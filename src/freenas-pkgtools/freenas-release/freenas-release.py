@@ -1,4 +1,6 @@
 #!/usr/bin/env python
+from __future__ import print_function
+
 import os
 import sys
 import getopt
@@ -53,7 +55,7 @@ class DatabaseIncompatibleVersionException(DatabaseException):
 
 def DebugSQL(sql, parms):
     if debugsql:
-        print >> sys.stderr, "sql = %s, parms = %s" % (sql, parms)
+        print("sql = %s, parms = %s" % (sql, parms), file=sys.stderr)
         
 CONFIG_KEYFILE_KEY = "keyfile"
 CONFIG_DBPATH_KEY = "db"
@@ -87,7 +89,7 @@ def SetConfiguration(path, project, arg_dict = {}):
             cfp.readfp(fp)
             fp.close()
         except BaseException as e:
-            print >> sys.stderr, "Could not load config file %s: %s" % (path, str(e))
+            print("Could not load config file %s: %s" % (path, str(e)), file=sys.stderr)
             return False
 
     # Now see if the section exists
@@ -104,7 +106,7 @@ def SetConfiguration(path, project, arg_dict = {}):
     try:
         fp = open(path, "w")
     except BaseException as e:
-        print >> sys.stderr, "Could not open config file %s for writing: %s" % (path, str(e))
+        print("Could not open config file %s for writing: %s" % (path, str(e)), file=sys.stderr)
         return False
     else:
         cfp.write(fp)
@@ -182,7 +184,7 @@ def LockArchive(archive, reason, wait = False):
             try:
                 fcntl.lockf(self._lock_file, flags, 0, 0)
             except (IOError, Exception) as e:
-                print >> sys.stderr, "Unable to obtain lock for archive %s: %s" % (archive, str(e))
+                print("Unable to obtain lock for archive %s: %s" % (archive, str(e)), file=sys.stderr)
                 return None
         def close(self):
             global is_locked
@@ -192,9 +194,9 @@ def LockArchive(archive, reason, wait = False):
             else:
                 raise Exception("Lock isn't locked!")
                 
-    print >> sys.stderr, "LockArchive(%s, %s): %s" % (archive, wait, reason)
+    print("LockArchive(%s, %s): %s" % (archive, wait, reason), file=sys.stderr)
     if is_locked:
-        print >> sys.stderr, "Recursive lock!??!?!"
+        print("Recursive lock!??!?!", file=sys.stderr)
         raise Exception("Recursive lock?!?!?!")
     lock_file = Locker(wait = wait)
     is_locked = True
@@ -267,7 +269,7 @@ class ReleaseDB(object):
         If count is 0, it returns them all.  Returns an
         empty array if no match.
         """
-        if debug:  print >> sys.stderr, "ReleaseDB::RecentSequencesForTrain(%s, %d)" % (train, count)
+        if debug:  print("ReleaseDB::RecentSequencesForTrain(%s, %d)" % (train, count), file=sys.stderr)
         return []
 
     def AddPakageUpdate(self, Pkg, OldPkg, DeltaChecksum = None):
@@ -432,17 +434,17 @@ class SQLiteReleaseDB(object):
             self._connection.commit()
             self._cursor = self._connection.cursor()
         else:
-            print >> sys.stderr, "Commit attempted with no cursor"
+            print("Commit attempted with no cursor", file=sys.stderr)
             
     def cursor(self):
         if self._cursor is None:
-            print >> sys.stderr, "Cursor was none, so getting a new one"
+            print("Cursor was none, so getting a new one", file=sys.stderr)
             self._cursor = self._connection.cursor()
         return self._cursor
 
     def close(self, commit = True):
         if commit:
-            print >> sys.stderr, "Committing the transaciton"
+            print("Committing the transaciton", file=sys.stderr)
             self.commit()
         if self._connection:
             self._cursor = None
@@ -471,7 +473,7 @@ class SQLiteReleaseDB(object):
         """
         self.cursor().execute(sql, parms)
         for m in self.cursor().fetchall():
-            print >> sys.stderr, "m = %s" % m
+            print("m = %s" % m, file=sys.stderr)
             raise Exception("Damnit")
         
         return
@@ -491,7 +493,7 @@ class SQLiteReleaseDB(object):
         sql = "SELECT Sequence FROM Sequences WHERE Sequence = ?"
         self.cursor().execute(sql, parms)
         for m in self.cursor().fetchall():
-            print >> sys.stderr, "This shouldn't happen:  %s" % str(m)
+            print("This shouldn't happen:  %s" % str(m), file=sys.stderr)
             raise Exception("This should not have happened")
         
         return
@@ -637,7 +639,7 @@ class SQLiteReleaseDB(object):
         packages = self.cursor().fetchall()
         rv = []
         for pkg in packages:
-            if debug:  print >> sys.stderr, "Found package %s-%s" % (pkg['PkgName'], pkg['PkgVersion'])
+            if debug:  print("Found package %s-%s" % (pkg['PkgName'], pkg['PkgVersion']), file=sys.stderr)
             p = Package.Package(pkg["PkgName"], pkg["PkgVersion"], pkg["Checksum"])
             p.SetRequiresReboot(bool(pkg["RequiresReboot"]))
             rv.append(p)
@@ -697,7 +699,7 @@ class SQLiteReleaseDB(object):
         self.cursor().execute(sql, parms)
         rv = []
         for entry in self.cursor():
-            if debug: print >> sys.stderr, "\t%s" % entry['PkgVersion']
+            if debug: print("\t%s" % entry['PkgVersion'], file=sys.stderr)
             p = Package.Package(pkg.Name(), entry['PkgVersion'], entry['Checksum'])
             p.SetRequiresReboot(bool(entry['RequiresReboot']))
             rv.append(p)
@@ -710,7 +712,7 @@ class SQLiteReleaseDB(object):
         it gets all the sequences.
         """
         if debug or verbose:
-            print >> sys.stderr, "SQLiteReleaseDB::RecentSequencesForTrain(%s, %d, %s)" % (train, count, oldest_first)
+            print("SQLiteReleaseDB::RecentSequencesForTrain(%s, %d, %s)" % (train, count, oldest_first), file=sys.stderr)
         sql = """
         SELECT Sequences.Sequence AS Sequence
         FROM Sequences
@@ -732,7 +734,7 @@ class SQLiteReleaseDB(object):
         self.cursor().execute(sql, parms)
         rv = []
         for entry in self.cursor():
-            if debug:  print >> sys.stderr, "\t%s" % entry['Sequence']
+            if debug:  print("\t%s" % entry['Sequence'], file=sys.stderr)
             rv.append( entry['Sequence'] )
 
         return rv
@@ -792,7 +794,7 @@ class SQLiteReleaseDB(object):
         import pdb
         global debug
 
-        if debug or verbose:  print >> sys.stderr, "SQLiteReleaseDB:AddPackageUpdate(%s, %s, %s, %s, %s)" % (Pkg.Name(), Pkg.Version(), OldVersion, DeltaChecksum, RequiresReboot)
+        if debug or verbose:  print("SQLiteReleaseDB:AddPackageUpdate(%s, %s, %s, %s, %s)" % (Pkg.Name(), Pkg.Version(), OldVersion, DeltaChecksum, RequiresReboot), file=sys.stderr)
 
         sql = """
         INSERT INTO PackageUpdates(Pkg, PkgBase, RequiresReboot, Checksum)
@@ -810,7 +812,7 @@ class SQLiteReleaseDB(object):
         self.commit()
         if debug:
             x = self.UpdatesForPackage(Pkg, 1)
-            print >> sys.stderr, "x = %s" % x
+            print("x = %s" % x, file=sys.stderr)
 
     def PackageUpdate(self, Pkg, OldPkg):
         """
@@ -839,7 +841,7 @@ class SQLiteReleaseDB(object):
         rv = None
         rows = self.cursor().fetchone()
         if rows:
-            if debug or verbose: print >> sys.stderr, "rows[RequiresReboot] = %s, rows[Checksum] = %s" % (bool(rows['RequiresReboot']), rows['Checksum'])
+            if debug or verbose: print("rows[RequiresReboot] = %s, rows[Checksum] = %s" % (bool(rows['RequiresReboot']), rows['Checksum']), file=sys.stderr)
             rv = {
                 Package.REBOOT_KEY : bool(rows["RequiresReboot"]),
                 Package.CHECKSUM_KEY : rows["Checksum"]
@@ -906,7 +908,8 @@ class SQLiteReleaseDB(object):
         rows = self.cursor().fetchall()
         rv = []
         for pkgRow in rows:
-            if debug:  print >> sys.stderr, "Found Update %s for package %s-%s" % (pkgRow["PkgOldVersion"], Pkg.Name(), Pkg.Version())
+            if debug:  print("Found Update %s for package %s-%s" % (pkgRow["PkgOldVersion"], Pkg.Name(), Pkg.Version()),
+                             file=sys.stderr)
             p = ( pkgRow['PkgOldVersion'] ,  pkgRow['Checksum'], bool(pkgRow['RequiresReboot']) )
             rv.append(p)
         return rv
@@ -1089,7 +1092,7 @@ class SQLiteReleaseDB(object):
         scripts = self.cursor().fetchall()
         for s in scripts:
             if debug or verbose:
-                print >> sys.stderr, "Found script %s for package %s-%s" % (s["Name"], pkg.Name(), pkg.Version())
+                print("Found script %s for package %s-%s" % (s["Name"], pkg.Name(), pkg.Version()), file=sys.stderr)
             n = s["Name"]
             h = s["Hash"]
             if s == "reboot" or h == "-":
@@ -1103,7 +1106,7 @@ def ChecksumFile(path):
     import hashlib
     global debug, verbose
 
-    if debug: print >> sys.stderr, "ChecksumFile(%s)" % path
+    if debug: print("ChecksumFile(%s)" % path, file=sys.stderr)
     kBufSize = 4 * 1024 * 1024
     sum = hashlib.sha256()
 
@@ -1115,11 +1118,11 @@ def ChecksumFile(path):
             else:
                 break
 
-    if debug:  print >> sys.stderr, "sum.hexdigest = %s" % sum.hexdigest()
+    if debug:  print("sum.hexdigest = %s" % sum.hexdigest(), file=sys.stderr)
     return sum.hexdigest()
 
 def usage():
-    print >> sys.stderr, """Usage: %s [--config config_file] [--database|-D db] [--debug|-d] [--verbose|-v] [--archive|--destination|-a archive_directory] <cmd> [args]
+    print("""Usage: %s [--config config_file] [--database|-D db] [--debug|-d] [--verbose|-v] [--archive|--destination|-a archive_directory] <cmd> [args]
     Command is:
 	add	Add the build-output directories (args) to the archive and database
 	check	Check the archive for self-consistency.
@@ -1130,7 +1133,7 @@ def usage():
     	delete	Delete a sequence or package.
     	rollback	Delete the most recent sequence for a train.
 	prune	Delete oldest sequences.
-""" % sys.argv[0]
+""" % sys.argv[0], file=sys.stderr)
     sys.exit(1)
 
 def UpgradeScriptsForPackage(archive, db, pkg, sequences = None):
@@ -1162,7 +1165,7 @@ def UpgradeScriptsForPackage(archive, db, pkg, sequences = None):
         if pkg_scripts is None:
             if current_pkg.RequiresReboot() == True:
                 # That means a reboot was required
-                print >> sys.stderr, "Package %s-%s requires a reboot" % (current_pkg.Name(), current_pkg.Version())
+                print("Package %s-%s requires a reboot" % (current_pkg.Name(), current_pkg.Version()), file=sys.stderr)
                 return None
         elif "reboot" in pkg_scripts:
             # Force a reboot
@@ -1175,12 +1178,12 @@ def UpgradeScriptsForPackage(archive, db, pkg, sequences = None):
                 try:
                     script_content = open(script_path).read()
                 except:
-                    print >> sys.stderr, "Cannot open expected script %s" % script_path
-                    print >> sys.stderr, "Returning None, indicating a reboot will be required"
+                    print("Cannot open expected script %s" % script_path, file=sys.stderr)
+                    print("Returning None, indicating a reboot will be required", file=sys.stderr)
                     return None
                 # Should check the checksum, I suppose
                 if pkg_scripts[script_name] != hashlib.sha256(script_content).hexdigest():
-                    print >> sys.stderr, "*** %s script for %s-%s does not match checksum!" % (script_name, current_pkg.Name(), current_pkg.Version())
+                    print("*** %s script for %s-%s does not match checksum!" % (script_name, current_pkg.Name(), current_pkg.Version()), file=sys.stderr)
                 rv[script_name] += script_content
     return rv
 
@@ -1189,7 +1192,8 @@ def AddPackageUpdateScript(db, archive, pkg, name, script, lock = True):
     Add the given script to both the database and the archive.
     The script goes in <archive>/Packages/<pkg.name>/<pkg.version>/<name>
     """
-    print >> sys.stderr, "AddPackageUpdateScript(db, %s, %s-%s, %s, %s, lock = %s)" % (archive, pkg.Name(), pkg.Version(), name, script, lock)
+    print("AddPackageUpdateScript(db, %s, %s-%s, %s, %s, lock = %s)" % (archive, pkg.Name(), pkg.Version(), name, script, lock),
+          file=sys.stderr)
     script_dir = os.path.join(archive, "Packages", pkg.Name(), pkg.Version())
     script_path = os.path.join(script_dir, name)
     if lock:
@@ -1205,15 +1209,15 @@ def AddPackageUpdateScript(db, archive, pkg, name, script, lock = True):
         try:
             db.AddPackageScript(pkg, name, script)
         except:
-            print >> sys.stderr, "Unable to add script %s to db for %s-%s" % (name, pkg.Name(), pkg.Version())
+            print("Unable to add script %s to db for %s-%s" % (name, pkg.Name(), pkg.Version()), file=sys.stderr)
             try:
                 os.remove(script_path)
                 os.rmdir(script_dir)
             except:
                 pass
     except:
-        print >> sys.stderr, "Could not create %s script for %s-%s" % (name, pkg.Name(), pkg.Version())
-        print >> sys.stderr, "Path was %s, exception = %s" % (script_path, str(sys.exc_info()))
+        print("Could not create %s script for %s-%s" % (name, pkg.Name(), pkg.Version()), file=sys.stderr)
+        print("Path was %s, exception = %s" % (script_path, str(sys.exc_info())), file=sys.stderr)
         pass
     if a_lock:
         a_lock.close()
@@ -1306,7 +1310,7 @@ def AddPackage(pkg, db = None,
             pkgfile = os.path.join(archive, "Packages", retval.FileName())
             if os.path.exists(pkgfile):
                 if retval.Checksum() != ChecksumFile(pkgfile):
-                    print >> sys.stderr, "Archive and database for %s-%s disagree about checksum" % (retval.Name(), retval.Version())
+                    print("Archive and database for %s-%s disagree about checksum" % (retval.Name(), retval.Version()), file=sys.stderr)
                     raise Exception("How can this be?!?!")
                 retval.SetSize(os.stat(pkgfile).st_size)
             else:
@@ -1325,10 +1329,10 @@ def AddPackage(pkg, db = None,
                     
         # Now we want to get the updates from previous_versions to this version
         updates = db.UpdatesForPackage(retval)
-        print >> sys.stderr, "\tFound updates %s" % updates
+        print("\tFound updates %s" % updates, file=sys.stderr)
         for update in updates:
             (base, hash, rr) = update
-            print >> sys.stderr, "\tAdding update from %s" % base
+            print("\tAdding update from %s" % base, file=sys.stderr)
             if archive:
                 delta_path = os.path.join(archive, "Packages", retval.FileName(base))
                 size = os.stat(delta_path).st_size
@@ -1345,7 +1349,7 @@ def AddPackage(pkg, db = None,
                 
         return retval
     
-    print >> sys.stderr, "AddPackage(%s-%s, db = %s, source = %s, archive = %s, train = %s, scripts = %s, fail_on_error = %s, restart_services = %s)" % (pkg.Name(), pkg.Version(), db, source, archive, train, scripts, fail_on_error, restart_services)
+    print("AddPackage(%s-%s, db = %s, source = %s, archive = %s, train = %s, scripts = %s, fail_on_error = %s, restart_services = %s)" % (pkg.Name(), pkg.Version(), db, source, archive, train, scripts, fail_on_error, restart_services), file=sys.stderr)
     
     add_pkg_to_db = True
     
@@ -1356,7 +1360,7 @@ def AddPackage(pkg, db = None,
         if pkg.Checksum() != checksum:
             if pkg.Checksum():
                 msg = "Package %s-%s checksum doesn't match source file" % (pkg.Name(), pkg.Version())
-                print >> sys.stderr, msg
+                print(msg, file=sys.stderr)
                 if fail_on_error:
                     raise Exception(msg)
             pkg.SetChecksum(checksum)
@@ -1369,12 +1373,12 @@ def AddPackage(pkg, db = None,
                 # all the updates have been created already.  So we need to
                 # get everything -- package information, delta scripts, updates --
                 # from the database.
-                print >> sys.stderr, "Package file for %s-%s already exists, so doing wackiness" % (pkg.Name(), pkg.Version())
+                print("Package file for %s-%s already exists, so doing wackiness" % (pkg.Name(), pkg.Version()), file=sys.stderr)
                 add_pkg_to_db = False
                 checksum = ChecksumFile(pkg_dest_file)
                 if pkg.Checksum() != checksum:
                     msg = "Package %s-%s checksum does not match archive version" % (pkg.Name(), pkg.Version())
-                    print >> sys.stderr, msg
+                    print(msg, file=sys.stderr)
                     if fail_on_error:
                         raise Exception(msg)
 
@@ -1382,8 +1386,8 @@ def AddPackage(pkg, db = None,
                 # I think.
                 pkg = PackageFromDB(pkg)
                 if scripts:
-                    print >> sys.stderr, "******* Package %s-%s already exists, can't specify delta scripts! ********" % (pkg.Name(), pkg.Version())
-                    print >> sys.stderr, "\tTHEY WILL BE IGNORED"
+                    print("******* Package %s-%s already exists, can't specify delta scripts! ********" % (pkg.Name(), pkg.Version()), file=sys.stderr)
+                    print("\tTHEY WILL BE IGNORED", file=sys.stderr)
                     
             else:
                 # Copy pkg_file to pkg_dest_file
@@ -1411,7 +1415,7 @@ def AddPackage(pkg, db = None,
 
                 # Find out if there are any services listed for this package.
                 package_services = PackageFile.GetPackageServices(path = pkg_file)
-                print >> sys.stderr, "\t**** package_services = %s" % package_services
+                print("\t**** package_services = %s" % package_services, file=sys.stderr)
                 
                 pkg_svc_list = None
                 pkg_restart_list = None
@@ -1436,7 +1440,7 @@ def AddPackage(pkg, db = None,
                     if restart_services:
                         restart_services = restart_services.copy()
                         for svc in restart_services.keys():
-                            print >> sys.stderr, "\t%s" % svc
+                            print("\t%s" % svc, file=sys.stderr)
                             if not svc in pkg_svc_list:
                                 restart_services.pop(svc)
                         # And now let's get rid of anything that simply
@@ -1456,19 +1460,19 @@ def AddPackage(pkg, db = None,
                 # We use this to add to the database, later on.
                 if restart_services:
                     service_list = restart_services.copy()
-                print >> sys.stderr, "After rpuning: restart_services = %s" % restart_services
+                print("After rpuning: restart_services = %s" % restart_services, file=sys.stderr)
                 
                 # Note that we are doing this before adding the new package to
                 # the database, although that's not strictly necessary.  (But
                 # not doing so means we don't have to remove it later if
                 # we downgrade.)
                 for v in previous_versions:
-                    print >> sys.stderr, "\t%s" % v.Version()
+                    print("\t%s" % v.Version(), file=sys.stderr)
                 
                 if previous_versions:
                     most_recent_pkg = previous_versions[0]
                     if most_recent_pkg.Version() == pkg.Version():
-                        print >> sys.stderr, "Most recent version is the same as version being added?!?!"
+                        print("Most recent version is the same as version being added?!?!", file=sys.stderr)
                         raise Exception("That's not right")
                     
                     # This gets us the most recent version of the package
@@ -1477,11 +1481,11 @@ def AddPackage(pkg, db = None,
                     previous_pkgfile = os.path.join(archive, "Packages", most_recent_pkg.FileName())
                     if os.path.exists(previous_pkgfile):
                         delta_pkgfile = os.path.join(archive, "Packages", pkg.FileName(most_recent_pkg.Version()))
-                        print >> sys.stderr, "Attempting to create delta package %s version %s -> %s" % (pkg.Name(), most_recent_pkg.Version(), pkg.Version())
+                        print("Attempting to create delta package %s version %s -> %s" % (pkg.Name(), most_recent_pkg.Version(), pkg.Version()), file=sys.stderr)
                         diffs = PackageFile.DiffPackageFiles(previous_pkgfile, pkg_dest_file, delta_pkgfile, scripts = scripts)
                         if diffs is None:
-                            print >> sys.stderr, "No differences between new package %s-%s and %s-%s" % (pkg.Name(), pkg.Version(), most_recent_pkg.Name(), most_recent_pkg.Version())
-                            print >> sys.stderr, "Downgrading to previous package version"
+                            print("No differences between new package %s-%s and %s-%s" % (pkg.Name(), pkg.Version(), most_recent_pkg.Name(), most_recent_pkg.Version()), file=sys.stderr)
+                            print("Downgrading to previous package version", file=sys.stderr)
                             # Need to downgrade, and also find updates.
                             os.remove(pkg_dest_file)
                             pkg = PackageFromDB(most_recent_pkg)
@@ -1500,7 +1504,7 @@ def AddPackage(pkg, db = None,
                             # Note that pkg_restart_list is kept pristine, because
                             # it's the default set of restarts for the packge, which
                             # we need if there is no entry for the package.
-                            print >> sys.stderr, "########### pkg_restart_list = %s, restart_services = %s" % (pkg_restart_list, restart_services)
+                            print("########### pkg_restart_list = %s, restart_services = %s" % (pkg_restart_list, restart_services), file=sys.stderr)
                                 
                             rr = None
                             if scripts:
@@ -1521,8 +1525,8 @@ def AddPackage(pkg, db = None,
                                                 size = os.lstat(delta_pkgfile).st_size,
                                                 RequiresReboot = rr)
                             
-                            print >> sys.stderr, "\t*** restart_services = %s" % restart_services
-                            print >> sys.stderr, "\t\tpkg_restart_list = %s" % pkg_restart_list
+                            print("\t*** restart_services = %s" % restart_services, file=sys.stderr)
+                            print("\t\tpkg_restart_list = %s" % pkg_restart_list, file=sys.stderr)
                             upd.SetRestartServices(restart_services)
                             # Need to repeat for all the previous versions.
                             # But first we start with this, the most recent version
@@ -1539,7 +1543,7 @@ def AddPackage(pkg, db = None,
                                 delta_scripts = {}
                             # Now we need to get any update scripts for this, the most recent version
                             update_scripts = UpgradeScriptsForPackage(archive, db, most_recent_pkg)
-                            print >> sys.stderr, "*** update_scripts = %s" % update_scripts
+                            print("*** update_scripts = %s" % update_scripts, file=sys.stderr)
                             if update_scripts is None:
                                 if not restart_services:
                                     delta_scripts["reboot"] = "reboot"
@@ -1566,12 +1570,12 @@ def AddPackage(pkg, db = None,
                                 # version requires a reboot (no delta script, and no
                                 # service restart list for that version), then the update
                                 # requires a reboot.
-                                print >> sys.stderr, "\tOlder version %s, restart_servces = %s" % (older_pkg.Version(), restart_services)
+                                print("\tOlder version %s, restart_servces = %s" % (older_pkg.Version(), restart_services), file=sys.stderr)
                                 if restart_services:
                                     tmp_restart_list = db.ServicesForPackageUpdate(older_pkg)
                                 else:
                                     tmp_restart_list = {}
-                                print >> sys.stderr, "\tRestart list for pkg %s-%s = %s, pkg_restart_list = %s" % (older_pkg.Name(), older_pkg.Version(), tmp_restart_list, pkg_restart_list)
+                                print("\tRestart list for pkg %s-%s = %s, pkg_restart_list = %s" % (older_pkg.Name(), older_pkg.Version(), tmp_restart_list, pkg_restart_list), file=sys.stderr)
                                 if tmp_restart_list:
                                     restart_services = MergeServiceList(restart_services, tmp_restart_list)
                                 else:
@@ -1582,7 +1586,7 @@ def AddPackage(pkg, db = None,
                                 # then don't include it at all.
                                 if restart_services == pkg_restart_list:
                                     restart_services = None
-                                print >> sys.stderr, "\tUpdate scripts for pkg %s-%s = %s" % (older_pkg.Name(), older_pkg.Version(), update_scripts)
+                                print("\tUpdate scripts for pkg %s-%s = %s" % (older_pkg.Name(), older_pkg.Version(), update_scripts), file=sys.stderr)
                                 if update_scripts is None:
                                     # That means a reboot is required
                                     # If the package default is to reboot, we have to reboot.
@@ -1599,13 +1603,13 @@ def AddPackage(pkg, db = None,
                                             delta_scripts[script] = update_scripts[script]
                                 if "reboot" in delta_scripts:
                                     delta_scripts = { "reboot" : "reboot" }
-                                print >> sys.stderr, "\tdelta_scripts = %s" % delta_scripts
+                                print("\tdelta_scripts = %s" % delta_scripts, file=sys.stderr)
                                 # Now we've got the update scripts from older_pkg to the current version.
                                 # So let's create a delta package file
                                 previous_pkgfile = os.path.join(archive, "Packages", older_pkg.FileName())
                                 if os.path.exists(previous_pkgfile):
                                     delta_pkgfile = os.path.join(archive, "Packages", pkg.FileName(older_pkg.Version()))
-                                    print >> sys.stderr, "Creating (forced) delta package file version %s -> %s" % (older_pkg.Version(), pkg.Version())
+                                    print("Creating (forced) delta package file version %s -> %s" % (older_pkg.Version(), pkg.Version()), file=sys.stderr)
                                     PackageFile.DiffPackageFiles(previous_pkgfile,
                                                                  pkg_dest_file,
                                                                  delta_pkgfile,
@@ -1626,20 +1630,20 @@ def AddPackage(pkg, db = None,
                                     # If the package requires a reboot, and there is no
                                     # service restart list for this update, then we have
                                     # to reboot.
-                                    print >> sys.stderr, "Package %s, second update:  RequiresReboot = %s, rr = %s, tmp_restart_list = %s" % (pkg.Name(), older_pkg.RequiresReboot(), rr, tmp_restart_list)
+                                    print("Package %s, second update:  RequiresReboot = %s, rr = %s, tmp_restart_list = %s" % (pkg.Name(), older_pkg.RequiresReboot(), rr, tmp_restart_list), file=sys.stderr)
                                     upd = pkg.AddUpdate(older_pkg.Version(),
                                                         ChecksumFile(delta_pkgfile),
                                                         size = os.lstat(delta_pkgfile).st_size,
                                                         RequiresReboot = rr)
                                     if restart_services:
                                         upd.SetRestartServices(restart_services)
-                                    print >> sys.stderr, "\t#### second one:  restart_services = %s" % restart_services
+                                    print("\t#### second one:  restart_services = %s" % restart_services, file=sys.stderr)
                                 else:
-                                    print >> sys.stderr, "Secondary Previous package file %s doesn't exist" % previous_pkgfile
+                                    print("Secondary Previous package file %s doesn't exist" % previous_pkgfile, file=sys.stderr)
                     else:
-                        print >> sys.stderr, "Initial previous package file %s doesn't exist" % previous_pkgfile
+                        print("Initial previous package file %s doesn't exist" % previous_pkgfile, file=sys.stderr)
                 else:
-                    print >> sys.stderr, "No previous versions for package %s-%s" % (pkg.Name(), pkg.Version())
+                    print("No previous versions for package %s-%s" % (pkg.Name(), pkg.Version()), file=sys.stderr)
         else:
             # No archive, so can't save
             # But we can compare the checksum to the real file
@@ -1652,7 +1656,7 @@ def AddPackage(pkg, db = None,
                     if upd.Checksum():
                         update_cksum = ChecksumFile(delta_file)
                         if upd.Checksum() != update_cksum:
-                            print >> sys.stderr, "Delta package %s checksum does not match package" % pkg.FileName(upd.Version())
+                            print("Delta package %s checksum does not match package" % pkg.FileName(upd.Version()), file=sys.stderr)
                             if fail_on_error:
                                 raise Exception("Delta packgage checksum mismatch")
     elif archive:
@@ -1667,7 +1671,7 @@ def AddPackage(pkg, db = None,
             
         # So first let's see if the package is already in the database.
         if db.FindPackage(pkg):
-            if debug or verbose:  print >> sys.stderr, "\tPackage is already in database"
+            if debug or verbose:  print("\tPackage is already in database", file=sys.stderr)
             add_pkg_to_db = False
         else:
             # Okay, it's not in the database, so we'll want to
@@ -1686,7 +1690,7 @@ def AddPackage(pkg, db = None,
                 if scripts and "reboot" in scripts:
                     scripts = { "reboot" : "reboot" }
                 if scripts:
-                    print >> sys.stderr, "Delta scripts: %s" % scripts
+                    print("Delta scripts: %s" % scripts, file=sys.stderr)
     else:
         raise Exception("No source or archive, don't know what to do")
     
@@ -1694,10 +1698,10 @@ def AddPackage(pkg, db = None,
     # All the updates would be added here as well, of so.
     # Let's add the package to the database
     if restart_services and not add_pkg_to_db:
-        print >> sys.stderr, "Restart services = %s, but not adding package %s-%s to database.  Problem?" % \
-            (restart_services, pkg.Name(), pkg.Version())
+        print("Restart services = %s, but not adding package %s-%s to database.  Problem?" % \
+              (restart_services, pkg.Name(), pkg.Version()), file=sys.stderr)
     if add_pkg_to_db:
-        if debug or verbose:  print >> sys.stderr, "\tAdding to database"
+        if debug or verbose:  print("\tAdding to database", file=sys.stderr)
         db.AddPackage(pkg)
         # RequiresReboot defaults to the package default
         rr = pkg.RequiresReboot()
@@ -1713,12 +1717,12 @@ def AddPackage(pkg, db = None,
                 svc_list_file = open(svc_list_file_name, "wx")
                 json.dump(service_list, svc_list_file)
                 svc_list_file.close()
-                print >> sys.stderr, "Wrote service list to %s" % svc_list_file_name
+                print("Wrote service list to %s" % svc_list_file_name, file=sys.stderr)
             except BaseException as e:
-                print >> sys.stderr, "Could NOT write service list to %s: %s" % (svc_list_file_name, str(e))
+                print("Could NOT write service list to %s: %s" % (svc_list_file_name, str(e)), file=sys.stderr)
                 svc_list_file = None
             for svc, val in service_list.iteritems():
-                print >> sys.stderr, "Adding service %s -> %s for %s-%s" % (svc, val, pkg.Name(), pkg.Version())
+                print("Adding service %s -> %s for %s-%s" % (svc, val, pkg.Name(), pkg.Version()), file=sys.stderr)
                 db.AddServiceForPackageUpdate(pkg, svc, val)
         if scripts:
             if "reboot" in scripts:
@@ -1737,7 +1741,7 @@ def AddPackage(pkg, db = None,
                 o_reboot = pkg.RequiresReboot()
             else:
                 o_reboot = update.RequiresReboot()
-            print >> sys.stderr, "\tAdding update to database %s -> %s" % (o_vers, pkg.Version())
+            print("\tAdding update to database %s -> %s" % (o_vers, pkg.Version()), file=sys.stderr)
             db.AddPackageUpdate(pkg, o_vers, DeltaChecksum = o_cksum, RequiresReboot = o_reboot)
             
     return pkg
@@ -1757,7 +1761,7 @@ def ProcessRelease(source, archive,
 
     force_reboot = None
     
-    if debug:  print >> sys.stderr, "Processelease(%s, %s, %s, %s)" % (source, archive, db, sign)
+    if debug:  print("Processelease(%s, %s, %s, %s)" % (source, archive, db, sign), file=sys.stderr)
 
     if db is None:
         raise Exception("Invalid db")
@@ -1802,7 +1806,7 @@ def ProcessRelease(source, archive,
         # Any errors -- usually going to be ENOENT -- means we
         # have no services to list
         services = {}
-    print >> sys.stderr, "******************* services = %s" % services
+    print("******************* services = %s" % services, file=sys.stderr)
     
     try:
         reboot_str = open(os.path.join(source, "FORCEREBOOT"), "r").read().strip()
@@ -1828,7 +1832,7 @@ def ProcessRelease(source, archive,
     while True:
         if suffix is not None:
             name = "%s-%d" % (manifest.Sequence(), suffix)
-            print >> sys.stderr, "Due to conflict, trying sequence %s" % name
+            print("Due to conflict, trying sequence %s" % name, file=sys.stderr)
         new_mani_path = "%s/%s/%s-%s" % (archive, manifest.Train(), project, name)
         try:
             mani_file = open(new_mani_path, "wxb", 0622)
@@ -1840,7 +1844,7 @@ def ProcessRelease(source, archive,
                 temp_mani = Manifest.Manifest()
                 temp_mani.LoadPath(new_mani_path)
                 if len(Manifest.CompareManifests(manifest, temp_mani)) == 0:
-                    print >> sys.stderr, "New manifest seems to be the same as the old one, doing nothing"
+                    print("New manifest seems to be the same as the old one, doing nothing", file=sys.stderr)
                     lock.close()
                     return
                 if suffix is None:
@@ -1849,7 +1853,7 @@ def ProcessRelease(source, archive,
                     suffix += 1
                 continue
             else:
-                print >> sys.stderr, "Cannot create manifest file %s: %s" % (name, str(e))
+                print("Cannot create manifest file %s: %s" % (name, str(e)), file=sys.stderr)
                 raise e
         except Exception as e:
                 raise e
@@ -1863,7 +1867,7 @@ def ProcessRelease(source, archive,
     delta_scripts = {}
     for pkg in manifest.Packages():
         lock = LockArchive(archive, "Processing package %s-%s" % (pkg.Name(), pkg.Version()), wait = True)
-        print >> sys.stderr, "Package %s, version %s, filename %s" % (pkg.Name(), pkg.Version(), pkg.FileName())
+        print("Package %s, version %s, filename %s" % (pkg.Name(), pkg.Version(), pkg.FileName()), file=sys.stderr)
         # Some setup for the AddPackage function
         script_path = os.path.join(pkg_source_dir, pkg.Name())
         scripts = {}
@@ -1917,12 +1921,12 @@ def ProcessRelease(source, archive,
                                                     prefix="%s-" % note_name,
                                                     delete = False)
             if debug or verbose:
-                print >> sys.stderr, "Created notes file %s for note %s" % (note_file.name, note_name)
+                print("Created notes file %s for note %s" % (note_file.name, note_name), file=sys.stderr)
             note_file.write(notes[note_name])
             os.chmod(note_file.name, 0664)
             manifest.SetNote(note_name, os.path.basename(note_file.name))
         except OSError as e:
-            print >> sys.stderr, "Unable to save note %s in archive: %s" % (note_name, str(e))
+            print("Unable to save note %s in archive: %s" % (note_name, str(e)), file=sys.stderr)
         lock.close()
     # And now let's add it to the database
     manifest.SetPackages(pkg_list)
@@ -1934,7 +1938,7 @@ def ProcessRelease(source, archive,
         try:
             manifest.SignWithKey(key_data)
         except:
-            print >> sys.stderr, "Could not sign manifest, so removing file"
+            print("Could not sign manifest, so removing file", file=sys.stderr)
             try:
                 os.remove(mani_file.name)
                 mani_file.close()
@@ -1954,19 +1958,19 @@ def ProcessRelease(source, archive,
         changefile = "%s/%s/ChangeLog.txt" % (archive, manifest.Train())
         change_input = None
         if changelog == "-":
-            print "Enter changelog, control-d when done"
+            print("Enter changelog, control-d when done")
             change_input = sys.stdin
         else:
             try:
                 change_input = open(changelog, "r")
             except:
-                print >> sys.stderr, "Unable to open input change log %s" % changelog
+                print("Unable to open input change log %s" % changelog, file=sys.stderr)
         if change_input:
             lock = LockArchive(archive, "Modifying ChangeLog", wait = True)
             try:
                 cfile = open(changefile, "ab", 0664)
             except:
-                print >> sys.stderr, "Unable to open changelog %s" % changefile
+                print("Unable to open changelog %s" % changefile, file=sys.stderr)
             else:
                 cfile.write("### START %s\n" % manifest.Sequence())
                 cfile.write(change_input.read())
@@ -1986,7 +1990,7 @@ def Check(archive, db, project = "FreeNAS", args = []):
     and orphaned files/directories.
     """
     def CheckUsage():
-        print >> sys.stderr, "Usage: %s check [-Q|--quick]" % sys.argv[0]
+        print("Usage: %s check [-Q|--quick]" % sys.argv[0], file=sys.stderr)
         usage()
 
     global verbose, debug
@@ -1997,14 +2001,14 @@ def Check(archive, db, project = "FreeNAS", args = []):
         long_options = ["quick"]
         opts, arguments = getopt.getopt(args, short_options, long_options)
     except getopt.GetoptError as err:
-        print >> sys.stderr, str(err)
+        print(str(err), file=sys.stderr)
         CheckUsage()
 
     for o, a in opts:
         if o in ("-Q", "--quick"):
             quick = True
         else:
-            print >> sys.stderr, "Unknown option %s" % o
+            print("Unknown option %s" % o, file=sys.stderr)
             CheckUsage()
 
     # First, let's get the list of trains.
@@ -2044,19 +2048,19 @@ def Check(archive, db, project = "FreeNAS", args = []):
         if entry == "trains.txt":
             continue
         if not os.path.isdir(archive + "/" + entry):
-            print >> sys.stderr, "%s/%s is not a directory" % (archive, entry)
+            print("%s/%s is not a directory" % (archive, entry), file=sys.stderr)
         else:
             found_contents[entry] = True
 
     if expected_contents != found_contents:
-        print >> sys.stderr, "Archive top-level directory does not match expectations"
+        print("Archive top-level directory does not match expectations", file=sys.stderr)
         for expected in expected_contents.keys():
             if expected in found_contents:
                 found_contents.pop(expected)
             else:
-                print >> sys.stderr, "Missing Archive top-level entry %s" % expected
+                print("Missing Archive top-level entry %s" % expected, file=sys.stderr)
         for found in found_contents.keys():
-            print >> sys.stderr, "Unexpected archive top-level entry %s" % found
+            print("Unexpected archive top-level entry %s" % found, file=sys.stderr)
 
     # Now we want to check that each train has only the sequences
     # expected.  Along the way, we'll also start loading the
@@ -2070,7 +2074,7 @@ def Check(archive, db, project = "FreeNAS", args = []):
         found_contents = {}
 
         if not os.path.isdir(t_dir):
-            print >> sys.stderr, "Expected train directory %s does not exist" % t_dir
+            print("Expected train directory %s does not exist" % t_dir, file=sys.stderr)
             continue
         for entry in os.listdir(t_dir):
             if entry == "Notes":
@@ -2081,7 +2085,7 @@ def Check(archive, db, project = "FreeNAS", args = []):
                 continue
             found_contents[entry] = True
 
-        if debug:  print >> sys.stderr, "Directory entries for Train %s:  %s" % (t, found_contents.keys())
+        if debug:  print("Directory entries for Train %s:  %s" % (t, found_contents.keys()), file=sys.stderr)
         # Go thorugh the manifest files for this train.
         # Load each manifest, and get the set of packages from it.
         # Figure out the path for each package, and update, and add
@@ -2096,7 +2100,7 @@ def Check(archive, db, project = "FreeNAS", args = []):
                 expected_contents[sequence_file] = True
 
             if not os.path.isfile(mani_path):
-                print >> sys.stderr, "Expected manifest file %s does not exist" % mani_path
+                print("Expected manifest file %s does not exist" % mani_path, file=sys.stderr)
                 continue
                 
             temp_mani = Manifest.Manifest()
@@ -2105,16 +2109,16 @@ def Check(archive, db, project = "FreeNAS", args = []):
             for pkg in temp_mani.Packages():
                 if pkg.FileName() in expected_packages:
                     if expected_packages[pkg.FileName()] != pkg.Checksum():
-                        print >> sys.stderr, "Package %s, version %s, already found with different checksum" \
-                            % (pkg.Name(), pkg.Version())
-                        print >> sys.stderr, "Found again in sequence %s in train %s" % (sequence_file, t)
+                        print("Package %s, version %s, already found with different checksum" \
+                              % (pkg.Name(), pkg.Version()), file=sys.stderr)
+                        print("Found again in sequence %s in train %s" % (sequence_file, t), file=sys.stderr)
                         continue
                 else:
                     expected_packages[pkg.FileName()] = pkg.Checksum()
-                    if debug:  print >> sys.stderr, "%s/%s:  %s: %s" % (t, sequence_file, pkg.FileName(), pkg.Checksum())
+                    if debug:  print("%s/%s:  %s: %s" % (t, sequence_file, pkg.FileName(), pkg.Checksum()), file=sys.stderr)
                     pathname = os.path.join(archive, "Packages", pkg.FileName())
                     if not os.path.exists(pathname):
-                        print >> sys.stderr, "Expected package file %s for %s %s does not exist" % (pathname, pkg.Name(), pkg.Version())
+                        print("Expected package file %s for %s %s does not exist" % (pathname, pkg.Name(), pkg.Version()), file=sys.stderr)
                 if pkg.FileName() not in sequences_for_packages:
                     sequences_for_packages[pkg.FileName()] = []
                 sequences_for_packages[pkg.FileName()].append(sequence_file)
@@ -2124,15 +2128,15 @@ def Check(archive, db, project = "FreeNAS", args = []):
                     o_sum = upd.Checksum()
                     if o_vers in expected_packages:
                         if expected_packages[o_vers] != o_sum:
-                            print >> sys.stderr, "Package update %s %s->%s, already found with different checksum" \
-                                % (pkg.Name(), upd.Version(), Pkg.Version())
-                            print >> sys.stderr, "Found again in sequence %s in train %s" % (sequence_File, t)
+                            print("Package update %s %s->%s, already found with different checksum" \
+                                  % (pkg.Name(), upd.Version(), Pkg.Version()), file=sys.stderr)
+                            print("Found again in sequence %s in train %s" % (sequence_File, t), file=sys.stderr)
                             continue
                     else:
                         expected_packages[o_vers] = o_sum
                         pathname = os.path.join(archive, "Packages", o_vers)
                         if not os.path.exists(pathname):
-                            print >> sys.stderr, "Expected package update file %s for %s %s %s does not exist" % (pathname, pkg.Name(), upd.Version(), pkg.Version())
+                            print("Expected package update file %s for %s %s %s does not exist" % (pathname, pkg.Name(), upd.Version(), pkg.Version()), file=sys.stderr)
                             
                     if o_vers not in sequences_for_packages:
                         sequences_for_packages[o_vers] = []
@@ -2146,25 +2150,25 @@ def Check(archive, db, project = "FreeNAS", args = []):
                             continue
                         note_file = notes_dict[note]
                         if note_file in expected_notes:
-                            print >> sys.stderr, "Note file %s already expected, this is confusing" % note_file
+                            print("Note file %s already expected, this is confusing" % note_file, file=sys.stderr)
                             if debug:
-                                print >> sys.stderr, "\tTrain %s, Sequence %s has the duplicate" % (temp_mani.Train(), temp_mani.Sequence())
+                                print("\tTrain %s, Sequence %s has the duplicate" % (temp_mani.Train(), temp_mani.Sequence()), file=sys.stderr)
                         expected_notes[note_file] = True
-                        if debug:  print >> sys.stderr, "Found Note %s in Train %s Sequence %s" % (note_file, temp_mani.Train(), temp_mani.Sequence())
+                        if debug:  print("Found Note %s in Train %s Sequence %s" % (note_file, temp_mani.Train(), temp_mani.Sequence()), file=sys.stderr)
 
         # Now let's check the found_contents and expected_contents dictionaries
         if expected_contents != found_contents:
-            print >> sys.stderr, "Sequences for train %s inconsistency found" % t
+            print("Sequences for train %s inconsistency found" % t, file=sys.stderr)
             if debug:
-                print >> sys.stderr, "Expected:  %s" % expected_contents
-                print >> sys.stderr, "Found   :  %s" % found_contents
+                print("Expected:  %s" % expected_contents, file=sys.stderr)
+                print("Found   :  %s" % found_contents, file=sys.stderr)
             for seq in expected_contents.keys():
                 if seq in found_contents:
                     found_contents.pop(seq)
                 else:
-                    print >> sys.stderr, "Expected sequence file %s not found in train %s" % (seq, t)
+                    print("Expected sequence file %s not found in train %s" % (seq, t), file=sys.stderr)
             for found in found_contents.keys():
-                print >> sys.stderr, "Unexpected entry in train %s: %s" % (t, found)
+                print("Unexpected entry in train %s: %s" % (t, found), file=sys.stderr)
 
     # Now we've got all of the package filenames, so let's start checking
     # the actual packages directory
@@ -2173,7 +2177,7 @@ def Check(archive, db, project = "FreeNAS", args = []):
     for pkgEntry in os.listdir(p_dir):
         full_path = os.path.join(p_dir, pkgEntry)
         if not os.path.isfile(full_path):
-            print >> sys.stderr, "Entry in Packages directory, %s, is not a file" % pkgEntry
+            print("Entry in Packages directory, %s, is not a file" % pkgEntry, file=sys.stderr)
             continue
         if quick:
             cksum = "-"
@@ -2183,38 +2187,38 @@ def Check(archive, db, project = "FreeNAS", args = []):
 
     if (quick and expected_packages.keys() != found_packages.keys()) or \
        (quick is False and expected_packages != found_packages):
-        print >> sys.stderr, "Packages directory does not match expecations"
+        print("Packages directory does not match expecations", file=sys.stderr)
         for expected in expected_packages.keys():
             if expected in found_packages:
                 if quick is False and expected_packages[expected] != found_packages[expected]:
-                    print >> sys.stderr, "Package %s has a different checksum than expected" % expected
+                    print("Package %s has a different checksum than expected" % expected, file=sys.stderr)
                     if debug or verbose:
-                        print >> sys.stderr, "\t%s (expected)\n\t%s (found)" % (expected_packages[expected], found_packages[expected])
+                        print("\t%s (expected)\n\t%s (found)" % (expected_packages[expected], found_packages[expected]), file=sys.stderr)
                 found_packages.pop(expected)
             else:
                 # We don't need to print this out, since was printed above
-                print >> sys.stderr, "Did not find expected package file %s" % expected
-                print >> sys.stderr, "\tUsed in sequences %s" % sequences_for_packages[expected]
+                print("Did not find expected package file %s" % expected, file=sys.stderr)
+                print("\tUsed in sequences %s" % sequences_for_packages[expected], file=sys.stderr)
         for found in found_packages.keys():
-            print >> sys.stderr, "Unexpected package file %s" % found
+            print("Unexpected package file %s" % found, file=sys.stderr)
 
     # Now let's check the notes
     if found_notes != expected_notes:
-        print >> sys.stderr, "Notes inconsistency"
+        print("Notes inconsistency", file=sys.stderr)
 #        if debug or verbose:
-#            print >> sys.stderr, "Expected Notes: %s" % expected_notes
-#            print >> sys.stderr, "Found Notes: %s" % found_notes
+#            printf("Expected Notes: %s" % expected_notes
+#            printf("Found Notes: %s" % found_notes
         for n in found_notes.keys():
             if n in expected_notes:
                 expected_notes.pop(n)
                 found_notes.pop(n)
 
         if len(found_notes) > 0:
-            print "Unexpectedly found notes files:"
-            for n in found_notes:  print "\t%s" % n
+            print("Unexpectedly found notes files:")
+            for n in found_notes:  print("\t%s" % n)
         if len(expected_notes) > 0:
-            print "Missing notes files:"
-            for n in expected_notes: print "\t%s" % n
+            print("Missing notes files:")
+            for n in expected_notes: print("\t%s" % n)
             
 def Dump(archive, db, project = "FreeNAS", args = []):
     """
@@ -2226,7 +2230,7 @@ def Dump(archive, db, project = "FreeNAS", args = []):
     <train> <sequence> <package> [...]
     """
     def DumpUsage():
-        print >> sys.stderr, "Usage: %s [-T|--train train]" % sys.argv[0]
+        print("Usage: %s [-T|--train train]" % sys.argv[0], file=sys.stderr)
         usage()
         
     train = None
@@ -2235,7 +2239,7 @@ def Dump(archive, db, project = "FreeNAS", args = []):
     try:
         opts, arguments = getopt.getopt(args, short_options, long_options)
     except getopt.GetoptError as err:
-        print >> sys.stderr, str(err)
+        print(str(err), file=sys.stderr)
         DumpUsage()
         
     for o, a in opts:
@@ -2251,12 +2255,12 @@ def Dump(archive, db, project = "FreeNAS", args = []):
         # For each sequence, we need to get the package
         pkgs = db.PackageForSequence(seq)
         if pkgs is None:
-            print >> sys.stderr, "Sequence %s has no packages?!" % seq
+            print("Sequence %s has no packages?!" % seq, file=sys.stderr)
             continue
         output_line = "TRAIN=%s %s " % (t, seq)
         for pkg in pkgs:
             output_line += "%s-%s " % (pkg.Name(), pkg.Version())
-        print output_line
+        print(output_line)
 
     return 0
 
@@ -2283,7 +2287,7 @@ def Rebuild(archive, dbfile, project = "FreeNAS", key = None, args = []):
     try:
         opts, args = getopt.getopt(args, None, long_options)
     except getopt.GetoptError as err:
-        print >> sys.stderr, str(err)
+        print(str(err), file=sys.stderr)
         usage()
 
     for o, a in opts:
@@ -2297,13 +2301,13 @@ def Rebuild(archive, dbfile, project = "FreeNAS", key = None, args = []):
             usage()
 
     if verify and copy:
-        print >> sys.stderr, "Only one of --verify or --copy is allowed"
+        print("Only one of --verify or --copy is allowed", file=sys.stderr)
         usage()
 
     try:
         db = SQLiteReleaseDB(dbfile = dbfile)
         if ifneeded:
-            print >> sys.stderr, "Database rebuild not needed due to compatible versions"
+            print("Database rebuild not needed due to compatible versions", file=sys.stderr)
             return
     except DatabaseIncompatibleVersionException:
         db = SQLiteReleaseDB(dbfile = dbfile, initialize = True)
@@ -2333,12 +2337,12 @@ def Rebuild(archive, dbfile, project = "FreeNAS", key = None, args = []):
         # This seems to duplicate a lot of ProcessRelease
         # so it should be abstracted so both can use it
         if debug or verbose:
-            print >> sys.stderr, "Processing %s" % manifest
+            print("Processing %s" % manifest, file=sys.stderr)
         m = Manifest.Manifest()
         try:
             m.LoadPath(manifest)
         except BaseException as e:
-            print >> sys.stderr, "Got exception %s trying to load %s, skipping" % (str(e), manifest)
+            print("Got exception %s trying to load %s, skipping" % (str(e), manifest), file=sys.stderr)
             continue
         
         pkg_list = []
@@ -2360,10 +2364,10 @@ def Rebuild(archive, dbfile, project = "FreeNAS", key = None, args = []):
                 lock.close()
             else:
                 svc_list_filename = os.path.join(pkg_directory, pkg.Name(), pkg.Version(), "Services")
-                print >> sys.stderr, "svc_list_filename = %s" % svc_list_filename
+                print("svc_list_filename = %s" % svc_list_filename, file=sys.stderr)
                 try:
                     svc_list = json.load(open(svc_list_filename, "r"))
-                    print >> sys.stderr, "\tsvc_list = %s" % svc_list
+                    print("\tsvc_list = %s" % svc_list, file=sys.stderr)
                 except:
                     svc_list = {}
                 pkg = AddPackage(pkg, db, source = None,
@@ -2388,12 +2392,12 @@ def Rebuild(archive, dbfile, project = "FreeNAS", key = None, args = []):
             suffix = None
             while True:
                 manifest_path = os.path.join(copy, m.Train(), "%s-%s" % (project, name))
-                print >> sys.stderr, "%s" % manifest_path
+                print("%s" % manifest_path, file=sys.stderr)
                 try:
                     manifest_file = open(manifest_path, "wxb", 0664)
                 except OSError as e:
                     # Should compare manifests, perhaps
-                    print >> sys.stderr, "Cannot open %s: %s" % (manifest_path, str(e))
+                    print("Cannot open %s: %s" % (manifest_path, str(e)), file=sys.stderr)
                     if suffix is None:
                         suffix = 1
                     else:
@@ -2416,11 +2420,11 @@ def Rebuild(archive, dbfile, project = "FreeNAS", key = None, args = []):
         try:
             db.AddRelease(m)
         except BaseException as e:
-            print >> sys.stderr, "Processing %s (file %s), got exception %s" % (m.Sequence(), manifest, str(e))
+            print("Processing %s (file %s), got exception %s" % (m.Sequence(), manifest, str(e)), file=sys.stderr)
             raise e
             continue
         if debug or verbose:
-            print >> sys.stderr, "Done processing %s" % m.Sequence()
+            print("Done processing %s" % m.Sequence(), file=sys.stderr)
 
     return
 
@@ -2447,7 +2451,7 @@ def RemovePackageUpdate(archive, db, pkg, base, dbonly = False, shlist = None):
     try:
         db.PackageUpdatesDeleteUpdate(pkg, base)
     except BaseException as e:
-        print >> sys.stderr, "Unable to delete %s %s->%s from db: %s" % (pkg.Name(), base, pkg.Version(), str(e))
+        print("Unable to delete %s %s->%s from db: %s" % (pkg.Name(), base, pkg.Version(), str(e)), file=sys.stderr)
         return
     
     if not dbonly:
@@ -2455,7 +2459,7 @@ def RemovePackageUpdate(archive, db, pkg, base, dbonly = False, shlist = None):
         try:
             os.remove(update_fname)
         except BaseException as e:
-            print >> sys.stderr, "Could not remove %s due to %s" % (update_fname, str(e))
+            print("Could not remove %s due to %s" % (update_fname, str(e)), file=sys.stderr)
         if shlist is not None:
             shlist.append("rm -f %s" % update_fname)
             
@@ -2468,7 +2472,7 @@ def RemovePackage(archive, db, pkg, dbonly = False, shlist = None):
     releases = db.SequencesForPackage(pkg)
     if releases and len(releases):
         if debug or verbose:
-            print >> sys.stderr, "Cannot delete package information for %s-%s because other sequences are using it (%s)" % (pkg.Name(), pkg.Version(), releases)
+            print("Cannot delete package information for %s-%s because other sequences are using it (%s)" % (pkg.Name(), pkg.Version(), releases), file=sys.stderr)
         return
     # Okay, no other sequences reference this package, so
     # we can delete it.  Maybe.  But we also need to delete any
@@ -2492,7 +2496,7 @@ def RemovePackage(archive, db, pkg, dbonly = False, shlist = None):
         # We're going to delete the delta package files
         # that have this package as the new version
         if debug or verbose:
-            print >> sys.stderr, "Deleting packages that update to %s-%s" % (pkg.Name(), pkg.Version())
+            print("Deleting packages that update to %s-%s" % (pkg.Name(), pkg.Version()), file=sys.stderr)
         for (base, hash, rr) in updates:
             pkg_filename = os.path.join(packages_dir, pkg.FileName(base))
             try:
@@ -2507,7 +2511,7 @@ def RemovePackage(archive, db, pkg, dbonly = False, shlist = None):
     # Now we look for updates _from_ this version.
     updates = db.UpdatesFromPackage(pkg)
     if updates:
-        print >> sys.stderr, "Doesn't look like we can delete package %s-%s entirely due to updates using it" % (pkg.Name(), pkg.Version())
+        print("Doesn't look like we can delete package %s-%s entirely due to updates using it" % (pkg.Name(), pkg.Version()), file=sys.stderr)
     else:
         # Nothing to delete from PackageUpdates, so now we want to
         # delete the PackageDeltaScripts for this package.
@@ -2516,21 +2520,21 @@ def RemovePackage(archive, db, pkg, dbonly = False, shlist = None):
         # from the filesystem in a bit.
         if len(scripts):
             if debug or verbose:
-                print >> sys.stderr, "Deleting delta scripts for %s-%s" % (pkg.Name(), pkg.Version())
+                print("Deleting delta scripts for %s-%s" % (pkg.Name(), pkg.Version()), file=sys.stderr)
             db.ScriptsDeleteForPackage(pkg)
             # Now we remove it from the filesystem
             scripts_dir = os.path.join(archive, "Packages", pkg.Name(), pkg.Version())
             for (script_name, script_hash) in scripts:
                 script_filename = os.path.join(scripts_dir, script_name)
                 if debug or verbose:
-                    print >> sys.stderr, "\tScript %s" % script_filename
+                    print("\tScript %s" % script_filename, file=sys.stderr)
                 if shlist:
                     shlist.append("rm %s" % script_filename)
                 try:
                     if not dbonly:
                         os.unlink(script_filename)
                 except:
-                    print >> sys.stderr, "Unable to delete delta script %s" % script_filename
+                    print("Unable to delete delta script %s" % script_filename, file=sys.stderr)
                     continue
             # Now try to remove the directory
             if shlist:
@@ -2539,12 +2543,12 @@ def RemovePackage(archive, db, pkg, dbonly = False, shlist = None):
                 if not dbonly:
                     os.rmdir(scripts_dir)
             except:
-                print >> sys.stderr, "Unable to delete delta package script dir %s" % scripts_dir
+                print("Unable to delete delta package script dir %s" % scripts_dir, file=sys.stderr)
 
         # And now we should be able to delete the package file itself
         pkg_filename = os.path.join(packages_dir, pkg.FileName())
         if debug or verbose:
-            print >> sys.stderr, "Removing package file %s" % pkg_filename
+            print("Removing package file %s" % pkg_filename, file=sys.stderr)
         if shlist:
             shlist.append("rm %s" % pkg_filename)
         try:
@@ -2591,13 +2595,13 @@ def RemoveRelease(archive, db, project, sequence, dbonly = False, shlist = None)
     notes = db.NotesForSequence(sequence)
     # At this point, we want to remove the sequence from Manifests.
     if debug or verbose:
-        print >> sys.stderr, "Deleting sequence %s from manifest table" % sequence
+        print("Deleting sequence %s from manifest table" % sequence, file=sys.stderr)
     db.ManifestDeleteSequence(sequence)
     # Next, let's go through the notes
     for note in notes:
         # note is the name of the note, and notes[note] is the path
         if debug or verbose:
-            print >> sys.stderr, "Deleting note %s" % note
+            print("Deleting note %s" % note, file=sys.stderr)
         # Well, it turns out the note file has a url in it.  Annoying.  Bug on my part
         # So let's get the filename part of it
         note_path_index = notes[note].find("/Notes/")
@@ -2611,11 +2615,11 @@ def RemoveRelease(archive, db, project, sequence, dbonly = False, shlist = None)
             if not dbonly:
                 os.unlink(note_file)
         except:
-            print >> sys.stderr, "Could not remove %s" % note_file
+            print("Could not remove %s" % note_file, file=sys.stderr)
         db.NotesDeleteNoteFile(notes[note])
 
     if debug or verbose:
-        print >> sys.stderr, "Deleting notice for sequence %s" % sequence    
+        print("Deleting notice for sequence %s" % sequence, file=sys.stderr)
     db.NoticesDeleteSequence(sequence)
     # Now we need to go through the packages
     for pkg in pkgs:
@@ -2627,7 +2631,7 @@ def RemoveRelease(archive, db, project, sequence, dbonly = False, shlist = None)
         if users and len(users):
             if len(users) > 1 or not (sequence in users):
                 if debug or verbose:
-                    print >> sys.stderr, "Cannot delete any package information for %s-%s because other sequences use it (%s)" % (pkg.Name(), pkg.Version(), users)
+                    print("Cannot delete any package information for %s-%s because other sequences use it (%s)" % (pkg.Name(), pkg.Version(), users), file=sys.stderr)
                 continue
         # Okay, no other sequences reference this package, so
         # we can delete it.  Maybe.  But we also need to delete any
@@ -2651,7 +2655,7 @@ def RemoveRelease(archive, db, project, sequence, dbonly = False, shlist = None)
             # We're going to delete the delta package files
             # that have this package as the new version
             if debug or verbose:
-                print >> sys.stderr, "Deleting packages that update to %s-%s" % (pkg.Name(), pkg.Version())
+                print("Deleting packages that update to %s-%s" % (pkg.Name(), pkg.Version()), file=sys.stderr)
             for (base, hash, rr) in updates:
                 pkg_filename = os.path.join(packages_dir, pkg.FileName(base))
                 try:
@@ -2666,7 +2670,7 @@ def RemoveRelease(archive, db, project, sequence, dbonly = False, shlist = None)
         # Now we look for updates _from_ this version.
         updates = db.UpdatesFromPackage(pkg)
         if updates:
-            print >> sys.stderr, "Doesn't look like we can delete package %s-%s entirely" % (pkg.Name(), pkg.Version())
+            print("Doesn't look like we can delete package %s-%s entirely" % (pkg.Name(), pkg.Version()), file=sys.stderr)
             continue
         # Next, remove any ServiceRestarts for this version of the package
         db.ServiceRestartDeleteForPackage(pkg)
@@ -2677,21 +2681,21 @@ def RemoveRelease(archive, db, project, sequence, dbonly = False, shlist = None)
         # from the filesystem in a bit.
         if scripts:
             if debug or verbose:
-                print >> sys.stderr, "Deleting delta scripts for %s-%s" % (pkg.Name(), pkg.Version())
+                print("Deleting delta scripts for %s-%s" % (pkg.Name(), pkg.Version()), file=sys.stderr)
             db.ScriptsDeleteForPackage(pkg)
             # Now we remove it from the filesystem
             scripts_dir = os.path.join(archive, "Packages", pkg.Name(), pkg.Version())
             for script_name in scripts:
                 script_filename = os.path.join(scripts_dir, script_name)
                 if debug or verbose:
-                    print >> sys.stderr, "\tScript %s" % script_filename
+                    print("\tScript %s" % script_filename, file=sys.stderr)
                 try:
                     if shlist is not None:
                         shlist.append("rm %s" % script_filename)
                     if not dbonly:
                         os.unlink(script_filename)
                 except:
-                    print >> sys.stderr, "Unable to delete delta script %s" % script_filename
+                    print("Unable to delete delta script %s" % script_filename, file=sys.stderr)
                     continue
             # Now try to remove the directory
             try:
@@ -2700,12 +2704,12 @@ def RemoveRelease(archive, db, project, sequence, dbonly = False, shlist = None)
                 if not dbonly:
                     os.rmdir(scripts_dir)
             except:
-                print >> sys.stderr, "Unable to delete delta package script dir %s" % scripts_dir
+                print("Unable to delete delta package script dir %s" % scripts_dir, file=sys.stderr)
 
         # And now we should be able to delete the package file itself
         pkg_filename = os.path.join(packages_dir, pkg.FileName())
         if debug or verbose:
-            print >> sys.stderr, "Removing package file %s" % pkg_filename
+            print("Removing package file %s" % pkg_filename, file=sys.stderr)
         try:
             if shlist is not None:
                 shlist.append("rm %s" % pkg_filename)
@@ -2717,7 +2721,7 @@ def RemoveRelease(archive, db, project, sequence, dbonly = False, shlist = None)
     # So now we delete the manifest file
     manifest_file = os.path.join(archive, train, "%s-%s" % (project, sequence))
     if verbose or debug:
-        print >> sys.stderr, "Removing manifest file %s" % manifest_file
+        print("Removing manifest file %s" % manifest_file, file=sys.stderr)
     try:
         if shlist is not None:
             shlist.append("rm %s" % manifest_file)
@@ -2726,9 +2730,9 @@ def RemoveRelease(archive, db, project, sequence, dbonly = False, shlist = None)
     except:
         pass
     if debug or verbose:
-        print >> sys.stderr, "Deleting sequence %s from database" % sequence
+        print("Deleting sequence %s from database" % sequence, file=sys.stderr)
     db.DeleteSequence(sequence)
-    print >> sys.stderr, "shlist = %s" % shlist
+    print("shlist = %s" % shlist, file=sys.stderr)
     return
 
 def Delete(archive, db, project, args = []):
@@ -2736,11 +2740,11 @@ def Delete(archive, db, project, args = []):
     Remove the given releases from both the database and filesystem.
     """
     def func_usage():
-        print >> sys.stderr, """
+        print("""
 Usage: %s [args] delete sequence <sequence> [...] -- delete sequences
         -or-     delete package <pkg> <version> -- delete (if possible) packge version
         -or-     delete package <pkg> <base> <version> -- delete (if possible) package update base -> version
-""" % sys.argv[0]
+""" % sys.argv[0], file=sys.stderr)
         usage()
 
     if args[0] == "sequence":
@@ -2748,7 +2752,7 @@ Usage: %s [args] delete sequence <sequence> [...] -- delete sequences
             msg = "Removing sequence %s" % sequence
             lock = LockArchive(archive, msg, wait = True)
             if debug or verbose:
-                print >> sys.stderr, msg
+                print(msg, file=sys.stderr)
             RemoveRelease(archive, db, project, sequence)
             lock.close()
     elif args[0] == "package":
@@ -2778,7 +2782,7 @@ def Prune(archive, db, project, args = []):
     -K / --keep tells it how many to keep (default is 10).
     """
     def func_usage():
-        print >> sys.stderr, "Usage:  %s [args] prune [-K|--keep num] train" % sys.argv[0]
+        print("Usage:  %s [args] prune [-K|--keep num] train" % sys.argv[0], file=sys.stderr)
         usage()
         
     keep = 10
@@ -2794,7 +2798,7 @@ def Prune(archive, db, project, args = []):
         if o in ("-K", "--keep"):
             keep = int(a)
         else:
-            print >> sys.stderr, "Unknown option %s" % o
+            print("Unknown option %s" % o, file=sys.stderr)
             func_usage()
 
     if len(arguments) != 1:
@@ -2804,17 +2808,18 @@ def Prune(archive, db, project, args = []):
 
     old_sequences = db.RecentSequencesForTrain(train, count = 0, oldest_first = True)
     if old_sequences is None:
-        print >> sys.stderr, "Unknown train %s" % train
+        print("Unknown train %s" % train, file=sys.stderr)
         return 1
     if len(old_sequences) <= keep:
-        print >> sys.stderr, "Not enough sequences for train %s to prune (%d exist, want to keep %d)" % (train, len(old_sequences), keep)
+        print("Not enough sequences for train %s to prune (%d exist, want to keep %d)" %
+              (train, len(old_sequences), keep), file=sys.stderr)
         return 1
 
     for sequence in old_sequences[0:-keep]:
         msg = "Removing old sequence %s" % sequence
         lock = LockArchive(archive, msg, wait = True)
         if debug or verbose:
-            print >> sys.stderr, msg
+            print(msg, file=sys.stderr)
         RemoveRelease(archive, db, project, sequence)
         lock.close()
         
@@ -2835,19 +2840,19 @@ def Rollback(archive, db, project = "FreeNAS", args = []):
     try:
         opts, arguments = getopt.getopt(args, short_options, long_options)
     except getopt.GetoptError as err:
-        print >> sys.stderr, "Usage:  %s [args] rollback [-C|--count num] train" % sys.argv[0]
-        print >> sys.stderr, str(err)
+        print("Usage:  %s [args] rollback [-C|--count num] train" % sys.argv[0], file=sys.stderr)
+        print(str(err), file=sys.stderr)
         usage()
 
     for o, a in opts:
         if o in ("-C", "--count"):
             count = int(a)
         else:
-            print >> sys.stderr, "Unknown option %s" % o
+            print("Unknown option %s" % o, file=sys.stderr)
             usage()
             
     if len(arguments) != 1:
-        print >> sys.stderr, "rollback must have train name"
+        print("rollback must have train name", file=sys.stderr)
         usage()
 
     train = arguments[0]
@@ -2858,7 +2863,7 @@ def Rollback(archive, db, project = "FreeNAS", args = []):
     # Next, let's get the most recent count+1 sequences for the train
     sequences = db.RecentSequencesForTrain(train, count = count + 1)
     if sequences is None or len(sequences) == 0:
-        print >> sys.stderr, "Unable to find sequences for train %s" % train
+        print("Unable to find sequences for train %s" % train, file=sys.stderr)
         lock.close()
         return 1
 
@@ -2874,7 +2879,7 @@ def Rollback(archive, db, project = "FreeNAS", args = []):
     for sequence in removed_sequences:
         shlist = []
         RemoveRelease(archive, db, project, sequence, shlist = shlist)
-        print >> sys.stderr, shlist
+        print(shlist, file=sys.stderr)
         
     # At this point, we need to either remove or remake the
     # LATEST symlink.
@@ -2899,7 +2904,7 @@ def Project(config_file, args = None):
     Op
     """
     def project_usage():
-        print >> sys.stderr, """
+        print("""
 Usage for project command:
 \tproject <project_name> <options>
 Options are:
@@ -2913,7 +2918,7 @@ Use '${PROJECT}' in pathnames to specify the project name;
 use an empty string to remove the key from the project settings.
 Use no options to simply create a project using the default
 values.
-"""
+""", file=sys.stderr)
         usage()
         
     propt = None
@@ -2932,7 +2937,7 @@ values.
     try:
         opts, args = getopt.getopt(args[1:], None, long_options)
     except getopt.GetoptError as err:
-        print >> sys.stderr, str(err)
+        print(str(err), file=sys.stderr)
         project_usage()
 
     arg_dict = {}
@@ -2953,7 +2958,7 @@ values.
             project_usage()
 
     if del_project and (propt or len(arg_dict) > 0):
-        print >> sys.stderr, "Do not set options and then delete the project at the same time"
+        print("Do not set options and then delete the project at the same time", file=sys.stderr)
         project_usage()
 
     if del_project:
@@ -2963,12 +2968,12 @@ values.
         try:
             fp = open(config_file, "r")
         except BaseException as e:
-            print >> sys.stderr, "Cannot delete project %s because can't read config file %s: %s" % (project, config_file, str(e))
+            print("Cannot delete project %s because can't read config file %s: %s" % (project, config_file, str(e)), file=sys.stderr)
             return
         try:
             cfp.readfp(fp)
         except BaseException as e:
-            print >> sys.stderr, "Could not delete project %s because could not parse config file %s: %s" % (project, config_file, str(e))
+            print("Could not delete project %s because could not parse config file %s: %s" % (project, config_file, str(e)), file=sys.stderr)
             return
 
         try:
@@ -2979,19 +2984,19 @@ values.
         try:
             fp = open(config_file, "w")
         except BaseException as e:
-            print >> sys.stderr, "Could not delete project %s because could not open config file %s for writing: %s" % (project, config_file, str(e))
+            print("Could not delete project %s because could not open config file %s for writing: %s" % (project, config_file, str(e)), file=sys.stderr)
             return
 
         try:
             cfp.write(fp)
         except BaseException as e:
-            print >> sys.stderr, "Could not write config file %s: %s" % (config_file, str(e))
+            print("Could not write config file %s: %s" % (config_file, str(e)), file=sys.stderr)
             return
     else:
         if arg_dict or not propt:
             rv = SetConfiguration(config_file, project, arg_dict)
             if rv is False:
-                print >> sys.stderr, "Unable to alter project %s in config file %s" % (project, config_file)
+                print("Unable to alter project %s in config file %s" % (project, config_file), file=sys.stderr)
 
     if propt:
         # Print out things
@@ -2999,72 +3004,84 @@ values.
         if cdict:
             for k, v in cdict.iteritems():
                 # Better hope there are no quotes or escaped characters here...
-                print "%s=\"%s\"" % (k, v)
+                print("%s=\"%s\"" % (k, v))
     return
 
 def Extract(archive, db, project = "FreeNAS", key = None, args = []):
     """
     This is used to extract a release from the archive.
     That is, for a given sequence, and a target, it will
-    create the target directory, ${PROJECT}-MANIFEST,
-    Packages directory, and various other files necessary
+    create the target directory, MANIFEST, a series of
+    (full) package files, and various other files necessary
     (such as ReleaseNotes, ChangeLog (maybe?), upgrade
     scripts, and RESTART service-restart file.
+    If --tar is given, it will create a tarball.
+    As the last thing it does, it will print the name of the
+    destination.
     """
+    import tempfile
     def Extract_usage():
-        print >> sys.stderr, "Usage:  %s extract [--full] [--dest dest] sequence" % sys.argv[0]
+        print("""
+Usage:  {0} extract [--dest dest] [--tar] sequence
+or	{0} extract [--dest dest] [--tar] --train=TRAIN""".format(sys.argv[0]), file=sys.stderr)
         usage()
         
     sequence = None
     dest = None
-    full = False
-
-    long_options = ["full",
-                    "dest=",
+    train = None
+    tarball = False
+    
+    long_options = ["dest=",
+                    "train=",
+                    "tar",
                     ]
 
     try:
         opts, args = getopt.getopt(args, None, long_options)
     except getopt.GetoptError as err:
-        print >> sys.stderr, str(err)
+        print(str(err), file=sys.stderr)
         Extract_usage()
 
     for o, a in opts:
-        if o in ("--full"):
-            full = True
-        elif o in ("--dest"):
+        if o in ("--dest"):
             dest = a
+        elif o in ("--train"):
+            train = a
+        elif o in ("--tar"):
+            tarball = True
         else:
-            print >> sys.stderr, "Unknown option %s" % o
+            print("Unknown option %s" % o, file=sys.stderr)
             Extract_usage()
 
-    if len(args) != 1:
-        print >> sys.stderr, "Incorrect number of arguments (%d)" % len(args)
+    if train is None and len(args) == 0:
         Extract_usage()
 
-    sequence = args[0]
-    
-
-    # This allows "extract FreeNAS-9.3-Nightlies/LATEST" to work.
-    if "/" in sequence:
-        (train, sequence) = sequence.split("/")
-        print >> sys.stderr, "train = %s, sequence = %s" % (train, sequence)
-        if train is None or sequence is None:
-            print >> sys.stderr, "Don't know how to handle %s" % args[0]
-            sys.exit(1)
+    if len(args) == 0:
+        # We've been given a train, so we just get the latest sequence
+        sequence = "LATEST"
         manifest_file = os.path.join(archive, train, sequence)
     else:
-        train = db.TrainForSequence(sequence)
-        if train is None:
-            print >> sys.stderr, "Sequence %s does not seem to exist" % sequence
-            sys.exit(1)
-        manifest_file = os.path.join(archive, train, project + "-" +  sequence)
+        sequence = args[0]
+        # This allows "extract FreeNAS-9.3-Nightlies/LATEST" to work.
+        if "/" in sequence:
+            (train, sequence) = sequence.split("/")
+            print("train = %s, sequence = %s" % (train, sequence), file=sys.stderr)
+            if train is None or sequence is None:
+                print("Don't know how to handle %s" % args[0], file=sys.stderr)
+                sys.exit(1)
+            manifest_file = os.path.join(archive, train, sequence)
+        else:
+            train = db.TrainForSequence(sequence)
+            if train is None:
+                print("Sequence %s does not seem to exist" % sequence, file=sys.stderr)
+                sys.exit(1)
+            manifest_file = os.path.join(archive, train, project + "-" +  sequence)
     
     man = Manifest.Manifest()
     try:
         man.LoadPath(manifest_file)
     except BaseException as e:
-        print >> sys.stderr, "Could not load manifest file %s: %s" % (manifest_file, str(e))
+        print("Could not load manifest file %s: %s" % (manifest_file, str(e)), file=sys.stderr)
         sys.exit(1)
 
     pkgs = man.Packages()
@@ -3115,22 +3132,29 @@ def Extract(archive, db, project = "FreeNAS", key = None, args = []):
     man.SignWithKey(key)
     
     if dest is None:
-        dest = os.path.join("/tmp", man.Sequence())
+        if tarball:
+            dest = tempfile.mkdtemp(prefix="ExtractTempDir-")
+            temp_dest = os.path.join("/tmp", man.Sequence() + ".tgz")
+        else:
+            dest = os.path.join("/tmp", man.Sequence())
+            try:
+                os.makedirs(dest)
+            except BaseException as e:
+                print("Unable to create destination directory %s: %s" % (dest, str(e)), file=sys.stderr)
+                sys.exit(1)
+    elif tarball:
+        temp_dest = dest
+        dest = tempfile.mkdtemp(prefix="ExtractTempDir-")
         
-    try:
-        os.makedirs(os.path.join(dest, "Packages"))
-    except BaseException as e:
-        print >> sys.stderr, "Cannot create destination bundle directory %s" % dest
-        sys.exit(1)
-        
+
     for pkg_file in pkg_files:
         import shutil
         try:
             dst_file = os.path.basename(pkg_file)
-            dst_file = os.path.join(dest, "Packages", dst_file)
+            dst_file = os.path.join(dest, dst_file)
             shutil.copy(pkg_file, dst_file)
         except BaseException as e:
-            print >> sys.stderr, "Unable to copy package file %s: %s" % (os.path.basename(pkg_file), str(e))
+            print("Unable to copy package file %s: %s" % (os.path.basename(pkg_file), str(e)), file=sys.stderr)
             sys.exit(1)
             
     if notice:
@@ -3138,7 +3162,7 @@ def Extract(archive, db, project = "FreeNAS", key = None, args = []):
             notice_path = os.path.join(dest, "NOTICE")
             open(notice_path, "w").write(notice)
         except BaseException as e:
-            print >> sys.stderr, "Unable to write NOTICE file: %s" % str(e)
+            print("Unable to write NOTICE file: %s" % str(e), file=sys.stderr)
             sys.exit(1)
 
     if notes_dict:
@@ -3147,7 +3171,7 @@ def Extract(archive, db, project = "FreeNAS", key = None, args = []):
                 note_path = os.path.join(dest, note)
                 open(note_path, "w").write(contents)
             except BaseException as e:
-                print >> sys.stderr, "Unable to write note file %s: %s" % (note, str(e))
+                print("Unable to write note file %s: %s" % (note, str(e)), file=sys.stderr)
                 sys.exit(1)
 
     if svc_list:
@@ -3158,7 +3182,7 @@ def Extract(archive, db, project = "FreeNAS", key = None, args = []):
             svc_path = os.path.join(dest, "RESTART")
             open(svc_path, "w".write(" ".join(svcs)))
         except BaseException as e:
-            print >> sys.stderr, "Unable to write RESTART file: %s" % str(e)
+            print("Unable to write RESTART file: %s" % str(e), file=sys.stderr)
             sys.exit(1)
     
     if update_scripts:
@@ -3167,7 +3191,7 @@ def Extract(archive, db, project = "FreeNAS", key = None, args = []):
                 script_path = os.path.join(dest, "Packages", pkg_name)
                 os.makedirs(script_path)
             except BaseException as e:
-                print >> sys.stderr, "Unable to create script directory for package %s: %s" % (pkg_name, str(e))
+                print("Unable to create script directory for package %s: %s" % (pkg_name, str(e)), file=sys.stderr)
                 sys.exit(1)
                 
             for n, s in d.iteritems():
@@ -3175,10 +3199,31 @@ def Extract(archive, db, project = "FreeNAS", key = None, args = []):
                     p = os.path.join(script_path, n)
                     open(p, "w").write(s)
                 except BaseException as e:
-                    print >> sys.stderr, "Unable to create update script %s for package %s: %s" % (n, pkg_name, str(e))
+                    print("Unable to create update script %s for package %s: %s" % (n, pkg_name, str(e)), file=sys.stderr)
                     sys.exit(1)
                     
-    man.StorePath(os.path.join(dest, "%s-MANIFEST" % project))
+    try:
+        clog = open(os.path.join(archive, train, "ChangeLog.txt"))
+        with open(os.path.join(dest, "ChangeLog.txt"), "w") as f:
+            f.write(clog.read())
+        clog.close()
+    except:
+        pass
+    man.StorePath(os.path.join(dest, "MANIFEST"))
+    if tarball:
+        # temp_dest has the name it should use, dest is the directory
+        import subprocess
+        import shutil
+        tar_args = ["/usr/bin/tar", "-zcf", temp_dest, "-C", dest, "."]
+        try:
+            subprocess.check_call(tar_args)
+        except BaseException as e:
+            print("Unable to create tar file %s: %s" % (temp_dest, str(e)))
+            sys.exit(1)
+        shutil.rmtree(dest, ignore_errors=True)
+        print(temp_dest)
+    else:
+        print(dest)
     
 def main():
     global debug, verbose
@@ -3214,7 +3259,7 @@ def main():
     try:
         opts, args = getopt.getopt(sys.argv[1:], options, long_options)
     except getopt.GetoptError as err:
-        print >> sys.stderr, str(err)
+        print(str(err), file=sys.stderr)
         usage()
 
     for o, a in opts:
@@ -3249,11 +3294,11 @@ def main():
             Database = cs[CONFIG_DBPATH_KEY]
             
     if archive is None and args[0] != "project":
-        print >> sys.stderr, "For now, archive directory must be specified"
+        print("For now, archive directory must be specified", file=sys.stderr)
         usage()
 
     if len(args) == 0:
-        print >> sys.stderr, "No command specified"
+        print("No command specified", file=sys.stderr)
         usage()
 
     cmd = args[0]
@@ -3272,7 +3317,7 @@ def main():
             try:
                 db = SQLiteReleaseDB(dbfile = Database)
             except BaseException as e:
-                print >> sys.stderr, "Could not use database %s: %s" % (Database, str(e))
+                print("Could not use database %s: %s" % (Database, str(e)), file=sys.stderr)
                 sys.exit(1)
 
     if key_file and key_file != "/dev/null" and key_file != "":
@@ -3281,12 +3326,12 @@ def main():
             key_contents = open(key_file).read()
             key_data = Crypto.load_privatekey(Crypto.FILETYPE_PEM, key_contents)
         except:
-            print >> sys.stderr, "Cannot open key file %s, aborting" % key_file
+            print("Cannot open key file %s, aborting" % key_file, file=sys.stderr)
             sys.exit(1)
 
     if cmd == "add":
         if len(args) == 0:
-            print >> sys.stderr, "No source directories specified"
+            print("No source directories specified", file=sys.stderr)
             usage()
         for source in args:
             ProcessRelease(source, archive, db, project = project_name, key_data = key_data, changelog = changelog)
@@ -3325,7 +3370,7 @@ def main():
     elif cmd == "project":
         Project(config_file, args = args)
     else:
-        print >> sys.stderr, "Unknown command %s" % cmd
+        print("Unknown command %s" % cmd, file=sys.stderr)
         usage()
 
 if __name__ == "__main__":

@@ -7,6 +7,36 @@ import logging.config
 import os
 import sys
 import tempfile
+import tarfile
+
+def ExtractFrozenUpdate(tarball, dest_dir, verbose=False):
+    """
+    Extract the files in the given tarball into dest_dir.
+    This assumes dest_dir already exists.
+    """
+    try:
+        tf = tarfile.open(tarball)
+    except BaseException as e:
+        print("Unable to open tarball %s: %s" % (tarball, str(e)), file=sys.stderr)
+        sys.exit(1)
+    files = tf.getmembers()
+    for f in files:
+        if f.name in ("./", ".", "./."):
+            continue
+        if not f.name.startswith("./"):
+            if verbose:
+                print("Illegal member %s" % f, file=sys.stderr)
+            continue
+        if len(f.name.split("/")) != 2:
+            if verbose:
+                print("Illegal member name %s has too many path components" % f.name, file=sys.stderr)
+            continue
+        if verbose:
+            print("Extracting %s" % f.name, file=sys.stderr)
+        tf.extract(f.name, path=dest_dir)
+        if verbose:
+            print("Done extracting %s" % f.name, file=sys.stderr)
+    return True
 
 def PrintDifferences(diffs):
     for type in diffs:
@@ -232,6 +262,55 @@ def main():
                 if snl:
                     print("Really explore the space.")
             sys.exit(0)
+    elif tarfile.is_tarfile(args[0]):
+        # Frozen tarball.  We'll extract it into the cache directory, and
+        # then add a couple of things to make it pass sanity, and then apply it.
+        # For now we just copy the code above.
+        import shutil
+        # First, remove the cache directory
+        # Hrm, could overstep a locked file.
+        shutil.rmtree(cache_dir, ignore_errors=True)
+        try:
+            os.makedirs(cache_dir)
+        except BaseException as e:
+            print("Unable to create cache directory %s: %s" % (cache_dir, str(e)))
+            sys.exit(1)
+        try:
+            ExtractFrozenUpdate(args[0], cache_dir, verbose=verbose)
+        except BaseException as e:
+            print("Unable to extract frozen update %s: %s" % (args[0], str(e)))
+            sys.exit(1)
+        # Exciting!  Now we need to have a SEQUENCE file, or it will fail verification.
+        with open(os.path.join(cache_dir, "SEQUENCE"), "w") as s:
+            s.write(config.SystemManifest().Sequence())
+        # And now the SERVER file
+        with open(os.path.join(cache_dir, "SERVER"), "w") as s:
+            s.write(config.UpdateServerName())
+            
+        try:
+            diffs = Update.PendingUpdatesChanges(cache_dir)
+        except BaseException as e:
+            print("Attempt to verify extracted frozen update failed: %s" % str(e), file=sys.stderr)
+            sys.exit(1)
+            
+        if diffs is None or diffs == {}:
+            if verbose:
+                print("No updates to apply", file=sys.stderr)
+        else:
+            if verbose:
+                PrintDifferences(diffs)
+            try:
+                rv = Update.ApplyUpdate(cache_dir)
+            except BaseException as e:
+                print("Unable to apply update: %s" % str(e), file=sys.stderr)
+                sys.exit(1)
+            if rv:
+                print("System should be rebooted now", file=sys.stderr)
+                if snl:
+                    print("Really explore the space.")
+            sys.exit(0)
+            
+        pass
     else:
         usage()
 
