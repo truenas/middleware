@@ -880,16 +880,23 @@ define([
             var mod9 = num % 9;
             var mod10 = num % 10;
             var mod11 = num % 11;
+            var remaining;
             var min = Math.min(mod9, mod10, mod11);
             if(min == mod11) {
               chosen = 11;
+              this.rows = Math.floor(this.initialDisks.length / 11);
+              remaining = this.initialDisks.length % 11;
             } else if(min == mod10) {
               chosen = 10;
+              this.rows = Math.floor(this.initialDisks.length / 10);
+              remaining = this.initialDisks.length % 10;
             } else if(min == mod9) {
               chosen = 9;
+              this.rows = Math.floor(this.initialDisks.length / 9);
+              remaining = this.initialDisks.length % 9;
             }
 
-            for(var i=0,len=this.initialDisks.length;i<len;i++) {
+            for(var i=0,len=this.initialDisks.length - remaining;i<len;i++) {
               this.initialDisks[0].addToRow(this, Math.floor(i / chosen), i % chosen);
             }
 
