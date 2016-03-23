@@ -496,7 +496,7 @@ Tunables
 #. **FreeBSD loaders:** a loader is only loaded when a FreeBSD-based system boots and can be used to pass a parameter to the kernel or to load an additional
    kernel module such as a FreeBSD hardware driver.
 
-#. **FreeBSD rc.conf options:** `rc.conf(5) <https://www.freebsd.org/cgi/man.cgi?query=rc.conf&apropos=0&sektion=0&manpath=FreeBSD+9.3-RELEASE>`_ is used to
+#. **FreeBSD rc.conf options:** `rc.conf(5) <https://www.freebsd.org/cgi/man.cgi?query=rc.conf>`_ is used to
    pass system configuration options to the system startup scripts as the system boots. Since TrueNAS® has been optimized for storage, not all of the
    services mentioned in rc.conf(5) are available for configuration.
 
@@ -556,7 +556,7 @@ attempting to change it from :ref:`Shell`. For example, to change the value of *
 :command:`sysctl net.inet.tcp.delay_ack=1`. If the sysctl value is read-only, an error message will indicate that the setting is read-only. If you do not get
 an error, the setting is now applied. For the setting to be persistent across reboots, the sysctl must still be added in :menuselection:`System --> Tunables`.
 
-The GUI does not display the sysctls that are pre-set when TrueNAS® is installed. TrueNAS® 9.3 ships with the following sysctls set::
+The GUI does not display the sysctls that are pre-set when TrueNAS® is installed. TrueNAS® |version| ships with the following sysctls set::
 
  kern.metadelay=3
  kern.dirdelay=4
@@ -571,7 +571,7 @@ The GUI does not display the sysctls that are pre-set when TrueNAS® is installe
 
 **Do not add or edit these default sysctls** as doing so may render the system unusable.
 
-The GUI does not display the loaders that are pre-set when TrueNAS® is installed. TrueNAS® 9.3 ships with the following loaders set::
+The GUI does not display the loaders that are pre-set when TrueNAS® is installed. TrueNAS® |version| ships with the following loaders set::
 
  autoboot_delay="2"
  loader_logo="truenas-logo"
@@ -602,7 +602,7 @@ The GUI does not display the loaders that are pre-set when TrueNAS® is installe
 
 **Do not add or edit the default tunables** as doing so may render the system unusable.
 
-The ZFS version used in 9.3 deprecates the following tunables::
+The ZFS version used in |version| deprecates the following tunables::
 
  vfs.zfs.write_limit_override
  vfs.zfs.write_limit_inflated
@@ -804,7 +804,7 @@ If you click the entry for a CA, the following buttons become available:
   X.509 certificate.
 
 * **Export Private Key:** will prompt to browse to the location, on the system being used to access the TrueNAS® system, to save a copy of the CA's private
-  key.
+  key. Note that this option only appears if the CA has a private key.
 
 * **Delete:** will prompt to confirm before deleting the CA.
 

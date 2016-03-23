@@ -879,6 +879,10 @@ configured NFS Share. In contrast, global settings which apply to all NFS shares
 |                        |            | to bind to                                                                                                          |
 |                        |            |                                                                                                                     |
 +------------------------+------------+---------------------------------------------------------------------------------------------------------------------+
+| Support>16 groups      |            | check this box if any users are members of more than 16 groups (useful in AD environments); note that this assumes  |
+|                        |            | that group membership has been configured correctly on the NFS server                                               |
+|                        |            |                                                                                                                     |
++------------------------+------------+---------------------------------------------------------------------------------------------------------------------+
 
 .. index:: Rsync
 .. _Rsync:
@@ -1133,6 +1137,10 @@ Mode" button or configure the system to always display these settings by checkin
 | **Setting**                   | **Value**      | **Description**                                                                                          |
 |                               |                |                                                                                                          |
 +===============================+================+==========================================================================================================+
+| Bind Interfaces               | selection      | only available in "Advanced Mode"; by default, SSH listens on all interfaces unless you specify which    |
+|                               |                | interfaces by highlighting them in the "Available" field and adding them to the "Selected" field         |
+|                               |                |                                                                                                          |
++-------------------------------+----------------+----------------------------------------------------------------------------------------------------------+
 | TCP Port                      | integer        | port to open for SSH connection requests; *22* by default                                                |
 |                               |                |                                                                                                          |
 +-------------------------------+----------------+----------------------------------------------------------------------------------------------------------+
@@ -1379,7 +1387,7 @@ this command. These users are created in the "Extra users" field.
 WebDAV
 ------
 
-In TrueNAS® 9.3, WebDAV can be configured to provide a file browser over a web connection. Before starting this service, you must create at least
+In TrueNAS®, WebDAV can be configured to provide a file browser over a web connection. Before starting this service, you must create at least
 one WebDAV share using :menuselection:`Sharing --> WebDAV Shares --> Add WebDAV Share`. Refer to :ref:`WebDAV Shares` for instructions on how to create a
 share and then how to connect to it once the service is configured and started.
 

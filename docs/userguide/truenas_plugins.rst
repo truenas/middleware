@@ -144,7 +144,7 @@ if they are sure that they want to delete. **This is the one and only warning.**
 Available Plugins
 -----------------
 
-The following plugins are available for TrueNAS® 9.3:
+The following plugins are available for TrueNAS®:
 
 * `bacula-sd (storage daemon) <http://bacula.org/>`_
 

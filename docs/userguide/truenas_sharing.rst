@@ -691,7 +691,7 @@ function of that option. `smb.conf(5) <http://www.sloop.net/smb.conf.html>`_ pro
 |                              |               | for all connections                                                                                         |
 |                              |               |                                                                                                             |
 +------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
-| Hosts Allow                  | string        | only available in "Advanced Mode"; comma, space, or tab delimited list of allowed hostnames or IP addresses;|
+| Hosts Allow                  | string        | only available in "Advanced Mode"; comma, space, or tab delimited list of allowed hostnames or IP addresses |
 |                              |               |                                                                                                             |
 +------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
 | Hosts Deny                   | string        | only available in "Advanced Mode"; comma, space, or tab delimited list of denied hostnames or IP addresses; |
@@ -723,7 +723,7 @@ Note the following regarding some of the "Advanced Mode" settings:
   Unchecking this option provides limited security and is not a substitute for proper permissions and password control.
 
 * If you wish some files on a shared volume to be hidden and inaccessible to users, put a *veto files=* line in the "Auxiliary Parameters" field. The syntax for
-  the "veto files" option and some examples can be found `here <http://www.sloop.net/smb.conf.html>`__.
+  the "veto files" option and some examples can be found `here <http://www.sloop.net/smb.conf.html>`_.
   
 To configure support for OS/2 clients, add this line to "Auxiliary Parameters"::
 
@@ -1495,7 +1495,8 @@ Table 10.5g summarizes the settings that can be configured when associating targ
 | Target      | drop-down menu | select the pre-created target                                                                          |
 |             |                |                                                                                                        |
 +-------------+----------------+--------------------------------------------------------------------------------------------------------+
-| LUN ID      | drop-down menu | specify the ID of the LUN; the default of *Auto* will select the next available LUN ID, starting at 0  |
+| LUN ID      | drop-down menu | the default of *Auto* will use the next available LUN ID; alternately, select the value of the ID or   |
+|             |                | type in the desired value                                                                              |
 |             |                |                                                                                                        |
 +-------------+----------------+--------------------------------------------------------------------------------------------------------+
 | Extent      | drop-down menu | select the pre-created extent                                                                          |
@@ -1592,8 +1593,8 @@ Connecting to iSCSI
 In order to access the iSCSI target, clients will need to use iSCSI initiator software.
 
 An iSCSI Initiator client is pre-installed with Windows 7. A detailed how-to for this client can be found
-`here <http://www.windowsnetworking.com/articles-tutorials/windows-7/Connecting-Windows-7-iSCSI-SAN.html>`__. A client for Windows 2000, XP, and 2003 can be found
-`here <http://www.microsoft.com/en-us/download/details.aspx?id=18986>`__. This `how-to <http://blog.pluralsight.com/freenas-8-iscsi-target-windows-7>`__
+`here <http://www.windowsnetworking.com/articles-tutorials/windows-7/Connecting-Windows-7-iSCSI-SAN.html>`_. A client for Windows 2000, XP, and 2003 can be found
+`here <http://www.microsoft.com/en-us/download/details.aspx?id=18986>`_. This `how-to <http://blog.pluralsight.com/freenas-8-iscsi-target-windows-7>`_
 shows how to create an iSCSI target for a Windows 7 system.
 
 Mac OS X does not include an initiator. `globalSAN <http://www.studionetworksolutions.com/globalsan-iscsi-initiator/>`_
