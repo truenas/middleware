@@ -15,6 +15,7 @@
 generate_fstab_real()
 {
 	echo "linproc /compat/linux/proc linprocfs rw,late 0 0"
+	echo "fdescfs	/dev/fd	fdescfs rw	0 0"
 	local IFS="|"
 	local fstype volumename newmp mountpoint mpoptions device fs
 

@@ -54,16 +54,6 @@ def unblock_sigchld():
     libc.sigprocmask(SIG_SETMASK, pmask, None)
 
 
-def fastclose():
-    # FIXME: Take into account keep_fd and determine which fds from /dev/fd
-    # or fstat. See #10206
-    for fd in range(3, 1024):
-        try:
-            os.close(fd)
-        except OSError:
-            pass
-
-
 def pipeopen(command, important=True, logger=log, allowfork=False, quiet=False):
     if not quiet:
         logger.log(
@@ -72,9 +62,9 @@ def pipeopen(command, important=True, logger=log, allowfork=False, quiet=False):
         )
     args = shlex_split(str(command))
 
-    preexec_fn = fastclose
+    preexec_fn = None
     if allowfork:
-        preexec_fn = lambda: (fastclose(), unblock_sigchld())
+        preexec_fn = unblock_sigchld
 
     return Popen(
         args, stdin=PIPE, stdout=PIPE, stderr=PIPE,
