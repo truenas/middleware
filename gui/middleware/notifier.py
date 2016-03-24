@@ -4595,6 +4595,7 @@ class notifier:
         if reg:
             disk.disk_subsystem = reg.group(1)
             disk.disk_number = int(reg.group(2))
+        self.sync_disk_extra(disk, add=False)
         disk.save()
 
     def sync_disk_extra(self, disk, add=False):
