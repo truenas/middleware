@@ -4629,12 +4629,19 @@ class notifier:
                 disk.disk_subsystem = reg.group(1)
                 disk.disk_number = int(reg.group(2))
 
+            geom = doc.xpath("//class[name = 'DISK']//geom[name = '%s']" % devname)
+            if len(geom) > 0:
+                serial = geom[0].xpath("./provider/config/ident")
+                if len(serial) > 0:
+                    disk.disk_serial = serial[0].text
+                mediasize = geom[0].xpath("./provider/mediasize")
+                if len(mediasize) > 0:
+                    disk.disk_size = mediasize[0].text
+            if not disk.disk_serial:
+                disk.disk_serial = self.serial_from_device(devname) or ''
+
             if disk.disk_serial:
                 serials.append(disk.disk_serial)
-
-            mediasize = doc.xpath("//class[name = 'DISK']//geom[name = '%s']/provider/mediasize" % devname)
-            if mediasize:
-                disk.disk_size = mediasize[0].text
 
             self.sync_disk_extra(disk, add=False)
 
