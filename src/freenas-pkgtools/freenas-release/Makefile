@@ -10,7 +10,4 @@ FILESOWN=	root
 FILESGRP=	wheel
 FILESMODE=	0644
 
-beforeinstall:
-	${INSTALL} -d ${DESTDIR}${FILESDIR}
-
 .include <bsd.prog.mk>
