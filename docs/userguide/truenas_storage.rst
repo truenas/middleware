@@ -1225,10 +1225,8 @@ Table 8.3a summarizes the available options in the "Add Replication" screen.
 | Dedicated User            | drop-down menu | only available if "Dedicated User Enabled" is checked; select the user account to be used for replication    |
 |                           |                |                                                                                                              |
 +---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
-| Encryption Cipher         | drop-down menu | choices are *Standard*,                                                                                      |
-|                           |                | *Fast*, or                                                                                                   |
-|                           |                | *Disabled*; temporarily selecting                                                                            |
-|                           |                | *Disabled* can significantly reduce the time for the initial replication                                     |
+| Encryption Cipher         | drop-down menu | choices are *Standard* or                                                                                    |
+|                           |                | *Fast*                                                                                                       |
 |                           |                |                                                                                                              |
 +---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
 | Remote hostkey            | string         | use the "SSH Key Scan" button to retrieve the public key of *PULL*                                           |
@@ -1239,9 +1237,7 @@ Table 8.3a summarizes the available options in the "Add Replication" screen.
 By default, replication occurs when snapshots occur. For example, if snapshots are scheduled for every 2 hours, replication occurs every 2 hours. The initial
 replication can take a significant period of time, from many hours to possibly days, as the structure of the entire ZFS pool needs to be recreated on the
 remote system. The actual time will depend upon the size of the pool and the speed of the network. Subsequent replications will take far less time, as only
-the modified data will be replicated. If the security policy allows it, temporarily change the "Encryption Cipher" to *Disabled* until the initial replication
-is complete. This will turn off encryption but will speed up the replication. The "Encryption Cipher" can then be changed to *Standard* or
-*Fast* for subsequent replications.
+the modified data will be replicated.
 
 The "Begin" and "End" times can be used to create a window of time where replication occurs. The default times allow replication to occur at any time of the
 day a snapshot occurs. Change these times if snapshot tasks are scheduled during office hours but the replication itself should occur after office hours. For
