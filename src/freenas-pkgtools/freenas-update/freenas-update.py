@@ -7,6 +7,14 @@ import logging.config
 import os
 import sys
 import tarfile
+import shutil
+
+sys.path.append("/usr/local/lib")
+
+import freenasOS.Configuration as Configuration
+import freenasOS.Update as Update
+import freenasOS.Exceptions as Exceptions
+
 
 def ExtractFrozenUpdate(tarball, dest_dir, verbose=False):
     """
@@ -37,6 +45,7 @@ def ExtractFrozenUpdate(tarball, dest_dir, verbose=False):
             print("Done extracting %s" % f.name, file=sys.stderr)
     return True
 
+
 def PrintDifferences(diffs):
     for type in diffs:
         if type == "Packages":
@@ -51,9 +60,8 @@ def PrintDifferences(diffs):
                 else:
                     print("Unknown package operation %s for packge %s-%s" % (op, pkg.Name(), pkg.Version()), file=sys.stderr)
         elif type == "Restart":
-            from freenasOS.Update import GetServiceDescription
             for svc in diffs[type]:
-                desc = GetServiceDescription(svc)
+                desc = Update.GetServiceDescription(svc)
                 if desc:
                     print("%s" % desc)
                 else:
@@ -68,12 +76,11 @@ def PrintDifferences(diffs):
         else:
             print("*** Unknown key %s (value %s)" % (type, str(diffs[type])), file=sys.stderrr)
 
+
 def DoDownload(train, cache_dir, pkg_type):
-    import freenasOS.Update as Update
-    import freenasOS.Exceptions as Exceptions
 
     try:
-        rv = Update.DownloadUpdate(train, cache_dir, pkg_type = pkg_type)
+        rv = Update.DownloadUpdate(train, cache_dir, pkg_type=pkg_type)
     except Exceptions.ManifestInvalidSignature:
         log.error("Manifest has invalid signature")
         print("Manifest has invalid signature", file=sys.stderr)
@@ -92,6 +99,7 @@ def DoDownload(train, cache_dir, pkg_type):
         sys.exit(1)
 
     return rv
+
 
 def main():
     global log
@@ -122,12 +130,6 @@ def main():
 
     log = logging.getLogger('freenas-update')
 
-    sys.path.append("/usr/local/lib")
-
-    import freenasOS.Configuration as Configuration
-    import freenasOS.Update as Update
-    import freenasOS.Exceptions as Exceptions
-    
     def usage():
         print("""Usage: %s [-C cache_dir] [-d] [-T train] [--no-delta] [-v] <cmd>, where cmd is one of:
         check\tCheck for updates
@@ -136,13 +138,14 @@ def main():
 
     try:
         short_opts = "C:dT:v"
-        long_opts = [ "cache=",
-                      "debug",
-                      "train=",
-                      "verbose",
-                      "no-delta",
-                      "snl"
-                      ]
+        long_opts = [
+            "cache=",
+            "debug",
+            "train=",
+            "verbose",
+            "no-delta",
+            "snl"
+        ]
         opts, args = getopt.getopt(sys.argv[1:], short_opts, long_opts)
     except getopt.GetoptError as err:
         print(str(err))
@@ -156,7 +159,7 @@ def main():
     train = None
     pkg_type = None
     snl = False
-    
+
     for o, a in opts:
         if o in ("-v", "--verbose"):
             verbose = True
@@ -186,7 +189,7 @@ def main():
         # given a cache directory, we pass that in; otherwise,
         # we make a temporary directory and use that.  We
         # have to clean up afterwards in that case.
-        
+
         rv = DoDownload(train, cache_dir, pkg_type)
         if rv is False:
             if verbose:
@@ -224,7 +227,7 @@ def main():
                 force_reboot = True
             else:
                 assert False, "Unhandled option %s" % o
-        
+
         # See if the cache directory has an update downloaded already
         do_download = True
         try:
@@ -239,10 +242,10 @@ def main():
             pass
         except:
             raise
-        
+
         if do_download:
             rv = DoDownload(train, cache_dir, pkg_type)
-            
+
         diffs = Update.PendingUpdatesChanges(cache_dir)
         if diffs is None or diffs == {}:
             if verbose:
@@ -251,7 +254,7 @@ def main():
             if verbose:
                 PrintDifferences(diffs)
             try:
-                rv = Update.ApplyUpdate(cache_dir, force_reboot = force_reboot)
+                rv = Update.ApplyUpdate(cache_dir, force_reboot=force_reboot)
             except BaseException as e:
                 print("Unable to apply update: %s" % str(e), file=sys.stderr)
                 sys.exit(1)
@@ -264,7 +267,6 @@ def main():
         # Frozen tarball.  We'll extract it into the cache directory, and
         # then add a couple of things to make it pass sanity, and then apply it.
         # For now we just copy the code above.
-        import shutil
         # First, remove the cache directory
         # Hrm, could overstep a locked file.
         shutil.rmtree(cache_dir, ignore_errors=True)
@@ -284,13 +286,13 @@ def main():
         # And now the SERVER file
         with open(os.path.join(cache_dir, "SERVER"), "w") as s:
             s.write(config.UpdateServerName())
-            
+
         try:
             diffs = Update.PendingUpdatesChanges(cache_dir)
         except BaseException as e:
             print("Attempt to verify extracted frozen update failed: %s" % str(e), file=sys.stderr)
             sys.exit(1)
-            
+
         if diffs is None or diffs == {}:
             if verbose:
                 print("No updates to apply", file=sys.stderr)
@@ -307,11 +309,10 @@ def main():
                 if snl:
                     print("Really explore the space.")
             sys.exit(0)
-            
+
         pass
     else:
         usage()
 
 if __name__ == "__main__":
     sys.exit(main())
-
