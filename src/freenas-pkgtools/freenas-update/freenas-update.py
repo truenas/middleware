@@ -236,7 +236,7 @@ def main():
                 f.close()
                 do_download = False
         except Exceptions.UpdateBusyCacheException:
-            printf("Cache directory busy, cannot update")
+            print("Cache directory busy, cannot update")
             sys.exit(0)
         except (Exceptions.UpdateInvalidCacheException, Exceptions.UpdateIncompleteCacheException):
             pass
