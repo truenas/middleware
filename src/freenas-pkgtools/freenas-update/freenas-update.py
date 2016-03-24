@@ -6,7 +6,6 @@ import logging
 import logging.config
 import os
 import sys
-import tempfile
 import tarfile
 
 def ExtractFrozenUpdate(tarball, dest_dir, verbose=False):
