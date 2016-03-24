@@ -1,0 +1,15 @@
+lib/freenasOS/Configuration.py
+lib/freenasOS/Exceptions.py
+lib/freenasOS/Installer.py
+lib/freenasOS/Manifest.py
+lib/freenasOS/Package.py
+lib/freenasOS/Train.py
+lib/freenasOS/Update.py
+lib/freenasOS/PackageFile.py
+libexec/verify_signature
+bin/manifest_util
+bin/freenas-install
+bin/freenas-update
+bin/freenas-verify
+share/certs/freenas-update.pem
+share/certs/iX-CA.pem
