@@ -1,0 +1,16 @@
+--- beadm.orig	2015-03-04 13:08:26.000000000 -0800
++++ beadm	2015-03-09 18:20:02.603620931 -0700
+@@ -696,9 +696,10 @@
+         else
+           TMPMNT=${MOUNT}
+         fi
+-        if [ -f /boot/zfs/zpool.cache ]
+-        then
+-          cp /boot/zfs/zpool.cache ${TMPMNT}/boot/zfs/zpool.cache
++        if [ -f /boot/zfs/rpool.cache ]; then
++          cp /boot/zfs/rpool.cache ${TMPMNT}/boot/zfs/rpool.cache
++        elif [ -f /boot/zfs/zpool.cache ]; then
++          cp /boot/zfs/zpool.cache ${TMPMNT}/boot/zfs/rpool.cache
+         else
+           rm -f ${TMPMNT}/boot/zfs/zpool.cache
+         fi

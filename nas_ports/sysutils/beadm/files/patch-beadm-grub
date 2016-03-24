@@ -1,0 +1,64 @@
+--- beadm.orig	2015-03-09 18:23:27.219158304 -0700
++++ beadm	2015-03-09 18:25:22.788519660 -0700
+@@ -258,11 +258,7 @@
+         fi
+       done
+ 
+-      # check if we need to update grub
+-      if [ "${GRUB}" = YES ]
+-      then
+-        __update_grub
+-      fi
++      __update_grub
+ }
+ 
+ ROOTFS=$( mount | awk '/ \/ / {print $1}' )
+@@ -294,9 +290,6 @@
+   . /usr/local/etc/beadm.conf
+ fi
+ 
+-# update GRUB bootloader instead of FreeBSD's loader(8)
+-: ${GRUB="NO"}
+-
+ # use other prefix then the 'pool/ROOT/bename' default
+ : ${BEDS="$( echo ${ROOTFS} | awk -F '/' '{print $2}' )"}
+ 
+@@ -742,11 +735,7 @@
+             zfs promote ${NAME}
+           done
+         done
+-    # check if we need to update grub
+-    if [ "${GRUB}" = YES ]
+-    then
+-      __update_grub
+-    fi
++    __update_grub
+     echo "Activated successfully"
+     ;;
+ 
+@@ -871,11 +860,7 @@
+                     done
+               done
+         fi
+-        # check if we need to update grub
+-        if [ "${GRUB}" = YES ]
+-        then
+-          __update_grub
+-        fi
++        __update_grub
+         echo "Destroyed successfully"
+         ;;
+       (*)
+@@ -948,11 +933,7 @@
+       fi
+     fi
+ 
+-    # check if we need to update grub
+-    if [ "${GRUB}" = YES ]
+-    then
+-      __update_grub
+-    fi
++    __update_grub
+ 
+     echo "Renamed successfully"
+     ;;

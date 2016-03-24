@@ -1,0 +1,17 @@
+--- beadm.orig	2015-03-09 18:20:36.577896558 -0700
++++ beadm	2015-03-09 18:23:10.141759910 -0700
+@@ -737,14 +737,6 @@
+       | grep -E "^${POOL}/${BEDS}/${ACTBE}(/|$)" \
+       | while read NAME
+         do
+-          # If we are using GRUB, don't set canmount=on, since it clobbers
+-          # what we set in grub.cfg for vfs.root.mountfrom
+-          if [ -e /boot/grub/grub.cfg ]
+-          then
+-            zfs set canmount=noauto ${NAME}
+-          else
+-            zfs set canmount=on ${NAME}
+-          fi
+           while __be_clone ${NAME}
+           do
+             zfs promote ${NAME}
