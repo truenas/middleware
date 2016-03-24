@@ -125,7 +125,6 @@ def main():
     sys.path.append("/usr/local/lib")
 
     import freenasOS.Configuration as Configuration
-    import freenasOS.Manifest as Manifest
     import freenasOS.Update as Update
     import freenasOS.Exceptions as Exceptions
     
