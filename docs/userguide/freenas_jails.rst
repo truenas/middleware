@@ -762,3 +762,44 @@ it will open the configuration screen shown in the Figure 13.4c.
 
 If you click a template's "Delete" button, a warning message will prompt you to confirm the deletion. Note that once a template is deleted, it will be removed
 from the "Templates" drop-down menu and will be no longer available for creating new jails.
+
+.. _Using iohve:
+
+Using iohyve
+------------
+
+Beginning with version |version|, FreeNAS® includes the `iohyve <https://github.com/pr1ntf/iohyve>`_ command line utility for creating, managing, and launching
+`bhyve <https://en.wikipedia.org/wiki/Bhyve>`_ guests.
+
+To initialize this utility, run this command, substituting the name of the pool to hold the bhyve guests and the name of the network interface::
+
+ iohyve setup pool=volume1 kmod=1 net=em0
+ Setting up iohyve pool...
+ Loading kernel modules...
+ Setting up bridge0 on em0...
+ net.link.tap.up_onopen: 0 -> 1
+ 
+Next, tell :command:`iohyve` which installation ISO to download. In this example, we ask it to fetch FreeBSD 10.3-RC2 so that we can test that version::
+
+ iohyve fetch ftp://ftp.freebsd.org/pub/FreeBSD/releases/amd64/amd64/ISO-IMAGES/10.3/FreeBSD-10.3-RC2-amd64-bootonly.iso
+ Fetching ftp://ftp.freebsd.org/pub/FreeBSD/releases/amd64/amd64/ISO-IMAGES/10.3/FreeBSD-10.3-RC2-amd64-bootonly.iso...
+ 
+ iohyve isolist
+ FreeBSD-10.3-RC2-amd64-bootonly.iso
+ 
+Then, specify the name and size of the guest to create::
+
+ iohyve create freebsd10.3 8G
+ Creating freebsd10.3...
+ 
+ iohyve list
+ Guest		VMM?	Running?	rcboot?		Description
+ freebsd10.3    NO      NO              NO              Thu_Mar_24_09:37:30_PDT_2016
+ 
+And install the guest with the specified operating system::
+
+ iohyve install freebsd10.3 FreeBSD-10.3-RC2-amd64-bootonly.iso
+
+
+
+

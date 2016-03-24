@@ -113,6 +113,8 @@ What's New in |version|
 
 * The CrucibleWDS plugin has been deprecated and replaced with `CloneDeploy <https://sourceforge.net/projects/clonedeploy/>`_. 
 
+* :command:`iohyve` has been added for creating, managing, and launching `bhyve <https://en.wikipedia.org/wiki/Bhyve>`_ guests from the command line.
+
 * `htop <http://hisham.hm/htop/>`_ has been added which can be run from :ref:`Shell`.
 
 * The `jed <http://www.jedsoft.org/jed/>`_ editor has been added and can be run from :ref:`Shell`.
