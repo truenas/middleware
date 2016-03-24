@@ -779,10 +779,13 @@ To initialize this utility, run this command, substituting the name of the pool 
  Setting up bridge0 on em0...
  net.link.tap.up_onopen: 0 -> 1
  
+ ln -s /mnt/iohyve /iohyve
+ 
 Next, tell :command:`iohyve` which installation ISO to download. In this example, we ask it to fetch FreeBSD 10.3-RC2 so that we can test that version::
 
  iohyve fetch ftp://ftp.freebsd.org/pub/FreeBSD/releases/amd64/amd64/ISO-IMAGES/10.3/FreeBSD-10.3-RC2-amd64-bootonly.iso
  Fetching ftp://ftp.freebsd.org/pub/FreeBSD/releases/amd64/amd64/ISO-IMAGES/10.3/FreeBSD-10.3-RC2-amd64-bootonly.iso...
+ /iohyve/ISO/FreeBSD-10.3-RC2-amd64-bootonly.iso 100% of 232 MB 2443 kBps 01m38s
  
  iohyve isolist
  FreeBSD-10.3-RC2-amd64-bootonly.iso
@@ -799,7 +802,8 @@ Then, specify the name and size of the guest to create::
 And install the guest with the specified operating system::
 
  iohyve install freebsd10.3 FreeBSD-10.3-RC2-amd64-bootonly.iso
-
+ Installing freebsd10.3...
+ 
 
 
 
