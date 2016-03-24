@@ -16,6 +16,102 @@ import freenasOS.Update as Update
 import freenasOS.Exceptions as Exceptions
 
 
+class ProgressBar(object):
+    def __init__(self):
+        self.message = None
+        self.percentage = 0
+        self.write_stream = sys.stderr
+        self.write_stream.write('\n')
+
+    def draw(self):
+        progress_width = 40
+        filled_width = int(self.percentage * progress_width)
+        self.write_stream.write('\033[2K\033[A\033[2K\r')
+        self.write_stream.write('Status: {}\n'.format(self.message))
+        self.write_stream.write('Total Progress: [{}{}] {:.2%}'.format(
+            '#' * filled_width,
+            '_' * (progress_width - filled_width),
+            self.percentage))
+
+        self.write_stream.flush()
+
+    def update(self, percentage=None, message=None):
+        if percentage:
+            self.percentage = float(percentage / 100.0)
+
+        if message:
+            self.message = message
+
+        self.draw()
+
+    def finish(self):
+        self.percentage = 1
+        self.draw()
+        self.write_stream.write('\n')
+
+
+class UpdateHandler(object):
+    "A handler for Downloading and Applying Updates calls"
+
+    def __init__(self, update_progress=None):
+        self.progress = 0
+        self.details = ''
+        self.finished = False
+        self.error = False
+        self.indeterminate = False
+        self.reboot = False
+        self.pkgname = ''
+        self.pkgversion = ''
+        self.operation = ''
+        self.filesize = 0
+        self.numfilestotal = 0
+        self.numfilesdone = 0
+        self._baseprogress = 0
+        self.master_progress = 0
+        # Below is the function handle passed to this by the caller so that
+        # its status and progress can be updated accordingly
+        self.update_progress = update_progress
+
+    def check_handler(self, index, pkg, pkgList):
+        self.pkgname = pkg.Name()
+        self.pkgversion = pkg.Version()
+        self.operation = 'Downloading'
+        self.details = 'Downloading {0}'.format(self.pkgname)
+        stepprogress = int((1.0 / float(len(pkgList))) * 100)
+        self._baseprogress = index * stepprogress
+        self.progress = (index - 1) * stepprogress
+
+    def get_handler(self, method, filename, size=None, progress=None, download_rate=None):
+        if progress is not None:
+            self.progress = (progress * self._baseprogress) / 100
+            if self.progress == 0:
+                self.progress = 1
+            display_size = ' Size: {0}'.format(size) if size else ''
+            display_rate = ' Rate: {0} B/s'.format(download_rate) if download_rate else ''
+            self.details = 'Downloading: {0} Progress:{1}{2}{3}'.format(
+                self.pkgname, progress, display_size, display_rate
+                )
+
+        # Doing the drill below as there is a small window when
+        # step*progress logic does not catch up with the new value of step
+        if self.progress >= self.master_progress:
+            self.master_progress = self.progress
+        if self.update_progress is not None:
+            self.update_progress(self.master_progress, self.details)
+
+
+class StartsWithFilter(logging.Filter):
+    def __init__(self, params):
+        self.params = params
+
+    def filter(self, record):
+        if self.params:
+            allow = not any(record.msg.startswith(x) for x in self.params)
+        else:
+            allow = True
+        return allow
+
+
 def ExtractFrozenUpdate(tarball, dest_dir, verbose=False):
     """
     Extract the files in the given tarball into dest_dir.
@@ -77,10 +173,22 @@ def PrintDifferences(diffs):
             print("*** Unknown key %s (value %s)" % (type, str(diffs[type])), file=sys.stderrr)
 
 
-def DoDownload(train, cache_dir, pkg_type):
+def DoDownload(train, cache_dir, pkg_type, verbose):
 
     try:
-        rv = Update.DownloadUpdate(train, cache_dir, pkg_type=pkg_type)
+        if not verbose:
+            progress_bar = ProgressBar()
+            handler = UpdateHandler(progress_bar.update)
+            rv = Update.DownloadUpdate(
+                train,
+                cache_dir,
+                get_handler=handler.get_handler,
+                check_handler=handler.check_handler,
+                pkg_type=pkg_type,
+            )
+            progress_bar.finish()
+        else:
+            rv = Update.DownloadUpdate(train, cache_dir, pkg_type=pkg_type)
     except Exceptions.ManifestInvalidSignature:
         log.error("Manifest has invalid signature")
         print("Manifest has invalid signature", file=sys.stderr)
@@ -104,13 +212,19 @@ def DoDownload(train, cache_dir, pkg_type):
 def main():
     global log
 
-    logging.config.dictConfig({
+    log_config_dict = {
         'version': 1,
         'disable_existing_loggers': False,
         'formatters': {
             'simple': {
                 'format': '[%(name)s:%(lineno)s] %(message)s',
             },
+        },
+        'filters': {
+            'cleandownload': {
+                '()': StartsWithFilter,
+                'params': ['TryGetNetworkFile', 'Searching']
+            }
         },
         'handlers': {
             'std': {
@@ -126,9 +240,7 @@ def main():
                     'propagate': True,
             },
         },
-    })
-
-    log = logging.getLogger('freenas-update')
+    }
 
     def usage():
         print("""Usage: %s [-C cache_dir] [-d] [-T train] [--no-delta] [-v] <cmd>, where cmd is one of:
@@ -176,6 +288,11 @@ def main():
         else:
             assert False, "unhandled option %s" % o
 
+    if not verbose:
+        log_config_dict['handlers']['std']['filters'] = ['cleandownload']
+    logging.config.dictConfig(log_config_dict)
+    log = logging.getLogger('freenas-update')
+
     config = Configuration.Configuration()
     if train is None:
         train = config.SystemManifest().Train()
@@ -190,7 +307,7 @@ def main():
         # we make a temporary directory and use that.  We
         # have to clean up afterwards in that case.
 
-        rv = DoDownload(train, cache_dir, pkg_type)
+        rv = DoDownload(train, cache_dir, pkg_type, verbose)
         if rv is False:
             if verbose:
                 print("No updates available")
@@ -244,7 +361,7 @@ def main():
             raise
 
         if do_download:
-            rv = DoDownload(train, cache_dir, pkg_type)
+            rv = DoDownload(train, cache_dir, pkg_type, verbose)
 
         diffs = Update.PendingUpdatesChanges(cache_dir)
         if diffs is None or diffs == {}:
