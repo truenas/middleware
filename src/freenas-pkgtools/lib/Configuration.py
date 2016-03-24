@@ -22,7 +22,12 @@ from stat import (
     S_IMODE
 )
 
-VERIFY_SKIP_PATHS = ['/var/','/etc','/dev','/conf/base/etc/master.passwd','/boot/zfs/zpool.cache','/usr/local/share/smartmontools/drivedb.h', '/boot/device.hints', '/usr/local/lib/perl5/5.16/man/whatis', '/usr/share/man/whatis']
+VERIFY_SKIP_PATHS = [
+    '/var/', '/etc', '/dev', '/conf/base/etc/master.passwd', '/compat/linux/proc',
+    '/boot/zfs/zpool.cache', '/boot/device.hints', '/usr/share/man/whatis',
+    '/usr/local/share/smartmontools/drivedb.h', '/usr/local/lib/perl5/5.16/man/whatis',
+]
+
 CONFIG_DEFAULT = "Defaults"
 CONFIG_SEARCH = "Search"
 CONFIG_SERVER = "update_server"
@@ -44,7 +49,7 @@ log = logging.getLogger('freenasOS.Configuration')
 # We may want to use a different update server for
 # TrueNAS.
 #UPDATE_SERVER = "http://beta-update.freenas.org/" + Avatar()
-SEARCH_LOCATIONS = [ "http://update.freenas.org/" + Avatar() ]
+SEARCH_LOCATIONS = ["http://update.freenas.org/" + Avatar()]
 
 # List of trains
 TRAIN_FILE = "trains.txt"
