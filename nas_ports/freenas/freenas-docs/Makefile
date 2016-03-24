@@ -23,6 +23,10 @@ checksum fetch:
 
 .include <bsd.port.pre.mk>
 
+.if ${PRODUCT} == "TrueNAS"
+BUILD_DEPENDS+=	${PYTHON_PKGNAMEPREFIX}sphinxcontrib-numfig>0:${PORTSDIR}/textproc/py-sphinxcontrib-numfig
+.endif
+
 do-build:
 .if ${PRODUCT} == "TrueNAS"
 	(cd ${WRKSRC}/userguide && make SPHINXOPTS="-t truenas" html)
