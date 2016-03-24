@@ -320,7 +320,6 @@ def carp_master(fobj, state_file, ifname, vhid, event, user_override, forcetakeo
             run('cp /data/zfs/zpool.cache /data/zfs/zpool.cache.saved')
 
     log.warn('Beginning volume imports.')
-    os.system("kldload dtraceall")
     # TODO: now that we are all python, we should probably just absorb the code in.
     run(
         '/usr/local/bin/python /usr/local/www/freenasUI/failover/enc_helper.py'
