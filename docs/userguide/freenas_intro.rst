@@ -84,8 +84,8 @@ The FreeNAS® |release| Users Guide uses the following typographic conventions:
 Introduction
 ============
 
-FreeNAS® is an embedded open source network-attached storage (NAS) operating system based on FreeBSD and released under a BSD license. A NAS is an operating
-system that has been optimized for file storage and sharing.
+FreeNAS® is an embedded open source network-attached storage (NAS) operating system based on FreeBSD and released under a
+`2-clause BSD license <https://opensource.org/licenses/BSD-2-Clause>`_. A NAS is an operating system that has been optimized for file storage and sharing.
 
 FreeNAS® provides a browser-based, graphical configuration interface. Its built-in networking protocols can be configured to provide storage access to a
 wide range of operating systems. A plugins system is provided for extending the built-in features by installing additional software.

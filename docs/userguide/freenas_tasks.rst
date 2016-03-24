@@ -268,7 +268,9 @@ can be configured when creating an rsync task.
 |                                  |                             | escaped between single quotes (e.g. '\*.txt')                                             |
 |                                  |                             |                                                                                           |
 +----------------------------------+-----------------------------+-------------------------------------------------------------------------------------------+
-| Enabled                          | checkbox                    | uncheck if you would like to disable the rsync task without deleting it                   |
+| Enabled                          | checkbox                    | uncheck if you would like to disable the rsync task without deleting it; note that when   |
+|                                  |                             | the :ref:`Rsync` service is OFF, the rsync task will continue to look for the server      |
+|                                  |                             | unless this checkbox is unchecked                                                         |
 |                                  |                             |                                                                                           |
 +----------------------------------+-----------------------------+-------------------------------------------------------------------------------------------+
 
