@@ -186,6 +186,8 @@ def DoDownload(train, cache_dir, pkg_type, verbose):
                 check_handler=handler.check_handler,
                 pkg_type=pkg_type,
             )
+            if rv is False:
+                progress_bar.update(message="No updates available")
             progress_bar.finish()
         else:
             rv = Update.DownloadUpdate(train, cache_dir, pkg_type=pkg_type)
