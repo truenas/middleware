@@ -637,7 +637,7 @@ def add_nt4_conf(smb4_conf):
     nt4_workgroup = nt4.nt4_workgroup.upper()
 
     with open("/usr/local/etc/lmhosts", "w") as f:
-        f.write("%s\t%s\n" % (dc_ip, nt4_dcname.upper()))
+        f.write("%s\t%s\n" % (dc_ip, nt4.nt4_dcname.upper()))
         f.close()
 
     set_netbiosname(smb4_conf, nt4.nt4_netbiosname)
