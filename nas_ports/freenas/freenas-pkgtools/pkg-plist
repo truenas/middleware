@@ -1,3 +1,4 @@
+lib/freenasOS/__init__.py
 lib/freenasOS/Configuration.py
 lib/freenasOS/Exceptions.py
 lib/freenasOS/Installer.py
