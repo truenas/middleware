@@ -923,15 +923,15 @@ def generate_smb4_conf(smb4_conf, role):
     confset2(smb4_conf, "max open files = %d",
              long(get_sysctl('kern.maxfilesperproc')) - 25)
 
-    if cifs.cifs_srv_syslog:
-        confset1(smb4_conf, "syslog only = yes")
-    else:
-        confset1(smb4_conf, "syslog only = no")
-
     if cifs.cifs_srv_loglevel and cifs.cifs_srv_loglevel is not True:
-        confset2(smb4_conf, "syslog = %s", cifs.cifs_srv_loglevel)
+	loglevel = cifs.cifs_srv_loglevel
     else:
-        confset1(smb4_conf, "syslog = 0")
+	loglevel = "0"
+
+    if cifs.cifs_srv_syslog:
+        confset1(smb4_conf, "logging = syslog:%s" % loglevel)
+    else:
+        confset1(smb4_conf, "logging = file")
 
     confset1(smb4_conf, "load printers = no")
     confset1(smb4_conf, "printing = bsd")
@@ -964,7 +964,6 @@ def generate_smb4_conf(smb4_conf, role):
              "yes" if cifs.cifs_srv_nullpw else False)
     confset2(smb4_conf, "acl allow execute always = %s",
              "true" if cifs.cifs_srv_allow_execute_always else "false")
-    confset1(smb4_conf, "acl check permissions = true")
     confset1(smb4_conf, "dos filemode = yes")
     confset2(smb4_conf, "multicast dns register = %s",
              "yes" if cifs.cifs_srv_zeroconf else "no")
