@@ -633,6 +633,12 @@ class Scrub(Model):
 
 
 class Disk(Model):
+    disk_identifier = models.CharField(
+        max_length=42,
+        verbose_name=_("Identifier"),
+        editable=False,
+        primary_key=True,
+    )
     disk_name = models.CharField(
         max_length=120,
         verbose_name=_("Name")
@@ -645,11 +651,6 @@ class Disk(Model):
     disk_number = models.IntegerField(
         editable=False,
         default=1,
-    )
-    disk_identifier = models.CharField(
-        max_length=42,
-        verbose_name=_("Identifier"),
-        editable=False,
     )
     disk_serial = models.CharField(
         max_length=30,
