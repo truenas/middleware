@@ -542,7 +542,9 @@ require([
             toset = box.get("value");
         }
         for(var i=0;i<farray.length;i++) {
-            registry.byId(farray[i]).set('disabled', toset);
+            var widget = registry.byId(farray[i]);
+            if(widget)
+                widget.set('disabled', toset);
         }
 
     }
