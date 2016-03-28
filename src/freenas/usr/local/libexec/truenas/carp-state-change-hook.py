@@ -421,6 +421,8 @@ def carp_master(fobj, state_file, ifname, vhid, event, user_override, forcetakeo
     run('/usr/sbin/service collectd quietrestart')
     run('/usr/sbin/service ix-syslogd quietstart')
     run('/usr/sbin/service syslog-ng quietrestart')
+    run('/usr/sbin/service ix-smartd quietstart')
+    run('/usr/sbin/service smartd quietrestart')
 
     log.warn('Failover event complete.')
 
