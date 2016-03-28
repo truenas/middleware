@@ -131,20 +131,14 @@ def bsdGroups_objects(**kwargs):
 
 class FreeNAS_Local_Group(object):
     def __new__(cls, group, **kwargs):
-        log.debug("FreeNAS_Local_Group.__new__: enter")
-        log.debug("FreeNAS_Local_Group.__new__: group = %s", group)
 
         obj = None
         if group is not None:
             obj = super(FreeNAS_Local_Group, cls).__new__(cls)
 
-        log.debug("FreeNAS_Local_Group.__new__: leave")
         return obj
 
     def __init__(self, group, **kwargs):
-        log.debug("FreeNAS_Local_Group.__init__: enter")
-        log.debug("FreeNAS_Local_Group.__init__: group = %s", group)
-
         super(FreeNAS_Local_Group, self).__init__()
 
         data = kwargs.pop('data', None)
@@ -153,12 +147,7 @@ class FreeNAS_Local_Group(object):
         if group is not None:
             self.__get_group(group, data=data)
 
-        log.debug("FreeNAS_Local_Group.__init__: leave")
-
     def __get_group(self, group, data=None):
-        log.debug("FreeNAS_local_Group.__get_group: enter")
-        log.debug("FreeNAS_local_Group.__get_group: group = %s", group)
-
         if not data and (
             isinstance(group, int) or (
                 isinstance(group, (str, unicode)) and group.isdigit()
@@ -174,13 +163,9 @@ class FreeNAS_Local_Group(object):
             log.debug("Exception on grfunc: %s", e)
             self._gr = None
 
-        log.debug("FreeNAS_local_Group.__get_group: leave")
-
 
 class FreeNAS_Group(object):
     def __new__(cls, group, **kwargs):
-        log.debug("FreeNAS_Group.__new__: enter")
-        log.debug("FreeNAS_Group.__new__: group = %s", group)
 
         if 'dflags' in kwargs:
             dflags = kwargs['dflags']
@@ -208,13 +193,11 @@ class FreeNAS_Group(object):
         if obj:
             obj = obj._gr
 
-        log.debug("FreeNAS_Group.__new__: leave")
         return obj
 
 
 class FreeNAS_Groups(object):
     def __init__(self, **kwargs):
-        log.debug("FreeNAS_Groups.__init__: enter")
         self.__groups = None
 
         """
@@ -254,8 +237,6 @@ class FreeNAS_Groups(object):
         for group, obj in objects.items():
             self.__bsd_groups.append(FreeNAS_Group(group, data=obj, dflags=0))
 
-        log.debug("FreeNAS_Groups.__init__: leave")
-
     def __len__(self):
         return len(self.__bsd_groups) + len(self.__groups)
 
@@ -268,9 +249,6 @@ class FreeNAS_Groups(object):
 
 class FreeNAS_Local_User(object):
     def __new__(cls, user, **kwargs):
-        log.debug("FreeNAS_Local_User.__new__: enter")
-        log.debug("FreeNAS_Local_User.__new__: user = %s", user)
-
         obj = None
         if user is not None:
             obj = super(FreeNAS_Local_User, cls).__new__(cls)
@@ -279,9 +257,6 @@ class FreeNAS_Local_User(object):
         return obj
 
     def __init__(self, user, **kwargs):
-        log.debug("FreeNAS_Local_User.__init__: enter")
-        log.debug("FreeNAS_Local_User.__init__: user = %s", user)
-
         super(FreeNAS_Local_User, self).__init__()
 
         data = kwargs.pop('data', None)
@@ -292,9 +267,6 @@ class FreeNAS_Local_User(object):
         log.debug("FreeNAS_Local_User.__init__: leave")
 
     def __get_user(self, user, data=None):
-        log.debug("FreeNAS_local_User.__get_user: enter")
-        log.debug("FreeNAS_local_User.__get_user: user = %s", user)
-
         if not data and (
             isinstance(user, int) or (
                 isinstance(user, (str, unicode)) and user.isdigit()
@@ -311,13 +283,9 @@ class FreeNAS_Local_User(object):
             log.debug("Exception on pwfunc: %s", e)
             self._pw = None
 
-        log.debug("FreeNAS_local_User.__get_user: leave")
-
 
 class FreeNAS_User(object):
     def __new__(cls, user, **kwargs):
-        log.debug("FreeNAS_User.__new__: enter")
-        log.debug("FreeNAS_User.__new__: user = %s", user)
 
         if 'dflags' in kwargs:
             dflags = kwargs['dflags']
@@ -347,13 +315,11 @@ class FreeNAS_User(object):
         if obj:
             obj = obj._pw
 
-        log.debug("FreeNAS_User.__new__: leave")
         return obj
 
 
 class FreeNAS_Users(object):
     def __init__(self, **kwargs):
-        log.debug("FreeNAS_Users.__init__: enter")
         self.__users = None
 
         """
@@ -393,8 +359,6 @@ class FreeNAS_Users(object):
             self.__bsd_users.append(
                 FreeNAS_User(username, data=obj, dflags=0)
             )
-
-        log.debug("FreeNAS_Users.__init__: leave")
 
     def __len__(self):
         return len(self.__bsd_users) + len(self.__users)
