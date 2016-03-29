@@ -612,7 +612,7 @@ class iSCSITargetExtent(Model):
             return self.iscsi_target_extent_path
         else:
             try:
-                disk = Disk.objects.get(id=self.iscsi_target_extent_path)
+                disk = Disk.objects.get(pk=self.iscsi_target_extent_path)
                 if disk.disk_multipath_name:
                     return "/dev/%s" % disk.devname
                 else:
@@ -626,7 +626,7 @@ class iSCSITargetExtent(Model):
         if self.iscsi_target_extent_type in ("Disk", "ZVOL"):
             try:
                 if self.iscsi_target_extent_type == "Disk":
-                    disk = Disk.objects.get(id=self.iscsi_target_extent_path)
+                    disk = Disk.objects.get(pk=self.iscsi_target_extent_path)
                     devname = disk.identifier_to_device()
                     if not devname:
                         disk.disk_enabled = False
