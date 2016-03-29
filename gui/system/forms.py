@@ -34,7 +34,6 @@ import math
 import os
 import re
 import stat
-import string
 import subprocess
 
 from OpenSSL import crypto
@@ -107,7 +106,6 @@ from freenasUI.sharing.models import (
 from freenasUI.storage.forms import VolumeAutoImportForm
 from freenasUI.storage.models import Disk, Volume, Scrub
 from freenasUI.system import models
-from freenasUI.system.utils import manual_update
 from freenasUI.tasks.models import SMARTTest
 
 log = logging.getLogger('system.forms')
@@ -677,10 +675,23 @@ class InitialWizard(CommonWizard):
             except IndexError:
                 settingsm = models.Settings.objects.create()
 
-            settingsm.stg_language = cleaned_data.get('stg_language')
-            settingsm.stg_kbdmap = cleaned_data.get('stg_kbdmap')
-            settingsm.stg_timezone = cleaned_data.get('stg_timezone')
-            settingsm.save()
+            settingsdata = settingsm.__dict__
+            settingsdata.update({
+                'stg_language': cleaned_data.get('stg_language'),
+                'stg_kbdmap': cleaned_data.get('stg_kbdmap'),
+                'stg_timezone': cleaned_data.get('stg_timezone'),
+            })
+            settingsform = SettingsForm(
+                data=settingsdata,
+                instance=settingsm,
+            )
+            if settingsform.is_valid():
+                settingsform.save()
+            else:
+                log.warn(
+                    'Active Directory data failed to validate: %r',
+                    settingsform._errors,
+                )
 
         if ds_form:
 
