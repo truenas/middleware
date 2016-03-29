@@ -223,6 +223,7 @@ class DiskResourceMixin(object):
     def dehydrate(self, bundle):
         bundle = super(DiskResourceMixin, self).dehydrate(bundle)
         if self.is_webclient(bundle.request):
+            bundle.data['id'] = bundle.obj.pk
             bundle.data['_edit_url'] += '?deletable=false'
             bundle.data['_wipe_url'] = reverse('storage_disk_wipe', kwargs={
                 'devname': bundle.obj.disk_name,
