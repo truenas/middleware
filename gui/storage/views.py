@@ -1283,7 +1283,7 @@ def disk_editbulk(request):
 
     if request.method == "POST":
         ids = request.POST.get("ids", "").split(",")
-        disks = models.Disk.objects.filter(id__in=ids)
+        disks = models.Disk.objects.filter(pk__in=ids)
         form = forms.DiskEditBulkForm(request.POST, disks=disks)
         if form.is_valid():
             form.save()
@@ -1294,7 +1294,7 @@ def disk_editbulk(request):
         return JsonResp(request, form=form)
     else:
         ids = request.GET.get("ids", "").split(",")
-        disks = models.Disk.objects.filter(id__in=ids)
+        disks = models.Disk.objects.filter(pk__in=ids)
         form = forms.DiskEditBulkForm(disks=disks)
 
     return render(request, "storage/disk_editbulk.html", {

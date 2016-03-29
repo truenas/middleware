@@ -1230,7 +1230,7 @@ class DiskEditBulkForm(Form):
     def __init__(self, *args, **kwargs):
         self._disks = kwargs.pop('disks')
         super(DiskEditBulkForm, self).__init__(*args, **kwargs)
-        self.fields['ids'].initial = ','.join([str(d.id) for d in self._disks])
+        self.fields['ids'].initial = ','.join([str(d.pk) for d in self._disks])
 
         """
         Make sure all the disks have a same option for each field
