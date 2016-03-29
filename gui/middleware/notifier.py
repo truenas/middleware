@@ -4574,7 +4574,7 @@ class notifier:
         if ident and qs.exists():
             disk = qs[0]
         else:
-            qs = Disk.objects.filter(disk_name=devname).update(
+            Disk.objects.filter(disk_name=devname).update(
                 disk_enabled=False
             )
             disk = Disk()
@@ -4659,9 +4659,14 @@ class notifier:
 
         for devname in disks:
             if devname not in in_disks:
-                disk = Disk()
+                disk_identifier = self.device_to_identifier(devname)
+                disk = Disk.objects.filter(disk_identifier=disk_identifier)
+                if disk.exists():
+                    disk = disk[0]
+                else:
+                    disk = Disk()
+                    disk.disk_identifier = disk_identifier
                 disk.disk_name = devname
-                disk.disk_identifier = self.device_to_identifier(devname)
                 geom = doc.xpath("//class[name = 'DISK']//geom[name = '%s']" % devname)
                 if len(geom) > 0:
                     serial = geom[0].xpath("./provider/config/ident")
