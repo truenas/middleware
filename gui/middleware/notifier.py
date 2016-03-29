@@ -4869,7 +4869,7 @@ class notifier:
             )
             if qs.exists():
                 diskobj = qs[0]
-                mp_ids.append(diskobj.id)
+                mp_ids.append(diskobj.pk)
                 diskobj.disk_multipath_name = geom.xpath("./name")[0].text
                 if diskobj.disk_name in _disks:
                     _disks.remove(diskobj.disk_name)
@@ -4877,7 +4877,7 @@ class notifier:
                     diskobj.disk_multipath_member = _disks.pop()
                 diskobj.save()
 
-        Disk.objects.exclude(id__in=mp_ids).update(disk_multipath_name='', disk_multipath_member='')
+        Disk.objects.exclude(pk__in=mp_ids).update(disk_multipath_name='', disk_multipath_member='')
 
     def _find_root_devs(self):
         """Find the root device.
