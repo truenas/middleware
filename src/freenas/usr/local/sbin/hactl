@@ -49,8 +49,13 @@ def main(command, quiet):
             print "Node status: Passive (Master mode unreachable)"
 
         if fo_exists:
-            if failover_disabled_reasons():
-                print "Failover status: Disabled"
+            ret = failover_disabled_reasons()
+            if 'NO_FAILOVER' in ret:
+                print "Failover status: Administratively Disabled"
+            elif 'NO_PONG' in ret:
+                print "Failover status: Unavailable (remote node not responding)"
+            elif 'NO_VOLUME' in ret or 'NO_VIP' in ret:
+                print "Failover status: Unavailable (failover not configured)"
             else:
                 print "Failover status: Enabled"
         else:
