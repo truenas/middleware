@@ -747,7 +747,7 @@ class Disk(Model):
         return 0
 
     def save(self, *args, **kwargs):
-        if self.id and self._original_state.get("disk_togglesmart", None) != \
+        if self.pk and self._original_state.get("disk_togglesmart", None) != \
                 self.__dict__.get("disk_togglesmart"):
             notifier().restart("smartd")
         super(Disk, self).save(*args, **kwargs)
@@ -757,7 +757,7 @@ class Disk(Model):
         # Delete device extents depending on this Disk
         qs = iSCSITargetExtent.objects.filter(
             iscsi_target_extent_type='Disk',
-            iscsi_target_extent_path=str(self.id))
+            iscsi_target_extent_path=str(self.pk))
         if qs.exists():
             qs.delete()
         super(Disk, self).delete()
