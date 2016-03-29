@@ -66,29 +66,25 @@ class Model(models.Model):
         return ('freeadmin_%s_%s_add' % (
             self._meta.app_label,
             self._meta.model_name,
-            ), )
+        ), )
 
     @models.permalink
     def get_edit_url(self):
         return ('freeadmin_%s_%s_edit' % (
             self._meta.app_label,
             self._meta.model_name,
-            ), (), {
-            'oid': self.id,
-            })
+        ), (), {'oid': self.pk})
 
     @models.permalink
     def get_delete_url(self):
         return ('freeadmin_%s_%s_delete' % (
             self._meta.app_label,
             self._meta.model_name,
-            ), (), {
-            'oid': self.id,
-            })
+        ), (), {'oid': self.pk})
 
     @models.permalink
     def get_empty_formset_url(self):
         return ('freeadmin_%s_%s_empty_formset' % (
             self._meta.app_label,
             self._meta.model_name,
-            ), )
+        ), )
