@@ -7,38 +7,38 @@ from django.db import models
 
 class Migration(DataMigration):
 
+    depends_on = (
+        ('tasks', '0004_populate_rsync_delayupdates'),
+    )
+
     def forwards(self, orm):
-        # Deleting field 'Disk.id'
-        db.delete_column(u'storage_disk', u'id')
 
         seen_idents = []
+        id_map = {}
         for d in list(orm['storage.Disk'].objects.order_by('disk_enabled')):
             if d.disk_identifier in seen_idents:
                 d.delete()
             else:
                 seen_idents.append(d.disk_identifier)
+                id_map[str(d.id)] = d.disk_identifier
 
-        # Changing field 'Disk.disk_identifier'
-        db.alter_column(u'storage_disk', 'disk_identifier', self.gf('django.db.models.fields.CharField')(max_length=42, primary_key=True))
-        # Adding unique constraint on 'Disk', fields ['disk_identifier']
-        db.create_unique(u'storage_disk', ['disk_identifier'])
+        db.alter_column(u'tasks_smarttest_smarttest_disks', 'disk_id', self.gf('django.db.models.fields.CharField')(max_length=100))
+
+        rows = db.execute("select id, disk_id from tasks_smarttest_smarttest_disks")
+        if rows:
+            for row in rows:
+                disk_id = row[1]
+                if disk_id in id_map:
+                    db.execute("update tasks_smarttest_smarttest_disks set disk_id = %s where id = %s", [id_map[disk_id], row[0]])
+                else:
+                    db.execute("delete from tasks_smarttest_smarttest_disks where id = %s", [row[0]])
 
 
     def backwards(self, orm):
-        # Removing unique constraint on 'Disk', fields ['disk_identifier']
-        db.delete_unique(u'storage_disk', ['disk_identifier'])
-
-        # The following code is provided here to aid in writing a correct migration        # Adding field 'Disk.id'
-        db.add_column(u'storage_disk', u'id',
-                      self.gf('django.db.models.fields.IntegerField')(null=True),
-                      keep_default=False)
 
         for i, d in enumerate(orm['storage.Disk'].objects.all()):
             d.id = i + 1
             d.save()
-
-        # Changing field 'Disk.disk_identifier'
-        db.alter_column(u'storage_disk', 'disk_identifier', self.gf('django.db.models.fields.CharField')(max_length=42))
 
 
     models = {
@@ -49,7 +49,7 @@ class Migration(DataMigration):
             'disk_description': ('django.db.models.fields.CharField', [], {'max_length': '120', 'blank': 'True'}),
             'disk_enabled': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
             'disk_hddstandby': ('django.db.models.fields.CharField', [], {'default': "'Always On'", 'max_length': '120'}),
-            'disk_identifier': ('django.db.models.fields.CharField', [], {'max_length': '42', 'primary_key': 'True'}),
+            'disk_identifier': ('django.db.models.fields.CharField', [], {'max_length': '42'}),
             'disk_multipath_member': ('django.db.models.fields.CharField', [], {'max_length': '30', 'blank': 'True'}),
             'disk_multipath_name': ('django.db.models.fields.CharField', [], {'max_length': '30', 'blank': 'True'}),
             'disk_name': ('django.db.models.fields.CharField', [], {'max_length': '120'}),
@@ -59,7 +59,8 @@ class Migration(DataMigration):
             'disk_smartoptions': ('django.db.models.fields.CharField', [], {'max_length': '120', 'blank': 'True'}),
             'disk_subsystem': ('django.db.models.fields.CharField', [], {'default': "''", 'max_length': '10'}),
             'disk_togglesmart': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
-            'disk_transfermode': ('django.db.models.fields.CharField', [], {'default': "'Auto'", 'max_length': '120'})
+            'disk_transfermode': ('django.db.models.fields.CharField', [], {'default': "'Auto'", 'max_length': '120'}),
+            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'})
         },
         u'storage.encrypteddisk': {
             'Meta': {'object_name': 'EncryptedDisk'},
