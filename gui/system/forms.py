@@ -2282,7 +2282,7 @@ class CertificateAuthorityCreateInternalForm(ModelForm):
             crypto.dump_certificate(crypto.FILETYPE_PEM, cert)
         self.instance.cert_privatekey = \
             crypto.dump_privatekey(crypto.FILETYPE_PEM, key)
-        self.instance.cert_serial = 01
+        self.instance.cert_serial = 02
 
         super(CertificateAuthorityCreateInternalForm, self).save()
 
@@ -2420,7 +2420,7 @@ class CertificateAuthorityCreateIntermediateForm(ModelForm):
         ])
 
         cert.set_serial_number(signing_cert.cert_serial)
-        self.instance.cert_serial = 01
+        self.instance.cert_serial = 03
         sign_certificate(cert, signkey, self.instance.cert_digest_algorithm)
 
         self.instance.cert_certificate = \
