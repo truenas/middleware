@@ -1,16 +1,22 @@
 # -*- coding: utf-8 -*-
 from south.utils import datetime_utils as datetime
 from south.db import db
-from south.v2 import SchemaMigration
+from south.v2 import DataMigration
 from django.db import models
 
 
-class Migration(SchemaMigration):
+class Migration(DataMigration):
 
     def forwards(self, orm):
         # Deleting field 'Disk.id'
         db.delete_column(u'storage_disk', u'id')
 
+        seen_idents = []
+        for d in list(orm['storage.Disk'].objects.order_by('disk_enabled')):
+            if d.disk_identifier in seen_idents:
+                d.delete()
+            else:
+                seen_idents.append(d.disk_identifier)
 
         # Changing field 'Disk.disk_identifier'
         db.alter_column(u'storage_disk', 'disk_identifier', self.gf('django.db.models.fields.CharField')(max_length=42, primary_key=True))
@@ -22,18 +28,19 @@ class Migration(SchemaMigration):
         # Removing unique constraint on 'Disk', fields ['disk_identifier']
         db.delete_unique(u'storage_disk', ['disk_identifier'])
 
-
-        # User chose to not deal with backwards NULL issues for 'Disk.id'
-        raise RuntimeError("Cannot reverse this migration. 'Disk.id' and its values cannot be restored.")
-        
         # The following code is provided here to aid in writing a correct migration        # Adding field 'Disk.id'
         db.add_column(u'storage_disk', u'id',
-                      self.gf('django.db.models.fields.AutoField')(primary_key=True),
+                      self.gf('django.db.models.fields.IntegerField')(null=True),
                       keep_default=False)
 
+        if not db.dry_run:
+            for i, d in enumerate(orm['storage.Disk'].objects.all()):
+                d.id = i + 1
+                d.save()
 
         # Changing field 'Disk.disk_identifier'
         db.alter_column(u'storage_disk', 'disk_identifier', self.gf('django.db.models.fields.CharField')(max_length=42))
+
 
     models = {
         u'storage.disk': {
