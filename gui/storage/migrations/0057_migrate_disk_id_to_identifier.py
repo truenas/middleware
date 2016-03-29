@@ -34,6 +34,18 @@ class Migration(DataMigration):
                     db.execute("delete from tasks_smarttest_smarttest_disks where id = %s", [row[0]])
 
 
+        db.alter_column(u'storage_encrypteddisk', 'encrypted_disk_id', self.gf('django.db.models.fields.CharField')(max_length=100))
+
+        rows = db.execute("select id, encrypted_disk_id from storage_encrypteddisk")
+        if rows:
+            for row in rows:
+                disk_id = row[1]
+                if disk_id in id_map:
+                    db.execute("update storage_encrypteddisk set encrypted_disk_id = %s where id = %s", [id_map[disk_id], row[0]])
+                else:
+                    db.execute("delete from storage_encrypteddisk where id = %s", [row[0]])
+
+
     def backwards(self, orm):
 
         for i, d in enumerate(orm['storage.Disk'].objects.all()):
