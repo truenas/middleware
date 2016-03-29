@@ -642,7 +642,7 @@ class BaseFreeAdmin(object):
                             break
                     if fk_name:
                         qs = inline._meta.model.objects.filter(
-                            **{'%s__id' % fk_name: instance.id}
+                            **{'%s__id' % fk_name: instance.pk}
                         )
                         if qs.count() > 0:
                             extra = 0
@@ -676,7 +676,7 @@ class BaseFreeAdmin(object):
                 m._meta.app_label,
                 m._meta.model_name,
             ), kwargs={
-                'oid': instance.id,
+                'oid': instance.pk,
             }),
             'hook_buttons': appPool.hook_form_buttons(
                 str(type(mf).__name__),
@@ -750,7 +750,7 @@ class BaseFreeAdmin(object):
         try:
             if m._admin.delete_form_filter:
                 find = m.objects.filter(
-                    id=instance.id,
+                    pk=instance.pk,
                     **m._admin.delete_form_filter)
                 if find.count() == 0:
                     raise
