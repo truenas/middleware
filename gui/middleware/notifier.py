@@ -4413,7 +4413,7 @@ class notifier:
 
     def swap_from_diskid(self, diskid):
         from freenasUI.storage.models import Disk
-        disk = Disk.objects.get(id=diskid)
+        disk = Disk.objects.get(pk=diskid)
         return self.part_type_from_device('swap', disk.devname)
 
     def swap_from_identifier(self, ident):

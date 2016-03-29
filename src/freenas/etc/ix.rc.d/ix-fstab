@@ -73,7 +73,7 @@ generate_fstab_swap()
 {
         local IFS=\|
         local encrypted_swap swap_suffix
-        ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT id FROM storage_disk WHERE disk_enabled = 1" | \
+        ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT disk_identifier FROM storage_disk WHERE disk_enabled = 1" | \
         while read diskid; do
         devname=$(LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/python /usr/local/www/freenasUI/middleware/notifier.py swap_from_diskid "${diskid}")
         if [ -c "/dev/${devname}" ]; then
