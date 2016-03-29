@@ -8,6 +8,7 @@ from django.db import models
 class Migration(DataMigration):
 
     depends_on = (
+        ('services', '0190_dup_webdav'),
         ('tasks', '0004_populate_rsync_delayupdates'),
     )
 
@@ -44,6 +45,15 @@ class Migration(DataMigration):
                     db.execute("update storage_encrypteddisk set encrypted_disk_id = %s where id = %s", [id_map[disk_id], row[0]])
                 else:
                     db.execute("delete from storage_encrypteddisk where id = %s", [row[0]])
+
+
+        # Migrate iscsi device extents
+        rows = db.execute("select id, iscsi_target_extent_path from services_iscsitargetextent where iscsi_target_extent_type = 'Disk'")
+        if rows:
+            for row in rows:
+                disk_id = row[1]
+                if disk_id in id_map:
+                    db.execute("update services_iscsitargetextent set iscsi_target_extent_path = %s where id = %s", [id_map[disk_id], row[0]])
 
 
     def backwards(self, orm):
