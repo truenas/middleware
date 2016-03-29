@@ -33,7 +33,6 @@ from django.db import models
 from django.forms import ModelForm
 from django.utils.translation import ugettext_lazy as _
 
-import eventlet
 from freenasUI.common.log import log_traceback
 from freenasUI.common.warden import (
     WARDEN_STATUS_RUNNING, WARDEN_TYPE_PLUGINJAIL
@@ -48,6 +47,15 @@ from freenasUI.jails.models import Jails
 from freenasUI.middleware.notifier import notifier
 from freenasUI.plugins.models import Plugins
 from freenasUI.plugins.utils import get_base_url
+
+
+import ssl
+# Monkey patch ssl checking to get back to Python 2.7.8 behavior
+# Note: PLEASE DO THIS BEFORE importing eventlet as I went through its
+# code: https://github.com/eventlet/eventlet/blob/master/eventlet/green/ssl.py#LC376
+# Its horrible, but nothing much I can do about it
+ssl._create_default_https_context = ssl._create_unverified_context
+import eventlet
 
 log = logging.getLogger('freeadmin.navtree')
 
