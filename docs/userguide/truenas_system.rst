@@ -654,9 +654,6 @@ case, this screen will close once the updates are downloaded and the downloaded 
 in :numref:`Figure %s: Update Options <tn_update1>`. When you are ready to apply the previously downloaded updates, click the "Apply Pending Updates" button and be aware that the system may
 reboot after the updates are applied.
 
-While the "Manual Update" button can be used to manually upgrade the operating system, this button is only included for backwards compatibility as this method
-of upgrading is no longer the recommended way to upgrade. Instead, select a train and apply the necessary updates to upgrade the operating system.
-
 .. _If Something Goes Wrong:
 
 If Something Goes Wrong

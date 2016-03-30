@@ -706,11 +706,6 @@ case, this screen will close once the updates are downloaded and the downloaded 
 in Figure 5.8a. When you are ready to apply the previously downloaded updates, click the "Apply Pending Updates" button and be aware that the system may
 reboot after the updates are applied.
 
-.. note:: the "Manual Update" button can be used to manually upgrade using a previously downloaded upgrade file, as described in :ref:`Upgrading From the GUI`. 
-   While this can be useful to upgrade to a specific point in time, this button is primarily included for backwards compatibility as this method is no longer
-   the recommended way to upgrade. Instead, select a train and apply any outstanding updates to ensure that the operating system has the most recent updates for
-   the specified train.
-
 .. index:: CA, Certificate Authority
 .. _CAs:
 
