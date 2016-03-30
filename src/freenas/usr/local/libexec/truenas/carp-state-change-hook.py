@@ -413,6 +413,9 @@ def carp_master(fobj, state_file, ifname, vhid, event, user_override, forcetakeo
 
     run('/usr/sbin/service ix-crontab quietstart')
 
+    # sync disks is disabled on passive node
+    run('/usr/sbin/service ix-syncdisks quietstart')
+
     log.warn('Syncing enclosure')
     run('/usr/local/bin/python /usr/local/www/freenasUI/middleware/notifier.py'
         ' zpool_enclosure_sync')
