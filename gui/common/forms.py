@@ -47,6 +47,8 @@ def mchoicefield(form, field, default):
         form.initial[field] = default
     elif ',' in cm:
         form.initial[field] = cm.split(',')
+    else:
+        form.initial[field] = [cm]
 
 
 class AdvMixin(object):
