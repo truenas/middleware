@@ -27,8 +27,6 @@ is a daemon that runs a command or script on a regular schedule as a specified u
 `crontab(5) <http://www.freebsd.org/cgi/man.cgi?query=crontab&sektion=5>`_
 using syntax that can be perplexing to new Unix users. The FreeNAS® GUI makes it easy to schedule when you would like the task to occur.
 
-.. note:: due to a limitation in FreeBSD, users with account names that contain spaces or exceed 17 characters are unable to create cron jobs.
-
 Figure 6.1a shows the screen that opens when you click :menuselection:`Tasks --> Cron Jobs --> Add Cron Job`.
 
 **Figure 6.1a: Creating a Cron Job**
