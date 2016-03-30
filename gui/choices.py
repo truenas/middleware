@@ -185,6 +185,9 @@ CIFS_SMB_PROTO_CHOICES = (
     ('SMB2_24', _('SMB2_24')),
     ('SMB3', _('SMB3')),
     ('SMB3_00', _('SMB3_00')),
+    ('SMB3_02', _('SMB3_02')),
+    ('SMB3_10', _('SMB3_10')),
+    ('SMB3_11', _('SMB3_11')),
 )
 
 DOSCHARSET_CHOICES = (
