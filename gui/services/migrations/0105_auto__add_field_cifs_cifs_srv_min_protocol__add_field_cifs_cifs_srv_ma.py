@@ -15,7 +15,7 @@ class Migration(SchemaMigration):
 
         # Adding field 'CIFS.cifs_srv_max_protocol'
         db.add_column(u'services_cifs', 'cifs_srv_max_protocol',
-                      self.gf('django.db.models.fields.CharField')(default='SMB2', max_length=120),
+                      self.gf('django.db.models.fields.CharField')(default='SMB3', max_length=120),
                       keep_default=False)
 
 
