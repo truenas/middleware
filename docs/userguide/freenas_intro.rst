@@ -132,6 +132,8 @@ Some updates affect the user interface so this section lists any functional chan
    
 * The "NFSv3 ownership model for NFSv4" checkbox has been added to :menuselection:`Services --> NFS`.
 
+* The :command:`nslookup` and :command:`dig` command line utilities have returned.
+
 .. index:: Hardware Recommendations
 .. _Hardware Recommendations:
 
