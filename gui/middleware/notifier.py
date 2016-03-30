@@ -1159,7 +1159,15 @@ class notifier:
             )
         else:
             ident = self.device_to_identifier(diskname)
-            diskobj = Disk.objects.get(disk_identifier=ident)
+            diskobj = Disk.objects.filter(disk_identifier=ident).order_by('disk_enabled')
+            if diskobj.exists():
+                diskobj = diskobj[0]
+            else:
+                diskobj = Disk.objects.filter(disk_name=diskname).order_by('disk_enabled')
+                if diskobj.exists():
+                    diskobj = diskobj[0]
+                else:
+                    raise ValueError("Could not find disk in cache table")
         encdiskobj = EncryptedDisk()
         encdiskobj.encrypted_volume = volume
         encdiskobj.encrypted_disk = diskobj
