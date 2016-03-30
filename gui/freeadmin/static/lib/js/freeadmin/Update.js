@@ -124,7 +124,6 @@ define([
         handleAs: "json",
         query: {"format": "json"}
       }).then(function(data) {
-        console.log("data", data);
         me.dapCurrentTrain.innerHTML = data.selected_train.name;
         me.dapCurrentTrainDesc.innerHTML = data.selected_train.descr;
 
@@ -133,7 +132,6 @@ define([
           var name = data.trains[i];
           var entry = {id: name, label: name, value: name};
           if(name == data.selected_train.name) entry['selected'] = true;
-          console.log(options);
           options.push(entry);
         }
 
