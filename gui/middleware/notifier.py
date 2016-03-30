@@ -4556,6 +4556,13 @@ class notifier:
     def sync_disk(self, devname):
         from freenasUI.storage.models import Disk
 
+        # Skip sync disks on backup node
+        if (
+            not self.is_freenas() and self.failover_licensed() and
+            self.failover_status() == 'BACKUP'
+        ):
+            return
+
         # Do not sync geom classes like multipath/hast/etc
         if devname.find("/") != -1:
             return
@@ -4603,6 +4610,13 @@ class notifier:
 
     def sync_disks(self):
         from freenasUI.storage.models import Disk
+
+        # Skip sync disks on backup node
+        if (
+            not self.is_freenas() and self.failover_licensed() and
+            self.failover_status() == 'BACKUP'
+        ):
+            return
 
         doc = self._geom_confxml()
         disks = self.__get_disks()
