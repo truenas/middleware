@@ -483,13 +483,12 @@ class IPChoices(NICChoices):
         )
 
         from freenasUI.middleware.notifier import notifier
-        if hasattr(notifier, 'failover_status'):
+        _n = notifier()
+        carp = False
+        if not _n.is_freenas():
             try:
-                if notifier().failover_status() not in ('SINGLE', 'ERROR'):
-                    self._NIClist = filter(
-                        lambda y: re.search(r'^carp[0,3-9]|carp\d\d+$', y),
-                        self._NIClist,
-                    )
+                if _n.failover_status() not in ('SINGLE', 'ERROR'):
+                    carp = True
             except sqlite3.OperationalError:
                 pass
 
@@ -498,6 +497,14 @@ class IPChoices(NICChoices):
             pipe = popen("/sbin/ifconfig %s" % iface)
             lines = pipe.read().strip().split('\n')
             for line in lines:
+                if carp:
+                    reg = re.search(r' vhid (\d+)', line)
+                    if reg:
+                        vhid = reg.group(1)
+                        if vhid in ('10', '20'):
+                            continue
+                    else:
+                        continue
                 if line.startswith('\tinet6'):
                     if ipv6 is True:
                         self._IPlist.append(line.split(' ')[1].split('%')[0])
