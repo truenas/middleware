@@ -491,6 +491,7 @@ class ActiveDirectoryForm(ModelForm):
         cdata = self.cleaned_data
         domain = cdata.get("ad_domainname")
         bindname = cdata.get("ad_bindname")
+        binddn = "%s@%s" % (bindname, domain)
         bindpw = cdata.get("ad_bindpw")
         site = cdata.get("ad_site")
         netbiosname = cdata.get("ad_netbiosname_a")
@@ -520,7 +521,6 @@ class ActiveDirectoryForm(ModelForm):
             if not bindpw:
                 raise forms.ValidationError("No domain account password specified")
 
-            binddn = "%s@%s" % (bindname, domain)
             errors = []
 
             try:
