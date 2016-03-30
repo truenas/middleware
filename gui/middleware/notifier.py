@@ -4413,7 +4413,7 @@ class notifier:
 
     def swap_from_diskid(self, diskid):
         from freenasUI.storage.models import Disk
-        disk = Disk.objects.get(id=diskid)
+        disk = Disk.objects.get(pk=diskid)
         return self.part_type_from_device('swap', disk.devname)
 
     def swap_from_identifier(self, ident):
@@ -4556,6 +4556,13 @@ class notifier:
     def sync_disk(self, devname):
         from freenasUI.storage.models import Disk
 
+        # Skip sync disks on backup node
+        if (
+            not self.is_freenas() and self.failover_licensed() and
+            self.failover_status() == 'BACKUP'
+        ):
+            return
+
         # Do not sync geom classes like multipath/hast/etc
         if devname.find("/") != -1:
             return
@@ -4574,7 +4581,7 @@ class notifier:
         if ident and qs.exists():
             disk = qs[0]
         else:
-            qs = Disk.objects.filter(disk_name=devname).update(
+            Disk.objects.filter(disk_name=devname).update(
                 disk_enabled=False
             )
             disk = Disk()
@@ -4603,6 +4610,13 @@ class notifier:
 
     def sync_disks(self):
         from freenasUI.storage.models import Disk
+
+        # Skip sync disks on backup node
+        if (
+            not self.is_freenas() and self.failover_licensed() and
+            self.failover_status() == 'BACKUP'
+        ):
+            return
 
         doc = self._geom_confxml()
         disks = self.__get_disks()
@@ -4659,9 +4673,14 @@ class notifier:
 
         for devname in disks:
             if devname not in in_disks:
-                disk = Disk()
+                disk_identifier = self.device_to_identifier(devname)
+                disk = Disk.objects.filter(disk_identifier=disk_identifier)
+                if disk.exists():
+                    disk = disk[0]
+                else:
+                    disk = Disk()
+                    disk.disk_identifier = disk_identifier
                 disk.disk_name = devname
-                disk.disk_identifier = self.device_to_identifier(devname)
                 geom = doc.xpath("//class[name = 'DISK']//geom[name = '%s']" % devname)
                 if len(geom) > 0:
                     serial = geom[0].xpath("./provider/config/ident")
@@ -4869,7 +4888,7 @@ class notifier:
             )
             if qs.exists():
                 diskobj = qs[0]
-                mp_ids.append(diskobj.id)
+                mp_ids.append(diskobj.pk)
                 diskobj.disk_multipath_name = geom.xpath("./name")[0].text
                 if diskobj.disk_name in _disks:
                     _disks.remove(diskobj.disk_name)
@@ -4877,7 +4896,7 @@ class notifier:
                     diskobj.disk_multipath_member = _disks.pop()
                 diskobj.save()
 
-        Disk.objects.exclude(id__in=mp_ids).update(disk_multipath_name='', disk_multipath_member='')
+        Disk.objects.exclude(pk__in=mp_ids).update(disk_multipath_name='', disk_multipath_member='')
 
     def _find_root_devs(self):
         """Find the root device.

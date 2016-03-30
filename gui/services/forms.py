@@ -1305,7 +1305,7 @@ class iSCSITargetExtentForm(ModelForm):
         if exclude:
             qs = qs.exclude(id=exclude.id)
         diskids = [i[0] for i in qs.values_list('iscsi_target_extent_path')]
-        used_disks = [d.disk_name for d in Disk.objects.filter(id__in=diskids)]
+        used_disks = [d.disk_name for d in Disk.objects.filter(disk_identifier__in=diskids)]
 
         qs = models.iSCSITargetExtent.objects.filter(iscsi_target_extent_type='ZVOL')
         if exclude:
@@ -1476,7 +1476,7 @@ class iSCSITargetExtentForm(ModelForm):
                 mp_name = self.cleaned_data["iscsi_target_extent_disk"].split("/")[-1]
                 diskobj = models.Disk.objects.get(disk_multipath_name=mp_name)
                 oExtent.iscsi_target_extent_type = 'Disk'
-                oExtent.iscsi_target_extent_path = str(diskobj.id)
+                oExtent.iscsi_target_extent_path = diskobj.pk
             elif self.cleaned_data["iscsi_target_extent_disk"].startswith("hast"):
                 oExtent.iscsi_target_extent_type = 'HAST'
                 oExtent.iscsi_target_extent_path = self.cleaned_data["iscsi_target_extent_disk"]
@@ -1484,7 +1484,7 @@ class iSCSITargetExtentForm(ModelForm):
                 diskobj = models.Disk.objects.filter(
                     disk_name=self.cleaned_data["iscsi_target_extent_disk"],
                     disk_enabled=True,
-                ).order_by('-id')[0]
+                ).order_by('disk_enabled')[0]
                 # label it only if it is a real disk
                 if (
                     diskobj.disk_identifier.startswith("{devicename}")
@@ -1505,7 +1505,7 @@ class iSCSITargetExtentForm(ModelForm):
                         )
                     notifier().sync_disk(self.cleaned_data["iscsi_target_extent_disk"])
                 oExtent.iscsi_target_extent_type = 'Disk'
-                oExtent.iscsi_target_extent_path = str(diskobj.id)
+                oExtent.iscsi_target_extent_path = diskobj.pk
             oExtent.iscsi_target_extent_filesize = 0
             oExtent.save()
 

@@ -223,6 +223,7 @@ class DiskResourceMixin(object):
     def dehydrate(self, bundle):
         bundle = super(DiskResourceMixin, self).dehydrate(bundle)
         if self.is_webclient(bundle.request):
+            bundle.data['id'] = bundle.obj.pk
             bundle.data['_edit_url'] += '?deletable=false'
             bundle.data['_wipe_url'] = reverse('storage_disk_wipe', kwargs={
                 'devname': bundle.obj.disk_name,
@@ -1562,7 +1563,7 @@ class SMARTTestResourceMixin(object):
     def dehydrate(self, bundle):
         bundle = super(SMARTTestResourceMixin, self).dehydrate(bundle)
         bundle.data['smarttest_disks'] = [
-            o.id for o in bundle.obj.smarttest_disks.all()
+            o.pk for o in bundle.obj.smarttest_disks.all()
         ]
         if self.is_webclient(bundle.request):
             _common_human_fields(bundle)
@@ -1714,7 +1715,7 @@ class ISCSITargetExtentResourceMixin(object):
     def dehydrate(self, bundle):
         bundle = super(ISCSITargetExtentResourceMixin, self).dehydrate(bundle)
         if bundle.obj.iscsi_target_extent_type == 'Disk':
-            disk = Disk.objects.get(id=bundle.obj.iscsi_target_extent_path)
+            disk = Disk.objects.get(pk=bundle.obj.iscsi_target_extent_path)
             bundle.data['iscsi_target_extent_path'] = "/dev/%s" % disk.devname
         elif bundle.obj.iscsi_target_extent_type == 'ZVOL':
             bundle.data['iscsi_target_extent_path'] = "/dev/%s" % (

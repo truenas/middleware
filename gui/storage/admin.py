@@ -18,7 +18,6 @@ from freenasUI.storage import models
 class DiskFAdmin(BaseFreeAdmin):
 
     exclude_fields = (
-        'id',
         'disk_identifier',
         'disk_subsystem',
         'disk_number',

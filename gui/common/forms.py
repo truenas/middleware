@@ -74,7 +74,7 @@ class ModelForm(AdvMixin, MF):
         self._api = kwargs.pop('api_validation', False)
         super(ModelForm, self).__init__(*args, **kwargs)
 
-        if self.instance and self.instance.id:
+        if self.instance and self.instance.pk:
             """
             Only show fields that are node specific in passive node
             e.g. hostname

@@ -1150,7 +1150,7 @@ class DiskFormPartial(ModelForm):
     def __init__(self, *args, **kwargs):
         super(DiskFormPartial, self).__init__(*args, **kwargs)
         instance = getattr(self, 'instance', None)
-        if instance and instance.id:
+        if instance and instance.pk:
             self._original_smart_en = self.instance.disk_togglesmart
             self._original_smart_opts = self.instance.disk_smartoptions
             self.fields['disk_name'].widget.attrs['readonly'] = True
@@ -1230,7 +1230,7 @@ class DiskEditBulkForm(Form):
     def __init__(self, *args, **kwargs):
         self._disks = kwargs.pop('disks')
         super(DiskEditBulkForm, self).__init__(*args, **kwargs)
-        self.fields['ids'].initial = ','.join([str(d.id) for d in self._disks])
+        self.fields['ids'].initial = ','.join([str(d.pk) for d in self._disks])
 
         """
         Make sure all the disks have a same option for each field
