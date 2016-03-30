@@ -817,8 +817,9 @@ the failed device in the GUI, perform the following steps:
     disk.
 
 #.  Once the disk has been replaced and is showing as OFFLINE, click the disk again and then click its "Replace" button. Select the replacement disk from the drop-down menu
-    and click the "Replace Disk" button. If the disk is a member of an encrypted ZFS pool, the menu will also prompt you to input and confirm the passphrase for the pool.
-    Once you click the "Replace Disk" button, the ZFS pool will start to resilver and the status of the resilver will be displayed.
+    and click the "Replace Disk" button.  Once you click the "Replace Disk" button, the ZFS pool will start to resilver and the status of the resilver will be displayed.
+    
+#. Once the drive replacement process is complete, readd the replaced disk in the :ref:`S.M.A.R.T. Tests` screen.
 
 In the example shown in Figure 8.1p, a failed disk is being replaced by disk *ada5* in the volume named :file:`volume1`.
 
