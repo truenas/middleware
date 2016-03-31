@@ -1,0 +1,16 @@
+rsync is a replacement for rcp that has many more features.
+ 
+rsync uses the "rsync algorithm" which provides a very fast method for
+bringing remote files into sync. It does this by sending just the
+differences in the files across the link, without requiring that both
+sets of files are present at one of the ends of the link beforehand.
+This makes rsync a good remote file distribution/synchronization utility
+in a dialup PPP/SLIP environment.
+
+Note, requires rsync on the destination machine.
+
+There is a Computer Science Technical Report on the rsync algorithm is
+included in the distribution, and is available as
+ftp://samba.anu.edu.au/pub/rsync/tech_report.ps
+
+WWW: http://rsync.samba.org/

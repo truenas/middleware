@@ -2175,7 +2175,11 @@ class SnapshotResource(DojoResource):
             },
         )
         if form.is_valid():
-            form.commit()
+            err = form.commit()
+            if err:
+                raise ImmediateHttpResponse(
+                    response=self.error_response(request, err)
+                )
         else:
             raise ImmediateHttpResponse(
                 response=self.error_response(request, form.errors)

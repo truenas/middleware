@@ -208,6 +208,20 @@ class CIFSForm(ModelForm):
             self.initial['cifs_srv_domain_logons'] = True
             self.fields['cifs_srv_domain_logons'].widget.attrs['readonly'] = True
 
+        _n = notifier()
+        if not _n.is_freenas():
+            if not _n.failover_licensed():
+                del self.fields['cifs_srv_netbiosname_b']
+            else:
+                from freenasUI.failover.utils import node_label_field
+                node_label_field(
+                    _n.failover_node(),
+                    self.fields['ldap_netbiosname_a'],
+                    self.fields['ldap_netbiosname_b'],
+                )
+        else:
+            del self.fields['cifs_srv_netbiosname_b']
+
     def __check_octet(self, v):
         try:
             if v != "" and (int(v, 8) & ~011777):

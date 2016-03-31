@@ -81,6 +81,18 @@ class CIFS(Model):
         max_length=120,
         verbose_name=_("NetBIOS name"),
     )
+    cifs_srv_netbiosname_b = models.CharField(
+        max_length=120,
+        verbose_name=_("NetBIOS name"),
+        blank=True,
+        null=True,
+    )
+    cifs_srv_netbiosalias = models.CharField(
+        max_length=120,
+        verbose_name=_("NetBIOS alias"),
+        blank=True,
+        null=True,
+    )
     cifs_srv_workgroup = models.CharField(
         max_length=120,
         verbose_name=_("Workgroup"),

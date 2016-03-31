@@ -614,7 +614,10 @@ class Configuration(object):
                     # Do I need to do something different for the progress handler?
                     retval.seek(0)
                     return retval
-                log.error("Got http error %s" % str(error))
+                elif error.code == httplib.NOT_FOUND:
+                    # Doesn't exist.  Log this, and try the next one
+                    log.debug("URL %s returned not found" % url)
+                    continue
                 url_exc = error
             except BaseException as e:
                 log.error("Unable to load %s: %s", url, str(e))
@@ -1104,7 +1107,8 @@ class Configuration(object):
                 pathname = save_name,
                 reason = "DownloadPackageFile",
                 intr_ok = True
-                )
+            )
+            
             if file:
                 if search_attempt["Checksum"]:
                     h = ChecksumFile(file)
