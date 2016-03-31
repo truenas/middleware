@@ -219,6 +219,8 @@ class CIFSForm(ModelForm):
                     self.fields['ldap_netbiosname_a'],
                     self.fields['ldap_netbiosname_b'],
                 )
+        else:
+            del self.fields['cifs_srv_netbiosname_b']
 
     def __check_octet(self, v):
         try:
