@@ -1,0 +1,557 @@
+diff --git a/acls.c b/acls.c
+index 2c78e11..bd59cb6 100644
+--- a/acls.c
++++ b/acls.c
+@@ -79,20 +79,35 @@ typedef struct rsync_acl {
+ 	uchar other_obj;
+ } rsync_acl;
+ 
++typedef struct nfs4_acl {
++	char *nfs4_acl_text;
++	ssize_t nfs4_acl_len;
++} nfs4_acl;
++
+ typedef struct {
+ 	rsync_acl racl;
+ 	SMB_ACL_T sacl;
+ } acl_duo;
+ 
++typedef struct {
++	nfs4_acl nacl;
++	SMB_ACL_T sacl;
++} nfs4_duo;
++
+ static const rsync_acl empty_rsync_acl = {
+ 	{NULL, 0}, NO_ENTRY, NO_ENTRY, NO_ENTRY, NO_ENTRY
+ };
++static const nfs4_acl empty_nfs4_acl = {
++	NULL, -1
++};
+ 
+ static item_list access_acl_list = EMPTY_ITEM_LIST;
+ static item_list default_acl_list = EMPTY_ITEM_LIST;
++static item_list nfs4_acl_list = EMPTY_ITEM_LIST;
+ 
+ static size_t prior_access_count = (size_t)-1;
+ static size_t prior_default_count = (size_t)-1;
++static size_t prior_nfs4_count = (size_t)-1;
+ 
+ /* === Calculations on ACL types === */
+ 
+@@ -188,6 +203,17 @@ static rsync_acl *create_racl(void)
+ 	return racl;
+ }
+ 
++static nfs4_acl *create_nfs4_acl(void)
++{
++	nfs4_acl *nacl = new(nfs4_acl);
++
++	if (!nacl)
++		out_of_memory("create_nfs4_acl");
++	*nacl = empty_nfs4_acl;
++
++	return nacl;
++}
++
+ static BOOL ida_entries_equal(const ida_entries *ial1, const ida_entries *ial2)
+ {
+ 	id_access *ida1, *ida2;
+@@ -212,6 +238,11 @@ static BOOL rsync_acl_equal(const rsync_acl *racl1, const rsync_acl *racl2)
+ 	    && ida_entries_equal(&racl1->names, &racl2->names);
+ }
+ 
++static BOOL nfs4_acl_equal(const nfs4_acl *nacl1, const nfs4_acl *nacl2)
++{
++	return (strcmp(nacl1->nfs4_acl_text, nacl2->nfs4_acl_text) == 0);
++}
++
+ /* Are the extended (non-permission-bit) entries equal?  If so, the rest of
+  * the ACL will be handled by the normal mode-preservation code.  This is
+  * only meaningful for access ACLs!  Note: the 1st arg is a fully-populated
+@@ -245,6 +276,13 @@ static void rsync_acl_free(rsync_acl *racl)
+ 	*racl = empty_rsync_acl;
+ }
+ 
++static void nfs4_acl_free(nfs4_acl *nacl)
++{
++	if (nacl->nfs4_acl_text)
++		free(nacl->nfs4_acl_text);
++	*nacl = empty_nfs4_acl;
++}
++
+ void free_acl(stat_x *sxp)
+ {
+ 	if (sxp->acc_acl) {
+@@ -257,6 +295,11 @@ void free_acl(stat_x *sxp)
+ 		free(sxp->def_acl);
+ 		sxp->def_acl = NULL;
+ 	}
++	if (sxp->nfs4_acl) {
++		nfs4_acl_free(sxp->nfs4_acl);
++		free(sxp->nfs4_acl);
++		sxp->nfs4_acl = NULL;
++	}
+ }
+ 
+ #ifdef SMB_ACL_NEED_SORT
+@@ -487,6 +530,26 @@ static int find_matching_rsync_acl(const rsync_acl *racl, SMB_ACL_TYPE_T type,
+ 	return *match;
+ }
+ 
++static int find_matching_nfs4_acl(const nfs4_acl *nacl, const item_list *nfs4_acl_list)
++{
++	static int nfs4_match = -1;
++	int *match = &nfs4_match;
++	size_t count = nfs4_acl_list->count;
++
++	if (*match == -1)
++		*match = nfs4_acl_list->count - 1;
++	while (count--) {
++		nfs4_acl *base = nfs4_acl_list->items;
++		if (nfs4_acl_equal(base + *match, nacl))
++			return *match;
++		if (!(*match)--)
++			*match = nfs4_acl_list->count - 1;
++	}
++
++	*match = -1;
++	return *match;
++}
++
+ static int get_rsync_acl(const char *fname, rsync_acl *racl,
+ 			 SMB_ACL_TYPE_T type, mode_t mode)
+ {
+@@ -557,6 +620,21 @@ static int get_rsync_acl(const char *fname, rsync_acl *racl,
+ /* Return the Access Control List for the given filename. */
+ int get_acl(const char *fname, stat_x *sxp)
+ {
++	if (sys_acl_get_brand_file(fname, &sxp->brand) < 0)
++		return -1;
++
++	if (sxp->brand == SMB_ACL_BRAND_NFS4) {
++		SMB_ACL_T sacl;
++		if ((sacl = sys_acl_get_file(fname, SMB_ACL_TYPE_NFS4)) == NULL)
++			return -1;
++
++		sxp->nfs4_acl = create_nfs4_acl();
++		sxp->nfs4_acl->nfs4_acl_text = acl_to_text(sacl, &sxp->nfs4_acl->nfs4_acl_len);
++
++		sys_acl_free_acl(sacl);
++		return 0;
++	}
++
+ 	sxp->acc_acl = create_racl();
+ 
+ 	if (S_ISREG(sxp->st.st_mode) || S_ISDIR(sxp->st.st_mode)) {
+@@ -755,6 +833,25 @@ static void send_rsync_acl(int f, rsync_acl *racl, SMB_ACL_TYPE_T type,
+ 	}
+ }
+ 
++static void send_nfs4_acl(int f, nfs4_acl *nacl, item_list *nfs4_list)
++{
++	int ndx = find_matching_nfs4_acl(nacl, nfs4_list);
++
++	/* Send 0 (-1 + 1) to indicate that literal ACL data follows. */
++	write_varint(f, ndx + 1);
++
++	if (ndx < 0) {
++		nfs4_acl *new_nacl = EXPAND_ITEM_LIST(&nfs4_acl_list, nfs4_acl, 1000);
++
++		write_varint(f, nacl->nfs4_acl_len);
++		write_buf(f, nacl->nfs4_acl_text, nacl->nfs4_acl_len);
++
++		*new_nacl = *nacl;
++		*nacl = empty_nfs4_acl;
++	}
++}
++
++
+ /* Send the ACL from the stat_x structure down the indicated file descriptor.
+  * This also frees the ACL data. */
+ void send_acl(int f, stat_x *sxp)
+@@ -764,6 +861,12 @@ void send_acl(int f, stat_x *sxp)
+ 		return;
+ 	}
+ 
++	if (sxp->brand == SMB_ACL_BRAND_NFS4) {
++		write_varint(f, SMB_ACL_TYPE_NFS4);
++		send_nfs4_acl(f, sxp->nfs4_acl, &nfs4_acl_list);
++		return;
++	}
++
+ 	if (!sxp->acc_acl) {
+ 		sxp->acc_acl = create_racl();
+ 		rsync_acl_fake_perms(sxp->acc_acl, sxp->st.st_mode);
+@@ -771,12 +874,14 @@ void send_acl(int f, stat_x *sxp)
+ 	/* Avoid sending values that can be inferred from other data. */
+ 	rsync_acl_strip_perms(sxp);
+ 
++	write_varint(f, SMB_ACL_TYPE_ACCESS);
+ 	send_rsync_acl(f, sxp->acc_acl, SMB_ACL_TYPE_ACCESS, &access_acl_list);
+ 
+ 	if (S_ISDIR(sxp->st.st_mode)) {
+ 		if (!sxp->def_acl)
+ 			sxp->def_acl = create_racl();
+ 
++		write_varint(f, SMB_ACL_TYPE_DEFAULT);
+ 		send_rsync_acl(f, sxp->def_acl, SMB_ACL_TYPE_DEFAULT, &default_acl_list);
+ 	}
+ }
+@@ -1053,15 +1158,58 @@ static int recv_rsync_acl(int f, item_list *racl_list, SMB_ACL_TYPE_T type, mode
+ 	return ndx;
+ }
+ 
++
++static int recv_nfs4_acl(int f, item_list *nfs4_acl_list, struct file_struct *file __unused)
++{
++	nfs4_duo *duo_item;
++	int ndx = read_varint(f);
++
++	if (ndx < 0 || (size_t)ndx > nfs4_acl_list->count) {
++		rprintf(FERROR_XFER, "recv_nfs4_index: %s ACL index %d > %d\n",
++			str_acl_type(SMB_ACL_TYPE_NFS4), ndx, (int)nfs4_acl_list->count);
++		exit_cleanup(RERR_STREAMIO);
++	}
++
++	if (ndx != 0)
++		return ndx - 1;
++
++	ndx = nfs4_acl_list->count;
++	duo_item = EXPAND_ITEM_LIST(nfs4_acl_list, nfs4_duo, 1000);
++	duo_item->nacl = empty_nfs4_acl;
++
++	duo_item->nacl.nfs4_acl_len = read_varint(f);
++	duo_item->nacl.nfs4_acl_text = new_array(char, duo_item->nacl.nfs4_acl_len + 1);
++	if (!duo_item->nacl.nfs4_acl_text)
++		out_of_memory("recv_nfs4_acl");
++
++	read_buf(f, duo_item->nacl.nfs4_acl_text, duo_item->nacl.nfs4_acl_len);
++	duo_item->nacl.nfs4_acl_text[duo_item->nacl.nfs4_acl_len] = 0;
++
++	duo_item->sacl = NULL;
++	return ndx;
++}
++
++
+ /* Receive the ACL info the sender has included for this file-list entry. */
+ void receive_acl(int f, struct file_struct *file)
+ {
++	int ndx;
++	SMB_ACL_TYPE_T type;
++
+ 	if (protocol_version < 30) {
+ 		old_recv_acl(file, f);
+ 		return;
+ 	}
+ 
+-	F_ACL(file) = recv_rsync_acl(f, &access_acl_list, SMB_ACL_TYPE_ACCESS, file->mode);
++	type = read_varint(f);
++	if (type == SMB_ACL_TYPE_NFS4){
++		ndx = recv_nfs4_acl(f, &nfs4_acl_list, file);
++		F_ACL(file) = ndx;
++		return;
++	}
++
++	ndx = recv_rsync_acl(f, &access_acl_list, SMB_ACL_TYPE_ACCESS, file->mode);
++	F_ACL(file) = ndx;
+ 
+ 	if (S_ISDIR(file->mode))
+ 		F_DIR_DEFACL(file) = recv_rsync_acl(f, &default_acl_list, SMB_ACL_TYPE_DEFAULT, 0);
+@@ -1085,10 +1233,37 @@ static int cache_rsync_acl(rsync_acl *racl, SMB_ACL_TYPE_T type, item_list *racl
+ 	return ndx;
+ }
+ 
++static int cache_nfs4_acl(nfs4_acl *nacl, item_list *nfs4_list)
++{
++	int ndx;
++
++	if (!nacl)
++		ndx = -1;
++	else if ((ndx = find_matching_nfs4_acl(nacl, nfs4_list)) == -1) {
++		nfs4_duo *new_duo;
++		ndx = nfs4_list->count;
++		new_duo = EXPAND_ITEM_LIST(nfs4_list, nfs4_duo, 1000);
++		new_duo->nacl = *nacl;
++		new_duo->sacl = NULL;
++		*nacl = empty_nfs4_acl;
++	}
++
++	return ndx;
++}
++
++
+ /* Turn the ACL data in stat_x into cached ACL data, setting the index
+  * values in the file struct. */
+ void cache_tmp_acl(struct file_struct *file, stat_x *sxp)
+ {
++	if (sxp->brand == SMB_ACL_BRAND_NFS4) {
++		if (prior_nfs4_count == (size_t)-1)
++			prior_nfs4_count = nfs4_acl_list.count;
++
++		F_ACL(file) = cache_nfs4_acl(sxp->nfs4_acl, &nfs4_acl_list);
++		return;
++	}
++
+ 	if (prior_access_count == (size_t)-1)
+ 		prior_access_count = access_acl_list.count;
+ 
+@@ -1118,6 +1293,21 @@ static void uncache_duo_acls(item_list *duo_list, size_t start)
+ 	}
+ }
+ 
++static void uncache_nfs4_acls(item_list *nfs4_list, size_t start)
++{
++	nfs4_duo *nfs4_item = nfs4_list->items;
++	nfs4_duo *nfs4_start = nfs4_item + start;
++
++	nfs4_item += nfs4_list->count;
++	nfs4_list->count = start;
++
++	while (nfs4_item-- > nfs4_start) {
++		nfs4_acl_free(&nfs4_item->nacl);
++		if (nfs4_item->sacl)
++			sys_acl_free_acl(nfs4_item->sacl);
++	}
++}
++
+ void uncache_tmp_acls(void)
+ {
+ 	if (prior_access_count != (size_t)-1) {
+@@ -1129,6 +1319,10 @@ void uncache_tmp_acls(void)
+ 		uncache_duo_acls(&default_acl_list, prior_default_count);
+ 		prior_default_count = (size_t)-1;
+ 	}
++	if (prior_nfs4_count != (size_t)-1) {
++		uncache_nfs4_acls(&nfs4_acl_list, prior_nfs4_count);
++		prior_nfs4_count = (size_t)-1;
++	}
+ }
+ 
+ #ifndef HAVE_OSX_ACLS
+@@ -1281,6 +1475,7 @@ static int set_rsync_acl(const char *fname, acl_duo *duo_item,
+ 	return 0;
+ }
+ 
++
+ /* Given a fname, this sets extended access ACL entries, the default ACL (for a
+  * dir), and the regular mode bits on the file.  Call this with fname set to
+  * NULL to just check if the ACL is different.
+@@ -1300,6 +1495,32 @@ int set_acl(const char *fname, const struct file_struct *file, stat_x *sxp, mode
+ 		return -1;
+ 	}
+ 
++	if (sxp->brand == SMB_ACL_BRAND_NFS4) {
++		ndx = F_ACL(file);
++		if (ndx >= 0 && (size_t)ndx < nfs4_acl_list.count) {
++			nfs4_duo *duo_item = nfs4_acl_list.items;
++			duo_item += ndx;
++			changed = 1;
++
++			if (!duo_item->sacl) {
++				duo_item->sacl = acl_from_text(duo_item->nacl.nfs4_acl_text);
++				if (!duo_item->sacl)
++					return -1;
++			}
++
++			if (!dry_run && fname) {
++				if (sys_acl_set_file(fname, SMB_ACL_TYPE_NFS4, duo_item->sacl) < 0) {
++					rsyserr(FERROR_XFER, errno, "set_acl: sys_acl_set_file(%s, %s)",
++						fname, str_acl_type(SMB_ACL_TYPE_NFS4));
++					return -1;
++				}
++
++				return changed;
++			}
++		}
++	}
++
++
+ 	ndx = F_ACL(file);
+ 	if (ndx >= 0 && (size_t)ndx < access_acl_list.count) {
+ 		acl_duo *duo_item = access_acl_list.items;
+diff --git a/hlink.c b/hlink.c
+index 3b57898..6130bbc 100644
+--- a/hlink.c
++++ b/hlink.c
+@@ -426,7 +426,9 @@ int hard_link_check(struct file_struct *file, int ndx, char *fname,
+ 				else {
+ 					sxp->acc_acl = alt_sx.acc_acl;
+ 					sxp->def_acl = alt_sx.def_acl;
++					sxp->nfs4_acl = alt_sx.nfs4_acl;
+ 					alt_sx.acc_acl = alt_sx.def_acl = NULL;
++					alt_sx.nfs4_acl = NULL;
+ 				}
+ 			}
+ #endif
+diff --git a/ifuncs.h b/ifuncs.h
+index 6b119aa..24c4fd8 100644
+--- a/ifuncs.h
++++ b/ifuncs.h
+@@ -80,6 +80,7 @@ init_stat_x(stat_x *sx_p)
+ {
+ #ifdef SUPPORT_ACLS
+ 	sx_p->acc_acl = sx_p->def_acl = NULL;
++	sx_p->nfs4_acl = NULL;
+ #endif
+ #ifdef SUPPORT_XATTRS
+ 	sx_p->xattr = NULL;
+diff --git a/lib/sysacls.c b/lib/sysacls.c
+index 6ccfe43..a4faf50 100644
+--- a/lib/sysacls.c
++++ b/lib/sysacls.c
+@@ -80,12 +80,36 @@ SMB_ACL_T sys_acl_get_file( const char *path_p, SMB_ACL_TYPE_T type)
+ 	return acl_get_file( path_p, type);
+ }
+ 
+-#if 0
+ SMB_ACL_T sys_acl_get_fd(int fd)
+ {
+ 	return acl_get_fd(fd);
+ }
+-#endif
++
++int sys_acl_get_brand( SMB_ACL_T the_acl, int *brand_p)
++{
++	return acl_get_brand_np(the_acl, brand_p);
++}
++
++int sys_acl_get_brand_file( const char *path_p, int *brand_p)
++{
++	int fd;
++	acl_t acl;
++
++	if ((fd = open(path_p, O_RDONLY|O_NONBLOCK)) < 0)
++		return -1;
++	if ((acl = acl_get_fd(fd)) == NULL) {
++		close(fd);
++		return -1;
++	}
++	close(fd);
++	if (acl_get_brand_np(acl, brand_p) < 0) {
++		acl_free(acl);
++		return -1;
++	}
++
++	acl_free(acl);
++	return 0;
++}
+ 
+ #if defined(HAVE_ACL_GET_PERM_NP)
+ #define acl_get_perm(p, b) acl_get_perm_np(p, b)
+diff --git a/lib/sysacls.h b/lib/sysacls.h
+index 31c4909..49f7b33 100644
+--- a/lib/sysacls.h
++++ b/lib/sysacls.h
+@@ -48,6 +48,7 @@
+ #define SMB_ACL_GROUP_OBJ	ACL_GROUP_OBJ
+ #define SMB_ACL_OTHER		ACL_OTHER
+ #define SMB_ACL_MASK		ACL_MASK
++#define SMB_ACL_EVERYONE	ACL_EVERYONE
+ 
+ #define SMB_ACL_T		acl_t
+ 
+@@ -58,6 +59,11 @@
+ 
+ #define SMB_ACL_TYPE_ACCESS	ACL_TYPE_ACCESS
+ #define SMB_ACL_TYPE_DEFAULT	ACL_TYPE_DEFAULT
++#define	SMB_ACL_TYPE_NFS4	ACL_TYPE_NFS4
++
++#define	SMB_ACL_BRAND_UNKNOWN	ACL_BRAND_UNKNOWN
++#define	SMB_ACL_BRAND_POSIX	ACL_BRAND_POSIX
++#define	SMB_ACL_BRAND_NFS4	ACL_BRAND_NFS4
+ 
+ #define SMB_ACL_VALID_NAME_BITS	(4 | 2 | 1)
+ #define SMB_ACL_VALID_OBJ_BITS	(4 | 2 | 1)
+@@ -292,6 +298,8 @@ int sys_acl_get_info(SMB_ACL_ENTRY_T entry, SMB_ACL_TAG_T *tag_type_p, uint32 *b
+ SMB_ACL_T sys_acl_get_file(const char *path_p, SMB_ACL_TYPE_T type);
+ SMB_ACL_T sys_acl_get_fd(int fd);
+ SMB_ACL_T sys_acl_init(int count);
++int sys_acl_get_brand( SMB_ACL_T the_acl, int *brand_p);
++int sys_acl_get_brand_file( const char *path_p, int *brand_p);
+ int sys_acl_create_entry(SMB_ACL_T *pacl, SMB_ACL_ENTRY_T *pentry);
+ int sys_acl_set_info(SMB_ACL_ENTRY_T entry, SMB_ACL_TAG_T tagtype, uint32 bits, id_t u_g_id);
+ int sys_acl_set_access_bits(SMB_ACL_ENTRY_T entry, uint32 bits);
+diff --git a/main.c b/main.c
+index e7a13f7..0a65e45 100644
+--- a/main.c
++++ b/main.c
+@@ -1014,6 +1014,7 @@ static void do_server_recv(int f_in, int f_out, int argc, char *argv[])
+ 		rprintf(FERROR,"server_recv: recv_file_list error\n");
+ 		exit_cleanup(RERR_FILESELECT);
+ 	}
++
+ 	if (inc_recurse && file_total == 1)
+ 		recv_additional_file_list(f_in);
+ 
+diff --git a/rsync.c b/rsync.c
+index c498c44..7814ae5 100644
+--- a/rsync.c
++++ b/rsync.c
+@@ -561,19 +561,6 @@ int set_file_attrs(const char *fname, struct file_struct *file, stat_x *sxp,
+ 			file->flags |= FLAG_TIME_FAILED;
+ 	}
+ 
+-#ifdef SUPPORT_ACLS
+-	/* It's OK to call set_acl() now, even for a dir, as the generator
+-	 * will enable owner-writability using chmod, if necessary.
+-	 * 
+-	 * If set_acl() changes permission bits in the process of setting
+-	 * an access ACL, it changes sxp->st.st_mode so we know whether we
+-	 * need to chmod(). */
+-	if (preserve_acls && !S_ISLNK(new_mode)) {
+-		if (set_acl(fname, file, sxp, new_mode) > 0)
+-			updated = 1;
+-	}
+-#endif
+-
+ #ifdef HAVE_CHMOD
+ 	if (!BITS_EQUAL(sxp->st.st_mode, new_mode, CHMOD_BITS)) {
+ 		int ret = am_root < 0 ? 0 : do_chmod(fname, new_mode);
+@@ -588,6 +575,19 @@ int set_file_attrs(const char *fname, struct file_struct *file, stat_x *sxp,
+ 	}
+ #endif
+ 
++#ifdef SUPPORT_ACLS
++	/* It's OK to call set_acl() now, even for a dir, as the generator
++	 * will enable owner-writability using chmod, if necessary.
++	 * 
++	 * If set_acl() changes permission bits in the process of setting
++	 * an access ACL, it changes sxp->st.st_mode so we know whether we
++	 * need to chmod(). */
++	if (preserve_acls && !S_ISLNK(new_mode)) {
++		if (set_acl(fname, file, sxp, new_mode) > 0)
++			updated = 1;
++	}
++#endif
++
+ 	if (INFO_GTE(NAME, 2) && flags & ATTRS_REPORT) {
+ 		if (updated)
+ 			rprintf(FCLIENT, "%s\n", fname);
+diff --git a/rsync.h b/rsync.h
+index 4fef882..6a0c89c 100644
+--- a/rsync.h
++++ b/rsync.h
+@@ -994,13 +994,22 @@ typedef struct {
+ #ifdef SUPPORT_ACLS
+     struct rsync_acl *acc_acl; /* access ACL */
+     struct rsync_acl *def_acl; /* default ACL */
++    struct nfs4_acl *nfs4_acl; /* NFSv4 ACL */
++    int brand;
+ #endif
+ #ifdef SUPPORT_XATTRS
+     item_list *xattr;
+ #endif
+ } stat_x;
+ 
+-#define ACL_READY(sx) ((sx).acc_acl != NULL)
++#ifdef SUPPORT_ACLS
++#include "lib/sysacls.h"
++#endif
++
++#define ACL_READY_POSIX(sx) ((sx).acc_acl != NULL)
++#define ACL_READY_NFS4(sx) ((sx).nfs4_acl != NULL)
++#define ACL_READY(sx) (((sx).brand == SMB_ACL_BRAND_NFS4) ? (ACL_READY_NFS4(sx)) : (ACL_READY_POSIX(sx)))
++
+ #define XATTR_READY(sx) ((sx).xattr != NULL)
+ 
+ #include "proto.h"
