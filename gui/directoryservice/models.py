@@ -1231,6 +1231,12 @@ class LDAP(DirectoryServiceBase):
         blank=True,
         null=True,
     )
+    ldap_netbiosalias = models.CharField(
+        verbose_name=_("NetBIOS Alias"),
+        max_length=120,
+        blank=True,
+        null=True,
+    )
 
     @property
     def ldap_netbiosname(self):
