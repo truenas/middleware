@@ -38,6 +38,7 @@ import types
 
 from dns import resolver
 from ldap.controls import SimplePagedResultsControl
+from .log import log_traceback
 
 from freenasUI.common.pipesubr import (
     pipeopen,
@@ -1166,6 +1167,7 @@ class FreeNAS_ActiveDirectory_Base(object):
                 "no SRV records for %s found, fail!",
                 host
             )
+            log_traceback(log=log)
             srv_records = []
 
         return srv_records
