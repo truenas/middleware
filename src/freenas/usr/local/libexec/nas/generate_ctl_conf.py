@@ -169,7 +169,7 @@ def main():
         poolname = None
         lunthreshold = None
         if extent.iscsi_target_extent_type == 'Disk':
-            disk = Disk.objects.filter(id=path).order_by('disk_enabled')
+            disk = Disk.objects.filter(disk_identifier=path).order_by('disk_enabled')
             if not disk.exists():
                 continue
             disk = disk[0]

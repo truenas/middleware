@@ -752,7 +752,7 @@ class VolumeImportForm(Form):
         qs = iSCSITargetExtent.objects.filter(iscsi_target_extent_type='Disk')
         diskids = [i[0] for i in qs.values_list('iscsi_target_extent_path')]
         used_disks.extend([d.disk_name for d in models.Disk.objects.filter(
-            id__in=diskids)])
+            disk_identifier__in=diskids)])
 
         n = notifier()
         # Grab partition list
