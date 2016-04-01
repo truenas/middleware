@@ -14,15 +14,9 @@ class Migration(SchemaMigration):
                       self.gf('django.db.models.fields.CharField')(max_length=120, null=True, blank=True, default='truenas-b'),
                       keep_default=False)
 
-        _n = notifier()
-        if not _n.is_freenas() and _n.failover_licensed():
-            alias = 'truenas'
-        else:
-            alias = None
-
         # Adding field 'CIFS.cifs_srv_netbiosalias'
         db.add_column(u'services_cifs', 'cifs_srv_netbiosalias',
-                      self.gf('django.db.models.fields.CharField')(max_length=120, null=True, blank=True, default=alias),
+                      self.gf('django.db.models.fields.CharField')(max_length=120, null=True, blank=True),
                       keep_default=False)
 
 
