@@ -745,7 +745,9 @@ def add_activedirectory_conf(smb4_conf):
     except:
         return
 
-    set_netbiosname(smb4_conf, ad.ad_netbiosname)
+    confset2(smb4_conf, "netbios name = %s", ad.ad_netbiosname)
+    if ad.ad_netbiosalias:
+        confset2(smb4_conf, "netbios alias = %s", ad.ad_netbiosalias)
     confset2(smb4_conf, "workgroup = %s", ad_workgroup)
     confset2(smb4_conf, "realm = %s", ad.ad_domainname.upper())
     confset1(smb4_conf, "security = ADS")
