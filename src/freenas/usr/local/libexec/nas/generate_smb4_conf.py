@@ -1602,7 +1602,6 @@ def main():
             f.write(line + '\n')
         for line in smb4_shares:
             f.write(line + '\n')
-        f.close()
 
     smb4_set_SID()
 
