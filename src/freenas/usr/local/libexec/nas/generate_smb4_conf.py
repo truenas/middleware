@@ -1180,8 +1180,7 @@ def generate_smbusers():
     with open("/usr/local/etc/smbusers", "w") as f:
         for u in users:
             f.write("%s = %s\n" % (u.bsdusr_username, u.bsdusr_email))
-        f.close()
-        os.chmod("/usr/local/etc/smbusers", 0644)
+    os.chmod("/usr/local/etc/smbusers", 0644)
 
 
 def provision_smb4():
