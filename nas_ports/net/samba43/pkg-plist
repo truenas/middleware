@@ -409,7 +409,7 @@ lib/pkgconfig/ctdb.pc
 %%PYTHON_SITELIBDIR%%/samba/tests/docs.py
 %%PYTHON_SITELIBDIR%%/samba/tests/dsdb.py
 %%PYTHON_SITELIBDIR%%/samba/tests/gensec.py
-%%PYTHON_SITELIBDIR%%/samba/tests/getopt.py
+%%PYTHON_SITELIBDIR%%/samba/tests/get_opt.py
 %%PYTHON_SITELIBDIR%%/samba/tests/hostconfig.py
 %%PYTHON_SITELIBDIR%%/samba/tests/kcc/__init__.py
 %%PYTHON_SITELIBDIR%%/samba/tests/kcc/graph.py
