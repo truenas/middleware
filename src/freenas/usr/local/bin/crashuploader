@@ -23,7 +23,7 @@ if os.path.isfile("/etc/hostid"):
 
 if os.path.isfile("/etc/version"):
     f = open("/etc/version")
-    version = f.readline().strip()
+    version = f.read().strip()
     f.close()
     data['version'] = version
 
