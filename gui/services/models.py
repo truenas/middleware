@@ -282,6 +282,16 @@ class CIFS(Model):
         deletable = False
         icon_model = u"CIFSIcon"
 
+    def get_netbiosname(self):
+        _n = notifier()
+        if not _n.is_freenas():
+            if _n.failover_node() == 'B':
+                return self.cifs_srv_netbiosname_b
+            else:
+                return self.cifs_srv_netbiosname
+        else:
+            return self.cifs_srv_netbiosname
+
 
 class AFP(Model):
     afp_srv_guest = models.BooleanField(

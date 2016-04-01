@@ -795,7 +795,9 @@ def add_domaincontroller_conf(smb4_conf):
     # server_services = get_server_services()
     # dcerpc_endpoint_servers = get_dcerpc_endpoint_servers()
 
-    set_netbiosname(smb4_conf, cifs.cifs_srv_netbiosname)
+    confset2(smb4_conf, "netbios name = %s", cifs.get_netbiosname().upper())
+    if cifs.cifs_srv_netbiosalias:
+        confset2(smb4_conf, "netbios alias = %s", cifs.cifs_srv_netbiosalias.upper())
     confset2(smb4_conf, "workgroup = %s", dc.dc_domain.upper())
     confset2(smb4_conf, "realm = %s", dc.dc_realm)
     confset2(smb4_conf, "dns forwarder = %s", dc.dc_dns_forwarder)
@@ -1006,7 +1008,9 @@ def generate_smb4_conf(smb4_conf, role):
 
     elif role == 'standalone':
         confset1(smb4_conf, "server role = standalone")
-        set_netbiosname(smb4_conf, cifs.cifs_srv_netbiosname)
+        confset2(smb4_conf, "netbios name = %s", cifs.get_netbiosname().upper())
+        if cifs.cifs_srv_netbiosalias:
+            confset2(smb4_conf, "netbios alias = %s", cifs.cifs_srv_netbiosalias.upper())
         confset2(smb4_conf, "workgroup = %s", cifs.cifs_srv_workgroup.upper())
         confset1(smb4_conf, "security = user")
 
