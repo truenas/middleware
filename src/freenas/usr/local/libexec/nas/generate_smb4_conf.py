@@ -184,12 +184,15 @@ def config_share_for_nfs4(share):
     confset1(share, "nfs4:acedup = merge")
     confset1(share, "nfs4:chown = true")
 
+
 def config_share_for_zfs(share):
     confset1(share, "zfsacl:acesort = dontcare")
+
 
 def config_share_for_vfs_objects(share, vfs_objects):
     if vfs_objects:
         confset2(share, "vfs objects = %s", ' '.join(vfs_objects).encode('utf8'))
+
 
 def extend_vfs_objects_for_zfs(path, vfs_objects):
     if is_within_zfs(path):
@@ -197,6 +200,7 @@ def extend_vfs_objects_for_zfs(path, vfs_objects):
             'zfs_space',
             'zfsacl',
         ])
+
 
 def is_within_zfs(mountpoint):
     try:
@@ -512,7 +516,7 @@ def set_idmap_rfc2307_secret():
             if not line:
                 continue
             print line
- 
+
     ret = True
     if p.returncode != 0:
         print >> sys.stderr, "Failed to set idmap secret!"
@@ -716,7 +720,9 @@ def add_ldap_conf(smb4_conf):
     confset1(smb4_conf, "ldap passwd sync = yes")
     confset1(smb4_conf, "ldapsam:trusted = yes")
 
-    set_netbiosname(smb4_conf, ldap.ldap_netbiosname)
+    confset2(smb4_conf, "netbios name = %s", ldap.ldap_netbiosname.upper())
+    if ldap.ldap_netbiosalias:
+        confset2(smb4_conf, "netbios alias = %s", ldap.ldap_netbiosalias.upper())
     confset2(smb4_conf, "workgroup = %s", ldap_workgroup)
     confset1(smb4_conf, "domain logons = yes")
 
@@ -835,7 +841,8 @@ def add_domaincontroller_conf(smb4_conf):
 
 
 def get_smb4_users():
-    return bsdUsers.objects.filter(Q(bsdusr_smbhash__regex=r'^.+:.+:[X]{32}:.+$') | \
+    return bsdUsers.objects.filter(
+        Q(bsdusr_smbhash__regex=r'^.+:.+:[X]{32}:.+$') |
         Q(bsdusr_smbhash__regex=r'^.+:.+:[A-F0-9]{32}:.+$')
     )
 
@@ -928,9 +935,9 @@ def generate_smb4_conf(smb4_conf, role):
              long(get_sysctl('kern.maxfilesperproc')) - 25)
 
     if cifs.cifs_srv_loglevel and cifs.cifs_srv_loglevel is not True:
-	loglevel = cifs.cifs_srv_loglevel
+        loglevel = cifs.cifs_srv_loglevel
     else:
-	loglevel = "0"
+        loglevel = "0"
 
     if cifs.cifs_srv_syslog:
         confset1(smb4_conf, "logging = syslog:%s" % loglevel)
@@ -1139,7 +1146,7 @@ def generate_smb4_shares(smb4_shares):
             line = line.strip()
             if not line:
                 continue
-            line = line.encode('utf-8')  
+            line = line.encode('utf-8')
             confset1(smb4_shares, line)
 
 
@@ -1149,7 +1156,7 @@ def generate_smb4_system_shares(smb4_shares):
             dc = DomainController.objects.all()[0]
             sysvol_path = "/var/db/samba4/sysvol"
 
-            for share in [ "sysvol", "netlogon" ]:
+            for share in ["sysvol", "netlogon"]:
                 confset1(smb4_shares, "\n")
                 confset1(smb4_shares, "[%s]" % (share), space=0)
 
@@ -1504,7 +1511,7 @@ def smb4_backup_tdbfile(tdb_src, tdb_dst):
         return False
 
     try:
-         db_w = tdb.open(tdb_dst, flags=os.O_RDWR|os.O_CREAT, mode=0600)
+        db_w = tdb.open(tdb_dst, flags=os.O_RDWR | os.O_CREAT, mode=0600)
 
     except Exception as e:
         print >> sys.stderr, "Unable to open %s: %s" % (tdb_dst, e)
@@ -1517,7 +1524,7 @@ def smb4_backup_tdbfile(tdb_src, tdb_dst):
             db_w.transaction_prepare_commit()
             db_w.transaction_commit()
 
-        except Exception as e: 
+        except Exception as e:
             print >> sys.stderr, "Transaction for key %s failed: %s" % (key, e)
             db_w.transaction_cancel()
 
@@ -1536,8 +1543,7 @@ def smb4_restore_tdbfile(tdb_src, tdb_dst):
         return False
 
     try:
-         db_w = tdb.open(tdb_dst, flags=os.O_RDWR)
-
+        db_w = tdb.open(tdb_dst, flags=os.O_RDWR)
     except Exception as e:
         print >> sys.stderr, "Unable to open %s: %s" % (tdb_dst, e)
         return False
@@ -1553,7 +1559,7 @@ def smb4_restore_tdbfile(tdb_src, tdb_dst):
             db_w.transaction_prepare_commit()
             db_w.transaction_commit()
 
-        except Exception as e: 
+        except Exception as e:
             print >> sys.stderr, "Transaction for key %s failed: %s" % (key, e)
             db_w.transaction_cancel()
 
@@ -1615,8 +1621,11 @@ def main():
 
     if role != 'dc':
         if not Samba4().users_imported():
-            smb4_import_users(smb_conf_path, smb4_tdb,
-                "/var/db/samba4/private/passdb.tdb")
+            smb4_import_users(
+                smb_conf_path,
+                smb4_tdb,
+                "/var/db/samba4/private/passdb.tdb"
+            )
             smb4_grant_rights()
             Samba4().user_import_sentinel_file_create()
 
