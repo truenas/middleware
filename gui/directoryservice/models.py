@@ -894,6 +894,12 @@ class ActiveDirectory(DirectoryServiceBase):
         blank=True,
         null=True,
     )
+    ad_netbiosalias = models.CharField(
+        verbose_name=_("NetBIOS Alias"),
+        max_length=120,
+        blank=True,
+        null=True,
+    )
 
     @property
     def ad_netbiosname(self):
