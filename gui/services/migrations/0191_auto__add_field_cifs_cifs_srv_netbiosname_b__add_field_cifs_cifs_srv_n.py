@@ -10,7 +10,7 @@ class Migration(SchemaMigration):
     def forwards(self, orm):
         # Adding field 'CIFS.cifs_srv_netbiosname_b'
         db.add_column(u'services_cifs', 'cifs_srv_netbiosname_b',
-                      self.gf('django.db.models.fields.CharField')(max_length=120, null=True, blank=True),
+                      self.gf('django.db.models.fields.CharField')(max_length=120, null=True, blank=True, default='truenas-b'),
                       keep_default=False)
 
         # Adding field 'CIFS.cifs_srv_netbiosalias'
