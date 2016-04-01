@@ -1,4 +1,30 @@
-#12813	Bug	Critical	Cannot Create additional Vlans
-#13267	Bug	Expected	system verification looks like is broken in latest FreeNAS SU.
-#13273	Bug	Important	Make replication logging less verbose
-#13416	Bug	Critical	replication still not working in TrueNAS internal SU.
+#13017  Bug     Nice to have  Create API call for building the ixdiagnose.tgz file
+#13419  Bug     Important Replication error incorrect for conditions when "PULL" system is offline.
+#13020  Bug     Important Adding VLANs in the WebGUI doesn't give the red scary warning
+#13022  Bug     Important Deleting interface that is critical for failover
+#13056  Feature Important  domain account password retention
+#13225  Feature Important add checkbox to WebGUI to allow nfsv3-like ownership when using nfsv4
+#13293  Bug     Nice to have Unable to load /api/v1.0/storage/replication: 401
+#13447  Bug     Blocks Until Resolved   Syntax error in autosnap.py
+#13361  Bug     Nice to have  Wizard creates broken CIFS shares
+#13384  Bug     Important Improves speed of ListClones
+#13389  Bug     Important Enforce the lower bound of vlan tags
+#13468  Bug     Nice to have  Scheduled scrubs try to run during drive resilver
+#13589  Bug     Nice to have  Add jed to the build
+#13592  Bug     Blocks Until Resolved Samba with LDAP will not start when rebooting. bind password gone!
+#13873  Bug     Important ix-multipath isn't run when a drive is replaced
+#13924  Bug     Important CLI tool to view alerts
+#13957  Bug     Nice to Have Copyright in GUI footer needs updated to 2016
+#13967  Bug     Important Cannot create NFS share with unicode  character in path
+#13976  Bug     Important Need to set default kerberos realm during boot for Active Directory
+#13979  Bug     Important Zvols cannot be created with block size bigger than 128K however the GUI offers 256K, 512K and 1024K as choices
+#13990  Bug     Nice to have  Active Directory Verbose logging doesn't work
+#14053  Bug     Nice to have webdav services ORM artifact causes cosmetic bug
+#14067  Bug     Important Startup is a bit mysterious
+#14090  Feature Nice to have  Allow disabling Active Directory user/group cache
+#14136  Feature Important No REST API for extending zvol
+#14186  Feature Nice to have freenas-debug takes forever - profiling patch included
+#14215  Bug     Critical Fix AD Performance Issues
+#13225  Feature Important add checkbox to WebGUI to allow nfsv3-like ownership when using nfsv4
+#13696  Bug     Nice to have  System Boot Status 500
+#14172  Bug     Important Unable to start CIFS service
