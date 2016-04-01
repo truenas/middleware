@@ -99,10 +99,12 @@ def main():
                        'X-%s-Host' % get_sw_name(): socket.gethostname()},
         text=_('''A new update is available for the %(train)s train.
 
+Version: %(version)s
 Changelog:
 %(changelog)s
 ''') % {
             'train': updateobj.get_train(),
+            'version': update.Version(),
             'changelog': changelog,
         },
     )
