@@ -562,11 +562,12 @@ class notifier:
         self._system("/usr/sbin/service ix-collectd quietstart")
         self._system("/usr/sbin/service collectd start")
 
-    def _reload_networkgeneral(self):
-        self._system('/bin/hostname ""')
-        self._system("/usr/sbin/service ix-hostname quietstart")
+    def _reload_resolvconf(self):
+        self._reload_hostname()
         self._system("/usr/sbin/service ix-resolv quietstart")
-        self._system("/usr/sbin/service hostname quietstart")
+
+    def _reload_networkgeneral(self):
+        self._reload_resolvconf()
         self._system("/usr/sbin/service routing restart")
 
     def _reload_timeservices(self):

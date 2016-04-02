@@ -134,9 +134,16 @@ class GlobalConfiguration(Model):
 
     def __init__(self, *args, **kwargs):
         super(GlobalConfiguration, self).__init__(*args, **kwargs)
-        self._orig_gc_hostname = self.__dict__.get('gc_hostname')
-        self._orig_gc_ipv4gateway = self.__dict__.get('gc_ipv4gateway')
-        self._orig_gc_ipv6gateway = self.__dict__.get('gc_ipv6gateway')
+        for name in (
+            'gc_hostname',
+            'gc_ipv4gateway',
+            'gc_ipv6gateway',
+            'gc_domain',
+            'gc_nameserver1',
+            'gc_nameserver2',
+            'gc_nameserver3'
+        ):
+            setattr(self, "_orig_%s" % name, self.__dict__.get(name))
 
     def __unicode__(self):
         return u'%s' % self.id

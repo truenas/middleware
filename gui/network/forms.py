@@ -590,10 +590,21 @@ class GlobalConfigurationForm(ModelForm):
         retval = super(GlobalConfigurationForm, self).save()
 
         whattoreload = "hostname"
-        if self.instance._orig_gc_ipv4gateway != self.cleaned_data.get('gc_ipv4gateway'):
+        if (
+            self.instance._orig_gc_domain != self.cleaned_data.get('gc_domain') or
+            self.instance._orig_gc_nameserver1 != self.cleaned_data.get('gc_nameserver1') or
+            self.instance._orig_gc_nameserver2 != self.cleaned_data.get('gc_nameserver2') or
+            self.instance._orig_gc_nameserver3 != self.cleaned_data.get('gc_nameserver3')
+          ):
+            # Note notifier's _reload_resolvconf has reloading hostname folded in it
+            whattoreload = "resolvconf"
+        if (
+            self.instance._orig_gc_ipv4gateway != self.cleaned_data.get('gc_ipv4gateway') or
+            self.instance._orig_gc_ipv6gateway != self.cleaned_data.get('gc_ipv6gateway')
+           ):
+            # this supersedes all since it has hostname and resolvconf reloads folded in it
             whattoreload = "networkgeneral"
-        if self.instance._orig_gc_ipv6gateway != self.cleaned_data.get('gc_ipv6gateway'):
-            whattoreload = "networkgeneral"
+
         notifier().reload(whattoreload)
 
         http_proxy = self.cleaned_data.get('gc_httpproxy')
@@ -637,9 +648,13 @@ class HostnameForm(Form):
     def save(self):
         host, domain = self.cleaned_data.get('hostname')
         self.instance.gc_hostname = host
+        orig_gc_domain = self.instance.gc_domain
         self.instance.gc_domain = domain
         self.instance.save()
-        notifier().reload("hostname")
+        if orig_gc_domain != self.instance.gc_domain:
+            notifier().reload("resolvconf")
+        else:
+            notifier().reload("hostname")
 
 
 class VLANForm(ModelForm):

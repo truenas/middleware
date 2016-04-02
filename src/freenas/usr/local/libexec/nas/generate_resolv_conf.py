@@ -1,7 +1,7 @@
 #!/usr/local/bin/python
 
 import os
-import string
+import errno
 import sys
 
 sys.path.extend([
@@ -16,10 +16,7 @@ cache.get_apps()
 
 RESOLV_CONF_PATH = "/etc/resolv.conf"
 
-from freenasUI.common.system import (
-    activedirectory_enabled,
-    domaincontroller_enabled
-)
+from freenasUI.common.system import domaincontroller_enabled
 from freenasUI.network.models import (
     GlobalConfiguration,
     Interfaces
@@ -27,7 +24,8 @@ from freenasUI.network.models import (
 from freenasUI.services.models import (
     CIFS,
     DomainController
-) 
+)
+
 
 def main():
 
@@ -39,11 +37,11 @@ def main():
             cifs = CIFS.objects.all()[0]
             dc = DomainController.objects.all()[0]
 
-            domain = dc.dc_realm 
+            domain = dc.dc_realm
             if cifs.cifs_srv_bindip:
-                for ip in cifs.cifs_srv_bindip: 
+                for ip in cifs.cifs_srv_bindip:
                     nameservers.append(ip)
-            else: 
+            else:
                 nameservers.append("127.0.0.1")
 
         except Exception as e:
@@ -66,16 +64,40 @@ def main():
             print >> sys.stderr, "ix-resolv: ERROR: %s" % e
             sys.exit(1)
 
-    if (not nameservers and Interfaces.objects.filter(int_dhcp=True)) or len(Interfaces.objects.all()) == 0:
+    if (
+        not nameservers and
+        (Interfaces.objects.count() == 0 or Interfaces.objects.filter(int_dhcp=True))
+       ):
+        # since we have set a dhclient hook that disables dhclient from writing to /etc/resolv.conf
+        # we should remove it now
+        try:
+            os.remove("/etc/dhclient-enter-hooks")
+        except OSError as e:
+            # if this error is not due to the file not existing then we have a problem
+            if e.errno != errno.ENOENT:
+                raise
+            # else we never wrote that file so....moving on
+            pass
         sys.exit(0)
 
     try:
-        fd = os.open(RESOLV_CONF_PATH, os.O_WRONLY|os.O_CREAT|os.O_TRUNC, 0644)
+        fd = os.open(RESOLV_CONF_PATH, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0x0644)
         if domain:
             os.write(fd, "search %s\n" % domain)
         for ns in nameservers:
             os.write(fd, "nameserver %s\n" % ns)
         os.close(fd)
+        with open("/etc/dhclient-enter-hooks", 'w') as f:
+            f.write(
+                """
+                add_new_resolv_conf() {
+                    # We don't want /etc/resolv.conf changed
+                    # So this is an empty function
+                    return 0
+                }
+                """
+            )
+        os.chmod("/etc/dhclient-enter-hooks", 0x0744)
 
     except Exception as e:
         print >> sys.stderr, "can't create %s: %s" % (RESOLV_CONF_PATH, e)
