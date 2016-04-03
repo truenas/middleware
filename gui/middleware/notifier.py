@@ -4318,7 +4318,7 @@ class notifier:
         doc = self._geom_confxml()
 
         search = doc.xpath("//class[name = 'DISK']/geom[name = '%s']/provider/config/ident" % name)
-        if len(search) > 0:
+        if len(search) > 0 and search[0].text:
             return "{serial}%s" % search[0].text
 
         serial = self.serial_from_device(name)
