@@ -13260,3 +13260,37 @@ msgstr "{0} is een gereserveerd intern trefwoord voor certificaatbeheer"
 #: templates/vcp/index.html:84
 msgid "Repair"
 msgstr "Repareren"
+
+#: choices.py:188
+#, fuzzy
+msgid "SMB3_02"
+msgstr "SMB3_00"
+
+#: choices.py:189
+#, fuzzy
+msgid "SMB3_10"
+msgstr "SMB3_00"
+
+#: choices.py:190
+#, fuzzy
+msgid "SMB3_11"
+msgstr "SMB3"
+
+#: services/models.py:92
+#, fuzzy
+msgid "NetBIOS alias"
+msgstr "NetBIOS-naam"
+
+#: tools/update_check.py:100
+#, fuzzy
+msgid ""
+"A new update is available for the %(train)s train.\n"
+"\n"
+"Version: %(version)s\n"
+"Changelog:\n"
+"%(changelog)s\n"
+msgstr ""
+"Er is een nieuwe update beschikbaar voor de train %(train)s.\n"
+"\n"
+"Changelog:\n"
+"%(changelog)s\n"

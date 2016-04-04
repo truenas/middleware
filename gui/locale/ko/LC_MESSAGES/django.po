@@ -12866,3 +12866,32 @@ msgstr ""
 #, fuzzy
 msgid "Repair"
 msgstr "필수"
+
+#: choices.py:188
+#, fuzzy
+msgid "SMB3_02"
+msgstr "SMB3_00"
+
+#: choices.py:189
+#, fuzzy
+msgid "SMB3_10"
+msgstr "SMB3_00"
+
+#: choices.py:190
+#, fuzzy
+msgid "SMB3_11"
+msgstr "SMB3"
+
+#: services/models.py:92
+#, fuzzy
+msgid "NetBIOS alias"
+msgstr "넷바이오스 명"
+
+#: tools/update_check.py:100
+msgid ""
+"A new update is available for the %(train)s train.\n"
+"\n"
+"Version: %(version)s\n"
+"Changelog:\n"
+"%(changelog)s\n"
+msgstr ""
