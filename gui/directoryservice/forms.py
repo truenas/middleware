@@ -51,6 +51,7 @@ from freenasUI.common.system import (
 from freenasUI.directoryservice import models
 from freenasUI.middleware.notifier import notifier
 from freenasUI.services.exceptions import ServiceFailed
+from freenasUI.services.models import CIFS
 
 log = logging.getLogger('directoryservice.form')
 
@@ -308,9 +309,25 @@ class NT4Form(ModelForm):
 
 class ActiveDirectoryForm(ModelForm):
 
+    ad_netbiosname_a = forms.CharField(
+        max_length=120,
+        label=_("NetBIOS name"),
+    )
+    ad_netbiosname_b = forms.CharField(
+        max_length=120,
+        label=_("NetBIOS name"),
+        required=False,
+    )
+    ad_netbiosalias =forms.CharField(
+        max_length=120,
+        label=_("NetBIOS alias"),
+        required=False,
+    )
+
     advanced_fields = [
         'ad_netbiosname_a',
         'ad_netbiosname_b',
+        'ad_netbiosalias',
         'ad_ssl',
         'ad_certificate',
         'ad_verbose_logging',
@@ -334,8 +351,6 @@ class ActiveDirectoryForm(ModelForm):
     class Meta:
         fields = '__all__'
         exclude = ['ad_idmap_backend_type']
-        if not hasattr(notifier, 'failover_node'):
-            exclude.append('ad_netbiosname_b')
 
         model = models.ActiveDirectory
         widgets = {
@@ -345,8 +360,6 @@ class ActiveDirectoryForm(ModelForm):
     def __original_save(self):
         for name in (
             'ad_domainname',
-            'ad_netbiosname_a',
-            'ad_netbiosname_b',
             'ad_allow_trusted_doms',
             'ad_use_default_domain',
             'ad_unix_extensions',
@@ -392,13 +405,24 @@ class ActiveDirectoryForm(ModelForm):
         self.fields["ad_enable"].widget.attrs["onChange"] = (
             "activedirectory_mutex_toggle();"
         )
-        if hasattr(notifier, 'failover_node'):
-            from freenasUI.failover.utils import node_label_field
-            node_label_field(
-                notifier().failover_node(),
-                self.fields['ad_netbiosname_a'],
-                self.fields['ad_netbiosname_b'],
-            )
+        cifs = CIFS.objects.latest('id')
+        if cifs:
+            self.fields['ad_netbiosname_a'].initial = cifs.cifs_srv_netbiosname
+            self.fields['ad_netbiosname_b'].initial = cifs.cifs_srv_netbiosname_b
+            self.fields['ad_netbiosalias'].initial = cifs.cifs_srv_netbiosalias
+        _n = notifier()
+        if not _n.is_freenas():
+            if _n.failover_licensed():
+                from freenasUI.failover.utils import node_label_field
+                node_label_field(
+                    _n.failover_node(),
+                    self.fields['ad_netbiosname_a'],
+                    self.fields['ad_netbiosname_b'],
+                )
+            else:
+                del self.fields['ad_netbiosname_b']
+        else:
+                del self.fields['ad_netbiosname_b']
 
     def clean_ad_dcname(self):
         ad_dcname = self.cleaned_data.get('ad_dcname')
