@@ -41,15 +41,15 @@ generate_hostname()
 		local netbiosname_field
 
 		if [ "$(ha_node)" = "B" ]; then
-			netbiosname_field="ad_netbiosname_b"
+			netbiosname_field="cifs_srv_netbiosname_b"
 		else
-			netbiosname_field="ad_netbiosname_a"
+			netbiosname_field="cifs_srv_netbiosname"
 		fi
+		netbiosname="$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT ${netbiosname_field} FROM services_cifs ORDER BY -id LIMIT 1"|tr A-Z a-z)"
 
 		${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
-		"SELECT ad_domainname, ${netbiosname_field} from directoryservice_activedirectory ORDER BY -id LIMIT 1" | \
-		while read -r domainname netbiosname; do
-			netbiosname="$(echo "${netbiosname}"|cut -f1 -d','|cut -f1 -d ' '|tr A-Z a-z)"
+		"SELECT ad_domainname from directoryservice_activedirectory ORDER BY -id LIMIT 1" | \
+		while read -r domainname; do
 			domainname="$(echo "${domainname}"|tr A-Z a-z)"
 
 			echo -e "127.0.0.1\t"${netbiosname}.${domainname}" "${netbiosname}"" >> /etc/hosts
