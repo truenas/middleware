@@ -897,14 +897,11 @@ class ActiveDirectory(DirectoryServiceBase):
 
     @property
     def ad_netbiosname(self):
-        _n = notifier()
-        if not _n.is_freenas():
-            if _n.failover_node() == 'B':
-                return self.ad_netbiosname_b
-            else:
-                return self.ad_netbiosname_a
-        else:
-            return self.ad_netbiosname_a
+        from freenasUI.services.models import CIFS
+        cifs = CIFS.objects.latest('id')
+        if not cifs:
+            return None
+        return cifs.get_netbiosname()
 
     ad_ssl = models.CharField(
         verbose_name=_("Encryption Mode"),
@@ -1049,14 +1046,6 @@ class ActiveDirectory(DirectoryServiceBase):
 
         self.ds_type = DS_TYPE_ACTIVEDIRECTORY
         self.ds_name = enum_to_directoryservice(self.ds_type)
-
-        if not self.ad_netbiosname_a:
-            from freenasUI.network.models import GlobalConfiguration
-            gc_hostname = GlobalConfiguration.objects.all().order_by('-id')[0].get_hostname()
-            if gc_hostname:
-                m = re.match(r"^([a-zA-Z][a-zA-Z0-9\.\-]+)", gc_hostname)
-                if m:
-                    self.ad_netbiosname_a = m.group(0).upper().strip()
 
     def save(self, **kwargs):
         if self.ad_bindpw and not self._ad_bindpw_encrypted:
