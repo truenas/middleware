@@ -834,7 +834,6 @@ AD_show_config()
 	printf "Active Directory Config:\n"
 	printf "+------------------------------------------------+\n"
 	printf "ad_domainname:         %s\n" $(AD_get ad_domainname)
-	printf "ad_netbiosname:        %s\n" $(AD_get ad_netbiosname)
 	printf "ad_site:               %d\n" $(AD_get ad_site)
 	printf "ad_dchost:             %s\n" $(AD_get ad_dchost)
 	printf "ad_dcport:             %d\n" $(AD_get ad_dcport)
