@@ -34,6 +34,7 @@ from freenasUI.directoryservice.models import (
     ActiveDirectory,
     LDAP
 )
+from freenasUI.services.models import CIFS
 from freenasUI.sharing.models import CIFS_Share
 
 SSSD_CONFIGFILE = "/usr/local/etc/sssd/sssd.conf"
@@ -861,8 +862,8 @@ def get_activedirectory_cookie():
     cookie = ''
 
     if activedirectory_enabled():
-        activedirectory = ActiveDirectory.objects.all()[0]
-        cookie = activedirectory.ad_netbiosname.upper()
+        cifs = CIFS.objects.latest('id')
+        cookie = cifs.get_netbiosname().upper()
         parts = cookie.split('.')
         cookie = parts[0]
 
