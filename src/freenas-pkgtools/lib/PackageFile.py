@@ -171,6 +171,8 @@ def usage():
     sys.exit(1)
 
 def DiffPackageFiles(pkg1, pkg2, output_file = None, scripts = None, force_output = False):
+    from Installer import GetTarMeta
+    
     pkg1_tarfile = tarfile.open(pkg1, "r")
     (pkg1_manifest, dc) = FindManifest(pkg1_tarfile)
 
@@ -216,6 +218,53 @@ def DiffPackageFiles(pkg1, pkg2, output_file = None, scripts = None, force_outpu
     new_manifest[kPkgFilesKey] = diffs[kPkgFilesKey].copy()
     new_manifest[kPkgDirsKey] = diffs[kPkgDirsKey].copy()
 
+    # Next thing to do is to collect the metadata from each tarfile.
+    # We do this in case the metadata of a file has changed, in which case
+    # we need to include it in the delta package.
+    # This adds some significant time to the processing.
+    old_files = {}
+    file_keys = []
+    if kPkgRemovedFilesKey in new_manifest:
+        file_keys.extend(new_manifest[kPkgRemovedFilesKey])
+    if kPkgRemovedDirsKey in new_manifest:
+        file_keys.extend(new_manifest[kPkgRemovedDirsKey])
+    if kPkgFilesKey in new_manifest:
+        file_keys.extend(new_manifest[kPkgFilesKey].keys())
+    if kPkgDirsKey in new_manifest:
+        file_keys.extend(new_manifest[kPkgDirsKey].keys())
+
+    for entry in pkg1_tarfile.getmembers():
+        if entry.name.startswith("+"):
+            continue
+        if entry.name in file_keys:
+            continue
+        if "/" + entry.name in file_keys:
+            continue
+        old_files[entry.name if entry.name.startswith("/") else "/" + entry.name] = GetTarMeta(entry)
+    new_files = {}
+    for entry in pkg2_tarfile.getmembers():
+        if entry.name.startswith("+"):
+            continue
+        if entry.name in file_keys:
+            continue
+        new_files[entry.name if entry.name.startswith("/") else "/" + entry.name] = GetTarMeta(entry)
+        
+    for entry in old_files.keys():
+        if old_files[entry] != new_files[entry]:
+            # The metadata is different.
+            # What happens if it's a directory in one, and a file in the other?
+            print >> sys.stderr, "#### adding %s simply because metadata changed" % entry
+            if entry in pkg2_manifest[kPkgDirsKey]:
+                # It's a directory.
+                new_manifest[kPkgDirsKey][entry] = pkg2_manifest[kPkgDirsKey][entry]
+                diffs[kPkgDirsKey][entry] = pkg2_manifest[kPkgDirsKey][entry]
+            elif entry in pkg2_manifest[kPkgFilesKey]:
+                # It's something else, which went into a file
+                new_manifest[kPkgFilesKey][entry] = pkg2_manifest[kPkgFilesKey][entry]
+                diffs[kPkgFilesKey][entry] = pkg2_manifest[kPkgFilesKey][entry]
+            else:
+                print >> sys.stderr, "%s is not in pkg2_manifest? %s" % (entry, pkg2_manifest)
+                sys.exit(1)
     # If there are no diffs, print a message, and exit without
     # creating a file.
     empty = True
@@ -249,8 +298,10 @@ def DiffPackageFiles(pkg1, pkg2, output_file = None, scripts = None, force_outpu
     # Now copy files from pkg2 to new_tf
     # We want to do this by going through pkg2_tarfile.
     search_dict = dict(diffs[kPkgFilesKey], ** diffs[kPkgDirsKey])
-    while member is not None:
+    for member in pkg2_tarfile.members:
         fname = member.name if member.name in search_dict else "/" + member.name
+        #print >> sys.stderr, "\t###### member = %s, fname = %s" % (member, fname)
+        #print >> sys.stderr, "search_dict = %s" % search_dict
         if fname in search_dict:
             if member.issym() or member.islnk():
             # A link
@@ -268,6 +319,6 @@ def DiffPackageFiles(pkg1, pkg2, output_file = None, scripts = None, force_outpu
             search_dict.pop(fname)
             if len(search_dict) == 0:
                 break
-        member = pkg2_tarfile.next()
+        #member = pkg2_tarfile.next()
     new_tf.close()
     return output_file
