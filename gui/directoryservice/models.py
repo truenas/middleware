@@ -881,19 +881,6 @@ class ActiveDirectory(DirectoryServiceBase):
         help_text=_("Domain Account password."),
         blank=True
     )
-    ad_netbiosname_a = models.CharField(
-        verbose_name=_("NetBIOS Name"),
-        max_length=120,
-        help_text=_("System hostname"),
-        blank=True
-    )
-    ad_netbiosname_b = models.CharField(
-        verbose_name=_("NetBIOS Name"),
-        max_length=120,
-        help_text=_("System hostname"),
-        blank=True,
-        null=True,
-    )
 
     @property
     def ad_netbiosname(self):
