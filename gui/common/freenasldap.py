@@ -1582,8 +1582,6 @@ class FreeNAS_ActiveDirectory_Base(object):
         log.debug("FreeNAS_ActiveDirectory_Base.__init__: leave")
 
     def set_kwargs(self):
-        from freenasUI.middleware.notifier import notifier
-
         kwargs = self.kwargs
 
         if 'flags' in kwargs and (kwargs['flags'] & FLAGS_DBINIT):
@@ -1593,16 +1591,6 @@ class FreeNAS_ActiveDirectory_Base(object):
                     continue
 
                 newkey = key.replace("ad_", "")
-                if (
-                    key.startswith('ad_netbiosname') and
-                    not notifier().is_freenas() and
-                    notifier().failover_node() == 'B'
-                ):
-                    if key == 'ad_netbiosname_b':
-                        newkey = 'netbiosname'
-                    elif key == 'ad_netbiosname':
-                        continue
-
                 if newkey in (
                     'verbose_logging',
                     'unix_extensions',
@@ -1613,22 +1601,6 @@ class FreeNAS_ActiveDirectory_Base(object):
                     kwargs[newkey] = (
                         False if long(ad.__dict__[key]) == 0 else True
                     )
-
-                elif newkey == 'netbiosname':
-                    netbiosname = ad.ad_netbiosname
-
-                    parts = []
-                    machine = netbiosname
-
-                    if ',' in netbiosname:
-                        parts = netbiosname.split(',')
-                        machine = parts[0]
-
-                    elif ' ' in netbiosname:
-                        parts = netbiosname.split()
-                        machine = parts[0]
-
-                    kwargs['machine'] = "%s$" % machine
 
                 elif newkey == 'certificate_id':
                     cert = get_certificateauthority_path(ad.ad_certificate)
@@ -1654,6 +1626,12 @@ class FreeNAS_ActiveDirectory_Base(object):
                 else:
                     kwargs[newkey] = ad.__dict__[key] \
                         if ad.__dict__[key] else None
+
+            from freenasUI.services.models import CIFS
+            cifs = CIFS.objects.latest('id')
+            if not cifs:
+                cifs = CIFS.objects.create()
+            kwargs['machine'] = "%s$" % cifs.get_netbiosname()
 
         for key in kwargs:
             if key == 'flags':
