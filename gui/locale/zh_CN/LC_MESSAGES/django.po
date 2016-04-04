@@ -12427,3 +12427,37 @@ msgstr ""
 #, fuzzy
 msgid "Repair"
 msgstr "已修复"
+
+#: choices.py:188
+#, fuzzy
+msgid "SMB3_02"
+msgstr "SMB3_00"
+
+#: choices.py:189
+#, fuzzy
+msgid "SMB3_10"
+msgstr "SMB3_00"
+
+#: choices.py:190
+#, fuzzy
+msgid "SMB3_11"
+msgstr "SMB3"
+
+#: services/models.py:92
+#, fuzzy
+msgid "NetBIOS alias"
+msgstr "NetBIOS 名称"
+
+#: tools/update_check.py:100
+#, fuzzy
+msgid ""
+"A new update is available for the %(train)s train.\n"
+"\n"
+"Version: %(version)s\n"
+"Changelog:\n"
+"%(changelog)s\n"
+msgstr ""
+"有可用更新 %(train)s 。\n"
+"\n"
+"Changelog:\n"
+"%(changelog)s\n"

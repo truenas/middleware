@@ -12766,3 +12766,28 @@ msgstr ""
 #, fuzzy
 msgid "Repair"
 msgstr "Skilyrt"
+
+#: choices.py:188
+msgid "SMB3_02"
+msgstr ""
+
+#: choices.py:189
+msgid "SMB3_10"
+msgstr ""
+
+#: choices.py:190
+msgid "SMB3_11"
+msgstr ""
+
+#: services/models.py:92
+msgid "NetBIOS alias"
+msgstr ""
+
+#: tools/update_check.py:100
+msgid ""
+"A new update is available for the %(train)s train.\n"
+"\n"
+"Version: %(version)s\n"
+"Changelog:\n"
+"%(changelog)s\n"
+msgstr ""

@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:00-0700\n"
-"PO-Revision-Date: 2016-03-21 09:04+0000\n"
+"PO-Revision-Date: 2016-04-04 08:00+0000\n"
 "Last-Translator: mav <mav@freebsd.org>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: uk\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
 "n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2)\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1458551079.0\n"
+"X-POOTLE-MTIME: 1459756842.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -6679,7 +6679,7 @@ msgstr "Вбудований користувач"
 #: storage/models.py:735
 #: storage/models.py:752
 msgid "Locked"
-msgstr "Заблокован"
+msgstr "Блокован"
 
 #: api/resources.py:860
 msgid "on every %(days)s"
@@ -8140,7 +8140,7 @@ msgstr "Том не може бути Iмпортовано"
 
 #: storage/models.py:126
 msgid "LOCKED"
-msgstr "ЗАБЛОКОВАН"
+msgstr "БЛОКОВАН"
 
 #: storage/models.py:445
 msgid "Disk Size"
@@ -8742,11 +8742,11 @@ msgstr "lz4 (найшвидший)"
 
 #: choices.py:318
 msgid "pigz (all rounder)"
-msgstr ""
+msgstr "pigz (середній в усьому)"
 
 #: choices.py:319
 msgid "plzip (best compression)"
-msgstr ""
+msgstr "plzip (краще стиснення)"
 
 #: choices.py:709
 msgid "data"
@@ -9174,7 +9174,7 @@ msgstr "Ступінь стиснення"
 
 #: storage/admin.py:297
 msgid "Lock Volume"
-msgstr "Заблокувати Том"
+msgstr "Блокувати Том"
 
 #: storage/admin.py:349
 msgid "Upgrade"
@@ -9296,7 +9296,7 @@ msgstr "Відправка"
 
 #: storage/views.py:980
 msgid "Volume locked"
-msgstr "Том pзаблоковано"
+msgstr "Том pазблоковано"
 
 #: storage/views.py:1151
 msgid "The pool failed to upgraded: %s"
@@ -9422,7 +9422,7 @@ msgstr "Параметри LLDP"
 
 #: templates/storage/lock.html:3
 msgid "Do you want to lock this volume?"
-msgstr "Ви хочете заблокувати цей том?"
+msgstr "Ви хочете блокувати цей том?"
 
 #: templates/storage/rekey.html:6
 msgid ""
@@ -9669,16 +9669,16 @@ msgstr ""
 
 #: choices.py:790
 msgid "ldap"
-msgstr ""
+msgstr "ldap"
 
 #: choices.py:791
 msgid "nss"
-msgstr ""
+msgstr "nss"
 
 #: choices.py:792
 #: directoryservice/models.py:155
 msgid "rfc2307"
-msgstr ""
+msgstr "rfc2307"
 
 #: choices.py:793
 msgid "rid"
@@ -9686,11 +9686,11 @@ msgstr "rid"
 
 #: choices.py:794
 msgid "tdb"
-msgstr ""
+msgstr "tdb"
 
 #: choices.py:795
 msgid "tdb2"
-msgstr ""
+msgstr "tdb2"
 
 #: directoryservice/models.py:134
 #: directoryservice/models.py:174
@@ -10287,7 +10287,7 @@ msgstr "Дайджест Аутентифікація"
 
 #: choices.py:799
 msgid "adex"
-msgstr ""
+msgstr "adex"
 
 #: choices.py:811
 msgid "Import an existing Certificate Authority"
@@ -11000,7 +11000,7 @@ msgstr ""
 
 #: choices.py:807
 msgid "rc.conf"
-msgstr ""
+msgstr "rc.conf"
 
 #: sharing/forms.py:94
 msgid "Failed to create %(path)s: %(error)s"
@@ -11547,19 +11547,19 @@ msgstr "SSD"
 
 #: choices.py:238
 msgid "5400"
-msgstr ""
+msgstr "5400"
 
 #: choices.py:239
 msgid "7200"
-msgstr ""
+msgstr "7200"
 
 #: choices.py:240
 msgid "10000"
-msgstr ""
+msgstr "10000"
 
 #: choices.py:241
 msgid "15000"
-msgstr ""
+msgstr "15000"
 
 #: choices.py:811
 msgid "Sensitive"
@@ -12971,3 +12971,34 @@ msgstr ""
 #: templates/vcp/index.html:84
 msgid "Repair"
 msgstr "Відновити"
+
+#: choices.py:188
+msgid "SMB3_02"
+msgstr "SMB3_02"
+
+#: choices.py:189
+msgid "SMB3_10"
+msgstr "SMB3_10"
+
+#: choices.py:190
+msgid "SMB3_11"
+msgstr "SMB3_11"
+
+#: services/models.py:92
+#, fuzzy
+msgid "NetBIOS alias"
+msgstr "Ім'я NetBIOS"
+
+#: tools/update_check.py:100
+msgid ""
+"A new update is available for the %(train)s train.\n"
+"\n"
+"Version: %(version)s\n"
+"Changelog:\n"
+"%(changelog)s\n"
+msgstr ""
+"Є нове оновлення для поїзда %(train)s.\n"
+"\n"
+"Версія: %(version)s\n"
+"Журнал змін:\n"
+"%(changelog)s\n"
