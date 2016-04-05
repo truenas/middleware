@@ -248,6 +248,24 @@ class CIFSForm(ModelForm):
             raise forms.ValidationError(_("netbiosname: %s" % e))
         return netbios
 
+    def clean_cifs_srv_netbiosname_b(self):
+        netbios = self.cleaned_data.get("cifs_srv_netbiosname_b")
+        if netbios:
+            try:
+                validate_netbios_names(netbios)
+            except Exception as e:
+                raise forms.ValidationError(_("netbiosname: %s" % e))
+        return netbios
+
+    def clean_cifs_srv_netbiosalias(self):
+        alias = self.cleaned_data.get("cifs_srv_netbiosalias")
+        if alias:
+            try:
+                validate_netbios_names(netbios)
+            except Exception as e:
+                raise forms.ValidationError(_("NetBIOS Alias: %s" % e))
+        return alias
+
     def clean_cifs_srv_filemask(self):
         v = self.cleaned_data.get("cifs_srv_filemask").strip()
         self.__check_octet(v)
