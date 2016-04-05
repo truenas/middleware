@@ -25,7 +25,7 @@ setuser()
 		user=$(getent passwd "${user}"|cut -f3 -d:)
 	fi
 
-	echo "${user}"
+	echo "${user}" | sed -E 's/\\/\\\\/'
 }
 
 setgroup()
@@ -35,7 +35,7 @@ setgroup()
 		group=$(getent group "${group}"|cut -f3 -d:)
 	fi
 
-	echo "${group}"
+	echo "${group}" | sed -E 's/\\/\\\\/'
 }
 
 #
@@ -92,12 +92,12 @@ generate_exports()
                 if [ -n "${nfs_mapall_user}" -o -n "${nfs_mapall_group}" ]; then
 			mapall_user=$(setuser "${nfs_mapall_user}")
 			mapall_group=$(setgroup "${nfs_mapall_group}")
-			line="${line} -mapall=${nfs_mapall_user}:${nfs_mapall_group}"
+			line="${line} -mapall=${mapall_user}:${mapall_group}"
                 else
                         if [ -n "${nfs_maproot_user}" -o -n "${nfs_maproot_group}" ]; then
 				maproot_user=$(setuser "${nfs_maproot_user}")
 				maproot_group=$(setgroup "${nfs_maproot_group}")
-			        line="${line} -maproot=${nfs_maproot_user}:${nfs_maproot_group}"
+			        line="${line} -maproot=${maproot_user}:${maproot_group}"
                         fi
 		fi
 		if [ -n "${nfs_security}" -a ${v4} -eq 1 ]; then
