@@ -70,14 +70,13 @@ active_directory_func()
 	#	Next, dump Active Directory configuration
 	#
 	local IFS="|"
-	read domainname bindname netbiosname ssl \
+	read domainname bindname ssl \
 		unix_extensions allow_trusted_doms use_default_domain \
 		dcname gcname timeout dns_timeout <<-__AD__
 	$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
 	SELECT
 		ad_domainname,
 		ad_bindname,
-		ad_netbiosname_a,
 		ad_ssl,
 		ad_unix_extensions,
 		ad_allow_trusted_doms,
@@ -103,7 +102,6 @@ __AD__
 	section_header "Active Directory Settings"
 	cat<<-__EOF__
 	Domain:                 ${domainname}
-	Workgroup:              ${netbiosname}
 	Bind name:              ${bindname}
 	UNIX extensions:        ${unix_extensions}
 	Trusted domains:        ${allow_trusted_doms}
