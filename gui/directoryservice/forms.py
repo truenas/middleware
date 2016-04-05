@@ -226,7 +226,6 @@ class NT4Form(ModelForm):
         }
         fields = [
             'nt4_dcname',
-            'nt4_netbiosname',
             'nt4_workgroup',
             'nt4_adminname',
             'nt4_adminpw',
@@ -264,14 +263,6 @@ class NT4Form(ModelForm):
         if not nt4_idmap_backend:
             nt4_idmap_backend = None
         return nt4_idmap_backend
-
-    def clean_nt4_netbiosname(self):
-        netbiosname = self.cleaned_data.get("nt4_netbiosname")
-        try:
-            validate_netbios_names(netbiosname)
-        except Exception as e:
-            raise forms.ValidationError(_("netbiosname: %s" % e))
-        return netbiosname
 
     def clean_nt4_workgroup(self):
         workgroup = self.cleaned_data.get("nt4_workgroup")

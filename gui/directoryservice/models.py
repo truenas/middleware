@@ -788,12 +788,6 @@ class NT4(DirectoryServiceBase):
         max_length=120,
         help_text=_("FQDN of the domain controller to use."),
     )
-    nt4_netbiosname = models.CharField(
-        verbose_name=_("NetBIOS Name"),
-        max_length=120,
-        help_text=_("System hostname"),
-        blank=True
-    )
     nt4_workgroup = models.CharField(
         verbose_name=_("Workgroup Name"),
         max_length=120,
@@ -841,14 +835,6 @@ class NT4(DirectoryServiceBase):
 
         self.ds_type = DS_TYPE_NT4
         self.ds_name = enum_to_directoryservice(self.ds_type)
-
-        if not self.nt4_netbiosname:
-            from freenasUI.network.models import GlobalConfiguration
-            gc_hostname = GlobalConfiguration.objects.all().order_by('-id')[0].get_hostname()
-            if gc_hostname:
-                m = re.match(r"^([a-zA-Z][a-zA-Z0-9]+)", gc_hostname)
-                if m:
-                    self.nt4_netbiosname = m.group(0).upper().strip()
 
     def save(self, *args, **kwargs):
         if self.nt4_adminpw and not self._nt4_adminpw_encrypted:
