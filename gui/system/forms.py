@@ -897,6 +897,9 @@ class SettingsForm(ModelForm):
         self.instance._original_stg_guiport = self.instance.stg_guiport
         self.instance._original_stg_guihttpsport = self.instance.stg_guihttpsport
         self.instance._original_stg_guihttpsredirect = self.instance.stg_guihttpsredirect
+        self.instance._original_stg_sysloglevel = (
+            self.instance.stg_sysloglevel
+        )
         self.instance._original_stg_syslogserver = (
             self.instance.stg_syslogserver
         )
@@ -932,8 +935,10 @@ class SettingsForm(ModelForm):
 
     def save(self):
         super(SettingsForm, self).save()
-        if self.instance._original_stg_syslogserver != self.instance.stg_syslogserver:
+        if (self.instance._original_stg_sysloglevel != self.instance.stg_sysloglevel or
+                self.instance._original_stg_syslogserver != self.instance.stg_syslogserver):
             notifier().restart("syslogd")
+
         notifier().reload("timeservices")
 
     def done(self, request, events):
