@@ -663,6 +663,21 @@ class NISForm(ModelForm):
 
 class LDAPForm(ModelForm):
 
+    ldap_netbiosname_a = forms.CharField(
+        max_length=120,
+        label=_("NetBIOS name"),
+    )
+    ldap_netbiosname_b = forms.CharField(
+        max_length=120,
+        label=_("NetBIOS name"),
+        required=False,
+    )
+    ldap_netbiosalias = forms.CharField(
+        max_length=120,
+        label=_("NetBIOS alias"),
+        required=False,
+    )
+
     advanced_fields = [
         'ldap_anonbind',
         'ldap_usersuffix',
@@ -672,6 +687,7 @@ class LDAPForm(ModelForm):
         'ldap_sudosuffix',
         'ldap_netbiosname_a',
         'ldap_netbiosname_b',
+        'ldap_netbiosalias',
         'ldap_kerberos_realm',
         'ldap_kerberos_principal',
         'ldap_ssl',
@@ -687,8 +703,6 @@ class LDAPForm(ModelForm):
     class Meta:
         fields = '__all__'
         exclude = ['ldap_idmap_backend_type']
-        if not hasattr(notifier, 'failover_node'):
-            exclude.append('ldap_netbiosname_b')
 
         model = models.LDAP
         widgets = {
@@ -700,13 +714,24 @@ class LDAPForm(ModelForm):
         self.fields["ldap_enable"].widget.attrs["onChange"] = (
             "ldap_mutex_toggle();"
         )
-        if hasattr(notifier, 'failover_node'):
-            from freenasUI.failover.utils import node_label_field
-            node_label_field(
-                notifier().failover_node(),
-                self.fields['ldap_netbiosname_a'],
-                self.fields['ldap_netbiosname_b'],
-            )
+        self.cifs = CIFS.objects.latest('id')
+        if self.cifs:
+            self.fields['ldap_netbiosname_a'].initial = self.cifs.cifs_srv_netbiosname
+            self.fields['ldap_netbiosname_b'].initial = self.cifs.cifs_srv_netbiosname_b
+            self.fields['ldap_netbiosalias'].initial = self.cifs.cifs_srv_netbiosalias
+        _n = notifier()
+        if not _n.is_freenas():
+            if _n.failover_licensed():
+                from freenasUI.failover.utils import node_label_field
+                node_label_field(
+                    _n.failover_node(),
+                    self.fields['ldap_netbiosname_a'],
+                    self.fields['ldap_netbiosname_b'],
+                )
+            else:
+                del self.fields['ldap_netbiosname_b']
+        else:
+                del self.fields['ldap_netbiosname_b']
 
     def clean_ldap_bindpw(self):
         cdata = self.cleaned_data
@@ -806,6 +831,10 @@ class LDAPForm(ModelForm):
 
         started = notifier().started("ldap")
         obj = super(LDAPForm, self).save()
+        self.cifs.cifs_srv_netbiosname = self.cleaned_data.get("ldap_netbiosname_a")
+        self.cifs.cifs_srv_netbiosname_b = self.cleaned_data.get("ldap_netbiosname_b")
+        self.cifs.cifs_srv_netbiosalias = self.cleaned_data.get("ldap_netbiosalias")
+        self.cifs.save()
 
         if enable:
             if started is True:
