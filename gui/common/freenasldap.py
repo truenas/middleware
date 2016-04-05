@@ -35,6 +35,7 @@ import string
 import tempfile
 import time
 import types
+import ipaddr
 
 from dns import resolver
 from ldap.controls import SimplePagedResultsControl
@@ -1758,14 +1759,38 @@ class FreeNAS_ActiveDirectory_Base(object):
     def locate_site(self):
         from freenasUI.choices import NICChoices
         from freenasUI.middleware.notifier import notifier
-        from freenasUI.common.sipcalc import sipcalc_type
 
         subnets = self.get_subnets()
         if not subnets:
             return None
 
-        ipv4_candidates = {}
-        ipv6_candidates = {}
+        ipv4_subnet_info_lst = []
+        ipv6_subnet_info_lst = []
+        ipv4_site = None
+        ipv6_site = None
+
+        for s in subnets:
+            if not s or len(s) < 2:
+                continue
+
+            network = site_dn = None
+            if 'cn' in s[1]:
+                network = s[1]['cn'][0]
+            else:
+                # if the network is None no point calculating
+                # anything more so ....
+                continue
+            if 'siteObject' in s[1]:
+                site_dn = s[1]['siteObject'][0]
+            # Note should/can we do the same skip as done for `network`
+            # the site_dn none too?
+
+            st = ipaddr.IPNetwork(network)
+
+            if st.version == 4:
+                ipv4_subnet_info_lst.append((site_dn, s, st))
+            elif st.version == 6:
+                ipv6_subnet_info_lst.append((site_dn, s, st))
 
         nics = NICChoices(exclude_configured=False)
         for n in nics:
@@ -1774,60 +1799,29 @@ class FreeNAS_ActiveDirectory_Base(object):
 
             if iinfo['ipv4']:
                 for i in iinfo['ipv4']:
-                    nic_ipv4_st = sipcalc_type(i['inet'], i['netmask'])
-
-                    for s in subnets:
-                        if not s or len(s) < 2:
-                            continue
-
-                        network = site_dn = None
-                        if 'cn' in s[1]:
-                            network = s[1]['cn'][0]
-                        if 'siteObject' in s[1]:
-                            site_dn = s[1]['siteObject'][0]
-
-                        st = sipcalc_type(network)
-                        if st.is_ipv4():
-                            if st.in_network(nic_ipv4_st):
-                                if nic not in ipv4_candidates:
-                                    ipv4_candidates[nic] = (site_dn, s, iinfo)
+                    ipv4_ipaddrobj = ipaddr.IPAddress(i['inet'], version=4)
+                    for s_tuple in ipv4_subnet_info_lst:
+                        site_dn, s, st = s_tuple
+                        if ipv4_ipaddrobj in st:
+                            sinfo = self.get_sites(distinguishedname=site_dn)[0]
+                            if sinfo and len(sinfo) > 1:
+                                ipv4_site = sinfo[1]['cn'][0]
+                                break
+                    if ipv4_site is not None:
+                        break
 
             if iinfo['ipv6']:
                 for i in iinfo['ipv6']:
-                    nic_ipv6_st = sipcalc_type("%s/%s" % (i['inet6'], i['prefixlen']))
-
-                    for s in subnets:
-                        if not s or len(s) < 2:
-                            continue
-                        network = site_dn = None
-
-                        if 'cn' in s[1]:
-                            network = s[1]['cn'][0]
-                        if 'siteObject' in s[1]:
-                            site_dn = s[1]['siteObject'][0]
-
-                        st = sipcalc_type(network)
-                        if st.is_ipv6():
-                            if st.in_network(nic_ipv6_st):
-                                if nic not in ipv6_candidates:
-                                    ipv6_candidates[nic] = (site_dn, s, iinfo)
-
-        ipv4_site = None
-        ipv6_site = None
-
-        for c in ipv4_candidates:
-            (site_dn, s, iinfo) = ipv4_candidates[c]
-            sinfo = self.get_sites(distinguishedname=site_dn)[0]
-            if sinfo and len(sinfo) > 1:
-                ipv4_site = sinfo[1]['cn'][0]
-                break
-
-        for c in ipv6_candidates:
-            (site_dn, s, iinfo) = ipv6_candidates[c]
-            sinfo = self.get_sites(distinguishedname=site_dn)[0]
-            if sinfo and len(sinfo) > 1:
-                ipv6_site = sinfo[1]['cn'][0]
-                break
+                    ipv6_ipaddrobj = ipaddr.IPAddress(i['inet6'], version=6)
+                    for s_tuple in ipv6_subnet_info_lst:
+                        site_dn, s, st = s_tuple
+                        if ipv6_ipaddrobj in st:
+                            sinfo = self.get_sites(distinguishedname=site_dn)[0]
+                            if sinfo and len(sinfo) > 1:
+                                ipv6_site = sinfo[1]['cn'][0]
+                                break
+                        if ipv6_site is not None:
+                            break
 
         if ipv4_site and ipv6_site and ipv4_site == ipv6_site:
             return ipv4_site
