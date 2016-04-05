@@ -590,36 +590,6 @@ def configure_idmap_backend(smb4_conf, idmap, domain):
         pass
 
 
-def set_netbiosname(conf, netbiosname):
-    if not netbiosname:
-        return False
-
-    parts = None
-    if ',' in netbiosname:
-        parts = netbiosname.split(',')
-    elif ' ' in netbiosname:
-        parts = netbiosname.split(' ')
-
-    if not parts:
-        confset2(conf, "netbios name = %s", netbiosname.upper())
-    else:
-        netbiosname = parts[0].upper()
-        confset2(conf, "netbios name = %s", netbiosname)
-
-        if len(parts) > 1:
-            netbios_aliases = []
-            for p in parts[1:]:
-                if not p:
-                    continue
-                netbios_aliases.append(p.upper())
-
-            if netbios_aliases:
-                confset2(conf, "netbios aliases = %s",
-                         string.join(netbios_aliases))
-
-    return True
-
-
 def add_nt4_conf(smb4_conf):
     # TODO: These are unused, will they be at some point?
     # rid_range_start = 20000
@@ -644,7 +614,6 @@ def add_nt4_conf(smb4_conf):
         f.write("%s\t%s\n" % (dc_ip, nt4.nt4_dcname.upper()))
         f.close()
 
-    set_netbiosname(smb4_conf, nt4.nt4_netbiosname)
     confset2(smb4_conf, "workgroup = %s", nt4_workgroup)
 
     confset1(smb4_conf, "security = domain")
@@ -720,9 +689,6 @@ def add_ldap_conf(smb4_conf):
     confset1(smb4_conf, "ldap passwd sync = yes")
     confset1(smb4_conf, "ldapsam:trusted = yes")
 
-    confset2(smb4_conf, "netbios name = %s", ldap.ldap_netbiosname.upper())
-    if ldap.ldap_netbiosalias:
-        confset2(smb4_conf, "netbios alias = %s", ldap.ldap_netbiosalias.upper())
     confset2(smb4_conf, "workgroup = %s", ldap_workgroup)
     confset1(smb4_conf, "domain logons = yes")
 
@@ -751,7 +717,6 @@ def add_activedirectory_conf(smb4_conf):
     except:
         return
 
-    set_netbiosname(smb4_conf, ad.ad_netbiosname)
     confset2(smb4_conf, "workgroup = %s", ad_workgroup)
     confset2(smb4_conf, "realm = %s", ad.ad_domainname.upper())
     confset1(smb4_conf, "security = ADS")
@@ -1012,6 +977,10 @@ def generate_smb4_conf(smb4_conf, role):
 
         elif activedirectory_enabled():
             add_activedirectory_conf(smb4_conf)
+
+        confset2(smb4_conf, "netbios name = %s", cifs.get_netbiosname().upper())
+        if cifs.cifs_srv_netbiosalias:
+            confset2(smb4_conf, "netbios alias = %s", cifs.cifs_srv_netbiosalias.upper())
 
     elif role == 'standalone':
         confset1(smb4_conf, "server role = standalone")

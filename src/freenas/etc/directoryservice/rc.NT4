@@ -257,7 +257,6 @@ NT4_show_config()
 	printf "nt4_adminname:    %s\n" $(NT4_get nt4_adminname)
 	printf "nt4_adminpw:      %s\n" $(NT4_get nt4_adminpw)
 	printf "nt4_workgroup:    %s\n" $(NT4_get nt4_workgroup)
-	printf "nt4_netbiosname:  %s\n" $(NT4_get nt4_netbiosname)
 	printf "+------------------------------------------+\n"
 }
 
@@ -352,7 +351,6 @@ NT4_load_database_values()
 	cat << __SQL__ | ${FREENAS_SQLITE_CMD} -line ${FREENAS_CONFIG} > ${tmpfile}
 	SELECT
 		nt4_dcname,
-		nt4_netbiosname,
 		nt4_workgroup,
 		nt4_adminname,
 		nt4_adminpw

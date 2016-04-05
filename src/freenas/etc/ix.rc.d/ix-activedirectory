@@ -166,7 +166,10 @@ setup_homedirs()
 			done
 
 		else
-			local workgroup=$(AD_get ad_netbiosname)
+			local workgroup=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT cifs_srv_netbiosalias FROM services_cifs ORDER BY -id LIMIT 1")
+			if [ "${workgroup}" = "" ]; then
+				workgroup=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT cifs_srv_netbiosname FROM services_cifs ORDER BY -id LIMIT 1")
+			fi
 			local homedir="/home/${workgroup}"
 
 			mkdir -p "${homedir}"

@@ -216,8 +216,8 @@ class CIFSForm(ModelForm):
                 from freenasUI.failover.utils import node_label_field
                 node_label_field(
                     _n.failover_node(),
-                    self.fields['ldap_netbiosname_a'],
-                    self.fields['ldap_netbiosname_b'],
+                    self.fields['cifs_srv_netbiosname'],
+                    self.fields['cifs_srv_netbiosname_b'],
                 )
         else:
             del self.fields['cifs_srv_netbiosname_b']
@@ -247,6 +247,24 @@ class CIFSForm(ModelForm):
         except Exception as e:
             raise forms.ValidationError(_("netbiosname: %s" % e))
         return netbios
+
+    def clean_cifs_srv_netbiosname_b(self):
+        netbios = self.cleaned_data.get("cifs_srv_netbiosname_b")
+        if netbios:
+            try:
+                validate_netbios_names(netbios)
+            except Exception as e:
+                raise forms.ValidationError(_("netbiosname: %s" % e))
+        return netbios
+
+    def clean_cifs_srv_netbiosalias(self):
+        alias = self.cleaned_data.get("cifs_srv_netbiosalias")
+        if alias:
+            try:
+                validate_netbios_names(netbios)
+            except Exception as e:
+                raise forms.ValidationError(_("NetBIOS Alias: %s" % e))
+        return alias
 
     def clean_cifs_srv_filemask(self):
         v = self.cleaned_data.get("cifs_srv_filemask").strip()

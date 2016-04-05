@@ -51,6 +51,7 @@ from freenasUI.common.system import (
 from freenasUI.directoryservice import models
 from freenasUI.middleware.notifier import notifier
 from freenasUI.services.exceptions import ServiceFailed
+from freenasUI.services.models import CIFS
 
 log = logging.getLogger('directoryservice.form')
 
@@ -225,7 +226,6 @@ class NT4Form(ModelForm):
         }
         fields = [
             'nt4_dcname',
-            'nt4_netbiosname',
             'nt4_workgroup',
             'nt4_adminname',
             'nt4_adminpw',
@@ -264,14 +264,6 @@ class NT4Form(ModelForm):
             nt4_idmap_backend = None
         return nt4_idmap_backend
 
-    def clean_nt4_netbiosname(self):
-        netbiosname = self.cleaned_data.get("nt4_netbiosname")
-        try:
-            validate_netbios_names(netbiosname)
-        except Exception as e:
-            raise forms.ValidationError(_("netbiosname: %s" % e))
-        return netbiosname
-
     def clean_nt4_workgroup(self):
         workgroup = self.cleaned_data.get("nt4_workgroup")
         try:
@@ -308,9 +300,25 @@ class NT4Form(ModelForm):
 
 class ActiveDirectoryForm(ModelForm):
 
+    ad_netbiosname_a = forms.CharField(
+        max_length=120,
+        label=_("NetBIOS name"),
+    )
+    ad_netbiosname_b = forms.CharField(
+        max_length=120,
+        label=_("NetBIOS name"),
+        required=False,
+    )
+    ad_netbiosalias = forms.CharField(
+        max_length=120,
+        label=_("NetBIOS alias"),
+        required=False,
+    )
+
     advanced_fields = [
         'ad_netbiosname_a',
         'ad_netbiosname_b',
+        'ad_netbiosalias',
         'ad_ssl',
         'ad_certificate',
         'ad_verbose_logging',
@@ -334,8 +342,6 @@ class ActiveDirectoryForm(ModelForm):
     class Meta:
         fields = '__all__'
         exclude = ['ad_idmap_backend_type']
-        if not hasattr(notifier, 'failover_node'):
-            exclude.append('ad_netbiosname_b')
 
         model = models.ActiveDirectory
         widgets = {
@@ -345,8 +351,6 @@ class ActiveDirectoryForm(ModelForm):
     def __original_save(self):
         for name in (
             'ad_domainname',
-            'ad_netbiosname_a',
-            'ad_netbiosname_b',
             'ad_allow_trusted_doms',
             'ad_use_default_domain',
             'ad_unix_extensions',
@@ -359,23 +363,30 @@ class ActiveDirectoryForm(ModelForm):
                 "_original_%s" % name,
                 getattr(self.instance, name)
             )
+        for name in (
+            'cifs_srv_netbiosname',
+            'cifs_srv_netbiosname_b',
+            'cifs_srv_netbiosalias',
+        ):
+            setattr(
+                self.cifs,
+                "_original_%s" % name,
+                getattr(self.cifs, name),
+            )
 
     def __original_changed(self):
-        if self.instance._original_ad_domainname != self.instance.ad_domainname:
-            return True
-        if self.instance._original_ad_netbiosname_a != self.instance.ad_netbiosname_a:
-            return True
-        if self.instance._original_ad_allow_trusted_doms != self.instance.ad_allow_trusted_doms:
-            return True
-        if self.instance._original_ad_use_default_domain != self.instance.ad_use_default_domain:
-            return True
-        if self.instance._original_ad_unix_extensions != self.instance.ad_unix_extensions:
-            return True
-        if self.instance._original_ad_verbose_logging != self.instance.ad_verbose_logging:
-            return True
-        if self.instance._original_ad_bindname != self.instance.ad_bindname:
-            return True
-        if self.instance._original_ad_bindpw != self.instance.ad_bindpw:
+        if (
+            self.instance._original_ad_domainname != self.instance.ad_domainname or
+            self.cifs._original_cifs_srv_netbiosname != self.cifs.cifs_srv_netbiosname or
+            self.cifs._original_cifs_srv_netbiosname_b != self.cifs.cifs_srv_netbiosname_b or
+            self.cifs._original_cifs_srv_netbiosalias != self.cifs.cifs_srv_netbiosalias or
+            self.instance._original_ad_allow_trusted_doms != self.instance.ad_allow_trusted_doms or
+            self.instance._original_ad_use_default_domain != self.instance.ad_use_default_domain or
+            self.instance._original_ad_unix_extensions != self.instance.ad_unix_extensions or
+            self.instance._original_ad_verbose_logging != self.instance.ad_verbose_logging or
+            self.instance._original_ad_bindname != self.instance.ad_bindname or
+            self.instance._original_ad_bindpw != self.instance.ad_bindpw
+        ):
             return True
         return False
 
@@ -383,6 +394,7 @@ class ActiveDirectoryForm(ModelForm):
         super(ActiveDirectoryForm, self).__init__(*args, **kwargs)
         if self.instance.ad_bindpw:
             self.fields['ad_bindpw'].required = False
+        self.cifs = CIFS.objects.latest('id')
         self.__original_save()
 
         self.fields["ad_idmap_backend"].widget.attrs["onChange"] = (
@@ -392,13 +404,23 @@ class ActiveDirectoryForm(ModelForm):
         self.fields["ad_enable"].widget.attrs["onChange"] = (
             "activedirectory_mutex_toggle();"
         )
-        if hasattr(notifier, 'failover_node'):
-            from freenasUI.failover.utils import node_label_field
-            node_label_field(
-                notifier().failover_node(),
-                self.fields['ad_netbiosname_a'],
-                self.fields['ad_netbiosname_b'],
-            )
+        if self.cifs:
+            self.fields['ad_netbiosname_a'].initial = self.cifs.cifs_srv_netbiosname
+            self.fields['ad_netbiosname_b'].initial = self.cifs.cifs_srv_netbiosname_b
+            self.fields['ad_netbiosalias'].initial = self.cifs.cifs_srv_netbiosalias
+        _n = notifier()
+        if not _n.is_freenas():
+            if _n.failover_licensed():
+                from freenasUI.failover.utils import node_label_field
+                node_label_field(
+                    _n.failover_node(),
+                    self.fields['ad_netbiosname_a'],
+                    self.fields['ad_netbiosname_b'],
+                )
+            else:
+                del self.fields['ad_netbiosname_b']
+        else:
+                del self.fields['ad_netbiosname_b']
 
     def clean_ad_dcname(self):
         ad_dcname = self.cleaned_data.get('ad_dcname')
@@ -576,6 +598,10 @@ class ActiveDirectoryForm(ModelForm):
 
         started = notifier().started("activedirectory")
         obj = super(ActiveDirectoryForm, self).save()
+        self.cifs.cifs_srv_netbiosname = self.cleaned_data.get("ad_netbiosname_a")
+        self.cifs.cifs_srv_netbiosname_b = self.cleaned_data.get("ad_netbiosname_b")
+        self.cifs.cifs_srv_netbiosalias = self.cleaned_data.get("ad_netbiosalias")
+        self.cifs.save()
 
         if enable:
             if started is True:
@@ -628,6 +654,21 @@ class NISForm(ModelForm):
 
 class LDAPForm(ModelForm):
 
+    ldap_netbiosname_a = forms.CharField(
+        max_length=120,
+        label=_("NetBIOS name"),
+    )
+    ldap_netbiosname_b = forms.CharField(
+        max_length=120,
+        label=_("NetBIOS name"),
+        required=False,
+    )
+    ldap_netbiosalias = forms.CharField(
+        max_length=120,
+        label=_("NetBIOS alias"),
+        required=False,
+    )
+
     advanced_fields = [
         'ldap_anonbind',
         'ldap_usersuffix',
@@ -637,6 +678,7 @@ class LDAPForm(ModelForm):
         'ldap_sudosuffix',
         'ldap_netbiosname_a',
         'ldap_netbiosname_b',
+        'ldap_netbiosalias',
         'ldap_kerberos_realm',
         'ldap_kerberos_principal',
         'ldap_ssl',
@@ -652,8 +694,6 @@ class LDAPForm(ModelForm):
     class Meta:
         fields = '__all__'
         exclude = ['ldap_idmap_backend_type']
-        if not hasattr(notifier, 'failover_node'):
-            exclude.append('ldap_netbiosname_b')
 
         model = models.LDAP
         widgets = {
@@ -665,13 +705,24 @@ class LDAPForm(ModelForm):
         self.fields["ldap_enable"].widget.attrs["onChange"] = (
             "ldap_mutex_toggle();"
         )
-        if hasattr(notifier, 'failover_node'):
-            from freenasUI.failover.utils import node_label_field
-            node_label_field(
-                notifier().failover_node(),
-                self.fields['ldap_netbiosname_a'],
-                self.fields['ldap_netbiosname_b'],
-            )
+        self.cifs = CIFS.objects.latest('id')
+        if self.cifs:
+            self.fields['ldap_netbiosname_a'].initial = self.cifs.cifs_srv_netbiosname
+            self.fields['ldap_netbiosname_b'].initial = self.cifs.cifs_srv_netbiosname_b
+            self.fields['ldap_netbiosalias'].initial = self.cifs.cifs_srv_netbiosalias
+        _n = notifier()
+        if not _n.is_freenas():
+            if _n.failover_licensed():
+                from freenasUI.failover.utils import node_label_field
+                node_label_field(
+                    _n.failover_node(),
+                    self.fields['ldap_netbiosname_a'],
+                    self.fields['ldap_netbiosname_b'],
+                )
+            else:
+                del self.fields['ldap_netbiosname_b']
+        else:
+                del self.fields['ldap_netbiosname_b']
 
     def clean_ldap_bindpw(self):
         cdata = self.cleaned_data
@@ -771,6 +822,10 @@ class LDAPForm(ModelForm):
 
         started = notifier().started("ldap")
         obj = super(LDAPForm, self).save()
+        self.cifs.cifs_srv_netbiosname = self.cleaned_data.get("ldap_netbiosname_a")
+        self.cifs.cifs_srv_netbiosname_b = self.cleaned_data.get("ldap_netbiosname_b")
+        self.cifs.cifs_srv_netbiosalias = self.cleaned_data.get("ldap_netbiosalias")
+        self.cifs.save()
 
         if enable:
             if started is True:

@@ -195,7 +195,6 @@ Available options:
             "ad_machine",
             "ad_bindname",
             "ad_domainname",
-            "ad_netbiosname",
             "ad_basedn",
             "ad_binddn",
             "ad_site",

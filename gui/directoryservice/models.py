@@ -788,12 +788,6 @@ class NT4(DirectoryServiceBase):
         max_length=120,
         help_text=_("FQDN of the domain controller to use."),
     )
-    nt4_netbiosname = models.CharField(
-        verbose_name=_("NetBIOS Name"),
-        max_length=120,
-        help_text=_("System hostname"),
-        blank=True
-    )
     nt4_workgroup = models.CharField(
         verbose_name=_("Workgroup Name"),
         max_length=120,
@@ -842,14 +836,6 @@ class NT4(DirectoryServiceBase):
         self.ds_type = DS_TYPE_NT4
         self.ds_name = enum_to_directoryservice(self.ds_type)
 
-        if not self.nt4_netbiosname:
-            from freenasUI.network.models import GlobalConfiguration
-            gc_hostname = GlobalConfiguration.objects.all().order_by('-id')[0].get_hostname()
-            if gc_hostname:
-                m = re.match(r"^([a-zA-Z][a-zA-Z0-9]+)", gc_hostname)
-                if m:
-                    self.nt4_netbiosname = m.group(0).upper().strip()
-
     def save(self, *args, **kwargs):
         if self.nt4_adminpw and not self._nt4_adminpw_encrypted:
             self.nt4_adminpw = notifier().pwenc_encrypt(
@@ -881,31 +867,6 @@ class ActiveDirectory(DirectoryServiceBase):
         help_text=_("Domain Account password."),
         blank=True
     )
-    ad_netbiosname_a = models.CharField(
-        verbose_name=_("NetBIOS Name"),
-        max_length=120,
-        help_text=_("System hostname"),
-        blank=True
-    )
-    ad_netbiosname_b = models.CharField(
-        verbose_name=_("NetBIOS Name"),
-        max_length=120,
-        help_text=_("System hostname"),
-        blank=True,
-        null=True,
-    )
-
-    @property
-    def ad_netbiosname(self):
-        _n = notifier()
-        if not _n.is_freenas():
-            if _n.failover_node() == 'B':
-                return self.ad_netbiosname_b
-            else:
-                return self.ad_netbiosname_a
-        else:
-            return self.ad_netbiosname_a
-
     ad_ssl = models.CharField(
         verbose_name=_("Encryption Mode"),
         max_length=120,
@@ -1049,14 +1010,6 @@ class ActiveDirectory(DirectoryServiceBase):
 
         self.ds_type = DS_TYPE_ACTIVEDIRECTORY
         self.ds_name = enum_to_directoryservice(self.ds_type)
-
-        if not self.ad_netbiosname_a:
-            from freenasUI.network.models import GlobalConfiguration
-            gc_hostname = GlobalConfiguration.objects.all().order_by('-id')[0].get_hostname()
-            if gc_hostname:
-                m = re.match(r"^([a-zA-Z][a-zA-Z0-9\.\-]+)", gc_hostname)
-                if m:
-                    self.ad_netbiosname_a = m.group(0).upper().strip()
 
     def save(self, **kwargs):
         if self.ad_bindpw and not self._ad_bindpw_encrypted:
@@ -1212,30 +1165,6 @@ class LDAP(DirectoryServiceBase):
             "ou=SUDOers"),
         blank=True
     )
-    ldap_netbiosname_a = models.CharField(
-        verbose_name=_("NetBIOS Name"),
-        max_length=120,
-        help_text=_("System hostname"),
-        blank=True
-    )
-    ldap_netbiosname_b = models.CharField(
-        verbose_name=_("NetBIOS Name"),
-        max_length=120,
-        help_text=_("System hostname"),
-        blank=True,
-        null=True,
-    )
-
-    @property
-    def ldap_netbiosname(self):
-        _n = notifier()
-        if not _n.is_freenas():
-            if _n.failover_node() == 'B':
-                return self.ldap_netbiosname_b
-            else:
-                return self.ldap_netbiosname_a
-        else:
-            return self.ldap_netbiosname_a
     ldap_kerberos_realm = models.ForeignKey(
         KerberosRealm,
         verbose_name=_("Kerberos Realm"),
@@ -1318,14 +1247,6 @@ class LDAP(DirectoryServiceBase):
 
         self.ds_type = DS_TYPE_LDAP
         self.ds_name = enum_to_directoryservice(self.ds_type)
-
-        if not self.ldap_netbiosname_a:
-            from freenasUI.network.models import GlobalConfiguration
-            gc_hostname = GlobalConfiguration.objects.all().order_by('-id')[0].get_hostname()
-            if gc_hostname:
-                m = re.match(r"^([a-zA-Z][a-zA-Z0-9\.\-]+)", gc_hostname)
-                if m:
-                    self.ldap_netbiosname_a = m.group(0).upper().strip()
 
     def save(self, *args, **kwargs):
         if self.ldap_bindpw and not self._ldap_bindpw_encrypted:
