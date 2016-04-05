@@ -881,15 +881,6 @@ class ActiveDirectory(DirectoryServiceBase):
         help_text=_("Domain Account password."),
         blank=True
     )
-
-    @property
-    def ad_netbiosname(self):
-        from freenasUI.services.models import CIFS
-        cifs = CIFS.objects.latest('id')
-        if not cifs:
-            return None
-        return cifs.get_netbiosname()
-
     ad_ssl = models.CharField(
         verbose_name=_("Encryption Mode"),
         max_length=120,
