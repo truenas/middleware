@@ -902,7 +902,7 @@ def debug_download(request):
         hostname = ''
     else:
         debug_file = dump
-        extension = '.tgz'
+        extension = 'tgz'
         hostname = '-%s' % gc.gc_hostname.encode('utf-8')
 
     wrapper = FileWrapper(file(debug_file))
