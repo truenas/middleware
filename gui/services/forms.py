@@ -216,8 +216,8 @@ class CIFSForm(ModelForm):
                 from freenasUI.failover.utils import node_label_field
                 node_label_field(
                     _n.failover_node(),
-                    self.fields['ldap_netbiosname_a'],
-                    self.fields['ldap_netbiosname_b'],
+                    self.fields['cifs_srv_netbiosname'],
+                    self.fields['cifs_srv_netbiosname_b'],
                 )
         else:
             del self.fields['cifs_srv_netbiosname_b']
