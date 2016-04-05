@@ -318,7 +318,7 @@ class ActiveDirectoryForm(ModelForm):
         label=_("NetBIOS name"),
         required=False,
     )
-    ad_netbiosalias =forms.CharField(
+    ad_netbiosalias = forms.CharField(
         max_length=120,
         label=_("NetBIOS alias"),
         required=False,
@@ -372,23 +372,30 @@ class ActiveDirectoryForm(ModelForm):
                 "_original_%s" % name,
                 getattr(self.instance, name)
             )
+        for name in (
+            'cifs_srv_netbiosname',
+            'cifs_srv_netbiosname_b',
+            'cifs_srv_netbiosalias',
+        ):
+            setattr(
+                self.cifs,
+                "_original_%s" % name,
+                getattr(self.cifs, name),
+            )
 
     def __original_changed(self):
-        if self.instance._original_ad_domainname != self.instance.ad_domainname:
-            return True
-        if self.instance._original_ad_netbiosname_a != self.instance.ad_netbiosname_a:
-            return True
-        if self.instance._original_ad_allow_trusted_doms != self.instance.ad_allow_trusted_doms:
-            return True
-        if self.instance._original_ad_use_default_domain != self.instance.ad_use_default_domain:
-            return True
-        if self.instance._original_ad_unix_extensions != self.instance.ad_unix_extensions:
-            return True
-        if self.instance._original_ad_verbose_logging != self.instance.ad_verbose_logging:
-            return True
-        if self.instance._original_ad_bindname != self.instance.ad_bindname:
-            return True
-        if self.instance._original_ad_bindpw != self.instance.ad_bindpw:
+        if (
+            self.instance._original_ad_domainname != self.instance.ad_domainname or
+            self.cifs._original_cifs_srv_netbiosname != self.cifs.cifs_srv_netbiosname or
+            self.cifs._original_cifs_srv_netbiosname_b != self.cifs.cifs_srv_netbiosname_b or
+            self.cifs._original_cifs_srv_netbiosalias != self.cifs.cifs_srv_netbiosalias or
+            self.instance._original_ad_allow_trusted_doms != self.instance.ad_allow_trusted_doms or
+            self.instance._original_ad_use_default_domain != self.instance.ad_use_default_domain or
+            self.instance._original_ad_unix_extensions != self.instance.ad_unix_extensions or
+            self.instance._original_ad_verbose_logging != self.instance.ad_verbose_logging or
+            self.instance._original_ad_bindname != self.instance.ad_bindname or
+            self.instance._original_ad_bindpw != self.instance.ad_bindpw
+        ):
             return True
         return False
 
@@ -405,11 +412,11 @@ class ActiveDirectoryForm(ModelForm):
         self.fields["ad_enable"].widget.attrs["onChange"] = (
             "activedirectory_mutex_toggle();"
         )
-        cifs = CIFS.objects.latest('id')
-        if cifs:
-            self.fields['ad_netbiosname_a'].initial = cifs.cifs_srv_netbiosname
-            self.fields['ad_netbiosname_b'].initial = cifs.cifs_srv_netbiosname_b
-            self.fields['ad_netbiosalias'].initial = cifs.cifs_srv_netbiosalias
+        self.cifs = CIFS.objects.latest('id')
+        if self.cifs:
+            self.fields['ad_netbiosname_a'].initial = self.cifs.cifs_srv_netbiosname
+            self.fields['ad_netbiosname_b'].initial = self.cifs.cifs_srv_netbiosname_b
+            self.fields['ad_netbiosalias'].initial = self.cifs.cifs_srv_netbiosalias
         _n = notifier()
         if not _n.is_freenas():
             if _n.failover_licensed():
