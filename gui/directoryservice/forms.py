@@ -403,6 +403,7 @@ class ActiveDirectoryForm(ModelForm):
         super(ActiveDirectoryForm, self).__init__(*args, **kwargs)
         if self.instance.ad_bindpw:
             self.fields['ad_bindpw'].required = False
+        self.cifs = CIFS.objects.latest('id')
         self.__original_save()
 
         self.fields["ad_idmap_backend"].widget.attrs["onChange"] = (
@@ -412,7 +413,6 @@ class ActiveDirectoryForm(ModelForm):
         self.fields["ad_enable"].widget.attrs["onChange"] = (
             "activedirectory_mutex_toggle();"
         )
-        self.cifs = CIFS.objects.latest('id')
         if self.cifs:
             self.fields['ad_netbiosname_a'].initial = self.cifs.cifs_srv_netbiosname
             self.fields['ad_netbiosname_b'].initial = self.cifs.cifs_srv_netbiosname_b
@@ -607,6 +607,10 @@ class ActiveDirectoryForm(ModelForm):
 
         started = notifier().started("activedirectory")
         obj = super(ActiveDirectoryForm, self).save()
+        self.cifs.cifs_srv_netbiosname = self.cleaned_data.get("ad_netbiosname_a")
+        self.cifs.cifs_srv_netbiosname_b = self.cleaned_data.get("ad_netbiosname_b")
+        self.cifs.cifs_srv_netbiosalias = self.cleaned_data.get("ad_netbiosalias")
+        self.cifs.save()
 
         if enable:
             if started is True:
