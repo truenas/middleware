@@ -7,6 +7,8 @@ from django.db import models
 
 def netbios_split(netbiosname):
     parts = None
+    if netbiosname is None:
+        return None, None
     if ',' in netbiosname:
         parts = netbiosname.split(',')
     elif ' ' in netbiosname:
