@@ -160,6 +160,8 @@ This screen also allows you to configure an alias for the interface. If you wish
 wish to configure. To delete an alias, highlight the interface in the tree to access its "Edit" screen. Be sure to check the "Delete" checkbox associated with
 the alias. If you instead click the "Delete" button at the bottom of this screen, you will delete the whole interface, not just the alias.
 
+.. note:: the ability to delete interfaces is disabled if :ref:`Failovers` has been configured.
+
 When configuring multiple interfaces, they can not be members of the same subnet. Check the subnet mask if you receive an error when setting the IP addresses
 on multiple interfaces.
 
@@ -488,3 +490,6 @@ configuration. This makes it difficult for the GUI to do the right thing without
 `Network --> Interfaces --> Add Interface`. Select the parent interface from the NIC drop-down menu and in the "Options" field, type
 :command:`up`. This will bring up the parent interface. If an IP address is required, it can be configured using the rest of the options in the "Add
 Interface" screen.
+
+.. warning:: creating a vlan will cause network connectivity to be interrupted and, if :ref:`Failovers` has been configured, a failover event. Accordingly, the GUI will provide a warning
+   and an opportunity to cancel the vlan creation.

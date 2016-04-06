@@ -832,11 +832,11 @@ NFS
 The settings that are configured when creating NFS Shares in :menuselection:`Sharing --> Unix (NFS) Shares --> Add Unix (NFS) Share` are specific to each
 configured NFS Share. In contrast, global settings which apply to all NFS shares are configured in :menuselection:`Services --> NFS`.
 
-:numref:`Figure %s: Configuring NFS <nfs1a>` shows the configuration screen and Table 11.9a summarizes the configuration options for the NFS service.
+:numref:`Figure %s: Configuring NFS <nfs1c>` shows the configuration screen and Table 11.9a summarizes the configuration options for the NFS service.
 
-.. _nfs1a:
+.. _nfs1c:
 
-.. figure:: images/nfs1a.png
+.. figure:: images/nfs1c.png
 
 **Table 11.9a: NFS Configuration Options**
 
@@ -860,6 +860,10 @@ configured NFS Share. In contrast, global settings which apply to all NFS shares
 | Enable NFSv4           | checkbox   | the default is to use NFSv3, check this box to switch to NFSv4                                                      |
 |                        |            |                                                                                                                     |
 +------------------------+------------+---------------------------------------------------------------------------------------------------------------------+
+| NFSv3 ownership model  | checkbox   | greyed out unless "Enable NFSv4" is checked and, in turn, will grey out "Support>16 groups" which is incompatible;  |
+| for NFSv4              |            | check this box if NFSv4 ACL support is needed without requiring the client and the server to sync users and groups  |
+|                        |            |                                                                                                                     |
++------------------------+------------+---------------------------------------------------------------------------------------------------------------------+
 | Require Kerberos for   | checkbox   | when checked, NFS shares will fail if the Kerberos ticket is unavailable                                            |
 | NFSv4                  |            |                                                                                                                     |
 |                        |            |                                                                                                                     |
@@ -877,6 +881,10 @@ configured NFS Share. In contrast, global settings which apply to all NFS shares
 | rpc.lockd(8) bind port | integer    | optional; specify port for                                                                                          |
 |                        |            | `rpc.lockd(8) <http://www.freebsd.org/cgi/man.cgi?query=rpc.lockd>`_                                                |
 |                        |            | to bind to                                                                                                          |
+|                        |            |                                                                                                                     |
++------------------------+------------+---------------------------------------------------------------------------------------------------------------------+
+| Support>16 groups      |            | check this box if any users are members of more than 16 groups (useful in AD environments); note that this assumes  |
+|                        |            | that group membership has been configured correctly on the NFS server                                               |
 |                        |            |                                                                                                                     |
 +------------------------+------------+---------------------------------------------------------------------------------------------------------------------+
 

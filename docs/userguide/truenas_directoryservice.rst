@@ -114,6 +114,10 @@ display these settings by checking the box "Show advanced fields by default" in 
 | Allow DNS updates        | checkbox      | when unchecked, disables Samba from doing DNS updates when joining a domain                                                                |
 |                          |               |                                                                                                                                            |
 +--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
+| Disable Active Directory | checkbox      | when checked, disables caching AD users and groups; useful if you cannot bind to a domain with a large number of users or groups           |
+| user/group cache         |               |                                                                                                                                            |
+|                          |               |                                                                                                                                            |
++--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
 | Site Name                | string        | only available in "Advanced Mode"; the relative distinguished name of the site object in Active Directory                                  |
 |                          |               |                                                                                                                                            |
 +--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
