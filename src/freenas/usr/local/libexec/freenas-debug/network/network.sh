@@ -113,4 +113,8 @@ network_func()
         netstat -p $proto -s
     done
 	section_footer
+
+	section_header "Open connections and listening sockets (sockstat)" 
+	sockstat 
+	section_footer
 }
