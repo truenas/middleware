@@ -904,10 +904,12 @@ class AutoImportWizard(SessionWizardView):
                         volume.get_geli_keyfile(),
                         passphrase=passfile
                     )
-                    if disk.startswith("gptid"):
+                    if disk.startswith("gptid/"):
                         diskname = _n.identifier_to_device(
                             "{uuid}%s" % disk.replace("gptid/", "")
                         )
+                    elif disk.startswith("gpt/"):
+                        diskname = _n.label_to_disk(disk)
                     else:
                         diskname = disk
                     ed = models.EncryptedDisk()
