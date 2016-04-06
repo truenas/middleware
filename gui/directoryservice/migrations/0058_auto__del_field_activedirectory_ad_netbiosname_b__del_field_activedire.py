@@ -7,6 +7,10 @@ from django.db import models
 
 class Migration(SchemaMigration):
 
+    depends_on = (
+        ('services', '0192_netbiosname_split'),
+    )
+
     def forwards(self, orm):
         # Deleting field 'ActiveDirectory.ad_netbiosname_b'
         db.delete_column(u'directoryservice_activedirectory', 'ad_netbiosname_b')
