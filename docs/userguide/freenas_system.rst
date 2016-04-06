@@ -369,7 +369,7 @@ backup will be saved as a binary file. To restore a saved backup, use the "12) R
 
 .. warning:: the backup function **IGNORES ENCRYPTED POOLS**. Do not use it to backup systems with encrypted pools.
 
-**Save Debug:** used to generate a text file of diagnostic information. It will prompt for the location to save the generated ASCII text file.
+**Save Debug:** used to generate a text file of diagnostic information. Once the debug is created, it will prompt for the location to save the generated ASCII text file.
 
 **Figure 5.4b: Backup Configuration Screen**
 

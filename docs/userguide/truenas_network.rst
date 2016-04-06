@@ -160,7 +160,7 @@ This screen also allows you to configure an alias for the interface. If you wish
 wish to configure. To delete an alias, highlight the interface in the tree to access its "Edit" screen. Be sure to check the "Delete" checkbox associated with
 the alias. If you instead click the "Delete" button at the bottom of this screen, you will delete the whole interface, not just the alias.
 
-.. note:: the ability to delete interfaces is disabled if :ref:`Failovers` has been configured.
+.. note:: the ability to delete interfaces is disabled if :ref:`Failovers` has been configured and enabled.
 
 When configuring multiple interfaces, they can not be members of the same subnet. Check the subnet mask if you receive an error when setting the IP addresses
 on multiple interfaces.

@@ -222,7 +222,8 @@ Highlight an entry to view its configuration buttons.  The following configurati
 
 * **Delete:** used to delete the highlighted entries, which also removes these entries from the boot menu. Since you can not delete an entry that has been activated, this button will
   not appear for the active boot environment. If you need to delete an entry that you created and it is currently  activated, first activate another entry, which will clear the
-  *On reboot* field of the currently activated entry.
+  *On reboot* field of the currently activated entry. Note that this button will not be displayed for the "default" boot environment as this entry is needed in order to return the system to
+  the original installation state.
 
 The buttons above the boot entries can be used to:
 
@@ -333,7 +334,7 @@ backup will be saved as a binary file. To restore a saved backup, use the "12) R
 
 .. warning:: the backup function **IGNORES ENCRYPTED POOLS**. Do not use it to backup systems with encrypted pools.
 
-**Save Debug:** used to generate a text file of diagnostic information. It will prompt for the location to save the generated ASCII text file.
+**Save Debug:** used to generate a text file of diagnostic information. Once the debug is created, it will prompt for the location to save the generated ASCII text file.
 
 .. _backup1:
 
@@ -1014,7 +1015,7 @@ Next, go to :menuselection:`Network --> Interfaces --> Add Interface`. The HA li
 
 * **Critical for Failover:** check this box if a failover should occur when this interface becomes unavailable. How many seconds it takes for that failover to occur depends upon the
   value of the "Timeout", as described in Table 5.12a. This checkbox is interface-specific, allowing you to have different settings for a management network and a data network. Note that
-  checking this box requires the *Virtual IP* to be set.
+  checking this box requires the *Virtual IP* to be set and that at least one interface needs to be set as "Critical for Failover" in order to configure failover.
 
 * **Group:** this drop-down menu is greyed out unless the "Critical for Failover" checkbox is checked. This box allows you to group multiple, critical for failover interfaces. In this case,
   all of the interfaces in a group must go down before failover occurs. This can be a useful configuration in a multipath scenario.

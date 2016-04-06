@@ -130,6 +130,8 @@ Some updates affect the user interface so this section lists any functional chan
 .. note:: the screenshots in this documentation assume that your system is fully updated to the latest STABLE version of FreeNAS® |version|. If a screen on your
    system looks different than the documentation, make sure that the system is fully up-to-date and apply any outstanding updates if it is not.
    
+* Samba has been updated to `4.3.6 <https://www.samba.org/samba/history/samba-4.3.6.html>`_.
+   
 * The "NFSv3 ownership model for NFSv4" checkbox has been added to :menuselection:`Services --> NFS`.
 
 * The :command:`nslookup` and :command:`dig` command line utilities have returned.
