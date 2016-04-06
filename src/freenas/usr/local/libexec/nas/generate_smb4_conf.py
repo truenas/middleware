@@ -768,7 +768,7 @@ def add_domaincontroller_conf(smb4_conf):
 
     confset2(smb4_conf, "netbios name = %s", cifs.get_netbiosname().upper())
     if cifs.cifs_srv_netbiosalias:
-        confset2(smb4_conf, "netbios alias = %s", cifs.cifs_srv_netbiosalias.upper())
+        confset2(smb4_conf, "netbios aliases = %s", cifs.cifs_srv_netbiosalias.upper())
     confset2(smb4_conf, "workgroup = %s", dc.dc_domain.upper())
     confset2(smb4_conf, "realm = %s", dc.dc_realm)
     confset2(smb4_conf, "dns forwarder = %s", dc.dc_dns_forwarder)
@@ -980,13 +980,13 @@ def generate_smb4_conf(smb4_conf, role):
 
         confset2(smb4_conf, "netbios name = %s", cifs.get_netbiosname().upper())
         if cifs.cifs_srv_netbiosalias:
-            confset2(smb4_conf, "netbios alias = %s", cifs.cifs_srv_netbiosalias.upper())
+            confset2(smb4_conf, "netbios aliases = %s", cifs.cifs_srv_netbiosalias.upper())
 
     elif role == 'standalone':
         confset1(smb4_conf, "server role = standalone")
         confset2(smb4_conf, "netbios name = %s", cifs.get_netbiosname().upper())
         if cifs.cifs_srv_netbiosalias:
-            confset2(smb4_conf, "netbios alias = %s", cifs.cifs_srv_netbiosalias.upper())
+            confset2(smb4_conf, "netbios aliases = %s", cifs.cifs_srv_netbiosalias.upper())
         confset2(smb4_conf, "workgroup = %s", cifs.cifs_srv_workgroup.upper())
         confset1(smb4_conf, "security = user")
 
