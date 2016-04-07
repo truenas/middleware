@@ -313,8 +313,7 @@ def main():
         if rv is False:
             if verbose:
                 print("No updates available")
-            if cache_dir is None:
-                Update.RemoveUpdate(cache_dir)
+            Update.RemoveUpdate(cache_dir)
             sys.exit(1)
         else:
             diffs = Update.PendingUpdatesChanges(cache_dir)
