@@ -63,4 +63,8 @@ geom_func()
 		fi
 	done
 	section_footer
+
+	section_header "GEOM labels (glabel status)" 
+	glabel status
+	section_footer
 }
