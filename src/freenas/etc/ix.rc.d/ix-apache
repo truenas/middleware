@@ -20,6 +20,7 @@ LoadModule authn_core_module libexec/apache24/mod_authn_core.so
 LoadModule authz_user_module libexec/apache24/mod_authz_user.so
 LoadModule authz_core_module libexec/apache24/mod_authz_core.so
 LoadModule alias_module libexec/apache24/mod_alias.so
+LoadModule mpm_prefork_module libexec/apache24/mod_mpm_prefork.so
 LoadModule mpm_itk_module libexec/apache24/mod_mpm_itk.so
 LoadModule unixd_module libexec/apache24/mod_unixd.so
 LoadModule auth_basic_module libexec/apache24/mod_auth_basic.so
@@ -53,6 +54,16 @@ ServerName localhost
 # Limiting the number of idle threads
 # see: http://httpd.apache.org/docs/current/mod/prefork.html#MinSpareServers
 <IfModule mpm_itk_module>
+        StartServers 1
+        MinSpareServers 1
+</IfModule>
+
+# I really do not know why mpm-prefork or mpm-event are needed
+# to start apache24 successfully when I already have mpm itk
+# (see: https://bugs.freenas.org/issues/14396)
+# Bandaid fix, till I can (hopefully) think of a better fix
+# Please fix if you can!
+<IfModule mpm_prefork_module>
         StartServers 1
         MinSpareServers 1
 </IfModule>
@@ -170,7 +181,7 @@ generate_webdav_conf ()
         # The purpose of this is to facilitate apache to run even in the absence of a secondary config
         # file. Else, it will try to bind to port 80 and fail as nginx is using it and thus spit out a
         # mesaage stating that unable to bind to port, cannot create logs.
-        echo "Listen 8080" > /etc/local/apache24/httpd.conf
+        echo "Listen 8080" >> /etc/local/apache24/httpd.conf
     fi
 
 }
