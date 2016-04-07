@@ -113,7 +113,8 @@ What's New in |version|
 
 * The CrucibleWDS plugin has been deprecated and replaced with `CloneDeploy <https://sourceforge.net/projects/clonedeploy/>`_. 
 
-* :command:`iohyve` has been added for creating, managing, and launching `bhyve <https://en.wikipedia.org/wiki/Bhyve>`_ guests from the command line.
+* :command:`iohyve` has been added for creating, managing, and launching `bhyve <https://en.wikipedia.org/wiki/Bhyve>`_ guests from the command line. This utility requires an Intel or AMD
+  processor that reports the "POPCNT" (POPulation Count) processor feature.
 
 * `htop <http://hisham.hm/htop/>`_ has been added which can be run from :ref:`Shell`.
 

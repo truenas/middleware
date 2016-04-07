@@ -771,6 +771,9 @@ Using iohyve
 Beginning with version |version|, FreeNAS® includes the `iohyve <https://github.com/pr1ntf/iohyve>`_ command line utility for creating, managing, and launching
 `bhyve <https://en.wikipedia.org/wiki/Bhyve>`_ guests.
 
+.. note:: this type of virtualization requires an Intel or AMD processor that reports the "POPCNT" (POPulation Count) processor feature. To verify that your processor has this feature,
+   type :command:`grep POPCNT /var/boot/dmesg.boot` from :ref:`Shell`. If you just receive your prompt back, you will not be able to install guests using :command:`iohyve`.
+
 To initialize this utility, run this command, substituting the name of the pool to hold the bhyve guests and the name of the network interface::
 
  iohyve setup pool=volume1 kmod=1 net=em0
@@ -781,16 +784,17 @@ To initialize this utility, run this command, substituting the name of the pool 
  
  ln -s /mnt/iohyve /iohyve
  
-Next, tell :command:`iohyve` which installation ISO to download. In this example, we ask it to fetch FreeBSD 10.3-RC2 so that we can test that version::
+Next, tell :command:`iohyve` which installation ISO to download. In this example, we ask it to fetch the 64-bit version of FreeBSD 10.3, then verify that the fetch was successful::
 
- iohyve fetch ftp://ftp.freebsd.org/pub/FreeBSD/releases/amd64/amd64/ISO-IMAGES/10.3/FreeBSD-10.3-RC2-amd64-bootonly.iso
- Fetching ftp://ftp.freebsd.org/pub/FreeBSD/releases/amd64/amd64/ISO-IMAGES/10.3/FreeBSD-10.3-RC2-amd64-bootonly.iso...
- /iohyve/ISO/FreeBSD-10.3-RC2-amd64-bootonly.iso 100% of 232 MB 2443 kBps 01m38s
+ iohyve fetch ftp://ftp.freebsd.org/pub/FreeBSD/releases/amd64/amd64/ISO-IMAGES/10.3/FreeBSD-10.3-RELEASE-amd64-bootonly.iso
+ Fetching ftp://ftp.freebsd.org/pub/FreeBSD/releases/amd64/amd64/ISO-IMAGES/10.3/FreeBSD-10.3-RELEASE-amd64-bootonly.iso...
+ /iohyve/ISO/FreeBSD-10.3-RELEASE-amd64-bootonly.iso 100% of 232 MB 2443 kBps 01m38s
  
  iohyve isolist
- FreeBSD-10.3-RC2-amd64-bootonly.iso
+ Listing ISO's...
+ FreeBSD-10.3-RELEASE-amd64-bootonly.iso
  
-Then, specify the name and size of the guest to create::
+Then, specify the name and size of the guest to create and verify its status::
 
  iohyve create freebsd10.3 8G
  Creating freebsd10.3...
@@ -799,9 +803,11 @@ Then, specify the name and size of the guest to create::
  Guest		VMM?	Running?	rcboot?		Description
  freebsd10.3    NO      NO              NO              Thu_Mar_24_09:37:30_PDT_2016
  
-And install the guest with the specified operating system::
+Note that the newly created guest is not running, nor is it set to automatically start ("rcboot:) when :command:`iohyve` starts.
+ 
+To install the guest using the specified ISO::
 
- iohyve install freebsd10.3 FreeBSD-10.3-RC2-amd64-bootonly.iso
+ iohyve install freebsd10.3 FreeBSD-10.3-RELEASE-amd64-bootonly.iso
  Installing freebsd10.3...
  
 
