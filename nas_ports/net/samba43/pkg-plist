@@ -632,6 +632,7 @@ lib/shared-modules/nss_info/rfc2307.so
 lib/shared-modules/nss_info/sfu.so
 lib/shared-modules/nss_info/sfu20.so
 lib/shared-modules/nss_info/template.so
+%%PDB_FREENAS%%lib/shared-modules/pdb/freenas.so
 lib/shared-modules/pdb/ldapsam.so
 lib/shared-modules/pdb/samba_dsdb.so
 lib/shared-modules/pdb/smbpasswd.so

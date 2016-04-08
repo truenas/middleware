@@ -84,6 +84,7 @@ LIB_DEPENDS+=		libsunacl.so:${PORTSDIR}/sysutils/libsunacl
 BUILD_DEPENDS+=		libarchive>=3.1.2:${PORTSDIR}/archivers/libarchive
 RUN_DEPENDS+=		libarchive>=3.1.2:${PORTSDIR}/archivers/libarchive
 
+
 # snapper needs dbus 
 LIB_DEPENDS+=		libdbus-1.so:${PORTSDIR}/devel/dbus 
 LIB_DEPENDS+=		libdbus-glib-1.so:${PORTSDIR}/devel/dbus-glib
@@ -392,6 +393,15 @@ CONFIGURE_ARGS+=	--with-utmp
 CONFIGURE_ARGS+=	--without-utmp
 .endif
 
+.if ${PORT_OPTIONS:MFREENAS}
+CONFIGURE_ARGS+=	--with-freenas
+SAMBA4_MODULES+=	pdb_freenas
+PLIST_SUB+=		PDB_FREENAS=""
+.else
+CONFIGURE_ARGS+=	--without-freenas
+PLIST_SUB+=		PDB_FREENAS="@comment "
+.endif
+
 .if defined(SAMBA4_WANT_ADS)
 CONFIGURE_ARGS+=	--with-ads
 .else
@@ -430,7 +440,7 @@ CONFIGURE_ARGS+=	--with-shared-modules="${SAMBA4_MODULES:Q:C|(\\\\ )+|,|g:S|\\||
 .for module in	auth_samba4 auth_skel auth_unix auth_wbc gpext_registry gpext_scripts \
 		gpext_security idmap_ad idmap_ldap idmap_nss idmap_passdb idmap_tdb \
 		nss_info_template pdb_ldap pdb_samba_dsdb pdb_smbpasswd pdb_tdbsam \
-		pdb_test pdb_wbc_sam perfcount_test vfs_aio_posix vfs_aio_pthread \
+		pdb_test pdb_freenas pdb_wbc_sam perfcount_test vfs_aio_posix vfs_aio_pthread \
 		vfs_cacheprime vfs_dfs_samba4 vfs_fake_acls \
 		vfs_shadow_copy_test vfs_skel_opaque vfs_skel_transparent
 .	if !empty(SAMBA4_MODULES) && ${SAMBA4_MODULES:M${module}}
