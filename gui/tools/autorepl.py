@@ -353,7 +353,7 @@ for replication in replication_tasks:
         if sshproc.returncode:
             # Be conservative: only consider it's Okay when we see the expected result.
             if error != '':
-                if output.split('\n')[0] == ("cannot open '%s': dataset does not exist" % (remotefs_final)):
+                if error.split('\n')[0] == ("cannot open '%s': dataset does not exist" % (remotefs_final)):
                     may_proceed = True
         else:
             if output != '':
