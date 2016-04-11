@@ -7,7 +7,7 @@ PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin:/rescue
 export PATH
 HOME=/root
 export HOME
-TERM=${TERM:-cons25}
+TERM=${TERM:-xterm}
 export TERM
 GRUB_TERMINAL_OUTPUT="console serial"
 export GRUB_TERMINAL_OUTPUT
