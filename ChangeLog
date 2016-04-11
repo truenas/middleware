@@ -25,7 +25,6 @@
 #14136  Feature Important No REST API for extending zvol
 #14186  Feature Nice to have freenas-debug takes forever - profiling patch included
 #14215  Bug     Critical Fix AD Performance Issues
-#13225  Feature Important add checkbox to WebGUI to allow nfsv3-like ownership when using nfsv4
 #13696  Bug     Nice to have  System Boot Status 500
 #14172  Bug     Important Unable to start CIFS service
 #14415  Bug     Blocks Until Resolved Incorrect handling of resolv.conf generation and other network issues
