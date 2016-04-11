@@ -8,6 +8,19 @@ from django.db import models
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
+        # Deleting model 'Registration'
+        db.delete_table(u'system_registration')
+
+        # Adding field 'Certificate.cert_chain'
+        db.add_column(u'system_certificate', 'cert_chain',
+                      self.gf('django.db.models.fields.BooleanField')(default=False),
+                      keep_default=False)
+
+        # Adding field 'CertificateAuthority.cert_chain'
+        db.add_column(u'system_certificateauthority', 'cert_chain',
+                      self.gf('django.db.models.fields.BooleanField')(default=False),
+                      keep_default=False)
+
         # Adding field 'Settings.stg_sysloglevel'
         db.add_column(u'system_settings', 'stg_sysloglevel',
                       self.gf('django.db.models.fields.CharField')(default='f_info', max_length=120),
@@ -15,6 +28,29 @@ class Migration(SchemaMigration):
 
 
     def backwards(self, orm):
+        # Adding model 'Registration'
+        db.create_table(u'system_registration', (
+            ('reg_cellphone', self.gf('django.db.models.fields.CharField')(max_length=120, null=True, blank=True)),
+            ('reg_city', self.gf('django.db.models.fields.CharField')(max_length=120, null=True, blank=True)),
+            ('reg_state', self.gf('django.db.models.fields.CharField')(max_length=120, null=True, blank=True)),
+            ('reg_homephone', self.gf('django.db.models.fields.CharField')(max_length=120, null=True, blank=True)),
+            ('reg_firstname', self.gf('django.db.models.fields.CharField')(max_length=120)),
+            ('reg_company', self.gf('django.db.models.fields.CharField')(max_length=120, null=True, blank=True)),
+            (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
+            ('reg_address', self.gf('django.db.models.fields.CharField')(max_length=120, null=True, blank=True)),
+            ('reg_email', self.gf('django.db.models.fields.CharField')(max_length=120)),
+            ('reg_zip', self.gf('django.db.models.fields.CharField')(max_length=120, null=True, blank=True)),
+            ('reg_lastname', self.gf('django.db.models.fields.CharField')(max_length=120)),
+            ('reg_workphone', self.gf('django.db.models.fields.CharField')(max_length=120, null=True, blank=True)),
+        ))
+        db.send_create_signal(u'system', ['Registration'])
+
+        # Deleting field 'Certificate.cert_chain'
+        db.delete_column(u'system_certificate', 'cert_chain')
+
+        # Deleting field 'CertificateAuthority.cert_chain'
+        db.delete_column(u'system_certificateauthority', 'cert_chain')
+
         # Deleting field 'Settings.stg_sysloglevel'
         db.delete_column(u'system_settings', 'stg_sysloglevel')
 
@@ -48,7 +84,7 @@ class Migration(SchemaMigration):
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
             'message_id': ('django.db.models.fields.CharField', [], {'max_length': '100'}),
             'node': ('django.db.models.fields.CharField', [], {'default': "'A'", 'max_length': '100'}),
-            'timestamp': ('django.db.models.fields.IntegerField', [], {'default': '1459919501'})
+            'timestamp': ('django.db.models.fields.IntegerField', [], {'default': '1460350385'})
         },
         u'system.backup': {
             'Meta': {'object_name': 'Backup'},

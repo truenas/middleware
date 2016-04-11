@@ -17,7 +17,7 @@ generate_syslog_conf()
 	eval local $f
 	local sf=$(var_to_sf $f)
 	eval local $g
-	local sf=$(var_to_sf $g)
+	local sg=$(var_to_sf $g)
 	local serverhost=""
 	local serverport=""
 	local sysloglevel=""
