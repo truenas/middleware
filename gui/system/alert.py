@@ -1,4 +1,5 @@
 import cPickle
+import datetime
 import hashlib
 import imp
 import logging
@@ -69,13 +70,7 @@ class Alert(object):
             self._id = hashlib.md5(message.encode('utf8')).hexdigest()
         else:
             self._id = id
-        node = alert_node()
-        qs = mAlert.objects.filter(message_id=self.getId(), node=node)
-        if qs.exists():
-            self._timestamp = qs[0].timestamp
-        else:
-            self._timestamp = int(time.time())
-            mAlert.objects.create(node=node, message_id=self.getId(), timestamp=self._timestamp, dismiss=False)
+        self._timestamp = int(time.time())
 
     def __repr__(self):
         return '<Alert: %s>' % self._id
@@ -121,6 +116,12 @@ class Alert(object):
 
     def getTimestamp(self):
         return self._timestamp
+
+    def setTimestamp(self, value):
+        self._timestamp = value
+
+    def getDatetime(self):
+        return datetime.datetime.fromtimestamp(self._timestamp)
 
 
 class AlertPlugins:
@@ -195,6 +196,7 @@ class AlertPlugins:
         node = alert_node()
         dismisseds = [a.message_id
                       for a in mAlert.objects.filter(node=node, dismiss=True)]
+        ids = []
         for instance in self.mods:
             try:
                 if instance.name in results:
@@ -208,6 +210,29 @@ class AlertPlugins:
                 if rv:
                     alerts = filter(None, rv)
                     for alert in alerts:
+                        ids.append(alert.getId())
+                        update_or_create = False
+                        if instance.name in results:
+                            found = False
+                            for i in (results[instance.name]['alerts'] or []):
+                                if alert == i:
+                                    found = i
+                                    break
+                            if found is not False:
+                                alert.setTimestamp(found.getTimestamp())
+                            else:
+                                update_or_create = True
+                        else:
+                            update_or_create = True
+
+                        if update_or_create:
+                            qs = mAlert.objects.filter(message_id=alert.getId(), node=node)
+                            if qs.exists():
+                                qs[0].timestamp = alert.getTimestamp()
+                                qs[0].save()
+                            else:
+                                mAlert.objects.create(node=node, message_id=alert.getId(), timestamp=alert.getTimestamp(), dismiss=False)
+
                         if alert.getId() in dismisseds:
                             alert.setDismiss(True)
                     rvs.extend(alerts)
@@ -220,6 +245,7 @@ class AlertPlugins:
                 log.debug("Alert module '%s' failed: %s", instance, e, exc_info=True)
                 log.error("Alert module '%s' failed: %s", instance, e)
 
+        mAlert.objects.exclude(message_id__in=ids, node=node).delete()
         crits = sorted([a for a in rvs if a and a.getLevel() == Alert.CRIT])
         if obj and crits:
             lastcrits = sorted([

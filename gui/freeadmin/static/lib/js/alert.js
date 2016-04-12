@@ -75,7 +75,7 @@ require([
     alert_open = function() {
         var alertdlg = new Dialog({
             title: gettext("Alert System"),
-            style: "width: 400px",
+            style: "width: 600px",
             id: "alert_dialog",
             href: "/admin/alert/",
             onHide: function() {
