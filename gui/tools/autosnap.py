@@ -73,6 +73,7 @@ log = logging.getLogger('tools.autosnap')
 MNTLOCK = mntlock()
 
 VMWARE_FAILS = '/var/tmp/.vmwaresnap_fails'
+VMWARESNAPDELETE_FAILS = '/var/tmp/.vmwaresnapdelete_fails'
 
 # Set to True if verbose log desired
 debug = False
@@ -149,6 +150,7 @@ def autorepl_running():
     except OSError:
         return False
 
+
 # Check if a VM is using a certain datastore
 def doesVMDependOnDataStore(vm, dataStore):
     try:
@@ -158,7 +160,7 @@ def doesVMDependOnDataStore(vm, dataStore):
             return True
         # check if VM has disks on the data store
         # we check both "diskDescriptor" and "diskExtent" types of files
-        disks=vm.get_property("disks")
+        disks = vm.get_property("disks")
         for disk in disks:
             for file in disk["files"]:
                 if file["name"].startswith("[%s]" % dataStore):
@@ -167,11 +169,12 @@ def doesVMDependOnDataStore(vm, dataStore):
         log.debug('Exception in doesVMDependOnDataStore')
     return False
 
+
 # check if VMware can snapshot a VM
 def canSnapshotVM(vm):
     try:
         # check for PCI pass-through devices
-        devs=vm.get_property('devices')
+        devs = vm.get_property('devices')
         for dev in devs:
             if devs[dev]['type'] == "VirtualPCIPassthrough":
                 return False
@@ -181,10 +184,11 @@ def canSnapshotVM(vm):
         log.debug('Exception in canSnapshotVM')
     return True
 
+
 # check if there is already a snapshot by a given name
 def doesVMSnapshotByNameExists(vm, snapshotName):
     try:
-        snaps=vm.get_snapshots()
+        snaps = vm.get_snapshots()
         for snap in snaps:
             if snap.get_name() == snapshotName:
                 return True
@@ -340,14 +344,14 @@ if len(mp_to_task_map) > 0:
                 if doesVMDependOnDataStore(vm1, obj.datastore):
                     try:
                         if canSnapshotVM(vm1):
-                            if not doesVMSnapshotByNameExists(vm1, vmsnapname): # have we already created a snapshot of the VM for this volume iteration? can happen if the VM uses two datasets (a and b) where both datasets are mapped to the same ZFS volume in FreeNAS.
+                            if not doesVMSnapshotByNameExists(vm1, vmsnapname):  # have we already created a snapshot of the VM for this volume iteration? can happen if the VM uses two datasets (a and b) where both datasets are mapped to the same ZFS volume in FreeNAS.
                                 vm1.create_snapshot(vmsnapname, description=vmsnapdescription, memory=False)
                             else:
                                 log.debug("Not creating snapshot %s for VM %s because it already exists", vmsnapname, vm)
                         else:
                             # we can try to shutdown the VM, if the user provided us an ok to do so (might need a new list property in obj to know which VMs are fine to shutdown and a UI to specify such exceptions)
                             # otherwise can skip VM snap and then make a crash-consistent zfs snapshot for this VM
-                            log.log(logging.NOTICE, "Can't snapshot VM %s that depends on datastore %s and filesystem %s. Possibly using PT devices. Skipping.", vm, obj.datastore, fs) # log to syslog
+                            log.log(logging.NOTICE, "Can't snapshot VM %s that depends on datastore %s and filesystem %s. Possibly using PT devices. Skipping.", vm, obj.datastore, fs)  # log to syslog
                             snapvmskips.append(vm1)
                     except:
                         log.warn("Snapshot of VM %s failed", vm)
@@ -397,13 +401,35 @@ Hello,
             if proc.returncode != 0:
                 log.error("Failed to create snapshot '%s': %s", snapname, err)
 
+        snapdeletefails = []
         for vm in snapvms:
             if vm not in snapvmfails and vm not in snapvmskips:
                 try:
                     vm.delete_named_snapshot(vmsnapname)
                 except:
                     log.debug("Exception delete_named_snapshot %s %s", vm.get_property('path'), vmsnapname)
+                    snapdeletefails.append(vm.get_property('path'))
+        if snapdeletefails:
+            try:
+                with LockFile(VMWARESNAPDELETE_FAILS) as lock:
+                    with open(VMWARESNAPDELETE_FAILS, 'rb') as f:
+                        fails = pickle.load(f)
+            except:
+                fails = {}
+            fails[snapname] = [vm.get_property('path') for vm in snapdeletefails]
+            with LockFile(VMWARESNAPDELETE_FAILS) as lock:
+                with open(VMWARESNAPDELETE_FAILS, 'wb') as f:
+                    pickle.dump(fails, f)
 
+            send_mail(
+                subject="VMware Snapshot deletion failed! (%s)" % snapname,
+                text="""
+Hello,
+    The following VM snapshot(s) failed to delete %s:
+%s
+""" % (snapname, '    \n'.join([vm.get_property('path') for vm in snapdeletefails])),
+                channel='snapvmware'
+            )
 
     MNTLOCK.lock()
     if not autorepl_running():
