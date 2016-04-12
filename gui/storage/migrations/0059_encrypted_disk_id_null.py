@@ -1,68 +1,18 @@
 # -*- coding: utf-8 -*-
 from south.utils import datetime_utils as datetime
 from south.db import db
-from south.v2 import DataMigration
+from south.v2 import SchemaMigration
 from django.db import models
 
 
-class Migration(DataMigration):
-
-    depends_on = (
-        ('services', '0190_dup_webdav'),
-        ('tasks', '0004_populate_rsync_delayupdates'),
-    )
+class Migration(SchemaMigration):
 
     def forwards(self, orm):
-
-        seen_idents = []
-        id_map = {}
-        for d in list(orm['storage.Disk'].objects.order_by('disk_enabled')):
-            if d.disk_identifier in seen_idents:
-                d.delete()
-            else:
-                seen_idents.append(d.disk_identifier)
-                id_map[str(d.id)] = d.disk_identifier
-
-        db.alter_column(u'tasks_smarttest_smarttest_disks', 'disk_id', self.gf('django.db.models.fields.CharField')(max_length=100))
-
-        rows = db.execute("select id, disk_id from tasks_smarttest_smarttest_disks")
-        if rows:
-            for row in rows:
-                disk_id = row[1]
-                if disk_id in id_map:
-                    db.execute("update tasks_smarttest_smarttest_disks set disk_id = %s where id = %s", [id_map[disk_id], row[0]])
-                else:
-                    db.execute("delete from tasks_smarttest_smarttest_disks where id = %s", [row[0]])
-
+        # This migration required because of #14602
         db.alter_column(u'storage_encrypteddisk', 'encrypted_disk_id', self.gf('django.db.models.fields.CharField')(max_length=100, null=True))
 
-        rows = db.execute("select id, encrypted_disk_id from storage_encrypteddisk")
-        if rows:
-            for row in rows:
-                disk_id = row[1]
-                if disk_id is None:
-                    continue
-                if disk_id in id_map:
-                    db.execute("update storage_encrypteddisk set encrypted_disk_id = %s where id = %s", [id_map[disk_id], row[0]])
-                else:
-                    db.execute("delete from storage_encrypteddisk where id = %s", [row[0]])
-
-
-        # Migrate iscsi device extents
-        rows = db.execute("select id, iscsi_target_extent_path from services_iscsitargetextent where iscsi_target_extent_type = 'Disk'")
-        if rows:
-            for row in rows:
-                disk_id = row[1]
-                if disk_id in id_map:
-                    db.execute("update services_iscsitargetextent set iscsi_target_extent_path = %s where id = %s", [id_map[disk_id], row[0]])
-
-
     def backwards(self, orm):
-
-        for i, d in enumerate(orm['storage.Disk'].objects.all()):
-            d.id = i + 1
-            d.save()
-
+        pass
 
     models = {
         u'storage.disk': {
@@ -72,7 +22,7 @@ class Migration(DataMigration):
             'disk_description': ('django.db.models.fields.CharField', [], {'max_length': '120', 'blank': 'True'}),
             'disk_enabled': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
             'disk_hddstandby': ('django.db.models.fields.CharField', [], {'default': "'Always On'", 'max_length': '120'}),
-            'disk_identifier': ('django.db.models.fields.CharField', [], {'max_length': '42'}),
+            'disk_identifier': ('django.db.models.fields.CharField', [], {'max_length': '42', 'primary_key': 'True'}),
             'disk_multipath_member': ('django.db.models.fields.CharField', [], {'max_length': '30', 'blank': 'True'}),
             'disk_multipath_name': ('django.db.models.fields.CharField', [], {'max_length': '30', 'blank': 'True'}),
             'disk_name': ('django.db.models.fields.CharField', [], {'max_length': '120'}),
@@ -82,8 +32,7 @@ class Migration(DataMigration):
             'disk_smartoptions': ('django.db.models.fields.CharField', [], {'max_length': '120', 'blank': 'True'}),
             'disk_subsystem': ('django.db.models.fields.CharField', [], {'default': "''", 'max_length': '10'}),
             'disk_togglesmart': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
-            'disk_transfermode': ('django.db.models.fields.CharField', [], {'default': "'Auto'", 'max_length': '120'}),
-            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'})
+            'disk_transfermode': ('django.db.models.fields.CharField', [], {'default': "'Auto'", 'max_length': '120'})
         },
         u'storage.encrypteddisk': {
             'Meta': {'object_name': 'EncryptedDisk'},
@@ -161,71 +110,7 @@ class Migration(DataMigration):
             'vol_fstype': ('django.db.models.fields.CharField', [], {'max_length': '120'}),
             'vol_guid': ('django.db.models.fields.CharField', [], {'max_length': '50', 'blank': 'True'}),
             'vol_name': ('django.db.models.fields.CharField', [], {'unique': 'True', 'max_length': '120'})
-        },
-        u'tasks.cronjob': {
-            'Meta': {'ordering': "['cron_description', 'cron_user']", 'object_name': 'CronJob'},
-            'cron_command': ('django.db.models.fields.TextField', [], {}),
-            'cron_daymonth': ('django.db.models.fields.CharField', [], {'default': "'*'", 'max_length': '100'}),
-            'cron_dayweek': ('django.db.models.fields.CharField', [], {'default': "'*'", 'max_length': '100'}),
-            'cron_description': ('django.db.models.fields.CharField', [], {'max_length': '200', 'blank': 'True'}),
-            'cron_enabled': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
-            'cron_hour': ('django.db.models.fields.CharField', [], {'default': "'*'", 'max_length': '100'}),
-            'cron_minute': ('django.db.models.fields.CharField', [], {'default': "'00'", 'max_length': '100'}),
-            'cron_month': ('django.db.models.fields.CharField', [], {'default': "'*'", 'max_length': '100'}),
-            'cron_stderr': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
-            'cron_stdout': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
-            'cron_user': ('freenasUI.freeadmin.models.fields.UserField', [], {'max_length': '60'}),
-            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'})
-        },
-        u'tasks.initshutdown': {
-            'Meta': {'object_name': 'InitShutdown'},
-            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'ini_command': ('django.db.models.fields.CharField', [], {'max_length': '300', 'blank': 'True'}),
-            'ini_script': ('freenasUI.freeadmin.models.fields.PathField', [], {'max_length': '255', 'null': 'True', 'blank': 'True'}),
-            'ini_type': ('django.db.models.fields.CharField', [], {'default': "'command'", 'max_length': '15'}),
-            'ini_when': ('django.db.models.fields.CharField', [], {'max_length': '15'})
-        },
-        u'tasks.rsync': {
-            'Meta': {'ordering': "['rsync_path', 'rsync_desc']", 'object_name': 'Rsync'},
-            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'rsync_archive': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
-            'rsync_compress': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
-            'rsync_daymonth': ('django.db.models.fields.CharField', [], {'default': "'*'", 'max_length': '100'}),
-            'rsync_dayweek': ('django.db.models.fields.CharField', [], {'default': "'*'", 'max_length': '100'}),
-            'rsync_delayupdates': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
-            'rsync_delete': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
-            'rsync_desc': ('django.db.models.fields.CharField', [], {'max_length': '120', 'blank': 'True'}),
-            'rsync_direction': ('django.db.models.fields.CharField', [], {'default': "'push'", 'max_length': '10'}),
-            'rsync_enabled': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
-            'rsync_extra': ('django.db.models.fields.TextField', [], {'blank': 'True'}),
-            'rsync_hour': ('django.db.models.fields.CharField', [], {'default': "'*'", 'max_length': '100'}),
-            'rsync_minute': ('django.db.models.fields.CharField', [], {'default': "'00'", 'max_length': '100'}),
-            'rsync_mode': ('django.db.models.fields.CharField', [], {'default': "'module'", 'max_length': '20'}),
-            'rsync_month': ('django.db.models.fields.CharField', [], {'default': "'*'", 'max_length': '100'}),
-            'rsync_path': ('freenasUI.freeadmin.models.fields.PathField', [], {'max_length': '255'}),
-            'rsync_preserveattr': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
-            'rsync_preserveperm': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
-            'rsync_quiet': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
-            'rsync_recursive': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
-            'rsync_remotehost': ('django.db.models.fields.CharField', [], {'max_length': '120'}),
-            'rsync_remotemodule': ('django.db.models.fields.CharField', [], {'max_length': '120', 'blank': 'True'}),
-            'rsync_remotepath': ('django.db.models.fields.CharField', [], {'max_length': '255', 'blank': 'True'}),
-            'rsync_remoteport': ('django.db.models.fields.SmallIntegerField', [], {'default': '22'}),
-            'rsync_times': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
-            'rsync_user': ('freenasUI.freeadmin.models.fields.UserField', [], {'max_length': '60'})
-        },
-        u'tasks.smarttest': {
-            'Meta': {'ordering': "['smarttest_type']", 'object_name': 'SMARTTest'},
-            u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'}),
-            'smarttest_daymonth': ('django.db.models.fields.CharField', [], {'default': "'*'", 'max_length': '100'}),
-            'smarttest_dayweek': ('django.db.models.fields.CharField', [], {'default': "'*'", 'max_length': '100'}),
-            'smarttest_desc': ('django.db.models.fields.CharField', [], {'max_length': '120', 'blank': 'True'}),
-            'smarttest_disks': ('django.db.models.fields.related.ManyToManyField', [], {'to': u"orm['storage.Disk']", 'symmetrical': 'False'}),
-            'smarttest_hour': ('django.db.models.fields.CharField', [], {'default': "'*'", 'max_length': '100'}),
-            'smarttest_month': ('django.db.models.fields.CharField', [], {'default': "'*'", 'max_length': '100'}),
-            'smarttest_type': ('django.db.models.fields.CharField', [], {'max_length': '2'})
         }
     }
 
-    complete_apps = ['storage', 'tasks']
-    symmetrical = True
+    complete_apps = ['storage']
