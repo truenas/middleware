@@ -24,6 +24,7 @@ fi
 : ${GIT_PORTS_REPO=https://github.com/freenas/ports.git}
 : ${GIT_LICENSELIB_REPO=https://github.com/freenas/licenselib.git}
 : ${GIT_PYLIBZFS_REPO=https://github.com/freenas/py-libzfs.git}
+: ${GIT_SAMBA_REPO=https://github.com/freenas/samba.git}
 
 : ${GIT_FREEBSD_BRANCH=TN-9.3-STABLE}
 : ${GIT_FREEBSD_CHECKOUT_PATH="${AVATAR_ROOT}/FreeBSD/src"}
@@ -35,4 +36,9 @@ fi
 
 : ${GIT_PYLIBZFS_CHECKOUT_PATH="${AVATAR_ROOT}/nas_source/py-libzfs"}
 : ${GIT_PYLIBZFS_REVCMD="rev-list HEAD --count"}
-: ${REPOS="FREEBSD PORTS LICENSELIB PYLIBZFS ${ADDL_REPOS}"}
+
+: ${GIT_SAMBA_BRANCH=v4-3-stable}
+: ${GIT_SAMBA_CHECKOUT_PATH="${AVATAR_ROOT}/nas_source/samba"}
+: ${GIT_SAMBA_TAG=9.3.1-NAS}
+
+: ${REPOS="FREEBSD PORTS LICENSELIB PYLIBZFS SAMBA ${ADDL_REPOS}"}
