@@ -164,7 +164,7 @@ NANO_DATADIR=""
 
 # src.conf to use when building the image. Defaults to /dev/null for the sake
 # of determinism.
-SRCCONF=${SRCCONF:=/dev/null}
+SRCCONF=${SRCCONF:=${AVATAR_ROOT}/build/files/src.conf}
 
 # Files to exclude via find(1)
 NANO_IGNORE_FILES_EXPR='(CVS|\.git|\.svn)'
