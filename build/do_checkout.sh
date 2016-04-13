@@ -123,7 +123,7 @@ generic_checkout_git()
         cd ${checkout_path}
         local old_branch=`git rev-parse --abbrev-ref HEAD`
         # if only tag specified then do not do fancy things
-        if [ "x${my_branch}" == "x" -a "x${my_tag}" != "x"]; then
+        if [ "x${my_branch}" == "x" -a "x${my_tag}" != "x" ]; then
             git remote set-url origin "${my_repo}"
             git fetch origin
             do_git_update "${my_branch}" "${my_tag}"
@@ -155,7 +155,9 @@ generic_checkout_git()
             git fetch origin
             do_git_update "${my_branch}" "${my_tag}"
         fi
-        git pull $_depth_arg
+        if [ -z "$my_branch" ]; then
+            git pull $_depth_arg
+        fi
         cd ..
     else
         # do a fresh checkout...
