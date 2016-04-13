@@ -529,31 +529,26 @@ class JailTemplate(Model):
         verbose_name=_("Name"),
         unique=True
     )
-
     jt_os = models.CharField(
         max_length=120,
         verbose_name=_("OS"),
         choices=choices.JAIL_TEMPLATE_OS_CHOICES
     )
-
     jt_arch = models.CharField(
         max_length=120,
         verbose_name=_("Architecture"),
         choices=choices.JAIL_TEMPLATE_ARCH_CHOICES
     )
-
     jt_url = models.CharField(
         max_length=255,
         verbose_name=_("URL")
     )
-
     jt_mtree = models.CharField(
         max_length=255,
         verbose_name=_("mtree"),
         help_text=_("The mtree file for the template"),
         blank=True
     )
-
     jt_system = models.BooleanField(
         default=False,
         verbose_name=_("System"),
@@ -562,7 +557,6 @@ class JailTemplate(Model):
             "and will only be used internally."
         ),
     )
-
     jt_readonly = models.BooleanField(
         default=False,
         verbose_name=_("Read-only")
@@ -613,6 +607,9 @@ class JailTemplate(Model):
                 instances += 1
 
         return instances
+
+    def __unicode__(self):
+        return self.jt_name
 
     def delete(self, force=False):
         ninstances = self.jt_instances
