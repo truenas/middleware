@@ -59,7 +59,9 @@ from freenasUI.common.system import (
 )
 from freenasUI.common.warden import Warden
 from freenasUI.freeadmin.options import FreeBaseInlineFormSet
-from freenasUI.jails.forms import JailCreateForm, JailsEditForm
+from freenasUI.jails.forms import (
+    JailCreateForm, JailsEditForm, JailTemplateCreateForm, JailTemplateEditForm
+)
 from freenasUI.jails.models import JailTemplate
 from freenasUI.middleware import zfs
 from freenasUI.middleware.exceptions import MiddlewareError
@@ -2059,6 +2061,8 @@ class JailTemplateResourceMixin(object):
 
     class Meta:
         queryset = JailTemplate.objects.exclude(jt_system=True)
+        post_validation = FormValidation(form_class=JailTemplateCreateForm)
+        put_validation = FormValidation(form_class=JailTemplateEditForm)
 
     def dehydrate(self, bundle):
         bundle = super(JailTemplateResourceMixin, self).dehydrate(bundle)
