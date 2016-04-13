@@ -37,7 +37,6 @@ fi
 : ${GIT_PYLIBZFS_CHECKOUT_PATH="${AVATAR_ROOT}/nas_source/py-libzfs"}
 : ${GIT_PYLIBZFS_REVCMD="rev-list HEAD --count"}
 
-: ${GIT_SAMBA_BRANCH=v4-3-stable}
 : ${GIT_SAMBA_CHECKOUT_PATH="${AVATAR_ROOT}/nas_source/samba"}
 : ${GIT_SAMBA_TAG=9.3.1-NAS}
 

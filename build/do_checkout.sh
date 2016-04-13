@@ -122,7 +122,12 @@ generic_checkout_git()
         ## do stuff if there is already a checkout...
         cd ${checkout_path}
         local old_branch=`git rev-parse --abbrev-ref HEAD`
-        if [ "x${old_branch}" != "x${my_branch}" ]; then
+        # if only tag specified then do not do fancy things
+        if [ "x${my_branch}" == "x" -a "x${my_tag}" != "x"]; then
+            git remote set-url origin "${my_repo}"
+            git fetch origin
+            do_git_update "${my_branch}" "${my_tag}"
+        elif [ "x${old_branch}" != "x${my_branch}" ]; then
 
             # Some forms of checkout set a specific fetch spec for only
             # the specific branch head.  Basically this means that we are
@@ -154,7 +159,11 @@ generic_checkout_git()
         cd ..
     else
         # do a fresh checkout...
-        git clone -b "$my_branch" ${my_repo} $_depth_arg ${checkout_path}
+        if [ -z "$my_branch" ]; then
+            git clone ${my_repo} $_depth_arg ${checkout_path}
+        else
+            git clone -b "$my_branch" ${my_repo} $_depth_arg ${checkout_path}
+        fi
         if [ "$my_tag" ]; then
             cd ${checkout_path}
             git checkout "$my_tag"
