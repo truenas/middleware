@@ -992,6 +992,9 @@ class CIFS_VFS_OBJECTS(object):
         self.__vfs_module_path = '/usr/local/lib/shared-modules/vfs'
         self.__vfs_modules = []
         self.__vfs_exclude = [
+            'shadow_copy2',
+            'recycle',
+            'zfs_space',
             'zfsacl',
         ]
 
