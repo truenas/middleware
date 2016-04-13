@@ -70,6 +70,10 @@ if [ -d ${GIT_PYLIBZFS_CHECKOUT_PATH} ]; then
 	cp -a ${GIT_PYLIBZFS_CHECKOUT_PATH} ${NANO_OBJ}/_.j/usr/nas_source
 fi
 
+if [ -d ${GIT_SAMBA_CHECKOUT_PATH} ]; then
+	cp -a ${GIT_SAMBA_CHECKOUT_PATH} ${NANO_OBJ}/_.j/usr/nas_source
+fi
+
 for d in $EXTRA_PORT_DIRS; do
 	mkdir -p "${GIT_PORTS_CHECKOUT_PATH}/${d}"
 	cp -a ${AVATAR_ROOT}/nas_ports/${d}/* ${GIT_PORTS_CHECKOUT_PATH}/${d}
