@@ -573,9 +573,10 @@ class JailTemplate(Model):
         template = self.jt_name
         instances = 0
 
-        jc = JailsConfiguration.objects.all()[0]
-        if not jc:
+        jc = JailsConfiguration.objects.all()
+        if not jc.exists():
             return 0
+        jc = jc[0]
 
         tdir = os.path.realpath("%s/.warden-template-%s" % (jc.jc_path, template))
         if not os.path.exists(tdir):
