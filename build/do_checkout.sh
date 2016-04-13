@@ -155,7 +155,7 @@ generic_checkout_git()
             git fetch origin
             do_git_update "${my_branch}" "${my_tag}"
         fi
-        if [ -z "$my_branch" ]; then
+        if [ -z "$my_tag" ]; then
             git pull $_depth_arg
         fi
         cd ..
