@@ -343,6 +343,7 @@ add_port_debug net/samba43 \
        OPTIONS_FILE_UNSET+=BIND99 \
        OPTIONS_FILE_UNSET+=BIND910 \
        OPTIONS_FILE_UNSET+=FREENAS \
+       OPTIONS_FILE_SET+=CLUSTER \
        WITH_DEBUG=yes CRAZY=yes
 
 add_port sysutils/lsof
