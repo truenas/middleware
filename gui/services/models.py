@@ -413,11 +413,9 @@ class NFS(Model):
         blank=True,
         max_length=250,
         verbose_name=_("Bind IP Addresses"),
-        help_text=_("Specify specific IP addresses (separated by commas) to "
-                    "bind to for TCP and UDP requests. This option may be "
-                    "specified multiple times. If no IP is specified it will "
-                    "bind to INADDR_ANY. It will automatically add 127.0.0.1 "
-                    "and if IPv6 is enabled, ::1 to the list."),
+        help_text=_("Select the IP address(es) to listen for NFS requests. "
+                    "If left unchecked, NFS will listen on all available "
+                    "addresses."),
     )
     nfs_srv_mountd_port = models.SmallIntegerField(
         verbose_name=_("mountd(8) bind port"),
