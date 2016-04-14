@@ -1,4 +1,4 @@
-#+
+#
 # Copyright 2010 iXsystems, Inc.
 # All rights reserved
 #
@@ -29,6 +29,7 @@ import logging
 import os
 import time
 
+from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
@@ -42,7 +43,8 @@ log = logging.getLogger('account.models')
 
 class bsdGroups(Model):
     bsdgrp_gid = models.IntegerField(
-        verbose_name=_("Group ID")
+        verbose_name=_("Group ID"),
+        validators=[MinValueValidator(0), MaxValueValidator(4294967295)],
     )
     bsdgrp_group = models.CharField(
         unique=True,
@@ -96,7 +98,8 @@ class bsdUsers(Model):
     REQUIRED_FIELDS = []
 
     bsdusr_uid = models.IntegerField(
-        verbose_name=_("User ID")
+        verbose_name=_("User ID"),
+        validators=[MinValueValidator(0), MaxValueValidator(4294967295)],
     )
     bsdusr_username = models.CharField(
         max_length=16,
@@ -271,7 +274,7 @@ class bsdUsers(Model):
             notifier().reload("user")
 
     def save(self, *args, **kwargs):
-        #TODO: Add last_login field
+        # TODO: Add last_login field
         if (
             'update_fields' in kwargs and
             'last_login' in kwargs['update_fields']
