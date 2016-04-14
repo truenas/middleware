@@ -1,3 +1,1 @@
-#13592  Bug     Blocks Until Resolved Samba with LDAP will not start when rebooting. bind password gone!
-#13419  Bug     Nice to have Replication error incorrect for conditions when destination dataset doesn't exist
-#14479  Bug     Important kerberized nfsv4 shares not accessible.
+#14605 Bug Expected Badlock fix SSU: CVE-2016-2118
