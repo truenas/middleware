@@ -189,6 +189,7 @@ CONFIGURE_ARGS+=	\
 			--without-systemd \
 			--enable-gnutls \
 			--builtin-libraries=smbclient \
+			--without-pie \
 			${ICONV_CONFIGURE_BASE}
 
 # for libexecinfo: (so that __builtin_frame_address() finds the top of the stack)
