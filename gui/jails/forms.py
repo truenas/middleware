@@ -463,6 +463,10 @@ class JailCreateForm(ModelForm):
             self.errors['__all__'] = self.error_class([_(e.message)])
             return
 
+        # Requery instance so we have everything up-to-date after save
+        # See #14686
+        self.instance = Jails.objects.get(jail_host=jail_host)
+
 
 class JailsConfigurationForm(ModelForm):
 
