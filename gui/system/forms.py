@@ -1914,6 +1914,9 @@ class InitialWizardVolumeImportForm(VolumeAutoImportForm):
 
     @classmethod
     def show_condition(cls, wizard):
+        volume = wizard.get_cleaned_data_for_step('volume')
+        if volume and volume.get('volume_name'):
+            return False
         if Volume.objects.all().exists():
             return False
         return len(cls._populate_disk_choices()) > 0
