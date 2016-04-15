@@ -1,0 +1,30 @@
+--- update-smart-drivedb.in.orig	2014-12-06 20:12:50 UTC
++++ update-smart-drivedb.in
+@@ -69,26 +69,8 @@ EOF
+   *)  DEST="$1" ;;
+ esac
+ 
+-# Abort if 'which' is not available
+-which which >/dev/null || exit 1
+-
+ # Find download tool
+-DOWNLOAD=
+-for t in $os_dltools; do
+-  if which $t >/dev/null 2>/dev/null; then
+-    case $t in
+-      curl)  DOWNLOAD="curl ${q:+-s }"'-f -o "$DEST.new" "$SRC"' ;;
+-      lynx)  DOWNLOAD='lynx -source "$SRC" >"$DEST.new"' ;;
+-      wget)  DOWNLOAD="wget $q"'-O "$DEST.new" "$SRC"' ;;
+-      fetch) DOWNLOAD='fetch -o "$DEST.new" "$SRC"' ;; # FreeBSD
+-      ftp)   DOWNLOAD='ftp -o "$DEST.new" "$SRC"' ;; # OpenBSD
+-    esac
+-    break
+-  fi
+-done
+-if [ -z "$DOWNLOAD" ]; then
+-  echo "$0: found none of: $os_dltools" >&2; exit 1
+-fi
++DOWNLOAD='fetch -o "$DEST.new" "$SRC"'
+ 
+ # Try possible branch first, then trunk
+ for location in "branches/$BRANCH" "trunk"; do
