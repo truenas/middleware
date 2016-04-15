@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:10-0700\n"
-"PO-Revision-Date: 2016-01-16 08:44+0000\n"
-"Last-Translator: Vincèn <vincen@vincen.org>\n"
+"PO-Revision-Date: 2016-04-15 08:48+0000\n"
+"Last-Translator: effel <effel.all@free.fr>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1452933849.0\n"
+"X-POOTLE-MTIME: 1460710114.0\n"
 
 # Pour la fonction actuelle, "Graphiques" correspond plus.
 #~ msgid "Reporting"
@@ -274,9 +274,8 @@ msgid "Manual setup"
 msgstr "Configuration manuelle"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1225
-#, fuzzy
 msgid "ZFS Volume Manager"
-msgstr "Nom du volume"
+msgstr "Gestionnaire de volume ZFS"
 
 #: freeadmin/static/lib/js/freeadmin.js:918
 msgid "Confirm"

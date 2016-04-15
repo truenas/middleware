@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:03-0700\n"
-"PO-Revision-Date: 2016-01-16 08:44+0000\n"
-"Last-Translator: Vincèn <vincen@vincen.org>\n"
+"PO-Revision-Date: 2016-04-15 08:48+0000\n"
+"Last-Translator: effel <effel.all@free.fr>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1452933849.0\n"
+"X-POOTLE-MTIME: 1460710091.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -444,8 +444,8 @@ msgstr ""
 #: choices.py:526
 msgid "Idle - Check the device unless it is in SLEEP, STANDBY or IDLE mode"
 msgstr ""
-"Ralenti - Contrôler le périphérique à moins qu'il ne soit en veille, en "
-"attente ou au ralenti"
+"Inactif - Contrôler le périphérique à moins qu'il ne soit en veille, en "
+"attente ou inactif"
 
 #: choices.py:530
 msgid "Long Self-Test"
@@ -848,7 +848,7 @@ msgstr "Erreur"
 
 #: network/forms.py:41 network/models.py:86
 msgid "NIC"
-msgstr "Interface réseau"
+msgstr "contrôleur réseau"
 
 #: network/forms.py:87 network/forms.py:100 network/forms.py:394
 #: network/forms.py:410
@@ -997,7 +997,7 @@ msgstr "Configuration générale"
 
 #: network/models.py:87
 msgid "Pick your NIC"
-msgstr "Choisissez une interface réseau"
+msgstr "Choisissez un contrôleur réseau"
 
 #: network/models.py:91
 msgid "Interface Name"
@@ -1005,7 +1005,7 @@ msgstr "Nom de l'interface"
 
 #: network/models.py:92
 msgid "Name your NIC."
-msgstr "Donnez un nom à l'interface réseau."
+msgstr "Donnez un nom au contrôleur réseau."
 
 #: network/models.py:95 templates/network/interface.html:7
 msgid "DHCP"
@@ -1124,7 +1124,7 @@ msgstr "Numéro de priorité LAGG"
 
 #: network/models.py:354
 msgid "Physical NIC"
-msgstr "Interface réseau physique"
+msgstr "Contrôleur réseau physique"
 
 #: network/models.py:384
 msgid "Destination network"
@@ -1945,7 +1945,7 @@ msgstr "Méthode d'authentification pour la découverte"
 
 #: services/models.py:275
 msgid "I/O Timeout"
-msgstr "Délais des E/S"
+msgstr "Délais des Entrés/Sorties expiré"
 
 #: services/models.py:276
 msgid "I/O timeout in seconds (30 by default)."
@@ -3081,8 +3081,8 @@ msgstr ""
 "Cette option est une liste délimitée par des virgules, espaces ou "
 "tabulations d'hôtes NON autorisés à accéder à ce module. Lors de conflits "
 "dans les listes, la liste des autorisations est prioritaire. Dans le cas où "
-"il est nécessaire de tout interdire par défaut, utilisez le mot-clé ALL (ou "
-"le masque réseau 0.0.0.0/0) et spécifiez ensuite les hôtes dont l'accès doit "
+"il est nécessaire de tout interdire par défaut, utiliser le mot-clé ALL (ou "
+"le masque réseau 0.0.0.0/0) et spécifier ensuite les hôtes dont l'accès doit "
 "être autorisé dans le paramètre Hôtes autorisés. Laisser le champ vide pour "
 "utiliser la configuration par défaut."
 
@@ -3325,8 +3325,8 @@ msgstr ""
 "Cette option est une liste délimitée par des virgules, espaces ou "
 "tabulations d'hôtes NON autorisés à accéder à ce partage. Lors de conflits "
 "dans les listes, la liste des autorisations est prioritaire. Dans le cas où "
-"il est nécessaire de tout interdire par défaut, utilisez le mot-clé ALL (ou "
-"le masque réseau 0.0.0.0/0) et spécifiez ensuite les hôtes dont l'accès doit "
+"il est nécessaire de tout interdire par défaut, utiliser le mot-clé ALL (ou "
+"le masque réseau 0.0.0.0/0) et spécifier ensuite les hôtes dont l'accès doit "
 "être autorisé dans le paramètre Hôtes autorisés. Laisser le champ vide pour "
 "utiliser la configuration par défaut."
 
@@ -4117,7 +4117,7 @@ msgstr "Mode de transfert"
 
 #: storage/models.py:365 storage/views.py:250
 msgid "HDD Standby"
-msgstr "Mise en veille"
+msgstr "Mise en veille des disques dur"
 
 #: storage/models.py:371 storage/views.py:251
 msgid "Advanced Power Management"
@@ -5128,7 +5128,7 @@ msgstr "ATTENTION"
 
 #: templates/freeadmin/alert_status.html:13
 msgid "CRITICAL"
-msgstr "CRTITIQUE"
+msgstr "CRITIQUE"
 
 #: templates/freeadmin/generic_form.html:19
 #: templates/freeadmin/generic_model_add.html:53
@@ -6114,8 +6114,8 @@ msgid ""
 "HINT: Test e-mails are sent to root user. To configure it use Users -> root -"
 "> Change E-mail"
 msgstr ""
-"ASTUCE : Les e-mails sont envoyés à l'utilisateur root. Pour le configurer, "
-"Utilisateurs -> root -> Modifier l'e-mail"
+"ASTUCE : Les e-mails de test sont envoyés à l'utilisateur root. Pour le "
+"configurer, aller dans Utilisateurs -> root -> Modifier l'e-mail"
 
 #~ msgid "iBurst"
 #~ msgstr "iRafale"
@@ -6886,7 +6886,7 @@ msgstr "Démon"
 
 #: choices.py:687
 msgid "NIS"
-msgstr "Interface réseau"
+msgstr "NIS"
 
 #: choices.py:695
 msgid "data"
@@ -8608,7 +8608,7 @@ msgstr "Secret du pair (confirmation)"
 
 #: services/forms.py:1081
 msgid "LUN ID already exists."
-msgstr "Cet Identifiant LUN existe déjà."
+msgstr "Cet Identifiant de LUN existe déjà."
 
 #: services/forms.py:1456
 msgid "Serial not found and glabel failed for %(disk)s: %(error)s"
@@ -9156,7 +9156,7 @@ msgstr "Envoi en cours"
 #: templates/storage/volume_datagrid.html:10
 #, fuzzy
 msgid "ZFS Volume Manager"
-msgstr "Gestionnaire de volumes UFS"
+msgstr "Gestionnaire de volume ZFS"
 
 #: storage/views.py:783
 #, fuzzy
@@ -9250,9 +9250,8 @@ msgid "WebGUI IPv6 Address"
 msgstr "Adresse du WebGUI"
 
 #: system/models.py:75
-#, fuzzy
 msgid "WebGUI HTTPS Port"
-msgstr "Port du WebGUI"
+msgstr "Port HTTPS du WebGUI"
 
 #: system/models.py:80
 msgid "WebGUI HTTP -> HTTPS Redirect"
@@ -9349,9 +9348,8 @@ msgid "Partition"
 msgstr "Option de démarrage"
 
 #: templates/services/core.html:82
-#, fuzzy
 msgid "LLDP Settings"
-msgstr "Paramètres LDAP"
+msgstr "Paramètres LLDP"
 
 #: templates/storage/create_passphrase.html:5
 msgid ""
@@ -9531,7 +9529,7 @@ msgstr "IP du serveur"
 
 #: services/models.py:1018
 msgid "UPS Mode"
-msgstr "Mode"
+msgstr "Mode de l'onduleur"
 
 #: services/models.py:1292
 msgid "TLS allow dot login"
@@ -9763,9 +9761,8 @@ msgid "Unable to create system dataset!"
 msgstr "Impossible de trouver le modèle !"
 
 #: system/models.py:70
-#, fuzzy
 msgid "WebGUI HTTP Port"
-msgstr "Port du WebGUI"
+msgstr "Port HTTP du WebGUI"
 
 #: system/models.py:205
 #, fuzzy
@@ -10133,6 +10130,8 @@ msgid ""
 "Turn the module into read-only mode. No new ranges will be allocated nor "
 "will new mappings be created in the idmap pool."
 msgstr ""
+"Passe le module en mode lecture seule. Aucun nouvel interval ne sera alloué "
+"et aucun nouveau montage ne sera créé dans l'outil idmap."
 
 #: directoryservice/models.py:204
 msgid "Ignore Builtin"
@@ -10140,7 +10139,7 @@ msgstr ""
 
 #: directoryservice/models.py:205
 msgid "Ignore any mapping requests for the BUILTIN domain."
-msgstr ""
+msgstr "Ignore les requêtes de montage du domaine intégré."
 
 #: directoryservice/models.py:210
 #: directoryservice/models.py:211
@@ -10158,6 +10157,10 @@ msgid ""
 "API. Entries in the file are of the form \"unix name = qualified domain "
 "name\". Mapping of both user and group names is supported."
 msgstr ""
+"Specifie le chemin absolu vers le fichier de nom de montage utilisé par "
+"l'API nss_info. Les entrées de ce fichier doivent etre au format \"nom unix="
+"nom de domaine qualifié\". Le montage des noms d'utilisateur et de groupe "
+"est supporté."
 
 #: directoryservice/models.py:239
 #: directoryservice/models.py:240
@@ -10170,11 +10173,13 @@ msgid ""
 "not defined, idmap_ldap will default to using the \"ldap idmap suffix\" "
 "option from smb.conf."
 msgstr ""
+"Définit le suffixe du répertoire de base à utiliser pour les entrées de "
+"montage SID/uid/gid. S'il n'est pas défini, idmap_ldap utilisera par défaut "
+"l'option \"suffixe ldap idmap\" de smb.conf"
 
 #: directoryservice/models.py:268
-#, fuzzy
 msgid "User DN"
-msgstr "ID Utilisateur"
+msgstr "Identifiant utilisateur"
 
 #: directoryservice/models.py:271
 msgid ""
@@ -10184,10 +10189,17 @@ msgid ""
 "used, and if these are also absent, an anonymous bind will be performed as "
 "last fallback."
 msgstr ""
+"Définit le DN utilisateur à utiliser pour l'authentification. Le secret pour "
+"authentifier cet utilisateur doit être enregistré avec le secret net idmap ("
+"voir net(8)). En cas d'absence, les droits ldap de la configuration ldap "
+"passdb seront utilisés, et s'ils sont également absents, un accès anonyme "
+"sera effectué en dernier recours."
 
 #: directoryservice/models.py:283
 msgid "Specifies the LDAP server to use for SID/uid/gid map entries."
 msgstr ""
+"Spécifie quel serveur LDAP doit être interrogé pour obtenir les éléments "
+"SID/uid/gid."
 
 #: directoryservice/models.py:288
 #: directoryservice/models.py:289
@@ -10239,6 +10251,8 @@ msgstr "Utilisateur &"
 #: directoryservice/models.py:356
 msgid "Query cn attribute instead of uid attribute for the user name in LDAP."
 msgstr ""
+"Demande l'attribut cn plutôt que l'attribut uid pour le nom d'utilisateur "
+"LDAP."
 
 #: directoryservice/models.py:362
 msgid "CN Realm"
@@ -10247,11 +10261,13 @@ msgstr ""
 #: directoryservice/models.py:363
 msgid "Append @realm to cn for groups (and users if user_cn is set) in LDAP."
 msgstr ""
+"Ajoute @realm au cn pour les groupes (et les utilisateurs si l'attribut "
+"user_cn est défini) dans l'annuaire LDAP."
 
 #: directoryservice/models.py:369
 #, fuzzy
 msgid "LDAP Domain"
-msgstr "Domaine"
+msgstr "Domaine de l’annuaire LDAP"
 
 #: directoryservice/models.py:372
 msgid ""
@@ -10261,6 +10277,12 @@ msgid ""
 "This parameter is optional, the default is to access the AD server in the "
 "current domain to query LDAPrecords."
 msgstr ""
+"Lors de l'utilisation du serveur d'annuaire LDAP dans un serveur Active "
+"Directory, cela permet de spécifier le domaine où accéder au serveur Active "
+"Directory. Cela permet également d’utiliser une relation de confiance tout "
+"en conservant les enregistrements liés à la RFC2307 à un seul endroit. Ce "
+"paramètre est facultatif, par défaut les requêtes d'enregistrements LDAP se "
+"font par le serveur Active Directory du domaine courant."
 
 #: directoryservice/models.py:383
 msgid "LDAP URL"
@@ -10312,11 +10334,15 @@ msgid "TDB Idmap"
 msgstr ""
 
 #: directoryservice/models.py:474
+#, fuzzy
 msgid ""
 "This option can be used to configure an external program for performing id "
 "mappings instead of using the tdb counter. The mappings are then stored int "
 "tdb2 idmap database."
 msgstr ""
+"Cette option peut être utilisée pour configurer un programme externe qui "
+"procédera au montage des id plutôt que le compteur tdb interne. Les montages "
+"seront stockés dans la base de données tdb2 idmap."
 
 #: directoryservice/models.py:481
 #: directoryservice/models.py:482
@@ -10570,15 +10596,15 @@ msgid "Security"
 msgstr ""
 
 #: storage/forms.py:2052
-#, fuzzy
 msgid ""
 "Enabling this may substantially increase transfer speed on high speed, "
 "secure local networks.  It uses NO ENCRYPTION AT ALL, making it totally "
 "unsuitable for untrusted networks."
 msgstr ""
-"Activer cela peut accroitre la vitesse de transfert sur des réseaux haute "
-"vitesse/faible latence. Cela utilise des algorithmes moins sécurisés que par "
-"défaut, ce qui le rend moins judicieux sur des réseaux sans approbation."
+"Activer cette option peut accroître la vitesse de transfert sur des réseaux "
+"locaux sécurisés, à haute vitesse/faible latence. Elle DÉSACTIVE TOUTE "
+"ENCRYPTION, ce qui la rend complètement inadaptée sur des réseaux non "
+"sécurisés."
 
 #: storage/models.py:819
 #, fuzzy
@@ -10594,15 +10620,15 @@ msgid "Fast"
 msgstr ""
 
 #: storage/models.py:830
-#, fuzzy
 msgid ""
 "Enabling this may substantially increase transfer speed on high speed, "
 "secure local networks.  It uses NO encryption at all, making it totally "
 "unsuitable for untrusted networks."
 msgstr ""
-"Activer cela peut accroitre la vitesse de transfert sur des réseaux haute "
-"vitesse/faible latence. Cela utilise des algorithmes moins sécurisés que par "
-"défaut, ce qui le rend moins judicieux sur des réseaux sans approbation."
+"Activer cette option peut accroître la vitesse de transfert sur des réseaux "
+"locaux sécurisés, à haute vitesse/faible latence. Elle DÉSACTIVE TOUTE "
+"ENCRYPTION, ce qui la rend complètement inadaptée sur des réseaux non "
+"sécurisés."
 
 #: templates/directoryservice/index.html:15
 #, fuzzy
@@ -10792,9 +10818,8 @@ msgid "These parameters are added to [Global] section of afp.conf"
 msgstr "Ces paramètres sont ajoutés à la section [global] du fichier smb.conf"
 
 #: services/models.py:1728
-#, fuzzy
 msgid "HTTP Port"
-msgstr "Port TCP"
+msgstr "Port HTTP"
 
 #: services/models.py:1731
 msgid ""
@@ -10803,9 +10828,8 @@ msgid ""
 msgstr ""
 
 #: services/models.py:1736
-#, fuzzy
 msgid "HTTPS Port"
-msgstr "Port TCP"
+msgstr "Port HTTPS"
 
 #: services/models.py:1739
 msgid ""
@@ -10823,9 +10847,8 @@ msgid "The Default Password is: davtest"
 msgstr ""
 
 #: services/models.py:1752
-#, fuzzy
 msgid "HTTP Authentication"
-msgstr "Authentification"
+msgstr "Authentification HTTP"
 
 #: services/models.py:1755
 msgid ""
@@ -11154,9 +11177,8 @@ msgid "Internal Certificate successfully created."
 msgstr "Modèle de prison modifié avec succès."
 
 #: system/views.py:1041
-#, fuzzy
 msgid "Certificate CSR successfully created."
-msgstr "Jeu de données modifié avec succès."
+msgstr "Certificat CSR créé avec succès."
 
 #: system/views.py:1062
 #, fuzzy
@@ -11381,9 +11403,8 @@ msgid ""
 msgstr ""
 
 #: storage/views.py:203
-#, fuzzy
 msgid "WARNING!"
-msgstr "ATTENTION"
+msgstr "AVERTISSEMENT!"
 
 #: storage/views.py:205
 msgid ""
@@ -11430,9 +11451,8 @@ msgid "Use as home share"
 msgstr ""
 
 #: sharing/models.py:103
-#, fuzzy
 msgid "VFS Objects"
-msgstr "Sujet"
+msgstr "Objets VFS"
 
 #: storage/forms.py:2132
 msgid "I'm also aware the snapshots are currently on hold for replication"
@@ -11706,9 +11726,8 @@ msgid ""
 msgstr ""
 
 #: system/models.py:907
-#, fuzzy
 msgid "ZFS Filesystem"
-msgstr "Système de fichiers"
+msgstr "Système de fichiers ZFS"
 
 #: system/models.py:911
 #, fuzzy
@@ -11770,7 +11789,7 @@ msgstr "La suppression de l'environnement de boot a échoué."
 
 #: system/alertmods/boot_volume_status.py:44
 msgid "The boot volume status is DEGRADED"
-msgstr "Le volume de boot a le statut DÉGRADÉ"
+msgstr "Le volume de démarrage a le statut DÉGRADÉ"
 
 #: system/alertmods/update_check.py:30
 msgid "There is a new update available! Apply it in System -> Update tab."
@@ -12043,7 +12062,7 @@ msgstr "Redémarrage"
 
 #: jails/forms.py:219
 msgid "Jail name cannot have '.' or ' '"
-msgstr "Le nom d'un jail ne peut pas contenir '.' or ' '"
+msgstr "Le nom d'un jail ne peut pas contenir '.' ou ' '"
 
 #: jails/forms.py:590
 #, fuzzy
@@ -12131,9 +12150,8 @@ msgid "Peer secret must be between 12 and 16 characters."
 msgstr ""
 
 #: services/forms.py:1082
-#, fuzzy
 msgid "LUN ID is already being used for this target."
-msgstr "Le LUN existe déjà sur la cible."
+msgstr "Cet identifiant de LUN est déjà utilisé sur cette cible."
 
 #: services/forms.py:1633
 #, fuzzy
@@ -12358,9 +12376,8 @@ msgid "A share with this name already exists."
 msgstr "Une cible avec ce nom existe déjà."
 
 #: sharing/forms.py:527
-#, fuzzy
 msgid "Whitespace is not a valid character for NFS shares."
-msgstr "Ce champ n'est pas une adresse de serveur de noms valide"
+msgstr "L'espace n'est pas un caractère valide pour un nom de partage NFS."
 
 #: storage/admin.py:510
 #, fuzzy
@@ -12691,9 +12708,8 @@ msgid "Put all updated files into place at the end"
 msgstr ""
 
 #: templates/reporting/index.html:15
-#, fuzzy
 msgid "ZFS"
-msgstr "NFS"
+msgstr "ZFS"
 
 #: templates/services/iscsi.html:45
 msgid "Fiber Channel Ports"
@@ -12840,13 +12856,12 @@ msgid "The system will reboot to perform this operation!"
 msgstr "Le système est en train de redémarrer."
 
 #: templates/system/email_edit.html:21
-#, fuzzy
 msgid ""
 "HINT: Test e-mails are sent to root user. To configure it use Account -> "
 "Users -> View Users -> root -> Change E-mail"
 msgstr ""
-"ASTUCE : Les e-mails sont envoyés à l'utilisateur root. Pour le configurer, "
-"Utilisateurs -> root -> Modifier l'e-mail"
+"ASTUCE : Les e-mails de test sont envoyés à l'utilisateur root. Pour le "
+"configurer, aller dans Utilisateurs -> root -> Modifier l'e-mail"
 
 #: templates/system/initialwizard_volume.html:79
 #, fuzzy
@@ -12886,7 +12901,7 @@ msgstr ""
 #: network/forms.py:305
 #, fuzzy
 msgid "VLAN ID"
-msgstr "VLAN"
+msgstr "Identifiant de VLAN"
 
 #: sharing/forms.py:465
 msgid "A mountpoint with this path is already in use by another share."
@@ -12904,9 +12919,8 @@ msgstr ""
 "dispositif(s) dans un pool constitué de %(vdevnum)s dispositif(s)"
 
 #: directoryservice/forms.py:122
-#, fuzzy
 msgid "Confirm LDAP User DN Password"
-msgstr "Confirmer le nouveau mot de passe"
+msgstr "Confirmer le mot de passe de l'utilisateur LDAP"
 
 #: directoryservice/models.py:519
 #, fuzzy
@@ -12916,7 +12930,7 @@ msgstr "ID Utilisateur"
 #: directoryservice/models.py:521
 #, fuzzy
 msgid "Password for LDAP User DN"
-msgstr "ID Utilisateur"
+msgstr "Mot de passe utilisateur pour le serveur LDAP"
 
 #: directoryservice/forms.py:476
 #, fuzzy
@@ -12957,7 +12971,7 @@ msgstr "Les disques suivants ont déjà des tests de ce type: %s"
 #: network/forms.py:282
 #, fuzzy
 msgid "The IP must be within the same network"
-msgstr "Le clone doit être dans le même volume"
+msgstr "L'adresse IP doit être incluse dans le même réseau"
 
 #: network/forms.py:815
 msgid "Virtual IP is not in the same network"
@@ -13185,13 +13199,12 @@ msgid "An integer from 1 - 65535, generally will be 443"
 msgstr "Un entier compris entre 1 et 65535, généralement 25, 465 ou 587"
 
 #: vcp/models.py:66
-#, fuzzy
 msgid " vCenter Username"
-msgstr "Nom d'utilisateur"
+msgstr "Nom d'utilisateur vCenter"
 
 #: vcp/models.py:76
 msgid " version"
-msgstr "  Version"
+msgstr "Version"
 
 #: vcp/views.py:80
 #, fuzzy
