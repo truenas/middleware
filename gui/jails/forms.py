@@ -220,11 +220,12 @@ class JailCreateForm(ModelForm):
 
     def clean_jail_host(self):
         jail_host = self.cleaned_data.get('jail_host')
-        if re.search(r'[\. ]', jail_host) is not None:
-            raise forms.ValidationError(
-                _("Jail name cannot have '.' or ' '")
-            )
-        return jail_host
+        if not re.search(r'^[a-z0-9_]+$', jail_host):
+            raise forms.ValidationError(_(
+                "Jail name may contain only alphanumeric characters and "
+                "underscore."
+            ))
+        return jail_host.lower()
 
     def save(self):
         jc = self.jc
