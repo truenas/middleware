@@ -365,7 +365,7 @@ def carp_master(fobj, state_file, ifname, vhid, event, user_override, forcetakeo
     if output == "1":
         run('/usr/sbin/service ix-ldap quietstart')
     error, output = run("""sqlite3 /data/freenas-v1.db
-                        "select srv_enable from services_services where srv_service = 'nfs'""")
+                        "select srv_enable from services_services where srv_service = 'nfs' " """)
     if output == "1":
         run('/usr/local/bin/python /usr/local/www/freenasUI/middleware/notifier.py'
             ' nfsv4link')
