@@ -4753,7 +4753,7 @@ class notifier:
                     if disk.exists():
                         disk = disk[0]
                         if not ed.encrypted_disk or (
-                            ed.encrypted_disk and ed.encrypted_disk.id != disk.id
+                            ed.encrypted_disk and ed.encrypted_disk.pk != disk.pk
                         ):
                             ed.encrypted_disk = disk
                             ed.save()
