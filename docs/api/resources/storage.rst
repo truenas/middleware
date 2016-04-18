@@ -1475,7 +1475,6 @@ List resource
                 "disk_multipath_name": "",
                 "disk_identifier": "{serial}VBad9d9bb7-3d1d3bce",
                 "disk_togglesmart": true,
-                "id": 8,
                 "disk_hddstandby": "Always On",
                 "disk_transfermode": "Auto",
                 "disk_multipath_member": "",
@@ -1495,15 +1494,15 @@ List resource
 Update resource
 +++++++++++++++
 
-.. http:put:: /api/v1.0/storage/disk/(int:id)/
+.. http:put:: /api/v1.0/storage/disk/(str:disk_identifier)/
 
-   Update Disk `id`.
+   Update Disk `disk_identifier`.
 
    **Example request**:
 
    .. sourcecode:: http
 
-      PUT /api/v1.0/storage/disk/1/ HTTP/1.1
+      PUT /api/v1.0/storage/disk/{serial}VBad9d9bb7-3d1d3bce/ HTTP/1.1
       Content-Type: application/json
 
         {
@@ -1526,7 +1525,6 @@ Update resource
                 "disk_multipath_name": "",
                 "disk_identifier": "{serial}VBad9d9bb7-3d1d3bce",
                 "disk_togglesmart": false,
-                "id": 8,
                 "disk_hddstandby": "Always On",
                 "disk_transfermode": "Auto",
                 "disk_multipath_member": "",
