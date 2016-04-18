@@ -166,7 +166,7 @@ advanced fields by default" in :menuselection:`System --> Advanced`.
 |                           |                |                                                                                                              |
 |                           |                |                                                                                                              |
 +===========================+================+==============================================================================================================+
-| Jail Name                 | string         | mandatory; can only contain letters and numbers                                                              |
+| Jail Name                 | string         | mandatory; can only contain letters, numbers, or the underscore character                                    |
 |                           |                |                                                                                                              |
 +---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
 | Template                  | drop-down menu | only available in "Advanced Mode"; contains the *VirtualBox* template for creating an instance of            |

@@ -135,6 +135,14 @@ Some updates affect the user interface so this section lists any functional chan
    
 * The "NFSv3 ownership model for NFSv4" checkbox has been added to :menuselection:`Services --> NFS`.
 
+* The "fruit", "shell_snap", "snapper", "unityed_media", and "worm" VFS objects have been added to
+  :menuselection:`Sharing --> Windows (CIFS Shares) --> Add Windows (CIFS) Share --> Advanced Mode --> VFS Objects`, while the "notify_fam" VFS object has been removed. The "recycle",
+  "shadow_copy2", "zfs_space", and "zfsacl" VFS objects have been hidden from this screen as they are always enabled.
+
+* :command:`iohyve` has been updated to version 0.7.5.
+
+* Timestamps have been added to alerts.
+
 * The :command:`nslookup` and :command:`dig` command line utilities have returned.
 
 .. index:: Hardware Recommendations
