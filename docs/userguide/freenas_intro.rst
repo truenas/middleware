@@ -138,6 +138,9 @@ Some updates affect the user interface so this section lists any functional chan
 * The "fruit", "shell_snap", "snapper", "unityed_media", and "worm" VFS objects have been added to
   :menuselection:`Sharing --> Windows (CIFS Shares) --> Add Windows (CIFS) Share --> Advanced Mode --> VFS Objects`, while the "notify_fam" VFS object has been removed. The "recycle",
   "shadow_copy2", "zfs_space", and "zfsacl" VFS objects have been hidden from this screen as they are always enabled.
+  
+* The "SMB3_02", "SMB3_10", and "SMB3_11" protocols have been added to the "Server minimum protocol" and "Server maximum protocol" drop-down menus :menuselection:`Services --> CIFS`. The
+  default "Server maximum protocol" is now "SMB3".
 
 * :command:`iohyve` has been updated to version 0.7.5.
 

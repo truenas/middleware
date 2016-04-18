@@ -302,11 +302,18 @@ Figure 11.3a shows the global CIFS configuration options which are described in 
 | SMB3_00        | used by Windows 8, mostly the same as SMB2_24              |
 |                |                                                            |
 +----------------+------------------------------------------------------------+
+| SMB3_02        | used by Windows 8.1 and Windows Server 2012                |
+|                |                                                            |
++----------------+------------------------------------------------------------+
+| SMB3_10        | used in early Technical Previews of Windows 8.1            |
+|                |                                                            |
++----------------+------------------------------------------------------------+
+| SMB3_11        | used by Windows 10                                         |
+|                |                                                            |
++----------------+------------------------------------------------------------+
 
-.. note:: Windows 8.1 and Windows Server 2012 R2 use SMB3.02 which is not yet supported by Samba. 
 
-Beginning with FreeNAS® 8.0.3-RELEASE, changes to CIFS settings and CIFS shares take effect immediately. For previous versions, changes will not take effect
-until you manually stop and start the CIFS service.
+Changes to CIFS settings and CIFS shares take effect immediately.
 
 .. note:: do not set the
    *directory name cache size* as an "Auxiliary parameter". Due to differences in how Linux and BSD handle file descriptors, directory name caching is
