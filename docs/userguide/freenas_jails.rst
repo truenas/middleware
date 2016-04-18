@@ -772,7 +772,7 @@ Beginning with version |version|, FreeNAS® includes the `iohyve <https://github
 `bhyve <https://en.wikipedia.org/wiki/Bhyve>`_ guests.
 
 .. note:: this type of virtualization requires an Intel or AMD processor that reports the "POPCNT" (POPulation Count) processor feature. To verify that your processor has this feature,
-   type :command:`grep POPCNT /var/boot/dmesg.boot` from :ref:`Shell`. If you just receive your prompt back, you will not be able to install guests using :command:`iohyve`.
+   type :command:`grep POPCNT /var/run/dmesg.boot` from :ref:`Shell`. If you just receive your prompt back, you will not be able to install guests using :command:`iohyve`.
 
 To initialize this utility, run this command, substituting the name of the pool to hold the bhyve guests and the name of the network interface::
 
