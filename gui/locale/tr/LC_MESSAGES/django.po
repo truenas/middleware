@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:05-0700\n"
-"PO-Revision-Date: 2015-11-28 10:24+0000\n"
-"Last-Translator: sistemarjin <sistemarjin@gmail.com>\n"
+"PO-Revision-Date: 2016-04-18 08:28+0000\n"
+"Last-Translator: BouRock <hitowerdigit@hotmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: tr\n"
 "MIME-Version: 1.0\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1448706245.0\n"
+"X-POOTLE-MTIME: 1460968124.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -110,11 +110,11 @@ msgstr "Her Zaman Açık"
 
 #: choices.py:86 choices.py:95
 msgid "Disabled"
-msgstr "Etkin Değil"
+msgstr "Etkisizleştirildi"
 
 #: choices.py:87
 msgid "Level 1 - Minimum power usage with Standby (spindown)"
-msgstr "Seviye 1 - Bekleme konumunda en az güç tüketimi (Disk Beklemede)"
+msgstr "Seviye 1 - Bekleme konumunda en az güç tüketimi (dönüş hızı yavaşlatma)"
 
 #: choices.py:88
 msgid "Level 64 - Intermediate power usage with Standby"
@@ -126,11 +126,13 @@ msgstr "Seviye 127 - Bekleme konumunda orta seviye güç tüketimi"
 
 #: choices.py:90
 msgid "Level 128 - Minimum power usage without Standby (no spindown)"
-msgstr "Seviye 128 - Beklemede olmadan en az güç tüketimi (Disk Aktif)"
+msgstr ""
+"Seviye 128 - Bekleme konumunda olmadan en az güç tüketimi (disk hızı "
+"yavaşlatma yok)"
 
 #: choices.py:91
 msgid "Level 192 - Intermediate power usage without Standby"
-msgstr "Seviye 192 - Bekleme olmadan orta seviye güç tüketimi"
+msgstr "Seviye 192 - Bekleme konumunda olmadan orta seviye güç tüketimi"
 
 #: choices.py:92
 msgid "Level 254 - Maximum performance, maximum power usage"
@@ -138,7 +140,7 @@ msgstr "Seviye 254 - En yüksek güç tüketimi, en yüksek performans"
 
 #: choices.py:96 choices.py:188
 msgid "Minimum"
-msgstr "Asgari"
+msgstr "En az"
 
 #: choices.py:97
 msgid "Medium"
@@ -146,7 +148,7 @@ msgstr "Orta"
 
 #: choices.py:98
 msgid "Maximum"
-msgstr "Azami"
+msgstr "En fazla"
 
 #: choices.py:132 templates/storage/tasks.html:84
 msgid "January"
@@ -226,7 +228,7 @@ msgstr "Pazar"
 
 #: choices.py:163
 msgid "Anonymous"
-msgstr "Anonim"
+msgstr "İsimsiz"
 
 #: choices.py:164
 msgid "Local User"
@@ -246,7 +248,7 @@ msgstr "Hata Ayıklama"
 
 #: choices.py:195
 msgid "Default"
-msgstr "Öntanımlı"
+msgstr "Varsayılan"
 
 #: choices.py:196
 msgid "Time Machine"
@@ -320,7 +322,7 @@ msgstr "UPS bataryası azaldı"
 
 #: choices.py:252
 msgid "UPS goes on battery"
-msgstr "UPS düşük güç"
+msgstr "UPS bataryadan çalışıyor"
 
 #: choices.py:255
 msgid "Preferred"
@@ -328,7 +330,7 @@ msgstr "Tercih edilen"
 
 #: choices.py:256
 msgid "Tolerated"
-msgstr "Tolere"
+msgstr "Tolere edilen"
 
 #: choices.py:257
 msgid "Required"
@@ -336,7 +338,7 @@ msgstr "Gerekli"
 
 #: choices.py:284 choices.py:290
 msgid "Inherit"
-msgstr "Miras"
+msgstr "Devral"
 
 #: choices.py:285
 msgid "On"
@@ -348,7 +350,7 @@ msgstr "Kapalı"
 
 #: choices.py:292
 msgid "lzjb (recommended)"
-msgstr "lzjb (tavsiye edilen)"
+msgstr "lzjb (önerilir)"
 
 #: choices.py:293
 msgid "gzip (default level, 6)"
@@ -390,7 +392,7 @@ msgstr "Hergün"
 
 #: choices.py:498
 msgid "Every selected weekday"
-msgstr "Haftanın her seçilen günü"
+msgstr "Hafta içi her seçilen gün"
 
 #: choices.py:504
 msgid "Read-only"
@@ -398,7 +400,7 @@ msgstr "Salt-okunur"
 
 #: choices.py:505
 msgid "Write-only"
-msgstr "Sadece-Yazılabilir"
+msgstr "Sadece-yazılabilir"
 
 #: choices.py:506
 msgid "Read and Write"
@@ -407,63 +409,63 @@ msgstr "Oku ve Yaz"
 #: choices.py:510 choices.py:511
 #, python-format
 msgid "%(minutes)s minutes"
-msgstr "%(minutes) dakika"
+msgstr "%(minutes)s dakika"
 
 #: choices.py:512
 #, python-format
 msgid "%(hour)s hour"
-msgstr "%(hour) saat"
+msgstr "%(hour)s saat"
 
 #: choices.py:513 choices.py:514 choices.py:515 choices.py:516 choices.py:517
 #, python-format
 msgid "%(hours)s hours"
-msgstr "%(hour) saat"
+msgstr "%(hours)s saat"
 
 #: choices.py:518
 #, python-format
 msgid "%(day)s day"
-msgstr "%(day) gün"
+msgstr "%(day)s gün"
 
 #: choices.py:519
 #, python-format
 msgid "%(week)s week"
-msgstr "%(week) hafta"
+msgstr "%(week)s hafta"
 
 #: choices.py:523
 msgid "Never - Check the device regardless of its power mode"
-msgstr "Asla - Güç modu ne olursa olsun aygıtı kontrol edin"
+msgstr "Asla - Güç kipine bakılmaksızın aygıtı kontrol et"
 
 #: choices.py:524
 msgid "Sleep - Check the device unless it is in SLEEP mode"
-msgstr "Uyku - UYKU modunda olmadıkça aygıtı kontrol edin"
+msgstr "Uyku - UYKU kipinde olmadıkça aygıtı kontrol et"
 
 #: choices.py:525
 msgid "Standby - Check the device unless it is in SLEEP or STANDBY mode"
-msgstr "Bekleme - UYKU veya BEKLEME modunda olmadıça aygıtı kontrol edin"
+msgstr "Bekleme - UYKU veya BEKLEME kipinde olmadıça aygıtı kontrol et"
 
 #: choices.py:526
 msgid "Idle - Check the device unless it is in SLEEP, STANDBY or IDLE mode"
-msgstr "Boşta - UYKU, BEKLEME veya BOŞTA modunda olmadıkça aygıtı kontrol edin"
+msgstr "Boşta - UYKU, BEKLEME veya BOŞTA kipinde olmadıkça aygıtı kontrol et"
 
 #: choices.py:530
 msgid "Long Self-Test"
-msgstr "Kendi kendine uzun test"
+msgstr "Kendi Kendine Uzun Deneme"
 
 #: choices.py:531
 msgid "Short Self-Test"
-msgstr "Kendi kendine kısa test"
+msgstr "Kendi Kendine Kısa Deneme"
 
 #: choices.py:532
 msgid "Conveyance Self-Test (ATA  only)"
-msgstr "Yalnızca ATA modda iken iletim testi"
+msgstr "Kendi Kendine İletim Denemesi (Sadece ATA)"
 
 #: choices.py:533
 msgid "Offline Immediate Test (ATA only)"
-msgstr "Çevrimdışı acil test (Sadece ATA mod)"
+msgstr "Çevrimdışı Acil Deneme (Sadece ATA)"
 
 #: choices.py:562
 msgid "Rsync module"
-msgstr "Rsync Modülü"
+msgstr "Rsync modülü"
 
 #: choices.py:563
 msgid "Rsync over SSH"
@@ -483,7 +485,7 @@ msgstr "Adınız \"-\" ile başlayamaz"
 
 #: account/forms.py:57
 msgid "The character $ is only allowed as the final character"
-msgstr "$ karakteri sadece son karakter olarak izin verilir"
+msgstr "$ karakterine sadece son karakter olarak izin verilir"
 
 #: account/forms.py:66
 #, python-format
@@ -493,7 +495,7 @@ msgstr "Adınız geçersiz karakterler içeriyor (%s)."
 #: account/forms.py:79
 #, python-format
 msgid "Your full name contains invalid characters (%s)."
-msgstr "Adınız ve soyadınız geçersiz karakter içeriyor (%s)."
+msgstr "Adınız ve soyadınız geçersiz karakterler içeriyor (%s)."
 
 #: account/forms.py:220 account/forms.py:253 account/forms.py:497
 #: account/models.py:88 services/models.py:769 services/models.py:1126
@@ -510,8 +512,7 @@ msgstr ""
 
 #: account/forms.py:226
 msgid "This value may contain only letters, numbers and ./-/_ characters."
-msgstr ""
-"Bu değer sadece harfleri, rakamları ve /./-/_ işaretlerini barındırabilir."
+msgstr "Bu değer sadece harfleri, rakamları ve ./-/_ karakterlerini içerebilir."
 
 #: account/forms.py:256 account/forms.py:499 services/models.py:773
 #: system/forms.py:331 system/models.py:250 templates/account/bsdusers.html:9
@@ -525,7 +526,7 @@ msgstr "Parola doğrulama"
 
 #: account/forms.py:262 account/forms.py:505 system/forms.py:337
 msgid "Enter the same password as above, for verification."
-msgstr "Doğrulama için, parolayı yukarıdaki gibi tekrar girin."
+msgstr "Doğrulama için, aynı parolayı yukarıdaki gibi girin."
 
 #: account/forms.py:265 account/forms.py:558 account/models.py:115
 #: freeadmin/navtree.py:360 templates/account/bsdusers.html:8
@@ -535,7 +536,7 @@ msgstr "Kabuk"
 
 #: account/forms.py:269 account/forms.py:553
 msgid "Disable password logins"
-msgstr "Parolayla oturum açmayı devre dışı bırak"
+msgstr "Parolayla oturum açmayı etkisizleştir"
 
 #: account/forms.py:271 account/forms.py:556
 msgid "Lock user"
@@ -547,15 +548,15 @@ msgstr "Kullanıcı için yeni bir birincil grup oluştur"
 
 #: account/forms.py:276
 msgid "Primary Group"
-msgstr "Birincil grup"
+msgstr "Birincil Grup"
 
 #: account/forms.py:279 account/forms.py:563
 msgid "SSH Public Key"
-msgstr "SSH genel anahtarı"
+msgstr "SSH Ortak Anahtarı"
 
 #: account/forms.py:284 account/forms.py:549
 msgid "Home Directory Mode"
-msgstr "Ev dizini modu"
+msgstr "Giriş Dizini Kipi"
 
 #: account/forms.py:287 account/forms.py:804
 msgid "Auxiliary groups"
@@ -566,7 +567,7 @@ msgstr "Yardımcı gruplar"
 
 #: account/forms.py:360
 msgid "A user with that username already exists."
-msgstr "Aynı kullanıcı adı zaten var."
+msgstr "Bu kullanıcı adı ile bir kullanıcı zaten var."
 
 #: account/forms.py:369 storage/forms.py:281 system/forms.py:370
 #: system/forms.py:376 system/forms.py:382 system/forms.py:675
@@ -582,19 +583,19 @@ msgstr "İki parola alanı eşleşmedi."
 
 #: account/forms.py:386
 msgid "Home directory has to start with /mnt/ or be /nonexistent"
-msgstr "Ev dizini /mnt/ veya /nonexistent ile başlamalı"
+msgstr "Giriş dizini /mnt/ ile başlamak ya da /nonexistent olmak zorundadır"
 
 #: account/forms.py:401 account/forms.py:828
 msgid "A user cannot belong to more than 64 auxiliary groups"
-msgstr "Bir kullanıcı en fazla 64 yedek gruba ait olabilir."
+msgstr "Bir kullanıcı 64 yardımcı gruptan fazlasına ait olamaz"
 
 #: account/forms.py:416 account/forms.py:653
 msgid "Home directory is not writable, leave this blank"
-msgstr "Ev dizini yazılabilir değil bu bölümü boş bırakın"
+msgstr "Giriş dizini yazılabilir değil, bunu boş bırakın"
 
 #: account/forms.py:423
 msgid "Password is disabled, leave this blank"
-msgstr "Bu bölümü boş bırakırsanız parola devre dışı kalır"
+msgstr "Parola etkisizleştirildi, bunu boş bırakın"
 
 #: account/forms.py:429 plugins/forms.py:133 plugins/forms.py:260
 #: services/forms.py:742 services/forms.py:1071 storage/forms.py:244
@@ -611,11 +612,11 @@ msgstr "Tekrarlanan GID dosyalarına izin ver"
 
 #: account/forms.py:739
 msgid "A group with that name already exists."
-msgstr "Bu ada sahip bir grup zaten var."
+msgstr "Bu isimde bir grup zaten var."
 
 #: account/forms.py:759
 msgid "A group with this gid already exists"
-msgstr "Bu gid ile bir grup zaten var."
+msgstr "Bu gid ile bir grup zaten var"
 
 #: account/forms.py:772
 msgid "Member users"
@@ -628,11 +629,11 @@ msgstr "Yeni parola"
 
 #: account/forms.py:856
 msgid "New password confirmation"
-msgstr "Yeni parolayı onaylayın"
+msgstr "Yeni parola onayı"
 
 #: account/forms.py:887
 msgid "Change root password as well"
-msgstr "Root parolasını değiştir"
+msgstr "Root parolasını da değiştir"
 
 #: account/forms.py:896
 msgid "Old password"
@@ -640,7 +641,7 @@ msgstr "Eski parola"
 
 #: account/forms.py:914
 msgid "Your old password was entered incorrectly. Please enter it again."
-msgstr "Eski parolanızı yanlış girdiniz. Lütfen tekrar girin."
+msgstr "Eski parolanız yanlış girildi. Lütfen tekrar girin."
 
 #: account/forms.py:922
 msgid "Do you want to delete all users with this primary group?"
@@ -651,11 +652,11 @@ msgstr "Bu birincil grup ile tüm kullanıcıları silmek istiyor musunuz?"
 #: templates/services/iscsi_authini.html:5
 #: templates/services/iscsi_portals.html:4
 msgid "Group ID"
-msgstr "Grup kimliği"
+msgstr "Grup Kimliği"
 
 #: account/models.py:41
 msgid "Group Name"
-msgstr "Grup adı"
+msgstr "Grup Adı"
 
 #: account/models.py:49 account/models.py:172 services/models.py:1423
 #: templates/account/bsdgroups.html:5 templates/account/bsdgroups.html:70
@@ -670,23 +671,23 @@ msgstr "Gruplar"
 #: account/models.py:67
 #, python-format
 msgid "Group %s is built-in and can not be deleted!"
-msgstr "Grup %s 'leri yerleşiktir ve silinemez!"
+msgstr "Grup %s yerleşiktir ve silinemez!"
 
 #: account/models.py:82
 msgid "User ID"
-msgstr "Kullanıcı kimliği"
+msgstr "Kullanıcı Kimliği"
 
 #: account/models.py:87
 msgid "User &"
-msgstr "Kullanıcı &"
+msgstr "Kullanıcı ve"
 
 #: account/models.py:94
 msgid "Hashed UNIX password"
-msgstr "Karıştırılmış UNIX parola"
+msgstr "Karma UNIX parolası"
 
 #: account/models.py:100
 msgid "Hashed SMB password"
-msgstr "Karıştırılmış SMB parola"
+msgstr "Karma SMB parolası"
 
 #: account/models.py:105
 msgid "Primary Group ID"
@@ -694,15 +695,15 @@ msgstr "Birincil Grup Kimliği"
 
 #: account/models.py:109
 msgid "Home Directory"
-msgstr "Ev dizini"
+msgstr "Giriş Dizini"
 
 #: account/models.py:119
 msgid "Full Name"
-msgstr "Tam adı"
+msgstr "Tam Adı"
 
 #: account/models.py:126 templates/account/bsdusers.html:90
 msgid "E-mail"
-msgstr "E-Posta"
+msgstr "E-posta"
 
 #: account/models.py:131 account/models.py:176 services/models.py:593
 #: services/models.py:1416 system/models.py:329 system/models.py:522
@@ -718,7 +719,7 @@ msgstr "Kullanıcılar"
 #: account/models.py:151
 #, python-format
 msgid "User %s is built-in and can not be deleted!"
-msgstr "Kullanıcı %s leri yerleşiktir ve silinemez!"
+msgstr "Kullanıcı %s yerleşiktir ve silinemez!"
 
 #: account/nav.py:5 templates/menubar.html:47
 msgid "Account"
@@ -739,18 +740,18 @@ msgstr "Parola Değiştir"
 
 #: account/views.py:95
 msgid "Password successfully updated."
-msgstr "Parola başarıyla güncellendi."
+msgstr "Parola başarılı olarak güncellendi."
 
 #~ msgid "Admin user successfully updated."
 #~ msgstr "Yönetici kullanıcısı başarıyla güncellendi."
 
 #: account/views.py:125
 msgid "Users successfully updated."
-msgstr "Kullanıcılar başarıyla güncellendi."
+msgstr "Kullanıcılar başarılı olarak güncellendi."
 
 #: account/views.py:138
 msgid "Groups successfully updated."
-msgstr "Guruplar başarıyla güncellendi."
+msgstr "Guruplar başarılı olarak güncellendi."
 
 #: freeadmin/forms.py:114
 #, python-format
@@ -760,11 +761,11 @@ msgstr "Kullanıcı %s geçerli değil."
 #: freeadmin/forms.py:149
 #, python-format
 msgid "The group %s is not valid."
-msgstr "'%s' grubu geçerli değil."
+msgstr "Grup %s geçerli değil."
 
 #: freeadmin/forms.py:174
 msgid "The path must reside within a volume mount point"
-msgstr "Yol, bağlanma birimi noktası içerisinde olmalıdır"
+msgstr "Yol, birim bağlama noktasında yer almak zorundadır"
 
 #: freeadmin/middleware.py:198 freeadmin/views.py:445 freeadmin/views.py:669
 #, python-format
@@ -774,12 +775,12 @@ msgstr "Hata: %s"
 #: freeadmin/navtree.py:327
 #, python-format
 msgid "Add %s"
-msgstr "%s Ekle "
+msgstr "%s Ekle"
 
 #: freeadmin/navtree.py:340
 #, python-format
 msgid "View %s"
-msgstr "%s Göster "
+msgstr "%s Göster"
 
 #: freeadmin/navtree.py:354
 msgid "Display System Processes"
@@ -787,7 +788,7 @@ msgstr "Sistem Süreçlerini Görüntüle"
 
 #: freeadmin/navtree.py:366 templates/system/reboot_dialog.html:14
 msgid "Reboot"
-msgstr "Yeniden Başlat"
+msgstr "Yeniden başlat"
 
 #: freeadmin/navtree.py:374 templates/system/shutdown_dialog.html:14
 msgid "Shutdown"
@@ -796,12 +797,12 @@ msgstr "Kapat"
 #: freeadmin/navtree.py:408
 #, python-format
 msgid "Empty data returned from %s"
-msgstr "%s boş veri döndürüldü"
+msgstr "%s gelen boş veri döndürüldü"
 
 #: freeadmin/navtree.py:411 services/views.py:77
 #, python-format
 msgid "Couldn't retrieve %(url)s: %(error)s"
-msgstr "%(url) alınamadı: %(error)"
+msgstr "%(url)s alınamadı: %(error)s"
 
 #: freeadmin/navtree.py:445
 #, python-format
@@ -810,21 +811,21 @@ msgstr "%(url)s gelen serisizleştirmede bir hata oluştu: %(error)s"
 
 #: freeadmin/views.py:257
 msgid "It was not possible to retrieve the current status"
-msgstr "Bu geçerli durumu almak mümkün değil"
+msgstr "Şu anki durumu almak mümkün değildi"
 
 #: freeadmin/views.py:443 freeadmin/views.py:663 freeadmin/views.py:665
 #, python-format
 msgid "%s successfully updated."
-msgstr "%s başarıyla yüklendi"
+msgstr "%s başarılı olarak güncellendi."
 
 #: freeadmin/views.py:447 freeadmin/views.py:667
 msgid "The service failed to restart."
-msgstr "Hizmet yeniden başlatılamadı."
+msgstr "Hizmeti yeniden başlatma başarısız."
 
 #: freeadmin/views.py:781 freeadmin/views.py:786
 #, python-format
 msgid "%s successfully deleted."
-msgstr "%s başarı ile silindi."
+msgstr "%s başarılı olarak silindi."
 
 #: middleware/zfs.py:560 storage/models.py:579
 msgid "Error getting total space"
@@ -1012,7 +1013,7 @@ msgstr ""
 #: network/models.py:99 network/models.py:215
 #: templates/network/interface.html:8 templates/network/summary.html:6
 msgid "IPv4 Address"
-msgstr "IPv4 adresi"
+msgstr "IPv4 Adresi"
 
 #: network/models.py:108 network/models.py:224
 msgid "IPv4 Netmask"
@@ -1105,7 +1106,7 @@ msgstr "Bağlantı Birleştirmeler"
 
 #: network/models.py:346
 msgid "LAGG Interface group"
-msgstr "LAGG arabirim grubu"
+msgstr "LAGG Arayüz grubu"
 
 #: network/models.py:349
 msgid "LAGG Priority Number"
@@ -5040,7 +5041,7 @@ msgstr "Grubu Sil"
 #: templates/account/bsdusers.html:41 templates/account/bsdusers.html.py:43
 #: templates/account/bsdusers.html:120 templates/account/bsdusers.html:122
 msgid "Modify User"
-msgstr "Kullanıcıda Değişiklik Yap"
+msgstr "Kullanıcıyı Değiştir"
 
 #: templates/account/bsdusers.html:47 templates/account/bsdusers.html.py:49
 #: templates/account/bsdusers.html:126 templates/account/bsdusers.html:128
@@ -6541,7 +6542,7 @@ msgstr "Birimi Dışarı Aktar"
 #~ msgstr "Birim bu gruba ait"
 
 msgid "Group Membership"
-msgstr "Grup üyeliği"
+msgstr "Grup Üyeliği"
 
 #~ msgid "The disk group containing this disk"
 #~ msgstr "Bu diskin bulunduğu disk grubu"
@@ -6654,7 +6655,7 @@ msgstr "Şifrelenmemiş"
 
 #: choices.py:166
 msgid "Encrypted, no passphrase"
-msgstr "Şifrelenmiş hiçbir parola yok"
+msgstr "Şifrelenmiş, parola yok"
 
 #: choices.py:308
 msgid "zle (runs of zeros)"
@@ -6662,7 +6663,7 @@ msgstr "zle (sıfırdan farklı değerde çalışır)"
 
 #: choices.py:309
 msgid "lzjb (legacy, not recommended)"
-msgstr "lzjb (miras, önerilmez)"
+msgstr "lzjb (miras, eski)"
 
 #: choices.py:601
 msgid "19200"
@@ -6686,7 +6687,7 @@ msgstr "veri"
 
 #: choices.py:697
 msgid "auth"
-msgstr "onay"
+msgstr "yetki"
 
 #: choices.py:700
 msgid "ctrl+!data"
@@ -6698,11 +6699,11 @@ msgstr "onay+!veri"
 
 #: account/forms.py:60
 msgid "Confirm New Password"
-msgstr "Yeni Parolayı Onaylayın:"
+msgstr "Yeni Parolayı Onaylayın"
 
 #: account/forms.py:539
 msgid "Home directory cannot contain colons"
-msgstr "Ev dizini iki nokta üst üste içeremez"
+msgstr "Giriş dizini iki nokta üst üste içeremez"
 
 #: account/models.py:135
 msgid "Built-in User"
@@ -6713,11 +6714,11 @@ msgstr "Yerleşik Kullanıcı"
 #: storage/models.py:735
 #: storage/models.py:752
 msgid "Locked"
-msgstr "Kilitle"
+msgstr "Kilitli"
 
 #: api/resources.py:860
 msgid "on every %(days)s"
-msgstr "Her %s günde"
+msgstr "her %(days)s günde"
 
 #: freeadmin/forms.py:255
 #: freeadmin/forms.py:279
@@ -7536,11 +7537,11 @@ msgstr "HTTP+HTTPS"
 
 #: choices.py:167
 msgid "Encrypted, with passphrase"
-msgstr "Parola ile şifrelenmiş"
+msgstr "Şifrelenmiş, parola ile"
 
 #: choices.py:304
 msgid "lz4 (recommended)"
-msgstr "lz4 (önerilen)"
+msgstr "lz4 (önerilir)"
 
 #: choices.py:560
 msgid "Verify"
@@ -7556,7 +7557,7 @@ msgstr "57600"
 
 #: choices.py:659
 msgid "Fatal"
-msgstr "Ölümcül"
+msgstr "Önemli"
 
 #: choices.py:664
 msgid "Debug2"
@@ -7568,7 +7569,7 @@ msgstr "Hata Ayıklama3"
 
 #: choices.py:672
 msgid "Auth"
-msgstr "Onay"
+msgstr "Yetki"
 
 #: choices.py:673
 msgid "Local 0"
@@ -7612,7 +7613,7 @@ msgstr "NIS"
 
 #: choices.py:694
 msgid "off"
-msgstr "Kapalı"
+msgstr "kapalı"
 
 #: choices.py:696
 msgid "!data"
@@ -7637,7 +7638,7 @@ msgstr "Parolalar eşeleşmiyor"
 
 #: account/models.py:52
 msgid "Built-in Group"
-msgstr "Yerleşik grup"
+msgstr "Yerleşik Grup"
 
 #: account/models.py:56
 #: account/models.py:150
@@ -7646,7 +7647,7 @@ msgstr "Sudo izni"
 
 #: common/system.py:278
 msgid "Mount failed (%(retcode)s) -> %(output)s"
-msgstr "Dosya bağlanamdı (%(retcode)s) -> %(output)s"
+msgstr "Bağlama başarısız (%(retcode)s) -> %(output)s"
 
 #: freeadmin/forms.py:220
 msgid "A file is required"
@@ -7659,12 +7660,12 @@ msgstr "Geçersiz ağ: %s"
 
 #: freeadmin/navtree.py:573
 msgid "Error unserializing %(url)s (%(error)s), data retrieved:"
-msgstr "%(url)s gelen serisizleştirmede bir hata oluştu: %(error)s"
+msgstr "%(url)s (%(error)s) serisizleştirmede hata oldu, veri alındı:"
 
 #: jails/admin.py:91
 #: jails/models.py:149
 msgid "Autostart"
-msgstr "Otomatik Başlat"
+msgstr "Otomatik başlat"
 
 #: jails/admin.py:192
 msgid "Edit Jail"
@@ -7678,11 +7679,11 @@ msgstr "Depolama Ekle"
 #: jails/admin.py:198
 #: templates/plugins/available_datagrid.html:27
 msgid "Upload Plugin"
-msgstr "Eklentiyi Yükle"
+msgstr "Eklentiyi Gönder"
 
 #: jails/admin.py:207
 msgid "Stop"
-msgstr "Dur"
+msgstr "Durdur"
 
 #: jails/admin.py:277
 msgid "Instances"
@@ -8481,19 +8482,19 @@ msgstr "onay+veri"
 
 #: account/forms.py:561
 msgid "Home directory must end with username"
-msgstr "Ev dizini kullanıcı adı ile bitmelidir"
+msgstr "Giriş dizini kullanıcı adı ile bitmek zorundadır"
 
 #: account/models.py:142
 msgid "Disable password login"
-msgstr "Parolayla oturum açmayı devre dışı bırak"
+msgstr "Parolayla oturum açmayı etkisizleştir"
 
 #: account/models.py:242
 msgid "Group Memberships"
-msgstr "Grup Üyeleri"
+msgstr "Grup Üyelikleri"
 
 #: freeadmin/navtree.py:608
 msgid "Could not reverse url, skipping node %(node)s: %(error)s"
-msgstr "Ağ atlamasında url adresi ters olamaz. %(node)s - %(error)s"
+msgstr "URL ters çevrilemedi, %(node)s düğümü atlanıyor: %(error)s"
 
 #: jails/forms.py:451
 msgid "Path does not exist!"
@@ -8862,27 +8863,24 @@ msgid "SMB3_00"
 msgstr "SMB3_00"
 
 #: choices.py:317
-#, fuzzy
 msgid "lz4 (fastest)"
 msgstr "lz4 (en hızlı)"
 
 #: choices.py:318
 msgid "pigz (all rounder)"
-msgstr ""
+msgstr "pigz (her alanda)"
 
 #: choices.py:319
 msgid "plzip (best compression)"
 msgstr "plzip (en iyi sıkıştırma)"
 
 #: choices.py:707
-#, fuzzy
 msgid "on"
-msgstr "Hiçbiri"
+msgstr "açık"
 
 #: account/forms.py:398
-#, fuzzy
 msgid "Create Home Directory In"
-msgstr "Ev dizini"
+msgstr "Giriş Dizini İçi oluştur"
 
 #: api/resources.py:992
 msgid "From %(begin)s through %(end)s, %(repeat)s"
@@ -8890,9 +8888,8 @@ msgstr ""
 
 #: api/resources.py:1864
 #: api/resources.py:1875
-#, fuzzy
 msgid "Invalid snapshot"
-msgstr "Geçersiz Anlık Durum Görüntüsü"
+msgstr "Geçersiz anlık görüntü"
 
 #: jails/forms.py:508
 msgid "Jail root must be on a volume or dataset!"
@@ -9588,9 +9585,8 @@ msgid ""
 msgstr ""
 
 #: freeadmin/options.py:633
-#, fuzzy
 msgid "Are you sure you want to edit this?"
-msgstr "Ayırmak istediğinize emin misiniz?"
+msgstr "Bunu düzenlemek istediğinize emin misiniz?"
 
 #: network/admin.py:61
 msgid "This change will cause a failover event. Do you want to proceed?"
@@ -9626,31 +9622,27 @@ msgid ""
 "Passwords containing a question mark (?) are currently not allowed due to "
 "problems with CIFS."
 msgstr ""
-"Soru işareti (?) içeren parola, CIFS kullanımında problem "
-"oluşturabileceğinden izin verilmez"
+"Soru işareti (?) içeren parolalara, şimdilik CIFS ile olan sorunlardan "
+"dolayı izin verilmiyor."
 
 #: directoryservice/forms.py:104
-#, fuzzy
 msgid "NT4 failed to reload."
-msgstr "AFP hizmeti tekrar yüklenemedi."
+msgstr "NT4 yeniden yükleme başarısız."
 
 #: directoryservice/forms.py:222
-#, fuzzy
 msgid "Active Directory failed to reload."
-msgstr "Aktif Dizin hizmeti yeniden yüklenirken hata oluştu."
+msgstr "Active Directory'yi yeniden yükleme başarısız."
 
 #: directoryservice/forms.py:316
-#, fuzzy
 msgid "LDAP failed to reload."
-msgstr "AFP hizmeti tekrar yüklenemedi."
+msgstr "LDAP yeniden yükleme başarısız."
 
 #: directoryservice/models.py:67
 #: directoryservice/models.py:197
 #: directoryservice/models.py:263
 #: directoryservice/models.py:358
-#, fuzzy
 msgid "Enable"
-msgstr "Etkin"
+msgstr "Etkinleştir"
 
 #: directoryservice/models.py:295
 #, fuzzy
@@ -9772,18 +9764,16 @@ msgstr "Dizin Hizmetleri"
 
 #: choices.py:787
 #: directoryservice/models.py:335
-#, fuzzy
 msgid "ad"
-msgstr "Oku"
+msgstr "ad"
 
 #: choices.py:788
-#, fuzzy
 msgid "autorid"
-msgstr "Otomatik başlat"
+msgstr "autorid"
 
 #: choices.py:789
 msgid "hash"
-msgstr ""
+msgstr "adresleme"
 
 #: choices.py:790
 msgid "ldap"
@@ -9804,11 +9794,11 @@ msgstr "rid"
 
 #: choices.py:794
 msgid "tdb"
-msgstr ""
+msgstr "tdb"
 
 #: choices.py:795
 msgid "tdb2"
-msgstr ""
+msgstr "tdb2"
 
 #: directoryservice/models.py:134
 #: directoryservice/models.py:174
@@ -9820,7 +9810,7 @@ msgstr ""
 #: directoryservice/models.py:444
 #: directoryservice/models.py:464
 msgid "Range Low"
-msgstr ""
+msgstr "Aralık Düşük"
 
 #: directoryservice/models.py:138
 #: directoryservice/models.py:178
@@ -9832,12 +9822,11 @@ msgstr ""
 #: directoryservice/models.py:448
 #: directoryservice/models.py:468
 msgid "Range High"
-msgstr ""
+msgstr "Aralık Yüksek"
 
 #: directoryservice/models.py:142
-#, fuzzy
 msgid "Schema Mode"
-msgstr "Erişim türü"
+msgstr "Şema Kipi"
 
 #: directoryservice/models.py:145
 msgid ""
@@ -9851,21 +9840,20 @@ msgstr ""
 
 #: directoryservice/models.py:156
 msgid "sfu"
-msgstr ""
+msgstr "sfu"
 
 #: directoryservice/models.py:157
 msgid "sfu20"
-msgstr ""
+msgstr "sfu20"
 
 #: directoryservice/models.py:163
 #: directoryservice/models.py:164
 msgid "AD Idmap"
-msgstr ""
+msgstr "AD Idmap"
 
 #: directoryservice/models.py:182
-#, fuzzy
 msgid "Range Size"
-msgstr "Kayıt Boyutu"
+msgstr "Aralık Boyutu"
 
 #: directoryservice/models.py:184
 msgid ""
@@ -10255,14 +10243,12 @@ msgstr ""
 #: directoryservice/forms.py:486
 #: directoryservice/models.py:700
 #: directoryservice/models.py:919
-#, fuzzy
 msgid "Kerberos Keytab"
-msgstr "Kerberos sunucusu"
+msgstr "Kerberos Keytab"
 
 #: directoryservice/forms.py:498
-#, fuzzy
 msgid "A keytab is required."
-msgstr "Bir dosya gerekli"
+msgstr "Bir keytab gerekli."
 
 #: directoryservice/models.py:549
 #, fuzzy
@@ -10389,42 +10375,39 @@ msgstr ""
 
 #: choices.py:43
 msgid "Basic Authentication"
-msgstr "Temel Kimlik Denetimi               "
+msgstr "Temel Kimlik Doğrulaması"
 
 #: choices.py:44
-#, fuzzy
 msgid "Digest Authentication"
-msgstr "Kimlik Doğrulama"
+msgstr "Kısa Kimlik Doğrulaması"
 
 #: choices.py:799
 msgid "adex"
-msgstr ""
+msgstr "adex"
 
 #: choices.py:811
 msgid "Import an existing Certificate Authority"
-msgstr ""
+msgstr "Varolan Sertifika Yetkisini içe aktar"
 
 #: choices.py:812
 msgid "Create an internal Certificate Authority"
-msgstr ""
+msgstr "Dahili Sertifika Yetkisi oluştur"
 
 #: choices.py:813
 msgid "Create an intermediate Certificate Authority"
-msgstr ""
+msgstr "Orta Seviye Sertifika Yetkisi oluştur"
 
 #: choices.py:817
 msgid "Import an existing Certificate"
 msgstr "Varolan Sertifikayı içe aktar"
 
 #: choices.py:818
-#, fuzzy
 msgid "Create an internal Certificate"
-msgstr "SSL sertifikası"
+msgstr "Dahili Sertifika oluştur"
 
 #: choices.py:819
-#, fuzzy
 msgid "Create a Certificate Signing Request"
-msgstr "TLS sertifika isteği yok"
+msgstr "Sertifika İmzalama İsteği oluştur"
 
 #: choices.py:823
 msgid "512"
@@ -10463,14 +10446,12 @@ msgid "SHA512"
 msgstr "SHA512"
 
 #: directoryservice/forms.py:406
-#, fuzzy
 msgid "NIS failed to reload."
-msgstr "AFP hizmeti tekrar yüklenemedi."
+msgstr "NIS yeniden yükleme başarısız."
 
 #: api/resources.py:2488
-#, fuzzy
 msgid "On Reboot"
-msgstr "Yeniden Başlat"
+msgstr "Yeniden Başlatmada"
 
 #: directoryservice/models.py:228
 #: directoryservice/models.py:229
@@ -11328,9 +11309,8 @@ msgid "Check For Update"
 msgstr ""
 
 #: common/system.py:301
-#, fuzzy
 msgid "Unmount Failed (%(retcode)s) -> %(output)s"
-msgstr "Dosya bağlanamdı (%(retcode)s) -> %(output)s"
+msgstr "Sökme Başarısız Oldu (%(retcode)s) -> %(output)s"
 
 #: jails/forms.py:218
 #, fuzzy
@@ -11724,9 +11704,8 @@ msgstr "Sistem yeniden başlatılıyor"
 
 #: choices.py:587
 #: choices.py:588
-#, fuzzy
 msgid "%(weeks)s weeks"
-msgstr "%(week) hafta"
+msgstr "%(weeks)s hafta"
 
 #: system/views.py:419
 #, fuzzy
@@ -11750,42 +11729,40 @@ msgid "Changelog"
 msgstr "Değiştir"
 
 #: choices.py:237
-#, fuzzy
 msgid "SSD"
-msgstr "SSL"
+msgstr "SSD"
 
 #: choices.py:238
 msgid "5400"
-msgstr ""
+msgstr "5400"
 
 #: choices.py:239
 msgid "7200"
-msgstr ""
+msgstr "7200"
 
 #: choices.py:240
 msgid "10000"
-msgstr ""
+msgstr "10000"
 
 #: choices.py:241
 msgid "15000"
-msgstr ""
+msgstr "15000"
 
 #: choices.py:811
 msgid "Sensitive"
-msgstr ""
+msgstr "Duyarlı"
 
 #: choices.py:812
 msgid "Insensitive"
-msgstr ""
+msgstr "Duyarlı değil"
 
 #: choices.py:813
 msgid "Mixed"
-msgstr ""
+msgstr "Karışık"
 
 #: account/models.py:160
-#, fuzzy
 msgid "Microsoft Account"
-msgstr "Misafir hesabı"
+msgstr "Microsoft Hesabı"
 
 #: directoryservice/forms.py:223
 #: services/forms.py:237
@@ -12669,7 +12646,8 @@ msgstr ""
 #: account/models.py:151
 msgid "This disables all forms of password login, including for sharing."
 msgstr ""
-"Bu ayar, paylaşım için olanlar dahil her formdaki parolayı etkisiz kılar"
+"Bu, oturum açma parolasının tüm biçimlerini etkisizleştirir, paylaşım için "
+"olan dahil."
 
 #: network/forms.py:305
 #, fuzzy
@@ -13236,20 +13214,17 @@ msgid "Repair"
 msgstr "Onarılılan"
 
 #: choices.py:188
-#, fuzzy
 msgid "SMB3_02"
-msgstr "SMB3_00"
+msgstr "SMB3_02"
 
 #: choices.py:189
-#, fuzzy
 msgid "SMB3_10"
-msgstr "SMB3_00"
+msgstr "SMB3_10"
 
 # Protokol isimleri özel isim olarak aynen yazılmalı.  refs.: http://doc.freenas.org/9.3/freenas_services.html?highlight=cifs#cifs             > teblo: 11.3b    ve https://www.samba.org/cifs/docs/what-is-smb.html#SMB_Servers 
 #: choices.py:190
-#, fuzzy
 msgid "SMB3_11"
-msgstr "SMB3"
+msgstr "SMB3_11"
 
 #: services/models.py:92
 #, fuzzy
