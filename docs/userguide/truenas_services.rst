@@ -302,8 +302,15 @@ each configured CIFS Share. In contrast, global settings which apply to all CIFS
 | SMB3_00        | used by Windows 8, mostly the same as SMB2_24              |
 |                |                                                            |
 +----------------+------------------------------------------------------------+
-
-.. note:: Windows 8.1 and Windows Server 2012 R2 use SMB3.02 which is not yet supported by Samba. 
+| SMB3_02        | used by Windows 8.1 and Windows Server 2012                |
+|                |                                                            |
++----------------+------------------------------------------------------------+
+| SMB3_10        | used in early Technical Previews of Windows 8.1            |
+|                |                                                            |
++----------------+------------------------------------------------------------+
+| SMB3_11        | used by Windows 10                                         |
+|                |                                                            |
++----------------+------------------------------------------------------------+
 
 .. note:: do not set the
    *directory name cache size* as an "Auxiliary parameter". Due to differences in how Linux and BSD handle file descriptors, directory name caching is

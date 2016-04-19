@@ -883,7 +883,7 @@ The following VFS objects do not appear in the drop-down menu as they are always
 
 * **shadow_copy2:** a more recent implementation of "shadow_copy" with some additonal features 
 
-* **zfs_space:** 
+* **zfs_space:** correctly calculates ZFS space used by share, including any reservations or quotas
 
 * **zfsacl:**
 

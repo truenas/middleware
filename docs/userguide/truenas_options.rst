@@ -138,15 +138,14 @@ Alert
 -----
 
 TrueNAS® provides an alert system to provide a visual warning of any conditions that require administrative attention. The "Alert" button in the far right corner will flash red when there is
-an outstanding alert. In the example alert shown in :numref:`Figure %s: Example Alert Message <alert1>`. one of the disks in a ZFS pool is offline which has degraded the state of the pool.
+an outstanding alert. In the example alert shown in :numref:`Figure %s: Example Alert Message <alert2a>`, the system is warning that the S.M.A.R.T. service is not running.
 
-.. _alert1:
+.. _alert2a:
 
-.. figure:: images/alert1.png
+.. figure:: images/alert2a.png
 
-Informational messages will have a green "OK" while messages requiring attention will be listed as a red "CRITICAL". CRITICAL messages will also be emailed to
-the root user account. If you are aware of a critical condition but wish to remove the flashing alert until you deal with it, uncheck the box next to that
-message.
+Informational messages will have a green "OK", warning messages will flash yellow, and messages requiring attention will be listed as a red "CRITICAL". CRITICAL messages will also be emailed
+to the root user account. If you are aware of a critical condition but wish to remove the flashing alert until you deal with it, uncheck the box next to that message.
 
 Behind the scenes, an alert daemon checks for various alert conditions, such as volume and disk status, and writes the current conditions to
 :file:`/var/tmp/alert`. The daemon retrieves the current alert status every minute and will change the solid green alert icon to flashing red if a new alert

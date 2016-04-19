@@ -800,6 +800,9 @@ for more details.
 | fake_perms          | allows roaming profile files and directories to be set as read-only                                                                        |
 |                     |                                                                                                                                            |
 +---------------------+--------------------------------------------------------------------------------------------------------------------------------------------+
+| fruit               | provides interoperability with a Netatalk 3 AFP fileserver                                                                                 |
+|                     |                                                                                                                                            |
++---------------------+--------------------------------------------------------------------------------------------------------------------------------------------+
 | full_audit          | records selected client operations to the system log                                                                                       |
 |                     |                                                                                                                                            |
 +---------------------+--------------------------------------------------------------------------------------------------------------------------------------------+
@@ -810,9 +813,6 @@ for more details.
 |                     |                                                                                                                                            |
 +---------------------+--------------------------------------------------------------------------------------------------------------------------------------------+
 | netatalk            | eases the co-existence of CIFS and AFP shares                                                                                              |
-|                     |                                                                                                                                            |
-+---------------------+--------------------------------------------------------------------------------------------------------------------------------------------+
-| notify_fam          | implements file change notifications from IRIX and some BSD systems to Windows clients                                                     |
 |                     |                                                                                                                                            |
 +---------------------+--------------------------------------------------------------------------------------------------------------------------------------------+
 | posix_eadb          | provides Extended Attributes (EAs) support so they can be used on filesystems which do not provide native support for EAs                  |
@@ -827,19 +827,17 @@ for more details.
 | readonly            | marks a share as read-only for all clients connecting within the configured time period                                                    |
 |                     |                                                                                                                                            |
 +---------------------+--------------------------------------------------------------------------------------------------------------------------------------------+
-| recycle             | moves deleted files to the recycle directory instead of deleting them                                                                      |
-|                     |                                                                                                                                            |
-+---------------------+--------------------------------------------------------------------------------------------------------------------------------------------+
 | scannedonly         | ensures that only files that have been scanned for viruses are visible and accessible                                                      |
 |                     |                                                                                                                                            |
 +---------------------+--------------------------------------------------------------------------------------------------------------------------------------------+
 | shadow_copy         | allows Microsoft shadow copy clients to browse shadow copies on Windows shares                                                             |
 |                     |                                                                                                                                            |
 +---------------------+--------------------------------------------------------------------------------------------------------------------------------------------+
-| shadow_copy2        | a more recent implementation of "shadow_copy" with some additonal features                                                                 |
+| shadow_copy_test    | shadow copy testing                                                                                                                        |
 |                     |                                                                                                                                            |
 +---------------------+--------------------------------------------------------------------------------------------------------------------------------------------+
-| shadow_copy_test    | shadow copy testing                                                                                                                        |
+| shell_snap          | provides shell-script callouts for snapshot creation and deletion operations issued by remote clients using the File Server Remote VSS     |
+|                     | Protocol (FSRVP)                                                                                                                           |
 |                     |                                                                                                                                            |
 +---------------------+--------------------------------------------------------------------------------------------------------------------------------------------+
 | skel_opaque         | implements dummy versions of all VFS modules (useful to VFS module developers)                                                             |
@@ -849,6 +847,9 @@ for more details.
 |                     |                                                                                                                                            |
 +---------------------+--------------------------------------------------------------------------------------------------------------------------------------------+
 | smb_traffic_analyzer| logs Samba read and write operations through a socket to a helper application                                                              |
+|                     |                                                                                                                                            |
++---------------------+--------------------------------------------------------------------------------------------------------------------------------------------+
+| snapper             | provides the ability for remote SMB clients to access shadow copies of FSRVP snapshots using Windows Explorer                              |
 |                     |                                                                                                                                            |
 +---------------------+--------------------------------------------------------------------------------------------------------------------------------------------+
 | streams_depot       | **experimental** module to store alternate data streams in a central directory                                                             |
@@ -863,12 +864,25 @@ for more details.
 | time_audit          | logs system calls that take longer than the number of defined milliseconds                                                                 |
 |                     |                                                                                                                                            |
 +---------------------+--------------------------------------------------------------------------------------------------------------------------------------------+
+| unityed_media       | allows multiple Avid clients to share a network drive                                                                                      |
+|                     |                                                                                                                                            |
++---------------------+--------------------------------------------------------------------------------------------------------------------------------------------+
+| worm                | controls the writability of files and folders depending on their change time and an adjustable grace period                                |  
+|                     |                                                                                                                                            |
++---------------------+--------------------------------------------------------------------------------------------------------------------------------------------+
 | xattr_tdb           | stores Extended Attributes (EAs) in a tdb file so they can be used on filesystems which do not provide support for EAs                     |
 |                     |                                                                                                                                            |
 +---------------------+--------------------------------------------------------------------------------------------------------------------------------------------+
-| zfs_space           | correctly calculates ZFS space used by share, including any reservations or quotas                                                         |
-|                     |                                                                                                                                            |
-+---------------------+--------------------------------------------------------------------------------------------------------------------------------------------+
+
+The following VFS objects do not appear in the drop-down menu as they are always enabled:
+
+* **recycle:** moves deleted files to the recycle directory instead of deleting them 
+
+* **shadow_copy2:** a more recent implementation of "shadow_copy" with some additonal features 
+
+* **zfs_space:** correctly calculates ZFS space used by share, including any reservations or quotas
+
+* **zfsacl:**
 
 
 .. _Configuring Unauthenticated Access:

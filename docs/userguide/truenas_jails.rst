@@ -164,7 +164,7 @@ advanced fields by default" in :menuselection:`System --> Advanced`.
 |                           |                |                                                                                                              |
 |                           |                |                                                                                                              |
 +===========================+================+==============================================================================================================+
-| Jail Name                 | string         | mandatory; can only contain letters and numbers                                                              |
+| Jail Name                 | string         | mandatory; can only contain letters, numbers, and the underscore character                                   |
 |                           |                |                                                                                                              |
 +---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
 | Template                  | drop-down menu | only available in "Advanced Mode"; contains the *VirtualBox* template for creating an instance of            |
@@ -761,3 +761,47 @@ it will open the configuration screen shown in the :numref:`Figure %s: Editing a
 
 If you click a template's "Delete" button, a warning message will prompt you to confirm the deletion. Note that once a template is deleted, it will be removed
 from the "Templates" drop-down menu and will be no longer available for creating new jails.
+
+.. _Using iohve:
+
+Using iohyve
+------------
+
+Beginning with version |version|, TrueNAS® includes the `iohyve <https://github.com/pr1ntf/iohyve>`_ command line utility for creating, managing, and launching
+`bhyve <https://en.wikipedia.org/wiki/Bhyve>`_ guests.
+
+To initialize this utility, run this command, substituting the name of the pool to hold the bhyve guests and the name of the network interface::
+
+ iohyve setup pool=volume1 kmod=1 net=em0
+ Setting up iohyve pool...
+ Loading kernel modules...
+ Setting up bridge0 on em0...
+ net.link.tap.up_onopen: 0 -> 1
+ 
+ ln -s /mnt/iohyve /iohyve
+ 
+Next, tell :command:`iohyve` which installation ISO to download. In this example, we ask it to fetch the 64-bit version of FreeBSD 10.3, then verify that the fetch was successful::
+
+ iohyve fetch ftp://ftp.freebsd.org/pub/FreeBSD/releases/amd64/amd64/ISO-IMAGES/10.3/FreeBSD-10.3-RELEASE-amd64-bootonly.iso
+ Fetching ftp://ftp.freebsd.org/pub/FreeBSD/releases/amd64/amd64/ISO-IMAGES/10.3/FreeBSD-10.3-RELEASE-amd64-bootonly.iso...
+ /iohyve/ISO/FreeBSD-10.3-RELEASE-amd64-bootonly.iso 100% of 232 MB 2443 kBps 01m38s
+ 
+ iohyve isolist
+ Listing ISO's...
+ FreeBSD-10.3-RELEASE-amd64-bootonly.iso
+ 
+Then, specify the name and size of the guest to create and verify its status::
+
+ iohyve create freebsd10.3 8G
+ Creating freebsd10.3...
+ 
+ iohyve list
+ Guest		VMM?	Running?	rcboot?		Description
+ freebsd10.3    NO      NO              NO              Thu_Mar_24_09:37:30_PDT_2016
+ 
+Note that the newly created guest is not running, nor is it set to automatically start ("rcboot:) when :command:`iohyve` starts.
+ 
+To install the guest using the specified ISO::
+
+ iohyve install freebsd10.3 FreeBSD-10.3-RELEASE-amd64-bootonly.iso
+ Installing freebsd10.3...
