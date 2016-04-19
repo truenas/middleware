@@ -245,7 +245,9 @@ class AlertPlugins:
                 log.debug("Alert module '%s' failed: %s", instance, e, exc_info=True)
                 log.error("Alert module '%s' failed: %s", instance, e)
 
-        mAlert.objects.exclude(message_id__in=ids, node=node).delete()
+        qs = mAlert.objects.exclude(message_id__in=ids, node=node)
+        if qs.exists():
+            qs.delete()
         crits = sorted([a for a in rvs if a and a.getLevel() == Alert.CRIT])
         if obj and crits:
             lastcrits = sorted([
