@@ -70,6 +70,7 @@ from freenasUI.network.forms import AliasForm
 from freenasUI.network.models import Alias, Interfaces
 from freenasUI.plugins import availablePlugins, Plugin
 from freenasUI.plugins.models import Plugins
+from freenasUI.plugins.utils import get_base_url, get_plugin_status
 from freenasUI.services.forms import iSCSITargetPortalIPForm
 from freenasUI.services.models import (
     iSCSITargetPortal, iSCSITargetPortalIP, FibreChannelToTarget
@@ -2132,6 +2133,12 @@ class PluginsResourceMixin(NestedMixin):
             )
 
         return HttpResponse('Plugin stopped.', status=202)
+
+    def dehydrate(self, bundle):
+        host = get_base_url(bundle.request)
+        plugin, status, jstatus = get_plugin_status((bundle.obj, host, bundle.request))
+        bundle.data['plugin_status'] = status['status'] if status and 'status' in status else 'UNKNOWN'
+        return bundle
 
 
 class SnapshotResource(DojoResource):
