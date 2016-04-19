@@ -133,7 +133,7 @@ class Plugins(Model):
                 # The API needs to be able to poke plugins services
                 # however it was built to use the current browser session
                 # to check for authentication so we need to use this field.
-                'sessionid': request.META['HTTP_AUTHORIZATION'].encode('base64'),
+                'sessionid': request.META['HTTP_AUTHORIZATION'].encode('base64').strip(),
             },
             verify=False,
         )
