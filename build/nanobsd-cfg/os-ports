@@ -313,7 +313,7 @@ add_port devel/libinotify
 add_port dns/samba-nsupdate
 add_port security/gnutls \
        OPTIONS_FILE_UNSET+=TPM
-add_port_debug net/samba41 \
+add_port_debug net/samba43 \
        OPTIONS_FILE_SET+=ACL_SUPPORT \
        OPTIONS_FILE_SET+=ADS \
        OPTIONS_FILE_SET+=AD_DC \
@@ -333,12 +333,15 @@ add_port_debug net/samba41 \
        OPTIONS_FILE_SET+=PTHREADPOOL \
        OPTIONS_FILE_SET+=QUOTAS \
        OPTIONS_FILE_UNSET+=SWAT \
+       OPTIONS_FILE_UNSET+=SPOTLIGHT \
        OPTIONS_FILE_SET+=SYSLOG \
        OPTIONS_FILE_SET+=UTMP \
        OPTIONS_FILE_SET+=WINBIND \
        OPTIONS_FILE_SET+=NSUPDATE \
        OPTIONS_FILE_UNSET+=BIND99 \
        OPTIONS_FILE_UNSET+=BIND910 \
+       OPTIONS_FILE_UNSET+=FREENAS \
+       OPTIONS_FILE_SET+=CLUSTER \
        WITH_DEBUG=yes CRAZY=yes
 
 add_port sysutils/lsof
