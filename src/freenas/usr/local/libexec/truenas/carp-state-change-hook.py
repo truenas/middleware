@@ -322,8 +322,8 @@ def carp_master(fobj, state_file, ifname, vhid, event, user_override, forcetakeo
     log.warn('Beginning volume imports.')
     # TODO: now that we are all python, we should probably just absorb the code in.
     run(
-        '/usr/local/bin/python /usr/local/www/freenasUI/failover/enc_helper.py'
-        ' attachall'
+        'LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/python '
+        '/usr/local/www/freenasUI/failover/enc_helper.py attachall'
     )
 
     p = multiprocessing.Process(target=os.system("""dtrace -qn 'zfs-dbgmsg{printf("\r                            \r%s", stringof(arg0))}' > /dev/console &"""))
@@ -360,12 +360,11 @@ def carp_master(fobj, state_file, ifname, vhid, event, user_override, forcetakeo
     log.warn('Volume imports complete.')
     log.warn('Restarting services.')
 
-    error, output = run('sqlite3 /data/freenas-v1.db'
+    error, output = run('LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/sqlite3 /data/freenas-v1.db'
                         ' "select ldap_enable from directoryservice_ldap"')
     if output == "1":
         run('/usr/sbin/service ix-ldap quietstart')
-    error, output = run("""sqlite3 /data/freenas-v1.db
-                        "select srv_enable from services_services where srv_service = 'nfs' " """)
+    error, output = run("""LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/sqlite3 /data/freenas-v1.db "select srv_enable from services_services where srv_service = 'nfs' " """)
     if output == "1":
         run('/usr/local/bin/python /usr/local/www/freenasUI/middleware/notifier.py'
             ' nfsv4link')
@@ -379,15 +378,13 @@ def carp_master(fobj, state_file, ifname, vhid, event, user_override, forcetakeo
 
     run('/usr/sbin/service ix-ssl quietstart')
     run('/usr/sbin/service ix-system quietstart')
-    error, output = run("""sqlite3 /data/freenas-v1.db
-                        "select srv_enable from services_services where srv_service = 'cifs' " """)
+    error, output = run("""LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/sqlite3 /data/freenas-v1.db "select srv_enable from services_services where srv_service = 'cifs' " """)
     if output == "1":
         run('/usr/sbin/service ix-pre-samba quietstart')
         run('/usr/sbin/service samba_server forcestop')
         run('/usr/sbin/service samba_server quietstart')
         run('/usr/sbin/service ix-post-samba quietstart')
-    error, output = run("""sqlite3 /data/freenas-v1.db
-                        "select srv_enable from services_services where srv_service = 'afp' " """)
+    error, output = run("""LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/sqlite3 /data/freenas-v1.db "select srv_enable from services_services where srv_service = 'afp' " """)
     if output == "1":
         run('/usr/sbin/service ix-afpd quietstart')
         run('/usr/sbin/service netatalk forcestop')
