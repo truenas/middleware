@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:05-0700\n"
-"PO-Revision-Date: 2016-04-18 08:28+0000\n"
+"PO-Revision-Date: 2016-04-19 08:54+0000\n"
 "Last-Translator: BouRock <hitowerdigit@hotmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: tr\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1460968124.0\n"
+"X-POOTLE-MTIME: 1461056052.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -1182,7 +1182,7 @@ msgstr "PBI dosyasını yükle:"
 #: plugins/forms.py:200
 msgid "The plugins jail path cannot be a subset of the plugins archive path."
 msgstr ""
-"Eklentilerin jail yolu eklentilerin arşiv yolunun bir alt kümesi olamaz."
+"Eklentilerin kafes yolu eklentilerin arşiv yolunun bir alt kümesi olamaz."
 
 #~ msgid "The plugins archive path cannot be a subset of the plugins jail path."
 #~ msgstr "Eklentilerin arşiv eklentilerin jail yolunun bir alt kümesi olamaz."
@@ -1205,11 +1205,11 @@ msgstr "Jail PBI eklentileri"
 
 #: plugins/forms.py:286 templates/plugins/mountpoints.html:6
 msgid "Mounted?"
-msgstr "Bağlı?"
+msgstr "Bağlandı mı?"
 
 #: plugins/forms.py:314
 msgid "The full path cannot exceed 88 characters"
-msgstr "Tam yol 88 karakterden uzun olamaz"
+msgstr "Tam yol 88 karakteri aşamaz"
 
 #: plugins/forms.py:336
 #, python-format
@@ -1219,7 +1219,7 @@ msgstr "%s yolu bağlanamadı"
 #: plugins/forms.py:341
 #, python-format
 msgid "The path could not be umounted %s"
-msgstr "%s yolu ayrılamadı"
+msgstr "Yol sökülemedi %s"
 
 #: plugins/models.py:38 templates/plugins/plugin_info.html:5
 #: templates/services/plugins.html:30
@@ -2221,7 +2221,7 @@ msgstr "Tür"
 
 #: services/models.py:654
 msgid "Logical Unit Type mapped to LUN."
-msgstr "Eşleşen Mantıksal Birim Türü LUN."
+msgstr "Mantıksal Birim Türü LUN'a eşlendi."
 
 #: services/models.py:660
 msgid "Target Flags"
@@ -3198,17 +3198,15 @@ msgstr "'%s' IP'si geçerli değil."
 
 #: sharing/forms.py:179
 msgid "Maproot group requires Maproot user"
-msgstr ""
-"Yönetici haritası kullanıcısı yönetici haritası kullanıcı grubunu gerektirir"
+msgstr "Maproot grubu Maproot kullanıcısı gerektirir"
 
 #: sharing/forms.py:184
 msgid "Mapall group requires Mapall user"
-msgstr "Tüm harita kullanıcısı tüm harita grubunu gerektirir"
+msgstr "Mapall grubu Mapall kullanıcısı gerektirir"
 
 #: sharing/forms.py:190 sharing/forms.py:195
 msgid "Maproot user/group disqualifies Mapall"
-msgstr ""
-"Yönetici haritası kullanıcı/grubun Tüm yönetici haritası yetkisini alır"
+msgstr "Maproot kullanıcısı/grubu Mapall'dan yetkisini alır"
 
 #: sharing/models.py:39 sharing/models.py:113 storage/models.py:45
 #: storage/models.py:326 storage/views.py:246
@@ -3610,28 +3608,28 @@ msgstr "Paylaşılan, engellenen günlük uyarılarını dışa aktarmada sorun 
 
 #: sharing/models.py:285
 msgid "Maproot User"
-msgstr "Yönetici haritası kullanıcısı"
+msgstr "Maproot Kullanıcısı"
 
 #~ msgid "User to map root to"
 #~ msgstr "Kullanıcıdan harita yetkilisine"
 
 #: sharing/models.py:292
 msgid "Maproot Group"
-msgstr "Yönetici haritası grubu"
+msgstr "Maproot Grubu"
 
 #~ msgid "Group to map root to"
 #~ msgstr "Gruptan harita yetkilisine"
 
 #: sharing/models.py:299
 msgid "Mapall User"
-msgstr "Tüm harita kullanıcısı"
+msgstr "Mapall Kullanıcısı"
 
 #~ msgid "User to map all users to"
 #~ msgstr "Kullanıcıdan tüm harita kullanıcılarına"
 
 #: sharing/models.py:306
 msgid "Mapall Group"
-msgstr "Tüm harita grubu"
+msgstr "Mapall Grubu"
 
 #~ msgid "Group to map all users to"
 #~ msgstr "Gruptan tüm harita kullanıcılarına"
@@ -4482,7 +4480,7 @@ msgstr "Dil"
 
 #: system/models.py:67
 msgid "Console Keyboard Map"
-msgstr "Konsol klavye haritası"
+msgstr "Konsol Klavyesi Eşlemesi"
 
 #: system/models.py:74
 msgid "Timezone"
@@ -6743,7 +6741,7 @@ msgstr "URL"
 
 #: jails/forms.py:89
 msgid "type"
-msgstr "Tür"
+msgstr "tür"
 
 #: jails/forms.py:171
 msgid "No jail root configured."
@@ -6751,11 +6749,11 @@ msgstr "Kafes için root yapılandırması yok."
 
 #: jails/forms.py:459
 msgid "autostart"
-msgstr "Otomatik başlat"
+msgstr "otomatik başlat"
 
 #: jails/forms.py:772
 msgid "The path could not be mounted %(source)s: %(error)s"
-msgstr "%(source)s yolu bağlanamadı: %(error)s"
+msgstr "Yol bağlanamadı %(source)s: %(error)s"
 
 #: jails/models.py:109
 msgid "IPv4 bridge netmask"
@@ -6840,7 +6838,7 @@ msgstr "Kafes Şablonları Ekle"
 
 #: jails/utils.py:640
 msgid "Failed to install plugin: %s"
-msgstr "Eklenti yüklenemedi: %s"
+msgstr "Eklenti yükleme başarısız: %s"
 
 #: jails/utils.py:694
 msgid "Failed to create dataset %(name)s: %(error)s"
@@ -7647,7 +7645,7 @@ msgstr "Sudo izni"
 
 #: common/system.py:278
 msgid "Mount failed (%(retcode)s) -> %(output)s"
-msgstr "Bağlama başarısız (%(retcode)s) -> %(output)s"
+msgstr "Bağlama başarısız oldu (%(retcode)s) -> %(output)s"
 
 #: freeadmin/forms.py:220
 msgid "A file is required"
@@ -7691,7 +7689,7 @@ msgstr "Örnekler"
 
 #: jails/forms.py:99
 msgid "vanilla"
-msgstr "Vanilya"
+msgstr "vanilya"
 
 #: jails/forms.py:234
 #: jails/utils.py:623
@@ -7701,7 +7699,7 @@ msgstr "Şablon bulunamıyor!"
 #: jails/forms.py:460
 #: jails/models.py:158
 msgid "VIMAGE"
-msgstr "Birim imajı"
+msgstr "BİRİMİMAJI"
 
 #: jails/forms.py:461
 #: jails/models.py:162
@@ -7710,7 +7708,7 @@ msgstr "NAT"
 
 #: jails/forms.py:652
 msgid "Create destination directory if it does not exist"
-msgstr "Hedef dizin yoksa oluştur"
+msgstr "Hedef dizin mevcut değilse oluştur"
 
 #: jails/forms.py:694
 msgid "This shouldn't happen, but the jail could not be found"
@@ -8498,7 +8496,7 @@ msgstr "URL ters çevrilemedi, %(node)s düğümü atlanıyor: %(error)s"
 
 #: jails/forms.py:451
 msgid "Path does not exist!"
-msgstr "Böyle bir yol mevcut değil."
+msgstr "Yol mevcut değil!"
 
 #: jails/models.py:90
 msgid "IPv4 netmask"
@@ -9870,24 +9868,25 @@ msgid ""
 "Turn the module into read-only mode. No new ranges will be allocated nor "
 "will new mappings be created in the idmap pool."
 msgstr ""
+"Modülü salt-okunur kipine döndürün. Ne yeni aralıklar ayrılayacaktır ne de "
+"idmap havuzunda yeni eşlemeler oluşturulacaktır."
 
 #: directoryservice/models.py:204
 msgid "Ignore Builtin"
-msgstr ""
+msgstr "Yerleşik Olanı Yoksay"
 
 #: directoryservice/models.py:205
 msgid "Ignore any mapping requests for the BUILTIN domain."
-msgstr ""
+msgstr "YERLEŞİK etki alanı için herhangi bir eşleme isteğini yoksayar."
 
 #: directoryservice/models.py:210
 #: directoryservice/models.py:211
 msgid "AutoRID Idmap"
-msgstr ""
+msgstr "AutoRID Idmap"
 
 #: directoryservice/models.py:229
-#, fuzzy
 msgid "Name Map"
-msgstr "Adı"
+msgstr "Ad Eşlemesi"
 
 #: directoryservice/models.py:231
 msgid ""
@@ -9899,7 +9898,7 @@ msgstr ""
 #: directoryservice/models.py:239
 #: directoryservice/models.py:240
 msgid "Hash Idmap"
-msgstr ""
+msgstr "Hash Idmap"
 
 #: directoryservice/models.py:261
 msgid ""
@@ -9909,9 +9908,8 @@ msgid ""
 msgstr ""
 
 #: directoryservice/models.py:268
-#, fuzzy
 msgid "User DN"
-msgstr "Kullanıcı kimliği"
+msgstr "Kullanıcı DN"
 
 #: directoryservice/models.py:271
 msgid ""
@@ -9924,7 +9922,7 @@ msgstr ""
 
 #: directoryservice/models.py:283
 msgid "Specifies the LDAP server to use for SID/uid/gid map entries."
-msgstr ""
+msgstr "SID/uid/gid eşleme girişlerini kullanmak için LDAP sunucusunu belirler."
 
 #: directoryservice/models.py:288
 #: directoryservice/models.py:289
@@ -9937,9 +9935,8 @@ msgid "NSS Idmap"
 msgstr "NSS Idmap"
 
 #: directoryservice/models.py:327
-#, fuzzy
 msgid "LDAP Server"
-msgstr "NTP Sunucu"
+msgstr "LDAP Sunucusu"
 
 #: directoryservice/models.py:330
 msgid ""
@@ -10036,17 +10033,17 @@ msgstr ""
 #: directoryservice/models.py:413
 #: directoryservice/models.py:414
 msgid "RFC2307 Idmap"
-msgstr ""
+msgstr "RFC2307 Idmap"
 
 #: directoryservice/models.py:433
 #: directoryservice/models.py:434
 msgid "RID Idmap"
-msgstr ""
+msgstr "RID Idmap"
 
 #: directoryservice/models.py:453
 #: directoryservice/models.py:454
 msgid "TDB Idmap"
-msgstr ""
+msgstr "TDB Idmap"
 
 #: directoryservice/models.py:474
 msgid ""
@@ -10058,7 +10055,7 @@ msgstr ""
 #: directoryservice/models.py:481
 #: directoryservice/models.py:482
 msgid "TDB2 Idmap"
-msgstr ""
+msgstr "TDB2 Idmap"
 
 #: directoryservice/models.py:549
 #, fuzzy
@@ -10456,12 +10453,11 @@ msgstr "Yeniden Başlatmada"
 #: directoryservice/models.py:228
 #: directoryservice/models.py:229
 msgid "ADEX Idmap"
-msgstr ""
+msgstr "ADEX Idmap"
 
 #: api/resources.py:2490
-#, fuzzy
 msgid "Now"
-msgstr "Hayır"
+msgstr "Şimdi"
 
 #: directoryservice/models.py:637
 #, fuzzy
@@ -12666,9 +12662,8 @@ msgid ""
 msgstr ""
 
 #: directoryservice/forms.py:122
-#, fuzzy
 msgid "Confirm LDAP User DN Password"
-msgstr "Yeni Parolayı Onaylayın:"
+msgstr "LDAP Kullanıcısı DN Parolasını Onaylayın"
 
 #: directoryservice/models.py:519
 #, fuzzy
@@ -13166,11 +13161,11 @@ msgstr ""
 
 #: services/views.py:296
 msgid "Idmap Range Low"
-msgstr ""
+msgstr "Idmap Aralığı Düşük"
 
 #: services/views.py:297
 msgid "Idmap Range High"
-msgstr ""
+msgstr "Idmap Aralığı Yüksek"
 
 #: storage/forms.py:734
 #, fuzzy
@@ -13238,4 +13233,24 @@ msgid ""
 "Version: %(version)s\n"
 "Changelog:\n"
 "%(changelog)s\n"
+msgstr ""
+
+#: jails/forms.py:225
+#, fuzzy
+msgid "Jail name may contain only alphanumeric characters and underscore."
+msgstr "Konum yalnızca alfasayısal karakterler, _ veya - olabilir."
+
+#: services/forms.py:266
+#, fuzzy
+msgid "NetBIOS Alias: %s"
+msgstr "NetBIOS adı"
+
+#: services/models.py:416
+msgid ""
+"Select the IP address(es) to listen for NFS requests. If left unchecked, NFS "
+"will listen on all available addresses."
+msgstr ""
+
+#: system/alertmods/vmwaresnapdelete_fails.py:25
+msgid "VMWare snapshot deletion %(snap)s failed for the following VMs: %(vms)s"
 msgstr ""

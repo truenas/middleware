@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:07-0700\n"
-"PO-Revision-Date: 2016-04-06 12:40+0000\n"
+"PO-Revision-Date: 2016-04-18 13:08+0000\n"
 "Last-Translator: pavelb <pavel.borecki@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: cs\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1459946445.0\n"
+"X-POOTLE-MTIME: 1460984890.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -12965,3 +12965,27 @@ msgstr ""
 "Verze: %(version)s\n"
 "Seznam změn:\n"
 "%(changelog)s\n"
+
+#: jails/forms.py:225
+msgid "Jail name may contain only alphanumeric characters and underscore."
+msgstr ""
+"Název vyhrazeného prostředí (jail) nemůže obsahovat jiné znaky než písmena a "
+"čísla a podtržítko."
+
+#: services/forms.py:266
+msgid "NetBIOS Alias: %s"
+msgstr "Název v NetBIOS: %s"
+
+#: services/models.py:416
+msgid ""
+"Select the IP address(es) to listen for NFS requests. If left unchecked, NFS "
+"will listen on all available addresses."
+msgstr ""
+"Vyberte IP adresy, na kterých očekávat NFS požadavky. Pokud není zadáno, "
+"bude spojení očekáváno na všech dostupných."
+
+#: system/alertmods/vmwaresnapdelete_fails.py:25
+msgid "VMWare snapshot deletion %(snap)s failed for the following VMs: %(vms)s"
+msgstr ""
+"Nepodařilo smazat zachycené stavy %(snap)s pro následující VMWare virtuální "
+"stroje: %(vms)s"

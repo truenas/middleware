@@ -12461,3 +12461,25 @@ msgstr ""
 "\n"
 "Changelog:\n"
 "%(changelog)s\n"
+
+#: jails/forms.py:225
+#, fuzzy
+msgid "Jail name may contain only alphanumeric characters and underscore."
+msgstr "评论只能包含字母、数字、下划线或者横线"
+
+#: services/forms.py:266
+#, fuzzy
+msgid "NetBIOS Alias: %s"
+msgstr "NetBIOS 名称"
+
+#: services/models.py:416
+#, fuzzy
+msgid ""
+"Select the IP address(es) to listen for NFS requests. If left unchecked, NFS "
+"will listen on all available addresses."
+msgstr "IP公告和监听。如果不指定，则公告系统的第一个IP地址，但监听所有入站请求。"
+
+#: system/alertmods/vmwaresnapdelete_fails.py:25
+#, fuzzy
+msgid "VMWare snapshot deletion %(snap)s failed for the following VMs: %(vms)s"
+msgstr "VMs: %(vms)s 的快照  %(snap)s 失败"

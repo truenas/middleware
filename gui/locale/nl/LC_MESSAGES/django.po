@@ -13294,3 +13294,28 @@ msgstr ""
 "\n"
 "Changelog:\n"
 "%(changelog)s\n"
+
+#: jails/forms.py:225
+#, fuzzy
+msgid "Jail name may contain only alphanumeric characters and underscore."
+msgstr "De community mag alleen alfanumerieke tekens, _ of - bevatten"
+
+#: services/forms.py:266
+#, fuzzy
+msgid "NetBIOS Alias: %s"
+msgstr "NetBIOS-naam"
+
+#: services/models.py:416
+#, fuzzy
+msgid ""
+"Select the IP address(es) to listen for NFS requests. If left unchecked, NFS "
+"will listen on all available addresses."
+msgstr ""
+"IP-adres(sen) voor aankondigingen en waarop wordt geluisterd. Als niets is "
+"opgegeven, wordt het eerste IP-adres van het systeem aangekondigd, maar naar "
+"alle inkomende aanvragen geluisterd."
+
+#: system/alertmods/vmwaresnapdelete_fails.py:25
+#, fuzzy
+msgid "VMWare snapshot deletion %(snap)s failed for the following VMs: %(vms)s"
+msgstr "VMware-momentopname %(snap)s mislukt voor de volgende VM's: %(vms)s"
