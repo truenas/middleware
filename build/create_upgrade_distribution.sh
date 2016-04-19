@@ -48,6 +48,6 @@ if [ -n "${REBOOT}" ]; then
 fi
 
 rm -f "${LATEST}"
-ln -sf "${UPDATE_DIR}" "${LATEST}"
+ln -sf "${SEQUENCE}-Update" "${LATEST}"
 
 exit 0
