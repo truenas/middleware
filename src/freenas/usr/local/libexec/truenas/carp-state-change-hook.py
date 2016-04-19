@@ -369,7 +369,7 @@ def carp_master(fobj, state_file, ifname, vhid, event, user_override, forcetakeo
     if output == "1":
         run('/usr/local/bin/python /usr/local/www/freenasUI/middleware/notifier.py'
             ' nfsv4link')
-        run('/usr/sbin/service /etc/rc.d/statd quietstart')
+        run('/usr/sbin/service statd quietstart')
         run('/usr/sbin/service ix-nfsd quietstart')
         run('/usr/sbin/service mountd quietrestart')
         run('/usr/sbin/service nfsd quietrestart')
