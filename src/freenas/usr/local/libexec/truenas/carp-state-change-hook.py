@@ -380,14 +380,14 @@ def carp_master(fobj, state_file, ifname, vhid, event, user_override, forcetakeo
     run('/usr/sbin/service ix-ssl quietstart')
     run('/usr/sbin/service ix-system quietstart')
     error, output = run("""sqlite3 /data/freenas-v1.db
-                        "select srv_enable from services_services where srv_service = 'cifs'""")
+                        "select srv_enable from services_services where srv_service = 'cifs' " """)
     if output == "1":
         run('/usr/sbin/service ix-pre-samba quietstart')
         run('/usr/sbin/service samba_server forcestop')
         run('/usr/sbin/service samba_server quietstart')
         run('/usr/sbin/service ix-post-samba quietstart')
     error, output = run("""sqlite3 /data/freenas-v1.db
-                        "select srv_enable from services_services where srv_service = 'afp'""")
+                        "select srv_enable from services_services where srv_service = 'afp' " """)
     if output == "1":
         run('/usr/sbin/service ix-afpd quietstart')
         run('/usr/sbin/service netatalk forcestop')
