@@ -13354,3 +13354,24 @@ msgid ""
 "Changelog:\n"
 "%(changelog)s\n"
 msgstr ""
+
+#: jails/forms.py:225
+#, fuzzy
+msgid "Jail name may contain only alphanumeric characters and underscore."
+msgstr ""
+"La comunidad debe contener solamente caracteres alfanuméricos, \"_\" o \"-\""
+
+#: services/forms.py:266
+#, fuzzy
+msgid "NetBIOS Alias: %s"
+msgstr "Nombre de NetBIOS"
+
+#: services/models.py:416
+msgid ""
+"Select the IP address(es) to listen for NFS requests. If left unchecked, NFS "
+"will listen on all available addresses."
+msgstr ""
+
+#: system/alertmods/vmwaresnapdelete_fails.py:25
+msgid "VMWare snapshot deletion %(snap)s failed for the following VMs: %(vms)s"
+msgstr ""
