@@ -391,15 +391,21 @@ Hello,
             snapcmd = '/sbin/zfs snapshot%s %s"%s"' % (rflag, vmflag, snapname)
             proc = pipeopen(snapcmd, logger=log)
             err = proc.communicate()[1]
-            if proc.returncode != 0:
-                log.error("Failed to create snapshot '%s': %s", snapname, err)
             MNTLOCK.unlock()
         else:
             snapcmd = '/sbin/zfs snapshot%s %s"%s"' % (rflag, vmflag, snapname)
             proc = pipeopen(snapcmd, logger=log)
             err = proc.communicate()[1]
-            if proc.returncode != 0:
-                log.error("Failed to create snapshot '%s': %s", snapname, err)
+        if proc.returncode != 0:
+            log.error("Failed to create snapshot '%s': %s", snapname, err)
+            send_mail(
+                subject="Snapshot failed! (%s)" % snapname,
+                text="""
+Hello,
+    Snapshot %s failed with the following error: %s""" % (snapname, err),
+                interval=datetime.timedelta(hours=1),
+                channel='autosnap',
+            )
 
         snapdeletefails = []
         for vm in snapvms:
