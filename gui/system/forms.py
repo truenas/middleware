@@ -1602,6 +1602,17 @@ class InitialWizardShareForm(Form):
         required=False,
     )
 
+    def clean_share_name(self):
+        share_name = self.cleaned_data.get('share_name')
+        qs = Volume.objects.filter(vol_fstype='ZFS')
+        if qs.exists():
+            volume_name = qs[0].vol_name
+            path = '/mnt/%s/%s' % (volume_name, share_name)
+            if os.path.exists(path):
+                raise forms.ValidationError(
+                    _('Share path %s already exists') % path
+                )
+
 
 class SharesBaseFormSet(BaseFormSet):
 
@@ -1620,6 +1631,9 @@ class SharesBaseFormSet(BaseFormSet):
             keys[idx][name] = val
 
         return json.dumps(keys.values())
+
+    def errors_json(self):
+        return json.dumps(self.errors)
 
 InitialWizardShareFormSet = formset_factory(
     InitialWizardShareForm,

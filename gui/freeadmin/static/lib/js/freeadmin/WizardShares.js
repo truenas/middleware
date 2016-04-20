@@ -64,8 +64,17 @@ define([
   var WizardShares = declare("freeadmin.WizardShares", [ _Widget, _Templated ], {
     templateString : template,
     initial: "[]",
+    errors: "[]",
     postCreate: function() {
       var me = this;
+
+      var errors = json.parse(me.errors)
+      for(var i=0;i<errors.length;i++) {
+        var form = errors[i];
+        if(form && form.share_name) {
+          me.dapSharesErrors.appendChild(domConstruct.toDom('<p><span style="color: red;">' + form.share_name[0] + '</span></p>'));
+        }
+      }
 
       me.dapShareNameLabel.innerHTML = gettext("Share name") + ":";
 
