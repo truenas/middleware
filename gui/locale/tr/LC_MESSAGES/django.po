@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:05-0700\n"
-"PO-Revision-Date: 2016-04-19 08:54+0000\n"
+"PO-Revision-Date: 2016-04-20 09:00+0000\n"
 "Last-Translator: BouRock <hitowerdigit@hotmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: tr\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1461056052.0\n"
+"X-POOTLE-MTIME: 1461142852.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -573,7 +573,7 @@ msgstr "Bu kullanıcı adı ile bir kullanıcı zaten var."
 #: system/forms.py:376 system/forms.py:382 system/forms.py:675
 #: system/forms.py:682
 msgid "This field is required"
-msgstr "Bu alan gereklidir"
+msgstr "Bu alan gerekli"
 
 #: account/forms.py:377 account/forms.py:529 account/forms.py:870
 #: services/forms.py:349 services/forms.py:466 sharing/forms.py:108
@@ -601,7 +601,7 @@ msgstr "Parola etkisizleştirildi, bunu boş bırakın"
 #: services/forms.py:742 services/forms.py:1071 storage/forms.py:244
 #: system/forms.py:548
 msgid "This field is required."
-msgstr "Bu alan gereklidir."
+msgstr "Bu alan gerekli."
 
 #~ msgid "Home directory has to start with /mnt or be /nonexistent"
 #~ msgstr "Ev dizini /mnt/ ile veya / başlamalı"
@@ -837,7 +837,7 @@ msgstr "Kullanılabilir alan alma hatası"
 
 #: middleware/zfs.py:581 storage/models.py:600
 msgid "Error getting used space"
-msgstr "Boş alan alma hatası"
+msgstr "Kullanılan alan alma hatası"
 
 #: middleware/zfs.py:590 middleware/zfs.py:598 storage/models.py:95
 #: storage/models.py:608 storage/models.py:616
@@ -1201,7 +1201,7 @@ msgstr ""
 
 #: plugins/forms.py:244
 msgid "Plugins Jail PBI"
-msgstr "Jail PBI eklentileri"
+msgstr "Kafes PBI eklentileri"
 
 #: plugins/forms.py:286 templates/plugins/mountpoints.html:6
 msgid "Mounted?"
@@ -1214,12 +1214,12 @@ msgstr "Tam yol 88 karakteri aşamaz"
 #: plugins/forms.py:336
 #, python-format
 msgid "The path could not be mounted %s"
-msgstr "%s yolu bağlanamadı"
+msgstr "Yol, %s için bağlanamadı"
 
 #: plugins/forms.py:341
 #, python-format
 msgid "The path could not be umounted %s"
-msgstr "Yol sökülemedi %s"
+msgstr "Yol, %s için sökülemedi"
 
 #: plugins/models.py:38 templates/plugins/plugin_info.html:5
 #: templates/services/plugins.html:30
@@ -1323,7 +1323,7 @@ msgstr "Eklenti başarıyla kuruldu."
 
 #: plugins/views.py:204
 msgid "Jail successfully imported."
-msgstr "Jail başarıyla alındı."
+msgstr "Kafes başarılı olarak içe aktarıldı."
 
 #: services/forms.py:70
 msgid "This is not a valid mask"
@@ -2818,7 +2818,7 @@ msgstr "Yönetici adı"
 
 #: services/models.py:1264
 msgid "Domain Administrator account name"
-msgstr "Alan adı yöneticinin hesap adı"
+msgstr "Etki alanı Yöneticisi hesabı adı"
 
 #: services/models.py:1268
 msgid "Administrator Password"
@@ -2826,12 +2826,12 @@ msgstr "Yönetci parolası"
 
 #: services/models.py:1269
 msgid "Domain Administrator account password."
-msgstr "Alan adı yöneticisinin parolası."
+msgstr "Etki alanı Yöneticisi hesabı parolası."
 
 #: services/models.py:1273 services/models.py:1274
 #: templates/services/core.html:15
 msgid "Active Directory"
-msgstr "Aktif Dizin"
+msgstr "Active Directory"
 
 #: services/models.py:1286
 msgid "The name or IP address of the LDAP server"
@@ -6753,7 +6753,7 @@ msgstr "otomatik başlat"
 
 #: jails/forms.py:772
 msgid "The path could not be mounted %(source)s: %(error)s"
-msgstr "Yol bağlanamadı %(source)s: %(error)s"
+msgstr "Yol, %(source)s için bağlanamadı : %(error)s"
 
 #: jails/models.py:109
 msgid "IPv4 bridge netmask"
@@ -6773,55 +6773,55 @@ msgstr "MAC"
 
 #: jails/models.py:224
 msgid "This jail is required by %d plugin(s)"
-msgstr "Bu kafes %d eklentileri tarafından gerekli"
+msgstr "Bu kafes %d eklenti tarafından gereklidir"
 
 #: jails/models.py:260
 msgid "Jail Root"
-msgstr "Root kafesi"
+msgstr "Kafes Kökü"
 
 #: jails/models.py:261
 msgid "Path where to store jail data"
-msgstr "Kafes verilerini depolamak için kullanılan yol"
+msgstr "Kafes verilerinin depolandığı yol"
 
 #: jails/models.py:266
 msgid "IPv4 network range for jails and plugins"
-msgstr "Kafes ve eklentiler için IPv4 ağ sıralaması"
+msgstr "Kafesler ve eklentiler için IPv4 ağı aralığı"
 
 #: jails/models.py:271
 msgid "IPv4 network start address for jails and plugins"
-msgstr "Kafes ve eklentiler için IPv4 ağ başlangıç adresi"
+msgstr "Kafesler ve eklentiler için IPv4 ağı başlangıç adresi"
 
 #: jails/models.py:276
 msgid "IPv4 network end address for jails and plugins"
-msgstr "Kafes ve eklentiler için IPv4 bitiş adresi"
+msgstr "Kafesler ve eklentiler için IPv4 ağı bitiş adresi"
 
 #: jails/models.py:280
 msgid "IPv6 Network"
-msgstr "IPv6 ağı"
+msgstr "IPv6 Ağı"
 
 #: jails/models.py:290
 msgid "IPv6 Network End Address"
-msgstr "IPv6 ağ bitiş adresi"
+msgstr "IPv6 Ağı Bitiş Adresi"
 
 #: jails/models.py:291
 msgid "IPv6 network end address for jails and plugins"
-msgstr "Kafes ve eklentiler için IPv6 ağ bitiş adresi"
+msgstr "Kafesler ve eklentiler için IPv6 ağı bitiş adresi"
 
 #: jails/models.py:294
 msgid "Collection URL"
-msgstr "Arşiv URL"
+msgstr "Koleksiyon URL'si"
 
 #: jails/models.py:296
 msgid "URL for the jails index"
-msgstr "Kafes dizini için URL"
+msgstr "Kafeslerin indeksleri için URL"
 
 #: jails/models.py:353
 msgid "Architecture"
-msgstr "Yapı"
+msgstr "Mimari"
 
 #: jails/models.py:380
 msgid "Template must have 0 instances!"
-msgstr "Şablon 0 örnekler halinde olmalı!"
+msgstr "Şablon 0 örneğe sahip olmak zorundadır!"
 
 #: jails/models.py:395
 #: jails/models.py:396
@@ -6830,7 +6830,7 @@ msgstr "Kafes Şablonları"
 
 #: jails/models.py:415
 msgid "Read-Only"
-msgstr "Sadece-Okunur"
+msgstr "Salt Okunur"
 
 #: jails/nav.py:85
 msgid "Add Jail Templates"
@@ -6842,7 +6842,7 @@ msgstr "Eklenti yükleme başarısız: %s"
 
 #: jails/utils.py:694
 msgid "Failed to create dataset %(name)s: %(error)s"
-msgstr "%(name)s veri kümesi oluşturulamadı: %(error)s"
+msgstr "%(name)s veri kümesi oluşturma başarısız: %(error)s"
 
 #: jails/views.py:96
 msgid "Jail successfully edited."
@@ -6858,7 +6858,7 @@ msgstr "Kafes şablonu başarıyla düzenlendi."
 
 #: middleware/notifier.py:2877
 msgid "No RPC Token!"
-msgstr "RPC Simgesi Yok!"
+msgstr "RPC Belirteci Yok!"
 
 #: middleware/zfs.py:609
 msgid "In Progress"
@@ -7720,11 +7720,11 @@ msgstr "Bu olmamalıydı fakat kafes bulunamadı"
 #: jails/nav.py:47
 #: templates/jails/index.html:17
 msgid "Jails"
-msgstr "Kafes"
+msgstr "Kafesler"
 
 #: jails/models.py:73
 msgid "Jail Name"
-msgstr "Kafes adı"
+msgstr "Kafes Adı"
 
 #: jails/models.py:83
 msgid "IPv4 address"
@@ -7732,11 +7732,11 @@ msgstr "IPv4 adresi"
 
 #: jails/models.py:89
 msgid "IPv4 aliases"
-msgstr "IPV4 takma adı"
+msgstr "IPv4 takma adları"
 
 #: jails/models.py:101
 msgid "IPv4 bridge aliases"
-msgstr "IPV4 köprü takma adı"
+msgstr "IPV4 köprü takma adları"
 
 #: jails/models.py:107
 msgid "IPv4 default gateway"
@@ -7744,7 +7744,7 @@ msgstr "IPv4 varsayılan ağ geçidi"
 
 #: jails/models.py:119
 msgid "IPv6 aliases"
-msgstr "IPV6 takma adı"
+msgstr "IPV6 takma adları"
 
 #: jails/models.py:153
 msgid "IPv6 bridge prefix length"
@@ -7752,28 +7752,28 @@ msgstr "IPv6 köprü önek uzunluğu"
 
 #: jails/models.py:265
 msgid "IPv4 Network"
-msgstr "IPv4 ağı"
+msgstr "IPv4 Ağı"
 
 #: jails/models.py:270
 msgid "IPv4 Network Start Address"
-msgstr "IPv4 ağ başlangıç adresi"
+msgstr "IPv4 Ağı Başlangıç Adresi"
 
 #: jails/models.py:275
 msgid "IPv4 Network End Address"
-msgstr "IPv4 ağ bitiş adresi"
+msgstr "IPv4 Ağı Bitiş Adresi"
 
 #: jails/models.py:285
 msgid "IPv6 Network Start Address"
-msgstr "IPv6 ağ başlangıç adresi"
+msgstr "IPv6 Ağı Başlangıç Adresi"
 
 #: jails/models.py:305
 #: jails/models.py:306
 msgid "Jails Configuration"
-msgstr "Kafes Yapılandırma"
+msgstr "Kafes Yapılandırması"
 
 #: jails/models.py:347
 msgid "OS"
-msgstr "İşletim sistemi"
+msgstr "İS"
 
 #: jails/nav.py:100
 msgid "View Jails"
@@ -8512,7 +8512,7 @@ msgstr "IPv6 köprü adresi"
 
 #: jails/models.py:131
 msgid "IPv6 bridge aliases"
-msgstr "IPV6 köprü takma adı"
+msgstr "IPV6 köprü takma adları"
 
 #: jails/models.py:138
 msgid "IPv6 default gateway"
@@ -8520,15 +8520,15 @@ msgstr "IPv6 varsayılan ağ geçidi"
 
 #: jails/models.py:281
 msgid "IPv6 network range for jails and plugins"
-msgstr "Kafes ve eklentiler için IPv6 ağ sıralaması"
+msgstr "Kafesler ve eklentiler için IPv6 ağı aralığı"
 
 #: jails/models.py:286
 msgid "IPv6 network start address for jails and plugins"
-msgstr "Kafes ve eklentiler için IPv6 ağ başlangıç adresi"
+msgstr "Kafesler ve eklentiler için IPv6 ağı başlangıç adresi"
 
 #: jails/nav.py:70
 msgid "Add Jails"
-msgstr "Kafes Ekle "
+msgstr "Kafesleri Ekle"
 
 #: jails/nav.py:114
 msgid "View Jail Templates"
@@ -8536,7 +8536,7 @@ msgstr "Kafes Şablonlarını Göster"
 
 #: jails/utils.py:679
 msgid "You need to create a ZFS volume to proceed!"
-msgstr "Devam etmek için bir ZFS birimi oluşturmak gerekiyor!"
+msgstr "Devam etmek için bir ZFS birimi oluşturmanız gerekiyor!"
 
 #: jails/views.py:178
 msgid "Jail successfully deleted."
@@ -8891,17 +8891,15 @@ msgstr "Geçersiz anlık görüntü"
 
 #: jails/forms.py:508
 msgid "Jail root must be on a volume or dataset!"
-msgstr ""
+msgstr "Kafes kökü, bir birim veya veri kümesinde olmak zorundadır"
 
 #: jails/models.py:178
-#, fuzzy
 msgid "Comma delimited list of sysctl's"
-msgstr "NIS sunucularının listesi virgülle sınırlandırılmıştır"
+msgstr "Virgülle sınırlandırılmış sysctl'nin listesi"
 
 #: jails/models.py:493
-#, fuzzy
 msgid "Jail root is not configured!"
-msgstr "Kafes için root yapılandırması yok."
+msgstr "Kafes kökü yapılandırılmadı!"
 
 #: jails/models.py:537
 #, fuzzy
@@ -8909,9 +8907,8 @@ msgid "Filesystem"
 msgstr "Dosya sistem türü"
 
 #: jails/utils.py:695
-#, fuzzy
 msgid "You need to create a volume to proceed!"
-msgstr "Devam etmek için bir ZFS birimi oluşturmak gerekiyor!"
+msgstr "Devam etmek için bir birim oluşturmanız gerekiyor!"
 
 #: jails/utils.py:739
 #, fuzzy
@@ -9473,9 +9470,8 @@ msgstr ""
 
 #: system/alertmods/volume_version.py:24
 #: system/alertmods/volume_version.py:44
-#, fuzzy
 msgid "You need to upgrade the volume %s"
-msgstr "Devam etmek için bir ZFS birimi oluşturmak gerekiyor!"
+msgstr "%s birimini yükseltmeniz gerekiyor!"
 
 #: system/alertmods/zpool_capacity.py:28
 msgid ""
@@ -9601,7 +9597,7 @@ msgstr "Alan adı"
 
 #: network/admin.py:66
 msgid "Network connectivity will be interrupted. Do you want to proceed?"
-msgstr "Ağ bağlantısı kesilecek. Devam etmek istiyor musunuz?"
+msgstr "Ağ bağlanabilirliği kesilecektir. Devam etmek istiyor musunuz?"
 
 #: services/admin.py:67
 msgid "Enabling experimental target requires a reboot. Do you want to proceed?"
@@ -9643,14 +9639,12 @@ msgid "Enable"
 msgstr "Etkinleştir"
 
 #: directoryservice/models.py:295
-#, fuzzy
 msgid "Bind DN"
-msgstr "Root için ayırt edici (DN) bağlama"
+msgstr "DN Bağla"
 
 #: directoryservice/models.py:302
-#, fuzzy
 msgid "Bind password"
-msgstr "Yönetici Parolası"
+msgstr "Bağlama parolası"
 
 #: services/forms.py:753
 #: services/forms.py:896
@@ -9943,50 +9937,58 @@ msgid ""
 "Defines the type of LDAP server to use. This can either be the LDAP server "
 "provided by the Active Directory server (ad) or a stand-alone LDAP server."
 msgstr ""
+"Kullanmak için LDAP sunucusunun türünü tanımlar. Bu ya Active Directory "
+"sunucusu (ad) tarafından sağlanan LDAP sunucusu ya da tek başına bir LDAP "
+"sunucusu olabilir."
 
 #: directoryservice/models.py:336
 msgid "stand-alone"
-msgstr ""
+msgstr "tek başına"
 
 #: directoryservice/models.py:341
 msgid "User Bind Path"
-msgstr ""
+msgstr "Kullanıcı Bağlama Yolu"
 
 #: directoryservice/models.py:343
 msgid ""
 "Specifies the bind path where user objects can be found in the LDAP server."
 msgstr ""
+"Kullanıcı nesnelerinin bulanabildiği LDAP sunucusunda bağlama yolunu "
+"belirler."
 
 #: directoryservice/models.py:348
 msgid "Group Bind Path"
-msgstr ""
+msgstr "Grup Bağlama Yolu"
 
 #: directoryservice/models.py:350
 msgid ""
 "Specifies the bind path where group objects can be found in the LDAP server."
 msgstr ""
+"Grup nesnelerinin bulanabildiği LDAP sunucusunda bağlama yolunu belirler."
 
 #: directoryservice/models.py:355
-#, fuzzy
 msgid "User CN"
-msgstr "Kullanıcı &"
+msgstr "Kullanıcı CN"
 
 #: directoryservice/models.py:356
 msgid "Query cn attribute instead of uid attribute for the user name in LDAP."
 msgstr ""
+"LDAP içindeki kullanıcı adları için uid özniteliği yerine cn özniteliğini "
+"sorgular."
 
 #: directoryservice/models.py:362
 msgid "CN Realm"
-msgstr ""
+msgstr "CN Erişim Alanı"
 
 #: directoryservice/models.py:363
 msgid "Append @realm to cn for groups (and users if user_cn is set) in LDAP."
 msgstr ""
+"LDAP içindeki @realm'i gruplar (ve user_cn ayarlıysa kullanıcılar) için cn'e "
+"ilave eder."
 
 #: directoryservice/models.py:369
-#, fuzzy
 msgid "LDAP Domain"
-msgstr "Alan adı"
+msgstr "LDAP Etki Alanı"
 
 #: directoryservice/models.py:372
 msgid ""
@@ -9998,20 +10000,20 @@ msgid ""
 msgstr ""
 
 #: directoryservice/models.py:383
-#, fuzzy
 msgid "LDAP URL"
-msgstr "LDAP"
+msgstr "LDAP URL"
 
 #: directoryservice/models.py:385
 msgid ""
 "When using a stand-alone LDAP server, this parameter specifies the ldap URL "
 "for accessing the LDAP server."
 msgstr ""
+"Tek başına LDAP sunucusu kullanılırken, bu parametre LDAP sunucusuna erişim "
+"için ldap URL'sini belirler."
 
 #: directoryservice/models.py:391
-#, fuzzy
 msgid "LDAP User DN"
-msgstr "Kullanıcı kimliği"
+msgstr "LDAP Kullanıcı DN"
 
 #: directoryservice/models.py:394
 msgid ""
@@ -10022,7 +10024,7 @@ msgstr ""
 
 #: directoryservice/models.py:402
 msgid "LDAP Realm"
-msgstr ""
+msgstr "LDAP Erişim Alanı"
 
 #: directoryservice/models.py:405
 msgid ""
@@ -10058,32 +10060,29 @@ msgid "TDB2 Idmap"
 msgstr "TDB2 Idmap"
 
 #: directoryservice/models.py:549
-#, fuzzy
 msgid "Domain administrator account name"
-msgstr "Alan adı yöneticinin hesap adı"
+msgstr "Etki alanı yöneticisi hesabı adı"
 
 #: directoryservice/models.py:554
-#, fuzzy
 msgid "Domain administrator account password."
-msgstr "Alan adı yöneticisinin parolası."
+msgstr "Etki alanı yöneticisi hesabı parolası."
 
 #: directoryservice/models.py:557
 #: directoryservice/models.py:662
-#, fuzzy
 msgid "Use Default Domain"
-msgstr "Varsayılan etki alanını kullanın"
+msgstr "Varsayılan Etki Alanını Kullan"
 
 #: directoryservice/models.py:563
 #: directoryservice/models.py:702
 #: directoryservice/models.py:867
 msgid "Idmap backend"
-msgstr ""
+msgstr "Idmap arka ucu"
 
 #: directoryservice/models.py:566
 #: directoryservice/models.py:705
 #: directoryservice/models.py:870
 msgid "Idmap backend for winbind."
-msgstr ""
+msgstr "Winbind için Idmap arka ucu."
 
 #: freeadmin/navtree.py:256
 #, fuzzy
@@ -10248,40 +10247,41 @@ msgid "A keytab is required."
 msgstr "Bir keytab gerekli."
 
 #: directoryservice/models.py:549
-#, fuzzy
 msgid "Kerberos realm."
-msgstr "Kerberos sunucusu"
+msgstr "Kerberos erişim alanı."
 
 #: directoryservice/models.py:552
 msgid "KDC"
-msgstr ""
+msgstr "KDC"
 
 #: directoryservice/models.py:554
-#, fuzzy
 msgid "KDC for this realm."
-msgstr "Bu birim için kota"
+msgstr "Bu erişim alanı için KDC."
 
 #: directoryservice/models.py:557
-#, fuzzy
 msgid "Admin Server"
-msgstr "Yönetici kullanıcısı"
+msgstr "Yönetici Sunucusu"
 
 #: directoryservice/models.py:560
 msgid ""
 "Specifies the admin server for this realm, where all the modifications to "
 "the database are performed."
 msgstr ""
+"Bu erişim alanı için veritabanına tüm değişikliklerin uygulandığı yönetici "
+"sunucusunu belirler."
 
 #: directoryservice/models.py:565
-#, fuzzy
 msgid "Password Server"
-msgstr "Kerberos sunucu parolası"
+msgstr "Parola Sunucusu"
 
 #: directoryservice/models.py:568
 msgid ""
 "Points to the server where all the password changes are performed.  If there "
 "is no such entry, the kpasswd port on the admin_server host will be tried."
 msgstr ""
+"Tüm parola değişikliklerinin yapıldığı sunucuyu işaret eder. Eğer böyle bir "
+"giriş yoksa, admin_server anamakinesi üzerindeki kpasswd bağlantı noktası "
+"denenecektir."
 
 #: directoryservice/models.py:581
 msgid "Principal"
@@ -10293,7 +10293,7 @@ msgstr ""
 
 #: directoryservice/models.py:586
 msgid "Keytab"
-msgstr ""
+msgstr "Keytab"
 
 #: directoryservice/models.py:753
 #: directoryservice/models.py:913
@@ -10460,9 +10460,8 @@ msgid "Now"
 msgstr "Şimdi"
 
 #: directoryservice/models.py:637
-#, fuzzy
 msgid "Descriptive Name."
-msgstr "Açıklama"
+msgstr "Tanımlayıcı Adı."
 
 #: directoryservice/models.py:668
 #: directoryservice/models.py:806
@@ -11763,13 +11762,12 @@ msgstr "Microsoft Hesabı"
 #: directoryservice/forms.py:223
 #: services/forms.py:237
 msgid "netbiosname: %s"
-msgstr ""
+msgstr "netbios adı: %s"
 
 #: directoryservice/forms.py:231
 #: services/forms.py:229
-#, fuzzy
 msgid "workgroup: %s"
-msgstr "Çalışma grubu"
+msgstr "çalışma grubu: %s"
 
 #: directoryservice/models.py:657
 #, fuzzy
@@ -12666,9 +12664,8 @@ msgid "Confirm LDAP User DN Password"
 msgstr "LDAP Kullanıcısı DN Parolasını Onaylayın"
 
 #: directoryservice/models.py:519
-#, fuzzy
 msgid "LDAP User DN Password"
-msgstr "Kullanıcı kimliği"
+msgstr "LDAP Kullanıcısı DN Parolası"
 
 #: directoryservice/models.py:521
 #, fuzzy
@@ -12676,15 +12673,13 @@ msgid "Password for LDAP User DN"
 msgstr "Kullanıcı kimliği"
 
 #: directoryservice/forms.py:476
-#, fuzzy
 msgid "NetBIOS cannot be the same as the first."
-msgstr "Kullanıcı parolası ile eş kullanıcı parolası aynı olamaz."
+msgstr "NetBIOS ilki gibi aynı olamaz."
 
 #: directoryservice/forms.py:540
 #: directoryservice/forms.py:545
-#, fuzzy
 msgid "The NetBIOS name cannot be the same as the workgroup name!"
-msgstr "Kullanıcı parolası ile eş kullanıcı parolası aynı olamaz."
+msgstr "NetBIOS adı çalışma grubu adı gibi aynı olamaz!"
 
 #: directoryservice/models.py:739
 #, fuzzy
