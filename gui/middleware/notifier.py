@@ -69,6 +69,7 @@ VERSION_FILE = '/etc/version'
 GELI_KEYPATH = '/data/geli'
 GELI_KEY_SLOT = 0
 GELI_RECOVERY_SLOT = 1
+GELI_REKEY_FAILED = '/tmp/.rekey_failed'
 SYSTEMPATH = '/var/db/system'
 PWENC_BLOCK_SIZE = 32
 PWENC_FILE_SECRET = '/data/pwenc_secret'
@@ -1275,6 +1276,10 @@ class notifier:
                     could_not_restore = True
                     log.error(str(ee))
             if could_not_restore:
+                try:
+                    open(GELI_REKEY_FAILED, 'w').close()
+                except:
+                    pass
                 log.error("Unable to rekey. Devices now have the following keys:%s%s",
                           os.linesep,
                           os.linesep.join(['%s: %s' % (dev, keyfile)
@@ -1284,6 +1289,11 @@ class notifier:
             else:
                 raise MiddlewareError("Unable to set key: %s" % (error, ))
         else:
+            if os.path.exists(GELI_REKEY_FAILED):
+                try:
+                    os.unlink(GELI_REKEY_FAILED)
+                except:
+                    pass
             log.debug("%s -> %s", geli_keyfile_tmp, geli_keyfile)
             os.rename(geli_keyfile_tmp, geli_keyfile)
             if volume.vol_encrypt != 1:
