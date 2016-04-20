@@ -46,9 +46,10 @@ def do_sendmail(msg, to_addrs=None, parse_recipients=False):
         aliases = get_aliases()
         to_addrs_repl = []
         for to_addr in to_addrs:
-            if to_addr.find('@') == -1 and to_addr in aliases:
-                to_addr = aliases[to_addr]
-            to_addrs_repl.append(to_addr)
+            for to_addr in to_addr.split(','):
+                if to_addr.find('@') == -1 and to_addr in aliases:
+                    to_addr = aliases[to_addr]
+                to_addrs_repl.append(to_addr)
 
     margs = {}
     margs['extra_headers'] = dict(em)
