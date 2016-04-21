@@ -139,8 +139,11 @@ Some updates affect the user interface so this section lists any functional chan
   :menuselection:`Sharing --> Windows (CIFS Shares) --> Add Windows (CIFS) Share --> Advanced Mode --> VFS Objects`, while the "notify_fam" VFS object has been removed. The "recycle",
   "shadow_copy2", "zfs_space", and "zfsacl" VFS objects have been hidden from this screen as they are always enabled.
   
-* The "SMB3_02", "SMB3_10", and "SMB3_11" protocols have been added to the "Server minimum protocol" and "Server maximum protocol" drop-down menus :menuselection:`Services --> CIFS`. The
+* The "SMB3_02" and "SMB3_11" protocols have been added to the "Server minimum protocol" and "Server maximum protocol" drop-down menus :menuselection:`Services --> CIFS`. The
   default "Server maximum protocol" is now "SMB3".
+  
+* The "SMB2_22" and "SMB2_24" protocols have been removed from the "Server minimum protocol" and "Server maximum protocol" drop-down menus :menuselection:`Services --> CIFS` as they are
+  not used by any Windows products.
 
 * :command:`iohyve` has been updated to version 0.7.5.
 

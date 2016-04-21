@@ -800,7 +800,7 @@ for more details.
 | fake_perms          | allows roaming profile files and directories to be set as read-only                                                                        |
 |                     |                                                                                                                                            |
 +---------------------+--------------------------------------------------------------------------------------------------------------------------------------------+
-| fruit               | provides interoperability with a Netatalk 3 AFP fileserver                                                                                 |
+| fruit               | enhances OS X support by providing the SMB2 AAPL extension (see NOTE below table)                                                          |
 |                     |                                                                                                                                            |
 +---------------------+--------------------------------------------------------------------------------------------------------------------------------------------+
 | full_audit          | records selected client operations to the system log                                                                                       |
@@ -873,6 +873,9 @@ for more details.
 | xattr_tdb           | stores Extended Attributes (EAs) in a tdb file so they can be used on filesystems which do not provide support for EAs                     |
 |                     |                                                                                                                                            |
 +---------------------+--------------------------------------------------------------------------------------------------------------------------------------------+
+
+.. note:: when using "fruit", also add the "streams_xattr" and "catia" VFS objects. Also, if you enable "fruit", enable it on **all** shares as mixing shares with and without "fruit" will
+  globally disable the AAPL extensions. 
 
 The following VFS objects do not appear in the drop-down menu as they are always enabled:
 

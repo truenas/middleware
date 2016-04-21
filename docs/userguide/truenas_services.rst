@@ -290,12 +290,6 @@ each configured CIFS Share. In contrast, global settings which apply to all CIFS
 | SMB2_10        | used by Windows 7                                          |
 |                |                                                            |
 +----------------+------------------------------------------------------------+
-| SMB2_22        | used by early Windows 8                                    |
-|                |                                                            |
-+----------------+------------------------------------------------------------+
-| SMB2_24        | used by Windows 8 beta                                     |
-|                |                                                            |
-+----------------+------------------------------------------------------------+
 | SMB3           | used by Windows 8                                          |
 |                |                                                            |
 +----------------+------------------------------------------------------------+
@@ -303,9 +297,6 @@ each configured CIFS Share. In contrast, global settings which apply to all CIFS
 |                |                                                            |
 +----------------+------------------------------------------------------------+
 | SMB3_02        | used by Windows 8.1 and Windows Server 2012                |
-|                |                                                            |
-+----------------+------------------------------------------------------------+
-| SMB3_10        | used in early Technical Previews of Windows 8.1            |
 |                |                                                            |
 +----------------+------------------------------------------------------------+
 | SMB3_11        | used by Windows 10                                         |

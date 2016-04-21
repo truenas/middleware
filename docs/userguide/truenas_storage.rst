@@ -728,6 +728,8 @@ be used if the passphrase is forgotten. **Always immediately** add a recovery ke
    downloaded keys, take care that that system and its backups are protected. Anyone who has the keys has the ability to re-import the disks should they be
    discarded or stolen.
 
+.. warning:: if a re-key fails on a multi-disk system, an alert will be generated. **Do not ignore this alert** as doing so may result in the loss of data.    
+   
 .. _View Multipaths:
 
 View Multipaths
