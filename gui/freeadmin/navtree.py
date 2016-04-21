@@ -55,7 +55,8 @@ import ssl
 # code: https://github.com/eventlet/eventlet/blob/master/eventlet/green/ssl.py#LC376
 # Its horrible, but nothing much I can do about it
 ssl._create_default_https_context = ssl._create_unverified_context
-import eventlet
+ssl.create_default_context = ssl._create_unverified_context
+from eventlet import green, GreenPool
 
 log = logging.getLogger('freeadmin.navtree')
 
@@ -550,14 +551,14 @@ class NavTree(object):
     def _plugin_fetch(self, args):
         plugin, host, request, timeout = args
         if re.match('^.+\[.+\]', host, re.I):
-            import urllib2
+            url_lib_to_use = urllib2
         else:
-            from eventlet.green import urllib2
+            url_lib_to_use = green.urllib2
 
         data = None
         url = "%s/plugins/%s/%d/_s/treemenu" % (host, plugin.plugin_name, plugin.id)
         try:
-            opener = urllib2.build_opener()
+            opener = url_lib_to_use.build_opener()
             opener.addheaders = [(
                 'Cookie', 'sessionid=%s' % (
                     request.COOKIES.get("sessionid", ''),
@@ -588,7 +589,7 @@ class NavTree(object):
             lambda y: (y, host, request, timeout),
             plugs)
 
-        pool = eventlet.GreenPool(20)
+        pool = GreenPool(20)
         for plugin, url, data in pool.imap(self._plugin_fetch, args):
 
             if not data:
