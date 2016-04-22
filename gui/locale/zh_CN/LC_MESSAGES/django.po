@@ -12483,3 +12483,15 @@ msgstr "IP公告和监听。如果不指定，则公告系统的第一个IP地�
 #, fuzzy
 msgid "VMWare snapshot deletion %(snap)s failed for the following VMs: %(vms)s"
 msgstr "VMs: %(vms)s 的快照  %(snap)s 失败"
+
+#: system/forms.py:1613
+#, fuzzy
+msgid "Share path %s already exists"
+msgstr "路径 %s 已存在"
+
+#: system/alertmods/volume_rekey.py:14
+msgid ""
+"Encrypted volume failed to rekey some disks. Please make sure you have "
+"working recovery keys, check logs files and correct the error as it may "
+"result to data loss."
+msgstr ""

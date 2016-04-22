@@ -13037,3 +13037,15 @@ msgstr ""
 #: system/alertmods/vmwaresnapdelete_fails.py:25
 msgid "VMWare snapshot deletion %(snap)s failed for the following VMs: %(vms)s"
 msgstr ""
+
+#: system/forms.py:1613
+#, fuzzy
+msgid "Share path %s already exists"
+msgstr "Вече съществува група с такъв групов номер (GID)."
+
+#: system/alertmods/volume_rekey.py:14
+msgid ""
+"Encrypted volume failed to rekey some disks. Please make sure you have "
+"working recovery keys, check logs files and correct the error as it may "
+"result to data loss."
+msgstr ""
