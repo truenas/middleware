@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2016-04-06 22:13-0700\n"
-"PO-Revision-Date: 2016-04-18 09:16+0000\n"
+"PO-Revision-Date: 2016-04-21 09:17+0000\n"
 "Last-Translator: Anonymous Pootle User\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: mt\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Plural-Forms: nplurals=4; plural=(n==1 ? 0 : n==0 || ( n%100>1 && n%100<11) "
 "? 1 : (n%100>10 && n%100<20 ) ? 2 : 3);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1460971011.0\n"
+"X-POOTLE-MTIME: 1461230255.0\n"
 
 #: choices.py:43
 msgid "Basic Authentication"
@@ -9495,4 +9495,15 @@ msgstr ""
 
 #: system/alertmods/vmwaresnapdelete_fails.py:25
 msgid "VMWare snapshot deletion %(snap)s failed for the following VMs: %(vms)s"
+msgstr ""
+
+#: system/forms.py:1613
+msgid "Share path %s already exists"
+msgstr ""
+
+#: system/alertmods/volume_rekey.py:14
+msgid ""
+"Encrypted volume failed to rekey some disks. Please make sure you have "
+"working recovery keys, check logs files and correct the error as it may "
+"result to data loss."
 msgstr ""

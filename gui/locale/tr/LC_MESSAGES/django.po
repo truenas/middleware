@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:05-0700\n"
-"PO-Revision-Date: 2016-04-20 09:00+0000\n"
+"PO-Revision-Date: 2016-04-21 18:22+0000\n"
 "Last-Translator: BouRock <hitowerdigit@hotmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: tr\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1461142852.0\n"
+"X-POOTLE-MTIME: 1461262933.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -502,7 +502,7 @@ msgstr "Adınız ve soyadınız geçersiz karakterler içeriyor (%s)."
 #: system/models.py:243 templates/account/bsdusers.html:5
 #: templates/account/bsdusers.html.py:84
 msgid "Username"
-msgstr "Kullanıcı adı"
+msgstr "Kullanıcı Adı"
 
 #: account/forms.py:223
 msgid "Required. 16 characters or fewer. Letters, digits and ./-/_ only."
@@ -846,130 +846,132 @@ msgstr "Hata"
 
 #: network/forms.py:41 network/models.py:86
 msgid "NIC"
-msgstr "NIC (Ağ arabirim kontrol kartı)"
+msgstr "NIC"
 
 #: network/forms.py:87 network/forms.py:100 network/forms.py:394
 #: network/forms.py:410
 #, python-format
 msgid "You cannot configure multiple interfaces with the same IP address (%s)"
-msgstr "Aynı IP adresi (%s) ile birden çok arabirimi yapılandıramazsınız"
+msgstr "Aynı IP adresi (%s) ile birden çok arayüz yapılandıramazsınız"
 
 #: network/forms.py:120
 msgid "You have to specify IPv4 address as well"
-msgstr "IPv4 adresi de belirtilmek zorunda"
+msgstr "IPv4 adresi de belirtmek zorundasınız"
 
 #: network/forms.py:124
 msgid "You have to choose IPv4 netmask as well"
-msgstr "IPv4 ağ maskesinide değiştirin"
+msgstr "IPv4 ağ maskesi de seçmek zorundasınız"
 
 #: network/forms.py:131
 msgid "You have to specify IPv6 address as well"
-msgstr "IPv6 adreside belitilmek zorunda"
+msgstr "IPv6 adresi de belirtmek zorundasınız"
 
 #: network/forms.py:135
 msgid "You have to choose IPv6 netmask as well"
-msgstr "IPv4 ağ maskesinde bir seçim yapın"
+msgstr "IPv6 ağ maskesi de seçmek zorundasınız"
 
 #: network/forms.py:140
 msgid "You have to choose between IPv4 or IPv6"
-msgstr "IPv4 veya IPv6 arasında bir seçim yapın"
+msgstr "IPv4 veya IPv6 arasında bir seçim yapmak zorundasınız"
 
 #: network/forms.py:160
 msgid "Loopback is not a valid nameserver"
-msgstr "Loopback geçerli bir ad sunucusu değil"
+msgstr "Loopback geçerli bir DNS sunucusu değil"
 
 #: network/forms.py:163
 msgid "Unspecified addresses are not valid as nameservers"
-msgstr "Tanımsız adresler ad sunucuları gibi geçersizdir"
+msgstr "Belirtilmemiş adresler DNS sunucuları gibi geçerli değildir"
 
 #: network/forms.py:167
 msgid "This is not a valid nameserver address"
-msgstr "Bu geçerli bir ad sunucusu adresi değildir"
+msgstr "Bu geçerli bir DNS sunucusu adresi değildir"
 
 #: network/forms.py:170
 msgid "169.254/16 subnet is not valid for nameserver"
-msgstr "169.254/16 alt ağ sunucusu için geçerli değildir"
+msgstr "169.254/16 alt ağı DNS sunucusu için geçerli değildir"
 
 #: network/forms.py:194
 msgid "Must fill out nameserver 2 before filling out nameserver 3"
-msgstr "Ad sunucusu 3'den önce Ad sunucusu 2'yi doldurmalısınız"
+msgstr "DNS sunucusu 3 doldurulmadan önce DNS sunucusu 2 doldurulmak zorunda"
 
 #: network/forms.py:197 network/forms.py:204 network/forms.py:215
 msgid "Required when using nameserver 3"
-msgstr "Ad sunucusu 3 kullanıldığında gerekli"
+msgstr "DNS sunucusu 3 kullanıldığında gerekli"
 
 #: network/forms.py:201
 msgid "Must fill out nameserver 1 before filling out nameserver 3"
-msgstr "Ad sunucusu 3'den önce Ad sunucusu 1'i doldurmalısınız"
+msgstr "DNS sunucusu 3 doldurulmadan önce DNS sunucusu 1 doldurulmak zorunda"
 
 #: network/forms.py:212
 msgid "Must fill out nameserver 1 before filling out nameserver 2"
-msgstr "Ad sunucusu 2'den önce Ad suncusu 1'i doldurmalısınız"
+msgstr "DNS sunucusu 2 doldurulmadan önce DNS sunucusu 1 doldurulmak zorunda"
 
 #: network/forms.py:229
 msgid "Parent Interface"
-msgstr "Tüm arabirimleri göster"
+msgstr "Ana Arayüz"
 
 #~ msgid "The name must be vlanXX where XX is an integer"
 #~ msgstr "Adı vlanXX olmalıdır. Burada XX bir tam sayıdır."
 
 #: network/forms.py:252
 msgid "VLAN Tags are 1 - 4095 inclusive"
-msgstr "VLAN etiketleri 1-4095 arasında."
+msgstr "VLAN Etiketleri 1 - 4095 içindedir"
 
 #: network/forms.py:275
 msgid "Physical NICs in the LAGG"
-msgstr "LAGG içindeki fiziksel kartlar"
+msgstr "LAGG içindeki Fiziksel NIC'ler"
 
 #: network/forms.py:286
 msgid "LAGG Physical NIC"
-msgstr "LAGG Fiziksel NIC (ethernet kartı)"
+msgstr "LAGG Fiziksel NIC"
 
 #: network/forms.py:360
 #, python-format
 msgid "The network '%s' is not valid, CIDR expected."
-msgstr "Bu ağ '%s' CIDR beklentisi dahilinde geçerli değil."
+msgstr "'%s' ağı geçerli değil, CIDR beklenmekte."
 
 #: network/forms.py:428
 msgid "You have to specify IPv4 address as well per alias"
-msgstr "IPv4 adreslerinin yanı sıra takma adlarda belirtilmek zorunda"
+msgstr "Her takma adın yanı sıra IPv4 adresini belirlemek zorundasınız"
 
 #: network/forms.py:432
 msgid "You have to choose IPv4 netmask as well per alias"
-msgstr "IPv4 alt ağ maskesi için takma ad seçilmek zorunda"
+msgstr "Her takma adın yanı sıra IPv4 ağ maskesini seçmek zorundasınız"
 
 #: network/forms.py:439
 msgid "You have to specify IPv6 address as well per alias"
-msgstr "IPv6 adresi yanı sıra takma ad belirtilmek zorunda"
+msgstr "Her takma adın yanı sıra IPv6 adresini belirlemek zorundasınız"
 
 #: network/forms.py:443
 msgid "You have to choose IPv6 netmask as well per alias"
-msgstr "IPv6 ağ maskesi için takma ad seçilmek zorunda"
+msgstr "Her takma adın yanı sıra IPv6 ağ maskesini seçmek zorundasınız"
 
 #: network/forms.py:448
 msgid "You have to choose between IPv4 or IPv6 per alias"
-msgstr "IPv4 veya IPv6 arasında takma ad seçilmek zorunda"
+msgstr "Takma ad başına IPv4 veya IPv6 seçmek zorundasınız"
 
 #: network/forms.py:453
 msgid "You must specify either an valid IPv4 or IPv6 with maskbit per alias"
-msgstr "IPv4 veya IPv6 ile maskbit için geçerli bir takma ad belirtmelisiniz"
+msgstr ""
+"Takma ad başına maskbit olan geçerli bir ya IPv4 ya da IPv6 belirlemek "
+"zorundasınız"
 
 #: network/models.py:42 services/models.py:1284
 #: templates/system/system_info.html:5
 msgid "Hostname"
-msgstr "Sunucu adı"
+msgstr "Anamakine Adı"
 
 #: network/models.py:46
 msgid "Domain"
-msgstr "Alan adı"
+msgstr "Etki Alanı"
 
 #: network/models.py:51
 msgid "IPv4 Default Gateway"
-msgstr "IPv4 varsayılan ağ geçidi"
+msgstr "IPv4 Varsayılan Ağ Geçidi"
 
 #: network/models.py:56
 msgid "IPv6 Default Gateway"
-msgstr "IPv6 varsayılan ağ geçidi"
+msgstr "IPv6 Varsayılan Ağ Geçidi"
 
 #: network/models.py:61
 msgid "Nameserver 1"
@@ -1167,7 +1169,10 @@ msgstr "Bu IP adresi zaten kullanılıyor."
 
 #: plugins/forms.py:119
 msgid "PBI file to be installed"
-msgstr "PBI dosyasını yükle:"
+msgstr ""
+"PBI'lerin ne olduğunu bulmak için buraya tıklayın!<a "
+"href='http://www.pcbsd.org/en/package-management/' "
+"onclick='window.open(this.href);return false;'>"
 
 #~ msgid "You must turn off Plugins service before proceeding"
 #~ msgstr "Devam etmeden önce eklentiler servisini kapatmak gerekir."
@@ -1480,7 +1485,7 @@ msgstr "Doğrulama için yukarıdaki ile aynı parolayı giriniz."
 
 #: services/forms.py:504
 msgid "Initiator Secret"
-msgstr "Başlatıcı parolası"
+msgstr "Başlatıcı Gizli Anahtarı"
 
 #: services/forms.py:506 services/models.py:605 services/models.py:610
 msgid "Initiator side secret. (for mutual CHAP authentication)"
@@ -1770,7 +1775,7 @@ msgstr "Ev dizinlerini etkinleştir"
 #: services/models.py:148
 msgid "Enable/disable home directories for samba user."
 msgstr ""
-"Bu, samba kullanıcıları için ev dizinlerini etkinleştirir\\etkisizleştirir"
+"Samba kullanıcıları için giriş dizinlerini etkinleştirir/etkisizleştirir."
 
 #: services/models.py:151
 msgid "Enable home directories browsing"
@@ -1779,8 +1784,8 @@ msgstr "Ev dizinlerini taramayı etkinleştir"
 #: services/models.py:152
 msgid "Enable/disable home directories browsing for samba user."
 msgstr ""
-"Bu, samba kullanıcıları için ev dizinlerini taramayı etkinleştirir"
-"\\etkisizleştirir"
+"Samba kullanıcıları için giriş dizinlerine gözatmayı "
+"etkinleştirir/etkisizleştirir."
 
 #: services/models.py:156
 msgid "Home directories"
@@ -1813,7 +1818,7 @@ msgstr "AIO etkinleştir"
 
 #: services/models.py:172
 msgid "Enable/disable AIO support."
-msgstr "Bu, AIO desteğini etkinleştirir\\etkisizleştirir"
+msgstr "AIO desteğini etkinleştirir/etkisizleştirir."
 
 #: services/models.py:176
 msgid "Minimum AIO read size"
@@ -5321,11 +5326,11 @@ msgstr "Başlatma seçeneği"
 
 #: templates/network/summary.html:22
 msgid "Nameserver"
-msgstr "Ad Sunucusu"
+msgstr "DNS Sunucusu"
 
 #: templates/network/summary.html:31
 msgid "No nameserver defined"
-msgstr "Henüz bir ad sunucsu yok"
+msgstr "Tanımlanmış DNS sunucusu yok"
 
 #: templates/network/summary.html:37
 msgid "Default route"
@@ -6157,7 +6162,7 @@ msgstr "Sistemi <strong>KAPATMAK</strong> ile ilgili tercihiniz nedir?"
 
 #: templates/system/smarttest.html:16
 msgid "Unknown"
-msgstr "Bilinmeyen"
+msgstr "Bilinmiyor"
 
 #~ msgid "No S.M.A.R.T. tests defined"
 #~ msgstr "Tanımlanan S.M.A.R.T. testleri yok"
@@ -6866,29 +6871,28 @@ msgstr "Devam Ediyor"
 
 #: middleware/zfs.py:654
 msgid "None requested"
-msgstr "Talep yok"
+msgstr "İstenen yok"
 
 #: network/forms.py:128
 msgid "Only one interface can be used for DHCP"
-msgstr "Sadece bir arabirim DHCP için kullanılabilir"
+msgstr "DHCP için sadece bir arayüz kullanılabilir"
 
 #: network/forms.py:175
 #: network/forms.py:584
 msgid "The network %s is already in use by another NIC."
-msgstr "%s ağı başka bir NIC tarafından zaten kullanılıyor."
+msgstr "%s ağı başka bir NIC tarafından zaten kullanılmakta."
 
 #: network/forms.py:284
 msgid "The IP \"%s\" is not valid"
-msgstr "%s IP adresi geçerli değil"
+msgstr "\"%s\" IP adresi geçerli değil"
 
 #: network/forms.py:343
 msgid "You need a domain, e.g. hostname.domain"
-msgstr "Bir alan gerekir. Örneğin hostname.domain"
+msgstr "Bir etki alanına ihtiyacınız var, örn. anamakineadı.etkialanı"
 
 #: network/forms.py:373
 msgid "The name must be vlanX where X is a number. Example: vlan0"
-msgstr ""
-"Buradaki X bir sayıdır. Arabirim adı vlanX şeklinde olmalıdır. Örneğin vlan0"
+msgstr "X bir sayıdır, adı vlanX şeklinde olmak zorundadır. Örnek: vlan0"
 
 #: network/models.py:77
 msgid "Enable netwait feature"
@@ -6923,7 +6927,10 @@ msgstr "Kur"
 msgid ""
 "Click here to find out what PBI's are!<a href='http://www.pcbsd.org/en"
 "/package-management/' onclick='window.open(this.href);return false;'>"
-msgstr "PBI dosyasını yükle:"
+msgstr ""
+"PBI'lerin ne olduğunu bulmak için buraya tıklayın!<a "
+"href='http://www.pcbsd.org/en/package-management/' "
+"onclick='window.open(this.href);return false;'>"
 
 #: plugins/forms.py:105
 msgid "Plugin Jail"
@@ -7804,15 +7811,17 @@ msgstr "Tamamlandı"
 
 #: network/admin.py:39
 msgid "IPv4 Addresses"
-msgstr "IPv4 adresleri"
+msgstr "IPv4 Adresleri"
 
 #: network/admin.py:44
 msgid "IPv6 Addresses"
-msgstr "IPv6 adresleri"
+msgstr "IPv6 Adresleri"
 
 #: network/forms.py:141
 msgid "Only one interface can have IPv6 autoconfiguration enabled"
-msgstr "Sadece bir arabirim IPv6 otomatik yapılandırmasında etkin olabilir"
+msgstr ""
+"Etkinleştirilmiş IPv6 otomatik yapılandırmasına sadece bir arayüz sahip "
+"olabilir"
 
 #: network/models.py:78
 msgid ""
@@ -7888,7 +7897,7 @@ msgstr "Bu IP ve bağlantı noktası zaten kullanılıyor."
 
 #: services/models.py:259
 msgid "Enable/disable home directories for afp user."
-msgstr "Afp kullanıcıları için ev dizinlerini etkinleştir\\devre dışı bırak."
+msgstr "Afp kullanıcıları için giriş dizinlerini etkinleştirir/etkisizleştirir."
 
 #: services/models.py:288
 msgid ""
@@ -8911,46 +8920,41 @@ msgid "You need to create a volume to proceed!"
 msgstr "Devam etmek için bir birim oluşturmanız gerekiyor!"
 
 #: jails/utils.py:739
-#, fuzzy
 msgid "Failed to create directory %(name)s: %(error)s"
-msgstr "%(name)s veri kümesi oluşturulamadı: %(error)s"
+msgstr "%(name)s dizinini oluşturma başarısız: %(error)s"
 
 #: middleware/notifier.py:3820
 #: middleware/notifier.py:3845
-#, fuzzy
 msgid "Active"
-msgstr "Eylem"
+msgstr "Aktif"
 
 #: middleware/notifier.py:3821
 msgid "Backup"
 msgstr "Yedekleme"
 
 #: middleware/notifier.py:3822
-#, fuzzy
 msgid "Init"
-msgstr "Ön Başlatma"
+msgstr "Init"
 
 #: middleware/notifier.py:3824
 msgid "No carrier"
-msgstr ""
+msgstr "Taşıyıcı yok"
 
 #: middleware/notifier.py:3847
 msgid "Degraded"
-msgstr "Bozulmuş"
+msgstr "Düşürülmüş"
 
 #: middleware/notifier.py:3849
 msgid "Down"
-msgstr ""
+msgstr "Aşağı"
 
 #: network/admin.py:39
-#, fuzzy
 msgid "Media Status"
-msgstr "Durum"
+msgstr "Ortam Durumu"
 
 #: network/forms.py:311
-#, fuzzy
 msgid "Channel"
-msgstr "Değiştir"
+msgstr "Kanal"
 
 #: network/models.py:77
 msgid "HTTP Proxy"
@@ -9585,6 +9589,7 @@ msgstr "Bunu düzenlemek istediğinize emin misiniz?"
 #: network/admin.py:61
 msgid "This change will cause a failover event. Do you want to proceed?"
 msgstr ""
+"Bu değişiklik yük devretme olayına neden olacak. Devam etmek istiyor musunuz?"
 
 #: network/admin.py:63
 msgid "Network connectivity will be interrupted"
@@ -9829,6 +9834,12 @@ msgid ""
 ". Please note that primary group membership is currently always calculated "
 "via the \"primaryGroupID\" LDAP attribute."
 msgstr ""
+"Kullanıcı ve grup bilgilerine ilişkin Active Directory sorgulandığında "
+"idmap_ad'nin kullanması gereken şemayı tanımlar. Bu ya Windows 2003 R2 içine "
+"dahil RFC2307 şeması desteği olabilir ya da Unix (SFU) şeması için Hizmet "
+"olabilir. SFU 3.0 veya 3.5 için lütfen \"sfu\" seçin, SFU 2.0 için lütfen "
+"\"sfu20\" seçin. Lütfen birincil grup üyeliğinin şimdilik her zaman "
+"\"primaryGroupID\" LDAP özniteliği aracılığıyla hesaplandığını unutmayın."
 
 #: directoryservice/models.py:156
 msgid "sfu"
@@ -9856,6 +9867,12 @@ msgid ""
 "domains (or new extension ranges for domains already known) are ignored and "
 "the corresponding map is discarded."
 msgstr ""
+"Etki alanı başına kullanılabilir uids/gids sayısını tanımlar. En az gereken "
+"değer 2000'dir. Bu değerden daha büyük RID'ler ile SID'ler, mevcut "
+"aralıkların sayısına bağlı olarak uzantı aralıları içinde eşlenecektir. Eğer "
+"autorid arka ucu mevcut aralıkların dışında çalışırsa, yeni etki alanları ("
+"veya zaten bilinen etki alanlarının yeni uzantı aralıkları) için eşleme "
+"istekleri yoksayılır ve karşılık gelen eşleme çıkarılır."
 
 #: directoryservice/models.py:197
 msgid ""
@@ -9888,6 +9905,9 @@ msgid ""
 "API. Entries in the file are of the form \"unix name = qualified domain "
 "name\". Mapping of both user and group names is supported."
 msgstr ""
+"Nss_info API tarafından kullanılan ad eşleme dosyasına tam yolu belirler. "
+"Dosyadaki girişler \"unix adı = nitelikli etki alanı adı\" formunundur. Her "
+"iki kullanıcı ve grup adlarının eşlemesi desteklenir."
 
 #: directoryservice/models.py:239
 #: directoryservice/models.py:240
@@ -10207,9 +10227,8 @@ msgid "Estimated Total Size"
 msgstr ""
 
 #: freeadmin/navtree.py:256
-#, fuzzy
 msgid "Wizard"
-msgstr "Başlatıcı"
+msgstr "Sihirbaz"
 
 #: services/forms.py:302
 #, fuzzy
@@ -10298,9 +10317,8 @@ msgstr "Keytab"
 #: directoryservice/models.py:753
 #: directoryservice/models.py:913
 #: services/models.py:1662
-#, fuzzy
 msgid "Kerberos Realm"
-msgstr "Kerberos sunucusu"
+msgstr "Kerberos Erişim Alanı"
 
 #: services/views.py:269
 #, fuzzy
@@ -10465,28 +10483,24 @@ msgstr "Tanımlayıcı Adı."
 
 #: directoryservice/models.py:668
 #: directoryservice/models.py:806
-#, fuzzy
 msgid "FQDN of the domain controller to use."
-msgstr "Kullanılacak etki alanı denetleyicisi ana bilgisayar adı."
+msgstr "Kullanmak için etki alanı denetleyicisinin FQDN'i."
 
 #: directoryservice/models.py:812
-#, fuzzy
 msgid "FQDN of the global catalog server to use."
-msgstr "Kullanmak için genel katalog sunucusunun ana bilgisayar adı."
+msgstr "Kullanmak için genel katalog sunucusunun FQDN'i."
 
 #: directoryservice/models.py:993
-#, fuzzy
 msgid "SUDO Suffix"
-msgstr "Kullanıcı soneki"
+msgstr "SUDO Soneki"
 
 #: directoryservice/models.py:996
-#, fuzzy
 msgid ""
 "This parameter specifies the suffix that is used for the SUDO configuration "
 "in the LDAP directory, e.g. ou=SUDOers"
 msgstr ""
-"Bu parametre LDAP dizinine eklendiğinde kullanıcılar için kullanılabilir eki "
-"belirler. Örneğin ou=Kullanıcılar"
+"Bu parametre LDAP dizinindeki SUDO yapılandırması için kullanılan soneki "
+"belirler, örn. ou=SUDOers"
 
 #: directoryservice/models.py:1049
 msgid "Idmap Backend"
@@ -11055,14 +11069,12 @@ msgid "Clone"
 msgstr ""
 
 #: directoryservice/models.py:804
-#, fuzzy
 msgid "Site Name"
-msgstr "Sunucu adı"
+msgstr "Site Adı"
 
 #: directoryservice/models.py:806
-#, fuzzy
 msgid "Name of site to use."
-msgstr "Eklentinin adı"
+msgstr "Kullanmak için site adı."
 
 #: services/models.py:263
 msgid ""
@@ -11106,7 +11118,7 @@ msgstr "Kafes başarıyla düzenlendi."
 
 #: directoryservice/models.py:853
 msgid "Winbind NSS Info"
-msgstr ""
+msgstr "Winbind NSS Bilgisi"
 
 #: directoryservice/models.py:854
 msgid ""
@@ -11216,7 +11228,7 @@ msgstr ""
 
 #: directoryservice/models.py:857
 msgid "SASL wrapping"
-msgstr ""
+msgstr "SASL kaydırma"
 
 #: directoryservice/models.py:860
 msgid ""
@@ -11770,22 +11782,19 @@ msgid "workgroup: %s"
 msgstr "çalışma grubu: %s"
 
 #: directoryservice/models.py:657
-#, fuzzy
 msgid "Appdefaults auxiliary parameters"
-msgstr "Ev dizinlerinin yardımcı parametreleri"
+msgstr "Uygulama varsayılanları yardımcı parametreleri"
 
 #: directoryservice/models.py:661
-#, fuzzy
 msgid "Libdefaults auxiliary parameters"
-msgstr "Ev dizinlerinin yardımcı parametreleri"
+msgstr "Kütüphane varsayılanları yardımcı parametreleri"
 
 #: directoryservice/models.py:666
 #: directoryservice/models.py:667
 #: directoryservice/nav.py:131
 #: templates/directoryservice/index.html:21
-#, fuzzy
 msgid "Kerberos Settings"
-msgstr "Kerberos sunucusu"
+msgstr "Kerberos Ayarları"
 
 #: directoryservice/models.py:1140
 msgid "LDAP Schema type."
@@ -12668,9 +12677,8 @@ msgid "LDAP User DN Password"
 msgstr "LDAP Kullanıcısı DN Parolası"
 
 #: directoryservice/models.py:521
-#, fuzzy
 msgid "Password for LDAP User DN"
-msgstr "Kullanıcı kimliği"
+msgstr "LDAP Kullanıcısı DN için parola"
 
 #: directoryservice/forms.py:476
 msgid "NetBIOS cannot be the same as the first."
@@ -12682,19 +12690,16 @@ msgid "The NetBIOS name cannot be the same as the workgroup name!"
 msgstr "NetBIOS adı çalışma grubu adı gibi aynı olamaz!"
 
 #: directoryservice/models.py:739
-#, fuzzy
 msgid "Version number"
-msgstr "Sürüm"
+msgstr "Sürüm numarası"
 
 #: directoryservice/models.py:743
-#, fuzzy
 msgid "Encryption algorithm"
-msgstr "Şifreleme Türü"
+msgstr "Şifreleme algoritması"
 
 #: directoryservice/models.py:747
-#, fuzzy
 msgid "Principal name"
-msgstr "Kafes eklenti adı"
+msgstr "Esas adı"
 
 #: directoryservice/models.py:962
 #: directoryservice/models.py:1198
@@ -12939,14 +12944,12 @@ msgid "An integer from 1 - 65535, generally will be 443"
 msgstr "1 - 65535 arasında bir tamsayı. Genellikle 25, 465 veya 587."
 
 #: vcp/models.py:66
-#, fuzzy
 msgid " vCenter Username"
-msgstr "Kullanıcı adı"
+msgstr " vCenter Kullanıcı Adı"
 
 #: vcp/models.py:76
-#, fuzzy
 msgid " version"
-msgstr "Sürüm"
+msgstr " sürüm"
 
 #: vcp/views.py:80
 #, fuzzy
@@ -13248,4 +13251,16 @@ msgstr ""
 
 #: system/alertmods/vmwaresnapdelete_fails.py:25
 msgid "VMWare snapshot deletion %(snap)s failed for the following VMs: %(vms)s"
+msgstr ""
+
+#: system/forms.py:1613
+#, fuzzy
+msgid "Share path %s already exists"
+msgstr "%s yolu zaten var"
+
+#: system/alertmods/volume_rekey.py:14
+msgid ""
+"Encrypted volume failed to rekey some disks. Please make sure you have "
+"working recovery keys, check logs files and correct the error as it may "
+"result to data loss."
 msgstr ""
