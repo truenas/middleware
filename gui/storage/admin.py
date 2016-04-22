@@ -132,6 +132,12 @@ class VolumeFAdmin(BaseFreeAdmin):
             'label': _('Status'),
             'sortable': False,
         })
+        
+        columns.append({
+            'name': 'readonly',
+            'label': _('Readonly'),
+            'sortable': False,
+        })
         return columns
 
     def _action_builder(
