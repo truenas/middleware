@@ -4,8 +4,7 @@
 #
 
 # PROVIDE: ix-postinit
-# REQUIRE: LOGIN
-# BEFORE: cron
+# REQUIRES: cron swaplate
 
 . /etc/rc.subr
 
