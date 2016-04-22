@@ -877,6 +877,11 @@ class notifier:
 
     def _stop_afp(self):
         self._system("/usr/sbin/service netatalk forcestop")
+        # when netatalk stops if afpd or cnid_metad is stuck
+        # they'll get left behind, which can cause issues
+        # restarting netatalk.
+        self._system("pkill -9 afpd")
+        self._system("pkill -9 cnid_metad")
 
     def _restart_afp(self):
         self._stop_afp()
