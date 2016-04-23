@@ -207,7 +207,7 @@ def send_mail(subject=None,
         error = True
     except Exception as e:
         errmsg = str(e)
-        log.warn('Failed to send email: %s', errmsg)
+        log.warn('Failed to send email: %s', errmsg, exc_info=True)
         error = True
     except smtplib.SMTPAuthenticationError as e:
         errmsg = "%d %s" % (e.smtp_code, e.smtp_error)
