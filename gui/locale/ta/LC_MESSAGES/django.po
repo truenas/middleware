@@ -12288,3 +12288,8 @@ msgid ""
 "working recovery keys, check logs files and correct the error as it may "
 "result to data loss."
 msgstr ""
+
+#: storage/admin.py:138
+#, fuzzy
+msgid "Readonly"
+msgstr "வாசிக்க மட்டும்"
