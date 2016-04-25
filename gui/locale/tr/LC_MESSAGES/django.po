@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:05-0700\n"
-"PO-Revision-Date: 2016-04-21 18:22+0000\n"
+"PO-Revision-Date: 2016-04-25 08:20+0000\n"
 "Last-Translator: BouRock <hitowerdigit@hotmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: tr\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1461262933.0\n"
+"X-POOTLE-MTIME: 1461572418.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -522,7 +522,7 @@ msgstr "Parola"
 
 #: account/forms.py:260 account/forms.py:503 system/forms.py:335
 msgid "Password confirmation"
-msgstr "Parola doğrulama"
+msgstr "Parola onayı"
 
 #: account/forms.py:262 account/forms.py:505 system/forms.py:337
 msgid "Enter the same password as above, for verification."
@@ -820,7 +820,7 @@ msgstr "%s başarılı olarak güncellendi."
 
 #: freeadmin/views.py:447 freeadmin/views.py:667
 msgid "The service failed to restart."
-msgstr "Hizmeti yeniden başlatma başarısız."
+msgstr "Hizmeti yeniden başlatma başarısız oldu."
 
 #: freeadmin/views.py:781 freeadmin/views.py:786
 #, python-format
@@ -992,15 +992,15 @@ msgstr "Genel Yapılandırma"
 
 #: network/models.py:87
 msgid "Pick your NIC"
-msgstr "Ağ kartınızı seçin"
+msgstr "NIC'inizi seçin"
 
 #: network/models.py:91
 msgid "Interface Name"
-msgstr "Arabirim adı"
+msgstr "Arayüz Adı"
 
 #: network/models.py:92
 msgid "Name your NIC."
-msgstr "Ağ kartınızın adı"
+msgstr "NIC'inizin adı."
 
 #: network/models.py:95 templates/network/interface.html:7
 msgid "DHCP"
@@ -1010,7 +1010,8 @@ msgstr "DHCP"
 msgid ""
 "When enabled, use DHCP to obtain IPv4 address as well as default router, etc."
 msgstr ""
-"Aktif ettğinizde IPv4 adresiniz DHCP sunucusundan otomatik olarak alınır."
+"Etkinleştirildiğinde, IPv4 adresi almak için varsayılan yönlendiricinin, vb. "
+"yanı sıra DHCP kullanın."
 
 #: network/models.py:99 network/models.py:215
 #: templates/network/interface.html:8 templates/network/summary.html:6
@@ -1019,7 +1020,7 @@ msgstr "IPv4 Adresi"
 
 #: network/models.py:108 network/models.py:224
 msgid "IPv4 Netmask"
-msgstr "IPv4 ağ maskesi"
+msgstr "IPv4 Ağ Maskesi"
 
 #: network/models.py:112
 msgid "Auto configure IPv6"
@@ -1027,12 +1028,14 @@ msgstr "IPv6 otomatik yapılandır"
 
 #: network/models.py:113
 msgid "When enabled, automatically configurate IPv6 address via rtsol(8)."
-msgstr "Aktif ettğinizde IPv6 adresiniz rtsol(8) üzerinden otomatik ayarlanır."
+msgstr ""
+"Etkinleştirildiğinde, IPv6 adresi rtsol(8) aracılığıyla otomatik olarak "
+"yapılandırılır."
 
 #: network/models.py:116 network/models.py:228
 #: templates/network/interface.html:10
 msgid "IPv6 Address"
-msgstr "IPv6 adresi"
+msgstr "IPv6 Adresi"
 
 #: network/models.py:125 network/models.py:237
 msgid "IPv6 Prefix Length"
@@ -1046,11 +1049,11 @@ msgstr "Seçenekler"
 #: network/models.py:156 network/models.py:212 network/models.py:310
 #: templates/network/interface.html:5
 msgid "Interface"
-msgstr "Arabirim"
+msgstr "Arayüz"
 
 #: network/models.py:157 templates/network/index.html:8
 msgid "Interfaces"
-msgstr "Arabirimler"
+msgstr "Arayüzler"
 
 #: network/models.py:253 templates/services/iscsi_targets.html:6
 msgid "Alias"
@@ -1058,25 +1061,26 @@ msgstr "Takma Ad"
 
 #: network/models.py:254
 msgid "Aliases"
-msgstr "Takma Ad"
+msgstr "Takma Adlar"
 
 #: network/models.py:265 templates/network/lagg.html:5
 #: templates/network/vlan.html:4
 msgid "Virtual Interface"
-msgstr "Sanal arabirim"
+msgstr "Sanal Arayüz"
 
 #: network/models.py:266
 msgid "Interface names must be vlanX where X is a number. Example: vlan0."
-msgstr "Buradaki XX bir sayıdır. Arabirim adı vlanXX olmalıdır. Örneğin vlan0."
+msgstr ""
+"X bir sayıdır, arayüz adları vlanX şeklinde olmak zorundadır. Örnek: vlan0."
 
 #: network/models.py:271 templates/network/lagg_members.html:5
 #: templates/network/vlan.html:5
 msgid "Physical Interface"
-msgstr "Fiziksel Arabirim"
+msgstr "Fiziksel Arayüz"
 
 #: network/models.py:274 templates/network/vlan.html:6
 msgid "VLAN Tag"
-msgstr "VLAN etiketi"
+msgstr "VLAN Etiketi"
 
 #: network/models.py:278 network/models.py:392 services/models.py:86
 #: services/models.py:916 storage/models.py:211 storage/models.py:352
@@ -1092,11 +1096,11 @@ msgstr "VLAN"
 
 #: network/models.py:293
 msgid "VLANs"
-msgstr "VLAN"
+msgstr "VLAN'lar"
 
 #: network/models.py:314
 msgid "Protocol Type"
-msgstr "Kural türü"
+msgstr "Protokol Türü"
 
 #: network/models.py:319 network/models.py:372 templates/network/index.html:13
 msgid "Link Aggregation"
@@ -1104,7 +1108,7 @@ msgstr "Bağlantı Birleştirme"
 
 #: network/models.py:320 network/models.py:373 network/nav.py:33
 msgid "Link Aggregations"
-msgstr "Bağlantı Birleştirmeler"
+msgstr "Bağlantı Birleştirmeleri"
 
 #: network/models.py:346
 msgid "LAGG Interface group"
@@ -1112,11 +1116,11 @@ msgstr "LAGG Arayüz grubu"
 
 #: network/models.py:349
 msgid "LAGG Priority Number"
-msgstr "LAGG öncelik numarası"
+msgstr "LAGG Öncelik Numarası"
 
 #: network/models.py:354
 msgid "Physical NIC"
-msgstr "Fiziksel NIC (ethernet kartı)"
+msgstr "Fiziksel NIC"
 
 #: network/models.py:384
 msgid "Destination network"
@@ -1144,18 +1148,18 @@ msgstr "Ağ Özeti"
 
 #: network/nav.py:41
 msgid "Create Link Aggregation"
-msgstr "Bağlantı Birleştir"
+msgstr "Bağlantı Birleştirme Oluştur"
 
 #: network/nav.py:50
 msgid "View Link Aggregations"
-msgstr "Birleştirilmiş Bağlantıları Göster"
+msgstr "Bağlantı Birleştirmelerini Göster"
 
 #~ msgid "LAGG successfully added"
 #~ msgstr "LAGG başarıyla eklendi"
 
 #: plugins/forms.py:55
 msgid "This IP is already in use."
-msgstr "Bu IP adresi zaten kullanılıyor."
+msgstr "Bu IP adresi zaten kullanımda."
 
 #~ msgid "Place to temporarily place PBI file"
 #~ msgstr "Geçici olarak yerleştirilecek PBI dosyasının yükleneceği yer"
@@ -1237,11 +1241,11 @@ msgstr "Eklentinin adı"
 
 #: plugins/models.py:44
 msgid "Plugin info name"
-msgstr "Eklentinin ad bilgisi"
+msgstr "Eklenti bilgi adı"
 
 #: plugins/models.py:45
 msgid "Info name of the plugin"
-msgstr "Eklentinin ad bilgisi"
+msgstr "Eklentinin bilgi adı"
 
 #: plugins/models.py:50
 msgid "Plugin version"
@@ -1262,7 +1266,7 @@ msgstr "Eklenti mimarisi"
 #: plugins/models.py:67 plugins/models.py:68
 #: templates/plugins/plugin_info.html:9
 msgid "Plugin enabled"
-msgstr "Eklenti etkin"
+msgstr "Eklenti etkinleştirildi"
 
 #: plugins/models.py:74 plugins/models.py:75
 #: templates/plugins/plugin_info.html:13
@@ -1276,11 +1280,11 @@ msgstr "Eklenti TCP bağlantı noktası"
 
 #: plugins/models.py:86
 msgid "Plugin archive path"
-msgstr "Eklentilerinin arşiv yolu"
+msgstr "Eklenti arşiv yolu"
 
 #: plugins/models.py:87 services/models.py:830
 msgid "Path where the plugins are saved after installation"
-msgstr "Eklentiler kurulduktan sonra kaydedilen yer"
+msgstr "Kurulumdan sonra eklentilerin kaydedildiği yerin yolu"
 
 #: plugins/models.py:96 plugins/models.py:97 services/models.py:835
 #: services/models.py:836 services/nav.py:215 templates/services/core.html:96
@@ -1306,7 +1310,7 @@ msgstr "Bağlantı noktası"
 
 #: plugins/views.py:52
 msgid "Plugin successfully updated."
-msgstr "Eklenti başarıyla güncellendi."
+msgstr "Eklenti başarılı olarak güncellendi."
 
 #~ msgid "Plugin successfully removed."
 #~ msgstr "Eklenti başarıyla silindi."
@@ -1317,11 +1321,11 @@ msgstr "Eklenti kaldırılamıyor."
 
 #: plugins/views.py:101
 msgid "Plugin successfully updated"
-msgstr "Eklenti başarıyla güncellendi."
+msgstr "Eklenti başarılı olarak güncellendi"
 
 #: plugins/views.py:130
 msgid "Plugin successfully installed"
-msgstr "Eklenti başarıyla kuruldu."
+msgstr "Eklenti başarılı olarak yüklendi"
 
 #~ msgid "There was a problem importing the jail."
 #~ msgstr "Jail almada bir sorun var."
@@ -1336,23 +1340,23 @@ msgstr "Bu geçerli bir maske değil"
 
 #: services/forms.py:91
 msgid "This field is required for \"Enable home directories browsing\"."
-msgstr "\"Ana dizin gözatma etkin\" ise bu alan doldurulmalıdır."
+msgstr "\"Giriş dizinlerine gözatmayı etkinleştir\" için bu alan gereklidir."
 
 #: services/forms.py:97
 msgid "This field is required for \"Home directories\"."
-msgstr "\"Ana dizin\" etkin ise bu alan doldurulmalıdır."
+msgstr "\"Giriş dizinleri\" için bu alan gereklidir."
 
 #: services/forms.py:106
 msgid "The CIFS service failed to reload."
-msgstr "CIFS hizmeti yeniden yüklenirken başarısız oldu."
+msgstr "CIFS hizmetini yeniden yükleme başarısız oldu."
 
 #: services/forms.py:118
 msgid "The AFP service failed to reload."
-msgstr "AFP hizmeti tekrar yüklenemedi."
+msgstr "AFP hizmetini yeniden yükleme başarısız oldu."
 
 #: services/forms.py:130
 msgid "The NFS service failed to reload."
-msgstr "NFS hizmeti tekrar yüklenemedi."
+msgstr "NFS hizmetini yeniden yükleme başarısız oldu."
 
 #~ msgid "This IP already exists."
 #~ msgstr "Bu IP zaten mevcut."
@@ -1362,57 +1366,57 @@ msgstr "NFS hizmeti tekrar yüklenemedi."
 
 #: services/forms.py:169
 msgid "File Permission"
-msgstr "Dosya iznleri"
+msgstr "Dosya İzni"
 
 #: services/forms.py:170
 msgid "Directory Permission"
-msgstr "Dizin iznleri"
+msgstr "Dizin İzni"
 
 #: services/forms.py:200
 msgid "This value must be between 1024 and 65535, inclusive. 0 for default"
 msgstr ""
-"Bu değer 1024 ile 65535 arasında olmalıdır. Varsayılan değer için 0 giriniz."
+"Bu değer 1024 ve 65535 dahil arasında olmak zorundadır. Varsayılan için 0"
 
 #: services/forms.py:210
 msgid "This value must be between 1024 and 65535, inclusive. 0 for default."
 msgstr ""
-"Bu değer 1024 ile 65535 arasında olmalıdır. Varsayılan değer için 0 giriniz."
+"Bu değer 1024 ve 65535 dahil arasında olmak zorundadır. Varsayılan için 0."
 
 #: services/forms.py:215
 msgid "This must be higher than minimum passive port"
-msgstr "En az pasif bağlantı noktası daha yüksek olmalıdır."
+msgstr "Bu, en az pasif bağlantı noktasından daha yüksek olmak zorundadır"
 
 #: services/forms.py:235
 msgid "This field is required for anonymous login"
-msgstr "Bu alan anonim giriş için gereklidir."
+msgstr "Bu alan isimsiz oturum açma için gerekli"
 
 #: services/forms.py:242
 msgid "The ftp service failed to start."
-msgstr "FTP hizmeti başlatılamadı."
+msgstr "FTP hizmetini başlatma başarısız oldu."
 
 #: services/forms.py:257
 msgid "The tftp service failed to reload."
-msgstr "FTP hizmeti yeniden yüklenemedi."
+msgstr "TFTP hizmetini yeniden yükleme başarısız oldu."
 
 #: services/forms.py:272
 msgid "The SSH service failed to reload."
-msgstr "SHH hizmeti yeniden yüklenirken hata oluştu."
+msgstr "SSH hizmetini yeniden yükleme başarısız oldu."
 
 #: services/forms.py:284 services/forms.py:315
 msgid "The Rsync service failed to reload."
-msgstr "Rsync hizmeti yeniden yüklenirken hata oluştu."
+msgstr "Rsync hizmetini yeniden yükleme başarısız oldu."
 
 #: services/forms.py:296
 msgid "The name cannot contain slash or a closing square backet."
-msgstr "Bu ad, taksim ve köşeli parantez içeremez."
+msgstr "İsim, eğik çizgi veya kapatma köşeli parantez içeremez."
 
 #: services/forms.py:320
 msgid "Confirm Password"
-msgstr "Parola doğrulama"
+msgstr "Parolayı Onaylayın"
 
 #: services/forms.py:362
 msgid "The DynamicDNS service failed to reload."
-msgstr "DynamicDNS hizmeti yeniden yüklenirken hata oluştu."
+msgstr "DynamicDNS hizmetini yeniden yükleme başarısız oldu."
 
 #: services/forms.py:374
 msgid "This is not a valid e-mail address"
@@ -1423,21 +1427,21 @@ msgid ""
 "The contact must contain only alphanumeric characters, _, - or a valid e-"
 "mail address"
 msgstr ""
-"Geçerli bir e-posta adresi sade alfanumerik karakterler, _, veya - "
-"içermelidir."
+"Kişi sadece alfasayısal karakterler, _, - veya geçerli bir e-posta adresi "
+"içermek zorundadır"
 
 #: services/forms.py:382
 msgid "The community must contain only alphanumeric characters, _ or -"
-msgstr "Topluluk sadece alfasayısal karakterler, _ veya - içermelidir."
+msgstr "Topluluk sadece alfasayısal karakterler, _ veya - içermek zorundadır"
 
 #: services/forms.py:389
 msgid "The SNMP service failed to reload."
-msgstr "SNMP hizmeti yeniden yüklenirken hata oluştu."
+msgstr "SNMP hizmetini yeniden yükleme başarısız oldu."
 
 #: services/forms.py:404 services/models.py:525 services/models.py:905
 #: services/models.py:967 services/models.py:1119
 msgid "Port"
-msgstr "Bağlantı noktası"
+msgstr "B.Noktası"
 
 #: services/forms.py:415
 msgid "Use alphanumeric characters, \".\", \"-\" and \"_\"."
@@ -1457,31 +1461,31 @@ msgstr "UPS hizmetini yeniden yükleme başarısız oldu."
 
 #: services/forms.py:442
 msgid "Confirm Administrator Password"
-msgstr "Yönetci parolasını onayla"
+msgstr "Yönetci Parolasını Onaylayın"
 
 #: services/forms.py:479
 msgid "The activedirectory service failed to reload."
-msgstr "Aktif Dizin hizmeti yeniden yüklenirken hata oluştu."
+msgstr "Active Directory hizmetini yeniden yükleme başarısız oldu."
 
 #: services/forms.py:494
 msgid "The ldap service failed to reload."
-msgstr "Ldap hizmeti yeniden yüklenirken hata oluştu."
+msgstr "Ldap hizmetini yeniden yükleme başarısız oldu."
 
 #: services/forms.py:498 services/models.py:598
 msgid "Secret"
-msgstr "Parola"
+msgstr "Gizli Anahtar"
 
 #: services/forms.py:500 services/models.py:599
 msgid "Target side secret."
-msgstr "Hedef tarafı parolalı."
+msgstr "Hedef tarafındaki gizli anahtar."
 
 #: services/forms.py:501
 msgid "Secret (Confirm)"
-msgstr "Parola (Onayla)"
+msgstr "Gizli Anahtar (Onay)"
 
 #: services/forms.py:503 services/forms.py:511
 msgid "Enter the same secret above for verification."
-msgstr "Doğrulama için yukarıdaki ile aynı parolayı giriniz."
+msgstr "Doğrulama için yukarıdaki aynı gizli anahtarı girin."
 
 #: services/forms.py:504
 msgid "Initiator Secret"
@@ -1489,59 +1493,59 @@ msgstr "Başlatıcı Gizli Anahtarı"
 
 #: services/forms.py:506 services/models.py:605 services/models.py:610
 msgid "Initiator side secret. (for mutual CHAP authentication)"
-msgstr "Başlatıcı tarafı gizli. (Karşılıklı CHAP kimlik doğrulamaları için)"
+msgstr ""
+"Başlatıcı tarafında gizli anahtar. (karşılıklı CHAP kimlik doğrulaması için)"
 
 #~ msgid "Initiator Secret (Confirm)"
 #~ msgstr "Başlatıcı parolası (Onayla)"
 
 #: services/forms.py:544
 msgid "Secret does not match"
-msgstr "Parolalar birbirinin aynısı değil"
+msgstr "Gizli anahtar eşleşmiyor"
 
 #: services/forms.py:559 services/forms.py:560
 msgid "The peer secret is required if you set a peer user."
-msgstr ""
-"Eş kullanıcı girişi yaptıysanız eş kullanıcı parolası onayı gereklidir."
+msgstr "Kişi gizli anahtarı kişi kullanıcısını ayarlarsanız gereklidir."
 
 #: services/forms.py:563
 msgid "The peer secret cannot be the same as user secret."
-msgstr "Kullanıcı parolası ile eş kullanıcı parolası aynı olamaz."
+msgstr "Kişi gizli anahtarı kullanıcı gizli anahtarı ile aynı olamaz."
 
 #: services/forms.py:566 services/forms.py:569
 msgid "The peer user is required if you set a peer secret."
-msgstr "Gizli bir eş ayarlarsanız gizli bir kullanıcıyada ihtiyaç var."
+msgstr "Kişi kullanıcısı kişi gizli anahtarını ayarlarsanız gereklidir."
 
 #: services/forms.py:582 services/forms.py:614 services/forms.py:756
 #: services/forms.py:821 services/forms.py:927 services/forms.py:955
 #: services/forms.py:1027 services/forms.py:1086 services/models.py:514
 #: services/models.py:744
 msgid "The iSCSI service failed to reload."
-msgstr "iSCSI himzeti yeniden yüklenirken hata oluştu."
+msgstr "iSCSI hizmetini yeniden yükleme başarısız oldu."
 
 #: services/forms.py:606
 msgid "LUN already exists in the same target."
-msgstr "Aynı hedefte bu LUN zaten mevcut."
+msgstr "Aynı hedefte LUN zaten var."
 
 #: services/forms.py:619 services/models.py:374
 msgid "Controller Auth Group"
-msgstr "Kontrolör onay gurubu"
+msgstr "Denetleyici Yetki Grubu"
 
 #: services/forms.py:620
 msgid ""
 "The istgtcontrol can access the targets with correct userand secret in "
 "specific Auth Group."
 msgstr ""
-"Istgtcontrol özel kimlik doğrulama grubu doğru userand gizli kod dizesi "
-"yoluyla hedeflere erişebilirsiniz."
+"Istgtcontrol belirli Yetki Grubunda doğru kullanıcı ve gizli anahtar ile "
+"hedeflere erişebilir."
 
 #: services/forms.py:623 services/models.py:268
 msgid "Discovery Auth Group"
-msgstr "Grup doğrulama yöntemi"
+msgstr "Keşif Yetki Grubu"
 
 #: services/forms.py:656
 #, python-format
 msgid "This value must be between %(start)d and %(end)d, inclusive."
-msgstr "Bu değer %(start) ve %(end) arasında olmalıdır."
+msgstr "Bu değer %(start)d ve %(end)d dahil arasında olmak zorundadır."
 
 #: services/forms.py:669
 msgid ""
@@ -1555,7 +1559,7 @@ msgid ""
 "This field is required whether CHAP or Mutual CHAP are set for Controller "
 "Auth Method."
 msgstr ""
-"Bu alan CHAP veya Karşılıklı CHAP kontrolörü Yetki Yöntemi için ayarlanıp "
+"Bu alan CHAP veya Karşılıklı CHAP, Denetleyici Yetki Yöntemi için ayarlanıp "
 "ayarlanmadığında gereklidir."
 
 #: services/forms.py:730
@@ -1564,30 +1568,28 @@ msgstr "Bu geçerli bir ağ değil"
 
 #: services/forms.py:771
 msgid "You need to specify a filepath, not a directory."
-msgstr "Bir dosya yolu değil, bir dizin belirtmeniz gerekir."
+msgstr "Bir dosya yolu belirtmeniz gerek, bir dizin değil."
 
 #: services/forms.py:776
 msgid "You need to specify a file inside your volume/dataset."
-msgstr "Birim/VeriKümesi içinde yer alan bir dosya belirtmelisiniz."
+msgstr "Biriminiz/verikümeniz içinde bir dosya belirtmeniz gerek."
 
 #: services/forms.py:781
 msgid ""
 "Your path to the extent must reside inside a volume/dataset mount point."
 msgstr ""
-"Boyut yolunuzun bir bağlanma noktası birim/verikümesi içinde bulunmalıdır."
+"Kapsam için yolunuz bir birim/verikümesi bağlama noktası içinde bulunmak "
+"zorundadır."
 
 #: services/forms.py:795
 msgid ""
 "This value can be a size in bytes, or can be postfixed with KB, MB, GB, TB"
 msgstr ""
-"Bu değer byte cinsinden olabileceği gibi KB, MB, GB ve TB ekleri ile de "
-"belirtilebilir."
+"Bu değer bayt cinsinden olabilir ya da KB, MB, GB ve TB gibi sonekli olabilir"
 
 #: services/forms.py:803
 msgid "The file must exist if the extent size is set to auto (0)"
-msgstr ""
-"Boyut kapasitesi otomatik olarak sıfır ayarlanır. Eğer bir dosya olacaksa "
-"bir değer girilmelidir."
+msgstr "Kapsam boyutu otomatik (0) olarak ayarlanırsa dosya varolmak zorundadır"
 
 #: services/forms.py:830
 msgid "Disk device"
@@ -1596,7 +1598,7 @@ msgstr "Disk aygıtı"
 #: services/forms.py:948
 #, python-format
 msgid "Your Portal Group ID cannot be higher than %d"
-msgstr "Portal Grup ID'niz %d den büyük olamaz."
+msgstr "Portal Grup ID'niz %d değerinden büyük olamaz"
 
 #, python-format
 #~ msgid "Your Group ID cannot be higher than %d"
@@ -1607,12 +1609,12 @@ msgid ""
 "The field is a not a valid IP address or network. The keyword \"ALL\" can be "
 "used to allow everything."
 msgstr ""
-"Bu alan geçerli bir IP adresi veya ağ değil. Her şeye izin vermek için "
-"anahtar kelimeyi \"ALL\" olarak kullanılmalıdır."
+"Bu alan geçerli bir IP adresi veya ağ değil. \"ALL\" anahtar kelimesi her "
+"şeye izin vermek için kullanılabilir."
 
 #: services/forms.py:1032
 msgid "Authentication Group number"
-msgstr "Kimlik doğrulama grup numarası"
+msgstr "Kimlik Doğrulama Grup numarası"
 
 #: services/forms.py:1063
 msgid "Use alphanumeric characters, \".\", \"-\" and \":\"."
@@ -1644,7 +1646,7 @@ msgstr "Hizmet Adı, kurulum esnasında otomatik olarak oluşturulmalıdır"
 
 #: services/models.py:55
 msgid "Enable Service"
-msgstr "Hizmeti Etkinleştir"
+msgstr "Hizmeti etkinleştir"
 
 #: services/models.py:58 services/models.py:59 services/nav.py:8
 #: templates/menubar.html:27
@@ -1653,13 +1655,14 @@ msgstr "Hizmetler"
 
 #: services/models.py:72
 msgid "Authentication Model"
-msgstr "Kimlik doğrulama biçimi"
+msgstr "Kimlik Doğrulama Modeli"
 
 #: services/models.py:73
 msgid ""
 "Using Active Directory or LDAP authentication will supersede this option"
 msgstr ""
-"Active Directory veya LDAP kimlik doğrulama, bu seçeneği geçersiz kılar"
+"Active Directory veya LDAP kimlik doğrulaması kullanmak, bu seçeneği "
+"geçersiz kılar"
 
 #: services/models.py:77
 msgid "NetBIOS name"
@@ -1674,32 +1677,32 @@ msgid ""
 "Workgroup the server will appear to be in when queried by clients (maximum "
 "15 characters)."
 msgstr ""
-"İstemciler tarafından sorgulama sırasında görünecek çalışma grubu sunucusu "
-"(en fazla15 karakter)."
+"Sunucu çalışma grubu istemciler tarafından sorgulandığında görünecek (en "
+"fazla15 karakter)."
 
 #: services/models.py:88
 msgid "Server description. This can usually be left blank."
-msgstr "Sunucu tanımı. Boş bırakabilirsiniz."
+msgstr "Sunucu tanımı. Bu genellikle boş bırakılabilir."
 
 #: services/models.py:94
 msgid "DOS charset"
-msgstr "DOS karakter seti"
+msgstr "DOS karakter kümesi"
 
 #: services/models.py:100
 msgid "UNIX charset"
-msgstr "UNIX karakter seti"
+msgstr "UNIX karakter kümesi"
 
 #: services/models.py:106
 msgid "Log level"
-msgstr "Kayıt seviyesi"
+msgstr "Günlük seviyesi"
 
 #: services/models.py:109
 msgid "Local Master"
-msgstr "Yerel yönetici"
+msgstr "Yerel Yönetici"
 
 #: services/models.py:111
 msgid "Time Server for Domain"
-msgstr "Etki alanı için zaman sunucusu"
+msgstr "Etki Alanı için Zaman Sunucusu"
 
 #: services/models.py:116 services/models.py:214
 msgid "Guest account"
@@ -1713,12 +1716,12 @@ msgid ""
 "guest service. This user must exist in the password file, but does not "
 "require a valid login. The user root can not be used as guest account."
 msgstr ""
-"Misafir kullanıcı olarak belirtilen hizmetlere erişim için kullanılacak "
-"kullanıcı adını (varsayılan 'nobody') geçersiz kılmak için bu seçeneği "
-"kullanın. Bu seçenek misafir servisine bağlanmadan müşteriye sunulacak olan "
-"ayrıcalıkları içermektedir. Bu kullanıcının geçerli giriş gerçekleştirmesi "
-"için parola dosyasında olması gerekmektedir. root misafir hesabı olarak "
-"kullanılamaz."
+"Misafir olarak belirtilen hizmetlere erişim için kullanılacak olan kullanıcı "
+"adını (varsayılan 'nobody') geçersiz kılmak için bu seçeneği kullanın. "
+"Yetkiler ne olursa olsun bu kullanıcı misafir hizmete bağlanan herhangi bir "
+"istemci olabilecektir. Bu kullanıcı parola dosyasında olmak zorundadır, "
+"ancak geçerli bir oturum açma bilgisi gerekmez. Kullanıcı root, misafir "
+"hesabı olarak kullanılamaz."
 
 #: services/models.py:121 services/models.py:1013
 msgid "File mask"
@@ -1749,15 +1752,15 @@ msgstr ""
 
 #: services/models.py:136
 msgid "EA Support"
-msgstr "EA desteği"
+msgstr "EA Desteği"
 
 #: services/models.py:138
 msgid "Support DOS File Attributes"
-msgstr "DOS dosya özniteliklerini destekle"
+msgstr "DOS Dosya Özniteliklerini destekle"
 
 #: services/models.py:140
 msgid "Allow Empty Password"
-msgstr "Boş parolaya izin ver"
+msgstr "Boş Parolaya izin ver"
 
 #: services/models.py:142 services/models.py:787 services/models.py:874
 #: services/models.py:1084 services/models.py:1373 services/models.py:1438
@@ -1766,11 +1769,11 @@ msgstr "Yardımcı parametreler"
 
 #: services/models.py:144
 msgid "These parameters are added to [global] section of smb.conf"
-msgstr "Bu parametreler smb.conf [Global] bölümüne eklendi."
+msgstr "Bu parametreler smb.conf dosyasının [global] bölümüne eklendi"
 
 #: services/models.py:147
 msgid "Enable home directories"
-msgstr "Ev dizinlerini etkinleştir"
+msgstr "Giriş dizinlerini etkinleştir"
 
 #: services/models.py:148
 msgid "Enable/disable home directories for samba user."
@@ -1779,7 +1782,7 @@ msgstr ""
 
 #: services/models.py:151
 msgid "Enable home directories browsing"
-msgstr "Ev dizinlerini taramayı etkinleştir"
+msgstr "Giriş dizinlerine gözatmayı etkinleştir"
 
 #: services/models.py:152
 msgid "Enable/disable home directories browsing for samba user."
@@ -1789,28 +1792,28 @@ msgstr ""
 
 #: services/models.py:156
 msgid "Home directories"
-msgstr "Ev dizinleri"
+msgstr "Giriş dizinleri"
 
 #: services/models.py:160
 msgid "Homes auxiliary parameters"
-msgstr "Ev dizinlerinin yardımcı parametreleri"
+msgstr "Giriş dizinlerin yardımcı parametreleri"
 
 #: services/models.py:162
 msgid "These parameters are added to [homes] section of smb.conf"
-msgstr "Bu parametreler smb.conf dosyasında [homes] bölümüne eklenir"
+msgstr "Bu parametreler smb.conf dosyasının [homes] bölümüne eklendi"
 
 #: services/models.py:165
 msgid "Unix Extensions"
-msgstr "Unix uzantıları"
+msgstr "Unix Uzantıları"
 
 #: services/models.py:167
 msgid ""
 "These extensions enable Samba to better serve UNIX CIFS clients by "
 "supporting features such as symbolic links, hard links, etc..."
 msgstr ""
-"Bu uzatmalar etkinleştirilirse, simgesel bağlantılar, sabit bağlatılar gibi "
-"özellikleri destekleyerek Sambanın UNIX CIFS müşterilerine daha iyi servis "
-"sağlayacaktır"
+"Bu uzantılar, simgesel bağlantılar, sabit bağlatılar, vb. gibi özellikleri "
+"destekleyerek UNIX CIFS istemcilerinin daha iyi hizmet etmesi için Samba'yı "
+"etkinleştirir."
 
 #: services/models.py:171
 msgid "Enable AIO"
@@ -1827,7 +1830,7 @@ msgstr "En küçük AIO okuma boyutu"
 #: services/models.py:177
 msgid ""
 "Samba will read asynchronously if request size is larger than this value."
-msgstr "İstek boyutu bu değerden büyükse Samba uyumsuz okuyacaktır."
+msgstr "İstek boyutu bu değerden büyükse Samba eşzamanlı olmadan okuyacaktır."
 
 #: services/models.py:182
 msgid "Minimum AIO write size"
@@ -1836,11 +1839,11 @@ msgstr "En küçük AIO yazma boyutu"
 #: services/models.py:183
 msgid ""
 "Samba will write asynchronously if request size is larger than this value."
-msgstr "İstek boyutu bu değerden büyükse Samba uyumsuz yazacaktır."
+msgstr "İstek boyutu bu değerden büyükse Samba eşzamanlı olmadan yazacaktır."
 
 #: services/models.py:187
 msgid "Zeroconf share discovery"
-msgstr "Sıfır ayarlama paylaşım keşfi"
+msgstr "Sıfır yapılandırma paylaşım keşfi"
 
 #: services/models.py:189
 msgid ""
@@ -1848,9 +1851,9 @@ msgid ""
 "to automatically discover the CIFS shares on the system similar to the "
 "Computer Browser service in Windows."
 msgstr ""
-"Müşterilerine Avahi üzerinden sıfır yapılandırma desteği sağlar (özellikle "
-"Mac OSX bulucular) otomatik olarak Windows Bilgisayar Tarayıcısı hizmetine "
-"benzer sistem üzerinde CIFS paylaşımları bulmak içindir."
+"Avahi aracılığıyla sıfır yapılandırma desteği, Windows'taki Bilgisayar "
+"Tarayıcısı hizmetine benzer, sistem üzerinde CIFS paylaşımlarını otomatik "
+"olarak keşfetmek için istemcilere (özellikle Mac OSX buluculara) izin verir."
 
 #: services/models.py:193 services/models.py:194
 #: templates/services/core.html:26
@@ -1867,21 +1870,21 @@ msgstr "CIFS"
 
 #: services/models.py:207
 msgid "Guest Access"
-msgstr "Misafir erişimi"
+msgstr "Misafir Erişimi"
 
 #: services/models.py:208
 msgid "Allows guest access to all apple shares on this box."
-msgstr "Bu kutu ile bütün apple paylaşımlarına misafir erişimi izni ver."
+msgstr "Bu kutudaki tüm apple paylaşımlarına misafir erişime izin verir."
 
 #: services/models.py:219
 msgid "Max. Connections"
-msgstr "En fazla bağlantı sayısı"
+msgstr "En Fazla Bağlantı"
 
 #: services/models.py:221
 msgid ""
 "Maximum number of connections permitted via AFP. The default limit is 50."
 msgstr ""
-"AFP aracılığı ile izin verilen en fazla bağlantı sayısı.Varsayılan sınırı "
+"AFP aracılığı ile izin verilen en fazla bağlantı sayısı. Varsayılan sınır "
 "50'dir."
 
 #: services/models.py:226 services/models.py:227
@@ -1898,8 +1901,8 @@ msgid ""
 "Specifies how many servers to create. There should be enough to handle the "
 "maximum level of concurrency from its clients, typically four to six."
 msgstr ""
-"Kaç sunucu oluşturulacağını belirler. Uyumlu bir şekilde en fazla düzeyde "
-"işlemek için tipik olarak dört altı istemci yeterli olmaktadır."
+"Kaç sunucu oluşturulacağını belirler. Genellikle dört ila altı olan "
+"istemcilerden gelen en fazla uyumluluk seviyesini işlemek yeterli olmalıdır."
 
 #~ msgid "Asynchronous mode"
 #~ msgstr "Uyumsuz biçim"
@@ -1918,64 +1921,63 @@ msgstr "NFS"
 
 #: services/models.py:257
 msgid "Base Name"
-msgstr "Temel ad"
+msgstr "Temel Adı"
 
 #: services/models.py:258
 msgid ""
 "The base name (e.g. iqn.2007-09.jp.ne.peach.istgt, see RFC 3720 and 3721 for "
 "details) will append the target name that is not starting with 'iqn.'"
 msgstr ""
-"'iqn' temel ad değildir, hedef adlarda ekler eklenir. (Örneğin iqn.2007-09."
-"jp.ne.peach.istg gibi, detaylar için RFC 3720 ve 3721 bakınız)"
+"Temel ad (örn. iqn.2007-09.jp.ne.peach.istg, ayrıntılar için RFC 3720 ve "
+"3721'e bakın), 'iqn' ile başlamayan hedef adlara ilave edilecek"
 
 #: services/models.py:264
 msgid "Discovery Auth Method"
-msgstr "Kimlik doğrulama yöntemi"
+msgstr "Keşif Yetki Yöntemi"
 
 #: services/models.py:275
 msgid "I/O Timeout"
-msgstr "G/Ç zaman aşımı"
+msgstr "G/Ç Zaman Aşımı"
 
 #: services/models.py:276
 msgid "I/O timeout in seconds (30 by default)."
-msgstr "Saniye cinsinden G/Ç zaman aşımı (varsayılan değer 30)."
+msgstr "Saniye cinsinden G/Ç zaman aşımı (varsayılan 30)."
 
 #: services/models.py:281
 msgid "NOPIN Interval"
-msgstr "NOPIN aralığı"
+msgstr "NOPIN Aralığı"
 
 #: services/models.py:282
 msgid "NOPIN sending interval in seconds (20 by default)."
-msgstr ""
-"NOPIN değerini saniye cinsinden aralıklarla gönderme (varsayılan değer 20)."
+msgstr "Saniye cinsinden NOPIN gönderme aralığı (varsayılan 20)."
 
 #: services/models.py:287
 msgid "Max. sessions"
-msgstr "En fazla oturum sayısı"
+msgstr "En fazla oturum"
 
 #: services/models.py:288
 msgid "Maximum number of sessions holding at same time (16 by default)."
-msgstr "Aynı zamandaki sahip oturumların sayısı (varsayılan 16)."
+msgstr "Aynı zamanda tutulan en fazla oturum sayısı (varsayılan 16)."
 
 #: services/models.py:293
 msgid "Max. connections"
-msgstr "En fazla bağlantı sayısı"
+msgstr "En fazla bağlantı"
 
 #: services/models.py:294
 msgid "Maximum number of connections in each session (8 by default)."
-msgstr "Her bölümdeki en fazla bağlantı sayısı (varsayılan 8)."
+msgstr "Her oturumdaki en fazla bağlantı sayısı (varsayılan 8)."
 
 #: services/models.py:299
 msgid "Max. pre-send R2T"
-msgstr "En fazla ön-gönderim R2T sayısı"
+msgstr "En fazla R2T ön-gönderimi"
 
 #: services/models.py:300
 msgid ""
 "Maximum number of pre-send R2T in each connection (32 by default). The "
 "actual number is limited to QueueDepth of the target."
 msgstr ""
-"Bağlantı öncesi R2T ön gönderim en fazla sayısı (varsayılan değer 32). "
-"Gerçek sayı hedefi QueueDepth ile sınırlıdır."
+"Her bağlantıdaki en fazla R2T ön-gönderim sayısı (varsayılan 32). Asıl sayı "
+"hedefin QueueDepth değeri ile sınırlıdır."
 
 #: services/models.py:305
 msgid "MaxOutstandingR2T"
@@ -1983,43 +1985,43 @@ msgstr "MakÇıkışDuranR2T"
 
 #: services/models.py:306
 msgid "iSCSI initial parameter (16 by default)."
-msgstr "iSCSI başlangıç parametresi (varsayılan 16)"
+msgstr "iSCSI başlangıç parametresi (varsayılan 16)."
 
 #: services/models.py:311
 msgid "First burst length"
-msgstr "Birinci veri blok uzunluğu"
+msgstr "İlk seri uzunluğu"
 
 #: services/models.py:312
 msgid "iSCSI initial parameter (65536 by default)."
-msgstr "iSCSI başlangıç parametresi (varsayılan değer 65536)"
+msgstr "iSCSI başlangıç parametresi (varsayılan 65536)."
 
 #: services/models.py:317
 msgid "Max burst length"
-msgstr "En fazla veri blok uzunluğu"
+msgstr "En fazla seri uzunluğu"
 
 #: services/models.py:318 services/models.py:324
 msgid "iSCSI initial parameter (262144 by default)."
-msgstr "iSCSI başlangıç parametresi (varsayılan değer 262144)"
+msgstr "iSCSI başlangıç parametresi (varsayılan 262144)."
 
 #: services/models.py:323
 msgid "Max receive data segment length"
-msgstr "Alınacak en fazla veri bölüm uzunluğu"
+msgstr "Alınan en fazla veri bölümü uzunluğu"
 
 #: services/models.py:329
 msgid "DefaultTime2Wait"
-msgstr "Beklenecek varsayılan zaman"
+msgstr "VarsayılanBeklemeZamanı"
 
 #: services/models.py:330
 msgid "iSCSI initial parameter (2 by default)."
-msgstr "iSCSI başlangıç parametresi (varsayılan değer 2)"
+msgstr "iSCSI başlangıç parametresi (varsayılan 2)."
 
 #: services/models.py:335
 msgid "DefaultTime2Retain"
-msgstr "Muhafaza edilecek varsayılan zaman"
+msgstr "VarsayılanSürüdürülenZaman"
 
 #: services/models.py:336
 msgid "iSCSI initial parameter (60 by default)."
-msgstr "iSCSI başlangıç parametresi (varsayılan değer 60)"
+msgstr "iSCSI başlangıç parametresi (varsayılan 60)."
 
 #: services/models.py:341
 msgid "Enable LUC"
@@ -2027,24 +2029,24 @@ msgstr "LUC etkinleştir"
 
 #: services/models.py:345
 msgid "Controller IP address"
-msgstr "Kontrolör IP adresi"
+msgstr "Denetleyici IP adresi"
 
 #: services/models.py:346
 msgid "Logical Unit Controller IP address (127.0.0.1(localhost) by default)"
 msgstr ""
-"Mantıksal Birim Kontrolörü IP adresi (varsayılan 127.0.0.1 (localhost))"
+"Mantıksal Birim Denetleyicisi IP adresi (varsayılan 127.0.0.1 (localhost))"
 
 #: services/models.py:351
 msgid "Controller TCP port"
-msgstr "Kontrolör TCP bağlantı noktası"
+msgstr "Denetleyici TCP bağlantı noktası"
 
 #: services/models.py:352
 msgid "Logical Unit Controller TCP port (3261 by default)"
-msgstr "Mantıksal Birim Kontrolörü TCP bağlantı noktası (varsayılan 3261)"
+msgstr "Mantıksal Birim Denetleyicisi TCP bağlantı noktası (varsayılan 3261)"
 
 #: services/models.py:358
 msgid "Controller Authorized Network"
-msgstr "Yetkili ağ denetleyicisi"
+msgstr "Denetleyici Yetkili Ağı"
 
 #: services/models.py:360
 msgid "Logical Unit Controller Authorized netmask (127.0.0.0/8 by default)"
@@ -2053,60 +2055,61 @@ msgstr ""
 
 #: services/models.py:368
 msgid "Controller Auth Method"
-msgstr "Kontrolör yetki yöntemi"
+msgstr "Denetleyici Yetki Yöntemi"
 
 #: services/models.py:369
 msgid "The method can be accepted in the controller."
-msgstr "Bu yöntem kontrolör olarak kabul edilebilir."
+msgstr "Bu yöntem denetleyici içinde kabul edilebilir."
 
 #: services/models.py:375
 msgid ""
 "The istgtcontrol can access the targets with correct user and secret in "
 "specific Auth Group."
 msgstr ""
-"Istgtcontrol ile hedeflere özel onay grubu, kullanıcı adı ve parolası ile "
-"erişebilir."
+"Istgtcontrol, belirli Yetki Grubu içindeki doğru kullanıcı ve gizli anahtar "
+"ile hedeflere erişebilir."
 
 #: services/models.py:382 services/models.py:383
 #: templates/services/iscsi.html:2
 msgid "Target Global Configuration"
-msgstr "Hedef Genel Yapılandırma"
+msgstr "Hedef Genel Yapılandırması"
 
 #: services/models.py:396
 msgid "Extent Name"
-msgstr "Boyut adı"
+msgstr "Kapsam Adı"
 
 #: services/models.py:397
 msgid "String identifier of the extent."
-msgstr "Boyutun karakter dizisi tanımlayıcısı."
+msgstr "Kapsamın dizgi tanımlayıcısı."
 
 #: services/models.py:401
 msgid "Extent Type"
-msgstr "Boyut türü"
+msgstr "Kapsam Türü"
 
 #: services/models.py:402
 msgid "Type used as extent."
-msgstr "Boyut türü kullan."
+msgstr "Kapsam olarak kullanılan tür."
 
 #: services/models.py:407
 msgid "Path to the extent"
-msgstr "Boyutun yolu"
+msgstr "Kapsam için yol"
 
 #: services/models.py:408
 msgid "File path (e.g. /mnt/sharename/extent/extent0) used as extent."
-msgstr "Kullanılan dosya boyutu yolu (örneğin /mnt/sharename/extent/extent0)."
+msgstr ""
+"Kapsam olarak kullanılan dosya yolu (örn. /mnt/sharename/extent/extent0)."
 
 #: services/models.py:413
 msgid "Extent size"
-msgstr "Boyut kapasitesi"
+msgstr "Kapsam boyutu"
 
 #: services/models.py:414
 msgid ""
 "Size of extent, 0 means auto, a raw number is bytes, or suffix with KB, MB, "
 "TB for convenience."
 msgstr ""
-"Boyut kapasitesi, 0 otomatik anlamına gelir, bayt olarak bir sayı ve son ek "
-"olarakta KB, MB veya TB kullanılabilir."
+"Kapsam boyutu, 0 otomatik anlamına gelir, ham bir sayı bayttır ya da "
+"uyarlamak için sonek olarak KB, MB veya TB kullanılabilir."
 
 #: services/models.py:419 services/models.py:480 services/models.py:557
 #: services/models.py:1395 sharing/models.py:43 sharing/models.py:262
@@ -2117,21 +2120,21 @@ msgstr ""
 #: templates/sharing/windows.html:13 templates/system/sysctl.html:7
 #: templates/system/tunable.html:7
 msgid "Comment"
-msgstr "Yorum"
+msgstr "Açıklama"
 
 #: services/models.py:420 services/models.py:481 services/models.py:558
 msgid "You may enter a description here for your reference."
-msgstr "Referans için buraya bir açıklama girebilirsiniz."
+msgstr "Referansınız için buraya bir açıklama girebilirsiniz."
 
 #: services/models.py:423 services/models.py:730
 #: templates/services/iscsi_assoctargets.html:6
 #: templates/services/iscsi_dextents.html:5
 msgid "Extent"
-msgstr "Boyut"
+msgstr "Kapsam"
 
 #: services/models.py:475 services/models.py:664
 msgid "Portal Group ID"
-msgstr "Portal grup kimliği"
+msgstr "Portal Grup Kimliği"
 
 #: services/models.py:485 services/models.py:519
 msgid "Portal"
@@ -2139,7 +2142,7 @@ msgstr "Portal"
 
 #: services/models.py:522
 msgid "IP Address"
-msgstr "IP adresi"
+msgstr "IP Adresi"
 
 #: services/models.py:534
 msgid "Portal IP"
@@ -2154,8 +2157,8 @@ msgid ""
 "Initiator authorized to access to the iSCSI target. It takes a name or 'ALL' "
 "for any initiators."
 msgstr ""
-"iSCSI hedef erişim yetkisi başlatıcısı. Herhangi bir başlatıcı için bir ad "
-"veya 'TÜMÜ' alınır."
+"iSCSI hedefine erişmek için başlatıcısı yetkilidir. Herhangi bir başlatıcı "
+"için bir ad veya 'ALL' değeri alır."
 
 #: services/models.py:550
 msgid "Authorized network"
@@ -2166,8 +2169,8 @@ msgid ""
 "Network authorized to access to the iSCSI target. It takes IP or CIDR "
 "addresses or 'ALL' for any IPs."
 msgstr ""
-"iSCSI hedef ağ erişim yetkisi. Bu herhangi bir IP adresi için 'TÜMÜ' veya IP "
-"ve CIDR adresleri alır."
+"iSCSI hedefine erişmek için ağ yetkilidir. Herhangi bir IP için 'ALL' değeri "
+"ya da IP veya CIDR adresleri alır."
 
 #: services/models.py:562
 msgid "Initiator"
@@ -2175,39 +2178,41 @@ msgstr "Başlatıcı"
 
 #: services/models.py:594
 msgid "Target side user name. It is usually the initiator name by default."
-msgstr "Yan hedef kullanıcı adı. Genellikle varsayılan başlatıcı adıdır."
+msgstr ""
+"Hedef tarafındaki kullanıcı adı. Genellikle varsayılan başlatıcı adıdır."
 
 #: services/models.py:604
 msgid "Peer User"
-msgstr "Eş Kullanıcı"
+msgstr "Kişi Kullanıcısı"
 
 #: services/models.py:609
 msgid "Peer Secret"
-msgstr "Gizli Eş"
+msgstr "Kişi Gizli Anahtarı"
 
 #: services/models.py:614
 msgid "Authorized Access"
-msgstr "Yetkili Giriş"
+msgstr "Yetkili Erişim"
 
 #: services/models.py:615
 msgid "Authorized Accesses"
-msgstr "Yetkili Girişler"
+msgstr "Yetkili Erişimler"
 
 #: services/models.py:632
 msgid "Target Name"
-msgstr "Hedef adı"
+msgstr "Hedef Adı"
 
 #: services/models.py:633
 msgid "Base Name will be appended automatically when starting without 'iqn.'."
-msgstr "Temel adların başına otomatik olarak 'iqn.' eklenir."
+msgstr ""
+"Temel Ad, 'iqn.' olmadan başladığında otomatik olarak ilave edilecektir."
 
 #: services/models.py:640
 msgid "Target Alias"
-msgstr "Hedef takma adı"
+msgstr "Hedef Takma Adı"
 
 #: services/models.py:641
 msgid "Optional user-friendly string of the target."
-msgstr "İsteğe bağlı kullanıcı-dostu dizesi hedefi."
+msgstr "İsteğe bağlı kullanımı kolay hedef dizgisi."
 
 #: services/models.py:644 storage/models.py:335 storage/views.py:247
 msgid "Serial"
@@ -2230,23 +2235,23 @@ msgstr "Mantıksal Birim Türü LUN'a eşlendi."
 
 #: services/models.py:660
 msgid "Target Flags"
-msgstr "Hedef bayrakları"
+msgstr "Hedef İşaretleri"
 
 #: services/models.py:668
 msgid "Initiator Group ID"
-msgstr "Başlatıcı grup kimliği"
+msgstr "Başlatıcı Grup Kimliği"
 
 #: services/models.py:674 services/models.py:686
 msgid "Auth Method"
-msgstr "Yetki yönetimi"
+msgstr "Yetki Yöntemi"
 
 #: services/models.py:675 services/models.py:687
 msgid ""
 "The method can be accepted by the target. Auto means both none and "
 "authentication."
 msgstr ""
-"Bu yöntem hedef tarafından kabul edilebilir. Otomatik, hiçbir yetkilendirme "
-"yapma demektir."
+"Bu yöntem hedef tarafından kabul edilebilir. Otomatik, hem yok hem de kimlik "
+"doğrulaması anlamına gelir."
 
 #: services/models.py:679
 msgid "Authentication Group ID"
@@ -2254,19 +2259,19 @@ msgstr "Kimlik Doğrulaması Grup Kimliği"
 
 #: services/models.py:692
 msgid "Queue Depth"
-msgstr "Sıra derinliği"
+msgstr "Sıra Derinliği"
 
 #: services/models.py:693
 msgid ""
 "0=disabled, 1-255=enabled command queuing with specified depth. The "
 "recommended queue depth is 32."
 msgstr ""
-"0 = kapalı, 1-255 = etkin. Komutları belirtilen derinliği sıraya alır. "
-"Tavsiye edilen derinlik sırası 32'dir."
+"0=etkisizleştirildi, 1-255=etkinleştirildi komutu belirtilen derinlik ile "
+"sıraya alır. Tavsiye edilen sıra derinliği 32'dir."
 
 #: services/models.py:698
 msgid "Logical Block Size"
-msgstr "Mantıksal blok kapasitesi"
+msgstr "Mantıksal Blok Boyutu"
 
 #: services/models.py:699
 msgid ""
@@ -2284,15 +2289,15 @@ msgstr "Hedef"
 
 #: services/models.py:725
 msgid "Target this extent belongs to"
-msgstr "Bu boyuta ait olan hedef"
+msgstr "Bu kapsamın ait olduğu hedef"
 
 #: services/models.py:734
 msgid "Target / Extent"
-msgstr "Hedef / Boyut"
+msgstr "Hedef / Kapsam"
 
 #: services/models.py:735
 msgid "Targets / Extents"
-msgstr "Hedefler / Boyutlar"
+msgstr "Hedefler / Kapsamlar"
 
 #: services/models.py:759
 msgid "Provider"
@@ -2300,15 +2305,16 @@ msgstr "Sağlayıcı"
 
 #: services/models.py:763
 msgid "Domain name"
-msgstr "Alan adı"
+msgstr "Etki alanı adı"
 
 #: services/models.py:765
 msgid ""
 "A host name alias. This option can appear multiple times, for each domain "
 "that has the same IP. Use a space to separate multiple alias names."
 msgstr ""
-"Ana bilgisayarın takma adı. Bu seçenek aynı IP de her bir alan için birden "
-"çok kez görünebilir. Birden çok takma adlar için bir boşluk kullanın."
+"Anamakine takma adı. Bu seçenek aynı IP adresine sahip her etki alanı için "
+"birden çok kez görünebilir. Birden çok takma adlarını ayırmak için bir "
+"boşluk kullanın."
 
 #: services/models.py:777
 msgid "Update period"
@@ -2316,7 +2322,7 @@ msgstr "Güncelleme süresi"
 
 #: services/models.py:779
 msgid "Time in seconds. Default is about 1 min."
-msgstr "Saniye cinsinden zaman. Standardı 1 dakika kadardır."
+msgstr "Saniye cinsinden zaman. Varsayılan yaklaşık 1 dakikadır."
 
 #: services/models.py:783
 msgid "Forced update period"
@@ -2329,14 +2335,14 @@ msgstr "Bu parametreler inadyn.conf dosyasındaki genel ayarlara eklenecektir."
 #: services/models.py:793 services/models.py:794
 #: templates/services/core.html:37
 msgid "Dynamic DNS"
-msgstr "Dinamik DNS"
+msgstr "Değişken DNS"
 
 #~ msgid "Path to the plugins jail"
 #~ msgstr "Eklentilerin jail yolu"
 
 #: services/models.py:809
 msgid "Jail name"
-msgstr "Jail adı"
+msgstr "Kafes adı"
 
 #~ msgid "Name of the plugins jail"
 #~ msgstr "Eklentilerin jail adı"
@@ -2348,7 +2354,7 @@ msgstr "Jail adı"
 
 #: services/models.py:821
 msgid "Jail IP address"
-msgstr "Jail IP adresi"
+msgstr "Kafes IP adresi"
 
 #~ msgid "Jail IP Netmask"
 #~ msgstr "Jail IP ağ maskesi"
@@ -2365,7 +2371,7 @@ msgid ""
 "Location information, e.g. physical location of this system: 'Floor of "
 "building, Room xyzzy'."
 msgstr ""
-"Konum bilgileri, örneğin bu sistemin fiziksel konumu:'Bina Kat, Oda xyzzy'."
+"Konum bilgileri, örn. bu sistemin fiziksel konumu: 'Bina Katı, Oda xyzzy'."
 
 #: services/models.py:859
 msgid "Contact"
@@ -2376,8 +2382,8 @@ msgid ""
 "Contact information, e.g. name or email of the person responsible for this "
 "system: 'admin@email.address'."
 msgstr ""
-"İletişim bilgileri, örneğin adını veya bu sistemden sorumlu kişinin e-"
-"postası: 'yönetici@e-posta.adresi'."
+"İletişim bilgileri, örn. bu sistemden sorumlu kişinin adı veya e-postası: "
+"'admin@e-posta.adresi'."
 
 #: services/models.py:867
 msgid "Community"
@@ -2385,11 +2391,11 @@ msgstr "Topluluk"
 
 #: services/models.py:868
 msgid "In most cases, 'public' is used here."
-msgstr "Çoğu durumda burada 'genel' kullanılır."
+msgstr "Çoğu durumda burada 'public' kullanılır."
 
 #: services/models.py:871
 msgid "Send SNMP Traps"
-msgstr "SNMP tuzaklarını gönder"
+msgstr "SNMP Yakalamalarını gönder"
 
 #: services/models.py:881 services/models.py:882
 #: templates/services/core.html:122
@@ -2403,7 +2409,7 @@ msgstr "Tanımlayıcı"
 #: services/models.py:894
 msgid "This name is used to uniquely identify your UPS on this system."
 msgstr ""
-"Bu sistem üzerinde UPS tanımlamak için benzersiz bir ad kullanılmalıdır."
+"Bu ad, sistem üzerinde UPS'nizi benzersiz olarak tanımlamak için kullanılır."
 
 #: services/models.py:898
 msgid "Driver"
@@ -2411,11 +2417,11 @@ msgstr "Sürücü"
 
 #: services/models.py:901
 msgid "The driver used to communicate with your UPS."
-msgstr "Sürücü UPS ile iletişim kurmak için kullanılır."
+msgstr "Sürücü UPS'niz ile iletişim kurmak için kullanılır."
 
 #: services/models.py:907
 msgid "The serial or USB port where your UPS is connected."
-msgstr "UPS'e bağlı seri veya USB bağlantı noktası nerede."
+msgstr "UPS'inizin bağlandığı seri veya USB bağlantı noktası."
 
 #: services/models.py:910
 msgid "Auxiliary parameters (ups.conf)"
@@ -2423,11 +2429,11 @@ msgstr "Yardımcı parametreler (ups.conf)"
 
 #: services/models.py:912
 msgid "Additional parameters to the hardware-specific part of the driver."
-msgstr "Sürücünün donanımı ile belirli bir kısmına ek parametreler."
+msgstr "Sürücünün belirli donanım kısmı için ilave parametreler."
 
 #: services/models.py:923
 msgid "Shutdown mode"
-msgstr "Kapatma modu"
+msgstr "Kapatma kipi"
 
 #: services/models.py:927
 msgid "Shutdown timer"
@@ -2438,8 +2444,8 @@ msgid ""
 "The time in seconds until shutdown is initiated. If the UPS happens to come "
 "back before the time is up the shutdown is canceled."
 msgstr ""
-"Kapatma saniyeler içinde başlatılır. UPS de geri dönme durumu oluşursa zaman "
-"bitmeden kapatma iptal edilir."
+"Kapatma başlatılana kadar ki saniye olarak zaman. Eğer zamanı gelmeden önce "
+"UPS geri gelirse, kapatma iptal edilir."
 
 #~ msgid "UPS Master User Password"
 #~ msgstr "UPS master kullanıcı parolası"
@@ -2450,33 +2456,32 @@ msgstr "Ekstra kullanıcılar (upsd.users)"
 
 #: services/models.py:940
 msgid "Remote Monitor"
-msgstr "Uzaktan izleme"
+msgstr "Uzak İzleme"
 
 #: services/models.py:942
 msgid "Send Email Status Updates"
-msgstr "Durum güncellemelerini e-postayla gönder"
+msgstr "E-posta Durum Güncellemelerini gönder"
 
 #: services/models.py:945
 msgid "To email"
-msgstr "E-posta"
+msgstr "Kime e-postası"
 
 #: services/models.py:947
 msgid "Destination email address. Separate email addresses by semi-colon."
-msgstr ""
-"Hedef e-posta adresi. Her bir e-posta adresini noktalı virgül ile ayırın."
+msgstr "Hedef e-posta adresi. E-posta adreslerini noktalı virgül ile ayırın."
 
 #: services/models.py:951
 msgid "Email Subject"
-msgstr "E-posta konusu"
+msgstr "E-posta Konusu"
 
 #: services/models.py:952
 msgid ""
 "The subject of the email. You can use the following parameters for "
 "substitution:<br /><ul><li>%d - Date</li><li>%h - Hostname</li></ul>"
 msgstr ""
-"E-postanın konusu. Değişiklik için aşağıdaki parametreleri "
-"kullanabilirsiniz: <br /><ul><li>% d - Tarih </li><li>% h - Bilgisayar adı </"
-"li> </ul>"
+"E-postanın konusu. Değişim için şurada belirtilen parametreleri "
+"kullanabilirsiniz: <br /><ul><li>%d - Tarih</li><li>%h - Anamakine "
+"adı</li></ul>"
 
 #: services/models.py:956 services/models.py:957
 #: templates/services/core.html:166
@@ -2485,7 +2490,7 @@ msgstr "UPS"
 
 #: services/models.py:969
 msgid "Port to bind FTP server."
-msgstr "FTP sunucusuna bağlanacak bağlantı noktası."
+msgstr "FTP sunucusuna bağlamak için bağlantı noktası."
 
 #: services/models.py:973
 msgid "Clients"
@@ -2493,7 +2498,7 @@ msgstr "İstemciler"
 
 #: services/models.py:975
 msgid "Maximum number of simultaneous clients."
-msgstr "Aynı andaki istemcilerin en fazla sayısı."
+msgstr "Eşzamanlı istemcilerin en fazla sayısı."
 
 #: services/models.py:979
 msgid "Connections"
@@ -2501,15 +2506,15 @@ msgstr "Bağlantılar"
 
 #: services/models.py:981
 msgid "Maximum number of connections per IP address (0 = unlimited)."
-msgstr "IP adresi başına bağlantı sayısı (0 = sınırsız)."
+msgstr "IP adresi başına en fazla bağlantı sayısı (0 = sınırsız)."
 
 #: services/models.py:985
 msgid "Login Attempts"
-msgstr "Giriş denemesi"
+msgstr "Oturum Açma Denemeleri"
 
 #: services/models.py:987
 msgid "Maximum number of allowed password attempts before disconnection."
-msgstr "Bağlantı kesilmesinden önce verilen en fazla bağlantı deneme sayısı."
+msgstr "Bağlantı kesilmesinden önce izin verilen en fazla parola deneme sayısı."
 
 #: services/models.py:991
 msgid "Timeout"
@@ -2517,15 +2522,15 @@ msgstr "Zaman aşımı"
 
 #: services/models.py:993
 msgid "Maximum idle time in seconds."
-msgstr "En fazla saniye cinsinden boşta durma."
+msgstr "Saniye cinsinden en fazla boşta kalan zaman."
 
 #: services/models.py:996
 msgid "Allow Root Login"
-msgstr "Root girişine izin ver"
+msgstr "Root Oturumu Açmaya izin ver"
 
 #: services/models.py:998
 msgid "Allow Anonymous Login"
-msgstr "Anonim girişe izin ver"
+msgstr "İsimsiz Oturum Açmaya izin ver"
 
 #: services/models.py:1001 services/models.py:1398 sharing/models.py:47
 #: sharing/models.py:122 sharing/models.py:266 storage/forms.py:154
@@ -2538,7 +2543,7 @@ msgstr "Yol"
 
 #: services/models.py:1003
 msgid "Allow Local User Login"
-msgstr "Yerel kullanıcı girişine izin ver"
+msgstr "Yerel Kullanıcı Oturumu Açmaya izin ver"
 
 #~ msgid "Banner"
 #~ msgstr "Afiş"
@@ -2558,7 +2563,7 @@ msgstr "FXP etkinleştir"
 
 #: services/models.py:1025
 msgid "Allow Transfer Resumption"
-msgstr "Yeniden başlama aktarımına izin ver"
+msgstr "Aktarım Yeniden Başlamasına izin ver"
 
 #: services/models.py:1027
 msgid "Always Chroot"
@@ -2566,15 +2571,15 @@ msgstr "Her zaman Chroot"
 
 #: services/models.py:1029
 msgid "Require IDENT Authentication"
-msgstr "IDENT kimlik doğrulama gerekir"
+msgstr "IDENT Kimlik Doğrulaması gerekir"
 
 #: services/models.py:1031
 msgid "Require Reverse DNS for IP"
-msgstr "IP için ters DNS gerekir"
+msgstr "IP için Ters DNS gerekir"
 
 #: services/models.py:1033
 msgid "Masquerade address"
-msgstr "Maske adresi"
+msgstr "Maskeli adres"
 
 #: services/models.py:1036
 msgid ""
@@ -2784,7 +2789,7 @@ msgstr "SSH"
 
 #: services/models.py:1239
 msgid "Domain Controller Name"
-msgstr "Alan adı kontrolcüsünün adı"
+msgstr "Etki Alanı Denetleyicisi Adı"
 
 #~ msgid "AD or PDC name."
 #~ msgstr "AD veya PDC adı."
@@ -3100,15 +3105,15 @@ msgstr ""
 
 #: services/models.py:1475
 msgid "Informal"
-msgstr "Resmi olmayan"
+msgstr "Resmi değil"
 
 #: services/models.py:1476 services/models.py:1481
 msgid ""
 "Report if the temperature is greater or equal than N degrees Celsius. 0 to "
 "disable"
 msgstr ""
-"Rapor: Eğer sıcaklık N santigrat dereceden daha büyük veya eşitse. Devre "
-"dışı bırakmak için 0 girin."
+"Sıcaklık N santigrat dereceden daha büyük veya eşitse bildir. "
+"Etkisizleştirmek için 0"
 
 #: services/models.py:1480
 msgid "Critical"
@@ -3120,8 +3125,7 @@ msgstr "E-posta"
 
 #: services/models.py:1487
 msgid "Destination email address. Separate email addresses by semi-colon"
-msgstr ""
-"Hedef e-posta adresi. Ayrı e-posta adreslerini noktalı virgülle ayırın."
+msgstr "Hedef e-posta adresi. E-posta adreslerini noktalı virgülle ayırın"
 
 #: services/models.py:1490 services/models.py:1491
 #: templates/services/core.html:133
@@ -3149,7 +3153,7 @@ msgstr "Kontrol Hizmetleri"
 
 #: services/nav.py:118
 msgid "View File Extents"
-msgstr "Aygıt Dosyalarını Göster"
+msgstr "Dosya Kapsamlarını Göster"
 
 #: services/nav.py:131 templates/services/core.html:61
 msgid "iSCSI"
@@ -4136,7 +4140,7 @@ msgstr ""
 #: storage/models.py:666 system/models.py:458
 #: templates/storage/replications.html:22
 msgid "Remote Host"
-msgstr "Uzak ana bilgisayar"
+msgstr "Uzak Anamakine"
 
 #~ msgid "Remote ZFS filesystem name"
 #~ msgstr "Uzak ZFS dosya sistemi adı"
@@ -4948,7 +4952,7 @@ msgstr "Sistem"
 
 #: system/nav.py:12 templates/system/reporting.html:1
 msgid "Reporting"
-msgstr "Rapor"
+msgstr "Bildiriliyor"
 
 #: system/nav.py:20
 msgid "System Information"
@@ -6698,7 +6702,7 @@ msgstr "ctrl+!veri"
 
 #: choices.py:702
 msgid "auth+!data"
-msgstr "onay+!veri"
+msgstr "yetki+!veri"
 
 #: account/forms.py:60
 msgid "Confirm New Password"
@@ -6904,11 +6908,11 @@ msgstr "Ağ bekleme IP listesi"
 
 #: network/models.py:97
 msgid "Host name data base"
-msgstr "Ana bilgisayar veri tabanı"
+msgstr "Anamakine adı veri tabanı"
 
 #: network/models.py:401
 msgid "LAGG Interface Group"
-msgstr "LAGG Ara Birim Grubu"
+msgstr "LAGG Arayüzü Grubu"
 
 #: network/models.py:427
 msgid "Link Aggregation Member"
@@ -6921,7 +6925,7 @@ msgstr "Bağlantı Birleştirme Üyeleri"
 #: plugins/admin.py:58
 #: plugins/admin.py:65
 msgid "Install"
-msgstr "Kur"
+msgstr "Yükle"
 
 #: plugins/forms.py:89
 msgid ""
@@ -6934,31 +6938,31 @@ msgstr ""
 
 #: plugins/forms.py:105
 msgid "Plugin Jail"
-msgstr "Kafes eklentileri"
+msgstr "Kafes Eklenti"
 
 #: plugins/forms.py:106
 msgid "The plugin jail that the PBI is to be installed in."
-msgstr "PBI içine kurulan kafes eklentileri."
+msgstr "PBI'ın içine yüklü olduğu kafes eklenti."
 
 #: plugins/forms.py:215
 msgid "Unable to set repository: %s"
-msgstr "Depo ayarlanmak için açılamıyor: %s"
+msgstr "Depo ayarlanamıyor: %s"
 
 #: plugins/models.py:103
 msgid "Plugin"
-msgstr "Eklentiler"
+msgstr "Eklenti"
 
 #: plugins/models.py:175
 msgid "URL for the plugins repository"
-msgstr "Depo eklentilerinin adresi"
+msgstr "Eklentiler deposu için URL"
 
 #: plugins/views.py:198
 msgid "Jail does not exist"
-msgstr "Böyle bir kafes yok"
+msgstr "Kafes mevcut değil"
 
 #: plugins/views.py:207
 msgid "Failed to update plugin"
-msgstr "Eklentinin güncellenemedi"
+msgstr "Eklentiyi güncelleme başarısız"
 
 #: plugins/views.py:226
 #: plugins/views.py:357
@@ -6968,59 +6972,59 @@ msgstr "Kullanılabilir IP adresleri yok"
 #: services/forms.py:637
 #: services/forms.py:645
 msgid "Spaces or number signs are not allowed."
-msgstr "Boşluk veya sayı işaretlerine izin verilmez."
+msgstr "Boşluklara veya sayı işaretlerine izin verilmez."
 
 #: services/forms.py:826
 msgid "Peer Secret (Confirm)"
-msgstr "Gizli Parola (Tekrar)"
+msgstr "Kişi Gizli Anahtarı (Onay)"
 
 #: services/forms.py:1331
 msgid "Serial not found and glabel failed for %(disk)s: %(error)s"
-msgstr "Glabel %(disk)s için seri bulunamadı: %(error)s"
+msgstr "Seri bulunamadı ve %(disk)s için glabel başarısız oldu: %(error)s"
 
 #: services/forms.py:1504
 msgid "A target with that name already exists."
-msgstr "Bu adda zaten bir hedef var."
+msgstr "Bu isimde bir hedef zaten var."
 
 #: services/models.py:214
 msgid "Hostnames lookups"
-msgstr "Sunucu adı aramaları"
+msgstr "Anamakine adı aramaları"
 
 #: services/models.py:287
 msgid "Allow non-root mount"
-msgstr "Root olmayana bağlama izni ver"
+msgstr "Root olmayan bağlamaya izin ver"
 
 #: services/models.py:298
 msgid "Bind IP Addresses"
-msgstr "Bağlantı IP Adresleri"
+msgstr "IP Adreslerini Bağla"
 
 #: services/models.py:712
 msgid "Initiator side user name."
-msgstr "Yan başlatıcı kullanıcı adı."
+msgstr "Başlatıcı tarafındaki kullanıcı adı."
 
 #: services/models.py:932
 msgid "These parameters will be added to /etc/snmpd.config."
-msgstr "Bu seçenekler /etc/snmpd.conf dosyasına eklenecektir."
+msgstr "Bu parametreler /etc/snmpd.config dosyasına eklenecektir."
 
 #: services/models.py:971
 msgid "Remote Port"
-msgstr "Uzak Bağlantı Noktası Numarası"
+msgstr "Uzak Bağlantı Noktası"
 
 #: services/models.py:1015
 msgid "Monitor User"
-msgstr "İzleyici Kullanıcı"
+msgstr "İzleyici Kullanıcısı"
 
 #: services/models.py:1105
 msgid "Message which will be displayed to the user when they initially login."
-msgstr "Başlangıçta giriş sırasında kullanıcıya gösterilecek mesaj."
+msgstr "Başlangıçta oturum açtığında kullanıcıya gösterilecek olan ileti."
 
 #: services/models.py:1132
 msgid ""
 "For local users, only allow access to user home directory unless the user is "
 "a member of group wheel."
 msgstr ""
-"Yerel kullanıcılar kullanıcı grubu çarkının bir üyesi olmadıkça yalnızca "
-"kullanıcı ev dizinine erişim sağlar."
+"Yerel kullanıcılar için, kullanıcı bir grup çarkının üyesi olmadıkça sadece "
+"kullanıcı giriş dizinine erişime izin verir."
 
 #: services/models.py:1194
 msgid "Enable TLS"
@@ -7648,7 +7652,7 @@ msgstr "Yerleşik Grup"
 #: account/models.py:56
 #: account/models.py:150
 msgid "Permit Sudo"
-msgstr "Sudo izni"
+msgstr "Sudo İzni"
 
 #: common/system.py:278
 msgid "Mount failed (%(retcode)s) -> %(output)s"
@@ -7832,12 +7836,12 @@ msgid ""
 "timeouts are exceeded, network services are started anyway with no guarantee "
 "that the network is usable."
 msgstr ""
-"Eğer bu seçenek etkinse ağ bekleme ip listelerinde tanımlanan ICMP paketleri "
-"işlem yaparken ağ bağımlı hizmetlerin başlangıcını geciktirir. Bağlantı "
-"durumu incelendiğinde ağ kullanılabilirliğini doğrulamak için IP adresinin "
-"\"ping\" çıktısı incelenmelidir. Hiçbir hedefe ulaşılamaz ya da zaman "
-"aşımına uğrarsa ağ hizmetlerinin yeniden başladığının ve kullanılabilir "
-"olduğunun ve başladığının garantisi yoktur."
+"Eğer etkinleştirildiyse, arayüz açılana kadar ve ağ bekleme ip listelerinde "
+"bir hedefe tanımlanan ICMP paketleri akarken ağ bağımlı hizmetlerin "
+"başlangıcını geciktirir. Önce bağlantı durumu incelenir, bunu ağ "
+"kullanılabilirliğini doğrulamak için bir IP adresine \"ping'leme\" takip "
+"eder. Eğer hiçbir hedefe ulaşılamaz ya da zaman aşımına uğranırsa, ağ "
+"hizmetleri ağın kullanılabilirliğinin garantisi olmadan yine de başlatılır."
 
 #: network/models.py:89
 msgid ""
@@ -7845,17 +7849,18 @@ msgid ""
 "are specified, each will be tried until one is successful or the list is "
 "exhausted. If it is empty the default gateway will be used."
 msgstr ""
-"Ayrılmış IP listesine ping(8) gider. Birden fazla IP listesi belirtilirse "
-"liste bitene kadar veya başarana kadar denenecektir. Eğer boşsa varsayılan "
-"ağ geçidi kullanılır."
+"Ping(8) işlemi için IP adreslerinin boşlukla ayrılmış listesi. Eğer birden "
+"çok IP adresi belirtilirse, bir tanesi başarılı olana kadar ya da liste "
+"bitene kadar her biri denenecektir. Eğer boş ise varsayılan ağ geçidi "
+"kullanılacaktır."
 
 #: network/models.py:98
 msgid ""
 "This field is appended to /etc/hosts which contains information regarding "
 "known hosts on the network. hosts(5)"
 msgstr ""
-"Bu alan /etc/hosts alanına eklenen ağdaki ana bilgisayarlar hakkında bilgi "
-"içerir. hosts(5)"
+"Bu alan ağda bilinen anamakinelere ilişkin bilgileri içeren /etc/hosts "
+"dizinine ilave edilir. hosts(5)"
 
 #: plugins/models.py:93
 msgid "Plugin jail name"
@@ -7863,23 +7868,23 @@ msgstr "Kafes eklenti adı"
 
 #: plugins/models.py:94
 msgid "Jail where the plugin is installed"
-msgstr "Kafes eklentilerinin yüklendiği yer"
+msgstr "Eklentinin yüklendiği yerdeki kafes"
 
 #: plugins/models.py:141
 msgid "Plugin Kernel Module"
-msgstr "Çekirdek Müdül Eklentisi"
+msgstr "Eklenti Çekirdek Modülü"
 
 #: plugins/models.py:173
 msgid "Repository URL"
-msgstr "Depo adresi"
+msgstr "Depo URL'si"
 
 #: plugins/plugin.py:120
 msgid "Failed to download %(url)s: %(error)s"
-msgstr "%(url)s indirilemedi: %(error)s"
+msgstr "%(url)s indirme başarısız: %(error)s"
 
 #: plugins/views.py:173
 msgid "Plugin not installed"
-msgstr "Kurulu eklenti yok"
+msgstr "Eklenti yüklü değil"
 
 #: plugins/views.py:183
 #: plugins/views.py:244
@@ -7889,15 +7894,15 @@ msgstr "Geçersiz eklenti"
 #: plugins/views.py:194
 #: plugins/views.py:252
 msgid "Failed to download plugin"
-msgstr "Eklenti indirilemedi"
+msgstr "Eklentiyi indirme başarısız"
 
 #: services/forms.py:1446
 msgid "This IP and port are already in use."
-msgstr "Bu IP ve bağlantı noktası zaten kullanılıyor."
+msgstr "Bu IP ve bağlantı noktası zaten kullanımda."
 
 #: services/models.py:259
 msgid "Enable/disable home directories for afp user."
-msgstr "Afp kullanıcıları için giriş dizinlerini etkinleştirir/etkisizleştirir."
+msgstr "AFP kullanıcıları için giriş dizinlerini etkinleştirir/etkisizleştirir."
 
 #: services/models.py:288
 msgid ""
@@ -7906,10 +7911,10 @@ msgid ""
 "vfs.nfsrv.nfs_privport sysctl flag, which controls if the kernel will accept "
 "NFS requests from reserved ports only."
 msgstr ""
-"Root olmayan hizmet isteklerine bağlama izni ver. Sadece bunu gerektiren "
-"istemciler varsa bu belirtilmelidir. Hangi çekirdeğin NFS isteklerini "
-"bağlantı noktalarından denetleyerek kabul edeceği otomatik olarak "
-"vfs.nfsrv.nfs_privport bayrağı ile belirlenir."
+"Root olmayan bağlama isteklerinin hizmet olarak verilmesine izin verir. "
+"Sadece bunu gerektiren istemciler varsa bu belirtilmelidir. Çekirdek, sadece "
+"ayrılmış bağlantı noktalarından gelen NFS isteklerini kabul edecekse "
+"denetleyen vfs.nfsrv.nfs_privport işaretini otomatik olarak temizleyecek."
 
 #: services/models.py:299
 msgid ""
@@ -7918,54 +7923,54 @@ msgid ""
 "specified it will bind to INADDR_ANY. It will automatically add 127.0.0.1 "
 "and if IPv6 is enabled, ::1 to the list."
 msgstr ""
-"TCP ve UDP isteklerine bağlanmak için (virgülle ayrılmış) belirli IP "
-"adreslerini girebilirsiniz. Bu seçenek birden çok kez belirtilebilir. Hiçbir "
-"IP belirtilmemişse INADDR_ANY olarak bağlanacaktır. IPv6 etkinse otomatik "
-"olarak 127.0.0.1 1 listesine eklenecektir."
+"TCP ve UDP isteklerine bağlanmak için (virgülle ayrılmış) belli IP "
+"adreslerini belirler. Bu seçenek birden çok kez belirtilebilir. Hiçbir IP "
+"belirtilmemişse, INADDR_ANY olarak bağlanacak. Otomatik olarak 127.0.0.1 "
+"ekleyecek ve IPv6 etkinleştirilirse, listeye ::1 ekleyecek."
 
 #: services/models.py:307
 msgid "mountd(8) bind port"
-msgstr "mountd(8) bağlantı noktası"
+msgstr "mountd(8) bağlama bağlantı noktası"
 
 #: services/models.py:324
 msgid ""
 "This option forces the rpc.statd daemon to bind to the specified port, for "
 "both IPv4 and IPv6 address families."
 msgstr ""
-"Bu seçenek IPv4 ve IPv6 adres ailelerinin belirtilen bağlantı noktasına "
-"bağlamak için rpc.statd artalan sürecini çalışmaya zorlar."
+"Bu seçenek her iki IPv4 ve IPv6 adres aileleri için belirtilen bağlantı "
+"noktasına rpc.statd geri plan yordamını bağlamaya zorlar."
 
 #: services/models.py:861
 msgid ""
 "A host name alias. This option can appear multiple times, for each domain "
 "that has the same IP. Use a comma to separate multiple alias names."
 msgstr ""
-"Bir ana bilgisayar takma adı. Bu seçenek aynı IP varsa her etki alanı için "
-"birden çok kez görünebilir. Birden fazla takma adları ayırmak için virgül "
-"kullanın."
+"Anamakine takma adı. Bu seçenek aynı IP'ye sahip her etki alanı için birden "
+"çok kez görünebilir. Birden fazla takma adları ayırmak için virgül kullanın."
 
 #: services/models.py:888
 msgid "These parameters will be added to global settings in inadyn-mt.conf."
-msgstr "Bu seçenekler inadyn-mt.conf dosyasındaki genel ayarlara eklenecektir."
+msgstr ""
+"Bu parametreler inadyn-mt.conf dosyasındaki genel ayarlara eklenecektir."
 
 #: services/models.py:950
 msgid "Master"
-msgstr "Birincil"
+msgstr "Asıl"
 
 #: services/models.py:951
 msgid "Slave"
-msgstr "İkincil"
+msgstr "Bağımlı"
 
 #: services/models.py:1102
 msgid "Display Login"
-msgstr "Girişi Göster"
+msgstr "Oturum Açma Bilgilerini Görüntüle"
 
 #: services/models.py:1121
 msgid ""
 "Use this option to override the directory creation mask (077 by default)."
 msgstr ""
 "Dizin oluşturma maskesini geçersiz kılmak için bu seçeneği kullanın ("
-"varsayılan 0777)."
+"varsayılan 077)."
 
 #: services/models.py:1210
 msgid "TLS allow per user"
@@ -8485,7 +8490,7 @@ msgstr "9600"
 
 #: choices.py:701
 msgid "auth+data"
-msgstr "onay+veri"
+msgstr "yetki+veri"
 
 #: account/forms.py:561
 msgid "Home directory must end with username"
@@ -8561,9 +8566,10 @@ msgid ""
 "ip addresses instead. An example place where hostname lookups are currently "
 "used is when checking the hosts deny and hosts allow."
 msgstr ""
-"Pahalı ana bilgisayar adı veya IP adresi aramaları yerine Samba "
-"kullanılmalıdır. Örneğin ana bilgisayar adı aramaları şu anda kullanılan "
-"yerlerde ana kontrol ve ana bilgisayar durumunu reddeder."
+"Samba'nın (pahalı) anamakine adı aramalarını kullanıp kullanmamasını ya da "
+"bunun yerine IP adresi kullanıp kullanmamasını belirler. Reddedilen "
+"anamakineler ve izin verilen anamakineler kontrol edildiğinde anamakine adı "
+"aramalarının şu anda kullanıldığı yer bir örnektir."
 
 #: services/models.py:312
 msgid ""
@@ -8571,29 +8577,30 @@ msgid ""
 "families. This is typically done to ensure that the port which mountd binds "
 "to is a known value which can be used in firewall rulesets."
 msgstr ""
-"IPv4 ve IPv6 adres aileleri için belirtilen bağlantı noktasına mountd "
-"gereklidir. Bu genellikle mountd bağlantı noktası için güvenlik duvarı "
-"kurallarını kullanabilecek diğer bağlantıları sağlamak için yapılır."
+"Her iki IPv4 ve IPv6 adres aileleri için belirtilen bağlantı noktasına "
+"mountd bağlamaya zorlar. Bu genellikle güvenlik duvarı kurallar gurubunda "
+"kullanılabilen bilinen bir değere mountd bağlayan bağlantı noktasını "
+"garantilemek için yapılır."
 
 #: services/models.py:319
 msgid "rpc.statd(8) bind port"
-msgstr "rpc.statd(8) bağlama noktası"
+msgstr "rpc.statd(8) bağlama bağlantı noktası"
 
 #: services/models.py:329
 msgid "rpc.lockd(8) bind port"
-msgstr "rpc.lockd(8) bağlantı noktası"
+msgstr "rpc.lockd(8) bağlama bağlantı noktası"
 
 #: services/models.py:334
 msgid ""
 "This option forces rpc.lockd the daemon to bind to the specified port, for "
 "both IPv4 and IPv6 address families."
 msgstr ""
-"Bu seçenek IPv4 ve IPv6 adres ailelerinin belirtilen bağlantı noktasına "
-"bağlamak için rpc.lockd artalan sürecini çalışmaya zorlar."
+"Bu seçenek her iki IPv4 ve IPv6 adres aileleri için belirtilen bağlantı "
+"noktasına rpc.lockd geri plan yordamını bağlamaya zorlar."
 
 #: services/models.py:953
 msgid "UPS Mode"
-msgstr "UPS Biçimi"
+msgstr "UPS Kipi"
 
 #: services/models.py:1020
 msgid "Monitor Password"
@@ -8601,7 +8608,7 @@ msgstr "İzleyici Parolası"
 
 #: services/models.py:1139
 msgid "Perform Reverse DNS Lookups"
-msgstr "Ters DNS Aramaları Gerçekleştirmek"
+msgstr "Ters DNS Aramaları yap"
 
 #: services/models.py:1206
 msgid "TLS allow dot login"
@@ -8958,46 +8965,40 @@ msgstr "Kanal"
 
 #: network/models.py:77
 msgid "HTTP Proxy"
-msgstr ""
+msgstr "HTTP Proksi"
 
 #: network/nav.py:17
 #: templates/network/index.html:14
 msgid "IPMI"
-msgstr ""
+msgstr "IPMI"
 
 #: network/views.py:66
-#, fuzzy
 msgid "IPMI successfully edited"
-msgstr "başarıyla düzenlendi"
+msgstr "IPMI başarılı olarak düzenlendi"
 
 #: network/views.py:68
 msgid "IPMI failed"
-msgstr ""
+msgstr "IPMI başarısız oldu"
 
 #: plugins/admin.py:73
-#, fuzzy
 msgid "Install plugin"
-msgstr "Eklenti Yükle"
+msgstr "Eklentiyi yükle"
 
 #: plugins/models.py:129
-#, fuzzy
 msgid "jail not found"
-msgstr "Sayfa Bulunamadı"
+msgstr "Kafes bulunamadı"
 
 #: services/forms.py:220
-#, fuzzy
 msgid "This path does not exist."
-msgstr "%s yolu mevcut değil"
+msgstr "Bu yol mevcut değil."
 
 #: services/forms.py:222
-#, fuzzy
 msgid "This path is not a directory."
 msgstr "Bu yol bir dizin değil."
 
 #: services/forms.py:754
-#, fuzzy
 msgid "Confirm Domain Account Password"
-msgstr "Yönetci parolasını onayla"
+msgstr "Etki Alanı Hesabı Parolasını Onaylayın"
 
 #: services/forms.py:758
 #: services/models.py:1612
@@ -9006,9 +9007,8 @@ msgid "Kerberos keytab"
 msgstr "Kerberos sunucusu"
 
 #: services/forms.py:1081
-#, fuzzy
 msgid "LUN ID already exists."
-msgstr "Bu IP zaten mevcut."
+msgstr "LUN ID zaten var."
 
 #: services/models.py:109
 msgid "Use syslog"
@@ -9016,24 +9016,23 @@ msgstr ""
 
 #: services/models.py:233
 msgid "Server minimum protocol"
-msgstr ""
+msgstr "En düşük sunucu protokolü"
 
 #: services/models.py:235
 msgid "The minimum protocol version that will be supported by the server"
-msgstr ""
+msgstr "Sunucu tarafından desteklenecek olan en düşük protokol sürümü"
 
 #: services/models.py:240
 msgid "Server maximum protocol"
-msgstr ""
+msgstr "En yüksek sunucu protokolü"
 
 #: services/models.py:243
 msgid "The highest protocol version that will be supported by the server"
-msgstr ""
+msgstr "Sunucu tarafından desteklenecek olan en yüksek protokol sürümü"
 
 #: services/models.py:246
-#, fuzzy
 msgid "Allow execute always"
-msgstr "Tekrarlanan GID dosyalarına izin ver"
+msgstr "Her zaman yürütmeye izin ver"
 
 #: services/models.py:248
 msgid ""
@@ -9047,10 +9046,20 @@ msgid ""
 "does not check execute permissions on \"open for execution\", thus re-"
 "establishing the behaviour of Samba 3.6 "
 msgstr ""
+"Bu boolean parametresi, bir Windows istemcisinden gelen \"çalıştırmak için "
+"aç\" protokol isteği aldığında smbd(8) davranışını denetler. Samba 3.6 ve "
+"daha eskisi ile ACL içindeki çalıştırma hakkı kontrol edilmezdi, bu yüzden "
+"bir istemci dosya üzerinde çalıştırma hakkına sahip olmasa bile dosyayı "
+"çalıştırabilirdi. Samba 4.0'da, bu düzeltildi, böylece bu varsayılandır, "
+"örn. bu parametre \"False\" olarak ayarlandığında, çalıştırma izinleri "
+"mevcut olmadığında \"çalıştırmak için aç\" artık reddedilir. Eğer parametre "
+"\"True\" olarak ayarlanırsa, Samba \"çalıştırmak için aç\" üzerinde "
+"çalıştırma izinlerini kontrol etmez, böylelikle Samba 3.6'nın davranışı "
+"yeniden kurulur "
 
 #: services/models.py:334
 msgid "Serve UDP NFS clients"
-msgstr ""
+msgstr "UDP NFS istemcilere hizmet et"
 
 #: services/models.py:418
 msgid "Enable multithreaded mode"
@@ -9058,12 +9067,11 @@ msgstr ""
 
 #: services/models.py:874
 msgid "LUN ID"
-msgstr ""
+msgstr "LUN ID"
 
 #: services/models.py:914
-#, fuzzy
 msgid "IP Server"
-msgstr "NTP Sunucu"
+msgstr "IP Sunucusu"
 
 #: services/models.py:916
 msgid ""
@@ -9596,9 +9604,8 @@ msgid "Network connectivity will be interrupted"
 msgstr ""
 
 #: services/models.py:117
-#, fuzzy
 msgid "Domain logons"
-msgstr "Alan adı"
+msgstr "Etki alanı oturum açma bilgileri"
 
 #: network/admin.py:66
 msgid "Network connectivity will be interrupted. Do you want to proceed?"
@@ -9610,7 +9617,7 @@ msgstr ""
 
 #: services/forms.py:1381
 msgid "Extent name must be unique."
-msgstr "Extent ismi benzersiz olmalı."
+msgstr "Kapsam adı benzersiz olmak zorundadır."
 
 #: services/models.py:414
 msgid "Enable experimental target"
@@ -9626,15 +9633,15 @@ msgstr ""
 
 #: directoryservice/forms.py:104
 msgid "NT4 failed to reload."
-msgstr "NT4 yeniden yükleme başarısız."
+msgstr "NT4 yeniden yükleme başarısız oldu."
 
 #: directoryservice/forms.py:222
 msgid "Active Directory failed to reload."
-msgstr "Active Directory'yi yeniden yükleme başarısız."
+msgstr "Active Directory'yi yeniden yükleme başarısız oldu."
 
 #: directoryservice/forms.py:316
 msgid "LDAP failed to reload."
-msgstr "LDAP yeniden yükleme başarısız."
+msgstr "LDAP yeniden yükleme başarısız oldu."
 
 #: directoryservice/models.py:67
 #: directoryservice/models.py:197
@@ -9653,9 +9660,8 @@ msgstr "Bağlama parolası"
 
 #: services/forms.py:753
 #: services/forms.py:896
-#, fuzzy
 msgid "Certificate"
-msgstr "SSL sertifikası"
+msgstr "Sertifika"
 
 #: services/forms.py:864
 #, fuzzy
@@ -9730,7 +9736,7 @@ msgstr "Silmek istediğinizden emin misiniz?"
 
 #: services/models.py:256
 msgid "Obey pam restrictions"
-msgstr ""
+msgstr "Pam kısıtlamalarına uy"
 
 #: services/models.py:258
 msgid ""
@@ -9920,6 +9926,9 @@ msgid ""
 "not defined, idmap_ldap will default to using the \"ldap idmap suffix\" "
 "option from smb.conf."
 msgstr ""
+"SID/uid/gid eşleme girişleri için kullanılmak üzere dizin tabanlı öneki "
+"tanımlar. Eğer tanımlanmadıysa, idmap_ldap smb.conf dosyasından gelen \"ldap "
+"idmap suffix\" seçeneğini varsayılan olarak kullanacak."
 
 #: directoryservice/models.py:268
 msgid "User DN"
@@ -9933,6 +9942,11 @@ msgid ""
 "used, and if these are also absent, an anonymous bind will be performed as "
 "last fallback."
 msgstr ""
+"Kimlik doğrulaması için kullanılacak kullanıcı DN'ini tanımlar. Kimlik "
+"doğrulayan bu kullanıcı için gizli anahtar net idmap secret ile "
+"saklanmalıdır (net(8) bakın). Eğer yoksa, ldap passdb yapılandırmasından "
+"ldap kimlik bilgileri kullanılır, ve bunlar yine yoksa, bir isimsiz bağlama "
+"son geri dönüş olarak uygulanacaktır."
 
 #: directoryservice/models.py:283
 msgid "Specifies the LDAP server to use for SID/uid/gid map entries."
@@ -10018,6 +10032,11 @@ msgid ""
 "This parameter is optional, the default is to access the AD server in the "
 "current domain to query LDAPrecords."
 msgstr ""
+"Active Directory sunucusundaki LDAP sunucusunu kullanırken, Active Directory "
+"sunucusunun eriştiği etki alanını belirlemeye bu izin verir. Bu, tek yerdeki "
+"tüm RFC 2307 kayıtları tutulurken güven ilişkilerini kullanmaya izin verir. "
+"Bu parametre isteğe bağlıdır, varsayılan, LDAP kayıtlarını sorgulamak için "
+"şu anki etki alanı içindeki AD sunucusuna erişmektir."
 
 #: directoryservice/models.py:383
 msgid "LDAP URL"
@@ -10041,6 +10060,10 @@ msgid ""
 "authenticating this user should be stored with net idmap secret (see net(8))"
 ". If absent, an anonymous bind will be performed."
 msgstr ""
+"Kimlik doğrulaması için kullanılacak kullanıcı DN'ini tanımlar. Kimlik "
+"doğrulayan bu kullanıcı için gizli anahtar net idmap secret ile "
+"saklanmalıdır (net(8) bakın). Eğer yoksa, isimsiz bir bağlama son geri dönüş "
+"olarak uygulanacaktır."
 
 #: directoryservice/models.py:402
 msgid "LDAP Realm"
@@ -10051,6 +10074,9 @@ msgid ""
 "Defines the realm to use in the user and group names. This is only required "
 "when using cn_realm together with a stand-alone ldap server."
 msgstr ""
+"Kullanıcı ve grup adlarında kullanmak için erişim alanını tanımlar. Bu "
+"sadece tek başına bir ldap sunucu ile birlikte cn_realm kullanılırken "
+"gerekir."
 
 #: directoryservice/models.py:413
 #: directoryservice/models.py:414
@@ -10073,6 +10099,9 @@ msgid ""
 "mappings instead of using the tdb counter. The mappings are then stored int "
 "tdb2 idmap database."
 msgstr ""
+"Bu seçenek tdb sayacı kullanmak yerine id eşlemelerini gerçekleştirmek için "
+"bir harici programı yapılandırmada kullanılablir. Bu eşlemeler o zaman int "
+"tdb2 idmap veritabanında depolanır."
 
 #: directoryservice/models.py:481
 #: directoryservice/models.py:482
@@ -10110,9 +10139,8 @@ msgid "Initial Wizard"
 msgstr "Başlatıcı"
 
 #: middleware/notifier.py:2222
-#, fuzzy
 msgid "Failed to create group %s"
-msgstr "Eklentinin güncellenemedi"
+msgstr "%s grubunu oluşturma başarısız"
 
 #: system/forms.py:256
 #, fuzzy
@@ -10231,9 +10259,8 @@ msgid "Wizard"
 msgstr "Sihirbaz"
 
 #: services/forms.py:302
-#, fuzzy
 msgid "This field is required to enable NFSv4."
-msgstr "Bu alan gereklidir."
+msgstr "NFSv4'ü etkinleştirmek için bu alan gereklidir."
 
 #: services/models.py:351
 #, fuzzy
@@ -10462,7 +10489,7 @@ msgstr "SHA512"
 
 #: directoryservice/forms.py:406
 msgid "NIS failed to reload."
-msgstr "NIS yeniden yükleme başarısız."
+msgstr "NIS yeniden yükleme başarısız oldu."
 
 #: api/resources.py:2488
 msgid "On Reboot"
@@ -10504,40 +10531,35 @@ msgstr ""
 
 #: directoryservice/models.py:1049
 msgid "Idmap Backend"
-msgstr ""
+msgstr "Idmap Arka Ucu"
 
 #: directoryservice/models.py:1056
 msgid "Samba Schema"
-msgstr ""
+msgstr "Samba Şeması"
 
 #: jails/forms.py:92
-#, fuzzy
 msgid "Template"
-msgstr "Şablonlar"
+msgstr "Şablon"
 
 #: jails/views.py:492
-#, fuzzy
 msgid "Jail Template successfully created."
-msgstr "Kafes şablonu başarıyla düzenlendi."
+msgstr "Kafes Şablonu başarılı olarak oluşturuldu."
 
 #: jails/views.py:512
-#, fuzzy
 msgid "Jail Template successfully edited."
-msgstr "Kafes şablonu başarıyla düzenlendi."
+msgstr "Kafes Şablonu başarılı olarak düzenlendi."
 
 #: services/forms.py:1541
-#, fuzzy
 msgid "Confirm WebDAV Password"
-msgstr "Yeni Parolayı Onaylayın:"
+msgstr "WebDAV Parolasını Onaylayın"
 
 #: services/forms.py:1607
 msgid "The HTTP and HTTPS ports cannot be the same!"
-msgstr ""
+msgstr "HTTP ve HTTPS bağlantı noktaları aynı olamaz!"
 
 #: services/forms.py:1628
-#, fuzzy
 msgid "The WebDAV service failed to reload."
-msgstr "AFP hizmeti tekrar yüklenemedi."
+msgstr "WebDAV hizmetini yeniden yükleme başarısız oldu."
 
 #: services/models.py:325
 #, fuzzy
@@ -11125,16 +11147,17 @@ msgid ""
 "This parameter is designed to control how Winbind retrieves Name Service "
 "Information to construct a user's home directory and login"
 msgstr ""
+"Bu parametre, bir kullanıcının giriş dizinini ve oturum açma bilgisini inşaa "
+"etmek için Winbind'ın Ad Hizmeti Bilgilerini nasıl aldığını denetlemek için "
+"tasarlandı."
 
 #: jails/models.py:359
-#, fuzzy
 msgid "IPv4 DHCP"
-msgstr "DHCP"
+msgstr "IPv4 DHCP"
 
 #: jails/models.py:383
-#, fuzzy
 msgid "IPv6 Autoconfigure"
-msgstr "IPv6 otomatik yapılandır"
+msgstr "IPv6 Otomatik Yapılandırma"
 
 #: sharing/models.py:336
 msgid ""
@@ -11239,6 +11262,13 @@ msgid ""
 "key \"HKLM\\System\\CurrentControlSet\\Services\\NTDS\\Parameters\\LDAPServer"
 "Integrity\" on the Windows server side."
 msgstr ""
+"İstemci ldap sasl kaydırma, ldap trafiğinin imzalanıp imzalanmayacağını ya "
+"da hem imzalanıp hem de şifreleneceğini (mühürleneceğini) tanımlar. Bu "
+"seçenek Etki Alanı Denetleyecilerinin imzalanmış LDAP bağlantılarının (örn. "
+"Windows 2000 SP3 veya üzeri) kullanımına zorlaması durumunda gereklidir. "
+"LDAP imzası ve mührü Windows sunucusu tarafında \"HKLM\\System\\CurrentContro"
+"lSet\\Services\\NTDS\\Parameters\\LDAPServerIntegrity\" kayıt defteri "
+"anahtarı ile denetlenebilir."
 
 #: services/models.py:291
 msgid ""
@@ -11325,23 +11355,20 @@ msgid "Jail name cannot have '.'"
 msgstr "Kullanıcı adlarında boşluk olamaz"
 
 #: jails/forms.py:1070
-#, fuzzy
 msgid "The path could not be umounted %(source)s: %(error)s"
-msgstr "%(source)s yolu bağlanamadı: %(error)s"
+msgstr "Yol, %(source)s için bağlanamadı: %(error)s"
 
 #: jails/utils.py:609
-#, fuzzy
 msgid "Unable to determine IPv6 for plugin"
-msgstr "Eklenti için IPv4 belirlenemiyor"
+msgstr "Eklenti için IPv6 belirlenemiyor"
 
 #: services/forms.py:1006
-#, fuzzy
 msgid "The following addresses are not valid: %s"
-msgstr "Aşağıdaki çoklu yollar için uygun değildir: %s"
+msgstr "Şurada belirtilen adresler geçerli değil: %s"
 
 #: services/forms.py:1471
 msgid "This authentication group does not support CHAP MUTUAL"
-msgstr ""
+msgstr "Bu kimlik doğrulaması grubu KARŞILIKLI CHAP desteklemez"
 
 #: services/models.py:440
 #, fuzzy
@@ -11607,24 +11634,20 @@ msgid "Start the Verification process now?"
 msgstr ""
 
 #: directoryservice/models.py:1099
-#, fuzzy
 msgid "LDAP timeout"
-msgstr "AD zaman aşımı"
+msgstr "LDAP zaman aşımı"
 
 #: directoryservice/models.py:1100
-#, fuzzy
 msgid "Timeout for LDAP related commands."
-msgstr "AD ile ilgili komutlar için zaman aşımı."
+msgstr "LDAP ile ilgili komutlar için zaman aşımı."
 
 #: directoryservice/models.py:1105
-#, fuzzy
 msgid "Timeout for LDAP DNS queries."
-msgstr "AD DNS sorguları için zaman aşımı."
+msgstr "LDAP DNS sorguları için zaman aşımı."
 
 #: directoryservice/models.py:1108
-#, fuzzy
 msgid "These parameters are added to sssd.conf"
-msgstr "Bu parametreler ldap.conf dosyasına eklenir."
+msgstr "Bu parametreler sssd.conf dosyasına eklenir"
 
 #: services/models.py:514
 msgid "Xen initiator compat mode"
@@ -11798,99 +11821,92 @@ msgstr "Kerberos Ayarları"
 
 #: directoryservice/models.py:1140
 msgid "LDAP Schema type."
-msgstr ""
+msgstr "LDAP Şema türü."
 
 #: freeadmin/navtree.py:249
 #: templates/menubar.html:73
 msgid "Guide"
-msgstr ""
+msgstr "Rehber"
 
 #: jails/admin.py:231
 #: templates/jails/restart.html:3
-#, fuzzy
 msgid "Restart"
-msgstr "Yeniden Başlatılıyor..."
+msgstr "Yeniden Başlat"
 
 #: jails/forms.py:219
-#, fuzzy
 msgid "Jail name cannot have '.' or ' '"
-msgstr "Kullanıcı adlarında boşluk olamaz"
+msgstr "Kafes adında '.' veya ' ' olamaz"
 
 #: jails/forms.py:590
-#, fuzzy
 msgid "Jail root does not exist!"
-msgstr "Böyle bir kafes yok"
+msgstr "Kafes kökü mevcut değil!"
 
 #: jails/forms.py:1027
-#, fuzzy
 msgid ""
 "Destination must begin with an alphanumeric character and may only contain "
 "\"-\", \"_\", \":\", \" \" and \".\"."
 msgstr ""
-"Veri kümesi adları alfasayısal karakterlerle başlamalıdır ve sadece (-), (_)"
-", (:) ve (.) içerebilir."
+"Hedef alfasayısal bir karakter ile başlamak zorundadır ve sadece \"-\", \"_\""
+", \":\", \" \" ve \".\" içerebilir."
 
 #: jails/models.py:554
 msgid "mtree"
-msgstr ""
+msgstr "mtree"
 
 #: jails/models.py:555
 msgid "The mtree file for the template"
-msgstr ""
+msgstr "Şablon için mtree dosyası"
 
 #: jails/models.py:562
 msgid ""
 "If this is a system template, it will not be visible in the UI and will only "
 "be used internally."
 msgstr ""
+"Eğer bu bir sistem şablonu ise, KA içinde görünür olmayacaktır ve sadece "
+"dahili olarak kullanılabilir."
 
 #: jails/nav.py:73
-#, fuzzy
 msgid "Add Jail"
-msgstr "Kafes Ekle "
+msgstr "Kafes Ekle"
 
 #: jails/views.py:192
-#, fuzzy
 msgid "Jail successfully restarted."
-msgstr "Kafes başarıyla başlatıldı."
+msgstr "Kafes başarılı olarak yeniden başlatıldı."
 
 #: middleware/notifier.py:3791
 msgid "Failed to upload config, version newer than the current installed."
 msgstr ""
+"Yapınlandırma gönderme başarısız, sürüm şu anki yüklü olandan daha yeni."
 
 #: services/forms.py:89
 msgid "You have %d pending active iSCSI connection(s)."
-msgstr ""
+msgstr "%d bekleyen aktif iSCSI bağlantısına sahipsiniz."
 
 #: services/forms.py:654
 #: services/forms.py:662
 msgid "Incorrect usage of the # delimiter."
-msgstr ""
+msgstr "# sınırlayıcısının yanlış kullanımı."
 
 #: services/forms.py:666
 #: services/forms.py:676
-#, fuzzy
 msgid "Invalid domain name."
-msgstr "NT alan adı"
+msgstr "Geçersiz etki alanı adı."
 
 #: services/forms.py:672
 msgid "Invalid domain name or incorrect hash delimiter."
-msgstr ""
+msgstr "Geçersiz etki alanı adı ya da yanlış adresleme sınırlayıcısı."
 
 #: services/forms.py:716
-#, fuzzy
 msgid "Confirm Privacy Passphrase"
-msgstr "Parolayı onayla"
+msgstr "Özel Parolayı Onaylayın"
 
 #: services/forms.py:762
-#, fuzzy
 msgid "Password must contain at least 8 characters"
-msgstr "Adınız geçersiz karakterler içeriyor (%s)."
+msgstr "Parola en az 8 karakter içermek zorundadır"
 
 #: services/forms.py:820
-#, fuzzy
 msgid "Passphrase must contain at least 8 characters"
-msgstr "Adınız geçersiz karakterler içeriyor (%s)."
+msgstr "Parola en az 8 karakter içermek zorundadır"
 
 #: services/forms.py:976
 #, fuzzy
@@ -12653,9 +12669,8 @@ msgstr ""
 "olan dahil."
 
 #: network/forms.py:305
-#, fuzzy
 msgid "VLAN ID"
-msgstr "VLAN"
+msgstr "VLAN ID"
 
 #: sharing/forms.py:465
 #, fuzzy
@@ -12699,58 +12714,52 @@ msgstr "Şifreleme algoritması"
 
 #: directoryservice/models.py:747
 msgid "Principal name"
-msgstr "Esas adı"
+msgstr "Sorumlu adı"
 
 #: directoryservice/models.py:962
 #: directoryservice/models.py:1198
-#, fuzzy
 msgid "Kerberos Principal"
-msgstr "Kerberos sunucusu"
+msgstr "Kerberos Sorumlusu"
 
 #: network/forms.py:254
-#, fuzzy
 msgid "The following VHIDs are already in use: %s"
-msgstr "Aşağıdaki çoklu yollar için uygun değildir: %s"
+msgstr "Şurada belirtilen VHID'ler zaten kullanımda: %s"
 
 #: network/forms.py:282
-#, fuzzy
 msgid "The IP must be within the same network"
-msgstr "Klon aynı birim içinde olmalıdır"
+msgstr "IP aynı ağ içinde olmak zorundadır"
 
 #: network/forms.py:815
 msgid "Virtual IP is not in the same network"
-msgstr ""
+msgstr "Sanal IP aynı ağda değil"
 
 #: network/hook.py:72
 msgid "IPMI (Node %s)"
-msgstr ""
+msgstr "IPMI (Düğüm %s)"
 
 #: network/models.py:228
-#, fuzzy
 msgid "Virtual IP"
-msgstr "Portal IP"
+msgstr "Sanal IP"
 
 #: network/models.py:233
 msgid "Virtual Host ID"
-msgstr ""
+msgstr "Sanal Anamakine Kimliği"
 
 #: network/models.py:245
-#, fuzzy
 msgid "Critical for Failover"
-msgstr "Kritik Uyarılar"
+msgstr "Yük Devretme için Önemli"
 
 #: network/models.py:359
-#, fuzzy
 msgid "Virtual IPv4"
-msgstr "Portal IP"
+msgstr "Sanal IPv4"
 
 #: network/nav.py:45
 msgid "IPMI (Node B)"
-msgstr ""
+msgstr "IPMI (Düğüm B)"
 
 #: network/nav.py:47
 msgid "IPMI (Node A)"
-msgstr ""
+msgstr "IPMI (Düğüm A)"
 
 #: system/alertmods/mpr_firmware.py:34
 msgid ""
@@ -12760,9 +12769,8 @@ msgstr ""
 
 #: network/forms.py:320
 #: network/forms.py:324
-#, fuzzy
 msgid "This field is required for failover"
-msgstr "Bu alan anonim giriş için gereklidir."
+msgstr "Bu alan yük devretme için gereklidir"
 
 #: services/forms.py:1151
 #, fuzzy
@@ -12770,9 +12778,8 @@ msgid "Extent is already in this target."
 msgstr "Aynı hedefte bu LUN zaten mevcut."
 
 #: jails/models.py:647
-#, fuzzy
 msgid "Jail Template"
-msgstr "Kafes Şablonları"
+msgstr "Kafes Şablonu"
 
 #: services/models.py:679
 #, fuzzy
@@ -12867,7 +12874,7 @@ msgstr ""
 
 #: network/forms.py:280
 msgid "One interface must be marked critical for failover."
-msgstr ""
+msgstr "Bir arayüz yük devretme için önemli olarak işaretlenmek zorundadır."
 
 #: vcp/models.py:41
 #, fuzzy
@@ -13019,14 +13026,12 @@ msgid "Fibre Channel Ports have been successfully changed."
 msgstr "Yaptığınız değişiklikler başarıyla güncellendi!"
 
 #: directoryservice/models.py:941
-#, fuzzy
 msgid "Allow DNS updates"
-msgstr "İzin verilen liste"
+msgstr "DNS güncellemelerine izin ver"
 
 #: directoryservice/models.py:942
-#, fuzzy
 msgid "Set this if you want to allow allow DNS updates."
-msgstr "Eğer Güvenilir Etki Alanları izin vermek istiyorsanız bunu ayarlayın."
+msgstr "Eğer DNS güncellemelerine izin vermek istiyorsanız bunu ayarlayın."
 
 #: services/forms.py:1436
 msgid "File size must be a multiple of block size"
@@ -13072,11 +13077,13 @@ msgstr "Kendinden imzalı sertifika"
 
 #: network/forms.py:278
 msgid "Virtual IP is required to set it as Critical for Failover"
-msgstr ""
+msgstr "Sanal IP, Yük Devretme için Önemli olarak ayarlanması için gerekir"
 
 #: network/forms.py:295
 msgid "Failover needs to be disabled to perform network changes."
 msgstr ""
+"Yük devretme, ağ değişikliklerinin yapılmasının etkisizleştirilmesine "
+"ihtiyaç duyar."
 
 #: services/forms.py:1129
 msgid "LUN ID must be a positive integer"
@@ -13143,7 +13150,7 @@ msgstr ""
 
 #: directoryservice/models.py:953
 msgid "Disable Active Directory user/group cache"
-msgstr ""
+msgstr "Active Directory kullanıcı/grup önbelleğini etkisizleştir"
 
 #: directoryservice/models.py:954
 msgid ""
@@ -13155,7 +13162,7 @@ msgstr ""
 
 #: network/forms.py:385
 msgid "You are not allowed to delete interfaces while failover is enabled."
-msgstr ""
+msgstr "Yük devretme etkinleştirildiğinde arayüzleri silmenize izin verilmiyor."
 
 #: services/views.py:296
 msgid "Idmap Range Low"
@@ -13186,6 +13193,10 @@ msgid ""
 "Use this option if you are experiencing slowness or having difficulty "
 "binding to the domain with a large number of users and groups."
 msgstr ""
+"Eğer Active Directory kullanıcılarını ve gruplarını önbelleklemeyi "
+"etkisizleştirmek istiyorsanız bunu ayarlayın. Eğer büyük bir sayıdaki "
+"kullanıcıları ve grupları etki alanına bağlamada zorluk çekiyor ve yavaşlık "
+"yaşıyorsanız bu seçeneği kullanın."
 
 #: system/forms.py:2081
 #, fuzzy
@@ -13234,9 +13245,8 @@ msgid ""
 msgstr ""
 
 #: jails/forms.py:225
-#, fuzzy
 msgid "Jail name may contain only alphanumeric characters and underscore."
-msgstr "Konum yalnızca alfasayısal karakterler, _ veya - olabilir."
+msgstr "Kafes adı sadece alfasayısal karakterler ve altçizgi içerebilir."
 
 #: services/forms.py:266
 #, fuzzy
@@ -13264,3 +13274,8 @@ msgid ""
 "working recovery keys, check logs files and correct the error as it may "
 "result to data loss."
 msgstr ""
+
+#: storage/admin.py:138
+#, fuzzy
+msgid "Readonly"
+msgstr "Salt-okunur"

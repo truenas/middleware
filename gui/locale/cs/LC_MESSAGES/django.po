@@ -13003,3 +13003,8 @@ msgstr ""
 "Šifrovanému svazku se nepodařilo znovu opatřit některé disky klíčem. Ověřte, "
 "že máte funkční obnovovací klíče, nahlédněte do souborů se záznamem událostí "
 "a nalezené chyby opravte, protože by mohly vést ke ztrátě dat."
+
+#: storage/admin.py:138
+#, fuzzy
+msgid "Readonly"
+msgstr "Pouze čtení"
