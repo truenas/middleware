@@ -204,7 +204,9 @@ class AlertPlugins:
                         'lastrun'
                     ) > time.time() - (instance.interval * 60):
                         if results.get(instance.name).get('alerts'):
-                            rvs.extend(results.get(instance.name).get('alerts'))
+                            for alert in results.get(instance.name).get('alerts'):
+                                ids.append(alert.getId())
+                                rvs.append(alert)
                         continue
                 rv = instance.run()
                 if rv:
