@@ -909,6 +909,11 @@ class VolumeResourceMixin(NestedMixin):
                     {},
                 ).get('compressratio', ('', '-'))[1]
 
+		data['comments'] = self.__zfsopts.get(
+                    child.path,
+                    {},
+                ).get('volume_entity:comments', ('', '-'))[1]
+
                 data['used'] = "%s (%s%%)" % (
                     humanize_size(data['used']),
                     data['used_pct'],
@@ -993,7 +998,7 @@ class VolumeResourceMixin(NestedMixin):
         if self.is_webclient(request):
             self.__zfsopts = notifier().zfs_get_options(
                 recursive=True,
-                props=['compression', 'compressratio'],
+                props=['compression', 'compressratio', 'volume_entity:comments'],
             )
         self._uid = Uid(100)
         return super(VolumeResourceMixin, self).dispatch_list(

@@ -387,6 +387,7 @@ def dataset_create(request, fs):
             props['casesensitivity'] = cleaned_data.get(
                 'dataset_case_sensitivity'
             )
+	    dataset_comments = cleaned_data.get('dataset_comments')
             props['compression'] = dataset_compression.__str__()
             dataset_atime = cleaned_data.get('dataset_atime')
             props['atime'] = dataset_atime.__str__()
@@ -411,6 +412,7 @@ def dataset_create(request, fs):
             errno, errmsg = notifier().create_zfs_dataset(
                 path=str(dataset_name),
                 props=props)
+	    notifier().zfs_set_option(name = str(dataset_name),item = "volume_entity:comments",value = dataset_comments)
             if errno == 0:
                 if dataset_share_type == "unix":
                     notifier().dataset_init_unix(dataset_name)
@@ -510,6 +512,7 @@ def zvol_create(request, parent):
             zvol_name = "%s/%s" % (parent, cleaned_data.get('zvol_name'))
             zvol_compression = cleaned_data.get('zvol_compression')
             props['compression'] = str(zvol_compression)
+	    zvol_comments = cleaned_data.get('zvol_comments')
             if zvol_blocksize:
                 props['volblocksize'] = zvol_blocksize
             errno, errmsg = notifier().create_zfs_vol(
@@ -517,6 +520,7 @@ def zvol_create(request, parent):
                 size=str(zvol_size),
                 sparse=cleaned_data.get("zvol_sparse", False),
                 props=props)
+	    notifier().zfs_set_option(name = str(zvol_name),item = "volume_entity:comments",value = zvol_comments)
             if errno == 0:
                 return JsonResp(
                     request,
