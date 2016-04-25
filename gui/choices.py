@@ -348,7 +348,6 @@ class NICChoices(object):
     """Populate a list of NIC choices"""
     def __init__(self, nolagg=False, novlan=False,
                  exclude_configured=True, include_vlan_parent=False,
-                 exclude_unconfigured_vlan_parent=False,
                  with_alias=False, nobridge=True, noepair=True):
         pipe = popen("/sbin/ifconfig -l")
         self._NIClist = pipe.read().strip().split(' ')
@@ -395,7 +394,7 @@ class NICChoices(object):
             # The exception to this case is when we are getting the NIC
             # list for the GUI, in which case we want the vlan parents
             # as they may have a valid config on them.
-            if not include_vlan_parent or exclude_unconfigured_vlan_parent:
+            if not include_vlan_parent:
                 try:
                     c.execute("SELECT vlan_pint FROM network_vlan")
                 except sqlite3.OperationalError:
@@ -404,23 +403,6 @@ class NICChoices(object):
                     for interface in c:
                         if interface[0] in self._NIClist:
                             self._NIClist.remove(interface[0])
-
-            if exclude_unconfigured_vlan_parent:
-            # Add the configured VLAN parents back in
-                try:
-                    c.execute("SELECT vlan_pint FROM network_vlan "
-                              "INNER JOIN network_interfaces ON "
-                              "network_vlan.vlan_pint=network_interfaces.int_interface "
-                              "WHERE network_interfaces.int_interface IS NOT NULL "
-                              "AND ((network_interfaces.int_ipv4address != '' "
-                              "AND network_interfaces.int_ipv4address IS NOT NULL) "
-                              "OR network_interfaces.int_dhcp = 1)")
-                except sqlite3.OperationalError:
-                    pass
-                else:
-                    for interface in c:
-                        if interface[0] not in self._NIClist:
-                            self._NIClist.append(interface[0])
 
         if with_alias:
             try:
