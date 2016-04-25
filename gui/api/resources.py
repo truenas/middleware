@@ -223,6 +223,12 @@ class DiskResourceMixin(object):
         )
         allowed_methods = ['get', 'put']
 
+    def obj_update(self, bundle, skip_errors=False, **kwargs):
+        try:
+            return super(DiskResourceMixin, self).obj_update(bundle, skip_errors=skip_errors, **kwargs)
+        except:
+            raise ImmediateHttpResponse(response=HttpNotFound())
+
     def dehydrate(self, bundle):
         bundle = super(DiskResourceMixin, self).dehydrate(bundle)
         if self.is_webclient(bundle.request):
