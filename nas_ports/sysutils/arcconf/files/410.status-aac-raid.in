@@ -1,0 +1,30 @@
+#!/bin/sh
+ 
+if [ -r /etc/defaults/periodic.conf ]
+then
+    . /etc/defaults/periodic.conf
+    source_periodic_confs
+fi
+ 
+case "$daily_status_aac_raid_enable" in
+    [Yy][Ee][Ss])
+        echo
+        echo 'Checking status of Adaptec RAID:'
+ 
+        rc=0
+        arcconf=/usr/local/sbin/arcconf
+        tmpfile=`mktemp -q /tmp/aac-raid.XXXXXX`
+        $arcconf GETCONFIG 1 AD | tee $tmpfile
+        control_ok=`grep -i -c 'Controller Status.*Optimal' $tmpfile`
+        $arcconf GETCONFIG 1 LD | tee $tmpfile
+        volume_ok=`grep -i -c 'Status of logical device.*Optimal' $tmpfile`
+        rm $tmpfile
+        if [ $control_ok -eq 0 -o $volume_ok -eq 0 ]; then
+            rc=3
+        fi
+        ;;
+ 
+    *)  rc=0;;
+esac
+ 
+exit $rc
