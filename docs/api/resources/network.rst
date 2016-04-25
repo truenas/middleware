@@ -157,7 +157,7 @@ List resource
       ]
 
    :query offset: offset number. default is 0
-   :query limit: limit number. default is 30
+   :query limit: limit number. default is 20
    :resheader Content-Type: content type of the response
    :statuscode 200: no error
 
@@ -346,7 +346,7 @@ List resource
       ]
 
    :query offset: offset number. default is 0
-   :query limit: limit number. default is 30
+   :query limit: limit number. default is 20
    :resheader Content-Type: content type of the response
    :statuscode 200: no error
 
@@ -500,7 +500,7 @@ List resource
       ]
 
    :query offset: offset number. default is 0
-   :query limit: limit number. default is 30
+   :query limit: limit number. default is 20
    :resheader Content-Type: content type of the response
    :statuscode 200: no error
 
@@ -603,7 +603,7 @@ List resource
       ]
 
    :query offset: offset number. default is 0
-   :query limit: limit number. default is 30
+   :query limit: limit number. default is 20
    :resheader Content-Type: content type of the response
    :statuscode 200: no error
 

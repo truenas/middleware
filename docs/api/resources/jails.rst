@@ -45,7 +45,7 @@ List resource
         }
 
    :query offset: offset number. default is 0
-   :query limit: limit number. default is 30
+   :query limit: limit number. default is 20
    :resheader Content-Type: content type of the response
    :statuscode 200: no error
 
@@ -97,7 +97,7 @@ Update resource
    :json string jc_ipv6_network_end: IPv6 network end address for jails and plugins
    :json string jc_path: dataset the jails will reside within
    :query offset: offset number. default is 0
-   :query limit: limit number. default is 30
+   :query limit: limit number. default is 20
    :resheader Content-Type: content type of the response
    :statuscode 200: no error
 
@@ -158,7 +158,7 @@ List resource
       ]
 
    :query offset: offset number. default is 0
-   :query limit: limit number. default is 30
+   :query limit: limit number. default is 20
    :resheader Content-Type: content type of the response
    :statuscode 200: no error
 
@@ -393,7 +393,7 @@ List resource
       ]
 
    :query offset: offset number. default is 0
-   :query limit: limit number. default is 30
+   :query limit: limit number. default is 20
    :resheader Content-Type: content type of the response
    :statuscode 200: no error
 
@@ -555,7 +555,7 @@ List resource
       ]
 
    :query offset: offset number. default is 0
-   :query limit: limit number. default is 30
+   :query limit: limit number. default is 20
    :resheader Content-Type: content type of the response
    :statuscode 200: no error
 
