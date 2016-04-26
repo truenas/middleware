@@ -3879,9 +3879,9 @@ class notifier:
         item = str(item)
         value = str(value)
         if recursive:
-            zfsproc = self._pipeopen("zfs set -r '%s'='%s' '%s'" % (item, value, name))
+            zfsproc = self._pipeopen("/sbin/zfs set -r '%s'='%s' '%s'" % (item, value, name))
         else:
-            zfsproc = self._pipeopen("zfs set '%s'='%s' '%s'" % (item, value, name))
+            zfsproc = self._pipeopen("/sbin/zfs set '%s'='%s' '%s'" % (item, value, name))
         err = zfsproc.communicate()[1]
         if zfsproc.returncode == 0:
             return True, None
