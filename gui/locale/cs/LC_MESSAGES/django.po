@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:07-0700\n"
-"PO-Revision-Date: 2016-04-22 07:36+0000\n"
+"PO-Revision-Date: 2016-04-25 19:02+0000\n"
 "Last-Translator: pavelb <pavel.borecki@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: cs\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1461310598.0\n"
+"X-POOTLE-MTIME: 1461610958.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -13005,6 +13005,5 @@ msgstr ""
 "a nalezené chyby opravte, protože by mohly vést ke ztrátě dat."
 
 #: storage/admin.py:138
-#, fuzzy
 msgid "Readonly"
-msgstr "Pouze čtení"
+msgstr "Pouze pro čtení"
