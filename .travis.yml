@@ -1,0 +1,15 @@
+language: python
+python:
+    - 2.7
+notifications:
+    email: false
+
+install:
+    - pip install pep8
+
+script:
+    # Run pep8 on all .py files in all subfolders
+    # We must ignore E402 module level import not at top of file
+    # because of use case sys.path.append('..'); import <module>
+    - num_errors_before=`find gui -name \*.py -exec pep8 --ignore=E402 {} + | wc -l`
+    - echo $num_errors_before
