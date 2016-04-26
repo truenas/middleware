@@ -1934,6 +1934,11 @@ class CloneSnapshotForm(Form):
 
 class ZFSDiskReplacementForm(Form):
 
+    force = forms.BooleanField(
+        label=_("Force"),
+        required=False,
+        widget=forms.widgets.HiddenInput(),
+    )
     replace_disk = forms.ChoiceField(
         choices=(),
         widget=forms.Select(attrs=attrs_dict),
@@ -1947,6 +1952,12 @@ class ZFSDiskReplacementForm(Form):
             disk = self.label
         self.disk = disk
         super(ZFSDiskReplacementForm, self).__init__(*args, **kwargs)
+
+        if self.data:
+            devname = self.data.get('replace_disk')
+            if devname:
+                if not notifier().disk_check_clean(devname):
+                    self.fields['force'].widget = forms.widgets.CheckboxInput()
         if self.volume.vol_encrypt == 2:
             self.fields['pass'] = forms.CharField(
                 label=_("Passphrase"),
@@ -2003,6 +2014,17 @@ class ZFSDiskReplacementForm(Form):
         ))
         return choices
 
+    def clean_replace_disk(self):
+        devname = self.cleaned_data.get('replace_disk')
+        force = self.cleaned_data.get('force')
+        if not devname:
+            return devname
+        if not force and not notifier().disk_check_clean(devname):
+            self._errors['force'] = self.error_class([_(
+                "Disk is not clear, partitions or ZFS labels were found."
+            )])
+        return devname
+
     def clean_pass2(self):
         passphrase = self.cleaned_data.get("pass")
         passphrase2 = self.cleaned_data.get("pass2")
@@ -2038,6 +2060,7 @@ class ZFSDiskReplacementForm(Form):
                     self.volume,
                     self.label,
                     devname,
+                    force=self.cleaned_data.get('force'),
                     passphrase=passfile
                 )
             else:
@@ -2045,6 +2068,7 @@ class ZFSDiskReplacementForm(Form):
                     self.volume,
                     self.label,
                     self.disk,
+                    force=self.cleaned_data.get('force'),
                     passphrase=passfile
                 )
         if rv == 0:

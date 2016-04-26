@@ -1786,7 +1786,7 @@ class notifier:
         assert volume.vol_fstype == 'ZFS'
         self.__create_zfs_volume(volume, swapsize, kwargs.pop('groups', False), kwargs.pop('path', None), init_rand=kwargs.pop('init_rand', False))
 
-    def zfs_replace_disk(self, volume, from_label, to_disk, passphrase=None):
+    def zfs_replace_disk(self, volume, from_label, to_disk, force=False, passphrase=None):
         """Replace disk in zfs called `from_label` to `to_disk`"""
         from freenasUI.storage.models import Disk, EncryptedDisk
         swapsize = self.get_swapsize()
@@ -1857,7 +1857,7 @@ class notifier:
             if ret == 256:
                 ret = self._system_nolog('/sbin/zpool scrub %s' % (volume.vol_name))
         else:
-            p1 = self._pipeopen('/sbin/zpool replace %s %s %s' % (volume.vol_name, from_label, devname))
+            p1 = self._pipeopen('/sbin/zpool replace %s%s %s %s' % ('-f ' if force else '', volume.vol_name, from_label, devname))
             stdout, stderr = p1.communicate()
             ret = p1.returncode
             if ret == 0:
@@ -3488,6 +3488,13 @@ class notifier:
         if p1.returncode == 0:
             return True, ''
         return False, err
+
+    def disk_check_clean(self, disk):
+        doc = self._geom_confxml()
+        search = doc.xpath("//class[name = 'PART']/..//*[name = '%s']" % disk)
+        if len(search) > 0:
+            return False
+        return True
 
     def detect_volumes(self, extra=None):
         """
