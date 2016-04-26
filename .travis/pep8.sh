@@ -5,7 +5,7 @@ set -x
 # Run pep8 on all .py files in all subfolders
 # We must ignore E402 module level import not at top of file
 # because of use case sys.path.append('..'); import <module>
-branch=$(git rev-parse --abbrev-ref HEAD)
+branch=$(git symbolic-ref --short HEAD)
 git checkout ${branch}~
 
 tmpbefore=$(mktemp)
