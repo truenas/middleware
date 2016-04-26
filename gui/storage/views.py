@@ -408,9 +408,11 @@ def dataset_create(request, fs):
             recordsize = cleaned_data.get('dataset_recordsize')
             if recordsize:
                 props['recordsize'] = recordsize
+            dataset_comments = cleaned_data.get('dataset_comments')
             errno, errmsg = notifier().create_zfs_dataset(
                 path=str(dataset_name),
                 props=props)
+            notifier().zfs_set_option(name = str(dataset_name),item = "storage:comments",value = dataset_comments)
             if errno == 0:
                 if dataset_share_type == "unix":
                     notifier().dataset_init_unix(dataset_name)
@@ -505,6 +507,7 @@ def zvol_create(request, parent):
         if zvol_form.is_valid():
             props = {}
             cleaned_data = zvol_form.cleaned_data
+            zvol_comments = cleaned_data.get('zvol_comments')
             zvol_size = cleaned_data.get('zvol_size')
             zvol_blocksize = cleaned_data.get("zvol_blocksize")
             zvol_name = "%s/%s" % (parent, cleaned_data.get('zvol_name'))
@@ -517,6 +520,7 @@ def zvol_create(request, parent):
                 size=str(zvol_size),
                 sparse=cleaned_data.get("zvol_sparse", False),
                 props=props)
+            notifier().zfs_set_option(name = str(zvol_name),item = "storage:comments",value = zvol_comments)
             if errno == 0:
                 return JsonResp(
                     request,

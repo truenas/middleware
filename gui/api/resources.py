@@ -915,6 +915,11 @@ class VolumeResourceMixin(NestedMixin):
                 )
                 data['avail'] = humanize_size(data['avail'])
 
+                data['comments'] = self.__zfsopts.get(
+                    child.path,
+                    {},
+                ).get('storage:comments', ('', '-'))[1]
+
             if self.is_webclient(bundle.request):
                 data['_add_zfs_volume_url'] = reverse(
                     'storage_zvol',
@@ -993,7 +998,7 @@ class VolumeResourceMixin(NestedMixin):
         if self.is_webclient(request):
             self.__zfsopts = notifier().zfs_get_options(
                 recursive=True,
-                props=['compression', 'compressratio'],
+                props=['compression', 'compressratio', 'storage:comments'],
             )
         self._uid = Uid(100)
         return super(VolumeResourceMixin, self).dispatch_list(
