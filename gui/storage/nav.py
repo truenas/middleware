@@ -1,5 +1,6 @@
-from freenasUI.freeadmin.tree import TreeNode
 from django.utils.translation import ugettext_lazy as _
+from freenasUI.freeadmin.tree import TreeNode
+from freenasUI.middleware.notifier import notifier
 import models
 
 NAME = _('Storage')
@@ -74,6 +75,18 @@ class ViewDisks(TreeNode):
     gname = 'ViewDisks'
     name = _(u'View Disks')
     view = 'freeadmin_storage_disk_datagrid'
+    type = 'view'
+    icon = u'ViewAllVolumesIcon'
+    app_name = 'storage'
+    model = 'Disk'
+    skip = True
+
+
+class ViewEnclosure(TreeNode):
+
+    gname = 'ViewEnclosure'
+    name = _(u'View Enclosure')
+    view = 'storage_enclosure_status'
     type = 'view'
     icon = u'ViewAllVolumesIcon'
     app_name = 'storage'
@@ -192,6 +205,9 @@ class Volumes(TreeNode):
             ViewVolumes(),
             ViewDisks(),
         ])
+
+        if not notifier().is_freenas():
+            self.append_child(ViewEnclosure())
 
         has_multipath = models.Disk.objects.exclude(
             disk_multipath_name=''
