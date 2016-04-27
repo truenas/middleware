@@ -412,7 +412,7 @@ def dataset_create(request, fs):
             errno, errmsg = notifier().create_zfs_dataset(
                 path=str(dataset_name),
                 props=props)
-            notifier().zfs_set_option(name = str(dataset_name),item = "org.freenas:description",value = dataset_comments)
+            notifier().zfs_set_option(name=str(dataset_name),item="org.freenas:description",value=dataset_comments)
             if errno == 0:
                 if dataset_share_type == "unix":
                     notifier().dataset_init_unix(dataset_name)
@@ -520,7 +520,7 @@ def zvol_create(request, parent):
                 size=str(zvol_size),
                 sparse=cleaned_data.get("zvol_sparse", False),
                 props=props)
-            notifier().zfs_set_option(name = str(zvol_name),item = "org.freenas:description",value = zvol_comments)
+            notifier().zfs_set_option(name=str(zvol_name),item="org.freenas:description",value=zvol_comments)
             if errno == 0:
                 return JsonResp(
                     request,

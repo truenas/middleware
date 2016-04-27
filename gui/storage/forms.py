@@ -1287,8 +1287,8 @@ class ZFSDataset(Form):
         max_length=128,
         label=_('Dataset Name'))
     dataset_comments = forms.CharField(
-        max_length = 1024,
-        label = _('Comments'))
+        max_length=1024,
+        label=_('Comments'))
     dataset_compression = forms.ChoiceField(
         choices=choices.ZFS_CompressionChoices,
         widget=forms.Select(attrs=attrs_dict),
