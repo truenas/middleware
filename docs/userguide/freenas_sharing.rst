@@ -803,7 +803,7 @@ for more details.
 | fake_perms          | allows roaming profile files and directories to be set as read-only                                                                        |
 |                     |                                                                                                                                            |
 +---------------------+--------------------------------------------------------------------------------------------------------------------------------------------+
-| fruit               | enhances OS X support by providing the SMB2 AAPL extension (see NOTE below table)                                                          |
+| fruit               | enhances OS X support by providing the SMB2 AAPL extension and Netatalk interoperability (see NOTE below table)                            |
 |                     |                                                                                                                                            |
 +---------------------+--------------------------------------------------------------------------------------------------------------------------------------------+
 | full_audit          | records selected client operations to the system log                                                                                       |
@@ -877,8 +877,7 @@ for more details.
 |                     |                                                                                                                                            |
 +---------------------+--------------------------------------------------------------------------------------------------------------------------------------------+
 
-.. note:: when using "fruit", also add the "streams_xattr" and "catia" VFS objects. Also, if you enable "fruit", enable it on **all** shares as mixing shares with and without "fruit" will
-  globally disable the AAPL extensions. 
+.. note:: when using "fruit", also add the "streams_xattr" and "catia" VFS objects and be sure to configure **all** CIFS shares this way. 
 
 The following VFS objects do not appear in the drop-down menu as they are always enabled:
 
