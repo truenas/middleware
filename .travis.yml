@@ -7,6 +7,6 @@ notifications:
 install:
     - sudo apt-get -qq update
     - sudo apt-get -y install git
-    - pip install flake8
+    - pip install pep8
 
-script: .travis/flake8.sh
+script: .travis/pep8.sh

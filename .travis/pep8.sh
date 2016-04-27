@@ -7,20 +7,20 @@ set -x
 # because of use case sys.path.append('..'); import <module>
 
 tmpafter=$(mktemp)
-find gui -name \*.py -exec flake8 --ignore=E402,E501 {} + | grep -v "migrations/" > $tmpafter
+find gui -name \*.py -exec pep8 --ignore=E402,E501 {} + | grep -v "migrations/" > $tmpafter
 num_errors_after=`cat $tmpafter | wc -l`
 echo $num_errors_after
 
 git checkout HEAD~
 
 tmpbefore=$(mktemp)
-find gui -name \*.py -exec flake8 --ignore=E402,E501 {} + | grep -v "migrations/" > $tmpbefore
+find gui -name \*.py -exec pep8 --ignore=E402,E501 {} + | grep -v "migrations/" > $tmpbefore
 num_errors_before=`cat $tmpbefore | wc -l`
 echo $num_errors_before
 
 
 if [ $num_errors_after -gt $num_errors_before ]; then
-	echo "New Flake8 errors were introduced:"
+	echo "New PEP8 errors were introduced:"
 	diff -u $tmpbefore $tmpafter
 	exit 1
 fi
