@@ -63,15 +63,15 @@ class Migration(SchemaMigration):
         ))
         db.send_create_signal(u'directoryservice', ['idmap_ad'])
 
-		if 'FREENAS_INSTALL' in os.environ:
-			idmap_rid_range_low = 20000
-		else:
-			idmap_rid_range_low = 10000
+        if 'FREENAS_INSTALL' in os.environ:
+            idmap_rid_range_low = 20000
+        else:
+            idmap_rid_range_low = 10000
 
         # Adding model 'idmap_rid'
         db.create_table(u'directoryservice_idmap_rid', (
             (u'id', self.gf('django.db.models.fields.AutoField')(primary_key=True)),
-            ('idmap_rid_range_low', self.gf('django.db.models.fields.IntegerField')(default=20000)),
+            ('idmap_rid_range_low', self.gf('django.db.models.fields.IntegerField')(default=idmap_rid_range_low)),
             ('idmap_rid_range_high', self.gf('django.db.models.fields.IntegerField')(default=90000000)),
         ))
         db.send_create_signal(u'directoryservice', ['idmap_rid'])
