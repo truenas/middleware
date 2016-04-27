@@ -661,7 +661,7 @@ space is "Available", the type of "Compression", the "Compression Ratio", and th
 
 **Figure 8.1k: Viewing Volumes**
 
-.. image:: images/volume1a.png
+.. image:: images/volume1b.png
 
 If you click the entry for a pool, several buttons will appear at the bottom of the screen. In order from left to right, these buttons are used to perform the
 following:

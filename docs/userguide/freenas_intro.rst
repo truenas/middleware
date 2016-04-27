@@ -132,9 +132,9 @@ Some updates affect the user interface so this section lists any functional chan
    system looks different than the documentation, make sure that the system is fully up-to-date and apply any outstanding updates if it is not.
    
 * Samba has been updated to `4.3.6 <https://www.samba.org/samba/history/samba-4.3.6.html>`_.
-   
-* The "NFSv3 ownership model for NFSv4" checkbox has been added to :menuselection:`Services --> NFS`.
 
+* The "Readonly" column has been added to :menuselection:`Storage --> Volumes --> View Volumes` so that it is easy to visualize which are read-only replications from another server.
+   
 * The "fruit", "shell_snap", "snapper", "unityed_media", and "worm" VFS objects have been added to
   :menuselection:`Sharing --> Windows (CIFS Shares) --> Add Windows (CIFS) Share --> Advanced Mode --> VFS Objects`, while the "notify_fam" VFS object has been removed. The "recycle",
   "shadow_copy2", "zfs_space", and "zfsacl" VFS objects have been hidden from this screen as they are always enabled.
@@ -144,6 +144,8 @@ Some updates affect the user interface so this section lists any functional chan
   
 * The "SMB2_22" and "SMB2_24" protocols have been removed from the "Server minimum protocol" and "Server maximum protocol" drop-down menus :menuselection:`Services --> CIFS` as they are
   not used by any Windows products.
+  
+* The "NFSv3 ownership model for NFSv4" checkbox has been added to :menuselection:`Services --> NFS`.
 
 * :command:`iohyve` has been updated to version 0.7.5.
 
