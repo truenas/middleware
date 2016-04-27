@@ -34,6 +34,13 @@ class Migration(DataMigration):
                 else:
                     db.execute("delete from tasks_smarttest_smarttest_disks where id = %s", [row[0]])
 
+        try:
+            # Workaround failed migration leaving table behind
+            # See #14970
+            db.execute("drop table _south_new_storage_encrypteddisk")
+        except:
+            pass
+
         db.alter_column(u'storage_encrypteddisk', 'encrypted_disk_id', self.gf('django.db.models.fields.CharField')(max_length=100, null=True))
 
         rows = db.execute("select id, encrypted_disk_id from storage_encrypteddisk")
