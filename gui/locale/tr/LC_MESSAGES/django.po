@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:05-0700\n"
-"PO-Revision-Date: 2016-04-26 09:01+0000\n"
+"PO-Revision-Date: 2016-04-26 13:20+0000\n"
 "Last-Translator: BouRock <hitowerdigit@hotmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: tr\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1461661310.0\n"
+"X-POOTLE-MTIME: 1461676843.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -2857,98 +2857,97 @@ msgid ""
 "The default base Distinguished Name (DN) to use for searches, eg dc=test,"
 "dc=org"
 msgstr ""
-"Varsayılan Ayırt Edici (DN) adı aramak için kullanılabilecek yöntem: "
-"dc=test, dc=org"
+"Aramalarda kullanmak için varsayılan temel Ayırt Edici Ad (DN), örnek "
+"dc=test,dc=org"
 
 #: services/models.py:1295
 msgid "Allow Anonymous Binding"
-msgstr "Anonim kullanıcı için bağlama izni ver"
+msgstr "İsimsiz Bağlamaya izni ver"
 
 #: services/models.py:1298
 msgid "Root bind DN"
-msgstr "Root için ayırt edici (DN) bağlama"
+msgstr "Root bağlama DN"
 
 #: services/models.py:1300
 msgid ""
 "The distinguished name with which to bind to the directory server, e.g. "
 "cn=admin,dc=test,dc=org"
 msgstr ""
-"Dizin sunucusuna bağlanmak için kullanılabilecek ayırt edici adı yöntemi: "
-"örneğin cn=admin,dc=test,dc=org"
+"Dizin sunucusuna bağlanan ile ayırt edici ad, örn. cn=admin,dc=test,dc=org"
 
 #: services/models.py:1304
 msgid "Root bind password"
-msgstr "Root bağlanma parolası"
+msgstr "Root bağlama parolası"
 
 #: services/models.py:1306
 msgid "The credentials with which to bind."
-msgstr "Bağlanmak için kimlik bilgileri."
+msgstr "Bağlanan ile kimlik bilgileri."
 
 #: services/models.py:1311
 msgid "Password Encryption"
-msgstr "Parola ile şifreleme"
+msgstr "Parola Şifrelemesi"
 
 #: services/models.py:1312
 msgid "The password change protocol to use."
-msgstr "Parola değiştirme kuralını kullanmak."
+msgstr "Kullanmak için parola değiştirme protokolü."
 
 #: services/models.py:1317
 msgid "User Suffix"
-msgstr "Kullanıcı soneki"
+msgstr "Kullanıcı Soneki"
 
 #: services/models.py:1318
 msgid ""
 "This parameter specifies the suffix that is used for users when these are "
 "added to the LDAP directory, e.g. ou=Users"
 msgstr ""
-"Bu parametre LDAP dizinine eklendiğinde kullanıcılar için kullanılabilir eki "
-"belirler. Örneğin ou=Kullanıcılar"
+"Bu parametre, kullanıcılar LDAP dizinine eklendiğinde bunlar için kullanılan "
+"soneki belirler, örn. ou=Users"
 
 #: services/models.py:1323
 msgid "Group Suffix"
-msgstr "Grup soneki"
+msgstr "Grup Soneki"
 
 #: services/models.py:1324
 msgid ""
 "This parameter specifies the suffix that is used for groups when these are "
 "added to the LDAP directory, e.g. ou=Groups"
 msgstr ""
-"Bu parametre LDAP dizinine eklendiğinde gruplar için kullanılabilir eki "
-"belirler. Örneğin ou=Gruplar"
+"Bu parametre, gruplar LDAP dizinine eklendiğinde bunlar için kullanılan "
+"soneki belirler, örn. ou=Groups"
 
 #: services/models.py:1328
 msgid "Password Suffix"
-msgstr "Parola soneki"
+msgstr "Parola Soneki"
 
 #: services/models.py:1330
 msgid ""
 "This parameter specifies the suffix that is used for passwords when these "
 "are added to the LDAP directory, e.g. ou=Passwords"
 msgstr ""
-"Bu parametre LDAP dizinine eklendiğinde parolalar için kullanılabilir eki "
-"belirler. Örneğin ou=Parolalar"
+"Bu parametre, parolalar LDAP dizinine eklendiğinde bunlar için kullanılan "
+"soneki belirler, örn. ou=Passwords"
 
 #: services/models.py:1334
 msgid "Machine Suffix"
-msgstr "Bilgisayar soneki"
+msgstr "Makine Soneki"
 
 #: services/models.py:1336
 msgid ""
 "This parameter specifies the suffix that is used for machines when these are "
 "added to the LDAP directory, e.g. ou=Computers"
 msgstr ""
-"Bu parametre LDAP dizinine eklendiğinde bilgisayarlar için kullanılabilir "
-"eki belirler. Örneğin ou=Bilgisayarlar"
+"Bu parametre, makineler LDAP dizinine eklendiğinde bunlar için kullanılan "
+"soneki belirler, örn. ou=Computers"
 
 #: services/models.py:1341
 msgid "Encryption Mode"
-msgstr "Şifreleme türü"
+msgstr "Şifreleme Kipi"
 
 #: services/models.py:1342
 msgid "This parameter specifies whether to use SSL/TLS, e.g. on/off/start_tls"
 msgstr ""
-"Bu parametre SSL/TLS kullanılıp kullanılmadığını belirler. Örneğin açık/"
-"kapalı/tls_başlat"
+"Bu parametre, SSL/TLS kullanılıp kullanılmayacağını belirler, örn. "
+"on/off/start_tls"
 
 #: services/models.py:1345
 msgid "Self signed certificate"
@@ -2960,7 +2959,7 @@ msgstr "Buraya kendinden imzalı sertifika dosyasının içeriğini yerleştirin
 
 #: services/models.py:1351 sharing/models.py:81
 msgid "Auxiliary Parameters"
-msgstr "Yardımcı parametreler"
+msgstr "Yardımcı Parametreler"
 
 #: services/models.py:1353
 msgid "These parameters are added to ldap.conf."
@@ -3658,7 +3657,7 @@ msgstr "Paylaşım"
 
 #: storage/forms.py:105
 msgid "Enter positive number (optionally suffixed by K, M, G, T), or, 0"
-msgstr "Pozitif bir sayı (isteğe bağlı K, M, G, T) veya 0 girin"
+msgstr "Pozitif bir sayı (isteğe bağlı sonuna eklenen K, M, G, T) veya 0 girin"
 
 #: storage/forms.py:120
 #, python-format
@@ -7115,12 +7114,12 @@ msgstr "Güvenli kip"
 
 #: services/models.py:1612
 msgid "Cause ypbind to run in secure mode"
-msgstr "Ypbindin çalıştırılmasına güvenli biçim neden olur"
+msgstr "Güvenli kipte ypbind çalıştırılmasına neden olur"
 
 #: services/models.py:1625
 #: services/models.py:1626
 msgid "NIS Domain"
-msgstr "NIS alanı"
+msgstr "NIS Etki Alanı"
 
 #: services/models.py:1868
 msgid "Informational"
@@ -7915,7 +7914,8 @@ msgstr ""
 "Root olmayan bağlama isteklerinin hizmet olarak verilmesine izin verir. "
 "Sadece bunu gerektiren istemciler varsa bu belirtilmelidir. Çekirdek, sadece "
 "ayrılmış bağlantı noktalarından gelen NFS isteklerini kabul edecekse "
-"denetleyen vfs.nfsrv.nfs_privport işaretini otomatik olarak temizleyecek."
+"denetleyen vfs.nfsrv.nfs_privport sysctl işaretini otomatik olarak "
+"temizleyecek."
 
 #: services/models.py:299
 msgid ""
@@ -8050,11 +8050,11 @@ msgstr "NIS sunucuları"
 
 #: services/models.py:1616
 msgid "Manycast"
-msgstr "Birçok Kalıp"
+msgstr "Manycast"
 
 #: services/models.py:1617
 msgid "Cause ypbind to use 'many-cast' instead of broadcast"
-msgstr "Ypbindin yerine yaygın olarak 'çoklu-çevirim' kullanılır"
+msgstr "Ypbindin'in broadcast yerine 'many-cast' kullanmasına neden olur"
 
 #: sharing/forms.py:195
 msgid "This is not a valid network: %s"
@@ -9930,7 +9930,7 @@ msgid ""
 "not defined, idmap_ldap will default to using the \"ldap idmap suffix\" "
 "option from smb.conf."
 msgstr ""
-"SID/uid/gid eşleme girişleri için kullanılmak üzere dizin tabanlı öneki "
+"SID/uid/gid eşleme girişleri için kullanılmak üzere dizin tabanlı soneki "
 "tanımlar. Eğer tanımlanmadıysa, idmap_ldap smb.conf dosyasından gelen \"ldap "
 "idmap suffix\" seçeneğini varsayılan olarak kullanacak."
 
@@ -11283,9 +11283,8 @@ msgstr ""
 "sistemin ilk IP adresini duyurur, ancak herhangi bir gelen isteği de dinler."
 
 #: services/models.py:744
-#, fuzzy
 msgid "The authentication method accepted by the target."
-msgstr "Bu yöntem kontrolör olarak kabul edilebilir."
+msgstr "Hedef tarafından kabul edilen kimlik doğrulama yöntemi."
 
 #: system/forms.py:1905
 msgid "Current Train"
@@ -11656,7 +11655,7 @@ msgstr "Bu parametreler sssd.conf dosyasına eklenir"
 
 #: services/models.py:514
 msgid "Xen initiator compat mode"
-msgstr ""
+msgstr "Xen başlatıcısı uyumluluk kipi"
 
 #: services/models.py:515
 msgid ""
@@ -11664,6 +11663,9 @@ msgid ""
 "naming scheme.  Checking this alters the naming scheme to be more Xen-"
 "friendly"
 msgstr ""
+"FreeNAS varsayılan adlandırma şemasını kullanan LUN'lara bağlanırken Xen "
+"başlatıcıları hatalar verir. Bu değiştirmeler kontrol edilirken adlandırma "
+"şeması daha Xen dostudur"
 
 #: storage/forms.py:1505
 #, fuzzy
@@ -11940,41 +11942,39 @@ msgstr ""
 "target ayrılmış bir kelimedir, lütfen bu takma ad için farklı bir ad seçin."
 
 #: services/models.py:322
-#, fuzzy
 msgid "Home share name"
-msgstr "Ev Telefonu"
+msgstr "Ana paylaşım adı"
 
 #: services/models.py:324
 msgid "When set overrides the default Home Share Name."
-msgstr ""
+msgstr "Ayarlandığında varsayılan Ana Paylaşım Adı'nı geçersiz kılar."
 
 #: services/models.py:366
-#, fuzzy
 msgid ""
 "Allow non-root mount requests to be served. This should only be specified if "
 "there are clients that require it. It will automatically clear the "
 "vfs.nfsrv.nfs_privport sysctl flag, which controls if the kernel will accept "
 "NFS requests from reserved ports only."
 msgstr ""
-"Root olmayan hizmet isteklerine bağlama izni ver. Sadece bunu gerektiren "
-"istemciler varsa bu belirtilmelidir. Hangi çekirdeğin NFS isteklerini "
-"bağlantı noktalarından denetleyerek kabul edeceği otomatik olarak "
-"vfs.nfsrv.nfs_privport bayrağı ile belirlenir."
+"Root olmayan bağlama isteklerinin hizmet olarak verilmesine izin verir. "
+"Sadece bunu gerektiren istemciler varsa bu belirtilmelidir. Çekirdek, sadece "
+"ayrılmış bağlantı noktalarından gelen NFS isteklerini kabul edecekse "
+"denetleyen vfs.nfsrv.nfs_privport sysctl işaretini otomatik olarak "
+"temizleyecek."
 
 #: services/models.py:378
-#, fuzzy
 msgid "Require Kerberos for NFSv4"
-msgstr "IP için ters DNS gerekir"
+msgstr "NFSv4 için Kerberos gerekir"
 
 #: services/models.py:429
-#, fuzzy
 msgid ""
 "The base name (e.g. iqn.2005-10.org.freenas.ctl, see RFC 3720 and 3721 for "
 "details) will append the target name that is not starting with 'iqn.', "
 "'eui.' or 'naa.'"
 msgstr ""
-"'iqn' temel ad değildir, hedef adlarda ekler eklenir. (Örneğin iqn.2007-"
-"09.jp.ne.peach.istg gibi, detaylar için RFC 3720 ve 3721 bakınız)"
+"Temel ad (örn. iqn.2005-10.org.freenas.ctl, ayrıntılar için RFC 3720 ve "
+"3721'e bakın), 'iqn.', 'eui.' veya 'naa.' ile başlamayan hedef adlara ilave "
+"edilecek"
 
 #: services/models.py:437
 msgid "List of Internet Storage Name Service (iSNS) Servers"
