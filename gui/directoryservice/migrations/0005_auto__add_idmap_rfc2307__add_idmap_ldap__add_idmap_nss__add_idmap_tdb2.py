@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import os
 from south.utils import datetime_utils as datetime
 from south.db import db
 from south.v2 import SchemaMigration
@@ -61,6 +62,11 @@ class Migration(SchemaMigration):
             ('idmap_ad_schema_mode', self.gf('django.db.models.fields.CharField')(default='rfc2307', max_length=120)),
         ))
         db.send_create_signal(u'directoryservice', ['idmap_ad'])
+
+		if 'FREENAS_INSTALL' in os.environ:
+			idmap_rid_range_low = 20000
+		else:
+			idmap_rid_range_low = 10000
 
         # Adding model 'idmap_rid'
         db.create_table(u'directoryservice_idmap_rid', (

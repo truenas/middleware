@@ -18,7 +18,7 @@ post-install()
 		mkdir -p /data
 	fi
         cd ${dstCR}
-	%%PYTHON_CMD%% manage.py syncdb --noinput --migrate --traceback
+	env FREENAS_INSTALL=yes %%PYTHON_CMD%% manage.py syncdb --noinput --migrate --traceback
 	%%PYTHON_CMD%% manage.py collectstatic --noinput
 	%%PYTHON_CMD%% tools/compilemsgs.py
         cd /data
