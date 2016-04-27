@@ -1,4 +1,5 @@
 # -*- coding: utf-8 -*-
+import os
 from south.utils import datetime_utils as datetime
 from south.db import db
 from south.v2 import DataMigration
@@ -22,7 +23,10 @@ class Migration(DataMigration):
             # DS_TYPE_ACTIVEDIRECTORY
             idmap.idmap_ds_type = 1
             idmap.idmap_ds_id = ad.id 
-            idmap.idmap_rid_range_low = 20000
+            if 'FREENAS_INSTALL' in os.environ:
+                idmap.idmap_rid_range_low = 20000
+            else:
+                idmap.idmap_rid_range_low = 10000
 
             idmap.save() 
 
