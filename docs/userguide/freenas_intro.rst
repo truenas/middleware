@@ -14,7 +14,7 @@ Copyright © 2011-2016
 This Guide covers the installation and use of FreeNAS® |release|.
 
 The FreeNAS® Users Guide is a work in progress and relies on the contributions of many individuals. If you are interested in helping us to improve the Guide,
-read the instructions in the `README <https://github.com/freenas/freenas/blob/master/docs/userguide/README>`_. If you use IRC Freenode, you are welcome to join
+read the instructions in the `README <https://github.com/freenas/freenas/blob/master/docs/userguide/README.md>`_. If you use IRC Freenode, you are welcome to join
 the #freenas channel where you will find other FreeNAS® users.
 
 The FreeNAS® Users Guide is freely available for sharing and redistribution under the terms of the
