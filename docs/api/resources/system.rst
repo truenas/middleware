@@ -1024,7 +1024,7 @@ Manage updates.
 Check pending updates
 +++++++++++++++++++++
 
-.. http:post:: /api/v1.0/system/update/check/
+.. http:get:: /api/v1.0/system/update/check/
 
    Return an array of updates downloaded and waiting to be applied.
 
