@@ -12205,3 +12205,7 @@ msgstr ""
 #, fuzzy
 msgid "Readonly"
 msgstr "მხოლოდ-კითხვადი"
+
+#: storage/forms.py:2024
+msgid "Disk is not clear, partitions or ZFS labels were found."
+msgstr ""

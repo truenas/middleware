@@ -13279,3 +13279,7 @@ msgstr ""
 #, fuzzy
 msgid "Readonly"
 msgstr "Salt-okunur"
+
+#: storage/forms.py:2024
+msgid "Disk is not clear, partitions or ZFS labels were found."
+msgstr ""
