@@ -2730,7 +2730,7 @@ class BootEnvResource(NestedMixin, DojoResource):
                 name="freeadmin_system_bootenv_status"
             ),
             url(
-                r"^(?P<resource_name>%s)/(?P<pk>\w[\w/-]*)/rename%s$" % (
+                r"^(?P<resource_name>%s)/(?P<pk>[^/]+)/rename%s$" % (
                     self._meta.resource_name, trailing_slash()
                 ),
                 self.wrap_view('rename_detail'),
