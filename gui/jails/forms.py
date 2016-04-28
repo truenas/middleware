@@ -225,7 +225,7 @@ class JailCreateForm(ModelForm):
                 "Jail name may contain only alphanumeric characters and "
                 "underscore."
             ))
-        return jail_host.lower()
+        return jail_host
 
     def save(self):
         jc = self.jc
