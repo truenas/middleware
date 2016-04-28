@@ -155,11 +155,12 @@ def volumemanager(request):
             return JsonResp(request, form=form, formsets={'layout': {
                 'instance': form._formset,
             }})
-    disks = []
 
+    _n = notifier()
+    disks = []
     # Grab disk list
     # Root device already ruled out
-    for disk, info in notifier().get_disks().items():
+    for disk, info in _n.get_disks().items():
         disks.append(forms.Disk(
             info['devname'],
             info['capacity'],
@@ -195,7 +196,6 @@ def volumemanager(request):
 
     bysize = OrderedDict(sorted(bysize.iteritems(), reverse=True))
 
-    qs = models.Volume.objects.filter(vol_fstype='ZFS')
     swap = Advanced.objects.latest('id').adv_swapondrive
 
     encwarn = (
@@ -220,20 +220,28 @@ def volumemanager(request):
         ),
     )
 
+    extend = [{'value': '', 'label': '-----'}]
+    qs = models.Volume.objects.filter(vol_fstype='ZFS')
+    for vol in qs:
+        if not vol.is_decrypted():
+            continue
+        try:
+            _n.zpool_parse(vol.vol_name)
+        except:
+            continue
+        extend.append({
+            'label': vol.vol_name,
+            'value': vol.vol_name,
+            'enc': vol.vol_encrypt > 0
+        })
+
     return render(request, "storage/volumemanager.html", {
         'disks': json.dumps(bysize),
         'dedup_warning': forms.DEDUP_WARNING,
         'encryption_warning': encwarn,
         'swap_size': swap * 1024 * 1024 * 1024,
         'manual_url': reverse('storage_volumemanager_zfs'),
-        'extend': json.dumps(
-            [{'value': '', 'label': '-----'}] +
-            [{
-                'label': x.vol_name,
-                'value': x.vol_name,
-                'enc': x.vol_encrypt > 0
-            } for x in qs if x.is_decrypted()]
-        ),
+        'extend': json.dumps(extend),
     })
 
 
