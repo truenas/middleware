@@ -13582,3 +13582,7 @@ msgstr ""
 #, fuzzy
 msgid "Readonly"
 msgstr "Μόνο για ανάγνωση"
+
+#: storage/forms.py:2024
+msgid "Disk is not clear, partitions or ZFS labels were found."
+msgstr ""

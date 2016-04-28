@@ -12628,3 +12628,7 @@ msgstr ""
 #, fuzzy
 msgid "Readonly"
 msgstr "Tik skaitymui"
+
+#: storage/forms.py:2024
+msgid "Disk is not clear, partitions or ZFS labels were found."
+msgstr ""
