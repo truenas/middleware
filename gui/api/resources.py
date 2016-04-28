@@ -920,7 +920,7 @@ class VolumeResourceMixin(NestedMixin):
                     data['used_pct'],
                 )
                 data['avail'] = humanize_size(data['avail'])
-                
+
                 data['readonly'] = self.__zfsopts.get(
                     child.path,
                     {},
