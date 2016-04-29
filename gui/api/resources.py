@@ -3091,11 +3091,14 @@ class UpdateResourceMixin(NestedMixin):
         except IndexError:
             updateobj = mUpdate.objects.create()
 
-        deserialized = self.deserialize(
-            request,
-            request.body,
-            format=request.META.get('CONTENT_TYPE', 'application/json'),
-        )
+        if request.body:
+            deserialized = self.deserialize(
+                request,
+                request.body,
+                format=request.META.get('CONTENT_TYPE', 'application/json'),
+            )
+        else:
+            deserialized = {}
 
         train = deserialized.get('train') or updateobj.get_train()
         cache = notifier().get_update_location()
