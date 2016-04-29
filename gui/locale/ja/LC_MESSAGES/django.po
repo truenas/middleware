@@ -13731,3 +13731,8 @@ msgstr "読み取り専用"
 #: storage/forms.py:2024
 msgid "Disk is not clear, partitions or ZFS labels were found."
 msgstr ""
+
+#: storage/nav.py:88
+#, fuzzy
+msgid "View Enclosure"
+msgstr "Rsync モジュールを表示"

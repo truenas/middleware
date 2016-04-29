@@ -12387,3 +12387,7 @@ msgstr "Lees-alleenlik"
 #: storage/forms.py:2024
 msgid "Disk is not clear, partitions or ZFS labels were found."
 msgstr ""
+
+#: storage/nav.py:88
+msgid "View Enclosure"
+msgstr ""

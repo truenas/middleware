@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:05-0700\n"
-"PO-Revision-Date: 2016-04-26 13:20+0000\n"
+"PO-Revision-Date: 2016-04-28 18:24+0000\n"
 "Last-Translator: BouRock <hitowerdigit@hotmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: tr\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1461676843.0\n"
+"X-POOTLE-MTIME: 1461867841.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -1441,7 +1441,7 @@ msgstr "SNMP hizmetini yeniden yükleme başarısız oldu."
 #: services/forms.py:404 services/models.py:525 services/models.py:905
 #: services/models.py:967 services/models.py:1119
 msgid "Port"
-msgstr "B.Noktası"
+msgstr "Bağlantı noktası"
 
 #: services/forms.py:415
 msgid "Use alphanumeric characters, \".\", \"-\" and \"_\"."
@@ -2972,7 +2972,7 @@ msgstr "LDAP"
 
 #: services/models.py:1369
 msgid "Alternate TCP port. Default is 873"
-msgstr "Alternatif TCP bağlantı noktası. Varsayılan değer 873"
+msgstr "Alternatif TCP bağlantı noktası. Varsayılan 873'tür"
 
 #: services/models.py:1374
 msgid "These parameters will be added to [global] settings in rsyncd.conf"
@@ -2981,7 +2981,7 @@ msgstr ""
 
 #: services/models.py:1378 services/models.py:1379
 msgid "Configure Rsyncd"
-msgstr "Rsyncd Yapılandırma"
+msgstr "Rsyncd Yapılandır"
 
 #: services/models.py:1390
 msgid "Module name"
@@ -2993,11 +2993,11 @@ msgstr "Paylaşılacak olan yol"
 
 #: services/models.py:1405
 msgid "Access Mode"
-msgstr "Erişim türü"
+msgstr "Erişim Kipi"
 
 #: services/models.py:1406
 msgid "This controls the access a remote host has to this module"
-msgstr "Bu modül uzak ana bilgisayar erişimine sahip kontrolleri içerir"
+msgstr "Bu modüle sahip uzak bir anamakineye erişimi bu denetler"
 
 #: services/models.py:1410
 msgid "Maximum connections"
@@ -3005,7 +3005,7 @@ msgstr "En fazla bağlantı"
 
 #: services/models.py:1411
 msgid "Maximum number of simultaneous connections. Default is 0 (unlimited)"
-msgstr "Aynı anda en fazla bağlantı sayısı. Varsayılan değer 0 (sınırsız)"
+msgstr "Eşzamanlı en fazla bağlantı sayısı. Varsayılan 0'dır (sınırsız)"
 
 #: services/models.py:1417
 msgid ""
@@ -3014,23 +3014,23 @@ msgid ""
 "determines what file permissions are available. Leave this field empty to "
 "use default settings"
 msgstr ""
-"Dosya aktarımlarının ve bu modül gerçekleşmesi gerektiğinde bu seçenek "
-"kullanıcıların adını belirtir. Bu izinler mevcut dosyalar ile 'Grup' "
-"seçenekleri izinlerini belirler. Varsayılan ayarları kabul etmek için bu "
-"alanı boş bırakın."
+"Bu seçenek, modüle ve modülden dosyanın aktarılmasını gerçekleştirmesi "
+"gereken kullanıcı adını belirler. 'Grup' seçeneği ile birleşmesi halinde bu "
+"hangi dosya izinlerinin mevcut olduğunu belirler. Varsayılan ayarları "
+"kullanmak için bu alanı boş bırakın"
 
 #: services/models.py:1424
 msgid ""
 "This option specifies the group name that file transfers to and from that "
 "module should take place. Leave this field empty to use default settings"
 msgstr ""
-"Dosya aktarımlarının ve bu modül gerçekleşmesi gerektiğinde bu seçenek "
-"kullanıcıların adını belirtir. Varsayılan ayarları kabul etmek için bu alanı "
-"boş bırakın."
+"Bu seçenek, modüle ve modülden dosyanın aktarılmasını gerçekleştirmesi "
+"gereken grup adını belirler. Varsayılan ayarları kullanmak için bu alanı boş "
+"bırakın"
 
 #: services/models.py:1428
 msgid "Hosts allow"
-msgstr "İzin verilecek ana bilgisayarlar"
+msgstr "İzin verilen anamakineler"
 
 #: services/models.py:1429
 msgid ""
@@ -3038,13 +3038,14 @@ msgid ""
 "permitted to access this module. You can specify the hosts by name or IP "
 "number. Leave this field empty to use default settings"
 msgstr ""
-"Modül erişimine izin verilen ana bilgisayarlarda bu seçenek virgül, boşluk "
-"veya sekme ile ayarlanır. Bilgisayar adı veya IP numarası ile bilgisayarlar "
-"belirtebilirsiniz. Varsayılan ayarları kullanmak için bu alanı boş bırakın."
+"Bu seçenek, bu modüle erişmeye izin veren virgül, boşluk veya sekme ile "
+"sınırlandırılan anamakineler kümesidir. Anamakineleri adına veya IP "
+"numarasına göre belirleyebilirsiniz. Varsayılan ayarları kullanmak için bu "
+"alanı boş bırakın"
 
 #: services/models.py:1433
 msgid "Hosts deny"
-msgstr "Reddedilecek ana bilgisayarlar"
+msgstr "Reddedilen anamakineler"
 
 #: services/models.py:1434
 msgid ""
@@ -3055,12 +3056,13 @@ msgid ""
 "to the hosts allow parameter those hosts that should be permitted access. "
 "Leave this field empty to use default settings"
 msgstr ""
-"Bu seçenek ile virgül, boşluk veya tab ile ayrılmışsa bir modüle izni "
-"verilmez. İzin listeleri içindeki uyuşmazlık listeleri önceliklidir. "
-"Varsayılan olarak tümünü reddetmek gerekirse TÜMÜ (veya ağmaskesi 0.0.0.0/0) "
-"anahtar sözcüğünü kullanın ve daha sonra açık bir şekilde ana makineye "
-"erişim izni vermek için bu parametreleri kullanın. Varsayılan ayarları "
-"kullanmak için bu alanı boş bırakın."
+"Bu seçenek, bu modüle erişmeye izin VERMEYEN virgül, boşluk veya sekme ile "
+"sınırlandırılan anamakineler kümesidir. Listelerin çakıştığı yerde izin "
+"verme listesi öncelikli olur. Varsayılan olarak tümünü reddetmenin gerekmesi "
+"halinde, ALL (veya 0.0.0.0/0 ağ maskesi) anahtar kelimesini kullanın ve "
+"ondan sonra erişime izin verilmesi gereken bu anamakinelere, izin verilen "
+"anamakineler parametresini açık bir şekilde belirleyin. Varsayılan ayarları "
+"kullanmak için bu alanı boş bırakın"
 
 #: services/models.py:1439
 msgid ""
@@ -3070,7 +3072,7 @@ msgstr ""
 
 #: services/models.py:1444
 msgid "Rsync Module"
-msgstr "Rsync Modül"
+msgstr "Rsync Modülü"
 
 #: services/models.py:1445
 msgid "Rsync Modules"
@@ -3084,12 +3086,12 @@ msgstr "Kontrol aralığı"
 msgid ""
 "Sets the interval between disk checks to N minutes. The default is 30 minutes"
 msgstr ""
-"Disk kontralleri arasındaki aralık N dakika olarak ayarlanır. Varsayılan "
-"değer 30 dakikadır."
+"Disk kontrolleri arasındaki aralığı N dakika olarak ayarlar. Varsayılan 30 "
+"dakikadır"
 
 #: services/models.py:1466
 msgid "Power mode"
-msgstr "Güç modu"
+msgstr "Güç kipi"
 
 #: services/models.py:1470
 msgid "Difference"
@@ -3100,8 +3102,8 @@ msgid ""
 "Report if the temperature had changed by at least N degrees Celsius since "
 "last report. 0 to disable"
 msgstr ""
-"Rapor: Sıcaklık son rapordan bu yana en az N derece değişmiş durumda. Devre "
-"dışı bırakmak için 0 girin."
+"Sıcaklık son bildirildiğinden bu yana en az N Santigrat derece değiştiyse "
+"bildir. Etkisizleştirmek için 0"
 
 #: services/models.py:1475
 msgid "Informal"
@@ -3112,7 +3114,7 @@ msgid ""
 "Report if the temperature is greater or equal than N degrees Celsius. 0 to "
 "disable"
 msgstr ""
-"Sıcaklık N santigrat dereceden daha büyük veya eşitse bildir. "
+"Sıcaklık N Santigrat dereceden daha büyük veya eşitse bildir. "
 "Etkisizleştirmek için 0"
 
 #: services/models.py:1480
@@ -3121,7 +3123,7 @@ msgstr "Kritik"
 
 #: services/models.py:1484
 msgid "Email to report"
-msgstr "E-posta"
+msgstr "Bildirmek için e-posta"
 
 #: services/models.py:1487
 msgid "Destination email address. Separate email addresses by semi-colon"
@@ -3134,7 +3136,7 @@ msgstr "S.M.A.R.T."
 
 #: services/nav.py:15
 msgid "Control Services"
-msgstr "Kontrol Hizmetleri"
+msgstr "Denetim Hizmetleri"
 
 #~ msgid "Device Extents"
 #~ msgstr "Aygıt Boyutları"
@@ -3170,7 +3172,7 @@ msgstr "Rsync Modülü Ekle"
 
 #: services/nav.py:159
 msgid "View Rsync Modules"
-msgstr "Rsync Modül Görünümleri"
+msgstr "Rsync Modüllerini Göster"
 
 #: services/nav.py:168 system/models.py:84 system/nav.py:28
 #: templates/system/settings.html:2
@@ -3182,15 +3184,15 @@ msgstr "Ayarlar"
 
 #: services/views.py:326
 msgid "The service could not be stopped."
-msgstr "Servis durdurulamadı."
+msgstr "Hizmet durdurulamadı."
 
 #: services/views.py:333
 msgid "The service could not be started."
-msgstr "Servis başlatılamadı."
+msgstr "Hizmet başlatılamadı."
 
 #: sharing/forms.py:81
 msgid "Confirm Share Password"
-msgstr "Paylaşılan parola onayı"
+msgstr "Paylaşım Parolasını Onaylayın"
 
 #: sharing/forms.py:139
 #, python-format
@@ -3227,43 +3229,43 @@ msgstr "Adı"
 
 #: sharing/models.py:49
 msgid "Export Read Only"
-msgstr "Sadece okunabilirleri ihraç et"
+msgstr "Salt Okunur dışa aktar"
 
 #: sharing/models.py:51
 msgid "Browsable to Network Clients"
-msgstr "Ağ istemcileri bakabilir"
+msgstr "Ağ İstemcilerine gözatılabilir"
 
 #: sharing/models.py:53
 msgid "Inherit Owner"
-msgstr "İzinleri devral"
+msgstr "Sahipliği Devral"
 
 #: sharing/models.py:55
 msgid "Inherit Permissions"
-msgstr "Kalıtsallık izinleri"
+msgstr "İzinleri Devral"
 
 #: sharing/models.py:57
 msgid "Export Recycle Bin"
-msgstr "Geri dönüşüm kutusuna taşı"
+msgstr "Geri Dönüşüm Kutusunu dışa aktar"
 
 #: sharing/models.py:59
 msgid "Show Hidden Files"
-msgstr "Gizli dosyaları göster"
+msgstr "Gizli Dosyaları göster"
 
 #: sharing/models.py:61
 msgid "Allow Guest Access"
-msgstr "Misafir erişimine izin ver"
+msgstr "Misafir Erişimine izin ver"
 
 #: sharing/models.py:62
 msgid ""
 "If true then no password is required to connect to the share. Privileges "
 "will be those of the guest account."
 msgstr ""
-"Eğer doğruysa paylaşıma bağlanmak için parolaya gerek yoktur. Konuk hesabı "
-"olanlar ayrıcalıklı olacaktır."
+"Eğer true ise paylaşıma bağlanmak için parola gerekmez. Yetkiler bu misafir "
+"hesabının olacaktır."
 
 #: sharing/models.py:65
 msgid "Only Allow Guest Access"
-msgstr "Sadece misafir erişimine izin ver"
+msgstr "Sadece Misafir Erişimine izin ver"
 
 #: sharing/models.py:66
 msgid ""
@@ -4150,8 +4152,8 @@ msgid ""
 "This should be the name of the ZFS filesystem on remote side. eg: poolname/"
 "datasetname not the mountpoint or filesystem path"
 msgstr ""
-"Uzak tarafındaki ZFS dosya sisteminin adı olmalıdır. Örneğin: havuzadı/"
-"verikümesiadı değil bağlama noktası veya dosya sistemi yolu"
+"Bu, uzak taraftaki ZFS dosya sisteminin adı olmalıdır. örn: havuzadı/"
+"verikümesiadı bağlama noktası veya dosya sistemi yolu değil"
 
 #: storage/models.py:676
 msgid "Recursively replicate and remove stale snapshot on remote side"
@@ -7123,27 +7125,27 @@ msgstr "NIS Etki Alanı"
 
 #: services/models.py:1868
 msgid "Informational"
-msgstr "Bilgi"
+msgstr "Bilgilendirme"
 
 #: services/models.py:1869
 msgid ""
 "Report as informational in the system log if the temperature is greater or "
 "equal than N degrees Celsius. 0 to disable"
 msgstr ""
-"Sıcaklık çok büyükse veya N dereceye eşitse sistem günlüğüne bildir. Devre "
-"dışı bırakmak için 0 girilmelidir."
+"Sıcaklık N Santigrat dereceden daha büyük veya eşitse sistem günlüğünde "
+"bilgilendirme olarak bildir. Etkisizleştirmek için 0"
 
 #: services/models.py:1876
 msgid ""
 "Report as critical in the system log and send an email if the temperature is "
 "greater or equal than N degrees Celsius. 0 to disable"
 msgstr ""
-"Sıcaklık çok büyükse veya N dereceye eşitse bir e-posta gönder. Devre dışı "
-"bırakmak için 0 girilmelidir."
+"Sıcaklık N Santigrat dereceden daha büyük veya eşitse sistem günlüğünde "
+"kritik olarak bildir ve bir e-posta gönder. Etkisizleştirmek için 0"
 
 #: services/models.py:1884
 msgid "Destination email address. Separate email addresses by commas"
-msgstr "Hedef e-posta adresi. Ayrı e-posta adreslerini virgülle ayırın."
+msgstr "Hedef e-posta adresi. E-posta adreslerini virgüller ile ayırın"
 
 #: services/nav.py:115
 #: templates/services/core.html:27
@@ -7158,7 +7160,7 @@ msgstr "Yollar"
 #: sharing/forms.py:148
 #: sharing/forms.py:153
 msgid "The umask must be between 000 and 777."
-msgstr "Umask 000 ile 777 arasında olmalıdır."
+msgstr "Umask değeri 000 ve 777 arasında olmak zorundadır."
 
 #: sharing/forms.py:274
 msgid "Paths for a NFS share must reside within the same filesystem"
@@ -7166,7 +7168,7 @@ msgstr "Bir NFS paylaşımı için yollar aynı dosya sistemi içinde yer almal�
 
 #: sharing/forms.py:281
 msgid "You cannot share a mount point and subdirectories all at once"
-msgstr "Bir kerede bir bağlantı noktası ve alt dizinleri paylaşamazsınız"
+msgstr "Bir kerede bir bağlama noktasını ve alt dizinleri paylaşamazsınız"
 
 #: sharing/forms.py:318
 msgid ""
@@ -8062,11 +8064,11 @@ msgstr "Bu geçerli bir ağ değildir: %s"
 
 #: sharing/forms.py:309
 msgid "This option is only available once per mountpoint"
-msgstr "Bu seçenek bağlantı noktası başına sadece bir kez kullanılabilir"
+msgstr "Bu seçenek bağlama noktası başına sadece bir kez kullanılabilir"
 
 #: sharing/forms.py:341
 msgid "You need at least one path for the share"
-msgstr "Paylaşım için en az bir yol gereklidir"
+msgstr "Paylaşım için en az bir yola ihtiyacınız var"
 
 #: sharing/models.py:178
 msgid "Default umask"
@@ -8570,8 +8572,8 @@ msgid ""
 msgstr ""
 "Samba'nın (pahalı) anamakine adı aramalarını kullanıp kullanmamasını ya da "
 "bunun yerine IP adresi kullanıp kullanmamasını belirler. Reddedilen "
-"anamakineler ve izin verilen anamakineler kontrol edildiğinde anamakine adı "
-"aramalarının şu anda kullanıldığı yer bir örnektir."
+"anamakineler ve izin verilen anamakineler işaretlendiğinde şu anda "
+"kullanılan anamakine adı aramalarının yeri bir örnektir."
 
 #: services/models.py:312
 msgid ""
@@ -9084,62 +9086,56 @@ msgid ""
 msgstr ""
 
 #: services/models.py:1595
-#, fuzzy
 msgid "Domain Account Name"
-msgstr "Alan adı"
+msgstr "Etki Alanı Hesabı Adı"
 
 #: services/models.py:1596
-#, fuzzy
 msgid "Domain account name to bind as"
-msgstr "Alan adı yöneticinin hesap adı"
+msgstr "Farklı bağlamak için etki alanı hesabı adı"
 
 #: services/models.py:1600
-#, fuzzy
 msgid "Domain Account Password"
-msgstr "Alan adı yöneticisinin parolası."
+msgstr "Etki Alanı Hesabı Parolası"
 
 #: services/models.py:1601
-#, fuzzy
 msgid "Domain Account password."
-msgstr "Alan adı yöneticisinin parolası."
+msgstr "Etki Alanı Hesabı parolası."
 
 #: services/models.py:1609
 msgid "Use keytab"
 msgstr ""
 
 #: services/models.py:1613
-#, fuzzy
 msgid "Kerberos keytab file"
-msgstr "Kerberos sunucusu"
+msgstr "Kerberos keytab dosyası"
 
 #: services/models.py:1850
-#, fuzzy
 msgid "Interface Description"
-msgstr "Açıklama"
+msgstr "Arayüz Açıklaması"
 
 #: services/models.py:1852
 msgid "Save received info in interface description / alias"
-msgstr ""
+msgstr "Arayüz açıklaması / takma ad içindeki alınan bilgiyi kaydet"
 
 #: services/models.py:1855
-#, fuzzy
 msgid "Country Code"
-msgstr "Ülke"
+msgstr "Ülke Kodu"
 
 #: services/models.py:1858
 msgid ""
 "Specify a two-letterISO 3166 country code (required for LLDPlocation support)"
 msgstr ""
+"İki harfli ISO 3166 ülke kodu belirleyin (LLDPkonumu desteği için gerekir)"
 
 #: services/models.py:1866
 msgid "Specify the physical location of the host"
-msgstr ""
+msgstr "Anamakinenin fiziksel konumunu belirleyin"
 
 #: services/models.py:1871
 #: services/models.py:1872
 #: templates/services/core.html:76
 msgid "LLDP"
-msgstr ""
+msgstr "LLDP"
 
 #: services/models.py:2058
 msgid "Realm"
@@ -9674,9 +9670,8 @@ msgstr "Root bağlanma parolası"
 
 #: services/models.py:1623
 #: services/models.py:1835
-#, fuzzy
 msgid "Upload your certificate file here."
-msgstr "Buraya kendinden imzalı sertifika dosyasının içeriğini yerleştirin."
+msgstr "Sertifika dosyanızı buraya yükleyin."
 
 #: system/models.py:1148
 msgid "Reporting Database"
@@ -11978,15 +11973,15 @@ msgstr ""
 
 #: services/models.py:437
 msgid "List of Internet Storage Name Service (iSNS) Servers"
-msgstr ""
+msgstr "Internet Depolama Adı Hizmet (iSNS) Sunucuları Listesi"
 
 #: services/models.py:440
 msgid "Pool Available Space Threshold (%)"
-msgstr ""
+msgstr "Havuz Mevcut Alan Eşiği (%)"
 
 #: services/models.py:445
 msgid "Remaining ZFS pool capacity warning threshold when using zvol extents"
-msgstr ""
+msgstr "Zvol kapsamları kullanılırken kalan ZFS havuz kapasitesi uyarısı eşiği"
 
 #: services/models.py:504
 msgid "Disable Physical Block Size Reporting"
@@ -11998,18 +11993,21 @@ msgid ""
 "can be up to 128K. Some initiators do not work with values above 4K, "
 "checking this disables reporting the physical blocksize."
 msgstr ""
+"Varsayılan fiziksel blok boyutu, 128K boyuta kadar olabilen ZFS blok boyutu "
+"olarak bildirilir. Bazı başlatıcılar 4K üzerindeki değerler ile çalışmaz, "
+"bunu işaretlemek fiziksel blok boyutunu bildirmeyi etkisizleştirir."
 
 #: services/models.py:512
 msgid "Available Space Threshold (%)"
-msgstr ""
+msgstr "Kullanılabilir Alan Eşiği (%)"
 
 #: services/models.py:516
 msgid "Remaining dataset/zvol capacity warning threshold"
-msgstr ""
+msgstr "Kalan veri kümesi/zvol kapasitesi uyarı eşiği"
 
 #: services/models.py:550
 msgid "LUN RPM"
-msgstr ""
+msgstr "LUN RPM"
 
 #: services/models.py:551
 msgid ""
@@ -12019,13 +12017,20 @@ msgid ""
 "LUNs as swap devices, there is some value to picking a non-SSD RPM if your "
 "extent is indeed not SSDs and the initiator will be VMWare."
 msgstr ""
+"RPM, bu kapsam/LUN için başlatıcılara bildirir. Varsayılan SSD'dir çünkü "
+"windows SSD olmayan aygıtları birleştirmeyi deneyecektir. Bu, ZFS için tam "
+"bir en kötü durum senaryosudur. VMWare, takas aygıtları olarak SSD "
+"LUN'larını kullanmak için size bir seçenek verecektir, eğer kapsamınız "
+"aslında SSD'ler değilse, SSD olmayan RPM seçmek için bazı değerler vardır ve "
+"başlatıcı VMWare olacaktır."
 
 #: services/models.py:821
-#, fuzzy
 msgid ""
 "Base Name will be appended automatically when starting without 'iqn.', "
 "'eui.' or 'naa.'."
-msgstr "Temel adların başına otomatik olarak 'iqn.' eklenir."
+msgstr ""
+"Temel Ad, 'iqn.', 'eui.' veya 'naa.' olmadan başladığında otomatik olarak "
+"ilave edilecektir."
 
 #: services/models.py:835
 #, fuzzy
@@ -12034,17 +12039,15 @@ msgstr "Değiştir"
 
 #: services/models.py:836
 msgid "Both"
-msgstr ""
+msgstr "İkisi de"
 
 #: services/models.py:840
-#, fuzzy
 msgid "Target Mode"
-msgstr "Hedef adı"
+msgstr "Hedef Kipi"
 
 #: services/models.py:868
-#, fuzzy
 msgid "Target this group belongs to"
-msgstr "Birim bu gruba ait"
+msgstr "Bu grubun ait olduğu hedef"
 
 #: services/models.py:909
 #: services/models.py:910
@@ -12784,9 +12787,8 @@ msgid "Jail Template"
 msgstr "Kafes Şablonu"
 
 #: services/models.py:679
-#, fuzzy
 msgid "Portal IPs"
-msgstr "Portal IP"
+msgstr "Portal IP'leri"
 
 #: services/models.py:910
 #, fuzzy
@@ -13096,9 +13098,8 @@ msgid "Use syslog only"
 msgstr "Sadece syslog kullan"
 
 #: services/models.py:422
-#, fuzzy
 msgid "Support >16 groups"
-msgstr "Destek Konuları"
+msgstr ">16 grubu destekle"
 
 #: services/models.py:424
 msgid ""
@@ -13123,7 +13124,7 @@ msgstr ""
 
 #: services/models.py:379
 msgid "NFSv3 ownership model for NFSv4"
-msgstr ""
+msgstr "NFSv4 için NFSv3 sahiplik modeli"
 
 #: services/models.py:380
 msgid ""
@@ -13131,6 +13132,9 @@ msgid ""
 "users and groups between the client and server. Note that this option is "
 "mutually incompatible with the > 16 groups option."
 msgstr ""
+"NFSv4 için NFSv3 sahiplik modelini kullanın. Bu atlatmalar, kullanıcıları ve "
+"grupları istemci ve sunucu arasında eşitleme gereği duyar. Bu seçeneğin "
+"karşılıklı olarak > 16 grup seçeneği ile uyumsuz olduğunu unutmayın."
 
 #: services/models.py:433
 msgid ""
@@ -13138,6 +13142,9 @@ msgid ""
 "and looks up the group membership on the server.  Note that this option is "
 "mutually incompatible with the NFSv3 ownership model for NFSv4."
 msgstr ""
+"Bu seçenek NFS istemcisi tarafından kablo üzerinde gönderilen grup üyeliğini "
+"yoksayar ve sunucuda grup üyeliğini arar. Bu seçeneğin karşılıklı olarak "
+"NFSv4 için NFSv3 sahiplik modeli ile uyumsuz olduğunu unutmayın."
 
 #: system/models.py:333
 #, fuzzy
@@ -13258,6 +13265,8 @@ msgid ""
 "Select the IP address(es) to listen for NFS requests. If left unchecked, NFS "
 "will listen on all available addresses."
 msgstr ""
+"NFS isteklerini dinlemek için IP adres(lerini)ini seçin. Eğer işaretlenmeden "
+"bırakılırsa, NFS tüm mevcut adresleri dinleyecek."
 
 #: system/alertmods/vmwaresnapdelete_fails.py:25
 msgid "VMWare snapshot deletion %(snap)s failed for the following VMs: %(vms)s"
@@ -13283,3 +13292,8 @@ msgstr "Salt-okunur"
 #: storage/forms.py:2024
 msgid "Disk is not clear, partitions or ZFS labels were found."
 msgstr ""
+
+#: storage/nav.py:88
+#, fuzzy
+msgid "View Enclosure"
+msgstr "Rsync Modül Görünümleri"

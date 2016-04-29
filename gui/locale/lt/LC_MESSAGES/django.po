@@ -12632,3 +12632,8 @@ msgstr "Tik skaitymui"
 #: storage/forms.py:2024
 msgid "Disk is not clear, partitions or ZFS labels were found."
 msgstr ""
+
+#: storage/nav.py:88
+#, fuzzy
+msgid "View Enclosure"
+msgstr "Rodyti Visus Vartotojus"

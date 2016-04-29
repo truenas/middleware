@@ -12923,3 +12923,8 @@ msgstr "唯讀"
 #: storage/forms.py:2024
 msgid "Disk is not clear, partitions or ZFS labels were found."
 msgstr ""
+
+#: storage/nav.py:88
+#, fuzzy
+msgid "View Enclosure"
+msgstr "查看所有用戶"
