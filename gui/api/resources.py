@@ -2740,6 +2740,7 @@ class BootEnvResource(NestedMixin, DojoResource):
 
     def status(self, request, **kwargs):
         self.method_check(request, allowed=['get'])
+        self.is_authenticated(request)
 
         pool = notifier().zpool_parse('freenas-boot')
 
@@ -3067,6 +3068,7 @@ class UpdateResourceMixin(NestedMixin):
 
     def check(self, request, **kwargs):
         self.method_check(request, allowed=['get'])
+        self.is_authenticated(request)
 
         # If it is HA licensed get pending updates from stanbdy node
         if (
@@ -3085,6 +3087,7 @@ class UpdateResourceMixin(NestedMixin):
 
     def update(self, request, **kwargs):
         self.method_check(request, allowed=['post'])
+        self.is_authenticated(request)
 
         try:
             updateobj = mUpdate.objects.order_by('-id')[0]
@@ -3122,6 +3125,7 @@ class UpdateResourceMixin(NestedMixin):
 
     def trains(self, request, **kwargs):
         self.method_check(request, allowed=['get'])
+        self.is_authenticated(request)
 
         try:
             update = mUpdate.objects.order_by('-id')[0]
