@@ -5,6 +5,7 @@
 
 # PROVIDE: ix-snmpd
 # REQUIRE: FILESYSTEMS NETWORKING
+# REQUIRE: sshd
 # BEFORE: snmpd
 
 . /etc/rc.subr
