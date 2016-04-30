@@ -95,7 +95,7 @@ wide range of operating systems. A plugins system is provided for extending the 
 What's New in |version|
 -----------------------
 
-* Based on FreeBSD 10.3 which adds `these features <https://www.freebsd.org/releases/10.3R/relnotes.html>`_. This includes many new hardware drivers and many updates to existing drivers.
+* Based on FreeBSD 10.3 which adds `these features <https://www.freebsd.org/releases/10.3R/relnotes.html>`_. This includes many new hardware drivers and updates to existing drivers.
 
 * Samba has been updated to `4.3.4 <https://www.samba.org/samba/history/samba-4.3.4.html>`_.
 
