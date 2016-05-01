@@ -174,7 +174,7 @@ explains these options in more detail.
 |             |           |                                                                                                                       |
 +-------------+-----------+-----------------------------------------------------------------------------------------------------------------------+
 
-
+.. index:: Boot Environments, Multiple Boot Environments
 .. _Boot:
 
 Boot
