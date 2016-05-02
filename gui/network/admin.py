@@ -14,31 +14,13 @@ from freenasUI.network import models
 SW_NAME = get_sw_name()
 
 
-class NetworkInterruptMixin(object):
-
-    def get_confirm_message(self, action, **kwargs):
-        if (
-            hasattr(notifier, 'failover_status') and
-            notifier().failover_status() == 'MASTER'
-        ):
-            return _(
-                'This change will cause a failover event. '
-                'Do you want to proceed?'
-            )
-        else:
-            return _(
-                'Network connectivity will be interrupted. '
-                'Do you want to proceed?'
-            )
-
-
 class GlobalConfigurationFAdmin(BaseFreeAdmin):
 
     deletable = False
     resource_mixin = GlobalConfigurationResourceMixin
 
 
-class InterfacesFAdmin(NetworkInterruptMixin, BaseFreeAdmin):
+class InterfacesFAdmin(BaseFreeAdmin):
 
     create_modelform = "InterfacesForm"
     delete_form = "InterfacesDeleteForm"
@@ -88,8 +70,24 @@ class InterfacesFAdmin(NetworkInterruptMixin, BaseFreeAdmin):
 
         return columns
 
+    def get_confirm_message(self, action, **kwargs):
+        if (
+            hasattr(notifier, 'failover_status') and
+            notifier().failover_status() == 'MASTER'
+        ):
+            from freenasUI.failover.models import Failover
+            if Failover.objects.all()[0].disabled is False:
+                return _(
+                    'This change will cause a failover event. '
+                    'Do you want to proceed?'
+                )
+        return _(
+            'Network connectivity will be interrupted. '
+            'Do you want to proceed?'
+        )
 
-class LAGGInterfaceFAdmin(NetworkInterruptMixin, BaseFreeAdmin):
+
+class LAGGInterfaceFAdmin(BaseFreeAdmin):
 
     icon_object = u"VLANIcon"
     icon_model = u"VLANIcon"
@@ -135,6 +133,21 @@ class LAGGInterfaceFAdmin(NetworkInterruptMixin, BaseFreeAdmin):
             }}
         return actions
 
+    def get_confirm_message(self, action, **kwargs):
+        if (
+            hasattr(notifier, 'failover_status') and
+            notifier().failover_status() == 'MASTER'
+        ):
+            return _(
+                'This change will cause a failover event. '
+                'Do you want to proceed?'
+            )
+        else:
+            return _(
+                'Network connectivity will be interrupted. '
+                'Do you want to proceed?'
+            )
+
 
 class LAGGInterfaceMembersFAdmin(BaseFreeAdmin):
 
@@ -148,13 +161,27 @@ class LAGGInterfaceMembersFAdmin(BaseFreeAdmin):
         }
 
 
-class VLANFAdmin(NetworkInterruptMixin, BaseFreeAdmin):
+class VLANFAdmin(BaseFreeAdmin):
 
     icon_object = u"VLANIcon"
     icon_model = u"VLANIcon"
     icon_add = u"AddVLANIcon"
     icon_view = u"ViewAllVLANsIcon"
 
+    def get_confirm_message(self, action, **kwargs):
+        if (
+            hasattr(notifier, 'failover_status') and
+            notifier().failover_status() == 'MASTER'
+        ):
+            return _(
+                'This change will cause a failover event. '
+                'Do you want to proceed?'
+            )
+        else:
+            return _(
+                'Network connectivity will be interrupted. '
+                'Do you want to proceed?'
+            )
 
 site.register(models.GlobalConfiguration, GlobalConfigurationFAdmin)
 site.register(models.Interfaces, InterfacesFAdmin)
