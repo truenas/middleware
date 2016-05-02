@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:06-0700\n"
-"PO-Revision-Date: 2016-04-04 07:54+0000\n"
+"PO-Revision-Date: 2016-05-01 17:22+0000\n"
 "Last-Translator: mav <mav@freebsd.org>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ru\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
 "n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1459756465.0\n"
+"X-POOTLE-MTIME: 1462123324.0\n"
 
 # Альтернатива SSL/TLS
 #: choices.py:40
@@ -13179,33 +13179,28 @@ msgstr ""
 "%(changelog)s\n"
 
 #: jails/forms.py:225
-#, fuzzy
 msgid "Jail name may contain only alphanumeric characters and underscore."
-msgstr "Должно содержать только буквы, цифры, _ или -"
+msgstr "Имя jail может содержать только буквы, цифры и подчеркивания."
 
 #: services/forms.py:266
-#, fuzzy
 msgid "NetBIOS Alias: %s"
-msgstr "Псевдоним NetBIOS"
+msgstr "Псевдоним NetBIOS: %s"
 
 #: services/models.py:416
-#, fuzzy
 msgid ""
 "Select the IP address(es) to listen for NFS requests. If left unchecked, NFS "
 "will listen on all available addresses."
 msgstr ""
-"Анонсируемые и слушаемые интерфейсы. Если никто не указано слушаются все "
-"интерфейсы."
+"Выберите IP адрес(а) которые будет слушать NFS. Если ничего не указано, NFS "
+"будет слушать все интерфейсы."
 
 #: system/alertmods/vmwaresnapdelete_fails.py:25
-#, fuzzy
 msgid "VMWare snapshot deletion %(snap)s failed for the following VMs: %(vms)s"
-msgstr "Снимок VMWare %(snap)s не удался для следующих ВМ: %(vms)s"
+msgstr "Удаление снимка VMWare %(snap)s не удался для следующих ВМ: %(vms)s"
 
 #: system/forms.py:1613
-#, fuzzy
 msgid "Share path %s already exists"
-msgstr "Путь %s уже существует."
+msgstr "Путь ресурса %s уже существует"
 
 #: system/alertmods/volume_rekey.py:14
 msgid ""
@@ -13213,17 +13208,18 @@ msgid ""
 "working recovery keys, check logs files and correct the error as it may "
 "result to data loss."
 msgstr ""
+"Зашифрованный том не смог сменить ключи некоторых дисков. Пожалуйста, "
+"убедитесь, что вы имеете ключи восстановления работы, проверьте файлы "
+"журналов и исправьте ошибку, поскольку это может привести к потере данных."
 
 #: storage/admin.py:138
-#, fuzzy
 msgid "Readonly"
 msgstr "Только чтение"
 
 #: storage/forms.py:2024
 msgid "Disk is not clear, partitions or ZFS labels were found."
-msgstr ""
+msgstr "Диск не чист, найдены разделы или метки ZFS."
 
 #: storage/nav.py:88
-#, fuzzy
 msgid "View Enclosure"
-msgstr "Показать модули Rsync"
+msgstr "Показать Enclosure"
