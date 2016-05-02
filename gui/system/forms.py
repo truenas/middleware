@@ -1048,7 +1048,6 @@ class AdvancedForm(ModelForm):
         self.instance._original_adv_autotune = self.instance.adv_autotune
         self.instance._original_adv_debugkernel = self.instance.adv_debugkernel
         self.instance._original_adv_periodic_notifyuser = self.instance.adv_periodic_notifyuser
-        self.instance._original_adv_graphite = self.instance.adv_graphite
 
     def save(self):
         super(AdvancedForm, self).save()
@@ -1088,8 +1087,6 @@ class AdvancedForm(ModelForm):
             notifier().reload("loader")
         if self.instance._original_adv_periodic_notifyuser != self.instance.adv_periodic_notifyuser:
             notifier().start("ix-periodic")
-        if self.instance._original_adv_graphite != self.instance.adv_graphite:
-            notifier().restart("collectd")
 
     def done(self, request, events):
         if self.instance._original_adv_consolemsg != self.instance.adv_consolemsg:
