@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:07-0700\n"
-"PO-Revision-Date: 2016-04-25 19:02+0000\n"
+"PO-Revision-Date: 2016-05-01 16:54+0000\n"
 "Last-Translator: pavelb <pavel.borecki@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: cs\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1461610958.0\n"
+"X-POOTLE-MTIME: 1462121682.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -13010,9 +13010,8 @@ msgstr "Pouze pro čtení"
 
 #: storage/forms.py:2024
 msgid "Disk is not clear, partitions or ZFS labels were found."
-msgstr ""
+msgstr "Disk není prázdný – nacházejí se na něm oddíly či ZFS návěstí."
 
 #: storage/nav.py:88
-#, fuzzy
 msgid "View Enclosure"
-msgstr "Šasi E16"
+msgstr "Zobrazit šasi"
