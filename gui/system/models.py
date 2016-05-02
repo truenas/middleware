@@ -44,7 +44,6 @@ from OpenSSL import crypto
 
 from freenasUI import choices
 from freenasUI.common.ssl import (
-    write_certificate,
     write_certificate_chain,
     write_certificate_signing_request,
     write_privatekey
