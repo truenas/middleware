@@ -17,20 +17,10 @@ SW_NAME = get_sw_name()
 class NetworkInterruptMixin(object):
 
     def get_confirm_message(self, action, **kwargs):
-        failover_event = False
         if (
             hasattr(notifier, 'failover_status') and
             notifier().failover_status() == 'MASTER'
         ):
-            s = notifier().failover_rpc(timeout=1)
-            if s is not None:
-                try:
-                    s.ping()
-                    failover_event = True
-                except Exception:
-                    pass
-
-        if failover_event:
             return _(
                 'This change will cause a failover event. '
                 'Do you want to proceed?'
