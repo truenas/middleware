@@ -763,6 +763,7 @@ it will open the configuration screen shown in the Figure 13.4c.
 If you click a template's "Delete" button, a warning message will prompt you to confirm the deletion. Note that once a template is deleted, it will be removed
 from the "Templates" drop-down menu and will be no longer available for creating new jails.
 
+.. index:: bhyve, iohyve
 .. _Using iohve:
 
 Using iohyve
