@@ -451,6 +451,7 @@ def dataset_edit(request, dataset_name):
             errors = {}
 
             for attr in (
+                'org.freenas:description',
                 'compression',
                 'atime',
                 'dedup',
@@ -460,7 +461,10 @@ def dataset_edit(request, dataset_name):
                 'refquota',
                 'share_type'
             ):
-                formfield = 'dataset_%s' % attr
+                if attr == 'org.freenas:description':
+                    formfield = 'dataset_comments'
+                else:
+                    formfield = 'dataset_%s' % attr
                 val = dataset_form.cleaned_data[formfield]
 
                 if val == "inherit":
@@ -572,11 +576,15 @@ def zvol_edit(request, name):
             _n = notifier()
             error, errors = False, {}
             for attr in (
+                'org.freenas:description',
                 'compression',
                 'dedup',
                 'volsize',
             ):
-                formfield = 'volume_%s' % attr
+                if attr == 'org.freenas:description':
+                    formfield = 'volume_comments'
+                else:
+                    formfield = 'volume_%s' % attr
                 if form.cleaned_data[formfield] == "inherit":
                     success, err = _n.zfs_inherit_option(
                         name,
