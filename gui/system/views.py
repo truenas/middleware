@@ -38,7 +38,6 @@ import time
 import urllib
 import xmlrpclib
 
-from django.contrib.auth import login, get_backends
 from django.core.servers.basehttp import FileWrapper
 from django.core.urlresolvers import reverse
 from django.db import transaction
@@ -83,6 +82,7 @@ from freenasUI.system.utils import (
     VerifyHandler,
     debug_get_settings,
     debug_generate,
+    factory_restore,
     get_changelog,
     parse_changelog,
     run_updated,
@@ -477,13 +477,7 @@ def bootenv_pool_replace(request, label):
 
 def config_restore(request):
     if request.method == "POST":
-        request.session['allow_reboot'] = True
-        notifier().config_restore()
-        user = bsdUsers.objects.filter(bsdusr_uid=0)[0]
-        backend = get_backends()[0]
-        user.backend = "%s.%s" % (backend.__module__,
-                                  backend.__class__.__name__)
-        login(request, user)
+        factory_restore(request)
         return render(request, 'system/config_ok2.html')
     return render(request, 'system/config_restore.html')
 

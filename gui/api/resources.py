@@ -93,7 +93,7 @@ from freenasUI.system.forms import (
 )
 from freenasUI.system.models import Update as mUpdate
 from freenasUI.system.utils import (
-    BootEnv, get_pending_updates, debug_generate
+    BootEnv, get_pending_updates, debug_generate, factory_restore
 )
 from tastypie import fields, http
 from tastypie.http import (
@@ -920,7 +920,7 @@ class VolumeResourceMixin(NestedMixin):
                     data['used_pct'],
                 )
                 data['avail'] = humanize_size(data['avail'])
-                
+
                 data['readonly'] = self.__zfsopts.get(
                     child.path,
                     {},
@@ -2548,6 +2548,17 @@ class DebugResource(DojoResource):
             'url': reverse('system_debug_download'),
         }
         return self.create_response(request, data)
+
+
+class FactoryRestoreResource(DojoResource):
+
+    class Meta:
+        allowed_methods = ['post']
+        resource_name = 'system/factory_restore'
+
+    def post_list(self, request, **kwargs):
+        factory_restore(request)
+        return HttpResponse('Factory restore completed. Reboot is required.', status=202)
 
 
 class KerberosRealmResourceMixin(object):

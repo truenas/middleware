@@ -28,16 +28,17 @@ import logging
 import os
 import re
 import tarfile
-import time
-from datetime import timedelta
 from uuid import uuid4
 
+from django.contrib.auth import login, get_backends
 from django.utils.translation import ugettext as _
 from lockfile import LockFile
 
 from freenasOS import Configuration, Update
+from freenasUI.account.models import bsdUsers
 from freenasUI.common import humanize_size
 from freenasUI.common.pipesubr import pipeopen
+from freenasUI.middleware.notifier import notifier
 
 log = logging.getLogger('system.utils')
 
@@ -481,3 +482,12 @@ def debug_generate():
             with tarfile.open(debug_file, 'w') as tar:
                 tar.add('%s/standby.txz' % direc, '%s.txz' % hostname_b)
                 tar.add(dump, '%s.txz' % hostname_a)
+
+
+def factory_restore(request):
+    request.session['allow_reboot'] = True
+    notifier().config_restore()
+    user = bsdUsers.objects.filter(bsdusr_uid=0)[0]
+    backend = get_backends()[0]
+    user.backend = "%s.%s" % (backend.__module__, backend.__class__.__name__)
+    login(request, user)
