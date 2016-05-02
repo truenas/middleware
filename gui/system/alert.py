@@ -5,13 +5,16 @@ import imp
 import logging
 import os
 import socket
+import subprocess
 import time
 
 from django.utils.translation import ugettext_lazy as _
 
-from freenasUI.common.system import send_mail
+from freenasUI.common.system import send_mail, get_sw_version
 from freenasUI.freeadmin.hook import HookMetaclass
+from freenasUI.middleware.notifier import notifier
 from freenasUI.system.models import Alert as mAlert
+from freenasUI.support.utils import get_license, new_ticket
 
 log = logging.getLogger('system.alert')
 
@@ -178,6 +181,37 @@ class AlertPlugins:
             text='\n'.join(msgs)
         )
 
+    def ticket(self, alerts):
+        node = alert_node()
+        dismisseds = [a.message_id
+                      for a in mAlert.objects.filter(dismiss=True, node=node)]
+        msgs = []
+        for alert in alerts:
+            if alert.getId() not in dismisseds:
+                msgs.append(unicode(alert).encode('utf8'))
+        if len(msgs) == 0:
+            return
+
+        serial = subprocess.Popen(
+            ['/usr/local/sbin/dmidecode', '-s', 'system-serial-number'],
+            stdout=subprocess.PIPE
+        ).communicate()[0].split('\n')[0].upper()
+
+        license, reason = get_license()
+        if license:
+            company = license.customer_name
+        else:
+            company = 'Unknown'
+
+        new_ticket({
+            'title': 'Automatic alert (%s)' % serial,
+            'body': '\n'.join(msgs),
+            'version': get_sw_version().split('-', 1)[-1],
+            'debug': False,
+            'company': company,
+            'serial': serial,
+        })
+
     def run(self):
 
         obj = None
@@ -260,6 +294,8 @@ class AlertPlugins:
 
         if crits:
             self.email(crits)
+            if not notifier().is_freenas():
+                self.ticket(crits)
 
         with open(self.ALERT_FILE, 'w') as f:
             cPickle.dump({
