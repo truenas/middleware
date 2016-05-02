@@ -64,6 +64,7 @@ from freenasUI.common.system import (
     get_sw_version,
     send_mail
 )
+from freenasUI.common.pipesubr import pipeopen
 from freenasUI.common.ssl import (
     export_certificate,
     export_certificate_chain,
@@ -1380,7 +1381,6 @@ def update_check(request):
                 return render(request, 'failover/failover_down.html')
 
         handler = CheckUpdateHandler()
-        error = None
         try:
             update = CheckForUpdates(
                 diff_handler=handler.diff_call,
@@ -1391,10 +1391,6 @@ def update_check(request):
         except UpdateManifestNotFound:
             network = False
             update = False
-        except Exception as e:
-            network = False
-            update = False
-            error = str(e)
         if update:
             conf = Configuration.Configuration()
             sys_mani = conf.SystemManifest()
@@ -1410,7 +1406,6 @@ def update_check(request):
             'network': network,
             'handler': handler,
             'changelog': changelog,
-            'error': error,
         })
 
 
