@@ -489,7 +489,7 @@ class SSSDConf(SSSDBase):
                         if s[var]:
                             self_s[var] = s[var]
 
-                else: 
+                else:
                     self.sections[st] = s
 
                 if st not in services:
@@ -506,7 +506,6 @@ class SSSDConf(SSSDBase):
 
         with open(self.path, 'r') as f:
             lines = f.readlines()
-            f.close()
 
         nsections = 0
         for line in lines:
@@ -522,7 +521,6 @@ class SSSDConf(SSSDBase):
 
         with open(self.path, "r") as f:
             lines = f.readlines()
-            f.close()
 
         section = None
 
