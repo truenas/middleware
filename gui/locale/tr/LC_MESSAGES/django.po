@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:05-0700\n"
-"PO-Revision-Date: 2016-05-01 19:01+0000\n"
+"PO-Revision-Date: 2016-05-02 18:26+0000\n"
 "Last-Translator: BouRock <hitowerdigit@hotmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: tr\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1462129315.0\n"
+"X-POOTLE-MTIME: 1462213613.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -4417,7 +4417,7 @@ msgstr "Zorla"
 
 #: system/forms.py:268
 msgid "Max Poll should be higher than Min Poll"
-msgstr "En fazla oylama en az oylamadan daha yüksek olmalıdır"
+msgstr "En fazla yoklama en az yoklamadan daha yüksek olmalıdır"
 
 #: system/forms.py:274
 msgid "Server could not be reached. Check \"Force\" to continue regardless."
@@ -4516,9 +4516,9 @@ msgid ""
 "usual one. This is designed to improve timekeeping quality with the server "
 "command and s addresses."
 msgstr ""
-"Sunucu erişilebilir olduğunda bunun yerine alışılmış bir sekiz paket "
-"gönderir. Bu sunucu komut ve s adresleri ile zaman tutma kalitesini artırmak "
-"için tasarlanmıştır."
+"Sunucu erişilebilir olduğunda, alışılmışın yerine sekiz paketli veri bloğu "
+"gönderir. Bu, sunucu komutu ve s adresleri ile zaman tutma kalitesini "
+"artırmak için tasarlanmıştır."
 
 #: system/models.py:104
 msgid "IBurst"
@@ -4530,38 +4530,39 @@ msgid ""
 "usual one. This is designed to speed the initial synchronization acquisition "
 "with the server command and s addresses."
 msgstr ""
-"Sunucu erişilebilir olduğunda bunun yerine alışılmış bir sekiz paket "
-"gönderir. Bu sunucu komut ve s adresleri ile eşitlemeyi hızlandırmak için "
-"tasarlanmıştır."
+"Sunucu erişilemez olduğunda, alışılmışın yerine sekiz paketli veri bloğu "
+"gönderir. Bu, sunucu komutu ve s adresleri ile ilk eşitleme alımına hız "
+"kazandırmak için tasarlanmıştır."
 
 #: system/models.py:112 templates/system/ntpserver.html:8
 msgid "Prefer"
-msgstr "Tercih"
+msgstr "Tercih et"
 
 #: system/models.py:114
 msgid ""
 "Marks the server as preferred. All other things being equal, this host will "
 "be chosen for synchronization among a set of correctly operating hosts."
 msgstr ""
-"Tercih olarak sunucu işaretler. Tüm diğer şeyleri eşitlemek üzere şu ana "
-"kadar çalışan ana dizin arasında eşleme için seçilecektir."
+"Tercih edildi olarak sunucuyu işaretler. Tüm diğer şeyler eşitlenir, bu "
+"anamakine şu anda doğru olarak işleyen bir grup anamakinenin arasından "
+"eşitleme için seçilecektir."
 
 #: system/models.py:119 templates/system/ntpserver.html:9
 msgid "Min. Poll"
-msgstr "Min. sorgulama"
+msgstr "En Az Yoklama"
 
 #: system/models.py:122
 msgid ""
 "The minimum poll interval for NTP messages, as a power of 2 in seconds. "
 "Defaults to 6 (64 s), but can be decreased to a lower limit of 4 (16 s)"
 msgstr ""
-"NTP mesajlar için en az yoklama aralığı 2 değerinin saniyede bir katı "
-"olarak. Varsayılan değer 6 (64 s) fakat 4 (16 s) arasında bir alt sınır ile "
-"azaltılabilir."
+"NTP iletileri için en az yoklama aralığı, saniye cinsinden 2'nin kuvveti "
+"olarak. Varsayılanı 6 (64 san), fakat 4'ün (16 san) bir alt sınırına "
+"azaltılabilir"
 
 #: system/models.py:127 templates/system/ntpserver.html:10
 msgid "Max. Poll"
-msgstr "Mak. sorgulama"
+msgstr "En Fazla Yoklama"
 
 #: system/models.py:130
 msgid ""
@@ -4569,25 +4570,25 @@ msgid ""
 "Defaults to 10 (1,024 s), but can be increased to an upper limit of 17 (36.4 "
 "h)"
 msgstr ""
-"NTP mesajlar için en çok yoklama aralığı 2 değerinin saniyede bir katı "
-"olarak. Varsayılan değer 10 (1,024 s) fakat 17 (36,4 saat) arasında bir üst "
-"sınır ile artırılabilir."
+"NTP iletileri için en fazla yoklama aralığı, saniye cinsinden 2'nin kuvveti "
+"olarak. Varsayılanı 10 (1,024 san), fakat 17'nin (36.4 sa) bir üst sınırına "
+"artırılabilir"
 
 #: system/models.py:144
 msgid "NTP Server"
-msgstr "NTP Sunucu"
+msgstr "NTP Sunucusu"
 
 #: system/models.py:145
 msgid "NTP Servers"
-msgstr "NTP Sunucu"
+msgstr "NTP Sunucuları"
 
 #: system/models.py:157
 msgid "Enable Console Menu"
-msgstr "Konsol menüsünü etkinleştir"
+msgstr "Konsol Menüsünü etkinleştir"
 
 #: system/models.py:159
 msgid "Use Serial Console"
-msgstr "Seri konsol kullanımı"
+msgstr "Seri Konsol Kullan"
 
 #: system/models.py:161
 msgid "Enable screen saver"
@@ -10332,17 +10333,16 @@ msgstr ""
 "ağlar için tamamen uygunsuz yapar."
 
 #: storage/models.py:819
-#, fuzzy
 msgid "Encryption Cipher"
-msgstr "Şifreleme Türü"
+msgstr "Şifreleme Şifresi"
 
 #: storage/models.py:821
 msgid "Standard"
-msgstr ""
+msgstr "Standart"
 
 #: storage/models.py:822
 msgid "Fast"
-msgstr ""
+msgstr "Hızlı"
 
 #: storage/models.py:830
 msgid ""
@@ -13245,9 +13245,8 @@ msgid ""
 msgstr ""
 
 #: storage/admin.py:138
-#, fuzzy
 msgid "Readonly"
-msgstr "Salt-okunur"
+msgstr "Salt okunur"
 
 #: storage/forms.py:2024
 msgid "Disk is not clear, partitions or ZFS labels were found."
