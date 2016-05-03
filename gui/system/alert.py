@@ -308,8 +308,19 @@ class AlertPlugins:
 
         if crits:
             self.email(crits)
-            if not notifier().is_freenas():
-                self.ticket(crits)
+
+        if not notifier().is_freenas():
+            # Automatically create ticket for new alerts tagged as possible
+            # hardware problem
+            hardware = sorted([a for a in rvs if a and a.getHardware()])
+            if obj and hardware:
+                lasthardware = sorted([
+                    a for a in obj['alerts'] if a and a.getHardware()
+                ])
+                if hardware == lasthardware:
+                    hardware = []
+            if hardware:
+                self.ticket(hardware)
 
         with open(self.ALERT_FILE, 'w') as f:
             cPickle.dump({
