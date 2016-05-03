@@ -225,6 +225,8 @@ class AlertPlugins:
         })
         if error:
             log.error("Failed to create a support ticket: %s", msg)
+        else:
+            log.debug("Automatic alert ticket successfully created: %s", msg)
 
     def run(self):
 
