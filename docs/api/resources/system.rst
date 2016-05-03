@@ -1016,6 +1016,39 @@ List resource
    :statuscode 200: no error
 
 
+Configuration
+-------------
+
+Configuration handling.
+
+Factory Restore
++++++++++++++++
+
+.. http:post:: /api/v1.0/system/config/factory_restore/
+
+   Perform a factory restore. A reboot is necessary after this operation.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      POST /api/v1.0/system/config/factory_restore/ HTTP/1.1
+      Content-Type: application/json
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 202 Accepted
+      Vary: Accept
+      Content-Type: application/json
+
+        Factory restore completed. Reboot is required.
+
+   :resheader Content-Type: content type of the response
+   :statuscode 202: no error
+
+
 Update
 ------
 
