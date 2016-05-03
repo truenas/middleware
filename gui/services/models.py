@@ -284,11 +284,8 @@ class CIFS(Model):
 
     def get_netbiosname(self):
         _n = notifier()
-        if not _n.is_freenas():
-            if _n.failover_node() == 'B':
-                return self.cifs_srv_netbiosname_b
-            else:
-                return self.cifs_srv_netbiosname
+        if not _n.is_freenas() and _n.failover_node() == 'B':
+            return self.cifs_srv_netbiosname_b
         else:
             return self.cifs_srv_netbiosname
 
