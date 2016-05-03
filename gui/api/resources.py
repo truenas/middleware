@@ -2550,11 +2550,11 @@ class DebugResource(DojoResource):
         return self.create_response(request, data)
 
 
-class FactoryRestoreResource(DojoResource):
+class ConfigFactoryRestoreResource(DojoResource):
 
     class Meta:
         allowed_methods = ['post']
-        resource_name = 'system/factory_restore'
+        resource_name = 'system/config/factory_restore'
 
     def post_list(self, request, **kwargs):
         factory_restore(request)

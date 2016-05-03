@@ -38,7 +38,7 @@ from freenasUI.api.resources import (
     AlertResource,
     BootEnvResource,
     DebugResource,
-    FactoryRestoreResource,
+    ConfigFactoryRestoreResource,
     FCPortsResource,
     PermissionResource,
     RebootResource,
@@ -56,7 +56,7 @@ handler404 = 'freenasUI.freeadmin.views.page_not_found'
 v1_api.register(AlertResource())
 v1_api.register(BootEnvResource())
 v1_api.register(DebugResource())
-v1_api.register(FactoryRestoreResource())
+v1_api.register(ConfigFactoryRestoreResource())
 v1_api.register(FCPortsResource())
 v1_api.register(PermissionResource())
 v1_api.register(RebootResource())
