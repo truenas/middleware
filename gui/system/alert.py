@@ -210,14 +210,21 @@ class AlertPlugins:
         else:
             company = 'Unknown'
 
-        new_ticket({
+        error, msg = new_ticket({
             'title': 'Automatic alert (%s)' % serial,
             'body': '\n'.join(msgs),
             'version': get_sw_version().split('-', 1)[-1],
             'debug': False,
             'company': company,
             'serial': serial,
+            'category': 'Hardware',
+            'criticality': 'Loss of Functionality',
+            'environment': 'Production',
+            'name': 'Automatic Alert',
+            'email': 'dev@ixsystems.com',
         })
+        if error:
+            log.error("Failed to create a support ticket: %s", msg)
 
     def run(self):
 
