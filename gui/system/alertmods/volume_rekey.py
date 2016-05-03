@@ -14,7 +14,7 @@ class VolRekeyAlert(BaseAlert):
                 'Encrypted volume failed to rekey some disks. Please make '
                 'sure you have working recovery keys, check logs files and '
                 'correct the error as it may result to data loss.'
-            )))
+            ), hardware=True))
         return alerts
 
 alertPlugins.register(VolRekeyAlert)

@@ -18,6 +18,7 @@ class MultipathAlert(BaseAlert):
                     Alert.CRIT,
                     _('The following multipaths are not optimal: %s') % (
                         ', '.join(not_optimal),
+                    hardware=True,
                     )
                 )
             ]

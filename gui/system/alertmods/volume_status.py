@@ -18,7 +18,7 @@ class VolumeStatusAlert(BaseAlert):
             'volume': vol,
             'state': state,
             'status': status,
-        })
+        }, hardware=True)
 
     def volumes_status_enabled(self):
         return True

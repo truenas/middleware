@@ -16,7 +16,8 @@ class BootVolumeStatusAlert(BaseAlert):
             _('The boot volume state is %(state)s: %(status)s') % {
                 'state': state,
                 'status': status,
-            }
+            },
+            hardware=True,
         )
 
     def run(self):

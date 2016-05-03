@@ -65,10 +65,11 @@ class Alert(object):
     CRIT = 'CRIT'
     WARN = 'WARN'
 
-    def __init__(self, level, message, id=None, dismiss=False):
+    def __init__(self, level, message, id=None, dismiss=False, hardware=False):
         self._level = level
         self._message = message
         self._dismiss = dismiss
+        self._hardware = hardware
         if id is None:
             self._id = hashlib.md5(message.encode('utf8')).hexdigest()
         else:
@@ -116,6 +117,12 @@ class Alert(object):
 
     def getDismiss(self):
         return self._dismiss
+
+    def setHardware(self, value):
+        self._hardware = value
+
+    def getHardware(self):
+        return self._hardware
 
     def getTimestamp(self):
         return self._timestamp
