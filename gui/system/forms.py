@@ -1615,6 +1615,7 @@ class InitialWizardShareForm(Form):
                 raise forms.ValidationError(
                     _('Share path %s already exists') % path
                 )
+        return share_name
 
 
 class SharesBaseFormSet(BaseFormSet):
