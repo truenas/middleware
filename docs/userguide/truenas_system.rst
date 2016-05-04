@@ -193,14 +193,14 @@ state.
    configuration database in order to load the current configuration values. If your intent is to make configuration changes, rather than operating system
    changes, make a backup of the configuration database first using :menuselection:`System --> General` --> Save Config.
 
-As seen in :numref:`Figure %s: Viewing Boot Environments <tn_be1a>`, two boot environments are created when TrueNAS® is installed. The system will boot into the *default* boot environment
+As seen in :numref:`Figure %s: Viewing Boot Environments <tn_be1b>`, two boot environments are created when TrueNAS® is installed. The system will boot into the *default* boot environment
 and users can make their changes and update from this version. The other boot environment, named *Initial-Install* can be booted into if the system needs to be returned to
 a pristine, non-configured version of the installation. If you used the initial configuration wizard, a third boot environment called *Wizard-date* is also
 created indicating the date and time the wizard was run.
 
-.. _tn_be1a:
+.. _tn_be1b:
 
-.. figure:: images/tn_be1a.png
+.. figure:: images/tn_be1b.png
 
 Each boot environment entry contains the following information:
 
@@ -212,18 +212,18 @@ Each boot environment entry contains the following information:
 
 Highlight an entry to view its configuration buttons.  The following configuration buttons are available:
 
-* **Rename:** used to change the name of the boot environment.
-
 * **Activate:** will only appear on entries which are not currently set to "Active". Changes the selected entry to the default boot entry on next boot. Its
   status will change to "On Reboot" and the current "Active" entry will change from "On Reboot, Now" to "Now", indicating that it was used on the last boot
   but won't be used on the next boot.
-
-* **Clone:** used to create a copy of the highlighted boot environment.
 
 * **Delete:** used to delete the highlighted entries, which also removes these entries from the boot menu. Since you can not delete an entry that has been activated, this button will
   not appear for the active boot environment. If you need to delete an entry that you created and it is currently  activated, first activate another entry, which will clear the
   *On reboot* field of the currently activated entry. Note that this button will not be displayed for the "default" boot environment as this entry is needed in order to return the system to
   the original installation state.
+  
+* **Rename:** used to change the name of the boot environment.
+  
+* **Clone:** used to create a copy of the highlighted boot environment.
 
 The buttons above the boot entries can be used to:
 
@@ -316,6 +316,10 @@ Advanced
 +-----------------------------------------+----------------------------------+------------------------------------------------------------------------------+
 | Periodic Notification User              | drop-down menu                   | select the user to receive security output emails; this output runs nightly  |
 |                                         |                                  | but only sends an email when the system reboots or encounters an error       |
+|                                         |                                  |                                                                              |
++-----------------------------------------+----------------------------------+------------------------------------------------------------------------------+
+| Remote Graphite Server hostname         | string                           | input the IP address or hostname of a remote server that is running          |
+|                                         |                                  | a `Graphite <http://graphite.wikidot.com/>`_ server                          |
 |                                         |                                  |                                                                              |
 +-----------------------------------------+----------------------------------+------------------------------------------------------------------------------+
 
@@ -580,26 +584,23 @@ The GUI does not display the loaders that are pre-set when TrueNAS® is installe
  loader_brand="truenas-brand"
  loader_version=" "
  kern.cam.boot_delay=10000
- geom_mirror_load="YES"
- geom_stripe_load="YES"
- geom_raid_load="YES"
- geom_raid3_load="YES"
- geom_raid5_load="YES"
- geom_gate_load="YES"
- geom_multipath_load="YES"
- hwpmc_load="YES"
  debug.debugger_on_panic=1
  debug.ddb.textdump.pending=1
  hw.hptrr.attach_generic=0
+ ispfw_load="YES"
+ module_path="/boot/kernel;/boot/modules;/usr/local/modules"
+ net.inet6.ip6.auto_linklocal="0"
+ vfs.zfs.vol.mode=2
+ kern.geom.label.disk_ident.enable="0"
+ hint.ahciem.0.disabled="1"
+ hint.ahciem.1.disabled="1"
+ kern.msgbufsize="524288"
  kern.ipc.nmbclusters="262144"
  kern.hwpmc.nbuffers="4096"
  kern.hwpmc.nsamples="4096"
  hw.memtest.tests="0"
- module_path="/boot/kernel;/boot/modules;/usr/local/modules"
- net.inet6.ip6.auto_linklocal="0"
- kern.msgbufsize="524288"
  vfs.zfs.trim.enabled="0"
- vfs.zfs.vol.mode=2
+ kern.cam.ctl.ha_mode=2
 
 **Do not add or edit the default tunables** as doing so may render the system unusable.
 
