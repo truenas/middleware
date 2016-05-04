@@ -22,11 +22,31 @@
 # IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 #####################################################################
+from lockfile import LockFile, LockTimeout
 
 import fcntl
 import os
 
 MNTPT = '/mnt'
+
+
+def lock(path):
+    def decorate(f):
+        def do_lock(*args, **kwargs):
+            lock = LockFile(path)
+            while not lock.i_am_locking():
+                try:
+                    lock.acquire(timeout=5)
+                except LockTimeout:
+                    lock.break_lock()
+
+            try:
+                rv = f(*args, **kwargs)
+            finally:
+                lock.release()
+            return rv
+        return do_lock
+    return decorate
 
 
 class MountLock:
