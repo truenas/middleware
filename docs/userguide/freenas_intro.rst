@@ -87,8 +87,7 @@ Introduction
 FreeNAS® is an embedded open source network-attached storage (NAS) operating system based on FreeBSD and released under a
 `2-clause BSD license <https://opensource.org/licenses/BSD-2-Clause>`_. A NAS has an operating system optimized for file storage and sharing.
 
-FreeNAS® provides a browser-based, graphical configuration interface. Its built-in networking protocols can be configured to provide storage access to a
-wide range of operating systems. A plugins system is provided for extending the built-in features by installing additional software.
+FreeNAS® provides a browser-based, graphical configuration interface. Its built-in networking protocols provide storage access to multiple operating systems. A plugins system is provided for extending the built-in features by installing additional software.
 
 .. _What's New in |release|:
 
@@ -189,9 +188,9 @@ Depending upon your use case, your system may require more RAM. Here are some ge
 * If you plan to use Active Directory with a lot of users, add an additional 2 GB of RAM for winbind's internal cache.
 
 * If you plan on :ref:`Using the phpVirtualBox Template`, increase the minimum RAM size by the amount of virtual memory you configure for the virtual machines. For example, if you
-  plan to install two virtual machines, each with 4GB of virtual memory, the system will need at least 16GB of RAM.
+  plan to install two virtual machines, each with 4 GB of virtual memory, the system will need at least 16 GB of RAM.
 
-* If you plan to use iSCSI, install at least 16GB of RAM, if performance is not critical, or at least 32GB of RAM if performance is a requirement.
+* If you plan to use iSCSI, install at least 16 GB of RAM, if performance is not critical, or at least 32 GB of RAM if performance is a requirement.
 
 * If you are installing FreeNAS® on a headless system, disable the shared memory settings for the video card in the BIOS.
 
@@ -200,10 +199,10 @@ corruption of data before the error-correcting properties of ZFS come into play,
 performed by ZFS. If you consider your data to be important, use ECC RAM. This 
 `Case Study <http://research.cs.wisc.edu/adsl/Publications/zfs-corruption-fast10.pdf>`_ describes the risks associated with memory corruption.
 
-If you don't have at least 8GB of RAM, you should consider getting more powerful hardware before using FreeNAS® to store your data. Plenty of users expect
+If you don't have at least 8 GB of RAM, you should consider getting more powerful hardware before using FreeNAS® to store your data. Plenty of users expect
 FreeNAS® to function with less than these requirements, just at reduced performance.  The bottom line is that these minimums are based on the feedback of
 many users. Users that do not meet these requirements and who ask for help in the forums or IRC will likely be ignored because of the abundance of information
-that FreeNAS® may not behave properly with less than 8GB of RAM.
+that FreeNAS® may not behave properly with less than 8 GB of RAM.
 
 .. _Compact or USB Flash:
 
@@ -220,10 +219,10 @@ or SSD. Technically, it can also be installed onto a hard drive, but this is dis
 
 When determining the type and size of device to install the operating system to, keep the following points in mind:
 
-- the *bare* minimum size is 4GB. This provides room for the operating system and two boot environments. Since each update creates a boot environment, the
-  *recommended* minimum is at least 8GB or 16GB as this provides room for more boot environments.
+- the *bare* minimum size is 4 GB. This provides room for the operating system and two boot environments. Since each update creates a boot environment, the
+  *recommended* minimum is at least 8 GB or 16 GB as this provides room for more boot environments.
 
-- if you plan to make your own boot environments, budget about 1GB of storage per boot environment. Consider deleting older boot environments once you are
+- if you plan to make your own boot environments, budget about 1 GB of storage per boot environment. Consider deleting older boot environments once you are
   sure that a boot environment is no longer needed. Boot environments can be created and deleted using :menuselection:`System --> Boot`.
 
 - when using a USB stick, it is recommended to use a name brand USB stick as ZFS will quickly find errors on cheap, not well made sticks.
@@ -237,7 +236,7 @@ Storage Disks and Controllers
 
 The
 `Disk section <http://www.freebsd.org/releases/10.3R/hardware.html#DISK>`_
-of the FreeBSD Hardware List lists the supported disk controllers. In addition, support for 3ware 6gbps RAID controllers has been added along with the CLI
+of the FreeBSD Hardware List lists the supported disk controllers. In addition, support for 3ware 6 gbps RAID controllers has been added along with the CLI
 utility :command:`tw_cli` for managing 3ware RAID controllers.
 
 FreeNAS® supports hot pluggable drives. To use this feature, make sure that AHCI is enabled in the BIOS.
