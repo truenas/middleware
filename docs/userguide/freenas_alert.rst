@@ -38,6 +38,8 @@ is detected. Some of the conditions that trigger an alert include:
 
 * a VMware login or a :ref:`VMware-Snapshot` task fails
 
+* a delete of a VMware snapshot fails
+
 * a Certificate Authority or certificate is invalid or malformed
 
 * a re-key operation fails on an encrypted pool

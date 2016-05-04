@@ -159,19 +159,27 @@ is detected. Some of the conditions that trigger an alert include:
 
 * ZFS pool status changes from "HEALTHY"
 
+* the system dataset does not reside on the boot pool
+
 * a S.M.A.R.T. error occurs
 
 * the system is unable to bind to the "WebGUI IPv4 Address" set in :menuselection:`System --> General`
 
 * the system can not find an IP address configured on an iSCSI portal
 
+* the interface which is set to be critical for failover is not found or is not configured
+
 * a periodic snapshot or replication task fails
 
 * a VMware login or a :ref:`VMware-Snapshot` task fails
 
+* a delete of a VMware snapshot fails
+
 * a Certificate Authority or certificate is invalid or malformed
 
 * HA is configured but the connection is not established
+
+* one node of an HA pair gets stuck applying its configuration journal as this condition could block future configuration changes from being applied to the standby node
 
 * 30 days before the license expires and when the license expires
 
@@ -182,6 +190,9 @@ is detected. Some of the conditions that trigger an alert include:
   is included for managing these devices
   
 * the usage of a HA link goes above 10MB/s
+
+.. note:: alerts which may be related to a hardware issue will automatically create a support ticket. These include a ZFS pool status change, a multipath failure, a failed S.M.A.R.T.
+   test, and a failed re-key operation.
 
 An alert will also be generated when the Avago HBA firmware version does not match the driver version. To resolve this alert, download the IT (integrated
 target) firmware, not the IR (integrated RAID) firmware, from the Avago website. Then, specify the name of the firmware image and bios as well as the
