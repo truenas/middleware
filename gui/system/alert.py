@@ -231,6 +231,14 @@ class AlertPlugins:
 
     def run(self):
 
+        _n = notifier()
+        # Skip for standby node
+        if (
+            not _n.is_freenas() and _n.failover_licensed()
+            and _n.failover_status != 'MASTER'
+        ):
+            return []
+
         obj = None
         if os.path.exists(self.ALERT_FILE):
             with open(self.ALERT_FILE, 'r') as f:
