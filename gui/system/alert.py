@@ -10,6 +10,7 @@ import time
 
 from django.utils.translation import ugettext_lazy as _
 
+from freenasUI.common.locks import lock
 from freenasUI.common.system import send_mail, get_sw_version
 from freenasUI.freeadmin.hook import HookMetaclass
 from freenasUI.middleware.notifier import notifier
@@ -229,6 +230,7 @@ class AlertPlugins:
         else:
             log.debug("Automatic alert ticket successfully created: %s", msg)
 
+    @lock('/tmp/.alertrun')
     def run(self):
 
         _n = notifier()
