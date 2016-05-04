@@ -76,6 +76,7 @@ urlpatterns = patterns(
     url(r'^bootenv/bulk-delete/progress/$', 'bootenv_deletebulk_progress', name='system_bootenv_deletebulk_progress'),
     url(r'^bootenv/delete/(?P<name>[^/]+)/$', 'bootenv_delete', name='system_bootenv_delete'),
     url(r'^bootenv/rename/(?P<name>[^/]+)/$', 'bootenv_rename', name='system_bootenv_rename'),
+    url(r'^bootenv/keep/(?P<name>[^/]+)/$', 'bootenv_keep', name='system_bootenv_keep'),
     url(r'^bootenv/datagrid/$', 'bootenv_datagrid', name='system_bootenv_datagrid'),
     url(r'^bootenv/datagrid/structure/$', 'bootenv_datagrid_structure', name='system_bootenv_datagrid_structure'),
     url(r'^bootenv/datagrid/actions/$', 'bootenv_datagrid_actions', name='system_bootenv_datagrid_actions'),

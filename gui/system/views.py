@@ -57,6 +57,8 @@ from freenasOS.Update import (
     ActivateClone,
     CheckForUpdates,
     DeleteClone,
+    FindClone,
+    CloneSetAttr,
 )
 from freenasUI.account.models import bsdUsers
 from freenasUI.common.system import (
@@ -237,6 +239,10 @@ function() {
         _('Rename'): {
             'on_click': onclick % (_('Rename'), '_rename_url'),
             'button_name': _('Rename'),
+        },
+        _('Keep'): {
+            'on_click': onclick % (_('Keep'), '_keep_url'),
+            'button_name': _('Keep'),
         },
     }
     return HttpResponse(
@@ -426,6 +432,25 @@ def bootenv_rename(request, name):
         'form': form,
         'name': name,
     })
+
+
+def bootenv_keep(request, name):
+    if request.method == 'POST':
+        be = FindClone("default")
+        keep = CloneSetAttr(be, keep = True)
+        if keep:
+            return JsonResp(
+                request,
+                message=_('Boot Environment successfully Kept.'),
+            )
+        return JsonResp(
+            request,
+            message=_('Failed to keep Boot Environment.'),
+        )
+    return render(request, 'system/bootenv_keep.html', {
+        'name': name,
+    })
+
 
 
 def bootenv_pool_attach(request):
