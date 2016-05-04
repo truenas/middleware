@@ -159,7 +159,7 @@ class FreeNAS_Local_Group(object):
 
         try:
             self._gr = grp.getgrnam(group.encode('utf-8'))
-        except Exceptiona as e:
+        except Exception as e:
             log.debug("Exception on grfunc: {0}".foramt(e))
             self._gr = None
 
