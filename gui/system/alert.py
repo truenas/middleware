@@ -210,7 +210,7 @@ class AlertPlugins:
         else:
             company = 'Unknown'
 
-        error, msg = new_ticket({
+        error, msg, ticketnum = new_ticket({
             'title': 'Automatic alert (%s)' % serial,
             'body': '\n'.join(msgs),
             'version': get_sw_version().split('-', 1)[-1],
