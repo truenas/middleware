@@ -199,7 +199,7 @@ corruption of data before the error-correcting properties of ZFS come into play,
 performed by ZFS. If you consider your data to be important, use ECC RAM. This 
 `Case Study <http://research.cs.wisc.edu/adsl/Publications/zfs-corruption-fast10.pdf>`_ describes the risks associated with memory corruption.
 
-If you don't have at least 8 GB of RAM, you should consider getting more powerful hardware before using FreeNAS® to store your data. Plenty of users expect
+If you do not have at least 8 GB of RAM, you should consider getting more powerful hardware before using FreeNAS® to store your data. Plenty of users expect
 FreeNAS® to function with less than these requirements, just at reduced performance.  The bottom line is that these minimums are based on the feedback of
 many users. Users that do not meet these requirements and who ask for help in the forums or IRC will likely be ignored because of the abundance of information
 that FreeNAS® may not behave properly with less than 8 GB of RAM.
@@ -225,7 +225,7 @@ When determining the type and size of device to install the operating system to,
 - if you plan to make your own boot environments, budget about 1 GB of storage per boot environment. Consider deleting older boot environments once you are
   sure that a boot environment is no longer needed. Boot environments can be created and deleted using :menuselection:`System --> Boot`.
 
-- when using a USB stick, it is recommended to use a name brand USB stick as ZFS will quickly find errors on cheap, not well made sticks.
+- when using a USB stick, it is recommended to use a name brand USB stick as ZFS will quickly find errors on cheap, poorly made sticks.
   
 - if a reliable boot disk is required, use two identical devices and select them both during the installation. Doing so will create a mirrored boot device.
 
