@@ -159,8 +159,8 @@ class FreeNAS_Local_Group(object):
 
         try:
             self._gr = grp.getgrnam(group.encode('utf-8'))
-        except Exception, e:
-            log.debug("Exception on grfunc: %s", e)
+        except Exceptiona as e:
+            log.debug("Exception on grfunc: {0}".foramt(e))
             self._gr = None
 
 
@@ -225,8 +225,8 @@ class FreeNAS_Groups(object):
             try:
                 self.__groups = dir(**kwargs)
 
-            except Exception, e:
-                log.error("Directory Groups could not be retrieved: %s", str(e))
+            except Exception as e:
+                log.error("Directory Groups could not be retrieved: {0}".format(str(e)))
                 self.__groups = None
 
         if self.__groups is None:
@@ -253,7 +253,6 @@ class FreeNAS_Local_User(object):
         if user is not None:
             obj = super(FreeNAS_Local_User, cls).__new__(cls)
 
-        log.debug("FreeNAS_Local_User.__new__: leave")
         return obj
 
     def __init__(self, user, **kwargs):
@@ -264,13 +263,10 @@ class FreeNAS_Local_User(object):
         if user is not None:
             self.__get_user(user, data=data)
 
-        log.debug("FreeNAS_Local_User.__init__: leave")
-
     def __get_user(self, user, data=None):
         if not data and (
-            isinstance(user, int) or (
-                isinstance(user, (str, unicode)) and user.isdigit()
-            )
+            isinstance(user, int) or
+            (isinstance(user, (str, unicode)) and user.isdigit())
         ):
             objects = bsdUsers_objects(bsdusr_uid=user)
             if objects:
@@ -279,8 +275,8 @@ class FreeNAS_Local_User(object):
         try:
             self._pw = pwd.getpwnam(user.encode('utf-8'))
 
-        except Exception, e:
-            log.debug("Exception on pwfunc: %s", e)
+        except Exception as e:
+            log.debug("Exception on pwfunc: {0}".format(e))
             self._pw = None
 
 
@@ -346,8 +342,8 @@ class FreeNAS_Users(object):
             try:
                 self.__users = dir(**kwargs)
 
-            except Exception, e:
-                log.error("Directory Users could not be retrieved: %s", str(e))
+            except Exception as e:
+                log.error("Directory Users could not be retrieved: {0}".format(str(e)))
                 self.__users = None
 
         if self.__users is None:
