@@ -225,7 +225,7 @@ When determining the type and size of device to install the operating system to,
 - if you plan to make your own boot environments, budget about 1 GB of storage per boot environment. Consider deleting older boot environments once you are
   sure that a boot environment is no longer needed. Boot environments can be created and deleted using :menuselection:`System --> Boot`.
 
-- when using a USB stick, it is recommended to use a name brand USB stick as ZFS will quickly find errors on cheap, not well made sticks.
+- when using a USB stick, it is recommended to use a name brand USB stick as ZFS will quickly find errors on cheap, poorly made sticks.
   
 - if a reliable boot disk is required, use two identical devices and select them both during the installation. Doing so will create a mirrored boot device.
 
