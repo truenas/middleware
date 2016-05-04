@@ -799,7 +799,7 @@ Then, specify the name and size of the guest to create and verify its status::
  Guest		VMM?	Running?	rcboot?		Description
  freebsd10.3    NO      NO              NO              Thu_Mar_24_09:37:30_PDT_2016
  
-Note that the newly created guest is not running, nor is it set to automatically start ("rcboot:) when :command:`iohyve` starts.
+Note that the newly created guest is not running, nor is it set to automatically start (rcboot) when :command:`iohyve` starts.
  
 To install the guest using the specified ISO::
 
