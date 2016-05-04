@@ -208,7 +208,7 @@ def carp_master(fobj, state_file, ifname, vhid, event, user_override, forcetakeo
                     sys.exit(1)
 
     if not forcetakeover:
-        run('pkill -f fenced')
+        run('pkill -9 -f fenced')
 
     try:
         os.unlink(FAILED_FILE)
@@ -470,7 +470,7 @@ def carp_backup(fobj, state_file, ifname, vhid, event, user_override):
                         'are UP.', ifname)
                     sys.exit(1)
 
-    run('pkill -f fenced')
+    run('pkill -9 -f fenced')
 
     for group in fobj['groups']:
         for interface in fobj['groups'][group]:
