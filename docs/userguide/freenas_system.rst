@@ -240,11 +240,12 @@ The buttons above the boot entries can be used to:
 If this system had a mirrored boot device and one device had a "Status" of *OFFLINE*, one could click the device to replace, then click its "Replace" button.
 Note that **you cannot replace the boot device if it is the only boot device** as it contains the operating system itself.
 
-Figure 5.3c shows a sample boot menu containing entries for the default, initial, and wizard generated boot environments.
+Figure 5.3c shows a sample boot menu. By default, it will boot into the boot environment created by the latest update. To access the entries for the default, initial-install, or previous
+updates, select "Boot Environment Menu".
 
 **Figure 5.3c: Boot Environments in Boot Menu**
 
-.. image:: images/be3a.png
+.. image:: images/be3b.png
 
 .. index:: Mirroring the Boot Device
 .. _Mirroring the Boot Device:
