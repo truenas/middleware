@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:05-0700\n"
-"PO-Revision-Date: 2016-05-02 18:26+0000\n"
+"PO-Revision-Date: 2016-05-05 07:49+0000\n"
 "Last-Translator: BouRock <hitowerdigit@hotmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: tr\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1462213613.0\n"
+"X-POOTLE-MTIME: 1462434567.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -4605,7 +4605,7 @@ msgstr "Ekran koruyucuyu etkinleştir"
 
 #: system/models.py:169
 msgid "Enable powerd (Power Saving Daemon)"
-msgstr "Gücü etkinleştir (Güç Koruma Programcığı)"
+msgstr "Güç arka plan programını etkinleştir (Güç Tasarrufu Arka Programı)"
 
 #~ msgid "Enable Zeroconf/Bonjour"
 #~ msgstr "Zeroconf/Bonjour Etkinleştir"
@@ -4615,18 +4615,17 @@ msgid ""
 "Swap size on each drive in GiB, affects new disks only. Setting this to 0 "
 "disables swap creation completely (STRONGLY DISCOURAGED)."
 msgstr ""
-"Sadece yeni disklerde GIB her sürücüde takas alanı boyutunu etkiler. Takas "
-"oluşturma alanını kapatmak için bu alanı 0 olarak ayarlayın (KESİNLİKLE "
+"GiB olarak her sürücüdeki takas boyutu sadece yeni diskleri etkiler. Bunu 0 "
+"olarak ayarlamak takas oluşturmayı tamamen etkisizleştirir (KESİNLİKLE "
 "ÖNERİLMEZ)."
 
 #: system/models.py:179
 msgid "Show console messages in the footer"
-msgstr ""
-"Alt bilgide konsol mesajlarını göster (Sayfanın yenilenmesini gerektirir)"
+msgstr "Altta konsol iletilerini göster"
 
 #: system/models.py:182
 msgid "Show tracebacks in case of fatal errors"
-msgstr "Ölümcül bir hata durumunda, sorun izleme listesini göster"
+msgstr "Ciddi hataların olduğu durumda geri izlemeleri göster"
 
 #: system/models.py:185
 msgid "Show advanced fields by default"
@@ -4638,7 +4637,7 @@ msgstr "Otomatik ayarı etkinleştir"
 
 #: system/models.py:196
 msgid "MOTD banner"
-msgstr "MOTD (açılış mesajı) afişi"
+msgstr "MOTD afişi"
 
 #: system/models.py:200 templates/system/settings.html:5
 msgid "Advanced"
@@ -4646,15 +4645,15 @@ msgstr "Gelişmiş"
 
 #: system/models.py:209
 msgid "From email"
-msgstr "Kimden (e-posta)"
+msgstr "Kimden e-postası"
 
 #: system/models.py:210
 msgid ""
 "An email address that the system will use for the sending address for mail "
 "it sends, eg: freenas@example.com"
 msgstr ""
-"Sistemin e-posta gönderirken kullanacağı, postanın gönderici kısmında "
-"görünecek e-posta adresi, örn: freenas@alanadım.com"
+"Sistemin postayı gönderen olarak gönderim adresi için kullanacağı e-posta "
+"adresi, örn: freenas@ornek.com"
 
 #: system/models.py:216
 msgid "Outgoing mail server"
@@ -4665,20 +4664,20 @@ msgid ""
 "A hostname or ip that will accept our mail, for instance mail.example.org, "
 "or 192.168.1.1"
 msgstr ""
-"E-postanızı alacak suncunun makine adı veya ip numarası. Örn: mail.ornek.com "
+"Postamızı kabul edecek anamakine adı veya ip adresi, örneğin mail.ornek.org "
 "veya 192.168.1.1"
 
 #: system/models.py:224
 msgid "An integer from 1 - 65535, generally will be 25, 465, or 587"
-msgstr "1 - 65535 arasında bir tamsayı. Genellikle 25, 465 veya 587."
+msgstr "1 - 65535 arasında bir tamsayı, genellikle 25, 465 veya 587 olacaktır"
 
 #: system/models.py:226
 msgid "Port to connect to"
-msgstr "Bağlanılacak bağlantı nokatası numarası"
+msgstr "Bağlanacak bağlantı noktası"
 
 #: system/models.py:232
 msgid "encryption of the connection"
-msgstr "Bağlantının şifreleme türü"
+msgstr "bağlantının şifrelemesi"
 
 #: system/models.py:233
 msgid "TLS/SSL"
@@ -4686,7 +4685,7 @@ msgstr "TLS/SSL"
 
 #: system/models.py:236
 msgid "Use SMTP Authentication"
-msgstr "SMTP için kimlik doğrulaması kullan"
+msgstr "SMTP Kimlik Doğrulaması kullan"
 
 #: system/models.py:244
 msgid "A username to authenticate to the remote server"
@@ -7409,11 +7408,11 @@ msgstr "Dizin Hizmeti"
 
 #: system/models.py:193
 msgid "Set this to match your serial port speed"
-msgstr "Seri bağlantı noktası hızını eşleştirmek için bu seçeneği ayarlayın"
+msgstr "Seri bağlantı noktası hızınızı eşleştirmek için bunu ayarlayın"
 
 #: system/models.py:226
 msgid "Enable report anonymous statistics"
-msgstr "Anonim rapor istatistikleri etkinleştir"
+msgstr "İsimsiz istatistikleri bildirmeyi etkinleştir"
 
 #: system/models.py:426
 msgid "Redirect Stderr"
@@ -8288,15 +8287,15 @@ msgstr "WebGKA HTTPS Bağlantı Noktası"
 
 #: system/models.py:194
 msgid "Serial Port Speed"
-msgstr "Seri bağlantı noktası hızı"
+msgstr "Seri Bağlantı Noktası Hızı"
 
 #: system/models.py:219
 msgid "Enable debug kernel"
-msgstr "Çekirdek hata ayıklamasını etkinleştir"
+msgstr "Hata ayıklama çekirdeğini etkinleştir"
 
 #: system/models.py:222
 msgid "Enable automatic upload of kernel crash dumps"
-msgstr "Çekirdek kilitlenmesinde dokümanları otomatik yüklemeyi etkinleştir"
+msgstr "Çekirdek çökme dökümlerinin otomatik gönderilmesini etkinleştir"
 
 #: system/models.py:421
 msgid ""
@@ -12129,16 +12128,22 @@ msgid ""
 "copied over to the path specified in the 'Destination' field below and then "
 "unmounted. Importing non-zfs disks permanently as a Volume is deprecated"
 msgstr ""
+"Bu, zfs dosya sistemi olmayan disktir. Bağlanacak, verisi aşağıdaki 'Hedef' "
+"alanında belirtilen yol üzerinden kopyalanacak ve ondan sonra sökülecektir. "
+"Bir Birim olarak zfs olmayan disklerin kalıcı olarak içe aktarılması "
+"kullanım dışıdır"
 
 #: storage/forms.py:746
 msgid "This must be a dataset/folder in an existing Volume"
-msgstr ""
+msgstr "Bu, varolan bir Birim içinde veri kümesi/klasör olmak zorundadır"
 
 #: storage/forms.py:797
 msgid ""
 "The path %s does not exist.                    This must be a dataset/folder "
 "in an existing Volume"
 msgstr ""
+"%s yolu mevcut değil.                    Bu, varolan bir Birim içinde veri "
+"kümesi/klasör olmak zorundadır"
 
 #: storage/forms.py:1439
 #, fuzzy
@@ -12654,6 +12659,8 @@ msgid ""
 "You are trying to add a virtual device consisting of %(addnum)s device(s) in "
 "a pool that has a virtual device consisting of %(vdevnum)s device(s)"
 msgstr ""
+"%(vdevnum)s aygıttan oluşan bir sanal aygıta sahip bir havuz içinde %(addnum)"
+"s aygıttan oluşan bir sanal aygıtı eklemeye çalışıyorsunuz"
 
 #: directoryservice/forms.py:122
 msgid "Confirm LDAP User DN Password"
