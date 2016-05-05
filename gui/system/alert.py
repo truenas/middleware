@@ -218,7 +218,7 @@ class AlertPlugins:
             'debug': False,
             'company': company,
             'serial': serial,
-            'category': 'Hardware',
+            'category': 'Auto-Ticketing',
             'criticality': 'Loss of Functionality',
             'environment': 'Production',
             'name': 'Automatic Alert',
