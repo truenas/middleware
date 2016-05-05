@@ -203,6 +203,14 @@ def DoDownload(train, cache_dir, pkg_type, verbose):
         log.error(str(e))
         print("Incomplete download cache, cannot update", file=sys.stderr)
         sys.exit(1)
+    except Exceptions.ChecksumFailException as e:
+        log.error(str(e))
+        print("Checksum error, cannot update", file=sys.stderr)
+        sys.exit(1)
+    except Exceptions.UpdateInvalidUpdateException as e:
+        log.error(str(e))
+        print("Update not allowed:\n%s" % e.value, file=sys.stderr)
+        sys.exit(1)
     except BaseException as e:
         log.error(str(e))
         print("Received exception during download phase, cannot update", file=sys.stderr)

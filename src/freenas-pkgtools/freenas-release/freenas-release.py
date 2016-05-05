@@ -427,6 +427,24 @@ class SQLiteReleaseDB(object):
 		CONSTRAINT package_servicerestart_key FOREIGN KEY (Pkg) REFERENCES Packages(indx))
         """)
         
+        # A table for update validation scripts.  We keep track of the hash, size, and name.
+        # The name is, for the update server, relative to a special directory.
+        self._cursor.execute("""
+        CREATE TABLE IF NOT EXISTS ValidationScripts(Name TEXT NOT NULL,
+		Checksum TEXT NOT NULL,
+		Kind TEXT NOT NULL,
+		indx INTEGER PRIMARY KEY ASC AUTOINCREMENT,
+		CONSTRAINT vs_unique UNIQUE(Name, Checksum, Kind) ON CONFLICT IGNORE)
+        """)
+        # And a list of which sequences have which scripts
+        self._cursor.execute("""
+	CREATE TABLE IF NOT EXISTS SequenceValidationScripts(Sequence NOT NULL,
+    		Script NOT NULL,
+		indx INTEGER PRIMARY KEY ASC AUTOINCREMENT,
+		CONSTRAINT sequence_scripts_constraint FOREIGN KEY(Sequence) REFERENCES Sequences(indx),        
+		CONSTRAINT sequence_scripts_script_constraint FOREIGN KEY(Script) REFERENCES ValidationScripts(indx),
+        	CONSTRAINT sequence_script_unique UNIQUE(Sequence, Script) ON CONFLICT IGNORE)
+        """)
         self.commit()
 
     def commit(self):
@@ -570,6 +588,14 @@ class SQLiteReleaseDB(object):
             DebugSQL(sql, parms)
                 
             self.cursor().execute(sql, parms)
+            
+        # Validation program, if any
+        for vprog in manifest.ValidationProgramList():
+            print("vprog = %s" % vprog)
+            self.AddValidator(vprog["Name"],
+                            vprog["Checksum"],
+                            vprog["Kind"],
+                            manifest.Sequence())
             
         # I haven't implemented this at all
         # if manifest.Name():
@@ -1102,6 +1128,182 @@ class SQLiteReleaseDB(object):
             return None
         return rv
     
+    def FindValidatorsForSequence(self, sequence, kind=None):
+        """
+        Find the validators (if any) for the given sequence.
+        If kind is not None, then it will search for only that particular kind.
+        Returns an dictioanry "Sequence" : { { Name, Checksum, Kind } }
+        (or an empty dictionary if none were found).
+        """
+        sql = """
+        SELECT Script.Name AS Name, Script.Checksum AS Checksum, Script.Kind AS Kind, Sequences.Sequence AS Sequence
+        FROM ValidationScripts AS Script
+        JOIN SequenceValidationScripts AS svs
+        JOIN Sequences
+        WHERE Script.indx = svs.Script
+        AND Sequences.indx = svs.Sequence
+        AND Sequences.Sequence = ?
+        """
+        parms = (sequence,)
+        if kind:
+            sql += "AND Script.Kind = ?"
+            parms += (kind,)
+        DebugSQL(sql, parms)
+        rv = {}
+        self.cursor().execute(sql, parms)
+        rows = self.cursor().fetchall()
+        for r in rows:
+            tdict = {
+                "Name" : r["Name"],
+                "Checksum" : r["Checksum"],
+                "Kind" : r["Kind"]
+                }
+            rv[r["Sequence"]] = tdict
+            if debug or verbose:
+                print("Found validation script %s (%s, hash %s) for sequence %s" % (r["Name"], r["Kind"], r["Checksum"], r["Sequence"]), file=sys.stderr)
+        return rv
+
+    def FindSequencesForValidator(self, checksum, kind=Manifest.VALIDATE_UPDATE):
+        """
+        Return the sequences using the given <hash, kind> validator as an array.
+        The array may be empty.
+        """
+        sql = """
+        SELECT Sequences.Sequence
+        FROM Sequences
+        JOIN SequenceValidationScripts AS svs
+        JOIN ValidationScripts AS Script
+        WHERE Script.indx = svs.Script
+        AND Sequences.indx = svs.Sequence
+        AND Script.Checksum = ?
+        AND Script.Kind = ?
+        """
+        parms = (checksum, kind)
+        DebugSQL(sql, parms)
+        rv = []
+        self.cursor().execute(sql, parms)
+        rows = self.cursor().fetchall()
+        for r in rows:
+            rv.append(r["Sequence"])
+        return rv
+        
+    def FindValidators(self, checksum, kind=None):
+        """
+        Find the script.  Return an array of dictionaries: { "Name" : name, "Checksum" : checksum, "Kind" : kind }
+        (possibly empty).
+        """
+        sql = """
+        SELECT Script.Name AS Name, Script.Checksum AS Hash, Script.Kind AS Kind
+        FROM ValidationScripts AS Script
+        WHERE Script.Checksum = ?
+        """
+        parms = (checksum,)
+        if kind:
+            sql += "AND Script.Kind = ?"
+            parms += (kind,)
+
+        DebugSQL(sql, parms)
+        self.cursor().execute(sql, parms)
+        rows = self.cursor().fetchall()
+        rv = []
+        if rows:
+            for r in rows:
+                t = {
+                    "Name" : r["Name"],
+                    "Checksum" : r["Hash"],
+                    "Kind" : r["Kind"]
+                }
+                rv.append(t)
+        return rv
+    
+    def RemoveValidator(self, checksum, kind=None):
+        """
+        Remove the validator given by the checksum.  If kind is set, it specifies that.
+        Conceivably, this could verify that no sequences use it still.
+        """
+        sql = """
+        DELETE FROM ValidationScripts
+        WHERE ValidationScripts.Checksum = ?
+        """
+        parms = (checksum,)
+        if kind:
+            sql += "AND ValidationScripts.Kind = ?"
+            parms += (kind,)
+        DebugSQL(sql, parms)
+        self.cursor().execute(sql, parms)
+        self.commit()
+        return
+    
+    def RemoveValidatorForSequence(self, sequence, kind=None):
+        """
+        Remove the validation script for the sequence.  If kind is defined, only that particular
+        script is removed, otherwise all are.
+        Returns a list of names (if any) that have been removed from the ValidationScripts table
+        (and should thus be removed from the filesystem).
+        """
+        sql = """
+        DELETE FROM SequenceValidationScripts
+        WHERE SequenceValidationScripts.Sequence IN
+        (SELECT Sequences.indx
+         FROM ValidationScripts AS scripts
+         JOIN Sequences
+         JOIN SequenceValidationScripts AS svs
+         WHERE Sequences.Sequence = ?
+         AND svs.Sequence = Sequences.indx
+         AND scripts.indx = svs.Script
+        """
+        parms = (sequence,)
+        if kind:
+            sql += "AND scripts.Kind = ?"
+            parms += (kind,)
+        sql += ")"
+
+        scripts = self.FindValidatorsForSequence(sequence, kind)
+        if scripts is None:
+            return
+        
+        DebugSQL(sql, parms)
+        self.cursor().execute(sql, parms)
+        # Remove any dangling valdation entries
+        rv = []
+        for v in scripts.itervalues():
+            sequences = self.FindSequencesForValidator(checksum=v["Checksum"], kind=v["Kind"])
+            if debug or verbose:
+                print("After SVS deletion, sequences = %s" % str(sequences), file=sys.stderr)
+            if not sequences:
+                if debug or verbose:
+                    print("\tAnd now removing validators with checksum %s kind %s" % (v["Checksum"], v["Kind"]), file=sys.stderr)
+                self.RemoveValidator(checksum=v["Checksum"], kind=v["Kind"])
+                rv.append(v["Name"])
+        return rv
+        
+    def AddValidator(self, name, checksum, kind=Manifest.VALIDATE_UPDATE, sequence=None):
+        """
+        Add the script to the database.  Optionally, if sequence is set, enter it for that
+        sequence as well.
+        """
+        sql = """
+        INSERT INTO ValidationScripts(Name, Checksum, Kind)
+        VALUES(?, ?, ?)
+        """
+        parms = (name, checksum, kind)
+        DebugSQL(sql, parms)
+        self.cursor().execute(sql, parms)
+
+        if sequence:
+            sql = """
+            INSERT INTO SequenceValidationScripts(Sequence, Script)
+            	SELECT Sequences.indx, ValidationScripts.indx
+            	FROM Sequences
+            	JOIN ValidationScripts
+            	WHERE Sequences.Sequence = ?
+            	AND ValidationScripts.Checksum = ?
+		AND ValidationScripts.Kind = ?
+            """
+            parms = (sequence, checksum, kind)
+            DebugSQL(sql, parms)
+            self.cursor().execute(sql, parms)
+            
 def ChecksumFile(path):
     import hashlib
     global debug, verbose
@@ -1187,6 +1389,46 @@ def UpgradeScriptsForPackage(archive, db, pkg, sequences = None):
                 rv[script_name] += script_content
     return rv
 
+def AddValidationScript(db, archive, manifest, path, kind=Manifest.VALIDATE_UPDATE):
+    """
+    Add the validation program at path to the manifest.
+    This will first see if there is already one in the db; if not, it'll add it
+    to the archive and then add that to the database.
+    ARCHIVE MUST BE LOCKED.
+    """
+    from hashlib import sha256
+
+    progdata = open(path, "rb").read()
+    progname = os.path.basename(path)
+    checksum = sha256(progdata).hexdigest()
+
+    vprogs = db.FindValidators(checksum, kind)
+    if vprogs:
+        # Should only be one, so we'll only look at index 0
+        progname = vprogs[0]["Name"]
+    else:
+        import tempfile
+        try:
+            os.makedirs(os.path.join(archive, Manifest.VALIDATION_DIR))
+        except:
+            pass
+        
+        progfile = tempfile.NamedTemporaryFile(suffix=".txt",
+                                               dir=os.path.join(archive, Manifest.VALIDATION_DIR),
+                                               prefix="%s-" % progname,
+                                               delete=False)
+        progfile.write(progdata)
+        try:
+            os.chmod(progfile.name, 0644)
+        except:
+            pass
+        
+        progname = os.path.basename(progfile.name)
+        db.AddValidator(progname, checksum, kind)
+
+    manifest.AddValidationProgram(progname, checksum, kind)
+
+    
 def AddPackageUpdateScript(db, archive, pkg, name, script, lock = True):
     """
     Add the given script to both the database and the archive.
@@ -1788,6 +2030,12 @@ def ProcessRelease(source, archive,
         except:
             pass
     
+    # Add any validation scripts
+    for (name, kind) in [("ValidateInstall", Manifest.VALIDATE_INSTALL),
+                         ("ValidateUpdate", Manifest.VALIDATE_UPDATE)]:
+        if os.path.exists(os.path.join(source, name)):
+            AddValidationScript(db, archive, manifest, os.path.join(source, name), kind)
+    
     try:
         service_file = open(os.path.join(source, "RESTART"), "r")
         service_list = service_file.read().strip()
@@ -2023,12 +2271,23 @@ def Check(archive, db, project = "FreeNAS", args = []):
         s = db.RecentSequencesForTrain(t, 0)
         s.append("LATEST")
         sequences[t] = s
+        ndir = os.path.join(archive, t, "Notes")
         try:
             for note_file in os.listdir(ndir):
                 found_notes[note_file] = True
         except:
             pass
 
+    # Get a list of validators, if any
+    # Note that this is just a list of files, not kind.
+    found_validator_files = {}
+    try:
+        vdir = os.path.join(archive, Manifest.VALIDATION_DIR)
+        for vfile in os.listdir(vdir):
+            found_validator_files[vfile] = ChecksumFile(os.path.join(vdir, vfile))
+    except:
+        pass
+    
     # First check is we make sure all of the sequence
     # files are there, as expected.  And that nothing
     # unexpected is there.
@@ -2046,6 +2305,9 @@ def Check(archive, db, project = "FreeNAS", args = []):
             # This is the archive lock file
             continue
         if entry == "trains.txt":
+            continue
+        if entry == Manifest.VALIDATION_DIR:
+            # We don't need to check this
             continue
         if not os.path.isdir(archive + "/" + entry):
             print("%s/%s is not a directory" % (archive, entry), file=sys.stderr)
@@ -2155,7 +2417,19 @@ def Check(archive, db, project = "FreeNAS", args = []):
                                 print("\tTrain %s, Sequence %s has the duplicate" % (temp_mani.Train(), temp_mani.Sequence()), file=sys.stderr)
                         expected_notes[note_file] = True
                         if debug:  print("Found Note %s in Train %s Sequence %s" % (note_file, temp_mani.Train(), temp_mani.Sequence()), file=sys.stderr)
-
+                for validator in temp_mani.ValidationProgramList():
+                    expected_validator[validator["Name"], validator["Kind"]] = validator["Checksum"]
+                # Now check against the database
+                for seq in db.FindValidatorsForSequence(temp_mani.Sequence()):
+                    v = l[seq]
+                    k = v["Kind"]
+                    n = v["Name"]
+                    c = v["Checksum"]
+                    if (n, k) not in expected_validator:
+                        print("Found %s validator %s in database, but not in manifest for sequence %s" % (k, n, seq), file=sys.stderr)
+                    elif v[n, k] != expected_validator[n, k]:
+                        print("%s validator has different checksum in database and manifest for sequence %s" % (k, n, seq), file=sys.stderr)
+                    
         # Now let's check the found_contents and expected_contents dictionaries
         if expected_contents != found_contents:
             print("Sequences for train %s inconsistency found" % t, file=sys.stderr)
@@ -2573,6 +2847,7 @@ def RemoveRelease(archive, db, project, sequence, dbonly = False, shlist = None)
     2:  ReleaseNames (or not, not implemented yet apparently)
     3:  Notices
     4:  Manifests
+    5:  Validation scripts
     Before we remove it from Manifests, we want
     to get a list of packages used by this sequence.
     After we remove it from Manifests, we can then
@@ -2621,6 +2896,24 @@ def RemoveRelease(archive, db, project, sequence, dbonly = False, shlist = None)
     if debug or verbose:
         print("Deleting notice for sequence %s" % sequence, file=sys.stderr)
     db.NoticesDeleteSequence(sequence)
+
+    # Next do the validation scripts
+    vscripts = db.FindValidatorsForSequence(sequence)
+    if debug or verbose:
+        print("*** vscripts = %s" % str(vscripts), file=sys.stderr)
+    for vscr in vscripts.itervalues():
+        delete_files = db.RemoveValidatorForSequence(sequence, vscr["Kind"])
+        for f in delete_files:
+            if debug or verbose:
+                print("Deleting validation script %s (%s)" % (f, vscr["Kind"]), file=sys.stderr)
+            vpath = os.path.join(archive, Manifest.VALIDATION_DIR, f)
+            if shlist:
+                shlist.append("rm %s" % vpath)
+            try:
+                os.remove(vpath)
+            except BaseException as e:
+                print("Could not remove validation script %s: %s" % (f, str(e)), file=sys.stderr)
+
     # Now we need to go through the packages
     for pkg in pkgs:
         # For each package, we need to see if this is the
@@ -2867,6 +3160,8 @@ def Rollback(archive, db, project = "FreeNAS", args = []):
         lock.close()
         return 1
 
+    if debug or verbose:
+        print("Found sequences %s (count = %d)" % (str(sequences), count), file=sys.stderr)
     # We want to delete all but the last one we got
     if len(sequences) <= count:
         # We're getting rid of all the releases that exist!
@@ -2885,9 +3180,10 @@ def Rollback(archive, db, project = "FreeNAS", args = []):
     # LATEST symlink.
     latest = os.path.join(archive, train, "LATEST")
     try:
-        os.path.remove(latest)
-    except:
-        pass
+        os.remove(latest)
+    except BaseException as e:
+        print("Couldn't remove symlink %s: %s" % (latest, str(e)), file=sys.stderr)
+        
     if last_sequence:
         MakeLATEST(archive, project, train, last_sequence)
     lock.close()
@@ -3090,7 +3386,8 @@ or	{0} extract [--dest dest] [--tar] --train=TRAIN""".format(sys.argv[0]), file=
     svc_list = {}
     notes_dict = man.Notes(raw = True)
     notice = man.Notice()
-    
+    validator_list = list(man.ValidationProgramList())
+
     if notes_dict:
         for note, loc in notes_dict.iteritems():
             note_file = os.path.join(archive, train, "Notes", loc)
@@ -3155,6 +3452,18 @@ or	{0} extract [--dest dest] [--tar] --train=TRAIN""".format(sys.argv[0]), file=
             shutil.copy(pkg_file, dst_file)
         except BaseException as e:
             print("Unable to copy package file %s: %s" % (os.path.basename(pkg_file), str(e)), file=sys.stderr)
+            sys.exit(1)
+            
+    for validator in validator_list:
+        in_path = os.path.join(archive, Manifest.VALIDATION_DIR, validator["Name"])
+        out_path = os.path.join(dest, validator["Kind"])
+        try:
+            with open(in_path, "rb") as f:
+                in_data = f.read()
+            with open(out_path, "wb") as f:
+                f.write(in_data)
+        except BaseExcption as e:
+            print("Unable to copy validation file %s: %s" % (in_path, str(e)), file=sys.stderr)
             sys.exit(1)
             
     if notice:
