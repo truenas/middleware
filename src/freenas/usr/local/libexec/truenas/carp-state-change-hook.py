@@ -13,6 +13,7 @@ import logging
 import logging.config
 import multiprocessing
 import os
+import sqlite3
 import subprocess
 import sys
 import time
@@ -30,8 +31,9 @@ FAILOVER_NEEDOP = '/tmp/.failover_needop'
 HEARTBEAT_BARRIER = '/tmp/heartbeat_barrier'
 HEARTBEAT_STATE = '/tmp/heartbeat_state'
 
-logging.raiseExceptions = False # Please, don't hate us this much
+logging.raiseExceptions = False  # Please, don't hate us this much
 log = logging.getLogger('carp-state-change-hook')
+
 
 def run(cmd):
     proc = subprocess.Popen(
@@ -359,15 +361,26 @@ def carp_master(fobj, state_file, ifname, vhid, event, user_override, forcetakeo
 
     log.warn('Volume imports complete.')
     log.warn('Restarting services.')
+    FREENAS_DB = '/data/freenas-v1.db'
+    conn = sqlite3.connect(FREENAS_DB)
+    c = conn.cursor()
 
-    error, output = run('LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/sqlite3 /data/freenas-v1.db'
-                        ' "select ldap_enable from directoryservice_ldap"')
-    if output == "1":
+    # TODO: This needs investigation.  Why is part of the LDAP
+    # stack restarted?  Maybe homedir handling that
+    # requires the volume to be imported?
+    c.execute('SELECT ldap_enable FROM directoryservice_ldap')
+    ret = c.fetchone()
+    if ret and ret[0] == 1:
         run('/usr/sbin/service ix-ldap quietstart')
-    error, output = run("""LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/sqlite3 /data/freenas-v1.db "select srv_enable from services_services where srv_service = 'nfs' " """)
-    if output == "1":
-        run('/usr/local/bin/python /usr/local/www/freenasUI/middleware/notifier.py'
-            ' nfsv4link')
+
+    # TODO: Why is lockd missing from this list?
+    # why are things being restarted instead of reloaded?
+    c.execute('SELECT srv_enable FROM services_services WHERE srv_service = "nfs"')
+    ret = c.fetchone()
+    if ret and ret[0] == 1:
+        run('LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/python '
+            '/usr/local/www/freenasUI/middleware/notifier.py '
+            'nfsv4link')
         run('/usr/sbin/service statd quietstart')
         run('/usr/sbin/service ix-nfsd quietstart')
         run('/usr/sbin/service mountd quietrestart')
@@ -376,26 +389,33 @@ def carp_master(fobj, state_file, ifname, vhid, event, user_override, forcetakeo
     # 0 for Active node
     run('/sbin/sysctl kern.cam.ctl.ha_role=0')
 
+    # TODO: Why is this being restarted?
     run('/usr/sbin/service ix-ssl quietstart')
     run('/usr/sbin/service ix-system quietstart')
-    error, output = run("""LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/sqlite3 /data/freenas-v1.db "select srv_enable from services_services where srv_service = 'cifs' " """)
-    if output == "1":
+
+    c.execute('SELECT srv_enable FROM services_services WHERE srv_service = "cifs"')
+    ret = c.fetchone()
+    if ret and ret[0] == 1:
         run('/usr/sbin/service ix-pre-samba quietstart')
         run('/usr/sbin/service samba_server forcestop')
         run('/usr/sbin/service samba_server quietstart')
         run('/usr/sbin/service ix-post-samba quietstart')
-    error, output = run("""LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/sqlite3 /data/freenas-v1.db "select srv_enable from services_services where srv_service = 'afp' " """)
-    if output == "1":
+
+    c.execute('SELECT srv_enable FROM services_services WHERE srv_service = "afp"')
+    ret = c.fetchone()
+    if ret and ret[0] == 1:
         run('/usr/sbin/service ix-afpd quietstart')
         run('/usr/sbin/service netatalk forcestop')
         run('/usr/sbin/service netatalk quietstart')
 
+    conn.close()
     log.warn('Service restarts complete.')
 
+    # TODO: This is 4 years old at this point.  Is it still needed?
     # There appears to be a small lag if we allow NFS traffic right away. During
     # this time, we fail NFS requests with ESTALE to the remote system. This
     # gives remote clients heartburn, so rather than try to deal with the
-    # downstream effect of that, instead we take a chill pill for 2 seconds.
+    # downstream effect of that, instead we take a chill pill for 1 seconds.
     time.sleep(1)
 
     run('/sbin/pfctl -d')
@@ -414,8 +434,9 @@ def carp_master(fobj, state_file, ifname, vhid, event, user_override, forcetakeo
     run('/usr/sbin/service ix-syncdisks quietstart')
 
     log.warn('Syncing enclosure')
-    run('/usr/local/bin/python /usr/local/www/freenasUI/middleware/notifier.py'
-        ' zpool_enclosure_sync')
+    run('LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/python '
+        '/usr/local/www/freenasUI/middleware/notifier.py '
+        'zpool_enclosure_sync')
 
     run('/usr/sbin/service ix-collectd quietstart')
     run('/usr/sbin/service collectd quietrestart')
@@ -454,7 +475,7 @@ def carp_backup(fobj, state_file, ifname, vhid, event, user_override):
             )
             if output == 'MASTER':
                 log.warn("Ignoring state on %s because it changed back to MASTER after "
-                     "%s seconds.", ifname, sleeper)
+                         "%s seconds.", ifname, sleeper)
                 sys.exit(0)
 
     totoutput = 0
@@ -480,8 +501,9 @@ def carp_backup(fobj, state_file, ifname, vhid, event, user_override):
 
     run('/sbin/pfctl -ef /etc/pf.conf.block')
 
-    run('/etc/rc.d/statd stop')
-    run('/etc/rc.d/watchdogd quietstop')
+    # TODO: Why do we stop statd here?
+    run('/usr/sbin/service statd stop')
+    run('/usr/sbin/service watchdogd quietstop')
     run('watchdog -t 4')
 
     # make CTL to close backing storages, allowing pool to export
@@ -503,7 +525,7 @@ def carp_backup(fobj, state_file, ifname, vhid, event, user_override):
     except:
         pass
 
-    run('/etc/rc.d/watchdogd quietstart')
+    run('/usr/sbin/service watchdogd quietstart')
     run('/usr/sbin/service ix-syslogd quietstart')
     run('/usr/sbin/service syslog-ng quietrestart')
     run('/usr/sbin/service ix-crontab quietstart')
@@ -511,12 +533,10 @@ def carp_backup(fobj, state_file, ifname, vhid, event, user_override):
     run('/usr/sbin/service collectd forcestop')
     run('echo "$(date), $(hostname), assume backup" | mail -s "Failover" root')
 
-    log.warn('Syncing enclosure')
-    run('/usr/local/bin/python /usr/local/www/freenasUI/middleware/notifier.py'
-        ' zpool_enclosure_sync')
     log.warn('Setting passphrase from master')
-    run('/usr/local/bin/python /usr/local/www/freenasUI/failover/enc_helper.py'
-        ' syncfrompeer')
+    run('LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/python '
+        '/usr/local/www/freenasUI/failover/enc_helper.py '
+        'syncfrompeer')
 
 
 if __name__ == '__main__':
@@ -524,7 +544,7 @@ if __name__ == '__main__':
     try:
         logging.config.dictConfig({
             'version': 1,
-            #'disable_existing_loggers': True,
+            # 'disable_existing_loggers': True,
             'formatters': {
                 'simple': {
                     'format': '[%(name)s:%(lineno)s] %(message)s',
@@ -549,7 +569,7 @@ if __name__ == '__main__':
     except:
         logging.config.dictConfig({
             'version': 1,
-            #'disable_existing_loggers': True,
+            # 'disable_existing_loggers': True,
             'formatters': {
                 'simple': {
                     'format': '[%(name)s:%(lineno)s] %(message)s',
