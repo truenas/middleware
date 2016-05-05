@@ -249,6 +249,9 @@ A series of instructional videos are available for FreeNAS®. They include:
 
 * `FreeNAS 9.3 iSCSI Overview <https://www.youtube.com/watch?v=HvyOWlFISdo&>`_
 
+* `FreeNAS 9.10 - Certificate Authority & SSL Certificates <https://www.youtube.com/watch?v=OT1Le5VQIc0>`_
+
+
 .. index:: Professional Support
 .. _Professional Support:
 
