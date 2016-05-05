@@ -1464,8 +1464,7 @@ def smb4_map_groups():
     groupmap = notifier().groupmap_list()
     groups = get_groups()
     for g in groups:
-        if (not smb4_group_mapped(groupmap, g) and
-                not smb4_groupname_is_username(g)):
+        if not (smb4_group_mapped(groupmap, g) or smb4_groupname_is_username(g)):
             notifier().groupmap_add(unixgroup=g, ntgroup=g)
 
 
