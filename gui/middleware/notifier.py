@@ -724,17 +724,15 @@ class notifier:
         return res
 
     def _started_activedirectory(self):
+        ret = False
         from freenasUI.common.freenasldap import (FreeNAS_ActiveDirectory, FLAGS_DBINIT)
 
         for srv in ('kinit', 'activedirectory', ):
             if self._system_nolog('/usr/sbin/service ix-%s status' % (srv, )) != 0:
                 return False
 
-        ret = False
         try:
-            f = FreeNAS_ActiveDirectory(flags=FLAGS_DBINIT)
-            if f.connected():
-                ret = True
+            ret = FreeNAS_ActiveDirectory(flags=FLAGS_DBINIT).connected()
         except:
             pass
 

@@ -543,17 +543,17 @@ class ActiveDirectoryForm(ModelForm):
             if not bindpw:
                 raise forms.ValidationError("No domain account password specified")
 
-            errors = []
-
             try:
-                ret = FreeNAS_ActiveDirectory.validate_credentials(
-                    domain, site=site, ssl=ssl, certfile=certificate,
-                    binddn=binddn, bindpw=bindpw, errors=errors
+                FreeNAS_ActiveDirectory.validate_credentials(
+                    domain,
+                    site=site,
+                    ssl=ssl,
+                    certfile=certificate,
+                    binddn=binddn,
+                    bindpw=bindpw
                 )
-                if ret is False:
-                    raise forms.ValidationError("%s." % errors[0])
-            except FreeNAS_ActiveDirectory_Exception, e:
-                raise forms.ValidationError('%s.' % e)
+            except Exception as e:
+                raise forms.ValidationError('{0}.'.format(str(e)))
 
             args['binddn'] = binddn
             args['bindpw'] = bindpw
@@ -741,8 +741,7 @@ class LDAPForm(ModelForm):
             parts = hostname.split(':')
             hostname = parts[0]
             if len(parts) > 1:
-                port = int(parts[1]) 
-        errors = []
+                port = int(parts[1])
 
         certfile = None
 
@@ -750,12 +749,18 @@ class LDAPForm(ModelForm):
             certificate = cdata["ldap_certificate"]
             certfile = get_certificateauthority_path(certificate)
 
-        ret = FreeNAS_LDAP.validate_credentials(
-            hostname, binddn=binddn, bindpw=bindpw, basedn=basedn,
-            port=port, certfile=certfile, ssl=ssl, errors=errors
-        )
-        if ret is False:
-            raise forms.ValidationError("%s." % errors[0])
+        try:
+            FreeNAS_LDAP.validate_credentials(
+                hostname,
+                binddn=binddn,
+                bindpw=bindpw,
+                basedn=basedn,
+                port=port,
+                certfile=certfile,
+                ssl=ssl
+            )
+        except Exception as e:
+            raise forms.ValidationError("{0}".format(str(e)))
 
         return bindpw
 

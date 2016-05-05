@@ -1433,7 +1433,6 @@ class InitialWizardDSForm(Form):
             bindname = cdata.get('ds_ad_bindname')
             bindpw = cdata.get('ds_ad_bindpw')
             binddn = '%s@%s' % (bindname, domain)
-            errors = []
 
             if not (domain and bindname and bindpw):
                 if domain or bindname or bindpw:
@@ -1456,20 +1455,16 @@ class InitialWizardDSForm(Form):
             else:
 
                 try:
-                    ret = FreeNAS_ActiveDirectory.validate_credentials(
-                        domain, binddn=binddn, bindpw=bindpw, errors=errors
+                    FreeNAS_ActiveDirectory.validate_credentials(
+                        domain, binddn=binddn, bindpw=bindpw
                     )
-                except Exception, e:
-                    raise forms.ValidationError("%s." % e)
-
-                if ret is False:
-                    raise forms.ValidationError("%s." % errors[0])
+                except Exception as e:
+                    raise forms.ValidationError("{0}".format(e))
 
         elif cdata.get('ds_type') == 'ldap':
             hostname = cdata.get('ds_ldap_hostname')
             binddn = cdata.get('ds_ldap_binddn')
             bindpw = cdata.get('ds_ldap_bindpw')
-            errors = []
 
             if not (hostname and binddn and bindpw):
                 if hostname or binddn or bindpw:
@@ -1492,14 +1487,9 @@ class InitialWizardDSForm(Form):
             else:
 
                 try:
-                    ret = FreeNAS_LDAP.validate_credentials(
-                        hostname, binddn=binddn, bindpw=bindpw, errors=errors
-                    )
-                except Exception, e:
-                    raise forms.ValidationError("%s." % e)
-
-                if ret is False:
-                    raise forms.ValidationError("%s." % errors[0])
+                    FreeNAS_LDAP.validate_credentials(hostname, binddn=binddn, bindpw=bindpw)
+                except Exception as e:
+                    raise forms.ValidationError("{0}".format(str(e)))
 
         elif cdata.get('ds_type') == 'nis':
             values = []

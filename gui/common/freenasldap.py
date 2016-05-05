@@ -117,22 +117,15 @@ class FreeNAS_LDAP_Directory(object):
         hostname, port=389, basedn=None, binddn=None, bindpw=None, ssl='off',
         certfile=None, errors=[]
     ):
-        ret = None
-
-        f = FreeNAS_LDAP(
-            host=hostname, port=port, binddn=binddn, bindpw=bindpw,
-            basedn=basedn, certfile=certfile, ssl=ssl
-        )
-        try:
-            f.open()
-            ret = True
-
-        except Exception as e:
-            for error in e:
-                errors.append(error['desc'])
-            ret = False
-
-        return ret
+        FreeNAS_LDAP(
+            host=hostname,
+            port=port,
+            binddn=binddn,
+            bindpw=bindpw,
+            basedn=basedn,
+            certfile=certfile,
+            ssl=ssl
+        ).open()
 
     def __init__(self, **kwargs):
         log.debug("FreeNAS_LDAP_Directory.__init__: enter")
@@ -1283,38 +1276,27 @@ class FreeNAS_ActiveDirectory_Base(object):
 
     @staticmethod
     def validate_credentials(
-        domain, site=None, binddn=None, bindpw=None, ssl='off', certfile=None,
-        errors=[]
+        domain, site=None, binddn=None, bindpw=None, ssl='off', certfile=None
     ):
-        ret = None
         best_host = None
 
         dcs = FreeNAS_ActiveDirectory_Base.get_domain_controllers(domain, site, ssl)
         if not dcs:
             raise FreeNAS_ActiveDirectory_Exception(
-                "Unable to find domain controllers for %s" % domain
+                "Unable to find domain controllers for {0}".format(domain)
             )
 
         best_host = FreeNAS_ActiveDirectory_Base.get_best_host(dcs)
         if best_host:
             (dchost, dcport) = best_host
-            f = FreeNAS_LDAP(
+            FreeNAS_LDAP(
                 host=dchost, port=dcport, binddn=binddn, bindpw=bindpw,
                 ssl=ssl, certfile=certfile
+            ).open()
+        else:
+            raise FreeNAS_ActiveDirectory_Exception(
+                'Unable to find best host for the following dcs: {0}'.format(dcs)
             )
-            try:
-                f.open()
-                ret = True
-
-            except Exception as e:
-                for error in e:
-                    if isinstance(e, dict):
-                        errors.append(error['desc'])
-                    else:
-                        errors.append(error)
-                ret = False
-
-        return ret
 
     @staticmethod
     def port_is_listening(host, port, errors=[]):
@@ -1815,10 +1797,24 @@ class FreeNAS_ActiveDirectory_Base(object):
         return None
 
     def connected(self):
-        return self.validate_credentials(
-            self.domainname, site=self.site, ssl=self.ssl,
-            certfile=self.certfile, binddn=self.binddn, bindpw=self.bindpw
-        )
+        """
+        Although this is named 'connected'.
+        This is stupid. Just keeping it alive for "compatability"
+        Someday will nuke!
+        """
+        try:
+            self.validate_credentials(
+                self.domainname,
+                site=self.site,
+                ssl=self.ssl,
+                certfile=self.certfile,
+                binddn=self.binddn,
+                bindpw=self.bindpw
+            )
+            return True
+        except:
+            pass
+        return False
 
     def reload(self, **kwargs):
         self.kwargs.update(kwargs)
