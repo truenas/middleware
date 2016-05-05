@@ -8,7 +8,7 @@ import string
 import tdb
 import tempfile
 import time
-
+import logging
 from dns import resolver
 
 sys.path.extend([
@@ -34,6 +34,7 @@ from freenasUI.common.freenasldap import (
     FLAGS_DBINIT
 )
 from freenasUI.common.pipesubr import pipeopen
+from freenasUI.common.log import log_traceback
 from freenasUI.common.samba import Samba4
 from freenasUI.common.system import (
     activedirectory_enabled,
@@ -70,14 +71,16 @@ from freenasUI.services.models import (
 from freenasUI.sharing.models import CIFS_Share
 
 
+log = logging.getLogger('generate_smb4_conf')
+
+
 def debug_SID(str):
     if str:
         print >> sys.stderr, "XXX: %s" % str
     p = pipeopen("/usr/local/bin/net -d 0 getlocalsid")
-    out = p.communicate()
-    if out and out[0]:
-        time.sleep(1)
-        print >> sys.stderr, "XXX: %s" % out[0]
+    out, _ = p.communicate()
+    if out:
+        print >> sys.stderr, "XXX: %s" % out
 
 
 def smb4_get_system_SID():
@@ -95,7 +98,11 @@ def smb4_get_system_SID():
     parts = net_out.split()
     try:
         SID = parts[5]
-    except:
+    except Exception as e:
+        log.debug(
+            'The following exception occured while trying to obtain system SID: {0}'.format(e)
+        )
+        log_traceback(log=log)
         SID = None
 
     return SID
@@ -108,7 +115,11 @@ def smb4_get_database_SID():
         cifs = CIFS.objects.all()[0]
         if cifs:
             SID = cifs.cifs_SID
-    except:
+    except Exception as e:
+        log.debug(
+            'The following exception occured while trying to obtain database SID: {0}'.format(e)
+        )
+        log_traceback(log=log)
         SID = None
 
     return SID
@@ -121,6 +132,7 @@ def smb4_set_system_SID(SID):
     p = pipeopen("/usr/local/bin/net -d 0 setlocalsid %s" % SID)
     net_out = p.communicate()
     if p.returncode != 0:
+        log.error('Failed to setlocalsid with the following error: {0}'.format(net_out[1]))
         return False
     if not net_out:
         return False
@@ -139,7 +151,11 @@ def smb4_set_database_SID(SID):
         cifs.save()
         ret = True
 
-    except:
+    except Exception as e:
+        log.debug(
+            'The following exception occured while trying to set database SID: {0}'.format(e)
+        )
+        log_traceback(log=log)
         ret = False
 
     return ret
