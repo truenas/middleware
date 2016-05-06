@@ -113,7 +113,7 @@ When using the :command:`dd` command:
 On OS X
 ~~~~~~~
 
-Insert the USB thumb drive and go to :menuselection:`Launchpad --> Utilities --> Disk Utility`. Unmount any mounted partitions on the USB thumb drive. Check
+Insert the USB thumb drive and go to :menuselection:`Launchpad --> Disk Utility`. Unmount any mounted partitions on the USB thumb drive. Check
 that the USB thumb drive has only one partition, otherwise you will get partition table errors on boot. If needed, use Disk Utility to setup one partition on
 the USB drive; selecting "free space" when creating the partition works fine.
 
