@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:05-0700\n"
-"PO-Revision-Date: 2016-05-05 07:49+0000\n"
+"PO-Revision-Date: 2016-05-06 05:49+0000\n"
 "Last-Translator: BouRock <hitowerdigit@hotmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: tr\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1462434567.0\n"
+"X-POOTLE-MTIME: 1462513785.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -4705,35 +4705,35 @@ msgstr "Kuruluş"
 
 #: system/models.py:267
 msgid "Organization Name (eg, company)"
-msgstr "Kuruluş adı (örnek: şirket)"
+msgstr "Kuruluş Adı (örn, şirket)"
 
 #: system/models.py:273
 msgid "Organizational Unit"
-msgstr "Kuruluş birimi"
+msgstr "Kuruluş Birimi"
 
 #: system/models.py:274
 msgid "Organizational Unit Name (eg, section)"
-msgstr "Kuruluş birim adı (örn: bölüm)"
+msgstr "Kuruluş Birim Adı (örn, bölüm)"
 
 #: system/models.py:280 system/models.py:281
 msgid "Email Address"
-msgstr "E-posta adresi"
+msgstr "E-posta Adresi"
 
 #: system/models.py:287
 msgid "Locality"
-msgstr "Bölge"
+msgstr "Yerleşim"
 
 #: system/models.py:288
 msgid "Locality Name (eg, city)"
-msgstr "Bölge adı (örn: şehir)"
+msgstr "Yerleşim Adı (örn, şehir)"
 
 #: system/models.py:294
 msgid "State"
-msgstr "İlçe"
+msgstr "İl"
 
 #: system/models.py:295
 msgid "State or Province Name (full name)"
-msgstr "İlçe veya il adı (tam ad)"
+msgstr "İl veya İlçe Adı (tam adı)"
 
 #: system/models.py:301
 msgid "Country"
@@ -4741,28 +4741,30 @@ msgstr "Ülke"
 
 #: system/models.py:302
 msgid "Country Name (2 letter code)"
-msgstr "Ülke adı (2 harflik ülke kodu)"
+msgstr "Ülke Adı (2 harflik kod)"
 
 #: system/models.py:308
 msgid "Common Name"
-msgstr "Ortak ad"
+msgstr "Ortak Ad"
 
 #: system/models.py:309
 msgid "Common Name (eg, YOUR name)"
-msgstr "Ortak ad (Örneğin ADINIZ)"
+msgstr "Ortak Ad (örn, ADINIZ)"
 
 #: system/models.py:314
 msgid "SSL Certificate"
-msgstr "SSL sertifikası"
+msgstr "SSL Sertifikası"
 
 #: system/models.py:315
 msgid ""
 "Cut and paste the contents of your private and public certificate files here."
-msgstr "Özel kamu sertifikası dosya içeriğini kesin ve buraya yapıştırın."
+msgstr ""
+"Özel ya da ortak sertifika dosyalarınızın içeriklerini kesin ve buraya "
+"yapıştırın."
 
 #: system/models.py:330 system/models.py:523
 msgid "The user to run the command"
-msgstr "Kullanıcı için çalıştırılacak komut"
+msgstr "Komutu çalıştırmak için kullanıcı"
 
 #: system/models.py:333 templates/system/cronjob.html:11
 msgid "Command"
@@ -4775,31 +4777,31 @@ msgstr "Kısa açıklama"
 
 #: system/models.py:374
 msgid "Cron Job"
-msgstr "Zamanlanmış Görev"
+msgstr "Zamanlanmış İş"
 
 #: system/models.py:375
 msgid "Cron Jobs"
-msgstr "Zamanlanmış Görevleri"
+msgstr "Zamanlanmış İşler"
 
 #: system/models.py:459
 msgid "IP Address or hostname"
-msgstr "IP adresi veya bilgisayar adı"
+msgstr "IP Adresi veya anamakine adı"
 
 #: system/models.py:468
 msgid "Remote Module Name"
-msgstr "Uzak modül adı"
+msgstr "Uzak Modül Adı"
 
 #: system/models.py:470
 msgid "Name of the module defined in the remote rsync daemon"
-msgstr "Uzaktaki rsync sunucusunda tanımlanan modülün adı"
+msgstr "Uzak rsync arka plan programında tanımlı modülün adı"
 
 #: system/models.py:475
 msgid "Remote Path"
-msgstr "Uzak yol"
+msgstr "Uzak Yol"
 
 #: system/models.py:477
 msgid "Path on remote host to rsync to, e.g. /mnt/tank"
-msgstr "Uzak ana bilgisayardaki rsync yolu. Örneğin: /mnt/depo"
+msgstr "Uzak anamakinede rsync çalıştırmak için yol, örn. /mnt/tank"
 
 #: system/models.py:481 templates/system/rsync.html:8
 msgid "Direction"
@@ -4808,11 +4810,11 @@ msgstr "Yön"
 #: system/models.py:482
 msgid ""
 "Push - From local to remote machine. Pull - From remote to local machine."
-msgstr "Gönder - Yerelden uzak makineye. Al - Uzaktan yerel makineye."
+msgstr "Yolla - Yerelden uzak makineye. Al - Uzaktan yerel makineye."
 
 #: system/models.py:527
 msgid "Recurse into directories"
-msgstr "Tekrarlanan dizinler"
+msgstr "Dizinlerin içinde yinele"
 
 #: system/models.py:531
 msgid "Times"
@@ -4820,7 +4822,7 @@ msgstr "Zamanlar"
 
 #: system/models.py:532
 msgid "Preserve modification times"
-msgstr "Değişiklikleri bir kez koru"
+msgstr "Değişiklik zamanlarını koru"
 
 #: system/models.py:536
 msgid "Compress"
@@ -4836,7 +4838,7 @@ msgstr "Arşiv"
 
 #: system/models.py:542
 msgid "Archive mode"
-msgstr "Arşiv Modu"
+msgstr "Arşiv kipi"
 
 #: system/models.py:546 templates/freeadmin/generic_model_edit.html:89
 #: templates/network/interface.html:32 templates/network/lagg.html:44
@@ -4873,35 +4875,35 @@ msgstr "Sil"
 
 #: system/models.py:547
 msgid "Delete files on the receiving side that don't exist on sender"
-msgstr "Alıcı tarafından göndereni bulunmayan dosyaları sil"
+msgstr "Alınan tarafta göndereni olmayan dosyaları sil"
 
 #: system/models.py:553
 msgid "Suppress non-error messages"
-msgstr "Olmayan hata mesajlarını durdur"
+msgstr "Hata olmayan iletileri gösterme"
 
 #: system/models.py:557
 msgid "Preserve permissions"
-msgstr "Dizin yetkisi"
+msgstr "İzinleri koru"
 
 #: system/models.py:558
 msgid ""
 "This option causes the receiving rsync to set the destination permissions to "
 "be the same as the source permissions"
 msgstr ""
-"Bu seçenek aynı kaynak izinleri aynı hedef izinlerini ayarlamak için "
-"rsync'den bilgileri alır."
+"Bu seçenek hedef izinlerin kaynak izinler ile aynı olmasını sağlayan "
+"ayarlama için rsync almaya neden olur"
 
 #: system/models.py:564
 msgid "Preserve extended attributes"
-msgstr "Genişletilmiş özellikleri koruma"
+msgstr "Genişletilmiş öznitelikleri koru"
 
 #: system/models.py:565
 msgid ""
 "This option causes rsync to update the remote extended attributes to be the "
 "same as the local ones"
 msgstr ""
-"Bu seçenek yerel kullanıcılar gibi aynı olacak uzak kullanıcıların gelişmiş "
-"özniteliklerini güncellemek için rsync kullanır"
+"Bu seçenek uzak genişletilmiş özniteliklerin yerel olanlar ile aynı olmasını "
+"sağlayan güncelleme için rsync'e neden olur"
 
 #: system/models.py:571
 msgid "Extra options to rsync command line (usually empty)"
@@ -4909,7 +4911,7 @@ msgstr "Rsync komut satırına ek seçenekler (genellikle boş)"
 
 #: system/models.py:580
 msgid "Rsync Task"
-msgstr "Rsync Görevleri"
+msgstr "Rsync Görevi"
 
 #: system/models.py:581
 msgid "Rsync Tasks"
@@ -4917,11 +4919,11 @@ msgstr "Rsync Görevleri"
 
 #: system/models.py:756
 msgid "S.M.A.R.T. Test"
-msgstr "S.M.A.R.T. Test"
+msgstr "S.M.A.R.T. Denemesi"
 
 #: system/models.py:757
 msgid "S.M.A.R.T. Tests"
-msgstr "S.M.A.R.T. Testleri"
+msgstr "S.M.A.R.T. Denemeleri"
 
 #: system/models.py:771 system/models.py:810 templates/system/sysctl.html:5
 #: templates/system/tunable.html:5
@@ -4939,7 +4941,7 @@ msgstr "Sysctl"
 
 #: system/models.py:796
 msgid "Sysctls"
-msgstr "Sysctl"
+msgstr "Sysctl'ler"
 
 #: system/models.py:834
 msgid "Tunable"
@@ -5428,7 +5430,7 @@ msgstr "Kullanıcı adınız ve parolanızı eşleşmedi. Lütfen tekrar deneyin
 #: templates/registration/login.html:44
 #, python-format
 msgid "Welcome, %(username)s. Thanks for logging in."
-msgstr "Hoşgeldiniz, %(username)s. Giriş yaptığınız için teşekkürler."
+msgstr "Hoş Geldin, %(username)s. Oturum açtığın için teşekkürler."
 
 #: templates/registration/login.html:46
 #, python-format
@@ -5994,7 +5996,7 @@ msgstr "Veri Kümesini Kaldır"
 
 #: templates/storage/wizard.html:27
 msgid "Volume to extend"
-msgstr "Birim uzantısı"
+msgstr "Genişletmek için birim"
 
 #: templates/storage/wizard.html:37
 msgid "Member disks"
@@ -6687,7 +6689,7 @@ msgstr "Ayrıntılı"
 
 #: choices.py:670
 msgid "Daemon"
-msgstr "Süreç"
+msgstr "Arka Plan Programı"
 
 #: choices.py:695
 msgid "data"
@@ -7424,11 +7426,11 @@ msgstr "Ön Başlatma"
 
 #: system/models.py:957
 msgid "Last Name"
-msgstr "Soyad"
+msgstr "Soyadınız"
 
 #: system/models.py:985
 msgid "Zip"
-msgstr "Posta kodu"
+msgstr "Posta Kodu"
 
 #: system/models.py:995
 msgid "Home Phone"
@@ -8301,20 +8303,20 @@ msgstr "Çekirdek çökme dökümlerinin otomatik gönderilmesini etkinleştir"
 msgid ""
 "Redirect the standard output to /dev/null. In other words, disable output."
 msgstr ""
-"Standart çıkışı /dev/null dizinine yönlendir. Diğer bir değişle çıkışı devre "
-"dışı bırak."
+"Standart çıktıyı /dev/null dizinine yönlendirin. Diğer bir değişle çıktıyı "
+"etkisizleştirin."
 
 #: system/models.py:427
 msgid ""
 "Redirect the standard error output to /dev/null. In other words, disable "
 "error output."
 msgstr ""
-"Standart hata çıkıtısını /dev/null dizinine yönlendir. Diğer bir değişle "
-"hata çıktısını devre dışı bırak."
+"Standart hata çıkıtısını /dev/null dizinine yönlendirin. Diğer bir değişle "
+"hata çıktısını etkisizleştirin."
 
 #: system/models.py:519
 msgid "Remote SSH Port"
-msgstr "Uzak SSH bağlantı noktası"
+msgstr "Uzak SSH Bağlantı Noktası"
 
 #: system/models.py:520
 msgid "SSH Port"
@@ -8331,11 +8333,11 @@ msgstr "Başlat/Kapat Komutları"
 
 #: system/models.py:953
 msgid "First Name"
-msgstr "İlk Ad"
+msgstr "Adınız"
 
 #: system/models.py:961
 msgid "Company"
-msgstr "Kurum"
+msgstr "Şirket"
 
 #: system/models.py:973
 msgid "City"
@@ -8769,7 +8771,7 @@ msgstr "Özel anahtar parolası"
 
 #: system/models.py:420
 msgid "Redirect Stdout"
-msgstr "Standart çıkışı yeniden yönlendir"
+msgstr "Standart Çıktıyı yönlendir"
 
 #: system/models.py:921
 msgid "Post Init"
@@ -8795,7 +8797,7 @@ msgstr "Şablonlar"
 
 #: templates/registration/login.html:51
 msgid "Welcome to %(sw_name)s&reg; %(sw_login_version)s"
-msgstr "Hoşgeldiniz %(sw_name)s&trade; %(sw_login_version)s"
+msgstr "%(sw_name)s&trade; %(sw_login_version)s sürümüne Hoş Geldiniz"
 
 #: templates/storage/create_passphrase.html:5
 msgid ""
@@ -9351,49 +9353,43 @@ msgid "Sending"
 msgstr "Gönderiliyor"
 
 #: storage/views.py:980
-#, fuzzy
 msgid "Volume locked"
 msgstr "Birim kilitlendi"
 
 #: storage/views.py:1151
-#, fuzzy
 msgid "The pool failed to upgraded: %s"
-msgstr "Birimi dışarı aktarmak başarısız oldu"
+msgstr "Havuzun yükseltilmesi başarısız oldu: %s"
 
 #: storage/views.py:1154
 msgid "The pool has been upgraded"
-msgstr ""
+msgstr "Havuz yükseltildi"
 
 #: system/admin.py:59
 #: system/admin.py:66
 #: system/admin.py:106
 #: system/admin.py:113
 msgid "Run Now"
-msgstr ""
+msgstr "Şimdi Çalıştır"
 
 #: system/forms.py:1018
-#, fuzzy
 msgid "This variable already exists"
-msgstr "Bu IP zaten mevcut."
+msgstr "Bu değişken zaten var"
 
 #: system/forms.py:1124
 msgid "System dataset pool"
-msgstr ""
+msgstr "Sistem veri kümesi havuzu"
 
 #: system/forms.py:1148
-#, fuzzy
 msgid "Unable to create system dataset!"
-msgstr "Şablon bulunamıyor!"
+msgstr "Sistem veri kümesi oluşturulamıyor!"
 
 #: system/forms.py:1155
-#, fuzzy
 msgid "Unable to migrate system dataset!"
-msgstr "Şablon bulunamıyor!"
+msgstr "Sistem veri kümesi geçirilemiyor!"
 
 #: system/models.py:80
-#, fuzzy
 msgid "WebGUI HTTP -> HTTPS Redirect"
-msgstr "WebGUI HTTP bağlantı noktası"
+msgstr "WebGKA HTTP -> HTTPS Yönlendirme"
 
 #: system/models.py:83
 msgid ""
@@ -9430,9 +9426,8 @@ msgid "System Dataset"
 msgstr "Veri Kümesini Düzenle"
 
 #: system/views.py:191
-#, fuzzy
 msgid "The cron process has started"
-msgstr "Temizleme süreci durduruldu."
+msgstr "Zamanlanmış işlem başladı"
 
 #: system/views.py:541
 #, fuzzy
@@ -9538,9 +9533,8 @@ msgid "Deduplication"
 msgstr "ZFS Tekilleştirme"
 
 #: templates/system/cron_run.html:5
-#, fuzzy
 msgid "Would you like to run this cron job now?"
-msgstr "Bu hizmeti etkinleştirmek ister misiniz?"
+msgstr "Bu zamanlanmış işi şimdi çalıştırmak ister misiniz?"
 
 #: templates/system/reboot_dialog2.html:4
 msgid ""
@@ -10111,24 +10105,20 @@ msgid "Failed to create group %s"
 msgstr "%s grubunu oluşturma başarısız"
 
 #: system/forms.py:256
-#, fuzzy
 msgid "Group does not exist: %s"
-msgstr "Böyle bir kafes yok"
+msgstr "Grup mevcut değil: %s"
 
 #: system/forms.py:270
-#, fuzzy
 msgid "User does not exist: %s"
-msgstr "Böyle bir kafes yok"
+msgstr "Kullanıcı mevcut değil: %s"
 
 #: system/forms.py:306
-#, fuzzy
 msgid "Failed to create ZFS: %s"
-msgstr "%(name)s veri kümesi oluşturulamadı: %(error)s"
+msgstr "ZFS oluşturma başarısız: %s"
 
 #: system/forms.py:1136
-#, fuzzy
 msgid "Share Name"
-msgstr "Sunucu adı"
+msgstr "Paylaşım Adı"
 
 #: system/forms.py:1140
 #: templates/system/initialwizard_volume.html:65
@@ -10136,9 +10126,8 @@ msgid "Purpose"
 msgstr ""
 
 #: system/forms.py:1144
-#, fuzzy
 msgid "Unix (NFS)"
-msgstr "Unix (NFS) Paylaşımı"
+msgstr "Unix (NFS)"
 
 #: system/forms.py:1145
 msgid "Block Storage (iSCSI)"
@@ -11015,9 +11004,8 @@ msgstr ""
 #: storage/nav.py:56
 #: templates/storage/volume_datagrid.html:17
 #: templates/storage/volume_datagrid.html:19
-#, fuzzy
 msgid "Import Disk"
-msgstr "Birim Al"
+msgstr "Diski İçe Aktar"
 
 #: system/forms.py:1852
 #, fuzzy
@@ -11091,9 +11079,8 @@ msgid "Only one row for the vitual device of type %s is allowed."
 msgstr "Sadece %s türünde sanal aygıt için tek satıra izin verilir."
 
 #: storage/views.py:494
-#, fuzzy
 msgid "Zvol successfully edited."
-msgstr "Kafes başarıyla düzenlendi."
+msgstr "Zvol başarılı olarak düzenlendi."
 
 #: directoryservice/models.py:853
 msgid "Winbind NSS Info"
@@ -11125,15 +11112,16 @@ msgstr ""
 ")://freenas-makinesi-ipsi:webdav_b_noktası/'Paylaşım Adı'"
 
 #: storage/views.py:203
-#, fuzzy
 msgid "WARNING!"
-msgstr "UYARI"
+msgstr "UYARI!"
 
 #: storage/views.py:205
 msgid ""
 "Always backup the key! If the key is lost, the data on the disks will also "
 "be lost with no hope of recovery."
 msgstr ""
+"Anahtarı her zaman yedekleyin! Eğer anahtar kaybolursa, aynı zamanda "
+"disklerdeki veriler kurtarma ihtimali olmaksızın kaybolacaktır."
 
 #: storage/views.py:209
 msgid ""
@@ -11660,7 +11648,7 @@ msgstr "Disk kaldırıldı."
 #: system/views.py:1249
 #: system/views.py:1321
 msgid "Update daemon failed!"
-msgstr ""
+msgstr "Arka plan güncelleme programı başarısız oldu!"
 
 #: system/alertmods/volume_version.py:15
 msgid ""
@@ -12146,17 +12134,18 @@ msgstr ""
 "kümesi/klasör olmak zorundadır"
 
 #: storage/forms.py:1439
-#, fuzzy
 msgid "The path %s already exists."
-msgstr "%s yolu zaten var"
+msgstr "%s yolu zaten var."
 
 #: storage/forms.py:1553
 msgid "Allow the zvol to consume more then 80% of available space"
 msgstr ""
+"Mevcut alanın %80'ninden daha fazlasını tüketmesi için zvol'a izin verir"
 
 #: storage/forms.py:2132
 msgid "This field will be empty if you have not setup a periodic snapshot task"
 msgstr ""
+"Bu alan, eğer düzenli bir anlık görüntü görevi ayarlamazsanız boş olacaktır"
 
 #: storage/models.py:413
 #: tasks/models.py:122
@@ -13035,6 +13024,8 @@ msgid ""
 "You are not allowed to create a volume with different data vdev types "
 "(%(vdev1)s and %(vdev2)s)"
 msgstr ""
+"Farklı veri vdev türleri (%(vdev1)s ve %(vdev2)s) ile bir birim "
+"oluşturmanıza izin verilmiyor"
 
 #: system/forms.py:2219
 msgid "Something is seriously jacked up."
@@ -13149,9 +13140,8 @@ msgid "Idmap Range High"
 msgstr "Idmap Aralığı Yüksek"
 
 #: storage/forms.py:734
-#, fuzzy
 msgid "File System type"
-msgstr "Dosya sistemi türü"
+msgstr "Dosya Sistemi türü"
 
 #: support/forms.py:49
 #, fuzzy
