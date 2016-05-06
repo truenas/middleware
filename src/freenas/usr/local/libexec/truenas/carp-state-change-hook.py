@@ -381,10 +381,8 @@ def carp_master(fobj, state_file, ifname, vhid, event, user_override, forcetakeo
         run('LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/python '
             '/usr/local/www/freenasUI/middleware/notifier.py '
             'nfsv4link')
-        run('/usr/sbin/service statd quietstart')
         run('/usr/sbin/service ix-nfsd quietstart')
-        run('/usr/sbin/service mountd quietrestart')
-        run('/usr/sbin/service nfsd quietrestart')
+        run('/usr/sbin/service mountd reload')
 
     # 0 for Active node
     run('/sbin/sysctl kern.cam.ctl.ha_role=0')
@@ -501,8 +499,6 @@ def carp_backup(fobj, state_file, ifname, vhid, event, user_override):
 
     run('/sbin/pfctl -ef /etc/pf.conf.block')
 
-    # TODO: Why do we stop statd here?
-    run('/usr/sbin/service statd stop')
     run('/usr/sbin/service watchdogd quietstop')
     run('watchdog -t 4')
 
