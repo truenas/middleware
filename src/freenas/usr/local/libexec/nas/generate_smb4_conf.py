@@ -1,6 +1,7 @@
 #!/usr/local/bin/python
 
 import os
+import pwd
 import re
 import sys
 import socket
@@ -1166,8 +1167,7 @@ def generate_smb4_system_shares(smb4_shares):
 def generate_smbusers():
     users = bsdUsers.objects.filter(
         Q(bsdusr_microsoft_account=True) & (
-            ~Q(bsdusr_email=None) &
-            ~Q(bsdusr_email='')
+            ~Q(bsdusr_email=None) & ~Q(bsdusr_email='')
         )
     )
     if not users:
