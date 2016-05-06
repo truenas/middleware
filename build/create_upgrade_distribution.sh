@@ -37,6 +37,29 @@ if [ -n "${DELTA_SCRIPTS}" -a -d "${DELTA_SCRIPTS}" ]; then
     cp -R "${DELTA_SCRIPTS}"/* "${UPDATE_DIR}"/Packages
 fi
 
+if [ -e "${TOP}/ValidateUpdate" ]; then
+	cp "${TOP}/ValidateUpdate" "${UPDATE_DIR}/ValidateUpdate"
+fi
+if [ -e "${TOP}/ValidateInstall" ]; then
+	cp "${TOP}/ValidateInstall" "${UPDATE_DIR}/ValidateInstall"
+fi
+
+if printenv | grep -q "VALIDATE_UPDATE"; then
+	if [ "${VALIDATE_UPDATE}" = "/dev/null" -o "${VALIDATE_UPDATE}" = "" ]; then
+		rm -f "${UPDATE_DIR}/ValidateUpdate"
+	else
+		cp "${VALIDATE_UPDATE}" "${UPDATE_DIR}/ValidateUpdate"
+	fi
+fi
+
+if printenv | grep -q "VALIDATE_INSTALL"; then
+	if [ "${VALIDATE_INSTALL}" = "/dev/null" -o "${VALIDATE_INSTALL}" = "" ]; then
+		rm -f "${UPDATE_DIR}/ValidateInstall"
+	else
+		cp "${VALIDATE_INSTALL}" "${UPDATE_DIR}/ValidateInstall"
+	fi
+fi
+
 # If RESTART is given, save that
 if [ -n "${RESTART}" ]; then
     echo ${RESTART} > ${UPDATE_DIR}/RESTART

@@ -8,12 +8,19 @@ import Package
 
 log = logging.getLogger('freenasOS.Manifest')
 
+# Kinds of validation programs
+VALIDATE_UPDATE = "ValidateUpdate"
+VALIDATE_INSTALL = "ValidateInstall"
+
+# Where validation programs go (on the update server)
+VALIDATION_DIR = "Validators"
+
 SYSTEM_MANIFEST_FILE = "/data/manifest"
 
 # The keys are as follows:
 # SEQUENCE_KEY:  A string, uniquely identifying this manifest.
 # PACKAGES_KEY:  An array of dictionaries.  They are installed in this order.
-# SIGNATURE_KEY:  A string for the signed value of the manifest.  Not yet implemented.
+# SIGNATURE_KEY:  A string for the signed value of the manifest.
 # NOTES_KEY:  An array of name, URL pairs.  Typical names are "README" and "Release Notes".
 # TRAIN_KEY:  A string identifying the train for this maifest.
 # VERSION_KEY:  A string, the friendly name for this particular release.  Does not need to be unqiue.
@@ -29,6 +36,9 @@ SYSTEM_MANIFEST_FILE = "/data/manifest"
 # REBOOT_KEY:  A boolean, indicaating whether a reboot should be done or not.
 #	This should RARELY be used, as it will over-ride the Package settings,
 #	which are a better way to determine rebootability.
+# VALIDATE_UPDATE_KEY: A dictionary, specifying a validation program to run for updates.
+# VALIDATE_INSTALL_EKY:  A dictionary, specifying a validation program to run for installs.
+
 
 SEQUENCE_KEY = "Sequence"
 PACKAGES_KEY = "Packages"
@@ -41,6 +51,8 @@ SCHEME_KEY = "Scheme"
 NOTICE_KEY = "Notice"
 SWITCH_KEY = "NewTrainName"
 REBOOT_KEY = "Reboot"
+VALIDATE_UPDATE_KEY = "UpdateCheckProgram"
+VALIDATE_INSTALL_KEY = "InstallCheckProrgam"
 
 # SCHEME_V1 is the first scheme for packaging and manifests.
 # Manifest is at <location>/FreeNAS/<train_name>/LATEST,
@@ -495,3 +507,120 @@ class Manifest(object):
         if REBOOT_KEY in self._dict:
             return self._dict[REBOOT_KEY]
         return None
+
+    def ValidationProgramList(self):
+        t = self.ValidationProgram(kind=None)
+        if t:
+            for kind in t:
+                yield t[kind]
+    
+    def ValidationProgram(self, kind=VALIDATE_UPDATE):
+        if kind is None:
+            rv = {}
+            for k in [VALIDATE_INSTALL_KEY, VALIDATE_UPDATE_KEY]:
+                if k in self._dict:
+                    rv[k] = self._dict[k]
+            return rv
+        if kind != VALIDATE_UPDATE:
+            log.debug("Invalid validation program kind %s" % str(kind))
+            return None
+        
+        if kind == VALIDATE_UPDATE and VALIDATE_UPDATE_KEY in self._dict:
+            return self._dict[VALIDATE_UPDATE_KEY]
+        if kind == VALIDATE_INSTALL and VALIDATE_INSTALL_KEY in self._dict:
+            return self._dict[VALIDATE_INSTALL_KEY]
+        return None
+
+    def AddValidationProgram(self, name, checksum, kind=VALIDATE_UPDATE):
+        """
+        Add the filename as the validation program.
+        Only the last component of the path is used.
+        The checksum is generated from the file.
+        """
+        if kind != VALIDATE_UPDATE:
+            raise ValueError("Invalid validation program kind %s" % str(kind))
+        if kind == VALIDATE_UPDATE:
+            key = VALIDATE_UPDATE_KEY
+        elif kind == VALIDATE_INSTALL:
+            key = VALIDATE_INSTALL_KEY
+        else:
+            raise ValueError("Unknown validation kind %s" % str(kind))
+        vdict = {}
+        self._dict[key] = vdict
+        if name is None:
+            # Similar to methods above, None means to remove the element
+            self._dict.pop(key)
+            return
+        vdict["Name"] = name
+        vdict["Checksum"] = checksum
+        vdict["Kind"] = kind
+        return
+
+    def RunValidationProgram(self, cache_dir, kind=VALIDATE_UPDATE):
+        # Not sure this should go here
+        # kind is currently unused.
+        import subprocess, hashlib, tempfile
+
+        old_version = self._config.SystemManifest().Version()
+        old_sequence = self._config.SystemManifest().Sequence()
+        new_version = self.Version()
+        new_sequence = self.Sequence()
+
+        def PreExecHook():
+            import pwd
+            try:
+                uid = pwd.getpwnam("nobody").pw_uid
+            except:
+                # This is what freebsd uses for nobody
+                uid = 65534
+            os.environ["CURRENT_VERSION"] = old_version
+            os.environ["CURRENT_SEQUENCE"] = old_sequence
+            os.environ["NEW_VERSION"] = new_version
+            os.environ["NEW_SEQUENCE"] = new_sequence
+            os.setegid(uid)
+            os.seteuid(uid)
+            
+        if kind != VALIDATE_UPDATE:
+            raise ValueError("Invalid validation program kind %s" % str(kind))
+        
+        v = self.ValidationProgram(kind)
+        if v is None:
+            # No validation to run, therefore good
+            return True
+        tmp_file = None
+        if cache_dir is None:
+            tmp_file = tempfile.NamedTemporaryFile()
+            prog_path = tmp_file.name
+        else:
+            prog_path = os.path.join(cache_dir, kind)
+        if tmp_file or (not os.path.exists(prog_path)):
+            # If tmp_file is set, we did not have a cache directory,
+            # and so it's not possible to have it pre-downloaded.
+            # Need to download it
+            # This may raise an exception, in which case we let it propagate up
+            self._config.TryGetNetworkFile(file="%s/%s" % (VALIDATION_DIR, v["Name"]),
+                                           pathname=prog_path,
+                                           reason="Validation Script")
+        with open(prog_path, "rb") as f:
+            hash = hashlib.sha256(f.read()).hexdigest()
+        if hash != v["Checksum"]:
+            if tmp_file: tmp_file.close()
+            # Let's attempt to remove it, as well
+            try:
+                os.remove(prog_path)
+            except:
+                pass
+            raise Exceptions.ChecksumFailException("Validation program %s" % v["Name"])
+        try:
+            os.lchmod(prog_path, 0555)
+        except:
+            pass
+        try:
+            subprocess.check_output(prog_path, preexec_fn=PreExecHook, stderr=subprocess.STDOUT)
+        except subprocess.CalledProcessError as err:
+            raise Exceptions.UpdateInvalidUpdateException(err.output.rstrip())
+        finally:
+            if tmp_file: tmp_file.close()
+            
+        return True
+    
