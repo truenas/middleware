@@ -1115,27 +1115,7 @@ class VolumeAutoImportForm(Form):
                 self._errors["volume_disks"] = self.error_class([msg])
                 del cleaned_data["volume_disks"]
 
-            if cleaned_data['volume']['type'] == 'geom':
-                if cleaned_data['volume']['group_type'] == 'mirror':
-                    dev = "/dev/mirror/%s" % (cleaned_data['volume']['label'])
-                elif cleaned_data['volume']['group_type'] == 'stripe':
-                    dev = "/dev/stripe/%s" % (cleaned_data['volume']['label'])
-                elif cleaned_data['volume']['group_type'] == 'raid3':
-                    dev = "/dev/raid3/%s" % (cleaned_data['volume']['label'])
-                else:
-                    raise NotImplementedError
-
-                isvalid = notifier().precheck_partition(dev, 'UFS')
-                if not isvalid:
-                    msg = _(
-                        u"The selected disks were not verified for this "
-                        "import rules.")
-                    self._errors["volume_disks"] = self.error_class([msg])
-
-                    if "volume_disks" in cleaned_data:
-                        del cleaned_data["volume_disks"]
-
-            elif cleaned_data['volume']['type'] != 'zfs':
+            if cleaned_data['volume']['type'] != 'zfs':
                 raise NotImplementedError
 
         return cleaned_data
