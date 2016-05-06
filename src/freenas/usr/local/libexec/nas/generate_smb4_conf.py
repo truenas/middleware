@@ -74,6 +74,19 @@ from freenasUI.sharing.models import CIFS_Share
 
 log = logging.getLogger('generate_smb4_conf')
 
+IDMAP_FUNCTIONS = {
+    IDMAP_TYPE_AD: configure_idmap_ad,
+    IDMAP_TYPE_ADEX: configure_idmap_ad,
+    IDMAP_TYPE_AUTORID: configure_idmap_autorid,
+    IDMAP_TYPE_HASH: configure_idmap_hash,
+    IDMAP_TYPE_LDAP: configure_idmap_ldap,
+    IDMAP_TYPE_NSS: configure_idmap_nss,
+    IDMAP_TYPE_RFC2307: configure_idmap_rfc2307,
+    IDMAP_TYPE_RID: configure_idmap_rid,
+    IDMAP_TYPE_TDB: configure_idmap_tdb,
+    IDMAP_TYPE_TDB2: configure_idmap_tdb2
+}
+
 
 def debug_SID(str):
     if str:
@@ -302,31 +315,13 @@ def get_server_role():
 
 
 def confset1(conf, line, space=4):
-    if not line:
-        return
-
-    i = 0
-    str = ''
-    while i < space:
-        str += ' '
-        i += 1
-    line = str + line
-
-    conf.append(line)
+    if line:
+        conf.append(' ' * space + line)
 
 
 def confset2(conf, line, var, space=4):
-    if not line:
-        return
-
-    i = 0
-    str = ''
-    while i < space:
-        str += ' '
-        i += 1
-    line = str + line
-
-    if var:
+    if line and var:
+        line = ' ' * space + line
         conf.append(line % var)
 
 
@@ -583,26 +578,11 @@ def configure_idmap_tdb2(smb4_conf, idmap, domain):
 
 
 def configure_idmap_backend(smb4_conf, idmap, domain):
-    idmap_functions = {
-        IDMAP_TYPE_AD: configure_idmap_ad,
-        IDMAP_TYPE_ADEX: configure_idmap_ad,
-        IDMAP_TYPE_AUTORID: configure_idmap_autorid,
-        IDMAP_TYPE_HASH: configure_idmap_hash,
-        IDMAP_TYPE_LDAP: configure_idmap_ldap,
-        IDMAP_TYPE_NSS: configure_idmap_nss,
-        IDMAP_TYPE_RFC2307: configure_idmap_rfc2307,
-        IDMAP_TYPE_RID: configure_idmap_rid,
-        IDMAP_TYPE_TDB: configure_idmap_tdb,
-        IDMAP_TYPE_TDB2: configure_idmap_tdb2
-    }
-
     if not domain:
         domain = "*"
 
     try:
-        func = idmap_functions[idmap.idmap_backend_type]
-        func(smb4_conf, idmap, domain)
-
+        IDMAP_FUNCTIONS[idmap.idmap_backend_type](smb4_conf, idmap, domain)
     except:
         pass
 
@@ -622,14 +602,17 @@ def add_nt4_conf(smb4_conf):
         answers = resolver.query(nt4.nt4_dcname, 'A')
         dc_ip = answers[0]
 
-    except Exception:
+    except Exception as e:
+        log.debug(
+            "resolver query for {0}'s A record failed with {1}".format(nt4.nt4_dcname, e)
+        )
+        log_traceback(log=log)
         dc_ip = nt4.nt4_dcname
 
     nt4_workgroup = nt4.nt4_workgroup.upper()
 
     with open("/usr/local/etc/lmhosts", "w") as f:
         f.write("%s\t%s\n" % (dc_ip, nt4.nt4_dcname.upper()))
-        f.close()
 
     confset2(smb4_conf, "workgroup = %s", nt4_workgroup)
 
@@ -644,8 +627,9 @@ def add_nt4_conf(smb4_conf):
     confset1(smb4_conf, "winbind enum users = yes")
     confset1(smb4_conf, "winbind enum groups = yes")
     confset1(smb4_conf, "winbind nested groups = yes")
-    confset2(smb4_conf, "winbind use default domain = %s",
-             "yes" if nt4.nt4_use_default_domain else "no")
+    confset2(
+        smb4_conf, "winbind use default domain = %s", "yes" if nt4.nt4_use_default_domain else "no"
+    )
 
     confset1(smb4_conf, "template shell = /bin/sh")
 
@@ -817,7 +801,6 @@ def add_domaincontroller_conf(smb4_conf):
     with open("/usr/local/etc/lmhosts", "w") as f:
         for ipv4 in ipv4_addrs:
             f.write("%s\t%s\n" % (ipv4, dc.dc_domain.upper()))
-        f.close()
 
 
 def get_smb4_users():
