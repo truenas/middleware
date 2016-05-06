@@ -792,7 +792,7 @@ class VolumeImportForm(Form):
         return cleaned_data
 
 
-def show_descrypt_condition(wizard):
+def show_decrypt_condition(wizard):
     cleaned_data = wizard.get_cleaned_data_for_step('0') or {}
     if cleaned_data.get("step") == "decrypt":
         return True
