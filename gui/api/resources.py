@@ -1151,6 +1151,29 @@ class ScrubResourceMixin(object):
         return bundle
 
 
+class VolumeImportResource(DojoResource):
+
+    class Meta:
+        allowed_methods = ['post']
+        resource_name = 'storage/volume_import'
+
+    def post_list(self, request, **kwargs):
+        self.is_authenticated(request)
+        _format = bundle.request.META.get('CONTENT_TYPE') or 'application/json'
+        deserialized = self._meta.serializer.deserialize(
+            bundle.request.body,
+            format=_format,
+        )
+        form = VolumeAutoImportForm(data=deserialized)
+        if not form.is_valid():
+            raise ImmediateHttpResponse(
+                response=self.error_response(request, form.errors)
+            )
+        volume = form.cleaned_data['volume']
+        notifier().volume_import(vol['label'], vol['id'])
+        return self.create_response(request, 'Volume imported.')
+
+
 class ReplicationResourceMixin(object):
 
     def dehydrate(self, bundle):

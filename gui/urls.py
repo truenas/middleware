@@ -45,6 +45,7 @@ from freenasUI.api.resources import (
     ShutdownResource,
     SnapshotResource,
     VersionResource,
+    VolumeImportResource,
 )
 from freenasUI.freeadmin.site import site
 from freenasUI.freeadmin.middleware import public
@@ -63,6 +64,7 @@ v1_api.register(RebootResource())
 v1_api.register(ShutdownResource())
 v1_api.register(SnapshotResource())
 v1_api.register(VersionResource())
+v1_api.register(VolumeImportResource())
 
 navtree.prepare_modelforms()
 freeadmin.autodiscover()
