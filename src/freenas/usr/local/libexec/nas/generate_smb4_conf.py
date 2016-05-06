@@ -74,20 +74,6 @@ from freenasUI.sharing.models import CIFS_Share
 
 log = logging.getLogger('generate_smb4_conf')
 
-IDMAP_FUNCTIONS = {
-    IDMAP_TYPE_AD: configure_idmap_ad,
-    IDMAP_TYPE_ADEX: configure_idmap_ad,
-    IDMAP_TYPE_AUTORID: configure_idmap_autorid,
-    IDMAP_TYPE_HASH: configure_idmap_hash,
-    IDMAP_TYPE_LDAP: configure_idmap_ldap,
-    IDMAP_TYPE_NSS: configure_idmap_nss,
-    IDMAP_TYPE_RFC2307: configure_idmap_rfc2307,
-    IDMAP_TYPE_RID: configure_idmap_rid,
-    IDMAP_TYPE_TDB: configure_idmap_tdb,
-    IDMAP_TYPE_TDB2: configure_idmap_tdb2
-}
-
-
 def debug_SID(str):
     if str:
         print >> sys.stderr, "XXX: %s" % str
@@ -575,6 +561,20 @@ def configure_idmap_tdb2(smb4_conf, idmap, domain):
         domain,
         idmap.idmap_tdb2_script
     ))
+
+
+IDMAP_FUNCTIONS = {
+    IDMAP_TYPE_AD: configure_idmap_ad,
+    IDMAP_TYPE_ADEX: configure_idmap_ad,
+    IDMAP_TYPE_AUTORID: configure_idmap_autorid,
+    IDMAP_TYPE_HASH: configure_idmap_hash,
+    IDMAP_TYPE_LDAP: configure_idmap_ldap,
+    IDMAP_TYPE_NSS: configure_idmap_nss,
+    IDMAP_TYPE_RFC2307: configure_idmap_rfc2307,
+    IDMAP_TYPE_RID: configure_idmap_rid,
+    IDMAP_TYPE_TDB: configure_idmap_tdb,
+    IDMAP_TYPE_TDB2: configure_idmap_tdb2
+}
 
 
 def configure_idmap_backend(smb4_conf, idmap, domain):
