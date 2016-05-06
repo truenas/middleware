@@ -3649,6 +3649,9 @@ class notifier:
         from freenasUI.storage.models import Disk, EncryptedDisk, Scrub, Volume
         from freenasUI.system.alert import alertPlugins
 
+        if enc_disks is None:
+            enc_disks = []
+
         passfile = None
         if key and passphrase:
             encrypt = 2
