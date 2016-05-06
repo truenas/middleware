@@ -859,17 +859,12 @@ class AutoImportWizard(SessionWizardView):
         cdata = self.get_cleaned_data_for_step('2') or {}
         vol = cdata['volume']
         volume_name = vol['label']
-        group_type = vol['group_type']
-        if vol['type'] == 'geom':
-            volume_fstype = 'UFS'
-        elif vol['type'] == 'zfs':
-            volume_fstype = 'ZFS'
 
         try:
             with transaction.atomic():
                 volume = models.Volume(
                     vol_name=volume_name,
-                    vol_fstype=volume_fstype,
+                    vol_fstype='ZFS',
                     vol_encrypt=encrypt)
                 volume.save()
                 if encrypt > 0:
@@ -883,18 +878,11 @@ class AutoImportWizard(SessionWizardView):
 
                 _n = notifier()
 
-                if vol['type'] != 'zfs':
-                    _n.label_disk(
-                        volume_name,
-                        "%s/%s" % (group_type, volume_name),
-                        'UFS')
-                else:
-                    volume.vol_guid = vol['id']
-                    volume.save()
-                    models.Scrub.objects.create(scrub_volume=volume)
+                volume.vol_guid = vol['id']
+                volume.save()
+                models.Scrub.objects.create(scrub_volume=volume)
 
-                if vol['type'] == 'zfs' and not _n.zfs_import(
-                        vol['label'], vol['id']):
+                if not _n.zfs_import(vol['label'], vol['id']):
                     raise MiddlewareError(_(
                         'The volume "%s" failed to import, '
                         'for futher details check pool status') % vol['label'])
