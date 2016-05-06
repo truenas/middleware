@@ -3644,6 +3644,84 @@ class notifier:
         self._encvolume_detach(volume)
         self.__rmdir_mountpoint(vol_mountpath)
 
+    def volume_import(self, volume_name, volume_id, key=None, passphrase=None, enc_disks=None):
+        from django.db import transaction
+        from freenasUI.storage.models import Disk, EncryptedDisk, Scrub, Volume
+        from freenasUI.system.alert import alertPlugins
+
+        passfile = None
+        if key and passphrase:
+            encrypt = 2
+            passfile = tempfile.mktemp(dir='/tmp/')
+            with open(passfile, 'w') as f:
+                os.chmod(passfile, 600)
+                f.write(passphrase)
+        elif key:
+            encrypt = 1
+        else:
+            encrypt = 0
+
+        try:
+            with transaction.atomic():
+                volume = Volume(
+                    vol_name=volume_name,
+                    vol_fstype='ZFS',
+                    vol_encrypt=encrypt)
+                volume.save()
+                if encrypt > 0:
+                    if not os.path.exists(GELI_KEYPATH):
+                        os.mkdir(GELI_KEYPATH)
+                    key.seek(0)
+                    keydata = key.read()
+                    with open(volume.get_geli_keyfile(), 'wb') as f:
+                        f.write(keydata)
+                self.volume = volume
+
+                volume.vol_guid = volume_id
+                volume.save()
+                Scrub.objects.create(scrub_volume=volume)
+
+                if not self.zfs_import(volume_name, volume_id):
+                    raise MiddlewareError(_(
+                        'The volume "%s" failed to import, '
+                        'for futher details check pool status') % volume_name)
+                for disk in enc_disks:
+                    self.geli_setkey(
+                        "/dev/%s" % disk,
+                        volume.get_geli_keyfile(),
+                        passphrase=passfile
+                    )
+                    if disk.startswith("gptid/"):
+                        diskname = self.identifier_to_device(
+                            "{uuid}%s" % disk.replace("gptid/", "")
+                        )
+                    elif disk.startswith("gpt/"):
+                        diskname = self.label_to_disk(disk)
+                    else:
+                        diskname = disk
+                    ed = EncryptedDisk()
+                    ed.encrypted_volume = volume
+                    ed.encrypted_disk = Disk.objects.filter(
+                        disk_name=diskname,
+                        disk_enabled=True
+                    )[0]
+                    ed.encrypted_provider = disk
+                    ed.save()
+        except:
+            if passfile:
+                os.unlink(passfile)
+            raise
+
+        self.reload("disk")
+        self.start("ix-system")
+        self.start("ix-syslogd")
+        self.start("ix-warden")
+        # FIXME: do not restart collectd again
+        self.restart("system_datasets")
+
+        alertPlugins.run()
+        return volume
+
     def __rmdir_mountpoint(self, path):
         """Remove a mountpoint directory designated by path
 

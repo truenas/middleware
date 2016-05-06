@@ -58,10 +58,9 @@ from freenasUI.freeadmin.forms import (
 from freenasUI.freeadmin.views import JsonResp
 from freenasUI.middleware import zfs
 from freenasUI.middleware.exceptions import MiddlewareError
-from freenasUI.middleware.notifier import notifier, GELI_KEYPATH
+from freenasUI.middleware.notifier import notifier
 from freenasUI.services.exceptions import ServiceFailed
 from freenasUI.services.models import iSCSITargetExtent, services
-from freenasUI.system.alert import alertPlugins
 from freenasUI.storage import models
 from freenasUI.storage.widgets import UnixPermissionField
 from freenasUI.support.utils import dedup_enabled
@@ -844,83 +843,11 @@ class AutoImportWizard(SessionWizardView):
         enc_disks = cdata.get("disks", [])
         key = cdata.get("key")
         passphrase = cdata.get("passphrase")
-        passfile = None
-        if key and passphrase:
-            encrypt = 2
-            passfile = tempfile.mktemp(dir='/tmp/')
-            with open(passfile, 'w') as f:
-                os.chmod(passfile, 600)
-                f.write(passphrase)
-        elif key:
-            encrypt = 1
-        else:
-            encrypt = 0
 
         cdata = self.get_cleaned_data_for_step('2') or {}
         vol = cdata['volume']
-        volume_name = vol['label']
 
-        try:
-            with transaction.atomic():
-                volume = models.Volume(
-                    vol_name=volume_name,
-                    vol_fstype='ZFS',
-                    vol_encrypt=encrypt)
-                volume.save()
-                if encrypt > 0:
-                    if not os.path.exists(GELI_KEYPATH):
-                        os.mkdir(GELI_KEYPATH)
-                    key.seek(0)
-                    keydata = key.read()
-                    with open(volume.get_geli_keyfile(), 'wb') as f:
-                        f.write(keydata)
-                self.volume = volume
-
-                _n = notifier()
-
-                volume.vol_guid = vol['id']
-                volume.save()
-                models.Scrub.objects.create(scrub_volume=volume)
-
-                if not _n.zfs_import(vol['label'], vol['id']):
-                    raise MiddlewareError(_(
-                        'The volume "%s" failed to import, '
-                        'for futher details check pool status') % vol['label'])
-                for disk in enc_disks:
-                    _n.geli_setkey(
-                        "/dev/%s" % disk,
-                        volume.get_geli_keyfile(),
-                        passphrase=passfile
-                    )
-                    if disk.startswith("gptid/"):
-                        diskname = _n.identifier_to_device(
-                            "{uuid}%s" % disk.replace("gptid/", "")
-                        )
-                    elif disk.startswith("gpt/"):
-                        diskname = _n.label_to_disk(disk)
-                    else:
-                        diskname = disk
-                    ed = models.EncryptedDisk()
-                    ed.encrypted_volume = volume
-                    ed.encrypted_disk = models.Disk.objects.filter(
-                        disk_name=diskname,
-                        disk_enabled=True
-                    )[0]
-                    ed.encrypted_provider = disk
-                    ed.save()
-        except:
-            if passfile:
-                os.unlink(passfile)
-            raise
-
-        _n.reload("disk")
-        _n.start("ix-system")
-        _n.start("ix-syslogd")
-        _n.start("ix-warden")
-        # FIXME: do not restart collectd again
-        _n.restart("system_datasets")
-
-        alertPlugins.run()
+        self.volume = notifier().volume_import(vol['label'], vol['id'], key, passphrase, enc_disks)
 
         events = ['loadalert()']
         appPool.hook_form_done('AutoImportWizard', self, self.request, events)
