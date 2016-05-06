@@ -1449,14 +1449,12 @@ def smb4_group_mapped(groupmap, group):
 
 # Windows no likey
 def smb4_groupname_is_username(group):
-    cmd = "/usr/bin/getent passwd '%s'" % group
+    try:
+        pwd.getpwnam(group)
+    except KeyError:
+        return False
 
-    p = pipeopen(cmd)
-    p.communicate()
-    if p.returncode == 0:
-        return True
-
-    return False
+    return True
 
 
 def smb4_map_groups():
