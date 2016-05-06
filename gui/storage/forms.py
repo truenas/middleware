@@ -1039,14 +1039,14 @@ class AutoImportDecryptForm(Form):
 
 class VolumeAutoImportForm(Form):
 
-    volume_disks = forms.ChoiceField(
+    volume_name = forms.ChoiceField(
         choices=(),
         widget=forms.Select(attrs=attrs_dict),
         label=_('Volume'))
 
     def __init__(self, *args, **kwargs):
         super(VolumeAutoImportForm, self).__init__(*args, **kwargs)
-        self.fields['volume_disks'].choices = self._populate_disk_choices()
+        self.fields['volume_name'].choices = self._populate_disk_choices()
 
     @staticmethod
     def _populate_disk_choices():
@@ -1096,7 +1096,7 @@ class VolumeAutoImportForm(Form):
     def clean(self):
         cleaned_data = self.cleaned_data
         vols = notifier().detect_volumes()
-        volume_name, zid = cleaned_data.get('volume_disks', '|').split('|', 1)
+        volume_name, zid = cleaned_data.get('volume_name', '|').split('|', 1)
         for vol in vols:
             if vol['label'] == volume_name:
                 if (zid and zid == vol['id']) or not zid:
@@ -1112,8 +1112,8 @@ class VolumeAutoImportForm(Form):
             if models.Volume.objects.filter(
                     vol_name=cleaned_data['volume']['label']).count() > 0:
                 msg = _(u"You already have a volume with same name")
-                self._errors["volume_disks"] = self.error_class([msg])
-                del cleaned_data["volume_disks"]
+                self._errors["volume_name"] = self.error_class([msg])
+                del cleaned_data["volume_name"]
 
             if cleaned_data['volume']['type'] != 'zfs':
                 raise NotImplementedError
