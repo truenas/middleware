@@ -108,7 +108,7 @@ Enter the password created during the installation. You should then see the admi
 
 **Figure 3c: FreeNAS® Graphical Configuration Menu**
 
-.. image:: images/initial.png
+.. image:: images/initial2.png
 
 If you are unable to access the IP address from a browser, check the following:
 
