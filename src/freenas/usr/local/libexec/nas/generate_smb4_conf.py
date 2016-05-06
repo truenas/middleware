@@ -1471,6 +1471,8 @@ def smb4_backup_tdbfile(tdb_src, tdb_dst):
 
     except Exception as e:
         print >> sys.stderr, "Unable to open %s: %s" % (tdb_src, e)
+        log.error("Unable to open {0}: {1}".format(tdb_src, e))
+        log_traceback(log=log)
         return False
 
     try:
@@ -1478,6 +1480,8 @@ def smb4_backup_tdbfile(tdb_src, tdb_dst):
 
     except Exception as e:
         print >> sys.stderr, "Unable to open %s: %s" % (tdb_dst, e)
+        log.error("Unable to open {0}: {1}".format(tdb_dst, e))
+        log_traceback(log=log)
         return False
 
     for key in db_r.iterkeys():
@@ -1489,6 +1493,8 @@ def smb4_backup_tdbfile(tdb_src, tdb_dst):
 
         except Exception as e:
             print >> sys.stderr, "Transaction for key %s failed: %s" % (key, e)
+            log.error("Transaction for key {0} failed: {1}".format(key, e))
+            log_traceback(log=log)
             db_w.transaction_cancel()
 
     db_r.close()
@@ -1503,12 +1509,16 @@ def smb4_restore_tdbfile(tdb_src, tdb_dst):
 
     except Exception as e:
         print >> sys.stderr, "Unable to open %s: %s" % (tdb_src, e)
+        log.error("Unable to open {0}: {1}".format(tdb_src, e))
+        log_traceback(log=log)
         return False
 
     try:
         db_w = tdb.open(tdb_dst, flags=os.O_RDWR)
     except Exception as e:
         print >> sys.stderr, "Unable to open %s: %s" % (tdb_dst, e)
+        log.error("Unable to open {0}: {1}".format(tdb_dst, e))
+        log_traceback(log=log)
         return False
 
     for key in db_r.iterkeys():
@@ -1524,6 +1534,8 @@ def smb4_restore_tdbfile(tdb_src, tdb_dst):
 
         except Exception as e:
             print >> sys.stderr, "Transaction for key %s failed: %s" % (key, e)
+            log.error("Transaction for key {0} failed: {1}".format(key, e))
+            log_traceback(log=log)
             db_w.transaction_cancel()
 
     db_r.close()
