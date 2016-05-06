@@ -1155,8 +1155,15 @@ class ScrubResourceMixin(object):
 class VolumeImportResource(DojoResource):
 
     class Meta:
-        allowed_methods = ['post']
+        allowed_methods = ['get', 'post']
         resource_name = 'storage/volume_import'
+
+    def get_list(self, request, **kwargs):
+        self.is_authenticated(request)
+        vols = VolumeAutoImportForm._unused_volumes()
+        for vol in vols:
+            vol['id'] = '%s|%s' % (vol['label'], vol['id'])
+        return self.create_response(request, vols)
 
     def post_list(self, request, **kwargs):
         self.is_authenticated(request)
