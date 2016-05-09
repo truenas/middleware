@@ -5,7 +5,7 @@ Storage
 Resources related to storage.
 
 Volume
-----------
+------
 
 The Volume resource represents ZFS pools and UFS volumes.
 
@@ -239,6 +239,95 @@ Datasets
 
    :resheader Content-Type: content type of the response
    :statuscode 204: no error
+
+Import
+++++++
+
+.. http:post:: /api/v1.0/storage/volume_import/
+
+   Get list of importable volumes.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      GET /api/v1.0/storage/volume_import/ HTTP/1.1
+      Content-Type: application/json
+
+      {
+        "name": "foo"
+      }
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 200 OK
+      Vary: Accept
+      Content-Type: application/json
+
+      [
+          {
+              "disks": {
+                  "status": "ONLINE",
+                  "numVdevs": 1,
+                  "name": "test",
+                  "vdevs": [
+                      {
+                          "status": "ONLINE",
+                          "disks": [
+                              {
+                                  "status": "ONLINE",
+                                  "name": "ada2p1"
+                              }
+                          ],
+                          "type": "stripe",
+                          "name": "stripe",
+                          "numDisks": 1
+                      }
+                  ]
+              },
+              "log": null,
+              "cache": null,
+              "label": "test",
+              "spare": null,
+              "type": "zfs",
+              "id": "test|15955869083029286480",
+              "group_type": "none"
+          }
+      ]
+
+
+   :resheader Content-Type: content type of the response
+   :statuscode 200: no error
+
+.. http:post:: /api/v1.0/storage/volume_import/
+
+   Import volume.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      POST /api/v1.0/storage/volume_import/ HTTP/1.1
+      Content-Type: application/json
+
+      {
+           "volume_id": "test|15955869083029286480"
+      }
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 202 Accepted
+      Vary: Accept
+      Content-Type: application/json
+
+      "Volume imported."
+
+   :resheader Content-Type: content type of the response
+   :statuscode 202: no error
 
 
 ZFS Volumes
