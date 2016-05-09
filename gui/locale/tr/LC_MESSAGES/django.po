@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:05-0700\n"
-"PO-Revision-Date: 2016-05-06 05:49+0000\n"
+"PO-Revision-Date: 2016-05-09 08:21+0000\n"
 "Last-Translator: BouRock <hitowerdigit@hotmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: tr\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1462513785.0\n"
+"X-POOTLE-MTIME: 1462782115.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -788,7 +788,7 @@ msgstr "Sistem İşlemlerini Görüntüle"
 
 #: freeadmin/navtree.py:366 templates/system/reboot_dialog.html:14
 msgid "Reboot"
-msgstr "Yeniden başlat"
+msgstr "Yeniden Başlat"
 
 #: freeadmin/navtree.py:374 templates/system/shutdown_dialog.html:14
 msgid "Shutdown"
@@ -1630,7 +1630,7 @@ msgstr "Alttaki dosyayı sil"
 #: templates/storage/snapshot_confirm_delete_bulk.html:5
 #: templates/storage/zvol_confirm_delete.html:7
 msgid "Are you sure you want to delete?"
-msgstr "Silmek istediğinizden emin misiniz?"
+msgstr "Silmek istediğinize emin misiniz?"
 
 #: services/forms.py:1147
 msgid "The S.M.A.R.T. service failed to reload."
@@ -3118,7 +3118,7 @@ msgstr ""
 
 #: services/models.py:1480
 msgid "Critical"
-msgstr "Kritik"
+msgstr "Önemli"
 
 #: services/models.py:1484
 msgid "Email to report"
@@ -4355,7 +4355,7 @@ msgstr "Anlık görüntüler başarılı olarak silindi."
 
 #: storage/views.py:616
 msgid "Rollback successful."
-msgstr "Geri alma başarılı."
+msgstr "Geri döndürme başarılı."
 
 #~ msgid "Snapshot successfully added."
 #~ msgstr "Anlık durum görüntüsü başarıyla eklendi."
@@ -4390,7 +4390,7 @@ msgstr "Disk kaldırıldı."
 
 #: storage/views.py:766
 msgid "The volume has been successfully detached"
-msgstr "Birim başarılı olarak ayrıldı"
+msgstr "Birim başarılı olarak ayırıldı"
 
 #: storage/views.py:788
 msgid "The scrub process has begun"
@@ -4621,7 +4621,7 @@ msgstr ""
 
 #: system/models.py:179
 msgid "Show console messages in the footer"
-msgstr "Altta konsol iletilerini göster"
+msgstr "Altbilgide konsol iletilerini göster"
 
 #: system/models.py:182
 msgid "Show tracebacks in case of fatal errors"
@@ -4945,11 +4945,11 @@ msgstr "Sysctl'ler"
 
 #: system/models.py:834
 msgid "Tunable"
-msgstr "Yükleyici"
+msgstr "Ayarlayıcı"
 
 #: system/models.py:835
 msgid "Tunables"
-msgstr "Yükleyicileri"
+msgstr "Ayarlayıcılar"
 
 #: system/nav.py:5 templates/menubar.html:7
 msgid "System"
@@ -4961,53 +4961,53 @@ msgstr "Raporlama"
 
 #: system/nav.py:20
 msgid "System Information"
-msgstr "Sistem Bilgisi"
+msgstr "Sistem Bilgileri"
 
 #: system/views.py:129
 msgid "The uploaded file is not valid."
-msgstr "Yüklediğiniz dosya geçersiz."
+msgstr "Gönderilen dosya geçerli değil."
 
 #: system/views.py:239
 msgid "Reboot is being issued"
-msgstr "Yayınlananlar tekrar oluşturuluyor"
+msgstr "Yeniden başlatma işleminden çıkarıldı"
 
 #: system/views.py:264
 msgid "Shutdown is being issued"
-msgstr "Yayınlananları kapat"
+msgstr "Kapatma işleminden çıkarıldı"
 
 #: system/views.py:297
 #, python-format
 msgid "Test message from %s"
-msgstr "Test mesajı: %s"
+msgstr "%s tarafından gelen deneme iletisi"
 
 #: system/views.py:299
 #, python-format
 msgid "This is a message test from %s"
-msgstr "Test mesajı: %s"
+msgstr "Bu, %s tarafından gelen bir deneme iletisidir"
 
 #: system/views.py:302
 #, python-format
 msgid "Your test email could not be sent: %s"
-msgstr "Test e-posta gönderilemedi: %s"
+msgstr "Deneme e-postanız gönderilemedi: %s"
 
 #: system/views.py:304
 msgid "Your test email has been sent!"
-msgstr "Test e-posta gönderildi!"
+msgstr "Deneme e-postanız gönderildi!"
 
 #~ msgid "Page Not Found"
 #~ msgstr "Sayfa Bulunamadı"
 
 #: templates/base.html:51
 msgid "expand all"
-msgstr "Genişlet"
+msgstr "tümünü genişlet"
 
 #: templates/base.html:52
 msgid "collapse all"
-msgstr "Daralt"
+msgstr "tümünü daralt"
 
 #: templates/menubar.html:36
 msgid "Log Out"
-msgstr "Çıkış Yap"
+msgstr "Oturumu Kapat"
 
 #: templates/menubar.html:42
 msgid "Help"
@@ -5015,7 +5015,7 @@ msgstr "Yardım"
 
 #: templates/menubar.html:54 templates/registration/login.html:59
 msgid "Log In"
-msgstr "Giriş Yap"
+msgstr "Oturum Aç"
 
 #~ msgid "ID"
 #~ msgstr "Kullanıcı Kimliği"
@@ -5083,11 +5083,11 @@ msgstr "E-Postayı Değiştir"
 
 #: templates/freeadmin/advanced_btn.html:25
 msgid "Basic Mode"
-msgstr "Temel Mod"
+msgstr "Temel Kip"
 
 #: templates/freeadmin/advanced_btn.html:27
 msgid "Advanced Mode"
-msgstr "Gelişmiş Mod"
+msgstr "Gelişmiş Kip"
 
 #: templates/freeadmin/alert_status.html:6
 #: templates/freeadmin/generic_form.html:15
@@ -5097,7 +5097,7 @@ msgstr "Gelişmiş Mod"
 #: templates/plugins/plugin_info.html:25
 #: templates/storage/scrub_confirm.html:14
 msgid "OK"
-msgstr "Tamam"
+msgstr "TAMAM"
 
 #: templates/freeadmin/alert_status.html:10
 msgid "WARNING"
@@ -5105,7 +5105,7 @@ msgstr "UYARI"
 
 #: templates/freeadmin/alert_status.html:13
 msgid "CRITICAL"
-msgstr "KRİTİK"
+msgstr "ÖNEMLİ"
 
 #: templates/freeadmin/generic_form.html:19
 #: templates/freeadmin/generic_model_add.html:53
@@ -5164,7 +5164,7 @@ msgstr "Yükleniyor..."
 
 #: templates/freeadmin/index.html:53
 msgid "Help & Support"
-msgstr "Yardım & Destek"
+msgstr "Yardım ve Destek"
 
 #: templates/freeadmin/index.html:57
 msgid "Forum"
@@ -5176,7 +5176,7 @@ msgstr "Topluluk Forumu"
 
 #: templates/freeadmin/index.html:64
 msgid "IRC (Chat)"
-msgstr "IRC (Sohbet Odaları)"
+msgstr "IRC (Sohbet)"
 
 #: templates/freeadmin/index.html:66
 msgid "#freenas on freenode"
@@ -5184,7 +5184,7 @@ msgstr "freenode üzerinde #freenas odası"
 
 #: templates/freeadmin/index.html:70
 msgid "Mailing Lists"
-msgstr "E-posta Listeleri"
+msgstr "Postalama Listeleri"
 
 #: templates/freeadmin/index.html:72
 msgid "FreeNAS Announce"
@@ -5192,19 +5192,19 @@ msgstr "FreeNAS Duyuru"
 
 #: templates/freeadmin/index.html:73
 msgid "FreeNAS Commit"
-msgstr "FreeNAS Önermeleri"
+msgstr "FreeNAS Yürütme"
 
 #: templates/freeadmin/index.html:74
 msgid "FreeNAS Devel"
-msgstr "FreeNAS İlerlemeleri"
+msgstr "FreeNAS Geliştirme"
 
 #: templates/freeadmin/index.html:75
 msgid "FreeNAS Testing"
-msgstr "FreeNAS Testleri"
+msgstr "FreeNAS Deneme"
 
 #: templates/freeadmin/index.html:76
 msgid "FreeNAS Docs"
-msgstr "FreeNAS Dokümanları"
+msgstr "FreeNAS Belgeler"
 
 #: templates/freeadmin/index.html:77
 msgid "FreeNAS Translations"
@@ -5220,7 +5220,7 @@ msgstr "Hata İzleyici"
 
 #: templates/freeadmin/index.html:89
 msgid "Documentation"
-msgstr "Belgelendirme"
+msgstr "Belgeler"
 
 #: templates/freeadmin/index.html:91
 msgid "FreeNAS Documentation"
@@ -5277,7 +5277,7 @@ msgstr "Düzenle"
 
 #: templates/network/interface.html:41 templates/network/summary.html:16
 msgid "No interfaces defined"
-msgstr "Tanımlı bir arabirim yok"
+msgstr "Tanımlanmış arayüzler yok"
 
 #: templates/network/interface.html:47 templates/network/interface.html:49
 msgid "Add Interface"
@@ -5341,11 +5341,11 @@ msgstr "Tanımlanmış DNS sunucusu yok"
 
 #: templates/network/summary.html:37
 msgid "Default route"
-msgstr "Varsayılan Yol"
+msgstr "Varsayılan yol"
 
 #: templates/network/summary.html:46
 msgid "No default route defined"
-msgstr "Henüz varsayılan bir yol yok"
+msgstr "Tanımlanmış varsayılan yol yok"
 
 #~ msgid "Edit VLAN"
 #~ msgstr "VLAN Düzenle"
@@ -5379,7 +5379,7 @@ msgstr "Eklenti bilgisi"
 
 #: templates/plugins/index.html:47 templates/services/plugins.html:62
 msgid "Delete plugin"
-msgstr "Eklentiyi Sil"
+msgstr "Eklentiyi sil"
 
 #: templates/plugins/index.html:55
 msgid "No plugins installed"
@@ -5387,12 +5387,12 @@ msgstr "Yüklü eklenti yok"
 
 #: templates/plugins/jail_import.html:2
 msgid "Import"
-msgstr "Birim Al"
+msgstr "İçe Aktar"
 
 #: templates/plugins/jailpbi.html:3 templates/system/wizard.html:2
 #, python-format
 msgid "Step %(step)s of %(step_count)s"
-msgstr "%(step)s - %(step_count)s"
+msgstr "Adım %(step)s / %(step_count)s"
 
 #~ msgid "Upload Jail PBI"
 #~ msgstr "Jail PBI Yükle"
@@ -5404,7 +5404,7 @@ msgstr "%(step)s - %(step_count)s"
 #: templates/storage/zvol_confirm_delete.html:13
 #: templates/system/wizard.html:16
 msgid "Please wait..."
-msgstr "Lütfen Bekleyin..."
+msgstr "Lütfen bekleyin..."
 
 #~ msgid "Edit Mount Point"
 #~ msgstr "Bağlantı noktasını düzenle"
@@ -5421,11 +5421,11 @@ msgstr "Lütfen Bekleyin..."
 #: templates/plugins/plugin_install.html:5
 #: templates/plugins/plugin_update.html:5
 msgid "Upload"
-msgstr "Yükle"
+msgstr "Gönder"
 
 #: templates/registration/login.html:40
 msgid "Your username and password didn't match. Please try again."
-msgstr "Kullanıcı adınız ve parolanızı eşleşmedi. Lütfen tekrar deneyin."
+msgstr "Kullanıcı adınız ve parolanız eşleşmedi. Lütfen tekrar deneyin."
 
 #: templates/registration/login.html:44
 #, python-format
@@ -5443,7 +5443,7 @@ msgstr "Lütfen oturum açın."
 
 #: templates/registration/logout.html:4
 msgid "Logged Out"
-msgstr "Oturumu Kapatmak"
+msgstr "Oturum Kapatıldı"
 
 #: templates/registration/logout.html:24
 msgid "You are now logged out."
@@ -5451,7 +5451,7 @@ msgstr "Şimdi oturumu kapattınız."
 
 #: templates/registration/logout.html:24
 msgid "Log back in"
-msgstr "Tekrar giriş yap"
+msgstr "Tekrar oturum aç"
 
 #: templates/services/core.html:10
 msgid "AFP Settings"
@@ -5467,7 +5467,7 @@ msgstr "CIFS Ayarları"
 
 #: templates/services/core.html:45
 msgid "Dynamic DNS Settings"
-msgstr "Dinamik DNS Ayarları"
+msgstr "Değişken DNS Ayarları"
 
 #: templates/services/core.html:56
 msgid "FTP Settings"
@@ -5546,11 +5546,11 @@ msgstr "Hedefler"
 
 #: templates/services/iscsi.html:38
 msgid "Extents"
-msgstr "Boyutlar"
+msgstr "Kapsamlar"
 
 #: templates/services/iscsi.html:44
 msgid "Associated Targets"
-msgstr "Bağlı Hedefler"
+msgstr "İlişkili Hedefler"
 
 #~ msgid "No associated targets defined"
 #~ msgstr "Henüz tanımlanacak bir hedef yok"
@@ -5644,11 +5644,11 @@ msgstr "Güncelle"
 
 #: templates/services/plugins.html:56
 msgid "Update plugin"
-msgstr "Eklentiyi Güncelle"
+msgstr "Eklentiyi güncelle"
 
 #: templates/services/plugins.html:71
 msgid "No available plugins services"
-msgstr "Kullanılabilir eklenti hizmetleri yok"
+msgstr "Mevcut eklenti hizmetleri yok"
 
 #~ msgid "All the files within the plugins jail will be permanently deleted."
 #~ msgstr "Jail içindeki tüm eklenti dosyaları kalıcı olarak silinecek."
@@ -5718,12 +5718,12 @@ msgstr "Windows (CIFS)"
 
 #: templates/storage/clonesnap.html:2 templates/storage/snapshots.html:16
 msgid "Clone Snapshot"
-msgstr "Anlık Durum Görüntüsünü Çoğalt"
+msgstr "Anlık Görüntüyü Çoğalt"
 
 #: templates/storage/dataset_confirm_delete.html:5
 #, python-format
 msgid "Are you sure you want to destroy \"%(name)s\"?"
-msgstr "Silmek istediğinizden emin misiniz? - \"%(name)s\""
+msgstr "\"%(name)s\" veri kümesini kaldırmak istediğinize emin misiniz?"
 
 # Burası neden çevrile miyor?
 #: templates/storage/dataset_confirm_delete.html:8
@@ -5744,7 +5744,7 @@ msgstr "Veri Kümesini Düzenle"
 #: templates/storage/datasets.html:3
 #, python-format
 msgid "Create ZFS dataset in %(fs)s"
-msgstr "%(fs)s içinde ZFS Veri Kümesi Oluştur"
+msgstr "%(fs)s içinde ZFS veri kümesi oluştur"
 
 #: templates/storage/datasets.html:6
 msgid "Add Dataset"
@@ -5757,24 +5757,24 @@ msgstr "Ayırmak istediğinize emin misiniz?"
 
 #: templates/storage/disk_offline.html:3
 msgid "Are you sure you want to offline?"
-msgstr "Çevrimdışı olmak istediğinizden emin misiniz?"
+msgstr "Çevrimdışı olmak istediğinize emin misiniz?"
 
 #: templates/storage/disk_remove.html:3
 msgid "Are you sure you want to remove?"
-msgstr "Silmek istediğinizden emin misiniz?"
+msgstr "Kaldırmak istediğinize emin misiniz?"
 
 #: templates/storage/disk_wipe.html:4
 msgid "Are you sure you want to wipe?"
-msgstr "Silmek istediğinizden emin misiniz?"
+msgstr "Silmek istediğinize emin misiniz?"
 
 #: templates/storage/geom_disk_replace.html:9
 #: templates/storage/zpool_disk_replace.html:6
 msgid "Replacing disk"
-msgstr "Değiştirilecek disk:"
+msgstr "Disk değiştiriliyor"
 
 #: templates/storage/geom_disk_replace.html:15
 msgid "Replace disk"
-msgstr "Diski Değiştir"
+msgstr "Diski değiştir"
 
 #: templates/storage/index.html:2
 msgid "Active Volumes"
@@ -5782,15 +5782,15 @@ msgstr "Aktif Birimler"
 
 #: templates/storage/index.html:8
 msgid "ZFS Snapshots"
-msgstr "ZFS Anlık Durum Görüntüleri"
+msgstr "ZFS Anlık Görüntüleri"
 
 #: templates/storage/index.html:20
 msgid "ZFS Replication"
-msgstr "ZFS Kopyalama"
+msgstr "ZFS Çoğaltma"
 
 #: templates/storage/manualsnap.html:2
 msgid "Manually Create Snapshot"
-msgstr "Elle Anlık Durum Görüntüsü Oluşturun"
+msgstr "Elle Anlık Görüntü Oluştur"
 
 #: templates/storage/permission.html:2
 msgid "Change"
@@ -5798,7 +5798,7 @@ msgstr "Değiştir"
 
 #: templates/storage/permission.html:4
 msgid "Change permission"
-msgstr "İzin Değiştirme"
+msgstr "İzni değiştir"
 
 #: templates/storage/permission.html:5
 #, python-format
@@ -5807,7 +5807,7 @@ msgstr "%(path)s yolu üzerindeki izni değiştir"
 
 #: templates/storage/replications.html:4 templates/storage/replications.html:6
 msgid "Add Replication"
-msgstr "Kopya Ekle"
+msgstr "Çoğaltma Ekle"
 
 #: templates/storage/replications.html:10
 #: templates/storage/replications.html:12
@@ -5819,8 +5819,8 @@ msgid ""
 "ATTENTION: A periodic snapshot of a given ZFS filesystem/volume is required "
 "to create a replication task"
 msgstr ""
-"DİKKAT: Belirli bir ZFS dosya sistemi/biriminin periyodik anlık bir "
-"görüntüsünün kopyalama görevi oluşturulması için gerekli olan alan"
+"DİKKAT: Çoğaltma görevi oluşturmak için verilen bir ZFS dosya sisteminin/"
+"biriminin düzenli bir anlık görüntüsü gerekir"
 
 #~ msgid "Last snapshot"
 #~ msgstr "Son Anlık Durum Görüntüsü"
@@ -5850,8 +5850,8 @@ msgstr ""
 msgid ""
 "Scrub is currently running! Are you sure you want to STOP the scrub process?"
 msgstr ""
-"Temizleme şu anda çalışmıyor. Temizleme işlemini DURDURMAK istediğinizden "
-"emin misiniz?"
+"Temizleme şu an çalışıyor! Temizleme işlemini DURDURMAK istediğinize emin "
+"misiniz?"
 
 #: templates/storage/scrub_confirm.html:8
 msgid "Are you sure you want to scrub?"
@@ -5859,45 +5859,46 @@ msgstr "Temizlemek istediğinize emin misiniz?"
 
 #: templates/storage/scrub_confirm.html:8
 msgid "This will increase system overhead while in progress"
-msgstr "İlerleme sırasında sistem yükü artacaktır."
+msgstr "Bu, ilerleme sırasında sistem ek yükünü artıracak"
 
 #: templates/storage/snapshot_confirm_rollback.html:7
 msgid "Are you sure you want to rollback dataset to this snapshot state?"
 msgstr ""
-"Dataset'i bu anlık durum görüntüsü'ne geri almak istediğinize emin misiniz?"
+"Veri kümsini bu anlık görüntü durumuna geri döndürmek istediğinize emin "
+"misiniz?"
 
 #: templates/storage/snapshots.html:21
 msgid "Clone snapshot"
-msgstr "Anlık Durum Görüntüsünü Çoğalt"
+msgstr "Anlık görüntüyü çoğalt"
 
 #: templates/storage/snapshots.html:32
 msgid "Destroy Snapshot"
-msgstr "Anlık Durum Görüntüsünü Sil"
+msgstr "Anlık Görüntüyü Kaldır"
 
 #: templates/storage/snapshots.html:37
 msgid "Destroy this snapshot"
-msgstr "Bu Anlık Durum Görüntüsünü Sil"
+msgstr "Bu anlık görüntüyü kaldırır"
 
 #: templates/storage/snapshots.html:48
 msgid "Rollback Snapshot"
-msgstr "Anlık Durum Görüntüsünü Geri Al"
+msgstr "Anlık Görüntüyü Geri Döndür"
 
 #: templates/storage/snapshots.html:53
 msgid "Rollback to this snapshot"
-msgstr "Bu Anlık Durum Görüntüsünü Geri Al"
+msgstr "Bu anlık görüntüye geri döndürür"
 
 #: templates/storage/snapshots.html:126
 msgid "Destroy"
-msgstr "Sil"
+msgstr "Kaldır"
 
 #: templates/storage/snapshots.html:136
 msgid "Delete snapshots"
-msgstr "Anlık durum görüntüsünü sil"
+msgstr "Anlık görüntüleri sil"
 
 # "peryodik" diye bir kelime yoktur. Kökü "periyot" tur.
 #: templates/storage/tasks.html:8
 msgid "Periodic Snapshots"
-msgstr "Periyodik Anlık Durum Görüntüsü"
+msgstr "Düzenli Anlık Görüntüler"
 
 #~ msgid "Periodic Snapshot Schedule"
 #~ msgstr "Periyodik Anlık Durum Görüntüsü Takvimi"
@@ -5934,11 +5935,11 @@ msgstr "her gün"
 #: templates/storage/volume_detach.html:8
 #, python-format
 msgid "You have %(used)s of used space within this volume"
-msgstr "Bu birim içinde kullanılan alan: %(used)s"
+msgstr "Bu birim içinde kullanılan alanın %(used)s kadarına sahipsiniz"
 
 #: templates/storage/volume_edit.html:3
 msgid "Edit ZFS Volume"
-msgstr "ZFS Birimlerini Düzenle"
+msgstr "ZFS Birimini Düzenle"
 
 #: templates/storage/volumes.html:60
 msgid "Used"
@@ -6000,7 +6001,7 @@ msgstr "Genişletmek için birim"
 
 #: templates/storage/wizard.html:37
 msgid "Member disks"
-msgstr "Kullanıcı diskleri"
+msgstr "Üye diskler"
 
 #: templates/storage/wizard.html:73
 msgid "Group type"
@@ -6027,7 +6028,7 @@ msgstr "Birim Ekle"
 
 #: templates/storage/wizard.html:157
 msgid "Existing data will be cleared"
-msgstr "Mevcut veriler silinecektir"
+msgstr "Varolan veriler temizlenecektir"
 
 #: templates/storage/zpool_disk_replace.html:2
 msgid "Replace Disk"
@@ -6054,23 +6055,23 @@ msgstr "LDAP/AD Önbelleğini Yeniden Oluştur"
 #: templates/system/advanced_edit.html:27
 #: templates/system/advanced_edit.html:29
 msgid "Save Debug"
-msgstr "Hata Düzeltmeyi Kaydet"
+msgstr "Hata Ayıklamayı Kaydet"
 
 #: templates/system/advanced_edit.html:33
 #: templates/system/advanced_edit.html:35
 msgid "Firmware Update"
-msgstr "Aygıt Yazılımını Güncelle"
+msgstr "Aygıt Yazılımı Güncelleme"
 
 #~ msgid "Import Plugins Jail"
 #~ msgstr "Jail Eklentilerini Al"
 
 #: templates/system/config_ok.html:13 templates/system/config_ok2.html:6
 msgid "Restarting..."
-msgstr "Yeniden Başlatılıyor..."
+msgstr "Yeniden başlatılıyor..."
 
 #: templates/system/config_restore.html:3
 msgid "Are you sure you want to restore to factory config?"
-msgstr "Kurulumun standart ayarlarına geri dönmek istediğinizden emin misiniz?"
+msgstr "Fabrika yapılandırmasına geri yüklemek istediğinize emin misiniz?"
 
 #~ msgid "No cron jobs defined."
 #~ msgstr "Henüz tanımlanmış bir zamanlanmış görev yok"
@@ -6083,19 +6084,20 @@ msgstr "Kurulumun standart ayarlarına geri dönmek istediğinizden emin misiniz
 
 #: templates/system/done.html:13
 msgid "Rebooting..."
-msgstr "Yeniden Başlatılıyor..."
+msgstr "Yeniden başlatılıyor..."
 
 #: templates/system/email_edit.html:13
 msgid "Send Test Mail"
-msgstr "Test E-posta Gönder"
+msgstr "Deneme Postası Gönder"
 
 #: templates/system/email_edit.html:20
 msgid ""
 "HINT: Test e-mails are sent to root user. To configure it use Users -> root -"
 "> Change E-mail"
 msgstr ""
-"İPUCU: Test e-posta root kullanıcısına  gönderilir. Yapılandırmak için Hesap "
-"-> Kullanıcılar -> Kullanıcıları Göster -> root -> E-postayı Değiştir"
+"İPUCU: Deneme e-postaları root kullanıcısına gönderilir. Yapılandırmak için "
+"Hesap -> Kullanıcılar -> Kullanıcıları Göster -> root -> E-postayı "
+"Değiştir'i kullanın"
 
 #~ msgid "iBurst"
 #~ msgstr "iBurst"
@@ -6119,11 +6121,11 @@ msgid ""
 "You are about to <strong>REBOOT</strong> the system, what would you like to "
 "do?"
 msgstr ""
-"Sistemi <strong>YENİDEN BAŞLATMAK</strong> ile ilgili tercihiniz nedir?"
+"Sistemi <strong>YENİDEN BAŞLATMAK</strong> üzeresiniz, ne yapmak istersiniz?"
 
 #: templates/system/reporting.html:2
 msgid "History"
-msgstr "Kayıt"
+msgstr "Geçmiş"
 
 #~ msgid "Local Path"
 #~ msgstr "Yerel Yol"
@@ -6146,11 +6148,11 @@ msgstr "Genel"
 
 #: templates/system/settings_edit.html:5
 msgid "Factory Restore"
-msgstr "Standart Ayarlara Geri Dön"
+msgstr "Fabrika Ayarlarına Geri Yükle"
 
 #: templates/system/settings_edit.html:7
 msgid "Restore Config"
-msgstr "Geri Yüklemeyi Yapılandırma"
+msgstr "Yapılandırmayı Geri Yükle"
 
 #: templates/system/settings_edit.html:11
 msgid "Save Config"
@@ -6159,13 +6161,13 @@ msgstr "Yapılandırmayı Kaydet"
 #: templates/system/settings_edit.html:17
 #: templates/system/settings_edit.html:19
 msgid "Upload Config"
-msgstr "Yapılandırmayı Yükle"
+msgstr "Yapılandırmayı Gönder"
 
 #: templates/system/shutdown_dialog.html:4
 msgid ""
 "You are about to <strong>SHUTDOWN</strong> the system, what would you like "
 "to do?"
-msgstr "Sistemi <strong>KAPATMAK</strong> ile ilgili tercihiniz nedir?"
+msgstr "Sistemi <strong>KAPATMAK</strong> üzeresiniz, ne yapmak istersiniz?"
 
 #: templates/system/smarttest.html:16
 msgid "Unknown"
@@ -6191,7 +6193,7 @@ msgstr "Bilinmiyor"
 
 #: templates/system/system_info.html:9
 msgid "Build"
-msgstr "Yapı"
+msgstr "Yapım"
 
 #: templates/system/system_info.html:13
 msgid "Platform"
@@ -6199,19 +6201,19 @@ msgstr "Platform"
 
 #: templates/system/system_info.html:17
 msgid "Memory"
-msgstr "Hafıza"
+msgstr "Bellek"
 
 #: templates/system/system_info.html:21
 msgid "System Time"
-msgstr "Sistem saati"
+msgstr "Sistem Saati"
 
 #: templates/system/system_info.html:25
 msgid "Uptime"
-msgstr "Çalışma süresi"
+msgstr "Çalışma Süresi"
 
 #: templates/system/system_info.html:29
 msgid "Load Average"
-msgstr "Ortalama yük"
+msgstr "Ortalama Yük"
 
 #~ msgid "Connected through"
 #~ msgstr "Bağlantı adresi"
@@ -6232,12 +6234,12 @@ msgstr "Güncellemeyi Uygula"
 #: tools/alert.py:108
 #, python-format
 msgid "The volume %s status is HEALTHY"
-msgstr "%s birimi durumu: HATASIZ"
+msgstr "Birim %s durumu SAĞLAM"
 
 #: tools/alert.py:111
 #, python-format
 msgid "The volume %s status is DEGRADED"
-msgstr "%s birim durumu: BOZUK"
+msgstr "Birim %s durumu BOZUK"
 
 #: tools/alert.py:115
 #, python-format
@@ -6259,18 +6261,19 @@ msgstr "Birim %(volume)s durumu %(status)s"
 #: tools/alert.py:137
 #, python-format
 msgid "The WebGUI Address could not be bind to %s; using wildcard"
-msgstr "%s WebGUI Adresine bağlanamadı; joker karakter kullanıyorsanız"
+msgstr "WebGKA Adresi %s adresine bağlanamadı; joker karakter kullanılıyor"
 
 #: tools/alert.py:147
 #, python-format
 msgid ""
 "The following IPs are bind to iSCSI Portal but were not found in the system: "
 "%s"
-msgstr "Aşağıdaki IP'ler iSCSI Portalına bağlı ancak sistemde bulunmadı: %s"
+msgstr ""
+"Şurada belirtilen IP'ler iSCSI Portalına bağlı ancak sistemde bulunamadı: %s"
 
 #: tools/alert.py:177
 msgid "Critical Alerts"
-msgstr "Kritik Uyarılar"
+msgstr "Önemli Uyarılar"
 
 #~ msgid "Selected"
 #~ msgstr "Seçilen"
@@ -6315,7 +6318,7 @@ msgstr "Kritik Uyarılar"
 #~ msgstr "Eklentilerin Yolu"
 
 msgid "Path to the plugins directory"
-msgstr "Eklentiler dizinin yolu"
+msgstr "Eklentiler dizini yolu"
 
 msgid "Invalid prefix"
 msgstr "Geçersiz önek"
@@ -6366,10 +6369,10 @@ msgstr "Geçersiz önek"
 #~ msgstr "Kapat"
 
 msgid "Jail path"
-msgstr "Jail yolu"
+msgstr "Kafes yolu"
 
 msgid "Jail IP"
-msgstr "Jail IP"
+msgstr "Kafes IP"
 
 #~ msgid "Plugins path"
 #~ msgstr "Eklenti yolu"
@@ -6420,7 +6423,7 @@ msgstr "Jail IP"
 #~ msgstr "Pas"
 
 msgid "Disable password"
-msgstr "Parolayı devre dışı bırak"
+msgstr "Parolayı etkisizleştir"
 
 #~ msgid "My Account"
 #~ msgstr "Hesabım"
@@ -6537,7 +6540,7 @@ msgstr "Diski Düzenle"
 #~ msgstr "Silmek istediğinizden emin misiniz?"
 
 msgid "Export Volume"
-msgstr "Birimi Dışarı Aktar"
+msgstr "Birimi Dışa Aktar"
 
 #~ msgid "Add loader"
 #~ msgstr "Yükleyici Ekle"
@@ -6579,7 +6582,7 @@ msgstr "IPv6 Ağ Maskesi"
 #~ msgstr "Bu değer 0 ile 10000 arasında olmalıdır."
 
 msgid "This value must be between 0 and 1000, inclusive."
-msgstr "Bu değer 0 ile 1000 arasında olmalıdır."
+msgstr "Bu değer 0 ve 1000 dahil arasında olmak zorundadır."
 
 #~ msgid "Enable DDP"
 #~ msgstr "DDP Aktifleştir"
@@ -6594,7 +6597,7 @@ msgstr "Bu değer 0 ile 1000 arasında olmalıdır."
 #~ msgstr "Rsyncd"
 
 msgid "The volume failed to export"
-msgstr "Birimi dışarı aktarmak başarısız oldu"
+msgstr "Birimi dışa aktarma başarısız oldu"
 
 #~ msgid "Cron Scheduler"
 #~ msgstr "Cron Zamanlayıcısı"
@@ -6645,7 +6648,7 @@ msgstr "Birimi dışarı aktarmak başarısız oldu"
 #~ msgstr "Yönetici kullanıcısı"
 
 msgid "N/A"
-msgstr "Kullanılamaz"
+msgstr "YOK"
 
 #~ msgid "ZVol Name"
 #~ msgstr "ZVol Adı"
@@ -6673,7 +6676,7 @@ msgstr "zle (sıfırdan farklı değerde çalışır)"
 
 #: choices.py:309
 msgid "lzjb (legacy, not recommended)"
-msgstr "lzjb (miras, eski)"
+msgstr "lzjb (eski, önerilmez)"
 
 #: choices.py:601
 msgid "19200"
@@ -7043,7 +7046,7 @@ msgstr "TLS istemci yeniden anlaşmalarına izin verir"
 
 #: services/models.py:1214
 msgid "TLS common name required"
-msgstr "TLS genel ad gerekli"
+msgstr "TLS ortak adı gerekli"
 
 #: services/models.py:1218
 msgid "TLS enable diagnostics"
@@ -7142,7 +7145,7 @@ msgid ""
 "greater or equal than N degrees Celsius. 0 to disable"
 msgstr ""
 "Sıcaklık N Santigrat dereceden daha büyük veya eşitse sistem günlüğünde "
-"kritik olarak bildir ve bir e-posta gönder. Etkisizleştirmek için 0"
+"önemli olarak bildir ve bir e-posta gönder. Etkisizleştirmek için 0"
 
 #: services/models.py:1884
 msgid "Destination email address. Separate email addresses by commas"
@@ -7422,7 +7425,7 @@ msgstr "Standart hatayı yönlendir"
 
 #: system/models.py:920
 msgid "Pre Init"
-msgstr "Ön Başlatma"
+msgstr "Başlatma Öncesi"
 
 #: system/models.py:957
 msgid "Last Name"
@@ -7442,24 +7445,25 @@ msgstr "İş Telefonu"
 
 #: templates/freeadmin/generic_model_datagrid.html:8
 msgid "Add %(name)s"
-msgstr "%(name)s Ekle "
+msgstr "%(name)s Ekle"
 
 #: templates/freeadmin/help.html:39
 msgid "FreeBSD Man Pages"
-msgstr "FreeBSD Man Sayfası"
+msgstr "FreeBSD Ana Sayfası"
 
 #: templates/jails/delete.html:3
 msgid "Are you sure you want to delete "
-msgstr "Silmek istediğinizden emin misiniz?"
+msgstr "Silmek istediğinizin "
 
 #: templates/jails/index.html:8
 #: templates/plugins/index.html:32
 msgid "You must configure a default route (Network->IPv4 Default Gateway)"
-msgstr "Varsayılan yolu yapılandırmanız gerekir (Ağ->Varsayılan IPv4 Ağ Geçidi)"
+msgstr ""
+"Varsayılan yolu yapılandırmak zorundasınız (Ağ->IPv4 Varsayılan Ağ Geçidi)"
 
 #: templates/jails/stop.html:3
 msgid "Stop "
-msgstr "Dur"
+msgstr "Durdur "
 
 #: templates/plugins/available_datagrid.html:13
 msgid "Refresh"
@@ -7467,42 +7471,42 @@ msgstr "Yenile"
 
 #: templates/plugins/index.html:12
 msgid "Installed"
-msgstr "Kurulu"
+msgstr "Yüklendi"
 
 #: templates/plugins/plugin_info.html:2
 msgid "Plugin information"
-msgstr "Eklenti bilgisi"
+msgstr "Eklenti bilgileri"
 
 #: templates/registration/login.html:54
 msgid ""
 "The web admin user has been removed in this release in order to unify the "
 "web and Unix authentication mechanisms."
 msgstr ""
-"Web yönetici kullanıcısı web ve Unix kimlik doğrulama mekanizmalarını "
-"birleştirmek için bu sürümden kaldırılmıştır."
+"Web yönetici kullanıcısı, web ve Unix kimlik doğrulama mekanizmalarını "
+"birleştirmek için bu yayımda kaldırıldı."
 
 #: templates/registration/login.html:55
 msgid ""
 "Administrators should log in to the web UI as root, since the web UI already "
 "confers superuser privileges in many areas."
 msgstr ""
-"Yöneticilerin Web ara yüzünü kullanabilmesi için root olarak oturum açması "
-"gerekir. Bu durumda Web ara yüzü birçok alanda süper ayrıcalıklar sunacaktır."
+"Yöneticiler, web arayüzünün birçok alanda süper kullanıcı yetkilerini zaten "
+"sunmasından dolayı, web arayüzüne root olarak oturum açmalıdırlar."
 
 #: templates/storage/dataset_edit.html:4
 msgid "Dataset"
-msgstr "Veri Seti"
+msgstr "Veri Kümesi"
 
 #: templates/storage/key.html:6
 #: templates/storage/recoverykey_add.html:9
 #: templates/storage/recoverykey_remove.html:6
 #: templates/storage/rekey.html:6
 msgid "Continue"
-msgstr "Devam Et"
+msgstr "Devam"
 
 #: templates/storage/recoverykey_add.html:5
 msgid "This will invalidate any previous recovery key"
-msgstr "Bu herhangi bir önceki kurtarma anahtarını geçersiz kılacaktır"
+msgstr "Bu, herhangi bir önceki kurtarma anahtarını geçersiz kılacak"
 
 #: templates/storage/rekey.html:3
 msgid "You are about to re-key the encryption"
@@ -7514,19 +7518,19 @@ msgstr "Mevcut Eylemler"
 
 #: templates/storage/volumestatus_datagrid.html:8
 msgid "Progress"
-msgstr "Süreç"
+msgstr "İlerleme"
 
 #: templates/storage/volumestatus_datagrid.html:15
 msgid "Repaired"
-msgstr "Onarılılan"
+msgstr "Onarıldı"
 
 #: templates/storage/zpool_disk_replace.html:8
 msgid "WARNING: The recovery key of your volume will be invalidated!"
-msgstr "UYARI: Birimin kurtarma anahtarı geçersiz olacak!"
+msgstr "UYARI: Biriminizin kurtarma anahtarı geçersiz kılınacaktır!"
 
 #: templates/storage/zvols.html:6
 msgid "Add zvol"
-msgstr "ZFS Birimi Ekle"
+msgstr "Zvol Ekle"
 
 #: templates/system/shutdown.html:85
 msgid "System is shutting down"
@@ -7534,11 +7538,11 @@ msgstr "Sistem kapatılıyor"
 
 #: tools/alert.py:176
 msgid "The WebGUI Address could not bind to %s; using wildcard"
-msgstr "%s WebGUI Adresine bağlanamadı; joker karakter kullanıyorsanız"
+msgstr "WebGKA Adresi %s adresine bağlanamadı; joker karakter kullanılıyor"
 
 #: tools/alert.py:198
 msgid "The following multipaths are not optimal: %s"
-msgstr "Aşağıdaki çoklu yollar için uygun değildir: %s"
+msgstr "Şurada belirtilen çoklu yollar uygun değil: %s"
 
 #: choices.py:52
 msgid "HTTP+HTTPS"
@@ -8325,11 +8329,11 @@ msgstr "SSH Bağlantı Noktası"
 #: system/models.py:901
 #: system/models.py:913
 msgid "Script"
-msgstr "Komut dizisi"
+msgstr "Komut Dizisi"
 
 #: system/models.py:940
 msgid "Init/Shutdown Scripts"
-msgstr "Başlat/Kapat Komutları"
+msgstr "Başlatma/Kapatma Komut Dizileri"
 
 #: system/models.py:953
 msgid "First Name"
@@ -8355,7 +8359,8 @@ msgstr "Kayıt"
 #: system/views.py:316
 msgid "You must configure the root email (Accounts->Users->root)"
 msgstr ""
-"Root e-posta hesabını yapılandırmak gerekir (Hesaplar->Kullanıcılar->root)"
+"Root e-posta hesabını yapılandırmak zorundasınız "
+"(Hesaplar->Kullanıcılar->root)"
 
 #: templates/menubar.html:48
 msgid "Alert"
@@ -8363,7 +8368,7 @@ msgstr "Uyarı"
 
 #: templates/freeadmin/generic_model_datagrid.html:176
 msgid "No entry has been found"
-msgstr "Hiçbir giriş bulunamadı"
+msgstr "Hiç giriş bulunamadı"
 
 #: templates/freeadmin/help.html:44
 msgid "Professional Support"
@@ -8371,44 +8376,44 @@ msgstr "Profesyonel Destek"
 
 #: templates/freeadmin/help.html:46
 msgid "Professionally-Supported FreeNAS-Based Storage Appliance"
-msgstr "FreeNAS Tabanlı Depolama Cihazı İçin Profesyonel Destek"
+msgstr "Profesyonel Olarak Desteklenen FreeNAS Tabanlı Depolama Cihazı"
 
 #: templates/jails/delete.html:3
 #: templates/jails/start.html:3
 #: templates/jails/stop.html:3
 msgid "?"
-msgstr "?"
+msgstr "olduğundan emin misiniz?"
 
 #: templates/jails/start.html:3
 msgid "Start "
-msgstr "Başlangıç"
+msgstr "Başlat "
 
 #: templates/plugins/available_install.html:3
 msgid "Are you sure you want to install \"%(plugin)s\" plugin?"
-msgstr "Eklentiyi kurmak istediğinize emin misiniz? - \"%(plugin)s\""
+msgstr "\"%(plugin)s\" eklentisini yüklemek istediğinize emin misiniz?"
 
 #: templates/plugins/plugin_update.html:3
 msgid "Are you sure you want to update \"%(plugin)s\" plugin?"
-msgstr "Eklentiyi güncellemek istediğinize emin misiniz? - \"%(plugin)s\""
+msgstr "\"%(plugin)s\" eklentisini güncellemek istediğinize emin misiniz?"
 
 #: templates/plugins/plugins_datagrid.html:4
 #: templates/plugins/plugins_datagrid.html:6
 msgid "Available Plugins"
-msgstr "Kullanılabilir Eklentiler"
+msgstr "Mevcut Eklentiler"
 
 #: templates/registration/login.html:57
 msgid "For security reasons, you must now set a new root password:"
 msgstr ""
-"Güvenlik nedenlerinden dolayı şimdi yeni bir root parolası ayarlamanız "
-"gerekir:"
+"Güvenlik nedenlerinden dolayı, şimdi yeni bir root parolası ayarlamak "
+"zorundasınız:"
 
 #: templates/services/core.html:33
 msgid "Directory Service Settings"
-msgstr "Aktif Dizin Ayarları"
+msgstr "Dizin Hizmeti Ayarları"
 
 #: templates/storage/disk_editbulk.html:3
 msgid "Editing the following disks"
-msgstr "Aşağıdaki diskleri düzenle"
+msgstr "Aşağıdaki diskler düzenleniyor"
 
 #: templates/storage/key.html:3
 msgid "You are about to download the global GELI key"
@@ -8420,7 +8425,7 @@ msgstr "Bu birim için bir kurtarma anahtarı eklemek üzeresiniz"
 
 #: templates/storage/replication_add.html:5
 msgid "SSH Key Scan"
-msgstr "SSH Anahtarını Tara"
+msgstr "SSH Anahtarı Tarama"
 
 #: templates/storage/snapshots.html:97
 msgid "Refer"
@@ -8436,9 +8441,9 @@ msgid ""
 "target=\"_blank\">download</a> the key so you can be able to import it in "
 "the future"
 msgstr ""
-"Bu şifrelenmiş bir birimdir. Gelecekte bunu almak mümkün olmayabilir. Bu "
-"yüzden anahtarı <a href=\"%(url)s\" target=\"_blank\">indirdiğinize</a> emin "
-"olun."
+"Bu şifrelenmiş bir birimdir, anahtarı <a href=\"%(url)s\" "
+"target=\"_blank\">indirdiğinizden</a> emin olun böylece gelecekte bunu içe "
+"aktarabileceksiniz"
 
 #: templates/storage/volumestatus_datagrid.html:4
 msgid "Scrub"
@@ -8446,7 +8451,7 @@ msgstr "Temizleme"
 
 #: templates/storage/volumestatus_datagrid.html:9
 msgid "%(scanned)s out of %(total)s"
-msgstr "%(total)s - %(scanned)s"
+msgstr "%(scanned)s / %(total)s"
 
 #: templates/storage/volumestatus_datagrid.html:14
 msgid "Errors"
@@ -8454,11 +8459,11 @@ msgstr "Hatalar"
 
 #: templates/storage/wizard.html:92
 msgid "Extend Volume"
-msgstr "Birimi Genişletin"
+msgstr "Birimi Genişlet"
 
 #: templates/storage/zvols.html:3
 msgid "Create zvol on %(name)s"
-msgstr "%(name)s üzerinde ZFS birimi oluştur"
+msgstr "%(name)s üzerinde zvol oluştur"
 
 #: templates/support/index.html:57
 msgid "Submit"
@@ -8468,7 +8473,7 @@ msgstr "Gönder"
 #: templates/system/registration_add.html:11
 #: templates/system/registration_edit.html:11
 msgid "Reset"
-msgstr "Yeniden Başlat"
+msgstr "Sıfırla"
 
 #: templates/system/firmware_wizard_0.html:6
 #: templates/system/firmware_wizard_1.html:21
@@ -8476,7 +8481,7 @@ msgid ""
 "Consider downloading your configuration before proceeding, <a "
 "href=\"%(url)s\" target=\"_blank\">click here</a>."
 msgstr ""
-"Yapılandırma indirilirken devam etmeden önce <a href=\"%(url)s\" "
+"Devam etmeden önce yapılandırmanızı indirmeyi düşünün, <a href=\"%(url)s\" "
 "target=\"_blank\">buraya tıklayın</a>."
 
 #: templates/system/reboot.html:79
@@ -8775,11 +8780,11 @@ msgstr "Standart Çıktıyı yönlendir"
 
 #: system/models.py:921
 msgid "Post Init"
-msgstr "Mesaj Başlatma"
+msgstr "Başlatma Sonrası"
 
 #: system/models.py:939
 msgid "Init/Shutdown Script"
-msgstr "Başlat/Kapat Komutları"
+msgstr "Başlatma/Kapatma Komut Dizisi"
 
 #: templates/freeadmin/generic_model_add.html:38
 #: templates/freeadmin/generic_model_edit.html:42
@@ -8804,8 +8809,8 @@ msgid ""
 "Remember to add a new recovery key as this action invalidates the previous "
 "recovery key"
 msgstr ""
-"Bu eylem bir önceki kurtarma anahtarını geçersiz kılacak. Yeni bir kurtarma "
-"anahtarı eklemeyi unutmayın."
+"Bu eylemin önceki kurtarma anahtarını geçersiz kıldığı gibi yeni bir "
+"kurtarma anahtarı eklemeyi hatırlar"
 
 #: templates/storage/recoverykey_remove.html:3
 msgid "You are about to remove a recovery key for this volume"
@@ -8817,7 +8822,7 @@ msgstr "Bu birimin kilidini açmak istiyor musunuz?"
 
 #: templates/storage/volume_detach.html:19
 msgid "ATTENTION - Currently the following services depend on this volume: "
-msgstr "DİKKAT - Şu anda aşağıdaki hizmetler bu birime bağlıdır:"
+msgstr "DİKKAT - Şu anda aşağıdaki hizmetler bu birime bağlıdır: "
 
 #: templates/storage/volumestatus_datagrid.html:9
 msgid "Scan"
@@ -8950,7 +8955,7 @@ msgstr "Taşıyıcı yok"
 
 #: middleware/notifier.py:3847
 msgid "Degraded"
-msgstr "Düşürülmüş"
+msgstr "Bozulmuş"
 
 #: middleware/notifier.py:3849
 msgid "Down"
@@ -9395,25 +9400,26 @@ msgstr "WebGKA HTTP -> HTTPS Yönlendirme"
 msgid ""
 "Redirect HTTP (port 80) to HTTPS when only the HTTPS protocol is enabled"
 msgstr ""
+"Sadece HTTPS protokolü etkinleştirildiğinde HTTP'yi (b.noktası 80) HTTPS'ye "
+"yönlendirir"
 
 #: system/models.py:203
-#, fuzzy
 msgid "Set this to match your serial port address (0x3f8, 0x2f8, etc.)"
-msgstr "Seri bağlantı noktası hızını eşleştirmek için bu seçeneği ayarlayın"
+msgstr ""
+"Seri bağlantı noktası adresiniz (0x3f8, 0x2f8, vb.) ile eşleşmesi için bunu "
+"ayarlayın"
 
 #: system/models.py:205
-#, fuzzy
 msgid "Serial Port Address"
-msgstr "Seri bağlantı noktası hızı"
+msgstr "Seri Bağlantı Noktası Adresi"
 
 #: system/models.py:1133
 msgid "Pool"
-msgstr ""
+msgstr "Havuz"
 
 #: system/models.py:1138
-#, fuzzy
 msgid "Syslog"
-msgstr "Syslog sunucusu"
+msgstr "Sistem Günlüğü"
 
 #: system/models.py:1142
 msgid "RRD"
@@ -9421,28 +9427,28 @@ msgstr ""
 
 #: system/models.py:1146
 #: templates/system/settings.html:11
-#, fuzzy
 msgid "System Dataset"
-msgstr "Veri Kümesini Düzenle"
+msgstr "Sistem Veri Kümesi"
 
 #: system/views.py:191
 msgid "The cron process has started"
 msgstr "Zamanlanmış işlem başladı"
 
 #: system/views.py:541
-#, fuzzy
 msgid "The rsync process has started"
-msgstr "Temizleme süreci durduruldu."
+msgstr "Rsync işlemi başladı"
 
 #: system/alertmods/lsi_firmware.py:34
 msgid ""
 "Firmware version %(fwversion)s does not match driver version %(drversion)s "
 "for /dev/mps%(mps)s"
 msgstr ""
+"Donanım yazılımı sürümü %(fwversion)s, /dev/mps%(mps)s için sürücü sürümü "
+"%(drversion)s ile eşleşmiyor"
 
 #: system/alertmods/replication_status.py:17
 msgid "Replication %(replication)s failed: %(message)s"
-msgstr ""
+msgstr "Çoğaltma %(replication)s başarısız oldu: %(message)s"
 
 #: system/alertmods/volume_version.py:24
 #: system/alertmods/volume_version.py:44
@@ -9454,6 +9460,8 @@ msgid ""
 "The capacity for the volume '%(volume)s' is currently at %(capacity)d%%, "
 "while the recommended value is below 80%%."
 msgstr ""
+"Önerilen değer %%80'nin altında iken, '%(volume)s' biriminin kapasitesi şu "
+"anda %%%(capacity)d."
 
 #: templates/freeadmin/generic_model_delete.html:19
 #, fuzzy
@@ -9469,54 +9477,46 @@ msgstr[0] ""
 
 #: templates/reporting/index.html:3
 msgid "CPU"
-msgstr ""
+msgstr "İşlemci"
 
 #: templates/reporting/index.html:11
-#, fuzzy
 msgid "Partition"
-msgstr "Başlatma seçeneği"
+msgstr "Bölüm"
 
 #: templates/services/core.html:82
-#, fuzzy
 msgid "LLDP Settings"
-msgstr "LDAP Ayarları"
+msgstr "LLDP Ayarları"
 
 #: templates/storage/lock.html:3
-#, fuzzy
 msgid "Do you want to lock this volume?"
-msgstr "Bu birimin kilidini açmak istiyor musunuz?"
+msgstr "Bu birimi kilitlemek istiyor musunuz?"
 
 #: templates/storage/rekey.html:6
-#, fuzzy
 msgid ""
 "Remember to create a new passphrase as this action removes the current "
 "passphrase"
 msgstr ""
-"Bu eylem bir önceki kurtarma anahtarını geçersiz kılacak. Yeni bir kurtarma "
-"anahtarı eklemeyi unutmayın."
+"Oluşturulan yeni bir parolayı hatırlayan bu eylem şu anki parolayı kaldırır"
 
 #: templates/storage/replication_datagrid.html:16
-#, fuzzy
 msgid ""
 "ATTENTION: A periodic snapshot of a given ZFS Volume/Dataset is required to "
 "create a replication task"
 msgstr ""
-"DİKKAT: Belirli bir ZFS dosya sistemi/biriminin periyodik anlık bir "
-"görüntüsünün kopyalama görevi oluşturulması için gerekli olan alan"
+"DİKKAT: Çoğaltma görevi oluşturmak için verilen bir ZFS Biriminin/Veri "
+"Kümsesinin düzenli bir anlık görüntüsü gerekir"
 
 #: templates/storage/snapshots.html:102
-#, fuzzy
 msgid "Replication"
-msgstr "ZFS Kopyalama"
+msgstr "Çoğaltma"
 
 #: templates/storage/upgrade_confirm.html:5
-#, fuzzy
 msgid "Are you sure you want to upgrade your pool?"
-msgstr "Silmek istediğinizden emin misiniz?"
+msgstr "Havuzunuzu yükseltmek istediğinize emin misiniz?"
 
 #: templates/storage/upgrade_confirm.html:5
 msgid "This operation is irreversible!"
-msgstr ""
+msgstr "Bu işlem geri alınamaz!"
 
 #: templates/storage/volumestatus_datagrid.html:6
 msgid "Resilver"
@@ -9525,12 +9525,11 @@ msgstr ""
 #: templates/storage/volumestatus_datagrid.html:17
 #: templates/storage/volumestatus_datagrid.html:33
 msgid "Date"
-msgstr ""
+msgstr "Tarih"
 
 #: templates/storage/zfswizard.html:77
-#, fuzzy
 msgid "Deduplication"
-msgstr "ZFS Tekilleştirme"
+msgstr "Tekilleştirme"
 
 #: templates/system/cron_run.html:5
 msgid "Would you like to run this cron job now?"
@@ -9645,24 +9644,23 @@ msgid ""
 "Save the Round-Robin Database (RRD) used by system statistics collection "
 "daemon into the system dataset"
 msgstr ""
+"Sistem istatistikleri koleksiyonu arka plan programı tarafından kullanılan "
+"Round-Robin Veritabanını (RRD) sistem veri kümesi içine kaydeder"
 
 #: system/nav.py:45
 #: templates/system/index.html:3
-#, fuzzy
 msgid "Information"
-msgstr "Bilgi"
+msgstr "Bilgiler"
 
 #: tasks/nav.py:4
 #: templates/menubar.html:13
 #: templates/tasks/index.html:1
-#, fuzzy
 msgid "Tasks"
-msgstr "Rsync Görevleri"
+msgstr "Görevler"
 
 #: templates/services/core.html:32
-#, fuzzy
 msgid "Domain Controller Settings"
-msgstr "Alan adı kontrolcüsünün adı"
+msgstr "Etki Alanı Denetleyicisi Ayarları"
 
 #: templates/system/settings_edit.html:30
 #: templates/system/settings_edit.html:32
@@ -9680,9 +9678,8 @@ msgid "System dataset is required to perform this action."
 msgstr ""
 
 #: templates/system/perftest.html:20
-#, fuzzy
 msgid "You are about to start a performance test."
-msgstr "Bu birim için bir kurtarma anahtarı eklemek üzeresiniz"
+msgstr "Performans denemesi başlatmak üzeresiniz."
 
 #: templates/system/perftest.html:22
 msgid ""
@@ -9723,9 +9720,8 @@ msgstr ""
 #: templates/directoryservice/ldap_edit.html:8
 #: templates/directoryservice/nis_edit.html:8
 #: templates/directoryservice/nt4_edit.html:8
-#, fuzzy
 msgid "Rebuild Directory Service Cache"
-msgstr "Dizin Hizmetleri"
+msgstr "Dizin Hizmeti Önbelleğini Yeniden Oluştur"
 
 #: choices.py:787
 #: directoryservice/models.py:335
@@ -10123,7 +10119,7 @@ msgstr "Paylaşım Adı"
 #: system/forms.py:1140
 #: templates/system/initialwizard_volume.html:65
 msgid "Purpose"
-msgstr ""
+msgstr "Amaç"
 
 #: system/forms.py:1144
 msgid "Unix (NFS)"
@@ -10131,27 +10127,23 @@ msgstr "Unix (NFS)"
 
 #: system/forms.py:1145
 msgid "Block Storage (iSCSI)"
-msgstr ""
+msgstr "Blok Depolama (iSCSI)"
 
 #: system/forms.py:1149
-#, fuzzy
 msgid "Allow Guest"
-msgstr "İzin verilen liste"
+msgstr "Misafire izin ver"
 
 #: system/forms.py:1157
-#, fuzzy
 msgid "iSCSI Size"
-msgstr "iSCSI"
+msgstr "iSCSI Boyutu"
 
 #: system/forms.py:1208
-#, fuzzy
 msgid "Pool Name"
-msgstr "ZVol Adı"
+msgstr "Havuz Adı"
 
 #: system/forms.py:1223
-#, fuzzy
 msgid "Automatic"
-msgstr "Otomatik Başlat"
+msgstr "Otomatik"
 
 #: system/forms.py:1227
 msgid "VMWare (RAID 10: Good Reliability, Good Performance)"
@@ -10170,9 +10162,8 @@ msgid "Logs (RAID 0: No Reliability, Max Performance / Storage)"
 msgstr ""
 
 #: system/forms.py:1441
-#, fuzzy
 msgid "No available disks have been found."
-msgstr "Hiçbir giriş bulunamadı"
+msgstr "Hiç mevcut disk bulunamadı."
 
 #: templates/system/initialwizard_confirm.html:29
 msgid ""
@@ -10181,14 +10172,12 @@ msgid ""
 msgstr ""
 
 #: templates/system/initialwizard_confirm.html:32
-#, fuzzy
 msgid "Are you sure?"
-msgstr "Silmek istediğinizden emin misiniz?"
+msgstr "Emin misiniz?"
 
 #: templates/system/initialwizard_confirm.html:39
-#, fuzzy
 msgid "Confirm"
-msgstr "Yapılandırma"
+msgstr "Onayla"
 
 #: templates/system/initialwizard_confirm.html:46
 msgid "Return to Wizard"
@@ -10228,9 +10217,8 @@ msgid "NFSv4 Root Path"
 msgstr "NFSv4 Kök Yol"
 
 #: system/forms.py:1468
-#, fuzzy
 msgid "A pool with this name already exists."
-msgstr "Bu ada sahip bir birim zaten var."
+msgstr "Bu isimde bir havuz zaten var."
 
 #: directoryservice/forms.py:341
 #: directoryservice/forms.py:448
@@ -10343,28 +10331,25 @@ msgstr ""
 "ağlar için tamamen uygunsuz yapar."
 
 #: templates/directoryservice/index.html:15
-#, fuzzy
 msgid "Kerberos"
-msgstr "Kerberos sunucusu"
+msgstr "Kerberos"
 
 #: templates/directoryservice/index.html:15
-#, fuzzy
 msgid "Kerberos Realms"
-msgstr "Kerberos sunucusu"
+msgstr "Kerberos Erişim Alanları"
 
 #: templates/directoryservice/index.html:18
-#, fuzzy
 msgid "Kerberos Keytabs"
-msgstr "Kerberos sunucusu"
+msgstr "Kerberos Keytab'ları"
 
 #: templates/system/initialwizard_shares.html:51
 #: templates/system/initialwizard_volume.html:92
 msgid "Exit"
-msgstr ""
+msgstr "Çıkış"
 
 #: templates/system/initialwizard_import.html:31
 msgid "Skip"
-msgstr ""
+msgstr "Atla"
 
 #: choices.py:43
 msgid "Basic Authentication"
@@ -10615,60 +10600,53 @@ msgid "Case Sensitivity"
 msgstr "Büyük/Küçük Harfe Duyarlı"
 
 #: system/admin.py:49
-#, fuzzy
 msgid "Internal"
 msgstr "Aralık"
 
 #: system/admin.py:54
 #: system/admin.py:148
 msgid "Issuer"
-msgstr ""
+msgstr "Çıkaran"
 
 #: system/admin.py:59
 #: system/nav.py:91
 #: templates/system/index.html:27
-#, fuzzy
 msgid "Certificates"
-msgstr "SSL sertifikası"
+msgstr "Sertifikalar"
 
 #: system/admin.py:64
 #: system/admin.py:153
-#, fuzzy
 msgid "Distinguished Name"
-msgstr "Veri kümesi adı"
+msgstr "Ayırt Edici Ad"
 
 #: system/admin.py:74
 #: system/admin.py:163
 msgid "Until"
-msgstr ""
+msgstr "Kadar"
 
 #: system/forms.py:163
-#, fuzzy
 msgid "Failed to create a new Boot."
-msgstr "%(name)s veri kümesi oluşturulamadı: %(error)s"
+msgstr "Yeni bir Önyükleme oluşturma başarısız."
 
 #: system/forms.py:183
-#, fuzzy
 msgid "Failed to rename Boot Environment."
-msgstr "%(name)s veri kümesi oluşturulamadı: %(error)s"
+msgstr "Önyükleme Ortamını yeniden adlandırma başarısız."
 
 #: system/forms.py:1028
 msgid "Place to temporarily place update file"
 msgstr "Güncelleme dosyasını geçici olarak yerleştirmek için yer"
 
 #: system/forms.py:1030
-#, fuzzy
 msgid ""
 "The system will use this place to temporarily store the update file before "
 "it's being applied."
 msgstr ""
-"Sisteme uygulamadan önce aygıt yazılımı güncelleme dosyasını saklamak için "
-"geçici olarak burayı kullanabilirsiniz."
+"Sistem, güncelleme dosyası uygulanmadan önce dosyayı geçici olarak saklamak "
+"için bu yeri kullanacak."
 
 #: system/forms.py:1062
-#, fuzzy
 msgid "Update file to be installed"
-msgstr "PBI dosyasını yükle:"
+msgstr "Yüklenmesi için dosyayı gönder"
 
 #: system/forms.py:1924
 #: system/forms.py:1952
@@ -10678,24 +10656,21 @@ msgstr "PBI dosyasını yükle:"
 #: system/forms.py:2237
 #: system/forms.py:2279
 #: system/forms.py:2395
-#, fuzzy
 msgid "Descriptive Name"
-msgstr "Açıklama"
+msgstr "Tanımlayıcı Adı"
 
 #: system/forms.py:1930
 #: system/forms.py:1958
 #: system/forms.py:2214
 #: system/forms.py:2243
 #: system/models.py:589
-#, fuzzy
 msgid "Cut and paste the contents of your certificate here"
-msgstr "Özel kamu sertifikası dosya içeriğini kesin ve buraya yapıştırın."
+msgstr "Sertifikanızın içeriklerini kesin ve buraya yapıştırın"
 
 #: system/forms.py:1935
 #: system/forms.py:1963
-#, fuzzy
 msgid "Serial for next Certificate"
-msgstr "Kendinden imzalı sertifika"
+msgstr "Sonraki Sertifika için seri no"
 
 #: system/forms.py:1997
 #: system/forms.py:2089
@@ -10710,209 +10685,180 @@ msgstr ""
 #: system/forms.py:2404
 #: system/models.py:613
 msgid "Digest Algorithm"
-msgstr ""
+msgstr "Özet Algoritma"
 
 #: system/forms.py:2009
 #: system/forms.py:2101
 #: system/forms.py:2294
 #: system/models.py:619
 msgid "Lifetime"
-msgstr ""
+msgstr "Ömür süresi"
 
 #: system/forms.py:2246
 #: system/models.py:594
-#, fuzzy
 msgid "Private Key"
-msgstr "Ana bilgisayar özel anahtarı"
+msgstr "Özel Anahtar"
 
 #: system/forms.py:2242
-#, fuzzy
 msgid "Certificate Signing Request"
-msgstr "TLS sertifika isteği yok"
+msgstr "Sertifika İmzalama İsteği"
 
 #: system/forms.py:2249
 #: system/models.py:595
-#, fuzzy
 msgid "Cut and paste the contents of your private key here"
-msgstr "Özel kamu sertifikası dosya içeriğini kesin ve buraya yapıştırın."
+msgstr "Özel anahtarınızın içeriklerini kesin ve buraya yapıştırın"
 
 #: system/models.py:550
 msgid "Check Automatically For Updates"
-msgstr ""
+msgstr "Güncellemeleri Otomatik Olarak Kontrol Et"
 
 #: system/utils.py:82
-#, fuzzy
 msgid "Downloading"
-msgstr "Anahtarı İndir"
+msgstr "İndiriliyor"
 
 #: system/utils.py:103
-#, fuzzy
 msgid "Installing"
-msgstr "Kur"
+msgstr "Kuruluyor"
 
 #: system/nav.py:32
 #: templates/system/index.html:9
 msgid "Boot"
-msgstr ""
+msgstr "Önyükleme"
 
 #: system/models.py:583
-#, fuzzy
 msgid "Descriptive Name)"
-msgstr "Açıklama"
+msgstr "Tanımlayıcı Adı)"
 
 #: system/models.py:600
 msgid "Signing Request"
-msgstr ""
+msgstr "İmzalama İsteği"
 
 #: system/models.py:601
-#, fuzzy
 msgid "Cut and paste the contents of your CSR here"
-msgstr "Özel kamu sertifikası dosya içeriğini kesin ve buraya yapıştırın."
+msgstr "Sertifika İmzalama İsteğinizin içeriklerini kesin ve buraya yapıştırın"
 
 #: system/models.py:606
 msgid "Key length"
-msgstr ""
+msgstr "Anahtar uzunluğu"
 
 #: system/models.py:669
-#, fuzzy
 msgid "Serial for next certificate"
-msgstr "Kendinden imzalı sertifika"
+msgstr "Sonraki sertifika için seri no"
 
 #: system/views.py:163
 #: system/views.py:164
 #: system/views.py:165
-#, fuzzy
 msgid "Create"
-msgstr "ZFS Birimi Oluştur"
+msgstr "Oluştur"
 
 #: system/models.py:675
 msgid "Signing Certificate Authority"
-msgstr ""
+msgstr "Sertifika Yetkisi İmzalanıyor"
 
 #: system/views.py:171
 #: system/views.py:172
 #: system/views.py:176
-#, fuzzy
 msgid "Activate"
-msgstr "Eylem"
+msgstr "Etkinleştir"
 
 #: system/models.py:794
-#, fuzzy
 msgid "Certificate Authority"
-msgstr "SSL sertifikası"
+msgstr "Sertifika Yetkisi"
 
 #: system/views.py:189
-#, fuzzy
 msgid "Created"
-msgstr "ZFS Birimi Oluştur"
+msgstr "Oluşturuldu"
 
 #: system/views.py:203
-#, fuzzy
 msgid "Boot Environment successfully activated."
-msgstr "Veri kümesi başarıyla düzenlendi."
+msgstr "Önyükleme Ortamı başarılı olarak etkinleştirildi."
 
 #: system/views.py:207
 msgid "Failed to activate Boot Environment."
-msgstr ""
+msgstr "Önyükleme Ortamını etkinleştirme başarısız."
 
 #: system/views.py:221
-#, fuzzy
 msgid "Boot Environment successfully added."
-msgstr "Birim başarıyla eklendi."
+msgstr "Önyükleme Ortamı başarılı olarak eklendi."
 
 #: system/views.py:178
 #: system/views.py:179
 #: system/views.py:180
-#, fuzzy
 msgid "Rename"
-msgstr "Kullanıcı adı"
+msgstr "Yeniden Adlandır"
 
 #: system/nav.py:83
 #: templates/system/index.html:24
 msgid "CAs"
-msgstr ""
+msgstr "CA'lar"
 
 #: system/views.py:238
-#, fuzzy
 msgid "Boot Environment successfully deleted."
-msgstr "Anlık durum görüntüsü başarıyla silindi."
+msgstr "Önyükleme Ortamı başarılı olarak silindi."
 
 #: system/views.py:242
 msgid "Failed to delete Boot Environment."
-msgstr ""
+msgstr "Önyükleme Ortamını silme başarısız."
 
 #: system/views.py:260
-#, fuzzy
 msgid "Boot Environment successfully renamed."
-msgstr "Birim başarıyla eklendi."
+msgstr "Önyükleme Ortamı başarılı olarak yeniden adlandırıldı."
 
 #: system/views.py:896
-#, fuzzy
 msgid "Certificate Authority successfully imported."
-msgstr "Jail başarıyla alındı."
+msgstr "Sertifika Yetkisi başarılı olarak içe aktarıldı."
 
 #: system/views.py:915
-#, fuzzy
 msgid "Internal Certificate Authority successfully created."
-msgstr "Kafes şablonu başarıyla düzenlendi."
+msgstr "Dahili Sertifika Yetkisi başarılı olarak oluşturuldu."
 
 #: system/views.py:934
 msgid "Intermediate Certificate Authority successfully created."
-msgstr ""
+msgstr "Orta Seviye Sertifika Yetkisi başarılı olarak oluşturuldu."
 
 #: system/views.py:1206
-#, fuzzy
 msgid "Internal Certificate Viewed."
-msgstr "SSL sertifikası"
+msgstr "Dahili Sertifika Gösterildi."
 
 #: system/views.py:955
-#, fuzzy
 msgid "Certificate Authority successfully edited."
-msgstr "Veri kümesi başarıyla düzenlendi."
+msgstr "Sertifika Yetkisi başarılı olarak düzenlendi."
 
 #: system/views.py:1003
-#, fuzzy
 msgid "Certificate successfully imported."
-msgstr "Jail başarıyla alındı."
+msgstr "Sertifika başarılı olarak içe aktarıldı."
 
 #: system/views.py:1022
-#, fuzzy
 msgid "Internal Certificate successfully created."
-msgstr "Kafes şablonu başarıyla düzenlendi."
+msgstr "Dahili Sertifika başarılı olarak oluşturuldu."
 
 #: system/views.py:1041
-#, fuzzy
 msgid "Certificate CSR successfully created."
-msgstr "Veri kümesi başarıyla düzenlendi."
+msgstr "Sertifika CSR başarılı olarak oluşturuldu."
 
 #: system/views.py:1062
-#, fuzzy
 msgid "Internal Certificate successfully edited."
-msgstr "Kafes şablonu başarıyla düzenlendi."
+msgstr "Dahili Sertifika başarılı olarak düzenlendi."
 
 #: system/views.py:1083
-#, fuzzy
 msgid "CSR successfully edited."
-msgstr "başarıyla düzenlendi"
+msgstr "CSR başarılı olarak düzenlendi."
 
 #: templates/freeadmin/generic_model_delete.html:31
-#, fuzzy
 msgid "Are you sure you want to delete %(verbose_name)s %(object)s?"
-msgstr "Silmek istediğinizden emin misiniz? - \"%(name)s\""
+msgstr "%(verbose_name)s %(object)s silmek istediğinize emin misiniz?"
 
 #: templates/services/core.html:170
-#, fuzzy
 msgid "WebDAV Settings"
-msgstr "LDAP Ayarları"
+msgstr "WebDAV Ayarları"
 
 #: templates/storage/index.html:24
 msgid "Scrubs"
 msgstr "Temizlemeler"
 
 #: templates/storage/index.html:31
-#, fuzzy
 msgid "Snapshots"
-msgstr "Anlık Durum Görüntüsü"
+msgstr "Anlık Görüntüler"
 
 #: templates/system/upgrade.html:22
 msgid "You're about to upgrade. The following packages will be changed:"
@@ -11008,29 +10954,26 @@ msgid "Import Disk"
 msgstr "Diski İçe Aktar"
 
 #: system/forms.py:1852
-#, fuzzy
 msgid "Root E-mail"
-msgstr "E-Posta"
+msgstr "Root E-postası"
 
 #: system/forms.py:1843
 msgid "Administrative email address used for alerts."
-msgstr ""
+msgstr "Uyarılar için kullanılan yönetimsel e-posta adresi."
 
 #: system/forms.py:1847
 msgid "Console messages"
-msgstr ""
+msgstr "Konsol iletileri"
 
 #: system/forms.py:1848
-#, fuzzy
 msgid "Show console messages in the footer."
-msgstr ""
-"Alt bilgide konsol mesajlarını göster (Sayfanın yenilenmesini gerektirir)"
+msgstr "Altbilgide konsol iletilerini gösterir."
 
 #: system/views.py:163
 #: system/views.py:164
 #: system/views.py:165
 msgid "Clone"
-msgstr ""
+msgstr "Çoğalt"
 
 #: directoryservice/models.py:804
 msgid "Site Name"
@@ -11129,12 +11072,17 @@ msgid ""
 "sensitive data and want the ability to remove disks from the pool and "
 "dispose of/re-use them without concern for erasure."
 msgstr ""
+"Şifrelemenin bu türü hassas veri saklayan ve havuzdan diskleri kaldırabilme "
+"kabiliyeti ve silme endişesi olmadan bunlardan kurtulmak/yeniden kullanmak "
+"isteyen kullanıcılarda öncelikli hedeftir."
 
 #: storage/views.py:214
 msgid ""
 "iXsystems, Inc. can not be held responsible for any lost or unrecoverable "
 "data as a consequence of using this feature."
 msgstr ""
+"iXsystems, Inc. bu özelliğin kullanımı sonucunda herhangi bir kayıp veya "
+"kurtarılamaz veri için sorumlu tutulamaz."
 
 #: choices.py:807
 msgid "rc.conf"
@@ -11150,7 +11098,7 @@ msgstr "Sadece Alfasayısal karakterlere izin verilir."
 
 #: system/views.py:504
 msgid "You must provide a Root E-mail"
-msgstr ""
+msgstr "Bir Root E-postası vermek zorundasınız"
 
 #: sharing/forms.py:77
 msgid "Only one share is allowed to be a home share."
@@ -11174,9 +11122,8 @@ msgid "Also delete the share's configuration"
 msgstr "Aynı zamanda paylaşımın yapılandırmasını siler"
 
 #: tasks/forms.py:116
-#, fuzzy
 msgid "Rsync Create"
-msgstr "ZFS Birimi Oluştur"
+msgstr "Rsync Oluşturma"
 
 #: tasks/forms.py:118
 msgid ""
@@ -11237,42 +11184,45 @@ msgstr ""
 
 #: system/forms.py:1993
 #: system/forms.py:2378
-#, fuzzy
 msgid "Passphrase for encrypted private keys"
-msgstr "Parola oluşturuldu"
+msgstr "Şifrelenmiş özel anahtarlar için parola"
 
 #: system/forms.py:2016
 #: system/forms.py:2396
-#, fuzzy
 msgid "Incorrect passphrase"
-msgstr "Root bağlanma parolası"
+msgstr "Yanlış parola"
 
 #: system/models.py:509
-#, fuzzy
 msgid "Updade"
 msgstr "Güncelle"
 
 #: system/models.py:606
 msgid "Common Name (eg, FQDN of FreeNAS server or service)"
-msgstr ""
+msgstr "Ortak Ad (örn, FreeNAS sunucusunun FQDN'i ya da hizmet)"
 
 #: tasks/models.py:301
 msgid ""
 "Values allowed:<br>Slider: 0-30 (as it is every Nth minute).<br>Specific "
 "Minute: 0-59."
 msgstr ""
+"İzin verilen değerler:<br>Kaydırıcı: 0-30 (her N'ci dakika olarak).<br>"
+"Belirli Dakika: 0-59."
 
 #: tasks/models.py:309
 msgid ""
 "Values allowed:<br>Slider: 0-12 (as it is every Nth hour).<br>Specific Hour: "
 "0-23."
 msgstr ""
+"İzin verilen değerler:<br>Kaydırıcı: 0-12 (her N'ci saat olarak).<br>Belirli "
+"Saat: 0-23."
 
 #: tasks/models.py:317
 msgid ""
 "Values allowed:<br>Slider: 0-15 (as its is every Nth day).<br>Specific Day: "
 "1-31."
 msgstr ""
+"İzin verilen değerler:<br>Kaydırıcı: 0-15 (her N'ci gün olarak).<br>Belirli "
+"Gün: 1-31."
 
 #: templates/system/update.html:23
 msgid "NOTICE"
@@ -11411,34 +11361,35 @@ msgstr "VMWare-Anlık Durum Görüntüsü"
 
 #: system/forms.py:1610
 msgid "Automatic - Pick reasonable defaults for available drives"
-msgstr ""
+msgstr "Otomatik - Mevcut diskler için makul varsayılanları seç"
 
 #: system/forms.py:1614
 msgid ""
 "Virtualization (RAID 10: Good Reliability, Better Performance, Minimum "
 "Storage)"
 msgstr ""
+"Sanallaştırma (RAID 10: İyi Güvenilirlik, En İyi Performans, En Az Depolama)"
 
 #: system/forms.py:1618
 msgid "Backups (RAID Z2: Good Reliability, Medium Performance, Medium Storage)"
 msgstr ""
+"Yedeklemeler (RAID Z2: İyi Güvenilirlik, Orta Performans, En Az Depolama)"
 
 #: system/forms.py:1622
 msgid "Media (RAID Z1: Medium Reliability, Good Performance, More Storage)"
-msgstr ""
+msgstr "Ortam (RAID Z1: Orta Güvenilirlik, İyi Performans, Daha Fazla Depolama)"
 
 #: system/forms.py:1626
 msgid "Logs (RAID 0: No Reliability, Best Performance, Maximum Storage)"
-msgstr ""
+msgstr "Günlükler (RAID 0: Güvenilirlik Yok, İyi Performans, En Fazla Depolama)"
 
 #: system/forms.py:2752
 msgid "Datastore not found in the server."
-msgstr ""
+msgstr "Veri deposu sunucuda bulunamadı."
 
 #: system/forms.py:2757
-#, fuzzy
 msgid "Failed to connect: %s"
-msgstr "%(name)s veri kümesi oluşturulamadı: %(error)s"
+msgstr "Bağlanma başarısız: %s"
 
 #: system/models.py:898
 msgid ""
@@ -11447,14 +11398,12 @@ msgid ""
 msgstr ""
 
 #: system/models.py:907
-#, fuzzy
 msgid "ZFS Filesystem"
-msgstr "Dosya sistem türü"
+msgstr "ZFS Dosya Sistemi"
 
 #: system/models.py:911
-#, fuzzy
 msgid "Datastore"
-msgstr "Veri Seti"
+msgstr "Veri Deposu"
 
 #: system/models.py:914
 msgid "The datastore on the VMWare side that the filesystem corresponds to."
@@ -11462,33 +11411,29 @@ msgstr ""
 
 #: system/models.py:920
 #: templates/system/index.html:33
-#, fuzzy
 msgid "VMWare Plugin"
-msgstr "Eklentiler"
+msgstr "VMWare Eklentisi"
 
 #: system/views.py:239
 msgid "Scrubbing the Boot Pool..."
-msgstr ""
+msgstr "Önyükleme Havuzu temizleniyor..."
 
 #: system/views.py:1064
 #: system/views.py:1118
-#, fuzzy
 msgid "System dataset not configured"
-msgstr "Kafes için root yapılandırması yok."
+msgstr "Sistem veri kümesi yapılandırılmadı"
 
 #: system/views.py:185
-#, fuzzy
 msgid "DeleteBulk"
-msgstr "Sil"
+msgstr "TopluSil"
 
 #: system/views.py:1138
 msgid "Packages downloaded"
-msgstr ""
+msgstr "Paket indirildi"
 
 #: system/utils.py:230
-#, fuzzy
 msgid "Verifying"
-msgstr "Doğrula"
+msgstr "Doğrulanıyor"
 
 #: system/alertmods/boot_volume_status.py:19
 #, fuzzy
@@ -11496,28 +11441,25 @@ msgid "The boot volume status is %(status)s: %(message)s"
 msgstr "Birim %(volume)s durumu %(status)s: %(message)s"
 
 #: system/views.py:318
-#, fuzzy
 msgid "Boot Environments successfully deleted."
-msgstr "Anlık durum görüntüsü başarıyla silindi."
+msgstr "Önyükleme Ortamları başarılı olarak silindi."
 
 #: system/alertmods/boot_volume_status.py:28
-#, fuzzy
 msgid "The boot volume status is %(status)s"
-msgstr "Birim %(volume)s durumu %(status)s"
+msgstr "Önyükleme birimi durumu %(status)s"
 
 #: system/views.py:322
-#, fuzzy
 msgid "Failed to delete Boot Environments."
-msgstr "%(name)s veri kümesi oluşturulamadı: %(error)s"
+msgstr "Önyükleme Ortamlarını silme başarısız."
 
 #: system/alertmods/boot_volume_status.py:44
-#, fuzzy
 msgid "The boot volume status is DEGRADED"
-msgstr "%s birim durumu: BOZUK"
+msgstr "Önyükleme birimi durumu BOZUK"
 
 #: system/alertmods/update_check.py:30
 msgid "There is a new update available! Apply it in System -> Update tab."
 msgstr ""
+"Mevcut yeni bir güncelleme var! Sistem -> Güncelle sekmesinde uygulayın."
 
 #: templates/system/boot_scrub.html:5
 #, fuzzy
@@ -11616,34 +11558,29 @@ msgid "Force size"
 msgstr "Zorlanan boyut"
 
 #: storage/views.py:351
-#, fuzzy
 msgid "Volume successfully Imported."
-msgstr "Birim başarıyla eklendi."
+msgstr "Birim başarılı olarak içe aktarıldı."
 
 #: storage/views.py:356
-#, fuzzy
 msgid "Error Importing Volume"
-msgstr "Otomatik Birim Ekle"
+msgstr "Birim İçe Aktarılırken Hata Oldu"
 
 #: system/admin.py:129
-#, fuzzy
 msgid "Attach"
-msgstr "Ayır"
+msgstr "İliştir"
 
 #: system/forms.py:164
-#, fuzzy
 msgid "Only alphanumeric, underscores and dashes are allowed."
-msgstr "Alfasayısal karakterler, \".\", \"-\" ve \"_\" kullanın."
+msgstr ""
+"Sadece alfasayısal karakterlere, alt çizgilere ve tirelere izin verilir."
 
 #: system/views.py:361
-#, fuzzy
 msgid "Disk successfully attached."
-msgstr "Disk başarıyla düzenlendi"
+msgstr "Disk başarılı olarak eklendi."
 
 #: system/views.py:379
-#, fuzzy
 msgid "Disk is being replaced."
-msgstr "Disk kaldırıldı."
+msgstr "Disk değiştirildi."
 
 #: system/views.py:1249
 #: system/views.py:1321
@@ -11655,12 +11592,17 @@ msgid ""
 "New feature flags are available for volume %s. Refer to the \"Upgrading a "
 "ZFS Pool\" section of the User Guide for instructions."
 msgstr ""
+"Yeni özellik işaretleri %s birimi için kullanılabilir. Talimatlar için "
+"Kullanıcı Rehberinin \"Upgrading a ZFS Pool\" bölümüne bakın."
 
 #: tasks/models.py:256
 msgid ""
 "IP Address or hostname. Specify user@hostname or user@ip-address if your "
 "remote machine user and above rsync task user are different."
 msgstr ""
+"IP Adresi ya da anamakine adı. Eğer uzak makine kullanıcınız ve yukarıdaki "
+"rsync görevi kullanıcısı farklı ise kullanıcı@anamakaineadı veya kullanıcı"
+"@ip-adresi'ni belirleyin."
 
 #: templates/storage/import_stats.html:16
 msgid "Done"
@@ -11688,19 +11630,16 @@ msgid "%(weeks)s weeks"
 msgstr "%(weeks)s hafta"
 
 #: system/views.py:419
-#, fuzzy
 msgid "Disk has been successfully detached."
-msgstr "Birim başarıyla ayrıldı"
+msgstr "Disk başarılı olarak ayırıldı."
 
 #: system/alertmods/boot_volume_status.py:15
-#, fuzzy
 msgid "The boot volume state is %(state)s: %(status)s"
-msgstr "Birim %(volume)s durumu %(status)s: %(message)s"
+msgstr "Önyükleme birimi durumu %(state)s: %(status)s"
 
 #: system/alertmods/volume_status.py:17
-#, fuzzy
 msgid "The volume %(volume)s state is %(state)s: %(status)s"
-msgstr "Birim %(volume)s durumu %(status)s: %(message)s"
+msgstr "Birim %(volume)s durumu %(state)s: %(status)s"
 
 #: templates/system/update.html:31
 #: templates/system/update_check.html:32
@@ -12150,30 +12089,26 @@ msgstr ""
 #: storage/models.py:413
 #: tasks/models.py:122
 #: tasks/models.py:450
-#, fuzzy
 msgid "Every {0} minute(s)"
-msgstr "Her %s dakikada"
+msgstr "Her {0} dakikada bir"
 
 #: storage/models.py:421
 #: tasks/models.py:131
 #: tasks/models.py:459
 #: tasks/models.py:649
-#, fuzzy
 msgid "Every {0} hour(s)"
-msgstr "Her %s saatte"
+msgstr "Her {0} saatte bir"
 
 #: storage/models.py:429
 #: tasks/models.py:140
 #: tasks/models.py:468
 #: tasks/models.py:658
-#, fuzzy
 msgid "Every {0} days"
-msgstr "Her %s günde"
+msgstr "Her {0} günde bir"
 
 #: storage/models.py:1026
-#, fuzzy
 msgid "Exclude System Dataset"
-msgstr "Veri Kümesini Düzenle"
+msgstr "Sistem Veri Kümesini Hariç Tut"
 
 #: storage/models.py:1027
 msgid ""
@@ -12186,136 +12121,127 @@ msgid ""
 "Username on the above VMware host with enough privileges to snapshot virtual "
 "machines."
 msgstr ""
+"Sanal makinelerin anlık görüntüsünü almak için yeterli yetkileri olan "
+"yukarıdaki VMware anamakinesi üzerindeki kullanıcı adı."
 
 #: storage/models.py:1141
 msgid "The datastore on the VMware side that the filesystem corresponds to."
-msgstr ""
+msgstr "Dosya sisteminin karşılık geldiği VMware tarafındaki veri deposu."
 
 #: storage/models.py:1147
 #: templates/storage/index.html:38
-#, fuzzy
 msgid "VMware-Snapshot"
-msgstr "VMWare-Anlık Durum Görüntüsü"
+msgstr "VMWare-Anlık Görüntüsü"
 
 #: storage/models.py:1148
-#, fuzzy
 msgid "VMware-Snapshots"
-msgstr "VMWare-Anlık Durum Görüntüsü"
+msgstr "VMWare-Anlık Görüntüleri"
 
 #: storage/views.py:787
-#, fuzzy
 msgid "Disk online operation has been issued."
-msgstr "Çevrimdışı disk çalışması hazırlanmıştır.."
+msgstr "Disk çevrimiçi işlemden çıkarıldı."
 
 #: support/forms.py:58
-#, fuzzy
 msgid "This is not a valid license."
-msgstr "Bu geçerli bir maske değil"
+msgstr "Bu geçerli bir lisans değil."
 
 #: support/models.py:40
-#, fuzzy
 msgid "From Email"
-msgstr "Kimden (e-posta)"
+msgstr "Kimden E-postası"
 
 #: support/models.py:41
 msgid "The email address that the system will use to create this ticket"
 msgstr ""
+"Sistemin bu destek başvurusunu oluşturmak için kullanacağı e-posta adresi"
 
 #: support/utils.py:57
 #: support/utils.py:102
 #: support/utils.py:127
-#, fuzzy
 msgid "Connection failed: %s"
-msgstr "Bağlantılar"
+msgstr "Bağlantı başarısız oldu: %s"
 
 #: support/utils.py:59
 #: support/utils.py:104
 #: support/utils.py:129
-#, fuzzy
 msgid "Connection timed out: %s"
-msgstr "Bağlantılar"
+msgstr "Bağlantı zaman aşımına uğradı: %s"
 
 #: support/utils.py:107
 msgid "Ticket creation failed, try again later."
-msgstr ""
+msgstr "Destek başvurusu oluşturma başarısız oldu, daha sonra tekrar deneyin."
 
 #: support/views.py:88
-#, fuzzy
 msgid "License updated."
-msgstr "%s başarıyla yüklendi"
+msgstr "Lisans güncellendi."
 
 #: system/forms.py:1027
-#, fuzzy
 msgid "Continue operation if the server could not be reached/validated."
-msgstr "Servis başlatılamadı."
+msgstr "Eğer sunucu ulaşılamaz/doğrulanamaz ise işleme devam et."
 
 #: system/forms.py:2215
 #: system/forms.py:2688
-#, fuzzy
 msgid "A certificate with this name already exists."
-msgstr "Bu adda zaten bir hedef var."
+msgstr "Bu isimde bir sertifika zaten var."
 
 #: system/forms.py:2245
 #: system/forms.py:2678
-#, fuzzy
 msgid "Passphrase confirmation does not match."
-msgstr "Eşleşmeyen parolaları onayla"
+msgstr "Parola onaylaması eşleşmiyor."
 
 #: system/forms.py:2981
-#, fuzzy
 msgid "Hostname or IP address"
-msgstr "Kontrolör IP adresi"
+msgstr "Anamakine adı veya IP adresi"
 
 #: system/forms.py:2985
-#, fuzzy
 msgid "User name"
 msgstr "Kullanıcı adı"
 
 #: system/forms.py:3001
-#, fuzzy
 msgid "Remote directory"
-msgstr "Ev dizini"
+msgstr "Uzak dizin"
 
 #: system/forms.py:3005
-#, fuzzy
 msgid "Backup data"
-msgstr "Yedekleme"
+msgstr "Veriyi yedekle"
 
 #: system/forms.py:3009
-#, fuzzy
 msgid "Compress backup"
-msgstr "Sıkıştırma"
+msgstr "Yedeği sıkıştır"
 
 #: system/forms.py:3013
-#, fuzzy
 msgid "Use key authentication"
-msgstr "SMTP için kimlik doğrulaması kullan"
+msgstr "Anahtar kimlik doğrulaması kullan"
 
 #: system/models.py:261
 msgid ""
 "By default only essential fields are shown. Fields considered advanced can "
 "be displayed through the Advanced Mode button."
 msgstr ""
+"Varsayılan olarak sadece gerekli alanlar gösterilir. Gelişmiş olarak "
+"değerlendirilen alanlar Gelişmiş Kip düğmesi aracılığıyla görüntülenebilir."
 
 #: system/models.py:267
-#, fuzzy
 msgid "Enable automatic upload of kernel crash dumps and daily telemetry"
-msgstr "Çekirdek kilitlenmesinde dokümanları otomatik yüklemeyi etkinleştir"
+msgstr ""
+"Çekirdek çökme dökümlerinin ve uzaktan günlük ölçümünün otomatik "
+"gönderilmesini etkinleştirir"
 
 #: system/models.py:269
 msgid ""
 "Attempt to automatically tune the network and ZFS system control variables "
 "based on memory available."
 msgstr ""
+"Mevcut belleğe dayanarak ağı ve ZFS sistem denetimi değişkenlerini otomatik "
+"olarak ayarlamayı dener"
 
 #: system/models.py:292
-#, fuzzy
 msgid "Periodic Notification User"
-msgstr "Değişiklikleri bir kez koru"
+msgstr "Düzenli Bildirim Kullanıcısı"
 
 #: system/models.py:277
 msgid "The kernel built with debug symbols will be booted instead."
 msgstr ""
+"Bunun yerine hata ayıklama sembolleri ile yapılmış çekirdek önyüklenecektir."
 
 #: system/models.py:293
 msgid ""
@@ -12323,51 +12249,49 @@ msgid ""
 "alert emails are set to (root) set an email address for a user and select "
 "that user in the dropdown."
 msgstr ""
+"Eğer düzenli e-postaların, uyarı e-postalarının ayarlı olduğu (root) farklı "
+"bir e-posta adresine gönderilmesini isterseniz, bir kullanıcı için bir e-"
+"posta adresi ayarlayın ve bu kullanıcıyı aşağı açılır menüden seçin."
 
 #: system/models.py:923
-#, fuzzy
 msgid "CA"
-msgstr "CHAP"
+msgstr "CA"
 
 #: system/models.py:952
 msgid "Finished"
-msgstr ""
+msgstr "Tamamlandı"
 
 #: system/models.py:957
 msgid "Failed"
-msgstr ""
+msgstr "Başarısız oldu"
 
 #: system/models.py:962
 msgid "Acknowledged"
-msgstr ""
+msgstr "Tanındı"
 
 #: system/models.py:966
 msgid "Backup worker PID"
-msgstr ""
+msgstr "Çalışan PID yedekle"
 
 #: system/models.py:971
-#, fuzzy
 msgid "Started at"
-msgstr "Başlangıç"
+msgstr "Başlama zamanı"
 
 #: system/models.py:975
-#, fuzzy
 msgid "Finished at"
-msgstr "Veri kümesi adı"
+msgstr "Tamamlanma zamanı"
 
 #: system/models.py:995
-#, fuzzy
 msgid "System Backup"
-msgstr "Sistem"
+msgstr "Sistem Yedekleme"
 
 #: system/views.py:303
 msgid "Interval must be an integer."
-msgstr ""
+msgstr "Aralık bir tamsayı olmak zorundadır."
 
 #: system/views.py:318
-#, fuzzy
 msgid "Scrub interval successfully changed."
-msgstr "Depo başarıyla eklendi."
+msgstr "Temizleme aralığı başarılı olarak değiştirildi."
 
 #: system/views.py:1212
 #: system/views.py:1314
@@ -12433,9 +12357,8 @@ msgid ""
 msgstr ""
 
 #: tasks/models.py:419
-#, fuzzy
 msgid "Delay Updates"
-msgstr "Güncellemeyi Uygula"
+msgstr "Güncellemeleri Ertele"
 
 #: tasks/models.py:420
 msgid "Put all updated files into place at the end"
@@ -12882,11 +12805,8 @@ msgid "vCenter Configurations"
 msgstr "Yapılandırma"
 
 #: storage/models.py:905
-#, fuzzy
 msgid "Recursively replicate child dataset's snapshots"
-msgstr ""
-"Ardışık olarak uzak sunucudaki eski anlık durum görüntüleri kopyalama ve "
-"kaldırma"
+msgstr "Alt veri kümesinin anlık görüntülerini yinelemeli çoğaltır"
 
 #: storage/models.py:910
 msgid ""
@@ -12895,11 +12815,8 @@ msgid ""
 msgstr ""
 
 #: storage/models.py:910
-#, fuzzy
 msgid "Delete stale snapshots on remote system"
-msgstr ""
-"Son anlık durum görüntüsü uzak tarafına gönder (tam kopyalama için boş "
-"bırakın)"
+msgstr "Uzak sistemdeki eski anlık görüntüleri siler"
 
 #: vcp/views.py:83
 #, fuzzy
@@ -13032,9 +12949,8 @@ msgid "Something is seriously jacked up."
 msgstr ""
 
 #: system/forms.py:2228
-#, fuzzy
 msgid "Not a valid certificate."
-msgstr "Kendinden imzalı sertifika"
+msgstr "Geçerli bir sertifika değil."
 
 #: network/forms.py:278
 msgid "Virtual IP is required to set it as Critical for Failover"
@@ -13048,7 +12964,7 @@ msgstr ""
 
 #: services/forms.py:1129
 msgid "LUN ID must be a positive integer"
-msgstr "LUN ID pozitif bir sayı olmak zorundadır"
+msgstr "LUN ID pozitif bir tamsayı olmak zorundadır"
 
 #: services/models.py:115
 msgid "Use syslog only"
@@ -13105,15 +13021,16 @@ msgstr ""
 "NFSv4 için NFSv3 sahiplik modeli ile uyumsuz olduğunu unutmayın."
 
 #: system/models.py:333
-#, fuzzy
 msgid "Remote Graphite Server Hostname"
-msgstr "Uzak Ana Bilgisayar Adı"
+msgstr "Uzak Grafit Sunucusu Anamakine Adı"
 
 #: system/models.py:334
 msgid ""
 "A hostname or IP here will be used as the destination to send collectd data "
 "to using the graphite plugin to collectd."
 msgstr ""
+"Buradaki bir anamakine adı veya IP, collectd için grafit eklentisini "
+"kullanan collectd verisini göndermek için hedef olarak kullanılacaktır."
 
 #: directoryservice/models.py:953
 msgid "Disable Active Directory user/group cache"
@@ -13144,14 +13061,12 @@ msgid "File System type"
 msgstr "Dosya Sistemi türü"
 
 #: support/forms.py:49
-#, fuzzy
 msgid "License"
-msgstr "Eklentiyi Güncelle"
+msgstr "Lisans"
 
 #: system/admin.py:26
-#, fuzzy
 msgid "Boot Status"
-msgstr "Durum"
+msgstr "Önyükleme Durumu"
 
 #: directoryservice/models.py:954
 msgid ""
@@ -13165,9 +13080,8 @@ msgstr ""
 "yaşıyorsanız bu seçeneği kullanın."
 
 #: system/forms.py:2081
-#, fuzzy
 msgid "Empty Certificate!"
-msgstr "SSL sertifikası"
+msgstr "Boş Sertifika!"
 
 #: system/forms.py:2112
 #: system/forms.py:2250
@@ -13176,7 +13090,7 @@ msgstr "SSL sertifikası"
 #: system/forms.py:2718
 #: system/forms.py:2856
 msgid "{0} is a reserved internal keyword for Certificate Management"
-msgstr ""
+msgstr "{0}, Sertifika Yönetimi için ayrılan bir dahili anahtar kelimedir"
 
 #: templates/vcp/index.html:84
 #, fuzzy
@@ -13230,9 +13144,8 @@ msgid "VMWare snapshot deletion %(snap)s failed for the following VMs: %(vms)s"
 msgstr ""
 
 #: system/forms.py:1613
-#, fuzzy
 msgid "Share path %s already exists"
-msgstr "%s yolu zaten var"
+msgstr "Paylaşım yolu %s zaten var"
 
 #: system/alertmods/volume_rekey.py:14
 msgid ""
@@ -13247,9 +13160,8 @@ msgstr "Salt okunur"
 
 #: storage/forms.py:2024
 msgid "Disk is not clear, partitions or ZFS labels were found."
-msgstr ""
+msgstr "Disk temiz değil, bölümler veya ZFS etiketleri bulundu."
 
 #: storage/nav.py:88
-#, fuzzy
 msgid "View Enclosure"
-msgstr "Rsync Modül Görünümleri"
+msgstr "Kapamayı Göster"
