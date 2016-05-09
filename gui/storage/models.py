@@ -827,7 +827,7 @@ class ReplRemote(Model):
         return rv
 
     def __unicode__(self):
-        return self.ssh_remote_hostname
+        return u"%s:%s" % (self.ssh_remote_hostname, self.ssh_remote_port)
 
 
 class Replication(Model):
