@@ -1217,11 +1217,16 @@ class ReplicationResourceMixin(object):
         bundle = super(ReplicationResourceMixin, self).hydrate(bundle)
         if bundle.obj.id:
             bundle.data['repl_remote_hostname'] = bundle.obj.repl_remote.ssh_remote_hostname
-            bundle.data['repl_remote_port'] = bundle.obj.repl_remote.ssh_remote_port
-            bundle.data['repl_remote_dedicateduser_enabled'] = bundle.obj.repl_remote.ssh_remote_dedicateduser_enabled
-            bundle.data['repl_remote_dedicateduser'] = bundle.obj.repl_remote.ssh_remote_dedicateduser
-            bundle.data['repl_remote_cipher'] = bundle.obj.repl_remote.ssh_cipher
-            bundle.data['repl_remote_hostkey'] = bundle.obj.repl_remote.ssh_remote_hostkey
+            if 'repl_remote_port' not in bundle.data:
+                bundle.data['repl_remote_port'] = bundle.obj.repl_remote.ssh_remote_port
+            if 'repl_remote_dedicateduser_enabled' not in bundle.data:
+                bundle.data['repl_remote_dedicateduser_enabled'] = bundle.obj.repl_remote.ssh_remote_dedicateduser_enabled
+            if 'repl_remote_dedicateduser' not in bundle.data:
+                bundle.data['repl_remote_dedicateduser'] = bundle.obj.repl_remote.ssh_remote_dedicateduser
+            if 'repl_remote_cipher' not in bundle.data:
+                bundle.data['repl_remote_cipher'] = bundle.obj.repl_remote.ssh_cipher
+            if 'repl_remote_cipher' not in bundle.data:
+                bundle.data['repl_remote_hostkey'] = bundle.obj.repl_remote.ssh_remote_hostkey
 
         return bundle
 
