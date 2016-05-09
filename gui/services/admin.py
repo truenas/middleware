@@ -160,6 +160,7 @@ class ISCSITargetExtentFAdmin(BaseFreeAdmin):
         'id',
         'iscsi_target_extent_filesize',
         'iscsi_target_extent_naa',
+        'iscsi_target_extent_legacy',
     )
 
 

@@ -15,6 +15,7 @@ cache.get_apps()
 
 
 from freenasUI.middleware import zfs
+from freenasUI.middleware import notifier
 
 # NOTE
 # Normally global variables are a bad idea, and this is no
@@ -218,7 +219,19 @@ def main():
             if size.endswith('B'):
                 size = size.strip('B')
             addline("\t\tsize %s\n" % size)
-        addline('\toption vendor "FreeBSD"\n')
+
+        # We can't change the vendor name of existing
+        # LUNs without angering VMWare, but we can
+        # use the right names going forward.
+        if extent.iscsi_target_extent_legacy is True:
+            addline('\toption vendor "FreeBSD"\n')
+        else:
+            _n = notifier.notifier()
+            if _n.is_freenas:
+                addline('\toption vendor "FreeNAS"\n')
+            else:
+                addline('\toption vendor "TrueNAS"\n')
+
         addline('\toption product "iSCSI Disk"\n')
         addline('\toption revision "0123"\n')
         addline('\toption naa %s\n' % extent.iscsi_target_extent_naa)

@@ -615,6 +615,9 @@ class iSCSITargetExtent(Model):
         default=False,
         verbose_name=_("Read-only"),
     )
+    iscsi_target_extent_legacy = models.BooleanField(
+        default=False,
+    )
 
     class Meta:
         verbose_name = _("Extent")
