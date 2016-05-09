@@ -310,11 +310,6 @@ def main():
     if len(args) != 1:
         usage()
 
-    try:
-        assert args[0] == "check" or args[0] == "update" or os.path.isfile(args[0])
-    except AssertionError:
-        usage()
-
     if args[0] == "check":
         # To see if we have an update available, we
         # call Update.DownloadUpdate.  If we have been
