@@ -10,8 +10,11 @@ class Migration(SchemaMigration):
     def forwards(self, orm):
         # Adding field 'iSCSITargetExtent.iscsi_target_extent_legacy'
         db.add_column(u'services_iscsitargetextent', 'iscsi_target_extent_legacy',
-                      self.gf('django.db.models.fields.BooleanField')(default=False),
+                      self.gf('django.db.models.fields.BooleanField')(default=0),
                       keep_default=False)
+
+        if not db.dry_run:
+            orm['services.iSCSITargetExtent'].objects.all().update(iscsi_target_extent_legacy=True)
 
 
     def backwards(self, orm):
