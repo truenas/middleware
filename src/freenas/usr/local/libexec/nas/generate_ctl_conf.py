@@ -227,7 +227,7 @@ def main():
             addline('\toption vendor "FreeBSD"\n')
         else:
             _n = notifier.notifier()
-            if _n.is_freenas:
+            if _n.is_freenas():
                 addline('\toption vendor "FreeNAS"\n')
             else:
                 addline('\toption vendor "TrueNAS"\n')
