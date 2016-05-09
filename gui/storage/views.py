@@ -297,22 +297,49 @@ def volumemanager_zfs(request):
 SOCKIMP = '/var/run/importcopy/importsock'
 
 
+def get_import_progress_from_socket(s=None, n=4096):
+    data = ''
+    close_sock = False
+    try:
+        if s is None:
+            s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+            s.connect(SOCKIMP)
+            s.setblocking(0)
+            close_sock = True
+        s.send("get_progress")
+        packet = s.recv(n)
+        while packet:
+            data += packet
+            packet = s.recv(n)
+    except socket.error:
+        pass
+    finally:
+        if close_sock:
+            s.close()
+    return data
+
+
+def final_importdisk_return_response(data, abort=False):
+    stdout_data = False
+    if data['stdout_file']:
+            with open(data['stdout_file'], 'rUb') as f:
+                stdout_data = f.read().decode('utf8')
+    return {
+        'vol': data["volume"],
+        'error': data.get("error", False),
+        'abort': abort,
+        'traceback': data.get("traceback", False),
+        'stdout': stdout_data
+    }
+
+
 def volimport(request):
     if os.path.exists(SOCKIMP):
-        s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        s.connect(SOCKIMP)
-        s.send("get_progress")
-        data = json.loads(s.recv(1024))
-        s.close()
-        if data["status"] == "finished":
-            return render(request, 'storage/import_stats.html', {
-                'vol': data["volume"]}
+        data = json.loads(get_import_progress_from_socket())
+        if data["status"] in ["finished", "error"]:
+            return render(
+                request, 'storage/import_stats.html', final_importdisk_return_response(data)
             )
-        if data["status"] == "error":
-            return render(request, 'storage/import_stats.html', {
-                'vol': data["volume"],
-                'error': data["error"],
-            })
         return render(request, 'storage/import_progress.html')
     if request.method == "POST":
         form = forms.VolumeImportForm(request.POST)
@@ -320,13 +347,13 @@ def volimport(request):
             form.done(request)
             # usage for command below
             # Usage: sockscopy vol_to_import fs_type dest_path socket_path
-            msg = "/usr/local/bin/sockscopy /dev/%s %s %s %s &" % (
-                form.cleaned_data.get('volume_disks'),
+            subprocess.Popen([
+                "/usr/local/bin/sockscopy",
+                "dev/{0}".format(form.cleaned_data.get('volume_disks')),
                 form.cleaned_data.get('volume_fstype').lower(),
                 form.cleaned_data.get('volume_dest_path'),
-                SOCKIMP,
-            )
-            subprocess.Popen(msg, shell=True)
+                SOCKIMP
+            ])
             # give the background disk import code time to create a socket
             sleep(2)
             return render(request, 'storage/import_progress.html')
@@ -346,38 +373,30 @@ def volimport(request):
 
 
 def volimport_progress(request):
-    s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-    s.connect(SOCKIMP)
-    s.send("get_progress")
-    data = s.recv(1024)
-    s.close()
-    return HttpResponse(data, content_type='application/json')
+    return HttpResponse(get_import_progress_from_socket(), content_type='application/json')
 
 
 def volimport_abort(request):
     if request.method == 'POST':
         s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         s.connect(SOCKIMP)
-        s.send("get_progress")
-        data = json.loads(s.recv(1024))
+        s.setblocking(0)
+        data = json.loads(get_import_progress_from_socket(s))
         if data["status"] == "finished":
             s.send("done")
             s.close()
-            return JsonResp(
-                request, message=_("Volume successfully Imported.")
-            )
+            return JsonResp(request, message=_("Volume successfully Imported."))
         if data["status"] == "error":
             s.send("stop")
             s.close()
-            return JsonResp(
-                request, message=_("Error Importing Volume")
-            )
+            return JsonResp(request, message=_("Error Importing Volume"))
         s.send("stop")
         s.close()
-        return render(request, 'storage/import_stats.html', {
-            'abort': True,
-            'vol': data["volume"],
-        })
+        return render(
+            request,
+            'storage/import_stats.html',
+            final_importdisk_return_response(data, abort=True)
+        )
 
 
 def dataset_create(request, fs):
