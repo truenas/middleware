@@ -2427,6 +2427,17 @@ require([
         }
     }
 
+    disclosureToggle = function(element) {
+        child = document.querySelector(".disclosure-content");
+        if ( element.className === "disclosure-title" ) {
+            element.className = "disclosure-title active"
+            child.className = "disclosure-content show";
+        } else {
+            element.className = "disclosure-title";
+            child.className = "disclosure-content";
+        }
+    }
+
     dojo._contentHandlers.text = (function(old){
       return function(xhr){
         if(xhr.responseText.match("<!-- THIS IS A LOGIN WEBPAGE -->")){
