@@ -1179,7 +1179,11 @@ class VolumeImportResource(DojoResource):
             )
         volume = form.cleaned_data['volume']
         notifier().volume_import(volume['label'], volume['id'])
-        return self.create_response(request, 'Volume imported.')
+        return self.create_response(
+            request,
+            'Volume imported.',
+            response_class=HttpAccepted
+        )
 
 
 class ReplicationResourceMixin(object):
