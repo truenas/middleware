@@ -586,6 +586,11 @@ class SSHForm(ModelForm):
             'ssh_tcpport': forms.widgets.TextInput(),
         }
 
+    def __init__(self, *args, **kwargs):
+        super(SSHForm, self).__init__(*args, **kwargs)
+        self.fields['ssh_bindiface'].choices = list(choices.NICChoices(exclude_configured=False,
+                                                    exclude_unconfigured_vlan_parent=True))
+
     def save(self):
         super(SSHForm, self).save()
         started = notifier().reload("ssh")
