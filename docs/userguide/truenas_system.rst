@@ -1056,14 +1056,15 @@ The options available in :menuselection:`System --> Failovers` are shown in :num
 | **Setting**    | **Value**      | **Description**                                                                                                                                       |
 |                |                |                                                                                                                                                       |
 +================+================+=======================================================================================================================================================+
-| Disabled       | checkbox       | when checked, disables failover which changes the "HA Enabled" icon to "HA Disabled" and activates the "Master" field                                 |
+| Disabled       | checkbox       | when checked, administratively disables failover which changes the "HA Enabled" icon to "HA Disabled" and activates the "Master" field; this will     |
+|                |                | generate an error message if the standby node is not responding or failover has not been configured                                                   |
 |                |                |                                                                                                                                                       |
 +----------------+----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------+
 | Master         | checkbox       | greyed out unless "Disabled" is checked; in that case, this box is automatically checked on the master system, allowing the master to automatically   |
 |                |                | takeover when the "Disabled" box is unchecked                                                                                                         |
 |                |                |                                                                                                                                                       |
 +----------------+----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------+
-|Timeout         | integer        | specifies, in seconds, how quickly failover occurs after a network failure; the default of *0* indicates that failover either occurs immediately or,  |
+| Timeout        | integer        | specifies, in seconds, how quickly failover occurs after a network failure; the default of *0* indicates that failover either occurs immediately or,  |
 |                |                | if the system is using a link aggregation, after 2 seconds                                                                                            |
 |                |                |                                                                                                                                                       |
 +----------------+----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------+
