@@ -412,7 +412,7 @@ Email
 that can be configured using the Email tab.
 
 .. note:: it is important to configure the system so that it can successfully send emails. An automatic script sends a nightly email to the *root* user
-   account containing important information such as the health of the disks. Alert events are also emailed to the *root* user account.
+   account containing important information such as the health of the disks. :ref:`Alert` events are also emailed to the *root* user account.
 
 .. _tn_system4:
 
