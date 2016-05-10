@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:10-0700\n"
-"PO-Revision-Date: 2016-04-19 08:49+0000\n"
+"PO-Revision-Date: 2016-05-10 08:03+0000\n"
 "Last-Translator: BouRock <hitowerdigit@hotmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: tr\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1461055744.0\n"
+"X-POOTLE-MTIME: 1462867420.0\n"
 
 #~ msgid "Reporting"
 #~ msgstr "Raporlama"
@@ -28,7 +28,7 @@ msgstr "Ayarlar"
 
 #: freeadmin/static/lib/js/freeadmin.js:79
 msgid "System Information"
-msgstr "Sistem Bilgisi"
+msgstr "Sistem Bilgileri"
 
 #: freeadmin/static/lib/js/freeadmin.js:119
 msgid "Network Settings"
@@ -49,7 +49,7 @@ msgstr "Depolama"
 #: freeadmin/static/lib/js/freeadmin.js:500
 #: freeadmin/static/lib/js/freeadmin.js:523
 msgid "Some error occurred"
-msgstr "Bazı hatalar oluştu"
+msgstr "Bazı hatalar meydana geldi"
 
 #~ msgid "Edit"
 #~ msgstr "Düzenle"
@@ -69,11 +69,11 @@ msgstr "Lütfen bekleyin..."
 
 #: freeadmin/static/lib/js/freeadmin.js:927
 msgid "An error occurred!"
-msgstr "Bir hata oluştu!"
+msgstr "Bir hata meydana geldi!"
 
 #: freeadmin/static/lib/js/freeadmin/form/Cron.js:45
 msgid "Each selected"
-msgstr "Seçilen her"
+msgstr "Her seçilen"
 
 #: freeadmin/static/lib/js/freeadmin/form/Cron.js:97
 msgid "Every N"
@@ -106,7 +106,7 @@ msgstr "Uyarı Sistemi"
 
 #: freeadmin/static/lib/js/freeadmin.js:239
 msgid "Enable service"
-msgstr "Hizmeti aktifleştir"
+msgstr "Hizmeti etkinleştir"
 
 #: freeadmin/static/lib/js/freeadmin.js:994
 msgid "The cache is being rebuilt."
@@ -114,7 +114,7 @@ msgstr "Önbellek yeniden oluşturuluyor."
 
 #: freeadmin/static/lib/js/freeadmin.js:996
 msgid "The cache could not be rebuilt: "
-msgstr "Önbellek yeniden oluşturulamadı:"
+msgstr "Önbellek yeniden oluşturulamadı: "
 
 #: freeadmin/static/lib/js/freeadmin/Menu.js:134
 msgid "Shares"
@@ -122,7 +122,7 @@ msgstr "Paylaşımlar"
 
 #: freeadmin/static/lib/js/freeadmin/Menu.js:212
 msgid "Jails"
-msgstr "Kafes"
+msgstr "Kafesler"
 
 #: freeadmin/static/lib/js/freeadmin/Menu.js:398
 msgid "Support"
@@ -160,10 +160,11 @@ msgid ""
 "href='http://doc.freenas.org/index.php/Volumes#ZFS_Volume_Manager' "
 "target='_blank'>documentation</a>."
 msgstr ""
-"En iyi yapılandırma!<br /><br />Bu numara diskler ve disk grupları için "
-"mümkün olan en iyi performansa sahip olacağı anlamına gelir.<br /><br />Daha "
-"fazla açıklama için <a href='http://doc.freenas.org/index.php/Volumes#"
-"ZFS_Volume_Manager' target='_blank'>belegelerine</a> bakabilirsiniz."
+"Yapılandırmanız uygun!<br /><br />Bu disk sayısı ve disk grubu türü için "
+"mümkün olan en iyi performansa sahip olacaksınız anlamına gelir.<br /><br />"
+"Daha fazla açıklama için lütfen <a "
+"href='http://doc.freenas.org/index.php/Volumes#ZFS_Volume_Manager' "
+"target='_blank'>belgelere</a> bakın."
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:524
 msgid ""
@@ -173,10 +174,11 @@ msgid ""
 "href='http://doc.freenas.org/index.php/Volumes#ZFS_Volume_Manager' "
 "target='_blank'>documentation</a>."
 msgstr ""
-"En iyi yapılandırm!<br /><br />Bu disklerin sayısı disk grubunun en iyi "
-"performansı vermeyeceği anlamına gelir.<br /><br />Daha fazla açıklama için <"
-"a href='http://doc.freenas.org/index.php/Volumes#ZFS_Volume_Manager' "
-"target='_blank'>belgelerine</a> bakabilirsiniz."
+"Yapılandırmanız uygun değil!<br /><br />Bu disk sayısı, bu disk grubu türü "
+"için mümkün olan en iyi performansı sağlamayacak anlamına gelir.<br /><br />"
+"Daha fazla açıklama için lütfen <a "
+"href='http://doc.freenas.org/index.php/Volumes#ZFS_Volume_Manager' "
+"target='_blank'>belgelere</a> bakın."
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:665
 msgid "Capacity"
@@ -184,7 +186,7 @@ msgstr "Kapasite"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:973
 msgid "Drag and drop this to resize"
-msgstr "Yeniden boyutlandırmak için sürükleyin ve bırakın"
+msgstr "Yeniden boyutlandırmak için bunu sürükleyin ve bırakın"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1015
 msgid "Add Volume"
@@ -192,11 +194,11 @@ msgstr "Birim Ekle"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1015
 msgid "Existing data will be cleared"
-msgstr "Mevcut veriler silinecektir"
+msgstr "Varolan veriler temizlenecektir"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1016
 msgid "Extend Volume"
-msgstr "Birimi Yapılandır"
+msgstr "Birimi Genişlet"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1063
 msgid "Volume Name"
@@ -204,12 +206,14 @@ msgstr "Birim Adı"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1064
 msgid "Volume to extend"
-msgstr "Yapılandırılacak birim"
+msgstr "Genişletmek için birim"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1065
 msgid ""
 "Extending an encrypted volume will reset the passphrase and recovery key!"
-msgstr "Şifreli bir birimi yapılandırma parola ve kurtarma anahtarını sıfırlar!"
+msgstr ""
+"Şifrelenmiş bir birimi genişletmek parola ve kurtarma anahtarını "
+"sıfırlayacak!"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1066
 msgid "Encryption"
@@ -217,7 +221,7 @@ msgstr "Şifreleme"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1067
 msgid "Initialize Safely"
-msgstr "Güvenli Bir Şekilde Başlat"
+msgstr "Güvenle Başlat"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1068
 msgid "Available disks"
@@ -251,7 +255,7 @@ msgstr "Yapıştır"
 #: freeadmin/static/lib/js/freeadmin/form/PathSelector.js:80
 #: freeadmin/static/lib/js/freeadmin/form/PathSelector.js:85
 msgid "Browse"
-msgstr "Göz at"
+msgstr "Gözat"
 
 #: freeadmin/static/lib/js/freeadmin/form/PathSelector.js:83
 #: freeadmin/static/lib/js/freeadmin/form/PathSelector.js:88
@@ -260,60 +264,56 @@ msgstr "Kapat"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1219
 msgid "Manual setup"
-msgstr ""
+msgstr "Elle kurulum"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1225
-#, fuzzy
 msgid "ZFS Volume Manager"
-msgstr "Birim Adı"
+msgstr "ZFS Birim Yöneticisi"
 
 #: freeadmin/static/lib/js/freeadmin.js:918
 msgid "Confirm"
-msgstr ""
+msgstr "Onayla"
 
 #: freeadmin/static/lib/js/freeadmin/Menu.js:49
-#, fuzzy
 msgid "System"
-msgstr "Uyarı Sistemi"
+msgstr "Sistem"
 
 #: freeadmin/static/lib/js/freeadmin/Menu.js:94
 msgid "Tasks"
-msgstr ""
+msgstr "Görevler"
 
 #: freeadmin/static/lib/js/freeadmin/Menu.js:92
-#, fuzzy
 msgid "Network"
-msgstr "Ağ Ayarları"
+msgstr "Ağ"
 
 #: freeadmin/static/lib/js/freeadmin/Menu.js:182
-#, fuzzy
 msgid "Sharing"
-msgstr "Paylaşımlar"
+msgstr "Paylaşım"
 
 #: freeadmin/static/lib/js/freeadmin/Menu.js:521
 msgid "Directory Service"
-msgstr ""
+msgstr "Dizin Hizmeti"
 
 #: freeadmin/static/lib/js/freeadmin.js:1772
 #: freeadmin/static/lib/js/freeadmin.js:1863
-#, fuzzy
 msgid "Initial Wizard"
-msgstr "Güvenli Bir Şekilde Başlat"
+msgstr "Başlangıç Sihirbazı"
 
 #: freeadmin/static/lib/js/freeadmin/WizardShares.js:68
-#, fuzzy
 msgid "Share name"
-msgstr "Paylaşımlar"
+msgstr "Paylaşım adı"
 
 #: freeadmin/static/lib/js/freeadmin/WizardShares.js:74
 msgid ""
 "This field may only contain alphanumeric and the following characters: \"_\""
 ", \"-\", \".\"."
 msgstr ""
+"Bu alan sadece alfasayısal ve şurada belirtilen karakterleri içerebilir: "
+"\"_\", \"-\", \".\"."
 
 #: freeadmin/static/lib/js/freeadmin/WizardShares.js:129
 msgid "Specify the size using B, K, M, G, T prefixes."
-msgstr ""
+msgstr "B, K, M, G, T öneklerini kullanarak boyutu belirleyin."
 
 #: freeadmin/static/lib/js/freeadmin/WizardShares.js:133
 msgid "Add"
@@ -321,32 +321,31 @@ msgstr "Ekle"
 
 #: freeadmin/static/lib/js/freeadmin/WizardShares.js:140
 msgid "Delete"
-msgstr ""
+msgstr "Sil"
 
 #: freeadmin/static/lib/js/freeadmin/WizardShares.js:153
 msgid "Update"
-msgstr ""
+msgstr "Güncelle"
 
 #: freeadmin/static/lib/js/freeadmin/WizardShares.js:184
 msgid "Ownership"
-msgstr ""
+msgstr "Sahiplik"
 
 #: freeadmin/static/lib/js/freeadmin/WizardShares.js:210
 msgid "This user does not exist."
-msgstr "Bu kullanıcı mevcut değil"
+msgstr "Bu kullanıcı mevcut değil."
 
 #: freeadmin/static/lib/js/freeadmin/WizardShares.js:246
 msgid "This group does not exist."
-msgstr "Grup mevcut değil."
+msgstr "Bu grup mevcut değil."
 
 #: freeadmin/static/lib/js/freeadmin/WizardShares.js:278
 msgid "Return"
-msgstr ""
+msgstr "Geri Gön"
 
 #: freeadmin/static/lib/js/freeadmin.js:1772
-#, fuzzy
 msgid "Wizard"
-msgstr "Güvenli Bir Şekilde Başlat"
+msgstr "Sihirbaz"
 
 #: freeadmin/static/lib/js/freeadmin/WizardShares.js:242
 msgid "Paswords do not match."
@@ -354,21 +353,23 @@ msgstr ""
 
 #: freeadmin/static/lib/js/freeadmin.js:374
 msgid "Warning!"
-msgstr ""
+msgstr "Uyarı!"
 
 #: freeadmin/static/lib/js/freeadmin.js:376
 msgid ""
 "This option DISABLES ENCRYPTION for replication tasks and should ONLY be "
 "used on a secure LAN!"
 msgstr ""
+"Bu seçenek çoğaltma görevleri için ŞİFRELEMEYİ ETKİSİZLEŞTİRİR ve SADECE "
+"güvenli bir LAN üzerinde kullanılmalıdır!"
 
 #: freeadmin/static/lib/js/freeadmin.js:376
 msgid "Are you sure you want to do this?"
-msgstr ""
+msgstr "Bunu yapmak istediğinize emin misiniz?"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1190
 msgid "Manual Setup"
-msgstr "Elle kurulum"
+msgstr "Elle Kurulum"
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:82
 msgid "Check For Updates"
@@ -376,19 +377,19 @@ msgstr ""
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:86
 msgid "Apply Pending Updates"
-msgstr ""
+msgstr "Bekleyen Güncellemeleri Uygula"
 
 #: freeadmin/static/lib/js/freeadmin.js:1287
 msgid "Hostname cannot be blank."
-msgstr ""
+msgstr "Anamakine adı boş olamaz."
 
 #: freeadmin/static/lib/js/freeadmin.js:1290
 msgid "Username cannot be blank."
-msgstr ""
+msgstr "Kullanıcı adı boş olamaz."
 
 #: freeadmin/static/lib/js/freeadmin.js:1293
 msgid "Password cannot be blank."
-msgstr ""
+msgstr "Parola boş olamaz."
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:79
 #: freeadmin/static/lib/js/freeadmin/Update.js:81
@@ -398,36 +399,36 @@ msgstr ""
 #: freeadmin/static/lib/js/freeadmin/Update.js:88
 #: freeadmin/static/lib/js/freeadmin/Update.js:90
 msgid "Check Now"
-msgstr ""
+msgstr "Şimdi Kontrol Et"
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:142
 msgid "Yes"
-msgstr ""
+msgstr "Evet"
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:151
 msgid "No"
-msgstr ""
+msgstr "Hayır"
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:166
 msgid "Loading..."
-msgstr ""
+msgstr "Yükleniyor..."
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:167
 msgid "No pending updates have been found."
-msgstr ""
+msgstr "Hiç bekleyen güncelleme bulunamadı."
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:104
 #: freeadmin/static/lib/js/freeadmin/Update.js:106
 msgid "Verify Install"
-msgstr ""
+msgstr "Yüklemeyi Doğrula"
 
 #: freeadmin/static/lib/js/freeadmin/WizardShares.js:245
 msgid "Passwords do not match."
-msgstr "Parolalar eşleşmedi."
+msgstr "Parolalar eşleşmiyor."
 
 #: freeadmin/static/lib/js/freeadmin.js:260
 msgid "Restarting WebGUI"
-msgstr ""
+msgstr "WebGKA yeniden başlatılıyor"
 
 #: freeadmin/static/lib/js/freeadmin.js:1157
 msgid "Active Directory IDMAP change!"
@@ -437,178 +438,193 @@ msgstr "Active Directory IDMAP değiştirme!"
 msgid ""
 "<font color='red'>STOP</font>: Do you know what you are doing?<br /><br />"
 msgstr ""
+"<font color='red'>DURUN</font>: Ne yaptığınızı biliyor musunuz?<br /><br />"
 
 #: freeadmin/static/lib/js/freeadmin.js:1163
 msgid ""
 "The idmap_ad plugin provides a way for Winbind to read id mappings from<br />"
 msgstr ""
+"Idmap_ad eklentisi, RFC2307/SFU şeması uzantıları kullanan bir AD "
+"sunucusundan<br />"
 
 #: freeadmin/static/lib/js/freeadmin.js:1164
 msgid "an AD server that uses RFC2307/SFU schema extensions. This module<br />"
 msgstr ""
+"gelen kimlik eşleşmelerini okumak için bir Winbind yolunu verir. Bu modül<br "
+"/>"
 
 #: freeadmin/static/lib/js/freeadmin.js:1165
 msgid ""
 "implements only the \"idmap\" API, and is READONLY. Mappings must be<br />"
 msgstr ""
+"sadece \"idmap\" API'sini uygular ve SALTOKUNUR'dur. Eşlemeler, AD içindeki<"
+"br />"
 
 #: freeadmin/static/lib/js/freeadmin.js:1166
 msgid "provided in advance by the administrator by adding the uidNumber<br />"
 msgstr ""
+"kullanıcılar için uidNumber özniteliklerini ve gruplar için gidNumber<br />"
 
 #: freeadmin/static/lib/js/freeadmin.js:1167
 msgid ""
 "attributes for users and gidNumber attributes for groups in the AD.<br />"
 msgstr ""
+"özniteliklerini ekleyerek başta yönetici tarafından sağlanmak zorundadır.<br "
+"/>"
 
 #: freeadmin/static/lib/js/freeadmin.js:1168
 msgid ""
 "Winbind will only map users that have a uidNumber and whose primary<br />"
-msgstr ""
+msgstr "Winbind sadece bir uidNumber'ı olan ve birincil grubu gidNumber<br />"
 
 #: freeadmin/static/lib/js/freeadmin.js:1169
 msgid ""
 "group have a gidNumber attribute set. It is however recommended that<br />"
 msgstr ""
+"özniteliği kümesine sahip kullanıcıları eşler. Ancak yine de kullanımda olan<"
+"br />"
 
 #: freeadmin/static/lib/js/freeadmin.js:1170
 msgid ""
 "all groups in use have gidNumber attributes assigned, otherwise they<br />"
 msgstr ""
+"tüm grupların atanmış gidNumber özniteliklerine sahip olması önerilir, <br />"
 
 #: freeadmin/static/lib/js/freeadmin.js:1171
 msgid "are not working.<br /><br />"
-msgstr ""
+msgstr "aksi halde çalışmazlar.<br /><br />"
 
 #: freeadmin/static/lib/js/freeadmin.js:1172
 msgid ""
 "<font color='red'>STOP</font>: If your Active Directory is not configured "
 "for this, it will not work.<br><br>"
 msgstr ""
+"<font color='red'>DURUN</font>: Eğer Active Directory'niz bunun için "
+"yapılandırılmadıysa, çalışmayacak.<br><br>"
 
 #: freeadmin/static/lib/js/freeadmin/Menu.js:512
 msgid "Documentation"
-msgstr ""
+msgstr "Belgeler"
 
 #: freeadmin/static/lib/js/freeadmin/SupportTicket.js:115
 msgid "Username"
-msgstr ""
+msgstr "Kullanıcı adı"
 
 #: freeadmin/static/lib/js/freeadmin/SupportTicket.js:116
 msgid "If you do not have an account, please"
-msgstr ""
+msgstr "Eğer bir hesabınız yoksa, lütfen"
 
 #: freeadmin/static/lib/js/freeadmin/SupportTicket.js:116
 msgid "register"
-msgstr ""
+msgstr "kayıt olun"
 
 #: freeadmin/static/lib/js/freeadmin/SupportTicket.js:117
 msgid "Attach Debug Info"
-msgstr ""
+msgstr "Hata Ayıklama Bilgisi Ekle"
 
 #: freeadmin/static/lib/js/freeadmin/SupportTicket.js:226
 msgid "Submit"
-msgstr ""
+msgstr "Gönder"
 
 #: freeadmin/static/lib/js/freeadmin/SupportTicket.js:326
 msgid "This field is required."
-msgstr ""
+msgstr "Bu alan gerekli."
 
 #: freeadmin/static/lib/js/freeadmin/SupportTicket.js:361
 msgid "Uploading attachments to host"
-msgstr ""
+msgstr "Ekler anamakineye gönderiliyor"
 
 #: freeadmin/static/lib/js/freeadmin/SupportTicket.js:367
 msgid "Generating debug info"
-msgstr ""
+msgstr "Hata ayıklama bilgisi oluşturuluyor"
 
 #: freeadmin/static/lib/js/freeadmin/SupportTicket.js:372
 msgid "Submitting ticket"
-msgstr ""
+msgstr "Destek başvurusu gönderiliyor"
 
 #: freeadmin/static/lib/js/freeadmin/SupportTicket.js:377
 msgid "Uploading attachments from host to the ticket"
-msgstr ""
+msgstr "Ekler anamakineden destek başvurusuna gönderiliyor"
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:86
 msgid "Train Descriptions"
-msgstr ""
+msgstr "Çalışma Açıklamaları"
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:88
 msgid "Loading"
-msgstr ""
+msgstr "Yükleniyor"
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:89
 msgid "Automatically check for updates"
-msgstr ""
+msgstr "Güncellemeleri otomatik olarak kontrol et"
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:90
 msgid "Current Train"
-msgstr ""
+msgstr "Şu Anki Çalışma"
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:91
 msgid "Update Server"
-msgstr ""
+msgstr "Güncelleme Sunucusu"
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:92
 msgid "Pending Updates"
-msgstr ""
+msgstr "Bekleyen Güncellemeler"
 
 #: freeadmin/static/lib/js/freeadmin/Menu.js:185
 msgid "vCenter Plugin Configuration"
-msgstr ""
+msgstr "vCenter Eklenti Yapılandırması"
 
 #: freeadmin/static/lib/js/freeadmin.js:1343
 msgid "Decreasing WebGUI https security!"
-msgstr ""
+msgstr "WebGKA https güvenliği azaltılıyor!"
 
 #: freeadmin/static/lib/js/freeadmin.js:1348
 msgid ""
 "<font color='red'>Warning: Selecting this reduces your https security.<br /><"
 "br />"
 msgstr ""
+"<font color='red'>Uyarı: Bunu seçmek https güvenliğinizi düşürür.<br /><br />"
 
 #: freeadmin/static/lib/js/freeadmin/SupportTicket.js:117
 msgid "Password"
-msgstr ""
+msgstr "Parola"
 
 #: freeadmin/static/lib/js/freeadmin/SupportTicket.js:118
 msgid "Name"
-msgstr ""
+msgstr "Adı"
 
 #: freeadmin/static/lib/js/freeadmin/SupportTicket.js:119
 msgid "E-mail"
-msgstr ""
+msgstr "E-posta"
 
 #: freeadmin/static/lib/js/freeadmin/SupportTicket.js:120
 msgid "Phone"
-msgstr ""
+msgstr "Telefon"
 
 #: freeadmin/static/lib/js/freeadmin/SupportTicket.js:121
 msgid "Type"
-msgstr ""
+msgstr "Türü"
 
 #: freeadmin/static/lib/js/freeadmin/SupportTicket.js:122
 msgid "Category"
-msgstr ""
+msgstr "Kategori"
 
 #: freeadmin/static/lib/js/freeadmin/SupportTicket.js:123
 msgid "Environment"
-msgstr ""
+msgstr "Ortam"
 
 #: freeadmin/static/lib/js/freeadmin/SupportTicket.js:124
 msgid "Criticality"
-msgstr ""
+msgstr "Kritiklik"
 
 #: freeadmin/static/lib/js/freeadmin/SupportTicket.js:126
 msgid "Subject"
-msgstr ""
+msgstr "Konu"
 
 #: freeadmin/static/lib/js/freeadmin/SupportTicket.js:127
-#, fuzzy
 msgid "Description"
-msgstr "Şifreleme"
+msgstr "Açıklama"
 
 #: freeadmin/static/lib/js/freeadmin/SupportTicket.js:128
 msgid "Attachments"
-msgstr ""
+msgstr "Ekler"
