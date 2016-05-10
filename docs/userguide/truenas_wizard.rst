@@ -145,7 +145,7 @@ which directory service is selected. Tables 15a to 15d summarize the available c
 | Domain Controller       | string         | hostname of domain controller                                                                         |
 |                         |                |                                                                                                       |
 +-------------------------+----------------+-------------------------------------------------------------------------------------------------------+
-| NetBIOS Name            | string         | hostname of TrueNAS system; cannot be greater than 15 characters                                      |
+| NetBIOS Name            | string         | hostname of TrueNAS system; cannot be greater than 15 characters or the same as the "Workgroup Name"  |
 |                         |                |                                                                                                       |
 +-------------------------+----------------+-------------------------------------------------------------------------------------------------------+
 | Workgroup Name          | string         | name of Windows server's workgroup                                                                    |

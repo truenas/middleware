@@ -276,7 +276,7 @@ which directory service is selected. Tables 3.1a to 3.1d summarize the available
 | Domain Controller       | string         | hostname of domain controller                                                                         |
 |                         |                |                                                                                                       |
 +-------------------------+----------------+-------------------------------------------------------------------------------------------------------+
-| NetBIOS Name            | string         | hostname of FreeNAS system; cannot be greater than 15 characters                                      |
+| NetBIOS Name            | string         | hostname of FreeNAS system; cannot be greater than 15 characters or the same as the "Workgroup "Name" |
 |                         |                |                                                                                                       |
 +-------------------------+----------------+-------------------------------------------------------------------------------------------------------+
 | Workgroup Name          | string         | name of Windows server's workgroup                                                                    |

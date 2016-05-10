@@ -514,37 +514,37 @@ these settings by checking the box "Show advanced fields by default" in :menusel
 
 **Table 9.4a: NT4 Configuration Options**
 
-+------------------------+-----------+--------------------------------------------------------------------------------------------------+
-| **Setting**            | **Value** | **Description**                                                                                  |
-|                        |           |                                                                                                  |
-|                        |           |                                                                                                  |
-+========================+===========+==================================================================================================+
-| Domain Controller      | string    | hostname of domain controller                                                                    |
-|                        |           |                                                                                                  |
-+------------------------+-----------+--------------------------------------------------------------------------------------------------+
-| NetBIOS Name           | string    | hostname of TrueNAS system; cannot be greater than 15 characters                                 |
-|                        |           |                                                                                                  |
-+------------------------+-----------+--------------------------------------------------------------------------------------------------+
-| Workgroup Name         | string    | name of Windows server's workgroup                                                               |
-|                        |           |                                                                                                  |
-+------------------------+-----------+--------------------------------------------------------------------------------------------------+
-| Administrator Name     | string    | name of the domain administrator account                                                         |
-|                        |           |                                                                                                  |
-+------------------------+-----------+--------------------------------------------------------------------------------------------------+
-| Administrator Password | string    | input and confirm the password for the domain administrator account                              |
-|                        |           |                                                                                                  |
-+------------------------+-----------+--------------------------------------------------------------------------------------------------+
-| Use default domain     | checkbox  | only available in "Advanced Mode"; when unchecked, the domain name is prepended to the username  |
-|                        |           |                                                                                                  |
-+------------------------+-----------+--------------------------------------------------------------------------------------------------+
-| Idmap backend          | drop-down | only available in "Advanced Mode"; select the backend to use to map Windows security identifiers |
-|                        | and Edit  | (SIDs) to UNIX UIDs and GIDs; see Table 9.1b for a summary of the available backends; click the  |
-|                        | menu      | "Edit" link to configure that backend's editable options                                         |
-|                        |           |                                                                                                  |
-+------------------------+-----------+--------------------------------------------------------------------------------------------------+
-| Enable                 | checkbox  | uncheck to disable the configuration without deleting it                                         |
-|                        |           |                                                                                                  |
-+------------------------+-----------+--------------------------------------------------------------------------------------------------+
++------------------------+-----------+------------------------------------------------------------------------------------------------------+
+| **Setting**            | **Value** | **Description**                                                                                      |
+|                        |           |                                                                                                      |
+|                        |           |                                                                                                      |
++========================+===========+======================================================================================================+
+| Domain Controller      | string    | hostname of domain controller                                                                        |
+|                        |           |                                                                                                      |
++------------------------+-----------+------------------------------------------------------------------------------------------------------+
+| NetBIOS Name           | string    | hostname of TrueNAS system; cannot be greater than 15 characters or the same as the "Workgroup Name" |
+|                        |           |                                                                                                      |
++------------------------+-----------+------------------------------------------------------------------------------------------------------+
+| Workgroup Name         | string    | name of Windows server's workgroup                                                                   |
+|                        |           |                                                                                                      |
++------------------------+-----------+------------------------------------------------------------------------------------------------------+
+| Administrator Name     | string    | name of the domain administrator account                                                             |
+|                        |           |                                                                                                      |
++------------------------+-----------+------------------------------------------------------------------------------------------------------+
+| Administrator Password | string    | input and confirm the password for the domain administrator account                                  |
+|                        |           |                                                                                                      |
++------------------------+-----------+------------------------------------------------------------------------------------------------------+
+| Use default domain     | checkbox  | only available in "Advanced Mode"; when unchecked, the domain name is prepended to the username      |
+|                        |           |                                                                                                      |
++------------------------+-----------+------------------------------------------------------------------------------------------------------+
+| Idmap backend          | drop-down | only available in "Advanced Mode"; select the backend to use to map Windows security identifiers     |
+|                        | and Edit  | (SIDs) to UNIX UIDs and GIDs; see Table 9.1b for a summary of the available backends; click the      |
+|                        | menu      | "Edit" link to configure that backend's editable options                                             |
+|                        |           |                                                                                                      |
++------------------------+-----------+------------------------------------------------------------------------------------------------------+
+| Enable                 | checkbox  | uncheck to disable the configuration without deleting it                                             |
+|                        |           |                                                                                                      |
++------------------------+-----------+------------------------------------------------------------------------------------------------------+
 
 Click the "Rebuild Directory Service Cache" button if you add a user to Active Directory who needs immediate access to TrueNAS®; otherwise this occurs
 automatically once a day as a cron job.
