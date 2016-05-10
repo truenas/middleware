@@ -27,15 +27,16 @@ QUIT_FLAG = threading.Event()  # Termination Event
 # Global Dicts
 # The following contain zilstat results from the last
 # zilstat command (1, 5 and 10 second intervals)
-global zilstat_one
-global zilstat_five
-global zilstat_ten
-# This is for zpool iostat 1 results
-global zpoolio_one
+zilstat_one = {}
+zilstat_five = {}
+zilstat_ten = {}
+# This is for zpool iostat (total and 1 sec results)
+zpoolio_all = {}
+zpoolio_one = {}
 # This is for properly teminating all subprocess when freenas-snmpd is killed
-global proc_pid_list
 proc_pid_list = []
 
+# global data lock
 lock = threading.Lock()
 
 size_dict = {"K": 1024,
@@ -139,27 +140,38 @@ class SockHandler(asyncore.dispatcher_with_send):
         global zilstat_one
         global zilstat_five
         global zilstat_ten
+        global zpoolio_all
+        with lock:
+            tmp_data = {
+                "zil_data": {
+                    "1": zilstat_one.copy(),
+                    "5": zilstat_five.copy(),
+                    "10": zilstat_ten.copy()
+                },
+                "zpool_data": {
+                    "1": zpoolio_one.copy(),
+                    "all": zpoolio_all.copy()
+                }
+            }
         res = None
         a = self.recv(8192)
         if a.startswith("get_zilstat_1_second_interval"):
-            with lock:
-                res = zilstat_one
+            res = tmp_data["zil_data"]["one"]
         if a.startswith("get_zilstat_5_second_interval"):
-            with lock:
-                res = zilstat_five
+            res = tmp_data["zil_data"]["five"]
         if a.startswith("get_zilstat_10_second_interval"):
-            with lock:
-                res = zilstat_ten
+            res = tmp_data["zil_data"]["ten"]
         if a.startswith("get_zpoolio_1_second_interval"):
-            with lock:
-                res = zpoolio_one
+            res = tmp_data["zpool_data"]["one"]
+        if a.startswith("get_all"):
+            res = tmp_data
         self.buffer = json.dumps(res)
 
     def writable(self):
         return (len(self.buffer) > 0)
 
     def handle_write(self):
-        self.send(self.buffer)
+        self.socket.sendall(self.buffer)
         self.buffer = ''
 
     def handle_close(self):
@@ -189,11 +201,8 @@ class Loop_Sockserver(threading.Thread):
 # Method to parse `zilstat interval 1`
 def zfs_zilstat_ops(interval):
     global proc_pid_list
-    zilstatproc = subprocess.Popen([
-        '/usr/local/bin/zilstat',
-        str(interval),
-        '1',
-    ],
+    zilstatproc = subprocess.Popen(
+        ['/usr/local/bin/zilstat', str(interval), '1'],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         preexec_fn=os.setsid,
@@ -263,16 +272,14 @@ class zilTenWorker(threading.Thread):
                 zilstat_ten = temp
 
 
-class zpoolioOneWorker(threading.Thread):
+class zpoolioWorker(threading.Thread):
     def __init__(self):
-        super(zpoolioOneWorker, self).__init__()
+        super(zpoolioWorker, self).__init__()
         self.daemon = True
-        global zpoolio_one
-        with lock:
-            zpoolio_one = {}
 
     def run(self):
         global zpoolio_one
+        global zpoolio_all
         zfs = libzfs.ZFS()
         previous_values = {}
         while not QUIT_FLAG.wait(1.0):
@@ -308,7 +315,8 @@ class zpoolioOneWorker(threading.Thread):
                     # the current next_val
                     previous_values[pool.name] = next_val.copy()
             with lock:
-                zpoolio_one = rv
+                zpoolio_one = rv.copy()
+                zpoolio_all = previous_values.copy()
 
 if __name__ == '__main__':
 
@@ -332,11 +340,11 @@ if __name__ == '__main__':
         z1 = zilOneWorker()
         z5 = zilFiveWorker()
         z10 = zilTenWorker()
-        zio1 = zpoolioOneWorker()
+        zio = zpoolioWorker()
         z1.start()
         z5.start()
         z10.start()
-        zio1.start()
+        zio.start()
         # stupid while true to keep main loop active
         # fix this if possible
         while True:

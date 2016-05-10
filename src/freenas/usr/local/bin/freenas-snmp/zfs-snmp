@@ -26,10 +26,8 @@
 
 import sys
 import commands
-import os
 import re
 import snmpresponse
-import subprocess
 import json
 import socket
 import libzfs
@@ -43,16 +41,44 @@ BASE_OID = '.1.3.6.1.4.1.25359.1'
 ARC = get_arc_efficiency(get_Kstat())
 FREENASSNMPDSOCK = '/var/run/freenas-snmpd.sock'
 
-size_dict = {"K": 1024,
-             "M": 1048576,
-             "G": 1073741824,
-             "T": 1099511627776}
+size_dict = {
+    "K": 1024,
+    "M": 1048576,
+    "G": 1073741824,
+    "T": 1099511627776
+}
+
+
+def get_from_freenas_snmpd_sock(val_to_obtain):
+    data = ''
+    try:
+        s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        s.connect(FREENASSNMPDSOCK)
+        s.setblocking(0)
+        s.send(val_to_obtain)
+        packet = s.recv(4096)
+        while packet:
+            data += packet
+            packet = s.recv(4096)
+    except socket.error:
+        pass
+    finally:
+        s.close()
+    try:
+        data = json.loads(data)
+    except ValueError:
+        data = {}
+    return data
+
+
+FSNMPDATA = get_from_freenas_snmpd_sock("get_all")
 
 
 class ArgumentValidationError(ValueError):
     """
     Raised when the type of an argument to a function is not what it should be.
     """
+
     def __init__(self, arg_num, func_name, accepted_arg_type):
         self.error = 'The {0} argument of {1}() is not a {2}'.format(
             arg_num, func_name, accepted_arg_type)
@@ -74,36 +100,6 @@ def unprettyprint(ster):
         except:
             pass
     return long(num)
-
-
-# Method to parse zpool iostat
-def zpool_iostat(name=None):
-    zfsproc = subprocess.Popen([
-        'zpool',
-        'iostat',
-        ] + ([name] if name else []),
-        stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE,
-    )
-    output = zfsproc.communicate()[0].strip('\n')
-    rv = {}
-    output = output.split('\n')
-    output = output[3:-1] if len(output) > 4 else output[3:]
-    for line in output:
-        data = line.split()
-        attrs = {
-             'pool': data[0],
-             'alloc': unprettyprint(data[1]),
-             'free': unprettyprint(data[2]),
-             'opread': unprettyprint(data[3]),
-             'opwrite': unprettyprint(data[4]),
-             'bwread': unprettyprint(data[5]),
-             'bwrite': unprettyprint(data[6]),
-             }
-        rv[attrs['pool']] = attrs
-    if name:
-        return rv[name]
-    return rv
 
 
 def kstat(name):
@@ -145,7 +141,7 @@ def zfs_arc_miss_percent(oid):
     arc_misses = kstat("zfs.misc.arcstats.misses")
     arc_read = arc_hits + arc_misses
     if (arc_read > 0):
-        hit_percent = float(100 * arc_hits/arc_read)
+        hit_percent = float(100 * arc_hits / arc_read)
         miss_percent = 100 - hit_percent
         return ('string', str(miss_percent))
     return ('string', "0")
@@ -163,44 +159,32 @@ def zfs_arc_p(oid):
 
 def zfs_arc_cache_hit_ratio(oid):
     # percentage (floating point precision wrapped as a string)
-    return ('string',  ARC['cache_hit_ratio']['per'][:-1])
+    return ('string', ARC['cache_hit_ratio']['per'][:-1])
 
 
 def zfs_arc_cache_miss_ratio(oid):
     # percentage (floating point precision wrapped as a string)
-    return ('string',  ARC['cache_miss_ratio']['per'][:-1])
+    return ('string', ARC['cache_miss_ratio']['per'][:-1])
 
 
 def zilstatd_ops(interval):
-    if os.path.exists(FREENASSNMPDSOCK):
-        try:
-            s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-            s.connect(FREENASSNMPDSOCK)
-            s.send("get_zilstat_"+str(interval)+"_second_interval")
-            data = json.loads(s.recv(1024))
-            s.close()
-            if data:
-                return long(float(data["ops"]))
-        except (socket.error, ValueError):
-            pass
-    return long(0)
+    res = long(0)
+    try:
+        res = FSNMPDATA["zil_data"][str(interval)]
+    except KeyError:
+        pass
+    return res
 
 
-# Note: Currently only 1 second interval is supported
+# Note: Currently only 1 second interval and "all" is supported
 # to add more make the appropriate worker in gui/tools/freenas-snmpd.py
 def zpoolio_interval(interval):
-    if os.path.exists(FREENASSNMPDSOCK):
-        try:
-            s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-            s.connect(FREENASSNMPDSOCK)
-            s.send("get_zpoolio_"+str(interval)+"_second_interval")
-            data = json.loads(s.recv(1024))
-            s.close()
-            if data:
-                return data
-        except (socket.error, ValueError):
-            pass
-    return {}
+    res = {}
+    try:
+        res = FSNMPDATA["zpool_data"][str(interval)]
+    except KeyError:
+        pass
+    return res
 
 
 def zfs_zilstat_ops1(oid):
@@ -303,8 +287,7 @@ result = [
     (BASE_OID + '.6.3.0', zfs_zilstat_ops10),
 ]
 
-i = 1
-all_iostat = zpool_iostat()
+all_iostat = zpoolio_interval("all")
 onesec_iostat = zpoolio_interval(1)
 zfs = libzfs.ZFS()
 pools = [pool for pool in zfs.pools]
@@ -316,77 +299,77 @@ for res in map(zfs_segregate, [pool.root_dataset for pool in pools]):
     datasets.extend(res[0][1:])
     zvols.extend(res[1])
 
-for zpool in pools:
+for i, zpool in enumerate(pools):
     stri = str(i)
     pool = zpool.name
     pool_health = zpool.properties['health'].value
     # Dividing by 1024 to ge to KB
-    pool_used = unprettyprint(zpool.root_dataset.properties['used'].value)/1024
-    pool_available = unprettyprint(zpool.root_dataset.properties['available'].value)/1024
-    pool_size = unprettyprint(zpool.properties['size'].value)/1024
-    result.append((BASE_OID + '.1.1.' + stri, ('string', pool)))
-    result.append((BASE_OID + '.1.2.' + stri, ('gauge', pool_available)))
-    result.append((BASE_OID + '.1.3.' + stri, ('gauge', pool_used)))
-    result.append((BASE_OID + '.1.4.' + stri, ('string', pool_health)))
-    result.append((BASE_OID + '.1.5.' + stri, ('gauge', pool_size)))
-    result.append((BASE_OID + '.1.12.' + stri, ('gauge', pool_available/1024)))
-    result.append((BASE_OID + '.1.13.' + stri, ('gauge', pool_used/1024)))
-    result.append((BASE_OID + '.1.14.' + stri, ('gauge', pool_size/1024)))
-    result.append((BASE_OID + '.1.15.' + stri,
-                   lambda oid, fs=pool: ('counter64',
-                                         all_iostat[fs]['opread'])))
-    result.append((BASE_OID + '.1.16.' + stri,
-                   lambda oid, fs=pool: ('counter64',
-                                         all_iostat[fs]['opwrite'])))
-    result.append((BASE_OID + '.1.17.' + stri,
-                   lambda oid, fs=pool: ('counter64',
-                                         all_iostat[fs]['bwread'])))
-    result.append((BASE_OID + '.1.18.' + stri,
-                   lambda oid, fs=pool: ('counter64',
-                                         all_iostat[fs]['bwrite'])))
-    result.append((BASE_OID + '.1.19.' + stri,
-                   lambda oid, fs=pool: ('counter64',
-                                         onesec_iostat[fs].get('opread', 0))))
-    result.append((BASE_OID + '.1.20.' + stri,
-                   lambda oid, fs=pool: ('counter64',
-                                         onesec_iostat[fs].get('opwrite', 0))))
-    result.append((BASE_OID + '.1.21.' + stri,
-                   lambda oid, fs=pool: ('counter64',
-                                         onesec_iostat[fs].get('bwread', 0))))
-    result.append((BASE_OID + '.1.22.' + stri,
-                   lambda oid, fs=pool: ('counter64',
-                                         onesec_iostat[fs].get('bwrite', 0))))
-    i += 1
+    pool_used = unprettyprint(zpool.root_dataset.properties['used'].value) / 1024
+    pool_available = unprettyprint(zpool.root_dataset.properties['available'].value) / 1024
+    pool_size = unprettyprint(zpool.properties['size'].value) / 1024
+    result.extend([
+        (BASE_OID + '.1.1.' + stri, ('string', pool)),
+        (BASE_OID + '.1.2.' + stri, ('gauge', pool_available)),
+        (BASE_OID + '.1.3.' + stri, ('gauge', pool_used)),
+        (BASE_OID + '.1.4.' + stri, ('string', pool_health)),
+        (BASE_OID + '.1.5.' + stri, ('gauge', pool_size)),
+        (BASE_OID + '.1.12.' + stri, ('gauge', pool_available / 1024)),
+        (BASE_OID + '.1.13.' + stri, ('gauge', pool_used / 1024)),
+        (BASE_OID + '.1.14.' + stri, ('gauge', pool_size / 1024)),
+        (BASE_OID + '.1.15.' + stri, lambda oid, fs=pool: ('counter64', all_iostat[fs]['opread'])),
+        (
+            BASE_OID + '.1.16.' + stri,
+            lambda oid, fs=pool: ('counter64', all_iostat[fs]['opwrite'])
+        ),
+        (BASE_OID + '.1.17.' + stri, lambda oid, fs=pool: ('counter64', all_iostat[fs]['bwread'])),
+        (BASE_OID + '.1.18.' + stri, lambda oid, fs=pool: ('counter64', all_iostat[fs]['bwrite'])),
+        (
+            BASE_OID + '.1.19.' + stri,
+            lambda oid, fs=pool: ('counter64', onesec_iostat[fs].get('opread', 0))
+        ),
+        (
+            BASE_OID + '.1.20.' + stri,
+            lambda oid, fs=pool: ('counter64', onesec_iostat[fs].get('opwrite', 0))
+        ),
+        (
+            BASE_OID + '.1.21.' + stri,
+            lambda oid, fs=pool: ('counter64', onesec_iostat[fs].get('bwread', 0))
+        ),
+        (
+            BASE_OID + '.1.22.' + stri,
+            lambda oid, fs=pool: ('counter64', onesec_iostat[fs].get('bwrite', 0))
+        )
+    ])
 
-i = 1
-for zvol in zvols:
+for i, zvol in enumerate(zvols):
     stri = str(i)
-    volsize = unprettyprint(zvol.properties['volsize'].value)/1024
-    vol_used = unprettyprint(zvol.properties['used'].value)/1024
-    vol_available = unprettyprint(zvol.properties['available'].value)/1024
-    result.append((BASE_OID + '.5.1.' + stri, ('string', zvol.name)))
-    result.append((BASE_OID + '.5.2.' + stri, ('gauge', vol_available)))
-    result.append((BASE_OID + '.5.3.' + stri, ('gauge', vol_used)))
-    result.append((BASE_OID + '.5.4.' + stri, ('gauge', volsize)))
-    result.append((BASE_OID + '.5.12.' + stri, ('gauge', vol_available/1024)))
-    result.append((BASE_OID + '.5.13.' + stri, ('gauge', vol_used/1024)))
-    result.append((BASE_OID + '.5.14.' + stri, ('gauge', volsize/1024)))
-    i += 1
+    volsize = unprettyprint(zvol.properties['volsize'].value) / 1024
+    vol_used = unprettyprint(zvol.properties['used'].value) / 1024
+    vol_available = unprettyprint(zvol.properties['available'].value) / 1024
+    result.extend([
+        (BASE_OID + '.5.1.' + stri, ('string', zvol.name)),
+        (BASE_OID + '.5.2.' + stri, ('gauge', vol_available)),
+        (BASE_OID + '.5.3.' + stri, ('gauge', vol_used)),
+        (BASE_OID + '.5.4.' + stri, ('gauge', volsize)),
+        (BASE_OID + '.5.12.' + stri, ('gauge', vol_available / 1024)),
+        (BASE_OID + '.5.13.' + stri, ('gauge', vol_used / 1024)),
+        (BASE_OID + '.5.14.' + stri, ('gauge', volsize / 1024))
+    ])
 
-i = 1
-for ds in datasets:
+for i, ds in enumerate(datasets):
     stri = str(i)
-    ds_used = unprettyprint(ds.properties['used'].value)/1024
-    ds_available = unprettyprint(ds.properties['available'].value)/1024
+    ds_used = unprettyprint(ds.properties['used'].value) / 1024
+    ds_available = unprettyprint(ds.properties['available'].value) / 1024
     ds_size = ds_used + ds_available
-    result.append((BASE_OID + '.7.1.' + stri, ('string', ds.name)))
-    result.append((BASE_OID + '.7.2.' + stri, ('gauge', ds_available)))
-    result.append((BASE_OID + '.7.3.' + stri, ('gauge', ds_used)))
-    result.append((BASE_OID + '.7.4.' + stri, ('gauge', ds_size)))
-    result.append((BASE_OID + '.7.12.' + stri, ('gauge', ds_available/1024)))
-    result.append((BASE_OID + '.7.13.' + stri, ('gauge', ds_used/1024)))
-    result.append((BASE_OID + '.7.14.' + stri, ('gauge', ds_size/1024)))
-    i += 1
+    result.extend([
+        (BASE_OID + '.7.1.' + stri, ('string', ds.name)),
+        (BASE_OID + '.7.2.' + stri, ('gauge', ds_available)),
+        (BASE_OID + '.7.3.' + stri, ('gauge', ds_used)),
+        (BASE_OID + '.7.4.' + stri, ('gauge', ds_size)),
+        (BASE_OID + '.7.12.' + stri, ('gauge', ds_available / 1024)),
+        (BASE_OID + '.7.13.' + stri, ('gauge', ds_used / 1024)),
+        (BASE_OID + '.7.14.' + stri, ('gauge', ds_size / 1024))
+    ])
 
 
 operation = sys.argv[1]
