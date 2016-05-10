@@ -116,7 +116,7 @@ class QueueItem(object):
 
 class MailQueue(object):
 
-    QUEUE_FILE = '/data/mail.queue'
+    QUEUE_FILE = '/tmp/mail.queue'
     MAX_ATTEMPTS = 3
 
     def __init__(self):
