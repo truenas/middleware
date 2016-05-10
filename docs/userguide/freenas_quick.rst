@@ -102,7 +102,7 @@ system. You should be prompted to input the password for the root user, as seen 
 
 **Figure 3b: Input the Root Password**
 
-.. image:: images/login.png
+.. image:: images/login1.png
 
 Enter the password created during the installation. You should then see the administrative GUI as shown in the example in Figure 3c.
 
