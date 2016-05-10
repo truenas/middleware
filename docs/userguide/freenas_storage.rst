@@ -1131,7 +1131,7 @@ Figure 8.2a. Table 8.2a summarizes the fields in this screen.
 | Weekday        | checkboxes                 | which days of the week to take snapshots                                                                     |
 |                |                            |                                                                                                              |
 +----------------+----------------------------+--------------------------------------------------------------------------------------------------------------+
-| Enabled        | checkbox                   | uncheck to disable the scheduled replication task without deleting it                                        |
+| Enabled        | checkbox                   | uncheck to disable the scheduled snapshot task without deleting it                                           |
 |                |                            |                                                                                                              |
 +----------------+----------------------------+--------------------------------------------------------------------------------------------------------------+
 

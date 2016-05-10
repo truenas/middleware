@@ -1075,7 +1075,7 @@ To create a periodic snapshot task, click :menuselection:`Storage --> Periodic S
 | Weekday        | checkboxes                 | which days of the week to take snapshots                                                                     |
 |                |                            |                                                                                                              |
 +----------------+----------------------------+--------------------------------------------------------------------------------------------------------------+
-| Enabled        | checkbox                   | uncheck to disable the scheduled replication task without deleting it                                        |
+| Enabled        | checkbox                   | uncheck to disable the scheduled snapshot task without deleting it                                           |
 |                |                            |                                                                                                              |
 +----------------+----------------------------+--------------------------------------------------------------------------------------------------------------+
 
