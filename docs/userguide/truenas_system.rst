@@ -656,6 +656,22 @@ case, this screen will close once the updates are downloaded and the downloaded 
 in :numref:`Figure %s: Update Options <tn_update1>`. When you are ready to apply the previously downloaded updates, click the "Apply Pending Updates" button and be aware that the system may
 reboot after the updates are applied.
 
+.. _Updating an HA System:
+
+Updating an HA System
+~~~~~~~~~~~~~~~~~~~~~
+
+If the TrueNAS® array has been configured for High Availability (HA), the update process must be started on the active node. Once the update is complete, the standby node will automatically
+reboot. Wait for it to come back up by monitoring the remote console or the graphical administrative interface of the standby node.
+
+At this point, the active mode may issue an alert indicating that there is a firmware version mismatch. This is expected when an update also updates the HBA version.
+
+Once the standby node has finished booting up, it is important to perform a failover by rebooting the current active node. This action tells the standby node to import the current
+configuration and restart its services.
+
+Once the previously active node comes back up as a standby node, use :ref:`System --> Update` to apply the update on the current active node (which was previously the passive node).
+Once complete, the now standby node will reboot a second time.
+
 .. _If Something Goes Wrong:
 
 If Something Goes Wrong
