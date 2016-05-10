@@ -145,7 +145,7 @@ class MailQueue(object):
         self._lock = LockFile(self.QUEUE_FILE)
         while not self._lock.i_am_locking():
             try:
-                self._lock.acquire(timeout=5)
+                self._lock.acquire(timeout=330)
             except LockTimeout:
                 self._lock.break_lock()
 
