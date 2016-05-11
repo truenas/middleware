@@ -1964,7 +1964,7 @@ class WebDAVForm(ModelForm):
     webdav_password2 = forms.CharField(
         max_length=120,
         label=_("Confirm WebDAV Password"),
-        widget=forms.widgets.PasswordInput(render_value=True),
+        widget=forms.widgets.PasswordInput(),
         required=False,
     )
 
@@ -1977,7 +1977,7 @@ class WebDAVForm(ModelForm):
         widgets = {
             'webdav_tcpport': forms.widgets.TextInput(),
             'webdav_tcpportssl': forms.widgets.TextInput(),
-            'webdav_password': forms.widgets.PasswordInput(render_value=True),
+            'webdav_password': forms.widgets.PasswordInput(),
         }
 
     def __original_save(self):
@@ -2015,7 +2015,7 @@ class WebDAVForm(ModelForm):
         super(WebDAVForm, self).__init__(*args, **kwargs)
         if self.instance.webdav_password:
             self.fields['webdav_password'].required = False
-            self.fields['webdav_password2'].initial = self.instance.webdav_password
+            self.fields['webdav_password2'].required = False
         if self._api is True:
             del self.fields['webdav_password2']
         self.fields['webdav_protocol'].widget.attrs['onChange'] = (
