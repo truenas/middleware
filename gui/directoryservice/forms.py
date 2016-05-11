@@ -345,7 +345,7 @@ class ActiveDirectoryForm(ModelForm):
 
         model = models.ActiveDirectory
         widgets = {
-            'ad_bindpw': forms.widgets.PasswordInput(render_value=True),
+            'ad_bindpw': forms.widgets.PasswordInput(render_value=False),
         }
 
     def __original_save(self):
