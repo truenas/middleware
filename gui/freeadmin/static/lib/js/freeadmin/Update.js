@@ -45,6 +45,7 @@ define([
     templateString : template,
     applyUrl: "",
     checkUrl: "",
+    currentTrain: "",
     verifyUrl: "",
     updateUrl: "",
     updateServer: "",
@@ -125,7 +126,6 @@ define([
         query: {"format": "json"}
       }).then(function(data) {
         me.dapCurrentTrain.innerHTML = data.selected_train.name;
-        me._currentTrain = data.selected_train.name;
         me.dapCurrentTrainDesc.innerHTML = data.selected_train.descr;
 
         var options = [];
@@ -155,10 +155,10 @@ define([
           return;
         }
 
-        var compare = me.compareTrains(me._currentTrain, val);
+        var compare = me.compareTrains(me.currentTrain, val);
 
         var train_msg = {
-            "NIGHTLY_DOWNGRADE": gettext("You're not allowed to change to away from the nightly train, it is considered a downgrade."),
+            "NIGHTLY_DOWNGRADE": gettext("You're not allowed to change away from the nightly train, it is considered a downgrade."),
             "MINOR_DOWNGRADE": gettext("Changing minor version is considered a downgrade, thus not a supported operation.")
         }
         if(compare == "NIGHTLY_DOWNGRADE" || compare == "MINOR_DOWNGRADE") {

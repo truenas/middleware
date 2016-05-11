@@ -1,4 +1,3 @@
-# +
 # Copyright 2010 iXsystems, Inc.
 # All rights reserved
 #
@@ -562,6 +561,12 @@ class Update(Model):
         if not self.upd_train or self.upd_train not in trains:
             return conf.CurrentTrain()
         return self.upd_train
+
+    def get_system_train(self):
+        from freenasOS import Configuration
+        conf = Configuration.Configuration()
+        conf.LoadTrainsConfig()
+        return conf.CurrentTrain()
 
 
 CA_TYPE_EXISTING = 0x00000001
