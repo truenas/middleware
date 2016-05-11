@@ -4,7 +4,7 @@
 #
 
 # PROVIDE: ix-sssd
-# REQUIRE: DAEMON
+# REQUIRE: DAEMON ix-ssl
 # BEFORE: sssd
 
 . /etc/rc.freenas
