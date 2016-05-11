@@ -4,9 +4,12 @@ import os
 import sys
 import pwd
 import grp
-
+import crypt
+import md5
+import random
 from subprocess import Popen, PIPE
 import logging
+
 log = logging.getLogger('generate_webdav_config')
 
 sys.path.extend([
@@ -22,7 +25,17 @@ cache.get_apps()
 
 from freenasUI.services.models import WebDAV
 from freenasUI.sharing.models import WebDAV_Share
-from freenasUI.middleware.notifier import notifier
+
+
+def salt():
+    """
+    Returns a string of 2 random letters.
+    Taken from Eli Carter's htpasswd.py
+    """
+    letters = 'abcdefghijklmnopqrstuvwxyz' \
+              'ABCDEFGHIJKLMNOPQRSTUVWXYZ' \
+              '0123456789/.'
+    return random.choice(letters) + random.choice(letters)
 
 
 # The below is a function borrowed form the notifier
@@ -48,14 +61,21 @@ def _chownrecur(path, uid, gid):
 
 
 def dav_passwd_change(passwd, auth_type):
-        if auth_type == 'basic':
-            cmd = "/usr/local/bin/python /usr/local/bin/htpasswd.py -c -b" \
-                  " /etc/local/apache24/webdavhtbasic webdav %s" % passwd
-        else:
-            cmd = """(echo -n "webdav:webdav:" && echo -n "webdav:webdav:%s" | md5 ) > /etc/local/apache24/webdavhtdigest""" % passwd
-        _pipeopen(cmd)
-        _pipeopen("chown webdav:webdav /etc/local/apache24/webdavht%s"
-                  % (auth_type,))
+    if isinstance(passwd, unicode):
+        passwd = passwd.encode('utf8')
+    if auth_type == 'basic':
+        with open("/etc/local/apache24/webdavhtbasic", "wb+") as f:
+            f.write("webdav:{0}".format(crypt.crypt(passwd, salt())))
+    else:
+        with open("/etc/local/apache24/webdavhtdigest", "wb+") as f:
+            f.write(
+                "webdav:webdav:{0}".format(md5.new("webdav:webdav:{0}".format(passwd)).hexdigest())
+            )
+    os.chown(
+        "/etc/local/apache24/webdavht{0}".format(auth_type),
+        pwd.getpwnam("webdav").pw_uid,
+        grp.getgrnam("webdav").gr_gid
+    )
 
 
 def main():
@@ -66,7 +86,7 @@ def main():
     dav_tcpportssl = webby.webdav_tcpportssl
     dav_protocol = webby.webdav_protocol
     dav_auth_type = webby.webdav_htauth
-    dav_passwd = notifier().pwenc_decrypt(webby.webdav_password)
+    dav_passwd = webby.webdav_password
     if dav_protocol != 'http':
         dav_ssl_certfile = webby.webdav_certssl.cert_certificate_path
         dav_ssl_keyfile = webby.webdav_certssl.cert_privatekey_path
@@ -120,8 +140,7 @@ def main():
     oscmd = "/etc/local/apache24/var"
     if not os.path.isdir(oscmd):
         os.mkdir(oscmd, 0774)
-    _chownrecur(oscmd, pwd.getpwnam("webdav").pw_uid,
-                grp.getgrnam("webdav").gr_gid)
+    _chownrecur(oscmd, pwd.getpwnam("webdav").pw_uid, grp.getgrnam("webdav").gr_gid)
 
     # Now getting to the actual webdav share details and all
     webshares = WebDAV_Share.objects.all()

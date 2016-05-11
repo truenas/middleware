@@ -2170,6 +2170,22 @@ class WebDAV(Model):
         null=True,
     )
 
+    def __init__(self, *args, **kwargs):
+        super(WebDAV, self).__init__(*args, **kwargs)
+        if self.webdav_password:
+            try:
+                self.webdav_password = notifier().pwenc_decrypt(self.webdav_password)
+            except:
+                log.debug('Failed to decrypt Webdav password', exc_info=True)
+                self.webdav_password = ''
+        self._webdav_password_encrypted = False
+
+    def save(self, *args, **kwargs):
+        if self.webdav_password and not self._webdav_password_encrypted:
+            self.webdav_password = notifier().pwenc_encrypt(self.webdav_password)
+            self._webdav_password_encrypted = True
+        return super(WebDAV, self).save(*args, **kwargs)
+
     class Meta:
         verbose_name = _(u"WebDAV")
         verbose_name_plural = _(u"WebDAV")
