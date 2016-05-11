@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:09-0700\n"
-"PO-Revision-Date: 2016-02-01 20:40+0000\n"
-"Last-Translator: fabiusx <fabioslurp@yahoo.it>\n"
+"PO-Revision-Date: 2016-05-10 15:44+0000\n"
+"Last-Translator: fenderbob <Roberto.bagnato94@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: it\n"
 "MIME-Version: 1.0\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1454359223.0\n"
+"X-POOTLE-MTIME: 1462895071.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -7024,7 +7024,6 @@ msgstr "plzip (migliore compressione)"
 #: services/models.py:1639
 #: services/models.py:2103
 #: services/models.py:2104
-#, fuzzy
 msgid "Domain Controller"
 msgstr "Gestore accessi"
 
@@ -7993,9 +7992,8 @@ msgid "pigz (all rounder)"
 msgstr "pigz (miglior compromesso)"
 
 #: choices.py:685
-#, fuzzy
 msgid "Auth"
-msgstr "Autorizzazione"
+msgstr "                  Autenticazione                "
 
 #: choices.py:688
 #, fuzzy
@@ -8003,12 +8001,10 @@ msgid "Local 2"
 msgstr "Utente locale 2"
 
 #: choices.py:691
-#, fuzzy
 msgid "Local 5"
 msgstr "Utente locale"
 
 #: choices.py:701
-#, fuzzy
 msgid "NIS"
 msgstr "NIS"
 
@@ -9013,7 +9009,6 @@ msgid "lz4 (fastest)"
 msgstr "lz4 (più veloce)"
 
 #: choices.py:686
-#, fuzzy
 msgid "Local 0"
 msgstr "Utente locale 0"
 
@@ -9028,17 +9023,14 @@ msgid "Local 3"
 msgstr "Utente locale 3"
 
 #: choices.py:690
-#, fuzzy
 msgid "Local 4"
 msgstr "Utente locale"
 
 #: choices.py:692
-#, fuzzy
 msgid "Local 6"
 msgstr "Utente locale"
 
 #: choices.py:693
-#, fuzzy
 msgid "Local 7"
 msgstr "Utente locale"
 
@@ -12060,7 +12052,6 @@ msgstr "Ora di Sistema"
 
 #: choices.py:587
 #: choices.py:588
-#, fuzzy
 msgid "%(weeks)s weeks"
 msgstr "% settimana(e)"
 
