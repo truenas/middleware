@@ -155,6 +155,38 @@ define([
           return;
         }
 
+        var compare = me.compareTrains(me._currentTrain, val);
+
+        var train_msg = {
+            "NIGHTLY_DOWNGRADE": gettext("You're not allowed to change to away from the nightly train, it is considered a downgrade."),
+            "MINOR_DOWNGRADE": gettext("Changing minor version is considered a downgrade, thus not a supported operation.")
+        }
+        if(compare == "NIGHTLY_DOWNGRADE" || compare == "MINOR_DOWNGRADE") {
+          var errorDialog = new Dialog({
+            title: gettext("Confirm"),
+            style: "background-color: white;",
+            content: train_msg[compare],
+            onHide: function() {
+              ok.destroy();
+              setTimeout(lang.hitch(this, 'destroyRecursive'), manager.defaultDuration);
+            }
+          });
+
+          var ok = new Button({
+            label: gettext("OK"),
+            onClick: function() {
+              me._selectTrain.set('internalchange', true);
+              me._selectTrain.set('value', me._selectTrain.get('oldvalue'));
+              errorDialog.hide();
+            }
+          });
+
+          errorDialog.domNode.appendChild(ok.domNode);
+          errorDialog.show();
+          return;
+
+        }
+
         var confirmDialog;
 
         var ok = new Button({
@@ -189,10 +221,15 @@ define([
           }
         });
 
+        var warning = '';
+        if(compare == "NIGHTLY_UPGRADE") {
+          warning = '<br /><span style="color: red;">' + gettext("WARNING: Changing to a nightly train is a one way street. Changing back to stable is not supported!") + '</span>';
+        }
+
         confirmDialog = new Dialog({
           title: gettext("Confirm"),
           style: "background-color: white;",
-          content: "Are you sure you want to change trains?",
+          content: "Are you sure you want to change trains?" + warning,
           onHide: function() {
             ok.destroy();
             cancel.destroy();
