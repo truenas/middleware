@@ -125,6 +125,7 @@ define([
         query: {"format": "json"}
       }).then(function(data) {
         me.dapCurrentTrain.innerHTML = data.selected_train.name;
+        me._currentTrain = data.selected_train.name;
         me.dapCurrentTrainDesc.innerHTML = data.selected_train.descr;
 
         var options = [];
@@ -231,6 +232,46 @@ define([
 
       this.inherited(arguments);
 
+    },
+    parseTrainName: function(name) {
+      var split = name.split('-');
+      var version = split[1].split('.');
+      var branch = split[2];
+
+      for(var i=0;i<version.length;i++) {
+          try {
+              version[i] = parseInt(version[i]);
+          }
+          catch (e) {}
+      }
+      version.push(branch);
+      return version;
+    },
+    compareTrains: function(t1, t2) {
+      var v1 = this.parseTrainName(t1);
+      var v2 = this.parseTrainName(t2);
+      try {
+
+        if(v1[0] != v2[0] ) {
+          if(v1[0] > v2[0]) {
+            return "MAJOR_DOWNGRADE";
+          } else {
+            return "MAJOR_UPGRADE";
+          }
+        }
+        if(v1[1] > v2[1]) {
+          return "MINOR_DOWNGRADE";
+        }
+        var branch1 = v1[v1.length-1].toLowerCase();
+        var branch2 = v2[v2.length-1].toLowerCase();
+        if(branch1 != branch2) {
+          if(branch2 == "nightlies") {
+            return "NIGHTLY_UPGRADE";
+          } else {
+            return "NIGHTLY_DOWNGRADE";
+          }
+        }
+      } catch (e) {}
     },
     update: function(train) {
 
