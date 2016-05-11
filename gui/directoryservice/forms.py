@@ -682,17 +682,26 @@ class LDAPForm(ModelForm):
         bindpw = cdata.get("ldap_bindpw")
         basedn = cdata.get("ldap_basedn")
         hostname = cdata.get("ldap_hostname")
+        ssl = cdata.get("ldap_ssl")
+        port = 389
+        if ssl == "on":
+            port = 636
+        if hostname:
+            parts = hostname.split(':')
+            hostname = parts[0]
+            if len(parts) > 1:
+                port = int(parts[1]) 
         errors = []
 
         certfile = None
-        ssl = cdata.get("ldap_ssl")
+
         if ssl in ('start_tls', 'on'):
             certificate = cdata["ldap_certificate"]
             certfile = get_certificateauthority_path(certificate)
 
         ret = FreeNAS_LDAP.validate_credentials(
             hostname, binddn=binddn, bindpw=bindpw, basedn=basedn,
-            certfile=certfile, ssl=ssl, errors=errors
+            port=port, certfile=certfile, ssl=ssl, errors=errors
         )
         if ret is False:
             raise forms.ValidationError("%s." % errors[0])
