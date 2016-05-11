@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:05-0700\n"
-"PO-Revision-Date: 2016-05-10 08:58+0000\n"
+"PO-Revision-Date: 2016-05-11 06:21+0000\n"
 "Last-Translator: BouRock <hitowerdigit@hotmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: tr\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1462870720.0\n"
+"X-POOTLE-MTIME: 1462947697.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -4677,7 +4677,7 @@ msgstr "Bağlanacak bağlantı noktası"
 
 #: system/models.py:232
 msgid "encryption of the connection"
-msgstr "bağlantının şifrelemesi"
+msgstr "Bağlantının şifreleme türü"
 
 #: system/models.py:233
 msgid "TLS/SSL"
@@ -6213,7 +6213,7 @@ msgstr "Çalışma Süresi"
 
 #: templates/system/system_info.html:29
 msgid "Load Average"
-msgstr "Ortalama Yük"
+msgstr "Yük Ortalaması"
 
 #~ msgid "Connected through"
 #~ msgstr "Bağlantı adresi"
@@ -8943,7 +8943,7 @@ msgstr "Aktif"
 
 #: middleware/notifier.py:3821
 msgid "Backup"
-msgstr "Yedekleme"
+msgstr "Yedekle"
 
 #: middleware/notifier.py:3822
 msgid "Init"
@@ -9115,7 +9115,7 @@ msgstr "Arayüz Açıklaması"
 
 #: services/models.py:1852
 msgid "Save received info in interface description / alias"
-msgstr "Arayüz açıklaması / takma ad içindeki alınan bilgiyi kaydet"
+msgstr "Arayüz açıklaması / takma adı içindeki alınan bilgiyi kaydeder"
 
 #: services/models.py:1855
 msgid "Country Code"
@@ -10774,7 +10774,7 @@ msgstr "Sertifika Yetkisi"
 
 #: system/views.py:189
 msgid "Created"
-msgstr "Oluşturuldu"
+msgstr "Oluşturma"
 
 #: system/views.py:203
 msgid "Boot Environment successfully activated."
