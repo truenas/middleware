@@ -697,7 +697,7 @@ class LDAPForm(ModelForm):
 
         model = models.LDAP
         widgets = {
-            'ldap_bindpw': forms.widgets.PasswordInput(render_value=True),
+            'ldap_bindpw': forms.widgets.PasswordInput(render_value=False),
         }
 
     def __init__(self, *args, **kwargs):
