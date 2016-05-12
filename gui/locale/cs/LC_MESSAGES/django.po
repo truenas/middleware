@@ -13015,3 +13015,7 @@ msgstr "Disk není prázdný – nacházejí se na něm oddíly či ZFS návěst
 #: storage/nav.py:88
 msgid "View Enclosure"
 msgstr "Zobrazit šasi"
+
+#: services/forms.py:2044
+msgid "Webdav SSL protocol specified without choosing a certificate"
+msgstr ""

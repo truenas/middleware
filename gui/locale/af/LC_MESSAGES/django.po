@@ -12391,3 +12391,7 @@ msgstr ""
 #: storage/nav.py:88
 msgid "View Enclosure"
 msgstr ""
+
+#: services/forms.py:2044
+msgid "Webdav SSL protocol specified without choosing a certificate"
+msgstr ""

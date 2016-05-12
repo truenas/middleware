@@ -13063,3 +13063,7 @@ msgstr ""
 #, fuzzy
 msgid "View Enclosure"
 msgstr "Rsync модул"
+
+#: services/forms.py:2044
+msgid "Webdav SSL protocol specified without choosing a certificate"
+msgstr ""

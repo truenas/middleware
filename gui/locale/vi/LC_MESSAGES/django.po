@@ -12699,3 +12699,7 @@ msgstr ""
 #, fuzzy
 msgid "View Enclosure"
 msgstr "Xem tất cả tài khoản"
+
+#: services/forms.py:2044
+msgid "Webdav SSL protocol specified without choosing a certificate"
+msgstr ""
