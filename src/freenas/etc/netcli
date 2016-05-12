@@ -233,11 +233,16 @@ def configure_interface():
             try:
                 if iface.id != None:
                     iface.int_ipv4address = ''
+                    iface.int_ipv4address_b = ''
                     iface.int_v4netmaskbit = ''
                     iface.int_dhcp = False
                     iface.int_v6netmaskbit = ''
                     iface.int_ipv6address = ''
                     iface.int_ipv6auto = False
+                    iface.int_vip = ''
+                    iface.int_vhid = None
+                    iface.int_pass = ''
+                    iface.int_critical = False
                     iface.save()
             except Exception, err:
                 print _("Failed %s") % str(err)
@@ -273,7 +278,8 @@ def configure_interface():
                 iface.int_interface = nic
                 iface.int_dhcp = True
                 iface.int_ipv4address =  ''
-                iface.int_v4netmaskbit = '' 
+                iface.int_ipv4address_b =  ''
+                iface.int_v4netmaskbit = ''
                 iface.int_v6netmaskbit = ''
                 iface.int_ipv6address = ''
                 iface.int_ipv6auto = False
@@ -304,6 +310,8 @@ def configure_interface():
         else:
             break
 
+    _n = notifier()
+
     while True and need_restart != "DHCP":
         yes = raw_input(_("Configure IPv4? (y/n) "))
         if yes.lower().startswith("y"):
@@ -311,7 +319,18 @@ def configure_interface():
             int_name = raw_input(int_name_prompt)
             if not int_name and iface.int_name:
                 int_name = iface.int_name
-            ip_prompt = prompt("IPv4 Address", iface.int_ipv4address)
+            if not _n.is_freenas() and _n.failover_licensed():
+                if _n.failover_node() == 'A':
+                    ip_label = "IPv4 Address (This Node)"
+                    ip_b_label = "IPv4 Address (Node B)"
+                else:
+                    ip_label = "IPv4 Address (Node A)"
+                    ip_b_label = "IPv4 Address (This Node)"
+                ip_prompt = prompt(ip_label, iface.int_ipv4address)
+                ip_b_prompt = prompt(ip_b_label, iface.int_ipv4address_b)
+            else:
+                ip_prompt = prompt("IPv4 Address", iface.int_ipv4address)
+
             mask_prompt = prompt("IPv4 Netmask", iface.int_v4netmaskbit)
             print _("Several input formats are supported")
             print _("Example 1 CIDR Notation:")
@@ -320,12 +339,18 @@ def configure_interface():
             print "    IP: 192.168.1.1"
             print "    Netmask: 255.255.255.0, /24 or 24"
 
-            ip = mask = None
+            ip = ip_b = mask = None
             while True:
                 ip = raw_input(ip_prompt)
 
                 if not ip and iface.int_ipv4address:
                     ip = iface.int_ipv4address
+
+                if not _n.is_freenas() and _n.failover_licensed():
+                    ip_b = raw_input(ip_b_prompt)
+
+                    if not ip_b and iface.int_ipv4address_b:
+                        ip_b = iface.int_ipv4address_b
 
                 try:
                     try:
@@ -369,6 +394,7 @@ Acceptable formats are 255.255.255.0,
             iface.int_interface = nic
             iface.int_name = int_name
             iface.int_ipv4address = ip
+            iface.int_ipv4address_b = ip_b
             iface.int_v4netmaskbit = mask
             iface.int_dhcp = False
             iface.int_v6netmaskbit = ''
