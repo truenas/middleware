@@ -530,7 +530,7 @@ Select "VDI" and click the "Next" button to see the screen in Figure 2.6f.
 
 .. image:: images/virtualbox6.png
 
-You can now choose whether you want "Dynamically allocated" or "Fixed-size" storage. The first option uses disk space as needed until it reaches the
+Choose either "Dynamically allocated" or "Fixed-size" storage. The first option uses disk space as needed until it reaches the
 maximum size that you will set in the next screen. The second option creates a disk the same size as that specified amount of disk space, whether it is used
 or not. Choose the first option if you are worried about disk space; otherwise, choose the second option as it allows VirtualBox to run slightly faster. Once
 you select "Next", you will see the screen in Figure 2.6g.
@@ -543,7 +543,7 @@ This screen is used to set the size (or upper limit) of the virtual machine. **I
 directory on disk with sufficient space to hold the virtual machine.
 
 Once you make your selection and press "Next", you will see a summary of your choices. Use the "Back" button to return to a previous screen if you need to
-change any values. Otherwise, click "Finish" to finish using the wizard. The virtual machine will be listed in the left frame, as seen in the example in
+change any values. Otherwise, click "Finish" to complete the wizard. The virtual machine will be listed in the left frame, as seen in the example in
 Figure 2.6h.
 
 **Figure 2.6h: The New Virtual Machine**
@@ -559,8 +559,8 @@ Next, create the virtual disk(s) to be used for storage. Click the "Storage" hyp
 
 Click the "Add Attachment" button, select "Add Hard Disk" from the pop-up menu, then click the "Create New Disk" button. This will launch the Create New 
 Virtual Hard Drive Wizard (seen in Figures 2.2e and 2.2f). Since this disk will be used for storage, create a size appropriate to your needs, making sure that
-it is **at least 4 GB** in size. If you wish to practice RAID configurations, create as many virtual disks as you need. You will be able to create 2 disks on
-the IDE controller. If you need additional disks, click the "Add Controller" button to create another controller to attach disks to.
+it is **at least 4 GB** in size. If you wish to practice RAID configurations, create as many virtual disks as needed. You will be able to create 2 disks on
+the IDE controller. For additional disks, click the "Add Controller" button to create another controller to attach disks to.
 
 Next, create the device for the installation media. Highlight the word "Empty", then click the "CD" icon as seen in Figure 2.6j.
 
@@ -576,7 +576,7 @@ mode" when you try to boot the ISO, your CPU either does not have the required e
 
 .. note:: if you receive a kernel panic when booting into the ISO, stop the virtual machine. Then, go to System and check the box "Enable IO APIC".
 
-To configure the network adapter, go to :menuselection:`Settings --> Network`. In the "Attached to" drop-down menu select "Bridged Adapter", then select the
+To configure the network adapter, go to :menuselection:`Settings --> Network`. In the "Attached to" drop-down menu select "Bridged Adapter", then choose the
 name of the physical interface from the "Name" drop-down menu. In the example shown in Figure 2.6k, the Intel Pro/1000 Ethernet card is attached to the
 network and has a device name of *em0*.
 
@@ -585,7 +585,7 @@ network and has a device name of *em0*.
 .. image:: images/virtualbox11.png
 
 Once your configuration is complete, click the "Start" arrow and install FreeNAS® as described in `Performing the Installation`_. Once FreeNAS® is
-installed, press "F12" to access the boot menu in order to select the primary hard disk as the boot option. You can permanently boot from disk by removing the
+installed, press "F12" to access the boot menu and select the primary hard disk as the boot option. You can permanently boot from disk by removing the
 "CD/DVD" device in "Storage" or by unchecking "CD/DVD-ROM" in the "Boot Order" section of "System".
 
 .. _VMware ESXi:
