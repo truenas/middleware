@@ -2563,6 +2563,31 @@ class CertificateImportForm(ModelForm):
         widget=forms.PasswordInput(render_value=True),
     )
 
+    def clean_cert_certificate(self):
+        cdata = self.cleaned_data
+        certificate = cdata.get('cert_certificate')
+        if not certificate:
+            raise forms.ValidationError(_("Empty Certificate!"))
+
+        regex = re.compile(r"(-{5}BEGIN[\s\w]+-{5}[^-]+-{5}END[\s\w]+-{5})+", re.M | re.S)
+        matches = regex.findall(certificate)
+
+        nmatches = len(matches)
+        if not nmatches:
+            raise forms.ValidationError(_(
+                "Not a valid certificate."
+            ))
+
+        if nmatches > 1:
+            self.instance.cert_chain = True
+
+        #
+        # Should we validate the chain??? Probably
+        # For now, just assume the user knows WTF he is doing
+        #
+
+        return certificate
+
     def clean_cert_passphrase(self):
         cdata = self.cleaned_data
 
