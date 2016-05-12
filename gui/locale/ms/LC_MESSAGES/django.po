@@ -12691,3 +12691,7 @@ msgstr ""
 #, fuzzy
 msgid "View Enclosure"
 msgstr "Papar semua pengguna"
+
+#: services/forms.py:2044
+msgid "Webdav SSL protocol specified without choosing a certificate"
+msgstr ""

@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:05-0700\n"
-"PO-Revision-Date: 2016-05-11 06:21+0000\n"
+"PO-Revision-Date: 2016-05-11 10:30+0000\n"
 "Last-Translator: BouRock <hitowerdigit@hotmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: tr\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1462947697.0\n"
+"X-POOTLE-MTIME: 1462962647.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -3102,7 +3102,7 @@ msgid ""
 "last report. 0 to disable"
 msgstr ""
 "Sıcaklık son bildirildiğinden bu yana en az N Santigrat derece değiştiyse "
-"bildir. Etkisizleştirmek için 0"
+"bildirir. Etkisizleştirmek için 0"
 
 #: services/models.py:1475
 msgid "Informal"
@@ -3113,12 +3113,12 @@ msgid ""
 "Report if the temperature is greater or equal than N degrees Celsius. 0 to "
 "disable"
 msgstr ""
-"Sıcaklık N Santigrat dereceden daha büyük veya eşitse bildir. "
+"Sıcaklık N Santigrat dereceden daha büyük veya eşitse bildirir. "
 "Etkisizleştirmek için 0"
 
 #: services/models.py:1480
 msgid "Critical"
-msgstr "Önemli"
+msgstr "Kritik"
 
 #: services/models.py:1484
 msgid "Email to report"
@@ -5105,7 +5105,7 @@ msgstr "UYARI"
 
 #: templates/freeadmin/alert_status.html:13
 msgid "CRITICAL"
-msgstr "ÖNEMLİ"
+msgstr "KRİTİK"
 
 #: templates/freeadmin/generic_form.html:19
 #: templates/freeadmin/generic_model_add.html:53
@@ -6273,7 +6273,7 @@ msgstr ""
 
 #: tools/alert.py:177
 msgid "Critical Alerts"
-msgstr "Önemli Uyarılar"
+msgstr "Kritik Uyarılar"
 
 #~ msgid "Selected"
 #~ msgstr "Seçilen"
@@ -7137,7 +7137,7 @@ msgid ""
 "equal than N degrees Celsius. 0 to disable"
 msgstr ""
 "Sıcaklık N Santigrat dereceden daha büyük veya eşitse sistem günlüğünde "
-"bilgilendirme olarak bildir. Etkisizleştirmek için 0"
+"bilgilendirme olarak bildirir. Etkisizleştirmek için 0"
 
 #: services/models.py:1876
 msgid ""
@@ -7145,7 +7145,7 @@ msgid ""
 "greater or equal than N degrees Celsius. 0 to disable"
 msgstr ""
 "Sıcaklık N Santigrat dereceden daha büyük veya eşitse sistem günlüğünde "
-"önemli olarak bildir ve bir e-posta gönder. Etkisizleştirmek için 0"
+"kritik olarak bildirir ve bir e-posta gönderir. Etkisizleştirmek için 0"
 
 #: services/models.py:1884
 msgid "Destination email address. Separate email addresses by commas"
@@ -12627,7 +12627,7 @@ msgstr "Sanal Anamakine Kimliği"
 
 #: network/models.py:245
 msgid "Critical for Failover"
-msgstr "Yük Devretme için Önemli"
+msgstr "Yük Devretme için Kritik"
 
 #: network/models.py:359
 msgid "Virtual IPv4"
@@ -12746,7 +12746,7 @@ msgstr ""
 
 #: network/forms.py:280
 msgid "One interface must be marked critical for failover."
-msgstr "Bir arayüz yük devretme için önemli olarak işaretlenmek zorundadır."
+msgstr "Bir arayüz yük devretme için kritik olarak işaretlenmek zorundadır."
 
 #: vcp/models.py:41
 msgid "TrueNAS Management IP Address"
@@ -12938,7 +12938,7 @@ msgstr "Geçerli bir sertifika değil."
 
 #: network/forms.py:278
 msgid "Virtual IP is required to set it as Critical for Failover"
-msgstr "Sanal IP, Yük Devretme için Önemli olarak ayarlanması için gerekir"
+msgstr "Sanal IP, Yük Devretme için Kritik olarak ayarlanması için gerekir"
 
 #: network/forms.py:295
 msgid "Failover needs to be disabled to perform network changes."
@@ -13160,3 +13160,7 @@ msgstr "Disk temiz değil, bölümler veya ZFS etiketleri bulundu."
 #: storage/nav.py:88
 msgid "View Enclosure"
 msgstr "Muhafazayı Göster"
+
+#: services/forms.py:2044
+msgid "Webdav SSL protocol specified without choosing a certificate"
+msgstr "Webdav SSL protokolü bir sertifika seçilmeden belirtildi"

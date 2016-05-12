@@ -13304,3 +13304,7 @@ msgstr ""
 #, fuzzy
 msgid "View Enclosure"
 msgstr "檢視 Rsync 資料同步模組"
+
+#: services/forms.py:2044
+msgid "Webdav SSL protocol specified without choosing a certificate"
+msgstr ""

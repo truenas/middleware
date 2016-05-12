@@ -12509,3 +12509,7 @@ msgstr ""
 #, fuzzy
 msgid "View Enclosure"
 msgstr "E16 附件"
+
+#: services/forms.py:2044
+msgid "Webdav SSL protocol specified without choosing a certificate"
+msgstr ""
