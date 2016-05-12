@@ -506,7 +506,8 @@ class Configuration(object):
     _temp = "/tmp"
     _system_dataset = "/var/db/system"
     _package_dir = None
-
+    _manifest = None
+    
     def __init__(self, root = None, file = None):
         if root is not None: self._root = root
         if file is not None: self._config_path = file
@@ -751,12 +752,13 @@ class Configuration(object):
         return
 
     def SystemManifest(self):
-        man = Manifest.Manifest(configuration = self)
-        try:
-            man.LoadPath(self._root + Manifest.SYSTEM_MANIFEST_FILE)
-        except:
-            man = None
-        return man
+        if self._manifest is None:
+            self._manifest = Manifest.Manifest(configuration = self)
+            try:
+                self._manifest.LoadPath(self._root + Manifest.SYSTEM_MANIFEST_FILE)
+            except:
+                self._manifest = None
+        return self._manifest
 
     def PackageDB(self, root = None, create = True):
         if root is None: root = self._root
