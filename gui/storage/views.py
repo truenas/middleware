@@ -31,6 +31,8 @@ import re
 import signal
 import ssl
 import subprocess
+import traceback
+import sys
 import urllib
 from time import sleep
 
@@ -335,12 +337,23 @@ def final_importdisk_return_response(data, abort=False):
 
 def volimport(request):
     if os.path.exists(SOCKIMP):
-        data = json.loads(get_import_progress_from_socket())
-        if data["status"] in ["finished", "error"]:
-            return render(
-                request, 'storage/import_stats.html', final_importdisk_return_response(data)
-            )
-        return render(request, 'storage/import_progress.html')
+        try:
+            data = json.loads(get_import_progress_from_socket())
+            if data["status"] in ["finished", "error"]:
+                return render(
+                    request, 'storage/import_stats.html', final_importdisk_return_response(data)
+                )
+            return render(request, 'storage/import_progress.html')
+        except Exception as e:
+            traceback = traceback.format_exc() if sys.exc_info()[0] else False
+            data = {
+                'vol': '',
+                'status': 'error',
+                'error': str(e),
+                'traceback': traceback
+            }
+            return render(request, 'storage/import_stats.html', data)
+
     if request.method == "POST":
         form = forms.VolumeImportForm(request.POST)
         if form.is_valid():
@@ -381,7 +394,16 @@ def volimport_abort(request):
         s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         s.connect(SOCKIMP)
         s.setblocking(0)
-        data = json.loads(get_import_progress_from_socket(s))
+        try:
+            data = json.loads(get_import_progress_from_socket(s))
+        except Exception as e:
+            traceback = traceback.format_exc() if sys.exc_info()[0] else False
+            data = {
+                'vol': '',
+                'status': 'error',
+                'error': str(e),
+                'traceback': traceback
+            }
         if data["status"] == "finished":
             s.send("done")
             s.close()

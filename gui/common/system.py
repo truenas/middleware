@@ -364,6 +364,8 @@ def is_mounted(**kwargs):
 
 
 def mount(dev, path, mntopts=None, fstype=None):
+    mount_cmd = ['/sbin/mount']
+
     if isinstance(dev, unicode):
         dev = dev.encode('utf-8')
 
@@ -375,22 +377,26 @@ def mount(dev, path, mntopts=None, fstype=None):
     else:
         opts = []
 
-    fstype = ['-t', fstype] if fstype else []
+    if fstype == 'ntfs':
+        mount_cmd = ['/usr/local/bin/ntfs-3g']
+        fstype = []
+    else:
+        fstype = ['-t', fstype] if fstype else []
 
     proc = subprocess.Popen(
-        ['/sbin/mount'] + opts + fstype + [dev, path],
+        mount_cmd + opts + fstype + [dev, path],
         stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT)
-    output = proc.communicate()[0]
+        stderr=subprocess.PIPE
+    )
+    output = proc.communicate()
 
     if proc.returncode != 0:
         log.debug("Mount failed (%s): %s", proc.returncode, output)
-        raise ValueError(_(
-            "Mount failed (%(retcode)s) -> %(output)s" % {
-                'retcode': proc.returncode,
-                'output': output,
-            }
-        ))
+        raise ValueError(_("Mount failed {0} -> {1}, {2}" .format(
+            proc.returncode,
+            output[0],
+            output[1]
+        )))
     else:
         return True
 
@@ -404,17 +410,16 @@ def umount(path, force=False):
     proc = subprocess.Popen(
         cmdlst,
         stdout=subprocess.PIPE,
-        stderr=subprocess.STDOUT)
-    output = proc.communicate()[0]
+        stderr=subprocess.PIPE)
+    output = proc.communicate()
 
     if proc.returncode != 0:
         log.debug("Umount failed (%s): %s", proc.returncode, output)
-        raise ValueError(_(
-            "Unmount Failed (%(retcode)s) -> %(output)s" % {
-                'retcode': proc.returncode,
-                'output': output,
-            }
-        ))
+        raise ValueError(_("Unmount Failed {0} -> {1} {2}".format(
+            proc.returncode,
+            output[0],
+            output[1]
+        )))
     else:
         return True
 
