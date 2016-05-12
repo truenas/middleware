@@ -411,7 +411,7 @@ entries include a date and timestamp, indicating when that boot environment was 
 
 .. image:: images/boot1.png
 
-To boot into the previous version of the operating system, use the up or down arrow to select it and press enter.
+To boot into the previous version of the operating system, use the up or down arrow to select it and press :kbd:`Enter`.
 
 Should a boot device fail and the system no longer boots, don't panic. The data is still on your disks and you still have a copy of your saved configuration.
 You can always:
