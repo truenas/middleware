@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:06-0700\n"
-"PO-Revision-Date: 2016-05-11 09:17+0000\n"
+"PO-Revision-Date: 2016-05-12 09:16+0000\n"
 "Last-Translator: Anonymous Pootle User\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: zu\n"
@@ -16,7 +16,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1462958224.0\n"
+"X-POOTLE-MTIME: 1463044614.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -12195,4 +12195,12 @@ msgstr ""
 
 #: services/forms.py:2044
 msgid "Webdav SSL protocol specified without choosing a certificate"
+msgstr ""
+
+#: common/system.py:395
+msgid "Mount failed {0} -> {1}, {2}"
+msgstr ""
+
+#: common/system.py:418
+msgid "Unmount Failed {0} -> {1} {2}"
 msgstr ""

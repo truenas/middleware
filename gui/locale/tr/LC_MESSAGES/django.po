@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:05-0700\n"
-"PO-Revision-Date: 2016-05-11 10:30+0000\n"
+"PO-Revision-Date: 2016-05-12 13:11+0000\n"
 "Last-Translator: BouRock <hitowerdigit@hotmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: tr\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1462962647.0\n"
+"X-POOTLE-MTIME: 1463058699.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -473,7 +473,7 @@ msgstr "SSH üzerinden Rsync"
 
 #: choices.py:567
 msgid "Push"
-msgstr "Gönder"
+msgstr "Yolla"
 
 #: choices.py:568
 msgid "Pull"
@@ -1011,7 +1011,7 @@ msgid ""
 "When enabled, use DHCP to obtain IPv4 address as well as default router, etc."
 msgstr ""
 "Etkinleştirildiğinde, IPv4 adresi almak için varsayılan yönlendiricinin, vb. "
-"yanı sıra DHCP kullanın."
+"yanı sıra DHCP kullanır."
 
 #: network/models.py:99 network/models.py:215
 #: templates/network/interface.html:8 templates/network/summary.html:6
@@ -1678,7 +1678,7 @@ msgid ""
 "15 characters)."
 msgstr ""
 "Sunucu çalışma grubu istemciler tarafından sorgulandığında görünecek (en "
-"fazla15 karakter)."
+"fazla 15 karakter)."
 
 #: services/models.py:88
 msgid "Server description. This can usually be left blank."
@@ -4814,7 +4814,7 @@ msgstr "Yolla - Yerelden uzak makineye. Al - Uzaktan yerel makineye."
 
 #: system/models.py:527
 msgid "Recurse into directories"
-msgstr "Dizinlerin içinde yinele"
+msgstr "Dizinlerin içinde yineler"
 
 #: system/models.py:531
 msgid "Times"
@@ -4822,15 +4822,15 @@ msgstr "Zamanlar"
 
 #: system/models.py:532
 msgid "Preserve modification times"
-msgstr "Değişiklik zamanlarını koru"
+msgstr "Değişiklik zamanlarını korur"
 
 #: system/models.py:536
 msgid "Compress"
-msgstr "Sıkıştırma"
+msgstr "Sıkıştır"
 
 #: system/models.py:537
 msgid "Compress data during the transfer"
-msgstr "Veriyi aktarım sırasında sıkıştır"
+msgstr "Veriyi aktarım sırasında sıkıştırır"
 
 #: system/models.py:541
 msgid "Archive"
@@ -4875,11 +4875,11 @@ msgstr "Sil"
 
 #: system/models.py:547
 msgid "Delete files on the receiving side that don't exist on sender"
-msgstr "Alınan tarafta göndereni olmayan dosyaları sil"
+msgstr "Alınan tarafta göndereni olmayan dosyaları siler"
 
 #: system/models.py:553
 msgid "Suppress non-error messages"
-msgstr "Hata olmayan iletileri gösterme"
+msgstr "Hata olmayan iletileri göstermez"
 
 #: system/models.py:557
 msgid "Preserve permissions"
@@ -4895,7 +4895,7 @@ msgstr ""
 
 #: system/models.py:564
 msgid "Preserve extended attributes"
-msgstr "Genişletilmiş öznitelikleri koru"
+msgstr "Genişletilmiş öznitelikleri korur"
 
 #: system/models.py:565
 msgid ""
@@ -8307,16 +8307,16 @@ msgstr "Çekirdek çökme dökümlerinin otomatik gönderilmesini etkinleştir"
 msgid ""
 "Redirect the standard output to /dev/null. In other words, disable output."
 msgstr ""
-"Standart çıktıyı /dev/null dizinine yönlendirin. Diğer bir değişle çıktıyı "
-"etkisizleştirin."
+"Standart çıktıyı /dev/null dizinine yönlendirir. Diğer bir değişle çıktıyı "
+"etkisizleştirir."
 
 #: system/models.py:427
 msgid ""
 "Redirect the standard error output to /dev/null. In other words, disable "
 "error output."
 msgstr ""
-"Standart hata çıkıtısını /dev/null dizinine yönlendirin. Diğer bir değişle "
-"hata çıktısını etkisizleştirin."
+"Standart hata çıkıtısını /dev/null dizinine yönlendirir. Diğer bir değişle "
+"hata çıktısını etkisizleştirir."
 
 #: system/models.py:519
 msgid "Remote SSH Port"
@@ -12362,7 +12362,7 @@ msgstr "Güncellemeleri Ertele"
 
 #: tasks/models.py:420
 msgid "Put all updated files into place at the end"
-msgstr "Tüm güncellenmiş dosyaları sondaki yerin içine koyun"
+msgstr "Tüm güncellenmiş dosyaları sondaki yerin içine koyar"
 
 #: templates/reporting/index.html:15
 msgid "ZFS"
@@ -13164,3 +13164,11 @@ msgstr "Muhafazayı Göster"
 #: services/forms.py:2044
 msgid "Webdav SSL protocol specified without choosing a certificate"
 msgstr "Webdav SSL protokolü bir sertifika seçilmeden belirtildi"
+
+#: common/system.py:395
+msgid "Mount failed {0} -> {1}, {2}"
+msgstr "Bağlama başarısız oldu {0} -> {1}, {2}"
+
+#: common/system.py:418
+msgid "Unmount Failed {0} -> {1} {2}"
+msgstr "Sökme başarısız oldu {0} -> {1} {2}"

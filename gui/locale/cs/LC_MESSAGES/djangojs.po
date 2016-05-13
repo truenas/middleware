@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:10-0700\n"
-"PO-Revision-Date: 2016-03-28 09:22+0000\n"
+"PO-Revision-Date: 2016-05-12 11:01+0000\n"
 "Last-Translator: Pavel <pavel.borecki@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: cs\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1459156928.0\n"
+"X-POOTLE-MTIME: 1463050919.0\n"
 
 #~ msgid "Reporting"
 #~ msgstr "Reportování"
@@ -629,3 +629,40 @@ msgstr "Popis"
 #: freeadmin/static/lib/js/freeadmin/SupportTicket.js:128
 msgid "Attachments"
 msgstr "Přílohy"
+
+#: freeadmin/static/lib/js/freeadmin/Update.js:161
+msgid ""
+"You're not allowed to change away from the nightly train, it is considered a "
+"downgrade."
+msgstr ""
+"Z testovací řady nelze přejít na jinou, podobně jako není možné přejít na "
+"starší vydání systému."
+
+#: freeadmin/static/lib/js/freeadmin/Update.js:161
+#: freeadmin/static/lib/js/freeadmin/Update.js:162
+msgid ""
+"If you have an existing boot environment that uses that train, boot into it "
+"in order to upgrade that train."
+msgstr ""
+"Pokud máte existující zaváděcí prostředí, které používá tuto řadu, "
+"nastartujte do něj a přejděte na jinou řadu z něj."
+
+#: freeadmin/static/lib/js/freeadmin/Update.js:162
+msgid ""
+"Changing minor version is considered a downgrade, thus not a supported "
+"operation."
+msgstr ""
+"Změna drobné verze je považována za to samé, jako návrat na předchozí řadu a "
+"tudíž nepodporovanou operaci."
+
+#: freeadmin/static/lib/js/freeadmin/Update.js:176
+msgid "OK"
+msgstr "OK"
+
+#: freeadmin/static/lib/js/freeadmin/Update.js:226
+msgid ""
+"WARNING: Changing to a nightly train is a one way street. Changing back to "
+"stable is not supported!"
+msgstr ""
+"VAROVÁNÍ: Přechod na testovací řadu je pouze jednosměrný. Návrat zpět na "
+"stabilní řadu není podporován!"
