@@ -12519,3 +12519,11 @@ msgstr ""
 #: services/forms.py:2044
 msgid "Webdav SSL protocol specified without choosing a certificate"
 msgstr ""
+
+#: common/system.py:395
+msgid "Mount failed {0} -> {1}, {2}"
+msgstr ""
+
+#: common/system.py:418
+msgid "Unmount Failed {0} -> {1} {2}"
+msgstr ""

@@ -595,3 +595,32 @@ msgstr "加密"
 #: freeadmin/static/lib/js/freeadmin/SupportTicket.js:128
 msgid "Attachments"
 msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/Update.js:161
+msgid ""
+"You're not allowed to change away from the nightly train, it is considered a "
+"downgrade."
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/Update.js:161
+#: freeadmin/static/lib/js/freeadmin/Update.js:162
+msgid ""
+"If you have an existing boot environment that uses that train, boot into it "
+"in order to upgrade that train."
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/Update.js:162
+msgid ""
+"Changing minor version is considered a downgrade, thus not a supported "
+"operation."
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/Update.js:176
+msgid "OK"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/Update.js:226
+msgid ""
+"WARNING: Changing to a nightly train is a one way street. Changing back to "
+"stable is not supported!"
+msgstr ""

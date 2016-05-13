@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:10-0700\n"
-"PO-Revision-Date: 2016-03-16 09:16+0000\n"
+"PO-Revision-Date: 2016-05-12 09:16+0000\n"
 "Last-Translator: Anonymous Pootle User\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: pa\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1458119791.0\n"
+"X-POOTLE-MTIME: 1463044598.0\n"
 
 #: freeadmin/static/lib/js/freeadmin.js:56
 msgid "Reporting"
@@ -579,4 +579,33 @@ msgstr ""
 
 #: freeadmin/static/lib/js/freeadmin/SupportTicket.js:128
 msgid "Attachments"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/Update.js:161
+msgid ""
+"You're not allowed to change away from the nightly train, it is considered a "
+"downgrade."
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/Update.js:161
+#: freeadmin/static/lib/js/freeadmin/Update.js:162
+msgid ""
+"If you have an existing boot environment that uses that train, boot into it "
+"in order to upgrade that train."
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/Update.js:162
+msgid ""
+"Changing minor version is considered a downgrade, thus not a supported "
+"operation."
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/Update.js:176
+msgid "OK"
+msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin/Update.js:226
+msgid ""
+"WARNING: Changing to a nightly train is a one way street. Changing back to "
+"stable is not supported!"
 msgstr ""
