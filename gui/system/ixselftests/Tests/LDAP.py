@@ -27,8 +27,6 @@
 import os
 import sys
 
-from string import join
-
 sys.path.extend([
     '/usr/local/www',
     '/usr/local/www/freenasUI'
