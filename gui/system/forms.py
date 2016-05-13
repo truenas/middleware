@@ -1927,7 +1927,7 @@ class InitialWizardVolumeImportForm(VolumeAutoImportForm):
             return False
         if Volume.objects.all().exists():
             return False
-        return len(cls._populate_disk_choices()) > 0
+        return len(cls._unused_volumes()) > 0
 
 
 class InitialWizardSettingsForm(Form):
