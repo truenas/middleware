@@ -932,12 +932,12 @@ class VolumeResourceMixin(NestedMixin):
                     child.path,
                     {},
                 ).get('org.freenas:description', ('', '-'))[1]
-              
-                #Filtering out comments field for Jails
+
+                # Filtering out comments field for Jails
                 for jail in jails_list:
                     child_name = child.name.split('/')
                     length = len(child_name)
-                    if jail.jail_host == child_name[length-1] or "warden" in child_name[length-1]:
+                    if jail.jail_host == child_name[length - 1] or "warden" in child_name[length - 1]:
                         data['comments'] = '-'
 
             if self.is_webclient(bundle.request):
