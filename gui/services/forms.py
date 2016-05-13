@@ -733,11 +733,7 @@ class DynamicDNSForm(ModelForm):
         return cdata
 
     def save(self):
-        obj = super(DynamicDNSForm, self).save(commit=False)
-        obj.ddns_password = notifier().pwenc_encrypt(
-            self.cleaned_data.get('ddns_password')
-        )
-        obj.save()
+        obj = super(DynamicDNSForm, self).save()
         started = notifier().restart("dynamicdns")
         if (
             started is False and
