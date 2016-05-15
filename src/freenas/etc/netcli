@@ -462,6 +462,35 @@ Acceptable formats are 255.255.255.0,
         elif yes.lower().startswith("n"):
             break
 
+    while True:
+        if _n.is_freenas() or not _n.failover_licensed():
+            break
+        yes = raw_input(_("Configure failover settings? (y/n) "))
+        if yes.lower().startswith("y"):
+
+            vip_prompt = prompt("Virtual IP", iface.int_vip)
+
+            vip = raw_input(vip_prompt)
+
+            if not vip and iface.int_vip:
+                vip = iface.int_vip
+
+            iface.int_vip = vip
+
+            print _("Saving interface configuration:"),
+            try:
+                iface.save()
+            except:
+                print _("Failed")
+                return False
+            print _("Ok")
+            if not need_restart:
+                need_restart = True
+            break
+
+        elif yes.lower().startswith("n"):
+            break
+
     if need_restart:
         print _("Restarting network:"),
         try:
