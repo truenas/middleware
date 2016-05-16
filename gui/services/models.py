@@ -1238,6 +1238,12 @@ class UPS(Model):
         help_text=_("Additional parameters to the hardware-specific part "
                     "of the driver."),
     )
+    ups_optionsupsd = models.TextField(
+        verbose_name=_("Auxiliary parameters (upsd.conf)"),
+        blank=True,
+        help_text=_("Additional parameters to the hardware-specific part "
+                    "of the driver."),
+    )
     ups_description = models.CharField(
         max_length=120,
         verbose_name=_("Description"),

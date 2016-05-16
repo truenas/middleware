@@ -107,7 +107,7 @@ generate_upsd()
 {
 
     local IFS="|"
-    local f="ups_rmonitor"
+    local f="id ups_rmonitor"
     eval local $f
     local sf
     sf=$(echo $f | sed -e 's/ /, /g')
@@ -119,6 +119,8 @@ generate_upsd()
         else
 	        echo "LISTEN 127.0.0.1"
         fi
+    ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
+    "SELECT ups_optionsupsd FROM services_ups WHERE id = ${id}"
     done
 
 }
