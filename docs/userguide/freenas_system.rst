@@ -680,8 +680,13 @@ This screen also shows which software branch, or train, the system is currently 
 * **FreeNAS-9.3-STABLE:** this is the maintenance-only mode for an older version of FreeNAS®. It is recommended to upgrade to "FreeNAS-9.10-STABLE", by selecting that train, to ensure that
   the system receives bug fixes and new features.
 
-To change the train, use the drop-down menu to make a different selection. It also lists the URL of the official update server should that information be
-needed in a network with outbound firewall restrictions.
+To change the train, use the drop-down menu to make a different selection. 
+
+.. note:: the train selector will not allow you to do a downgrade. For example, you cannot select a STABLE train while booted into a Nightly boot environment or select a 9.3 train while
+   booted into a 9.10 boot environment. If you have been testing or running a more recent version and wish to go back to an earlier version, reboot and select a boot environment for that
+   earlier version. You can then use this screen to see if any updates are available for that train.
+
+This screen also lists the URL of the official update server should that information be needed in a network with outbound firewall restrictions.
 
 The "Verify Install" button will go through the operating system files in the current installation, looking for any inconsistencies. When finished, a pop-up
 menu will list any files with checksum mismatches or permission errors.
