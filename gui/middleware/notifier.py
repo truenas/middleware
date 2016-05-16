@@ -2422,7 +2422,7 @@ class notifier:
             fd = open(keypath, 'w')
             fd.write(pubkey)
             fd.close()
-            self._system("/usr/sbin/chown -R %s:%s %s" % (username, groupname, sshpath))
+            self._system("""/usr/sbin/chown -R %s:%s "%s" """ % (username, groupname, sshpath))
         os.umask(saved_umask)
 
     def delete_pubkey(self, homedir):
