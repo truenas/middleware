@@ -48,8 +48,10 @@ from freenasUI.common.freenasldap import (
 
 from system.ixselftests import TestObject
 
+
 def List():
     return ["ActiveDirectory"]
+
 
 class ActiveDirectory(TestObject):
     def __init__(self, handler=None):
@@ -69,4 +71,3 @@ class ActiveDirectory(TestObject):
                 return self._handler.Fail("ActiveDirectory", "Unable to login to the Domain Controller.")
         except Exception as e:
             return self._handler.Fail("ActiveDirectory", str(e))
-
