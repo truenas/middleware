@@ -1,1 +1,7 @@
-#14719 Bug Critical No longer use rebootless updates for CVE-2016-2118
+#15132	Bug	Expected	LDAP with TLS is not binding on bootup
+#15047	Bug	Expected	Fix port number issues with ldap
+#14958	Bug	Expected	NFS bind addresses don't work for lockd
+#14921	Bug	Expected	Remove sipcalc from AD binding
+#15098	Bug	Important	zpool import -T doesn't work on 9.3
+#14841	Bug	Important	Misleading "vfs.nfsd.enable_stringtouid:: not found" message in console log
+#14759	Bug	Important	9.2 - 9.3 upgrade changes the rid mapping
