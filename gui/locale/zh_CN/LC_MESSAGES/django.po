@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:07-0700\n"
-"PO-Revision-Date: 2015-11-20 04:36+0000\n"
-"Last-Translator: zy2688 <zy2688@gmail.com>\n"
+"PO-Revision-Date: 2016-05-15 07:07+0000\n"
+"Last-Translator: jimhu <jimhuyiwei@me.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: zh_CN\n"
 "MIME-Version: 1.0\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1447994162.0\n"
+"X-POOTLE-MTIME: 1463296042.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -11925,13 +11925,13 @@ msgstr "加密算法"
 
 #: directoryservice/models.py:747
 msgid "Principal name"
-msgstr ""
+msgstr "规则名称"
 
 #: directoryservice/models.py:962
 #: directoryservice/models.py:1198
 #, fuzzy
 msgid "Kerberos Principal"
-msgstr "Kerberos Principal"
+msgstr "Kerberos 规则"
 
 #: network/forms.py:254
 msgid "The following VHIDs are already in use: %s"
@@ -12245,7 +12245,7 @@ msgstr "若允许信任域，则设置此项。"
 
 #: services/forms.py:1436
 msgid "File size must be a multiple of block size"
-msgstr ""
+msgstr "文件大小必须是块大小的整数倍"
 
 #: system/alertmods/mpr_firmware.py:34
 #, fuzzy
@@ -12298,7 +12298,7 @@ msgstr ""
 #: services/forms.py:1129
 #, fuzzy
 msgid "LUN ID must be a positive integer"
-msgstr "间隔必须为整数。"
+msgstr "LUN ID 必须为正整数。"
 
 #: services/models.py:115
 #, fuzzy
@@ -12363,7 +12363,7 @@ msgstr ""
 
 #: directoryservice/models.py:953
 msgid "Disable Active Directory user/group cache"
-msgstr ""
+msgstr "禁用 Active Directory 用户/用户组缓存"
 
 #: directoryservice/models.py:954
 msgid ""
@@ -12408,6 +12408,8 @@ msgid ""
 "Use this option if you are experiencing slowness or having difficulty "
 "binding to the domain with a large number of users and groups."
 msgstr ""
+"如果您希望禁用 Active Directory "
+"用户和用户组缓存，请选中此项。如果遇到系统运行缓慢或者在域名上绑定大量用户和用户组时遇到困难，请选中此项。"
 
 #: system/forms.py:2081
 #, fuzzy
@@ -12429,19 +12431,17 @@ msgid "Repair"
 msgstr "已修复"
 
 #: choices.py:188
-#, fuzzy
 msgid "SMB3_02"
-msgstr "SMB3_00"
+msgstr "SMB3_02"
 
 #: choices.py:189
 #, fuzzy
 msgid "SMB3_10"
-msgstr "SMB3_00"
+msgstr "SMB3_10"
 
 #: choices.py:190
-#, fuzzy
 msgid "SMB3_11"
-msgstr "SMB3"
+msgstr "SMB3_11"
 
 #: services/models.py:92
 #, fuzzy
@@ -12465,7 +12465,7 @@ msgstr ""
 #: jails/forms.py:225
 #, fuzzy
 msgid "Jail name may contain only alphanumeric characters and underscore."
-msgstr "评论只能包含字母、数字、下划线或者横线"
+msgstr "Jail 只能包含字母、数字、下划线或者横线。"
 
 #: services/forms.py:266
 #, fuzzy
@@ -12512,12 +12512,12 @@ msgstr "E16 附件"
 
 #: services/forms.py:2044
 msgid "Webdav SSL protocol specified without choosing a certificate"
-msgstr ""
+msgstr "未为 Webdav SSL 协议指定一个证书"
 
 #: common/system.py:395
 msgid "Mount failed {0} -> {1}, {2}"
-msgstr ""
+msgstr "挂载失败 {0} -> {1}, {2}"
 
 #: common/system.py:418
 msgid "Unmount Failed {0} -> {1} {2}"
-msgstr ""
+msgstr "卸载失败 {0} -> {1} {2}"
