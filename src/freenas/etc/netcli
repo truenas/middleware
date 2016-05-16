@@ -469,13 +469,22 @@ Acceptable formats are 255.255.255.0,
         if yes.lower().startswith("y"):
 
             vip_prompt = prompt("Virtual IP", iface.int_vip)
-
             vip = raw_input(vip_prompt)
-
             if not vip and iface.int_vip:
                 vip = iface.int_vip
-
             iface.int_vip = vip
+
+            vhid_prompt = prompt("VHID", iface.int_vhid)
+            vhid = raw_input(vhid_prompt)
+            if not vhid and iface.int_vhid:
+                vhid = iface.int_vhid
+            iface.int_vhid = vhid
+
+            pwd_prompt = prompt("Password", iface.int_pass)
+            passwd = raw_input(pwd_prompt)
+            if not passwd and iface.int_pass:
+                passwd = iface.int_pass
+            iface.int_pass = passwd
 
             print _("Saving interface configuration:"),
             try:
