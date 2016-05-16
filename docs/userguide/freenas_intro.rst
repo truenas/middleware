@@ -132,6 +132,9 @@ Some updates affect the user interface so this section lists any functional chan
    
 * Samba has been updated to `4.3.6 <https://www.samba.org/samba/history/samba-4.3.6.html>`_.
 
+* Smartmontools has been updated to `6.5 <https://www.smartmontools.org/browser/tags/RELEASE_6_5/smartmontools/NEWS>`_ which adds
+  `NVMe support <https://www.smartmontools.org/wiki/NVMe_Support>`_.
+
 * The "Readonly" column has been added to :menuselection:`Storage --> Volumes --> View Volumes` so that it is easy to visualize which are read-only replications from another server.
    
 * The "fruit", "shell_snap", "snapper", "unityed_media", and "worm" VFS objects have been added to
