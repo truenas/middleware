@@ -98,8 +98,8 @@ from freenasUI.system.utils import (
 )
 from tastypie import fields, http
 from tastypie.http import (
-    HttpAccepted,
-    HttpCreated, HttpMethodNotAllowed, HttpMultipleChoices, HttpNotFound
+    HttpAccepted, HttpCreated, HttpMethodNotAllowed, HttpMultipleChoices,
+    HttpNotFound, HttpNoContent,
 )
 from tastypie.exceptions import ImmediateHttpResponse, NotFound
 from tastypie.utils import trailing_slash
@@ -2390,8 +2390,8 @@ class SnapshotResource(DojoResource):
         )
         return self.create_response(
             bundle.request,
-            bundle,
-            response_class=HttpAccepted,
+            None,
+            response_class=HttpNoContent,
         )
 
     def dehydrate(self, bundle):
