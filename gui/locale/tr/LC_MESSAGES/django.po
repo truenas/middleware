@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:05-0700\n"
-"PO-Revision-Date: 2016-05-12 13:11+0000\n"
+"PO-Revision-Date: 2016-05-14 18:52+0000\n"
 "Last-Translator: BouRock <hitowerdigit@hotmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: tr\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1463058699.0\n"
+"X-POOTLE-MTIME: 1463251947.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -12160,7 +12160,7 @@ msgstr "Lisans güncellendi."
 
 #: system/forms.py:1027
 msgid "Continue operation if the server could not be reached/validated."
-msgstr "Eğer sunucu ulaşılamaz/doğrulanamaz ise işleme devam et."
+msgstr "Eğer sunucu ulaşılamaz/doğrulanamaz ise işleme devam eder."
 
 #: system/forms.py:2215
 #: system/forms.py:2688
