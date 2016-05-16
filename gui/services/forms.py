@@ -261,7 +261,7 @@ class CIFSForm(ModelForm):
         alias = self.cleaned_data.get("cifs_srv_netbiosalias")
         if alias:
             try:
-                validate_netbios_names(netbios)
+                validate_netbios_names(alias)
             except Exception as e:
                 raise forms.ValidationError(_("NetBIOS Alias: %s" % e))
         return alias
@@ -742,6 +742,7 @@ class DynamicDNSForm(ModelForm):
             raise ServiceFailed(
                 "dynamicdns", _("The DynamicDNS service failed to reload.")
             )
+        return obj
 DynamicDNSForm.base_fields.keyOrder.remove('ddns_password2')
 DynamicDNSForm.base_fields.keyOrder.insert(5, 'ddns_password2')
 
