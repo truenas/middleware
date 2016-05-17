@@ -256,6 +256,7 @@ def bootenv_datagrid_structure(request):
         ('name', {'label': _('Name')}),
         ('active', {'label': _('Active')}),
         ('created', {'label': _('Created')}),
+        ('keep', {'label': _('Keep')}),
     ))
     return HttpResponse(
         json.dumps(structure),
@@ -436,7 +437,7 @@ def bootenv_rename(request, name):
 
 def bootenv_keep(request, name):
     if request.method == 'POST':
-        be = FindClone("default")
+        be = FindClone(name)
         keep = CloneSetAttr(be, keep = True)
         if keep:
             return JsonResp(

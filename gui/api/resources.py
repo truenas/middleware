@@ -2693,6 +2693,7 @@ class BootEnvResource(NestedMixin, DojoResource):
     active = fields.CharField(attribute='active')
     space = fields.CharField(attribute='space')
     created = fields.CharField(attribute='created')
+    keep = fields.CharField(attribute='keep')
 
     class Meta:
         object_class = BootEnv
@@ -3013,6 +3014,10 @@ class BootEnvResource(NestedMixin, DojoResource):
             bundle.data['_rename_url'] = reverse(
                 'system_bootenv_rename', kwargs={'name': bundle.obj.name},
             )
+            if bundle.obj.keep:
+                bundle.data['keep'] = "Yes"
+            else:
+                bundle.data['keep'] = "No"
             bundle.data['_keep_url'] = reverse(
                 'system_bootenv_keep', kwargs={'name': bundle.obj.name},
             )
