@@ -53,7 +53,7 @@ class Application(WebSocketApplication):
                 'id': message['id'],
                 'msg': 'result',
                 'result': self.middleware.call_method(
-                    message['method'], message.get('params', [])
+                    message['method'], message.get('params') or []
                 ),
             })
         except Exception as e:
