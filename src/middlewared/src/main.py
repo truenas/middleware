@@ -1,8 +1,9 @@
 from collections import OrderedDict
-from geventwebsocket import WebSocketServer, WebSocketApplication, Resource
 from freenas.client.protocol import DDPProtocol
+from geventwebsocket import WebSocketServer, WebSocketApplication, Resource
 
 import json
+import subprocess
 
 
 class Application(WebSocketApplication):
@@ -12,11 +13,37 @@ class Application(WebSocketApplication):
     def __init__(self, *args, **kwargs):
         self.middleware = kwargs.pop('middleware')
         super(Application, self).__init__(*args, **kwargs)
+        self.authenticated = self._check_permission()
 
     def _send(self, data):
         self.ws.send(json.dumps(data))
 
+    def send_error(self, message, error, stacktrace=None):
+        self._send({
+            'msg': 'result',
+            'id': message['id'],
+            'error': {
+                'error': error,
+                'stacktrace': stacktrace,
+            },
+        })
+
+    def _check_permission(self):
+        remote = '{0}:{1}'.format(
+            self.ws.environ['REMOTE_ADDR'], self.ws.environ['REMOTE_PORT']
+        )
+
+        proc = subprocess.Popen([
+            '/usr/bin/sockstat', '-46c', '-p', self.ws.environ['REMOTE_PORT']
+        ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        for line in proc.communicate()[0].strip().splitlines()[1:]:
+            cols = line.split()
+            if cols[-1] == remote and cols[0] == 'root':
+                return True
+        return False
+
     def call_method(self, message):
+
         try:
             self._send({
                 'id': message['id'],
@@ -26,13 +53,7 @@ class Application(WebSocketApplication):
                 ),
             })
         except Exception as e:
-            self._send({
-                'id': message['id'],
-                'msg': 'result',
-                'error': {
-                    'error': str(e),
-                },
-            })
+            self.send_error(message, str(e))
 
     def on_open(self):
         pass
@@ -41,7 +62,11 @@ class Application(WebSocketApplication):
         pass
 
     def on_message(self, message):
-        print message
+
+        if not self.authenticated:
+            self.send_error(message, 'Not authenticated')
+            return
+
         if message['msg'] == 'method':
             self.call_method(message)
 
