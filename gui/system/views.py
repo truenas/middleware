@@ -437,8 +437,8 @@ def bootenv_rename(request, name):
 
 def bootenv_keep(request, name):
     if request.method == 'POST':
-        be = FindClone(name)
-        keep = CloneSetAttr(be, keep = True)
+        be = FindClone(name) 
+        keep = CloneSetAttr(be, keep=True)
         if keep:
             return JsonResp(
                 request,
@@ -451,7 +451,6 @@ def bootenv_keep(request, name):
     return render(request, 'system/bootenv_keep.html', {
         'name': name,
     })
-
 
 
 def bootenv_pool_attach(request):
