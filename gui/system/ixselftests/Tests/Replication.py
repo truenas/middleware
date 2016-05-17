@@ -30,6 +30,7 @@ import re
 import subprocess
 import sys
 
+
 def List():
     return ["replication"]
 
@@ -56,13 +57,14 @@ from freenasUI.common.system import send_mail, get_sw_name
 
 from system.ixselftests import TestObject
 
+
 class replication(TestObject):
     def __init__(self, handler):
         super(self.__class__, self).__init__(handler)
         self._replications = Replication.objects.all()
         if tpath:
             sys.path = tpath
-            
+
     def Enabled(self):
         # For now
         return len(self._replications) > 0
@@ -84,7 +86,7 @@ class replication(TestObject):
 
             if not replication.repl_enabled:
                 continue
-            
+
             if cipher == 'fast':
                 sshcmd = (
                     '/usr/bin/ssh -c arcfour256,arcfour128,blowfish-cbc,'
@@ -109,7 +111,7 @@ class replication(TestObject):
 
             sshcmd = '%s -p %d %s' % (sshcmd, remote_port, remote)
 
-            # Now we do a simple, stupid test for ssh                                                              
+            # Now we do a simple, stupid test for ssh
             rproc = pipeopen("%s /usr/bin/true" % sshcmd)
             output, error = rproc.communicate()
             error = error.strip('\n').strip('\r').replace('WARNING: enabled NONE cipher', '')
@@ -127,7 +129,7 @@ class replication(TestObject):
                 zfsproc = pipeopen('/sbin/zfs list -H -t snapshot -p -o name,creation -r "%s"' % (localfs), debug)
             else:
                 zfsproc = pipeopen('/sbin/zfs list -H -t snapshot -p -o name,creation -r -d 1 "%s"' % (localfs), debug)
-                
+
             output, error = zfsproc.communicate()
             if zfsproc.returncode:
                 self._handler.Fail("replication",
@@ -172,9 +174,9 @@ class replication(TestObject):
             else:
                 self._handler.Pass("replicaiton read-only check", remotefs_final)
 
-
         if status:
-            return self._handler.Pass("replication", "%s tests passed" % ("all" if all_passed else "some"))
+            return self._handler.Pass(
+                "replication", "%s tests passed" % ("all" if all_passed else "some")
+            )
         else:
             return False
-    

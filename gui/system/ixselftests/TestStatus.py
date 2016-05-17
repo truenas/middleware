@@ -1,9 +1,10 @@
 from __future__ import print_function
 
-import os, sys
+import os
 
-from . import (ALERT_FILE, TEST_PASS, TEST_WARNING, TEST_FAIL, TEST_CRITICAL)
+from . import ALERT_FILE
 from . import (_module_dir, _module_name)
+
 
 class TestStatus(object):
     def __init__(self, verbose=False, alert=False):
@@ -14,7 +15,7 @@ class TestStatus(object):
                 os.path.remove(ALERT_FILE)
             except:
                 pass
-                        
+
     def Pass(self, test=None, module=None, message=None):
         st = "[PASS]"
         if self._verbose and test:
@@ -25,7 +26,7 @@ class TestStatus(object):
             st = st + " " + message
         if self._verbose:
             print(st)
-        
+
         if self._verbose and self._alert:
             with open(ALERT_FILE, "a") as f:
                 f.write(st + "\n")

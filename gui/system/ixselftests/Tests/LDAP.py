@@ -48,8 +48,10 @@ from freenasUI.common.freenasldap import (
 
 from system.ixselftests import TestObject
 
+
 def List():
-	return ["LDAP"]
+    return ["LDAP"]
+
 
 class LDAP(TestObject):
     def __init__(self, handler=None):
