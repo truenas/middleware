@@ -589,7 +589,7 @@ class Manifest(object):
             return True
         tmp_file = None
         if cache_dir is None:
-            tmp_file = tempfile.NamedTemporaryFile()
+            tmp_file = tempfile.NamedTemporaryFile(delete=False)
             prog_path = tmp_file.name
         else:
             prog_path = os.path.join(cache_dir, kind)
@@ -600,11 +600,12 @@ class Manifest(object):
             # This may raise an exception, in which case we let it propagate up
             self._config.TryGetNetworkFile(file="%s/%s" % (VALIDATION_DIR, v["Name"]),
                                            pathname=prog_path,
-                                           reason="Validation Script")
+                                           reason="Validation Script").close()
         with open(prog_path, "rb") as f:
             hash = hashlib.sha256(f.read()).hexdigest()
+        if tmp_file:
+            tmp_file.close()
         if hash != v["Checksum"]:
-            if tmp_file: tmp_file.close()
             # Let's attempt to remove it, as well
             try:
                 os.remove(prog_path)
@@ -620,7 +621,7 @@ class Manifest(object):
         except subprocess.CalledProcessError as err:
             raise Exceptions.UpdateInvalidUpdateException(err.output.rstrip())
         finally:
-            if tmp_file: tmp_file.close()
+            if tmp_file: os.remove(prog_path)
             
         return True
     
