@@ -139,7 +139,7 @@ class Middleware(object):
                     self.register_service(attr(self))
 
     def register_service(self, service):
-        self._services[service._meta.namespasce] = service
+        self._services[service._meta.namespace] = service
 
     def call_method(self, method, params):
         service, method = method.rsplit('.', 1)
