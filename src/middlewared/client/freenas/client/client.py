@@ -94,5 +94,6 @@ class Client(object):
     def __del__(self):
         self.close()
 
-c = Client()
-print(c.call('notifier.is_freenas'))
+if __name__ == '__main__':
+    c = Client()
+    print(c.call('notifier.is_freenas'))
