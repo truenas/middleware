@@ -15,7 +15,6 @@ class Application(WebSocketApplication):
     protocol_class = DDPProtocol
 
     def __init__(self, *args, **kwargs):
-        self.middleware = kwargs.pop('middleware')
         super(Application, self).__init__(*args, **kwargs)
         self.authenticated = self._check_permission()
 
@@ -75,34 +74,6 @@ class Application(WebSocketApplication):
             self.call_method(message)
 
 
-class MResource(Resource):
-
-    def __init__(self, *args, **kwargs):
-        self.middleware = kwargs.pop('middleware')
-        super(MResource, self).__init__(*args, **kwargs)
-
-    def __call__(self, environ, start_response):
-        """
-        Method entirely copied except current_app call to include middleware
-        """
-        environ = environ
-        is_websocket_call = 'wsgi.websocket' in environ
-        current_app = self._app_by_path(environ['PATH_INFO'], is_websocket_call)
-
-        if current_app is None:
-            raise Exception("No apps defined")
-
-        if is_websocket_call:
-            ws = environ['wsgi.websocket']
-            current_app = current_app(ws, middleware=self.middleware)
-            current_app.ws = ws  # TODO: needed?
-            current_app.handle()
-            # Always return something, calling WSGI middleware may rely on it
-            return []
-        else:
-            return current_app(environ, start_response)
-
-
 class Middleware(object):
 
     def __init__(self):
@@ -146,9 +117,10 @@ class Middleware(object):
         return getattr(self._services[service], method)(*params)
 
     def run(self):
-        server = WebSocketServer(('', 8000), MResource(OrderedDict([
+        Application.middleware = self
+        server = WebSocketServer(('', 8000), Resource(OrderedDict([
             ('/websocket', Application),
-        ]), middleware=self))
+        ])))
         server.serve_forever()
 
 
