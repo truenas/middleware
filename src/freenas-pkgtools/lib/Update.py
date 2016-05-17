@@ -400,10 +400,12 @@ def ListClones():
         try:
             ds = zfs.get_dataset("freenas-boot/ROOT/{0}".format(tdict["realname"]))
             kstr = ds.properties["beadm:keep"].value
-            if kstr == "-":
-                tdict["keep"] = None
+            if kstr == "True":
+                tdict["keep"] = True
+            elif kstr == "False":
+                tdict["keep"] = False
             else:
-                tdict["keep"] = bool(kstr)
+                tdict["keep"] = None
         except:
             tdict["keep"] = None
         rv.append(tdict)
