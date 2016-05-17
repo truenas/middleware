@@ -2,8 +2,12 @@ from collections import OrderedDict
 from freenas.client.protocol import DDPProtocol
 from geventwebsocket import WebSocketServer, WebSocketApplication, Resource
 
+import imp
+import inspect
 import json
+import os
 import subprocess
+import sys
 
 
 class Application(WebSocketApplication):
@@ -103,6 +107,36 @@ class Middleware(object):
 
     def __init__(self):
         self._services = {}
+        self._plugins_load()
+
+    def _plugins_load(self):
+        from middlewared.service import Service
+        plugins_dir = os.path.join(
+            os.path.dirname(os.path.realpath(__file__)),
+            'plugins',
+        )
+        if not os.path.exists(plugins_dir):
+            return
+
+        for f in os.listdir(plugins_dir):
+            if not f.endswith('.py'):
+                continue
+            f = f[:-3]
+            fp, pathname, description = imp.find_module(f, [plugins_dir])
+            try:
+                mod = imp.load_module(f, fp, pathname, description)
+            finally:
+                if fp:
+                    fp.close()
+
+            for attr in dir(mod):
+                attr = getattr(mod, attr)
+                if not inspect.isclass(attr):
+                    continue
+                if attr is Service:
+                    continue
+                if issubclass(attr, Service):
+                    self.register_service(attr(self))
 
     def register_service(self, service):
         self._services[service._meta.namespasce] = service
@@ -119,4 +153,10 @@ class Middleware(object):
 
 
 if __name__ == '__main__':
+    modpath = os.path.join(
+        os.path.dirname(os.path.realpath(__file__)),
+        '..',
+    )
+    if modpath not in sys.path:
+        sys.path.insert(0, modpath)
     Middleware().run()
