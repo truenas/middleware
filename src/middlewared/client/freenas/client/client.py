@@ -1,8 +1,8 @@
-from ws4py.client.threadedclient import WebSocketClient
-
 from protocol import DDPProtocol
 from threading import Event
+from ws4py.client.threadedclient import WebSocketClient
 
+import argparse
 import json
 import uuid
 
@@ -36,6 +36,7 @@ class ClientException(Exception):
     def __init__(self, error, stacktrace):
         self.error = error
         self.stacktrace = stacktrace
+
     def __str__(self):
         return self.error
 
@@ -54,7 +55,6 @@ class Client(object):
         _id = message.get('id')
         if _id is not None and message.get('msg') == 'result':
             call = self._calls.get(_id)
-            print(call)
             if call:
                 call.result = message.get('result')
                 if 'error' in message:
@@ -95,5 +95,10 @@ class Client(object):
         self.close()
 
 if __name__ == '__main__':
-    c = Client()
-    print(c.call('notifier.is_freenas'))
+    parser = argparse.ArgumentParser()
+    parser.add_argument('call', nargs='+')
+    args = parser.parse_args()
+
+    if args.call:
+        c = Client()
+        print(c.call(args.call[1], args.call[2:]))
