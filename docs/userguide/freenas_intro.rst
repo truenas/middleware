@@ -270,7 +270,7 @@ cards typically use multiple 10 GigE network interfaces.
 
 If you will be using ZFS,
 `Disk Space Requirements for ZFS Storage Pools <http://docs.oracle.com/cd/E19253-01/819-5461/6n7ht6r12/index.html>`_
-recommends a minimum of 16 GB of disk space. Due to the way that ZFS creates swap, **you can not format less than 3 GB of space with ZFS**. However, on a
+recommends a minimum of 16 GB of disk space. Due to the way that ZFS creates swap, **you cannot format less than 3 GB of space with ZFS**. However, on a
 drive that is below the minimum recommended size you lose a fair amount of storage space to swap: for example, on a 4 GB drive, 2 GB will be reserved for
 swap.
 

@@ -235,7 +235,7 @@ can:
 * add additional disks to increase the capacity of the ZFS pool. The caveats to doing this are described below.
 
 When adding disks to increase the capacity of a volume, ZFS supports the addition of virtual devices, known as vdevs, to an existing ZFS pool. A vdev can be a
-single disk, a stripe, a mirror, a RAIDZ1, RAIDZ2, or a RAIDZ3. **Once a vdev is created, you can not add more drives to that vdev**; however, you can stripe
+single disk, a stripe, a mirror, a RAIDZ1, RAIDZ2, or a RAIDZ3. **Once a vdev is created, you cannot add more drives to that vdev**; however, you can stripe
 a new vdev (and its disks) with the **same type of existing vdev** in order to increase the overall size of ZFS the pool. In other words, when you extend a
 ZFS volume, you are really striping similar vdevs. Here are some examples:
 
@@ -578,7 +578,7 @@ access the screen shown in Figure 8.1i.
 Select the disks in the encrypted pool, browse to the location of the saved encryption key, input the passphrase associated with the key, then click "OK" to
 decrypt the disks.
 
-.. note:: the encryption key is required to decrypt the pool. If the pool can not be decrypted, it can not be re-imported after a failed upgrade or lost
+.. note:: the encryption key is required to decrypt the pool. If the pool cannot be decrypted, it cannot be re-imported after a failed upgrade or lost
    configuration. This means that it is **very important** to save a copy of the key and to remember the passphrase that was configured for the key. Refer to
    :ref:`Managing Encrypted Volumes` for instructions on how to manage the keys for encrypted volumes.
 
@@ -724,7 +724,7 @@ action.
 **Create zvol:** allows you to create a child zvol within this dataset.
 
 If you click a zvol in :menuselection:`Storage --> Volumes --> View Volumes`, three icons will appear at the bottom of the screen: "Create Snapshot", "Edit
-zvol", and "Destroy zvol". Similar to datasets, you can not edit a zvol's name and you will need to confirm that you wish to destroy the zvol.
+zvol", and "Destroy zvol". Similar to datasets, you cannot edit a zvol's name and you will need to confirm that you wish to destroy the zvol.
 
 .. _Managing Encrypted Volumes:
 
@@ -744,7 +744,7 @@ In order from left to right, these additional encryption buttons are used to:
 repeat the desired passphrase and a red warning reminds you to "Remember to add a new recovery key as this action invalidates the previous recovery key".
 Unlike a password, a passphrase can contain spaces and is typically a series of words. A good passphrase is easy to remember (like the line to a song or piece
 of literature) but hard to guess (people who know you should not be able to guess the passphrase).
-**Remember this passphrase as you can not re-import an encrypted volume without it.** In other words, if you forget the passphrase, the data on the volume can
+**Remember this passphrase as you cannot re-import an encrypted volume without it.** In other words, if you forget the passphrase, the data on the volume can
 become inaccessible if you need to re-import the pool. Protect this passphrase as anyone who knows it could re-import your encrypted volume, thwarting the
 reason for encrypting the disks in the first place.
 
@@ -1261,7 +1261,7 @@ Table 8.3a summarizes the available options in the "Add Replication" screen.
 | Limit (kB/s)              | integer        | limits replication speed to specified value in kilobytes/second; default of *0* is unlimited                 |
 |                           |                |                                                                                                              |
 +---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
-| Begin                     | drop-down menu | the replication can not start before this time; the times selected in the "Begin" and                        |
+| Begin                     | drop-down menu | the replication cannot start before this time; the times selected in the "Begin" and                        |
 |                           |                | "End" fields set the replication window for when replication can occur                                       |
 |                           |                |                                                                                                              |
 +---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+

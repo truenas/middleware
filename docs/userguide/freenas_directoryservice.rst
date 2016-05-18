@@ -43,7 +43,7 @@ Next, add a DNS record for the FreeNAS® system on the Windows server and verify
 domain controller.
 
 Active Directory relies on Kerberos, which is a time sensitive protocol. This means that the time on both the FreeNAS® system and the Active Directory Domain
-Controller can not be out of sync by more than a few minutes. The best way to ensure that the same time is running on both systems is to configure both
+Controller cannot be out of sync by more than a few minutes. The best way to ensure that the same time is running on both systems is to configure both
 systems to:
 
 * use the same NTP server (set in :menuselection:`System --> NTP Servers` on the FreeNAS® system)
@@ -68,10 +68,10 @@ display these settings by checking the box "Show advanced fields by default" in 
 +==========================+===============+=======================================================================================================================================================+
 | Domain Name              | string        | name of Active Directory domain (e.g. *example.com*) or child domain (e.g.                                                                            |
 |                          |               | *sales.example.com*); this setting is mandatory and the GUI will refuse to save the settings if the domain controller for the specified               |
-|                          |               | domain can not be found                                                                                                                               |
+|                          |               | domain cannot be found                                                                                                                               |
 |                          |               |                                                                                                                                                       |
 +--------------------------+---------------+-------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Domain Account Name      | string        | name of the Active Directory administrator account; this setting is mandatory and the GUI will refuse to save the settings if it can not              |
+| Domain Account Name      | string        | name of the Active Directory administrator account; this setting is mandatory and the GUI will refuse to save the settings if it cannot              |
 |                          |               | connect to the domain controller using this account name                                                                                              |
 |                          |               |                                                                                                                                                       |
 +--------------------------+---------------+-------------------------------------------------------------------------------------------------------------------------------------------------------+

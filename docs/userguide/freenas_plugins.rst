@@ -20,7 +20,7 @@ good understanding of networking basics and software installation on FreeBSD-bas
 It is recommended that users skim through both the :ref:`Plugins` and :ref:`Jails` sections in order to become familiar with the features and limitations of
 each and to choose the method that best meets their software needs.
 
-.. note:: due to ABI (application binary interface) changes, FreeNAS® 8.x Plugins can not be installed on a 9.x system.
+.. note:: due to ABI (application binary interface) changes, FreeNAS® 8.x Plugins cannot be installed on a 9.x system.
 
 .. _Installing Plugins:
 

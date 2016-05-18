@@ -175,7 +175,7 @@ can be configured when creating an rsync task.
 |                                  |                             |                                                                                           |
 +----------------------------------+-----------------------------+-------------------------------------------------------------------------------------------+
 | User                             | drop-down menu              | specified user must have permission to write to the specified directory on the remote     |
-|                                  |                             | system; due to a limitation in FreeBSD, the user name can not contain spaces or exceed 17 |
+|                                  |                             | system; due to a limitation in FreeBSD, the user name cannot contain spaces or exceed 17 |
 |                                  |                             | characters                                                                                |
 |                                  |                             |                                                                                           |
 +----------------------------------+-----------------------------+-------------------------------------------------------------------------------------------+
