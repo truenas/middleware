@@ -209,7 +209,7 @@ def DoDownload(train, cache_dir, pkg_type, verbose):
         sys.exit(1)
     except Exceptions.UpdateInvalidUpdateException as e:
         log.error(str(e))
-        print("Update not allowed:\n%s" % e.value, file=sys.stderr)
+        print("Update not permitted:\n%s" % e.value, file=sys.stderr)
         sys.exit(1)
     except BaseException as e:
         log.error(str(e))
@@ -218,7 +218,42 @@ def DoDownload(train, cache_dir, pkg_type, verbose):
 
     return rv
 
+def DoUpdate(cache_dir, verbose):
+    """
+    Common code to apply an update once it's been downloaded.
+    This will handle all of the exceptions in a common fashion.
+    Raises an exception on error.
+    """
+    global log
 
+    try:
+        diffs = Update.PendingUpdatesChanges(cache_dir)
+    except Exceptions.UpdateBusyCacheException:
+        log.error("Cache directory busy, cannot update")
+        raise
+    except Exceptions.UpdateInvalidUpdateException as e:
+        log.error("Unable not permitted: %s" % e.value)
+        raise
+    except BaseException as e:
+        log.error("Unable to update: %s" % str(e))
+        raise
+    if verbose:
+        PrintDifferences(diffs)
+
+    if not diffs:
+        log.debug("No updates to apply")
+        return
+    
+    try:
+        rv = Update.ApplyUpdate(cache_dir)
+    except BaseException as e:
+        log.error("Unable to apply update: %s" % str(e))
+        raise
+    if rv and verbose:
+        print("System should be rebooted now", file=sys.stderr)
+
+    return
+        
 def main():
     global log
 
@@ -253,9 +288,11 @@ def main():
     }
 
     def usage():
-        print("""Usage: %s [-C cache_dir] [-d] [-T train] [--no-delta] [-v] <cmd>, where cmd is one of:
+        print("""Usage: {0} [-C cache_dir] [-d] [-T train] [--no-delta] [-v] <cmd>
+or	{0} <update_tar_file>
+where cmd is one of:
         check\tCheck for updates
-        update\tDo an update""" % sys.argv[0], file=sys.stderr)
+        update\tDo an update""".format(sys.argv[0]), file=sys.stderr)
         sys.exit(1)
 
     try:
@@ -372,24 +409,22 @@ def main():
         if do_download:
             rv = DoDownload(train, cache_dir, pkg_type, verbose)
 
-        diffs = Update.PendingUpdatesChanges(cache_dir)
-        if diffs is None or diffs == {}:
-            if verbose:
-                print("No updates to apply", file=sys.stderr)
-        else:
-            if verbose:
-                PrintDifferences(diffs)
-            try:
-                rv = Update.ApplyUpdate(cache_dir, force_reboot=force_reboot)
-            except BaseException as e:
-                print("Unable to apply update: %s" % str(e), file=sys.stderr)
-                sys.exit(1)
-            if rv:
-                print("System should be rebooted now", file=sys.stderr)
-                if snl:
-                    print("Really explore the space.")
+        try:
+            DoUpdate(cache_dir)
             sys.exit(0)
-    elif tarfile.is_tarfile(args[0]):
+        except:
+            sys.exit(1)
+    else:
+        # If it's not a tarfile (possibly because it doesn't exist),
+        # print usage and exit.
+        try:
+            if len(args) > 1:
+                usage()
+            if not tarfile.is_tarfile(args[0]):
+                usage()
+        except:
+            usage()
+        
         # Frozen tarball.  We'll extract it into the cache directory, and
         # then add a couple of things to make it pass sanity, and then apply it.
         # For now we just copy the code above.
@@ -401,6 +436,7 @@ def main():
         except BaseException as e:
             print("Unable to create cache directory %s: %s" % (cache_dir, str(e)))
             sys.exit(1)
+
         try:
             ExtractFrozenUpdate(args[0], cache_dir, verbose=verbose)
         except BaseException as e:
@@ -414,29 +450,11 @@ def main():
             s.write(config.UpdateServerName())
 
         try:
-            diffs = Update.PendingUpdatesChanges(cache_dir)
-        except BaseException as e:
-            print("Attempt to verify extracted frozen update failed: %s" % str(e), file=sys.stderr)
-            sys.exit(1)
-
-        if diffs is None or diffs == {}:
-            if verbose:
-                print("No updates to apply", file=sys.stderr)
-        else:
-            if verbose:
-                PrintDifferences(diffs)
-            try:
-                rv = Update.ApplyUpdate(cache_dir)
-            except BaseException as e:
-                print("Unable to apply update: %s" % str(e), file=sys.stderr)
-                sys.exit(1)
-            if rv:
-                print("System should be rebooted now", file=sys.stderr)
-                if snl:
-                    print("Really explore the space.")
+            DoUpdate(cache_dir)
             sys.exit(0)
-
-        pass
+        except:
+            sys.exit(1)
+            
     else:
         usage()
 
