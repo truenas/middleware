@@ -26,6 +26,7 @@
 
 import os
 import sys
+from ldap import LDAPError
 
 sys.path.extend([
     '/usr/local/www',
@@ -70,6 +71,21 @@ class LDAP(TestObject):
                 return self._handler.Pass("LDAP")
             else:
                 return self._handler.Fail("LDAP", "Unable to query the server.")
+        except LDAPError as e:
+            # LDAPError is dumb, it returns a list with one element for goodness knows what reason
+            e = e[0]
+            error = "" 
+            if 'desc' in e:
+                error = e['desc']
+                if 'info' in e:
+                    error = "{0}, {1}".format(error, e['info'])
+            else:
+                # LDAPError may have desc and info or just info so making a case that handles just info
+                if 'info' in e:
+                    error = e['info']
+                else:
+                    error = str(e)
+            return self._handler.Fail("LDAP", error)
         except Exception as e:
             return self._handler.Fail("LDAP", str(e))
 
