@@ -192,7 +192,7 @@ class Plugins(Model):
                         jail = Jails.objects.get(jail_host=self.plugin_jail)
                         jail.delete(force=True)
                     except Jails.DoesNotExist:
-                        pass
+                        log.debug('Could not delete jail %s', self.plugin_jail, exc_info=True)
             super(Plugins, self).delete(*args, **kwargs)
             self.plugin_secret.delete()
 
