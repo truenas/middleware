@@ -3861,7 +3861,8 @@ class notifier:
             if (not data[1] in noinherit_fields) and (
                 data[3] == 'default' or data[3].startswith('inherited')
             ):
-                dval[data[1]] = (data[2], "inherit (%s)" % data[2], 'inherit')
+                if data[1] != 'org.freenas:description':
+                    dval[data[1]] = (data[2], "inherit (%s)" % data[2], 'inherit')
             else:
                 dval[data[1]] = (data[2], data[2], data[3])
         return retval
