@@ -4,7 +4,7 @@
 Alert
 =====
 
-FreeNAS® provides an alert system to provide a visual warning of any conditions that require administrative attention. The "Alert" button in the far right
+The FreeNAS® alert system provides a visual warning of any conditions that require administrative attention. The "Alert" button in the far right
 corner will flash red when there is an outstanding alert. In the example alert shown in Figure 22a, the system is warning that the S.M.A.R.T. service is not running.
 
 **Figure 22a: Example Alert Message**
@@ -54,4 +54,4 @@ controller to flash::
 
  sas2flash -o -f firmwareimagename -b biosname -c controllernumber
 
-When finished, reboot the system. The new firmware version should appear in the system messages and the alert will be cleared.
+When finished, reboot the system. The new firmware version will appear in the system messages and the alert will be cleared.
