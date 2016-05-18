@@ -1,0 +1,18 @@
+--- src/collectd.conf.in.orig	2015-10-14 06:04:38.157654000 -0700
++++ src/collectd.conf.in	2015-10-14 06:08:38.334173000 -0700
+@@ -120,6 +120,7 @@
+ #@BUILD_PLUGIN_FHCOUNT_TRUE@LoadPlugin fhcount
+ #@BUILD_PLUGIN_FILECOUNT_TRUE@LoadPlugin filecount
+ #@BUILD_PLUGIN_FSCACHE_TRUE@LoadPlugin fscache
++#@BUILD_PLUGIN_GEOM_STAT_TRUE@LoadPlugin geom_stat
+ #@BUILD_PLUGIN_GMOND_TRUE@LoadPlugin gmond
+ #@BUILD_PLUGIN_HDDTEMP_TRUE@LoadPlugin hddtemp
+ @BUILD_PLUGIN_INTERFACE_TRUE@@BUILD_PLUGIN_INTERFACE_TRUE@LoadPlugin interface
+@@ -206,6 +207,7 @@
+ #@BUILD_PLUGIN_WRITE_TSDB_TRUE@LoadPlugin write_tsdb
+ #@BUILD_PLUGIN_XMMS_TRUE@LoadPlugin xmms
+ #@BUILD_PLUGIN_ZFS_ARC_TRUE@LoadPlugin zfs_arc
++#@BUILD_PLUGIN_ZFS_ARC_V2_TRUE@LoadPlugin zfs_arc_v2
+ #@BUILD_PLUGIN_ZOOKEEPER_TRUE@LoadPlugin zookeeper
+ 
+ ##############################################################################

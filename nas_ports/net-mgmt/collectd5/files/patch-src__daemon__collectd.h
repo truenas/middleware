@@ -1,4 +1,4 @@
---- src/daemon/collectd.h.orig	2015-05-22 10:04:36 UTC
+--- src/daemon/collectd.h.orig	2016-01-22 09:51:17 UTC
 +++ src/daemon/collectd.h
 @@ -240,15 +240,15 @@ typedef int _Bool;
  #endif

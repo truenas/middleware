@@ -1,6 +1,6 @@
---- configure.ac.orig	2015-05-27 09:51:35.609705000 +0200
-+++ configure.ac	2016-02-07 18:12:16.612161861 +0100
-@@ -120,7 +120,7 @@
+--- configure.ac.orig	2016-01-22 09:51:17 UTC
++++ configure.ac
+@@ -155,7 +155,7 @@ then
  fi
  
  # Where to install .pc files.
@@ -9,7 +9,7 @@
  AC_SUBST(pkgconfigdir)
  
  # Check for standards compliance mode
-@@ -641,7 +641,7 @@
+@@ -715,7 +715,7 @@ SAVE_CFLAGS="$CFLAGS"
  # Emulate behavior of src/Makefile.am
  if test "x$GCC" = "xyes"
  then
@@ -18,7 +18,7 @@
  fi
  
  AC_CACHE_CHECK([for strtok_r],
-@@ -770,7 +770,7 @@
+@@ -844,7 +844,7 @@ AC_CHECK_FUNCS(getutxent, [have_getutxen
  if test "x$GCC" = "xyes"
  then
  	SAVE_CFLAGS="$CFLAGS"
@@ -27,7 +27,7 @@
  fi
  
  AC_CHECK_FUNCS(strptime, [have_strptime="yes"], [have_strptime="no"])
-@@ -1495,6 +1495,7 @@
+@@ -1571,6 +1571,7 @@ if test "x$with_kstat" = "xyes"
  then
  	AC_CHECK_LIB(kstat, kstat_open, [with_kstat="yes"], [with_kstat="no (libkstat not found)"], [])
  fi
@@ -35,7 +35,7 @@
  if test "x$with_kstat" = "xyes"
  then
  	AC_CHECK_LIB(devinfo, di_init, [with_devinfo="yes"], [with_devinfo="no (not found)"], [])
-@@ -1504,6 +1505,8 @@
+@@ -1580,6 +1581,8 @@ if test "x$with_kstat" = "xyes"
  then
  	AC_DEFINE(HAVE_LIBKSTAT, 1,
  		  [Define to 1 if you have the 'kstat' library (-lkstat)])
@@ -44,7 +44,36 @@
  fi
  AM_CONDITIONAL(BUILD_WITH_LIBKSTAT, test "x$with_kstat" = "xyes")
  AM_CONDITIONAL(BUILD_WITH_LIBDEVINFO, test "x$with_devinfo" = "xyes")
-@@ -3346,7 +3349,7 @@
+@@ -2624,8 +2627,8 @@ AC_ARG_WITH(libmongoc, [AS_HELP_STRING([
+ 	 with_libmongoc="no"
+  else
+ 	 with_libmongoc="yes"
+-	 LIBMONGOC_CPPFLAGS="$LIBMONGOC_CPPFLAGS -I$withval/include"
+-	 LIBMONGOC_LDFLAGS="$LIBMONGOC_LDFLAGS -L$withval/lib"
++	 LIBMONGOC_CPPFLAGS="$LIBMONGOC_CPPFLAGS -I$withval/include/libmongoc-1.0 -I$withval/include/libbson-1.0"
++	 LIBMONGOC_LDFLAGS="$LIBMONGOC_LDFLAGS -L$withval/lib -lsasl2 -lssl -lcrypto  -lmongoc-1.0 -lbson-1.0"
+  fi; fi
+ ],
+ [with_libmongoc="yes"])
+@@ -2642,7 +2645,7 @@ then
+ 	then
+ 		AC_MSG_NOTICE([libmongoc CPPFLAGS: $LIBMONGOC_CPPFLAGS])
+ 	fi
+-	AC_CHECK_HEADERS(mongo.h,
++	AC_CHECK_HEADERS(mongoc.h,
+ 	[with_libmongoc="yes"],
+ 	[with_libmongoc="no ('mongo.h' not found)"],
+ [#if HAVE_STDINT_H
+@@ -2658,7 +2661,7 @@ then
+ 	then
+ 		AC_MSG_NOTICE([libmongoc LDFLAGS: $LIBMONGOC_LDFLAGS])
+ 	fi
+-	AC_CHECK_LIB(mongoc, mongo_run_command,
++	AC_CHECK_LIB(mongoc-1.0, mongoc_client_command,
+ 	[with_libmongoc="yes"],
+ 	[with_libmongoc="no (symbol 'mongo_run_command' not found)"])
+ fi
+@@ -3415,7 +3418,7 @@ then
  	SAVE_LIBS="$LIBS"
  	# trigger an error if Perl_load_module*() uses __attribute__nonnull__(3)
  	# (see issues #41 and #42)
@@ -53,7 +82,7 @@
  	LIBS="$LIBS $PERL_LIBS"
  
  	AC_CACHE_CHECK([for broken Perl_load_module()],
-@@ -3576,7 +3579,7 @@
+@@ -3645,7 +3648,7 @@ fi
  if test "x$with_python" = "xyes"
  then
  	AC_MSG_CHECKING([for Python CPPFLAGS])
@@ -62,7 +91,7 @@
  	python_config_status=$?
  
  	if test "$python_config_status" -ne 0 || test "x$python_include_path" = "x"
-@@ -3599,7 +3602,7 @@
+@@ -3668,7 +3671,7 @@ fi
  if test "x$with_python" = "xyes"
  then
  	AC_MSG_CHECKING([for Python LDFLAGS])
@@ -71,7 +100,7 @@
  	python_config_status=$?
  
  	if test "$python_config_status" -ne 0 || test "x$python_library_path" = "x"
-@@ -3614,7 +3617,7 @@
+@@ -3683,7 +3686,7 @@ fi
  if test "x$with_python" = "xyes"
  then
  	AC_MSG_CHECKING([for Python LIBS])
@@ -80,7 +109,7 @@
  	python_config_status=$?
  
  	if test "$python_config_status" -ne 0 || test "x$python_library_flags" = "x"
-@@ -3629,7 +3632,7 @@
+@@ -3698,7 +3701,7 @@ fi
  if test "x$with_python" = "xyes"
  then
  	LDFLAGS="-L$python_library_path $LDFLAGS"
@@ -89,7 +118,85 @@
  
  	AC_CHECK_FUNC(PyObject_CallFunction,
  		      [with_python="yes"],
-@@ -4692,8 +4695,8 @@
+@@ -4689,6 +4692,77 @@ fi
+ AM_CONDITIONAL(BUILD_WITH_LIBYAJL, test "x$with_libyajl" = "xyes")
+ # }}}
+ 
++# --with-libzfs {{{
++with_libzfs_cppflags=""
++with_libzfs_ldflags=""
++AC_ARG_WITH(libzfs, [AS_HELP_STRING([--with-libzfs@<:@=PREFIX@:>@], [Path to libzfs.])],
++[
++	if test "x$withval" = "xyes"
++	then
++		with_libzfs_cppflags="\
++-DNEED_SOLARIS_BOOLEAN=1 \
++-I /usr/src/cddl/contrib/opensolaris/lib/libzpool/common \
++-I /usr/src/cddl/compat/opensolaris/include \
++-I /usr/src/cddl/compat/opensolaris/lib/libumem \
++-I /usr/src/sys/cddl/compat/opensolaris \
++-I /usr/src/cddl/contrib/opensolaris/head \
++-I /usr/src/cddl/contrib/opensolaris/lib/libuutil/common \
++-I /usr/src/cddl/contrib/opensolaris/lib/libzfs/common \
++-I /usr/src/cddl/contrib/opensolaris/lib/libzfs_core/common \
++-I /usr/src/cddl/contrib/opensolaris/lib/libumem/common \
++-I /usr/src/cddl/contrib/opensolaris/lib/libnvpair \
++-I /usr/src/sys/cddl/contrib/opensolaris/uts/common \
++-I /usr/src/sys/cddl/contrib/opensolaris/uts/common/fs/zfs \
++-I /usr/src/sys/cddl/contrib/opensolaris/uts/common/sys \
++-I /usr/src/sys/cddl/contrib/opensolaris/common/zfs \
++"
++		with_libzfs_ldflags="-lgeom -luutil -lzfs_core -lzfs"
++		with_libzfs="yes"
++	else
++		with_libzfs="no"
++	fi
++],
++[
++	with_libzfs="no"
++])
++if test "x$with_libzfs" = "xyes"
++then
++	SAVE_CPPFLAGS="$CPPFLAGS"
++	SAVE_LDFLAGS="$LDFLAGS"
++
++	CPPFLAGS="$CPPFLAGS $with_libzfs_cppflags"
++	LDFLAGS="$LDFLAGS $with_libzfs_ldflags"
++
++	AC_CHECK_LIB(zfs, libzfs_init,
++	[
++		AC_DEFINE(HAVE_LIBZFS, 1, [Define to 1 if you have the zfs library (-lzfs).])
++	], [with_libzfs="no (libzfs not found)"])
++
++	CPPFLAGS="$SAVE_CPPFLAGS"
++	LDFLAGS="$SAVE_LDFLAGS"
++fi
++if test "x$with_libzfs" = "xyes"
++then
++	SAVE_CPPFLAGS="$CPPFLAGS"
++	CPPFLAGS="$CPPFLAGS $with_libzfs_cppflags"
++
++	AC_CHECK_HEADERS(libzfs.h,
++	[
++		AC_DEFINE(HAVE_LIBZFS_H, 1, [Define to 1 if you have the <libzfs.h> header file.])
++	], [with_libzfs="no (libzfs.h not found)"])
++
++	CPPFLAGS="$SAVE_CPPFLAGS"
++fi
++if test "x$with_libzfs" = "xyes"
++then
++	BUILD_WITH_LIBZFS_CPPFLAGS="$with_libzfs_cppflags"
++	BUILD_WITH_LIBZFS_LDFLAGS="$with_libzfs_ldflags"
++	AC_SUBST(BUILD_WITH_LIBZFS_CPPFLAGS)
++	AC_SUBST(BUILD_WITH_LIBZFS_LDFLAGS)
++fi
++AM_CONDITIONAL(BUILD_WITH_LIBZFS, test "x$with_libzfs" = "xyes")
++# }}}
++
+ # --with-mic {{{
+ with_mic_cflags="-I/opt/intel/mic/sysmgmt/sdk/include"
+ with_mic_ldpath="-L/opt/intel/mic/sysmgmt/sdk/lib/Linux"
+@@ -4761,8 +4835,8 @@ AC_ARG_WITH(libvarnish, [AS_HELP_STRING(
  	else if test -d "$with_libvarnish/lib"
  	then
  		AC_MSG_NOTICE([Not checking for libvarnish: Manually configured])
@@ -100,19 +207,86 @@
  		with_libvarnish="yes"
  	fi; fi; fi
  ],
-@@ -5263,6 +5266,7 @@
+@@ -5237,6 +5311,7 @@ plugin_entropy="no"
+ plugin_ethstat="no"
+ plugin_fhcount="no"
+ plugin_fscache="no"
++plugin_geom_stat="no"
+ plugin_interface="no"
+ plugin_ipmi="no"
+ plugin_ipvs="no"
+@@ -5264,6 +5339,7 @@ plugin_vmem="no"
+ plugin_vserver="no"
+ plugin_wireless="no"
+ plugin_zfs_arc="no"
++plugin_zfs_arc_v2="no"
+ plugin_zookeeper="no"
+ 
+ # Linux
+@@ -5334,7 +5410,10 @@ fi
  
  if test "x$ac_system" = "xFreeBSD"
  then
 +	plugin_disk="yes"
-         plugin_zfs_arc="yes"
++	plugin_geom_stat="yes"
+ 	plugin_zfs_arc="yes"
++	plugin_zfs_arc_v2="yes"
  fi
  
-@@ -5535,6 +5539,7 @@
- AC_PLUGIN([ceph],        [$plugin_ceph],       [Ceph daemon statistics])
+ 
+@@ -5362,6 +5441,7 @@ then
+ 	plugin_processes="yes"
+ 	plugin_uptime="yes"
+ 	plugin_zfs_arc="yes"
++	plugin_zfs_arc_v2="yes"
+ fi
+ 
+ if test "x$with_devinfo$with_kstat" = "xyesyes"
+@@ -5612,6 +5692,7 @@ AC_PLUGIN([ceph],        [$plugin_ceph],
  AC_PLUGIN([conntrack],   [$plugin_conntrack],  [nf_conntrack statistics])
  AC_PLUGIN([contextswitch], [$plugin_contextswitch], [context switch statistics])
-+AC_PLUGIN([cputemp],     [yes],                [CPU temperature statistics])
  AC_PLUGIN([cpufreq],     [$plugin_cpufreq],    [CPU frequency statistics])
++AC_PLUGIN([cputemp],     [yes],                [CPU temperature statistics])
  AC_PLUGIN([cpu],         [$plugin_cpu],        [CPU usage statistics])
  AC_PLUGIN([csv],         [yes],                [CSV output plugin])
+ AC_PLUGIN([curl],        [$with_libcurl],      [CURL generic web statistics])
+@@ -5630,6 +5711,7 @@ AC_PLUGIN([exec],        [yes],         
+ AC_PLUGIN([fhcount],     [$plugin_fhcount],    [File handles statistics])
+ AC_PLUGIN([filecount],   [yes],                [Count files in directories])
+ AC_PLUGIN([fscache],     [$plugin_fscache],    [fscache statistics])
++AC_PLUGIN([geom_stat],   [$plugin_geom_stat],  [FreeBSD GEOM statistics])
+ AC_PLUGIN([gmond],       [$with_libganglia],   [Ganglia plugin])
+ AC_PLUGIN([hddtemp],     [yes],                [Query hddtempd])
+ AC_PLUGIN([interface],   [$plugin_interface],  [Interface traffic statistics])
+@@ -5732,6 +5814,7 @@ AC_PLUGIN([write_sensu], [yes],         
+ AC_PLUGIN([write_tsdb],  [yes],                [TSDB output plugin])
+ AC_PLUGIN([xmms],        [$with_libxmms],      [XMMS statistics])
+ AC_PLUGIN([zfs_arc],     [$plugin_zfs_arc],    [ZFS ARC statistics])
++AC_PLUGIN([zfs_arc_v2],  [$plugin_zfs_arc_v2], [ZFS ARC statistics, improved v2])
+ AC_PLUGIN([zookeeper],   [yes],  	       [Zookeeper statistics])
+ 
+ dnl Default configuration file
+@@ -5964,6 +6047,7 @@ Configuration:
+     libxml2 . . . . . . . $with_libxml2
+     libxmms . . . . . . . $with_libxmms
+     libyajl . . . . . . . $with_libyajl
++    libzfs  . . . . . . . $with_libzfs
+     oracle  . . . . . . . $with_oracle
+     protobuf-c  . . . . . $have_protoc_c
+     python  . . . . . . . $with_python
+@@ -6008,6 +6092,7 @@ Configuration:
+     fhcount . . . . . . . $enable_fhcount
+     filecount . . . . . . $enable_filecount
+     fscache . . . . . . . $enable_fscache
++    geom_stat . . . . . . $enable_geom_stat
+     gmond . . . . . . . . $enable_gmond
+     hddtemp . . . . . . . $enable_hddtemp
+     interface . . . . . . $enable_interface
+@@ -6109,6 +6194,7 @@ Configuration:
+     write_tsdb  . . . . . $enable_write_tsdb
+     xmms  . . . . . . . . $enable_xmms
+     zfs_arc . . . . . . . $enable_zfs_arc
++    zfs_arc_v2 . . . . . .$enable_zfs_arc_v2
+     zookeeper . . . . . . $enable_zookeeper
+ 
+ EOF

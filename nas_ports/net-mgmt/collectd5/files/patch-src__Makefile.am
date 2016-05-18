@@ -1,6 +1,6 @@
---- src/Makefile.am.orig	2016-02-07 17:59:05.611217011 +0100
-+++ src/Makefile.am	2016-02-07 18:01:14.773208616 +0100
-@@ -7,14 +7,14 @@
+--- src/Makefile.am.orig	2016-01-22 09:51:17 UTC
++++ src/Makefile.am
+@@ -7,14 +7,14 @@ SUBDIRS += daemon
  PLUGIN_LDFLAGS = -module -avoid-version -export-symbols-regex '\<module_register\>'
  
  if COMPILER_IS_GCC
@@ -17,7 +17,7 @@
  if BUILD_FEATURE_DAEMON
  AM_CPPFLAGS += -DPIDFILE='"${localstatedir}/run/${PACKAGE_NAME}.pid"'
  endif
-@@ -211,6 +211,12 @@
+@@ -211,6 +211,12 @@ contextswitch_la_LIBADD += -lperfstat
  endif
  endif
  
@@ -30,7 +30,7 @@
  if BUILD_PLUGIN_CPU
  pkglib_LTLIBRARIES += cpu.la
  cpu_la_SOURCES = cpu.c
-@@ -218,7 +224,7 @@
+@@ -218,7 +224,7 @@ cpu_la_CFLAGS = $(AM_CFLAGS)
  cpu_la_LDFLAGS = $(PLUGIN_LDFLAGS)
  cpu_la_LIBADD =
  if BUILD_WITH_LIBKSTAT
@@ -39,7 +39,19 @@
  endif
  if BUILD_WITH_LIBDEVINFO
  cpu_la_LIBADD += -ldevinfo
-@@ -303,7 +309,7 @@
+@@ -292,6 +298,11 @@ pkglib_LTLIBRARIES += df.la
+ df_la_SOURCES = df.c
+ df_la_LDFLAGS = $(PLUGIN_LDFLAGS)
+ df_la_LIBADD = libmount.la
++df_la_CPPFLAGS = $(AM_CPPFLAGS)
++if BUILD_WITH_LIBZFS
++df_la_CPPFLAGS += $(BUILD_WITH_LIBZFS_CPPFLAGS)
++df_la_LDFLAGS += $(BUILD_WITH_LIBZFS_LDFLAGS)
++endif
+ endif
+ 
+ if BUILD_PLUGIN_DISK
+@@ -301,7 +312,7 @@ disk_la_CFLAGS = $(AM_CFLAGS)
  disk_la_LDFLAGS = $(PLUGIN_LDFLAGS)
  disk_la_LIBADD =
  if BUILD_WITH_LIBKSTAT
@@ -48,7 +60,7 @@
  endif
  if BUILD_WITH_LIBDEVINFO
  disk_la_LIBADD += -ldevinfo
-@@ -321,6 +327,9 @@
+@@ -319,6 +330,9 @@ endif
  if BUILD_WITH_PERFSTAT
  disk_la_LIBADD += -lperfstat
  endif
@@ -58,7 +70,20 @@
  endif
  
  if BUILD_PLUGIN_DNS
-@@ -408,7 +417,7 @@
+@@ -376,6 +390,12 @@ filecount_la_SOURCES = filecount.c
+ filecount_la_LDFLAGS = $(PLUGIN_LDFLAGS)
+ endif
+ 
++if BUILD_PLUGIN_GEOM_STAT
++pkglib_LTLIBRARIES += geom_stat.la
++geom_stat_la_SOURCES = geom_stat.c
++geom_stat_la_LDFLAGS = -module -avoid-version -ldevstat -lkvm -lgeom lbsdxml -lsbuf
++endif
++
+ if BUILD_PLUGIN_GMOND
+ pkglib_LTLIBRARIES += gmond.la
+ gmond_la_SOURCES = gmond.c
+@@ -405,7 +425,7 @@ interface_la_CFLAGS += $(BUILD_WITH_LIBS
  interface_la_LIBADD += $(BUILD_WITH_LIBSTATGRAB_LDFLAGS)
  else
  if BUILD_WITH_LIBKSTAT
@@ -67,7 +92,7 @@
  endif
  if BUILD_WITH_LIBDEVINFO
  interface_la_LIBADD += -ldevinfo
-@@ -591,7 +600,7 @@
+@@ -584,7 +604,7 @@ memory_la_CFLAGS = $(AM_CFLAGS)
  memory_la_LDFLAGS = $(PLUGIN_LDFLAGS)
  memory_la_LIBADD =
  if BUILD_WITH_LIBKSTAT
@@ -76,7 +101,7 @@
  endif
  if BUILD_WITH_LIBDEVINFO
  memory_la_LIBADD += -ldevinfo
-@@ -964,7 +973,7 @@
+@@ -951,7 +971,7 @@ swap_la_CFLAGS = $(AM_CFLAGS)
  swap_la_LDFLAGS = $(PLUGIN_LDFLAGS)
  swap_la_LIBADD =
  if BUILD_WITH_LIBKSTAT
@@ -85,7 +110,7 @@
  endif
  if BUILD_WITH_LIBDEVINFO
  swap_la_LIBADD += -ldevinfo
-@@ -1010,7 +1019,7 @@
+@@ -997,7 +1017,7 @@ if BUILD_PLUGIN_TAPE
  pkglib_LTLIBRARIES += tape.la
  tape_la_SOURCES = tape.c
  tape_la_LDFLAGS = $(PLUGIN_LDFLAGS)
@@ -94,7 +119,7 @@
  endif
  
  if BUILD_PLUGIN_TARGET_NOTIFICATION
-@@ -1116,7 +1125,7 @@
+@@ -1102,7 +1122,7 @@ uptime_la_CFLAGS = $(AM_CFLAGS)
  uptime_la_LDFLAGS = $(PLUGIN_LDFLAGS)
  uptime_la_LIBADD =
  if BUILD_WITH_LIBKSTAT
@@ -103,7 +128,7 @@
  endif
  if BUILD_WITH_PERFSTAT
  uptime_la_LIBADD += -lperfstat
-@@ -1275,7 +1284,7 @@
+@@ -1260,11 +1280,23 @@ if BUILD_LINUX
  # zfs_arc requires no library on linux
  else
  # solaris
@@ -112,7 +137,23 @@
  endif
  endif
  endif
-@@ -1364,12 +1373,7 @@
+ 
++if BUILD_PLUGIN_ZFS_ARC_V2
++pkglib_LTLIBRARIES += zfs_arc_v2.la
++zfs_arc_v2_la_SOURCES = zfs_arc_v2.c
++zfs_arc_v2_la_CFLAGS = $(AM_CFLAGS)
++zfs_arc_v2_la_LDFLAGS = -module -avoid-version
++if BUILD_FREEBSD
++zfs_arc_v2_la_LIBADD = -lm
++else
++zfs_arc_v2_la_LIBADD = -lkstat
++endif
++endif
++
+ if BUILD_PLUGIN_ZOOKEEPER
+ pkglib_LTLIBRARIES += zookeeper.la
+ zookeeper_la_SOURCES = zookeeper.c
+@@ -1354,12 +1386,7 @@ endif
  
  install-exec-hook:
  	$(mkinstalldirs) $(DESTDIR)$(sysconfdir)
