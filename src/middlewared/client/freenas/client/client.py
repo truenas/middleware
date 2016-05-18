@@ -99,6 +99,13 @@ if __name__ == '__main__':
     parser.add_argument('call', nargs='+')
     args = parser.parse_args()
 
+    def to_json(args):
+        for i in args:
+            try:
+                yield json.loads(i)
+            except:
+                yield i
+
     if args.call:
         c = Client()
-        print(c.call(args.call[1], args.call[2:]))
+        print(c.call(args.call[1], list(to_json(args.call[2:]))))
