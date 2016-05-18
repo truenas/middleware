@@ -73,17 +73,19 @@ class ActiveDirectory(TestObject):
         except LDAPError as e:
             # LDAPError is dumb, it returns a list with one element for goodness knows what reason
             e = e[0]
-            error = "" 
-            if 'desc' in e:
-                error = e['desc']
-                if 'info' in e:
-                    error = "{0}, {1}".format(error, e['info'])
+            error = []
+            desc = e.get('desc')
+            info = e.get('info')
+            if desc:
+                error.append(desc)
+            if info:
+                error.append(info)
+
+            if error:
+                error = ', '.join(error)
             else:
-                # LDAPError may have desc and info or just info so making a case that handles just info
-                if 'info' in e:
-                    error = e['info']
-                else:
-                    error = str(e)
+                error = str(e)
+
             return self._handler.Fail("ActiveDirectory", error)
         except Exception as e:
             return self._handler.Fail("ActiveDirectory", str(e))
