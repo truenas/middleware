@@ -91,7 +91,7 @@ or *False*.
 |                          |          |                                                                                                                      |
 |                          |          |                                                                                                                      |
 +==========================+==========+======================================================================================================================+
-| bsdusr_username          | string   | maximum 32 characters, though a maximum of 8 is recommended for interoperability; can include numerals but cannot   |
+| bsdusr_username          | string   | maximum 32 characters, though a maximum of 8 is recommended for interoperability; can include numerals but cannot    |
 |                          |          | include a space                                                                                                      |
 |                          |          |                                                                                                                      |
 +--------------------------+----------+----------------------------------------------------------------------------------------------------------------------+

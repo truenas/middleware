@@ -68,10 +68,10 @@ display these settings by checking the box "Show advanced fields by default" in 
 +==========================+===============+=======================================================================================================================================================+
 | Domain Name              | string        | name of Active Directory domain (e.g. *example.com*) or child domain (e.g.                                                                            |
 |                          |               | *sales.example.com*); this setting is mandatory and the GUI will refuse to save the settings if the domain controller for the specified               |
-|                          |               | domain cannot be found                                                                                                                               |
+|                          |               | domain cannot be found                                                                                                                                |
 |                          |               |                                                                                                                                                       |
 +--------------------------+---------------+-------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Domain Account Name      | string        | name of the Active Directory administrator account; this setting is mandatory and the GUI will refuse to save the settings if it cannot              |
+| Domain Account Name      | string        | name of the Active Directory administrator account; this setting is mandatory and the GUI will refuse to save the settings if it cannot               |
 |                          |               | connect to the domain controller using this account name                                                                                              |
 |                          |               |                                                                                                                                                       |
 +--------------------------+---------------+-------------------------------------------------------------------------------------------------------------------------------------------------------+

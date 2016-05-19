@@ -560,7 +560,7 @@ Table 11.6a summarizes the available options when configuring the FTP server:
 |                                                               |                | DNS is not configured                                                               |
 |                                                               |                |                                                                                     |
 +---------------------------------------------------------------+----------------+-------------------------------------------------------------------------------------+
-| Masquerade address                                            | string         | public IP address or hostname; set if FTP clients cannot connect through a         |
+| Masquerade address                                            | string         | public IP address or hostname; set if FTP clients cannot connect through a          |
 |                                                               |                | NAT device                                                                          |
 |                                                               |                |                                                                                     |
 +---------------------------------------------------------------+----------------+-------------------------------------------------------------------------------------+
@@ -623,7 +623,7 @@ Table 11.6a summarizes the available options when configuring the FTP server:
 |                                                               |                | environment variables                                                               |
 |                                                               |                |                                                                                     |
 +---------------------------------------------------------------+----------------+-------------------------------------------------------------------------------------+
-| TLS no certificate request                                    | checkbox       | only available in "Advanced Mode"; try checking this box if the client cannot      |
+| TLS no certificate request                                    | checkbox       | only available in "Advanced Mode"; try checking this box if the client cannot       |
 |                                                               |                | connect and you suspect that the client software is not properly handling           |
 |                                                               |                | the server's certificate request                                                    |
 |                                                               |                |                                                                                     |
@@ -1360,7 +1360,7 @@ Table 11.15a summarizes the options in the UPS Configuration screen.
 | Monitor User              | string         | default is *upsmon*                                                                                   |
 |                           |                |                                                                                                       |
 +---------------------------+----------------+-------------------------------------------------------------------------------------------------------+
-| Monitor Password          | string         | default is known value *fixmepass* and should be changed; cannot contain a space or #                |
+| Monitor Password          | string         | default is known value *fixmepass* and should be changed; cannot contain a space or #                 |
 |                           |                |                                                                                                       |
 +---------------------------+----------------+-------------------------------------------------------------------------------------------------------+
 | Extra users               | string         | defines the accounts that have administrative access; see                                             |

@@ -162,11 +162,11 @@ explains these options in more detail.
 | Prefer      | checkbox  | should only be used for NTP servers that are known to be highly accurate, such as those with time monitoring hardware |
 |             |           |                                                                                                                       |
 +-------------+-----------+-----------------------------------------------------------------------------------------------------------------------+
-| Min. Poll   | integer   | power of 2 in seconds; cannot be lower than                                                                          |
+| Min. Poll   | integer   | power of 2 in seconds; cannot be lower than                                                                           |
 |             |           | *4* or higher than "Max. Poll"                                                                                        |
 |             |           |                                                                                                                       |
 +-------------+-----------+-----------------------------------------------------------------------------------------------------------------------+
-| Max. Poll   | integer   | power of 2 in seconds; cannot be higher than                                                                         |
+| Max. Poll   | integer   | power of 2 in seconds; cannot be higher than                                                                          |
 |             |           | *17* or lower than "Min. Poll"                                                                                        |
 |             |           |                                                                                                                       |
 +-------------+-----------+-----------------------------------------------------------------------------------------------------------------------+
@@ -853,7 +853,7 @@ summarized in Table 5.10a.
 | **Setting**          | **Value**            | **Description**                                                                                 |
 |                      |                      |                                                                                                 |
 +======================+======================+=================================================================================================+
-| Name                 | string               | mandatory; input a descriptive name for the certificate; cannot contain the *"* character      |
+| Name                 | string               | mandatory; input a descriptive name for the certificate; cannot contain the *"* character       |
 |                      |                      |                                                                                                 |
 +----------------------+----------------------+-------------------------------------------------------------------------------------------------+
 | Certificate          | string               | mandatory; paste the contents of the certificate                                                |
@@ -884,7 +884,7 @@ self-signed certificate, use the CA that you imported or created using :ref:`CAs
 | Signing Certificate  | drop-down menu       | mandatory; select the CA which was previously imported or created using :ref:`CAs`              |
 | Authority            |                      |                                                                                                 |
 +----------------------+----------------------+-------------------------------------------------------------------------------------------------+
-| Name                 | string               | mandatory; input a descriptive name for the certificate; cannot contain the *"* character      |
+| Name                 | string               | mandatory; input a descriptive name for the certificate; cannot contain the *"* character       |
 |                      |                      |                                                                                                 |
 +----------------------+----------------------+-------------------------------------------------------------------------------------------------+
 | Key Length           | drop-down menu       | for security reasons, a minimum of *2048* is recommended                                        |

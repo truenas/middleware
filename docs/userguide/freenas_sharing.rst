@@ -91,7 +91,7 @@ created.
 |                              |               |                                                                                                             |
 +------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
 | Name                         | string        | volume name that will appear in the Mac computer's "connect to server" dialogue; limited to 27 characters   |
-|                              |               | and cannot contain a period                                                                                |
+|                              |               | and cannot contain a period                                                                                 |
 |                              |               |                                                                                                             |
 +------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
 | Share Comment                | string        | only available in "Advanced Mode"; optional                                                                 |
@@ -1440,7 +1440,7 @@ Table 10.5f summarizes the settings that can be configured when creating an exte
 | **Setting**        | **Value**      | **Description**                                                                                                      |
 |                    |                |                                                                                                                      |
 +====================+================+======================================================================================================================+
-| Extent Name        | string         | name of extent; if the "Extent size" is not *0*, it cannot be an existing file within the volume/dataset            |
+| Extent Name        | string         | name of extent; if the "Extent size" is not *0*, it cannot be an existing file within the volume/dataset             |
 |                    |                |                                                                                                                      |
 +--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
 | Extent Type        | drop-down menu | select from *File* or                                                                                                |

@@ -1261,7 +1261,7 @@ Table 8.3a summarizes the available options in the "Add Replication" screen.
 | Limit (kB/s)              | integer        | limits replication speed to specified value in kilobytes/second; default of *0* is unlimited                 |
 |                           |                |                                                                                                              |
 +---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
-| Begin                     | drop-down menu | the replication cannot start before this time; the times selected in the "Begin" and                        |
+| Begin                     | drop-down menu | the replication cannot start before this time; the times selected in the "Begin" and                         |
 |                           |                | "End" fields set the replication window for when replication can occur                                       |
 |                           |                |                                                                                                              |
 +---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
