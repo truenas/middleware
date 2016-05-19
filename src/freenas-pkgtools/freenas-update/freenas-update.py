@@ -120,7 +120,7 @@ def ExtractFrozenUpdate(tarball, dest_dir, verbose=False):
     try:
         tf = tarfile.open(tarball)
     except BaseException as e:
-        print("Unable to open tarball %s: %s" % (tarball, str(e)), file=sys.stderr)
+        print("Unable to open tarball {0}: {1}".format(tarball, str(e)), file=sys.stderr)
         sys.exit(1)
     files = tf.getmembers()
     for f in files:
@@ -128,17 +128,17 @@ def ExtractFrozenUpdate(tarball, dest_dir, verbose=False):
             continue
         if not f.name.startswith("./"):
             if verbose:
-                print("Illegal member %s" % f, file=sys.stderr)
+                print("Illegal member {0}".format(f), file=sys.stderr)
             continue
         if len(f.name.split("/")) != 2:
             if verbose:
-                print("Illegal member name %s has too many path components" % f.name, file=sys.stderr)
+                print("Illegal member name {0} has too many path components".format(f.name), file=sys.stderr)
             continue
         if verbose:
-            print("Extracting %s" % f.name, file=sys.stderr)
+            print("Extracting {0}".format(f.name), file=sys.stderr)
         tf.extract(f.name, path=dest_dir)
         if verbose:
-            print("Done extracting %s" % f.name, file=sys.stderr)
+            print("Done extracting {0}".format(f.name), file=sys.stderr)
     return True
 
 
@@ -148,29 +148,29 @@ def PrintDifferences(diffs):
             pkg_diffs = diffs[type]
             for (pkg, op, old) in pkg_diffs:
                 if op == "delete":
-                    print("Delete package %s" % pkg.Name(), file=sys.stderr)
+                    print("Delete package {0}".format(pkg.Name()), file=sys.stderr)
                 elif op == "install":
-                    print("Install package %s-%s" % (pkg.Name(), pkg.Version()), file=sys.stderr)
+                    print("Install package {0}-{1}".format(pkg.Name(), pkg.Version()), file=sys.stderr)
                 elif op == "upgrade":
-                    print("Upgrade package %s %s->%s" % (pkg.Name(), old.Version(), pkg.Version()), file=sys.stderr)
+                    print("Upgrade package {0} {1}->{2}".format(pkg.Name(), old.Version(), pkg.Version()), file=sys.stderr)
                 else:
-                    print("Unknown package operation %s for packge %s-%s" % (op, pkg.Name(), pkg.Version()), file=sys.stderr)
+                    print("Unknown package operation {0} for packge {1}-{2}".format(op, pkg.Name(), pkg.Version()), file=sys.stderr)
         elif type == "Restart":
             for svc in diffs[type]:
                 desc = Update.GetServiceDescription(svc)
                 if desc:
-                    print("%s" % desc)
+                    print(str(desc), file=sys.stderr)
                 else:
-                    print("Unknown service restart %s?!" % svc)
+                    print("Unknown service restart {0}?!".format(svc), file=sys.stderr)
         elif type in ("Train", "Sequence"):
             # Train and Sequence are a single tuple, (old, new)
             old, new = diffs[type]
-            print("%s %s -> %s" % (type, old, new), file=sys.stderr)
+            print("{0} {1} -> {2}".format(type, old, new), file=sys.stderr)
         elif type == "Reboot":
             rr = diffs[type]
-            print("Reboot is (conditionally) %srequired" % ("" if rr else "not "), file=sys.stderr)
+            print("Reboot is (conditionally) {0}required".format("" if rr else "not "), file=sys.stderr)
         else:
-            print("*** Unknown key %s (value %s)" % (type, str(diffs[type])), file=sys.stderrr)
+            print("*** Unknown key {0} (value {1})".format(type, str(diffs[type])), file=sys.stderrr)
 
 
 def DoDownload(train, cache_dir, pkg_type, verbose):
@@ -209,7 +209,7 @@ def DoDownload(train, cache_dir, pkg_type, verbose):
         sys.exit(1)
     except Exceptions.UpdateInvalidUpdateException as e:
         log.error(str(e))
-        print("Update not permitted:\n%s" % e.value, file=sys.stderr)
+        print("Update not permitted:\n{0}".format(e.value), file=sys.stderr)
         sys.exit(1)
     except BaseException as e:
         log.error(str(e))
@@ -232,10 +232,10 @@ def DoUpdate(cache_dir, verbose):
         log.error("Cache directory busy, cannot update")
         raise
     except Exceptions.UpdateInvalidUpdateException as e:
-        log.error("Unable not permitted: %s" % e.value)
+        log.error("Unable not permitted: {0}".format(e.value))
         raise
     except BaseException as e:
-        log.error("Unable to update: %s" % str(e))
+        log.error("Unable to update: {0}".format(str(e)))
         raise
     if verbose:
         PrintDifferences(diffs)
@@ -247,7 +247,7 @@ def DoUpdate(cache_dir, verbose):
     try:
         rv = Update.ApplyUpdate(cache_dir)
     except BaseException as e:
-        log.error("Unable to apply update: %s" % str(e))
+        log.error("Unable to apply update: {0}".format(str(e)))
         raise
     if rv and verbose:
         print("System should be rebooted now", file=sys.stderr)
@@ -282,7 +282,7 @@ def main():
             '': {
                 'handlers': ['std'],
                 'level': 'DEBUG',
-                    'propagate': True,
+                'propagate': True,
             },
         },
     }
@@ -307,7 +307,7 @@ where cmd is one of:
         ]
         opts, args = getopt.getopt(sys.argv[1:], short_opts, long_opts)
     except getopt.GetoptError as err:
-        print(str(err))
+        print(str(err), file=sys.stderr)
         usage()
 
     verbose = False
@@ -333,7 +333,7 @@ where cmd is one of:
         elif o in ("--snl"):
             snl = True
         else:
-            assert False, "unhandled option %s" % o
+            assert False, "unhandled option {0}".format(o)
 
     if not verbose:
         log_config_dict['handlers']['std']['filters'] = ['cleandownload']
@@ -381,7 +381,7 @@ where cmd is one of:
         try:
             update_opts, update_args = getopt.getopt(args[1:], "R", "--reboot")
         except getopt.GetoptError as err:
-            print(str(err))
+            print(str(err), file=sys.stderr)
             usage()
 
         force_reboot = False
@@ -389,7 +389,7 @@ where cmd is one of:
             if o in ("-R", "--reboot"):
                 force_reboot = True
             else:
-                assert False, "Unhandled option %s" % o
+                assert False, "Unhandled option {0}".format(o)
 
         # See if the cache directory has an update downloaded already
         do_download = True
@@ -399,7 +399,7 @@ where cmd is one of:
                 f.close()
                 do_download = False
         except Exceptions.UpdateBusyCacheException:
-            print("Cache directory busy, cannot update")
+            print("Cache directory busy, cannot update", file=sys.stderr)
             sys.exit(0)
         except (Exceptions.UpdateInvalidCacheException, Exceptions.UpdateIncompleteCacheException):
             pass
@@ -410,7 +410,7 @@ where cmd is one of:
             rv = DoDownload(train, cache_dir, pkg_type, verbose)
 
         try:
-            DoUpdate(cache_dir)
+            DoUpdate(cache_dir, verbose)
             sys.exit(0)
         except:
             sys.exit(1)
@@ -434,13 +434,13 @@ where cmd is one of:
         try:
             os.makedirs(cache_dir)
         except BaseException as e:
-            print("Unable to create cache directory %s: %s" % (cache_dir, str(e)))
+            print("Unable to create cache directory {0}: {1}".format(cache_dir, str(e)))
             sys.exit(1)
 
         try:
             ExtractFrozenUpdate(args[0], cache_dir, verbose=verbose)
         except BaseException as e:
-            print("Unable to extract frozen update %s: %s" % (args[0], str(e)))
+            print("Unable to extract frozen update {0}: {1}".format(args[0], str(e)))
             sys.exit(1)
         # Exciting!  Now we need to have a SEQUENCE file, or it will fail verification.
         with open(os.path.join(cache_dir, "SEQUENCE"), "w") as s:
@@ -450,13 +450,10 @@ where cmd is one of:
             s.write(config.UpdateServerName())
 
         try:
-            DoUpdate(cache_dir)
+            DoUpdate(cache_dir, verbose)
             sys.exit(0)
         except:
             sys.exit(1)
-            
-    else:
-        usage()
 
 if __name__ == "__main__":
     sys.exit(main())
