@@ -38,6 +38,8 @@ import subprocess
 
 from OpenSSL import crypto
 
+from ldap import LDAPError
+
 from django.conf import settings
 from django.contrib.formtools.wizard.views import SessionWizardView
 from django.core.files.storage import FileSystemStorage
@@ -1458,6 +1460,23 @@ class InitialWizardDSForm(Form):
                     FreeNAS_ActiveDirectory.validate_credentials(
                         domain, binddn=binddn, bindpw=bindpw
                     )
+                except LDAPError as e:
+                    # LDAPError is dumb, it returns a list with one element for goodness knows what reason
+                    e = e[0]
+                    error = []
+                    desc = e.get('desc')
+                    info = e.get('info')
+                    if desc:
+                        error.append(desc)
+                    if info:
+                        error.append(info)
+
+                    if error:
+                        error = ', '.join(error)
+                    else:
+                        error = str(e)
+
+                    raise forms.ValidationError("{0}".format(error))
                 except Exception as e:
                     raise forms.ValidationError("{0}".format(e))
 
@@ -1485,9 +1504,25 @@ class InitialWizardDSForm(Form):
                 else:
                     cdata.pop('ds_type', None)
             else:
-
                 try:
                     FreeNAS_LDAP.validate_credentials(hostname, binddn=binddn, bindpw=bindpw)
+                except LDAPError as e:
+                    # LDAPError is dumb, it returns a list with one element for goodness knows what reason
+                    e = e[0]
+                    error = []
+                    desc = e.get('desc')
+                    info = e.get('info')
+                    if desc:
+                        error.append(desc)
+                    if info:
+                        error.append(info)
+
+                    if error:
+                        error = ', '.join(error)
+                    else:
+                        error = str(e)
+
+                    raise forms.ValidationError("{0}".format(error))
                 except Exception as e:
                     raise forms.ValidationError("{0}".format(str(e)))
 

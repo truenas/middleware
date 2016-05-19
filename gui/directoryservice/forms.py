@@ -30,6 +30,8 @@ import os
 import re
 import tempfile
 
+from ldap import LDAPError
+
 from django.forms import FileField
 from django.utils.translation import ugettext_lazy as _
 
@@ -552,6 +554,23 @@ class ActiveDirectoryForm(ModelForm):
                     binddn=binddn,
                     bindpw=bindpw
                 )
+            except LDAPError as e:
+                # LDAPError is dumb, it returns a list with one element for goodness knows what reason
+                e = e[0]
+                error = []
+                desc = e.get('desc')
+                info = e.get('info')
+                if desc:
+                    error.append(desc)
+                if info:
+                    error.append(info)
+
+                if error:
+                    error = ', '.join(error)
+                else:
+                    error = str(e)
+
+                raise forms.ValidationError("{0}".format(error))
             except Exception as e:
                 raise forms.ValidationError('{0}.'.format(str(e)))
 
@@ -759,6 +778,23 @@ class LDAPForm(ModelForm):
                 certfile=certfile,
                 ssl=ssl
             )
+        except LDAPError as e:
+            # LDAPError is dumb, it returns a list with one element for goodness knows what reason
+            e = e[0]
+            error = []
+            desc = e.get('desc')
+            info = e.get('info')
+            if desc:
+                error.append(desc)
+            if info:
+                error.append(info)
+
+            if error:
+                error = ', '.join(error)
+            else:
+                error = str(e)
+
+            raise forms.ValidationError("{0}".format(error))
         except Exception as e:
             raise forms.ValidationError("{0}".format(str(e)))
 
