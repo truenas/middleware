@@ -4,6 +4,7 @@ from ws4py.client.threadedclient import WebSocketClient
 
 import argparse
 import json
+import sys
 import uuid
 
 
@@ -108,4 +109,8 @@ if __name__ == '__main__':
 
     if args.call:
         c = Client()
-        print(c.call(args.call[1], list(to_json(args.call[2:]))))
+        try:
+            print(c.call(args.call[1], list(to_json(args.call[2:]))))
+        except ClientException as e:
+            print(e.stacktrace)
+            sys.exit(1)
