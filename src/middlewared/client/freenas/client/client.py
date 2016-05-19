@@ -95,7 +95,8 @@ class Client(object):
     def __del__(self):
         self.close()
 
-if __name__ == '__main__':
+
+def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('call', nargs='+')
     args = parser.parse_args()
@@ -114,3 +115,6 @@ if __name__ == '__main__':
         except ClientException as e:
             print(e.stacktrace)
             sys.exit(1)
+
+if __name__ == '__main__':
+    main()

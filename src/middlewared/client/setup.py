@@ -7,7 +7,7 @@ install_requires = [
 
 setup(
     name='freenas.client',
-    description='FreeNAS RPC client library',
+    description='FreeNAS middlewared client library',
     packages=['freenas', 'freenas.client'],
     namespace_packages=[str('freenas')],
     license='BSD',
@@ -21,4 +21,9 @@ setup(
         'Programming Language :: Python :: 3',
     ],
     install_requires=install_requires,
+    entry_points={
+        'console_scripts': [
+            'midclt = freenas.client.client:main',
+        ],
+    },
 )
