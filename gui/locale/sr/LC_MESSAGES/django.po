@@ -13130,3 +13130,8 @@ msgstr ""
 #: common/system.py:418
 msgid "Unmount Failed {0} -> {1} {2}"
 msgstr ""
+
+#: services/models.py:1258
+#, fuzzy
+msgid "Auxiliary parameters (upsd.conf)"
+msgstr "Pomoćni parametri (ups.conf)"

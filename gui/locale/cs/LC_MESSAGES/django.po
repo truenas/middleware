@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:07-0700\n"
-"PO-Revision-Date: 2016-05-12 10:53+0000\n"
+"PO-Revision-Date: 2016-05-18 19:16+0000\n"
 "Last-Translator: Pavel <pavel.borecki@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: cs\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1463050380.0\n"
+"X-POOTLE-MTIME: 1463598997.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -42,7 +42,7 @@ msgstr "HTTPS"
 
 #: choices.py:53 choices.py:227
 msgid "Auto"
-msgstr "Samočinné"
+msgstr "Automaticky"
 
 #: choices.py:54
 msgid "PIO0"
@@ -314,7 +314,7 @@ msgstr "Vzájemný CHAP"
 
 #: choices.py:251
 msgid "UPS reaches low battery"
-msgstr "Akumulátor v UPS zdroji je již téměř vybitý"
+msgstr "Akumulátor v UPS zdroji je už téměř vybitý"
 
 #: choices.py:252
 msgid "UPS goes on battery"
@@ -560,18 +560,18 @@ msgstr "Veřejná část SSH klíče"
 
 #: account/forms.py:284 account/forms.py:549
 msgid "Home Directory Mode"
-msgstr "Režim domovské složky"
+msgstr "Přístupová práva do domovské složky"
 
 #: account/forms.py:287 account/forms.py:804
 msgid "Auxiliary groups"
-msgstr "Pomocné skupiny"
+msgstr "Doplňkové skupiny"
 
 #~ msgid "A user with that uid already exists."
 #~ msgstr "Uživatelské jméno tohoto UID již existuje."
 
 #: account/forms.py:360
 msgid "A user with that username already exists."
-msgstr "Toto uživatelské jméno je v systému již používáno – zvolte jiné."
+msgstr "Toto uživatelské jméno je už v systému používáno – zvolte jiné."
 
 #: account/forms.py:369 storage/forms.py:281 system/forms.py:370
 #: system/forms.py:376 system/forms.py:382 system/forms.py:675
@@ -595,7 +595,7 @@ msgstr ""
 
 #: account/forms.py:401 account/forms.py:828
 msgid "A user cannot belong to more than 64 auxiliary groups"
-msgstr "Uživatel nemůže být členem více než 64 pomocných skupin"
+msgstr "Uživatel nemůže být členem více než 64 doplňkových skupin"
 
 #: account/forms.py:416 account/forms.py:653
 msgid "Home directory is not writable, leave this blank"
@@ -620,11 +620,11 @@ msgstr "Umožnit opakované použití identifikátorů skupiny"
 
 #: account/forms.py:739
 msgid "A group with that name already exists."
-msgstr "Skupina s takovým názvem již v systému existuje – zvolte jiný."
+msgstr "Skupina s takovým názvem už v systému existuje – zvolte jiný."
 
 #: account/forms.py:759
 msgid "A group with this gid already exists"
-msgstr "Skupina s takovým identifikátorem (GID) již existuje – zvolte jiný."
+msgstr "Skupina s takovým identifikátorem (GID) už existuje – zvolte jiný."
 
 #: account/forms.py:772
 msgid "Member users"
@@ -698,7 +698,7 @@ msgstr "Zašifrované SMB heslo"
 
 #: account/models.py:105
 msgid "Primary Group ID"
-msgstr "Identifikátor hlavní skupiny"
+msgstr "Identifikátor (GID) hlavní skupiny"
 
 #: account/models.py:109
 msgid "Home Directory"
@@ -808,10 +808,13 @@ msgstr "Z %s byla obdržena prázdná data"
 msgid "Couldn't retrieve %(url)s: %(error)s"
 msgstr "Nelze načíst %(url)s: %(error)s"
 
+# https://cs.wikipedia.org/wiki/Serializace
 #: freeadmin/navtree.py:445
 #, python-format
 msgid "An error occurred while unserializing from %(url)s: %(error)s"
-msgstr "Během deserializace z %(url)s došlo k chybě: %(error)s"
+msgstr ""
+"Při extrahování datových struktur (deserializace) z %(url)s došlo k chybě: "
+"%(error)s"
 
 #: freeadmin/views.py:257
 msgid "It was not possible to retrieve the current status"
@@ -841,7 +844,7 @@ msgstr ""
 
 #: middleware/zfs.py:581 storage/models.py:600
 msgid "Error getting used space"
-msgstr "Chyba při získávání informace o využitém místu"
+msgstr "Chyba při získávání informace o využité kapacitě"
 
 #: middleware/zfs.py:590 middleware/zfs.py:598 storage/models.py:95
 #: storage/models.py:608 storage/models.py:616
@@ -857,23 +860,23 @@ msgstr "Síťové rozhraní"
 #, python-format
 msgid "You cannot configure multiple interfaces with the same IP address (%s)"
 msgstr ""
-"Jedna a tatáž IP adresa (%s) nemůže být použita na více rozhraních současně"
+"Jedna a tatáž IP adresa (%s) nemůže být přiřazena více rozhraním současně"
 
 #: network/forms.py:120
 msgid "You have to specify IPv4 address as well"
-msgstr "Je třeba zadat též IPv4 adresu"
+msgstr "Je třeba zadat také IPv4 adresu"
 
 #: network/forms.py:124
 msgid "You have to choose IPv4 netmask as well"
-msgstr "Je třeba zvolit též IPv4 masku sítě"
+msgstr "Je třeba zvolit také IPv4 masku sítě"
 
 #: network/forms.py:131
 msgid "You have to specify IPv6 address as well"
-msgstr "Je třeba zadat též IPv6 adresu"
+msgstr "Je třeba zadat také IPv6 adresu"
 
 #: network/forms.py:135
 msgid "You have to choose IPv6 netmask as well"
-msgstr "Je třeba zvolit též IPv6 masku sítě"
+msgstr "Je třeba zvolit také IPv6 masku sítě"
 
 #: network/forms.py:140
 msgid "You have to choose between IPv4 or IPv6"
@@ -7211,7 +7214,7 @@ msgstr "SMB2_02"
 
 #: choices.py:311
 msgid "zle (runs of zeros)"
-msgstr "zle („běh nul“)"
+msgstr "zle (posloupnost nul)"
 
 #: choices.py:312
 msgid "lzjb (legacy, not recommended)"
@@ -13029,3 +13032,7 @@ msgstr "Připojení (mount) se nezdařilo {0} -> {1}, {2}"
 #: common/system.py:418
 msgid "Unmount Failed {0} -> {1} {2}"
 msgstr "Odpojení (umount) se nezdařilo {0} -> {1} {2}"
+
+#: services/models.py:1258
+msgid "Auxiliary parameters (upsd.conf)"
+msgstr "Pomocné parametry (upsd.conf)"

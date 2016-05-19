@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:05-0700\n"
-"PO-Revision-Date: 2016-05-14 18:52+0000\n"
+"PO-Revision-Date: 2016-05-18 08:32+0000\n"
 "Last-Translator: BouRock <hitowerdigit@hotmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: tr\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1)\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1463251947.0\n"
+"X-POOTLE-MTIME: 1463560322.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -244,7 +244,7 @@ msgstr "Tam"
 
 #: choices.py:191
 msgid "Debug"
-msgstr "Hata Ayıklama"
+msgstr "Hata ayıklama"
 
 #: choices.py:195
 msgid "Default"
@@ -400,7 +400,7 @@ msgstr "Salt-okunur"
 
 #: choices.py:505
 msgid "Write-only"
-msgstr "Sadece-yazılabilir"
+msgstr "Sadece yazılır"
 
 #: choices.py:506
 msgid "Read and Write"
@@ -641,7 +641,7 @@ msgstr "Eski parola"
 
 #: account/forms.py:914
 msgid "Your old password was entered incorrectly. Please enter it again."
-msgstr "Eski parolanız yanlış girildi. Lütfen tekrar girin."
+msgstr "Eski parolanız yanlış olarak girildi. Lütfen tekrar girin."
 
 #: account/forms.py:922
 msgid "Do you want to delete all users with this primary group?"
@@ -807,7 +807,8 @@ msgstr "%(url)s alınamadı: %(error)s"
 #: freeadmin/navtree.py:445
 #, python-format
 msgid "An error occurred while unserializing from %(url)s: %(error)s"
-msgstr "%(url)s gelen serisizleştirmede bir hata oluştu: %(error)s"
+msgstr ""
+"%(url)s adresinden gelen serisizleştirmede bir hata meydana geldi: %(error)s"
 
 #: freeadmin/views.py:257
 msgid "It was not possible to retrieve the current status"
@@ -1756,7 +1757,7 @@ msgstr "EA Desteği"
 
 #: services/models.py:138
 msgid "Support DOS File Attributes"
-msgstr "DOS Dosya Özniteliklerini destekle"
+msgstr "DOS Dosya Özniteliklerini destekler"
 
 #: services/models.py:140
 msgid "Allow Empty Password"
@@ -2478,9 +2479,8 @@ msgid ""
 "The subject of the email. You can use the following parameters for "
 "substitution:<br /><ul><li>%d - Date</li><li>%h - Hostname</li></ul>"
 msgstr ""
-"E-postanın konusu. Değişim için şurada belirtilen parametreleri "
-"kullanabilirsiniz: <br /><ul><li>%d - Tarih</li><li>%h - Anamakine "
-"adı</li></ul>"
+"E-postanın konusu. Değişim için aşağıdaki parametreleri kullanabilirsiniz:<"
+"br /><ul><li>%d - Tarih</li><li>%h - Anamakine adı</li></ul>"
 
 #: services/models.py:956 services/models.py:957
 #: templates/services/core.html:166
@@ -4741,7 +4741,7 @@ msgstr "Ülke"
 
 #: system/models.py:302
 msgid "Country Name (2 letter code)"
-msgstr "Ülke Adı (2 harflik kod)"
+msgstr "Ülke Adı (2 harfli kod)"
 
 #: system/models.py:308
 msgid "Common Name"
@@ -5475,7 +5475,7 @@ msgstr "FTP Ayarları"
 
 #: templates/services/core.html:69
 msgid "ISCSI Settings"
-msgstr "ISCSI Ayarları"
+msgstr "iSCSI Ayarları"
 
 #~ msgid "LDAP Settings"
 #~ msgstr "LDAP Ayarları"
@@ -8913,7 +8913,7 @@ msgstr "Geçersiz anlık görüntü"
 
 #: jails/forms.py:508
 msgid "Jail root must be on a volume or dataset!"
-msgstr "Kafes kökü, bir birim veya veri kümesinde olmak zorundadır"
+msgstr "Kafes kökü, bir birim veya veri kümesinde olmak zorundadır!"
 
 #: jails/models.py:178
 msgid "Comma delimited list of sysctl's"
@@ -9327,7 +9327,7 @@ msgstr "İzin Türü"
 
 #: storage/forms.py:1817
 msgid "Only [-a-zA-Z0-9_. ] permitted as snapshot name"
-msgstr "Anlık görüntü adı olarak sadece [-a-zA-Z0-9_.] izin verilir"
+msgstr "Anlık görüntü adı olarak sadece [-a-zA-Z0-9_. ] izin verilir"
 
 #: storage/forms.py:1860
 msgid "Only [-a-zA-Z0-9_./ ] permitted as clone name"
@@ -9453,7 +9453,7 @@ msgstr "Çoğaltma %(replication)s başarısız oldu: %(message)s"
 #: system/alertmods/volume_version.py:24
 #: system/alertmods/volume_version.py:44
 msgid "You need to upgrade the volume %s"
-msgstr "%s birimini yükseltmeniz gerekiyor!"
+msgstr "%s birimini yükseltmeniz gerekiyor"
 
 #: system/alertmods/zpool_capacity.py:28
 msgid ""
@@ -10094,7 +10094,7 @@ msgstr "Idmap arka ucu"
 #: directoryservice/models.py:705
 #: directoryservice/models.py:870
 msgid "Idmap backend for winbind."
-msgstr "Winbind için Idmap arka ucu."
+msgstr "Winbind için ldmap arka ucu."
 
 #: freeadmin/navtree.py:256
 #, fuzzy
@@ -11032,7 +11032,7 @@ msgid ""
 msgstr ""
 "Bu parametre, bir kullanıcının ana dizini ve oturum açma bilgisini inşaa "
 "etmek için Winbind'ın Ad Hizmeti Bilgilerini nasıl aldığını denetlemek için "
-"tasarlandı."
+"tasarlandı"
 
 #: jails/models.py:359
 msgid "IPv4 DHCP"
@@ -11098,7 +11098,7 @@ msgstr "Bir Root E-postası vermek zorundasınız"
 
 #: sharing/forms.py:77
 msgid "Only one share is allowed to be a home share."
-msgstr "Ana paylaşım olması için sadece bir paylaşıma izin verilir"
+msgstr "Ana paylaşım olması için sadece bir paylaşıma izin verilir."
 
 #: sharing/models.py:42
 msgid "Use as home share"
@@ -12216,7 +12216,7 @@ msgid ""
 "based on memory available."
 msgstr ""
 "Mevcut belleğe dayanarak ağı ve ZFS sistem denetimi değişkenlerini otomatik "
-"olarak ayarlamayı dener"
+"olarak ayarlamayı dener."
 
 #: system/models.py:292
 msgid "Periodic Notification User"
@@ -13172,3 +13172,7 @@ msgstr "Bağlama başarısız oldu {0} -> {1}, {2}"
 #: common/system.py:418
 msgid "Unmount Failed {0} -> {1} {2}"
 msgstr "Sökme başarısız oldu {0} -> {1} {2}"
+
+#: services/models.py:1258
+msgid "Auxiliary parameters (upsd.conf)"
+msgstr "Yardımcı parametreler (upsd.conf)"

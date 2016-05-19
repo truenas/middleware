@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:01-0700\n"
-"PO-Revision-Date: 2016-02-28 20:33+0000\n"
-"Last-Translator: Reinhart <mx-6@live.de>\n"
+"PO-Revision-Date: 2016-05-16 11:22+0000\n"
+"Last-Translator: smoeschter <smoeschter@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: de\n"
 "MIME-Version: 1.0\n"
@@ -17,12 +17,12 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1456691588.0\n"
+"X-POOTLE-MTIME: 1463397731.0\n"
 
 #: choices.py:40
 #, fuzzy
 msgid "Plain"
-msgstr "einfach"
+msgstr "unverschlüsselt"
 
 #: choices.py:41 choices.py:557 system/models.py:320
 #: templates/system/settings.html:9
@@ -8203,12 +8203,12 @@ msgstr "Passwörter stimmen nicht überein"
 #: account/forms.py:398
 #, fuzzy
 msgid "Create Home Directory In"
-msgstr "Heimatverzeichnis"
+msgstr "Heimat- / Basisverzeichnis anlegen in:"
 
 #: account/models.py:54
 #, fuzzy
 msgid "Built-in Group"
-msgstr "Eingebauter Benutzer"
+msgstr "Integrierte Benutzergruppe"
 
 #: api/resources.py:437
 #: storage/views.py:778
@@ -9228,7 +9228,7 @@ msgstr "                  Authentifizierung+Daten                "
 #: account/forms.py:534
 #, fuzzy
 msgid "Home directory must end with username"
-msgstr "Das Home-Verzeichnis ist nicht beschreibar, Eingabe leer lassen"
+msgstr "Das Heimat-/Basisverzeichnis muss mit dem Benutzernamen enden!"
 
 # könnte je nach Kontext auch heißen: Anmeldungen (aller Benutzer) deaktivieren
 #: account/models.py:146
@@ -10097,6 +10097,8 @@ msgid ""
 "Passwords containing a question mark (?) are currently not allowed due to "
 "problems with CIFS."
 msgstr ""
+"Passwörter mit Fragezeichen (?) sind nicht erlaubt auf Grund eines Problems "
+"mit CIFS.                "
 
 #: directoryservice/forms.py:104
 msgid "NT4 failed to reload."
@@ -10244,7 +10246,7 @@ msgstr "hinzufügen"
 #: choices.py:788
 #, fuzzy
 msgid "autorid"
-msgstr "Automatisch starten"
+msgstr "Authentifizeirungs ID"
 
 #: choices.py:789
 msgid "hash"
@@ -10256,7 +10258,7 @@ msgstr "                  LDAP                "
 
 #: choices.py:791
 msgid "nss"
-msgstr ""
+msgstr "nss"
 
 #: choices.py:792
 #: directoryservice/models.py:155
@@ -10266,15 +10268,15 @@ msgstr "rfc2307"
 #: choices.py:793
 #, fuzzy
 msgid "rid"
-msgstr "Freitag"
+msgstr "rid"
 
 #: choices.py:794
 msgid "tdb"
-msgstr ""
+msgstr "tdb"
 
 #: choices.py:795
 msgid "tdb2"
-msgstr ""
+msgstr "tdb2"
 
 #: directoryservice/models.py:134
 #: directoryservice/models.py:174
@@ -10841,7 +10843,7 @@ msgstr "Gesicherte Authentifizierung"
 
 #: choices.py:799
 msgid "adex"
-msgstr ""
+msgstr "adex"
 
 #: choices.py:811
 msgid "Import an existing Certificate Authority"
@@ -10857,11 +10859,11 @@ msgstr ""
 
 #: choices.py:813
 msgid "Create an intermediate Certificate Authority"
-msgstr ""
+msgstr "Selbstautorisiertes Zertifikat erstellen"
 
 #: choices.py:817
 msgid "Import an existing Certificate"
-msgstr ""
+msgstr "Bestehendes Zertifikat importieren                "
 
 #: choices.py:818
 msgid "Create an internal Certificate"
@@ -10870,7 +10872,7 @@ msgstr "Erstelle ein internes Zertifikat"
 #: choices.py:819
 #, fuzzy
 msgid "Create a Certificate Signing Request"
-msgstr "Selbstsigniertes Zertifikat"
+msgstr "Selbstsigniertes Zertifikat erstellen"
 
 #: choices.py:823
 msgid "512"
@@ -10890,7 +10892,7 @@ msgstr ""
 
 #: choices.py:830
 msgid "SHA1"
-msgstr ""
+msgstr "SHA1                "
 
 #: choices.py:831
 msgid "SHA224"
@@ -10906,7 +10908,7 @@ msgstr ""
 
 #: choices.py:834
 msgid "SHA512"
-msgstr ""
+msgstr "SHA512                "
 
 #: directoryservice/forms.py:406
 msgid "NIS failed to reload."
@@ -12227,15 +12229,15 @@ msgstr "15000"
 
 #: choices.py:811
 msgid "Sensitive"
-msgstr ""
+msgstr "Groß / Kleinschreibung beachten"
 
 #: choices.py:812
 msgid "Insensitive"
-msgstr ""
+msgstr "Groß-/Kleinschreibung ignorieren"
 
 #: choices.py:813
 msgid "Mixed"
-msgstr ""
+msgstr "Gemischt                "
 
 #: account/models.py:160
 msgid "Microsoft Account"
@@ -13701,17 +13703,17 @@ msgstr "Benötigt"
 #: choices.py:188
 #, fuzzy
 msgid "SMB3_02"
-msgstr "SMB3_00"
+msgstr "SMB3_02"
 
 #: choices.py:189
 #, fuzzy
 msgid "SMB3_10"
-msgstr "SMB3_00"
+msgstr "SMB3_10"
 
 #: choices.py:190
 #, fuzzy
 msgid "SMB3_11"
-msgstr "SMB3"
+msgstr "SMB3_11"
 
 #: services/models.py:92
 #, fuzzy
@@ -13784,3 +13786,8 @@ msgstr ""
 #: common/system.py:418
 msgid "Unmount Failed {0} -> {1} {2}"
 msgstr ""
+
+#: services/models.py:1258
+#, fuzzy
+msgid "Auxiliary parameters (upsd.conf)"
+msgstr "zusätzliche Parameter (ups.conf)"
