@@ -8,6 +8,7 @@ import json
 import os
 import subprocess
 import sys
+import traceback
 
 
 class Application(WebSocketApplication):
@@ -59,7 +60,7 @@ class Application(WebSocketApplication):
                 ),
             })
         except Exception as e:
-            self.send_error(message, str(e))
+            self.send_error(message, str(e), ''.join(traceback.format_exception(sys.exc_type, sys.exc_value, sys.exc_traceback)))
 
     def on_open(self):
         pass
