@@ -1316,7 +1316,7 @@ Figure 11.15a shows the UPS configuration screen:
 
 **Figure 11.15a: UPS Configuration Screen**
 
-.. image:: images/ups.png
+.. image:: images/ups1.png
 
 Table 11.15a summarizes the options in the UPS Configuration screen.
 
@@ -1343,7 +1343,11 @@ Table 11.15a summarizes the options in the UPS Configuration screen.
 |                           |                |                                                                                                       |
 +---------------------------+----------------+-------------------------------------------------------------------------------------------------------+
 | Auxiliary Parameters      | string         | additional options from                                                                               |
-|                           |                | `ups.conf(5) <http://www.networkupstools.org/docs/man/ups.conf.html>`_                                |
+| (ups.conf)                |                | `ups.conf(5) <http://www.networkupstools.org/docs/man/ups.conf.html>`_                                |
+|                           |                |                                                                                                       |
++---------------------------+----------------+-------------------------------------------------------------------------------------------------------+
+| Auxiliary Parameters      | string         | additional options from                                                                               |
+| (upsd.conf)               |                | `upsd.conf(5) <http://www.networkupstools.org/docs/man/upsd.conf.html>`_                              |
 |                           |                |                                                                                                       |
 +---------------------------+----------------+-------------------------------------------------------------------------------------------------------+
 | Description               | string         | optional                                                                                              |

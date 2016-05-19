@@ -149,6 +149,8 @@ Some updates affect the user interface so this section lists any functional chan
   
 * The "NFSv3 ownership model for NFSv4" checkbox has been added to :menuselection:`Services --> NFS`.
 
+* The "Auxiliary Parameters" field of :menuselection:`Services --> UPS` has been split into two so that you can specify additional :file:`ups.conf` and :file:`upsd.conf` settings.
+
 * :command:`iohyve` has been updated to version 0.7.5.
 
 * Timestamps have been added to alerts.
