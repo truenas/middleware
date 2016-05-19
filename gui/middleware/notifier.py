@@ -1704,7 +1704,10 @@ class notifier:
         if retval is None:
             mp = self.__get_mountpath(path, 'ZFS')
             if self.contains_jail_root(mp):
-                self.delete_plugins()
+                try:
+                    self.delete_plugins()
+                except:
+                    log.warn('Failed to delete plugins', exc_info=True)
 
             if recursive:
                 zfsproc = self._pipeopen("zfs destroy -r '%s'" % (path))
