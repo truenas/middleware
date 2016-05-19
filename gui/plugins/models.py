@@ -149,7 +149,7 @@ class Plugins(Model):
     def service_stop(self, request):
         return self._service_control(request, 'stop')
 
-    def _do_delete(self):
+    def _do_delete(self, force=False):
         jc = JailsConfiguration.objects.order_by('-id')[0]
         pbi_path = os.path.join(
             jc.jc_path,
@@ -162,7 +162,7 @@ class Plugins(Model):
             if j.host == self.plugin_jail:
                 jail = j
                 break
-        if jail is None:
+        if jail is None and not force:
             raise MiddlewareError(_("jail not found"))
 
         notifier().umount_filesystems_within(pbi_path)
@@ -183,10 +183,11 @@ class Plugins(Model):
                 jail=self.plugin_jail,
                 plugin=self.plugin_name,
             )
+            force = kwargs.pop('force', False)
             if qs.count() > 0:
-                self._do_delete()
+                self._do_delete(force=force)
             else:
-                self._do_delete()
+                self._do_delete(force=force)
                 if os.path.exists("%s/.plugins/PLUGIN" % jaildir):
                     try:
                         jail = Jails.objects.get(jail_host=self.plugin_jail)

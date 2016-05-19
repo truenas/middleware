@@ -1705,7 +1705,7 @@ class notifier:
             mp = self.__get_mountpath(path, 'ZFS')
             if self.contains_jail_root(mp):
                 try:
-                    self.delete_plugins()
+                    self.delete_plugins(force=True)
                 except:
                     log.warn('Failed to delete plugins', exc_info=True)
 
@@ -3335,10 +3335,10 @@ class notifier:
 
         return False
 
-    def delete_plugins(self):
+    def delete_plugins(self, force=False):
         from freenasUI.plugins.models import Plugins
         for p in Plugins.objects.all():
-            p.delete()
+            p.delete(force=force)
 
     def get_volume_status(self, name, fs):
         status = 'UNKNOWN'
