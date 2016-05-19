@@ -263,7 +263,7 @@ class bsdUsers(Model):
             if not gobj.bsdgrp_builtin and count == 0 and count2 == 0:
                 gobj.delete(reload=False, pwdelete=False)
         except:
-            pass
+            log.warn(u'Failed to delete primary group of %s', self, exc_info=True)
         cifs = CIFS.objects.latest('id')
         if cifs:
             if cifs.cifs_srv_guest == self.bsdusr_username:
