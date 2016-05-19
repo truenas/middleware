@@ -228,7 +228,7 @@ The next screen, shown in Figure 2.3f, prompts for the *root* password which is 
 
 .. image:: images/install4.png
 
-Setting a password is mandatory and the password can not be blank. Since this password provides access to the administrative GUI, it should be a hard-to-guess
+Setting a password is mandatory and the password cannot be blank. Since this password provides access to the administrative GUI, it should be a hard-to-guess
 password. Input the password, press the down arrow key, and confirm the password. Then press :kbd:`Enter` to start the installation.
 
 .. note:: for security reasons, the SSH service and *root* SSH logins are disabled by default. Unless these are set, the only way to access a shell as
@@ -435,7 +435,7 @@ In FreeNAS®, ZFS pools can be upgraded from the graphical administrative interf
 
 Before upgrading an existing ZFS pool, be aware of the following caveats first:
 
-* the pool upgrade is a one-way street meaning that **if you change your mind you can not go back to an earlier ZFS version or downgrade to an earlier version
+* the pool upgrade is a one-way street meaning that **if you change your mind you cannot go back to an earlier ZFS version or downgrade to an earlier version
   of FreeNAS® that does not support those feature flags.**
 
 * before performing any operation that may affect the data on a storage disk, **always backup your data first and verify the integrity of the backup.**

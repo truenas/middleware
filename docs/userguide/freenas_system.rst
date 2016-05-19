@@ -162,11 +162,11 @@ explains these options in more detail.
 | Prefer      | checkbox  | should only be used for NTP servers that are known to be highly accurate, such as those with time monitoring hardware |
 |             |           |                                                                                                                       |
 +-------------+-----------+-----------------------------------------------------------------------------------------------------------------------+
-| Min. Poll   | integer   | power of 2 in seconds; can not be lower than                                                                          |
+| Min. Poll   | integer   | power of 2 in seconds; cannot be lower than                                                                          |
 |             |           | *4* or higher than "Max. Poll"                                                                                        |
 |             |           |                                                                                                                       |
 +-------------+-----------+-----------------------------------------------------------------------------------------------------------------------+
-| Max. Poll   | integer   | power of 2 in seconds; can not be higher than                                                                         |
+| Max. Poll   | integer   | power of 2 in seconds; cannot be higher than                                                                         |
 |             |           | *17* or lower than "Min. Poll"                                                                                        |
 |             |           |                                                                                                                       |
 +-------------+-----------+-----------------------------------------------------------------------------------------------------------------------+
@@ -209,7 +209,7 @@ Each boot environment entry contains the following information:
 
 Highlight an entry to view its configuration buttons.  The following configuration buttons are available:
 
-* **Delete:** used to delete the highlighted entry, which also removes that entry from the boot menu. Since you can not delete an entry that has been activated, this button will
+* **Delete:** used to delete the highlighted entry, which also removes that entry from the boot menu. Since you cannot delete an entry that has been activated, this button will
   not appear for the active boot environment. If you need to delete an entry that  is currently activated, first activate another entry, which will clear the
   *On reboot* field of the currently activated entry. Note that this button will not be displayed for the "default" boot environment as this entry is needed in order to return the system to
   the original installation state.
@@ -853,7 +853,7 @@ summarized in Table 5.10a.
 | **Setting**          | **Value**            | **Description**                                                                                 |
 |                      |                      |                                                                                                 |
 +======================+======================+=================================================================================================+
-| Name                 | string               | mandatory; input a descriptive name for the certificate; can not contain the *"* character      |
+| Name                 | string               | mandatory; input a descriptive name for the certificate; cannot contain the *"* character      |
 |                      |                      |                                                                                                 |
 +----------------------+----------------------+-------------------------------------------------------------------------------------------------+
 | Certificate          | string               | mandatory; paste the contents of the certificate                                                |
@@ -884,7 +884,7 @@ self-signed certificate, use the CA that you imported or created using :ref:`CAs
 | Signing Certificate  | drop-down menu       | mandatory; select the CA which was previously imported or created using :ref:`CAs`              |
 | Authority            |                      |                                                                                                 |
 +----------------------+----------------------+-------------------------------------------------------------------------------------------------+
-| Name                 | string               | mandatory; input a descriptive name for the certificate; can not contain the *"* character      |
+| Name                 | string               | mandatory; input a descriptive name for the certificate; cannot contain the *"* character      |
 |                      |                      |                                                                                                 |
 +----------------------+----------------------+-------------------------------------------------------------------------------------------------+
 | Key Length           | drop-down menu       | for security reasons, a minimum of *2048* is recommended                                        |

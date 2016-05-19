@@ -91,7 +91,7 @@ created.
 |                              |               |                                                                                                             |
 +------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
 | Name                         | string        | volume name that will appear in the Mac computer's "connect to server" dialogue; limited to 27 characters   |
-|                              |               | and can not contain a period                                                                                |
+|                              |               | and cannot contain a period                                                                                |
 |                              |               |                                                                                                             |
 +------------------------------+---------------+-------------------------------------------------------------------------------------------------------------+
 | Share Comment                | string        | only available in "Advanced Mode"; optional                                                                 |
@@ -401,7 +401,7 @@ Second NFS share:
 
 * "Path" set to :file:`/mnt/volume1/dataset1/directory1`
 
-Note that this requires the creation of two shares as it can not be accomplished in one share.
+Note that this requires the creation of two shares as it cannot be accomplished in one share.
 
 .. _Example Configuration:
 
@@ -1039,7 +1039,7 @@ Before using shadow copies with FreeNAS®, be aware of the following caveats:
 
 * Appropriate permissions must be configured on the volume/dataset being shared by CIFS.
 
-* Users can not delete shadow copies on the Windows system due to the way Samba works. Instead, the administrator can remove snapshots from the FreeNAS®
+* Users cannot delete shadow copies on the Windows system due to the way Samba works. Instead, the administrator can remove snapshots from the FreeNAS®
   administrative GUI. The only way to disable shadow copies completely is to remove the periodic snapshot task and delete all snapshots associated with the
   CIFS share.
 
@@ -1440,7 +1440,7 @@ Table 10.5f summarizes the settings that can be configured when creating an exte
 | **Setting**        | **Value**      | **Description**                                                                                                      |
 |                    |                |                                                                                                                      |
 +====================+================+======================================================================================================================+
-| Extent Name        | string         | name of extent; if the "Extent size" is not *0*, it can not be an existing file within the volume/dataset            |
+| Extent Name        | string         | name of extent; if the "Extent size" is not *0*, it cannot be an existing file within the volume/dataset            |
 |                    |                |                                                                                                                      |
 +--------------------+----------------+----------------------------------------------------------------------------------------------------------------------+
 | Extent Type        | drop-down menu | select from *File* or                                                                                                |

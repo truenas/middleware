@@ -152,8 +152,8 @@ default" in :menuselection:`System --> Advanced`. Table 4.2a summarizes the opti
 |                            |                 | port number used by the service                                                                                                                       |
 |                            |                 |                                                                                                                                                       |
 +----------------------------+-----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------+
-| Username                   | string          | greyed out if user already created; maximum 16 characters though a maximum of 8 is recommended for interoperability; can not begin with a hyphen, if  |
-|                            |                 | a *$* is used it can only be the last character, and it can not contain a space, tab, or the characters                                               |
+| Username                   | string          | greyed out if user already created; maximum 16 characters though a maximum of 8 is recommended for interoperability; cannot begin with a hyphen, if  |
+|                            |                 | a *$* is used it can only be the last character, and it cannot contain a space, tab, or the characters                                               |
 |                            |                 | *, : + & # % ^ \ & ( ) ! @ ~ * ? < > = "*                                                                                                             |
 |                            |                 |                                                                                                                                                       |
 +----------------------------+-----------------+-------------------------------------------------------------------------------------------------------------------------------------------------------+

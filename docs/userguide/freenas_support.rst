@@ -176,7 +176,7 @@ To get the most out of the IRC channel, keep the following points in mind:
 
 * Do not ask "can anyone help me?"; instead, just ask your question. If someone knows the answer, they will try to assist you.
 
-* Do not ask a question and then leave. Users who know the answer can not help you if you disappear.
+* Do not ask a question and then leave. Users who know the answer cannot help you if you disappear.
 
 * Do not take it personally if no one answers or demand that someone answers your question. Maybe no one who knows the answer is available, maybe your
   question is really hard, or maybe it is a question that has already been answered many times in the other support resources. Try asking again in a few
