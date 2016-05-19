@@ -769,7 +769,7 @@ class BaseFreeAdmin(object):
         else:
             if mf is None:
                 try:
-                    mf = navtree._modelforms[m][m.FreeAdmin.edit_modelform]
+                    mf = navtree._modelforms[m][m._admin.edit_modelform]
                 except:
                     mf = navtree._modelforms[m].values()[-1]
             else:
@@ -788,7 +788,7 @@ class BaseFreeAdmin(object):
         }
 
         form_i = None
-        mf = mf(instance=instance)
+        mf = mf(data=request.POST, instance=instance)
         if request.method == "POST":
             if form:
                 form_i = form(request.POST, instance=instance)

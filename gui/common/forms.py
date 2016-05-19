@@ -127,8 +127,8 @@ class ModelForm(AdvMixin, MF):
                 cdata[fname] = val.strip()
         return cdata
 
-    def delete(self, request=None, events=None):
-        self.instance.delete()
+    def delete(self, request=None, events=None, **kwargs):
+        self.instance.delete(**kwargs)
         fname = str(type(self).__name__)
         appPool.hook_form_delete(fname, self, request, events)
 

@@ -245,7 +245,7 @@ class bsdUsers(Model):
                 raw_password, str(self.bsdusr_unixhash)
             ) == str(self.bsdusr_unixhash)
 
-    def delete(self, using=None, reload=True):
+    def delete(self, using=None, reload=True, delete_group=True):
         from freenasUI.services.models import CIFS
         if self.bsdusr_builtin is True:
             raise ValueError(_(
@@ -260,7 +260,7 @@ class bsdUsers(Model):
                 bsdgrpmember_group=gobj).count()
             count2 = bsdUsers.objects.filter(bsdusr_group=gobj).exclude(
                 id=self.id).count()
-            if not gobj.bsdgrp_builtin and count == 0 and count2 == 0:
+            if delete_group and not gobj.bsdgrp_builtin and count == 0 and count2 == 0:
                 gobj.delete(reload=False, pwdelete=False)
         except:
             log.warn(u'Failed to delete primary group of %s', self, exc_info=True)

@@ -14,6 +14,7 @@ from freenasUI.account import models
 class BsdUserFAdmin(BaseFreeAdmin):
 
     create_modelform = "bsdUsersForm"
+    delete_form = "DeleteUserForm"
     edit_modelform = "bsdUsersForm"
 
     object_filters = {'bsdusr_builtin__exact': False}

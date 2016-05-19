@@ -1,4 +1,3 @@
-#s __
 # Copyright 2010-2011 iXsystems, Inc.
 # All rights reserved
 #
@@ -409,7 +408,7 @@ class bsdUsersForm(ModelForm, bsdUserGroupMixin):
 
                 if not self.instance.id:
                     home = "%s/%s" % (home.rstrip('/'), bsdusr_username)
-               
+
                 if not self.instance.id and not home.endswith(bsdusr_username):
                     raise forms.ValidationError(
                         _('Home directory must end with username')
@@ -600,6 +599,13 @@ class bsdUsersForm(ModelForm, bsdUserGroupMixin):
             _notifier.delete_pubkey(bsduser.bsdusr_home)
         return bsduser
 
+    def delete(self, **kwargs):
+        if self.data.get('nodelgroup'):
+            kwargs['delete_group'] = False
+        else:
+            kwargs['delete_group'] = True
+        super(bsdUsersForm, self).delete(**kwargs)
+
 
 class bsdUserPasswordForm(ModelForm):
     bsdusr_username2 = forms.CharField(label=_("Username"), required=False)
@@ -665,6 +671,20 @@ class bsdUserEmailForm(ModelForm, bsdUserGroupMixin):
         bsduser = super(bsdUserEmailForm, self).save(commit=True)
         notifier().reload("user")
         return bsduser
+
+
+class DeleteUserForm(forms.Form):
+
+    def __init__(self, *args, **kwargs):
+        self.instance = kwargs.pop('instance', None)
+        super(DeleteUserForm, self).__init__(*args, **kwargs)
+        qs = models.bsdUsers.objects.filter(bsdusr_group__id=self.instance.bsdusr_group.id).exclude(id=self.instance.id)
+        if not qs.exists():
+            self.fields['nodelgroup'] = forms.BooleanField(
+                label=_("Do not delete user primary group"),
+                required=False,
+                initial=False,
+            )
 
 
 class bsdGroupsForm(ModelForm, bsdUserGroupMixin):
@@ -740,7 +760,7 @@ class bsdGroupsForm(ModelForm, bsdUserGroupMixin):
         if self.instance and hasattr(self.instance, "_original_bsdgrp_group") and \
             self.instance._original_bsdgrp_group != self.instance.bsdgrp_group:
             notifier().groupmap_delete(ntgroup=self.instance._original_bsdgrp_group)
- 
+
         notifier().groupmap_add(unixgroup=self.instance.bsdgrp_group,
             ntgroup=self.instance.bsdgrp_group)
 
