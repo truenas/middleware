@@ -12521,3 +12521,8 @@ msgstr "挂载失败 {0} -> {1}, {2}"
 #: common/system.py:418
 msgid "Unmount Failed {0} -> {1} {2}"
 msgstr "卸载失败 {0} -> {1} {2}"
+
+#: services/models.py:1258
+#, fuzzy
+msgid "Auxiliary parameters (upsd.conf)"
+msgstr "附加参数 (ups.conf)"
