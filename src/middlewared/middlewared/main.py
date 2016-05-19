@@ -128,7 +128,7 @@ class Middleware(object):
         server.serve_forever()
 
 
-if __name__ == '__main__':
+def main():
     modpath = os.path.join(
         os.path.dirname(os.path.realpath(__file__)),
         '..',
@@ -136,3 +136,6 @@ if __name__ == '__main__':
     if modpath not in sys.path:
         sys.path.insert(0, modpath)
     Middleware().run()
+
+if __name__ == '__main__':
+    main()
