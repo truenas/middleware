@@ -33,7 +33,7 @@ proftpd_requirevalidshell=${proftpd_requirevalidshell:-"off"}
 proftpd_deleteabortedstores=${proftpd_deleteabortedstores:-"off"}
 proftpd_tlsverifyclient=${proftpd_tlsverifyclient:-"off"}
 proftpd_tlsoptions=${proftpd_tlsoptions:-"NoCertRequest"}
-proftpd_tlsprotocol=${proftpd_tlsprotocol:-"SSLv23"}
+proftpd_tlsprotocol=${proftpd_tlsprotocol:-"SSLv3 TLSv1.2"}
 proftpd_tlsrequired=${proftpd_tlsrequired:-"on"}
 proftpd_tcpaccesssysloglevels=${proftpd_tcpaccesssysloglevels:-"info warn"}
 proftpd_tcpservicename=${proftpd_tcpservicename:-"ftpd"}
@@ -245,7 +245,7 @@ LoadModule mod_tls.c
   TLSEngine on
   TLSProtocol ${proftpd_tlsprotocol}
   ${tls_options}
-  TLSRSACertificateFile "${tls_cert_dir}/${certname}.crt"
+  TLSRSACertificateFile "${tls_cert_dir}/${certname}.csr"
   TLSRSACertificateKeyFile "${tls_cert_dir}/${certname}.key"
   TLSVerifyClient ${proftpd_tlsverifyclient}
   TLSRequired ${ftp_tls_policy}
