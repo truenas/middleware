@@ -2,6 +2,7 @@ from setuptools import setup
 
 
 install_requires = [
+    'ws4py',
     'gevent',
     'gevent-websocket',
 ]
@@ -9,7 +10,10 @@ install_requires = [
 setup(
     name='middlewared',
     description='FreeNAS Middleware Daemon ',
-    packages=['middlewared', 'middlewared.plugins'],
+    packages=[
+        'middlewared',
+        'middlewared.client',
+        'middlewared.plugins'],
     license='BSD',
     platforms='any',
     classifiers=[
@@ -24,6 +28,7 @@ setup(
     entry_points={
         'console_scripts': [
             'middlewared = middlewared.main:main',
+            'midclt = middlewared.client.client:main',
         ],
     },
 )
