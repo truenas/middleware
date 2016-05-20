@@ -8,9 +8,15 @@
 
 . /etc/rc.subr
 
+middlewared_start() {
+	/sbin/ifconfig lo0 127.0.0.1 up
+	${command}
+}
+
 name="middlewared"
 pidfile="/var/run/middlewared.pid"
 command="/usr/local/bin/${name}"
+start_cmd='middlewared_start'
 
 load_rc_config $name
 run_rc_command $*
