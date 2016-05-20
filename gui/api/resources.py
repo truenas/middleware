@@ -62,6 +62,7 @@ from freenasUI.freeadmin.options import FreeBaseInlineFormSet
 from freenasUI.jails.forms import (
     JailCreateForm, JailsEditForm, JailTemplateCreateForm, JailTemplateEditForm
 )
+from freenasUI.jails.models import Jails
 from freenasUI.jails.models import JailTemplate
 from freenasUI.middleware import zfs
 from freenasUI.middleware.exceptions import MiddlewareError
@@ -889,6 +890,7 @@ class VolumeResourceMixin(NestedMixin):
     def _get_children(self, bundle, vol, children, uid):
         rv = []
         attr_fields = ('avail', 'used', 'used_pct')
+        jails_list = Jails.objects.all()
         for path, child in children.items():
             if child.name.startswith('.'):
                 continue
@@ -920,11 +922,23 @@ class VolumeResourceMixin(NestedMixin):
                     data['used_pct'],
                 )
                 data['avail'] = humanize_size(data['avail'])
-                
+
                 data['readonly'] = self.__zfsopts.get(
                     child.path,
                     {},
                 ).get('readonly', ('', '-'))[1]
+
+                data['comments'] = self.__zfsopts.get(
+                    child.path,
+                    {},
+                ).get('org.freenas:description', ('', '-'))[1]
+
+                # Filtering out comments field for Jails
+                for jail in jails_list:
+                    child_name = child.name.split('/')
+                    length = len(child_name)
+                    if jail.jail_host == child_name[length - 1] or "warden" in child_name[length - 1]:
+                        data['comments'] = '-'
 
             if self.is_webclient(bundle.request):
                 data['_add_zfs_volume_url'] = reverse(
@@ -1004,7 +1018,7 @@ class VolumeResourceMixin(NestedMixin):
         if self.is_webclient(request):
             self.__zfsopts = notifier().zfs_get_options(
                 recursive=True,
-                props=['compression', 'compressratio', 'readonly'],
+                props=['compression', 'compressratio', 'readonly', 'org.freenas:description'],
             )
         self._uid = Uid(100)
         return super(VolumeResourceMixin, self).dispatch_list(
