@@ -1,0 +1,16 @@
+#!/bin/sh
+#
+# $FreeBSD$
+#
+
+# PROVIDE: middlewared
+# BEFORE: fsck
+
+. /etc/rc.subr
+
+name="middlewared"
+pidfile="/var/run/middlewared.pid"
+command="/usr/local/bin/${name}"
+
+load_rc_config $name
+run_rc_command $*

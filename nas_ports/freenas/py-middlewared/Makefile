@@ -17,6 +17,8 @@ RUN_DEPENDS=	${PYTHON_PKGNAMEPREFIX}gevent>0:${PORTSDIR}/devel/py-gevent \
 		${PYTHON_PKGNAMEPREFIX}gevent-websocket>0:${PORTSDIR}/www/py-gevent-websocket \
 		${PYTHON_PKGNAMEPREFIX}ws4py>0:${PORTSDIR}/www/py-ws4py
 
+USE_RC_SUBR=	middlewared
+
 WRKSRC?=/usr/nas_source/middlewared
 
 checksum fetch:
