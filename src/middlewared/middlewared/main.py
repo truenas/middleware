@@ -142,6 +142,7 @@ def main():
 
     parser = argparse.ArgumentParser()
     parser.add_argument('restart', nargs='?')
+    parser.add_argument('--foregound', '-f', action='store_true')
     args = parser.parse_args()
 
     pidpath = '/var/run/middlewared.pid'
@@ -152,15 +153,21 @@ def main():
                 pid = int(f.read().strip())
             os.kill(pid, 15)
 
-    with DaemonContext(
-        pidfile=TimeoutPIDLockFile(pidpath),
-        detach_process=True,
-        stdout=sys.stdout,
-        stdin=sys.stdin,
-        stderr=sys.stderr,
-    ):
+    try:
+        if not args.foregound:
+            daemonc = DaemonContext(
+                pidfile=TimeoutPIDLockFile(pidpath),
+                detach_process=True,
+                stdout=sys.stdout,
+                stdin=sys.stdin,
+                stderr=sys.stderr,
+            )
+            daemonc.open()
         setproctitle.setproctitle('middlewared')
         Middleware().run()
+    finally:
+        if not args.foregound:
+            daemonc.close()
 
 if __name__ == '__main__':
     main()
