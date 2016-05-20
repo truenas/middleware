@@ -135,10 +135,11 @@ class Middleware(object):
 
 
 def main():
-    modpath = os.path.join(
+    # Workaround for development
+    modpath = os.path.realpath(os.path.join(
         os.path.dirname(os.path.realpath(__file__)),
         '..',
-    )
+    ))
     if modpath not in sys.path:
         sys.path.insert(0, modpath)
 
