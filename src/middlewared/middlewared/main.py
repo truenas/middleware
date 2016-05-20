@@ -8,6 +8,8 @@ import argparse
 import imp
 import inspect
 import json
+import logging
+import logging.config
 import os
 import setproctitle
 import subprocess
@@ -163,7 +165,31 @@ def main():
                 stderr=sys.stderr,
             )
             daemonc.open()
+
+        logging.config.dictConfig({
+	        'version': 1,
+            'handlers': {
+                'console': {
+                    'level': 'DEBUG',
+                    'class': 'logging.StreamHandler',
+                },
+                'file': {
+                    'level': 'DEBUG',
+                    'class': 'logging.handlers.RotatingFileHandler',
+                    'filename': '/var/log/middlewared.log',
+                }
+            },
+            'loggers': {
+                '': {
+                    'handlers': ['console' if args.foregound else 'file'],
+                    'level': 'DEBUG',
+                    'propagate': True,
+                },
+            }
+        })
+
         setproctitle.setproctitle('middlewared')
+
         Middleware().run()
     finally:
         if not args.foregound:
