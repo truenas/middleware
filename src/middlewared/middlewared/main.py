@@ -4,6 +4,7 @@ from daemon import DaemonContext
 from daemon.pidfile import TimeoutPIDLockFile
 from geventwebsocket import WebSocketServer, WebSocketApplication, Resource
 
+import argparse
 import imp
 import inspect
 import json
@@ -139,8 +140,20 @@ def main():
     if modpath not in sys.path:
         sys.path.insert(0, modpath)
 
+    parser = argparse.ArgumentParser()
+    parser.add_argument('restart', nargs='?')
+    args = parser.parse_args()
+
+    pidpath = '/var/run/middlewared.pid'
+
+    if args.restart:
+        if os.path.exists(pidpath):
+            with open(pidpath, 'r') as f:
+                pid = int(f.read().strip())
+            os.kill(pid, 15)
+
     with DaemonContext(
-        pidfile=TimeoutPIDLockFile('/var/run/middlewared.pid'),
+        pidfile=TimeoutPIDLockFile(pidpath),
         detach_process=True,
         stdout=sys.stdout,
         stdin=sys.stdin,
