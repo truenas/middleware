@@ -46,7 +46,7 @@ class Client(object):
 
     def __init__(self):
         self._calls = {}
-        self._ws = WSClient('ws://192.168.3.9:8000/websocket', client=self)
+        self._ws = WSClient('ws://127.0.0.1:8000/websocket', client=self)
         self._ws.connect()
 
     def _send(self, data):
