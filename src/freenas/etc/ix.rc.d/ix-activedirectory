@@ -194,7 +194,13 @@ activedirectory_start()
 		if ! AD_join_domain
 		then
 			/etc/directoryservice/ActiveDirectory/ctl stop
+			touch /tmp/.adalert
 			return 1
+    else
+			if [ -f /tmp/.adalert ]
+      then
+				rm /tmp/.adalert
+			fi
 		fi
 
 		setup_homedirs
