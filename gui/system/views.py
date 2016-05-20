@@ -244,6 +244,10 @@ function() {
             'on_click': onclick % (_('Keep'), '_keep_url'),
             'button_name': _('Keep'),
         },
+        _('UnKeep'): {
+            'on_click': onclick % (_('Unkeep'), '_un_keep_url'),
+            'button_name': _('Unkeep'),
+        },
     }
     return HttpResponse(
         json.dumps(actions),
@@ -437,7 +441,7 @@ def bootenv_rename(request, name):
 
 def bootenv_keep(request, name):
     if request.method == 'POST':
-        be = FindClone(name) 
+        be = FindClone(name)
         keep = CloneSetAttr(be, keep=True)
         if keep:
             return JsonResp(
@@ -449,6 +453,24 @@ def bootenv_keep(request, name):
             message=_('Failed to keep Boot Environment.'),
         )
     return render(request, 'system/bootenv_keep.html', {
+        'name': name,
+    })
+
+
+def bootenv_unkeep(request, name):
+    if request.method == 'POST':
+        be = FindClone(name)
+        keep = CloneSetAttr(be, keep = False)
+        if keep:
+            return JsonResp(
+                    request,
+                    message=_('Boot Environment successfully UnKept.'),
+        )
+        return JsonResp(
+            request,
+            message=_('Failed to Unkeep Boot Environment.'),
+        )
+    return render(request, 'system/bootenv_unkeep.html', {
         'name': name,
     })
 

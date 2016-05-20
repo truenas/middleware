@@ -3021,6 +3021,9 @@ class BootEnvResource(NestedMixin, DojoResource):
             bundle.data['_keep_url'] = reverse(
                 'system_bootenv_keep', kwargs={'name': bundle.obj.name},
             )
+            bundle.data['_un_keep_url'] = reverse(
+                'system_bootenv_unkeep', kwargs={'name': bundle.obj.name},
+            )
         return bundle
 
 
