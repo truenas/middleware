@@ -128,7 +128,7 @@ class Middleware(object):
 
     def run(self):
         Application.middleware = self
-        server = WebSocketServer(('', 8000), Resource(OrderedDict([
+        server = WebSocketServer(('127.0.0.1', 8000), Resource(OrderedDict([
             ('/websocket', Application),
         ])))
         server.serve_forever()
