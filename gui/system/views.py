@@ -203,7 +203,7 @@ function() {
         var data = grid.row(i).data;
         ids.push(data.id);
     }
-    editObject('Delete In Bulk', data._deletebulk_url + '?ids=' + ids.join(","),
+    editObject('Delete In Bulk',data._deletebulk_url + '?ids=' + ids.join(","),
         [mybtn,]);
 }""",
             'on_select_after': """function(evt, actionName, action) {
@@ -460,12 +460,12 @@ def bootenv_keep(request, name):
 def bootenv_unkeep(request, name):
     if request.method == 'POST':
         be = FindClone(name)
-        keep = CloneSetAttr(be, keep = False)
+        keep = CloneSetAttr(be, keep=False)
         if keep:
             return JsonResp(
-                    request,
-                    message=_('Boot Environment successfully UnKept.'),
-        )
+                request,
+                message=_('Boot Environment successfully UnKept.'),
+            )
         return JsonResp(
             request,
             message=_('Failed to Unkeep Boot Environment.'),
