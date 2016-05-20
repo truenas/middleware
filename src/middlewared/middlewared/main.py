@@ -1,11 +1,14 @@
 from collections import OrderedDict
-from freenas.client.protocol import DDPProtocol
+from client.protocol import DDPProtocol
+from daemon import DaemonContext
+from daemon.pidfile import TimeoutPIDLockFile
 from geventwebsocket import WebSocketServer, WebSocketApplication, Resource
 
 import imp
 import inspect
 import json
 import os
+import setproctitle
 import subprocess
 import sys
 import traceback
@@ -135,7 +138,16 @@ def main():
     )
     if modpath not in sys.path:
         sys.path.insert(0, modpath)
-    Middleware().run()
+
+    with DaemonContext(
+        pidfile=TimeoutPIDLockFile('/var/run/middlewared.pid'),
+        detach_process=True,
+        stdout=sys.stdout,
+        stdin=sys.stdin,
+        stderr=sys.stderr,
+    ):
+        setproctitle.setproctitle('middlewared')
+        Middleware().run()
 
 if __name__ == '__main__':
     main()
