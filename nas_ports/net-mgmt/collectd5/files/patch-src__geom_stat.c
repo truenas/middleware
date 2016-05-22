@@ -1,5 +1,5 @@
---- src/geom_stat.c.orig	2015-10-14 06:05:34.131539000 -0700
-+++ src/geom_stat.c	2015-10-14 06:05:34.135912000 -0700
+--- src/geom_stat.c.orig	2016-05-22 07:00:21 UTC
++++ src/geom_stat.c
 @@ -0,0 +1,334 @@
 +/**
 + * collectd - src/geom.c 

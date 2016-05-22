@@ -1,6 +1,6 @@
---- src/types.db.orig	2015-05-20 05:05:42.672060002 -0700
-+++ src/types.db	2015-10-14 06:05:34.137516000 -0700
-@@ -239,3 +239,44 @@
+--- src/types.db.orig	2016-01-22 09:51:17 UTC
++++ src/types.db
+@@ -240,3 +240,44 @@ arc_ratio		value:GAUGE:0:U
  arc_size		current:GAUGE:0:U, target:GAUGE:0:U, minlimit:GAUGE:0:U, maxlimit:GAUGE:0:U
  mysql_qcache		hits:COUNTER:0:U, inserts:COUNTER:0:U, not_cached:COUNTER:0:U, lowmem_prunes:COUNTER:0:U, queries_in_cache:GAUGE:0:U
  mysql_threads		running:GAUGE:0:U, connected:GAUGE:0:U, cached:GAUGE:0:U, created:COUNTER:0:U
