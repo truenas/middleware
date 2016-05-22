@@ -76,7 +76,7 @@
 +	sstrncpy(vl.host, hostname_g, sizeof(vl.host));
 +	sstrncpy(vl.plugin, NFSSTAT_PLUGIN_NAME, sizeof(vl.plugin));
 +	/* client for now */
-+	sstrncpy(vl.plugin_instance, "NFS client statistics",
++	sstrncpy(vl.plugin_instance, "client",
 +		sizeof(vl.plugin_instance));
 +	sstrncpy(vl.type, NFSSTAT_PLUGIN_NAME, sizeof(vl.type));
 +
@@ -84,7 +84,7 @@
 +		percentage = 1;
 +
 +	if (flags & NFSSTAT_CLIENT_ONLY) {
-+		plugin_dispatch_multivalue(&vl, percentage, DS_TYPE_DERIVE,
++		plugin_dispatch_multivalue(&vl, percentage, DS_TYPE_COUNTER,
 +			"access", ext_nfsstats->rpccnt[NFSPROC_ACCESS],
 +			"commit", ext_nfsstats->rpccnt[NFSPROC_COMMIT],
 +			"create", ext_nfsstats->rpccnt[NFSPROC_CREATE],
@@ -139,7 +139,7 @@
 +#endif
 +
 +	if (flags & NFSSTAT_SERVER_ONLY) {
-+		plugin_dispatch_multivalue(&vl, percentage, DS_TYPE_DERIVE,
++		plugin_dispatch_multivalue(&vl, percentage, DS_TYPE_COUNTER,
 +			"access", ext_nfsstats->srvrpccnt[NFSV4OP_ACCESS],
 +			"commit", ext_nfsstats->srvrpccnt[NFSV4OP_COMMIT],
 +			"create", ext_nfsstats->srvrpccnt[NFSV4OP_CREATE],
