@@ -1,6 +1,6 @@
 --- src/nfsstat.c.orig	2016-05-22 07:15:25 UTC
 +++ src/nfsstat.c
-@@ -0,0 +1,213 @@
+@@ -0,0 +1,212 @@
 +/**
 + * collectd - src/nfs_freebsd.c 
 + * 
@@ -177,7 +177,6 @@
 +	"WriteOps", ext_nfsstats->srvrpccnt[NFSV4OP_WRITE]
 +	"WriteRPC", ext_nfsstats->srvrpccnt[NFSV4OP_WRITE]
 +#endif
-+	}
 +
 +	return (0);
 +}
