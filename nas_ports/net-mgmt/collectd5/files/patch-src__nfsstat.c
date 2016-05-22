@@ -1,4 +1,4 @@
---- src/nfsstat.c.orig	2016-05-22 07:00:21 UTC
+--- src/nfsstat.c.orig	2016-05-22 07:11:11 UTC
 +++ src/nfsstat.c
 @@ -0,0 +1,201 @@
 +/**
@@ -73,97 +73,97 @@
 +
 +	if (flags & NFSSTAT_CLIENT_ONLY) {
 +		plugin_dispatch_multivalue(&vl, percentage, DS_TYPE_DERIVE,
-+			"access", ext_nfsstats.rpccnt[NFSPROC_ACCESS],
-+			"commit", ext_nfsstats.rpccnt[NFSPROC_COMMIT],
-+			"create", ext_nfsstats.rpccnt[NFSPROC_CREATE],
-+			"fsinfo", ext_nfsstats.rpccnt[NFSPROC_FSINFO],
-+			"fsstat", ext_nfsstats.rpccnt[NFSPROC_FSSTAT],
-+			"getattr", ext_nfsstats.rpccnt[NFSPROC_GETATTR],
-+			"link", ext_nfsstats.rpccnt[NFSPROC_LINK],
-+			"lookup", ext_nfsstats.rpccnt[NFSPROC_LOOKUP],
-+			"mkdir", ext_nfsstats.rpccnt[NFSPROC_MKDIR],
-+			"mknod", ext_nfsstats.rpccnt[NFSPROC_MKNOD],
-+			"pathconf", ext_nfsstats.rpccnt[NFSPROC_PATHCONF],
-+			"read", ext_nfsstats.rpccnt[NFSPROC_READ],
-+			"readdir", ext_nfsstats.rpccnt[NFSPROC_READDIR],
-+			"readirplus", ext_nfsstats.rpccnt[NFSPROC_READDIRPLUS],
-+			"readlink", ext_nfsstats.rpccnt[NFSPROC_READLINK],
-+			"remove", ext_nfsstats.rpccnt[NFSPROC_REMOVE],
-+			"rename", ext_nfsstats.rpccnt[NFSPROC_RENAME],
-+			"rmdir", ext_nfsstats.rpccnt[NFSPROC_RMDIR],
-+			"setattr", ext_nfsstats.rpccnt[NFSPROC_SETATTR],
-+			"symlink", ext_nfsstats.rpccnt[NFSPROC_SYMLINK],
-+			"write", ext_nfsstats.rpccnt[NFSPROC_WRITE],
++			"access", ext_nfsstats->rpccnt[NFSPROC_ACCESS],
++			"commit", ext_nfsstats->rpccnt[NFSPROC_COMMIT],
++			"create", ext_nfsstats->rpccnt[NFSPROC_CREATE],
++			"fsinfo", ext_nfsstats->rpccnt[NFSPROC_FSINFO],
++			"fsstat", ext_nfsstats->rpccnt[NFSPROC_FSSTAT],
++			"getattr", ext_nfsstats->rpccnt[NFSPROC_GETATTR],
++			"link", ext_nfsstats->rpccnt[NFSPROC_LINK],
++			"lookup", ext_nfsstats->rpccnt[NFSPROC_LOOKUP],
++			"mkdir", ext_nfsstats->rpccnt[NFSPROC_MKDIR],
++			"mknod", ext_nfsstats->rpccnt[NFSPROC_MKNOD],
++			"pathconf", ext_nfsstats->rpccnt[NFSPROC_PATHCONF],
++			"read", ext_nfsstats->rpccnt[NFSPROC_READ],
++			"readdir", ext_nfsstats->rpccnt[NFSPROC_READDIR],
++			"readirplus", ext_nfsstats->rpccnt[NFSPROC_READDIRPLUS],
++			"readlink", ext_nfsstats->rpccnt[NFSPROC_READLINK],
++			"remove", ext_nfsstats->rpccnt[NFSPROC_REMOVE],
++			"rename", ext_nfsstats->rpccnt[NFSPROC_RENAME],
++			"rmdir", ext_nfsstats->rpccnt[NFSPROC_RMDIR],
++			"setattr", ext_nfsstats->rpccnt[NFSPROC_SETATTR],
++			"symlink", ext_nfsstats->rpccnt[NFSPROC_SYMLINK],
++			"write", ext_nfsstats->rpccnt[NFSPROC_WRITE],
 +			NULL
 +		);
 +	}
 +
 +#if 0
-+	"TimedOut", ext_nfsstats.rpctimeouts
-+	"Invalid", ext_nfsstats.rpcinvalid
-+	"X Replies", ext_nfsstats.rpcunexpected
-+	"Retries", ext_nfsstats.rpcretries
-+	"Requests", ext_nfsstats.rpcrequests
++	"TimedOut", ext_nfsstats->rpctimeouts
++	"Invalid", ext_nfsstats->rpcinvalid
++	"X Replies", ext_nfsstats->rpcunexpected
++	"Retries", ext_nfsstats->rpcretries
++	"Requests", ext_nfsstats->rpcrequests
 +
-+	"Attr Hits", ext_nfsstats.attrcache_hits
-+	"Misses", ext_nfsstats.attrcache_misses
-+	"Lookup Hits", ext_nfsstats.lookupcache_hits
-+	"Misses", ext_nfsstats.lookupcache_misses
++	"Attr Hits", ext_nfsstats->attrcache_hits
++	"Misses", ext_nfsstats->attrcache_misses
++	"Lookup Hits", ext_nfsstats->lookupcache_hits
++	"Misses", ext_nfsstats->lookupcache_misses
 +
-+	"BioR Hits", ext_nfsstats.read_bios
-+	"Misses", ext_nfsstats.read_bios
-+	"BioW Hits", ext_nfsstats.biocache_writes - ext_nfsstats.write_bios
-+	"Misses", ext_nfsstats.write_bios
++	"BioR Hits", ext_nfsstats->read_bios
++	"Misses", ext_nfsstats->read_bios
++	"BioW Hits", ext_nfsstats->biocache_writes - ext_nfsstats.write_bios
++	"Misses", ext_nfsstats->write_bios
 +
-+	"BioRLHits", ext_nfsstats.biocache_readlinks - ext_nfsstats.readlink_bios
-+	"Misses", ext_nfsstats.readlink_bios
-+	"BioD Hists", ext_nfsstats.biocache_readdirs - ext_nfsstats.readdir_bios
-+	"Misses", ext_nfsstats.readdir_bios
++	"BioRLHits", ext_nfsstats->biocache_readlinks - ext_nfsstats.readlink_bios
++	"Misses", ext_nfsstats->readlink_bios
++	"BioD Hists", ext_nfsstats->biocache_readdirs - ext_nfsstats.readdir_bios
++	"Misses", ext_nfsstats->readdir_bios
 +
-+	"DirE Hits", ext_nfsstats.direofcache_hits
-+	"Misses", ext_nfsstats.direofcache_misses
-+	"Accs Hits", ext_nfsstats.accesscache_hits
-+	"Misses", ext_nfsstats.accesscache_misses
++	"DirE Hits", ext_nfsstats->direofcache_hits
++	"Misses", ext_nfsstats->direofcache_misses
++	"Accs Hits", ext_nfsstats->accesscache_hits
++	"Misses", ext_nfsstats->accesscache_misses
 +#endif
 +
 +	if (flags & NFSSTAT_SERVER_ONLY) {
 +		plugin_dispatch_multivalue(&vl, percentage, DS_TYPE_DERIVE,
-+			"access", ext_nfsstats.srvrpccnt[NFSV4OP_ACCESS],
-+			"commit", ext_nfsstats.srvrpccnt[NFSV4OP_COMMIT],
-+			"create", ext_nfsstats.srvrpccnt[NFSV4OP_CREATE],
-+			"fsinfo", ext_nfsstats.srvrpccnt[NFSV4OP_FSINFO],
-+			"fsstat", ext_nfsstats.srvrpccnt[NFSV4OP_FSSTAT],
-+			"getattr", ext_nfsstats.srvrpccnt[NFSV4OP_GETATTR],
-+			"link", ext_nfsstats.srvrpccnt[NFSV4OP_LINK],
-+			"lookup", ext_nfsstats.srvrpccnt[NFSV4OP_LOOKUP],
-+			"mkdir", ext_nfsstats.srvrpccnt[NFSV4OP_MKDIR],
-+			"mknod", ext_nfsstats.srvrpccnt[NFSV4OP_MKNOD],
-+			"pathconf", ext_nfsstats.srvrpccnt[NFSV4OP_PATHCONF],
-+			"read", ext_nfsstats.srvrpccnt[NFSV4OP_READ],
-+			"readdir", ext_nfsstats.srvrpccnt[NFSV4OP_READDIR],
-+			"readirplus", ext_nfsstats.srvrpccnt[NFSV4OP_READDIRPLUS],
-+			"readlink", ext_nfsstats.srvrpccnt[NFSV4OP_READLINK],
-+			"remove", ext_nfsstats.srvrpccnt[NFSV4OP_REMOVE],
-+			"rename", ext_nfsstats.srvrpccnt[NFSV4OP_RENAME],
-+			"rmdir", ext_nfsstats.srvrpccnt[NFSV4OP_RMDIR],
-+			"setattr", ext_nfsstats.srvrpccnt[NFSV4OP_SETATTR],
-+			"symlink", ext_nfsstats.srvrpccnt[NFSV4OP_SYMLINK],
-+			"write", ext_nfsstats.srvrpccnt[NFSV4OP_WRITE],
++			"access", ext_nfsstats->srvrpccnt[NFSV4OP_ACCESS],
++			"commit", ext_nfsstats->srvrpccnt[NFSV4OP_COMMIT],
++			"create", ext_nfsstats->srvrpccnt[NFSV4OP_CREATE],
++			"fsinfo", ext_nfsstats->srvrpccnt[NFSV4OP_FSINFO],
++			"fsstat", ext_nfsstats->srvrpccnt[NFSV4OP_FSSTAT],
++			"getattr", ext_nfsstats->srvrpccnt[NFSV4OP_GETATTR],
++			"link", ext_nfsstats->srvrpccnt[NFSV4OP_LINK],
++			"lookup", ext_nfsstats->srvrpccnt[NFSV4OP_LOOKUP],
++			"mkdir", ext_nfsstats->srvrpccnt[NFSV4OP_MKDIR],
++			"mknod", ext_nfsstats->srvrpccnt[NFSV4OP_MKNOD],
++			"pathconf", ext_nfsstats->srvrpccnt[NFSV4OP_PATHCONF],
++			"read", ext_nfsstats->srvrpccnt[NFSV4OP_READ],
++			"readdir", ext_nfsstats->srvrpccnt[NFSV4OP_READDIR],
++			"readirplus", ext_nfsstats->srvrpccnt[NFSV4OP_READDIRPLUS],
++			"readlink", ext_nfsstats->srvrpccnt[NFSV4OP_READLINK],
++			"remove", ext_nfsstats->srvrpccnt[NFSV4OP_REMOVE],
++			"rename", ext_nfsstats->srvrpccnt[NFSV4OP_RENAME],
++			"rmdir", ext_nfsstats->srvrpccnt[NFSV4OP_RMDIR],
++			"setattr", ext_nfsstats->srvrpccnt[NFSV4OP_SETATTR],
++			"symlink", ext_nfsstats->srvrpccnt[NFSV4OP_SYMLINK],
++			"write", ext_nfsstats->srvrpccnt[NFSV4OP_WRITE],
 +			NULL
 +		);
 +	}
 +
 +#if 0
-+	"Server Ret-Failed", ext_nfsstats.srvrpc_errs
-+	"Server Faults", ext_nfsstats.srv_errs
++	"Server Ret-Failed", ext_nfsstats->srvrpc_errs
++	"Server Faults", ext_nfsstats->srv_errs
 +
-+	"Inprog", ext_nfsstats.srvcache_inproghits
-+	"Idem", ext_nfsstats.srvcache_idemdonehits
-+	"Non-idem", ext_nfsstats.srvcache_nonidemdonehits
-+	"Misses", ext_nfsstats.srvcache_misses
++	"Inprog", ext_nfsstats->srvcache_inproghits
++	"Idem", ext_nfsstats->srvcache_idemdonehits
++	"Non-idem", ext_nfsstats->srvcache_nonidemdonehits
++	"Misses", ext_nfsstats->srvcache_misses
 +
-+	"WriteOps", ext_nfsstats.srvrpccnt[NFSV4OP_WRITE]
-+	"WriteRPC", ext_nfsstats.srvrpccnt[NFSV4OP_WRITE]
++	"WriteOps", ext_nfsstats->srvrpccnt[NFSV4OP_WRITE]
++	"WriteRPC", ext_nfsstats->srvrpccnt[NFSV4OP_WRITE]
 +#endif
 +	}
 +

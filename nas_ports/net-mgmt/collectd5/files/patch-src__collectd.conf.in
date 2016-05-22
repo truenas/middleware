@@ -1,14 +1,5 @@
 --- src/collectd.conf.in.orig	2016-01-22 09:51:17 UTC
 +++ src/collectd.conf.in
-@@ -12,7 +12,7 @@
- 
- #Hostname    "localhost"
- #FQDNLookup   true
--#BaseDir     "@localstatedir@/lib/@PACKAGE_NAME@"
-+#BaseDir     "/var/db/@PACKAGE_NAME@"
- #PIDFile     "@localstatedir@/run/@PACKAGE_NAME@.pid"
- #PluginDir   "@libdir@/@PACKAGE_NAME@"
- #TypesDB     "@prefix@/share/@PACKAGE_NAME@/types.db"
 @@ -120,6 +120,7 @@
  #@BUILD_PLUGIN_FHCOUNT_TRUE@LoadPlugin fhcount
  #@BUILD_PLUGIN_FILECOUNT_TRUE@LoadPlugin filecount
@@ -33,38 +24,3 @@
  #@BUILD_PLUGIN_ZOOKEEPER_TRUE@LoadPlugin zookeeper
  
  ##############################################################################
-@@ -340,7 +343,7 @@
- #</Plugin>
- #
- #<Plugin csv>
--#	DataDir "@localstatedir@/lib/@PACKAGE_NAME@/csv"
-+#	DataDir "/var/db/@PACKAGE_NAME@/csv"
- #	StoreRates false
- #</Plugin>
- 
-@@ -1011,14 +1014,14 @@
- 
- #<Plugin rrdcached>
- #	DaemonAddress "unix:/tmp/rrdcached.sock"
--#	DataDir "@localstatedir@/lib/@PACKAGE_NAME@/rrd"
-+#	DataDir "/var/db/@PACKAGE_NAME@/rrd"
- #	CreateFiles true
- #	CreateFilesAsync false
- #	CollectStatistics true
- #</Plugin>
- 
- #<Plugin rrdtool>
--#	DataDir "@localstatedir@/lib/@PACKAGE_NAME@/rrd"
-+#	DataDir "/var/db/@PACKAGE_NAME@/rrd"
- #	CreateFilesAsync false
- #	CacheTimeout 120
- #	CacheFlush   900
-@@ -1231,7 +1234,7 @@
- #</Plugin>
- 
- #<Plugin unixsock>
--#	SocketFile "@prefix@/var/run/@PACKAGE_NAME@-unixsock"
-+#	SocketFile "/var/run/@PACKAGE_NAME@-unixsock"
- #	SocketGroup "collectd"
- #	SocketPerms "0660"
- #	DeleteSocket false
