@@ -37,6 +37,8 @@ import sysctl
 import time
 import urllib
 import xmlrpclib
+import traceback
+import sys
 
 from django.core.servers.basehttp import FileWrapper
 from django.core.urlresolvers import reverse
@@ -1375,6 +1377,7 @@ def update_check(request):
 
         handler = CheckUpdateHandler()
         error = None
+        error_trace = None
         try:
             update = CheckForUpdates(
                 diff_handler=handler.diff_call,
@@ -1385,10 +1388,14 @@ def update_check(request):
         except UpdateManifestNotFound:
             network = False
             update = False
+            if sys.exc_info()[0]:
+                error_trace = traceback.format_exc()
         except Exception as e:
             network = False
             update = False
             error = str(e)
+            if sys.exc_info()[0]:
+                error_trace = traceback.format_exc()
         if update:
             conf = Configuration.Configuration()
             sys_mani = conf.SystemManifest()
@@ -1405,6 +1412,7 @@ def update_check(request):
             'handler': handler,
             'changelog': changelog,
             'error': error,
+            'traceback': error_trace,
         })
 
 

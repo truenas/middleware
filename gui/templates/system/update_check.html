@@ -46,6 +46,11 @@ doSubmit({
     {% if error %}
     <p>{{ error }}</p>
     {% endif %}
+    {% if traceback %}
+        <br>
+        <div class="disclosure-title" onclick="disclosureToggle(this)">Traceback</div>
+        <div class="disclosure-wrapper"><div class="disclosure-content">{{ traceback|linebreaks }}</div></div>
+    {% endif %}
 {% endif %}
   </td>
 </tr>
