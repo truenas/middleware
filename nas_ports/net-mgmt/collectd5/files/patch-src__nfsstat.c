@@ -1,6 +1,6 @@
---- src/nfsstat.c.orig	2016-05-22 07:11:11 UTC
+--- src/nfsstat.c.orig	2016-05-22 07:15:25 UTC
 +++ src/nfsstat.c
-@@ -0,0 +1,201 @@
+@@ -0,0 +1,213 @@
 +/**
 + * collectd - src/nfs_freebsd.c 
 + * 
@@ -42,6 +42,7 @@
 +#include <nfs/nfssvc.h>
 +#include <fs/nfs/nfsport.h>
 +
++#define	NFSSTAT_PLUGIN_NAME		"nfsstat"
 +#define	NFSSTAT_CLIENT_ONLY		0x00000001
 +#define	NFSSTAT_SERVER_ONLY		0x00000002
 +#define	NFSSTAT_PERCENTAGE		0x00000004
@@ -66,7 +67,18 @@
 +static int
 +nfsstat_submit(struct ext_nfsstats *ext_nfsstats, uint64_t flags)
 +{
++	value_t v[1];
++	value_list_t vl = VALUE_LIST_INIT;
 +	_Bool percentage = 0;
++
++	vl.values = v;
++	vl.values_len = STATIC_ARRAY_SIZE(v);
++	sstrncpy(vl.host, hostname_g, sizeof(vl.host));
++	sstrncpy(vl.plugin, NFSSTAT_PLUGIN_NAME, sizeof(vl.plugin));
++	/* client for now */
++	sstrncpy(vl.plugin_instance, "NFS client statistics",
++		sizeof(vl.plugin_instance));
++	sstrncpy(vl.type, NFSSTAT_PLUGIN_NAME, sizeof(vl.type));
 +
 +	if (flags & NFSSTAT_PERCENTAGE)
 +		percentage = 1;
@@ -196,9 +208,9 @@
 +module_register(void)
 +{
 +#if 0
-+	plugin_register_config("nfsstat", "nfsstat_config",
++	plugin_register_config(NFSSTAT_PLUGIN_NAME, "nfsstat_config",
 +		nfsstat_config_keys, nfsstat_config_keys_size);
 +#endif
-+	plugin_register_init("nfsstat", nfsstat_init);
-+	plugin_register_read("nfsstat", nfsstat_read);
++	plugin_register_init(NFSSTAT_PLUGIN_NAME, nfsstat_init);
++	plugin_register_read(NFSSTAT_PLUGIN_NAME, nfsstat_read);
 +} /* void module_register */

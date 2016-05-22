@@ -1,4 +1,4 @@
---- src/geom_stat.c.orig	2016-05-22 07:11:11 UTC
+--- src/geom_stat.c.orig	2016-05-22 07:15:25 UTC
 +++ src/geom_stat.c
 @@ -0,0 +1,334 @@
 +/**
