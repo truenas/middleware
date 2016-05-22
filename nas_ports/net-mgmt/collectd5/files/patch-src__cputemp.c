@@ -1,4 +1,4 @@
---- src/cputemp.c.orig	2016-05-22 07:15:25 UTC
+--- src/cputemp.c.orig	2016-05-22 07:49:15 UTC
 +++ src/cputemp.c
 @@ -0,0 +1,97 @@
 +//+

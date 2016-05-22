@@ -1,4 +1,4 @@
---- src/nfsstat.c.orig	2016-05-22 07:15:25 UTC
+--- src/nfsstat.c.orig	2016-05-22 07:49:15 UTC
 +++ src/nfsstat.c
 @@ -0,0 +1,212 @@
 +/**
@@ -84,7 +84,7 @@
 +		percentage = 1;
 +
 +	if (flags & NFSSTAT_CLIENT_ONLY) {
-+		plugin_dispatch_multivalue(&vl, percentage, DS_TYPE_COUNTER,
++		plugin_dispatch_multivalue(&vl, percentage, DS_TYPE_DERIVE,
 +			"access", ext_nfsstats->rpccnt[NFSPROC_ACCESS],
 +			"commit", ext_nfsstats->rpccnt[NFSPROC_COMMIT],
 +			"create", ext_nfsstats->rpccnt[NFSPROC_CREATE],
@@ -139,7 +139,7 @@
 +#endif
 +
 +	if (flags & NFSSTAT_SERVER_ONLY) {
-+		plugin_dispatch_multivalue(&vl, percentage, DS_TYPE_COUNTER,
++		plugin_dispatch_multivalue(&vl, percentage, DS_TYPE_DERIVE,
 +			"access", ext_nfsstats->srvrpccnt[NFSV4OP_ACCESS],
 +			"commit", ext_nfsstats->srvrpccnt[NFSV4OP_COMMIT],
 +			"create", ext_nfsstats->srvrpccnt[NFSV4OP_CREATE],
