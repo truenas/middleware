@@ -294,6 +294,7 @@ CONFIGURE_ARGS+=--enable-aggregation \
 		--enable-memcached \
 		--enable-memory \
 		--enable-network \
+		--enable-nfsstat \
 		--enable-ntpd \
 		--enable-openvpn \
 		--enable-powerdns \

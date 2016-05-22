@@ -54,6 +54,7 @@ lib/collectd/network.so
 %%CURL%%lib/collectd/nginx.so
 %%NOTIFYDESKTOP%%lib/collectd/notify_desktop.so
 %%NOTIFYEMAIL%%lib/collectd/notify_email.so
+lib/collectd/nfsstat.so
 lib/collectd/ntpd.so
 %%NUTUPS%%lib/collectd/nut.so
 %%OLSRD%%lib/collectd/olsrd.so
