@@ -47,7 +47,7 @@ from dojango import forms
 from dojango.forms import CheckboxSelectMultiple
 from freenasUI import choices
 from freenasUI.account.models import bsdUsers
-from freenasUI.common import humanize_number_si
+from freenasUI.common import humanize_number_si, humansize_to_bytes
 from freenasUI.common.forms import ModelForm, Form, mchoicefield
 from freenasUI.common.pipesubr import pipeopen
 from freenasUI.freeadmin.apppool import appPool
@@ -1391,15 +1391,15 @@ class ZVol_EditForm(Form):
                 parentdata['dedup'][0]
             )
 
-        data = _n.zfs_get_options(name)
-        self.fields['volume_compression'].initial = data['compression'][2]
-        self.fields['volume_volsize'].initial = data['volsize'][0]
+        self.zdata = _n.zfs_get_options(name)
+        self.fields['volume_compression'].initial = self.zdata['compression'][2]
+        self.fields['volume_volsize'].initial = self.zdata['volsize'][0]
 
-        if data['dedup'][2] == 'inherit':
+        if self.zdata['dedup'][2] == 'inherit':
             self.fields['volume_dedup'].initial = 'inherit'
-        elif data['dedup'][0] in ('on', 'off', 'verify'):
-            self.fields['volume_dedup'].initial = data['dedup'][0]
-        elif data['dedup'][0] == 'sha256,verify':
+        elif self.zdata['dedup'][0] in ('on', 'off', 'verify'):
+            self.fields['volume_dedup'].initial = self.zdata['dedup'][0]
+        elif self.zdata['dedup'][0] == 'sha256,verify':
             self.fields['volume_dedup'].initial = 'verify'
         else:
             self.fields['volume_dedup'].initial = 'off'
@@ -1420,6 +1420,12 @@ class ZVol_EditForm(Form):
             self,
             ('volsize', ),
             "volume_")
+        volsize = cleaned_data.get('volume_volsize')
+        if volsize and 'volume_volsize' not in self._errors:
+            if humansize_to_bytes(self.zdata['volsize'][0]) > humansize_to_bytes(volsize):
+                self._errors['volume_volsize'] = self.error_class([
+                    _('You cannot shrink a zvol from GUI, this may lead to data loss.')
+                ])
         return cleaned_data
 
     def set_error(self, msg):
