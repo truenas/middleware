@@ -2,6 +2,7 @@ import os
 
 from freenasUI.system.alert import alertPlugins, Alert, BaseAlert
 
+
 class ADAlert(BaseAlert):
 
     def run(self):
