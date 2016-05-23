@@ -88,11 +88,11 @@ def main(subsystem, event):
                 if ifname == interface:
                     SENTINEL = True
 
-        if not event == "shutdown" and not SENTINEL:
+        if and not SENTINEL:
             log.warn("Ignoring state change on non-critical interface %s.", ifname)
             sys.exit()
 
-        if not event == "shutdown" and fobj['disabled']:
+        if and fobj['disabled']:
             if not fobj['master']:
                 log.warn("Failover disabled.  Assuming backup.")
                 sys.exit()
@@ -449,7 +449,7 @@ def carp_master(fobj, state_file, ifname, vhid, event, user_override, forcetakeo
 def carp_backup(fobj, state_file, ifname, vhid, event, user_override):
     log.warn("Entering BACKUP on %s", ifname)
 
-    if not event == "shutdown" and not user_override:
+    if and not user_override:
         sleeper = fobj['timeout']
         error, output = run("ifconfig lagg0")
         if not error:
@@ -477,17 +477,16 @@ def carp_backup(fobj, state_file, ifname, vhid, event, user_override):
                 sys.exit(0)
 
     totoutput = 0
-    if not event == "shutdown":
-        for group, carpint in fobj['groups'].items():
-            for i in carpint:
-                error, output = run("ifconfig %s | grep 'carp: MASTER' | wc -l" % i)
-                totoutput += int(output)
+    for group, carpint in fobj['groups'].items():
+        for i in carpint:
+            error, output = run("ifconfig %s | grep 'carp: MASTER' | wc -l" % i)
+            totoutput += int(output)
 
-                if not error and totoutput > 0:
-                    log.warn(
-                        'Ignoring DOWN state on %s because we still have interfaces that '
-                        'are UP.', ifname)
-                    sys.exit(1)
+            if not error and totoutput > 0:
+                log.warn(
+                    'Ignoring DOWN state on %s because we still have interfaces that '
+                    'are UP.', ifname)
+                sys.exit(1)
 
     run('pkill -9 -f fenced')
 
