@@ -1,0 +1,2 @@
+#!/bin/sh
+/usr/local/bin/sqlite3 -cmd ".timeout 2000" $*
