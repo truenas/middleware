@@ -35,7 +35,7 @@ def salt():
     letters = 'abcdefghijklmnopqrstuvwxyz' \
               'ABCDEFGHIJKLMNOPQRSTUVWXYZ' \
               '0123456789/.'
-    return random.choice(letters) + random.choice(letters)
+    return '$6${0}'.format(''.join([random.choice(letters) for i in range(16)]))
 
 
 # The below is a function borrowed form the notifier
