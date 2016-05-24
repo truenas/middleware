@@ -12958,3 +12958,8 @@ msgstr ""
 #, fuzzy
 msgid "Auxiliary parameters (upsd.conf)"
 msgstr "보조 지정자들"
+
+#: account/forms.py:684
+#, fuzzy
+msgid "Do not delete user primary group"
+msgstr "Do you want to delete all users with this primary group?"

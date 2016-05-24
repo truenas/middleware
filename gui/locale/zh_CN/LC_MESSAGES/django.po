@@ -12526,3 +12526,8 @@ msgstr "卸载失败 {0} -> {1} {2}"
 #, fuzzy
 msgid "Auxiliary parameters (upsd.conf)"
 msgstr "附加参数 (ups.conf)"
+
+#: account/forms.py:684
+#, fuzzy
+msgid "Do not delete user primary group"
+msgstr "要删除该主用户组内的所有用户吗？"

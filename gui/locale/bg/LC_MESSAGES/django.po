@@ -13080,3 +13080,8 @@ msgstr ""
 #, fuzzy
 msgid "Auxiliary parameters (upsd.conf)"
 msgstr "Допълнителни параметри"
+
+#: account/forms.py:684
+#, fuzzy
+msgid "Do not delete user primary group"
+msgstr "Искате ли да изтриете всички потребители ot тази основна група?"

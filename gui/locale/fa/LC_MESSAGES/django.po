@@ -12644,3 +12644,9 @@ msgstr ""
 #: services/models.py:1258
 msgid "Auxiliary parameters (upsd.conf)"
 msgstr ""
+
+#: account/forms.py:684
+#, fuzzy
+msgid "Do not delete user primary group"
+msgstr ""
+"آیا اطمینان دارید که می خواهید تمام کاربرها را با این گروه اصی حذف کنید ؟"

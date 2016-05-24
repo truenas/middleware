@@ -13135,3 +13135,8 @@ msgstr ""
 #, fuzzy
 msgid "Auxiliary parameters (upsd.conf)"
 msgstr "Pomoćni parametri (ups.conf)"
+
+#: account/forms.py:684
+#, fuzzy
+msgid "Do not delete user primary group"
+msgstr "Da li želite da obrišete sve korisnike sa ovom primarnom grupom?"

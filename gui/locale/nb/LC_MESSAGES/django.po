@@ -13371,3 +13371,8 @@ msgstr ""
 #, fuzzy
 msgid "Auxiliary parameters (upsd.conf)"
 msgstr "Tilleggsparameter"
+
+#: account/forms.py:684
+#, fuzzy
+msgid "Do not delete user primary group"
+msgstr "Vil du slette alle brukerene med denne primærgruppen?"
