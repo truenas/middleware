@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:10-0700\n"
-"PO-Revision-Date: 2016-05-01 17:22+0000\n"
+"PO-Revision-Date: 2016-05-23 11:16+0000\n"
 "Last-Translator: mav <mav@freebsd.org>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ru\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
 "n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1462123324.0\n"
+"X-POOTLE-MTIME: 1464002206.0\n"
 
 #~ msgid "Reporting"
 #~ msgstr "Отчёты"
@@ -622,6 +622,8 @@ msgid ""
 "You're not allowed to change away from the nightly train, it is considered a "
 "downgrade."
 msgstr ""
+"Вы не можете изменить поезд с nightly, это считается возвратом к старой "
+"версии."
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:161
 #: freeadmin/static/lib/js/freeadmin/Update.js:162
@@ -629,19 +631,25 @@ msgid ""
 "If you have an existing boot environment that uses that train, boot into it "
 "in order to upgrade that train."
 msgstr ""
+"Если у вас есть существующее огружение загрузки, использующее этот поезд, "
+"нужно загрузиться в него, чтобы обновить этот поезд."
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:162
 msgid ""
 "Changing minor version is considered a downgrade, thus not a supported "
 "operation."
 msgstr ""
+"Изменение дополнительной версии считается понижение рейтинга, таким образом, "
+"не поддерживаемая операция."
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:176
 msgid "OK"
-msgstr ""
+msgstr "OK"
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:226
 msgid ""
 "WARNING: Changing to a nightly train is a one way street. Changing back to "
 "stable is not supported!"
 msgstr ""
+"ВНИМАНИЕ: Переход на nightly поезд это улица с односторонним движением. "
+"Переход обратно на stable не поддерживается!"

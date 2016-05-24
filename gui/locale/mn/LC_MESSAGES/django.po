@@ -12531,3 +12531,8 @@ msgstr ""
 #: services/models.py:1258
 msgid "Auxiliary parameters (upsd.conf)"
 msgstr ""
+
+#: account/forms.py:684
+#, fuzzy
+msgid "Do not delete user primary group"
+msgstr "Энэ үндсэн бүлэг дэх бүх хэрэглэгчдийг устгахыг зөвшөөрч байна уу?"

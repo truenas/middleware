@@ -13608,3 +13608,8 @@ msgstr ""
 #, fuzzy
 msgid "Auxiliary parameters (upsd.conf)"
 msgstr "Βοηθητικές παράμετροι (ups.conf)"
+
+#: account/forms.py:684
+#, fuzzy
+msgid "Do not delete user primary group"
+msgstr "Θέλετε να διαγράψετε όλους τους χρήστες σε αυτήν την κύρια ομάδα;"

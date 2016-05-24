@@ -13456,3 +13456,8 @@ msgstr ""
 #, fuzzy
 msgid "Auxiliary parameters (upsd.conf)"
 msgstr "Pomocné parametre"
+
+#: account/forms.py:684
+#, fuzzy
+msgid "Do not delete user primary group"
+msgstr "Chcete vymazať všetkých užívateľov s touto primárnou skupinou?"
