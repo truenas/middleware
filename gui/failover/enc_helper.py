@@ -6,6 +6,7 @@
 # and may not be copied and/or distributed
 # without the express permission of iXsystems.
 
+import argparse
 import logging
 import socket
 import subprocess
@@ -119,31 +120,22 @@ class LocalEscrowCtl:
         return (data == "200 keyd\n")
 
 if __name__ == "__main__":
-    cmdset = set(['setkey', 'clear', 'synctopeer', 'syncfrompeer', 'shutdown', 'status', 'attachall', 'interactive'])
+    parser = argparse.ArgumentParser()
+    subparsers = parser.add_subparsers(help='sub-command help', dest='name')
+    subparsers.add_parser('clear', help='Clears passphrase')
+    subparsers.add_parser('synctopeer', help='Transfer local passphrase to remote system')
+    subparsers.add_parser('syncfrompeer', help='Transfer remote passphrase to local system')
+    subparsers.add_parser('shutdown', help='Shuts down escrow daemon')
+    subparsers.add_parser('status', help='Inquiry escrow daemon status')
+    subparsers.add_parser('attachall', help='Attach volumes with the escrowed passphrase')
+    subparsers.add_parser('interactive', help='Sets passphrase securely from the CLI')
 
-    # Parse command options
-    if len(sys.argv) < 2 or not sys.argv[1] in cmdset or (sys.argv[1] == 'setkey' and len(sys.argv) != 3):
-        print """
-Usage: %s command [args...]
-
-Available commands are:
-  setkey [passphrase] Sets passphrase
-  clear               Clears passphrase
-  synctopeer          Transfer local passphrase to remote system
-  syncfrompeer        Transfer remote passphrase to local system
-  shutdown            Shuts down escrow daemon
-  status              Inquiry escrow daemon status
-  attachall           Attach volumes with the escrowed passphrase
-  interactive         Sets passphrase securely from the CLI
-        """ % sys.argv[0]
-        sys.exit(1)
+    args = parser.parse_args()
 
     escrowctl = LocalEscrowCtl()
-    cmd = sys.argv[1]
+    cmd = args.name
     rv = "Unknown"
-    if cmd == 'setkey':
-        rv = escrowctl.setkey(sys.argv[2])
-    elif cmd == 'clear':
+    if cmd == 'clear':
         rv = escrowctl.clear()
     elif cmd == 'shutdown':
         rv = escrowctl.shutdown()
