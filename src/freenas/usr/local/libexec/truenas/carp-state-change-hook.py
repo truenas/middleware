@@ -88,11 +88,11 @@ def main(subsystem, event):
                 if ifname == interface:
                     SENTINEL = True
 
-        if and not SENTINEL:
+        if not SENTINEL:
             log.warn("Ignoring state change on non-critical interface %s.", ifname)
             sys.exit()
 
-        if and fobj['disabled']:
+        if fobj['disabled']:
             if not fobj['master']:
                 log.warn("Failover disabled.  Assuming backup.")
                 sys.exit()
@@ -449,7 +449,7 @@ def carp_master(fobj, state_file, ifname, vhid, event, user_override, forcetakeo
 def carp_backup(fobj, state_file, ifname, vhid, event, user_override):
     log.warn("Entering BACKUP on %s", ifname)
 
-    if and not user_override:
+    if not user_override:
         sleeper = fobj['timeout']
         error, output = run("ifconfig lagg0")
         if not error:
@@ -463,7 +463,7 @@ def carp_backup(fobj, state_file, ifname, vhid, event, user_override):
             )
             if output == 'MASTER':
                 log.warn("Ignoring state on %s because it changed back to MASTER after "
-                         "%s seconds.",  ifname, sleeper)
+                         "%s seconds.", ifname, sleeper)
                 sys.exit(0)
         else:
             log.warn("Sleeping %s seconds and rechecking %s", sleeper, ifname)
