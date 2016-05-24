@@ -27,7 +27,10 @@ class MPRFirmwareAlert(BaseAlert):
         for number, mibs in mpr.items():
             firmware = mibs.get('firmware_version')
             driver = mibs.get('driver_version')
-            if firmware != driver:
+            # For the 93xx controllers the firmware package
+            # is always one version behind the driver package
+            # version...why, because Avago hates us.
+            if (firmware + 1) != driver:
                 alerts.append(Alert(
                     Alert.WARN,
                     _(
