@@ -85,7 +85,7 @@ define([
       me.dapUpdateTrainInfoLink.setAttribute('href', me.updateServer+"/trains.txt");
       me.dapUpdateTrainInfoLink.innerHTML = gettext('Train Descriptions');
 
-      me.dapCurrentTrain.innerHTML = gettext('Loading');
+      me.dapCurrentTrain.innerHTML = gettext( me.currentTrain ? me.currentTrain : 'Loading');
       me.dapAutoCheckText.innerHTML = gettext('Automatically check for updates');
       me.dapCurrentTrainText.innerHTML = gettext('Current Train');
       me.dapUpdateServerText.innerHTML = gettext('Update Server');
@@ -125,9 +125,6 @@ define([
         handleAs: "json",
         query: {"format": "json"}
       }).then(function(data) {
-        me.dapCurrentTrain.innerHTML = data.selected_train.name;
-        me.dapCurrentTrainDesc.innerHTML = data.selected_train.descr;
-
         var options = [];
         for(var i in data.trains) {
           var name = data.trains[i];
