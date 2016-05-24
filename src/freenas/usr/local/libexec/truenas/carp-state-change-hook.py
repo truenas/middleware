@@ -324,8 +324,7 @@ def carp_master(fobj, state_file, ifname, vhid, event, user_override, forcetakeo
     log.warn('Beginning volume imports.')
     # TODO: now that we are all python, we should probably just absorb the code in.
     run(
-        'LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/python '
-        '/usr/local/www/freenasUI/failover/enc_helper.py attachall'
+        'LD_LIBRARY_PATH=/usr/local/lib /usr/local/sbin/enc_helper attachall'
     )
 
     p = multiprocessing.Process(target=os.system("""dtrace -qn 'zfs-dbgmsg{printf("\r                            \r%s", stringof(arg0))}' > /dev/console &"""))
@@ -529,8 +528,7 @@ def carp_backup(fobj, state_file, ifname, vhid, event, user_override):
     run('echo "$(date), $(hostname), assume backup" | mail -s "Failover" root')
 
     log.warn('Setting passphrase from master')
-    run('LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/python '
-        '/usr/local/www/freenasUI/failover/enc_helper.py '
+    run('LD_LIBRARY_PATH=/usr/local/lib /usr/local/sbin/enc_helper '
         'syncfrompeer')
 
 
