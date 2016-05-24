@@ -26,6 +26,7 @@
 import json
 import logging
 import re
+import urllib2
 
 from django.conf import settings
 from django.core.urlresolvers import NoReverseMatch, resolve, reverse
