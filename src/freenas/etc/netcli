@@ -1219,7 +1219,7 @@ def main_menu():
         if is_truenas and os.path.exists('/tmp/.failover_needop'):
              yes = raw_input(_("Enter passphrase now? (y/n) "))
              if yes.lower().startswith("y"):
-                 os.system("/usr/local/bin/python /usr/local/www/freenasUI/failover/enc_helper.py interactive")
+                 os.system("/usr/local/sbin/enc_helper interactive")
                  time.sleep(5)
                  continue
 
