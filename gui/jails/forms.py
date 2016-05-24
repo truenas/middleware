@@ -232,6 +232,17 @@ class JailCreateForm(ModelForm):
             ))
         return jail_host
 
+    def clean_jail_mac(self):
+        jail_mac = self.cleaned_data.get('jail_mac')
+        jobs = Jails.objects.all()
+        for jail in jobs:
+            if jail.jail_mac == jail_mac:
+                raise forms.ValidationError(_(
+                    "You have entered an existing MAC Address."
+                    "Please enter a new one."
+                ))
+        return jail_mac
+
     def save(self):
         jc = self.jc
 
@@ -410,12 +421,28 @@ class JailCreateForm(ModelForm):
                     jail_flags |= WARDEN_SET_FLAGS_FLAGS
                     jail_set_args['jflags'] = val
 
-                jail_set_args['flags'] = jail_flags
-                try:
-                    w.set(**jail_set_args)
-                except Exception as e:
-                    self.errors['__all__'] = self.error_class([_(e.message)])
-                    return
+            else:
+                if key == 'jail_mac':
+                    duplicate_mac = 0
+                    while True:
+                        mac_address = generate_randomMAC()
+                        jail_list = Jails.objects.all()
+                        for jail in jail_list:
+                            if jail.jail_mac == mac_address:
+                                duplicate_mac = 1
+                                break
+                        if duplicate_mac != 1:
+                            break
+
+                    jail_flags |= WARDEN_SET_FLAGS_MAC
+                    jail_set_args['mac'] = mac_address
+
+            jail_set_args['flags'] = jail_flags
+            try:
+                w.set(**jail_set_args)
+            except Exception as e:
+                self.errors['__all__'] = self.error_class([_(e.message)])
+                return
 
         jail_nat = self.cleaned_data.get('jail_nat', None)
         jail_vnet = self.cleaned_data.get('jail_vnet', None)
@@ -471,6 +498,16 @@ class JailCreateForm(ModelForm):
         # Requery instance so we have everything up-to-date after save
         # See #14686
         self.instance = Jails.objects.get(jail_host=jail_host)
+
+
+def generate_randomMAC():
+    local_list = [0x02, 0x06, 0x0a, 0x0e]
+    first_byte = random.randint(0x00, 0x0f)
+    first = first_byte << 4
+    first = first | random.choice(local_list)
+    val = [first, random.randint(0x00, 0xff), random.randint(0x00, 0xff), random.randint(0x00, 0xff), random.randint(0x00, 0xff), random.randint(0x00, 0xff)]
+    mac_address = ':'.join(map(lambda x: "%02x" % x, val))
+    return mac_address
 
 
 class JailsConfigurationForm(ModelForm):
@@ -801,6 +838,17 @@ class JailsEditForm(ModelForm):
 
         self.__set_ro(instance, 'jail_host')
         self.__set_ro(instance, 'jail_type')
+
+    def clean_jail_mac(self):
+        jail_mac = self.cleaned_data.get('jail_mac')
+        jobs = Jails.objects.all()
+        for jail in jobs:
+            if jail.jail_mac == jail_mac:
+                raise forms.ValidationError(_(
+                    "You have entered an existing MAC Address."
+                    "Please enter a new one."
+                ))
+        return jail_mac
 
     def save(self):
         jail_host = self.cleaned_data.get('jail_host')
