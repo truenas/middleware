@@ -101,6 +101,7 @@ if __name__ == "__main__":
         passphrase = getpass.getpass()
         if passphrase:
             rv = escrowctl.setkey(passphrase)
+            notifier().failover_force_master()
     else:
         if cmd == 'synctopeer':
             passphrase = escrowctl.getkey()
