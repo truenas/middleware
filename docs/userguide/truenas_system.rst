@@ -737,10 +737,10 @@ If your organization already has a CA, you can import the CA's certificate and k
 | Certificate          | string               | mandatory; paste in the certificate for the CA                                                    |
 |                      |                      |                                                                                                   |
 +----------------------+----------------------+---------------------------------------------------------------------------------------------------+
-| Private Key          | string               | paste the private key associated with the certificate so that it can be used to sign certificates |
+| Private Key          | string               | if there is a private key associated with the "Certificate", paste it here                        |
 |                      |                      |                                                                                                   |
 +----------------------+----------------------+---------------------------------------------------------------------------------------------------+
-| Passphrase           | string               | if the private key is protected by a passphrase, enter it here and repeat it in the "Confirm      |
+| Passphrase           | string               | if the "Private Key" is protected by a passphrase, enter it here and repeat it in the "Confirm    |
 |                      |                      | Passphrase" field                                                                                 |
 |                      |                      |                                                                                                   |
 +----------------------+----------------------+---------------------------------------------------------------------------------------------------+
