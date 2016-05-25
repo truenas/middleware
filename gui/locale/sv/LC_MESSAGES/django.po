@@ -13016,3 +13016,7 @@ msgstr "Extra parametrar (ups.conf)"
 #, fuzzy
 msgid "Do not delete user primary group"
 msgstr "Vill du ta bort all användare med denna ursprungliga grupp?"
+
+#: storage/forms.py:1427
+msgid "You cannot shrink a zvol from GUI, this may lead to data loss."
+msgstr ""

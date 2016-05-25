@@ -13125,3 +13125,7 @@ msgid "Do not delete user primary group"
 msgstr ""
 "Szeretné törölni az összes felhasználót ezzel az elsődleges csoporttal "
 "együtt?"
+
+#: storage/forms.py:1427
+msgid "You cannot shrink a zvol from GUI, this may lead to data loss."
+msgstr ""

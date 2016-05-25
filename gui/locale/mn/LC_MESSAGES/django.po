@@ -12536,3 +12536,7 @@ msgstr ""
 #, fuzzy
 msgid "Do not delete user primary group"
 msgstr "Энэ үндсэн бүлэг дэх бүх хэрэглэгчдийг устгахыг зөвшөөрч байна уу?"
+
+#: storage/forms.py:1427
+msgid "You cannot shrink a zvol from GUI, this may lead to data loss."
+msgstr ""

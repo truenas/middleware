@@ -12949,3 +12949,7 @@ msgstr ""
 #, fuzzy
 msgid "Do not delete user primary group"
 msgstr "要刪除這個主要群組的所有使用者嗎？"
+
+#: storage/forms.py:1427
+msgid "You cannot shrink a zvol from GUI, this may lead to data loss."
+msgstr ""

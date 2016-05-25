@@ -13367,3 +13367,7 @@ msgstr "Hulpparameters (ups.conf)"
 #, fuzzy
 msgid "Do not delete user primary group"
 msgstr "Wilt u alle gebruikers met deze primaire groep verwijderen?"
+
+#: storage/forms.py:1427
+msgid "You cannot shrink a zvol from GUI, this may lead to data loss."
+msgstr ""

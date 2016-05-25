@@ -13526,3 +13526,7 @@ msgstr "Parameter tambahan"
 #, fuzzy
 msgid "Do not delete user primary group"
 msgstr "Anda ingin menghapus seluruh pengguna dalam grup utama ini?"
+
+#: storage/forms.py:1427
+msgid "You cannot shrink a zvol from GUI, this may lead to data loss."
+msgstr ""

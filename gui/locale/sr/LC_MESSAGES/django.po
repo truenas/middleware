@@ -13140,3 +13140,7 @@ msgstr "Pomoćni parametri (ups.conf)"
 #, fuzzy
 msgid "Do not delete user primary group"
 msgstr "Da li želite da obrišete sve korisnike sa ovom primarnom grupom?"
+
+#: storage/forms.py:1427
+msgid "You cannot shrink a zvol from GUI, this may lead to data loss."
+msgstr ""

@@ -13758,3 +13758,7 @@ msgstr "補助パラメータ"
 #, fuzzy
 msgid "Do not delete user primary group"
 msgstr "このプライマリグループに属するユーザを全て削除してもよろしいですか？"
+
+#: storage/forms.py:1427
+msgid "You cannot shrink a zvol from GUI, this may lead to data loss."
+msgstr ""
