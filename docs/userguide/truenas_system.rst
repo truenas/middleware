@@ -661,8 +661,8 @@ At this point, the active mode may issue an alert indicating that there is a fir
 Once the standby node has finished booting up, it is important to perform a failover by rebooting the current active node. This action tells the standby node to import the current
 configuration and restart its services.
 
-Once the previously active node comes back up as a standby node, use :ref:`System --> Update` to apply the update on the current active node (which was previously the passive node).
-Once complete, the now standby node will reboot a second time.
+Once the previously active node comes back up as a standby node, use :menuselection:`System --> Update` to apply the update on the current active node (which was previously the passive
+node). Once complete, the now standby node will reboot a second time.
 
 .. _If Something Goes Wrong:
 
