@@ -386,19 +386,11 @@ backup will be saved as a binary file. To restore a saved backup, use the "12) R
 Autotune
 ~~~~~~~~
 
-TrueNAS® provides an autotune script which attempts to optimize the system. It is recommended to discuss system optimization with an iXsystems support
-engineer prior to running this script and to review the results with the support engineer.
+TrueNAS® provides an autotune script which attempts to optimize the system. The "Enable autotune" checkbox in :menuselection:`System --> Advanced` is checked by default, meaning that
+this script runs automatically. It is recommended to not disable this setting unless you are advised to do so by an iXsystems support engineer.
 
-The "Enable autotune" checkbox in :menuselection:`System --> Advanced` is unchecked by default. Check this box if you would like the autotuner to run
-at boot time. If you would like the script to run immediately, you will need to reboot the system.
-
-If the autotune script finds any settings that need adjusting, the changed values will appear in :menuselection:`System --> Tunables`. If you do not like the
-changes, you can modify the values that are displayed in the GUI and your changes will override the values that were created by the autotune script. However,
-if you delete a tunable that was created by autotune, it will be recreated at next boot. This is because autotune only creates values that do not already
-exist.
-
-If you are trying to increase the performance of your TrueNAS® system and suspect that the current hardware may be limiting performance, try enabling
-autotune.
+If the autotune script adjusts any settings, the changed values will appear in :menuselection:`System --> Tunables`. While you can modify, which will override, these values, speak to your
+support engineer before doing so as this may have a negative impact on system performance. Note that if you delete a tunable that was created by autotune, it will be recreated at next boot.
 
 If you wish to read the script to see which checks are performed, the script is located in :file:`/usr/local/bin/autotune`.
 
