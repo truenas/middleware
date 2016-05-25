@@ -24,6 +24,7 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
+import argparse
 import os
 import sys
 
@@ -33,7 +34,7 @@ if '/usr/local/www' not in sys.path:
 from freenasUI.services.utils import SmartAlert
 
 
-def main():
+def event():
     device = os.environ.get('SMARTD_DEVICE')
     if device is None:
         return
@@ -43,11 +44,25 @@ def main():
         return
 
     with SmartAlert() as sa:
-        if device not in sa.data:
-            sa.data[device] = []
-        if message not in sa.data[device]:
-            sa.data[device].append(message)
+        sa.message_add(device, message)
 
+
+def remove(dev):
+    if not dev.startswith('/dev/'):
+        dev = '/dev/{0}'.format(dev)
+    with SmartAlert() as sa:
+        sa.device_delete(dev)
+
+
+def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument('-d', '--dev')
+
+    args = parser.parse_args()
+    if args.dev:
+        remove(args.dev)
+    else:
+        event()
 
 if __name__ == '__main__':
     main()

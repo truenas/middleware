@@ -59,3 +59,12 @@ class SmartAlert(object):
         self.lock.release()
         if typ is not None:
             raise
+
+    def message_add(self, dev, message):
+        if dev not in self.data:
+            self.data[dev] = []
+        if message not in self.data[dev]:
+            self.data[dev].append(message)
+
+    def device_delete(self, dev):
+        self.data.pop(dev, None)
