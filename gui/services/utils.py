@@ -1,5 +1,3 @@
-#!/usr/local/bin/python2.7
-#
 # Copyright (c) 2015 iXsystems, Inc.
 # All rights reserved.
 #
@@ -24,30 +22,40 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
+
+import cPickle as pickle
 import os
-import sys
 
-if '/usr/local/www' not in sys.path:
-    sys.path.insert(0, '/usr/local/www')
-
-from freenasUI.services.utils import SmartAlert
+from lockfile import LockFile, LockTimeout
 
 
-def main():
-    device = os.environ.get('SMARTD_DEVICE')
-    if device is None:
-        return
+class SmartAlert(object):
 
-    message = os.environ.get('SMARTD_MESSAGE')
-    if message is None:
-        return
+    SMART_FILE = '/tmp/.smartalert'
 
-    with SmartAlert() as sa:
-        if device not in sa.data:
-            sa.data[device] = []
-        if message not in sa.data[device]:
-            sa.data[device].append(message)
+    def __init__(self):
+        self.data = {}
+        self.lock = LockFile(self.SMART_FILE)
 
+    def __enter__(self):
+        while not self.lock.i_am_locking():
+            try:
+                self.lock.acquire(timeout=5)
+            except LockTimeout:
+                self.lock.break_lock()
 
-if __name__ == '__main__':
-    main()
+        if os.path.exists(self.SMART_FILE):
+            with open(self.SMART_FILE, 'rb') as f:
+                try:
+                    self.data = pickle.loads(f.read())
+                except:
+                    pass
+        return self
+
+    def __exit__(self, typ, value, traceback):
+        with open(self.SMART_FILE, 'wb') as f:
+            f.write(pickle.dumps(self.data))
+
+        self.lock.release()
+        if typ is not None:
+            raise
