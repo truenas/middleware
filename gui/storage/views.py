@@ -1228,6 +1228,15 @@ def volume_key_download(request, object_id):
 
 def volume_rekey(request, object_id):
 
+    _n = notifier()
+    standby_offline = False
+    if not _n.is_freenas() and _n.failover_licensed():
+        s = _n.failover_rpc()
+        try:
+            s.ping()
+        except:
+            standby_offline = True
+
     volume = models.Volume.objects.get(id=object_id)
     if request.method == "POST":
         form = forms.ReKeyForm(request.POST, volume=volume)
@@ -1242,6 +1251,7 @@ def volume_rekey(request, object_id):
     return render(request, "storage/rekey.html", {
         'form': form,
         'volume': volume,
+        'standby_offline': standby_offline,
     })
 
 
