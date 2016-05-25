@@ -1303,6 +1303,11 @@ class notifier:
                 volume.vol_encrypt = 1
                 volume.save()
 
+            # Sync new file to standby node
+            if not self.is_freenas() and self.failover_licensed():
+                s = self.failover_rpc()
+                self.sync_file_send(s, geli_keyfile)
+
     def geli_recoverykey_add(self, volume, passphrase=None):
         reckey_file = tempfile.mktemp(dir='/tmp/')
         self.__create_keyfile(reckey_file, force=True)
