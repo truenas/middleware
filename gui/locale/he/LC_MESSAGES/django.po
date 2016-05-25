@@ -13507,3 +13507,7 @@ msgstr "מאפיני עזר"
 #, fuzzy
 msgid "Do not delete user primary group"
 msgstr "האם ברצונך למחוק את כל המשתמשים בקבוצה הראשית הזאת?"
+
+#: storage/forms.py:1427
+msgid "You cannot shrink a zvol from GUI, this may lead to data loss."
+msgstr ""

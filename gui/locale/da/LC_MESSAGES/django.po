@@ -12899,3 +12899,7 @@ msgstr "Hjælpeparametre"
 #, fuzzy
 msgid "Do not delete user primary group"
 msgstr "Vil du slette alle bruger i den primære gruppe?"
+
+#: storage/forms.py:1427
+msgid "You cannot shrink a zvol from GUI, this may lead to data loss."
+msgstr ""

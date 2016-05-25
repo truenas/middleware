@@ -13423,3 +13423,7 @@ msgstr "Parámetros auxiliares (ups.conf)"
 #, fuzzy
 msgid "Do not delete user primary group"
 msgstr "¿Desea borrar todos los usuarios con este grupo primario?"
+
+#: storage/forms.py:1427
+msgid "You cannot shrink a zvol from GUI, this may lead to data loss."
+msgstr ""

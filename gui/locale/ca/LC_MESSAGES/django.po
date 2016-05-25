@@ -13559,3 +13559,7 @@ msgstr "parametres auxiliars"
 #, fuzzy
 msgid "Do not delete user primary group"
 msgstr "Vols esborrar tots els usuaris amb aquest grup primari?"
+
+#: storage/forms.py:1427
+msgid "You cannot shrink a zvol from GUI, this may lead to data loss."
+msgstr ""

@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:10-0700\n"
-"PO-Revision-Date: 2016-05-12 11:01+0000\n"
+"PO-Revision-Date: 2016-05-24 14:23+0000\n"
 "Last-Translator: Pavel <pavel.borecki@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: cs\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1463050919.0\n"
+"X-POOTLE-MTIME: 1464099816.0\n"
 
 #~ msgid "Reporting"
 #~ msgstr "Reportování"
@@ -150,7 +150,7 @@ msgstr "žádné další jednotky"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:334
 msgid "Disk size mismatch"
-msgstr "Neodpovídající si velikost disku"
+msgstr "Neodpovídající si velikosti disku"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:519
 msgid ""
@@ -357,8 +357,8 @@ msgid ""
 "This option DISABLES ENCRYPTION for replication tasks and should ONLY be "
 "used on a secure LAN!"
 msgstr ""
-"Tato volba u replikačních úloh ZAKÁŽE ŠIFROVÁNÍ a měla by být použita POUZE "
-"v prostředí zabezpečené místní sítě!"
+"Tato volba ZAKÁŽE ŠIFROVÁNÍ u replikačních úloh a měla by být použita POUZE "
+"v prostředí bezpečné místní sítě!"
 
 #: freeadmin/static/lib/js/freeadmin.js:376
 msgid "Are you sure you want to do this?"
@@ -474,14 +474,14 @@ msgstr ""
 msgid ""
 "Winbind will only map users that have a uidNumber and whose primary<br />"
 msgstr ""
-"Komponenta Winbind mapuje pouze ty uživatele, kteří mají uidNumber a jejichž "
+"Komponenta Winbind mapuje pouze ty uživatele, kteří mají uidNumber a jejich "
 "hlavní<br />"
 
 #: freeadmin/static/lib/js/freeadmin.js:1169
 msgid ""
 "group have a gidNumber attribute set. It is however recommended that<br />"
 msgstr ""
-"skupina má nastaven atribut gidNumber. Nicméně, je doporučeno, aby<br />"
+"skupina má nastavený atribut gidNumber. Nicméně, je doporučeno, aby<br />"
 
 #: freeadmin/static/lib/js/freeadmin.js:1170
 msgid ""
@@ -499,8 +499,8 @@ msgid ""
 "<font color='red'>STOP</font>: If your Active Directory is not configured "
 "for this, it will not work.<br><br>"
 msgstr ""
-"<font color='red'>STOP</font>: Pokud tato instalace Active Directory není "
-"pro toto nastavena, nebude to fungovat.<br><br>"
+"<font color='red'>STOP</font>: Pokud zde používaná instalace Active "
+"Directory není pro toto nastavena, nebude to fungovat.<br><br>"
 
 #: freeadmin/static/lib/js/freeadmin/Menu.js:512
 msgid "Documentation"
@@ -520,7 +520,7 @@ msgstr "zaregistrujte se"
 
 #: freeadmin/static/lib/js/freeadmin/SupportTicket.js:117
 msgid "Attach Debug Info"
-msgstr "Připojit ladicí informace"
+msgstr "Připojit ladící informace"
 
 #: freeadmin/static/lib/js/freeadmin/SupportTicket.js:226
 msgid "Submit"
@@ -536,7 +536,7 @@ msgstr "Nahrávání příloh na stroj…"
 
 #: freeadmin/static/lib/js/freeadmin/SupportTicket.js:367
 msgid "Generating debug info"
-msgstr "Vytváření ladicích informací"
+msgstr "Pořizování výpisu ladících informací"
 
 #: freeadmin/static/lib/js/freeadmin/SupportTicket.js:372
 msgid "Submitting ticket"
@@ -560,7 +560,7 @@ msgstr "Automaticky kontrolovat aktualizace"
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:90
 msgid "Current Train"
-msgstr "Současná řada"
+msgstr "Stávající řada"
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:91
 msgid "Update Server"
@@ -572,7 +572,7 @@ msgstr "Čekající aktualizace"
 
 #: freeadmin/static/lib/js/freeadmin/Menu.js:185
 msgid "vCenter Plugin Configuration"
-msgstr "Nastavení zásuvného modulu vCenter"
+msgstr "Nastavení zásuvného modulu pro vCenter"
 
 #: freeadmin/static/lib/js/freeadmin.js:1343
 msgid "Decreasing WebGUI https security!"

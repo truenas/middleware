@@ -12531,3 +12531,7 @@ msgstr "附加参数 (ups.conf)"
 #, fuzzy
 msgid "Do not delete user primary group"
 msgstr "要删除该主用户组内的所有用户吗？"
+
+#: storage/forms.py:1427
+msgid "You cannot shrink a zvol from GUI, this may lead to data loss."
+msgstr ""

@@ -13285,3 +13285,7 @@ msgstr "Parametri auxiliari (ups.conf)"
 #, fuzzy
 msgid "Do not delete user primary group"
 msgstr "Ștergeți acest grup primar împreună cu toți utilizatorii?"
+
+#: storage/forms.py:1427
+msgid "You cannot shrink a zvol from GUI, this may lead to data loss."
+msgstr ""

@@ -13613,3 +13613,7 @@ msgstr "Βοηθητικές παράμετροι (ups.conf)"
 #, fuzzy
 msgid "Do not delete user primary group"
 msgstr "Θέλετε να διαγράψετε όλους τους χρήστες σε αυτήν την κύρια ομάδα;"
+
+#: storage/forms.py:1427
+msgid "You cannot shrink a zvol from GUI, this may lead to data loss."
+msgstr ""

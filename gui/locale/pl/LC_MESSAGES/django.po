@@ -13398,3 +13398,7 @@ msgstr "Opcje dodatkowe"
 msgid "Do not delete user primary group"
 msgstr ""
 "Czy chcesz usunąć wszystkich użytkowników należących do tej grupy głównej?"
+
+#: storage/forms.py:1427
+msgid "You cannot shrink a zvol from GUI, this may lead to data loss."
+msgstr ""

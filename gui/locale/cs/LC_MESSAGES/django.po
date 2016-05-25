@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:07-0700\n"
-"PO-Revision-Date: 2016-05-24 08:58+0000\n"
+"PO-Revision-Date: 2016-05-25 08:59+0000\n"
 "Last-Translator: Pavel <pavel.borecki@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: cs\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1464080292.0\n"
+"X-POOTLE-MTIME: 1464166796.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -2391,8 +2391,8 @@ msgid ""
 "Location information, e.g. physical location of this system: 'Floor of "
 "building, Room xyzzy'."
 msgstr ""
-"Informace o umístění, např. kde se systém fyzicky nachází: \"Podlaží x, "
-"místnost y\"."
+"Informace o umístění, např. kde se systém fyzicky nachází: „Podlaží x, "
+"místnost y“."
 
 #: services/models.py:859
 msgid "Contact"
@@ -2403,12 +2403,12 @@ msgid ""
 "Contact information, e.g. name or email of the person responsible for this "
 "system: 'admin@email.address'."
 msgstr ""
-"Kontaktní údaje, např. jméno či e-mailová adresa osoby odpovědné za tento "
+"Kontaktní údaje, např. jméno nebo e-mailová adresa osoby odpovědné za tento "
 "systém: „spravce@example.com“."
 
 #: services/models.py:867
 msgid "Community"
-msgstr " SNMP komunita"
+msgstr "SNMP komunita"
 
 #: services/models.py:868
 msgid "In most cases, 'public' is used here."
@@ -2416,7 +2416,7 @@ msgstr "Ve většině případů se zde používá „public“."
 
 #: services/models.py:871
 msgid "Send SNMP Traps"
-msgstr "Posílat SNMP hlášení"
+msgstr "Posílat SNMP hlášení (trap)"
 
 #: services/models.py:881 services/models.py:882
 #: templates/services/core.html:122
@@ -2429,7 +2429,9 @@ msgstr "Identifikátor"
 
 #: services/models.py:894
 msgid "This name is used to uniquely identify your UPS on this system."
-msgstr "Tento název slouží k jednoznačnému určení UPS na tomto systému."
+msgstr ""
+"Tento název slouží k jednoznačnému rozlišení UPS zdroje v rámci tohoto "
+"systému."
 
 #: services/models.py:898
 msgid "Driver"
@@ -2447,7 +2449,7 @@ msgstr ""
 
 #: services/models.py:910
 msgid "Auxiliary parameters (ups.conf)"
-msgstr "Pomocné parametry (ups.conf)"
+msgstr "Doplňkové parametry (ups.conf)"
 
 #: services/models.py:912
 msgid "Additional parameters to the hardware-specific part of the driver."
@@ -2455,7 +2457,7 @@ msgstr "Další parametry pro část ovladače, určenou pro konkrétní zaříz
 
 #: services/models.py:923
 msgid "Shutdown mode"
-msgstr "Kdy zahájit vypínání"
+msgstr "V jakém případě zahájit vypínání"
 
 #: services/models.py:927
 msgid "Shutdown timer"
@@ -2491,7 +2493,7 @@ msgstr "Na e-mail"
 
 #: services/models.py:947
 msgid "Destination email address. Separate email addresses by semi-colon."
-msgstr "Cílové e-mailové adresy. Oddělujte je středníkem."
+msgstr "Cílová e-mailová adresa. Vícero položek oddělujte středníkem."
 
 #: services/models.py:951
 msgid "Email Subject"
@@ -2549,7 +2551,7 @@ msgstr "Nejdelší přijatelný čas nečinnosti (v sekundách)."
 
 #: services/models.py:996
 msgid "Allow Root Login"
-msgstr "Umožnit přihlášení správce (root)"
+msgstr "Umožnit přihlášení správce systému (root)"
 
 #: services/models.py:998
 msgid "Allow Anonymous Login"
@@ -2752,7 +2754,7 @@ msgstr "Další možnosti"
 
 #: services/models.py:1138
 msgid "Extra command line options (usually empty)."
-msgstr "Další možnosti příkazového řádku (obvykle prázdné)."
+msgstr "Další předvolby příkazového řádku (obvykle prázdné)."
 
 #: services/models.py:1142 services/models.py:1143
 #: templates/services/core.html:155
@@ -2785,7 +2787,7 @@ msgstr "Umožnit ověřování heslem"
 
 #: services/models.py:1163
 msgid "Allow TCP Port Forwarding"
-msgstr "Umožnit přesměrování TCP portu"
+msgstr "Umožnit přesměrování TCP portů"
 
 #: services/models.py:1165
 msgid "Compress Connections"
@@ -2840,8 +2842,7 @@ msgstr "Název skupiny"
 
 #: services/models.py:1255
 msgid "Workgroup or domain name in old format, eg WORKGROUP"
-msgstr ""
-"Název pracovní skupiny či domény ve starém formátu, např. PRACOVNISKUPINA"
+msgstr "Název pracovní skupiny či domény ve starém formátu, např. SKUPINA"
 
 #: services/models.py:1259
 msgid "Allow Trusted Domains"
@@ -2949,7 +2950,7 @@ msgid ""
 "This parameter specifies the suffix that is used for passwords when these "
 "are added to the LDAP directory, e.g. ou=Passwords"
 msgstr ""
-"Tento parametru určuje příponu, použitou pro hesla, přidávaná do LDAP "
+"Tento parametr určuje příponu, použitou pro hesla, přidávaná do LDAP "
 "adresáře, např. ou=Hesla"
 
 #: services/models.py:1334
@@ -2961,7 +2962,7 @@ msgid ""
 "This parameter specifies the suffix that is used for machines when these are "
 "added to the LDAP directory, e.g. ou=Computers"
 msgstr ""
-"Tento parametr určuje příponu, použitou pro stroje, přidáváné do LDAP "
+"Tento parametr určuje příponu, použitou pro stroje, přidávané do LDAP "
 "adresáře, např. ou=Pocitace"
 
 #: services/models.py:1341
@@ -2970,7 +2971,9 @@ msgstr "Režim šifrování"
 
 #: services/models.py:1342
 msgid "This parameter specifies whether to use SSL/TLS, e.g. on/off/start_tls"
-msgstr "Tento parametru určuje, zda použít SSL/TLS, např. on/off/start_tls"
+msgstr ""
+"Tento parametr určuje, zda použít zabezpečení SSL/TLS šifrováním, např. "
+"on/off/start_tls"
 
 #: services/models.py:1345
 msgid "Self signed certificate"
@@ -2982,7 +2985,7 @@ msgstr ""
 
 #: services/models.py:1351 sharing/models.py:81
 msgid "Auxiliary Parameters"
-msgstr "Pomocné parametry"
+msgstr "Doplňkové parametry"
 
 #: services/models.py:1353
 msgid "These parameters are added to ldap.conf."
@@ -3000,7 +3003,7 @@ msgstr "Alternativní TCP port. Výchozí je 873"
 #: services/models.py:1374
 msgid "These parameters will be added to [global] settings in rsyncd.conf"
 msgstr ""
-"Tyto parametry budou přidány do sekce [global] v nastavení, obsaženém v "
+"Tyto parametry budou přidány do sekce [global] v souboru s nastaveními "
 "rsyncd.conf"
 
 #: services/models.py:1378 services/models.py:1379
@@ -3025,7 +3028,7 @@ msgstr "Toto určuje jaké možnosti přístupu bude mít protistrana k tomuto m
 
 #: services/models.py:1410
 msgid "Maximum connections"
-msgstr "Nejvýše umožněno současných spojení"
+msgstr "Nejvýše umožněných současných spojení"
 
 #: services/models.py:1411
 msgid "Maximum number of simultaneous connections. Default is 0 (unlimited)"
@@ -3052,7 +3055,7 @@ msgstr ""
 
 #: services/models.py:1428
 msgid "Hosts allow"
-msgstr "Počítače, ze kterých je přístup umožněn"
+msgstr "Stroje, ze kterých je přístup umožněn"
 
 #: services/models.py:1429
 msgid ""
@@ -7115,7 +7118,7 @@ msgstr "Zadejte název stroje"
 
 #: storage/views.py:128
 msgid "Key could not be retrieved for unknown reason"
-msgstr "Klíč nebyl z neznámých důvodů získán"
+msgstr "Klíč nebyl obdržen – příčina není známa"
 
 #: templates/jails/delete.html:3
 #: templates/jails/start.html:3
@@ -7370,7 +7373,7 @@ msgstr "Toto umístění není složkou."
 #: services/forms.py:671
 #: services/forms.py:679
 msgid "Spaces or number signs are not allowed."
-msgstr "Mezery a číslice není možné použít."
+msgstr "Mezery ani číslice není možné použít."
 
 #: services/forms.py:754
 msgid "Confirm Domain Account Password"
@@ -7382,11 +7385,13 @@ msgstr "Heslo protistrany (potvrzení)"
 
 #: services/forms.py:1456
 msgid "Serial not found and glabel failed for %(disk)s: %(error)s"
-msgstr "Sériové číslo nebylo nalezeno a glabel pro %(disk)s selhalo: %(error)s"
+msgstr ""
+"Sériové číslo nebylo nalezeno a opatření %(disk)s štítkem pomocí nástroje "
+"glabel se nezdařilo: %(error)s"
 
 #: services/forms.py:1659
 msgid "A target with that name already exists."
-msgstr "Tento název je již používán pro jiný, existující cíl."
+msgstr "Tento název je už používán jiným existujícím cílem – zvolte jiný."
 
 #: services/models.py:224
 msgid "Hostnames lookups"
@@ -7398,7 +7403,7 @@ msgstr "Nejnižší přijatelná verze protokolu serveru"
 
 #: services/models.py:235
 msgid "The minimum protocol version that will be supported by the server"
-msgstr "Nejnižší verze protokolu, která bude podporována timto serverem"
+msgstr "Nejnižší verze protokolu, která bude podporována tímto serverem"
 
 #: services/models.py:243
 msgid "The highest protocol version that will be supported by the server"
@@ -8081,8 +8086,8 @@ msgid ""
 "confers superuser privileges in many areas."
 msgstr ""
 "Není účelné, aby se správci systému na webové rozhraní přihlašovali jiným, "
-"než svým účtem s právy správce (root), protože webové rozhraní již beztak "
-"taková práva v mnoha oblastech stejně používá."
+"než svým účtem s právy správce (root), protože webové rozhraní stejně taková "
+"práva v mnoha oblastech už používá."
 
 #: templates/reporting/index.html:3
 msgid "CPU"
@@ -8381,11 +8386,11 @@ msgstr "Kerberos server"
 
 #: services/forms.py:1081
 msgid "LUN ID already exists."
-msgstr "Takový identifikátor LUN již existuje."
+msgstr "Takový identifikátor LUN už existuje."
 
 #: services/forms.py:1561
 msgid "This IP and port are already in use."
-msgstr "Tato IP adresa a port jsou již používány."
+msgstr "Tato IP adresa a port jsou už používány pro něco jiného."
 
 #: services/models.py:109
 msgid "Use syslog"
@@ -8393,7 +8398,7 @@ msgstr "Použít syslog"
 
 #: services/models.py:246
 msgid "Allow execute always"
-msgstr "Vždy umožnit spouštět"
+msgstr "Vždy umožnit spouštění"
 
 #: services/models.py:298
 msgid "Enable/disable home directories for afp user."
@@ -8433,8 +8438,8 @@ msgid ""
 "This option forces the rpc.statd daemon to bind to the specified port, for "
 "both IPv4 and IPv6 address families."
 msgstr ""
-"Tato volba vynutí, aby se služba rpc.statd spojila na určený port, na "
-"protokolech IPv4 i IPv6."
+"Tato volba vynutí, aby služba rpc.statd očekávala spojení na určeném portu a "
+"to na protokolech IPv4 i IPv6."
 
 #: services/models.py:874
 msgid "LUN ID"
@@ -9049,8 +9054,8 @@ msgid ""
 "create a replication task"
 msgstr ""
 "UPOZORNĚNÍ: Aby bylo možné vytvořit replikační úlohu, je nutné nejprve "
-"vytvořit pravidelné pořizování zachycených stavů daného ZFS souborového "
-"systému / svazku"
+"vytvořit pravidelné pořizování zachycených stavů daného ZFS svazku / datové "
+"sady"
 
 #: templates/storage/snapshots.html:97
 msgid "Refer"
@@ -9067,7 +9072,7 @@ msgid ""
 "the future"
 msgstr ""
 "Toto je šifrovaný svazek, nezapomeňte si<a href=\"%(url)s\" "
-"target=\"_blank\">stáhnout</a> klíč, aby jste jej případně byli schopni v "
+"target=\"_blank\">stáhnout</a> klíč, aby jste ho případně byli schopní v "
 "budoucnu importovat (a dostat se tak ke svým datům!)"
 
 #: templates/storage/volumestatus_datagrid.html:6
@@ -9088,7 +9093,7 @@ msgid ""
 "Consider downloading your configuration before proceeding, <a "
 "href=\"%(url)s\" target=\"_blank\">click here</a>."
 msgstr ""
-"Než budete pokračovat, zvažte stažení si (zazálohování) současného "
+"Než budete pokračovat, zvažte stažení si (zazálohování) stávajícího "
 "nastavení, <a href=\"%(url)s\" target=\"_blank\">kliknutím sem</a>."
 
 #: templates/system/reboot_dialog2.html:4
@@ -9161,9 +9166,10 @@ msgid ""
 "families. This is typically done to ensure that the port which mountd binds "
 "to is a known value which can be used in firewall rulesets."
 msgstr ""
-"Vynutí, aby se služba mountd spojila na zadaný port, platí pro protokoly "
-"IPv4 i IPv6. Užitečné pro zajištění toho, že spojovací port mountd bude znám "
-"a díky tomu pro něj bude možné nastavit pravidlo na firewallu."
+"Vynutí, aby služba mountd očekávala spojení na určeném portu a to na "
+"protokolech IPv4 i IPv6. Užitečné pro zajištění toho, že spojovací port "
+"mountd bude znám a díky tomu pro něj bude možné nastavit pravidlo na "
+"firewallu."
 
 #: services/models.py:371
 msgid "rpc.statd(8) bind port"
@@ -9178,8 +9184,8 @@ msgid ""
 "This option forces rpc.lockd the daemon to bind to the specified port, for "
 "both IPv4 and IPv6 address families."
 msgstr ""
-"Tato volba vynutí, aby se služba rpc.lockd spojila na určený port, na "
-"protokolech IPv4 i IPv6."
+"Tato volba vynutí, aby služba rpc.lockd očekávala spojení na určeném portu a "
+"to na protokolech IPv4 i IPv6."
 
 #: services/models.py:916
 msgid ""
@@ -9393,7 +9399,7 @@ msgstr "Replikace"
 
 #: templates/storage/volume_detach.html:19
 msgid "ATTENTION - Currently the following services depend on this volume: "
-msgstr "VÝSTRAHA – Na tomto svazku v současnosti závisejí následující služby: "
+msgstr "VÝSTRAHA – na tomto svazku v současnosti závisejí následující služby: "
 
 #: templates/system/rsync_run.html:5
 msgid "Would you like to run this rsync job now?"
@@ -10949,8 +10955,7 @@ msgid ""
 "Check this if the remotepath specified does<br>not exist, and you want to "
 "create it."
 msgstr ""
-"Zaškrtněte, pokud umístění na protistraně<br>neexistuje a chcete jej "
-"vytvořit."
+"Zaškrtněte, pokud umístění na protistraně<br>neexistuje a chcete ho vytvořit."
 
 #: tasks/forms.py:263
 msgid ""
@@ -10966,8 +10971,7 @@ msgstr ""
 "(vytvořit).<br>**Poznámka**: K této situaci může dojít též v případě, že "
 "délka popisu umístění <br> přesáhla 255 znaků a byla proto zkrácena. Upravte "
 "tedy umístění tak, aby postačilo oněch<br>255 znaků. Případně by příčinou "
-"ještě mohla být chybná SSH pověření (dále něco pokaženého na protistraně, "
-"atd)."
+"ještě mohla být chybná SSH pověření (název vzdáleného stroje, atd)."
 
 #: directoryservice/models.py:857
 msgid "SASL wrapping"
@@ -11033,7 +11037,7 @@ msgid ""
 "Values allowed:<br>Slider: 0-30 (as it is every Nth minute).<br>Specific "
 "Minute: 0-59."
 msgstr ""
-"Přípustné hodnoty:<br>Posuvník: 0-30 (každých N minut).<br>Určitá minuta: "
+"Přípustné hodnoty:<br>Posuvník: 0-30 (každých N minut).<br>Konkrétní minuta: "
 "0-59."
 
 #: tasks/models.py:309
@@ -11041,7 +11045,7 @@ msgid ""
 "Values allowed:<br>Slider: 0-12 (as it is every Nth hour).<br>Specific Hour: "
 "0-23."
 msgstr ""
-"Přípustné hodnoty:<br>Posuvník: 0-12 (každých N hodin).<br>Určitá hodina: "
+"Přípustné hodnoty:<br>Posuvník: 0-12 (každých N hodin).<br>Konkrétní hodina: "
 "0-23."
 
 #: tasks/models.py:317
@@ -11049,7 +11053,7 @@ msgid ""
 "Values allowed:<br>Slider: 0-15 (as its is every Nth day).<br>Specific Day: "
 "1-31."
 msgstr ""
-"Přípustné hodnoty:<br>Posuvník: 0-15 (každých N dnů).<br>Určitý den: 1-31."
+"Přípustné hodnoty:<br>Posuvník: 0-15 (každých N dnů).<br>Konkrétní den: 1-31."
 
 #: templates/system/update.html:23
 msgid "NOTICE"
@@ -11405,7 +11409,7 @@ msgstr "Nahrazování disku…"
 #: system/views.py:1249
 #: system/views.py:1321
 msgid "Update daemon failed!"
-msgstr "Aktualizační služba selhala!"
+msgstr "Proces aktualizační služby selhal!"
 
 #: system/alertmods/volume_version.py:15
 msgid ""
@@ -11413,7 +11417,7 @@ msgid ""
 "ZFS Pool\" section of the User Guide for instructions."
 msgstr ""
 "Pro svazek %s jsou k dispozici nové příznaky funkcí. Pokyny k nim se "
-"nacházejí v sekci „Přechod na novější verzi ZFS fondu úložišť“ v Uživatelské "
+"nacházejí v sekci „Přechod na novější verzi ZFS fondu úložišť“ v uživatelské "
 "příručce."
 
 #: tasks/models.py:256
@@ -11423,7 +11427,7 @@ msgid ""
 msgstr ""
 "IP adresa nebo název stroje. Zadejte uzivatel@nazev_stroje nebo uzivatel@ip-"
 "adresa, pokud uživatelský účet na stroji protistrany a uživatelský účet "
-"rsync úlohy nejsou tytéž."
+"rsync úlohy nejsou shodné."
 
 #: templates/storage/import_stats.html:16
 msgid "Done"
@@ -11572,8 +11576,8 @@ msgid ""
 "If this is a system template, it will not be visible in the UI and will only "
 "be used internally."
 msgstr ""
-"Je-li toto systémová šablona, nebude viditelná v uživatelském rozhraní a "
-"bude použita pouze vnitřně."
+"Pokud je toto systémová šablona, nebude viditelná v uživatelském rozhraní a "
+"bude používána pouze pro účely systému."
 
 #: jails/nav.py:73
 msgid "Add Jail"
@@ -12010,7 +12014,7 @@ msgstr ""
 #: system/forms.py:2215
 #: system/forms.py:2688
 msgid "A certificate with this name already exists."
-msgstr "Certifikát s tímto názvem již existuje."
+msgstr "Certifikát s tímto názvem už existuje."
 
 #: system/forms.py:2245
 #: system/forms.py:2678
@@ -12050,20 +12054,20 @@ msgid ""
 msgstr ""
 "Ve výchozím stavu jsou zobrazovány pouze kolonky základních parametrů. "
 "Kolonky nastavení, která jsou považována za pokročilá, lze zobrazit pomocí "
-"tlačítka Pokročilý režim."
+"tlačítka „Pokročilý režim“."
 
 #: system/models.py:267
 msgid "Enable automatic upload of kernel crash dumps and daily telemetry"
 msgstr ""
-"Zapnout samočinné zasílání výpisů pádů jádra a neadresných provozních údajů "
-"vývojářům"
+"Zapnout automatické zasílání výpisů pádů jádra a neadresných provozních "
+"údajů vývojářům"
 
 #: system/models.py:269
 msgid ""
 "Attempt to automatically tune the network and ZFS system control variables "
 "based on memory available."
 msgstr ""
-"Pokusit se o samočinné vyladění proměnných nastavení sítě a souborového "
+"Pokusit se o automatické vyladění proměnných nastavení sítě a souborového "
 "systému ZFS v závislosti na dostupné operační paměti."
 
 #: system/models.py:292
@@ -12084,7 +12088,7 @@ msgid ""
 msgstr ""
 "Pokud si přejete, aby e-maily s pravidelnými hlášeními byly posílány na "
 "jinou adresu, než ty výstražné (které jdou správci systému), nastavte u "
-"některého z uživatelský účtů e-mailovou adresu a následně tohoto uživatele "
+"některý z uživatelských účtů e-mailovou adresu a následně tohoto uživatele "
 "vyberte z rozbalovací nabídky zde."
 
 #: system/models.py:923
@@ -12125,7 +12129,7 @@ msgstr "Je třeba, aby interval byl celé kladné číslo."
 
 #: system/views.py:318
 msgid "Scrub interval successfully changed."
-msgstr "Hodnota intervalu mezi čištěními byla úspěšně změněna."
+msgstr "Hodnota intervalu mezi kontrolami byla úspěšně změněna."
 
 #: system/views.py:1212
 #: system/views.py:1314
@@ -12148,7 +12152,7 @@ msgid ""
 "and cannot be used for any services. This Alert will remain here until the "
 "CA is deleted"
 msgstr ""
-"Certifikační autorita (CA): %(CA_name)s má buď nesprávný formát nebo je "
+"Certifikační autorita (CA): %(CA_name)s buď nemá správný formát nebo je "
 "neplatná a proto nemůže být použita pro žádnou službu. Tato výstraha zde "
 "zůstane do doby, než bude autorita smazána"
 
@@ -12213,7 +12217,7 @@ msgstr "Pozdržet aktualizace"
 
 #: tasks/models.py:420
 msgid "Put all updated files into place at the end"
-msgstr "Nechat všechny aktualizované soubory až na konec"
+msgstr "Umístit všechny aktualizované soubory až na konec"
 
 #: templates/reporting/index.html:15
 msgid "ZFS"
@@ -12328,7 +12332,7 @@ msgid ""
 "to ensure the issue has not already been reported. If it has, add a comment "
 "to the existing issue instead of creating a new one."
 msgstr ""
-", zda toto již nebylo nahlášeno někým jiným. Pokud ano, přidejte svůj "
+", zda toto už nebylo nahlášeno někým jiným. Pokud ano, přidejte svůj "
 "komentář k existujícímu hlášení a nevytvářejte nové."
 
 #: templates/support/home.html:82
@@ -12349,7 +12353,7 @@ msgstr ""
 
 #: templates/system/bootenv_datagrid.html:86
 msgid "Automatic scrub interval (in days)"
-msgstr "Interval mezi samočinným odstraňováním starých položek (dny)"
+msgstr "Interval mezi automatickým odstraňováním starých položek (dny)"
 
 #: templates/system/config_upload.html:5
 msgid "The system will reboot to perform this operation!"
@@ -12365,7 +12369,7 @@ msgstr ""
 
 #: templates/system/initialwizard_volume.html:79
 msgid "Disks to be formatted"
-msgstr "Disky, které budou naformátovány"
+msgstr "Disky, které naformátovat"
 
 #: templates/system/update.html:37
 msgid "The system will be rebooted after updates are applied."
@@ -12504,7 +12508,8 @@ msgstr ""
 #: network/forms.py:324
 msgid "This field is required for failover"
 msgstr ""
-"Vyplnění této kolonky je vyžadováno pro převzetí služby v případě selhání"
+"Vyplnění této kolonky je vyžadováno pro fungování převzetí služby v případě "
+"selhání (failover)"
 
 #: services/forms.py:1151
 msgid "Extent is already in this target."
@@ -12591,11 +12596,11 @@ msgstr "Zásuvný modul vCenter byl úspěšně nainstalován."
 
 #: vcp/views.py:75
 msgid "vCenter plugin upgraded successfully."
-msgstr "Zásuvný modul vCenter byl úspěšně zaktualizován."
+msgstr "Zásuvný modul pro vCenter byl úspěšně zaktualizován."
 
 #: vcp/views.py:84
 msgid "vCenter plugin uninstalled successfully."
-msgstr "Zásuvný modul vCenter byl úspěšně odinstalován."
+msgstr "Zásuvný modul pro vCenter byl úspěšně odinstalován."
 
 #: network/forms.py:280
 msgid "One interface must be marked critical for failover."
@@ -12635,7 +12640,7 @@ msgstr "Nastavení vCenter"
 
 #: vcp/models.py:78
 msgid "vCenter Configurations"
-msgstr "Nastavení vCenter"
+msgstr "Nastavení pro vCenter"
 
 #: storage/models.py:905
 msgid "Recursively replicate child dataset's snapshots"
@@ -12659,7 +12664,7 @@ msgstr "Přechod na novější verzi není nutný"
 
 #: vcp/views.py:126
 msgid "vCenter plugin is repaired successfully"
-msgstr "Zásuvný modul vCenter byl úspěšně opraven"
+msgstr "Zásuvný modul pro vCenter byl úspěšně opraven"
 
 #: vcp/models.py:61
 msgid "An integer from 1 - 65535, generally will be 443"
@@ -12691,7 +12696,7 @@ msgstr ""
 
 #: templates/vcp/index.html:41
 msgid "Edit vCenter Auxiliary Settings"
-msgstr "Upravit pomocná nastavení pro vCenter"
+msgstr "Upravit doplňková nastavení pro vCenter"
 
 #: vcp/models.py:93
 msgid "Enable Vcenter Plugin over https"
@@ -12700,11 +12705,11 @@ msgstr ""
 #: vcp/models.py:97
 #: vcp/models.py:98
 msgid "vCenter Auxiliary Settings"
-msgstr "Pomocná nastavení pro vCenter"
+msgstr "Doplňková nastavení pro vCenter"
 
 #: vcp/views.py:98
 msgid "vCenter Auxiliary Settings successfully edited."
-msgstr "Pomocná nastavení pro vCenter byla úspěšně upravena."
+msgstr "Doplňková nastavení pro vCenter byla úspěšně upravena."
 
 #: templates/vcp/index.html:27
 msgid "Enable vCenter Plugin over https:"
@@ -12712,7 +12717,7 @@ msgstr "Zapnout zásuvný modul vCenter přes https:"
 
 #: vcp/models.py:93
 msgid " Enable vCenter Plugin over https"
-msgstr " Zapnout zásuvný modul vCenter přes https"
+msgstr " Zapnout komunikaci zásuvného modulu pro vCenter přes https"
 
 #: services/models.py:837
 msgid "Fibre Channel"
@@ -12840,7 +12845,7 @@ msgstr ""
 #: templates/system/config_upload.html:6
 msgid "All your passwords will be reseted, make sure to set them after reboot."
 msgstr ""
-"Veškerá vaše hesla budou vrácena na výchozí hodnoty, proto je nezapomeňte po "
+"Veškerá hesla budou vrácena na výchozí hodnoty, proto je nezapomeňte po "
 "restartu znovu nastavit."
 
 #: services/models.py:379
@@ -12870,16 +12875,16 @@ msgstr ""
 
 #: system/models.py:333
 msgid "Remote Graphite Server Hostname"
-msgstr "Název stroje, na kterém se nachází Graphite"
+msgstr "Název stroje, na kterém se nachází dohledový systém Graphite"
 
 #: system/models.py:334
 msgid ""
 "A hostname or IP here will be used as the destination to send collectd data "
 "to using the graphite plugin to collectd."
 msgstr ""
-"Název stroje nebo jeho IP adresa, zadaná zde, bude použita jako cíl pro "
-"odesílání údajů z nástroje collectd, s použitím zásuvného modulu graphite do "
-"něj."
+"Zde zadaný název stroje nebo jeho IP adresa, bude použit jako cíl pro "
+"odesílání údajů z nástroje collectd, resp. jeho zásuvného modulu pro "
+"graphite."
 
 #: directoryservice/models.py:953
 msgid "Disable Active Directory user/group cache"
@@ -12901,7 +12906,7 @@ msgstr ""
 #: network/forms.py:385
 msgid "You are not allowed to delete interfaces while failover is enabled."
 msgstr ""
-"Když je zapnuté přebírání funkce (failover) v případě výpadku, není možné "
+"Když je zapnuté přebírání funkce v případě výpadku (failover), není možné "
 "mazat síťová rozhraní"
 
 #: services/views.py:296
@@ -13016,7 +13021,7 @@ msgid ""
 "working recovery keys, check logs files and correct the error as it may "
 "result to data loss."
 msgstr ""
-"Šifrovanému svazku se nepodařilo znovu opatřit některé disky klíčem. Ověřte, "
+"Šifrovanému svazku se nepodařilo některé disky znovu opatřit klíčem. Ověřte, "
 "že máte funkční obnovovací klíče, nahlédněte do souborů se záznamem událostí "
 "a nalezené chyby opravte, protože by mohly vést ke ztrátě dat."
 
@@ -13053,3 +13058,7 @@ msgstr "Pomocné parametry (upsd.conf)"
 #: account/forms.py:684
 msgid "Do not delete user primary group"
 msgstr "Nemazat hlavní skupinu uživatele"
+
+#: storage/forms.py:1427
+msgid "You cannot shrink a zvol from GUI, this may lead to data loss."
+msgstr ""
