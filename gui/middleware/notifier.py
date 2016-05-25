@@ -3081,6 +3081,8 @@ class notifier:
 
         mountpoints = JailMountPoint.objects.filter(jail=jail_name)
         for mp in mountpoints:
+            if not mp.mounted:
+                continue
             fp = "%s/%s%s" % (jc.jc_path, jail_name, mp.destination)
             p = pipeopen("/sbin/umount -f '%s'" % fp)
             out = p.communicate()
