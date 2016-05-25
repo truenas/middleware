@@ -121,7 +121,8 @@ display these settings by checking the box "Show advanced fields by default" in 
 | Site Name                | string        | only available in "Advanced Mode"; the relative distinguished name of the site object in Active Directory                                  |
 |                          |               |                                                                                                                                            |
 +--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
-| Domain Controller        | string        | only available in "Advanced Mode"; if the hostname of the domain controller to use is specified, make sure it is resolvable                |
+| Domain Controller        | string        | only available in "Advanced Mode"; will automatically be added to the SRV record for the domain and, when multiple controllers are         |
+|                          |               | specified, TrueNAS will select the closest DC which responds                                                                               |
 |                          |               |                                                                                                                                            |
 +--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
 | Global Catalog Server    | string        | only available in "Advanced Mode"; if the hostname of the global catalog server to use is specified, make sure it is resolvable            |
@@ -133,7 +134,7 @@ display these settings by checking the box "Show advanced fields by default" in 
 | Kerberos Principal       | drop-down     | only available in "Advanced Mode"; browse to the location of the keytab created using the instructions in :ref:`Kerberos Keytabs`          |
 |                          | menu          |                                                                                                                                            |
 +--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
-|AD timeout                | integer       | only available in "Advanced Mode"; in seconds, increase if the AD service does not start after connecting to the                           |
+| AD timeout               | integer       | only available in "Advanced Mode"; in seconds, increase if the AD service does not start after connecting to the                           |
 |                          |               | domain                                                                                                                                     |
 |                          |               |                                                                                                                                            |
 +--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
