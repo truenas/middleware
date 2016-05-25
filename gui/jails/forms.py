@@ -28,6 +28,7 @@ import os
 import platform
 import re
 import logging
+import random
 
 from django.utils.translation import ugettext_lazy as _
 
