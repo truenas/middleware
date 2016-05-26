@@ -1,6 +1,6 @@
---- src/nfsstat.c.orig	2016-05-22 07:58:08 UTC
+--- src/nfsstat.c.orig	2016-05-26 22:25:31 UTC
 +++ src/nfsstat.c
-@@ -0,0 +1,212 @@
+@@ -0,0 +1,256 @@
 +/**
 + * collectd - src/nfs_freebsd.c 
 + * 
@@ -48,67 +48,153 @@
 +#define	NFSSTAT_PERCENTAGE		0x00000004
 +#define	NFSSTAT_ALL				(NFSSTAT_CLIENT_ONLY|NFSSTAT_SERVER_ONLY)
 +
++static _Bool nfsstat_flags = NFSSTAT_ALL;
 +
-+#if 0
-+static int
-+nfsstat_config(const char *key, const char *value)
-+{
-+	return (0);
-+}
-+#endif
++static const char *nfsstat_config_keys[] = {
++	"ClientStats",
++	"ServerStats",
++	"ValuesAbsolute",
++	"ValuesPercentage"
++};
 +
++static int nfsstat_config_keys_size = STATIC_ARRAY_SIZE(nfsstat_config_keys);
 +
 +static int
 +nfsstat_init(void)
 +{
++	nfsstat_flags = NFSSTAT_ALL;
 +	return (0);
 +}
 +
 +static int
-+nfsstat_submit(struct ext_nfsstats *ext_nfsstats, uint64_t flags)
++nfsstat_config(const char *key, const char *value)
++{
++	if (strcasecmp(key, "ServerStats") == 0) {
++		if (IS_TRUE(value))
++			nfsstat_flags |= NFSSTAT_SERVER_ONLY;
++
++	} else if (strcasecmp(key, "ClientStats") == 0) {
++		if (IS_TRUE(value))
++			nfsstat_flags |= NFSSTAT_CLIENT_ONLY;
++
++	} else if (strcasecmp(key, "ValuesAbsolute") == 0) {
++		nfsstat_flags &= ~NFSSTAT_PERCENTAGE;
++
++	} else if (strcasecmp(key, "ValuesPercentage") == 0) {
++		nfsstat_flags |= NFSSTAT_PERCENTAGE;
++	}
++
++	return (0);
++}
++
++static int
++nfsstat_server_submit(struct ext_nfsstats *ext_nfsstats)
 +{
 +	value_t v[1];
 +	value_list_t vl = VALUE_LIST_INIT;
-+	_Bool percentage = 0;
 +
 +	vl.values = v;
 +	vl.values_len = STATIC_ARRAY_SIZE(v);
 +	sstrncpy(vl.host, hostname_g, sizeof(vl.host));
 +	sstrncpy(vl.plugin, NFSSTAT_PLUGIN_NAME, sizeof(vl.plugin));
-+	/* client for now */
++	sstrncpy(vl.plugin_instance, "server",
++		sizeof(vl.plugin_instance));
++	sstrncpy(vl.type, NFSSTAT_PLUGIN_NAME, sizeof(vl.type));
++
++#if 0
++	//sstrncpy(vl.type, NFSSTAT_PLUGIN_NAME, sizeof(vl.type));
++	sstrncpy(vl.type, "server", sizeof(vl.type));
++	sstrncpy(vl.type_instance, "server", sizeof(vl.type_instance));
++#endif
++
++	plugin_dispatch_multivalue(&vl,
++		nfsstat_flags & NFSSTAT_PERCENTAGE, DS_TYPE_DERIVE,
++		"access", (derive_t) ext_nfsstats->srvrpccnt[NFSV4OP_ACCESS],
++		"commit", (derive_t) ext_nfsstats->srvrpccnt[NFSV4OP_COMMIT],
++		"create", (derive_t) ext_nfsstats->srvrpccnt[NFSV4OP_CREATE],
++		"fsinfo", (derive_t) ext_nfsstats->srvrpccnt[NFSV4OP_FSINFO],
++		"fsstat", (derive_t) ext_nfsstats->srvrpccnt[NFSV4OP_FSSTAT],
++		"getattr", (derive_t) ext_nfsstats->srvrpccnt[NFSV4OP_GETATTR],
++		"link", (derive_t) ext_nfsstats->srvrpccnt[NFSV4OP_LINK],
++		"lookup", (derive_t) ext_nfsstats->srvrpccnt[NFSV4OP_LOOKUP],
++		"mkdir", (derive_t) ext_nfsstats->srvrpccnt[NFSV4OP_MKDIR],
++		"mknod", (derive_t) ext_nfsstats->srvrpccnt[NFSV4OP_MKNOD],
++		"pathconf", (derive_t) ext_nfsstats->srvrpccnt[NFSV4OP_PATHCONF],
++		"read", (derive_t) ext_nfsstats->srvrpccnt[NFSV4OP_READ],
++		"readdir", (derive_t) ext_nfsstats->srvrpccnt[NFSV4OP_READDIR],
++		"readirplus", (derive_t) ext_nfsstats->srvrpccnt[NFSV4OP_READDIRPLUS],
++		"readlink", (derive_t) ext_nfsstats->srvrpccnt[NFSV4OP_READLINK],
++		"remove", (derive_t) ext_nfsstats->srvrpccnt[NFSV4OP_REMOVE],
++		"rename", (derive_t) ext_nfsstats->srvrpccnt[NFSV4OP_RENAME],
++		"rmdir", (derive_t) ext_nfsstats->srvrpccnt[NFSV4OP_RMDIR],
++		"setattr", (derive_t) ext_nfsstats->srvrpccnt[NFSV4OP_SETATTR],
++		"symlink", (derive_t) ext_nfsstats->srvrpccnt[NFSV4OP_SYMLINK],
++		"write", (derive_t) ext_nfsstats->srvrpccnt[NFSV4OP_WRITE],
++		NULL
++	);
++
++#if 0
++	"Server Ret-Failed", ext_nfsstats->srvrpc_errs
++	"Server Faults", ext_nfsstats->srv_errs
++
++	"Inprog", ext_nfsstats->srvcache_inproghits
++	"Idem", ext_nfsstats->srvcache_idemdonehits
++	"Non-idem", ext_nfsstats->srvcache_nonidemdonehits
++	"Misses", ext_nfsstats->srvcache_misses
++
++	"WriteOps", ext_nfsstats->srvrpccnt[NFSV4OP_WRITE]
++	"WriteRPC", ext_nfsstats->srvrpccnt[NFSV4OP_WRITE]
++#endif
++
++
++	return (0);
++}
++
++static int
++nfsstat_client_submit(struct ext_nfsstats *ext_nfsstats)
++{
++	value_t v[1];
++	value_list_t vl = VALUE_LIST_INIT;
++
++	vl.values = v;
++	vl.values_len = STATIC_ARRAY_SIZE(v);
++	sstrncpy(vl.host, hostname_g, sizeof(vl.host));
++	sstrncpy(vl.plugin, NFSSTAT_PLUGIN_NAME, sizeof(vl.plugin));
 +	sstrncpy(vl.plugin_instance, "client",
 +		sizeof(vl.plugin_instance));
 +	sstrncpy(vl.type, NFSSTAT_PLUGIN_NAME, sizeof(vl.type));
 +
-+	if (flags & NFSSTAT_PERCENTAGE)
-+		percentage = 1;
++#if 0
++	//sstrncpy(vl.type, NFSSTAT_PLUGIN_NAME, sizeof(vl.type));
++	sstrncpy(vl.type, "client", sizeof(vl.type));
++	sstrncpy(vl.type_instance, "client", sizeof(vl.type_instance));
++#endif
 +
-+	if (flags & NFSSTAT_CLIENT_ONLY) {
-+		plugin_dispatch_multivalue(&vl, percentage, DS_TYPE_DERIVE,
-+			"access", (derive_t) ext_nfsstats->rpccnt[NFSPROC_ACCESS],
-+			"commit", (derive_t) ext_nfsstats->rpccnt[NFSPROC_COMMIT],
-+			"create", (derive_t) ext_nfsstats->rpccnt[NFSPROC_CREATE],
-+			"fsinfo", (derive_t) ext_nfsstats->rpccnt[NFSPROC_FSINFO],
-+			"fsstat", (derive_t) ext_nfsstats->rpccnt[NFSPROC_FSSTAT],
-+			"getattr", (derive_t) ext_nfsstats->rpccnt[NFSPROC_GETATTR],
-+			"link", (derive_t) ext_nfsstats->rpccnt[NFSPROC_LINK],
-+			"lookup", (derive_t) ext_nfsstats->rpccnt[NFSPROC_LOOKUP],
-+			"mkdir", (derive_t) ext_nfsstats->rpccnt[NFSPROC_MKDIR],
-+			"mknod", (derive_t) ext_nfsstats->rpccnt[NFSPROC_MKNOD],
-+			"pathconf", (derive_t) ext_nfsstats->rpccnt[NFSPROC_PATHCONF],
-+			"read", (derive_t) ext_nfsstats->rpccnt[NFSPROC_READ],
-+			"readdir", (derive_t) ext_nfsstats->rpccnt[NFSPROC_READDIR],
-+			"readirplus", (derive_t) ext_nfsstats->rpccnt[NFSPROC_READDIRPLUS],
-+			"readlink", (derive_t) ext_nfsstats->rpccnt[NFSPROC_READLINK],
-+			"remove", (derive_t) ext_nfsstats->rpccnt[NFSPROC_REMOVE],
-+			"rename", (derive_t) ext_nfsstats->rpccnt[NFSPROC_RENAME],
-+			"rmdir", (derive_t) ext_nfsstats->rpccnt[NFSPROC_RMDIR],
-+			"setattr", (derive_t) ext_nfsstats->rpccnt[NFSPROC_SETATTR],
-+			"symlink", (derive_t) ext_nfsstats->rpccnt[NFSPROC_SYMLINK],
-+			"write", (derive_t) ext_nfsstats->rpccnt[NFSPROC_WRITE],
-+			NULL
-+		);
-+	}
++	plugin_dispatch_multivalue(&vl,
++		nfsstat_flags & NFSSTAT_PERCENTAGE, DS_TYPE_DERIVE,
++		"access", (derive_t) ext_nfsstats->rpccnt[NFSPROC_ACCESS],
++		"commit", (derive_t) ext_nfsstats->rpccnt[NFSPROC_COMMIT],
++		"create", (derive_t) ext_nfsstats->rpccnt[NFSPROC_CREATE],
++		"fsinfo", (derive_t) ext_nfsstats->rpccnt[NFSPROC_FSINFO],
++		"fsstat", (derive_t) ext_nfsstats->rpccnt[NFSPROC_FSSTAT],
++		"getattr", (derive_t) ext_nfsstats->rpccnt[NFSPROC_GETATTR],
++		"link", (derive_t) ext_nfsstats->rpccnt[NFSPROC_LINK],
++		"lookup", (derive_t) ext_nfsstats->rpccnt[NFSPROC_LOOKUP],
++		"mkdir", (derive_t) ext_nfsstats->rpccnt[NFSPROC_MKDIR],
++		"mknod", (derive_t) ext_nfsstats->rpccnt[NFSPROC_MKNOD],
++		"pathconf", (derive_t) ext_nfsstats->rpccnt[NFSPROC_PATHCONF],
++		"read", (derive_t) ext_nfsstats->rpccnt[NFSPROC_READ],
++		"readdir", (derive_t) ext_nfsstats->rpccnt[NFSPROC_READDIR],
++		"readirplus", (derive_t) ext_nfsstats->rpccnt[NFSPROC_READDIRPLUS],
++		"readlink", (derive_t) ext_nfsstats->rpccnt[NFSPROC_READLINK],
++		"remove", (derive_t) ext_nfsstats->rpccnt[NFSPROC_REMOVE],
++		"rename", (derive_t) ext_nfsstats->rpccnt[NFSPROC_RENAME],
++		"rmdir", (derive_t) ext_nfsstats->rpccnt[NFSPROC_RMDIR],
++		"setattr", (derive_t) ext_nfsstats->rpccnt[NFSPROC_SETATTR],
++		"symlink", (derive_t) ext_nfsstats->rpccnt[NFSPROC_SYMLINK],
++		"write", (derive_t) ext_nfsstats->rpccnt[NFSPROC_WRITE],
++		NULL
++	);
 +
 +#if 0
 +	"TimedOut", ext_nfsstats->rpctimeouts
@@ -138,46 +224,6 @@
 +	"Misses", ext_nfsstats->accesscache_misses
 +#endif
 +
-+	if (flags & NFSSTAT_SERVER_ONLY) {
-+		plugin_dispatch_multivalue(&vl, percentage, DS_TYPE_DERIVE,
-+			"access", (derive_t) ext_nfsstats->srvrpccnt[NFSV4OP_ACCESS],
-+			"commit", (derive_t) ext_nfsstats->srvrpccnt[NFSV4OP_COMMIT],
-+			"create", (derive_t) ext_nfsstats->srvrpccnt[NFSV4OP_CREATE],
-+			"fsinfo", (derive_t) ext_nfsstats->srvrpccnt[NFSV4OP_FSINFO],
-+			"fsstat", (derive_t) ext_nfsstats->srvrpccnt[NFSV4OP_FSSTAT],
-+			"getattr", (derive_t) ext_nfsstats->srvrpccnt[NFSV4OP_GETATTR],
-+			"link", (derive_t) ext_nfsstats->srvrpccnt[NFSV4OP_LINK],
-+			"lookup", (derive_t) ext_nfsstats->srvrpccnt[NFSV4OP_LOOKUP],
-+			"mkdir", (derive_t) ext_nfsstats->srvrpccnt[NFSV4OP_MKDIR],
-+			"mknod", (derive_t) ext_nfsstats->srvrpccnt[NFSV4OP_MKNOD],
-+			"pathconf", (derive_t) ext_nfsstats->srvrpccnt[NFSV4OP_PATHCONF],
-+			"read", (derive_t) ext_nfsstats->srvrpccnt[NFSV4OP_READ],
-+			"readdir", (derive_t) ext_nfsstats->srvrpccnt[NFSV4OP_READDIR],
-+			"readirplus", (derive_t) ext_nfsstats->srvrpccnt[NFSV4OP_READDIRPLUS],
-+			"readlink", (derive_t) ext_nfsstats->srvrpccnt[NFSV4OP_READLINK],
-+			"remove", (derive_t) ext_nfsstats->srvrpccnt[NFSV4OP_REMOVE],
-+			"rename", (derive_t) ext_nfsstats->srvrpccnt[NFSV4OP_RENAME],
-+			"rmdir", (derive_t) ext_nfsstats->srvrpccnt[NFSV4OP_RMDIR],
-+			"setattr", (derive_t) ext_nfsstats->srvrpccnt[NFSV4OP_SETATTR],
-+			"symlink", (derive_t) ext_nfsstats->srvrpccnt[NFSV4OP_SYMLINK],
-+			"write", (derive_t) ext_nfsstats->srvrpccnt[NFSV4OP_WRITE],
-+			NULL
-+		);
-+	}
-+
-+#if 0
-+	"Server Ret-Failed", ext_nfsstats->srvrpc_errs
-+	"Server Faults", ext_nfsstats->srv_errs
-+
-+	"Inprog", ext_nfsstats->srvcache_inproghits
-+	"Idem", ext_nfsstats->srvcache_idemdonehits
-+	"Non-idem", ext_nfsstats->srvcache_nonidemdonehits
-+	"Misses", ext_nfsstats->srvcache_misses
-+
-+	"WriteOps", ext_nfsstats->srvrpccnt[NFSV4OP_WRITE]
-+	"WriteRPC", ext_nfsstats->srvrpccnt[NFSV4OP_WRITE]
-+#endif
-+
 +	return (0);
 +}
 +
@@ -194,22 +240,20 @@
 +		return (-1);
 +	}
 +
-+/*
-+    ssnprintf (plugin_instance, sizeof (plugin_instance), "v%i%s",
-+            nfs_version, instance);
-+*/
++	if (nfsstat_flags & NFSSTAT_CLIENT_ONLY)
++		nfsstat_client_submit(&ext_nfsstats);
 +
-+	nfsstat_submit(&ext_nfsstats, NFSSTAT_CLIENT_ONLY);
++	if (nfsstat_flags & NFSSTAT_SERVER_ONLY)
++		nfsstat_server_submit(&ext_nfsstats);
++
 +	return (0);
 +}
 +
 +void
 +module_register(void)
 +{
-+#if 0
-+	plugin_register_config(NFSSTAT_PLUGIN_NAME, "nfsstat_config",
++	plugin_register_config(NFSSTAT_PLUGIN_NAME, nfsstat_config,
 +		nfsstat_config_keys, nfsstat_config_keys_size);
-+#endif
 +	plugin_register_init(NFSSTAT_PLUGIN_NAME, nfsstat_init);
 +	plugin_register_read(NFSSTAT_PLUGIN_NAME, nfsstat_read);
 +} /* void module_register */
