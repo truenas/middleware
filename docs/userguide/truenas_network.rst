@@ -266,8 +266,7 @@ Requires a switch which supports IEEE 802.3ad static link aggregation.
 
 **None:** this protocol disables any traffic without disabling the lagg interface itself.
 
-**Do not** configure the interfaces used in the lagg device before creating the lagg device.
-
+.. note:: when using LACP, verify that the switch is configured for active LACP as passive LACP is not supported.
 
 Considerations When Using LACP, MPIO, NFS, or ESXi
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
@@ -297,7 +296,8 @@ Creating a Link Aggregation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 **Before** creating a link aggregation, double-check that no interfaces have been manually configured in `Network --> Interfaces --> View Interfaces`. If any
-configured interfaces exist, delete them as lagg creation will fail if any interfaces are manually configured.
+configured interfaces exist, delete them as 
+**lagg creation will fail if any interfaces are manually configured**.
 
 :numref:`Figure %s: Creating a lagg Interface <lagg4>` shows the configuration options when adding a lagg interface using `Network --> Link Aggregations --> Create Link Aggregation`.
 

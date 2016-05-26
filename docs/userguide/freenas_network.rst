@@ -267,7 +267,7 @@ mode can cause unordered packet arrival at the client. This has a side effect of
 
 **None:** this protocol disables any traffic without disabling the lagg interface itself.
 
-**Do not** configure the interfaces used in the lagg device before creating the lagg device.
+.. note:: when using LACP, verify that the switch is configured for active LACP as passive LACP is not supported.
 
 .. _LACP, MPIO, NFS, and ESXi:
 
@@ -301,8 +301,8 @@ Creating a Link Aggregation
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 **Before** creating a link aggregation, double-check that no interfaces have been manually configured in
-:menuselection:`Network --> Interfaces --> View Interfaces`. If any configured interfaces exist, delete them as lagg creation will fail if any interfaces are
-manually configured.
+:menuselection:`Network --> Interfaces --> View Interfaces`. If any configured interfaces exist, delete them as 
+**lagg creation will fail if any interfaces are manually configured**.
 
 Figure 7.4a shows the configuration options when adding a lagg interface using :menuselection:`Network --> Link Aggregations --> Create Link Aggregation`.
 
