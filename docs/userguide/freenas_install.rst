@@ -159,15 +159,8 @@ to the USB drive.
 On Windows
 ~~~~~~~~~~
 
-Windows users will need to download a utility that can create a USB bootable image from the :file:`.iso` file.
-
-This section will demonstrate how to use
-`Win32DiskImager <https://launchpad.net/win32-image-writer>`_
-to burn the :file:`.iso` file. When downloading Win32DiskImager, download the latest version that ends in :file:`-binary.zip` and use 7-Zip to unzip its
-executable.
-
-Once installed, launch Win32DiskImager and use its "browse" button to browse to the location of the :file:`.iso` file. Insert a USB thumb drive and select its
-drive letter from the "Device" drop-down menu. Click the "Write" button and the image will be written to the USB thumb drive.
+Windows users can use the Windows USB/DVD Download Tool to create a USB bootable image from the :file:`.iso` file. Follow 
+`these instructions <https://www.microsoft.com/en-us/download/windows-usb-dvd-download-tool>`_, but input the name of the :file:`.iso` you downloaded into the "SOURCE FILE" box.
 
 .. index:: Install
 .. _Performing the Installation:
