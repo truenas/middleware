@@ -242,10 +242,16 @@ function() {
         },
         _('Keep'): {
             'on_click': onclick % (_('Keep'), '_keep_url'),
+            'on_select_after': onselectafter % (
+                'row.data._keep_url === undefined'
+            ),
             'button_name': _('Keep'),
         },
         _('UnKeep'): {
             'on_click': onclick % (_('Unkeep'), '_un_keep_url'),
+            'on_select_after': onselectafter % (
+                'row.data._un_keep_url === undefined'
+            ),
             'button_name': _('Unkeep'),
         },
     }
