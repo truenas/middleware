@@ -76,6 +76,10 @@ system_func()
 	vmstat -i
 	section_footer
 
+	section_header "vmstat -z"
+	vmstat -z
+	section_footer
+
 	section_header "Alert System"
 	/usr/local/bin/alertcli.py
 	section_footer
