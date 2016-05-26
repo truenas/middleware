@@ -220,8 +220,8 @@ advanced fields by default" in :menuselection:`System --> Advanced`.
 |                           |                | default gateway IPv6 address                                                                                 |
 |                           |                |                                                                                                              |
 +---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
-| MAC                       | string         | only available in "Advanced Mode" and will be greyed out if "VIMAGE" is unchecked; if a static MAC address   |
-|                           |                | is needed, input it here                                                                                     |
+| MAC                       | string         | only available in "Advanced Mode" and will be greyed out if "VIMAGE" is unchecked; if you choose to input a  |
+|                           |                | static MAC address, you must do so for every jail you create                                                 |
 |                           |                |                                                                                                              |
 +---------------------------+----------------+--------------------------------------------------------------------------------------------------------------+
 | NIC                       | drop-down menu | only available in "Advanced Mode" and will be greyed out if "VIMAGE" is checked; can be used to specify      |
