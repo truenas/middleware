@@ -457,9 +457,11 @@ def dataset_create(request, fs):
             recordsize = cleaned_data.get('dataset_recordsize')
             if recordsize:
                 props['recordsize'] = recordsize
+            dataset_comments = cleaned_data.get('dataset_comments')
             errno, errmsg = notifier().create_zfs_dataset(
                 path=str(dataset_name),
                 props=props)
+            notifier().zfs_set_option(name=str(dataset_name), item="org.freenas:description", value=dataset_comments)
             if errno == 0:
                 if dataset_share_type == "unix":
                     notifier().dataset_init_unix(dataset_name)
@@ -498,6 +500,7 @@ def dataset_edit(request, dataset_name):
             errors = {}
 
             for attr in (
+                'org.freenas:description',
                 'compression',
                 'atime',
                 'dedup',
@@ -507,7 +510,10 @@ def dataset_edit(request, dataset_name):
                 'refquota',
                 'share_type'
             ):
-                formfield = 'dataset_%s' % attr
+                if attr == 'org.freenas:description':
+                    formfield = 'dataset_comments'
+                else:
+                    formfield = 'dataset_%s' % attr
                 val = dataset_form.cleaned_data[formfield]
 
                 if val == "inherit":
@@ -554,6 +560,7 @@ def zvol_create(request, parent):
         if zvol_form.is_valid():
             props = {}
             cleaned_data = zvol_form.cleaned_data
+            zvol_comments = cleaned_data.get('zvol_comments')
             zvol_size = cleaned_data.get('zvol_size')
             zvol_blocksize = cleaned_data.get("zvol_blocksize")
             zvol_name = "%s/%s" % (parent, cleaned_data.get('zvol_name'))
@@ -566,6 +573,7 @@ def zvol_create(request, parent):
                 size=str(zvol_size),
                 sparse=cleaned_data.get("zvol_sparse", False),
                 props=props)
+            notifier().zfs_set_option(name=str(zvol_name), item="org.freenas:description", value=zvol_comments)
             if errno == 0:
                 return JsonResp(
                     request,
@@ -617,11 +625,15 @@ def zvol_edit(request, name):
             _n = notifier()
             error, errors = False, {}
             for attr in (
+                'org.freenas:description',
                 'compression',
                 'dedup',
                 'volsize',
             ):
-                formfield = 'volume_%s' % attr
+                if attr == 'org.freenas:description':
+                    formfield = 'volume_comments'
+                else:
+                    formfield = 'volume_%s' % attr
                 if form.cleaned_data[formfield] == "inherit":
                     success, err = _n.zfs_inherit_option(
                         name,
