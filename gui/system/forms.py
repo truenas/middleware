@@ -110,6 +110,8 @@ from freenasUI.storage.models import Disk, Volume, Scrub
 from freenasUI.system import models
 from freenasUI.tasks.models import SMARTTest
 
+logging.NOTICE = 60
+logging.addLevelName(logging.NOTICE, "NOTICE")
 log = logging.getLogger('system.forms')
 WIZARD_PROGRESSFILE = '/tmp/.initialwizard_progress'
 
@@ -928,11 +930,20 @@ class SettingsForm(ModelForm):
         if proto == "http":
             return cdata
 
-        certificate = cdata["stg_guicertificate"]
-        if not certificate:
+        if not cdata["stg_guicertificate"]:
             raise forms.ValidationError(
                 "HTTPS specified without certificate")
-
+        else:
+            certificate_obj = models.Certificate.objects.get(cert_name=cdata["stg_guicertificate"])
+            fingerprint = certificate_obj.get_fingerprint()
+            # We need to write this to the system console (i.e. /dev/ttyv0)
+            # see ticket: #6605 for more ifo as to why
+            with open('/dev/ttyv0', 'wb') as f:
+                f.write("Fingerprint of the certificate used in the GUI: {0}".format(
+                    fingerprint)
+                )
+            logger = log
+            logger.log(logging.NOTICE, "Fingerprint of the certificate used in the GUI: " + fingerprint)
         return cdata
 
     def save(self):
