@@ -5,6 +5,9 @@ import os
 import signal
 import subprocess
 import sys
+import random
+import shutil
+import fcntl
 try:
     import libzfs
 except ImportError:
@@ -17,9 +20,11 @@ from . import Avatar
 import freenasOS.Manifest as Manifest
 import freenasOS.Configuration as Configuration
 import freenasOS.Installer as Installer
-from freenasOS.Exceptions import UpdateIncompleteCacheException, UpdateInvalidCacheException, UpdateBusyCacheException, UpdateBootEnvironmentException, UpdatePackageException, UpdateSnapshotException
-
-from freenasOS.Exceptions import ManifestInvalidSignature, UpdateManifestNotFound
+from freenasOS.Exceptions import (
+    UpdateIncompleteCacheException, UpdateInvalidCacheException, UpdateBusyCacheException,
+    UpdateBootEnvironmentException, UpdatePackageException, UpdateSnapshotException,
+    ManifestInvalidSignature, UpdateManifestNotFound
+)
 
 log = logging.getLogger('freenasOS.Update')
 
@@ -39,57 +44,59 @@ PkgFileDeltaOnly = "delta-only"
 PkgFileFullOnly = "full-only"
 
 SERVICES = {
-    "WebUI" : {
-        "Name" : "WebUI",
+    "WebUI": {
+        "Name": "WebUI",
         "ServiceName": "django",
         "Description": "Restart Web UI (forces a logout)",
-        "CheckStatus" : False,
+        "CheckStatus": False,
     },
-    "SMB" : {
-        "Name" : "CIFS",
-        "ServiceName" : "cifs",
-        "Description" : "Restart CIFS sharing",
-        "CheckStatus" : True,
+    "SMB": {
+        "Name": "CIFS",
+        "ServiceName": "cifs",
+        "Description": "Restart CIFS sharing",
+        "CheckStatus": True,
     },
-    "AFP" : {
-        "Name" : "AFP",
-        "ServiceName" : "afp",
-        "Description" : "Restart AFP sharing",
-        "CheckStatus" : True,
+    "AFP": {
+        "Name": "AFP",
+        "ServiceName": "afp",
+        "Description": "Restart AFP sharing",
+        "CheckStatus": True,
     },
-    "NFS" : {
-        "Name" : "NFS",
-        "ServiceName" : "nfs",
-        "Description" : "Restart NFS sharing",
-        "CheckStatus" : True,
+    "NFS": {
+        "Name": "NFS",
+        "ServiceName": "nfs",
+        "Description": "Restart NFS sharing",
+        "CheckStatus": True,
     },
-    "iSCSI" : {
-        "Name" : "iSCSI",
-        "ServiceName" : "iscsitarget",
-        "Description" : "Restart iSCSI services",
-        "CheckStatus" : True,
+    "iSCSI": {
+        "Name": "iSCSI",
+        "ServiceName": "iscsitarget",
+        "Description": "Restart iSCSI services",
+        "CheckStatus": True,
     },
-    "FTP" : {
-        "Name" : "FTP",
-        "ServiceName" : "ftp",
-        "Description" : "Restart FTP services",
-        "CheckStatus" : True,
+    "FTP": {
+        "Name": "FTP",
+        "ServiceName": "ftp",
+        "Description": "Restart FTP services",
+        "CheckStatus": True,
     },
-    "WebDAV" : {
+    "WebDAV": {
         "Name": "WebDAV",
-        "ServiceName" : "webdav",
-        "Description" : "Restart WebDAV services",
-        "CheckStatus" : True,
+        "ServiceName": "webdav",
+        "Description": "Restart WebDAV services",
+        "CheckStatus": True,
     },
-# Not sure what DirectoryServices would be
-#    "DirectoryServices" : {
-#        "Name" : "Restart directory services",
+    # Not sure what DirectoryServices would be
+    #    "DirectoryServices" : {
+    #        "Name" : "Restart directory services",
 }
 
+
 def GetServiceDescription(svc):
-    if not svc in SERVICES:
+    if svc not in SERVICES:
         return None
     return SERVICES[svc]["Description"]
+
 
 def VerifyServices(svc_names):
     """
@@ -97,9 +104,10 @@ def VerifyServices(svc_names):
     This is a trivial wrapper for now.
     """
     for name in svc_names:
-        if not name in SERVICES:
+        if name not in SERVICES:
             return False
     return True
+
 
 def StopServices(svc_list):
     """
@@ -108,16 +116,16 @@ def StopServices(svc_list):
     """
     old_path = []
     old_environ = None
-    if not "DJANGO_SETTINGS_MODULE" in os.environ:
+    if "DJANGO_SETTINGS_MODULE" not in os.environ:
         old_environ = True
         os.environ["DJANGO_SETTINGS_MODULE"] = "freenasUI.settings"
-    if not "/usr/local/www" in sys.path:
+    if "/usr/local/www" not in sys.path:
         old_path.append("/usr/local/www")
         sys.path.append("/usr/local/www")
-    if not "/usr/local/www/freenasUI" in sys.path:
+    if "/usr/local/www/freenasUI" not in sys.path:
         old_path.append("/usr/local/www/freenasUI")
         sys.path.append("/usr/local/www/freenasUI")
-        
+
     from django.db.models.loading import cache
     cache.get_apps()
 
@@ -127,7 +135,7 @@ def StopServices(svc_list):
     # Hm, this doesn't handle any particular ordering.
     # May need to fix this.
     for svc in svc_list:
-        if not svc in SERVICES:
+        if svc not in SERVICES:
             raise ValueError("%s is not a known service" % svc)
         s = SERVICES[svc]
         svc_name = s["ServiceName"]
@@ -137,13 +145,13 @@ def StopServices(svc_list):
             n.stop(svc_name)
         else:
             log.debug("svc %s is not started" % svc)
-            
+
     # Should I remove the environment settings?
     if old_environ:
         os.environ.pop("DJANGO_SETTINGS_MODULE")
     for p in old_path:
         sys.path.remove(p)
-        
+
     return retval
 
 
@@ -154,16 +162,16 @@ def StartServices(svc_list):
     """
     old_path = []
     old_environ = None
-    if not "DJANGO_SETTINGS_MODULE" in os.environ:
+    if "DJANGO_SETTINGS_MODULE" not in os.environ:
         old_environ = True
         os.environ["DJANGO_SETTINGS_MODULE"] = "freenasUI.settings"
-    if not "/usr/local/www" in sys.path:
+    if "/usr/local/www" not in sys.path:
         old_path.append("/usr/local/www")
         sys.path.append("/usr/local/www")
-    if not "/usr/local/www/freenasUI" in sys.path:
+    if "/usr/local/www/freenasUI" not in sys.path:
         old_path.append("/usr/local/www/freenasUI")
         sys.path.append("/usr/local/www/freenasUI")
-        
+
     from django.db.models.loading import cache
     cache.get_apps()
 
@@ -172,7 +180,7 @@ def StartServices(svc_list):
     # Hm, this doesn't handle any particular ordering.
     # May need to fix this.
     for svc in svc_list:
-        if not svc in SERVICES:
+        if svc not in SERVICES:
             raise ValueError("%s is not a known service" % svc)
         svc_name = SERVICES[svc]["ServiceName"]
         n.start(svc_name)
@@ -201,10 +209,10 @@ def RunCommand(command, args):
     # Run the given command.  Uses subprocess module.
     # Returns True if the command exited with 0, or
     # False otherwise.
-    import subprocess
 
-    proc_args = [ command ]
-    if args is not None:  proc_args.extend(args)
+    proc_args = [command]
+    if args is not None:
+        proc_args.extend(args)
     log.debug("RunCommand(%s, %s)" % (command, args))
     if debug:
         print >> sys.stderr, proc_args
@@ -226,6 +234,7 @@ def RunCommand(command, args):
         return True
     else:
         return False
+
 
 def GetRootDataset():
     # Returns the name of the root dataset.
@@ -311,6 +320,7 @@ def PruneClones(cb=None):
         if ((used * 100.0) / size) < 80.0:
             return False
         return True
+
     def DCW(be):
         """
         Dead Clone Walking:  return true if the
@@ -321,7 +331,9 @@ def PruneClones(cb=None):
         as well, but log it.
         """
         if "keep" not in be:
-            log.debug("Cannot prune clone {0} since it is missing a keep option".format(be["name"]))
+            log.debug(
+                "Cannot prune clone {0} since it is missing a keep option".format(be["name"])
+            )
             return False
         if be["keep"] is None:
             log.debug("Cannot prune clone {0} since keep is None".format(be["name"]))
@@ -332,7 +344,9 @@ def PruneClones(cb=None):
             log.debug("Cannot prune clone {0} since it is mounted at {1}".format(be["name"], be["mountpoint"]))
             return False
         if be["active"] != "-":
-            log.debug("Cannot prune clone {0} since it is active {1}".format(be["name"], be["active"]))
+            log.debug(
+                "Cannot prune clone {0} since it is active {1}".format(be["name"], be["active"])
+            )
             return False
         return True
 
@@ -343,7 +357,7 @@ def PruneClones(cb=None):
     if PruneDone(size, used):
         log.debug("No pruning necessary")
         return True
-    clones = sorted(ListClones(), key = lambda be: be["created"])
+    clones = sorted(ListClones(), key=lambda be: be["created"])
     for be in clones:
         # Check if clone is eligible.
         #
@@ -387,7 +401,7 @@ def ListClones():
         return None
     stdout, stderr = p.communicate()
     if p.returncode != 0:
-        log.error("`%s' returned %d" %( cmd, p.returncode))
+        log.error("`%s' returned %d" % (cmd, p.returncode))
         return None
 
     for line in stdout.strip('\n').split('\n'):
@@ -482,7 +496,6 @@ def CreateClone(name, snap_grub=True, bename=None, rename=None):
         log.debug("FindClone returned %s" % cl)
         args.extend(["-e", cl["realname"]])
     if rename:
-        import random
         temp_name = "Pre-%s-%d" % (name, random.SystemRandom().randint(0, 1024 * 1024))
         args.append(temp_name)
         log.debug("CreateClone with rename, temp_name = %s" % temp_name)
@@ -582,25 +595,28 @@ def MountClone(name, mountpoint=None):
             UnmountClone(name, None)
             return None
         # Now let's mount devfs, tmpfs, and grub
-        args_array = [ ["-t", "devfs", "devfs", mount_point + "/dev"],
-                       ["-t", "tmpfs", "tmpfs", mount_point + "/var/tmp"],
-                       ["-t", "zfs", "freenas-boot/grub", mount_point + "/boot/grub" ]
-                       ]
+        args_array = [
+            ["-t", "devfs", "devfs", mount_point + "/dev"],
+            ["-t", "tmpfs", "tmpfs", mount_point + "/var/tmp"],
+            ["-t", "zfs", "freenas-boot/grub", mount_point + "/boot/grub"]
+        ]
         cmd = "/sbin/mount"
         for fs_args in args_array:
             rv = RunCommand(cmd, fs_args)
             if rv is False:
                 UnmountClone(name, None)
                 return None
-            
+
     return mount_point
+
 
 def ActivateClone(name):
     # Set the clone to be active for the next boot
     args = ["activate", name]
     return RunCommand(beadm, args)
 
-def UnmountClone(name, mount_point = None):
+
+def UnmountClone(name, mount_point=None):
     # Unmount the given clone.  After unmounting,
     # it removes the mount directory.
     # First thing we need to do is try to unmount
@@ -621,10 +637,10 @@ def UnmountClone(name, mount_point = None):
         for dir in ["/dev", "/var/tmp"]:
             args = ["-f", mount_point + dir]
             RunCommand(cmd, args)
-    
+
     # Now we ask beadm to unmount it.
     args = ["unmount", "-f", name]
-    
+
     if RunCommand(beadm, args) is False:
         return False
 
@@ -672,12 +688,12 @@ def GetUpdateChanges(old_manifest, new_manifest, cache_dir=None):
             return base_list
         if isinstance(new_list, list):
             for svc in new_list:
-                if not svc in base_list:
+                if svc not in base_list:
                     base_list.append(svc)
         elif isinstance(new_list, dict):
             for svc, val in new_list.iteritems():
                 if val:
-                    if not svc in base_list:
+                    if svc not in base_list:
                         base_list.append(svc)
         return base_list
 
@@ -772,7 +788,7 @@ def CheckForUpdates(handler=None, train=None, cache_dir=None, diff_handler=None)
             raise e
     if mfile:
         # We always want a valid signature when doing an update
-        new_manifest = Manifest.Manifest(require_signature = True)
+        new_manifest = Manifest.Manifest(require_signature=True)
         try:
             new_manifest.LoadFile(mfile)
             mfile.close()
@@ -781,7 +797,7 @@ def CheckForUpdates(handler=None, train=None, cache_dir=None, diff_handler=None)
             raise e
     else:
         try:
-            new_manifest = conf.FindLatestManifest(train = train, require_signature = True)
+            new_manifest = conf.FindLatestManifest(train=train, require_signature=True)
         except Exception as e:
             log.error("Could not find latest manifest due to %s" % str(e))
 
@@ -790,7 +806,11 @@ def CheckForUpdates(handler=None, train=None, cache_dir=None, diff_handler=None)
 
     # If new_manifest is not the requested train, then we don't have an update to do
     if train and train != new_manifest.Train():
-        log.debug("CheckForUpdate(train = %s, cache_dir = %s):  Wrong train in caache (%s)" % (train, cache_dir, new_manifest.Train()))
+        log.debug(
+            "CheckForUpdate(train = {0}, cache_dir = {1}):  Wrong train in cache ({2})".format(
+                train, cache_dir, new_manifest.Train()
+            )
+        )
         return None
 
     # See if the validation script is happy
@@ -820,13 +840,12 @@ def DownloadUpdate(train, directory, get_handler=None, check_handler=None, pkg_t
     has happened.  This will remove the existing content if it decides
     it has to redownload for any reason.
     """
-    import fcntl
 
     conf = Configuration.Configuration()
     mani = conf.SystemManifest()
     # First thing, let's get the latest manifest
     try:
-        latest_mani = conf.FindLatestManifest(train, require_signature = True)
+        latest_mani = conf.FindLatestManifest(train, require_signature=True)
     except ManifestInvalidSignature as e:
         log.error("Latest manifest has invalid signature: %s" % str(e))
         return False
@@ -886,7 +905,7 @@ def DownloadUpdate(train, directory, get_handler=None, check_handler=None, pkg_t
             mani_file.close()
             return False
 
-        temporary_manifest = Manifest.Manifest(require_signature = True)
+        temporary_manifest = Manifest.Manifest(require_signature=True)
         log.debug("Going to try loading manifest file now")
         temporary_manifest.LoadFile(mani_file)
         log.debug("Loaded manifest file")
@@ -1078,7 +1097,7 @@ def ServiceRestarts(directory):
 
                 if svcs:
                     for svc in svcs:
-                        if not svc in retval:
+                        if svc not in retval:
                             retval.append(svc)
 
     return retval
@@ -1251,7 +1270,9 @@ def ApplyUpdate(directory, install_handler=None, force_reboot=False):
                     "freenas-boot/ROOT/{0}".format(root_env["realname"])]
             RunCommand(cmd, args)
 
-            raise UpdateBootEnvironmentException("Unable to create new boot environment %s" % new_boot_name)
+            raise UpdateBootEnvironmentException(
+                "Unable to create new boot environment {0}".format(new_boot_name)
+            )
         if "Restart" in changes:
             service_list = StopServices(changes["Restart"])
 
@@ -1276,14 +1297,16 @@ def ApplyUpdate(directory, install_handler=None, force_reboot=False):
                 raise UpdatePackageException(s)
             conf.PackageDB(mount_point).RemovePackage(pkg.Name())
 
-        installer = Installer.Installer(manifest = new_manifest,
-                                        root = mount_point,
-                                        config = conf)
-        installer.GetPackages(pkgList = updated_packages)
+        installer = Installer.Installer(
+            manifest=new_manifest,
+            root=mount_point,
+            config=conf
+        )
+        installer.GetPackages(pkgList=updated_packages)
         log.debug("Installer got packages %s" % installer._packages)
         # Now to start installing them
         rv = False
-        if installer.InstallPackages(handler = install_handler) is False:
+        if installer.InstallPackages(handler=install_handler) is False:
             log.error("Unable to install packages")
             raise UpdatePackageException("Unable to install packages")
         else:
@@ -1307,7 +1330,7 @@ def ApplyUpdate(directory, install_handler=None, force_reboot=False):
                     service_list = None
                 # Clean up the emergency holographic snapshot
                 cmd = "/sbin/zfs"
-                args = ["destroy", "-r", snapshot_name ]
+                args = ["destroy", "-r", snapshot_name]
                 rv = RunCommand(cmd, args)
                 if rv is False:
                     log.error("Unable to destroy snapshot %s" % snapshot_name)
@@ -1333,7 +1356,7 @@ def ApplyUpdate(directory, install_handler=None, force_reboot=False):
                 if rv:
                     # Now roll back the snapshot, and set the beadm:nickname value
                     cmd = "/sbin/zfs"
-                    args = [ "rollback", "-r", snapshot_name]
+                    args = ["rollback", "-r", snapshot_name]
                     rv = RunCommand(cmd, args)
                     if rv is False:
                         log.error("Unable to rollback %s" % snapshot_name)
@@ -1342,7 +1365,7 @@ def ApplyUpdate(directory, install_handler=None, force_reboot=False):
                     rv = RunCommand(cmd, args)
                     if rv is False:
                         log.error("Unable to set nickname, wonder what I did wrong")
-                    args = ["destroy", "-r", snapshot_name ]
+                    args = ["destroy", "-r", snapshot_name]
                     rv = RunCommand(cmd, args)
                     if rv is False:
                         log.error("Unable to destroy snapshot %s" % snapshot_name)
@@ -1400,8 +1423,9 @@ def VerifyUpdate(directory):
         cached_sequence = open(directory + "/SEQUENCE", "r").read().rstrip()
     except (IOError, Exception) as e:
         log.error("Could not open sequence file in cache directory %s: %s" % (directory, str(e)))
-        raise UpdateIncompleteCacheException("Cache directory %s does not have a sequence file" % directory)
-
+        raise UpdateIncompleteCacheException(
+            "Cache directory {0} does not have a sequence file".format(directory)
+        )
 
     # Now let's see if the sequence matches us.
     if cached_sequence != mani.Sequence():
@@ -1445,11 +1469,15 @@ def VerifyUpdate(directory):
                 cur_vers = old.Version()
             # This is slightly redundant -- if cur_vers is None, it'll check
             # the same filename twice.
-            if not os.path.exists(directory + "/" + pkg.FileName())  and \
+            if not os.path.exists(directory + "/" + pkg.FileName()) and \
                not os.path.exists(directory + "/" + pkg.FileName(cur_vers)):
                 # Neither exists, so incoplete
-                log.error("Cache %s  directory missing files for package %s" % (directory, pkg.Name()))
-                raise UpdateIncompleteCacheException("Cache directory %s missing files for package %s" % (directory, pkg.Name()))
+                log.error(
+                    "Cache %s directory missing files for package %s" % (directory, pkg.Name())
+                )
+                raise UpdateIncompleteCacheException(
+                    "Cache directory {0} missing files for package {1}".format(directory, pkg.Name())
+                )
             # Okay, at least one of them exists.
             # Let's try the full file first
             try:
@@ -1494,7 +1522,6 @@ def VerifyUpdate(directory):
 
 
 def RemoveUpdate(directory):
-    import shutil
     try:
         shutil.rmtree(directory)
     except:
