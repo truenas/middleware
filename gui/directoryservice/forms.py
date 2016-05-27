@@ -30,6 +30,8 @@ import os
 import re
 import tempfile
 
+from ldap import LDAPError
+
 from django.forms import FileField
 from django.utils.translation import ugettext_lazy as _
 
