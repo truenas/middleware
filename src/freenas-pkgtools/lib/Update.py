@@ -1,3 +1,4 @@
+from __future__ import print_function
 from datetime import datetime
 import ctypes
 import logging
@@ -42,6 +43,7 @@ REQUIRE_REBOOT = False
 PkgFileAny = None
 PkgFileDeltaOnly = "delta-only"
 PkgFileFullOnly = "full-only"
+
 
 SERVICES = {
     "WebUI": {
@@ -202,7 +204,7 @@ freenas_pool = "freenas-boot"
 
 
 def _grub_snapshot(name):
-    return "%s/grub@Pre-Upgrade-%s" % (freenas_pool, name)
+    return "{0}/grub@Pre-Upgrade-{1}".format(freenas_pool, name)
 
 
 def RunCommand(command, args):
@@ -215,7 +217,7 @@ def RunCommand(command, args):
         proc_args.extend(args)
     log.debug("RunCommand(%s, %s)" % (command, args))
     if debug:
-        print >> sys.stderr, proc_args
+        print(proc_args, file=sys.stderr)
         child = 0
     else:
         libc = ctypes.cdll.LoadLibrary("libc.so.7")
@@ -241,7 +243,7 @@ def GetRootDataset():
     # This will be of the form zroot/ROOT/<be-name>
     cmd = ["/bin/df", "/"]
     if debug:
-        print >> sys.stderr, cmd
+        print(cmd, file=sys.stderr)
         return None
     try:
         p = subprocess.Popen(cmd, stdout=subprocess.PIPE)
@@ -360,7 +362,6 @@ def PruneClones(cb=None):
     clones = sorted(ListClones(), key=lambda be: be["created"])
     for be in clones:
         # Check if clone is eligible.
-        #
         if DCW(be):
             log.debug("I want to get rid of clone %s" % be["name"])
             if DeleteClone(be["realname"]) is True:
@@ -392,7 +393,7 @@ def ListClones():
     cmd = [beadm, "list", "-H"]
     rv = []
     if debug:
-        print >> sys.stderr, cmd
+        print(cmd, file=sys.stderr)
         return None
     try:
         p = subprocess.Popen(cmd, stdout=subprocess.PIPE)
@@ -632,7 +633,7 @@ def UnmountClone(name, mount_point=None):
         rv = RunCommand(cmd, args)
         if rv is False:
             log.error("UNABLE TO MOUNT /boot/grub; SYSTEM MAY NOT BOOT")
-            raise Exception("UNABLE TO REMOUNT /boot/grub; FIX MANUALLY OR SYSTEM AMY NOT BOOT")
+            raise Exception("UNABLE TO REMOUNT /boot/grub; FIX MANUALLY OR SYSTEM MAY NOT BOOT")
         cmd = "/sbin/umount"
         for dir in ["/dev", "/var/tmp"]:
             args = ["-f", mount_point + dir]
@@ -691,7 +692,7 @@ def GetUpdateChanges(old_manifest, new_manifest, cache_dir=None):
                 if svc not in base_list:
                     base_list.append(svc)
         elif isinstance(new_list, dict):
-            for svc, val in new_list.iteritems():
+            for svc, val in new_list.items():
                 if val:
                     if svc not in base_list:
                         base_list.append(svc)
@@ -1268,6 +1269,7 @@ def ApplyUpdate(directory, install_handler=None, force_reboot=False):
             # And set the beadm:nickname property back
             args = ["set", "beadm:nickname=%s" % root_env["name"],
                     "freenas-boot/ROOT/{0}".format(root_env["realname"])]
+
             RunCommand(cmd, args)
 
             raise UpdateBootEnvironmentException(
@@ -1338,7 +1340,7 @@ def ApplyUpdate(directory, install_handler=None, force_reboot=False):
             # RunCommand("/sbin/zpool", ["scrub", "freenas-boot"])
     except BaseException as e:
         # Cleanup code is entirely different for reboot vs non reboot
-        log.error("Update got exception during update: %s" % str(e))
+        log.error("Update got exception during update: %s", e, exc_info=True)
         if reboot:
             if mount_point:
                 UnmountClone(new_boot_name, mount_point)
@@ -1386,7 +1388,6 @@ def VerifyUpdate(directory):
     UpdateIncompleteCacheException or UpdateInvalidCacheException --
     if necessary.
     """
-    import fcntl
 
     # First thing we do is get the systen configuration and
     # systen manifest
@@ -1420,7 +1421,8 @@ def VerifyUpdate(directory):
 
     # First easy thing to do:  look for the SEQUENCE file.
     try:
-        cached_sequence = open(directory + "/SEQUENCE", "r").read().rstrip()
+        with open(directory + "/SEQUENCE", "r") as f:
+            cached_sequence = f.read().rstrip()
     except (IOError, Exception) as e:
         log.error("Could not open sequence file in cache directory %s: %s" % (directory, str(e)))
         raise UpdateIncompleteCacheException(
@@ -1436,7 +1438,8 @@ def VerifyUpdate(directory):
     # name we're using
     cached_server = "default"
     try:
-        cached_server = open(directory + "/SERVER", "r").read().rstrip()
+        with open(directory + "/SERVER", "r") as f:
+            cached_server = f.read().rstrip()
     except (IOError, Exception) as e:
         log.debug("Could not open SERVER file in cache direcory %s: %s" % (directory, str(e)))
         cached_server = "default"
@@ -1481,7 +1484,7 @@ def VerifyUpdate(directory):
             # Okay, at least one of them exists.
             # Let's try the full file first
             try:
-                with open(directory + "/" + pkg.FileName()) as f:
+                with open(directory + "/" + pkg.FileName(), 'rb') as f:
                     if pkg.Checksum():
                         cksum = Configuration.ChecksumFile(f)
                         if cksum == pkg.Checksum():
@@ -1503,7 +1506,7 @@ def VerifyUpdate(directory):
             if update and update.Checksum():
                 upd_cksum = update.Checksum()
                 try:
-                    with open(directory + "/" + pkg.FileName(cur_vers)) as f:
+                    with open(directory + "/" + pkg.FileName(cur_vers), 'rb') as f:
                         cksum = Configuration.ChecksumFile(f)
                         if upd_cksum != cksum:
                             update = None
