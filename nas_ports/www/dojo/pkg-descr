@@ -1,0 +1,7 @@
+Dojo is an Open Source DHTML toolkit written in JavaScript. It
+builds on several contributed code bases (nWidgets, Burstlib, f(m)),
+which is why we refer to it sometimes as a "unified" toolkit. Dojo
+aims to solve some long-standing historical problems with DHTML
+which prevented mass adoption of dynamic web application development.
+
+WWW:    http://dojotoolkit.org/

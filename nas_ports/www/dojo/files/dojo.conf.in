@@ -1,0 +1,6 @@
+Alias /dojo %%WWWDIR%%
+
+<Location /dojo>
+    Order deny,allow
+    Allow from all
+</Location>
