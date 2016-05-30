@@ -1,0 +1,166 @@
+<div class="${baseClass}">
+	<button data-dojo-type="dijit/form/Button" type="button"
+			data-dojo-attach-point="doneButton">
+		Done
+	</button>
+
+	<fieldset>
+		<legend>${i18n.generalColumnProperties}</legend>
+		<div class="label">
+			field
+		</div>
+		<div class="field">
+			<input data-dojo-type="dijit/form/TextBox" name="field" type="text">
+		</div>
+
+		<div class="label">
+			label
+		</div>
+		<div class="field">
+			<input data-dojo-type="dijit/form/TextBox" name="label" type="text">
+		</div>
+
+		<div class="label">
+			className
+		</div>
+		<div class="field">
+			<input data-dojo-type="dijit/form/TextBox" name="className" type="text">
+		</div>
+
+		<div class="label">
+			sortable
+		</div>
+		<div class="field">
+			<input data-dojo-type="dijit/form/RadioButton" name="sortable" value="true" id="${id}_sortableTrue" type="radio" checked>
+			<label for="${id}_sortableTrue">true</label>
+			<input data-dojo-type="dijit/form/RadioButton" name="sortable" value="false" id="${id}_sortableFalse" type="radio">
+			<label for="${id}_sortableFalse">false</label>
+		</div>
+	</fieldset>
+
+
+	<div class="mixinProp">${i18n.mixinColumnProperties}</div>
+
+	<fieldset data-dojo-attach-point="editorFields" class="dijitHidden">
+		<legend class="propTitle"></legend>
+
+		<div class="label">
+			editor
+		</div>
+		<div class="field">
+			<select data-dojo-type="dijit/form/FilteringSelect" required="false" name="editor">
+				<option value="text">text</option>
+				<option value="textarea">textarea</option>
+				<option value="dijit/form/TextBox">dijit/form/TextBox</option>
+				<option value="dijit/form/SimpleTextarea">dijit/form/SimpleTextarea</option>
+			</select>
+		</div>
+
+		<div class="label">
+			editOn
+		</div>
+		<div class="field">
+			<select data-dojo-type="dijit/form/FilteringSelect" required="false" name="editOn">
+				<option value="click">click</option>
+				<option value="dblclick">dblclick</option>
+			</select>
+		</div>
+
+		<div class="label">
+			autoSave
+		</div>
+		<div class="field">
+			<input data-dojo-type="dijit/form/RadioButton" name="autoSave" value="true" id="${id}_autoSaveTrue" type="radio">
+			<label for="${id}_autoSaveTrue">true</label>
+			<input data-dojo-type="dijit/form/RadioButton" name="autoSave" value="false" id="${id}_autoSaveFalse" type="radio" checked>
+			<label for="${id}_autoSaveFalse">false</label>
+		</div>
+
+		<div class="label">
+			autoSelect
+		</div>
+		<div class="field">
+			<input data-dojo-type="dijit/form/RadioButton" name="autoSelect" value="true" id="${id}_autoSelectTrue" type="radio">
+			<label for="${id}_autoSelectTrue">true</label>
+			<input data-dojo-type="dijit/form/RadioButton" name="autoSelect" value="false" id="${id}_autoSelectFalse" type="radio" checked>
+			<label for="${id}_autoSelectFalse">false</label>
+		</div>
+
+		<div class="label">
+			dismissOnEnter
+		</div>
+		<div class="field">
+			<input data-dojo-type="dijit/form/RadioButton" name="dismissOnEnter" value="true" id="${id}_dismissOnEnterTrue" type="radio" checked>
+			<label for="${id}_dismissOnEnterTrue">true</label>
+			<input data-dojo-type="dijit/form/RadioButton" name="dismissOnEnter" value="false" id="${id}_dismissOnEnterFalse" type="radio">
+			<label for="${id}_dismissOnEnterFalse">false</label>
+		</div>
+	</fieldset>
+
+	<fieldset data-dojo-attach-point="columnHiderFields" class="dijitHidden">
+		<legend class="propTitle"></legend>
+
+		<div class="label">
+			hidden
+		</div>
+		<div class="field">
+			<input data-dojo-type="dijit/form/RadioButton" name="hidden" value="true" id="${id}_hiddenTrue" type="radio">
+			<label for="${id}_hiddenTrue">true</label>
+			<input data-dojo-type="dijit/form/RadioButton" name="hidden" value="false" id="${id}_hiddenFalse" type="radio" checked>
+			<label for="${id}_hiddenFalse">false</label>
+		</div>
+
+		<div class="label">
+			unhidable
+		</div>
+		<div class="field">
+			<input data-dojo-type="dijit/form/RadioButton" name="unhidable" value="true" id="${id}_unhidableTrue" type="radio">
+			<label for="${id}_unhidableTrue">true</label>
+			<input data-dojo-type="dijit/form/RadioButton" name="unhidable" value="false" id="${id}_unhidableFalse" type="radio" checked>
+			<label for="${id}_unhidableFalse">false</label>
+		</div>
+	</fieldset>
+
+	<fieldset data-dojo-attach-point="columnReorderFields" class="dijitHidden">
+		<legend class="propTitle"></legend>
+
+		<div class="label">
+			reorderable
+		</div>
+		<div class="field">
+			<input data-dojo-type="dijit/form/RadioButton" name="reorderable" value="true" id="${id}_reorderableTrue" type="radio" checked>
+			<label for="${id}_reorderableTrue">true</label>
+			<input data-dojo-type="dijit/form/RadioButton" name="reorderable" value="false" id="${id}_reorderableFalse" type="radio">
+			<label for="${id}_reorderableFalse">false</label>
+		</div>
+	</fieldset>
+
+	<fieldset data-dojo-attach-point="columnResizerFields" class="dijitHidden">
+		<legend class="propTitle"></legend>
+
+		<div class="label">
+			resizable
+		</div>
+		<div class="field">
+			<input data-dojo-type="dijit/form/RadioButton" name="resizable" value="true" id="${id}_resizableTrue" type="radio" checked>
+			<label for="${id}_resizableTrue">true</label>
+			<input data-dojo-type="dijit/form/RadioButton" name="resizable" value="false" id="${id}_resizableFalse" type="radio">
+			<label for="${id}_resizableFalse">false</label>
+		</div>
+	</fieldset>
+
+	<fieldset data-dojo-attach-point="selectorFields" class="dijitHidden">
+		<legend class="propTitle"></legend>
+
+		<div class="label">
+			selector
+		</div>
+		<div class="field">
+			<input data-dojo-type="dijit/form/RadioButton" name="selector" value="checkbox" id="${id}_selectorTrue" type="radio">
+			<label for="${id}_selectorTrue">checkbox</label>
+			<input data-dojo-type="dijit/form/RadioButton" name="selector" value="radio" id="${id}_selectorFalse" type="radio">
+			<label for="${id}_selectorFalse">radio</label>
+			<span class="actionLink" data-dojo-attach-event="click: _clearField" data-field-name="selector">${i18n.clear}</span>
+		</div>
+	</fieldset>
+</div>

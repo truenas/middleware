@@ -29,14 +29,12 @@
 	width: 100%;
 }
 
-.dgrid-header-hidden,
-html.has-quirks .dgrid-header-hidden .dgrid-cell {
+.dgrid-header-hidden {
 	/*
 		Used to "hide" header, without losing size information for reference.
 		!important is used to supersede theme styles at higher specificity.
 		Left/right box styles are untouched, as they may influence width of
 		.dgrid-content as updated in Grid's resize method.
-		Note: Still not quite perfect in IE Quirks mode (1px left over).
 	*/
 	font-size: 0; /* allow shrinkage in IE Quirks mode for Lists */
 	height: 0 !important;
@@ -66,24 +64,21 @@ html.has-quirks .dgrid-header-hidden .dgrid-cell {
 	border: none;
 	table-layout: fixed;
 	empty-cells: show;
-	width: 100%; /* this becomes 'auto' for IE7 (non-quirks) */
+	width: 100%;
 	height: 100%;
 }
 .dgrid-cell {
-	padding: 0px;
+	padding: 3px;
 	text-align: left;
 	overflow: hidden;
 	vertical-align: top;
 	border: 1px solid #ddd;
 	border-top-style: none;
-	
+
 	box-sizing: border-box;
 	-moz-box-sizing: border-box;
 	-ms-box-sizing: border-box;
 	-webkit-box-sizing: border-box;
-}
-.dgrid-cell-padding {
-	padding: 3px;
 }
 
 .dgrid-content {
@@ -170,29 +165,14 @@ html.has-quirks .dgrid-header-hidden .dgrid-cell {
 	width: 99%;
 }
 
-/* UA-specific hacks*/
-html.has-mozilla .dgrid *:focus, html.has-opera .dgrid *:focus {
-	/* firefox's focus doesn't work by default for divs prior to actually tabbing into it. This fixes that
-	(we don't do any other browsers because we are trying to stay as close to native as possible) */ 
+html.has-mozilla .dgrid .dgrid-row:focus,
+html.has-mozilla .dgrid .dgrid-cell:focus {
+	/* Fix: Firefox's focus outline doesn't work by default for divs prior to actually tabbing into it */
 	outline: 1px dotted;
-}
-html.has-ie-6-7.has-no-quirks .dgrid-row-table {
-	/* in IE7 this is needed instead of 100% to make it not create a horizontal scroll bar*/
-	width: auto;
-}
-html.has-quirks .dgrid-row-table, html.has-ie-6 .dgrid-row-table {
-	/* similar story, height looks too high */
-	height: auto; 
-}
-
-html.has-quirks .dgrid-header-scroll,
-html.has-ie-6 .dgrid-header-scroll {
-	/* ensure that header scroll node can shrink to 0 height in IE6 & quirks */
-	font-size: 0;
 }
 
 html.has-mozilla .dgrid-focus {
-	/* fix row focus outline (prevents horizontal scroll in FF 3.6) */
+	/* Tighten outline to fit within cells (avoids cutting off top/bottom outlines) */
 	outline-offset: -1px;
 }
 

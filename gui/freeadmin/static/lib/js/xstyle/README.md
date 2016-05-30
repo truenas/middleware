@@ -1,17 +1,21 @@
-Xstyle is a framework for building applications through extensible CSS. With xstyle you
-can define data bindings, UI elements, variables, extensions, and shims to create modern
-web applications with an elegantly simple, stylesheet driven approach. Xstyle also includes
-tools for loading CSS and building and minifying CSS-driven applications.
+xstyle is a declarative language for defining reactive user interfaces. xstyle extends CSS, combining 
+familiar syntax with extensibility for creating componentized interfaces that can be used to present not only
+HTML, but data objects, with functionally reactive bindings. With xstyle you
+can define data bindings, UI elements, variables, extensions, and shims with a simple, stylesheet-driven approach. xstyle also includes tools for loading CSS and building and minifying CSS-driven applications.
 
-Much of the functionality in xstyle is still pre-alpha, but this documentation is annotated 
-where implementation is incomplete. 
+xstyle is designed to maximize the maintainability and readability of applications, by allowing
+developers to define relationships and extensions, with clear, concise declarations that express
+purpose over mechanics, without the noise and repetitiveness of HTML.
+
+xstyle is designed to maximize the performance of applications, allowing components to be defined
+and built on modern techniques of event delegation and CSS properties, fully leveraging browser capabilities
+without zero per-instance overhead.
 
 # Why Extensible CSS with xstyle?
 
 Modern web browsers have increasingly moved towards relying on CSS to define the 
 presentation of the user interface. Furthermore, CSS is fundamentally built on the 
-powerful paradigms of declarative, function reactive programming, providing similar types of
-expressiveness as dependency injection systems. By adding a few simple CSS constructs,
+powerful paradigms of declarative, function reactive programming. By adding a few simple CSS constructs,
 xstyle bridges the gap to provide the capabilities for composition and modular extensions that
 allow virtually unlimited expression of user interfaces, with a familiar syntax in encapsulated form. 
 Xstyle goes beyond the capabilities of preprocessor because it runs in the browser and extensions
@@ -21,8 +25,7 @@ both encapsulation and separation of concerns with intelligent organization.
 
 # Getting Started
 
-To start using xstyle's extensible CSS, you simply need to load the xstyle JavaScript library, <code>xstyle.js</code> 
-or <code>xstyle.min.js</code> (minified) and you can start using xstyle's CSS extensions:
+To start using xstyle's extensible CSS, you simply need to load the xstyle JavaScript library, <a href="http://kriszyp.github.io/xstyle/xstyle.js"><code>xstyle.js</code></a> and you can start using xstyle's CSS extensions:
 
 <pre>
 &lt;style>
@@ -41,7 +44,7 @@ xstyle/main module to initiate the css extension parsing:
 </pre>
 
 You will also need to make sure you have installed the [put-selector](https://github.com/kriszyp/put-selector)
-package, as xstyle depends on it.
+package (if you are using xstyle extensions), as xstyle depends on it.
 
 Using a module loader is beneficial, as it provides for automatic loading of extension
 modules when they are used in CSS.
@@ -51,7 +54,7 @@ See the AMD Plugin Loader section for more information.
 
 Xstyle supports all modern browsers, and Internet Explorer back to version 8 
 (although in IE8, it is not possible to use xstyle CSS directly in style tags, all xstyle CSS
-must exist in CSS files). 
+must exist in CSS files, which is recommended anyway).
 
 # Using Xstyle CSS
 
@@ -61,10 +64,10 @@ making use of new definitions to develop your application within CSS.
 ## New Definitions
 
 The key building block in xstyle is an extension for creating new definitions for features like
-user defined properties. In traditional CSS, all properties, functions, and other 
+user defined properties, data sources, and functions. In traditional CSS, all properties, functions, and other 
 constructs are defined by the browser, and stylesheet rules are limited to using 
 these predefined properties. In xstyle, new properties, functions, and other elements can be defined with 
-extensible meaning. New definitions may be used as shims (to fill in for standard properties
+extensible meaning. New definitions may be used as bindings to data models, shims (to fill in for standard properties
 on other browsers), they may be compositions of other properties, or provide entirely new concepts.
 Since definitions can be constructed using JavaScript modules that can interact with
 the DOM, there is virtually no limit to the what can be created.
@@ -76,7 +79,7 @@ We can create such a property:
 
 	transition = prefix;
 
-New properties can be defined anywhere in a stylesheet, including at the top level (amongst
+New definitions can be defined anywhere in a stylesheet, including at the top level (amongst
 rules), within rules (or nested rules), or even directly in property names. At the top level, a new definition makes
 the definition or property available for use anywhere below the definition. Defined within a rule, the 
 new definition is available only within that rule declaration (or nested rules or extending rules) 
@@ -111,7 +114,7 @@ create new definitions with custom behavior implemented in JavaScript module, wh
 in turn create other custom rules or affect interaction with the DOM. We can use
 rules as a definitions or JavaScript modules for more customized behavior:
 
-	my-custom-property = module('my/module');
+	my-custom-property = module(my/module);
 	
 We look at how how to implement a module in more detail later.
 
@@ -140,7 +143,7 @@ as defined in the base definition, we set the value to "defaults":
 We can also override properties from our definition:
 
 	.my-class {
-		absolutely: default;
+		absolutely: defaults;
 		top: 60px;
 	}
 
@@ -154,14 +157,14 @@ values are then assigned to the composite properties in order of declaration. Fo
 Would be the same as:
 
 	.my-class {
-		absolutely: default;
+		absolutely: defaults;
 		top: 60px;
 		bottom: 70px;
 	}
 
 ## Extending Rules
 
-We can also create rule definitions that extend other rule definitions. We do this simply
+We can also create rule definitions that extend other rule definitions. We do this
 by referencing the base definition after the '=' and before the rule declaration:
 
 	absolutely-green = absolutely {
@@ -185,13 +188,21 @@ a new definition within a base rule definition, you can reference that definitio
 property definitions or element references.
 
 The second capability that extending rules provides (that is not a part of property mixins),
-is that you can refer to any tag or class selector as the base definition, and that tag or class will be used
-when the definition is referenced in element generation (see next section). For example,
-we can create our own big-header definition that inherits from an h1:
-  
+is that you can refer to any tag or class selector as the base definition, and that tag or class (or a `tag.class` combination) will be used
+when the definition is referenced in element generation (see section below). For example,
+we can create our own big-header definition that inherits from an `h1`:
+
 	big-header = h1 {
 		font-size: 4em;
 	}
+
+## Limitations
+
+Due to goals of performance and minimizing the size and complexity of the xstyle library, there are several key limitations that should be understood.
+
+First, definitions can only be referenced *after* they have been defined. This means that if you are going to reference a custom definition in your stylesheet, you must ensure that the definition is defined before (above) you use it.
+
+Second, we can only extend other definitions or HTML elements. Xstyle does not support extending other types of selectors (like class references, etc.).
 
 ## Element Generation
 
@@ -277,12 +288,12 @@ prefix. For example, suppose we want to define several rules for elements within
 		input {
 			/* this rule's selector is equivalent to .my-form input */ 
 		}
-		selector {
+		select {
 			/* this rule's selector is equivalent to .my-form select */ 
 		}
 	}
 
-Using nesting rules can reduce typing, add better organization, and make it easier to refactor stylesheets.
+Using nested rules can improve readability, add better organization, and make it easier to refactor stylesheets.
 
 ### Nested Element Generation
 
@@ -303,7 +314,17 @@ synchronize an element identifier or selector with another CSS rule.
 We can nest element generation and CSS rules in any combination that we want, allowing
 us to create sophisticated UI elements in a single modular unit. 
 
-## Predefined Property Definitions
+## Programmatic Generation
+
+From JavaScript, we can also leverage the generation capabilites to create new elements and instantiate and use classes and components that were defined in xstyle css. This is functionality is provided by the `xstyle/core/generate` module, and if using the xstyle script, is accessible from `xstyle.generate`. This function takes two arguments, and supports the same CSS selector syntax for defining elements to be created:
+
+	generate(parentElement, selector);
+
+With this function we could generate a new element that has been defined as a component with generated sub-content. Here we could refer to the `content` class created above:
+
+	generate(target, 'div.content');
+
+## Predefined Property and Function Definitions
 
 Xstyle includes several predefined, or intrinsic definitions for properties. These can and usually
 are assigned to other names to create property definitions for use in rules. The next 
@@ -341,11 +362,9 @@ This definition will create a property like the declared property, except a vend
 will be added that corresponds to the browser's vendor. The prefixes are -webkit- for
 WebKit browsers, -moz- for Firefox, and -ms- for IE. A typical usage is:
 
-	border-radius = prefix;
+	appearance = prefix;
 	
-	border-radius: 5px;
-
-(functionality has been implemented)
+	appearance: button;
 
 ### content - Insertion Point
 
@@ -359,29 +378,48 @@ For example:
 
 We could then have some HTML that starts as:
 
-	&lt;div class="greeting">John Doe&lt;/div>
+	<div class="greeting">John Doe</div>
 
 And then xstyle would convert this to:
 
-	&lt;div class="greeting">&lt;h1>Welcome:&lt;/h1>John Doe&lt;/div>
-
-(not fully implemented)
+	<div class="greeting"><h1>Welcome:</h1>John Doe</div>
 
 ### on - Event Handling
 
 The "on" definition makes it possible to register handlers directly from rules. This property
 definition does not need to be assigned to a new name. It utilizes sub-property names
 to specify the event to listen for. The property name should be the form of <code>on-&lt;event-name></code>.
-The value of the property should be a definition (or an expression) pointing to a function,
-that should be executed in response to the event. For example, to register 
+The value of the property should be an expression that should be executed in response to the event. For example, to register 
 a <code>click</code> handler, we could write a property:
 
-	on-click: click-handler;
+	on-click: click-handler();
+
+The triggering event is also available in through the event definition:
+
+	on-click: click-handler(event);
 
 See the Data Bindings section below, as you will probably want to access sub-properties of
 definitions for your event handlers.
 
-(implemented, lightly tested)
+### get - Expressions in CSS property values
+
+Normally standard CSS property values are not resolved as expressions. However, function calls in CSS properties are evaluated if a matching definition can be found. However, by using `get(expression)`, you can provide an expression to be evaluated in CSS property. For example, if we wanted to define a color that was dependent on another property value, we could write:
+
+	color: get(forecast/temperature > 80 ? 'red' : 'blue');
+
+### set - Set the value of a definition
+
+The set function can be used to set the value of a particular definition. This is particularly useful in event handlers, where you might want to set a value in response to an action. For example, we could write an `click` handler for a button to turn a flag on:
+
+	button {
+		on-click: set(enable-editing, true);
+	}
+
+### toggle - Toggle a value
+
+The `toggle` function works similar to get, but is a convience function for toggling. We could toggle a flag like:
+
+	on-click: toggle(enable-editing);
 
 ### margin, padding, border, etc. - Nested Definitions
 
@@ -394,7 +432,55 @@ we could specify the margin-left and margin-right by writing:
 		right: 20px;
 	};
 
-(not implemented)
+We can also assign the top level value by setting the `main` property. For example:
+
+	margin: {
+		main: 10px;
+		right: 20px;
+	};
+
+Is equivalent too:
+
+	margin: 10px;
+	margin-right: 20px;
+
+### element-property
+
+This definition is mapped to a property that is stored on each element instance of the rule. This allows you to keep state information on elements, that is unique to each element. This could be mapped to an existing or native property or a custom property. For example, we could track selection state, by defining the `selected` variable as an element property, which could then be used to track the state of the element:
+
+	li {
+		selected = element-property;
+		background-color: get(selected ? 'yellow' : 'transparent');
+		button.select {
+			on-click: toggle(selected);
+		}
+	}
+
+### element-class
+
+This definition is a boolean value that corresponds to the presence or absence of a class name on each element instance of the rule. This is similar to the `element-property` definition, except that the state is stored with a class name. We could alternately write the example of tracking the selected state:
+
+	li {
+		selected = element-class;
+		button.select {
+			on-click: toggle(selected);
+		}
+	}
+	li.selected {
+		background-color: yellow;
+	}
+
+### element
+
+This returns a reference to the corresponding DOM element. The element definition can be defined/reassigned in a rule, so that the element for that rule can be referenced. For example, we could create a component, with a button that references the element for the higher level component:
+
+	component = {
+		component-element = element;
+		=>
+			button {
+				on-click: do-something(component-element);
+			};
+	}
 
 ## Data Binding
 
@@ -408,8 +494,8 @@ A basic example of a data binding would be to create a variable with a string va
 		=> span(first-name);
 	}
 
-The contents of the span that was created would then be set to the value of firstName. Changes in the
-value of the firstName would automatically be updated in the span's contents.
+The contents of the span that was created would then be set to the value of `firstName` (note that dashed nameds are converted to camelCase for JavaScript interaction). Changes in the
+value of the `firstName` would automatically be updated in the span's contents.
 
 We can also bind variables to inputs, and then the binding will work two ways, not only can 
 changes in the variable be reflected in the input, but user edits to the value will be updated
@@ -425,7 +511,7 @@ This provides the foundation for wiring components to data sources. We can also 
 variables to modules, providing an interface between JavaScript-driven data and the UI.
 We bind a variable to a module like this:
 
-	person = module('data/person');
+	person = module(package/person-model);
  
 We can then bind to the object returned from the module. We use a / operator to refer
 to properties of an object:
@@ -433,10 +519,12 @@ to properties of an object:
 	form.content {
 		=> 
 			label 'First Name:',
-			input[type=text](person/firstName),
+			input[type=text](person/first-name),
 			label 'Last Name:',
-			input[type=text](person/lastName);
+			input[type=text](person/last-name);
 	}
+
+Changes in property values will be automatically reflected in the rendered elements, and for inputs, and user changes will be reflected back to the source objects.
 
 ### Attribute Binding
 
@@ -450,8 +538,6 @@ For example, we could bind the href of an anchor element to a variable:
 	.content {
 		=> a[href=(targetUrl)];
 	}
-
-This functionality is implemented and has been lightly tested.
 
 ### List Binding
 
@@ -495,6 +581,8 @@ items in the array, and the second column corresponds to the "age" property:
 		};
 	}
 
+In addition to using plain arrays, [dstore](https://github.com/SitePen/dstore) stores/collections can be used, providing real-time reflection of data sources.
+
 ### Expressions
 
 Data bindings can include more than just a plain variable reference, we can also write
@@ -503,10 +591,11 @@ to the value of concatenation of two strings (again a live binding, automaticall
 variable or property changes):
 
 	h1.name {
-		=> span(person/firstName + person/lastName);
+		=> span(person/first-name + person/last-name);
 	}
 
-This functionality is implemented and has been lightly tested.
+The following operators are available in expressions, and have the same meaning as in JavaScript:
++, -, *, /, ?:, !, %, (, ), >, <=, <, <=, == (same as JS ===), & (same as JS &&), | (same as JS ||).
 
 ## Creating Components
 
@@ -547,41 +636,61 @@ Here, we can use newer CSS properties like 'box-shadow' and 'transform' and Xsty
 will shim (or "polyfill" or "fix") older browsers for you, transforming these to 
 MS filters for older versions of Internet Explorer. 
 
-## Definition Modules
+# Interfacing with JavaScipt
 
-While xstyles provides predefined expressions for new definitions, we can also 
-define new definitions with our own custom JavaScript modules. To define a new property
-with a JavaScript module, we use the module('module-id') as the property definition:
+Xstyle provides expressive declarative capabilities, but any substantial application will need to interact
+with JavaScript. We often need to interact with JavaScript to access data models, create custom components or functions, and 
+define other imperative operations.
 
-	my-new-property = module('package/module-id');
+There are a couple ways we can interact with JavaScript. The first, preferred approach is to reference a module.
+To define a new definition from a JavaScript module, we use the module(module-id) to assign to a definition:
+
+	my-new-definition = module(package/module-id);
 	
-If you are using an AMD loader, xstyle will load the target module id and use this to handle
-the property. If you are not using an AMD module loader, you can still simply include a script
-with a define call:
+Using an AMD loader, xstyle will load the target module id and assign the result to the definition.
 
-define('package/module-id', {
-	/* module property definition */
-});
+Alternately, we access the global window variable through the `window` definition (or `global`). For example:
 
-The module can return an object (or provide an object to the define call), that has
-methods that to be called when the property is used in stylesheets. The following
-methods are defined:
+	my-new-definition = window.library.feature;
 
-* <code>module.put(value, rule, name)</code> - This is called whenever the property is used within a rule. The
+Note, that you need to be careful to ensure the global property/object is available before xstyle accesses it.
+
+The JavaScript module can return an object (or provide an object to the define call), or we can reference a global
+that has methods that will be called when the property or function is used in stylesheets. The following
+methods will be called if they exist (they are all optional):
+
+* <code>object.put(value, rule, propertyName)</code> - This is called whenever the property is used within a rule. The
 <code>value</code> argument is the property value in the rule, and the <code>rule</code>
-argument is the Rule object.  
-* <code>module.receive(callback, rule, name)</code> - This is called when a property is accessed from a 
-binding, to receive the current value. The callback should be called wheneve the value
-is changed in the future.
-* <code>module.forElement(element)</code> - If the value of a property is dependent on the element
-that the rule is being applied, the module object may provide a forElement(element)
-function that would return an object with the same methods as described here for the 
-module. It should be noted that there is additional processing overhead, since every
-element needs to be processed individually with this approach.  
-* <code>module.get(name)</code> - This is called when a property is accessed using the my-new-property/sub-property
+argument is the Rule object. This can return a contextualized object (see below).
+* <code>object.valueOf()</code> - This is called to return the value of the current object. This can be used to return
+scalar values if desired. It can also return a contextualized object (see below).
+* <code>object.dependencyOf(definition)</code> - This is called to setup a dependency on your provide object. This is called
+with another definition as the argument. If the value of this module changes, the `invalidate()` method on the definition
+can be called to indicate a change in the value.
+* <code>object.define(rule, name)</code> - This will be called when an object is assigned to a new
+definition.
+* <code>object.property(name)</code> - This is called when a property is accessed using the my-new-property/sub-property
 syntax.
-* <code>module.call(rule, args,...)</code> - This is called when the definition is used a function, like
-my-new-property()
+* <code>object.apply(rule, args)</code> - This is called when the definition is used a function, like
+my-new-definition(). Note, you can also provide a function as the value of the module or the referenced global value,
+in which case the apply() call will execute the function.
+
+Note that all references that use dash-style-names in xstyle are converted to camelCase for JavaScript interaction.
+## Contextualized Objects
+
+The `valueOf()` and `put()` methods may return contextualized objects, which indicate that their value is dependent on
+context. By including one or both of the follow methods, the return object is indicating that they need additional
+information that is context-sensitive to compute their fina value:
+
+* <code>object.forElement(element)</code> - If the value of a property is dependent on the element
+that the rule is being applied, the contextualized object may provide a forElement(element)
+function that would be executed (and return a value in the case of `valueOf`) based on the provided element.
+It should be noted that there is additional processing overhead, since every
+element needs to be processed individually with this approach.  
+* <code>object.forRule(rule, name)</code> - This indicates that the method needs to be executed for
+each rule that this property applies to. The rule and the name of the property will be passed in. Note that a property
+may be declared in a rule, triggering a single call to `put()` yet, the rule may be extended to create new rules, resulting
+in multiple calls to `forRule()`
 
 The Rule object has the following properties and methods that can be used by the module:
 
@@ -592,12 +701,99 @@ apply additional native CSS properties directly by setting properties on the sty
 
 	rule.setStyle('color', 'red');
 
+For example, we could define a module that vertically expands a target element when it is clicked, and takes
+two height values, with starting and ending values.
+
+	define([], function(){
+		return {
+			forParent: function(rule){
+				var heights;
+				return {
+					put: function(value){
+						// take the two heights and split them up
+						heights = value.split(/\s+/);
+						// define the starting height
+						rule.setStyle('height: ' + heights[0]);
+						// define a property for animating the change
+						rule.setStyle('transition: height 0.2s');
+
+					},
+					forElement: function(element){
+						element.addEventListener('click', function(){
+							// when the element is clicked, change the height
+							element.style.height = heights[1];
+						});
+						// note that when setting up event handling,
+						// it is strongly recommended that you use event delegation
+						// instead of forElement, when possible
+					}
+				};
+
+			}
+		};
+	});
+
+We could now use our property definition in a xstyle stylesheet:
+
+	expandable-height = module(my-package/expandable);
+
+	.target-element {
+		expandable-height: 10px 30px; /* specify a starting and ending height*/
+	}
+
+
+## Functions
+
+As listed, the `apply()` method will be called when a function is encountered. However, there are several ways of handling functions.
+By default, the function will be treated as a reactive function, the referenced definitions will be resolved, asynchronously, if needed, contextualized, and monitored for changes, such that any change will trigger the function execution again. For example, we could create a module that a function that computes the sum of values:
+
+	define(function () {
+		return function sum() {
+			var sum = 0;
+			for (var i = 0; i < arguments.length; i++) {
+				sum += arguments[i];
+			}
+			return sum;
+		};
+	});
+
+We could then use this in our xstyle stylesheet:
+
+	sum = module(my-package/sum);
+	model = module(my-package/data-model);
+
+	#sum {
+		=>
+			span (sum(model/a, model/b, model/b))
+	}
+
+The function will be executed with the values from the model objects, and will be re-executed whenever those values change so that the sum can be recomputed.
+
+Alternately, we may wish to have greater control over the execution of a function. There are several flags that we can set to control how our function is executed.
+
+If you wish to have the argument references/expressions resolved, but you would like to directly handle the definition objects that are passed to the argument, you can do so by setting a `selfExecuting` property on the function to true. Your function will be called with definition objects for the specified arguments. You can then determine if you and when you want to retrieve the current value (by calling `valueOf()`), and if you want to declare a dependency so that you can be notified of any changes in the arguments (using `dependencyOf()`). Note that `valueOf()` may return a promise if the value is not available yet. It also may return (or resolve to) a contextual object, which generally requires returning another contextual object to retrieve each current context.
+
+Or, you can set a `selfResolving` property on the function to true, and your function will be called with the unresolved raw arguments as strings or sequences of tokens. The function will be executed without any argument resolution. For example, if our function is called like `func(a, b)`, the arguments will be the actual strings `'a'` and `'b'`. This gives us the greatest ultimate control of the behavior of the function, but generally requires the greatest effort if you want to achieve normal definition referencing and reactivity.
+
+## Definition Object
+
+A definition object is a core object in a xstyle. All definitions that are defined are stored in definition objects, to permit time-varying values, with dependency tracking. A definition object has the following methods:
+
+* `valueOf()` - This will return the current value of the definition. This may be a plain primitive value or objects. However, there are several important types that can be returned as well:
+	* The value may be a promise, if the data is not available yet.
+	* The value may be a contextual object. See the contextualized object section above for more information on contextual objects. 
+* `dependencyOf(definition)` - This is a method that may be called to add a dependency on this definition. If you would like to be notified of any data changes, you can add an object with an `invalidate()` method to be notified if the argument is changed (and you can call `valueOf()` to get the latest value),
+* `invalidate()` - Called to invalidate this definition. Generally this should only be called by the `dependencyOf()` method.
+* `property(name)` - Called to retrieve a definition for a property of the value of this definition.
+* `put(value)` - Set a new value into the definition. Some definitions may not have a `put()` method, indicating that they are read-only. This may return a contextual object, if the definition needs to know the context of where the value is being set.
+
+
 ## Pseudo Definitions
 
 We can create new definitions for pseudo selectors. Pseudo selector definitions begin
 with a colon. For example, we can could create a custom pseudo selector:
 
-	:custom = module('my-package/custom');  
+	:custom = module(my-package/custom);
 
 The module's returned object should have a pseudo method that will be called for handling
 rule's with the defined pseudo selector.
@@ -606,7 +802,7 @@ Again, we can use a conditional operator if we only want to implement the pseudo
 has not already been provided by the browser. For example, if wanted to shim support
 for the :enabled pseudo, we could implement a shim module and conditionally load it:
 
-	:enabled =? module('my-package/enabled');
+	:enabled =? module(my-package/enabled);
 
 ## Scoped Blocks Xstyle and Disabling Parsing
 
@@ -675,7 +871,11 @@ based on the size of the scrollbar.
 * ext/widget - This module can instantiate widgets to be applied to elements that match
 a rule's selector. This is designed to instantiate widgets with the form of Widget(params, targetNode),
 and can be used to instantiate Dojo's Dijit widgets.
+* ext/meta - This provides metadata information about fields, including validation.
 
+## Validation and Metadata
+
+The `xstyle/ext/meta` module can be used to provide metadata information about fields, including validation.
 
 ## Widgets
 
@@ -688,7 +888,7 @@ be passed to the widget. There should also be a "type" property that indicates
 the id of the module with the widget to load. For example, we could add a "widget"
 property definition:
 
-	widget = module('xstyle/ext/widget');
+	widget = module(xstyle/ext/widget);
 
 And then we could create progress bar using dijit/ProgressBar, using the "widget" property
 in a rule:
@@ -773,7 +973,7 @@ in the layer definition in the build profile:
 		...
 
 When the build runs, any CSS dependencies that are encountered in modules will then
-be added to main-stylesheet.js (which will be created if it does not already exist), rather 
+be added to main-stylesheet.css (which will be created if it does not already exist), rather 
 than inlined in the JavaScript build layer. One
 can still use the #inline URL directive to inline resources in combination with the AMD
 build plugin.
@@ -832,6 +1032,15 @@ Or version IE8 through IE10:
 
 	hasClass("ie-8-10");
 
+## Philosophy
+
+Xstyle is driven by several guiding ideas:
+* Leveraging declarative transforms as functionally reactive, bidirection mechanism for mapping data to a UI
+* Integration and interoperability of CSS with JS, to facilitate separation of declarative and imperative code.
+* A pragmatic extension of CSS so that it leverage existing CSS loading and parsing facilities in the browser.
+* Extending and polyfilling with using the same extension mechanism most commonly used by browsers for new UI features.
+
+## License
 xstyle is freely available under *either* the terms of the modified BSD license *or* the
 Academic Free License version 2.1. More details can be found in the [LICENSE](LICENSE).
 The xstyle project follows the IP guidelines of Dojo foundation packages and all contributions require a Dojo CLA. 

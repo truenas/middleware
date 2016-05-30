@@ -1,0 +1,256 @@
+* {
+	box-sizing: border-box;
+}
+
+html,
+body {
+	height: 100%;
+	width: 100%;
+	margin: 0;
+	font-family: $fontFamily;
+	font-size: 16px;
+	background: #F8F8F8;
+}
+
+fieldset {
+	border: 0;
+	margin: 0;
+	padding: 0;
+}
+
+.laboratory {
+	font-size: 0;
+	height: 100%;
+	padding-top: $headerHeight;
+}
+
+.control {
+	width: $sidebarWidth;
+	height: 100%;
+	display: inline-block;
+	vertical-align: top;
+	font-size: 16px;
+	background: $sidebarBackground;
+	position: relative;
+}
+
+.render {
+	background: #F8F8F8;
+	display: inline-block;
+	font-size: 14px;
+	padding: $renderPadding;
+	position: relative;
+	height: 100%;
+	width: "calc(100% - %s)" % $sidebarWidth;
+	vertical-align: top;
+	z-index: 2;
+}
+
+.tabControl {
+	line-height: 31px;
+	color: #144C66;
+	position: relative;
+	font-weight: bold;
+}
+
+
+/*
+ * Header
+ */
+
+.header {
+	position: absolute;
+	top:0;
+	left:0;
+	width: 100%;
+	background: white;
+	overflow: hidden;
+	font-size: 24px;
+	font-weight: 100;
+	height: $headerHeight;
+	color: white;
+	vertical-align: middle;
+	box-shadow: 0px 4px 10px -2px #0B1E2A;
+	z-index: 3;
+
+	.controlHeader {
+		background: #1284CC;
+		width: $sidebarWidth;
+		display: inline-block;
+	}
+
+	.logoLink {
+		box-shadow: 1px 0 6px 0px #0E6AA4;
+		display: inline-block;
+		vertical-align: middle;
+		margin-right: 10px;
+	}
+
+	.menuLink {
+		color: black;
+		font-size: 18px;
+		margin-left: 16px;
+		text-decoration: none;
+	}
+	.logo {
+		width: 98px;
+		padding: 15px;
+	}
+
+	.splogo {
+		position: absolute;
+		top: 10px;
+		right: 30px;
+	}
+
+}
+
+
+
+/*
+ * Icon font
+ */
+
+@font-face {
+	font-family: 'icomoon';
+	src:url('fonts/icomoon.eot?kn321z');
+	src:url('fonts/icomoon.eot?#iefixkn321z') format('embedded-opentype'),
+		url('fonts/icomoon.woff?kn321z') format('woff'),
+		url('fonts/icomoon.ttf?kn321z') format('truetype'),
+		url('fonts/icomoon.svg?kn321z#icomoon') format('svg');
+	font-weight: normal;
+	font-style: normal;
+}
+
+[class^="icon-"], [class*=" icon-"] {
+	font-family: 'icomoon';
+	speak: none;
+	font-style: normal;
+	font-weight: normal;
+	font-variant: normal;
+	text-transform: none;
+	line-height: 1;
+	transition: color 0.5s;
+	-webkit-font-smoothing: antialiased;
+	-moz-osx-font-smoothing: grayscale;
+	&:hover {
+		cursor:pointer;
+	}
+}
+
+.icon-times:before {
+	content: $closeIcon;
+}
+
+.icon-gear:before {
+	content: $gearIcon;
+}
+
+.icon-info-circle:before {
+	content: $infoIcon;
+}
+.icon-external-link:before {
+	content: $externalLinkIcon;
+}
+.icon-navicon:before {
+	content: $navIcon;
+}
+.icon-angle-up:before {
+	content: $angleUpIcon;
+}
+.icon-angle-down:before {
+	content: $angleDownIcon;
+}
+.icon-mail-reply:before {
+	content: $replyIcon;
+}
+
+.icon-grid:before {
+	content: $gridIcon;
+}
+
+.icon-code:before {
+	content: $codeIcon;
+}
+
+
+/*
+ * Tabs
+ */
+.tabs {
+	font-size: 0;
+	background: $sidebarTabStripBg;
+}
+
+.tab {
+	color: #C3F1FF;
+	font-size: 12px;
+	padding: 15px 10px;
+	display: inline-block;
+	cursor: pointer;
+	transition: background 0.4s;
+
+	&.active {
+		background: $sidebarTabActiveBg;
+		&:hover {
+			background: $sidebarTabActiveBg;
+		}
+	}
+
+	&:hover {
+		background: lighten($sidebarTabStripBg, 10%);
+	}
+}
+
+.tabContent {
+	display: none;
+	overflow: auto;
+	position: absolute;
+	bottom: 0;
+	top: $tabHeight;
+
+	&.active {
+		display: block;
+	}
+}
+
+/*
+ * About Dialog
+ */
+.claro .aboutDialog {
+	overflow: visible;
+	width:60%;
+	border-radius: 8px;
+	border:none;
+	background:#fff;
+	box-shadow: 0px 0px 15px 0px rgba(0,0,0,0.70);
+	padding:2em;
+
+	// dijit/Dialog's sizing logic does not expect border-box, so reset it
+	* {
+		box-sizing: content-box;
+
+	}
+
+	.dijitDialogCloseIcon {
+		background-image: url("img/lab.png");
+		background-position: 0 0;
+		width:286px;
+		height: 241px;
+		top:-130px;
+		right:-60px;
+		z-index: 951;
+		position: absolute;
+	}
+
+	.dijitDialogTitleBar,
+	.dijitDialogPaneContent {
+		background: none;
+		border:none;
+	}
+
+	.dijitDialogTitleBar {
+		text-align:center;
+		font-size:42px;
+	}
+}

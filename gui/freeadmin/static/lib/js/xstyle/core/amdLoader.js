@@ -37,7 +37,7 @@
 				})(i));
 			}else{
 				deps[i] = module.result;
-			} 
+			}
 		}
 		module = modules[id] || (modules[id] = {callbacks: []});
 		loaded();
@@ -55,7 +55,7 @@
 	};
 	
 	require = function(deps, factory){
-		define("", deps, factory);
+		define('', deps, factory);
 	};
 	
 	var modules = {require: {result: require}};

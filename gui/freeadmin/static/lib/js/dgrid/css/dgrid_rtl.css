@@ -50,9 +50,5 @@
 .dgrid-rtl.dgrid-autoheight .dgrid-header {
 	left: 0;
 }
-.has-ie-6 .dgrid-rtl .dgrid-header-row {
-	left: auto;
-	right: auto;
-}
 
 #dgrid-css-dgrid_rtl-loaded { display: none; }

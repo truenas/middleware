@@ -1,4 +1,5 @@
 .dgrid-column-resizer {
+	cursor: col-resize;
 	position: absolute;
 	width: 2px;
 	background-color: #666;
@@ -16,18 +17,19 @@
 	border-left: 5px solid transparent;
 	outline: none;
 }
-html.has-ie-6 .dgrid-resize-handle {
-	border-color: pink;
-	filter: chroma(color=pink);
-}
-html.has-mozilla .dgrid .dgrid-resize-handle:focus,
-html.has-opera .dgrid .dgrid-resize-handle:focus {
-	/* Override focus outline style set in dgrid.css */
-	outline: none;
-}
 
 .dgrid-resize-header-container {
 	height:100%;
+}
+
+.dgrid-resize-guard {
+	/* Used to prevent click events trickling down to the underlying header cell */
+	cursor: col-resize;
+	position: absolute;
+	bottom: 0;
+	left: 0;
+	right: 0;
+	top: 0;
 }
 
 /* make the resize handles larger on touch-capable devices */
@@ -38,25 +40,12 @@ html.has-touch .dgrid-column-resizer {
 	width: 2px;
 }
 
-html.has-no-quirks .dgrid-resize-header-container {
-	/* set to relative so we can do the resizing against this node...
-		except when in quirks mode, where we have to use the th */
+.dgrid-resize-header-container {
+	/* set to relative so we can do the resizing against this node */
 	position: relative;
 }
-html.has-ie-6 .dgrid-resize-header-container {
-	position: static; /* and in IE6 we have to do the th hack */
-} 
-.dgrid-header .dgrid-cell-padding {
+.dgrid-header .dgrid-cell {
 	overflow: hidden;
-}
-html.has-ie-6 .dgrid-header .dgrid-cell-padding {
-	margin-right: 4px; /* for IE6, keep the resizer visible */
-}
-html.has-ie-6 .dgrid-header .dgrid-sort-arrow {
-    margin-right: 0; /* for IE6, zero out the right margin due to the right margin for the container */
-}
-html.has-quirks .dgrid-header .dgrid-cell-padding, html.has-ie-6 .dgrid-header .dgrid-cell {
-	position:relative;
 }
 
 #dgrid-css-extensions-ColumnResizer-loaded {

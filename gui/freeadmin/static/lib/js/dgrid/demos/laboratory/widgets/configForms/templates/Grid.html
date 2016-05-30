@@ -1,0 +1,48 @@
+<div class="${baseClass}">
+<!--
+TODO: wrap template in a 'form' element instead of 'div'
+Each collection of fields should be contained in its own form to avoid name collisions between forms.
+Changing the top-level node from 'div' to 'form' for this template causes the CSS class value to get messed up
+because the form contains an element named "className".
+-->
+	<fieldset>
+		<legend data-dojo-attach-point="legendNode"></legend>
+
+		<div class="label">
+			addUiClasses
+		</div>
+		<div class="field">
+			<input data-dojo-type="dijit/form/RadioButton" name="addUiClasses" value="true" id="${id}_uiClassesTrue" type="radio">
+			<label for="${id}_uiClassesTrue">true</label>
+			<input data-dojo-type="dijit/form/RadioButton" name="addUiClasses" value="false" id="${id}_uiClassesFalse" type="radio">
+			<label for="${id}_uiClassesFalse">false</label>
+		</div>
+
+		<div class="label">
+			className
+		</div>
+		<div class="field">
+			<input data-dojo-type="dijit/form/TextBox" name="className" type="text">
+		</div>
+
+		<div class="label">
+			showHeader
+		</div>
+		<div class="field">
+			<input data-dojo-type="dijit/form/RadioButton" name="showHeader" value="true" id="${id}_showHeaderTrue" type="radio">
+			<label for="${id}_showHeaderTrue">true</label>
+			<input data-dojo-type="dijit/form/RadioButton" name="showHeader" value="false" id="${id}_showHeaderFalse" type="radio">
+			<label for="${id}_showHeaderFalse">false</label>
+		</div>
+
+		<div class="label">
+			showFooter
+		</div>
+		<div class="field">
+			<input data-dojo-type="dijit/form/RadioButton" name="showFooter" value="true" id="${id}_showFooterTrue" type="radio">
+			<label for="${id}_showFooterTrue">true</label>
+			<input data-dojo-type="dijit/form/RadioButton" name="showFooter" value="false" id="${id}_showFooterFalse" type="radio">
+			<label for="${id}_showFooterFalse">false</label>
+		</div>
+	</fieldset>
+</div>

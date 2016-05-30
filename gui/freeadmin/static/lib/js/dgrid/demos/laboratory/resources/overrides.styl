@@ -1,0 +1,108 @@
+/*
+ * Dijit overrides
+ */
+.claro {
+
+	.dijitButton .dijitButtonNode {
+		border: 1px solid $primaryButtonColor;
+		background: transparent;
+		color: $primaryButtonColor;
+		padding: 2px 7px 4px;
+		transition: background 0.3s, color 0.3s;
+		&:hover {
+			background:$primaryButtonColor;
+			color:#000;
+			border-color: darken($primaryButtonColor, 20%);
+		}
+	}
+
+	.dijitTextBox {
+		border-radius: 8px;
+		border: 0;
+		padding: 2px 6px;
+		background: #FFF !important;
+		font-size: 12px;
+		color: #333;
+		box-shadow: inset 1px 1px 3px 0px rgba(50, 50, 50, 0.75);
+	}
+
+	.dijitTextBox .dijitInputInner {
+		color: #333;
+	}
+
+	.dijitTextBox,
+	.dijitPlaceHolder,
+	.dgrid-input {
+		font-style: normal;
+		font-family: $fontFamily;
+		outline: 0;
+	}
+
+	.dgrid-input:focus {
+		outline: 0;
+	}
+
+	.dijitMenuItem {
+		font-size:12px;
+	}
+
+	.dijitArrowButton {
+		background-color:#fff !important;
+	}
+
+	.dijitComboBoxMenu {
+		border-radius: 0 0 4px 4px;
+
+		.dijitMenuItem {
+			transition:background-color 0.3s;
+		}
+		.dijitMenuItemSelected,
+		.dijitMenuItemHover {
+			background-image:none;
+			border-color:#fff;
+		}
+	}
+}
+
+/* Override DND Avatar */
+.claro table.dojoDndAvatar {
+
+	border-collapse: collapse;
+	background-color: none;
+	box-shadow: 3px 3px 4px 0px rgba(0, 0, 0, 0.67);
+
+	td {
+		border:0;
+	}
+
+	table {
+		width:$sidebarWidth;
+		line-height:26px;
+		border:0;
+	}
+
+	.dgrid-row:before,
+	.dgrid-row:after {
+		display:none;
+	}
+
+	.dgrid-row table td {
+		background: $draggedRowBg !important;
+		padding:5px;
+		border:none;
+	}
+
+	.dojoDndAvatarHeader {
+		display:none;
+	}
+	.dojoDndAvatarItem td {
+		padding: 0px;
+	}
+}
+
+.claro.dojoDndMove .dojoDndAvatarHeader {
+  background-color: red;
+}
+.claro.dojoDndMove .dojoDndAvatarCanDrop .dojoDndAvatarHeader {
+  background-color: green;
+}

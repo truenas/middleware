@@ -1,0 +1,59 @@
+<form class="${baseClass}">
+	<fieldset>
+		<legend data-dojo-attach-point="legendNode"></legend>
+
+		<div class="label">
+			rowsPerPage
+		</div>
+		<div class="field">
+			<input data-dojo-type="dijit/form/NumberTextBox" name="rowsPerPage" type="text" class="halfWidth">
+		</div>
+
+		<div class="label">
+			previousNextArrows
+		</div>
+		<div class="field">
+			<input data-dojo-type="dijit/form/RadioButton" name="previousNextArrows" value="true" id="${id}_previousNextTrue" type="radio">
+			<label for="${id}_previousNextTrue">true</label>
+			<input data-dojo-type="dijit/form/RadioButton" name="previousNextArrows" value="false" id="${id}_previousNextFalse" type="radio">
+			<label for="${id}_previousNextFalse">false</label>
+		</div>
+
+		<div class="label">
+			firstLastArrows
+		</div>
+		<div class="field">
+			<input data-dojo-type="dijit/form/RadioButton" name="firstLastArrows" value="true" id="${id}_firstLastTrue" type="radio">
+			<label for="${id}_firstLastTrue">true</label>
+			<input data-dojo-type="dijit/form/RadioButton" name="firstLastArrows" value="false" id="${id}_firstLastFalse" type="radio">
+			<label for="${id}_firstLastFalse">false</label>
+		</div>
+
+		<div class="label">
+			pagingLinks
+		</div>
+		<div class="field">
+			<input data-dojo-type="dijit/form/NumberTextBox" name="pagingLinks" type="text" class="halfWidth">
+		</div>
+
+		<div class="label">
+			pagingTextBox
+		</div>
+		<div class="field">
+			<input data-dojo-type="dijit/form/RadioButton" name="pagingTextBox" value="true" id="${id}_pagingTextBoxTrue" type="radio">
+			<label for="${id}_pagingTextBoxTrue">true</label>
+			<input data-dojo-type="dijit/form/RadioButton" name="pagingTextBox" value="false" id="${id}_pagingTextBoxFalse" type="radio">
+			<label for="${id}_pagingTextBoxFalse">false</label>
+		</div>
+
+		<div class="label">
+			showLoadingMessage
+		</div>
+		<div class="field">
+			<input data-dojo-type="dijit/form/RadioButton" name="showLoadingMessage" value="true" id="${id}_showLoadingMessageTrue" type="radio">
+			<label for="${id}_showLoadingMessageTrue">true</label>
+			<input data-dojo-type="dijit/form/RadioButton" name="showLoadingMessage" value="false" id="${id}_showLoadingMessageFalse" type="radio">
+			<label for="${id}_showLoadingMessageFalse">false</label>
+		</div>
+	</fieldset>
+</form>

@@ -39,9 +39,6 @@
 	transition-property: background-color, border-color;
 	background: url("images/row_back.png") #fff repeat-x;
 }
-.has-ie-6 .claro .dgrid-row {
-	background-image: none;
-}
 .claro .dgrid-row:hover {
 	background-color: #e9f2fe;
 }

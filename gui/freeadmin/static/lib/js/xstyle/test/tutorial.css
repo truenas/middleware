@@ -1,7 +1,8 @@
+@import url("./ui.css");
 contacts = module('xstyle/test/contacts');
 body {
 	=>
-		h1 'Hello, world of my contacts',
+		h1 'Contacts of the 27 club',
 		ul.contacts-list (contacts/list) {
 			each: li (item/firstName + ' ' + item/lastName) {
 				on-click: contacts/select(item);
@@ -17,17 +18,22 @@ body {
 				h2 (selected/firstName + ' ' + selected/lastName),
 				label.start-row 'First Name:',
 				input[type=text] (selected/firstName),
-				span.error (selected/firstName/error)
 				label.start-row 'Last Name:',
 				input[type=text] (selected/lastName),
 				label.start-row 'Email:',
 				input[type=email] (selected/email),
-				button.start-row 'New Contact' {
-					on-click: contacts/create();
-				},
-				button.start-row 'Save' {
-					on-click: contacts/save(selected);
-				};
+				label.start-row 'Comments:',
+				textarea (selected/comments),
+				div
+					button 'New Contact' {
+						on-click: contacts/create();
+					},
+					button 'Delete' {
+						on-click: contacts/delete(selected);
+					},
+					button 'Save' {
+						on-click: contacts/save(selected);
+					};
 			float: left;
 			margin: 20px;
 		};

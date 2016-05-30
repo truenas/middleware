@@ -79,9 +79,3 @@
 .sage .dgrid-header .dojoDndItemAfter {
 	border-right: 2px dotted #fff !important;
 }
-
-/* for pagination in IE < 8 + quirks, need additional rule to override link color */
-.has-ie-6-7 .sage .dgrid-navigation a,
-.has-ie.has-quirks .sage .dgrid-navigation a {
-	color: #fff;
-}

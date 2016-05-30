@@ -46,13 +46,6 @@
 	padding-left: 20px;
 }
 
-html.has-quirks .dgrid-hider-menu-check,
-html.has-ie-6-7 .dgrid-hider-menu-check {
-	/* IE < 8 seems to ignore padding: 0, so counteract */
-	top: 0;
-	left: 0;
-}
-
 #dgrid-css-extensions-ColumnHider-loaded {
 	display: none;
 }

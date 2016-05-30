@@ -1,0 +1,106 @@
+.content h3 {
+	margin: 1em 0 0.5em;
+}
+
+#grid {
+	width: 80%;
+	margin: auto;
+	height: 332px; /* tall enough for 2 rows in gallery view */
+}
+
+.controls,
+.content {
+	width: 944px;
+	margin: 0 auto;
+	padding: 2em;
+}
+
+.controls {
+	background: #000;
+	padding: 1.25em 2em;
+	color: #fff;
+	text-align: center;
+}
+
+.controls button {
+	margin: 0 0.5em;
+	padding: 0 1em;
+}
+
+/* styles for icon node in various views */
+
+.icon {
+	font-size: 0; /*TODO: is this needed?*/
+	background-repeat: no-repeat;
+}
+
+.table .icon {
+	width: 32px;
+	height: 32px;
+}
+
+.details .icon {
+	width: 72px; /* 64px + buffer to separate icon from text */
+	height: 64px;
+}
+
+.gallery .icon {
+	width: 128px;
+	height: 128px;
+	margin: auto;
+}
+
+/* styles for "table" view (using Grid.renderRow) */
+
+.table .field-icon {
+	width: 33px;
+	padding: 0;
+}
+
+.table .dgrid-cell {
+	vertical-align: middle;
+}
+
+/* Table view allows expanding/collapsing rows to show summary */
+
+.table .expando {
+	/* style of area containing summary, expanded on click */
+	border-bottom: 1px solid #ccc !important;
+	padding: 0.7em 1em 0.5em 3em;
+	background: #fff;
+	background: -moz-linear-gradient(top,  rgba(255,255,255,1) 24%, rgba(237,237,237,1) 100%);
+	background: -webkit-linear-gradient(top,  rgba(255,255,255,1) 24%,rgba(237,237,237,1) 100%);
+	background: -ms-linear-gradient(top,  rgba(255,255,255,1) 24%,rgba(237,237,237,1) 100%);
+	background: linear-gradient(top,  rgba(255,255,255,1) 24%,rgba(237,237,237,1) 100%);
+	filter: progid:DXImageTransform.Microsoft.gradient( startColorstr='#ffffff', endColorstr='#ededed',GradientType=0 );
+}
+
+.table .collapsed .expando {
+	display: none;
+}
+
+/* styles for details view */
+
+.details .dgrid-row {
+	clear: both;
+	min-height: 64px;
+	padding: 0.5em;
+}
+
+.details .icon {
+	float: left;
+}
+
+.details .name {
+	font-weight: bold;
+	margin-bottom: 1em;
+}
+
+/* styles for gallery view */
+
+.gallery .dgrid-row {
+	width: 25%;
+	display: inline-block;
+	text-align: center;
+	padding: 1em 0;
+}

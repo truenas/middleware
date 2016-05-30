@@ -2,9 +2,6 @@
 
 converter = module('xstyle/test/converter');
 data = converter/parsed;
-body {
-	converter: true;
-}
 h1, h2 {
 	font-weight: 100;
 	font-family: "Segoe UI Light", "Helvetica Neue", RobotoLight, "Segoe UI", "Segoe WP", sans-serif;

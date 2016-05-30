@@ -1,0 +1,46 @@
+<div>
+	<!-- Top pane -->
+	<div class="header">
+		<div class="controlHeader">
+			<a class="logoLink" href="${dgridUrl}"><img class="logo" src="${resourcesBaseUrl}/img/dgridLogo.png" alt="dgrid logo"></a>
+			${i18n.laboratory}
+		</div>
+		<a href="#" class="menuLink" data-dojo-attach-event="click:_showAbout">${i18n.about}</a>
+		<a href="${docBaseUrl}" target="_blank" class="menuLink">${i18n.docs}</a>
+		<a href="http://sitepen.com/" class="splogo"><img src="${resourcesBaseUrl}/img/sitepenLogo.png" alt="SitePen logo"></a>
+	</div>
+
+	<div class="control">
+		<div class="tabs">
+			<div class="tab active" data-target="columns" data-dojo-attach-event="click:selectTab">
+				${i18n.columns}
+			</div>
+			<div class="tab" data-target="gridFeatures" data-dojo-attach-event="click:selectTab">
+				${i18n.gridFeatures}
+			</div>
+			<div class="tab" data-target="columnFeatures" data-dojo-attach-event="click:selectTab">
+				${i18n.columnFeatures}
+			</div>
+		</div>
+
+		<div data-dojo-attach-point="columnEditorNode" data-tab="columns" class="tabContent active"></div>
+		<div data-dojo-attach-point="featureEditorNode" data-tab="features" class="tabContent"></div>
+	</div>
+
+	<div data-dojo-attach-point="previewTabs" data-selected-page="grid" class="render">
+		<div class="tabControl">
+			<span data-dojo-attach-event="click:_selectGrid" class="gridBtn">
+				<i class="icon-grid"></i>${i18n.preview}
+			</span><span data-dojo-attach-event="click:_selectCode" class="codeBtn">
+				<i class="icon-code"></i>${i18n.code}
+			</span>
+		</div>
+		<div class="demoGridPane" data-dojo-attach-point="demoGridPane">
+			${i18n.demoInstructions}
+		</div>
+
+		<div class="demoCodePane" data-dojo-attach-point="demoCodePane">
+			<textarea data-dojo-attach-point="gridCodeTextArea" class="demoCode" readonly></textarea>
+		</div>
+	</div>
+</div>

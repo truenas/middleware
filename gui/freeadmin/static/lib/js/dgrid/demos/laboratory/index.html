@@ -1,0 +1,37 @@
+<!DOCTYPE html>
+<html>
+	<head>
+		<title>dgrid Laboratory</title>
+		<meta charset="utf-8">
+		<link rel="stylesheet" href="../../../dijit/themes/claro/claro.css">
+		<link rel="stylesheet" href="../../css/dgrid.css">
+		<link rel="stylesheet" href="../../css/skins/claro.css">
+		<link rel="stylesheet" href="resources/laboratory.css">
+	</head>
+
+	<body class="claro">
+		<script>
+			var dojoConfig = {
+				async: true,
+				baseUrl: '../../../',
+				packages: [
+					'dojo',
+					'dijit',
+					'dgrid',
+					'dstore',
+					'put-selector',
+					'xstyle'
+				]
+			};
+		</script>
+		<script src="../../../dojo/dojo.js"></script>
+		<script>
+			require([
+				'dgrid/demos/laboratory/widgets/Laboratory'
+			], function (Laboratory) {
+				var laboratory = new Laboratory().placeAt(document.body);
+				laboratory.startup();
+			});
+		</script>
+	</body>
+</html>

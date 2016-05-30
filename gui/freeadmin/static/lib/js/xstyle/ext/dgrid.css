@@ -1,2 +1,1 @@
-@import '../../dgrid/css/dgrid.css';
-dgrid = module('xstyle/ext/dgrid');
+dgrid = module(xstyle/ext/dgrid);

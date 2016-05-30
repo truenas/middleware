@@ -1,0 +1,75 @@
+<form class="${baseClass}">
+	<fieldset>
+		<legend data-dojo-attach-point="legendNode"></legend>
+
+		<div class="label">
+			minRowsPerPage
+		</div>
+		<div class="field">
+			<input data-dojo-type="dijit/form/NumberTextBox" type="text" name="minRowsPerPage" class="halfWidth">
+		</div>
+
+		<div class="label">
+			maxRowsPerPage
+		</div>
+		<div class="field">
+			<input data-dojo-type="dijit/form/NumberTextBox" type="text" name="maxRowsPerPage" class="halfWidth">
+		</div>
+
+		<div class="label">
+			maxEmptySpace
+		</div>
+		<div class="field">
+			<input data-dojo-type="dijit/form/TextBox" type="text" name="maxEmptySpace" class="halfWidth">
+		</div>
+
+		<div class="label">
+			bufferRows
+		</div>
+		<div class="field">
+			<input data-dojo-type="dijit/form/NumberTextBox" type="text" name="bufferRows" class="halfWidth">
+		</div>
+
+		<div class="label">
+			farOffRemoval
+		</div>
+		<div class="field">
+			<input data-dojo-type="dijit/form/NumberTextBox" type="text" name="farOffRemoval" class="halfWidth">
+		</div>
+
+		<div class="label">
+			queryRowsOverlap
+		</div>
+		<div class="field">
+			<input data-dojo-type="dijit/form/NumberTextBox" type="text" name="queryRowsOverlap" class="halfWidth">
+		</div>
+
+		<div class="label">
+			pagingMethod
+		</div>
+		<div class="field">
+			<select data-dojo-type="dijit/form/FilteringSelect" name="pagingMethod">
+				<option value="debounce">debounce</option>
+				<option value="throttle">throttle</option>
+				<option value="throttleDelayed">throttleDelayed</option>
+			</select>
+		</div>
+
+		<div class="label">
+			pagingDelay
+		</div>
+		<div class="field">
+			<input data-dojo-type="dijit/form/NumberTextBox" type="text" name="pagingDelay" class="halfWidth">
+		</div>
+
+		<div class="label">
+			keepScrollPosition
+		</div>
+		<div class="field">
+			<input data-dojo-type="dijit/form/RadioButton" name="keepScrollPosition" value="true" id="${id}_keepScrollTrue" type="radio">
+			<label for="${id}_keepScrollTrue">true</label>
+			<input data-dojo-type="dijit/form/RadioButton" name="keepScrollPosition" value="false" id="${id}_keepScrollFalse" type="radio">
+			<label for="${id}_keepScrollFalse">false</label>
+		</div>
+	</fieldset>
+</form>

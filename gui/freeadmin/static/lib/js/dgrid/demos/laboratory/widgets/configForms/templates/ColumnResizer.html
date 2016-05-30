@@ -1,0 +1,21 @@
+<form class="${baseClass}">
+	<fieldset>
+		<legend data-dojo-attach-point="legendNode"></legend>
+			<div class="label">
+				adjustLastColumn
+			</div>
+			<div class="field">
+				<input data-dojo-type="dijit/form/RadioButton" name="adjustLastColumn" value="true" id="${id}_adjustLastColumnTrue" type="radio">
+				<label for="${id}_adjustLastColumnTrue">true</label>
+				<input data-dojo-type="dijit/form/RadioButton" name="adjustLastColumn" value="false" id="${id}_adjustLastColumnFalse" type="radio">
+				<label for="${id}_adjustLastColumnFalse">false</label>
+			</div>
+
+			<div class="label">
+				minWidth
+			</div>
+			<div class="field">
+				<input data-dojo-type="dijit/form/NumberTextBox" name="minWidth" type="text" class="halfWidth">
+			</div>
+	</fieldset>
+</form>

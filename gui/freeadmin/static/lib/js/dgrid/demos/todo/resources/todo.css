@@ -1,0 +1,39 @@
+#container {
+	width: 500px;
+	margin: auto;
+}
+
+.actionArea {
+	position: absolute;
+	height: 2em;
+}
+.topArea {
+	top: 0;
+}
+.bottomArea {
+	bottom: 0;
+}
+
+#list {
+	position: absolute;
+	top: 2em;
+	bottom: 2em;
+	height: auto;
+	width: 500px;
+}
+
+#list .field-completed {
+	/* column with checkboxes for completing tasks */
+	width: 30px;
+}
+
+#list .completed {
+	/* tasks that are checked off on the list get this class applied */
+	text-decoration: line-through;
+	font-style: italic;
+}
+
+#txtTask {
+	/* text field for adding tasks */
+	width: 400px;
+}

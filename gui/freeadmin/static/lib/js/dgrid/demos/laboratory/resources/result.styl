@@ -1,0 +1,107 @@
+.gridTypeForm {
+	color: white;
+	font-size: 14px;
+	font-weight: 100;
+	margin-bottom: 10px;
+}
+
+.demoGridPane,
+.demoCodePane {
+	position: absolute;
+	top: 59px;
+	bottom: $renderPadding;
+	left: $renderPadding;
+	right: $renderPadding;
+}
+
+.demoGridPane {
+	color: #95a5a6;
+
+	.dgrid {
+		height: 100%;
+	}
+
+	.dgrid-content {
+		.dojoDndItem,
+		.dojoDndItemOver {
+		    padding: 0;
+		    border: 0;
+		}
+	}
+}
+
+.demoCodePane {
+	textarea {
+		background: #EBEBEB;
+		border: 0;
+		font-family: Consolas, Courier, monospace;
+		font-size: 12px;
+		height: 100%;
+		padding: 5px;
+		resize: none;
+		width: 100%;
+	}
+}
+
+.render {
+	padding-top:13px;
+
+	.gridBtn,
+	.codeBtn {
+		font-size:13px;
+		margin:0;
+		padding:0.55em 0.75em;
+		font-weight: normal;
+		cursor: pointer;
+		transition: background 0.3s;
+
+		i {
+			margin-right:0.45em;
+			position:relative;
+			top:1px;
+		}
+	}
+
+	.gridBtn {
+		border-radius: 4px 0 0 4px;
+	}
+
+	.codeBtn {
+		border-radius: 0 4px 4px 0;
+	}
+
+	&[data-selected-page="code"] {
+		.demoGridPane {
+			display: none;
+		}
+
+		.codeBtn {
+			background: $resultButtonOnBg;
+			color: $resultButtonOnText;
+		}
+		.gridBtn {
+			background: $resultButtonOffBg;
+			color: $resultButtonOffText;
+			&:hover {
+				background: lighten($resultButtonOnBg, 80%);
+			}
+		}
+	}
+
+	&[data-selected-page="grid"] {
+		.demoCodePane {
+			display: none;
+		}
+		.codeBtn {
+			background: $resultButtonOffBg;
+			color: $resultButtonOffText;
+			&:hover {
+				background: lighten($resultButtonOnBg, 80%);
+			}
+		}
+		.gridBtn {
+			background: $resultButtonOnBg;
+			color: $resultButtonOnText;
+		}
+	}
+}

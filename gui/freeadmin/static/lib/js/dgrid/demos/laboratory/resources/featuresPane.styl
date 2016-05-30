@@ -1,0 +1,65 @@
+
+.featureEditor .gridTypeForm {
+	line-height: 26px;
+	border: 0;
+	padding: 0;
+}
+
+/*
+ * Feature Editor Grid
+ */
+.featureEditor {
+	width: 100%;
+
+	.configForm {
+		width: 100% !important;
+
+		.dijitButton {
+			top: 18px;
+			right: 15px;
+			margin: 0;
+			z-index: 1;
+		}
+		a {
+			color: white;
+			font-size:13px;
+		}
+	}
+	.gridTypeForm {
+		padding: 10px;
+	}
+
+	.dgrid-row {
+		padding: 0 7px !important;
+		position:relative;
+
+		a {
+			text-decoration: none;
+			color: white;
+			font-size: 13px;
+		}
+		.icon-gear {
+			position:absolute;
+			right:10px;
+			top:8px;
+		}
+
+		.dgrid-cell {
+			padding:4px;
+		}
+	}
+
+	.dgrid-row-even:hover {
+		background: lighten($sidebarRowEvenBg, 5%);
+		transition: background 0.4s;
+	}
+
+	.dgrid-row-odd:hover {
+		background: lighten($sidebarRowOddBg, 5%);
+		transition: background 0.4s;
+	}
+
+	.field-selected {
+		width: 30px;
+	}
+}

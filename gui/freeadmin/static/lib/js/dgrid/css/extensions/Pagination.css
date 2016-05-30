@@ -19,9 +19,7 @@
 .dgrid-first, .dgrid-last, .dgrid-next, .dgrid-previous {
 	font-size: 130%;
 }
-.dgrid-pagination .dgrid-page-disabled,
-.has-ie-6-7 .dgrid-navigation .dgrid-page-disabled,
-.has-ie.has-quirks .dgrid-navigation .dgrid-page-disabled {
+.dgrid-pagination .dgrid-page-disabled {
 	color: #aaa;
 	cursor: default;
 }

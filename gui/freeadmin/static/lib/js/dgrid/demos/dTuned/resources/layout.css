@@ -1,0 +1,84 @@
+html, body {
+	width: 100%;
+	height: 100%;
+	overflow: hidden;
+}
+body {
+	font-family: "Lucida Grande", sans-serif;
+	font-size: 11px;
+	position: relative;
+}
+#header {
+	position: relative;
+	height: 64px;
+	background-image: url(images/header-background.png);
+	background-repeat: repeat-x;
+}
+#header-content {
+	position: absolute;
+	top: 10px;
+	left: 50%;
+	width: 431px;
+	height: 45px;
+	margin-left: -215px;
+	font-size: 18px;
+	font-weight: bold;
+	text-align: center;
+	padding-top: 12px;
+	background-image: url(images/header.png);
+	background-repeat: no-repeat;
+}
+#list-container {
+	position: absolute;
+	top: 65px;
+	left: 0;
+	right: 0;
+	height: 120px;
+}
+
+/* styles for the three lists in the top region */
+#genres, #artists, #albums {
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	width: 33.3%;
+	height: auto;
+}
+#list-container .dgrid-row { /* all rows in all 3 lists */
+	padding: 0.25em;
+	cursor: default;
+}
+
+#artists { left: 33.3%; }
+#albums { right: 0; }
+
+#grid {
+	position: absolute;
+	left: 0;
+	right: 0;
+	top: 187px;
+	bottom: 0;
+	height: auto; /* override default height: 30em; in dgrid.css */
+}
+
+#grid .dgrid-cell {
+	border: 0;
+}
+#grid .dgrid-header th {
+	border: 0;
+	border-right: 1px solid #a6a6a6;
+}
+#grid .dgrid-header th:last-child {
+	border: 0;
+}
+#grid .dgrid-row-even {
+	background-color: #f2f6fa;
+}
+#grid .dgrid-row-even.dgrid-selected {
+	background-color: #bfd6eb;
+}
+
+#grid .field-Time,
+#grid .field-Year { 
+	text-align: right; 
+}

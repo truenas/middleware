@@ -1,234 +1,279 @@
-define("xstyle/core/expression", ["xstyle/core/utils"], function(utils){
+define('xstyle/core/expression', ['xstyle/core/utils', 'xstyle/core/Definition'], function(utils, Definition){
 	// handles the creation of reactive expressions
-	var jsKeywords = {
-		'true': true, 'false': false, 'null': 'null', 'typeof': 'typeof', or: '||', and: '&&'
-	};
-	var nextId = 1;
-	function get(target, path, callback){
-		return utils.when(target, function(target){
-			var name = path[0];
-			if(!target){
-				return callback(name || target);
-			}
-			if(name && target.get){
-				return get(target.get(name), path.slice(1), callback);
-			}
-			if(target.receive){
-				return target.receive(name ? function(value){
-					get(value, path, callback);
-				} : callback);
-			}
-			if(name){
-				return get(target[name], path.slice(1), callback);
-			}
-			return callback(target);
-		});
-	}
-	function set(target, path, value){
-		get(target, path.slice(0, path.length - 1), function(target){
-			var property = path[path.length - 1];
-			target.set ?
-				target.set(property, value) :
-				target[property] = value;
-		});
-	}
-	return function(rule, name, value){
-		// evaluate a binding
-		var binding = rule["var-expr-" + name];
-		if(variables){
-			return binding;
+	function get(target, path){
+		var name = path[0];
+		if(name && target){
+			name = convertCssNameToJs(name);
+			return get(target.property ? target.property(name) : target[name], path.slice(1));
 		}
-		var variables = [], isElementDependent;
-		variables.id = nextId++;
-		var target, parameters = [], id = 0, callbacks = [],
-			attributeParts, expression = value.join ? value.join("") : value.toString(),
-			simpleExpression = expression.match(/^[\w_$\/\.-]*$/); 
-		// Do the parsing and function creation just once, and adapt the dependencies for the element at creation time
-		// deal with an array, converting strings to JS-eval'able strings
-			// find all the variables in the expression
-		expression = expression.replace(/("[^\"]*")|([\w_$\.\/-]+)/g, function(t, string, variable){
-			if(variable){
-				if(jsKeywords.hasOwnProperty(variable)){
-					return jsKeywords[variable];
+		return target;
+	}
+	var convertCssNameToJs = utils.convertCssNameToJs;
+	var someHasProperty = utils.someHasProperty;
+	function selfResolving(func){
+		func.selfResolving = true;
+		return func;
+	}
+
+	function contextualize(type, inputs, callback){
+		if(someHasProperty(inputs, type)){
+			var contextualizedObject = {};
+			contextualizedObject[type] = function(element){
+				var contextualized = [];
+				for(var i =0, l = inputs.length; i < l; i++){
+					var input = inputs[i];
+					if(input && typeof input[type] == 'function'){
+						//if(input.selectElement)
+						input = input[type](element);
+					}
+					contextualized[i] = input;
 				}
-				// for each reference, we break apart into variable reference and property references after each dot				
-				attributeParts = variable.split('/');
-				var parameterName = attributeParts.join('_').replace(/-/g,'_');
-				parameters.push(parameterName);
-				variables.push(attributeParts);
-				// first find the rule that is being referenced
-				var firstReference = attributeParts[0];
-				var target = rule.getDefinition(firstReference);
-				if(typeof target == 'string' || target instanceof Array){
-					target = evaluateExpression(rule, firstReference, target);
-				}else if(!target){
-					throw new Error('Could not find reference "' + firstReference + '"');					
+				return callback(contextualized);
+			};
+			return contextualizedObject;
+		}
+		return callback(inputs);
+
+	}
+	function react(forward, reverse){
+		return {
+			apply: function(instance, inputs, definition){
+				for(var i = 0, l = inputs.length; i < l; i++){
+					var input = inputs[i];
+					input.dependencyOf && input.dependencyOf(definition);
 				}
-				if(target.forElement){
-					isElementDependent = true;
-				}
-				attributeParts[0] = target;
-				// we will reference the variable a function argument in the function we will create
-				return parameterName;
-			}
-			return t;
-		})
-	
-		if(simpleExpression){
-			// a direct reversible reference
-			// no forward reactive needed
-			if(name){
-				// create the reverse function
-				var reversal = function(element, name, value){
-					utils.when(findAttributeInAncestors(element, attributeParts[0], attributeParts[1]), function(target){
-						for(var i = 2; i < attributeParts.length -1; i++){
-							var name = attributeParts[i];
-							target = target.get ?
-								target.get(name) :
-								target[name];
-						}
-						var name = attributeParts[i];
-						if(target.set){
-							target.set(name, value);
-						}else{
-							target[name] = value;
-						}
+				var compute = function(){
+					var results = [];
+					// TODO: make an opt-out for this
+					if(forward.selfExecuting){
+						return forward.apply(instance, inputs, definition);
+					}
+					for(var i = 0, l = inputs.length; i < l; i++){
+						results[i] = inputs[i].valueOf();
+					}
+					if(forward.selfWaiting){
+						return forward.apply(instance, results, definition);
+					}
+					// include the instance in whenAll
+					results.push(instance);
+					// wait for the values to be received
+					return utils.whenAll(results, function(inputs){
+						var instance = inputs.pop();
+						// contextualize along each dimension
+						return contextualize('forRule', inputs, function(inputs){
+							return contextualize('forElement', inputs, function(results){
+								return forward.apply(instance, results, definition);
+							});
+						});
 					});
 				};
-				reversal.rule = rule;
-//				(reversalOfAttributes[name] || (reversalOfAttributes[name] = [])).push(reversal);
-			}
-		}else{
-			// it's a full expression, so we create a time-varying bound function with the expression
-			var reactiveFunction = Function.apply(this, parameters.concat(['return (' + expression + ')']));
-		}
-		variables.func = reactiveFunction;
-		rule["var-expr-" + name] = variables;
-		function getComputation(){
-			var waiting = variables.length + 1;
-			var values = [], callbacks = [];
-			var result, isResolved, stopped;
-			var done = function(i){
-				return function(value){
-					if(stopped){
-						return;
-					}
-					values[i] = value;
-					waiting--;
-					if(waiting <= 0){
-						isResolved = true;
-						result = reactiveFunction ? reactiveFunction.apply(this, values) : values[0];
-						for(var j = 0; j < callbacks.length;j++){
-							callbacks[j](result);
-						}
-					}
+				compute.reverse = function(value){
+					return reverse(value, inputs);
 				};
-			};
-			if(reactiveFunction){
-				for(var i = 0; i < variables.length; i++){
-					var variable = variables[i];
-					get(variable[0], variable.slice(1), done(i));
+				return compute;
+			}
+		};
+	}
+	var deny = {};
+	var operatingFunctions = {};
+	var operators = {};
+	function getOperatingFunction(expression){
+		// jshint evil: true
+		return operatingFunctions[expression] ||
+			(operatingFunctions[expression] =
+				new Function('a', 'b', 'return ' + expression));
+	}
+	function operator(operator, precedence, forward, reverseA, reverseB){
+		// defines the standard operators
+		var reverse = function(output, inputs){
+			var a = inputs[0],
+				b = inputs[1];
+			if(a && a.put){
+				var result = reverseA(output, b && b.valueOf());
+				if(result !== deny){
+					a.put(result);
 				}
+			}else if(b && b.put){
+				b.put(reverseB(output, a && a.valueOf()));
 			}else{
-				var variable = variables[0];
-				var value = {
-					then: function(callback){
-						callbacks ? 
-							callbacks.push(callback) :
-							callback(value); // immediately available
-					}
-				}
-				utils.when(variable[0], function(resolved){
-					value = resolved;
-					for(var j = 1; j < variable.length; j++){
-						if(value && value.get){
-							value = value.get(variable[j]);
-						}else{
-							value = {
-								receive: function(callback){
-									get(resolved, variable.slice(1), callback);
-								},
-								put: function(value){
-									set(resolved, variable.slice(1), value);
-								}
-							};
-							break;
-						}
-					}
-					for(var j = 0; j < callbacks.length; j++){
-						callbacks[j](value);
-					}
-					// accept no more callbacks, since we have resolved
-					callbacks = null;
-				});
-				return value;
-				if(first && first.then){
-					return {
-						then: function(callback){
-							get(variable[0], variable.slice(1), callback);
-						}
-					};
-				}else{
-					return variable;
-				}
+				throw new TypeError('Can not put');
 			}
-			done(-1)();
-			if(result && result.then){
-				return result;
+		};
+		// define a function that can lazily ensure the operating function
+		// is available
+		var operatorHandler = {
+			apply: function(instance, args, definition){
+				var operatorReactive;
+				forward = getOperatingFunction(forward);
+				reverseA = reverseA && getOperatingFunction(reverseA);
+				reverseB = reverseB && getOperatingFunction(reverseB);
+				operators[operator] = operatorReactive = react(forward, reverse);
+				addFlags(operatorReactive);
+				return operatorReactive.apply(instance, args, definition);
 			}
-			return {
-				receive: function(callback){
-					if(callbacks){
-						callbacks.push(callback);
-					}
-					if(isResolved){
-						callback(result);
-					}
-				},
-				stop: function(){
-					// TODO: this is not the right way to do this, we need to remove
-					// all the variable listeners and properly destroy this
-					stopped = true;
+		};
+		function addFlags(operatorHandler){
+			operatorHandler.skipResolve = true;
+			operatorHandler.precedence = precedence;
+			operatorHandler.infix = reverseB !== false;
+		}
+		addFlags(operatorHandler);
+		operators[operator] = operatorHandler;
+	}
+	// using order precedence from:
+	// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Operators/Operator_Precedence
+	operator('+', 6, 'a+b', 'a-b', 'a-b');
+	operator('-', 6, 'a-b', 'a+b', 'b-a');
+	operator('*', 5, 'a*b', 'a/b', 'a/b');
+	operator('/', 5, 'a/b', 'a*b', 'b/a');
+//	operator('^', 7, 'a^b', 'a^(-b)', 'Math.log(a)/Math.log(b)');
+	operator('?', 16, 'b[a?0:1]', 'a===b[0]||(a===b[1]?false:deny)', '[a,b]');
+	operator(':', 15, '[a,b]', 'a[0]?a[1]:deny', 'a[1]');
+	operator('!', 4, '!a', '!a', false);
+	operator('%', 5, 'a%b');
+	operator('>', 8, 'a>b');
+	operator('>=', 8, 'a>=b');
+	operator('<', 8, 'a<b');
+	operator('<=', 8, 'a<=b');
+	operator('==', 9, 'a===b');
+	operator('&', 8, 'a&&b');
+	operator('|', 8, 'a||b');
+
+	function evaluateExpression(rule, value){
+		// evaluate an expression
+		/*
+		// TODO: do we need to cache this?
+		var binding = rule['var-expr-' + name];
+		if(variables){
+			return binding;
+		}*/
+		var i;
+		var part;
+		value = value.join ? value.slice() : [value];
+		for(i = 0; i < value.length; i++){
+			part = value[i];
+			if(typeof part == 'string'){
+				// parse out operators
+				// TODO: change this to a replace so we can find any extra characters to report
+				// a syntax error
+				var parts = part.match(/"[^\"]*"|[+\-<>\|\/\?\:^*!&|]+|[\w_$\.\/-]+/g);
+				var spliceArgs = [i, 1];
+				if(parts){
+					spliceArgs.push.apply(spliceArgs, parts);
 				}
+				// splice them back into the list
+				value.splice.apply(value, spliceArgs);
+				// adjust the index
+				i += spliceArgs.length - 3;
 			}
 		}
-		return rule["var-expr-" + name] = isElementDependent ? {
-			forElement: function(element){
-				// TODO: at some point may make this async
-				var callbacks = [];
-				var mostSpecificElement;
-				var elementVariables = [];
-				// now find the element that matches that rule, in case we are dealing with a child
-				var parentElement;
-				for(var i = 0; i < variables.length; i++){
-					var variable = variables[i];
-					var target = variable[0];
-					// now find the element that is keyed on
-					if(target.forElement){
-						target = variable[0] = target.forElement(element, variable.length == 1);
-					}
-					// we need to find the most parent element that we need to vary on for this computation 
-					var varyOnElement = parentElement = target.element;
-					if(mostSpecificElement){
-						// check to see if one its parent is the mostSpecificElement
-						while(parentElement && parentElement != mostSpecificElement){
-							parentElement = parentElement.parentNode;
+		var lastOperatorPrecedence;
+		var stack = [];
+		var lastOperator;
+		// TODO: might only enable this in debug mode
+		var dependencies = {};
+		// now apply operators
+		for(i = 0; i < value.length; i++){
+			part = value[i];
+			if(part.operator == '('){
+				var functionDefinition = stack[stack.length - 1];
+				// pop off the name that precedes
+				if(functionDefinition === undefined || operators.hasOwnProperty(functionDefinition)){
+					part = evaluateExpression(rule, part.getArgs()[0]);
+				}else{
+					// a function call
+					stack.pop();
+					part = (function(functionDefinition, args){
+						var resolved;
+						var compute;
+						function resolveValue(reverse){
+							return utils.when(functionDefinition.valueOf(), function(functionValue){
+								var instance = functionDefinition.parent &&
+									functionDefinition.parent.valueOf();
+								if(!functionValue.selfResolving){
+									if(!resolved){
+										resolved = [];
+										for(var i = 0, l = args.length; i < l; i++){
+											resolved[i] = evaluateExpression(rule, args[i]);
+										}
+										if(functionValue.selfReacting){
+											compute = functionValue.apply(instance, resolved, definition);
+										}else{
+											compute = react(functionValue).apply(instance, resolved, definition);
+										}
+									}
+									return compute();
+								}
+								var applied = functionValue.apply(instance, args, definition);
+								return reverse ? applied : applied.valueOf();
+							});
 						}
-						// if so, we have a new most specific
-					}	
-					if(parentElement){
-						mostSpecificElement = varyOnElement;
-					}
+						var definition = new Definition(resolveValue);
+						definition.setReverseCompute(function(){
+							var args = arguments;
+							return utils.when(resolveValue(true), function(resolved){
+								return resolved.put.apply(resolved, args);
+							});
+						});
+						return definition;
+					})(functionDefinition, part.getArgs());
 				}
-				// make sure we indicate the store we are keying off of
-				var computation = mostSpecificElement["expr-result-" + variables.id];
-				if(!computation){
-					mostSpecificElement["expr-result-" + variables.id] = computation = getComputation();
-					computation.element = mostSpecificElement;
+			}else if(operators.hasOwnProperty(part)){
+				// it is an operator, it has been added to the stack, but we need
+				// to apply on the stack of higher priority
+				var operator = operators[part];
+				windDownStack(operator);
+				lastOperatorPrecedence = (lastOperator || operator).precedence;
+			}else if(part > -1){
+				// a number literal
+				part = +part;
+			}else if(part.isLiteralString){
+				// a quoted string
+				part = part.value;
+			}else{
+				// a reference
+				var propertyParts = part.split(/\s*\/\s*/);
+				var firstReference = propertyParts[0];
+				var target = rule.getDefinition(firstReference);
+				if(typeof target == 'string' || target instanceof Array){
+					target = evaluateExpression(rule, target);
+				}else if(target === undefined){
+					throw new Error('Could not find reference "' + firstReference + '"');
 				}
-				return computation;
+				dependencies[firstReference] = target;
+				if(propertyParts.length > 1){
+					target = get(target, propertyParts.slice(1));
+				}
+				part = target;
 			}
-		} : getComputation();
+			stack.push(part);
+		}
+		// finally apply any operators still on the stack
+		windDownStack({precedence: 100});
+		function windDownStack(operator){
+			// apply waiting operators of higher precedence
+			while(lastOperatorPrecedence <= operator.precedence){
+				var lastOperand = stack.pop();
+				var executingOperator = operators[stack.pop()];
+				var result = new Definition();
+				result.setCompute(executingOperator.apply(null, executingOperator.infix ?
+					[stack.pop(), lastOperand] : [lastOperand], result));
+				lastOperator = stack.length ? stack[stack.length-1] : undefined;
+				stack.push(result);
+				lastOperatorPrecedence = lastOperator && operators[lastOperator] && operators[lastOperator].precedence;
+			}
+		}
+		if(stack.length > 1){
+			throw new Error('Could not reduce expression');
+		}
+		part = stack[0];
+		part.inputs = dependencies;
+		return part;
 	}
-	
+
+	return {
+		react: react,
+		evaluate: evaluateExpression,
+		selfResolving: selfResolving
+	};
 });

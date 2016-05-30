@@ -1,0 +1,10 @@
+<div data-dojo-attach-point="containerNode">
+	<form data-dojo-type="dijit/form/Form" class="columnGridForm"
+		  data-dojo-attach-point="columnGridForm"
+		  data-dojo-attach-event="onSubmit: _onFormSubmit">
+		<input data-dojo-type="dijit/form/TextBox" name="label"
+			   data-dojo-attach-point="fieldLabelTextBox" placeholder="${i18n.fieldNamePlaceholder}">
+		<button type="submit" class="addBtn" data-dojo-attach-point="addColumnButton">+</button>
+	</form>
+	<div data-dojo-attach-point="gridNode"></div>
+</div>

@@ -1,3 +1,3 @@
 define({
-	status: "${start} - ${end} de ${total} resultados"
+	status: '${start} - ${end} de ${total} resultados'
 });

@@ -1,5 +1,12 @@
-define(["dojo/_base/declare", "dojo/has", "dojo/on", "../util/misc", "put-selector/put", "dojo/i18n!./nls/columnHider", "xstyle/css!../css/extensions/ColumnHider.css"],
-function(declare, has, listen, miscUtil, put, i18n){
+define([
+	'dojo/_base/declare',
+	'dojo/has',
+	'dojo/on',
+	'../util/misc',
+	'put-selector/put',
+	'dojo/i18n!./nls/columnHider',
+	'xstyle/css!../css/extensions/ColumnHider.css'
+], function (declare, has, listen, miscUtil, put, i18n) {
 /*
  *	Column Hider plugin for dgrid
  *	Originally contributed by TRT 2011-09-28
@@ -17,62 +24,58 @@ function(declare, has, listen, miscUtil, put, i18n){
  *		definition as a template to write your own plugin.
  *
  */
-	
+
 	var activeGrid, // references grid for which the menu is currently open
-		bodyListener, // references pausable event handler for body mousedown
-		// Need to handle old IE specially for checkbox listener and for attribute.
-		hasIE = has("ie"),
-		hasIEQuirks = hasIE && has("quirks"),
-		forAttr = hasIE < 8 || hasIEQuirks ? "htmlFor" : "for";
-	
-	function getColumnIdFromCheckbox(cb, grid){
+		bodyListener; // references pausable event handler for body mousedown
+
+	function getColumnIdFromCheckbox(cb, grid) {
 		// Given one of the checkboxes from the hider menu,
 		// return the id of the corresponding column.
 		// (e.g. gridIDhere-hider-menu-check-colIDhere -> colIDhere)
 		return cb.id.substr(grid.id.length + 18);
 	}
-	
+
 	return declare(null, {
 		// hiderMenuNode: DOMNode
 		//		The node for the menu to show/hide columns.
 		hiderMenuNode: null,
-		
+
 		// hiderToggleNode: DOMNode
 		//		The node for the toggler to open the menu.
 		hiderToggleNode: null,
-		
+
 		// i18nColumnHider: Object
 		//		This object contains all of the internationalized strings for
 		//		the ColumnHider extension as key/value pairs.
 		i18nColumnHider: i18n,
-		
+
 		// _hiderMenuOpened: Boolean
 		//		Records the current open/closed state of the menu.
 		_hiderMenuOpened: false,
-		
+
 		// _columnHiderRules: Object
 		//		Hash containing handles returned from addCssRule.
 		_columnHiderRules: null,
-		
+
 		// _columnHiderCheckboxes: Object
 		//		Hash containing checkboxes generated for menu items.
 		_columnHiderCheckboxes: null,
-		
-		_renderHiderMenuEntries: function(){
+
+		_renderHiderMenuEntries: function () {
 			// summary:
 			//		Iterates over subRows for the sake of adding items to the
 			//		column hider menu.
-			
+
 			var subRows = this.subRows,
 				first = true,
 				srLength, cLength, sr, c;
-			
+
 			delete this._columnHiderFirstCheckbox;
-			
-			for(sr = 0, srLength = subRows.length; sr < srLength; sr++){
-				for(c = 0, cLength = subRows[sr].length; c < cLength; c++){
+
+			for (sr = 0, srLength = subRows.length; sr < srLength; sr++) {
+				for (c = 0, cLength = subRows[sr].length; c < cLength; c++) {
 					this._renderHiderMenuEntry(subRows[sr][c]);
-					if(first){
+					if (first) {
 						first = false;
 						this._columnHiderFirstCheckbox =
 							this._columnHiderCheckboxes[subRows[sr][c].id];
@@ -80,152 +83,157 @@ function(declare, has, listen, miscUtil, put, i18n){
 				}
 			}
 		},
-		
-		_renderHiderMenuEntry: function(col){
+
+		_renderHiderMenuEntry: function (col) {
 			var id = col.id,
-				replacedId = miscUtil.escapeCssIdentifier(id, "-"),
+				replacedId = miscUtil.escapeCssIdentifier(id, '-'),
 				div,
 				checkId,
 				checkbox,
 				label;
-			
-			if(col.hidden){
+
+			if (col.hidden) {
 				// Hide the column (reset first to avoid short-circuiting logic)
 				col.hidden = false;
 				this._hideColumn(id);
 				col.hidden = true;
 			}
-			
+
 			// Allow cols to opt out of the hider (e.g. for selector column).
-			if(col.unhidable){ return; }
-			
+			if (col.unhidable) {
+				return;
+			}
+
 			// Create the checkbox and label for each column selector.
-			div = put("div.dgrid-hider-menu-row");
-			checkId = this.domNode.id + "-hider-menu-check-" + replacedId;
-			
+			div = put('div.dgrid-hider-menu-row');
+			checkId = this.domNode.id + '-hider-menu-check-' + replacedId;
+
 			// put-selector can't handle invalid selector characters, and the
 			// ID could have some, so add it directly
 			checkbox = this._columnHiderCheckboxes[id] =
-				put(div, "input.dgrid-hider-menu-check.hider-menu-check-" + replacedId + "[type=checkbox]");
+				put(div, 'input.dgrid-hider-menu-check.hider-menu-check-' + replacedId + '[type=checkbox]');
 			checkbox.id = checkId;
-			
-			label = put(div, "label.dgrid-hider-menu-label.hider-menu-label-" + replacedId +
-				"[" + forAttr + "=" + checkId + "]",
-				col.label || col.field || "");
-			
+
+			label = put(div, 'label.dgrid-hider-menu-label.hider-menu-label-' + replacedId +
+				'[for=' + checkId + ']',
+				col.label || col.field || '');
+
 			put(this.hiderMenuNode, div);
-			
-			if(!col.hidden){
+
+			if (!col.hidden) {
 				// Hidden state is false; checkbox should be initially checked.
 				// (Need to do this after adding to DOM to avoid IE6 clobbering it.)
 				checkbox.checked = true;
 			}
 		},
-		
-		renderHeader: function(){
+
+		renderHeader: function () {
 			var grid = this,
 				hiderMenuNode = this.hiderMenuNode,
 				hiderToggleNode = this.hiderToggleNode,
 				id;
-			
-			function stopPropagation(event){
+
+			function stopPropagation(event) {
 				event.stopPropagation();
 			}
-			
+
 			this.inherited(arguments);
-			
-			if(!hiderMenuNode){ // first run
+
+			if (!hiderMenuNode) {
+				// First run
 				// Assume that if this plugin is used, then columns are hidable.
 				// Create the toggle node.
 				hiderToggleNode = this.hiderToggleNode =
-					put(this.domNode, "button.ui-icon.dgrid-hider-toggle[type=button]");
-				
-				this._listeners.push(listen(hiderToggleNode, "click", function(e){
+					put(this.domNode, 'button.ui-icon.dgrid-hider-toggle[type=button][aria-label=' +
+						this.i18nColumnHider.popupTriggerLabel + ']');
+
+				this._listeners.push(listen(hiderToggleNode, 'click', function (e) {
 					grid._toggleColumnHiderMenu(e);
 				}));
-	
+
 				// Create the column list, with checkboxes.
 				hiderMenuNode = this.hiderMenuNode =
-					put("div.dgrid-hider-menu[role=dialog][aria-label=" +
-						this.i18nColumnHider.popupLabel + "]");
-				hiderMenuNode.id = this.id + "-hider-menu";
+					put('div.dgrid-hider-menu[role=dialog][aria-label=' +
+						this.i18nColumnHider.popupLabel + ']');
+				hiderMenuNode.id = this.id + '-hider-menu';
 
-				this._listeners.push(listen(hiderMenuNode, "keyup", function (e) {
+				this._listeners.push(listen(hiderMenuNode, 'keyup', function (e) {
 					var charOrCode = e.charCode || e.keyCode;
-					if(charOrCode === /*ESCAPE*/ 27){
+					if (charOrCode === /*ESCAPE*/ 27) {
 						grid._toggleColumnHiderMenu(e);
 						hiderToggleNode.focus();
 					}
 				}));
-				
+
 				// Make sure our menu is initially hidden, then attach to the document.
-				hiderMenuNode.style.display = "none";
+				hiderMenuNode.style.display = 'none';
 				put(this.domNode, hiderMenuNode);
-				
+
 				// Hook up delegated listener for modifications to checkboxes.
 				this._listeners.push(listen(hiderMenuNode,
-						".dgrid-hider-menu-check:" + (hasIE < 9 || hasIEQuirks ? "click" : "change"),
-					function(e){
+						'.dgrid-hider-menu-check:' + (has('ie') < 9 ? 'click' : 'change'),
+					function (e) {
 						grid._updateColumnHiddenState(
 							getColumnIdFromCheckbox(e.target, grid), !e.target.checked);
 					}
 				));
-				
+
 				// Stop click events from propagating from menu or trigger nodes,
 				// so that we can simply track body clicks for hide without
 				// having to drill-up to check.
 				this._listeners.push(
-					listen(hiderMenuNode, "mousedown", stopPropagation),
-					listen(hiderToggleNode, "mousedown", stopPropagation)
+					listen(hiderMenuNode, 'mousedown', stopPropagation),
+					listen(hiderToggleNode, 'mousedown', stopPropagation)
 				);
-				
+
 				// Hook up top-level mousedown listener if it hasn't been yet.
-				if(!bodyListener){
-					bodyListener = listen.pausable(document, "mousedown", function(e){
+				if (!bodyListener) {
+					bodyListener = listen.pausable(document, 'mousedown', function (e) {
 						// If an event reaches this listener, the menu is open,
 						// but a click occurred outside, so close the dropdown.
 						activeGrid && activeGrid._toggleColumnHiderMenu(e);
 					});
 					bodyListener.pause(); // pause initially; will resume when menu opens
 				}
-			}else{ // subsequent run
+			}
+			else { // subsequent run
 				// Remove active rules, and clear out the menu (to be repopulated).
-				for(id in this._columnHiderRules){
+				for (id in this._columnHiderRules) {
 					this._columnHiderRules[id].remove();
 				}
-				hiderMenuNode.innerHTML = "";
+				hiderMenuNode.innerHTML = '';
 			}
-			
+
 			this._columnHiderCheckboxes = {};
 			this._columnHiderRules = {};
 
 			// Populate menu with checkboxes/labels based on current columns.
 			this._renderHiderMenuEntries();
 		},
-		
-		destroy: function(){
+
+		destroy: function () {
 			this.inherited(arguments);
 			// Remove any remaining rules applied to hidden columns.
-			for(var id in this._columnHiderRules){
+			for (var id in this._columnHiderRules) {
 				this._columnHiderRules[id].remove();
 			}
 		},
-		
-		left: function(cell, steps){
+
+		left: function (cell, steps) {
 			return this.right(cell, -steps);
 		},
-		
-		right: function(cell, steps){
-			if(!cell.element){
+
+		right: function (cell, steps) {
+			if (!cell.element) {
 				cell = this.cell(cell);
 			}
 			var nextCell = this.inherited(arguments),
 				prevCell = cell;
-			
+
 			// Skip over hidden cells
-			while(nextCell.column.hidden){
+			while (nextCell.column.hidden) {
 				nextCell = this.inherited(arguments, [nextCell, steps > 0 ? 1 : -1]);
-				if(prevCell.element === nextCell.element){
+				if (prevCell.element === nextCell.element) {
 					// No further visible cell found - return original
 					return cell;
 				}
@@ -233,27 +241,28 @@ function(declare, has, listen, miscUtil, put, i18n){
 			}
 			return nextCell;
 		},
-		
-		isColumnHidden: function(id){
+
+		isColumnHidden: function (id) {
 			// summary:
 			//		Convenience method to determine current hidden state of a column
 			return !!this._columnHiderRules[id];
 		},
-		
-		_toggleColumnHiderMenu: function(){
+
+		_toggleColumnHiderMenu: function () {
 			var hidden = this._hiderMenuOpened, // reflects hidden state after toggle
 				hiderMenuNode = this.hiderMenuNode,
 				domNode = this.domNode,
 				firstCheckbox;
 
 			// Show or hide the hider menu
-			hiderMenuNode.style.display = (hidden ? "none" : "");
+			hiderMenuNode.style.display = (hidden ? 'none' : '');
 
 			// Adjust height of menu
 			if (hidden) {
 				// Clear the set size
-				hiderMenuNode.style.height = "";
-			} else {
+				hiderMenuNode.style.height = '';
+			}
+			else {
 				// Adjust height of the menu if necessary
 				// Why 12? Based on menu default paddings and border, we need
 				// to adjust to be 12 pixels shorter. Given the infrequency of
@@ -261,14 +270,14 @@ function(declare, has, listen, miscUtil, put, i18n){
 				// static value of 12 for now, to avoid pulling in any sort of
 				// computed styles.
 				if (hiderMenuNode.offsetHeight > domNode.offsetHeight - 12) {
-					hiderMenuNode.style.height = (domNode.offsetHeight - 12) + "px";
+					hiderMenuNode.style.height = (domNode.offsetHeight - 12) + 'px';
 				}
 				// focus on the first checkbox
 				(firstCheckbox = this._columnHiderFirstCheckbox) && firstCheckbox.focus();
 			}
 
 			// Pause or resume the listener for clicks outside the menu
-			bodyListener[hidden ? "pause" : "resume"]();
+			bodyListener[hidden ? 'pause' : 'resume']();
 
 			// Update activeGrid appropriately
 			activeGrid = hidden ? null : this;
@@ -276,14 +285,14 @@ function(declare, has, listen, miscUtil, put, i18n){
 			// Toggle the instance property
 			this._hiderMenuOpened = !hidden;
 		},
-		
-		_hideColumn: function(id){
+
+		_hideColumn: function (id) {
 			// summary:
 			//		Hides the column indicated by the given id.
-			
+
 			// Use miscUtil function directly, since we clean these up ourselves anyway
 			var grid = this,
-				selectorPrefix = "#" + miscUtil.escapeCssIdentifier(this.domNode.id) + " .dgrid-column-",
+				selectorPrefix = '#' + miscUtil.escapeCssIdentifier(this.domNode.id) + ' .dgrid-column-',
 				tableRule; // used in IE8 code path
 
 			if (this._columnHiderRules[id]) {
@@ -291,43 +300,45 @@ function(declare, has, listen, miscUtil, put, i18n){
 			}
 
 			this._columnHiderRules[id] =
-				miscUtil.addCssRule(selectorPrefix + miscUtil.escapeCssIdentifier(id, "-"),
-					"display: none;");
+				miscUtil.addCssRule(selectorPrefix + miscUtil.escapeCssIdentifier(id, '-'),
+					'display: none;');
 
-			if(has("ie") === 8 && !has("quirks")){
-				tableRule = miscUtil.addCssRule(".dgrid-row-table", "display: inline-table;");
+			if (has('ie') === 8 || has('ie') === 10) {
+				// Work around IE8 display issue and IE10 issue where
+				// header/body cells get out of sync when ColumnResizer is also used
+				tableRule = miscUtil.addCssRule('.dgrid-row-table', 'display: inline-table;');
 
-				window.setTimeout(function(){
+				window.setTimeout(function () {
 					tableRule.remove();
 					grid.resize();
 				}, 0);
 			}
 		},
-		
-		_showColumn: function(id){
+
+		_showColumn: function (id) {
 			// summary:
 			//		Shows the column indicated by the given id
 			//		(by removing the rule responsible for hiding it).
-			
-			if(this._columnHiderRules[id]){
+
+			if (this._columnHiderRules[id]) {
 				this._columnHiderRules[id].remove();
 				delete this._columnHiderRules[id];
 			}
 		},
-		
-		_updateColumnHiddenState: function(id, hidden){
+
+		_updateColumnHiddenState: function (id, hidden) {
 			// summary:
 			//		Performs internal work for toggleColumnHiddenState; see the public
 			//		method for more information.
-			
+
 			this[hidden ? '_hideColumn' : '_showColumn'](id);
-			
+
 			// Update hidden state in actual column definition,
 			// in case columns are re-rendered.
 			this.columns[id].hidden = hidden;
-			
+
 			// Emit event to notify of column state change.
-			listen.emit(this.domNode, "dgrid-columnstatechange", {
+			listen.emit(this.domNode, 'dgrid-columnstatechange', {
 				grid: this,
 				column: this.columns[id],
 				hidden: hidden,
@@ -337,8 +348,8 @@ function(declare, has, listen, miscUtil, put, i18n){
 			// Adjust the size of the header.
 			this.resize();
 		},
-		
-		toggleColumnHiddenState: function(id, hidden){
+
+		toggleColumnHiddenState: function (id, hidden) {
 			// summary:
 			//		Shows or hides the column with the given id.
 			// id: String
@@ -346,12 +357,16 @@ function(declare, has, listen, miscUtil, put, i18n){
 			// hide: Boolean?
 			//		If specified, explicitly sets the hidden state of the specified
 			//		column.  If unspecified, toggles the column from the current state.
-			
-			if(typeof hidden === "undefined"){ hidden = !this._columnHiderRules[id]; }
+
+			if (typeof hidden === 'undefined') {
+				hidden = !this._columnHiderRules[id];
+			}
 			this._updateColumnHiddenState(id, hidden);
-			
+
 			// Since this can be called directly, re-sync the appropriate checkbox.
-			this._columnHiderCheckboxes[id].checked = !hidden;
+			if (this._columnHiderCheckboxes[id]) {
+				this._columnHiderCheckboxes[id].checked = !hidden;
+			}
 		}
 	});
 });

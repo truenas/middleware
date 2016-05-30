@@ -1,3 +1,4 @@
+/* dgrid skin for dTuned demo */
 .dTuned .dgrid {
 	background: #fff;
 	color: #000;
@@ -24,9 +25,6 @@
 	-o-transition-property: background-color, border-color;
 	transition-property: background-color, border-color;
 	background: url("../../../css/skins/images/row_back.png") #fff repeat-x;
-}
-.has-ie-6 .dTuned .dgrid-row {
-	background-image: none;
 }
 
 .dTuned .dgrid-row:hover {

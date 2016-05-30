@@ -1,0 +1,43 @@
+<form class="${baseClass}">
+	<fieldset>
+		<legend data-dojo-attach-point="legendNode"></legend>
+
+		<div class="label">
+			${i18n.parentNodeColumn}
+		</div>
+		<div class="field">
+			<select data-dojo-type="dijit/form/FilteringSelect" name="renderExpando"
+				data-dojo-attach-point="expandoSelect">
+			</select>
+		</div>
+
+		<div class="label">
+			treeIndentWidth
+		</div>
+		<div class="field">
+			<input data-dojo-type="dijit/form/NumberTextBox"
+				   name="treeIndentWidth" type="text" class="halfWidth">
+			px
+		</div>
+
+		<div class="label">
+			collapseOnRefresh
+		</div>
+		<div class="field">
+			<input data-dojo-type="dijit/form/RadioButton" name="collapseOnRefresh" value="true" id="${id}_collapseTrue" type="radio">
+			<label for="${id}_collapseTrue">true</label>
+			<input data-dojo-type="dijit/form/RadioButton" name="collapseOnRefresh" value="false" id="${id}_collapseFalse" type="radio">
+			<label for="${id}_collapseFalse">false</label>
+		</div>
+
+		<div class="label">
+			enableTreeTransitions
+		</div>
+		<div class="field">
+			<input data-dojo-type="dijit/form/RadioButton" name="enableTreeTransitions" value="true" id="${id}_transitionsTrue" type="radio">
+			<label for="${id}_transitionsTrue">true</label>
+			<input data-dojo-type="dijit/form/RadioButton" name="enableTreeTransitions" value="false" id="${id}_transitionsFalse" type="radio">
+			<label for="${id}_transitionsFalse">false</label>
+		</div>
+	</fieldset>
+</form>

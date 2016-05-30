@@ -1,0 +1,22 @@
+form = module(xstyle/ext/form);
+field = form/field;
+
+form-field = {
+	=>
+		label (content/label)
+		input (content)
+		span.error (content/errors);
+}
+
+model = module(xstyle/test/form-data);
+
+body {
+	=>
+		h1 (model/firstName)
+		form (model)
+			field (model/firstName)
+				label 'First Name'
+				input[name=firstName][type=text]
+			form-field (model/lastName)
+			form-field (model/age);	
+}

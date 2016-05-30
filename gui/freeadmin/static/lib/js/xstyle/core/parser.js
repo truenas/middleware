@@ -1,8 +1,9 @@
-define("xstyle/core/parser", ["xstyle/core/utils"], function(utils){
+define('xstyle/core/parser', [], function(){
 	// regular expressions used to parse CSS
 	var singleQuoteScan = /((?:\\.|[^'])*)'/g;
 	var doubleQuoteScan = /((?:\\.|[^"])*)"/g;
-	var commentScan = /\/\*[\w\W]*?\*\//g; // preserve carriage returns to retain line numbering once we do line based error reporting 
+	// preserve carriage returns to retain line numbering once we do line based error reporting 
+	var commentScan = /\/\*[\w\W]*?\*\//g;
 	var operatorMatch = {
 		'{': '}',
 		'[': ']',
@@ -28,15 +29,48 @@ define("xstyle/core/parser", ["xstyle/core/utils"], function(utils){
 	}
 	LiteralString.prototype.toString = function(){
 		return '"' + this.value.replace(/["\\\n\r]/g, '\\$&') + '"';
+	};
+	LiteralString.prototype.isLiteralString = true;
+
+	function parseArgs(){
+		var parsedArgs, sequence = this.args[0];
+		// parse the commas now, to separate into distint args
+		if(typeof sequence == 'string'){
+			// TODO: does this ever happen
+			// simple string split
+			parsedArgs = sequence.split(/\s*,\s*/);
+		}else if(sequence){
+			// need to go through the sequence to find comma splits
+			parsedArgs = [];
+			var lastPosition = 0;
+			for(var i = 0; i < sequence.length + 1; i++){ // go one past, so we can do cleanup
+				var arg = sequence[i];
+				if(typeof arg == 'string' || arg === undefined){
+					var parts = arg && arg.split(/\s*,\s*/);
+					if(parsedArgs.length > 1 || parts === undefined){
+						var nextSequence = sequence.slice(lastPosition, i);
+						if(lastPosition > 0){
+							nextSequence.unshift(parsedArgs.pop());
+						}
+						lastPosition = i + 1;
+						parsedArgs.push(nextSequence);
+						parts && parsedArgs.push.apply(parsedArgs, parts.slice(1));
+					}
+				}
+			}
+		}else{
+			return [];
+		}
+		return parsedArgs;
 	}
 	
 	function parse(model, textToParse, styleSheet){
+		styleSheet = styleSheet || {addRule: function(){}, cssRules: []};
 		var mainScan;
 		var cssScan = mainScan = /(\s*)((?:[^{\}\[\]\(\)\\'":=;]|\[(?:[^\]'"]|'(?:\\.|[^'])*'|"(?:\\.|[^"])*")\])*)([=:]\??\s*([^{\}\[\]\(\)\\'":;]*))?(?:([{\}\[\]\(\)\\'":;])(\/\d+)?|$)/g;
-									// name: value 	operator
+		                   // whitespace          name          or attribute or  'string'    or  "string"          assignmentOperator  value                operator           build ref
 		// tracks the stack of rules as they get nested
 		var stack = [model];
-		var ruleMap = {};
 		model.parse = parseSheet;
 		parseSheet(textToParse, styleSheet);
 		function parseSheet(textToParse, styleSheet){
@@ -65,7 +99,7 @@ define("xstyle/core/parser", ["xstyle/core/utils"], function(utils){
 			function resume(){
 				function addInSequence(operand){
 					if(operand && typeof operand == 'string' && whitespace){
-						operand = whitespace + operand; 
+						operand = whitespace + operand;
 					}
 					if(sequence){
 						// we had a string so we are accumulated sequences now
@@ -106,7 +140,8 @@ define("xstyle/core/parser", ["xstyle/core/utils"], function(utils){
 							// remember the name, so can assign to it
 							name = first;
 							//	selector = match[1] + assignment;
-							// remember the operator (could be ':' for a property assignment or '=' for a property declaration)
+							// remember the operator (could be ':' for a property assignment or 
+							// '=' for a property declaration)
 							assignmentOperator = assignment.charAt(0);
 							conditionalAssignment = assignment.charAt(1) == '?';
 							if(assignment.indexOf('\n') > -1){
@@ -124,23 +159,30 @@ define("xstyle/core/parser", ["xstyle/core/utils"], function(utils){
 						// subsequent part of a property
 						value = assignment ? first + assignment : first;
 						// add to the current sequence
-						addInSequence(value);	
+						addInSequence(value);
 					}
 					if(operator != '{'){
 						selector += match[0];
 					}
 					switch(operator){
-						case "'": case '"':
-							// encountered a quoted string, parse through to the end of the string and add to the current sequence
+						case "'":
+						case '"':
+							// encountered a quoted string, parse through to the end of the string and
+							// add to the current sequence
 							var quoteScan = operator == "'" ? singleQuoteScan : doubleQuoteScan;
 							quoteScan.lastIndex = cssScan.lastIndex; // find our current location in the parsing
 							var parsed = quoteScan.exec(textToParse);
 							if(!parsed){ // no match for the end of the string
-								error("unterminated string");
+								error('unterminated string');
 							}
-							var str = parsed[1]; // the contents of the string
+							// get the real contents of the string, parsing any backslashes
+							var str = parsed[1].replace(/\\([a-fA-F\d]{0,5}[ a-fA-F\d]?)/g, function(full, unicode){
+								if(unicode){
+									return String.fromCharCode(parseInt(unicode, 16));
+								}
+							});
 							// move the css parser up to the end of the string position
-							cssScan.lastIndex = quoteScan.lastIndex; 
+							cssScan.lastIndex = quoteScan.lastIndex;
 							// push the string on the current value and keep parsing
 							addInSequence(new LiteralString(str));
 							selector += parsed[0];
@@ -151,10 +193,11 @@ define("xstyle/core/parser", ["xstyle/core/utils"], function(utils){
 							// add the escaped character to the sequence
 							addInSequence(textToParse.charAt(lastIndex));
 							continue;
-						case '(': case '{': case '[':
+						case '(':
+						case '{':
+						case '[':
 							// encountered a new contents of a rule or a function call
 							var newTarget;
-							var doExtend = false;
 							if(operator == '{'){
 								// it's a rule
 								assignNextName = true; // enter into the beginning of property mode
@@ -162,10 +205,7 @@ define("xstyle/core/parser", ["xstyle/core/utils"], function(utils){
 								if(assignmentOperator == ':' && assignment){
 									first += assignment;
 								}
-								selector = trim((selector + first).replace(/\s+/g, ' ').replace(/([\.#:])\S+|\w+/g,function(t, operator){
-									// make tag names be lower case 
-									return operator ? t : t.toLowerCase();
-								}));
+								selector = trim((selector + first).replace(/\s+/g, ' '));
 								// check to see if it is a correlator rule, from the build process
 								// add this new rule to the current parent rule
 								addInSequence(newTarget = target.newRule(selector));
@@ -174,29 +214,27 @@ define("xstyle/core/parser", ["xstyle/core/utils"], function(utils){
 								if(assignmentOperator == '='){
 									browserUnderstoodRule = false;
 									sequence.creating = true;
-									if(value){
-										// extend the referenced target value
-										doExtend = true;
-									}
 								}
-								if(assignmentOperator == ':' && !target.root){
-									// we will assume that we are in a property in this case. We will need to do some adjustments to support nested pseudo selectors
-									sequence.creating = true;
-								}
-								var nextRule = null;
+								var cssRules, nextRule = null;
 								var lastRuleIndex = ruleIndex;
 								if(match[6]){
-									// when we are using built stylesheets, we make numeric references to the rules, by index
-									var cssRules = styleSheet.cssRules || styleSheet.rules;
-									if(newTarget.cssRule = nextRule = cssRules[match[6].slice(1)]){
+									// when we are using built stylesheets, we make numeric references
+									// to the rules, by index
+									cssRules = styleSheet.cssRules || styleSheet.rules;
+									if((newTarget.cssRule = nextRule = cssRules[match[6].slice(1)])){
 										selector = nextRule.selectorText;
 									}
 								}
 								if(target.root && browserUnderstoodRule){
-									// we track the native CSSOM rule that we are attached to so we can add properties to the correct rule
-									var cssRules = styleSheet.cssRules || styleSheet.rules;
-									while((nextRule = cssRules[ruleIndex++])){									
-										if(nextRule.selectorText == selector){
+									// we track the native CSSOM rule that we are attached to so we can add
+									// properties to the correct rule
+									cssRules = styleSheet.cssRules || styleSheet.rules;
+									while((nextRule = cssRules[ruleIndex++])){
+										if((nextRule.selectorText == selector) ||
+											// CSS3 pseudo-elements can be auto-converted from CSS2 psuedo by browsers
+												(nextRule.selectorText &&
+													nextRule.selectorText.replace(/::/g, ':').replace(/'/g, '"') ==
+														selector.replace(/::/g, ':').replace(/'/g, '"'))){
 											// found it
 											newTarget.cssRule = nextRule;
 											break;
@@ -206,15 +244,21 @@ define("xstyle/core/parser", ["xstyle/core/utils"], function(utils){
 								if(!nextRule){
 									// didn't find it
 									newTarget.ruleIndex = ruleIndex = lastRuleIndex;
-									newTarget.styleSheet = styleSheet;									
-									//console.warn("Unable to find rule ", selector, "existing rule did not match", nextRule.selectorText); 
 								}
+								// TODO: this doesn't need to be done when there is a rule, except for old IE,
+								// as most browsers, the style sheet can be retrieved the cssRule
+								newTarget.styleSheet = styleSheet;
 								if(sequence.creating){
 									// in generation, we auto-generate selectors so we can reference them
-									newTarget.selector = '.' + (assignmentOperator == '=' ? first.match(/[\w-]*$/g,'')[0] : '') + '-x-' + nextId++;
+									newTarget.selector = '.' + (assignmentOperator == '=' ?
+											first.match(/[\w-]*$/g,'')[0] : '') + '-x-' + nextId++;
 									newTarget.creating = true;
-								}else{						
-									newTarget.selector = target.root ? selector : target.selector + ' ' + selector;
+								}else{
+									if(/^@(?!font-face)(?!FONT-FACE)/.test(selector)){
+										newTarget.setMediaSelector(selector);
+									}else{
+										newTarget.selector = target.root ? selector : target.selector + ' ' + selector;
+									}
 								}
 								selector = '';
 							}else{
@@ -222,18 +266,9 @@ define("xstyle/core/parser", ["xstyle/core/utils"], function(utils){
 								var callParts = value.match(/(.*?)([\w-]*)$/);
 								addInSequence(newTarget = target.newCall(callParts[2], sequence, target));
 								newTarget.ref = target.getDefinition(callParts[2]);
+								newTarget.getArgs = parseArgs;
+
 								(sequence.calls || (sequence.calls = [])).push(newTarget);
-							}
-							// make the parent reference
-							newTarget.parent = target;
-							if(doExtend){
-	//							value.replace(/(?:^|,|>)\s*([\w-]+)/g, function(t, base){
-								value.replace(/\s*([\w-]+)\s*$/g, function(t, base){
-									var result = utils.extend(newTarget, base, error);
-									if(result && result.then){
-										resumeOnComplete(result);
-									}
-								});
 							}
 							
 							// store the current state information so we can restore it when exiting this rule or call
@@ -261,15 +296,16 @@ define("xstyle/core/parser", ["xstyle/core/utils"], function(utils){
 					}
 					if(sequence){
 						// now see if we need to process an assignment or directive
-						var first = typeof sequence == 'string' ? sequence: sequence[0];
-						if(first.charAt && first.charAt(0) == "@"){
+						var first = typeof sequence == 'string' ? sequence : sequence[0];
+						if(first.charAt && first.charAt(0) == '@'){
 							// it's a directive
 							var directive = first.match(/\w+/)[0];
-							if(directive == "import"){
+							if(directive == 'import'){
 								// get the stylesheet
-								var importedSheet = parse.getStyleSheet((styleSheet.cssRules || styleSheet.imports)[ruleIndex++], sequence, styleSheet);
-								//waiting++;
-								// preserve the current index, as we are using a single regex to be shared by all parsing executions
+								var importedSheet = parse.getStyleSheet((styleSheet.cssRules ||
+									styleSheet.imports)[ruleIndex++], sequence, styleSheet);
+								// preserve the current index, as we are using a single regex to be shared
+								// by all parsing executions
 								var currentIndex = cssScan.lastIndex;
 								// parse the imported stylesheet
 								parseSheet(importedSheet.localSource, importedSheet);
@@ -280,7 +316,6 @@ define("xstyle/core/parser", ["xstyle/core/utils"], function(utils){
 									// start a new nested rule for the new scope
 									var newTarget = target ? target.newRule('') : lastRootTarget;
 									newTarget.root = target.root;
-									newTarget.parent = target;
 									stack.push(target = newTarget);
 								}else{
 									// end of scope, store the scope, and pop it
@@ -289,13 +324,13 @@ define("xstyle/core/parser", ["xstyle/core/utils"], function(utils){
 									target = stack[stack.length - 1];
 								}
 								cssScan = target ? mainScan : /(@[\w\s])/g;
-							}else if(directive == 'supports'){
-								// TODO: implement this
 							}
-						}else if(assignmentOperator){
+							// TODO: implement this
+							// else if(directive == 'supports'){
+						}else if(assignmentOperator === '='){
 							// need to do an assignment
 							try{
-								var result = target[assignmentOperator == ':' ? 'setValue' : 'declareProperty'](name, sequence, conditionalAssignment);
+								var result = target.declareDefinition(name, sequence, conditionalAssignment);
 								if(result && result.then){
 									resumeOnComplete(result);
 								}
@@ -315,66 +350,82 @@ define("xstyle/core/parser", ["xstyle/core/utils"], function(utils){
 								addInSequence(':');
 							}
 							break;
-						case '}': case ')': case ']':
+						case '}':
+							if(name && !(target.root || target.isMediaBlock)){
+								// CSS ASI at the end of the inside of a rule
+								try{
+									target[assignmentOperator == ':' ? 'setValue' : 'declareDefinition']
+										(name, sequence, conditionalAssignment);
+								}catch(e){
+									error(e);
+								}
+							}
+							// fall through
+						case ')':
+						case ']':
 							// end of a rule or function call
 							// clear the name now
 							if(operatorMatch[target.operator] != operator){
-								error('Incorrect opening operator ' + target.operator + ' with closing operator ' + operator); 
+								error('Incorrect opening operator ' + target.operator +
+									' with closing operator ' + operator);
 							}
 							name = null;
 							// record the cssText
 							var ruleCssText = textToParse.slice(target.start, cssScan.lastIndex - 1);
-							target.cssText = target.cssText ? 
+							target.cssText = target.cssText ?
 								target.cssText + ';' + ruleCssText : ruleCssText;
 								
 							if(operator == '}'){
-								
 								if(lastOperator == '}'){
 									var parentSelector = target.parent.selector;
 									if(parentSelector && !parentSelector.charAt(0) == '@'){
-										// we throw an error for this because it so catastrophically messes up the browser's CSS parsing, not because we can't handle it fine
-										error("A nested rule must end with a semicolon");
+										// we throw an error for this because it so catastrophically
+										// messes up the browser's CSS parsing, not because we can't handle it fine
+										error('A nested rule must end with a semicolon');
 									}
 								}
 								if(target.root){
-									error("Unmatched " + operator);
+									error('Unmatched ' + operator);
 								}else{
 									// if it is rule, call the rule handler
-									try{ 
+									try{
 										target.onRule(target.selector, target);
 									}catch(e){
 										error(e);
 									}
 									
-									// TODO: remove this conditional, now that we use assignment
-									/*if(target.selector.slice(0,2) != "x-"){// don't trigger the property for the property registration
-										target.eachProperty(onProperty);
-									}*/
 									browserUnderstoodRule = true;
 								}
 								selector = '';
 							}
 							// now pop the call or rule off the stack and restore the state
+							if(operator == ')' || operator == ']'){
+								target.args = [sequence];
+							}
 							if(operator == ')' && !assignmentOperator){
 								// call handler
 								// immediately call this, since it isn't a part of a property
-								target.args = sequence.isSequence ? sequence : [sequence];
-								var result = stack[stack.length - 2].onCall(target);
+								try{
+									var result = stack[stack.length - 2].onArguments(target);
+								}catch(e){
+									error(e);
+								}
 								if(result && result.then){
 									resumeOnComplete(result);
 								}
 							}
 							stack.pop();
-							target = stack[stack.length - 1];				
+							target = stack[stack.length - 1];
 							sequence = target.currentSequence;
 							name = target.currentName;
 							assignmentOperator = target.assignmentOperator;
 							if(target.root && operator == '}'){
-								// CSS ASI
+								// CSS ASI between rules at the top level
 								if(assignmentOperator){
 									// may still need to do an assignment
 									try{
-										target[assignmentOperator == ':' ? 'setValue' : 'declareProperty'](name, sequence[1] || sequence, conditionalAssignment);
+										target[assignmentOperator == ':' ? 'setValue' : 'declareDefinition']
+											(name, sequence, conditionalAssignment);
 									}catch(e){
 										error(e);
 									}
@@ -383,11 +434,24 @@ define("xstyle/core/parser", ["xstyle/core/utils"], function(utils){
 								assignmentOperator = false;
 							}
 							break;
-						case "": case undefined:
+						case '':
+						case undefined:
 							// no operator means we have reached the end of the text to parse
 							return;
 						case ';':
 							// end of a property, end the sequence return to the beginning of propery mode
+							// need to do an assignment
+							if(target && name){
+								try{
+									var result = target[assignmentOperator == ':' ? 'setValue' : 'declareDefinition']
+										(name, sequence, conditionalAssignment);
+									if(result && result.then){
+										resumeOnComplete(result);
+									}
+								}catch(e){
+									error(e);
+								} name
+							}
 							sequence = null;
 							assignNextName = true;
 							browserUnderstoodRule = false;
@@ -398,10 +462,18 @@ define("xstyle/core/parser", ["xstyle/core/utils"], function(utils){
 				}
 			}
 			function error(e){
-				console.error(e.message || e, (styleSheet.href || "in-page stylesheet") + ':' + textToParse.slice(0, cssScan.lastIndex).split('\n').length);
+				var lines = textToParse.slice(0, cssScan.lastIndex).split('\n');
+				var lastLine = lines[lines.length - 1];
+				// provide line and column details
+				var detail = (styleSheet.href || 'in-page stylesheet') + ':' +
+					lines.length + ':' + lastLine.length + ' near:\n' + lastLine.slice(-40);
+				if(parseSheet.onerror){
+					parseSheet.onerror(e, detail);
+				}
+				console.error(e.message || e, detail);
 				if(e.stack){
 					console.error(e.stack);
-				}			
+				}
 			}
 		}
 	}

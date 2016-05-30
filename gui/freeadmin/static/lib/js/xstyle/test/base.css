@@ -1,0 +1,21 @@
+test-should-not-beloaded = module(xstyle/test/dontloadthis, true);
+test-prefix = {
+	appearance=prefix: button;
+}
+test-expand = {
+	margin: {
+		main: 1px;
+		right: 2px;
+		bottom: 3px;
+	}
+}
+.test-content {
+	=> div(content)
+}
+test-event = div {
+	test-element = element;
+	=>
+		button {
+			on-click: test-event(test-element);
+		};
+}

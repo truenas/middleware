@@ -1,0 +1,334 @@
+/*
+ * Feature grid and Column grid
+ */
+.columnGridContainer {
+	display: inline-block;
+	padding-top: 1em;
+}
+
+.claro {
+	.featureGrid {
+		margin-top:0.5em;
+	}
+
+	.featureGrid,
+	.columnGrid,
+	.dojoDndAvatar {
+		background: transparent;
+		height: auto;
+		border: 0 !important;
+
+		.dgrid-row {
+			color: #fff;
+			font-size: 13px;
+			font-weight: 100;
+			border: none !important;
+			width:100%;
+			padding:0;
+			transition: padding 0.3s;
+			cursor: default;
+
+			.dgrid-cell {
+				padding: 4px;
+			}
+		}
+
+		.dgrid-row-odd {
+			background: $sidebarRowOddBg;
+		}
+
+		.dgrid-row-even {
+			background: $sidebarRowEvenBg;
+		}
+
+		.dgrid-cell {
+			line-height: 26px;
+			border: 0;
+			padding: 0;
+		}
+		.dijitCheckBox {
+			background: none;
+			border-radius: 3px;
+			background-color: $checkBg;
+			box-shadow: inset 1px 1px 3px 0px rgba(50, 50, 50, 0.65);
+			width: $checkboxSize;
+			height: $checkboxSize;
+			transition: background-color 0.3s, box-shadow 0.3s;
+
+			&:hover{
+				box-shadow: inset 1px 1px 1px 0px rgba(50, 50, 50, 0.45);
+			}
+
+			&.dijitCheckBoxDisabled {
+				background-color: $checkDisabledBg;
+				box-shadow: none;
+			}
+
+			&.dijitCheckBoxChecked {
+				$sprite($checkboxChecked);
+				background-color: $checkFilledBg;
+				&:hover {
+					background-color: lighten(@background-color, 15%);
+				}
+			}
+
+			&.dijitCheckBoxCheckedDisabled {
+				$sprite($checkboxChecked);
+				background-color: darken($checkFilledBg, 30%);
+				&:hover {
+					background-color: @background-color;
+				}
+			}
+		}
+
+
+		.icon-gear {
+			color: $sidebarIconColor;
+			font-size: 16px;
+			vertical-align: middle;
+			&:hover {
+				color:$sidebarGearColor;
+			}
+		}
+	}
+
+	.columnGrid,
+	.dojoDndAvatar {
+		.field-dragSource {
+			width: 30px;
+			font-size: 16px;
+			color: $sidebarIconColor;
+			i {
+				position:relative;
+				top:1px;
+				&:hover {
+					cursor: move;
+				}
+			}
+			&:hover,
+			&:active {
+				color: $dgridBlue;
+			}
+		}
+
+
+		.field-config  {
+			width: 45px;
+			padding-left: 4px;
+		}
+		.field-label {
+			padding-left: 2px;
+		}
+
+		.icon-gear {
+			margin-left: 7px;
+		}
+
+		.icon-times {
+			color: $sidebarIconColor;
+			&:hover {
+				color: $deleteColor;
+			}
+			vertical-align: middle;
+		}
+
+
+		.dojoDndItem {
+			&:before,
+			&:after {
+				border:1px dotted #3C5E79;
+				content: " ";
+				height:1px;
+				display:block;
+				transition: height 0.2s, opacity 0.3s, background 0.3s;
+				opacity: 0;
+			}
+
+			&:active,
+			.dgrid-selected {
+				opacity: 0.5;
+			}
+
+			.dojoDndHandle {
+				padding-left:10px;
+				&:hover {
+					cursor:move;
+				}
+			}
+		}
+
+		.dojoDndItemBefore:before,
+		.dojoDndItemAfter:after,
+		.dojoDndItemAfter:nth-last-child(2):after {
+			background: $dropTargetBg;
+			height:30px;
+			opacity: 1;
+			cursor:move;
+		}
+
+		.dojoDndItemAfter:nth-last-child(2):before {
+			height:1px;
+			opacity:0;
+		}
+
+
+		.dgrid-selected {
+			&:before,
+			&:after {
+				height:1px;
+				opacity:0;
+			}
+		}
+
+		.dojoDndItem .dgrid-cell {
+			border-top: none;
+			border-bottom: none;
+		}
+		/* END DnD FIX */
+	}
+
+	.dijitRadio {
+		$sprite($radio);
+	}
+
+	.dijitRadioChecked {
+		$sprite($radioChecked);
+	}
+}
+
+/*
+ * Column grid form
+ */
+
+.columnGridForm {
+	font-size: 0;
+	position: relative;
+	padding: 5px 0 14px 10px;
+
+	.addBtn {
+		background: transparent;
+		border: none;
+		color: #fff;
+		font-size: 18px;
+		outline: none;
+		padding: 0 0 0 16px;
+		transition: color 0.4s;
+		vertical-align: middle;
+
+		&:hover {
+			color: lighten($confirmColor, 20%);
+			cursor:pointer;
+		}
+	}
+
+	.dijitTextBox:first-child {
+		display: inline-block;
+		width: calc(100% - 40px);
+	}
+}
+
+
+/*
+ * Column configuration form
+ */
+
+.columnEditor {
+	margin: 0;
+	overflow-x: hidden;
+
+	.configForm {
+		display: none;
+	}
+
+	// TODO: Ideally we'd like to use transitions here, but they're problematic
+	// because keeping both elements rendered affects scrollHeight of the full container
+	&.slid .columnGridContainer {
+		display: none;
+	}
+	&.slid .configForm {
+		display: block;
+	}
+}
+
+.configForm {
+	color: #fff;
+	font-weight: 100;
+	font-size: 14px;
+	position: relative;
+	padding: 15px;
+	padding-top: 1em;
+	display: inline-block;
+	vertical-align: top;
+
+	legend {
+		// IE reverts to #000 for legends unless specifically told otherwise
+		color: #fff;
+	}
+
+	.dijitButton {
+		margin: 0;
+		position: absolute;
+		top: 18px;
+		right: 15px;
+		z-index: 1;
+	}
+
+	.dijitButton .dijitButtonNode {
+		font-size: 12px;
+	}
+
+	fieldset {
+		font-size: 0;
+		position: relative;
+	}
+
+	legend {
+		font-size: 14px;
+		font-weight:400;
+		margin:0 0 20px 0;
+    	padding: 10px 0 0 0;
+    	text-transform: uppercase;
+	}
+	.label {
+		width: 150px;
+		display: inline-block;
+		font-size: 13px;
+		vertical-align: top;
+		height: 35px;
+	}
+
+	.propTitle {
+		margin-bottom:0.55em;
+		font-size:13px;
+		color: $primaryButtonColor;
+		text-transform:none;
+	}
+
+	.field {
+		font-weight:400;
+		width: calc(100% - 180px);
+		display: inline-block;
+		vertical-align: top;
+		font-size: 12px;
+		.dijitTextBox {
+			width: 100%;
+			margin-bottom:10px;
+		}
+
+		.halfWidth {
+			width: 35%;
+		}
+	}
+
+
+	.mixinProp {
+		font-weight: 400;
+		margin-top: 20px;
+		text-transform: uppercase;
+	}
+	.actionLink {
+		cursor:pointer;
+		color: #A8EAFF;
+		margin-left:1em;
+	}
+}

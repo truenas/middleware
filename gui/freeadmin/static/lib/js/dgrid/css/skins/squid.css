@@ -49,10 +49,6 @@
 	background-color: #444;
 }
 
-.has-ie-6 .squid .dgrid-row {
-	background-image: none;
-}
-
 .squid .dgrid-selected {
 	background-color: #64390d;
 	text-shadow: 0 -1px 0 rgba(0,0,0,.3);
@@ -76,10 +72,4 @@
 }
 .squid .dgrid-header .dojoDndItemAfter {
 	border-right: 2px dotted #fff !important;
-}
-
-/* for pagination in IE < 8 + quirks, need additional rule to override link color */
-.has-ie-6-7 .squid .dgrid-navigation a,
-.has-ie.has-quirks .squid .dgrid-navigation a {
-	color: #fff;
 }

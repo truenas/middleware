@@ -1,4 +1,10 @@
-define("xstyle/main", ["require", "xstyle/core/parser", "xstyle/core/base", "xstyle/core/elemental"], function (require, parser, ruleModel, elemental) {
+define("xstyle/main", [
+		"require",
+		"xstyle/core/parser",
+		"xstyle/core/base",
+		"xstyle/core/elemental",
+		"xstyle/core/generate"], // eventually we might split generate.js, to just load the actual string parsing segment
+		function (require, parser, ruleModel, elemental, generate) {
 	"use strict";
 	function search(tag){
 		// used to search for link and style tags
@@ -7,14 +13,19 @@ define("xstyle/main", ["require", "xstyle/core/parser", "xstyle/core/base", "xst
 			checkImports(elements[i]);
 		}
 	}
-	elemental.ready(function(){
+	function searchAll(){
 		// search the document for <link> and <style> elements to potentially parse.
 		search('link');
 		search('style');
-	});
+	}
+	elemental.ready(searchAll);
 	// traverse the @imports to load the sources 
 	function checkImports(element, callback, fixedImports){
-		var sheet = element.sheet || element.styleSheet || element;
+		var sheet = element.sheet || element.styleSheet;
+		if(!sheet || (sheet.processed && !fixedImports)){
+			return;
+		}
+		sheet.processed = true;
 		var needsParsing = sheet.needsParsing, // load-imports can check for the need to parse when it does it's recursive look at imports 
 			cssRules = sheet.rules || sheet.cssRules;
 		function fixImports(){
@@ -45,7 +56,7 @@ define("xstyle/main", ["require", "xstyle/core/parser", "xstyle/core/base", "xst
 			return fixImports();
 		}
 		if(!needsParsing){
-			for(var i = 0; i < cssRules.length; i++){								
+			for(var i = 0; i < cssRules.length; i++){
 				var rule = cssRules[i];
 				if(rule.href && !fixedImports){
 					// it's an import (for non-IE browsers)
@@ -103,12 +114,28 @@ define("xstyle/main", ["require", "xstyle/core/parser", "xstyle/core/base", "xst
 	
 	var xstyle =  {
 		process: checkImports,
+		processAll: searchAll,
 		parse: parse,
-		
+		// generate:
+		// 		put-selector like functionality, but returned element will be processed by
+		//	 	xstyle, with any applicable rules handling the new or updated element
+		//	parentElement:
+		// 		a parent element must be provided
+		//	selector:
+		// 		CSS selector syntax for creating a new element
+		generate: generate,
+		update: elemental.update,
 		load:  function(resourceDef, require, callback, config){
-			// support use an AMD plugin loader
+			// support using an AMD plugin loader
 			require(['xstyle/css'], function(plugin){
-				plugin.load(resourceDef, require, callback, config);
+				plugin.load(resourceDef, require, function(styleSheet){
+					if(styleSheet){
+						checkImports({sheet: styleSheet}, callback);
+					}else{
+						searchAll();
+						callback();
+					}
+				}, config);
 			});
 		}
 	};

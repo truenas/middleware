@@ -1,0 +1,63 @@
+$fontFamily = 'Open Sans', sans-serif;
+
+$confirmColor = #2F9903;
+$deleteColor = #D31605;
+$dgridBlue = #0B6DC4;
+
+$sidebarBackground = #0b1e2a;
+$sidebarIconColor = #6A7782;
+$sidebarGearColor = lighten($sidebarIconColor, 60%);
+$sidebarRowEvenBg = #0B1E2A;
+$sidebarRowOddBg = #23343F;
+$sidebarTabActiveBg = #0B1E2A;
+$sidebarTabStripBg = #1A374F;
+
+
+$dropTargetBg = lighten($sidebarRowEvenBg, 5%);
+$draggedRowBg = darken($dropTargetBg, 10%);
+
+$primaryButtonColor = #A8EAFF;
+
+$sidebarWidth = 370px;
+$headerHeight = 70px;
+$tabHeight = 47px;
+
+$resultButtonOnBg = #2B6BA2;
+$resultButtonOnText = #fff;
+$resultButtonOffBg = #E1E1E1;
+$resultButtonOffText = #333;
+$renderPadding = 25px;
+
+$checkBg = #ECF0F1;
+$checkFilledBg = $dgridBlue;
+$checkDisabledBg = #687987;
+
+$checkboxSize = 16px;
+$checkmark = "\e600";
+$closeIcon = "\f00d";
+$gearIcon = "\f013";
+$infoIcon = "\f05a";
+$externalLinkIcon = "\f08e";
+$navIcon = "\f0c9";
+$angleUpIcon = "\f106";
+$angleDownIcon = "\f107";
+$replyIcon = "\f112";
+$gridIcon = "\e603";
+$codeIcon = "\e604";
+
+$radio = -20px 0;
+$radioChecked = -41px 0;
+$checkboxChecked = 0 1px;
+
+
+$formSprite = "img/formSprite.png";
+$formSprite2x = "img/formSprite@2x.png"
+
+$sprite() {
+	background: url($formSprite) no-repeat arguments;
+
+	@media only screen and (-webkit-min-device-pixel-ratio: 2),
+	only screen and (min-device-pixel-ratio: 2) {
+		background: url($formSprite2x) no-repeat (arguments x 2);
+	}
+}
