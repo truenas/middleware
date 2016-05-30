@@ -48,11 +48,11 @@ require([
     "dojo/dom-style",
     "dojo/query",
     "dojo/request/xhr",
-    "dojo/store/JsonRest",
+    "dstore/Rest",
     "dgrid/OnDemandGrid",
     "dgrid/Keyboard",
     "dgrid/Selection",
-    "dgrid/tree",
+    "dgrid/Tree",
     "dgrid/extensions/DijitRegistry",
     "dgrid/extensions/ColumnResizer",
     "dijit/registry",
@@ -66,7 +66,7 @@ require([
     domStyle,
     query,
     xhr,
-    JsonRest,
+    Rest,
     Grid,
     Keyboard,
     Selection,
@@ -157,7 +157,7 @@ require([
         }
     });
 
-    var store = new JsonRest({
+    var store = new Rest({
         target: "{{ resource_url }}{{ datagrid_filters|escapejs }}",
         headers: {"X-Requested-From": "WebUI"},
         getChildren: function(parent, options){
@@ -171,7 +171,7 @@ require([
     var StandardGrid = declare([Grid, Selection, Keyboard, ColumnResizer]);
     var griddiv = query(".gridDiv", cpane.domNode.parentNode)[0];
     var grid = new StandardGrid({
-        store: store,
+        collection: store,
         columns: columns,
 	loadingMessage: '{% trans "Loading..."|escapejs %}',
 	noDataMessage: '{% trans "No entry has been found"|escapejs %}'
