@@ -403,7 +403,10 @@ def ListClones():
             if kstr == "-":
                 tdict["keep"] = None
             else:
-                tdict["keep"] = bool(kstr)
+                 if kstr == "True":
+                     tdict["keep"] = True
+                 elif kstr == "False":
+                     tdict["keep"] = False
         except:
             tdict["keep"] = None
         rv.append(tdict)
