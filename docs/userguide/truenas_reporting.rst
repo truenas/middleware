@@ -37,7 +37,8 @@ to provide reporting statistics. The following collectd plugins are enabled in :
 
 *   `uptime <https://collectd.org/wiki/index.php/Plugin:Uptime>`_: keeps track of the system uptime, the average running time, and the maximum reached uptime.
 
-*   target: contains bandwidth statistics for iSCSI and Fibre Channel ports.
+*   target: contains bandwidth statistics for iSCSI and Fibre Channel ports as well as third-party copy (tpc) used by XCOPY. If :ref:`Failovers` has been configured, there will be
+    separate graphs for the ports of each head, plus a graph displaying the interlink traffic.
 
 *   `zfs <https://collectd.org/wiki/index.php/Plugin:ZFS_ARC>`_: shows ARC size, hit ratio, and requests.
 
