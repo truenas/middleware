@@ -3087,6 +3087,16 @@ class BootEnvResource(NestedMixin, DojoResource):
             bundle.data['_rename_url'] = reverse(
                 'system_bootenv_rename', kwargs={'name': bundle.obj.name},
             )
+            if bundle.obj.keep:
+                bundle.data['keep'] = "Yes"
+                bundle.data['_un_keep_url'] = reverse(
+                    'system_bootenv_unkeep', kwargs={'name': bundle.obj.name},
+                )
+            else:
+                bundle.data['keep'] = "No"
+                bundle.data['_keep_url'] = reverse(
+                    'system_bootenv_keep', kwargs={'name': bundle.obj.name},
+                )
         return bundle
 
 

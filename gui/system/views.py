@@ -58,6 +58,8 @@ from freenasOS.Update import (
     ActivateClone,
     CheckForUpdates,
     DeleteClone,
+    FindClone,
+    CloneSetAttr,
 )
 from freenasUI.account.models import bsdUsers
 from freenasUI.common.system import (
@@ -203,7 +205,7 @@ function() {
         var data = grid.row(i).data;
         ids.push(data.id);
     }
-    editObject('Delete In Bulk', data._deletebulk_url + '?ids=' + ids.join(","),
+    editObject('Delete In Bulk',data._deletebulk_url + '?ids=' + ids.join(","),
         [mybtn,]);
 }""",
             'on_select_after': """function(evt, actionName, action) {
@@ -240,6 +242,20 @@ function() {
             'on_click': onclick % (_('Rename'), '_rename_url'),
             'button_name': _('Rename'),
         },
+        _('Keep'): {
+            'on_click': onclick % (_('Keep'), '_keep_url'),
+            'on_select_after': onselectafter % (
+                'row.data._keep_url === undefined'
+            ),
+            'button_name': _('Keep'),
+        },
+        _('UnKeep'): {
+            'on_click': onclick % (_('Unkeep'), '_un_keep_url'),
+            'on_select_after': onselectafter % (
+                'row.data._un_keep_url === undefined'
+            ),
+            'button_name': _('Unkeep'),
+        },
     }
     return HttpResponse(
         json.dumps(actions),
@@ -252,6 +268,7 @@ def bootenv_datagrid_structure(request):
         ('name', {'label': _('Name')}),
         ('active', {'label': _('Active')}),
         ('created', {'label': _('Created')}),
+        ('keep', {'label': _('Keep')}),
     ))
     return HttpResponse(
         json.dumps(structure),
@@ -426,6 +443,42 @@ def bootenv_rename(request, name):
         form = forms.BootEnvRenameForm(name=name)
     return render(request, 'system/bootenv_rename.html', {
         'form': form,
+        'name': name,
+    })
+
+
+def bootenv_keep(request, name):
+    if request.method == 'POST':
+        be = FindClone(name)
+        keep = CloneSetAttr(be, keep=True)
+        if keep:
+            return JsonResp(
+                request,
+                message=_('Boot Environment successfully Kept.'),
+            )
+        return JsonResp(
+            request,
+            message=_('Failed to keep Boot Environment.'),
+        )
+    return render(request, 'system/bootenv_keep.html', {
+        'name': name,
+    })
+
+
+def bootenv_unkeep(request, name):
+    if request.method == 'POST':
+        be = FindClone(name)
+        keep = CloneSetAttr(be, keep=False)
+        if keep:
+            return JsonResp(
+                request,
+                message=_('Boot Environment successfully UnKept.'),
+            )
+        return JsonResp(
+            request,
+            message=_('Failed to Unkeep Boot Environment.'),
+        )
+    return render(request, 'system/bootenv_unkeep.html', {
         'name': name,
     })
 
