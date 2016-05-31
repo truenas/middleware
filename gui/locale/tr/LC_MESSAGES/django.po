@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:05-0700\n"
-"PO-Revision-Date: 2016-05-24 10:45+0000\n"
+"PO-Revision-Date: 2016-05-26 10:56+0000\n"
 "Last-Translator: BouRock <hitowerdigit@hotmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: tr\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1)\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1464086712.0\n"
+"X-POOTLE-MTIME: 1464260203.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -114,25 +114,26 @@ msgstr "Etkisizleştirildi"
 
 #: choices.py:87
 msgid "Level 1 - Minimum power usage with Standby (spindown)"
-msgstr "Seviye 1 - Bekleme konumunda en az güç tüketimi (dönüş hızı yavaşlatma)"
+msgstr ""
+"Seviye 1 - Bekleme kipi ile en az güç tüketimi (dönüş hızını yavaşlatma)"
 
 #: choices.py:88
 msgid "Level 64 - Intermediate power usage with Standby"
-msgstr "Seviye 64 - Bekleme konumunda orta seviye güç tüketimi"
+msgstr "Seviye 64 - Bekleme kipi ile orta seviye güç tüketimi"
 
 #: choices.py:89
 msgid "Level 127 - Intermediate power usage with Standby"
-msgstr "Seviye 127 - Bekleme konumunda orta seviye güç tüketimi"
+msgstr "Seviye 127 - Bekleme kipi ile orta seviye güç tüketimi"
 
 #: choices.py:90
 msgid "Level 128 - Minimum power usage without Standby (no spindown)"
 msgstr ""
-"Seviye 128 - Bekleme konumunda olmadan en az güç tüketimi (disk hızı "
-"yavaşlatma yok)"
+"Seviye 128 - Bekleme kipi olmadan en az güç tüketimi (disk hızını yavaşlatma "
+"yok)"
 
 #: choices.py:91
 msgid "Level 192 - Intermediate power usage without Standby"
-msgstr "Seviye 192 - Bekleme konumunda olmadan orta seviye güç tüketimi"
+msgstr "Seviye 192 - Bekleme kipi olmadan orta seviye güç tüketimi"
 
 #: choices.py:92
 msgid "Level 254 - Maximum performance, maximum power usage"
@@ -392,7 +393,7 @@ msgstr "Hergün"
 
 #: choices.py:498
 msgid "Every selected weekday"
-msgstr "Hafta içi her seçilen gün"
+msgstr "Her seçilen hafta içi gün"
 
 #: choices.py:504
 msgid "Read-only"
@@ -4202,7 +4203,7 @@ msgstr "Başlangıç"
 
 #: storage/models.py:737
 msgid "Do not snapshot before"
-msgstr "Şundan önce anlık görüntü alma"
+msgstr "Bu zamandan önce anlık görüntü almaz"
 
 #: storage/models.py:741
 msgid "End"
@@ -4210,7 +4211,7 @@ msgstr "Bitiş"
 
 #: storage/models.py:742
 msgid "Do not snapshot after"
-msgstr "Şundan sonra anlık görüntü alma"
+msgstr "Bu zamandan sonra anlık görüntü almaz"
 
 #: storage/models.py:748
 msgid "Interval"
@@ -7358,7 +7359,7 @@ msgstr "Uzak ZFS Birimi/Veri Kümesi"
 
 #: storage/models.py:885
 msgid "Do not start replication after"
-msgstr "Şundan sonra çoğaltmayı başlatma"
+msgstr "Bu zamandan sonra çoğaltmayı başlatmaz"
 
 #: storage/nav.py:40
 #: templates/storage/volume_datagrid.html:6
@@ -8229,7 +8230,7 @@ msgstr ""
 
 #: storage/models.py:880
 msgid "Do not start replication before"
-msgstr "Şundan önce çoğaltmayı başlatma"
+msgstr "Bu zamandan önce çoğaltmayı başlatmaz"
 
 #: storage/views.py:717
 msgid "Pool output could not be parsed. Is the pool imported?"
@@ -8794,7 +8795,7 @@ msgstr "Ek şunu ekle:"
 
 #: templates/freeadmin/generic_model_datagrid.html:10
 msgid "Add"
-msgstr "Ekle"
+msgstr "Ekle 1"
 
 #: templates/jails/index.html:32
 msgid "Templates"
@@ -12784,7 +12785,7 @@ msgstr "vCenter Yapılandırmaları"
 
 #: storage/models.py:905
 msgid "Recursively replicate child dataset's snapshots"
-msgstr "Alt veri kümesinin anlık görüntülerini yinelemeli çoğaltır"
+msgstr "Alt veri kümesinin anlık görüntülerini yinelemeli çoğalt"
 
 #: storage/models.py:910
 msgid ""
@@ -12794,7 +12795,7 @@ msgstr ""
 
 #: storage/models.py:910
 msgid "Delete stale snapshots on remote system"
-msgstr "Uzak sistemdeki eski anlık görüntüleri siler"
+msgstr "Uzak sistemdeki eski anlık görüntüleri sil"
 
 #: vcp/views.py:83
 msgid "Upgrade is not required"
@@ -13185,3 +13186,7 @@ msgstr "Birincil kullanıcı grubunu silme"
 msgid "You cannot shrink a zvol from GUI, this may lead to data loss."
 msgstr ""
 "Bir zvol birimini GKA'den küçültemezsiniz, bu veri kaybına neden olabilir."
+
+#: templates/storage/rekey.html:5
+msgid "You cannot rekey volume while standby node is down!"
+msgstr "Bekleme düğümü kapalıyken birimi yeniden anahtarlayamazsınız!"

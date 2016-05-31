@@ -12315,3 +12315,7 @@ msgstr ""
 #: storage/forms.py:1427
 msgid "You cannot shrink a zvol from GUI, this may lead to data loss."
 msgstr ""
+
+#: templates/storage/rekey.html:5
+msgid "You cannot rekey volume while standby node is down!"
+msgstr ""

@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:07-0700\n"
-"PO-Revision-Date: 2016-05-25 08:59+0000\n"
+"PO-Revision-Date: 2016-05-27 13:06+0000\n"
 "Last-Translator: Pavel <pavel.borecki@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: cs\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1464166796.0\n"
+"X-POOTLE-MTIME: 1464354412.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -1340,8 +1340,8 @@ msgstr "Toto není platná maska"
 #: services/forms.py:91
 msgid "This field is required for \"Enable home directories browsing\"."
 msgstr ""
-"Vyplnění této kolonky je vyžadováno pro volbu „Umožnit procházení domovských "
-"složek“."
+"Vyplnění této kolonky je vyžadováno, pokud je zaškrtnuta předvolba „Umožnit "
+"procházení domovských složek“."
 
 #: services/forms.py:97
 msgid "This field is required for \"Home directories\"."
@@ -1900,14 +1900,14 @@ msgstr ""
 
 #: services/models.py:219
 msgid "Max. Connections"
-msgstr "Nejvýše spojení"
+msgstr "Nejvýše souběžných spojení"
 
 #: services/models.py:221
 msgid ""
 "Maximum number of connections permitted via AFP. The default limit is 50."
 msgstr ""
-"Nejvyšší umožněný počet současných připojení k AFP. Výchozím omezením (když "
-"tato kolonka není vyplněna) je 50 takových připojení."
+"Nejvyšší umožněný počet souběžných připojení prostřednictvím protokolu AFP. "
+"Výchozím omezením (když tato kolonka není vyplněna) je 50 takových připojení."
 
 #: services/models.py:226 services/models.py:227
 #: templates/services/core.html:4
@@ -2047,7 +2047,9 @@ msgstr "Počáteční parametr iSCSI (výchozí hodnota je 60)."
 
 #: services/models.py:341
 msgid "Enable LUC"
-msgstr "Povolit LUC"
+msgstr ""
+"Zpřístupnit aplikační programové rozhraní (api) řadiče logických jednotek "
+"(LUC), poskytované nástrojem istgt"
 
 #: services/models.py:345
 msgid "Controller IP address"
@@ -2086,8 +2088,8 @@ msgid ""
 "The istgtcontrol can access the targets with correct user and secret in "
 "specific Auth Group."
 msgstr ""
-"Istgcontrol může přistupovat k cílům se správným uživatelem a heslem ve "
-"specifické ověřovací skupině."
+"Se správným uživatelským účtem a heslem může nástroj istgcontrol přistupovat "
+"k cílům v konkrétní ověřovací skupině."
 
 #: services/models.py:382 services/models.py:383
 #: templates/services/iscsi.html:2
@@ -2108,7 +2110,7 @@ msgstr "Typ úložné jednotky"
 
 #: services/models.py:402
 msgid "Type used as extent."
-msgstr "Typ použitý jako úložná jednotka"
+msgstr "Typ použitý jako úložná jednotka."
 
 #: services/models.py:407
 msgid "Path to the extent"
@@ -2122,7 +2124,7 @@ msgstr ""
 
 #: services/models.py:413
 msgid "Extent size"
-msgstr "Velkost úložné jednotky"
+msgstr "Velikost úložné jednotky"
 
 #: services/models.py:414
 msgid ""
@@ -2178,7 +2180,7 @@ msgid ""
 "Initiator authorized to access to the iSCSI target. It takes a name or 'ALL' "
 "for any initiators."
 msgstr ""
-"Iniciátor, pověřený pro přístup k iSCSI cíli. Zadejte název nebo klíčové "
+"Iniciátor pověřený pro přístup k iSCSI cíli. Zadejte název nebo klíčové "
 "slovo ALL (vše) pro umožnění přístupu všem iniciátorům."
 
 #: services/models.py:550
@@ -2190,9 +2192,8 @@ msgid ""
 "Network authorized to access to the iSCSI target. It takes IP or CIDR "
 "addresses or 'ALL' for any IPs."
 msgstr ""
-"Síť, ze které bude umožněn přístup k iSCSI cíli. Zadejte IP adresu (i v "
-"zápisu CIDR) nebo klíčové slovo ALL (vše) pro umožnění přístupu z libovolné "
-"sítě."
+"Síť, ze které bude umožněn přístup k iSCSI cíli. Zadejte IP adresu (i v CIDR "
+"zápisu) nebo klíčové slovo ALL (vše) pro umožnění přístupu z libovolné sítě."
 
 #: services/models.py:562
 msgid "Initiator"
@@ -2270,8 +2271,8 @@ msgid ""
 "The method can be accepted by the target. Auto means both none and "
 "authentication."
 msgstr ""
-"Metoda, která je pro cíl přijatelná. Volba Samočinně znamená jak s, tak bez "
-"ověřování."
+"Metoda, která je pro cíl přijatelná. Volba Automaticky znamená jak s, tak "
+"bez ověřování."
 
 #: services/models.py:679
 msgid "Authentication Group ID"
@@ -5371,7 +5372,7 @@ msgstr "Jmenný (DNS) server"
 
 #: templates/network/summary.html:31
 msgid "No nameserver defined"
-msgstr "Není určen žádný jmenný server"
+msgstr "Není určený žádný jmenný server (DNS)"
 
 #: templates/network/summary.html:37
 msgid "Default route"
@@ -5379,7 +5380,7 @@ msgstr "Výchozí trasa"
 
 #: templates/network/summary.html:46
 msgid "No default route defined"
-msgstr "Není určena žádná výchozí trasa"
+msgstr "Není určená žádná výchozí trasa"
 
 #~ msgid "Edit VLAN"
 #~ msgstr "Upravit VLAN"
@@ -5451,7 +5452,7 @@ msgstr ""
 
 #: templates/plugins/mountpoints.html:32
 msgid "No mount points defined"
-msgstr "Nejsou určeny žádné přípojné body"
+msgstr "Nejsou určené žádné přípojné body"
 
 #: templates/plugins/mountpoints.html:38 templates/plugins/mountpoints.html:40
 msgid "Add Mount Point"
@@ -5469,7 +5470,7 @@ msgstr "Uživatelské jméno a heslo si neodpovídají. Zkuste to znovu."
 #: templates/registration/login.html:44
 #, python-format
 msgid "Welcome, %(username)s. Thanks for logging in."
-msgstr "Vítejte, %(username)s. Jsme rádi, že jste se přihlásili."
+msgstr "Vítejte, %(username)s. Děkujeme, že jste se přihlásili."
 
 #: templates/registration/login.html:46
 #, python-format
@@ -5485,7 +5486,7 @@ msgstr "Odhlášeno"
 
 #: templates/registration/logout.html:24
 msgid "You are now logged out."
-msgstr "Nyní jste odhlášeni."
+msgstr "Nyní jste odhlášení."
 
 #: templates/registration/logout.html:24
 msgid "Log back in"
@@ -5619,7 +5620,7 @@ msgstr ""
 
 #: templates/services/iscsi_authini.html:35
 msgid "No authorized initiators defined"
-msgstr "Nejsou určeny žádné pověřené iniciátory"
+msgstr "Nejsou určené žádné pověřené iniciátory"
 
 #: templates/services/iscsi_authini.html:42
 #: templates/services/iscsi_authini.html:44
@@ -5691,7 +5692,7 @@ msgstr "Verze"
 
 #: templates/services/plugins.html:32
 msgid "PBI"
-msgstr "PBI"
+msgstr "PBI balíček"
 
 #: templates/services/plugins.html:33
 msgid "Service status"
@@ -5871,7 +5872,7 @@ msgstr ""
 
 #: templates/storage/manualsnap.html:2
 msgid "Manually Create Snapshot"
-msgstr "Pořídit nyní zachycený stav"
+msgstr "Pořídit zachycený stav nyní"
 
 #: templates/storage/permission.html:2
 msgid "Change"
@@ -5901,7 +5902,7 @@ msgid ""
 "to create a replication task"
 msgstr ""
 "UPOZORNĚNÍ: Aby bylo možné vytvořit replikační úlohu, je nutné nejprve "
-"vytvořit pravidelné pořizování zachycených stavů daného ZFS souborového "
+"nastavit pravidelné pořizování zachycených stavů daného ZFS souborového "
 "systému / svazku."
 
 #: templates/storage/replications.html:21
@@ -5942,7 +5943,7 @@ msgstr "Opravdu chcete překontrolovat svazek?"
 
 #: templates/storage/scrub_confirm.html:8
 msgid "This will increase system overhead while in progress"
-msgstr "Průvodním jevem této operace bude zvýšení vytížení stroje s FreeNAS"
+msgstr "Průvodním jevem této operace bude zvýšení vytížení serveru"
 
 #: templates/storage/snapshot_confirm_rollback.html:7
 msgid "Are you sure you want to rollback dataset to this snapshot state?"
@@ -5978,7 +5979,7 @@ msgstr "Smazat zachycené stavy"
 
 #: templates/storage/tasks.html:8
 msgid "Periodic Snapshots"
-msgstr "Pravidelné pořizování zachycených stavů"
+msgstr "Pravidelně pořizované zachycené stavy"
 
 #: templates/storage/tasks.html:13
 msgid "Periodic Snapshot Schedule"
@@ -7350,8 +7351,9 @@ msgid ""
 "Click here to find out what PBI's are!<a href='http://www.pcbsd.org/en"
 "/package-management/' onclick='window.open(this.href);return false;'>"
 msgstr ""
-"Co jsou to PBI zjistíte klikutím zde!<a href='http://www.pcbsd.org/en"
-"/package-management/' onclick='window.open(this.href);return false;'>"
+"Co jsou to PBI balíčky softwaru zjistíte klikutím zde!<a "
+"href='http://www.pcbsd.org/en/package-management/' "
+"onclick='window.open(this.href);return false;'>"
 
 #: plugins/forms.py:210
 msgid "Unable to set repository: %s"
@@ -7817,7 +7819,8 @@ msgstr "Použít vyhrazeného uživatele"
 
 #: storage/forms.py:2022
 msgid "If disabled then root will be used for replication."
-msgstr "Pokud není použito, bude pro replikaci použit účet správce (root)."
+msgstr ""
+"Pokud ne vyhrazený uživatel, bude pro replikaci použit účet správce (root)."
 
 #: storage/forms.py:2030
 msgid "Enable High Speed Ciphers"
@@ -7832,7 +7835,7 @@ msgstr ""
 
 #: storage/forms.py:2237
 msgid "A scrub with this volume already exists."
-msgstr "Pro tento svazek je kontrola již nastavena."
+msgstr "Pro tento svazek je už kontrola nastavená."
 
 #: storage/forms.py:2316
 msgid "New Passphrase"
@@ -7883,8 +7886,8 @@ msgid ""
 "Datasetname not the mountpoint or filesystem path"
 msgstr ""
 "Toto by měl být název ZFS souborového systému na protistraně. Např.: název "
-"svazku / název datové sady, nikoli přípojný bod či popis umístění v "
-"souborovém systému"
+"svazku / název datové sady, nikoli přípojný bod či popis umístění v rámci "
+"adresářové struktury"
 
 #: storage/models.py:886
 msgid "Replication Stream Compression"
@@ -7900,7 +7903,7 @@ msgstr "Odesílání %(snapshot)s (%(percent)s%%)"
 
 #: storage/views.py:964
 msgid "Passphrase updated"
-msgstr "Heslová fráze byla aktualizována"
+msgstr "Heslová fráze byla zaktualizována"
 
 #: storage/views.py:997
 #: storage/views.py:1010
@@ -7917,7 +7920,7 @@ msgstr "Zahajování stahování obnovovacího klíče GELI šifrování…"
 
 #: storage/views.py:1151
 msgid "The pool failed to upgraded: %s"
-msgstr "Přechod na novější verzi fondu se nezdařil: %s"
+msgstr "Přechod na novější verzi fondu úložišť se nezdařil: %s"
 
 #: support/models.py:40
 msgid "Subject"
@@ -8740,8 +8743,8 @@ msgstr "Příklad: 1 GiB"
 #: storage/forms.py:1655
 msgid "Specify the size with IEC suffixes, e.g. 10 GiB"
 msgstr ""
-"Zadejte velikost s použitím předpon jednotek kapacity dle normy IEC, např. "
-"10 GiB"
+"Zadejte velikost s použitím přípon jednotek kapacity dle normy IEC, např. 10 "
+"GiB"
 
 #: storage/forms.py:1944
 #: storage/forms.py:2280
@@ -8791,7 +8794,7 @@ msgstr ""
 
 #: storage/models.py:909
 msgid "Disabling will not stop any replications which are in progress."
-msgstr "Vypnutí nepovede k zastavení žádné z již probíhajících replikací."
+msgstr "Vypnutí nepovede k zastavení žádné z už probíhajících replikací."
 
 #: storage/models.py:951
 msgid "Sending"
@@ -9139,7 +9142,7 @@ msgstr "Bez signálu"
 
 #: network/views.py:68
 msgid "IPMI failed"
-msgstr "IPMI selhalo"
+msgstr "operace s IPMI se nezdařila"
 
 #: plugins/models.py:129
 msgid "jail not found"
@@ -10418,7 +10421,7 @@ msgstr "WebDAV sdílení"
 #: storage/admin.py:263
 #: storage/admin.py:361
 msgid "Edit Options"
-msgstr "Upravit nastavení"
+msgstr "Upravit předvolby"
 
 #: storage/admin.py:268
 #: storage/admin.py:367
@@ -10869,7 +10872,7 @@ msgstr "IPv4 DHCP"
 
 #: jails/models.py:383
 msgid "IPv6 Autoconfigure"
-msgstr "Samonastavení IPv6"
+msgstr "Automatické nastavení IPv6"
 
 #: sharing/models.py:336
 msgid ""
@@ -10940,11 +10943,12 @@ msgstr "Objekty virt. souborového syst. (VFS)"
 #: storage/forms.py:2132
 msgid "I'm also aware the snapshots are currently on hold for replication"
 msgstr ""
-"Uvědomuji si, že v tuto chvíli je též pozastavena replikace zachycených stavů"
+"Beru také na vědomí, že v tuto chvíli je pozastavená replikace zachycených "
+"stavů"
 
 #: storage/forms.py:2098
 msgid "Also delete the share's configuration"
-msgstr "Smazat též nastavení sdílení"
+msgstr "Smazat také nastavení sdílení"
 
 #: tasks/forms.py:116
 msgid "Rsync Create"
@@ -11081,11 +11085,11 @@ msgstr "Název vyhrazeného prostředí nemůže obsahovat znak „.“ (tečka)
 
 #: jails/forms.py:1070
 msgid "The path could not be umounted %(source)s: %(error)s"
-msgstr "Umístění nemohlo být připojeno %(source)s: %(error)s"
+msgstr "Umístění nemohlo být odpojeno %(source)s: %(error)s"
 
 #: jails/utils.py:609
 msgid "Unable to determine IPv6 for plugin"
-msgstr "Nelze zjistit IPv6 adresu zásuvného modulu"
+msgstr "Nelze zjistit IPv6 adresu pro zásuvný modul"
 
 #: services/forms.py:1006
 msgid "The following addresses are not valid: %s"
@@ -11177,8 +11181,8 @@ msgid ""
 "The default of the zvol block size is chosen automatically based on the "
 "number of the disks in the pool for a general use case."
 msgstr ""
-"Výchozí velikost bloku ZFS svazku je zvolena samočinně dle počtu disků ve "
-"fondu úložišť a je vhodná pro všeobecné použití."
+"Výchozí velikost bloku ZFS svazku je volená automaticky a to dle počtu disků "
+"ve fondu úložišť tak, aby byla vhodná pro všeobecné použití."
 
 #: storage/models.py:1098
 #: templates/storage/index.html:38
@@ -11548,20 +11552,21 @@ msgstr "Restartovat"
 
 #: jails/forms.py:219
 msgid "Jail name cannot have '.' or ' '"
-msgstr "Název vyhrazeného prostředí nemůže obsahovat znak „.“ (tečka) a mezeru"
+msgstr ""
+"Název vyhrazeného prostředí nemůže obsahovat znak „.“ (tečka) ani mezeru"
 
 #: jails/forms.py:590
 msgid "Jail root does not exist!"
-msgstr "Kořenová složka vyhrazenho prostředí neexistuje!"
+msgstr "Kořenová složka vyhrazeného prostředí neexistuje!"
 
 #: jails/forms.py:1027
 msgid ""
 "Destination must begin with an alphanumeric character and may only contain "
 "\"-\", \"_\", \":\", \" \" and \".\"."
 msgstr ""
-"Je třeba, aby určení cíle začínalo písmeny nebo čísly, pokračovat pak může "
-"ještě i znaky „-“ (spojovník), „_“ (podtržítko), „:“ (dvojtečka), „.“ (tečka)"
-" a mezera."
+"Je třeba, aby určení cíle začínalo písmenem nebo číslicí, v pokračování pak "
+"ještě může obsahovat i znaky „-“ (spojovník), „_“ (podtržítko), „:“ "
+"(dvojtečka), „.“ (tečka) a mezera."
 
 #: jails/models.py:554
 msgid "mtree"
@@ -11861,7 +11866,7 @@ msgstr "Fiber Channel porty byly úspěšně změněny."
 
 #: sharing/forms.py:291
 msgid "A share with this name already exists."
-msgstr "Sdílení s tímto názvem již existuje."
+msgstr "Sdílení s tímto názvem už existuje."
 
 #: sharing/forms.py:527
 msgid "Whitespace is not a valid character for NFS shares."
@@ -11903,11 +11908,11 @@ msgstr ""
 
 #: storage/forms.py:1439
 msgid "The path %s already exists."
-msgstr "Umístění %s již existuje."
+msgstr "Umístění %s už existuje."
 
 #: storage/forms.py:1553
 msgid "Allow the zvol to consume more then 80% of available space"
-msgstr "Umožnit ZFS svazku zabrat více než 80% dostupného prostoru"
+msgstr "Umožnit, aby ZFS svazek zabíral více než 80% dostupného prostoru"
 
 #: storage/forms.py:2132
 msgid "This field will be empty if you have not setup a periodic snapshot task"
@@ -12407,7 +12412,7 @@ msgstr "Identifikátor virtuální sítě (VLAN)"
 
 #: sharing/forms.py:465
 msgid "A mountpoint with this path is already in use by another share."
-msgstr "Přípojný bod s tímto popisem umístění je již používán jiným sdílením."
+msgstr "Přípojný bod s tímto popisem umístění je už používán jiným sdílením."
 
 #: storage/forms.py:441
 msgid ""
@@ -13062,3 +13067,10 @@ msgstr "Nemazat hlavní skupinu uživatele"
 #: storage/forms.py:1427
 msgid "You cannot shrink a zvol from GUI, this may lead to data loss."
 msgstr ""
+"Funkce pro zmenšení ZFS svazku není přístupná z webového správního rozhraní, "
+"protože to zde nelze zařídit tak, aby nehrozila ztráta dat."
+
+#: templates/storage/rekey.html:5
+msgid "You cannot rekey volume while standby node is down!"
+msgstr ""
+"Když je pohotovostní uzel vypnutý, není možné svazek znovu opatřit klíčem!"

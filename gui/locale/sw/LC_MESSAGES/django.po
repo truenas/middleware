@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:01-0700\n"
-"PO-Revision-Date: 2016-05-24 09:15+0000\n"
+"PO-Revision-Date: 2016-05-26 09:16+0000\n"
 "Last-Translator: Anonymous Pootle User\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: sw\n"
@@ -16,7 +16,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1464081303.0\n"
+"X-POOTLE-MTIME: 1464254165.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -12215,4 +12215,8 @@ msgstr ""
 
 #: storage/forms.py:1427
 msgid "You cannot shrink a zvol from GUI, this may lead to data loss."
+msgstr ""
+
+#: templates/storage/rekey.html:5
+msgid "You cannot rekey volume while standby node is down!"
 msgstr ""
