@@ -38,7 +38,8 @@ if __name__ == "__main__":
     subparsers.add_parser('shutdown', help='Shuts down escrow daemon')
     subparsers.add_parser('status', help='Inquiry escrow daemon status')
     subparsers.add_parser('attachall', help='Attach volumes with the escrowed passphrase')
-    subparsers.add_parser('interactive', help='Sets passphrase securely from the CLI')
+    iparser = subparsers.add_parser('interactive', help='Sets passphrase securely from the CLI')
+    iparser.add_argument('-k', '--key-only', action='store_true', help='Set the key only, do not force failover')
 
     args = parser.parse_args()
 
@@ -101,7 +102,8 @@ if __name__ == "__main__":
         passphrase = getpass.getpass()
         if passphrase:
             rv = escrowctl.setkey(passphrase)
-            notifier().failover_force_master()
+            if not args.key_only:
+                notifier().failover_force_master()
     else:
         if cmd == 'synctopeer':
             passphrase = escrowctl.getkey()
