@@ -4597,7 +4597,7 @@ class notifier:
         return r.search(res) is not None
 
     def zpool_version(self, name):
-        p1 = self._pipeopen("zpool get -H -o value version %s" % name)
+        p1 = self._pipeopen("zpool get -H -o value version %s" % name, logger=None)
         res, err = p1.communicate()
         if p1.returncode != 0:
             raise ValueError(err)
