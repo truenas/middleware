@@ -28,6 +28,8 @@ import logging
 import os
 import re
 import tarfile
+import signal
+
 from uuid import uuid4
 
 from django.contrib.auth import login, get_backends
@@ -39,6 +41,51 @@ from freenasUI.common import humanize_size
 from freenasUI.common.pipesubr import pipeopen
 
 log = logging.getLogger('system.utils')
+
+UPDATE_APPLIED_SENTINEL = '/tmp/.updateapplied'
+
+
+def is_update_applied(update_version, create_alert=True):
+    active_be_msg = 'Please Reboot the system to avail of this update'
+    # TODO: The below boot env name should really be obtained from the update code
+    # for now we just duplicate that code here
+    if update_version.startswith(Update.Avatar() + "-"):
+        update_boot_env = update_version[len(Update.Avatar() + "-"):]
+    else:
+        update_boot_env = "%s-%s" % (Update.Avatar(), update_version)
+
+    found = False
+    msg = ''
+    for clone in Update.ListClones():
+        if clone['realname'] == update_boot_env:
+            if clone['active'] != 'R':
+                active_be_msg = 'Please activate {0} via'.format(update_boot_env) + \
+                                ' the Boot Environment Tab and Reboot to use this updated version'
+            msg = 'Update: {0} has already been applied. {1}'.format(update_version, active_be_msg)
+            found = True
+            if create_alert:
+                create_update_alert(update_version)
+            break
+
+    return (found, msg)
+
+
+def create_update_alert(update_version):
+    # Create Alert that update is applied and system should now be
+    # rebooted. This is to catch the corner case when the update.py
+    # daemon errors out AFTER an update was applied and its BootEnv
+    # created (and sometimes even activated)
+    with open(UPDATE_APPLIED_SENTINEL, 'wb+') as f:
+        f.write(json.dumps({'update_version': update_version}))
+    # Now send SIGUSR1 (signal 10) to the alertd daemon (to rescan
+    # alertmods)
+    try:
+        with open("/var/run/alertd.pid", "r") as f:
+            alertd_pid = int(f.read())
+        os.kill(alertd_pid, signal.SIGUSR1)
+    except:
+        # alertd not running?
+        pass
 
 
 class BootEnv(object):

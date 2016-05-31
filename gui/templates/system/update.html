@@ -17,7 +17,9 @@ doSubmit({
 {% block form %}
 <tr>
   <td>
-{% if update %}
+{% if update_applied %}
+    <p>{% blocktrans with update_applied_msg=update_applied_msg%}{{ update_applied_msg }}{% endblocktrans %}</p>
+{% elif update %}
 {% if update.Notice %}
 <strong>{% trans "NOTICE" %}: {{ update.Notice }}</strong>
 {% endif %}
@@ -47,7 +49,7 @@ doSubmit({
 {% endblock %}
 
 {% block buttons %}
-{% if update %}
+{% if update and not update_applied %}
 {{ block.super }}
 {% else %}
 <button id="btn_Update_Close" data-dojo-type="dijit.form.Button"type="button">

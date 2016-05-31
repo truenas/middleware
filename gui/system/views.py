@@ -88,6 +88,7 @@ from freenasUI.system.utils import (
     get_changelog,
     parse_changelog,
     run_updated,
+    is_update_applied
 )
 
 GRAPHS_DIR = '/var/db/graphs'
@@ -1258,6 +1259,8 @@ def update_apply(request):
         )
         changelog = None
         if update:
+            update_version = update.Version()
+            update_applied, update_applied_msg = is_update_applied(update_version)
             changelogpath = '%s/ChangeLog.txt' % (
                 notifier().get_update_location()
             )
@@ -1276,6 +1279,8 @@ def update_apply(request):
                     )
         return render(request, 'system/update.html', {
             'update': update,
+            'update_applied': update_applied,
+            'update_applied_msg': update_applied_msg,
             'handler': handler,
             'changelog': changelog,
         })
@@ -1397,6 +1402,9 @@ def update_check(request):
             if sys.exc_info()[0]:
                 error_trace = traceback.format_exc()
         if update:
+            update_version = update.Version()
+            update_applied, update_applied_msg = is_update_applied(update_version)
+
             conf = Configuration.Configuration()
             sys_mani = conf.SystemManifest()
             if sys_mani:
@@ -1408,6 +1416,8 @@ def update_check(request):
             changelog = None
         return render(request, 'system/update_check.html', {
             'update': update,
+            'update_applied': update_applied,
+            'update_applied_msg': update_applied_msg,
             'network': network,
             'handler': handler,
             'changelog': changelog,

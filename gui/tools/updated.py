@@ -50,9 +50,10 @@ from freenasUI.settings import LOGGING
 log = logging.getLogger('tools.updated')
 logging.config.dictConfig(LOGGING)
 
-from freenasOS import Update
+from freenasOS import Update, Manifest
+from freenasOS.Exceptions import ManifestInvalidSignature
 from freenasUI.common.log import log_traceback
-from freenasUI.system.utils import UpdateHandler
+from freenasUI.system.utils import UpdateHandler, create_update_alert
 
 
 class PidFile(object):
@@ -109,6 +110,14 @@ def main(handler, args):
         )
         log.debug('DownloadUpdate finished')
 
+    new_manifest = Manifest.Manifest(require_signature=True)
+    try:
+        new_manifest.LoadPath(args.cache + '/MANIFEST')
+    except ManifestInvalidSignature as e:
+        log.error("Cached manifest has invalid signature: %s" % str(e))
+        raise
+    update_version = new_manifest.Version()
+
     if args.apply:
         log.debug('Starting ApplyUpdate')
         handler.reboot = Update.ApplyUpdate(
@@ -116,6 +125,10 @@ def main(handler, args):
             install_handler=handler.install_handler,
         )
         log.debug('ApplyUpdate finished')
+        if handler.reboot:
+            # Create Alert that update is applied and system should now be rebooted
+            create_update_alert(update_version)
+
 
 if __name__ == '__main__':
 
