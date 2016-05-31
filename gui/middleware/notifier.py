@@ -5371,10 +5371,13 @@ class notifier:
                 channel,
             )
         )
-        rv |= self._system_nolog(
+        # Setting arp have some issues in some hardwares
+        # Do not fail if setting these couple settings do not work
+        # See #15578
+        self._system_nolog(
             '/usr/local/bin/ipmitool lan set %d arp respond on' % channel
         )
-        rv |= self._system_nolog(
+        self._system_nolog(
             '/usr/local/bin/ipmitool lan set %d arp generate on' % channel
         )
         if data.get("ipmi_password1"):
