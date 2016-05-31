@@ -147,12 +147,12 @@ each configured CIFS Share. In contrast, global settings which apply to all CIFS
    `master browser election <http://www.samba.org/samba/docs/man/Samba-HOWTO-Collection/NetworkBrowsing.html#id2581357>`_
    to occur and for the TrueNAS® system to become available in Windows Explorer.
 
-:numref:`Figure %s: Global CIFS Configuration <cifs1a>` shows the global CIFS configuration options which are described in Table 11.3a. This configuration screen is really a front-end to
+:numref:`Figure %s: Global CIFS Configuration <tn_cifs1a>` shows the global CIFS configuration options which are described in Table 11.3a. This configuration screen is really a front-end to
 `smb4.conf <http://www.sloop.net/smb.conf.html>`_.
 
-.. _cifs1a:
+.. _tn_cifs1a:
 
-.. figure:: images/cifs1a.png
+.. figure:: images/tn_cifs1a.png
 
 **Table 11.3a: Global CIFS Configuration Options**
 
@@ -160,8 +160,14 @@ each configured CIFS Share. In contrast, global settings which apply to all CIFS
 | **Setting**                      | **Value**      | **Description**                                                                                       |
 |                                  |                |                                                                                                       |
 +==================================+================+=======================================================================================================+
-| NetBIOS Name                     | string         | automatically populated with the system's original hostname; it **must**  be different from the       |
+| NetBIOS Name (This Node)         | string         | automatically populated with the system's original hostname; it **must**  be different from the       |
 |                                  |                | *Workgroup* name                                                                                      |
+|                                  |                |                                                                                                       |
++----------------------------------+----------------+-------------------------------------------------------------------------------------------------------+
+| NetBIOS Name (Node B)            | string         | when using :ref:`Failovers`, set a unique NetBIOS name for the standby node                           |
+|                                  |                |                                                                                                       |
++----------------------------------+----------------+-------------------------------------------------------------------------------------------------------+
+| NetBIOS Alias                    | string         | when using :ref:`Failovers`, this is the NetBIOS name that resolves to either node                    |
 |                                  |                |                                                                                                       |
 +----------------------------------+----------------+-------------------------------------------------------------------------------------------------------+
 | Workgroup                        | string         | must match Windows workgroup name; this setting is ignored if the Active Directory or LDAP service is |

@@ -158,6 +158,16 @@ display these settings by checking the box "Show advanced fields by default" in 
 | Enable                   | checkbox      | uncheck to disable the configuration without deleting it                                                                                   |
 |                          |               |                                                                                                                                            |
 +--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
+| NetBIOS Name (This Node) | string        | only available in "Advanced Mode"; automatically populated with the system's original hostname; it **must**  be different from the         |
+|                          |               | *Workgroup* name                                                                                                                           |
+|                          |               |                                                                                                                                            |
++--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
+| NetBIOS Name (Node B)    | string        | only available in "Advanced Mode"; when using :ref:`Failovers`, set a unique NetBIOS name for the standby node                             |
+|                          |               |                                                                                                                                            |
++--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
+| NetBIOS Alias            | string        | only available in "Advanced Mode"; when using :ref:`Failovers`, this is the NetBIOS name that resolves to either node                      |
+|                          |               |                                                                                                                                            |
++--------------------------+---------------+--------------------------------------------------------------------------------------------------------------------------------------------+
 
 Table 9.1b summarizes the backends which are available in the "Idmap backend" drop-down menu. Each backend has its own
 `man page <https://www.samba.org/samba/docs/man/manpages/>`_ which should be referred to for implementation details. Since selecting the
@@ -432,6 +442,17 @@ If you are new to LDAP terminology, skim through the
 |                         |                |                                                                                                                |
 +-------------------------+----------------+----------------------------------------------------------------------------------------------------------------+
 | Enable                  | checkbox       | uncheck to disable the configuration without deleting it                                                       |
+|                         |                |                                                                                                                |
++-------------------------+----------------+----------------------------------------------------------------------------------------------------------------+
+| NetBIOS Name            | string         | only available in "Advanced Mode"; automatically populated with the system's original hostname; it **must**    |
+| (This Node)             |                | be different from the *Workgroup* name                                                                         |
+|                         |                |                                                                                                                |
++-------------------------+----------------+----------------------------------------------------------------------------------------------------------------+
+| NetBIOS Name (Node B)   | string         | only available in "Advanced Mode"; when using :ref:`Failovers`, set a unique NetBIOS name for the standby node |
+|                         |                |                                                                                                                |
++-------------------------+----------------+----------------------------------------------------------------------------------------------------------------+
+| NetBIOS Alias           | string         | only available in "Advanced Mode"; when using :ref:`Failovers`, this is the NetBIOS name that resolves to      |
+|                         |                | either node                                                                                                    |
 |                         |                |                                                                                                                |
 +-------------------------+----------------+----------------------------------------------------------------------------------------------------------------+
 
