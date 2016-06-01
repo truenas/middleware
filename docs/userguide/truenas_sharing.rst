@@ -1155,12 +1155,12 @@ The rest of this section describes these steps in more detail.
 Target Global Configuration
 ~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-:menuselection:`Sharing --> Block (iSCSI) --> Target Global Configuration`, shown in :numref:`Figure %s:  iSCSI Target Global Configuration Variables <global1a>`, contains settings that
+:menuselection:`Sharing --> Block (iSCSI) --> Target Global Configuration`, shown in :numref:`Figure %s:  iSCSI Target Global Configuration Variables <global1b>`, contains settings that
 apply to all iSCSI shares. Table 10.5a summarizes the settings that can be configured in the Target Global Configuration screen.
 
-.. _global1a:
+.. _global1b:
 
-.. figure:: images/global1a.png
+.. figure:: images/global1b.png
 
 **Table 10.5a: Target Global Configuration Settings**
 
