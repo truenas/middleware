@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:10-0700\n"
-"PO-Revision-Date: 2016-05-25 11:31+0000\n"
+"PO-Revision-Date: 2016-06-01 05:15+0000\n"
 "Last-Translator: BouRock <hitowerdigit@hotmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: tr\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1464175900.0\n"
+"X-POOTLE-MTIME: 1464758120.0\n"
 
 #~ msgid "Reporting"
 #~ msgstr "Raporlama"
@@ -317,7 +317,7 @@ msgstr "B, K, M, G, T öneklerini kullanarak boyutu belirleyin."
 
 #: freeadmin/static/lib/js/freeadmin/WizardShares.js:133
 msgid "Add"
-msgstr "Ekle 2"
+msgstr "Ekle"
 
 #: freeadmin/static/lib/js/freeadmin/WizardShares.js:140
 msgid "Delete"
