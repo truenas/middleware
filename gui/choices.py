@@ -753,6 +753,19 @@ DIRECTORY_SERVICE_CHOICES = (
     )
 
 
+SYS_LOG_LEVEL = (
+    ('f_emerg', _('Emergency')),
+    ('f_alert', _('Alert')),
+    ('f_crit', _('Critical')),
+    ('f_err', _('Error')),
+    ('f_warning', _('Warning')),
+    ('f_notice', _('Notice')),
+    ('f_info', _('Info')),
+    ('f_debug', _('Debug')),
+    ('f_is_debug', _('Is_Debug')),
+    )
+
+
 # on|off|ctrl|[!]data|auth|auth+[!]data
 FTP_TLS_POLICY_CHOICES = (
     ('on', _('on')),
