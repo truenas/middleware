@@ -1311,6 +1311,8 @@ def update_apply(request):
             cache_dir=notifier().get_update_location(),
         )
         changelog = None
+        update_applied = False
+        update_applied_msg = ''
         if update:
             update_version = update.Version()
             update_applied, update_applied_msg = is_update_applied(update_version)
@@ -1436,6 +1438,9 @@ def update_check(request):
         handler = CheckUpdateHandler()
         error = None
         error_trace = None
+        update_applied = False
+        update_applied_msg = ''
+
         try:
             update = CheckForUpdates(
                 diff_handler=handler.diff_call,
