@@ -1012,12 +1012,7 @@ grid.on(".dgrid-row:dblclick", function(evt) {
         data = OrderedDict()
         for column in columns:
             name = column.pop('name')
-            if column.pop("tree", False) is True:
-                data['name'] = "tree(%s)" % (
-                    json.dumps(column),
-                )
-            else:
-                data[name] = column
+            data[name] = column
 
         enc = json.dumps(data)
         return HttpResponse(enc)
