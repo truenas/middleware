@@ -4,9 +4,8 @@ define([
   "dojo/data/ObjectStore",
   "dojo/on",
   "dojo/request/xhr",
-  "dojo/store/JsonRest",
+  "dstore/Rest",
   "dojo/store/Memory",
-  "dojo/store/Observable",
   "dijit/_base/manager",
   "dijit/_Widget",
   "dijit/_TemplatedMixin",
@@ -25,9 +24,8 @@ define([
   ObjectStore,
   on,
   xhr,
-  JsonRest,
+  Rest,
   Memory,
-  Observable,
   manager,
   _Widget,
   _Templated,
@@ -142,7 +140,7 @@ define([
         me._selectTrain.set('disabled', false);
 
         me._updatesGrid.set('query', "?train=" + data.selected_train.name);
-        me._updatesGrid.set('store', me._store);
+        me._updatesGrid.set('collection', me._store);
       });
 
       on(me._selectTrain, "change", function(val) {
@@ -240,9 +238,9 @@ define([
 
       });
 
-      me._store = new Observable(new JsonRest({
+      me._store = new Rest({
         target: "/api/v1.0/system/update/check/"
-      }));
+      });
 
       me._updatesGrid = new (declare([OnDemandGrid, Selection]))({
         selectionMode: "single",
@@ -255,13 +253,11 @@ define([
       }, me.dapUpdateGrid);
 
       on(me._updatesGrid, "dgrid-refresh-complete", function(e) {
-        e.results.then(function(data) {
-          if(data.length > 0) {
+        if(e.grid._total > 0) {
             me._applyPending.set('disabled', false);
-          } else {
+        } else {
             me._applyPending.set('disabled', true);
-          }
-        });
+        }
       });
 
       this.inherited(arguments);
