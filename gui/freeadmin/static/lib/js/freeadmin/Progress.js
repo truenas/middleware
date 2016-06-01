@@ -103,6 +103,7 @@ define([
     update: function(uuid) {
 
       var updateProgress = function(data) {
+        if(!data) return;
         if(data.step) {
           me._curStep = data.step;
         }
