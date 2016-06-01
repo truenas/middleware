@@ -70,7 +70,7 @@ require([
     Grid,
     Keyboard,
     Selection,
-    tree,
+    Tree,
     DijitRegistry,
     ColumnResizer,
     registry,
@@ -168,7 +168,7 @@ require([
         }
     });
 
-    var StandardGrid = declare([Grid, Selection, Keyboard, ColumnResizer]);
+    var StandardGrid = declare([Grid, Tree, Selection, Keyboard, ColumnResizer]);
     var griddiv = query(".gridDiv", cpane.domNode.parentNode)[0];
     var grid = new StandardGrid({
         collection: store,
