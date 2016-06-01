@@ -63,13 +63,14 @@ if __name__ == "__main__":
             procs = []
             failed_drive = 0
             failed_volume = 0
-            for vol in Volume.objects.filter(vol_encrypt__exact=2):
+            for vol in Volume.objects.filter(vol_encrypt__gte=1):
                 keyfile = vol.get_geli_keyfile()
                 for ed in vol.encrypteddisk_set.all():
                     provider = ed.encrypted_provider
                     if not os.path.exists('/dev/%s.eli' % provider):
-                        proc = pipeopen("geli attach -j %s -k %s %s" % (
-                            tmp.name, keyfile, provider), quiet=True)
+                        proc = pipeopen("geli attach %s -k %s %s" % (
+                            '-j  %s' % tmp.name if vol.vol_encrypt == 2 else '',
+                            keyfile, provider), quiet=True)
                         procs.append(proc)
                 for proc in procs:
                     msg = proc.communicate()[1]
