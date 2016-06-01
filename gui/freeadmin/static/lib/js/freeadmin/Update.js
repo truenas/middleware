@@ -254,7 +254,7 @@ define([
       }, me.dapUpdateGrid);
 
       on(me._updatesGrid, "dgrid-refresh-complete", function(e) {
-        if(e.grid._total > 0) {
+        if(e.grid.contentNode.textContent.length > 0) {
             me._applyPending.set('disabled', false);
         } else {
             me._applyPending.set('disabled', true);
