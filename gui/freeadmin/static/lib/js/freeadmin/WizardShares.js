@@ -10,7 +10,7 @@ define([
   "dojo/on",
   "dojo/query",
   "dojo/request/xhr",
-  "dojo/store/Memory",
+  "dstore/Memory",
   "dijit/_Widget",
   "dijit/_TemplatedMixin",
   "dijit/form/CheckBox",
@@ -87,7 +87,7 @@ define([
 
       on(me._shareName, "keyup", function(evt) {
         var value = this.get('value');
-        var result = me._store.get(value);
+        var result = me._store.getSync(value);
         if(result) {
           var row = me._sharesList.row(value);
           me._sharesList.select(row);
@@ -174,7 +174,7 @@ define([
       });
 
       me._sharesList = new (declare([OnDemandGrid, Selection]))({
-        store: me._store,
+        collection: me._store,
         selectionMode: "single",
         columns: {
           name: "Name"
@@ -354,14 +354,14 @@ define([
         if(!valid) return;
 
         // Update the values in store if the item has already been saved
-        var result = me._store.get(me._shareName.get("value"));
+        var result = me._store.getSync(me._shareName.get("value"));
         if(result) {
           result.user = me._ownershipUser.get("value");
           result.group = me._ownershipGroup.get("value");
           result.usercreate = me._ownershipUserCreate.get("value");
           result.groupcreate = me._ownershipGroupCreate.get("value");
           result.mode = me._ownershipMode.get("value");
-          me._store.put(result);
+          me._store.putSync(result);
         }
         me.dump();
         ownershipToShare();
@@ -402,7 +402,7 @@ define([
       else if(me._shareAFP.get("value")) purpose = "afp";
       else if(me._shareNFS.get("value")) purpose = "nfs";
       else if(me._shareiSCSI.get("value")) purpose = "iscsitarget";
-      me._store.put({
+      me._store.putSync({
         name: me._shareName.get("value"),
         purpose: purpose,
         allowguest: me._shareGuest.get("value"),
@@ -424,7 +424,7 @@ define([
     },
     remove: function(id) {
       var me = this;
-      me._store.remove(id);
+      me._store.removeSync(id);
       me._sharesList.refresh();
       if(Object.keys(me._sharesList.selection).length == 0) {
         me._shareDelete.set("disabled", true);
@@ -434,7 +434,7 @@ define([
     },
     select: function(id) {
       var me = this;
-      var data = me._store.get(id);
+      var data = me._store.getSync(id);
       me._shareName.set("value", data.name);
       me._shareGuest.set("value", data.allowguest);
       me._shareAFP_TM.set("value", data.timemachine);
@@ -515,7 +515,7 @@ define([
         dumpNode = domConstruct.create("div", {id: me.id + "_dump"}, me.domNode.parentNode);
       }
 
-      me._store.query({}).forEach(function(obj, idx) {
+      me._store.forEach(function(obj, idx) {
 
         new TextBox({
           name: "shares-" + idx + "-share_name",
