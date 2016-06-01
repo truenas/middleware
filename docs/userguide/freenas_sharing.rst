@@ -871,6 +871,20 @@ for more details.
 |                     |                                                                                                                                            |
 +---------------------+--------------------------------------------------------------------------------------------------------------------------------------------+
 
+<<<<<<< HEAD
+=======
+.. note:: when using "fruit", also add the "streams_xattr" and "catia" VFS objects and be sure to configure **all** CIFS shares this way. Reboot the Mac client after making this change. 
+
+The following VFS objects do not appear in the drop-down menu as they are always enabled:
+
+* **recycle:** moves deleted files to the recycle directory instead of deleting them 
+
+* **shadow_copy2:** a more recent implementation of "shadow_copy" with some additonal features 
+
+* **zfs_space:** correctly calculates ZFS space used by share, including any reservations or quotas
+
+* **zfsacl:**
+>>>>>>> 3d83805... Note that client should be rebooted.
 
 .. _Configuring Unauthenticated Access:
 
