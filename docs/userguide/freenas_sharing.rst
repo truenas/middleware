@@ -877,7 +877,7 @@ for more details.
 |                     |                                                                                                                                            |
 +---------------------+--------------------------------------------------------------------------------------------------------------------------------------------+
 
-.. note:: when using "fruit", also add the "streams_xattr" and "catia" VFS objects and be sure to configure **all** CIFS shares this way. 
+.. note:: when using "fruit", also add the "streams_xattr" and "catia" VFS objects and be sure to configure **all** CIFS shares this way. Reboot the Mac client after making this change. 
 
 The following VFS objects do not appear in the drop-down menu as they are always enabled:
 
