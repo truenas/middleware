@@ -264,6 +264,10 @@ permissions of the files and directories that are created by the client.
 The chapter on :ref:`Sharing` contains configuration examples for several types of permission scenarios. This section provides an overview of the screen that
 is used to set permissions.
 
+.. note:: in order for users and groups to be available, they must either be first created using the instructions in :ref:`Account` or imported from a directory service using the
+   instructions in :ref:`Directory Service`. If more than 50 users or groups are available, the drop-down menus described in this section will automatically truncate their display to
+   50 for performance reasons. In this case, start to type in the desired user or group name so that the display narrows its search to matching results.
+
 Once a volume or dataset is created, it will be listed by its mount point name in :menuselection:`Storage --> Volumes --> View Volumes`. If you click the
 "Change Permissions" icon for a specific volume/dataset, you will see the screen shown in Figure 8.1c. Table 8.1c summarizes the options in this screen.
 
