@@ -41,7 +41,7 @@ class BootStatusFAdmin(BaseFreeAdmin):
         columns.append({
             'name': 'name',
             'label': _('Name'),
-            'tree': True,
+            'renderExpando': True,
             'sortable': False,
             'shouldExpand': True,
         })
