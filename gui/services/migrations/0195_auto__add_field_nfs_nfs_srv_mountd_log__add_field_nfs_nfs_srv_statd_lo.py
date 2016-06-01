@@ -11,7 +11,7 @@ class Migration(SchemaMigration):
         # Adding field 'NFS.nfs_srv_mountd_log'
         db.add_column(u'services_nfs', 'nfs_srv_mountd_log',
                       self.gf('django.db.models.fields.BooleanField')(default=True),
-                      keep_default=False)
+                      keep_default=True)
 
         # Adding field 'NFS.nfs_srv_statd_lockd_log'
         db.add_column(u'services_nfs', 'nfs_srv_statd_lockd_log',
