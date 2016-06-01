@@ -146,6 +146,19 @@ def clean_path_locked(mp):
             )
 
 
+def check_certificate(certificate):
+    regex = re.compile(r"(-{5}BEGIN[\s\w]+-{5}[^-]+-{5}END[\s\w]+-{5})+", re.M | re.S)
+    matches = regex.findall(certificate)
+
+    nmatches = len(matches)
+    if not nmatches:
+        raise forms.ValidationError(_(
+            "Not a valid certificate."
+        ))
+
+    return certificate, nmatches
+
+
 class BootEnvAddForm(Form):
 
     name = forms.CharField(
@@ -2091,18 +2104,10 @@ class CertificateAuthorityImportForm(ModelForm):
         if not certificate:
             raise forms.ValidationError(_("Empty Certificate!"))
 
-        regex = re.compile(r"(-{5}BEGIN[\s\w]+-{5}[^-]+-{5}END[\s\w]+-{5})+", re.M | re.S)
-        matches = regex.findall(certificate)
-
-        nmatches = len(matches)
-        if not nmatches:
-            raise forms.ValidationError(_(
-                "Not a valid certificate."
-            ))
+        certificaten, nmatches = check_certificate(certificate)
 
         if nmatches > 1:
             self.instance.cert_chain = True
-
         #
         # Should we validate the chain??? Probably
         # For now, just assume the user knows WTF he is doing
@@ -2562,6 +2567,23 @@ class CertificateImportForm(ModelForm):
         required=False,
         widget=forms.PasswordInput(render_value=True),
     )
+
+    def clean_cert_certificate(self):
+        cdata = self.cleaned_data
+        certificate = cdata.get('cert_certificate')
+        if not certificate:
+            raise forms.ValidationError(_("Empty Certificate!"))
+
+        certificaten, nmatches = check_certificate(certificate)
+
+        if nmatches > 1:
+            self.instance.cert_chain = True
+        #
+        # Should we validate the chain??? Probably
+        # For now, just assume the user knows WTF he is doing
+        #
+
+        return certificate
 
     def clean_cert_passphrase(self):
         cdata = self.cleaned_data
