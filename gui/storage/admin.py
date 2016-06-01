@@ -98,7 +98,7 @@ class VolumeFAdmin(BaseFreeAdmin):
         columns.append({
             'name': 'name',
             'label': _('Name'),
-            'tree': True,
+            'renderExpando': True,
             'sortable': False,
             'shouldExpand': True,
         })
@@ -427,7 +427,7 @@ class VolumeStatusFAdmin(BaseFreeAdmin):
         columns.append({
             'name': 'name',
             'label': _('Name'),
-            'tree': True,
+            'renderExpando': True,
             'sortable': False,
             'shouldExpand': True,
         })
