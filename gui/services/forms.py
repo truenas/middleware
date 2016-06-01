@@ -63,8 +63,6 @@ from ipaddr import (
     IPv4Address, IPv6Address,
 )
 
-logging.NOTICE = 60
-logging.addLevelName(logging.NOTICE, "NOTICE")
 log = logging.getLogger('services.form')
 
 
@@ -610,12 +608,8 @@ class SSHForm(ModelForm):
             decoded_key = base64.b64decode(pubkey.encode("ascii"))
             key_digest = hashlib.sha256(decoded_key).digest()
             ssh_fingerprint = (b"SHA256:" + base64.b64encode(key_digest).replace(b"=", b"")).decode("utf-8")
-            with open('/dev/ttyv0', 'wb') as f:
-                f.write("ECDSA Fingerprint of the SSH KEY: {0}".format(
-                    ssh_fingerprint)
-                )
-            logger = log
-            logger.log(logging.NOTICE, "ECDSA Fingerprint of the SSH KEY: " + ssh_fingerprint)
+            # using log.error since it logs to /var/log/messages, /var/log/debug.log as well as /dev/console all at once
+            log.error("ECDSA Fingerprint of the SSH KEY: " + ssh_fingerprint)
 
 
 class RsyncdForm(ModelForm):
