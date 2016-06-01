@@ -468,7 +468,10 @@ The system dataset can optionally be configured to also store the system log and
 information, moving these to the system dataset will prevent :file:`/var/` on the device holding the operating system from filling up as :file:`/var/` has
 limited space. 
 
-Use the drop-down menu to select the ZFS volume (pool) to contain the system dataset.
+Use the drop-down menu to select the ZFS volume (pool) to contain the system dataset. 
+
+.. note:: it is recommended to store the system dataset on the :file:`freenas-boot` pool. For this reason, a yellow system alert will be generated when the system dataset is configured to
+   use another pool.
 
 To store the system log on the system dataset, check the "Syslog" box.
 
