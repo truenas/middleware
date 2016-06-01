@@ -590,8 +590,6 @@ _gen_conf()
 	while read -r nonroot mountdport statdport lockdport; do
 		if [ "${nonroot}" = 1 ]; then
 			mountdflags="${mountdflags}n"
-                        statdflags="${statdflags}n"
-                        lockdflags="${lockdflags}n"
 		fi
 		if [ -n "${mountdport}" ]; then
 			mountdflags="${mountdflags} -p ${mountdport}"
