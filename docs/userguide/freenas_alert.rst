@@ -44,6 +44,8 @@ is detected. Some of the conditions that trigger an alert include:
 
 * a re-key operation fails on an encrypted pool
 
+* an update failed or an update completed and the system needs a reboot in order to complete the updating process.
+
 * the status of an Avago MegaRAID SAS controller has changed;
   `mfiutil(8) <http://www.freebsd.org/cgi/man.cgi?query=mfiutil>`_
   is included for managing these devices

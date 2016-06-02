@@ -151,6 +151,8 @@ Some updates affect the user interface so this section lists any functional chan
 
 * The "Auxiliary Parameters" field of :menuselection:`Services --> UPS` has been split into two so that you can specify additional :file:`ups.conf` and :file:`upsd.conf` settings.
 
+* An alert will be generated for these two conditions: an update failed or an update completed and the system needs a reboot in order to complete the updating process.
+
 * :command:`iohyve` has been updated to version 0.7.5.
 
 * Timestamps have been added to alerts.
