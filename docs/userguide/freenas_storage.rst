@@ -660,8 +660,8 @@ Note that in this example, there are two datasets named *volume1*. The first rep
 disk parity. The second represents the implicit or root dataset and its "Used" and "Available" entries indicate the amount of disk space available for storage.
 
 Buttons are provided for quick access to "Volume Manager", "Import Disk", "Import Volume", and "View Disks". If the system has multipath-capable hardware, an
-extra button will be added to "View Multipaths". The columns indicate the "Name" of the volume/dataset/zvol, how much disk space is "Used", how much disk
-space is "Available", the type of "Compression", the "Compression Ratio", and the "Status" of the pool.
+extra button will be added to "View Multipaths". For each entry, the columns indicate the “Name”, how much disk space is “Used”, how much disk space is “Available”, the type of
+“Compression”, the “Compression Ratio”, the “Status”, and whether or not it is mounted as read-only.
 
 **Figure 8.1k: Viewing Volumes**
 
