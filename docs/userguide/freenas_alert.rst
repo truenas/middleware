@@ -4,17 +4,15 @@
 Alert
 =====
 
-FreeNAS® provides an alert system to provide a visual warning of any conditions that require administrative attention. The "Alert" button in the far right
-corner will flash red when there is an outstanding alert. In the example alert shown in Figure 22a, one of the disks in a ZFS pool is offline which has
-degraded the state of the pool.
+The FreeNAS® alert system provides a visual warning of any conditions that require administrative attention. The "Alert" button in the far right
+corner will flash red when there is an outstanding alert. In the example alert shown in Figure 22a, the system is warning that the S.M.A.R.T. service is not running.
 
 **Figure 22a: Example Alert Message**
 
-.. image:: images/alert2.png
+.. image:: images/alert2a.png
 
-Informational messages will have a green "OK" while messages requiring attention will be listed as a red "CRITICAL". CRITICAL messages will also be emailed to
-the root user account. If you are aware of a critical condition but wish to remove the flashing alert until you deal with it, uncheck the box next to that
-message.
+Informational messages will have a green "OK", warning messages will flash yellow, and messages requiring attention will be listed as a red "CRITICAL". CRITICAL messages will also be emailed
+to the root user account. If you are aware of a critical condition but wish to remove the flashing alert until you deal with it, uncheck the box next to that message.
 
 Behind the scenes, an alert daemon checks for various alert conditions, such as volume and disk status, and writes the current conditions to
 :file:`/var/tmp/alert`. The daemon retrieves the current alert status every minute and will change the solid green alert icon to flashing red if a new alert
@@ -34,13 +32,19 @@ is detected. Some of the conditions that trigger an alert include:
 
 * the system is unable to bind to the "WebGUI IPv4 Address" set in :menuselection:`System --> General`
 
-* the system can not find an IP address configured on an iSCSI portal
+* the system cannot find an IP address configured on an iSCSI portal
 
-* a replication task fails
+* a periodic snapshot or replication task fails
 
 * a VMware login or a :ref:`VMware-Snapshot` task fails
 
+* a delete of a VMware snapshot fails
+
 * a Certificate Authority or certificate is invalid or malformed
+
+* a re-key operation fails on an encrypted pool
+
+* an update failed or an update completed and the system needs a reboot in order to complete the updating process.
 
 * the status of an Avago MegaRAID SAS controller has changed;
   `mfiutil(8) <http://www.freebsd.org/cgi/man.cgi?query=mfiutil>`_
@@ -52,4 +56,4 @@ controller to flash::
 
  sas2flash -o -f firmwareimagename -b biosname -c controllernumber
 
-When finished, reboot the system. The new firmware version should appear in the system messages and the alert will be cleared.
+When finished, reboot the system. The new firmware version will appear in the system messages and the alert will be cleared.
