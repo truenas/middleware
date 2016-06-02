@@ -197,7 +197,7 @@ created indicating the date and time the wizard was run.
 
 **Figure 5.3a: Viewing Boot Environments**
 
-.. image:: images/be1f.png
+.. image:: images/be1g.png
 
 Each boot environment entry contains the following information:
 
@@ -207,21 +207,26 @@ Each boot environment entry contains the following information:
 
 * **Created:** indicates the date and time the boot entry was created.
 
+* **Keep:** indicates whether or not this boot environment can be pruned if an update does not have enough space to proceed. Click the entry's "Keep" button if that boot environment should
+  not be automatically pruned.
+
 Highlight an entry to view its configuration buttons.  The following configuration buttons are available:
 
+* **Rename:** used to change the name of the boot environment.
+
+* **Keep/Unkeep:** used to toggle whether or not the updater can prune (automatically delete) this boot environment if there is not enough space to proceed with the update.
+
+* **Clone:** used to create a copy of the highlighted boot environment.
+  
 * **Delete:** used to delete the highlighted entry, which also removes that entry from the boot menu. Since you cannot delete an entry that has been activated, this button will
   not appear for the active boot environment. If you need to delete an entry that  is currently activated, first activate another entry, which will clear the
   *On reboot* field of the currently activated entry. Note that this button will not be displayed for the "default" boot environment as this entry is needed in order to return the system to
   the original installation state.
 
-* **Rename:** used to change the name of the boot environment.
-
 * **Activate:** will only appear on entries which are not currently set to "Active". Changes the selected entry to the default boot entry on next boot. Its
   status will change to "On Reboot" and the current "Active" entry will change from "On Reboot, Now" to "Now", indicating that it was used on the last boot
   but won't be used on the next boot.
-
-* **Clone:** used to create a copy of the highlighted boot environment.
-
+  
 The buttons above the boot entries can be used to:
 
 * **Create:** a manual boot environment. A pop-up menu will prompt you to input a "Name" for the boot environment. When inputting the name, only alphanumeric,
