@@ -164,6 +164,7 @@ require([
     var store = new (declare([Rest, TreeStore]))({
         target: "{{ resource_url }}{{ datagrid_filters|escapejs }}",
         headers: {"X-Requested-From": "WebUI"},
+	useRangeHeaders: true,
         getChildren: function(object){
 	    col = new Memory({});
 	    col.setData(object.children);
