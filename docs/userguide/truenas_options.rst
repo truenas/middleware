@@ -177,6 +177,8 @@ is detected. Some of the conditions that trigger an alert include:
 
 * a Certificate Authority or certificate is invalid or malformed
 
+* an update failed or an update completed and the system needs a reboot in order to complete the updating process.
+
 * HA is configured but the connection is not established
 
 * one node of an HA pair gets stuck applying its configuration journal as this condition could block future configuration changes from being applied to the standby node
