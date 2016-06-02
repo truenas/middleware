@@ -193,14 +193,14 @@ state.
    configuration database in order to load the current configuration values. If your intent is to make configuration changes, rather than operating system
    changes, make a backup of the configuration database first using :menuselection:`System --> General` --> Save Config.
 
-As seen in :numref:`Figure %s: Viewing Boot Environments <tn_be1b>`, two boot environments are created when TrueNAS® is installed. The system will boot into the *default* boot environment
+As seen in :numref:`Figure %s: Viewing Boot Environments <be1g>`, two boot environments are created when TrueNAS® is installed. The system will boot into the *default* boot environment
 and users can make their changes and update from this version. The other boot environment, named *Initial-Install* can be booted into if the system needs to be returned to
 a pristine, non-configured version of the installation. If you used the initial configuration wizard, a third boot environment called *Wizard-date* is also
 created indicating the date and time the wizard was run.
 
-.. _tn_be1b:
+.. _be1g:
 
-.. figure:: images/tn_be1b.png
+.. figure:: images/be1g.png
 
 Each boot environment entry contains the following information:
 
@@ -210,20 +210,25 @@ Each boot environment entry contains the following information:
 
 * **Created:** indicates the date and time the boot entry was created.
 
+* **Keep:** indicates whether or not this boot environment can be pruned if an update does not have enough space to proceed. Click the entry's "Keep" button if that boot environment should
+  not be automatically pruned.
+
 Highlight an entry to view its configuration buttons.  The following configuration buttons are available:
 
-* **Activate:** will only appear on entries which are not currently set to "Active". Changes the selected entry to the default boot entry on next boot. Its
-  status will change to "On Reboot" and the current "Active" entry will change from "On Reboot, Now" to "Now", indicating that it was used on the last boot
-  but won't be used on the next boot.
+* **Rename:** used to change the name of the boot environment.
+
+* **Keep/Unkeep:** used to toggle whether or not the updater can prune (automatically delete) this boot environment if there is not enough space to proceed with the update.
+  
+* **Clone:** used to create a copy of the highlighted boot environment.
 
 * **Delete:** used to delete the highlighted entries, which also removes these entries from the boot menu. Since you can not delete an entry that has been activated, this button will
   not appear for the active boot environment. If you need to delete an entry that you created and it is currently  activated, first activate another entry, which will clear the
   *On reboot* field of the currently activated entry. Note that this button will not be displayed for the "default" boot environment as this entry is needed in order to return the system to
   the original installation state.
-  
-* **Rename:** used to change the name of the boot environment.
-  
-* **Clone:** used to create a copy of the highlighted boot environment.
+
+* **Activate:** will only appear on entries which are not currently set to "Active". Changes the selected entry to the default boot entry on next boot. Its
+  status will change to "On Reboot" and the current "Active" entry will change from "On Reboot, Now" to "Now", indicating that it was used on the last boot
+  but won't be used on the next boot.
 
 The buttons above the boot entries can be used to:
 
