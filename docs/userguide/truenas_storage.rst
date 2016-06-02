@@ -639,7 +639,7 @@ View Volumes
 ~~~~~~~~~~~~
 
 If you click :menuselection:`Storage --> Volumes --> View Volumes`, you can view and further configure existing ZFS pools, datasets, and zvols. The example
-shown in :numref:`Figure %s: Viewing Volumes <tn_volume1a>` demonstrates one ZFS pool (*volume1*) with two datasets
+shown in :numref:`Figure %s: Viewing Volumes <tn_volume1b>` demonstrates one ZFS pool (*volume1*) with two datasets
 (the one automatically created with the pool, *volume1*, and
 *dataset1*) and one zvol
 (*zvol1*).
@@ -648,12 +648,12 @@ Note that in this example, there are two datasets named *volume1*. The first rep
 disk parity. The second represents the implicit or root dataset and its "Used" and "Available" entries indicate the amount of disk space available for storage.
 
 Buttons are provided for quick access to "Volume Manager", "Import Disk", "Import Volume", and "View Disks", and "View Enclosure". If the system has
-multipath-capable hardware, an extra button will be added to "View Multipaths". The columns indicate the "Name" of the volume/dataset/zvol, how much disk
-space is "Used", how much disk space is "Available", the type of "Compression", the "Compression Ratio", and the "Status" of the pool.
+multipath-capable hardware, an extra button will be added to "View Multipaths". For each entry, the columns indicate the "Name", how much disk
+space is "Used", how much disk space is "Available", the type of "Compression", the "Compression Ratio", the "Status", and whether or not it is mounted as read-only.
 
-.. _tn_volume1a:
+.. _tn_volume1b:
 
-.. figure:: images/tn_volume1a.png
+.. figure:: images/tn_volume1b.png
 
 If you click the entry for a pool, several buttons will appear at the bottom of the screen. In order from left to right, these buttons are used to perform the
 following:
