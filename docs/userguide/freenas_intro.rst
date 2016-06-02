@@ -134,6 +134,8 @@ Some updates affect the user interface so this section lists any functional chan
 
 * Smartmontools has been updated to `6.5 <https://www.smartmontools.org/browser/tags/RELEASE_6_5/smartmontools/NEWS>`_ which adds
   `NVMe support <https://www.smartmontools.org/wiki/NVMe_Support>`_.
+  
+* The "Keep" / "Unkeep" button has been added to :menuselection:`System --> Boot` and the "Keep" column has been added to this screen.
 
 * The "Readonly" column has been added to :menuselection:`Storage --> Volumes --> View Volumes` so that it is easy to visualize which are read-only replications from another server.
    
