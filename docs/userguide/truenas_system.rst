@@ -53,11 +53,11 @@ does not use a domain name add *.local* to the end of the hostname.
 General
 -------
 
-:menuselection:`System --> General` is shown in :numref:`Figure %s: General Screen <tn_system2>`.
+:menuselection:`System --> General` is shown in :numref:`Figure %s: General Screen <tn_system2a>`.
 
-.. _tn_system2:
+.. _tn_system2a:
 
-.. figure:: images/tn_system2.png
+.. figure:: images/tn_system2a.png
     
 Table 5.2a summarizes the settings that can be configured using the General tab:
 
@@ -108,6 +108,9 @@ Table 5.2a summarizes the settings that can be configured using the General tab:
 |                      |                |                                                                                                                                |
 +----------------------+----------------+--------------------------------------------------------------------------------------------------------------------------------+
 | Timezone             | drop-down menu | select the timezone from the drop-down menu                                                                                    |
+|                      |                |                                                                                                                                |
++----------------------+----------------+--------------------------------------------------------------------------------------------------------------------------------+
+| Syslog level         | drop-down menu | when "Syslog server" is defined, only logs matching this level are sent                                                        |
 |                      |                |                                                                                                                                |
 +----------------------+----------------+--------------------------------------------------------------------------------------------------------------------------------+
 | Syslog server        | string         | *IP address_or_hostname:optional_port_number* of remote syslog server to send logs to; once set, log entries will be written   |
