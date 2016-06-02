@@ -12539,3 +12539,54 @@ msgstr ""
 #: templates/storage/rekey.html:5
 msgid "You cannot rekey volume while standby node is down!"
 msgstr ""
+
+#: system/views.py:245
+#: system/views.py:246
+#: system/views.py:250
+#: system/views.py:271
+msgid "Keep"
+msgstr ""
+
+#: system/views.py:252
+msgid "UnKeep"
+msgstr ""
+
+#: system/views.py:253
+#: system/views.py:257
+msgid "Unkeep"
+msgstr ""
+
+#: system/views.py:457
+#, fuzzy
+msgid "Boot Environment successfully Kept."
+msgstr "启动环境已删除。"
+
+#: system/views.py:461
+#, fuzzy
+msgid "Failed to keep Boot Environment."
+msgstr "启动环境重命名失败。"
+
+#: system/views.py:475
+#, fuzzy
+msgid "Boot Environment successfully UnKept."
+msgstr "启动环境已删除。"
+
+#: system/views.py:479
+#, fuzzy
+msgid "Failed to Unkeep Boot Environment."
+msgstr "启动环境重命名失败。"
+
+#: templates/system/bootenv_keep.html:4
+#, fuzzy
+msgid "Do you want to set keep flag in this boot environment?"
+msgstr "是否删除下列启动环境？"
+
+#: templates/system/bootenv_unkeep.html:4
+#, fuzzy
+msgid "Do you want to reset keep flag in this boot environment?"
+msgstr "是否删除下列启动环境？"
+
+#: templates/system/update.html:21
+#: templates/system/update_check.html:22
+msgid "%(update_applied_msg)s"
+msgstr ""
