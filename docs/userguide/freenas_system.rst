@@ -55,7 +55,7 @@ General
 
 **Figure 5.2a: General Screen**
 
-.. image:: images/system2a.png
+.. image:: images/system2b.png
     
 Table 5.2a summarizes the settings that can be configured using the General tab:
 
@@ -106,6 +106,9 @@ Table 5.2a summarizes the settings that can be configured using the General tab:
 |                      |                |                                                                                                                                |
 +----------------------+----------------+--------------------------------------------------------------------------------------------------------------------------------+
 | Timezone             | drop-down menu | select the timezone from the drop-down menu                                                                                    |
+|                      |                |                                                                                                                                |
++----------------------+----------------+--------------------------------------------------------------------------------------------------------------------------------+
+| Syslog level         | drop-down menu | when "Syslog server" is defined, only logs matching this level are sent                                                        |
 |                      |                |                                                                                                                                |
 +----------------------+----------------+--------------------------------------------------------------------------------------------------------------------------------+
 | Syslog server        | string         | *IP address_or_hostname:optional_port_number* of remote syslog server to send logs to; once set, log entries will be written   |
