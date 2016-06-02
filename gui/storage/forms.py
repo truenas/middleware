@@ -1359,56 +1359,114 @@ class ZFSDataset(Form):
         del self.cleaned_data
 
 
-class ZVol_EditForm(Form):
-    volume_compression = forms.ChoiceField(
+class CommonZVol(object):
+
+    def __init__(self, *args, **kwargs):
+        self._force = False
+        super(CommonZVol, self).__init__(*args, **kwargs)
+
+    def _zvol_force(self):
+        if self._force:
+            if not self.cleaned_data.get('zvol_force'):
+                self._errors['zvol_volsize'] = self.error_class([
+                    'It is not recommended to use more than 80% of your '
+                    'available space for your zvol!'
+                ])
+        #else:
+        #    self.fields['zvol_force'].widget = forms.widgets.HiddenInput()
+
+    def clean_zvol_volsize(self):
+        size = self.cleaned_data.get('zvol_volsize').replace(' ', '')
+        reg = re.search(r'^(\d+(?:\.\d+)?)([BKMGTP](?:iB)?)$', size, re.I)
+        if not reg:
+            raise forms.ValidationError(
+                _('Specify the size with IEC suffixes, e.g. 10 GiB')
+            )
+
+        number, suffix = reg.groups()
+        if suffix.lower().endswith('ib'):
+            size = '%s%s' % (number, suffix[0])
+
+        zlist = zfs.list_datasets(path=self.vol_name, include_root=True)
+        if zlist:
+            dataset = zlist.get(self.vol_name)
+            _map = {
+                'P': 1125899906842624,
+                'T': 1099511627776,
+                'G': 1073741824,
+                'M': 1048576,
+            }
+            if suffix in _map:
+                cmpsize = Decimal(number) * _map.get(suffix)
+            else:
+                cmpsize = Decimal(number)
+            avail = dataset.avail
+            if hasattr(self, 'name'):
+                zvol = zlist.get(self.name)
+                if zvol:
+                    avail += zvol.used
+            if cmpsize > avail * 0.80:
+                self._force = True
+
+        return size
+
+
+class ZVol_EditForm(CommonZVol, Form):
+    zvol_compression = forms.ChoiceField(
         choices=choices.ZFS_CompressionChoices,
         widget=forms.Select(attrs=attrs_dict),
         label=_('Compression level'))
-    volume_dedup = forms.ChoiceField(
+    zvol_dedup = forms.ChoiceField(
         label=_('ZFS Deduplication'),
         choices=choices.ZFS_DEDUP_INHERIT,
         widget=WarningSelect(text=DEDUP_WARNING),
     )
-    volume_volsize = forms.CharField(
+    zvol_volsize = forms.CharField(
         max_length=128,
         label=_('Size'),
         help_text=_('Example: 1 GiB'))
+    zvol_force = forms.BooleanField(
+        label=_('Force size'),
+        required=False,
+        help_text=_('Allow the zvol to consume more then 80% of available space'),
+    )
 
     def __init__(self, *args, **kwargs):
-        name = kwargs.pop('name')
+        self.name = kwargs.pop('name')
+        self.vol_name = self.name.rsplit('/', 1)[0]
         super(ZVol_EditForm, self).__init__(*args, **kwargs)
         _n = notifier()
-        if '/' in name:
-            parentds = name.rsplit('/', 1)[0]
+        if '/' in self.name:
+            parentds = self.name.rsplit('/', 1)[0]
             parentdata = _n.zfs_get_options(parentds)
 
-            self.fields['volume_compression'].choices = _inherit_choices(
+            self.fields['zvol_compression'].choices = _inherit_choices(
                 choices.ZFS_CompressionChoices,
                 parentdata['compression'][0]
             )
-            self.fields['volume_dedup'].choices = _inherit_choices(
+            self.fields['zvol_dedup'].choices = _inherit_choices(
                 choices.ZFS_DEDUP_INHERIT,
                 parentdata['dedup'][0]
             )
 
-        self.zdata = _n.zfs_get_options(name)
-        self.fields['volume_compression'].initial = self.zdata['compression'][2]
-        self.fields['volume_volsize'].initial = self.zdata['volsize'][0]
+        self.zdata = _n.zfs_get_options(self.name)
+        self.fields['zvol_compression'].initial = self.zdata['compression'][2]
+        self.fields['zvol_volsize'].initial = self.zdata['volsize'][0]
 
         if self.zdata['dedup'][2] == 'inherit':
-            self.fields['volume_dedup'].initial = 'inherit'
+            self.fields['zvol_dedup'].initial = 'inherit'
         elif self.zdata['dedup'][0] in ('on', 'off', 'verify'):
-            self.fields['volume_dedup'].initial = self.zdata['dedup'][0]
+            self.fields['zvol_dedup'].initial = self.zdata['dedup'][0]
         elif self.zdata['dedup'][0] == 'sha256,verify':
-            self.fields['volume_dedup'].initial = 'verify'
+            self.fields['zvol_dedup'].initial = 'verify'
         else:
-            self.fields['volume_dedup'].initial = 'off'
+            self.fields['zvol_dedup'].initial = 'off'
 
         if not dedup_enabled():
-            self.fields['volume_dedup'].widget.attrs['readonly'] = True
-            self.fields['volume_dedup'].widget.attrs['class'] = (
+            self.fields['zvol_dedup'].widget.attrs['readonly'] = True
+            self.fields['zvol_dedup'].widget.attrs['class'] = (
                 'dijitSelectDisabled dijitDisabled')
-            self.fields['volume_dedup'].widget.text = mark_safe(
+            self.fields['zvol_dedup'].widget.text = mark_safe(
                 '<span style="color: red;">Dedup feature not activated. '
                 'Contact <a href="mailto:truenas-support@ixsystems.com?subject'
                 '=ZFS Deduplication Activation">TrueNAS Support</a> for '
@@ -1416,16 +1474,14 @@ class ZVol_EditForm(Form):
             )
 
     def clean(self):
-        cleaned_data = _clean_zfssize_fields(
-            self,
-            ('volsize', ),
-            "volume_")
-        volsize = cleaned_data.get('volume_volsize')
-        if volsize and 'volume_volsize' not in self._errors:
+        cleaned_data = _clean_zfssize_fields(self, ('volsize', ), "zvol_")
+        volsize = cleaned_data.get('zvol_volsize')
+        if volsize and 'zvol_volsize' not in self._errors:
             if humansize_to_bytes(self.zdata['volsize'][0]) > humansize_to_bytes(volsize):
-                self._errors['volume_volsize'] = self.error_class([
+                self._errors['zvol_volsize'] = self.error_class([
                     _('You cannot shrink a zvol from GUI, this may lead to data loss.')
                 ])
+        self._zvol_force()
         return cleaned_data
 
     def set_error(self, msg):
@@ -1434,9 +1490,9 @@ class ZVol_EditForm(Form):
         del self.cleaned_data
 
 
-class ZVol_CreateForm(Form):
+class ZVol_CreateForm(CommonZVol, Form):
     zvol_name = forms.CharField(max_length=128, label=_('zvol name'))
-    zvol_size = forms.CharField(
+    zvol_volsize = forms.CharField(
         max_length=128,
         label=_('Size for this zvol'),
         help_text=_('Example: 1 GiB'),
@@ -1477,7 +1533,6 @@ class ZVol_CreateForm(Form):
 
     def __init__(self, *args, **kwargs):
         self.vol_name = kwargs.pop('vol_name')
-        self._force = False
         zpool = notifier().zpool_parse(self.vol_name.split('/')[0])
         numdisks = 4
         for vdev in zpool.data:
@@ -1515,37 +1570,6 @@ class ZVol_CreateForm(Form):
                 "(-), (_), (:) and (.)."))
         return name
 
-    def clean_zvol_size(self):
-        size = self.cleaned_data.get('zvol_size')
-        size = size.replace(' ', '')
-        reg = re.search(r'^(\d+(?:\.\d+)?)([BKMGTP](?:iB)?)$', size, re.I)
-        if not reg:
-            raise forms.ValidationError(
-                _('Specify the size with IEC suffixes, e.g. 10 GiB')
-            )
-
-        number, suffix = reg.groups()
-        if suffix.lower().endswith('ib'):
-            size = '%s%s' % (number, suffix[0])
-
-        zlist = zfs.list_datasets(path=self.vol_name, include_root=True)
-        if zlist:
-            dataset = zlist.get(self.vol_name)
-            _map = {
-                'P': 1125899906842624,
-                'T': 1099511627776,
-                'G': 1073741824,
-                'M': 1048576,
-            }
-            if suffix in _map:
-                cmpsize = Decimal(number) * _map.get(suffix)
-            else:
-                cmpsize = Decimal(number)
-            if cmpsize > dataset.avail * 0.80:
-                self._force = True
-
-        return size
-
     def clean(self):
         cleaned_data = self.cleaned_data
         full_zvol_name = "%s/%s" % (
@@ -1556,14 +1580,7 @@ class ZVol_CreateForm(Form):
             self._errors["zvol_name"] = self.error_class([msg])
             del cleaned_data["zvol_name"]
 
-        if self._force:
-            if not cleaned_data.get('zvol_force'):
-                self._errors['zvol_size'] = self.error_class([
-                    'It is not recommended to use more than 80% of your '
-                    'available space for your zvol!'
-                ])
-        else:
-            self.fields['zvol_force'].widget = forms.widgets.HiddenInput()
+        self._zvol_force()
         return cleaned_data
 
     def set_error(self, msg):
