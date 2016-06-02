@@ -554,7 +554,7 @@ def zvol_create(request, parent):
         if zvol_form.is_valid():
             props = {}
             cleaned_data = zvol_form.cleaned_data
-            zvol_size = cleaned_data.get('zvol_size')
+            zvol_volsize = cleaned_data.get('zvol_volsize')
             zvol_blocksize = cleaned_data.get("zvol_blocksize")
             zvol_name = "%s/%s" % (parent, cleaned_data.get('zvol_name'))
             zvol_compression = cleaned_data.get('zvol_compression')
@@ -563,7 +563,7 @@ def zvol_create(request, parent):
                 props['volblocksize'] = zvol_blocksize
             errno, errmsg = notifier().create_zfs_vol(
                 name=str(zvol_name),
-                size=str(zvol_size),
+                size=str(zvol_volsize),
                 sparse=cleaned_data.get("zvol_sparse", False),
                 props=props)
             if errno == 0:
@@ -621,7 +621,7 @@ def zvol_edit(request, name):
                 'dedup',
                 'volsize',
             ):
-                formfield = 'volume_%s' % attr
+                formfield = 'zvol_%s' % attr
                 if form.cleaned_data[formfield] == "inherit":
                     success, err = _n.zfs_inherit_option(
                         name,
