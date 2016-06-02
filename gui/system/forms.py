@@ -107,6 +107,7 @@ from freenasUI.storage.forms import VolumeAutoImportForm
 from freenasUI.storage.models import Disk, Volume, Scrub
 from freenasUI.system import models
 from freenasUI.tasks.models import SMARTTest
+from common.ssl import CERT_CHAIN_REGEX
 
 log = logging.getLogger('system.forms')
 WIZARD_PROGRESSFILE = '/tmp/.initialwizard_progress'
@@ -147,8 +148,7 @@ def clean_path_locked(mp):
 
 
 def check_certificate(certificate):
-    regex = re.compile(r"(-{5}BEGIN[\s\w]+-{5}[^-]+-{5}END[\s\w]+-{5})+", re.M | re.S)
-    matches = regex.findall(certificate)
+    matches = CERT_CHAIN_REGEX.findall(certificate)
 
     nmatches = len(matches)
     if not nmatches:
@@ -156,7 +156,7 @@ def check_certificate(certificate):
             "Not a valid certificate."
         ))
 
-    return certificate, nmatches
+    return nmatches
 
 
 class BootEnvAddForm(Form):
@@ -2104,7 +2104,7 @@ class CertificateAuthorityImportForm(ModelForm):
         if not certificate:
             raise forms.ValidationError(_("Empty Certificate!"))
 
-        certificaten, nmatches = check_certificate(certificate)
+        nmatches = check_certificate(certificate)
 
         if nmatches > 1:
             self.instance.cert_chain = True
@@ -2574,7 +2574,7 @@ class CertificateImportForm(ModelForm):
         if not certificate:
             raise forms.ValidationError(_("Empty Certificate!"))
 
-        certificaten, nmatches = check_certificate(certificate)
+        nmatches = check_certificate(certificate)
 
         if nmatches > 1:
             self.instance.cert_chain = True
