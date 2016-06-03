@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:05-0700\n"
-"PO-Revision-Date: 2016-06-02 05:13+0000\n"
+"PO-Revision-Date: 2016-06-02 16:29+0000\n"
 "Last-Translator: BouRock <hitowerdigit@hotmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: tr\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1)\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1464844406.0\n"
+"X-POOTLE-MTIME: 1464884991.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -8009,9 +8009,9 @@ msgid ""
 "DEBUG3 each specify higher levels of debugging output. The default is ERROR."
 msgstr ""
 "Hangi iletilerin sftp sunucusu tarafından günlükleneceğini belirtir. BİLGİ "
-"ve AYRINTILI günlük işlemleri bu sftp sunucu istemcisi adına "
-"gerçekleştirilir. Her iki HATAAYIKLAMA2 ve HATAAYIKLAMA3, hata ayıklama "
-"çıktısının en yüksek seviyesini belirtir. Varsayılan HATA'dır."
+"ve AYRINTILI günlük işlemlerini bu sftp sunucusu istemcinin adına "
+"gerçekleştirir. Her iki HATAAYIKLAMA2 ve HATAAYIKLAMA3, hata ayıklama "
+"çıktısının en yüksek seviyelerini belirtir. Varsayılan HATA'dır."
 
 #: services/models.py:1516
 msgid "UNIX extensions"
@@ -13237,3 +13237,34 @@ msgstr ""
 #: templates/system/update_check.html:22
 msgid "%(update_applied_msg)s"
 msgstr "%(update_applied_msg)s"
+
+#: choices.py:757
+msgid "Emergency"
+msgstr "Acil Durum"
+
+#: choices.py:761
+msgid "Warning"
+msgstr "Uyarı"
+
+#: choices.py:762
+msgid "Notice"
+msgstr "Bildirim"
+
+#: choices.py:765
+msgid "Is_Debug"
+msgstr "Is_Debug"
+
+#: system/models.py:137
+msgid "Syslog level"
+msgstr "Syslog seviyesi"
+
+#: system/models.py:138
+msgid ""
+"Specifies which messages will be logged by server. INFO and VERBOSE log "
+"transactions that server performs on behalf of the client. f_is_debug "
+"specify higher levels of debugging output. The default is f_info."
+msgstr ""
+"Hangi iletilerin sunucu tarafından günlükleneceğini belirtir. BİLGİ ve "
+"AYRINTILI günlük işlemlerini bu sunucu istemci adına gerçekleştirilir. "
+"f_is_debug, hata ayıklama çıktısının en yüksek seviyelerini belirtir. "
+"Varsayılan f_info'dur."
