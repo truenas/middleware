@@ -248,12 +248,16 @@ The buttons above the boot entries can be used to:
 If this system had a mirrored boot device and one device had a "Status" of *OFFLINE*, one could click the device to replace, then click its "Replace" button.
 Note that **you cannot replace the boot device if it is the only boot device** as it contains the operating system itself.
 
-Figure 5.3c shows a sample boot menu. By default, it will boot into the boot environment created by the latest update. To access the entries for the default, initial-install, or previous
-updates, select "Boot Environment Menu".
+Figure 5.3c shows a sample boot menu. 
 
 **Figure 5.3c: Boot Environments in Boot Menu**
 
-.. image:: images/be3b.png
+.. image:: images/be3c.png
+
+The first entry is the active boot environment, or the one that the system has been configured to boot into. To boot into a different boot environment, press the :kbd:`spacebar` to pause
+this screen, use the down arrow to select "Boot Environment Menu", and press :kbd:`Enter`. This will present a menu that displays the other available boot environments. Use your up/down
+arrows to select the desired boot environment and press :kbd:`Enter` to boot into it. If you wish to always boot into that boot environment, go to :menuselection:`System --> Boot`,
+highlight that entry, and click the "Activate" button.
 
 .. index:: Mirroring the Boot Device
 .. _Mirroring the Boot Device:
