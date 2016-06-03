@@ -13629,3 +13629,38 @@ msgstr "Êtes-vous sûr de vouloir supprimer ces environnements de démarrage ?"
 #: templates/system/update_check.html:22
 msgid "%(update_applied_msg)s"
 msgstr ""
+
+#: choices.py:757
+msgid "Emergency"
+msgstr ""
+
+#: choices.py:761
+#, fuzzy
+msgid "Warning"
+msgstr "Attention !"
+
+#: choices.py:762
+msgid "Notice"
+msgstr ""
+
+#: choices.py:765
+#, fuzzy
+msgid "Is_Debug"
+msgstr "Débogage"
+
+#: system/models.py:137
+#, fuzzy
+msgid "Syslog level"
+msgstr "Serveur syslog"
+
+#: system/models.py:138
+#, fuzzy
+msgid ""
+"Specifies which messages will be logged by server. INFO and VERBOSE log "
+"transactions that server performs on behalf of the client. f_is_debug "
+"specify higher levels of debugging output. The default is f_info."
+msgstr ""
+"Spécifie quels messages seront historisés par le serveur sftp. "
+"L'historisation des transactions INFO et VERBOSE que le serveur sftp réalise "
+"pour le client. Chacun de DEBUG2 et DEBUG3 spécifie des plus hauts niveaux "
+"de debug. Par défaut c'est ERROR."

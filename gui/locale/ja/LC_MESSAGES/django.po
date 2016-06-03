@@ -13819,3 +13819,35 @@ msgstr "本当に削除してもよろしいですか？"
 #: templates/system/update_check.html:22
 msgid "%(update_applied_msg)s"
 msgstr ""
+
+#: choices.py:757
+msgid "Emergency"
+msgstr ""
+
+#: choices.py:761
+#, fuzzy
+msgid "Warning"
+msgstr "注意！"
+
+#: choices.py:762
+msgid "Notice"
+msgstr ""
+
+# log levelの設定だと思われます。
+# カタカナだけだと、致命的な設定ミスを誘発しかねないので、元の単語を併記します。
+#: choices.py:765
+#, fuzzy
+msgid "Is_Debug"
+msgstr "デバッグ（Debug）"
+
+#: system/models.py:137
+#, fuzzy
+msgid "Syslog level"
+msgstr "Syslogサーバ"
+
+#: system/models.py:138
+msgid ""
+"Specifies which messages will be logged by server. INFO and VERBOSE log "
+"transactions that server performs on behalf of the client. f_is_debug "
+"specify higher levels of debugging output. The default is f_info."
+msgstr ""
