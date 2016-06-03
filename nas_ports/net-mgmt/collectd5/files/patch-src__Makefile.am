@@ -116,7 +116,7 @@
  endif
  if BUILD_WITH_LIBDEVINFO
  memory_la_LIBADD += -ldevinfo
-@@ -671,6 +699,12 @@ nfs_la_SOURCES = nfs.c
+@@ -671,6 +699,17 @@ nfs_la_SOURCES = nfs.c
  nfs_la_LDFLAGS = $(PLUGIN_LDFLAGS)
  endif
  
@@ -124,12 +124,17 @@
 +pkglib_LTLIBRARIES += nfsstat.la
 +nfsstat_la_SOURCES = nfsstat.c
 +nfsstat_la_LDFLAGS = $(PLUGIN_LDFLAGS)
++nfsstat_la_CPPFLAGS = $(AM_CPPFLAGS)
++if BUILD_WITH_LIBDTRACE
++nfsstat_la_CPPFLAGS += $(BUILD_WITH_LIBDTRACE_CPPFLAGS)
++nfsstat_la_LDFLAGS += $(BUILD_WITH_LIBDTRACE_LDFLAGS)
++endif
 +endif
 +
  if BUILD_PLUGIN_FSCACHE
  pkglib_LTLIBRARIES += fscache.la
  fscache_la_SOURCES = fscache.c
-@@ -951,7 +985,7 @@ swap_la_CFLAGS = $(AM_CFLAGS)
+@@ -951,7 +990,7 @@ swap_la_CFLAGS = $(AM_CFLAGS)
  swap_la_LDFLAGS = $(PLUGIN_LDFLAGS)
  swap_la_LIBADD =
  if BUILD_WITH_LIBKSTAT
@@ -138,7 +143,7 @@
  endif
  if BUILD_WITH_LIBDEVINFO
  swap_la_LIBADD += -ldevinfo
-@@ -997,7 +1031,7 @@ if BUILD_PLUGIN_TAPE
+@@ -997,7 +1036,7 @@ if BUILD_PLUGIN_TAPE
  pkglib_LTLIBRARIES += tape.la
  tape_la_SOURCES = tape.c
  tape_la_LDFLAGS = $(PLUGIN_LDFLAGS)
@@ -147,7 +152,7 @@
  endif
  
  if BUILD_PLUGIN_TARGET_NOTIFICATION
-@@ -1102,7 +1136,7 @@ uptime_la_CFLAGS = $(AM_CFLAGS)
+@@ -1102,7 +1141,7 @@ uptime_la_CFLAGS = $(AM_CFLAGS)
  uptime_la_LDFLAGS = $(PLUGIN_LDFLAGS)
  uptime_la_LIBADD =
  if BUILD_WITH_LIBKSTAT
@@ -156,16 +161,16 @@
  endif
  if BUILD_WITH_PERFSTAT
  uptime_la_LIBADD += -lperfstat
-@@ -1260,9 +1294,21 @@ if BUILD_LINUX
+@@ -1260,11 +1299,23 @@ if BUILD_LINUX
  # zfs_arc requires no library on linux
  else
  # solaris
 -zfs_arc_la_LIBADD = -lkstat
 +zfs_arc_la_LIBADD = $(BUILD_WITH_LIBKSTAT_LIBS)
-+endif
  endif
  endif
-+
+ endif
+ 
 +if BUILD_PLUGIN_ZFS_ARC_V2
 +pkglib_LTLIBRARIES += zfs_arc_v2.la
 +zfs_arc_v2_la_SOURCES = zfs_arc_v2.c
@@ -176,10 +181,12 @@
 +else
 +zfs_arc_v2_la_LIBADD = -lkstat
 +endif
- endif
- 
++endif
++
  if BUILD_PLUGIN_ZOOKEEPER
-@@ -1354,12 +1400,7 @@ endif
+ pkglib_LTLIBRARIES += zookeeper.la
+ zookeeper_la_SOURCES = zookeeper.c
+@@ -1354,12 +1405,7 @@ endif
  
  install-exec-hook:
  	$(mkinstalldirs) $(DESTDIR)$(sysconfdir)
