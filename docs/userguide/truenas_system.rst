@@ -252,11 +252,16 @@ The buttons above the boot entries can be used to:
 If one of the boot devices has a "Status" of *OFFLINE*, click the device that needs to be replaced, click its "Replace" button, select the new replacement
 device, and click "Replace Disk" to rebuild the boot mirror.
 
-:numref:`Figure %s: Boot Environments in Boot Menu <tn_be3>` shows a sample boot menu containing entries for the default and initial boot environments.
+:numref:`Figure %s: Boot Environments in Boot Menu <tn_be3a>` shows a sample boot menu.
 
-.. _tn_be3:
+.. _tn_be3a:
 
-.. figure:: images/tn_be3.png
+.. figure:: images/tn_be3a.png
+
+The first entry is the active boot environment, or the one that the system has been configured to boot into. To boot into a different boot environment, press the :kbd:`spacebar` to pause
+this screen, use the down arrow to select "Boot Environment Menu", and press :kbd:`Enter`. This will present a menu that displays the other available boot environments. Use your up/down
+arrows to select the desired boot environment and press :kbd:`Enter` to boot into it. If you wish to always boot into that boot environment, go to :menuselection:`System --> Boot`,
+highlight that entry, and click the "Activate" button.
 
 .. _Advanced:
 
