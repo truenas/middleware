@@ -13035,3 +13035,32 @@ msgstr "Da li ste sigurni da želite uništiti \"%(name)s\"?"
 #: templates/system/update_check.html:22
 msgid "%(update_applied_msg)s"
 msgstr ""
+
+#: choices.py:757
+msgid "Emergency"
+msgstr ""
+
+#: choices.py:761
+msgid "Warning"
+msgstr ""
+
+#: choices.py:762
+msgid "Notice"
+msgstr ""
+
+#: choices.py:765
+#, fuzzy
+msgid "Is_Debug"
+msgstr "Debug"
+
+#: system/models.py:137
+#, fuzzy
+msgid "Syslog level"
+msgstr "Nivo bilješki"
+
+#: system/models.py:138
+msgid ""
+"Specifies which messages will be logged by server. INFO and VERBOSE log "
+"transactions that server performs on behalf of the client. f_is_debug "
+"specify higher levels of debugging output. The default is f_info."
+msgstr ""

@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:10-0700\n"
-"PO-Revision-Date: 2016-03-20 16:56+0000\n"
+"PO-Revision-Date: 2016-06-03 06:47+0000\n"
 "Last-Translator: Tonnes <tonnes.mb@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: nl\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1458492987.0\n"
+"X-POOTLE-MTIME: 1464936427.0\n"
 
 #~ msgid "Reporting"
 #~ msgstr "Rapporteren"
@@ -651,7 +651,7 @@ msgstr ""
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:176
 msgid "OK"
-msgstr ""
+msgstr "OK"
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:226
 msgid ""
