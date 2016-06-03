@@ -22,7 +22,7 @@ LIB_DEPENDS=	libltdl.so:devel/libltdl
 USES=		autoreconf gmake libtool pkgconfig shebangfix tar:bzip2
 GNU_CONFIGURE=	yes
 
-OPTIONS_DEFINE=		CGI DEBUG GCRYPT LIBZFS LOGSTASH VIRT
+OPTIONS_DEFINE=		CGI DEBUG GCRYPT LIBDTRACE LIBZFS LOGSTASH VIRT
 OPTIONS_GROUP=		INPUT OUTPUT
 OPTIONS_GROUP_OUTPUT=	KAFKA MONGODB NOTIFYDESKTOP NOTIFYEMAIL RIEMANN RRDTOOL \
 			TSDB
@@ -42,6 +42,7 @@ GCRYPT_DESC=		Build with libgcrypt
 IPMI_DESC=		Enable OpenIPMI plugin
 JSON_DESC=		Enable JSON plugins
 KAFKA_DESC=		Enable write_kafka plugin
+LIBDTRACE_DESC=	Build with LibDTrace
 LIBZFS_DESC=	Build with LibZFS
 LOGSTASH_DESC=		Enable log_logstash plugin (requires json)
 MEMCACHEC_DESC=		Enable memcachec plugin
@@ -331,6 +332,9 @@ SHEBANG_FILES=	contrib/collection.cgi
 
 .if ${PORT_OPTIONS:MLIBZFS} && exists(/usr/lib/libzfs.so) && exists(/usr/lib/libzfs_core.so)
 CONFIGURE_ARGS+=	--with-libzfs
+.endif
+.if ${PORT_OPTIONS:MLIBDTRACE} && exists(/usr/lib/libdtrace.so)
+CONFIGURE_ARGS+=	--with-libdtrace
 .endif
 
 post-patch:

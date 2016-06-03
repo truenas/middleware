@@ -118,10 +118,70 @@
  
  	AC_CHECK_FUNC(PyObject_CallFunction,
  		      [with_python="yes"],
-@@ -4689,6 +4692,77 @@ fi
+@@ -4689,6 +4692,137 @@ fi
  AM_CONDITIONAL(BUILD_WITH_LIBYAJL, test "x$with_libyajl" = "xyes")
  # }}}
  
++# --with-libdtrace {{{
++with_libdtrace_cppflags=""
++with_libdtrace_ldflags=""
++AC_ARG_WITH(libdtrace, [AS_HELP_STRING([--with-libdtrace@<:@=PREFIX@:>@], [Path to libdtrace.])],
++[
++	if test "x$withval" = "xyes"
++	then
++		with_libdtrace_cppflags="\
++-I /usr/src/cddl/compat/opensolaris/include \
++-I /usr/src/cddl/contrib/opensolaris/lib/libdtrace/common \
++-I /usr/src/sys/cddl/compat/opensolaris \
++-I /usr/src/sys/cddl/contrib/opensolaris/uts/common \
++"
++		with_libdtrace_ldflags="-ldtrace"
++		with_libdtrace="yes"
++	else
++		with_libdtrace="no"
++	fi
++],
++[
++	with_libdtrace="no"
++])
++if test "x$with_libdtrace" = "xyes"
++then
++	SAVE_CPPFLAGS="$CPPFLAGS"
++	SAVE_LDFLAGS="$LDFLAGS"
++
++	CPPFLAGS="$CPPFLAGS $with_libdtrace_cppflags"
++	LDFLAGS="$LDFLAGS $with_libdtrace_ldflags"
++
++	AC_CHECK_LIB(dtrace, dtrace_open,
++	[
++		AC_DEFINE(HAVE_LIBDTRACE, 1, [Define to 1 if you have the dtrace library (-ldtrace).])
++	], [with_libdtrace="no (libdtrace not found)"])
++
++	CPPFLAGS="$SAVE_CPPFLAGS"
++	LDFLAGS="$SAVE_LDFLAGS"
++fi
++if test "x$with_libdtrace" = "xyes"
++then
++	SAVE_CPPFLAGS="$CPPFLAGS"
++	CPPFLAGS="$CPPFLAGS $with_libdtrace_cppflags"
++
++	AC_CHECK_HEADERS(dtrace.h,
++	[
++		AC_DEFINE(HAVE_LIBDTRACE_H, 1, [Define to 1 if you have the <libdtrace.h> header file.])
++	], [with_libdtrace="no (dtrace.h not found)"])
++
++	CPPFLAGS="$SAVE_CPPFLAGS"
++fi
++if test "x$with_libdtrace" = "xyes"
++then
++	BUILD_WITH_LIBDTRACE_CPPFLAGS="$with_libdtrace_cppflags"
++	BUILD_WITH_LIBDTRACE_LDFLAGS="$with_libdtrace_ldflags"
++	AC_SUBST(BUILD_WITH_LIBDTRACE_CPPFLAGS)
++	AC_SUBST(BUILD_WITH_LIBDTRACE_LDFLAGS)
++fi
++AM_CONDITIONAL(BUILD_WITH_LIBDTRACE, test "x$with_libdtrace" = "xyes")
++# }}}
++
 +# --with-libzfs {{{
 +with_libzfs_cppflags=""
 +with_libzfs_ldflags=""
@@ -196,7 +256,7 @@
  # --with-mic {{{
  with_mic_cflags="-I/opt/intel/mic/sysmgmt/sdk/include"
  with_mic_ldpath="-L/opt/intel/mic/sysmgmt/sdk/lib/Linux"
-@@ -4761,8 +4835,8 @@ AC_ARG_WITH(libvarnish, [AS_HELP_STRING(
+@@ -4761,8 +4895,8 @@ AC_ARG_WITH(libvarnish, [AS_HELP_STRING(
  	else if test -d "$with_libvarnish/lib"
  	then
  		AC_MSG_NOTICE([Not checking for libvarnish: Manually configured])
@@ -207,7 +267,7 @@
  		with_libvarnish="yes"
  	fi; fi; fi
  ],
-@@ -5230,6 +5304,7 @@ plugin_cpu="no"
+@@ -5230,6 +5364,7 @@ plugin_cpu="no"
  plugin_cpufreq="no"
  plugin_curl_json="no"
  plugin_curl_xml="no"
@@ -215,7 +275,7 @@
  plugin_df="no"
  plugin_disk="no"
  plugin_drbd="no"
-@@ -5237,6 +5312,7 @@ plugin_entropy="no"
+@@ -5237,6 +5372,7 @@ plugin_entropy="no"
  plugin_ethstat="no"
  plugin_fhcount="no"
  plugin_fscache="no"
@@ -223,7 +283,7 @@
  plugin_interface="no"
  plugin_ipmi="no"
  plugin_ipvs="no"
-@@ -5246,6 +5322,7 @@ plugin_log_logstash="no"
+@@ -5246,6 +5382,7 @@ plugin_log_logstash="no"
  plugin_memory="no"
  plugin_multimeter="no"
  plugin_nfs="no"
@@ -231,7 +291,7 @@
  plugin_numa="no"
  plugin_perl="no"
  plugin_processes="no"
-@@ -5264,6 +5341,7 @@ plugin_vmem="no"
+@@ -5264,6 +5401,7 @@ plugin_vmem="no"
  plugin_vserver="no"
  plugin_wireless="no"
  plugin_zfs_arc="no"
@@ -239,7 +299,7 @@
  plugin_zookeeper="no"
  
  # Linux
-@@ -5334,7 +5412,12 @@ fi
+@@ -5334,7 +5472,12 @@ fi
  
  if test "x$ac_system" = "xFreeBSD"
  then
@@ -252,7 +312,7 @@
  fi
  
  
-@@ -5362,6 +5445,7 @@ then
+@@ -5362,6 +5505,7 @@ then
  	plugin_processes="yes"
  	plugin_uptime="yes"
  	plugin_zfs_arc="yes"
@@ -260,7 +320,7 @@
  fi
  
  if test "x$with_devinfo$with_kstat" = "xyesyes"
-@@ -5612,11 +5696,13 @@ AC_PLUGIN([ceph],        [$plugin_ceph],
+@@ -5612,11 +5756,13 @@ AC_PLUGIN([ceph],        [$plugin_ceph],
  AC_PLUGIN([conntrack],   [$plugin_conntrack],  [nf_conntrack statistics])
  AC_PLUGIN([contextswitch], [$plugin_contextswitch], [context switch statistics])
  AC_PLUGIN([cpufreq],     [$plugin_cpufreq],    [CPU frequency statistics])
@@ -274,7 +334,7 @@
  AC_PLUGIN([cgroups],     [$plugin_cgroups],    [CGroups CPU usage accounting])
  AC_PLUGIN([dbi],         [$with_libdbi],       [General database statistics])
  AC_PLUGIN([df],          [$plugin_df],         [Filesystem usage statistics])
-@@ -5630,6 +5716,7 @@ AC_PLUGIN([exec],        [yes],         
+@@ -5630,6 +5776,7 @@ AC_PLUGIN([exec],        [yes],         
  AC_PLUGIN([fhcount],     [$plugin_fhcount],    [File handles statistics])
  AC_PLUGIN([filecount],   [yes],                [Count files in directories])
  AC_PLUGIN([fscache],     [$plugin_fscache],    [fscache statistics])
@@ -282,7 +342,7 @@
  AC_PLUGIN([gmond],       [$with_libganglia],   [Ganglia plugin])
  AC_PLUGIN([hddtemp],     [yes],                [Query hddtempd])
  AC_PLUGIN([interface],   [$plugin_interface],  [Interface traffic statistics])
-@@ -5663,6 +5750,7 @@ AC_PLUGIN([netapp],      [$with_libnetap
+@@ -5663,6 +5810,7 @@ AC_PLUGIN([netapp],      [$with_libnetap
  AC_PLUGIN([netlink],     [$with_libmnl],       [Enhanced Linux network statistics])
  AC_PLUGIN([network],     [yes],                [Network communication plugin])
  AC_PLUGIN([nfs],         [$plugin_nfs],        [NFS statistics])
@@ -290,7 +350,7 @@
  AC_PLUGIN([nginx],       [$with_libcurl],      [nginx statistics])
  AC_PLUGIN([notify_desktop], [$with_libnotify], [Desktop notifications])
  AC_PLUGIN([notify_email], [$with_libesmtp],    [Email notifier])
-@@ -5732,6 +5820,7 @@ AC_PLUGIN([write_sensu], [yes],         
+@@ -5732,6 +5880,7 @@ AC_PLUGIN([write_sensu], [yes],         
  AC_PLUGIN([write_tsdb],  [yes],                [TSDB output plugin])
  AC_PLUGIN([xmms],        [$with_libxmms],      [XMMS statistics])
  AC_PLUGIN([zfs_arc],     [$plugin_zfs_arc],    [ZFS ARC statistics])
@@ -298,7 +358,7 @@
  AC_PLUGIN([zookeeper],   [yes],  	       [Zookeeper statistics])
  
  dnl Default configuration file
-@@ -5964,6 +6053,7 @@ Configuration:
+@@ -5964,6 +6113,7 @@ Configuration:
      libxml2 . . . . . . . $with_libxml2
      libxmms . . . . . . . $with_libxmms
      libyajl . . . . . . . $with_libyajl
@@ -306,7 +366,7 @@
      oracle  . . . . . . . $with_oracle
      protobuf-c  . . . . . $have_protoc_c
      python  . . . . . . . $with_python
-@@ -5993,6 +6083,7 @@ Configuration:
+@@ -5993,6 +6143,7 @@ Configuration:
      cpu . . . . . . . . . $enable_cpu
      cpufreq . . . . . . . $enable_cpufreq
      csv . . . . . . . . . $enable_csv
@@ -314,7 +374,7 @@
      curl  . . . . . . . . $enable_curl
      curl_json . . . . . . $enable_curl_json
      curl_xml  . . . . . . $enable_curl_xml
-@@ -6008,6 +6099,7 @@ Configuration:
+@@ -6008,6 +6159,7 @@ Configuration:
      fhcount . . . . . . . $enable_fhcount
      filecount . . . . . . $enable_filecount
      fscache . . . . . . . $enable_fscache
@@ -322,7 +382,7 @@
      gmond . . . . . . . . $enable_gmond
      hddtemp . . . . . . . $enable_hddtemp
      interface . . . . . . $enable_interface
-@@ -6041,6 +6133,7 @@ Configuration:
+@@ -6041,6 +6193,7 @@ Configuration:
      netlink . . . . . . . $enable_netlink
      network . . . . . . . $enable_network
      nfs . . . . . . . . . $enable_nfs
@@ -330,7 +390,7 @@
      nginx . . . . . . . . $enable_nginx
      notify_desktop  . . . $enable_notify_desktop
      notify_email  . . . . $enable_notify_email
-@@ -6109,6 +6202,7 @@ Configuration:
+@@ -6109,6 +6262,7 @@ Configuration:
      write_tsdb  . . . . . $enable_write_tsdb
      xmms  . . . . . . . . $enable_xmms
      zfs_arc . . . . . . . $enable_zfs_arc
