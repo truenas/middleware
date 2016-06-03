@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:03-0700\n"
-"PO-Revision-Date: 2016-03-20 16:56+0000\n"
+"PO-Revision-Date: 2016-06-03 06:55+0000\n"
 "Last-Translator: Tonnes <tonnes.mb@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: nl\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1458492987.0\n"
+"X-POOTLE-MTIME: 1464936955.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -13262,27 +13262,22 @@ msgid "Repair"
 msgstr "Repareren"
 
 #: choices.py:188
-#, fuzzy
 msgid "SMB3_02"
-msgstr "SMB3_00"
+msgstr "SMB3_02"
 
 #: choices.py:189
-#, fuzzy
 msgid "SMB3_10"
-msgstr "SMB3_00"
+msgstr "SMB3_10"
 
 #: choices.py:190
-#, fuzzy
 msgid "SMB3_11"
-msgstr "SMB3"
+msgstr "SMB3_11"
 
 #: services/models.py:92
-#, fuzzy
 msgid "NetBIOS alias"
-msgstr "NetBIOS-naam"
+msgstr "NetBIOS-alias"
 
 #: tools/update_check.py:100
-#, fuzzy
 msgid ""
 "A new update is available for the %(train)s train.\n"
 "\n"
@@ -13292,6 +13287,7 @@ msgid ""
 msgstr ""
 "Er is een nieuwe update beschikbaar voor de train %(train)s.\n"
 "\n"
+"Versie: %(version)s\n"
 "Changelog:\n"
 "%(changelog)s\n"
 
@@ -13301,9 +13297,8 @@ msgid "Jail name may contain only alphanumeric characters and underscore."
 msgstr "De community mag alleen alfanumerieke tekens, _ of - bevatten"
 
 #: services/forms.py:266
-#, fuzzy
 msgid "NetBIOS Alias: %s"
-msgstr "NetBIOS-naam"
+msgstr "NetBIOS-alias: %s"
 
 #: services/models.py:416
 #, fuzzy
@@ -13425,4 +13420,38 @@ msgstr "Weet u zeker dat u de volgende opstartomgevingen wilt verwijderen?"
 #: templates/system/update.html:21
 #: templates/system/update_check.html:22
 msgid "%(update_applied_msg)s"
+msgstr "%(update_applied_msg)s"
+
+#: choices.py:757
+msgid "Emergency"
 msgstr ""
+
+#: choices.py:761
+msgid "Warning"
+msgstr "Waarschuwing"
+
+#: choices.py:762
+msgid "Notice"
+msgstr ""
+
+#: choices.py:765
+#, fuzzy
+msgid "Is_Debug"
+msgstr "Foutopsporing"
+
+#: system/models.py:137
+#, fuzzy
+msgid "Syslog level"
+msgstr "Syslog-server"
+
+#: system/models.py:138
+#, fuzzy
+msgid ""
+"Specifies which messages will be logged by server. INFO and VERBOSE log "
+"transactions that server performs on behalf of the client. f_is_debug "
+"specify higher levels of debugging output. The default is f_info."
+msgstr ""
+"Bepaalt welke berichten door sftp-server worden geregistreerd. INFO en "
+"VERBOSE registreren transacties die sftp-server namens de client uitvoert. "
+"DEBUG2 en DEBUG3 specificeren beide hogere niveaus aan "
+"foutopsporingsuitvoer. De standaard is ERROR."
