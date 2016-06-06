@@ -703,6 +703,9 @@ jail_post_start()
 	ipv6=$(jail_get_ipv6 "${jail}")
 	jid="$(jail_get_jid "${jail}")"
 
+        #Adding a command to set devfs ruleset on all /dev/adax mountpoints except the host one
+        mount -t devfs | grep -v '^devfs on /dev ' | awk '{print $3;}' | xargs -n 1 -J % devfs -m % rule -s 4 applyset
+
 	if [ -n "${ipv4}" ]
 	then
 		jail_get_ip_and_netmask "${ipv4}"
