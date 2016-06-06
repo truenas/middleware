@@ -422,21 +422,20 @@ class JailCreateForm(ModelForm):
                     jail_flags |= WARDEN_SET_FLAGS_FLAGS
                     jail_set_args['jflags'] = val
 
-            else:
-                if key == 'jail_mac':
+            elif key == 'jail_mac':
+                jail_list = Jails.objects.all()
+                while True:
                     duplicate_mac = 0
-                    while True:
-                        mac_address = generate_randomMAC()
-                        jail_list = Jails.objects.all()
-                        for jail in jail_list:
-                            if jail.jail_mac == mac_address:
-                                duplicate_mac = 1
-                                break
-                        if duplicate_mac != 1:
+                    mac_address = generate_randomMAC()
+                    for jail in jail_list:
+                        if jail.jail_mac == mac_address:
+                            duplicate_mac = 1
                             break
+                    if duplicate_mac != 1:
+                        break
 
-                    jail_flags |= WARDEN_SET_FLAGS_MAC
-                    jail_set_args['mac'] = mac_address
+                jail_flags |= WARDEN_SET_FLAGS_MAC
+                jail_set_args['mac'] = mac_address
 
             jail_set_args['flags'] = jail_flags
             try:
