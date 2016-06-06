@@ -6054,6 +6054,24 @@ class notifier:
         connections = xml.xpath('//connection')
         return len(connections)
 
+    def iscsi_connected_targets(self):
+        '''
+        Returns the list of connected iscsi targets
+        '''
+        from lxml import etree
+        proc = self._pipeopen('ctladm islist -x')
+        xml = proc.communicate()[0]
+        connections = etree.fromstring(xml)
+        connected_targets = []
+        for connection in connections:
+            # Get full target name (Base name:target name) for each connection
+            target_name = connection[3].text
+            # Get target name from full name
+            target = target_name.split(':')[1]
+            if target not in connected_targets:
+                connected_targets.append(target)
+        return connected_targets
+
     def call_backupd(self, args):
         ntries = 15
         sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
