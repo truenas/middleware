@@ -243,7 +243,7 @@ Datasets
 Import
 ++++++
 
-.. http:post:: /api/v1.0/storage/volume_import/
+.. http:get:: /api/v1.0/storage/volume_import/
 
    Get list of importable volumes.
 
@@ -253,10 +253,6 @@ Import
 
       GET /api/v1.0/storage/volume_import/ HTTP/1.1
       Content-Type: application/json
-
-      {
-        "name": "foo"
-      }
 
    **Example response**:
 
