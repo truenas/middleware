@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:05-0700\n"
-"PO-Revision-Date: 2016-06-02 16:29+0000\n"
+"PO-Revision-Date: 2016-06-06 06:33+0000\n"
 "Last-Translator: BouRock <hitowerdigit@hotmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: tr\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1)\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1464884991.0\n"
+"X-POOTLE-MTIME: 1465194794.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -4896,7 +4896,7 @@ msgstr ""
 
 #: system/models.py:564
 msgid "Preserve extended attributes"
-msgstr "Genişletilmiş öznitelikleri korur"
+msgstr "Genişletilmiş öznitelikleri koru"
 
 #: system/models.py:565
 msgid ""
@@ -10761,7 +10761,7 @@ msgstr "Oluştur"
 
 #: system/models.py:675
 msgid "Signing Certificate Authority"
-msgstr "Sertifika Yetkisi İmzalanıyor"
+msgstr "İmzalı Sertifika Yetkisi"
 
 #: system/views.py:171
 #: system/views.py:172
@@ -11312,11 +11312,11 @@ msgstr "Geçersiz IP ya da Ağ."
 msgid "Allow only listed hosts and/or networks access to this volume"
 msgstr ""
 "Sadece listelenen anamakinelerin ve/veya ağların bu birime erişmesine izin "
-"ver"
+"verir"
 
 #: sharing/models.py:229
 msgid "Deny listed hosts and/or networks access to this volume"
-msgstr "Listelenen anamakinelerin ve/veya ağların bu birime erişmesini reddet"
+msgstr "Listelenen anamakinelerin ve/veya ağların bu birime erişmesini reddeder"
 
 #: sharing/nav.py:43
 #: templates/sharing/index.html:27
@@ -12359,7 +12359,7 @@ msgstr ""
 
 #: tasks/models.py:419
 msgid "Delay Updates"
-msgstr "Güncellemeleri Ertele"
+msgstr "Güncellemeleri ertele"
 
 #: tasks/models.py:420
 msgid "Put all updated files into place at the end"
