@@ -10,6 +10,7 @@ from freenasUI.api.resources import (
 from freenasUI.freeadmin.options import BaseFreeAdmin
 from freenasUI.freeadmin.site import site
 from freenasUI.services import models
+from freenasUI.middleware.notifier import notifier
 
 
 class ServicesFAdmin(BaseFreeAdmin):
@@ -57,8 +58,38 @@ class FTPFAdmin(BaseFreeAdmin):
     )
 
 
+def iscsi_active_check(model, obj):
+    '''
+    Check if selected iscsi target/extent is in use or not
+    '''
+    target_to_be_deleted = None
+    targets_in_use = notifier().iscsi_connected_targets()
+    if isinstance(model, ISCSITargetExtentFAdmin):
+        is_extent_active = False
+        target_to_extent_list = models.iSCSITargetToExtent.objects.filter(
+            iscsi_extent__iscsi_target_extent_name=str(obj).split()[0])
+        for target_to_extent in target_to_extent_list:
+            # Get target name from target:extent association
+            target = str(target_to_extent).split(' / ')[0]
+            if target in targets_in_use:
+                is_extent_active = True
+                # Extent is active. No need to check other targets.
+                break
+        return is_extent_active
+    elif isinstance(model, ISCSITargetFAdmin):
+        target_to_be_deleted = str(obj).split()[0]
+    elif isinstance(model, ISCSITargetToExtentFAdmin):
+        # Get target name from target:extent association
+        target_to_be_deleted = str(obj).split(' / ')[0]
+    if target_to_be_deleted in targets_in_use:
+        return True
+    else:
+        return False
+
+
 class ISCSITargetFAdmin(BaseFreeAdmin):
 
+    delete_active_check = iscsi_active_check
     menu_child_of = "sharing.ISCSI"
     icon_object = u"TargetIcon"
     icon_model = u"TargetIcon"
@@ -133,6 +164,7 @@ class ISCSIAuthCredentialFAdmin(BaseFreeAdmin):
 
 class ISCSITargetToExtentFAdmin(BaseFreeAdmin):
 
+    delete_active_check = iscsi_active_check
     menu_child_of = "sharing.ISCSI"
     icon_object = u"TargetExtentIcon"
     icon_model = u"TargetExtentIcon"
@@ -145,6 +177,7 @@ class ISCSITargetToExtentFAdmin(BaseFreeAdmin):
 
 class ISCSITargetExtentFAdmin(BaseFreeAdmin):
 
+    delete_active_check = iscsi_active_check
     delete_form = "ExtentDelete"
     delete_form_filter = {'iscsi_target_extent_type__exact': 'File'}
     menu_child_of = "sharing.ISCSI"

@@ -72,6 +72,7 @@ class BaseFreeAdmin(object):
 
     create_modelform = None
     edit_modelform = None
+    delete_active_check = None
     delete_form = None
     delete_form_filter = {}  # Ugly workaround for Extent/DeviceExtent
     deletable = True
@@ -776,6 +777,11 @@ class BaseFreeAdmin(object):
                 mf = navtree._modelforms[m][mf]
 
         related, related_num = get_related_objects(instance)
+
+        is_active = None
+        if callable(m._admin.delete_active_check):
+            is_active = m._admin.delete_active_check(instance)
+
         context = {
             'app': m._meta.app_label,
             'model': m._meta.model_name,
@@ -785,6 +791,7 @@ class BaseFreeAdmin(object):
             'verbose_name': instance._meta.verbose_name,
             'related': related,
             'related_num': related_num,
+            'is_active': is_active
         }
 
         form_i = None
