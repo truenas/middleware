@@ -1,0 +1,3 @@
+lib/nss_ldap.so.1
+@sample etc/nss_ldap.conf.sample
+man/man5/nss_ldap.5.gz

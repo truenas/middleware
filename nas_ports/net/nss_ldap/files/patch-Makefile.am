@@ -1,0 +1,37 @@
+--- Makefile.am.orig	2009-11-06 05:28:08.000000000 -0500
++++ Makefile.am	2010-01-12 23:24:17.000000000 -0500
+@@ -9,8 +9,12 @@
+ if AIX
+ INST_GID=system
+ else
++if FreeBSD
++INST_GID=wheel
++else
+ INST_GID=root
+ endif
++endif
+ 
+ EXTRA_DIST = CVSVersionInfo.txt ChangeLog \
+ 	     AUTHORS ANNOUNCE NEWS INSTALL README LICENSE.OpenLDAP COPYING\
+@@ -23,7 +27,7 @@
+ 	ldap-alias.c ldap-service.c ldap-schema.c ldap-ethers.c \
+ 	ldap-bp.c ldap-automount.c util.c ltf.c snprintf.c resolve.c \
+ 	dnsconfig.c irs-nss.c pagectrl.c ldap-sldap.c ldap-init-krb5-cache.c \
+-	vers.c
++	vers.c bsdnss.c
+ 
+ nss_ldap_so_LDFLAGS = @nss_ldap_so_LDFLAGS@
+ 
+@@ -103,11 +107,10 @@
+ 		$(mkinstalldirs) $(DESTDIR)$(dir $(NSS_LDAP_PATH_CONF)); \
+ 		$(INSTALL_DATA) -o $(INST_UID) -g $(INST_GID) $(srcdir)/ldap.conf $(DESTDIR)$(NSS_LDAP_PATH_CONF); \
+ 	fi
+-	$(INSTALL_DATA) -o $(INST_UID) -g $(INST_GID) $(srcdir)/nsswitch.ldap $(DESTDIR)$(sysconfdir)/nsswitch.ldap; 
+ 
+ uninstall-local:
+ 	@$(NORMAL_UNINSTALL)
+ 
+ vers.c: $(top_srcdir)/CVSVersionInfo.txt
+-	CVSVERSIONDIR=$(top_srcdir) vers_string -v
++	$(top_srcdir)/vers_string -v
+ 
