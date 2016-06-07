@@ -593,8 +593,8 @@ class SSHForm(ModelForm):
                                                     exclude_unconfigured_vlan_parent=True))
 
     def save(self):
-        super(SSHForm, self).save()
-        obj = started = notifier().reload("ssh")
+        obj = super(SSHForm, self).save()
+        started = notifier().reload("ssh")
         if (
             started is False
             and
