@@ -235,13 +235,11 @@ class JailCreateForm(ModelForm):
 
     def clean_jail_mac(self):
         jail_mac = self.cleaned_data.get('jail_mac')
-        jobs = Jails.objects.all()
-        for jail in jobs:
-            if jail.jail_mac == jail_mac:
-                raise forms.ValidationError(_(
-                    "You have entered an existing MAC Address."
-                    "Please enter a new one."
-                ))
+        if is_jail_mac_duplicate(jail_mac):
+            raise forms.ValidationError(_(
+                "You have entered an existing MAC Address."
+                "Please enter a new one."
+            ))
         return jail_mac
 
     def save(self):
@@ -423,16 +421,10 @@ class JailCreateForm(ModelForm):
                     jail_set_args['jflags'] = val
 
             elif key == 'jail_mac':
-                jail_list = Jails.objects.all()
-                while True:
-                    duplicate_mac = 0
+                jail_mac_list = [jail.jail_mac for jail in Jails.objects.all()]
+                mac_address = generate_randomMAC()
+                while mac_address in jail_mac_list:
                     mac_address = generate_randomMAC()
-                    for jail in jail_list:
-                        if jail.jail_mac == mac_address:
-                            duplicate_mac = 1
-                            break
-                    if duplicate_mac != 1:
-                        break
 
                 jail_flags |= WARDEN_SET_FLAGS_MAC
                 jail_set_args['mac'] = mac_address
@@ -498,6 +490,11 @@ class JailCreateForm(ModelForm):
         # Requery instance so we have everything up-to-date after save
         # See #14686
         self.instance = Jails.objects.get(jail_host=jail_host)
+
+
+def is_jail_mac_duplicate(mac):
+    jail_macs = [jail.jail_mac for jail in Jails.objects.all()]
+    return mac in jail_macs
 
 
 def generate_randomMAC():
@@ -841,13 +838,11 @@ class JailsEditForm(ModelForm):
 
     def clean_jail_mac(self):
         jail_mac = self.cleaned_data.get('jail_mac')
-        jobs = Jails.objects.all()
-        for jail in jobs:
-            if jail.jail_mac == jail_mac:
-                raise forms.ValidationError(_(
-                    "You have entered an existing MAC Address."
-                    "Please enter a new one."
-                ))
+        if is_jail_mac_duplicate(jail_mac):
+            raise forms.ValidationError(_(
+                "You have entered an existing MAC Address."
+                "Please enter a new one."
+            ))
         return jail_mac
 
     def save(self):
