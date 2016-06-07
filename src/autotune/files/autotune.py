@@ -161,11 +161,10 @@ def guess_kern_maxfilesperproc():
 
 
 def guess_net_inet_tcp_delayed_ack():
-    """Maximum size for TCP receive buffers
+    """Set the TCP stak to use delayed ACKs
 
-    See guess_kern_ipc_maxsockbuf().
     """
-    return 0
+    return 1
 
 
 def guess_net_inet_tcp_recvbuf_max():
