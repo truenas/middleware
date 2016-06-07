@@ -29,7 +29,8 @@ import logging
 import os
 import re
 import subprocess
-
+import hashlib
+import base64
 from django.core.validators import validate_email
 from django.utils.safestring import mark_safe
 from django.utils.translation import (
@@ -600,6 +601,15 @@ class SSHForm(ModelForm):
             models.services.objects.get(srv_service='ssh').srv_enable
         ):
             raise ServiceFailed("ssh", _("The SSH service failed to reload."))
+        else:
+            keyfile = "/etc/ssh/ssh_host_ecdsa_key.pub"
+            with open(keyfile, "rb") as f:
+                pubkey = f.read().strip().split(None, 3)[1]
+            decoded_key = base64.b64decode(pubkey.encode("ascii"))
+            key_digest = hashlib.sha256(decoded_key).digest()
+            ssh_fingerprint = (b"SHA256:" + base64.b64encode(key_digest).replace(b"=", b"")).decode("utf-8")
+            # using log.error since it logs to /var/log/messages, /var/log/debug.log as well as /dev/console all at once
+            log.error("ECDSA Fingerprint of the SSH KEY: " + ssh_fingerprint)
 
 
 class RsyncdForm(ModelForm):
