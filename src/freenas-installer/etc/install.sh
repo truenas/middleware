@@ -286,7 +286,7 @@ install_grub() {
 	mv ${_mnt}/conf/base/etc/local/grub.d/10_ktrueos.bak /tmp/bakup
 	for _disk in ${_disks}; do
 	    _grub_args=""
-	    if [ "$BOOTMODE" = "efi" ] ; then
+	    if [ "$BOOTMODE" = "efi" -a "$AVATAR_PROJECT" != "TrueNAS" ] ; then
 		# EFI Mode
 		sed -i '' 's|GRUB_TERMINAL_OUTPUT=console|GRUB_TERMINAL_OUTPUT=gfxterm|g' ${_mnt}/conf/base/etc/local/default/grub
 		glabel label efibsd /dev/${_disk}p1
@@ -335,7 +335,7 @@ create_partitions() {
 	_size="-s $2"
     fi
     if gpart create -s GPT -f active ${_disk}; then
-	if [ "$BOOTMODE" = "efi" ] ; then
+	if [ "$BOOTMODE" = "efi" -a "$AVATAR_PROJECT" != "TrueNAS" ] ; then
 	  # EFI Mode
 	  sysctl kern.geom.debugflags=16
 	  sysctl kern.geom.label.disk_ident.enable=0
@@ -422,7 +422,7 @@ partition_disk() {
 	
 	_disksparts=$(for _disk in ${_disks}; do
 	    create_partitions ${_disk} ${_minsize} >&2
-	    if [ "$BOOTMODE" != "efi" ] ; then
+	    if [ "$BOOTMODE" != "efi" -o "$AVATAR_PROJECT" = "TrueNAS" ] ; then
 	      # Make the disk active
 	      gpart set -a active ${_disk} >&2
 	    fi
