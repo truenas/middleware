@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:06-0700\n"
-"PO-Revision-Date: 2016-05-23 11:16+0000\n"
+"PO-Revision-Date: 2016-06-06 18:51+0000\n"
 "Last-Translator: mav <mav@freebsd.org>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ru\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
 "n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1464002206.0\n"
+"X-POOTLE-MTIME: 1465239061.0\n"
 
 # Альтернатива SSL/TLS
 #: choices.py:40
@@ -13305,19 +13305,17 @@ msgstr ""
 
 #: choices.py:757
 msgid "Emergency"
-msgstr ""
+msgstr "Экстренно"
 
 #: choices.py:761
-#, fuzzy
 msgid "Warning"
-msgstr "Внимание!"
+msgstr "Предупреждение"
 
 #: choices.py:762
 msgid "Notice"
-msgstr ""
+msgstr "Уведомление"
 
 #: choices.py:765
-#, fuzzy
 msgid "Is_Debug"
 msgstr "Отладка"
 
@@ -13327,13 +13325,11 @@ msgid "Syslog level"
 msgstr "Сервер Syslog"
 
 #: system/models.py:138
-#, fuzzy
 msgid ""
 "Specifies which messages will be logged by server. INFO and VERBOSE log "
 "transactions that server performs on behalf of the client. f_is_debug "
 "specify higher levels of debugging output. The default is f_info."
 msgstr ""
-"Указывает какие сообщения будут журналированы SFTP сервером. INFO и VERBOSE "
-"журналируют транзакции которые SFTP сервер выполняет от имени клиента, "
-"DEBUG2 и DEBUG3 указывают более высокие уровни отладки. По умолчанию "
-"используется ERROR."
+"Указывает какие сообщения будут журналированы сервером. INFO и VERBOSE "
+"журналируют транзакции которые сервер выполняет от имени клиента. f_is_debug "
+"указывает более высокие уровни отладки. По умолчанию используется f_info."
