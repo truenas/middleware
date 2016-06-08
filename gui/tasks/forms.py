@@ -2,6 +2,7 @@ import glob
 import os
 import pwd
 import subprocess
+from subprocess import Popen, PIPE
 
 from django.utils.translation import ugettext_lazy as _
 
@@ -186,6 +187,8 @@ class RsyncForm(ModelForm):
         exists or not. Returns TRUE rpath is a directory
         and exists, else FALSE"""
 
+        self.ssh_host_keyscan()
+
         ruser = self.cleaned_data.get("rsync_user").encode('utf8')
         rhost = str(self.cleaned_data.get("rsync_remotehost"))
         if '@' in rhost:
@@ -203,6 +206,27 @@ class RsyncForm(ModelForm):
             % (ruser, rport, remote, rpath), shell=True)
         proc.wait()
         return proc.returncode == 0
+
+    def ssh_host_keyscan(self):
+        rhost = str(self.cleaned_data.get("rsync_remotehost"))
+        if '@' in rhost:
+            remote = rhost.split("@")
+            remote_host = remote[1]
+        else:
+            remote_host = rhost
+        rport = str(self.cleaned_data.get("rsync_remoteport"))
+        proc = subprocess.Popen([
+            "/usr/bin/ssh-keyscan",
+            "-p", str(rport),
+            "-t", "rsa",
+            str(remote_host),
+        ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        host_key, errmsg = proc.communicate()
+        if host_key:
+            with open("/root/.ssh/known_hosts", "a") as myfile:
+                myfile.write(host_key)
+        elif not errmsg:
+            errmsg = _("Key could not be retrieved for unknown reason")
 
     def clean_rsync_user(self):
         user = self.cleaned_data.get("rsync_user")
