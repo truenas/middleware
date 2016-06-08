@@ -2,7 +2,6 @@ import glob
 import os
 import pwd
 import subprocess
-from subprocess import Popen, PIPE
 
 from django.utils.translation import ugettext_lazy as _
 
