@@ -1031,7 +1031,7 @@ menu_install()
 	# This should be investigated.
 #	chroot /tmp/data /bin/sh -c "/usr/bin/yes | \
 #		/usr/local/bin/python
-#		      /usr/local/www/freenasUI/manage.py migrate --all --merge --delete-ghost-migrations"
+#		      /usr/local/www/freenasUI/manage.py migrate --all --merge"
 	# Create upgrade sentinel files
 	: > /tmp/data/${CD_UPGRADE_SENTINEL}
 	: > /tmp/data/${NEED_UPDATE_SENTINEL}

@@ -45,7 +45,7 @@ db_update_real()
 
 	touch /tmp/.sqlite3_ha_skip
 	yes | /usr/local/bin/python \
-	    /usr/local/www/freenasUI/manage.py migrate --merge --delete-ghost-migrations > \
+	    /usr/local/www/freenasUI/manage.py migrate --merge > \
 		$UPDATE_FAILED_LOG 2>&1
 	if [ $? -ne 0 ]; then
 		rm -f /tmp/.sqlite3_ha_skip
