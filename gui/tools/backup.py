@@ -746,7 +746,6 @@ class RestoreWorker(object):
                         '/usr/local/www/freenasUI/manage.py',
                         'migrate',
                         '--merge',
-                        '--delete-ghost-migrations'
                 ], stdout=devnull, stderr=devnull) != 0:
                     self.fail('Could not restore database')
                     return
