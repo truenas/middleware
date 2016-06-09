@@ -8,8 +8,13 @@ from django.db import models
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
-        # Deleting model 'Registration'
-        db.delete_table(u'system_registration')
+        # Succeeding to delete this table is not useful
+        # See #15850
+        try:
+            # Deleting model 'Registration'
+            db.delete_table(u'system_registration')
+        except:
+            pass
 
 
     def backwards(self, orm):
