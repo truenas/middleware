@@ -4129,7 +4129,7 @@ class notifier:
         if not child_ipv4_info and not child_ipv6_info:
             return None
 
-        interfaces = choices.NICChoices(exclude_configured=False)
+        interfaces = choices.NICChoices(exclude_configured=False, include_vlan_parent=True)
         for iface in interfaces:
             iface = iface[0]
             if self.is_carp_interface(iface):
