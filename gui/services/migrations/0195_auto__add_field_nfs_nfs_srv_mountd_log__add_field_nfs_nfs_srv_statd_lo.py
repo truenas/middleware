@@ -10,13 +10,13 @@ class Migration(SchemaMigration):
     def forwards(self, orm):
         # Adding field 'NFS.nfs_srv_mountd_log'
         db.add_column(u'services_nfs', 'nfs_srv_mountd_log',
-                      self.gf('django.db.models.fields.BooleanField')(default=True),
-                      keep_default=True)
+                      self.gf('django.db.models.fields.BooleanField')(default=1),
+                      keep_default=1)
 
         # Adding field 'NFS.nfs_srv_statd_lockd_log'
         db.add_column(u'services_nfs', 'nfs_srv_statd_lockd_log',
-                      self.gf('django.db.models.fields.BooleanField')(default=False),
-                      keep_default=False)
+                      self.gf('django.db.models.fields.BooleanField')(default=0),
+                      keep_default=0)
 
 
     def backwards(self, orm):
