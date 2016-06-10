@@ -23,7 +23,27 @@ class Migration(DataMigration):
                 seen_idents.append(d.disk_identifier)
                 id_map[str(d.id)] = d.disk_identifier
 
-        db.alter_column(u'tasks_smarttest_smarttest_disks', 'disk_id', self.gf('django.db.models.fields.CharField')(max_length=100))
+		"""
+        Its possible tasks_smarttest_smarttest_disks will have an index called
+        sqlite_auto_*, indexes with that kind of name pattern are for internal
+        sqlite3 use, thus any table rename operation will lead to an error
+        while trying to recreate the index.
+        Because if that issue we have to rename the table and manually copy
+        the data and create new index
+        See #15860
+        """
+        db.rename_table('tasks_smarttest_smarttest_disks', 'tasks_smarttest_smarttest_disks_old')
+
+        db.create_table('tasks_smarttest_smarttest_disks', (
+            ('id', models.AutoField(verbose_name='ID', primary_key=True, auto_created=True)),
+            ('smarttest', models.ForeignKey(orm['tasks.smarttest'], null=False)),
+            ('disk_id', models.CharField(max_length=100, null=False))
+        ))
+
+        db._copy_data('tasks_smarttest_smarttest_disks_old', 'tasks_smarttest_smarttest_disks')
+
+        db.create_unique('tasks_smarttest_smarttest_disks', ['smarttest_id', 'disk_id'])
+        db.delete_table('tasks_smarttest_smarttest_disks_old')
 
         rows = db.execute("select id, disk_id from tasks_smarttest_smarttest_disks")
         if rows:
