@@ -1593,6 +1593,7 @@ def main():
 
     if role == 'member' and smb4_ldap_enabled():
         set_ldap_password()
+        backup_secrets_database()
 
     if role != 'dc':
         if not Samba4().users_imported():
