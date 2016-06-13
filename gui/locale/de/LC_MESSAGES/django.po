@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:01-0700\n"
-"PO-Revision-Date: 2016-05-16 11:22+0000\n"
-"Last-Translator: smoeschter <smoeschter@gmail.com>\n"
+"PO-Revision-Date: 2016-06-09 17:51+0000\n"
+"Last-Translator: freenasuser12123 <muhr_rene@hotmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: de\n"
 "MIME-Version: 1.0\n"
@@ -17,12 +17,11 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1463397731.0\n"
+"X-POOTLE-MTIME: 1465494660.0\n"
 
 #: choices.py:40
-#, fuzzy
 msgid "Plain"
-msgstr "unverschlüsselt"
+msgstr "Klartext"
 
 #: choices.py:41 choices.py:557 system/models.py:320
 #: templates/system/settings.html:9
@@ -251,12 +250,12 @@ msgstr "Normal"
 # ist in der Kategorie "LOGLEVEL_CHOICES"
 #: choices.py:190
 msgid "Full"
-msgstr "Voll"
+msgstr "Ausführlich"
 
 # Verwendung in choices.py legt Verwendung des Begriffs als Log Level nahe
 #: choices.py:191
 msgid "Debug"
-msgstr "Fehlerbehebung"
+msgstr "Fehlersuche"
 
 #~ msgid "Default"
 #~ msgstr "Standard"
@@ -418,27 +417,27 @@ msgstr "Lesen und Schreiben"
 #: choices.py:510 choices.py:511
 #, python-format
 msgid "%(minutes)s minutes"
-msgstr "%(minutes)s Minuten"
+msgstr "%Minute(n)"
 
 #: choices.py:512
 #, python-format
 msgid "%(hour)s hour"
-msgstr "%(hour)s Stunde"
+msgstr "%Stunde(n)"
 
 #: choices.py:513 choices.py:514 choices.py:515 choices.py:516 choices.py:517
 #, python-format
 msgid "%(hours)s hours"
-msgstr "%(hours)s Stunden"
+msgstr "%Stunde(n)"
 
 #: choices.py:518
 #, python-format
 msgid "%(day)s day"
-msgstr "%(day)s Tag"
+msgstr "%Tag(e)"
 
 #: choices.py:519
 #, python-format
 msgid "%(week)s week"
-msgstr "%(week)s Woche"
+msgstr "%Woche(n)"
 
 #: choices.py:523
 msgid "Never - Check the device regardless of its power mode"
@@ -461,9 +460,7 @@ msgstr ""
 
 #: choices.py:530
 msgid "Long Self-Test"
-msgstr ""
-"                                    Ausführlicher "
-"Selbsttest                                "
+msgstr " Ausführlicher Selbsttest"
 
 #: choices.py:531
 msgid "Short Self-Test"
@@ -475,7 +472,7 @@ msgstr "Übertragungsraten Selbsttest (nur ATA)"
 
 #: choices.py:533
 msgid "Offline Immediate Test (ATA only)"
-msgstr "                  \"Sofortiger Offline\"-Test (nur ATA)                "
+msgstr "\"Sofortiger Offline\"-Test (nur ATA)"
 
 #: choices.py:562
 msgid "Rsync module"
@@ -2936,9 +2933,7 @@ msgstr "Passwort des Domänen Administratorkontos."
 #: services/models.py:1273 services/models.py:1274
 #: templates/services/core.html:15
 msgid "Active Directory"
-msgstr ""
-"                                    Debug3 (Fehler beheben 3)"
-"                                "
+msgstr "Active Directory"
 
 #: services/models.py:1286
 msgid "The name or IP address of the LDAP server"
@@ -3754,7 +3749,7 @@ msgstr ""
 
 #: sharing/models.py:281 system/models.py:552
 msgid "Quiet"
-msgstr "Still"
+msgstr "Leise"
 
 #: sharing/models.py:282
 msgid ""
@@ -7041,7 +7036,7 @@ msgstr "zle (Nulldurchläufe)"
 
 #: choices.py:560
 msgid "Verify"
-msgstr "                  Überprüfen                "
+msgstr "Überprüfen"
 
 #: choices.py:600
 msgid "9600"
@@ -7069,11 +7064,11 @@ msgstr "Schwerwiegend"
 
 #: choices.py:662
 msgid "Verbose"
-msgstr "Ausführlich               "
+msgstr "Ausführlich"
 
 #: choices.py:670
 msgid "Daemon"
-msgstr "                  Dienstprogramm                "
+msgstr "Dienstprogramm"
 
 #: choices.py:686
 msgid "NT4"
@@ -7180,7 +7175,7 @@ msgstr "lzjb (veraltet, nicht empfohlen)"
 
 #: choices.py:318
 msgid "pigz (all rounder)"
-msgstr "pigz (Alleskönner)"
+msgstr "pigz (generell)"
 
 #: choices.py:319
 msgid "plzip (best compression)"
@@ -8149,7 +8144,7 @@ msgstr "Möchten Sie diesen Dienst aktivieren?"
 
 #: choices.py:172
 msgid "COREPLUS"
-msgstr "COREPLUS                "
+msgstr "Kern Erweiterung"
 
 #: choices.py:179
 msgid "SMB2_22"
@@ -8162,14 +8157,12 @@ msgstr "SMB2_24"
 # Verwendung in choices.py legt Verwendung des Begriffs als Log Level nahe
 #: choices.py:677
 msgid "Debug2"
-msgstr "Debug2"
+msgstr "Fehler beheben 2"
 
 # Verwendung in choices.py legt Verwendung des Begriffs als Log Level nahe
 #: choices.py:678
 msgid "Debug3"
-msgstr ""
-"                                    Debug3 (Fehler beheben 3)"
-"                                "
+msgstr "Active Directory"
 
 #: choices.py:685
 msgid "Auth"
@@ -12184,7 +12177,7 @@ msgstr "Das System wird heruntergefahren ..."
 #: choices.py:587
 #: choices.py:588
 msgid "%(weeks)s weeks"
-msgstr "%(weeks)s Woche"
+msgstr "%Woche(n)"
 
 #: system/views.py:419
 #, fuzzy
