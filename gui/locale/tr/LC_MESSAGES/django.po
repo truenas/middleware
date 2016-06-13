@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:05-0700\n"
-"PO-Revision-Date: 2016-06-06 06:33+0000\n"
+"PO-Revision-Date: 2016-06-10 11:40+0000\n"
 "Last-Translator: BouRock <hitowerdigit@hotmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: tr\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1)\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1465194794.0\n"
+"X-POOTLE-MTIME: 1465558817.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -3233,7 +3233,7 @@ msgstr "Salt Okunur dışa aktar"
 
 #: sharing/models.py:51
 msgid "Browsable to Network Clients"
-msgstr "Ağ İstemcilerine gözatılabilir"
+msgstr "Ağ İstemcileri için gözatılabilir"
 
 #: sharing/models.py:53
 msgid "Inherit Owner"
