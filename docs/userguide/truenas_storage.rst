@@ -1315,7 +1315,7 @@ available snapshots will be listed.
 VMware-Snapshot
 ---------------
 
-:menuselection:`Storage --> VMware-Snapshot` allows you to coordinate ZFS snapshots when using VMware as a datastore. Once this type of snapshot is created,
+:menuselection:`Storage --> VMware-Snapshot` allows you to coordinate ZFS snapshots when using TrueNAS® as a VMware datastore. Once this type of snapshot is created,
 TrueNAS® will automatically snapshot any running VMware virtual machines before taking a scheduled or manual ZFS snapshot of the dataset or zvol backing that
 VMware datastore. The temporary VMware snapshots are then deleted on the VMware side but still exist in the ZFS snapshot and can be used as stable
 resurrection points in that snapshot.  These coordinated snapshots will be listed in :ref:`Snapshots`.
