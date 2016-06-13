@@ -1,0 +1,4 @@
+This is a PAM module which will create the $HOME for the user authenticated,
+if it's not already there. It also copies over files from a skel directory
+( default /usr/share/skel ) and can set the permission of the newly created
+$HOME to a value of your choice

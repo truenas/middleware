@@ -1,0 +1,9 @@
+
+You may want to add something like this to your /etc/pam.d/login
+or /etc/pam.d/sshd ( when you've configured ssh with PAM )
+file to use this module:
+
+session         required       %%PREFIX%%/lib/pam_mkhomedir.so
+
+
+
