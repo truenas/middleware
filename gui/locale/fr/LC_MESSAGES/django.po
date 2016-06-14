@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:03-0700\n"
-"PO-Revision-Date: 2016-04-15 08:48+0000\n"
-"Last-Translator: effel <effel.all@free.fr>\n"
+"PO-Revision-Date: 2016-06-13 13:19+0000\n"
+"Last-Translator: galio <galiorion@laposte.net>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: fr\n"
 "MIME-Version: 1.0\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1460710114.0\n"
+"X-POOTLE-MTIME: 1465823982.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -144,7 +144,7 @@ msgstr "Minimum"
 
 #: choices.py:97
 msgid "Medium"
-msgstr "Moyen(ne)"
+msgstr "Moyen"
 
 #: choices.py:98
 msgid "Maximum"
@@ -244,7 +244,7 @@ msgstr "Complet"
 
 #: choices.py:191
 msgid "Debug"
-msgstr "Débogage"
+msgstr "Debug"
 
 #~ msgid "Default"
 #~ msgstr "Par défaut"
@@ -688,11 +688,11 @@ msgstr "Utilisateur &"
 
 #: account/models.py:94
 msgid "Hashed UNIX password"
-msgstr "Mot de passe UNIX crypté                                "
+msgstr "Mot de passe UNIX haché"
 
 #: account/models.py:100
 msgid "Hashed SMB password"
-msgstr "Mot de passe SMB crypté"
+msgstr "Mot de passe SMB hashé"
 
 #: account/models.py:105
 msgid "Primary Group ID"
@@ -8467,7 +8467,7 @@ msgstr "SMB3"
 
 #: choices.py:317
 msgid "lz4 (fastest)"
-msgstr "gzip (le plus rapide)"
+msgstr "lz4 (le plus rapide)"
 
 #: choices.py:319
 msgid "plzip (best compression)"
@@ -13567,9 +13567,7 @@ msgstr "Paramètres supplémentaires (ups.conf)"
 #: account/forms.py:684
 #, fuzzy
 msgid "Do not delete user primary group"
-msgstr ""
-"Voulez-vous aussi supprimer les utilisateurs appartenant à ce groupe "
-"primaire ?"
+msgstr "Ne pas effacer le groupe primaire des utilisateurs"
 
 #: storage/forms.py:1427
 msgid "You cannot shrink a zvol from GUI, this may lead to data loss."
@@ -13635,13 +13633,12 @@ msgid "Emergency"
 msgstr ""
 
 #: choices.py:761
-#, fuzzy
 msgid "Warning"
-msgstr "Attention !"
+msgstr "Avertissement"
 
 #: choices.py:762
 msgid "Notice"
-msgstr ""
+msgstr "Note"
 
 #: choices.py:765
 #, fuzzy
