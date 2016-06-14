@@ -22,8 +22,12 @@ class NetworkInterruptMixin(object):
             hasattr(notifier, 'failover_status') and
             notifier().failover_status() == 'MASTER'
         ):
+            from freenasUI.failover.models import Failover
             s = notifier().failover_rpc(timeout=1)
-            if s is not None:
+            if (
+                not Failover.objects.all()[0].disabled and
+                s is not None
+            ):
                 try:
                     s.ping()
                     failover_event = True
