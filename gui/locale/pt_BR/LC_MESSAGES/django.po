@@ -13557,3 +13557,7 @@ msgstr ""
 "Especifica quais mensagens serão logadas pelo servidor sftp. INFO e VERBOSE "
 "logam transações que o servidor sftp realiza pelo cliente. DEBUG2 e DEBUG3 "
 "especificam cada níveis maiores de saída para debug. O padrão é ERROR."
+
+#: templates/network/ipmi.html:5
+msgid "WARNING! Failed to query IPMI data, standby node is down."
+msgstr ""

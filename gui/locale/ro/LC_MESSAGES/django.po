@@ -13380,3 +13380,7 @@ msgstr ""
 "mesajele DEBUG2 și DEBUG3 specifică un nivel mai mare de detaliere. Nivelul "
 "implicit este EROARE (vor fi arhivate doar mesajele tip eroare generate de "
 "server)."
+
+#: templates/network/ipmi.html:5
+msgid "WARNING! Failed to query IPMI data, standby node is down."
+msgstr ""
