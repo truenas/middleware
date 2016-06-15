@@ -12621,3 +12621,7 @@ msgid ""
 "transactions that server performs on behalf of the client. f_is_debug "
 "specify higher levels of debugging output. The default is f_info."
 msgstr "指定哪些信息将被 sftp 服务器记录。信息和日志的详细程度。DEBUG2 和 DEBUG3 是更高级别的调试和输出方式。默认为 ERROR。"
+
+#: templates/network/ipmi.html:5
+msgid "WARNING! Failed to query IPMI data, standby node is down."
+msgstr ""
