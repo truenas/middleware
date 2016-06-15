@@ -13168,3 +13168,7 @@ msgstr ""
 "журналюють транзакції які SFTP сервер виконує від імені клієнта, DEBUG2 і "
 "DEBUG3 вказують більш високі рівні налагодження. За замовчуванням "
 "використовується ERROR."
+
+#: templates/network/ipmi.html:5
+msgid "WARNING! Failed to query IPMI data, standby node is down."
+msgstr ""

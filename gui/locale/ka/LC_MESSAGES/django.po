@@ -12314,3 +12314,7 @@ msgid ""
 "transactions that server performs on behalf of the client. f_is_debug "
 "specify higher levels of debugging output. The default is f_info."
 msgstr ""
+
+#: templates/network/ipmi.html:5
+msgid "WARNING! Failed to query IPMI data, standby node is down."
+msgstr ""
