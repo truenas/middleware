@@ -13455,3 +13455,7 @@ msgstr ""
 "VERBOSE registreren transacties die sftp-server namens de client uitvoert. "
 "DEBUG2 en DEBUG3 specificeren beide hogere niveaus aan "
 "foutopsporingsuitvoer. De standaard is ERROR."
+
+#: templates/network/ipmi.html:5
+msgid "WARNING! Failed to query IPMI data, standby node is down."
+msgstr ""

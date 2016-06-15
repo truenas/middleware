@@ -13333,3 +13333,7 @@ msgstr ""
 "Указывает какие сообщения будут журналированы сервером. INFO и VERBOSE "
 "журналируют транзакции которые сервер выполняет от имени клиента. f_is_debug "
 "указывает более высокие уровни отладки. По умолчанию используется f_info."
+
+#: templates/network/ipmi.html:5
+msgid "WARNING! Failed to query IPMI data, standby node is down."
+msgstr ""

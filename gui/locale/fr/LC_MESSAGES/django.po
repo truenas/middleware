@@ -13661,3 +13661,7 @@ msgstr ""
 "L'historisation des transactions INFO et VERBOSE que le serveur sftp réalise "
 "pour le client. Chacun de DEBUG2 et DEBUG3 spécifie des plus hauts niveaux "
 "de debug. Par défaut c'est ERROR."
+
+#: templates/network/ipmi.html:5
+msgid "WARNING! Failed to query IPMI data, standby node is down."
+msgstr ""
