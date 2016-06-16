@@ -169,7 +169,20 @@ def guess_kern_ipc_maxsockbuf():
     Higher -> better throughput, but greater the likelihood of wasted bandwidth
     and memory use/chance for starvation with a larger number of connections.
     """
-    return 16 * MB
+    if TRUENAS and (hardware[0] == "Z50" or hardware[0] == "Z35"):
+        return 16 * MB
+    elif TRUENAS and hardware[0] == "Z30":
+        return 8 * MB
+    elif TRUENAS and hardware[0] == "Z20":
+        return 4 * MB
+    elif HW_PHYSMEM_GB > 180:
+        return 16 * MB
+    elif HW_PHYSMEM_GB > 84:
+        return 8 * MB
+    elif HW_PHYSMEM_GB > 44:
+        return 4 * MB
+    else:
+        return 2 * MB
 
 
 # kern.ipc.maxsockets
@@ -197,7 +210,8 @@ def guess_kern_maxfilesperproc():
 
 
 def guess_kern_ipc_nmbclusters():
-    return 1 * MB
+    # You can't make this smaller
+    return max(sysctl_int('kern.ipc.nmbclusters'), 2 * MB)
 
 
 def guess_net_inet_tcp_delayed_ack():
@@ -268,11 +282,37 @@ def guess_net_inet_tcp_mssdflt():
 
 
 def guess_net_inet_tcp_recvspace():
-    return 4 * MB
+    if TRUENAS and (hardware[0] == "Z50" or hardware[0] == "Z35"):
+        return 1 * MB
+    elif TRUENAS and hardware[0] == "Z30":
+        return 512 * KB
+    elif TRUENAS and hardware[0] == "Z20":
+        return 256 * KB
+    elif HW_PHYSMEM_GB > 180:
+        return 1 * MB
+    elif HW_PHYSMEM_GB > 84:
+        return 512 * KB
+    elif HW_PHYSMEM_GB > 44:
+        return 256 * KB
+    else:
+        return 128 * KB
 
 
 def guess_net_inet_tcp_sendspace():
-    return 2 * MB
+    if TRUENAS and (hardware[0] == "Z50" or hardware[0] == "Z35"):
+        return 1 * MB
+    elif TRUENAS and hardware[0] == "Z30":
+        return 512 * KB
+    elif TRUENAS and hardware[0] == "Z20":
+        return 256 * KB
+    elif HW_PHYSMEM_GB > 180:
+        return 1 * MB
+    elif HW_PHYSMEM_GB > 84:
+        return 512 * KB
+    elif HW_PHYSMEM_GB > 44:
+        return 256 * KB
+    else:
+        return 128 * KB
 
 
 def guess_net_inet_tcp_sendbuf_inc():
