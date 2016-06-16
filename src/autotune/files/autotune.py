@@ -12,6 +12,7 @@ Example:
 
 
 import argparse
+import atexit
 import os
 import platform
 import re
@@ -48,6 +49,14 @@ KB = 1024 ** 1
 MB = 1024 ** 2
 GB = 1024 ** 3
 
+NO_HASYNC = "/tmp/.sqlite3_ha_skip"
+
+@atexit.register
+def cleanup():
+    try:
+        os.unlink(NO_HASYNC)
+    except:
+        pass
 
 # 32, 64, etc.
 ARCH_WIDTH = int(platform.architecture()[0].replace('bit', ''))
@@ -361,6 +370,7 @@ def main(argv):
         recommendations[knob] = str(retval)
 
     changed_values = False
+    open(NO_HASYNC, 'w').close()
     for var, value in recommendations.items():
         qs = Tunable.objects.filter(tun_var=var)
         if qs.exists() and not args.overwrite:
@@ -384,6 +394,7 @@ def main(argv):
         # fine at least once.
         changed_values = True
 
+    cleanup()
     if changed_values:
         # Informs the caller that a change was made and a reboot is required.
         sys.exit(2)
