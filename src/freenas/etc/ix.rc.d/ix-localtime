@@ -4,7 +4,7 @@
 
 # PROVIDE: ix-localtime
 # REQUIRE: FILESYSTEMS
-# BEFORE: NETWORKING
+# BEFORE: NETWORKING devd
 
 . /etc/rc.subr
 
