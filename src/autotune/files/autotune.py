@@ -28,14 +28,25 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'freenasUI.settings')
 from django.db.models.loading import cache
 cache.get_apps()
 
+from freenasUI.middleware.notifier import notifier
+n = notifier()
+if n.is_freenas():
+    TRUENAS = False
+else:
+    TRUENAS = True
+    hardware = n.get_chassis_hardware()
+    hardware = hardware.replace('TRUENAS-', '')
+    hardware = hardware.split('-')
+
 try:
     from freenasUI.system.models import Advanced, Tunable
 except ImportError:
     # Not working state, abort
     sys.exit(1)
 
-MB = 1024 * 1024
-GB = 1024 * MB
+KB = 1024 ** 1
+MB = 1024 ** 2
+GB = 1024 ** 3
 
 
 # 32, 64, etc.
@@ -93,8 +104,7 @@ def get_interfaces(include_fake=False):
     if include_fake:
         return interfaces
     return filter(lambda i: not re.match('^(%s)\d+$'
-                                         % ('|'.join(fake_interfaces), ), i),
-                                         interfaces)
+                  % ('|'.join(fake_interfaces), ), i), interfaces)
 
 
 def sysctl(oid):
@@ -108,7 +118,10 @@ def sysctl_int(oid):
 
 
 HW_PHYSMEM = sysctl_int('hw.physmem')
+HW_PHYSMEM_GB = HW_PHYSMEM / GB
 
+# If you add a dictionary key here be sure to add it
+# as a valid choice to the -c option.
 DEF_KNOBS = {
     'loader': {
         'vm.kmem_size',
@@ -116,6 +129,7 @@ DEF_KNOBS = {
     },
     'sysctl': {
         'kern.ipc.maxsockbuf',
+        'kern.ipc.nmbclusters',
         'net.inet.tcp.delayed_ack',
         'net.inet.tcp.recvbuf_max',
         'net.inet.tcp.sendbuf_max',
@@ -124,6 +138,18 @@ DEF_KNOBS = {
         'vfs.zfs.l2arc_norw',
         'vfs.zfs.l2arc_write_max',
         'vfs.zfs.l2arc_write_boost',
+        'net.inet.tcp.mssdflt',
+        'net.inet.tcp.recvspace',
+        'net.inet.tcp.sendspace',
+        'net.inet.tcp.sendbuf_max',
+        'net.inet.tcp.recvbuf_max',
+        'net.inet.tcp.sendbuf_inc',
+        'net.inet.tcp.recvbuf_inc',
+        'vfs.zfs.vdev.async_read_max_active',
+        'vfs.zfs.vdev.sync_read_max_active',
+        'vfs.zfs.vdev.async_write_max_active',
+        'vfs.zfs.vdev.sync_write_max_active',
+        'vfs.zfs.top_maxinflight',
     },
 }
 
@@ -131,11 +157,10 @@ DEF_KNOBS = {
 def guess_kern_ipc_maxsockbuf():
     """Maximum socket buffer.
 
-    Higher -> better throughput, but greater tha likelihood of wasted bandwidth
+    Higher -> better throughput, but greater the likelihood of wasted bandwidth
     and memory use/chance for starvation with a larger number of connections.
     """
-    # 9.x defaults
-    return 2 * MB
+    return 16 * MB
 
 
 # kern.ipc.maxsockets
@@ -149,6 +174,7 @@ def guess_kern_maxfiles():
     - Samba sets this to 16k by default to meet a Windows minimum value.
     """
     # XXX: should be dynamically tuned based on the platform profile.
+    # Currently not used, and 10.x default value is way higher than this
     return 65536
 
 
@@ -157,14 +183,19 @@ def guess_kern_maxfilesperproc():
 
     - FreeBSD defined ratio is 9:10, but that's with lower limits.
     """
+    # Currently not used
     return int(0.8 * guess_kern_maxfiles())
 
 
+def guess_kern_ipc_nmbclusters():
+    return 1 * MB
+
+
 def guess_net_inet_tcp_delayed_ack():
-    """Set the TCP stak to use delayed ACKs
+    """Set the TCP stack to not use delayed ACKs
 
     """
-    return 1
+    return 0
 
 
 def guess_net_inet_tcp_recvbuf_max():
@@ -172,7 +203,7 @@ def guess_net_inet_tcp_recvbuf_max():
 
     See guess_kern_ipc_maxsockbuf().
     """
-    return 2 * MB
+    return 16 * MB
 
 
 def guess_net_inet_tcp_sendbuf_max():
@@ -180,7 +211,7 @@ def guess_net_inet_tcp_sendbuf_max():
 
     See guess_kern_ipc_maxsockbuf().
     """
-    return 2 * MB
+    return 16 * MB
 
 
 def guess_vm_kmem_size():
@@ -192,10 +223,14 @@ def guess_vfs_zfs_arc_max():
 
     - See comments for USERLAND_RESERVED_MEM.
     """
-    kmem_size = sysctl_int('vm.kmem_size')
-    return int(max(min(kmem_size * 9 / 10,
-                   HW_PHYSMEM - (USERLAND_RESERVED_MEM + KERNEL_RESERVED_MEM)),
-                   MIN_ZFS_RESERVED_MEM))
+    if HW_PHYSMEM_GB > 200 and TRUENAS:
+        return int(max(min(int(HW_PHYSMEM * .92),
+                       HW_PHYSMEM - (USERLAND_RESERVED_MEM + KERNEL_RESERVED_MEM)),
+                       MIN_ZFS_RESERVED_MEM))
+    else:
+        return int(max(min(int(HW_PHYSMEM * .9),
+                       HW_PHYSMEM - (USERLAND_RESERVED_MEM + KERNEL_RESERVED_MEM)),
+                       MIN_ZFS_RESERVED_MEM))
 
 
 def guess_vfs_zfs_l2arc_headroom():
@@ -218,13 +253,59 @@ def guess_vfs_zfs_l2arc_write_boost():
     return 40000000
 
 
-# vfs.zfs.txg.synctime_ms
-# vfs.zfs.txg.timeout
-# vfs.zfs.vdev.cache.max
-# vfs.zfs.vdev.read_gap_limit
-# vfs.zfs.vdev.write_gap_limit
-# vfs.zfs.write_limit_min
-# vfs.zfs.write_limit_max
+def guess_net_inet_tcp_mssdflt():
+    return 1448
+
+
+def guess_net_inet_tcp_recvspace():
+    return 4 * MB
+
+
+def guess_net_inet_tcp_sendspace():
+    return 2 * MB
+
+
+def guess_net_inet_tcp_sendbuf_inc():
+    return 16 * KB
+
+
+def guess_net_inet_tcp_recvbuf_inc():
+    return 512 * KB
+
+
+def guess_vfs_zfs_vdev_async_read_max_active():
+    if TRUENAS and hardware[0] == "Z50":
+        return 64
+    else:
+        return None
+
+
+def guess_vfs_zfs_vdev_sync_read_max_active():
+    if TRUENAS and hardware[0] == "Z50":
+        return 64
+    else:
+        return None
+
+
+def guess_vfs_zfs_vdev_async_write_max_active():
+    if TRUENAS and hardware[0] == "Z50":
+        return 64
+    else:
+        return None
+
+
+def guess_vfs_zfs_vdev_sync_write_max_active():
+    if TRUENAS and hardware[0] == "Z50":
+        return 64
+    else:
+        return None
+
+
+def guess_vfs_zfs_top_maxinflight():
+    if TRUENAS and hardware[0] == "Z50":
+        return 256
+    else:
+        return None
 
 
 def main(argv):
@@ -241,6 +322,7 @@ def main(argv):
     parser.add_argument('-c', '--conf',
                         default='loader',
                         type=str,
+                        choices=['loader', 'sysctl'],
                         )
     parser.add_argument('-o', '--overwrite',
                         default=False,
@@ -286,6 +368,11 @@ def main(argv):
             continue
         if qs.exists():
             obj = qs[0]
+            # We bail out here because if we set a value to what the database
+            # already has we'll set changed_values = True which will
+            # cause ix-loader to reboot the system.
+            if obj.tun_value == value:
+                continue
         else:
             obj = Tunable()
         obj.tun_var = var

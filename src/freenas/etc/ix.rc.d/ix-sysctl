@@ -21,6 +21,7 @@ set_autotune_sysctls()
 	if [ -x $autotune ]; then
 
 		$autotune \
+			-o \
 			--kernel-reserved=1073741824 \
 			--userland-reserved=2417483648 \
 			--conf sysctl
