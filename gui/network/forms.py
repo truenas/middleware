@@ -363,6 +363,11 @@ class InterfacesForm(ModelForm):
         # or the interface wouldn't appear once IP was changed.
         _n = notifier()
         if not _n.is_freenas() and _n.failover_licensed():
+            from django.db import connection
+            # Force config sync to make sure changes are seen before
+            # CARP IPs runs and network is restarted
+            # See #15941
+            connection.dump_send()
             s = _n.failover_rpc()
             s.notifier('sync_carp_ips', None, None)
         _n.start("network")
