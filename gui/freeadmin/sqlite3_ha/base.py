@@ -324,8 +324,8 @@ class HASQLiteCursorWrapper(Database.Cursor):
                     elif issubclass(next_.__class__, sqlparse.sql.Comparison):
                         lookup = [next_]
 
-                    # Get all placeholders from the query (%s)
-                    placeholders = [a for a in p.flatten() if a.value == '%s']
+                    # Get all placeholders from the query (%s or ?)
+                    placeholders = [a for a in p.flatten() if a.value in ('%s', '?')]
 
                 # Remember correspondent cparams to delete
                 delete_idx = []
