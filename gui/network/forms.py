@@ -953,6 +953,7 @@ class AliasForm(ModelForm):
     def clean(self):
         cdata = self.cleaned_data
 
+        ipv4vip = cdata.get("alias_vip")
         ipv4addr = cdata.get("alias_v4address")
         ipv4net = cdata.get("alias_v4netmaskbit")
         ipv6addr = cdata.get("alias_v6address")
@@ -986,8 +987,22 @@ class AliasForm(ModelForm):
             self._errors['__all__'] = self.error_class([
                 _("You have to choose between IPv4 or IPv6 per alias"),
             ])
-        if not ipv6 and not (ipv6addr or ipv6net) and not ipv4 and \
-                not (ipv4addr or ipv4net):
+
+        configured_vip = False
+        if ipv4vip and hasattr(self, 'parent'):
+            iface = self.parent.instance
+            ip = IPNetwork('%s/32' % ipv4vip)
+            network = IPNetwork('%s/%s' % (
+                iface.int_ipv4address,
+                iface.int_v4netmaskbit,
+            ))
+            if ip.overlaps(network):
+                configured_vip = True
+
+        if (
+            not configured_vip and not ipv6 and not (ipv6addr or ipv6net) and
+            not ipv4 and not (ipv4addr or ipv4net)
+        ):
             self._errors['__all__'] = self.error_class([
                 _("You must specify either an valid IPv4 or IPv6 with maskbit "
                     "per alias"),
