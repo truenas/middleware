@@ -30,8 +30,6 @@ import os
 import re
 import tempfile
 
-from ldap import LDAPError
-
 from django.forms import FileField
 from django.utils.translation import ugettext_lazy as _
 
@@ -755,37 +753,21 @@ class LDAPForm(ModelForm):
             hostname = parts[0]
             if len(parts) > 1:
                 port = int(parts[1])
+        errors = []
 
         # self.check_for_samba_schema()
-        try:
-            FreeNAS_LDAP.validate_credentials(
-                hostname,
-                binddn=binddn,
-                bindpw=bindpw,
-                basedn=basedn,
-                port=port,
-                certfile=certfile,
-                ssl=ssl
-            )
-        except LDAPError as e:
-            # LDAPError is dumb, it returns a list with one element for goodness knows what reason
-            e = e[0]
-            error = []
-            desc = e.get('desc')
-            info = e.get('info')
-            if desc:
-                error.append(desc)
-            if info:
-                error.append(info)
-
-            if error:
-                error = ', '.join(error)
-            else:
-                error = str(e)
-
-            raise forms.ValidationError("{0}".format(error))
-        except Exception as e:
-            raise forms.ValidationError("{0}".format(str(e)))
+        ret = FreeNAS_LDAP.validate_credentials(
+            hostname,
+            binddn=binddn,
+            bindpw=bindpw,
+            basedn=basedn,
+            port=port,
+            certfile=certfile,
+            ssl=ssl,
+            errors=errors
+        )
+        if ret is False:
+            raise forms.ValidationError("%s." % errors[0])
 
         return cdata
 
