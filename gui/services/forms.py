@@ -1880,6 +1880,22 @@ class iSCSITargetGroupsForm(ModelForm):
         return int(group)
 
 
+class TargetExtentDelete(Form):
+    '''
+    Delete form for Targets/Associated Targets
+    '''
+    def __init__(self, *args, **kwargs):
+        self.instance = kwargs.pop('instance', None)
+        super(TargetExtentDelete, self).__init__(*args, **kwargs)
+        if not self.data:
+            connected_targets = notifier().iscsi_connected_targets()
+            # Get target name from targetname/extentname combination
+            target_to_be_deleted = str(self.instance).split(' / ')[0]
+            if target_to_be_deleted in connected_targets:
+                self.errors['__all__'] = self.error_class(
+                    ["Warning: Target is in use"])
+
+
 class ExtentDelete(Form):
     delete = forms.BooleanField(
         label=_("Delete underlying file"),
@@ -1890,12 +1906,30 @@ class ExtentDelete(Form):
     def __init__(self, *args, **kwargs):
         self.instance = kwargs.pop('instance', None)
         super(ExtentDelete, self).__init__(*args, **kwargs)
+        if self.instance.iscsi_target_extent_type != 'File':
+            self.fields.pop('delete')
+        if not self.data:
+            targets_in_use = notifier().iscsi_connected_targets()
+            is_extent_active = False
+            target_to_extent_list = models.iSCSITargetToExtent.objects.filter(
+                iscsi_extent__iscsi_target_extent_name=str(
+                    self.instance).split()[0])
+            for target_to_extent in target_to_extent_list:
+                # Get target name from target:extent association
+                target = str(target_to_extent).split(' / ')[0]
+                if target in targets_in_use:
+                    is_extent_active = True
+                    # Extent is active. No need to check other targets.
+                    break
+            if is_extent_active:
+                self.errors['__all__'] = self.error_class(
+                    ["Warning: Associated Target is in use"])
 
     def done(self, *args, **kwargs):
         if (
-            self.cleaned_data['delete']
-            and
             self.instance.iscsi_target_extent_type == 'File'
+            and
+            self.cleaned_data['delete']
             and
             os.path.exists(self.instance.iscsi_target_extent_path)
         ):

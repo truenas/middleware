@@ -73,7 +73,6 @@ class BaseFreeAdmin(object):
     create_modelform = None
     edit_modelform = None
     delete_form = None
-    delete_form_filter = {}  # Ugly workaround for Extent/DeviceExtent
     deletable = True
     menu_child_of = None
 
@@ -748,12 +747,6 @@ class BaseFreeAdmin(object):
         instance = get_object_or_404(m, pk=oid)
 
         try:
-            if m._admin.delete_form_filter:
-                find = m.objects.filter(
-                    pk=instance.pk,
-                    **m._admin.delete_form_filter)
-                if find.count() == 0:
-                    raise
             _temp = __import__(
                 '%s.forms' % m._meta.app_label,
                 globals(),
