@@ -10,7 +10,7 @@ class Migration(SchemaMigration):
     def forwards(self, orm):
         # Adding field 'GlobalConfiguration.gc_hostname_b'
         db.add_column(u'network_globalconfiguration', 'gc_hostname_b',
-                      self.gf('django.db.models.fields.CharField')(max_length=120, null=True, blank=True),
+                      self.gf('django.db.models.fields.CharField')(default='truenas-b', max_length=120, null=True, blank=True),
                       keep_default=False)
 
 
