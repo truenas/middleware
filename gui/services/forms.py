@@ -1832,8 +1832,11 @@ class TargetExtentDelete(Form):
         super(TargetExtentDelete, self).__init__(*args, **kwargs)
         if not self.data:
             connected_targets = notifier().iscsi_connected_targets()
-            # Get target name from targetname/extentname combination
-            target_to_be_deleted = str(self.instance).split(' / ')[0]
+            target_to_be_deleted = None
+            if isinstance(self.instance, models.iSCSITarget):
+                target_to_be_deleted = self.instance.iscsi_target_name
+            elif isinstance(self.instance, models.iSCSITargetToExtent):
+                target_to_be_deleted = self.instance.iscsi_target.iscsi_target_name
             if target_to_be_deleted in connected_targets:
                 self.errors['__all__'] = self.error_class(
                     ["Warning: Target is in use"])
@@ -1855,11 +1858,9 @@ class ExtentDelete(Form):
             targets_in_use = notifier().iscsi_connected_targets()
             is_extent_active = False
             target_to_extent_list = models.iSCSITargetToExtent.objects.filter(
-                iscsi_extent__iscsi_target_extent_name=str(
-                    self.instance).split()[0])
+                iscsi_extent__iscsi_target_extent_name=self.instance.iscsi_target_extent_name)
             for target_to_extent in target_to_extent_list:
-                # Get target name from target:extent association
-                target = str(target_to_extent).split(' / ')[0]
+                target = target_to_extent.iscsi_target.iscsi_target_name
                 if target in targets_in_use:
                     is_extent_active = True
                     # Extent is active. No need to check other targets.
