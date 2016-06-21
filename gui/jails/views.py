@@ -573,6 +573,27 @@ def jail_template_edit(request, id):
     })
 
 
+def jail_template_delete(request, id):
+    jt = models.JailTemplate.objects.get(pk=id)
+
+    if request.method == 'POST':
+        try:
+            jt.delete()
+            return JsonResp(
+                request,
+                message=_("Jail template successfully deleted.")
+            )
+        except MiddlewareError:
+            raise
+        except Exception, e:
+            return JsonResp(request, error=True, message=repr(e))
+
+    else:
+        return render(request, "jails/delete.html", {
+            'name': jt.jt_name
+        })
+
+
 def jailsconfiguration_info(request):
     data = {}
 
