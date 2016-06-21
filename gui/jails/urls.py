@@ -44,6 +44,7 @@ urlpatterns = patterns(
     url(r'^template/info/(?P<name>.+)/$', 'jail_template_info', name="jail_template_info"),
     url(r'^template/create/$', 'jail_template_create', name="jail_template_create"),
     url(r'^template/edit/(?P<id>.+)/$', 'jail_template_edit', name="jail_template_edit"),
+    url(r'^template/delete/(?P<id>.+)/$', 'jail_template_delete', name="jail_template_delete"),
     url(r'^jailsconfiguration/info/$', 'jailsconfiguration_info', name="jailsconfiguration_info"),
     url(r'^jailsconfiguration/network/info/$', 'jailsconfiguration_network_info', name="jailsconfiguration_network_info"),
 )
