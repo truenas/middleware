@@ -51,6 +51,7 @@ GB = 1024 ** 3
 
 NO_HASYNC = "/tmp/.sqlite3_ha_skip"
 
+
 @atexit.register
 def cleanup():
     try:
@@ -159,6 +160,7 @@ DEF_KNOBS = {
         'vfs.zfs.vdev.async_write_max_active',
         'vfs.zfs.vdev.sync_write_max_active',
         'vfs.zfs.top_maxinflight',
+        'vfs.zfs.metaslab.lba_weighting_enabled',
     },
 }
 
@@ -356,6 +358,13 @@ def guess_vfs_zfs_top_maxinflight():
         return 256
     else:
         return None
+
+
+def guess_vfs_zfs_metaslab_lba_weighting_enabled():
+    if TRUENAS and hardware[0] == "Z50":
+        return 0
+    else:
+        return 1
 
 
 def main(argv):
