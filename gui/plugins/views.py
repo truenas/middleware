@@ -93,10 +93,17 @@ def reset_plugin_progress():
 
 
 def home(request):
-    default_iface = notifier().get_default_interface()
-    conf = models.Configuration.objects.latest('id')
 
-    reset_plugin_progress()
+    try:
+        default_iface = notifier().get_default_interface()
+        conf = models.Configuration.objects.latest('id')
+
+        reset_plugin_progress()
+    except MiddlewareError as e:
+        error = e.value
+        return render(request, "plugins/index_error.html", {
+            'error': error,
+        })
 
     return render(request, "plugins/index.html", {
         'conf': conf,
