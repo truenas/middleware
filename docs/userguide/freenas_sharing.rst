@@ -1598,7 +1598,8 @@ the example shown in Figure 10.5j, the current size of the zvol named *zvol1* is
 Input the new size for the zvol in the "Size" field and click the "Edit ZFS Volume" button. This menu will close and the new size for the zvol will
 immediately show in the "Used" column of the "View Volumes" screen.
 
-.. note:: the GUI will not let you reduce (shrink) the size of the zvol as doing so could result in loss of data.
+.. note:: the GUI will not let you reduce (shrink) the size of the zvol as doing so could result in loss of data. It also will not let you increase the size of the zvol past
+   80% of the volume size.
 
 .. _File Extent Based LUN:
 

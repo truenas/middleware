@@ -130,6 +130,8 @@ Some updates affect the user interface so this section lists any functional chan
 .. note:: the screenshots in this documentation assume that your system is fully updated to the latest STABLE version of FreeNAS® |version|. If a screen on your
    system looks different than the documentation, make sure that the system is fully up-to-date and apply any outstanding updates if it is not.
    
+* UEFI boot support has been added for both new installs and upgrades. Installer images contain hybrid BIOS/UEFI support so that they can be installed on both types of firmware.
+
 * Samba has been updated to `4.3.6 <https://www.samba.org/samba/history/samba-4.3.6.html>`_.
 
 * Smartmontools has been updated to `6.5 <https://www.smartmontools.org/browser/tags/RELEASE_6_5/smartmontools/NEWS>`_ which adds
