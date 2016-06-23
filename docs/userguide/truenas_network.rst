@@ -383,10 +383,12 @@ If you click the "Edit Members" button, click the entry for a member, then click
 +----------------------+----------------+------------------------------------------------------------------------------------------------+
 
 
-.. note:: options can be set at either the lagg level (using the "Edit" button) or the individual parent interface level (using the "Edit Members" button).
-   Typically, changes are made at the lagg level as each interface member will inherit from the lagg. If you instead configure the interface level, you will
-   have to repeat the configuration for each interface within the lagg. However, some lagg options can only be set by editing the interface. For instance, the
-   MTU of a lagg is inherited from the interface. To set an MTU on a lagg, set all the interfaces to the same MTU.
+Options can be set at either the lagg level (using the "Edit" button) or the individual parent interface level (using the "Edit Members" button).
+Typically, changes are made at the lagg level as each interface member will inherit from the lagg. If you instead configure the interface level, you will
+have to repeat the configuration for each interface within the lagg. However, some lagg options can only be set by editing the interface. For instance, the
+MTU of a lagg is inherited from the interface. To set an MTU on a lagg, set all the interfaces to the same MTU.
+   
+.. note:: when changing the MTU to create a jumbo frame lagg, a reboot is required.  
 
 To see if the link aggregation is load balancing properly, run the following command from :ref:`Shell`::
 
