@@ -366,8 +366,10 @@ def guess_vfs_zfs_metaslab_lba_weighting_enabled():
     else:
         return 1
 
+
 def guess_vfs_zfs_zfetch_max_distance():
     return 33554432
+
 
 def main(argv):
     """main"""
