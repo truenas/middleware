@@ -193,6 +193,8 @@ APP_MODULES = []
 for entry in os.listdir(HERE):
     if entry in DIR_BLACKLIST:
         continue
+    if entry.startswith('.'):
+        continue
     if os.path.isdir(os.path.join(HERE, entry)):
         APP_MODULES.append('freenasUI.%s' % entry)
 
