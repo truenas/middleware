@@ -401,11 +401,13 @@ The configurable options are summarized in Table 7.4b.
 +----------------------+----------------+------------------------------------------------------------------------------------------------+
 
 
-.. note:: options can be set at either the lagg level (using the "Edit" button) or the individual parent interface level (using the "Edit Members" button).
-   Typically, changes are made at the lagg level (Figure 7.4c) as each interface member will inherit from the lagg. If you instead configure the interface
-   level (Figure 7.4d), you will have to repeat the configuration for each interface within the lagg. However, some lagg options can only be set by editing
-   the interface. For instance, since the MTU of a lagg is inherited from the interface, in order to set an MTU on a lagg you must set all the interfaces to
-   the same MTU **before** creating the lagg.
+Options can be set at either the lagg level (using the "Edit" button) or the individual parent interface level (using the "Edit Members" button).
+Typically, changes are made at the lagg level (Figure 7.4c) as each interface member will inherit from the lagg. If you instead configure the interface
+level (Figure 7.4d), you will have to repeat the configuration for each interface within the lagg. However, some lagg options can only be set by editing
+the interface. For instance, since the MTU of a lagg is inherited from the interface, in order to set an MTU on a lagg you must set all the interfaces to
+the same MTU **before** creating the lagg.
+   
+.. note:: when changing the MTU to create a jumbo frame lagg, a reboot is required.  
 
 To see if the link aggregation is load balancing properly, run the following command from Shell::
 
