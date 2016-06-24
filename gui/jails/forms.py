@@ -833,11 +833,14 @@ class JailsEditForm(ModelForm):
 
     def clean_jail_mac(self):
         jail_mac = self.cleaned_data.get('jail_mac')
-        if is_jail_mac_duplicate(jail_mac):
-            raise forms.ValidationError(_(
-                "You have entered an existing MAC Address."
-                "Please enter a new one."
-            ))
+        curr_host = self.cleaned_data.get('jail_host')
+        jail = Jails.objects.get(jail_host=curr_host)
+        if jail_mac != jail.jail_mac:
+            if is_jail_mac_duplicate(jail_mac):
+                raise forms.ValidationError(_(
+                    "You have entered an existing MAC Address."
+                    "Please enter a new one."
+                ))
         return jail_mac
 
     def save(self):
