@@ -1241,7 +1241,7 @@ four interfaces configured with the following addresses:
 192.168.4.1/24
 
 You could create a portal containing the first two IP addresses (group ID 1) and a portal containing the remaining two IP addresses (group ID 2). You could
-then create a target named A with a Portal Group ID of 1 and a second target named B with a Portal Group ID of 2. In this scenario, istgt would listen on all
+then create a target named A with a Portal Group ID of 1 and a second target named B with a Portal Group ID of 2. In this scenario, the iSCSI service would listen on all
 four interfaces, but connections to target A would be limited to the first two networks and connections to target B would be limited to the last two networks.
 
 Another scenario would be to create a portal which includes every IP address **except** for the one used by a management interface. This would prevent iSCSI
