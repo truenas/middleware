@@ -69,7 +69,7 @@ if __name__ == "__main__":
                     provider = ed.encrypted_provider
                     if not os.path.exists('/dev/%s.eli' % provider):
                         proc = pipeopen("geli attach %s -k %s %s" % (
-                            '-j  %s' % tmp.name if vol.vol_encrypt == 2 else '',
+                            '-j  %s' % tmp.name if vol.vol_encrypt == 2 else '-p',
                             keyfile, provider), quiet=True)
                         procs.append(proc)
                 for proc in procs:
