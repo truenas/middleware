@@ -66,6 +66,14 @@ if __name__ == "__main__":
             for vol in Volume.objects.filter(vol_encrypt__gte=1):
                 keyfile = vol.get_geli_keyfile()
                 for ed in vol.encrypteddisk_set.all():
+                    if ed.encrypted_disk:
+                        # gptid might change on the active head, so we need to rescan
+                        # See #16070
+                        try:
+                            open('/dev/%s' % ed.encrypted_disk.devname, 'w').close()
+                        except Exception as e:
+                            print('Failed to open dev %s to rescan' % ed.encrypted_disk.devname)
+                            log.warn('Failed to open dev %s to rescan' % ed.encrypted_disk.devname)
                     provider = ed.encrypted_provider
                     if not os.path.exists('/dev/%s.eli' % provider):
                         proc = pipeopen("geli attach %s -k %s %s" % (
