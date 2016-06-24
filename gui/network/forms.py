@@ -372,6 +372,7 @@ class InterfacesForm(ModelForm):
             s.notifier('sync_carp_ips', None, None)
         _n.start("network")
         _n.reload("networkgeneral")
+        MultiSelectField.choices = list(choices.IPChoices())
         super(InterfacesForm, self).done(*args, **kwargs)
 
 
