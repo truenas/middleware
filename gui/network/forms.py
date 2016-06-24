@@ -42,6 +42,7 @@ from freenasUI.common.system import get_sw_name
 from freenasUI.contrib.IPAddressField import IP4AddressFormField
 from freenasUI.middleware.notifier import notifier
 from freenasUI.network import models
+from freenasUI.freeadmin.models.fields import MultiSelectField
 from ipaddr import (
     IPAddress, AddressValueError,
     IPNetwork,
