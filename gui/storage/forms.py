@@ -2501,7 +2501,7 @@ class UnlockPassphraseForm(Form):
             escrowctl = LocalEscrowCtl()
             escrowctl.setkey(passphrase)
             try:
-                s = _n.failover_rpc()
+                s = _notifier.failover_rpc()
                 s.enc_setkey(passphrase)
             except:
                 log.warn('Failed to set key on standby node, is it down?', exc_info=True)
