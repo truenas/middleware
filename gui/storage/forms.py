@@ -2500,6 +2500,11 @@ class UnlockPassphraseForm(Form):
             from freenasUI.failover.enc_helper import LocalEscrowCtl
             escrowctl = LocalEscrowCtl()
             escrowctl.setkey(passphrase)
+            try:
+                s = _n.failover_rpc()
+                s.enc_setkey(passphrase)
+            except:
+                log.warn('Failed to set key on standby node, is it down?', exc_info=True)
             _notifier.failover_force_master()
 
 
