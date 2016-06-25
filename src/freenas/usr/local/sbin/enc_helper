@@ -111,6 +111,11 @@ if __name__ == "__main__":
         passphrase = getpass.getpass()
         if passphrase:
             rv = escrowctl.setkey(passphrase)
+            try:
+                s = notifier().failover_rpc()
+                s.enc_setkey(passphrase)
+            except:
+                print "Failed to set key on standby node, is it down?"
             if not args.key_only:
                 notifier().failover_force_master()
     else:
