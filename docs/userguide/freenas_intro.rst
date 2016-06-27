@@ -132,6 +132,8 @@ Some updates affect the user interface so this section lists any functional chan
    
 * UEFI boot support has been added for both new installs and upgrades. Installer images contain hybrid BIOS/UEFI support so that they can be installed on both types of firmware.
 
+* Support for Mellanox ConnectX-4 40Gb adapter cards has been added.
+
 * Samba has been updated to `4.3.6 <https://www.samba.org/samba/history/samba-4.3.6.html>`_.
 
 * Smartmontools has been updated to `6.5 <https://www.smartmontools.org/browser/tags/RELEASE_6_5/smartmontools/NEWS>`_ which adds
