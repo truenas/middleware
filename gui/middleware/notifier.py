@@ -62,7 +62,8 @@ import threading
 import time
 import types
 import crypt
-import uuid
+import string
+import random
 
 WWW_PATH = "/usr/local/www"
 FREENAS_PATH = os.path.join(WWW_PATH, "freenasUI")
@@ -5987,7 +5988,7 @@ class notifier:
 
 
 def crypt_makeSalt():
-    return '$6$' + str(uuid.uuid4().get_hex()[0:16])
+    return '$6$' + ''.join(random.choice(string.ascii_uppercase + string.ascii_lowercase + string.digits + '.' + '/') for _ in range(16))
 
 
 def usage():
