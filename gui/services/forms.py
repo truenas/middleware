@@ -132,11 +132,6 @@ class servicesForm(ModelForm):
             else:
                 started = _notifier.stop("domaincontroller")
 
-        elif obj.srv_service == 'afp' and _notifier._started_domaincontroller():
-            obj.srv_enable = True
-            obj.save()
-            started = True
-
         else:
             """
             For now on, lets handle it properly for all services!
