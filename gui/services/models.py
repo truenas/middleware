@@ -318,7 +318,6 @@ class AFP(Model):
         ),
         max_length=255,
         blank=True,
-        choices=list(choices.IPChoices()),
         default='',
     )
     afp_srv_connections_limit = models.IntegerField(
