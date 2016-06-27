@@ -61,6 +61,9 @@ import tempfile
 import threading
 import time
 import types
+import crypt
+import string
+import random
 
 WWW_PATH = "/usr/local/www"
 FREENAS_PATH = os.path.join(WWW_PATH, "freenasUI")
@@ -2103,6 +2106,7 @@ class notifier:
 
         if msg != "":
             log.debug("Command reports %s", msg)
+        return crypt.crypt(password, crypt_makeSalt())
 
     def __smbpasswd(self, username, password):
         """
@@ -2123,8 +2127,9 @@ class notifier:
         return smbpasswd.returncode == 0
 
     def __issue_pwdchange(self, username, command, password):
-        self.__pw_with_password(command, password)
+        unix_hash = self.__pw_with_password(command, password)
         self.__smbpasswd(username, password)
+        return unix_hash
 
     def user_create(self, username, fullname, password, uid=-1, gid=-1,
                     shell="/sbin/nologin",
@@ -2240,7 +2245,7 @@ class notifier:
                 new_homedir = True
 
         try:
-            self.__issue_pwdchange(username, command, password)
+            unix_hash = self.__issue_pwdchange(username, command, password)
             """
             Make sure to use -d 0 for pdbedit, otherwise it will bomb
             if CIFS debug level is anything different than 'Minimum'.
@@ -2260,7 +2265,7 @@ class notifier:
             raise
 
         user = self.___getpwnam(username)
-        return (user.pw_uid, user.pw_gid, user.pw_passwd, smb_hash)
+        return (user.pw_uid, user.pw_gid, unix_hash, smb_hash)
 
     def group_create(self, name):
         command = '/usr/sbin/pw group add "%s"' % (
@@ -2338,8 +2343,9 @@ class notifier:
     def user_changepassword(self, username, password):
         """Changes user password"""
         command = '/usr/sbin/pw usermod "%s" -h 0' % (username)
-        self.__issue_pwdchange(username, command, password)
-        return self.user_gethashedpassword(username)
+        unix_hash = self.__issue_pwdchange(username, command, password)
+        smb_hash = self.user_gethashedpassword(username)
+        return (unix_hash, smb_hash)
 
     def user_gethashedpassword(self, username):
         """
@@ -2356,8 +2362,7 @@ class notifier:
         smb_command = "/usr/local/bin/pdbedit -d 0 -w %s" % username
         smb_cmd = self._pipeopen(smb_command)
         smb_hash = smb_cmd.communicate()[0].split('\n')[0]
-        user = self.___getpwnam(username)
-        return (user.pw_passwd, smb_hash)
+        return smb_hash
 
     def user_deleteuser(self, username):
         """
@@ -6121,6 +6126,10 @@ class notifier:
     def fc_enabled(self):
         from freenasUI.support.utils import fc_enabled
         return fc_enabled()
+
+
+def crypt_makeSalt():
+    return '$6$' + ''.join(random.choice(string.ascii_uppercase + string.ascii_lowercase + string.digits + '.' + '/') for _ in range(16))
 
 
 def usage():
