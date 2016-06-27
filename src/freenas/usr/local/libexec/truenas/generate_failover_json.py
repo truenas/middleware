@@ -78,6 +78,11 @@ def main():
     except IndexError:
         settings = Settings.objects.create()
 
+    # Cook data['ips'] which will be empty in the single
+    # head case.  Bug #16116
+    if not data['ips']:
+        data['ips'] = ['0.0.0.0']
+
     with open('/etc/pf.conf.block', 'w+') as f:
         f.write('set block-policy drop\n')
         f.write('''
