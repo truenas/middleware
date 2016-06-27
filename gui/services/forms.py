@@ -151,6 +151,11 @@ class servicesForm(ModelForm):
             else:
                 started = _notifier.stop("domaincontroller")
 
+        elif obj.srv_service == 'afp' and _notifier._started_domaincontroller():
+            obj.srv_enable = True
+            obj.save()
+            started = True
+
         else:
             """
             For now on, lets handle it properly for all services!
@@ -329,16 +334,57 @@ class CIFSForm(ModelForm):
 
 class AFPForm(ModelForm):
 
+    afp_srv_bindip = forms.MultipleChoiceField(
+        label=models.AFP._meta.get_field('afp_srv_bindip').verbose_name,
+        help_text=models.AFP._meta.get_field('afp_srv_bindip').help_text,
+        required=False,
+        widget=forms.widgets.CheckedMultiSelect(),
+    )
+
     class Meta:
         fields = '__all__'
+        exclude = ['afp_SID', 'afp_srv_bindip']
         model = models.AFP
 
     def __init__(self, *args, **kwargs):
         super(AFPForm, self).__init__(*args, **kwargs)
+        if self.data and self.data.get('afp_srv_bindip'):
+            if ',' in self.data['afp_srv_bindip']:
+                self.data = self.data.copy()
+                self.data.setlist(
+                    'afp_srv_bindip',
+                    self.data['afp_srv_bindip'].split(',')
+                )
         self.fields['afp_srv_bindip'].choices = list(choices.IPChoices())
+        if self.instance.id and self.instance.afp_srv_bindip:
+            bindips = []
+            for ip in self.instance.afp_srv_bindip:
+                bindips.append(ip.encode('utf-8'))
+
+            self.fields['afp_srv_bindip'].initial = (bindips)
+        else:
+            self.fields['afp_srv_bindip'].initial = ('')
+
+    def clean_afp_srv_bindip(self):
+        ips = self.cleaned_data.get("afp_srv_bindip")
+        if not ips:
+            return ''
+        bind = []
+        for ip in ips:
+            try:
+                IPAddress(ip.encode('utf-8'))
+            except:
+                raise forms.ValidationError(
+                    "This is not a valid IP: %s" % (ip, )
+                )
+            bind.append(ip)
+        return ','.join(bind)
 
     def save(self):
-        super(AFPForm, self).save()
+        obj = super(AFPForm, self).save(commit=False)
+        obj.afp_srv_bindip = self.cleaned_data.get('afp_srv_bindip')
+        obj.save()
+
         started = notifier().restart("afp")
         if (
             started is False
