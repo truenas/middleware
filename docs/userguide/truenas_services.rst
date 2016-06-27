@@ -1371,7 +1371,8 @@ Table 11.15a summarizes the options in the UPS Configuration screen.
 | Send Email Status Updates | checkbox       | if checked, activates the "To email" field                                                            |
 |                           |                |                                                                                                       |
 +---------------------------+----------------+-------------------------------------------------------------------------------------------------------+
-| To email                  | email address  | if "Send Email" box checked, email address of person to receive status updates                        |
+| To email                  | email address  | if "Send Email" box checked, email address to receive status updates; separate multiple email         |
+|                           |                | addresses with a semicolon                                                                            |
 |                           |                |                                                                                                       |
 +---------------------------+----------------+-------------------------------------------------------------------------------------------------------+
 | Email subject             | string         | if "Send Email" box checked, subject of email updates                                                 |
