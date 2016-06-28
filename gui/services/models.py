@@ -451,6 +451,18 @@ class NFS(Model):
             "that this option is mutually incompatible with the NFSv3 ownership "
             "model for NFSv4."),
     )
+    nfs_srv_mountd_log = models.BooleanField(
+        default=True,
+        verbose_name=_("Log mountd(8) requests"),
+        help_text=_(
+            "This option enable mountd logging into syslog."),
+    )
+    nfs_srv_statd_lockd_log = models.BooleanField(
+        default=False,
+        verbose_name=_("Log rpc.statd(8) and rpc.lockd(8)"),
+        help_text=_(
+            "This option enable statd and lockd logging into syslog."),
+    )
 
     class Meta:
         verbose_name = _("NFS")

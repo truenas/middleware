@@ -551,7 +551,21 @@ _gen_conf()
 		echo "saver=\"daemon\""
 	fi
 
-	local nonroot mountdflags="-l -rS" ip nfsips mountdport statdport lockdport
+        local nonroot mountdflags statdflags lockdflags ip nfsips mountdport statdport lockdport
+        
+        if [ "$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT nfs_srv_mountd_log FROM services_nfs ORDER BY -id LIMIT 1")" = 1 ]; then
+                mountdflags="-l -rS"
+        else
+                mountdflags="-rS"
+        fi
+                
+        if [ "$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT nfs_srv_statd_lockd_log FROM services_nfs ORDER BY -id LIMIT 1")" = 1 ]; then
+                statdflags=" -d"
+                lockdflags=" -d 10"
+        else
+                statdflags=" "
+                lockdflags=" "
+        fi
 
 	nfsips=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT nfs_srv_bindip FROM services_nfs ORDER BY -id LIMIT 1" | tr "," \\n | \
 	while read -r ip; do
@@ -581,10 +595,10 @@ _gen_conf()
 			mountdflags="${mountdflags} -p ${mountdport}"
 		fi
 		if [ -n "${statdport}" ]; then
-			statdport="-p ${statdport}"
+			statdport="${statdflags} -p ${statdport}"
 		fi
 		if [ -n "${lockdport}" ]; then
-			lockdport="-p ${lockdport}"
+			lockdport="${lockdflags} -p ${lockdport}"
 		fi
 		if [ -n "${nfsips}" ]; then
 			mountdflags="${mountdflags} ${nfsips}"
