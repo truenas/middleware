@@ -37,6 +37,7 @@ LOCALE_DIR = os.path.abspath(
     )
 )
 
+RE_SIMPLE = re.compile(r'\B%[sfd]\b')
 RE_FORMAT = re.compile(r'\B%\(\w+\)s\b')
 
 
@@ -62,6 +63,15 @@ def pocompile(src, dest):
                 if 'fuzzy' not in entry.flags:
                     entry.flags.append('fuzzy')
                 break
+
+        tmp = entry.msgid
+        for fmt in RE_SIMPLE.findall(tmp):
+            if fmt not in translated:
+                if 'fuzzy' not in entry.flags:
+                    entry.flags.append('fuzzy')
+                break
+            else:
+                tmp = tmp.replace(fmt, '', 1)
 
     po.save_as_mofile(dest)
 
