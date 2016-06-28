@@ -580,6 +580,7 @@ _gen_conf()
 		nfsips=""
 		touch /tmp/.nfsbindip_notfound
 	else
+		rm -f /tmp/.nfsbindip_notfound
 		nfsips=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT nfs_srv_bindip FROM services_nfs ORDER BY -id LIMIT 1" | tr "," \\n | \
 		while read -r ip; do
 			if [ -n "${ip}" ]; then
