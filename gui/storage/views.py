@@ -1404,7 +1404,7 @@ def tasks_json(request, dataset=None):
                 continue
 
             try:
-                zfs_mp, zfs_ds = line.split()
+                zfs_mp, zfs_ds = line.split('\t')
                 if mp == zfs_mp or mp.startswith("/%s/" % zfs_mp):
                     if mp == zfs_mp:
                         task_list = models.Task.objects.filter(
