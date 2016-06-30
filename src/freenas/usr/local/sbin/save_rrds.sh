@@ -54,11 +54,11 @@ use_rrd_dataset()
 			echo "1"
 		else
 			if is_freenas; then
-				echo "0"
+				return 0	
 			else
 				local failover="$(/usr/local/bin/python /usr/local/www/freenasUI/middleware/notifier.py failover_status 2> /dev/null)"
 				if [ "x${failover}" = "xMASTER" ]; then
-					echo "0"
+					return 0	
 				else
 					echo "1"
 				fi
