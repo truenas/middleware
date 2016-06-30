@@ -51,7 +51,7 @@ use_rrd_dataset()
 	do
 		if [ "${rrd_usedataset}" = "1" ]
 		then
-			echo "1"
+			return 1
 		else
 			if is_freenas; then
 				return 0	
@@ -60,7 +60,7 @@ use_rrd_dataset()
 				if [ "x${failover}" = "xMASTER" ]; then
 					return 0	
 				else
-					echo "1"
+					return 1
 				fi
 			fi
 		fi
