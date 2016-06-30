@@ -484,7 +484,6 @@ def is_JailRoot_Shared(jail_root):
     for i in range(len(iscsi_target_paths)):
         iscsi_target_paths[i] = iscsi_target_paths[i].rpartition('/')[0]
     paths.extend(iscsi_target_paths)
-    log.error("--PATHS-- : %s ", paths)
     for path in paths:
         if jail_root.startswith(path):
             return 1
