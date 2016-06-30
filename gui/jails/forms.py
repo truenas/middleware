@@ -475,19 +475,20 @@ class JailCreateForm(ModelForm):
         self.instance = Jails.objects.get(jail_host=jail_host)
 
 
-def is_JailRoot_Shared(jail_root):
+def is_jail_root_shared(jail_root):
     paths = [c.cifs_path for c in CIFS_Share.objects.all()]
     paths.extend([a.afp_path for a in AFP_Share.objects.all()])
     paths.extend([n.path for n in NFS_Share_Path.objects.all()])
     paths.extend([w.webdav_path for w in WebDAV_Share.objects.all()])
-    iscsi_target_paths = [i.iscsi_target_extent_path for i in iSCSITargetExtent.objects.all()]
-    for i in range(len(iscsi_target_paths)):
-        iscsi_target_paths[i] = iscsi_target_paths[i].rpartition('/')[0]
-    paths.extend(iscsi_target_paths)
+    extents = iSCSITargetExtent.objects.all()
+    for e in extents:
+        if e.iscsi_target_extent_type == 'File':
+            iscsi_path = e.iscsi_target_extent_path.rpartition('/')[0]
+            paths.append(iscsi_path)
     for path in paths:
         if jail_root.startswith(path):
-            return 1
-    return 0
+            return True
+    return False
 
 
 class JailsConfigurationForm(ModelForm):
@@ -601,7 +602,7 @@ class JailsConfigurationForm(ModelForm):
     def clean_jc_path(self):
         jc_path = self.cleaned_data.get('jc_path').rstrip('/')
 
-        if is_JailRoot_Shared(jc_path):
+        if is_jail_root_shared(jc_path):
             raise forms.ValidationError(
                 _("Jail dataset created on a share")
             )
