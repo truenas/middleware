@@ -480,11 +480,9 @@ def is_jail_root_shared(jail_root):
     paths.extend([a.afp_path for a in AFP_Share.objects.all()])
     paths.extend([n.path for n in NFS_Share_Path.objects.all()])
     paths.extend([w.webdav_path for w in WebDAV_Share.objects.all()])
-    extents = iSCSITargetExtent.objects.all()
+    extents = iSCSITargetExtent.objects.filter(iscsi_target_extent_type='File')
     for e in extents:
-        if e.iscsi_target_extent_type == 'File':
-            iscsi_path = e.iscsi_target_extent_path.rpartition('/')[0]
-            paths.append(iscsi_path)
+        paths.append(e.iscsi_target_extent_path.rpartition('/')[0])
     for path in paths:
         if jail_root.startswith(path):
             return True
