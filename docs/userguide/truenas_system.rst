@@ -3,7 +3,8 @@
 System Configuration
 ====================
 
-The System section of the administrative GUI contains the following entries:
+The System section of the administrative GUI contains the following 
+entries:
 
 * :ref:`Information`: provides general TrueNAS® system information such as hostname, operating system version, platform, and uptime
 
@@ -36,11 +37,11 @@ Each of these is described in more detail in this section.
 Information
 -----------
 
-:menuselection:`System --> Information` displays general information about the TrueNAS® system. An example is seen in :numref:`Figure %s: System Information Tab <system1>`.
+:menuselection:`System --> Information` displays general information about the TrueNAS® system. An example is seen in :numref:`Figure %s: System Information Tab <system1a>`.
 
-.. _system1:
+.. _system1a:
 
-.. figure:: images/tn_system1.png
+.. figure:: images/tn_system1a.png
 
 The information includes the hostname, build version, type of CPU (platform), the amount of memory, the current system time, the system's uptime, the
 current load average, and the system's serial number.
@@ -635,17 +636,32 @@ environments, an administrator can try new features or apply system patches with
 system, using the instructions in :ref:`If Something Goes Wrong`. Signed patches also mean that the administrator no longer has to manually download the GUI
 upgrade file and its associated checksum in order to perform an upgrade.
 
-:numref:`Figure %s: Update Options <tn_update1>` shows an example of the :menuselection:`System --> Update` screen. 
+:numref:`Figure %s: Update Options <tn_update1a>` shows an example of the :menuselection:`System --> Update` screen. 
 
-.. _tn_update1:
+.. _tn_update1a:
 
-.. figure:: images/tn_update1.png
+.. figure:: images/tn_update1a.png
 
 By default, the system will automatically check for updates and will issue an alert when a new update becomes available. To disable this default, uncheck the
 box "Automatically check for updates".
 
-This screen also indicates which software branch, or train, the system is currently tracking updates for and lists the URL of the official update server,
-should that information be needed in a network with outbound firewall restrictions.
+This screen lists the URL of the official update server, should that
+information be needed in a network with outbound firewall
+restrictions. It also indicates which software branch, or train, the
+system is currently tracking updates for. The following trains are
+available:
+  
+* **TrueNAS-9.10-STABLE:**  this is the
+  **recommended train for production use**. Once new fixes and
+  features have been tested as production-ready, they are added to
+  this train. It is recommended to follow this train and to apply any
+  of its pending updates. 
+
+* **TrueNAS-9.3-STABLE:** this is the maintenance-only mode for an
+  older version of FreeNAS®. Unless an iX support engineer indicates
+  otherwise, it is recommended to upgrade to "FreeNAS-9.10-STABLE", by
+  selecting that train, to ensure that the system receives bug fixes
+  and new features.
 
 The "Verify Install" button will go through the operating system files in the current installation, looking for any inconsistencies. When finished, a pop-up
 menu will list any files with checksum mismatches or permission errors.
@@ -661,7 +677,7 @@ button to download and apply the updates. Note that some updates will automatica
 
 Alternately, you can download the updates now and apply them later. To do so, uncheck the "Apply updates after downloading" box before pressing "OK". In this
 case, this screen will close once the updates are downloaded and the downloaded updates will be listed in the "Pending Updates" section of the screen shown
-in :numref:`Figure %s: Update Options <tn_update1>`. When you are ready to apply the previously downloaded updates, click the "Apply Pending Updates" button and be aware that the system may
+in :numref:`Figure %s: Update Options <tn_update1a>`. When you are ready to apply the previously downloaded updates, click the "Apply Pending Updates" button and be aware that the system may
 reboot after the updates are applied.
 
 .. _Updating an HA System:
