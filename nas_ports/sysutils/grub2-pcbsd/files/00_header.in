@@ -201,6 +201,7 @@ EOF
     set gfxmode=${GRUB_GFXMODE}
     load_video
     insmod gfxterm
+    kernvt="sc"
   else
     # EFI
     insmod efi_gop
@@ -209,6 +210,7 @@ EOF
     insmod videotest
     insmod videoinfo
     set gfxmode=${GRUB_GFXMODE}
+    kernvt="vt"
   fi
 EOF
 
