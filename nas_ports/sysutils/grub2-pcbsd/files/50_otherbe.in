@@ -161,7 +161,7 @@ display_loaderopts()
   fi
 
   # Set the grub.platform kenv variable
-  echo "    set kFreeBSD.kern.vty=\$kernvt"
+  echo "    set kFreeBSD.kern.vty=vt"
   echo "    set kFreeBSD.grub.platform=\"\$grub_platform\""
 
   # See if we need to do GELI passphrase passthrough
