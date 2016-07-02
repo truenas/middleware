@@ -539,6 +539,9 @@ class ActiveDirectoryForm(ModelForm):
             bindpw = self.instance.ad_bindpw
             cdata['ad_bindpw'] = bindpw
 
+        if cdata.get("ad_enable") is False:
+            return cdata
+
         if not ad_kerberos_principal:
             if not bindname:
                 raise forms.ValidationError("No domain account name specified")
@@ -823,6 +826,9 @@ class LDAPForm(ModelForm):
             hostname = parts[0]
             if len(parts) > 1:
                 port = int(parts[1])
+
+        if cdata.get("ldap_enable") is False:
+            return cdata
 
         # self.check_for_samba_schema()
         try:
