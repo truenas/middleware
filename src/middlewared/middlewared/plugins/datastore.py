@@ -34,12 +34,29 @@ class DatastoreService(Service):
                 raise Exception("Invalid filter {0}".format(f))
         return rv
 
-    def query(self, name, filters=None):
+    def __get_model(self, name):
+        """Helper method to get Model for given name
+        e.g. network.interfaces -> Interfaces
+        """
         app, model = name.split('.', 1)
         model = cache.get_model(app, model)
+
+    def query(self, name, filters=None):
+        model = sellf.__get_model(name)
 
         qs = model.objects.all()
         if filters:
             qs = qs.filter(**self._filters_to_queryset(filters))
 
         return serializers.serialize('json', qs)
+
+    def insert(self, name, data):
+        """
+        Insert a new entry to 'name'.
+
+        returns: primary key
+        """
+        model = sellf.__get_model(name)
+        obj = model(**data)
+        obj.save()
+        return obj.pk
