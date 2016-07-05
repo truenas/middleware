@@ -87,17 +87,17 @@ class Application(WebSocketApplication):
 class Middleware(object):
 
     def __init__(self):
-        self._services = {}
-        self._plugins_load()
+        self.__services = {}
+        self.__plugins_load()
 
-    def _plugins_load(self):
+    def __plugins_load(self):
         from middlewared.service import Service
         plugins_dir = os.path.join(
             os.path.dirname(os.path.realpath(__file__)),
             'plugins',
         )
         if not os.path.exists(plugins_dir):
-            return
+            raise ValueError('plugins dir not found')
 
         for f in os.listdir(plugins_dir):
             if not f.endswith('.py'):
@@ -119,12 +119,15 @@ class Middleware(object):
                 if issubclass(attr, Service):
                     self.register_service(attr(self))
 
-    def register_service(self, service):
-        self._services[service._meta.namespace] = service
+    def add_service(self, service):
+        self.__services[service._meta.namespace] = service
+
+    def get_service(self, name):
+        return self.__services[name]
 
     def call_method(self, method, params):
         service, method = method.rsplit('.', 1)
-        return getattr(self._services[service], method)(*params)
+        return getattr(self.get_service(service), method)(*params)
 
     def run(self):
         Application.middleware = self
