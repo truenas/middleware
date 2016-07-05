@@ -15,7 +15,8 @@ EXTRACT_ONLY=
 
 RUN_DEPENDS=	${PYTHON_PKGNAMEPREFIX}gevent>0:${PORTSDIR}/devel/py-gevent \
 		${PYTHON_PKGNAMEPREFIX}gevent-websocket>0:${PORTSDIR}/www/py-gevent-websocket \
-		${PYTHON_PKGNAMEPREFIX}ws4py>0:${PORTSDIR}/www/py-ws4py
+		${PYTHON_PKGNAMEPREFIX}ws4py>0:${PORTSDIR}/www/py-ws4py \
+		${PYTHON_PKGNAMEPREFIX}falcon>0:${PORTSDIR}/www/py-falcon
 
 USE_RC_SUBR=	middlewared
 
