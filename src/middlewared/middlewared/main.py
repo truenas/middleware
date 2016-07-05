@@ -2,7 +2,9 @@ from collections import OrderedDict
 from client.protocol import DDPProtocol
 from daemon import DaemonContext
 from daemon.pidfile import TimeoutPIDLockFile
+from gevent.wsgi import WSGIServer
 from geventwebsocket import WebSocketServer, WebSocketApplication, Resource
+from restful import RESTfulAPI
 
 import argparse
 import imp
@@ -131,10 +133,19 @@ class Middleware(object):
 
     def run(self):
         Application.middleware = self
-        server = WebSocketServer(('127.0.0.1', 8000), Resource(OrderedDict([
+        wsserver = WebSocketServer(('127.0.0.1', 8000), Resource(OrderedDict([
             ('/websocket', Application),
         ])))
-        server.serve_forever()
+
+        restful_api = RESTfulAPI(self)
+
+        restserver = WSGIServer(('127.0.0.1', 8001), restful_api.get_app())
+
+        server_threads = [
+            gevent.spawn(wsserver.serve_forever),
+            gevent.spawn(restserver.serve_forever),
+        ]
+        gevent.joinall(server_threads)
 
 
 def main():
