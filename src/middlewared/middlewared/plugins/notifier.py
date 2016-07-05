@@ -3,7 +3,8 @@ from middlewared.service import Service
 import os
 import sys
 
-sys.path.append('/usr/local/www')
+if '/usr/local/www' not in sys.path:
+    sys.path.append('/usr/local/www')
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'freenasUI.settings')
 
 # Make sure to load all modules
