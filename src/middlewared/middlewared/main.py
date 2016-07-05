@@ -117,7 +117,7 @@ class Middleware(object):
                 if attr is Service:
                     continue
                 if issubclass(attr, Service):
-                    self.register_service(attr(self))
+                    self.add_service(attr(self))
 
     def add_service(self, service):
         self.__services[service._meta.namespace] = service
