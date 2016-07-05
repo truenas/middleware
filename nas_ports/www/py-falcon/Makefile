@@ -4,7 +4,8 @@
 PORTNAME=	falcon
 PORTVERSION=	1.0.0
 CATEGORIES=	www python
-MASTER_SITES=	CHEESESHOP
+MASTER_SITES=	CHEESESHOP \
+		https://files.pythonhosted.org/packages/source/f/falcon/
 PKGNAMEPREFIX=	${PYTHON_PKGNAMEPREFIX}
 
 MAINTAINER=	lichray@gmail.com
