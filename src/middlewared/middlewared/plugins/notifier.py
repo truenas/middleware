@@ -11,6 +11,7 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'freenasUI.settings')
 from django.db.models.loading import cache
 cache.get_apps()
 
+from freenasUI import common as fcommon
 from freenasUI.middleware.notifier import notifier
 
 
@@ -22,5 +23,13 @@ class NotifierService(Service):
             return object.__getattribute__(self, attr)
         except AttributeError:
             return getattr(_n, attr)
+
+    def common(self, name, method, params=None):
+        """Simple wrapper to access methods under freenasUI.common.*"""
+        if params is None:
+            params = []
+        subsystem = getattr(fcommon, name)
+        rv = getattr(subsystem, method)(*params)
+        return rv
 
 
