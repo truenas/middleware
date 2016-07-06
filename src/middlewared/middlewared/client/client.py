@@ -70,7 +70,8 @@ class Client(object):
     def unregister_call(self, call):
         self._calls.pop(call.id, None)
 
-    def call(self, method, params=None, timeout=10):
+    def call(self, method, *params, **kwargs):
+        timeout = kwargs.pop('timeout', 10)
         c = Call(method, params)
         self.register_call(c)
         self._send({
@@ -111,7 +112,7 @@ def main():
     if args.call:
         c = Client()
         try:
-            print(json.dumps(c.call(args.call[1], list(to_json(args.call[2:])))))
+            print(json.dumps(c.call(args.call[1], *list(to_json(args.call[2:])))))
         except ClientException as e:
             print(e.stacktrace)
             sys.exit(1)
