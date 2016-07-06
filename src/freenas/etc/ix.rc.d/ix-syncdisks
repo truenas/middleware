@@ -11,8 +11,9 @@
 syncdisks()
 {
 	touch /tmp/.sync_disk_done
-	/usr/local/bin/python /usr/local/www/freenasUI/tools/sync_disks.py
-	checkyesno failover_enable || /usr/local/bin/python /usr/local/www/freenasUI/middleware/notifier.py zpool_enclosure_sync 2> /dev/null
+	/usr/local/bin/midclt call notifier.sync_disks
+	/usr/local/bin/midclt call notifier.multipath_sync
+	checkyesno failover_enable || /usr/local/bin/midclt call notifier.zpool_enclosure_sync 2> /dev/null
 }
 
 name="ix-syncdisks"
