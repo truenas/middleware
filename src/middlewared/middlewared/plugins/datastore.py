@@ -47,14 +47,23 @@ class DatastoreService(Service):
             entry.pop('_state')
             yield entry
 
-    def query(self, name, filters=None):
+    def query(self, name, filters=None, options=None):
         model = self.__get_model(name)
+        if options is None:
+            options = {}
 
         qs = model.objects.all()
         if filters:
             qs = qs.filter(**self._filters_to_queryset(filters))
 
-        return list(self.__queryset_serialize(qs))
+        if options.get('count') is True:
+            return qs.count()
+
+        result = list(self.__queryset_serialize(qs))
+
+        if options.get('get') is True:
+            return result[0]
+        return result
 
     def insert(self, name, data):
         """
