@@ -99,6 +99,7 @@ class Client(object):
 
 def main():
     parser = argparse.ArgumentParser()
+    parser.add_argument('-q', '--quiet', action='store_true')
     parser.add_argument('call', nargs='+')
     args = parser.parse_args()
 
@@ -114,7 +115,8 @@ def main():
         try:
             print(json.dumps(c.call(args.call[1], *list(to_json(args.call[2:])))))
         except ClientException as e:
-            print(e.stacktrace)
+            if not args.quiet:
+                print(e.stacktrace)
             sys.exit(1)
 
 if __name__ == '__main__':
