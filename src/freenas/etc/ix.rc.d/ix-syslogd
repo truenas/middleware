@@ -72,7 +72,7 @@ use_syslog_dataset()
 		then
 			echo "1"
 		else
-			local failover="$(/usr/local/bin/python /usr/local/www/freenasUI/middleware/notifier.py failover_status 2> /dev/null)"
+			local failover="$(/usr/local/bin/midclt -q call notifier.failover_status 2> /dev/null)"
 			if [ "x${failover}" = "xBACKUP" ]; then
 				echo "1"
 			else
