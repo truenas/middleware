@@ -41,6 +41,12 @@ class DatastoreService(Service):
         app, model = name.split('.', 1)
         return cache.get_model(app, model)
 
+    def __queryset_serialize(self, qs):
+        for i in qs:
+            entry = i.__dict__
+            entry.pop('_state')
+            yield entry
+
     def query(self, name, filters=None):
         model = self.__get_model(name)
 
@@ -48,7 +54,7 @@ class DatastoreService(Service):
         if filters:
             qs = qs.filter(**self._filters_to_queryset(filters))
 
-        return serializers.serialize('json', qs)
+        return list(self.__queryset_serialize(qs))
 
     def insert(self, name, data):
         """
