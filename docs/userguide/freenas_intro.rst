@@ -214,8 +214,8 @@ changes that have occurred since 9.10 was released.
 
 * The "fruit", "shell_snap", "snapper", "unityed_media", and "worm"
   VFS objects have been added to :menuselection:`Sharing --> Windows
-  (CIFS Shares) --> Add Windows :(CIFS) Share --> Advanced Mode -->
-  VFS Objects`, while the :"notify_fam" VFS object has been removed.
+  (CIFS Shares) --> Add Windows (CIFS) Share --> Advanced Mode -->
+  VFS Objects`, while the "notify_fam" VFS object has been removed.
   The "recycle", "shadow_copy2", "zfs_space", and "zfsacl" VFS objects
   have been hidden from this screen as they are always enabled.
 
