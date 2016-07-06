@@ -113,7 +113,11 @@ def main():
     if args.call:
         c = Client()
         try:
-            print(json.dumps(c.call(args.call[1], *list(to_json(args.call[2:])))))
+            rv = c.call(args.call[1], *list(to_json(args.call[2:])))
+            if isinstance(rv, (int, str, unicode)):
+                print(rv)
+            else:
+                print(json.dumps(rv))
         except ClientException as e:
             if not args.quiet:
                 print(e.stacktrace)
