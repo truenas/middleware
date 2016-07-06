@@ -4,8 +4,8 @@
 Services Configuration
 ======================
 
-The Services section of the GUI allows you to configure, start, and stop the various services that ship with the TrueNAS® system. TrueNAS® supports the
-following built-in services:
+The Services section of the GUI is where the various services that ship with the TrueNAS® system are configured, started, or stopped. TrueNAS® includes
+these built-in services:
 
 * :ref:`AFP`
 
@@ -45,8 +45,8 @@ This section demonstrates how to start a TrueNAS® service then describes the av
 Control Services
 ----------------
 
-:menuselection:`Services --> Control Services`, shown in :numref:`Figure %s: Control Services <services1>`, allows you to quickly determine which services are currently running, to start
-and stop services, and to configure services. By default, all services, except for the S.M.A.R.T. service, are off until you start them.
+:menuselection:`Services --> Control Services`, shown in :numref:`Figure %s: Control Services <services1>`, allows you to quickly determine which services are currently running, and to start
+stop, or configure services. Only the S.M.A.R.T. service is enabled by default. Other services default to off until you start them.
 
 .. _services1:
 
@@ -60,7 +60,7 @@ If a service does not start, go to :menuselection:`System --> Advanced` and chec
 show at the bottom of your browser. If you click the console messages area, it will pop-up as a window, allowing you to scroll through the output and to copy
 messages. Watch these messages for errors when you stop and start the problematic service.
 
-If you would like to read the system logs to get more information about a service failure, open :ref:`Shell` and type :command:`more /var/log/messages`.
+To read the system logs for more information about a service failure, open :ref:`Shell` and type :command:`more /var/log/messages`.
 
 .. index:: AFP, Apple Filing Protocol
 .. _AFP:
@@ -126,13 +126,13 @@ Troubleshooting AFP
 
 You can determine which users are connected to an AFP share by typing :command:`afpusers`.
 
-If you receive a "Something wrong with the volume's CNID DB" error message, run the following command from :ref:`Shell`, replacing the path to the problematic
+If you receive a "Something wrong with the volume's CNID DB" error message, run this command from :ref:`Shell`, replacing the path to the problematic
 AFP share::
 
  dbd -rf /path/to/share
 
 This command may take a while, depending upon the size of the volume or dataset being shared. This command will wipe the CNID database and rebuild it from the
-CNIIDs stored in the AppleDouble files.
+CNIDs stored in the AppleDouble files.
 
 .. index:: CIFS, Samba, Windows File Share, SMB
 .. _CIFS:
@@ -143,7 +143,7 @@ CIFS
 The settings that are configured when creating CIFS Shares in :menuselection:`Sharing --> Windows (CIFS) Shares --> Add Windows (CIFS) Share` are specific to
 each configured CIFS Share. In contrast, global settings which apply to all CIFS shares are configured in :menuselection:`Services --> CIFS`.
 
-.. note:: after starting the CIFS service, it may take several minutes for the
+.. note:: After starting the CIFS service, it may take several minutes for the
    `master browser election <http://www.samba.org/samba/docs/man/Samba-HOWTO-Collection/NetworkBrowsing.html#id2581357>`_
    to occur and for the TrueNAS® system to become available in Windows Explorer.
 
@@ -309,9 +309,9 @@ each configured CIFS Share. In contrast, global settings which apply to all CIFS
 |                |                                                            |
 +----------------+------------------------------------------------------------+
 
-.. note:: do not set the
+.. note:: Do not set the
    *directory name cache size* as an "Auxiliary parameter". Due to differences in how Linux and BSD handle file descriptors, directory name caching is
-   disabled on BSD systems in order to improve performance.
+   disabled on BSD systems to improve performance.
 
 .. _Troubleshooting CIFS:
 
@@ -322,15 +322,15 @@ Windows automatically caches file sharing information. If you make changes to a 
 are no longer able to access the share, try logging out and back into the Windows system. Alternately, users can type :command:`net use /delete` from the
 command line to clear their SMB sessions.
 
-Windows also automatically caches login information. If you wish users to be prompted to login every time access is required, reduce the cache settings on the
+Windows also automatically caches login information. If you want users to be prompted to log in every time access is required, reduce the cache settings on the
 client computers.
 
-Where possible, avoid using a mix of case in filenames as this may cause confusion for Windows users.
+Where possible, avoid using a mix of case in filenames as this can cause confusion for Windows users.
 `Representing and resolving filenames with Samba <http://www.oreilly.com/openbook/samba/book/ch05_04.html>`_
 explains this in more detail.
 
 If a particular user cannot connect to a CIFS share, double-check that their password does not contain the *?* character. If it does, have the user change
-their password and try again.
+the password and try again.
 
 If permissions work for Windows users but not for OS X users, try disabling "Unix Extensions" and restarting the CIFS service.
 
@@ -359,8 +359,8 @@ Domain Controller
 
 TrueNAS® can be configured to act either as the domain controller for a network or to join an existing Active Directory network as a domain controller. 
 
-.. note:: this section demonstrates how to configure the TrueNAS® system to act as a domain controller. If your goal is to integrate with an existing Active
-   Directory network in order to access its authentication and authorization services, instead configure :ref:`Active Directory`.
+.. note:: This section demonstrates how to configure the TrueNAS® system to act as a domain controller. If your goal is to integrate with an existing Active
+   Directory network to access its authentication and authorization services, configure :ref:`Active Directory` instead.
 
 Be aware that configuring a domain controller is a complex process that requires a good understanding of how Active Directory works. While
 :menuselection:`Services --> Domain Controller` makes it easy to input the needed settings into the administrative graphical interface, it is up to you to
@@ -649,7 +649,7 @@ Table 11.6a summarizes the available options when configuring the FTP server:
 +---------------------------------------------------------------+----------------+-------------------------------------------------------------------------------------+
 
 
-The following example demonstrates the auxiliary parameters that will prevent all users from performing the FTP DELETE command::
+This example demonstrates the auxiliary parameters that will prevent all users from performing the FTP DELETE command::
 
  <Limit DELE>
  DenyAll
@@ -674,7 +674,7 @@ To configure anonymous FTP:
 
     * "Mode": review that the permissions are appropriate for the share
 
-    .. note:: for FTP, the type of client does not matter when it comes to the type of ACL. This means that you always use Unix ACLs, even if Windows clients
+    .. note:: For FTP, the type of client does not matter when it comes to the type of ACL. This means that you always use Unix ACLs, even if Windows clients
        will be accessing TrueNAS® via FTP.
 
 #.  Configure anonymous FTP in :menuselection:`Services --> FTP` by setting the following attributes:
@@ -726,7 +726,7 @@ To configure this scenario:
 #.  Set the permissions for each dataset in :menuselection:`Storage --> Volumes`. Click the "Change Permissions" button for a dataset to assign a user
     account as "Owner" of that dataset and to set the desired permissions for that user. Repeat for each dataset.
 
-    .. note:: for FTP, the type of client does not matter when it comes to the type of ACL. This means that you always use Unix ACLs, even if Windows clients
+    .. note:: For FTP, the type of client does not matter when it comes to the type of ACL. This means that you always use Unix ACLs, even if Windows clients
        will be accessing TrueNAS® via FTP.
 
 #.  Configure FTP in :menuselection:`Services --> FTP` with the following attributes:
@@ -762,7 +762,7 @@ To configure any FTP scenario to use encrypted connections:
 #.  In :menuselection:`Services --> FTP`. Check the box "Enable TLS" and select the certificate in the "Certificate" drop-down menu.
 
 #.  Specify secure FTP when accessing the TrueNAS® system. For example, in Filezilla input *ftps://IP_address* (for an implicit connection) or
-    *ftpes://IP_address* (for an explicit connection) as the Host when connecting. The first time a user connects, they should be presented with the
+    *ftpes://IP_address* (for an explicit connection) as the Host when connecting. The first time a user connects, they will be presented with the
     certificate of the TrueNAS® system. Click "OK" to accept the certificate and negotiate an encrypted connection.
 
 #.  To force encrypted connections, select *on* for the "TLS Policy".
@@ -792,7 +792,7 @@ iSCSI
 
 Refer to :ref:`Block (iSCSI)` for instructions on how to configure iSCSI. To start the iSCSI service, click its entry in "Services".
 
-.. note:: a warning message will occur if you stop the iSCSI service when initiators are connected. Type :command:`ctladm islist` to determine the names of
+.. note:: A warning message is shown if you stop the iSCSI service when initiators are connected. Type :command:`ctladm islist` to determine the names of
           the connected initiators.
 
 .. index:: LLDP, Link Layer Discovery Protocol
@@ -1132,7 +1132,7 @@ in your network will need to use
 This section shows the TrueNAS® SSH configuration options, demonstrates an example configuration that restricts users to their home directory, and provides
 some troubleshooting tips.
 
-:numref:`Figure %s: SSH Configuration <ssh1>` shows the :menuselection:`Services --> SSH` configuration screen. Once you have configured SSH, don't forget to start it in
+:numref:`Figure %s: SSH Configuration <ssh1>` shows the :menuselection:`Services --> SSH` configuration screen. Once you have configured SSH, remember to start it in
 :menuselection:`Services --> Control Services`.
 
 .. _ssh1:
@@ -1194,7 +1194,7 @@ Mode" button or configure the system to always display these settings by checkin
 +-------------------------------+----------------+----------------------------------------------------------------------------------------------------------+
 
 
-A few sshd_config(5) options that are useful to input in the "Extra Options" field include:
+A few `sshd_config(5) <http://www.freebsd.org/cgi/man.cgi?query=sshd_config>`_ options that are useful to input in the "Extra Options" field include:
 
 *  increase the *ClientAliveInterval* if SSH connections tend to drop
 
@@ -1220,7 +1220,7 @@ on the TrueNAS® system, while restricting them from logging into the system usi
 Test the configuration from another system by running the :command:`sftp`, :command:`ssh`, and :command:`scp` commands as the user. The :command:`sftp`
 and :command:`scp` commands should work but the :command:`ssh`  should fail.
 
-.. note:: some utilities such as WinSCP and Filezilla can bypass the scponly shell. This section assumes that users are accessing the system using the command
+.. note:: Some utilities such as WinSCP and Filezilla can bypass the scponly shell. This section assumes that users are accessing the system using the command
    line versions of :command:`scp` and :command:`sftp`.
 
 .. _Troubleshooting SSH:
@@ -1383,8 +1383,8 @@ Table 11.15a summarizes the options in the UPS Configuration screen.
 +---------------------------+----------------+-------------------------------------------------------------------------------------------------------+
 
 
-.. note:: for USB devices, the easiest way to determine the correct device name is to check the box "Show console messages" in
-   :menuselection:`System --> Advanced`. Plug in the USB device and the console messages will give the name of the */dev/ugenX.X* device; where the X's are
+.. note:: For USB devices, the easiest way to determine the correct device name is to check the box "Show console messages" in
+   :menuselection:`System --> Advanced`. Plug in the USB device and the console messages show the name of the */dev/ugenX.X* device, where the X's are
    the numbers that show on the console.
 
 `upsc(8) <http://www.networkupstools.org/docs/man/upsc.html>`_
