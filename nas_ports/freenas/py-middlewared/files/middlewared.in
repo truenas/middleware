@@ -4,7 +4,7 @@
 #
 
 # PROVIDE: middlewared
-# BEFORE: fsck
+# BEFORE: fsck earlykld
 
 . /etc/rc.subr
 
