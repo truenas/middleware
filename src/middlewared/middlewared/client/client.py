@@ -111,7 +111,7 @@ def main():
     if args.call:
         c = Client()
         try:
-            print(c.call(args.call[1], list(to_json(args.call[2:]))))
+            print(json.dumps(c.call(args.call[1], list(to_json(args.call[2:])))))
         except ClientException as e:
             print(e.stacktrace)
             sys.exit(1)
