@@ -39,10 +39,10 @@ class DatastoreService(Service):
         e.g. network.interfaces -> Interfaces
         """
         app, model = name.split('.', 1)
-        model = cache.get_model(app, model)
+        return cache.get_model(app, model)
 
     def query(self, name, filters=None):
-        model = sellf.__get_model(name)
+        model = self.__get_model(name)
 
         qs = model.objects.all()
         if filters:
@@ -56,7 +56,7 @@ class DatastoreService(Service):
 
         returns: primary key
         """
-        model = sellf.__get_model(name)
+        model = self.__get_model(name)
         obj = model(**data)
         obj.save()
         return obj.pk
