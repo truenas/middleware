@@ -122,7 +122,7 @@ class Middleware(object):
                     self.add_service(attr(self))
 
     def add_service(self, service):
-        self.__services[service._meta.namespace] = service
+        self.__services[service._config.namespace] = service
 
     def get_service(self, name):
         return self.__services[name]
