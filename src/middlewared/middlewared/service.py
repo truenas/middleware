@@ -19,7 +19,11 @@ class ServiceBase(type):
             'namespace': namespace,
             'public': True,
         }
-        config_atrrs.update(config.__dict__)
+        if config:
+            config_attrs.update({
+                k: v
+                for k, v in config.__dict__ if not k.startswith('_')
+            })
 
         klass._config = type('Config', (), config_attrs)
         return klass
