@@ -41,11 +41,15 @@ class DatastoreService(Service):
         app, model = name.split('.', 1)
         return cache.get_model(app, model)
 
+    def __modelobj_serialize(self, obj):
+        data = {}
+        for field in  obj._meta.fields:
+            data[field.name] = field.get_prep_value(getattr(obj, field.name))
+        return data
+
     def __queryset_serialize(self, qs):
         for i in qs:
-            entry = i.__dict__
-            entry.pop('_state')
-            yield entry
+            yield self.__modelobj_serialize(i)
 
     def query(self, name, filters=None, options=None):
         model = self.__get_model(name)
