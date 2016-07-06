@@ -7,6 +7,7 @@ from geventwebsocket import WebSocketServer, WebSocketApplication, Resource
 from restful import RESTfulAPI
 
 import argparse
+import gevent
 import imp
 import inspect
 import json
