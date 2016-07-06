@@ -149,7 +149,7 @@ ldap_status()
 			local cmd
 		
 			chmod 400 "${temp}"
-			echo -n "$(/usr/local/www/freenasUI/middleware/notifier.py pwenc_decrypt ${ldap_bindpw})" > "${temp}"
+			echo -n "$(/usr/local/bin/midclt call notifier.pwenc_decrypt ${ldap_bindpw})" > "${temp}"
 
 			echo "${ldapsearch} ${options} -D "'${ldap_binddn}'" -b '' -s base -y "${temp}"" > "${cmdfile}"
 			cmd=$(cat ${cmdfile})
