@@ -1,39 +1,22 @@
 #!/usr/local/bin/python
+from middlewared.client import Client
 
 import os
 import errno
 import sys
 
-sys.path.extend([
-    '/usr/local/www',
-    '/usr/local/www/freenasUI'
-])
-
-os.environ["DJANGO_SETTINGS_MODULE"] = "freenasUI.settings"
-
-from django.db.models.loading import cache
-cache.get_apps()
-
 RESOLV_CONF_PATH = "/etc/resolv.conf"
-
-from freenasUI.common.system import domaincontroller_enabled
-from freenasUI.network.models import (
-    GlobalConfiguration,
-    Interfaces
-)
-from freenasUI.services.models import (
-    CIFS,
-    DomainController
-)
 
 
 def main():
 
+    client = Client()
     domain = None
     nameservers = []
 
-    if domaincontroller_enabled():
+    if client.call('notifier.common', 'system', 'domaincontroller_enabled'):
         try:
+            print client.call('datastore.query', 'services.cifs', None, {'get': True})
             cifs = CIFS.objects.all()[0]
             dc = DomainController.objects.all()[0]
 
@@ -50,23 +33,26 @@ def main():
 
     else:
         try:
-            gc = GlobalConfiguration.objects.all()[0]
-            if gc.gc_domain:
-                domain = gc.gc_domain
-            if gc.gc_nameserver1:
-                nameservers.append(gc.gc_nameserver1)
-            if gc.gc_nameserver2:
-                nameservers.append(gc.gc_nameserver2)
-            if gc.gc_nameserver3:
-                nameservers.append(gc.gc_nameserver3)
+            gc = client.call('datastore.query', 'network.globalconfiguration', None, {'get': True})
+            if gc['gc_domain']:
+                domain = gc['gc_domain']
+            if gc['gc_nameserver1']:
+                nameservers.append(gc['gc_nameserver1'])
+            if gc['gc_nameserver2']:
+                nameservers.append(gc['gc_nameserver2'])
+            if gc['gc_nameserver3']:
+                nameservers.append(gc['gc_nameserver3'])
 
         except Exception as e:
             print >> sys.stderr, "ix-resolv: ERROR: %s" % e
             sys.exit(1)
 
+    iface_count = client.call('datastore.query', 'network.interfaces', None, {'count': True})
+    iface_dhcp = client.call('datastore.query', 'network.interfaces', [('int_dhcp', '=', True)], {'count': True})
+
     if (
         not nameservers and
-        (Interfaces.objects.count() == 0 or Interfaces.objects.filter(int_dhcp=True))
+        (iface_count == 0 or iface_dhcp > 0)
        ):
         # since we have set a dhclient hook that disables dhclient from writing to /etc/resolv.conf
         # we should remove it now
