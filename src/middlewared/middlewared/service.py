@@ -11,9 +11,10 @@ class ServiceBase(type):
         config = attrs.pop('Config', None)
         klass = super_new(cls, name, bases, attrs)
 
-        namespace = cls.__name__
+        namespace = klass.__name__
         if namespace.endswith('Service'):
             namespace = namespace[:-7]
+        namespace = namespace.lower()
 
         config_attrs = {
             'namespace': namespace,
