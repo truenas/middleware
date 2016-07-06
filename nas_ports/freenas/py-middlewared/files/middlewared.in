@@ -11,6 +11,9 @@
 middlewared_start() {
 	/sbin/ifconfig lo0 127.0.0.1 up
 	${command}
+	# FIXME: add midctl command to wait for server to be ready
+	# for now, the old and brave sleep
+	sleep 5
 }
 
 name="middlewared"
