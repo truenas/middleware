@@ -129,6 +129,10 @@ class Middleware(object):
         return self.__services[name]
 
     def call_method(self, method, params):
+        # DEPRECATED, FIXME: DeprecationWarning
+        return self.call(method, params)
+
+    def call(self, method, params):
         service, method = method.rsplit('.', 1)
         return getattr(self.get_service(service), method)(*params)
 
