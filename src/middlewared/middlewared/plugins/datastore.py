@@ -71,8 +71,17 @@ class DatastoreService(Service):
             options = {}
 
         qs = model.objects.all()
+
+        extra = options.get('extra')
+        if extra:
+            qs = qs.extra(extra)
+
         if filters:
             qs = qs.filter(*self._filters_to_queryset(filters))
+
+        order_by = options.get('order_by')
+        if order_by:
+            qs = qs.order_by(*order_by)
 
         if options.get('count') is True:
             return qs.count()
