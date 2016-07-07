@@ -11,6 +11,7 @@ from django.core import serializers
 from django.db.models.loading import cache
 cache.get_apps()
 
+from django.db.models.fields.related import ForeignKey
 from freenasUI.contrib.IPAddressField import IPAddressField
 
 
@@ -49,6 +50,8 @@ class DatastoreService(Service):
             value = getattr(obj, field.name)
             if isinstance(field, IPAddressField):
                 data[field.name] = str(value)
+            elif isinstance(field, ForeignKey):
+                data[field.name] = self.__modelobj_serialize(value)
             else:
                 data[field.name] = value
         return data
