@@ -7,4 +7,8 @@ class Struct:
     client instead of django directly.
     """
     def __init__(self, mapping):
-        self.__dict__.update(**mapping)
+        for k, v in mapping.iteritems():
+            if isinstance(v, dict):
+                setattr(self, k, Struct(v))
+            else:
+                setattr(self, k, v)
