@@ -1,28 +1,7 @@
 #!/usr/local/bin/python
+from middlewared.client import Client
+from middlewared.client.utils import Struct
 
-import os
-import sys
-
-sys.path.extend([
-    '/usr/local/www',
-    '/usr/local/www/freenasUI'
-])
-
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'freenasUI.settings')
-
-# Make sure to load all modules
-from django.db.models.loading import cache
-cache.get_apps()
-
-from freenasUI.sharing.models import AFP_Share
-from freenasUI.services.models import AFP
-from freenasUI.directoryservice.models import KerberosKeytab
-
-from freenasUI.common.freenasldap import (
-    FreeNAS_ActiveDirectory,
-    FLAGS_DBINIT
-)
-from freenasUI.common.system import activedirectory_enabled
 
 def main():
     """Use the django ORM to generate a config file.  We'll build the
@@ -32,8 +11,9 @@ def main():
     map_acls_mode = False
     afp_config = "/usr/local/etc/afp.conf"
     cf_contents = []
+    client = Client()
 
-    afp = AFP.objects.order_by('-id')[0]
+    afp = Struct(client.call('datastore.query', 'services.afp', None, {'get': True}))
 
     cf_contents.append("[Global]\n")
     uam_list = ['uams_dhx.so', 'uams_dhx2.so']
@@ -41,7 +21,7 @@ def main():
         uam_list.append('uams_guest.so')
         cf_contents.append('\tguest account = %s\n' % afp.afp_srv_guest_user)
     # uams_gss.so bails out with an error if kerberos isn't configured
-    if KerberosKeytab.objects.count() > 0:
+    if client.call('datastore.query', 'directoryservice.kerberoskeytab', None, {'count': True}) > 0:
         uam_list.append('uams_gss.so')
     cf_contents.append('\tuam list = %s\n' % (" ").join(uam_list))
 
@@ -60,11 +40,11 @@ def main():
     if afp.afp_srv_map_acls:
         cf_contents.append("\tmap acls = %s\n" % afp.afp_srv_map_acls)
 
-    if afp.afp_srv_map_acls == 'mode' and activedirectory_enabled():
+    if afp.afp_srv_map_acls == 'mode' and client.call('notifier.common', 'system', 'activedirectory_enabled'):
         map_acls_mode = True
 
     if map_acls_mode:
-        ad = FreeNAS_ActiveDirectory(flags=FLAGS_DBINIT)
+        ad = client.call('notifier.directoryservice', 'AD')
 
         cf_contents.append("\tldap auth method = %s\n" % "simple")
         cf_contents.append("\tldap auth dn = %s\n" % ad.binddn)
@@ -90,7 +70,8 @@ def main():
             cf_contents.append("\thome name = %s\n" % afp.afp_srv_homename)
         cf_contents.append("\n")
 
-    for share in AFP_Share.objects.all():
+    for share in client.call('datastore.query', 'sharing.afp_share'):
+        share = Struct(share)
         cf_contents.append("[%s]\n" % share.afp_name)
         cf_contents.append("\tpath = %s\n" % share.afp_path)
         if share.afp_allow:
