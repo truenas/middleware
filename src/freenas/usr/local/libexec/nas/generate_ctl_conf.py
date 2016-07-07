@@ -1,21 +1,7 @@
 #!/usr/local/bin/python2
+from middlewared.client import Client
+from middlewared.client.utils import Struct
 import os
-import sys
-
-sys.path.extend([
-    '/usr/local/www',
-    '/usr/local/www/freenasUI'
-])
-
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'freenasUI.settings')
-
-# Make sure to load all modules
-from django.db.models.loading import cache
-cache.get_apps()
-
-
-from freenasUI.middleware import zfs
-from freenasUI.middleware import notifier
 
 # NOTE
 # Normally global variables are a bad idea, and this is no
@@ -112,19 +98,13 @@ def auth_group_config(auth_tag=None, auth_list=None, auth_type=None, initiator=N
 
 
 def main():
-    """Use the django ORM to generate a config file.  We'll build the
+    """Use the middleware client to generate a config file. We'll build the
     config file as a series of lines, and once that is done write it
     out in one go"""
 
-    from freenasUI.services.models import iSCSITargetGlobalConfiguration
-    from freenasUI.services.models import iSCSITargetPortal
-    from freenasUI.services.models import iSCSITargetPortalIP
-    from freenasUI.services.models import iSCSITargetAuthCredential
-    from freenasUI.services.models import iSCSITargetExtent
-    from freenasUI.services.models import iSCSITarget
-    from freenasUI.storage.models import Disk
+    client = Client()
 
-    gconf = iSCSITargetGlobalConfiguration.objects.order_by('-id')[0]
+    gconf = Struct(client.call('datastore.query', 'services.iSCSITargetGlobalConfiguration', None, {'get': True}))
 
     if gconf.iscsi_isns_servers:
         for server in gconf.iscsi_isns_servers.split(' '):
@@ -132,11 +112,14 @@ def main():
 
     # Generate the portal-group section
     addline('portal-group default {\n}\n\n')
-    for portal in iSCSITargetPortal.objects.all():
+    for portal in client.call('datastore.query', 'services.iSCSITargetPortal'):
+        portal = Struct(portal)
         # Prepare auth group for the portal group
         if portal.iscsi_target_portal_discoveryauthgroup:
-            auth_list = iSCSITargetAuthCredential.objects.filter(
-                iscsi_target_auth_tag=portal.iscsi_target_portal_discoveryauthgroup)
+            auth_list = [
+                Struct(i)
+                for i in client.call('datastore.query', 'services.iSCSITargetAuthCredential', [('iscsi_target_auth_tag', '=', portal.iscsi_target_portal_discoveryauthgroup)])
+            ]
         else:
             auth_list = []
         agname = '4pg%d' % portal.iscsi_target_portal_tag
@@ -150,7 +133,10 @@ def main():
             addline("\tdiscovery-auth-group ag%s\n" % agname)
         else:
             addline("\tdiscovery-auth-group no-authentication\n")
-        listen = iSCSITargetPortalIP.objects.filter(iscsi_target_portalip_portal=portal)
+        listen = [
+            Struct(i)
+            for i in client.call('datastore.query', 'services.iSCSITargetPortalIP', [('iscsi_target_portalip_portal', '=', portal.id)])
+        ]
         for obj in listen:
             if ':' in obj.iscsi_target_portalip_ip:
                 address = '[%s]' % obj.iscsi_target_portalip_ip
@@ -162,22 +148,23 @@ def main():
 
     # Cache zpool threshold
     poolthreshold = {}
-    zpoollist = zfs.zpool_list()
+    zpoollist = client.call('notifier.zpool_list')
 
     # Generate the LUN section
-    for extent in iSCSITargetExtent.objects.all():
+    for extent in client.call('datastore.query', 'services.iSCSITargetExtent'):
+        extent = Struct(extent)
         path = extent.iscsi_target_extent_path
         poolname = None
         lunthreshold = None
         if extent.iscsi_target_extent_type == 'Disk':
-            disk = Disk.objects.filter(disk_identifier=path).order_by('disk_enabled')
-            if not disk.exists():
+            disk = client.call('datastore.query', 'storage.Disk', [('disk_identifier', '=', path)], {'order_by': ['disk_enabled']})
+            if not disk:
                 continue
-            disk = disk[0]
+            disk = Struct(disk[0])
             if disk.disk_multipath_name:
                 path = "/dev/multipath/%s" % disk.disk_multipath_name
             else:
-                path = "/dev/%s" % disk.identifier_to_device()
+                path = "/dev/%s" % client.call('notifier.identifier_to_device', disk.disk_identifier)
         else:
             if not path.startswith("/mnt"):
                 poolname = path.split('/', 2)[1]
@@ -190,9 +177,9 @@ def main():
                         )
                 if extent.iscsi_target_extent_avail_threshold:
                     zvolname = path.split('/', 1)[1]
-                    zfslist = zfs.zfs_list(path=zvolname, types=['volume'])
+                    zfslist = client.call('notifier.zfs_list', [zvolname, False, False, False, ['volume']])
                     if zfslist:
-                        lunthreshold = int(zfslist[zvolname].volsize *
+                        lunthreshold = int(zfslist[zvolname]['volsize'] *
                                            (extent.iscsi_target_extent_avail_threshold / 100.0))
                 path = "/dev/" + path
             else:
@@ -212,7 +199,7 @@ def main():
         addline("\tserial \"%s\"\n" % (extent.iscsi_target_extent_serial, ))
         padded_serial = extent.iscsi_target_extent_serial
         if not extent.iscsi_target_extent_xen:
-            for i in xrange(31-len(extent.iscsi_target_extent_serial)):
+            for i in xrange(31 - len(extent.iscsi_target_extent_serial)):
                 padded_serial += " "
         addline('\tdevice-id "iSCSI Disk      %s"\n' % padded_serial)
         if size != "0":
@@ -226,8 +213,7 @@ def main():
         if extent.iscsi_target_extent_legacy is True:
             addline('\toption vendor "FreeBSD"\n')
         else:
-            _n = notifier.notifier()
-            if _n.is_freenas():
+            if client.call('notifier.is_freenas'):
                 addline('\toption vendor "FreeNAS"\n')
             else:
                 addline('\toption vendor "TrueNAS"\n')
@@ -254,13 +240,17 @@ def main():
 
     # Generate the target section
     target_basename = gconf.iscsi_basename
-    for target in iSCSITarget.objects.all():
+    for target in client.call('datastore.query', 'services.iSCSITarget'):
+        target = Struct(target)
 
         authgroups = {}
-        for grp in target.iscsitargetgroups_set.all():
+        for grp in client.call('datastore.query', 'services.iscsitargetgroups', [('iscsi_target', '=', target.id)]):
+            grp = Struct(grp)
             if grp.iscsi_target_authgroup:
-                auth_list = iSCSITargetAuthCredential.objects.filter(
-                    iscsi_target_auth_tag=grp.iscsi_target_authgroup)
+                auth_list = [
+                    Struct(i)
+                    for i in client.call('datastore.query', 'services.iSCSITargetAuthCredential', [('iscsi_target_auth_tag', '=', grp.iscsi_target_authgroup)])
+                ]
             else:
                 auth_list = []
             agname = '4tg%d_%d' % (target.id, grp.id)
@@ -280,10 +270,12 @@ def main():
         elif target.iscsi_target_name:
             addline("\talias \"%s\"\n" % target.iscsi_target_name)
 
-        for fctt in target.fibrechanneltotarget_set.all():
+        for fctt in client.call('datastore.query', 'services.fibrechanneltotarget', [('fc_target', '=', target.id)]):
+            fctt = Struct(fctt)
             addline("\tport %s\n" % fctt.fc_port)
 
-        for grp in target.iscsitargetgroups_set.all():
+        for grp in client.call('datastore.query', 'services.iscsitargetgroups', [('iscsi_target', '=', target.id)]):
+            grp = Struct(grp)
             agname = authgroups.get(grp.id) or None
             addline("\tportal-group pg%d %s\n" % (
                 grp.iscsi_target_portalgroup.iscsi_target_portal_tag,
@@ -291,15 +283,12 @@ def main():
             ))
         addline("\n")
         used_lunids = [
-            o.iscsi_lunid
-            for o in target.iscsitargettoextent_set.all().exclude(
-                iscsi_lunid=None,
-            )
+            o['iscsi_lunid']
+            for o in client.call('datastore.query', 'services.iscsitargettoextent', [('iscsi_target', '=', target.id), ('iscsi_lunid', '!=', None)])
         ]
         cur_lunid = 0
-        for t2e in target.iscsitargettoextent_set.all().extra({
-            'null_first': 'iscsi_lunid IS NULL',
-        }).order_by('null_first', 'iscsi_lunid'):
+        for t2e in client.call('datastore.query', 'services.iscsitargettoextent', [('iscsi_target', '=', target.id)], {'extra': {'null_first': 'iscsi_lunid IS NULL'}, 'order_by': ['null_first', 'iscsi_lunid']}):
+            t2e = Struct(t2e)
 
             if t2e.iscsi_lunid is None:
                 while cur_lunid in used_lunids:
