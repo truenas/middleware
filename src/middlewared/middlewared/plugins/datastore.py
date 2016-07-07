@@ -11,6 +11,7 @@ from django.core import serializers
 from django.db.models.loading import cache
 cache.get_apps()
 
+from django.db.models import Q
 from django.db.models.fields.related import ForeignKey
 from freenasUI.contrib.IPAddressField import IPAddressField
 
@@ -20,19 +21,23 @@ class DatastoreService(Service):
     def _filters_to_queryset(self, filters):
         opmap = {
             '=': 'exact',
+            '!=': 'exact',
             '>': 'gt',
             '>=': 'gte',
             '<': 'lt',
             '<=': 'lte',
         }
 
-        rv = {}
+        rv = []
         for f in filters:
             if len(f) == 3:
                 name, op, value = f
                 if op not in opmap:
                     raise Exception("Invalid operation {0}".format(op))
-                rv['{0}__{1}'.format(name, opmap[op])] = value
+                q = Q(**{'{0}__{1}'.format(name, opmap[op]): value})
+                if op == '!=':
+                    q.negate()
+                rv.append(q)
             else:
                 raise Exception("Invalid filter {0}".format(f))
         return rv
@@ -67,7 +72,7 @@ class DatastoreService(Service):
 
         qs = model.objects.all()
         if filters:
-            qs = qs.filter(**self._filters_to_queryset(filters))
+            qs = qs.filter(*self._filters_to_queryset(filters))
 
         if options.get('count') is True:
             return qs.count()
