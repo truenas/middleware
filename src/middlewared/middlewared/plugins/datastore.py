@@ -49,7 +49,7 @@ class DatastoreService(Service):
         app, model = name.split('.', 1)
         return cache.get_model(app, model)
 
-    def __modelobj_serialize(self, obj):
+    def __modelobj_serialize(self, obj, extend=None):
         data = {}
         for field in  obj._meta.fields:
             value = getattr(obj, field.name)
@@ -59,11 +59,13 @@ class DatastoreService(Service):
                 data[field.name] = self.__modelobj_serialize(value) if value is not None else value
             else:
                 data[field.name] = value
+        if extend:
+            data = self.middleware.call(extend, data)
         return data
 
-    def __queryset_serialize(self, qs):
+    def __queryset_serialize(self, qs, extend=None):
         for i in qs:
-            yield self.__modelobj_serialize(i)
+            yield self.__modelobj_serialize(i, extend=extend)
 
     def query(self, name, filters=None, options=None):
         model = self.__get_model(name)
@@ -86,7 +88,7 @@ class DatastoreService(Service):
         if options.get('count') is True:
             return qs.count()
 
-        result = list(self.__queryset_serialize(qs))
+        result = list(self.__queryset_serialize(qs, extend=options.get('extend')))
 
         if options.get('get') is True:
             return result[0]
