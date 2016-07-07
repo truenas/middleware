@@ -3,12 +3,15 @@
 Account
 =======
 
-The Account Configuration section of the administrative GUI describes how to manually create and manage users and groups. This section contains the following
-entries:
+The Account Configuration section of the administrative GUI describes
+how to manually create and manage users and groups. This section
+contains the following entries:
 
-* :ref:`Groups`: used to manage UNIX-style groups on the FreeNAS® system.
+* :ref:`Groups`: used to manage UNIX-style groups on the FreeNAS®
+  system.
 
-* :ref:`Users`: used to manage UNIX-style accounts on the FreeNAS® system.
+* :ref:`Users`: used to manage UNIX-style accounts on the FreeNAS®
+  system.
 
 Each of these entries are described in more detail in this section.
 
@@ -18,26 +21,36 @@ Each of these entries are described in more detail in this section.
 Groups
 ------
 
-The Groups interface allows you to manage UNIX-style groups on the FreeNAS® system.
+The Groups interface allows you to manage UNIX-style groups on the
+FreeNAS® system.
 
-.. note:: if a directory service is running on your network, you do not need to recreate the network's users or groups. Instead, import the existing
-   account information into FreeNAS®. Refer to :ref:`Directory Service` for details.
+.. note:: if a directory service is running on your network, you do
+          not need to recreate the network's users or groups. Instead,
+          import the existing account information into FreeNAS®. Refer
+          to :ref:`Directory Service` for details.
 
-This section describes how to create a group and assign it user accounts. The next section will describe how to create user accounts.
+This section describes how to create a group and assign it user
+accounts. The next section will describe how to create user accounts.
 
-If you click :menuselection:`Groups --> View Groups`, you will see a screen similar to Figure 4.1a.
+If you click :menuselection:`Groups --> View Groups`, you will see a
+screen similar to Figure 4.1a.
 
 **Figure 4.1a: FreeNAS® Groups Management**
 
 .. image:: images/group1.png
 
-All groups that came with the operating system will be listed. Each group has an entry indicating the group ID, group name, whether or not it is a built-in
-group which was installed with FreeNAS®, and whether or not the group's members are allowed to use :command:`sudo`. If you click a group entry, a "Members"
-button will appear. Click this button to view and modify that group's membership.
+All groups that came with the operating system will be listed. Each
+group has an entry indicating the group ID, group name, whether or not
+it is a built-in group which was installed with FreeNAS®, and whether
+or not the group's members are allowed to use :command:`sudo`. If you
+click a group entry, a "Members" button will appear. Click this button
+to view and modify that group's membership.
 
 .. index:: Add Group, New Group, Create Group
 
-If you click the "Add Group" button, you will see the screen shown in Figure 4.1b. Table 4.1a summarizes the available options when creating a group.
+If you click the "Add Group" button, you will see the screen shown in
+Figure 4.1b. Table 4.1a summarizes the available options when creating
+a group.
 
 **Figure 4.1b: Creating a New Group**
 
@@ -68,15 +81,17 @@ If you click the "Add Group" button, you will see the screen shown in Figure 4.1
 +---------------------+-----------+--------------------------------------------------------------------------------------------------------------------------+
 
 
-Once the group and users are created, you can assign users as members of a group. Highlight the group you wish to assign users to, then click the "Members"
-button. Highlight the user in the "Member users" list (which shows all user accounts on the system) and click the ">>" to move that user to the right
-frame. The user accounts which appear in the right frame will be added as members of that group.
+Once the group and users are created, you can assign users as members
+of a group. Highlight the group you wish to assign users to, then
+click the "Members" button. Highlight the user in the "Member users"
+list (which shows all user accounts on the system) and click the ">>"
+to move that user to the right frame. The user accounts which appear
+in the right frame will be added as members of that group.
 
-In the example shown in Figure 4.1c, the *data1* group has been created and the
-*user1* user account has been created with a primary group of
-*user1*. The "Members" button for the
-*data1* group has been selected and
-*user1* has been added as a member of that group.
+In the example shown in Figure 4.1c, the *data1* group has been
+created and the *user1* user account has been created with a primary
+group of *user1*. The "Members" button for the *data1* group has been
+selected and *user1* has been added as a member of that group.
 
 **Figure 4.1c: Assigning a User as a Member of a Group**
 
@@ -84,8 +99,10 @@ In the example shown in Figure 4.1c, the *data1* group has been created and the
 
 .. index:: Delete Group, Remove Group
 
-To delete a group, click its "Delete Group" button. The pop-up message will ask whether or not you would also like to delete all members of that group. Note
-that the built-in groups do not provide a "Delete Group" button.
+To delete a group, click its "Delete Group" button. The pop-up message
+will ask whether or not you would also like to delete all members of
+that group. Note that the built-in groups do not provide a "Delete
+Group" button.
 
 .. index:: Users
 .. _Users:
@@ -93,48 +110,74 @@ that the built-in groups do not provide a "Delete Group" button.
 Users
 -----
 
-FreeNAS® supports users, groups, and permissions, allowing great flexibility in configuring which users have access to the data stored on FreeNAS®. In order
-to assign permissions to shares, you will need to do **one of the following**:
+FreeNAS® supports users, groups, and permissions, allowing great
+flexibility in configuring which users have access to the data stored
+on FreeNAS®. In order to assign permissions to shares, you will need
+to do **one of the following**:
 
-#.  Create a guest account that all users will use or create a user account for every user in the network where the name of each account is the same as a
-    logon name used on a computer. For example, if a Windows system has a login name of *bobsmith*, you should create a user account with the name
-    *bobsmith* on FreeNAS®. If your intent is to assign groups of users different permissions to shares, you will need to also create groups and assign users
-    to the groups.
+#.  Create a guest account that all users will use or create a user
+    account for every user in the network where the name of each
+    account is the same as a logon name used on a computer. For
+    example, if a Windows system has a login name of *bobsmith*, you
+    should create a user account with the name *bobsmith* on FreeNAS®.
+    If your intent is to assign groups of users different permissions
+    to shares, you will need to also create groups and assign users to
+    the groups.
 
-#.  If your network uses a directory service, import the existing account information using the instructions in :ref:`Directory Service`.
+#.  If your network uses a directory service, import the existing
+    account information using the instructions in
+    :ref:`Directory Service`.
 
-:menuselection:`Account --> Users --> View Users` provides a listing of all of the system accounts that were installed with the FreeNAS® operating system, as
-shown in Figure 4.2a.
+:menuselection:`Account --> Users --> View Users` provides a listing
+of all of the system accounts that were installed with the FreeNAS®
+operating system, as shown in Figure 4.2a.
 
 **Figure 4.2a: Managing User Accounts**
 
 .. image:: images/user1a.png
 
-Each account entry indicates the user ID, username, primary group ID, home directory, default shell, full name, whether or not it is a built-in user that came
-with the FreeNAS® installation, the email address, whether or not logins are disabled, whether or not the user account is locked, whether or not the user
-is allowed to use :command:`sudo`, and whether or not the user connects from a Windows 8, 8.1, 10, or higher system. To reorder the list, click the desired
-column name. An arrow indicates which column the view is sorted by; click the arrow to reverse the sort order.
+Each account entry indicates the user ID, username, primary group ID,
+home directory, default shell, full name, whether or not it is a
+built-in user that came with the FreeNAS® installation, the email
+address, whether or not logins are disabled, whether or not the user
+account is locked, whether or not the user is allowed to use
+:command:`sudo`, and whether or not the user connects from a Windows
+8, 8.1, 10, or higher system. To reorder the list, click the desired
+column name. An arrow indicates which column the view is sorted by;
+click the arrow to reverse the sort order.
 
-If you click a user account, the following buttons will appear for that account:
+If you click a user account, the following buttons will appear for
+that account:
 
-* **Modify User:** used to modify the account's settings, as listed in Table 4.2b.
+* **Modify User:** used to modify the account's settings, as listed
+  in Table 4.2b.
 
-* **Change E-mail:** used to change the email address associated with the account.
+* **Change E-mail:** used to change the email address associated with
+  the account.
 
-.. note:: it is important to set the email address for the built-in *root* user account as important system messages are sent to the
-   *root* user. For security reasons, password logins are disabled for the
-   *root* account and changing this setting is highly discouraged.
+.. note:: it is important to set the email address for the built-in
+          *root* user account as important system messages are sent to
+          the *root* user. For security reasons, password logins are
+          disabled for the *root* account and changing this setting is
+          highly discouraged.
 
-Every account that came with the FreeNAS® operating system, except for the *root* user, is a system account. Each system account is used by a service and
-should not be available for use as a login account. For this reason, the default shell is
-`nologin(8) <http://www.freebsd.org/cgi/man.cgi?query=nologin>`_. For security reasons, and to prevent breakage of system services, you should not modify the
-system accounts.
+Every account that came with the FreeNAS® operating system, except for
+the *root* user, is a system account. Each system account is used by a
+service and should not be available for use as a login account. For
+this reason, the default shell is
+`nologin(8) <http://www.freebsd.org/cgi/man.cgi?query=nologin>`_. For
+security reasons, and to prevent breakage of system services, you
+should not modify the system accounts.
 
 .. index:: Add User, Create User, New User
 
-To create a user account, click the "Add User" button to open the screen shown in Figure 4.2b. Some settings are only available in "Advanced Mode". To see
-these settings, either click the "Advanced Mode" button or configure the system to always display these settings by checking the box "Show advanced fields by
-default" in :menuselection:`System --> Advanced`. Table 4.2a summarizes the options which are available when you create or modify a user account.
+To create a user account, click the "Add User" button to open the
+screen shown in Figure 4.2b. Some settings are only available in
+"Advanced Mode". To see these settings, either click the "Advanced
+Mode" button or configure the system to always display these settings
+by checking the box "Show advanced fields by default" in
+:menuselection:`System --> Advanced`. Table 4.2a summarizes the
+options which are available when you create or modify a user account.
 
 **Figure 4.2b: Adding or Editing a User Account**
 
