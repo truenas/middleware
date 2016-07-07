@@ -1,32 +1,13 @@
 #!/usr/local/bin/python
+from middlewared.client import Client
 
 import os
 import string
 import sys
 
-sys.path.extend([
-    '/usr/local/www',
-    '/usr/local/www/freenasUI'
-])
-
-os.environ["DJANGO_SETTINGS_MODULE"] = "freenasUI.settings"
-
-from django.db.models.loading import cache
-cache.get_apps()
 
 NSSWITCH_CONF_PATH = "/etc/nsswitch.conf"
 
-from freenasUI.common.system import (
-    activedirectory_enabled,
-    activedirectory_has_unix_extensions,
-    activedirectory_has_principal,
-    domaincontroller_enabled,
-    ldap_enabled,
-    ldap_anonymous_bind,
-    ldap_sudo_configured,
-    nis_enabled,
-    nt4_enabled
-)
 
 def main():
     nsswitch_conf = {
@@ -45,36 +26,43 @@ def main():
     if len(sys.argv) > 1:
         verb = sys.argv[1].lower()
 
+    client = Client()
+    activedirectory_enabled = client.call('notifier.common', 'system', 'activedirectory_enabled')
+    domaincontroller_enabled = client.call('notifier.common', 'system', 'domaincontroller_enabled')
+    ldap_enabled = client.call('notifier.common', 'system', 'ldap_enabled')
+    nis_enabled = client.call('notifier.common', 'system', 'nis_enabled')
+    nt4_enabled = client.call('notifier.common', 'system', 'nt4_enabled')
+
     if verb == 'start':
-        if activedirectory_enabled() and \
-            activedirectory_has_unix_extensions() and  \
-            activedirectory_has_principal():
+        if activedirectory_enabled and \
+            client.call('notifier.common', 'system', 'activedirectory_has_unix_extensions') and \
+            client.call('notifier.common', 'system', 'activedirectory_has_principal'):
             nsswitch_conf['passwd'].append('sss')
             nsswitch_conf['group'].append('sss')
-        elif activedirectory_enabled() or \
-            domaincontroller_enabled() or nt4_enabled():
+        elif activedirectory_enabled or \
+            domaincontroller_enabled or nt4_enabled:
             nsswitch_conf['passwd'].append('winbind')
             nsswitch_conf['group'].append('winbind')
 
         #if nt4_enabled():
         #    nsswitch_conf['hosts'].append('wins')
 
-        if ldap_enabled() and ldap_anonymous_bind():
+        if ldap_enabled and client.call('notifier.common', 'system', 'ldap_anonymous_bind'):
             nsswitch_conf['passwd'].append('ldap')
             nsswitch_conf['group'].append('ldap')
-        elif ldap_enabled():
+        elif ldap_enabled:
             nsswitch_conf['passwd'].append('sss')
             nsswitch_conf['group'].append('sss')
-            if ldap_sudo_configured():
+            if client.call('notifier.common', 'system', 'ldap_sudo_configured'):
                 nsswitch_conf['sudoers'].append('sss')
 
-        if nis_enabled():
+        if nis_enabled:
             nsswitch_conf['passwd'].append('nis')
             nsswitch_conf['group'].append('nis')
             nsswitch_conf['hosts'].append('nis')
 
     try:
-        fd = os.open(NSSWITCH_CONF_PATH, os.O_WRONLY|os.O_CREAT|os.O_TRUNC, 0644)
+        fd = os.open(NSSWITCH_CONF_PATH, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0644)
         for key in nsswitch_conf:
             line = "%s: %s\n" % (
                 key.strip(),
