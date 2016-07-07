@@ -12,6 +12,7 @@ from django.db.models.loading import cache
 cache.get_apps()
 
 from freenasUI import common as fcommon
+from freenasUI.middleware import zfs
 from freenasUI.middleware.notifier import notifier
 
 
@@ -32,4 +33,22 @@ class NotifierService(Service):
         rv = getattr(subsystem, method)(*params)
         return rv
 
+    def zpool_list(self, name=None):
+        """Wrapper for zfs.zpool_list"""
+        return zfs.zpool_list(name)
 
+    def zfs_list(self, *args):
+        """Wrapper to serialize zfs.zfs_list"""
+        rv = zfs.zfs_list(*args)
+
+        def serialize(i):
+            data = {}
+            if isinstance(i, zfs.ZFSList):
+                for k, v in i.items():
+                    data[k] = serialize(v)
+            elif isinstance(i, (zfs.ZFSVol, zfs.ZFSDataset)):
+                data = i.__dict__
+                data['children'] = [serialize(j) for j in data.get('children') or []]
+            return data
+
+        return serialize(rv)
