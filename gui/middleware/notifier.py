@@ -4698,6 +4698,9 @@ class notifier:
     def sync_disk(self, devname):
         from freenasUI.storage.models import Disk
 
+        if devname.startswith('/dev/'):
+            devname = devname.replace('/dev/', '')
+
         # Skip sync disks on backup node
         if (
             not self.is_freenas() and self.failover_licensed() and
