@@ -56,7 +56,7 @@ class DatastoreService(Service):
             if isinstance(field, IPAddressField):
                 data[field.name] = str(value)
             elif isinstance(field, ForeignKey):
-                data[field.name] = self.__modelobj_serialize(value)
+                data[field.name] = self.__modelobj_serialize(value) if value is not None else value
             else:
                 data[field.name] = value
         return data
