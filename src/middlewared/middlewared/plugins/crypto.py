@@ -1,9 +1,18 @@
 from middlewared.service import Service
 from OpenSSL import crypto
 
+import dateutil
+import dateutil.parser
 import logging
 import os
 import re
+
+CA_TYPE_EXISTING = 0x01
+CA_TYPE_INTERNAL = 0x02
+CA_TYPE_INTERMEDIATE = 0x04
+CERT_TYPE_EXISTING = 0x08
+CERT_TYPE_INTERNAL = 0x10
+CERT_TYPE_CSR = 0x20
 
 CERT_ROOT_PATH = '/etc/certificates'
 RE_CERTIFICATE = re.compile(r"(-{5}BEGIN[\s\w]+-{5}[^-]+-{5}END[\s\w]+-{5})+", re.M | re.S)
@@ -62,5 +71,40 @@ class CertificateService(Service):
                 cert['cert_CSR'] = crypto.dump_certificate_request(crypto.FILETYPE_PEM, csr_obj)
         except:
             logger.debug('Failed to load csr {0}'.format(cert['cert_name']), exc_info=True)
+
+        cert['cert_internal'] = 'NO' if cert['cert_type'] in (CA_TYPE_EXISTING, CERT_TYPE_EXISTING) else 'YES'
+
+        issuer = None
+        if cert['cert_type'] in (CA_TYPE_EXISTING, CERT_TYPE_EXISTING):
+            issuer = "external"
+        elif cert['cert_type'] == CA_TYPE_INTERNAL:
+            issuer = "self-signed"
+        elif cert['cert_type'] in (CERT_TYPE_INTERNAL, CA_TYPE_INTERMEDIATE):
+            issuer = cert['cert_signedby']
+        elif cert['cert_type'] == CERT_TYPE_CSR:
+            issuer = "external - signature pending"
+        cert['cert_issuer'] = issuer
+
+        if cert['cert_type'] == CERT_TYPE_CSR:
+            obj = csr_obj
+            # date not applicable for CSR
+            cert['cert_from'] = None
+            cert['cert_until'] = None
+        else:
+            obj = cert_obj
+            notBefore = obj.get_notBefore()
+            t1 = dateutil.parser.parse(notBefore)
+            t2 = t1.astimezone(dateutil.tz.tzutc())
+            cert['cert_from'] = t2.ctime()
+
+            notAfter = obj.get_notAfter()
+            t1 = dateutil.parser.parse(notAfter)
+            t2 = t1.astimezone(dateutil.tz.tzutc())
+            cert['cert_until'] = t2.ctime()
+
+        cert['cert_DN'] = '/' + '/'.join([
+            '%s=%s' % (c[0], c[1])
+            for c in obj.get_subject().get_components()
+        ])
 
         return cert
