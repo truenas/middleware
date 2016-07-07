@@ -65,7 +65,7 @@ class Application(WebSocketApplication):
                 'id': message['id'],
                 'msg': 'result',
                 'result': self.middleware.call_method(
-                    message['method'], message.get('params') or []
+                    message['method'], *(message.get('params') or [])
                 ),
             })
         except Exception as e:
@@ -128,11 +128,11 @@ class Middleware(object):
     def get_service(self, name):
         return self.__services[name]
 
-    def call_method(self, method, params):
+    def call_method(self, method, *params):
         # DEPRECATED, FIXME: DeprecationWarning
-        return self.call(method, params)
+        return self.call(method, *params)
 
-    def call(self, method, params):
+    def call(self, method, *params):
         service, method = method.rsplit('.', 1)
         return getattr(self.get_service(service), method)(*params)
 
