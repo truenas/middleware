@@ -1,5 +1,6 @@
 #!/usr/local/bin/python
 from middlewared.client import Client
+from middlewared.client.utils import Struct
 
 import os
 import errno
@@ -16,9 +17,8 @@ def main():
 
     if client.call('notifier.common', 'system', 'domaincontroller_enabled'):
         try:
-            print client.call('datastore.query', 'services.cifs', None, {'get': True})
-            cifs = CIFS.objects.all()[0]
-            dc = DomainController.objects.all()[0]
+            cifs = Struct(client.call('datastore.query', 'services.cifs', None, {'get': True}))
+            dc = Struct(client.call('datastore.query', 'services.DomainController', None, {'get': True}))
 
             domain = dc.dc_realm
             if cifs.cifs_srv_bindip:
@@ -53,7 +53,7 @@ def main():
     if (
         not nameservers and
         (iface_count == 0 or iface_dhcp > 0)
-       ):
+    ):
         # since we have set a dhclient hook that disables dhclient from writing to /etc/resolv.conf
         # we should remove it now
         try:
