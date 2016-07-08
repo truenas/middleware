@@ -42,11 +42,6 @@ from django.utils.translation import ugettext_lazy as _
 from OpenSSL import crypto
 
 from freenasUI import choices
-from freenasUI.common.ssl import (
-    write_certificate_chain,
-    write_certificate_signing_request,
-    write_privatekey
-)
 from freenasUI.freeadmin.models import Model, UserField
 from freenasUI.middleware.notifier import notifier
 from freenasUI.storage.models import Volume
@@ -755,31 +750,6 @@ class CertificateBase(Model):
 
     def get_CSR_path(self):
         return "%s/%s.csr" % (self.cert_root_path, self.cert_name)
-
-    def write_certificate(self, path=None):
-        if not path:
-            path = self.get_certificate_path()
-        chain_to_write = []
-        if self.cert_chain:
-            chain_to_write = self.get_certificate_chain()
-        else:
-            chain_to_write.append(self.get_certificate())
-            signing_CA = self.cert_issuer
-            while signing_CA not in ["external", "self-signed", "external - signature pending"]:
-                chain_to_write.append(signing_CA.get_certificate())
-                signing_CA = signing_CA.cert_issuer
-
-        write_certificate_chain(chain_to_write, path)
-
-    def write_privatekey(self, path=None):
-        if not path:
-            path = self.get_privatekey_path()
-        write_privatekey(self.get_privatekey(), path)
-
-    def write_CSR(self, path=None):
-        if not path:
-            path = self.get_CSR_path()
-        write_certificate_signing_request(self.get_CSR(), path)
 
     def __load_certificate(self):
         if self.cert_certificate is not None and self.__certificate is None:
