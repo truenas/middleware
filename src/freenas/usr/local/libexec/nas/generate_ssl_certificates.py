@@ -1,9 +1,7 @@
 #!/usr/local/bin/python
 from middlewared.client import Client
-from middlewared.client.utils import Struct
 
 import os
-import sys
 
 
 def write_certificates(certs):
