@@ -58,6 +58,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('-d', '--dev')
     parser.add_argument('-s')
+    parser.add_argument('email', nargs='*')
 
     args = parser.parse_args()
     if args.dev:
