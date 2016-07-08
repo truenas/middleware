@@ -1,52 +1,38 @@
 #!/usr/local/bin/python
+from middlewared.client import Client
+from middlewared.client.utils import Struct
 
 import os
-import string
 import sys
-
-sys.path.extend([
-    '/usr/local/www',
-    '/usr/local/www/freenasUI'
-])
-
-os.environ["DJANGO_SETTINGS_MODULE"] = "freenasUI.settings"
-
-from django.db.models.loading import cache
-cache.get_apps()
-
-from freenasUI.system import models
 
 
 def write_certificates(certs):
     for cert in certs:
-        if not os.path.exists(cert.cert_root_path):
-            os.mkdir(cert.cert_root_path, 0755)
+        if not os.path.exists(cert['cert_root_path']):
+            os.mkdir(cert['cert_root_path'], 0755)
 
-        if cert.cert_certificate:
-            try:
-                cert.write_certificate()
-            except Exception as e:
-                print >> sys.stderr, "ERROR: %s" % e
+        if cert['cert_chain_list']:
+            with open(cert['cert_certificate_path'], 'w') as f:
+                for i in cert['cert_chain_list']:
+                    f.write(i)
 
-        if cert.cert_privatekey:
-            try:
-                cert.write_privatekey()
-                os.chmod(cert.get_privatekey_path(), 0400)
-            except Exception as e:
-                print >> sys.stderr, "ERROR: %s" % e
+        if cert['cert_privatekey']:
+            with open(cert['cert_privatekey_path'], 'w') as f:
+                f.write(cert['cert_privatekey'])
+            os.chmod(cert['cert_privatekey_path'], 0400)
 
-        if cert.cert_type & models.CERT_TYPE_CSR and cert.cert_CSR:
-            try:
-                cert.write_CSR()
-            except Exception as e:
-                print >> sys.stderr, "ERROR: %s" % e
+        if cert['cert_type'] & 0x20 and cert['cert_CSR']:
+            with open(cert['cert_csr_path'], 'w') as f:
+                f.write(cert['cert_CSR'])
 
 
 def main():
-    CAs = models.CertificateAuthority.objects.all()
-    write_certificates(CAs)
+    client = Client()
 
-    certs = models.Certificate.objects.all()
+    certs = client.call('certificate.query')
+    write_certificates(certs)
+
+    certs = client.call('certificateauthority.query')
     write_certificates(certs)
 
 if __name__ == '__main__':
