@@ -187,7 +187,7 @@ def main():
             daemonc.open()
 
         logging.config.dictConfig({
-	        'version': 1,
+            'version': 1,
             'handlers': {
                 'console': {
                     'level': 'DEBUG',
