@@ -57,9 +57,6 @@ def main(subsystem, event):
     else:
         forcetakeover = False
 
-    if vhid in ('10', '20'):
-        sys.exit(1)
-
     if not os.path.exists(FAILOVER_JSON):
         sys.exit(1)
 
@@ -80,6 +77,9 @@ def main(subsystem, event):
 
     with open(FAILOVER_JSON, 'r') as f:
         fobj = json.loads(f.read())
+
+    if ifname in fobj['internal_interfaces']:
+        sys.exit(1)
 
     if not forcetakeover:
         SENTINEL = False
@@ -185,10 +185,11 @@ def carp_master(fobj, state_file, ifname, vhid, event, user_override, forcetakeo
     if os.path.exists(FAILOVER_ASSUMED_MASTER) or forcetakeover:
         error, output = run("ifconfig -l")
         for iface in list(output.split()):
+            if iface in fobj['internal_interfaces']:
+                continue
             error, output = run("ifconfig %s | grep 'carp:' | awk '{print $4}'" % iface)
             for vhid in list(output.split()):
-                if vhid not in ("10", "20"):
-                    run("ifconfig %s vhid %s advskew 1" % (iface, vhid))
+                run("ifconfig %s vhid %s advskew 1" % (iface, vhid))
         if not forcetakeover:
             sys.exit(0)
 
@@ -234,13 +235,17 @@ def carp_master(fobj, state_file, ifname, vhid, event, user_override, forcetakeo
             error, status0 = run(
                 "ifconfig %s | grep 'carp:' | awk '{print $2}'" % ifname
             )
+            if fobj['internal_interfaces']:
+                intiface = fobj['internal_interfaces'][0]
+            else:
+                intiface = ''
             error, status1 = run(
-                "ifconfig | grep carp: | grep -E 'vhid (10|20) ' | awk '{print $2;}' "
-                "|grep -E '(MASTER|INIT)' | wc -l"
+                "ifconfig %s | grep carp: | grep -E 'vhid (10|20) ' | awk '{print $2;}' "
+                "|grep -E '(MASTER|INIT)' | wc -l" % intiface
             )
             error, status2 = run(
-                "ifconfig | grep carp: | grep -E 'vhid (10|20) ' | awk '{print $2;}' "
-                "|grep BACKUP | wc -l"
+                "ifconfig %s | grep carp: | grep -E 'vhid (10|20) ' | awk '{print $2;}' "
+                "|grep BACKUP | wc -l" % intiface
             )
 
             log.warn('Status: %s:%s:%s', status0, status1, status2)
@@ -294,10 +299,11 @@ def carp_master(fobj, state_file, ifname, vhid, event, user_override, forcetakeo
     error, output = run("ifconfig -l")
     for iface in output.split():
         for iface in list(output.split()):
+            if iface in fobj['internal_interfaces']:
+                continue
             error, output = run("ifconfig %s | grep 'carp:' | awk '{print $4}'" % iface)
             for vhid in list(output.split()):
-                if vhid not in ("10", "20"):
-                    run("ifconfig %s vhid %s advskew 1" % (iface, vhid))
+                run("ifconfig %s vhid %s advskew 1" % (iface, vhid))
 
     open(IMPORTING_FILE, 'w').close()
     try:

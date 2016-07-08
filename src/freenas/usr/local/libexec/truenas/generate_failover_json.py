@@ -35,6 +35,7 @@ def main():
     from freenasUI.services.models import SSH
     from freenasUI.storage.models import Volume
     from freenasUI.system.models import Settings
+    from freenasUI.middleware.notifier import notifier
 
     if Failover.objects.all().exists():
         fobj = Failover.objects.all()[0]
@@ -59,6 +60,7 @@ def main():
         'ips': [
             str(i.int_vip) for i in Interfaces.objects.exclude(int_vip=None).exclude(int_vip='')
         ],
+        'internal_interfaces': notifier().failover_internal_interfaces(),
     }
 
     for item in Interfaces.objects.filter(int_critical=True).exclude(
