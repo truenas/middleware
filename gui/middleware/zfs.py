@@ -453,7 +453,7 @@ class ZFSList(SortedDict):
                 search = names[0]
                 names = names[1:]
                 for child in item.children:
-                    if child.name == search:
+                    if child.name.rsplit('/', 1)[-1] == search:
                         item = child
                         found = True
                         break
