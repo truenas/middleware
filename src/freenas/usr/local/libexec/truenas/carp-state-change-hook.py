@@ -46,6 +46,14 @@ def run(cmd):
     return (proc.returncode, output.strip('\n'))
 
 
+def run_async(cmd):
+    subprocess.Popen(
+            cmd,
+            shell=True,
+            )
+    return
+
+
 def main(subsystem, event):
 
     if '@' not in subsystem:
@@ -205,9 +213,9 @@ def carp_master(fobj, state_file, ifname, vhid, event, user_override, forcetakeo
                         'Ignoring UP state on %s because we still have interfaces that are'
                         ' BACKUP.', ifname
                     )
-                    run('echo "$(date), $(hostname), %s assumed master while other '
-                        'interfaces are still in slave mode." | mail -s "Failover WARNING"'
-                        ' root' % ifname)
+                    run_async('echo "$(date), $(hostname), %s assumed master while other '
+                              'interfaces are still in slave mode." | mail -s "Failover WARNING"'
+                              ' root' % ifname)
                     sys.exit(1)
 
     if not forcetakeover:
@@ -424,7 +432,7 @@ def carp_master(fobj, state_file, ifname, vhid, event, user_override, forcetakeo
     run('/sbin/pfctl -d')
 
     log.warn('Allowing network traffic.')
-    run('echo "$(date), $(hostname), assume master" | mail -s "Failover" root')
+    run_async('echo "$(date), $(hostname), assume master" | mail -s "Failover" root')
 
     try:
         os.unlink(FAILOVER_OVERRIDE)
@@ -531,7 +539,7 @@ def carp_backup(fobj, state_file, ifname, vhid, event, user_override):
     run('/usr/sbin/service ix-crontab quietstart')
     run('/usr/sbin/service ix-collectd quietstart')
     run('/usr/sbin/service collectd forcestop')
-    run('echo "$(date), $(hostname), assume backup" | mail -s "Failover" root')
+    run_async('echo "$(date), $(hostname), assume backup" | mail -s "Failover" root')
 
     log.warn('Setting passphrase from master')
     run('LD_LIBRARY_PATH=/usr/local/lib /usr/local/sbin/enc_helper '
