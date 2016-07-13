@@ -30,7 +30,7 @@ get_jc_path()
 {
 	local IFS="|"
 
-	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+	${FREENAS_SQLITE_CMD} ${RO_FREENAS_CONFIG} "
 	SELECT
 		jc_path
 	FROM
@@ -234,7 +234,7 @@ generate_warden_conf()
 {
 	local tmpfile
 	local wconf="${WARDENCONF}"
-	local jc_path=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+	local jc_path=$(${FREENAS_SQLITE_CMD} ${RO_FREENAS_CONFIG} "
 		SELECT
 			jc_path
 		FROM
@@ -268,6 +268,8 @@ __EOF__
 
 ix_warden_start()
 {
+	RO_FREENAS_CONFIG=$(ro_sqlite ${name} 2> /tmp/${name}.fail && rm /tmp/${name}.fail)
+	trap 'rm -f ${RO_FREENAS_CONFIG}' EXIT
 	generate_warden_conf
 	migrate_warden_templates
 }

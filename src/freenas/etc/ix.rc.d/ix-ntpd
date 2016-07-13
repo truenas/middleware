@@ -16,7 +16,10 @@ generate_ntp_conf()
 	eval local $f
 	local sf=$(var_to_sf $f)
 
-	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT $sf FROM system_ntpserver ORDER BY id" | \
+	RO_FREENAS_CONFIG=$(ro_sqlite ${name} 2> /tmp/${name}.fail && rm /tmp/${name}.fail)
+	trap 'rm -f ${RO_FREENAS_CONFIG}' EXIT
+
+	${FREENAS_SQLITE_CMD} ${RO_FREENAS_CONFIG} "SELECT $sf FROM system_ntpserver ORDER BY id" | \
 	while eval read -r $f; do
 		echo -n "server ${ntp_address}"
 		if [ "${ntp_burst}" = "1" ]; then

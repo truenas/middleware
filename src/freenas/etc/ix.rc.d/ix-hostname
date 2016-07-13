@@ -12,6 +12,8 @@ generate_hostname()
 {
 	local IFS="|"
 	local id gc_hostname gc_domain hostname_field
+	RO_FREENAS_CONFIG=$(ro_sqlite ${name} 2> /tmp/${name}.fail && rm /tmp/${name}.fail)
+	trap 'rm -f ${RO_FREENAS_CONFIG}' EXIT
 
 	if [ "$(ha_node)" = "B" ]; then
 		hostname_field="gc_hostname_b"
@@ -19,15 +21,15 @@ generate_hostname()
 		hostname_field="gc_hostname"
 	fi
 
-	id="$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
+	id="$(${FREENAS_SQLITE_CMD} ${RO_FREENAS_CONFIG} \
             "SELECT id FROM network_globalconfiguration ORDER BY -id LIMIT 1")"
-	gc_hostname="$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
+	gc_hostname="$(${FREENAS_SQLITE_CMD} ${RO_FREENAS_CONFIG} \
             "SELECT ${hostname_field} FROM network_globalconfiguration ORDER BY -id LIMIT 1")"
-	gc_domain="$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
+	gc_domain="$(${FREENAS_SQLITE_CMD} ${RO_FREENAS_CONFIG} \
             "SELECT gc_domain FROM network_globalconfiguration ORDER BY -id LIMIT 1")"
 
 	cp /conf/base/etc/hosts /etc/hosts
-	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
+	${FREENAS_SQLITE_CMD} ${RO_FREENAS_CONFIG} \
 		"SELECT gc_hosts FROM network_globalconfiguration WHERE id = ${id}" >> /etc/hosts
 
 	if dirsrv_enabled nis; then
@@ -45,9 +47,9 @@ generate_hostname()
 		else
 			netbiosname_field="cifs_srv_netbiosname"
 		fi
-		netbiosname="$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT ${netbiosname_field} FROM services_cifs ORDER BY -id LIMIT 1"|tr A-Z a-z)"
+		netbiosname="$(${FREENAS_SQLITE_CMD} ${RO_FREENAS_CONFIG} "SELECT ${netbiosname_field} FROM services_cifs ORDER BY -id LIMIT 1"|tr A-Z a-z)"
 
-		${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
+		${FREENAS_SQLITE_CMD} ${RO_FREENAS_CONFIG} \
 		"SELECT ad_domainname from directoryservice_activedirectory ORDER BY -id LIMIT 1" | \
 		while read -r domainname; do
 			domainname="$(echo "${domainname}"|tr A-Z a-z)"

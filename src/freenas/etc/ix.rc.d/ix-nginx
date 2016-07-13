@@ -15,7 +15,7 @@ NGINX_FASTCGI_PARAMS="${HTTPDDIR}/fastcgi_params"
 
 get_ssl_certificate_name()
 {
-	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+	${FREENAS_SQLITE_CMD} ${RO_FREENAS_CONFIG} "
 	SELECT
 		sc.cert_name
 	FROM
@@ -63,7 +63,7 @@ generate_plugins_conf()
         # Workaround: config check fail if it doesnt exist
         mkdir -p /var/tmp/nginx 2> /dev/null > /dev/null
 
-	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+	${FREENAS_SQLITE_CMD} ${RO_FREENAS_CONFIG} "
 	SELECT
 		id,
 		plugin_name,
@@ -331,7 +331,7 @@ set_stg_guiprotocol()
 
 	if [ "${proto}" = "http" -o "${proto}" = "https" -o "${proto}" = "httphttps" ]
 	then
-		${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+		${FREENAS_SQLITE_CMD} ${RO_FREENAS_CONFIG} "
 		UPDATE
 			system_settings
 		SET
@@ -351,7 +351,7 @@ set_stg_guiport()
 
 	: $((port += 0))
 
-	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+	${FREENAS_SQLITE_CMD} ${RO_FREENAS_CONFIG} "
 	UPDATE
 		system_settings
 	SET
@@ -367,7 +367,7 @@ generate_fastcgi_params()
 {
 	local IFS="|"
 
-	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+	${FREENAS_SQLITE_CMD} ${RO_FREENAS_CONFIG} "
 	SELECT
 		stg_guiprotocol
 
@@ -406,7 +406,7 @@ get_nginx_settings()
 {
 	local settings=$(
 		local IFS="|"
-		${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+		${FREENAS_SQLITE_CMD} ${RO_FREENAS_CONFIG} "
 		SELECT
 			stg_guiprotocol,
 			stg_guiaddress,
@@ -465,6 +465,9 @@ get_nginx_settings()
 
 ix_nginx_start()
 {
+	RO_FREENAS_CONFIG=$(ro_sqlite ${name} 2> /tmp/${name}.fail && rm /tmp/${name}.fail)
+	trap 'rm -f ${RO_FREENAS_CONFIG}' EXIT
+
 	local settings=$(get_nginx_settings)
 
 	local proto=$(echo "${settings}"|cut -f1 -d"|")
@@ -475,7 +478,7 @@ ix_nginx_start()
 	local httpsredirect=$(echo "${settings}"|cut -f6 -d"|")
 
 	local vcenter_https=$(
-		${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+		${FREENAS_SQLITE_CMD} ${RO_FREENAS_CONFIG} "
 		SELECT
 			vc_enable_https
 

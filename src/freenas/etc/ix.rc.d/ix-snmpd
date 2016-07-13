@@ -18,6 +18,8 @@ generate_snmpconf()
 	local f="snmp_location snmp_contact snmp_community snmp_v3 snmp_v3_username snmp_v3_authtype snmp_v3_password snmp_v3_privproto snmp_v3_privpassphrase"
 	eval local $f
 	local sf=$(var_to_sf $f)
+	RO_FREENAS_CONFIG=$(ro_sqlite ${name} 2> /tmp/${name}.fail && rm /tmp/${name}.fail)
+	trap 'rm -f ${RO_FREENAS_CONFIG}' EXIT
 
 	umask 077
 	hw_machine=`/sbin/sysctl -n hw.machine`
@@ -27,7 +29,7 @@ generate_snmpconf()
 	kern_osrelease=`/sbin/sysctl -n kern.osrelease`
 	kern_osrevision=`/sbin/sysctl -n kern.osrevision`
 
-	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT $sf FROM services_snmp ORDER BY -id LIMIT 1" | \
+	${FREENAS_SQLITE_CMD} ${RO_FREENAS_CONFIG} "SELECT $sf FROM services_snmp ORDER BY -id LIMIT 1" | \
 	while eval read -r $f; do
 		cat > "${snmp_config}" << EOF
 agentAddress udp:161,udp6:161,unix:/var/run/snmpd.sock
@@ -55,7 +57,7 @@ EOF
 		fi
 
 	done
-	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT snmp_options FROM services_snmp ORDER BY -id LIMIT 1" >> ${snmp_config}
+	${FREENAS_SQLITE_CMD} ${RO_FREENAS_CONFIG} "SELECT snmp_options FROM services_snmp ORDER BY -id LIMIT 1" >> ${snmp_config}
 	if checkyesno snmpd_enable; then
 		# start freenas-snmpd.py daemon
 		# (needed by snmp for stats from zfs,zilstat,etc )
