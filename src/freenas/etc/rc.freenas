@@ -890,3 +890,12 @@ ha_node()
 	return 0
 
 }
+
+ro_sqlite()
+{
+	local name ret
+	name=$1
+	ret=$(mktemp /tmp/${name}.XXXXX 2> /tmp/${name}.rcfail && rm /tmp/${name}.rcfail)
+	cp ${FREENAS_CONFIG} ${ret}
+	echo ${ret}
+}
