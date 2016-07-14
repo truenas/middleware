@@ -1,4 +1,6 @@
 #!/usr/local/bin/python
+from middlewared.client import Client
+from middlewared.client.utils import Struct
 
 import os
 import re
@@ -25,17 +27,6 @@ from freenasUI.common.freenasldap import (
 from freenasUI.common.ssl import (
     get_certificateauthority_path,
 )
-from freenasUI.common.system import (
-    activedirectory_enabled,
-    ldap_enabled,
-    ldap_anonymous_bind
-)
-from freenasUI.directoryservice.models import (
-    ActiveDirectory,
-    LDAP
-)
-from freenasUI.services.models import CIFS
-from freenasUI.sharing.models import CIFS_Share
 
 SSSD_CONFIGFILE = "/usr/local/etc/sssd/sssd.conf"
 
@@ -598,12 +589,11 @@ class SSSDConf(SSSDBase):
             os.chmod(path, 0600)
 
 
-def activedirectory_has_unix_extensions():
+def activedirectory_has_unix_extensions(client):
     ad_unix_extensions = False
 
     try:
-        ad = ActiveDirectory.objects.all()[0]
-        ad_unix_extensions = ad.ad_unix_extensions
+        ad_unix_extensions = client.call('datastore.query', 'directoryservice.activedirectory', None, {'get': True})['ad_unix_extensions']
     except:
         pass
 
@@ -628,8 +618,8 @@ def sssd_setup():
         os.chmod(SSSD_CONFIGFILE, 0600)
 
 
-def add_ldap_section(sc):
-    ldap = LDAP.objects.all()[0]
+def add_ldap_section(client, sc):
+    ldap = Struct(client.call('datastore.query', 'directoryservice.ldap', None, {'get': True}))
 
     ldap_hostname = ldap.ldap_hostname.upper()
     parts = ldap_hostname.split('.')
@@ -749,8 +739,8 @@ def add_ldap_section(sc):
         sc.merge_config(aux_sc)
 
 
-def add_activedirectory_section(sc):
-    activedirectory = ActiveDirectory.objects.all()[0]
+def add_activedirectory_section(client, sc):
+    activedirectory = Struct(client.call('datastore.query', 'directoryservice.activedirectory', None, {'get': True}))
     ad = FreeNAS_ActiveDirectory(flags=FLAGS_DBINIT)
     use_ad_provider = False
 
@@ -818,8 +808,8 @@ def add_activedirectory_section(sc):
         ad_section.use_fully_qualified_names = 'false'
 
     try:
-        shares = CIFS_Share.objects.all()
-        for share in shares:
+        for share in client.call('datastore.query', 'sharing.cifs_share'):
+            share = Struct(share)
             if share.cifs_home and share.cifs_path:
                 if ad.use_default_domain:
                     homedir_path = "%s/%%u" % share.cifs_path
@@ -855,23 +845,23 @@ def add_activedirectory_section(sc):
     sc['sssd'].add_newline()
 
 
-def get_activedirectory_cookie():
+def get_activedirectory_cookie(client):
     cookie = ''
 
-    if activedirectory_enabled():
-        cifs = CIFS.objects.latest('id')
-        cookie = cifs.get_netbiosname().upper()
+    if client.call('notifier.common', 'system', 'activedirectory_enabled'):
+        cifs = Struct(client.call('cifs.config'))
+        cookie = cifs.netbiosname.upper()
         parts = cookie.split('.')
         cookie = parts[0]
 
     return cookie
 
 
-def get_ldap_cookie():
+def get_ldap_cookie(client):
     cookie = ''
 
-    if ldap_enabled():
-        ldap = LDAP.objects.all()[0]
+    if client.call('notifier.common', 'system', 'ldap_enabled'):
+        ldap = Struct(client.call('datastore.query', 'directoryservice.ldap', None, {'get': True}))
         cookie = ldap.ldap_hostname.upper()
         parts = cookie.split('.')
         cookie = parts[0]
@@ -879,41 +869,42 @@ def get_ldap_cookie():
     return cookie
 
 
-def get_directoryservice_cookie():
-    if activedirectory_enabled():
-        return get_activedirectory_cookie()
-    if ldap_enabled():
-        return get_ldap_cookie()
+def get_directoryservice_cookie(client):
+    if client.call('notifier.common', 'system', 'activedirectory_enabled'):
+        return get_activedirectory_cookie(client)
+    if client.call('notifier.common', 'system', 'ldap_enabled'):
+        return get_ldap_cookie(client)
 
     return None
 
 
 def main():
+    client = Client()
     sssd_conf = None
 
-    if ldap_enabled() and ldap_anonymous_bind():
+    if client.call('notifier.common', 'system', 'ldap_enabled') and client.call('notifier.common', 'system', 'ldap_anonymous_bind'):
         sys.exit(1)
 
     sssd_setup()
     if os.path.exists(SSSD_CONFIGFILE):
         sssd_conf = SSSD_CONFIGFILE
 
-    cookie = get_directoryservice_cookie()
+    cookie = get_directoryservice_cookie(client)
     if not cookie:
         sys.exit(1)
 
     def nullfunc():
         pass
-    sc = SSSDConf(path=sssd_conf, parse=nullfunc, cookie=cookie)
+    sc = SSSDConf(client=client, path=sssd_conf, parse=nullfunc, cookie=cookie)
 
     sc.add_sssd_section()
     sc.add_nss_section()
     sc.add_pam_section()
 
-    if activedirectory_enabled() and activedirectory_has_unix_extensions():
-        add_activedirectory_section(sc)
-    if ldap_enabled():
-        add_ldap_section(sc)
+    if client.call('notifier.common', 'system', 'activedirectory_enabled') and activedirectory_has_unix_extensions(client):
+        add_activedirectory_section(client, sc)
+    if client.call('notifier.common', 'system', 'ldap_enabled'):
+        add_ldap_section(client, sc)
 
     sc.save(SSSD_CONFIGFILE)
 
