@@ -9,11 +9,8 @@ import re
 
 class CIFSService(Service):
 
-    def query(self, filters=None, options=None):
-        if options is None:
-            options = {}
-        options['extend'] = 'cifs.cifs_extend'
-        return self.middleware.call('datastore.query', 'services.cifs', filters, options)
+    def config(self):
+        return self.middleware.call('datastore.query', 'services.cifs', None, {'get': True, 'extend': 'cifs.cifs_extend'})
 
     def cifs_extend(self, cifs):
         """Extend cifs for netbios
