@@ -673,41 +673,6 @@ class LDAPForm(ModelForm):
                 self.fields['ldap_netbiosname_b'],
             )
 
-    def clean_ldap_bindpw(self):
-        cdata = self.cleaned_data
-        if not cdata.get("ldap_bindpw"):
-            cdata["ldap_bindpw"] = self.instance.ldap_bindpw
-
-        binddn = cdata.get("ldap_binddn")
-        bindpw = cdata.get("ldap_bindpw")
-        basedn = cdata.get("ldap_basedn")
-        hostname = cdata.get("ldap_hostname")
-        ssl = cdata.get("ldap_ssl")
-        port = 389
-        if ssl == "on":
-            port = 636
-        if hostname:
-            parts = hostname.split(':')
-            hostname = parts[0]
-            if len(parts) > 1:
-                port = int(parts[1]) 
-        errors = []
-
-        certfile = None
-
-        if ssl in ('start_tls', 'on'):
-            certificate = cdata["ldap_certificate"]
-            certfile = get_certificateauthority_path(certificate)
-
-        ret = FreeNAS_LDAP.validate_credentials(
-            hostname, binddn=binddn, bindpw=bindpw, basedn=basedn,
-            port=port, certfile=certfile, ssl=ssl, errors=errors
-        )
-        if ret is False:
-            raise forms.ValidationError("%s." % errors[0])
-
-        return bindpw
-
     def check_for_samba_schema(self):
         self.clean_bindpw()
 
@@ -762,17 +727,48 @@ class LDAPForm(ModelForm):
 
     def clean(self):
         cdata = self.cleaned_data
-        ssl = cdata.get("ldap_ssl")
-        if ssl in ("off", None):
-            # self.check_for_samba_schema()
-            return cdata
+        if not cdata.get("ldap_bindpw"):
+            cdata["ldap_bindpw"] = self.instance.ldap_bindpw
 
-        certificate = cdata["ldap_certificate"]
-        if not certificate:
-            raise forms.ValidationError(
-                "SSL/TLS specified without certificate")
+        binddn = cdata.get("ldap_binddn")
+        bindpw = cdata.get("ldap_bindpw")
+        basedn = cdata.get("ldap_basedn")
+        hostname = cdata.get("ldap_hostname")
+        ssl = cdata.get("ldap_ssl")
+
+        certfile = None
+        if ssl in ('start_tls', 'on'):
+            certificate = cdata["ldap_certificate"]
+            if not certificate:
+                raise forms.ValidationError(
+                    "SSL/TLS specified without certificate")
+            else:
+                certfile = get_certificateauthority_path(certificate)
+
+        port = 389
+        if ssl == "on":
+            port = 636
+        if hostname:
+            parts = hostname.split(':')
+            hostname = parts[0]
+            if len(parts) > 1:
+                port = int(parts[1])
+        errors = []
 
         # self.check_for_samba_schema()
+        ret = FreeNAS_LDAP.validate_credentials(
+            hostname,
+            binddn=binddn,
+            bindpw=bindpw,
+            basedn=basedn,
+            port=port,
+            certfile=certfile,
+            ssl=ssl,
+            errors=errors
+        )
+        if ret is False:
+            raise forms.ValidationError("%s." % errors[0])
+
         return cdata
 
     def save(self):
