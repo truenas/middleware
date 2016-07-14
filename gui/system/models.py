@@ -145,7 +145,11 @@ class Settings(Model):
         default='',
         blank=True,
         max_length=120,
-        verbose_name=_("Syslog server")
+        verbose_name=_("Syslog server"),
+        help_text=_("Specifies the server and port syslog messages "
+                    "will be sent to.  The accepted format is hostname:port "
+                    "or ip:port, if :port is not specified it will default to "
+                    "port 514 (this field currently only takes IPv4 addresses)"),
     )
     stg_wizardshown = models.BooleanField(
         editable=False,

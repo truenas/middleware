@@ -924,6 +924,14 @@ class SettingsForm(ModelForm):
 
     def clean(self):
         cdata = self.cleaned_data
+
+        # todo: make this and ix-syslogd support udp6
+        if cdata["stg_syslogserver"]:
+            syslogserver = cdata.get("stg_syslogserver")
+            match = re.match("^(\w\.?)+(\:\d+)?$", syslogserver)
+            if match is None:
+                raise forms.ValidationError("Invalid syslog server format")
+
         proto = cdata.get("stg_guiprotocol")
         if proto == "http":
             return cdata
