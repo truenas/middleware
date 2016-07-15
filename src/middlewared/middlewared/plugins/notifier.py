@@ -52,3 +52,18 @@ class NotifierService(Service):
             return data
 
         return serialize(rv)
+
+    def directoryservice(self, name):
+        """Wrapper to serialize DS connectors"""
+        if name == 'AD':
+            ds = FreeNAS_ActiveDirectory(flags=0x00010000)
+        else:
+            raise ValueError('Unknown ds name {0}'.format(name))
+        data = {}
+        for i in (
+            'netbiosname', 'keytab_file', 'keytab_principal', 'domainname',
+            'use_default_domain', 'dchost', 'basedn', 'binddn', 'bindpw',
+        ):
+            if hasattr(ds, i):
+                data[i] = getattr(ds, )
+        return data
