@@ -1,6 +1,6 @@
 #!/bin/sh
 
-GDB="/usr/local/bin/gdb711 --batch --command /usr/local/etc/samba.gdb"
+GDB="/usr/local/bin/gdb7111 --batch --command /usr/local/etc/samba.gdb"
 
 nmbd_pid="$(cat /var/run/samba/nmbd.pid 2>/dev/null)"
 smbd_pid="$(cat /var/run/samba/smbd.pid 2>/dev/null)"
