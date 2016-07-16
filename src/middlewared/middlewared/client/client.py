@@ -120,7 +120,7 @@ def main():
                 print(json.dumps(rv))
         except ClientException as e:
             if not args.quiet:
-                print(e.stacktrace)
+                print >> sys.stderr, e.stacktrace
             sys.exit(1)
 
 if __name__ == '__main__':
