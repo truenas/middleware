@@ -13743,3 +13743,45 @@ msgstr ""
 #: templates/network/ipmi.html:5
 msgid "WARNING! Failed to query IPMI data, standby node is down."
 msgstr ""
+
+#: jails/forms.py:610
+msgid "Jail dataset created on a share"
+msgstr ""
+
+#: jails/views.py:584
+#, fuzzy
+msgid "Jail template successfully deleted."
+msgstr "Dataset modificato con successo."
+
+#: services/models.py:456
+msgid "Log mountd(8) requests"
+msgstr ""
+
+#: services/models.py:458
+msgid "This option enable mountd logging into syslog."
+msgstr ""
+
+#: services/models.py:462
+msgid "Log rpc.statd(8) and rpc.lockd(8)"
+msgstr ""
+
+#: services/models.py:464
+msgid "This option enable statd and lockd logging into syslog."
+msgstr ""
+
+#: storage/forms.py:1437
+#: storage/forms.py:1509
+msgid "Allow the zvol to consume more than 80% of available space"
+msgstr ""
+
+#: system/models.py:149
+msgid ""
+"Specifies the server and port syslog messages will be sent to.  The accepted "
+"format is hostname:port or ip:port, if :port is not specified it will "
+"default to port 514 (this field currently only takes IPv4 addresses)"
+msgstr ""
+
+#: system/alertmods/nfs_bindaddr.py:15
+#, fuzzy
+msgid "NFS services could not bind specific IPs, using wildcard"
+msgstr "L'indirizzo WebGUI non può essere collegato a %s; utilizzo le wildcard"

@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:06-0700\n"
-"PO-Revision-Date: 2016-06-14 09:15+0000\n"
+"PO-Revision-Date: 2016-07-15 09:17+0000\n"
 "Last-Translator: Anonymous Pootle User\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: zu\n"
@@ -16,7 +16,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1465895732.0\n"
+"X-POOTLE-MTIME: 1468574250.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -12295,4 +12295,44 @@ msgstr ""
 
 #: templates/network/ipmi.html:5
 msgid "WARNING! Failed to query IPMI data, standby node is down."
+msgstr ""
+
+#: jails/forms.py:610
+msgid "Jail dataset created on a share"
+msgstr ""
+
+#: jails/views.py:584
+msgid "Jail template successfully deleted."
+msgstr ""
+
+#: services/models.py:456
+msgid "Log mountd(8) requests"
+msgstr ""
+
+#: services/models.py:458
+msgid "This option enable mountd logging into syslog."
+msgstr ""
+
+#: services/models.py:462
+msgid "Log rpc.statd(8) and rpc.lockd(8)"
+msgstr ""
+
+#: services/models.py:464
+msgid "This option enable statd and lockd logging into syslog."
+msgstr ""
+
+#: storage/forms.py:1437
+#: storage/forms.py:1509
+msgid "Allow the zvol to consume more than 80% of available space"
+msgstr ""
+
+#: system/models.py:149
+msgid ""
+"Specifies the server and port syslog messages will be sent to.  The accepted "
+"format is hostname:port or ip:port, if :port is not specified it will "
+"default to port 514 (this field currently only takes IPv4 addresses)"
+msgstr ""
+
+#: system/alertmods/nfs_bindaddr.py:15
+msgid "NFS services could not bind specific IPs, using wildcard"
 msgstr ""

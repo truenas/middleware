@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:05-0700\n"
-"PO-Revision-Date: 2016-06-14 11:13+0000\n"
+"PO-Revision-Date: 2016-07-15 19:30+0000\n"
 "Last-Translator: BouRock <hitowerdigit@hotmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: tr\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1)\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1465902831.0\n"
+"X-POOTLE-MTIME: 1468611021.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -13272,3 +13272,48 @@ msgstr ""
 #: templates/network/ipmi.html:5
 msgid "WARNING! Failed to query IPMI data, standby node is down."
 msgstr "UYARI! IPMI verisini sorgulama başarısız, bekleme düğümü kapalı."
+
+#: jails/forms.py:610
+msgid "Jail dataset created on a share"
+msgstr "Kafes veri kümesi bir paylaşımda oluşturuldu"
+
+#: jails/views.py:584
+msgid "Jail template successfully deleted."
+msgstr "Kafes şablonu başarılı olarak silindi."
+
+#: services/models.py:456
+msgid "Log mountd(8) requests"
+msgstr "mountd(8) isteklerini günlükle"
+
+#: services/models.py:458
+msgid "This option enable mountd logging into syslog."
+msgstr "Bu seçenek syslog içinde mountd günlüklemeyi etkinleştirir."
+
+#: services/models.py:462
+msgid "Log rpc.statd(8) and rpc.lockd(8)"
+msgstr "rpc.statd(8) ve rpc.lockd(8) günlükle"
+
+#: services/models.py:464
+msgid "This option enable statd and lockd logging into syslog."
+msgstr "Bu seçenek syslog içinde statd ve lockd günlüklemeyi etkinleştirir."
+
+#: storage/forms.py:1437
+#: storage/forms.py:1509
+msgid "Allow the zvol to consume more than 80% of available space"
+msgstr ""
+"Mevcut alanın %80'ninden daha fazlasını tüketmesi için zvol'a izin verir"
+
+#: system/models.py:149
+msgid ""
+"Specifies the server and port syslog messages will be sent to.  The accepted "
+"format is hostname:port or ip:port, if :port is not specified it will "
+"default to port 514 (this field currently only takes IPv4 addresses)"
+msgstr ""
+"Syslog iletilerinin gönderileceği sunucu ve bağlantı noktasını belirler.  "
+"Kabul edilen biçim anamakine adı:b.noktası ya da ip:b.noktası şeklindedir, "
+"eğer :b.noktası belirtilmezse, varsayılan bağlantı noktası 514 olacaktır (bu "
+"alan şimdilik sadece IPv4 adresleri kabul eder)"
+
+#: system/alertmods/nfs_bindaddr.py:15
+msgid "NFS services could not bind specific IPs, using wildcard"
+msgstr "NFS hizmetleri belirli IP'lere bağlanamadı, joker karakter kullanılıyor"

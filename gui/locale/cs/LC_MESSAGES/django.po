@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:07-0700\n"
-"PO-Revision-Date: 2016-06-15 08:08+0000\n"
+"PO-Revision-Date: 2016-07-12 09:34+0000\n"
 "Last-Translator: Pavel <pavel.borecki@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: cs\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1465978113.0\n"
+"X-POOTLE-MTIME: 1468316067.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -13156,3 +13156,44 @@ msgid "WARNING! Failed to query IPMI data, standby node is down."
 msgstr ""
 "VAROVÁNÍ! Nepodařilo se zjistit údaje o IPMI – pohotovostní uzel (stroj) je "
 "nedostupný."
+
+#: jails/forms.py:610
+msgid "Jail dataset created on a share"
+msgstr "Na sdílení byla vytvořena datová sada pro vyhrazené prostředí"
+
+#: jails/views.py:584
+msgid "Jail template successfully deleted."
+msgstr "Šablona vyhrazeného prostředí byla úspěšně smazána."
+
+#: services/models.py:456
+msgid "Log mountd(8) requests"
+msgstr "Zahrnout požadavky mountd(8) do záznamu událostí"
+
+#: services/models.py:458
+msgid "This option enable mountd logging into syslog."
+msgstr "Tato předvolba zapne zaznamenávání událostí mountd do syslog."
+
+#: services/models.py:462
+msgid "Log rpc.statd(8) and rpc.lockd(8)"
+msgstr "Zaznamenávat události v rpc.statd(8) a rpc.lockd(8)"
+
+#: services/models.py:464
+msgid "This option enable statd and lockd logging into syslog."
+msgstr "Tato předvolba zapne zaznamenávání událostí statd a lockd do syslog."
+
+#: storage/forms.py:1437
+#: storage/forms.py:1509
+msgid "Allow the zvol to consume more than 80% of available space"
+msgstr "Umožnit, aby ZFS svazek zabíral více než 80% dostupného prostoru"
+
+#: system/models.py:149
+msgid ""
+"Specifies the server and port syslog messages will be sent to.  The accepted "
+"format is hostname:port or ip:port, if :port is not specified it will "
+"default to port 514 (this field currently only takes IPv4 addresses)"
+msgstr ""
+
+#: system/alertmods/nfs_bindaddr.py:15
+msgid "NFS services could not bind specific IPs, using wildcard"
+msgstr ""
+"NFS služby nelze navázat na konkrétní IP adresy, s použitím zástupných znaků"
