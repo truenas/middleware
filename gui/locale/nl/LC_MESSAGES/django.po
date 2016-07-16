@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:03-0700\n"
-"PO-Revision-Date: 2016-06-03 06:55+0000\n"
+"PO-Revision-Date: 2016-07-10 17:31+0000\n"
 "Last-Translator: Tonnes <tonnes.mb@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: nl\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1464936955.0\n"
+"X-POOTLE-MTIME: 1468171874.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -13321,11 +13321,15 @@ msgid "Share path %s already exists"
 msgstr "Het pad %s bestaat al."
 
 #: system/alertmods/volume_rekey.py:14
+#, fuzzy
 msgid ""
 "Encrypted volume failed to rekey some disks. Please make sure you have "
 "working recovery keys, check logs files and correct the error as it may "
 "result to data loss."
 msgstr ""
+"Versleuteld volume kon bepaalde schijven niet opnieuw versleutelen. Zorg "
+"ervoor dat u werkende herstelsleutels hebt, controleer logbestanden en "
+"verhelp de fout, omdat dit tot gegevensverlies kan leiden."
 
 #: storage/admin.py:138
 #, fuzzy
@@ -13333,8 +13337,9 @@ msgid "Readonly"
 msgstr "Alleen-lezen"
 
 #: storage/forms.py:2024
+#, fuzzy
 msgid "Disk is not clear, partitions or ZFS labels were found."
-msgstr ""
+msgstr "Schijf is niet leeg; partities of ZFS-labels aangetroffen."
 
 #: storage/nav.py:88
 #, fuzzy
@@ -13343,15 +13348,15 @@ msgstr "E16-behuizing"
 
 #: services/forms.py:2044
 msgid "Webdav SSL protocol specified without choosing a certificate"
-msgstr ""
+msgstr "Webdav-SSL-protocol opgegeven zonder een certificaat te kiezen"
 
 #: common/system.py:395
 msgid "Mount failed {0} -> {1}, {2}"
-msgstr ""
+msgstr "Koppelen mislukt {0} -> {1}, {2}"
 
 #: common/system.py:418
 msgid "Unmount Failed {0} -> {1} {2}"
-msgstr ""
+msgstr "Ontkoppelen mislukt {0} -> {1} {2}"
 
 #: services/models.py:1258
 #, fuzzy
@@ -13361,31 +13366,36 @@ msgstr "Hulpparameters (ups.conf)"
 #: account/forms.py:684
 #, fuzzy
 msgid "Do not delete user primary group"
-msgstr "Wilt u alle gebruikers met deze primaire groep verwijderen?"
+msgstr "Primaire groep van gebruiker niet verwijderen"
 
 #: storage/forms.py:1427
+#, fuzzy
 msgid "You cannot shrink a zvol from GUI, this may lead to data loss."
 msgstr ""
+"U kunt geen zvol verkleinen vanuit de GUI; dit kan leiden tot "
+"gegevensverlies."
 
 #: templates/storage/rekey.html:5
+#, fuzzy
 msgid "You cannot rekey volume while standby node is down!"
 msgstr ""
+"U kunt geen volume opnieuw versleutelen als een stand-bynode niet werkt!"
 
 #: system/views.py:245
 #: system/views.py:246
 #: system/views.py:250
 #: system/views.py:271
 msgid "Keep"
-msgstr ""
+msgstr "Behouden"
 
 #: system/views.py:252
 msgid "UnKeep"
-msgstr ""
+msgstr "Niet behouden"
 
 #: system/views.py:253
 #: system/views.py:257
 msgid "Unkeep"
-msgstr ""
+msgstr "Niet behouden"
 
 #: system/views.py:457
 #, fuzzy
@@ -13424,7 +13434,7 @@ msgstr "%(update_applied_msg)s"
 
 #: choices.py:757
 msgid "Emergency"
-msgstr ""
+msgstr "Noodgeval"
 
 #: choices.py:761
 msgid "Warning"
@@ -13432,12 +13442,11 @@ msgstr "Waarschuwing"
 
 #: choices.py:762
 msgid "Notice"
-msgstr ""
+msgstr "Opmerking"
 
 #: choices.py:765
-#, fuzzy
 msgid "Is_Debug"
-msgstr "Foutopsporing"
+msgstr "Is_Debug"
 
 #: system/models.py:137
 #, fuzzy
@@ -13457,5 +13466,53 @@ msgstr ""
 "foutopsporingsuitvoer. De standaard is ERROR."
 
 #: templates/network/ipmi.html:5
+#, fuzzy
 msgid "WARNING! Failed to query IPMI data, standby node is down."
 msgstr ""
+"WAARSCHUWING! Opvragen van IPMI-gegevens is mislukt; stand-bynode werkt niet."
+
+#: jails/forms.py:610
+msgid "Jail dataset created on a share"
+msgstr ""
+
+#: jails/views.py:584
+#, fuzzy
+msgid "Jail template successfully deleted."
+msgstr "Jail-sjabloon met succes bewerkt."
+
+#: services/models.py:456
+msgid "Log mountd(8) requests"
+msgstr ""
+
+#: services/models.py:458
+msgid "This option enable mountd logging into syslog."
+msgstr ""
+
+#: services/models.py:462
+#, fuzzy
+msgid "Log rpc.statd(8) and rpc.lockd(8)"
+msgstr "rpc.statd(8)-bindpoort"
+
+#: services/models.py:464
+msgid "This option enable statd and lockd logging into syslog."
+msgstr ""
+
+#: storage/forms.py:1437
+#: storage/forms.py:1509
+#, fuzzy
+msgid "Allow the zvol to consume more than 80% of available space"
+msgstr ""
+"Toestaan dat het zvol meer dan 80% van de beschikbare ruimte mag gebruiken"
+
+#: system/models.py:149
+msgid ""
+"Specifies the server and port syslog messages will be sent to.  The accepted "
+"format is hostname:port or ip:port, if :port is not specified it will "
+"default to port 514 (this field currently only takes IPv4 addresses)"
+msgstr ""
+
+#: system/alertmods/nfs_bindaddr.py:15
+#, fuzzy
+msgid "NFS services could not bind specific IPs, using wildcard"
+msgstr ""
+"Het WebGUI-adres kon niet aan %s worden gebonden; jokerteken wordt gebruikt"
