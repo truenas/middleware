@@ -6,19 +6,6 @@ import os
 import re
 import sys
 
-sys.path.extend([
-    '/usr/local/www',
-    '/usr/local/www/freenasUI'
-])
-
-os.environ["DJANGO_SETTINGS_MODULE"] = "freenasUI.settings"
-
-from django.db.models.loading import cache
-cache.get_apps()
-
-from freenasUI.common.ssl import get_certificateauthority_path
-from freenasUI.directoryservice.utils import get_idmap_object
-
 
 def ldap_conf_ldap(client, ldap_conf):
     try:
@@ -34,7 +21,8 @@ def ldap_conf_ldap(client, ldap_conf):
     f.write("BASE %s\n" % ldap.ldap_basedn)
 
     if ldap.ldap_ssl in ("start_tls", "on"):
-        capath = get_certificateauthority_path(ldap.ldap_certificate)
+        ca = client.call('certificateauthority.query', [('id', '=', ldap.ldap_certificate.id)], {'get': True})
+        capath = ca['cert_certificate_path']
         if capath:
             f.write("TLS_CACERT %s\n" % capath)
         f.write("TLS_REQCERT allow\n")
@@ -64,17 +52,18 @@ def ldap_conf_activedirectory(client, ldap_conf):
     #
     ad = Struct(client.call('datastore.query', 'directoryservice.activedirectory', None, {'get': True}))
     if ad.ad_idmap_backend in ("rfc2307", "ldap"):
-        idmap = get_idmap_object(ad.ds_type, ad.id, ad.ad_idmap_backend)
-        idmap_url = idmap.get_url()
+        idmap = Struct(client.call('notifier.ds_get_idmap_object', ad.ds_type, ad.id, ad.ad_idmap_backend))
+        idmap_url = idmap.url
         idmap_url = re.sub('^(ldaps?://)', '', idmap_url)
 
         config["URI"] = "%s://%s" % (
-            "ldaps" if idmap.get_ssl() == "on" else "ldap",
+            "ldaps" if idmap.ssl == "on" else "ldap",
             idmap_url
         )
 
-        if idmap.get_ssl() in ('start_tls', 'on'):
-            capath = get_certificateauthority_path(idmap.get_certificate())
+        if idmap.ssl in ('start_tls', 'on'):
+            ca = client.call('certificateauthority.query', [('id', '=', idmap.certificate.id)], {'get': True})
+            capath = ca['cert_ceritifcate_path']
             if capath:
                 config["TLS_CACERT"] = capath
             config["TLS_REQCERT"] = "allow"
