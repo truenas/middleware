@@ -25,20 +25,9 @@ os.environ["DJANGO_SETTINGS_MODULE"] = "freenasUI.settings"
 from django.db.models.loading import cache
 cache.get_apps()
 
-from django.db.models import Q
-
-from freenasUI.account.models import (
-    bsdUsers,
-    bsdGroups,
-    bsdGroupMembership
-)
 from freenasUI.common.pipesubr import pipeopen
 from freenasUI.common.log import log_traceback
 from freenasUI.common.samba import Samba4
-from freenasUI.common.system import (
-    activedirectory_enabled,
-    nt4_enabled
-)
 from freenasUI.choices import IPChoices
 from freenasUI.directoryservice.models import (
     IDMAP_TYPE_AD,
@@ -297,7 +286,7 @@ def get_dcerpc_endpoint_servers():
 
 def get_server_role(client):
     role = "standalone"
-    if client.call('notifier.common', 'system', 'nt4_enabled') or client.call('notifier.common', 'system', 'activedirectory_enabledr') or smb4_ldap_enabled(client):
+    if client.call('notifier.common', 'system', 'nt4_enabled') or client.call('notifier.common', 'system', 'activedirectory_enabled') or smb4_ldap_enabled(client):
         role = "member"
 
     if client.call('notifier.common', 'system', 'domaincontroller_enabled'):
@@ -816,20 +805,29 @@ def add_domaincontroller_conf(client, smb4_conf):
             f.write("%s\t%s\n" % (ipv4, dc.dc_domain.upper()))
 
 
-def get_smb4_users():
-    return bsdUsers.objects.filter(
-        Q(bsdusr_smbhash__regex=r'^.+:.+:[X]{32}:.+$') |
-        Q(bsdusr_smbhash__regex=r'^.+:.+:[A-F0-9]{32}:.+$')
-    )
+def get_smb4_users(client):
+    # FIXME: test query and support for OR
+    return client.call('datastore.query', 'account.bsdusers', (
+        'OR', [
+            ('bsdusr_smbhash', '~', r'^.+:.+:[X]{32}:.+$'),
+            ('bsdusr_smbhash', '~', r'^.+:.+:[A-F0-9]{32}:.+$'),
+        ],
+    ))
 
 
-def get_disabled_users():
+def get_disabled_users(client):
+    # XXX: WTF moment, this method is not used
     disabled_users = []
     try:
-        users = bsdUsers.objects.filter(
-            Q(bsdusr_smbhash__regex=r'^.+:.+:XXXX.+$') &
-            (Q(bsdusr_locked=1) | Q(bsdusr_password_disabled=1))
-        )
+        # FIXME: test query and support for OR
+        users = client.call('datastore.query', 'account.bsdusers', (
+            ('bsdusr_smbhash', '~', r'^.+:.+:XXXX.+$'),
+            (
+                'OR',
+                ('bsdusr_locked', '=', True),
+                ('bsdusr_password_disabled', '=', True),
+            ),
+        ))
         for u in users:
             disabled_users.append(u)
 
@@ -839,11 +837,11 @@ def get_disabled_users():
     return disabled_users
 
 
-def generate_smb4_tdb(smb4_tdb):
+def generate_smb4_tdb(client, smb4_tdb):
     try:
-        users = get_smb4_users()
+        users = get_smb4_users(client)
         for u in users:
-            smb4_tdb.append(u.bsdusr_smbhash)
+            smb4_tdb.append(u['bsdusr_smbhash'])
     except:
         return
 
@@ -959,7 +957,7 @@ def generate_smb4_conf(client, smb4_conf, role):
         confset2(smb4_conf, "domain logons = %s",
                  "yes" if cifs.cifs_srv_domain_logons else "no")
 
-    if (not nt4_enabled() and not activedirectory_enabled()):
+    if (not client.call('notifier.common', 'system', 'nt4_enabled') and not client.call('notifier.common', 'system', 'activedirectory_enabled')):
         confset2(smb4_conf, "local master = %s",
                  "yes" if cifs.cifs_srv_localmaster else "no")
 
@@ -982,13 +980,13 @@ def generate_smb4_conf(client, smb4_conf, role):
     elif role == 'member':
         confset1(smb4_conf, "server role = member server")
 
-        if nt4_enabled():
+        if client.call('notifier.common', 'system', 'nt4_enabled'):
             add_nt4_conf(client, smb4_conf)
 
         elif smb4_ldap_enabled():
             add_ldap_conf(client, smb4_conf)
 
-        elif activedirectory_enabled():
+        elif client.call('notifier.common', 'system', 'activedirectory_enabled'):
             add_activedirectory_conf(client, smb4_conf)
 
         confset2(smb4_conf, "netbios name = %s", cifs.netbiosname.upper())
@@ -1319,7 +1317,7 @@ def do_migration(old_samba4_datasets):
     return True
 
 
-def smb4_import_users(smb_conf_path, smb4_tdb, exportfile=None):
+def smb4_import_users(client, smb_conf_path, smb4_tdb, exportfile=None):
     (fd, tmpfile) = tempfile.mkstemp(dir="/tmp")
     for line in smb4_tdb:
         os.write(fd, line + '\n')
@@ -1346,8 +1344,9 @@ def smb4_import_users(smb_conf_path, smb4_tdb, exportfile=None):
             print line
 
     os.unlink(tmpfile)
-    smb4_users = get_smb4_users()
+    smb4_users = get_smb4_users(client)
     for u in smb4_users:
+        u = Struct(u)
         smbhash = u.bsdusr_smbhash
         parts = smbhash.split(':')
         user = parts[0]
@@ -1425,27 +1424,32 @@ def smb4_grant_rights():
             smb4_grant_user_rights(user)
 
 
-def get_groups():
+def get_groups(client):
     _groups = {}
 
-    groups = bsdGroups.objects.filter(bsdgrp_builtin=0)
+    groups = client.call('datastore.query', 'account.bsdGroups', [('bsdgrp_builtin', '=', False)])
     for g in groups:
+        g = Struct(g)
         key = str(g.bsdgrp_group)
         _groups[key] = []
-        members = bsdGroupMembership.objects.filter(bsdgrpmember_group=g.id)
+        # FIXME: test query
+        members = client.call('datastore.query', 'account.bsdGroupMembership', [('bsdgrpmember_group', '=', g.id)])
         for m in members:
-            u = bsdUsers.objects.filter(bsdusr_username=m.bsdgrpmember_user)
+            m = Struct(m)
+            # FIXME: test query
+            u = client.call('datastore.query', 'account.bsdUsers', [('bsdusr_username', '=', m.bsdgrpmember_user)])
             if u:
                 u = u[0]
-                _groups[key].append(str(u.bsdusr_username))
+                _groups[key].append(str(u['bsdusr_username']))
 
     return _groups
 
 
-def smb4_import_groups():
+def smb4_import_groups(client):
+    # XXX: WTF moment, this method is not used
     s = Samba4()
 
-    groups = get_groups()
+    groups = get_groups(client)
     for g in groups:
         s.group_add(g)
         if groups[g]:
@@ -1474,9 +1478,9 @@ def smb4_groupname_is_username(group):
     return True
 
 
-def smb4_map_groups():
+def smb4_map_groups(client):
     groupmap = notifier().groupmap_list()
-    groups = get_groups()
+    groups = get_groups(client)
     for g in groups:
         if not (smb4_group_mapped(groupmap, g) or smb4_groupname_is_username(g)):
             notifier().groupmap_add(unixgroup=g, ntgroup=g)
@@ -1593,7 +1597,7 @@ def main():
     role = get_server_role(client)
 
     generate_smbusers()
-    generate_smb4_tdb(smb4_tdb)
+    generate_smb4_tdb(client, smb4_tdb)
     generate_smb4_conf(client, smb4_conf, role)
     generate_smb4_system_shares(client, smb4_shares)
     generate_smb4_shares(client, smb4_shares)
@@ -1616,6 +1620,7 @@ def main():
     if role != 'dc':
         if not Samba4().users_imported():
             smb4_import_users(
+                client,
                 smb_conf_path,
                 smb4_tdb,
                 "/var/db/samba4/private/passdb.tdb"
@@ -1623,9 +1628,9 @@ def main():
             smb4_grant_rights()
             Samba4().user_import_sentinel_file_create()
 
-        smb4_map_groups()
+        smb4_map_groups(client)
 
-    if role == 'member' and client.call('notifier.common', 'system', 'activedirectory_enabledr') and idmap_backend_rfc2307(client):
+    if role == 'member' and client.call('notifier.common', 'system', 'activedirectory_enabled') and idmap_backend_rfc2307(client):
         set_idmap_rfc2307_secret(client)
 
     restore_secrets_database()
