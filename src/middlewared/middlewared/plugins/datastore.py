@@ -92,11 +92,14 @@ class DatastoreService(Service):
             return result[0]
         return result
 
-    def config(self, name):
+    def config(self, name, options=None):
         """
         Get configuration settings dict for a given name
         """
-        return self.query(name, None, {'get': True})
+        if options is None:
+            options = {}
+        options['get'] = True
+        return self.query(name, None, options)
 
     def insert(self, name, data):
         """
