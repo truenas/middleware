@@ -6,14 +6,13 @@ import sys
 sys.path.append('/usr/local/www')
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'freenasUI.settings')
 
-from django.core import serializers
 # Make sure to load all modules
 from django.db.models.loading import cache
 cache.get_apps()
 
 from django.db.models import Q
-from django.db.models.fields.related import ForeignKey
-from freenasUI.contrib.IPAddressField import IPAddressField
+
+from middlewared.utils import django_modelobj_serialize
 
 
 class DatastoreService(Service):
@@ -49,23 +48,9 @@ class DatastoreService(Service):
         app, model = name.split('.', 1)
         return cache.get_model(app, model)
 
-    def __modelobj_serialize(self, obj, extend=None):
-        data = {}
-        for field in  obj._meta.fields:
-            value = getattr(obj, field.name)
-            if isinstance(field, IPAddressField):
-                data[field.name] = str(value)
-            elif isinstance(field, ForeignKey):
-                data[field.name] = self.__modelobj_serialize(value) if value is not None else value
-            else:
-                data[field.name] = value
-        if extend:
-            data = self.middleware.call(extend, data)
-        return data
-
     def __queryset_serialize(self, qs, extend=None):
         for i in qs:
-            yield self.__modelobj_serialize(i, extend=extend)
+            yield self.django_modelobj_serialize(i, extend=extend)
 
     def query(self, name, filters=None, options=None):
         model = self.__get_model(name)
