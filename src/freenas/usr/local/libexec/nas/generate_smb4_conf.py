@@ -32,10 +32,6 @@ from freenasUI.account.models import (
     bsdGroups,
     bsdGroupMembership
 )
-from freenasUI.common.freenasldap import (
-    FreeNAS_ActiveDirectory,
-    FLAGS_DBINIT
-)
 from freenasUI.common.pipesubr import pipeopen
 from freenasUI.common.log import log_traceback
 from freenasUI.common.samba import Samba4
@@ -47,8 +43,6 @@ from freenasUI.common.system import (
 from freenasUI.choices import IPChoices
 from freenasUI.directoryservice.models import (
     ActiveDirectory,
-    LDAP,
-    NT4,
     IDMAP_TYPE_AD,
     IDMAP_TYPE_ADEX,
     IDMAP_TYPE_AUTORID,
@@ -66,7 +60,6 @@ from freenasUI.directoryservice.utils import get_idmap_object
 from freenasUI.middleware.notifier import notifier
 
 from freenasUI.services.models import (
-    CIFS,
     DomainController
 )
 from freenasUI.sharing.models import CIFS_Share
@@ -612,13 +605,13 @@ def configure_idmap_backend(smb4_conf, idmap, domain):
         pass
 
 
-def add_nt4_conf(smb4_conf):
+def add_nt4_conf(client, smb4_conf):
     # TODO: These are unused, will they be at some point?
     # rid_range_start = 20000
     # rid_range_end = 20000000
 
     try:
-        nt4 = NT4.objects.all()[0]
+        nt4 = Struct(client.call('datastore.query', 'directoryservice.nt4', None, {'get': True}))
     except:
         return
 
@@ -644,7 +637,8 @@ def add_nt4_conf(smb4_conf):
     confset1(smb4_conf, "security = domain")
     confset1(smb4_conf, "password server = *")
 
-    idmap = get_idmap_object(nt4.ds_type, nt4.id, nt4.nt4_idmap_backend)
+    # FIXME: no ds_type, extend model
+    idmap = client.call('notifier.ds_get_idmap_object', nt4.ds_type, nt4.id, nt4.nt4_idmap_backend)
     configure_idmap_backend(smb4_conf, idmap, nt4_workgroup)
 
     confset1(smb4_conf, "winbind cache time = 7200")
@@ -663,9 +657,9 @@ def add_nt4_conf(smb4_conf):
     confset1(smb4_conf, "preferred master = no")
 
 
-def set_ldap_password():
+def set_ldap_password(client):
     try:
-        ldap = LDAP.objects.all()[0]
+        ldap = Struct(client.call('datastore.query', 'directoryservice.LDAP', None, {'get': True}))
     except:
         return
 
@@ -681,10 +675,10 @@ def set_ldap_password():
                 print line
 
 
-def add_ldap_conf(smb4_conf):
+def add_ldap_conf(client, smb4_conf):
     try:
-        ldap = LDAP.objects.all()[0]
-        cifs = CIFS.objects.all()[0]
+        ldap = Struct(client.call('datastore.query', 'directoryservice.LDAP', None, {'get': True}))
+        cifs = Struct(client.call('datastore.query', 'services.CIFS', None, {'get': True}))
     except:
         return
 
@@ -718,13 +712,14 @@ def add_ldap_conf(smb4_conf):
     confset2(smb4_conf, "workgroup = %s", ldap_workgroup)
     confset1(smb4_conf, "domain logons = yes")
 
-    idmap = get_idmap_object(ldap.ds_type, ldap.id, ldap.ldap_idmap_backend)
+    # FIXME: no ds_type, extend or use static
+    idmap = client.call('notifier.ds_get_idmap_object', ldap.ds_type, ldap.id, ldap.ldap_idmap_backend)
     configure_idmap_backend(smb4_conf, idmap, ldap_workgroup)
 
 
-def add_activedirectory_conf(smb4_conf):
+def add_activedirectory_conf(client, smb4_conf):
     try:
-        ad = ActiveDirectory.objects.all()[0]
+        ad = Struct(client.call('datastore.query', 'directoryservice.ActiveDirectory', None, {'get': True}))
     except:
         return
 
@@ -738,7 +733,7 @@ def add_activedirectory_conf(smb4_conf):
 
     ad_workgroup = None
     try:
-        fad = FreeNAS_ActiveDirectory(flags=FLAGS_DBINIT)
+        fad = Struct(client.call('notifier.directoryservice', 'AD'))
         ad_workgroup = fad.netbiosname.upper()
     except:
         return
@@ -768,7 +763,8 @@ def add_activedirectory_conf(smb4_conf):
     if ad.ad_nss_info:
         confset2(smb4_conf, "winbind nss info = %s", ad.ad_nss_info)
 
-    idmap = get_idmap_object(ad.ds_type, ad.id, ad.ad_idmap_backend)
+    # FIXME: no ds_type, use static or extend model
+    idmap = client.call('notifier.ds_get_idmap_object', ad.ds_type, ad.id, ad.ad_idmap_backend)
     configure_idmap_backend(smb4_conf, idmap, ad_workgroup)
 
     confset2(smb4_conf, "allow trusted domains = %s",
@@ -782,17 +778,17 @@ def add_activedirectory_conf(smb4_conf):
              "/home/%D/%U" if not ad.ad_use_default_domain else "/home/%U")
 
 
-def add_domaincontroller_conf(smb4_conf):
+def add_domaincontroller_conf(client, smb4_conf):
     try:
-        dc = DomainController.objects.all()[0]
-        cifs = CIFS.objects.all()[0]
+        dc = Struct(client.call('datastore.query', 'services.DomainController', None, {'get': True}))
+        cifs = Struct(client.call('cifs.config'))
     except:
         return
 
     # server_services = get_server_services()
     # dcerpc_endpoint_servers = get_dcerpc_endpoint_servers()
 
-    confset2(smb4_conf, "netbios name = %s", cifs.get_netbiosname().upper())
+    confset2(smb4_conf, "netbios name = %s", cifs.netbiosname.upper())
     if cifs.cifs_srv_netbiosalias:
         confset2(smb4_conf, "netbios aliases = %s", cifs.cifs_srv_netbiosalias.upper())
     confset2(smb4_conf, "workgroup = %s", dc.dc_domain.upper())
@@ -860,9 +856,9 @@ def generate_smb4_tdb(smb4_tdb):
         return
 
 
-def generate_smb4_conf(smb4_conf, role):
+def generate_smb4_conf(client, smb4_conf, role):
     try:
-        cifs = CIFS.objects.all()[0]
+        cifs = Struct(client.call('cifs.config'))
     except:
         return
 
@@ -989,27 +985,27 @@ def generate_smb4_conf(smb4_conf, role):
 
     elif role == 'dc':
         confset1(smb4_conf, "server role = active directory domain controller")
-        add_domaincontroller_conf(smb4_conf)
+        add_domaincontroller_conf(client, smb4_conf)
 
     elif role == 'member':
         confset1(smb4_conf, "server role = member server")
 
         if nt4_enabled():
-            add_nt4_conf(smb4_conf)
+            add_nt4_conf(client, smb4_conf)
 
         elif smb4_ldap_enabled():
-            add_ldap_conf(smb4_conf)
+            add_ldap_conf(client, smb4_conf)
 
         elif activedirectory_enabled():
-            add_activedirectory_conf(smb4_conf)
+            add_activedirectory_conf(client, smb4_conf)
 
-        confset2(smb4_conf, "netbios name = %s", cifs.get_netbiosname().upper())
+        confset2(smb4_conf, "netbios name = %s", cifs.netbiosname.upper())
         if cifs.cifs_srv_netbiosalias:
             confset2(smb4_conf, "netbios aliases = %s", cifs.cifs_srv_netbiosalias.upper())
 
     elif role == 'standalone':
         confset1(smb4_conf, "server role = standalone")
-        confset2(smb4_conf, "netbios name = %s", cifs.get_netbiosname().upper())
+        confset2(smb4_conf, "netbios name = %s", cifs.netbiosname.upper())
         if cifs.cifs_srv_netbiosalias:
             confset2(smb4_conf, "netbios aliases = %s", cifs.cifs_srv_netbiosalias.upper())
         confset2(smb4_conf, "workgroup = %s", cifs.cifs_srv_workgroup.upper())
@@ -1602,7 +1598,7 @@ def main():
 
     generate_smbusers()
     generate_smb4_tdb(smb4_tdb)
-    generate_smb4_conf(smb4_conf, role)
+    generate_smb4_conf(client, smb4_conf, role)
     generate_smb4_system_shares(smb4_shares)
     generate_smb4_shares(smb4_shares)
 
@@ -1618,7 +1614,7 @@ def main():
     smb4_set_SID(client)
 
     if role == 'member' and smb4_ldap_enabled():
-        set_ldap_password()
+        set_ldap_password(client)
         backup_secrets_database()
 
     if role != 'dc':
