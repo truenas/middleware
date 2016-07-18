@@ -37,12 +37,10 @@ from freenasUI.common.log import log_traceback
 from freenasUI.common.samba import Samba4
 from freenasUI.common.system import (
     activedirectory_enabled,
-    domaincontroller_enabled,
     nt4_enabled
 )
 from freenasUI.choices import IPChoices
 from freenasUI.directoryservice.models import (
-    ActiveDirectory,
     IDMAP_TYPE_AD,
     IDMAP_TYPE_ADEX,
     IDMAP_TYPE_AUTORID,
@@ -56,13 +54,7 @@ from freenasUI.directoryservice.models import (
     DS_TYPE_CIFS,
     idmap_to_enum
 )
-from freenasUI.directoryservice.utils import get_idmap_object
 from freenasUI.middleware.notifier import notifier
-
-from freenasUI.services.models import (
-    DomainController
-)
-from freenasUI.sharing.models import CIFS_Share
 
 
 log = logging.getLogger('generate_smb4_conf')
@@ -971,7 +963,7 @@ def generate_smb4_conf(client, smb4_conf, role):
         confset2(smb4_conf, "local master = %s",
                  "yes" if cifs.cifs_srv_localmaster else "no")
 
-    idmap = get_idmap_object(DS_TYPE_CIFS, cifs.id, 'tdb')
+    idmap = client.call('notifier.ds_get_idmap_object', DS_TYPE_CIFS, cifs.id, 'tdb')
     configure_idmap_backend(smb4_conf, idmap, None)
 
     if role == 'auto':
@@ -1032,16 +1024,18 @@ def generate_smb4_conf(client, smb4_conf, role):
         confset1(smb4_conf, line)
 
 
-def generate_smb4_shares(smb4_shares):
+def generate_smb4_shares(client, smb4_shares):
     try:
-        shares = CIFS_Share.objects.all()
+        shares = client.call('datastore.query', 'sharing.CIFS_Share')
     except:
+        log.warn('Failed to retrieve cifs shares', exc_info=True)
         return
 
     if len(shares) == 0:
         return
 
     for share in shares:
+        share = Struct(share)
         if (not share.cifs_home and
                 not os.path.isdir(share.cifs_path.encode('utf8'))):
             continue
@@ -1053,9 +1047,9 @@ def generate_smb4_shares(smb4_shares):
             valid_users_path = "%U"
             valid_users = "%U"
 
-            if activedirectory_enabled():
+            if client.call('notifier.common', 'system', 'activedirectory_enabled'):
                 try:
-                    ad = ActiveDirectory.objects.all()[0]
+                    ad = Struct(client.call('datastore.query', 'directoryservice.ActiveDirectory', None, {'get': True}))
                     if not ad.ad_use_default_domain:
                         valid_users_path = "%D/%U"
                         valid_users = "%D\%U"
@@ -1138,10 +1132,10 @@ def generate_smb4_shares(smb4_shares):
             confset1(smb4_shares, line)
 
 
-def generate_smb4_system_shares(smb4_shares):
-    if domaincontroller_enabled():
+def generate_smb4_system_shares(client, smb4_shares):
+    if client.call('notifier.common', 'system', 'domaincontroller_enabled'):
         try:
-            dc = DomainController.objects.all()[0]
+            dc = Struct(client.call('datastore.query', 'services.DomainController', None, {'get': True}))
             sysvol_path = "/var/db/samba4/sysvol"
 
             for share in ["sysvol", "netlogon"]:
@@ -1168,17 +1162,19 @@ def generate_smb4_system_shares(smb4_shares):
             pass
 
 
-def generate_smbusers():
-    users = bsdUsers.objects.filter(
-        Q(bsdusr_microsoft_account=True) & (
-            ~Q(bsdusr_email=None) & ~Q(bsdusr_email='')
-        )
-    )
+def generate_smbusers(client):
+    # FIXME: test query
+    users = client.call('datastore.query', 'account.bsdusers', [
+        ('bsdusr_microsoft_account', '=', True),
+        ('bsdusr_email', '!=', None),
+        ('bsdusr_email', '!=', ''),
+    ])
     if not users:
         return
 
     with open("/usr/local/etc/smbusers", "w") as f:
         for u in users:
+            u = Struct(u)
             f.write("%s = %s\n" % (u.bsdusr_username, u.bsdusr_email))
     os.chmod("/usr/local/etc/smbusers", 0644)
 
@@ -1599,8 +1595,8 @@ def main():
     generate_smbusers()
     generate_smb4_tdb(smb4_tdb)
     generate_smb4_conf(client, smb4_conf, role)
-    generate_smb4_system_shares(smb4_shares)
-    generate_smb4_shares(smb4_shares)
+    generate_smb4_system_shares(client, smb4_shares)
+    generate_smb4_shares(client, smb4_shares)
 
     if role == 'dc' and not Samba4().domain_provisioned():
         provision_smb4()
