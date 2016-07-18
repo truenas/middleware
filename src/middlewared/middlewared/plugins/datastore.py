@@ -25,6 +25,7 @@ class DatastoreService(Service):
             '>=': 'gte',
             '<': 'lt',
             '<=': 'lte',
+            '~', 'regex',
         }
 
         rv = []
