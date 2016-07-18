@@ -37,7 +37,7 @@ generate_smbpasswd()
 	while eval read $f
 	do
 		if [ -n "${ldap_bindpw}" ]; then
-			/usr/local/bin/smbpasswd -w "$(/usr/local/www/freenasUI/middleware/notifier.py pwenc_decrypt ${ldap_bindpw})" >/dev/null 2>&1
+			/usr/local/bin/smbpasswd -w "$(/usr/local/bin/midclt notifier.pwenc_decrypt ${ldap_bindpw})" >/dev/null 2>&1
 		fi
 	done
 }
