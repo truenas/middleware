@@ -183,7 +183,7 @@ __SQL__
 		val=$(echo ${line}|cut -f2- -d=|xargs)
 
 		if [ "${var}" = "dc_passwd" ]; then
-			DC_set "${var}" "$(/usr/local/www/freenasUI/middleware/notifier.py pwenc_decrypt ${val})"
+			DC_set "${var}" "$(/usr/local/bin/midclt call notifier.pwenc_decrypt ${val})"
 		else
 			DC_set "${var}" "${val}"
 		fi
