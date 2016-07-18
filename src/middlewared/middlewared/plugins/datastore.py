@@ -25,7 +25,7 @@ class DatastoreService(Service):
             '>=': 'gte',
             '<': 'lt',
             '<=': 'lte',
-            '~', 'regex',
+            '~': 'regex',
         }
 
         rv = []
@@ -38,6 +38,18 @@ class DatastoreService(Service):
                 if op == '!=':
                     q.negate()
                 rv.append(q)
+            elif len(f) == 2:
+                op, value = f
+                if op == 'OR':
+                    or_value = None
+                    for value in self._filters_to_queryset(value):
+                        if or_value is None:
+                            or_value = value
+                        else:
+                            or_value |= value
+                    rv.append(or_value)
+                else:
+                    raise ValueError('Invalid operation: {0}'.format(op))
             else:
                 raise Exception("Invalid filter {0}".format(f))
         return rv
@@ -51,7 +63,7 @@ class DatastoreService(Service):
 
     def __queryset_serialize(self, qs, extend=None):
         for i in qs:
-            yield self.django_modelobj_serialize(i, extend=extend)
+            yield django_modelobj_serialize(i, extend=extend)
 
     def query(self, name, filters=None, options=None):
         model = self.__get_model(name)
