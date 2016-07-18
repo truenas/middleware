@@ -1,4 +1,6 @@
 #!/usr/local/bin/python
+from middlewared.client import Client
+from middlewared.client.utils import Struct
 
 import os
 import pwd
@@ -40,8 +42,6 @@ from freenasUI.common.samba import Samba4
 from freenasUI.common.system import (
     activedirectory_enabled,
     domaincontroller_enabled,
-    ldap_enabled,
-    ldap_has_samba_schema,
     nt4_enabled
 )
 from freenasUI.choices import IPChoices
@@ -73,6 +73,7 @@ from freenasUI.sharing.models import CIFS_Share
 
 
 log = logging.getLogger('generate_smb4_conf')
+
 
 def debug_SID(str):
     if str:
@@ -108,11 +109,11 @@ def smb4_get_system_SID():
     return SID
 
 
-def smb4_get_database_SID():
+def smb4_get_database_SID(client):
     SID = None
 
     try:
-        cifs = CIFS.objects.all()[0]
+        cifs = Struct(client.call('datastore.query', 'services.cifs', None, {'get': True}))
         if cifs:
             SID = cifs.cifs_SID
     except Exception as e:
@@ -140,13 +141,13 @@ def smb4_set_system_SID(SID):
     return True
 
 
-def smb4_set_database_SID(SID):
+def smb4_set_database_SID(client, SID):
     ret = False
     if not SID:
         return ret
 
     try:
-        cifs = CIFS.objects.all()[0]
+        cifs = Struct(client.call('datastore.query', 'services.cifs', None, {'get': True}))
         cifs.cifs_SID = SID
         cifs.save()
         ret = True
@@ -161,8 +162,8 @@ def smb4_set_database_SID(SID):
     return ret
 
 
-def smb4_set_SID():
-    database_SID = smb4_get_database_SID()
+def smb4_set_SID(client):
+    database_SID = smb4_get_database_SID(client)
     system_SID = smb4_get_system_SID()
 
     if database_SID:
@@ -183,13 +184,13 @@ def smb4_set_SID():
         if not smb4_set_system_SID(system_SID):
             print >> sys.stderr, "Unable to set SID to %s" % system_SID
         else:
-            smb4_set_database_SID(system_SID)
+            smb4_set_database_SID(client, system_SID)
 
 
-def smb4_ldap_enabled():
+def smb4_ldap_enabled(client):
     ret = False
 
-    if ldap_enabled() and ldap_has_samba_schema():
+    if client.call('notifier.common', 'system', 'ldap_enabled') and client.call('notifier.common', 'system', 'ldap_has_samba_schema'):
         ret = True
 
     return ret
@@ -309,15 +310,14 @@ def get_dcerpc_endpoint_servers():
     return dcerpc_endpoint_servers
 
 
-def get_server_role():
+def get_server_role(client):
     role = "standalone"
-    if nt4_enabled() or activedirectory_enabled() or smb4_ldap_enabled():
+    if client.call('notifier.common', 'system', 'nt4_enabled') or client.call('notifier.common', 'system', 'activedirectory_enabledr') or smb4_ldap_enabled(client):
         role = "member"
 
-    if domaincontroller_enabled():
+    if client.call('notifier.common', 'system', 'domaincontroller_enabled'):
         try:
-            dc = DomainController.objects.all()[0]
-            role = dc.dc_role
+            role = client.call('datastore.query', 'services.DomainController', None, {'get': True})['dc_role']
         except:
             pass
 
@@ -494,26 +494,27 @@ def configure_idmap_rfc2307(smb4_conf, idmap, domain):
         ))
 
 
-def idmap_backend_rfc2307():
+def idmap_backend_rfc2307(client):
     try:
-        ad = ActiveDirectory.objects.all()[0]
+        ad = Struct(client.call('datastore.query', 'directoryservice.ActiveDirectory', None, {'get': True}))
     except:
         return False
 
     return (idmap_to_enum(ad.ad_idmap_backend) == IDMAP_TYPE_RFC2307)
 
 
-def set_idmap_rfc2307_secret():
+def set_idmap_rfc2307_secret(client):
     try:
-        ad = ActiveDirectory.objects.all()[0]
+        ad = Struct(client.call('datastore.query', 'directoryservice.ActiveDirectory', None, {'get': True}))
     except:
         return False
 
     domain = None
-    idmap = get_idmap_object(ad.ds_type, ad.id, ad.ad_idmap_backend)
+    # FIXME: ad ds_type, extend model
+    idmap = Struct(client.call('notifier.ds_get_idmap_object', ad.ds_type, ad.id, ad.ad_idmap_backend))
 
     try:
-        fad = FreeNAS_ActiveDirectory(flags=FLAGS_DBINIT)
+        fad = Struct(client.call('notifier.directoryservice', 'AD'))
         domain = fad.netbiosname.upper()
     except:
         return False
@@ -1583,6 +1584,7 @@ def restore_secrets_database():
 
 
 def main():
+    client = Client()
     smb_conf_path = "/usr/local/etc/smb4.conf"
 
     smb4_tdb = []
@@ -1596,7 +1598,7 @@ def main():
     if migration_available(old_samba4_datasets):
         do_migration(old_samba4_datasets)
 
-    role = get_server_role()
+    role = get_server_role(client)
 
     generate_smbusers()
     generate_smb4_tdb(smb4_tdb)
@@ -1613,7 +1615,7 @@ def main():
         for line in smb4_shares:
             f.write(line + '\n')
 
-    smb4_set_SID()
+    smb4_set_SID(client)
 
     if role == 'member' and smb4_ldap_enabled():
         set_ldap_password()
@@ -1631,8 +1633,8 @@ def main():
 
         smb4_map_groups()
 
-    if role == 'member' and activedirectory_enabled() and idmap_backend_rfc2307():
-        set_idmap_rfc2307_secret()
+    if role == 'member' and client.call('notifier.common', 'system', 'activedirectory_enabledr') and idmap_backend_rfc2307(client):
+        set_idmap_rfc2307_secret(client)
 
     restore_secrets_database()
 
