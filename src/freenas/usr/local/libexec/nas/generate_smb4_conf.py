@@ -19,15 +19,8 @@ sys.path.extend([
     '/usr/local/www/freenasUI'
 ])
 
-os.environ["DJANGO_SETTINGS_MODULE"] = "freenasUI.settings"
-
-# Make sure to load all modules
-from django.db.models.loading import cache
-cache.get_apps()
-
 from freenasUI.common.pipesubr import pipeopen
 from freenasUI.common.log import log_traceback
-from freenasUI.common.samba import Samba4
 from freenasUI.choices import IPChoices
 
 
@@ -1164,24 +1157,24 @@ def generate_smbusers(client):
     os.chmod("/usr/local/etc/smbusers", 0644)
 
 
-def provision_smb4():
-    if not Samba4().domain_provision():
+def provision_smb4(client):
+    if not client.call('notifier.samba4', 'domain_provision'):
         print >> sys.stderr, "Failed to provision domain"
         return False
 
-    if not Samba4().disable_password_complexity():
+    if not client.call('notifier.samba4', 'disable_password_complexity'):
         print >> sys.stderr, "Failed to disable password complexity"
         return False
 
-    if not Samba4().set_min_pwd_length():
+    if not client.call('notifier.samba4', 'set_min_pwd_length'):
         print >> sys.stderr, "Failed to set minimum password length"
         return False
 
-    if not Samba4().set_administrator_password():
+    if not client.call('notifier.samba4', 'set_administrator_password'):
         print >> sys.stderr, "Failed to set administrator password"
         return False
 
-    if not Samba4().domain_sentinel_file_create():
+    if not client.call('notifier.samba4', 'domain_sentinel_file_create'):
         return False
 
     return True
@@ -1433,13 +1426,11 @@ def get_groups(client):
 
 def smb4_import_groups(client):
     # XXX: WTF moment, this method is not used
-    s = Samba4()
-
     groups = get_groups(client)
     for g in groups:
-        s.group_add(g)
+        client.call('notifier.samba4', 'group_add', [g])
         if groups[g]:
-            s.group_addmembers(g, groups[g])
+            client.call('notifier.samba4', 'group_addmembers', [g, groups[g]])
 
 
 def smb4_group_mapped(groupmap, group):
@@ -1588,8 +1579,8 @@ def main():
     generate_smb4_system_shares(client, smb4_shares)
     generate_smb4_shares(client, smb4_shares)
 
-    if role == 'dc' and not Samba4().domain_provisioned():
-        provision_smb4()
+    if role == 'dc' and not client.call('notifier.samba4', 'domain_provisioned'):
+        provision_smb4(client)
 
     with open(smb_conf_path, "w") as f:
         for line in smb4_conf:
@@ -1604,7 +1595,7 @@ def main():
         backup_secrets_database()
 
     if role != 'dc':
-        if not Samba4().users_imported():
+        if not client.call('notifier.samba4', 'users_imported'):
             smb4_import_users(
                 client,
                 smb_conf_path,
@@ -1612,7 +1603,7 @@ def main():
                 "/var/db/samba4/private/passdb.tdb"
             )
             smb4_grant_rights()
-            Samba4().user_import_sentinel_file_create()
+            client.call('notifier.samba4', 'user_import_sentinel_file_create')
 
         smb4_map_groups(client)
 

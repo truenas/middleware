@@ -16,6 +16,7 @@ from freenasUI.common.freenasldap import (
     FreeNAS_ActiveDirectory,
     FLAGS_DBINIT,
 )
+from freenasUI.common.samba import Samba4
 from freenasUI.middleware import zfs
 from freenasUI.middleware.notifier import notifier
 from freenasUI.directoryservice.models import (
@@ -120,6 +121,12 @@ class NotifierService(Service):
         if code not in mapping:
             raise ValueError('Unknown idmap code: {0}'.format(code))
         return mapping[code]
+
+    def samba4(self, name, args=None):
+        """Temporary wrapper to use Samba4 over middlewared"""
+        if args is None:
+            args = []
+        return getattr(Samba4(), name)(*args)
 
     def systemdataset_is_decrypted(self):
         """Temporary workaround to get system dataset crypt state"""
