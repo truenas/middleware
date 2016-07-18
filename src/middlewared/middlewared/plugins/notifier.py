@@ -18,6 +18,19 @@ from freenasUI.common.freenasldap import (
 )
 from freenasUI.middleware import zfs
 from freenasUI.middleware.notifier import notifier
+from freenasUI.directoryservice.models import (
+    IDMAP_TYPE_AD,
+    IDMAP_TYPE_ADEX,
+    IDMAP_TYPE_AUTORID,
+    IDMAP_TYPE_HASH,
+    IDMAP_TYPE_LDAP,
+    IDMAP_TYPE_NSS,
+    IDMAP_TYPE_RFC2307,
+    IDMAP_TYPE_RID,
+    IDMAP_TYPE_TDB,
+    IDMAP_TYPE_TDB2,
+    DS_TYPE_CIFS,
+)
 from freenasUI.directoryservice.utils import get_idmap_object
 
 from middlewared.utils import django_modelobj_serialize
@@ -89,6 +102,24 @@ class NotifierService(Service):
         data['ssl'] = obj.get_ssl()
         data['url'] = obj.get_url()
         return data
+
+    def ds_idmap_type_code_to_string(self, code):
+        """Temporary wrapper to convert idmap code to string"""
+        mapping = {
+            IDMAP_TYPE_AD: 'IDMAP_TYPE_AD'
+            IDMAP_TYPE_ADEX: 'IDMAP_TYPE_ADEX'
+            IDMAP_TYPE_AUTORID: 'IDMAP_TYPE_AUTORID'
+            IDMAP_TYPE_HASH: 'IDMAP_TYPE_HASH'
+            IDMAP_TYPE_HASH: 'IDMAP_TYPE_LDAP'
+            IDMAP_TYPE_HASH: 'IDMAP_TYPE_NSS'
+            IDMAP_TYPE_HASH: 'IDMAP_TYPE_RFC2307'
+            IDMAP_TYPE_HASH: 'IDMAP_TYPE_RID'
+            IDMAP_TYPE_HASH: 'IDMAP_TYPE_TDB'
+            IDMAP_TYPE_HASH: 'IDMAP_TYPE_TDB2'
+        }
+        if code not in mapping:
+            raise ValueError('Unknown idmap code: {0}'.format(code))
+        return mapping[code]
 
     def systemdataset_is_decrypted(self):
         """Temporary workaround to get system dataset crypt state"""

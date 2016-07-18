@@ -29,20 +29,6 @@ from freenasUI.common.pipesubr import pipeopen
 from freenasUI.common.log import log_traceback
 from freenasUI.common.samba import Samba4
 from freenasUI.choices import IPChoices
-from freenasUI.directoryservice.models import (
-    IDMAP_TYPE_AD,
-    IDMAP_TYPE_ADEX,
-    IDMAP_TYPE_AUTORID,
-    IDMAP_TYPE_HASH,
-    IDMAP_TYPE_LDAP,
-    IDMAP_TYPE_NSS,
-    IDMAP_TYPE_RFC2307,
-    IDMAP_TYPE_RID,
-    IDMAP_TYPE_TDB,
-    IDMAP_TYPE_TDB2,
-    DS_TYPE_CIFS,
-    idmap_to_enum
-)
 
 
 log = logging.getLogger('generate_smb4_conf')
@@ -473,7 +459,7 @@ def idmap_backend_rfc2307(client):
     except:
         return False
 
-    return (idmap_to_enum(ad.ad_idmap_backend) == IDMAP_TYPE_RFC2307)
+    return (client.call('notifier.ds_idmap_type_code_to_string', ad.ad_idmap_backend) == 'IDMAP_TYPE_RFC2307')
 
 
 def set_idmap_rfc2307_secret(client):
@@ -562,26 +548,28 @@ def configure_idmap_tdb2(smb4_conf, idmap, domain):
 
 
 IDMAP_FUNCTIONS = {
-    IDMAP_TYPE_AD: configure_idmap_ad,
-    IDMAP_TYPE_ADEX: configure_idmap_ad,
-    IDMAP_TYPE_AUTORID: configure_idmap_autorid,
-    IDMAP_TYPE_HASH: configure_idmap_hash,
-    IDMAP_TYPE_LDAP: configure_idmap_ldap,
-    IDMAP_TYPE_NSS: configure_idmap_nss,
-    IDMAP_TYPE_RFC2307: configure_idmap_rfc2307,
-    IDMAP_TYPE_RID: configure_idmap_rid,
-    IDMAP_TYPE_TDB: configure_idmap_tdb,
-    IDMAP_TYPE_TDB2: configure_idmap_tdb2
+    'IDMAP_TYPE_AD': configure_idmap_ad,
+    'IDMAP_TYPE_ADEX': configure_idmap_ad,
+    'IDMAP_TYPE_AUTORID': configure_idmap_autorid,
+    'IDMAP_TYPE_HASH': configure_idmap_hash,
+    'IDMAP_TYPE_LDAP': configure_idmap_ldap,
+    'IDMAP_TYPE_NSS': configure_idmap_nss,
+    'IDMAP_TYPE_RFC2307': configure_idmap_rfc2307,
+    'IDMAP_TYPE_RID': configure_idmap_rid,
+    'IDMAP_TYPE_TDB': configure_idmap_tdb,
+    'IDMAP_TYPE_TDB2': configure_idmap_tdb2
 }
 
 
-def configure_idmap_backend(smb4_conf, idmap, domain):
+def configure_idmap_backend(client, smb4_conf, idmap, domain):
     if not domain:
         domain = "*"
 
     try:
-        IDMAP_FUNCTIONS[idmap.idmap_backend_type](smb4_conf, idmap, domain)
+        idmap_str = client.call('notifier.ds_idmap_type_code_to_string', idmap.idmap_backend_type)
+        IDMAP_FUNCTIONS[idmap_str](smb4_conf, idmap, domain)
     except:
+        log.warn('Failed to configure idmap', exc_info=True)
         pass
 
 
@@ -619,7 +607,7 @@ def add_nt4_conf(client, smb4_conf):
 
     # FIXME: no ds_type, extend model
     idmap = client.call('notifier.ds_get_idmap_object', nt4.ds_type, nt4.id, nt4.nt4_idmap_backend)
-    configure_idmap_backend(smb4_conf, idmap, nt4_workgroup)
+    configure_idmap_backend(client, smb4_conf, idmap, nt4_workgroup)
 
     confset1(smb4_conf, "winbind cache time = 7200")
     confset1(smb4_conf, "winbind offline logon = yes")
@@ -694,7 +682,7 @@ def add_ldap_conf(client, smb4_conf):
 
     # FIXME: no ds_type, extend or use static
     idmap = client.call('notifier.ds_get_idmap_object', ldap.ds_type, ldap.id, ldap.ldap_idmap_backend)
-    configure_idmap_backend(smb4_conf, idmap, ldap_workgroup)
+    configure_idmap_backend(client, smb4_conf, idmap, ldap_workgroup)
 
 
 def add_activedirectory_conf(client, smb4_conf):
@@ -745,7 +733,7 @@ def add_activedirectory_conf(client, smb4_conf):
 
     # FIXME: no ds_type, use static or extend model
     idmap = client.call('notifier.ds_get_idmap_object', ad.ds_type, ad.id, ad.ad_idmap_backend)
-    configure_idmap_backend(smb4_conf, idmap, ad_workgroup)
+    configure_idmap_backend(client, smb4_conf, idmap, ad_workgroup)
 
     confset2(smb4_conf, "allow trusted domains = %s",
              "yes" if ad.ad_allow_trusted_doms else "no")
@@ -959,8 +947,9 @@ def generate_smb4_conf(client, smb4_conf, role):
         confset2(smb4_conf, "local master = %s",
                  "yes" if cifs.cifs_srv_localmaster else "no")
 
-    idmap = client.call('notifier.ds_get_idmap_object', DS_TYPE_CIFS, cifs.id, 'tdb')
-    configure_idmap_backend(smb4_conf, idmap, None)
+    # 5 = DS_TYPE_CIFS
+    idmap = client.call('notifier.ds_get_idmap_object', 5, cifs.id, 'tdb')
+    configure_idmap_backend(client, smb4_conf, idmap, None)
 
     if role == 'auto':
         confset1(smb4_conf, "server role = auto")
