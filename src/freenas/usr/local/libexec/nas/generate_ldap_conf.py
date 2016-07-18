@@ -16,10 +16,6 @@ os.environ["DJANGO_SETTINGS_MODULE"] = "freenasUI.settings"
 from django.db.models.loading import cache
 cache.get_apps()
 
-from freenasUI.common.freenasldap import (
-    FreeNAS_ActiveDirectory,
-    FLAGS_DBINIT
-)
 from freenasUI.common.ssl import get_certificateauthority_path
 from freenasUI.directoryservice.utils import get_idmap_object
 
@@ -48,7 +44,7 @@ def ldap_conf_ldap(client, ldap_conf):
 
 
 def ldap_conf_activedirectory(client, ldap_conf):
-    ad = FreeNAS_ActiveDirectory(flags=FLAGS_DBINIT)
+    ad = Struct(client.call('notifier.directoryservice', 'AD'))
 
     config = {}
     config["URI"] = "%s://%s" % (

@@ -12,7 +12,10 @@ from django.db.models.loading import cache
 cache.get_apps()
 
 from freenasUI import common as fcommon
-from freenasUI.common.freenasldap import FreeNAS_ActiveDirectory
+from freenasUI.common.freenasldap import (
+    FreeNAS_ActiveDirectory,
+    FLAGS_DBINIT,
+)
 from freenasUI.middleware import zfs
 from freenasUI.middleware.notifier import notifier
 
@@ -57,13 +60,15 @@ class NotifierService(Service):
     def directoryservice(self, name):
         """Wrapper to serialize DS connectors"""
         if name == 'AD':
-            ds = FreeNAS_ActiveDirectory(flags=0x00010000)
+            ds = FreeNAS_ActiveDirectory(flags=FLAGS_DBINIT)
         else:
             raise ValueError('Unknown ds name {0}'.format(name))
         data = {}
         for i in (
             'netbiosname', 'keytab_file', 'keytab_principal', 'domainname',
             'use_default_domain', 'dchost', 'basedn', 'binddn', 'bindpw',
+            'ssl', 'certfile', 'id',
+            'ad_idmap_backend', 'ds_type',
         ):
             if hasattr(ds, i):
                 data[i] = getattr(ds, i)
