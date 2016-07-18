@@ -18,6 +18,9 @@ from freenasUI.common.freenasldap import (
 )
 from freenasUI.middleware import zfs
 from freenasUI.middleware.notifier import notifier
+from freenasUI.directoryservice.utils import get_idmap_object
+
+from middlewared.utils import django_modelobj_serialize
 
 
 class NotifierService(Service):
@@ -58,7 +61,7 @@ class NotifierService(Service):
         return serialize(rv)
 
     def directoryservice(self, name):
-        """Wrapper to serialize DS connectors"""
+        """Temporary rapper to serialize DS connectors"""
         if name == 'AD':
             ds = FreeNAS_ActiveDirectory(flags=FLAGS_DBINIT)
         else:
@@ -72,4 +75,17 @@ class NotifierService(Service):
         ):
             if hasattr(ds, i):
                 data[i] = getattr(ds, i)
+        return data
+
+    def ds_get_idmap_object(self, ds_type, id, idmap_backend):
+        """Temporary wrapper to serialize IDMAP objects"""
+        obj = get_idmap_object(ds_type, id, idmap_backend)
+        data = django_modelobj_serialize(obj)
+        cert = obj.get_certificate()
+        if cert:
+            data['certificate'] = django_modelobj_serialize(cert)
+        else:
+            data['certificate'] = None
+        data['ssl'] = obj.get_ssl()
+        data['url'] = obj.get_url()
         return data
