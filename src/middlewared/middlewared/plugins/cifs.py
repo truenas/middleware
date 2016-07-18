@@ -4,7 +4,7 @@ from middlewared.service import Service
 class CIFSService(Service):
 
     def config(self):
-        return self.middleware.call('datastore.query', 'services.cifs', None, {'get': True, 'extend': 'cifs.cifs_extend'})
+        return self.middleware.call('datastore.config', 'services.cifs', {'extend': 'cifs.cifs_extend'})
 
     def cifs_extend(self, cifs):
         """Extend cifs for netbios
