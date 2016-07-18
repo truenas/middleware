@@ -8,25 +8,6 @@ import string
 import sys
 import tempfile
 
-sys.path.extend([
-    '/usr/local/www',
-    '/usr/local/www/freenasUI'
-])
-
-os.environ["DJANGO_SETTINGS_MODULE"] = "freenasUI.settings"
-
-# Make sure to load all modules
-from django.db.models.loading import cache
-cache.get_apps()
-
-from freenasUI.common.freenasldap import (
-    FreeNAS_ActiveDirectory,
-    FreeNAS_LDAP,
-    FLAGS_DBINIT
-)
-from freenasUI.common.ssl import (
-    get_certificateauthority_path,
-)
 
 SSSD_CONFIGFILE = "/usr/local/etc/sssd/sssd.conf"
 
@@ -410,13 +391,13 @@ class SSSDSectionContainer(object):
 
         sections = []
         for st in section_types:
-            for s in self.sections: 
+            for s in self.sections:
                 if st in s:
-                    sections.append({ st : s[st] })
+                    sections.append({st: s[st]})
                 elif st == 'domain':
                     key = s.keys()[0]
                     if key.startswith('domain'):
-                        sections.append({ key: s[key] })
+                        sections.append({key: s[key]})
 
         self.sections = sections
 
@@ -694,19 +675,21 @@ def add_ldap_section(client, sc):
         )
 
     if ldap.ldap_ssl == 'on':
-        certpath = get_certificateauthority_path(ldap.ldap_certificate)
+        ca = client.call('certificateauthority.query', [('id', '=', ldap.ldap_certificate.id)], {'get': True})
+        certpath = ca['cert_certificate_path']
         if certpath:
             ldap_section.ldap_tls_cacert = certpath
 
     elif ldap.ldap_ssl == 'start_tls':
         ldap_section.tls_reqcert = 'demand'
-        certpath = get_certificateauthority_path(ldap.ldap_certificate)
+        ca = client.call('certificateauthority.query', [('id', '=', ldap.ldap_certificate.id)], {'get': True})
+        certpath = ca['cert_certificate_path']
         if certpath:
             ldap_section.ldap_tls_cacert = certpath
         ldap_section.ldap_id_use_start_tls = 'true'
 
     ldap_save = ldap
-    ldap = FreeNAS_LDAP(flags=FLAGS_DBINIT)
+    ldap = client.call('notifier.directoryservice', 'LDAP')
 
     if ldap.keytab_file and ldap.keytab_principal:
         ldap_section.auth_provider = 'krb5'
@@ -741,7 +724,7 @@ def add_ldap_section(client, sc):
 
 def add_activedirectory_section(client, sc):
     activedirectory = Struct(client.call('datastore.query', 'directoryservice.activedirectory', None, {'get': True}))
-    ad = FreeNAS_ActiveDirectory(flags=FLAGS_DBINIT)
+    ad = client.call('notifier.directoryservice', 'AD')
     use_ad_provider = False
 
     ad_cookie = ad.netbiosname

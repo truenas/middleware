@@ -14,6 +14,7 @@ cache.get_apps()
 from freenasUI import common as fcommon
 from freenasUI.common.freenasldap import (
     FreeNAS_ActiveDirectory,
+    FreeNAS_LDAP,
     FLAGS_DBINIT,
 )
 from freenasUI.common.samba import Samba4
@@ -78,6 +79,8 @@ class NotifierService(Service):
         """Temporary rapper to serialize DS connectors"""
         if name == 'AD':
             ds = FreeNAS_ActiveDirectory(flags=FLAGS_DBINIT)
+        elif name == 'LDAP':
+            ds = FreeNAS_LDAP(flags=FLAGS_DBINIT)
         else:
             raise ValueError('Unknown ds name {0}'.format(name))
         data = {}
