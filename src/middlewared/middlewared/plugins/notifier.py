@@ -39,6 +39,13 @@ from middlewared.utils import django_modelobj_serialize
 
 
 class NotifierService(Service):
+    """
+    This service is supposed to be temporary.
+    It will serve as a transition from pre-middlewared world when
+    everything was just methods randomly placed somewhere (mainly notifier.py).
+    In a better world we will have specific services to split things logically.
+    e.g. account, zfs, network, sharing, services, etc.
+    """
 
     def __getattr__(self, attr):
         _n = notifier()
