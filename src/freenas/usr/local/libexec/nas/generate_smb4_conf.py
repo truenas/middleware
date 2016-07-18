@@ -43,7 +43,6 @@ from freenasUI.directoryservice.models import (
     DS_TYPE_CIFS,
     idmap_to_enum
 )
-from freenasUI.middleware.notifier import notifier
 
 
 log = logging.getLogger('generate_smb4_conf')
@@ -874,19 +873,18 @@ def generate_smb4_conf(client, smb4_conf, role):
         if role != 'dc':
             bindips = "127.0.0.1 %s" % bindips
 
-        n = notifier()
         bindips = bindips.split()
         for bindip in bindips:
             if not bindip:
                 continue
             bindip = bindip.strip()
-            iface = n.get_interface(bindip)
-            if iface and n.is_carp_interface(iface):
-                parent_iface = n.get_parent_interface(iface)
+            iface = client.call('notifier.get_interface', bindip)
+            if iface and client.call('notifier.is_carp_interface', iface):
+                parent_iface = client.call('notifier.get_parent_interface', iface)
                 if not parent_iface:
                     continue
 
-                parent_iinfo = n.get_interface_info(parent_iface[0])
+                parent_iinfo = client.call('notifier.get_interface_info', parent_iface[0])
                 if not parent_iinfo:
                     continue
 
@@ -1214,7 +1212,7 @@ def smb4_unlink(dir):
         pass
 
 
-def smb4_setup():
+def smb4_setup(client):
     statedir = "/var/db/samba4"
 
     smb4_mkdir("/var/run/samba")
@@ -1228,19 +1226,18 @@ def smb4_setup():
     smb4_unlink("/usr/local/etc/smb.conf")
     smb4_unlink("/usr/local/etc/smb4.conf")
 
-    if (hasattr(notifier, 'failover_status') and
-            notifier().failover_status() == 'BACKUP'):
+    if not client.call('notifier.is_freenas') and client.call('notifier.failover_status') == 'BACKUP':
         return
 
-    systemdataset, basename = notifier().system_dataset_settings()
+    systemdataset_is_decrypted = client.call('notifier.systemdataset_is_decrypted')
 
-    if not basename or not systemdataset or not systemdataset.is_decrypted():
+    if not systemdataset_is_decrypted:
         if os.path.islink(statedir):
             smb4_unlink(statedir)
             smb4_mkdir(statedir)
         return
 
-    systemdataset_path = notifier().system_dataset_path() or statedir
+    systemdataset_path = client.call('notifier.system_dataset_path') or statedir
 
     basename_realpath = os.path.join(systemdataset_path, 'samba4')
     statedir_realpath = os.path.realpath(statedir)
@@ -1278,10 +1275,10 @@ def smb4_setup():
 #    smb4_set_SID()
 
 
-def get_old_samba4_datasets():
+def get_old_samba4_datasets(client):
     old_samba4_datasets = []
 
-    fsvols = notifier().list_zfs_fsvols()
+    fsvols = client.call('notifier.list_zfs_fsvols')
     for fsvol in fsvols:
         if re.match('^.+/.samba4\/?$', fsvol):
             old_samba4_datasets.append(fsvol)
@@ -1301,7 +1298,7 @@ def migration_available(old_samba4_datasets):
     return res
 
 
-def do_migration(old_samba4_datasets):
+def do_migration(client, old_samba4_datasets):
     if len(old_samba4_datasets) > 1:
         return False
     old_samba4_dataset = "/mnt/%s/" % old_samba4_datasets[0]
@@ -1309,7 +1306,7 @@ def do_migration(old_samba4_datasets):
     try:
         pipeopen("/usr/local/bin/rsync -avz '%s'* '/var/db/samba4/'" %
                  old_samba4_dataset).wait()
-        notifier().destroy_zfs_dataset(old_samba4_datasets[0], True)
+        client.call('notifier.destroy_zfs_dataset', old_samba4_datasets[0], True)
 
     except Exception as e:
         print >> sys.stderr, e
@@ -1479,11 +1476,11 @@ def smb4_groupname_is_username(group):
 
 
 def smb4_map_groups(client):
-    groupmap = notifier().groupmap_list()
+    groupmap = client.call('notifier.groupmap_list')
     groups = get_groups(client)
     for g in groups:
         if not (smb4_group_mapped(groupmap, g) or smb4_groupname_is_username(g)):
-            notifier().groupmap_add(unixgroup=g, ntgroup=g)
+            client.call('notifier.groupmap_add', g, g)
 
 
 def smb4_backup_tdbfile(tdb_src, tdb_dst):
@@ -1588,11 +1585,11 @@ def main():
     smb4_shares = []
 
     backup_secrets_database()
-    smb4_setup()
+    smb4_setup(client)
 
-    old_samba4_datasets = get_old_samba4_datasets()
+    old_samba4_datasets = get_old_samba4_datasets(client)
     if migration_available(old_samba4_datasets):
-        do_migration(old_samba4_datasets)
+        do_migration(client, old_samba4_datasets)
 
     role = get_server_role(client)
 

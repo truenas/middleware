@@ -89,3 +89,12 @@ class NotifierService(Service):
         data['ssl'] = obj.get_ssl()
         data['url'] = obj.get_url()
         return data
+
+    def systemdataset_is_decrypted(self):
+        """Temporary workaround to get system dataset crypt state"""
+        systemdataset, basename = notifier().system_dataset_settings()
+        if not systemdataset:
+            return None
+        if not basename:
+            return None
+        return systemdataset.is_decrypted(), basename
