@@ -14,13 +14,15 @@
 #
 generate_rsyncd()
 {
+    RO_FREENAS_CONFIG=$(ro_sqlite ${name} 2> /tmp/${name}.fail && rm /tmp/${name}.fail)
+    trap 'rm -f ${RO_FREENAS_CONFIG}' EXIT
     local IFS="|"
     local f="rsyncd_port"
     eval local $f
     local cmd cfg
     local sf=$(var_to_sf $f)
     cfg=/usr/local/etc/rsyncd.conf
-    ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
+    ${FREENAS_SQLITE_CMD} ${RO_FREENAS_CONFIG} \
 	"SELECT $sf FROM services_rsyncd ORDER BY -id LIMIT 1" | \
 	while eval read -r $f; do
 	    cat > $cfg <<EOF
@@ -32,14 +34,14 @@ EOF
 		echo "port  = $rsyncd_port" >> $cfg
 	    fi
     done
-    ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
+    ${FREENAS_SQLITE_CMD} ${RO_FREENAS_CONFIG} \
 	"SELECT rsyncd_auxiliary FROM services_rsyncd ORDER BY -id LIMIT 1" >> $cfg
 
     local f="id rsyncmod_name rsyncmod_comment rsyncmod_path rsyncmod_mode rsyncmod_maxconn rsyncmod_user rsyncmod_group rsyncmod_hostsallow rsyncmod_hostsdeny"
     eval local $f
     local sf=$(var_to_sf $f)
     local cmd cfg
-    ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
+    ${FREENAS_SQLITE_CMD} ${RO_FREENAS_CONFIG} \
 	"SELECT $sf FROM services_rsyncmod ORDER BY id" | \
 	while eval read -r $f; do
 	    cat >> $cfg <<EOF
@@ -70,7 +72,7 @@ EOF
 	    if [ -n "${rsyncmod_hostsdeny}" ]; then
             echo "    hosts deny = ${rsyncmod_hostsdeny}" >> $cfg
         fi
-        ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
+        ${FREENAS_SQLITE_CMD} ${RO_FREENAS_CONFIG} \
 	    "SELECT rsyncmod_auxiliary FROM services_rsyncmod WHERE id = ${id}" >> $cfg
     done
 }

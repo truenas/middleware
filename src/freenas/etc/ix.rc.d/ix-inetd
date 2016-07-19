@@ -18,7 +18,7 @@ generate_tftp()
     local cmd
     local enabled
     srv_enabled tftp; enabled=$?
-    ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
+    ${FREENAS_SQLITE_CMD} ${RO_FREENAS_CONFIG} \
 	"SELECT $sf FROM services_tftp ORDER BY -id LIMIT 1" | \
     while eval read $f; do
 	if [ $enabled -eq 0 ]; then
@@ -41,6 +41,8 @@ generate_tftp()
 generate_inetd_files()
 {
 	local tmp
+	RO_FREENAS_CONFIG=$(ro_sqlite ${name} 2> /tmp/${name}.fail && rm /tmp/${name}.fail)
+	trap 'rm -f ${RO_FREENAS_CONFIG}' EXIT
 
 	# XXX: intentional namespace pollution
 	tmp_inetd_conf_extra=$(mktemp /tmp/tmp.XXXXXX)

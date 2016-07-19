@@ -104,9 +104,11 @@ jails_start()
 	local module
 	local jails="$*"
 	local res=0
+	RO_FREENAS_CONFIG=$(ro_sqlite ${name} 2> /tmp/${name}.fail && rm /tmp/${name}.fail)
+	trap 'rm -f ${RO_FREENAS_CONFIG}' EXIT
 
 	local IFS="|"
-	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+	${FREENAS_SQLITE_CMD} ${RO_FREENAS_CONFIG} "
 	SELECT
 		module
 	FROM

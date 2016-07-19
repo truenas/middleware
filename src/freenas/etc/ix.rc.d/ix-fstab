@@ -19,7 +19,7 @@ generate_fstab_real()
 	local IFS="|"
 	local fstype volumename newmp mountpoint mpoptions device fs
 
-	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+	${FREENAS_SQLITE_CMD} ${RO_FREENAS_CONFIG} "
 		SELECT
 			v.vol_fstype,
 			v.vol_name,
@@ -73,7 +73,7 @@ generate_fstab_swap()
 {
         local IFS=\|
         local encrypted_swap swap_suffix
-        ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT disk_identifier FROM storage_disk WHERE disk_enabled = 1" | \
+        ${FREENAS_SQLITE_CMD} ${RO_FREENAS_CONFIG} "SELECT disk_identifier FROM storage_disk WHERE disk_enabled = 1" | \
         while read diskid; do
         devname=$(LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/python /usr/local/www/freenasUI/middleware/notifier.py swap_from_diskid "${diskid}")
         if [ -c "/dev/${devname}" ]; then
@@ -87,6 +87,8 @@ generate_fstab_swap()
 generate_fstab()
 {
 	local _doumount=0
+	RO_FREENAS_CONFIG=$(ro_sqlite ${name} 2> /tmp/${name}.fail && rm /tmp/${name}.fail)
+	trap 'rm -f ${RO_FREENAS_CONFIG}' EXIT
 
 	if [ `stat -f "%d:%i" /conf/base/etc/fstab` = `stat -f "%d:%i" /etc/fstab` ]; then	
 		# Hard link.  Let's remove /etc/fstab and copy /conf/base/etc/fstab to it

@@ -21,7 +21,10 @@ generate_krb5_keytab()
 	mkdir -p "${kdir}"
 	rm -rf "${kdir}"/*
 
-	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+	RO_FREENAS_CONFIG=$(ro_sqlite ${name} 2> /tmp/${name}.fail && rm /tmp/${name}.fail)
+	trap 'rm -f ${RO_FREENAS_CONFIG}' EXIT
+
+	${FREENAS_SQLITE_CMD} ${RO_FREENAS_CONFIG} "
 	SELECT
 		keytab_name,
 		keytab_file
