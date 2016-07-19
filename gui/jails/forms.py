@@ -218,9 +218,14 @@ class JailCreateForm(ModelForm):
         else:
             self.fields['jail_ipv6_autoconf'].initial = True
 
+    #
+    # Allow dashes in the name
+    #
+    # https://bugs.freenas.org/issues/16009
+    #
     def clean_jail_host(self):
         jail_host = self.cleaned_data.get('jail_host')
-        if not re.search(r'^[A-Za-z0-9_]+$', jail_host):
+        if not re.search(r'^[A-Za-z0-9_-]+$', jail_host):
             raise forms.ValidationError(_(
                 "Jail name may contain only alphanumeric characters and "
                 "underscore."
