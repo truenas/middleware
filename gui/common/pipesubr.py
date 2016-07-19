@@ -54,7 +54,12 @@ def unblock_sigchld():
     libc.sigprocmask(SIG_SETMASK, pmask, None)
 
 
-def pipeopen(command, important=True, logger=log, allowfork=False, quiet=False):
+#
+# Allow closing of file descriptors on exec
+#
+# https://bugs.freenas.org/issues/15817
+#
+def pipeopen(command, important=True, logger=log, allowfork=False, quiet=False, close_fds=False):
     if not quiet:
         logger.log(
             logging.NOTICE if important else logging.DEBUG,
@@ -68,7 +73,7 @@ def pipeopen(command, important=True, logger=log, allowfork=False, quiet=False):
 
     return Popen(
         args, stdin=PIPE, stdout=PIPE, stderr=PIPE,
-        close_fds=False, preexec_fn=preexec_fn
+        close_fds=close_fds, preexec_fn=preexec_fn
     )
 
 
