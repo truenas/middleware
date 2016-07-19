@@ -176,7 +176,7 @@ class BootEnvAddForm(Form):
             **kwargs
         )
         if clone is False:
-            raise MiddlewareError(_('Failed to create a new Boot.'))
+            raise MiddlewareError(_('No Boot environments could be deleted due to keep flag settings, and boot-pool is out of space. Failed to create a new Boot.'))
 
 
 class BootEnvRenameForm(Form):
