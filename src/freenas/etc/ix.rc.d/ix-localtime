@@ -17,7 +17,9 @@ install_timezone()
 	local f="stg_timezone"
 	eval local $f
 	local sf=$(var_to_sf $f)
-	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT $sf FROM system_settings ORDER BY -id LIMIT 1" | \
+	RO_FREENAS_CONFIG=$(ro_sqlite ${name} 2> /tmp/${name}.fail && rm /tmp/${name}.fail)
+	trap 'rm -f ${RO_FREENAS_CONFIG}' EXIT
+	${FREENAS_SQLITE_CMD} ${RO_FREENAS_CONFIG} "SELECT $sf FROM system_settings ORDER BY -id LIMIT 1" | \
 	while eval read $f; do
 		timezone=$(echo ${stg_timezone} | sed -es=america-los_angeles=America/Los_Angeles=)
 		if [ -z "${stg_timezone}" ]; then

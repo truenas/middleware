@@ -11,6 +11,9 @@
 
 plugins_start()
 {
+	RO_FREENAS_CONFIG=$(ro_sqlite ${name} 2> /tmp/${name}.fail && rm /tmp/${name}.fail)
+	trap 'rm -f ${RO_FREENAS_CONFIG}' EXIT
+
 	local args="$*"
 
 	local sql="
@@ -56,7 +59,7 @@ plugins_start()
 	IFS="|"
 
 	local tmpfile="/var/tmp/...borked"
-	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "${sql}" | \
+	${FREENAS_SQLITE_CMD} ${RO_FREENAS_CONFIG} "${sql}" | \
 	while read name jail path enabled port
 	do
 		if [ "${enabled}" != "1" ]
@@ -166,7 +169,7 @@ plugins_stop()
 	IFS="|"
 	
 	local tmpfile="/var/tmp/...borked"
-	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "${sql}" | \
+	${FREENAS_SQLITE_CMD} ${RO_FREENAS_CONFIG} "${sql}" | \
 	while read name jail path enabled 
 	do
 		if [ "${enabled}" != "1" ]
@@ -254,7 +257,7 @@ plugins_status()
 	IFS="|"
 	
 	local tmpfile="/var/tmp/...sporked"
-	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "${sql}" | \
+	${FREENAS_SQLITE_CMD} ${RO_FREENAS_CONFIG} "${sql}" | \
 	while read name jail path enabled 
 	do
 		local jid=$(jail_get_jid "${jail}")

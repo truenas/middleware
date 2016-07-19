@@ -19,7 +19,7 @@ use_rrd_dataset()
 		return 1
 	fi
 
-	use="$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+	use="$(${FREENAS_SQLITE_CMD} ${RO_FREENAS_CONFIG} "
 	SELECT
 		sys_rrd_usedataset
 	FROM
@@ -58,7 +58,7 @@ get_rrd_dataset()
 	fi
 	if system_dataset_enabled
 	then
-		echo "$(realpath ${FREENAS_SYSTEMDATASET}/rrd-$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "select ${sys_uuid_field} from system_systemdataset"))"
+		echo "$(realpath ${FREENAS_SYSTEMDATASET}/rrd-$(${FREENAS_SQLITE_CMD} ${RO_FREENAS_CONFIG} "select ${sys_uuid_field} from system_systemdataset"))"
 	fi
 }
 
@@ -69,16 +69,19 @@ generate_collectd()
     local hostname
     local graphite
 
+    RO_FREENAS_CONFIG=$(ro_sqlite ${name} 2> /tmp/${name}.fail && rm /tmp/${name}.fail)
+    trap 'rm -f ${RO_FREENAS_CONFIG}' EXIT
+
     # If there is a failover table remove the rc.conf cache
     # rc.conf.local will run again using the correct collectd_enable
     # See #5019
-    local failover="$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "select count(*) from failover_failover" 2> /dev/null)"
+    local failover="$(${FREENAS_SQLITE_CMD} ${RO_FREENAS_CONFIG} "select count(*) from failover_failover" 2> /dev/null)"
     if [ -n "${failover}" ] && [ ${failover} -gt 0 ]; then
 	rm ${FREENAS_CONFIG_MD5}
     fi
 
     local hostname=$(hostname)
-    local graphite="$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "select adv_graphite from system_advanced")"
+    local graphite="$(${FREENAS_SQLITE_CMD} ${RO_FREENAS_CONFIG} "select adv_graphite from system_advanced")"
 
     rrdfile="/data/rrd_dir.tar.bz2"
     basedir="/var/db/collectd"

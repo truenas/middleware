@@ -17,7 +17,7 @@ generate_master.passwd()
 	eval local $f
 	local sf=$(var_to_sf $f)
 
-	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT
+	${FREENAS_SQLITE_CMD} ${RO_FREENAS_CONFIG} "SELECT
 		$sf
 	FROM
 		account_bsdusers AS u
@@ -45,7 +45,7 @@ group_membership()
 	local f="bsdusr_username"
 	eval local $f
 	local sf=$(var_to_sf $f)
-	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT
+	${FREENAS_SQLITE_CMD} ${RO_FREENAS_CONFIG} "SELECT
 		$sf
 	FROM
 		account_bsdgroupmembership AS m
@@ -82,7 +82,7 @@ generate_group()
 	LOGNAME="$(whoami)"
 	export LOGNAME
 
-	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT
+	${FREENAS_SQLITE_CMD} ${RO_FREENAS_CONFIG} "SELECT
 		$sf
 	FROM
 		account_bsdgroups" | \
@@ -103,6 +103,8 @@ generate_group()
 
 generate_all()
 {
+	RO_FREENAS_CONFIG=$(ro_sqlite ${name} 2> /tmp/${name}.fail && rm /tmp/${name}.fail)
+	trap 'rm -f ${RO_FREENAS_CONFIG}' EXIT
 	generate_group
 	generate_master.passwd
 	pwd_mkdb -p /etc/master.passwd

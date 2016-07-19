@@ -91,7 +91,7 @@ EOF
 
 get_trusted()
 {
-	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+	${FREENAS_SQLITE_CMD} ${RO_FREENAS_CONFIG} "
 	SELECT
 		ad_allow_trusted_doms
 
@@ -107,7 +107,7 @@ get_trusted()
 
 get_cifs_homedir()
 {
-	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+	${FREENAS_SQLITE_CMD} ${RO_FREENAS_CONFIG} "
 	SELECT
 		cifs_path
 
@@ -126,7 +126,7 @@ get_cifs_homedir()
 
 has_unix_extensions()
 {
-	local ad_unix=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+	local ad_unix=$(${FREENAS_SQLITE_CMD} ${RO_FREENAS_CONFIG} "
 	SELECT
 		ad_unix_extensions
 
@@ -166,9 +166,9 @@ setup_homedirs()
 			done
 
 		else
-			local workgroup=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT cifs_srv_netbiosalias FROM services_cifs ORDER BY -id LIMIT 1")
+			local workgroup=$(${FREENAS_SQLITE_CMD} ${RO_FREENAS_CONFIG} "SELECT cifs_srv_netbiosalias FROM services_cifs ORDER BY -id LIMIT 1")
 			if [ "${workgroup}" = "" ]; then
-				workgroup=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT cifs_srv_netbiosname FROM services_cifs ORDER BY -id LIMIT 1")
+				workgroup=$(${FREENAS_SQLITE_CMD} ${RO_FREENAS_CONFIG} "SELECT cifs_srv_netbiosname FROM services_cifs ORDER BY -id LIMIT 1")
 			fi
 			local homedir="/home/${workgroup}"
 
@@ -186,6 +186,8 @@ activedirectory_start()
 {
 	if dirsrv_enabled activedirectory
 	then
+		RO_FREENAS_CONFIG=$(ro_sqlite ${name} 2> /tmp/${name}.fail && rm /tmp/${name}.fail)
+		trap 'rm -f ${RO_FREENAS_CONFIG}' EXIT
 		AD_init
 
 		/usr/local/libexec/nas/generate_ldap_conf.py
@@ -196,9 +198,9 @@ activedirectory_start()
 			/etc/directoryservice/ActiveDirectory/ctl stop
 			touch /tmp/.adalert
 			return 1
-    else
+		else
 			if [ -f /tmp/.adalert ]
-      then
+			then
 				rm /tmp/.adalert
 			fi
 		fi

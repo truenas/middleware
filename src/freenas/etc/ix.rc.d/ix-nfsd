@@ -44,19 +44,21 @@ setgroup()
 #
 generate_exports()
 {
+	RO_FREENAS_CONFIG=$(ro_sqlite ${name} 2> /tmp/${name}.fail && rm /tmp/${name}.fail)
+	trap 'rm -f ${RO_FREENAS_CONFIG}' EXIT
 	rm /etc/exports
 	local v4=0
 	local IFS="|"
 	local f="id nfs_network nfs_hosts nfs_alldirs nfs_ro nfs_quiet nfs_maproot_user nfs_maproot_group nfs_mapall_user nfs_mapall_group nfs_security"
 	eval local $f
 	local sf=$(var_to_sf $f)
-	if [ "$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT nfs_srv_v4 FROM services_nfs")" -eq 1 ]; then
-		if [ "$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT nfs_srv_v4_krb FROM services_nfs")" -eq 1 ]; then
+	if [ "$(${FREENAS_SQLITE_CMD} ${RO_FREENAS_CONFIG} "SELECT nfs_srv_v4 FROM services_nfs")" -eq 1 ]; then
+		if [ "$(${FREENAS_SQLITE_CMD} ${RO_FREENAS_CONFIG} "SELECT nfs_srv_v4_krb FROM services_nfs")" -eq 1 ]; then
 			# The user has required kerberos for NFSv4 in the GUI.  We aren't going
 			# to check for a keytab, we'll just do what we are told.
 			echo "V4: / -sec=krb5:krb5i:krb5p" > /etc/exports
 		else
-			krb=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT COUNT() FROM directoryservice_kerberoskeytab")
+			krb=$(${FREENAS_SQLITE_CMD} ${RO_FREENAS_CONFIG} "SELECT COUNT() FROM directoryservice_kerberoskeytab")
 			# The user has not forced kerberized NFSv4 only, so we'll look for
 			# a keytab and if we find one turn on kerberized NFSv4.
 			if [ "${krb}" = "0" ]; then
@@ -67,10 +69,10 @@ generate_exports()
 		fi
 		v4=1
 	fi
-	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT $sf FROM sharing_nfs_share AS us ORDER BY us.id DESC" | \
+	${FREENAS_SQLITE_CMD} ${RO_FREENAS_CONFIG} "SELECT $sf FROM sharing_nfs_share AS us ORDER BY us.id DESC" | \
 	while eval read -r $f; do
 		local path paths line
-		paths=`${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT path FROM sharing_nfs_share_path AS usp WHERE share_id = ${id} ORDER BY usp.id DESC" | \
+		paths=`${FREENAS_SQLITE_CMD} ${RO_FREENAS_CONFIG} "SELECT path FROM sharing_nfs_share_path AS usp WHERE share_id = ${id} ORDER BY usp.id DESC" | \
 		while read -r path; do
 			if [ -d ${path} ]; then
 				echo -n "${path} "
