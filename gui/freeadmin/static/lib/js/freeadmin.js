@@ -809,6 +809,14 @@ require([
         var jail_ipv4_dhcp = ipv4_dhcp.get("value");
         var jail_ipv6_autoconf = ipv6_autoconf.get("value");
 
+        var jail_ipv4_value = ipv4.get("value");
+        var jail_ipv4_is_dhcp = jail_ipv4_value.startsWith("DHCP");
+    
+        if (!jail_ipv4_is_dhcp) {
+            jail_ipv4_dhcp = "off";
+            ipv4_dhcp.set("checked", false);
+        }
+
         if (jail_ipv4_dhcp == "on") {
             ipv4.set("value", "DHCP");
             vnet.set("checked", true);
