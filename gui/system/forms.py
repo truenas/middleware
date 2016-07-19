@@ -936,11 +936,14 @@ class SettingsForm(ModelForm):
         if proto == "http":
             return cdata
 
-        certificate = cdata["stg_guicertificate"]
-        if not certificate:
+        if not cdata["stg_guicertificate"]:
             raise forms.ValidationError(
                 "HTTPS specified without certificate")
-
+        else:
+            certificate_obj = models.Certificate.objects.get(cert_name=cdata["stg_guicertificate"])
+            fingerprint = certificate_obj.get_fingerprint()
+            # using log.error since it logs to /var/log/messages, /var/log/debug.log as well as /dev/console all at once
+            log.error("Fingerprint of the certificate used in the GUI: " + fingerprint)
         return cdata
 
     def save(self):
