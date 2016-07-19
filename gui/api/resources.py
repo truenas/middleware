@@ -2073,6 +2073,10 @@ class JailTemplateResourceMixin(object):
                 'jail_template_edit',
                 kwargs={'id': bundle.obj.id},
             )
+            bundle.data['_delete_url'] = reverse(
+                'jail_template_delete',
+                kwargs={'id': bundle.obj.id},
+            )
 
         return bundle
 
