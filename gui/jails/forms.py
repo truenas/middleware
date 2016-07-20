@@ -28,6 +28,7 @@ import os
 import platform
 import re
 import logging
+import random
 
 from django.utils.translation import ugettext_lazy as _
 
@@ -232,6 +233,15 @@ class JailCreateForm(ModelForm):
             ))
         return jail_host
 
+    def clean_jail_mac(self):
+        jail_mac = self.cleaned_data.get('jail_mac')
+        if is_jail_mac_duplicate(jail_mac):
+            raise forms.ValidationError(_(
+                "You have entered an existing MAC Address."
+                "Please enter a new one."
+            ))
+        return jail_mac
+
     def save(self):
         jc = self.jc
 
@@ -410,12 +420,21 @@ class JailCreateForm(ModelForm):
                     jail_flags |= WARDEN_SET_FLAGS_FLAGS
                     jail_set_args['jflags'] = val
 
-                jail_set_args['flags'] = jail_flags
-                try:
-                    w.set(**jail_set_args)
-                except Exception as e:
-                    self.errors['__all__'] = self.error_class([_(e.message)])
-                    return
+            elif key == 'jail_mac':
+                jail_mac_list = [jail.jail_mac for jail in Jails.objects.all()]
+                mac_address = generate_randomMAC()
+                while mac_address in jail_mac_list:
+                    mac_address = generate_randomMAC()
+
+                jail_flags |= WARDEN_SET_FLAGS_MAC
+                jail_set_args['mac'] = mac_address
+
+            jail_set_args['flags'] = jail_flags
+            try:
+                w.set(**jail_set_args)
+            except Exception as e:
+                self.errors['__all__'] = self.error_class([_(e.message)])
+                return
 
         jail_nat = self.cleaned_data.get('jail_nat', None)
         jail_vnet = self.cleaned_data.get('jail_vnet', None)
@@ -471,6 +490,21 @@ class JailCreateForm(ModelForm):
         # Requery instance so we have everything up-to-date after save
         # See #14686
         self.instance = Jails.objects.get(jail_host=jail_host)
+
+
+def is_jail_mac_duplicate(mac):
+    jail_macs = [jail.jail_mac for jail in Jails.objects.all()]
+    return mac in jail_macs
+
+
+def generate_randomMAC():
+    local_list = [0x02, 0x06, 0x0a, 0x0e]
+    first_byte = random.randint(0x00, 0x0f)
+    first = first_byte << 4
+    first = first | random.choice(local_list)
+    val = [first, random.randint(0x00, 0xff), random.randint(0x00, 0xff), random.randint(0x00, 0xff), random.randint(0x00, 0xff), random.randint(0x00, 0xff)]
+    mac_address = ':'.join(map(lambda x: "%02x" % x, val))
+    return mac_address
 
 
 class JailsConfigurationForm(ModelForm):
@@ -801,6 +835,18 @@ class JailsEditForm(ModelForm):
 
         self.__set_ro(instance, 'jail_host')
         self.__set_ro(instance, 'jail_type')
+
+    def clean_jail_mac(self):
+        jail_mac = self.cleaned_data.get('jail_mac')
+        curr_host = self.cleaned_data.get('jail_host')
+        jail = Jails.objects.get(jail_host=curr_host)
+        if jail_mac != jail.jail_mac:
+            if is_jail_mac_duplicate(jail_mac):
+                raise forms.ValidationError(_(
+                    "You have entered an existing MAC Address."
+                    "Please enter a new one."
+                ))
+        return jail_mac
 
     def save(self):
         jail_host = self.cleaned_data.get('jail_host')
