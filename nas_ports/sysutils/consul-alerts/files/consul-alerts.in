@@ -1,0 +1,32 @@
+#!/bin/sh
+
+# $FreeBSD$
+#
+# PROVIDE: consul-alerts
+# REQUIRE: LOGIN
+# KEYWORD: shutdown
+#
+# Add the following lines to /etc/rc.conf.local or /etc/rc.conf
+# to enable this service:
+#
+# consul_alerts_enable (bool):	Set to NO by default.
+#                               Set it to YES to enable consul-alerts
+# consul_alerts_env (string):   Set environment variables used with consul-alerts
+#                               Default is "".
+
+. /etc/rc.subr
+
+name=consul_alerts
+rcvar=consul_alerts_enable
+
+load_rc_config $name
+
+: ${consul_alerts_enable:="NO"}
+: ${consul_alerts_env:=""}
+
+pidfile=/var/run/consul-alerts.pid
+procname="%%PREFIX%%/bin/consul-alerts"
+command="/usr/sbin/daemon"
+command_args="-f -p ${pidfile} /usr/bin/env ${consul_alerts_env} ${procname} start ${consul_alerts_args}"
+
+run_rc_command "$1"
