@@ -234,22 +234,18 @@ List resource
 
       [
         {
-                "nfs_inheritperms": false,
-                "nfs_hostsallow": "",
-                "nfs_guestok": false,
-                "nfs_showhiddenfiles": false,
-                "nfs_hostsdeny": "",
-                "nfs_recyclebin": false,
-                "nfs_auxsmbconf": "",
+                "nfs_alldirs": false,
                 "nfs_comment": "",
-                "nfs_paths": [
-                        "/mnt/tank"
-                ],
+                "nfs_hosts": "",
+                "nfs_mapall_group": "Group1",
+                "nfs_mapall_user": "User1",
+                "nfs_maproot_group': "",
+                "nfs_maproot_user": "",
+                "nfs_network": "192.168.1.0/24",
+                "nfs_paths": ["/mnt/tank/shares"],
+                "nfs_quiet": false,
                 "nfs_ro": false,
-                "nfs_inheritowner": false,
-                "nfs_guestonly": true,
-                "id": 1,
-                "nfs_browsable": true
+                "nfs_security': []
         }
       ]
 
