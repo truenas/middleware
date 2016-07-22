@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:02-0700\n"
-"PO-Revision-Date: 2016-07-15 09:17+0000\n"
+"PO-Revision-Date: 2016-07-19 09:16+0000\n"
 "Last-Translator: Anonymous Pootle User\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: pa\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1468574236.0\n"
+"X-POOTLE-MTIME: 1468919761.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -12338,4 +12338,9 @@ msgstr ""
 
 #: system/alertmods/nfs_bindaddr.py:15
 msgid "NFS services could not bind specific IPs, using wildcard"
+msgstr ""
+
+#: jails/forms.py:247
+#: jails/forms.py:872
+msgid "You have entered an existing MAC Address.Please enter a new one."
 msgstr ""

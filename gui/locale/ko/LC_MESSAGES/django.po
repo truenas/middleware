@@ -13097,3 +13097,8 @@ msgstr ""
 #, fuzzy
 msgid "NFS services could not bind specific IPs, using wildcard"
 msgstr "해당 WebGUI 주소가 %s에 바인드 될 수 없습니다: 와일드 카드 사용하기"
+
+#: jails/forms.py:247
+#: jails/forms.py:872
+msgid "You have entered an existing MAC Address.Please enter a new one."
+msgstr ""

@@ -12446,3 +12446,8 @@ msgstr ""
 #: system/alertmods/nfs_bindaddr.py:15
 msgid "NFS services could not bind specific IPs, using wildcard"
 msgstr ""
+
+#: jails/forms.py:247
+#: jails/forms.py:872
+msgid "You have entered an existing MAC Address.Please enter a new one."
+msgstr ""

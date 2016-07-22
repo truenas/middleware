@@ -13516,3 +13516,8 @@ msgstr ""
 msgid "NFS services could not bind specific IPs, using wildcard"
 msgstr ""
 "Het WebGUI-adres kon niet aan %s worden gebonden; jokerteken wordt gebruikt"
+
+#: jails/forms.py:247
+#: jails/forms.py:872
+msgid "You have entered an existing MAC Address.Please enter a new one."
+msgstr ""
