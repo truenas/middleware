@@ -13429,3 +13429,8 @@ msgid "NFS services could not bind specific IPs, using wildcard"
 msgstr ""
 "Adresa WebGUI nu a putut fi legată la %s; folosind caracterele de "
 "substituție."
+
+#: jails/forms.py:247
+#: jails/forms.py:872
+msgid "You have entered an existing MAC Address.Please enter a new one."
+msgstr ""
