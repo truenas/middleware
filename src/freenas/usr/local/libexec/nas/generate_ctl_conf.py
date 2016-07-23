@@ -65,7 +65,7 @@ def auth_group_config(auth_tag=None, auth_list=None, auth_type=None, initiator=N
             elif " " in initiator.iscsi_target_initiator_initiators:
                 sep = " "
             inames = initiator.iscsi_target_initiator_initiators.strip('\n').split(sep)
-            inames = filter(lambda x: x != 'ALL', inames)
+            inames = filter(lambda x: x != 'ALL' and x != '', inames)
         if initiator.iscsi_target_initiator_auth_network:
             sep = "\n"
             if "," in initiator.iscsi_target_initiator_auth_network:
@@ -73,7 +73,7 @@ def auth_group_config(auth_tag=None, auth_list=None, auth_type=None, initiator=N
             elif " " in initiator.iscsi_target_initiator_auth_network:
                 sep = " "
             inets = initiator.iscsi_target_initiator_auth_network.strip('\n').split(sep)
-            inets = filter(lambda x: x != 'ALL', inets)
+            inets = filter(lambda x: x != 'ALL' and x != '', inets)
 
     # If nothing left after filtering, then we are done.
     if not inames and not inets and not auth_list and (auth_type == 'None' or auth_type == 'auto'):
