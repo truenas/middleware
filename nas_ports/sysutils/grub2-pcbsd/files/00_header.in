@@ -245,6 +245,7 @@ case x${GRUB_TERMINAL_OUTPUT} in
   ;;
   x*)
     cat << EOF
+kernvt="sc"
 terminal_output ${GRUB_TERMINAL_OUTPUT}
 EOF
   ;;
