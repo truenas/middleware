@@ -13,7 +13,7 @@ def django_modelobj_serialize(middleware, obj, extend=None):
         )):
             data[field.name] = str(value)
         elif isinstance(field, ForeignKey):
-            data[field.name] = django_modelobj_serialize(value) if value is not None else value
+            data[field.name] = django_modelobj_serialize(middleware, value) if value is not None else value
         else:
             data[field.name] = value
     if extend:
