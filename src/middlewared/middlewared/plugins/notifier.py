@@ -11,6 +11,7 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'freenasUI.settings')
 from django.db.models.loading import cache
 cache.get_apps()
 
+from freenasUI import choices
 from freenasUI import common as fcommon
 from freenasUI.common.freenasldap import (
     FreeNAS_ActiveDirectory,
@@ -146,3 +147,13 @@ class NotifierService(Service):
         if not basename:
             return None
         return systemdataset.is_decrypted(), basename
+
+    def choices(self, name, args=None):
+        """Temporary wrapper to get to UI choices"""
+        if args is None:
+            args = []
+        attr = getattr(choices, name)
+        if callable(attr):
+            return list(attr(*args))
+        else:
+            return attr
