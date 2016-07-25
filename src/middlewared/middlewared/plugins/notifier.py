@@ -105,10 +105,13 @@ class NotifierService(Service):
     def ds_get_idmap_object(self, ds_type, id, idmap_backend):
         """Temporary wrapper to serialize IDMAP objects"""
         obj = get_idmap_object(ds_type, id, idmap_backend)
-        data = django_modelobj_serialize(obj)
+        data = django_modelobj_serialize(self.middleware, obj)
+        # Only these types have SSL
+        if ds_type not in (IDMAP_TYPE_LDAP, IDMAP_TYPE_RFC2307):
+            return data
         cert = obj.get_certificate()
         if cert:
-            data['certificate'] = django_modelobj_serialize(cert)
+            data['certificate'] = django_modelobj_serialize(self.middleware, cert)
         else:
             data['certificate'] = None
         data['ssl'] = obj.get_ssl()
