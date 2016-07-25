@@ -63,7 +63,7 @@ class DatastoreService(Service):
 
     def __queryset_serialize(self, qs, extend=None):
         for i in qs:
-            yield django_modelobj_serialize(i, extend=extend)
+            yield django_modelobj_serialize(self.middleware, i, extend=extend)
 
     def query(self, name, filters=None, options=None):
         model = self.__get_model(name)
