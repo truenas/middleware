@@ -1,0 +1,26 @@
+#!/bin/sh
+#
+# $FreeBSD$
+#
+
+# PROVIDE: ix-nfsbind
+# BEFORE: mountd gssd nfsuserd nfsd
+
+. /etc/rc.freenas
+
+
+nfs_bindip() {
+	# We need to make sure the NFS bind IP exists
+	# and that can't happen until network starts.
+	# Since nfs flags goes in rc.conf.local we need to regenerate it.
+	rm ${FREENAS_CONFIG_MD5}
+	/etc/rc.conf.local
+	killall -ALRM sh
+}
+
+name="ix-nfsbind"
+start_cmd='nfs_bindip'
+stop_cmd=':'
+
+load_rc_config $name
+run_rc_command "$1"
