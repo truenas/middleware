@@ -88,6 +88,13 @@ class servicesForm(ModelForm):
                     connections
                 ))
 
+    def deny_precheck_cifs(self, obj):
+        if obj.srv_enable is False and activedirectory_enabled():
+            obj.srv_enable= True
+            obj.save()
+            return _("Cannot disable CIFS while ActiveDirectory is in use.")
+        return False
+
     def save(self, *args, **kwargs):
         obj = super(servicesForm, self).save(*args, **kwargs)
         _notifier = notifier()
@@ -102,6 +109,18 @@ class servicesForm(ModelForm):
             if rv:
                 self._extra_events.append(
                     "confirm_service('%s', '%s');" % (
+                        obj.srv_service,
+                        rv,
+                    ),
+                )
+                self.started = obj.srv_enable
+                return obj
+        deny_method = getattr(self, 'deny_precheck_%s' % obj.srv_service, None)
+        if not self._force and callable(deny_method):
+            rv = deny_method(obj)
+            if rv:
+                self._extra_events.append(
+                    "deny_service('%s', '%s');" % (
                         obj.srv_service,
                         rv,
                     ),

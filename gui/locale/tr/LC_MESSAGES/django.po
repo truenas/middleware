@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:05-0700\n"
-"PO-Revision-Date: 2016-07-15 19:30+0000\n"
+"PO-Revision-Date: 2016-07-23 16:25+0000\n"
 "Last-Translator: BouRock <hitowerdigit@hotmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: tr\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1)\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1468611021.0\n"
+"X-POOTLE-MTIME: 1469291147.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -13317,3 +13317,19 @@ msgstr ""
 #: system/alertmods/nfs_bindaddr.py:15
 msgid "NFS services could not bind specific IPs, using wildcard"
 msgstr "NFS hizmetleri belirli IP'lere bağlanamadı, joker karakter kullanılıyor"
+
+#: jails/forms.py:247
+#: jails/forms.py:872
+msgid "You have entered an existing MAC Address.Please enter a new one."
+msgstr "Varolan bir MAC Adresi girdiniz. Lütfen yeni bir tane girin."
+
+#: jails/forms.py:238
+msgid ""
+"Valid characters for jail names are letters, numbers, dashes, or underscores."
+msgstr ""
+"Kafes adları için geçerli karakterler harfler, sayılar, tireler veya alt "
+"çizgilerdir."
+
+#: services/forms.py:95
+msgid "Cannot disable CIFS while ActiveDirectory is in use."
+msgstr "Active Directory kullanımdayken CIFS etkisizleştirilemez."

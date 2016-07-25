@@ -345,12 +345,11 @@ def volimport(request):
                 )
             return render(request, 'storage/import_progress.html')
         except Exception as e:
-            traceback = traceback.format_exc() if sys.exc_info()[0] else False
             data = {
                 'vol': '',
                 'status': 'error',
                 'error': str(e),
-                'traceback': traceback
+                'traceback': traceback.format_exc() if sys.exc_info()[0] else False
             }
             return render(request, 'storage/import_stats.html', data)
 
@@ -397,12 +396,11 @@ def volimport_abort(request):
         try:
             data = json.loads(get_import_progress_from_socket(s))
         except Exception as e:
-            traceback = traceback.format_exc() if sys.exc_info()[0] else False
             data = {
                 'vol': '',
                 'status': 'error',
                 'error': str(e),
-                'traceback': traceback
+                'traceback': traceback.format_exc() if sys.exc_info()[0] else False
             }
         if data["status"] == "finished":
             s.send("done")

@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:07-0700\n"
-"PO-Revision-Date: 2016-07-12 09:34+0000\n"
+"PO-Revision-Date: 2016-07-19 11:06+0000\n"
 "Last-Translator: Pavel <pavel.borecki@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: cs\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1468316067.0\n"
+"X-POOTLE-MTIME: 1468926409.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -13192,8 +13192,26 @@ msgid ""
 "format is hostname:port or ip:port, if :port is not specified it will "
 "default to port 514 (this field currently only takes IPv4 addresses)"
 msgstr ""
+"Určuje server a číslo portu, na které budou posílány syslog zprávy. Možné "
+"zápisy jsou nazev_stroje:port nebo IP_adresa:port. Pokud část :port není "
+"zadána, bude použit výchozí 514. IP adresou v tuto chvíli může být pouze "
+"IPv4 adresa."
 
 #: system/alertmods/nfs_bindaddr.py:15
 msgid "NFS services could not bind specific IPs, using wildcard"
 msgstr ""
 "NFS služby nelze navázat na konkrétní IP adresy, s použitím zástupných znaků"
+
+#: jails/forms.py:247
+#: jails/forms.py:872
+msgid "You have entered an existing MAC Address.Please enter a new one."
+msgstr "Zadali jste MAC adresu, která je už používána – zadejte jinou."
+
+#: jails/forms.py:238
+msgid ""
+"Valid characters for jail names are letters, numbers, dashes, or underscores."
+msgstr ""
+
+#: services/forms.py:95
+msgid "Cannot disable CIFS while ActiveDirectory is in use."
+msgstr ""

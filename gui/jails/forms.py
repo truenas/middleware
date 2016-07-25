@@ -235,8 +235,8 @@ class JailCreateForm(ModelForm):
         jail_host = self.cleaned_data.get('jail_host')
         if not re.search(r'^[A-Za-z0-9_-]+$', jail_host):
             raise forms.ValidationError(_(
-                "Jail name may contain only alphanumeric characters and "
-                "underscore."
+                "Valid characters for jail names are letters, numbers, dashes,"
+                " or underscores."
             ))
         return jail_host
 
