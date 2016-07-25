@@ -570,7 +570,7 @@ _gen_conf()
 	# Make sure IPs bind to NFS are in the interfaces (exist!) #16044
 	nfsips=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT nfs_srv_bindip FROM services_nfs ORDER BY -id LIMIT 1" | tr "," \\n | \
 	while read -r ip; do
-		if [ -n "${ip}" ] && ! /sbin/ifconfig -a inet|grep "${ip} "; then
+		if [ -n "${ip}" ] && ! /sbin/ifconfig -a inet|grep " ${ip} "; then
 			echo "NOTFOUND"
 			break
 		fi
