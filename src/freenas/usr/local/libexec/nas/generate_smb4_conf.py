@@ -21,7 +21,6 @@ sys.path.extend([
 
 from freenasUI.common.pipesubr import pipeopen
 from freenasUI.common.log import log_traceback
-from freenasUI.choices import IPChoices
 
 
 log = logging.getLogger('generate_smb4_conf')
@@ -772,7 +771,7 @@ def add_domaincontroller_conf(client, smb4_conf):
                 pass
 
     else:
-        interfaces = IPChoices(ipv6=False)
+        interfaces = client.call('notifier.choices', 'IPChoices', [True, False])
         for i in interfaces:
             try:
                 socket.inet_aton(i[0])
@@ -932,7 +931,7 @@ def generate_smb4_conf(client, smb4_conf, role):
     confset2(smb4_conf, "multicast dns register = %s",
              "yes" if cifs.cifs_srv_zeroconf else "no")
 
-    if not smb4_ldap_enabled():
+    if not smb4_ldap_enabled(client):
         confset2(smb4_conf, "domain logons = %s",
                  "yes" if cifs.cifs_srv_domain_logons else "no")
 
@@ -963,7 +962,7 @@ def generate_smb4_conf(client, smb4_conf, role):
         if client.call('notifier.common', 'system', 'nt4_enabled'):
             add_nt4_conf(client, smb4_conf)
 
-        elif smb4_ldap_enabled():
+        elif smb4_ldap_enabled(client):
             add_ldap_conf(client, smb4_conf)
 
         elif client.call('notifier.common', 'system', 'activedirectory_enabled'):
@@ -1573,7 +1572,7 @@ def main():
 
     role = get_server_role(client)
 
-    generate_smbusers()
+    generate_smbusers(client)
     generate_smb4_tdb(client, smb4_tdb)
     generate_smb4_conf(client, smb4_conf, role)
     generate_smb4_system_shares(client, smb4_shares)
@@ -1590,7 +1589,7 @@ def main():
 
     smb4_set_SID(client)
 
-    if role == 'member' and smb4_ldap_enabled():
+    if role == 'member' and smb4_ldap_enabled(client):
         set_ldap_password(client)
         backup_secrets_database()
 
