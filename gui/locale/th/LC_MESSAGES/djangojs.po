@@ -609,3 +609,7 @@ msgid ""
 "WARNING: Changing to a nightly train is a one way street. Changing back to "
 "stable is not supported!"
 msgstr ""
+
+#: freeadmin/static/lib/js/freeadmin.js:359
+msgid "Ok"
+msgstr ""
