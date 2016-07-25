@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:08-0700\n"
-"PO-Revision-Date: 2016-07-19 09:15+0000\n"
+"PO-Revision-Date: 2016-07-23 09:15+0000\n"
 "Last-Translator: Anonymous Pootle User\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: eu\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1468919746.0\n"
+"X-POOTLE-MTIME: 1469265350.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -12343,4 +12343,13 @@ msgstr ""
 #: jails/forms.py:247
 #: jails/forms.py:872
 msgid "You have entered an existing MAC Address.Please enter a new one."
+msgstr ""
+
+#: jails/forms.py:238
+msgid ""
+"Valid characters for jail names are letters, numbers, dashes, or underscores."
+msgstr ""
+
+#: services/forms.py:95
+msgid "Cannot disable CIFS while ActiveDirectory is in use."
 msgstr ""

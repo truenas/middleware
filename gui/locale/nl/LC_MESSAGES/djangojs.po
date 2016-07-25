@@ -668,3 +668,7 @@ msgid ""
 msgstr ""
 "WAARSCHUWING: overstappen naar een nightly train is eenrichtingsverkeer. "
 "Teruggaan naar stable wordt niet ondersteund!"
+
+#: freeadmin/static/lib/js/freeadmin.js:359
+msgid "Ok"
+msgstr ""

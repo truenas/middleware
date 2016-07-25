@@ -13902,3 +13902,12 @@ msgstr "WebGUIのアドレスは %s とバインドできなかった為、ワ�
 #: jails/forms.py:872
 msgid "You have entered an existing MAC Address.Please enter a new one."
 msgstr ""
+
+#: jails/forms.py:238
+msgid ""
+"Valid characters for jail names are letters, numbers, dashes, or underscores."
+msgstr ""
+
+#: services/forms.py:95
+msgid "Cannot disable CIFS while ActiveDirectory is in use."
+msgstr ""
