@@ -117,16 +117,16 @@ class NotifierService(Service):
     def ds_idmap_type_code_to_string(self, code):
         """Temporary wrapper to convert idmap code to string"""
         mapping = {
-            IDMAP_TYPE_AD: 'IDMAP_TYPE_AD'
-            IDMAP_TYPE_ADEX: 'IDMAP_TYPE_ADEX'
-            IDMAP_TYPE_AUTORID: 'IDMAP_TYPE_AUTORID'
-            IDMAP_TYPE_HASH: 'IDMAP_TYPE_HASH'
-            IDMAP_TYPE_HASH: 'IDMAP_TYPE_LDAP'
-            IDMAP_TYPE_HASH: 'IDMAP_TYPE_NSS'
-            IDMAP_TYPE_HASH: 'IDMAP_TYPE_RFC2307'
-            IDMAP_TYPE_HASH: 'IDMAP_TYPE_RID'
-            IDMAP_TYPE_HASH: 'IDMAP_TYPE_TDB'
-            IDMAP_TYPE_HASH: 'IDMAP_TYPE_TDB2'
+            IDMAP_TYPE_AD: 'IDMAP_TYPE_AD',
+            IDMAP_TYPE_ADEX: 'IDMAP_TYPE_ADEX',
+            IDMAP_TYPE_AUTORID: 'IDMAP_TYPE_AUTORID',
+            IDMAP_TYPE_HASH: 'IDMAP_TYPE_HASH',
+            IDMAP_TYPE_LDAP: 'IDMAP_TYPE_LDAP',
+            IDMAP_TYPE_NSS: 'IDMAP_TYPE_NSS',
+            IDMAP_TYPE_RFC2307: 'IDMAP_TYPE_RFC2307',
+            IDMAP_TYPE_RID: 'IDMAP_TYPE_RID',
+            IDMAP_TYPE_TDB: 'IDMAP_TYPE_TDB',
+            IDMAP_TYPE_TDB2: 'IDMAP_TYPE_TDB2',
         }
         if code not in mapping:
             raise ValueError('Unknown idmap code: {0}'.format(code))
