@@ -14,6 +14,12 @@ class WSClient(WebSocketClient):
         self.protocol = DDPProtocol(self)
         super(WSClient, self).__init__(*args, **kwargs)
 
+    def connect(self):
+        self.sock.settimeout(10)
+        rv = super(WSClient, self).connect()
+        self.sock.settimeout(None)
+        return rv
+
     def received_message(self, message):
         self.protocol.on_message(message.data.decode('utf8'))
 
