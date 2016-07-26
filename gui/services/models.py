@@ -1290,6 +1290,15 @@ class UPS(Model):
             "happens to come back before the time is up the "
             "shutdown is canceled."),
     )
+    ups_shutdowncmd = models.CharField(
+        max_length=255,
+        verbose_name=("Shutdown Command"),
+        default='/sbin/shutdown -p now',
+        help_text=_(
+            "The command used to shutdown the server. You can use "
+            "a custom command here to perform other tasks before shutdown."
+            "default: /sbin/shutdown -p now"),
+    )
     ups_monuser = models.CharField(
         max_length=50,
         default='upsmon',
