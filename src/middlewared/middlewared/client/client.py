@@ -122,6 +122,7 @@ def main():
             if not args.quiet:
                 print >> sys.stderr, e.stacktrace
             sys.exit(1)
+        c.close()
 
 if __name__ == '__main__':
     main()
