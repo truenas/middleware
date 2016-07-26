@@ -785,13 +785,12 @@ def add_domaincontroller_conf(client, smb4_conf):
 
 
 def get_smb4_users(client):
-    # FIXME: test query and support for OR
-    return client.call('datastore.query', 'account.bsdusers', (
-        'OR', [
+    return client.call('datastore.query', 'account.bsdusers', [
+        ['OR', [
             ('bsdusr_smbhash', '~', r'^.+:.+:[X]{32}:.+$'),
             ('bsdusr_smbhash', '~', r'^.+:.+:[A-F0-9]{32}:.+$'),
-        ],
-    ))
+        ]],
+    ])
 
 
 def get_disabled_users(client):
