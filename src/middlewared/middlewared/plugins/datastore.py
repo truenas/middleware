@@ -30,10 +30,12 @@ class DatastoreService(Service):
 
         rv = []
         for f in filters:
+            if not isinstance(f, (list, tuple)):
+                raise ValueError('Filter must be a list: {0}'.format(f))
             if len(f) == 3:
                 name, op, value = f
                 if op not in opmap:
-                    raise Exception("Invalid operation {0}".format(op))
+                    raise Exception("Invalid operation: {0}".format(op))
                 q = Q(**{'{0}__{1}'.format(name, opmap[op]): value})
                 if op == '!=':
                     q.negate()
