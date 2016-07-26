@@ -32,7 +32,7 @@ def main():
     except IndexError:
         hostname = socket.gethostname()
 
-    ssh_service = client.call('datastore.query', 'services.services', [('srv_service', '=', 'ssh'), ('srv_enable', '=', True)], {'get': True})
+    ssh_service = client.call('datastore.query', 'services.services', [('srv_service', '=', 'ssh'), ('srv_enable', '=', True)])
     if ssh_service:
         sshport = client.call('datastore.query', 'services.ssh', None, {'get': True})['ssh_tcpport']
         t = threading.Thread(target=register,
