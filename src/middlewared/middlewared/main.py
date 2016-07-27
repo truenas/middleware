@@ -43,8 +43,8 @@ class Application(WebSocketApplication):
         })
 
     def _check_permission(self):
-        #if self.ws.environ['REMOTE_ADDR'] not in ('127.0.0.1', '::1'):
-        #    return False
+        if self.ws.environ['REMOTE_ADDR'] not in ('127.0.0.1', '::1'):
+            return False
 
         remote = '{0}:{1}'.format(
             self.ws.environ['REMOTE_ADDR'], self.ws.environ['REMOTE_PORT']
