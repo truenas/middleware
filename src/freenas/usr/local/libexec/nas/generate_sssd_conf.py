@@ -689,7 +689,7 @@ def add_ldap_section(client, sc):
         ldap_section.ldap_id_use_start_tls = 'true'
 
     ldap_save = ldap
-    ldap = client.call('notifier.directoryservice', 'LDAP')
+    ldap = Struct(client.call('notifier.directoryservice', 'LDAP'))
 
     if ldap.keytab_file and ldap.keytab_principal:
         ldap_section.auth_provider = 'krb5'
