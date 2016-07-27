@@ -55,6 +55,10 @@ class NotifierService(Service):
         except AttributeError:
             return getattr(_n, attr)
 
+    def system_dataset_create(self, mount=True):
+        """Make sure return value is serializable"""
+        return notifier().system_dataset_create(mount=mount) is not None
+
     def common(self, name, method, params=None):
         """Simple wrapper to access methods under freenasUI.common.*"""
         if params is None:
