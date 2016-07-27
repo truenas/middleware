@@ -55,6 +55,14 @@ class Client(object):
         self._ws = WSClient('ws://127.0.0.1:8000/websocket', client=self)
         self._ws.connect()
 
+    def __enter__(self):
+        return self
+
+    def __exit__(self, typ, value, traceback):
+        self.close()
+        if typ is not None:
+            raise
+
     def _send(self, data):
         self._ws.send(json.dumps(data))
 
