@@ -91,9 +91,9 @@ class Application(WebSocketApplication):
 class Middleware(object):
 
     def __init__(self):
+        self.logger = logging.getLogger('middleware')
         self.__services = {}
         self.__plugins_load()
-        self.logger = logging.getLogger('middleware')
 
     def __plugins_load(self):
         from middlewared.service import Service
