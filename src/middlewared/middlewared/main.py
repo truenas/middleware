@@ -101,7 +101,7 @@ class Middleware(object):
             os.path.dirname(os.path.realpath(__file__)),
             'plugins',
         )
-        self.logger.debug('Loading plugins')
+        self.logger.debug('Loading plugins from {0}'.format(plugins_dir))
         if not os.path.exists(plugins_dir):
             raise ValueError('plugins dir not found')
 
@@ -194,15 +194,22 @@ def main():
 
         logging.config.dictConfig({
             'version': 1,
+            'formatters': {
+                'simple': {
+                    'format': '[%(asctime)s %(filename)s:%(lineno)s] %(message)s'
+                },
+            },
             'handlers': {
                 'console': {
                     'level': 'DEBUG',
                     'class': 'logging.StreamHandler',
+                    'formatter': 'simple',
                 },
                 'file': {
                     'level': 'DEBUG',
                     'class': 'logging.handlers.RotatingFileHandler',
                     'filename': '/var/log/middlewared.log',
+                    'formatter': 'simple',
                 }
             },
             'loggers': {
