@@ -222,6 +222,8 @@ def main():
         })
 
         setproctitle.setproctitle('middlewared')
+        # Workaround to tell django to not set up logging on its own
+        os.environ['MIDDLEWARED'] = str(os.getpid())
 
         Middleware().run()
     finally:

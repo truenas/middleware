@@ -232,6 +232,11 @@ SOUTH_TESTS_MIGRATE = False
 FILE_UPLOAD_MAX_MEMORY_SIZE = 33554432
 FILE_UPLOAD_TEMP_DIR = "/var/tmp/firmware/"
 
+# Do not set up logging if its being imported from middlewared
+if 'MIDDLEWARED' in os.environ:
+    print "OK"
+    LOGGING_CONFIG = False
+
 # the site admins on every HTTP 500 error.
 # See http://docs.djangoproject.com/en/dev/topics/logging for
 # more details on how to customize your logging configuration.
