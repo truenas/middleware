@@ -101,6 +101,7 @@ class Middleware(object):
             os.path.dirname(os.path.realpath(__file__)),
             'plugins',
         )
+        self.logger.debug('Loading plugins')
         if not os.path.exists(plugins_dir):
             raise ValueError('plugins dir not found')
 
@@ -123,6 +124,7 @@ class Middleware(object):
                     continue
                 if issubclass(attr, Service):
                     self.add_service(attr(self))
+        self.logger.debug('All plugins loaded')
 
     def add_service(self, service):
         self.__services[service._config.namespace] = service
@@ -152,6 +154,7 @@ class Middleware(object):
             gevent.spawn(wsserver.serve_forever),
             gevent.spawn(restserver.serve_forever),
         ]
+        self.logger.debug('Accepting connections')
         gevent.joinall(server_threads)
 
 
