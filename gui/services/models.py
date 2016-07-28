@@ -1292,7 +1292,7 @@ class UPS(Model):
     )
     ups_shutdowncmd = models.CharField(
         max_length=255,
-        verbose_name=("Shutdown Command"),
+        verbose_name=_("Shutdown Command"),
         default='/sbin/shutdown -p now',
         help_text=_(
             "The command used to shutdown the server. You can use "
