@@ -1,4 +1,4 @@
-PORTNAME?=		${SAMBA4_BASENAME}43
+PORTNAME?=		${SAMBA4_BASENAME}44
 PORTVERSION?=		${SAMBA4_VERSION}
 PORTREVISION?=		${REVISION}
 CATEGORIES?=		net
@@ -8,11 +8,11 @@ COMMENT?=		Free SMB/CIFS and AD/DC server and client for Unix
 
 LICENSE=		GPLv3
 
-CONFLICTS?=		*samba3[2-6]-3.* samba4-4.0.* samba41-4.1.* samba42-4.2.*
+CONFLICTS?=		*samba3[2-6]-3.* samba4-4.0.* samba41-4.1.* samba42-4.2.* samba43-4.3.*
 
 SAMBA4_BASENAME=	samba
 SAMBA4_PORTNAME=	${SAMBA4_BASENAME}4
-SAMBA4_VERSION=		4.3.10
+SAMBA4_VERSION=		4.4.5
 SAMBA4_DISTNAME=	${SAMBA4_BASENAME}-${SAMBA4_VERSION:S|.p|pre|:S|.r|rc|:S|.t|tp|:S|.a|alpha|}
 
 NO_CHECKSUM=		yes
@@ -42,10 +42,10 @@ CONFIGURE_ARGS+=	--mandir="${MANPREFIX}/man" \
 			--includedir="${SAMBA4_INCLUDEDIR}" \
 			--datadir="${DATADIR}" \
 			--libdir="${SAMBA4_LIBDIR}" \
+			--with-pkgconfigdir="${PKGCONFIGDIR}" \
 			--with-pammodulesdir="${SAMBA4_LIBDIR}" \
 			--with-privatelibdir="${SAMBA4_LIBDIR}/samba" \
 			--with-modulesdir="${SAMBA4_MODULEDIR}" \
-			--with-pkgconfigdir="${PKGCONFIGDIR}" \
 			--localstatedir="${VARDIR}" \
 			--with-piddir="${SAMBA4_RUNDIR}" \
 			--with-sockets-dir="${SAMBA4_RUNDIR}" \
@@ -135,7 +135,8 @@ SAMBA4_BUNDLED_LIBS+=	!libarchive
 # Options
 OPTIONS_DEFINE=		ACL_SUPPORT AD_DC ADS AIO_SUPPORT CUPS DEBUG \
 			CLUSTER DNSUPDATE DOCS FAM GLUSTERFS LDAP LIBZFS \
-			PAM_SMBPASS PTHREADPOOL QUOTAS SPOTLIGHT SYSLOG UTMP
+			PTHREADPOOL QUOTAS SPOTLIGHT SYSLOG UTMP \
+			FREENAS
 
 OPTIONS_DEFAULT:=	ACL_SUPPORT AD_DC ADS AIO_SUPPORT DEBUG \
 			DNSUPDATE DOCS FAM LDAP \
@@ -153,7 +154,6 @@ FAM_DESC=		File Alteration Monitor support
 GLUSTERFS=		Gluster filesystem support
 LDAP_DESC=		LDAP client support
 LIBZFS_DESC=		LibZFS support
-PAM_SMBPASS_DESC=	PAM authentication via passdb backends
 PTHREADPOOL_DESC=	Pthread pool
 QUOTAS_DESC=		Disk quota support
 SPOTLIGHT_DESC=	Spotlight support
@@ -176,7 +176,6 @@ NSUPDATE_DESC=		Use samba NSUPDATE utility for AD DC
 
 CONFIGURE_ARGS+=	\
 			--with-automount \
-			--with-gettext=${LOCALBASE} \
 			--with-iconv \
 			--with-libarchive \
 			--with-pam \
@@ -252,11 +251,11 @@ WANT_EXP_MODULES=	auth_samba4 auth_script auth_skel auth_unix auth_wbc \
 			vfs_dfs_samba4 vfs_dirsort vfs_expand_msdfs vfs_extd_audit \
 			vfs_fake_acls vfs_fake_perms vfs_full_audit vfs_media_harmony \
 			vfs_netatalk vfs_posix_eadb vfs_preopen vfs_readahead \
-			vfs_readonly vfs_recycle vfs_scannedonly vfs_shadow_copy \
-			vfs_shadow_copy2 vfs_shadow_copy_test vfs_shell_snap \
-			vfs_skel_opaque vfs_skel_transparent vfs_smb_traffic_analyzer \
-			vfs_streams_depot vfs_streams_xattr vfs_syncops vfs_time_audit \
-			vfs_unityed_media vfs_xattr_tdb vfs_zfsacl vfs_zfs_space
+			vfs_readonly vfs_recycle vfs_shadow_copy vfs_shadow_copy2 \
+			vfs_shadow_copy_test vfs_shell_snap vfs_skel_opaque \
+			vfs_skel_transparent vfs_streams_depot vfs_streams_xattr \
+			vfs_syncops vfs_time_audit vfs_unityed_media vfs_xattr_tdb \
+			vfs_zfsacl vfs_zfs_space
 .endif
 
 .if ${PORT_OPTIONS:MEXP_MODULES}
@@ -287,13 +286,6 @@ SAMBA4_WANT_LDAP=	yes
 # List of extra modules taken from RHEL build
 # https://bugs.freebsd.org/bugzilla/show_bug.cgi?id=197320
 SAMBA4_MODULES+=	idmap_rid idmap_ad idmap_hash idmap_adex idmap_tdb2
-.endif
-
-.if ${PORT_OPTIONS:MAIO_SUPPORT}
-CONFIGURE_ARGS+=	--with-aio-support
-SAMBA4_MODULES+=	vfs_aio_posix
-.else
-CONFIGURE_ARGS+=	--without-aio-support
 .endif
 
 .if ${PORT_OPTIONS:MAVAHI}
@@ -350,15 +342,6 @@ PLIST_SUB+=		LIBZFS=""
 .else
 CONFIGURE_ARGS+=	--without-libzfs
 PLIST_SUB+=		LIBZFS="@comment "
-.endif
-
-
-.if ${PORT_OPTIONS:MPAM_SMBPASS}
-CONFIGURE_ARGS+=	--with-pam_smbpass
-PLIST_SUB+=		SMBPASS=""
-.else
-CONFIGURE_ARGS+=	--without-pam_smbpass
-PLIST_SUB+=		SMBPASS="@comment "
 .endif
 
 .if ${PORT_OPTIONS:MPTHREADPOOL}
@@ -511,42 +494,20 @@ SAMBA_MAN1+=		ad2oLschema.1 dbwrap_tool.1 findsmb.1 gentest.1 \
 SAMBA_MAN5+=		lmhosts.5 pam_winbind.conf.5 smb.conf.5 smbgetrc.5 \
 			smbpasswd.5
 
-
-#SAMBA_MAN7+=		samba.7 winbind_krb5_locator.7
-
 SAMBA_MAN7+=		libsmbclient.7 samba.7 winbind_krb5_locator.7
-
-#SAMBA_MAN8+=		eventlogadm.8 idmap_ad.8 idmap_autorid.8 idmap_hash.8 \
-#			idmap_ldap.8 idmap_nss.8 idmap_rfc2307.8 idmap_rid.8 \
-#			idmap_tdb.8 idmap_tdb2.8 net.8 nmbd.8 pam_winbind.8 pdbedit.8 \
-#			samba-regedit.8 samba-tool.8 samba.8 smbd.8 smbpasswd.8 \
-#			smbspool.8 smbta-util.8 vfs_acl_tdb.8 vfs_acl_xattr.8 \
-#			vfs_aio_fork.8 vfs_aio_linux.8 vfs_aio_pthread.8 \
-#			vfs_audit.8 vfs_cacheprime.8 vfs_cap.8 vfs_catia.8 vfs_ceph.8 \
-#			vfs_commit.8 vfs_crossrename.8 vfs_default_quota.8 \
-#			vfs_dirsort.8 vfs_extd_audit.8 vfs_fake_perms.8 vfs_fileid.8 \
-#			vfs_fruit.8 vfs_full_audit.8 vfs_glusterfs.8 vfs_gpfs.8 vfs_media_harmony.8 \
-#			vfs_netatalk.8 vfs_notify_fam.8 vfs_prealloc.8 \
-#			vfs_preopen.8 vfs_readahead.8 vfs_readonly.8 \
-#			vfs_recycle.8 vfs_scannedonly.8 vfs_shadow_copy.8 \
-#			vfs_shadow_copy2.8 vfs_snapper.8 vfs_smb_traffic_analyzer.8 \
-#			vfs_streams_depot.8 vfs_streams_xattr.8 vfs_syncops.8 vfs_time_audit.8 \
-#			vfs_tsmsm.8 vfs_worm.8 vfs_xattr_tdb.8 winbindd.8 \
-#			vfs_linux_xfs_sgid.8 vfs_btrfs.8
 
 SAMBA_MAN8+=		eventlogadm.8 idmap_ad.8 idmap_autorid.8 idmap_hash.8 idmap_ldap.8 \
 			idmap_nss.8 idmap_rfc2307.8 idmap_rid.8 idmap_script.8 idmap_tdb.8 \
 			idmap_tdb2.8 net.8 nmbd.8 pam_winbind.8 pdbedit.8 samba-regedit.8 \
-			samba-tool.8 samba.8 smbd.8 smbpasswd.8 smbspool.8 smbta-util.8 \
+			samba-tool.8 samba.8 smbd.8 smbpasswd.8 smbspool.8 \
 			vfs_acl_tdb.8 vfs_acl_xattr.8 vfs_aio_fork.8 vfs_aio_linux.8 \
 			vfs_aio_pthread.8 vfs_audit.8 vfs_btrfs.8 vfs_cacheprime.8 vfs_cap.8 \
 			vfs_catia.8 vfs_ceph.8 vfs_commit.8 vfs_crossrename.8 vfs_default_quota.8 \
 			vfs_dirsort.8 vfs_extd_audit.8 vfs_fake_perms.8 vfs_fileid.8 vfs_fruit.8 \
 			vfs_full_audit.8 vfs_glusterfs.8 vfs_gpfs.8 vfs_linux_xfs_sgid.8 \
 			vfs_media_harmony.8 vfs_netatalk.8 vfs_prealloc.8 vfs_preopen.8 \
-			vfs_readahead.8 vfs_readonly.8 vfs_recycle.8 vfs_scannedonly.8 \
-			vfs_shadow_copy.8 vfs_shadow_copy2.8 vfs_shell_snap.8 \
-			vfs_smb_traffic_analyzer.8 vfs_snapper.8 vfs_streams_depot.8 \
+			vfs_readahead.8 vfs_readonly.8 vfs_recycle.8 vfs_shadow_copy.8 \
+			vfs_shadow_copy2.8 vfs_shell_snap.8 vfs_snapper.8 vfs_streams_depot.8 \
 			vfs_streams_xattr.8 vfs_syncops.8 vfs_time_audit.8 vfs_tsmsm.8 \
 			vfs_unityed_media.8 vfs_worm.8 vfs_xattr_tdb.8 vfs_zfsacl.8 winbindd.8
 

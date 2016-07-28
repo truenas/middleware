@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:07-0700\n"
-"PO-Revision-Date: 2016-07-19 11:06+0000\n"
+"PO-Revision-Date: 2016-07-26 19:58+0000\n"
 "Last-Translator: Pavel <pavel.borecki@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: cs\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1468926409.0\n"
+"X-POOTLE-MTIME: 1469563096.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -2131,7 +2131,7 @@ msgid ""
 "Size of extent, 0 means auto, a raw number is bytes, or suffix with KB, MB, "
 "TB for convenience."
 msgstr ""
-"Velikost úložné jednotky, 0 (nula) znamená samočinně, holé číslo znamená "
+"Velikost úložné jednotky, 0 (nula) znamená automaticky, holé číslo znamená "
 "bajty, či (pohodlněji) příponami KB, MB či TB."
 
 #: services/models.py:419 services/models.py:480 services/models.py:557
@@ -2225,7 +2225,7 @@ msgstr "Název cíle"
 
 #: services/models.py:633
 msgid "Base Name will be appended automatically when starting without 'iqn.'."
-msgstr "Pokud NEzačíná na „iqn.“, bude základní název připojen samočinně."
+msgstr "Pokud NEzačíná na „iqn.“, bude základní název připojen automaticky."
 
 #: services/models.py:640
 msgid "Target Alias"
@@ -3571,7 +3571,7 @@ msgid ""
 "automounting or volumes created by a preexec script."
 msgstr ""
 "Neuvádět umístění svazku při vyčíslování seznamu svazků. Užitečné pro "
-"samočinné připojování (mount) či svazky vytvářené skriptem preexec."
+"automatické připojování (mount) či svazky vytvářené skriptem preexec."
 
 #: sharing/models.py:216
 msgid "AFP3 Unix Privs"
@@ -4298,7 +4298,7 @@ msgstr "Zobrazit zařízení Multipath"
 #: storage/nav.py:85 templates/storage/volumes.html:20
 #: templates/storage/volumes.html.py:22
 msgid "Auto Import Volume"
-msgstr "Samočinně importovat svazek"
+msgstr "Importovat svazek automaticky"
 
 #: storage/nav.py:96
 msgid "View Volumes"
@@ -4651,7 +4651,7 @@ msgstr "Vždy zobrazovat kolonky pokročilých nastavení"
 
 #: system/models.py:188
 msgid "Enable autotune"
-msgstr "Zapnout samočinné vyladění"
+msgstr "Zapnout automatické vyladění"
 
 #: system/models.py:196
 msgid "MOTD banner"
@@ -7758,7 +7758,7 @@ msgstr ""
 "Určuje doporučenou velikost bloku pro soubory na souborovém systému. Tato "
 "vlastnost byla navržena výhradně pro potřeby ukládání takových databází, "
 "které přistupují k souborům v záznamech o neměnné velikosti. Pro všechny "
-"ostatní případy použití nenastavujte – ZFS samočinně upravuje velikosti "
+"ostatní případy použití nenastavujte – ZFS automaticky upravuje velikosti "
 "bloků dle vnitřních algoritmů, uzpůsobených pro typické vzorce přístupu k "
 "datům."
 
@@ -8416,7 +8416,7 @@ msgid ""
 msgstr ""
 "Povolit obsloužení požadavků na připojení (mount) i od uživatelů, kteří "
 "nejsou správci (root). Toto by mělo být nastaveno pouze v případě, pokud "
-"bude skutečně používáno. Způsobí samočinné vypnutí sysctl příznaku "
+"bude skutečně používáno. Způsobí automatické vypnutí sysctl příznaku "
 "vfs.nfsrv.nfs_privports, který řídí, zda jádro systému přijímá NFS požadavky "
 "pouze z vyhrazených portů."
 
@@ -8429,7 +8429,7 @@ msgid ""
 msgstr ""
 "Určuje konkrétní IP adresy (oddělené čárkami) se kterými se spojovat pro TCP "
 "a UDP požadavky. Tato volba může být použita opakovaně. Není-li určena žádná "
-"adresa, bude spojovat na INADDR_ANY. Na seznam budou samočinně přidány "
+"adresa, bude spojovat na INADDR_ANY. Na seznam budou automaticky přidány "
 "adresy 127.0.0.1 a (je-li zapnuto IPv6) ::1."
 
 #: services/models.py:359
@@ -11671,7 +11671,7 @@ msgid ""
 msgstr ""
 "Povolit obsloužení požadavků na připojení (mount) i od uživatelů, kteří "
 "nejsou správci (root). Toto by mělo být nastaveno pouze v případě, pokud "
-"bude skutečně používáno. Způsobí samočinné vypnutí sysctl příznaku "
+"bude skutečně používáno. Způsobí automatické vypnutí sysctl příznaku "
 "vfs.nfsrv.nfs_privports, který řídí, zda jádro systému přijímá NFS požadavky "
 "pouze z vyhrazených portů."
 
@@ -11751,7 +11751,7 @@ msgid ""
 "'eui.' or 'naa.'."
 msgstr ""
 "Pokud NEzačíná na „iqn.“, „eui.“ či „naa.“, bude název cíle připojen "
-"samočinně."
+"automaticky."
 
 #: services/models.py:835
 msgid "Fiber Channel"
@@ -13211,7 +13211,9 @@ msgstr "Zadali jste MAC adresu, která je už používána – zadejte jinou."
 msgid ""
 "Valid characters for jail names are letters, numbers, dashes, or underscores."
 msgstr ""
+"Názvy vyhrazených prostředí mohou obsahovat pouze písmena, číslice, "
+"spojovníky a podtržítka."
 
 #: services/forms.py:95
 msgid "Cannot disable CIFS while ActiveDirectory is in use."
-msgstr ""
+msgstr "Službu CIFS nelze vypnout, pokud zapnutá služba ActiveDirectory."

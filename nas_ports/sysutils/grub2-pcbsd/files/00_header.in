@@ -201,7 +201,7 @@ EOF
     set gfxmode=${GRUB_GFXMODE}
     load_video
     insmod gfxterm
-    kernvt="sc"
+    set kernvt="sc"
   else
     # EFI
     insmod efi_gop
@@ -210,7 +210,7 @@ EOF
     insmod videotest
     insmod videoinfo
     set gfxmode=${GRUB_GFXMODE}
-    kernvt="vt"
+    set kernvt="vt"
   fi
 EOF
 
@@ -245,7 +245,7 @@ case x${GRUB_TERMINAL_OUTPUT} in
   ;;
   x*)
     cat << EOF
-kernvt="sc"
+set kernvt="sc"
 terminal_output ${GRUB_TERMINAL_OUTPUT}
 EOF
   ;;
