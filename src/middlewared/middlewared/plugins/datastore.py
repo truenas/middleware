@@ -88,10 +88,10 @@ class DatastoreService(Service):
           simple_filter: '[' attribute_name, OPERATOR, value ']'
           conjunction: '[' CONJUNTION, '[' simple_filter (',' simple_filter)* ']]'
 
-		  OPERATOR: ('=' | '!=' | '>' | '>=' | '<' | '<=' | '~' )
+          OPERATOR: ('=' | '!=' | '>' | '>=' | '<' | '<=' | '~' )
           CONJUNCTION: 'OR'
 
-		e.g. ['OR', [ ['username', '=', 'root' ], ['uid', '=', 0] ] ]
+        e.g. ['OR', [ ['username', '=', 'root' ], ['uid', '=', 0] ] ]
              [ ['username', '=', 'root' ] ]
 
         .. examples(websocket)::
