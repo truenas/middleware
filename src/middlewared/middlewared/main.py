@@ -93,7 +93,12 @@ class Middleware(object):
     def __init__(self):
         self.logger = logging.getLogger('middleware')
         self.__services = {}
+        self.__init_services()
         self.__plugins_load()
+
+    def __init_services(self):
+        from middlewared.service import CoreService
+        self.add_service(CoreService(self))
 
     def __plugins_load(self):
         from middlewared.service import Service
@@ -139,6 +144,9 @@ class Middleware(object):
 
     def get_service(self, name):
         return self.__services[name]
+
+    def get_services(self):
+        return self.__services
 
     def call_method(self, method, *params):
         # DEPRECATED, FIXME: DeprecationWarning

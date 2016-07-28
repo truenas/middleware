@@ -35,3 +35,10 @@ class Service(object):
 
     def __init__(self, middleware):
         self.middleware = middleware
+
+
+class CoreService(Service):
+
+    def get_services(self):
+        """Returns a list of all registered services"""
+        return self.middleware.get_services().keys()
