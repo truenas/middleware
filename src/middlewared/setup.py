@@ -5,6 +5,7 @@ install_requires = [
     'ws4py',
     'gevent',
     'gevent-websocket',
+    'Flask',
 ]
 
 setup(
