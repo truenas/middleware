@@ -3,7 +3,7 @@
 
 PORTNAME=	grub2-pcbsd
 PORTVERSION=	2.02q
-PORTREVISION=	14
+PORTREVISION=	15
 CATEGORIES=	sysutils
 MASTER_SITES=	http://www.pcbsd.org/~kris/software/ \
 		ftp://ftp.pcbsd.org/pub/software/
