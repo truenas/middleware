@@ -125,6 +125,8 @@ class List(EnumMixin, Attribute):
 
     def clean(self, value):
         value = super(List, self).clean(value)
+        if value is None and not self.required:
+            return self.default
         if not isinstance(value, list):
             raise Error(self.name, 'Not a list')
         if self.items:
