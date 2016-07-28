@@ -124,6 +124,14 @@ class Middleware(object):
                     continue
                 if issubclass(attr, Service):
                     self.add_service(attr(self))
+
+        # Now that all plugins have been loaded we can resolve all method params
+        # to make sure every schema is patched and references match
+		from middlewared.schema import resolver  # Lazy import so namespace match
+        for service in self.__services.values():
+            for attr in dir(service):
+                resolver(self, getattr(service, attr))
+
         self.logger.debug('All plugins loaded')
 
     def add_service(self, service):

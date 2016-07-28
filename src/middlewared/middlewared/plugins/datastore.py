@@ -1,4 +1,5 @@
 from middlewared.service import Service
+from middlewared.schema import accepts, Dict, List, Str
 
 import os
 import sys
@@ -67,6 +68,7 @@ class DatastoreService(Service):
         for i in qs:
             yield django_modelobj_serialize(self.middleware, i, extend=extend)
 
+    @accepts(Str('name'), List('filters'), Dict('options'))
     def query(self, name, filters=None, options=None):
         model = self.__get_model(name)
         if options is None:
