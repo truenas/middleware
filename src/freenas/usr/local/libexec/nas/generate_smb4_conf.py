@@ -829,10 +829,7 @@ def generate_smb4_tdb(client, smb4_tdb):
 
 
 def generate_smb4_conf(client, smb4_conf, role):
-    try:
-        cifs = Struct(client.call('cifs.config'))
-    except:
-        return
+    cifs = Struct(client.call('cifs.config'))
 
     if not cifs.cifs_srv_guest:
         cifs.cifs_srv_guest = 'ftp'
