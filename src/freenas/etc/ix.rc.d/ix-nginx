@@ -289,6 +289,15 @@ __EOF__
             alias /usr/local/www/dojo;
         }
 
+        location /api/docs {
+            proxy_pass http://localhost:8001;
+            proxy_set_header Host \$host;
+            proxy_set_header X-Forwarded-For \$proxy_add_x_forwarded_for;
+            proxy_set_header X-Scheme \$scheme;
+            proxy_set_header X-Script-Name /api/docs;
+        }
+
+
         location /docs {
         	alias /usr/local/www/data/docs;
         }

@@ -6,7 +6,7 @@ from gevent import monkey
 from gevent.wsgi import WSGIServer
 from geventwebsocket import WebSocketServer, WebSocketApplication, Resource
 from restful import RESTfulAPI
-from apidoc import app as apidoc_app
+from apidocs import app as apidocs_app
 
 import argparse
 import gevent
@@ -165,12 +165,12 @@ class Middleware(object):
 
         restful_api = RESTfulAPI(self)
 
-        apidocserver = WSGIServer(('127.0.0.1', 8001), apidoc_app)
+        apidocsserver = WSGIServer(('127.0.0.1', 8001), apidocs_app)
         restserver = WSGIServer(('127.0.0.1', 8002), restful_api.get_app())
 
         server_threads = [
             gevent.spawn(wsserver.serve_forever),
-            gevent.spawn(apidocserver.serve_forever),
+            gevent.spawn(apidocsserver.serve_forever),
             gevent.spawn(restserver.serve_forever),
         ]
         self.logger.debug('Accepting connections')
