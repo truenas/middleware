@@ -1,3 +1,4 @@
+import inspect
 import re
 
 
@@ -40,5 +41,25 @@ class Service(object):
 class CoreService(Service):
 
     def get_services(self):
-        """Returns a list of all registered services"""
+        """Returns a list of all registered services."""
         return self.middleware.get_services().keys()
+
+    def get_methods(self, service=None):
+        """Return methods metadata of every available service.
+
+        `service` parameter is optional and filters the result for a single service."""
+        data = {}
+        for name, svc in list(self.middleware.get_services().items()):
+            if service is not None and name != service:
+                continue
+            for i in dir(svc):
+                if i.startswith('_'):
+                    continue
+                method = getattr(svc, i)
+                if not callable(method):
+                    continue
+
+                data['{0}.{1}'.format(name, i)] = {
+                    'description': inspect.getdoc(method)
+                }
+        return data
