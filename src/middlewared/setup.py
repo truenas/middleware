@@ -14,7 +14,13 @@ setup(
     packages=[
         'middlewared',
         'middlewared.client',
-        'middlewared.plugins'],
+        'middlewared.plugins',
+        'middlewared.apidocs',
+    ],
+    package_data={
+       'middlewared.apidocs': ['templates/*'],
+    },
+    include_package_data=True,
     license='BSD',
     platforms='any',
     classifiers=[
