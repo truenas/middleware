@@ -22,6 +22,7 @@ import setproctitle
 import subprocess
 import sys
 import traceback
+import uuid
 
 
 class Application(WebSocketApplication):
@@ -31,6 +32,8 @@ class Application(WebSocketApplication):
     def __init__(self, *args, **kwargs):
         super(Application, self).__init__(*args, **kwargs)
         self.authenticated = self._check_permission()
+        self.sessionid = str(uuid.uuid4())
+        self.handshake = False
 
     def _send(self, data):
         self.ws.send(json.dumps(data))
@@ -85,6 +88,27 @@ class Application(WebSocketApplication):
 
         if not self.authenticated:
             self.send_error(message, 'Not authenticated')
+            return
+
+        if message['msg'] == 'connect':
+            if message.get('version') != '1':
+                self._send({
+                    'msg': 'failed',
+                    'version': '1',
+                })
+            else:
+                self._send({
+                    'msg': 'connected',
+                    'session': self.sessionid,
+                })
+                self.handshake = True
+            return
+
+        if not self.handshake:
+            self._send({
+                'msg': 'failed',
+                'version': '1',
+            })
             return
 
         if message['msg'] == 'method':
