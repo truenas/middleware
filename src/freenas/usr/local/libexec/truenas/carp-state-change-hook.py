@@ -5,7 +5,7 @@
 # and may not be copied and/or distributed
 # without the express permission of iXsystems.
 
-from lockfile import LockFile
+from lockfile import LockFile, AlreadyLocked
 
 import atexit
 import json
@@ -25,11 +25,34 @@ FAILED_FILE = '/tmp/.failover_failed'
 FAILOVER_ASSUMED_MASTER = '/tmp/.failover_master'
 FAILOVER_JSON = '/tmp/failover.json'
 FAILOVER_MTX = '/tmp/.failover_mtx'
+FAILOVER_MUTEX = '/tmp/.failover_mutex'
 FAILOVER_OVERRIDE = '/tmp/failover_override'
 FAILOVER_STATE = '/tmp/.failover_state'
 FAILOVER_NEEDOP = '/tmp/.failover_needop'
 HEARTBEAT_BARRIER = '/tmp/heartbeat_barrier'
 HEARTBEAT_STATE = '/tmp/heartbeat_state'
+
+# FAILOVER_MTX is the mutex used to protect per-interface events.
+# Before creating the lockfile that this script is handing events
+# on a given interface, this lock is aquired.  This lock attempt
+# sleeps indefinitely, which is (ab)used to create an event queue.
+# For instance, if igb0 link_down, link_up, link_down happens in
+# rapid succession, the script will fire with all three events, but
+# event two and three will wait until event one runs to completion.
+# It's important to note that when the event handlers fire one of
+# the first things they do is check to see if the event that fired
+# them is still in affect.  For instance, by the time the link_up
+# event handler runs in this example igb0 will be link_down and it
+# will exit.
+
+# FAILOVER_MUTEX is the mutex to protect the critical sections of
+# the "become active" or "become standby" actions in this script.
+# This is needed in situations where there are multiple interfaces
+# that all go link_up or link_down simultaniously (such as when the
+# partner node reboots).  In that case each interface will acquire
+# it's per-interface lock and run the link_up or link_down event
+# FAILOVER_MUTEX prevents them both from starting fenced or
+# importing volumes or whatnot.
 
 logging.raiseExceptions = False  # Please, don't hate us this much
 log = logging.getLogger('carp-state-change-hook')
@@ -123,7 +146,7 @@ def main(subsystem, event):
                     s = notifier().failover_rpc()
                     status = s.notifier("failover_status", None, None)
                     if status == 'MASTER':
-                        log.warn("Other node is already up, assuming backup.")
+                        log.warn("Other node is already active, assuming backup.")
                         sys.exit()
                 except Exception as e:
                     log.info("Failed to contact the other node", exc_info=True)
@@ -142,6 +165,7 @@ def main(subsystem, event):
                         log.warn("Failover disabled.  Assuming active.")
                         run("touch %s" % FAILOVER_OVERRIDE)
                 if masterret is False:
+                    # All pools are already imported
                     sys.exit()
 
     open(HEARTBEAT_BARRIER, 'a+').close()
@@ -166,12 +190,16 @@ def carp_master(fobj, state_file, ifname, vhid, event, user_override, forcetakeo
 
     if not user_override and not forcetakeover:
         sleeper = fobj['timeout']
-        error, output = run("ifconfig lagg0")
-        if not error:
+        # The specs for lagg require that if a subinterface of the lagg interface
+        # changes state, all traffic on the entire logical interface will be halted
+        # for two seconds while the bundle reconverges.  This means if there's a
+        # toplogy change on the active node, the standby node will get a link_up
+        # event on the lagg.  To  prevent the standby node from immediately pre-empting
+        # we wait 2 seconds to see if the evbent was transient.
+        if ifname.startswith("lagg"):
             if sleeper < 2:
                 sleeper = 2
             log.warn("Sleeping %s seconds and rechecking %s", sleeper, ifname)
-            # FIXME
             time.sleep(sleeper)
             error, output = run(
                 "ifconfig %s | grep 'carp:' | grep 'vhid %s ' | awk '{print $2}'" % (ifname, vhid)
@@ -271,192 +299,202 @@ def carp_master(fobj, state_file, ifname, vhid, event, user_override, forcetakeo
             if int(status1) == 2 and int(status2) == 0:
                 fasttrack = True
 
-    log.warn('Starting fenced')
-    run('/sbin/camcontrol rescan all')
-    if not user_override and not fasttrack and not forcetakeover:
-        error, output = run('LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/python /usr/local/sbin/fenced')
-    else:
-        error, output = run(
-            'LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/python /usr/local/sbin/fenced force'
-        )
-
-    if error:
-        if error == 1:
-            log.warn('Can not register keys on disks!')
-            run('ifconfig %s vhid %s advskew 201' % (ifname, vhid))
-        elif error == 2:
-            log.warn('Remote fenced is running!')
-            run('ifconfig %s vhid %s advskew 202' % (ifname, vhid))
-        elif error == 3:
-            log.warn('Can not reserve all disks!')
-            run('ifconfig %s vhid %s advskew 203' % (ifname, vhid))
-        elif error == 5:
-            log.warn('Fencing daemon encountered an unexpected fatal error!')
-            run('ifconfig %s vhid %s advskew 205' % (ifname, vhid))
-        else:
-            log.warn('This should never happen: %d', error)
-            run('ifconfig %s vhid %s advskew 204' % (ifname, vhid))
-        try:
-            os.unlink(ELECTING_FILE)
-        except:
-            pass
-        sys.exit(1)
-
-    # If we reached here, fenced is daemonized and have all drives reserved.
-    # Bring up all carps we own.
-    error, output = run("ifconfig -l")
-    for iface in output.split():
-        for iface in list(output.split()):
-            if iface in fobj['internal_interfaces']:
-                continue
-            error, output = run("ifconfig %s | grep 'carp:' | awk '{print $4}'" % iface)
-            for vhid in list(output.split()):
-                run("ifconfig %s vhid %s advskew 1" % (iface, vhid))
-
-    open(IMPORTING_FILE, 'w').close()
+    # Start the critical section
     try:
-        os.unlink(ELECTING_FILE)
-    except:
-        pass
+        with LockFile(FAILOVER_MUTEX, timeout=0):
+            # The lockfile modules cleans up lockfiles if this script exits on it's own accord.
+            # For reboots, /tmp is cleared by virtue of being a memory device.
+            # If someone does a kill -9 on the script while it's running the lockfile
+            # will get left dangling.
+            log.warn('Aquired failover master lock')
+            log.warn('Starting fenced')
+            run('/sbin/camcontrol rescan all')
+            if not user_override and not fasttrack and not forcetakeover:
+                error, output = run('LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/python /usr/local/sbin/fenced')
+            else:
+                error, output = run(
+                    'LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/python /usr/local/sbin/fenced force'
+                )
 
-    run("sysctl -n kern.disks | tr ' ' '\\n' | sed -e 's,^,/dev/,' | grep '^/dev/da' | xargs -n 1 echo 'false >' | sh")
+            if error:
+                if error == 1:
+                    log.warn('Can not register keys on disks!')
+                    run('ifconfig %s vhid %s advskew 201' % (ifname, vhid))
+                elif error == 2:
+                    log.warn('Remote fenced is running!')
+                    run('ifconfig %s vhid %s advskew 202' % (ifname, vhid))
+                elif error == 3:
+                    log.warn('Can not reserve all disks!')
+                    run('ifconfig %s vhid %s advskew 203' % (ifname, vhid))
+                elif error == 5:
+                    log.warn('Fencing daemon encountered an unexpected fatal error!')
+                    run('ifconfig %s vhid %s advskew 205' % (ifname, vhid))
+                else:
+                    log.warn('This should never happen: %d', error)
+                    run('ifconfig %s vhid %s advskew 204' % (ifname, vhid))
+                try:
+                    os.unlink(ELECTING_FILE)
+                except:
+                    pass
+                sys.exit(1)
 
-    if os.path.exists('/data/zfs/killcache'):
-        run('rm -f /data/zfs/zpool.cache /data/zfs/zpool.cache.saved')
-    else:
-        open('/data/zfs/killcache', 'w').close()
-        run('fsync /data/zfs/killcache')
+            # If we reached here, fenced is daemonized and have all drives reserved.
+            # Bring up all carps we own.
+            error, output = run("ifconfig -l")
+            for iface in output.split():
+                for iface in list(output.split()):
+                    if iface in fobj['internal_interfaces']:
+                        continue
+                    error, output = run("ifconfig %s | grep 'carp:' | awk '{print $4}'" % iface)
+                    for vhid in list(output.split()):
+                        run("ifconfig %s vhid %s advskew 1" % (iface, vhid))
 
-    if os.path.exists('/data/zfs/zpool.cache'):
-        stat1 = os.stat('/data/zfs/zpool.cache')
-        if (
-            not os.path.exists('/data/zfs/zpool.cache.saved') or
-            stat1.st_mtime > os.stat('/data/zfs/zpool.cache.saved').st_mtime
-        ):
-            run('cp /data/zfs/zpool.cache /data/zfs/zpool.cache.saved')
+            open(IMPORTING_FILE, 'w').close()
+            try:
+                os.unlink(ELECTING_FILE)
+            except:
+                pass
 
-    log.warn('Beginning volume imports.')
-    # TODO: now that we are all python, we should probably just absorb the code in.
-    run(
-        'LD_LIBRARY_PATH=/usr/local/lib /usr/local/sbin/enc_helper attachall'
-    )
+            run("sysctl -n kern.disks | tr ' ' '\\n' | sed -e 's,^,/dev/,' | grep '^/dev/da' | xargs -n 1 echo 'false >' | sh")
 
-    p = multiprocessing.Process(target=os.system("""dtrace -qn 'zfs-dbgmsg{printf("\r                            \r%s", stringof(arg0))}' > /dev/console &"""))
-    p.start()
-    for volume in fobj['volumes']:
-        log.warn('Importing %s', volume)
-        error, output = run('/sbin/zpool import %s -o cachefile=none -m -R /mnt -f %s' % (
-            '-c /data/zfs/zpool.cache.saved' if os.path.exists(
-                '-c /data/zfs/zpool.cache.saved'
-            ) else '',
-            volume,
-        ))
-        if error:
-            open(FAILED_FILE, 'w').close()
-        run('/sbin/zpool set cachefile=/data/zfs/zpool.cache %s' % volume)
+            if os.path.exists('/data/zfs/killcache'):
+                run('rm -f /data/zfs/zpool.cache /data/zfs/zpool.cache.saved')
+            else:
+                open('/data/zfs/killcache', 'w').close()
+                run('fsync /data/zfs/killcache')
 
-    p.terminate()
-    os.system("pkill -9 -f 'dtrace -qn'")
-    if not os.path.exists(FAILOVER_NEEDOP):
-        open(FAILOVER_ASSUMED_MASTER, 'w').close()
+            if os.path.exists('/data/zfs/zpool.cache'):
+                stat1 = os.stat('/data/zfs/zpool.cache')
+                if (
+                    not os.path.exists('/data/zfs/zpool.cache.saved') or
+                    stat1.st_mtime > os.stat('/data/zfs/zpool.cache.saved').st_mtime
+                ):
+                    run('cp /data/zfs/zpool.cache /data/zfs/zpool.cache.saved')
 
-    try:
-        os.unlink('/data/zfs/killcache')
-    except:
-        pass
+            log.warn('Beginning volume imports.')
+            # TODO: now that we are all python, we should probably just absorb the code in.
+            run(
+                'LD_LIBRARY_PATH=/usr/local/lib /usr/local/sbin/enc_helper attachall'
+            )
 
-    if not os.path.exists(FAILED_FILE):
-        run('cp /data/zfs/zpool.cache /data/zfs/zpool.cache.saved')
-    try:
-        os.unlink(IMPORTING_FILE)
-    except:
-        pass
+            p = multiprocessing.Process(target=os.system("""dtrace -qn 'zfs-dbgmsg{printf("\r                            \r%s", stringof(arg0))}' > /dev/console &"""))
+            p.start()
+            for volume in fobj['volumes']:
+                log.warn('Importing %s', volume)
+                error, output = run('/sbin/zpool import %s -o cachefile=none -m -R /mnt -f %s' % (
+                    '-c /data/zfs/zpool.cache.saved' if os.path.exists(
+                        '-c /data/zfs/zpool.cache.saved'
+                    ) else '',
+                    volume,
+                ))
+                if error:
+                    open(FAILED_FILE, 'w').close()
+                run('/sbin/zpool set cachefile=/data/zfs/zpool.cache %s' % volume)
 
-    log.warn('Volume imports complete.')
-    log.warn('Restarting services.')
-    FREENAS_DB = '/data/freenas-v1.db'
-    conn = sqlite3.connect(FREENAS_DB)
-    c = conn.cursor()
+            p.terminate()
+            os.system("pkill -9 -f 'dtrace -qn'")
+            if not os.path.exists(FAILOVER_NEEDOP):
+                open(FAILOVER_ASSUMED_MASTER, 'w').close()
 
-    # TODO: This needs investigation.  Why is part of the LDAP
-    # stack restarted?  Maybe homedir handling that
-    # requires the volume to be imported?
-    c.execute('SELECT ldap_enable FROM directoryservice_ldap')
-    ret = c.fetchone()
-    if ret and ret[0] == 1:
-        run('/usr/sbin/service ix-ldap quietstart')
+            try:
+                os.unlink('/data/zfs/killcache')
+            except:
+                pass
 
-    # TODO: Why is lockd missing from this list?
-    # why are things being restarted instead of reloaded?
-    c.execute('SELECT srv_enable FROM services_services WHERE srv_service = "nfs"')
-    ret = c.fetchone()
-    if ret and ret[0] == 1:
-        run('LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/python '
-            '/usr/local/www/freenasUI/middleware/notifier.py '
-            'nfsv4link')
-        run('/usr/sbin/service ix-nfsd quietstart')
-        run('/usr/sbin/service mountd reload')
+            if not os.path.exists(FAILED_FILE):
+                run('cp /data/zfs/zpool.cache /data/zfs/zpool.cache.saved')
+            try:
+                os.unlink(IMPORTING_FILE)
+            except:
+                pass
 
-    # 0 for Active node
-    run('/sbin/sysctl kern.cam.ctl.ha_role=0')
+            log.warn('Volume imports complete.')
+            log.warn('Restarting services.')
+            FREENAS_DB = '/data/freenas-v1.db'
+            conn = sqlite3.connect(FREENAS_DB)
+            c = conn.cursor()
 
-    # TODO: Why is this being restarted?
-    run('/usr/sbin/service ix-ssl quietstart')
-    run('/usr/sbin/service ix-system quietstart')
+            # TODO: This needs investigation.  Why is part of the LDAP
+            # stack restarted?  Maybe homedir handling that
+            # requires the volume to be imported?
+            c.execute('SELECT ldap_enable FROM directoryservice_ldap')
+            ret = c.fetchone()
+            if ret and ret[0] == 1:
+                run('/usr/sbin/service ix-ldap quietstart')
 
-    c.execute('SELECT srv_enable FROM services_services WHERE srv_service = "cifs"')
-    ret = c.fetchone()
-    if ret and ret[0] == 1:
-        run('/usr/sbin/service ix-pre-samba quietstart')
-        run('/usr/sbin/service samba_server forcestop')
-        run('/usr/sbin/service samba_server quietstart')
-        run('/usr/sbin/service ix-post-samba quietstart')
+            # TODO: Why is lockd missing from this list?
+            # why are things being restarted instead of reloaded?
+            c.execute('SELECT srv_enable FROM services_services WHERE srv_service = "nfs"')
+            ret = c.fetchone()
+            if ret and ret[0] == 1:
+                run('LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/python '
+                    '/usr/local/www/freenasUI/middleware/notifier.py '
+                    'nfsv4link')
+                run('/usr/sbin/service ix-nfsd quietstart')
+                run('/usr/sbin/service mountd reload')
 
-    c.execute('SELECT srv_enable FROM services_services WHERE srv_service = "afp"')
-    ret = c.fetchone()
-    if ret and ret[0] == 1:
-        run('/usr/sbin/service ix-afpd quietstart')
-        run('/usr/sbin/service netatalk forcestop')
-        run('/usr/sbin/service netatalk quietstart')
+            # 0 for Active node
+            run('/sbin/sysctl kern.cam.ctl.ha_role=0')
 
-    conn.close()
-    log.warn('Service restarts complete.')
+            # TODO: Why is this being restarted?
+            run('/usr/sbin/service ix-ssl quietstart')
+            run('/usr/sbin/service ix-system quietstart')
 
-    # TODO: This is 4 years old at this point.  Is it still needed?
-    # There appears to be a small lag if we allow NFS traffic right away. During
-    # this time, we fail NFS requests with ESTALE to the remote system. This
-    # gives remote clients heartburn, so rather than try to deal with the
-    # downstream effect of that, instead we take a chill pill for 1 seconds.
-    time.sleep(1)
+            c.execute('SELECT srv_enable FROM services_services WHERE srv_service = "cifs"')
+            ret = c.fetchone()
+            if ret and ret[0] == 1:
+                run('/usr/sbin/service ix-pre-samba quietstart')
+                run('/usr/sbin/service samba_server forcestop')
+                run('/usr/sbin/service samba_server quietstart')
+                run('/usr/sbin/service ix-post-samba quietstart')
 
-    run('/sbin/pfctl -d')
+            c.execute('SELECT srv_enable FROM services_services WHERE srv_service = "afp"')
+            ret = c.fetchone()
+            if ret and ret[0] == 1:
+                run('/usr/sbin/service ix-afpd quietstart')
+                run('/usr/sbin/service netatalk forcestop')
+                run('/usr/sbin/service netatalk quietstart')
 
-    log.warn('Allowing network traffic.')
-    run_async('echo "$(date), $(hostname), assume master" | mail -s "Failover" root')
+            conn.close()
+            log.warn('Service restarts complete.')
 
-    try:
-        os.unlink(FAILOVER_OVERRIDE)
-    except:
-        pass
+            # TODO: This is 4 years old at this point.  Is it still needed?
+            # There appears to be a small lag if we allow NFS traffic right away. During
+            # this time, we fail NFS requests with ESTALE to the remote system. This
+            # gives remote clients heartburn, so rather than try to deal with the
+            # downstream effect of that, instead we take a chill pill for 1 seconds.
+            time.sleep(1)
 
-    run('/usr/sbin/service ix-crontab quietstart')
+            run('/sbin/pfctl -d')
 
-    # sync disks is disabled on passive node
-    run('/usr/sbin/service ix-syncdisks quietstart')
+            log.warn('Allowing network traffic.')
+            run_async('echo "$(date), $(hostname), assume master" | mail -s "Failover" root')
 
-    log.warn('Syncing enclosure')
-    run('LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/python '
-        '/usr/local/www/freenasUI/middleware/notifier.py '
-        'zpool_enclosure_sync')
+            try:
+                os.unlink(FAILOVER_OVERRIDE)
+            except:
+                pass
 
-    run('/usr/sbin/service ix-collectd quietstart')
-    run('/usr/sbin/service collectd quietrestart')
-    run('/usr/sbin/service ix-syslogd quietstart')
-    run('/usr/sbin/service syslog-ng quietrestart')
-    run('/usr/sbin/service ix-smartd quietstart')
-    run('/usr/sbin/service smartd quietrestart')
+            run('/usr/sbin/service ix-crontab quietstart')
 
-    log.warn('Failover event complete.')
+            # sync disks is disabled on passive node
+            run('/usr/sbin/service ix-syncdisks quietstart')
+
+            log.warn('Syncing enclosure')
+            run('LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/python '
+                '/usr/local/www/freenasUI/middleware/notifier.py '
+                'zpool_enclosure_sync')
+
+            run('/usr/sbin/service ix-collectd quietstart')
+            run('/usr/sbin/service collectd quietrestart')
+            run('/usr/sbin/service ix-syslogd quietstart')
+            run('/usr/sbin/service syslog-ng quietrestart')
+            run('/usr/sbin/service ix-smartd quietstart')
+            run('/usr/sbin/service smartd quietrestart')
+
+            log.warn('Failover event complete.')
+    except AlreadyLocked:
+        log.warn('Failover event handler failed to aquire master lockfile')
 
 
 def carp_backup(fobj, state_file, ifname, vhid, event, user_override):
@@ -464,8 +502,13 @@ def carp_backup(fobj, state_file, ifname, vhid, event, user_override):
 
     if not user_override:
         sleeper = fobj['timeout']
-        error, output = run("ifconfig lagg0")
-        if not error:
+        # The specs for lagg require that if a subinterface of the lagg interface
+        # changes state, all traffic on the entire logical interface will be halted
+        # for two seconds while the bundle reconverges.  This means if there's a
+        # toplogy change on the active node, the standby node will get a link_up
+        # event on the lagg.  To  prevent the standby node from immediately pre-empting
+        # we wait 2 seconds to see if the evbent was transient.
+        if ifname.startswith("lagg"):
             if sleeper < 2:
                 sleeper = 2
             log.warn("Sleeping %s seconds and rechecking %s", sleeper, ifname)
@@ -501,49 +544,60 @@ def carp_backup(fobj, state_file, ifname, vhid, event, user_override):
                     'are UP.', ifname)
                 sys.exit(1)
 
-    run('pkill -9 -f fenced')
-
-    for group in fobj['groups']:
-        for interface in fobj['groups'][group]:
-            error, output = run("ifconfig %s | grep 'carp:' | awk '{print $4}'" % interface)
-            for vhid in output.split():
-                run("ifconfig %s vhid %s advskew 100" % (interface, vhid))
-
-    run('/sbin/pfctl -ef /etc/pf.conf.block')
-
-    run('/usr/sbin/service watchdogd quietstop')
-    run('watchdog -t 4')
-
-    # make CTL to close backing storages, allowing pool to export
-    run('/sbin/sysctl kern.cam.ctl.ha_role=1')
-
-    for volume in fobj['volumes'] + fobj['phrasedvolumes']:
-        error, output = run('zpool list %s' % volume)
-        if not error:
-            log.warn('Exporting %s', volume)
-            error, output = run('zpool export -f %s' % volume)
-            if error:
-                run('zpool status %s' % volume)
-                time.sleep(5)
-            log.warn('Exported %s', volume)
-
-    run('watchdog -t 0')
+    # Start the critical section
     try:
-        os.unlink(FAILOVER_ASSUMED_MASTER)
-    except:
-        pass
+        with LockFile(FAILOVER_MUTEX, timeout=0):
+            # The lockfile modules cleans up lockfiles if this script exits on it's own accord.
+            # For reboots, /tmp is cleared by virtue of being a memory device.
+            # If someone does a kill -9 on the script while it's running the lockfile
+            # will get left dangling.
+            log.warn('Aquired failover backup lock')
+            run('pkill -9 -f fenced')
 
-    run('/usr/sbin/service watchdogd quietstart')
-    run('/usr/sbin/service ix-syslogd quietstart')
-    run('/usr/sbin/service syslog-ng quietrestart')
-    run('/usr/sbin/service ix-crontab quietstart')
-    run('/usr/sbin/service ix-collectd quietstart')
-    run('/usr/sbin/service collectd forcestop')
-    run_async('echo "$(date), $(hostname), assume backup" | mail -s "Failover" root')
+            for group in fobj['groups']:
+                for interface in fobj['groups'][group]:
+                    error, output = run("ifconfig %s | grep 'carp:' | awk '{print $4}'" % interface)
+                    for vhid in output.split():
+                        run("ifconfig %s vhid %s advskew 100" % (interface, vhid))
 
-    log.warn('Setting passphrase from master')
-    run('LD_LIBRARY_PATH=/usr/local/lib /usr/local/sbin/enc_helper '
-        'syncfrompeer')
+            run('/sbin/pfctl -ef /etc/pf.conf.block')
+
+            run('/usr/sbin/service watchdogd quietstop')
+            run('watchdog -t 4')
+
+            # make CTL to close backing storages, allowing pool to export
+            run('/sbin/sysctl kern.cam.ctl.ha_role=1')
+
+            for volume in fobj['volumes'] + fobj['phrasedvolumes']:
+                error, output = run('zpool list %s' % volume)
+                if not error:
+                    log.warn('Exporting %s', volume)
+                    error, output = run('zpool export -f %s' % volume)
+                    if error:
+                        run('zpool status %s' % volume)
+                        time.sleep(5)
+                    log.warn('Exported %s', volume)
+
+            run('watchdog -t 0')
+            try:
+                os.unlink(FAILOVER_ASSUMED_MASTER)
+            except:
+                pass
+
+            run('/usr/sbin/service watchdogd quietstart')
+            run('/usr/sbin/service ix-syslogd quietstart')
+            run('/usr/sbin/service syslog-ng quietrestart')
+            run('/usr/sbin/service ix-crontab quietstart')
+            run('/usr/sbin/service ix-collectd quietstart')
+            run('/usr/sbin/service collectd forcestop')
+            run_async('echo "$(date), $(hostname), assume backup" | mail -s "Failover" root')
+
+            log.warn('Setting passphrase from master')
+            run('LD_LIBRARY_PATH=/usr/local/lib /usr/local/sbin/enc_helper '
+                'syncfrompeer')
+
+    except AlreadyLocked:
+        log.warn('Failover event handler failed to aquire backup lockfile')
 
 
 if __name__ == '__main__':
