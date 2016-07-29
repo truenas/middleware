@@ -271,7 +271,6 @@ def resolver(middleware, f):
         return
     if not hasattr(f, 'accepts'):
         return
-    print f, "--"
     new_params = []
     for p in f.accepts:
         if isinstance(p, (Patch, Ref, Attribute)):
