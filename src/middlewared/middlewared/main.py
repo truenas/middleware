@@ -1,8 +1,10 @@
+from gevent import monkey
+monkey.patch_all()
+
 from collections import OrderedDict
 from client.protocol import DDPProtocol
 from daemon import DaemonContext
 from daemon.pidfile import TimeoutPIDLockFile
-from gevent import monkey
 from gevent.wsgi import WSGIServer
 from geventwebsocket import WebSocketServer, WebSocketApplication, Resource
 from restful import RESTfulAPI
@@ -178,7 +180,6 @@ class Middleware(object):
 
 
 def main():
-    monkey.patch_all()
     # Workaround for development
     modpath = os.path.realpath(os.path.join(
         os.path.dirname(os.path.realpath(__file__)),
