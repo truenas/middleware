@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:03-0700\n"
-"PO-Revision-Date: 2016-07-10 17:31+0000\n"
+"PO-Revision-Date: 2016-07-28 15:09+0000\n"
 "Last-Translator: Tonnes <tonnes.mb@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: nl\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1468171874.0\n"
+"X-POOTLE-MTIME: 1469718547.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -9145,8 +9145,8 @@ msgid ""
 "The client IP is detected by calling 'url' from this 'ip_server_name:port'. "
 "Defaults to checkip.dyndns.org:80 /."
 msgstr ""
-"Het client-IP-adres wordt herkend door 'url' vanaf deze 'ip_server_name:"
-"port' aan te roepen. Standaard is dit checkip.dyndns.org:80 /."
+"Het client-IP-adres wordt herkend door 'url' vanaf deze 'ip-servernaam:"
+"poort' aan te roepen. Standaard is dit checkip.dyndns.org:80 /."
 
 #: services/models.py:1595
 msgid "Domain Account Name"
@@ -9994,12 +9994,12 @@ msgstr ""
 #: directoryservice/models.py:288
 #: directoryservice/models.py:289
 msgid "LDAP Idmap"
-msgstr "LDAP-Idmap"
+msgstr "LDAP-idmap"
 
 #: directoryservice/models.py:308
 #: directoryservice/models.py:309
 msgid "NSS Idmap"
-msgstr "NSS-Idmap"
+msgstr "NSS-idmap"
 
 #: directoryservice/models.py:327
 msgid "LDAP Server"
@@ -10120,12 +10120,12 @@ msgstr ""
 #: directoryservice/models.py:413
 #: directoryservice/models.py:414
 msgid "RFC2307 Idmap"
-msgstr "RFC2307-Idmap"
+msgstr "RFC2307-idmap"
 
 #: directoryservice/models.py:433
 #: directoryservice/models.py:434
 msgid "RID Idmap"
-msgstr "RID-Idmap"
+msgstr "RID-idmap"
 
 #: directoryservice/models.py:453
 #: directoryservice/models.py:454
@@ -10531,7 +10531,7 @@ msgstr "Nu"
 
 #: directoryservice/models.py:637
 msgid "Descriptive Name."
-msgstr "Beschrijvende naam"
+msgstr "Beschrijvende naam."
 
 #: directoryservice/models.py:668
 #: directoryservice/models.py:806
@@ -11834,7 +11834,7 @@ msgstr "Kerberos-instellingen"
 
 #: directoryservice/models.py:1140
 msgid "LDAP Schema type."
-msgstr "Type LDAP-schema"
+msgstr "Type LDAP-schema."
 
 # Afhankelijk van context, dus niet altijd letterlijk.
 # Echter, User Guide = Gebruikershandleiding, Guided Tour = Rondleiding, Travel Guide = Reisgids. Handleiding lijkt daarom geschikter.
@@ -12082,7 +12082,7 @@ msgid ""
 ".'. Leaving this field blank causes the service to use its built in default: "
 "checkip.dyndns.org:80 /."
 msgstr ""
-"Het client-IP-adres wordt herkend door 'url' vanaf deze 'ip_server_name:port "
+"Het client-IP-adres wordt herkend door 'url' vanaf deze 'ip-servernaam:poort "
 "/.' aan te roepen. Leeg laten van dit veld zorgt ervoor dat de service zijn "
 "ingebouwde standaardwaarde gebruikt: checkip.dyndns.org:80 /."
 
@@ -12718,13 +12718,11 @@ msgstr ""
 
 # Lijkt _titel_ van dialoogvenster, dan infinitief, dus helewerkwoordsvorm. (Alleen) bij opdracht aan (zin in richting van) gebruiker, imperatief (geb. wijs), maar dan ook overige 'confirm'-strings aanpassen. Test/controle vereist.
 #: directoryservice/forms.py:122
-#, fuzzy
 msgid "Confirm LDAP User DN Password"
 msgstr "DN-wachtwoord van LDAP-gebruiker bevestigen"
 
 # Zo kort mogelijk houden / onbepaald / onnodig, dus geen lidwoord. Wel 'van' tussen beide znw. (geen krantenkopstijl).
 #: directoryservice/models.py:519
-#, fuzzy
 msgid "LDAP User DN Password"
 msgstr "DN-wachtwoord van LDAP-gebruiker"
 
@@ -13054,7 +13052,6 @@ msgid "File size must be a multiple of block size"
 msgstr "Bestandsgrootte moet een veelvoud van blokgrootte zijn"
 
 #: system/alertmods/mpr_firmware.py:34
-#, fuzzy
 msgid ""
 "Firmware version %(fwversion)s does not match driver version %(drversion)s "
 "for /dev/mpr%(mpr)s. Please flash controller to P%(drversion)s IT firmware."
@@ -13064,7 +13061,6 @@ msgstr ""
 "P%(drversion)s."
 
 #: system/alertmods/mps_firmware.py:35
-#, fuzzy
 msgid ""
 "Firmware version %(fwversion)s does not match driver version %(drversion)s "
 "for /dev/mps%(mps)s. Please flash controller to P%(drversion)s IT firmware."
@@ -13087,7 +13083,6 @@ msgstr ""
 "upgrade' op de opdrachtregel."
 
 #: storage/forms.py:387
-#, fuzzy
 msgid ""
 "You are not allowed to create a volume with different data vdev types "
 "(%(vdev1)s and %(vdev2)s)"
@@ -13124,7 +13119,7 @@ msgstr "Alleen syslog gebruiken"
 #: services/models.py:422
 #, fuzzy
 msgid "Support >16 groups"
-msgstr "Ondersteuningskwesties"
+msgstr ">16 groepen ondersteunen"
 
 #: services/models.py:424
 #, fuzzy
@@ -13145,9 +13140,8 @@ msgid ""
 "Interfaces to advertise and listens to. If none specified, listen for in all "
 "available addresses."
 msgstr ""
-"IP-adres(sen) voor aankondigingen en waarop wordt geluisterd. Als niets is "
-"opgegeven, wordt het eerste IP-adres van het systeem aangekondigd, maar naar "
-"alle inkomende aanvragen geluisterd."
+"Interfaces voor aankondigingen en waarop wordt geluisterd. Als niets is "
+"opgegeven, wordt op alle beschikbare adressen geluisterd."
 
 #: templates/system/config_upload.html:6
 msgid "All your passwords will be reseted, make sure to set them after reboot."
@@ -13292,9 +13286,9 @@ msgstr ""
 "%(changelog)s\n"
 
 #: jails/forms.py:225
-#, fuzzy
 msgid "Jail name may contain only alphanumeric characters and underscore."
-msgstr "De community mag alleen alfanumerieke tekens, _ of - bevatten"
+msgstr ""
+"Jailnaam mag alleen alfanumerieke tekens en liggende streepjes bevatten."
 
 #: services/forms.py:266
 msgid "NetBIOS Alias: %s"
@@ -13306,9 +13300,9 @@ msgid ""
 "Select the IP address(es) to listen for NFS requests. If left unchecked, NFS "
 "will listen on all available addresses."
 msgstr ""
-"IP-adres(sen) voor aankondigingen en waarop wordt geluisterd. Als niets is "
-"opgegeven, wordt het eerste IP-adres van het systeem aangekondigd, maar naar "
-"alle inkomende aanvragen geluisterd."
+"Selecteer een of meer IP-adressen waarop naar NFS-aanvragen wordt "
+"geluisterd. Als dit niet is aangevinkt, luistert NFS op alle beschikbare "
+"adressen."
 
 #: system/alertmods/vmwaresnapdelete_fails.py:25
 #, fuzzy
@@ -13318,10 +13312,9 @@ msgstr "VMware-momentopname %(snap)s mislukt voor de volgende VM's: %(vms)s"
 #: system/forms.py:1613
 #, fuzzy
 msgid "Share path %s already exists"
-msgstr "Het pad %s bestaat al."
+msgstr "Pad naar share %s bestaat al"
 
 #: system/alertmods/volume_rekey.py:14
-#, fuzzy
 msgid ""
 "Encrypted volume failed to rekey some disks. Please make sure you have "
 "working recovery keys, check logs files and correct the error as it may "
@@ -13337,14 +13330,13 @@ msgid "Readonly"
 msgstr "Alleen-lezen"
 
 #: storage/forms.py:2024
-#, fuzzy
 msgid "Disk is not clear, partitions or ZFS labels were found."
 msgstr "Schijf is niet leeg; partities of ZFS-labels aangetroffen."
 
 #: storage/nav.py:88
 #, fuzzy
 msgid "View Enclosure"
-msgstr "E16-behuizing"
+msgstr "Behuizing weergeven"
 
 #: services/forms.py:2044
 msgid "Webdav SSL protocol specified without choosing a certificate"
@@ -13359,17 +13351,14 @@ msgid "Unmount Failed {0} -> {1} {2}"
 msgstr "Ontkoppelen mislukt {0} -> {1} {2}"
 
 #: services/models.py:1258
-#, fuzzy
 msgid "Auxiliary parameters (upsd.conf)"
-msgstr "Hulpparameters (ups.conf)"
+msgstr "Hulpparameters (upsd.conf)"
 
 #: account/forms.py:684
-#, fuzzy
 msgid "Do not delete user primary group"
 msgstr "Primaire groep van gebruiker niet verwijderen"
 
 #: storage/forms.py:1427
-#, fuzzy
 msgid "You cannot shrink a zvol from GUI, this may lead to data loss."
 msgstr ""
 "U kunt geen zvol verkleinen vanuit de GUI; dit kan leiden tot "
@@ -13400,32 +13389,29 @@ msgstr "Niet behouden"
 #: system/views.py:457
 #, fuzzy
 msgid "Boot Environment successfully Kept."
-msgstr "Opstartomgeving met succes verwijderd."
+msgstr "Opstartomgeving met succes behouden."
 
 #: system/views.py:461
-#, fuzzy
 msgid "Failed to keep Boot Environment."
-msgstr "Hernoemen van opstartomgeving is mislukt."
+msgstr "Behouden van opstartomgeving is mislukt."
 
 #: system/views.py:475
-#, fuzzy
 msgid "Boot Environment successfully UnKept."
-msgstr "Opstartomgeving met succes verwijderd."
+msgstr "Niet behouden van opstartomgeving is mislukt."
 
 #: system/views.py:479
-#, fuzzy
 msgid "Failed to Unkeep Boot Environment."
-msgstr "Hernoemen van opstartomgeving is mislukt."
+msgstr "Niet behouden van opstartomgeving is mislukt."
 
 #: templates/system/bootenv_keep.html:4
 #, fuzzy
 msgid "Do you want to set keep flag in this boot environment?"
-msgstr "Weet u zeker dat u de volgende opstartomgevingen wilt verwijderen?"
+msgstr "Wilt u de behoudvlag in deze opstartomgeving instellen?"
 
 #: templates/system/bootenv_unkeep.html:4
 #, fuzzy
 msgid "Do you want to reset keep flag in this boot environment?"
-msgstr "Weet u zeker dat u de volgende opstartomgevingen wilt verwijderen?"
+msgstr "Wilt u de behoudvlag in deze opstartomgeving opnieuw instellen?"
 
 #: templates/system/update.html:21
 #: templates/system/update_check.html:22
@@ -13449,9 +13435,8 @@ msgid "Is_Debug"
 msgstr "Is_Debug"
 
 #: system/models.py:137
-#, fuzzy
 msgid "Syslog level"
-msgstr "Syslog-server"
+msgstr "Syslog-niveau"
 
 #: system/models.py:138
 #, fuzzy
@@ -13460,10 +13445,10 @@ msgid ""
 "transactions that server performs on behalf of the client. f_is_debug "
 "specify higher levels of debugging output. The default is f_info."
 msgstr ""
-"Bepaalt welke berichten door sftp-server worden geregistreerd. INFO en "
-"VERBOSE registreren transacties die sftp-server namens de client uitvoert. "
-"DEBUG2 en DEBUG3 specificeren beide hogere niveaus aan "
-"foutopsporingsuitvoer. De standaard is ERROR."
+"Geeft aan welke berichten door de server worden geregistreerd. INFO en "
+"VERBOSE registreren transacties die de server namens de client uitvoert. "
+"f_is_debug bepaalt hogere niveaus aan foutopsporingsuitvoer. De standaard is "
+"f_info."
 
 #: templates/network/ipmi.html:5
 #, fuzzy
@@ -13472,61 +13457,69 @@ msgstr ""
 "WAARSCHUWING! Opvragen van IPMI-gegevens is mislukt; stand-bynode werkt niet."
 
 #: jails/forms.py:610
+#, fuzzy
 msgid "Jail dataset created on a share"
-msgstr ""
+msgstr "Jail-gegevensset aangemaakt op een share"
 
 #: jails/views.py:584
 #, fuzzy
 msgid "Jail template successfully deleted."
-msgstr "Jail-sjabloon met succes bewerkt."
+msgstr "Jail-sjabloon is met succes verwijderd."
 
 #: services/models.py:456
 msgid "Log mountd(8) requests"
-msgstr ""
+msgstr "mountd(8)-aanvragen registreren"
 
 #: services/models.py:458
 msgid "This option enable mountd logging into syslog."
-msgstr ""
+msgstr "Deze optie schakelt mountd-logboekregistratie in syslog in."
 
 #: services/models.py:462
 #, fuzzy
 msgid "Log rpc.statd(8) and rpc.lockd(8)"
-msgstr "rpc.statd(8)-bindpoort"
+msgstr "rpc.statd(8) en rpc.lockd(8) registreren"
 
 #: services/models.py:464
 msgid "This option enable statd and lockd logging into syslog."
-msgstr ""
+msgstr "Deze optie schakelt statd- en lockd-registratie in syslog in."
 
 #: storage/forms.py:1437
 #: storage/forms.py:1509
-#, fuzzy
 msgid "Allow the zvol to consume more than 80% of available space"
 msgstr ""
 "Toestaan dat het zvol meer dan 80% van de beschikbare ruimte mag gebruiken"
 
 #: system/models.py:149
+#, fuzzy
 msgid ""
 "Specifies the server and port syslog messages will be sent to.  The accepted "
 "format is hostname:port or ip:port, if :port is not specified it will "
 "default to port 514 (this field currently only takes IPv4 addresses)"
 msgstr ""
+"Geeft de server en poort aan waarnaar syslog-berichten worden gestuurd. De "
+"geaccepteerde notatie is hostnaam:poort of ip-adres:poort; als :poort niet "
+"is opgegeven, is dit standaard poort 514 (dit veld accepteert momenteel "
+"alleen IPv4-adressen)"
 
 #: system/alertmods/nfs_bindaddr.py:15
 #, fuzzy
 msgid "NFS services could not bind specific IPs, using wildcard"
 msgstr ""
-"Het WebGUI-adres kon niet aan %s worden gebonden; jokerteken wordt gebruikt"
+"NFS-services konden bepaalde IP-adressen niet binden; jokerteken wordt "
+"gebruikt"
 
 #: jails/forms.py:247
 #: jails/forms.py:872
 msgid "You have entered an existing MAC Address.Please enter a new one."
-msgstr ""
+msgstr "U hebt een bestaand MAC-adres ingevoerd. Voer een nieuw MAC-adres in."
 
 #: jails/forms.py:238
 msgid ""
 "Valid characters for jail names are letters, numbers, dashes, or underscores."
 msgstr ""
+"Geldige tekens voor jailnamen zijn letters, cijfers, streepjes of liggende "
+"streepjes."
 
 #: services/forms.py:95
 msgid "Cannot disable CIFS while ActiveDirectory is in use."
-msgstr ""
+msgstr "Kan CIFS niet uitschakelen terwijl ActiveDirectory in gebruik is."
