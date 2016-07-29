@@ -201,16 +201,6 @@ def main():
             os.kill(pid, 15)
 
     try:
-        if not args.foregound:
-            daemonc = DaemonContext(
-                pidfile=TimeoutPIDLockFile(pidpath),
-                detach_process=True,
-                stdout=sys.stdout,
-                stdin=sys.stdin,
-                stderr=sys.stderr,
-            )
-            daemonc.open()
-
         logging.config.dictConfig({
             'version': 1,
             'formatters': {
@@ -239,6 +229,16 @@ def main():
                 },
             }
         })
+
+        if not args.foregound:
+            daemonc = DaemonContext(
+                pidfile=TimeoutPIDLockFile(pidpath),
+                detach_process=True,
+                stdout=logging._handlers['file'].stream,
+                stderr=logging._handlers['file'].stream,
+                files_preserve=[logging._handlers['file'].stream],
+            )
+            daemonc.open()
 
         setproctitle.setproctitle('middlewared')
         # Workaround to tell django to not set up logging on its own
