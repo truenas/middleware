@@ -25,8 +25,8 @@ class DDPProtocol(object):
 
         self.app.on_message(message)
 
-    def on_close(self, reason=None):
-        self.app.on_close(reason)
+    def on_close(self, code=0, reason=None):
+        self.app.on_close(code, reason)
 
     @property
     def app(self):

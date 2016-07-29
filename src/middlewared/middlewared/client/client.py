@@ -20,11 +20,23 @@ class WSClient(WebSocketClient):
         self.sock.settimeout(None)
         return rv
 
+    def opened(self):
+        self.protocol.on_open()
+
+    def closed(self, code, reason=None):
+        self.protocol.on_close(code, reason)
+
     def received_message(self, message):
         self.protocol.on_message(message.data.decode('utf8'))
 
+    def on_open(self):
+        self.client.on_open()
+
     def on_message(self, message):
         self.client._recv(message)
+
+    def on_close(self, code, reason=None):
+        self.client.on_close(code, reason)
 
 
 class Call(object):
@@ -40,7 +52,7 @@ class Call(object):
 
 
 class ClientException(Exception):
-    def __init__(self, error, stacktrace):
+    def __init__(self, error, stacktrace=None):
         self.error = error
         self.stacktrace = stacktrace
 
@@ -54,6 +66,10 @@ class Client(object):
         self._calls = {}
         self._ws = WSClient('ws://127.0.0.1:8000/websocket', client=self)
         self._ws.connect()
+        self._connected = Event()
+        self._connected.wait(5)
+        if not self._connected.is_set():
+            raise ClientException('Failed connection handshake')
 
     def __enter__(self):
         return self
@@ -68,7 +84,12 @@ class Client(object):
 
     def _recv(self, message):
         _id = message.get('id')
-        if _id is not None and message.get('msg') == 'result':
+        msg = message.get('msg')
+        if msg == 'connected':
+            self._connected.set()
+        elif msg == 'failed':
+            raise ClientException('Unsupported protocol version')
+        elif _id is not None and msg == 'result':
             call = self._calls.get(_id)
             if call:
                 call.result = message.get('result')
@@ -77,6 +98,16 @@ class Client(object):
                     call.stacktrace = message['error'].get('stacktrace')
                 call.returned.set()
                 self.unregister_call(call)
+
+    def on_open(self):
+        self._send({
+            'msg': 'connect',
+            'version': '1',
+            'support': ['1'],
+        })
+
+    def on_close(self, code, reason=None):
+        pass
 
     def register_call(self, call):
         self._calls[call.id] = call
