@@ -491,7 +491,7 @@ class ActiveDirectoryForm(ModelForm):
     def clean_ad_netbiosname_a(self):
         netbiosname = self.cleaned_data.get("ad_netbiosname_a")
         try:
-            validate_netbios_names(netbiosname)
+            validate_netbios_name(netbiosname)
         except Exception as e:
             raise forms.ValidationError(e)
         return netbiosname
@@ -506,7 +506,7 @@ class ActiveDirectoryForm(ModelForm):
                 'NetBIOS cannot be the same as the first.'
             ))
         try:
-            validate_netbios_names(netbiosname)
+            validate_netbios_name(netbiosname)
         except Exception as e:
             raise forms.ValidationError(e)
         return netbiosname
