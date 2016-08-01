@@ -62,9 +62,11 @@ class ClientException(Exception):
 
 class Client(object):
 
-    def __init__(self):
+    def __init__(self, uri=None):
         self._calls = {}
-        self._ws = WSClient('ws://127.0.0.1:8000/websocket', client=self)
+        if uri is None:
+            uri = 'ws://127.0.0.1:8000/websocket'
+        self._ws = WSClient(uri, client=self)
         self._ws.connect()
         self._connected = Event()
         self._connected.wait(5)
@@ -145,6 +147,9 @@ class Client(object):
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('-q', '--quiet', action='store_true')
+    parser.add_argument('-u', '--uri')
+    parser.add_argument('-U', '--username')
+    parser.add_argument('-P', '--password')
     parser.add_argument('call', nargs='+')
     args = parser.parse_args()
 
@@ -156,18 +161,24 @@ def main():
                 yield i
 
     if args.call:
-        c = Client()
-        try:
-            rv = c.call(args.call[1], *list(to_json(args.call[2:])))
-            if isinstance(rv, (int, str, unicode)):
-                print(rv)
-            else:
-                print(json.dumps(rv))
-        except ClientException as e:
-            if not args.quiet:
-                print >> sys.stderr, e.stacktrace
-            sys.exit(1)
-        c.close()
+        with Client(uri=args.uri) as c:
+            try:
+                if args.username and args.password:
+                    if not c.call('auth.login', args.username, args.password):
+                        raise ValueError('Invalid username or password')
+            except Exception as e:
+                print "Failed to login: ", e
+                sys.exit(0)
+            try:
+                rv = c.call(args.call[1], *list(to_json(args.call[2:])))
+                if isinstance(rv, (int, str, unicode)):
+                    print(rv)
+                else:
+                    print(json.dumps(rv))
+            except ClientException as e:
+                if not args.quiet:
+                    print >> sys.stderr, e.stacktrace
+                sys.exit(1)
 
 if __name__ == '__main__':
     main()
