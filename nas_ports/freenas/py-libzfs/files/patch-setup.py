@@ -1,5 +1,5 @@
 --- setup.py.orig	2016-08-01 02:01:42.000000000 -0700
-+++ setup.py	2016-08-01 02:03:09.000000000 -0700
++++ setup.py	2016-08-01 03:01:31.000000000 -0700
 @@ -24,10 +24,7 @@
  # SUCH DAMAGE.
  #
@@ -11,7 +11,7 @@
  from distutils.core import setup
  from Cython.Distutils.extension import Extension
  from Cython.Distutils import build_ext
-@@ -55,13 +52,11 @@
+@@ -55,13 +52,12 @@
  ]
  
  system_includes = [os.path.expandvars(x) for x in system_includes]
