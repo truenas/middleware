@@ -290,8 +290,9 @@ class VolumeManagerForm(VolumeMixin, Form):
         # This must be outside transaction block to make sure the changes
         # are committed before the call of ix-fstab
         notifier().reload("disk")
-        notifier().start("ix-syslogd")
-        notifier().restart("system_datasets")
+        if not add:
+            notifier().start("ix-syslogd")
+            notifier().restart("system_datasets")
         # For scrub cronjob
         if volume.vol_fstype == 'ZFS':
             notifier().restart("cron")
