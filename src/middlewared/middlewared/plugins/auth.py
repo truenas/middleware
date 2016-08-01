@@ -1,12 +1,13 @@
 import crypt
 
-from middlewared.service import Service, no_auth_required
+from middlewared.service import Service, no_auth_required, pass_app
 
 
 class AuthService(Service):
 
     @no_auth_required
-    def login(self, username, password):
+    @pass_app
+    def login(self, app, username, password):
         """Authenticate session using username and password.
         Currently only root user is allowed.
         """
@@ -18,4 +19,7 @@ class AuthService(Service):
             return False
         if user['bsdusr_unixhash'] in ('x', '*'):
             return False
-        return crypt.crypt(password, user['bsdusr_unixhash']) == user['bsdusr_unixhash']
+        valid = crypt.crypt(password, user['bsdusr_unixhash']) == user['bsdusr_unixhash']
+        if valid:
+            app.authenticated = True
+        return valid

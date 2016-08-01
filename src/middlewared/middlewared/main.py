@@ -195,7 +195,10 @@ class Middleware(object):
             app.send_error(message, 'Not authenticated')
             return
 
-        return methodobj(*params)
+        if hasattr(methodobj, '_pass_app'):
+            return methodobj(app, *params)
+        else:
+            return methodobj(*params)
 
     def call(self, method, *params):
         service, method = method.rsplit('.', 1)

@@ -3,7 +3,13 @@ import re
 
 
 def no_auth_required(fn):
+    """Authentication is not required to use the given method."""
     fn._no_auth_required = True
+    return fn
+
+def pass_app(fn):
+    """Pass the application instance as parameter to the method."""
+    fn._pass_app = True
     return fn
 
 
