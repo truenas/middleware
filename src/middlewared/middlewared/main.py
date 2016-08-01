@@ -157,6 +157,9 @@ class Middleware(object):
                 if issubclass(attr, Service):
                     self.add_service(attr(self))
 
+            if hasattr(mod, 'setup'):
+                mod.setup(self)
+
         # Now that all plugins have been loaded we can resolve all method params
         # to make sure every schema is patched and references match
         from middlewared.schema import resolver  # Lazy import so namespace match
