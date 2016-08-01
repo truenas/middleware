@@ -71,9 +71,7 @@ class Application(WebSocketApplication):
             self._send({
                 'id': message['id'],
                 'msg': 'result',
-                'result': self.middleware.call_method(
-                    message['method'], *(message.get('params') or [])
-                ),
+                'result': self.middleware.call_method(self, message),
             })
         except Exception as e:
             self.send_error(message, str(e), ''.join(traceback.format_exception(sys.exc_type, sys.exc_value, sys.exc_traceback)))
@@ -85,10 +83,6 @@ class Application(WebSocketApplication):
         pass
 
     def on_message(self, message):
-
-        if not self.authenticated:
-            self.send_error(message, 'Not authenticated')
-            return
 
         if message['msg'] == 'connect':
             if message.get('version') != '1':
@@ -113,6 +107,11 @@ class Application(WebSocketApplication):
 
         if message['msg'] == 'method':
             self.call_method(message)
+
+        if not self.authenticated:
+            self.send_error(message, 'Not authenticated')
+            return
+
 
 
 class Middleware(object):
@@ -178,9 +177,18 @@ class Middleware(object):
     def get_services(self):
         return self.__services
 
-    def call_method(self, method, *params):
-        # DEPRECATED, FIXME: DeprecationWarning
-        return self.call(method, *params)
+    def call_method(self, app, message):
+        """Call method from websocket"""
+        method = message['method']
+        params = message.get('params') or []
+        service, method = method.rsplit('.', 1)
+        methodobj = getattr(self.get_service(service), method)
+
+        if not app.authenticated and not hasattr(methodobj, '_no_auth_required'):
+            app.send_error(message, 'Not authenticated')
+            return
+
+        return methodobj(*params)
 
     def call(self, method, *params):
         service, method = method.rsplit('.', 1)
