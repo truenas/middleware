@@ -2,6 +2,11 @@ import inspect
 import re
 
 
+def no_auth_required(fn):
+    fn._no_auth_required = True
+    return fn
+
+
 class ServiceBase(type):
 
     def __new__(cls, name, bases, attrs):

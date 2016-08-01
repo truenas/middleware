@@ -1,10 +1,11 @@
 import crypt
 
-from middlewared.service import Service
+from middlewared.service import Service, no_auth_required
 
 
 class AuthService(Service):
 
+    @no_auth_required
     def login(self, username, password):
         """Authenticate session using username and password.
         Currently only root user is allowed.
