@@ -1,6 +1,17 @@
---- setup.py.orig	2015-08-06 18:12:14.000000000 -0700
-+++ setup.py	2015-08-06 18:14:36.000000000 -0700
-@@ -49,7 +49,8 @@
+--- setup.py.orig	2016-08-01 02:01:42.000000000 -0700
++++ setup.py	2016-08-01 02:03:09.000000000 -0700
+@@ -24,10 +24,7 @@
+ # SUCH DAMAGE.
+ #
+ 
+-import Cython.Compiler.Options
+-Cython.Compiler.Options.annotate = True
+ import os
+-import subprocess
+ from distutils.core import setup
+ from Cython.Distutils.extension import Extension
+ from Cython.Distutils import build_ext
+@@ -55,13 +52,11 @@
  ]
  
  system_includes = [os.path.expandvars(x) for x in system_includes]
@@ -10,3 +21,9 @@
  
  setup(
      name='libzfs',
+     version='1.0',
+-    packages=[''],
+-    package_data={'': ['*.html', '*.c']},
+     cmdclass={'build_ext': build_ext},
+     ext_modules=[
+         Extension(
