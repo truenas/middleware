@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:07-0700\n"
-"PO-Revision-Date: 2016-07-26 19:58+0000\n"
+"PO-Revision-Date: 2016-08-01 13:07+0000\n"
 "Last-Translator: Pavel <pavel.borecki@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: cs\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1469563096.0\n"
+"X-POOTLE-MTIME: 1470056833.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -13217,3 +13217,16 @@ msgstr ""
 #: services/forms.py:95
 msgid "Cannot disable CIFS while ActiveDirectory is in use."
 msgstr "Službu CIFS nelze vypnout, pokud zapnutá služba ActiveDirectory."
+
+#: services/models.py:1295
+msgid "Shutdown Command"
+msgstr "Příkaz pro vypínání"
+
+#: services/models.py:1298
+msgid ""
+"The command used to shutdown the server. You can use a custom command here "
+"to perform other tasks before shutdown.default: /sbin/shutdown -p now"
+msgstr ""
+"Příkaz sloužící k vypnutí serveru. V jeho rámci je možné začlenit své "
+"vlastní příkazy, které provést před vypnutím. Pokud není zadáno, bude "
+"použito výchozí: /sbin/shutdown -p now"

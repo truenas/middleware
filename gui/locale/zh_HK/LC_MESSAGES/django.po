@@ -13095,3 +13095,14 @@ msgstr ""
 #: services/forms.py:95
 msgid "Cannot disable CIFS while ActiveDirectory is in use."
 msgstr ""
+
+#: services/models.py:1295
+#, fuzzy
+msgid "Shutdown Command"
+msgstr "關機模式"
+
+#: services/models.py:1298
+msgid ""
+"The command used to shutdown the server. You can use a custom command here "
+"to perform other tasks before shutdown.default: /sbin/shutdown -p now"
+msgstr ""
