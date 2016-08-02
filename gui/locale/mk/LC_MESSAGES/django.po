@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:08-0700\n"
-"PO-Revision-Date: 2016-07-23 09:16+0000\n"
+"PO-Revision-Date: 2016-07-29 09:15+0000\n"
 "Last-Translator: Anonymous Pootle User\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: mk\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n==1 || n%10==1 ? 0 : 1;\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1469265362.0\n"
+"X-POOTLE-MTIME: 1469783747.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -12352,4 +12352,14 @@ msgstr ""
 
 #: services/forms.py:95
 msgid "Cannot disable CIFS while ActiveDirectory is in use."
+msgstr ""
+
+#: services/models.py:1295
+msgid "Shutdown Command"
+msgstr ""
+
+#: services/models.py:1298
+msgid ""
+"The command used to shutdown the server. You can use a custom command here "
+"to perform other tasks before shutdown.default: /sbin/shutdown -p now"
 msgstr ""

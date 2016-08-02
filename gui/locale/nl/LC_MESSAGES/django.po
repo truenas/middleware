@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:03-0700\n"
-"PO-Revision-Date: 2016-07-28 15:09+0000\n"
+"PO-Revision-Date: 2016-08-01 23:45+0000\n"
 "Last-Translator: Tonnes <tonnes.mb@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: nl\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1469718547.0\n"
+"X-POOTLE-MTIME: 1470095117.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -8076,10 +8076,10 @@ msgid ""
 "transactions that sftp-server performs on behalf of the client. DEBUG2 and "
 "DEBUG3 each specify higher levels of debugging output. The default is ERROR."
 msgstr ""
-"Bepaalt welke berichten door sftp-server worden geregistreerd. INFO en "
+"Geeft aan welke berichten door sftp-server worden geregistreerd. INFO en "
 "VERBOSE registreren transacties die sftp-server namens de client uitvoert. "
-"DEBUG2 en DEBUG3 specificeren beide hogere niveaus aan "
-"foutopsporingsuitvoer. De standaard is ERROR."
+"DEBUG2 en DEBUG3 geven beide hogere niveaus van foutopsporingsuitvoer aan. "
+"De standaard is ERROR."
 
 #: services/models.py:1437
 #: services/models.py:1533
@@ -13447,8 +13447,8 @@ msgid ""
 msgstr ""
 "Geeft aan welke berichten door de server worden geregistreerd. INFO en "
 "VERBOSE registreren transacties die de server namens de client uitvoert. "
-"f_is_debug bepaalt hogere niveaus aan foutopsporingsuitvoer. De standaard is "
-"f_info."
+"f_is_debug geeft hogere niveaus aan foutopsporingsuitvoer aan. De standaard "
+"is f_info."
 
 #: templates/network/ipmi.html:5
 #, fuzzy
@@ -13523,3 +13523,14 @@ msgstr ""
 #: services/forms.py:95
 msgid "Cannot disable CIFS while ActiveDirectory is in use."
 msgstr "Kan CIFS niet uitschakelen terwijl ActiveDirectory in gebruik is."
+
+#: services/models.py:1295
+#, fuzzy
+msgid "Shutdown Command"
+msgstr "Afsluitmodus"
+
+#: services/models.py:1298
+msgid ""
+"The command used to shutdown the server. You can use a custom command here "
+"to perform other tasks before shutdown.default: /sbin/shutdown -p now"
+msgstr ""
