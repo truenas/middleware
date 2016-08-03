@@ -209,7 +209,7 @@ def config_share_for_zfs(share):
 # ticket: # 16325
 # aio_pthread needs to be last
 # fruit needs to be before streams_xattr, streams_xattr is required
-# for fruit, and if catia and fruit are used, fruit comes before catia
+# for fruit, and if catia and fruit are used, catia comes before fruit
 #
 def order_vfs_objects(vfs_objects):
     vfs_objects_ordered = []
