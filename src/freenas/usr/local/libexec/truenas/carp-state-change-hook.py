@@ -19,20 +19,38 @@ import sys
 import time
 
 
+# TODO /tmp/failover/
+
+# GUI sentinel files
 ELECTING_FILE = '/tmp/.failover_electing'
 IMPORTING_FILE = '/tmp/.failover_importing'
 FAILED_FILE = '/tmp/.failover_failed'
 FAILOVER_ASSUMED_MASTER = '/tmp/.failover_master'
+
+# Config file, externally generated
 FAILOVER_JSON = '/tmp/failover.json'
-FAILOVER_MTX = '/tmp/.failover_mtx'
-FAILOVER_MUTEX = '/tmp/.failover_mutex'
+
+# MUTEX files
+# Advanced TODO Merge to one mutex
+FAILOVER_IFQ = '/tmp/.failover_ifq'
+FAILOVER_EVENT = '/tmp/.failover_event'
+
+# Fast track, user initiated failover
 FAILOVER_OVERRIDE = '/tmp/failover_override'
+
+# GUI sentinel file
 FAILOVER_STATE = '/tmp/.failover_state'
+
+# This sentinel is created by the pool decryption
+# script to let us know we need to do something
 FAILOVER_NEEDOP = '/tmp/.failover_needop'
+
+# These files are created by a cron job
+# and used to fast track determining a master
 HEARTBEAT_BARRIER = '/tmp/heartbeat_barrier'
 HEARTBEAT_STATE = '/tmp/heartbeat_state'
 
-# FAILOVER_MTX is the mutex used to protect per-interface events.
+# FAILOVER_IFQ is the mutex used to protect per-interface events.
 # Before creating the lockfile that this script is handing events
 # on a given interface, this lock is aquired.  This lock attempt
 # sleeps indefinitely, which is (ab)used to create an event queue.
@@ -45,13 +63,13 @@ HEARTBEAT_STATE = '/tmp/heartbeat_state'
 # event handler runs in this example igb0 will be link_down and it
 # will exit.
 
-# FAILOVER_MUTEX is the mutex to protect the critical sections of
+# FAILOVER_EVENT is the mutex to protect the critical sections of
 # the "become active" or "become standby" actions in this script.
 # This is needed in situations where there are multiple interfaces
 # that all go link_up or link_down simultaniously (such as when the
 # partner node reboots).  In that case each interface will acquire
 # it's per-interface lock and run the link_up or link_down event
-# FAILOVER_MUTEX prevents them both from starting fenced or
+# FAILOVER_EVENT prevents them both from starting fenced or
 # importing volumes or whatnot.
 
 logging.raiseExceptions = False  # Please, don't hate us this much
@@ -91,6 +109,8 @@ def main(subsystem, event):
     if not os.path.exists(FAILOVER_JSON):
         sys.exit(1)
 
+    # TODO write the PID into the state file so a stale
+    # lockfile won't disable HA forever
     state_file = '%s%s' % (FAILOVER_STATE, event)
 
     @atexit.register
@@ -100,7 +120,8 @@ def main(subsystem, event):
         except:
             pass
 
-    with LockFile(FAILOVER_MTX):
+    # Implicit event queuing
+    with LockFile(FAILOVER_IFQ):
         if not os.path.exists(state_file):
             open(state_file, 'w').close()
         else:
@@ -109,9 +130,13 @@ def main(subsystem, event):
     with open(FAILOVER_JSON, 'r') as f:
         fobj = json.loads(f.read())
 
+    # The failover sript doesn't handle events on the
+    # internal interlink
     if ifname in fobj['internal_interfaces']:
+        # TODO log these events
         sys.exit(1)
 
+    # TODO python any
     if not forcetakeover:
         SENTINEL = False
         for group in fobj['groups']:
@@ -154,6 +179,7 @@ def main(subsystem, event):
 
                 masterret = False
                 for vol in fobj['volumes'] + fobj['phrasedvolumes']:
+                    # TODO run, or zfs lib
                     ret = os.system("zpool status %s > /dev/null" % vol)
                     if ret:
                         masterret = True
@@ -301,7 +327,7 @@ def carp_master(fobj, state_file, ifname, vhid, event, user_override, forcetakeo
 
     # Start the critical section
     try:
-        with LockFile(FAILOVER_MUTEX, timeout=0):
+        with LockFile(FAILOVER_EVENT, timeout=0):
             # The lockfile modules cleans up lockfiles if this script exits on it's own accord.
             # For reboots, /tmp is cleared by virtue of being a memory device.
             # If someone does a kill -9 on the script while it's running the lockfile
@@ -546,7 +572,7 @@ def carp_backup(fobj, state_file, ifname, vhid, event, user_override):
 
     # Start the critical section
     try:
-        with LockFile(FAILOVER_MUTEX, timeout=0):
+        with LockFile(FAILOVER_EVENT, timeout=0):
             # The lockfile modules cleans up lockfiles if this script exits on it's own accord.
             # For reboots, /tmp is cleared by virtue of being a memory device.
             # If someone does a kill -9 on the script while it's running the lockfile
