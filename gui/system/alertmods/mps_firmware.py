@@ -44,9 +44,9 @@ class MPSFirmwareAlert(BaseAlert):
                         }
                     ))
             except ValueError:
-                # cast returned cthulu
+                # cast returned Cthulhu
                 # This shouldn't ever happen but as a fallback try the old method
-                if ((firmware != driver) and not (firmware == 20 and driver == 21)):
+                if ((firmware != driver) and not (firmware.startswith("20") and driver.startswith("21"))):
                     alerts.append(Alert(
                         Alert.WARN,
                         _(
