@@ -642,9 +642,12 @@ def plugin_fcgi_client(request, name, oid, path):
         env['HTTPS'] = 'on'
 
     # Always use Ipv4 to talk to plugins
-    host_ip = get_ipv4_addr()
-    env['SERVER_ADDR'] = host_ip
-    env['HTTP_HOST'] = host_ip
+    try:
+        host_ip = get_ipv4_addr()
+        env['SERVER_ADDR'] = host_ip
+        env['HTTP_HOST'] = host_ip
+    except:
+        pass
 
     args = request.POST if request.method == "POST" else request.GET
     status, headers, body, raw = app(env, args=args)
