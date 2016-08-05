@@ -839,11 +839,6 @@ class SNMPForm(ModelForm):
                 raise forms.ValidationError(_('This field is required.'))
             else:
                 return community
-        if not re.match(r'^[-_a-zA-Z0-9\s]+$', community):
-            raise forms.ValidationError(
-                _(u"The community must contain only alphanumeric characters, "
-                    "_ or -")
-            )
         return community
 
     def clean_snmp_v3_password(self):
