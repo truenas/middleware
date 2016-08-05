@@ -840,7 +840,12 @@ require([
 
         var jail_ipv4_value = ipv4.get("value");
         var jail_ipv4_is_dhcp = jail_ipv4_value.startsWith("DHCP");
-    
+        
+        if (jail_ipv4_value.startsWith("DHCP") || 
+            (jail_ipv4_dhcp == "on" && !jail_ipv4_value.trim())) {
+            jail_ipv4_is_dhcp = true;
+        }
+
         if (!jail_ipv4_is_dhcp) {
             jail_ipv4_dhcp = "off";
             ipv4_dhcp.set("checked", false);
