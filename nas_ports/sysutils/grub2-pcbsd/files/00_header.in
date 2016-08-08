@@ -80,6 +80,26 @@ else
 set default="${GRUB_DEFAULT}"
 EOF
 fi
+
+if [ "x$GRUB_KERNVTY" = "x" ]; then
+    cat << EOF
+
+if [ x"\${grub_platform}" = xpc ] ; then
+  set kernvt="sc"
+  export kernvt
+else
+  set kernvt="vt"
+  export kernvt
+fi
+EOF
+else
+    cat << EOF
+
+set kernvt="${GRUB_KERNVTY}"
+export kernvt
+EOF
+fi
+
 cat <<EOF
 
 if [ x"\${feature_menuentry_id}" = xy ]; then
@@ -201,7 +221,6 @@ EOF
     set gfxmode=${GRUB_GFXMODE}
     load_video
     insmod gfxterm
-    kernvt="sc"
   else
     # EFI
     insmod efi_gop
@@ -210,7 +229,6 @@ EOF
     insmod videotest
     insmod videoinfo
     set gfxmode=${GRUB_GFXMODE}
-    kernvt="vt"
   fi
 EOF
 
@@ -245,7 +263,6 @@ case x${GRUB_TERMINAL_OUTPUT} in
   ;;
   x*)
     cat << EOF
-kernvt="sc"
 terminal_output ${GRUB_TERMINAL_OUTPUT}
 EOF
   ;;
