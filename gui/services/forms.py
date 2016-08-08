@@ -613,7 +613,7 @@ class SSHForm(ModelForm):
 
     def save(self):
         super(SSHForm, self).save()
-        started = notifier().reload("ssh")
+        obj = started = notifier().reload("ssh")
         if (
             started is False
             and
@@ -622,6 +622,8 @@ class SSHForm(ModelForm):
             raise ServiceFailed("ssh", _("The SSH service failed to reload."))
         else:
             keyfile = "/etc/ssh/ssh_host_ecdsa_key.pub"
+            if not os.path.exists(keyfile):
+                return obj
             with open(keyfile, "rb") as f:
                 pubkey = f.read().strip().split(None, 3)[1]
             decoded_key = base64.b64decode(pubkey.encode("ascii"))
@@ -629,6 +631,7 @@ class SSHForm(ModelForm):
             ssh_fingerprint = (b"SHA256:" + base64.b64encode(key_digest).replace(b"=", b"")).decode("utf-8")
             # using log.error since it logs to /var/log/messages, /var/log/debug.log as well as /dev/console all at once
             log.error("ECDSA Fingerprint of the SSH KEY: " + ssh_fingerprint)
+        return obj
 
 
 class RsyncdForm(ModelForm):
