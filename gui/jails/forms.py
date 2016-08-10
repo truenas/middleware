@@ -48,6 +48,7 @@ from freenasUI.jails.utils import (
     guess_ipv6_addresses,
     jail_path_configured,
     jail_auto_configure,
+    add_media_user_and_group
 )
 from freenasUI.common.warden import (
     Warden,
@@ -497,6 +498,8 @@ class JailCreateForm(ModelForm):
         # Requery instance so we have everything up-to-date after save
         # See #14686
         self.instance = Jails.objects.get(jail_host=jail_host)
+        if self.instance:
+            add_media_user_and_group(self.instance.jail_path)
 
 
 def is_jail_root_shared(jail_root):
