@@ -5,6 +5,10 @@ import time
 
 from django.utils.translation import ugettext as _
 
+from freenasUI.account.models import (
+    bsdGroups,
+    bsdUsers
+)
 from freenasUI.common.sipcalc import sipcalc_type
 from freenasUI.common.pipesubr import pipeopen
 from freenasUI.common import warden
@@ -712,8 +716,10 @@ def new_default_plugin_jail(basename):
         )
     )
     w.start(jail=jailname)
-    return Jails.objects.get(jail_host=jailname)
 
+    obj = Jails.objects.get(jail_host=jailname)
+    add_media_user_and_group(obj.jail_path)
+    return obj
 
 def jail_path_configured():
     """
@@ -778,3 +784,52 @@ def jail_auto_configure():
     w.jdir = jail.jc_path
     w.release = platform.release().strip()
     w.save()
+
+
+def add_media_user_and_group(jail_path):
+    if not jail_path or not os.path.exists(jail_path):
+        return False
+
+    try:
+        media_user = bsdUsers.objects.filter(bsdusr_username='media')[0]
+    except:
+        log.debug('add_media_user_and_group: unable to find media user')
+        return False
+
+    if not media_user.bsdusr_group:
+        log.debug('add_media_user_and_group: media user has no group')
+        return False
+
+    groupdel_cmd = "/usr/sbin/pw groupdel '%s'" % media_user.bsdusr_group.bsdgrp_group
+    chroot_groupdel_cmd = "/usr/sbin/chroot '%s' %s" % (jail_path, groupdel_cmd)
+
+    groupadd_cmd = "/usr/sbin/pw groupadd '%s' -g '%d'" % (
+        media_user.bsdusr_group.bsdgrp_group,
+        media_user.bsdusr_group.bsdgrp_gid)
+    chroot_groupadd_cmd = "/usr/sbin/chroot '%s' %s" % (jail_path, groupadd_cmd)
+    print chroot_groupadd_cmd
+
+    userdel_cmd = "/usr/sbin/pw userdel '%s'" % media_user.bsdusr_username
+    chroot_userdel_cmd = "/usr/sbin/chroot '%s' %s" % (jail_path, userdel_cmd)
+
+    useradd_cmd = "/usr/sbin/pw useradd '%s' -u '%d' -g '%s'" % (
+        media_user.bsdusr_username,
+        media_user.bsdusr_uid,
+        media_user.bsdusr_group.bsdgrp_group)
+    chroot_useradd_cmd = "/usr/sbin/chroot '%s' %s" % (jail_path, useradd_cmd)
+
+    p = pipeopen(chroot_groupadd_cmd, allowfork=True, close_fds=True)
+    out = p.communicate()
+    if p.returncode != 0:
+        log.debug('add_media_user_and_group: failed to create media group: %s', out)
+        pipeopen(chroot_groupdel_cmd, allowfork=True, close_fds=True).communicate()
+        return False
+
+    p = pipeopen(chroot_useradd_cmd, allowfork=True, close_fds=True)
+    out = p.communicate()
+    if p.returncode != 0:
+        log.debug('add_media_user_and_group: failed to create media user: %s', out)
+        pipeopen(chroot_userdel_cmd, allowfork=True, close_fds=True).communicate()
+        return False
+
+    return True
