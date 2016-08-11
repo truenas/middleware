@@ -28,7 +28,9 @@ class MPSFirmwareAlert(BaseAlert):
             firmware = mibs.get('firmware_version')
             driver = mibs.get('driver_version')
             try:
-                if int(firmware) != int(driver):
+                # Broadcom added a new one for us, an allowed combo is p20 firmware and v21 driver
+                # https://bugs.freenas.org/issues/16649
+                if ((int(firmware) != int(driver)) and not (int(firmware) == 20 and int(driver) == 21)):
                     alerts.append(Alert(
                         Alert.WARN,
                         _(
@@ -42,9 +44,9 @@ class MPSFirmwareAlert(BaseAlert):
                         }
                     ))
             except ValueError:
-                # cast returned cthulu
+                # cast returned Cthulhu
                 # This shouldn't ever happen but as a fallback try the old method
-                if firmware != driver:
+                if ((firmware != driver) and not (firmware.startswith("20") and driver.startswith("21"))):
                     alerts.append(Alert(
                         Alert.WARN,
                         _(
