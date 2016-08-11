@@ -63,10 +63,11 @@ zfs_func()
 	section_footer
 
 	section_header "ZFS Datasets Properties"
-	zfs list -o name -H | while read -r s
+	sets=$(zfs list -H|awk '{ print $1 }'|xargs)
+	for s in ${sets}
 	do
 		section_header "${s}"
-		zfs get all "${s}"
+		zfs get all ${s}
 		section_footer
 	done
 	section_footer
