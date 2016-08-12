@@ -29,14 +29,14 @@ BUILD_DEPENDS+=	${PYTHON_PKGNAMEPREFIX}sphinx_numfig>r0:${PORTSDIR}/textproc/py-
 
 do-build:
 .if ${PRODUCT} == "TrueNAS"
-	(cd ${WRKSRC}/userguide && make SPHINXOPTS="-t truenas" html)
+	(cd ${WRKSRC}/userguide && make TAG="truenas" html)
 .else
 	(cd ${WRKSRC}/userguide && make html)
 .endif
 
 do-install:
 	${MKDIR} -p ${STAGEDIR}${PREFIX}/www/data/
-	${MV} ${WRKSRC}/userguide/_build/html ${STAGEDIR}${PREFIX}/www/data/docs
+	${MV} ${WRKSRC}/userguide/processed/_build/html ${STAGEDIR}${PREFIX}/www/data/docs
 	(cd ${STAGEDIR}${PREFIX}/www/data/docs; ${FIND} . -type f \
 		| ${SED} -e 's,^\./,,g' \
 		| ${AWK} '{print length, $$0}' | ${SORT} -rn \
