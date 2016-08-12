@@ -13,7 +13,7 @@ COMMENT=        Userguide for UI
 BUILD_DEPENDS=	sphinx-build:${PORTSDIR}/textproc/py-sphinx \
 		${PYTHON_PKGNAMEPREFIX}sphinxcontrib-httpdomain>0:${PORTSDIR}/textproc/py-sphinxcontrib-httpdomain
 
-USES=	python:build
+USES=	perl5 python:build
 
 EXTRACT_ONLY=
 WRKSRC=		/usr/freenas_docs
