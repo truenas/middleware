@@ -11,7 +11,9 @@ MAINTAINER=     dev@ixsystems.com
 COMMENT=        Userguide for UI
 
 BUILD_DEPENDS=	sphinx-build:${PORTSDIR}/textproc/py-sphinx \
-		${PYTHON_PKGNAMEPREFIX}sphinxcontrib-httpdomain>0:${PORTSDIR}/textproc/py-sphinxcontrib-httpdomain
+		${PYTHON_PKGNAMEPREFIX}sphinxcontrib-httpdomain>0:${PORTSDIR}/textproc/py-sphinxcontrib-httpdomain \
+		${PYTHON_PKGNAMEPREFIX}sphinx_numfig>r0:${PORTSDIR}/textproc/py-sphinx_numfig
+
 
 USES=	perl5 python:build
 
@@ -22,10 +24,6 @@ checksum fetch:
 	echo ${.TARGET} not needed because building direct
 
 .include <bsd.port.pre.mk>
-
-.if ${PRODUCT} == "TrueNAS"
-BUILD_DEPENDS+=	${PYTHON_PKGNAMEPREFIX}sphinx_numfig>r0:${PORTSDIR}/textproc/py-sphinx_numfig
-.endif
 
 do-build:
 .if ${PRODUCT} == "TrueNAS"
