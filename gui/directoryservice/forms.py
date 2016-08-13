@@ -510,6 +510,15 @@ class ActiveDirectoryForm(ModelForm):
             raise forms.ValidationError(e)
         return netbiosname
 
+    def clean_ad_netbiosalias(self):
+        netbiosalias = self.cleaned_data.get("ad_netbiosalias")
+        if netbiosalias:
+            try:
+                validate_netbios_name(netbiosalias)
+            except Exception as e:
+                raise forms.ValidationError(e)
+        return netbiosalias
+
     def clean(self):
         cdata = self.cleaned_data
         domain = cdata.get("ad_domainname")
@@ -796,6 +805,15 @@ class LDAPForm(ModelForm):
         except Exception as e:
             raise forms.ValidationError(e)
         return netbiosname
+
+    def clean_ldap_netbiosalias(self):
+        netbiosalias = self.cleaned_data.get("ldap_netbiosalias")
+        if netbiosalias:
+            try:
+                validate_netbios_name(netbiosalias)
+            except Exception as e:
+                raise forms.ValidationError(e)
+        return netbiosalias
 
     def clean(self):
         cdata = self.cleaned_data
