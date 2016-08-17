@@ -328,6 +328,8 @@ class ActiveDirectoryForm(ModelForm):
         'ad_use_default_domain',
         'ad_allow_dns_updates',
         'ad_disable_freenas_cache',
+        'ad_userdn',
+        'ad_groupdn',
         'ad_site',
         'ad_dcname',
         'ad_gcname',

@@ -18,11 +18,18 @@ from freenasUI.sharing.models import AFP_Share
 from freenasUI.services.models import AFP
 from freenasUI.directoryservice.models import KerberosKeytab
 
+from freenasUI.common.freenasldap import (
+    FreeNAS_ActiveDirectory,
+    FLAGS_DBINIT
+)
+from freenasUI.common.system import activedirectory_enabled
+
 def main():
     """Use the django ORM to generate a config file.  We'll build the
     config file as a series of lines, and once that is done write it
     out in one go"""
 
+    map_acls_mode = False
     afp_config = "/usr/local/etc/afp.conf"
     cf_contents = []
 
@@ -49,6 +56,29 @@ def main():
         cf_contents.append("\tvol dbnest = yes\n")
     if afp.afp_srv_global_aux:
         cf_contents.append("\t%s" % afp.afp_srv_global_aux.encode('utf8'))
+
+    if afp.afp_srv_map_acls:
+        cf_contents.append("\tmap acls = %s\n" % afp.afp_srv_map_acls)
+
+    if afp.afp_srv_map_acls == 'mode' and activedirectory_enabled():
+        map_acls_mode = True
+
+    if map_acls_mode:
+        ad = FreeNAS_ActiveDirectory(flags=FLAGS_DBINIT)
+
+        cf_contents.append("\tldap auth method = %s\n" % "simple")
+        cf_contents.append("\tldap auth dn = %s\n" % ad.binddn)
+        cf_contents.append("\tldap auth pw = %s\n" % ad.bindpw)
+        cf_contents.append("\tldap server = %s\n" % ad.domainname)
+        cf_contents.append("\tldap userbase = %s\n" % ad.userdn)
+        cf_contents.append("\tldap userscope = %s\n" % "sub")
+        cf_contents.append("\tldap groupbase = %s\n" % ad.groupdn)
+        cf_contents.append("\tldap groupscope = %s\n" % "sub")
+        cf_contents.append("\tldap uuid attr = %s\n" % "objectGUID")
+        cf_contents.append("\tldap uuid encoding = %s\n" % "ms-guid")
+        cf_contents.append("\tldap name attr = %s\n" % "sAMAccountName")
+        cf_contents.append("\tldap group attr = %s\n" % "cn")
+
     cf_contents.append("\n")
 
     if afp.afp_srv_homedir_enable:
@@ -82,13 +112,15 @@ def main():
         if not share.afp_upriv:
             cf_contents.append("\tunix priv = no\n")
         else:
-            if share.afp_fperm:
+            if share.afp_fperm and not map_acls_mode:
                 cf_contents.append("\tfile perm = %s\n" % share.afp_fperm)
-            if share.afp_dperm:
+            if share.afp_dperm and not map_acls_mode:
                 cf_contents.append("\tdirectory perm = %s\n" % share.afp_dperm)
-            if share.afp_umask:
+            if share.afp_umask and not map_acls_mode:
                 cf_contents.append("\tumask = %s\n" % share.afp_umask)
         cf_contents.append("\tveto files = .windows/.mac/\n")
+        if map_acls_mode:
+            cf_contents.append("\tacls = yes\n")
 
     with open(afp_config, "w") as fh:
         for line in cf_contents:

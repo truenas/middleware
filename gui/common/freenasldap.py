@@ -1356,6 +1356,8 @@ class FreeNAS_ActiveDirectory_Base(object):
             'dns_timeout',
             'basedn',
             'binddn',
+            'userdn',
+            'groupdn',
             'dchost',
             'dcport',
             'gchost',

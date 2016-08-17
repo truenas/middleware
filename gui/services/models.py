@@ -356,6 +356,13 @@ class AFP(Model):
         help_text=_(
             "These parameters are added to [Global] section of afp.conf"),
     )
+    afp_srv_map_acls = models.CharField(
+        verbose_name=_("Map ACLs"),
+        max_length=120,
+        help_text=_('How to map the effective permissions of authenticated users.'),
+        choices=choices.AFP_MAP_ACLS_CHOICES,
+        default='rights'
+    )
 
     class Meta:
         verbose_name = _(u"AFP")

@@ -915,6 +915,20 @@ class ActiveDirectory(DirectoryServiceBase):
         help_text=_("Set this if you want to disable caching Active Directory users and groups.  Use this option if you are experiencing slowness or having difficulty binding to the domain with a large number of users and groups."),
         default=False
     )
+    ad_userdn = models.CharField(
+        verbose_name=_("User Base"),
+        max_length=1024,
+        help_text=_("DN of the user container in AD."),
+        blank=True,
+        null=True
+    )
+    ad_groupdn = models.CharField(
+        verbose_name=_("Group Base"),
+        max_length=1024,
+        help_text=_("DN of the group container in AD."),
+        blank=True,
+        null=True
+    )
     ad_site = models.CharField(
         verbose_name=_("Site Name"),
         max_length=120,

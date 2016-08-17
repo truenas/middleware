@@ -1034,3 +1034,9 @@ class CIFS_VFS_OBJECTS(object):
 
     def __iter__(self):
         return iter((m, m) for m in sorted(self.__vfs_modules))
+
+AFP_MAP_ACLS_CHOICES = (
+    ('none', _('None')),
+    ('rights', _('Rights')),
+    ('mode', _('Mode')),
+)

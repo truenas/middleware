@@ -67,6 +67,8 @@ class ADToolShell(cmd.Cmd):
             [ "domainname", "Name of domain"],
             [ "basedn", "Base DN" ],
             [ "binddn", "Bind DN"],
+            [ "userdn", "User DN"],
+            [ "groupdn", "Group DN"],
             [ "netbiosname", "Netbios name of the domain" ],
             [ "workgroup", "Netbios name of the domain" ],
             [ "machine", "machine account name" ],
@@ -197,6 +199,8 @@ Available options:
             "ad_domainname",
             "ad_basedn",
             "ad_binddn",
+            "ad_userdn",
+            "ad_groupdn",
             "ad_site",
             "ad_dcname",
             "ad_dchost",
@@ -339,6 +343,18 @@ Available options:
         print >> sys.stdout, self.adc.binddn
 
     def set_binddn(self, args):
+        pass
+
+    def get_userdn(self, args):
+        print >> sys.stdout, self.adc.userdn
+
+    def set_userdn(self, args):
+        pass
+
+    def get_groupdn(self, args):
+        print >> sys.stdout, self.adc.groupdn
+
+    def set_groupdn(self, args):
         pass
 
     def get_netbiosname(self, args):
