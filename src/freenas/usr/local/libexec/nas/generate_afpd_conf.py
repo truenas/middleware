@@ -74,6 +74,8 @@ def main():
         cf_contents.append("\tldap userscope = %s\n" % "sub")
         cf_contents.append("\tldap groupbase = %s\n" % ad.groupdn)
         cf_contents.append("\tldap groupscope = %s\n" % "sub")
+        cf_contents.append("\tldap user filter = %s\n" % "objectclass=user")
+        cf_contents.append("\tldap group filter = %s\n" % "objectclass=group")
         cf_contents.append("\tldap uuid attr = %s\n" % "objectGUID")
         cf_contents.append("\tldap uuid encoding = %s\n" % "ms-guid")
         cf_contents.append("\tldap name attr = %s\n" % "sAMAccountName")
