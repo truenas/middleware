@@ -43,4 +43,9 @@ iscsi_func()
 	section_header "ctladm islist"
 	ctladm islist
 	section_footer
+
+	section_header "ctladm portlist -v"
+	ctladm portlist -v
+	ctladm port -l
+	section_footer
 }
