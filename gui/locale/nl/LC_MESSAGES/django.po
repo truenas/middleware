@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:03-0700\n"
-"PO-Revision-Date: 2016-08-01 23:45+0000\n"
+"PO-Revision-Date: 2016-08-18 15:26+0000\n"
 "Last-Translator: Tonnes <tonnes.mb@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: nl\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1470095117.0\n"
+"X-POOTLE-MTIME: 1471534001.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -8583,7 +8583,6 @@ msgstr "Groepslidmaatschappen"
 
 # %(days)s = plural of days, e.g. Mondays?
 #: api/resources.py:860
-#, fuzzy
 msgid "on every %(days)s"
 msgstr "op elke %(days)s"
 
@@ -12333,7 +12332,6 @@ msgid "Remote directory"
 msgstr "Externe map"
 
 #: system/forms.py:3005
-#, fuzzy
 msgid "Backup data"
 msgstr "Back-up van gegevens maken"
 
@@ -12598,17 +12596,14 @@ msgid "Additional Hardware"
 msgstr "Aanvullende hardware"
 
 #: templates/support/home.html:58
-#, fuzzy
 msgid "E16 Enclosure"
 msgstr "E16-behuizing"
 
 #: templates/support/home.html:59
-#, fuzzy
 msgid "E24 Enclosure"
 msgstr "E24-behuizing"
 
 #: templates/support/home.html:60
-#, fuzzy
 msgid "E60 Enclosure"
 msgstr "E60-behuizing"
 
@@ -13021,12 +13016,10 @@ msgid "Fibre Channel"
 msgstr "Fibre Channel"
 
 #: services/models.py:967
-#, fuzzy
 msgid "Fibre Channel Target"
 msgstr "Doel van Fibre Channel"
 
 #: services/models.py:968
-#, fuzzy
 msgid "Fibre Channel Targets"
 msgstr "Doelen van Fibre Channel"
 
@@ -13074,7 +13067,6 @@ msgid "Allow Kerberos Authentication"
 msgstr "Kerberos-authenticatie toestaan"
 
 #: system/alertmods/volume_version.py:34
-#, fuzzy
 msgid ""
 "ZFS filesystem version is out of date. Consider upgrading using \"zfs "
 "upgrade\" command line."
@@ -13135,7 +13127,6 @@ msgid "Bind Interfaces"
 msgstr "Interfaces binden"
 
 #: services/models.py:1578
-#, fuzzy
 msgid ""
 "Interfaces to advertise and listens to. If none specified, listen for in all "
 "available addresses."
@@ -13208,12 +13199,12 @@ msgstr "U mag geen interfaces verwijderen terwijl failover is ingeschakeld."
 #: services/views.py:296
 #, fuzzy
 msgid "Idmap Range Low"
-msgstr "Bereik laag"
+msgstr "Idmap-bereik laag"
 
 #: services/views.py:297
 #, fuzzy
 msgid "Idmap Range High"
-msgstr "Bereik hoog"
+msgstr "Idmap-bereik hoog"
 
 #: storage/forms.py:734
 msgid "File System type"
@@ -13295,7 +13286,6 @@ msgid "NetBIOS Alias: %s"
 msgstr "NetBIOS-alias: %s"
 
 #: services/models.py:416
-#, fuzzy
 msgid ""
 "Select the IP address(es) to listen for NFS requests. If left unchecked, NFS "
 "will listen on all available addresses."
@@ -13310,7 +13300,6 @@ msgid "VMWare snapshot deletion %(snap)s failed for the following VMs: %(vms)s"
 msgstr "VMware-momentopname %(snap)s mislukt voor de volgende VM's: %(vms)s"
 
 #: system/forms.py:1613
-#, fuzzy
 msgid "Share path %s already exists"
 msgstr "Pad naar share %s bestaat al"
 
@@ -13325,7 +13314,6 @@ msgstr ""
 "verhelp de fout, omdat dit tot gegevensverlies kan leiden."
 
 #: storage/admin.py:138
-#, fuzzy
 msgid "Readonly"
 msgstr "Alleen-lezen"
 
@@ -13334,7 +13322,6 @@ msgid "Disk is not clear, partitions or ZFS labels were found."
 msgstr "Schijf is niet leeg; partities of ZFS-labels aangetroffen."
 
 #: storage/nav.py:88
-#, fuzzy
 msgid "View Enclosure"
 msgstr "Behuizing weergeven"
 
@@ -13387,7 +13374,6 @@ msgid "Unkeep"
 msgstr "Niet behouden"
 
 #: system/views.py:457
-#, fuzzy
 msgid "Boot Environment successfully Kept."
 msgstr "Opstartomgeving met succes behouden."
 
@@ -13451,20 +13437,17 @@ msgstr ""
 "is f_info."
 
 #: templates/network/ipmi.html:5
-#, fuzzy
 msgid "WARNING! Failed to query IPMI data, standby node is down."
 msgstr ""
 "WAARSCHUWING! Opvragen van IPMI-gegevens is mislukt; stand-bynode werkt niet."
 
 #: jails/forms.py:610
-#, fuzzy
 msgid "Jail dataset created on a share"
 msgstr "Jail-gegevensset aangemaakt op een share"
 
 #: jails/views.py:584
-#, fuzzy
 msgid "Jail template successfully deleted."
-msgstr "Jail-sjabloon is met succes verwijderd."
+msgstr "Jail-sjabloon met succes verwijderd."
 
 #: services/models.py:456
 msgid "Log mountd(8) requests"
@@ -13475,7 +13458,6 @@ msgid "This option enable mountd logging into syslog."
 msgstr "Deze optie schakelt mountd-logboekregistratie in syslog in."
 
 #: services/models.py:462
-#, fuzzy
 msgid "Log rpc.statd(8) and rpc.lockd(8)"
 msgstr "rpc.statd(8) en rpc.lockd(8) registreren"
 
@@ -13490,7 +13472,6 @@ msgstr ""
 "Toestaan dat het zvol meer dan 80% van de beschikbare ruimte mag gebruiken"
 
 #: system/models.py:149
-#, fuzzy
 msgid ""
 "Specifies the server and port syslog messages will be sent to.  The accepted "
 "format is hostname:port or ip:port, if :port is not specified it will "
@@ -13525,12 +13506,15 @@ msgid "Cannot disable CIFS while ActiveDirectory is in use."
 msgstr "Kan CIFS niet uitschakelen terwijl ActiveDirectory in gebruik is."
 
 #: services/models.py:1295
-#, fuzzy
 msgid "Shutdown Command"
-msgstr "Afsluitmodus"
+msgstr "Afsluitopdracht"
 
 #: services/models.py:1298
+#, fuzzy
 msgid ""
 "The command used to shutdown the server. You can use a custom command here "
 "to perform other tasks before shutdown.default: /sbin/shutdown -p now"
 msgstr ""
+"De gebruikte opdracht voor het afsluiten van de server. U kunt hier een "
+"eigen opdracht gebruiken om voor shutdown.default: /sbin/shutdown -p now "
+"andere taken uit te voeren"
