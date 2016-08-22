@@ -20,9 +20,10 @@ To build the system (experts only):
   * devel/git
   * sysutils/cdrtools
   * archivers/pxz
-  * lang/python (2.7 or later, with THREADS support)
+  * lang/python3 (2.7 or later, with THREADS support)
   * sysutils/grub2-pcbsd
   * sysutils/xorriso
+  * sysutils/grub2-efi
   * py27-sphinx
   * py27-sphinxcontrib-httpdomain-1.2.1
   (and all the dependencies that these ports/pkgs install, of course)
