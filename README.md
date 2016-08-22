@@ -18,6 +18,7 @@ To build the system (experts only):
   FreeNAS-related:
   * ports-mgmt/poudriere-devel
   * devel/git
+  * devel/gmake
   * sysutils/cdrtools
   * archivers/pxz
   * lang/python3 
