@@ -20,7 +20,7 @@ To build the system (experts only):
   * devel/git
   * sysutils/cdrtools
   * archivers/pxz
-  * lang/python3 (2.7 or later, with THREADS support)
+  * lang/python3 
   * sysutils/grub2-pcbsd
   * sysutils/xorriso
   * sysutils/grub2-efi
