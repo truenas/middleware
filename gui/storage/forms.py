@@ -49,7 +49,6 @@ from freenasUI import choices
 from freenasUI.account.models import bsdUsers
 from freenasUI.common import humanize_number_si, humansize_to_bytes
 from freenasUI.common.forms import ModelForm, Form, mchoicefield
-from freenasUI.common.pipesubr import pipeopen
 from freenasUI.freeadmin.apppool import appPool
 from freenasUI.freeadmin.forms import (
     CronMultiple, UserField, GroupField, WarningSelect,
