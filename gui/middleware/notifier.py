@@ -3504,7 +3504,7 @@ class notifier:
 
     def disk_check_clean(self, disk):
         doc = self._geom_confxml()
-        search = doc.xpath("//class[name = 'PART']/..//*[name = '%s']" % disk)
+        search = doc.xpath("//class[name = 'PART']/geom[name = '%s']" % disk)
         if len(search) > 0:
             return False
         return True
