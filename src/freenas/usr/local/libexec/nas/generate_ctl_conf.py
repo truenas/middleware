@@ -287,7 +287,7 @@ def main():
             for o in client.call('datastore.query', 'services.iscsitargettoextent', [('iscsi_target', '=', target.id), ('iscsi_lunid', '!=', None)])
         ]
         cur_lunid = 0
-        for t2e in client.call('datastore.query', 'services.iscsitargettoextent', [('iscsi_target', '=', target.id)], {'extra': {'null_first': 'iscsi_lunid IS NULL'}, 'order_by': ['null_first', 'iscsi_lunid']}):
+        for t2e in client.call('datastore.query', 'services.iscsitargettoextent', [('iscsi_target', '=', target.id)], {'extra': {'select': {'null_first': 'iscsi_lunid IS NULL'}}, 'order_by': ['null_first', 'iscsi_lunid']}):
             t2e = Struct(t2e)
 
             if t2e.iscsi_lunid is None:
