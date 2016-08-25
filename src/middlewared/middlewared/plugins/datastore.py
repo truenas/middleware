@@ -74,7 +74,7 @@ class DatastoreService(Service):
         Dict(
             'options',
             Str('extend'),
-            Str('extra'),
+            Dict('extra', additional_attrs=True),
             List('order_by'),
             Bool('count'),
             Bool('get'),
