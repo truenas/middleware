@@ -329,7 +329,7 @@ for replication in replication_tasks:
         localfs_tmp ="%s/%s" % (localfs, localfs)
     else:
         localfs_tmp = localfs
-    for dir in localfs.partition("/")[2].split("/"):
+    for dir in localfs_tmp.partition("/")[2].split("/"):
         ds = os.path.join(ds, dir)
         log.debug("ds = %s, remotefs = %s" % (ds, remotefs))
         sshproc = pipeopen('%s %s %s/%s' % (sshcmd, rzfscmd, remotefs, ds), quiet=True)
