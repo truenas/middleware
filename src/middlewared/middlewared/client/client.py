@@ -118,7 +118,7 @@ class Client(object):
         self._calls.pop(call.id, None)
 
     def call(self, method, *params, **kwargs):
-        timeout = kwargs.pop('timeout', 10)
+        timeout = kwargs.pop('timeout', 30)
         c = Call(method, params)
         self.register_call(c)
         self._send({
