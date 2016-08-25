@@ -112,7 +112,7 @@ class DatastoreService(Service):
 
         extra = options.get('extra')
         if extra:
-            qs = qs.extra(extra)
+            qs = qs.extra(**extra)
 
         if filters:
             qs = qs.filter(*self._filters_to_queryset(filters))
