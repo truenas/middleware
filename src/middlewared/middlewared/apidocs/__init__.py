@@ -7,4 +7,12 @@ app.wsgi_app = ReverseProxied(app.wsgi_app)
 
 @app.route('/')
 def main():
-    return render_template('websocket.html')
+    services = []
+    for name in app.middleware.call('core.get_services'):
+        services.append({
+           'name': name,
+           'methods': app.middleware.call('core.get_methods', name)
+        })
+    return render_template('websocket.html', **{
+        'services': services,
+    })

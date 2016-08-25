@@ -70,7 +70,8 @@ class CoreService(Service):
                 if not callable(method):
                     continue
 
+                doc = inspect.getdoc(method)
                 data['{0}.{1}'.format(name, i)] = {
-                    'description': inspect.getdoc(method)
+                    'description': doc,
                 }
         return data

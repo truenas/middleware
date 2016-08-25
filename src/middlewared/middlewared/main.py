@@ -212,6 +212,7 @@ class Middleware(object):
 
         restful_api = RESTfulAPI(self)
 
+        apidocs_app.middleware = self
         apidocsserver = WSGIServer(('127.0.0.1', 8001), apidocs_app)
         restserver = WSGIServer(('127.0.0.1', 8002), restful_api.get_app())
 
