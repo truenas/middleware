@@ -325,6 +325,10 @@ for replication in replication_tasks:
     # Attempt to create the remote dataset.  If it fails, we don't care at this point.
     rzfscmd = "zfs create -o readonly=on "
     ds=''
+    if "/" not in localfs:
+        localfs_tmp ="%s/%s" % (localfs, localfs)
+    else:
+        localfs_tmp = localfs
     for dir in localfs.partition("/")[2].split("/"):
         ds = os.path.join(ds, dir)
         log.debug("ds = %s, remotefs = %s" % (ds, remotefs))
