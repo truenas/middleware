@@ -205,8 +205,32 @@ def config_share_for_zfs(share):
     confset1(share, "zfsacl:acesort = dontcare")
 
 
+#
+# ticket: # 16325
+# aio_pthread needs to be last
+# fruit needs to be before streams_xattr, streams_xattr is required
+# for fruit, and if catia and fruit are used, catia comes before fruit
+#
+def order_vfs_objects(vfs_objects):
+    vfs_objects_ordered = []
+    for obj in vfs_objects:
+        if obj not in ('aio_pthread', 'catia', 'fruit', 'streams_xattr'):
+            vfs_objects_ordered.append(obj)
+
+    if 'fruit' in vfs_objects:
+        if 'catia' in vfs_objects:
+            vfs_objects_ordered.append('catia')
+        vfs_objects_ordered.append('fruit')
+        vfs_objects_ordered.append('streams_xattr')
+    if 'aio_pthread' in vfs_objects:
+        vfs_objects_ordered.append('aio_pthread')
+
+    return vfs_objects_ordered
+
+
 def config_share_for_vfs_objects(share, vfs_objects):
     if vfs_objects:
+        vfs_objects = order_vfs_objects(vfs_objects)
         confset2(share, "vfs objects = %s", ' '.join(vfs_objects).encode('utf8'))
 
 
