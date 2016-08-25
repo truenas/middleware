@@ -1,3 +1,5 @@
+from collections import defaultdict
+
 import inspect
 import re
 
@@ -63,15 +65,41 @@ class CoreService(Service):
         for name, svc in list(self.middleware.get_services().items()):
             if service is not None and name != service:
                 continue
-            for i in dir(svc):
-                if i.startswith('_'):
+            for attr in dir(svc):
+                if attr.startswith('_'):
                     continue
-                method = getattr(svc, i)
+                method = getattr(svc, attr)
                 if not callable(method):
                     continue
 
+                examples = defaultdict(list)
                 doc = inspect.getdoc(method)
-                data['{0}.{1}'.format(name, i)] = {
+                if doc:
+                    """
+                    Allow method docstring to have sections in the format of:
+
+                      .. section_name::
+
+                    Currently the following sections are available:
+
+                      .. examples:: - goes into `__all__` list in examples
+                      .. examples(rest):: - goes into `rest` list in examples
+                      .. examples(websocket):: - goes into `websocket` list in examples
+                    """
+                    sections = re.split(r'^.. (.+?)::$', doc, flags=re.M)
+                    doc = sections[0]
+                    for i in range((len(sections) - 1) / 2):
+                        idx = (i + 1) * 2 - 1
+                        reg = re.search(r'examples(?:\((.+)\))?', sections[idx])
+                        if reg is None:
+                            continue
+                        exname = reg.groups()[0]
+                        if exname is None:
+                            exname = '__all__'
+                        examples[exname].append(sections[idx+1])
+
+                data['{0}.{1}'.format(name, attr)] = {
                     'description': doc,
+                    'examples': examples,
                 }
         return data

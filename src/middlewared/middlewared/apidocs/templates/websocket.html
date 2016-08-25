@@ -18,6 +18,12 @@
         </thead>
         <tbody>
           <tr><td>{{ method.description|safe }}</td></tr>
+          {% for example in method.examples.get('__all__', []) %}
+          <tr><td>{{ example }}</td></tr>
+          {% endfor %}
+          {% for example in method.examples.get('websocket', []) %}
+          <tr><td>{{ example }}</td></tr>
+          {% endfor %}
         </tbody>
       </table>
      {% endfor %}
