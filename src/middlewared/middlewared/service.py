@@ -98,8 +98,13 @@ class CoreService(Service):
                             exname = '__all__'
                         examples[exname].append(sections[idx+1])
 
+                accepts = getattr(method, 'accepts', None)
+                if accepts:
+                    accepts = [i.to_json_schema() for i in accepts]
+
                 data['{0}.{1}'.format(name, attr)] = {
                     'description': doc,
                     'examples': examples,
+                    'accepts': accepts,
                 }
         return data
