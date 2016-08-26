@@ -1,4 +1,4 @@
-from middlewared.service import Service
+from middlewared.service import Service, private
 from OpenSSL import crypto
 
 import dateutil
@@ -28,11 +28,9 @@ class CertificateService(Service):
         options['extend'] = 'certificate.cert_extend'
         return self.middleware.call('datastore.query', 'system.certificate', filters, options)
 
+    @private
     def cert_extend(self, cert):
-        """Extend certificate with some useful attributes
-
-        @private
-        """
+        """Extend certificate with some useful attributes."""
         if cert['cert_type'] in (
             CA_TYPE_EXISTING, CA_TYPE_INTERNAL, CA_TYPE_INTERMEDIATE
         ):
