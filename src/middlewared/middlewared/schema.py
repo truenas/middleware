@@ -78,7 +78,7 @@ class Str(EnumMixin, Attribute):
 
     def to_json_schema(self):
         schema = {'title': self.verbose}
-        if self.required:
+        if not self.required:
             schema['type'] = ['string', 'null']
         else:
             schema['type'] = 'string'
