@@ -41,12 +41,12 @@ class ServiceBase(type):
 
         config_attrs = {
             'namespace': namespace,
-            'public': True,
+            'private': False,
         }
         if config:
             config_attrs.update({
                 k: v
-                for k, v in config.__dict__ if not k.startswith('_')
+                for k, v in config.__dict__.items() if not k.startswith('_')
             })
 
         klass._config = type('Config', (), config_attrs)
@@ -65,7 +65,10 @@ class CoreService(Service):
     @accepts()
     def get_services(self):
         """Returns a list of all registered services."""
-        return self.middleware.get_services().keys()
+        return [
+            k for k, v in self.middleware.get_services().items()
+            if not v._config.private
+        ]
 
     @accepts(Str('service'))
     def get_methods(self, service=None):
@@ -76,6 +79,7 @@ class CoreService(Service):
         for name, svc in list(self.middleware.get_services().items()):
             if service is not None and name != service:
                 continue
+
             for attr in dir(svc):
                 if attr.startswith('_'):
                     continue

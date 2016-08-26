@@ -48,6 +48,9 @@ class NotifierService(Service):
     e.g. account, zfs, network, sharing, services, etc.
     """
 
+    class Config:
+        private = True
+
     def __getattr__(self, attr):
         _n = notifier()
         try:
