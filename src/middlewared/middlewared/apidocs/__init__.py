@@ -31,6 +31,9 @@ def main():
            'name': name,
            'methods': app.middleware.call('core.get_methods', name)
         })
+
+    protocol = render_template('websocket/protocol.md')
     return render_template('websocket.html', **{
         'services': services,
+        'protocol': protocol,
     })

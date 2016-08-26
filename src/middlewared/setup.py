@@ -18,7 +18,10 @@ setup(
         'middlewared.apidocs',
     ],
     package_data={
-        'middlewared.apidocs': ['templates/*'],
+        'middlewared.apidocs': [
+            'templates/websocket/*',
+            'templates/*.*',
+        ],
     },
     include_package_data=True,
     license='BSD',

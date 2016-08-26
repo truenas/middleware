@@ -143,7 +143,10 @@
         <div id="sidebar-wrapper">
             <ul class="sidebar-nav">
                 <li class="sidebar-brand">
-                    <a href="#">Websocket Services</a>
+                    <a href="#websocket_protocol">Websocket Protocol</a>
+                </li>
+                <li class="sidebar-brand">
+                    <a href="#websocket_services">Websocket Services</a>
                 </li>
 
                 {% for service in services %}
@@ -161,6 +164,12 @@
            <div class="row">
              <div class="col-lg-12">
 
+               <span id="websocket_protocol">
+               {{ protocol|markdown|safe }}
+
+               <hr />
+
+               <span id="websocket_services">
              {% for service in services %}
               <h2 id="{{ service.name }}">{{ service.name }}</h2>
               {% for mname, method in service.methods.items() %}
