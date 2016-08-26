@@ -1537,6 +1537,7 @@ class FTP(Model):
     ftp_ssltls_certificate = models.ForeignKey(
         Certificate,
         verbose_name=_("Certificate"),
+        limit_choices_to={'cert_type': 16},
         on_delete=models.SET_NULL,
         blank=True,
         null=True,
@@ -2165,6 +2166,7 @@ class WebDAV(Model):
     webdav_certssl = models.ForeignKey(
         Certificate,
         verbose_name=_("Webdav SSL Certificate"),
+        limit_choices_to={'cert_type': 16},
         on_delete=models.SET_NULL,
         blank=True,
         null=True,
