@@ -62,10 +62,12 @@ class Service(object):
 
 class CoreService(Service):
 
+    @accepts()
     def get_services(self):
         """Returns a list of all registered services."""
         return self.middleware.get_services().keys()
 
+    @accepts(Str('service'))
     def get_methods(self, service=None):
         """Return methods metadata of every available service.
 
