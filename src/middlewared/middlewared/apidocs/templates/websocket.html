@@ -28,12 +28,12 @@
           {% endif %}
         </thead>
         <tbody>
-          <tr><td>{{ method.description|safe }}</td></tr>
+          <tr><td>{{ method.description|markdown|safe }}</td></tr>
           {% for example in method.examples.get('__all__', []) %}
-          <tr><td>{{ example }}</td></tr>
+          <tr><td>{{ example|markdown|safe }}</td></tr>
           {% endfor %}
           {% for example in method.examples.get('websocket', []) %}
-          <tr><td>{{ example }}</td></tr>
+          <tr><td>{{ example|markdown|safe }}</td></tr>
           {% endfor %}
         </tbody>
       </table>

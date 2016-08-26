@@ -1,4 +1,5 @@
 import json
+import markdown
 
 from .proxy import ReverseProxied
 from flask import Flask, render_template
@@ -10,8 +11,15 @@ app.wsgi_app = ReverseProxied(app.wsgi_app)
 @app.template_filter()
 def json_filter(value):
     return json.dumps(value, indent=True)
-
 app.jinja_env.filters['json'] = json_filter
+
+
+@app.template_filter()
+def markdown_filter(value):
+    if not value:
+        return value
+    return markdown.markdown(value)
+app.jinja_env.filters['markdown'] = markdown_filter
 
 
 @app.route('/')
