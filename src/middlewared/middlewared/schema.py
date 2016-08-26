@@ -296,15 +296,19 @@ def resolver(middleware, f):
 def accepts(*schema):
     def wrap(f):
         # Make sure number of schemas is same as method argument
-        assert len(schema) == f.__code__.co_argcount - 1  # -1 for self
+        if hasattr(f, '_pass_app'):
+            args_index = 2
+        else:
+            args_index = 1
+        assert len(schema) == f.__code__.co_argcount - args_index  # -1 for self
 
         def nf(*args, **kwargs):
             args = list(args)
 
             # Iterate over positional args first, excluding self
             i = 0
-            for arg in args[1:]:
-                args[i + 1] = nf.accepts[i].clean(args[i + 1])
+            for arg in args[args_index:]:
+                args[i + args_index] = nf.accepts[i].clean(args[i + args_index])
                 i += 1
 
             # Use i counter to map keyword argument to rpc positional
