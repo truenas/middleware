@@ -83,20 +83,26 @@ class DatastoreService(Service):
     def query(self, name, filters=None, options=None):
         """Query for items in a given collection `name`.
 
-        Filters is a list which each entry can be in one of the following formats::
-          entry: simple_filter | conjuntion
-          simple_filter: '[' attribute_name, OPERATOR, value ']'
-          conjunction: '[' CONJUNTION, '[' simple_filter (',' simple_filter)* ']]'
+        `filters` is a list which each entry can be in one of the following formats:
 
-          OPERATOR: ('=' | '!=' | '>' | '>=' | '<' | '<=' | '~' )
-          CONJUNCTION: 'OR'
+            entry: simple_filter | conjuntion
+            simple_filter: '[' attribute_name, OPERATOR, value ']'
+            conjunction: '[' CONJUNTION, '[' simple_filter (',' simple_filter)* ']]'
 
-        e.g. ['OR', [ ['username', '=', 'root' ], ['uid', '=', 0] ] ]
-             [ ['username', '=', 'root' ] ]
+            OPERATOR: ('=' | '!=' | '>' | '>=' | '<' | '<=' | '~' )
+            CONJUNCTION: 'OR'
+
+        e.g.
+
+        `['OR', [ ['username', '=', 'root' ], ['uid', '=', 0] ] ]`
+
+        `[ ['username', '=', 'root' ] ]`
 
         .. examples(websocket)::
 
-          Querying for username "root" and returning a single item::
+          Querying for username "root" and returning a single item:
+
+            :::javascript
             {
               "id": "d51da71b-bb48-4b8b-a8f7-6046fcc892b4",
               "msg": "method",

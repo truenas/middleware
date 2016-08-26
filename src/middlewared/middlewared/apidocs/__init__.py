@@ -1,5 +1,6 @@
 import json
 import markdown
+from markdown.extensions.codehilite import CodeHiliteExtension
 
 from .proxy import ReverseProxied
 from flask import Flask, render_template
@@ -18,7 +19,7 @@ app.jinja_env.filters['json'] = json_filter
 def markdown_filter(value):
     if not value:
         return value
-    return markdown.markdown(value)
+    return markdown.markdown(value, extensions=[CodeHiliteExtension(noclasses=True)])
 app.jinja_env.filters['markdown'] = markdown_filter
 
 
