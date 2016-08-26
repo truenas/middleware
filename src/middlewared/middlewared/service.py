@@ -3,15 +3,24 @@ from collections import defaultdict
 import inspect
 import re
 
+from middlewared.schema import accepts, Str
+
 
 def no_auth_required(fn):
     """Authentication is not required to use the given method."""
     fn._no_auth_required = True
     return fn
 
+
 def pass_app(fn):
     """Pass the application instance as parameter to the method."""
     fn._pass_app = True
+    return fn
+
+
+def private(fn):
+    """Do not expose method in public API"""
+    fn._private = True
     return fn
 
 
@@ -96,7 +105,7 @@ class CoreService(Service):
                         exname = reg.groups()[0]
                         if exname is None:
                             exname = '__all__'
-                        examples[exname].append(sections[idx+1])
+                        examples[exname].append(sections[idx + 1])
 
                 accepts = getattr(method, 'accepts', None)
                 if accepts:
