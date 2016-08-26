@@ -32,12 +32,13 @@ class EnumMixin(object):
 
 class Attribute(object):
 
-    def __init__(self, name, verbose=None, required=False, validators=None, default=None):
+    def __init__(self, name, verbose=None, required=False, validators=None, default=None, register=False):
         self.name = name
         self.default = default
         self.required = required
         self.verbose = verbose or name
         self.validators = validators or []
+        self.register = register
 
     def clean(self, value):
         return value
@@ -63,6 +64,8 @@ class Attribute(object):
             Dict('schema-test', ...)
         )
         """
+        if self.register:
+            middleware.add_schema(self)
         return self
 
 
@@ -155,6 +158,8 @@ class List(EnumMixin, Attribute):
     def resolve(self, middleware):
         for index, i in enumerate(self.items):
             self.items[index] = i.resolve(middleware)
+        if self.register:
+            middleware.add_schema(self)
         return self
 
 
@@ -212,6 +217,8 @@ class Dict(Attribute):
     def resolve(self, middleware):
         for name, attr in self.attrs.items():
             self.attrs[name] = attr.resolve(middleware)
+        if self.register:
+            middleware.add_schema(self)
         return self
 
 
@@ -263,6 +270,8 @@ class Patch(object):
             elif operation == 'attr':
                 for key, val in patch.items():
                     setattr(schema, key, val)
+        if self.register:
+            middleware.add_schema(schema)
         return schema
 
 

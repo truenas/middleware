@@ -1,3 +1,4 @@
+from middlewared.schema import Ref, accepts
 from middlewared.service import Service, private
 from OpenSSL import crypto
 
@@ -22,6 +23,7 @@ logger = logging.getLogger('plugins.crypto')
 
 class CertificateService(Service):
 
+    @accepts(Ref('query-filters'), Ref('query-options'))
     def query(self, filters=None, options=None):
         if options is None:
             options = {}

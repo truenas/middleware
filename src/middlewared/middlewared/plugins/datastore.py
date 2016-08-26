@@ -70,14 +70,15 @@ class DatastoreService(Service):
 
     @accepts(
         Str('name'),
-        List('filters'),
+        List('query-filters', register=True),
         Dict(
-            'options',
+            'query-options',
             Str('extend'),
             Dict('extra', additional_attrs=True),
             List('order_by'),
             Bool('count'),
             Bool('get'),
+            register=True,
         ),
     )
     def query(self, name, filters=None, options=None):

@@ -125,6 +125,7 @@ class Middleware(object):
 
     def __init__(self):
         self.logger = logging.getLogger('middleware')
+        self.__schemas = {}
         self.__services = {}
         self.__init_services()
         self.__plugins_load()
@@ -169,9 +170,22 @@ class Middleware(object):
         # Now that all plugins have been loaded we can resolve all method params
         # to make sure every schema is patched and references match
         from middlewared.schema import resolver  # Lazy import so namespace match
+        to_resolve = []
         for service in self.__services.values():
             for attr in dir(service):
-                resolver(self, getattr(service, attr))
+                to_resolve.append(getattr(service, attr))
+        resolved = 0
+        while len(to_resolve) > 0:
+            for method in list(to_resolve):
+                try:
+                    resolver(self, method)
+                except ValueError:
+                    pass
+                else:
+                    to_resolve.remove(method)
+                    resolved += 1
+            if resolved == 0:
+                raise ValueError("Not all could be resolved")
 
         self.logger.debug('All plugins loaded')
 
@@ -183,6 +197,17 @@ class Middleware(object):
 
     def get_services(self):
         return self.__services
+
+    def add_schema(self, schema):
+        print "add", schema, schema.name
+        if schema.name in self.__schemas:
+            raise ValueError('Schema "{0}" is already registered'.format(
+                schema.name
+            ))
+        self.__schemas[schema.name] = schema
+
+    def get_schema(self, name):
+        return self.__schemas.get(name)
 
     def call_method(self, app, message):
         """Call method from websocket"""
