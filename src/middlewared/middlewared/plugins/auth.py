@@ -1,11 +1,13 @@
 import crypt
 
+from middlewared.schema import Str, accepts
 from middlewared.service import Service, no_auth_required, pass_app
 
 
 class AuthService(Service):
 
     @no_auth_required
+    @accepts(Str('username'), Str('password'))
     @pass_app
     def login(self, app, username, password):
         """Authenticate session using username and password.

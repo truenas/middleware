@@ -129,6 +129,7 @@ class CertificateService(Service):
 
 class CertificateauthorityService(Service):
 
+    @accepts(Ref('query-filters'), Ref('query-options'))
     def query(self, filters=None, options=None):
         if options is None:
             options = {}
