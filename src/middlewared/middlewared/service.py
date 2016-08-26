@@ -83,6 +83,10 @@ class CoreService(Service):
                 if not callable(method):
                     continue
 
+                # Skip private methods
+                if hasattr(method, '_private'):
+                    continue
+
                 examples = defaultdict(list)
                 doc = inspect.getdoc(method)
                 if doc:
