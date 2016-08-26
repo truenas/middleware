@@ -1,5 +1,5 @@
 from middlewared.service import Service
-from middlewared.schema import accepts, Bool, Dict, List, Str
+from middlewared.schema import accepts, Bool, Dict, List, Ref, Str
 
 import os
 import sys
@@ -137,20 +137,22 @@ class DatastoreService(Service):
             return result[0]
         return result
 
+    @accepts(Str('name'), Ref('query-options'))
     def config(self, name, options=None):
         """
-        Get configuration settings dict for a given name
+        Get configuration settings object for a given `name`.
+
+        This is a shortcut for `query(name, {"get": true})`.
         """
         if options is None:
             options = {}
         options['get'] = True
         return self.query(name, None, options)
 
+    @accepts(Str('name'), Dict('data', additional_attrs=True))
     def insert(self, name, data):
         """
-        Insert a new entry to 'name'.
-
-        returns: primary key
+        Insert a new entry to `name`.
         """
         model = self.__get_model(name)
         obj = model(**data)
