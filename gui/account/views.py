@@ -272,11 +272,21 @@ def json_groups(request):
     )
 
 
+class ExtendedAuthForm(AuthenticationForm):
+    def __init__(self, request=None, *args, **kwargs):
+        if request is not None:
+            initial = kwargs.get('initial', {})
+            initial_default = {'username': 'root'}
+            initial_default.update(initial)
+            kwargs['initial'] = initial_default
+        super(ExtendedAuthForm, self).__init__(request, *args, **kwargs)
+
+
 def login_wrapper(
     request,
     template_name='registration/login.html',
     redirect_field_name=REDIRECT_FIELD_NAME,
-    authentication_form=AuthenticationForm,
+    authentication_form=ExtendedAuthForm,
     current_app=None, extra_context=None,
 ):
     """
