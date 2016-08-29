@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:06-0700\n"
-"PO-Revision-Date: 2016-07-22 19:00+0000\n"
+"PO-Revision-Date: 2016-08-25 20:11+0000\n"
 "Last-Translator: mav <mav@freebsd.org>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ru\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
 "n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1469214035.0\n"
+"X-POOTLE-MTIME: 1472155868.0\n"
 
 # Альтернатива SSL/TLS
 #: choices.py:40
@@ -13384,18 +13384,22 @@ msgstr "Вы ввели существующий MAC address. Пожалуйст
 msgid ""
 "Valid characters for jail names are letters, numbers, dashes, or underscores."
 msgstr ""
+"Допустимые символы для имен jail являются буквы, цифры, тире или знак "
+"подчеркивания."
 
 #: services/forms.py:95
 msgid "Cannot disable CIFS while ActiveDirectory is in use."
-msgstr ""
+msgstr "Невозможно отключить CIFS в то время как Active Directory используется."
 
 #: services/models.py:1295
-#, fuzzy
 msgid "Shutdown Command"
-msgstr "Режим выключения"
+msgstr "Команда выключения"
 
 #: services/models.py:1298
 msgid ""
 "The command used to shutdown the server. You can use a custom command here "
 "to perform other tasks before shutdown.default: /sbin/shutdown -p now"
 msgstr ""
+"Команда, используемая для завершения работы сервера. Вы можете использовать "
+"пользовательскую команду здесь, чтобы выполнять другие задачи перед "
+"shutdown.default: /sbin/shutdown -p now"
