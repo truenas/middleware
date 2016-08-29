@@ -65,7 +65,7 @@ class Client(object):
     def __init__(self, uri=None):
         self._calls = {}
         if uri is None:
-            uri = 'ws://127.0.0.1:8000/websocket'
+            uri = 'ws://127.0.0.1:6000/websocket'
         self._ws = WSClient(uri, client=self)
         self._ws.connect()
         self._connected = Event()

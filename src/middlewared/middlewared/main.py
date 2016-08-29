@@ -231,7 +231,7 @@ class Middleware(object):
 
     def run(self):
         Application.middleware = self
-        wsserver = WebSocketServer(('127.0.0.1', 8000), Resource(OrderedDict([
+        wsserver = WebSocketServer(('127.0.0.1', 6000), Resource(OrderedDict([
             ('/websocket', Application),
         ])))
 
