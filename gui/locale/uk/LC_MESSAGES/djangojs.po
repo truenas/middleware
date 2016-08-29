@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:10-0700\n"
-"PO-Revision-Date: 2016-04-04 08:00+0000\n"
+"PO-Revision-Date: 2016-08-26 11:29+0000\n"
 "Last-Translator: mav <mav@freebsd.org>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: uk\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
 "n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2)\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1459756859.0\n"
+"X-POOTLE-MTIME: 1472210964.0\n"
 
 #~ msgid "Reporting"
 #~ msgstr "Звіти"
@@ -485,8 +485,8 @@ msgid ""
 "<font color='red'>STOP</font>: If your Active Directory is not configured "
 "for this, it will not work.<br><br>"
 msgstr ""
-"<font color = 'red'> СТОП </ font>: Якщо ваша Active Directory не "
-"налаштована для цього, це не буде працювати.<br><br>"
+"<font color='red'>СТОП</font>: Якщо ваша Active Directory не налаштована для "
+"цього, це не буде працювати.<br><br>"
 
 #: freeadmin/static/lib/js/freeadmin/Menu.js:512
 msgid "Documentation"
@@ -619,6 +619,8 @@ msgid ""
 "You're not allowed to change away from the nightly train, it is considered a "
 "downgrade."
 msgstr ""
+"Ви не можете змінити поїзд з nightly, це вважається поверненням до старої "
+"версії."
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:161
 #: freeadmin/static/lib/js/freeadmin/Update.js:162
@@ -626,12 +628,16 @@ msgid ""
 "If you have an existing boot environment that uses that train, boot into it "
 "in order to upgrade that train."
 msgstr ""
+"Якщо у вас є існуюче оточення завантаження, що використовує цей поїзд, "
+"потрібно завантажитися в нього, щоб оновити цей поїзд."
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:162
 msgid ""
 "Changing minor version is considered a downgrade, thus not a supported "
 "operation."
 msgstr ""
+"Зміна додаткової версії вважається поверненням до старої версії, таким "
+"чином, ця операція не підтримується."
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:176
 msgid "OK"
@@ -642,6 +648,8 @@ msgid ""
 "WARNING: Changing to a nightly train is a one way street. Changing back to "
 "stable is not supported!"
 msgstr ""
+"УВАГА: Перехід на nightly поїзд це вулиця з одностороннім рухом. Перехід "
+"назад на stable не дозволен!"
 
 #: freeadmin/static/lib/js/freeadmin.js:359
 msgid "Ok"
