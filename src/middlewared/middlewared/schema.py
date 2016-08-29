@@ -74,7 +74,7 @@ class Str(EnumMixin, Attribute):
     def clean(self, value):
         value = super(Str, self).clean(value)
         if value is None and not self.required:
-            return value
+            return self.default
         if not isinstance(value, (str, unicode)):
             raise Error(self.name, 'Not a string')
         return value
@@ -92,7 +92,14 @@ class Str(EnumMixin, Attribute):
 
 class Bool(Attribute):
 
+    def __init__(self, *args, **kwargs):
+        if 'default' not in kwargs:
+            kwargs['default'] = False
+        super(Bool, self).__init__(*args, **kwargs)
+
     def clean(self, value):
+        if value is None and not self.required:
+            return self.default
         if not isinstance(value, bool):
             raise Error(self.name, 'Not a boolean')
         return value
@@ -176,6 +183,9 @@ class Dict(Attribute):
             self.attrs[i.name] = i
 
     def clean(self, data):
+        if data is None and not self.required:
+            return {}
+
         self.errors = []
         if not isinstance(data, dict):
             raise Error(self.name, 'A dict was expected')
