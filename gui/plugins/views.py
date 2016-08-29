@@ -25,6 +25,7 @@
 #####################################################################
 from collections import namedtuple
 
+import ipaddress
 import json
 import logging
 import os
@@ -56,6 +57,7 @@ from freenasUI.jails.utils import (
 )
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier
+from freenasUI.network.models import GlobalConfiguration
 from freenasUI.plugins import models, forms, availablePlugins
 from freenasUI.plugins.plugin import PROGRESS_FILE
 from freenasUI.plugins.utils import (
@@ -561,6 +563,37 @@ def plugin_installed_icon(request, plugin_name, oid):
 
     return HttpResponse(icon, content_type="image/png")
 
+#
+# Get the primary IPv4 address of this host. We
+# assume that there will always be an IPv4 address and
+# we also assume that plugins will always have an IPv4
+# address, and that is how we communicate with them.
+#
+def get_ipv4_addr():
+    def hex_to_cidr(num):
+        cidr = 0
+        while num:
+            cidr += (num & 0x01)
+            num >>= 1
+        return cidr
+
+    gc = GlobalConfiguration.objects.all()[0]
+
+    ipv4gateway = gc.gc_ipv4gateway
+    ipv4gateway_obj = ipaddress.ip_interface(ipv4gateway)
+
+    _n = notifier()
+    iface = _n.get_default_interface()
+    ii = _n.get_interface_info(iface)
+    if 'ipv4' in ii:
+        ipv4_info = ii['ipv4']
+        for i in ipv4_info:
+            ipv4addr =  unicode(i['inet'])
+            netmask = unicode(hex_to_cidr(int(i['netmask'], 0)))
+            ipv4_obj = ipaddress.ip_interface('%s/%s' % (ipv4addr, netmask))
+            ipv4_network = ipv4_obj.network
+            if ipv4gateway in ipv4_network:
+                return ipv4addr
 
 @public
 def plugin_fcgi_client(request, name, oid, path):
@@ -591,7 +624,7 @@ def plugin_fcgi_client(request, name, oid, path):
 
     try:
         if os.path.exists(fastcgi_env_path):
-            plugin_fascgi_env = {}
+            plugin_fascgi_env = { }
             execfile(fastcgi_env_path, {}, plugin_fascgi_env)
             env.update(plugin_fascgi_env)
 
@@ -607,6 +640,15 @@ def plugin_fcgi_client(request, name, oid, path):
     env['SCRIPT_NAME'] = env['PATH_INFO']
     if request.is_secure():
         env['HTTPS'] = 'on'
+
+    # Always use Ipv4 to talk to plugins
+    try:
+        host_ip = get_ipv4_addr()
+        env['SERVER_ADDR'] = host_ip
+        env['HTTP_HOST'] = host_ip
+    except:
+        pass
+
     args = request.POST if request.method == "POST" else request.GET
     status, headers, body, raw = app(env, args=args)
 
