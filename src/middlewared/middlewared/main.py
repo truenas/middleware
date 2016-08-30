@@ -199,7 +199,6 @@ class Middleware(object):
         return self.__services
 
     def add_schema(self, schema):
-        print "add", schema, schema.name
         if schema.name in self.__schemas:
             raise ValueError('Schema "{0}" is already registered'.format(
                 schema.name
