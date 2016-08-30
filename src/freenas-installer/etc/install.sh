@@ -279,7 +279,7 @@ install_grub() {
 	ln -s /conf/base/etc/local ${_mnt}/etc/local
 	chroot ${_mnt} /sbin/zpool set cachefile=/boot/zfs/rpool.cache freenas-boot
 	chroot ${_mnt} /etc/rc.d/ldconfig start
-	/usr/bin/sed -i.bak -e 's,^ROOTFS=.*$,ROOTFS=freenas-boot/ROOT/default,g' ${_mnt}/usr/local/sbin/beadm ${_mnt}/conf/base/etc/local/grub.d/10_ktrueos
+	/usr/bin/sed -i.bak -e 's,^ROOTFS=.*$,ROOTFS=freenas-boot/ROOT/${BENAME},g' ${_mnt}/usr/local/sbin/beadm ${_mnt}/conf/base/etc/local/grub.d/10_ktrueos
 	# Having 10_ktruos.bak in place causes grub-mkconfig to
 	# create two boot menu items.  So let's move it out of place
 	mkdir -p /tmp/bakup
@@ -301,7 +301,7 @@ install_grub() {
 	        chroot ${_mnt} /usr/local/sbin/grub-install --modules='zfs part_gpt' ${_grub_args} /dev/${_disk}
 	    fi
 	done
-	chroot ${_mnt} /usr/local/sbin/beadm activate default
+	chroot ${_mnt} /usr/local/sbin/beadm activate ${BENAME}
 	chroot ${_mnt} /usr/local/sbin/grub-mkconfig -o /boot/grub/grub.cfg > /dev/null 2>&1
 	# And now move the backup files back in place
 	mv ${_mnt}/usr/local/sbin/beadm.bak ${_mnt}/usr/local/sbin/beadm
@@ -320,7 +320,7 @@ mount_disk() {
 
 	_mnt="$1"
 	mkdir -p "${_mnt}"
-	mount -t zfs -o noatime freenas-boot/ROOT/default ${_mnt}
+	mount -t zfs -o noatime freenas-boot/ROOT/${BENAME} ${_mnt}
 	mkdir -p ${_mnt}/boot/grub
 	mount -t zfs -o noatime freenas-boot/grub ${_mnt}/boot/grub
 	mkdir -p ${_mnt}/data
@@ -441,7 +441,7 @@ partition_disk() {
 	zpool set feature@lz4_compress=enabled freenas-boot
 	zfs set compress=lz4 freenas-boot
 	zfs create -o canmount=off freenas-boot/ROOT
-	zfs create -o mountpoint=legacy freenas-boot/ROOT/default
+	zfs create -o mountpoint=legacy freenas-boot/ROOT/${BENAME}
 	zfs create -o mountpoint=legacy freenas-boot/grub
 
 	return 0
@@ -674,6 +674,31 @@ __EOF__
 
     echo -n "${password}" 1>&2
 
+}
+
+create_be()
+{
+  if [ $# -ne 1 ]; then
+    return 1
+  fi
+
+  echo "Creating new Boot-Environment"
+
+  # When upgrading, we will simply create a new BE dataset and install
+  # fresh into that, so old datasets are not lost
+  zpool import -N -f freenas-boot || return 1
+
+  # Create the new BE
+  zfs create -o mountpoint=legacy freenas-boot/ROOT/${BENAME} || return 1
+
+  # Mount the new BE datasets
+  mkdir -p ${1}
+  mount -t zfs freenas-boot/ROOT/${BENAME} ${1} || return 1
+  mkdir -p ${1}/boot/grub
+  mount -t zfs -o noatime freenas-boot/grub ${1}/boot/grub
+  mkdir -p ${1}/data
+
+  return 0
 }
 
 menu_install()
@@ -937,15 +962,30 @@ menu_install()
     # Hack #2
     ls $(get_product_path) > /dev/null
 
-    if echo ${_disks} | grep -q "raid/"; then
-	graid delete ${_disks}
-    fi
+    if [ ${_do_upgrade} -eq 1 -a ${upgrade_style} = "new" ]
+    then
+      # Set the boot-environment name
+      BENAME="upgrade-`date +%Y%m%d-%H%M%S`"
+      export BENAME
 
-    # We repartition even if it's an upgrade.
-    # This destroys all of the pool data, and
-    # ensures a clean filesystems.
-    partition_disk ${_realdisks}
-    mount_disk /tmp/data
+      # When doing new-style upgrades, we can keep the old zpool
+      # and instead do a new BE creation
+      create_be /tmp/data
+    else
+      # Set the boot-environment name
+      BENAME="default"
+      export BENAME
+
+      if echo ${_disks} | grep -q "raid/"; then
+	graid delete ${_disks}
+      fi
+
+      # We repartition on fresh install, or old upgrade_style
+      # This destroys all of the pool data, and
+      # ensures a clean filesystems.
+      partition_disk ${_realdisks}
+      mount_disk /tmp/data
+    fi
     
     if [ -d /tmp/data_preserved ]; then
 	cp -pR /tmp/data_preserved/. /tmp/data/data
@@ -1021,7 +1061,7 @@ menu_install()
     mount -t tmpfs tmpfs /tmp/data/var
     chroot /tmp/data /usr/sbin/mtree -deUf /etc/mtree/BSD.var.dist -p /var
     # Set default boot filesystem
-    zpool set bootfs=freenas-boot/ROOT/default freenas-boot
+    zpool set bootfs=freenas-boot/ROOT/${BENAME} freenas-boot
     install_grub /tmp/data ${_realdisks}
     
 #    set +x
