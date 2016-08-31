@@ -229,12 +229,22 @@ new_install_verify()
 {
     local _type="$1"
     shift
+    local _upgradetype="$1"
+    shift
 
     local _disks="$*"
     local _tmpfile="/tmp/msg"
     cat << EOD > "${_tmpfile}"
 WARNING:
-- This will erase ALL partitions and data on ${_disks}.
+EOD
+
+    if [ "$_type" = "upgrade" -a "$_upgradetype" = "inplace" ] ; then
+      echo "- This will install into existing zpool on ${_disks}." >> ${_tmpfile}
+    else
+      echo "- This will erase ALL partitions and data on ${_disks}." >> ${_tmpfile}
+    fi
+
+    cat << EOD >> "${_tmpfile}"
 - You can't use ${_disks} for sharing data.
 
 NOTE:
@@ -263,6 +273,22 @@ EOD
     dialog --title "Upgrade this $AVATAR_PROJECT installation" --no-label "Fresh Install" --yes-label "Upgrade Install" --yesno "${_msg}" 8 74
     return $?
 }
+
+ask_upgrade_inplace()
+{
+    local _tmpfile="/tmp/msg"
+    cat << EOD > "${_tmpfile}"
+Upgrading the installation can format the disk, or install directly
+into a boot environment, leaving your old system intact.
+
+Do you wish to format the disk or a save the old system dataset?
+EOD
+    _msg=`cat "${_tmpfile}"`
+    rm -f "${_tmpfile}"
+    dialog --title "Upgrade method selection" --no-label "Save old system dataset" --yes-label "Format the disk" --yesno "${_msg}" 8 74
+    return $?
+}
+
 
 install_grub() {
 	local _disk _disks
@@ -821,6 +847,7 @@ menu_install()
     fi
 
     _action="installation"
+    _upgrade_type="format"
     # This needs to be re-done.
     # If we're not interactive, then we have
     # to assume _disks is correct.
@@ -852,6 +879,12 @@ menu_install()
 	    echo "Unknown upgrade style" 1>&2
 	    exit 1
 	fi
+	# Ask if we want to do a format or inplace upgrade
+        if ${INTERACTIVE}; then
+	    if ! ask_upgrade_inplace ; then
+		_upgrade_type="inplace"
+	    fi
+	fi
 	break
     elif [ "${_satadom}" = "YES" -a -c /dev/ufs/TrueNASs4 ]; then
 	# Special hack for USB -> DOM upgrades
@@ -878,7 +911,7 @@ menu_install()
     fi
 
 
-    ${INTERACTIVE} && new_install_verify "$_action" ${_realdisks}
+    ${INTERACTIVE} && new_install_verify "$_action" "$_upgrade_type" ${_realdisks}
     _config_file="/tmp/pc-sysinstall.cfg"
 
     if ${INTERACTIVE} && [ "${_do_upgrade}" -eq 0 ]; then
@@ -962,10 +995,10 @@ menu_install()
     # Hack #2
     ls $(get_product_path) > /dev/null
 
-    if [ ${_do_upgrade} -eq 1 -a ${upgrade_style} = "new" ]
+    if [ ${_do_upgrade} -eq 1 -a ${upgrade_style} = "new" -a "${_upgrade_type}" = "inplace" ]
     then
       # Set the boot-environment name
-      BENAME="upgrade-`date +%Y%m%d-%H%M%S`"
+      BENAME="default-`date +%Y%m%d-%H%M%S`"
       export BENAME
 
       # When doing new-style upgrades, we can keep the old zpool
