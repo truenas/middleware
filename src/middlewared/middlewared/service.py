@@ -91,6 +91,8 @@ class CoreService(Service):
         """Returns a list of all registered services."""
         services = {}
         for k, v in self.middleware.get_services().items():
+            if v._config.private is True:
+                continue
             if isinstance(v, CRUDService):
                 _typ = 'crud'
             elif isinstance(v, ConfigService):
