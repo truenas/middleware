@@ -576,6 +576,7 @@ lib/shared-modules/gpext/scripts.so
 lib/shared-modules/gpext/security.so
 lib/shared-modules/idmap/ad.so
 lib/shared-modules/idmap/autorid.so
+lib/shared-modules/idmap/fruit.so
 lib/shared-modules/idmap/hash.so
 lib/shared-modules/idmap/ldap.so
 lib/shared-modules/idmap/nss.so

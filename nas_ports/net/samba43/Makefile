@@ -242,7 +242,7 @@ PLIST_SUB+=		DEVELOPER="@comment "
 .if defined(CRAZY)
 WANT_EXP_MODULES=	auth_samba4 auth_script auth_skel auth_unix auth_wbc \
 			gpext_registry gpext_scripts gpext_security idmap_ad \
-			idmap_autorid idmap_hash idmap_ldap idmap_passdb \
+			idmap_autorid idmap_fruit idmap_hash idmap_ldap idmap_passdb \
 			idmap_rid idmap_script idmap_tdb idmap_tdb2 idmap_nss \
 			nss_info_template pdb_ldap pdb_samba_dsdb pdb_smbpasswd \
 			pdb_tdbsam pdb_test pdb_wbc_sam perfcount_test vfs_acl_tdb \
@@ -286,7 +286,7 @@ SAMBA4_WANT_ADS=	yes
 SAMBA4_WANT_LDAP=	yes
 # List of extra modules taken from RHEL build
 # https://bugs.freebsd.org/bugzilla/show_bug.cgi?id=197320
-SAMBA4_MODULES+=	idmap_rid idmap_ad idmap_hash idmap_adex idmap_tdb2
+SAMBA4_MODULES+=	idmap_rid idmap_ad idmap_fruit idmap_hash idmap_adex idmap_tdb2
 .endif
 
 .if ${PORT_OPTIONS:MAIO_SUPPORT}
