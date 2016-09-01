@@ -1030,7 +1030,7 @@ menu_install()
 	graid delete ${_disks}
       fi
 
-      BOOTMODE="bios"
+      BOOTMODE=`kenv grub.platform`
       if ${INTERACTIVE}; then
         # Prompt for UEFI or BIOS mode
         if ask_boot_method
