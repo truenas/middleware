@@ -294,6 +294,12 @@ ask_boot_method()
       return 1
     fi
 
+    # If we are not on efi, set BIOS as the default selected option
+    dlgflags=""
+    if [ "$BOOTMODE" != "efi" ] ; then
+      dlgflags="--defaultno"
+    fi
+
     local _tmpfile="/tmp/msg"
     cat << EOD > "${_tmpfile}"
 $AVATAR_PROJECT can be booted in either BIOS or UEFI mode.
@@ -303,7 +309,7 @@ whereas UEFI may be required for newer consumer motherboards.
 EOD
     _msg=`cat "${_tmpfile}"`
     rm -f "${_tmpfile}"
-    dialog --title "$AVATAR_PROJECT Boot Mode" --no-label "Boot via BIOS" --yes-label "Boot via UEFI" --yesno "${_msg}" 8 74
+    dialog ${dlgflags} --title "$AVATAR_PROJECT Boot Mode" --no-label "Boot via BIOS" --yes-label "Boot via UEFI" --yesno "${_msg}" 8 74
     return $?
 }
 
