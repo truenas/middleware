@@ -56,16 +56,39 @@ class RESTfulAPI(object):
 
             kwargs = {}
             blacklist_methods = []
+            """
+            Hook up methods for the resource entrypoint.
+            For CRUD:
+              - GET -> $name.query
+              - POST - $name.create
+            For Config:
+              - GET -> $name.config
+              - PUT -> $name.update
+            """
             if service['type'] == 'crud':
                 kwargs['get'] = '{}.query'.format(name)
                 kwargs['post'] = '{}.create'.format(name)
-                blacklist_methods.extend([kwargs['get'], kwargs['post']])
+                blacklist_methods.extend(kwargs.values())
             elif service['type'] == 'config':
                 kwargs['get'] = '{}.config'.format(name)
                 kwargs['put'] = '{}.update'.format(name)
-                blacklist_methods.extend([kwargs['get'], kwargs['put']])
+                blacklist_methods.extend(kwargs.values())
 
             service_resource = Resource(self, self.middleware, name, **kwargs)
+
+            """
+            For CRUD services we also need a direct subresource so we can
+            operate on items in the entity, e.g. update or delete "john" of user namespace.
+            """
+            subresource = None
+            if service['type'] == 'crud':
+                kwargs = {
+                    'delete': '{}.delete'.format(name),
+                    'put': '{}.update'.format(name),
+                }
+                blacklist_methods.extend(kwargs.values())
+                subresource = Resource(self, self.middleware, 'id/{id}', parent=service_resource, **kwargs)
+
             for methodname, method in self.middleware.call('core.get_methods', name).items():
                 if methodname in blacklist_methods:
                     continue
