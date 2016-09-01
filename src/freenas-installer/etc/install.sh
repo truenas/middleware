@@ -11,8 +11,6 @@ TERM=${TERM:-xterm}
 export TERM
 GRUB_TERMINAL_OUTPUT="console serial"
 export GRUB_TERMINAL_OUTPUT
-BOOTMODE=`kenv grub.platform`
-export BOOTMODE
 
 . /etc/avatar.conf
 
@@ -289,6 +287,25 @@ EOD
     return $?
 }
 
+ask_boot_method()
+{
+    # TrueNAS is BIOS only for now
+    if [ "$AVATAR_PROJECT" = "TrueNAS" ] ; then
+      return 1
+    fi
+
+    local _tmpfile="/tmp/msg"
+    cat << EOD > "${_tmpfile}"
+$AVATAR_PROJECT can be booted in either BIOS or UEFI mode.
+
+BIOS mode is recommended for legacy and enterprise hardware,
+whereas UEFI may be required for newer consumer motherboards.
+EOD
+    _msg=`cat "${_tmpfile}"`
+    rm -f "${_tmpfile}"
+    dialog --title "$AVATAR_PROJECT Boot Mode" --no-label "Boot via BIOS" --yes-label "Boot via UEFI" --yesno "${_msg}" 8 74
+    return $?
+}
 
 install_grub() {
 	local _disk _disks
@@ -312,7 +329,7 @@ install_grub() {
 	mv ${_mnt}/conf/base/etc/local/grub.d/10_ktrueos.bak /tmp/bakup
 	for _disk in ${_disks}; do
 	    _grub_args=""
-	    if [ "$BOOTMODE" = "efi" -a "$AVATAR_PROJECT" != "TrueNAS" ] ; then
+	    if [ "$BOOTMODE" = "efi" ] ; then
 		# EFI Mode
 		sed -i '' 's|GRUB_TERMINAL_OUTPUT=console|GRUB_TERMINAL_OUTPUT=gfxterm|g' ${_mnt}/conf/base/etc/local/default/grub
 		glabel label efibsd /dev/${_disk}p1
@@ -361,7 +378,7 @@ create_partitions() {
 	_size="-s $2"
     fi
     if gpart create -s GPT -f active ${_disk}; then
-	if [ "$BOOTMODE" = "efi" -a "$AVATAR_PROJECT" != "TrueNAS" ] ; then
+	if [ "$BOOTMODE" = "efi" ] ; then
 	  # EFI Mode
 	  sysctl kern.geom.debugflags=16
 	  sysctl kern.geom.label.disk_ident.enable=0
@@ -448,7 +465,7 @@ partition_disk() {
 	
 	_disksparts=$(for _disk in ${_disks}; do
 	    create_partitions ${_disk} ${_minsize} >&2
-	    if [ "$BOOTMODE" != "efi" -o "$AVATAR_PROJECT" = "TrueNAS" ] ; then
+	    if [ "$BOOTMODE" != "efi" ] ; then
 	      # Make the disk active
 	      gpart set -a active ${_disk} >&2
 	    fi
@@ -752,7 +769,7 @@ menu_install()
     local _password
     local os_part
     local data_part
-    local upgrade_style
+    local upgrade_style="new"
     local whendone=""
     
     local readonly CD_UPGRADE_SENTINEL="/data/cd-upgrade"
@@ -1012,6 +1029,16 @@ menu_install()
       if echo ${_disks} | grep -q "raid/"; then
 	graid delete ${_disks}
       fi
+
+      BOOTMODE="bios"
+      if ${INTERACTIVE}; then
+        # Prompt for UEFI or BIOS mode
+        if ask_boot_method
+        then
+          BOOTMODE="efi"
+        fi
+      fi
+      export BOOTMODE
 
       # We repartition on fresh install, or old upgrade_style
       # This destroys all of the pool data, and
