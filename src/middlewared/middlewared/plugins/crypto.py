@@ -1,5 +1,5 @@
 from middlewared.schema import Ref, accepts
-from middlewared.service import Service, private
+from middlewared.service import CRUDService, private
 from OpenSSL import crypto
 
 import dateutil
@@ -21,7 +21,7 @@ RE_CERTIFICATE = re.compile(r"(-{5}BEGIN[\s\w]+-{5}[^-]+-{5}END[\s\w]+-{5})+", r
 logger = logging.getLogger('plugins.crypto')
 
 
-class CertificateService(Service):
+class CertificateService(CRUDService):
 
     @accepts(Ref('query-filters'), Ref('query-options'))
     def query(self, filters=None, options=None):
@@ -127,7 +127,7 @@ class CertificateService(Service):
         return cert
 
 
-class CertificateauthorityService(Service):
+class CertificateauthorityService(CRUDService):
 
     @accepts(Ref('query-filters'), Ref('query-options'))
     def query(self, filters=None, options=None):
