@@ -52,9 +52,23 @@ class RESTfulAPI(object):
         return self.app
 
     def register_resources(self):
-        for name in self.middleware.call('core.get_services'):
-            service_resource = Resource(self, self.middleware, name)
+        for name, service in self.middleware.call('core.get_services').items():
+
+            kwargs = {}
+            blacklist_methods = []
+            if service['type'] == 'crud':
+                kwargs['get'] = '{}.query'.format(name)
+                kwargs['post'] = '{}.create'.format(name)
+                blacklist_methods.extend([kwargs['get'], kwargs['post']])
+            elif service['type'] == 'config':
+                kwargs['get'] = '{}.config'.format(name)
+                kwargs['put'] = '{}.update'.format(name)
+                blacklist_methods.extend([kwargs['get'], kwargs['put']])
+
+            service_resource = Resource(self, self.middleware, name, **kwargs)
             for methodname, method in self.middleware.call('core.get_methods', name).items():
+                if methodname in blacklist_methods:
+                    continue
                 short_methodname = methodname.rsplit('.', 1)[-1]
                 Resource(self, self.middleware, short_methodname, parent=service_resource, get=methodname)
 
