@@ -60,15 +60,48 @@ class Service(object):
         self.middleware = middleware
 
 
+class ConfigService(Service):
+
+    def config(self):
+        raise NotImplementedError
+
+    def update(self, data):
+        return self.do_update(filters, options)
+
+
+class CRUDService(Service):
+
+    def query(self, filters, options):
+        raise NotImplementedError
+
+    def create(self, data):
+        return self.do_create(filters, options)
+
+    def update(self, data):
+        return self.do_update(filters, options)
+
+    def delete(self, data):
+        return self.do_delete(filters, options)
+
+
 class CoreService(Service):
 
     @accepts()
     def get_services(self):
         """Returns a list of all registered services."""
-        return [
-            k for k, v in self.middleware.get_services().items()
-            if not v._config.private
-        ]
+        services = {}
+        for k, v in self.middleware.get_services().items():
+            if isinstance(v, CRUDService):
+                _typ = 'crud'
+            elif isinstance(v, ConfigService):
+                _typ = 'config'
+            else:
+                _typ = 'service'
+            services[k] = {
+                'config': {k: v for k, v in v._config.__dict__.items() if not k.startswith('_')},
+                'type': _typ,
+            }
+        return services
 
     @accepts(Str('service'))
     def get_methods(self, service=None):

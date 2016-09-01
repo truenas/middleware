@@ -1,7 +1,7 @@
-from middlewared.service import Service, private
+from middlewared.service import ConfigService, private
 
 
-class CIFSService(Service):
+class CIFSService(ConfigService):
 
     def config(self):
         """Returns CIFS configuration object."""
