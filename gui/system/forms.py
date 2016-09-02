@@ -168,18 +168,15 @@ class BootEnvAddForm(Form):
         return name
 
     def save(self, *args, **kwargs):
-        if Update.PruneClones() is False:
-            raise MiddlewareError(_('No Boot environments could be deleted due to keep flag settings, and boot-pool is out of space. Failed to create a new Boot.'))
-        else:
-            kwargs = {}
-            if self._source:
-                kwargs['bename'] = self._source
-            clone = Update.CreateClone(
-                self.cleaned_data.get('name'),
-                **kwargs
-            )
-            if clone is False:
-                raise MiddlewareError(_('Failed to create a new Boot.'))
+        kwargs = {}
+        if self._source:
+            kwargs['bename'] = self._source
+        clone = Update.CreateClone(
+            self.cleaned_data.get('name'),
+            **kwargs
+        )
+        if clone is False:
+            raise MiddlewareError(_('Failed to create a new Boot.'))
 
 
 class BootEnvRenameForm(Form):
