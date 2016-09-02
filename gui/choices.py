@@ -873,9 +873,8 @@ class SERIAL_CHOICES(object):
     def __iter__(self):
         from freenasUI.middleware.notifier import notifier
         _n = notifier()
-        if not _n.is_freenas():
-            if _n.failover_hardware() == "ECHOSTREAM":
-                yield ('0x3f8', '0x3f8')
+        if not _n.is_freenas() and _n.failover_hardware() == "ECHOSTREAM":
+            yield ('0x3f8', '0x3f8')
         else:
             pipe = popen("/usr/sbin/devinfo -u | "
                          "awk '/^I\/O ports:/, /^I\/O memory addresses:/' | "
