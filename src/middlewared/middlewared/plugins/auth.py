@@ -6,10 +6,8 @@ from middlewared.service import Service, no_auth_required, pass_app
 
 class AuthService(Service):
 
-    @no_auth_required
     @accepts(Str('username'), Str('password'))
-    @pass_app
-    def login(self, app, username, password):
+    def check_user(self, username, password):
         """Authenticate session using username and password.
         Currently only root user is allowed.
         """
@@ -21,7 +19,13 @@ class AuthService(Service):
             return False
         if user['bsdusr_unixhash'] in ('x', '*'):
             return False
-        valid = crypt.crypt(password, user['bsdusr_unixhash']) == user['bsdusr_unixhash']
+        return crypt.crypt(password, user['bsdusr_unixhash']) == user['bsdusr_unixhash']
+
+    @no_auth_required
+    @accepts(Str('username'), Str('password'))
+    @pass_app
+    def login(self, app, username, password):
+        valid = self.check_user(username, password)
         if valid:
             app.authenticated = True
         return valid
