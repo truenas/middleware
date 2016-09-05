@@ -150,7 +150,10 @@ def main():
     parser.add_argument('-u', '--uri')
     parser.add_argument('-U', '--username')
     parser.add_argument('-P', '--password')
-    parser.add_argument('call', nargs='+')
+
+    subparsers = parser.add_subparsers(help='sub-command help', dest='name')
+    iparser = subparsers.add_parser('call', help='Call method')
+    iparser.add_argument('method', nargs='+')
     args = parser.parse_args()
 
     def to_json(args):
@@ -160,7 +163,7 @@ def main():
             except:
                 yield i
 
-    if args.call:
+    if args.name == 'call':
         with Client(uri=args.uri) as c:
             try:
                 if args.username and args.password:
@@ -170,7 +173,7 @@ def main():
                 print "Failed to login: ", e
                 sys.exit(0)
             try:
-                rv = c.call(args.call[1], *list(to_json(args.call[2:])))
+                rv = c.call(args.method[0], *list(to_json(args.method[1:])))
                 if isinstance(rv, (int, str, unicode)):
                     print(rv)
                 else:
