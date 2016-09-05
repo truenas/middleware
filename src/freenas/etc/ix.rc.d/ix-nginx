@@ -314,8 +314,8 @@ __EOF__
         location /api/v2.0 {
             proxy_pass http://127.0.0.1:8002/api/v2.0;
             proxy_http_version 1.1;
-            proxy_set_header X-Real-Remote-Addr $remote_addr;
-            proxy_set_header X-Real-Remote-Port $remote_port;
+            proxy_set_header X-Real-Remote-Addr \$remote_addr;
+            proxy_set_header X-Real-Remote-Port \$remote_port;
         }
 
         #error_page  404              /404.html;
