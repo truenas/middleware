@@ -110,10 +110,14 @@ class PidFile(object):
 
     def __enter__(self):
         self.pidfile = open(self.path, "a+")
+        self.pidfile.seek(0)
         try:
-            fcntl.flock(self.pidfile.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
-        except IOError:
+            pid = int(self.pidfile.read())
+            os.kill(pid, 0)
             raise SystemExit("Already running according to " + self.path)
+        except (OSError, ValueError):
+            pass
+
         self.pidfile.seek(0)
         self.pidfile.truncate()
         self.pidfile.write(str(os.getpid()))
