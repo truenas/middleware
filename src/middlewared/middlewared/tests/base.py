@@ -1,9 +1,4 @@
-import os
 import unittest
-
-from client import Client
-from paramiko import AutoAddPolicy
-from paramiko.client import SSHClient
 
 
 class RESTTestCase(unittest.TestCase):
@@ -34,7 +29,7 @@ class CRUDTestCase(RESTTestCase):
     def test_020_create(self):
         r = self.client.post(self.name, self.get_create_data())
         self.assertEqual(r.status_code, 201, msg=r.text)
-        data = r.json()
+        r.json()
         return r
 
     def test_040_retrieve(self):
