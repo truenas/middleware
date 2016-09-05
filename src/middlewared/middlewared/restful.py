@@ -1,5 +1,7 @@
 from datetime import datetime
 
+import base64
+import binascii
 import falcon
 import json
 
@@ -39,12 +41,53 @@ class JSONTranslator(object):
             resp.body = JsonEncoder(indent=True).encode(req.context['result'])
 
 
+class AuthMiddleware(object):
+
+    def __init__(self, middleware):
+        self.middleware = middleware
+
+    def process_request(self, req, resp):
+        # Do not require auth to access index
+        if req.relative_uri == '/':
+            return
+
+        auth = req.get_header("Authorization")
+        if auth is None or not auth.startswith('Basic '):
+            raise falcon.HTTPUnauthorized(
+                'Authorization token required',
+                'Provide a Basic Authentication header',
+                ['Basic realm="FreeNAS"'],
+            )
+        try:
+            username, password = base64.b64decode(auth[6:]).decode('utf8').split(':', 1)
+        except binascii.Error:
+            raise falcon.HTTPUnauthorized(
+                'Invalid Authorization token',
+                'Provide a valid Basic Authentication header',
+                ['Basic realm="FreeNAS"'],
+            )
+
+        try:
+            if not self.middleware.call('auth.check_user', username, password):
+                raise falcon.HTTPUnauthorized(
+                    'Invalid credentials',
+                    'Verify your credentials and try again.',
+                    ['Basic realm="FreeNAS"'],
+                )
+        except falcon.HTTPUnauthorized:
+            raise
+        except Exception as e:
+            raise falcon.HTTPUnauthorized('Unknown authentication error', str(e), ['Basic realm="FreeNAS"'])
+
+
+
 class RESTfulAPI(object):
 
     def __init__(self, middleware):
         self.middleware = middleware
         self.app = falcon.API(middleware=[
             JSONTranslator(),
+            AuthMiddleware(middleware),
         ])
         self.register_resources()
 
