@@ -154,6 +154,9 @@ def main():
     subparsers = parser.add_subparsers(help='sub-command help', dest='name')
     iparser = subparsers.add_parser('call', help='Call method')
     iparser.add_argument('method', nargs='+')
+
+    iparser = subparsers.add_parser('sql', help='Run SQL command')
+    iparser.add_argument('sql', nargs='+')
     args = parser.parse_args()
 
     def to_json(args):
@@ -182,6 +185,25 @@ def main():
                 if not args.quiet:
                     print >> sys.stderr, e.stacktrace
                 sys.exit(1)
+    elif args.name == 'sql':
+        with Client(uri=args.uri) as c:
+            try:
+                if args.username and args.password:
+                    if not c.call('auth.login', args.username, args.password):
+                        raise ValueError('Invalid username or password')
+            except Exception as e:
+                print "Failed to login: ", e
+                sys.exit(0)
+            rv = c.call('datastore.sql', args.sql[0])
+            if rv:
+                for i in rv:
+                    data = []
+                    for f in i:
+                        if isinstance(f, bool):
+                            data.append(str(int(f)))
+                        else:
+                            data.append(str(f))
+                    print '|'.join(data)
 
 if __name__ == '__main__':
     main()
