@@ -1,4 +1,4 @@
-from middlewared.service import Service
+from middlewared.service import Service, private
 from middlewared.schema import accepts, Bool, Dict, List, Ref, Str
 
 import os
@@ -11,6 +11,7 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'freenasUI.settings')
 from django.db.models.loading import cache
 cache.get_apps()
 
+from django.db import connection
 from django.db.models import Q
 
 from middlewared.utils import django_modelobj_serialize
@@ -158,3 +159,17 @@ class DatastoreService(Service):
         obj = model(**data)
         obj.save()
         return obj.pk
+
+    @private
+    def sql(self, query, params=None):
+        cursor = connection.cursor()
+        rv = None
+        try:
+            if params is None:
+                cursor.executelocal(query)
+            else:
+                cursor.executelocal(query, params)
+            rv = cursor.fetchall()
+        finally:
+            cursor.close()
+        return rv
