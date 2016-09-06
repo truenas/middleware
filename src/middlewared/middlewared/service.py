@@ -6,6 +6,14 @@ import re
 from middlewared.schema import accepts, Str
 
 
+def item_method(fn):
+    """Flag method as an item method.
+    That means it operates over a single item in the collection,
+    by an unique identifier."""
+    fn._item_method = True
+    return fn
+
+
 def no_auth_required(fn):
     """Authentication is not required to use the given method."""
     fn._no_auth_required = True
@@ -160,5 +168,6 @@ class CoreService(Service):
                     'description': doc,
                     'examples': examples,
                     'accepts': accepts,
+                    'item_method': hasattr(method, '_item_method'),
                 }
         return data

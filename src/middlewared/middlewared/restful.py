@@ -136,7 +136,11 @@ class RESTfulAPI(object):
                 if methodname in blacklist_methods:
                     continue
                 short_methodname = methodname.rsplit('.', 1)[-1]
-                Resource(self, self.middleware, short_methodname, parent=service_resource, get=methodname)
+                if method.get('item_method') is True:
+                    parent = subresource
+                else:
+                    parent = service_resource
+                Resource(self, self.middleware, short_methodname, parent=parent, get=methodname)
 
 
 class Resource(object):
