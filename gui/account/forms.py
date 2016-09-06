@@ -371,7 +371,7 @@ class bsdUsersForm(ModelForm, bsdUserGroupMixin):
         if bsdusr_password and '?' in bsdusr_password:
             raise forms.ValidationError(_(
                 'Passwords containing a question mark (?) are currently not '
-                'allowed due to problems with CIFS.'
+                'allowed due to problems with SMB.'
             ))
         return bsdusr_password
 

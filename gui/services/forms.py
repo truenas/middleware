@@ -91,7 +91,7 @@ class servicesForm(ModelForm):
         if obj.srv_enable is False and activedirectory_enabled():
             obj.srv_enable= True
             obj.save()
-            return _("Cannot disable CIFS while ActiveDirectory is in use.")
+            return _("Cannot disable SMB while ActiveDirectory is in use.")
         return False
 
     def save(self, *args, **kwargs):
@@ -322,7 +322,7 @@ class CIFSForm(ModelForm):
             models.services.objects.get(srv_service='cifs').srv_enable
         ):
             raise ServiceFailed(
-                "cifs", _("The CIFS service failed to reload.")
+                "cifs", _("The SMB service failed to reload.")
             )
 
 

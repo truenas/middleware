@@ -142,8 +142,8 @@ class CIFS_Share(Model):
         notifier().reload("cifs")
 
     class Meta:
-        verbose_name = _("Windows (CIFS) Share")
-        verbose_name_plural = _("Windows (CIFS) Shares")
+        verbose_name = _("Windows (SMB) Share")
+        verbose_name_plural = _("Windows (SMB) Shares")
         ordering = ["cifs_name"]
 
 
