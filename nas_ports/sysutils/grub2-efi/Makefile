@@ -22,7 +22,6 @@ BUILD_DEPENDS=	${LOCALBASE}/bin/flex:textproc/flex \
 
 WRKSRC=		${WRKDIR}/grub-${PORTVERSION}
 SSP_UNSAFE=	yes
-USE_GCC=	yes
 ACLOCAL_ARGS=	-Im4
 GNU_CONFIGURE=	yes
 USES=		autoreconf bison cpe gettext gmake python tar:xz
