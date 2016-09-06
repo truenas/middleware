@@ -181,7 +181,7 @@ class CIFS(Model):
         verbose_name=_("Unix Extensions"),
         default=True,
         help_text=_("These extensions enable Samba to better serve UNIX "
-                    "CIFS clients by supporting features such as symbolic "
+                    "SMB clients by supporting features such as symbolic "
                     "links, hard links, etc..."),
     )
     cifs_srv_aio_enable = models.BooleanField(
@@ -211,7 +211,7 @@ class CIFS(Model):
         default=True,
         help_text=_("Zeroconf support via Avahi allows clients (the Mac "
                     "OSX finder in particular) to automatically discover the "
-                    "CIFS shares on the system similar to the Computer "
+                    "SMB shares on the system similar to the Computer "
                     "Browser service in Windows."),
     )
     cifs_srv_hostlookup = models.BooleanField(

@@ -1604,7 +1604,7 @@ class InitialWizardShareForm(Form):
     share_purpose = forms.ChoiceField(
         label=_('Purpose'),
         choices=(
-            ('cifs', _('Windows (CIFS)')),
+            ('cifs', _('Windows (SMB)')),
             ('afp', _('Apple (AFP)')),
             ('nfs', _('Unix (NFS)')),
             ('iscsitarget', _('Block Storage (iSCSI)')),

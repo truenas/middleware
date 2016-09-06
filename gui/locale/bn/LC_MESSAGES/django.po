@@ -1340,7 +1340,7 @@ msgid "This field is required for \"Home directories\"."
 msgstr ""
 
 #: services/forms.py:106
-msgid "The CIFS service failed to reload."
+msgid "The SMB service failed to reload."
 msgstr ""
 
 #: services/forms.py:118
@@ -1773,7 +1773,7 @@ msgstr ""
 
 #: services/models.py:167
 msgid ""
-"These extensions enable Samba to better serve UNIX CIFS clients by "
+"These extensions enable Samba to better serve UNIX SMB clients by "
 "supporting features such as symbolic links, hard links, etc..."
 msgstr ""
 
@@ -1810,13 +1810,13 @@ msgstr ""
 #: services/models.py:189
 msgid ""
 "Zeroconf support via Avahi allows clients (the Mac OSX finder in particular) "
-"to automatically discover the CIFS shares on the system similar to the "
+"to automatically discover the SMB shares on the system similar to the "
 "Computer Browser service in Windows."
 msgstr ""
 
 #: services/models.py:193 services/models.py:194
 #: templates/services/core.html:26
-msgid "CIFS"
+msgid "SMB"
 msgstr ""
 
 #: services/models.py:203
@@ -3166,11 +3166,11 @@ msgid "These parameters are added to [Share] section of smb.conf"
 msgstr ""
 
 #: sharing/models.py:94
-msgid "Windows (CIFS) Share"
+msgid "Windows (SMB) Share"
 msgstr ""
 
 #: sharing/models.py:95
-msgid "Windows (CIFS) Shares"
+msgid "Windows (SMB) Shares"
 msgstr ""
 
 #: sharing/models.py:114
@@ -5284,7 +5284,7 @@ msgid "Active Directory Settings"
 msgstr ""
 
 #: templates/services/core.html:32
-msgid "CIFS Settings"
+msgid "SMB Settings"
 msgstr ""
 
 #: templates/services/core.html:45
@@ -5544,7 +5544,7 @@ msgid "UNIX (NFS)"
 msgstr ""
 
 #: templates/sharing/index.html:12
-msgid "Windows (CIFS)"
+msgid "Windows (SMB)"
 msgstr ""
 
 #: templates/sharing/unix.html:7
@@ -5568,19 +5568,19 @@ msgid "Add UNIX (NFS) Share"
 msgstr ""
 
 #: templates/sharing/windows.html:7
-msgid "There are no active Windows (CIFS) shares."
+msgid "There are no active Windows (SMB) shares."
 msgstr ""
 
 #: templates/sharing/windows.html:33
-msgid "Edit Windows (CIFS) Share"
+msgid "Edit Windows (SMB) Share"
 msgstr ""
 
 #: templates/sharing/windows.html:39
-msgid "Delete Windows (CIFS) Share"
+msgid "Delete Windows (SMB) Share"
 msgstr ""
 
 #: templates/sharing/windows.html:53 templates/sharing/windows.html.py:55
-msgid "Add Windows (CIFS) Share"
+msgid "Add Windows (SMB) Share"
 msgstr ""
 
 #: templates/storage/clonesnap.html:2 templates/storage/snapshots.html:16
@@ -8975,7 +8975,7 @@ msgstr ""
 #: account/forms.py:500
 msgid ""
 "Passwords containing a question mark (?) are currently not allowed due to "
-"problems with CIFS."
+"problems with SMB."
 msgstr ""
 
 #: directoryservice/forms.py:104
@@ -9619,7 +9619,7 @@ msgid "Kerberos Realm"
 msgstr ""
 
 #: services/views.py:269
-msgid "CIFS successfully updated."
+msgid "SMB successfully updated."
 msgstr ""
 
 #: sharing/models.py:290
@@ -12448,7 +12448,7 @@ msgid ""
 msgstr ""
 
 #: services/forms.py:95
-msgid "Cannot disable CIFS while ActiveDirectory is in use."
+msgid "Cannot disable SMB while ActiveDirectory is in use."
 msgstr ""
 
 #: services/models.py:1295

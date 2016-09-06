@@ -967,7 +967,7 @@ msgstr ""
 #: account/forms.py:374
 msgid ""
 "Passwords containing a question mark (?) are currently not allowed due to "
-"problems with CIFS."
+"problems with SMB."
 msgstr ""
 
 #: account/forms.py:384 account/forms.py:640 directoryservice/forms.py:167
@@ -3238,7 +3238,7 @@ msgid "NetBIOS Alias: %s"
 msgstr ""
 
 #: services/forms.py:306
-msgid "The CIFS service failed to reload."
+msgid "The SMB service failed to reload."
 msgstr ""
 
 #: services/forms.py:328
@@ -3670,7 +3670,7 @@ msgstr ""
 
 #: services/models.py:183
 msgid ""
-"These extensions enable Samba to better serve UNIX CIFS clients by "
+"These extensions enable Samba to better serve UNIX SMB clients by "
 "supporting features such as symbolic links, hard links, etc..."
 msgstr ""
 
@@ -3707,7 +3707,7 @@ msgstr ""
 #: services/models.py:212
 msgid ""
 "Zeroconf support via Avahi allows clients (the Mac OSX finder in particular) "
-"to automatically discover the CIFS shares on the system similar to the "
+"to automatically discover the SMB shares on the system similar to the "
 "Computer Browser service in Windows."
 msgstr ""
 
@@ -3777,7 +3777,7 @@ msgstr ""
 
 #: services/models.py:278 services/models.py:279 services/nav.py:43
 #: storage/forms.py:2483 templates/services/core.html:15
-msgid "CIFS"
+msgid "SMB"
 msgstr ""
 
 #: services/models.py:298
@@ -5174,7 +5174,7 @@ msgid "The service could not be started."
 msgstr ""
 
 #: services/views.py:287
-msgid "CIFS successfully updated."
+msgid "SMB successfully updated."
 msgstr ""
 
 #: services/views.py:296
@@ -5348,11 +5348,11 @@ msgid "These parameters are added to [Share] section of smb.conf"
 msgstr ""
 
 #: sharing/models.py:145
-msgid "Windows (CIFS) Share"
+msgid "Windows (SMB) Share"
 msgstr ""
 
 #: sharing/models.py:146
-msgid "Windows (CIFS) Shares"
+msgid "Windows (SMB) Shares"
 msgstr ""
 
 #: sharing/models.py:158
@@ -7011,7 +7011,7 @@ msgid "Purpose"
 msgstr ""
 
 #: system/forms.py:1563 templates/sharing/index.html:21
-msgid "Windows (CIFS)"
+msgid "Windows (SMB)"
 msgstr ""
 
 #: system/forms.py:1564 templates/sharing/index.html:3
@@ -8480,7 +8480,7 @@ msgid "AFP Settings"
 msgstr ""
 
 #: templates/services/core.html:21 templates/services/core.html.py:22
-msgid "CIFS Settings"
+msgid "SMB Settings"
 msgstr ""
 
 #: templates/services/core.html:33
@@ -9675,7 +9675,7 @@ msgid ""
 msgstr ""
 
 #: services/forms.py:95
-msgid "Cannot disable CIFS while ActiveDirectory is in use."
+msgid "Cannot disable SMB while ActiveDirectory is in use."
 msgstr ""
 
 #: services/models.py:1295
