@@ -1334,8 +1334,8 @@ msgid "This field is required for \"Home directories\"."
 msgstr "Este campo é necessário para \"Directórios da raiz\"."
 
 #: services/forms.py:106
-msgid "The CIFS service failed to reload."
-msgstr "O serviço CIFS falhou no reinicio."
+msgid "The SMB service failed to reload."
+msgstr "O serviço SMB falhou no reinicio."
 
 #: services/forms.py:118
 msgid "The AFP service failed to reload."
@@ -1794,10 +1794,10 @@ msgstr "Extensões Unix"
 
 #: services/models.py:167
 msgid ""
-"These extensions enable Samba to better serve UNIX CIFS clients by "
+"These extensions enable Samba to better serve UNIX SMB clients by "
 "supporting features such as symbolic links, hard links, etc..."
 msgstr ""
-"Estas extensões permitem Samba para melhor servir os clientes UNIX CIFS "
+"Estas extensões permitem Samba para melhor servir os clientes UNIX SMB "
 "apoiando recursos, como links simbólicos, links rígidos, etc..."
 
 #: services/models.py:171
@@ -1836,17 +1836,17 @@ msgstr "Descobrir partilha Zeroconf"
 #: services/models.py:189
 msgid ""
 "Zeroconf support via Avahi allows clients (the Mac OSX finder in particular) "
-"to automatically discover the CIFS shares on the system similar to the "
+"to automatically discover the SMB shares on the system similar to the "
 "Computer Browser service in Windows."
 msgstr ""
 "Apoio zeroconf via Avahi permite aos clientes (o Mac OSX finder em "
-"particular) para detectar automaticamente as partilhas CIFS no sistema "
+"particular) para detectar automaticamente as partilhas SMB no sistema "
 "similar ao serviço Navegador do Computador no Windows."
 
 #: services/models.py:193 services/models.py:194
 #: templates/services/core.html:26
-msgid "CIFS"
-msgstr "CIFS"
+msgid "SMB"
+msgstr "SMB"
 
 #~ msgid "Server Name"
 #~ msgstr "Nome do servidor"
@@ -3303,12 +3303,12 @@ msgid "These parameters are added to [Share] section of smb.conf"
 msgstr "Estes parâmetros foram adicionados á [Share] secção do smb.conf"
 
 #: sharing/models.py:94
-msgid "Windows (CIFS) Share"
-msgstr "Partilha (CIFS) Windows"
+msgid "Windows (SMB) Share"
+msgstr "Partilha (SMB) Windows"
 
 #: sharing/models.py:95
-msgid "Windows (CIFS) Shares"
-msgstr "Partilhas (CIFS) Windows"
+msgid "Windows (SMB) Shares"
+msgstr "Partilhas (SMB) Windows"
 
 #: sharing/models.py:114
 msgid ""
@@ -5450,8 +5450,8 @@ msgstr "Definições de AFP"
 #~ msgstr "Definições da Active Directory"
 
 #: templates/services/core.html:32
-msgid "CIFS Settings"
-msgstr "Definições do CIFS"
+msgid "SMB Settings"
+msgstr "Definições do SMB"
 
 #: templates/services/core.html:45
 msgid "Dynamic DNS Settings"
@@ -5704,8 +5704,8 @@ msgstr "Adicionar partilha UNIX (NFS)"
 
 #: templates/sharing/index.html:12
 #, fuzzy
-msgid "Windows (CIFS)"
-msgstr "Adicionar partilha Windows (CIFS)"
+msgid "Windows (SMB)"
+msgstr "Adicionar partilha Windows (SMB)"
 
 #: templates/sharing/unix.html:7
 #, fuzzy
@@ -5732,22 +5732,22 @@ msgstr "Adicionar partilha UNIX"
 
 #: templates/sharing/windows.html:7
 #, fuzzy
-msgid "There are no active Windows (CIFS) shares."
+msgid "There are no active Windows (SMB) shares."
 msgstr "Não existem partilhas Windows activas."
 
 #: templates/sharing/windows.html:33
 #, fuzzy
-msgid "Edit Windows (CIFS) Share"
+msgid "Edit Windows (SMB) Share"
 msgstr "Editar partilha Windows"
 
 #: templates/sharing/windows.html:39
 #, fuzzy
-msgid "Delete Windows (CIFS) Share"
+msgid "Delete Windows (SMB) Share"
 msgstr "Apagar partilha Windows"
 
 #: templates/sharing/windows.html:53 templates/sharing/windows.html.py:55
 #, fuzzy
-msgid "Add Windows (CIFS) Share"
+msgid "Add Windows (SMB) Share"
 msgstr "Adicionar partilha Windows"
 
 #: templates/storage/clonesnap.html:2 templates/storage/snapshots.html:16
@@ -6378,7 +6378,7 @@ msgstr "Ver chave-pública"
 #~ msgstr "Fechar"
 
 #, fuzzy
-msgid "Add Apple (CIFS) Share"
+msgid "Add Apple (SMB) Share"
 msgstr "Adicionar partilha Apple"
 
 #~ msgid "Apply Service Pack"
@@ -6485,11 +6485,11 @@ msgstr "Adicionar partilha Apple"
 #~ "para qualquer cliente se conectar ao serviço cliente. Este utilizador "
 #~ "deve existir no arquivo de senha, mas não exige um login válido."
 
-#~ msgid "CIFS Share"
-#~ msgstr "Partilha CIFS"
+#~ msgid "SMB Share"
+#~ msgstr "Partilha SMB"
 
-#~ msgid "CIFS Shares"
-#~ msgstr "CIFS Partilhas"
+#~ msgid "SMB Shares"
+#~ msgstr "SMB Partilhas"
 
 #~ msgid "NFS Share"
 #~ msgstr "Partilha NFS"
@@ -9762,7 +9762,7 @@ msgstr ""
 #: account/forms.py:500
 msgid ""
 "Passwords containing a question mark (?) are currently not allowed due to "
-"problems with CIFS."
+"problems with SMB."
 msgstr ""
 
 #: directoryservice/forms.py:104
@@ -10454,7 +10454,7 @@ msgstr "Número de servidores"
 
 #: services/views.py:269
 #, fuzzy
-msgid "CIFS successfully updated."
+msgid "SMB successfully updated."
 msgstr "%s actualizado com sucesso."
 
 #: sharing/models.py:290
@@ -13508,4 +13508,71 @@ msgstr ""
 
 #: templates/network/ipmi.html:5
 msgid "WARNING! Failed to query IPMI data, standby node is down."
+msgstr ""
+
+#: jails/forms.py:610
+msgid "Jail dataset created on a share"
+msgstr ""
+
+#: jails/views.py:584
+#, fuzzy
+msgid "Jail template successfully deleted."
+msgstr "Dataset editado com sucesso."
+
+#: services/models.py:456
+msgid "Log mountd(8) requests"
+msgstr ""
+
+#: services/models.py:458
+msgid "This option enable mountd logging into syslog."
+msgstr ""
+
+#: services/models.py:462
+msgid "Log rpc.statd(8) and rpc.lockd(8)"
+msgstr ""
+
+#: services/models.py:464
+msgid "This option enable statd and lockd logging into syslog."
+msgstr ""
+
+#: storage/forms.py:1437
+#: storage/forms.py:1509
+msgid "Allow the zvol to consume more than 80% of available space"
+msgstr ""
+
+#: system/models.py:149
+msgid ""
+"Specifies the server and port syslog messages will be sent to.  The accepted "
+"format is hostname:port or ip:port, if :port is not specified it will "
+"default to port 514 (this field currently only takes IPv4 addresses)"
+msgstr ""
+
+#: system/alertmods/nfs_bindaddr.py:15
+#, fuzzy
+msgid "NFS services could not bind specific IPs, using wildcard"
+msgstr "O Endereço da WebGUI  não foi ligado a %s; utilizando um \"wildcard\""
+
+#: jails/forms.py:247
+#: jails/forms.py:872
+msgid "You have entered an existing MAC Address.Please enter a new one."
+msgstr ""
+
+#: jails/forms.py:238
+msgid ""
+"Valid characters for jail names are letters, numbers, dashes, or underscores."
+msgstr ""
+
+#: services/forms.py:95
+msgid "Cannot disable SMB while ActiveDirectory is in use."
+msgstr ""
+
+#: services/models.py:1295
+#, fuzzy
+msgid "Shutdown Command"
+msgstr "Modo de encerramento"
+
+#: services/models.py:1298
+msgid ""
+"The command used to shutdown the server. You can use a custom command here "
+"to perform other tasks before shutdown.default: /sbin/shutdown -p now"
 msgstr ""

@@ -1348,8 +1348,8 @@ msgid "This field is required for \"Home directories\"."
 msgstr "Vyplnění této kolonky je vyžadováno pro volbu „Domovské složky“."
 
 #: services/forms.py:106
-msgid "The CIFS service failed to reload."
-msgstr "Znovunačtení služby CIFS se nezdařilo."
+msgid "The SMB service failed to reload."
+msgstr "Znovunačtení služby SMB se nezdařilo."
 
 #: services/forms.py:118
 msgid "The AFP service failed to reload."
@@ -1822,10 +1822,10 @@ msgstr "Unixová rozšíření"
 
 #: services/models.py:167
 msgid ""
-"These extensions enable Samba to better serve UNIX CIFS clients by "
+"These extensions enable Samba to better serve UNIX SMB clients by "
 "supporting features such as symbolic links, hard links, etc..."
 msgstr ""
-"Tato rozšíření umožňují službě Samba lépe obsluhovat unixové CIFS klienty "
+"Tato rozšíření umožňují službě Samba lépe obsluhovat unixové SMB klienty "
 "poskytnutím funkcí jako jsou symbolické a pevné odkazy, atd…"
 
 #: services/models.py:171
@@ -1865,18 +1865,18 @@ msgstr "Nabízet sdílení pomocí technologie Zeroconf"
 #: services/models.py:189
 msgid ""
 "Zeroconf support via Avahi allows clients (the Mac OSX finder in particular) "
-"to automatically discover the CIFS shares on the system similar to the "
+"to automatically discover the SMB shares on the system similar to the "
 "Computer Browser service in Windows."
 msgstr ""
 "Technologie Zeroconf (zde implementovaná službou Avahi) umožňuje klientům ("
-"konkrétně aplikaci finder v Mac OS X) automaticky objevit CIFS sdílení, "
+"konkrétně aplikaci finder v Mac OS X) automaticky objevit SMB sdílení, "
 "nabízené systémem – podobně jako je tomu u služby Procházení počítačů v "
 "systému Windows."
 
 #: services/models.py:193 services/models.py:194
 #: templates/services/core.html:26
-msgid "CIFS"
-msgstr "CIFS"
+msgid "SMB"
+msgstr "SMB"
 
 #~ msgid "Server Name"
 #~ msgstr "Jméno serveru"
@@ -3346,12 +3346,12 @@ msgstr ""
 "Tyto parametry jsou přidány do sekce [Share] v souboru s nastaveními smb.conf"
 
 #: sharing/models.py:94
-msgid "Windows (CIFS) Share"
-msgstr "Windows (CIFS) sdílení"
+msgid "Windows (SMB) Share"
+msgstr "Windows (SMB) sdílení"
 
 #: sharing/models.py:95
-msgid "Windows (CIFS) Shares"
-msgstr "Windows (CIFS) sdílení"
+msgid "Windows (SMB) Shares"
+msgstr "Windows (SMB) sdílení"
 
 #: sharing/models.py:114
 msgid ""
@@ -5501,8 +5501,8 @@ msgstr "Nastavení služby AFP"
 #~ msgstr "Nastavení Active Directory"
 
 #: templates/services/core.html:32
-msgid "CIFS Settings"
-msgstr "Nastavení služby CIFS"
+msgid "SMB Settings"
+msgstr "Nastavení služby SMB"
 
 #: templates/services/core.html:45
 msgid "Dynamic DNS Settings"
@@ -5751,8 +5751,8 @@ msgid "UNIX (NFS)"
 msgstr "UNIX (NFS)"
 
 #: templates/sharing/index.html:12
-msgid "Windows (CIFS)"
-msgstr "Windows (CIFS)"
+msgid "Windows (SMB)"
+msgstr "Windows (SMB)"
 
 #~ msgid "There are no active UNIX (NFS) shares."
 #~ msgstr "Žádné sdílení UNIX (NFS) není aktivní."
@@ -5773,19 +5773,19 @@ msgstr ""
 msgid "Add UNIX (NFS) Share"
 msgstr "Přidat unixové (NFS) sdílení"
 
-#~ msgid "There are no active Windows (CIFS) shares."
-#~ msgstr "Žádná sdílení Windows (CIFS) nejsou aktivní."
+#~ msgid "There are no active Windows (SMB) shares."
+#~ msgstr "Žádná sdílení Windows (SMB) nejsou aktivní."
 
 #: templates/sharing/windows.html:33
-msgid "Edit Windows (CIFS) Share"
+msgid "Edit Windows (SMB) Share"
 msgstr ""
 
 #: templates/sharing/windows.html:39
-msgid "Delete Windows (CIFS) Share"
+msgid "Delete Windows (SMB) Share"
 msgstr ""
 
 #: templates/sharing/windows.html:53 templates/sharing/windows.html.py:55
-msgid "Add Windows (CIFS) Share"
+msgid "Add Windows (SMB) Share"
 msgstr ""
 
 #: templates/storage/clonesnap.html:2 templates/storage/snapshots.html:16
@@ -6385,8 +6385,8 @@ msgstr "Zobrazit S.M.A.R.T. testy"
 #~ msgid "View Tunables"
 #~ msgstr "Zobrazit vyladění"
 
-msgid "Add Apple (CIFS) Share"
-msgstr "Přidat Apple (CIFS) sdílení"
+msgid "Add Apple (SMB) Share"
+msgstr "Přidat Apple (SMB) sdílení"
 
 #~ msgid "Hourly"
 #~ msgstr "Hodinové"
@@ -9443,10 +9443,10 @@ msgstr ""
 #: account/forms.py:500
 msgid ""
 "Passwords containing a question mark (?) are currently not allowed due to "
-"problems with CIFS."
+"problems with SMB."
 msgstr ""
 "Hesla obsahující znak „?“ (otazník) není v současnosti možné používat a to z "
-"důvodu problémů při použití s CIFS sdíleními."
+"důvodu problémů při použití s SMB sdíleními."
 
 #: directoryservice/forms.py:104
 msgid "NT4 failed to reload."
@@ -10145,8 +10145,8 @@ msgid "Kerberos Realm"
 msgstr "Oblast Kerbera"
 
 #: services/views.py:269
-msgid "CIFS successfully updated."
-msgstr "CIFS bylo úspěšně zaktualizováno"
+msgid "SMB successfully updated."
+msgstr "SMB bylo úspěšně zaktualizováno"
 
 #: sharing/models.py:290
 msgid "Security"
@@ -13156,3 +13156,77 @@ msgid "WARNING! Failed to query IPMI data, standby node is down."
 msgstr ""
 "VAROVÁNÍ! Nepodařilo se zjistit údaje o IPMI – pohotovostní uzel (stroj) je "
 "nedostupný."
+
+#: jails/forms.py:610
+msgid "Jail dataset created on a share"
+msgstr "Na sdílení byla vytvořena datová sada pro vyhrazené prostředí"
+
+#: jails/views.py:584
+msgid "Jail template successfully deleted."
+msgstr "Šablona vyhrazeného prostředí byla úspěšně smazána."
+
+#: services/models.py:456
+msgid "Log mountd(8) requests"
+msgstr "Zahrnout požadavky mountd(8) do záznamu událostí"
+
+#: services/models.py:458
+msgid "This option enable mountd logging into syslog."
+msgstr "Tato předvolba zapne zaznamenávání událostí mountd do syslog."
+
+#: services/models.py:462
+msgid "Log rpc.statd(8) and rpc.lockd(8)"
+msgstr "Zaznamenávat události v rpc.statd(8) a rpc.lockd(8)"
+
+#: services/models.py:464
+msgid "This option enable statd and lockd logging into syslog."
+msgstr "Tato předvolba zapne zaznamenávání událostí statd a lockd do syslog."
+
+#: storage/forms.py:1437
+#: storage/forms.py:1509
+msgid "Allow the zvol to consume more than 80% of available space"
+msgstr "Umožnit, aby ZFS svazek zabíral více než 80% dostupného prostoru"
+
+#: system/models.py:149
+msgid ""
+"Specifies the server and port syslog messages will be sent to.  The accepted "
+"format is hostname:port or ip:port, if :port is not specified it will "
+"default to port 514 (this field currently only takes IPv4 addresses)"
+msgstr ""
+"Určuje server a číslo portu, na které budou posílány syslog zprávy. Možné "
+"zápisy jsou nazev_stroje:port nebo IP_adresa:port. Pokud část :port není "
+"zadána, bude použit výchozí 514. IP adresou v tuto chvíli může být pouze "
+"IPv4 adresa."
+
+#: system/alertmods/nfs_bindaddr.py:15
+msgid "NFS services could not bind specific IPs, using wildcard"
+msgstr ""
+"NFS služby nelze navázat na konkrétní IP adresy, s použitím zástupných znaků"
+
+#: jails/forms.py:247
+#: jails/forms.py:872
+msgid "You have entered an existing MAC Address.Please enter a new one."
+msgstr "Zadali jste MAC adresu, která je už používána – zadejte jinou."
+
+#: jails/forms.py:238
+msgid ""
+"Valid characters for jail names are letters, numbers, dashes, or underscores."
+msgstr ""
+"Názvy vyhrazených prostředí mohou obsahovat pouze písmena, číslice, "
+"spojovníky a podtržítka."
+
+#: services/forms.py:95
+msgid "Cannot disable SMB while ActiveDirectory is in use."
+msgstr "Službu SMB nelze vypnout, pokud zapnutá služba ActiveDirectory."
+
+#: services/models.py:1295
+msgid "Shutdown Command"
+msgstr "Příkaz pro vypínání"
+
+#: services/models.py:1298
+msgid ""
+"The command used to shutdown the server. You can use a custom command here "
+"to perform other tasks before shutdown.default: /sbin/shutdown -p now"
+msgstr ""
+"Příkaz sloužící k vypnutí serveru. V jeho rámci je možné začlenit své "
+"vlastní příkazy, které provést před vypnutím. Pokud není zadáno, bude "
+"použito výchozí: /sbin/shutdown -p now"

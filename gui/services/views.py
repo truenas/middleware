@@ -284,7 +284,7 @@ def services_cifs(request):
             idmap_form.save()
             return JsonResp(
                 request,
-                message=_("CIFS successfully updated.")
+                message=_("SMB successfully updated.")
             )
         else:
             return JsonResp(request, form=idmap_form)

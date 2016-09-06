@@ -1321,8 +1321,8 @@ msgid "This field is required for \"Home directories\"."
 msgstr "Dit veld is vereist voor 'Basismappen'."
 
 #: services/forms.py:106
-msgid "The CIFS service failed to reload."
-msgstr "Opnieuw laden van de CIFS-service is mislukt."
+msgid "The SMB service failed to reload."
+msgstr "Opnieuw laden van de SMB-service is mislukt."
 
 #: services/forms.py:118
 msgid "The AFP service failed to reload."
@@ -1774,10 +1774,10 @@ msgstr "Unix-extensies"
 
 #: services/models.py:167
 msgid ""
-"These extensions enable Samba to better serve UNIX CIFS clients by "
+"These extensions enable Samba to better serve UNIX SMB clients by "
 "supporting features such as symbolic links, hard links, etc..."
 msgstr ""
-"Via deze extensies kan Samba UNIX CIFS-clients beter bedienen door functies "
+"Via deze extensies kan Samba UNIX SMB-clients beter bedienen door functies "
 "als symbolische koppelingen, harde koppelingen etc. te ondersteunen."
 
 #: services/models.py:171
@@ -1816,17 +1816,17 @@ msgstr "Zeroconf-share-detectie"
 #: services/models.py:189
 msgid ""
 "Zeroconf support via Avahi allows clients (the Mac OSX finder in particular) "
-"to automatically discover the CIFS shares on the system similar to the "
+"to automatically discover the SMB shares on the system similar to the "
 "Computer Browser service in Windows."
 msgstr ""
 "Door ondersteuning van Zeroconf via Avahi kunnen clients (met name de Finder "
-"in Mac OSX) automatisch de CIFS-shares op het systeem detecteren, "
+"in Mac OSX) automatisch de SMB-shares op het systeem detecteren, "
 "vergelijkbaar met de service Computer Browser in Windows."
 
 #: services/models.py:193 services/models.py:194
 #: templates/services/core.html:26
-msgid "CIFS"
-msgstr "CIFS"
+msgid "SMB"
+msgstr "SMB"
 
 #~ msgid "Server Name"
 #~ msgstr "Server Naam"
@@ -3272,12 +3272,12 @@ msgid "These parameters are added to [Share] section of smb.conf"
 msgstr "Deze parameters worden aan de sectie [share] van smb.conf toegevoegd"
 
 #: sharing/models.py:94
-msgid "Windows (CIFS) Share"
-msgstr "Windows (CIFS)-share"
+msgid "Windows (SMB) Share"
+msgstr "Windows (SMB)-share"
 
 #: sharing/models.py:95
-msgid "Windows (CIFS) Shares"
-msgstr "Windows (CIFS)-shares"
+msgid "Windows (SMB) Shares"
+msgstr "Windows (SMB)-shares"
 
 #: sharing/models.py:114
 msgid ""
@@ -5411,8 +5411,8 @@ msgstr "AFP-instellingen"
 #~ msgstr "Active Directory Instellingen"
 
 #: templates/services/core.html:32
-msgid "CIFS Settings"
-msgstr "CIFS-instellingen"
+msgid "SMB Settings"
+msgstr "SMB-instellingen"
 
 #: templates/services/core.html:45
 msgid "Dynamic DNS Settings"
@@ -5648,8 +5648,8 @@ msgid "UNIX (NFS)"
 msgstr "UNIX (NFS)"
 
 #: templates/sharing/index.html:12
-msgid "Windows (CIFS)"
-msgstr "Windows (CIFS)"
+msgid "Windows (SMB)"
+msgstr "Windows (SMB)"
 
 #: templates/sharing/unix.html:7
 msgid "There are no active UNIX (NFS) shares."
@@ -5671,19 +5671,19 @@ msgid "Add UNIX (NFS) Share"
 msgstr "UNIX (NFS)-share toevoegen"
 
 #: templates/sharing/windows.html:7
-msgid "There are no active Windows (CIFS) shares."
-msgstr "Er zijn geen actieve Windows (CIFS)-shares."
+msgid "There are no active Windows (SMB) shares."
+msgstr "Er zijn geen actieve Windows (SMB)-shares."
 
 #: templates/sharing/windows.html:33
-msgid "Edit Windows (CIFS) Share"
-msgstr "Windows (CIFS)-share bewerken"
+msgid "Edit Windows (SMB) Share"
+msgstr "Windows (SMB)-share bewerken"
 
 #: templates/sharing/windows.html:39
-msgid "Delete Windows (CIFS) Share"
-msgstr "Windows (CIFS)-share verwijderen"
+msgid "Delete Windows (SMB) Share"
+msgstr "Windows (SMB)-share verwijderen"
 
 #: templates/sharing/windows.html:53 templates/sharing/windows.html.py:55
-msgid "Add Windows (CIFS) Share"
+msgid "Add Windows (SMB) Share"
 msgstr "Replicatiestroomcompressie"
 
 #: templates/storage/clonesnap.html:2 templates/storage/snapshots.html:16
@@ -6332,8 +6332,8 @@ msgstr "Afstembare parameters weergeven"
 #~ msgid "Close"
 #~ msgstr "Sluiten"
 
-msgid "Add Apple (CIFS) Share"
-msgstr "Apple (CIFS)-share toevoegen"
+msgid "Add Apple (SMB) Share"
+msgstr "Apple (SMB)-share toevoegen"
 
 #~ msgid "Apply Service Pack"
 #~ msgstr "Service Pack toepassen"
@@ -6440,11 +6440,11 @@ msgstr "Apple (CIFS)-share toevoegen"
 #~ "bestaan in het wachtwoord bestand, maar er is geen geldige aanmelding "
 #~ "vereist."
 
-#~ msgid "CIFS Share"
-#~ msgstr "CIFS Share"
+#~ msgid "SMB Share"
+#~ msgstr "SMB Share"
 
-#~ msgid "CIFS Shares"
-#~ msgstr "CIFS Shares"
+#~ msgid "SMB Shares"
+#~ msgstr "SMB Shares"
 
 #~ msgid "NFS Share"
 #~ msgstr "NFS Share"
@@ -9665,10 +9665,10 @@ msgstr "Experimental target inschakelen"
 #: account/forms.py:500
 msgid ""
 "Passwords containing a question mark (?) are currently not allowed due to "
-"problems with CIFS."
+"problems with SMB."
 msgstr ""
 "Wachtwoorden die een vraagteken (?) bevatten zijn momenteel niet toegestaan "
-"vanwege problemen met CIFS."
+"vanwege problemen met SMB."
 
 #: directoryservice/forms.py:104
 msgid "NT4 failed to reload."
@@ -10373,8 +10373,8 @@ msgid "Kerberos Realm"
 msgstr "Kerberos-realm"
 
 #: services/views.py:269
-msgid "CIFS successfully updated."
-msgstr "CIFS met succes bijgewerkt."
+msgid "SMB successfully updated."
+msgstr "SMB met succes bijgewerkt."
 
 #: sharing/models.py:290
 msgid "Security"
@@ -13459,3 +13459,82 @@ msgstr ""
 #: templates/network/ipmi.html:5
 msgid "WARNING! Failed to query IPMI data, standby node is down."
 msgstr ""
+"WAARSCHUWING! Opvragen van IPMI-gegevens is mislukt; stand-bynode werkt niet."
+
+#: jails/forms.py:610
+msgid "Jail dataset created on a share"
+msgstr "Jail-gegevensset aangemaakt op een share"
+
+#: jails/views.py:584
+msgid "Jail template successfully deleted."
+msgstr "Jail-sjabloon met succes verwijderd."
+
+#: services/models.py:456
+msgid "Log mountd(8) requests"
+msgstr "mountd(8)-aanvragen registreren"
+
+#: services/models.py:458
+msgid "This option enable mountd logging into syslog."
+msgstr "Deze optie schakelt mountd-logboekregistratie in syslog in."
+
+#: services/models.py:462
+msgid "Log rpc.statd(8) and rpc.lockd(8)"
+msgstr "rpc.statd(8) en rpc.lockd(8) registreren"
+
+#: services/models.py:464
+msgid "This option enable statd and lockd logging into syslog."
+msgstr "Deze optie schakelt statd- en lockd-registratie in syslog in."
+
+#: storage/forms.py:1437
+#: storage/forms.py:1509
+msgid "Allow the zvol to consume more than 80% of available space"
+msgstr ""
+"Toestaan dat het zvol meer dan 80% van de beschikbare ruimte mag gebruiken"
+
+#: system/models.py:149
+msgid ""
+"Specifies the server and port syslog messages will be sent to.  The accepted "
+"format is hostname:port or ip:port, if :port is not specified it will "
+"default to port 514 (this field currently only takes IPv4 addresses)"
+msgstr ""
+"Geeft de server en poort aan waarnaar syslog-berichten worden gestuurd. De "
+"geaccepteerde notatie is hostnaam:poort of ip-adres:poort; als :poort niet "
+"is opgegeven, is dit standaard poort 514 (dit veld accepteert momenteel "
+"alleen IPv4-adressen)"
+
+#: system/alertmods/nfs_bindaddr.py:15
+#, fuzzy
+msgid "NFS services could not bind specific IPs, using wildcard"
+msgstr ""
+"NFS-services konden bepaalde IP-adressen niet binden; jokerteken wordt "
+"gebruikt"
+
+#: jails/forms.py:247
+#: jails/forms.py:872
+msgid "You have entered an existing MAC Address.Please enter a new one."
+msgstr "U hebt een bestaand MAC-adres ingevoerd. Voer een nieuw MAC-adres in."
+
+#: jails/forms.py:238
+msgid ""
+"Valid characters for jail names are letters, numbers, dashes, or underscores."
+msgstr ""
+"Geldige tekens voor jailnamen zijn letters, cijfers, streepjes of liggende "
+"streepjes."
+
+#: services/forms.py:95
+msgid "Cannot disable SMB while ActiveDirectory is in use."
+msgstr "Kan SMB niet uitschakelen terwijl ActiveDirectory in gebruik is."
+
+#: services/models.py:1295
+msgid "Shutdown Command"
+msgstr "Afsluitopdracht"
+
+#: services/models.py:1298
+#, fuzzy
+msgid ""
+"The command used to shutdown the server. You can use a custom command here "
+"to perform other tasks before shutdown.default: /sbin/shutdown -p now"
+msgstr ""
+"De gebruikte opdracht voor het afsluiten van de server. U kunt hier een "
+"eigen opdracht gebruiken om voor shutdown.default: /sbin/shutdown -p now "
+"andere taken uit te voeren"
