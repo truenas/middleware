@@ -1,7 +1,7 @@
 from base import RESTTestCase
 
 
-class VolumeCreateTestCase(RESTTestCase):
+class CoreTestCase(RESTTestCase):
 
     def test_041_get_services(self):
         r = self.client.get('core/get_services')
