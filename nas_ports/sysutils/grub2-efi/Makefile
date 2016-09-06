@@ -3,7 +3,7 @@
 
 PORTNAME=	grub2-efi
 PORTVERSION=	2.02
-PORTREVISION=	15
+PORTREVISION=	16
 CATEGORIES=	sysutils
 MASTER_SITES=	http://www.pcbsd.org/~kris/software/ \
 		ftp://ftp.pcbsd.org/pub/software/
