@@ -12,14 +12,14 @@
    </tr>
    <tr>
        <td>
-           <strong>{% trans "CIFS" %}</strong>
+           <strong>{% trans "SMB" %}</strong>
        </td>
        <td>
        <img id="cifs_toggle" name="cifs_toggle" src="{{ STATIC_URL }}images/ui/buttons/{% for s  in srv %}{% if s.srv_service == "cifs" %}{% if s.srv_enable %}on{% else %}off{% endif %}{% endif %}{% endfor %}.png" onClick="toggle_service(this)">
        </td>
        <td>
            <!--img id="cifs_settings" src="{{ STATIC_URL }}images/ui/buttons/settings.png" onClick="editObject('{% trans "CIFS Settings"|force_escape|force_escape %}', '{{ cifs.get_edit_url }}');" title="{% trans "CIFS Settings" %}"-->
-           <img id="cifs_settings" src="{{ STATIC_URL }}images/ui/buttons/settings.png" onClick="editObject('{% trans "CIFS Settings"|force_escape|force_escape %}', '{% url "services_cifs" %}');" title="{% trans "CIFS Settings" %}">
+           <img id="cifs_settings" src="{{ STATIC_URL }}images/ui/buttons/settings.png" onClick="editObject('{% trans "SMB Settings"|force_escape|force_escape %}', '{% url "services_cifs" %}');" title="{% trans "SMB Settings" %}">
        </td>
    </tr>
    <tr>

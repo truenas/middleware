@@ -1347,8 +1347,8 @@ msgid "This field is required for \"Home directories\"."
 msgstr "Це поле є обов'язковим для \"Домашні каталоги\"."
 
 #: services/forms.py:106
-msgid "The CIFS service failed to reload."
-msgstr "Службу CIFS не вдалося перезавантажити."
+msgid "The SMB service failed to reload."
+msgstr "Службу SMB не вдалося перезавантажити."
 
 #: services/forms.py:118
 msgid "The AFP service failed to reload."
@@ -1793,10 +1793,10 @@ msgstr "Розширення Unix"
 
 #: services/models.py:167
 msgid ""
-"These extensions enable Samba to better serve UNIX CIFS clients by "
+"These extensions enable Samba to better serve UNIX SMB clients by "
 "supporting features such as symbolic links, hard links, etc..."
 msgstr ""
-"Ці розширення дозволяють Samba краще обслуговувати UNIX CIFS клієнтів "
+"Ці розширення дозволяють Samba краще обслуговувати UNIX SMB клієнтів "
 "завдяки підтримці символічних посилань, жорстких посилань і тд ..."
 
 #: services/models.py:171
@@ -1835,17 +1835,17 @@ msgstr "Використання Zeroconf share"
 #: services/models.py:189
 msgid ""
 "Zeroconf support via Avahi allows clients (the Mac OSX finder in particular) "
-"to automatically discover the CIFS shares on the system similar to the "
+"to automatically discover the SMB shares on the system similar to the "
 "Computer Browser service in Windows."
 msgstr ""
 "Підтримка Zeroconf через Avahi дозволяє клієнтам (зокрема, пошуку Mac OSX) "
-"автоматично знаходити спільні ресурси CIFS аналогічно службі Computer "
+"автоматично знаходити спільні ресурси SMB аналогічно службі Computer "
 "Browser в Windows."
 
 #: services/models.py:193 services/models.py:194
 #: templates/services/core.html:26
-msgid "CIFS"
-msgstr "CIFS"
+msgid "SMB"
+msgstr "SMB"
 
 #~ msgid "Server Name"
 #~ msgstr "Ім'я сервера"
@@ -3297,12 +3297,12 @@ msgid "These parameters are added to [Share] section of smb.conf"
 msgstr "Ці параметри додаються до розділу [Share] smb.conf"
 
 #: sharing/models.py:94
-msgid "Windows (CIFS) Share"
-msgstr "Спільний ресурс Windows (CIFS)"
+msgid "Windows (SMB) Share"
+msgstr "Спільний ресурс Windows (SMB)"
 
 #: sharing/models.py:95
-msgid "Windows (CIFS) Shares"
-msgstr "Спільні ресурси Windows (CIFS)"
+msgid "Windows (SMB) Shares"
+msgstr "Спільні ресурси Windows (SMB)"
 
 #: sharing/models.py:114
 msgid ""
@@ -5430,8 +5430,8 @@ msgid "Active Directory Settings"
 msgstr "Налаштування Active Directory"
 
 #: templates/services/core.html:32
-msgid "CIFS Settings"
-msgstr "Налаштування CIFS"
+msgid "SMB Settings"
+msgstr "Налаштування SMB"
 
 #: templates/services/core.html:45
 msgid "Dynamic DNS Settings"
@@ -5652,8 +5652,8 @@ msgid "UNIX (NFS)"
 msgstr "UNIX (NFS)"
 
 #: templates/sharing/index.html:12
-msgid "Windows (CIFS)"
-msgstr "Windows (CIFS)"
+msgid "Windows (SMB)"
+msgstr "Windows (SMB)"
 
 #~ msgid "There are no active UNIX (NFS) shares."
 #~ msgstr "Немає активних спільних ресурсів UNIX (NFS)."
@@ -5670,17 +5670,17 @@ msgstr "Windows (CIFS)"
 #~ msgid "Add UNIX (NFS) Share"
 #~ msgstr "Додати спільний ресурс UNIX (NFS)"
 
-#~ msgid "There are no active Windows (CIFS) shares."
-#~ msgstr "Немає активних спільних ресурсів Windows (CIFS)."
+#~ msgid "There are no active Windows (SMB) shares."
+#~ msgstr "Немає активних спільних ресурсів Windows (SMB)."
 
-#~ msgid "Edit Windows (CIFS) Share"
-#~ msgstr "Змінити спільний ресурс Windows (CIFS)"
+#~ msgid "Edit Windows (SMB) Share"
+#~ msgstr "Змінити спільний ресурс Windows (SMB)"
 
-#~ msgid "Delete Windows (CIFS) Share"
-#~ msgstr "Видалити спільний ресурс Windows (CIFS)"
+#~ msgid "Delete Windows (SMB) Share"
+#~ msgstr "Видалити спільний ресурс Windows (SMB)"
 
-#~ msgid "Add Windows (CIFS) Share"
-#~ msgstr "Додати спільний ресурс Windows (CIFS)"
+#~ msgid "Add Windows (SMB) Share"
+#~ msgstr "Додати спільний ресурс Windows (SMB)"
 
 #: templates/storage/clonesnap.html:2 templates/storage/snapshots.html:16
 msgid "Clone Snapshot"
@@ -6345,8 +6345,8 @@ msgstr "Jail IP"
 #~ msgid "Plugins path"
 #~ msgstr "Шлях плагінів"
 
-#~ msgid "Add Apple (CIFS) Share"
-#~ msgstr "Додати спільний ресурс Apple (CIFS)"
+#~ msgid "Add Apple (SMB) Share"
+#~ msgstr "Додати спільний ресурс Apple (SMB)"
 
 #~ msgid "Apply Service Pack"
 #~ msgstr "Прийняти оновлення"
@@ -6452,11 +6452,11 @@ msgstr "Відключити пароль"
 #~ "гостьової служби. Цей користувач повинен існувати у файлі паролів, але не "
 #~ "вимагає коректного імені користувача."
 
-#~ msgid "CIFS Share"
-#~ msgstr "Загальний ресурс CIFS"
+#~ msgid "SMB Share"
+#~ msgstr "Загальний ресурс SMB"
 
-#~ msgid "CIFS Shares"
-#~ msgstr "Загальні ресурси CIFS"
+#~ msgid "SMB Shares"
+#~ msgstr "Загальні ресурси SMB"
 
 #~ msgid "NFS Share"
 #~ msgstr "Спільний ресурс NFS"
@@ -9522,8 +9522,8 @@ msgstr ""
 #: account/forms.py:500
 msgid ""
 "Passwords containing a question mark (?) are currently not allowed due to "
-"problems with CIFS."
-msgstr "Паролі що містять знак питання (?) заборонені через проблеми з CIFS."
+"problems with SMB."
+msgstr "Паролі що містять знак питання (?) заборонені через проблеми з SMB."
 
 #: directoryservice/forms.py:104
 msgid "NT4 failed to reload."
@@ -10217,8 +10217,8 @@ msgid "Kerberos Realm"
 msgstr "Область Kerberos"
 
 #: services/views.py:269
-msgid "CIFS successfully updated."
-msgstr "CIFS успішно оновлено."
+msgid "SMB successfully updated."
+msgstr "SMB успішно оновлено."
 
 #: sharing/models.py:290
 msgid "Security"
@@ -13172,3 +13172,77 @@ msgstr ""
 #: templates/network/ipmi.html:5
 msgid "WARNING! Failed to query IPMI data, standby node is down."
 msgstr ""
+"ПОПЕРЕДЖЕННЯ! Неможливо зробити запит IPMI, резервний вузол недоступний."
+
+#: jails/forms.py:610
+msgid "Jail dataset created on a share"
+msgstr "Jail dataset створений на ресурсі"
+
+#: jails/views.py:584
+msgid "Jail template successfully deleted."
+msgstr "Шаблон jail успішно змінено."
+
+#: services/models.py:456
+msgid "Log mountd(8) requests"
+msgstr "Журналювати запити mountd(8)"
+
+#: services/models.py:458
+msgid "This option enable mountd logging into syslog."
+msgstr "Ця опція включає журнал mountd в syslog."
+
+#: services/models.py:462
+msgid "Log rpc.statd(8) and rpc.lockd(8)"
+msgstr "Журнал роботи rpc.statd(8) та rpc.lockd(8)"
+
+#: services/models.py:464
+msgid "This option enable statd and lockd logging into syslog."
+msgstr "Ця опція включає журнал statd та lockd в syslog."
+
+#: storage/forms.py:1437
+#: storage/forms.py:1509
+msgid "Allow the zvol to consume more than 80% of available space"
+msgstr "Дозволити zvol займати більше 80% доступного місця"
+
+#: system/models.py:149
+msgid ""
+"Specifies the server and port syslog messages will be sent to.  The accepted "
+"format is hostname:port or ip:port, if :port is not specified it will "
+"default to port 514 (this field currently only takes IPv4 addresses)"
+msgstr ""
+"Визначає сервер і порт куди будуть відправлятися повідомлення syslog. Формат "
+"ім'я:порт або IP:порт, якщо :порт не вказано, то за замовчуванням "
+"використовується 514 (це поле в даний час тільки приймає адреси IPv4)"
+
+#: system/alertmods/nfs_bindaddr.py:15
+msgid "NFS services could not bind specific IPs, using wildcard"
+msgstr ""
+"NFS сервіс не може бути прив'язаний до конкретного IP, використовується "
+"шаблон"
+
+#: jails/forms.py:247
+#: jails/forms.py:872
+msgid "You have entered an existing MAC Address.Please enter a new one."
+msgstr "Ви ввели існуючий MAC address. Будь ласка, введіть новий."
+
+#: jails/forms.py:238
+msgid ""
+"Valid characters for jail names are letters, numbers, dashes, or underscores."
+msgstr "Символи для імен jail є букви, цифри, тире або знак підкреслення."
+
+#: services/forms.py:95
+msgid "Cannot disable SMB while ActiveDirectory is in use."
+msgstr ""
+"Неможливо відключити SMB в той час як Active Directory використовується."
+
+#: services/models.py:1295
+msgid "Shutdown Command"
+msgstr "Команда вимкнення"
+
+#: services/models.py:1298
+msgid ""
+"The command used to shutdown the server. You can use a custom command here "
+"to perform other tasks before shutdown.default: /sbin/shutdown -p now"
+msgstr ""
+"Команда, яка використовується для завершення роботи сервера. Ви можете "
+"використовувати призначену для користувача команду тут, щоб виконувати інші "
+"завдання перед shutdown.default: /sbin/shutdown -p now"

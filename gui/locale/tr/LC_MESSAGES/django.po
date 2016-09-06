@@ -1349,8 +1349,8 @@ msgid "This field is required for \"Home directories\"."
 msgstr "\"Ana dizinler\" için bu alan gereklidir."
 
 #: services/forms.py:106
-msgid "The CIFS service failed to reload."
-msgstr "CIFS hizmetini yeniden yükleme başarısız oldu."
+msgid "The SMB service failed to reload."
+msgstr "SMB hizmetini yeniden yükleme başarısız oldu."
 
 #: services/forms.py:118
 msgid "The AFP service failed to reload."
@@ -1809,11 +1809,11 @@ msgstr "Unix Uzantıları"
 
 #: services/models.py:167
 msgid ""
-"These extensions enable Samba to better serve UNIX CIFS clients by "
+"These extensions enable Samba to better serve UNIX SMB clients by "
 "supporting features such as symbolic links, hard links, etc..."
 msgstr ""
 "Bu uzantılar, simgesel bağlantılar, sabit bağlatılar, vb. gibi özellikleri "
-"destekleyerek UNIX CIFS istemcilerinin daha iyi hizmet etmesi için Samba'yı "
+"destekleyerek UNIX SMB istemcilerinin daha iyi hizmet etmesi için Samba'yı "
 "etkinleştirir."
 
 #: services/models.py:171
@@ -1849,17 +1849,17 @@ msgstr "Sıfır yapılandırma paylaşım keşfi"
 #: services/models.py:189
 msgid ""
 "Zeroconf support via Avahi allows clients (the Mac OSX finder in particular) "
-"to automatically discover the CIFS shares on the system similar to the "
+"to automatically discover the SMB shares on the system similar to the "
 "Computer Browser service in Windows."
 msgstr ""
 "Avahi aracılığıyla sıfır yapılandırma desteği, Windows'taki Bilgisayar "
-"Tarayıcısı hizmetine benzer, sistem üzerinde CIFS paylaşımlarını otomatik "
+"Tarayıcısı hizmetine benzer, sistem üzerinde SMB paylaşımlarını otomatik "
 "olarak keşfetmek için istemcilere (özellikle Mac OSX buluculara) izin verir."
 
 #: services/models.py:193 services/models.py:194
 #: templates/services/core.html:26
-msgid "CIFS"
-msgstr "CIFS"
+msgid "SMB"
+msgstr "SMB"
 
 #~ msgid "Server Name"
 #~ msgstr "Sunucu adı"
@@ -3317,12 +3317,12 @@ msgid "These parameters are added to [Share] section of smb.conf"
 msgstr "Bu parametreler smb.conf dosyasının [Share] bölümüne eklenir"
 
 #: sharing/models.py:94
-msgid "Windows (CIFS) Share"
-msgstr "Windows (CIFS) Paylaşımı"
+msgid "Windows (SMB) Share"
+msgstr "Windows (SMB) Paylaşımı"
 
 #: sharing/models.py:95
-msgid "Windows (CIFS) Shares"
-msgstr "Windows (CIFS) Paylaşımları"
+msgid "Windows (SMB) Shares"
+msgstr "Windows (SMB) Paylaşımları"
 
 #: sharing/models.py:114
 msgid ""
@@ -5463,8 +5463,8 @@ msgid "Active Directory Settings"
 msgstr "Active Directory Ayarları"
 
 #: templates/services/core.html:32
-msgid "CIFS Settings"
-msgstr "CIFS Ayarları"
+msgid "SMB Settings"
+msgstr "SMB Ayarları"
 
 #: templates/services/core.html:45
 msgid "Dynamic DNS Settings"
@@ -5687,8 +5687,8 @@ msgid "UNIX (NFS)"
 msgstr "UNIX (NFS)"
 
 #: templates/sharing/index.html:12
-msgid "Windows (CIFS)"
-msgstr "Windows (CIFS)"
+msgid "Windows (SMB)"
+msgstr "Windows (SMB)"
 
 #~ msgid "There are no active UNIX (NFS) shares."
 #~ msgstr "Hiç aktif UNIX (NFS) paylaşımı yok."
@@ -5705,17 +5705,17 @@ msgstr "Windows (CIFS)"
 #~ msgid "Add UNIX (NFS) Share"
 #~ msgstr "UNIX (NFS) Paylaşımı Ekle"
 
-#~ msgid "There are no active Windows (CIFS) shares."
-#~ msgstr "Hiç aktif Windows (CIFS) paylaşımı yok."
+#~ msgid "There are no active Windows (SMB) shares."
+#~ msgstr "Hiç aktif Windows (SMB) paylaşımı yok."
 
-#~ msgid "Edit Windows (CIFS) Share"
-#~ msgstr "Windows (CIFS) Paylaşımını Düzenle"
+#~ msgid "Edit Windows (SMB) Share"
+#~ msgstr "Windows (SMB) Paylaşımını Düzenle"
 
-#~ msgid "Delete Windows (CIFS) Share"
-#~ msgstr "Windows (CIFS) Paylaşımını Sil"
+#~ msgid "Delete Windows (SMB) Share"
+#~ msgstr "Windows (SMB) Paylaşımını Sil"
 
-#~ msgid "Add Windows (CIFS) Share"
-#~ msgstr "Windows (CIFS) Paylaşımı Ekle"
+#~ msgid "Add Windows (SMB) Share"
+#~ msgstr "Windows (SMB) Paylaşımı Ekle"
 
 #: templates/storage/clonesnap.html:2 templates/storage/snapshots.html:16
 msgid "Clone Snapshot"
@@ -6378,8 +6378,8 @@ msgstr "Kafes IP"
 #~ msgid "Plugins path"
 #~ msgstr "Eklenti yolu"
 
-#~ msgid "Add Apple (CIFS) Share"
-#~ msgstr "Apple (CIFS) Paylaşımı Ekle"
+#~ msgid "Add Apple (SMB) Share"
+#~ msgstr "Apple (SMB) Paylaşımı Ekle"
 
 #~ msgid "Apply Service Pack"
 #~ msgstr "Hizmet Paketi Yükle"
@@ -6492,11 +6492,11 @@ msgstr "Parolayı etkisizleştir"
 #~ "istemciye sunulacak olan ayrıcalıklar. Bu kullanıcının giriş yapabilmesi "
 #~ "için parola dosyasında olmalıdır yoksa girişi geçersizdir."
 
-#~ msgid "CIFS Share"
-#~ msgstr "CIFS Paylaşımı"
+#~ msgid "SMB Share"
+#~ msgstr "SMB Paylaşımı"
 
-#~ msgid "CIFS Shares"
-#~ msgstr "CIFS Paylaşımları"
+#~ msgid "SMB Shares"
+#~ msgstr "SMB Paylaşımları"
 
 #~ msgid "NFS Share"
 #~ msgstr "NFS Paylaşımı"
@@ -9593,9 +9593,9 @@ msgstr ""
 #: account/forms.py:500
 msgid ""
 "Passwords containing a question mark (?) are currently not allowed due to "
-"problems with CIFS."
+"problems with SMB."
 msgstr ""
-"Soru işareti (?) içeren parolalara, şimdilik CIFS ile olan sorunlardan "
+"Soru işareti (?) içeren parolalara, şimdilik SMB ile olan sorunlardan "
 "dolayı izin verilmiyor."
 
 #: directoryservice/forms.py:104
@@ -10299,8 +10299,8 @@ msgid "Kerberos Realm"
 msgstr "Kerberos Erişim Alanı"
 
 #: services/views.py:269
-msgid "CIFS successfully updated."
-msgstr "CIFS başarılı olarak güncellendi."
+msgid "SMB successfully updated."
+msgstr "SMB başarılı olarak güncellendi."
 
 #: sharing/models.py:290
 msgid "Security"
@@ -13272,3 +13272,77 @@ msgstr ""
 #: templates/network/ipmi.html:5
 msgid "WARNING! Failed to query IPMI data, standby node is down."
 msgstr "UYARI! IPMI verisini sorgulama başarısız, bekleme düğümü kapalı."
+
+#: jails/forms.py:610
+msgid "Jail dataset created on a share"
+msgstr "Kafes veri kümesi bir paylaşımda oluşturuldu"
+
+#: jails/views.py:584
+msgid "Jail template successfully deleted."
+msgstr "Kafes şablonu başarılı olarak silindi."
+
+#: services/models.py:456
+msgid "Log mountd(8) requests"
+msgstr "mountd(8) isteklerini günlükle"
+
+#: services/models.py:458
+msgid "This option enable mountd logging into syslog."
+msgstr "Bu seçenek syslog içinde mountd günlüklemeyi etkinleştirir."
+
+#: services/models.py:462
+msgid "Log rpc.statd(8) and rpc.lockd(8)"
+msgstr "rpc.statd(8) ve rpc.lockd(8) günlükle"
+
+#: services/models.py:464
+msgid "This option enable statd and lockd logging into syslog."
+msgstr "Bu seçenek syslog içinde statd ve lockd günlüklemeyi etkinleştirir."
+
+#: storage/forms.py:1437
+#: storage/forms.py:1509
+msgid "Allow the zvol to consume more than 80% of available space"
+msgstr ""
+"Mevcut alanın %80'ninden daha fazlasını tüketmesi için zvol'a izin verir"
+
+#: system/models.py:149
+msgid ""
+"Specifies the server and port syslog messages will be sent to.  The accepted "
+"format is hostname:port or ip:port, if :port is not specified it will "
+"default to port 514 (this field currently only takes IPv4 addresses)"
+msgstr ""
+"Syslog iletilerinin gönderileceği sunucu ve bağlantı noktasını belirler.  "
+"Kabul edilen biçim anamakine adı:b.noktası ya da ip:b.noktası şeklindedir, "
+"eğer :b.noktası belirtilmezse, varsayılan bağlantı noktası 514 olacaktır (bu "
+"alan şimdilik sadece IPv4 adresleri kabul eder)"
+
+#: system/alertmods/nfs_bindaddr.py:15
+msgid "NFS services could not bind specific IPs, using wildcard"
+msgstr "NFS hizmetleri belirli IP'lere bağlanamadı, joker karakter kullanılıyor"
+
+#: jails/forms.py:247
+#: jails/forms.py:872
+msgid "You have entered an existing MAC Address.Please enter a new one."
+msgstr "Varolan bir MAC Adresi girdiniz. Lütfen yeni bir tane girin."
+
+#: jails/forms.py:238
+msgid ""
+"Valid characters for jail names are letters, numbers, dashes, or underscores."
+msgstr ""
+"Kafes adları için geçerli karakterler harfler, sayılar, tireler veya alt "
+"çizgilerdir."
+
+#: services/forms.py:95
+msgid "Cannot disable SMB while ActiveDirectory is in use."
+msgstr "Active Directory kullanımdayken SMB etkisizleştirilemez."
+
+#: services/models.py:1295
+msgid "Shutdown Command"
+msgstr "Kapatma Komutu"
+
+#: services/models.py:1298
+msgid ""
+"The command used to shutdown the server. You can use a custom command here "
+"to perform other tasks before shutdown.default: /sbin/shutdown -p now"
+msgstr ""
+"Komut sunucuyu kapatmak için kullanılır. Kapatmadan önce diğer görevleri "
+"yapmak için burada özel bir komut kullanabilirsiniz. Varsayılan: /sbin/"
+"shutdown -p now"

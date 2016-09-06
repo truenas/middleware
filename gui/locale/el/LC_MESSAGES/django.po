@@ -1352,8 +1352,8 @@ msgid "This field is required for \"Home directories\"."
 msgstr "Αυτό το πεδίο απαιτείται για τους \"Αρχικούς καταλόγους\"."
 
 #: services/forms.py:106
-msgid "The CIFS service failed to reload."
-msgstr "Η επαναφόρτωση της υπηρεσίας CIFS απέτυχε."
+msgid "The SMB service failed to reload."
+msgstr "Η επαναφόρτωση της υπηρεσίας SMB απέτυχε."
 
 #: services/forms.py:118
 msgid "The AFP service failed to reload."
@@ -1822,7 +1822,7 @@ msgstr "Προεκτάσεις Unix"
 
 #: services/models.py:167
 msgid ""
-"These extensions enable Samba to better serve UNIX CIFS clients by "
+"These extensions enable Samba to better serve UNIX SMB clients by "
 "supporting features such as symbolic links, hard links, etc..."
 msgstr ""
 
@@ -1863,14 +1863,14 @@ msgstr ""
 #: services/models.py:189
 msgid ""
 "Zeroconf support via Avahi allows clients (the Mac OSX finder in particular) "
-"to automatically discover the CIFS shares on the system similar to the "
+"to automatically discover the SMB shares on the system similar to the "
 "Computer Browser service in Windows."
 msgstr ""
 
 #: services/models.py:193 services/models.py:194
 #: templates/services/core.html:26
-msgid "CIFS"
-msgstr "CIFS"
+msgid "SMB"
+msgstr "SMB"
 
 #~ msgid "Server Name"
 #~ msgstr "Όνομα Διακομιστή"
@@ -3354,12 +3354,12 @@ msgstr "Οι παράμετροι αυτοί προστίθενται στο [Sh
 
 #: sharing/models.py:94
 #, fuzzy
-msgid "Windows (CIFS) Share"
+msgid "Windows (SMB) Share"
 msgstr "Windows Share"
 
 #: sharing/models.py:95
 #, fuzzy
-msgid "Windows (CIFS) Shares"
+msgid "Windows (SMB) Shares"
 msgstr "Windows Shares"
 
 #: sharing/models.py:114
@@ -5515,8 +5515,8 @@ msgstr "Ρυθμίσεις AFP"
 #~ msgstr "Ρυθμίσεις Active Directory"
 
 #: templates/services/core.html:32
-msgid "CIFS Settings"
-msgstr "Ρυθμίσεις CIFS"
+msgid "SMB Settings"
+msgstr "Ρυθμίσεις SMB"
 
 #: templates/services/core.html:45
 msgid "Dynamic DNS Settings"
@@ -5752,8 +5752,8 @@ msgid "UNIX (NFS)"
 msgstr "κοινόχρηστα UNIX (NFS)"
 
 #: templates/sharing/index.html:12
-msgid "Windows (CIFS)"
-msgstr "κοινόχρηστα Windows (CIFS)"
+msgid "Windows (SMB)"
+msgstr "κοινόχρηστα Windows (SMB)"
 
 #~ msgid "There are no active UNIX (NFS) shares."
 #~ msgstr "Δεν υπάρχουν ενεργά κοινόχρηστα UNIX (NFS)."
@@ -5770,17 +5770,17 @@ msgstr "κοινόχρηστα Windows (CIFS)"
 #~ msgid "Add UNIX (NFS) Share"
 #~ msgstr "Προσθήκη κοινόχρηστου UNIX (NFS)"
 
-#~ msgid "There are no active Windows (CIFS) shares."
-#~ msgstr "Δεν υπάρχουν ενεργά κοινόχρηστα Windows (CIFS)."
+#~ msgid "There are no active Windows (SMB) shares."
+#~ msgstr "Δεν υπάρχουν ενεργά κοινόχρηστα Windows (SMB)."
 
-#~ msgid "Edit Windows (CIFS) Share"
-#~ msgstr "Επεξεργασία κοινόχρηστου Windows (CIFS)"
+#~ msgid "Edit Windows (SMB) Share"
+#~ msgstr "Επεξεργασία κοινόχρηστου Windows (SMB)"
 
-#~ msgid "Delete Windows (CIFS) Share"
-#~ msgstr "Διαγραφή κοινόχρηστου Windows (CIFS)"
+#~ msgid "Delete Windows (SMB) Share"
+#~ msgstr "Διαγραφή κοινόχρηστου Windows (SMB)"
 
-#~ msgid "Add Windows (CIFS) Share"
-#~ msgstr "Προσθήκη κοινόχρηστου Windows (CIFS)"
+#~ msgid "Add Windows (SMB) Share"
+#~ msgstr "Προσθήκη κοινόχρηστου Windows (SMB)"
 
 #: templates/storage/clonesnap.html:2 templates/storage/snapshots.html:16
 msgid "Clone Snapshot"
@@ -6440,8 +6440,8 @@ msgstr "Domain name"
 #~ msgid "Plugins path"
 #~ msgstr "Διαδρομή επεκτάσεων"
 
-#~ msgid "Add Apple (CIFS) Share"
-#~ msgstr "Προσθήκη κοινόχρηστου Apple (CIFS)"
+#~ msgid "Add Apple (SMB) Share"
+#~ msgstr "Προσθήκη κοινόχρηστου Apple (SMB)"
 
 #~ msgid "Apply Service Pack"
 #~ msgstr "Εφαρμογή Service Pack"
@@ -6549,11 +6549,11 @@ msgstr "Domain name"
 #~ "αλλά δεν απαιτεί μια έγκυρη σύνδεση."
 
 #, fuzzy
-msgid "CIFS Share"
+msgid "SMB Share"
 msgstr "UNIX Share"
 
 #, fuzzy
-msgid "CIFS Shares"
+msgid "SMB Shares"
 msgstr "UNIX Shares"
 
 #, fuzzy
@@ -9937,10 +9937,10 @@ msgstr ""
 #: account/forms.py:500
 msgid ""
 "Passwords containing a question mark (?) are currently not allowed due to "
-"problems with CIFS."
+"problems with SMB."
 msgstr ""
 "Ο κωδικός πρόσβασης περιέχει ένα ερωτηματικό (?) προς το παρόν αυτό δεν "
-"επιτρέπεται λόγω δημιουργίας προβλημάτων στο CIFS. "
+"επιτρέπεται λόγω δημιουργίας προβλημάτων στο SMB. "
 
 #: directoryservice/forms.py:104
 #, fuzzy
@@ -10632,7 +10632,7 @@ msgstr "Kerberos Αρχείο Keytab"
 
 #: services/views.py:269
 #, fuzzy
-msgid "CIFS successfully updated."
+msgid "SMB successfully updated."
 msgstr "%s ενημερώθηκε(αν) με επιτυχία."
 
 #: sharing/models.py:290
@@ -13705,4 +13705,72 @@ msgstr ""
 
 #: templates/network/ipmi.html:5
 msgid "WARNING! Failed to query IPMI data, standby node is down."
+msgstr ""
+
+#: jails/forms.py:610
+msgid "Jail dataset created on a share"
+msgstr ""
+
+#: jails/views.py:584
+#, fuzzy
+msgid "Jail template successfully deleted."
+msgstr "Το dataset επεξεργάσθηκε επιτυχώς."
+
+#: services/models.py:456
+msgid "Log mountd(8) requests"
+msgstr ""
+
+#: services/models.py:458
+msgid "This option enable mountd logging into syslog."
+msgstr ""
+
+#: services/models.py:462
+msgid "Log rpc.statd(8) and rpc.lockd(8)"
+msgstr ""
+
+#: services/models.py:464
+msgid "This option enable statd and lockd logging into syslog."
+msgstr ""
+
+#: storage/forms.py:1437
+#: storage/forms.py:1509
+msgid "Allow the zvol to consume more than 80% of available space"
+msgstr ""
+
+#: system/models.py:149
+msgid ""
+"Specifies the server and port syslog messages will be sent to.  The accepted "
+"format is hostname:port or ip:port, if :port is not specified it will "
+"default to port 514 (this field currently only takes IPv4 addresses)"
+msgstr ""
+
+#: system/alertmods/nfs_bindaddr.py:15
+#, fuzzy
+msgid "NFS services could not bind specific IPs, using wildcard"
+msgstr ""
+"Η διεύθυνση του WebGUI δεν μπόρεσε να συσχετιστεί με την %s, τέθηκε σε γενική"
+
+#: jails/forms.py:247
+#: jails/forms.py:872
+msgid "You have entered an existing MAC Address.Please enter a new one."
+msgstr ""
+
+#: jails/forms.py:238
+msgid ""
+"Valid characters for jail names are letters, numbers, dashes, or underscores."
+msgstr ""
+
+#: services/forms.py:95
+msgid "Cannot disable SMB while ActiveDirectory is in use."
+msgstr ""
+
+#: services/models.py:1295
+#, fuzzy
+msgid "Shutdown Command"
+msgstr "Κατάσταση τερματισμού λειτουργίας"
+
+#: services/models.py:1298
+msgid ""
+"The command used to shutdown the server. You can use a custom command here "
+"to perform other tasks before shutdown.default: /sbin/shutdown -p now"
 msgstr ""

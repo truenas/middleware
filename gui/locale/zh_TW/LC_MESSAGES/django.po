@@ -1365,8 +1365,8 @@ msgid "This field is required for \"Home directories\"."
 msgstr "欲使用 \"家目錄\" 的功能須填此欄位。"
 
 #: services/forms.py:106
-msgid "The CIFS service failed to reload."
-msgstr "CIFS 服務重新載入時發生失敗"
+msgid "The SMB service failed to reload."
+msgstr "SMB 服務重新載入時發生失敗"
 
 #: services/forms.py:118
 msgid "The AFP service failed to reload."
@@ -1803,7 +1803,7 @@ msgstr ""
 
 #: services/models.py:167
 msgid ""
-"These extensions enable Samba to better serve UNIX CIFS clients by "
+"These extensions enable Samba to better serve UNIX SMB clients by "
 "supporting features such as symbolic links, hard links, etc..."
 msgstr ""
 
@@ -1842,14 +1842,14 @@ msgstr ""
 #: services/models.py:189
 msgid ""
 "Zeroconf support via Avahi allows clients (the Mac OSX finder in particular) "
-"to automatically discover the CIFS shares on the system similar to the "
+"to automatically discover the SMB shares on the system similar to the "
 "Computer Browser service in Windows."
 msgstr ""
 
 #: services/models.py:193 services/models.py:194
 #: templates/services/core.html:26
-msgid "CIFS"
-msgstr "CIFS"
+msgid "SMB"
+msgstr "SMB"
 
 #~ msgid "Server Name"
 #~ msgstr "主機名稱"
@@ -3240,12 +3240,12 @@ msgstr "這些參數被新增到 smb.conf 的 [Share] 段落"
 
 #: sharing/models.py:94
 #, fuzzy
-msgid "Windows (CIFS) Share"
+msgid "Windows (SMB) Share"
 msgstr "Windows 檔案共享"
 
 #: sharing/models.py:95
 #, fuzzy
-msgid "Windows (CIFS) Shares"
+msgid "Windows (SMB) Shares"
 msgstr "Windows 檔案共享"
 
 #: sharing/models.py:114
@@ -5358,8 +5358,8 @@ msgstr "AFP 設定"
 #~ msgstr "Active Directory 設定"
 
 #: templates/services/core.html:32
-msgid "CIFS Settings"
-msgstr "CIFS 設定"
+msgid "SMB Settings"
+msgstr "SMB 設定"
 
 #: templates/services/core.html:45
 msgid "Dynamic DNS Settings"
@@ -5615,8 +5615,8 @@ msgstr "新增UNIX共享(NFS)"
 
 #: templates/sharing/index.html:12
 #, fuzzy
-msgid "Windows (CIFS)"
-msgstr "新增Windows共享(CIFS)"
+msgid "Windows (SMB)"
+msgstr "新增Windows共享(SMB)"
 
 #: templates/sharing/unix.html:7
 #, fuzzy
@@ -5643,22 +5643,22 @@ msgstr "新增UNIX共享"
 
 #: templates/sharing/windows.html:7
 #, fuzzy
-msgid "There are no active Windows (CIFS) shares."
+msgid "There are no active Windows (SMB) shares."
 msgstr "沒有設定Windows共享"
 
 #: templates/sharing/windows.html:33
 #, fuzzy
-msgid "Edit Windows (CIFS) Share"
+msgid "Edit Windows (SMB) Share"
 msgstr "設定Windows共享"
 
 #: templates/sharing/windows.html:39
 #, fuzzy
-msgid "Delete Windows (CIFS) Share"
+msgid "Delete Windows (SMB) Share"
 msgstr "刪除Windows共享"
 
 #: templates/sharing/windows.html:53 templates/sharing/windows.html.py:55
 #, fuzzy
-msgid "Add Windows (CIFS) Share"
+msgid "Add Windows (SMB) Share"
 msgstr "新增Windows共享"
 
 #: templates/storage/clonesnap.html:2 templates/storage/snapshots.html:16
@@ -6303,7 +6303,7 @@ msgstr "檢視公開金鑰"
 #~ msgstr "關閉"
 
 #, fuzzy
-msgid "Add Apple (CIFS) Share"
+msgid "Add Apple (SMB) Share"
 msgstr "新增 Apple Share"
 
 #~ msgid "Apply Service Pack"
@@ -6410,11 +6410,11 @@ msgstr "停用密碼"
 #~ "所有權限都將套用至每個連至訪客服務的用戶端。此帳號必須存在於 password 檔"
 #~ "裡，但不必是個有效的登入帳號。"
 
-#~ msgid "CIFS Share"
-#~ msgstr "CIFS 共享"
+#~ msgid "SMB Share"
+#~ msgstr "SMB 共享"
 
-#~ msgid "CIFS Shares"
-#~ msgstr "CIFS 共享"
+#~ msgid "SMB Shares"
+#~ msgstr "SMB 共享"
 
 #~ msgid "NFS Share"
 #~ msgstr "NFS 共享"
@@ -9703,8 +9703,8 @@ msgstr ""
 #: account/forms.py:500
 msgid ""
 "Passwords containing a question mark (?) are currently not allowed due to "
-"problems with CIFS."
-msgstr "由於 CIFS 的問題，目前不允許密碼中包含問號 (?)"
+"problems with SMB."
+msgstr "由於 SMB 的問題，目前不允許密碼中包含問號 (?)"
 
 #: directoryservice/forms.py:104
 #, fuzzy
@@ -10394,8 +10394,8 @@ msgid "Kerberos Realm"
 msgstr "Kerberos Keytab 檔"
 
 #: services/views.py:269
-msgid "CIFS successfully updated."
-msgstr "CIFS 更新成功"
+msgid "SMB successfully updated."
+msgstr "SMB 更新成功"
 
 #: sharing/models.py:290
 msgid "Security"
@@ -13418,4 +13418,71 @@ msgstr ""
 
 #: templates/network/ipmi.html:5
 msgid "WARNING! Failed to query IPMI data, standby node is down."
+msgstr ""
+
+#: jails/forms.py:610
+msgid "Jail dataset created on a share"
+msgstr ""
+
+#: jails/views.py:584
+#, fuzzy
+msgid "Jail template successfully deleted."
+msgstr "資料集更新成功"
+
+#: services/models.py:456
+msgid "Log mountd(8) requests"
+msgstr ""
+
+#: services/models.py:458
+msgid "This option enable mountd logging into syslog."
+msgstr ""
+
+#: services/models.py:462
+msgid "Log rpc.statd(8) and rpc.lockd(8)"
+msgstr ""
+
+#: services/models.py:464
+msgid "This option enable statd and lockd logging into syslog."
+msgstr ""
+
+#: storage/forms.py:1437
+#: storage/forms.py:1509
+msgid "Allow the zvol to consume more than 80% of available space"
+msgstr ""
+
+#: system/models.py:149
+msgid ""
+"Specifies the server and port syslog messages will be sent to.  The accepted "
+"format is hostname:port or ip:port, if :port is not specified it will "
+"default to port 514 (this field currently only takes IPv4 addresses)"
+msgstr ""
+
+#: system/alertmods/nfs_bindaddr.py:15
+#, fuzzy
+msgid "NFS services could not bind specific IPs, using wildcard"
+msgstr "WebGUI 網址不能使用 %s ; 請使用萬用字元。"
+
+#: jails/forms.py:247
+#: jails/forms.py:872
+msgid "You have entered an existing MAC Address.Please enter a new one."
+msgstr ""
+
+#: jails/forms.py:238
+msgid ""
+"Valid characters for jail names are letters, numbers, dashes, or underscores."
+msgstr ""
+
+#: services/forms.py:95
+msgid "Cannot disable SMB while ActiveDirectory is in use."
+msgstr ""
+
+#: services/models.py:1295
+#, fuzzy
+msgid "Shutdown Command"
+msgstr "關機模式"
+
+#: services/models.py:1298
+msgid ""
+"The command used to shutdown the server. You can use a custom command here "
+"to perform other tasks before shutdown.default: /sbin/shutdown -p now"
 msgstr ""

@@ -1332,8 +1332,8 @@ msgid "This field is required for \"Home directories\"."
 msgstr "Acest câmp este obligatoriu pentru \"Directoare Home\"."
 
 #: services/forms.py:106
-msgid "The CIFS service failed to reload."
-msgstr "Serviciul CIFS a eșuat să repornească."
+msgid "The SMB service failed to reload."
+msgstr "Serviciul SMB a eșuat să repornească."
 
 #: services/forms.py:118
 msgid "The AFP service failed to reload."
@@ -1792,10 +1792,10 @@ msgstr "Extensii Unix"
 
 #: services/models.py:167
 msgid ""
-"These extensions enable Samba to better serve UNIX CIFS clients by "
+"These extensions enable Samba to better serve UNIX SMB clients by "
 "supporting features such as symbolic links, hard links, etc..."
 msgstr ""
-"Aceste extensii permit Samba să servească mai bine clienții UNIX CIFS prin "
+"Aceste extensii permit Samba să servească mai bine clienții UNIX SMB prin "
 "caracteristici de sprijin cum ar fi legături simbolice, legături hard, etc . "
 ". . ."
 
@@ -1836,17 +1836,17 @@ msgstr "Descoperire partajare Zeroconf"
 #: services/models.py:189
 msgid ""
 "Zeroconf support via Avahi allows clients (the Mac OSX finder in particular) "
-"to automatically discover the CIFS shares on the system similar to the "
+"to automatically discover the SMB shares on the system similar to the "
 "Computer Browser service in Windows."
 msgstr ""
 "Suportul Zeroconf via Avahi permite clienţilor (în special clienţilor Mac "
-"OSX) să descopere partajările CIFS din sistem similar serviciului Computer "
+"OSX) să descopere partajările SMB din sistem similar serviciului Computer "
 "Browser din Windows."
 
 #: services/models.py:193 services/models.py:194
 #: templates/services/core.html:26
-msgid "CIFS"
-msgstr "CIFS"
+msgid "SMB"
+msgstr "SMB"
 
 #~ msgid "Server Name"
 #~ msgstr "Nume server"
@@ -3301,12 +3301,12 @@ msgstr ""
 "Aceşti parametri sunt adaugaţi la secţiunea [Share] a fişierului smb.conf"
 
 #: sharing/models.py:94
-msgid "Windows (CIFS) Share"
-msgstr "Partajări Windows (CIFS)"
+msgid "Windows (SMB) Share"
+msgstr "Partajări Windows (SMB)"
 
 #: sharing/models.py:95
-msgid "Windows (CIFS) Shares"
-msgstr "Partajări Windows (CIFS)"
+msgid "Windows (SMB) Shares"
+msgstr "Partajări Windows (SMB)"
 
 #: sharing/models.py:114
 msgid ""
@@ -5429,8 +5429,8 @@ msgstr "Setări AFP"
 #~ msgstr "Setări Active Directory"
 
 #: templates/services/core.html:32
-msgid "CIFS Settings"
-msgstr "Setări CIFS"
+msgid "SMB Settings"
+msgstr "Setări SMB"
 
 #: templates/services/core.html:45
 msgid "Dynamic DNS Settings"
@@ -5650,8 +5650,8 @@ msgid "UNIX (NFS)"
 msgstr "UNIX (NFS)"
 
 #: templates/sharing/index.html:12
-msgid "Windows (CIFS)"
-msgstr "Windows (CIFS)"
+msgid "Windows (SMB)"
+msgstr "Windows (SMB)"
 
 #~ msgid "There are no active UNIX (NFS) shares."
 #~ msgstr "Nu există partajări UNIX (NFS) active"
@@ -5668,17 +5668,17 @@ msgstr "Windows (CIFS)"
 #~ msgid "Add UNIX (NFS) Share"
 #~ msgstr "Adăugare partajare UNIX (NFS)"
 
-#~ msgid "There are no active Windows (CIFS) shares."
-#~ msgstr "Nu există partajări Windows (CIFS) active."
+#~ msgid "There are no active Windows (SMB) shares."
+#~ msgstr "Nu există partajări Windows (SMB) active."
 
-#~ msgid "Edit Windows (CIFS) Share"
-#~ msgstr "Editare partajare Windows (CIFS)"
+#~ msgid "Edit Windows (SMB) Share"
+#~ msgstr "Editare partajare Windows (SMB)"
 
-#~ msgid "Delete Windows (CIFS) Share"
-#~ msgstr "Modificare partajare Windows (CIFS)"
+#~ msgid "Delete Windows (SMB) Share"
+#~ msgstr "Modificare partajare Windows (SMB)"
 
-#~ msgid "Add Windows (CIFS) Share"
-#~ msgstr "Adăugare partajare Windows (CIFS)"
+#~ msgid "Add Windows (SMB) Share"
+#~ msgstr "Adăugare partajare Windows (SMB)"
 
 #: templates/storage/clonesnap.html:2 templates/storage/snapshots.html:16
 msgid "Clone Snapshot"
@@ -6288,8 +6288,8 @@ msgstr "Alerte critice"
 #~ msgid "View Tunables"
 #~ msgstr "Vizualizare setări reglabile"
 
-#~ msgid "Add Apple (CIFS) Share"
-#~ msgstr "Adăugare partajare Apple (CIFS)"
+#~ msgid "Add Apple (SMB) Share"
+#~ msgstr "Adăugare partajare Apple (SMB)"
 
 #~ msgid "Apply Service Pack"
 #~ msgstr "Aplicare service pack"
@@ -6395,11 +6395,11 @@ msgstr "Alerte critice"
 #~ "oricărei conexiuni la serviciul vizitator. Acest utilizator trebuie să "
 #~ "existe in fișierul de parole, dar nu necesită o autentificare validă."
 
-#~ msgid "CIFS Share"
-#~ msgstr "Partajare CIFS"
+#~ msgid "SMB Share"
+#~ msgstr "Partajare SMB"
 
-#~ msgid "CIFS Shares"
-#~ msgstr "Partajări CIFS"
+#~ msgid "SMB Shares"
+#~ msgstr "Partajări SMB"
 
 #~ msgid "NFS Share"
 #~ msgstr "Partajare NFS"
@@ -9600,10 +9600,10 @@ msgstr ""
 #: account/forms.py:500
 msgid ""
 "Passwords containing a question mark (?) are currently not allowed due to "
-"problems with CIFS."
+"problems with SMB."
 msgstr ""
 "Parolele care conțin caracterul (?) nu pot fi utilizate în acest moment din "
-"cauza problemelor cu CIFS"
+"cauza problemelor cu SMB"
 
 #: directoryservice/forms.py:104
 msgid "NT4 failed to reload."
@@ -10299,7 +10299,7 @@ msgstr "Kerberos Realm"
 
 #: services/views.py:269
 #, fuzzy
-msgid "CIFS successfully updated."
+msgid "SMB successfully updated."
 msgstr "%s actualizat cu succes."
 
 #: sharing/models.py:290
@@ -13383,4 +13383,74 @@ msgstr ""
 
 #: templates/network/ipmi.html:5
 msgid "WARNING! Failed to query IPMI data, standby node is down."
+msgstr ""
+
+#: jails/forms.py:610
+msgid "Jail dataset created on a share"
+msgstr ""
+
+#: jails/views.py:584
+#, fuzzy
+msgid "Jail template successfully deleted."
+msgstr "Șablon Jail editat cu succes."
+
+#: services/models.py:456
+msgid "Log mountd(8) requests"
+msgstr ""
+
+#: services/models.py:458
+msgid "This option enable mountd logging into syslog."
+msgstr ""
+
+#: services/models.py:462
+#, fuzzy
+msgid "Log rpc.statd(8) and rpc.lockd(8)"
+msgstr "port de legătură rpc.statd(8)"
+
+#: services/models.py:464
+msgid "This option enable statd and lockd logging into syslog."
+msgstr ""
+
+#: storage/forms.py:1437
+#: storage/forms.py:1509
+msgid "Allow the zvol to consume more than 80% of available space"
+msgstr ""
+
+#: system/models.py:149
+msgid ""
+"Specifies the server and port syslog messages will be sent to.  The accepted "
+"format is hostname:port or ip:port, if :port is not specified it will "
+"default to port 514 (this field currently only takes IPv4 addresses)"
+msgstr ""
+
+#: system/alertmods/nfs_bindaddr.py:15
+#, fuzzy
+msgid "NFS services could not bind specific IPs, using wildcard"
+msgstr ""
+"Adresa WebGUI nu a putut fi legată la %s; folosind caracterele de "
+"substituție."
+
+#: jails/forms.py:247
+#: jails/forms.py:872
+msgid "You have entered an existing MAC Address.Please enter a new one."
+msgstr ""
+
+#: jails/forms.py:238
+msgid ""
+"Valid characters for jail names are letters, numbers, dashes, or underscores."
+msgstr ""
+
+#: services/forms.py:95
+msgid "Cannot disable SMB while ActiveDirectory is in use."
+msgstr ""
+
+#: services/models.py:1295
+#, fuzzy
+msgid "Shutdown Command"
+msgstr "Mod oprire"
+
+#: services/models.py:1298
+msgid ""
+"The command used to shutdown the server. You can use a custom command here "
+"to perform other tasks before shutdown.default: /sbin/shutdown -p now"
 msgstr ""

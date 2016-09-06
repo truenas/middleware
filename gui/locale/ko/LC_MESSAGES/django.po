@@ -1314,8 +1314,8 @@ msgid "This field is required for \"Home directories\"."
 msgstr "\"홈 디렉토리\"를 위해 필요한 입력란입니다. "
 
 #: services/forms.py:106
-msgid "The CIFS service failed to reload."
-msgstr "CIFS 서비스를 다시 시작하는데 실패하였습니다."
+msgid "The SMB service failed to reload."
+msgstr "SMB 서비스를 다시 시작하는데 실패하였습니다."
 
 #: services/forms.py:118
 msgid "The AFP service failed to reload."
@@ -1742,10 +1742,10 @@ msgstr "유닉스 확장자들"
 
 #: services/models.py:167
 msgid ""
-"These extensions enable Samba to better serve UNIX CIFS clients by "
+"These extensions enable Samba to better serve UNIX SMB clients by "
 "supporting features such as symbolic links, hard links, etc..."
 msgstr ""
-"이 확장들은 삼바가 UNIX CIFS 클라이언트들에게 심볼릭 링크나 하드 링크등의 기능을 지원함으로써 더 낳은 서비스를 가능하게 합니다."
+"이 확장들은 삼바가 UNIX SMB 클라이언트들에게 심볼릭 링크나 하드 링크등의 기능을 지원함으로써 더 낳은 서비스를 가능하게 합니다."
 
 #: services/models.py:171
 msgid "Enable AIO"
@@ -1780,14 +1780,14 @@ msgstr ""
 #: services/models.py:189
 msgid ""
 "Zeroconf support via Avahi allows clients (the Mac OSX finder in particular) "
-"to automatically discover the CIFS shares on the system similar to the "
+"to automatically discover the SMB shares on the system similar to the "
 "Computer Browser service in Windows."
 msgstr ""
 
 #: services/models.py:193 services/models.py:194
 #: templates/services/core.html:26
-msgid "CIFS"
-msgstr "CIFS"
+msgid "SMB"
+msgstr "SMB"
 
 #~ msgid "Server Name"
 #~ msgstr "서버 이름"
@@ -3162,12 +3162,12 @@ msgstr ""
 
 #: sharing/models.py:94
 #, fuzzy
-msgid "Windows (CIFS) Share"
+msgid "Windows (SMB) Share"
 msgstr "윈도우 공유 추가"
 
 #: sharing/models.py:95
 #, fuzzy
-msgid "Windows (CIFS) Shares"
+msgid "Windows (SMB) Shares"
 msgstr "윈도우 공유 추가"
 
 #: sharing/models.py:114
@@ -5320,7 +5320,7 @@ msgid "Active Directory Settings"
 msgstr ""
 
 #: templates/services/core.html:32
-msgid "CIFS Settings"
+msgid "SMB Settings"
 msgstr ""
 
 #: templates/services/core.html:45
@@ -5553,8 +5553,8 @@ msgid "UNIX (NFS)"
 msgstr "유닉스 (NFS)"
 
 #: templates/sharing/index.html:12
-msgid "Windows (CIFS)"
-msgstr "윈도우 (CIFS)"
+msgid "Windows (SMB)"
+msgstr "윈도우 (SMB)"
 
 #~ msgid "There are no active UNIX (NFS) shares."
 #~ msgstr "현재 활성중인 UNIX 공유(NFS)가 없습니다."
@@ -5571,17 +5571,17 @@ msgstr "윈도우 (CIFS)"
 #~ msgid "Add UNIX (NFS) Share"
 #~ msgstr "UNIX 공유 (NFS) 추가하기"
 
-#~ msgid "There are no active Windows (CIFS) shares."
-#~ msgstr "활성화된 윈도우 공유 (CIFS) 가 없습니다. "
+#~ msgid "There are no active Windows (SMB) shares."
+#~ msgstr "활성화된 윈도우 공유 (SMB) 가 없습니다. "
 
-#~ msgid "Edit Windows (CIFS) Share"
-#~ msgstr "윈도우 공유 (CIFS) 수정하기"
+#~ msgid "Edit Windows (SMB) Share"
+#~ msgstr "윈도우 공유 (SMB) 수정하기"
 
-#~ msgid "Delete Windows (CIFS) Share"
-#~ msgstr "윈도우 공유 (CIFS) 삭제하기"
+#~ msgid "Delete Windows (SMB) Share"
+#~ msgstr "윈도우 공유 (SMB) 삭제하기"
 
-#~ msgid "Add Windows (CIFS) Share"
-#~ msgstr "윈도우 공유(CIFS) 추가하기"
+#~ msgid "Add Windows (SMB) Share"
+#~ msgstr "윈도우 공유(SMB) 추가하기"
 
 #: templates/storage/clonesnap.html:2 templates/storage/snapshots.html:16
 msgid "Clone Snapshot"
@@ -6150,8 +6150,8 @@ msgstr "디스크 보기"
 #~ msgid "View Tunables"
 #~ msgstr "Tunables 보기"
 
-#~ msgid "Add Apple (CIFS) Share"
-#~ msgstr "애플 공유 (CIFS) 추가하기"
+#~ msgid "Add Apple (SMB) Share"
+#~ msgstr "애플 공유 (SMB) 추가하기"
 
 #~ msgid "Apply Service Pack"
 #~ msgstr "서비스팩 적용"
@@ -6218,11 +6218,11 @@ msgstr "디스크 보기"
 #~ msgstr "게스트 계정"
 
 #, fuzzy
-msgid "CIFS Share"
+msgid "SMB Share"
 msgstr "NFS 공유 수정"
 
 #, fuzzy
-msgid "CIFS Shares"
+msgid "SMB Shares"
 msgstr "UNIX 공유 추가"
 
 #, fuzzy
@@ -9364,8 +9364,8 @@ msgstr "로더"
 #: account/forms.py:500
 msgid ""
 "Passwords containing a question mark (?) are currently not allowed due to "
-"problems with CIFS."
-msgstr "패스워드에 ? 마크를 포함하고 있어 현재 CIFS 문제를 해결할 수 없습니다."
+"problems with SMB."
+msgstr "패스워드에 ? 마크를 포함하고 있어 현재 SMB 문제를 해결할 수 없습니다."
 
 #: directoryservice/forms.py:104
 #, fuzzy
@@ -10048,7 +10048,7 @@ msgstr "서버 갯수"
 
 #: services/views.py:269
 #, fuzzy
-msgid "CIFS successfully updated."
+msgid "SMB successfully updated."
 msgstr "%s을(를) 성공적으로 갱신하였습니다."
 
 #: sharing/models.py:290
@@ -13054,4 +13054,71 @@ msgstr ""
 
 #: templates/network/ipmi.html:5
 msgid "WARNING! Failed to query IPMI data, standby node is down."
+msgstr ""
+
+#: jails/forms.py:610
+msgid "Jail dataset created on a share"
+msgstr ""
+
+#: jails/views.py:584
+#, fuzzy
+msgid "Jail template successfully deleted."
+msgstr "%s가 삭제 되었습니다. "
+
+#: services/models.py:456
+msgid "Log mountd(8) requests"
+msgstr ""
+
+#: services/models.py:458
+msgid "This option enable mountd logging into syslog."
+msgstr ""
+
+#: services/models.py:462
+msgid "Log rpc.statd(8) and rpc.lockd(8)"
+msgstr ""
+
+#: services/models.py:464
+msgid "This option enable statd and lockd logging into syslog."
+msgstr ""
+
+#: storage/forms.py:1437
+#: storage/forms.py:1509
+msgid "Allow the zvol to consume more than 80% of available space"
+msgstr ""
+
+#: system/models.py:149
+msgid ""
+"Specifies the server and port syslog messages will be sent to.  The accepted "
+"format is hostname:port or ip:port, if :port is not specified it will "
+"default to port 514 (this field currently only takes IPv4 addresses)"
+msgstr ""
+
+#: system/alertmods/nfs_bindaddr.py:15
+#, fuzzy
+msgid "NFS services could not bind specific IPs, using wildcard"
+msgstr "해당 WebGUI 주소가 %s에 바인드 될 수 없습니다: 와일드 카드 사용하기"
+
+#: jails/forms.py:247
+#: jails/forms.py:872
+msgid "You have entered an existing MAC Address.Please enter a new one."
+msgstr ""
+
+#: jails/forms.py:238
+msgid ""
+"Valid characters for jail names are letters, numbers, dashes, or underscores."
+msgstr ""
+
+#: services/forms.py:95
+msgid "Cannot disable SMB while ActiveDirectory is in use."
+msgstr ""
+
+#: services/models.py:1295
+#, fuzzy
+msgid "Shutdown Command"
+msgstr "종료 모드"
+
+#: services/models.py:1298
+msgid ""
+"The command used to shutdown the server. You can use a custom command here "
+"to perform other tasks before shutdown.default: /sbin/shutdown -p now"
 msgstr ""

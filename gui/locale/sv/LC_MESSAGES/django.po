@@ -1322,8 +1322,8 @@ msgid "This field is required for \"Home directories\"."
 msgstr "Detta fält krävs för \"hemkataloger\"."
 
 #: services/forms.py:106
-msgid "The CIFS service failed to reload."
-msgstr "CIFS tjänsten kunde inte starta om."
+msgid "The SMB service failed to reload."
+msgstr "SMB tjänsten kunde inte starta om."
 
 #: services/forms.py:118
 msgid "The AFP service failed to reload."
@@ -1772,10 +1772,10 @@ msgstr "UNIX anknytningar"
 
 #: services/models.py:167
 msgid ""
-"These extensions enable Samba to better serve UNIX CIFS clients by "
+"These extensions enable Samba to better serve UNIX SMB clients by "
 "supporting features such as symbolic links, hard links, etc..."
 msgstr ""
-"Dessa anknytningar aktiverar Samba för att bättre betjäna UNIX CIFS-klienter "
+"Dessa anknytningar aktiverar Samba för att bättre betjäna UNIX SMB-klienter "
 "genom att stödja funktioner som symboliska länkar, hårda länkar, etc. .."
 
 #: services/models.py:171
@@ -1813,17 +1813,17 @@ msgstr "Noll-konfigurerings utdelning upptäckt"
 #: services/models.py:189
 msgid ""
 "Zeroconf support via Avahi allows clients (the Mac OSX finder in particular) "
-"to automatically discover the CIFS shares on the system similar to the "
+"to automatically discover the SMB shares on the system similar to the "
 "Computer Browser service in Windows."
 msgstr ""
 "Noll-konfigurerings support via Avahi tillåter klienter (Mac OSX Finder i "
-"synnerhet) för att automatiskt upptäcka CIFS utdelningarna i systemet "
+"synnerhet) för att automatiskt upptäcka SMB utdelningarna i systemet "
 "liknande utforskaren tjänsten i Windows."
 
 #: services/models.py:193 services/models.py:194
 #: templates/services/core.html:26
-msgid "CIFS"
-msgstr "CIFS"
+msgid "SMB"
+msgstr "SMB"
 
 #~ msgid "Server Name"
 #~ msgstr "Server namn"
@@ -3261,12 +3261,12 @@ msgid "These parameters are added to [Share] section of smb.conf"
 msgstr "Dessa parametrar läggs till [Share] i smb.conf"
 
 #: sharing/models.py:94
-msgid "Windows (CIFS) Share"
-msgstr "Windows (CIFS) utdelning"
+msgid "Windows (SMB) Share"
+msgstr "Windows (SMB) utdelning"
 
 #: sharing/models.py:95
-msgid "Windows (CIFS) Shares"
-msgstr "Windows (CIFS) utdelning"
+msgid "Windows (SMB) Shares"
+msgstr "Windows (SMB) utdelning"
 
 #: sharing/models.py:114
 #, fuzzy
@@ -5386,8 +5386,8 @@ msgstr "AFP Inställningar"
 #~ msgstr "Active DirectoryInställningar"
 
 #: templates/services/core.html:32
-msgid "CIFS Settings"
-msgstr "CIFS Inställningar"
+msgid "SMB Settings"
+msgstr "SMB Inställningar"
 
 #: templates/services/core.html:45
 msgid "Dynamic DNS Settings"
@@ -5607,8 +5607,8 @@ msgid "UNIX (NFS)"
 msgstr "UNIX (NFS)"
 
 #: templates/sharing/index.html:12
-msgid "Windows (CIFS)"
-msgstr "Windows (CIFS)"
+msgid "Windows (SMB)"
+msgstr "Windows (SMB)"
 
 #~ msgid "There are no active UNIX (NFS) shares."
 #~ msgstr "Det finns inga aktiva UNIX (NFS) utdelningar."
@@ -5625,17 +5625,17 @@ msgstr "Windows (CIFS)"
 #~ msgid "Add UNIX (NFS) Share"
 #~ msgstr "Lägg till UNIX (NFS) utdelningar"
 
-#~ msgid "There are no active Windows (CIFS) shares."
-#~ msgstr "Det finns inga aktiva Windows (CIFS) utdelningar."
+#~ msgid "There are no active Windows (SMB) shares."
+#~ msgstr "Det finns inga aktiva Windows (SMB) utdelningar."
 
-#~ msgid "Edit Windows (CIFS) Share"
-#~ msgstr "Redigera Windows (CIFS) utdelningar"
+#~ msgid "Edit Windows (SMB) Share"
+#~ msgstr "Redigera Windows (SMB) utdelningar"
 
-#~ msgid "Delete Windows (CIFS) Share"
-#~ msgstr "Ta bort Windows (CIFS) utdelningar"
+#~ msgid "Delete Windows (SMB) Share"
+#~ msgstr "Ta bort Windows (SMB) utdelningar"
 
-#~ msgid "Add Windows (CIFS) Share"
-#~ msgstr "Lägg till Windows (CIFS) utdelning"
+#~ msgid "Add Windows (SMB) Share"
+#~ msgstr "Lägg till Windows (SMB) utdelning"
 
 #: templates/storage/clonesnap.html:2 templates/storage/snapshots.html:16
 msgid "Clone Snapshot"
@@ -6215,8 +6215,8 @@ msgstr "Kritiska Alarm"
 #~ msgid "Close"
 #~ msgstr "Stäng"
 
-#~ msgid "Add Apple (CIFS) Share"
-#~ msgstr "Lägg till Apple (CIFS) utdelningar"
+#~ msgid "Add Apple (SMB) Share"
+#~ msgstr "Lägg till Apple (SMB) utdelningar"
 
 #~ msgid "Hourly"
 #~ msgstr "Varje timme"
@@ -9383,7 +9383,7 @@ msgstr "Lägg till laddare"
 #: account/forms.py:500
 msgid ""
 "Passwords containing a question mark (?) are currently not allowed due to "
-"problems with CIFS."
+"problems with SMB."
 msgstr ""
 
 #: directoryservice/forms.py:104
@@ -10063,7 +10063,7 @@ msgstr "Antal servrar"
 
 #: services/views.py:269
 #, fuzzy
-msgid "CIFS successfully updated."
+msgid "SMB successfully updated."
 msgstr "%s uppdateringen lyckades."
 
 #: sharing/models.py:290
@@ -13108,4 +13108,71 @@ msgstr ""
 
 #: templates/network/ipmi.html:5
 msgid "WARNING! Failed to query IPMI data, standby node is down."
+msgstr ""
+
+#: jails/forms.py:610
+msgid "Jail dataset created on a share"
+msgstr ""
+
+#: jails/views.py:584
+#, fuzzy
+msgid "Jail template successfully deleted."
+msgstr "Dataset har redigerats korrekt."
+
+#: services/models.py:456
+msgid "Log mountd(8) requests"
+msgstr ""
+
+#: services/models.py:458
+msgid "This option enable mountd logging into syslog."
+msgstr ""
+
+#: services/models.py:462
+msgid "Log rpc.statd(8) and rpc.lockd(8)"
+msgstr ""
+
+#: services/models.py:464
+msgid "This option enable statd and lockd logging into syslog."
+msgstr ""
+
+#: storage/forms.py:1437
+#: storage/forms.py:1509
+msgid "Allow the zvol to consume more than 80% of available space"
+msgstr ""
+
+#: system/models.py:149
+msgid ""
+"Specifies the server and port syslog messages will be sent to.  The accepted "
+"format is hostname:port or ip:port, if :port is not specified it will "
+"default to port 514 (this field currently only takes IPv4 addresses)"
+msgstr ""
+
+#: system/alertmods/nfs_bindaddr.py:15
+#, fuzzy
+msgid "NFS services could not bind specific IPs, using wildcard"
+msgstr "WebbGUI adressen kunde inte bindas till %s; använd vildkort"
+
+#: jails/forms.py:247
+#: jails/forms.py:872
+msgid "You have entered an existing MAC Address.Please enter a new one."
+msgstr ""
+
+#: jails/forms.py:238
+msgid ""
+"Valid characters for jail names are letters, numbers, dashes, or underscores."
+msgstr ""
+
+#: services/forms.py:95
+msgid "Cannot disable SMB while ActiveDirectory is in use."
+msgstr ""
+
+#: services/models.py:1295
+#, fuzzy
+msgid "Shutdown Command"
+msgstr "Avstängningsläge"
+
+#: services/models.py:1298
+msgid ""
+"The command used to shutdown the server. You can use a custom command here "
+"to perform other tasks before shutdown.default: /sbin/shutdown -p now"
 msgstr ""
