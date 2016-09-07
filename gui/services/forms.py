@@ -1230,7 +1230,7 @@ class iSCSITargetToExtentForm(ModelForm):
     def __init__(self, *args, **kwargs):
         super(iSCSITargetToExtentForm, self).__init__(*args, **kwargs)
         choices = tuple(
-            [('', 'Auto')] + [(x, x) for x in xrange(25)]
+            [(x, x) for x in xrange(25)]
         )
         self.fields['iscsi_lunid'] = forms.CharField(
             label=self.fields['iscsi_lunid'].label,
@@ -1242,8 +1242,6 @@ class iSCSITargetToExtentForm(ModelForm):
     def clean_iscsi_lunid(self):
         lunid = self.cleaned_data.get('iscsi_lunid')
         if not lunid:
-            return None
-        if lunid == 'Auto':
             return None
         if isinstance(lunid, (str, unicode)) and not lunid.isdigit():
             raise forms.ValidationError(_("LUN ID must be a positive integer"))
