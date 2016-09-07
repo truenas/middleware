@@ -1480,3 +1480,7 @@ table.update > tbody > tr > td {
   transform: translateY(0);
   display: table;
 }
+
+#dgrid_volume .dgrid-column-name {
+  white-space: nowrap;
+}
