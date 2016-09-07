@@ -150,18 +150,20 @@ def main():
             with open(davssl_config_file, 'w') as f2:
                 f2.write("")
         with open(dav_config_file, 'w') as f:
-            f.write(" Listen "+str(dav_tcpport)+"\n")
-            f.write("\t <VirtualHost *:"+str(dav_tcpport)+">\n")
+            f.write(" Listen " + str(dav_tcpport) + "\n")
+            f.write("\t <VirtualHost *:" + str(dav_tcpport) + ">\n")
             f.write(dav_config_pretext)
             for share in webshares:
                 temp_path = """ "%s" """ % share.webdav_path
-                f.write("\t   Alias /"+share.webdav_name+temp_path+"\n")
-                f.write("\t   <Directory "+temp_path+">\n")
+                f.write("\t   Alias /" + share.webdav_name + temp_path + "\n")
+                f.write("\t   <Directory " + temp_path + ">\n")
                 f.write("\t   </Directory>\n")
                 if share.webdav_ro == 1:
-                        f.write("\t   <Location /" +
-                                share.webdav_name +
-                                ">\n\t\t AllowMethods GET OPTIONS PROPFIND\n\t   </Location>\n")
+                        f.write(
+                            "\t   <Location /" +
+                            share.webdav_name +
+                            ">\n\t\t AllowMethods GET OPTIONS PROPFIND\n\t   </Location>\n"
+                        )
                 if share.webdav_perm:
                     _pipeopen("chown -R webdav:webdav %s" % share.webdav_path)
             f.write(dav_config_posttext)
@@ -170,37 +172,36 @@ def main():
         if dav_protocol == 'https':
             with open(dav_config_file, 'w') as f:
                 f.write("")
-            with open(davssl_config_file, 'w') as f2:
-                f2.write(" Listen " +
-                         str(dav_tcpportssl)+"\n")
-                f2.write("\t <VirtualHost *:"+str(dav_tcpportssl)+">\n")
-                f2.write("\t  SSLEngine on\n")
-                f2.write("""\t  SSLCertificateFile "%s"\n""" %
-                         dav_ssl_certfile)
-                f2.write("""\t  SSLCertificateKeyFile "%s"\n""" %
-                         dav_ssl_keyfile)
-                f2.write("\t  SSLProtocol +TLSv1 +TLSv1.1 +TLSv1.2\n\t"
-                         "  SSLCipherSuite HIGH:MEDIUM\n")
-                f2.write(dav_config_pretext)
-                # Note: The for loop below is essentially code duplication,
-                # but since two different files are being written to I could
-                # not at the moment find a more efficient way of doing this.
-                # (if you can fix it, please do so)
-                for share in webshares:
-                    temp_path = """ "%s" """ % share.webdav_path
-                    f2.write("\t   Alias /"+share.webdav_name+temp_path+"\n")
-                    f2.write("\t   <Directory "+temp_path+">\n")
-                    f2.write("\t   </Directory>\n")
-                    if share.webdav_ro == 1:
-                        f2.write("\t   <Location /" +
-                                 share.webdav_name +
-                                 ">\n\t\t AllowMethods GET OPTIONS PROPFIND\n\t   </Location>\n")
-                    # Note: the 'and' in the if statement below is to ensure
-                    # that we do not waste time in changin permisions twice
-                    # (once while in http block)
-                    if (share.webdav_perm and dav_protocol != "httphttps"):
-                        _pipeopen("chown -R webdav:webdav %s" % share.webdav_path)
-                f2.write(dav_config_posttext)
+        with open(davssl_config_file, 'w') as f2:
+            f2.write(" Listen " +
+                     str(dav_tcpportssl) + "\n")
+            f2.write("\t <VirtualHost *:" + str(dav_tcpportssl) + ">\n")
+            f2.write("\t  SSLEngine on\n")
+            f2.write("""\t  SSLCertificateFile "%s"\n""" % dav_ssl_certfile)
+            f2.write("""\t  SSLCertificateKeyFile "%s"\n""" % dav_ssl_keyfile)
+            f2.write("\t  SSLProtocol +TLSv1 +TLSv1.1 +TLSv1.2\n\t  SSLCipherSuite HIGH:MEDIUM\n")
+            f2.write(dav_config_pretext)
+            # Note: The for loop below is essentially code duplication,
+            # but since two different files are being written to I could
+            # not at the moment find a more efficient way of doing this.
+            # (if you can fix it, please do so)
+            for share in webshares:
+                temp_path = """ "%s" """ % share.webdav_path
+                f2.write("\t   Alias /" + share.webdav_name + temp_path + "\n")
+                f2.write("\t   <Directory " + temp_path + ">\n")
+                f2.write("\t   </Directory>\n")
+                if share.webdav_ro == 1:
+                    f2.write(
+                        "\t   <Location /" +
+                        share.webdav_name +
+                        ">\n\t\t AllowMethods GET OPTIONS PROPFIND\n\t   </Location>\n"
+                    )
+                # Note: the 'and' in the if statement below is to ensure
+                # that we do not waste time in changin permisions twice
+                # (once while in http block)
+                if (share.webdav_perm and dav_protocol != "httphttps"):
+                    _pipeopen("chown -R webdav:webdav %s" % share.webdav_path)
+            f2.write(dav_config_posttext)
 
 if __name__ == "__main__":
     main()
