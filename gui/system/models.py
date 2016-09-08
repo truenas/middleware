@@ -78,7 +78,7 @@ class Settings(Model):
     stg_guicertificate = models.ForeignKey(
         "Certificate",
         verbose_name=_("Certificate"),
-        limit_choices_to={'cert_CSR__isnull': True}
+        limit_choices_to={'cert_CSR__isnull': True},
         on_delete=models.SET_NULL,
         blank=True,
         null=True
