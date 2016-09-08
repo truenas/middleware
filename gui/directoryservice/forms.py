@@ -47,7 +47,6 @@ from freenasUI.common.pipesubr import run
 from freenasUI.common.ssl import get_certificateauthority_path
 from freenasUI.common.system import (
     validate_netbios_name,
-    validate_netbios_names,
     compare_netbios_names
 )
 from freenasUI.directoryservice import models
@@ -491,7 +490,7 @@ class ActiveDirectoryForm(ModelForm):
     def clean_ad_netbiosname_a(self):
         netbiosname = self.cleaned_data.get("ad_netbiosname_a")
         try:
-            validate_netbios_names(netbiosname)
+            validate_netbios_name(netbiosname)
         except Exception as e:
             raise forms.ValidationError(e)
         return netbiosname
@@ -506,10 +505,19 @@ class ActiveDirectoryForm(ModelForm):
                 'NetBIOS cannot be the same as the first.'
             ))
         try:
-            validate_netbios_names(netbiosname)
+            validate_netbios_name(netbiosname)
         except Exception as e:
             raise forms.ValidationError(e)
         return netbiosname
+
+    def clean_ad_netbiosalias(self):
+        netbiosalias = self.cleaned_data.get("ad_netbiosalias")
+        if netbiosalias:
+            try:
+                validate_netbios_name(netbiosalias)
+            except Exception as e:
+                raise forms.ValidationError(e)
+        return netbiosalias
 
     def clean(self):
         cdata = self.cleaned_data
@@ -778,7 +786,7 @@ class LDAPForm(ModelForm):
     def clean_ldap_netbiosname_a(self):
         netbiosname = self.cleaned_data.get("ldap_netbiosname_a")
         try:
-            validate_netbios_names(netbiosname)
+            validate_netbios_name(netbiosname)
         except Exception as e:
             raise forms.ValidationError(e)
         return netbiosname
@@ -793,10 +801,19 @@ class LDAPForm(ModelForm):
                 'NetBIOS cannot be the same as the first.'
             ))
         try:
-            validate_netbios_names(netbiosname)
+            validate_netbios_name(netbiosname)
         except Exception as e:
             raise forms.ValidationError(e)
         return netbiosname
+
+    def clean_ldap_netbiosalias(self):
+        netbiosalias = self.cleaned_data.get("ldap_netbiosalias")
+        if netbiosalias:
+            try:
+                validate_netbios_name(netbiosalias)
+            except Exception as e:
+                raise forms.ValidationError(e)
+        return netbiosalias
 
     def clean(self):
         cdata = self.cleaned_data

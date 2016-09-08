@@ -44,7 +44,6 @@ from freenasUI.common.forms import ModelForm, Form
 from freenasUI.common.samba import Samba4
 from freenasUI.common.system import (
     validate_netbios_name,
-    validate_netbios_names,
     activedirectory_enabled,
     nt4_enabled,
     ldap_enabled
@@ -263,7 +262,7 @@ class CIFSForm(ModelForm):
     def clean_cifs_srv_netbiosname(self):
         netbios = self.cleaned_data.get("cifs_srv_netbiosname")
         try:
-            validate_netbios_names(netbios)
+            validate_netbios_name(netbios)
         except Exception as e:
             raise forms.ValidationError(_("netbiosname: %s" % e))
         return netbios
@@ -272,7 +271,7 @@ class CIFSForm(ModelForm):
         netbios = self.cleaned_data.get("cifs_srv_netbiosname_b")
         if netbios:
             try:
-                validate_netbios_names(netbios)
+                validate_netbios_name(netbios)
             except Exception as e:
                 raise forms.ValidationError(_("netbiosname: %s" % e))
         return netbios
@@ -281,7 +280,7 @@ class CIFSForm(ModelForm):
         alias = self.cleaned_data.get("cifs_srv_netbiosalias")
         if alias:
             try:
-                validate_netbios_names(alias)
+                validate_netbios_name(alias)
             except Exception as e:
                 raise forms.ValidationError(_("NetBIOS Alias: %s" % e))
         return alias
