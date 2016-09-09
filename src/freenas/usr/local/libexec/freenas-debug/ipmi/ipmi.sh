@@ -36,8 +36,8 @@ ipmi_func()
 	ipmitool lan print
 	section_footer
 
-	section_header "ipmitool -I open sel list"
-	ipmitool -I open sel list
+	section_header "ipmitool sel list"
+	ipmitool sel list
 	section_footer
 
 	section_header "ipmitool sdr list | grep Temp"
@@ -46,5 +46,9 @@ ipmi_func()
 
 	section_header "ipmitool sensor"
 	ipmitool sensor
+	section_footer
+
+	section_header "ipmitool mc info"
+	ipmitool mc info
 	section_footer
 }
