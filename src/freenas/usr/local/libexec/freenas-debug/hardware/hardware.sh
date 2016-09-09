@@ -133,4 +133,10 @@ hardware_func()
 		getencstat -V /dev/ses*
 		section_footer
 	fi
+
+	if [ -c /dev/mps0 ]; then
+		section_header "sas2flash -listall"
+		sas2flash -listall
+		section_footer
+	fi
 }
