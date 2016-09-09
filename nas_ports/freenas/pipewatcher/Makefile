@@ -27,6 +27,6 @@ do-build:
 
 do-install:
 	mkdir -p ${STAGEDIR}${PREFIX}/bin
-	${INSTALL_BIN} ${WRKSRC}/pipewatcher ${STAGEDIR}${PREFIX}/bin/
+	${INSTALL_PROGRAM} ${WRKSRC}/pipewatcher ${STAGEDIR}${PREFIX}/bin/
 
 .include <bsd.port.mk>
