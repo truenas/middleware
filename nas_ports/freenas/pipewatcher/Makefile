@@ -26,7 +26,7 @@ do-build:
 	cd ${WRKSRC} && ${CC} pipewatcher.c -o pipewatcher
 
 do-install:
-	mkdir -p ${STAGEDIR}${PREFIX}/usr/local/bin
-	${INSTALL_BIN} ${WRKSRC}/pipewatcher ${STAGEDIR}${PREFIX}/usr/local/bin/
+	mkdir -p ${STAGEDIR}${PREFIX}/bin
+	${INSTALL_BIN} ${WRKSRC}/pipewatcher ${STAGEDIR}${PREFIX}/bin/
 
 .include <bsd.port.mk>
