@@ -58,7 +58,7 @@ int main(int argc, char **argv) {
 			write_accum_size = 0;
 			for(;;) {
 
-				write_size = write(STDOUT_FILENO, &buffer + write_accum_size, read_size);
+				write_size = write(STDOUT_FILENO, buffer + write_accum_size, read_size - write_accum_size);
 
 				if(write_size == -1) {
 					if(errno != EAGAIN) {
