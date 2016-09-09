@@ -23,7 +23,7 @@ class Migration(DataMigration):
                 seen_idents.append(d.disk_identifier)
                 id_map[str(d.id)] = d.disk_identifier
 
-		"""
+        """
         Its possible tasks_smarttest_smarttest_disks will have an index called
         sqlite_auto_*, indexes with that kind of name pattern are for internal
         sqlite3 use, thus any table rename operation will lead to an error
