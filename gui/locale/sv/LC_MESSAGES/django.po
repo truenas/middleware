@@ -1321,9 +1321,8 @@ msgstr "Detta fält krävs för att \"Aktivera hemkatalogsbläddring\"."
 msgid "This field is required for \"Home directories\"."
 msgstr "Detta fält krävs för \"hemkataloger\"."
 
-#: services/forms.py:106
-msgid "The SMB service failed to reload."
-msgstr "SMB tjänsten kunde inte starta om."
+#~ msgid "The SMB service failed to reload."
+#~ msgstr "SMB tjänsten kunde inte starta om."
 
 #: services/forms.py:118
 msgid "The AFP service failed to reload."
@@ -1770,13 +1769,12 @@ msgstr "Dessa parametrar har skapats i [homes] delen av smb.conf"
 msgid "Unix Extensions"
 msgstr "UNIX anknytningar"
 
-#: services/models.py:167
-msgid ""
-"These extensions enable Samba to better serve UNIX SMB clients by "
-"supporting features such as symbolic links, hard links, etc..."
-msgstr ""
-"Dessa anknytningar aktiverar Samba för att bättre betjäna UNIX SMB-klienter "
-"genom att stödja funktioner som symboliska länkar, hårda länkar, etc. .."
+#~ msgid ""
+#~ "These extensions enable Samba to better serve UNIX SMB clients by "
+#~ "supporting features such as symbolic links, hard links, etc..."
+#~ msgstr ""
+#~ "Dessa anknytningar aktiverar Samba för att bättre betjäna UNIX SMB-klienter "
+#~ "genom att stödja funktioner som symboliska länkar, hårda länkar, etc. .."
 
 #: services/models.py:171
 msgid "Enable AIO"
@@ -1810,20 +1808,17 @@ msgstr ""
 msgid "Zeroconf share discovery"
 msgstr "Noll-konfigurerings utdelning upptäckt"
 
-#: services/models.py:189
-msgid ""
-"Zeroconf support via Avahi allows clients (the Mac OSX finder in particular) "
-"to automatically discover the SMB shares on the system similar to the "
-"Computer Browser service in Windows."
-msgstr ""
-"Noll-konfigurerings support via Avahi tillåter klienter (Mac OSX Finder i "
-"synnerhet) för att automatiskt upptäcka SMB utdelningarna i systemet "
-"liknande utforskaren tjänsten i Windows."
+#~ msgid ""
+#~ "Zeroconf support via Avahi allows clients (the Mac OSX finder in particular) "
+#~ "to automatically discover the SMB shares on the system similar to the "
+#~ "Computer Browser service in Windows."
+#~ msgstr ""
+#~ "Noll-konfigurerings support via Avahi tillåter klienter (Mac OSX Finder i "
+#~ "synnerhet) för att automatiskt upptäcka SMB utdelningarna i systemet "
+#~ "liknande utforskaren tjänsten i Windows."
 
-#: services/models.py:193 services/models.py:194
-#: templates/services/core.html:26
-msgid "SMB"
-msgstr "SMB"
+#~ msgid "SMB"
+#~ msgstr "SMB"
 
 #~ msgid "Server Name"
 #~ msgstr "Server namn"
@@ -3260,13 +3255,11 @@ msgstr ""
 msgid "These parameters are added to [Share] section of smb.conf"
 msgstr "Dessa parametrar läggs till [Share] i smb.conf"
 
-#: sharing/models.py:94
-msgid "Windows (SMB) Share"
-msgstr "Windows (SMB) utdelning"
+#~ msgid "Windows (SMB) Share"
+#~ msgstr "Windows (SMB) utdelning"
 
-#: sharing/models.py:95
-msgid "Windows (SMB) Shares"
-msgstr "Windows (SMB) utdelning"
+#~ msgid "Windows (SMB) Shares"
+#~ msgstr "Windows (SMB) utdelning"
 
 #: sharing/models.py:114
 #, fuzzy
@@ -5385,9 +5378,8 @@ msgstr "AFP Inställningar"
 #~ msgid "Active Directory Settings"
 #~ msgstr "Active DirectoryInställningar"
 
-#: templates/services/core.html:32
-msgid "SMB Settings"
-msgstr "SMB Inställningar"
+#~ msgid "SMB Settings"
+#~ msgstr "SMB Inställningar"
 
 #: templates/services/core.html:45
 msgid "Dynamic DNS Settings"
@@ -5606,9 +5598,8 @@ msgstr "Apple (AFP)"
 msgid "UNIX (NFS)"
 msgstr "UNIX (NFS)"
 
-#: templates/sharing/index.html:12
-msgid "Windows (SMB)"
-msgstr "Windows (SMB)"
+#~ msgid "Windows (SMB)"
+#~ msgstr "Windows (SMB)"
 
 #~ msgid "There are no active UNIX (NFS) shares."
 #~ msgstr "Det finns inga aktiva UNIX (NFS) utdelningar."
@@ -13176,3 +13167,63 @@ msgid ""
 "The command used to shutdown the server. You can use a custom command here "
 "to perform other tasks before shutdown.default: /sbin/shutdown -p now"
 msgstr ""
+
+#: account/forms.py:500
+msgid ""
+"Passwords containing a question mark (?) are currently not allowed due to "
+"problems with CIFS."
+msgstr ""
+
+#: services/forms.py:181
+msgid "The CIFS service failed to reload."
+msgstr "CIFS tjänsten kunde inte starta om."
+
+#: services/models.py:179
+msgid ""
+"These extensions enable Samba to better serve UNIX CIFS clients by "
+"supporting features such as symbolic links, hard links, etc..."
+msgstr ""
+"Dessa anknytningar aktiverar Samba för att bättre betjäna UNIX CIFS-klienter "
+"genom att stödja funktioner som symboliska länkar, hårda länkar, etc. .."
+
+#: services/models.py:208
+msgid ""
+"Zeroconf support via Avahi allows clients (the Mac OSX finder in particular) "
+"to automatically discover the CIFS shares on the system similar to the "
+"Computer Browser service in Windows."
+msgstr ""
+"Noll-konfigurerings support via Avahi tillåter klienter (Mac OSX Finder i "
+"synnerhet) för att automatiskt upptäcka CIFS utdelningarna i systemet "
+"liknande utforskaren tjänsten i Windows."
+
+#: services/models.py:223
+#: services/models.py:224
+#: storage/forms.py:2039
+#: templates/services/core.html:15
+msgid "CIFS"
+msgstr "CIFS"
+
+#: services/forms.py:95
+msgid "Cannot disable CIFS while ActiveDirectory is in use."
+msgstr ""
+
+#: sharing/models.py:94
+msgid "Windows (CIFS) Share"
+msgstr "Windows (CIFS) utdelning"
+
+#: sharing/models.py:95
+msgid "Windows (CIFS) Shares"
+msgstr "Windows (CIFS) utdelning"
+
+#: services/views.py:269
+#, fuzzy
+msgid "CIFS successfully updated."
+msgstr "%s uppdateringen lyckades."
+
+#: templates/services/core.html:21
+msgid "CIFS Settings"
+msgstr "CIFS Inställningar"
+
+#: templates/sharing/index.html:15
+msgid "Windows (CIFS)"
+msgstr "Windows (CIFS)"

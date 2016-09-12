@@ -1328,9 +1328,8 @@ msgstr "To je zahtevano polje za \"Omogoči brskanje domačih direktorijev\"."
 msgid "This field is required for \"Home directories\"."
 msgstr "To polje je potrebno za \"Domač-e direktorij-e\"."
 
-#: services/forms.py:106
-msgid "The SMB service failed to reload."
-msgstr "SMB servis se ni ponovno zagnal."
+#~ msgid "The SMB service failed to reload."
+#~ msgstr "SMB servis se ni ponovno zagnal."
 
 #: services/forms.py:118
 msgid "The AFP service failed to reload."
@@ -1778,14 +1777,13 @@ msgstr "Parametri so dodani v globalen del smb.conf"
 msgid "Unix Extensions"
 msgstr "UNIX Končnica"
 
-#: services/models.py:167
-msgid ""
-"These extensions enable Samba to better serve UNIX SMB clients by "
-"supporting features such as symbolic links, hard links, etc..."
-msgstr ""
-"Te razširitve omogočajo, da Samba bolje služil UNIX SMB strankam s podporo "
-"funkcij, kot so simbolne povezave (symbolic links), trdih povezav (hard "
-"links), itd ..."
+#~ msgid ""
+#~ "These extensions enable Samba to better serve UNIX SMB clients by "
+#~ "supporting features such as symbolic links, hard links, etc..."
+#~ msgstr ""
+#~ "Te razširitve omogočajo, da Samba bolje služil UNIX SMB strankam s podporo "
+#~ "funkcij, kot so simbolne povezave (symbolic links), trdih povezav (hard "
+#~ "links), itd ..."
 
 #: services/models.py:171
 msgid "Enable AIO"
@@ -1823,20 +1821,17 @@ msgstr ""
 msgid "Zeroconf share discovery"
 msgstr "Odkrivanje deljenja Zeroconf"
 
-#: services/models.py:189
-msgid ""
-"Zeroconf support via Avahi allows clients (the Mac OSX finder in particular) "
-"to automatically discover the SMB shares on the system similar to the "
-"Computer Browser service in Windows."
-msgstr ""
-"Zeroconf podpora preko Avahi-a omogoča strankam (Mac OSX finder) za "
-"samodejno odkrivanje SMB deljenje prostora na sistemu, podobno kot Computer "
-"Browse storitev v windows sistemih."
+#~ msgid ""
+#~ "Zeroconf support via Avahi allows clients (the Mac OSX finder in particular) "
+#~ "to automatically discover the SMB shares on the system similar to the "
+#~ "Computer Browser service in Windows."
+#~ msgstr ""
+#~ "Zeroconf podpora preko Avahi-a omogoča strankam (Mac OSX finder) za "
+#~ "samodejno odkrivanje SMB deljenje prostora na sistemu, podobno kot Computer "
+#~ "Browse storitev v windows sistemih."
 
-#: services/models.py:193 services/models.py:194
-#: templates/services/core.html:26
-msgid "SMB"
-msgstr "SMB"
+#~ msgid "SMB"
+#~ msgstr "SMB"
 
 #~ msgid "Server Name"
 #~ msgstr "Ime strežnika"
@@ -13050,4 +13045,65 @@ msgstr "Način zaustavitve"
 msgid ""
 "The command used to shutdown the server. You can use a custom command here "
 "to perform other tasks before shutdown.default: /sbin/shutdown -p now"
+msgstr ""
+
+#: account/forms.py:500
+msgid ""
+"Passwords containing a question mark (?) are currently not allowed due to "
+"problems with CIFS."
+msgstr ""
+
+#: services/forms.py:181
+msgid "The CIFS service failed to reload."
+msgstr "CIFS servis se ni ponovno zagnal."
+
+#: services/models.py:179
+msgid ""
+"These extensions enable Samba to better serve UNIX CIFS clients by "
+"supporting features such as symbolic links, hard links, etc..."
+msgstr ""
+"Te razširitve omogočajo, da Samba bolje služil UNIX CIFS strankam s podporo "
+"funkcij, kot so simbolne povezave (symbolic links), trdih povezav (hard "
+"links), itd ..."
+
+#: services/models.py:208
+msgid ""
+"Zeroconf support via Avahi allows clients (the Mac OSX finder in particular) "
+"to automatically discover the CIFS shares on the system similar to the "
+"Computer Browser service in Windows."
+msgstr ""
+"Zeroconf podpora preko Avahi-a omogoča strankam (Mac OSX finder) za "
+"samodejno odkrivanje CIFS deljenje prostora na sistemu, podobno kot Computer "
+"Browse storitev v windows sistemih."
+
+#: services/models.py:223
+#: services/models.py:224
+#: storage/forms.py:2039
+#: templates/services/core.html:15
+msgid "CIFS"
+msgstr "CIFS"
+
+#: services/forms.py:95
+msgid "Cannot disable CIFS while ActiveDirectory is in use."
+msgstr ""
+
+#: sharing/models.py:94
+msgid "Windows (CIFS) Share"
+msgstr ""
+
+#: sharing/models.py:95
+msgid "Windows (CIFS) Shares"
+msgstr ""
+
+#: services/views.py:269
+#, fuzzy
+msgid "CIFS successfully updated."
+msgstr "% uspešno posodobljen."
+
+#: templates/services/core.html:21
+msgid "CIFS Settings"
+msgstr ""
+
+#: templates/sharing/index.html:15
+msgid "Windows (CIFS)"
 msgstr ""

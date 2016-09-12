@@ -1361,9 +1361,8 @@ msgstr "Aquest camp és requereix per \"Enable home directories browsing\"."
 msgid "This field is required for \"Home directories\"."
 msgstr "Aquest camp és requereix per \"Home directories\"."
 
-#: services/forms.py:106
-msgid "The SMB service failed to reload."
-msgstr "El servei SMB ha fallat la recàrrega."
+#~ msgid "The SMB service failed to reload."
+#~ msgstr "El servei SMB ha fallat la recàrrega."
 
 #: services/forms.py:118
 msgid "The AFP service failed to reload."
@@ -1876,10 +1875,8 @@ msgid ""
 "Computer Browser service in Windows."
 msgstr ""
 
-#: services/models.py:193 services/models.py:194
-#: templates/services/core.html:26
-msgid "SMB"
-msgstr "SMB"
+#~ msgid "SMB"
+#~ msgstr "SMB"
 
 #~ msgid "Server Name"
 #~ msgstr "Nom del servidor"
@@ -5533,9 +5530,8 @@ msgstr "paràmetres AFP"
 #~ msgid "Active Directory Settings"
 #~ msgstr "Paràmetres del directori actiu"
 
-#: templates/services/core.html:32
-msgid "SMB Settings"
-msgstr "Paràmetres SMB"
+#~ msgid "SMB Settings"
+#~ msgstr "Paràmetres SMB"
 
 #: templates/services/core.html:45
 msgid "Dynamic DNS Settings"
@@ -5800,21 +5796,17 @@ msgstr "Elimina la compartició (share) de NFS (sistema de fitxers)"
 msgid "Add UNIX (NFS) Share"
 msgstr "Afegir la compartició UNIX"
 
-#: templates/sharing/windows.html:7
-msgid "There are no active Windows (SMB) shares."
-msgstr "No hi ha cap finestra activa de compartició"
+#~ msgid "There are no active Windows (SMB) shares."
+#~ msgstr "No hi ha cap finestra activa de compartició"
 
-#: templates/sharing/windows.html:33
-msgid "Edit Windows (SMB) Share"
-msgstr "Editar finestra de compartició"
+#~ msgid "Edit Windows (SMB) Share"
+#~ msgstr "Editar finestra de compartició"
 
-#: templates/sharing/windows.html:39
-msgid "Delete Windows (SMB) Share"
-msgstr "Eliminar finestra de compartició"
+#~ msgid "Delete Windows (SMB) Share"
+#~ msgstr "Eliminar finestra de compartició"
 
-#: templates/sharing/windows.html:53 templates/sharing/windows.html.py:55
-msgid "Add Windows (SMB) Share"
-msgstr "Afegir finestra de compartició"
+#~ msgid "Add Windows (SMB) Share"
+#~ msgstr "Afegir finestra de compartició"
 
 #: templates/storage/clonesnap.html:2 templates/storage/snapshots.html:16
 msgid "Clone Snapshot"
@@ -6459,8 +6451,8 @@ msgstr "Veure tots els usuaris"
 #~ msgid "Close"
 #~ msgstr "Tancar"
 
-msgid "Add Apple (SMB) Share"
-msgstr "Afegir Apple share"
+#~ msgid "Add Apple (SMB) Share"
+#~ msgstr "Afegir Apple share"
 
 #~ msgid "Apply Service Pack"
 #~ msgstr "Aplicar el Service Pack"
@@ -6567,8 +6559,8 @@ msgstr "Afegir Apple share"
 #~ "usuari ha d'existir al fitxer password, però no requereix tenir un login "
 #~ "vàlid."
 
-msgid "SMB Share"
-msgstr "UNIX Share"
+#~ msgid "SMB Share"
+#~ msgstr "UNIX Share"
 
 #~ msgid "SMB Shares"
 #~ msgstr "Comparticions SMB"
@@ -13719,3 +13711,83 @@ msgid ""
 "The command used to shutdown the server. You can use a custom command here "
 "to perform other tasks before shutdown.default: /sbin/shutdown -p now"
 msgstr ""
+
+#: account/forms.py:500
+msgid ""
+"Passwords containing a question mark (?) are currently not allowed due to "
+"problems with CIFS."
+msgstr ""
+
+#: services/forms.py:106
+msgid "The CIFS service failed to reload."
+msgstr "El servei CIFS ha fallat la recàrrega."
+
+#: services/models.py:167
+msgid ""
+"These extensions enable Samba to better serve UNIX CIFS clients by "
+"supporting features such as symbolic links, hard links, etc..."
+msgstr ""
+
+#: services/models.py:189
+msgid ""
+"Zeroconf support via Avahi allows clients (the Mac OSX finder in particular) "
+"to automatically discover the CIFS shares on the system similar to the "
+"Computer Browser service in Windows."
+msgstr ""
+
+#: services/models.py:193
+#: services/models.py:194
+#: templates/services/core.html:26
+msgid "CIFS"
+msgstr "CIFS"
+
+#: sharing/models.py:94
+#, fuzzy
+msgid "Windows (CIFS) Share"
+msgstr "Compartició de Windows"
+
+#: sharing/models.py:95
+#, fuzzy
+msgid "Windows (CIFS) Shares"
+msgstr "Compartició de Windows"
+
+#: services/forms.py:95
+msgid "Cannot disable CIFS while ActiveDirectory is in use."
+msgstr ""
+
+#: services/views.py:269
+#, fuzzy
+msgid "CIFS successfully updated."
+msgstr "%s actualitzat amb èxit."
+
+#: templates/services/core.html:32
+msgid "CIFS Settings"
+msgstr "Paràmetres CIFS"
+
+#: templates/sharing/index.html:12
+#, fuzzy
+msgid "Windows (CIFS)"
+msgstr "Afegir finestra de compartició (CIFS)"
+
+#: templates/sharing/windows.html:7
+msgid "There are no active Windows (CIFS) shares."
+msgstr "No hi ha cap finestra activa de compartició"
+
+#: templates/sharing/windows.html:33
+msgid "Edit Windows (CIFS) Share"
+msgstr "Editar finestra de compartició"
+
+#: templates/sharing/windows.html:39
+msgid "Delete Windows (CIFS) Share"
+msgstr "Eliminar finestra de compartició"
+
+#: templates/sharing/windows.html:53
+#: templates/sharing/windows.html.py:55
+msgid "Add Windows (CIFS) Share"
+msgstr "Afegir finestra de compartició"
+
+msgid "Add Apple (CIFS) Share"
+msgstr "Afegir Apple share"
+
+msgid "CIFS Share"
+msgstr "UNIX Share"

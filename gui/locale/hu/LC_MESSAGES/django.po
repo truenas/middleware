@@ -1360,9 +1360,8 @@ msgstr "Kötelező mező a \"Saját könyvtár böngészésének engedélyezés�
 msgid "This field is required for \"Home directories\"."
 msgstr "Kötelező mező a \"Saját könyvtárak\" eléréséhez"
 
-#: services/forms.py:106
-msgid "The SMB service failed to reload."
-msgstr "Az SMB szolgáltatás újraindítása nem sikerült."
+#~ msgid "The SMB service failed to reload."
+#~ msgstr "Az SMB szolgáltatás újraindítása nem sikerült."
 
 #: services/forms.py:118
 msgid "The AFP service failed to reload."
@@ -1862,10 +1861,8 @@ msgid ""
 "Computer Browser service in Windows."
 msgstr ""
 
-#: services/models.py:193 services/models.py:194
-#: templates/services/core.html:26
-msgid "SMB"
-msgstr "SMB"
+#~ msgid "SMB"
+#~ msgstr "SMB"
 
 #~ msgid "Server Name"
 #~ msgstr "Szerver neve"
@@ -3270,9 +3267,8 @@ msgstr ""
 msgid "These parameters are added to [Share] section of smb.conf"
 msgstr "Ezek a paraméterek az smb.conf fájl [Share] részéhez adódnak."
 
-#: sharing/models.py:94
-msgid "Windows (SMB) Share"
-msgstr "Windows (SMB) megosztás"
+#~ msgid "Windows (SMB) Share"
+#~ msgstr "Windows (SMB) megosztás"
 
 #: sharing/models.py:95
 #, fuzzy
@@ -9486,12 +9482,11 @@ msgstr ""
 msgid "Enable experimental target"
 msgstr ""
 
-#: account/forms.py:500
-msgid ""
-"Passwords containing a question mark (?) are currently not allowed due to "
-"problems with SMB."
-msgstr ""
-"A SMB korlátozásai miatt a kérdőjelet(?) tartalmazó jelszavak tiltottak."
+#~ msgid ""
+#~ "Passwords containing a question mark (?) are currently not allowed due to "
+#~ "problems with SMB."
+#~ msgstr ""
+#~ "A SMB korlátozásai miatt a kérdőjelet(?) tartalmazó jelszavak tiltottak."
 
 #: directoryservice/forms.py:104
 #, fuzzy
@@ -13284,3 +13279,61 @@ msgid ""
 "The command used to shutdown the server. You can use a custom command here "
 "to perform other tasks before shutdown.default: /sbin/shutdown -p now"
 msgstr ""
+
+#: account/forms.py:500
+msgid ""
+"Passwords containing a question mark (?) are currently not allowed due to "
+"problems with CIFS."
+msgstr ""
+"A CIFS korlátozásai miatt a kérdőjelet(?) tartalmazó jelszavak tiltottak."
+
+#: services/forms.py:181
+msgid "The CIFS service failed to reload."
+msgstr "Az CIFS szolgáltatás újraindítása nem sikerült."
+
+#: services/models.py:179
+msgid ""
+"These extensions enable Samba to better serve UNIX CIFS clients by "
+"supporting features such as symbolic links, hard links, etc..."
+msgstr ""
+
+#: services/models.py:208
+msgid ""
+"Zeroconf support via Avahi allows clients (the Mac OSX finder in particular) "
+"to automatically discover the CIFS shares on the system similar to the "
+"Computer Browser service in Windows."
+msgstr ""
+
+#: services/models.py:223
+#: services/models.py:224
+#: storage/forms.py:2039
+#: templates/services/core.html:15
+msgid "CIFS"
+msgstr "CIFS"
+
+#: services/forms.py:95
+msgid "Cannot disable CIFS while ActiveDirectory is in use."
+msgstr ""
+
+#: sharing/models.py:94
+msgid "Windows (CIFS) Share"
+msgstr "Windows (CIFS) megosztás"
+
+#: sharing/models.py:95
+#, fuzzy
+msgid "Windows (CIFS) Shares"
+msgstr "Windows megosztások"
+
+#: services/views.py:269
+#, fuzzy
+msgid "CIFS successfully updated."
+msgstr "%s sikeresen frissítve."
+
+#: templates/services/core.html:21
+msgid "CIFS Settings"
+msgstr ""
+
+#: templates/sharing/index.html:15
+#, fuzzy
+msgid "Windows (CIFS)"
+msgstr "Windows megosztás"

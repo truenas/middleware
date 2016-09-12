@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:05-0700\n"
-"PO-Revision-Date: 2016-07-29 11:44+0000\n"
+"PO-Revision-Date: 2016-09-11 16:42+0000\n"
 "Last-Translator: BouRock <hitowerdigit@hotmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: tr\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1)\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1469792686.0\n"
+"X-POOTLE-MTIME: 1473612174.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -1348,9 +1348,8 @@ msgstr "\"Ana dizinlere gözatmayı etkinleştir\" için bu alan gereklidir."
 msgid "This field is required for \"Home directories\"."
 msgstr "\"Ana dizinler\" için bu alan gereklidir."
 
-#: services/forms.py:106
-msgid "The SMB service failed to reload."
-msgstr "SMB hizmetini yeniden yükleme başarısız oldu."
+#~ msgid "The SMB service failed to reload."
+#~ msgstr "SMB hizmetini yeniden yükleme başarısız oldu."
 
 #: services/forms.py:118
 msgid "The AFP service failed to reload."
@@ -1807,14 +1806,13 @@ msgstr "Bu parametreler smb.conf dosyasının [homes] bölümüne eklenir"
 msgid "Unix Extensions"
 msgstr "Unix Uzantıları"
 
-#: services/models.py:167
-msgid ""
-"These extensions enable Samba to better serve UNIX SMB clients by "
-"supporting features such as symbolic links, hard links, etc..."
-msgstr ""
-"Bu uzantılar, simgesel bağlantılar, sabit bağlatılar, vb. gibi özellikleri "
-"destekleyerek UNIX SMB istemcilerinin daha iyi hizmet etmesi için Samba'yı "
-"etkinleştirir."
+#~ msgid ""
+#~ "These extensions enable Samba to better serve UNIX SMB clients by "
+#~ "supporting features such as symbolic links, hard links, etc..."
+#~ msgstr ""
+#~ "Bu uzantılar, simgesel bağlantılar, sabit bağlatılar, vb. gibi özellikleri "
+#~ "destekleyerek UNIX SMB istemcilerinin daha iyi hizmet etmesi için Samba'yı "
+#~ "etkinleştirir."
 
 #: services/models.py:171
 msgid "Enable AIO"
@@ -1846,20 +1844,17 @@ msgstr "İstek boyutu bu değerden büyükse Samba eşzamanlı olmadan yazacakt�
 msgid "Zeroconf share discovery"
 msgstr "Sıfır yapılandırma paylaşım keşfi"
 
-#: services/models.py:189
-msgid ""
-"Zeroconf support via Avahi allows clients (the Mac OSX finder in particular) "
-"to automatically discover the SMB shares on the system similar to the "
-"Computer Browser service in Windows."
-msgstr ""
-"Avahi aracılığıyla sıfır yapılandırma desteği, Windows'taki Bilgisayar "
-"Tarayıcısı hizmetine benzer, sistem üzerinde SMB paylaşımlarını otomatik "
-"olarak keşfetmek için istemcilere (özellikle Mac OSX buluculara) izin verir."
+#~ msgid ""
+#~ "Zeroconf support via Avahi allows clients (the Mac OSX finder in particular) "
+#~ "to automatically discover the SMB shares on the system similar to the "
+#~ "Computer Browser service in Windows."
+#~ msgstr ""
+#~ "Avahi aracılığıyla sıfır yapılandırma desteği, Windows'taki Bilgisayar "
+#~ "Tarayıcısı hizmetine benzer, sistem üzerinde SMB paylaşımlarını otomatik "
+#~ "olarak keşfetmek için istemcilere (özellikle Mac OSX buluculara) izin verir."
 
-#: services/models.py:193 services/models.py:194
-#: templates/services/core.html:26
-msgid "SMB"
-msgstr "SMB"
+#~ msgid "SMB"
+#~ msgstr "SMB"
 
 #~ msgid "Server Name"
 #~ msgstr "Sunucu adı"
@@ -3316,13 +3311,11 @@ msgstr ""
 msgid "These parameters are added to [Share] section of smb.conf"
 msgstr "Bu parametreler smb.conf dosyasının [Share] bölümüne eklenir"
 
-#: sharing/models.py:94
-msgid "Windows (SMB) Share"
-msgstr "Windows (SMB) Paylaşımı"
+#~ msgid "Windows (SMB) Share"
+#~ msgstr "Windows (SMB) Paylaşımı"
 
-#: sharing/models.py:95
-msgid "Windows (SMB) Shares"
-msgstr "Windows (SMB) Paylaşımları"
+#~ msgid "Windows (SMB) Shares"
+#~ msgstr "Windows (SMB) Paylaşımları"
 
 #: sharing/models.py:114
 msgid ""
@@ -5462,9 +5455,8 @@ msgstr "AFP Ayarları"
 msgid "Active Directory Settings"
 msgstr "Active Directory Ayarları"
 
-#: templates/services/core.html:32
-msgid "SMB Settings"
-msgstr "SMB Ayarları"
+#~ msgid "SMB Settings"
+#~ msgstr "SMB Ayarları"
 
 #: templates/services/core.html:45
 msgid "Dynamic DNS Settings"
@@ -5686,9 +5678,8 @@ msgstr "Apple (AFP)"
 msgid "UNIX (NFS)"
 msgstr "UNIX (NFS)"
 
-#: templates/sharing/index.html:12
-msgid "Windows (SMB)"
-msgstr "Windows (SMB)"
+#~ msgid "Windows (SMB)"
+#~ msgstr "Windows (SMB)"
 
 #~ msgid "There are no active UNIX (NFS) shares."
 #~ msgstr "Hiç aktif UNIX (NFS) paylaşımı yok."
@@ -9590,13 +9581,12 @@ msgstr "Kapsam adı benzersiz olmak zorundadır."
 msgid "Enable experimental target"
 msgstr ""
 
-#: account/forms.py:500
-msgid ""
-"Passwords containing a question mark (?) are currently not allowed due to "
-"problems with SMB."
-msgstr ""
-"Soru işareti (?) içeren parolalara, şimdilik SMB ile olan sorunlardan "
-"dolayı izin verilmiyor."
+#~ msgid ""
+#~ "Passwords containing a question mark (?) are currently not allowed due to "
+#~ "problems with SMB."
+#~ msgstr ""
+#~ "Soru işareti (?) içeren parolalara, şimdilik SMB ile olan sorunlardan "
+#~ "dolayı izin verilmiyor."
 
 #: directoryservice/forms.py:104
 msgid "NT4 failed to reload."
@@ -10298,9 +10288,8 @@ msgstr "Keytab"
 msgid "Kerberos Realm"
 msgstr "Kerberos Erişim Alanı"
 
-#: services/views.py:269
-msgid "SMB successfully updated."
-msgstr "SMB başarılı olarak güncellendi."
+#~ msgid "SMB successfully updated."
+#~ msgstr "SMB başarılı olarak güncellendi."
 
 #: sharing/models.py:290
 msgid "Security"
@@ -12136,8 +12125,7 @@ msgstr "Kimden E-postası"
 
 #: support/models.py:41
 msgid "The email address that the system will use to create this ticket"
-msgstr ""
-"Sistemin bu destek başvurusunu oluşturmak için kullanacağı e-posta adresi"
+msgstr "Sistemin bu çağrıyı oluşturmak için kullanacağı e-posta adresi"
 
 #: support/utils.py:57
 #: support/utils.py:102
@@ -12153,7 +12141,7 @@ msgstr "Bağlantı zaman aşımına uğradı: %s"
 
 #: support/utils.py:107
 msgid "Ticket creation failed, try again later."
-msgstr "Destek başvurusu oluşturma başarısız oldu, daha sonra tekrar deneyin."
+msgstr "Çağrı oluşturma başarısız oldu, daha sonra tekrar deneyin."
 
 #: support/views.py:88
 msgid "License updated."
@@ -13330,9 +13318,8 @@ msgstr ""
 "Kafes adları için geçerli karakterler harfler, sayılar, tireler veya alt "
 "çizgilerdir."
 
-#: services/forms.py:95
-msgid "Cannot disable SMB while ActiveDirectory is in use."
-msgstr "Active Directory kullanımdayken SMB etkisizleştirilemez."
+#~ msgid "Cannot disable SMB while ActiveDirectory is in use."
+#~ msgstr "Active Directory kullanımdayken SMB etkisizleştirilemez."
 
 #: services/models.py:1295
 msgid "Shutdown Command"
@@ -13346,3 +13333,65 @@ msgstr ""
 "Komut sunucuyu kapatmak için kullanılır. Kapatmadan önce diğer görevleri "
 "yapmak için burada özel bir komut kullanabilirsiniz. Varsayılan: /sbin/"
 "shutdown -p now"
+
+#: account/forms.py:500
+msgid ""
+"Passwords containing a question mark (?) are currently not allowed due to "
+"problems with CIFS."
+msgstr ""
+"Soru işareti (?) içeren parolalara, şimdilik CIFS ile olan sorunlardan "
+"dolayı izin verilmiyor."
+
+#: services/forms.py:181
+msgid "The CIFS service failed to reload."
+msgstr "CIFS hizmetini yeniden yükleme başarısız oldu."
+
+#: services/models.py:179
+msgid ""
+"These extensions enable Samba to better serve UNIX CIFS clients by "
+"supporting features such as symbolic links, hard links, etc..."
+msgstr ""
+"Bu uzantılar, simgesel bağlantılar, sabit bağlatılar, vb. gibi özellikleri "
+"destekleyerek UNIX CIFS istemcilerinin daha iyi hizmet etmesi için Samba'yı "
+"etkinleştirir."
+
+#: services/models.py:208
+msgid ""
+"Zeroconf support via Avahi allows clients (the Mac OSX finder in particular) "
+"to automatically discover the CIFS shares on the system similar to the "
+"Computer Browser service in Windows."
+msgstr ""
+"Avahi aracılığıyla sıfır yapılandırma desteği, Windows'taki Bilgisayar "
+"Tarayıcısı hizmetine benzer, sistem üzerinde CIFS paylaşımlarını otomatik "
+"olarak keşfetmek için istemcilere (özellikle Mac OSX buluculara) izin verir."
+
+#: services/models.py:223
+#: services/models.py:224
+#: storage/forms.py:2039
+#: templates/services/core.html:15
+msgid "CIFS"
+msgstr "CIFS"
+
+#: services/forms.py:95
+msgid "Cannot disable CIFS while ActiveDirectory is in use."
+msgstr "Active Directory kullanımdayken CIFS etkisizleştirilemez."
+
+#: sharing/models.py:94
+msgid "Windows (CIFS) Share"
+msgstr "Windows (CIFS) Paylaşımı"
+
+#: sharing/models.py:95
+msgid "Windows (CIFS) Shares"
+msgstr "Windows (CIFS) Paylaşımları"
+
+#: services/views.py:269
+msgid "CIFS successfully updated."
+msgstr "CIFS başarılı olarak güncellendi."
+
+#: templates/services/core.html:21
+msgid "CIFS Settings"
+msgstr "CIFS Ayarları"
+
+#: templates/sharing/index.html:15
+msgid "Windows (CIFS)"
+msgstr "Windows (CIFS)"
