@@ -1862,10 +1862,8 @@ msgid ""
 "Computer Browser service in Windows."
 msgstr ""
 
-#: services/models.py:193 services/models.py:194
-#: templates/services/core.html:26
-msgid "SMB"
-msgstr "SMB"
+#~ msgid "SMB"
+#~ msgstr "SMB"
 
 #~ msgid "Server Name"
 #~ msgstr "Име на сървъра"
@@ -5355,9 +5353,8 @@ msgstr "AFP настройки"
 #~ msgid "Active Directory Settings"
 #~ msgstr "Настройки на Активната директория"
 
-#: templates/services/core.html:32
-msgid "SMB Settings"
-msgstr "SMB настройки"
+#~ msgid "SMB Settings"
+#~ msgstr "SMB настройки"
 
 #: templates/services/core.html:45
 msgid "Dynamic DNS Settings"
@@ -5624,21 +5621,17 @@ msgstr "Изтриване на NFS споделени ресурси"
 msgid "Add UNIX (NFS) Share"
 msgstr "Добавяне на споделени ресурси за UNIX"
 
-#: templates/sharing/windows.html:7
-msgid "There are no active Windows (SMB) shares."
-msgstr "Няма активни Windows споделени ресурси."
+#~ msgid "There are no active Windows (SMB) shares."
+#~ msgstr "Няма активни Windows споделени ресурси."
 
-#: templates/sharing/windows.html:33
-msgid "Edit Windows (SMB) Share"
-msgstr "Редактиране на Windows споделени ресурси"
+#~ msgid "Edit Windows (SMB) Share"
+#~ msgstr "Редактиране на Windows споделени ресурси"
 
-#: templates/sharing/windows.html:39
-msgid "Delete Windows (SMB) Share"
-msgstr "Изтриване на споделени ресурси за Windows"
+#~ msgid "Delete Windows (SMB) Share"
+#~ msgstr "Изтриване на споделени ресурси за Windows"
 
-#: templates/sharing/windows.html:53 templates/sharing/windows.html.py:55
-msgid "Add Windows (SMB) Share"
-msgstr "Добавяне на споделени ресурси за Windows"
+#~ msgid "Add Windows (SMB) Share"
+#~ msgstr "Добавяне на споделени ресурси за Windows"
 
 #: templates/storage/clonesnap.html:2 templates/storage/snapshots.html:16
 msgid "Clone Snapshot"
@@ -6259,8 +6252,8 @@ msgstr "Показва лоудерите"
 #~ msgid "Close"
 #~ msgstr "Затваряне"
 
-msgid "Add Apple (SMB) Share"
-msgstr "Добавяне на споделени ресурси за Apple"
+#~ msgid "Add Apple (SMB) Share"
+#~ msgstr "Добавяне на споделени ресурси за Apple"
 
 #~ msgid "Apply Service Pack"
 #~ msgstr "Приложи сервизния пакет"
@@ -6335,8 +6328,8 @@ msgstr "Добавяне на споделени ресурси за Apple"
 #~ msgid "Guest Account"
 #~ msgstr "Гост"
 
-msgid "SMB Share"
-msgstr "Редактиране на NFS споделени ресурси"
+#~ msgid "SMB Share"
+#~ msgstr "Редактиране на NFS споделени ресурси"
 
 msgid "NFS Share"
 msgstr "Редактиране на NFS споделени ресурси"
@@ -13244,3 +13237,84 @@ msgid ""
 "The command used to shutdown the server. You can use a custom command here "
 "to perform other tasks before shutdown.default: /sbin/shutdown -p now"
 msgstr ""
+
+#: account/forms.py:500
+msgid ""
+"Passwords containing a question mark (?) are currently not allowed due to "
+"problems with CIFS."
+msgstr ""
+
+#: services/forms.py:106
+#, fuzzy
+msgid "The CIFS service failed to reload."
+msgstr "Услугата NFS не успя да се презареди."
+
+#: services/models.py:167
+msgid ""
+"These extensions enable Samba to better serve UNIX CIFS clients by "
+"supporting features such as symbolic links, hard links, etc..."
+msgstr ""
+
+#: services/models.py:189
+msgid ""
+"Zeroconf support via Avahi allows clients (the Mac OSX finder in particular) "
+"to automatically discover the CIFS shares on the system similar to the "
+"Computer Browser service in Windows."
+msgstr ""
+
+#: services/models.py:193
+#: services/models.py:194
+#: templates/services/core.html:26
+msgid "CIFS"
+msgstr "CIFS"
+
+#: sharing/models.py:94
+#, fuzzy
+msgid "Windows (CIFS) Share"
+msgstr "Добавяне на споделени ресурси за Windows"
+
+#: sharing/models.py:95
+#, fuzzy
+msgid "Windows (CIFS) Shares"
+msgstr "Споделени ресурси за UNIX"
+
+#: services/forms.py:95
+msgid "Cannot disable CIFS while ActiveDirectory is in use."
+msgstr ""
+
+#: services/views.py:269
+#, fuzzy
+msgid "CIFS successfully updated."
+msgstr "%s успешно обновени."
+
+#: templates/services/core.html:32
+msgid "CIFS Settings"
+msgstr "CIFS настройки"
+
+#: templates/sharing/index.html:12
+#, fuzzy
+msgid "Windows (CIFS)"
+msgstr "Добавяне на споделени ресурси за Windows (CIFS)"
+
+#: templates/sharing/windows.html:7
+msgid "There are no active Windows (CIFS) shares."
+msgstr "Няма активни Windows споделени ресурси."
+
+#: templates/sharing/windows.html:33
+msgid "Edit Windows (CIFS) Share"
+msgstr "Редактиране на Windows споделени ресурси"
+
+#: templates/sharing/windows.html:39
+msgid "Delete Windows (CIFS) Share"
+msgstr "Изтриване на споделени ресурси за Windows"
+
+#: templates/sharing/windows.html:53
+#: templates/sharing/windows.html.py:55
+msgid "Add Windows (CIFS) Share"
+msgstr "Добавяне на споделени ресурси за Windows"
+
+msgid "Add Apple (CIFS) Share"
+msgstr "Добавяне на споделени ресурси за Apple"
+
+msgid "CIFS Share"
+msgstr "Редактиране на NFS споделени ресурси"

@@ -1320,9 +1320,8 @@ msgstr "Dit veld is vereist voor 'Basismapverkenning inschakelen'."
 msgid "This field is required for \"Home directories\"."
 msgstr "Dit veld is vereist voor 'Basismappen'."
 
-#: services/forms.py:106
-msgid "The SMB service failed to reload."
-msgstr "Opnieuw laden van de SMB-service is mislukt."
+#~ msgid "The SMB service failed to reload."
+#~ msgstr "Opnieuw laden van de SMB-service is mislukt."
 
 #: services/forms.py:118
 msgid "The AFP service failed to reload."
@@ -1772,13 +1771,12 @@ msgstr "Deze parameters worden aan de sectie [homes] van smb.conf toegevoegd"
 msgid "Unix Extensions"
 msgstr "Unix-extensies"
 
-#: services/models.py:167
-msgid ""
-"These extensions enable Samba to better serve UNIX SMB clients by "
-"supporting features such as symbolic links, hard links, etc..."
-msgstr ""
-"Via deze extensies kan Samba UNIX SMB-clients beter bedienen door functies "
-"als symbolische koppelingen, harde koppelingen etc. te ondersteunen."
+#~ msgid ""
+#~ "These extensions enable Samba to better serve UNIX SMB clients by "
+#~ "supporting features such as symbolic links, hard links, etc..."
+#~ msgstr ""
+#~ "Via deze extensies kan Samba UNIX SMB-clients beter bedienen door functies "
+#~ "als symbolische koppelingen, harde koppelingen etc. te ondersteunen."
 
 #: services/models.py:171
 msgid "Enable AIO"
@@ -1813,20 +1811,17 @@ msgstr ""
 msgid "Zeroconf share discovery"
 msgstr "Zeroconf-share-detectie"
 
-#: services/models.py:189
-msgid ""
-"Zeroconf support via Avahi allows clients (the Mac OSX finder in particular) "
-"to automatically discover the SMB shares on the system similar to the "
-"Computer Browser service in Windows."
-msgstr ""
-"Door ondersteuning van Zeroconf via Avahi kunnen clients (met name de Finder "
-"in Mac OSX) automatisch de SMB-shares op het systeem detecteren, "
-"vergelijkbaar met de service Computer Browser in Windows."
+#~ msgid ""
+#~ "Zeroconf support via Avahi allows clients (the Mac OSX finder in particular) "
+#~ "to automatically discover the SMB shares on the system similar to the "
+#~ "Computer Browser service in Windows."
+#~ msgstr ""
+#~ "Door ondersteuning van Zeroconf via Avahi kunnen clients (met name de Finder "
+#~ "in Mac OSX) automatisch de SMB-shares op het systeem detecteren, "
+#~ "vergelijkbaar met de service Computer Browser in Windows."
 
-#: services/models.py:193 services/models.py:194
-#: templates/services/core.html:26
-msgid "SMB"
-msgstr "SMB"
+#~ msgid "SMB"
+#~ msgstr "SMB"
 
 #~ msgid "Server Name"
 #~ msgstr "Server Naam"
@@ -3271,13 +3266,11 @@ msgstr ""
 msgid "These parameters are added to [Share] section of smb.conf"
 msgstr "Deze parameters worden aan de sectie [share] van smb.conf toegevoegd"
 
-#: sharing/models.py:94
-msgid "Windows (SMB) Share"
-msgstr "Windows (SMB)-share"
+#~ msgid "Windows (SMB) Share"
+#~ msgstr "Windows (SMB)-share"
 
-#: sharing/models.py:95
-msgid "Windows (SMB) Shares"
-msgstr "Windows (SMB)-shares"
+#~ msgid "Windows (SMB) Shares"
+#~ msgstr "Windows (SMB)-shares"
 
 #: sharing/models.py:114
 msgid ""
@@ -5410,9 +5403,8 @@ msgstr "AFP-instellingen"
 #~ msgid "Active Directory Settings"
 #~ msgstr "Active Directory Instellingen"
 
-#: templates/services/core.html:32
-msgid "SMB Settings"
-msgstr "SMB-instellingen"
+#~ msgid "SMB Settings"
+#~ msgstr "SMB-instellingen"
 
 #: templates/services/core.html:45
 msgid "Dynamic DNS Settings"
@@ -5647,9 +5639,8 @@ msgstr "Apple (AFP)"
 msgid "UNIX (NFS)"
 msgstr "UNIX (NFS)"
 
-#: templates/sharing/index.html:12
-msgid "Windows (SMB)"
-msgstr "Windows (SMB)"
+#~ msgid "Windows (SMB)"
+#~ msgstr "Windows (SMB)"
 
 #: templates/sharing/unix.html:7
 msgid "There are no active UNIX (NFS) shares."
@@ -5670,21 +5661,17 @@ msgstr "UNIX (NFS)-share verwijderen"
 msgid "Add UNIX (NFS) Share"
 msgstr "UNIX (NFS)-share toevoegen"
 
-#: templates/sharing/windows.html:7
-msgid "There are no active Windows (SMB) shares."
-msgstr "Er zijn geen actieve Windows (SMB)-shares."
+#~ msgid "There are no active Windows (SMB) shares."
+#~ msgstr "Er zijn geen actieve Windows (SMB)-shares."
 
-#: templates/sharing/windows.html:33
-msgid "Edit Windows (SMB) Share"
-msgstr "Windows (SMB)-share bewerken"
+#~ msgid "Edit Windows (SMB) Share"
+#~ msgstr "Windows (SMB)-share bewerken"
 
-#: templates/sharing/windows.html:39
-msgid "Delete Windows (SMB) Share"
-msgstr "Windows (SMB)-share verwijderen"
+#~ msgid "Delete Windows (SMB) Share"
+#~ msgstr "Windows (SMB)-share verwijderen"
 
-#: templates/sharing/windows.html:53 templates/sharing/windows.html.py:55
-msgid "Add Windows (SMB) Share"
-msgstr "Replicatiestroomcompressie"
+#~ msgid "Add Windows (SMB) Share"
+#~ msgstr "Replicatiestroomcompressie"
 
 #: templates/storage/clonesnap.html:2 templates/storage/snapshots.html:16
 msgid "Clone Snapshot"
@@ -6332,8 +6319,8 @@ msgstr "Afstembare parameters weergeven"
 #~ msgid "Close"
 #~ msgstr "Sluiten"
 
-msgid "Add Apple (SMB) Share"
-msgstr "Apple (SMB)-share toevoegen"
+#~ msgid "Add Apple (SMB) Share"
+#~ msgstr "Apple (SMB)-share toevoegen"
 
 #~ msgid "Apply Service Pack"
 #~ msgstr "Service Pack toepassen"
@@ -9661,13 +9648,12 @@ msgstr "Extentnaam moet uniek zijn."
 msgid "Enable experimental target"
 msgstr "Experimental target inschakelen"
 
-#: account/forms.py:500
-msgid ""
-"Passwords containing a question mark (?) are currently not allowed due to "
-"problems with SMB."
-msgstr ""
-"Wachtwoorden die een vraagteken (?) bevatten zijn momenteel niet toegestaan "
-"vanwege problemen met SMB."
+#~ msgid ""
+#~ "Passwords containing a question mark (?) are currently not allowed due to "
+#~ "problems with SMB."
+#~ msgstr ""
+#~ "Wachtwoorden die een vraagteken (?) bevatten zijn momenteel niet toegestaan "
+#~ "vanwege problemen met SMB."
 
 #: directoryservice/forms.py:104
 msgid "NT4 failed to reload."
@@ -10371,9 +10357,8 @@ msgstr "Keytab"
 msgid "Kerberos Realm"
 msgstr "Kerberos-realm"
 
-#: services/views.py:269
-msgid "SMB successfully updated."
-msgstr "SMB met succes bijgewerkt."
+#~ msgid "SMB successfully updated."
+#~ msgstr "SMB met succes bijgewerkt."
 
 #: sharing/models.py:290
 msgid "Security"
@@ -13501,9 +13486,8 @@ msgstr ""
 "Geldige tekens voor jailnamen zijn letters, cijfers, streepjes of liggende "
 "streepjes."
 
-#: services/forms.py:95
-msgid "Cannot disable SMB while ActiveDirectory is in use."
-msgstr "Kan SMB niet uitschakelen terwijl ActiveDirectory in gebruik is."
+#~ msgid "Cannot disable SMB while ActiveDirectory is in use."
+#~ msgstr "Kan SMB niet uitschakelen terwijl ActiveDirectory in gebruik is."
 
 #: services/models.py:1295
 msgid "Shutdown Command"
@@ -13518,3 +13502,83 @@ msgstr ""
 "De gebruikte opdracht voor het afsluiten van de server. U kunt hier een "
 "eigen opdracht gebruiken om voor shutdown.default: /sbin/shutdown -p now "
 "andere taken uit te voeren"
+
+#: account/forms.py:500
+msgid ""
+"Passwords containing a question mark (?) are currently not allowed due to "
+"problems with CIFS."
+msgstr ""
+"Wachtwoorden die een vraagteken (?) bevatten zijn momenteel niet toegestaan "
+"vanwege problemen met CIFS."
+
+#: services/forms.py:106
+msgid "The CIFS service failed to reload."
+msgstr "Opnieuw laden van de CIFS-service is mislukt."
+
+#: services/models.py:167
+msgid ""
+"These extensions enable Samba to better serve UNIX CIFS clients by "
+"supporting features such as symbolic links, hard links, etc..."
+msgstr ""
+"Via deze extensies kan Samba UNIX CIFS-clients beter bedienen door functies "
+"als symbolische koppelingen, harde koppelingen etc. te ondersteunen."
+
+#: services/models.py:189
+msgid ""
+"Zeroconf support via Avahi allows clients (the Mac OSX finder in particular) "
+"to automatically discover the CIFS shares on the system similar to the "
+"Computer Browser service in Windows."
+msgstr ""
+"Door ondersteuning van Zeroconf via Avahi kunnen clients (met name de Finder "
+"in Mac OSX) automatisch de CIFS-shares op het systeem detecteren, "
+"vergelijkbaar met de service Computer Browser in Windows."
+
+#: services/models.py:193
+#: services/models.py:194
+#: templates/services/core.html:26
+msgid "CIFS"
+msgstr "CIFS"
+
+#: sharing/models.py:94
+msgid "Windows (CIFS) Share"
+msgstr "Windows (CIFS)-share"
+
+#: sharing/models.py:95
+msgid "Windows (CIFS) Shares"
+msgstr "Windows (CIFS)-shares"
+
+#: services/forms.py:95
+msgid "Cannot disable CIFS while ActiveDirectory is in use."
+msgstr "Kan CIFS niet uitschakelen terwijl ActiveDirectory in gebruik is."
+
+#: services/views.py:269
+msgid "CIFS successfully updated."
+msgstr "CIFS met succes bijgewerkt."
+
+#: templates/services/core.html:32
+msgid "CIFS Settings"
+msgstr "CIFS-instellingen"
+
+#: templates/sharing/index.html:12
+msgid "Windows (CIFS)"
+msgstr "Windows (CIFS)"
+
+#: templates/sharing/windows.html:7
+msgid "There are no active Windows (CIFS) shares."
+msgstr "Er zijn geen actieve Windows (CIFS)-shares."
+
+#: templates/sharing/windows.html:33
+msgid "Edit Windows (CIFS) Share"
+msgstr "Windows (CIFS)-share bewerken"
+
+#: templates/sharing/windows.html:53
+#: templates/sharing/windows.html.py:55
+msgid "Replication Stream Compression"
+msgstr "Replicatiestroomcompressie"
+
+#: templates/sharing/windows.html:39
+msgid "Delete Windows (CIFS) Share"
+msgstr "Windows (CIFS)-share verwijderen"
+
+msgid "Add Apple (CIFS) Share"
+msgstr "Apple (CIFS)-share toevoegen"

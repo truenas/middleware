@@ -1339,9 +1339,8 @@ msgstr ""
 msgid "This field is required for \"Home directories\"."
 msgstr "Este campo es obligatorio para \"Directorios home\""
 
-#: services/forms.py:106
-msgid "The SMB service failed to reload."
-msgstr "El servicio SMB ha fallado en la recarga."
+#~ msgid "The SMB service failed to reload."
+#~ msgstr "El servicio SMB ha fallado en la recarga."
 
 #: services/forms.py:118
 msgid "The AFP service failed to reload."
@@ -1810,13 +1809,12 @@ msgstr ""
 msgid "Unix Extensions"
 msgstr "Extensiones Unix"
 
-#: services/models.py:167
-msgid ""
-"These extensions enable Samba to better serve UNIX SMB clients by "
-"supporting features such as symbolic links, hard links, etc..."
-msgstr ""
-"Esta extension permite a SAMBA servir mejor a clientes UNIX que soporten "
-"caracteristicas como enlaces simbolicos, enlaces duros, etc..."
+#~ msgid ""
+#~ "These extensions enable Samba to better serve UNIX SMB clients by "
+#~ "supporting features such as symbolic links, hard links, etc..."
+#~ msgstr ""
+#~ "Esta extension permite a SAMBA servir mejor a clientes UNIX que soporten "
+#~ "caracteristicas como enlaces simbolicos, enlaces duros, etc..."
 
 #: services/models.py:171
 msgid "Enable AIO"
@@ -1852,20 +1850,17 @@ msgstr ""
 msgid "Zeroconf share discovery"
 msgstr "Descubrir automaticamente compartidos con Zeroconf"
 
-#: services/models.py:189
-msgid ""
-"Zeroconf support via Avahi allows clients (the Mac OSX finder in particular) "
-"to automatically discover the SMB shares on the system similar to the "
-"Computer Browser service in Windows."
-msgstr ""
-"El soporte Zeroconf via Avahi permite el descubrimiento automatico de "
-"compartidos windows (SMB) de forma parecida a como lo hace Windows con "
-"\"Explorar la red\" "
+#~ msgid ""
+#~ "Zeroconf support via Avahi allows clients (the Mac OSX finder in particular) "
+#~ "to automatically discover the SMB shares on the system similar to the "
+#~ "Computer Browser service in Windows."
+#~ msgstr ""
+#~ "El soporte Zeroconf via Avahi permite el descubrimiento automatico de "
+#~ "compartidos windows (SMB) de forma parecida a como lo hace Windows con "
+#~ "\"Explorar la red\" "
 
-#: services/models.py:193 services/models.py:194
-#: templates/services/core.html:26
-msgid "SMB"
-msgstr "SMB"
+#~ msgid "SMB"
+#~ msgstr "SMB"
 
 #~ msgid "Server Name"
 #~ msgstr "Nombre del Servidor"
@@ -3280,13 +3275,11 @@ msgid "These parameters are added to [Share] section of smb.conf"
 msgstr ""
 "Estos parametros son añadidos a la seccion [Share] del fichero smb.conf"
 
-#: sharing/models.py:94
-msgid "Windows (SMB) Share"
-msgstr "Compartidos de Windows (SMB) SAMBA"
+#~ msgid "Windows (SMB) Share"
+#~ msgstr "Compartidos de Windows (SMB) SAMBA"
 
-#: sharing/models.py:95
-msgid "Windows (SMB) Shares"
-msgstr "Compartidos de Windows (SMB) SAMBA"
+#~ msgid "Windows (SMB) Shares"
+#~ msgstr "Compartidos de Windows (SMB) SAMBA"
 
 #: sharing/models.py:114
 msgid ""
@@ -5408,9 +5401,8 @@ msgstr "Configuración AFP"
 #~ msgid "Active Directory Settings"
 #~ msgstr "Configuración AD"
 
-#: templates/services/core.html:32
-msgid "SMB Settings"
-msgstr "Configuración SMB"
+#~ msgid "SMB Settings"
+#~ msgstr "Configuración SMB"
 
 #: templates/services/core.html:45
 msgid "Dynamic DNS Settings"
@@ -5629,9 +5621,8 @@ msgstr "AFP (Apple)"
 msgid "UNIX (NFS)"
 msgstr "NFS (Unix)"
 
-#: templates/sharing/index.html:12
-msgid "Windows (SMB)"
-msgstr "SAMBA (SMB)"
+#~ msgid "Windows (SMB)"
+#~ msgstr "SAMBA (SMB)"
 
 #~ msgid "There are no active UNIX (NFS) shares."
 #~ msgstr "No hay compartidos NFS (Unix)"
@@ -9720,13 +9711,12 @@ msgstr "El Nombre de extensión debe ser único."
 msgid "Enable experimental target"
 msgstr ""
 
-#: account/forms.py:500
-msgid ""
-"Passwords containing a question mark (?) are currently not allowed due to "
-"problems with SMB."
-msgstr ""
-"Las contraseñas que contienen un signo de interrogación (?) Actualmente no "
-"se permiten debido a problemas con SMB.                "
+#~ msgid ""
+#~ "Passwords containing a question mark (?) are currently not allowed due to "
+#~ "problems with SMB."
+#~ msgstr ""
+#~ "Las contraseñas que contienen un signo de interrogación (?) Actualmente no "
+#~ "se permiten debido a problemas con SMB.                "
 
 #: directoryservice/forms.py:104
 msgid "NT4 failed to reload."
@@ -13583,3 +13573,65 @@ msgid ""
 "The command used to shutdown the server. You can use a custom command here "
 "to perform other tasks before shutdown.default: /sbin/shutdown -p now"
 msgstr ""
+
+#: account/forms.py:500
+msgid ""
+"Passwords containing a question mark (?) are currently not allowed due to "
+"problems with CIFS."
+msgstr ""
+"Las contraseñas que contienen un signo de interrogación (?) Actualmente no "
+"se permiten debido a problemas con CIFS.                "
+
+#: services/forms.py:181
+msgid "The CIFS service failed to reload."
+msgstr "El servicio CIFS ha fallado en la recarga."
+
+#: services/models.py:179
+msgid ""
+"These extensions enable Samba to better serve UNIX CIFS clients by "
+"supporting features such as symbolic links, hard links, etc..."
+msgstr ""
+"Esta extension permite a SAMBA servir mejor a clientes UNIX que soporten "
+"caracteristicas como enlaces simbolicos, enlaces duros, etc..."
+
+#: services/models.py:208
+msgid ""
+"Zeroconf support via Avahi allows clients (the Mac OSX finder in particular) "
+"to automatically discover the CIFS shares on the system similar to the "
+"Computer Browser service in Windows."
+msgstr ""
+"El soporte Zeroconf via Avahi permite el descubrimiento automatico de "
+"compartidos windows (CIFS) de forma parecida a como lo hace Windows con \""
+"Explorar la red\" "
+
+#: services/models.py:223
+#: services/models.py:224
+#: storage/forms.py:2039
+#: templates/services/core.html:15
+msgid "CIFS"
+msgstr "CIFS"
+
+#: services/forms.py:95
+msgid "Cannot disable CIFS while ActiveDirectory is in use."
+msgstr ""
+
+#: sharing/models.py:94
+msgid "Windows (CIFS) Share"
+msgstr "Compartidos de Windows (CIFS) SAMBA"
+
+#: sharing/models.py:95
+msgid "Windows (CIFS) Shares"
+msgstr "Compartidos de Windows (CIFS) SAMBA"
+
+#: services/views.py:269
+#, fuzzy
+msgid "CIFS successfully updated."
+msgstr "%s ha sido actualizado correctamente."
+
+#: templates/services/core.html:21
+msgid "CIFS Settings"
+msgstr "Configuración CIFS"
+
+#: templates/sharing/index.html:15
+msgid "Windows (CIFS)"
+msgstr "SAMBA (CIFS)"

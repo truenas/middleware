@@ -1340,9 +1340,8 @@ msgstr ""
 msgid "This field is required for \"Home directories\"."
 msgstr "Это поле является обязательным для \"Домашние каталоги\"."
 
-#: services/forms.py:106
-msgid "The SMB service failed to reload."
-msgstr "Не удалось перезагрузить службу SMB."
+#~ msgid "The SMB service failed to reload."
+#~ msgstr "Не удалось перезагрузить службу SMB."
 
 #: services/forms.py:118
 msgid "The AFP service failed to reload."
@@ -1794,13 +1793,12 @@ msgstr "Эти параметры добавляются в раздел [homes]
 msgid "Unix Extensions"
 msgstr "Расшиения Unix"
 
-#: services/models.py:167
-msgid ""
-"These extensions enable Samba to better serve UNIX SMB clients by "
-"supporting features such as symbolic links, hard links, etc..."
-msgstr ""
-"Эти расширения позволяют Samba лучше обслуживать UNIX SMB клиентов "
-"благодаря поддержке символических ссылок, жёстких ссылок итд..."
+#~ msgid ""
+#~ "These extensions enable Samba to better serve UNIX SMB clients by "
+#~ "supporting features such as symbolic links, hard links, etc..."
+#~ msgstr ""
+#~ "Эти расширения позволяют Samba лучше обслуживать UNIX SMB клиентов "
+#~ "благодаря поддержке символических ссылок, жёстких ссылок итд..."
 
 #: services/models.py:171
 msgid "Enable AIO"
@@ -1834,20 +1832,17 @@ msgstr ""
 msgid "Zeroconf share discovery"
 msgstr "Zeroconf обнаружение ресурса"
 
-#: services/models.py:189
-msgid ""
-"Zeroconf support via Avahi allows clients (the Mac OSX finder in particular) "
-"to automatically discover the SMB shares on the system similar to the "
-"Computer Browser service in Windows."
-msgstr ""
-"Поддержка Zeroconf через Avahi позволяет клиентам (в частности Mac OSX "
-"finder) автоматически находить общие ресурсы SMB аналогично Computer "
-"Browser service в Windows."
+#~ msgid ""
+#~ "Zeroconf support via Avahi allows clients (the Mac OSX finder in particular) "
+#~ "to automatically discover the SMB shares on the system similar to the "
+#~ "Computer Browser service in Windows."
+#~ msgstr ""
+#~ "Поддержка Zeroconf через Avahi позволяет клиентам (в частности Mac OSX "
+#~ "finder) автоматически находить общие ресурсы SMB аналогично Computer "
+#~ "Browser service в Windows."
 
-#: services/models.py:193 services/models.py:194
-#: templates/services/core.html:26
-msgid "SMB"
-msgstr "SMB"
+#~ msgid "SMB"
+#~ msgstr "SMB"
 
 #~ msgid "Server Name"
 #~ msgstr "Имя сервера"
@@ -3311,13 +3306,11 @@ msgstr ""
 msgid "These parameters are added to [Share] section of smb.conf"
 msgstr "Эти параметры добавляются в раздел [Share] smb.conf"
 
-#: sharing/models.py:94
-msgid "Windows (SMB) Share"
-msgstr "Общий ресурс Windows (SMB)"
+#~ msgid "Windows (SMB) Share"
+#~ msgstr "Общий ресурс Windows (SMB)"
 
-#: sharing/models.py:95
-msgid "Windows (SMB) Shares"
-msgstr "Общие ресурсы Windows (SMB)"
+#~ msgid "Windows (SMB) Shares"
+#~ msgstr "Общие ресурсы Windows (SMB)"
 
 #: sharing/models.py:114
 msgid ""
@@ -5433,9 +5426,8 @@ msgstr "Настройки AFP"
 #~ msgid "Active Directory Settings"
 #~ msgstr "Настройки Active Directory"
 
-#: templates/services/core.html:32
-msgid "SMB Settings"
-msgstr "Настройки SMB"
+#~ msgid "SMB Settings"
+#~ msgstr "Настройки SMB"
 
 #: templates/services/core.html:45
 msgid "Dynamic DNS Settings"
@@ -5655,9 +5647,8 @@ msgstr "Apple (AFP)"
 msgid "UNIX (NFS)"
 msgstr "UNIX (NFS)"
 
-#: templates/sharing/index.html:12
-msgid "Windows (SMB)"
-msgstr "Windows (SMB)"
+#~ msgid "Windows (SMB)"
+#~ msgstr "Windows (SMB)"
 
 #~ msgid "There are no active UNIX (NFS) shares."
 #~ msgstr "Нет активных общих ресурсов UNIX (NFS)."
@@ -9670,11 +9661,10 @@ msgstr "Имя экстента должно быть уникально."
 msgid "Enable experimental target"
 msgstr "Включить экспериментальную цель"
 
-#: account/forms.py:500
-msgid ""
-"Passwords containing a question mark (?) are currently not allowed due to "
-"problems with SMB."
-msgstr "Пароли содержащие знак вопроса (?) запрещены из-за проблем с SMB."
+#~ msgid ""
+#~ "Passwords containing a question mark (?) are currently not allowed due to "
+#~ "problems with SMB."
+#~ msgstr "Пароли содержащие знак вопроса (?) запрещены из-за проблем с SMB."
 
 #: directoryservice/forms.py:104
 msgid "NT4 failed to reload."
@@ -10369,9 +10359,8 @@ msgstr ""
 msgid "Kerberos Realm"
 msgstr "Область Kerberos"
 
-#: services/views.py:269
-msgid "SMB successfully updated."
-msgstr "SMB успешно обновлен."
+#~ msgid "SMB successfully updated."
+#~ msgstr "SMB успешно обновлен."
 
 #: sharing/models.py:290
 msgid "Security"
@@ -13387,9 +13376,8 @@ msgstr ""
 "Допустимые символы для имен jail являются буквы, цифры, тире или знак "
 "подчеркивания."
 
-#: services/forms.py:95
-msgid "Cannot disable SMB while ActiveDirectory is in use."
-msgstr "Невозможно отключить SMB в то время как Active Directory используется."
+#~ msgid "Cannot disable SMB while ActiveDirectory is in use."
+#~ msgstr "Невозможно отключить SMB в то время как Active Directory используется."
 
 #: services/models.py:1295
 msgid "Shutdown Command"
@@ -13403,3 +13391,62 @@ msgstr ""
 "Команда, используемая для завершения работы сервера. Вы можете использовать "
 "пользовательскую команду здесь, чтобы выполнять другие задачи перед "
 "shutdown.default: /sbin/shutdown -p now"
+
+#: account/forms.py:500
+msgid ""
+"Passwords containing a question mark (?) are currently not allowed due to "
+"problems with CIFS."
+msgstr "Пароли содержащие знак вопроса (?) запрещены из-за проблем с CIFS."
+
+#: services/forms.py:181
+msgid "The CIFS service failed to reload."
+msgstr "Не удалось перезагрузить службу CIFS."
+
+#: services/models.py:179
+msgid ""
+"These extensions enable Samba to better serve UNIX CIFS clients by "
+"supporting features such as symbolic links, hard links, etc..."
+msgstr ""
+"Эти расширения позволяют Samba лучше обслуживать UNIX CIFS клиентов "
+"благодаря поддержке символических ссылок, жёстких ссылок итд..."
+
+#: services/models.py:208
+msgid ""
+"Zeroconf support via Avahi allows clients (the Mac OSX finder in particular) "
+"to automatically discover the CIFS shares on the system similar to the "
+"Computer Browser service in Windows."
+msgstr ""
+"Поддержка Zeroconf через Avahi позволяет клиентам (в частности Mac OSX "
+"finder) автоматически находить общие ресурсы CIFS аналогично Computer "
+"Browser service в Windows."
+
+#: services/models.py:223
+#: services/models.py:224
+#: storage/forms.py:2039
+#: templates/services/core.html:15
+msgid "CIFS"
+msgstr "CIFS"
+
+#: services/forms.py:95
+msgid "Cannot disable CIFS while ActiveDirectory is in use."
+msgstr "Невозможно отключить CIFS в то время как Active Directory используется."
+
+#: sharing/models.py:94
+msgid "Windows (CIFS) Share"
+msgstr "Общий ресурс Windows (CIFS)"
+
+#: sharing/models.py:95
+msgid "Windows (CIFS) Shares"
+msgstr "Общие ресурсы Windows (CIFS)"
+
+#: services/views.py:269
+msgid "CIFS successfully updated."
+msgstr "CIFS успешно обновлен."
+
+#: templates/services/core.html:21
+msgid "CIFS Settings"
+msgstr "Настройки CIFS"
+
+#: templates/sharing/index.html:15
+msgid "Windows (CIFS)"
+msgstr "Windows (CIFS)"

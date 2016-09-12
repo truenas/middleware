@@ -1331,9 +1331,8 @@ msgstr ""
 msgid "This field is required for \"Home directories\"."
 msgstr "Acest câmp este obligatoriu pentru \"Directoare Home\"."
 
-#: services/forms.py:106
-msgid "The SMB service failed to reload."
-msgstr "Serviciul SMB a eșuat să repornească."
+#~ msgid "The SMB service failed to reload."
+#~ msgstr "Serviciul SMB a eșuat să repornească."
 
 #: services/forms.py:118
 msgid "The AFP service failed to reload."
@@ -1790,14 +1789,13 @@ msgstr ""
 msgid "Unix Extensions"
 msgstr "Extensii Unix"
 
-#: services/models.py:167
-msgid ""
-"These extensions enable Samba to better serve UNIX SMB clients by "
-"supporting features such as symbolic links, hard links, etc..."
-msgstr ""
-"Aceste extensii permit Samba să servească mai bine clienții UNIX SMB prin "
-"caracteristici de sprijin cum ar fi legături simbolice, legături hard, etc . "
-". . ."
+#~ msgid ""
+#~ "These extensions enable Samba to better serve UNIX SMB clients by "
+#~ "supporting features such as symbolic links, hard links, etc..."
+#~ msgstr ""
+#~ "Aceste extensii permit Samba să servească mai bine clienții UNIX SMB prin "
+#~ "caracteristici de sprijin cum ar fi legături simbolice, legături hard, etc . "
+#~ ". . ."
 
 #: services/models.py:171
 msgid "Enable AIO"
@@ -1833,20 +1831,17 @@ msgstr ""
 msgid "Zeroconf share discovery"
 msgstr "Descoperire partajare Zeroconf"
 
-#: services/models.py:189
-msgid ""
-"Zeroconf support via Avahi allows clients (the Mac OSX finder in particular) "
-"to automatically discover the SMB shares on the system similar to the "
-"Computer Browser service in Windows."
-msgstr ""
-"Suportul Zeroconf via Avahi permite clienţilor (în special clienţilor Mac "
-"OSX) să descopere partajările SMB din sistem similar serviciului Computer "
-"Browser din Windows."
+#~ msgid ""
+#~ "Zeroconf support via Avahi allows clients (the Mac OSX finder in particular) "
+#~ "to automatically discover the SMB shares on the system similar to the "
+#~ "Computer Browser service in Windows."
+#~ msgstr ""
+#~ "Suportul Zeroconf via Avahi permite clienţilor (în special clienţilor Mac "
+#~ "OSX) să descopere partajările SMB din sistem similar serviciului Computer "
+#~ "Browser din Windows."
 
-#: services/models.py:193 services/models.py:194
-#: templates/services/core.html:26
-msgid "SMB"
-msgstr "SMB"
+#~ msgid "SMB"
+#~ msgstr "SMB"
 
 #~ msgid "Server Name"
 #~ msgstr "Nume server"
@@ -3300,13 +3295,11 @@ msgid "These parameters are added to [Share] section of smb.conf"
 msgstr ""
 "Aceşti parametri sunt adaugaţi la secţiunea [Share] a fişierului smb.conf"
 
-#: sharing/models.py:94
-msgid "Windows (SMB) Share"
-msgstr "Partajări Windows (SMB)"
+#~ msgid "Windows (SMB) Share"
+#~ msgstr "Partajări Windows (SMB)"
 
-#: sharing/models.py:95
-msgid "Windows (SMB) Shares"
-msgstr "Partajări Windows (SMB)"
+#~ msgid "Windows (SMB) Shares"
+#~ msgstr "Partajări Windows (SMB)"
 
 #: sharing/models.py:114
 msgid ""
@@ -5428,9 +5421,8 @@ msgstr "Setări AFP"
 #~ msgid "Active Directory Settings"
 #~ msgstr "Setări Active Directory"
 
-#: templates/services/core.html:32
-msgid "SMB Settings"
-msgstr "Setări SMB"
+#~ msgid "SMB Settings"
+#~ msgstr "Setări SMB"
 
 #: templates/services/core.html:45
 msgid "Dynamic DNS Settings"
@@ -5649,9 +5641,8 @@ msgstr "Apple (AFP)"
 msgid "UNIX (NFS)"
 msgstr "UNIX (NFS)"
 
-#: templates/sharing/index.html:12
-msgid "Windows (SMB)"
-msgstr "Windows (SMB)"
+#~ msgid "Windows (SMB)"
+#~ msgstr "Windows (SMB)"
 
 #~ msgid "There are no active UNIX (NFS) shares."
 #~ msgstr "Nu există partajări UNIX (NFS) active"
@@ -9597,13 +9588,12 @@ msgstr ""
 msgid "Enable experimental target"
 msgstr ""
 
-#: account/forms.py:500
-msgid ""
-"Passwords containing a question mark (?) are currently not allowed due to "
-"problems with SMB."
-msgstr ""
-"Parolele care conțin caracterul (?) nu pot fi utilizate în acest moment din "
-"cauza problemelor cu SMB"
+#~ msgid ""
+#~ "Passwords containing a question mark (?) are currently not allowed due to "
+#~ "problems with SMB."
+#~ msgstr ""
+#~ "Parolele care conțin caracterul (?) nu pot fi utilizate în acest moment din "
+#~ "cauza problemelor cu SMB"
 
 #: directoryservice/forms.py:104
 msgid "NT4 failed to reload."
@@ -13454,3 +13444,66 @@ msgid ""
 "The command used to shutdown the server. You can use a custom command here "
 "to perform other tasks before shutdown.default: /sbin/shutdown -p now"
 msgstr ""
+
+#: account/forms.py:500
+msgid ""
+"Passwords containing a question mark (?) are currently not allowed due to "
+"problems with CIFS."
+msgstr ""
+"Parolele care conțin caracterul (?) nu pot fi utilizate în acest moment din "
+"cauza problemelor cu CIFS"
+
+#: services/forms.py:181
+msgid "The CIFS service failed to reload."
+msgstr "Serviciul CIFS a eșuat să repornească."
+
+#: services/models.py:179
+msgid ""
+"These extensions enable Samba to better serve UNIX CIFS clients by "
+"supporting features such as symbolic links, hard links, etc..."
+msgstr ""
+"Aceste extensii permit Samba să servească mai bine clienții UNIX CIFS prin "
+"caracteristici de sprijin cum ar fi legături simbolice, legături hard, etc . "
+". . ."
+
+#: services/models.py:208
+msgid ""
+"Zeroconf support via Avahi allows clients (the Mac OSX finder in particular) "
+"to automatically discover the CIFS shares on the system similar to the "
+"Computer Browser service in Windows."
+msgstr ""
+"Suportul Zeroconf via Avahi permite clienţilor (în special clienţilor Mac "
+"OSX) să descopere partajările CIFS din sistem similar serviciului Computer "
+"Browser din Windows."
+
+#: services/models.py:223
+#: services/models.py:224
+#: storage/forms.py:2039
+#: templates/services/core.html:15
+msgid "CIFS"
+msgstr "CIFS"
+
+#: services/forms.py:95
+msgid "Cannot disable CIFS while ActiveDirectory is in use."
+msgstr ""
+
+#: sharing/models.py:94
+msgid "Windows (CIFS) Share"
+msgstr "Partajări Windows (CIFS)"
+
+#: sharing/models.py:95
+msgid "Windows (CIFS) Shares"
+msgstr "Partajări Windows (CIFS)"
+
+#: services/views.py:269
+#, fuzzy
+msgid "CIFS successfully updated."
+msgstr "%s actualizat cu succes."
+
+#: templates/services/core.html:21
+msgid "CIFS Settings"
+msgstr "Setări CIFS"
+
+#: templates/sharing/index.html:15
+msgid "Windows (CIFS)"
+msgstr "Windows (CIFS)"

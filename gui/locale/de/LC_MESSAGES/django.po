@@ -1384,9 +1384,8 @@ msgstr ""
 msgid "This field is required for \"Home directories\"."
 msgstr "Diese Feld wird für \"Heimatverzeichnisse\" benötigt."
 
-#: services/forms.py:106
-msgid "The SMB service failed to reload."
-msgstr "Der SMB Dienst konnte nicht wieder geladen werden."
+#~ msgid "The SMB service failed to reload."
+#~ msgstr "Der SMB Dienst konnte nicht wieder geladen werden."
 
 #: services/forms.py:118
 msgid "The AFP service failed to reload."
@@ -1846,13 +1845,12 @@ msgstr ""
 msgid "Unix Extensions"
 msgstr "Unix Extensions"
 
-#: services/models.py:167
-msgid ""
-"These extensions enable Samba to better serve UNIX SMB clients by "
-"supporting features such as symbolic links, hard links, etc..."
-msgstr ""
-"Diese Erweiterungen erlauben symbolische Links, Hardlinks etc in Samba, "
-"damit eine bessere Integration von UNIX SMB Clients."
+#~ msgid ""
+#~ "These extensions enable Samba to better serve UNIX SMB clients by "
+#~ "supporting features such as symbolic links, hard links, etc..."
+#~ msgstr ""
+#~ "Diese Erweiterungen erlauben symbolische Links, Hardlinks etc in Samba, "
+#~ "damit eine bessere Integration von UNIX SMB Clients."
 
 #: services/models.py:171
 msgid "Enable AIO"
@@ -1889,20 +1887,17 @@ msgstr ""
 msgid "Zeroconf share discovery"
 msgstr "Zeroconf Freigaben Suche"
 
-#: services/models.py:189
-msgid ""
-"Zeroconf support via Avahi allows clients (the Mac OSX finder in particular) "
-"to automatically discover the SMB shares on the system similar to the "
-"Computer Browser service in Windows."
-msgstr ""
-"Zeroconf mittels Avahi erlaubt Clients (speziell dem (Mac) OS X Finder) ein "
-"Anzeigen der SMB Freigaben dieses Systems ohne weitere Konfiguration, "
-"vergleichbar der Netzwerk und Freigabe-Anzeige in Windows. "
+#~ msgid ""
+#~ "Zeroconf support via Avahi allows clients (the Mac OSX finder in particular) "
+#~ "to automatically discover the SMB shares on the system similar to the "
+#~ "Computer Browser service in Windows."
+#~ msgstr ""
+#~ "Zeroconf mittels Avahi erlaubt Clients (speziell dem (Mac) OS X Finder) ein "
+#~ "Anzeigen der SMB Freigaben dieses Systems ohne weitere Konfiguration, "
+#~ "vergleichbar der Netzwerk und Freigabe-Anzeige in Windows. "
 
-#: services/models.py:193 services/models.py:194
-#: templates/services/core.html:26
-msgid "SMB"
-msgstr "SMB"
+#~ msgid "SMB"
+#~ msgstr "SMB"
 
 #~ msgid "Server Name"
 #~ msgstr "Servername"
@@ -3433,13 +3428,11 @@ msgstr ""
 "Diese Parameter werden zur Sektion [Share] der Konfigurationsdatei smb.conf "
 "hinzugefügt."
 
-#: sharing/models.py:94
-msgid "Windows (SMB) Share"
-msgstr "Windows (SMB) Freigabe"
+#~ msgid "Windows (SMB) Share"
+#~ msgstr "Windows (SMB) Freigabe"
 
-#: sharing/models.py:95
-msgid "Windows (SMB) Shares"
-msgstr "Windows (SMB) Freigaben"
+#~ msgid "Windows (SMB) Shares"
+#~ msgstr "Windows (SMB) Freigaben"
 
 #: sharing/models.py:114
 msgid ""
@@ -5647,9 +5640,8 @@ msgstr "AFP Einstellungen"
 #~ msgid "Active Directory Settings"
 #~ msgstr "Active Directory Einstellungen"
 
-#: templates/services/core.html:32
-msgid "SMB Settings"
-msgstr "SMB Einstellungen"
+#~ msgid "SMB Settings"
+#~ msgstr "SMB Einstellungen"
 
 #: templates/services/core.html:45
 msgid "Dynamic DNS Settings"
@@ -5870,9 +5862,8 @@ msgstr "Apple Freigabe (AFP)"
 msgid "UNIX (NFS)"
 msgstr "UNIX Freigabe (NFS)"
 
-#: templates/sharing/index.html:12
-msgid "Windows (SMB)"
-msgstr "Windows Freigabe (SMB)"
+#~ msgid "Windows (SMB)"
+#~ msgstr "Windows Freigabe (SMB)"
 
 #~ msgid "There are no active UNIX (NFS) shares."
 #~ msgstr "Es gibt keine aktiven UNIX (NFS) Freigaben."
@@ -10085,13 +10076,12 @@ msgstr ""
 msgid "Enable experimental target"
 msgstr ""
 
-#: account/forms.py:500
-msgid ""
-"Passwords containing a question mark (?) are currently not allowed due to "
-"problems with SMB."
-msgstr ""
-"Passwörter mit Fragezeichen (?) sind nicht erlaubt auf Grund eines Problems "
-"mit SMB.                "
+#~ msgid ""
+#~ "Passwords containing a question mark (?) are currently not allowed due to "
+#~ "problems with SMB."
+#~ msgstr ""
+#~ "Passwörter mit Fragezeichen (?) sind nicht erlaubt auf Grund eines Problems "
+#~ "mit SMB.                "
 
 #: directoryservice/forms.py:104
 msgid "NT4 failed to reload."
@@ -13952,3 +13942,65 @@ msgid ""
 "The command used to shutdown the server. You can use a custom command here "
 "to perform other tasks before shutdown.default: /sbin/shutdown -p now"
 msgstr ""
+
+#: account/forms.py:500
+msgid ""
+"Passwords containing a question mark (?) are currently not allowed due to "
+"problems with CIFS."
+msgstr ""
+"Passwörter mit Fragezeichen (?) sind nicht erlaubt auf Grund eines Problems "
+"mit CIFS.                "
+
+#: services/forms.py:181
+msgid "The CIFS service failed to reload."
+msgstr "Der CIFS Dienst konnte nicht wieder geladen werden."
+
+#: services/models.py:179
+msgid ""
+"These extensions enable Samba to better serve UNIX CIFS clients by "
+"supporting features such as symbolic links, hard links, etc..."
+msgstr ""
+"Diese Erweiterungen erlauben symbolische Links, Hardlinks etc in Samba, "
+"damit eine bessere Integration von UNIX CIFS Clients."
+
+#: services/models.py:208
+msgid ""
+"Zeroconf support via Avahi allows clients (the Mac OSX finder in particular) "
+"to automatically discover the CIFS shares on the system similar to the "
+"Computer Browser service in Windows."
+msgstr ""
+"Zeroconf mittels Avahi erlaubt Clients (speziell dem (Mac) OS X Finder) ein "
+"Anzeigen der CIFS Freigaben dieses Systems ohne weitere Konfiguration, "
+"vergleichbar der Netzwerk und Freigabe-Anzeige in Windows. "
+
+#: services/models.py:223
+#: services/models.py:224
+#: storage/forms.py:2039
+#: templates/services/core.html:15
+msgid "CIFS"
+msgstr "CIFS"
+
+#: services/forms.py:95
+msgid "Cannot disable CIFS while ActiveDirectory is in use."
+msgstr ""
+
+#: sharing/models.py:94
+msgid "Windows (CIFS) Share"
+msgstr "Windows (CIFS) Freigabe"
+
+#: sharing/models.py:95
+msgid "Windows (CIFS) Shares"
+msgstr "Windows (CIFS) Freigaben"
+
+#: services/views.py:269
+#, fuzzy
+msgid "CIFS successfully updated."
+msgstr "%s erfolgreich aktualisiert."
+
+#: templates/services/core.html:21
+msgid "CIFS Settings"
+msgstr "CIFS Einstellungen"
+
+#: templates/sharing/index.html:15
+msgid "Windows (CIFS)"
+msgstr "Windows Freigabe (CIFS)"
