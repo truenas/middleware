@@ -18,6 +18,7 @@ RUN_DEPENDS=	${PYTHON_PKGNAMEPREFIX}gevent>0:${PORTSDIR}/devel/py-gevent \
 		${PYTHON_PKGNAMEPREFIX}ws4py>0:${PORTSDIR}/www/py-ws4py \
 		${PYTHON_PKGNAMEPREFIX}falcon>0:${PORTSDIR}/www/py-falcon \
 		${PYTHON_PKGNAMEPREFIX}Flask>0:${PORTSDIR}/www/py-flask
+		${PYTHON_PKGNAMEPREFIX}boto3>0:${PORTSDIR}/devel/py-boto3
 
 USE_RC_SUBR=	middlewared
 
