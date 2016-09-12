@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:05-0700\n"
-"PO-Revision-Date: 2016-07-29 11:44+0000\n"
+"PO-Revision-Date: 2016-09-11 16:43+0200\n"
 "Last-Translator: BouRock <hitowerdigit@hotmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: tr\n"
@@ -16,7 +16,7 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1)\n"
-"X-Generator: Pootle 2.5.0\n"
+"X-Generator: Pootle 2.1.6\n"
 "X-POOTLE-MTIME: 1469792686.0\n"
 
 #: choices.py:40
@@ -12136,8 +12136,7 @@ msgstr "Kimden E-postası"
 
 #: support/models.py:41
 msgid "The email address that the system will use to create this ticket"
-msgstr ""
-"Sistemin bu destek başvurusunu oluşturmak için kullanacağı e-posta adresi"
+msgstr "Sistemin bu çağrıyı oluşturmak için kullanacağı e-posta adresi"
 
 #: support/utils.py:57
 #: support/utils.py:102
@@ -12153,7 +12152,7 @@ msgstr "Bağlantı zaman aşımına uğradı: %s"
 
 #: support/utils.py:107
 msgid "Ticket creation failed, try again later."
-msgstr "Destek başvurusu oluşturma başarısız oldu, daha sonra tekrar deneyin."
+msgstr "Çağrı oluşturma başarısız oldu, daha sonra tekrar deneyin."
 
 #: support/views.py:88
 msgid "License updated."
