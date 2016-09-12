@@ -1,7 +1,8 @@
 #!/usr/local/bin/python
+from middlewared.client import Client
+from middlewared.client.utils import Struct
 
 import os
-import sys
 import pwd
 import grp
 import crypt
@@ -11,20 +12,6 @@ from subprocess import Popen, PIPE
 import logging
 
 log = logging.getLogger('generate_webdav_config')
-
-sys.path.extend([
-    '/usr/local/www',
-    '/usr/local/www/freenasUI'
-])
-
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'freenasUI.settings')
-
-# Make sure to load all modules
-from django.db.models.loading import cache
-cache.get_apps()
-
-from freenasUI.services.models import WebDAV
-from freenasUI.sharing.models import WebDAV_Share
 
 
 def salt():
@@ -79,17 +66,18 @@ def dav_passwd_change(passwd, auth_type):
 
 
 def main():
-    """Use the django ORM to generate a config file."""
+    """Use middleware client to generate a config file."""
+    client = Client()
     # Obtain the various webdav configuration details from services object
-    webby = WebDAV.objects.all()[0]
+    webby = Struct(client.call('datastore.query', 'services.WebDAV', None, {'get': True}))
     dav_tcpport = webby.webdav_tcpport
     dav_tcpportssl = webby.webdav_tcpportssl
     dav_protocol = webby.webdav_protocol
     dav_auth_type = webby.webdav_htauth
     dav_passwd = webby.webdav_password
     if dav_protocol != 'http':
-        dav_ssl_certfile = webby.webdav_certssl.cert_certificate_path
-        dav_ssl_keyfile = webby.webdav_certssl.cert_privatekey_path
+        dav_ssl_certfile = '/etc/certificates/%s.crt' % webby.webdav_certssl.cert_name
+        dav_ssl_keyfile = '/etc/certificates/%s.key' % webby.webdav_certssl.cert_name
 
     # Declaring the config file locations as well as making some
     # generic config-text blocks
@@ -143,7 +131,7 @@ def main():
     _chownrecur(oscmd, pwd.getpwnam("webdav").pw_uid, grp.getgrnam("webdav").gr_gid)
 
     # Now getting to the actual webdav share details and all
-    webshares = WebDAV_Share.objects.all()
+    webshares = [Struct(i) for i in client.call('datastore.query', 'sharing.WebDAV_Share')]
 
     if dav_protocol in ['http', 'httphttps']:
         if dav_protocol == 'http':

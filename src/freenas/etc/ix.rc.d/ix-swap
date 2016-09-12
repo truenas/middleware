@@ -11,7 +11,7 @@
 
 generate_fstab_swap()
 {
-    /usr/local/bin/python /usr/local/www/freenasUI/middleware/notifier.py get_allswapdev | \
+    /usr/local/bin/midclt call notifier.get_allswapdev | \
     while read devname; do
     if [ -c "/dev/${devname}" ]; then
         echo "/dev/${devname}.eli	none			swap		sw		0	0"

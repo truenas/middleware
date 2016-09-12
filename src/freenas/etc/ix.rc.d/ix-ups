@@ -54,7 +54,7 @@ generate_upsmon()
 	while eval read $f; do
 
 		user=`echo ${ups_monuser}|sed -E 's/([#$])/\\\1/g'`
-		passwd=`/usr/local/www/freenasUI/middleware/notifier.py pwenc_decrypt ${ups_monpwd}|sed -E 's/([#$])/\\\1/g'`
+		passwd=`/usr/local/bin/midclt call notifier.pwenc_decrypt ${ups_monpwd}|sed -E 's/([#$])/\\\1/g'`
 		if [ "${ups_mode}" = "master" ]; then
 			ident="${ups_identifier}"
 		else
@@ -90,7 +90,7 @@ generate_upsdusers()
 {
 
 	local user=`${FREENAS_SQLITE_CMD} ${RO_FREENAS_CONFIG} "SELECT ups_monuser FROM services_ups ORDER BY -id LIMIT 1"|sed -E 's/(["$#=])/\\\1/g'`
-	local passwd=`/usr/local/www/freenasUI/middleware/notifier.py pwenc_decrypt "$(${FREENAS_SQLITE_CMD} ${RO_FREENAS_CONFIG} "SELECT ups_monpwd FROM services_ups ORDER BY -id LIMIT 1")"|sed -E 's/(["$#=])/\\\1/g'`
+	local passwd=`/usr/local/bin/midclt call notifier.pwenc_decrypt "$(${FREENAS_SQLITE_CMD} ${RO_FREENAS_CONFIG} "SELECT ups_monpwd FROM services_ups ORDER BY -id LIMIT 1")"|sed -E 's/(["$#=])/\\\1/g'`
 	cat <<EOF
 [${user}]
     password = ${passwd}

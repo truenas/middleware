@@ -372,7 +372,7 @@ __SQL__
 		val=$(echo ${line}|cut -f2- -d=|xargs)
 
 		if [ "${var}" = "nt4_adminpw" ]; then
-			NT4_set "${var}" "$(/usr/local/www/freenasUI/middleware/notifier.py pwenc_decrypt ${val})"
+			NT4_set "${var}" "$(/usr/local/bin/midclt call notifier.pwenc_decrypt ${val})"
 		else
 			NT4_set "${var}" "${val}"
 		fi

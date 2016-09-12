@@ -6,7 +6,7 @@ cifs_file="/tmp/.cifs_AD"
 status_file="/var/run/directoryservice.activedirectory"
 service=/usr/sbin/service
 python=/usr/local/bin/python
-notifier=/usr/local/www/freenasUI/middleware/notifier.py
+notifier=/usr/local/bin/midclt
 
 adctl_cmd()
 {
@@ -55,20 +55,20 @@ cifs_enabled()
 
 cifs_start()
 {
-	adctl_cmd ${python} ${notifier} start cifs
+	adctl_cmd ${python} ${notifier} call notifier.start cifs
 	return $?
 }
 
 cifs_stop()
 {
-	adctl_cmd ${python} ${notifier} stop cifs
+	adctl_cmd ${python} ${notifier} call notifier.stop cifs
 	return $?
 }
 
 cifs_restart()
 {
-	adctl_cmd ${python} ${notifier} stop cifs
-	adctl_cmd ${python} ${notifier} start cifs
+	adctl_cmd ${python} ${notifier} call notifier.stop cifs
+	adctl_cmd ${python} ${notifier} call notifier.start cifs
 	return $?
 }
 

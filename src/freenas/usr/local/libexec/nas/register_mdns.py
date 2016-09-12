@@ -1,22 +1,10 @@
 #!/usr/local/bin/python
+from middlewared.client import Client
 
-import os
 import pybonjour
 import select
 import socket
-import sys
 import threading
-
-sys.path.extend([
-    '/usr/local/www',
-    '/usr/local/www/freenasUI'
-])
-
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'freenasUI.settings')
-
-# Make sure to load all modules
-from django.db.models.loading import cache
-cache.get_apps()
 
 
 def register(name, regtype, port):
@@ -37,18 +25,16 @@ def register(name, regtype, port):
 
 
 def main():
-    from freenasUI.services.models import services
-    from freenasUI.services.models import SSH
-    from freenasUI.system.models import Settings
+    client = Client()
 
     try:
         hostname = socket.gethostname().split(".")[0]
     except IndexError:
         hostname = socket.gethostname()
 
-    ssh_service = services.objects.filter(srv_service='ssh', srv_enable=1)
+    ssh_service = client.call('datastore.query', 'services.services', [('srv_service', '=', 'ssh'), ('srv_enable', '=', True)])
     if ssh_service:
-        sshport = int(SSH.objects.values('ssh_tcpport')[0]['ssh_tcpport'])
+        sshport = client.call('datastore.query', 'services.ssh', None, {'get': True})['ssh_tcpport']
         t = threading.Thread(target=register,
                              args=(hostname, '_ssh._tcp.', sshport))
         t.daemon = False
@@ -58,9 +44,7 @@ def main():
         t.daemon = False
         t.start()
 
-    webui = Settings.objects.values('stg_guiprotocol',
-                                    'stg_guiport',
-                                    'stg_guihttpsport')
+    webui = client.call('datastore.query', 'system.settings')
 
     if (webui[0]['stg_guiprotocol'] == 'http' or
             webui[0]['stg_guiprotocol'] == 'httphttps'):

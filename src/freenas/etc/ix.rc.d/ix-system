@@ -10,8 +10,7 @@
 
 notifier()
 {
-	/usr/local/bin/python \
-	/usr/local/www/freenasUI/middleware/notifier.py $*
+	/usr/local/bin/midclt call notifier.$1
 }
 
 system_start()

@@ -47,8 +47,7 @@ generate_crontab()
 	${FREENAS_SQLITE_CMD} -separator "" ${RO_FREENAS_CONFIG} \
 	"SELECT $sf FROM tasks_rsync WHERE rsync_enabled = 1 ORDER BY id" | \
 	while eval read -r $f; do
-		# FIXME: this is time consuming, ideally whole ix-crontab should be rewritten in python
-		rsync_command=$(/usr/local/bin/python /usr/local/www/freenasUI/middleware/notifier.py rsync_command ${id})
+		rsync_command=$(/usr/local/bin/midclt call notifier.rsync_command ${id})
 		# Note that echo -e will do the wrong thing with certain characters. Read the commit
 		# history for more details.
 		echo "${rsync_minute}	${rsync_hour}	${rsync_daymonth}	${rsync_month}	${rsync_dayweek}	${rsync_user}	PATH=\"$cron_PATH\" ${rsync_command} 2>&1 |/usr/bin/logger -t rsync" >> /etc/crontab

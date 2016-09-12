@@ -1,0 +1,33 @@
+#!/bin/sh
+#
+# $FreeBSD$
+#
+
+# PROVIDE: middlewared
+# BEFORE: fsck earlykld
+
+. /etc/rc.subr
+
+middlewared_debug=${middlewared_debug:-"NO"}
+
+middlewared_start() {
+	mount -uw /  # FIXME: why root is not rw by default?
+	/sbin/ifconfig lo0 127.0.0.1 up
+	if checkyesno middlewared_debug; then
+		/usr/local/bin/tmux new-session -s middlewared -d
+		/usr/local/bin/tmux send -t middlewared "${command} -f" ENTER
+	else
+		${command}
+	fi
+	# FIXME: add midctl command to wait for server to be ready
+	# for now, the old and brave sleep
+	sleep 5
+}
+
+name="middlewared"
+pidfile="/var/run/middlewared.pid"
+command="/usr/local/bin/${name}"
+start_cmd='middlewared_start'
+
+load_rc_config $name
+run_rc_command $*

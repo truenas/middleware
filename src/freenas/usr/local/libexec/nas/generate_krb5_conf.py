@@ -1,35 +1,10 @@
 #!/usr/local/bin/python
+from middlewared.client import Client
+from middlewared.client.utils import Struct
 
-import os
 import re
 import sys
-import string
-import tempfile
-import time
 
-sys.path.extend([
-    '/usr/local/www',
-    '/usr/local/www/freenasUI'
-])
-
-os.environ["DJANGO_SETTINGS_MODULE"] = "freenasUI.settings"
-
-# Make sure to load all modules
-from django.db.models.loading import cache
-cache.get_apps()
-
-from freenasUI.directoryservice.models import (
-    KerberosRealm,
-    KerberosSettings,
-    ActiveDirectory,
-    LDAP
-)
-
-from freenasUI.common.freenasldap import (
-    FreeNAS_LDAP,
-    FreeNAS_ActiveDirectory,
-    FLAGS_DBINIT
-)
 
 class KerberosConfigBinding(object):
     def __init__(self, name, value):
@@ -47,7 +22,7 @@ class KerberosConfigBindingCollection(list):
 
     def __append(self, item, item_list):
         for i in item_list:
-            if isinstance(i , KerberosConfigBinding):
+            if isinstance(i, KerberosConfigBinding):
                 if i.name == item.name:
                     i.value = item.value
                     return False
@@ -81,8 +56,10 @@ class KerberosConfigSection(object):
         for binding in self.bindings:
             yield binding
 
+
 class KerberosConfigSectionCollection(list):
     pass
+
 
 class KerberosConfig(object):
     def tokenize(self, code):
@@ -107,7 +84,7 @@ class KerberosConfig(object):
                 tokens.append(c)
             elif c == '\n':
                 if token:
-                    tokens.append(token) 
+                    tokens.append(token)
                 token = ""
             elif re.match('^\s+', c):
                 if token:
@@ -191,7 +168,6 @@ class KerberosConfig(object):
 
                     pair = []
 
-             
         if bindings:
             section.merge(bindings)
 
@@ -308,11 +284,10 @@ class KerberosConfig(object):
        )
 
        self.sections = sections
-  
+
     def __init__(self, *args, **kwargs):
         self.sections = None
 
- 
         self.krb5_conf = "/etc/krb5.conf"
         if 'krb5_conf' in kwargs:
             self.krb5_conf = kwargs['krb5_conf']
@@ -344,7 +319,7 @@ class KerberosConfig(object):
         return section
 
     def __get_binding(self, item, bindings):
-        if not item or bindings == None:
+        if not item or bindings is None:
             return None 
 
         if bindings.name != None and \
@@ -465,10 +440,11 @@ def get_kerberos_servers(kr, ad=None, ldap=None):
     return krb_kdc, krb_admin_server, krb_kpasswd_server
 
 def main():
-    realms = KerberosRealm.objects.all()
+    client = Client()
+    realms = client.call('datastore.query', 'directoryservice.KerberosRealm')
 
     try:
-        settings = KerberosSettings.objects.all()[0]
+        settings = Struct(client.call('datastore.config', 'directoryservice.KerberosSettings'))
     except:
         settings = None
 
@@ -480,17 +456,18 @@ def main():
     kc.create_default_config()
 
     ad = ldap = None
-    ldap_objects = LDAP.objects.all()
-    if ldap_objects and ldap_objects[0].ldap_enable:
-        ldap = FreeNAS_LDAP(flags=FLAGS_DBINIT)
+    ldap_objects = client.call('datastore.query', 'directoryservice.LDAP')
+    if ldap_objects and ldap_objects[0]['ldap_enable']:
+        ldap = client.call('notifier.directoryservice', 'LDAP')
 
-    ad_objects = ActiveDirectory.objects.all()
-    if ad_objects and ad_objects[0].ad_enable:
-        ad = FreeNAS_ActiveDirectory(flags=FLAGS_DBINIT)
+    ad_objects = client.call('datastore.query', 'directoryservice.ActiveDirectory')
+    if ad_objects and ad_objects[0]['ad_enable']:
+        ad = client.call('notifier.directoryservice', 'AD')
 
     for kr in realms:
+        kr = Struct(kr)
         if not kr.krb_realm:
-            continue 
+            continue
 
         krb_kdc, krb_admin_server, krb_kpasswd_server = get_kerberos_servers(
             kr, ad, ldap

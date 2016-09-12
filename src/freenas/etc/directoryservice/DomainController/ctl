@@ -5,7 +5,7 @@
 cifs_file="/tmp/.cifs_DC"
 service=/usr/sbin/service
 python=/usr/local/bin/python
-notifier=/usr/local/www/freenasUI/middleware/notifier.py
+notifier=/usr/local/bin/midclt
 
 dcctl_cmd()
 {
@@ -29,20 +29,20 @@ cifs_enabled()
 
 cifs_start()
 {
-	dcctl_cmd ${python} ${notifier} start cifs
+	dcctl_cmd ${python} ${notifier} call notifier.start cifs
 	return $?
 }
 
 cifs_stop()
 {
-	dcctl_cmd ${python} ${notifier} stop cifs
+	dcctl_cmd ${python} ${notifier} call notifier.stop cifs
 	return $?
 }
 
 cifs_restart()
 {
-	dcctl_cmd ${python} ${notifier} stop cifs
-	dcctl_cmd ${python} ${notifier} start cifs
+	dcctl_cmd ${python} ${notifier} call notifier.stop cifs
+	dcctl_cmd ${python} ${notifier} call notifier.start cifs
 	return $?
 }
 

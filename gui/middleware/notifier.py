@@ -188,8 +188,11 @@ class notifier:
         pomask = ctypes.pointer(omask)
         libc.sigprocmask(signal.SIGQUIT, pmask, pomask)
         try:
-            ret = self.__system("(" + command + ") 2>&1 | logger -p daemon.notice -t %s"
-                                % (self.IDENTIFIER, ))
+            p = Popen(
+                "(" + command + ") 2>&1 | logger -p daemon.notice -t %s" % (self.IDENTIFIER, ),
+                stdin=PIPE, stdout=PIPE, stderr=PIPE, shell=True, close_fds=True)
+            p.communicate()
+            ret = p.returncode
         finally:
             libc.sigprocmask(signal.SIGQUIT, pomask, None)
         log.debug("Executed: %s -> %s", command, ret)
@@ -206,17 +209,20 @@ class notifier:
         pomask = ctypes.pointer(omask)
         libc.sigprocmask(signal.SIGQUIT, pmask, pomask)
         try:
-            retval = self.__system("(" + command + ") >/dev/null 2>&1")
+            p = Popen(
+                "(" + command + ") >/dev/null 2>&1",
+                stdin=PIPE, stdout=PIPE, stderr=PIPE, shell=True, close_fds=True)
+            p.communicate()
+            retval = p.returncode
         finally:
             libc.sigprocmask(signal.SIGQUIT, pomask, None)
-        retval >>= 8
         log.debug("Executed: %s; returned %d", command, retval)
         return retval
 
     def _pipeopen(self, command, logger=log):
         if logger:
             logger.debug("Popen()ing: %s", command)
-        return Popen(command, stdin=PIPE, stdout=PIPE, stderr=PIPE, shell=True, close_fds=False)
+        return Popen(command, stdin=PIPE, stdout=PIPE, stderr=PIPE, shell=True, close_fds=True)
 
     def _pipeerr(self, command, good_status=0):
         proc = self._pipeopen(command)
@@ -4697,6 +4703,9 @@ class notifier:
 
     def sync_disk(self, devname):
         from freenasUI.storage.models import Disk
+
+        if devname.startswith('/dev/'):
+            devname = devname.replace('/dev/', '')
 
         # Skip sync disks on backup node
         if (
