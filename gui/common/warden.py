@@ -1127,7 +1127,10 @@ class Warden(warden_base):
         return self.__call(warden_pbis(flags, **kwargs))
 
     def set(self, flags=WARDEN_FLAGS_NONE, **kwargs):
-        return self.__call(warden_set(flags, **kwargs))
+        rv = self.__call(warden_set(flags, **kwargs))
+        # Clear cache when config is changed, see #16335
+        cache.delete('wardenList')
+        return rv
 
     def start(self, flags=WARDEN_FLAGS_NONE, **kwargs):
         return self.__call(warden_start(flags, **kwargs))
