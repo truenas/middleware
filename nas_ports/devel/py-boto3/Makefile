@@ -3,7 +3,6 @@
 PORTNAME=	boto3
 PORTVERSION=	1.4.0
 CATEGORIES=	devel python
-MASTER_SITES=	CHEESESHOP
 PKGNAMEPREFIX=	${PYTHON_PKGNAMEPREFIX}
 MAINTAINER=	dev@FreeBSD.org
 COMMENT=	The AWS SDK for Python
@@ -14,6 +13,12 @@ RUN_DEPENDS=    ${PYTHON_PKGNAMEPREFIX}dateutil>=2.1:${PORTSDIR}/devel/py-dateut
                 ${PYTHON_PKGNAMEPREFIX}botocore>0:${PORTSDIR}/devel/py-botocore
 
 USES=		python
+USE_GITHUB=	yes
 USE_PYTHON=	autoplist distutils
+
+GH_ACCOUNT=	boto
+
+do-test:
+	@cd ${WRKSRC} && ${PYTHON_CMD} -m nose -v tests/unit tests/functional
 
 .include <bsd.port.mk>
