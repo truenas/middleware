@@ -1368,8 +1368,9 @@ msgstr "この項目は、\"ホームディレクトリの閲覧を有効にす�
 msgid "This field is required for \"Home directories\"."
 msgstr "この項目は、\"ホームディレクトリ\" のために必須です。"
 
-#~ msgid "The SMB service failed to reload."
-#~ msgstr "NFS サービスを再開できませんでした。"
+#: services/forms.py:106
+msgid "The SMB service failed to reload."
+msgstr "NFS サービスを再開できませんでした。"
 
 #: services/forms.py:118
 msgid "The AFP service failed to reload."
@@ -1834,10 +1835,11 @@ msgstr ""
 msgid "Unix Extensions"
 msgstr "UNIX形式"
 
-#~ msgid ""
-#~ "These extensions enable Samba to better serve UNIX SMB clients by "
-#~ "supporting features such as symbolic links, hard links, etc..."
-#~ msgstr "この拡張はSambaをUNIX SMBクライアントにシンボリックリンクやハードリンクリンクなどを提供するために有効になっています"
+#: services/models.py:167
+msgid ""
+"These extensions enable Samba to better serve UNIX SMB clients by "
+"supporting features such as symbolic links, hard links, etc..."
+msgstr "この拡張はSambaをUNIX SMBクライアントにシンボリックリンクやハードリンクリンクなどを提供するために有効になっています"
 
 #: services/models.py:171
 msgid "Enable AIO"
@@ -1876,16 +1878,19 @@ msgstr ""
 msgid "Zeroconf share discovery"
 msgstr "Zeroconf 共有探索"
 
-#~ msgid ""
-#~ "Zeroconf support via Avahi allows clients (the Mac OSX finder in particular) "
-#~ "to automatically discover the SMB shares on the system similar to the "
-#~ "Computer Browser service in Windows."
-#~ msgstr ""
-#~ "Zeroconf は Avahi 経由でのクライアント（主にMac "
-#~ "OSXのファインダーなど）に、自動的にSMB共有フォルダをWindows上と同様に発見できるようにします。"
+#: services/models.py:189
+msgid ""
+"Zeroconf support via Avahi allows clients (the Mac OSX finder in particular) "
+"to automatically discover the SMB shares on the system similar to the "
+"Computer Browser service in Windows."
+msgstr ""
+"Zeroconf は Avahi 経由でのクライアント（主にMac "
+"OSXのファインダーなど）に、自動的にSMB共有フォルダをWindows上と同様に発見できるようにします。"
 
-#~ msgid "SMB"
-#~ msgstr "SMB"
+#: services/models.py:193 services/models.py:194
+#: templates/services/core.html:26
+msgid "SMB"
+msgstr "SMB"
 
 #~ msgid "Server Name"
 #~ msgstr "サーバ名"
@@ -5663,8 +5668,9 @@ msgstr "AFP の設定"
 #~ msgid "Active Directory Settings"
 #~ msgstr "Active Directory の設定"
 
-#~ msgid "SMB Settings"
-#~ msgstr "SMB の設定"
+#: templates/services/core.html:32
+msgid "SMB Settings"
+msgstr "SMB の設定"
 
 #: templates/services/core.html:45
 msgid "Dynamic DNS Settings"
@@ -5901,8 +5907,9 @@ msgstr "Apple共有(AFP)"
 msgid "UNIX (NFS)"
 msgstr "UNIX(NFS)"
 
-#~ msgid "Windows (SMB)"
-#~ msgstr "Windows共有(SMB)"
+#: templates/sharing/index.html:12
+msgid "Windows (SMB)"
+msgstr "Windows共有(SMB)"
 
 #~ msgid "There are no active UNIX (NFS) shares."
 #~ msgstr "有効な Unix ファイル共有（ＮＦＳ）はありません。"
@@ -13915,62 +13922,3 @@ msgid ""
 "The command used to shutdown the server. You can use a custom command here "
 "to perform other tasks before shutdown.default: /sbin/shutdown -p now"
 msgstr ""
-
-#: account/forms.py:500
-msgid ""
-"Passwords containing a question mark (?) are currently not allowed due to "
-"problems with CIFS."
-msgstr ""
-
-#: services/forms.py:181
-msgid "The CIFS service failed to reload."
-msgstr "NFS サービスを再開できませんでした。"
-
-#: services/models.py:179
-msgid ""
-"These extensions enable Samba to better serve UNIX CIFS clients by "
-"supporting features such as symbolic links, hard links, etc..."
-msgstr "この拡張はSambaをUNIX CIFSクライアントにシンボリックリンクやハードリンクリンクなどを提供するために有効になっています"
-
-#: services/models.py:208
-msgid ""
-"Zeroconf support via Avahi allows clients (the Mac OSX finder in particular) "
-"to automatically discover the CIFS shares on the system similar to the "
-"Computer Browser service in Windows."
-msgstr ""
-"Zeroconf は Avahi 経由でのクライアント（主にMac "
-"OSXのファインダーなど）に、自動的にCIFS共有フォルダをWindows上と同様に発見できるようにします。"
-
-#: services/models.py:223
-#: services/models.py:224
-#: storage/forms.py:2039
-#: templates/services/core.html:15
-msgid "CIFS"
-msgstr "CIFS"
-
-#: services/forms.py:95
-msgid "Cannot disable CIFS while ActiveDirectory is in use."
-msgstr ""
-
-#: sharing/models.py:94
-#, fuzzy
-msgid "Windows (CIFS) Share"
-msgstr "Windowsファイル共有"
-
-#: sharing/models.py:95
-#, fuzzy
-msgid "Windows (CIFS) Shares"
-msgstr "Windowsファイル共有"
-
-#: services/views.py:269
-#, fuzzy
-msgid "CIFS successfully updated."
-msgstr "%s を正しく更新しました。"
-
-#: templates/services/core.html:21
-msgid "CIFS Settings"
-msgstr "CIFS の設定"
-
-#: templates/sharing/index.html:15
-msgid "Windows (CIFS)"
-msgstr "Windows共有(CIFS)"

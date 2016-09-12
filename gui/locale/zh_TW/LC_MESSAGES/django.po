@@ -1364,8 +1364,9 @@ msgstr "欲使用 \"啟用瀏覽家目錄\" 的功能須填此欄位。"
 msgid "This field is required for \"Home directories\"."
 msgstr "欲使用 \"家目錄\" 的功能須填此欄位。"
 
-#~ msgid "The SMB service failed to reload."
-#~ msgstr "SMB 服務重新載入時發生失敗"
+#: services/forms.py:106
+msgid "The SMB service failed to reload."
+msgstr "SMB 服務重新載入時發生失敗"
 
 #: services/forms.py:118
 msgid "The AFP service failed to reload."
@@ -1845,8 +1846,10 @@ msgid ""
 "Computer Browser service in Windows."
 msgstr ""
 
-#~ msgid "SMB"
-#~ msgstr "SMB"
+#: services/models.py:193 services/models.py:194
+#: templates/services/core.html:26
+msgid "SMB"
+msgstr "SMB"
 
 #~ msgid "Server Name"
 #~ msgstr "主機名稱"
@@ -5354,8 +5357,9 @@ msgstr "AFP 設定"
 #~ msgid "Active Directory Settings"
 #~ msgstr "Active Directory 設定"
 
-#~ msgid "SMB Settings"
-#~ msgstr "SMB 設定"
+#: templates/services/core.html:32
+msgid "SMB Settings"
+msgstr "SMB 設定"
 
 #: templates/services/core.html:45
 msgid "Dynamic DNS Settings"
@@ -9696,10 +9700,11 @@ msgstr ""
 msgid "Enable experimental target"
 msgstr ""
 
-#~ msgid ""
-#~ "Passwords containing a question mark (?) are currently not allowed due to "
-#~ "problems with SMB."
-#~ msgstr "由於 SMB 的問題，目前不允許密碼中包含問號 (?)"
+#: account/forms.py:500
+msgid ""
+"Passwords containing a question mark (?) are currently not allowed due to "
+"problems with SMB."
+msgstr "由於 SMB 的問題，目前不允許密碼中包含問號 (?)"
 
 #: directoryservice/forms.py:104
 #, fuzzy
@@ -10388,8 +10393,9 @@ msgstr ""
 msgid "Kerberos Realm"
 msgstr "Kerberos Keytab 檔"
 
-#~ msgid "SMB successfully updated."
-#~ msgstr "SMB 更新成功"
+#: services/views.py:269
+msgid "SMB successfully updated."
+msgstr "SMB 更新成功"
 
 #: sharing/models.py:290
 msgid "Security"
@@ -13480,60 +13486,3 @@ msgid ""
 "The command used to shutdown the server. You can use a custom command here "
 "to perform other tasks before shutdown.default: /sbin/shutdown -p now"
 msgstr ""
-
-#: account/forms.py:500
-msgid ""
-"Passwords containing a question mark (?) are currently not allowed due to "
-"problems with CIFS."
-msgstr "由於 CIFS 的問題，目前不允許密碼中包含問號 (?)"
-
-#: services/forms.py:181
-msgid "The CIFS service failed to reload."
-msgstr "CIFS 服務重新載入時發生失敗"
-
-#: services/models.py:179
-msgid ""
-"These extensions enable Samba to better serve UNIX CIFS clients by "
-"supporting features such as symbolic links, hard links, etc..."
-msgstr ""
-
-#: services/models.py:208
-msgid ""
-"Zeroconf support via Avahi allows clients (the Mac OSX finder in particular) "
-"to automatically discover the CIFS shares on the system similar to the "
-"Computer Browser service in Windows."
-msgstr ""
-
-#: services/models.py:223
-#: services/models.py:224
-#: storage/forms.py:2039
-#: templates/services/core.html:15
-msgid "CIFS"
-msgstr "CIFS"
-
-#: services/forms.py:95
-msgid "Cannot disable CIFS while ActiveDirectory is in use."
-msgstr ""
-
-#: sharing/models.py:94
-#, fuzzy
-msgid "Windows (CIFS) Share"
-msgstr "Windows 檔案共享"
-
-#: sharing/models.py:95
-#, fuzzy
-msgid "Windows (CIFS) Shares"
-msgstr "Windows 檔案共享"
-
-#: services/views.py:269
-msgid "CIFS successfully updated."
-msgstr "CIFS 更新成功"
-
-#: templates/services/core.html:21
-msgid "CIFS Settings"
-msgstr "CIFS 設定"
-
-#: templates/sharing/index.html:15
-#, fuzzy
-msgid "Windows (CIFS)"
-msgstr "新增Windows共享(CIFS)"

@@ -1351,8 +1351,9 @@ msgstr ""
 msgid "This field is required for \"Home directories\"."
 msgstr "Αυτό το πεδίο απαιτείται για τους \"Αρχικούς καταλόγους\"."
 
-#~ msgid "The SMB service failed to reload."
-#~ msgstr "Η επαναφόρτωση της υπηρεσίας SMB απέτυχε."
+#: services/forms.py:106
+msgid "The SMB service failed to reload."
+msgstr "Η επαναφόρτωση της υπηρεσίας SMB απέτυχε."
 
 #: services/forms.py:118
 msgid "The AFP service failed to reload."
@@ -1866,8 +1867,10 @@ msgid ""
 "Computer Browser service in Windows."
 msgstr ""
 
-#~ msgid "SMB"
-#~ msgstr "SMB"
+#: services/models.py:193 services/models.py:194
+#: templates/services/core.html:26
+msgid "SMB"
+msgstr "SMB"
 
 #~ msgid "Server Name"
 #~ msgstr "Όνομα Διακομιστή"
@@ -5511,8 +5514,9 @@ msgstr "Ρυθμίσεις AFP"
 #~ msgid "Active Directory Settings"
 #~ msgstr "Ρυθμίσεις Active Directory"
 
-#~ msgid "SMB Settings"
-#~ msgstr "Ρυθμίσεις SMB"
+#: templates/services/core.html:32
+msgid "SMB Settings"
+msgstr "Ρυθμίσεις SMB"
 
 #: templates/services/core.html:45
 msgid "Dynamic DNS Settings"
@@ -5747,8 +5751,9 @@ msgstr "Apple (AFP)"
 msgid "UNIX (NFS)"
 msgstr "κοινόχρηστα UNIX (NFS)"
 
-#~ msgid "Windows (SMB)"
-#~ msgstr "κοινόχρηστα Windows (SMB)"
+#: templates/sharing/index.html:12
+msgid "Windows (SMB)"
+msgstr "κοινόχρηστα Windows (SMB)"
 
 #~ msgid "There are no active UNIX (NFS) shares."
 #~ msgstr "Δεν υπάρχουν ενεργά κοινόχρηστα UNIX (NFS)."
@@ -9929,12 +9934,13 @@ msgstr ""
 msgid "Enable experimental target"
 msgstr ""
 
-#~ msgid ""
-#~ "Passwords containing a question mark (?) are currently not allowed due to "
-#~ "problems with SMB."
-#~ msgstr ""
-#~ "Ο κωδικός πρόσβασης περιέχει ένα ερωτηματικό (?) προς το παρόν αυτό δεν "
-#~ "επιτρέπεται λόγω δημιουργίας προβλημάτων στο SMB. "
+#: account/forms.py:500
+msgid ""
+"Passwords containing a question mark (?) are currently not allowed due to "
+"problems with SMB."
+msgstr ""
+"Ο κωδικός πρόσβασης περιέχει ένα ερωτηματικό (?) προς το παρόν αυτό δεν "
+"επιτρέπεται λόγω δημιουργίας προβλημάτων στο SMB. "
 
 #: directoryservice/forms.py:104
 #, fuzzy
@@ -13768,62 +13774,3 @@ msgid ""
 "The command used to shutdown the server. You can use a custom command here "
 "to perform other tasks before shutdown.default: /sbin/shutdown -p now"
 msgstr ""
-
-#: account/forms.py:500
-msgid ""
-"Passwords containing a question mark (?) are currently not allowed due to "
-"problems with CIFS."
-msgstr ""
-"Ο κωδικός πρόσβασης περιέχει ένα ερωτηματικό (?) προς το παρόν αυτό δεν "
-"επιτρέπεται λόγω δημιουργίας προβλημάτων στο CIFS. "
-
-#: services/forms.py:181
-msgid "The CIFS service failed to reload."
-msgstr "Η επαναφόρτωση της υπηρεσίας CIFS απέτυχε."
-
-#: services/models.py:179
-msgid ""
-"These extensions enable Samba to better serve UNIX CIFS clients by "
-"supporting features such as symbolic links, hard links, etc..."
-msgstr ""
-
-#: services/models.py:208
-msgid ""
-"Zeroconf support via Avahi allows clients (the Mac OSX finder in particular) "
-"to automatically discover the CIFS shares on the system similar to the "
-"Computer Browser service in Windows."
-msgstr ""
-
-#: services/models.py:223
-#: services/models.py:224
-#: storage/forms.py:2039
-#: templates/services/core.html:15
-msgid "CIFS"
-msgstr "CIFS"
-
-#: services/forms.py:95
-msgid "Cannot disable CIFS while ActiveDirectory is in use."
-msgstr ""
-
-#: sharing/models.py:94
-#, fuzzy
-msgid "Windows (CIFS) Share"
-msgstr "Windows Share"
-
-#: sharing/models.py:95
-#, fuzzy
-msgid "Windows (CIFS) Shares"
-msgstr "Windows Shares"
-
-#: services/views.py:269
-#, fuzzy
-msgid "CIFS successfully updated."
-msgstr "%s ενημερώθηκε(αν) με επιτυχία."
-
-#: templates/services/core.html:21
-msgid "CIFS Settings"
-msgstr "Ρυθμίσεις CIFS"
-
-#: templates/sharing/index.html:15
-msgid "Windows (CIFS)"
-msgstr "κοινόχρηστα Windows (CIFS)"

@@ -1313,8 +1313,9 @@ msgstr "\"홈 디렉토리 브라우징 활성\"을 위해 필요한 입력란�
 msgid "This field is required for \"Home directories\"."
 msgstr "\"홈 디렉토리\"를 위해 필요한 입력란입니다. "
 
-#~ msgid "The SMB service failed to reload."
-#~ msgstr "SMB 서비스를 다시 시작하는데 실패하였습니다."
+#: services/forms.py:106
+msgid "The SMB service failed to reload."
+msgstr "SMB 서비스를 다시 시작하는데 실패하였습니다."
 
 #: services/forms.py:118
 msgid "The AFP service failed to reload."
@@ -1739,11 +1740,12 @@ msgstr "이 파라메터들은 smb.conf의 [homes] 섹션에 추가되어집니�
 msgid "Unix Extensions"
 msgstr "유닉스 확장자들"
 
-#~ msgid ""
-#~ "These extensions enable Samba to better serve UNIX SMB clients by "
-#~ "supporting features such as symbolic links, hard links, etc..."
-#~ msgstr ""
-#~ "이 확장들은 삼바가 UNIX SMB 클라이언트들에게 심볼릭 링크나 하드 링크등의 기능을 지원함으로써 더 낳은 서비스를 가능하게 합니다."
+#: services/models.py:167
+msgid ""
+"These extensions enable Samba to better serve UNIX SMB clients by "
+"supporting features such as symbolic links, hard links, etc..."
+msgstr ""
+"이 확장들은 삼바가 UNIX SMB 클라이언트들에게 심볼릭 링크나 하드 링크등의 기능을 지원함으로써 더 낳은 서비스를 가능하게 합니다."
 
 #: services/models.py:171
 msgid "Enable AIO"
@@ -1782,8 +1784,10 @@ msgid ""
 "Computer Browser service in Windows."
 msgstr ""
 
-#~ msgid "SMB"
-#~ msgstr "SMB"
+#: services/models.py:193 services/models.py:194
+#: templates/services/core.html:26
+msgid "SMB"
+msgstr "SMB"
 
 #~ msgid "Server Name"
 #~ msgstr "서버 이름"
@@ -5548,8 +5552,9 @@ msgstr "Apple (AFP)"
 msgid "UNIX (NFS)"
 msgstr "유닉스 (NFS)"
 
-#~ msgid "Windows (SMB)"
-#~ msgstr "윈도우 (SMB)"
+#: templates/sharing/index.html:12
+msgid "Windows (SMB)"
+msgstr "윈도우 (SMB)"
 
 #~ msgid "There are no active UNIX (NFS) shares."
 #~ msgstr "현재 활성중인 UNIX 공유(NFS)가 없습니다."
@@ -9356,10 +9361,11 @@ msgstr ""
 msgid "Loader"
 msgstr "로더"
 
-#~ msgid ""
-#~ "Passwords containing a question mark (?) are currently not allowed due to "
-#~ "problems with SMB."
-#~ msgstr "패스워드에 ? 마크를 포함하고 있어 현재 SMB 문제를 해결할 수 없습니다."
+#: account/forms.py:500
+msgid ""
+"Passwords containing a question mark (?) are currently not allowed due to "
+"problems with SMB."
+msgstr "패스워드에 ? 마크를 포함하고 있어 현재 SMB 문제를 해결할 수 없습니다."
 
 #: directoryservice/forms.py:104
 #, fuzzy
@@ -13116,61 +13122,3 @@ msgid ""
 "The command used to shutdown the server. You can use a custom command here "
 "to perform other tasks before shutdown.default: /sbin/shutdown -p now"
 msgstr ""
-
-#: account/forms.py:500
-msgid ""
-"Passwords containing a question mark (?) are currently not allowed due to "
-"problems with CIFS."
-msgstr "패스워드에 ? 마크를 포함하고 있어 현재 CIFS 문제를 해결할 수 없습니다."
-
-#: services/forms.py:181
-msgid "The CIFS service failed to reload."
-msgstr "CIFS 서비스를 다시 시작하는데 실패하였습니다."
-
-#: services/models.py:179
-msgid ""
-"These extensions enable Samba to better serve UNIX CIFS clients by "
-"supporting features such as symbolic links, hard links, etc..."
-msgstr ""
-"이 확장들은 삼바가 UNIX CIFS 클라이언트들에게 심볼릭 링크나 하드 링크등의 기능을 지원함으로써 더 낳은 서비스를 가능하게 합니다."
-
-#: services/models.py:208
-msgid ""
-"Zeroconf support via Avahi allows clients (the Mac OSX finder in particular) "
-"to automatically discover the CIFS shares on the system similar to the "
-"Computer Browser service in Windows."
-msgstr ""
-
-#: services/models.py:223
-#: services/models.py:224
-#: storage/forms.py:2039
-#: templates/services/core.html:15
-msgid "CIFS"
-msgstr "CIFS"
-
-#: services/forms.py:95
-msgid "Cannot disable CIFS while ActiveDirectory is in use."
-msgstr ""
-
-#: sharing/models.py:94
-#, fuzzy
-msgid "Windows (CIFS) Share"
-msgstr "윈도우 공유 추가"
-
-#: sharing/models.py:95
-#, fuzzy
-msgid "Windows (CIFS) Shares"
-msgstr "윈도우 공유 추가"
-
-#: services/views.py:269
-#, fuzzy
-msgid "CIFS successfully updated."
-msgstr "%s을(를) 성공적으로 갱신하였습니다."
-
-#: templates/services/core.html:21
-msgid "CIFS Settings"
-msgstr ""
-
-#: templates/sharing/index.html:15
-msgid "Windows (CIFS)"
-msgstr "윈도우 (CIFS)"

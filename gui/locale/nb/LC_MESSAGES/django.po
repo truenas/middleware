@@ -1863,8 +1863,10 @@ msgid ""
 "Computer Browser service in Windows."
 msgstr ""
 
-#~ msgid "SMB"
-#~ msgstr "SMB"
+#: services/models.py:193 services/models.py:194
+#: templates/services/core.html:26
+msgid "SMB"
+msgstr "SMB"
 
 #~ msgid "Server Name"
 #~ msgstr "Servernavn"
@@ -9756,12 +9758,13 @@ msgstr ""
 msgid "Enable experimental target"
 msgstr ""
 
-#~ msgid ""
-#~ "Passwords containing a question mark (?) are currently not allowed due to "
-#~ "problems with SMB."
-#~ msgstr ""
-#~ "Passord som inneholder spørsmålstegn (?) er ikke støttet grunnet problemer "
-#~ "med SMB"
+#: account/forms.py:500
+msgid ""
+"Passwords containing a question mark (?) are currently not allowed due to "
+"problems with SMB."
+msgstr ""
+"Passord som inneholder spørsmålstegn (?) er ikke støttet grunnet problemer "
+"med SMB"
 
 #: directoryservice/forms.py:104
 #, fuzzy
@@ -13531,64 +13534,3 @@ msgid ""
 "The command used to shutdown the server. You can use a custom command here "
 "to perform other tasks before shutdown.default: /sbin/shutdown -p now"
 msgstr ""
-
-#: account/forms.py:500
-msgid ""
-"Passwords containing a question mark (?) are currently not allowed due to "
-"problems with CIFS."
-msgstr ""
-"Passord som inneholder spørsmålstegn (?) er ikke støttet grunnet problemer "
-"med CIFS"
-
-#: services/forms.py:181
-#, fuzzy
-msgid "The CIFS service failed to reload."
-msgstr "NFS-tjenesten klarte ikke å restarte."
-
-#: services/models.py:179
-msgid ""
-"These extensions enable Samba to better serve UNIX CIFS clients by "
-"supporting features such as symbolic links, hard links, etc..."
-msgstr ""
-
-#: services/models.py:208
-msgid ""
-"Zeroconf support via Avahi allows clients (the Mac OSX finder in particular) "
-"to automatically discover the CIFS shares on the system similar to the "
-"Computer Browser service in Windows."
-msgstr ""
-
-#: services/models.py:223
-#: services/models.py:224
-#: storage/forms.py:2039
-#: templates/services/core.html:15
-msgid "CIFS"
-msgstr "CIFS"
-
-#: services/forms.py:95
-msgid "Cannot disable CIFS while ActiveDirectory is in use."
-msgstr ""
-
-#: sharing/models.py:94
-#, fuzzy
-msgid "Windows (CIFS) Share"
-msgstr "Windows Deling"
-
-#: sharing/models.py:95
-#, fuzzy
-msgid "Windows (CIFS) Shares"
-msgstr "Windowsversjon"
-
-#: services/views.py:269
-#, fuzzy
-msgid "CIFS successfully updated."
-msgstr "% er korrekt oppdatert."
-
-#: templates/services/core.html:21
-msgid "CIFS Settings"
-msgstr ""
-
-#: templates/sharing/index.html:15
-#, fuzzy
-msgid "Windows (CIFS)"
-msgstr "Windows Deling"

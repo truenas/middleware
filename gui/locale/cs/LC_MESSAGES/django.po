@@ -1347,8 +1347,9 @@ msgstr ""
 msgid "This field is required for \"Home directories\"."
 msgstr "Vyplnění této kolonky je vyžadováno pro volbu „Domovské složky“."
 
-#~ msgid "The SMB service failed to reload."
-#~ msgstr "Znovunačtení služby SMB se nezdařilo."
+#: services/forms.py:106
+msgid "The SMB service failed to reload."
+msgstr "Znovunačtení služby SMB se nezdařilo."
 
 #: services/forms.py:118
 msgid "The AFP service failed to reload."
@@ -1819,12 +1820,13 @@ msgstr ""
 msgid "Unix Extensions"
 msgstr "Unixová rozšíření"
 
-#~ msgid ""
-#~ "These extensions enable Samba to better serve UNIX SMB clients by "
-#~ "supporting features such as symbolic links, hard links, etc..."
-#~ msgstr ""
-#~ "Tato rozšíření umožňují službě Samba lépe obsluhovat unixové SMB klienty "
-#~ "poskytnutím funkcí jako jsou symbolické a pevné odkazy, atd…"
+#: services/models.py:167
+msgid ""
+"These extensions enable Samba to better serve UNIX SMB clients by "
+"supporting features such as symbolic links, hard links, etc..."
+msgstr ""
+"Tato rozšíření umožňují službě Samba lépe obsluhovat unixové SMB klienty "
+"poskytnutím funkcí jako jsou symbolické a pevné odkazy, atd…"
 
 #: services/models.py:171
 msgid "Enable AIO"
@@ -1860,18 +1862,21 @@ msgstr ""
 msgid "Zeroconf share discovery"
 msgstr "Nabízet sdílení pomocí technologie Zeroconf"
 
-#~ msgid ""
-#~ "Zeroconf support via Avahi allows clients (the Mac OSX finder in particular) "
-#~ "to automatically discover the SMB shares on the system similar to the "
-#~ "Computer Browser service in Windows."
-#~ msgstr ""
-#~ "Technologie Zeroconf (zde implementovaná službou Avahi) umožňuje klientům ("
-#~ "konkrétně aplikaci finder v Mac OS X) automaticky objevit SMB sdílení, "
-#~ "nabízené systémem – podobně jako je tomu u služby Procházení počítačů v "
-#~ "systému Windows."
+#: services/models.py:189
+msgid ""
+"Zeroconf support via Avahi allows clients (the Mac OSX finder in particular) "
+"to automatically discover the SMB shares on the system similar to the "
+"Computer Browser service in Windows."
+msgstr ""
+"Technologie Zeroconf (zde implementovaná službou Avahi) umožňuje klientům ("
+"konkrétně aplikaci finder v Mac OS X) automaticky objevit SMB sdílení, "
+"nabízené systémem – podobně jako je tomu u služby Procházení počítačů v "
+"systému Windows."
 
-#~ msgid "SMB"
-#~ msgstr "SMB"
+#: services/models.py:193 services/models.py:194
+#: templates/services/core.html:26
+msgid "SMB"
+msgstr "SMB"
 
 #~ msgid "Server Name"
 #~ msgstr "Jméno serveru"
@@ -3340,11 +3345,13 @@ msgid "These parameters are added to [Share] section of smb.conf"
 msgstr ""
 "Tyto parametry jsou přidány do sekce [Share] v souboru s nastaveními smb.conf"
 
-#~ msgid "Windows (SMB) Share"
-#~ msgstr "Windows (SMB) sdílení"
+#: sharing/models.py:94
+msgid "Windows (SMB) Share"
+msgstr "Windows (SMB) sdílení"
 
-#~ msgid "Windows (SMB) Shares"
-#~ msgstr "Windows (SMB) sdílení"
+#: sharing/models.py:95
+msgid "Windows (SMB) Shares"
+msgstr "Windows (SMB) sdílení"
 
 #: sharing/models.py:114
 msgid ""
@@ -5493,8 +5500,9 @@ msgstr "Nastavení služby AFP"
 #~ msgid "Active Directory Settings"
 #~ msgstr "Nastavení Active Directory"
 
-#~ msgid "SMB Settings"
-#~ msgstr "Nastavení služby SMB"
+#: templates/services/core.html:32
+msgid "SMB Settings"
+msgstr "Nastavení služby SMB"
 
 #: templates/services/core.html:45
 msgid "Dynamic DNS Settings"
@@ -5742,8 +5750,9 @@ msgstr "Apple (AFP)"
 msgid "UNIX (NFS)"
 msgstr "UNIX (NFS)"
 
-#~ msgid "Windows (SMB)"
-#~ msgstr "Windows (SMB)"
+#: templates/sharing/index.html:12
+msgid "Windows (SMB)"
+msgstr "Windows (SMB)"
 
 #~ msgid "There are no active UNIX (NFS) shares."
 #~ msgstr "Žádné sdílení UNIX (NFS) není aktivní."
@@ -6376,8 +6385,8 @@ msgstr "Zobrazit S.M.A.R.T. testy"
 #~ msgid "View Tunables"
 #~ msgstr "Zobrazit vyladění"
 
-#~ msgid "Add Apple (SMB) Share"
-#~ msgstr "Přidat Apple (SMB) sdílení"
+msgid "Add Apple (SMB) Share"
+msgstr "Přidat Apple (SMB) sdílení"
 
 #~ msgid "Hourly"
 #~ msgstr "Hodinové"
@@ -9431,12 +9440,13 @@ msgstr "Je třeba, aby se název úložné jednotky neopakoval."
 msgid "Enable experimental target"
 msgstr ""
 
-#~ msgid ""
-#~ "Passwords containing a question mark (?) are currently not allowed due to "
-#~ "problems with SMB."
-#~ msgstr ""
-#~ "Hesla obsahující znak „?“ (otazník) není v současnosti možné používat a to z "
-#~ "důvodu problémů při použití s SMB sdíleními."
+#: account/forms.py:500
+msgid ""
+"Passwords containing a question mark (?) are currently not allowed due to "
+"problems with SMB."
+msgstr ""
+"Hesla obsahující znak „?“ (otazník) není v současnosti možné používat a to z "
+"důvodu problémů při použití s SMB sdíleními."
 
 #: directoryservice/forms.py:104
 msgid "NT4 failed to reload."
@@ -10134,8 +10144,9 @@ msgstr "Uložená Kerberos pověření"
 msgid "Kerberos Realm"
 msgstr "Oblast Kerbera"
 
-#~ msgid "SMB successfully updated."
-#~ msgstr "SMB bylo úspěšně zaktualizováno"
+#: services/views.py:269
+msgid "SMB successfully updated."
+msgstr "SMB bylo úspěšně zaktualizováno"
 
 #: sharing/models.py:290
 msgid "Security"
@@ -13203,8 +13214,9 @@ msgstr ""
 "Názvy vyhrazených prostředí mohou obsahovat pouze písmena, číslice, "
 "spojovníky a podtržítka."
 
-#~ msgid "Cannot disable SMB while ActiveDirectory is in use."
-#~ msgstr "Službu SMB nelze vypnout, pokud zapnutá služba ActiveDirectory."
+#: services/forms.py:95
+msgid "Cannot disable SMB while ActiveDirectory is in use."
+msgstr "Službu SMB nelze vypnout, pokud zapnutá služba ActiveDirectory."
 
 #: services/models.py:1295
 msgid "Shutdown Command"
@@ -13218,67 +13230,3 @@ msgstr ""
 "Příkaz sloužící k vypnutí serveru. V jeho rámci je možné začlenit své "
 "vlastní příkazy, které provést před vypnutím. Pokud není zadáno, bude "
 "použito výchozí: /sbin/shutdown -p now"
-
-#: account/forms.py:500
-msgid ""
-"Passwords containing a question mark (?) are currently not allowed due to "
-"problems with CIFS."
-msgstr ""
-"Hesla obsahující znak „?“ (otazník) není v současnosti možné používat a to z "
-"důvodu problémů při použití s CIFS sdíleními."
-
-#: services/forms.py:106
-msgid "The CIFS service failed to reload."
-msgstr "Znovunačtení služby CIFS se nezdařilo."
-
-#: services/models.py:167
-msgid ""
-"These extensions enable Samba to better serve UNIX CIFS clients by "
-"supporting features such as symbolic links, hard links, etc..."
-msgstr ""
-"Tato rozšíření umožňují službě Samba lépe obsluhovat unixové CIFS klienty "
-"poskytnutím funkcí jako jsou symbolické a pevné odkazy, atd…"
-
-#: services/models.py:189
-msgid ""
-"Zeroconf support via Avahi allows clients (the Mac OSX finder in particular) "
-"to automatically discover the CIFS shares on the system similar to the "
-"Computer Browser service in Windows."
-msgstr ""
-"Technologie Zeroconf (zde implementovaná službou Avahi) umožňuje klientům ("
-"konkrétně aplikaci finder v Mac OS X) automaticky objevit CIFS sdílení, "
-"nabízené systémem – podobně jako je tomu u služby Procházení počítačů v "
-"systému Windows."
-
-#: services/models.py:193
-#: services/models.py:194
-#: templates/services/core.html:26
-msgid "CIFS"
-msgstr "CIFS"
-
-#: sharing/models.py:94
-msgid "Windows (CIFS) Share"
-msgstr "Windows (CIFS) sdílení"
-
-#: sharing/models.py:95
-msgid "Windows (CIFS) Shares"
-msgstr "Windows (CIFS) sdílení"
-
-#: services/forms.py:95
-msgid "Cannot disable CIFS while ActiveDirectory is in use."
-msgstr "Službu CIFS nelze vypnout, pokud zapnutá služba ActiveDirectory."
-
-#: services/views.py:269
-msgid "CIFS successfully updated."
-msgstr "CIFS bylo úspěšně zaktualizováno"
-
-#: templates/services/core.html:32
-msgid "CIFS Settings"
-msgstr "Nastavení služby CIFS"
-
-#: templates/sharing/index.html:12
-msgid "Windows (CIFS)"
-msgstr "Windows (CIFS)"
-
-msgid "Add Apple (CIFS) Share"
-msgstr "Přidat Apple (CIFS) sdílení"

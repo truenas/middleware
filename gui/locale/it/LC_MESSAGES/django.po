@@ -1352,8 +1352,9 @@ msgstr ""
 msgid "This field is required for \"Home directories\"."
 msgstr "Questo campo è obbligatorio per \"directory base\"."
 
-#~ msgid "The SMB service failed to reload."
-#~ msgstr "Riavvio del servizio SMB fallito."
+#: services/forms.py:106
+msgid "The SMB service failed to reload."
+msgstr "Riavvio del servizio SMB fallito."
 
 #: services/forms.py:118
 msgid "The AFP service failed to reload."
@@ -1818,12 +1819,13 @@ msgstr "Questi parametri sono aggiunti alla sezione [homes] di smb.conf"
 msgid "Unix Extensions"
 msgstr "Estensioni Unix"
 
-#~ msgid ""
-#~ "These extensions enable Samba to better serve UNIX SMB clients by "
-#~ "supporting features such as symbolic links, hard links, etc..."
-#~ msgstr ""
-#~ "Queste estensioni consentono a Samba di servire meglio i client UNIX SMB "
-#~ "supportando caratteristiche come link simbolici, hard link, ecc..."
+#: services/models.py:167
+msgid ""
+"These extensions enable Samba to better serve UNIX SMB clients by "
+"supporting features such as symbolic links, hard links, etc..."
+msgstr ""
+"Queste estensioni consentono a Samba di servire meglio i client UNIX SMB "
+"supportando caratteristiche come link simbolici, hard link, ecc..."
 
 #: services/models.py:171
 msgid "Enable AIO"
@@ -1859,17 +1861,20 @@ msgstr ""
 msgid "Zeroconf share discovery"
 msgstr "Discovery di condivisioni Zeroconf"
 
-#~ msgid ""
-#~ "Zeroconf support via Avahi allows clients (the Mac OSX finder in particular) "
-#~ "to automatically discover the SMB shares on the system similar to the "
-#~ "Computer Browser service in Windows."
-#~ msgstr ""
-#~ "Il supporto Zeroconf tramite Avahi consente ai client (Mac OSX finder in "
-#~ "particolare) di scoprire le condivisioni SMB sul sistema in modo simile al "
-#~ "servizio Esplora Risorse di Windows"
+#: services/models.py:189
+msgid ""
+"Zeroconf support via Avahi allows clients (the Mac OSX finder in particular) "
+"to automatically discover the SMB shares on the system similar to the "
+"Computer Browser service in Windows."
+msgstr ""
+"Il supporto Zeroconf tramite Avahi consente ai client (Mac OSX finder in "
+"particolare) di scoprire le condivisioni SMB sul sistema in modo simile al "
+"servizio Esplora Risorse di Windows"
 
-#~ msgid "SMB"
-#~ msgstr "SMB"
+#: services/models.py:193 services/models.py:194
+#: templates/services/core.html:26
+msgid "SMB"
+msgstr "SMB"
 
 #~ msgid "Server Name"
 #~ msgstr "Nome server"
@@ -3345,11 +3350,13 @@ msgid "These parameters are added to [Share] section of smb.conf"
 msgstr ""
 "Questi parametri saranno aggiunti alla sezione [Share] del file smb.conf"
 
-#~ msgid "Windows (SMB) Share"
-#~ msgstr "Elemento condiviso di Windows (SMB)"
+#: sharing/models.py:94
+msgid "Windows (SMB) Share"
+msgstr "Elemento condiviso di Windows (SMB)"
 
-#~ msgid "Windows (SMB) Shares"
-#~ msgstr "Elementi condivisi di Windows (SMB)"
+#: sharing/models.py:95
+msgid "Windows (SMB) Shares"
+msgstr "Elementi condivisi di Windows (SMB)"
 
 #: sharing/models.py:114
 msgid ""
@@ -5513,8 +5520,9 @@ msgstr "Impostazioni AFP"
 #~ msgid "Active Directory Settings"
 #~ msgstr "Impostazioni Active Directory"
 
-#~ msgid "SMB Settings"
-#~ msgstr "Impostazioni SMB"
+#: templates/services/core.html:32
+msgid "SMB Settings"
+msgstr "Impostazioni SMB"
 
 #: templates/services/core.html:45
 msgid "Dynamic DNS Settings"
@@ -9958,12 +9966,13 @@ msgstr ""
 msgid "Enable experimental target"
 msgstr ""
 
-#~ msgid ""
-#~ "Passwords containing a question mark (?) are currently not allowed due to "
-#~ "problems with SMB."
-#~ msgstr ""
-#~ "Le password che contengono un punto interrogativo (?) non sono attualmente "
-#~ "permesse a causa di problemi con SMB.                "
+#: account/forms.py:500
+msgid ""
+"Passwords containing a question mark (?) are currently not allowed due to "
+"problems with SMB."
+msgstr ""
+"Le password che contengono un punto interrogativo (?) non sono attualmente "
+"permesse a causa di problemi con SMB.                "
 
 #: directoryservice/forms.py:104
 msgid "NT4 failed to reload."
@@ -13801,66 +13810,3 @@ msgid ""
 "The command used to shutdown the server. You can use a custom command here "
 "to perform other tasks before shutdown.default: /sbin/shutdown -p now"
 msgstr ""
-
-#: account/forms.py:500
-msgid ""
-"Passwords containing a question mark (?) are currently not allowed due to "
-"problems with CIFS."
-msgstr ""
-"Le password che contengono un punto interrogativo (?) non sono attualmente "
-"permesse a causa di problemi con CIFS.                "
-
-#: services/forms.py:181
-msgid "The CIFS service failed to reload."
-msgstr "Riavvio del servizio CIFS fallito."
-
-#: services/models.py:179
-msgid ""
-"These extensions enable Samba to better serve UNIX CIFS clients by "
-"supporting features such as symbolic links, hard links, etc..."
-msgstr ""
-"Queste estensioni consentono a Samba di servire meglio i client UNIX CIFS "
-"supportando caratteristiche come link simbolici, hard link, ecc..."
-
-#: services/models.py:208
-msgid ""
-"Zeroconf support via Avahi allows clients (the Mac OSX finder in particular) "
-"to automatically discover the CIFS shares on the system similar to the "
-"Computer Browser service in Windows."
-msgstr ""
-"Il supporto Zeroconf tramite Avahi consente ai client (Mac OSX finder in "
-"particolare) di scoprire le condivisioni CIFS sul sistema in modo simile al "
-"servizio Esplora Risorse di Windows"
-
-#: services/models.py:223
-#: services/models.py:224
-#: storage/forms.py:2039
-#: templates/services/core.html:15
-msgid "CIFS"
-msgstr "CIFS"
-
-#: services/forms.py:95
-msgid "Cannot disable CIFS while ActiveDirectory is in use."
-msgstr ""
-
-#: sharing/models.py:94
-msgid "Windows (CIFS) Share"
-msgstr "Elemento condiviso di Windows (CIFS)"
-
-#: sharing/models.py:95
-msgid "Windows (CIFS) Shares"
-msgstr "Elementi condivisi di Windows (CIFS)"
-
-#: services/views.py:269
-#, fuzzy
-msgid "CIFS successfully updated."
-msgstr "%s aggiornato con successo."
-
-#: templates/services/core.html:21
-msgid "CIFS Settings"
-msgstr "Impostazioni CIFS"
-
-#: templates/sharing/index.html:15
-#, fuzzy
-msgid "Windows (CIFS)"
-msgstr "Aggiungi condivisione Windows (CIFS)"

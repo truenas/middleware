@@ -1324,8 +1324,9 @@ msgstr "要 \"启用主目录浏览\" 则此项必填。"
 msgid "This field is required for \"Home directories\"."
 msgstr "要使用 \"主目录\" 则此项必填。"
 
-#~ msgid "The SMB service failed to reload."
-#~ msgstr "SMB 服务重载失败。"
+#: services/forms.py:106
+msgid "The SMB service failed to reload."
+msgstr "SMB 服务重载失败。"
 
 #: services/forms.py:118
 msgid "The AFP service failed to reload."
@@ -1753,10 +1754,11 @@ msgstr "参数将追加到 smb.conf 配置文件的 [homes] 小节"
 msgid "Unix Extensions"
 msgstr "Unix 扩展"
 
-#~ msgid ""
-#~ "These extensions enable Samba to better serve UNIX SMB clients by "
-#~ "supporting features such as symbolic links, hard links, etc..."
-#~ msgstr "这些扩展使 Samba 能更好地支持 UNIX SMB 客户端，实现如符号链接，硬件链接等功能..."
+#: services/models.py:167
+msgid ""
+"These extensions enable Samba to better serve UNIX SMB clients by "
+"supporting features such as symbolic links, hard links, etc..."
+msgstr "这些扩展使 Samba 能更好地支持 UNIX SMB 客户端，实现如符号链接，硬件链接等功能..."
 
 #: services/models.py:171
 msgid "Enable AIO"
@@ -1788,14 +1790,17 @@ msgstr "如果请求的数据大于此值，Samba 将异步写入。"
 msgid "Zeroconf share discovery"
 msgstr "Zeroconf 共享发现"
 
-#~ msgid ""
-#~ "Zeroconf support via Avahi allows clients (the Mac OSX finder in particular) "
-#~ "to automatically discover the SMB shares on the system similar to the "
-#~ "Computer Browser service in Windows."
-#~ msgstr "Zeroconf 通过 Avahi 允许客户端(特别是Mac OSX Finder)自动发现 SMB 共享。"
+#: services/models.py:189
+msgid ""
+"Zeroconf support via Avahi allows clients (the Mac OSX finder in particular) "
+"to automatically discover the SMB shares on the system similar to the "
+"Computer Browser service in Windows."
+msgstr "Zeroconf 通过 Avahi 允许客户端(特别是Mac OSX Finder)自动发现 SMB 共享。"
 
-#~ msgid "SMB"
-#~ msgstr "SMB"
+#: services/models.py:193 services/models.py:194
+#: templates/services/core.html:26
+msgid "SMB"
+msgstr "SMB"
 
 #~ msgid "Server Name"
 #~ msgstr "服务器名"
@@ -3151,11 +3156,13 @@ msgstr ""
 msgid "These parameters are added to [Share] section of smb.conf"
 msgstr "这些参数将追加到 smb.conf 配置文件的 [Share] 小节"
 
-#~ msgid "Windows (SMB) Share"
-#~ msgstr "Windows (SMB) 共享"
+#: sharing/models.py:94
+msgid "Windows (SMB) Share"
+msgstr "Windows (SMB) 共享"
 
-#~ msgid "Windows (SMB) Shares"
-#~ msgstr "Windows (SMB) 共享列表"
+#: sharing/models.py:95
+msgid "Windows (SMB) Shares"
+msgstr "Windows (SMB) 共享列表"
 
 #: sharing/models.py:114
 msgid ""
@@ -5203,8 +5210,9 @@ msgstr "AFP设置"
 msgid "Active Directory Settings"
 msgstr "活动目录设置"
 
-#~ msgid "SMB Settings"
-#~ msgstr "SMB设置"
+#: templates/services/core.html:32
+msgid "SMB Settings"
+msgstr "SMB设置"
 
 #: templates/services/core.html:45
 msgid "Dynamic DNS Settings"
@@ -5425,8 +5433,9 @@ msgstr "Apple (AFP)"
 msgid "UNIX (NFS)"
 msgstr "UNIX（NFS）"
 
-#~ msgid "Windows (SMB)"
-#~ msgstr "Windows(SMB)"
+#: templates/sharing/index.html:12
+msgid "Windows (SMB)"
+msgstr "Windows(SMB)"
 
 #~ msgid "There are no active UNIX (NFS) shares."
 #~ msgstr "无活动 UNIX(NFS) 共享"
@@ -9099,10 +9108,11 @@ msgstr "Extent 名称必须唯一。"
 msgid "Enable experimental target"
 msgstr ""
 
-#~ msgid ""
-#~ "Passwords containing a question mark (?) are currently not allowed due to "
-#~ "problems with SMB."
-#~ msgstr "由于SMB服务问题，当前不允许在密码中使用 (?) 符号。"
+#: account/forms.py:500
+msgid ""
+"Passwords containing a question mark (?) are currently not allowed due to "
+"problems with SMB."
+msgstr "由于SMB服务问题，当前不允许在密码中使用 (?) 符号。"
 
 #: directoryservice/forms.py:104
 msgid "NT4 failed to reload."
@@ -9753,8 +9763,9 @@ msgstr "Keytab"
 msgid "Kerberos Realm"
 msgstr "Kerberos Realm"
 
-#~ msgid "SMB successfully updated."
-#~ msgstr "SMB 已更新。"
+#: services/views.py:269
+msgid "SMB successfully updated."
+msgstr "SMB 已更新。"
 
 #: sharing/models.py:290
 msgid "Security"
@@ -12683,57 +12694,3 @@ msgid ""
 "The command used to shutdown the server. You can use a custom command here "
 "to perform other tasks before shutdown.default: /sbin/shutdown -p now"
 msgstr ""
-
-#: account/forms.py:500
-msgid ""
-"Passwords containing a question mark (?) are currently not allowed due to "
-"problems with CIFS."
-msgstr "由于CIFS服务问题，当前不允许在密码中使用 (?) 符号。"
-
-#: services/forms.py:181
-msgid "The CIFS service failed to reload."
-msgstr "CIFS 服务重载失败。"
-
-#: services/models.py:179
-msgid ""
-"These extensions enable Samba to better serve UNIX CIFS clients by "
-"supporting features such as symbolic links, hard links, etc..."
-msgstr "这些扩展使 Samba 能更好地支持 UNIX CIFS 客户端，实现如符号链接，硬件链接等功能..."
-
-#: services/models.py:208
-msgid ""
-"Zeroconf support via Avahi allows clients (the Mac OSX finder in particular) "
-"to automatically discover the CIFS shares on the system similar to the "
-"Computer Browser service in Windows."
-msgstr "Zeroconf 通过 Avahi 允许客户端(特别是Mac OSX Finder)自动发现 CIFS 共享。"
-
-#: services/models.py:223
-#: services/models.py:224
-#: storage/forms.py:2039
-#: templates/services/core.html:15
-msgid "CIFS"
-msgstr "CIFS"
-
-#: services/forms.py:95
-msgid "Cannot disable CIFS while ActiveDirectory is in use."
-msgstr ""
-
-#: sharing/models.py:94
-msgid "Windows (CIFS) Share"
-msgstr "Windows (CIFS) 共享"
-
-#: sharing/models.py:95
-msgid "Windows (CIFS) Shares"
-msgstr "Windows (CIFS) 共享列表"
-
-#: services/views.py:269
-msgid "CIFS successfully updated."
-msgstr "CIFS 已更新。"
-
-#: templates/services/core.html:21
-msgid "CIFS Settings"
-msgstr "CIFS设置"
-
-#: templates/sharing/index.html:15
-msgid "Windows (CIFS)"
-msgstr "Windows(CIFS)"
