@@ -347,7 +347,7 @@ class Jails(Model):
                 task.delete()
             except Exception as e:
                 raise MiddlewareError(
-                    _("Unable to delete associated periodic snapshot %s:%s") % (task, e)
+                    _("Unable to delete associated periodic snapshot %(task)s:%(error)s") % {'task': task, 'error': e}
                 )
 
         Warden().delete(jail=self.jail_host, flags=WARDEN_DELETE_FLAGS_CONFIRM)
