@@ -1,0 +1,24 @@
+<div data-dojo-attach-point="dapCloudReplication">
+<form data-dojo-attach-point="dapForm" enctype="multipart/form-data" method="post">
+  <input type="hidden" data-dojo-attach-point="dapAll" />
+  <input type="hidden" name="csrfmiddlewaretoken" data-dojo-attach-point="dapCSRF" />
+  <table class="form">
+    <tr data-dojo-attach-point="dapErrorMessageRow">
+      <td colspan="4" data-dojo-attach-point="dapErrorMessage" style="color: red;">
+      </td>
+    </tr>
+    <tr>
+      <th data-dojo-attach-point="dapNameLabel">Name</th>
+      <td>
+        <input data-dojo-attach-point="dapName" type="text" />
+      </td>
+      <th data-dojo-attach-point="dapCredentialLabel">Credential</th>
+      <td>
+        <input data-dojo-attach-point="dapCredential" type="text" />
+      </td>
+    </tr>
+  <table>
+  <span data-dojo-attach-point="dapSubmit"></span>
+  <div data-dojo-attach-point="dapToaster"></div>
+</form>
+</div>
