@@ -1,0 +1,55 @@
+#!/bin/sh
+
+# $FreeBSD: head/security/vault/files/vault.in 390897 2015-06-29 13:38:25Z swills $
+#
+# PROVIDE: vault
+# REQUIRE: LOGIN
+# KEYWORD: shutdown
+#
+# Add the following lines to /etc/rc.conf.local or /etc/rc.conf
+# to enable this service:
+#
+# vault_enable (bool):	Set to NO by default.
+#				Set it to YES to enable vault.
+# vault_user (user):        Set user to run vault.
+#                               Default is "vault".
+# vault_group (group):      Set group to run vault.
+#                               Default is "vault".
+# vault_config (dir):       Set vault config file.
+#                               Default is "%%PREFIX%%/etc/vault.hcl".
+# vault_env (dir):          Set environment variables used with vault
+#                               Default is "".
+
+. /etc/rc.subr
+
+name=vault
+rcvar=vault_enable
+
+load_rc_config $name
+
+: ${vault_enable:="NO"}
+: ${vault_user:="vault"}
+: ${vault_group:="vault"}
+: ${vault_config:="%%PREFIX%%/etc/vault.hcl"}
+: ${vault_env:=""}
+
+pidfile=/var/run/vault.pid
+procname="%%PREFIX%%/bin/vault"
+command="/usr/sbin/daemon"
+command_args="-f -p ${pidfile} /usr/bin/env ${vault_env} ${procname} server -config=${vault_config}"
+
+start_precmd=vault_startprecmd
+
+vault_startprecmd()
+{
+        if [ ! -e ${pidfile} ]; then
+                install -o ${vault_user} -g ${vault_group} /dev/null ${pidfile};
+        fi
+
+        if [ ! -d ${vault_dir} ]; then
+                install -d -o ${vault_user} -g ${vault_group} ${vault_dir}
+        fi
+
+}
+
+run_rc_command "$1"

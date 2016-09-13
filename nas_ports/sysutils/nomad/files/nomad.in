@@ -1,0 +1,55 @@
+#!/bin/sh
+
+# $FreeBSD: head/sysutils/nomad/files/nomad.in 386655 2015-05-18 02:05:03Z swills $
+#
+# PROVIDE: nomad
+# REQUIRE: LOGIN
+# KEYWORD: shutdown
+#
+# Add the following lines to /etc/rc.conf.local or /etc/rc.conf
+# to enable this service:
+#
+# nomad_enable (bool):	Set to NO by default.
+#				Set it to YES to enable nomad.
+# nomad_user (user):        Set user to run nomad.
+#                               Default is "nomad".
+# nomad_group (group):      Set group to run nomad.
+#                               Default is "nomad".
+# nomad_dir (dir):          Set dir to run nomad in.
+#                               Default is "/var/tmp/nomad".
+# nomad_env (dir):          Set environment variables used with nomad
+#                               Default is "".
+
+. /etc/rc.subr
+
+name=nomad
+rcvar=nomad_enable
+
+load_rc_config $name
+
+: ${nomad_enable:="NO"}
+: ${nomad_user:="nomad"}
+: ${nomad_group:="nomad"}
+: ${nomad_dir:="/var/tmp/nomad"}
+: ${nomad_env:=""}
+
+pidfile=/var/run/nomad.pid
+procname="%%PREFIX%%/bin/nomad"
+command="/usr/sbin/daemon"
+command_args="-f -p ${pidfile} /usr/bin/env ${nomad_env} ${procname} agent -data-dir=${nomad_dir} -config=%%PREFIX%%/etc/nomad ${nomad_args}"
+
+start_precmd=nomad_startprecmd
+
+nomad_startprecmd()
+{
+        if [ ! -e ${pidfile} ]; then
+                install -o ${nomad_user} -g ${nomad_group} /dev/null ${pidfile};
+        fi
+
+        if [ ! -d ${nomad_dir} ]; then
+                install -d -o ${nomad_user} -g ${nomad_group} ${nomad_dir}
+        fi
+
+}
+
+run_rc_command "$1"
