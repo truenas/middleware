@@ -2999,12 +2999,12 @@ class CertificateCreateCSRForm(ModelForm):
 
 class CloudCredentialsForm(ModelForm):
 
-    access_key_id = forms.CharField(
-        label=_('Access Key ID'),
+    access_key = forms.CharField(
+        label=_('Access Key'),
         max_length=200,
     )
-    secret_access_key = forms.CharField(
-        label=_('Secret Access Key'),
+    secret_key = forms.CharField(
+        label=_('Secret Key'),
         max_length=200,
     )
 
@@ -3019,7 +3019,20 @@ class CloudCredentialsForm(ModelForm):
         self.fields['provider'].widget.attrs['onChange'] = (
             'cloudCredentialsProvider();'
         )
+        if self.instance.id:
+            if self.instance.provider == 'AMAZON':
+                self.fields['access_key'].initial = self.instance.attributes.get('access_key')
+                self.fields['secret_key'].initial = self.instance.attributes.get('secret_key')
 
+    def save(self, *args, **kwargs):
+        obj = super(CloudCredentialsForm, self).save(commit=False)
+        if obj.provider == 'AMAZON':
+            obj.attributes = {
+                'access_key': self.cleaned_data.get('access_key'),
+                'secret_key': self.cleaned_data.get('secret_key'),
+            }
+        obj.save()
+        return obj
 
 
 class BackupForm(Form):

@@ -45,15 +45,17 @@ class DictField(models.Field):
     def get_internal_type(self):
         return "TextField"
 
-    def to_python(self, value):
-        if not value:
-            return {}
-        return json.loads(value)
-
     def get_db_prep_value(self, value, connection, prepared=False):
         if not value:
             value = {}
         return json.dumps(value)
+
+    def to_python(self, value):
+        if not value:
+            return {}
+        if isinstance(value, basestring):
+            return json.loads(value)
+        return value
 
 
 class UserField(models.CharField):

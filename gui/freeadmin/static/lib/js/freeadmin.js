@@ -1460,8 +1460,8 @@ require([
         var provider = registry.byId("id_provider");
         var trp = provider.domNode.parentNode.parentNode;
 
-        var access_key = registry.byId("id_access_key_id");
-        var secret_key = registry.byId("id_secret_access_key");
+        var access_key = registry.byId("id_access_key");
+        var secret_key = registry.byId("id_secret_key");
         var tra = access_key.domNode.parentNode.parentNode;
         var trs = secret_key.domNode.parentNode.parentNode;
         if(provider.get('value') == 'AMAZON') {
