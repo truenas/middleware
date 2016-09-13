@@ -1332,6 +1332,9 @@ class SystemDatasetForm(ModelForm):
         self.instance._original_sys_pool = self.instance.sys_pool
         self.instance._original_sys_syslog_usedataset = self.instance.sys_syslog_usedataset
         self.instance._original_sys_rrd_usedataset = self.instance.sys_rrd_usedataset
+        self.fields['sys_pool'].widget.attrs['onChange'] = (
+            "systemDatasetMigration();"
+        )
 
     def save(self):
         super(SystemDatasetForm, self).save()
