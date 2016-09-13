@@ -36,7 +36,7 @@ import re
 import stat
 import subprocess
 
-from OpenSSL import crypto
+from OpenSSL import crypto, SSL
 
 from ldap import LDAPError
 
@@ -109,6 +109,7 @@ from freenasUI.storage.forms import VolumeAutoImportForm
 from freenasUI.storage.models import Disk, Volume, Scrub
 from freenasUI.system import models
 from freenasUI.tasks.models import SMARTTest
+from common.ssl import CERT_CHAIN_REGEX
 
 log = logging.getLogger('system.forms')
 WIZARD_PROGRESSFILE = '/tmp/.initialwizard_progress'
@@ -2669,6 +2670,17 @@ class CertificateImportForm(ModelForm):
             ))
         return name
 
+    def clean_cert_privatekey(self):
+        cdata = self.cleaned_data
+        certificate = cdata.get('cert_certificate')
+        certificate = CERT_CHAIN_REGEX.findall(certificate)[-1]
+        privatekey = cdata.get('cert_privatekey')
+        if is_valid_privatekey(certificate, privatekey) is False:
+            raise forms.ValidationError(_(
+                "The private key does not match with the certificate."
+            ))
+        return cdata
+
     def save(self):
         self.instance.cert_type = models.CERT_TYPE_EXISTING
 
@@ -2703,6 +2715,19 @@ class CertificateImportForm(ModelForm):
             'cert_passphrase'
         ]
         model = models.Certificate
+
+
+def is_valid_privatekey(certificate, privatekey):
+    pkey_obj = crypto.load_privatekey(crypto.FILETYPE_PEM, privatekey)
+    cert_obj = crypto.load_certificate(crypto.FILETYPE_PEM, certificate)
+    ctx = SSL.Context(SSL.TLSv1_METHOD)
+    ctx.use_privatekey(pkey_obj)
+    ctx.use_certificate(cert_obj)
+    try:
+        ctx.check_privatekey()
+        return True
+    except SSL.Error:
+        return False
 
 
 class CertificateCreateInternalForm(ModelForm):
