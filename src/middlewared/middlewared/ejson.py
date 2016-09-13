@@ -6,7 +6,7 @@ class JSONEncoder(json.JSONEncoder):
     def default(self, obj):
         if type(obj) is datetime:
             return str(obj)
-        return super(JsonEncoder, self).default(obj)
+        return super(JSONEncoder, self).default(obj)
 
 
 def dumps(obj, **kwargs):
