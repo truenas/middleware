@@ -125,6 +125,9 @@ __EOF__
 
 plugins_stop()
 {
+	RO_FREENAS_CONFIG=$(ro_sqlite ${name} 2> /tmp/${name}.fail && rm /tmp/${name}.fail)
+	trap 'rm -f ${RO_FREENAS_CONFIG}' EXIT
+
 	local args="$*"
 
 	sql="
@@ -213,6 +216,9 @@ plugins_stop()
 
 plugins_status()
 {
+	RO_FREENAS_CONFIG=$(ro_sqlite ${name} 2> /tmp/${name}.fail && rm /tmp/${name}.fail)
+	trap 'rm -f ${RO_FREENAS_CONFIG}' EXIT
+
 	local args="$*"
 
 	sql="
