@@ -996,6 +996,9 @@ class CloudCredentials(Model):
         editable=False,
     )
 
+    def __unicode__(self):
+        return self.name
+
     class Meta:
         verbose_name = _("Cloud Credential")
 
