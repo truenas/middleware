@@ -44,6 +44,10 @@ class CloudReplicationFAdmin(BaseFreeAdmin):
                 (o.id, o.name)
                 for o in CloudCredentials.objects.all()
             ]),
+            'filesystems': json.dumps(list(set([
+                task.task_filesystem
+                for task in models.Task.objects.all()
+            ]))),
         }
 
         try:

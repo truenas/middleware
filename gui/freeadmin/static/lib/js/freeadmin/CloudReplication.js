@@ -54,13 +54,15 @@ define([
       initial: "",
       url: "",
       credentials: "",
+      filesystems: "",
       templateString: template,
       postCreate: function() {
 
-        var me = this, _form, credentials;
+        var me = this, _form, credentials, filesystems;
         var submit, cancel;
         var initial = {};
         var creds = [{label: "-----", value: ""}];
+        var fss = [{label: "-----", value: ""}];
 
         if(this.initial != '') {
           initial = json.parse(this.initial);
@@ -70,8 +72,16 @@ define([
           credentials = json.parse(this.credentials);
         }
 
+        if(this.filesystems != '') {
+          filesystems = json.parse(this.filesystems);
+        }
+
         for(var i=0;i<credentials.length;i++) {
           creds.push({label: credentials[i][1], value: credentials[i][0]});
+        }
+
+        for(var i=0;i<filesystems.length;i++) {
+          fss.push({label: filesystems[i], value: filesystems[i]});
         }
 
         if(!gettext) {
@@ -105,6 +115,13 @@ define([
         }, this.dapCredential);
         if(initial.credential) this._credential.set('value', initial.credential);
 
+        this._filesystem = new Select({
+          name: "filesystem",
+          options: fss,
+          value: "",
+        }, this.dapFilesystem);
+        if(initial.filesystem) this._filesystem.set('value', initial.filesystem);
+
         this._name = new TextBox({
           name: "name",
           value: initial.name
@@ -124,11 +141,9 @@ define([
       validate: function() {
         var map;
           map = {
-            1: this._username,
-            2: this._password,
-            2: this._category,
-            3: this._subject,
-            4: this._desc
+            1: this._name,
+            2: this._filesystem,
+            3: this._credential,
           };
 
         for(var i in map) {
