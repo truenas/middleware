@@ -53,16 +53,25 @@ define([
       errorMessage: "",
       initial: "",
       url: "",
+      credentials: "",
       templateString: template,
       postCreate: function() {
 
-        var me = this, _form;
+        var me = this, _form, credentials;
         var submit, cancel;
-        var attachment_add;
         var initial = {};
+        var creds = [{label: "-----", value: ""}];
 
         if(this.initial != '') {
           initial = json.parse(this.initial);
+        }
+
+        if(this.credentials != '') {
+          credentials = json.parse(this.credentials);
+        }
+
+        for(var i=0;i<credentials.length;i++) {
+          creds.push({label: credentials[i][1], value: credentials[i][0]});
         }
 
         if(!gettext) {
@@ -89,13 +98,12 @@ define([
           type: "hidden"
         }, this.dapCSRF);
 
-/*
-        this._category = new Select({
-          name: "category",
-          options: options,
-        }, this.dapCategory);
-        if(initial.category) this._category.set('value', initial.category);
-        */
+        this._credential = new Select({
+          name: "credential",
+          options: creds,
+          value: "",
+        }, this.dapCredential);
+        if(initial.credential) this._credential.set('value', initial.credential);
 
         this._name = new TextBox({
           name: "name",

@@ -1,7 +1,12 @@
+import json
+
 from collections import OrderedDict
 
 from django.conf import settings
 from django.core.urlresolvers import reverse
+from django.shortcuts import render
+from django.template import TemplateDoesNotExist
+from django.template.loader import get_template
 from django.utils.html import escapejs
 from django.utils.translation import ugettext as _
 
@@ -25,6 +30,28 @@ class CloudReplicationFAdmin(BaseFreeAdmin):
         'id',
         'attributes',
     )
+
+    def add(self, request, mf=None):
+        from freenasUI.system.models import CloudCredentials
+        m = self._model
+        template = "%s/%s_add.html" % (
+            m._meta.app_label,
+            m._meta.object_name.lower(),
+        )
+
+        context = {
+            'credentials': json.dumps([
+                (o.id, o.name)
+                for o in CloudCredentials.objects.all()
+            ]),
+        }
+
+        try:
+            get_template(template)
+        except TemplateDoesNotExist:
+            template = 'freeadmin/generic_model_add.html'
+
+        return render(request, template, context)
 
 
 class DiskFAdmin(BaseFreeAdmin):
