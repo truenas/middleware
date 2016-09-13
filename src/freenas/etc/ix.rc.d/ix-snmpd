@@ -53,7 +53,7 @@ EOF
 			fi
 
 		else
-			echo "rocommunity ${snmp_community} default" >> ${snmp_config}
+			echo "rocommunity \"${snmp_community}\" default" >> ${snmp_config}
 		fi
 
 	done
