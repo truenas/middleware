@@ -50,6 +50,7 @@ class SystemHook(AppHook):
             models.Email,
             models.SystemDataset,
             models.Tunable,
+            models.CloudCredentials,
             models.CertificateAuthority,
             models.Certificate,
         ]

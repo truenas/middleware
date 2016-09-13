@@ -2997,6 +2997,15 @@ class CertificateCreateCSRForm(ModelForm):
         model = models.Certificate
 
 
+class CloudCredentialsForm(ModelForm):
+
+    class Meta:
+        model = models.CloudCredentials
+        exclude = (
+            'attributes',
+        )
+
+
 class BackupForm(Form):
     def __init__(self, *args, **kwargs):
         super(BackupForm, self).__init__(*args, **kwargs)

@@ -42,7 +42,7 @@ from django.utils.translation import ugettext_lazy as _
 from OpenSSL import crypto
 
 from freenasUI import choices
-from freenasUI.freeadmin.models import Model, UserField
+from freenasUI.freeadmin.models import DictField, Model, UserField
 from freenasUI.middleware.notifier import notifier
 from freenasUI.storage.models import Volume
 
@@ -980,6 +980,24 @@ class Certificate(CertificateBase):
     class Meta:
         verbose_name = _("Certificate")
         verbose_name_plural = _("Certificates")
+
+
+class CloudCredentials(Model):
+    name = models.CharField(
+        verbose_name=_('Account Name'),
+        max_length=100,
+    )
+    provider = models.CharField(
+        verbose_name=_('Provider'),
+        max_length=50,
+        choices=choices.CLOUD_PROVIDERS,
+    )
+    attributes = DictField(
+        editable=False,
+    )
+
+    class Meta:
+        verbose_name = _("Cloud Credential")
 
 
 class Backup(Model):
