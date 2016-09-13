@@ -1452,6 +1452,26 @@ require([
         } else {
             sys_dataset_pool._isReset = false;
         }
+
+    }
+
+    cloudCredentialsProvider = function() {
+
+        var provider = registry.byId("id_provider");
+        var trp = provider.domNode.parentNode.parentNode;
+
+        var access_key = registry.byId("id_access_key_id");
+        var secret_key = registry.byId("id_secret_access_key");
+        var tra = access_key.domNode.parentNode.parentNode;
+        var trs = secret_key.domNode.parentNode.parentNode;
+        if(provider.get('value') == 'AMAZON') {
+            domStyle.set(tra, "display", "table-row");
+            domStyle.set(trs, "display", "table-row");
+        } else {
+            domStyle.set(tra, "display", "none");
+            domStyle.set(trs, "display", "none");
+        }
+
     }
 
     vcenter_https_enable_check = function () {

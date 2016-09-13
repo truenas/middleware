@@ -2999,11 +2999,27 @@ class CertificateCreateCSRForm(ModelForm):
 
 class CloudCredentialsForm(ModelForm):
 
+    access_key_id = forms.CharField(
+        label=_('Access Key ID'),
+        max_length=200,
+    )
+    secret_access_key = forms.CharField(
+        label=_('Secret Access Key'),
+        max_length=200,
+    )
+
     class Meta:
         model = models.CloudCredentials
         exclude = (
             'attributes',
         )
+
+    def __init__(self, *args, **kwargs):
+        super(CloudCredentialsForm, self).__init__(*args, **kwargs)
+        self.fields['provider'].widget.attrs['onChange'] = (
+            'cloudCredentialsProvider();'
+        )
+
 
 
 class BackupForm(Form):
