@@ -150,6 +150,14 @@ def _inherit_choices(choices, inheritvalue):
     return nchoices
 
 
+class CloudReplicationForm(ModelForm):
+
+    class Meta:
+        fields = '__all__'
+        model = models.CloudReplication
+        exclude = ('attributes', )
+
+
 class VolumeMixin(object):
 
     def clean_volume_name(self):

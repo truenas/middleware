@@ -21,6 +21,13 @@
   refreshOnShow: true" class="objrefresh data_storage_Replication" tab="storage.Replication.View" id="tab_Replication">
   </div>
 
+  <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="title: '{% trans "Cloud Replication Tasks"|escapejs %}'
+  {% if focused_tab == "storage.CloudReplication.View" %}, selected: true{% endif %},
+  doLayout: false,
+  href: '{% url "freeadmin_storage_cloudreplication_datagrid" %}',
+  refreshOnShow: true" class="objrefresh data_storage_CloudReplication" tab="storage.CloudReplication.View" id="tab_CloudReplication">
+  </div>
+
   <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="title: '{% trans "Scrubs"|escapejs %}'
   {% if focused_tab == "storage.Scrub.View" %}, selected: true{% endif %},
   doLayout: false,
