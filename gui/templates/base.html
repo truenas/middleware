@@ -23,7 +23,9 @@
         {name: "dgrid", location: "{{ STATIC_URL }}lib/js/dgrid"},
         {name: "dstore", location: "{{ STATIC_URL }}lib/js/dstore"},
         {name: "xstyle", location: "{{ STATIC_URL }}lib/js/xstyle"},
-        {name: "put-selector", location: "{{ STATIC_URL }}lib/js/put-selector"}
+        {name: "put-selector", location: "{{ STATIC_URL }}lib/js/put-selector"},
+        {name: "ddpjs", location: "{{ STATIC_URL }}lib/js/ddp.js/lib"},
+        {name: "wolfy87-eventemitter", location: "{{ STATIC_URL }}lib/js/ddp.js/node_modules/wolfy87-eventemitter", main: "EventEmitter.min"}
         ]
     };
     var CSRFToken = '{{ csrf_token }}';
