@@ -34,6 +34,7 @@ import shutil
 import smtplib
 import sqlite3
 import subprocess
+import syslog
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.Utils import formatdate
@@ -216,6 +217,7 @@ def send_mail(
     from freenasUI.account.models import bsdUsers
     from freenasUI.system.models import Email
 
+    syslog.openlog(logoption=syslog.LOG_PID, facility=syslog.LOG_MAIL)
     if interval is None:
         interval = timedelta()
 
@@ -276,6 +278,7 @@ def send_mail(
         # This is because FreeNAS doesn't run a full MTA.
         # else:
         #    server.connect()
+        syslog.syslog("sending mail to " + ','.join(to) + msg.as_string()[0:140])
         server.sendmail(em.em_fromemail, to, msg.as_string())
         server.quit()
     except ValueError as ve:
