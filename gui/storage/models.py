@@ -1061,7 +1061,6 @@ class CloudReplication(Model):
     name = models.CharField(
         max_length=150,
         verbose_name=_('Name'),
-        blank=True,
     )
     filesystem = models.CharField(
         max_length=150,

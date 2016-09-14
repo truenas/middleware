@@ -188,9 +188,14 @@ define([
             }
             domStyle.set(me.dapAmazon, "display", "table-row");
             var buckets = new Select({
+              name: "bucket",
               options: options,
               value: ''
             }, me.dapAmazonBuckets);
+
+            var folder = new TextBox({
+              name: "folder"
+            }, me.dapAmazonFolder);
 
             me._hideLoading();
           }
@@ -229,16 +234,11 @@ define([
       submit: function(e) {
 
         var me = this;
-     doSubmit({
-        form: me._form,
-        event: e,
-        url: me.url,
-     });
-
-
-        //if(!this.validate()) return false;
-
-        //this._submit.set('disabled', true);
+        doSubmit({
+           form: me._form,
+           event: e,
+           url: me.url,
+        });
 
       }
     });
