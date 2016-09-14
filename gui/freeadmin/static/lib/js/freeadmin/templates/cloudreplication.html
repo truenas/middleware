@@ -12,8 +12,8 @@
       <td>
         <input data-dojo-attach-point="dapName" type="text" />
       </td>
-      <th rowspan="2" data-dojo-attach-point="dapCredentialLabel">Credential</th>
-      <td rowspan="2">
+      <th data-dojo-attach-point="dapCredentialLabel">Credential</th>
+      <td>
         <input data-dojo-attach-point="dapCredential" type="text" />
       </td>
     </tr>
@@ -22,9 +22,18 @@
       <td>
         <input data-dojo-attach-point="dapFilesystem" type="text" />
       </td>
+      <td colspan="2" rowspan="2" data-dojo-attach-point="dapProvider">
+        <table data-dojo-attach-point="dapAmazon" style="display: none;">
+          <tr>
+            <td>
+              <div data-dojo-attach-point="dapAmazonBuckets" name="buckets"></div>
+            </td>
+          </tr>
+        </table>
+      </td>
     </tr>
   <table>
   <span data-dojo-attach-point="dapSubmit"></span>
-  <div data-dojo-attach-point="dapToaster"></div>
+  <span data-dojo-attach-point="dapCancel"></span>
 </form>
 </div>

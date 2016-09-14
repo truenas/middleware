@@ -21,6 +21,7 @@ define([
   "dijit/form/SimpleTextarea",
   "dijit/popup",
   "dojox/uuid/generateRandomUuid",
+  "dojox/widget/Standby",
   "freeadmin/Progress",
   "dojo/text!freeadmin/templates/cloudreplication.html",
   ], function(
@@ -46,6 +47,7 @@ define([
   SimpleTextarea,
   popup,
   generateRandomUuid,
+  Standby,
   Progress,
   template) {
 
@@ -115,6 +117,19 @@ define([
         }, this.dapCredential);
         if(initial.credential) this._credential.set('value', initial.credential);
 
+        on(this._credential, 'change', function(value) {
+          me.hideAll();
+          if(value != '') {
+            me._showLoading();
+            Middleware.call(
+              'datastore.query', ['system.cloudcredentials', [['id', '=', value]], {get: true} ],
+              function(result) {
+                if(result.provider == 'AMAZON') me.showAmazon(result);
+              }
+            );
+          }
+        });
+
         this._filesystem = new Select({
           name: "filesystem",
           options: fss,
@@ -128,15 +143,58 @@ define([
         }, this.dapName);
 
         this._submit = new Button({
-          label: gettext("Submit")
+          label: gettext('OK')
         }, this.dapSubmit);
 
         on(this._submit, 'click', function() {
           me.submit();
         });
 
+        this._cancel = new Button({
+          label: gettext('Cancel')
+        }, this.dapCancel);
+
+        on(this._cancel, 'click', function() {
+          cancelDialog(this);
+        });
+
+        this._standby = new Standby({
+          target: me.dapProvider,
+        });
+        document.body.appendChild(this._standby.domNode);
+        this._standby.startup();
+
         this.inherited(arguments);
 
+      },
+      _hideLoading: function() {
+        this._standby.hide();
+      },
+      _showLoading: function() {
+        this.hideAll();
+        this._standby.show();
+      },
+      hideAll: function() {
+        domStyle.set(this.dapAmazon, "display", "none");
+      },
+      showAmazon: function(credential) {
+        var me = this;
+        Middleware.call(
+          'backup.s3.get_buckets', [credential.id],
+          function(result) {
+            var options = [{label: "-----", value: ""}];
+            for(var i=0;i<result.length;i++) {
+              options.push({label: result[i].name, value: result[i].name});
+            }
+            domStyle.set(me.dapAmazon, "display", "table-row");
+            var buckets = new Select({
+              options: options,
+              value: ''
+            }, me.dapAmazonBuckets);
+
+            me._hideLoading();
+          }
+        );
       },
       validate: function() {
         var map;
@@ -168,13 +226,19 @@ define([
         }
         return true;
       },
-      submit: function() {
+      submit: function(e) {
 
         var me = this;
+     doSubmit({
+        form: me._form,
+        event: e,
+        url: me.url,
+     });
 
-        if(!this.validate()) return false;
 
-        this._submit.set('disabled', true);
+        //if(!this.validate()) return false;
+
+        //this._submit.set('disabled', true);
 
       }
     });

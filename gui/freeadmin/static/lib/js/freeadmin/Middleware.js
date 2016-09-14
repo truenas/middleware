@@ -40,7 +40,8 @@ define([
           if(!message.error) {
             if(pending.onSuccess) pending.onSuccess(message.result);
           } else {
-            if(pending.onError) pending.onError(message.result);
+            if(pending.onError) pending.onError(message.error);
+            else console.log("Middleware call error:", message.error);
           }
         } else {
           console.log("Unknown message: ", message);
