@@ -198,6 +198,7 @@ class FreeAdminSite(object):
     def adminInterface(self, request):
         from freenasUI.network.models import GlobalConfiguration
         from freenasUI.system.models import Advanced, Settings
+        from freenasUI.middleware.client import client
 
         view = appPool.hook_app_index('freeadmin', request)
         view = filter(None, view)
@@ -223,6 +224,9 @@ class FreeAdminSite(object):
         except:
             wizard = False
 
+        with client as c:
+            middleware_token = c.call('auth.generate_token')
+
         sw_version = get_sw_version()
         return render(request, 'freeadmin/index.html', {
             'consolemsg': console,
@@ -234,6 +238,7 @@ class FreeAdminSite(object):
             'js_hook': appPool.get_base_js(request),
             'menu_hook': appPool.get_top_menu(request),
             'wizard': wizard,
+            'middleware_token': middleware_token,
         })
 
     @never_cache

@@ -26,6 +26,7 @@
  */
 
 var _webshell;
+var Middleware;
 
 require([
     "dojo",
@@ -59,6 +60,7 @@ require([
     "freeadmin/CloudReplication",
     "freeadmin/ESCDialog",
     "freeadmin/Menu",
+    "freeadmin/Middleware",
     "freeadmin/Progress",
     "freeadmin/RRDControl",
     "freeadmin/VolumeManager",
@@ -138,6 +140,7 @@ require([
     CloudReplication,
     ESCDialog,
     fMenu,
+    fMiddleware,
     Progress,
     RRDControl,
     VolumeManager,
@@ -188,6 +191,7 @@ require([
     ) {
 
     Menu = new fMenu();
+    Middleware = new fMiddleware({token: MIDDLEWARE_TOKEN});
 
     humanizeSize = function(value, integer) {
       var map = [
