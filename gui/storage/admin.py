@@ -31,15 +31,9 @@ class CloudReplicationFAdmin(BaseFreeAdmin):
         'attributes',
     )
 
-    def add(self, request, mf=None):
+    def get_extra_context(self, action):
         from freenasUI.system.models import CloudCredentials
-        m = self._model
-        template = "%s/%s_add.html" % (
-            m._meta.app_label,
-            m._meta.object_name.lower(),
-        )
-
-        context = {
+        return {
             'credentials': json.dumps([
                 (o.id, o.name)
                 for o in CloudCredentials.objects.all()
@@ -49,13 +43,6 @@ class CloudReplicationFAdmin(BaseFreeAdmin):
                 for task in models.Task.objects.all()
             ]))),
         }
-
-        try:
-            get_template(template)
-        except TemplateDoesNotExist:
-            template = 'freeadmin/generic_model_add.html'
-
-        return render(request, template, context)
 
 
 class DiskFAdmin(BaseFreeAdmin):
