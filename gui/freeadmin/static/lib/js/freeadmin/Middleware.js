@@ -6,7 +6,7 @@ define([
     ], function(
     declare,
     lang,
-    timing
+    timing,
     ddp
     ) {
 
@@ -30,7 +30,6 @@ define([
       },
       authToken: function() {
         var mid = this._ddp.method("auth.token", [this.token]);
-        console.log(mid);
       }
     });
     return Middleware;
