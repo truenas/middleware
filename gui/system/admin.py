@@ -137,7 +137,7 @@ class SettingsFAdmin(BaseFreeAdmin):
 
     deletable = False
 
-    def get_extra_context(self, action):
+    def get_extra_context(self, action, **kwargs):
         try:
             ssl = models.SSL.objects.order_by("-id")[0]
         except:

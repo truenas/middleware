@@ -31,7 +31,7 @@ class CloudReplicationFAdmin(BaseFreeAdmin):
         'attributes',
     )
 
-    def get_extra_context(self, action):
+    def get_extra_context(self, action, **kwargs):
         from freenasUI.system.models import CloudCredentials
         return {
             'credentials': json.dumps([

@@ -246,7 +246,7 @@ class BaseFreeAdmin(object):
     def urls(self):
         return self.get_urls()
 
-    def get_extra_context(self, action):
+    def get_extra_context(self, action, **kwargs):
         return {}
 
     def add(self, request, mf=None):
@@ -441,7 +441,7 @@ class BaseFreeAdmin(object):
             'formsets': formsets,
         })
 
-        context.update(self.get_extra_context('add'))
+        context.update(self.get_extra_context('add', request=request, form=mf))
 
         template = "%s/%s_add.html" % (
             m._meta.app_label,
@@ -686,7 +686,7 @@ class BaseFreeAdmin(object):
             ),
         })
 
-        context.update(self.get_extra_context('edit'))
+        context.update(self.get_extra_context('edit', request=request, form=mf))
 
         template = "%s/%s_edit.html" % (
             m._meta.app_label,
