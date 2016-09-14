@@ -137,6 +137,11 @@ define([
         }, this.dapFilesystem);
         if(initial.filesystem) this._filesystem.set('value', initial.filesystem);
 
+        this._enabled = new CheckBox({
+          name: "enabled",
+          value: true
+        }, me.dapEnabled);
+
         this._name = new TextBox({
           name: "name",
           value: initial.name
