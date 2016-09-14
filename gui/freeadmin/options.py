@@ -441,6 +441,8 @@ class BaseFreeAdmin(object):
             'formsets': formsets,
         })
 
+        context.update(self.get_extra_context('add'))
+
         template = "%s/%s_add.html" % (
             m._meta.app_label,
             m._meta.object_name.lower(),
