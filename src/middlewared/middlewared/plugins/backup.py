@@ -1,7 +1,34 @@
 from middlewared.schema import accepts, Int
-from middlewared.service import Service, private
+from middlewared.service import CRUDService, Service, private
 
 import boto3
+
+
+class BackupService(CRUDService):
+
+    def sync(self, id):
+
+        backup = self.middleware.call('datastore.query', 'storage.cloudreplication', [('id', '=', id)], {'get': True})
+        if not backup:
+            raise ValueError("Unknown id")
+
+        tasks = self.middleware.call('datastore.query', 'storage.task', [('task_filesystem', '=', backup['filesystem'])])
+        if not tasks:
+            raise ValueError("No periodic snapshot tasks found")
+
+        recursive = False
+        for task in tasks:
+            if task['task_recursive']:
+                recursive = True
+                break
+
+        # TODO: Get manifest and find snapshots there
+        remote_snapshots = []
+
+        # Calculate delta between remote and local
+
+        # Send new snapshots to remote
+
 
 
 class BackupS3Service(Service):
