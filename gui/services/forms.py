@@ -2076,7 +2076,6 @@ class WebDAVForm(ModelForm):
         widget=forms.widgets.CheckedMultiSelect(),
     )
 
-
     class Meta:
         fields = (
             'webdav_protocol', 'webdav_tcpport', 'webdav_tcpportssl',
