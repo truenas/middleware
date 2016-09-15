@@ -74,7 +74,7 @@ class ConfigService(Service):
         raise NotImplementedError
 
     def update(self, data):
-        return self.do_update(filters, options)
+        return self.do_update(data)
 
 
 class CRUDService(Service):
@@ -83,13 +83,13 @@ class CRUDService(Service):
         raise NotImplementedError
 
     def create(self, data):
-        return self.do_create(filters, options)
+        return self.do_create(data)
 
     def update(self, data):
-        return self.do_update(filters, options)
+        return self.do_update(data)
 
     def delete(self, data):
-        return self.do_delete(filters, options)
+        return self.do_delete(data)
 
 
 class CoreService(Service):
