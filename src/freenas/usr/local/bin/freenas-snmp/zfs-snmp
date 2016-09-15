@@ -50,13 +50,13 @@ size_dict = {
 
 
 def get_from_freenas_snmpd_sock(val_to_obtain):
-    data = ''
+    data = b''
     try:
         s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         s.connect(FREENASSNMPDSOCK)
         s.sendall(val_to_obtain)
         while True:
-            text = s.recv(4096).decode('utf8')
+            text = s.recv(4096)
             if text == '':
                 break
             else:
@@ -66,8 +66,8 @@ def get_from_freenas_snmpd_sock(val_to_obtain):
     finally:
         s.close()
     try:
-        data = json.loads(data)
-    except ValueError:
+        data = json.loads(data.decode('utf8'))
+    except (ValueError, UnicodeDecodeError):
         data = {}
     return data
 
