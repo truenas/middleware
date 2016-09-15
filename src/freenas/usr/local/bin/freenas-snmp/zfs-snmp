@@ -178,7 +178,7 @@ def zfs_arc_cache_miss_ratio(oid):
 def zilstatd_ops(interval):
     res = long(0)
     try:
-        res = FSNMPDATA["zil_data"][str(interval)]
+        res = FSNMPDATA["zil_data"][str(interval)]['ops']
     except KeyError:
         pass
     return res
