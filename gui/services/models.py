@@ -275,8 +275,8 @@ class CIFS(Model):
     )
 
     class Meta:
-        verbose_name = _(u"CIFS")
-        verbose_name_plural = _(u"CIFS")
+        verbose_name = _(u"SMB")
+        verbose_name_plural = _(u"SMB")
 
     class FreeAdmin:
         deletable = False
