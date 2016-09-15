@@ -2,7 +2,7 @@
 
 PORTNAME=	s3transfer
 PORTVERSION=	0.1.3
-CATEGORIES=	devel python
+CATEGORIES=	net python
 PKGNAMEPREFIX=	${PYTHON_PKGNAMEPREFIX}
 MAINTAINER=	wg@FreeBSD.org
 COMMENT=	An Amazon S3 Transfer Manager
