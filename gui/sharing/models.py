@@ -331,8 +331,8 @@ class NFS_Share(Model):
         null=True,
         default='',
         help_text=_(
-            "If a user is selected, the root user is limited to "
-            "that user's permissions"
+            "The credentials of the specified user is used for remote access "
+            "by root."
         ),
     )
     nfs_maproot_group = GroupField(
@@ -342,8 +342,8 @@ class NFS_Share(Model):
         null=True,
         default='',
         help_text=_(
-            "If a group is selected, the root user will also be "
-            "limited to that group's permissions"
+            "The credentials of the specified group is used for remote access "
+            "by root."
         ),
     )
     nfs_mapall_user = UserField(
@@ -353,7 +353,8 @@ class NFS_Share(Model):
         null=True,
         default='',
         help_text=_(
-            "The specified user's permissions are used by all clients"
+            "The credentials of the specified user is used for remote access "
+            "by all users."
         ),
     )
     nfs_mapall_group = GroupField(
@@ -363,7 +364,8 @@ class NFS_Share(Model):
         null=True,
         default='',
         help_text=_(
-            "The specified group's permission are used by all clients"
+            "The credentials of the specified group is used for remote access "
+            "by all users."
         ),
     )
     nfs_security = MultiSelectField(
