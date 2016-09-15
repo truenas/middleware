@@ -135,6 +135,7 @@ class SockHandler(asyncore.dispatcher_with_send):
         asyncore.dispatcher_with_send.__init__(self, sock)
         self.addr = addr
         self.buffer = ''
+        self.end = False
 
     def handle_read(self):
         global zilstat_one
@@ -166,6 +167,7 @@ class SockHandler(asyncore.dispatcher_with_send):
         if a.startswith("get_all"):
             res = tmp_data
         self.buffer = json.dumps(res)
+        self.end = True
 
     def writable(self):
         return (len(self.buffer) > 0)
@@ -173,6 +175,8 @@ class SockHandler(asyncore.dispatcher_with_send):
     def handle_write(self):
         self.socket.sendall(self.buffer)
         self.buffer = ''
+        if self.end:
+            self.close()
 
     def handle_close(self):
         self.close()

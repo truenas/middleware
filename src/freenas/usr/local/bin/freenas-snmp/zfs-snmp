@@ -31,7 +31,6 @@ import snmpresponse
 import json
 import socket
 import libzfs
-import select
 
 
 sys.path.append("/usr/local/www")
@@ -55,19 +54,13 @@ def get_from_freenas_snmpd_sock(val_to_obtain):
     try:
         s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         s.connect(FREENASSNMPDSOCK)
-        s.send(val_to_obtain)
-        streams = [s]
+        s.sendall(val_to_obtain)
         while True:
-            ready_to_read, _, _ = select.select(streams, [], [], 0.1)
-            if not ready_to_read:
+            text = s.recv(4096).decode('utf8')
+            if text == '':
                 break
-            for io in ready_to_read:
-                text = s.recv(4096).decode('utf8')
-                if text == '':
-                    streams.remove[io]
-                    break
-                if text:
-                    data += text
+            else:
+                data += text
     except socket.error:
         pass
     finally:
