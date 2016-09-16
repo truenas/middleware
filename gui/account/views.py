@@ -121,6 +121,7 @@ def json_users(request, exclude=None):
     else:
         exclude = []
     idx = 1
+    curr_users = []
     for user in FreeNAS_Users(
         flags=FLAGS_DBINIT | FLAGS_CACHE_READ_USER | FLAGS_CACHE_WRITE_USER
     ):
@@ -128,13 +129,14 @@ def json_users(request, exclude=None):
             break
         if (
             (query is None or user.pw_name.startswith(query.encode('utf8'))) and
-            user.pw_name not in exclude
+            user.pw_name not in exclude and user.pw_name not in curr_users
         ):
             json_user['items'].append({
                 'id': user.pw_name,
                 'name': user.pw_name,
                 'label': user.pw_name,
             })
+            curr_users.append(user.pw_name)
             idx += 1
 
     # Show users for the directory service provided in the wizard
@@ -205,18 +207,21 @@ def json_groups(request):
     }
 
     idx = 1
+    curr_groups = []
     for grp in FreeNAS_Groups(
         flags=FLAGS_DBINIT | FLAGS_CACHE_READ_GROUP | FLAGS_CACHE_WRITE_GROUP
     ):
         if idx > 50:
             break
-        if query is None or grp.gr_name.startswith(query.encode('utf8')):
+        if ((query is None or grp.gr_name.startswith(query.encode('utf8'))) and
+            grp.gr_name not in curr_groups):
             json_group['items'].append({
                 'id': grp.gr_name,
                 'name': grp.gr_name,
                 'label': grp.gr_name,
             })
             idx += 1
+            curr_groups.append(grp.gr_name)
 
     # Show groups for the directory service provided in the wizard
     wizard_ds = request.session.get('wizard_ds')
