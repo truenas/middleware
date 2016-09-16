@@ -1,0 +1,9 @@
+nss_ldap is a NSS module which provides an LDAP backend for C library
+functions such as getpwnam(3), getgrnam(3), and gethostbyname(3).  It
+is compliant with RFC 2307, ``An Approach for Using LDAP as a Network
+Information Service''.
+
+Currently this is an experimental port, with support only for the
+`passwd' and `group' databases.
+
+WWW: http://www.padl.com/OSS/nss_ldap.html

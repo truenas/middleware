@@ -1,0 +1,52 @@
+--- ldap-pwd.c	2009-08-29 09:21:43.000000000 -0400
++++ ldap-pwd.c	2009-08-29 08:17:12.000000000 -0400
+@@ -170,6 +170,15 @@
+     }
++
++#ifdef HAVE_LOGIN_CLASSES 
++  stat =
++    _nss_ldap_assign_attrval (e, AT (loginClass), &pw->pw_class, &buffer,
++		  	      &buflen);
++  if (stat != NSS_SUCCESS)
++    (void) _nss_ldap_assign_emptystring (&pw->pw_class, &buffer, &buflen);
++#endif
++
+   stat =
+     _nss_ldap_assign_attrval (e, AT (homeDirectory), &pw->pw_dir, &buffer,
+ 			      &buflen);
+   if (stat != NSS_SUCCESS)
+
+--- ldap-schema.c	2009-08-29 09:21:43.000000000 -0400
++++ ldap-schema.c	2009-08-28 12:09:52.000000000 -0400
+@@ -334,6 +334,9 @@
+ #ifdef HAVE_PASSWD_PW_EXPIRE
+   (*pwd_attrs)[i++] = AT (shadowExpire);
+ #endif /* HAVE_PASSWD_PW_EXPIRE */
++#ifdef HAVE_LOGIN_CLASSES
++  (*pwd_attrs)[i++] = AT (loginClass);
++#endif
+   (*pwd_attrs)[i] = NULL;
+ }
+ 
+--- ldap-schema.h	2009-08-29 09:21:43.000000000 -0400
++++ ldap-schema.h	2009-08-29 06:37:18.000000000 -0400
+@@ -24,7 +24,7 @@
+ #define _LDAP_NSS_LDAP_LDAP_SCHEMA_H
+ 
+ /* max number of attributes per object class */
+-#define ATTRTAB_SIZE	15
++#define ATTRTAB_SIZE	16
+ 
+ /**
+  * function to initialize global lookup filters.
+@@ -153,6 +153,10 @@
+ #define AT_gecos                  "gecos"
+ #define AT_homeDirectory          "homeDirectory"
+
++#ifdef HAVE_LOGIN_CLASSES
++/* FreeBSD extension -Jacob Myers <jacob@whotokspaz.org> */
++#define AT_loginClass           "loginClass"
++#endif
+ /*
+  * ( nisSchema.2.1 NAME 'shadowAccount' SUP top AUXILIARY
+  *   DESC 'Additional attributes for shadow passwords'            
