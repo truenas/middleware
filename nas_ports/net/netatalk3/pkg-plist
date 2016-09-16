@@ -61,8 +61,8 @@ include/atalk/vfs.h
 include/atalk/volume.h
 lib/libatalk.a
 lib/libatalk.so
-lib/libatalk.so.17
-lib/libatalk.so.17.0.0
+lib/libatalk.so.18
+lib/libatalk.so.18.0.0
 man/man1/ad.1.gz
 man/man1/afpldaptest.1.gz
 man/man1/afppasswd.1.gz
