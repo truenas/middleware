@@ -458,11 +458,11 @@ def main():
     ad = ldap = None
     ldap_objects = client.call('datastore.query', 'directoryservice.LDAP')
     if ldap_objects and ldap_objects[0]['ldap_enable']:
-        ldap = client.call('notifier.directoryservice', 'LDAP')
+        ldap = Struct(client.call('notifier.directoryservice', 'LDAP'))
 
     ad_objects = client.call('datastore.query', 'directoryservice.ActiveDirectory')
     if ad_objects and ad_objects[0]['ad_enable']:
-        ad = client.call('notifier.directoryservice', 'AD')
+        ad = Struct(client.call('notifier.directoryservice', 'AD'))
 
     for kr in realms:
         kr = Struct(kr)

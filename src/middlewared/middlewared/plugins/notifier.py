@@ -104,6 +104,8 @@ class NotifierService(Service):
             'use_default_domain', 'dchost', 'basedn', 'binddn', 'bindpw',
             'ssl', 'certfile', 'id',
             'ad_idmap_backend', 'ds_type',
+            'krb_realm', 'krbname', 'kpwdname',
+            'krb_kdc', 'krb_admin_server', 'krb_kpasswd_server',
         ):
             if hasattr(ds, i):
                 data[i] = getattr(ds, i)
