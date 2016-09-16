@@ -112,6 +112,7 @@ class UserField(forms.ChoiceField):
             if len(self._exclude) > 0:
                 kwargs['exclude'] = ','.join(self._exclude)
             self.widget = FilteredSelectJSON(
+                attrs=self.widget.attrs,
                 url=("account_bsduser_json", None, (), kwargs)
             )
         else:
@@ -137,6 +138,7 @@ class UserField(forms.ChoiceField):
             )
 
             self.widget = FilteredSelectJSON(
+                attrs=self.widget.attrs,
                 url=("account_bsduser_json",),
                 choices=ulist
             )
@@ -180,7 +182,10 @@ class GroupField(forms.ChoiceField):
         if len(groups) > 500:
             if self.initial:
                 self.choices = ((self.initial, self.initial),)
-            self.widget = FilteredSelectJSON(url=("account_bsdgroup_json",))
+            self.widget = FilteredSelectJSON(
+                attrs=self.widget.attrs,
+                url=("account_bsdgroup_json",)
+            )
         else:
             glist = []
             if not self.required:
@@ -199,9 +204,10 @@ class GroupField(forms.ChoiceField):
             )
             #self.choices = glist
             self.widget = FilteredSelectJSON(
-                    url=("account_bsdgroup_json",),
-                    choices=glist
-                )
+                attrs=self.widget.attrs,
+                url=("account_bsdgroup_json",),
+                choices=glist
+            )
 
     def clean(self, group):
         if not self.required and group in ('-----', '', None):
