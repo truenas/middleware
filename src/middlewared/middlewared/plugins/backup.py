@@ -1,7 +1,9 @@
+from collections import defaultdict
 from middlewared.schema import accepts, Int
 from middlewared.service import CRUDService, Service, private
 
 import boto3
+import subprocess
 
 
 class BackupService(CRUDService):
@@ -26,9 +28,21 @@ class BackupService(CRUDService):
         remote_snapshots = []
 
         # Calculate delta between remote and local
+        proc = subprocess.Popen([
+            '/sbin/zfs', 'list',
+            '-o', 'name',
+            '-H',
+        ] + (['-r'] if recursive else []) + [backup['filesystem']],
+        stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        datasets = proc.communicate()[0].strip().split('\n')
+        assert proc.returncode == 0
+
+        local_snapshots = defaultdict(dict)
+        for snapshot in self.middleware.call('zfs.snapshot.query'):
+            local_snapshots[snapshot['dataset']][snapshot['name']] = snapshot
+
 
         # Send new snapshots to remote
-
 
 
 class BackupS3Service(Service):
