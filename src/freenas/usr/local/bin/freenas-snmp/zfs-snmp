@@ -50,23 +50,24 @@ size_dict = {
 
 
 def get_from_freenas_snmpd_sock(val_to_obtain):
-    data = ''
+    data = b''
     try:
         s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         s.connect(FREENASSNMPDSOCK)
-        s.setblocking(0)
-        s.send(val_to_obtain)
-        packet = s.recv(4096)
-        while packet:
-            data += packet
-            packet = s.recv(4096)
+        s.sendall(val_to_obtain)
+        while True:
+            text = s.recv(4096)
+            if text == b'':
+                break
+            else:
+                data += text
     except socket.error:
         pass
     finally:
         s.close()
     try:
-        data = json.loads(data)
-    except ValueError:
+        data = json.loads(data.decode('utf8'))
+    except (ValueError, UnicodeDecodeError):
         data = {}
     return data
 
@@ -170,7 +171,7 @@ def zfs_arc_cache_miss_ratio(oid):
 def zilstatd_ops(interval):
     res = long(0)
     try:
-        res = FSNMPDATA["zil_data"][str(interval)]
+        res = FSNMPDATA["zil_data"][str(interval)]['ops']
     except KeyError:
         pass
     return res
