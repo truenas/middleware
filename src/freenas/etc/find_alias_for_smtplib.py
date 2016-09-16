@@ -7,6 +7,7 @@ import os
 import re
 import socket
 import sys
+import syslog
 
 from django.utils.translation import ugettext_lazy as _
 
@@ -28,6 +29,7 @@ def do_sendmail(msg, to_addrs=None, parse_recipients=False):
 
     if to_addrs is None:
         if not parse_recipients:
+            syslog.syslog('Do not know who to send the message to.' + msg[0:140])
             raise ValueError('Do not know who to send the message to.')
         to_addrs = []
 
@@ -110,6 +112,7 @@ def get_aliases():
 
 
 def main():
+    syslog.openlog(logoption=syslog.LOG_PID, facility=syslog.LOG_MAIL)
     parser = argparse.ArgumentParser(description='Process email')
     parser.add_argument('-i', dest='strip_leading_dot', action='store_false',
                         default=True, help='see sendmail(8) -i')
@@ -122,6 +125,7 @@ def main():
     if not to and not args.parse_recipients:
         parser.exit(message=parser.format_usage())
     msg = sys.stdin.read()
+    syslog.syslog("sending mail to " + ','.join(to) + msg[0:140])
     do_sendmail(msg, to_addrs=to, parse_recipients=args.parse_recipients)
 
 if __name__ == "__main__":
