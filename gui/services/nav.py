@@ -40,7 +40,7 @@ class EnDisServices(TreeNode):
 class CIFSView(TreeNode):
 
     gname = 'services.CIFS'
-    name = _(u'CIFS')
+    name = _(u'SMB')
     type = u'object'
     view = u'services_cifs'
     icon = u'CIFSIcon'
