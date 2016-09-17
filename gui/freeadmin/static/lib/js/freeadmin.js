@@ -1423,7 +1423,7 @@ require([
             content: domConstruct.create(
                 "p", {
                     innerHTML: gettext(
-                        gettext("Warning: The action will result in migration of dataset.<br />Some services will be restarted.<br /><br />")
+                        innerHTML: gettext("The action will result in migration of dataset.") + "<br />" + gettext("Some services will be restarted.")
                     )
                 }
             )
