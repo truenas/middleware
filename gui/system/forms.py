@@ -2223,7 +2223,6 @@ class CertificateAuthorityImportForm(ModelForm):
     def clean_cert_privatekey(self):
         cdata = self.cleaned_data
         certificate = cdata.get('cert_certificate')
-        certificate = CERT_CHAIN_REGEX.findall(certificate)[-1]
         privatekey = cdata.get('cert_privatekey')
         if is_valid_privatekey(certificate, privatekey) is False:
             raise forms.ValidationError(_(
@@ -2684,7 +2683,6 @@ class CertificateImportForm(ModelForm):
     def clean_cert_privatekey(self):
         cdata = self.cleaned_data
         certificate = cdata.get('cert_certificate')
-        certificate = CERT_CHAIN_REGEX.findall(certificate)[-1]
         privatekey = cdata.get('cert_privatekey')
         if is_valid_privatekey(certificate, privatekey) is False:
             raise forms.ValidationError(_(
