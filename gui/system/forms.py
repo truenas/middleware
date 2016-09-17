@@ -2615,8 +2615,8 @@ class CertificateImportForm(ModelForm):
         help_text=_(
             "Cut and paste the contents of your certificate here.<br>"
             "Order in which you should paste this: <br>"
-            "The Primary Certificate.<br>The Intermediate Certificate(s) (optional)."
-            "<br>The Root Certificate (optional)"),
+            "The Primary Certificate.<br>The Root CA's Intermediate Certificate(s) (optional)."
+            "<br>The Root CA Certificate (optional)"),
     )
     cert_privatekey = forms.CharField(
         label=models.Certificate._meta.get_field('cert_privatekey').verbose_name,
