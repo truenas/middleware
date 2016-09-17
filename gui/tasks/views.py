@@ -26,10 +26,14 @@
 #####################################################################
 from django.shortcuts import render
 from django.utils.translation import ugettext as _
+from django.http import HttpResponse
 
 from freenasUI.freeadmin.apppool import appPool
 from freenasUI.freeadmin.views import JsonResp
 from freenasUI.tasks import models
+from freenasUI.account.models import bsdUsers
+import subprocess
+import json
 
 
 def home(request):
