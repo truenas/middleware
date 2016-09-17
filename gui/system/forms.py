@@ -2220,6 +2220,17 @@ class CertificateAuthorityImportForm(ModelForm):
             ))
         return passphrase
 
+    def clean_cert_privatekey(self):
+        cdata = self.cleaned_data
+        certificate = cdata.get('cert_certificate')
+        certificate = CERT_CHAIN_REGEX.findall(certificate)[-1]
+        privatekey = cdata.get('cert_privatekey')
+        if is_valid_privatekey(certificate, privatekey) is False:
+            raise forms.ValidationError(_(
+                "The private key does not match with the certificate."
+            ))
+        return cdata
+
     def save(self):
         self.instance.cert_type = models.CA_TYPE_EXISTING
 
