@@ -1,4 +1,4 @@
-/*-
+sshkeyscan/*-
  * Copyright (c) 2011 iXsystems, Inc.
  * All rights reserved.
  *
@@ -1609,6 +1609,36 @@ require([
                 });
             }
         });
+    };
+
+    rsync_sshKeyScan = function(url, sendbtn) {
+        sendbtn.set('disabled', true);
+        form = getForm(sendbtn);
+        data = form.get('value');
+        var select = registry.byId("id_rsync_mode");
+        if(select.get('value') == 'ssh') {
+            var rport = registry.byId("id_rsync_remoteport");
+
+            xhr.post(url, {
+                handleAs: 'json',
+                data: {user: data['rsync_user'], host: data['rsync_remotehost'], port: rport},
+                headers: {"X-CSRFToken": CSRFToken}
+            }).then(function(data) {
+                sendbtn.set('disabled', false);
+                if(data.error) {
+                    Tooltip.show(data.errmsg, sendbtn.domNode);
+                    on.once(sendbtn.domNode, mouse.leave, function(){
+                        Tooltip.hide(sendbtn.domNode);
+                    });
+                }
+            });
+        } else {
+            sendbtn.set('disabled', false);
+            Tooltip.show("Select rsync over ssh", sendbtn.domNode);
+            on.once(sendbtn.domNode, mouse.leave, function(){
+                Tooltip.hide(sendbtn.domNode);
+            });
+        }
     };
 
     vmwareDatastores = function(url, button) {

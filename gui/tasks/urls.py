@@ -31,5 +31,6 @@ urlpatterns = patterns(
     'freenasUI.tasks.views',
     url(r'^$', 'home', name="tasks_home"),
     url(r'^cron/(?P<oid>\d+)/run/$', 'cron_run', name="cron_run"),
+    url(r'^rsync/keyscan/$', 'rsync_keyscan', name="tasks_rsync_keyscan"),
     url(r'^rsync/(?P<oid>\d+)/run/$', 'rsync_run', name="rsync_run"),
 )
