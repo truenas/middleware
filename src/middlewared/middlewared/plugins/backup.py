@@ -178,17 +178,17 @@ class BackupService(CRUDService):
     @private
     def generate_manifest(self, local_snapshots, backup, previous_manifest, actions):
         def make_snapshot_entry(action):
-            snapname = '{0}@{1}'.format(action['localfs'], action['snapshot'])
+            snapname = '{0}@{1}'.format(action.localfs, action.snapshot)
             filename = hashlib.md5(snapname.encode('utf-8')).hexdigest()
             snap = local_snapshots[snapname]
 
             txg = snap['properties']['createtxg']['rawvalue']
             return {
                 'name': snapname,
-                'anchor': action.get('anchor'),
-                'incremental': action['incremental'],
+                'anchor': action.anchor,
+                'incremental': action.incremental,
                 'created_at': datetime.fromtimestamp(int(snap['properties']['creation']['rawvalue'])),
-                'uuid': snap['properties']['org.freenas:uuid']['value'],
+                'uuid': snap['properties'].get('org.freenas:uuid', {'value': None})['value'],
                 'txg': int(txg) if txg else None,
                 'filename': filename
             }
@@ -197,7 +197,7 @@ class BackupService(CRUDService):
         new_snaps = []
 
         for a in actions:
-            if a.type == 'SEND_STREAM':
+            if a.type == ReplicationActionType.SEND_STREAM:
                 snap = make_snapshot_entry(a)
                 snaps.append(snap)
                 new_snaps.append(snap)
@@ -256,7 +256,7 @@ class BackupService(CRUDService):
         new_manifest, snaps = self.generate_manifest(local_snapshots_ids, backup, manifest, actions)
 
         # Send new snapshots to remote
-        for action in actions:
+        for snapshot in snaps:
             read_fd, write_fd = os.pipe()
             if os.fork() == 0:
                 os.dup2(write_fd, 1)
@@ -266,7 +266,7 @@ class BackupService(CRUDService):
                             os.close(int(i))
                 except OSError:
                     pass
-                os.execv('/sbin/zfs', ['/sbin/zfs', 'send', '-V', '-p'] + (['-i', snapshot_from] if snapshot_from else []) + [snapshot_to])
+                os.execv('/sbin/zfs', ['/sbin/zfs', 'send', '-V', '-p'] + (['-i', snapshot.get('anchor')] if snapshot.get('anchor') else []) + [snapshot['name']])
 
             else:
                 os.close(write_fd)
