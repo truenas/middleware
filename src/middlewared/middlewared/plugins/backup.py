@@ -47,7 +47,7 @@ class BackupService(CRUDService):
         def match_snapshots(local, remote):
             for i in local:
                 match = list(filter(lambda s: matches(i, s), remote))
-                yield match[0] if match else None
+                yield i, match[0] if match else i, None
 
         def convert_snapshot(snap):
             return {
@@ -55,7 +55,7 @@ class BackupService(CRUDService):
                 'snapshot_name': snap['snapshot_name'],
                 'created_at': snap['properties']['creation']['parsed'],
                 'txg': int(snap['properties']['createtxg']['rawvalue']),
-                'uuid': snap['properties']['org.freenas:uuid'],
+                'uuid': snap['properties'].get('org.freenas:uuid'),
             }
 
         def extend_with_snapshot_name(snap):
@@ -86,12 +86,12 @@ class BackupService(CRUDService):
             """
             remote_snapshots = snapshots_list
 
-            snapshots = local_snapshots[localfs][:]
+            snapshots = list(map(convert_snapshot, local_snapshots[localfs]))
             found = None
 
             if remote_snapshots:
                 # Find out the last common snapshot.
-                pairs = list(match_snapshots(local_snapshots, remote_snapshots))
+                pairs = list(match_snapshots(snapshots, remote_snapshots))
                 if pairs:
                     pairs.sort(key=lambda p: p[0]['created_at'], reverse=True)
                     match = list(filter(None, pairs))
@@ -114,16 +114,16 @@ class BackupService(CRUDService):
                                 snapshots=delete
                             ))
 
-                    index = local_snapshots.index(found)
+                    index = snapshots.index(found)
 
-                    for idx in range(index + 1, len(local_snapshots)):
+                    for idx in range(index + 1, len(snapshots)):
                         actions.append(ReplicationAction(
                             ReplicationActionType.SEND_STREAM,
                             localfs,
                             remotefs,
                             incremental=True,
-                            anchor=local_snapshots[idx - 1]['snapshot_name'],
-                            snapshot=local_snapshots[idx]['snapshot_name']
+                            anchor=snapshots[idx - 1]['snapshot_name'],
+                            snapshot=snapshots[idx]['snapshot_name']
                         ))
                 else:
                     actions.append(ReplicationAction(
@@ -246,7 +246,6 @@ class BackupService(CRUDService):
             self.middleware.call('backup.s3.get', backup, MANIFEST_FILENAME, write_fd)
             gevent.joinall([greenlet])
             manifest = greenlet.value or {}
-            print "manifest", manifest
         except botocore.exceptions.ClientError as e:
             if 'NoSuchKey' in str(e):
                 manifest = {}
@@ -282,7 +281,6 @@ class BackupService(CRUDService):
 
         # Send new snapshots to remote
         for snapshot in snaps:
-            break
             read_fd, write_fd = os.pipe()
             if os.fork() == 0:
                 os.dup2(write_fd, 1)
