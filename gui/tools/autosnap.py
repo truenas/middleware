@@ -33,7 +33,9 @@ import sys
 import uuid
 import ssl
 
-#Monkey patch ssl checking to get back to Python 2.7.8 behavior
+from pysphere import VIServer
+
+# Monkey patch ssl checking to get back to Python 2.7.8 behavior
 ssl._create_default_https_context = ssl._create_unverified_context
 
 sys.path.append('/usr/local/www')
@@ -46,7 +48,7 @@ from django.db.models.loading import cache
 cache.get_apps()
 
 from freenasUI.freeadmin.apppool import appPool
-from freenasUI.storage.models import Task, Replication
+from freenasUI.storage.models import Task
 from datetime import datetime, time, timedelta
 
 from freenasUI.common.locks import mntlock
@@ -76,6 +78,8 @@ VMWARE_FAILS = '/var/tmp/.vmwaresnap_fails'
 VMWARESNAPDELETE_FAILS = '/var/tmp/.vmwaresnapdelete_fails'
 
 # Set to True if verbose log desired
+# TODO: Most of the debug has left the building over the years
+# Make debug output great again.
 debug = False
 
 
@@ -265,7 +269,9 @@ if len(mp_to_task_map) > 0:
     previous_prefix = '/'
     zfsproc = pipeopen("/sbin/zfs list -t snapshot -H -o name", debug, logger=log)
     lines = zfsproc.communicate()[0].split('\n')
-    reg_autosnap = re.compile('^auto-(?P<year>\d{4})(?P<month>\d{2})(?P<day>\d{2}).(?P<hour>\d{2})(?P<minute>\d{2})-(?P<retcount>\d+)(?P<retunit>[hdwmy])$')
+    reg_autosnap = re.compile('^auto-(?P<year>\d{4})(?P<month>\d{2})(?P<day>\d{2}).'
+                              '(?P<hour>\d{2})(?P<minute>\d{2})-(?P<retcount>\d+)'
+                              '(?P<retunit>[hdwmy])$')
     for snapshot_name in lines:
         if snapshot_name != '':
             fs, snapname = snapshot_name.split('@')
@@ -323,79 +329,132 @@ if len(mp_to_task_map) > 0:
         snapname = '%s@auto-%s-%s' % (fs, snaptime_str, expire)
 
         # If there's a VMWare Plugin object for this filesystem
-        # snapshot the VMs before taking the ZFS snapshot
-        from pysphere import VIServer
-        server = VIServer()
+        # snapshot the VMs before taking the ZFS snapshot.
+        # Once we've taken the ZFS snapshot we're going to log back in
+        # to VMWare and destroy all the VMWare snapshots we created.
+        # We do this because having VMWare snapshots in existance impacts
+        # the performance of your VMs.
         qs = VMWarePlugin.objects.filter(filesystem=fs)
-        vmsnapname = str(uuid.uuid4())
-        vmsnapdescription = str(datetime.now()).split('.')[0] + " FreeNAS Created Snapshot"
-        snapvms = []
-        snapvmfails = []
-        snapvmskips = []
-        for obj in qs:
+        if qs:
+            server = VIServer()
+
+            # Generate a unique snapshot name that (hopefully) won't collide with anything
+            # that exists on the VMWare side.
+            vmsnapname = str(uuid.uuid4())
+
+            # Generate a helpful description that is visible on the VMWare side.  Since we
+            # are going to be creating VMWare snaps, if one gets left dangling this will
+            # help determine where it came from.
+            vmsnapdescription = str(datetime.now()).split('.')[0] + " FreeNAS Created Snapshot"
+
+            # Data structures that will be used to keep track of VMs that are snapped,
+            # as wel as VMs we tried to snap and failed, and VMs we realized we couldn't
+            # snapshot.
+            snapvms = {}
+            snapvmfails = {}
+            snapvmskips = {}
+
+        # We keep track of snapshots per VMWare "task" because we are going to iterate
+        # over all the VMWare tasks for a given ZFS filesystem, do all the VMWare snapshotting
+        # then take the ZFS snapshot, then iterate again over all the VMWare "tasks" and undo
+        # all the snaps we created in the first place.
+        for vmsnapobj in qs:
+            snapvms[vmsnapobj] = []
+            snapvmfails[vmsnapobj] = []
+            snapvmskips[vmsnapobj] = []
             try:
-                server.connect(obj.hostname, obj.username, obj.get_password())
+                server.connect(vmsnapobj.hostname,
+                               vmsnapobj.username,
+                               vmsnapobj.get_password())
             except:
-                log.warn("VMware login failed to %s", obj.hostname)
+                log.warn("VMware login failed to %s", vmsnapobj.hostname)
+                # TODO: This should generate an alert.
                 continue
+            # There's no point to even consider VMs that are paused or powered off.
             vmlist = server.get_registered_vms(status='poweredOn')
             for vm in vmlist:
-                vm1 = server.get_vm_by_path(vm)
-                if doesVMDependOnDataStore(vm1, obj.datastore):
+                vmobj = server.get_vm_by_path(vm)
+                if doesVMDependOnDataStore(vmobj, vmsnapobj.datastore):
                     try:
-                        if canSnapshotVM(vm1):
-                            if not doesVMSnapshotByNameExists(vm1, vmsnapname):  # have we already created a snapshot of the VM for this volume iteration? can happen if the VM uses two datasets (a and b) where both datasets are mapped to the same ZFS volume in FreeNAS.
-                                vm1.create_snapshot(vmsnapname, description=vmsnapdescription, memory=False)
+                        if canSnapshotVM(vmobj):
+                            if not doesVMSnapshotByNameExists(vmobj, vmsnapname):
+                                # have we already created a snapshot of the VM for this volume
+                                # iteration? can happen if the VM uses two datasets (a and b)
+                                # where both datasets are mapped to the same ZFS volume in FreeNAS.
+                                vmobj.create_snapshot(vmsnapname,
+                                                      description=vmsnapdescription,
+                                                      memory=False)
                             else:
-                                log.debug("Not creating snapshot %s for VM %s because it already exists", vmsnapname, vm)
+                                log.debug("Not creating snapshot %s for VM %s because it "
+                                          "already exists", vmsnapname, vm)
                         else:
-                            # we can try to shutdown the VM, if the user provided us an ok to do so (might need a new list property in obj to know which VMs are fine to shutdown and a UI to specify such exceptions)
-                            # otherwise can skip VM snap and then make a crash-consistent zfs snapshot for this VM
-                            log.log(logging.NOTICE, "Can't snapshot VM %s that depends on datastore %s and filesystem %s. Possibly using PT devices. Skipping.", vm, obj.datastore, fs)  # log to syslog
-                            snapvmskips.append(vm1)
+                            # TODO:
+                            # we can try to shutdown the VM, if the user provided us an ok to do
+                            # so (might need a new list property in obj to know which VMs are
+                            # fine to shutdown and a UI to specify such exceptions)
+                            # otherwise can skip VM snap and then make a crash-consistent zfs
+                            # snapshot for this VM
+                            log.log(logging.NOTICE, "Can't snapshot VM %s that depends on "
+                                    "datastore %s and filesystem %s."
+                                    " Possibly using PT devices. Skipping.",
+                                    vm, vmsnapobj.datastore, fs)
+                            snapvmskips[vmsnapobj].append(vmobj)
                     except:
                         log.warn("Snapshot of VM %s failed", vm)
-                        snapvmfails.append(vm1)
-                    snapvms.append(vm1)
+                        snapvmfails[vmsnapobj].append(vmobj)
+                    snapvms[vmsnapobj].append(vmobj)
+            if server.is_connected():
+                server.disconnect()
+        # At this point we've completed snapshotting VMs.
 
-        if snapvmfails:
-            try:
+        # Send out email alerts for VMs we tried to snapshot that failed.
+        # Also put the failures into a sentinel file that the alert
+        # system can understand.
+        for vmsnapobj in qs:
+            if snapvmfails[vmsnapobj]:
+                try:
+                    with LockFile(VMWARE_FAILS) as lock:
+                        with open(VMWARE_FAILS, 'rb') as f:
+                            fails = pickle.load(f)
+                except:
+                    fails = {}
+                # vmitem.get_property('path') is the reverse of server.get_vm_by_path(vm)
+                fails[snapname] = [vmitem.get_property('path') for vmitem in snapvmfails[vmsnapobj]]
                 with LockFile(VMWARE_FAILS) as lock:
-                    with open(VMWARE_FAILS, 'rb') as f:
-                        fails = pickle.load(f)
-            except:
-                fails = {}
-            fails[snapname] = [vm.get_property('path') for vm in snapvmfails]
-            with LockFile(VMWARE_FAILS) as lock:
-                with open(VMWARE_FAILS, 'wb') as f:
-                    pickle.dump(fails, f)
+                    with open(VMWARE_FAILS, 'wb') as f:
+                        pickle.dump(fails, f)
 
-            send_mail(
-                subject="VMware Snapshot failed! (%s)" % snapname,
-                text="""
+                send_mail(
+                    subject="VMware Snapshot failed! (%s)" % snapname,
+                    text="""
 Hello,
     The following VM failed to snapshot %s:
 %s
-""" % (snapname, '    \n'.join([vm.get_property('path') for vm in snapvmfails])),
-                channel='snapvmware'
-            )
+""" % (snapname, '    \n'.join(fails[snapname])),
+                    channel='snapvmware'
+                )
 
-        if len(snapvms) > 0 and len(snapvmfails) == 0:
+        # At this point we have finished sending alerts out
+
+        # If there were no failures and we successfully took some VMWare snapshots
+        # set the ZFS property to show the snapshot has consistent VM snapshots
+        # inside it.
+        sentinel = True
+        for vmsnapobj in qs:
+            if not (len(snapvms[vmsnapobj]) > 0 and len(snapvmfails[vmsnapobj]) == 0):
+                sentinel = False
+        if sentinel:
             vmflag = '-o freenas:vmsynced=Y '
         else:
             vmflag = ''
 
-        # If there is associated replication task, mark the snapshots as 'NEW'.
-        if Replication.objects.filter(repl_filesystem=fs, repl_enabled=True).count() > 0:
-            MNTLOCK.lock()
-            snapcmd = '/sbin/zfs snapshot%s %s"%s"' % (rflag, vmflag, snapname)
-            proc = pipeopen(snapcmd, logger=log)
-            err = proc.communicate()[1]
-            MNTLOCK.unlock()
-        else:
-            snapcmd = '/sbin/zfs snapshot%s %s"%s"' % (rflag, vmflag, snapname)
-            proc = pipeopen(snapcmd, logger=log)
-            err = proc.communicate()[1]
+        # Take the ZFS snapshot
+        MNTLOCK.lock()
+        snapcmd = '/sbin/zfs snapshot%s %s"%s"' % (rflag, vmflag, snapname)
+        proc = pipeopen(snapcmd, logger=log)
+        err = proc.communicate()[1]
+        MNTLOCK.unlock()
+
         if proc.returncode != 0:
             log.error("Failed to create snapshot '%s': %s", snapname, err)
             send_mail(
@@ -407,40 +466,66 @@ Hello,
                 channel='autosnap',
             )
 
-        snapdeletefails = []
-        for vm in snapvms:
-            if vm not in snapvmfails and vm not in snapvmskips:
-                try:
-                    vm.delete_named_snapshot(vmsnapname)
-                except:
-                    log.debug("Exception delete_named_snapshot %s %s", vm.get_property('path'), vmsnapname)
-                    snapdeletefails.append(vm.get_property('path'))
-        if snapdeletefails:
-            try:
-                with LockFile(VMWARESNAPDELETE_FAILS) as lock:
-                    with open(VMWARESNAPDELETE_FAILS, 'rb') as f:
-                        fails = pickle.load(f)
-            except:
-                fails = {}
-            fails[snapname] = [vm.get_property('path') for vm in snapdeletefails]
-            with LockFile(VMWARESNAPDELETE_FAILS) as lock:
-                with open(VMWARESNAPDELETE_FAILS, 'wb') as f:
-                    pickle.dump(fails, f)
+        # Delete all the VMWare snapshots we just took.
 
-            send_mail(
-                subject="VMware Snapshot deletion failed! (%s)" % snapname,
-                text="""
+        # This can be a list instead of a dict because we really don't care
+        # which VMWare task the failed deletion was fron.
+        snapdeletefails = []
+
+        for vmsnapobj in qs:
+            try:
+                server.connect(vmsnapobj.hostname,
+                               vmsnapobj.username,
+                               vmsnapobj.get_password())
+            except:
+                # TODO: We need to alert here as this will leave
+                # dangling VMWare snapshots.
+                log.warn("VMware login failed to %s", vmsnapobj.hostname)
+                continue
+            # vm is an object, so we'll dereference that object anywhere it's user facing.
+            for vm in snapvms[vmsnapobj]:
+                if vm not in snapvmfails[vmsnapobj] and vm not in snapvmskips[vmsnapobj]:
+                    # The test above is paranoia.  It shouldn't be possible for a vm to
+                    # be in more than one of the three dictionaries.
+                    try:
+                        vm.delete_named_snapshot(vmsnapname)
+                    except:
+                        log.debug("Exception delete_named_snapshot %s %s",
+                                  vm.get_property('path'), vmsnapname)
+                        snapdeletefails.append(vm.get_property('path'))
+
+            # Send out email alerts for VMware snapshot deletions that failed.
+            # Also put the failures into a sentinel file that the alert
+            # system can understand.
+            if snapdeletefails:
+                try:
+                    with LockFile(VMWARESNAPDELETE_FAILS) as lock:
+                        with open(VMWARESNAPDELETE_FAILS, 'rb') as f:
+                            fails = pickle.load(f)
+                except:
+                    fails = {}
+                fails[snapname] = [vm.get_property('path') for vm in snapdeletefails]
+                with LockFile(VMWARESNAPDELETE_FAILS) as lock:
+                    with open(VMWARESNAPDELETE_FAILS, 'wb') as f:
+                        pickle.dump(fails, f)
+
+                send_mail(
+                    subject="VMware Snapshot deletion failed! (%s)" % snapname,
+                    text="""
 Hello,
     The following VM snapshot(s) failed to delete %s:
 %s
-""" % (snapname, '    \n'.join([vm.get_property('path') for vm in snapdeletefails])),
-                channel='snapvmware'
-            )
+""" % (snapname, '    \n'.join(fails[snapname])),
+                    channel='snapvmware'
+                )
+            if server.is_connected():
+                server.disconnect()
 
     MNTLOCK.lock()
     if not autorepl_running():
         for snapshot in snapshots_pending_delete:
-            snapcmd = '/sbin/zfs destroy -r -d "%s"' % (snapshot)  # snapshots with clones will have destruction deferred
+            # snapshots with clones will have destruction deferred
+            snapcmd = '/sbin/zfs destroy -r -d "%s"' % (snapshot)
             proc = pipeopen(snapcmd, logger=log)
             err = proc.communicate()[1]
             if proc.returncode != 0:
