@@ -1,14 +1,21 @@
 from collections import defaultdict
 from datetime import datetime
+from middlewared import ejson as json
 from middlewared.schema import accepts, Int
 from middlewared.service import CRUDService, Service, private
 
 import boto3
+import botocore
 import enum
+import gevent
+import gevent.fileobject
 import hashlib
 import os
 import socket
 import subprocess
+
+CHUNK_SIZE = 1024 * 1024
+MANIFEST_FILENAME = 'FREENAS_MANIFEST'
 
 
 class ReplicationActionType(enum.Enum):
@@ -226,8 +233,27 @@ class BackupService(CRUDService):
                 recursive = True
                 break
 
-        # TODO: Get manifest and find snapshots there
-        remote_snapshots = []
+        # Get manifest file
+        try:
+            read_fd, write_fd = os.pipe()
+
+            def reader():
+                with os.fdopen(read_fd, 'rb') as f:
+                    fg = gevent.fileobject.FileObject(f, close=False)
+                    return json.loads(fg.read())
+
+            greenlet = gevent.spawn(reader)
+            self.middleware.call('backup.s3.get', backup, MANIFEST_FILENAME, write_fd)
+            gevent.joinall([greenlet])
+            manifest = greenlet.value or {}
+            print "manifest", manifest
+        except botocore.exceptions.ClientError as e:
+            if 'NoSuchKey' in str(e):
+                manifest = {}
+            else:
+                raise
+
+        remote_snapshots = manifest.get('snapshots', [])
 
         # Calculate delta between remote and local
         proc = subprocess.Popen([
@@ -252,11 +278,11 @@ class BackupService(CRUDService):
 
         actions = self.calculate_delta(datasets, backup['filesystem'], local_snapshots_dataset, remote_snapshots, followdelete=False)
 
-        manifest = None  #TODO: get previous manifest
         new_manifest, snaps = self.generate_manifest(local_snapshots_ids, backup, manifest, actions)
 
         # Send new snapshots to remote
         for snapshot in snaps:
+            break
             read_fd, write_fd = os.pipe()
             if os.fork() == 0:
                 os.dup2(write_fd, 1)
@@ -271,6 +297,17 @@ class BackupService(CRUDService):
             else:
                 os.close(write_fd)
                 self.middleware.call('backup.s3.put', backup, snapshot['filename'], read_fd)
+
+        # Write new manifest file
+        read_fd, write_fd = os.pipe()
+
+        def writer():
+            with os.fdopen(write_fd, 'wb') as f:
+                fg = gevent.fileobject.FileObject(f, 'wb', close=False)
+                fg.write(json.dumps(new_manifest))
+        greenlet = gevent.spawn(writer)
+        self.middleware.call('backup.s3.put', backup, MANIFEST_FILENAME, read_fd)
+        gevent.joinall([greenlet])
 
 
 class BackupS3Service(Service):
@@ -312,13 +349,14 @@ class BackupS3Service(Service):
 
         try:
             with os.fdopen(read_fd, 'rb') as f:
+                fg = gevent.fileobject.FileObject(f, 'rb', close=False)
                 mp = client.create_multipart_upload(
                     Bucket=backup['attributes']['bucket'],
                     Key=key
                 )
 
                 while True:
-                    chunk = f.read(1024 * 1024)
+                    chunk = fg.read(CHUNK_SIZE)
                     if chunk == b'':
                         break
 
@@ -327,7 +365,7 @@ class BackupS3Service(Service):
                         Key=key,
                         PartNumber=idx,
                         UploadId=mp['UploadId'],
-                        ContentLength=1024 * 1024,
+                        ContentLength=CHUNK_SIZE,
                         Body=chunk
                     )
 
@@ -348,3 +386,21 @@ class BackupS3Service(Service):
                 )
         finally:
             pass
+
+    @private
+    def get(self, backup, filename, write_fd):
+        client = self.get_client(backup['id'])
+        folder = backup['attributes']['folder'] or ''
+        key = os.path.join(folder, filename)
+        obj = client.get_object(
+            Bucket=backup['attributes']['bucket'],
+            Key=key
+        )
+
+        with os.fdopen(write_fd, 'wb') as f:
+            fg = gevent.fileobject.FileObject(f, 'wb', close=False)
+            while True:
+                chunk = obj['Body'].read(CHUNK_SIZE)
+                if chunk == b'':
+                    break
+                fg.write(chunk)
