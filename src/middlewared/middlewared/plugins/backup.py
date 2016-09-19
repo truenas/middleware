@@ -270,10 +270,7 @@ class BackupService(CRUDService):
 
             else:
                 os.close(write_fd)
-                while True:
-                    read = os.read(read_fd, 1024 * 1024)
-                    if read == b'':
-                        break
+                self.middleware.call('backup.s3.put', backup, snapshot['filename'], read_fd)
 
 
 class BackupS3Service(Service):
@@ -281,22 +278,73 @@ class BackupS3Service(Service):
     class Config:
         namespace = 'backup.s3'
 
-    @accepts(Int('id'))
-    def get_buckets(self, id):
-        """Returns buckets from a given S3 credential."""
+    @private
+    def get_client(self, id):
         credential = self.middleware.call('datastore.query', 'system.cloudcredentials', [('id', '=', id)], {'get': True})
 
-        s3 = boto3.client(
+        client = boto3.client(
             's3',
             aws_access_key_id=credential['attributes'].get('access_key'),
             aws_secret_access_key=credential['attributes'].get('secret_key'),
         )
+        return client
 
+    @accepts(Int('id'))
+    def get_buckets(self, id):
+        """Returns buckets from a given S3 credential."""
+        client = self.get_client(id)
         buckets = []
-        for bucket in s3.list_buckets()['Buckets']:
+        for bucket in client.list_buckets()['Buckets']:
             buckets.append({
                 'name': bucket['Name'],
                 'creation_date': bucket['CreationDate'],
             })
 
         return buckets
+
+    @private
+    def put(self, backup, filename, read_fd):
+        client = self.get_client(backup['id'])
+        folder = backup['attributes']['folder'] or ''
+        key = os.path.join(folder, filename)
+        parts = []
+        idx = 1
+
+        try:
+            with os.fdopen(read_fd, 'rb') as f:
+                mp = client.create_multipart_upload(
+                    Bucket=backup['attributes']['bucket'],
+                    Key=key
+                )
+
+                while True:
+                    chunk = f.read(1024 * 1024)
+                    if chunk == b'':
+                        break
+
+                    resp = client.upload_part(
+                        Bucket=backup['attributes']['bucket'],
+                        Key=key,
+                        PartNumber=idx,
+                        UploadId=mp['UploadId'],
+                        ContentLength=1024 * 1024,
+                        Body=chunk
+                    )
+
+                    parts.append({
+                        'ETag': resp['ETag'],
+                        'PartNumber': idx
+                    })
+
+                    idx += 1
+
+                client.complete_multipart_upload(
+                    Bucket=backup['attributes']['bucket'],
+                    Key=key,
+                    UploadId=mp['UploadId'],
+                    MultipartUpload={
+                        'Parts': parts
+                    }
+                )
+        finally:
+            pass
