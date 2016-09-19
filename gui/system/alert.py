@@ -223,7 +223,7 @@ class AlertPlugins:
             'criticality': 'Loss of Functionality',
             'environment': 'Production',
             'name': 'Automatic Alert',
-            'email': 'dev@ixsystems.com',
+            'email': 'auto-support@ixsystems.com',
             'phone': '-',
         })
         if not success:
