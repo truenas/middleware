@@ -1,0 +1,24 @@
+#!/bin/sh
+#
+# PROVIDE: inadynmt
+# REQUIRE: NETWORKING
+# KEYWORD: shutdown
+#
+# Add the following lines to /etc/rc.conf.local or /etc/rc.conf
+# to enable this service:
+#
+# inadynmt_enable="YES"
+#
+
+. /etc/rc.subr
+
+name="inadynmt"
+rcvar=inadynmt_enable
+
+command=%%PREFIX%%/bin/inadyn-mt
+
+load_rc_config $name
+
+: ${inadynmt_enable="NO"}
+
+run_rc_command "$1"
