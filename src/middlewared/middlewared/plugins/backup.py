@@ -1,10 +1,13 @@
 from collections import defaultdict
+from datetime import datetime
 from middlewared.schema import accepts, Int
 from middlewared.service import CRUDService, Service, private
 
 import boto3
 import enum
+import hashlib
 import os
+import socket
 import subprocess
 
 
@@ -23,16 +26,11 @@ class ReplicationAction(object):
         for k, v in kwargs.items():
             setattr(self, k, v)
 
-    def __getstate__(self):
-        d = dict(self.__dict__)
-        d['type'] = d['type'].name
-        return d
-
 
 class BackupService(CRUDService):
 
     @private
-    def calculate_delta(self, datasets, remoteds, snapshots_list, recursive=False, followdelete=False):
+    def calculate_delta(self, datasets, remoteds, local_snapshots, snapshots_list, recursive=False, followdelete=False):
         remote_datasets = list(filter(lambda s: '@' not in s['name'], snapshots_list))
         actions = []
 
@@ -58,13 +56,6 @@ class BackupService(CRUDService):
 
         for i in snapshots_list:
             extend_with_snapshot_name(i)
-
-        local_snapshots = defaultdict(list)
-        for snapshot in self.middleware.call('zfs.snapshot.query'):
-            local_snapshots[snapshot['dataset']].append(snapshot)
-
-        for dataset, snapshots in local_snapshots.iteritems():
-            snapshots.sort(key=lambda x: x['properties']['createtxg']['rawvalue'])
 
         for ds in datasets:
             localfs = ds
@@ -184,6 +175,41 @@ class BackupService(CRUDService):
         """
         return actions
 
+    @private
+    def generate_manifest(self, local_snapshots, backup, previous_manifest, actions):
+        def make_snapshot_entry(action):
+            snapname = '{0}@{1}'.format(action['localfs'], action['snapshot'])
+            filename = hashlib.md5(snapname.encode('utf-8')).hexdigest()
+            snap = local_snapshots[snapname]
+
+            txg = snap['properties']['createtxg']['rawvalue']
+            return {
+                'name': snapname,
+                'anchor': action.get('anchor'),
+                'incremental': action['incremental'],
+                'created_at': datetime.fromtimestamp(int(snap['properties']['creation']['rawvalue'])),
+                'uuid': snap['properties']['org.freenas:uuid']['value'],
+                'txg': int(txg) if txg else None,
+                'filename': filename
+            }
+
+        snaps = previous_manifest['snapshots'][:] if previous_manifest else []
+        new_snaps = []
+
+        for a in actions:
+            if a.type == 'SEND_STREAM':
+                snap = make_snapshot_entry(a)
+                snaps.append(snap)
+                new_snaps.append(snap)
+
+        manifest = {
+            'hostname': socket.gethostname(),
+            'dataset': backup['filesystem'],
+            'snapshots': snaps
+        }
+
+        return manifest, new_snaps
+
     def sync(self, id):
 
         backup = self.middleware.call('datastore.query', 'storage.cloudreplication', [('id', '=', id)], {'get': True})
@@ -213,7 +239,21 @@ class BackupService(CRUDService):
         datasets = proc.communicate()[0].strip().split('\n')
         assert proc.returncode == 0
 
-        actions = self.calculate_delta(datasets, backup['filesystem'], remote_snapshots, followdelete=False)
+        # Snapshots indexed by dataset
+        local_snapshots_dataset = defaultdict(list)
+        # Snapshots indexed by name
+        local_snapshots_ids = {}
+        for snapshot in self.middleware.call('zfs.snapshot.query'):
+            local_snapshots_dataset[snapshot['dataset']].append(snapshot)
+            local_snapshots_ids[snapshot['name']] = snapshot
+
+        for dataset, snapshots in local_snapshots_dataset.iteritems():
+            snapshots.sort(key=lambda x: x['properties']['createtxg']['rawvalue'])
+
+        actions = self.calculate_delta(datasets, backup['filesystem'], local_snapshots_dataset, remote_snapshots, followdelete=False)
+
+        manifest = None  #TODO: get previous manifest
+        new_manifest, snaps = self.generate_manifest(local_snapshots_ids, backup, manifest, actions)
 
         # Send new snapshots to remote
         for action in actions:
