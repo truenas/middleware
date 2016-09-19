@@ -261,7 +261,7 @@ DYNDNSPROVIDER_CHOICES = (
     ('dyndns@3322.org', '3322.org'),
     ('default@sitelutions.com', 'sitelutions.com'),
     ('default@dnsomatic.com', 'dnsomatic.com'),
-    ('ipv6tb@he.net', 'he.net'),
+    ('default@he.net', 'he.net'),
     ('default@tzo.com', 'tzo.com'),
     ('default@dynsip.org', 'dynsip.org'),
     ('default@dhis.org', 'dhis.org'),
