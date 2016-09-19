@@ -1,0 +1,76 @@
+--- readme.html.orig	2015-09-25 12:54:00 UTC
++++ readme.html
+@@ -284,7 +284,7 @@ update request, i.e., both ip address ty
+ </p>
+ <p style="margin-left: 20px;">'-x [-n &#60;service name&#62;]': remove service<br>
+ </p>
+-<p style="margin-left: 20px;">'--input_file &#60;path/file&#62;': input file name that contains inadyn-mt command options (adds to those already present in the cmd line).  The default configuration file name is '/etc/inadyn-mt.conf'. It is only
++<p style="margin-left: 20px;">'--input_file &#60;path/file&#62;': input file name that contains inadyn-mt command options (adds to those already present in the cmd line).  The default configuration file name is '%%PREFIX%%/etc/inadyn-mt.conf'. It is only
+ used if inadyn-mt is called without any command line options. This allows inadyn-mt to be called without any arguments. The format is as expected for a **NIX config&nbsp; file. See below for details.<br>
+ </p>
+ <p style="margin-left: 20px;">'--ip_server_name &#60;name&#62;[:port] &#60;url&#62;': The client
+@@ -368,7 +368,7 @@ DEFAULT value is intended for default se
+ '--retry_pending': retry ip update even after network comm retries exhausted,  default on.<br><br>
+ '--retry_pending_interval &#60;#&#62;': network comm seconds update retry interval, after retries exhausted,  5 to 3600,<br> &nbsp;&nbsp;&nbsp;&nbsp;default 300.<br><br>
+ '--lang_file &#60;path/file&#62;':  [language file path, and file name]. defaults to either ../inadyn-mt/lang/en.lng,<br>
+-&nbsp;&nbsp;&nbsp;&nbsp;or /etc/inadyn-mt/en.lng.  No parameter option gives hard coded defaults<br><br>
++&nbsp;&nbsp;&nbsp;&nbsp;or %%PREFIX%%/etc/inadyn-mt/en.lng.  No parameter option gives hard coded defaults<br><br>
+ '--online_check_url &#60;srv_name[:port] url&#62;': server name, optional port, and url to reach to confirm online status.<br><br>
+ '--status_interval &#60;#&#62;': seconds [30..864000] interval at which to check online status, default 600.<br><br>
+ '--alert_retries &#60;#&#62;':  network retries before audible network status alerts. [0..100], default 0.<br><br>
+@@ -412,7 +412,7 @@ There are two cache files: inadyn_time.c
+   
+   3. Update freedns.afraid.org, every minute, in daemon mode, with configuration read from file.<br><br>
+   
+-  Config file can be placed anywhere.  In linux, default location: /etc/inadyn-mt.conf<br><br>
++  Config file can be placed anywhere.  In linux, default location: %%PREFIX%%/etc/inadyn-mt.conf<br><br>
+ 
+   Content of config file:<br><br>
+   
+@@ -421,7 +421,7 @@ There are two cache files: inadyn_time.c
+   --log_file /var/log/inadyn.log<br>
+   --change_persona 10012 #to change to another user id after init.<br><br>
+ 
+-  Launching of inadyn-mt does not need any params. It looks for /etc/inadyn-mt.conf<br><br>
++  Launching of inadyn-mt does not need any params. It looks for %%PREFIX%%/etc/inadyn-mt.conf<br><br>
+ 
+   4. Freedns update in console<br><br>
+ 
+@@ -434,7 +434,7 @@ inadyn-mt can read the very same options
+ command line from a configuration file. This feature allows the user to
+ write the options only once, and avoids frequent retyping.<br><br>
+ 
+-<i>Default configuration file</i> is /etc/inadyn.conf under Unix systems. <br>
++<i>Default configuration file</i> is %%PREFIX%%/etc/inadyn.conf under Unix systems. <br>
+ The location of the config file can be given to inadyn-mt via --input_file option<br><br>
+ 
+ <i>The format</i> :<br><br>
+@@ -871,7 +871,7 @@ Ver.&nbsp; inadyn-mt 2.18.28 - June 2010
+ Ver.&nbsp; inadyn-mt 2.18.26 - June 2010<br>
+ &nbsp;&nbsp;&nbsp; &nbsp;&nbsp; Changes:<br>
+ &nbsp;&nbsp;&nbsp; &nbsp;&nbsp; - inadyn man files updated to inadyn-mt<br>
+-&nbsp;&nbsp;&nbsp; &nbsp;&nbsp; - *nix inadyn-mt.conf moved to /etc<br>
++&nbsp;&nbsp;&nbsp; &nbsp;&nbsp; - *nix inadyn-mt.conf moved to %%PREFIX%%/etc<br>
+ &nbsp;&nbsp;&nbsp; &nbsp;&nbsp; - added debian dpkg-buildpackage directory, et al<br>
+ &nbsp;&nbsp;&nbsp; &nbsp;&nbsp; - moved *nix meta files to /usr/share<br><br>
+ 
+@@ -881,7 +881,7 @@ Ver.&nbsp; inadyn-mt 2.18.24 - May 2010<
+ 
+ Ver.&nbsp; inadyn-mt 2.18.22 - May 2010<br>
+ &nbsp;&nbsp;&nbsp; &nbsp;&nbsp; Changes:<br>
+-&nbsp;&nbsp;&nbsp; &nbsp;&nbsp; - *nix meta files search root /etc, /usr/share, /usr/local/etc<br>
++&nbsp;&nbsp;&nbsp; &nbsp;&nbsp; - *nix meta files search root %%PREFIX%%/etc, /usr/share, /usr/local/etc<br>
+ &nbsp;&nbsp;&nbsp; &nbsp;&nbsp; - too many params compiler warning fixed<br><br>
+ 
+ Ver.&nbsp; inadyn-mt 2.18.20 - May 2010<br>
+@@ -1178,8 +1178,8 @@ Ver.&nbsp; inadyn-mt 2.12.02 - May 2008<
+ inadyn-mt<br>
+ &nbsp;&nbsp;&nbsp; &nbsp;&nbsp; - updated inadyn-mt man files' original inadyn homepage
+ to http://www.inatech.eu/inadyn/<br>
+-&nbsp;&nbsp;&nbsp; &nbsp;&nbsp; - changed default config file from /etc/inadyn.conf to 
+-/etc/inadyn-mt/inadyn-mt.conf<br><br>
++&nbsp;&nbsp;&nbsp; &nbsp;&nbsp; - changed default config file from %%PREFIX%%/etc/inadyn.conf to 
++%%PREFIX%%/etc/inadyn-mt/inadyn-mt.conf<br><br>
+ 
+ Ver.&nbsp; inadyn-mt 2.12.01 - May 2008<br>
+ &nbsp;&nbsp;&nbsp; Changes:<br>

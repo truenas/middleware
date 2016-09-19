@@ -1,0 +1,9 @@
+inadyn, inadyn-advanced fork. A multi-OS (*NIX, BSD, NT, 32 bit Win)
+console/service/daemon dynamic DNS client.
+
+It gives the possibility to have your own fixed hostname registered on the
+internet, although your IP might be changing. It checks periodically whether
+the IP address stored by the DNS server is the real current IP address of the
+machine that is running it.
+
+WWW: http://sourceforge.net/projects/inadyn-mt/
