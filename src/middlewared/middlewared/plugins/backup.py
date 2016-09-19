@@ -3,12 +3,186 @@ from middlewared.schema import accepts, Int
 from middlewared.service import CRUDService, Service, private
 
 import boto3
+import enum
 import os
 import subprocess
-import sys
+
+
+class ReplicationActionType(enum.Enum):
+    SEND_STREAM = 1
+    DELETE_SNAPSHOTS = 2
+    CLEAR_SNAPSHOTS = 3
+    DELETE_DATASET = 4
+
+
+class ReplicationAction(object):
+    def __init__(self, type, localfs, remotefs, **kwargs):
+        self.type = type
+        self.localfs = localfs
+        self.remotefs = remotefs
+        for k, v in kwargs.items():
+            setattr(self, k, v)
+
+    def __getstate__(self):
+        d = dict(self.__dict__)
+        d['type'] = d['type'].name
+        return d
 
 
 class BackupService(CRUDService):
+
+    @private
+    def calculate_delta(self, datasets, remoteds, snapshots_list, recursive=False, followdelete=False):
+        remote_datasets = list(filter(lambda s: '@' not in s['name'], snapshots_list))
+        actions = []
+
+        def matches(src, tgt):
+            return src['snapshot_name'] == tgt['snapshot_name'] and src['created_at'] == tgt['created_at']
+
+        def match_snapshots(local, remote):
+            for i in local:
+                match = list(filter(lambda s: matches(i, s), remote))
+                yield match[0] if match else None
+
+        def convert_snapshot(snap):
+            return {
+                'name': snap['name'],
+                'snapshot_name': snap['snapshot_name'],
+                'created_at': snap['properties']['creation']['parsed'],
+                'txg': int(snap['properties']['createtxg']['rawvalue']),
+                'uuid': snap['properties']['org.freenas:uuid'],
+            }
+
+        def extend_with_snapshot_name(snap):
+            snap['snapshot_name'] = snap['name'].split('@')[-1] if '@' in snap['name'] else None
+
+        for i in snapshots_list:
+            extend_with_snapshot_name(i)
+
+        local_snapshots = defaultdict(list)
+        for snapshot in self.middleware.call('zfs.snapshot.query'):
+            local_snapshots[snapshot['dataset']].append(snapshot)
+
+        for dataset, snapshots in local_snapshots.iteritems():
+            snapshots.sort(key=lambda x: x['properties']['createtxg']['rawvalue'])
+
+        for ds in datasets:
+            localfs = ds
+            # Remote fs is always the same as local fs for BACKUP
+            #remotefs = localfs.replace(localds, remoteds, 1)
+            remotefs = localfs
+
+            """
+            local_snapshots = sorted(
+                list(map(
+                    convert_snapshot,
+                    self.dispatcher.call_sync('zfs.dataset.get_snapshots', localfs)
+                )),
+                key=lambda x: x['txg']
+            )
+
+            remote_snapshots = q.query(
+                snapshots_list,
+                ('name', '~', '^{0}@'.format(remotefs))
+            )
+            """
+            remote_snapshots = snapshots_list
+
+            snapshots = local_snapshots[localfs][:]
+            found = None
+
+            if remote_snapshots:
+                # Find out the last common snapshot.
+                pairs = list(match_snapshots(local_snapshots, remote_snapshots))
+                if pairs:
+                    pairs.sort(key=lambda p: p[0]['created_at'], reverse=True)
+                    match = list(filter(None, pairs))
+                    found = match[0][0] if match else None
+
+                if found:
+                    if followdelete:
+                        delete = []
+                        for snap in remote_snapshots:
+                            rsnap = snap['snapshot_name']
+                            match = list(filter(lambda s: s['snapshot_name'] == rsnap, local_snapshots))
+                            if not match:
+                                delete.append(rsnap)
+
+                        if delete:
+                            actions.append(ReplicationAction(
+                                ReplicationActionType.DELETE_SNAPSHOTS,
+                                localfs,
+                                remotefs,
+                                snapshots=delete
+                            ))
+
+                    index = local_snapshots.index(found)
+
+                    for idx in range(index + 1, len(local_snapshots)):
+                        actions.append(ReplicationAction(
+                            ReplicationActionType.SEND_STREAM,
+                            localfs,
+                            remotefs,
+                            incremental=True,
+                            anchor=local_snapshots[idx - 1]['snapshot_name'],
+                            snapshot=local_snapshots[idx]['snapshot_name']
+                        ))
+                else:
+                    actions.append(ReplicationAction(
+                        ReplicationActionType.CLEAR_SNAPSHOTS,
+                        localfs,
+                        remotefs,
+                        snapshots=[snap['snapshot_name'] for snap in remote_snapshots]
+                    ))
+
+                    for idx in range(0, len(snapshots)):
+                        actions.append(ReplicationAction(
+                            ReplicationActionType.SEND_STREAM,
+                            localfs,
+                            remotefs,
+                            incremental=idx > 0,
+                            anchor=snapshots[idx - 1]['snapshot_name'] if idx > 0 else None,
+                            snapshot=snapshots[idx]['snapshot_name']
+                        ))
+            else:
+                for idx in range(0, len(snapshots)):
+                    actions.append(ReplicationAction(
+                        ReplicationActionType.SEND_STREAM,
+                        localfs,
+                        remotefs,
+                        incremental=idx > 0,
+                        anchor=snapshots[idx - 1]['snapshot_name'] if idx > 0 else None,
+                        snapshot=snapshots[idx]['snapshot_name']
+                    ))
+
+        for rds in remote_datasets:
+            remotefs = rds
+            # Local fs is always the same as remote fs for BACKUP
+            localfs = remotefs
+
+            if localfs not in datasets:
+                actions.append(ReplicationAction(
+                    ReplicationActionType.DELETE_DATASET,
+                    localfs,
+                    remotefs
+                ))
+
+		"""
+        total_send_size = 0
+        for action in actions:
+            if action.type == ReplicationActionType.SEND_STREAM:
+                logger.warning('localfs={0}, snapshot={1}, anchor={2}'.format(action.localfs, action.snapshot, getattr(action, 'anchor', None)))
+                size = self.dispatcher.call_sync(
+                    'zfs.dataset.estimate_send_size',
+                    action.localfs,
+                    action.snapshot,
+                    getattr(action, 'anchor', None)
+                )
+
+                action.send_size = size
+                total_send_size += size
+        """
+        return actions
 
     def sync(self, id):
 
@@ -39,16 +213,10 @@ class BackupService(CRUDService):
         datasets = proc.communicate()[0].strip().split('\n')
         assert proc.returncode == 0
 
-        local_snapshots = defaultdict(list)
-        for snapshot in self.middleware.call('zfs.snapshot.query'):
-            local_snapshots[snapshot['dataset']].append(snapshot)
+        actions = self.calculate_delta(datasets, backup['filesystem'], remote_snapshots, followdelete=False)
 
-        for dataset, snapshots in local_snapshots.iteritems():
-            snapshots.sort(key=lambda x: x['properties']['createtxg']['rawvalue'])
-
-        send_snapshots = []
         # Send new snapshots to remote
-        for snapshot_to, snapshot_from in send_snapshots:
+        for action in actions:
             read_fd, write_fd = os.pipe()
             if os.fork() == 0:
                 os.dup2(write_fd, 1)
