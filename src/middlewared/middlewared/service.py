@@ -1,6 +1,7 @@
 from collections import defaultdict
 
 import inspect
+import logging
 import re
 
 from middlewared.schema import accepts, Str
@@ -65,6 +66,7 @@ class Service(object):
     __metaclass__ = ServiceBase
 
     def __init__(self, middleware):
+        self.logger = logging.getLogger(type(self).__class__.__name__)
         self.middleware = middleware
 
 

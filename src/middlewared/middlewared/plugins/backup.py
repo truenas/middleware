@@ -279,6 +279,8 @@ class BackupService(CRUDService):
 
         new_manifest, snaps = self.generate_manifest(local_snapshots_ids, backup, manifest, actions)
 
+        self.logger.info('Sending {} new snapshots'.format(len(snaps)))
+
         # Send new snapshots to remote
         for snapshot in snaps:
             read_fd, write_fd = os.pipe()
