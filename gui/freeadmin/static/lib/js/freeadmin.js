@@ -1411,6 +1411,17 @@ require([
 
     }
 
+    systemDatasetMigration = function() {
+        var dialog = new Dialog({
+            title: gettext("Warning!"),
+            id: "Warning_box_dialog",
+            content: domConstruct.create(
+                "p", {
+                    innerHTML: gettext("The action will result in migration of dataset.") + "<br />" + gettext("Some services will be restarted.")
+                }
+            )
+        });
+
     vcenter_https_enable_check = function () {
         vc_enable_https = registry.byId('id_vc_enable_https');
 
