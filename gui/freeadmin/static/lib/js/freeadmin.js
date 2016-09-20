@@ -1421,6 +1421,7 @@ require([
                 }
             )
         });
+    }
 
     vcenter_https_enable_check = function () {
         vc_enable_https = registry.byId('id_vc_enable_https');
