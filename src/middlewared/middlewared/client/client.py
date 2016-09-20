@@ -160,7 +160,7 @@ def main():
     iparser.add_argument('sql', nargs='+')
     args = parser.parse_args()
 
-    def to_json(args):
+    def from_json(args):
         for i in args:
             try:
                 yield json.loads(i)
@@ -180,7 +180,7 @@ def main():
                 kwargs = {}
                 if args.timeout:
                     kwargs['timeout'] = args.timeout
-                rv = c.call(args.method[0], *list(to_json(args.method[1:])), **kwargs)
+                rv = c.call(args.method[0], *list(from_json(args.method[1:])), **kwargs)
                 if isinstance(rv, (int, str, unicode)):
                     print(rv)
                 else:
