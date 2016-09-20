@@ -14,7 +14,7 @@ import os
 import socket
 import subprocess
 
-CHUNK_SIZE = 1024 * 1024
+CHUNK_SIZE = 5 * 1024 * 1024
 MANIFEST_FILENAME = 'FREENAS_MANIFEST'
 
 
@@ -217,6 +217,7 @@ class BackupService(CRUDService):
 
         return manifest, new_snaps
 
+    @accepts(Int('id'))
     def sync(self, id):
 
         backup = self.middleware.call('datastore.query', 'storage.cloudreplication', [('id', '=', id)], {'get': True})
@@ -282,6 +283,7 @@ class BackupService(CRUDService):
         self.logger.info('Sending {} new snapshots'.format(len(snaps)))
 
         # Send new snapshots to remote
+        snapshots_sent = []
         for snapshot in snaps:
             read_fd, write_fd = os.pipe()
             if os.fork() == 0:
@@ -297,8 +299,22 @@ class BackupService(CRUDService):
 
             else:
                 os.close(write_fd)
-                self.middleware.call('backup.s3.put', backup, snapshot['filename'], read_fd)
+                try:
+                    self.middleware.call('backup.s3.put', backup, snapshot['filename'], read_fd)
+                    snapshots_sent.append(snapshot)
+                except Exception as e:
+                    # In case some error has occurred lets try to update
+                    # the manifest on server side with snapshots sent so far
+                    if snapshots_sent:
+                        new_manifest['snapshots'] = manifest.get('snapshots', []) + snapshots_sent
+                        self.upload_manifest(backup, new_manifest)
+                    raise
 
+        if snapshots_sent:
+            self.upload_manifest(backup, new_manifest)
+
+    @private
+    def upload_manifest(self, backup, new_manifest):
         # Write new manifest file
         read_fd, write_fd = os.pipe()
 
