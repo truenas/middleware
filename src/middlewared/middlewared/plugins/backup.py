@@ -2,7 +2,7 @@ from collections import defaultdict
 from datetime import datetime
 from middlewared import ejson as json
 from middlewared.schema import accepts, Int
-from middlewared.service import CRUDService, Service, private
+from middlewared.service import CRUDService, Service, item_method, private
 
 import boto3
 import botocore
@@ -218,6 +218,7 @@ class BackupService(CRUDService):
         return manifest, new_snaps
 
     @accepts(Int('id'))
+    @item_method
     def sync(self, id):
 
         backup = self.middleware.call('datastore.query', 'storage.cloudreplication', [('id', '=', id)], {'get': True})
