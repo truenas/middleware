@@ -594,12 +594,26 @@ def carp_backup(fobj, state_file, ifname, vhid, event, user_override):
             # make CTL to close backing storages, allowing pool to export
             run('/sbin/sysctl kern.cam.ctl.ha_role=1')
 
+            # If the network is flapping, a backup node could get a master
+            # event followed by an immediate backup event.  If the other node
+            # is master and shoots down our master event we will immediately
+            # run the code for the backup event, even though we are already backup.
+            # So we use volumes as a sentinel to tell us if we did anything with
+            # regards to exporting volumes.  If we don't export any volumes it's
+            # ok to assume we don't need to do anything else associated with
+            # transitioning to the backup state. (because we are already there)
+
+            # Note this wouldn't be needed with a proper state engine.
+            volumes = False
             for volume in fobj['volumes'] + fobj['phrasedvolumes']:
                 error, output = run('zpool list %s' % volume)
                 if not error:
+                    volumes = True
                     log.warn('Exporting %s', volume)
                     error, output = run('zpool export -f %s' % volume)
                     if error:
+                        # the zpool status here is extranious.  The sleep
+                        # is going to run off the watchdog and the system will reboot.
                         run('zpool status %s' % volume)
                         time.sleep(5)
                     log.warn('Exported %s', volume)
@@ -610,17 +624,18 @@ def carp_backup(fobj, state_file, ifname, vhid, event, user_override):
             except:
                 pass
 
-            run('/usr/sbin/service watchdogd quietstart')
-            run('/usr/sbin/service ix-syslogd quietstart')
-            run('/usr/sbin/service syslog-ng quietrestart')
-            run('/usr/sbin/service ix-crontab quietstart')
-            run('/usr/sbin/service ix-collectd quietstart')
-            run('/usr/sbin/service collectd forcestop')
-            run_async('echo "$(date), $(hostname), assume backup" | mail -s "Failover" root')
+            if volumes:
+                run('/usr/sbin/service watchdogd quietstart')
+                run('/usr/sbin/service ix-syslogd quietstart')
+                run('/usr/sbin/service syslog-ng quietrestart')
+                run('/usr/sbin/service ix-crontab quietstart')
+                run('/usr/sbin/service ix-collectd quietstart')
+                run('/usr/sbin/service collectd forcestop')
+                run_async('echo "$(date), $(hostname), assume backup" | mail -s "Failover" root')
 
-            log.warn('Setting passphrase from master')
-            run('LD_LIBRARY_PATH=/usr/local/lib /usr/local/sbin/enc_helper '
-                'syncfrompeer')
+                log.warn('Setting passphrase from master')
+                run('LD_LIBRARY_PATH=/usr/local/lib /usr/local/sbin/enc_helper '
+                    'syncfrompeer')
 
     except AlreadyLocked:
         log.warn('Failover event handler failed to aquire backup lockfile')
