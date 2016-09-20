@@ -284,12 +284,13 @@ class BackupService(CRUDService):
             read_fd, write_fd = os.pipe()
             if os.fork() == 0:
                 os.dup2(write_fd, 1)
-                try:
+                if os.path.isdir('/dev/fd'):
                     for i in os.listdir('/dev/fd'):
                         if i != '1':
-                            os.close(int(i))
-                except OSError:
-                    pass
+                            try:
+                                os.close(int(i))
+                            except OSError:
+                                pass
                 os.execv('/sbin/zfs', ['/sbin/zfs', 'send', '-V', '-p'] + (['-i', snapshot.get('anchor')] if snapshot.get('anchor') else []) + [snapshot['name']])
 
             else:
