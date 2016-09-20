@@ -147,12 +147,19 @@ MIDDLEWARE_CLASSES = (
     'freenasUI.freeadmin.middleware.CatchError',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'freenasUI.freeadmin.middleware.RequireLoginMiddleware',
+    'rollbar.contrib.django.middleware.RollbarNotifierMiddleware',
 )
 
 DOJANGO_DOJO_PROFILE = 'local_release'
 DOJANGO_DOJO_VERSION = '1.11.1'
 #DOJANGO_DOJO_BUILD_VERSION = '1.6.0b1'
 DOJANGO_DOJO_DEBUG = True
+
+ROLLBAR = {
+    'access_token': 'caf06383cba14d5893c4f4d0a40c33a9',
+    'environment': 'production',
+    'root': '/usr/local/www/freenasUI',
+}
 
 ROOT_URLCONF = 'freenasUI.urls'
 

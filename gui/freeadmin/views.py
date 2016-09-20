@@ -26,6 +26,7 @@
 
 import json
 import logging
+import rollbar
 import sys
 
 from django.http import HttpResponse, HttpResponseRedirect
@@ -191,6 +192,11 @@ def server_error(request, *args, **kwargs):
         tb = Advanced.objects.all().latest('id').adv_traceback
     except:
         tb = True
+
+    try:
+        rollbar.report_exc_info(exc_info, request)
+    except:
+        pass
     try:
         if tb:
             reporter = ExceptionReporter(request, *exc_info)
