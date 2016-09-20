@@ -1422,9 +1422,7 @@ require([
             id: "Warning_box_dialog",
             content: domConstruct.create(
                 "p", {
-                    innerHTML: gettext(
-                        innerHTML: gettext("The action will result in migration of dataset.") + "<br />" + gettext("Some services will be restarted.")
-                    )
+                    innerHTML: gettext("The action will result in migration of dataset.") + "<br />" + gettext("Some services will be restarted.")
                 }
             )
         });
