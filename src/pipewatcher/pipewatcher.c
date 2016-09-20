@@ -22,8 +22,13 @@ int main(int argc, char **argv) {
 		exit(1);
 	}
 
+	flags = fcntl(STDIN_FILENO, F_GETFL);
+	fcntl(STDIN_FILENO, F_SETFL, flags|O_NONBLOCK);
+
 	flags = fcntl(STDOUT_FILENO, F_GETFL);
 	fcntl(STDOUT_FILENO, F_SETFL, flags|O_NONBLOCK);
+
+	signal(SIGPIPE, SIG_IGN);
 
 	noop_read_interval = noop_write_interval = 0;
 	FD_ZERO(&fds_read);
