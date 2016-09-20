@@ -189,13 +189,14 @@ class Resource(object):
         return object.__getattribute__(self, attr)
 
     def get_path(self):
-        path = ''
+        path = []
         parent = self.parent
         while parent is not None:
-            path += parent.name + '/'
+            path.append(parent.name)
             parent = parent.parent
-        path += self.name
-        return path
+        path.reverse()
+        path.append(self.name)
+        return '/'.join(path)
 
     def do(self, http_method, req, resp, **kwargs):
         assert http_method in ('delete', 'get', 'post', 'put')
