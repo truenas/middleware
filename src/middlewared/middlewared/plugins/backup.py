@@ -280,6 +280,10 @@ class BackupService(CRUDService):
 
         new_manifest, snaps = self.generate_manifest(local_snapshots_ids, backup, manifest, actions)
 
+        if not snaps:
+            self.logger.info('No new snapshots to send')
+            return
+
         self.logger.info('Sending {} new snapshots'.format(len(snaps)))
 
         # Send new snapshots to remote
