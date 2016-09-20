@@ -150,6 +150,7 @@ def main():
     parser.add_argument('-u', '--uri')
     parser.add_argument('-U', '--username')
     parser.add_argument('-P', '--password')
+    parser.add_argument('-t', '--timeout', type=int)
 
     subparsers = parser.add_subparsers(help='sub-command help', dest='name')
     iparser = subparsers.add_parser('call', help='Call method')
@@ -176,7 +177,10 @@ def main():
                 print "Failed to login: ", e
                 sys.exit(0)
             try:
-                rv = c.call(args.method[0], *list(to_json(args.method[1:])))
+                kwargs = {}
+                if args.timeout:
+                    kwargs['timeout'] = args.timeout
+                rv = c.call(args.method[0], *list(to_json(args.method[1:])), **kwargs)
                 if isinstance(rv, (int, str, unicode)):
                     print(rv)
                 else:
