@@ -2227,7 +2227,7 @@ class CertificateAuthorityImportForm(ModelForm):
             raise forms.ValidationError(_(
                 "The private key does not match with the certificate."
             ))
-        return cdata
+        return privatekey
 
     def save(self):
         self.instance.cert_type = models.CA_TYPE_EXISTING
@@ -2687,7 +2687,7 @@ class CertificateImportForm(ModelForm):
             raise forms.ValidationError(_(
                 "The private key does not match with the certificate."
             ))
-        return cdata
+        return privatekey
 
     def save(self):
         self.instance.cert_type = models.CERT_TYPE_EXISTING
