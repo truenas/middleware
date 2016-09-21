@@ -1,12 +1,7 @@
-import json
-
 from collections import OrderedDict
 
 from django.conf import settings
 from django.core.urlresolvers import reverse
-from django.shortcuts import render
-from django.template import TemplateDoesNotExist
-from django.template.loader import get_template
 from django.utils.html import escapejs
 from django.utils.translation import ugettext as _
 
@@ -137,7 +132,7 @@ class VolumeFAdmin(BaseFreeAdmin):
             'label': _('Status'),
             'sortable': False,
         })
-        
+
         columns.append({
             'name': 'readonly',
             'label': _('Readonly'),
