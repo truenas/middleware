@@ -293,7 +293,8 @@ class BackupService(CRUDService):
 
         # Send new snapshots to remote
         snapshots_sent = []
-        for snapshot in snaps:
+        for i, snapshot in enumerate(snaps):
+            job.set_progress(int((float(i + 1) / len(snaps)) * 100.0), '{}/{} ({})'.format(i + 1, len(snaps), snapshot['name']))
             read_fd, write_fd = os.pipe()
             if os.fork() == 0:
                 os.dup2(write_fd, 1)
