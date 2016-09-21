@@ -12,9 +12,15 @@ from freenasUI.freeadmin.forms import CronMultiple
 from freenasUI.middleware.notifier import notifier
 from freenasUI.tasks import models
 
+from .widgets import CloudSyncWidget
+
 
 class CloudSyncForm(ModelForm):
 
+    attributes = forms.CharField(
+        widget=CloudSyncWidget(),
+        label=_('Provider'),
+    )
     bucket = forms.CharField(
         max_length=200,
         required=True,
@@ -27,7 +33,7 @@ class CloudSyncForm(ModelForm):
     )
 
     class Meta:
-        exclude = ('attributes', 'credential')
+        exclude = ('credential', )
         fields = '__all__'
         model = models.CloudSync
         widgets = {
@@ -52,10 +58,12 @@ class CloudSyncForm(ModelForm):
 
     def __init__(self, *args, **kwargs):
         super(CloudSyncForm, self).__init__(*args, **kwargs)
-        mchoicefield(self, 'rsync_month', [
+        self.fields.keyOrder.remove('attributes')
+        self.fields.keyOrder.insert(2, 'attributes')
+        mchoicefield(self, 'month', [
             1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12
         ])
-        mchoicefield(self, 'rsync_dayweek', [
+        mchoicefield(self, 'dayweek', [
             1, 2, 3, 4, 5, 6, 7
         ])
 

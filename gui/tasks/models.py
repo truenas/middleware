@@ -51,6 +51,9 @@ class CloudSync(Model):
     credential = models.ForeignKey(
         'system.CloudCredentials',
     )
+    attributes = DictField(
+        editable=False,
+    )
     minute = models.CharField(
         max_length=100,
         default="00",
@@ -85,9 +88,6 @@ class CloudSync(Model):
         max_length=100,
         default="*",
         verbose_name=_("Day of week"),
-    )
-    attributes = DictField(
-        editable=False,
     )
     enabled = models.BooleanField(
         default=True,

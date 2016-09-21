@@ -56,15 +56,12 @@ define([
       initial: "",
       url: "",
       credentials: "",
-      filesystems: "",
       templateString: template,
       postCreate: function() {
 
-        var me = this, _form, credentials, filesystems;
-        var submit, cancel;
+        var me = this, credentials = [];
         var initial = {};
         var creds = [{label: "-----", value: ""}];
-        var fss = [{label: "-----", value: ""}];
 
         if(this.initial != '') {
           initial = json.parse(this.initial);
@@ -75,7 +72,7 @@ define([
         }
 
         for(var i=0;i<credentials.length;i++) {
-          creds.push({label: credentials[i][1], value: credentials[i][0]});
+          creds.push({label: credentials[i][0], value: credentials[i][1]});
         }
 
         if(!gettext) {
@@ -114,14 +111,18 @@ define([
         document.body.appendChild(this._standby.domNode);
         this._standby.startup();
 
+        this.hideAll();
+
         this.inherited(arguments);
 
       },
       _hideLoading: function() {
         this._standby.hide();
+        domStyle.set(this.dapProvider, "height", "inherit");
       },
       _showLoading: function() {
         this.hideAll();
+        domStyle.set(this.dapProvider, "height", "100px");
         this._standby.show();
       },
       hideAll: function() {
@@ -155,7 +156,6 @@ define([
         var map;
           map = {
             1: this._name,
-            2: this._filesystem,
             3: this._credential,
           };
 
