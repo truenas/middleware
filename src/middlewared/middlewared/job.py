@@ -1,4 +1,5 @@
 from collections import OrderedDict
+from datetime import datetime
 
 import enum
 
@@ -40,6 +41,8 @@ class Job(object):
         self.id = None
         self.result = None
         self.state = State.RUNNING
+        self.time_started = datetime.now()
+        self.time_finished = None
 
     def set_id(self, id):
         self.id = id
@@ -48,11 +51,15 @@ class Job(object):
         self.result = result
 
     def set_state(self, state):
+        assert self.state == State.RUNNING and state != 'RUNNING'
         self.state = State.__members__[state]
+        self.time_finished = datetime.now()
 
     def __encode__(self):
         return {
             'id': self.id,
             'result': self.result,
             'state': self.state.name,
+            'time_started': self.time_started,
+            'time_finished': self.time_finished,
         }
