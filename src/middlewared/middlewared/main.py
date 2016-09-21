@@ -8,6 +8,7 @@ from daemon import DaemonContext
 from daemon.pidfile import TimeoutPIDLockFile
 from gevent.wsgi import WSGIServer
 from geventwebsocket import WebSocketServer, WebSocketApplication, Resource
+from job import Job, JobsDeque
 from restful import RESTfulAPI
 from apidocs import app as apidocs_app
 
@@ -118,6 +119,7 @@ class Middleware(object):
 
     def __init__(self):
         self.logger = logging.getLogger('middleware')
+        self.__jobs = JobsDeque()
         self.__schemas = {}
         self.__services = {}
         self.__init_services()
@@ -201,6 +203,22 @@ class Middleware(object):
     def get_schema(self, name):
         return self.__schemas.get(name)
 
+    def get_jobs(self):
+        return self.__jobs
+
+    def run_job(self, job, methodobj, args):
+        """
+        Run a Job and set state/result accordingly.
+        This method is supposed to run in a greenlet.
+        """
+        try:
+            job.set_result(methodobj(*args))
+        except:
+            job.set_state('FAILED')
+            raise
+        finally:
+            job.set_state('SUCCESS')
+
     def call_method(self, app, message):
         """Call method from websocket"""
         method = message['method']
@@ -212,10 +230,27 @@ class Middleware(object):
             app.send_error(message, 'Not authenticated')
             return
 
+        args = []
         if hasattr(methodobj, '_pass_app'):
-            return methodobj(app, *params)
+            args.append(app)
+
+        # If the method is marked as a @job we need to create a new
+        # entry to keep track of its state
+        if hasattr(methodobj, '_job'):
+            job = Job()
+            self.__jobs.add(job)
+            args.append(job)
         else:
-            return methodobj(*params)
+            job = None
+
+        args.extend(params)
+        if job:
+            # Jobs are run in a greenlet, returning its `id` to the client
+            # right away
+            gevent.spawn(self.run_job, job, methodobj, args)
+            return job.id
+        else:
+            return methodobj(*args)
 
     def call(self, method, *params):
         service, method = method.rsplit('.', 1)

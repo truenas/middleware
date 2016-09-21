@@ -4,7 +4,7 @@ import inspect
 import logging
 import re
 
-from middlewared.schema import accepts, Str
+from middlewared.schema import accepts, Int, Str
 
 
 def item_method(fn):
@@ -12,6 +12,12 @@ def item_method(fn):
     That means it operates over a single item in the collection,
     by an unique identifier."""
     fn._item_method = True
+    return fn
+
+
+def job(fn):
+    """Flag method as a long running job."""
+    fn._job = True
     return fn
 
 
@@ -95,6 +101,15 @@ class CRUDService(Service):
 
 
 class CoreService(Service):
+
+    @accepts(Int('id', required=False))
+    def get_jobs(self, id=None):
+        """Get the long running jobs."""
+        jobs = self.middleware.get_jobs().all()
+        if id:
+            job = jobs.get(id)
+            return job.__encode__() if job else None
+        return [job.__encode__() for job in jobs.itervalues()]
 
     @accepts()
     def get_services(self):

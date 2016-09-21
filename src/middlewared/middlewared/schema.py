@@ -306,10 +306,11 @@ def resolver(middleware, f):
 def accepts(*schema):
     def wrap(f):
         # Make sure number of schemas is same as method argument
+        args_index = 1
         if hasattr(f, '_pass_app'):
-            args_index = 2
-        else:
-            args_index = 1
+            args_index += 1
+        if hasattr(f, '_job'):
+            args_index += 1
         assert len(schema) == f.__code__.co_argcount - args_index  # -1 for self
 
         def nf(*args, **kwargs):
