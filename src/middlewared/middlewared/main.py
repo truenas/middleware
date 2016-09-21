@@ -216,7 +216,7 @@ class Middleware(object):
         except:
             job.set_state('FAILED')
             raise
-        finally:
+        else:
             job.set_state('SUCCESS')
 
     def call_method(self, app, message):
