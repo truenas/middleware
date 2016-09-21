@@ -1,4 +1,6 @@
 import glob
+import json
+import logging
 import os
 import pwd
 import subprocess
@@ -10,9 +12,12 @@ from freenasUI import choices
 from freenasUI.common.forms import ModelForm, mchoicefield
 from freenasUI.freeadmin.forms import CronMultiple
 from freenasUI.middleware.notifier import notifier
+from freenasUI.system.models import CloudCredentials
 from freenasUI.tasks import models
 
 from .widgets import CloudSyncWidget
+
+log = logging.getLogger('tasks.forms')
 
 
 class CloudSyncForm(ModelForm):
@@ -20,16 +25,6 @@ class CloudSyncForm(ModelForm):
     attributes = forms.CharField(
         widget=CloudSyncWidget(),
         label=_('Provider'),
-    )
-    bucket = forms.CharField(
-        max_length=200,
-        required=True,
-        widget=forms.widgets.HiddenInput(),
-    )
-    folder = forms.CharField(
-        max_length=200,
-        required=False,
-        widget=forms.widgets.HiddenInput(),
     )
 
     class Meta:
@@ -67,13 +62,32 @@ class CloudSyncForm(ModelForm):
             1, 2, 3, 4, 5, 6, 7
         ])
 
+    def clean_attributes(self):
+        attributes = self.cleaned_data.get('attributes')
+        try:
+            attributes = json.loads(attributes)
+        except ValueError:
+            raise forms.ValidationError(_('Invalid provider details.'))
+
+        credential = attributes.get('credential')
+        if not credential:
+            raise forms.ValidationError(_('This field is required.'))
+        qs = CloudCredentials.objects.filter(id=credential)
+        if not qs.exists():
+            raise forms.ValidationError(_('Invalid credential.'))
+        attributes['credential'] = qs[0]
+
+        if not attributes.get('bucket'):
+            raise forms.ValidationError(_('Bucket is required.'))
+
+        return attributes
+
     def save(self, **kwargs):
         kwargs['commit'] = False
         obj = super(CloudSyncForm, self).save(**kwargs)
-        obj.attributes = {
-            'bucket': self.cleaned_data.get('bucket'),
-            'folder': self.cleaned_data.get('folder'),
-        }
+        attributes = self.cleaned_data['attributes']
+        obj.credential = attributes.pop('credential')
+        obj.attributes = attributes
         obj.save()
         return obj
 
