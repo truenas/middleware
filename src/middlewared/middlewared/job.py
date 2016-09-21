@@ -41,6 +41,10 @@ class Job(object):
         self.id = None
         self.result = None
         self.state = State.RUNNING
+        self.progress = {
+            'percent': None,
+            'description': None,
+        }
         self.time_started = datetime.now()
         self.time_finished = None
 
@@ -55,9 +59,16 @@ class Job(object):
         self.state = State.__members__[state]
         self.time_finished = datetime.now()
 
+    def set_progress(self, percent, description=None):
+        assert isinstance(percent, int)
+        self.progress['percent'] = percent
+        if description:
+            self.progress['description'] = description
+
     def __encode__(self):
         return {
             'id': self.id,
+            'progress': self.progress,
             'result': self.result,
             'state': self.state.name,
             'time_started': self.time_started,
