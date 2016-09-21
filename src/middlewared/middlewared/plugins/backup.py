@@ -37,8 +37,8 @@ class ReplicationAction(object):
 class BackupService(CRUDService):
 
     @private
-    def calculate_delta(self, datasets, remoteds, local_snapshots, snapshots_list, recursive=False, followdelete=False):
-        remote_datasets = list(filter(lambda s: '@' not in s['name'], snapshots_list))
+    def calculate_delta(self, datasets, remoteds, local_snapshots, remote_snapshots, recursive=False, followdelete=False):
+        remote_datasets = list(filter(lambda s: '@' not in s['name'], remote_snapshots))
         actions = []
 
         def matches(src, tgt):
@@ -59,9 +59,11 @@ class BackupService(CRUDService):
             }
 
         def extend_with_snapshot_name(snap):
-            snap['snapshot_name'] = snap['name'].split('@')[-1] if '@' in snap['name'] else None
+            split = snap['name'].split('@', 1)
+            snap['snapshot_name'] = split[-1] if '@' in snap['name'] else None
+            snap['dataset_name'] = split[0]
 
-        for i in snapshots_list:
+        for i in remote_snapshots:
             extend_with_snapshot_name(i)
 
         for ds in datasets:
@@ -84,14 +86,14 @@ class BackupService(CRUDService):
                 ('name', '~', '^{0}@'.format(remotefs))
             )
             """
-            remote_snapshots = snapshots_list
+            ds_remote_snapshots = list(filter(lambda y: y['dataset_name'] == remotefs, remote_snapshots))
 
-            snapshots = list(map(convert_snapshot, local_snapshots[localfs]))
+            ds_local_snapshots = list(map(convert_snapshot, local_snapshots[localfs]))
             found = None
 
-            if remote_snapshots:
+            if ds_remote_snapshots:
                 # Find out the last common snapshot.
-                pairs = list(match_snapshots(snapshots, remote_snapshots))
+                pairs = list(match_snapshots(ds_local_snapshots, ds_remote_snapshots))
                 if pairs:
                     pairs.sort(key=lambda p: p[0]['created_at'], reverse=True)
                     match = list(filter(None, pairs))
@@ -100,9 +102,9 @@ class BackupService(CRUDService):
                 if found:
                     if followdelete:
                         delete = []
-                        for snap in remote_snapshots:
+                        for snap in ds_remote_snapshots:
                             rsnap = snap['snapshot_name']
-                            match = list(filter(lambda s: s['snapshot_name'] == rsnap, local_snapshots))
+                            match = list(filter(lambda s: s['snapshot_name'] == rsnap, ds_local_snapshots))
                             if not match:
                                 delete.append(rsnap)
 
@@ -114,43 +116,43 @@ class BackupService(CRUDService):
                                 snapshots=delete
                             ))
 
-                    index = snapshots.index(found)
+                    index = ds_local_snapshots.index(found)
 
-                    for idx in range(index + 1, len(snapshots)):
+                    for idx in range(index + 1, len(ds_local_snapshots)):
                         actions.append(ReplicationAction(
                             ReplicationActionType.SEND_STREAM,
                             localfs,
                             remotefs,
                             incremental=True,
-                            anchor=snapshots[idx - 1]['snapshot_name'],
-                            snapshot=snapshots[idx]['snapshot_name']
+                            anchor=ds_local_snapshots[idx - 1]['snapshot_name'],
+                            snapshot=ds_local_snapshots[idx]['snapshot_name']
                         ))
                 else:
                     actions.append(ReplicationAction(
                         ReplicationActionType.CLEAR_SNAPSHOTS,
                         localfs,
                         remotefs,
-                        snapshots=[snap['snapshot_name'] for snap in remote_snapshots]
+                        snapshots=[snap['snapshot_name'] for snap in ds_remote_snapshots]
                     ))
 
-                    for idx in range(0, len(snapshots)):
+                    for idx in range(0, len(ds_local_snapshots)):
                         actions.append(ReplicationAction(
                             ReplicationActionType.SEND_STREAM,
                             localfs,
                             remotefs,
                             incremental=idx > 0,
-                            anchor=snapshots[idx - 1]['snapshot_name'] if idx > 0 else None,
-                            snapshot=snapshots[idx]['snapshot_name']
+                            anchor=ds_local_snapshots[idx - 1]['snapshot_name'] if idx > 0 else None,
+                            snapshot=ds_local_snapshots[idx]['snapshot_name']
                         ))
             else:
-                for idx in range(0, len(snapshots)):
+                for idx in range(0, len(ds_local_snapshots)):
                     actions.append(ReplicationAction(
                         ReplicationActionType.SEND_STREAM,
                         localfs,
                         remotefs,
                         incremental=idx > 0,
-                        anchor=snapshots[idx - 1]['snapshot_name'] if idx > 0 else None,
-                        snapshot=snapshots[idx]['snapshot_name']
+                        anchor=ds_local_snapshots[idx - 1]['snapshot_name'] if idx > 0 else None,
+                        snapshot=ds_local_snapshots[idx]['snapshot_name']
                     ))
 
         for rds in remote_datasets:
