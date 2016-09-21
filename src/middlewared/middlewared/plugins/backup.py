@@ -47,7 +47,8 @@ class BackupService(CRUDService):
         def match_snapshots(local, remote):
             for i in local:
                 match = list(filter(lambda s: matches(i, s), remote))
-                yield i, match[0] if match else i, None
+                if match:
+                    yield i, match[0]
 
         def convert_snapshot(snap):
             return {
