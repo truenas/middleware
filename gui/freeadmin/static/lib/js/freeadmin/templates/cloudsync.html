@@ -1,0 +1,32 @@
+<div data-dojo-attach-point="dapCloudSync">
+  <table>
+    <tr data-dojo-attach-point="dapErrorMessageRow">
+      <td colspan="4" data-dojo-attach-point="dapErrorMessage" style="color: red;">
+      </td>
+    </tr>
+    <tr>
+      <td>
+        <div data-dojo-attach-point="dapCredentialLabel">Credential</div>
+        <input data-dojo-attach-point="dapCredential" type="text" />
+      </td>
+    </tr>
+    <tr data-dojo-attach-point="dapProvider">
+      <td>
+       <table>
+          <tr>
+            <th>Amazon S3 Buckets</th>
+            <td>
+              <div data-dojo-attach-point="dapAmazonBuckets" name="buckets"></div>
+            </td>
+          </tr>
+          <tr>
+            <th>Destination Folder</th>
+            <td>
+              <div data-dojo-attach-point="dapAmazonFolder" name="folder"></div>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  <table>
+</div>

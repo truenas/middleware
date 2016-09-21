@@ -20,31 +20,6 @@ from freenasUI.middleware.notifier import notifier
 from freenasUI.storage import models
 
 
-class CloudReplicationFAdmin(BaseFreeAdmin):
-
-    icon_model = u"ReplIcon"
-    icon_add = u"AddReplIcon"
-    icon_view = u"ViewAllReplIcon"
-    icon_object = u"ReplIcon"
-    exclude_fields = (
-        'id',
-        'attributes',
-    )
-
-    def get_extra_context(self, action, **kwargs):
-        from freenasUI.system.models import CloudCredentials
-        return {
-            'credentials': json.dumps([
-                (o.id, o.name)
-                for o in CloudCredentials.objects.all()
-            ]),
-            'filesystems': json.dumps(list(set([
-                task.task_filesystem
-                for task in models.Task.objects.all()
-            ]))),
-        }
-
-
 class DiskFAdmin(BaseFreeAdmin):
 
     exclude_fields = (
@@ -714,7 +689,6 @@ class VMWarePluginFAdmin(BaseFreeAdmin):
     icon_view = 'VMSnapshotIcon'
 
 
-site.register(models.CloudReplication, CloudReplicationFAdmin)
 site.register(models.Disk, DiskFAdmin)
 site.register(models.Scrub, ScrubFAdmin)
 site.register(models.Task, TaskFAdmin)

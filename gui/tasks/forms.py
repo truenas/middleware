@@ -13,6 +13,63 @@ from freenasUI.middleware.notifier import notifier
 from freenasUI.tasks import models
 
 
+class CloudSyncForm(ModelForm):
+
+    bucket = forms.CharField(
+        max_length=200,
+        required=True,
+        widget=forms.widgets.HiddenInput(),
+    )
+    folder = forms.CharField(
+        max_length=200,
+        required=False,
+        widget=forms.widgets.HiddenInput(),
+    )
+
+    class Meta:
+        exclude = ('attributes', 'credential')
+        fields = '__all__'
+        model = models.CloudSync
+        widgets = {
+            'minute': CronMultiple(
+                attrs={'numChoices': 60, 'label': _("minute")}
+            ),
+            'hour': CronMultiple(
+                attrs={'numChoices': 24, 'label': _("hour")}
+            ),
+            'daymonth': CronMultiple(
+                attrs={
+                    'numChoices': 31, 'start': 1, 'label': _("day of month"),
+                }
+            ),
+            'dayweek': forms.CheckboxSelectMultiple(
+                choices=choices.WEEKDAYS_CHOICES
+            ),
+            'month': forms.CheckboxSelectMultiple(
+                choices=choices.MONTHS_CHOICES
+            ),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super(CloudSyncForm, self).__init__(*args, **kwargs)
+        mchoicefield(self, 'rsync_month', [
+            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12
+        ])
+        mchoicefield(self, 'rsync_dayweek', [
+            1, 2, 3, 4, 5, 6, 7
+        ])
+
+    def save(self, **kwargs):
+        kwargs['commit'] = False
+        obj = super(CloudSyncForm, self).save(**kwargs)
+        obj.attributes = {
+            'bucket': self.cleaned_data.get('bucket'),
+            'folder': self.cleaned_data.get('folder'),
+        }
+        obj.save()
+        return obj
+
+
 class CronJobForm(ModelForm):
 
     class Meta:

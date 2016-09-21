@@ -38,7 +38,7 @@ from django.utils.translation import ugettext as __, ugettext_lazy as _
 from freenasUI import choices
 from freenasUI.middleware import zfs
 from freenasUI.middleware.notifier import notifier
-from freenasUI.freeadmin.models import DictField, Model, UserField
+from freenasUI.freeadmin.models import Model, UserField
 
 log = logging.getLogger('storage.models')
 REPL_RESULTFILE = '/tmp/.repl-result'
@@ -1055,39 +1055,6 @@ class Task(Model):
         verbose_name = _(u"Periodic Snapshot Task")
         verbose_name_plural = _(u"Periodic Snapshot Tasks")
         ordering = ["task_filesystem"]
-
-
-class CloudReplication(Model):
-    name = models.CharField(
-        max_length=150,
-        verbose_name=_('Name'),
-    )
-    filesystem = models.CharField(
-        max_length=150,
-        verbose_name=_('Volume/Dataset'),
-    )
-    credential = models.ForeignKey(
-        'system.CloudCredentials',
-        verbose_name=_('Credential'),
-    )
-    attributes = DictField(
-        editable=False,
-    )
-    enabled = models.BooleanField(
-        default=True,
-        verbose_name=_("Enabled"),
-        help_text=_(
-            'Disabling will not stop any replications which are in progress.'
-        ),
-    )
-
-    class Meta:
-        verbose_name = _(u"Cloud Replication Task")
-        verbose_name_plural = _(u"Cloud Replication Tasks")
-        ordering = ["filesystem"]
-
-    def __unicode__(self):
-        return self.name
 
 
 class VMWarePlugin(Model):

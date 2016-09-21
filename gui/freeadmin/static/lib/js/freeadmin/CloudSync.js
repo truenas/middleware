@@ -23,7 +23,7 @@ define([
   "dojox/uuid/generateRandomUuid",
   "dojox/widget/Standby",
   "freeadmin/Progress",
-  "dojo/text!freeadmin/templates/cloudreplication.html",
+  "dojo/text!freeadmin/templates/cloudsync.html",
   ], function(
   declare,
   domConst,
@@ -51,7 +51,7 @@ define([
   Progress,
   template) {
 
-    var CloudReplication = declare("freeadmin.CloudReplication", [ _Widget, _Templated ], {
+    var CloudSync = declare("freeadmin.CloudSync", [ _Widget, _Templated ], {
       errorMessage: "",
       initial: "",
       url: "",
@@ -74,41 +74,19 @@ define([
           credentials = json.parse(this.credentials);
         }
 
-        if(this.filesystems != '') {
-          filesystems = json.parse(this.filesystems);
-        }
-
         for(var i=0;i<credentials.length;i++) {
           creds.push({label: credentials[i][1], value: credentials[i][0]});
-        }
-
-        for(var i=0;i<filesystems.length;i++) {
-          fss.push({label: filesystems[i], value: filesystems[i]});
         }
 
         if(!gettext) {
           gettext = function(s) { return s; }
         }
 
-        this._form = new Form({
-          enctype: "multipart/form-data",
-          method: "post"
-        }, this.dapForm);
-        this._form.startup();
-
         if(this.errorMessage != '') {
           this.dapErrorMessage.innerHTML = this.errorMessage;
         } else {
           domStyle.set(this.dapErrorMessageRow, "display", "none");
         }
-
-        this.dapNameLabel.innerHTML = gettext('Name');
-
-        new TextBox({
-          name: "csrfmiddlewaretoken",
-          value: CSRFToken,
-          type: "hidden"
-        }, this.dapCSRF);
 
         this._credential = new Select({
           name: "credential",
@@ -128,39 +106,6 @@ define([
               }
             );
           }
-        });
-
-        this._filesystem = new Select({
-          name: "filesystem",
-          options: fss,
-          value: "",
-        }, this.dapFilesystem);
-        if(initial.filesystem) this._filesystem.set('value', initial.filesystem);
-
-        this._enabled = new CheckBox({
-          name: "enabled",
-          value: true
-        }, me.dapEnabled);
-
-        this._name = new TextBox({
-          name: "name",
-          value: initial.name
-        }, this.dapName);
-
-        this._submit = new Button({
-          label: gettext('OK')
-        }, this.dapSubmit);
-
-        on(this._submit, 'click', function() {
-          me.submit();
-        });
-
-        this._cancel = new Button({
-          label: gettext('Cancel')
-        }, this.dapCancel);
-
-        on(this._cancel, 'click', function() {
-          cancelDialog(this);
         });
 
         this._standby = new Standby({
@@ -239,13 +184,8 @@ define([
       submit: function(e) {
 
         var me = this;
-        doSubmit({
-           form: me._form,
-           event: e,
-           url: me.url,
-        });
 
       }
     });
-    return CloudReplication;
+    return CloudSync;
 });

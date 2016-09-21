@@ -150,27 +150,6 @@ def _inherit_choices(choices, inheritvalue):
     return nchoices
 
 
-class CloudReplicationForm(ModelForm):
-
-    bucket = forms.CharField(max_length=200, required=True)
-    folder = forms.CharField(max_length=200, required=False)
-
-    class Meta:
-        fields = '__all__'
-        model = models.CloudReplication
-        exclude = ('attributes', )
-
-    def save(self, **kwargs):
-        kwargs['commit'] = False
-        obj = super(CloudReplicationForm, self).save(**kwargs)
-        obj.attributes = {
-            'bucket': self.cleaned_data.get('bucket'),
-            'folder': self.cleaned_data.get('folder'),
-        }
-        obj.save()
-        return obj
-
-
 class VolumeMixin(object):
 
     def clean_volume_name(self):
