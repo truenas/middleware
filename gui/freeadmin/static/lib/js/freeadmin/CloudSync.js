@@ -52,6 +52,8 @@ define([
   template) {
 
     var CloudSync = declare("freeadmin.CloudSync", [ _Widget, _Templated ], {
+      name: "",
+      value: "",
       errorMessage: "",
       initial: "",
       url: "",
@@ -138,13 +140,13 @@ define([
               options.push({label: result[i].name, value: result[i].name});
             }
             domStyle.set(me.dapAmazon, "display", "table-row");
-            var buckets = new Select({
+            me._buckets = new Select({
               name: "bucket",
               options: options,
               value: ''
             }, me.dapAmazonBuckets);
 
-            var folder = new TextBox({
+            me._folder = new TextBox({
               name: "folder"
             }, me.dapAmazonFolder);
 
@@ -152,39 +154,12 @@ define([
           }
         );
       },
-      validate: function() {
-        var map;
-          map = {
-            1: this._name,
-            3: this._credential,
-          };
-
-        for(var i in map) {
-          var field = map[i];
-          var value = field.get('value');
-          if(value == '') {
-            var tooltip = new TooltipDialog({
-              content: gettext('This field is required.'),
-              onMouseLeave: function() {
-                popup.close(tooltip);
-                tooltip.destroyRecursive();
-              }
-            });
-            popup.open({
-              popup: tooltip,
-              around: field.domNode,
-              orient: ["above", "after", "below-alt"]
-            });
-            field.focus();
-            return false;
-          }
-        }
-        return true;
-      },
-      submit: function(e) {
-
-        var me = this;
-
+      _getValueAttr: function() {
+        var value = {};
+        if(this._credential) value['credential'] = this._credential.get('value');
+        if(this._buckets) value['bucket'] = this._buckets.get('value');
+        if(this._folder) value['folder'] = this._folder.get('value');
+        return json.stringify(value);
       }
     });
     return CloudSync;
