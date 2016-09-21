@@ -50,6 +50,7 @@ class CloudSync(Model):
     )
     credential = models.ForeignKey(
         'system.CloudCredentials',
+        verbose_name=_('Credential'),
     )
     attributes = DictField(
         editable=False,
