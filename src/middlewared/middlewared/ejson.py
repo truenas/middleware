@@ -8,7 +8,6 @@ class JSONEncoder(json.JSONEncoder):
     def default(self, obj):
         if type(obj) is datetime:
             return {'$date': str(obj)}
-            return str(obj)
         return super(JSONEncoder, self).default(obj)
 
 
