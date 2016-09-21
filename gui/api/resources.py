@@ -1549,6 +1549,16 @@ class LAGGInterfaceMembersResourceMixin(object):
         return bundle
 
 
+class CloudSyncResourceMixin(NestedMixin):
+
+    def dehydrate(self, bundle):
+        bundle = super(CloudSyncResourceMixin, self).dehydrate(bundle)
+        if self.is_webclient(bundle.request):
+            _common_human_fields(bundle)
+            bundle.data['credential'] = unicode(bundle.obj.credential)
+        return bundle
+
+
 class CronJobResourceMixin(NestedMixin):
 
     def prepend_urls(self):

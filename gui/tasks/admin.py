@@ -2,6 +2,7 @@ from django.utils.html import escapejs
 from django.utils.translation import ugettext as _
 
 from freenasUI.api.resources import (
+    CloudSyncResourceMixin,
     CronJobResourceMixin, RsyncResourceMixin, SMARTTestResourceMixin
 )
 from freenasUI.freeadmin.options import BaseFreeAdmin
@@ -53,6 +54,7 @@ class CloudSyncFAdmin(BaseFreeAdmin):
         'attributes',
     )
     menu_child_of = 'tasks'
+    resource_mixin = CloudSyncResourceMixin
 
     def get_actions(self):
         actions = super(CloudSyncFAdmin, self).get_actions()
