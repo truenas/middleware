@@ -82,6 +82,22 @@ class CloudSyncForm(ModelForm):
 
         return attributes
 
+    def clean_month(self):
+        m = self.data.getlist('month')
+        if len(m) == 12:
+            return '*'
+        m = ','.join(m)
+        return m
+
+    def clean_dayweek(self):
+        w = self.data.getlist('dayweek')
+        if w == '*':
+            return w
+        if len(w) == 7:
+            return '*'
+        w = ','.join(w)
+        return w
+
     def save(self, **kwargs):
         kwargs['commit'] = False
         obj = super(CloudSyncForm, self).save(**kwargs)
