@@ -62,11 +62,10 @@ define([
       postCreate: function() {
 
         var me = this, credentials = [];
-        var initial = {};
         var creds = [{label: "-----", value: ""}];
 
         if(this.initial != '') {
-          initial = json.parse(this.initial);
+          this.initial = json.parse(this.initial);
         }
 
         if(this.credentials != '') {
@@ -92,7 +91,7 @@ define([
           options: creds,
           value: "",
         }, this.dapCredential);
-        if(initial.credential) this._credential.set('value', initial.credential);
+        if(this.initial.credential) this._credential.set('value', this.initial.credential);
 
         on(this._credential, 'change', function(value) {
           me.hideAll();
@@ -145,10 +144,12 @@ define([
               options: options,
               value: ''
             }, me.dapAmazonBuckets);
+            if(me.initial.bucket) me._buckets.set('value', me.initial.bucket);
 
             me._folder = new TextBox({
               name: "folder"
             }, me.dapAmazonFolder);
+            if(me.initial.folder) me._folder.set('value', me.initial.folder);
 
             me._hideLoading();
           }

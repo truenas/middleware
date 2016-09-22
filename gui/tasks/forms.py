@@ -61,6 +61,11 @@ class CloudSyncForm(ModelForm):
         mchoicefield(self, 'dayweek', [
             1, 2, 3, 4, 5, 6, 7
         ])
+        if self.instance.id:
+            self.fields['attributes'].initial = {
+                'credential': self.instance.credential.id,
+            }
+            self.fields['attributes'].initial.update(self.instance.attributes)
 
     def clean_attributes(self):
         attributes = self.cleaned_data.get('attributes')

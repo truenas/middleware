@@ -40,11 +40,12 @@ class CloudSyncWidget(DojoWidgetMixin, Widget):
             value = ''
         extra_attrs = {
             'data-dojo-name': name,
-            'data-dojo-props': mark_safe("credentials: '{}'".format(
+            'data-dojo-props': mark_safe("credentials: '{}', initial: '{}'".format(
                 json.dumps([
                     (str(i), i.id)
                     for i in CloudCredentials.objects.all()
-                ])
+                ]),
+                json.dumps(value),
             ).replace('"', '&quot;')),
         }
         final_attrs = self.build_attrs(attrs, name=name, **extra_attrs)
