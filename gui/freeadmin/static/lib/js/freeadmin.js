@@ -1412,15 +1412,42 @@ require([
     }
 
     systemDatasetMigration = function() {
-        var dialog = new Dialog({
-            title: gettext("Warning!"),
-            id: "Warning_box_dialog",
-            content: domConstruct.create(
-                "p", {
-                    innerHTML: gettext("The action will result in migration of dataset.") + "<br />" + gettext("Some services will be restarted.")
+        sys_dataset_pool = registry.byId('id_sys_pool')
+        if (!sys_dataset_pool._isReset) {
+            var dialog = new Dialog({
+                title: gettext("Warning!"),
+                id: "Warning_box_dialog",
+                content: domConstruct.create(
+                    "p", {
+                        innerHTML: gettext("The action will result in migration of dataset.") + "<br />" + gettext("Some services will be restarted.")
+                    }
+                ),
+                onHide: function () {
+                    if (!this.confirmed) {
+                        sys_dataset_pool._isReset = true;
+                        sys_dataset_pool.reset();
+                    }
+                    this.destroy();
                 }
-            )
-        });
+            });
+            dialog.okButton = new Button({label: gettext("Continue")});
+            dialog.cancelButton = new Button({label: gettext("Cancel")});
+            dialog.addChild(dialog.okButton);
+            dialog.addChild(dialog.cancelButton);
+            dialog.okButton.on('click', function(e){
+                dialog.confirmed = true;
+                dialog.hide();
+            });
+            dialog.cancelButton.on('click', function(e) {
+                dialog.hide();
+            });
+            dialog.confirmed = false;
+            dialog.startup();
+            dialog.show();
+        } else {
+            sys_dataset_pool._isReset = false;
+        }
+    }
 
     vcenter_https_enable_check = function () {
         vc_enable_https = registry.byId('id_vc_enable_https');
