@@ -49,15 +49,8 @@ class Application(WebSocketApplication):
         })
 
     def _check_permission(self):
-        if 'HTTP_X_REAL_REMOTE_ADDR' in self.ws.environ:
-            remote_addr = self.ws.environ['HTTP_X_REAL_REMOTE_ADDR']
-        else:
-            remote_addr = self.ws.environ['REMOTE_ADDR']
-
-        if 'HTTP_X_REAL_REMOTE_PORT' in self.ws.environ:
-            remote_port = self.ws.environ['HTTP_X_REAL_REMOTE_PORT']
-        else:
-            remote_port = self.ws.environ['REMOTE_PORT']
+        remote_addr = self.ws.environ['REMOTE_ADDR']
+        remote_port = self.ws.environ['REMOTE_PORT']
 
         if remote_addr not in ('127.0.0.1', '::1'):
             return False
@@ -66,10 +59,10 @@ class Application(WebSocketApplication):
 
         proc = subprocess.Popen([
             '/usr/bin/sockstat', '-46c', '-p', remote_port
-        ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        ], stdout=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=True)
         for line in proc.communicate()[0].strip().splitlines()[1:]:
             cols = line.split()
-            if cols[-1] == remote and cols[0] == 'root':
+            if cols[-2] == remote and cols[0] == 'root':
                 return True
         return False
 
