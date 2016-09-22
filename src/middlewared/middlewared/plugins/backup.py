@@ -5,6 +5,9 @@ import boto3
 import gevent
 import gevent.fileobject
 import os
+import subprocess
+import re
+import tempfile
 
 CHUNK_SIZE = 5 * 1024 * 1024
 
@@ -19,6 +22,17 @@ class BackupService(CRUDService):
         backup = self.middleware.call('datastore.query', 'tasks.cloudsync', [('id', '=', id)], {'get': True})
         if not backup:
             raise ValueError("Unknown id")
+
+        credential = self.middleware.call('datastore.query', 'system.cloudcredentials', [('id', '=', backup['credential']['id'])], {'get': True})
+        if not credential:
+            raise ValueError("Backup credential not found.")
+
+        if credential['provider'] == 'AMAZON':
+            return self.middleware.call('backup.s3.sync', job, backup, credential)
+        else:
+            raise NotImplementedError('Unsupported provider: {}'.format(
+                credential['provider']
+            ))
 
 
 class BackupS3Service(Service):
@@ -49,6 +63,57 @@ class BackupS3Service(Service):
             })
 
         return buckets
+
+    @private
+    def sync(self, job, backup, credential):
+        # Use a temporary file to store s3cmd config file
+        with tempfile.NamedTemporaryFile(delete=False) as f:
+            # Make sure only root can read it ad there is sensitive data
+            os.chmod(f.name, 0o600)
+
+            fg = gevent.fileobject.FileObject(f.file, 'w', close=False)
+            fg.write("""[default]
+access_key = {access_key}
+secret_key = {secret_key}
+""".format(
+                access_key=credential['attributes']['access_key'],
+                secret_key=credential['attributes']['secret_key'],
+            ))
+            fg.flush()
+
+            args = [
+                '/usr/local/bin/s3cmd',
+                '-c', f.name,
+                '--progress',
+                'sync',
+                backup['path'],
+                's3://{}'.format(backup['attributes']['bucket']),
+            ]
+
+            def check_progress(job, proc):
+                RE_FILENUM = re.compile(r'\'(?P<src>.+)\' -> \'(?P<dst>.+)\'\s*\[(?P<current>\d+) of (?P<total>\d+)\]')
+                while True:
+                    read = proc.stdout.readline()
+                    if read == b'':
+                        break
+                    if read[0] != '\r':
+                        reg = RE_FILENUM.search(read)
+                        if reg:
+                            job.set_progress(None, '{}/{} {} -> {}'.format(
+                                reg.group('current'),
+                                reg.group('total'),
+                                reg.group('src'),
+                                reg.group('dst'),
+                            ))
+
+            proc = subprocess.Popen(
+                args,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            )
+            gevent.spawn(check_progress, job, proc)
+            stderr = proc.communicate()[1]
+            return proc.returncode == 0
 
     @private
     def put(self, backup, filename, read_fd):
