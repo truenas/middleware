@@ -113,7 +113,9 @@ secret_key = {secret_key}
             )
             gevent.spawn(check_progress, job, proc)
             stderr = proc.communicate()[1]
-            return proc.returncode == 0
+            if proc.returncode != 0:
+                raise ValueError('s3cmd failed: {}'.format(stderr))
+            return True
 
     @private
     def put(self, backup, filename, read_fd):
