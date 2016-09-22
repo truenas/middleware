@@ -188,3 +188,7 @@ class CoreService(Service):
                     'item_method': hasattr(method, '_item_method'),
                 }
         return data
+
+    @accepts()
+    def ping(self):
+        return 'pong'
