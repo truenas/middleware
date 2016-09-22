@@ -2,7 +2,7 @@ from gevent import monkey
 monkey.patch_all()
 
 from .client import ejson as json
-from collections import OrderedDict
+from collections import OrderedDict, defaultdict
 from client.protocol import DDPProtocol
 from daemon import DaemonContext
 from daemon.pidfile import TimeoutPIDLockFile
@@ -33,8 +33,22 @@ class Application(WebSocketApplication):
     def __init__(self, *args, **kwargs):
         super(Application, self).__init__(*args, **kwargs)
         self.authenticated = self._check_permission()
-        self.sessionid = str(uuid.uuid4())
         self.handshake = False
+        self.logger = logging.getLogger('application')
+        self.sessionid = str(uuid.uuid4())
+
+        """
+        Callback index registered by services. They are blocking.
+
+        Currently the following events are allowed:
+          on_message(app, message)
+          on_close(app)
+        """
+        self.__callbacks = defaultdict(list)
+
+    def register_callback(self, name, method):
+        assert name in ('on_message', 'on_close')
+        self.__callbacks[name].append(method)
 
     def _send(self, data):
         self.ws.send(json.dumps(data))
@@ -82,9 +96,20 @@ class Application(WebSocketApplication):
         pass
 
     def on_close(self, *args, **kwargs):
-        pass
+        # Run callbacks registered in plugins for on_close
+        for method in self.__callbacks['on_close']:
+            try:
+                method(self)
+            except:
+                self.logger.error('Failed to run on_close callback.', exc_info=True)
 
     def on_message(self, message):
+        # Run callbacks registered in plugins for on_message
+        for method in self.__callbacks['on_message']:
+            try:
+                method(self, message)
+            except:
+                self.logger.error('Failed to run on_message callback.', exc_info=True)
 
         if message['msg'] == 'connect':
             if message.get('version') != '1':
