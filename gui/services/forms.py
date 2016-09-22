@@ -902,7 +902,7 @@ class SNMPForm(ModelForm):
         if not re.match(r'^[-_.a-zA-Z0-9\s]+$', community):
             raise forms.ValidationError(
                 _(u"The community must contain only alphanumeric characters "
-                    "_ . or -")
+                    "_ . spaces or -")
             )
         return community
 
