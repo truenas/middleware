@@ -60,8 +60,9 @@ class Job(object):
         self.time_finished = datetime.now()
 
     def set_progress(self, percent, description=None):
-        assert isinstance(percent, int)
-        self.progress['percent'] = percent
+        if percent is not None:
+            assert isinstance(percent, int)
+            self.progress['percent'] = percent
         if description:
             self.progress['description'] = description
 
