@@ -24,12 +24,15 @@ define([
         this._ddp.on("connected", lang.hitch(me, me.onConnect));
         this._ddp.on("result", lang.hitch(me, me.onResult));
 
-        var timer = new timing.Timer(1000*60*5);
-        timer.onTick = lang.hitch(me, me.authToken);
+        var timer = new timing.Timer(1000*50);
+        timer.onTick = lang.hitch(me, me.ping);
         timer.start();
       },
       onConnect: function() {
         this.authToken();
+      },
+      ping: function() {
+        this.call("core.ping");
       },
       authToken: function() {
         this.call("auth.token", [this.token]);
