@@ -16,7 +16,7 @@ class BackupService(CRUDService):
 
     @item_method
     @accepts(Int('id'))
-    @job(lock='backup')
+    @job(lock=lambda args: 'backup:{}'.format(args[-1]))
     def sync(self, job, id):
 
         backup = self.middleware.call('datastore.query', 'tasks.cloudsync', [('id', '=', id)], {'get': True})
