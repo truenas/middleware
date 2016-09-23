@@ -53,6 +53,17 @@ generate_crontab()
 		echo "${rsync_minute}	${rsync_hour}	${rsync_daymonth}	${rsync_month}	${rsync_dayweek}	${rsync_user}	PATH=\"$cron_PATH\" ${rsync_command} 2>&1 |/usr/bin/logger -t rsync" >> /etc/crontab
 	done
 
+	local f="id minute hour daymonth month dayweek"
+	eval local $f
+	local sf=$(var_to_sf $f)
+
+	# Generate cloud sync
+	${FREENAS_SQLITE_CMD} -separator "" ${RO_FREENAS_CONFIG} \
+	"SELECT $sf FROM tasks_cloudsync WHERE enabled = 1 ORDER BY id" | \
+	while eval read -r $f; do
+		echo "${minute}	${hour}	${daymonth}	${month}	${dayweek}	root	/usr/local/bin/midclt call backup.sync ${id} > /dev/null"
+	done >> /etc/crontab
+
 	local f="scrub_threshold scrub_minute scrub_hour scrub_daymonth scrub_month scrub_dayweek vol_name"
 	eval local $f
 	local sf=$(var_to_sf $f)
