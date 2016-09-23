@@ -122,7 +122,11 @@ def license_status(request):
 
     sw_name = get_sw_name().lower()
     license, reason = utils.get_license()
-    if (license is None and sw_name != 'freenas') or license.expired:
+    if (
+        license is None and sw_name != 'freenas'
+    ) or (
+        license is not None and license.expired
+    ):
         return HttpResponse('PROMPT')
 
     return HttpResponse('OK')
