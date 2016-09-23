@@ -113,7 +113,7 @@ class CoreService(Service):
         if id:
             job = jobs.get(id)
             return job.__encode__() if job else None
-        return [job.__encode__() for job in jobs.itervalues()]
+        return [i.__encode__() for i in jobs.itervalues()]
 
     @accepts()
     def get_services(self):
