@@ -1,7 +1,7 @@
 from collections import OrderedDict
 from datetime import datetime
 from gevent.event import Event
-from gevent.lock import Semaphore, RLock
+from gevent.lock import Semaphore
 
 import enum
 import gevent
@@ -99,7 +99,6 @@ class JobsQueue(object):
         # waiting for the same lock
         self.queue_event.set()
 
-
     def next(self):
         """
         This is a blocking method.
@@ -196,7 +195,11 @@ class Job(object):
         self.result = result
 
     def set_state(self, state):
-        #assert self.state == State.RUNNING and state != 'RUNNING'
+        if self.state == State.WAITING:
+            assert state not in ('WAITING', 'SUCCESS')
+        if self.state == State.RUNNING:
+            assert state not in ('WAITING', 'RUNNING')
+        assert self.state not in (State.SUCCESS, State.FAILED)
         self.state = State.__members__[state]
         self.time_finished = datetime.now()
 
