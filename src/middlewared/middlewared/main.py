@@ -8,7 +8,7 @@ from daemon import DaemonContext
 from daemon.pidfile import TimeoutPIDLockFile
 from gevent.wsgi import WSGIServer
 from geventwebsocket import WebSocketServer, WebSocketApplication, Resource
-from job import Job, JobsDeque
+from job import Job, JobsQueue
 from restful import RESTfulAPI
 from apidocs import app as apidocs_app
 
@@ -144,7 +144,7 @@ class Middleware(object):
 
     def __init__(self):
         self.logger = logging.getLogger('middleware')
-        self.__jobs = JobsDeque()
+        self.__jobs = JobsQueue()
         self.__schemas = {}
         self.__services = {}
         self.__init_services()
@@ -231,19 +231,6 @@ class Middleware(object):
     def get_jobs(self):
         return self.__jobs
 
-    def run_job(self, job, methodobj, args):
-        """
-        Run a Job and set state/result accordingly.
-        This method is supposed to run in a greenlet.
-        """
-        try:
-            job.set_result(methodobj(*args))
-        except:
-            job.set_state('FAILED')
-            raise
-        else:
-            job.set_state('SUCCESS')
-
     def call_method(self, app, message):
         """Call method from websocket"""
         method = message['method']
@@ -260,19 +247,19 @@ class Middleware(object):
             args.append(app)
 
         # If the method is marked as a @job we need to create a new
-        # entry to keep track of its state
-        if hasattr(methodobj, '_job'):
-            job = Job()
+        # entry to keep track of its state.
+        job_options = getattr(methodobj, '_job', None)
+        if job_options:
+            # Create a job instance with required args
+            job = Job(methodobj, args, job_options)
+            # Add the job to the queue.
+            # At this point an `id` is assinged to the job.
             self.__jobs.add(job)
-            args.append(job)
         else:
             job = None
 
         args.extend(params)
         if job:
-            # Jobs are run in a greenlet, returning its `id` to the client
-            # right away
-            gevent.spawn(self.run_job, job, methodobj, args)
             return job.id
         else:
             return methodobj(*args)
@@ -297,6 +284,7 @@ class Middleware(object):
             gevent.spawn(wsserver.serve_forever),
             gevent.spawn(apidocsserver.serve_forever),
             gevent.spawn(restserver.serve_forever),
+            gevent.spawn(self.__jobs.run),
         ]
         self.logger.debug('Accepting connections')
         gevent.joinall(server_threads)

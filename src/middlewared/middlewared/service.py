@@ -15,10 +15,14 @@ def item_method(fn):
     return fn
 
 
-def job(fn):
+def job(lock=None):
     """Flag method as a long running job."""
-    fn._job = True
-    return fn
+    def check_job(fn):
+        fn._job = {
+            'lock': lock,
+        }
+        return fn
+    return check_job
 
 
 def no_auth_required(fn):
