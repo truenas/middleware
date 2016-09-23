@@ -29,6 +29,7 @@ import ipaddress
 import json
 import logging
 import os
+import socket
 import urllib2
 
 from django.shortcuts import render
@@ -650,7 +651,12 @@ def plugin_fcgi_client(request, name, oid, path):
         pass
 
     args = request.POST if request.method == "POST" else request.GET
-    status, headers, body, raw = app(env, args=args)
+    try:
+        status, headers, body, raw = app(env, args=args)
+    except socket.error as e:
+        resp = HttpResponse(str(e))
+        resp.status_code = 503
+        return resp
 
     resp = HttpResponse(body)
     for header, value in headers:
