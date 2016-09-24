@@ -1410,15 +1410,11 @@ def get_groups(client):
         g = Struct(g)
         key = str(g.bsdgrp_group)
         _groups[key] = []
-        # FIXME: test query
         members = client.call('datastore.query', 'account.bsdGroupMembership', [('bsdgrpmember_group', '=', g.id)])
         for m in members:
             m = Struct(m)
-            # FIXME: test query
-            u = client.call('datastore.query', 'account.bsdUsers', [('bsdusr_username', '=', m.bsdgrpmember_user)])
-            if u:
-                u = u[0]
-                _groups[key].append(str(u['bsdusr_username']))
+            if m.bsdgrpmember_user:
+                _groups[key].append(str(m.bsdgrpmember_user.bsdusr_username))
 
     return _groups
 
