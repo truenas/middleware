@@ -1,4 +1,4 @@
-from middlewared.schema import accepts, Int
+from middlewared.schema import accepts, Int, Str
 from middlewared.service import CRUDService, Service, item_method, job, private
 
 import boto3
@@ -64,6 +64,12 @@ class BackupS3Service(Service):
 
         return buckets
 
+    @accepts(Int('id'), Str('name'))
+    def get_bucket_location(self, id, name):
+        client = self.get_client(id)
+        response = client.get_bucket_location(Bucket=name)
+        return response['LocationConstraint']
+
     @private
     def sync(self, job, backup, credential):
         # Use a temporary file to store s3cmd config file
@@ -72,39 +78,39 @@ class BackupS3Service(Service):
             os.chmod(f.name, 0o600)
 
             fg = gevent.fileobject.FileObject(f.file, 'w', close=False)
-            fg.write("""[default]
-access_key = {access_key}
-secret_key = {secret_key}
+            fg.write("""[remote]
+type = s3
+env_auth = false
+access_key_id = {access_key}
+secret_access_key = {secret_key}
+region = {region}
 """.format(
                 access_key=credential['attributes']['access_key'],
                 secret_key=credential['attributes']['secret_key'],
+                region=backup['attributes']['region'] or '',
             ))
             fg.flush()
 
             args = [
-                '/usr/local/bin/s3cmd',
-                '-c', f.name,
-                '--progress',
+                '/usr/local/bin/rclone',
+                '--config', f.name,
+                '--stats', '1s',
                 'sync',
                 backup['path'],
-                's3://{}'.format(backup['attributes']['bucket']),
+                'remote:{}'.format(backup['attributes']['bucket']),
             ]
 
             def check_progress(job, proc):
-                RE_FILENUM = re.compile(r'\'(?P<src>.+)\' -> \'(?P<dst>.+)\'\s*\[(?P<current>\d+) of (?P<total>\d+)\]')
+                RE_TRANSF = re.compile(r'Transferred:\s*?(.+)$', re.S)
                 while True:
-                    read = proc.stdout.readline()
+                    read = proc.stderr.readline()
                     if read == b'':
                         break
-                    if read[0] != '\r':
-                        reg = RE_FILENUM.search(read)
-                        if reg:
-                            job.set_progress(None, '{}/{} {} -> {}'.format(
-                                reg.group('current'),
-                                reg.group('total'),
-                                reg.group('src'),
-                                reg.group('dst'),
-                            ))
+                    reg = RE_TRANSF.search(read)
+                    if reg:
+                        transferred = reg.group(1).strip()
+                        if not transferred.isdigit():
+                            job.set_progress(None, transferred)
 
             proc = subprocess.Popen(
                 args,
@@ -114,7 +120,7 @@ secret_key = {secret_key}
             gevent.spawn(check_progress, job, proc)
             stderr = proc.communicate()[1]
             if proc.returncode != 0:
-                raise ValueError('s3cmd failed: {}'.format(stderr))
+                raise ValueError('rclone failed: {}'.format(stderr))
             return True
 
     @private
