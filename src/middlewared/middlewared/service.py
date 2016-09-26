@@ -145,10 +145,26 @@ class CoreService(Service):
                 continue
 
             for attr in dir(svc):
+
                 if attr.startswith('_'):
                     continue
-                method = getattr(svc, attr)
-                if not callable(method):
+
+                method = None
+                if isinstance(svc, CRUDService):
+                    """
+                    For CRUD the create/update/delete are special.
+                    The real implementation happens in do_create/do_update/do_delete
+                    so thats where we actually extract pertinent information.
+                    """
+                    if attr in ('create', 'update', 'delete'):
+                        method = getattr(svc, 'do_{}'.format(attr), None)
+                    elif attr in ('do_create', 'do_update', 'do_delete'):
+                        continue
+
+                if method is None:
+                    method = getattr(svc, attr, None)
+
+                if method is None or not callable(method):
                     continue
 
                 # Skip private methods
