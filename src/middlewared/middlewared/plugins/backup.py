@@ -241,25 +241,31 @@ region = {region}
 
             def check_progress(job, proc):
                 RE_TRANSF = re.compile(r'Transferred:\s*?(.+)$', re.S)
+                read_buffer = ''
                 while True:
                     read = proc.stderr.readline()
                     if read == b'':
                         break
+                    read_buffer += read
+                    if len(read_buffer) > 10240:
+                        read_buffer = read_buffer[-10240:]
                     reg = RE_TRANSF.search(read)
                     if reg:
                         transferred = reg.group(1).strip()
                         if not transferred.isdigit():
                             job.set_progress(None, transferred)
+                return read_buffer
 
             proc = subprocess.Popen(
                 args,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
             )
-            gevent.spawn(check_progress, job, proc)
-            stderr = proc.communicate()[1]
+            check_greenlet = gevent.spawn(check_progress, job, proc)
+            proc.communicate()
             if proc.returncode != 0:
-                raise ValueError('rclone failed: {}'.format(stderr))
+                gevent.joinall([check_greenlet])
+                raise ValueError('rclone failed: {}'.format(check_greenlet.value))
             return True
 
     @private
