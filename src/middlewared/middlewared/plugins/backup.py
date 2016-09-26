@@ -152,6 +152,9 @@ class BackupS3Service(Service):
 
     @accepts(Int('id'), Str('name'))
     def get_bucket_location(self, id, name):
+        """
+        Returns bucket `name` location (region) from credential `id`.
+        """
         client = self.get_client(id)
         response = client.get_bucket_location(Bucket=name)
         return response['LocationConstraint']
