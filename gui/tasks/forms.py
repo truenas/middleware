@@ -11,6 +11,7 @@ from dojango import forms
 from freenasUI import choices
 from freenasUI.common.forms import ModelForm, mchoicefield
 from freenasUI.freeadmin.forms import CronMultiple
+from freenasUI.middleware.client import client
 from freenasUI.middleware.notifier import notifier
 from freenasUI.system.models import CloudCredentials
 from freenasUI.tasks import models
@@ -80,7 +81,6 @@ class CloudSyncForm(ModelForm):
         qs = CloudCredentials.objects.filter(id=credential)
         if not qs.exists():
             raise forms.ValidationError(_('Invalid credential.'))
-        attributes['credential'] = qs[0]
 
         if not attributes.get('bucket'):
             raise forms.ValidationError(_('Bucket is required.'))
@@ -104,13 +104,11 @@ class CloudSyncForm(ModelForm):
         return w
 
     def save(self, **kwargs):
-        kwargs['commit'] = False
-        obj = super(CloudSyncForm, self).save(**kwargs)
-        attributes = self.cleaned_data['attributes']
-        obj.credential = attributes.pop('credential')
-        obj.attributes = attributes
-        obj.save()
-        return obj
+        with client as c:
+            cdata = self.cleaned_data
+            cdata['credential'] = cdata['attributes'].pop('credential')
+            pk = c.call('backup.create', cdata)
+        return models.CloudSync.objects.get(pk=pk)
 
 
 class CronJobForm(ModelForm):
