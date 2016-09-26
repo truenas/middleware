@@ -4,7 +4,8 @@ import inspect
 import logging
 import re
 
-from middlewared.schema import accepts, Int, Str
+from middlewared.schema import accepts, Int, Ref, Str
+from middlewared.utils import filter_list
 
 
 def item_method(fn):
@@ -106,14 +107,11 @@ class CRUDService(Service):
 
 class CoreService(Service):
 
-    @accepts(Int('id', required=False))
-    def get_jobs(self, id=None):
+    @accepts(Ref('query-filters'), Ref('query-options'))
+    def get_jobs(self, filters=None, options=None):
         """Get the long running jobs."""
-        jobs = self.middleware.get_jobs().all()
-        if id:
-            job = jobs.get(id)
-            return job.__encode__() if job else None
-        return [i.__encode__() for i in jobs.itervalues()]
+        jobs = filter_list(self.middleware.get_jobs().all().values(), filters, options)
+        return [i.__encode__() for i in jobs]
 
     @accepts()
     def get_services(self):
