@@ -97,11 +97,11 @@ class CRUDService(Service):
     def create(self, data):
         return self.do_create(data)
 
-    def update(self, data):
-        return self.do_update(data)
+    def update(self, id, data):
+        return self.do_update(id, data)
 
-    def delete(self, data):
-        return self.do_delete(data)
+    def delete(self, id):
+        return self.do_delete(id)
 
 
 class CoreService(Service):
