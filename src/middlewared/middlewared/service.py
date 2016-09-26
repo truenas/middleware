@@ -92,7 +92,7 @@ class ConfigService(Service):
 class CRUDService(Service):
 
     def query(self, filters, options):
-        raise NotImplementedError
+        raise NotImplementedError('{}.query must be implemented'.format(self._config.namespace))
 
     def create(self, data):
         return self.do_create(data)
