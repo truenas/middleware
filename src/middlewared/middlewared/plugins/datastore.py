@@ -13,6 +13,7 @@ cache.get_apps()
 
 from django.db import connection
 from django.db.models import Q
+from django.db.models.fields.related import ForeignKey
 
 from middlewared.utils import django_modelobj_serialize
 
@@ -156,6 +157,11 @@ class DatastoreService(Service):
         Insert a new entry to `name`.
         """
         model = self.__get_model(name)
+        for field in model._meta.fields:
+            if field.name not in data:
+                continue
+            if isinstance(field, ForeignKey):
+                data[field.name] = field.rel.to.objects.get(pk=data[field.name])
         obj = model(**data)
         obj.save()
         return obj.pk
