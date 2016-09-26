@@ -183,6 +183,15 @@ class DatastoreService(Service):
         obj.save()
         return obj.pk
 
+    @accepts(Str('name'), Int('id'))
+    def delete(self, name, id):
+        """
+        Delete an entry `id` in `name`.
+        """
+        model = self.__get_model(name)
+        model.objects.get(pk=id).delete()
+        return True
+
     @private
     def sql(self, query, params=None):
         cursor = connection.cursor()
