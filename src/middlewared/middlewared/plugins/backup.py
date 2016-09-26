@@ -38,6 +38,34 @@ class BackupService(CRUDService):
         register=True,
     ))
     def do_create(self, data):
+        """
+        Creates a new backup entry.
+
+        .. examples(websocket)::
+
+          Create a new backup using amazon s3 attributes, which is supposed to run every hour.
+
+            :::javascript
+            {
+              "id": "6841f242-840a-11e6-a437-00e04d680384",
+              "msg": "method",
+              "method": "backup.create",
+              "params": [{
+                "description": "s3 sync",
+                "path": "/mnt/tank",
+                "credential": 1,
+                "minute": "00",
+                "hour": "*",
+                "daymonth: "*",
+                "month": "*",
+                "attributes": {
+                  "bucket": "mybucket",
+                  "folder": "",
+                },
+                "enabled": true
+              }]
+            }
+        """
         self._clean_credential(data)
         pk = self.middleware.call('datastore.insert', 'tasks.cloudsync', data)
         self.middleware.call('notifier.restart', 'cron')
@@ -45,6 +73,9 @@ class BackupService(CRUDService):
 
     @accepts(Int('id'), Ref('backup'))
     def do_update(self, id, data):
+        """
+        Updates the backup entry `id` with `data`.
+        """
         backup = self.middleware.call(
             'datastore.query',
             'tasks.cloudsync',
@@ -60,6 +91,9 @@ class BackupService(CRUDService):
 
     @accepts(Int('id'))
     def do_delete(self, id):
+        """
+        Deletes backup entry `id`.
+        """
         self.middleware.call('datastore.delete', 'tasks.cloudsync', id)
         self.middleware.call('notifier.restart', 'cron')
 
@@ -67,6 +101,9 @@ class BackupService(CRUDService):
     @accepts(Int('id'))
     @job(lock=lambda args: 'backup:{}'.format(args[-1]))
     def sync(self, job, id):
+        """
+        Run the backup job `id`, syncing the local data to remote.
+        """
 
         backup = self.middleware.call('datastore.query', 'tasks.cloudsync', [('id', '=', id)], {'get': True})
         if not backup:
