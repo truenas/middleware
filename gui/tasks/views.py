@@ -39,8 +39,10 @@ def home(request):
     if view:
         return view[0]
 
+    tabs = appPool.hook_app_tabs('tasks', request)
     return render(request, 'tasks/index.html', {
-        'tab': request.GET.get('tab', 'tasks.CronJob'),
+        'focused_tab': request.GET.get('tab', 'tasks.CronJob'),
+        'hook_tabs': tabs,
     })
 
 

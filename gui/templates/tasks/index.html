@@ -3,16 +3,12 @@
     <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="title: '{% trans "Cloud Sync"|escapejs %}', doLayout:false, refreshOnShow: true{% if tab == "tasks.CloudSync.View" %}, selected:true{% endif %}, href: '{% url "freeadmin_tasks_cloudsync_datagrid" %}'" tab="tasks.CloudSync.View" class="objrefresh data_tasks_CloudSync">
     </div>
 
-    <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="title: '{% trans "Cron Jobs"|escapejs %}', doLayout:false, refreshOnShow: true{% if tab == "tasks.CronJob.View" %}, selected:true{% endif %}, href: '{% url "freeadmin_tasks_cronjob_datagrid" %}'" tab="tasks.CronJob.View" class="objrefresh data_tasks_CronJob">
+{% for tab in hook_tabs %}
+    <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="title: '{{ tab.verbose_name|escapejs }}'
+    {% if focused_tab == tab.focus %}, selected: true{% endif %},
+    href: '{{ tab.url }}',
+    doLayout:false, refreshOnShow: true" class="objrefresh data_system_{{ tab.name }}" tab="{{ tab.focus }}" id="tab_{{ tab.name }}">
     </div>
-
-    <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="title: '{% trans "Init/Shutdown Scripts"|escapejs %}', doLayout:false, refreshOnShow: true{% if tab == "tasks.InitShutdown.View" %}, selected:true{% endif %}, href: '{% url "freeadmin_tasks_initshutdown_datagrid" %}'" tab="tasks.InitShutdown.View" class="objrefresh data_tasks_InitShutdown">
-    </div>
-
-    <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="title: '{% trans "Rsync Tasks"|escapejs %}', doLayout:false, refreshOnShow: true{% if tab == "tasks.Rsync.View" %}, selected:true{% endif %}, href: '{% url "freeadmin_tasks_rsync_datagrid" %}'" tab="tasks.Rsync.View" class="objrefresh data_tasks_Rsync">
-    </div>
-
-    <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="title: '{% trans "S.M.A.R.T. Tests"|escapejs %}', doLayout:false, refreshOnShow: true{% if tab == "tasks.SMARTTest.View" %}, selected:true{% endif %}, href: '{% url "freeadmin_tasks_smarttest_datagrid" %}'" tab="tasks.SMARTTest.View" class="objrefresh data_tasks_SMARTTest">
-    </div>
+{% endfor %}
 
 </div>
