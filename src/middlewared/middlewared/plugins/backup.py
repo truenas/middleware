@@ -1,4 +1,4 @@
-from middlewared.schema import accepts, Bool, Dict, Int, Str
+from middlewared.schema import accepts, Bool, Dict, Int, Ref, Str
 from middlewared.service import CRUDService, Service, item_method, job, private
 
 import boto3
@@ -14,6 +14,15 @@ CHUNK_SIZE = 5 * 1024 * 1024
 
 class BackupService(CRUDService):
 
+    def _clean_credential(self, data):
+        credential = self.middleware.call('datastore.query', 'system.cloudcredentials', [('id', '=', data['credential'])], {'get': True})
+        assert credential is not None
+
+        if credential['provider'] == 'AMAZON':
+            data['attributes']['region'] = self.middleware.call('backup.s3.get_bucket_location', credential['id'], data['attributes']['bucket'])
+        else:
+            raise NotImplementedError('Invalid provider: {}'.format(credential['provider']))
+
     @accepts(Dict(
         'backup',
         Str('description'),
@@ -26,18 +35,19 @@ class BackupService(CRUDService):
         Str('month'),
         Dict('attributes', additional_attrs=True),
         Bool('enabled'),
+        register=True,
     ))
     def do_create(self, data):
-        credential = self.middleware.call('datastore.query', 'system.cloudcredentials', [('id', '=', data['credential'])], {'get': True})
-        assert credential is not None
-
-        if credential['provider'] == 'AMAZON':
-            data['attributes']['region'] = self.middleware.call('backup.s3.get_bucket_location', credential['id'], data['attributes']['bucket'])
-        else:
-            raise NotImplementedError('Invalid provider: {}'.format(credential['provider']))
-
+        self._clean_credential(data)
         pk = self.middleware.call('datastore.insert', 'tasks.cloudsync', data)
         return pk
+
+    @accepts(Int('id'), Ref('backup'))
+    def do_update(self, id, data):
+        backup = self.middleware.call('datastore.query', 'tasks.cloudsync', [('id', '=', id)], {'get': True})
+        backup.update(data)
+        self._clean_credential(data)
+        self.middleware.call('datastore.update', 'tasks.cloudsync', id, backup)
 
     @item_method
     @accepts(Int('id'))

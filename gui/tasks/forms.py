@@ -107,7 +107,11 @@ class CloudSyncForm(ModelForm):
         with client as c:
             cdata = self.cleaned_data
             cdata['credential'] = cdata['attributes'].pop('credential')
-            pk = c.call('backup.create', cdata)
+            if self.instance.id:
+                c.call('backup.update', self.instance.id, cdata)
+                pk = self.instance.id
+            else:
+                pk = c.call('backup.create', cdata)
         return models.CloudSync.objects.get(pk=pk)
 
 
