@@ -127,6 +127,7 @@ define([
         this._standby.show();
       },
       hideAll: function() {
+        domStyle.set(this.dapProviderError, "display", "none");
         domStyle.set(this.dapAmazon, "display", "none");
       },
       showAmazon: function(credential) {
@@ -151,6 +152,11 @@ define([
             }, me.dapAmazonFolder);
             if(me.initial.folder) me._folder.set('value', me.initial.folder);
 
+            me._hideLoading();
+          },
+          function(err) {
+            me.dapProviderError.innerHTML = err.error;
+            domStyle.set(me.dapProviderError, "display", "");
             me._hideLoading();
           }
         );

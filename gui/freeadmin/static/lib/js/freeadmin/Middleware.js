@@ -46,6 +46,7 @@ define([
             if(pending.onError) pending.onError(message.error);
             else console.log("Middleware call error:", message.error);
           }
+          delete this._pending[message.id];
         } else {
           console.log("Unknown message: ", message);
         }
