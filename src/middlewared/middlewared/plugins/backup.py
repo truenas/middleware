@@ -190,7 +190,10 @@ region = {region}
                 '--stats', '1s',
                 'sync',
                 backup['path'],
-                'remote:{}'.format(backup['attributes']['bucket']),
+                'remote:{}{}'.format(
+                    backup['attributes']['bucket'],
+                    '/{}'.format(backup['attributes']['folder']) if backup['attributes'].get('folder') else '',
+                ),
             ]
 
             def check_progress(job, proc):
