@@ -44,10 +44,21 @@ class BackupService(CRUDService):
 
     @accepts(Int('id'), Ref('backup'))
     def do_update(self, id, data):
-        backup = self.middleware.call('datastore.query', 'tasks.cloudsync', [('id', '=', id)], {'get': True})
+        backup = self.middleware.call(
+            'datastore.query',
+            'tasks.cloudsync',
+            [('id', '=', id)],
+            {'get': True},
+        )
+        assert backup is not None
+
         backup.update(data)
         self._clean_credential(data)
         self.middleware.call('datastore.update', 'tasks.cloudsync', id, backup)
+
+    @accepts(Int('id'))
+    def do_delete(self, id):
+        self.middleware.call('datastore.delete', 'tasks.cloudsync', id)
 
     @item_method
     @accepts(Int('id'))

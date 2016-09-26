@@ -114,6 +114,10 @@ class CloudSyncForm(ModelForm):
                 pk = c.call('backup.create', cdata)
         return models.CloudSync.objects.get(pk=pk)
 
+    def delete(self, **kwargs):
+        with client as c:
+            c.call('backup.delete', self.instance.id)
+
 
 class CronJobForm(ModelForm):
 
