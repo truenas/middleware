@@ -1002,11 +1002,7 @@ def generate_smb4_conf(client, smb4_conf, role):
 
 
 def generate_smb4_shares(client, smb4_shares):
-    try:
-        shares = client.call('datastore.query', 'sharing.CIFS_Share')
-    except:
-        log.warn('Failed to retrieve cifs shares', exc_info=True)
-        return
+    shares = client.call('datastore.query', 'sharing.CIFS_Share')
 
     if len(shares) == 0:
         return
