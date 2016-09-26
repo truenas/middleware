@@ -110,8 +110,10 @@ class CoreService(Service):
     @accepts(Ref('query-filters'), Ref('query-options'))
     def get_jobs(self, filters=None, options=None):
         """Get the long running jobs."""
-        jobs = filter_list(self.middleware.get_jobs().all().values(), filters, options)
-        return [i.__encode__() for i in jobs]
+        jobs = filter_list([
+            i.__encode__() for i in self.middleware.get_jobs().all().values()
+        ], filters, options)
+        return jobs
 
     @accepts()
     def get_services(self):

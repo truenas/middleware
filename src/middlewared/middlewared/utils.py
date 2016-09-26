@@ -34,6 +34,7 @@ def filter_list(_list, filters=None, options=None):
     rv = []
     if filters:
         for i in _list:
+            valid = True
             for f in filters:
                 if len(f) == 3:
                     name, op, value = f
@@ -41,14 +42,16 @@ def filter_list(_list, filters=None, options=None):
                         raise ValueError('Invalid operation: {}'.format(op))
                     if isinstance(i, dict):
                         source = i[name]
-                    elif hasattr(i, '__encode__'):
-                        source = i.__encode__()[name]
                     else:
                         source = getattr(i, name)
-                    if opmap[op](source, value):
-                        if options.get('get') is True:
-                            return i
-                        rv.append(i)
+                    if not opmap[op](source, value):
+                        valid = False
+                        break
+            if not valid:
+                continue
+            rv.append(i)
+            if options.get('get') is True:
+                return i
     else:
         rv = _list
 
@@ -57,5 +60,14 @@ def filter_list(_list, filters=None, options=None):
 
     if options.get('get') is True:
         return rv[0]
+
+    if options.get('order_by'):
+        for o in options.get('order_by'):
+            if o.startswith('-'):
+                o = o[1:]
+                reverse = True
+            else:
+                reverse = False
+            rv = sorted(rv, key=lambda x: x[o], reverse=reverse)
 
     return rv
