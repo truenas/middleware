@@ -31,8 +31,6 @@ class BackupCredentialService(CRUDService):
         register=True,
     ))
     def do_create(self, data):
-
-        print "uh"
         return self.middleware.call(
             'datastore.insert',
             'system.cloudcredentials',
@@ -41,7 +39,6 @@ class BackupCredentialService(CRUDService):
 
     @accepts(Int('id'), Ref('backup-credential'))
     def do_update(self, id, data):
-        print "uh"
         return self.middleware.call(
             'datastore.update',
             'system.cloudcredentials',
@@ -51,7 +48,6 @@ class BackupCredentialService(CRUDService):
 
     @accepts(Int('id'))
     def do_delete(self, id):
-        print "uh"
         return self.middleware.call(
             'datastore.delete',
             'system.cloudcredentials',
