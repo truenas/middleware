@@ -169,7 +169,7 @@ class DatastoreService(Service):
     @accepts(Str('name'), Int('id'), Dict('data', additional_attrs=True))
     def update(self, name, id, data):
         """
-        Insert a new entry to `name`.
+        Update an entry `id` in `name`.
         """
         model = self.__get_model(name)
         obj = model.objects.get(pk=id)
