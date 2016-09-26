@@ -233,10 +233,9 @@ class Middleware(object):
 
     def call_method(self, app, message):
         """Call method from websocket"""
-        method = message['method']
         params = message.get('params') or []
-        service, method = method.rsplit('.', 1)
-        methodobj = getattr(self.get_service(service), method)
+        service, method_name = message['method'].rsplit('.', 1)
+        methodobj = getattr(self.get_service(service), method_name)
 
         if not app.authenticated and not hasattr(methodobj, '_no_auth_required'):
             app.send_error(message, 'Not authenticated')
@@ -251,7 +250,7 @@ class Middleware(object):
         job_options = getattr(methodobj, '_job', None)
         if job_options:
             # Create a job instance with required args
-            job = Job(methodobj, args, job_options)
+            job = Job(message['method'], methodobj, args, job_options)
             # Add the job to the queue.
             # At this point an `id` is assinged to the job.
             self.__jobs.add(job)

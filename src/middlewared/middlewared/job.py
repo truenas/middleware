@@ -5,6 +5,8 @@ from gevent.lock import Semaphore
 
 import enum
 import gevent
+import sys
+import traceback
 
 
 class State(enum.Enum):
@@ -159,7 +161,8 @@ class Job(object):
     Represents a long running call, methods marked with @job decorator
     """
 
-    def __init__(self, method, args, options):
+    def __init__(self, method_name, method, args, options):
+        self.method_name = method_name
         self.method = method
         self.args = args
         self.options = options
@@ -167,6 +170,7 @@ class Job(object):
         self.id = None
         self.lock = None
         self.result = None
+        self.exception = None
         self.state = State.WAITING
         self.progress = {
             'percent': None,
@@ -193,6 +197,9 @@ class Job(object):
 
     def set_result(self, result):
         self.result = result
+
+    def set_exception(self, exc_info):
+        self.exception = ''.join(traceback.format_exception(*exc_info))
 
     def set_state(self, state):
         if self.state == State.WAITING:
@@ -221,6 +228,7 @@ class Job(object):
             self.set_result(self.method(*([self] + self.args)))
         except:
             self.set_state('FAILED')
+            self.set_exception(sys.exc_info())
             raise
         else:
             self.set_state('SUCCESS')
@@ -230,8 +238,11 @@ class Job(object):
     def __encode__(self):
         return {
             'id': self.id,
+            'method': self.method_name,
+            'arguments': self.args,
             'progress': self.progress,
             'result': self.result,
+            'exception': self.exception,
             'state': self.state.name,
             'time_started': self.time_started,
             'time_finished': self.time_finished,
