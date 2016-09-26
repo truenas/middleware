@@ -56,11 +56,11 @@ class BackupService(CRUDService):
                 "credential": 1,
                 "minute": "00",
                 "hour": "*",
-                "daymonth: "*",
+                "daymonth": "*",
                 "month": "*",
                 "attributes": {
                   "bucket": "mybucket",
-                  "folder": "",
+                  "folder": ""
                 },
                 "enabled": true
               }]
