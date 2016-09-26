@@ -87,6 +87,7 @@ from freenasUI.directoryservice.models import (
     NT4,
 )
 from freenasUI.freeadmin.views import JsonResp
+from freenasUI.middleware.client import client
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier
 from freenasUI.services.models import (
@@ -3025,14 +3026,25 @@ class CloudCredentialsForm(ModelForm):
                 self.fields['secret_key'].initial = self.instance.attributes.get('secret_key')
 
     def save(self, *args, **kwargs):
-        obj = super(CloudCredentialsForm, self).save(commit=False)
-        if obj.provider == 'AMAZON':
-            obj.attributes = {
-                'access_key': self.cleaned_data.get('access_key'),
-                'secret_key': self.cleaned_data.get('secret_key'),
+        with client as c:
+            data = {
+                'name': self.cleaned_data.get('name'),
+                'provider': self.cleaned_data.get('provider'),
+                'attributes': {
+                    'access_key': self.cleaned_data.get('access_key'),
+                    'secret_key': self.cleaned_data.get('secret_key'),
+                }
             }
-        obj.save()
-        return obj
+            if self.instance.id:
+                c.call('backup.credential.update', self.instance.id, data)
+                pk = self.instance.id
+            else:
+                pk = c.call('backup.credential.create', data)
+        return models.CloudCredentials.objects.get(pk=pk)
+
+    def delete(self, *args, **kwargs):
+        with client as c:
+            c.call('backup.credential.delete', self.instance.id)
 
 
 class BackupForm(Form):

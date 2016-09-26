@@ -12,6 +12,53 @@ import tempfile
 CHUNK_SIZE = 5 * 1024 * 1024
 
 
+class BackupCredentialService(CRUDService):
+
+    class Config:
+        namespace = 'backup.credential'
+
+    @accepts(Ref('query-filters'), Ref('query-options'))
+    def query(self, filters=None, options=None):
+        return self.middleware.call('datastore.query', 'system.cloudcredentials', filters, options)
+
+    @accepts(Dict(
+        'backup-credential',
+        Str('name'),
+        Str('provider', enum=[
+            'AMAZON',
+        ]),
+        Dict('attributes', additional_attrs=True),
+        register=True,
+    ))
+    def do_create(self, data):
+
+        print "uh"
+        return self.middleware.call(
+            'datastore.insert',
+            'system.cloudcredentials',
+            data,
+        )
+
+    @accepts(Int('id'), Ref('backup-credential'))
+    def do_update(self, id, data):
+        print "uh"
+        return self.middleware.call(
+            'datastore.update',
+            'system.cloudcredentials',
+            id,
+            data,
+        )
+
+    @accepts(Int('id'))
+    def do_delete(self, id):
+        print "uh"
+        return self.middleware.call(
+            'datastore.delete',
+            'system.cloudcredentials',
+            id,
+        )
+
+
 class BackupService(CRUDService):
 
     @accepts(Ref('query-filters'), Ref('query-options'))
