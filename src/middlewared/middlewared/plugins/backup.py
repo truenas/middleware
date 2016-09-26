@@ -40,6 +40,7 @@ class BackupService(CRUDService):
     def do_create(self, data):
         self._clean_credential(data)
         pk = self.middleware.call('datastore.insert', 'tasks.cloudsync', data)
+        self.middleware.call('notifier.restart', 'cron')
         return pk
 
     @accepts(Int('id'), Ref('backup'))
@@ -55,10 +56,12 @@ class BackupService(CRUDService):
         backup.update(data)
         self._clean_credential(data)
         self.middleware.call('datastore.update', 'tasks.cloudsync', id, backup)
+        self.middleware.call('notifier.restart', 'cron')
 
     @accepts(Int('id'))
     def do_delete(self, id):
         self.middleware.call('datastore.delete', 'tasks.cloudsync', id)
+        self.middleware.call('notifier.restart', 'cron')
 
     @item_method
     @accepts(Int('id'))
