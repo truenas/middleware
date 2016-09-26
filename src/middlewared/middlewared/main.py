@@ -1,7 +1,7 @@
 from gevent import monkey
 monkey.patch_all()
 
-from . import ejson as json
+from .client import ejson as json
 from collections import OrderedDict
 from client.protocol import DDPProtocol
 from daemon import DaemonContext
