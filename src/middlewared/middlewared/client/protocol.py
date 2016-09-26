@@ -1,4 +1,4 @@
-import json
+from . import ejson as json
 
 
 class DDPProtocol(object):

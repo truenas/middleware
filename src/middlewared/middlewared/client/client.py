@@ -1,9 +1,9 @@
+from . import ejson as json
 from protocol import DDPProtocol
 from threading import Event
 from ws4py.client.threadedclient import WebSocketClient
 
 import argparse
-import json
 import sys
 import uuid
 
