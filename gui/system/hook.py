@@ -50,10 +50,12 @@ class SystemHook(AppHook):
             models.Email,
             models.SystemDataset,
             models.Tunable,
-            models.CloudCredentials,
             models.CertificateAuthority,
             models.Certificate,
         ]
+
+        if not notifier().is_freenas():
+            tabmodels.insert(5, models.CloudCredentials)
 
         tabs = []
         if (
