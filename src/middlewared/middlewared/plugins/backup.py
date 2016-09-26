@@ -14,6 +14,10 @@ CHUNK_SIZE = 5 * 1024 * 1024
 
 class BackupService(CRUDService):
 
+    @accepts(Ref('query-filters'), Ref('query-options'))
+    def query(self, filters=None, options=None):
+        return self.middleware.call('datastore.query', 'tasks.cloudsync', filters, options)
+
     def _clean_credential(self, data):
         credential = self.middleware.call('datastore.query', 'system.cloudcredentials', [('id', '=', data['credential'])], {'get': True})
         assert credential is not None
