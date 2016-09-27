@@ -203,7 +203,7 @@ def main(subsystem, event):
 
     if event == 'MASTER' or event == 'forcetakeover':
         carp_master(fobj, state_file, ifname, vhid, event, user_override, forcetakeover)
-    elif event == 'BACKUP':
+    elif event == 'BACKUP' or event == 'INIT':
         carp_backup(fobj, state_file, ifname, vhid, event, user_override)
 
 
