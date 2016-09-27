@@ -406,7 +406,7 @@ class NICChoices(object):
                             self._NIClist.remove(interface[0])
 
             if exclude_unconfigured_vlan_parent:
-            # Add the configured VLAN parents back in
+                # Add the configured VLAN parents back in
                 try:
                     c.execute("SELECT vlan_pint FROM network_vlan "
                               "INNER JOIN network_interfaces ON "
@@ -871,17 +871,22 @@ CASE_SENSITIVITY_CHOICES = (
 class SERIAL_CHOICES(object):
 
     def __iter__(self):
-        pipe = popen("/usr/sbin/devinfo -u | "
-            "awk '/^I\/O ports:/, /^I\/O memory addresses:/' | "
-            "sed -En 's/ *([0-9a-fA-Fx]+).*\(uart[0-9]+\)/\\1/p'")
-        ports = filter(
-            lambda y: True if y else False,
-            pipe.read().strip().strip('\n').split('\n')
-        )
-        if not ports:
-            ports = ['0x2f8']
-        for p in ports:
-            yield (p, p)
+        from freenasUI.middleware.notifier import notifier
+        _n = notifier()
+        if not _n.is_freenas() and _n.failover_hardware() == "ECHOSTREAM":
+            yield ('0x3f8', '0x3f8')
+        else:
+            pipe = popen("/usr/sbin/devinfo -u | "
+                         "awk '/^I\/O ports:/, /^I\/O memory addresses:/' | "
+                         "sed -En 's/ *([0-9a-fA-Fx]+).*\(uart[0-9]+\)/\\1/p'")
+            ports = filter(
+                lambda y: True if y else False,
+                pipe.read().strip().strip('\n').split('\n')
+            )
+            if not ports:
+                ports = ['0x2f8']
+            for p in ports:
+                yield (p, p)
 
 
 TUNABLE_TYPES = (
