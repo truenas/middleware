@@ -1571,11 +1571,13 @@ class CloudSyncResourceMixin(NestedMixin):
         job = self.__jobs.get(bundle.obj.id)
         if job:
             if job['state'] == 'RUNNING':
-                bundle.data['status'] = '{}: {}'.format(
+                bundle.data['status'] = '{}{}'.format(
                     job['state'],
-                    job['progress']['description'],
+                    ': ' + job['progress']['description']
+                    if job['progress']['description']
+                    else '',
                 )
-            if job['state'] == 'FAILED':
+            elif job['state'] == 'FAILED':
                 bundle.data['status'] = '{}: {}'.format(
                     job['state'],
                     job['error'],
