@@ -1,4 +1,6 @@
 import glob
+import json
+import logging
 import os
 import pwd
 import subprocess
@@ -9,8 +11,112 @@ from dojango import forms
 from freenasUI import choices
 from freenasUI.common.forms import ModelForm, mchoicefield
 from freenasUI.freeadmin.forms import CronMultiple
+from freenasUI.middleware.client import client
 from freenasUI.middleware.notifier import notifier
+from freenasUI.system.models import CloudCredentials
 from freenasUI.tasks import models
+
+from .widgets import CloudSyncWidget
+
+log = logging.getLogger('tasks.forms')
+
+
+class CloudSyncForm(ModelForm):
+
+    attributes = forms.CharField(
+        widget=CloudSyncWidget(),
+        label=_('Provider'),
+    )
+
+    class Meta:
+        exclude = ('credential', )
+        fields = '__all__'
+        model = models.CloudSync
+        widgets = {
+            'minute': CronMultiple(
+                attrs={'numChoices': 60, 'label': _("minute")}
+            ),
+            'hour': CronMultiple(
+                attrs={'numChoices': 24, 'label': _("hour")}
+            ),
+            'daymonth': CronMultiple(
+                attrs={
+                    'numChoices': 31, 'start': 1, 'label': _("day of month"),
+                }
+            ),
+            'dayweek': forms.CheckboxSelectMultiple(
+                choices=choices.WEEKDAYS_CHOICES
+            ),
+            'month': forms.CheckboxSelectMultiple(
+                choices=choices.MONTHS_CHOICES
+            ),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super(CloudSyncForm, self).__init__(*args, **kwargs)
+        self.fields.keyOrder.remove('attributes')
+        self.fields.keyOrder.insert(2, 'attributes')
+        mchoicefield(self, 'month', [
+            1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12
+        ])
+        mchoicefield(self, 'dayweek', [
+            1, 2, 3, 4, 5, 6, 7
+        ])
+        if self.instance.id:
+            self.fields['attributes'].initial = {
+                'credential': self.instance.credential.id,
+            }
+            self.fields['attributes'].initial.update(self.instance.attributes)
+
+    def clean_attributes(self):
+        attributes = self.cleaned_data.get('attributes')
+        try:
+            attributes = json.loads(attributes)
+        except ValueError:
+            raise forms.ValidationError(_('Invalid provider details.'))
+
+        credential = attributes.get('credential')
+        if not credential:
+            raise forms.ValidationError(_('This field is required.'))
+        qs = CloudCredentials.objects.filter(id=credential)
+        if not qs.exists():
+            raise forms.ValidationError(_('Invalid credential.'))
+
+        if not attributes.get('bucket'):
+            raise forms.ValidationError(_('Bucket is required.'))
+
+        return attributes
+
+    def clean_month(self):
+        m = self.data.getlist('month')
+        if len(m) == 12:
+            return '*'
+        m = ','.join(m)
+        return m
+
+    def clean_dayweek(self):
+        w = self.data.getlist('dayweek')
+        if w == '*':
+            return w
+        if len(w) == 7:
+            return '*'
+        w = ','.join(w)
+        return w
+
+    def save(self, **kwargs):
+        with client as c:
+            cdata = self.cleaned_data
+            cdata['credential'] = cdata['attributes'].pop('credential')
+            if self.instance.id:
+                c.call('backup.update', self.instance.id, cdata)
+                pk = self.instance.id
+            else:
+                pk = c.call('backup.create', cdata)
+        return models.CloudSync.objects.get(pk=pk)
+
+    def delete(self, **kwargs):
+        with client as c:
+            c.call('backup.delete', self.instance.id)
 
 
 class CronJobForm(ModelForm):

@@ -54,6 +54,9 @@ class SystemHook(AppHook):
             models.Certificate,
         ]
 
+        if not notifier().is_freenas():
+            tabmodels.insert(5, models.CloudCredentials)
+
         tabs = []
         if (
             hasattr(notifier, 'failover_status') and

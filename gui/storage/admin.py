@@ -132,7 +132,7 @@ class VolumeFAdmin(BaseFreeAdmin):
             'label': _('Status'),
             'sortable': False,
         })
-        
+
         columns.append({
             'name': 'readonly',
             'label': _('Readonly'),

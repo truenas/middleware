@@ -1,9 +1,11 @@
 from collections import defaultdict
 
 import inspect
+import logging
 import re
 
-from middlewared.schema import accepts, Str
+from middlewared.schema import accepts, Int, Ref, Str
+from middlewared.utils import filter_list
 
 
 def item_method(fn):
@@ -12,6 +14,16 @@ def item_method(fn):
     by an unique identifier."""
     fn._item_method = True
     return fn
+
+
+def job(lock=None):
+    """Flag method as a long running job."""
+    def check_job(fn):
+        fn._job = {
+            'lock': lock,
+        }
+        return fn
+    return check_job
 
 
 def no_auth_required(fn):
@@ -65,6 +77,7 @@ class Service(object):
     __metaclass__ = ServiceBase
 
     def __init__(self, middleware):
+        self.logger = logging.getLogger(type(self).__class__.__name__)
         self.middleware = middleware
 
 
@@ -74,25 +87,33 @@ class ConfigService(Service):
         raise NotImplementedError
 
     def update(self, data):
-        return self.do_update(filters, options)
+        return self.do_update(data)
 
 
 class CRUDService(Service):
 
     def query(self, filters, options):
-        raise NotImplementedError
+        raise NotImplementedError('{}.query must be implemented'.format(self._config.namespace))
 
     def create(self, data):
-        return self.do_create(filters, options)
+        return self.do_create(data)
 
-    def update(self, data):
-        return self.do_update(filters, options)
+    def update(self, id, data):
+        return self.do_update(id, data)
 
-    def delete(self, data):
-        return self.do_delete(filters, options)
+    def delete(self, id):
+        return self.do_delete(id)
 
 
 class CoreService(Service):
+
+    @accepts(Ref('query-filters'), Ref('query-options'))
+    def get_jobs(self, filters=None, options=None):
+        """Get the long running jobs."""
+        jobs = filter_list([
+            i.__encode__() for i in self.middleware.get_jobs().all().values()
+        ], filters, options)
+        return jobs
 
     @accepts()
     def get_services(self):
@@ -124,10 +145,26 @@ class CoreService(Service):
                 continue
 
             for attr in dir(svc):
+
                 if attr.startswith('_'):
                     continue
-                method = getattr(svc, attr)
-                if not callable(method):
+
+                method = None
+                if isinstance(svc, CRUDService):
+                    """
+                    For CRUD the create/update/delete are special.
+                    The real implementation happens in do_create/do_update/do_delete
+                    so thats where we actually extract pertinent information.
+                    """
+                    if attr in ('create', 'update', 'delete'):
+                        method = getattr(svc, 'do_{}'.format(attr), None)
+                    elif attr in ('do_create', 'do_update', 'do_delete'):
+                        continue
+
+                if method is None:
+                    method = getattr(svc, attr, None)
+
+                if method is None or not callable(method):
                     continue
 
                 # Skip private methods
@@ -171,3 +208,7 @@ class CoreService(Service):
                     'item_method': hasattr(method, '_item_method'),
                 }
         return data
+
+    @accepts()
+    def ping(self):
+        return 'pong'

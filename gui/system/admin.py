@@ -137,7 +137,7 @@ class SettingsFAdmin(BaseFreeAdmin):
 
     deletable = False
 
-    def get_extra_context(self, action):
+    def get_extra_context(self, action, **kwargs):
         try:
             ssl = models.SSL.objects.order_by("-id")[0]
         except:
@@ -401,6 +401,19 @@ class CertificateFAdmin(BaseFreeAdmin):
         return func
 
 
+class CloudCredentialsFAdmin(BaseFreeAdmin):
+
+    exclude_fields = (
+        'id',
+        'attributes',
+    )
+
+    icon_object = u"CloudCredentialsIcon"
+    icon_model = u"CloudCredentialsIcon"
+    icon_add = u"CloudCredentialsAddIcon"
+    icon_view = u"CloudCredentialsViewIcon"
+
+
 class UpdateFAdmin(BaseFreeAdmin):
 
     deletable = False
@@ -410,5 +423,6 @@ class UpdateFAdmin(BaseFreeAdmin):
 site.register(None, BootStatusFAdmin)
 site.register(models.CertificateAuthority, CertificateAuthorityFAdmin)
 site.register(models.Certificate, CertificateFAdmin)
+site.register(models.CloudCredentials, CloudCredentialsFAdmin)
 site.register(models.Settings, SettingsFAdmin)
 site.register(models.Update, UpdateFAdmin)

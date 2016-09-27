@@ -1,5 +1,5 @@
 from middlewared.service import Service, private
-from middlewared.schema import accepts, Bool, Dict, List, Ref, Str
+from middlewared.schema import accepts, Bool, Dict, Int, List, Ref, Str
 
 import os
 import sys
@@ -13,6 +13,7 @@ cache.get_apps()
 
 from django.db import connection
 from django.db.models import Q
+from django.db.models.fields.related import ForeignKey
 
 from middlewared.utils import django_modelobj_serialize
 
@@ -156,9 +157,40 @@ class DatastoreService(Service):
         Insert a new entry to `name`.
         """
         model = self.__get_model(name)
+        for field in model._meta.fields:
+            if field.name not in data:
+                continue
+            if isinstance(field, ForeignKey):
+                data[field.name] = field.rel.to.objects.get(pk=data[field.name])
         obj = model(**data)
         obj.save()
         return obj.pk
+
+    @accepts(Str('name'), Int('id'), Dict('data', additional_attrs=True))
+    def update(self, name, id, data):
+        """
+        Update an entry `id` in `name`.
+        """
+        model = self.__get_model(name)
+        obj = model.objects.get(pk=id)
+        for field in model._meta.fields:
+            if field.name not in data:
+                continue
+            if isinstance(field, ForeignKey):
+                data[field.name] = field.rel.to.objects.get(pk=data[field.name])
+        for k,v in data.items():
+            setattr(obj, k ,v)
+        obj.save()
+        return obj.pk
+
+    @accepts(Str('name'), Int('id'))
+    def delete(self, name, id):
+        """
+        Delete an entry `id` in `name`.
+        """
+        model = self.__get_model(name)
+        model.objects.get(pk=id).delete()
+        return True
 
     @private
     def sql(self, query, params=None):

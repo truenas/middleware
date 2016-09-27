@@ -34,6 +34,7 @@ from freenasUI.freeadmin.apppool import appPool
 
 #FIXME: Backward compatible
 from .fields import (
+    DictField,
     UserField, GroupField, PathField, MACField, Network4Field, Network6Field
 )
 

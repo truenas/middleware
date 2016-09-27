@@ -26,6 +26,7 @@
  */
 
 var _webshell;
+var Middleware;
 
 require([
     "dojo",
@@ -56,8 +57,10 @@ require([
     "dojo/NodeList-traverse",
     "dojo/NodeList-manipulate",
     "freeadmin/tree/Tree",
+    "freeadmin/CloudSync",
     "freeadmin/ESCDialog",
     "freeadmin/Menu",
+    "freeadmin/Middleware",
     "freeadmin/Progress",
     "freeadmin/RRDControl",
     "freeadmin/VolumeManager",
@@ -134,8 +137,10 @@ require([
     NodeListTraverse,
     NodeListManipulate,
     Tree,
+    CloudSync,
     ESCDialog,
     fMenu,
+    fMiddleware,
     Progress,
     RRDControl,
     VolumeManager,
@@ -186,6 +191,7 @@ require([
     ) {
 
     Menu = new fMenu();
+    Middleware = new fMiddleware({token: MIDDLEWARE_TOKEN});
 
     humanizeSize = function(value, integer) {
       var map = [
@@ -1452,6 +1458,26 @@ require([
         } else {
             sys_dataset_pool._isReset = false;
         }
+
+    }
+
+    cloudCredentialsProvider = function() {
+
+        var provider = registry.byId("id_provider");
+        var trp = provider.domNode.parentNode.parentNode;
+
+        var access_key = registry.byId("id_access_key");
+        var secret_key = registry.byId("id_secret_key");
+        var tra = access_key.domNode.parentNode.parentNode;
+        var trs = secret_key.domNode.parentNode.parentNode;
+        if(provider.get('value') == 'AMAZON') {
+            domStyle.set(tra, "display", "table-row");
+            domStyle.set(trs, "display", "table-row");
+        } else {
+            domStyle.set(tra, "display", "none");
+            domStyle.set(trs, "display", "none");
+        }
+
     }
 
     vcenter_https_enable_check = function () {

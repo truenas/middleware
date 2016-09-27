@@ -1045,3 +1045,8 @@ AFP_MAP_ACLS_CHOICES = (
     ('rights', _('Rights')),
     ('mode', _('Mode')),
 )
+
+
+CLOUD_PROVIDERS = (
+    ('AMAZON', _('Amazon S3')),
+)

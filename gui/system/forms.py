@@ -87,6 +87,7 @@ from freenasUI.directoryservice.models import (
     NT4,
 )
 from freenasUI.freeadmin.views import JsonResp
+from freenasUI.middleware.client import client
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier
 from freenasUI.services.models import (
@@ -2995,6 +2996,55 @@ class CertificateCreateCSRForm(ModelForm):
             'cert_common'
         ]
         model = models.Certificate
+
+
+class CloudCredentialsForm(ModelForm):
+
+    access_key = forms.CharField(
+        label=_('Access Key'),
+        max_length=200,
+    )
+    secret_key = forms.CharField(
+        label=_('Secret Key'),
+        max_length=200,
+    )
+
+    class Meta:
+        model = models.CloudCredentials
+        exclude = (
+            'attributes',
+        )
+
+    def __init__(self, *args, **kwargs):
+        super(CloudCredentialsForm, self).__init__(*args, **kwargs)
+        self.fields['provider'].widget.attrs['onChange'] = (
+            'cloudCredentialsProvider();'
+        )
+        if self.instance.id:
+            if self.instance.provider == 'AMAZON':
+                self.fields['access_key'].initial = self.instance.attributes.get('access_key')
+                self.fields['secret_key'].initial = self.instance.attributes.get('secret_key')
+
+    def save(self, *args, **kwargs):
+        with client as c:
+            data = {
+                'name': self.cleaned_data.get('name'),
+                'provider': self.cleaned_data.get('provider'),
+                'attributes': {
+                    'access_key': self.cleaned_data.get('access_key'),
+                    'secret_key': self.cleaned_data.get('secret_key'),
+                }
+            }
+            if self.instance.id:
+                c.call('backup.credential.update', self.instance.id, data)
+                pk = self.instance.id
+            else:
+                pk = c.call('backup.credential.create', data)
+        return models.CloudCredentials.objects.get(pk=pk)
+
+    def delete(self, *args, **kwargs):
+        with client as c:
+            c.call('backup.credential.delete', self.instance.id)
 
 
 class BackupForm(Form):

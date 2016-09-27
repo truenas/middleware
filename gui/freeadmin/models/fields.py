@@ -24,6 +24,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
+import json
 import logging
 import re
 
@@ -35,6 +36,26 @@ from south.modelsinspector import add_introspection_rules
 
 add_introspection_rules([], ["^(freenasUI\.)?freeadmin\.models\.fields\..*"])
 log = logging.getLogger('freeadmin.models.fields')
+
+
+class DictField(models.Field):
+    empty_strings_allowed = False
+    __metaclass__ = models.SubfieldBase
+
+    def get_internal_type(self):
+        return "TextField"
+
+    def get_db_prep_value(self, value, connection, prepared=False):
+        if not value:
+            value = {}
+        return json.dumps(value)
+
+    def to_python(self, value):
+        if not value:
+            return {}
+        if isinstance(value, basestring):
+            return json.loads(value)
+        return value
 
 
 class UserField(models.CharField):

@@ -2,12 +2,13 @@ from gevent import monkey
 monkey.patch_all()
 
 from .client import ejson as json
-from collections import OrderedDict
+from collections import OrderedDict, defaultdict
 from client.protocol import DDPProtocol
 from daemon import DaemonContext
 from daemon.pidfile import TimeoutPIDLockFile
 from gevent.wsgi import WSGIServer
 from geventwebsocket import WebSocketServer, WebSocketApplication, Resource
+from job import Job, JobsQueue
 from restful import RESTfulAPI
 from apidocs import app as apidocs_app
 
@@ -32,8 +33,22 @@ class Application(WebSocketApplication):
     def __init__(self, *args, **kwargs):
         super(Application, self).__init__(*args, **kwargs)
         self.authenticated = self._check_permission()
-        self.sessionid = str(uuid.uuid4())
         self.handshake = False
+        self.logger = logging.getLogger('application')
+        self.sessionid = str(uuid.uuid4())
+
+        """
+        Callback index registered by services. They are blocking.
+
+        Currently the following events are allowed:
+          on_message(app, message)
+          on_close(app)
+        """
+        self.__callbacks = defaultdict(list)
+
+    def register_callback(self, name, method):
+        assert name in ('on_message', 'on_close')
+        self.__callbacks[name].append(method)
 
     def _send(self, data):
         self.ws.send(json.dumps(data))
@@ -81,9 +96,20 @@ class Application(WebSocketApplication):
         pass
 
     def on_close(self, *args, **kwargs):
-        pass
+        # Run callbacks registered in plugins for on_close
+        for method in self.__callbacks['on_close']:
+            try:
+                method(self)
+            except:
+                self.logger.error('Failed to run on_close callback.', exc_info=True)
 
     def on_message(self, message):
+        # Run callbacks registered in plugins for on_message
+        for method in self.__callbacks['on_message']:
+            try:
+                method(self, message)
+            except:
+                self.logger.error('Failed to run on_message callback.', exc_info=True)
 
         if message['msg'] == 'connect':
             if message.get('version') != '1':
@@ -118,6 +144,7 @@ class Middleware(object):
 
     def __init__(self):
         self.logger = logging.getLogger('middleware')
+        self.__jobs = JobsQueue()
         self.__schemas = {}
         self.__services = {}
         self.__init_services()
@@ -201,21 +228,40 @@ class Middleware(object):
     def get_schema(self, name):
         return self.__schemas.get(name)
 
+    def get_jobs(self):
+        return self.__jobs
+
     def call_method(self, app, message):
         """Call method from websocket"""
-        method = message['method']
         params = message.get('params') or []
-        service, method = method.rsplit('.', 1)
-        methodobj = getattr(self.get_service(service), method)
+        service, method_name = message['method'].rsplit('.', 1)
+        methodobj = getattr(self.get_service(service), method_name)
 
         if not app.authenticated and not hasattr(methodobj, '_no_auth_required'):
             app.send_error(message, 'Not authenticated')
             return
 
+        args = []
         if hasattr(methodobj, '_pass_app'):
-            return methodobj(app, *params)
+            args.append(app)
+
+        # If the method is marked as a @job we need to create a new
+        # entry to keep track of its state.
+        job_options = getattr(methodobj, '_job', None)
+        if job_options:
+            # Create a job instance with required args
+            job = Job(message['method'], methodobj, args, job_options)
+            # Add the job to the queue.
+            # At this point an `id` is assinged to the job.
+            self.__jobs.add(job)
         else:
-            return methodobj(*params)
+            job = None
+
+        args.extend(params)
+        if job:
+            return job.id
+        else:
+            return methodobj(*args)
 
     def call(self, method, *params):
         service, method = method.rsplit('.', 1)
@@ -237,6 +283,7 @@ class Middleware(object):
             gevent.spawn(wsserver.serve_forever),
             gevent.spawn(apidocsserver.serve_forever),
             gevent.spawn(restserver.serve_forever),
+            gevent.spawn(self.__jobs.run),
         ]
         self.logger.debug('Accepting connections')
         gevent.joinall(server_threads)
@@ -254,6 +301,12 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('restart', nargs='?')
     parser.add_argument('--foregound', '-f', action='store_true')
+    parser.add_argument('--debug-level', default='DEBUG', choices=[
+        'DEBUG',
+        'INFO',
+        'WARN',
+        'ERROR',
+    ])
     args = parser.parse_args()
 
     pidpath = '/var/run/middlewared.pid'
@@ -269,7 +322,7 @@ def main():
             'version': 1,
             'formatters': {
                 'simple': {
-                    'format': '[%(asctime)s %(filename)s:%(lineno)s] %(message)s'
+                    'format': '[%(asctime)s %(filename)s:%(lineno)s] (%(levelname)s) %(message)s'
                 },
             },
             'handlers': {
@@ -288,7 +341,7 @@ def main():
             'loggers': {
                 '': {
                     'handlers': ['console' if args.foregound else 'file'],
-                    'level': 'DEBUG',
+                    'level': args.debug_level,
                     'propagate': True,
                 },
             }

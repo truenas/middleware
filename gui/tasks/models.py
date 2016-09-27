@@ -32,11 +32,136 @@ from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
 from freenasUI import choices
-from freenasUI.freeadmin.models import Model, UserField, PathField
+from freenasUI.freeadmin.models import DictField, Model, UserField, PathField
+from freenasUI.middleware.client import client
 from freenasUI.middleware.notifier import notifier
 from freenasUI.storage.models import Disk
 
 log = logging.getLogger('tasks.models')
+
+
+class CloudSync(Model):
+    description = models.CharField(
+        max_length=150,
+        verbose_name=_('Description'),
+    )
+    path = PathField(
+        verbose_name=_("Path"),
+        abspath=False,
+    )
+    credential = models.ForeignKey(
+        'system.CloudCredentials',
+        verbose_name=_('Credential'),
+    )
+    attributes = DictField(
+        editable=False,
+    )
+    minute = models.CharField(
+        max_length=100,
+        default="00",
+        verbose_name=_("Minute"),
+        help_text=_(
+            "Values allowed:"
+            "<br>Slider: 0-30 (as it is every Nth minute)."
+            "<br>Specific Minute: 0-59."),
+    )
+    hour = models.CharField(
+        max_length=100,
+        default="*",
+        verbose_name=_("Hour"),
+        help_text=_("Values allowed:"
+                    "<br>Slider: 0-12 (as it is every Nth hour)."
+                    "<br>Specific Hour: 0-23."),
+    )
+    daymonth = models.CharField(
+        max_length=100,
+        default="*",
+        verbose_name=_("Day of month"),
+        help_text=_("Values allowed:"
+                    "<br>Slider: 0-15 (as its is every Nth day)."
+                    "<br>Specific Day: 1-31."),
+    )
+    month = models.CharField(
+        max_length=100,
+        default='*',
+        verbose_name=_("Month"),
+    )
+    dayweek = models.CharField(
+        max_length=100,
+        default="*",
+        verbose_name=_("Day of week"),
+    )
+    enabled = models.BooleanField(
+        default=True,
+        verbose_name=_("Enabled"),
+        help_text=_(
+            'Disabling will not stop any syncs which are in progress.'
+        ),
+    )
+
+    class Meta:
+        verbose_name = _(u"Cloud Sync")
+        verbose_name_plural = _(u"Cloud Syncs")
+        ordering = ["description"]
+
+    def __unicode__(self):
+        return self.description
+
+    def get_human_minute(self):
+        if self.minute == '*':
+            return _(u'Every minute')
+        elif self.minute.startswith('*/'):
+            return _(u'Every {0} minute(s)').format(
+                self.minute.split('*/')[1])
+        else:
+            return self.minute
+
+    def get_human_hour(self):
+        if self.hour == '*':
+            return _(u'Every hour')
+        elif self.hour.startswith('*/'):
+            return _(u'Every {0} hour(s)').format(
+                self.hour.split('*/')[1])
+        else:
+            return self.hour
+
+    def get_human_daymonth(self):
+        if self.daymonth == '*':
+            return _(u'Everyday')
+        elif self.daymonth.startswith('*/'):
+            return _(u'Every {0} days').format(
+                self.daymonth.split('*/')[1])
+        else:
+            return self.daymonth
+
+    def get_human_month(self):
+        months = self.month.split(',')
+        if len(months) == 12 or self.month == '*':
+            return _("Every month")
+        mchoices = dict(choices.MONTHS_CHOICES)
+        labels = []
+        for m in months:
+            labels.append(unicode(mchoices[m]))
+        return ', '.join(labels)
+
+    def get_human_dayweek(self):
+        weeks = self.dayweek.split(',')
+        if len(weeks) == 7 or self.dayweek == '*':
+            return _('Everyday')
+        if weeks == map(str, xrange(1, 6)):
+            return _('Weekdays')
+        if weeks == map(str, xrange(6, 8)):
+            return _('Weekends')
+        wchoices = dict(choices.WEEKDAYS_CHOICES)
+        labels = []
+        for w in weeks:
+            labels.append(unicode(wchoices[str(w)]))
+        return ', '.join(labels)
+
+    def run(self):
+        with client as c:
+            jid = c.call('backup.sync', self.id)
+        return jid
 
 
 class CronJob(Model):

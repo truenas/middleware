@@ -1,4 +1,4 @@
-# Copyright 2016 iXsystems, Inc.
+# Copyright 2011 iXsystems, Inc.
 # All rights reserved
 #
 # Redistribution and use in source and binary forms, with or without
@@ -23,6 +23,30 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
-from freenasUI.freeadmin.apppool import appPool
-from .hook import TasksHook
-appPool.register(TasksHook)
+from django.forms.util import flatatt
+from django.forms.widgets import Widget
+from django.utils.safestring import mark_safe
+from dojango.forms.widgets import DojoWidgetMixin
+
+import json
+
+
+class CloudSyncWidget(DojoWidgetMixin, Widget):
+    dojo_type = 'freeadmin.CloudSync'
+
+    def render(self, name, value, attrs=None):
+        from freenasUI.system.models import CloudCredentials
+        if value is None:
+            value = ''
+        extra_attrs = {
+            'data-dojo-name': name,
+            'data-dojo-props': mark_safe("credentials: '{}', initial: '{}'".format(
+                json.dumps([
+                    (str(i), i.id)
+                    for i in CloudCredentials.objects.all()
+                ]),
+                json.dumps(value),
+            ).replace('"', '&quot;')),
+        }
+        final_attrs = self.build_attrs(attrs, name=name, **extra_attrs)
+        return mark_safe(u'<div%s></div>' % (flatatt(final_attrs),))
