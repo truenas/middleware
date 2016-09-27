@@ -46,6 +46,17 @@ def home(request):
     })
 
 
+def cloudsync_run(request, oid):
+    cloudsync = models.CloudSync.objects.get(pk=oid)
+    if request.method == "POST":
+        cloudsync.run()
+        return JsonResp(request, message=_("The cloud sync process has started"))
+
+    return render(request, 'tasks/cloudsync_run.html', {
+        'cloudsync': cloudsync,
+    })
+
+
 def cron_run(request, oid):
     cron = models.CronJob.objects.get(pk=oid)
     if request.method == "POST":

@@ -33,6 +33,7 @@ from django.utils.translation import ugettext_lazy as _
 
 from freenasUI import choices
 from freenasUI.freeadmin.models import DictField, Model, UserField, PathField
+from freenasUI.middleware.client import client
 from freenasUI.middleware.notifier import notifier
 from freenasUI.storage.models import Disk
 
@@ -156,6 +157,11 @@ class CloudSync(Model):
         for w in weeks:
             labels.append(unicode(wchoices[str(w)]))
         return ', '.join(labels)
+
+    def run(self):
+        with client as c:
+            jid = c.call('backup.sync', self.id)
+        return jid
 
 
 class CronJob(Model):

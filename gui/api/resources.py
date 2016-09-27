@@ -1564,6 +1564,9 @@ class CloudSyncResourceMixin(NestedMixin):
         bundle = super(CloudSyncResourceMixin, self).dehydrate(bundle)
         if self.is_webclient(bundle.request):
             _common_human_fields(bundle)
+            bundle.data['_run_url'] = reverse('cloudsync_run', kwargs={
+                'oid': bundle.obj.id
+            })
             bundle.data['credential'] = unicode(bundle.obj.credential)
         job = self.__jobs.get(bundle.obj.id)
         if job:
