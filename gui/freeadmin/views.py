@@ -26,6 +26,7 @@
 
 import json
 import logging
+import os
 import rollbar
 import sys
 
@@ -194,9 +195,15 @@ def server_error(request, *args, **kwargs):
         tb = True
 
     try:
-        rollbar.report_exc_info(exc_info, request)
+        extra_data = {
+            'sw_version': get_sw_version(),
+        }
+        if os.path.exists('/data/update.failed'):
+            with open('/data/update.failed', 'r') as f:
+                extra_data['update_failed'] = f.read()
+        rollbar.report_exc_info(exc_info, request, extra_data=extra_data)
     except:
-        pass
+        log.warn('Failed to report error', exc_info=True)
     try:
         if tb:
             reporter = ExceptionReporter(request, *exc_info)
