@@ -8,7 +8,7 @@ pre-install()
 
 post-install()
 {
-        set -x -e 
+        set -x
         local dstCR
         dstCR=/usr/local/www/freenasUI
 	echo "Adding freenas web gui"
@@ -19,6 +19,11 @@ post-install()
 	fi
         cd ${dstCR}
 	env FREENAS_INSTALL=yes %%PYTHON_CMD%% manage.py syncdb --noinput --migrate --traceback
+	# Lets be evil here and kill pkg(8) if this fails
+	# because pkg does not check return code of POST-INSTALL script
+	if [ $? -ne 0 ]; then
+		/usr/bin/procstat -h $$|awk '{print $2}'|xargs kill -9
+	fi
 	%%PYTHON_CMD%% manage.py collectstatic --noinput
 	%%PYTHON_CMD%% tools/compilemsgs.py
         cd /data
