@@ -72,8 +72,13 @@ class CloudSyncFAdmin(BaseFreeAdmin):
 
     def get_datagrid_columns(self):
         columns = super(CloudSyncFAdmin, self).get_datagrid_columns()
+        columns.insert(3, {
+            'name': 'status',
+            'label': _('Status'),
+            'sortable': False,
+        })
         for idx, column in enumerate(human_colums):
-            columns.insert(3 + idx, dict(column))
+            columns.insert(4 + idx, dict(column))
         return columns
 
 

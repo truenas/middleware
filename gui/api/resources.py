@@ -64,6 +64,7 @@ from freenasUI.jails.forms import (
 )
 from freenasUI.jails.models import JailTemplate
 from freenasUI.middleware import zfs
+from freenasUI.middleware.client import client
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier
 from freenasUI.network.forms import AliasForm
@@ -1551,11 +1552,35 @@ class LAGGInterfaceMembersResourceMixin(object):
 
 class CloudSyncResourceMixin(NestedMixin):
 
+    def dispatch_list(self, request, **kwargs):
+        with client as c:
+            self.__jobs = {}
+            for job in c.call('core.get_jobs', [('method', '=', 'backup.sync')], {'order_by': ['-id']}):
+                if job['arguments'] and job['arguments'][0] not in self.__jobs:
+                    self.__jobs[job['arguments'][0]] = job
+        return super(CloudSyncResourceMixin, self).dispatch_list(request, **kwargs)
+
     def dehydrate(self, bundle):
         bundle = super(CloudSyncResourceMixin, self).dehydrate(bundle)
         if self.is_webclient(bundle.request):
             _common_human_fields(bundle)
             bundle.data['credential'] = unicode(bundle.obj.credential)
+        job = self.__jobs.get(bundle.obj.id)
+        if job:
+            if job['state'] == 'RUNNING':
+                bundle.data['status'] = '{}: {}'.format(
+                    job['state'],
+                    job['progress']['description'],
+                )
+            if job['state'] == 'FAILED':
+                bundle.data['status'] = '{}: {}'.format(
+                    job['state'],
+                    job['error'],
+                )
+            else:
+                bundle.data['status'] = job['state']
+        else:
+            bundle.data['status'] = _('Not ran since last boot')
         return bundle
 
 
