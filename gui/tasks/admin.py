@@ -54,6 +54,7 @@ class CloudSyncFAdmin(BaseFreeAdmin):
         'attributes',
     )
     menu_child_of = 'tasks'
+    refresh_time = 12000
     resource_mixin = CloudSyncResourceMixin
 
     def get_actions(self):
