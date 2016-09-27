@@ -170,6 +170,7 @@ class Job(object):
         self.id = None
         self.lock = None
         self.result = None
+        self.error = None
         self.exception = None
         self.state = State.WAITING
         self.progress = {
@@ -199,6 +200,7 @@ class Job(object):
         self.result = result
 
     def set_exception(self, exc_info):
+        self.error = str(exc_info[1])
         self.exception = ''.join(traceback.format_exception(*exc_info))
 
     def set_state(self, state):
@@ -242,6 +244,7 @@ class Job(object):
             'arguments': self.args,
             'progress': self.progress,
             'result': self.result,
+            'error': self.error,
             'exception': self.exception,
             'state': self.state.name,
             'time_started': self.time_started,
