@@ -1,3 +1,3 @@
-TIMESTAMP = 1473792961
-SHA256 (boto-s3transfer-0.1.3_GH0.tar.gz) = a1f795a0374190b79870f099b9c78c738e946767cb28831cc8de32c84f61f33a
-SIZE (boto-s3transfer-0.1.3_GH0.tar.gz) = 95968
+TIMESTAMP = 1473844853
+SHA256 (s3transfer-0.1.4.tar.gz) = c41d039ab9204e9eea72a6098ca5092ed001f2820274b80be622dbe582ab2d41
+SIZE (s3transfer-0.1.4.tar.gz) = 87620
