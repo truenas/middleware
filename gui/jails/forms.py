@@ -1061,8 +1061,7 @@ class JailTemplateEditForm(ModelForm):
                 'jailtemplate_os(this);'
             )
         else:
-            obj = self.save(commit=False)
-            ninstances = int(obj.jt_instances)
+            ninstances = int(self.instance.jt_instances)
             if ninstances > 0:
                 self.__ro('jt_name')
                 self.__ro('jt_arch')
