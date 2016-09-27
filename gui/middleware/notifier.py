@@ -5553,7 +5553,13 @@ class notifier:
                 systemdataset.sys_pool = ''
                 systemdataset.save()
 
-        if not systemdataset.sys_pool:
+        if not systemdataset.sys_pool and not self.is_freenas():
+            # For TrueNAS default system dataset lives in boot pool
+            # See #17049
+            systemdataset.sys_pool = 'freenas-boot'
+            systemdataset.save()
+        elif not systemdataset.sys_pool:
+
             volume = None
             for o in Volume.objects.filter(vol_fstype='ZFS').order_by(
                 'vol_encrypt'
