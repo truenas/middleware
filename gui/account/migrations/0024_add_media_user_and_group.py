@@ -7,23 +7,29 @@ from django.db import models
 class Migration(DataMigration):
 
     def forwards(self, orm):
-        group = orm.bsdgroups()
-        group.bsdgrp_builtin = True
-        group.bsdgrp_gid = "8675309"
-        group.bsdgrp_group = "media"
-        group.save()
+        qs = orm['account.bsdGroups'].objects.filter(bsdgrp_group='media')
+        if not qs.exists():
+            group = orm.bsdgroups()
+            group.bsdgrp_builtin = True
+            group.bsdgrp_gid = "8675309"
+            group.bsdgrp_group = "media"
+            group.save()
+        else:
+            group = qs[0]
 
-        user = orm.bsdusers()
-        user.bsdusr_builtin = True
-        user.bsdusr_full_name = "Media User"
-        user.bsdusr_group = group
-        user.bsdusr_home = "/var/empty"
-        user.bsdusr_shell = "/usr/sbin/nologin"
-        user.bsdusr_smbhash = "*"
-        user.bsdusr_unixhash = "*"
-        user.bsdusr_uid = "8675309"
-        user.bsdusr_username = "media"
-        user.save()
+        qs = orm['account.bsdUsers'].objects.filter(bsdusr_username='media')
+        if not qs.exists():
+            user = orm.bsdusers()
+            user.bsdusr_builtin = True
+            user.bsdusr_full_name = "Media User"
+            user.bsdusr_group = group
+            user.bsdusr_home = "/var/empty"
+            user.bsdusr_shell = "/usr/sbin/nologin"
+            user.bsdusr_smbhash = "*"
+            user.bsdusr_unixhash = "*"
+            user.bsdusr_uid = "8675309"
+            user.bsdusr_username = "media"
+            user.save()
 
     def backwards(self, orm):
         try:
