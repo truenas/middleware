@@ -4,10 +4,10 @@
 #
 
 # PROVIDE: ix_sshd_save_keys
-# REQUIRE: sshd
+# REQUIRE: openssh
 
 #
-# Save any generated keys by /etc/rc.d/sshd into the config db.
+# Save any generated keys by /usr/local/etc/rc.d/sshd into the config db.
 #
 
 . /etc/rc.subr
@@ -16,8 +16,8 @@ save_keys()
 {
     for i in "ssh_host_key" "ssh_host_key.pub" "ssh_host_dsa_key" "ssh_host_dsa_key.pub" "ssh_host_dsa_key-cert.pub" "ssh_host_ecdsa_key" "ssh_host_ecdsa_key.pub" "ssh_host_ecdsa_key-cert.pub" "ssh_host_rsa_key" "ssh_host_rsa_key.pub" "ssh_host_rsa_key-cert.pub" "ssh_host_ed25519_key" "ssh_host_ed25519_key.pub" "ssh_host_ed25519_key-cert.pub" 
     do
-        if [ -f /etc/ssh/${i} ] ; then
-            _tmp=`cat /etc/ssh/${i} | /usr/local/bin/base64`
+        if [ -f /usr/local/etc/ssh/${i} ] ; then
+            _tmp=`cat /usr/local/etc/ssh/${i} | /usr/local/bin/base64`
             column=`echo ${i} | tr ".-" "_"`
             cmd="UPDATE services_ssh SET '${column}' = '${_tmp}' WHERE id = (SELECT id FROM services_ssh ORDER BY id LIMIT 1);" 
             echo ${cmd} | ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG}
