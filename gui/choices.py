@@ -829,6 +829,7 @@ class JAIL_TEMPLATE_CHOICES(object):
 REPL_CIPHER = (
     ('standard', _('Standard')),
     ('fast', _('Fast')),
+    ('disabled', _('Disabled')),
 )
 
 SAMBA4_ROLE_CHOICES = (
