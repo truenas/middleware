@@ -576,6 +576,18 @@ require([
 
     }
 
+    activeDirectoryBackupToggle= function(checkboxid) {
+
+        var box = registry.byId(checkboxid);
+        toset = box.get("value");
+        var modname = registry.byId("id_ad_dc_backup_path");
+        var trm = modname.domNode.parentNode.parentNode;
+        if(toset == false)
+            domStyle.set(trm, 'display', 'none');
+        else
+            domStyle.set(trm, 'display', '');
+    }
+
     disableGeneric = function(domid, farray, checkfn) {
 
         var box = registry.byId(domid);
