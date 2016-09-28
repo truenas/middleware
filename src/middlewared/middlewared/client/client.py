@@ -134,7 +134,7 @@ class Client(object):
 
         if not c.returned.wait(timeout):
             self.unregister_call(c)
-            raise Exception("Call timeout")
+            raise CallTimeout("Call timeout")
 
         if c.error:
             raise ClientException(c.error, c.stacktrace)
