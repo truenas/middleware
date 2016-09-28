@@ -6142,7 +6142,7 @@ class notifier:
         from freenasUI.support.utils import fc_enabled
         return fc_enabled()
 
-    def dc_backup(self,*args):
+    def dc_backup(self, *args):
         if args:
             self._system("samba_backup /var/db/samba4 %s " % args)
         else:
