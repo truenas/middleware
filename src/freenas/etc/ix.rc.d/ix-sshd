@@ -5,7 +5,7 @@
 
 # PROVIDE: ix-sshd
 # REQUIRE: FILESYSTEMS
-# BEFORE: sshd
+# BEFORE: openssh
 
 . /etc/rc.subr
 
@@ -19,7 +19,7 @@ generate_sshd()
     eval local $f
     local sf=$(var_to_sf $f)
     local cmd cfg
-    cfg=/etc/ssh/sshd_config
+    cfg=/usr/local/etc/ssh/sshd_config
 
     if [ ! -d /root/.ssh ]; then
 	mkdir -p /root/.ssh
@@ -116,9 +116,9 @@ __EOF__
 	mkdir -m 755 /data/ssh
     fi
     if [ ! -e /data/ssh/replication ]; then
-	/usr/bin/ssh-keygen -qt rsa -N "" -C "Key for replication" -b 2048 -f /data/ssh/replication
+	/usr/local/bin/ssh-keygen -qt rsa -N "" -C "Key for replication" -b 2048 -f /data/ssh/replication
     fi
-    ${FREENAS_SQLITE_CMD} ${RO_FREENAS_CONFIG} "SELECT ssh_remote_hostkey FROM storage_replremote" > /etc/ssh/ssh_known_hosts
+    ${FREENAS_SQLITE_CMD} ${RO_FREENAS_CONFIG} "SELECT ssh_remote_hostkey FROM storage_replremote" > /usr/local/etc/ssh/ssh_known_hosts
 
     # extract the saved host keys from the database.
     for i in "ssh_host_key" "ssh_host_key.pub" "ssh_host_dsa_key" "ssh_host_dsa_key.pub" "ssh_host_dsa_key-cert.pub" "ssh_host_ecdsa_key" "ssh_host_ecdsa_key.pub" "ssh_host_ecdsa_key-cert.pub" "ssh_host_rsa_key" "ssh_host_rsa_key.pub" "ssh_host_rsa_key-cert.pub" "ssh_host_ed25519_key" "ssh_host_ed25519_key.pub" "ssh_host_ed25519_key-cert.pub"
@@ -127,10 +127,10 @@ __EOF__
         _tmp=`${FREENAS_SQLITE_CMD} ${RO_FREENAS_CONFIG} "SELECT ${column} from services_ssh"`
         _tmpx=`echo ${_tmp} | tr '\n' '1'`
         if ! [ "${_tmpx}" = "1" ] ; then
-            echo ${_tmp} | /usr/local/bin/base64 -d > /etc/ssh/${i}
+            echo ${_tmp} | /usr/local/bin/base64 -d > /usr/local/etc/ssh/${i}
         fi
     done
-    chmod 600 /etc/ssh/ssh_host_key /etc/ssh/ssh_host_dsa_key /etc/ssh/ssh_host_ecdsa_key /etc/ssh/ssh_host_rsa_key /etc/ssh/ssh_host_ed25519_key 2>/dev/null
+    chmod 600 /usr/local/etc/ssh/ssh_host_key /usr/local/etc/ssh/ssh_host_dsa_key /usr/local/etc/ssh/ssh_host_ecdsa_key /usr/local/etc/ssh/ssh_host_rsa_key /usr/local/etc/ssh/ssh_host_ed25519_key 2>/dev/null
 }
 
 name="ix-sshd"
