@@ -32,12 +32,11 @@ int main(int argc, char **argv) {
 
 	noop_read_interval = noop_write_interval = 0;
 	FD_ZERO(&fds_read);
-	FD_SET(STDIN_FILENO, &fds_read);
 	FD_ZERO(&fds_write);
-	FD_SET(STDOUT_FILENO, &fds_write);
 
 	for(;;) {
 
+		FD_SET(STDIN_FILENO, &fds_read);
 		rv = select(STDIN_FILENO+1 , &fds_read, NULL, NULL, &timeout);
 		if (rv < 0) {
 			exit(1);
@@ -76,6 +75,7 @@ int main(int argc, char **argv) {
 				if(write_accum_size == read_size) break;
 
 
+				FD_SET(STDOUT_FILENO, &fds_write);
 				rv = select(STDOUT_FILENO+1 , NULL, &fds_write, NULL, &timeout);
 				if(rv < 0) {
 					exit(1);
