@@ -927,6 +927,11 @@ class VolumeResourceMixin(NestedMixin):
                     {},
                 ).get('readonly', ('', '-'))[1]
 
+                data['comments'] = self.__zfsopts.get(
+                    child.path,
+                    {},
+                ).get('org.freenas:description', ('', '-'))[1]
+
             if self.is_webclient(bundle.request):
                 data['_add_zfs_volume_url'] = reverse(
                     'storage_zvol',
@@ -1005,7 +1010,7 @@ class VolumeResourceMixin(NestedMixin):
         if self.is_webclient(request):
             self.__zfsopts = notifier().zfs_get_options(
                 recursive=True,
-                props=['compression', 'compressratio', 'readonly'],
+                props=['compression', 'compressratio', 'readonly', 'org.freenas:description'],
             )
         self._uid = Uid(100)
         return super(VolumeResourceMixin, self).dispatch_list(
