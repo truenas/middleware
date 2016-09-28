@@ -12,12 +12,37 @@ import tdb
 import tempfile
 import time
 import logging
+import logging.config
 from dns import resolver
 
 sys.path.extend([
     '/usr/local/www',
     '/usr/local/www/freenasUI'
 ])
+
+logging.config.dictConfig({
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'simple': {
+            'format': '[%(name)s:%(lineno)s] %(message)s'
+        },
+    },
+    'handlers': {
+        'syslog': {
+            'level': 'DEBUG',
+            'class': 'logging.handlers.SysLogHandler',
+            'formatter': 'simple',
+        }
+    },
+    'loggers': {
+        '': {
+            'handlers': ['syslog'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+    }
+})
 
 from freenasUI.common.pipesubr import pipeopen
 from freenasUI.common.log import log_traceback
