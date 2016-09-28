@@ -1537,7 +1537,8 @@ def backup_secrets_database():
     secrets = '/var/db/samba4/private/secrets.tdb'
     backup = '/root/secrets.tdb'
 
-    smb4_backup_tdbfile(secrets, backup)
+    if os.path.exists(secrets):
+        smb4_backup_tdbfile(secrets, backup)
 
 
 def restore_secrets_database():
