@@ -6,6 +6,7 @@ import logging
 import os
 import re
 import rollbar
+import sys
 
 from django.conf.urls import patterns, url, include
 from django.core.urlresolvers import reverse
@@ -230,7 +231,7 @@ class FreeAdminSite(object):
         try:
             with client as c:
                 middleware_token = c.call('auth.generate_token', timeout=10)
-        except Exception as e:
+        except Exception:
             middleware_token = None
             extra_data = {
                 'sw_version': sw_version,
@@ -238,9 +239,8 @@ class FreeAdminSite(object):
             if os.path.exists('/var/log/middlewared.log'):
                 with open('/var/log/middlewared.log', 'r') as f:
                     extra_data['middlewaredlog'] = f.read()[-10240:]
-            rollbar.report_message(
-                'Failed to generate token',
-                'error',
+            rollbar.report_exc_info(
+                sys.exc_info(),
                 request,
                 extra_data=extra_data,
             )
