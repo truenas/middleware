@@ -49,6 +49,11 @@ require(["dojo/_base/fx", "dojo/dom", "dojo/fx/easing", "dojo/_base/html", "dojo
 <p>{% blocktrans with user.username as username %}Welcome, {{ username }}. Thanks for logging in.{% endblocktrans %}</p>
 {% else %}
 <div id="login" data-dojo-type="dijit.Dialog" data-dojo-props="title: '{% blocktrans with sw_login_version=sw_login_version sw_name=sw_name %}Welcome to {{ sw_name }}&reg; {{ sw_login_version }}{% endblocktrans %}'" style="max-width: 400px;">
+<script type="dojo/event" data-dojo-event="onFocus">
+  require(["dojo/dom"], function(dom) {
+    dom.byId("id_password").focus();
+  });
+</script>
 <form action="." method="post">{% csrf_token %}
 {% if reset_password %}
 <p>{% trans "The web admin user has been removed in this release in order to unify the web and Unix authentication mechanisms." %}</p>
