@@ -152,7 +152,7 @@ def sendzfs(fromsnap, tosnap, dataset, localfs, remotefs, followdelete, throttle
         f.seek(0)
         msg = f.read().strip('\n').strip('\r')
     os.remove(templog)
-    msg = msg.replace('WARNING: enabled NONE cipher', '')
+    msg = msg.replace('WARNING: ENABLED NONE CIPHER', '')
     msg = msg.strip('\r').strip('\n')
     log.debug("Replication result: %s" % (msg))
     results[replication.id] = msg
@@ -333,7 +333,7 @@ for replication in replication_tasks:
         log.debug("ds = %s, remotefs = %s" % (ds, remotefs))
         sshproc = pipeopen('%s %s %s/%s' % (sshcmd, rzfscmd, remotefs, ds), quiet=True)
         output, error = sshproc.communicate()
-        error = error.strip('\n').strip('\r').replace('WARNING: enabled NONE cipher', '')
+        error = error.strip('\n').strip('\r').replace('WARNING: ENABLED NONE CIPHER', '')
 # Debugging code
         if sshproc.returncode:
             log.debug("Unable to create remote dataset %s: %s" % (
@@ -352,7 +352,7 @@ for replication in replication_tasks:
         rzfscmd = '"zfs list -H -o readonly -t filesystem,volume -r %s"' % (remotefs_final)
         sshproc = pipeopen('%s %s' % (sshcmd, rzfscmd))
         output, error = sshproc.communicate()
-        error = error.strip('\n').strip('\r').replace('WARNING: enabled NONE cipher', '')
+        error = error.strip('\n').strip('\r').replace('WARNING: ENABLED NONE CIPHER', '')
         if sshproc.returncode:
             # Be conservative: only consider it's Okay when we see the expected result.
             if error != '':
@@ -410,7 +410,7 @@ Hello,
         rzfscmd = '"zfs list -H -t snapshot -p -o name,creation -d 1 -r \'%s\'"' % (remotefs_final)
     sshproc = pipeopen('%s %s' % (sshcmd, rzfscmd), debug)
     output, error = sshproc.communicate()
-    error = error.strip('\n').strip('\r').replace('WARNING: enabled NONE cipher', '')
+    error = error.strip('\n').strip('\r').replace('WARNING: ENABLED NONE CIPHER', '')
     if output != '':
         snaplist = output.split('\n')
         snaplist = [x for x in snaplist if not system_re.match(x) and x != '']
