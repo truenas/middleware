@@ -73,10 +73,10 @@ def mapfromdata(input):
 # Return a pair of compression and decompress pipe commands
 #
 map_compression = {
-    'pigz': ('/usr/local/bin/pigz', '/usr/local/bin/pigz -d'),
-    'plzip': ('/usr/local/bin/plzip', '/usr/local/bin/plzip -d'),
-    'lz4': ('/usr/local/bin/lz4c', '/usr/local/bin/lz4c -d'),
-    'xz': ('/usr/bin/xz', '/usr/bin/xzdec'),
+    'pigz': ('/usr/local/bin/pigz', '/usr/bin/env pigz -d'),
+    'plzip': ('/usr/local/bin/plzip', '/usr/bin/env plzip -d'),
+    'lz4': ('/usr/local/bin/lz4c', '/usr/bin/env lz4c -d'),
+    'xz': ('/usr/bin/xz', '/usr/bin/env xzdec'),
 }
 
 is_truenas = not (get_sw_name().lower() == 'freenas')
