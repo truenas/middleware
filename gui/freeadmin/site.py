@@ -3,7 +3,9 @@ from functools import update_wrapper
 import hashlib
 import json
 import logging
+import os
 import re
+import rollbar
 
 from django.conf.urls import patterns, url, include
 from django.core.urlresolvers import reverse
@@ -223,11 +225,26 @@ class FreeAdminSite(object):
                 settings.save()
         except:
             wizard = False
-
-        with client as c:
-            middleware_token = c.call('auth.generate_token')
-
         sw_version = get_sw_version()
+
+        try:
+            with client as c:
+                middleware_token = c.call('auth.generate_token', timeout=10)
+        except Exception as e:
+            middleware_token = None
+            extra_data = {
+                'sw_version': sw_version,
+            }
+            if os.path.exists('/var/log/middlewared.log'):
+                with open('/var/log/middlewared.log', 'r') as f:
+                    extra_data['middlewaredlog'] = f.read()[-10240:]
+            rollbar.report_message(
+                'Failed to generate token',
+                'error',
+                request,
+                extra_data=extra_data,
+            )
+
         return render(request, 'freeadmin/index.html', {
             'consolemsg': console,
             'hostname': hostname,

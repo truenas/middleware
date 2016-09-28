@@ -60,6 +60,10 @@ class ClientException(Exception):
         return self.error
 
 
+class CallTimeout(ClientException):
+    pass
+
+
 class Client(object):
 
     def __init__(self, uri=None):
