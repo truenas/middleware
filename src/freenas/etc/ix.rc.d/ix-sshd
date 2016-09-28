@@ -44,6 +44,7 @@ UseDNS no
 ChallengeResponseAuthentication no
 ClientAliveCountMax 3
 ClientAliveInterval 15
+NoneEnabled yes
 __EOF__
 	    else
 		if ! echo $options | grep -q "Protocol"; then
@@ -66,6 +67,9 @@ __EOF__
 		    echo "ClientAliveInterval 15" >> $cfg
 		fi
 		
+		if ! echo "$options"| grep -q "NoneEnabled"; then
+		    echo "NoneEnabled yes" >> $cfg
+		fi
 	    fi
 	    if [ "$ssh_tcpport" -gt 0 ]; then
 		echo "Port $ssh_tcpport" >> $cfg
