@@ -198,9 +198,13 @@ def server_error(request, *args, **kwargs):
         extra_data = {
             'sw_version': get_sw_version(),
         }
-        if os.path.exists('/data/update.failed'):
-            with open('/data/update.failed', 'r') as f:
-                extra_data['update_failed'] = f.read()
+        for path, name in (
+            ('/data/update.failed', 'update_failed'),
+            ('/var/log/debug.log', 'debug_log'),
+        ):
+            if os.path.exists(path):
+                with open(path, 'r') as f:
+                    extra_data[name] = f.read()[-10240:]
         rollbar.report_exc_info(exc_info, request, extra_data=extra_data)
     except:
         log.warn('Failed to report error', exc_info=True)
