@@ -933,6 +933,40 @@ Clone snapshot
    :statuscode 202: no error
 
 
+Rollback snapshot
++++++++++++++++++
+
+.. http:post:: /api/v1.0/storage/snapshot/tank%40test/rollback/
+
+   Rollback to a snapshot.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      POST /api/v1.0/storage/snapshot/tank%40test/rollback/ HTTP/1.1
+      Content-Type: application/json
+
+        {
+            "force": true
+        }
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 202 Accepted
+      Vary: Accept
+      Content-Type: application/json
+
+        Snapshot rolled back.
+
+   :json string name: name/path of the clone
+   :reqheader Content-Type: the request content type
+   :resheader Content-Type: the response content type
+   :statuscode 202: no error
+
+
 Task
 ----------
 
