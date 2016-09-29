@@ -157,7 +157,7 @@ DOJANGO_DOJO_DEBUG = True
 
 ROLLBAR = {
     'access_token': 'caf06383cba14d5893c4f4d0a40c33a9',
-    'environment': 'production',
+    'environment': 'production' if 'DEVELOPER_MODE' not in os.environ else 'development',
     'root': '/usr/local/www/freenasUI',
 }
 
