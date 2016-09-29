@@ -622,17 +622,15 @@ def zvol_edit(request, name):
 
             _n = notifier()
             error, errors = False, {}
-            for attr in (
-                'org.freenas:description',
-                'compression',
-                'dedup',
-                'volsize',
+            for attr, formfield, can_inherit in (
+                ('org.freenas:description', 'zvol_comments', False),
+                ('compression', None, True),
+                ('dedup', None, True),
+                ('volsize', None, True),
             ):
-                if attr == 'org.freenas:description':
-                    formfield = 'volume_comments'
-                else:
-                    formfield = 'volume_%s' % attr
-                if form.cleaned_data[formfield] == "inherit":
+                if not formfield:
+                    formfield = 'zvol_%s' % attr
+                if can_inherit and form.cleaned_data[formfield] == "inherit":
                     success, err = _n.zfs_inherit_option(
                         name,
                         attr)
