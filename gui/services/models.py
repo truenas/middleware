@@ -150,7 +150,7 @@ class CIFS(Model):
             "guest. Whatever privileges this user has will be available to "
             "any client connecting to the guest service. This user must exist "
             "in the password file, but does not require a valid login. The "
-            "user root can not be used as guest account."
+            "user root cannot be used as guest account."
         ),
     )
     cifs_srv_filemask = models.CharField(
@@ -174,7 +174,7 @@ class CIFS(Model):
     cifs_srv_smb_options = models.TextField(
         verbose_name=_("Auxiliary parameters"),
         blank=True,
-        help_text=_("These parameters are added to [global] section of "
+        help_text=_("These parameters are added to the [global] section of "
                     "smb.conf"),
     )
     cifs_srv_unixext = models.BooleanField(
@@ -217,8 +217,8 @@ class CIFS(Model):
     cifs_srv_hostlookup = models.BooleanField(
         verbose_name=_("Hostnames lookups"),
         default=True,
-        help_text=_("Specifies whether samba should use (expensive) "
-                    "hostname lookups or use the ip addresses instead. An "
+        help_text=_("Specifies whether Samba should use (expensive) "
+                    "hostname lookups or use IP addresses instead. An "
                     "example place where hostname lookups are currently used "
                     "is when checking the hosts deny and hosts allow."),
     )
@@ -252,7 +252,7 @@ class CIFS(Model):
                     "denied when execution " "permissions are not present. If "
                     "this parameter is set to \"True\", Samba does not check "
                     "execute permissions on \"open for execution\", thus "
-                    "re-establishing the behaviour of Samba 3.6 "),
+                    "re-establishing the behavior of Samba 3.6 "),
     )
     cifs_srv_obey_pam_restrictions = models.BooleanField(
         verbose_name=_("Obey pam restrictions"),
@@ -262,7 +262,7 @@ class CIFS(Model):
     )
     cifs_srv_bindip = MultiSelectField(
         verbose_name=_("Bind IP Addresses"),
-        help_text=_("IP address(es) to bind to. If none specified, all "
+        help_text=_("IP addresses to bind to. If none specified, all "
                     "available interfaces that are up will be listened on."),
         max_length=250,
         blank=True,
@@ -293,7 +293,7 @@ class CIFS(Model):
 class AFP(Model):
     afp_srv_guest = models.BooleanField(
         verbose_name=_("Guest Access"),
-        help_text=_("Allows guest access to all apple shares on this box."),
+        help_text=_("Allows guest access to all Apple shares on this box."),
         default=False,
     )
     afp_srv_guest_user = UserField(
@@ -307,12 +307,12 @@ class AFP(Model):
                     "has will be available to any client connecting to the "
                     "guest service. This user must exist in the password "
                     "file, but does not require a valid login. The user root "
-                    "can not be used as guest account."),
+                    "cannot be used as guest account."),
     )
     afp_srv_bindip = MultiSelectField(
         verbose_name=_("Bind IP Addresses"),
         help_text=_(
-            "IP address(es) to advertise and listens to. If none specified, "
+            "IP addresses to advertise and listens to. If none specified, "
             "advertise the first IP address of the system, but to listen for "
             "any incoming request."
         ),
@@ -330,7 +330,7 @@ class AFP(Model):
     )
     afp_srv_homedir_enable = models.BooleanField(
         verbose_name=_("Enable home directories"),
-        help_text=_("Enable/disable home directories for afp user."),
+        help_text=_("Enable/disable home directories for AFP user."),
         default=False,
     )
     afp_srv_homedir = PathField(
@@ -340,7 +340,7 @@ class AFP(Model):
     afp_srv_homename = models.CharField(
         verbose_name=_("Home share name"),
         blank=True,
-        help_text=_("When set overrides the default Home Share Name."),
+        help_text=_("When set, overrides the default Home Share Name."),
         max_length=50,
     )
     afp_srv_dbpath = PathField(
@@ -354,12 +354,14 @@ class AFP(Model):
         verbose_name=_("Global auxiliary parameters"),
         blank=True,
         help_text=_(
-            "These parameters are added to [Global] section of afp.conf"),
+            "These parameters are added to the [Global] section of afp.conf"),
     )
     afp_srv_map_acls = models.CharField(
         verbose_name=_("Map ACLs"),
         max_length=120,
-        help_text=_('How to map the effective permissions of authenticated users.'),
+        help_text=_("How to map the effective permissions of authenticated "
+                    "users: Rights (default, Unix-style permissions),
+                    "Mode (ACls), or None"),
         choices=choices.AFP_MAP_ACLS_CHOICES,
         default='rights'
     )
@@ -380,7 +382,7 @@ class NFS(Model):
         verbose_name=_("Number of servers"),
         help_text=_("Specifies how many servers to create. There should be "
                     "enough to handle the maximum level of concurrency from "
-                    "its clients, typically four to six."),
+                    "clients, typically four to six."),
     )
     nfs_srv_udp = models.BooleanField(
         verbose_name=_('Serve UDP NFS clients'),
@@ -416,7 +418,7 @@ class NFS(Model):
         blank=True,
         max_length=250,
         verbose_name=_("Bind IP Addresses"),
-        help_text=_("Select the IP address(es) to listen for NFS requests. "
+        help_text=_("Select the IP addresses to listen to for NFS requests. "
                     "If left unchecked, NFS will listen on all available "
                     "addresses."),
     )
@@ -437,7 +439,7 @@ class NFS(Model):
         blank=True,
         null=True,
         help_text=_(
-            "This option forces the rpc.statd daemon to bind to the specified "
+            "Forces the rpc.statd daemon to bind to the specified "
             "port, for both IPv4 and IPv6 address families."),
     )
     nfs_srv_rpclockd_port = models.SmallIntegerField(
@@ -446,15 +448,15 @@ class NFS(Model):
         blank=True,
         null=True,
         help_text=_(
-            "This option forces rpc.lockd the daemon to bind to the specified "
+            "Force the rpc.lockd daemon to bind to the specified "
             "port, for both IPv4 and IPv6 address families."),
     )
     nfs_srv_16 = models.BooleanField(
         default=False,
         verbose_name=_("Support >16 groups"),
         help_text=_(
-            "This option ignores the group membership sent on the wire by the "
-            "NFS client and looks up the group membership on the server.  Note "
+            "Ignore the group membership sent on the wire by the "
+            "NFS client and look up the group membership on the server.  Note "
             "that this option is mutually incompatible with the NFSv3 ownership "
             "model for NFSv4."),
     )
@@ -462,13 +464,13 @@ class NFS(Model):
         default=True,
         verbose_name=_("Log mountd(8) requests"),
         help_text=_(
-            "This option enable mountd logging into syslog."),
+            "Enable/disable mountd logging into syslog."),
     )
     nfs_srv_statd_lockd_log = models.BooleanField(
         default=False,
         verbose_name=_("Log rpc.statd(8) and rpc.lockd(8)"),
         help_text=_(
-            "This option enable statd and lockd logging into syslog."),
+            "Enable/disable statd and lockd logging into syslog."),
     )
 
     class Meta:
@@ -560,15 +562,15 @@ class iSCSITargetExtent(Model):
         max_length=120,
         default=0,
         verbose_name=_("Extent size"),
-        help_text=_("Size of extent, 0 means auto, a raw number is bytes"
-                    ", or suffix with KB, MB, TB for convenience."),
+        help_text=_("Size of extent: 0 means auto, a raw number is bytes"
+                    ", or suffix with KB, MB, or TB for convenience."),
     )
     iscsi_target_extent_blocksize = models.IntegerField(
         max_length=4,
         choices=choices.TARGET_BLOCKSIZE_CHOICES,
         default=choices.TARGET_BLOCKSIZE_CHOICES[0][0],
         verbose_name=_("Logical Block Size"),
-        help_text=_("You may specify logical block length (512 by "
+        help_text=_("Logical block length (512 by "
                     "default). The recommended length for compatibility is "
                     "512."),
     )
@@ -576,9 +578,9 @@ class iSCSITargetExtent(Model):
         default=False,
         verbose_name=_("Disable Physical Block Size Reporting"),
         help_text=_(
-            'By default the physical blocksize is reported as the ZFS block '
+            'By default, the physical blocksize is reported as the ZFS block '
             'size, which can be up to 128K. Some initiators do not work with '
-            'values above 4K, checking this disables reporting the physical '
+            'values above 4K. Checking this disables reporting the physical '
             'blocksize.'),
     )
     iscsi_target_extent_avail_threshold = models.IntegerField(
@@ -592,7 +594,7 @@ class iSCSITargetExtent(Model):
         blank=True,
         max_length=120,
         verbose_name=_("Comment"),
-        help_text=_("You may enter a description here for your "
+        help_text=_("A description can be entered here for your "
                     "reference."),
     )
     iscsi_target_extent_naa = models.CharField(
@@ -622,10 +624,10 @@ class iSCSITargetExtent(Model):
         choices=choices.EXTENT_RPM_CHOICES,
         verbose_name=_("LUN RPM"),
         help_text=_("RPM reported to initiators for this extent/LUN. The "
-                    "default is SSD because windows will attempt to defrag "
+                    "default is SSD because Windows will attempt to defrag "
                     "non SSD devices.  This is a pathological worst-case "
-                    "situation for ZFS.  VMWare will give you the option to "
-                    "use SSD " "LUNs as swap devices, there is some value to "
+                    "situation for ZFS.  VMWare gives the option to "
+                    "use SSD " "LUNs as swap devices. There is some value to "
                     "picking a non-SSD RPM if your " "extent is indeed not "
                     "SSDs and the initiator will be VMWare."),
     )
@@ -695,7 +697,7 @@ class iSCSITargetPortal(Model):
         max_length=120,
         blank=True,
         verbose_name=_("Comment"),
-        help_text=_("You may enter a description here for your reference."),
+        help_text=_("A description can be entered here for your reference."),
     )
     iscsi_target_portal_discoveryauthmethod = models.CharField(
         max_length=120,
@@ -1436,7 +1438,7 @@ class FTP(Model):
         max_length=3,
         default="077",
         verbose_name=_("File mask"),
-        help_text=_("Use this option to override the file creation mask "
+        help_text=_("Override the file creation mask "
                     "(077 by default)."),
     )
     ftp_dirmask = models.CharField(
@@ -1444,7 +1446,7 @@ class FTP(Model):
         default="077",
         verbose_name=_("Directory mask"),
         help_text=_(
-            "Use this option to override the directory creation mask "
+            "Override the directory creation mask "
             "(077 by default)."),
     )
     ftp_fxp = models.BooleanField(
@@ -1474,7 +1476,7 @@ class FTP(Model):
         verbose_name=_("Masquerade address"),
         blank=True,
         max_length=120,
-        help_text=_("Causes the server to display the network information "
+        help_text=_("Cause the server to display the network information "
                     "for the specified address to the client, on the "
                     "assumption that IP address or DNS host is acting as a "
                     "NAT gateway or port forwarder for the server."),
@@ -1930,57 +1932,57 @@ class RsyncMod(Model):
         choices=choices.ACCESS_MODE,
         default="rw",
         verbose_name=_("Access Mode"),
-        help_text=_("This controls the access a remote host has to this "
+        help_text=_("Control the access a remote host has to this "
                     "module"),
     )
     rsyncmod_maxconn = models.IntegerField(
         default=0,
         verbose_name=_("Maximum connections"),
         help_text=_("Maximum number of simultaneous connections. Default "
-                    "is 0 (unlimited)"),
+                    "is 0 (unlimited)."),
     )
     rsyncmod_user = UserField(
         max_length=120,
         default="nobody",
         verbose_name=_("User"),
-        help_text=_("This option specifies the user name that file "
-                    "transfers to and from that module should take place. In "
-                    "combination with the 'Group' option this determines "
-                    "what file permissions are available. Leave this field "
-                    "empty to use default settings"),
+        help_text=_("Specify the user name for file "
+                    "transfers to and from that module. In "
+                    "combination with the 'Group' option, this determines "
+                    "which file permissions are available. Leave this field "
+                    "empty to use default settings."),
     )
     rsyncmod_group = GroupField(
         max_length=120,
         default="nobody",
         verbose_name=_("Group"),
-        help_text=_("This option specifies the group name that file "
-                    "transfers to and from that module should take place. "
-                    "Leave this field empty to use default settings"),
+        help_text=_("Specify the group name for file "
+                    "transfers to and from that module. "
+                    "Leave this field empty to use default settings."),
     )
     rsyncmod_hostsallow = models.TextField(
         verbose_name=_("Hosts allow"),
         help_text=_("This option is a comma, space, or tab delimited set "
                     "of hosts which are permitted to access this module. You "
                     "can " "specify the hosts by name or IP number. Leave "
-                    "this field empty to use default settings"),
+                    "this field empty to use default settings."),
         blank=True,
     )
     rsyncmod_hostsdeny = models.TextField(
         verbose_name=_("Hosts deny"),
-        help_text=_("This option is a comma, space, or tab delimited set "
-                    "of host which are NOT permitted to access this module. "
+        help_text=_("A comma, space, or tab-delimited set "
+                    "of hosts which are NOT permitted to access this module. "
                     "Where " "the lists conflict, the allow list takes "
                     "precedence. In the event that it is necessary to deny "
                     "all by default, use the " "keyword ALL (or the netmask "
-                    "0.0.0.0/0) and then explicitly specify to the hosts "
+                    "0.0.0.0/0) and then explicitly specify in the hosts "
                     "allow parameter those hosts that should be permitted "
-                    "access. Leave this field empty to use default settings"),
+                    "access. Leave this field empty to use default settings."),
         blank=True,
     )
     rsyncmod_auxiliary = models.TextField(
         verbose_name=_("Auxiliary parameters"),
         help_text=_("These parameters will be added to the module "
-                    "configuration in rsyncd.conf"),
+                    "configuration in rsyncd.conf."),
         blank=True,
     )
 
@@ -2001,8 +2003,8 @@ class SMART(Model):
     smart_interval = models.IntegerField(
         default=30,
         verbose_name=_("Check interval"),
-        help_text=_("Sets the interval between disk checks to N minutes. "
-                    "The default is 30 minutes"),
+        help_text=_("Set the interval between disk checks to N minutes. "
+                    "The default is 30 minutes."),
     )
     smart_powermode = models.CharField(
         choices=choices.SMART_POWERMODE,
@@ -2013,29 +2015,29 @@ class SMART(Model):
     smart_difference = models.IntegerField(
         default=0,
         verbose_name=_("Difference"),
-        help_text=_("Report if the temperature had changed by at least N "
-                    "degrees Celsius since last report. 0 to disable"),
+        help_text=_("Report if the temperature has changed by at least N "
+                    "degrees Celsius since the last report. 0 to disable."),
     )
     smart_informational = models.IntegerField(
         default=0,
         verbose_name=_("Informational"),
         help_text=_("Report as informational in the system log if the "
                     "temperature is greater or equal than N degrees Celsius. "
-                    "0 to disable"),
+                    "0 to disable."),
     )
     smart_critical = models.IntegerField(
         default=0,
         verbose_name=_("Critical"),
         help_text=_("Report as critical in the system log and send an "
                     "email if the temperature is greater or equal than N "
-                    "degrees Celsius. 0 to disable"),
+                    "degrees Celsius. 0 to disable."),
     )
     smart_email = models.CharField(
         verbose_name=_("Email to report"),
         max_length=255,
         blank=True,
         help_text=_("Destination email address. Separate email addresses "
-                    "by commas"),
+                    "with commas."),
     )
 
     class Meta:
@@ -2179,7 +2181,7 @@ class WebDAV(Model):
         verbose_name=_("HTTP Port"),
         default=8080,
         validators=[MinValueValidator(1), MaxValueValidator(65535)],
-        help_text=_("This is the port at which WebDAV will run on."
+        help_text=_("The port on which WebDAV will run."
                     "<br>Do not use a port that is already in use by another "
                     "service (e.g. 22 for SSH)."),
     )
@@ -2188,7 +2190,7 @@ class WebDAV(Model):
         verbose_name=_("HTTPS Port"),
         default=8081,
         validators=[MinValueValidator(1), MaxValueValidator(65535)],
-        help_text=_("This is the port at which Secure WebDAV will run on."
+        help_text=_("The port on which Secure WebDAV will run."
                     "<br>Do not use a port that is already in use by another "
                     "service (e.g. 22 for SSH)."),
     )
@@ -2208,8 +2210,8 @@ class WebDAV(Model):
         help_text=_("Type of HTTP Authentication for WebDAV"
                     "<br>Basic Auth: Password is sent over the network as "
                     "plaintext (Avoid if HTTPS is disabled) <br>Digest Auth: "
-                    "Hash of the password is sent over the network (more "
-                    "secure)"),
+                    "The hash of the password is sent over the network (more "
+                    "secure)."),
     )
 
     webdav_certssl = models.ForeignKey(
