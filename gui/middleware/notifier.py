@@ -3882,8 +3882,11 @@ class notifier:
         retval = zfsproc.communicate()[1]
         return retval
 
-    def rollback_zfs_snapshot(self, snapshot):
-        zfsproc = self._pipeopen("zfs rollback '%s'" % (snapshot))
+    def rollback_zfs_snapshot(self, snapshot, force=False):
+        zfsproc = self._pipeopen("zfs rollback %s'%s'" % (
+            '-r ' if force else '',
+            snapshot,
+        ))
         retval = zfsproc.communicate()[1]
         return retval
 

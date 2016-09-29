@@ -2262,6 +2262,12 @@ class SnapshotResource(DojoResource):
                 ),
                 self.wrap_view('clone')
             ),
+            url(
+                r"^(?P<resource_name>%s)/(?P<pk>.+?)/rollback%s$" % (
+                    self._meta.resource_name, trailing_slash()
+                ),
+                self.wrap_view('rollback')
+            ),
         ]
 
     def clone(self, request, **kwargs):
@@ -2292,6 +2298,23 @@ class SnapshotResource(DojoResource):
             )
 
         return HttpResponse('Snapshot cloned.', status=202)
+
+    def rollback(self, request, **kwargs):
+        self.method_check(request, allowed=['post'])
+        self.is_authenticated(request)
+
+        deserialized = self.deserialize(
+            request,
+            request.body,
+            format=request.META.get('CONTENT_TYPE', 'application/json'),
+        )
+        rv = notifier().rollback_zfs_snapshot(snapshot=kwargs['pk'], force=deserialized.get('force', False))
+        if rv != '':
+            raise ImmediateHttpResponse(
+                response=self.error_response(request, rv)
+            )
+
+        return HttpResponse('Snapshot rolled back.', status=202)
 
     def get_list(self, request, **kwargs):
 
