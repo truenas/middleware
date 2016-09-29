@@ -138,6 +138,12 @@ class VolumeFAdmin(BaseFreeAdmin):
             'label': _('Readonly'),
             'sortable': False,
         })
+
+        columns.append({
+            'name': 'comments',
+            'label': _('Comments'),
+            'sortable': False,
+        })
         return columns
 
     def _action_builder(

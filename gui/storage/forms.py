@@ -1191,6 +1191,10 @@ class ZFSDataset(Form):
     dataset_name = forms.CharField(
         max_length=128,
         label=_('Dataset Name'))
+    dataset_comments = forms.CharField(
+        max_length=1024,
+        label=_('Comments'),
+        required=False)
     dataset_compression = forms.ChoiceField(
         choices=choices.ZFS_CompressionChoices,
         widget=forms.Select(attrs=attrs_dict),
@@ -1417,6 +1421,10 @@ class CommonZVol(object):
 
 
 class ZVol_EditForm(CommonZVol, Form):
+    zvol_comments = forms.CharField(
+        max_length=128,
+        label=_('Comments'),
+        required=False)
     zvol_compression = forms.ChoiceField(
         choices=choices.ZFS_CompressionChoices,
         widget=forms.Select(attrs=attrs_dict),
@@ -1497,6 +1505,7 @@ class ZVol_EditForm(CommonZVol, Form):
 
 class ZVol_CreateForm(CommonZVol, Form):
     zvol_name = forms.CharField(max_length=128, label=_('zvol name'))
+    zvol_comments = forms.CharField(max_length=120, label=_('Comments'), required=False)
     zvol_volsize = forms.CharField(
         max_length=128,
         label=_('Size for this zvol'),
