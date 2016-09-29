@@ -1,0 +1,65 @@
+#!/bin/sh
+#
+# Copyright (C) Marco Weber <samba_backup@jukan.ch> 2014
+#
+# This program is free software; you can redistribute it and/or modify
+# it under the terms of the GNU General Public License as published by
+# the Free Software Foundation; either version 3 of the License, or
+# (at your option) any later version.
+#
+# This program is distributed in the hope that it will be useful,
+# but WITHOUT ANY WARRANTY; without even the implied warranty of
+# MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+# GNU General Public License for more details.
+#
+# You should have received a copy of the GNU General Public License
+# along with this program.  If not, see <http://www.gnu.org/licenses/>.
+#
+
+FROMWHERE=/var/db/system/samba4
+WHERE=/var/db/system
+if [ -n "$1" ] && [ "$1" = "-h" -o "$1" = "--usage" ]; then
+	echo "samba_backup [provisiondir] [destinationdir]"
+	echo "Will backup your provision located in provisiondir to archive stored in destinationdir"
+	echo "Default provisiondir: $FROMWHERE"
+	echo "Default destinationdir: $WHERE"
+	exit 0
+fi
+
+[ -n "$1" -a -d "$1" ]&&FROMWHERE=$1
+[ -n "$2" -a -d "$2" ]&&WHERE=$2
+
+DIRS="."
+#Number of days to keep the backup
+DAYS=90
+WHEN=`date +%Y%m%d-%H%M`
+
+if [ ! -d $WHERE ]; then
+	echo "Missing backup directory $WHERE"
+	exit 1
+fi
+
+if [ ! -d $FROMWHERE ]; then
+	echo "Missing or wrong provision directory $FROMWHERE"
+	exit 1
+fi
+
+cd $FROMWHERE
+relativedirname=`find . -type d -prune`
+find $relativedirname -name "*.ldb.bak" -exec rm {} \;
+for ldb in `find $relativedirname -name "*.ldb"`; do
+	tdbbackup $ldb
+	if [ $? -ne 0 ]; then
+		echo "Error while backuping $ldb"
+		exit 1
+	fi
+done
+
+cd ..
+tar cjf ${WHERE}/samba4_${WHEN}.tar.bz2 samba4 >/dev/null 2>&1
+if [ $? -ne 0 ]; then
+	echo "Error while archiving ${WHERE}/samba4_${WHEN}.tar.bz2"
+	exit 1
+fi
+
+find $WHERE -name "samba4_*bz2" -mtime +$DAYS -exec rm  {} \; >/dev/null 2>&1
