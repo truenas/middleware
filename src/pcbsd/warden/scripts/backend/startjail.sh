@@ -518,8 +518,7 @@ if is_symlinked_mountpoint "${JAILDIR}/dev"; then
    warden_print "${JAILDIR}/dev has symlink as parent, not mounting"
 else
    mount -t devfs devfs "${JAILDIR}/dev"
-   devfs rule -s 4 add path 'bpf*' unhide
-   devfs -m "${JAILDIR}/dev" rule -s 4 applyset
+   #devfs -m "${JAILDIR}/dev" rule -s 4 applyset
 fi
 
 if [ "$LINUXJAIL" = "YES" ] ; then
