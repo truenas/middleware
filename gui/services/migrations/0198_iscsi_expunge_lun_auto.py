@@ -23,6 +23,7 @@ class Migration(DataMigration):
                     while cur_lunid in used_lunids:
                         cur_lunid += 1
                     t2e.iscsi_lunid = cur_lunid
+                    used_lunids.append(cur_lunid)
                     t2e.save()
 
     def backwards(self, orm):
