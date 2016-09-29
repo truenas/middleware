@@ -109,6 +109,7 @@ from freenasUI.sharing.models import (
 from freenasUI.storage.forms import VolumeAutoImportForm
 from freenasUI.storage.models import Disk, Volume, Scrub
 from freenasUI.system import models
+from freenasUI.system.utils import manual_update
 from freenasUI.tasks.models import SMARTTest
 from common.ssl import CERT_CHAIN_REGEX
 
