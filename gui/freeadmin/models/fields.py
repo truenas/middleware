@@ -140,6 +140,12 @@ class MACField(models.Field):
 class MultiSelectField(models.Field):
     __metaclass__ = models.SubfieldBase
 
+    def __init__(self, *args, **kwargs):
+        self.attrs = kwargs.pop("attrs", {})
+        if kwargs.get('blank', False):
+            kwargs['null'] = True
+        super(MultiSelectField, self).__init__(*args, **kwargs)
+
     def get_internal_type(self):
         return "CharField"
 
@@ -157,6 +163,7 @@ class MultiSelectField(models.Field):
             'label': capfirst(self.verbose_name),
             'help_text': self.help_text,
             'choices': self.get_choices(include_blank=False),
+            'attrs': self.attrs
         }
         if self.has_default():
             if isinstance(self.default, list):

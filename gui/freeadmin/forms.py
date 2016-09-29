@@ -285,9 +285,15 @@ class MACField(forms.CharField):
 
 class SelectMultipleWidget(forms.widgets.SelectMultiple):
 
+    attribute = {}
+
     def __init__(self, attrs=None, choices=(), sorter=False):
         self._sorter = sorter
         super(SelectMultipleWidget, self).__init__(attrs, choices)
+
+    @classmethod
+    def set_attrs(cls, attrs=None):
+        cls.attribute = attrs
 
     def render(self, name, value, attrs=None, choices=()):
 
@@ -305,8 +311,9 @@ class SelectMultipleWidget(forms.widgets.SelectMultiple):
                     selected.append(choice)
                     break
 
+        SelectMultipleWidget.attribute.update({'size': 6})
         select_available = forms.widgets.SelectMultiple(
-            attrs={'size': 6}
+            attrs=SelectMultipleWidget.attribute
         ).render(
             'selecAt_from', value, {'id': 'select_from'}, unselected
         )
@@ -331,6 +338,9 @@ class SelectMultipleField(forms.fields.MultipleChoiceField):
     widget = SelectMultipleWidget
 
     def __init__(self, *args, **kwargs):
+        self.attrs = kwargs.pop('attrs', {})
+        if self.attrs:
+            SelectMultipleField.widget.set_attrs(self.attrs)
         super(SelectMultipleField, self).__init__(*args, **kwargs)
 
 
