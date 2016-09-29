@@ -1286,6 +1286,9 @@ class ZFSDataset(Form):
             del self.fields['dataset_case_sensitivity']
             data = _n.zfs_get_options(self._fs)
 
+            if 'org.freenas:description' in data and data['org.freenas:description'][2] == 'local':
+                self.fields['dataset_comments'].initial = data['org.freenas:description'][0]
+
             if data['compression'][2] == 'inherit':
                 self.fields['dataset_compression'].initial = 'inherit'
             else:
