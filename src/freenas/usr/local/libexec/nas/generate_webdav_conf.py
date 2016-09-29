@@ -141,7 +141,7 @@ def main():
             f.write(" Listen " + str(dav_tcpport) + "\n")
             if webby.webdav_bindip:
                 f.write(" Listen %s:80\n" % ' '.join(webby.webdav_bindip))
-                f.write("\t <VirtualHost %s *:%s>\n" %(' '.join(webby.webdav_bindip), str(dav_tcpport)))
+                f.write("\t <VirtualHost %s *:%s>\n" % (' '.join(webby.webdav_bindip), str(dav_tcpport)))
             else:
                 f.write("\t <VirtualHost *:" + str(dav_tcpport) + ">\n")
             f.write("\t <VirtualHost *:" + str(dav_tcpport) + ">\n")
