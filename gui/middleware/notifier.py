@@ -2739,28 +2739,29 @@ class notifier:
             fp.write("3|\n")
             fp.flush()
         os.unlink('/tmp/.extract_progress')
-        try:
-            subprocess.check_output(
-                ['bin/install_worker.sh', 'pre-install'], stderr=subprocess.STDOUT,
-            )
-        except subprocess.CalledProcessError, cpe:
-            raise MiddlewareError('The firmware does not meet the '
-                                  'pre-install criteria: %s' % (cpe.output, ))
-        finally:
-            os.chdir('/')
-        # XXX: bleh
+        os.chdir('/')
         return True
 
     def apply_update(self, path):
         from freenasUI.system.views import INSTALLFILE
-        os.chdir(os.path.dirname(path))
+        dirpath = os.path.dirname(path)
         open(INSTALLFILE, 'w').close()
         try:
             subprocess.check_output(
-                ['bin/install_worker.sh', 'install'], stderr=subprocess.STDOUT,
+                '/usr/local/bin/manifest_util sequence 2> /dev/null > {}/SEQUENCE'.format(dirpath),
+                shell=True,
             )
-        except subprocess.CalledProcessError, cpe:
-            raise MiddlewareError('The update failed %s: %s' % (str(cpe), cpe.output))
+            subprocess.check_output(
+                [
+                    '/usr/local/bin/freenas-update',
+                    '-C', dirpath,
+                    'update',
+                ],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            )
+        except subprocess.CalledProcessError as cpe:
+            raise MiddlewareError('Failed to apply update %s: %s' % (str(cpe), cpe.output))
         finally:
             os.chdir('/')
             os.unlink(path)
