@@ -1466,6 +1466,8 @@ class ZVol_EditForm(CommonZVol, Form):
             )
 
         self.zdata = _n.zfs_get_options(self.name)
+        if 'org.freenas:description' in self.zdata and self.zdata['org.freenas:description'][2] == 'local':
+            self.fields['zvol_comments'].initial = self.zdata['org.freenas:description'][0]
         self.fields['zvol_compression'].initial = self.zdata['compression'][2]
         self.fields['zvol_volsize'].initial = self.zdata['volsize'][0]
 
