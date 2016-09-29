@@ -893,6 +893,60 @@ class InitialWizard(CommonWizard):
         )
 
 
+class ManualUpdateWizard(FileWizard):
+
+    def get_template_names(self):
+        return [
+            'system/manualupdate_wizard_%s.html' % self.get_step_index(),
+        ]
+
+    def done(self, form_list, **kwargs):
+        cleaned_data = self.get_all_cleaned_data()
+        assert ('sha256' in cleaned_data)
+        updatefile = cleaned_data.get('updatefile')
+
+        _n = notifier()
+        path = self.file_storage.path(updatefile.file.name)
+
+        try:
+            if not _n.is_freenas() and _n.failover_licensed():
+                s = _n.failover_rpc(timeout=10)
+                s.notifier('create_upload_location', None, None)
+                _n.sync_file_send(s, path, '/var/tmp/firmware/update.tar.xz')
+                s.update_manual(
+                    '/var/tmp/firmware/update.tar.xz',
+                    cleaned_data['sha256'].encode('ascii', 'ignore'),
+                )
+                try:
+                    s.reboot()
+                except:
+                    pass
+                response = render_to_response('failover/update_standby.html')
+            else:
+                manual_update(
+                    path,
+                    cleaned_data['sha256'].encode('ascii', 'ignore'),
+                )
+                self.request.session['allow_reboot'] = True
+                response = render_to_response('system/done.html', {
+                    'retval': getattr(self, 'retval', None),
+                })
+        except:
+            try:
+                self.file_storage.delete(updatefile.name)
+            except:
+                log.warn('Failed to delete uploaded file', exc_info=True)
+            raise
+
+        if not self.request.is_ajax():
+            response.content = (
+                "<html><body><textarea>"
+                + response.content +
+                "</textarea></boby></html>"
+            )
+        return response
+
+
 class SettingsForm(ModelForm):
 
     class Meta:
@@ -1218,6 +1272,49 @@ class EmailForm(ModelForm):
             email.em_pass = self.cleaned_data['em_pass2']
             email.save()
         return email
+
+
+class ManualUpdateTemporaryLocationForm(Form):
+    mountpoint = forms.ChoiceField(
+        label=_("Place to temporarily place update file"),
+        help_text=_(
+            "The system will use this place to temporarily store the "
+            "update file before it's being applied."),
+        choices=(),
+        widget=forms.Select(attrs={'class': 'required'}),
+    )
+
+    def clean_mountpoint(self):
+        mp = self.cleaned_data.get("mountpoint")
+        if mp.startswith('/'):
+            clean_path_execbit(mp)
+        clean_path_locked(mp)
+        return mp
+
+    def __init__(self, *args, **kwargs):
+        super(ManualUpdateTemporaryLocationForm, self).__init__(*args, **kwargs)
+        self.fields['mountpoint'].choices = [
+            (x.vol_path, x.vol_path)
+            for x in Volume.objects.all()
+        ]
+        self.fields['mountpoint'].choices.append(
+            (':temp:', _('Memory device'))
+        )
+
+    def done(self, *args, **kwargs):
+        mp = str(self.cleaned_data["mountpoint"])
+        if mp == ":temp:":
+            notifier().create_upload_location()
+        else:
+            notifier().change_upload_location(mp)
+
+
+class ManualUpdateUploadForm(Form):
+    updatefile = FileField(label=_("Update file to be installed"), required=True)
+    sha256 = forms.CharField(
+        label=_("SHA256 sum for the image"),
+        required=True
+    )
 
 
 class ConfigUploadForm(Form):

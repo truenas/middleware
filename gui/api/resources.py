@@ -92,6 +92,9 @@ from freenasUI.system.alert import alertPlugins, Alert
 from freenasUI.system.forms import (
     BootEnvAddForm,
     BootEnvRenameForm,
+    ManualUpdateTemporaryLocationForm,
+    ManualUpdateUploadForm,
+    ManualUpdateWizard,
 )
 from freenasUI.system.models import Update as mUpdate
 from freenasUI.system.utils import (
@@ -3179,6 +3182,13 @@ class UpdateResourceMixin(NestedMixin):
     def prepend_urls(self):
         return [
             url(
+                r"^(?P<resource_name>%s)/manual%s$" % (
+                    self._meta.resource_name, trailing_slash()
+                ),
+                self.wrap_view('manual'),
+                name="api_upgrade_manual"
+            ),
+            url(
                 r"^(?P<resource_name>%s)/check%s$" % (
                     self._meta.resource_name, trailing_slash()
                 ),
@@ -3200,6 +3210,35 @@ class UpdateResourceMixin(NestedMixin):
                 name="api_upgrade_trains"
             ),
         ]
+
+    def manual(self, request, **kwargs):
+        self.method_check(request, allowed=['post'])
+
+        locationform = ManualUpdateTemporaryLocationForm(
+            request.POST,
+        )
+        updateform = ManualUpdateUploadForm(
+            request.POST, request.FILES
+        )
+
+        if not locationform.is_valid():
+            raise ImmediateHttpResponse(
+                response=self.error_response(request, locationform.errors)
+            )
+
+        if not updateform.is_valid():
+            raise ImmediateHttpResponse(
+                response=self.error_response(request, updateform.errors)
+            )
+
+        locationform.done()
+
+        updateview = ManualUpdateWizard()
+        updateview.do_update(
+            updateform.cleaned_data.get('updatefile'),
+            updateform.cleaned_data.get('sha256'),
+        )
+        return HttpResponse('Manual update finished.', status=202)
 
     def check(self, request, **kwargs):
         self.method_check(request, allowed=['get'])

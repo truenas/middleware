@@ -1,0 +1,26 @@
+{% extends "system/wizard.html" %}
+{% block onSubmit %}
+doSubmit({
+  form: this,
+  event: e,
+  url: '{{ request.path }}',
+  progressbar: {
+    steps: [
+      {"label": "Uploading update"},
+      {"label": "Extracting update"},
+      {"label": "Applying update"}
+    ],
+    poolUrl: '{% url "system_manualupdate_progress" %}'
+  }
+});
+{% endblock %}
+{% block form %}
+<tr>
+  <td colspan="2">
+    {% url "system_configsave" as saveurl %}
+    <p>{% blocktrans with url=saveurl %}Consider downloading your configuration before proceeding, <a href="{{ url }}" target="_blank">click here</a>.{% endblocktrans %}</p>
+  </td>
+</tr>
+{{ block.super }}
+{% endblock %}
+{% block oklabel %}{% trans "Apply Update" %}{% endblock %}

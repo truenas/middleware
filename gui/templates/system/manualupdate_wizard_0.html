@@ -1,0 +1,10 @@
+{% extends "system/wizard.html" %}
+{% block form %}
+<tr>
+  <td colspan="2">
+    {% url "system_configsave" as saveurl %}
+    <p>{% blocktrans with url=saveurl %}Consider downloading your configuration before proceeding, <a href="{{ url }}" target="_blank">click here</a>.{% endblocktrans %}</p>
+  </td>
+</tr>
+{{ block.super }}
+{% endblock %}

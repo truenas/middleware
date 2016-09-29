@@ -4,6 +4,7 @@
 		autoCheck: {% if update.upd_autocheck %}true{% else %}false{% endif %}
 	},
 	updateUrl: "{% url "system_update_save" %}",
+	manualUrl: "{% url "system_manualupdate" %}",
 	checkUrl: "{% url "system_update_check" %}",
 	verifyUrl: "{% url "system_update_verify" %}",
 	applyUrl: "{% url "system_update_apply" %}",
