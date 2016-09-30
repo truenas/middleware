@@ -307,7 +307,16 @@ def main():
         'WARN',
         'ERROR',
     ])
+    parser.add_argument('--log-handler', choices=[
+        'console',
+        'file',
+    ])
     args = parser.parse_args()
+
+    if args.log_handler:
+        log_handlers = [args.log_handler]
+    else:
+        log_handlers = ['console' if args.foregound else 'file']
 
     pidpath = '/var/run/middlewared.pid'
 
@@ -340,7 +349,7 @@ def main():
             },
             'loggers': {
                 '': {
-                    'handlers': ['console' if args.foregound else 'file'],
+                    'handlers': log_handlers,
                     'level': args.debug_level,
                     'propagate': True,
                 },
@@ -356,6 +365,9 @@ def main():
                 files_preserve=[logging._handlers['file'].stream],
             )
             daemonc.open()
+        elif 'file' in log_handlers:
+            sys.stdout = logging._handlers['file'].stream
+            sys.stderr = logging._handlers['file'].stream
 
         setproctitle.setproctitle('middlewared')
         # Workaround to tell django to not set up logging on its own
