@@ -13,6 +13,9 @@ COMMENT=	miscellaneous files for FreeNAS
 PRODUCT?=
 PREFIX=/
 
+USES= 	python
+RUN_DEPENDS=	${PYTHON_PKGNAMEPREFIX}snmp_passpersist>=1.3.0:${PORTSDIR}/net-mgmt/py-snmp_passpersist
+
 # explicitly set this for the port build
 FREEBSD_SRCTOP=/usr/src
 PLIST_SUB=	MACHINE_ARCH=${MACHINE_ARCH}
