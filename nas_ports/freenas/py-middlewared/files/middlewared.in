@@ -9,6 +9,8 @@
 . /etc/rc.subr
 
 middlewared_debug=${middlewared_debug:-"NO"}
+pidfile=/var/run/middlewared.pid
+command="/usr/sbin/daemon"
 
 middlewared_start() {
 	mount -uw /  # FIXME: why root is not rw by default?
@@ -17,7 +19,7 @@ middlewared_start() {
 		/usr/local/bin/tmux new-session -s middlewared -d
 		/usr/local/bin/tmux send -t middlewared "${command} -f" ENTER
 	else
-		${command}
+		${command} -P ${pidfile} -r /usr/local/bin/middlewared -f --log-handler=file
 	fi
 	# FIXME: add midctl command to wait for server to be ready
 	# for now, the old and brave sleep
@@ -25,8 +27,6 @@ middlewared_start() {
 }
 
 name="middlewared"
-pidfile="/var/run/middlewared.pid"
-command="/usr/local/bin/${name}"
 start_cmd='middlewared_start'
 
 load_rc_config $name
