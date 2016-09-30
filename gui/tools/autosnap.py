@@ -462,7 +462,7 @@ Hello,
                 text="""
 Hello,
     Snapshot %s failed with the following error: %s""" % (snapname, err),
-                interval=datetime.timedelta(hours=1),
+                interval=timedelta(hours=1),
                 channel='autosnap',
             )
 
