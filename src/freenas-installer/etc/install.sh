@@ -292,7 +292,7 @@ install_grub() {
 		glabel label efibsd /dev/${_disk}p1
 		mkdir -p ${_mnt}/boot/efi
 		mount -t msdosfs /dev/${_disk}p1 ${_mnt}/boot/efi
-		_grub_args="--efi-directory=/boot/efi --modules='zfs part_gpt efi_gop' --removable --target=x86_64-efi"
+		_grub_args="--efi-directory=/boot/efi --removable --target=x86_64-efi"
 	        echo "chroot ${_mnt} /usr/local/sbin/grub-install ${_grub_args} /dev/${_disk}"
 	        chroot ${_mnt} /usr/local/sbin/grub-install ${_grub_args} /dev/${_disk}
 		umount -f ${_mnt}/boot/efi
