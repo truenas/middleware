@@ -1042,6 +1042,8 @@ menu_install()
         if ask_boot_method
         then
           BOOTMODE="efi"
+	else
+	  BOOTMODE="efi"
         fi
       fi
       export BOOTMODE
