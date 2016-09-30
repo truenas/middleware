@@ -1043,7 +1043,7 @@ menu_install()
         then
           BOOTMODE="efi"
 	else
-	  BOOTMODE="efi"
+	  BOOTMODE="bios"
         fi
       fi
       export BOOTMODE
