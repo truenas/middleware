@@ -2757,7 +2757,6 @@ class notifier:
                     '-C', dirpath,
                     'update',
                 ],
-                stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
             )
         except subprocess.CalledProcessError as cpe:
