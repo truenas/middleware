@@ -117,7 +117,7 @@ class RESTfulAPI(object):
                 kwargs['put'] = '{}.update'.format(name)
                 blacklist_methods.extend(kwargs.values())
 
-            service_resource = Resource(self, self.middleware, name, **kwargs)
+            service_resource = Resource(self, self.middleware, name.replace('.', '/'), **kwargs)
 
             """
             For CRUD services we also need a direct subresource so we can
