@@ -990,3 +990,43 @@ def zpool_list(name=None):
     if name:
         return rv[name]
     return rv
+
+def zdb():
+    zfsproc = subprocess.Popen([
+        '/usr/sbin/zdb',
+        '-C',
+        '-U', '/data/zfs/zpool.cache',
+    ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    data = zfsproc.communicate()[0]
+    rv = {}
+    lines_ptr = {0: rv}
+    last_ident = 0
+    for line in data.splitlines():
+        cur_ident = line.count('    ')
+        k, v = line.strip().split(':', 1)
+        if v == '':
+            lines_ptr[last_ident][k] = lines_ptr[cur_ident + 1] = {'_parent': lines_ptr[last_ident]}
+        else:
+            v = v.strip()
+            if v.startswith("'") and v.endswith("'"):
+                v = v[1:-1]
+            lines_ptr[cur_ident][k] = v
+
+        last_ident = cur_ident
+
+    return rv
+
+
+def zdb_find(where, method):
+    found = False
+    for k, v in where.iteritems():
+        if k == '_parent':
+            continue
+        if isinstance(v, dict):
+            found = zdb_find(v, method)
+            if found:
+                break
+        elif method(k, v):
+            found = where
+            break
+    return found

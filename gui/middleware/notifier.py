@@ -1858,18 +1858,28 @@ class notifier:
                     EncryptedDisk.objects.filter(encrypted_volume=volume, encrypted_disk=from_diskobj[0]).delete()
                 devname = self.__encrypt_device("gptid/%s" % uuid[0].text, to_disk, volume, passphrase=passphrase)
 
-        proc = self._pipeopen("/usr/sbin/zdb -C -U /data/zfs/zpool.cache {}|grep ashift".format(volume.vol_name))
-        proc.wait()
+        try:
+            zdb = zfs.zdb()
+        except:
+            log.warn('Failed to parse zdb', exc_info=True)
+            zdb = {}
+        zdb = zdb.get(str(volume.vol_name))
         use_ashift = 0
-        if proc.returncode == 0:
+        if zdb:
             try:
-                # Parse:
-                # $ zdb -C -U /data/zfs/zpool.cache tank|grep ashift
-                #                 ashift: 9
-                if proc.communicate()[0].split('\n')[0].strip().split(':')[-1].strip() == '12':
-                    use_ashift = 1
+                find = zfs.zdb_find(zdb, lambda k, v: (k == 'guid' and v == from_label) or (k == 'path' and v[5:] == from_label))
+                if find is not False:
+                    while find:
+                        if 'ashift' in find:
+                            break
+                        if '_parent' in find:
+                            find = find['_parent']
+                        else:
+                            break
+                    if find.get('ashift') == '12':
+                        use_ashift = 1
             except:
-                log.warn('Failed to get zpool ashift', exc_info=True)
+                log.warn('Failed to get zpool vdev ashift', exc_info=True)
 
         larger_ashift = 1
         try:
