@@ -1858,13 +1858,26 @@ class notifier:
                     EncryptedDisk.objects.filter(encrypted_volume=volume, encrypted_disk=from_diskobj[0]).delete()
                 devname = self.__encrypt_device("gptid/%s" % uuid[0].text, to_disk, volume, passphrase=passphrase)
 
-        larger_ashift = 0
+        proc = self._pipeopen("/usr/sbin/zdb -C -U /data/zfs/zpool.cache {}|grep ashift".format(volume.vol_name))
+        proc.wait()
+        use_ashift = 0
+        if proc.returncode == 0:
+            try:
+                # Parse:
+                # $ zdb -C -U /data/zfs/zpool.cache tank|grep ashift
+                #                 ashift: 9
+                if proc.communicate()[0].split('\n')[0].strip().split(':')[-1].strip() == '12':
+                    use_ashift = 1
+            except:
+                log.warn('Failed to get zpool ashift', exc_info=True)
+
+        larger_ashift = 1
         try:
             larger_ashift = int(self.sysctl("vfs.zfs.vdev.larger_ashift_minimal"))
         except AssertionError:
             pass
-        if larger_ashift == 1:
-            self._system("/sbin/sysctl vfs.zfs.vdev.larger_ashift_minimal=0")
+        if larger_ashift != use_ashift:
+            self._system("/sbin/sysctl vfs.zfs.vdev.larger_ashift_minimal={}".format(use_ashift))
 
         if from_disk == to_disk:
             self._system('/sbin/zpool online %s %s' % (volume.vol_name, to_label))
@@ -1894,8 +1907,8 @@ class notifier:
                 raise MiddlewareError('Disk replacement failed: "%s"' % error)
 
         # Restore previous larger ashift state.
-        if larger_ashift == 1:
-            self._system("/sbin/sysctl vfs.zfs.vdev.larger_ashift_minimal=1")
+        if larger_ashift != use_ashift:
+            self._system("/sbin/sysctl vfs.zfs.vdev.larger_ashift_minimal={}".format(larger_ashift))
 
         if to_swap:
             self._system('/sbin/geli onetime /dev/%s' % (to_swap))
