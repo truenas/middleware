@@ -459,6 +459,12 @@ class NFS_ShareForm(ModelForm):
             except OSError:
                 pass
 
+        if not ismp and self.cleaned_data.get('nfs_alldirs'):
+            self._errors['nfs_alldirs'] = self.error_class([_(
+                "This option can only be used for datasets."
+            )])
+            valid = False
+
         networks = self.cleaned_data.get("nfs_network", "")
         if not networks:
             networks = ['0.0.0.0/0']
