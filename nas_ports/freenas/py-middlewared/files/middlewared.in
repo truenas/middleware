@@ -19,7 +19,7 @@ middlewared_start() {
 		/usr/local/bin/tmux new-session -s middlewared -d
 		/usr/local/bin/tmux send -t middlewared "${command} -f" ENTER
 	else
-		${command} -P ${pidfile} -r /usr/local/bin/middlewared -f --log-handler=file
+		${command} -f -P ${pidfile} -r /usr/local/bin/middlewared -f --log-handler=file
 	fi
 	# FIXME: add midctl command to wait for server to be ready
 	# for now, the old and brave sleep
