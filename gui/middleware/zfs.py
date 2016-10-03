@@ -25,6 +25,7 @@
 #
 from decimal import Decimal
 import bisect
+import libzfs
 import logging
 import re
 import subprocess
@@ -1000,19 +1001,16 @@ def zdb():
     data = zfsproc.communicate()[0]
     rv = {}
     lines_ptr = {0: rv}
-    last_ident = 0
     for line in data.splitlines():
         cur_ident = line.count('    ')
         k, v = line.strip().split(':', 1)
         if v == '':
-            lines_ptr[last_ident][k] = lines_ptr[cur_ident + 1] = {'_parent': lines_ptr[last_ident]}
+            lines_ptr[cur_ident][k] = lines_ptr[cur_ident + 1] = {'_parent': lines_ptr[cur_ident]}
         else:
             v = v.strip()
             if v.startswith("'") and v.endswith("'"):
                 v = v[1:-1]
             lines_ptr[cur_ident][k] = v
-
-        last_ident = cur_ident
 
     return rv
 
@@ -1030,3 +1028,34 @@ def zdb_find(where, method):
             found = where
             break
     return found
+
+
+def zfs_ashift_from_label(pool, label):
+    zfs = libzfs.ZFS()
+    pool = zfs.get(pool)
+    if not pool:
+        return None
+    if label.isdigit():
+        vdev = pool.vdev_by_guid(int(label))
+    else:
+        vdev = vdev_by_path(pool.groups, '/dev/' + label)
+    if not vdev:
+        return None
+    return vdev.stats.configured_ashift
+
+
+def iterate_vdevs(topology):
+    for group in list(topology.values()):
+        for vdev in group:
+            if vdev.type == 'disk':
+                yield vdev
+            elif vdev.children:
+                for subvdev in vdev.children:
+                    yield subvdev
+
+
+def vdev_by_path(topology, path):
+    for i in iterate_vdevs(topology):
+        if i.path == path:
+            return i
+    return None

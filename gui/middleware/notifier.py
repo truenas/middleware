@@ -1858,29 +1858,12 @@ class notifier:
                     EncryptedDisk.objects.filter(encrypted_volume=volume, encrypted_disk=from_diskobj[0]).delete()
                 devname = self.__encrypt_device("gptid/%s" % uuid[0].text, to_disk, volume, passphrase=passphrase)
 
-        try:
-            zdb = zfs.zdb()
-        except:
-            log.warn('Failed to parse zdb', exc_info=True)
-            zdb = {}
-        zdb = zdb.get(str(volume.vol_name))
         use_ashift = 0
-        if zdb:
-            try:
-                find = zfs.zdb_find(zdb, lambda k, v: (k == 'guid' and v == from_label) or (k == 'path' and v[5:] == from_label))
-                if find is not False:
-                    while find:
-                        if 'ashift' in find:
-                            break
-                        if '_parent' in find:
-                            find = find['_parent']
-                        else:
-                            break
-                    if find.get('ashift') == '12':
-                        use_ashift = 1
-            except:
-                log.warn('Failed to get zpool vdev ashift', exc_info=True)
-
+        try:
+            if zfs.zfs_ashift_from_label(str(volume.vol_name), from_label) == 12:
+                use_ashift = 1
+        except:
+            log.warn('Failed to get ashift', exc_info=True)
         larger_ashift = 1
         try:
             larger_ashift = int(self.sysctl("vfs.zfs.vdev.larger_ashift_minimal"))
