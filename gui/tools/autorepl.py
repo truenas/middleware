@@ -323,23 +323,26 @@ for replication in replication_tasks:
 
     # Attempt to create the remote dataset.  If it fails, we don't care at this point.
     rzfscmd = "zfs create -o readonly=on "
-    ds=''
+    ds = ''
     if "/" not in localfs:
-        localfs_tmp ="%s/%s" % (localfs, localfs)
+        localfs_tmp = "%s/%s" % (localfs, localfs)
     else:
         localfs_tmp = localfs
     for dir in localfs_tmp.partition("/")[2].split("/"):
-        ds = os.path.join(ds, dir)
-        log.debug("ds = %s, remotefs = %s" % (ds, remotefs))
-        sshproc = pipeopen('%s %s %s/%s' % (sshcmd, rzfscmd, remotefs, ds), quiet=True)
-        output, error = sshproc.communicate()
-        error = error.strip('\n').strip('\r').replace('WARNING: ENABLED NONE CIPHER', '')
-# Debugging code
-        if sshproc.returncode:
-            log.debug("Unable to create remote dataset %s: %s" % (
-                remotefs,
-                error
-            ))
+        # If this test fails there is no need to create datasets on the remote side
+        # eg: tank -> tank replication
+        if '/' in remotefs or '/' in localfs:
+            ds = os.path.join(ds, dir)
+            log.debug("ds = %s, remotefs = %s" % (ds, remotefs))
+            sshproc = pipeopen('%s %s %s/%s' % (sshcmd, rzfscmd, remotefs, ds), quiet=True)
+            output, error = sshproc.communicate()
+            error = error.strip('\n').strip('\r').replace('WARNING: ENABLED NONE CIPHER', '')
+            # Debugging code
+            if sshproc.returncode:
+                log.debug("Unable to create remote dataset %s: %s" % (
+                    remotefs,
+                    error
+                ))
 
     if is_truenas:
         # Bi-directional replication: the remote side indicates that they are
@@ -364,6 +367,8 @@ for replication in replication_tasks:
                     may_proceed = True
         if not may_proceed:
             # Report the problem and continue
+            results[replication.id] = 'Remote destination must be set readonly'
+            log.debug("dataset %s and it's children must be readonly." % remotefs_final)
             if ("on" in output or "off" in output) and len(output) > 0:
                 error, errmsg = send_mail(
                     subject="Replication denied! (%s)" % remote,
