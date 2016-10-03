@@ -420,7 +420,7 @@ class InitialWizard(CommonWizard):
 
                 if volume_import:
                     volume_name, guid = cleaned_data.get(
-                        'volume_disks'
+                        'volume_id'
                     ).split('|')
                     if not _n.zfs_import(volume_name, guid):
                         raise MiddlewareError(_(
