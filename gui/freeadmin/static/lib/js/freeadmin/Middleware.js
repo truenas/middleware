@@ -18,7 +18,7 @@ define([
         this._pending = {};
         lang.mixin(this, kwArgs);
         this._ddp = new ddp.default({
-          endpoint: window.location.protocol == 'http'? 'ws://' : 'wss://' + window.location.host + '/websocket',
+          endpoint: (window.location.protocol == 'http:' ? 'ws://' : 'wss://') + window.location.host + '/websocket',
           SocketConstructor: WebSocket
         });
         this._ddp.on("connected", lang.hitch(me, me.onConnect));
