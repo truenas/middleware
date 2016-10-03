@@ -25,7 +25,6 @@
 #
 from decimal import Decimal
 import bisect
-import libzfs
 import logging
 import re
 import subprocess
@@ -1031,6 +1030,7 @@ def zdb_find(where, method):
 
 
 def zfs_ashift_from_label(pool, label):
+    import libzfs
     zfs = libzfs.ZFS()
     pool = zfs.get(pool)
     if not pool:
