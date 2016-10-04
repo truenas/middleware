@@ -93,7 +93,7 @@ filter f_not_mdnsresponder { not program("mDNSResponder"); };
 #
 # *.err;kern.warning;auth.notice;mail.crit		/dev/console
 #
-log { source(src); filter(f_err); filter(f_not_authpriv); destination(console); };
+log { source(src); filter(f_err); filter(f_not_mdnsresponder); destination(console); };
 log { source(src); filter(f_kern); filter(f_warning); destination(console); };
 log { source(src); filter(f_auth); filter(f_notice); destination(console); };
 log { source(src); filter(f_mail); filter(f_crit); destination(console); };
