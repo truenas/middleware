@@ -40,6 +40,7 @@ destination slip { file("/var/log/slip.log"); };
 destination ppp { file("/var/log/ppp.log"); };
 destination console { file("/dev/console"); };
 destination allusers { usertty("*"); };
+destination mdnsresponder { file("/var/log/mdnsresponder.log"); };
 #destination loghost { udp("loghost" port(514)); };
 
 #
@@ -86,11 +87,13 @@ filter f_is_debug { level(debug); };
 #
 filter f_ppp { program("ppp"); };
 filter f_slip { program("startslip"); };
+filter f_mdnsresponder { program("mDNSResponder"); };
+filter f_not_mdnsresponder { not program("mDNSResponder"); };
 
 #
 # *.err;kern.warning;auth.notice;mail.crit		/dev/console
 #
-log { source(src); filter(f_err); destination(console); };
+log { source(src); filter(f_err); filter(f_not_authpriv); destination(console); };
 log { source(src); filter(f_kern); filter(f_warning); destination(console); };
 log { source(src); filter(f_auth); filter(f_notice); destination(console); };
 log { source(src); filter(f_mail); filter(f_crit); destination(console); };
@@ -98,7 +101,7 @@ log { source(src); filter(f_mail); filter(f_crit); destination(console); };
 #
 # *.notice;authpriv.none;kern.debug;lpr.info;mail.crit;news.err	/var/log/messages
 #
-log { source(src); filter(f_notice); filter(f_not_authpriv); destination(messages); };
+log { source(src); filter(f_notice); filter(f_not_authpriv); filter(f_not_mdnsresponder); destination(messages); };
 log { source(src); filter(f_kern); filter(f_debug); destination(messages); };
 log { source(src); filter(f_lpr); filter(f_info); destination(messages); };
 log { source(src); filter(f_mail); filter(f_crit); destination(messages); };
@@ -183,3 +186,4 @@ log { source(src); filter(f_emerg); destination(allusers); };
 # *.*							/var/log/ppp.log
 #
 log { source(src); filter(f_ppp); destination(ppp); };
+log { source(src); filter(f_mdnsresponder); filter(f_info); destination(mdnsresponder); };
