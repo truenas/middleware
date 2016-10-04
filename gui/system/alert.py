@@ -345,6 +345,8 @@ class AlertPlugins:
         return rvs
 
     def get_alerts(self):
+        if not os.path.exists(self.ALERT_FILE):
+            return []
         with open(self.ALERT_FILE, 'r') as f:
             return cPickle.load(f)['alerts']
 
