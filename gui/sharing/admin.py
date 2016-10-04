@@ -69,6 +69,18 @@ class CIFSShareFAdmin(BaseFreeAdmin):
     )
     resource_name = 'sharing/cifs'
 
+    def get_confirm_message(self, action, **kwargs):
+        if action not in ('add', 'edit'):
+            return
+        form = kwargs['form']
+        full_audit_form = 'full_audit' in form.cleaned_data.get('cifs_vfsobjects')
+        full_audit_instance = 'full_audit' in form._original_cifs_vfsobjects
+        if full_audit_form and not full_audit_instance:
+            return _(
+                'full_audit VFS object is known to have file transfer issues '
+                'with Windows 10. Do you wish to continue?'
+            )
+
 
 class NFSShareFAdmin(BaseFreeAdmin):
 
