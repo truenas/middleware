@@ -66,6 +66,8 @@ class InterfacesService(Service):
         addr.address = ip.ip
         addr.netmask = ip.netmask
         addr.broadcast = ip.network.broadcast_address
+        if 'vhid' in alias:
+            addr.vhid = alias['vhid']
         return addr
 
     @private
@@ -127,6 +129,16 @@ class InterfacesService(Service):
                     'netmask': data['int_v6netmaskbit'],
                 }))
 
+        carp_vhid = carp_pass = None
+        if data['int_vip']:
+            addrs_database.add(self.alias_to_addr({
+                'address': alias['int_vip'],
+                'netmask': '32',
+                'vhid': data['int_vhid'],
+            }))
+            carp_vhid = data['int_vhid']
+            carp_pass = data['int_pass'] or None
+
         for alias in aliases:
             if alias['alias_v4address']:
                 addrs_database.add(self.alias_to_addr({
@@ -138,6 +150,15 @@ class InterfacesService(Service):
                     'address': alias['alias_v6address'],
                     'netmask': alias['alias_v6netmaskbit'],
                 }))
+
+            if alias['alias_vip']:
+                addrs_database.add(self.alias_to_addr({
+                    'address': alias['alias_vip'],
+                    'netmask': '32',
+                    'vhid': data['int_vhid'],
+                }))
+
+        iface.carp_config = netif.CarpConfig(carp_vhid, None, key=carp_pass)
 
         # Remove addresses configured and not in database
         for addr in (addrs_configured - addrs_database):
