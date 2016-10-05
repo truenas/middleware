@@ -132,7 +132,7 @@ class InterfacesService(Service):
         carp_vhid = carp_pass = None
         if data['int_vip']:
             addrs_database.add(self.alias_to_addr({
-                'address': alias['int_vip'],
+                'address': data['int_vip'],
                 'netmask': '32',
                 'vhid': data['int_vhid'],
             }))
