@@ -42,6 +42,18 @@ class InterfacesService(Service):
             for member in (members_database - members_configured):
                 iface.add_port(member)
 
+        vlans = self.middleware.call('datastore.query', 'network.vlan')
+        for vlan in vlans:
+            try:
+                iface = netif.get_interface(vlan['vlan_vint'])
+            except KeyError:
+                netif.create_interface(vlan['vlan_vint'])
+                iface = netif.get_interface(vlan['vlan_vint'])
+
+            if iface.parent != vlan['vlan_pint'] or iface.tag != vlan['vlan_tag']:
+                iface.unconfigure()
+                iface.configure(vlan['vlan_pint'], vlan['vlan_tag'])
+
         interfaces = self.middleware.call('datastore.query', 'network.interfaces')
         for interface in interfaces:
             self.sync_interface(interface['int_interface'])
