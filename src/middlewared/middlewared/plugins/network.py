@@ -12,6 +12,36 @@ class InterfacesService(Service):
         """
         Sync interfaces configured in database to the OS.
         """
+
+        # First of all we need to create the virtual interfaces
+        # LAGG comes first and then VLAN
+        laggs = self.middleware.call('datastore.query', 'network.lagginterface')
+        for lagg in laggs:
+            name = lagg['lagg_interface']['int_name']
+            try:
+                iface = netif.get_interface(name)
+            except KeyError:
+                netif.create_interface(name)
+                iface = netif.get_interface(name)
+
+            if lagg['lagg_protocol'] == 'fec':
+                iface.protocol = netif.AggregationProtocol.ETHERCHANNEL
+            else:
+                iface.protocol = getattr(netif.AggregationProtocol, lagg['lagg_protocol'].upper())
+
+            members_configured = set(p[0] for p in iface.ports)
+            members_database = set()
+            for member in self.middleware.call('datastore.query', 'network.lagginterfacemembers', [('lagg_interfacegroup_id', '=', lagg['id'])]):
+                members_database.add(member['lagg_physnic'])
+
+            # Remeve member configured but not in database
+            for member in (members_configured - members_database):
+                iface.delete_port(member)
+
+            # Add member in database but not configured
+            for member in (members_database - members_configured):
+                iface.add_port(member)
+
         interfaces = self.middleware.call('datastore.query', 'network.interfaces')
         for interface in interfaces:
             self.sync_interface(interface['int_interface'])
