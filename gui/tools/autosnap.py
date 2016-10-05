@@ -55,7 +55,7 @@ from freenasUI.common.locks import mntlock
 from freenasUI.common.pipesubr import pipeopen
 from freenasUI.common.system import send_mail
 from freenasUI.common.timesubr import isTimeBetween
-from freenasUI.storage.models import VMWarePlugin
+from freenasUI.storage.models import Replication, VMWarePlugin
 
 from lockfile import LockFile
 
@@ -537,6 +537,7 @@ Hello,
 
 os.unlink('/var/run/autosnap.pid')
 
-os.execl('/usr/local/bin/python',
-         'python',
-         '/usr/local/www/freenasUI/tools/autorepl.py')
+if Replication.objects.exists():
+    os.execl('/usr/local/bin/python',
+             'python',
+             '/usr/local/www/freenasUI/tools/autorepl.py')
