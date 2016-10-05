@@ -151,7 +151,9 @@ class PluginManager:
                 ssl._create_default_https_context = ssl._create_unverified_context
             except AttributeError:
                 print 'Error ssl'
-            si = SmartConnect("https", vc_ip, int(port), usernName, password)
+            context = ssl.SSLContext(ssl.PROTOCOL_TLSv1)
+            context.verify_mode = ssl.CERT_NONE
+            si = SmartConnect("https", vc_ip, int(port), usernName, password, sslContext=context)
             ext = self.get_extension(vcp_url, thumb_print)
             if isinstance(ext, vim.Extension):
                 si.RetrieveServiceContent().extensionManager.RegisterExtension(ext)
@@ -171,7 +173,9 @@ class PluginManager:
                 ssl._create_default_https_context = ssl._create_unverified_context
             except AttributeError:
                 print 'Error ssl'
-            si = SmartConnect("https", vc_ip, int(port), usernName, password)
+            context = ssl.SSLContext(ssl.PROTOCOL_TLSv1)
+            context.verify_mode = ssl.CERT_NONE
+            si = SmartConnect("https", vc_ip, int(port), usernName, password, sslContext=context)
             extkey = self.get_extensionKey()
             si.RetrieveServiceContent().extensionManager.UnregisterExtension(extkey)
             return True
@@ -193,7 +197,9 @@ class PluginManager:
                 ssl._create_default_https_context = ssl._create_unverified_context
             except AttributeError:
                 print 'Error ssl'
-            si = SmartConnect("https", vc_ip, int(port), usernName, password)
+            context = ssl.SSLContext(ssl.PROTOCOL_TLSv1)
+            context.verify_mode = ssl.CERT_NONE
+            si = SmartConnect("https", vc_ip, int(port), usernName, password, sslContext=context)
             ext = self.get_extension(vcp_url, thumb_print)
             if isinstance(ext, vim.Extension):
                 si.RetrieveServiceContent().extensionManager.UpdateExtension(ext)
@@ -211,7 +217,9 @@ class PluginManager:
                 ssl._create_default_https_context = ssl._create_unverified_context
             except AttributeError:
                 print 'Error ssl'
-            si = SmartConnect("https", vc_ip, int(port), usernName, password)
+            context = ssl.SSLContext(ssl.PROTOCOL_TLSv1)
+            context.verify_mode = ssl.CERT_NONE
+            si = SmartConnect("https", vc_ip, int(port), usernName, password, sslContext=context)
             extkey = self.get_extensionKey()
             ext = si.RetrieveServiceContent().extensionManager.FindExtension(extkey)
             if ext is None:
@@ -233,7 +241,9 @@ class PluginManager:
                 ssl._create_default_https_context = ssl._create_unverified_context
             except AttributeError:
                 print 'Error ssl'
-            si = SmartConnect("https", vc_ip, int(port), usernName, password)
+            context = ssl.SSLContext(ssl.PROTOCOL_TLSv1)
+            context.verify_mode = ssl.CERT_NONE
+            si = SmartConnect("https", vc_ip, int(port), usernName, password, sslContext=context)
             if si is None:
                 return False
             else:
