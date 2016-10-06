@@ -99,25 +99,9 @@ class InterfacesService(Service):
             if a.af != netif.AddressFamily.LINK
         ])
 
-        dhclient_pidfile = '/var/run/dhclient.{}.pid'.format(name)
-        dhclient_pid = None
-        if os.path.exists(dhclient_pidfile):
-            with open(dhclient_pidfile, 'r') as f:
-                try:
-                    dhclient_pid = int(f.read().strip())
-                except ValueError:
-                    pass
-
-        dhclient_running = False
         has_ipv6 = data['int_ipv6auto'] or False
-        if dhclient_pid:
-            try:
-                os.kill(dhclient_pid, 0)
-            except OSError:
-                pass
-            else:
-                dhclient_running = True
 
+        dhclient_running, dhclient_pid = self.dhclient_status(name)
         if dhclient_running and data['int_dhcp']:
             dhclient_leasesfile = '/var/db/dhclient.leases.{}'.format(name)
             if os.path.exists(dhclient_leasesfile):
@@ -213,6 +197,27 @@ class InterfacesService(Service):
             ).wait()
         else:
             iface.nd6_flags = iface.nd6_flags - {netif.NeighborDiscoveryFlags.ACCEPT_RTADV}
+
+    @private
+    def dhclient_status(self, interface):
+        pidfile = '/var/run/dhclient.{}.pid'.format(interface)
+        pid = None
+        if os.path.exists(pidfile):
+            with open(pidfile, 'r') as f:
+                try:
+                    pid = int(f.read().strip())
+                except ValueError:
+                    pass
+
+        running = False
+        if pid:
+            try:
+                os.kill(pid, 0)
+            except OSError:
+                pass
+            else:
+                running = True
+        return running, pid
 
     @private
     def dhclient_start(self, interface):
