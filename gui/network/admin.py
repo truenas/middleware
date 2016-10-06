@@ -40,10 +40,11 @@ class NetworkInterruptMixin(object):
                 'Do you want to proceed?'
             )
         else:
-            return _(
-                'Network connectivity will be interrupted. '
-                'Do you want to proceed?'
-            )
+            if action != 'add':
+                return _(
+                    'Network connectivity will be interrupted. '
+                    'Do you want to proceed?'
+                )
 
 
 class GlobalConfigurationFAdmin(BaseFreeAdmin):
