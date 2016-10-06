@@ -199,6 +199,7 @@ class InterfacesService(Service):
                 ['/etc/rc.d/rtsold', 'onestart'],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
+                close_fds=True,
             ).wait()
         else:
             iface.nd6_flags = iface.nd6_flags - {netif.NeighborDiscoveryFlags.ACCEPT_RTADV}
@@ -228,7 +229,7 @@ class InterfacesService(Service):
     def dhclient_start(self, interface):
         proc = subprocess.Popen([
             '/sbin/dhclient', '-b', interface,
-        ], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        ], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, close_fds=True)
         output = proc.communicate()[0]
         if proc.returncode != 0:
             self.logger.error('Failed to run dhclient on {}: {}'.format(
