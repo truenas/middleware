@@ -5,6 +5,7 @@ import ipaddress
 import netif
 import os
 import re
+import signal
 import subprocess
 
 
@@ -85,40 +86,38 @@ class InterfacesService(Service):
             if a.af != netif.AddressFamily.LINK
         ])
 
-        dhclient_running = False
-        if data['int_dhcp']:
-
-            dhclient_pidfile = '/var/run/dhclient.{}.pid'.format(name)
-            dhclient_pid = None
-            if os.path.exists(dhclient_pidfile):
-                with open(dhclient_pidfile, 'r') as f:
-                    try:
-                        dhclient_pid = int(f.read().strip())
-                    except ValueError:
-                        pass
-
-            if dhclient_pid:
+        dhclient_pidfile = '/var/run/dhclient.{}.pid'.format(name)
+        dhclient_pid = None
+        if os.path.exists(dhclient_pidfile):
+            with open(dhclient_pidfile, 'r') as f:
                 try:
-                    os.kill(dhclient_pid, 0)
-                except OSError:
+                    dhclient_pid = int(f.read().strip())
+                except ValueError:
                     pass
-                else:
-                    dhclient_running = True
 
-            if dhclient_running:
-                dhclient_leasesfile = '/var/db/dhclient.leases.{}'.format(name)
-                if os.path.exists(dhclient_leasesfile):
-                    with open(dhclient_leasesfile, 'r') as f:
-                        dhclient_leases = f.read()
-                    reg_address = re.search(r'fixed-address\s+(.+);', dhclient_leases)
-                    reg_netmask = re.search(r'option subnet-mask\s+(.+);', dhclient_leases)
-                    if reg_address and reg_netmask:
-                        addrs_database.add(self.alias_to_addr({
-                            'address': reg_address.group(1),
-                            'netmask': reg_netmask.group(1),
-                        }))
-                    else:
-                        self.logger.info('Unable to get address from dhclient')
+        dhclient_running = False
+        if dhclient_pid:
+            try:
+                os.kill(dhclient_pid, 0)
+            except OSError:
+                pass
+            else:
+                dhclient_running = True
+
+        if dhclient_running and data['int_dhcp']:
+            dhclient_leasesfile = '/var/db/dhclient.leases.{}'.format(name)
+            if os.path.exists(dhclient_leasesfile):
+                with open(dhclient_leasesfile, 'r') as f:
+                    dhclient_leases = f.read()
+                reg_address = re.search(r'fixed-address\s+(.+);', dhclient_leases)
+                reg_netmask = re.search(r'option subnet-mask\s+(.+);', dhclient_leases)
+                if reg_address and reg_netmask:
+                    addrs_database.add(self.alias_to_addr({
+                        'address': reg_address.group(1),
+                        'netmask': reg_netmask.group(1),
+                    }))
+                else:
+                    self.logger.info('Unable to get address from dhclient')
         else:
             if data['int_ipv4address']:
                 addrs_database.add(self.alias_to_addr({
@@ -160,7 +159,8 @@ class InterfacesService(Service):
                     'vhid': data['int_vhid'],
                 }))
 
-        iface.carp_config = netif.CarpConfig(carp_vhid, None, key=carp_pass)
+        if carp_vhid:
+            iface.carp_config = netif.CarpConfig(carp_vhid, None, key=carp_pass)
 
         # Remove addresses configured and not in database
         for addr in (addrs_configured - addrs_database):
@@ -178,6 +178,8 @@ class InterfacesService(Service):
         # If dhclient is not running and dhcp is configured, lets start it
         if not dhclient_running and data['int_dhcp']:
             gevent.spawn(self.dhclient_start, data['int_interface'])
+        elif dhclient_running and not data['int_dhcp']:
+            os.kill(dhclient_pid, signal.SIGTERM)
 
     @private
     def dhclient_start(self, interface):
