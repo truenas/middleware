@@ -109,6 +109,7 @@ class InterfacesService(Service):
                     pass
 
         dhclient_running = False
+        has_ipv6 = None
         if dhclient_pid:
             try:
                 os.kill(dhclient_pid, 0)
@@ -142,6 +143,7 @@ class InterfacesService(Service):
                     'address': data['int_ipv6address'],
                     'netmask': data['int_v6netmaskbit'],
                 }))
+                has_ipv6 = True
 
         carp_vhid = carp_pass = None
         if data['int_vip']:
@@ -164,6 +166,7 @@ class InterfacesService(Service):
                     'address': alias['alias_v6address'],
                     'netmask': alias['alias_v6netmaskbit'],
                 }))
+                has_ipv6 = True
 
             if alias['alias_vip']:
                 addrs_database.add(self.alias_to_addr({
@@ -174,6 +177,13 @@ class InterfacesService(Service):
 
         if carp_vhid:
             iface.carp_config = netif.CarpConfig(carp_vhid, None, key=carp_pass)
+
+        if has_ipv6:
+            iface.nd6_flags = iface.nd6_flags - {netif.NeighborDiscoveryFlags.IFDISABLED}
+            iface.nd6_flags = iface.nd6_flags | {netif.NeighborDiscoveryFlags.AUTO_LINKLOCAL}
+        else:
+            iface.nd6_flags = iface.nd6_flags | {netif.NeighborDiscoveryFlags.IFDISABLED}
+            iface.nd6_flags = iface.nd6_flags - {netif.NeighborDiscoveryFlags.AUTO_LINKLOCAL}
 
         # Remove addresses configured and not in database
         for addr in (addrs_configured - addrs_database):
@@ -193,6 +203,11 @@ class InterfacesService(Service):
             gevent.spawn(self.dhclient_start, data['int_interface'])
         elif dhclient_running and not data['int_dhcp']:
             os.kill(dhclient_pid, signal.SIGTERM)
+
+        if data['int_ipv6auto']:
+            iface.nd6_flags = iface.nd6_flags | {netif.NeighborDiscoveryFlags.ACCEPT_RTADV}
+        else:
+            iface.nd6_flags = iface.nd6_flags - {netif.NeighborDiscoveryFlags.ACCEPT_RTADV}
 
     @private
     def dhclient_start(self, interface):
