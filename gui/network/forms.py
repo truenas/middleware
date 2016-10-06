@@ -799,6 +799,11 @@ class LAGGInterfaceMemberForm(ModelForm):
                 choices.NICChoices(nolagg=True, novlan=True)
             )
 
+    def save(self, *args, **kwargs):
+        obj = super(LAGGInterfaceMemberForm, self).save(*args, **kwargs)
+        notifier().start("network")
+        return obj
+
 
 class StaticRouteForm(ModelForm):
 
