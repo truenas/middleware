@@ -19,6 +19,8 @@ from freenasUI.support.utils import get_license, new_ticket
 
 log = logging.getLogger('system.alert')
 
+SENTINEL = "/data/noticket"
+
 
 def alert_node():
     from freenasUI.middleware.notifier import notifier
@@ -237,8 +239,8 @@ class AlertPlugins:
         _n = notifier()
         # Skip for standby node
         if (
-            not _n.is_freenas() and _n.failover_licensed()
-            and _n.failover_status() != 'MASTER'
+            not _n.is_freenas() and _n.failover_licensed() and
+            _n.failover_status() != 'MASTER'
         ):
             return []
 
@@ -295,7 +297,8 @@ class AlertPlugins:
                                 qs[0].timestamp = alert.getTimestamp()
                                 qs[0].save()
                             else:
-                                mAlert.objects.create(node=node, message_id=alert.getId(), timestamp=alert.getTimestamp(), dismiss=False)
+                                mAlert.objects.create(node=node, message_id=alert.getId(),
+                                                      timestamp=alert.getTimestamp(), dismiss=False)
 
                         if alert.getId() in dismisseds:
                             alert.setDismiss(True)
@@ -333,7 +336,7 @@ class AlertPlugins:
                 ])
                 if hardware == lasthardware:
                     hardware = []
-            if hardware:
+            if hardware and not os.path.exists(SENTINEL):
                 self.ticket(hardware)
 
         with open(self.ALERT_FILE, 'w') as f:
