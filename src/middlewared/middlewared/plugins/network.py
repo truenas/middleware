@@ -1,9 +1,11 @@
 from middlewared.service import Service, private
 
+import gevent
 import ipaddress
 import netif
 import os
 import re
+import subprocess
 
 
 class InterfacesService(Service):
@@ -83,6 +85,7 @@ class InterfacesService(Service):
             if a.af != netif.AddressFamily.LINK
         ])
 
+        dhclient_running = False
         if data['int_dhcp']:
 
             dhclient_pidfile = '/var/run/dhclient.{}.pid'.format(name)
@@ -94,7 +97,6 @@ class InterfacesService(Service):
                     except ValueError:
                         pass
 
-            dhclient_running = False
             if dhclient_pid:
                 try:
                     os.kill(dhclient_pid, 0)
@@ -172,3 +174,17 @@ class InterfacesService(Service):
         # Add addresses in database and not configured
         for addr in (addrs_database - addrs_configured):
             iface.add_address(addr)
+
+        # If dhclient is not running and dhcp is configured, lets start it
+        if not dhclient_running and data['int_dhcp']:
+            gevent.spawn(self.dhclient_start, data['int_interface'])
+
+    @private
+    def dhclient_start(self, interface):
+        proc = subprocess.Popen([
+            '/sbin/dhclient', '-b', interface,
+        ], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        output = proc.communicate()[0]
+        self.logger.error('Failed to run dhclient on {}: {}'.format(
+            interface, output,
+        ))
