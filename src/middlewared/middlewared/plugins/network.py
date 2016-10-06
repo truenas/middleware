@@ -74,6 +74,11 @@ class InterfacesService(Service):
                     for address in iface.addresses:
                         iface.remove_address(address)
 
+                    # Kill dhclient if its running for this interface
+                    dhclient_running, dhclient_pid = self.dhclient_status(name)
+                    if dhclient_running:
+                        os.kill(dhclient_pid, signal.SIGTERM)
+
     @private
     def alias_to_addr(self, alias):
         addr = netif.InterfaceAddress()
