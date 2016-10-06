@@ -120,7 +120,6 @@ from freenasUI.common.warden import (Warden, WardenJail,
                                      WARDEN_STATUS_RUNNING)
 from freenasUI.freeadmin.hook import HookMetaclass
 from freenasUI.middleware import zfs
-from freenasUI.middleware.client import client
 from freenasUI.middleware.encryption import random_wipe
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.multipath import Multipath
@@ -475,8 +474,27 @@ class notifier:
         self._system("/usr/sbin/service ix-sysctl reload")
 
     def _start_network(self):
-        with client as c:
-            c.call('interfaces.sync')
+        self._system("/usr/sbin/service rtsold stop")
+        from freenasUI.network.models import Alias, Interfaces
+        qs = Interfaces.objects.filter(int_ipv6auto=True).exists()
+        qs2 = Interfaces.objects.exclude(int_ipv6address='').exists()
+        qs3 = Alias.objects.exclude(alias_v6address='').exists()
+        if qs or qs2 or qs3:
+            try:
+                auto_linklocal = self.sysctl("net.inet6.ip6.auto_linklocal")
+            except AssertionError:
+                auto_linklocal = 0
+            if auto_linklocal == 0:
+                self._system("/sbin/sysctl net.inet6.ip6.auto_linklocal=1")
+                self._system("/usr/sbin/service autolink auto_linklocal quietstart")
+                self._system("/usr/sbin/service netif stop")
+        interfaces = self._pipeopen("ifconfig -l").communicate()[0].strip()
+        interface_list = interfaces.split(" ")
+        for interface in interface_list:
+            if interface.startswith("vlan") or interface.startswith("carp") or interface.startswith("lagg"):
+                self._system("ifconfig %s destroy" % interface)
+        self._system("/etc/netstart")
+        self._system("/usr/sbin/service rtsold start")
 
     def _stop_jails(self):
         from freenasUI.jails.models import Jails
