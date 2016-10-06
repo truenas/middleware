@@ -109,7 +109,7 @@ class InterfacesService(Service):
                     pass
 
         dhclient_running = False
-        has_ipv6 = None
+        has_ipv6 = data['int_ipv6auto'] or False
         if dhclient_pid:
             try:
                 os.kill(dhclient_pid, 0)
@@ -206,6 +206,11 @@ class InterfacesService(Service):
 
         if data['int_ipv6auto']:
             iface.nd6_flags = iface.nd6_flags | {netif.NeighborDiscoveryFlags.ACCEPT_RTADV}
+            subprocess.Popen(
+                ['/etc/rc.d/rtsold', 'onestart'],
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            ).wait()
         else:
             iface.nd6_flags = iface.nd6_flags - {netif.NeighborDiscoveryFlags.ACCEPT_RTADV}
 
