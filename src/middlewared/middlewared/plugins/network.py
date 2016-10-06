@@ -230,6 +230,7 @@ class InterfacesService(Service):
             '/sbin/dhclient', '-b', interface,
         ], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         output = proc.communicate()[0]
-        self.logger.error('Failed to run dhclient on {}: {}'.format(
-            interface, output,
-        ))
+        if proc.returncode != 0:
+            self.logger.error('Failed to run dhclient on {}: {}'.format(
+                interface, output,
+            ))
