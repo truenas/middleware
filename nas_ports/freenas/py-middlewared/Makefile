@@ -20,7 +20,6 @@ RUN_DEPENDS=	${PYTHON_PKGNAMEPREFIX}gevent>0:${PORTSDIR}/devel/py-gevent \
 		${PYTHON_PKGNAMEPREFIX}Flask>0:${PORTSDIR}/www/py-flask \
 		${PYTHON_PKGNAMEPREFIX}boto3>0:${PORTSDIR}/devel/py-boto3 \
 		${PYTHON_PKGNAMEPREFIX}netif>0:${PORTSDIR}/net/py-netif \
-		${PYTHON_PKGNAMEPREFIX}ucl>0:${PORTSDIR}/textproc/py-ucl \
 		rclone>0:${PORTSDIR}/net/rclone
 
 USE_RC_SUBR=	middlewared
