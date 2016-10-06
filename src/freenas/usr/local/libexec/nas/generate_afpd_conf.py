@@ -44,16 +44,25 @@ def main():
         map_acls_mode = True
 
     if map_acls_mode:
-        ad = client.call('notifier.directoryservice', 'AD')
+        ad = Struct(client.call('notifier.directoryservice', 'AD'))
 
         cf_contents.append("\tldap auth method = %s\n" % "simple")
         cf_contents.append("\tldap auth dn = %s\n" % ad.binddn)
         cf_contents.append("\tldap auth pw = %s\n" % ad.bindpw)
         cf_contents.append("\tldap server = %s\n" % ad.domainname)
-        cf_contents.append("\tldap userbase = %s\n" % ad.userdn)
+
+        # This should be configured when using this option
+        if ad.userdn:
+            cf_contents.append("\tldap userbase = %s\n" % ad.userdn)
+
         cf_contents.append("\tldap userscope = %s\n" % "sub")
-        cf_contents.append("\tldap groupbase = %s\n" % ad.groupdn)
+
+        # This should be configured when using this option
+        if ad.groupdn: 
+            cf_contents.append("\tldap groupbase = %s\n" % ad.groupdn)
+
         cf_contents.append("\tldap groupscope = %s\n" % "sub")
+
         cf_contents.append("\tldap user filter = %s\n" % "objectclass=user")
         cf_contents.append("\tldap group filter = %s\n" % "objectclass=group")
         cf_contents.append("\tldap uuid attr = %s\n" % "objectGUID")

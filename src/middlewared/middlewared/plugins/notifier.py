@@ -102,7 +102,7 @@ class NotifierService(Service):
         for i in (
             'netbiosname', 'keytab_file', 'keytab_principal', 'domainname',
             'use_default_domain', 'dchost', 'basedn', 'binddn', 'bindpw',
-            'ssl', 'certfile', 'id',
+            'userdn', 'groupdn', 'ssl', 'certfile', 'id',
             'ad_idmap_backend', 'ds_type',
             'krb_realm', 'krbname', 'kpwdname',
             'krb_kdc', 'krb_admin_server', 'krb_kpasswd_server',
