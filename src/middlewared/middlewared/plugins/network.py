@@ -57,9 +57,22 @@ class InterfacesService(Service):
                 iface.unconfigure()
                 iface.configure(vlan['vlan_pint'], vlan['vlan_tag'])
 
-        interfaces = self.middleware.call('datastore.query', 'network.interfaces')
+        interfaces = [i['int_interface'] for i in self.middleware.call('datastore.query', 'network.interfaces')]
         for interface in interfaces:
-            self.sync_interface(interface['int_interface'])
+            self.sync_interface(interface)
+
+        # Destroy interfaces which are not in database
+        for name, iface in list(netif.list_interfaces().items()):
+            if name.startswith(('lo', 'pflog', 'pfsync', 'tun', 'tap')):
+                continue
+            elif name.startswith(('lagg', 'vlan')):
+                if name not in interfaces:
+                    netif.destroy_interface(name)
+            else:
+                if name not in interfaces:
+                    # Physical interface not in database lose addresses
+                    for address in iface.addresses:
+                        iface.remove_address(address)
 
     @private
     def alias_to_addr(self, alias):
