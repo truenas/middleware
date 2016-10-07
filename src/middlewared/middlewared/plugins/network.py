@@ -21,6 +21,7 @@ class InterfacesService(Service):
         laggs = self.middleware.call('datastore.query', 'network.lagginterface')
         for lagg in laggs:
             name = lagg['lagg_interface']['int_name']
+            self.logger.info('Setting up {}'.format(name))
             try:
                 iface = netif.get_interface(name)
             except KeyError:
@@ -54,6 +55,7 @@ class InterfacesService(Service):
 
         vlans = self.middleware.call('datastore.query', 'network.vlan')
         for vlan in vlans:
+            self.logger.info('Setting up {}'.format(vlan['vlan_vint']))
             try:
                 iface = netif.get_interface(vlan['vlan_vint'])
             except KeyError:
@@ -71,6 +73,7 @@ class InterfacesService(Service):
                 self.logger.warn('Could not find {} from {}'.format(iface.parent, vlan['vlan_vint']))
 
         interfaces = [i['int_interface'] for i in self.middleware.call('datastore.query', 'network.interfaces')]
+        self.logger.info('Interfaces in database: {}'.format(', '.join(interfaces) or 'NONE'))
         for interface in interfaces:
             self.sync_interface(interface)
 
@@ -211,8 +214,10 @@ class InterfacesService(Service):
 
         # If dhclient is not running and dhcp is configured, lets start it
         if not dhclient_running and data['int_dhcp']:
+            self.logger.debug('Starting dhclient for {}'.format(name))
             gevent.spawn(self.dhclient_start, data['int_interface'])
         elif dhclient_running and not data['int_dhcp']:
+            self.logger.debug('Killing dhclient for {}'.format(name))
             os.kill(dhclient_pid, signal.SIGTERM)
 
         if data['int_ipv6auto']:
