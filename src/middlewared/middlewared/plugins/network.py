@@ -9,6 +9,34 @@ import signal
 import subprocess
 
 
+def dhclient_status(interface):
+    pidfile = '/var/run/dhclient.{}.pid'.format(interface)
+    pid = None
+    if os.path.exists(pidfile):
+        with open(pidfile, 'r') as f:
+            try:
+                pid = int(f.read().strip())
+            except ValueError:
+                pass
+
+    running = False
+    if pid:
+        try:
+            os.kill(pid, 0)
+        except OSError:
+            pass
+        else:
+            running = True
+    return running, pid
+
+
+def dhclient_leases(name):
+    leasesfile = '/var/db/dhclient.leases.{}'.format(name)
+    if os.path.exists(leasesfile):
+        with open(leasesfile, 'r') as f:
+            return f.read()
+
+
 class InterfacesService(Service):
 
     def sync(self):
@@ -101,7 +129,7 @@ class InterfacesService(Service):
                     iface.remove_address(address)
 
                 # Kill dhclient if its running for this interface
-                dhclient_running, dhclient_pid = self.dhclient_status(name)
+                dhclient_running, dhclient_pid = dhclient_status(name)
                 if dhclient_running:
                     os.kill(dhclient_pid, signal.SIGTERM)
 
@@ -146,14 +174,12 @@ class InterfacesService(Service):
             alias_ipv4_field = 'alias_v4address'
             alias_ipv6_field = 'alias_v6address'
 
-        dhclient_running, dhclient_pid = self.dhclient_status(name)
+        dhclient_running, dhclient_pid = dhclient_status(name)
         if dhclient_running and data['int_dhcp']:
-            dhclient_leasesfile = '/var/db/dhclient.leases.{}'.format(name)
-            if os.path.exists(dhclient_leasesfile):
-                with open(dhclient_leasesfile, 'r') as f:
-                    dhclient_leases = f.read()
-                reg_address = re.search(r'fixed-address\s+(.+);', dhclient_leases)
-                reg_netmask = re.search(r'option subnet-mask\s+(.+);', dhclient_leases)
+            leases = dhclient_leases(name)
+            if leases:
+                reg_address = re.search(r'fixed-address\s+(.+);', leases)
+                reg_netmask = re.search(r'option subnet-mask\s+(.+);', leases)
                 if reg_address and reg_netmask:
                     addrs_database.add(self.alias_to_addr({
                         'address': reg_address.group(1),
@@ -251,27 +277,6 @@ class InterfacesService(Service):
             iface.nd6_flags = iface.nd6_flags - {netif.NeighborDiscoveryFlags.ACCEPT_RTADV}
 
     @private
-    def dhclient_status(self, interface):
-        pidfile = '/var/run/dhclient.{}.pid'.format(interface)
-        pid = None
-        if os.path.exists(pidfile):
-            with open(pidfile, 'r') as f:
-                try:
-                    pid = int(f.read().strip())
-                except ValueError:
-                    pass
-
-        running = False
-        if pid:
-            try:
-                os.kill(pid, 0)
-            except OSError:
-                pass
-            else:
-                running = True
-        return running, pid
-
-    @private
     def dhclient_start(self, interface):
         proc = subprocess.Popen([
             '/sbin/dhclient', '-b', interface,
@@ -281,3 +286,37 @@ class InterfacesService(Service):
             self.logger.error('Failed to run dhclient on {}: {}'.format(
                 interface, output,
             ))
+
+
+class RoutesService(Service):
+
+    def sync(self):
+        config = self.middleware.call('datastore.query', 'network.globalconfiguration', [], {'get': True})
+
+        ipv4_gateway = config['gc_ipv4gateway'] or None
+        if not ipv4_gateway:
+            interface = self.middleware.call('datastore.query', 'network.interfaces', [('int_dhcp', '=', True)])
+            if interface:
+                interface = interface[0]
+                dhclient_running, dhclient_pid = dhclient_status(interface['int_interface'])
+                if dhclient_running:
+                    leases = dhclient_leases(interface['int_interface'])
+                    reg_routers = re.search(r'option routers (.+);', leases or '')
+                    if reg_routers:
+                        # Make sure to get first route only
+                        ipv4_gateway = reg_routers.group(1).split(' ')[0]
+        routing_table = netif.RoutingTable()
+        if ipv4_gateway:
+            ipv4_gateway = netif.Route('0.0.0.0', '0.0.0.0', ipaddress.ip_address(ipv4_gateway))
+            ipv4_gateway.flags.add(netif.RouteFlags.STATIC)
+            ipv4_gateway.flags.add(netif.RouteFlags.GATEWAY)
+            # If there is a gateway but there is none configured, add it
+            # Otherwise change it
+            if not routing_table.default_route_ipv4:
+                routing_table.add(ipv4_gateway)
+            elif ipv4_gateway != routing_table.default_route_ipv4:
+                routing_table.change(ipv4_gateway)
+        elif routing_table.default_route_ipv4:
+            # If there is no gateway in database but one is configured
+            # remove it
+            routing_table.delete(routing_table.default_route_ipv4)
