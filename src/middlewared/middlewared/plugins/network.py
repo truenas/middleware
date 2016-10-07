@@ -201,6 +201,7 @@ class InterfacesService(Service):
                 str(addr.address).startswith('fe80::')
             ):
                 continue
+            self.logger.debug('{}: removing {}'.format(name, addr))
             iface.remove_address(addr)
 
         # carp must be configured after removing addresses
@@ -210,6 +211,7 @@ class InterfacesService(Service):
 
         # Add addresses in database and not configured
         for addr in (addrs_database - addrs_configured):
+            self.logger.debug('{}: adding {}'.format(name, addr))
             iface.add_address(addr)
 
         # If dhclient is not running and dhcp is configured, lets start it
