@@ -169,9 +169,6 @@ class InterfacesService(Service):
                     'vhid': data['int_vhid'],
                 }))
 
-        if carp_vhid:
-            iface.carp_config = [netif.CarpConfig(carp_vhid, None, key=carp_pass)]
-
         if has_ipv6:
             iface.nd6_flags = iface.nd6_flags - {netif.NeighborDiscoveryFlags.IFDISABLED}
             iface.nd6_flags = iface.nd6_flags | {netif.NeighborDiscoveryFlags.AUTO_LINKLOCAL}
@@ -187,6 +184,11 @@ class InterfacesService(Service):
             ):
                 continue
             iface.remove_address(addr)
+
+        # carp must be configured after removing addresses
+        # in case removing the address removes the carp
+        if carp_vhid:
+            iface.carp_config = [netif.CarpConfig(carp_vhid, key=carp_pass)]
 
         # Add addresses in database and not configured
         for addr in (addrs_database - addrs_configured):
