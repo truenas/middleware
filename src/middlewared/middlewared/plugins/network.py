@@ -29,9 +29,12 @@ class InterfacesService(Service):
                 iface = netif.get_interface(name)
 
             if lagg['lagg_protocol'] == 'fec':
-                iface.protocol = netif.AggregationProtocol.ETHERCHANNEL
+                protocol = netif.AggregationProtocol.ETHERCHANNEL
             else:
-                iface.protocol = getattr(netif.AggregationProtocol, lagg['lagg_protocol'].upper())
+                protocol = getattr(netif.AggregationProtocol, lagg['lagg_protocol'].upper())
+            if iface.protocol != protocol:
+                self.logger.info('{}: changing protocol to {}'.format(name, protocol))
+                iface.protocol = protocol
 
             members_configured = set(p[0] for p in iface.ports)
             members_database = set()
