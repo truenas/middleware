@@ -81,21 +81,23 @@ class InterfacesService(Service):
 
         # Destroy interfaces which are not in database
         for name, iface in list(netif.list_interfaces().items()):
+            # Skip internal interfaces
             if name.startswith(internal_interfaces):
                 continue
+            # Skip interfaces in database
+            if name in interfaces:
+                continue
             elif name.startswith(('lagg', 'vlan')):
-                if name not in interfaces:
-                    netif.destroy_interface(name)
+                netif.destroy_interface(name)
             else:
-                if name not in interfaces:
-                    # Physical interface not in database lose addresses
-                    for address in iface.addresses:
-                        iface.remove_address(address)
+                # Physical interface not in database lose addresses
+                for address in iface.addresses:
+                    iface.remove_address(address)
 
-                    # Kill dhclient if its running for this interface
-                    dhclient_running, dhclient_pid = self.dhclient_status(name)
-                    if dhclient_running:
-                        os.kill(dhclient_pid, signal.SIGTERM)
+                # Kill dhclient if its running for this interface
+                dhclient_running, dhclient_pid = self.dhclient_status(name)
+                if dhclient_running:
+                    os.kill(dhclient_pid, signal.SIGTERM)
 
     @private
     def alias_to_addr(self, alias):
