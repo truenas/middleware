@@ -4736,12 +4736,12 @@ class notifier:
         disk.disk_enabled = True
         geom = doc.xpath("//class[name = 'DISK']//geom[name = '%s']" % devname)
         if len(geom) > 0:
-            serial = geom[0].xpath("./provider/config/ident")
-            if len(serial) > 0:
-                disk.disk_serial = serial[0].text
-            mediasize = geom[0].xpath("./provider/mediasize")
-            if len(mediasize) > 0:
-                disk.disk_size = mediasize[0].text
+            v = geom[0].xpath("./provider/config/ident")
+            if len(v) > 0:
+                disk.disk_serial = v[0].text
+            v = geom[0].xpath("./provider/mediasize")
+            if len(v) > 0:
+                disk.disk_size = v[0].text
         if not disk.disk_serial:
             disk.disk_serial = self.serial_from_device(devname) or ''
         reg = RE_DSKNAME.search(devname)
@@ -4790,19 +4790,24 @@ class notifier:
                 disk.disk_subsystem = reg.group(1)
                 disk.disk_number = int(reg.group(2))
 
+            serial = ''
             geom = doc.xpath("//class[name = 'DISK']//geom[name = '%s']" % devname)
             if len(geom) > 0:
-                serial = geom[0].xpath("./provider/config/ident")
-                if len(serial) > 0:
-                    disk.disk_serial = serial[0].text
-                mediasize = geom[0].xpath("./provider/mediasize")
-                if len(mediasize) > 0:
-                    disk.disk_size = mediasize[0].text
+                v = geom[0].xpath("./provider/config/ident")
+                if len(v) > 0:
+                    disk.disk_serial = v[0].text
+                    serial = v[0].text
+                v = geom[0].xpath("./provider/config/lunid")
+                if len(v) > 0:
+                    serial += v[0].text
+                v = geom[0].xpath("./provider/mediasize")
+                if len(v) > 0:
+                    disk.disk_size = v[0].text
             if not disk.disk_serial:
-                disk.disk_serial = self.serial_from_device(devname) or ''
+                serial = disk.disk_serial = self.serial_from_device(devname) or ''
 
-            if disk.disk_serial:
-                serials.append(disk.disk_serial)
+            if serial:
+                serials.append(serial)
 
             self.sync_disk_extra(disk, add=False)
 
@@ -4827,22 +4832,27 @@ class notifier:
                     disk = Disk()
                     disk.disk_identifier = disk_identifier
                 disk.disk_name = devname
+                serial = ''
                 geom = doc.xpath("//class[name = 'DISK']//geom[name = '%s']" % devname)
                 if len(geom) > 0:
-                    serial = geom[0].xpath("./provider/config/ident")
-                    if len(serial) > 0:
-                        disk.disk_serial = serial[0].text
-                    mediasize = geom[0].xpath("./provider/mediasize")
-                    if len(mediasize) > 0:
-                        disk.disk_size = mediasize[0].text
+                    v = geom[0].xpath("./provider/config/ident")
+                    if len(v) > 0:
+                        disk.disk_serial = v[0].text
+                        serial = v[0].text
+                    v = geom[0].xpath("./provider/config/lunid")
+                    if len(v) > 0:
+                        serial += v[0].text
+                    v = geom[0].xpath("./provider/mediasize")
+                    if len(v) > 0:
+                        disk.disk_size = v[0].text
                 if not disk.disk_serial:
-                    disk.disk_serial = self.serial_from_device(devname) or ''
-                if disk.disk_serial:
-                    if disk.disk_serial in serials:
+                    serial = disk.disk_serial = self.serial_from_device(devname) or ''
+                if serial:
+                    if serial in serials:
                         # Probably dealing with multipath here, do not add another
                         continue
                     else:
-                        serials.append(disk.disk_serial)
+                        serials.append(serial)
                 reg = RE_DSKNAME.search(devname)
                 if reg:
                     disk.disk_subsystem = reg.group(1)
