@@ -61,9 +61,15 @@ class InterfacesService(Service):
         for interface in interfaces:
             self.sync_interface(interface)
 
+
+        internal_interfaces = ['lo', 'pflog', 'pfsync', 'tun', 'tap']
+        if not self.middleware.call('system.is_freenas'):
+            internal_interfaces.extend(self.middleware.call('notifier.failover_internal_interfaces') or [])
+        internal_interfaces = tuple(internal_interfaces)
+
         # Destroy interfaces which are not in database
         for name, iface in list(netif.list_interfaces().items()):
-            if name.startswith(('lo', 'pflog', 'pfsync', 'tun', 'tap')):
+            if name.startswith(internal_interfaces)
                 continue
             elif name.startswith(('lagg', 'vlan')):
                 if name not in interfaces:
