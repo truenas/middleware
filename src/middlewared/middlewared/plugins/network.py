@@ -45,6 +45,13 @@ class InterfacesService(Service):
             for member in (members_database - members_configured):
                 iface.add_port(member)
 
+            for port in iface.ports:
+                port_iface = netif.get_interface(port[0])
+                if port_iface:
+                    port_iface.up()
+                else:
+                    self.logger.warn('Could not find {} from {}'.format(port[0], name))
+
         vlans = self.middleware.call('datastore.query', 'network.vlan')
         for vlan in vlans:
             try:
@@ -56,6 +63,12 @@ class InterfacesService(Service):
             if iface.parent != vlan['vlan_pint'] or iface.tag != vlan['vlan_tag']:
                 iface.unconfigure()
                 iface.configure(vlan['vlan_pint'], vlan['vlan_tag'])
+
+            parent_iface = netif.get_interface(iface.parent)
+            if parent_iface:
+                parent_iface.up()
+            else:
+                self.logger.warn('Could not find {} from {}'.format(iface.parent, vlan['vlan_vint']))
 
         interfaces = [i['int_interface'] for i in self.middleware.call('datastore.query', 'network.interfaces')]
         for interface in interfaces:
