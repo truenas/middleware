@@ -307,7 +307,7 @@ class RoutesService(Service):
                         ipv4_gateway = reg_routers.group(1).split(' ')[0]
         routing_table = netif.RoutingTable()
         if ipv4_gateway:
-            ipv4_gateway = netif.Route('0.0.0.0', '0.0.0.0', ipaddress.ip_address(ipv4_gateway))
+            ipv4_gateway = netif.Route(u'0.0.0.0', u'0.0.0.0', ipaddress.ip_address(unicode(ipv4_gateway)))
             ipv4_gateway.flags.add(netif.RouteFlags.STATIC)
             ipv4_gateway.flags.add(netif.RouteFlags.GATEWAY)
             # If there is a gateway but there is none configured, add it
