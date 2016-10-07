@@ -170,7 +170,7 @@ class InterfacesService(Service):
                 }))
 
         if carp_vhid:
-            iface.carp_config = netif.CarpConfig(carp_vhid, None, key=carp_pass)
+            iface.carp_config = [netif.CarpConfig(carp_vhid, None, key=carp_pass)]
 
         if has_ipv6:
             iface.nd6_flags = iface.nd6_flags - {netif.NeighborDiscoveryFlags.IFDISABLED}
