@@ -132,6 +132,20 @@ class InterfacesService(Service):
 
         has_ipv6 = data['int_ipv6auto'] or False
 
+        if (
+            not self.middleware.call('system.is_freenas') and
+            self.middleware.call('notifier.failover_node') == 'B'
+        ):
+            ipv4_field = 'int_ipv4address_b'
+            ipv6_field = 'int_ipv6address_b'
+            alias_ipv4_field = 'alias_v4address_b'
+            alias_ipv6_field = 'alias_v6address_b'
+        else:
+            ipv4_field = 'int_ipv4address'
+            ipv6_field = 'int_ipv6address'
+            alias_ipv4_field = 'alias_v4address'
+            alias_ipv6_field = 'alias_v6address'
+
         dhclient_running, dhclient_pid = self.dhclient_status(name)
         if dhclient_running and data['int_dhcp']:
             dhclient_leasesfile = '/var/db/dhclient.leases.{}'.format(name)
@@ -148,14 +162,14 @@ class InterfacesService(Service):
                 else:
                     self.logger.info('Unable to get address from dhclient')
         else:
-            if data['int_ipv4address']:
+            if data[ipv4_field]:
                 addrs_database.add(self.alias_to_addr({
-                    'address': data['int_ipv4address'],
+                    'address': data[ipv4_field],
                     'netmask': data['int_v4netmaskbit'],
                 }))
-            if data['int_ipv6address']:
+            if data[ipv6_field]:
                 addrs_database.add(self.alias_to_addr({
-                    'address': data['int_ipv6address'],
+                    'address': data[ipv6_field],
                     'netmask': data['int_v6netmaskbit'],
                 }))
                 has_ipv6 = True
@@ -171,14 +185,14 @@ class InterfacesService(Service):
             carp_pass = data['int_pass'] or None
 
         for alias in aliases:
-            if alias['alias_v4address']:
+            if alias[alias_ipv4_field]:
                 addrs_database.add(self.alias_to_addr({
-                    'address': alias['alias_v4address'],
+                    'address': alias[alias_ipv4_field],
                     'netmask': alias['alias_v4netmaskbit'],
                 }))
-            if alias['alias_v6address']:
+            if alias[alias_ipv6_field]:
                 addrs_database.add(self.alias_to_addr({
-                    'address': alias['alias_v6address'],
+                    'address': alias[alias_ipv6_field],
                     'netmask': alias['alias_v6netmaskbit'],
                 }))
                 has_ipv6 = True
