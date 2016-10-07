@@ -4431,6 +4431,9 @@ class notifier:
 
         search = doc.xpath("//class[name = 'DISK']/geom[name = '%s']/provider/config/ident" % name)
         if len(search) > 0 and search[0].text:
+            search2 = doc.xpath("//class[name = 'DISK']/geom[name = '%s']/provider/config/lunid" % name)
+            if len(search2) > 0 and search2[0].text:
+                return "{serial_lunid}%s_%s" % (search[0].text, search2[0].text)
             return "{serial}%s" % search[0].text
 
         serial = self.serial_from_device(name)
@@ -4493,6 +4496,12 @@ class notifier:
                 serial = self.serial_from_device(devname)
                 if serial == value:
                     return devname
+            return None
+
+        elif tp == 'serial_lunid':
+            search = doc.xpath("//class[name = 'DISK']/geom/provider/config[concat(ident,'_',lunid) = '%s']/../../name" % value)
+            if len(search) > 0:
+                return search[0].text
             return None
 
         elif tp == 'devicename':
