@@ -137,6 +137,7 @@ ix_syslogd_start()
 				mkdir -p /var/log
 			fi
 		fi
+        /usr/local/bin/midclt call core.reconfigure_logging > /dev/null
 		return 0
 	fi
 
@@ -158,6 +159,8 @@ ix_syslogd_start()
 				mkdir -p /var/log
 			fi
 		fi
+
+        /usr/local/bin/midclt call core.reconfigure_logging > /dev/null
 
 		return 0
 	fi
@@ -215,6 +218,8 @@ ix_syslogd_start()
 
 		/usr/local/bin/rsync -avz /var/log/* ${mp}/log/ >/dev/null 2>&1
 	fi
+
+    /usr/local/bin/midclt call core.reconfigure_logging > /dev/null
 
 	if [ ! -L "/var/log" -o ! -e "/var/log" ]
 	then
