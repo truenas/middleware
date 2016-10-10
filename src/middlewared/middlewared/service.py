@@ -3,6 +3,7 @@ from collections import defaultdict
 import inspect
 import logging
 import re
+import sys
 
 from middlewared.schema import accepts, Int, Ref, Str
 from middlewared.utils import filter_list
@@ -212,3 +213,22 @@ class CoreService(Service):
     @accepts()
     def ping(self):
         return 'pong'
+
+    @private
+    def reconfigure_logging(self):
+        """
+        When /var/log gets moved because of system dataset
+        we need to make sure the log file is reopened because
+        of the new location
+        """
+        handler = logging._handlers.get('file')
+        if handler:
+            stream = handler.stream
+            handler.stream = handler._open()
+            if sys.stdout is stream:
+                sys.stdout = handler.stream
+                sys.stderr = handler.stream
+            try:
+                stream.close()
+            except:
+                pass
