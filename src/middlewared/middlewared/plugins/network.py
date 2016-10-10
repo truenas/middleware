@@ -165,7 +165,7 @@ class InterfacesService(Service):
             self.middleware.call('notifier.failover_node') == 'B'
         ):
             ipv4_field = 'int_ipv4address_b'
-            ipv6_field = 'int_ipv6address_b'
+            ipv6_field = 'int_ipv6address'
             alias_ipv4_field = 'alias_v4address_b'
             alias_ipv6_field = 'alias_v6address_b'
         else:
