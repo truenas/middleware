@@ -477,6 +477,7 @@ class notifier:
     def _start_network(self):
         with client as c:
             c.call('interfaces.sync')
+            c.call('routes.sync')
 
     def _stop_jails(self):
         from freenasUI.jails.models import Jails
