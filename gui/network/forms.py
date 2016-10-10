@@ -371,7 +371,6 @@ class InterfacesForm(ModelForm):
             s = _n.failover_rpc()
             s.notifier('sync_carp_ips', None, None)
         _n.start("network")
-        _n.reload("networkgeneral")
         super(InterfacesForm, self).done(*args, **kwargs)
 
 
