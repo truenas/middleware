@@ -411,7 +411,6 @@ class Alias(Model):
 
     def delete(self):
         super(Alias, self).delete()
-        notifier().stop("netif")
         notifier().start("network")
 
     class Meta:
