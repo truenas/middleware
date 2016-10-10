@@ -505,45 +505,6 @@ class notifier:
     def _restart_pbid(self):
         self._system_nolog("/usr/sbin/service pbid restart")
 
-    def ifconfig_alias(self, iface, oldip=None, newip=None, oldnetmask=None, newnetmask=None):
-        if not iface:
-            return False
-
-        cmd = "/sbin/ifconfig %s" % iface
-        if newip and newnetmask:
-            cmd += " alias %s/%s" % (newip, newnetmask)
-
-        elif newip:
-            cmd += " alias %s" % newip
-
-        else:
-            cmd = None
-
-        if cmd:
-            p = self._pipeopen(cmd)
-            if p.wait() != 0:
-                return False
-
-        cmd = "/sbin/ifconfig %s" % iface
-        if newip:
-            cmd += " -alias %s" % oldip
-            p = self._pipeopen(cmd)
-            if p.wait() != 0:
-                return False
-
-        if newnetmask and not newip:
-            cmd += " alias %s/%s" % (oldip, newnetmask)
-
-        else:
-            cmd = None
-
-        if cmd:
-            p = self._pipeopen(cmd)
-            if p.wait() != 0:
-                return False
-
-        return True
-
     def _reload_named(self):
         self._system("/usr/sbin/service named reload")
 
