@@ -319,10 +319,32 @@ class RoutesService(Service):
             # If there is a gateway but there is none configured, add it
             # Otherwise change it
             if not routing_table.default_route_ipv4:
+                self.logger.info('Adding IPv4 default route to {}'.format(ipv4_gateway.gateway))
                 routing_table.add(ipv4_gateway)
             elif ipv4_gateway != routing_table.default_route_ipv4:
+                self.logger.info('Changing IPv4 default route from {} to {}'.format(routing_table.default_route_ipv4.gateway, ipv4_gateway.gateway))
                 routing_table.change(ipv4_gateway)
         elif routing_table.default_route_ipv4:
             # If there is no gateway in database but one is configured
             # remove it
+            self.logger.info('Removing IPv4 default route')
             routing_table.delete(routing_table.default_route_ipv4)
+
+        ipv6_gateway = config['gc_ipv6gateway'] or None
+        if ipv6_gateway:
+            ipv6_gateway = netif.Route(u'::', u'::', ipaddress.ip_address(unicode(ipv6_gateway)))
+            ipv6_gateway.flags.add(netif.RouteFlags.STATIC)
+            ipv6_gateway.flags.add(netif.RouteFlags.GATEWAY)
+            # If there is a gateway but there is none configured, add it
+            # Otherwise change it
+            if not routing_table.default_route_ipv6:
+                self.logger.info('Adding IPv6 default route to {}'.format(ipv6_gateway.gateway))
+                routing_table.add(ipv6_gateway)
+            elif ipv6_gateway != routing_table.default_route_ipv6:
+                self.logger.info('Changing IPv6 default route from {} to {}'.format(routing_table.default_route_ipv6.gateway, ipv6_gateway.gateway))
+                routing_table.change(ipv6_gateway)
+        elif routing_table.default_route_ipv6:
+            # If there is no gateway in database but one is configured
+            # remove it
+            self.logger.info('Removing IPv6 default route')
+            routing_table.delete(routing_table.default_route_ipv6)
