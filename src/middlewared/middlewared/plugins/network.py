@@ -1,4 +1,5 @@
 from middlewared.service import Service, private
+from middlewared.utils import Popen
 
 import gevent
 import ipaddress
@@ -266,7 +267,7 @@ class InterfacesService(Service):
         # Apply interface options specified in GUI
         if data['int_options']:
             self.logger.info('{}: applying {}'.format(name, data['int_options']))
-            proc = subprocess.Popen('/sbin/ifconfig {} {}'.format(name, data['int_options']), shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=True)
+            proc = Popen('/sbin/ifconfig {} {}'.format(name, data['int_options']), shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=True)
             err = proc.communicate()[1]
             if err:
                 self.logger.info('{}: error applying: {}'.format(name, err))
@@ -281,7 +282,7 @@ class InterfacesService(Service):
 
         if data['int_ipv6auto']:
             iface.nd6_flags = iface.nd6_flags | {netif.NeighborDiscoveryFlags.ACCEPT_RTADV}
-            subprocess.Popen(
+            Popen(
                 ['/etc/rc.d/rtsold', 'onestart'],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
@@ -292,7 +293,7 @@ class InterfacesService(Service):
 
     @private
     def dhclient_start(self, interface):
-        proc = subprocess.Popen([
+        proc = Popen([
             '/sbin/dhclient', '-b', interface,
         ], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, close_fds=True)
         output = proc.communicate()[0]

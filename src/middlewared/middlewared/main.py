@@ -2,6 +2,7 @@ from gevent import monkey
 monkey.patch_all()
 
 from .client import ejson as json
+from .utils import Popen
 from collections import OrderedDict, defaultdict
 from client.protocol import DDPProtocol
 from daemon import DaemonContext
@@ -72,7 +73,7 @@ class Application(WebSocketApplication):
 
         remote = '{0}:{1}'.format(remote_addr, remote_port)
 
-        proc = subprocess.Popen([
+        proc = Popen([
             '/usr/bin/sockstat', '-46c', '-p', remote_port
         ], stdout=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=True)
         for line in proc.communicate()[0].strip().splitlines()[1:]:
