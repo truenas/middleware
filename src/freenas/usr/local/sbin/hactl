@@ -10,27 +10,17 @@ import argparse
 import os
 import sys
 
-sys.path.extend([
-    '/usr/local/www',
-    '/usr/local/www/freenasUI',
-])
-
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'freenasUI.settings')
-
-# Make sure to load all modules
-from django.db.models.loading import cache
-cache.get_apps()
-
-from freenasUI.middleware.notifier import notifier
-from freenasUI.failover.models import Failover
-from freenasUI.failover.utils import failover_disabled_reasons
-_not = notifier()
+from middlewared.client import Client
 
 
 def main(command, quiet):
-    fo_exists = Failover.objects.all().exists()
+    client = Client()
+    failover = client.call('datastore.query', 'failover.failover')
+    fo_exists = len(failover) > 0
+    if fo_exists:
+        failover = failover[0]
     if command == "status":
-        ret = _not.failover_status()
+        ret = client.call('notifier.failover_status')
         if ret == "MASTER":
             print "Node status: Active"
         elif ret == "BACKUP":
@@ -49,7 +39,7 @@ def main(command, quiet):
             print "Node status: Passive (Master mode unreachable)"
 
         if fo_exists:
-            ret = failover_disabled_reasons()
+            ret = client.call('notifier.failover_disabled_reasons')
             if 'NO_FAILOVER' in ret:
                 print "Failover status: Administratively Disabled"
             elif 'NO_PONG' in ret:
@@ -66,19 +56,14 @@ def main(command, quiet):
             print("Not configured for failover. "
                   "There's nothing to enable here.")
             sys.exit(7)
-        if Failover.objects.all()[0].disabled is True:
-            s = _not.failover_rpc()
+        if failover['disabled'] is True:
             try:
-                if s is None:
-                    raise ValueError
-                s.hactl('enable')
-                for item in Failover.objects.all():
-                    item.disabled = False
-                    item.save()
+                client.call('notifier.failover_remote_hactl', 'enable')
+                client.call('datastore.update', 'failover.failover', failover['id'], {'disabled': False})
                 os.system("/usr/sbin/service ix-devd start")
                 print "Failover enabled."
                 sys.exit(0)
-            except Exception,e:
+            except Exception as e:
                 print "Unable to contact remote node.  Failover not enabled."
                 print e
                 sys.exit(2)
@@ -90,32 +75,25 @@ def main(command, quiet):
             print("Not configured for failover. "
                   "There's nothing to disable here.")
             sys.exit(8)
-        if Failover.objects.all()[0].disabled is False:
-            s = _not.failover_rpc()
-            if (_not.failover_status() == "MASTER" or
-                    _not.failover_status() == "IMPORTING"):
+        if failover['disabled'] is False:
+            failover_status = client.call('notifier.failover_status')
+            if failover_status in ("MASTER", "IMPORTING"):
                 status = "master"
                 try:
-                    ret = s.hactl('disable', ['passive'])
+                    ret = client.call('notifier.failover_remote_hactl', 'disable', ['passive'])
                 except:
                     ret = False
             else:
                 status = "passive"
                 try:
-                    ret = s.hactl('disable', ['active'])
+                    ret = client.call('notifier.failover_remote_hactl', 'disable', ['active'])
                 except:
                     ret = False
             if ret is not False:
-                for item in Failover.objects.all():
-                    item.disabled = True
-                    if status == "master":
-                        item.master = True
-                    else:
-                        item.master = False
-                    item.save()
-                    print "Failover disabled."
-                    os.system("/usr/sbin/service ix-devd start")
-                    sys.exit(0)
+                client.call('datastore.update', 'failover.failover', failover['id'], {'disabled': True, 'master': True if status == "master" else False})
+                print "Failover disabled."
+                os.system("/usr/sbin/service ix-devd start")
+                sys.exit(0)
             else:
                 print "Unable to contact remote node.  Failover not disabled."
                 sys.exit(3)
@@ -123,7 +101,7 @@ def main(command, quiet):
             print "Failover not enabled.  Cannot disable!"
 
     elif command == "takeover":
-        ret = _not.failover_status()
+        ret = client.call('notifier.failover_status')
         if ret != "BACKUP":
             print "Cannot takeover volume, not passive"
             sys.exit(5)
@@ -138,9 +116,9 @@ def main(command, quiet):
                 sys.exit(1)
             else:
                 continue
-        _not.failover_force_master()
+        client.call('notifier.failover_force_master')
     elif command == "giveback":
-        ret = _not.failover_status()
+        ret = client.call('notifier.failover_status')
         if ret == "BACKUP":
             print "Cannot giveback volume.  This unit is not Active!"
             sys.exit(6)
