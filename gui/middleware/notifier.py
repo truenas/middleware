@@ -38,6 +38,7 @@ from collections import defaultdict, OrderedDict
 from decimal import Decimal
 import base64
 from Crypto.Cipher import AES
+import bsd
 import ctypes
 import errno
 import glob
@@ -166,6 +167,10 @@ class StartNotify(threading.Thread):
             tries += 1
 
 
+def close_preexec():
+    bsd.closefrom(3)
+
+
 class notifier:
 
     __metaclass__ = HookMetaclass
@@ -191,7 +196,7 @@ class notifier:
         try:
             p = Popen(
                 "(" + command + ") 2>&1 | logger -p daemon.notice -t %s" % (self.IDENTIFIER, ),
-                stdin=PIPE, stdout=PIPE, stderr=PIPE, shell=True, close_fds=True)
+                stdin=PIPE, stdout=PIPE, stderr=PIPE, shell=True, preexec_fn=close_preexec, close_fds=False)
             p.communicate()
             ret = p.returncode
         finally:
@@ -212,7 +217,7 @@ class notifier:
         try:
             p = Popen(
                 "(" + command + ") >/dev/null 2>&1",
-                stdin=PIPE, stdout=PIPE, stderr=PIPE, shell=True, close_fds=True)
+                stdin=PIPE, stdout=PIPE, stderr=PIPE, shell=True, preexec_fn=close_preexec, close_fds=False)
             p.communicate()
             retval = p.returncode
         finally:
@@ -223,7 +228,7 @@ class notifier:
     def _pipeopen(self, command, logger=log):
         if logger:
             logger.debug("Popen()ing: %s", command)
-        return Popen(command, stdin=PIPE, stdout=PIPE, stderr=PIPE, shell=True, close_fds=True)
+        return Popen(command, stdin=PIPE, stdout=PIPE, stderr=PIPE, shell=True, preexec_fn=close_preexec, close_fds=False)
 
     def _pipeerr(self, command, good_status=0):
         proc = self._pipeopen(command)
