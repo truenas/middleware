@@ -267,6 +267,9 @@ class InterfacesService(Service):
         if data['int_options']:
             self.logger.info('{}: applying {}'.format(name, data['int_options']))
             proc = subprocess.Popen('/sbin/ifconfig {} {}'.format(name, data['int_options']), shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=True)
+            err = proc.communicate()[1]
+            if err:
+                self.logger.info('{}: error applying: {}'.format(name, err))
 
         # If dhclient is not running and dhcp is configured, lets start it
         if not dhclient_running and data['int_dhcp']:
