@@ -263,6 +263,11 @@ class InterfacesService(Service):
             self.logger.debug('{}: adding {}'.format(name, addr))
             iface.add_address(addr)
 
+        # Apply interface options specified in GUI
+        if data['int_options']:
+            self.logger.info('{}: applying {}'.format(name, data['int_options']))
+            proc = subprocess.Popen('/sbin/ifconfig {} {}'.format(name, data['int_options']), shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=True)
+
         # If dhclient is not running and dhcp is configured, lets start it
         if not dhclient_running and data['int_dhcp']:
             self.logger.debug('Starting dhclient for {}'.format(name))
