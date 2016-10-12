@@ -483,12 +483,15 @@ Hello,
         # If there were no failures and we successfully took some VMWare snapshots
         # set the ZFS property to show the snapshot has consistent VM snapshots
         # inside it.
-        sentinel = True
-        for vmsnapobj in qs:
-            if not (len(snapvms[vmsnapobj]) > 0 and len(snapvmfails[vmsnapobj]) == 0):
-                sentinel = False
-        if sentinel:
-            vmflag = '-o freenas:vmsynced=Y '
+        if qs:
+            sentinel = True
+            for vmsnapobj in qs:
+                if not (len(snapvms[vmsnapobj]) > 0 and len(snapvmfails[vmsnapobj]) == 0):
+                    sentinel = False
+            if sentinel:
+                vmflag = '-o freenas:vmsynced=Y '
+            else:
+                vmflag = ''
         else:
             vmflag = ''
 
