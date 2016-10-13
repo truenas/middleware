@@ -779,6 +779,7 @@ class LAGGInterfaceForm(ModelForm):
     def delete(self, *args, **kwargs):
         with DBSync():
             return super(LAGGInterfaceForm, self).delete(*args, **kwargs)
+        notifier().start("network")
 
 
 class LAGGInterfaceMemberForm(ModelForm):
