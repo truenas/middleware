@@ -504,7 +504,6 @@ class LAGGInterface(Model):
             vlan_pint=self.lagg_interface.int_interface
         ).delete()
         self.lagg_interface.delete()
-        notifier().iface_destroy(self.lagg_interface.int_interface)
 
 
 class LAGGInterfaceMembers(Model):

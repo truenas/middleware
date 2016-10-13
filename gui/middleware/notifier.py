@@ -3993,9 +3993,6 @@ class notifier:
             retval = 'Try again later.'
         return retval
 
-    def iface_destroy(self, name):
-        self._system("ifconfig %s destroy" % name)
-
     def iface_media_status(self, name):
 
         statusmap = {
