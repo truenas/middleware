@@ -15,6 +15,7 @@ Database = sqlite3base.Database
 DatabaseError = sqlite3base.DatabaseError
 IntegrityError = sqlite3base.IntegrityError
 
+execute_sync = False
 log = logging.getLogger('freeadmin.sqlite3_ha')
 
 
@@ -29,6 +30,24 @@ NO_SYNC_MAP = {
         'fields': ['master'],
     },
 }
+
+
+class DBSync(object):
+    """
+    Allow to execute all queries made within a with statement
+    in a synchronous way.
+    This is not thread-safe.
+    """
+
+    def __enter__(self):
+        global execute_sync
+        execute_sync = True
+
+    def __exit__(self, typ, value, traceback):
+        global execute_sync
+        execute_sync = False
+        if typ is not None:
+            raise
 
 
 class Journal(object):
@@ -248,6 +267,7 @@ class HASQLiteCursorWrapper(Database.Cursor):
         Process the query, modify it if necessary based on NO_SYNC_MAP rules
         and execute it on the remote side.
         """
+        global execute_sync
 
         # Skip SELECT queries
         if query.lower().startswith('select'):
@@ -367,6 +387,8 @@ class HASQLiteCursorWrapper(Database.Cursor):
             # Actually try to run the query on the remote side within a thread
             rsr = RunSQLRemote(sql=sql, params=cparams)
             rsr.start()
+            if execute_sync:
+                rsr.join()
 
     def execute(self, query, params=None):
 
