@@ -448,10 +448,8 @@ class VLAN(Model):
         return self.vlan_vint
 
     def delete(self):
-        vint = self.vlan_vint
         super(VLAN, self).delete()
         Interfaces.objects.filter(int_interface=vint).delete()
-        notifier().iface_destroy(vint)
 
     class Meta:
         verbose_name = _("VLAN")

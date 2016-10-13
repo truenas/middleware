@@ -704,6 +704,7 @@ class VLANForm(ModelForm):
     def delete(self, *args, **kwargs):
         with DBSync():
             return super(VLANForm, self).delete(*args, **kwargs)
+        notifier().start("network")
 
 
 class LAGGInterfaceForm(ModelForm):
