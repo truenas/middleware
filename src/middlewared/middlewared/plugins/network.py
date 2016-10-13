@@ -45,11 +45,14 @@ class InterfacesService(Service):
         Sync interfaces configured in database to the OS.
         """
 
+        interfaces = [i['int_interface'] for i in self.middleware.call('datastore.query', 'network.interfaces')]
+
         # First of all we need to create the virtual interfaces
         # LAGG comes first and then VLAN
         laggs = self.middleware.call('datastore.query', 'network.lagginterface')
         for lagg in laggs:
             name = lagg['lagg_interface']['int_name']
+            interfaces.append(name)
             self.logger.info('Setting up {}'.format(name))
             try:
                 iface = netif.get_interface(name)
@@ -87,6 +90,7 @@ class InterfacesService(Service):
 
         vlans = self.middleware.call('datastore.query', 'network.vlan')
         for vlan in vlans:
+            interfaces.append(vlan['vlan_vint'])
             self.logger.info('Setting up {}'.format(vlan['vlan_vint']))
             try:
                 iface = netif.get_interface(vlan['vlan_vint'])
@@ -104,7 +108,6 @@ class InterfacesService(Service):
             else:
                 self.logger.warn('Could not find {} from {}'.format(iface.parent, vlan['vlan_vint']))
 
-        interfaces = [i['int_interface'] for i in self.middleware.call('datastore.query', 'network.interfaces')]
         self.logger.info('Interfaces in database: {}'.format(', '.join(interfaces) or 'NONE'))
         for interface in interfaces:
             self.sync_interface(interface)
@@ -148,7 +151,12 @@ class InterfacesService(Service):
 
     @private
     def sync_interface(self, name):
-        data = self.middleware.call('datastore.query', 'network.interfaces', [('int_interface', '=', name)], {'get': True})
+        try:
+            data = self.middleware.call('datastore.query', 'network.interfaces', [('int_interface', '=', name)], {'get': True})
+        except IndexError:
+            self.logger.info('{} is not in interfaces database'.format(name))
+            return
+
         aliases = self.middleware.call('datastore.query', 'network.alias', [('alias_interface_id', '=', data['id'])])
 
         iface = netif.get_interface(name)
