@@ -40,6 +40,7 @@ from freenasUI import choices
 from freenasUI.common.forms import Form, ModelForm
 from freenasUI.common.system import get_sw_name
 from freenasUI.contrib.IPAddressField import IP4AddressFormField
+from freenasUI.freeadmin.sqlite3_ha.base import DBSync
 from freenasUI.middleware.notifier import notifier
 from freenasUI.network import models
 from ipaddr import (
@@ -358,18 +359,15 @@ class InterfacesForm(ModelForm):
 
         return cdata
 
-    def done(self, *args, **kwargs):
-        # TODO: new IP address should be added in a side-by-side manner
-        # or the interface wouldn't appear once IP was changed.
-        _n = notifier()
-        if not _n.is_freenas() and _n.failover_licensed():
-            from django.db import connection
-            # Force config sync to make sure changes are seen before
-            # CARP IPs runs and network is restarted
-            # See #15941
-            connection.dump_send()
-        _n.start("network")
-        super(InterfacesForm, self).done(*args, **kwargs)
+    def save(self, *args, **kwargs):
+        with DBSync():
+            obj = super(InterfacesForm, self).save(*args, **kwargs)
+        notifier().start("network")
+        return obj
+
+    def delete(self, *args, **kwargs):
+        with DBSync():
+            return super(InterfacesForm, self).delete(*args, **kwargs)
 
 
 class InterfacesDeleteForm(forms.Form):
@@ -689,18 +687,23 @@ class VLANForm(ModelForm):
 
     def save(self):
         vlan_pint = self.cleaned_data['vlan_pint']
-        if len(models.Interfaces.objects.filter(int_interface=vlan_pint)) == 0:
-            vlan_interface = models.Interfaces(
-                int_interface=vlan_pint,
-                int_name=vlan_pint,
-                int_dhcp=False,
-                int_ipv6auto=False,
-                int_options='up',
-            )
-            vlan_interface.save()
-        retval = super(VLANForm, self).save()
+        with DBSync():
+            if len(models.Interfaces.objects.filter(int_interface=vlan_pint)) == 0:
+                vlan_interface = models.Interfaces(
+                    int_interface=vlan_pint,
+                    int_name=vlan_pint,
+                    int_dhcp=False,
+                    int_ipv6auto=False,
+                    int_options='up',
+                )
+                vlan_interface.save()
+            retval = super(VLANForm, self).save()
         notifier().start("network")
         return retval
+
+    def delete(self, *args, **kwargs):
+        with DBSync():
+            return super(VLANForm, self).delete(*args, **kwargs)
 
 
 class LAGGInterfaceForm(ModelForm):
@@ -740,36 +743,41 @@ class LAGGInterfaceForm(ModelForm):
         lagg_name = "lagg%d" % candidate_index
         lagg_protocol = self.cleaned_data['lagg_protocol']
         lagg_member_list = self.cleaned_data['lagg_interfaces']
-        with transaction.atomic():
-            # Step 1: Create an entry in interface table that
-            # represents the lagg interface
-            lagg_interface = models.Interfaces(
-                int_interface=lagg_name,
-                int_name=lagg_name,
-                int_dhcp=False,
-                int_ipv6auto=False
-            )
-            lagg_interface.save()
-            # Step 2: Write associated lagg attributes
-            lagg_interfacegroup = models.LAGGInterface(
-                lagg_interface=lagg_interface,
-                lagg_protocol=lagg_protocol
-            )
-            lagg_interfacegroup.save()
-            # Step 3: Write lagg's members in the right order
-            order = 0
-            for interface in lagg_member_list:
-                lagg_member_entry = models.LAGGInterfaceMembers(
-                    lagg_interfacegroup=lagg_interfacegroup,
-                    lagg_ordernum=order,
-                    lagg_physnic=interface,
-                    lagg_deviceoptions='up'
+        with DBSync():
+            with transaction.atomic():
+                # Step 1: Create an entry in interface table that
+                # represents the lagg interface
+                lagg_interface = models.Interfaces(
+                    int_interface=lagg_name,
+                    int_name=lagg_name,
+                    int_dhcp=False,
+                    int_ipv6auto=False
                 )
-                lagg_member_entry.save()
-                order = order + 1
+                lagg_interface.save()
+                # Step 2: Write associated lagg attributes
+                lagg_interfacegroup = models.LAGGInterface(
+                    lagg_interface=lagg_interface,
+                    lagg_protocol=lagg_protocol
+                )
+                lagg_interfacegroup.save()
+                # Step 3: Write lagg's members in the right order
+                order = 0
+                for interface in lagg_member_list:
+                    lagg_member_entry = models.LAGGInterfaceMembers(
+                        lagg_interfacegroup=lagg_interfacegroup,
+                        lagg_ordernum=order,
+                        lagg_physnic=interface,
+                        lagg_deviceoptions='up'
+                    )
+                    lagg_member_entry.save()
+                    order = order + 1
         self.instance = lagg_interfacegroup
         notifier().start("network")
         return lagg_interfacegroup
+
+    def delete(self, *args, **kwargs):
+        with DBSync():
+            return super(LAGGInterfaceForm, self).delete(*args, **kwargs)
 
 
 class LAGGInterfaceMemberForm(ModelForm):
@@ -797,7 +805,8 @@ class LAGGInterfaceMemberForm(ModelForm):
             )
 
     def save(self, *args, **kwargs):
-        obj = super(LAGGInterfaceMemberForm, self).save(*args, **kwargs)
+        with DBSync():
+            obj = super(LAGGInterfaceMemberForm, self).save(*args, **kwargs)
         notifier().start("network")
         return obj
 
