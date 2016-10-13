@@ -367,7 +367,8 @@ class InterfacesForm(ModelForm):
 
     def delete(self, *args, **kwargs):
         with DBSync():
-            return super(InterfacesForm, self).delete(*args, **kwargs)
+            super(InterfacesForm, self).delete(*args, **kwargs)
+        notifier().start("network")
 
 
 class InterfacesDeleteForm(forms.Form):
@@ -703,7 +704,7 @@ class VLANForm(ModelForm):
 
     def delete(self, *args, **kwargs):
         with DBSync():
-            return super(VLANForm, self).delete(*args, **kwargs)
+            super(VLANForm, self).delete(*args, **kwargs)
         notifier().start("network")
 
 
@@ -778,7 +779,7 @@ class LAGGInterfaceForm(ModelForm):
 
     def delete(self, *args, **kwargs):
         with DBSync():
-            return super(LAGGInterfaceForm, self).delete(*args, **kwargs)
+            super(LAGGInterfaceForm, self).delete(*args, **kwargs)
         notifier().start("network")
 
 
