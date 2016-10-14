@@ -361,13 +361,14 @@ class InterfacesForm(ModelForm):
 
     def save(self, *args, **kwargs):
         with DBSync():
-            obj = super(InterfacesForm, self).save(*args, **kwargs)
-        notifier().start("network")
-        return obj
+            return super(InterfacesForm, self).save(*args, **kwargs)
 
     def delete(self, *args, **kwargs):
         with DBSync():
-            super(InterfacesForm, self).delete(*args, **kwargs)
+            return super(InterfacesForm, self).delete(*args, **kwargs)
+
+    def done(self, *args, **kwargs):
+        super(InterfacesForm, self).done(*args, **kwargs)
         notifier().start("network")
 
 
@@ -698,13 +699,14 @@ class VLANForm(ModelForm):
                     int_options='up',
                 )
                 vlan_interface.save()
-            retval = super(VLANForm, self).save()
-        notifier().start("network")
-        return retval
+            return super(VLANForm, self).save()
 
     def delete(self, *args, **kwargs):
         with DBSync():
-            super(VLANForm, self).delete(*args, **kwargs)
+            return super(VLANForm, self).delete(*args, **kwargs)
+
+    def done(self, *args, **kwargs):
+        super(VLANForm, self).done(*args, **kwargs)
         notifier().start("network")
 
 
@@ -774,12 +776,14 @@ class LAGGInterfaceForm(ModelForm):
                     lagg_member_entry.save()
                     order = order + 1
         self.instance = lagg_interfacegroup
-        notifier().start("network")
         return lagg_interfacegroup
 
     def delete(self, *args, **kwargs):
         with DBSync():
-            super(LAGGInterfaceForm, self).delete(*args, **kwargs)
+            return super(LAGGInterfaceForm, self).delete(*args, **kwargs)
+
+    def done(self, *args, **kwargs):
+        super(LAGGInterfaceForm, self).done(*args, **kwargs)
         notifier().start("network")
 
 
@@ -809,15 +813,15 @@ class LAGGInterfaceMemberForm(ModelForm):
 
     def delete(self, *args, **kwargs):
         with DBSync():
-            obj = super(LAGGInterfaceMemberForm, self).delete(*args, **kwargs)
-        notifier().start("network")
-        return obj
+            return super(LAGGInterfaceMemberForm, self).delete(*args, **kwargs)
 
     def save(self, *args, **kwargs):
         with DBSync():
-            obj = super(LAGGInterfaceMemberForm, self).save(*args, **kwargs)
+            return super(LAGGInterfaceMemberForm, self).save(*args, **kwargs)
+
+    def done(self, *args, **kwargs):
+        super(LAGGInterfaceMemberForm, self).done(*args, **kwargs)
         notifier().start("network")
-        return obj
 
 
 class StaticRouteForm(ModelForm):
