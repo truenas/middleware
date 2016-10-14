@@ -47,6 +47,7 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'freenasUI.settings')
 from django.db.models.loading import cache
 cache.get_apps()
 
+from django.db.models import Q
 from freenasUI.freeadmin.apppool import appPool
 from freenasUI.storage.models import Task
 from datetime import datetime, time, timedelta
@@ -249,14 +250,15 @@ for task in TaskObjects:
         else:
             taskpath['nonrecursive'].append(task.task_filesystem)
         fs = task.task_filesystem
+        recursive = task.task_recursive
         expire_time = ('%s%s' % (task.task_ret_count, task.task_ret_unit[0])).__str__()
         tasklist = []
-        if (fs, expire_time) in mp_to_task_map:
-            tasklist = mp_to_task_map[(fs, expire_time)]
+        if (fs, expire_time, recursive) in mp_to_task_map:
+            tasklist = mp_to_task_map[(fs, expire_time, recursive)]
             tasklist.append(task)
         else:
             tasklist = [task]
-        mp_to_task_map[(fs, expire_time)] = tasklist
+        mp_to_task_map[(fs, expire_time, recursive)] = tasklist
 
 re_path = re.compile("^((" + '|'.join(taskpath['nonrecursive']) +
                      ")@|(" + '|'.join(taskpath['recursive']) + ")[@/])")
@@ -292,13 +294,20 @@ if len(mp_to_task_map) > 0:
                                 previous_prefix = '%s/' % (fs)
                             snapshots_pending_delete.add(snapshot_name)
                 else:
-                    if (fs, snap_ret_policy) in mp_to_task_map:
-                        if (fs, snap_ret_policy) in snapshots:
-                            last_snapinfo = snapshots[(fs, snap_ret_policy)]
+                    if (fs, snap_ret_policy, True) in mp_to_task_map:
+                        if (fs, snap_ret_policy, True) in snapshots:
+                            last_snapinfo = snapshots[(fs, snap_ret_policy, True)]
                             if snapinfodict2datetime(last_snapinfo) < snapinfodict2datetime(snap_infodict):
-                                snapshots[(fs, snap_ret_policy)] = snap_infodict
+                                snapshots[(fs, snap_ret_policy, True)] = snap_infodict
                         else:
-                            snapshots[(fs, snap_ret_policy)] = snap_infodict
+                            snapshots[(fs, snap_ret_policy, True)] = snap_infodict
+                    if (fs, snap_ret_policy, False) in mp_to_task_map:
+                        if (fs, snap_ret_policy, False) in snapshots:
+                            last_snapinfo = snapshots[(fs, snap_ret_policy, False)]
+                            if snapinfodict2datetime(last_snapinfo) < snapinfodict2datetime(snap_infodict):
+                                snapshots[(fs, snap_ret_policy, False)] = snap_infodict
+                        else:
+                            snapshots[(fs, snap_ret_policy, False)] = snap_infodict
 
     list_mp = mp_to_task_map.keys()
 
@@ -315,13 +324,38 @@ if len(mp_to_task_map) > 0:
 
     snaptime_str = snaptime.strftime('%Y%m%d.%H%M')
 
+    # This block removes snapshot tasks from mp_to_task_map
+    # if they would be taken by a recursive snapshot task.
+    # For instance if you have datasets:
+    # tank
+    # tank/a
+    # tank/b
+    # tank/c
+    # and a recursive snapshot task on tank as well as a snapshot task
+    # on tank/b
+    # The recursive task works by snapshotting all the dependant datasets
+    # however if there is a name collision (say both snapshot tasks have the same
+    # retention period) then the snapshot task will fail because a dataset already
+    # exists with that name.  If the snapshot task on tank/b runs first then
+    # the entire recursive snapshot task on tank will fail, and the next minute it
+    # will run again.
+    rec = [x for x in mp_to_task_map.keys() if x[2] is True]
+    nonrec = [x for x in mp_to_task_map.keys() if x[2] is False]
+    for nr in nonrec:
+        for r in rec:
+            if (nr[0] + '/').startswith(r[0]):
+                # Delete this item from the dict of snaps to be taken
+                # as it is going to be taken by a recusive task on a
+                # dataset above it.
+                try:
+                    del mp_to_task_map[nr]
+                except:
+                    log.warn("Error removing snapshot task: %s" % nr[0])
+                break
+
     for mpkey, tasklist in mp_to_task_map.items():
-        fs, expire = mpkey
-        recursive = False
-        for task in tasklist:
-            if task.task_recursive is True:
-                recursive = True
-        if recursive is True:
+        fs, expire, recursive = mpkey
+        if recursive:
             rflag = ' -r'
         else:
             rflag = ''
@@ -334,7 +368,17 @@ if len(mp_to_task_map) > 0:
         # to VMWare and destroy all the VMWare snapshots we created.
         # We do this because having VMWare snapshots in existance impacts
         # the performance of your VMs.
-        qs = VMWarePlugin.objects.filter(filesystem=fs)
+
+        # filesystem is the dataset that the vmware snapshot is on.
+        # fs is the ZFS dataset that is getting snapshotted.
+
+        if recursive:
+            # filesystem can be a child dataset of fs or it can be fs
+            qs = VMWarePlugin.objects.filter(Q(filesystem__startswith=fs + '/') | Q(filesystem=fs))
+        else:
+            # No recursive snapshot, filesystem must equal fs
+            qs = VMWarePlugin.objects.filter(filesystem=fs)
+
         if qs:
             server = VIServer()
 
@@ -439,12 +483,15 @@ Hello,
         # If there were no failures and we successfully took some VMWare snapshots
         # set the ZFS property to show the snapshot has consistent VM snapshots
         # inside it.
-        sentinel = True
-        for vmsnapobj in qs:
-            if not (len(snapvms[vmsnapobj]) > 0 and len(snapvmfails[vmsnapobj]) == 0):
-                sentinel = False
-        if sentinel:
-            vmflag = '-o freenas:vmsynced=Y '
+        if qs:
+            sentinel = True
+            for vmsnapobj in qs:
+                if not (len(snapvms[vmsnapobj]) > 0 and len(snapvmfails[vmsnapobj]) == 0):
+                    sentinel = False
+            if sentinel:
+                vmflag = '-o freenas:vmsynced=Y '
+            else:
+                vmflag = ''
         else:
             vmflag = ''
 
