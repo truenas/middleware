@@ -1038,3 +1038,7 @@ class AliasForm(ModelForm):
             ])
 
         return cdata
+
+    def save(self, *args, **kwargs):
+        with DBSync():
+            return super(AliasForm, self).save(*args, **kwargs)
