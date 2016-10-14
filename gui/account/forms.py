@@ -565,6 +565,17 @@ class bsdUsersForm(ModelForm, bsdUserGroupMixin):
                 bsduser.bsdusr_smbhash = smbhash
                 bsduser.save()
 
+            homedir_mode = self.cleaned_data.get('bsdusr_mode')
+            if (
+                not bsduser.bsdusr_builtin and homedir_mode is not None and
+                os.path.exists(bsduser.bsdusr_home)
+            ):
+                try:
+                    homedir_mode = int(homedir_mode, 8)
+                    os.chmod(bsduser.bsdusr_home, homedir_mode)
+                except:
+                    log.warn('Failed to set homedir mode', exc_info=True)
+
         #
         # Check if updating group membership
         #
