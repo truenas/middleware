@@ -279,6 +279,8 @@ __EOF__
 
         location /static {
             alias /usr/local/www/freenasUI/static;
+            add_header Cache-Control "must-revalidate";
+            add_header Etag "$(cat /etc/version)";
         }
 
         location /reporting/graphs {
