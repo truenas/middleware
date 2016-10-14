@@ -260,8 +260,8 @@ for task in TaskObjects:
             tasklist = [task]
         mp_to_task_map[(fs, expire_time, recursive)] = tasklist
 
-re_path = re.compile("^((" + '|'.join(taskpath['recursive']) +
-                     ")@|(" + '|'.join(taskpath['nonrecursive']) + ")[@/])")
+re_path = re.compile("^((" + '|'.join(taskpath['nonrecursive']) +
+                     ")@|(" + '|'.join(taskpath['recursive']) + ")[@/])")
 # Only proceed further if we are  going to generate any snapshots for this run
 if len(mp_to_task_map) > 0:
 
