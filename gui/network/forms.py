@@ -807,6 +807,12 @@ class LAGGInterfaceMemberForm(ModelForm):
                 choices.NICChoices(nolagg=True, novlan=True)
             )
 
+    def delete(self, *args, **kwargs):
+        with DBSync():
+            obj = super(LAGGInterfaceMemberForm, self).delete(*args, **kwargs)
+        notifier().start("network")
+        return obj
+
     def save(self, *args, **kwargs):
         with DBSync():
             obj = super(LAGGInterfaceMemberForm, self).save(*args, **kwargs)

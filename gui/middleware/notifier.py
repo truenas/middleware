@@ -4268,9 +4268,6 @@ class notifier:
 
         return None
 
-    def lagg_remove_port(self, lagg, iface):
-        return self._system_nolog("ifconfig %s -laggport %s" % (lagg, iface))
-
     def __init__(self):
         self.__confxml = None
         self.__camcontrol = None

@@ -529,13 +529,6 @@ class LAGGInterfaceMembers(Model):
     def __unicode__(self):
         return self.lagg_physnic
 
-    def delete(self):
-        notifier().lagg_remove_port(
-            self.lagg_interfacegroup.lagg_interface.int_interface,
-            self.lagg_physnic,
-        )
-        super(LAGGInterfaceMembers, self).delete()
-
     class Meta:
         verbose_name = _("Link Aggregation Member")
         verbose_name_plural = _("Link Aggregation Members")
