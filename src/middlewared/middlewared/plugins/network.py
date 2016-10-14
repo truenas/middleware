@@ -280,6 +280,11 @@ class InterfacesService(Service):
             if err:
                 self.logger.info('{}: error applying: {}'.format(name, err))
 
+            # In case there is no MTU in interface options and it is currently
+            # different than the default of 1500, revert it
+            if data['int_options'].find('mtu') == -1 and iface.mtu != 1500:
+                iface.mtu = 1500
+
         # If dhclient is not running and dhcp is configured, lets start it
         if not dhclient_running and data['int_dhcp']:
             self.logger.debug('Starting dhclient for {}'.format(name))
