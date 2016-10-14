@@ -46,13 +46,14 @@ class InterfacesService(Service):
         """
 
         interfaces = [i['int_interface'] for i in self.middleware.call('datastore.query', 'network.interfaces')]
+        cloned_interfaces = []
 
         # First of all we need to create the virtual interfaces
         # LAGG comes first and then VLAN
         laggs = self.middleware.call('datastore.query', 'network.lagginterface')
         for lagg in laggs:
             name = lagg['lagg_interface']['int_name']
-            interfaces.append(name)
+            cloned_interfaces.append(name)
             self.logger.info('Setting up {}'.format(name))
             try:
                 iface = netif.get_interface(name)
@@ -90,7 +91,7 @@ class InterfacesService(Service):
 
         vlans = self.middleware.call('datastore.query', 'network.vlan')
         for vlan in vlans:
-            interfaces.append(vlan['vlan_vint'])
+            cloned_interfaces.append(vlan['vlan_vint'])
             self.logger.info('Setting up {}'.format(vlan['vlan_vint']))
             try:
                 iface = netif.get_interface(vlan['vlan_vint'])
@@ -125,17 +126,22 @@ class InterfacesService(Service):
             # Skip interfaces in database
             if name in interfaces:
                 continue
-            elif name.startswith(('lagg', 'vlan')):
+
+            # Interface not in database lose addresses
+            for address in iface.addresses:
+                iface.remove_address(address)
+
+            # Kill dhclient if its running for this interface
+            dhclient_running, dhclient_pid = dhclient_status(name)
+            if dhclient_running:
+                os.kill(dhclient_pid, signal.SIGTERM)
+
+            # If we have vlan or lagg not in the database at all
+            # It gets destroy, otherwise just bring it down
+            if name not in cloned_interfaces and name.startswith(('lagg', 'vlan')):
                 netif.destroy_interface(name)
             else:
-                # Physical interface not in database lose addresses
-                for address in iface.addresses:
-                    iface.remove_address(address)
-
-                # Kill dhclient if its running for this interface
-                dhclient_running, dhclient_pid = dhclient_status(name)
-                if dhclient_running:
-                    os.kill(dhclient_pid, signal.SIGTERM)
+                iface.down()
 
     @private
     def alias_to_addr(self, alias):
@@ -284,6 +290,9 @@ class InterfacesService(Service):
             # different than the default of 1500, revert it
             if data['int_options'].find('mtu') == -1 and iface.mtu != 1500:
                 iface.mtu = 1500
+
+        if netif.InterfaceFlags.UP not in iface.flags:
+            iface.up()
 
         # If dhclient is not running and dhcp is configured, lets start it
         if not dhclient_running and data['int_dhcp']:
