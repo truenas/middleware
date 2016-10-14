@@ -392,7 +392,6 @@ create_partitions() {
 	    if ! newfs_msdos -F 16 /dev/${_disk}p1 ; then
 	      return 1
 	    fi
-	    gpart set -a lenovofix /dev/${_disk}
 	  fi
 	else
 	  # BIOS Mode
