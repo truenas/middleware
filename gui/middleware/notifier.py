@@ -4038,9 +4038,6 @@ class notifier:
 
         return statusmap.get(status, status)
 
-    def interface_mtu(self, iface, mtu):
-        self._system("ifconfig %s mtu %s" % (iface, mtu))
-
     def get_default_ipv4_interface(self):
         p1 = self._pipeopen("route -nv show default|grep 'interface:'|awk '{ print $2 }'")
         iface = p1.communicate()

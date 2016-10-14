@@ -291,11 +291,7 @@ class Interfaces(Model):
                 )
                 for n in xrange(16)
             ])
-        super(Interfaces, self).save(*args, **kwargs)
-        if self._original_int_options != self.int_options and \
-                re.search(r'mtu \d+', self._original_int_options) and \
-                self.int_options.find("mtu") == -1:
-            notifier().interface_mtu(self.int_interface, "1500")
+        return super(Interfaces, self).save(*args, **kwargs)
 
     class Meta:
         verbose_name = _("Interface")
