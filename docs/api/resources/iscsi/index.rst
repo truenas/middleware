@@ -217,7 +217,7 @@ Create extent using zvol.
         {
                 "iscsi_target_extent_type": "Disk",
                 "iscsi_target_extent_name": "zvolextent",
-                "iscsi_target_extent_disk": "/dev/zvol/tank/zvolextent"
+                "iscsi_target_extent_disk": "zvol/tank/zvolextent"
         }
 
    **Example response**:
@@ -236,7 +236,7 @@ Create extent using zvol.
                 "iscsi_target_extent_insecure_tpc": true,
                 "iscsi_target_extent_naa": "0x3822690834aae6c5",
                 "id": 1,
-                "iscsi_target_extent_path": "/dev/zvol/tank/zvolextent"
+                "iscsi_target_extent_path": "/dev/zvol/tank/zvolextent",
                 "iscsi_target_extent_xen": false,
                 "iscsi_target_extent_avail_threshold": null,
                 "iscsi_target_extent_blocksize": 512,
