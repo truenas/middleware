@@ -1,5 +1,6 @@
 {% extends "freeadmin/generic_form.html" %}
 {% block form %}
 <tr><td>{{ name }}: {% trans "Are you sure you want to delete?" %}</td></tr>
+{{ block.super }}
 {% endblock %}
 {% block oklabel %}{% trans "Yes" %}{% endblock %}
