@@ -76,6 +76,33 @@ class servicesForm(ModelForm):
         self._extra_events = []
         super(servicesForm, self).__init__(*args, **kwargs)
 
+    def clean_srv_service(self):
+        service = self.cleaned_data.get('srv_service')
+        method = 'precheck_%s' % service
+        method = getattr(self, method, None)
+        if not self._force and method and callable(method):
+            rv = method(self.instance)
+            if rv:
+                self._extra_events.append(
+                    "confirm_service('%s', '%s');" % (
+                        service,
+                        rv,
+                    ),
+                )
+                raise forms.ValidationError('precheck')
+        deny_method = getattr(self, 'deny_precheck_%s' % service, None)
+        if not self._force and callable(deny_method):
+            rv = deny_method(self.instance)
+            if rv:
+                self._extra_events.append(
+                    "deny_service('%s', '%s');" % (
+                        service,
+                        rv,
+                    ),
+                )
+                raise forms.ValidationError('deny_precheck')
+        return service
+
     def precheck_iscsitarget(self, obj):
         if obj.srv_enable is False:
             connections = notifier().iscsi_active_connections()
@@ -100,32 +127,6 @@ class servicesForm(ModelForm):
 
         self.enabled_svcs = []
         self.disabled_svcs = []
-
-        method = 'precheck_%s' % obj.srv_service
-        method = getattr(self, method, None)
-        if not self._force and method and callable(method):
-            rv = method(obj)
-            if rv:
-                self._extra_events.append(
-                    "confirm_service('%s', '%s');" % (
-                        obj.srv_service,
-                        rv,
-                    ),
-                )
-                self.started = obj.srv_enable
-                return obj
-        deny_method = getattr(self, 'deny_precheck_%s' % obj.srv_service, None)
-        if not self._force and callable(deny_method):
-            rv = deny_method(obj)
-            if rv:
-                self._extra_events.append(
-                    "deny_service('%s', '%s');" % (
-                        obj.srv_service,
-                        rv,
-                    ),
-                )
-                self.started = obj.srv_enable
-                return obj
 
         if obj.srv_service == 'cifs' and _notifier._started_domaincontroller():
             obj.srv_enable = True
