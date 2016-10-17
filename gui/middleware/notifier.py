@@ -1689,11 +1689,14 @@ class notifier:
 
         return retval
 
-    def destroy_zfs_vol(self, name):
+    def destroy_zfs_vol(self, name, recursive=False):
         mp = self.__get_mountpath(name, 'ZFS')
         if self.contains_jail_root(mp):
             self.delete_plugins()
-        zfsproc = self._pipeopen("zfs destroy '%s'" % (str(name),))
+        zfsproc = self._pipeopen("zfs destroy %s'%s'" % (
+            '-r ' if recursive else '',
+            str(name),
+        ))
         retval = zfsproc.communicate()[1]
         return retval
 
