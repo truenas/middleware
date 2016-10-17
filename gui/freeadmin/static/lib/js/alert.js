@@ -45,7 +45,7 @@ require([
     timing
     ) {
 
-    var _alert_status = 'OK';
+    var _alert_status = '';
 
     loadalert = function() {
 
@@ -55,18 +55,22 @@ require([
             }).then(function(data) {
 
                 var alertdiv = dom.byId("alert_status");
+                var alerttext = dom.byId("menuBar_AlertText");
                 if(data == _alert_status)
                     return true;
                 _alert_status = data;
                 if(data == 'OK') {
                     domClass.remove(alertdiv, ["alert_crit", "alert_warn"]);
                     domClass.add(alertdiv, "alert_ok");
+                    alerttext.innerHTML = gettext('OK');
                 } else if(data == 'WARN') {
                     domClass.remove(alertdiv, ["alert_crit", "alert_ok"]);
                     domClass.add(alertdiv, "alert_warn");
+                    alerttext.innerHTML = gettext('Warning');
                 } else if(data == 'CRIT') {
                     domClass.remove(alertdiv, ["alert_warn", "alert_ok"]);
                     domClass.add(alertdiv, "alert_crit");
+                    alerttext.innerHTML = gettext('Critical');
                 }
 
             });

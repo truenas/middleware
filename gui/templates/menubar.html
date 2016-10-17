@@ -64,9 +64,9 @@
   </div>
   {% endfor %}
 
-  <div id="meuBar_Alert" data-dojo-type="dijit.MenuBarItem" class="menu_icon right" onClick="alert_open();">
+  <div id="menuBar_Alert" data-dojo-type="dijit.MenuBarItem" class="menu_icon right" onClick="alert_open();">
     <div data-dojo-type="dijit.layout.ContentPane" id="alert_status" class="alert_ok"></div>
-    <span>{% trans "Alert" %}</span>
+    <span id="menuBar_AlertText">{% trans "Alert" %}</span>
   </div>
 
   <div id="menuBar_Documentation" data-dojo-type="dijit.MenuBarItem" onClick="Menu.openDocumentation();" class="menu_icon right">
