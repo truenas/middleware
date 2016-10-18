@@ -12,25 +12,12 @@
 
 ix_resolv_start()
 {
-	if [ -f /etc/resolv.conf ]
-	then
-		cp /etc/resolv.conf /etc/resolv.conf.bak
-	fi
-
-	LD_LIBRARY_PATH=/usr/local/lib /usr/local/libexec/nas/generate_resolv_conf.py
-}
-
-ix_resolv_stop()
-{
-	if [ -f /etc/resolv.conf.bak ]
-	then
-		cp /etc/resolv.conf.bak /etc/resolv.conf
-	fi
+	LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/midctl -q call dns.sync > /dev/null
 }
 
 name="ix-resolv"
 start_cmd='ix_resolv_start'
-stop_cmd='ix_resolv_stop'
+stop_cmd=':'
 
 load_rc_config $name
 run_rc_command "$1"
