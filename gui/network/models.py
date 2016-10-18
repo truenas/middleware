@@ -277,6 +277,8 @@ class Interfaces(Model):
         with transaction.atomic():
             for lagg in self.lagginterface_set.all():
                 lagg.delete()
+            # Delete VLAN entries for this interface
+            VLAN.objects.filter(vlan_vint=self.int_interface).delete()
             if self.id:
                 super(Interfaces, self).delete()
         os.system("sleep 2")
