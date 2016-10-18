@@ -690,6 +690,7 @@ class VLANForm(ModelForm):
 
     def save(self):
         vlan_pint = self.cleaned_data['vlan_pint']
+        vlan_vint = self.cleaned_data['vlan_vint']
         with DBSync():
             if len(models.Interfaces.objects.filter(int_interface=vlan_pint)) == 0:
                 vlan_interface = models.Interfaces(
@@ -700,6 +701,12 @@ class VLANForm(ModelForm):
                     int_options='up',
                 )
                 vlan_interface.save()
+            models.Interfaces.objects.create(
+                int_interface=vlan_vint,
+                int_name=vlan_vint,
+                int_dhcp=False,
+                int_ipv6auto=False,
+            )
             return super(VLANForm, self).save()
 
     def delete(self, *args, **kwargs):
