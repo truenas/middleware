@@ -379,3 +379,41 @@ class RoutesService(Service):
             # remove it
             self.logger.info('Removing IPv6 default route')
             routing_table.delete(routing_table.default_route_ipv6)
+
+
+class DNSService(Service):
+
+    def sync(self):
+        domain = None
+        nameservers = []
+
+        if self.middleware.call('notifier.common', 'system', 'domaincontroller_enabled'):
+            cifs = self.middlware.call('datastore.query', 'services.cifs', None, {'get': True})
+            dc = self.middleware.call('datastore.query', 'services.DomainController', None, {'get': True})
+            domain = dc['dc_realm']
+            if cifs['cifs_srv_bindip']:
+                for ip in cifs['cifs_srv_bindip']:
+                    nameservers.append(ip)
+            else:
+                nameservers.append('127.0.0.1')
+        else:
+            gc = self.middleware.call('datastore.query', 'network.globalconfiguration', None, {'get': True})
+            if gc['gc_domain']:
+                domain = gc['gc_domain']
+            if gc['gc_nameserver1']:
+                nameservers.append(gc['gc_nameserver1'])
+            if gc['gc_nameserver2']:
+                nameservers.append(gc['gc_nameserver2'])
+            if gc['gc_nameserver3']:
+                nameservers.append(gc['gc_nameserver3'])
+
+        resolvconf = ''
+        if domain:
+            resolvconf += 'search {}\n'.format(domain)
+        for ns in nameservers:
+            resolvconf += 'nameserver {}\n'.format(ns)
+
+        proc = Popen([
+            '/sbin/resolvconf', '-a', 'lo0'
+        ], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        proc.communicate(input=resolvconf)
