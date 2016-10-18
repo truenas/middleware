@@ -57,6 +57,7 @@ from freenasUI.common.pipesubr import pipeopen
 from freenasUI.common.system import send_mail
 from freenasUI.common.timesubr import isTimeBetween
 from freenasUI.storage.models import Replication, VMWarePlugin
+from middlewared.client import Client
 
 from lockfile import LockFile
 
@@ -156,6 +157,32 @@ def autorepl_running():
         return False
 
 
+# Check if autosnap is suppose to run now by comparing last time it did run
+# and the shortest interval among all periodic snapshots
+def run_interval():
+    with Client() as c:
+        last_run = c.call('cache.get', 'autosnap.last_run')
+        if last_run is None:
+            c.call('cache.put', 'autosnap.last_run', datetime.utcnow())
+            return True
+        interval = (datetime.utcnow() - last_run).total_seconds()
+        shortest_interval = None
+        for task in Task.objects.filter(task_enabled=True):
+            if not shortest_interval:
+                shortest_interval = task.task_interval * 60
+            elif task.task_interval * 60 < shortest_interval:
+                shortest_interval = task.task_interval * 60
+
+        if shortest_interval is None:
+            c.call('cache.put', 'autosnap.last_run', datetime.utcnow())
+            return True
+
+        if interval > shortest_interval - 30:
+            c.call('cache.put', 'autosnap.last_run', datetime.utcnow())
+            return True
+        return False
+
+
 # Check if a VM is using a certain datastore
 def doesVMDependOnDataStore(vm, dataStore):
     try:
@@ -200,6 +227,13 @@ def doesVMSnapshotByNameExists(vm, snapshotName):
     except:
         log.debug('Exception in doesVMSnapshotByNameExists')
     return False
+
+
+try:
+    if not run_interval():
+        sys.exit(0)
+except Exception:
+    log.debug('Failed to run_interval()', exc_info=True)
 
 
 appPool.hook_tool_run('autosnap')
