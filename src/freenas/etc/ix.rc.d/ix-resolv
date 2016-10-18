@@ -12,7 +12,7 @@
 
 ix_resolv_start()
 {
-	LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/midctl -q call dns.sync > /dev/null
+	LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/midclt -q call dns.sync > /dev/null
 }
 
 name="ix-resolv"
