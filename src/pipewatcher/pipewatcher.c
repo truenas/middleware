@@ -42,8 +42,8 @@ int main(int argc, char **argv) {
 			exit(1);
 		} else if (rv == 0) {
 			noop_read_interval++;
-			if(noop_read_interval >= 300) {
-				/* We are over 300 loops (~5 minutes) without receiving data, lets abort!
+			if(noop_read_interval >= 3600) {
+				/* We are over 3600 loops (~60 minutes) without receiving data, lets abort!
 				 * See #16023 */
 				kill(atoi(argv[1]), SIGTERM);
 				exit(2);
@@ -81,8 +81,8 @@ int main(int argc, char **argv) {
 					exit(1);
 				} else if(rv == 0) {
 					noop_write_interval++;
-					if(noop_write_interval >= 300) {
-						/* We are over 300 loops (~5 minutes) without receiving data, lets abort!
+					if(noop_write_interval >= 3600) {
+						/* We are over 3600 loops (~60 minutes) without receiving data, lets abort!
 						 * See #16023 */
 						kill(atoi(argv[1]), SIGTERM);
 						exit(2);
