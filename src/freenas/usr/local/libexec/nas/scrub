@@ -51,9 +51,11 @@ main()
 	local _last_scrub _scrub_diff _status pool
 
 	# Do not try to run scrub on passive node
-	local failover="$(/usr/local/bin/midclt -q call notifier.failover_status 2> /dev/null)"
-	if [ "x${failover}" = "xBACKUP" ]; then
-		exit 0
+	if [ "$(/usr/local/bin/midclt call system.is_freenas)" = "False" ]; then
+		local failover="$(/usr/local/bin/midclt -q call notifier.failover_status 2> /dev/null)"
+		if [ "x${failover}" = "xBACKUP" ]; then
+			exit 0
+		fi
 	fi
 
 	while getopts "t:" opt
