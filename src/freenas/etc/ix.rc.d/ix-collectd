@@ -34,9 +34,13 @@ use_rrd_dataset()
 		then
 			echo "1"
 		else
-			local failover="$(/usr/local/bin/midclt -q call notifier.failover_status 2> /dev/null)"
-			if [ "x${failover}" = "xBACKUP" ]; then
-				echo "1"
+			if [ "$(/usr/local/bin/midclt call system.is_freenas)" = "False" ]; then
+				local failover="$(/usr/local/bin/midclt -q call notifier.failover_status 2> /dev/null)"
+				if [ "x${failover}" = "xBACKUP" ]; then
+					echo "1"
+				else
+					echo "0"
+				fi
 			else
 				echo "0"
 			fi
