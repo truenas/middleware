@@ -49,7 +49,7 @@ from freenasUI.common.system import (
     validate_netbios_name,
     compare_netbios_names
 )
-from freenasUI.directoryservice import models
+from freenasUI.directoryservice import models, utils
 from freenasUI.middleware.notifier import notifier
 from freenasUI.services.exceptions import ServiceFailed
 from freenasUI.services.models import CIFS
@@ -630,10 +630,10 @@ class ActiveDirectoryForm(ModelForm):
         obj = super(ActiveDirectoryForm, self).save()
 
         try:
-            get_idmap_object(obj.ds_type, obj.id, obj.ad_idmap_backend)
+            utils.get_idmap_object(obj.ds_type, obj.id, obj.ad_idmap_backend)
         except models.idmap_base.DoesNotExist:
             log.debug('IDMAP backend {} entry does not exist, creating one.'.format(obj.ad_idmap_backend))
-            get_idmap(obj.ds_type, obj.id, obj.ad_idmap_backend)
+            utils.get_idmap(obj.ds_type, obj.id, obj.ad_idmap_backend)
 
         self.cifs.cifs_srv_netbiosname = self.cleaned_data.get("ad_netbiosname_a")
         self.cifs.cifs_srv_netbiosname_b = self.cleaned_data.get("ad_netbiosname_b")
