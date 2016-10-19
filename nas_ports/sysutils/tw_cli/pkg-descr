@@ -1,0 +1,7 @@
+tw_cli(8) is a Command Line Interface Storage Management Software for
+AMCC/3ware ATA RAID Controllers, supported by twe(4) and twa(4) drivers.
+It provides controller, logical unit and drive management. tw_cli can
+be used in both interactive and batch mode, providing higher-level API
+(Application Programming Interface) functionalities.
+
+WWW: http://3ware.com/support/download.asp
