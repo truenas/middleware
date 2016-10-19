@@ -32,6 +32,7 @@ import tempfile
 
 from ldap import LDAPError
 
+from django.core.exceptions import ObjectDoesNotExist
 from django.forms import FileField
 from django.utils.translation import ugettext_lazy as _
 
@@ -631,7 +632,7 @@ class ActiveDirectoryForm(ModelForm):
 
         try:
             utils.get_idmap_object(obj.ds_type, obj.id, obj.ad_idmap_backend)
-        except models.idmap_base.DoesNotExist:
+        except ObjectDoesNotExist:
             log.debug('IDMAP backend {} entry does not exist, creating one.'.format(obj.ad_idmap_backend))
             utils.get_idmap(obj.ds_type, obj.id, obj.ad_idmap_backend)
 
