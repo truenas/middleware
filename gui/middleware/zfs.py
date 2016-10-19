@@ -404,7 +404,7 @@ class Dev(Tnode):
                     pool = pool.parent
                 # Lets check whether it is a guid
                 p1 = subprocess.Popen(
-                    ["/usr/sbin/zdb", "-C", pool.name],
+                    ["/usr/sbin/zdb", "-U", "/data/zfs/zpool.cache", "-C", pool.name],
                     stdout=subprocess.PIPE,
                     stderr=subprocess.PIPE)
                 zdb = p1.communicate()[0]
