@@ -20,6 +20,7 @@ import inspect
 import logging
 import logging.config
 import os
+import rollbar
 import setproctitle
 import subprocess
 import sys
@@ -93,6 +94,7 @@ class Application(WebSocketApplication):
         except Exception as e:
             self.send_error(message, str(e), ''.join(traceback.format_exception(sys.exc_type, sys.exc_value, sys.exc_traceback)))
             self.middleware.logger.warn('Exception while calling {}(*{})'.format(message['method'], message.get('params')), exc_info=True)
+            gevent.spawn(self.middleware.rollbar_report, sys.exc_info())
 
     def on_open(self):
         pass
@@ -150,11 +152,18 @@ class Middleware(object):
         self.__schemas = {}
         self.__services = {}
         self.__init_services()
+        self.__init_rollbar()
         self.__plugins_load()
 
     def __init_services(self):
         from middlewared.service import CoreService
         self.add_service(CoreService(self))
+
+    def __init_rollbar(self):
+        rollbar.init(
+            'caf06383cba14d5893c4f4d0a40c33a9',
+            'production' if 'DEVELOPER_MODE' not in os.environ else 'development'
+        )
 
     def __plugins_load(self):
         from middlewared.service import Service, CRUDService, ConfigService
@@ -268,6 +277,21 @@ class Middleware(object):
     def call(self, method, *params):
         service, method = method.rsplit('.', 1)
         return getattr(self.get_service(service), method)(*params)
+
+    def rollbar_report(self, exc_info):
+        extra_data = {}
+        try:
+            extra_data['sw_version'] = self.call('system.version')
+        except:
+            self.logger.debug('Failed to get system version', exc_info=True)
+
+        for path, name in (
+            ('/var/log/middlewared.log', 'middlewared_log'),
+        ):
+            if os.path.exists(path):
+                with open(path, 'r') as f:
+                    extra_data[name] = f.read()[-10240:]
+        rollbar.report_exc_info(exc_info, extra_data=extra_data)
 
     def run(self):
         Application.middleware = self
