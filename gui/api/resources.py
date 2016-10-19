@@ -62,7 +62,8 @@ from freenasUI.freeadmin.options import FreeBaseInlineFormSet
 from freenasUI.jails.forms import (
     JailCreateForm, JailsEditForm, JailTemplateCreateForm, JailTemplateEditForm
 )
-from freenasUI.jails.models import JailTemplate
+from freenasUI.jails.models import JailsConfiguration, JailTemplate
+from freenasUI.jails.utils import guess_ipv4_addresses
 from freenasUI.middleware import zfs
 from freenasUI.middleware.client import client
 from freenasUI.middleware.exceptions import MiddlewareError
@@ -2156,6 +2157,28 @@ class JailsResourceMixin(NestedMixin):
         bundle = super(JailsResourceMixin, self).hydrate(bundle)
         if 'id' not in bundle.data:
             bundle.data['id'] = 1
+        if bundle.request.method == 'POST':
+            # The way default values is provided in JailsCreateForm
+            # is not ideal since it relays in form data from UI.
+            # To workaround this lets do the same operation done in the form
+            # in case ipv4 not dhcp has been provided via API.
+            # See #14687
+            if 'jail_ipv4' not in bundle.data and not bundle.data.get('jail_ipv4_dhcp'):
+                jc = JailsConfiguration.objects.order_by("-id")[0]
+                if not jc.jc_ipv4_dhcp:
+                    ipv4_addrs = guess_ipv4_addresses()
+                    if ipv4_addrs['high_ipv4']:
+                        parts = str(ipv4_addrs['high_ipv4']).split('/')
+                        bundle.data['jail_ipv4'] = parts[0]
+                        if len(parts) > 1:
+                            bundle.data['jail_ipv4_netmask'] = parts[1]
+
+                    if ipv4_addrs['bridge_ipv4']:
+                        parts = str(ipv4_addrs['bridge_ipv4']).split('/')
+                        bundle.data['jail_bridge_ipv4'] = parts[0]
+                        if len(parts) > 1:
+                            bundle.data['jail_bridge_ipv4_netmask'] = parts[1]
+
         return bundle
 
 
