@@ -92,6 +92,7 @@ class Application(WebSocketApplication):
             })
         except Exception as e:
             self.send_error(message, str(e), ''.join(traceback.format_exception(sys.exc_type, sys.exc_value, sys.exc_traceback)))
+            self.middleware.logger.warn('Exception while calling {}(*{})'.format(message['method'], message.get('params')), exc_info=True)
 
     def on_open(self):
         pass
