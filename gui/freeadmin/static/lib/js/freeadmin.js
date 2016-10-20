@@ -502,7 +502,7 @@ require([
 
     repliRemoteMode = function() {
 
-      var mode = registry.byId('id_repl_remote_mode').get('value');
+      var mode = registry.byId('id_repl_remote_mode');
 
       var rp = registry.byId('id_repl_remote_port');
       var rhk = registry.byId('id_repl_remote_hostkey');
@@ -518,7 +518,10 @@ require([
       var tr_rh = rh.domNode.parentNode.parentNode;
       var tr_rt = rt.domNode.parentNode.parentNode;
 
-      if(mode == 'MANUAL') {
+      var modewarn = dom.byId('repl_mode_semiautomatic_warn');
+
+      if(mode.get('value') == 'MANUAL') {
+        if(modewarn) domConstruct.destroy(modewarn);
         domStyle.set(tr_rp, 'display', '');
         domStyle.set(tr_rhk, 'display', '');
         domStyle.set(rscan.domNode, 'display', '');
@@ -526,6 +529,10 @@ require([
         domStyle.set(tr_rh, 'display', 'none');
         domStyle.set(tr_rt, 'display', 'none');
       } else {
+        if(!modewarn) {
+          modewarn = domConstruct.toDom('<p id="repl_mode_semiautomatic_warn" style="color: red;">This method only works with remote version greater or equal than 9.10.2</p>');
+          domConstruct.place(modewarn, mode.domNode.parentNode);
+        }
         domStyle.set(tr_rp, 'display', 'none');
         domStyle.set(tr_rhk, 'display', 'none');
         domStyle.set(rscan.domNode, 'display', 'none');
