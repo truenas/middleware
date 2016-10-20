@@ -2224,6 +2224,7 @@ class ReplicationForm(ModelForm):
                     data = c.call('replication.pair', {
                         'hostname': self.cleaned_data.get("repl_remote_hostname"),
                         'public-key': publickey,
+                        'user': r.ssh_remote_dedicateduser if r.ssh_remote_dedicateduser_enabled else None,
                     })
                     r.ssh_remote_port = data['ssh_port']
                     r.ssh_remote_hostkey = data['ssh_hostkey']
