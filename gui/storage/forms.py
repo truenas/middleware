@@ -2222,6 +2222,7 @@ class ReplicationForm(ModelForm):
                     with open('/data/ssh/replication.pub', 'r') as f:
                         publickey = f.read()
                     data = c.call('replication.pair', {
+                        'hostname': self.cleaned_data.get("repl_remote_hostname"),
                         'public-key': publickey,
                     })
                     r.ssh_remote_port = data['ssh_port']

@@ -2,6 +2,7 @@ from middlewared.schema import accepts, Dict, Str
 from middlewared.service import private, Service
 from middlewared.utils import Popen
 
+import base64
 import subprocess
 
 
@@ -25,6 +26,7 @@ class ReplicationService(Service):
     @private
     @accepts(Dict(
         'replication-pair-data',
+        Str('hostname'),
         Str('public-key'),
     ))
     def pair(self, data):
@@ -47,7 +49,14 @@ class ReplicationService(Service):
             if data['public-key'] not in f.read():
                 f.write('\n' + data['public-key'])
 
+        ssh_hostkey = '{0} {1}\n{0} {2}\n{0} {3}\n'.format(
+            data['hostname'],
+            base64.b64decode(ssh['ssh_host_rsa_key_pub']),
+            base64.b64decode(ssh['ssh_host_ecdsa_key_pub']),
+            base64.b64decode(ssh['ssh_host_ed25519_key_pub']),
+        )
+
         return {
             'ssh_port': ssh['ssh_tcpport'],
-            'ssh_hostkey': self.ssh_keyscan('localhost', ssh['ssh_tcpport']),
+            'ssh_hostkey': ssh_hostkey,
         }
