@@ -40,7 +40,8 @@ class ReplicationService(Service):
 
         # Make sure SSH is enabled
         if not service['srv_enable']:
-            raise ValueError('SSH service is not enabled on remote')
+            self.middleware.call('datastore.update', service['id'], {'srv_enable': True})
+            self.middleware.call('notifier.start', 'ssh')
 
         # Write public key in user authorized_keys for SSH
         authorized_keys_file = '{}/.ssh/authorized_keys'.format(root['bsdusr_home'])
