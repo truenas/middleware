@@ -624,8 +624,7 @@ def add_nt4_conf(client, smb4_conf):
     confset1(smb4_conf, "security = domain")
     confset1(smb4_conf, "password server = *")
 
-    # FIXME: no ds_type, extend model
-    idmap = client.call('notifier.ds_get_idmap_object', nt4.ds_type, nt4.id, nt4.nt4_idmap_backend)
+    idmap = Struct(client.call('notifier.ds_get_idmap_object', nt4.ds_type, nt4.id, nt4.nt4_idmap_backend))
     configure_idmap_backend(client, smb4_conf, idmap, nt4_workgroup)
 
     confset1(smb4_conf, "winbind cache time = 7200")
@@ -700,8 +699,7 @@ def add_ldap_conf(client, smb4_conf):
     confset2(smb4_conf, "workgroup = %s", ldap_workgroup)
     confset1(smb4_conf, "domain logons = yes")
 
-    # FIXME: no ds_type, extend or use static
-    idmap = client.call('notifier.ds_get_idmap_object', ldap.ds_type, ldap.id, ldap.ldap_idmap_backend)
+    idmap = Struct(client.call('notifier.ds_get_idmap_object', ldap.ds_type, ldap.id, ldap.ldap_idmap_backend))
     configure_idmap_backend(client, smb4_conf, idmap, ldap_workgroup)
 
 
@@ -752,8 +750,7 @@ def add_activedirectory_conf(client, smb4_conf):
     if ad.ad_nss_info:
         confset2(smb4_conf, "winbind nss info = %s", ad.ad_nss_info)
 
-    # FIXME: no ds_type, use static or extend model
-    idmap = client.call('notifier.ds_get_idmap_object', ad.ds_type, ad.id, ad.ad_idmap_backend)
+    idmap = Struct(client.call('notifier.ds_get_idmap_object', ad.ds_type, ad.id, ad.ad_idmap_backend))
     configure_idmap_backend(client, smb4_conf, idmap, ad_workgroup)
 
     confset2(smb4_conf, "allow trusted domains = %s",
@@ -965,7 +962,7 @@ def generate_smb4_conf(client, smb4_conf, role):
                  "yes" if cifs.cifs_srv_localmaster else "no")
 
     # 5 = DS_TYPE_CIFS
-    idmap = client.call('notifier.ds_get_idmap_object', 5, cifs.id, 'tdb')
+    idmap = Struct(client.call('notifier.ds_get_idmap_object', 5, cifs.id, 'tdb'))
     configure_idmap_backend(client, smb4_conf, idmap, None)
 
     if role == 'auto':
