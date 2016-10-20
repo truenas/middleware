@@ -38,6 +38,7 @@ urlpatterns = patterns(
     url(r'^replications/$', 'replications', name="storage_replications"),
     url(r'^replications/public-key/$', 'replications_public_key', name="storage_replications_key"),
     url(r'^replications/keyscan/$', 'replications_keyscan', name="storage_replications_keyscan"),
+    url(r'^replications/authtoken/$', 'replications_authtoken', name="storage_replications_authtoken"),
     url(r'^snapshots/$', 'snapshots', name="storage_snapshots"),
     url(r'^disks/editbulk/$', 'disk_editbulk', name="storage_disk_editbulk"),
     url(r'^disks/wipe/(?P<devname>[^/]+)/$', 'disk_wipe', name="storage_disk_wipe"),

@@ -13,6 +13,12 @@
       editObject('{% trans "View Public Key"|force_escape|force_escape %}', '{% url "storage_replications_key" %}', [this,]);
   </script>
 </button>
+<button id="btnDatagrid_Replication_AuthToken" data-dojo-type="dijit.form.Button" type="button" class="left" style="margin-right: 15px;">
+  <p>{% trans "Temporary Auth Token" %}</p>
+  <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
+      editObject('{% trans "Temporary Auth Token"|escapejs %}', '{% url "storage_replications_authtoken" %}', [this,]);
+  </script>
+</button>
   <p style="margin:10px;"><span style="color: red;">{% trans "ATTENTION: A periodic snapshot of a given ZFS Volume/Dataset is required to create a replication task" %}</span></p>
 <span class="clear"></span>
 {% endblock %}
