@@ -2219,11 +2219,18 @@ class ReplicationForm(ModelForm):
                 with Client(self._build_uri()) as c:
                     if not c.call('auth.token', self.cleaned_data.get('repl_remote_token')):
                         raise ValueError('Invalid token')
+                    with open('/data/ssh/replication.pub', 'r') as f:
+                        publickey = f.read()
+                    data = c.call('replication.pair', {
+                        'public-key': publickey,
+                    })
+                    r.ssh_remote_port = data['ssh_port']
+                    r.ssh_remote_hostkey = data['ssh_hostkey']
             except Exception as e:
                 raise MiddlewareError('Failed to setup replication: %s' % e)
         else:
-            r.ssh_remote_hostkey = self.cleaned_data.get("repl_remote_hostkey")
             r.ssh_remote_port = self.cleaned_data.get("repl_remote_port")
+            r.ssh_remote_hostkey = self.cleaned_data.get("repl_remote_hostkey")
         r.save()
         notifier().reload("ssh")
         self.instance.repl_remote = r
