@@ -2006,12 +2006,32 @@ class ZFSDiskReplacementForm(Form):
 
 
 class ReplicationForm(ModelForm):
+    repl_remote_mode = forms.ChoiceField(
+        label=_('Setup mode'),
+        choices=(
+            ('MANUAL', _('Manual')),
+            ('SEMIAUTOMATIC', _('Semi-automatic')),
+        ),
+    )
     repl_remote_hostname = forms.CharField(label=_("Remote hostname"))
     repl_remote_port = forms.IntegerField(
         label=_("Remote port"),
         initial=22,
         required=False,
         widget=forms.widgets.TextInput(),
+    )
+    repl_remote_http_port = forms.CharField(
+        label=_('Remote HTTP/HTTPS Port'),
+        max_length=200,
+        initial=80,
+    )
+    repl_remote_https = forms.BooleanField(
+        label=_('Remote HTTPS'),
+        initial=False,
+    )
+    repl_remote_token = forms.CharField(
+        label=_('Remote Auth Token'),
+        max_length=100,
     )
     repl_remote_dedicateduser_enabled = forms.BooleanField(
         label=_("Dedicated User Enabled"),
@@ -2075,6 +2095,16 @@ class ReplicationForm(ModelForm):
             for task in models.Task.objects.all()
         ]))
         self.fields['repl_filesystem'].choices = fs
+
+        if not self.instance.id:
+            self.fields['repl_remote_mode'].widget.attrs['onChange'] = (
+                'repliRemoteMode'
+            )
+        else:
+            del self.fields['repl_remote_mode']
+            del self.fields['repl_remote_http_port']
+            del self.fields['repl_remote_https']
+            del self.fields['repl_remote_token']
 
         self.fields['repl_remote_dedicateduser_enabled'].widget.attrs[
             'onClick'
