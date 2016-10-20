@@ -1,4 +1,12 @@
 {% extends "freeadmin/generic_model_add.html" %}
+{% block post_form %}
+{{ block.super }}
+<script type="dojo/method">
+addToStack(function() {
+  repliRemoteMode();
+});
+</script>
+{% endblock %}
 
 {% block buttons_extra %}
 <button id="btn_Replication_SSHKeyScan" data-dojo-type="dijit.form.Button">
