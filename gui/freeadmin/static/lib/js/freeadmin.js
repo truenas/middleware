@@ -500,6 +500,49 @@ require([
       }
     }
 
+    repliRemoteMode = function() {
+
+      var mode = registry.byId('id_repl_remote_mode');
+
+      var rp = registry.byId('id_repl_remote_port');
+      var rhk = registry.byId('id_repl_remote_hostkey');
+      var rhp = registry.byId('id_repl_remote_http_port');
+      var rh = registry.byId('id_repl_remote_https');
+      var rt = registry.byId('id_repl_remote_token');
+
+      var rscan = registry.byId('btn_Replication_SSHKeyScan');
+
+      var tr_rp = rp.domNode.parentNode.parentNode;
+      var tr_rhk = rhk.domNode.parentNode.parentNode;
+      var tr_rhp = rhp.domNode.parentNode.parentNode;
+      var tr_rh = rh.domNode.parentNode.parentNode;
+      var tr_rt = rt.domNode.parentNode.parentNode;
+
+      var modewarn = dom.byId('repl_mode_semiautomatic_warn');
+
+      if(mode.get('value') == 'MANUAL') {
+        if(modewarn) domConstruct.destroy(modewarn);
+        domStyle.set(tr_rp, 'display', '');
+        domStyle.set(tr_rhk, 'display', '');
+        domStyle.set(rscan.domNode, 'display', '');
+        domStyle.set(tr_rhp, 'display', 'none');
+        domStyle.set(tr_rh, 'display', 'none');
+        domStyle.set(tr_rt, 'display', 'none');
+      } else {
+        if(!modewarn) {
+          modewarn = domConstruct.toDom('<p id="repl_mode_semiautomatic_warn" style="color: red;">This method only works with remote version greater or equal than 9.10.2</p>');
+          domConstruct.place(modewarn, mode.domNode.parentNode);
+        }
+        domStyle.set(tr_rp, 'display', 'none');
+        domStyle.set(tr_rhk, 'display', 'none');
+        domStyle.set(rscan.domNode, 'display', 'none');
+        domStyle.set(tr_rhp, 'display', '');
+        domStyle.set(tr_rh, 'display', '');
+        domStyle.set(tr_rt, 'display', '');
+      }
+
+    }
+
     togglePluginService = function(from, name, id) {
 
         var td = from.parentNode;

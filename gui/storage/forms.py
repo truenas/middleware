@@ -63,6 +63,7 @@ from freenasUI.services.models import iSCSITargetExtent, services
 from freenasUI.storage import models
 from freenasUI.storage.widgets import UnixPermissionField
 from freenasUI.support.utils import dedup_enabled
+from middlewared.client import Client
 from pysphere import VIServer
 
 attrs_dict = {'class': 'required', 'maxHeight': 200}
@@ -2006,12 +2007,34 @@ class ZFSDiskReplacementForm(Form):
 
 
 class ReplicationForm(ModelForm):
+    repl_remote_mode = forms.ChoiceField(
+        label=_('Setup mode'),
+        choices=(
+            ('MANUAL', _('Manual')),
+            ('SEMIAUTOMATIC', _('Semi-automatic')),
+        ),
+    )
     repl_remote_hostname = forms.CharField(label=_("Remote hostname"))
     repl_remote_port = forms.IntegerField(
         label=_("Remote port"),
         initial=22,
         required=False,
         widget=forms.widgets.TextInput(),
+    )
+    repl_remote_http_port = forms.CharField(
+        label=_('Remote HTTP/HTTPS Port'),
+        max_length=200,
+        initial=80,
+    )
+    repl_remote_https = forms.BooleanField(
+        label=_('Remote HTTPS'),
+        required=False,
+        initial=False,
+    )
+    repl_remote_token = forms.CharField(
+        label=_('Remote Auth Token'),
+        max_length=100,
+        required=False,
     )
     repl_remote_dedicateduser_enabled = forms.BooleanField(
         label=_("Dedicated User Enabled"),
@@ -2030,6 +2053,7 @@ class ReplicationForm(ModelForm):
     repl_remote_hostkey = forms.CharField(
         label=_("Remote hostkey"),
         widget=forms.Textarea(),
+        required=False,
     )
 
     class Meta:
@@ -2075,6 +2099,16 @@ class ReplicationForm(ModelForm):
             for task in models.Task.objects.all()
         ]))
         self.fields['repl_filesystem'].choices = fs
+
+        if not self.instance.id:
+            self.fields['repl_remote_mode'].widget.attrs['onChange'] = (
+                'repliRemoteMode'
+            )
+        else:
+            del self.fields['repl_remote_mode']
+            del self.fields['repl_remote_http_port']
+            del self.fields['repl_remote_https']
+            del self.fields['repl_remote_token']
 
         self.fields['repl_remote_dedicateduser_enabled'].widget.attrs[
             'onClick'
@@ -2128,19 +2162,77 @@ class ReplicationForm(ModelForm):
             raise forms.ValidationError("You must select a valid user")
         return user
 
+    def _build_uri(self):
+        hostname = self.cleaned_data.get('repl_remote_hostname')
+        http_port = self.cleaned_data.get('repl_remote_http_port')
+        https = self.cleaned_data.get('repl_remote_https')
+        return 'ws{}://{}:{}/websocket'.format(
+            's' if https else '',
+            hostname,
+            http_port,
+        )
+
+    def clean_repl_remote_token(self):
+        mode = self.cleaned_data.get('repl_remote_mode')
+        token = self.cleaned_data.get('repl_remote_token')
+        if mode != 'SEMIAUTOMATIC':
+            return token
+
+        if not token:
+            raise forms.ValidationError(_('This field is required'))
+
+        try:
+            with Client(self._build_uri()) as c:
+                if not c.call('auth.token', token):
+                    raise forms.ValidationError(_('Token is invalid.'))
+        except forms.ValidationError:
+            raise
+        except Exception as e:
+            raise forms.ValidationError(_('Failed to connect to remote: %s' % e))
+        return token
+
+    def clean_repl_remote_hostkey(self):
+        hostkey = self.cleaned_data.get('repl_remote_hostkey')
+        mode = self.cleaned_data.get('repl_remote_mode')
+        if mode == 'MANUAL' and not hostkey:
+            raise forms.ValidationError(_('This field is required'))
+        return hostkey
+
     def save(self):
+
+        mode = self.cleaned_data.get('repl_remote_mode')
+
         if self.instance.id is None:
             r = models.ReplRemote()
         else:
             r = self.instance.repl_remote
+
         r.ssh_remote_hostname = self.cleaned_data.get("repl_remote_hostname")
-        r.ssh_remote_hostkey = self.cleaned_data.get("repl_remote_hostkey")
         r.ssh_remote_dedicateduser_enabled = self.cleaned_data.get(
             "repl_remote_dedicateduser_enabled")
         r.ssh_remote_dedicateduser = self.cleaned_data.get(
             "repl_remote_dedicateduser")
-        r.ssh_remote_port = self.cleaned_data.get("repl_remote_port")
         r.ssh_cipher = self.cleaned_data.get("repl_remote_cipher")
+
+        if mode == 'SEMIAUTOMATIC':
+            try:
+                with Client(self._build_uri()) as c:
+                    if not c.call('auth.token', self.cleaned_data.get('repl_remote_token')):
+                        raise ValueError('Invalid token')
+                    with open('/data/ssh/replication.pub', 'r') as f:
+                        publickey = f.read()
+                    data = c.call('replication.pair', {
+                        'hostname': self.cleaned_data.get("repl_remote_hostname"),
+                        'public-key': publickey,
+                        'user': r.ssh_remote_dedicateduser if r.ssh_remote_dedicateduser_enabled else None,
+                    })
+                    r.ssh_remote_port = data['ssh_port']
+                    r.ssh_remote_hostkey = data['ssh_hostkey']
+            except Exception as e:
+                raise MiddlewareError('Failed to setup replication: %s' % e)
+        else:
+            r.ssh_remote_port = self.cleaned_data.get("repl_remote_port")
+            r.ssh_remote_hostkey = self.cleaned_data.get("repl_remote_hostkey")
         r.save()
         notifier().reload("ssh")
         self.instance.repl_remote = r

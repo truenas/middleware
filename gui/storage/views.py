@@ -49,6 +49,7 @@ from freenasUI.common.system import is_mounted
 from freenasUI.freeadmin.apppool import appPool
 from freenasUI.freeadmin.views import JsonResp
 from freenasUI.middleware import zfs
+from freenasUI.middleware.client import client
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier
 from freenasUI.system.models import Advanced
@@ -110,6 +111,14 @@ def replications_public_key(request):
         key = None
     return render(request, 'storage/replications_key.html', {
         'key': key,
+    })
+
+
+def replications_authtoken(request):
+    with client as c:
+        tokenid = c.call('auth.generate_token', 120)
+    return render(request, 'storage/replications_authtoken.html', {
+        'tokenid': tokenid,
     })
 
 
