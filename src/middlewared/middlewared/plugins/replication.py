@@ -40,7 +40,7 @@ class ReplicationService(Service):
 
         # Make sure SSH is enabled
         if not service['srv_enable']:
-            self.middleware.call('datastore.update', service['id'], {'srv_enable': True})
+            self.middleware.call('datastore.update', 'services.services', service['id'], {'srv_enable': True})
             self.middleware.call('notifier.start', 'ssh')
 
         # Write public key in user authorized_keys for SSH
