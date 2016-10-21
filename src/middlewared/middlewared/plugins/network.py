@@ -116,7 +116,7 @@ class InterfacesService(Service):
             try:
                 self.sync_interface(interface)
             except:
-                log.error('Failed to configure {}'.format(interface), exc_info=True)
+                self.logger.error('Failed to configure {}'.format(interface), exc_info=True)
 
         internal_interfaces = ['lo', 'pflog', 'pfsync', 'tun', 'tap']
         if not self.middleware.call('system.is_freenas'):
