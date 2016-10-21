@@ -195,17 +195,22 @@ def server_error(request, *args, **kwargs):
         tb = True
 
     try:
-        extra_data = {
-            'sw_version': get_sw_version(),
-        }
-        for path, name in (
-            ('/data/update.failed', 'update_failed'),
-            ('/var/log/debug.log', 'debug_log'),
+        # Allow rollbar to be disabled via sentinel file or environment var
+        if (
+            not os.path.exists('/tmp/.rollbar_disabled') and
+            'ROLLBAR_DISABLED' not in os.environ
         ):
-            if os.path.exists(path):
-                with open(path, 'r') as f:
-                    extra_data[name] = f.read()[-10240:]
-        rollbar.report_exc_info(exc_info, request, extra_data=extra_data)
+            extra_data = {
+                'sw_version': get_sw_version(),
+            }
+            for path, name in (
+                ('/data/update.failed', 'update_failed'),
+                ('/var/log/debug.log', 'debug_log'),
+            ):
+                if os.path.exists(path):
+                    with open(path, 'r') as f:
+                        extra_data[name] = f.read()[-10240:]
+            rollbar.report_exc_info(exc_info, request, extra_data=extra_data)
     except:
         log.warn('Failed to report error', exc_info=True)
     try:
