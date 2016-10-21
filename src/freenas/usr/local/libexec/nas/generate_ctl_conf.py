@@ -177,7 +177,7 @@ def main():
                         )
                 if extent.iscsi_target_extent_avail_threshold:
                     zvolname = path.split('/', 1)[1]
-                    zfslist = client.call('notifier.zfs_list', [zvolname, False, False, False, ['volume']])
+                    zfslist = client.call('notifier.zfs_list', zvolname, False, False, False, ['volume'])
                     if zfslist:
                         lunthreshold = int(zfslist[zvolname]['volsize'] *
                                            (extent.iscsi_target_extent_avail_threshold / 100.0))
