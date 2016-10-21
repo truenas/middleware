@@ -92,7 +92,7 @@ class Application(WebSocketApplication):
                 'result': self.middleware.call_method(self, message),
             })
         except Exception as e:
-            self.send_error(message, str(e), ''.join(traceback.format_exception(*sys.exc_info()))
+            self.send_error(message, str(e), ''.join(traceback.format_exception(*sys.exc_info())))
             self.middleware.logger.warn('Exception while calling {}(*{})'.format(message['method'], message.get('params')), exc_info=True)
             gevent.spawn(self.middleware.rollbar_report, sys.exc_info())
 
