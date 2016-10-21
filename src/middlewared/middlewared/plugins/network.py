@@ -83,11 +83,12 @@ class InterfacesService(Service):
                 iface.add_port(member)
 
             for port in iface.ports:
-                port_iface = netif.get_interface(port[0])
-                if port_iface:
-                    port_iface.up()
-                else:
+                try:
+                    port_iface = netif.get_interface(port[0])
+                except KeyError:
                     self.logger.warn('Could not find {} from {}'.format(port[0], name))
+                    continue
+                port_iface.up()
 
         vlans = self.middleware.call('datastore.query', 'network.vlan')
         for vlan in vlans:
@@ -103,15 +104,19 @@ class InterfacesService(Service):
                 iface.unconfigure()
                 iface.configure(vlan['vlan_pint'], vlan['vlan_tag'])
 
-            parent_iface = netif.get_interface(iface.parent)
-            if parent_iface:
-                parent_iface.up()
-            else:
+            try:
+                parent_iface = netif.get_interface(iface.parent)
+            except KeyError:
                 self.logger.warn('Could not find {} from {}'.format(iface.parent, vlan['vlan_vint']))
+                continue
+            parent_iface.up()
 
         self.logger.info('Interfaces in database: {}'.format(', '.join(interfaces) or 'NONE'))
         for interface in interfaces:
-            self.sync_interface(interface)
+            try:
+                self.sync_interface(interface)
+            except:
+                log.error('Failed to configure {}'.format(interface), exc_info=True)
 
         internal_interfaces = ['lo', 'pflog', 'pfsync', 'tun', 'tap']
         if not self.middleware.call('system.is_freenas'):
