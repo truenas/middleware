@@ -279,6 +279,14 @@ class Middleware(object):
         return getattr(self.get_service(service), method)(*params)
 
     def rollbar_report(self, exc_info):
+
+        # Allow rollbar to be disabled via sentinel file or environment var
+        if (
+            os.path.exists('/tmp/.rollbar_disabled') or
+            'ROLLBAR_DISABLED' in os.environ
+        ):
+            return
+
         extra_data = {}
         try:
             extra_data['sw_version'] = self.call('system.version')
