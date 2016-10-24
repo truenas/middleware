@@ -52,7 +52,7 @@ class AuthTokens(object):
         if sessionid in token['sessions']:
             token['sessions'].remove(sessionid)
 
-    def pop(self, token_id):
+    def pop_token(self, token_id):
         # Remove a token from both indexes
         token = self.__tokens.pop(token_id)
         for sessionid in token['sessions']:
