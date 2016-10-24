@@ -1921,6 +1921,9 @@ class notifier:
                 self._system('/sbin/geli detach /dev/%s' % (from_swap,))
 
         ret = self._system_nolog('/sbin/zpool detach %s %s' % (vol_name, label))
+
+        self.sync_encrypted(volume)
+
         if from_disk:
             # TODO: This operation will cause damage to disk data which should be limited
             self.__gpt_unlabeldisk(from_disk)
@@ -1946,8 +1949,10 @@ class notifier:
         if p1.returncode != 0:
             error = ", ".join(stderr.split('\n'))
             raise MiddlewareError('Disk could not be removed: "%s"' % error)
-        # TODO: This operation will cause damage to disk data which should be limited
 
+        self.sync_encrypted(volume)
+
+        # TODO: This operation will cause damage to disk data which should be limited
         if from_disk:
             self.__gpt_unlabeldisk(from_disk)
 
