@@ -4796,7 +4796,7 @@ class notifier:
                 v = geom[0].xpath("./provider/config/ident")
                 if len(v) > 0:
                     disk.disk_serial = v[0].text
-                    serial = v[0].text
+                    serial = v[0].text or ''
                 v = geom[0].xpath("./provider/config/lunid")
                 if len(v) > 0:
                     serial += v[0].text
