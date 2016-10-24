@@ -1,0 +1,12 @@
+This is Net-SNMP (previously known as "ucd-snmp").
+
+Various tools relating to the Simple Network Management Protocol including:
+
+    An extensible agent
+    An SNMP library
+    tools to request or set information from SNMP agents
+    tools to generate and handle SNMP traps
+    a version of the Unix 'netstat' command using SNMP
+    a graphical Perl/Tk/SNMP based mib browser
+
+WWW: http://net-snmp.sourceforge.net/

@@ -1,0 +1,65 @@
+#!/bin/sh
+
+# $FreeBSD$
+#
+# PROVIDE: snmpd
+# REQUIRE: DAEMON
+#
+# Add the following line to /etc/rc.conf to enable snmpd:
+#
+# snmpd_enable="YES"
+# snmpd_flags="<set as needed>"
+# snmpd_conffile="<set as needed>"
+
+. /etc/rc.subr
+
+name=snmpd
+rcvar=snmpd_enable
+
+load_rc_config snmpd
+
+snmpd_enable=${snmpd_enable:-"NO"}
+snmpd_flush_cache=${snmpd_flush_cache-"NO"}
+
+pidfile=${snmpd_pidfile:-"/var/run/net_snmpd.pid"}
+
+command=%%PREFIX%%/sbin/${name}
+
+start_precmd=net_snmpd_precmd
+
+net_snmpd_precmd () {
+	local flag conffile snmpd_conffile_set
+
+	if checkyesno snmpd_flush_cache; then
+		rm -vf /var/net-snmp/.snmp-exec-cache
+	fi
+
+	for flag in ${snmpd_flags}; do
+		case "${flag}" in
+		-p*)
+			err 1 "\$snmpd_flags includes -p option." \
+				"Please use \$snmpd_pidfile instead."
+			;;
+		-c*)
+			err 1 "\$snmpd_flags includes -c option." \
+				"Please use \$snmpd_conffile instead."
+			;;
+		esac
+	done
+
+	for conffile in ${snmpd_conffile}; do
+		if [ -f "${conffile}" -a -s "${conffile}" ]; then
+		       snmpd_conffile_set="${snmpd_conffile_set},${conffile}"
+		else
+		       err 1 "snmpd configuration file $conffile not found."
+		fi
+	done
+
+	# snmpd syntax requires that the listening address (if defined) be the last argument
+	if [ -n "${snmpd_conffile_set}" ]; then
+		rc_flags="-c ${snmpd_conffile_set#,} ${rc_flags}"
+	fi
+	rc_flags="-p ${pidfile} ${rc_flags}"
+}
+
+run_rc_command "$1"
