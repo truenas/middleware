@@ -118,7 +118,7 @@ class NotifierService(Service):
         data['idmap_backend_name'] = obj.idmap_backend_name
         data['idmap_backend_type'] = obj.idmap_backend_type
         # Only these types have SSL
-        if ds_type not in (IDMAP_TYPE_LDAP, IDMAP_TYPE_RFC2307):
+        if data['idmap_backend_type'] not in (IDMAP_TYPE_LDAP, IDMAP_TYPE_RFC2307):
             return data
         cert = obj.get_certificate()
         if cert:
