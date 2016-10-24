@@ -72,6 +72,7 @@ class Client(object):
             uri = 'ws://127.0.0.1:6000/websocket'
         self._ws = WSClient(uri, client=self)
         self._ws.connect()
+        self._closed = Event()
         self._connected = Event()
         self._connected.wait(5)
         if not self._connected.is_set():
@@ -113,7 +114,7 @@ class Client(object):
         })
 
     def on_close(self, code, reason=None):
-        pass
+        self._closed.set()
 
     def register_call(self, call):
         self._calls[call.id] = call
@@ -143,6 +144,8 @@ class Client(object):
 
     def close(self):
         self._ws.close()
+        # Wait for websocketclient thread to close
+        self._closed.wait(1)
 
     def __del__(self):
         self.close()
