@@ -1,5 +1,5 @@
 from middlewared.schema import accepts, Dict, Str
-from middlewared.service import Service
+from middlewared.service import job, Service
 
 import re
 import sys
@@ -7,7 +7,7 @@ import sys
 if '/usr/local/lib' not in sys.path:
     sys.path.append('/usr/local/lib')
 
-from freenasOS import Configuration
+from freenasOS import Configuration, Manifest, Update
 from freenasOS.Update import CheckForUpdates, GetServiceDescription
 
 
@@ -63,6 +63,39 @@ class CheckUpdateHandler(object):
         for r in self.restarts:
             output += r + "\n"
         return output
+
+
+class UpdateHandler(object):
+
+    def __init__(self, service, job):
+        self.service = service
+        self.job = job
+
+    def check_handler(self, index, pkg, pkgList):
+        pkgname = '%s-%s' % (
+            pkg.Name(),
+            pkg.Version(),
+        )
+        step_progress = int((1.0 / len(pkgList)) * 100.0)
+        self._baseprogress = index * step_progress
+
+        self.job.set_progress((index - 1) * step_progress, 'Downloading {}'.format(pkgname))
+
+    def get_handler(
+        self, method, filename, size=None, progress=None, download_rate=None
+    ):
+        filename = filename.rsplit('/', 1)[-1]
+        if not progress:
+            return
+        progress = (progress * self._baseprogress) / 100
+        if progress == 0:
+            progress = 1
+        self.job.set_progress(progress, 'Downloading {} {} ({}%) {}/s'.format(
+            filename,
+            size if size else '',
+            progress,
+            download_rate if download_rate else '',
+        ))
 
 
 def get_changelog(train, start='', end=''):
@@ -125,6 +158,7 @@ class UpdateService(Service):
         manifest = CheckForUpdates(
             diff_handler=handler.diff_call,
             handler=handler.call,
+            train=train,
         )
 
         data = {
@@ -148,3 +182,34 @@ class UpdateService(Service):
 
         data['version'] = manifest.Version()
         return data
+
+    @accepts(Dict(
+        'update-check-available',
+        Str('train', required=False),
+        required=False,
+    ))
+    @job(lock='update')
+    def update(self, job, attrs=None):
+        """
+        Downloads (if not already in cache) and apply an update.
+        """
+        train = (attrs or {}).get('train') or self.get_train()
+        location = self.middleware.call('notifier.get_update_location')
+
+        handler = UpdateHandler(self, job)
+
+        Update.DownloadUpdate(
+            train,
+            location,
+            check_handler=handler.check_handler,
+            get_handler=handler.get_handler,
+        )
+
+        new_manifest = Manifest.Manifest(require_signature=True)
+        new_manifest.LoadPath('{}/MANIFEST'.format(location))
+
+        Update.ApplyUpdate(
+            location,
+            install_handler=handler.install_handler,
+        )
+        return True
