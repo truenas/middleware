@@ -176,6 +176,7 @@ class Job(object):
         self.progress = {
             'percent': None,
             'description': None,
+            'extra': None,
         }
         self.time_started = datetime.now()
         self.time_finished = None
@@ -212,12 +213,14 @@ class Job(object):
         self.state = State.__members__[state]
         self.time_finished = datetime.now()
 
-    def set_progress(self, percent, description=None):
+    def set_progress(self, percent, description=None, extra=None):
         if percent is not None:
             assert isinstance(percent, int)
             self.progress['percent'] = percent
         if description:
             self.progress['description'] = description
+        if extra:
+            selg.progress['extra'] = extra
 
     def run(self, queue):
         """
