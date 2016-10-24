@@ -220,7 +220,7 @@ class Job(object):
         if description:
             self.progress['description'] = description
         if extra:
-            selg.progress['extra'] = extra
+            self.progress['extra'] = extra
 
     def run(self, queue):
         """
