@@ -110,52 +110,6 @@ class BootEnv(object):
         return self._created.strftime('%Y-%m-%d %H:%M:%S')
 
 
-class CheckUpdateHandler(object):
-
-    reboot = False
-
-    def __init__(self):
-        self.changes = []
-        self.restarts = []
-
-    def call(self, op, newpkg, oldpkg):
-        self.changes.append({
-            'operation': op,
-            'old': oldpkg,
-            'new': newpkg,
-        })
-
-    def diff_call(self, diffs):
-        self.reboot = diffs.get('Reboot', False)
-        if self.reboot is False:
-            from freenasOS.Update import GetServiceDescription
-            # We may have service changes
-            for svc in diffs.get("Restart", []):
-                self.restarts.append(GetServiceDescription(svc))
-
-    @property
-    def output(self):
-        output = ''
-        for c in self.changes:
-            if c['operation'] == 'upgrade':
-                output += '%s: %s-%s -> %s-%s\n' % (
-                    _('Upgrade'),
-                    c['old'].Name(),
-                    c['old'].Version(),
-                    c['new'].Name(),
-                    c['new'].Version(),
-                )
-            elif c['operation'] == 'install':
-                output += '%s: %s-%s\n' % (
-                    _('Install'),
-                    c['new'].Name(),
-                    c['new'].Version(),
-                )
-        for r in self.restarts:
-            output += r + "\n"
-        return output
-
-
 class UpdateHandler(object):
 
     DUMPFILE = '/tmp/.upgradeprogress'
@@ -352,37 +306,6 @@ class VerifyHandler(object):
         log.debug("VerifyUpdate: handler.exit() was called")
         if os.path.exists(self.DUMPFILE):
             os.unlink(self.DUMPFILE)
-
-
-def get_changelog(train, start='', end=''):
-    conf = Configuration.Configuration()
-    changelog = conf.GetChangeLog(train=train)
-    if not changelog:
-        return None
-
-    return parse_changelog(changelog.read(), start, end)
-
-
-def parse_changelog(changelog, start='', end=''):
-    regexp = r'### START (\S+)(.+?)### END \1'
-    reg = re.findall(regexp, changelog, re.S | re.M)
-
-    if not reg:
-        return None
-
-    changelog = None
-    for seq, changes in reg:
-        if not changes.strip('\n'):
-            continue
-        if seq == start:
-            # Once we found the right one, we start accumulating
-            changelog = ''
-        elif changelog is not None:
-            changelog += changes.strip('\n') + '\n'
-        if seq == end:
-            break
-
-    return changelog
 
 
 def get_pending_updates(path):

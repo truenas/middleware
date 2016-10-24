@@ -48,7 +48,7 @@ from freenasOS import Configuration, Update
 from freenasUI.common.system import get_sw_name, send_mail
 from freenasUI.middleware.notifier import notifier
 from freenasUI.system.models import Update as mUpdate
-from freenasUI.system.utils import get_changelog
+from middlewared.plugins.update import get_changelog
 
 log = logging.getLogger('tools.update_check')
 

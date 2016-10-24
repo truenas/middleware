@@ -81,17 +81,15 @@ from freenasUI.network.models import GlobalConfiguration
 from freenasUI.storage.models import Volume
 from freenasUI.system import forms, models
 from freenasUI.system.utils import (
-    CheckUpdateHandler,
     UpdateHandler,
     VerifyHandler,
     debug_get_settings,
     debug_generate,
     factory_restore,
-    get_changelog,
-    parse_changelog,
     run_updated,
     is_update_applied
 )
+from middlewared.plugins.update import CheckUpdateHandler, get_changelog, parse_changelog
 
 GRAPHS_DIR = '/var/db/graphs'
 VERSION_FILE = '/etc/version'
