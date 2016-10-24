@@ -26,7 +26,6 @@
 import json
 import logging
 import os
-import re
 import tarfile
 import signal
 
@@ -36,7 +35,7 @@ from django.contrib.auth import login, get_backends
 from django.utils.translation import ugettext as _
 from lockfile import LockFile
 
-from freenasOS import Configuration, Update
+from freenasOS import Update
 from freenasUI.common import humanize_size
 from freenasUI.common.pipesubr import pipeopen
 
