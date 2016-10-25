@@ -97,6 +97,13 @@ class UpdateHandler(object):
             download_rate if download_rate else '',
         ))
 
+    def install_handler(self, index, name, packages):
+        total = len(packages)
+        self.job.set_progress(
+            int((float(index) / float(total)) * 100.0),
+            'Installing {} ({}/{})'.format(name, index, total),
+        )
+
 
 def get_changelog(train, start='', end=''):
     conf = Configuration.Configuration()
