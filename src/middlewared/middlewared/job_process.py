@@ -56,13 +56,14 @@ class FakeMiddleware(object):
     def add_service(self, service):
         self.__services[service._config.namespace] = service
 
-    def _call_job(self, method, *params):
-        service, method = method.rsplit('.', 1)
+    def _call_job(self, job_id):
+        job = self.client.call('core.get_jobs', [('id', '=', job_id)], {'get': True})
+        service, method = job['method'].rsplit('.', 1)
         methodobj = getattr(self.__services[service], method)
         job_options = getattr(methodobj, '_job', None)
         if job_options:
-            params = list(params)
-            params.insert(0, object())
+            params = list(job['arguments'])
+            params.insert(0, FakeJob(job['id'], self.client))
             return methodobj(*params)
         else:
             raise NotImplementedError("Only jobs are allowed")
@@ -74,14 +75,33 @@ class FakeMiddleware(object):
         return self.client.call(method, *params)
 
 
+class FakeJob(object):
+
+    def __init__(self, id, client):
+        self.id = id
+        self.client = client
+        self.progress = {
+            'percent': None,
+            'description': None,
+            'extra': None,
+        }
+
+    def set_progress(self, percent, description=None, extra=None):
+        self.progress['percent'] = percent
+        if description:
+            self.progress['description'] = description
+        if extra:
+            self.progress['extra'] = extra
+        self.client.call('core.job_update', self.id, {'progress': self.progress})
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('job', type=int)
     args = parser.parse_args()
     with Client() as c:
-        job = c.call('core.get_jobs', [('id', '=', args.job)], {'get': True})
         middleware = FakeMiddleware(c)
-        return middleware._call_job(job['method'], *job['arguments'])
+        return middleware._call_job(args.job)
 
 if __name__ == '__main__':
     try:
