@@ -5,7 +5,7 @@ import logging
 import re
 import sys
 
-from middlewared.schema import accepts, Int, Ref, Str
+from middlewared.schema import accepts, Dict, Int, Ref, Str
 from middlewared.utils import filter_list
 
 
@@ -116,6 +116,20 @@ class CoreService(Service):
             i.__encode__() for i in self.middleware.get_jobs().all().values()
         ], filters, options)
         return jobs
+
+    @accepts(Int('id'), Dict(
+        'job-update',
+        Dict('progress', additional_attrs=True),
+    ))
+    def job_update(self, id, data):
+        job = self.middleware.get_jobs().all()[id]
+        progress = data.get('progress')
+        if progress:
+            job.set_progress(
+                progress['percent'],
+                description=progress.get('description'),
+                extra=progress.get('extra'),
+            )
 
     @accepts()
     def get_services(self):
