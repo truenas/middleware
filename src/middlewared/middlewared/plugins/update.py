@@ -195,7 +195,7 @@ class UpdateService(Service):
         Str('train', required=False),
         required=False,
     ))
-    @job(lock='update')
+    @job(lock='update', process=True)
     def update(self, job, attrs=None):
         """
         Downloads (if not already in cache) and apply an update.
@@ -205,12 +205,14 @@ class UpdateService(Service):
 
         handler = UpdateHandler(self, job)
 
-        Update.DownloadUpdate(
+        update = Update.DownloadUpdate(
             train,
             location,
             check_handler=handler.check_handler,
             get_handler=handler.get_handler,
         )
+        if update is False:
+            raise ValueError('No update available')
 
         new_manifest = Manifest.Manifest(require_signature=True)
         new_manifest.LoadPath('{}/MANIFEST'.format(location))
