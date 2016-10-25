@@ -2,9 +2,13 @@ from collections import OrderedDict
 from datetime import datetime
 from gevent.event import Event
 from gevent.lock import Semaphore
+from middlewared.utils import Popen
 
 import enum
 import gevent
+import json
+import os
+import subprocess
 import sys
 import traceback
 
@@ -230,13 +234,37 @@ class Job(object):
 
         try:
             self.set_state('RUNNING')
-            self.set_result(self.method(*([self] + self.args)))
+            """
+            If job is flagged as process a new process is spawned
+            with the job id which will in turn run the method
+            and return the result as a json
+            """
+            if self.options.get('process'):
+                proc = Popen([
+                    '/usr/bin/env',
+                    'python2',
+                    os.path.join(
+                        os.path.dirname(os.path.realpath(__file__)),
+                        'job_process.py',
+                    ),
+                    str(self.id),
+                ], stdout=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=True)
+                output = proc.communicate()[0]
+                data = json.loads(output)
+                if proc.returncode != 0:
+                    self.set_state('FAILED')
+                    self.error = data['error']
+                    self.exception = data['exception']
+                else:
+                    self.set_result(data)
+                    self.set_state('SUCCESS')
+            else:
+                self.set_result(self.method(*([self] + self.args)))
+                self.set_state('SUCCESS')
         except:
             self.set_state('FAILED')
             self.set_exception(sys.exc_info())
             raise
-        else:
-            self.set_state('SUCCESS')
         finally:
             queue.release_lock(self)
 
