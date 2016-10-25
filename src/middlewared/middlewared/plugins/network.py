@@ -393,7 +393,7 @@ class DNSService(Service):
         nameservers = []
 
         if self.middleware.call('notifier.common', 'system', 'domaincontroller_enabled'):
-            cifs = self.middlware.call('datastore.query', 'services.cifs', None, {'get': True})
+            cifs = self.middleware.call('datastore.query', 'services.cifs', None, {'get': True})
             dc = self.middleware.call('datastore.query', 'services.DomainController', None, {'get': True})
             domain = dc['dc_realm']
             if cifs['cifs_srv_bindip']:
