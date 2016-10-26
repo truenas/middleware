@@ -1,7 +1,12 @@
 from middlewared.schema import accepts
 from middlewared.service import Service
+from middlewared.utils import Popen
 
+import os
+import socket
+import subprocess
 import sys
+import sysctl
 
 if '/usr/local/lib' not in sys.path:
     sys.path.append('/usr/local/lib')
@@ -32,3 +37,22 @@ class SystemService(Service):
             if sys_mani:
                 self.__version = sys_mani.Version()
         return self.__version
+
+    @accepts()
+    def info(self):
+        """
+        Returns basic system information.
+        """
+        uptime = Popen(
+            "env -u TZ uptime | awk -F', load averages:' '{ print $1 }'",
+            stdout=subprocess.PIPE,
+            shell=True,
+        ).communicate()[0].strip()
+        return {
+            'version': self.version(),
+            'hostname': socket.gethostname(),
+            'physmem': sysctl.filter('hw.physmem')[0].value,
+            'model': sysctl.filter('hw.model')[0].value,
+            'loadavg': os.getloadavg(),
+            'uptime': uptime,
+        }
