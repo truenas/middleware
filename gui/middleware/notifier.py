@@ -5573,7 +5573,10 @@ class notifier:
             self.failover_status() == 'BACKUP'
         ):
             if os.path.exists(SYSTEMPATH):
-                os.unlink(SYSTEMPATH)
+                try:
+                    os.unlink(SYSTEMPATH)
+                except:
+                    pass
             return None
 
         systemdataset, basename = self.system_dataset_settings()
