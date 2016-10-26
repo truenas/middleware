@@ -141,5 +141,5 @@ class AuthService(Service):
             app.authenticated = True
             return True
         else:
-            self.authtokens.pop_token(token)
+            self.authtokens.pop_token(token['id'])
             return False
