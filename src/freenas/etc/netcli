@@ -374,9 +374,17 @@ def configure_interface():
                     try:
                         ipaddr.IPNetwork(ip, version=4)
                     except ValueError:
-                        print _("Invalid value entered")
+                        print _("Invalid value entered: %s") % ip
                         continue
                     ip, mask = ip.split('/')
+
+                    if not _n.is_freenas() and _n.failover_licensed():
+                        try:
+                            ipaddr.IPNetwork(ip_b, version=4)
+                        except ValueError:
+                            print _("Invalid value entered: %s") % ip_b
+                            continue
+                        ip_b, mask = ip_b.split('/')
                     break
                 except:
                     mask = raw_input(mask_prompt)
