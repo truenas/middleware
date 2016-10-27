@@ -138,6 +138,12 @@ class Application(WebSocketApplication):
 
         if message['msg'] == 'method':
             self.call_method(message)
+        elif message['msg'] == 'ping':
+            pong = {'msg': 'pong'}
+            if 'id' in message:
+                pong['id'] = message['id']
+            self._send(pong)
+            return
 
         if not self.authenticated:
             self.send_error(message, 'Not authenticated')
