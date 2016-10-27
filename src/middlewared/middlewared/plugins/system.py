@@ -1,9 +1,11 @@
+from datetime import datetime
 from middlewared.schema import accepts
 from middlewared.service import Service
 from middlewared.utils import Popen
 
 import os
 import socket
+import struct
 import subprocess
 import sys
 import sysctl
@@ -55,4 +57,7 @@ class SystemService(Service):
             'model': sysctl.filter('hw.model')[0].value,
             'loadavg': os.getloadavg(),
             'uptime': uptime,
+            'boottime': datetime.fromtimestamp(
+                struct.unpack('l', sysctl.filter('kern.boottime')[0].value[:8])[0]
+            ),
         }
