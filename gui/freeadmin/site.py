@@ -262,7 +262,7 @@ class FreeAdminSite(object):
         from freenasUI.system.models import Alert
         from freenasUI.system.alert import alert_node, alertPlugins
         dismisseds = [a.message_id for a in Alert.objects.filter(node=alert_node(), dismiss=True)]
-        alerts = alertPlugins.run()
+        alerts = alertPlugins.get_alerts()
         current = 'OK'
         for alert in alerts:
             # Skip dismissed alerts
