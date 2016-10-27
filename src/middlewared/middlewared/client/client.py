@@ -68,6 +68,7 @@ class Client(object):
 
     def __init__(self, uri=None):
         self._calls = {}
+        self._pings = {}
         if uri is None:
             uri = 'ws://127.0.0.1:6000/websocket'
         self._ws = WSClient(uri, client=self)
@@ -96,6 +97,10 @@ class Client(object):
             self._connected.set()
         elif msg == 'failed':
             raise ClientException('Unsupported protocol version')
+        elif msg == 'pong' and _id is not None:
+            ping_event = self._pings.get(_id)
+            if ping_event:
+                ping_event.set()
         elif _id is not None and msg == 'result':
             call = self._calls.get(_id)
             if call:
@@ -104,7 +109,7 @@ class Client(object):
                     call.error = message['error'].get('error')
                     call.stacktrace = message['error'].get('stacktrace')
                 call.returned.set()
-                self.unregister_call(call)
+                self._unregister_call(call)
 
     def on_open(self):
         self._send({
@@ -116,16 +121,16 @@ class Client(object):
     def on_close(self, code, reason=None):
         self._closed.set()
 
-    def register_call(self, call):
+    def _register_call(self, call):
         self._calls[call.id] = call
 
-    def unregister_call(self, call):
+    def _unregister_call(self, call):
         self._calls.pop(call.id, None)
 
     def call(self, method, *params, **kwargs):
         timeout = kwargs.pop('timeout', 30)
         c = Call(method, params)
-        self.register_call(c)
+        self._register_call(c)
         self._send({
             'msg': 'method',
             'method': c.method,
@@ -134,13 +139,25 @@ class Client(object):
         })
 
         if not c.returned.wait(timeout):
-            self.unregister_call(c)
+            self._unregister_call(c)
             raise CallTimeout("Call timeout")
 
         if c.error:
             raise ClientException(c.error, c.stacktrace)
 
         return c.result
+
+    def ping(self, timeout=10):
+        _id = str(uuid.uuid4())
+        event = self._pings[_id] = Event()
+        self._send({
+            'msg': 'ping',
+            'id': _id,
+        })
+
+        if not event.wait(timeout):
+            return False
+        return True
 
     def close(self):
         self._ws.close()
@@ -163,6 +180,8 @@ def main():
     iparser = subparsers.add_parser('call', help='Call method')
     iparser.add_argument('method', nargs='+')
 
+    iparser = subparsers.add_parser('ping', help='Ping')
+
     iparser = subparsers.add_parser('sql', help='Run SQL command')
     iparser.add_argument('sql', nargs='+')
     args = parser.parse_args()
@@ -174,8 +193,8 @@ def main():
             except:
                 yield i
 
-    if args.name == 'call':
-        with Client(uri=args.uri) as c:
+    with Client(uri=args.uri) as c:
+        if args.name == 'call':
             try:
                 if args.username and args.password:
                     if not c.call('auth.login', args.username, args.password):
@@ -196,8 +215,10 @@ def main():
                 if not args.quiet:
                     print >> sys.stderr, e.stacktrace
                 sys.exit(1)
-    elif args.name == 'sql':
-        with Client(uri=args.uri) as c:
+        elif args.name == 'ping':
+            if not c.ping():
+                sys.exit(1)
+        elif args.name == 'sql':
             try:
                 if args.username and args.password:
                     if not c.call('auth.login', args.username, args.password):
