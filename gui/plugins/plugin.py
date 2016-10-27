@@ -454,8 +454,10 @@ class Available(object):
         status = False
 
         iplugin = models.Plugins.objects.filter(id=oid)
-        if iplugin:
+        if iplugin.exists():
             iplugin = iplugin[0]
+        else:
+            return status
 
         rplugin = None
         for rp in self.get_remote(cache=True):
