@@ -6,9 +6,6 @@ DBDIR=/var/netatalk
 
 case $2 in
 	POST-INSTALL)
-		umask 22
-		mkdir -p $DBDIR/CNID
-		chown root:wheel $DBDIR $DBDIR/CNID
 		tee $DBDIR/README > $DBDIR/CNID/README <<-'EOF'
 			This directory contains modifiable Netatalk configuration files and the CNID databases.
 		EOF
