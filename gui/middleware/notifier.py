@@ -3950,7 +3950,10 @@ class notifier:
         """
         name = str(name)
         item = str(item)
-        value = str(value)
+        if isinstance(value, unicode):
+            value = value.encode('utf8')
+        else:
+            value = str(value)
         if recursive:
             zfsproc = self._pipeopen("/sbin/zfs set -r '%s'='%s' '%s'" % (item, value, name))
         else:
