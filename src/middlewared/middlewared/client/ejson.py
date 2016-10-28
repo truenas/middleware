@@ -1,5 +1,4 @@
-from datetime import datetime, time
-from dateutil.parser import parse
+from datetime import datetime, time, timedelta
 
 import json
 
@@ -7,7 +6,8 @@ import json
 class JSONEncoder(json.JSONEncoder):
     def default(self, obj):
         if type(obj) is datetime:
-            return {'$date': str(obj)}
+            # Total milliseconds since EPOCH
+            return {'$date': int((obj - datetime(1970, 1, 1)).total_seconds() * 1000)}
         elif type(obj) is time:
             return {'$time': str(obj)}
         return super(JSONEncoder, self).default(obj)
@@ -16,7 +16,7 @@ class JSONEncoder(json.JSONEncoder):
 def object_hook(obj):
     if len(obj) == 1:
         if '$date' in obj:
-            return parse(obj['$date'])
+            return datetime.utcfromtimestamp(obj['$date'] / 1000) + timedelta(milliseconds=obj['$date'] % 1000)
         if '$time' in obj:
             return time(*[int(i) for i in obj['$time'].split(':')])
     return obj
