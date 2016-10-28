@@ -2,13 +2,11 @@
 # $FreeBSD$
 
 PORTNAME=	virtualbox-ose
-DISTVERSION=	4.3.34
+PORTVERSION=	5.1.8
 CATEGORIES=	emulators
-MASTER_SITES=	http://download.virtualbox.org/virtualbox/${DISTVERSION}/ \
-		http://tmp.chruetertee.ch/ \
-		http://disasterarea.chruetertee.ch/
+MASTER_SITES=	http://download.virtualbox.org/virtualbox/${PORTVERSION}/
 PKGNAMESUFFIX=	-kmod
-DISTNAME=	VirtualBox-${DISTVERSION}
+DISTNAME=	VirtualBox-${PORTVERSION}
 
 MAINTAINER=	vbox@FreeBSD.org
 COMMENT=	VirtualBox kernel module for FreeBSD
@@ -16,7 +14,7 @@ COMMENT=	VirtualBox kernel module for FreeBSD
 LICENSE=	GPLv2
 LICENSE_FILE=	${WRKSRC}/COPYING
 
-BUILD_DEPENDS=	kmk:${PORTSDIR}/devel/kBuild
+BUILD_DEPENDS=	kmk:devel/kBuild
 
 CPE_VENDOR=	oracle
 CPE_PRODUCT=	vm_virtualbox
@@ -85,13 +83,14 @@ post-patch:
 	@${ECHO} 'VBOX_WITH_NETFLT_VIMAGE = 1' >> ${WRKSRC}/LocalConfig.kmk
 .endif
 	@${REINPLACE_CMD} -e 's|/usr/local|${LOCALBASE}|g' \
-		${WRKSRC}/Config.kmk \
-		${WRKSRC}/configure
-	@${REINPLACE_CMD} -e 's|\$$KBUILDDIR_BIN/kmk_sed|${LOCALBASE}/bin/kmk_sed|g' ${WRKSRC}/configure
+	    ${WRKSRC}/Config.kmk ${WRKSRC}/configure
+	@${REINPLACE_CMD} \
+	    -e 's|\$$KBUILDDIR_BIN/kmk_sed|${LOCALBASE}/bin/kmk_sed|g' \
+	    ${WRKSRC}/configure
 
 pre-build:
-	cd ${WRKSRC}/src/VBox/HostDrivers && \
-	    ${SH} -c '. ${WRKSRC}/env.sh && ${KMK_CONFIG} ${LOCALBASE}/bin/kmk ${KMK_FLAGS}'
+	cd ${WRKSRC}/src/VBox/HostDrivers && ${SH} -c \
+	    '. ${WRKSRC}/env.sh && ${KMK_CONFIG} ${LOCALBASE}/bin/kmk ${KMK_FLAGS}'
 
 do-install:
 	${MKDIR} ${STAGEDIR}${KMODDIR}
