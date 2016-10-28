@@ -140,7 +140,13 @@ class RESTfulAPI(object):
                     parent = subresource
                 else:
                     parent = service_resource
-                Resource(self, self.middleware, short_methodname, parent=parent, get=methodname)
+
+                res_kwargs = {}
+                if method['accepts']:
+                    res_kwargs['post'] = methodname
+                else:
+                    res_kwargs['get'] = methodname
+                Resource(self, self.middleware, short_methodname, parent=parent, **res_kwargs)
 
 
 class Resource(object):
@@ -205,4 +211,4 @@ class Resource(object):
         if http_method in ('delete', 'get'):
             req.context['result'] = self.middleware.call(method)
         else:
-            req.context['result'] = self.middleware.call(method, *req.context['doc'])
+            req.context['result'] = self.middleware.call(method, *req.context.get('doc', []))
