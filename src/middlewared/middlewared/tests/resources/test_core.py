@@ -10,13 +10,13 @@ class CoreTestCase(RESTTestCase):
         self.assertIsInstance(data, dict)
 
     def test_042_get_methods(self):
-        r = self.client.get('core/get_methods')
+        r = self.client.post('core/get_methods')
         self.assertEqual(r.status_code, 200, msg=r.text)
         data = r.json()
         self.assertIsInstance(data, dict)
 
     def test_043_get_jobs(self):
-        r = self.client.get('core/get_jobs')
+        r = self.client.post('core/get_jobs')
         self.assertEqual(r.status_code, 200, msg=r.text)
         data = r.json()
         self.assertIsInstance(data, list)
