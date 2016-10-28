@@ -52,7 +52,7 @@ class InterfacesService(Service):
         # LAGG comes first and then VLAN
         laggs = self.middleware.call('datastore.query', 'network.lagginterface')
         for lagg in laggs:
-            name = lagg['lagg_interface']['int_name']
+            name = lagg['lagg_interface']['int_interface']
             cloned_interfaces.append(name)
             self.logger.info('Setting up {}'.format(name))
             try:
