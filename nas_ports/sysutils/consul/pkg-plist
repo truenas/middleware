@@ -1,9 +1,0 @@
-bin/consul
-%%DATADIR%%/index.html
-%%DATADIR%%/static/application.min.js
-%%DATADIR%%/static/base.css
-%%DATADIR%%/static/base.css.map
-%%DATADIR%%/static/bootstrap.min.css
-%%DATADIR%%/static/consul-logo.png
-%%DATADIR%%/static/favicon.png
-%%DATADIR%%/static/loading-cylon-purple.svg
