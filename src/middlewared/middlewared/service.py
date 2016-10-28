@@ -227,6 +227,11 @@ class CoreService(Service):
 
     @accepts()
     def ping(self):
+        """
+        Utility method which just returns "pong".
+        Can be used to keep connection/authtoken alive instead of using
+        "ping" protocol message.
+        """
         return 'pong'
 
     @private
