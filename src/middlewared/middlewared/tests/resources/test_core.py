@@ -14,3 +14,15 @@ class CoreTestCase(RESTTestCase):
         self.assertEqual(r.status_code, 200, msg=r.text)
         data = r.json()
         self.assertIsInstance(data, dict)
+
+    def test_043_get_jobs(self):
+        r = self.client.get('core/get_jobs')
+        self.assertEqual(r.status_code, 200, msg=r.text)
+        data = r.json()
+        self.assertIsInstance(data, list)
+
+    def test_044_ping(self):
+        r = self.client.get('core/ping')
+        self.assertEqual(r.status_code, 200, msg=r.text)
+        data = r.json()
+        self.assertEqual(data, 'pong')
