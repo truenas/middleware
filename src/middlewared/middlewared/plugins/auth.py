@@ -67,8 +67,8 @@ class AuthService(Service):
 
     @accepts(Str('username'), Str('password'))
     def check_user(self, username, password):
-        """Authenticate session using username and password.
-        Currently only root user is allowed.
+        """
+        Verify username and password
         """
         if username != 'root':
             return False
@@ -91,6 +91,9 @@ class AuthService(Service):
     @accepts(Str('username'), Str('password'))
     @pass_app
     def login(self, app, username, password):
+        """Authenticate session using username and password.
+        Currently only root user is allowed.
+        """
         valid = self.check_user(username, password)
         if valid:
             app.authenticated = True
