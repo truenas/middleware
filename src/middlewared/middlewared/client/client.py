@@ -48,13 +48,13 @@ class Call(object):
         self.returned = Event()
         self.result = None
         self.error = None
-        self.stacktrace = None
+        self.trace = None
 
 
 class ClientException(Exception):
-    def __init__(self, error, stacktrace=None):
+    def __init__(self, error, trace=None):
         self.error = error
-        self.stacktrace = stacktrace
+        self.trace = trace
 
     def __str__(self):
         return self.error
@@ -107,7 +107,7 @@ class Client(object):
                 call.result = message.get('result')
                 if 'error' in message:
                     call.error = message['error'].get('error')
-                    call.stacktrace = message['error'].get('stacktrace')
+                    call.trace = message['error'].get('trace')
                 call.returned.set()
                 self._unregister_call(call)
 
@@ -143,7 +143,7 @@ class Client(object):
             raise CallTimeout("Call timeout")
 
         if c.error:
-            raise ClientException(c.error, c.stacktrace)
+            raise ClientException(c.error, c.trace)
 
         return c.result
 
@@ -213,7 +213,7 @@ def main():
                     print(json.dumps(rv))
             except ClientException as e:
                 if not args.quiet:
-                    print >> sys.stderr, e.stacktrace
+                    print >> sys.stderr, e.trace['formatted']
                 sys.exit(1)
         elif args.name == 'ping':
             if not c.ping():

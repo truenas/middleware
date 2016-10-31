@@ -17,6 +17,7 @@ import argparse
 import gevent
 import imp
 import inspect
+import linecache
 import logging
 import logging.config
 import os
@@ -25,6 +26,7 @@ import setproctitle
 import subprocess
 import sys
 import traceback
+import types
 import uuid
 
 
@@ -55,13 +57,73 @@ class Application(WebSocketApplication):
     def _send(self, data):
         self.ws.send(json.dumps(data))
 
-    def send_error(self, message, error, stacktrace=None):
+    def _tb_error(self, exc_info):
+        klass, exc, trace = exc_info
+
+        frames = []
+        cur_tb = trace
+        while cur_tb:
+            tb_frame = cur_tb.tb_frame
+            cur_tb = cur_tb.tb_next
+
+            if not isinstance(tb_frame, types.FrameType):
+                continue
+
+            cur_frame = {
+                'filename': tb_frame.f_code.co_filename,
+                'lineno': tb_frame.f_lineno,
+                'method': tb_frame.f_code.co_name,
+                'line': linecache.getline(tb_frame.f_code.co_filename, tb_frame.f_lineno),
+            }
+
+            argspec = None
+            varargspec = None
+            keywordspec = None
+            _locals = {}
+
+            try:
+                arginfo = inspect.getargvalues(tb_frame)
+                argspec = arginfo.args
+                if arginfo.varargs is not None:
+                    varargspec = arginfo.varargs
+                    temp_varargs = list(arginfo.locals[varargspec])
+                    for i, arg in enumerate(temp_varargs):
+                        temp_varargs[i] = '***'
+
+                    arginfo.locals[varargspec] = tuple(temp_varargs)
+
+                if arginfo.keywords is not None:
+                    keywordspec = arginfo.keywords
+
+                _locals.update(arginfo.locals.items())
+
+            except Exception:
+                self.logger.exception('Error while extracting arguments from frames.')
+
+            if argspec:
+                cur_frame['argspec'] = argspec
+            if varargspec:
+                cur_frame['varargspec'] = varargspec
+            if keywordspec:
+                cur_frame['keywordspec'] = keywordspec
+            if _locals:
+                cur_frame['locals'] = {k: repr(v) for k, v in _locals.iteritems()}
+
+            frames.append(cur_frame)
+
+        return {
+            'class': klass.__name__,
+            'frames': frames,
+            'formatted': ''.join(traceback.format_exception(*exc_info)),
+        }
+
+    def send_error(self, message, error, exc_info=None):
         self._send({
             'msg': 'result',
             'id': message['id'],
             'error': {
                 'error': error,
-                'stacktrace': stacktrace,
+                'trace': self._tb_error(exc_info) if exc_info else None,
             },
         })
 
@@ -92,7 +154,7 @@ class Application(WebSocketApplication):
                 'result': self.middleware.call_method(self, message),
             })
         except Exception as e:
-            self.send_error(message, str(e), ''.join(traceback.format_exception(*sys.exc_info())))
+            self.send_error(message, str(e), sys.exc_info())
             self.middleware.logger.warn('Exception while calling {}(*{})'.format(message['method'], message.get('params')), exc_info=True)
             gevent.spawn(self.middleware.rollbar_report, sys.exc_info())
 
