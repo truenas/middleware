@@ -8,31 +8,28 @@ bin/cnid2_create
 bin/dbd
 bin/macusers
 bin/netatalk-config
-@unexec if cmp -s %D/etc/afp.conf %D/etc/afp.conf.dist; then rm -f %D/etc/afp.conf; fi
-etc/afp.conf.dist
-@exec [ -f %B/afp.conf ] || cp %B/%f %B/afp.conf
+@sample etc/afp.conf.sample
 %%DBUS%%etc/dbus-1/system.d/netatalk-dbus.conf
 %%DBUS%%etc/dbus-session.conf.netatalk
-@unexec if cmp -s %D/etc/extmap.conf %D/etc/extmap.conf.dist; then rm -f %D/etc/extmap.conf; fi
-etc/extmap.conf.dist
-@exec [ -f %B/extmap.conf ] || cp %B/%f %B/extmap.conf
+@sample etc/extmap.conf.sample
+%%PAM%%@sample etc/pam.d/netatalk.sample
 libexec/netatalk-uams/uams_clrtxt.so
 libexec/netatalk-uams/uams_dhx.so
 libexec/netatalk-uams/uams_dhx2.so
-%%NETATALKPAM%%libexec/netatalk-uams/uams_dhx2_pam.a
-%%NETATALKPAM%%libexec/netatalk-uams/uams_dhx2_pam.so
+%%PAM%%libexec/netatalk-uams/uams_dhx2_pam.a
+%%PAM%%libexec/netatalk-uams/uams_dhx2_pam.so
 libexec/netatalk-uams/uams_dhx2_passwd.a
 libexec/netatalk-uams/uams_dhx2_passwd.so
-%%NETATALKPAM%%libexec/netatalk-uams/uams_dhx_pam.a
-%%NETATALKPAM%%libexec/netatalk-uams/uams_dhx_pam.so
+%%PAM%%libexec/netatalk-uams/uams_dhx_pam.a
+%%PAM%%libexec/netatalk-uams/uams_dhx_pam.so
 libexec/netatalk-uams/uams_dhx_passwd.a
 libexec/netatalk-uams/uams_dhx_passwd.so
-%%NETATALKKRB5%%libexec/netatalk-uams/uams_gss.a
-%%NETATALKKRB5%%libexec/netatalk-uams/uams_gss.so
+%%KERBEROS5%%libexec/netatalk-uams/uams_gss.a
+%%KERBEROS5%%libexec/netatalk-uams/uams_gss.so
 libexec/netatalk-uams/uams_guest.a
 libexec/netatalk-uams/uams_guest.so
-%%NETATALKPAM%%libexec/netatalk-uams/uams_pam.a
-%%NETATALKPAM%%libexec/netatalk-uams/uams_pam.so
+%%PAM%%libexec/netatalk-uams/uams_pam.a
+%%PAM%%libexec/netatalk-uams/uams_pam.so
 libexec/netatalk-uams/uams_passwd.a
 libexec/netatalk-uams/uams_passwd.so
 libexec/netatalk-uams/uams_randnum.a

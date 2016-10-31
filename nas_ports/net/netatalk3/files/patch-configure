@@ -1,6 +1,6 @@
---- configure.orig	2015-12-28 21:02:04.000000000 -0500
-+++ configure	2015-12-31 12:34:21.340885027 -0500
-@@ -17342,7 +17342,7 @@ if test "x$bdb_required" = "xyes"; then
+--- configure.orig	2016-09-12 09:54:34 UTC
++++ configure
+@@ -17360,7 +17360,7 @@ if test "x$bdb_required" = "xyes"; then
      trybdbdir=""
      dobdbsearch=yes
      bdb_search_dirs="/usr/local /usr"

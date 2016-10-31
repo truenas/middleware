@@ -3,8 +3,8 @@
 
 PORTNAME=	netatalk
 PORTVERSION=	3.1.10
+PORTREVISION=	2
 PORTEPOCH=	1
-PORTREVISION=	1
 CATEGORIES=	net
 MASTER_SITES=	SF
 PKGNAMESUFFIX=	3
@@ -14,14 +14,14 @@ COMMENT=	File server for Mac OS X
 
 LICENSE=	GPLv2
 
-LIB_DEPENDS=	libgcrypt.so:${PORTSDIR}/security/libgcrypt \
-    		libevent.so:${PORTSDIR}/devel/libevent2
+LIB_DEPENDS=	libgcrypt.so:security/libgcrypt \
+		libevent.so:devel/libevent2
 
-USE_BDB=	5+
-USES=		iconv gmake pkgconfig perl5 libtool tar:bzip2
+USES=		bdb:5+ gettext gmake iconv libtool perl5 pkgconfig ssl tar:bzip2
 GNU_CONFIGURE=	yes
 USE_LDCONFIG=	yes
 USE_RC_SUBR=	netatalk
+INSTALL_TARGET=install-strip
 
 CONFIGURE_ARGS+=	--with-pkgconfdir=${PREFIX}/etc \
 			--with-libgcrypt-dir=${LOCALBASE} \
@@ -31,130 +31,73 @@ CONFIGURE_ARGS+=	--with-pkgconfdir=${PREFIX}/etc \
 			--localstatedir=/var \
 			--disable-bundled-libevent \
 			--with-libevent-header=${LOCALBASE}/include \
-			--with-libevent-lib=${LOCALBASE}/lib
+			--with-libevent-lib=${LOCALBASE}/lib \
+			--with-ssl-dir=${OPENSSLBASE} \
+			--without-dtrace
 
-OPTIONS_DEFINE=PAM KRB5 LDAP SENDFILE KERBEROS DBUS MYSQL ACL TCPWRAP
-OPTIONS_DEFAULT=KERBEROS DBUS TCPWRAP
+OPTIONS_DEFINE=PAM KERBEROS5 LDAP SENDFILE KERBEROS DBUS MYSQL ACL LIBWRAP
+OPTIONS_DEFAULT=AVAHI DBUS KERBEROS LIBWRAP
 OPTIONS_RADIO=ZEROCONF
 OPTIONS_RADIO_ZEROCONF=AVAHI MDNSRESPONDER
-OPTIONS_DEFAULT+=AVAHI
-
-NOZEROCONF_DESC=Disable Zeroconf(Bonjour) support
-KRB5_DESC=	Enable Kerberos V UAM
-#DTRACE_DESC=	Enable DTrace support
+ZEROCONF_DESC=	Zeroconf(Bonjour) support
 MYSQL_DESC=	Enable MySQL CNID backend support
 SENDFILE_DESC=	Enable Sendfile support
 ACL_DESC=	Enable ACL support
-TCPWRAP_DESC=	Enable TCP Wrappers support
-
-.include <bsd.port.options.mk>
+OPTIONS_SUB=	yes
+KERBEROS5_CONFIGURE_ON=	--enable-krbV-uam
+KERBEROS_CONFIGURE_WITH=kerberos
+KERBEROS_LIB_DEPENDS=libgpg-error.so:security/libgpg-error
+PAM_CONFIGURE_WITH=pam
+AVAHI_CONFIGURE_ON=	--enable-zeroconf=${LOCALBASE}
+AVAHI_CFLAGS=		-I${LOCALBASE}/include -L${LOCALBASE}/lib
+AVAHI_LIB_DEPENDS=		libavahi-client.so:net/avahi-app
+AVAHI_SUB_LIST=		ZEROCONF="avahi_daemon"
+MDNSRESPONDER_CONFIGURE_ON=	--enable-zeroconf=${LOCALBASE}
+MDNSRESPONDER_CONFIGURE_ENV=	ac_cv_lib_avahi_client_avahi_client_new=no
+MDNSRESPONDER_CFLAGS=		-I${LOCALBASE}/include -L${LOCALBASE}/lib
+MDNSRESPONDER_LIB_DEPENDS=		libdns_sd.so:net/mDNSResponder
+MDNSRESPONDER_SUB_LIST=	ZEROCONF="mdnsd"
+LDAP_CONFIGURE_ON=	--with-ldap=${LOCALBASE}
+LDAP_CFLAGS=		-I${LOCALBASE}/include -L${LOCALBASE}/lib
+LDAP_USE=	OPENLDAP=yes
+LDAP_CONFIGURE_OFF=	--without-ldap
+SENDFILE_CONFIGURE_ENABLE=sendfile
+DBUS_USES=	python:2
+DBUS_USE=	GNOME=glib20
+DBUS_LIB_DEPENDS=	libdbus-glib-1.so:devel/dbus-glib \
+			libdbus-1.so:devel/dbus
+DBUS_RUN_DEPENDS=	${PYTHON_SITELIBDIR}/dbus/_dbus.py:devel/py-dbus
+MYSQL_USE=	MYSQL=yes
+MYSQL_CONFIGURE_OFF=--with-mysql-config=/nonexistent
+ACL_LIB_DEPENDS=	libsunacl.so:sysutils/libsunacl
+ACL_CONFIGURE_WITH=acls
+LIBWRAP_CONFIGURE_ENABLE=tcp-wrappers
 
 CONFLICTS=	bigloo-2.* cap-6.0.* tct-1.* netatalk-[12]* yudit-[0-9]*
 
-.if ${PORT_OPTIONS:MKRB5}
-CONFIGURE_ARGS+=	--enable-krbV-uam
-PLIST_SUB+=		NETATALKKRB5=""
-.else
-PLIST_SUB+=		NETATALKKRB5="@comment "
-.endif
+.include <bsd.port.pre.mk>
 
-.if ${PORT_OPTIONS:MDTRACE}
-CONFIGURE_ARGS+=	--with-dtrace
-.else
-CONFIGURE_ARGS+=	--without-dtrace
-.endif
-
-.if ${PORT_OPTIONS:MKERBEROS}
-CONFIGURE_ARGS+=	--with-kerberos
-.else
-CONFIGURE_ARGS+=	--without-kerberos
-.endif
-
-.if ${PORT_OPTIONS:MPAM}
-CONFIGURE_ARGS+=	--with-pam
-PLIST_SUB+=		NETATALKPAM=""
-.else
-CONFIGURE_ARGS+=	--without-pam
-PLIST_SUB+=		NETATALKPAM="@comment "
-.endif
-
-.if ${PORT_OPTIONS:MNOZEROCONF}
-CONFIGURE_ARGS+=	--disable-zeroconf
-SUB_LIST+=		ZEROCONF=""
-.endif
-
-.if ${PORT_OPTIONS:MAVAHI}
-CONFIGURE_ARGS+=	--enable-zeroconf=${LOCALBASE}
-CFLAGS+=		-I${LOCALBASE}/include -L${LOCALBASE}/lib
-LIB_DEPENDS+=		libavahi-client.so:${PORTSDIR}/net/avahi-app
-SUB_LIST+=		ZEROCONF="avahi_daemon"
-.endif
-
-.if ${PORT_OPTIONS:MMDNSRESPONDER}
-CONFIGURE_ARGS+=	--enable-zeroconf=${LOCALBASE}
-CFLAGS+=		-I${LOCALBASE}/include -L${LOCALBASE}/lib
-LIB_DEPENDS+=		libdns_sd.so:${PORTSDIR}/net/mDNSResponder
-SUB_LIST+=		ZEROCONF="mdnsd"
-.endif
-
-.if ${PORT_OPTIONS:MLDAP}
-CONFIGURE_ARGS+=	--with-ldap=${LOCALBASE}
-CFLAGS+=		-I${LOCALBASE}/include -L${LOCALBASE}/lib
-USE_OPENLDAP=		yes
-.else
-CONFIGURE_ARGS+=	--without-ldap
-.endif
-
-.if ${PORT_OPTIONS:MSENDFILE}
-CONFIGURE_ARGS+=	--enable-sendfile
-.else
-CONFIGURE_ARGS+=	--disable-sendfile
-.endif
-
-.if ${PORT_OPTIONS:MDBUS} || exists(${LOCALBASE}/libdata/pkgconfig/dbus-glib-1.pc)
-USES+=			python:2
-LIB_DEPENDS+=		libdbus-glib-1.so:${PORTSDIR}/devel/dbus-glib
-RUN_DEPENDS+=		${PYTHON_SITELIBDIR}/dbus/_dbus.py:${PORTSDIR}/devel/py-dbus
-PLIST_SUB+=		DBUS=""
-.else
-PLIST_SUB+=		DBUS="@comment "
-.endif
-
-.if ${PORT_OPTIONS:MMYSQL}
-USE_MYSQL=	yes
-.else
-CONFIGURE_ARGS+=--with-mysql-config=/nonexistent
-.endif
-
-.if ${PORT_OPTIONS:MACL}
-LIB_DEPENDS+=	libsunacl.so:${PORTSDIR}/sysutils/libsunacl
-CONFIGURE_ARGS+=--with-acls
-.else
-CONFIGURE_ARGS+=--without-acls
-.endif
-
-.if ${PORT_OPTIONS:MTCPWRAP}
-CONFIGURE_ARGS+=--enable-tcp-wrappers
-.else
-CONFIGURE_ARGS+=--disable-tcp-wrappers
+.if ${PORT_OPTIONS:MAVAHI}=="" && ${PORT_OPTIONS:MMDNSRESPONDER}==""
+SUB_LIST+=	ZEROCONF=""
+CONFIGURE_ARGS+=--disable-zeroconf
 .endif
 
 post-patch:
 	@${REINPLACE_CMD} -e 's|%%DB_NAME%%|${BDB_INCLUDE_DIR:T}| ; \
-	    	s|%%DB_LIB%%|-l${BDB_LIB_NAME}|g ; \
+		s|%%DB_LIB%%|-l${BDB_LIB_NAME}|g ; \
 		s|%%LOCALBASE%%|${LOCALBASE}|g' \
 		${WRKSRC}/configure
-
-post-stage:
-	@${RM} -f ${STAGEDIR}${PREFIX}/etc/afp.conf \
-		${STAGEDIR}${PREFIX}/etc/extmap.conf
+	@${REINPLACE_CMD} -e 's|\.dist|\.sample|g' \
+	    	${WRKSRC}/config/Makefile.in
+	@${REINPLACE_CMD} -e 's|%%PYTHONCMD%%|${PYTHONCMD}|' \
+	    	${WRKSRC}/contrib/shell_utils/afpstats
 
 post-install:
 	${INSTALL_SCRIPT} ${WRKSRC}/contrib/macusers/macusers \
 		${STAGEDIR}${PREFIX}/bin/macusers
-	[ -f ${STAGEDIR}${PREFIX}/etc/afp.conf ] || \
-		${INSTALL_DATA} -c ${STAGEDIR}${PREFIX}/etc/afp.conf.dist ${STAGEDIR}${PREFIX}/etc/afp.conf
-	[ -f ${STAGEDIR}${PREFIX}/etc/extmap.conf ] || \
-		${INSTALL_DATA} -c ${STAGEDIR}${PREFIX}/etc/extmap.conf.dist ${STAGEDIR}${PREFIX}/etc/extmap.conf
 
-.include <bsd.port.mk>
+.if ${PORT_OPTIONS:MPAM}
+	${INSTALL_DATA} ${FILESDIR}/pam.conf ${STAGEDIR}${PREFIX}/etc/pam.d/netatalk.sample
+.endif
+
+.include <bsd.port.post.mk>
