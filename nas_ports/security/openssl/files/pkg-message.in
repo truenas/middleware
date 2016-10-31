@@ -1,0 +1,4 @@
+
+Copy %%PREFIX%%/openssl/openssl.cnf.sample to %%PREFIX%%/openssl/openssl.cnf
+and edit it to fit your needs.
+

@@ -1,0 +1,11 @@
+TIMESTAMP = 1474893748
+SHA256 (openssl-1.0.2j/openssl-1.0.2j.tar.gz) = e7aff292be21c259c6af26469c7a9b3ba26e9abaaffd325e3dccc9785256c431
+SIZE (openssl-1.0.2j/openssl-1.0.2j.tar.gz) = 5307912
+SHA256 (openssl-1.0.2j/1001-crypto-hmac-support-EVP_MD_CTX_FLAG_ONESHOT-and-set-.patch) = 2eddcb7ab342285cb637ce6b6be143cca835f449f35dd9bb8c7b9167ba2117a7
+SIZE (openssl-1.0.2j/1001-crypto-hmac-support-EVP_MD_CTX_FLAG_ONESHOT-and-set-.patch) = 3717
+SHA256 (openssl-1.0.2j/1002-backport-changes-from-upstream-padlock-module.patch) = aee88a24622ce9d71e38deeb874e58435dcf8ff5690f56194f0e4a00fb09b260
+SIZE (openssl-1.0.2j/1002-backport-changes-from-upstream-padlock-module.patch) = 5770
+SHA256 (openssl-1.0.2j/1003-engines-e_padlock-implement-sha1-sha224-sha256-accel.patch) = c10b8aaf56a4f4f79ca195fc587e0bb533f643e777d7a3e6fb0350399a6060ea
+SIZE (openssl-1.0.2j/1003-engines-e_padlock-implement-sha1-sha224-sha256-accel.patch) = 20935
+SHA256 (openssl-1.0.2j/1004-crypto-engine-autoload-padlock-dynamic-engine.patch) = 97eb4411d0fc0890e94bc7c2d682f68b71135da782af769ca73914b37da2b1fd
+SIZE (openssl-1.0.2j/1004-crypto-engine-autoload-padlock-dynamic-engine.patch) = 832
