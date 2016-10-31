@@ -248,7 +248,15 @@ class Job(object):
                         'job_process.py',
                     ),
                     str(self.id),
-                ], stdout=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=True)
+                ], stdout=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=True,
+                    env={
+                    'LOGNAME': 'root',
+                    'USER': 'root',
+                    'GROUP': 'wheel',
+                    'HOME': '/root',
+                    'PATH': '/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin',
+                    'TERM': 'xterm',
+                })
                 output = proc.communicate()
                 try:
                     data = json.loads(output[0])
