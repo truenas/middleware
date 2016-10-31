@@ -249,15 +249,20 @@ class Job(object):
                     ),
                     str(self.id),
                 ], stdout=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=True)
-                output = proc.communicate()[0]
-                data = json.loads(output)
-                if proc.returncode != 0:
+                output = proc.communicate()
+                try:
+                    data = json.loads(output[0])
+                except ValueError:
                     self.set_state('FAILED')
-                    self.error = data['error']
-                    self.exception = data['exception']
+                    self.error = 'Running job has failed.\nSTDOUT: {}\nSTDERR: {}'.format(output[0], output[1])
                 else:
-                    self.set_result(data)
-                    self.set_state('SUCCESS')
+                    if proc.returncode != 0:
+                        self.set_state('FAILED')
+                        self.error = data['error']
+                        self.exception = data['exception']
+                    else:
+                        self.set_result(data)
+                        self.set_state('SUCCESS')
             else:
                 self.set_result(self.method(*([self] + self.args)))
                 self.set_state('SUCCESS')
