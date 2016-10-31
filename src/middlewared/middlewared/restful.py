@@ -80,7 +80,6 @@ class AuthMiddleware(object):
             raise falcon.HTTPUnauthorized('Unknown authentication error', str(e), ['Basic realm="FreeNAS"'])
 
 
-
 class RESTfulAPI(object):
 
     def __init__(self, middleware):
@@ -208,7 +207,20 @@ class Resource(object):
         assert http_method in ('delete', 'get', 'post', 'put')
 
         method = getattr(self, http_method)
-        if http_method in ('delete', 'get'):
-            req.context['result'] = self.middleware.call(method)
+        """
+        Arguments for a method can be grabbed from an override method in
+        the form of "get_{get,post,put,delete}_args", e.g.:
+
+          def get_post_args(self, req, resp, **kwargs):
+              return [req.context['doc'], True, False]
+        """
+        get_method_args = getattr(self, 'get_{}_args'.format(http_method), None)
+        if get_method_args is not None:
+            method_args = get_method_args(req, resp, **kwargs)
         else:
-            req.context['result'] = self.middleware.call(method, *req.context.get('doc', []))
+            if http_method in ('post', 'put'):
+                method_args = req.context.get('doc', [])
+            else:
+                method_args = []
+
+        req.context['result'] = self.middleware.call(method, *method_args)
