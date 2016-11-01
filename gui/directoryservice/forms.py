@@ -32,6 +32,7 @@ import tempfile
 
 from ldap import LDAPError
 
+from django.core.exceptions import ObjectDoesNotExist
 from django.forms import FileField
 from django.utils.translation import ugettext_lazy as _
 
@@ -49,7 +50,7 @@ from freenasUI.common.system import (
     validate_netbios_name,
     compare_netbios_names
 )
-from freenasUI.directoryservice import models
+from freenasUI.directoryservice import models, utils
 from freenasUI.middleware.notifier import notifier
 from freenasUI.services.exceptions import ServiceFailed
 from freenasUI.services.models import CIFS
@@ -628,6 +629,13 @@ class ActiveDirectoryForm(ModelForm):
 
         started = notifier().started("activedirectory")
         obj = super(ActiveDirectoryForm, self).save()
+
+        try:
+            utils.get_idmap_object(obj.ds_type, obj.id, obj.ad_idmap_backend)
+        except ObjectDoesNotExist:
+            log.debug('IDMAP backend {} entry does not exist, creating one.'.format(obj.ad_idmap_backend))
+            utils.get_idmap(obj.ds_type, obj.id, obj.ad_idmap_backend)
+
         self.cifs.cifs_srv_netbiosname = self.cleaned_data.get("ad_netbiosname_a")
         self.cifs.cifs_srv_netbiosname_b = self.cleaned_data.get("ad_netbiosname_b")
         self.cifs.cifs_srv_netbiosalias = self.cleaned_data.get("ad_netbiosalias")
