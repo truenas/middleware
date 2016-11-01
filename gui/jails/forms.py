@@ -1032,8 +1032,6 @@ class JailTemplateCreateForm(ModelForm):
         if not jt_name:
             return jt_name
         qs = JailTemplate.objects.filter(jt_name=jt_name)
-        if self.instance.id:
-            qs = qs.exclude(id=self.instance.id)
         if qs.exists():
             raise forms.ValidationError(_('This name is already in use.'))
         return jt_name
