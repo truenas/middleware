@@ -193,15 +193,16 @@ class LocaleMiddleware(object):
 class CatchError(object):
 
     def process_response(self, request, response):
-        if sys.exc_type and sys.exc_type in (
+        exc_info = sys.exc_info()
+        if exc_info[0] and exc_info[0] in (
             MiddlewareError, ServiceFailed, OperationalError
         ):
-            excp = sys.exc_info()[1]
+            excp = exc_info[1]
             kwargs = {
                 'error': True,
                 'message': _("Error: %s") % (
                     unicode(excp.value)
-                    if sys.exc_type is not OperationalError
+                    if exc_info[0] is not OperationalError
                     else unicode(excp.message)
                 ),
             }
