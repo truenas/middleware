@@ -896,7 +896,7 @@ class VolumeResourceMixin(NestedMixin):
 
             data = {
                 'id': uid.next(),
-                'name': child.name,
+                'name': child.name.rsplit('/', 1)[-1],
                 'type': 'dataset' if child.category == 'filesystem' else 'zvol',
                 'status': '-',
                 'path': child.path,
