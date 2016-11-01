@@ -214,7 +214,10 @@ def servicesToggleView(request, formname):
         'srv_service': changing_service,
     }, force=force)
     if not mf.is_valid():
-        return
+        data = {
+            'events': mf._extra_events,
+        }
+        return HttpResponse(json.dumps(data), content_type="application/json")
     svc_entry = mf.save()
     events = []
     mf.done(request, events)
