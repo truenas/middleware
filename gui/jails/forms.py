@@ -1027,6 +1027,17 @@ class JailTemplateCreateForm(ModelForm):
         exclude = ['jt_system']
         model = JailTemplate
 
+    def clean_jt_name(self):
+        jt_name = self.cleaned_data.get('jt_name')
+        if not jt_name:
+            return jt_name
+        qs = JailTemplate.objects.filter(jt_name=jt_name)
+        if self.instance.id:
+            qs = qs.exclude(id=self.instance.id)
+        if qs.exists():
+            raise forms.ValidationError(_('This name is already in use.'))
+        return jt_name
+
 
 class JailTemplateEditForm(ModelForm):
 
