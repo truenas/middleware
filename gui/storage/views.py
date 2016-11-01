@@ -583,6 +583,7 @@ def zvol_create(request, parent):
 def zvol_delete(request, name):
 
     if request.method == 'POST':
+        form = forms.ZvolDestroyForm(request.POST, fs=name)
         extents = iSCSITargetExtent.objects.filter(
             iscsi_target_extent_type='ZVOL',
             iscsi_target_extent_path='zvol/' + name)
@@ -593,17 +594,20 @@ def zvol_delete(request, name):
                 message=_(
                     "This is in use by the iscsi target, please remove "
                     "it there first."))
-        retval = notifier().destroy_zfs_vol(name)
-        if retval == '':
-            return JsonResp(
-                request,
-                message=_("ZFS Volume successfully destroyed."))
-        else:
-            return JsonResp(request, error=True, message=retval)
+        if form.is_valid():
+            retval = notifier().destroy_zfs_vol(name, recursive=True)
+            if retval == '':
+                return JsonResp(
+                    request,
+                    message=_("ZFS Volume successfully destroyed."))
+            else:
+                return JsonResp(request, error=True, message=retval)
     else:
-        return render(request, 'storage/zvol_confirm_delete.html', {
-            'name': name,
-        })
+        form = forms.ZvolDestroyForm(fs=name)
+    return render(request, 'storage/zvol_confirm_delete.html', {
+        'form': form,
+        'name': name,
+    })
 
 
 def zvol_edit(request, name):

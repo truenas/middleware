@@ -2183,6 +2183,20 @@ class Dataset_Destroy(Form):
                 label=label)
 
 
+class ZvolDestroyForm(Form):
+    def __init__(self, *args, **kwargs):
+        self.fs = kwargs.pop('fs')
+        super(ZvolDestroyForm, self).__init__(*args, **kwargs)
+        snaps = notifier().zfs_snapshot_list(path=self.fs)
+        if len(snaps.get(self.fs, [])) > 0:
+            label = _(
+                "I'm aware this will destroy snapshots of this zvol",
+            )
+            self.fields['cascade'] = forms.BooleanField(
+                initial=False,
+                label=label)
+
+
 class ScrubForm(ModelForm):
 
     class Meta:
