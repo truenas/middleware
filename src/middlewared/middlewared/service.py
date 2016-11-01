@@ -46,6 +46,11 @@ def private(fn):
     return fn
 
 
+def filtrate(fn):
+    fn._filtrate = True
+    return accepts(Ref('query-filters'), Ref('query-options'))(fn)
+
+
 class ServiceBase(type):
 
     def __new__(cls, name, bases, attrs):
@@ -109,7 +114,7 @@ class CRUDService(Service):
 
 class CoreService(Service):
 
-    @accepts(Ref('query-filters'), Ref('query-options'))
+    @filtrate
     def get_jobs(self, filters=None, options=None):
         """Get the long running jobs."""
         jobs = filter_list([
