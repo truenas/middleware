@@ -766,8 +766,7 @@ class VolumeImportForm(Form):
         for name, part in _parts.items():
             for i in used_disks:
                 if re.search(r'^%s([ps]|$)' % i, part['devname']) is not None:
-                    del _parts[name]
-                    continue
+                    _parts.pop(name, None)
 
         parts = []
         for name, part in _parts.items():
