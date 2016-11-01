@@ -80,6 +80,11 @@ class CIFS_ShareForm(ModelForm):
 
     def __init__(self, *args, **kwargs):
         super(CIFS_ShareForm, self).__init__(*args, **kwargs)
+        if self.instance.id:
+            self._original_cifs_vfsobjects = self.instance.cifs_vfsobjects
+        else:
+            self._original_cifs_vfsobjects = []
+
         self.fields['cifs_guestok'].widget.attrs['onChange'] = (
             'javascript:toggleGeneric("id_cifs_guestok", '
             '["id_cifs_guestonly"], true);')
