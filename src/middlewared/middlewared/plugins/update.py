@@ -158,6 +158,17 @@ class UpdateService(Service):
     def check_available(self, attrs=None):
         """
         Checks if there is an update available from update server.
+
+        .. examples(websocket)::
+
+		  Check available update using default train,
+
+            :::javascript
+            {
+                "id": "6841f242-840a-11e6-a437-00e04d680384",
+                "msg": "method",
+                "method": "update.check_available"
+            }
         """
         train = (attrs or {}).get('train') or self.get_train()
 
