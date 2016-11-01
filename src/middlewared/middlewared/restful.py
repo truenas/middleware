@@ -1,3 +1,4 @@
+from collections import defaultdict
 from datetime import datetime
 
 import base64
@@ -88,6 +89,14 @@ class RESTfulAPI(object):
             JSONTranslator(),
             AuthMiddleware(middleware),
         ])
+
+        # Keep methods cached for future lookups
+        self._methods = {}
+        self._methods_by_service = defaultdict(dict)
+        for methodname, method in self.middleware.call('core.get_methods').items():
+            self._methods[methodname] = method
+            self._methods_by_service[methodname.rsplit('.', 1)[0]][methodname] = method
+
         self.register_resources()
 
     def get_app(self):
@@ -131,7 +140,7 @@ class RESTfulAPI(object):
                 blacklist_methods.extend(kwargs.values())
                 subresource = Resource(self, self.middleware, 'id/{id}', parent=service_resource, **kwargs)
 
-            for methodname, method in self.middleware.call('core.get_methods', name).items():
+            for methodname, method in self._methods_by_service[name].items():
                 if methodname in blacklist_methods:
                     continue
                 short_methodname = methodname.rsplit('.', 1)[-1]
@@ -141,7 +150,11 @@ class RESTfulAPI(object):
                     parent = service_resource
 
                 res_kwargs = {}
-                if method['accepts']:
+                """
+                Methods with not empty accepts list and not filterable
+                are treated as POST HTTP methods.
+                """
+                if method['accepts'] and not method['filterable']:
                     res_kwargs['post'] = methodname
                 else:
                     res_kwargs['get'] = methodname
@@ -203,10 +216,61 @@ class Resource(object):
         path.append(self.name)
         return '/'.join(path)
 
+    def _filterable_args(self, req):
+        filters = []
+        options = {}
+        for key, val in req.params.items():
+            if '__' in key:
+                field, op = key.split('__', 1)
+            else:
+                field, op = key, '='
+
+            def convert(val):
+                if val.isdigit():
+                    val = int(val)
+                elif val.lower() in ('true', 'false', '0', '1'):
+                    if val.lower() in ('true', '1'):
+                        val = True
+                    elif val.lower() in ('false', '0'):
+                        val = False
+                return val
+
+            if key in ('limit', 'offset', 'count'):
+                options[key] = convert(val)
+                continue
+            elif key == 'sort':
+                options[key] = [convert(v) for v in val.split(',')]
+                continue
+
+            op_map = {
+                'eq': '=',
+                'neq': '!=',
+                'gt': '>',
+                'lt': '<',
+                'gte': '>=',
+                'lte': '<=',
+                'regex': '~',
+            }
+
+            op = op_map.get(op, op)
+
+            if val.isdigit():
+                val = int(val)
+            elif val.lower() == 'true':
+                val = True
+            elif val.lower() == 'false':
+                val = False
+            elif val.lower() == 'null':
+                val = None
+            filters.append((field, op, val))
+
+        return [filters, options]
+
     def do(self, http_method, req, resp, **kwargs):
         assert http_method in ('delete', 'get', 'post', 'put')
 
-        method = getattr(self, http_method)
+        methodname = getattr(self, http_method)
+        method = self.rest._methods[methodname]
         """
         Arguments for a method can be grabbed from an override method in
         the form of "get_{get,post,put,delete}_args", e.g.:
@@ -220,7 +284,9 @@ class Resource(object):
         else:
             if http_method in ('post', 'put'):
                 method_args = req.context.get('doc', [])
+            elif http_method == 'get' and method['filterable']:
+                method_args = self._filterable_args(req)
             else:
                 method_args = []
 
-        req.context['result'] = self.middleware.call(method, *method_args)
+        req.context['result'] = self.middleware.call(methodname, *method_args)

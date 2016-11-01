@@ -46,8 +46,8 @@ def private(fn):
     return fn
 
 
-def filtrate(fn):
-    fn._filtrate = True
+def filterable(fn):
+    fn._filterable = True
     return accepts(Ref('query-filters'), Ref('query-options'))(fn)
 
 
@@ -114,7 +114,7 @@ class CRUDService(Service):
 
 class CoreService(Service):
 
-    @filtrate
+    @filterable
     def get_jobs(self, filters=None, options=None):
         """Get the long running jobs."""
         jobs = filter_list([
@@ -227,6 +227,7 @@ class CoreService(Service):
                     'examples': examples,
                     'accepts': accepts,
                     'item_method': hasattr(method, '_item_method'),
+                    'filterable': hasattr(method, '_filterable'),
                 }
         return data
 
