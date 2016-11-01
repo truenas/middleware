@@ -109,8 +109,16 @@ class Volume(Model):
             if not hasattr(self, '_disks'):
                 n = notifier()
                 if self.vol_fstype == 'ZFS':
-                    pool = n.zpool_parse(self.vol_name)
-                    self._disks = pool.get_disks()
+                    if self.is_decrypted():
+                        pool = n.zpool_parse(self.vol_name)
+                        self._disks = pool.get_disks()
+                    else:
+                        self._disks = []
+                        for ed in self.encrypteddisk_set.all():
+                            if not ed.encrypted_disk:
+                                continue
+                            if os.path.exists('/dev/{}'.format(ed.encrypted_disk.devname)):
+                                self._disks.append(ed.encrypted_disk.devname)
                 else:
                     prov = n.get_label_consumer(
                         self.vol_fstype.lower(),
