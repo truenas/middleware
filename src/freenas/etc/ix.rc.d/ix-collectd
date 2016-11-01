@@ -194,7 +194,6 @@ LoadPlugin zfs_arc_v2
 
 <Plugin "exec">
     NotificationExec "nobody" "/usr/local/www/freenasUI/tools/collectd_alert.py"
-    Exec "nobody:nobody" "/bin/echo" "PUTVAL localhost/collectd/ping N:1"
 </Plugin>
 
 <Plugin "interface">
