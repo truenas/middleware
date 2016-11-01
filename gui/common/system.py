@@ -232,7 +232,10 @@ def send_mail(
             pass
         timediff = datetime.now() - last_update
         if (timediff >= interval) or (timediff < timedelta()):
-            open(channelfile, 'w').close()
+            # Make sure mtime is modified
+            # We could use os.utime but this is simpler!
+            with open(channelfile, 'w') as f:
+                f.write('!')
         else:
             return True, 'This message was already sent in the given interval'
 
