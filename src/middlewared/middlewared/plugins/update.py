@@ -161,7 +161,7 @@ class UpdateService(Service):
 
         .. examples(websocket)::
 
-		  Check available update using default train,
+          Check available update using default train,
 
             :::javascript
             {
