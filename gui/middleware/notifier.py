@@ -1857,32 +1857,32 @@ class notifier:
         if larger_ashift == 1:
             self._system("/sbin/sysctl vfs.zfs.vdev.larger_ashift_minimal=0")
 
-        if from_disk == to_disk:
-            self._system('/sbin/zpool online %s %s' % (volume.vol_name, to_label))
-            ret = self._system_nolog('/sbin/zpool replace %s %s' % (volume.vol_name, to_label))
-            if ret == 256:
-                ret = self._system_nolog('/sbin/zpool scrub %s' % (volume.vol_name))
+        if force:
+            try:
+                self.disk_wipe(devname.replace('/dev/', ''), mode='quick')
+            except:
+                log.debug('Failed to wipe disk {}'.format(to_disk), exc_info=True)
+
+        p1 = self._pipeopen('/sbin/zpool replace %s%s %s %s' % ('-f ' if force else '', volume.vol_name, from_label, devname))
+        stdout, stderr = p1.communicate()
+        ret = p1.returncode
+        if ret == 0:
+            # If we are replacing a faulted disk, kick it right after replace
+            # is initiated.
+            if from_label.isdigit():
+                self._system('/sbin/zpool detach %s %s' % (volume.vol_name, from_label))
+            # TODO: geli detach -l
         else:
-            p1 = self._pipeopen('/sbin/zpool replace %s%s %s %s' % ('-f ' if force else '', volume.vol_name, from_label, devname))
-            stdout, stderr = p1.communicate()
-            ret = p1.returncode
-            if ret == 0:
-                # If we are replacing a faulted disk, kick it right after replace
-                # is initiated.
-                if from_label.isdigit():
-                    self._system('/sbin/zpool detach %s %s' % (volume.vol_name, from_label))
-                # TODO: geli detach -l
-            else:
-                if from_swap != '':
-                    self._system('/sbin/geli onetime /dev/%s' % (from_swap))
-                    self._system('/sbin/swapon /dev/%s.eli' % (from_swap))
-                error = ", ".join(stderr.split('\n'))
-                if to_swap != '':
-                    self._system('/sbin/swapoff /dev/%s.eli' % (to_swap, ))
-                    self._system('/sbin/geli detach /dev/%s' % (to_swap, ))
-                if encrypt:
-                    self._system('/sbin/geli detach %s' % (devname, ))
-                raise MiddlewareError('Disk replacement failed: "%s"' % error)
+            if from_swap != '':
+                self._system('/sbin/geli onetime /dev/%s' % (from_swap))
+                self._system('/sbin/swapon /dev/%s.eli' % (from_swap))
+            error = ", ".join(stderr.split('\n'))
+            if to_swap != '':
+                self._system('/sbin/swapoff /dev/%s.eli' % (to_swap, ))
+                self._system('/sbin/geli detach /dev/%s' % (to_swap, ))
+            if encrypt:
+                self._system('/sbin/geli detach %s' % (devname, ))
+            raise MiddlewareError('Disk replacement failed: "%s"' % error)
 
         # Restore previous larger ashift state.
         if larger_ashift == 1:

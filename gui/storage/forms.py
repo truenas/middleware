@@ -1908,8 +1908,6 @@ class ZFSDiskReplacementForm(Form):
         used_disks = []
         for v in models.Volume.objects.all():
             used_disks.extend(v.get_disks())
-        if self.disk and self.disk in used_disks:
-            used_disks.remove(self.disk)
 
         # Grab partition list
         # NOTE: This approach may fail if device nodes are not accessible.
@@ -1930,12 +1928,7 @@ class ZFSDiskReplacementForm(Form):
                 continue
             devname, capacity = disks[disk]['devname'], disks[disk]['capacity']
             capacity = humanize_number_si(int(capacity))
-            if devname == self.disk:
-                diskchoices[devname] = "In-place [%s (%s)]" % (
-                    devname,
-                    capacity)
-            else:
-                diskchoices[devname] = "%s (%s)" % (devname, capacity)
+            diskchoices[devname] = "%s (%s)" % (devname, capacity)
 
         choices = diskchoices.items()
         choices.sort(key=lambda a: float(
@@ -1984,22 +1977,13 @@ class ZFSDiskReplacementForm(Form):
             passfile = None
 
         with transaction.atomic():
-            if devname != self.disk:
-                rv = notifier().zfs_replace_disk(
-                    self.volume,
-                    self.label,
-                    devname,
-                    force=self.cleaned_data.get('force'),
-                    passphrase=passfile
-                )
-            else:
-                rv = notifier().zfs_replace_disk(
-                    self.volume,
-                    self.label,
-                    self.disk,
-                    force=self.cleaned_data.get('force'),
-                    passphrase=passfile
-                )
+            rv = notifier().zfs_replace_disk(
+                self.volume,
+                self.label,
+                devname,
+                force=self.cleaned_data.get('force'),
+                passphrase=passfile
+            )
         if rv == 0:
             if (services.objects.get(srv_service='smartd').srv_enable):
                 notifier().restart("smartd")
