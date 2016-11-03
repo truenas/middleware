@@ -159,9 +159,14 @@ class UpdateService(Service):
         """
         Checks if there is an update available from update server.
 
+        status:
+          - REBOOT_REQUIRED: an update has already been applied
+          - AVAILABLE: an update is available
+          - UNAVAILABLE: no update available
+
         .. examples(websocket)::
 
-          Check available update using default train,
+          Check available update using default train:
 
             :::javascript
             {
@@ -170,6 +175,11 @@ class UpdateService(Service):
                 "method": "update.check_available"
             }
         """
+
+        applied = self.middleware.call('cache.get', 'update.applied')
+        if applied is True:
+            return {'status': 'REBOOT_REQUIRED'}
+
         train = (attrs or {}).get('train') or self.get_train()
 
         handler = CheckUpdateHandler()
@@ -179,12 +189,13 @@ class UpdateService(Service):
             train=train,
         )
 
+        if not manifest:
+            return {'status': 'UNAVAILABLE'}
+
         data = {
+            'status': 'AVAILABLE',
             'changes': handler.changes,
         }
-
-        if not manifest:
-            return data
 
         conf = Configuration.Configuration()
         sys_mani = conf.SystemManifest()
@@ -232,4 +243,5 @@ class UpdateService(Service):
             location,
             install_handler=handler.install_handler,
         )
+        self.middleware.call('cache.put', 'update.applied', True)
         return True
