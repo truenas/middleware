@@ -68,6 +68,8 @@ class SystemService(Service):
     def reboot(self, job, options=None):
         """
         Reboots the operating system.
+
+        Emits an "added" event of name "system" and id "reboot".
         """
         if options is None:
             options = {}
@@ -87,6 +89,8 @@ class SystemService(Service):
     def shutdown(self, job, options=None):
         """
         Shuts down the operating system.
+
+        Emits an "added" event of name "system" and id "shutdown".
         """
         if options is None:
             options = {}
