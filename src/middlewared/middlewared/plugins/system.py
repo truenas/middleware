@@ -1,6 +1,6 @@
 from datetime import datetime
-from middlewared.schema import accepts
-from middlewared.service import Service
+from middlewared.schema import accepts, Dict, Int
+from middlewared.service import job, Service
 from middlewared.utils import Popen
 
 import os
@@ -9,6 +9,7 @@ import struct
 import subprocess
 import sys
 import sysctl
+import time
 
 if '/usr/local/lib' not in sys.path:
     sys.path.append('/usr/local/lib')
@@ -61,3 +62,41 @@ class SystemService(Service):
                 struct.unpack('l', sysctl.filter('kern.boottime')[0].value[:8])[0]
             ),
         }
+
+    @accepts(Dict('system-reboot', Int('delay', required=False), required=False))
+    @job()
+    def reboot(self, job, options=None):
+        """
+        Reboots the operating system.
+        """
+        if options is None:
+            options = {}
+
+        self.middleware.send_event('system', 'ADDED', id='reboot', fields={
+            'description': 'System is going to reboot',
+        })
+
+        delay = options.get('delay')
+        if delay:
+            time.sleep(delay)
+
+        Popen(["/sbin/reboot"])
+
+    @accepts(Dict('system-shutdown', Int('delay', required=False), required=False))
+    @job()
+    def shutdown(self, job, options=None):
+        """
+        Shuts down the operating system.
+        """
+        if options is None:
+            options = {}
+
+        self.middleware.send_event('system', 'ADDED', id='shutdown', fields={
+            'description': 'System is going to shutdown',
+        })
+
+        delay = options.get('delay')
+        if delay:
+            time.sleep(delay)
+
+        Popen(["/sbin/poweroff"])
