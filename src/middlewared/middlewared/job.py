@@ -169,7 +169,8 @@ class Job(object):
     Represents a long running call, methods marked with @job decorator
     """
 
-    def __init__(self, method_name, method, args, options):
+    def __init__(self, middleware, method_name, method, args, options):
+        self.middleware = middleware
         self.method_name = method_name
         self.method = method
         self.args = args
@@ -230,7 +231,7 @@ class Job(object):
             self.progress['description'] = description
         if extra:
             self.progress['extra'] = extra
-        self.middleware.send_event('core.get_jobs', 'CHANGED', id=job.id, fields={
+        self.middleware.send_event('core.get_jobs', 'CHANGED', id=self.id, fields={
             'progress': self.progress,
         })
 
@@ -288,7 +289,7 @@ class Job(object):
             raise
         finally:
             queue.release_lock(self)
-            self.middleware.send_event('core.get_jobs', 'CHANGED', id=job.id, fields=self.__encode__())
+            self.middleware.send_event('core.get_jobs', 'CHANGED', id=self.id, fields=self.__encode__())
 
     def __encode__(self):
         return {
