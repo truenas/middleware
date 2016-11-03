@@ -50,6 +50,8 @@ class Application(WebSocketApplication):
         """
         self.__callbacks = defaultdict(list)
 
+        self.__subscribed = {}
+
     def register_callback(self, name, method):
         assert name in ('on_message', 'on_close')
         self.__callbacks[name].append(method)
@@ -158,6 +160,34 @@ class Application(WebSocketApplication):
             self.middleware.logger.warn('Exception while calling {}(*{})'.format(message['method'], message.get('params')), exc_info=True)
             gevent.spawn(self.middleware.rollbar_report, sys.exc_info())
 
+    def subscribe(self, ident, name):
+        self.__subscribed[ident] = name
+
+    def unsubscribe(self, ident):
+        self.__subscribed.pop(ident)
+
+    def send_event(self, name, event_type, **kwargs):
+        found = False
+        for i in self.__subscribed.itervalues():
+            if i == name or i == '*':
+                found = True
+                break
+        if not found:
+            return
+        event = {
+            'msg': event_type.lower(),
+            'collection': kwargs['collection'],
+        }
+        if 'id' in kwargs:
+            event['id'] = kwargs['id']
+        if event_type in ('ADDED', 'CHANGED'):
+            if 'fields' in kwargs:
+                event['fields'] = kwargs['fields']
+        if event_type == 'CHANGED':
+            if 'cleared' in kwargs:
+                event['cleared'] = kwargs['cleared']
+        self._send(event)
+
     def on_open(self):
         self.middleware.register_wsclient(self)
 
@@ -212,6 +242,11 @@ class Application(WebSocketApplication):
         if not self.authenticated:
             self.send_error(message, 'Not authenticated')
             return
+
+        if message['msg'] == 'sub':
+            self.subscribe(message['id'], message['name'])
+        elif message['msg'] == 'unsub':
+            self.unsubscribe(message['name'])
 
 
 class Middleware(object):
@@ -354,6 +389,14 @@ class Middleware(object):
     def call(self, method, *params):
         service, method = method.rsplit('.', 1)
         return getattr(self.get_service(service), method)(*params)
+
+    def send_event(self, name, event_type, **kwargs):
+        assert event_type in ('ADDED', 'CHANGED', 'REMOVED')
+        for sessionid, wsclient in self.__wsclients.iteritems():
+            try:
+                wsclient.send_event(name, event_type, **kwargs)
+            except:
+                self.logger.warn('Failed to send event {} to {}'.format(name, sessionid), exc_info=True)
 
     def rollbar_report(self, exc_info):
 
