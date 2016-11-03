@@ -176,7 +176,7 @@ class Application(WebSocketApplication):
             return
         event = {
             'msg': event_type.lower(),
-            'collection': kwargs['collection'],
+            'collection': name,
         }
         if 'id' in kwargs:
             event['id'] = kwargs['id']
@@ -253,7 +253,7 @@ class Middleware(object):
 
     def __init__(self):
         self.logger = logging.getLogger('middleware')
-        self.__jobs = JobsQueue()
+        self.__jobs = JobsQueue(self)
         self.__schemas = {}
         self.__services = {}
         self.__wsclients = {}
@@ -373,7 +373,7 @@ class Middleware(object):
         job_options = getattr(methodobj, '_job', None)
         if job_options:
             # Create a job instance with required args
-            job = Job(message['method'], methodobj, args, job_options)
+            job = Job(self, message['method'], methodobj, args, job_options)
             # Add the job to the queue.
             # At this point an `id` is assinged to the job.
             self.__jobs.add(job)
