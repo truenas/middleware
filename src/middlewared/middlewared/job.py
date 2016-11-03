@@ -55,7 +55,8 @@ class JobSharedLock(object):
 
 class JobsQueue(object):
 
-    def __init__(self):
+    def __init__(self, middleware):
+        self.middleware = middleware
         self.deque = JobsDeque()
         self.queue = []
 
@@ -72,6 +73,9 @@ class JobsQueue(object):
     def add(self, job):
         self.deque.add(job)
         self.queue.append(job)
+
+        self.middleware.send_event('core.get_jobs', 'ADDED', id=job.id, fields=job.__encode__())
+
         # A job has been added to the queue, let the queue scheduler run
         self.queue_event.set()
 
@@ -226,6 +230,9 @@ class Job(object):
             self.progress['description'] = description
         if extra:
             self.progress['extra'] = extra
+        self.middleware.send_event('core.get_jobs', 'CHANGED', id=job.id, fields={
+            'progress': self.progress,
+        })
 
     def run(self, queue):
         """
@@ -281,6 +288,7 @@ class Job(object):
             raise
         finally:
             queue.release_lock(self)
+            self.middleware.send_event('core.get_jobs', 'CHANGED', id=job.id, fields=self.__encode__())
 
     def __encode__(self):
         return {

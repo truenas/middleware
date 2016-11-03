@@ -50,6 +50,8 @@ class Application(WebSocketApplication):
         """
         self.__callbacks = defaultdict(list)
 
+        self.__subscribed = {}
+
     def register_callback(self, name, method):
         assert name in ('on_message', 'on_close')
         self.__callbacks[name].append(method)
@@ -158,8 +160,36 @@ class Application(WebSocketApplication):
             self.middleware.logger.warn('Exception while calling {}(*{})'.format(message['method'], message.get('params')), exc_info=True)
             gevent.spawn(self.middleware.rollbar_report, sys.exc_info())
 
+    def subscribe(self, ident, name):
+        self.__subscribed[ident] = name
+
+    def unsubscribe(self, ident):
+        self.__subscribed.pop(ident)
+
+    def send_event(self, name, event_type, **kwargs):
+        found = False
+        for i in self.__subscribed.itervalues():
+            if i == name or i == '*':
+                found = True
+                break
+        if not found:
+            return
+        event = {
+            'msg': event_type.lower(),
+            'collection': name,
+        }
+        if 'id' in kwargs:
+            event['id'] = kwargs['id']
+        if event_type in ('ADDED', 'CHANGED'):
+            if 'fields' in kwargs:
+                event['fields'] = kwargs['fields']
+        if event_type == 'CHANGED':
+            if 'cleared' in kwargs:
+                event['cleared'] = kwargs['cleared']
+        self._send(event)
+
     def on_open(self):
-        pass
+        self.middleware.register_wsclient(self)
 
     def on_close(self, *args, **kwargs):
         # Run callbacks registered in plugins for on_close
@@ -168,6 +198,8 @@ class Application(WebSocketApplication):
                 method(self)
             except:
                 self.logger.error('Failed to run on_close callback.', exc_info=True)
+
+        self.middleware.unregister_wsclient(self)
 
     def on_message(self, message):
         # Run callbacks registered in plugins for on_message
@@ -211,14 +243,20 @@ class Application(WebSocketApplication):
             self.send_error(message, 'Not authenticated')
             return
 
+        if message['msg'] == 'sub':
+            self.subscribe(message['id'], message['name'])
+        elif message['msg'] == 'unsub':
+            self.unsubscribe(message['name'])
+
 
 class Middleware(object):
 
     def __init__(self):
         self.logger = logging.getLogger('middleware')
-        self.__jobs = JobsQueue()
+        self.__jobs = JobsQueue(self)
         self.__schemas = {}
         self.__services = {}
+        self.__wsclients = {}
         self.__init_services()
         self.__init_rollbar()
         self.__plugins_load()
@@ -288,6 +326,12 @@ class Middleware(object):
 
         self.logger.debug('All plugins loaded')
 
+    def register_wsclient(self, client):
+        self.__wsclients[client.sessionid] = client
+
+    def unregister_wsclient(self, client):
+        self.__wsclients.pop(client.sessionid)
+
     def add_service(self, service):
         self.__services[service._config.namespace] = service
 
@@ -329,7 +373,7 @@ class Middleware(object):
         job_options = getattr(methodobj, '_job', None)
         if job_options:
             # Create a job instance with required args
-            job = Job(message['method'], methodobj, args, job_options)
+            job = Job(self, message['method'], methodobj, args, job_options)
             # Add the job to the queue.
             # At this point an `id` is assinged to the job.
             self.__jobs.add(job)
@@ -345,6 +389,14 @@ class Middleware(object):
     def call(self, method, *params):
         service, method = method.rsplit('.', 1)
         return getattr(self.get_service(service), method)(*params)
+
+    def send_event(self, name, event_type, **kwargs):
+        assert event_type in ('ADDED', 'CHANGED', 'REMOVED')
+        for sessionid, wsclient in self.__wsclients.iteritems():
+            try:
+                wsclient.send_event(name, event_type, **kwargs)
+            except:
+                self.logger.warn('Failed to send event {} to {}'.format(name, sessionid), exc_info=True)
 
     def rollbar_report(self, exc_info):
 
