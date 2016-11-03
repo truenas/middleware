@@ -215,7 +215,7 @@ class Job(object):
             assert state not in ('WAITING', 'RUNNING')
         assert self.state not in (State.SUCCESS, State.FAILED)
         self.state = State.__members__[state]
-        if state.state in (State.SUCCESS, State.FAILED):
+        if self.state in (State.SUCCESS, State.FAILED):
             self.time_finished = datetime.now()
 
     def set_progress(self, percent, description=None, extra=None):
