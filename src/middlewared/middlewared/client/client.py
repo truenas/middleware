@@ -76,6 +76,7 @@ class Client(object):
         self._closed = Event()
         self._connected = Event()
         self._connected.wait(5)
+        self._event_callbacks = {}
         if not self._connected.is_set():
             raise ClientException('Failed connection handshake')
 
@@ -110,6 +111,15 @@ class Client(object):
                     call.trace = message['error'].get('trace')
                 call.returned.set()
                 self._unregister_call(call)
+        elif msg in ('added', 'changed', 'removed'):
+            if self.event_callback:
+                if '*' in self._event_callbacks:
+                    self._event_callbacks['*'](msg.upper(), **message)
+                if collection in self._event_callbacks:
+                    self._event_callbacks[collection](msg.upper(), **message)
+
+    def register_event_callback(self, name, callback):
+        self._event_callbacks[name] = callback
 
     def on_open(self):
         self._send({
