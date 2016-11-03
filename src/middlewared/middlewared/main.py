@@ -159,7 +159,7 @@ class Application(WebSocketApplication):
             gevent.spawn(self.middleware.rollbar_report, sys.exc_info())
 
     def on_open(self):
-        pass
+        self.middleware.register_wsclient(self)
 
     def on_close(self, *args, **kwargs):
         # Run callbacks registered in plugins for on_close
@@ -168,6 +168,8 @@ class Application(WebSocketApplication):
                 method(self)
             except:
                 self.logger.error('Failed to run on_close callback.', exc_info=True)
+
+        self.middleware.unregister_wsclient(self)
 
     def on_message(self, message):
         # Run callbacks registered in plugins for on_message
@@ -219,6 +221,7 @@ class Middleware(object):
         self.__jobs = JobsQueue()
         self.__schemas = {}
         self.__services = {}
+        self.__wsclients = {}
         self.__init_services()
         self.__init_rollbar()
         self.__plugins_load()
@@ -287,6 +290,12 @@ class Middleware(object):
                 raise ValueError("Not all could be resolved")
 
         self.logger.debug('All plugins loaded')
+
+    def register_wsclient(self, client):
+        self.__wsclients[client.sessionid] = client
+
+    def unregister_wsclient(self, client):
+        self.__wsclients.pop(client.sessionid)
 
     def add_service(self, service):
         self.__services[service._config.namespace] = service
