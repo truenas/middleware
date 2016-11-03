@@ -123,7 +123,8 @@ class JobsQueue(object):
                 # Get job in the queue if it has no lock or its not locked
                 if lock is None or not lock.locked():
                     found = job
-                    job.set_lock(lock)
+                    if lock:
+                        job.set_lock(lock)
                     break
             if found:
                 # Unlocked job found to run
