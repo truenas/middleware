@@ -1904,6 +1904,11 @@ class TargetExtentDelete(Form):
                 target_to_be_deleted = self.instance.iscsi_target_name
             elif isinstance(self.instance, models.iSCSITargetToExtent):
                 target_to_be_deleted = self.instance.iscsi_target.iscsi_target_name
+
+            if not target_to_be_deleted.startswith(('iqn.', 'naa.', 'eui.')):
+                basename = models.iSCSITargetGlobalConfiguration.objects.order_by('-id')[0].iscsi_basename
+                target_to_be_deleted = basename + ':' + target_to_be_deleted
+
             if target_to_be_deleted in connected_targets:
                 self.errors['__all__'] = self.error_class(
                     ["Warning: Target is in use"])
