@@ -33,7 +33,7 @@ urlpatterns = patterns(
     'freenasUI.reporting.views',
     url(r'^$', 'index', name="reporting_index"),
     url(r'^cpu/$', 'generic_graphs', {'names': ['cpu', 'load']}, name="reporting_cpu"),
-    url(r'^disk/$', 'generic_graphs', {'names': ['disk']}, name="reporting_disk"),
+    url(r'^disk/$', 'generic_graphs', {'names': ['disk', 'diskgeombusy', 'diskgeomlatency', 'diskgeomopsrwd', 'diskgeomqueue']}, name="reporting_disk"),
     url(r'^memory/$', 'generic_graphs', {'names': ['memory', 'swap']}, name="reporting_memory"),
     url(r'^network/$', 'generic_graphs', {'names': ['interface']}, name="reporting_network"),
     url(r'^partition/$', 'generic_graphs', {'names': ['df']}, name="reporting_partition"),

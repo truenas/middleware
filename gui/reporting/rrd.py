@@ -827,6 +827,230 @@ class DiskPlugin(RRDBase):
         return args
 
 
+class DiskGeomBusyPlugin(RRDBase):
+
+    vertical_label = "Percent"
+
+    def get_title(self):
+        title = self.identifier.replace("geom_stat/geom_busy_percent-", "")
+        return 'Disk Busy (%s)' % title
+
+    def get_identifiers(self):
+        ids = []
+        for entry in glob.glob('%s/geom_stat/geom_busy_percent-*' % self._base_path):
+            ident = entry.split('-', 1)[-1]
+            ident = re.sub(r'.rrd$', '', ident)
+            if not re.match(r'^[a-z]+[0-9]+$', ident):
+                continue
+            if not os.path.exists('/dev/%s' % ident):
+                continue
+            if ident.startswith('pass'):
+                continue
+            ids.append(ident)
+
+        ids.sort(key=RRDBase._sort_disks)
+        return ids
+
+    def graph(self):
+
+        path = os.path.join(self._base_path, "geom_stat/geom_busy_percent-%s.rrd" % self.identifier)
+
+        args = [
+            'DEF:min_rd=%s:value:MIN' % path,
+            'DEF:avg_rd=%s:value:AVERAGE' % path,
+            'DEF:max_rd=%s:value:MAX' % path,
+            'VDEF:tot_rd=avg_rd,TOTAL',
+            'AREA:avg_rd#bfbfff',
+            'LINE1:avg_rd#0000ff:Value ',
+            'GPRINT:min_rd:MIN:%5.1lf%s Min\g',
+            'GPRINT:avg_rd:AVERAGE: %5.1lf%s Avg\g',
+            'GPRINT:max_rd:MAX: %5.1lf%s Max\g',
+            'GPRINT:avg_rd:LAST: %5.1lf%s Last\g',
+            'GPRINT:tot_rd: %3.0lf%s Total\l',
+        ]
+
+        return args
+
+
+class DiskGeomLatencyPlugin(RRDBase):
+
+    vertical_label = "Time,msec"
+
+    def get_title(self):
+        title = self.identifier.replace("geom_stat/geom_latency-", "")
+        return 'Disk Latency (%s)' % title
+
+    def get_identifiers(self):
+        ids = []
+        for entry in glob.glob('%s/geom_stat/geom_latency-*' % self._base_path):
+            ident = entry.split('-', 1)[-1]
+            ident = re.sub(r'.rrd$', '', ident)
+            if not re.match(r'^[a-z]+[0-9]+$', ident):
+                continue
+            if not os.path.exists('/dev/%s' % ident):
+                continue
+            if ident.startswith('pass'):
+                continue
+            ids.append(ident)
+
+        ids.sort(key=RRDBase._sort_disks)
+        return ids
+
+    def graph(self):
+
+        path = os.path.join(self._base_path, "geom_stat/geom_latency-%s.rrd" % self.identifier)
+
+        args = [
+            'DEF:min_rd=%s:read:MIN' % path,
+            'DEF:avg_rd=%s:read:AVERAGE' % path,
+            'DEF:max_rd=%s:read:MAX' % path,
+            'DEF:min_wr=%s:write:MIN' % path,
+            'DEF:avg_wr=%s:write:AVERAGE' % path,
+            'DEF:max_wr=%s:write:MAX' % path,
+            'DEF:min_dl=%s:delete:MIN' % path,
+            'DEF:avg_dl=%s:delete:AVERAGE' % path,
+            'DEF:max_dl=%s:delete:MAX' % path,
+            'VDEF:tot_rd=avg_rd,TOTAL',
+            'VDEF:tot_wr=avg_wr,TOTAL',
+            'VDEF:tot_dl=avg_dl,TOTAL',
+            'AREA:avg_rd#bfbfff',
+            'AREA:avg_wr#bfe0cf',
+            'AREA:avg_dl#ffe0bf',
+            'LINE1:avg_rd#0000ff:Read  ',
+            'GPRINT:min_rd:MIN:%5.1lf%s Min\g',
+            'GPRINT:avg_rd:AVERAGE: %5.1lf%s Avg\g',
+            'GPRINT:max_rd:MAX: %5.1lf%s Max\g',
+            'GPRINT:avg_rd:LAST: %5.1lf%s Last\g',
+            'GPRINT:tot_rd: %3.0lf%s Total\l',
+            'LINE1:avg_wr#00b000:Write ',
+            'GPRINT:min_wr:MIN:%5.1lf%s Min\g',
+            'GPRINT:avg_wr:AVERAGE: %5.1lf%s Avg\g',
+            'GPRINT:max_wr:MAX: %5.1lf%s Max\g',
+            'GPRINT:avg_wr:LAST: %5.1lf%s Last\g',
+            'GPRINT:tot_wr: %3.0lf%s Total\l',
+            'LINE1:avg_dl#ff0000:Delete',
+            'GPRINT:min_dl:MIN:%5.1lf%s Min\g',
+            'GPRINT:avg_dl:AVERAGE: %5.1lf%s Avg\g',
+            'GPRINT:max_dl:MAX: %5.1lf%s Max\g',
+            'GPRINT:avg_dl:LAST: %5.1lf%s Last\g',
+            'GPRINT:tot_dl: %3.0lf%s Total\l',
+        ]
+
+        return args
+
+
+class DiskGeomOpsRWDPlugin(RRDBase):
+
+    vertical_label = "Operations/s"
+
+    def get_title(self):
+        title = self.identifier.replace("geom_stat/geom_ops_rwd-", "")
+        return 'Disk Operations detailed (%s)' % title
+
+    def get_identifiers(self):
+        ids = []
+        for entry in glob.glob('%s/geom_stat/geom_ops_rwd-*' % self._base_path):
+            ident = entry.split('-', 1)[-1]
+            ident = re.sub(r'.rrd$', '', ident)
+            if not re.match(r'^[a-z]+[0-9]+$', ident):
+                continue
+            if not os.path.exists('/dev/%s' % ident):
+                continue
+            if ident.startswith('pass'):
+                continue
+            ids.append(ident)
+
+        ids.sort(key=RRDBase._sort_disks)
+        return ids
+
+    def graph(self):
+
+        path = os.path.join(self._base_path, "geom_stat/geom_ops_rwd-%s.rrd" % self.identifier)
+
+        args = [
+            'DEF:min_rd=%s:read:MIN' % path,
+            'DEF:avg_rd=%s:read:AVERAGE' % path,
+            'DEF:max_rd=%s:read:MAX' % path,
+            'DEF:min_wr=%s:write:MIN' % path,
+            'DEF:avg_wr=%s:write:AVERAGE' % path,
+            'DEF:max_wr=%s:write:MAX' % path,
+            'DEF:min_dl=%s:delete:MIN' % path,
+            'DEF:avg_dl=%s:delete:AVERAGE' % path,
+            'DEF:max_dl=%s:delete:MAX' % path,
+            'VDEF:tot_rd=avg_rd,TOTAL',
+            'VDEF:tot_wr=avg_wr,TOTAL',
+            'VDEF:tot_dl=avg_dl,TOTAL',
+            'AREA:avg_rd#bfbfff',
+            'AREA:avg_wr#bfe0cf',
+            'AREA:avg_dl#ffe0bf',
+            'LINE1:avg_rd#0000ff:Read  ',
+            'GPRINT:min_rd:MIN:%5.1lf%s Min\g',
+            'GPRINT:avg_rd:AVERAGE: %5.1lf%s Avg\g',
+            'GPRINT:max_rd:MAX: %5.1lf%s Max\g',
+            'GPRINT:avg_rd:LAST: %5.1lf%s Last\g',
+            'GPRINT:tot_rd: %3.0lf%s Total\l',
+            'LINE1:avg_wr#00b000:Write ',
+            'GPRINT:min_wr:MIN:%5.1lf%s Min\g',
+            'GPRINT:avg_wr:AVERAGE: %5.1lf%s Avg\g',
+            'GPRINT:max_wr:MAX: %5.1lf%s Max\g',
+            'GPRINT:avg_wr:LAST: %5.1lf%s Last\g',
+            'GPRINT:tot_wr: %3.0lf%s Total\l',
+            'LINE1:avg_dl#ff0000:Delete',
+            'GPRINT:min_dl:MIN:%5.1lf%s Min\g',
+            'GPRINT:avg_dl:AVERAGE: %5.1lf%s Avg\g',
+            'GPRINT:max_dl:MAX: %5.1lf%s Max\g',
+            'GPRINT:avg_dl:LAST: %5.1lf%s Last\g',
+            'GPRINT:tot_dl: %3.0lf%s Total\l',
+        ]
+
+        return args
+
+
+class DiskGeomQueuePlugin(RRDBase):
+
+    vertical_label = "Requests"
+
+    def get_title(self):
+        title = self.identifier.replace("geom_stat/geom_queue-", "")
+        return 'Pending I/O requests on (%s)' % title
+
+    def get_identifiers(self):
+        ids = []
+        for entry in glob.glob('%s/geom_stat/geom_queue-*' % self._base_path):
+            ident = entry.split('-', 1)[-1]
+            ident = re.sub(r'.rrd$', '', ident)
+            if not re.match(r'^[a-z]+[0-9]+$', ident):
+                continue
+            if not os.path.exists('/dev/%s' % ident):
+                continue
+            if ident.startswith('pass'):
+                continue
+            ids.append(ident)
+
+        ids.sort(key=RRDBase._sort_disks)
+        return ids
+
+    def graph(self):
+
+        path = os.path.join(self._base_path, "geom_stat/geom_queue-%s.rrd" % self.identifier)
+
+        args = [
+            'DEF:min_rd=%s:length:MIN' % path,
+            'DEF:avg_rd=%s:length:AVERAGE' % path,
+            'DEF:max_rd=%s:length:MAX' % path,
+            'VDEF:tot_rd=avg_rd,TOTAL',
+            'AREA:avg_rd#bfbfff',
+            'LINE1:avg_rd#0000ff:I/O Requests ',
+            'GPRINT:min_rd:MIN:%5.1lf%s Min\g',
+            'GPRINT:avg_rd:AVERAGE: %5.1lf%s Avg\g',
+            'GPRINT:max_rd:MAX: %5.1lf%s Max\g',
+            'GPRINT:avg_rd:LAST: %5.1lf%s Last\g',
+            'GPRINT:tot_rd: %3.0lf%s Total\l',
+        ]
+
+        return args
+
+
 class ARCSizePlugin(RRDBase):
 
     plugin = 'zfs_arc'
