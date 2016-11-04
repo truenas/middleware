@@ -6057,11 +6057,9 @@ class notifier:
         xml = proc.communicate()[0]
         connections = etree.fromstring(xml)
         connected_targets = []
-        for connection in connections:
+        for connection in connections.xpath("//connection"):
             # Get full target name (Base name:target name) for each connection
-            target_name = connection[3].text
-            # Get target name from full name
-            target = target_name.split(':')[1]
+            target = connection.xpath("./target")[0].text
             if target not in connected_targets:
                 connected_targets.append(target)
         return connected_targets
