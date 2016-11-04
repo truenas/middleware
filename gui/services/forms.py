@@ -1931,8 +1931,11 @@ class ExtentDelete(Form):
             is_extent_active = False
             target_to_extent_list = models.iSCSITargetToExtent.objects.filter(
                 iscsi_extent__iscsi_target_extent_name=self.instance.iscsi_target_extent_name)
+            basename = models.iSCSITargetGlobalConfiguration.objects.order_by('-id')[0].iscsi_basename
             for target_to_extent in target_to_extent_list:
                 target = target_to_extent.iscsi_target.iscsi_target_name
+                if not target.startswith(('iqn.', 'naa.', 'eui.')):
+                    target = basename + ':' + target
                 if target in targets_in_use:
                     is_extent_active = True
                     # Extent is active. No need to check other targets.
