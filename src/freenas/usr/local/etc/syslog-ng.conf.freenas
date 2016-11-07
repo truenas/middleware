@@ -10,7 +10,7 @@
 #
 # options
 #
-options { chain_hostnames(off); flush_lines(0); threaded(yes); };
+options { chain_hostnames(off); flush_lines(0); threaded(yes); ts_format(iso);};
 
 #
 # sources
@@ -19,26 +19,31 @@ source src { unix-dgram("/var/run/log");
              unix-dgram("/var/run/logpriv" perm(0600));
 	     udp(localport(1031)); internal(); file("/dev/klog"); };
 
+template template_date_format {
+    template("${ISODATE} ${HOST} ${MSGHDR}${MSG}\n");
+    template_escape(no);
+};
+
 #
 # destinations
 #
-destination messages { file("/var/log/messages"); };
-destination security { file("/var/log/security"); };
-destination authlog { file("/var/log/auth.log"); };
-destination daemon { file("/var/log/daemon.log"); };
-destination maillog { file("/var/log/maillog"); };
-destination lpd-errs { file("/var/log/lpd-errs"); };
-destination xferlog { file("/var/log/xferlog"); };
-destination cron { file("/var/log/cron"); };
-destination debuglog { file("/var/log/debug.log"); };
-destination consolelog { file("/var/log/console.log"); };
-destination all { file("/var/log/all.log"); };
-destination newscrit { file("/var/log/news/news.crit"); };
-destination newserr { file("/var/log/news/news.err"); };
-destination newsnotice { file("/var/log/news/news.notice"); };
-destination slip { file("/var/log/slip.log"); };
-destination ppp { file("/var/log/ppp.log"); };
-destination console { file("/dev/console"); };
+destination messages { file("/var/log/messages" template(template_date_format)); };
+destination security { file("/var/log/security" template(template_date_format)); };
+destination authlog { file("/var/log/auth.log" template(template_date_format)); };
+destination daemon { file("/var/log/daemon.log" template(template_date_format)); };
+destination maillog { file("/var/log/maillog" template(template_date_format)); };
+destination lpd-errs { file("/var/log/lpd-errs" template(template_date_format)); };
+destination xferlog { file("/var/log/xferlog" template(template_date_format)); };
+destination cron { file("/var/log/cron" template(template_date_format)); };
+destination debuglog { file("/var/log/debug.log" template(template_date_format)); };
+destination consolelog { file("/var/log/console.log" template(template_date_format)); };
+destination all { file("/var/log/all.log" template(template_date_format)); };
+destination newscrit { file("/var/log/news/news.crit" template(template_date_format)); };
+destination newserr { file("/var/log/news/news.err" template(template_date_format)); };
+destination newsnotice { file("/var/log/news/news.notice" template(template_date_format)); };
+destination slip { file("/var/log/slip.log" template(template_date_format)); };
+destination ppp { file("/var/log/ppp.log" template(template_date_format)); };
+destination console { file("/dev/console" template(template_date_format)); };
 destination allusers { usertty("*"); };
 destination mdnsresponder { file("/var/log/mdnsresponder.log"); };
 #destination loghost { udp("loghost" port(514)); };
