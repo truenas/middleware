@@ -1,6 +1,5 @@
 from middlewared.schema import accepts, Bool, Dict, Int, Ref, Str
 from middlewared.service import CRUDService, Service, item_method, job, private
-from middlewared.utils import Popen
 
 import boto3
 import gevent
@@ -168,34 +167,6 @@ class BackupService(CRUDService):
                 credential['provider']
             ))
 
-    @accepts(Dict(
-        'backup-restore',
-        Int('credential', required=True),
-        Dict(
-            'attributes',
-            Str('bucket'),
-            Str('region'),
-            required=True,
-        ),
-        Str('path', required=True),
-    ))
-    @job(lock=lambda args: 'backup.restore:{}'.format(args[0]['credential']))
-    def restore(self, job, data):
-        """
-        Run the backup restore job `id`, syncing the remote data to local.
-        """
-
-        credential = self.middleware.call('datastore.query', 'system.cloudcredentials', [('id', '=', data['credential'])], {'get': True})
-        if not credential:
-            raise ValueError("Backup credential not found.")
-
-        if credential['provider'] == 'AMAZON':
-            return self.middleware.call('backup.s3.restore', job, data, credential)
-        else:
-            raise NotImplementedError('Unsupported provider: {}'.format(
-                credential['provider']
-            ))
-
 
 class BackupS3Service(Service):
 
@@ -236,24 +207,6 @@ class BackupS3Service(Service):
         return response['LocationConstraint']
 
     @private
-    def _rclone_check_progress(self, job, proc):
-        RE_TRANSF = re.compile(r'Transferred:\s*?(.+)$', re.S)
-        read_buffer = ''
-        while True:
-            read = proc.stderr.readline()
-            if read == b'':
-                break
-            read_buffer += read
-            if len(read_buffer) > 10240:
-                read_buffer = read_buffer[-10240:]
-            reg = RE_TRANSF.search(read)
-            if reg:
-                transferred = reg.group(1).strip()
-                if not transferred.isdigit():
-                    job.set_progress(None, transferred)
-        return read_buffer
-
-    @private
     def sync(self, job, backup, credential):
         # Use a temporary file to store s3cmd config file
         with tempfile.NamedTemporaryFile() as f:
@@ -286,56 +239,29 @@ region = {region}
                 ),
             ]
 
-            proc = Popen(
+            def check_progress(job, proc):
+                RE_TRANSF = re.compile(r'Transferred:\s*?(.+)$', re.S)
+                read_buffer = ''
+                while True:
+                    read = proc.stderr.readline()
+                    if read == b'':
+                        break
+                    read_buffer += read
+                    if len(read_buffer) > 10240:
+                        read_buffer = read_buffer[-10240:]
+                    reg = RE_TRANSF.search(read)
+                    if reg:
+                        transferred = reg.group(1).strip()
+                        if not transferred.isdigit():
+                            job.set_progress(None, transferred)
+                return read_buffer
+
+            proc = subprocess.Popen(
                 args,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
             )
-            check_greenlet = gevent.spawn(self._rclone_check_progress, job, proc)
-            proc.communicate()
-            if proc.returncode != 0:
-                gevent.joinall([check_greenlet])
-                raise ValueError('rclone failed: {}'.format(check_greenlet.value))
-            return True
-
-    @private
-    def restore(self, job, data, credential):
-        # Use a temporary file to store s3cmd config file
-        with tempfile.NamedTemporaryFile() as f:
-            # Make sure only root can read it ad there is sensitive data
-            os.chmod(f.name, 0o600)
-
-            fg = gevent.fileobject.FileObject(f.file, 'w', close=False)
-            fg.write("""[remote]
-type = s3
-env_auth = false
-access_key_id = {access_key}
-secret_access_key = {secret_key}
-region = {region}
-""".format(
-                access_key=credential['attributes']['access_key'],
-                secret_key=credential['attributes']['secret_key'],
-                region=data['attributes']['region'] or '',
-            ))
-            fg.flush()
-
-            args = [
-                '/usr/local/bin/rclone',
-                '--config', f.name,
-                '--stats', '1s',
-                'sync',
-                'remote:{}'.format(
-                    data['attributes']['bucket'],
-                ),
-                data['path'],
-            ]
-
-            proc = Popen(
-                args,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-            )
-            check_greenlet = gevent.spawn(self._rclone_check_progress, job, proc)
+            check_greenlet = gevent.spawn(check_progress, job, proc)
             proc.communicate()
             if proc.returncode != 0:
                 gevent.joinall([check_greenlet])
