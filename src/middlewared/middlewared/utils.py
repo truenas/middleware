@@ -73,9 +73,6 @@ def filter_list(_list, filters=None, options=None):
     if options.get('count') is True:
         return len(rv)
 
-    if options.get('get') is True:
-        return rv[0]
-
     if options.get('order_by'):
         for o in options.get('order_by'):
             if o.startswith('-'):
@@ -84,5 +81,8 @@ def filter_list(_list, filters=None, options=None):
             else:
                 reverse = False
             rv = sorted(rv, key=lambda x: x[o], reverse=reverse)
+
+    if options.get('get') is True:
+        return rv[0]
 
     return rv
