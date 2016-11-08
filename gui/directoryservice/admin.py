@@ -124,6 +124,7 @@ class KerberosSettingsFAdmin(BaseFreeAdmin):
     icon_model = u"SettingsIcon"
     icon_add = u"SettingsIcon"
     icon_view = u"SettingsIcon"
+    deletable = False
 
     resource_mixin = KerberosSettingsResourceMixin
 
