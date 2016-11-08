@@ -73,6 +73,7 @@ class BackupService(CRUDService):
     @accepts(Dict(
         'backup',
         Str('description'),
+        Str('direction', enum=['PUSH', 'PULL']),
         Str('path'),
         Int('credential'),
         Str('minute'),
@@ -232,12 +233,17 @@ region = {region}
                 '--config', f.name,
                 '--stats', '1s',
                 'sync',
-                backup['path'],
-                'remote:{}{}'.format(
-                    backup['attributes']['bucket'],
-                    '/{}'.format(backup['attributes']['folder']) if backup['attributes'].get('folder') else '',
-                ),
             ]
+
+            remote_path = 'remote:{}{}'.format(
+                backup['attributes']['bucket'],
+                '/{}'.format(backup['attributes']['folder']) if backup['attributes'].get('folder') else '',
+            )
+
+            if backup['direction'] == 'PUSH':
+                args.extend([backup['path'], remote_path])
+            else:
+                args.extend([remote_path, backup['path']])
 
             def check_progress(job, proc):
                 RE_TRANSF = re.compile(r'Transferred:\s*?(.+)$', re.S)
