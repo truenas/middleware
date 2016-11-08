@@ -45,6 +45,19 @@ class CloudSync(Model):
         max_length=150,
         verbose_name=_('Description'),
     )
+    direction = models.CharField(
+        max_length=10,
+        verbose_name=_("Direction"),
+        help_text=_(
+            "Push - From local to remote. Pull - From "
+            "remote to local."
+        ),
+        default='PUSH',
+        choices=(
+            ('PUSH', _('Push')),
+            ('PULL', _('Pull')),
+        )
+    )
     path = PathField(
         verbose_name=_("Path"),
         abspath=False,
