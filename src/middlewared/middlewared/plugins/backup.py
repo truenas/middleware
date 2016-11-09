@@ -349,5 +349,4 @@ region = {region}
         )
         if obj['KeyCount'] == 0:
             return []
-        print obj
         return obj['Contents']
