@@ -339,3 +339,12 @@ region = {region}
                 if chunk == b'':
                     break
                 fg.write(chunk)
+
+    @private
+    def ls(self, cred_id, bucket, path):
+        client = self.get_client(cred_id)
+        obj = client.list_objects_v2(
+            Bucket=bucket,
+            Prefix=path,
+        )
+        return obj['Contents']
