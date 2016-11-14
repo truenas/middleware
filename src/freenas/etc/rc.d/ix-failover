@@ -20,16 +20,24 @@ procname="/bin/sh"
 rcvar="failover_enable"
 
 ix_failover_start()
-{
-	local IFS=\|
+{ 
+	allint=$(ifconfig -l)
+	# The midclt call returns something like ["em0"] likely there is better sed to extract the em0 part.
+	int=$(LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/midclt call notifier.failover_internal_interfaces | sed 's/\["\(.*\)"\]/\1/g')
+	# "${allint#*$int}" != "$allint" is a really obfuscited way to express "is this substring in this string?"
+	# however it is POSIX compliant...so there is that.
+	# Note the check to make sure ${int} actually contains a value isn't all that paranoid.
+	# The check to ensure that ${int} is a valid interface on the system is a little paranoid.
+	if [ "$(LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/midclt call notifier.failover_licensed)" = "True" -a -n ${int} -a "${allint#*$int}" != "$allint" ]; then
+		local IFS=\|
 
-	if [ ! -x /etc/heartbeat-check ]; then
-		cat >> /etc/heartbeat-check << E*O*F
+		if [ ! -x /etc/heartbeat-check ]; then
+			cat >> /etc/heartbeat-check << E*O*F
 #!/bin/sh
 
 while true; do
-	S1=\`(ifconfig carp1 | grep carp: | awk '{print \$2;}' ; ifconfig carp2 | grep carp: | awk '{print \$2;}')| grep MASTER | wc -l\`
-	S2=\`(ifconfig carp1 | grep carp: | awk '{print \$2;}' ; ifconfig carp2 | grep carp: | awk '{print \$2;}')| grep BACKUP | wc -l\`
+	S1=\`(ifconfig $int | grep MASTER | wc -l)\`
+	S2=\`(ifconfig $int | grep MASTER | wc -l)\`
 
 	if [ \${S1} -eq 1 -a \${S2} -eq 1 ]; then
 		touch /tmp/heartbeat_state
@@ -43,6 +51,7 @@ E*O*F
 	mkdir -p `dirname ${pidfile}`
 	chown nobody `dirname ${pidfile}`
 	daemon -cf -p ${pidfile} -u nobody /etc/heartbeat-check
+	fi
 }
 
 load_rc_config $name
