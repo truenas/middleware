@@ -6,8 +6,11 @@ import json
 class JSONEncoder(json.JSONEncoder):
     def default(self, obj):
         if type(obj) is datetime:
+            if obj.tzinfo:
+                obj += obj.utcoffset()
+                obj = obj.replace(tzinfo=None)
             # Total milliseconds since EPOCH
-            return {'$date': int((obj.now() - datetime(1970, 1, 1)).total_seconds() * 1000)}
+            return {'$date': int((obj - datetime(1970, 1, 1)).total_seconds() * 1000)}
         elif type(obj) is time:
             return {'$time': str(obj)}
         return super(JSONEncoder, self).default(obj)
