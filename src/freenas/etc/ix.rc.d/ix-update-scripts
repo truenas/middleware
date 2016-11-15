@@ -1,0 +1,39 @@
+#!/bin/sh
+#
+# $FreeBSD$
+#
+
+# PROVIDE: ix-update-scripts
+# BEFORE: ix-system
+# REQUIRE: FILESYSTEMS
+
+. /etc/rc.freenas
+
+name="ix-update-scripts"
+start_cmd="update_scripts"
+stop_cmd=":"
+status_cmd=":"
+
+update_scripts() {
+    # If there are update-related scripts, run themm, clean up, and reboot
+    if [ -d /update-scripts ]; then
+	if [ -f /update-scripts/order ]; then
+	    cat /etc/update-scripts/order | while read name
+	    do
+		sh -x /etc/update-scripts/${name}
+	    done
+	else
+	    # Just run them alphabetically
+	    for name in /etc/update-scripts/*
+	    do
+		sh -x ${name}
+	    done
+	fi
+	rm -rf /update-scripts
+	reboot
+    fi
+    return 0
+}
+
+load_rc_config ${name}
+run_rc_command $*
