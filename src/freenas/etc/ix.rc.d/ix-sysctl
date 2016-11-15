@@ -19,12 +19,19 @@ set_autotune_sysctls()
 
 	autotune=/usr/local/bin/autotune
 	if [ -x $autotune ]; then
-
-		$autotune \
-			-o \
-			--kernel-reserved=1073741824 \
-			--userland-reserved=2417483648 \
-			--conf sysctl
+		if [ "$(LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/midclt call system.is_freenas)" = "False" ]; then
+			$autotune \
+				-o \
+				--kernel-reserved=6442450944 \
+				--userland-reserved=4831838208 \
+				--conf sysctl
+		else
+			$autotune \
+				-o \
+				--kernel-reserved=1073741824 \
+				--userland-reserved=2417483648 \
+				--conf sysctl
+		fi
 
 	fi
 }
@@ -54,6 +61,8 @@ start_sysctl()
 
 reload_sysctl()
 {
+	RO_FREENAS_CONFIG=$(ro_sqlite ${name} 2> /tmp/${name}.fail && rm /tmp/${name}.fail)
+	trap 'rm -f ${RO_FREENAS_CONFIG}' EXIT
 	set_user_sysctls
 }
 
