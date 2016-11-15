@@ -14,8 +14,9 @@
 #
 generate_fstab_real()
 {
-	echo "linproc /compat/linux/proc linprocfs rw,late 0 0"
-	echo "fdescfs	/dev/fd	fdescfs rw	0 0"
+	if [ "${freenas}" = "True" ]; then
+		echo "fdescfs	/dev/fd	fdescfs rw	0 0"
+	fi
 	local IFS="|"
 	local fstype volumename newmp mountpoint mpoptions device fs
 
@@ -69,23 +70,45 @@ generate_fstab_real()
 	done
 }
 
+create_mirrored_swap()
+{
+	disks=$(LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/midclt call notifier.get_boot_pool_disks)
+	swapparts=$(for _disk in $disks; do echo ${_disk}p3; done)
+	gmirror label -b prefer swap ${swapparts}
+	echo "/dev/mirror/swap.eli              none                    swap            sw              0       0" > /data/fstab.swap
+}
+
 generate_fstab_swap()
 {
-        local IFS=\|
-        local encrypted_swap swap_suffix
-        ${FREENAS_SQLITE_CMD} ${RO_FREENAS_CONFIG} "SELECT disk_identifier FROM storage_disk WHERE disk_enabled = 1" | \
-        while read diskid; do
-        devname=$(LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/midclt -q call notifier.swap_from_diskid "${diskid}")
-        if [ -c "/dev/${devname}" ]; then
-            if [ ! -L /dev/dumpdev ]; then
-                /sbin/dumpon /dev/${devname} && ln -sf /dev/${devname} /dev/dumpdev
-            fi
-        fi 
-        done
+	if [ "${freenas}" = "True" ]; then
+		local IFS=\|
+		local encrypted_swap swap_suffix
+		${FREENAS_SQLITE_CMD} ${RO_FREENAS_CONFIG} "SELECT disk_identifier FROM storage_disk WHERE disk_enabled = 1" | \
+		while read diskid; do
+			devname=$(LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/midclt -q call notifier.swap_from_diskid "${diskid}")
+			if [ -c "/dev/${devname}" ]; then
+				if [ ! -L /dev/dumpdev ]; then
+					/sbin/dumpon /dev/${devname} && ln -sf /dev/${devname} /dev/dumpdev
+				fi
+			fi 
+		done
+	else
+		if [ ! -c /dev/mirror/swap ]; then
+			create_mirrored_swap
+		fi
+		if [ -e /data/fstab.swap ]; then
+			cat /data/fstab.swap
+		fi
+		if [ ! -L /dev/dumpdev ]; then
+			devname=$(awk '{print $1}' /data/fstab.swap | sed -e 's/\.eli$//')
+			/sbin/dumpon ${devname} && ln -sf ${devname} /dev/dumpdev
+		fi
+	fi
 }
 
 generate_fstab()
 {
+	freenas=$(LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/midclt call system.is_freenas)
 	local _doumount=0
 	RO_FREENAS_CONFIG=$(ro_sqlite ${name} 2> /tmp/${name}.fail && rm /tmp/${name}.fail)
 	trap 'rm -f ${RO_FREENAS_CONFIG}' EXIT
@@ -96,7 +119,11 @@ generate_fstab()
 	fi
 	cp /conf/base/etc/fstab /etc/fstab
 	generate_fstab_real >> /etc/fstab
-	generate_fstab_swap
+	if [ "${freenas}" = "True" ]; then
+		generate_fstab_swap
+	else
+		generate_fstab_swap >> /etc/fstab
+	fi
 	mount -uw /
 	if savecore -C /dev/dumpdev > /dev/null; then
 		savecore ${savecore_flags} ${dumpdir} /dev/dumpdev

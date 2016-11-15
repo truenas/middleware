@@ -13,7 +13,7 @@
 generate_ctl()
 {
 	/usr/local/libexec/nas/generate_ctl_conf.py
-	if [ "$(/usr/local/bin/midclt call system.is_freenas)" = "False" ];
+	if [ "$(LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/midclt call system.is_freenas)" = "False" ]; then
 		if [ "$(ha_mode)" = "MANUAL" ]; then
 			# TODO: get from database if we are not echostream
 		else
@@ -36,7 +36,7 @@ generate_ctl()
 
 stop_ctl()
 {
-	if [ "$(/usr/local/bin/midclt call system.is_freenas)" = "False" ];
+	if [ "$(/usr/local/bin/midclt call system.is_freenas)" = "False" ]; then
 		sys=$(/sbin/sysctl -n kern.cam.ctl.ha_peer)
 		if [ -n "${sys}" ]; then
 			/sbin/sysctl kern.cam.ctl.ha_peer=""

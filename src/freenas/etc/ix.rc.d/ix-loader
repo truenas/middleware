@@ -120,12 +120,12 @@ loader_ha()
 {
 	local node
 
-	if [ "$(LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/midclt call system.is_freenas)" = "True" ];
+	if [ "$(LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/midclt call system.is_freenas)" = "True" ]; then
 		echo "kern.cam.ctl.ha_id=0"
 	else
 		node=$(ha_node)
-		if [ "$(LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/midclt call notifier.failover_licensed)" = "True" ];
-			if [ "$(LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/midclt call notifier.fc_enabled)" = "True" ];
+		if [ "$(LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/midclt call notifier.failover_licensed)" = "True" ]; then
+			if [ "$(LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/midclt call notifier.fc_enabled)" = "True" ]; then
 				if [ "${node}" = "A" ]; then
 					echo "kern.cam.ctl.ha_id=1"
 				elif [ "${node}" = "B" ]; then
@@ -151,7 +151,7 @@ do_autotune()
 	ec=0
 	if [ -x $autotune ]
 	then
-		if [ "$(LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/midclt call system.is_freenas)" = "False" ];
+		if [ "$(LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/midclt call system.is_freenas)" = "False" ]; then
 			$autotune \
 					-o \
 					--kernel-reserved=6442450944 \
@@ -180,7 +180,7 @@ generate_boot_loader_conf_local()
 	local tmp
 	local first_install=0
 
-	if [ "$(LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/midclt call system.is_freenas)" = "False" ];
+	if [ "$(LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/midclt call system.is_freenas)" = "False" ]; then
 		settings="serial user debugkernel ha"
 	else
 		settings="serial user debugkernel ha xen"
