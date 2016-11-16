@@ -2592,7 +2592,7 @@ class notifier:
 
         pref = doc.xpath(
             "//class[name = 'LABEL']/geom/"
-            "provider[name = 'ufs/%s']/../consumer/provider/@ref" % (label, )
+            "provider[name = 'label/%s']/../consumer/provider/@ref" % (label, )
         )
         if not pref:
             proc = self._pipeopen("/sbin/mdconfig -a -t swap -s 2800m")
@@ -2600,14 +2600,16 @@ class notifier:
             if proc.returncode != 0:
                 raise MiddlewareError("Could not create memory device: %s" % err)
 
-            proc = self._pipeopen("newfs -L %s /dev/%s" % (label, mddev))
+            self._system("/sbin/glabel create %s %s" % (label, mddev))
+
+            proc = self._pipeopen("newfs /dev/label/%s" % (label, ))
             err = proc.communicate()[1]
             if proc.returncode != 0:
                 raise MiddlewareError("Could not create temporary filesystem: %s" % err)
 
             self._system("/bin/rm -rf /var/tmp/firmware")
             self._system("/bin/mkdir -p /var/tmp/firmware")
-            proc = self._pipeopen("mount /dev/ufs/%s /var/tmp/firmware" % (label, ))
+            proc = self._pipeopen("mount /dev/label/%s /var/tmp/firmware" % (label, ))
             err = proc.communicate()[1]
             if proc.returncode != 0:
                 raise MiddlewareError("Could not mount temporary filesystem: %s" % err)
@@ -2633,7 +2635,7 @@ class notifier:
 
         pref = doc.xpath(
             "//class[name = 'LABEL']/geom/"
-            "provider[name = 'ufs/%s']/../consumer/provider/@ref" % (label, )
+            "provider[name = 'label/%s']/../consumer/provider/@ref" % (label, )
         )
         if not pref:
             return False
@@ -2643,7 +2645,7 @@ class notifier:
 
         mddev = prov[0].text
 
-        self._system("umount /dev/ufs/%s" % (label, ))
+        self._system("umount /dev/label/%s" % (label, ))
         proc = self._pipeopen("mdconfig -d -u %s" % (mddev, ))
         err = proc.communicate()[1]
         if proc.returncode != 0:
