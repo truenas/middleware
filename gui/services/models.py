@@ -359,9 +359,10 @@ class AFP(Model):
     afp_srv_map_acls = models.CharField(
         verbose_name=_("Map ACLs"),
         max_length=120,
-        help_text=_("How to map the effective permissions of authenticated "
-                    "users: Rights (default, Unix-style permissions)"
-                    "Mode (ACls), or None"),
+        help_text=_("How to map the effective permissions of authenticated users: "
+                    "Rights (default, Unix-style permissions), "
+                    "Mode (ACLs), "
+                    "or None"),
         choices=choices.AFP_MAP_ACLS_CHOICES,
         default='rights'
     )
