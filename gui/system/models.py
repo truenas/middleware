@@ -344,6 +344,10 @@ class Advanced(Model):
         help_text=_("A hostname or IP here will be used as the destination to send collectd "
                     "data to using the graphite plugin to collectd.")
     )
+    adv_fqdn_syslog = models.BooleanField(
+        verbose_name=_("Use FQDN for logging"),
+        default=False,
+    )
 
     class Meta:
         verbose_name = _("Advanced")

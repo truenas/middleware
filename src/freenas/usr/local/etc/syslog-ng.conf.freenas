@@ -10,7 +10,7 @@
 #
 # options
 #
-options { chain_hostnames(off); flush_lines(0); threaded(yes); };
+options { chain_hostnames(off); flush_lines(0); threaded(yes); use-fqdn(no); };
 
 #
 # sources

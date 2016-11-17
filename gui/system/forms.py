@@ -1138,6 +1138,7 @@ class AdvancedForm(ModelForm):
         self.instance._original_adv_debugkernel = self.instance.adv_debugkernel
         self.instance._original_adv_periodic_notifyuser = self.instance.adv_periodic_notifyuser
         self.instance._original_adv_graphite = self.instance.adv_graphite
+        self.instance._original_adv_fqdn_syslog = self.instance.adv_fqdn_syslog
 
     def save(self):
         super(AdvancedForm, self).save()
@@ -1179,6 +1180,8 @@ class AdvancedForm(ModelForm):
             notifier().start("ix-periodic")
         if self.instance._original_adv_graphite != self.instance.adv_graphite:
             notifier().restart("collectd")
+        if self.instance._original_adv_fqdn_syslog != self.instance.adv_fqdn_syslog:
+            notifier().restart("syslogd")
 
     def done(self, request, events):
         if self.instance._original_adv_consolemsg != self.instance.adv_consolemsg:

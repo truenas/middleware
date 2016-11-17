@@ -20,6 +20,11 @@ generate_syslog_conf()
 
 	cp /conf/base/etc/local/syslog-ng.conf.freenas /etc/local/syslog-ng.conf
 
+	fqdn=$(${FREENAS_SQLITE_CMD} ${RO_FREENAS_CONFIG} "SELECT adv_fqdn_syslog FROM system_advanced")
+	if [ "${fqdn}" -eq "1" ]; then
+		sed -i "" -e 's/use-fqdn(no)/use-fqdn(yes)/' /etc/local/syslog-ng.conf
+	fi
+
 	${FREENAS_SQLITE_CMD} ${RO_FREENAS_CONFIG} "
 	SELECT
 		$sf
