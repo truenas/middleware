@@ -9,6 +9,9 @@
 
 . /etc/rc.freenas
 
+
+LDAP_STATUS_ALERT="/tmp/.ldap_status_alert"
+
 generate_ldapconf()
 {
 	/usr/local/libexec/nas/generate_ldap_conf.py
@@ -194,17 +197,26 @@ ldap_start()
 
 		if ! generate_ldapconf
 		then
+			touch $LDAP_STATUS_ALERT
 			return 1
 		fi
 
 		if ! setup_homedirs
 		then
+			touch $LDAP_STATUS_ALERT
 			return 2
 		fi
 
 		if ! create_cache_filesystem
 		then
 			return 4
+		fi
+
+		if ! ldap_status
+		then
+			touch $LDAP_STATUS_ALERT
+		else
+			rm -rf $LDAP_STATUS_ALERT
 		fi
 	fi
 }
