@@ -956,6 +956,9 @@ class notifier:
         self._system("/usr/sbin/service samba_server forcereload")
         self._system("/usr/sbin/service ix-post-samba quietstart")
         self._system("/usr/sbin/service mdnsd restart")
+        # After mdns is restarted we need to reload netatalk to have it rereregister
+        # with mdns. Ticket #7133
+        self._system("/usr/sbin/service netatalk reload")
 
     def _restart_cifs(self):
         self._system("/usr/sbin/service ix-pre-samba quietstart")
@@ -963,6 +966,9 @@ class notifier:
         self._system("/usr/sbin/service samba_server quietrestart")
         self._system("/usr/sbin/service ix-post-samba quietstart")
         self._system("/usr/sbin/service mdnsd restart")
+        # After mdns is restarted we need to reload netatalk to have it rereregister
+        # with mdns. Ticket #7133
+        self._system("/usr/sbin/service netatalk reload")
 
     def _start_cifs(self):
         self._system("/usr/sbin/service ix-pre-samba quietstart")
