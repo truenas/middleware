@@ -250,6 +250,16 @@ class JailCreateForm(ModelForm):
             ))
         return jail_mac
 
+    def clean(self):
+        jail_ipv4_dhcp = self.cleaned_data.get('jail_ipv4_dhcp')
+        jail_ipv4 = self.cleaned_data.get('jail_ipv4')
+
+        if jail_ipv4_dhcp and not jail_ipv4.isspace():
+            self._errors["jail_ipv4_dhcp"] = self.error_class(
+                [_("You can either enter dhcp or static ip but not both")]
+            )
+        return self.cleaned_data
+
     def save(self):
         jc = self.jc
 
