@@ -66,8 +66,6 @@ __EOF__
 	done
 
 	echo
-	echo "Output will be saved to ${FREENAS_DEBUG_DIRECTORY}"
-	echo
 
 	return 0
 }
