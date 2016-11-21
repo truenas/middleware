@@ -36,14 +36,21 @@ class Migration(DataMigration):
     )
 
     def forwards(self, orm):
-        cifs = orm['services.CIFS'].objects.latest('id')
-        if not cifs:
+        try:
+            cifs = orm['services.CIFS'].objects.latest('id')
+        except:
             return
 
         cifs.cifs_srv_netbiosname, cifs.cifs_srv_netbiosalias = netbios_split(cifs.cifs_srv_netbiosname)
 
-        ad = orm['directoryservice.ActiveDirectory'].objects.latest('id')
-        ldap = orm['directoryservice.LDAP'].objects.latest('id')
+        try:
+            ad = orm['directoryservice.ActiveDirectory'].objects.latest('id')
+        except:
+            ad = None
+        try:
+            ldap = orm['directoryservice.LDAP'].objects.latest('id')
+        except:
+            ldap = None
         if ad and ad.ad_enable:
             cifs.cifs_srv_netbiosname, cifs.cifs_srv_netbiosalias = netbios_split(ad.ad_netbiosname_a)
             cifs.cifs_srv_netbiosname_b, cifs.cifs_srv_netbiosalias = netbios_split(ad.ad_netbiosname_b)
