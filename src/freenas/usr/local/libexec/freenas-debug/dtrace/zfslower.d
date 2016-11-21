@@ -16,7 +16,7 @@ fbt::zfs_freebsd_read:entry, fbt::zfs_freebsd_write:entry
 /this->fi_name != "unknown"/
 {
 
-    /* http://svn0.us-west.freebsd.org/base/vendor/dtracetoolkit/dist/Snippits/fd2pathname.txt 
+    /* http://svn0.us-west.freebsd.org/base/vendor/dtracetoolkit/dist/Snippits/fd2pathname.txt
     this->filep =
     curthread->t_procp->p_user.u_finfo.fi_list[this->fd].uf_file;
     this->vnodep = this->filep != 0 ? this->filep->f_vnode : 0;
@@ -24,10 +24,10 @@ fbt::zfs_freebsd_read:entry, fbt::zfs_freebsd_write:entry
         cleanpath(this->vnodep->v_path) : "<unknown>") : "<unknown>";*/
 
     this->vp = args[0]->a_vp;
-    this->ncp = this->vp != NULL ? (&(this->vp->v_cache_dst) != NULL ? 
+    this->ncp = this->vp != NULL ? (&(this->vp->v_cache_dst) != NULL ?
             this->vp->v_cache_dst.tqh_first : 0) : 0;
-    this->fi_name = this->ncp ? (this->ncp->nc_name != 0 ? 
-            stringof(this->ncp->nc_name) : "<unknown>") : "<unknown>"; 
+    this->fi_name = this->ncp ? (this->ncp->nc_name != 0 ?
+            stringof(this->ncp->nc_name) : "<unknown>") : "<unknown>";
 
     self->path = this->fi_name; /* args[0]->v_path; */
     /*printf("0x%x", args[0]); */

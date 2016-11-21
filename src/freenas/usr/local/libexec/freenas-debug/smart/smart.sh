@@ -17,7 +17,7 @@
 # WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
 # ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
 # DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS 	 
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
 # OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
 # HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
 # STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
@@ -32,11 +32,11 @@ smart_help() { echo "Dump SMART Information"; }
 smart_directory() { echo "SMART"; }
 smart_func()
 {
-        section_header "SMART"
-        for i in `sysctl -n kern.disks`
-        do
-            echo /dev/$i
-            smartctl -x /dev/$i
-        done
-        section_footer
+	section_header "SMART"
+	for i in `sysctl -n kern.disks`
+	do
+	    echo /dev/$i
+	    smartctl -x /dev/$i
+	done
+	section_footer
 }

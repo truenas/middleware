@@ -17,7 +17,7 @@
 # WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
 # ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
 # DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS 	 
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
 # OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
 # HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
 # STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
@@ -28,7 +28,7 @@
 
 
 geom_opt() { echo g; }
-geom_help() { echo "Dump GEOM configuration"; }
+geom_help() { echo "Dump GEOM Configuration"; }
 geom_directory() { echo "Geom"; }
 geom_func()
 {
@@ -42,7 +42,7 @@ geom_func()
 		then
 			list=$(${c} list)
 			status=$(${c} status)
-			if [ -z "${list}" -a -z "${status}" ] 
+			if [ -z "${list}" -a -z "${status}" ]
 			then
 				continue
 			fi
@@ -59,12 +59,12 @@ geom_func()
 				section_header "${c} status"
 				${c} status
 				section_footer
-			fi	
+			fi
 		fi
 	done
 	section_footer
 
-	section_header "GEOM labels (glabel status)" 
+	section_header "GEOM labels (glabel status)"
 	glabel status
 	section_footer
 }

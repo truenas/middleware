@@ -17,7 +17,7 @@
 # WARRANTIES OF MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE
 # ARE DISCLAIMED.  IN NO EVENT SHALL THE AUTHOR BE LIABLE FOR ANY
 # DIRECT, INDIRECT, INCIDENTAL, SPECIAL, EXEMPLARY, OR CONSEQUENTIAL
-# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS 	 
+# DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT OF SUBSTITUTE GOODS
 # OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS INTERRUPTION)
 # HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN CONTRACT,
 # STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
@@ -28,7 +28,7 @@
 
 
 jails_opt() { echo j; }
-jails_help() { echo "Dump jails Information"; }
+jails_help() { echo "Dump Jail Information"; }
 jails_directory() { echo "Jails"; }
 jails_func()
 {
@@ -86,7 +86,7 @@ jails_func()
 		Collection URL: ${jc_collectionurl}
 __EOF__
 	done
-	section_footer	
+	section_footer
 
 	jc_path="$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
 	SELECT
@@ -170,7 +170,7 @@ __EOF__
 		Readonly: ${jt_readonly}
 __EOF__
 	done
-	section_footer	
+	section_footer
 
 	local jail
 	local source
