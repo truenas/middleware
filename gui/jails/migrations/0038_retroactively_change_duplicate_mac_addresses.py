@@ -20,17 +20,12 @@ def generate_randomMAC():
 class Migration(DataMigration):
 
     def forwards(self, orm):
-        existing_mac_addrs = []
-        for jail in orm['jails.jails'].objects.all():
-            if jail.jail_mac in existing_mac_addrs:
-                # This is a dup lets change it
-                while True:
-                    new_mac = generate_randomMAC()
-                    if new_mac not in existing_mac_addrs:
-                        break
-                jail.jail_mac = new_mac
-                jail.save()
-            existing_mac_addrs.append(jail.jail_mac)
+        """
+        Models cannot be used here because warden config is in
+        the filesystem.
+        This migration has been created because we missed that
+        and they are not supposed to be deleted.
+        """
 
     def backwards(self, orm):
         "Write your backwards methods here."
