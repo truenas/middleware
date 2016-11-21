@@ -1,7 +1,8 @@
 # $FreeBSD$
 
 PORTNAME=	iohyve
-PORTVERSION=	0.7.5
+PORTVERSION=	0.7.7
+PORTREVISION=	1
 CATEGORIES=	sysutils
 
 MAINTAINER=	lme@FreeBSD.org
@@ -16,11 +17,7 @@ GH_ACCOUNT=	pr1ntf
 NO_BUILD=	yes
 NO_ARCH=	yes
 
-PLIST_FILES=	etc/rc.d/iohyve man/man8/iohyve.8.gz sbin/iohyve
-
-do-install:
-	${INSTALL_SCRIPT} ${WRKSRC}/rc.d/iohyve ${STAGEDIR}${PREFIX}/etc/rc.d
-	${INSTALL_SCRIPT} ${WRKSRC}/iohyve ${STAGEDIR}${PREFIX}/sbin
-	${INSTALL_MAN} ${WRKSRC}/iohyve.8 ${STAGEDIR}${PREFIX}/man/man8
+do-patch:
+	${REINPLACE_CMD} 's%\$$(PREFIX)%${STAGEDIR}/$$(PREFIX)%g' ${WRKSRC}/Makefile
 
 .include <bsd.port.mk>
