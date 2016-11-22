@@ -592,9 +592,15 @@ def reset_factory_defaults(*args):
         os.system("/sbin/shutdown -r now")
 
 def create_backup():
+    print
+    print 'NOTE: this backup option is meant for DISASTER RECOVERY OF A ZFS FILESYSTEM, not a FreeNAS configuration.'
+    print
     return os.system(os.path.join(FREENAS_PATH, "tools/backup.py") + " -i");
 
 def restore_from_backup():
+    print
+    print 'NOTE: this restore option is meant for DISASTER RECOVERY OF A ZFS FILESYSTEM, not a FreeNAS configuration.'
+    print
     return os.system(os.path.join(FREENAS_PATH, "tools/backup.py") + " -ri")
 
 def configure_lagg_interface(*args):
@@ -1223,8 +1229,8 @@ def main_menu():
         [ _("Reset to factory defaults"), reset_factory_defaults ],
         [ _("Shell"), shell ],
         [ _("System Update (requires networking)"), system_update ],
-        [ _("Create backup"), create_backup ],
-        [ _("Restore from a backup"), restore_from_backup ],
+        [ _("Create volume backup"), create_backup ],
+        [ _("Restore volume from a backup"), restore_from_backup ],
         [ _("Reboot"), reboot ],
         [ _("Shutdown"), shutdown],
               ]
