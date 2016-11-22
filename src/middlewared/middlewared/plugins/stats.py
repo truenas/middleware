@@ -1,4 +1,5 @@
-from middlewared.schema import Str, accepts
+from middlewared.client import ejson as json
+from middlewared.schema import Dict, Int, Str, accepts
 from middlewared.service import Service
 from middlewared.utils import Popen
 
@@ -9,7 +10,6 @@ import subprocess
 
 
 RRD_PATH = '/var/db/collectd/rrd/localhost/'
-
 RE_DSTYPE = re.compile(r'ds\[(\w+)\]\.type = "(\w+)"')
 RE_STEP = re.compile(r'step = (\d+)')
 RE_LAST_UPDATE = re.compile(r'last_update = (\d+)')
@@ -41,7 +41,7 @@ class StatsService(Service):
         """
         rrdfile = '{}/{}/{}.rrd'.format(RRD_PATH, source, name)
         proc = Popen(
-            ["rrdtool", "info", rrdfile],
+            ['rrdtool', 'info', rrdfile],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
         )
@@ -62,3 +62,36 @@ class StatsService(Service):
         if reg:
             info['last_update'] = int(reg.group(1))
         return info
+
+    @accepts(Dict(
+        'stats-data',
+        Str('source'),
+        Str('type'),
+        Str('dataset'),
+        Str('cf', default='AVERAGE'),
+        Int('step'),
+        Str('start', default='now-1h'),
+        Str('end', default='now'),
+        additional_attrs=False,
+    ))
+    def get_data(self, data):
+        """
+        Get data points from rrd files.
+        """
+
+        rrdfile = '{}/{}/{}.rrd'.format(RRD_PATH, data['source'], data['type'])
+        proc = Popen(
+            [
+                'rrdtool', 'xport', '--json',
+                '--start', data['start'], '--end', data['end'],
+            ] + (['--step', str(data['step'])] if data.get('step') else []) + [
+                'DEF:xxx={}:{}:{}'.format(rrdfile, data['dataset'], data['cf']),
+                'XPORT:xxx',
+            ],
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+        data, err = proc.communicate()
+        if proc.returncode != 0:
+            raise ValueError('rrdtool failed: {}'.format(err))
+        return json.loads(data)
