@@ -406,7 +406,7 @@ class NICChoices(object):
                             self._NIClist.remove(interface[0])
 
             if exclude_unconfigured_vlan_parent:
-            	# Add the configured VLAN parents back in
+                # Add the configured VLAN parents back in
                 try:
                     c.execute("SELECT vlan_pint FROM network_vlan "
                               "INNER JOIN network_interfaces ON "
