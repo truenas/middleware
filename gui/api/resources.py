@@ -650,6 +650,11 @@ class VolumeResourceMixin(NestedMixin):
 
         bundle, obj = self._get_parent(request, kwargs)
 
+        if obj.vol_encrypt == 0:
+            raise ImmediateHttpResponse(
+                response=self.error_response(request, _('Volume is not encrypted.'))
+            )
+
         _n = notifier()
         _n.volume_detach(obj)
 
