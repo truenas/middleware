@@ -650,7 +650,35 @@ Unlock
 
    :json string passphrase: passphrase to unlock the volume
    :resheader Content-Type: content type of the response
-   :statuscode 200: no error
+   :statuscode 202: no error
+
+
+Lock
+++++
+
+.. http:post:: /api/v1.0/storage/volume/(int:id|string:name)/lock/
+
+   Lock encrypted volume `id`.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      POST /api/v1.0/storage/volume/tank/lock/ HTTP/1.1
+      Content-Type: application/json
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 202 Accepted
+      Vary: Accept
+      Content-Type: application/json
+
+      Volume has been locked.
+
+   :resheader Content-Type: content type of the response
+   :statuscode 202: no error
 
 
 Recovery Key
