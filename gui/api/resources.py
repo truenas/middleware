@@ -536,6 +536,12 @@ class VolumeResourceMixin(NestedMixin):
                 self.wrap_view('unlock')
             ),
             url(
+                r"^(?P<resource_name>%s)/(?P<pk>\w[\w/-]*)/lock%s$" % (
+                    self._meta.resource_name, trailing_slash()
+                ),
+                self.wrap_view('lock')
+            ),
+            url(
                 r"^(?P<resource_name>%s)/(?P<pk>\w[\w/-]*)/upgrade%s$" % (
                     self._meta.resource_name, trailing_slash()
                 ),
@@ -638,6 +644,16 @@ class VolumeResourceMixin(NestedMixin):
         else:
             form.done(obj)
         return HttpResponse('Volume has been unlocked.', status=202)
+
+    def lock(self, request, **kwargs):
+        self.method_check(request, allowed=['post'])
+
+        bundle, obj = self._get_parent(request, kwargs)
+
+        _n = notifier()
+        _n.volume_detach(obj)
+
+        return HttpResponse('Volume has been locked.', status=202)
 
     def upgrade(self, request, **kwargs):
         self.method_check(request, allowed=['post'])
