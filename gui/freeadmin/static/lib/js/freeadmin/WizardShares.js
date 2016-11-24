@@ -203,12 +203,14 @@ define([
       });
 
       me._storeUsers = new ItemFileReadStore({
-        url: "/account/bsduser/json/?wizard=1"
+        url: "/account/bsduser/json/?wizard=1",
+        clearOnClose: true,
       });
       me._storeUsers.fetch();
 
       me._storeGroups = new ItemFileReadStore({
-        url: "/account/bsdgroup/json/?wizard=1"
+        url: "/account/bsdgroup/json/?wizard=1",
+        clearOnClose: true,
       });
       me._storeGroups.fetch();
 
@@ -216,6 +218,7 @@ define([
         required: true,
         store: me._storeUsers,
         searchAttr: 'name',
+        autoComplete: false,
         intermediateChanges: true,
         value: 'root',
         invalidMessage: gettext('This user does not exist.'),
@@ -242,6 +245,11 @@ define([
         } else {
           me._ownershipUserCreate.set('disabled', false);
         }
+
+        var t = me._ownershipUser.get('displayedValue');
+        me._storeUsers.url = me._storeUsers.url.split('?')[0] + '?wizard=1&q='+t;
+        me._storeUsers.close();
+        me._storeUsers.fetch();
       });
 
 
@@ -282,6 +290,7 @@ define([
         required: true,
         store: me._storeGroups,
         searchAttr: 'name',
+        autoComplete: false,
         intermediateChanges: true,
         value: 'wheel',
         invalidMessage: gettext('This group does not exist.'),
@@ -308,6 +317,11 @@ define([
         } else {
           me._ownershipGroupCreate.set('disabled', false);
         }
+
+        var t = me._ownershipGroup.get('displayedValue');
+        me._storeGroups.url = me._storeGroups.url.split('?')[0] + '?wizard=1&q='+t;
+        me._storeGroups.close();
+        me._storeGroups.fetch();
       });
 
       me._ownershipGroupCreate = new CheckBox({disabled: true}, me.dapOwnershipGroupCreate);
