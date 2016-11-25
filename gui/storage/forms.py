@@ -2035,6 +2035,11 @@ class ReplicationForm(ModelForm):
         label=_('Remote Auth Token'),
         max_length=100,
         required=False,
+        help_text=_(
+            "On the remote host go to Storage -> Replication Tasks, click the "
+            "Temporary Auth Token button and paste the resulting value in to "
+            "this field."
+        ),
     )
     repl_remote_dedicateduser_enabled = forms.BooleanField(
         label=_("Dedicated User Enabled"),
