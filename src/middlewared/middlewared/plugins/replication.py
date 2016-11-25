@@ -48,6 +48,10 @@ class ReplicationService(Service):
             self.middleware.call('datastore.update', 'services.services', service['id'], {'srv_enable': True})
             self.middleware.call('notifier.start', 'ssh')
 
+            # This might be the first time of the service being enabled
+            # which will then result in new host keys we need to grab
+            ssh = self.middleware.call('datastore.query', 'services.ssh', None, {'get': True})
+
         if not os.path.exists(user['bsdusr_home']):
             raise ValueError('Homedir {} does not exist'.format(user['bsdusr_home']))
 
