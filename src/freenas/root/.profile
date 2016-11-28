@@ -3,7 +3,7 @@
 PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/games:/usr/local/sbin:/usr/local/bin:~/bin:/usr/local/fusion-io
 export PATH
 HOME=/root; export HOME
-TERM=${TERM:-cons25}; export TERM
+TERM=${TERM:-xterm}; export TERM
 PAGER=more; export PAGER
 
 # set ENV to a file invoked each time sh is started for interactive use.
