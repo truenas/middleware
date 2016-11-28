@@ -15,6 +15,10 @@ do_postinit()
 	eval local $f
 	local sf=$(var_to_sf $f)
 
+	# Sentinel file to tell we have gone far enough in the boot process.
+	# See #17508
+	touch /tmp/.bootready
+
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
 	"SELECT $sf FROM tasks_initshutdown WHERE ini_when = 'postinit' ORDER BY id" | \
 	while eval read -r $f; do
