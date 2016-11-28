@@ -290,7 +290,7 @@ EOD
 ask_boot_method()
 {
     # TrueNAS is BIOS only for now
-    if [ "$AVATAR_PROJECT" = "TrueNAS" ] ; then
+    if [ "${AVATAR_PROJECT}" = "TrueNAS" -a "$(sysctl -n kern.vm_guest)" != "bhyve" ]; then
       return 1
     fi
 
@@ -814,6 +814,10 @@ menu_install()
 	INTERACTIVE=true
     fi
 
+    if ${INTERACTIVE}; then
+	pre_install_check || return 0
+    fi
+    
     if do_sata_dom
     then
 	_satadom="YES"
@@ -990,7 +994,6 @@ menu_install()
 		mount /dev/${_disk}s${slice}a /tmp/data
 		ls /tmp/data > /dev/null
 	    fi
-	    pre_install_check
             umount /tmp/data
 	elif [ "${upgrade_style}" != "new" ]; then
 		echo "Unknown upgrade style" 1>&2
@@ -998,11 +1001,6 @@ menu_install()
 	fi
         rmdir /tmp/data
     else
-        # Run through some sanity checks on new installs ;).. some of the
-        # checks won't make sense, but others might (e.g. hardware sanity
-        # checks).
-	pre_install_check
-
 	# Destroy existing partition table, if there is any but tolerate
 	# failure.
 	for _disk in ${_realdisks}; do
