@@ -488,8 +488,7 @@ class IPChoices(NICChoices):
         nolagg=False,
         novlan=False,
         exclude_configured=False,
-        include_vlan_parent=True,
-        skip_carp=False,
+        include_vlan_parent=True
     ):
         super(IPChoices, self).__init__(
             nolagg=nolagg,
@@ -501,7 +500,7 @@ class IPChoices(NICChoices):
         from freenasUI.middleware.notifier import notifier
         _n = notifier()
         carp = False
-        if not _n.is_freenas() and not skip_carp:
+        if not _n.is_freenas():
             try:
                 if _n.failover_status() not in ('SINGLE', 'ERROR'):
                     carp = True
@@ -513,10 +512,8 @@ class IPChoices(NICChoices):
             pipe = popen("/sbin/ifconfig %s" % iface)
             lines = pipe.read().strip().split('\n')
             for line in lines:
-                reg = re.search(r' vhid (\d+)', line)
-                if reg and skip_carp:
-                    continue
                 if carp:
+                    reg = re.search(r' vhid (\d+)', line)
                     if reg:
                         vhid = reg.group(1)
                         if vhid in ('10', '20'):
