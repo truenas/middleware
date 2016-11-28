@@ -1726,7 +1726,7 @@ class SSH(Model):
         max_length=120,
         verbose_name=_("Extra options"),
         blank=True,
-        help_text=_("Extra options to /etc/ssh/sshd_config (usually "
+        help_text=_("Extra options to /usr/local/etc/ssh/sshd_config (usually "
                     "empty). Note, incorrect entered options prevent SSH "
                     "service to be started."),
     )

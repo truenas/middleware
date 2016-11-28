@@ -662,7 +662,7 @@ class SSHForm(ModelForm):
         ):
             raise ServiceFailed("ssh", _("The SSH service failed to reload."))
         else:
-            keyfile = "/etc/ssh/ssh_host_ecdsa_key.pub"
+            keyfile = "/usr/local/etc/ssh/ssh_host_ecdsa_key.pub"
             if not os.path.exists(keyfile):
                 return obj
             with open(keyfile, "rb") as f:

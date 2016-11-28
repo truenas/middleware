@@ -74,14 +74,14 @@ def check_ssh(ip, port, user, key_file, retries=1):
     # by ix-sshd, especially if there's a replication task in the
     # database, however if there isn't, or if it's corrupted
     # don't let that stop us.
-    if os.path.isfile("/etc/ssh/ssh_known_hosts"):
+    if os.path.isfile("/usr/local/etc/ssh/ssh_known_hosts"):
         try:
-            ssh.load_system_host_keys("/etc/ssh/ssh_known_hosts")
+            ssh.load_system_host_keys("/usr/local/etc/ssh/ssh_known_hosts")
         except paramiko.hostkeys.InvalidHostKey:
             # TODO: Presumably if we unlink this file and don't end
             # up saving any changes to the database later on it will
             # get regenerated at some point with the same corruption.
-            os.unlink("/etc/ssh/ssh_known_hosts")
+            os.unlink("/usr/local/etc/ssh/ssh_known_hosts")
 
     for x in range(retries):
         try:
