@@ -1711,11 +1711,15 @@ class iSCSITargetPortalIPForm(ModelForm):
 
     def __init__(self, *args, **kwargs):
         super(iSCSITargetPortalIPForm, self).__init__(*args, **kwargs)
+        ipkwargs = {}
+        if models.iSCSITargetGlobalConfiguration.objects.order_by('-id')[0].iscsi_alua:
+            ipkwargs['skip_carp'] = True
+
         self.fields['iscsi_target_portalip_ip'] = forms.ChoiceField(
             label=self.fields['iscsi_target_portalip_ip'].label,
         )
         ips = [('', '------'), ('0.0.0.0', '0.0.0.0')]
-        ips.extend(list(choices.IPChoices()))
+        ips.extend(list(choices.IPChoices(**ipkwargs)))
         self.fields['iscsi_target_portalip_ip'].choices = ips
         if not self.instance.id and not self.data:
             if not(
