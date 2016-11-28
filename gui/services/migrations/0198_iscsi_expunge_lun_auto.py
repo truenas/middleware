@@ -48,6 +48,7 @@ class Migration(DataMigration):
             'afp_srv_guest': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'afp_srv_guest_user': ('freenasUI.freeadmin.models.fields.UserField', [], {'default': "'nobody'", 'max_length': '120'}),
             'afp_srv_homedir': ('freenasUI.freeadmin.models.fields.PathField', [], {'max_length': '255', 'null': 'True', 'blank': 'True'}),
+            'afp_srv_map_acls': ('django.db.models.fields.CharField', [], {'default': "'rights'", 'max_length': '120'}),
             'afp_srv_homedir_enable': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'afp_srv_homename': ('django.db.models.fields.CharField', [], {'max_length': '50', 'blank': 'True'}),
             u'id': ('django.db.models.fields.AutoField', [], {'primary_key': 'True'})
