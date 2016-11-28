@@ -250,6 +250,13 @@ class InterfacesService(Service):
                     'vhid': data['int_vhid'],
                 }))
 
+        if carp_vhid:
+            advskew = None
+            for cc in iface.carp_config:
+                if cc.vhid == carp_vhid:
+                    advskew = cc.advskew
+                    break
+
         if has_ipv6:
             iface.nd6_flags = iface.nd6_flags - {netif.NeighborDiscoveryFlags.IFDISABLED}
             iface.nd6_flags = iface.nd6_flags | {netif.NeighborDiscoveryFlags.AUTO_LINKLOCAL}
@@ -270,9 +277,8 @@ class InterfacesService(Service):
         # carp must be configured after removing addresses
         # in case removing the address removes the carp
         if carp_vhid:
-            advskew = None
-            if not self.middleware.call('notifier.is_freenas'):
-                if self.middleware.call('notifier.failover_status') == 'MASTER':
+            if not self.middleware.call('notifier.is_freenas') and not advskew:
+                if self.middleware.call('notifier.failover_node') == 'A':
                     advskew = 20
                 else:
                     advskew = 80
