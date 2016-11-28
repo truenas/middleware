@@ -503,6 +503,11 @@ class iSCSITargetGlobalConfiguration(Model):
             "extents"
         ),
     )
+    iscsi_alua = models.BooleanField(
+        verbose_name=_('Enable iSCSI ALUA'),
+        default=False,
+        help_text=_('Enabling this feature requires initiator reconfiguration'),
+    )
 
     class Meta:
         verbose_name = _(u"Target Global Configuration")
