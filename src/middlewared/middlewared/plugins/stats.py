@@ -41,7 +41,7 @@ class StatsService(Service):
         """
         rrdfile = '{}/{}/{}.rrd'.format(RRD_PATH, source, name)
         proc = Popen(
-            ['rrdtool', 'info', rrdfile],
+            ['/usr/local/bin/rrdtool', 'info', rrdfile],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
         )
