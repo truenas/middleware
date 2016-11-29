@@ -95,7 +95,7 @@ class StatsService(Service):
             ])
         proc = Popen(
             [
-                'rrdtool', 'xport', '--json',
+                '/usr/local/bin/rrdtool', 'xport', '--json',
                 '--start', stats['start'], '--end', stats['end'],
             ] + (['--step', str(stats['step'])] if stats.get('step') else []) + defs,
             stdout=subprocess.PIPE,
