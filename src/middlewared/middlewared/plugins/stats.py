@@ -74,10 +74,11 @@ class StatsService(Service):
                 additional_attrs=False,
             )
         ]),
-        Dict('stats-filter',
-           Int('step', default=10),
-           Str('start', default='now-1h'),
-           Str('end', default='now'),
+        Dict(
+            'stats-filter',
+            Int('step', default=10),
+            Str('start', default='now-1h'),
+            Str('end', default='now'),
         ),
     )
     def get_data(self, data_list, stats):
