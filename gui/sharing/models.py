@@ -267,6 +267,16 @@ class AFP_Share(Model):
         verbose_name=_("Hosts Deny")
     )
 
+    afp_auxparams = models.TextField(
+        blank=True,
+        max_length=255,
+        help_text=_(
+            "These parameters are added to the [Volume] section of afp.conf."
+            " Add each different parameter on a newline"
+        ),
+        verbose_name=_("Auxiliary Parameters")
+    )
+
     def __unicode__(self):
         return unicode(self.afp_name)
 

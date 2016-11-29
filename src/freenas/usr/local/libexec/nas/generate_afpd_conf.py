@@ -113,6 +113,13 @@ def main():
         cf_contents.append("\tveto files = .windows/.mac/\n")
         if map_acls_mode:
             cf_contents.append("\tacls = yes\n")
+        # Do not fail if aux params are not properly entered by the user
+        try:
+            aux_params = ["\t{0}\n".format(p.encode('utf8')) for p in share.afp_auxparams.split("\n")]
+        except:
+            pass
+        else:
+            cf_contents += aux_params
 
     with open(afp_config, "w") as fh:
         for line in cf_contents:
