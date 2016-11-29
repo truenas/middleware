@@ -89,7 +89,9 @@ class StatsService(Service):
         """
 
         defs = []
+        names_pair = []
         for i, data in enumerate(data_list):
+            names_pair.append([data['source'], data['type']])
             rrdfile = '{}/{}/{}.rrd'.format(RRD_PATH, data['source'], data['type'])
             defs.extend([
                 'DEF:xxx{}={}:{}:{}'.format(i, rrdfile, data['dataset'], data['cf']),
@@ -106,4 +108,8 @@ class StatsService(Service):
         data, err = proc.communicate()
         if proc.returncode != 0:
             raise ValueError('rrdtool failed: {}'.format(err))
-        return json.loads(data)
+        data = json.loads(data)
+
+        # Custom about property
+        data['about'] = 'Data for ' + ','.join(['/'.join(i) for i in names_pair])
+        return data
