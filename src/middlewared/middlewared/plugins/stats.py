@@ -1,5 +1,5 @@
 from middlewared.client import ejson as json
-from middlewared.schema import Dict, Int, Str, accepts
+from middlewared.schema import Dict, Int, List, Str, accepts
 from middlewared.service import Service
 from middlewared.utils import Popen
 
@@ -63,31 +63,40 @@ class StatsService(Service):
             info['last_update'] = int(reg.group(1))
         return info
 
-    @accepts(Dict(
-        'stats-data',
-        Str('source'),
-        Str('type'),
-        Str('dataset'),
-        Str('cf', default='AVERAGE'),
-        Int('step'),
-        Str('start', default='now-1h'),
-        Str('end', default='now'),
-        additional_attrs=False,
-    ))
-    def get_data(self, data):
+    @accepts(
+        List('stats-list', items=[
+            Dict(
+                'stats-data',
+                Str('source'),
+                Str('type'),
+                Str('dataset'),
+                Str('cf', default='AVERAGE'),
+                additional_attrs=False,
+            )
+        ]),
+        Dict('stats-filter',
+           Int('step', default=10),
+           Str('start', default='now-1h'),
+           Str('end', default='now'),
+        ),
+    )
+    def get_data(self, data_list, stats):
         """
         Get data points from rrd files.
         """
 
-        rrdfile = '{}/{}/{}.rrd'.format(RRD_PATH, data['source'], data['type'])
+        defs = []
+        for i, data in enumerate(data_list):
+            rrdfile = '{}/{}/{}.rrd'.format(RRD_PATH, data['source'], data['type'])
+            defs.extend([
+                'DEF:xxx{}={}:{}:{}'.format(i, rrdfile, data['dataset'], data['cf']),
+                'XPORT:xxx{}'.format(i),
+            ])
         proc = Popen(
             [
                 'rrdtool', 'xport', '--json',
-                '--start', data['start'], '--end', data['end'],
-            ] + (['--step', str(data['step'])] if data.get('step') else []) + [
-                'DEF:xxx={}:{}:{}'.format(rrdfile, data['dataset'], data['cf']),
-                'XPORT:xxx',
-            ],
+                '--start', stats['start'], '--end', stats['end'],
+            ] + (['--step', str(stats['step'])] if stats.get('step') else []) + defs,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
         )
