@@ -34,12 +34,12 @@ class StatsService(Service):
             sources[source].append(metric)
         return sources
 
-    @accepts(Str('source'), Str('name'))
-    def get_dataset_info(self, source, name):
+    @accepts(Str('source'), Str('type'))
+    def get_dataset_info(self, source, _type):
         """
         Returns info about a given dataset from some source.
         """
-        rrdfile = '{}/{}/{}.rrd'.format(RRD_PATH, source, name)
+        rrdfile = '{}/{}/{}.rrd'.format(RRD_PATH, source, _type)
         proc = Popen(
             ['/usr/local/bin/rrdtool', 'info', rrdfile],
             stdout=subprocess.PIPE,
@@ -50,6 +50,8 @@ class StatsService(Service):
             raise ValueError('rrdtool failed: {}'.format(err))
 
         info = {
+            'source': source,
+            'type': _type,
             'data_sources': {}
         }
         for data_source, _type in RE_DSTYPE.findall(data):
