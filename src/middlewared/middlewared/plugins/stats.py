@@ -52,10 +52,10 @@ class StatsService(Service):
         info = {
             'source': source,
             'type': _type,
-            'data_sources': {}
+            'datasets': {}
         }
-        for data_source, _type in RE_DSTYPE.findall(data):
-            info['data_sources'][data_source] = {'type': _type}
+        for dataset, _type in RE_DSTYPE.findall(data):
+            info['datasets'][dataset] = {'type': _type}
 
         reg = RE_STEP.search(data)
         if reg:
