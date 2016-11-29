@@ -370,7 +370,8 @@ class InterfacesForm(ModelForm):
 
     def done(self, *args, **kwargs):
         super(InterfacesForm, self).done(*args, **kwargs)
-        notifier().start("network")
+        if notifier().is_freenas():
+            notifier().start("network")
 
 
 class InterfacesDeleteForm(forms.Form):
