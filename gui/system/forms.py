@@ -625,8 +625,15 @@ class InitialWizard(CommonWizard):
                         serial = mac.strip() + "%.2d" % lid
                     except:
                         serial = "10000001"
+
+                    iscsi_target_name = '%sTarget' % share_name
+                    iscsi_target_name_idx = 1
+                    while iSCSITarget.objects.filter(iscsi_target_name=iscsi_target_name).exists():
+                        iscsi_target_name = '%sTarget%d' % (share_name, iscsi_target_name_idx)
+                        iscsi_target_name_idx += 1
+
                     target = iSCSITarget.objects.create(
-                        iscsi_target_name='%sTarget' % share_name,
+                        iscsi_target_name=iscsi_target_name
                     )
 
                     iSCSITargetGroups.objects.create(
