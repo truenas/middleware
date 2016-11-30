@@ -47,6 +47,7 @@ class InterfacesService(Service):
 
         interfaces = [i['int_interface'] for i in self.middleware.call('datastore.query', 'network.interfaces')]
         cloned_interfaces = []
+        parent_interfaces = []
 
         # First of all we need to create the virtual interfaces
         # LAGG comes first and then VLAN
@@ -88,6 +89,7 @@ class InterfacesService(Service):
                 except KeyError:
                     self.logger.warn('Could not find {} from {}'.format(port[0], name))
                     continue
+                parent_interfaces.append(port[0])
                 port_iface.up()
 
         vlans = self.middleware.call('datastore.query', 'network.vlan')
@@ -109,6 +111,7 @@ class InterfacesService(Service):
             except KeyError:
                 self.logger.warn('Could not find {} from {}'.format(iface.parent, vlan['vlan_vint']))
                 continue
+            parent_interfaces.append(iface.parent)
             parent_iface.up()
 
         self.logger.info('Interfaces in database: {}'.format(', '.join(interfaces) or 'NONE'))
@@ -145,7 +148,7 @@ class InterfacesService(Service):
             # It gets destroy, otherwise just bring it down
             if name not in cloned_interfaces and name.startswith(('lagg', 'vlan')):
                 netif.destroy_interface(name)
-            else:
+            elif name not in parent_interfaces:
                 iface.down()
 
     @private
