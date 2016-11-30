@@ -22,9 +22,7 @@ class NetworkInterruptMixin(object):
             hasattr(notifier, 'failover_status') and
             notifier().failover_status() == 'MASTER'
         ):
-            form = kwargs.get('form')
-            if form.cleaned_data.get('int_vip'):
-                failover_dis = True
+            failover_dis = True
 
         if failover_dis:
             return _(
