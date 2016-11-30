@@ -288,7 +288,12 @@ class InterfacesForm(ModelForm):
         cdata = self.cleaned_data
 
         _n = notifier()
-        if not _n.is_freenas() and _n.failover_licensed() and _n.failover_status() != 'SINGLE':
+        if (
+            not _n.is_freenas() and _n.failover_licensed() and
+            _n.failover_status() != 'SINGLE' and (
+                self.instance.id and self.instance.int_vip
+            )
+        ):
             from freenasUI.failover.models import Failover
             try:
                 if Failover.objects.all()[0].disabled is False:
