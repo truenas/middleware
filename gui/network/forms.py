@@ -287,6 +287,18 @@ class InterfacesForm(ModelForm):
     def clean(self):
         cdata = self.cleaned_data
 
+        _n = notifier()
+        if not _n.is_freenas() and _n.failover_licensed() and _n.failover_status() != 'SINGLE':
+            from freenasUI.failover.models import Failover
+            try:
+                if Failover.objects.all()[0].disabled is False:
+                    self._errors['__all__'] = self.error_class([_(
+                        'Failover needs to be disabled to perform network '
+                        'changes.'
+                    )])
+            except:
+                log.warn('Failed to verify failover status', exc_info=True)
+
         ipv4key = 'int_ipv4address'
         ipv4addr = cdata.get(ipv4key)
         ipv4addr_b = cdata.get('int_ipv4address_b')

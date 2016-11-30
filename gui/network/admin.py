@@ -17,17 +17,27 @@ SW_NAME = get_sw_name()
 class NetworkInterruptMixin(object):
 
     def get_confirm_message(self, action, **kwargs):
-        failover_dis = False
+        failover_event = False
         if (
             hasattr(notifier, 'failover_status') and
             notifier().failover_status() == 'MASTER'
         ):
-            failover_dis = True
+            from freenasUI.failover.models import Failover
+            s = notifier().failover_rpc(timeout=1)
+            if (
+                not Failover.objects.all()[0].disabled and
+                s is not None
+            ):
+                try:
+                    s.ping()
+                    failover_event = True
+                except Exception:
+                    pass
 
-        if failover_dis:
+        if failover_event:
             return _(
-                'Changing this interface will disable HA while the '
-                'configuration change completes. Do you wish to proceed?'
+                'This change will cause a failover event. '
+                'Do you want to proceed?'
             )
         else:
             if action != 'add':
