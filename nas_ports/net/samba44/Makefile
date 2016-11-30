@@ -12,7 +12,7 @@ CONFLICTS?=		*samba3[2-6]-3.* samba4-4.0.* samba41-4.1.* samba42-4.2.* samba43-4
 
 SAMBA4_BASENAME=	samba
 SAMBA4_PORTNAME=	${SAMBA4_BASENAME}4
-SAMBA4_VERSION=		4.4.5
+SAMBA4_VERSION=		4.4.7
 SAMBA4_DISTNAME=	${SAMBA4_BASENAME}-${SAMBA4_VERSION:S|.p|pre|:S|.r|rc|:S|.t|tp|:S|.a|alpha|}
 
 NO_CHECKSUM=		yes
@@ -255,7 +255,7 @@ WANT_EXP_MODULES=	auth_samba4 auth_script auth_skel auth_unix auth_wbc \
 			vfs_shadow_copy_test vfs_shell_snap vfs_skel_opaque \
 			vfs_skel_transparent vfs_streams_depot vfs_streams_xattr \
 			vfs_syncops vfs_time_audit vfs_unityed_media vfs_xattr_tdb \
-			vfs_zfsacl vfs_zfs_space
+			vfs_winmsa vfs_zfsacl vfs_zfs_space
 .endif
 
 .if ${PORT_OPTIONS:MEXP_MODULES}
