@@ -21,7 +21,8 @@ generate_ctl()
 		fi
 		ret=$(LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/midclt call notifier.failover_licensed)
 		if [ "${ret}" = "True" ]; then
-			fc=$(LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/midclt call notifier.fc_enabled iscsi=True)
+			# the trailing true sets iscsi=True to the fc_enabled method
+			fc=$(LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/midclt call notifier.fc_enabled true)
 			if [ "${fc}" = "True" ]; then
 				if [ "${node}" = "A" ]; then
 					/sbin/sysctl kern.cam.ctl.ha_peer="listen 169.254.10.1" >/dev/null

@@ -125,7 +125,8 @@ loader_ha()
 	else
 		node=$(ha_node)
 		if [ "$(LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/midclt call notifier.failover_licensed)" = "True" ]; then
-			if [ "$(LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/midclt call notifier.fc_enabled iscsi=True)" = "True" ]; then
+			# the trailing true sets iscsi=True to the fc_enabled method
+			if [ "$(LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/midclt call notifier.fc_enabled true)" = "True" ]; then
 				if [ "${node}" = "A" ]; then
 					echo "kern.cam.ctl.ha_id=1"
 				elif [ "${node}" = "B" ]; then
