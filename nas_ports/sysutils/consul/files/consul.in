@@ -1,0 +1,56 @@
+#!/bin/sh
+
+# $FreeBSD: head/sysutils/consul/files/consul.in 425857 2016-11-11 01:01:38Z swills $
+#
+# PROVIDE: consul
+# REQUIRE: LOGIN
+# KEYWORD: shutdown
+#
+# Add the following lines to /etc/rc.conf.local or /etc/rc.conf
+# to enable this service:
+#
+# consul_enable (bool):	Set to NO by default.
+#				Set it to YES to enable consul.
+# consul_user (user):        Set user to run consul.
+#                               Default is "consul".
+# consul_group (group):      Set group to run consul.
+#                               Default is "consul".
+# consul_dir (dir):          Set dir to run consul in.
+#                               Default is "/var/tmp/consul".
+# consul_env (dir):          Set environment variables used with consul
+#                               Default is "".
+
+. /etc/rc.subr
+
+name=consul
+rcvar=consul_enable
+extra_commands="reload"
+
+load_rc_config $name
+
+: ${consul_enable:="NO"}
+: ${consul_user:="consul"}
+: ${consul_group:="consul"}
+: ${consul_dir:="/var/tmp/consul"}
+: ${consul_env:=""}
+
+pidfile=/var/run/consul.pid
+procname="%%PREFIX%%/bin/consul"
+command="/usr/sbin/daemon"
+command_args="-f -p ${pidfile} /usr/bin/env ${consul_env} ${procname} agent -data-dir=${consul_dir} -config-dir=%%PREFIX%%/etc/consul.d ${consul_args}"
+
+start_precmd=consul_startprecmd
+
+consul_startprecmd()
+{
+        if [ ! -e ${pidfile} ]; then
+                install -o ${consul_user} -g ${consul_group} /dev/null ${pidfile};
+        fi
+
+        if [ ! -d ${consul_dir} ]; then
+                install -d -o ${consul_user} -g ${consul_group} ${consul_dir}
+        fi
+
+}
+
+run_rc_command "$1"
