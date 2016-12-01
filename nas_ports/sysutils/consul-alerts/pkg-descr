@@ -1,0 +1,7 @@
+A highly available daemon to send notifications and reminders based on
+Consul health checks. Including profile selection based on service,
+check, or host that enables specific handlers and reminder intervals.
+consul-alerts makes use of consul services to provide leader election
+and automatic failover amongst multiple instances.
+
+URL: https://github.com/AcalephStorage/consul-alerts
