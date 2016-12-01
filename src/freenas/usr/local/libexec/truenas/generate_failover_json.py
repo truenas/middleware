@@ -31,7 +31,7 @@ def main():
         pass
 
     from freenasUI.failover.models import Failover
-    from freenasUI.network.models import Interfaces
+    from freenasUI.network.models import Interfaces, Alias
     from freenasUI.services.models import SSH
     from freenasUI.storage.models import Volume
     from freenasUI.system.models import Settings
@@ -61,6 +61,9 @@ def main():
         ],
         'internal_interfaces': notifier().failover_internal_interfaces(),
     }
+
+    for i in Alias.objects.exclude(alias_vip=None).exclude(alias_vip=''):
+        data['ips'].append(str(i.alias_vip)
 
     for item in Interfaces.objects.filter(int_critical=True):
         data['groups'][item.int_group].append(item.int_interface)
