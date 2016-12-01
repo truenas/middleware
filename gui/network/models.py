@@ -343,7 +343,7 @@ class Interfaces(Model):
                 ips.append("%s" % str(self.int_vip))
             for alias in self.alias_set.exclude(alias_vip=''):
                 ips.append("%s" % str(alias.alias_vip))
-                                                                                                                                                                                                                        return ips
+        return ips
 
     def get_ipv6_addresses(self):
         """
