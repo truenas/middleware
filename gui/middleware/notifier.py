@@ -6126,8 +6126,15 @@ class notifier:
         from freenasUI.common.system import backup_database
         backup_database()
 
-    def fc_enabled(self):
+    def fc_enabled(self, iscsi=None):
+        ret = None
         from freenasUI.support.utils import fc_enabled
+        if iscsi:
+            from freenasUI.services.models import iSCSITargetGlobalConfiguration
+            qs = iSCSITargetGlobalConfiguration.objects.all()
+            if qs:
+                ret = qs[0].iscsi_alua
+                return fc_enabled() or ret
         return fc_enabled()
 
 
