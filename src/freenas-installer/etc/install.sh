@@ -276,14 +276,13 @@ ask_upgrade_inplace()
 {
     local _tmpfile="/tmp/msg"
     cat << EOD > "${_tmpfile}"
-Upgrading the installation can format the disk, or install directly
-into a boot environment, leaving your old system intact.
+User configuration settings and storage volumes are preserved and not affected by this step.
 
-Do you wish to format the disk or a save the old system dataset?
+The boot device can be formatted to remove old versions, or the upgrade can be installed in a new boot environment without affecting any existing versions.
 EOD
     _msg=`cat "${_tmpfile}"`
     rm -f "${_tmpfile}"
-    dialog --title "Upgrade method selection" --no-label "Save old system dataset" --yes-label "Format the disk" --yesno "${_msg}" 8 74
+    dialog --trim --title "Update Method Selection" --yes-label "Install in new boot environment" --no-label "Format the boot device" --yesno "${_msg}" 0 0
     return $?
 }
 
