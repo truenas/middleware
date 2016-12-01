@@ -95,7 +95,7 @@ class StatsService(Service):
             rrdfile = '{}/{}/{}.rrd'.format(RRD_PATH, data['source'], data['type'])
             defs.extend([
                 'DEF:xxx{}={}:{}:{}'.format(i, rrdfile, data['dataset'], data['cf']),
-                'XPORT:xxx{}'.format(i),
+                'XPORT:xxx{}:{}/{}'.format(i, data['source'], data['type']),
             ])
         proc = Popen(
             [
