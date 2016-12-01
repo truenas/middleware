@@ -1,0 +1,15 @@
+TIMESTAMP = 1479585907
+SHA256 (hashicorp-nomad-v0.5.0_GH0.tar.gz) = a7d9126b4ce7937dbf3c72f14172261ddf59e88f4c2e4b7167601ab3ca421059
+SIZE (hashicorp-nomad-v0.5.0_GH0.tar.gz) = 17718704
+SHA256 (kardianos-govendor-v1.0.8_GH0.tar.gz) = 7e887b84c7a9278473f39ae8a74440ffc17b329aa193e9304d170d458f8785c7
+SIZE (kardianos-govendor-v1.0.8_GH0.tar.gz) = 114321
+SHA256 (mitchellh-gox-v0.3.0_GH0.tar.gz) = 29dc6b689f670a5444cc54cd9111549ccb01501901bc9197d0e1325a35157802
+SIZE (mitchellh-gox-v0.3.0_GH0.tar.gz) = 13735
+SHA256 (golang-tools-8b84dae_GH0.tar.gz) = ec2ab2f9ef0f6df7fbc12faba1fcd42768d9f50ff0f595d4201deaa2f9414d0f
+SIZE (golang-tools-8b84dae_GH0.tar.gz) = 2192701
+SHA256 (axw-gocov-c77561c_GH0.tar.gz) = 47451bdf1a1704f3c08dc66b24572ead4f76b5bd21f802ed0ec7a3e049ebf3f9
+SIZE (axw-gocov-c77561c_GH0.tar.gz) = 12516
+SHA256 (matm-gocov-html-v1.1_GH0.tar.gz) = 0a0bc1168671c17c57eb3a0fd759c625d154bdd420aefac6e10e42d0116dff98
+SIZE (matm-gocov-html-v1.1_GH0.tar.gz) = 125858
+SHA256 (ugorji-go-faddd61_GH0.tar.gz) = f86b83ac7113121a99d6db8a5f1035ab877a62519257b2976ee98120be26cf40
+SIZE (ugorji-go-faddd61_GH0.tar.gz) = 168810
