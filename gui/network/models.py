@@ -321,6 +321,30 @@ class Interfaces(Model):
             ))
         return ips
 
+    def get_my_ipv4_addresses(self, vip=None):
+        """
+        Includes IPv4 addresses of this node, aliases of this node,
+        and (optionally) VIPs
+        """
+        ips = []
+        _n = notifier()
+        if not _n.is_freenas() and _n.failover_node() == 'B':
+            if self.int_ipv4address_b:
+                ips.append("%s" % str(self.int_ipv4address_b))
+            for alias in self.alias_set.exclude(alias_v4address_b=''):
+                ips.append("%s" % str(alias.alias_v4address_b))
+        else:
+            if self.int_ipv4address:
+                ips.append("%s" % str(self.int_ipv4address))
+            for alias in self.alias_set.exclude(alias_v4address=''):
+                ips.append("%s" % str(alias.alias_v4address))
+        if vip:
+            if self.int_vip:
+                ips.append("%s" % str(self.int_vip))
+            for alias in self.alias_set.exclude(alias_vip=''):
+                ips.append("%s" % str(alias.alias_vip))
+                                                                                                                                                                                                                        return ips
+
     def get_ipv6_addresses(self):
         """
         Includes IPv6 addresses in aliases
