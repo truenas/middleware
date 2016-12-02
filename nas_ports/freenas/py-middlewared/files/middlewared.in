@@ -5,6 +5,7 @@
 
 # PROVIDE: middlewared
 # BEFORE: fsck earlykld
+# KEYWORD: shutdown
 
 . /etc/rc.subr
 
