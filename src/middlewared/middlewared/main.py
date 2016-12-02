@@ -23,6 +23,7 @@ import logging.config
 import os
 import rollbar
 import setproctitle
+import signal
 import subprocess
 import sys
 import traceback
@@ -257,6 +258,7 @@ class Middleware(object):
         self.__schemas = {}
         self.__services = {}
         self.__wsclients = {}
+        self.__server_threads = []
         self.__init_services()
         self.__init_rollbar()
         self.__plugins_load()
@@ -422,6 +424,9 @@ class Middleware(object):
         rollbar.report_exc_info(exc_info, extra_data=extra_data)
 
     def run(self):
+
+        gevent.signal(signal.SIGTERM, self.kill)
+
         Application.middleware = self
         wsserver = WebSocketServer(('127.0.0.1', 6000), Resource(OrderedDict([
             ('/websocket', Application),
@@ -433,14 +438,20 @@ class Middleware(object):
         apidocsserver = WSGIServer(('127.0.0.1', 8001), apidocs_app)
         restserver = WSGIServer(('127.0.0.1', 8002), restful_api.get_app())
 
-        server_threads = [
+        self.__server_threads = [
             gevent.spawn(wsserver.serve_forever),
             gevent.spawn(apidocsserver.serve_forever),
             gevent.spawn(restserver.serve_forever),
             gevent.spawn(self.__jobs.run),
         ]
         self.logger.debug('Accepting connections')
-        gevent.joinall(server_threads)
+        gevent.joinall(self.__server_threads)
+
+    def kill(self):
+        self.logger.info('Killall server threads')
+        gevent.killall(self.__server_threads)
+
+        sys.exit(0)
 
 
 def main():
