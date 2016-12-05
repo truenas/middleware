@@ -957,8 +957,7 @@ class VolumeResourceMixin(NestedMixin):
                     child.path,
                     {},
                 ).get('org.freenas:description', ('', '-', 'inherit'))
-                if description[2] == 'local':
-                    data['comments'] = description[1] if description[2] == 'local' else ''
+                data['comments'] = description[1] if description[2] == 'local' else ''
 
             if self.is_webclient(bundle.request):
                 data['_add_zfs_volume_url'] = reverse(
