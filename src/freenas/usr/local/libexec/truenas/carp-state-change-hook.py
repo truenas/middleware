@@ -107,6 +107,7 @@ def main(subsystem, event):
         forcetakeover = False
 
     if not os.path.exists(FAILOVER_JSON):
+        log.warn("No %s found, exiting.", FAILOVER_JSON)
         sys.exit(1)
 
     # TODO write the PID into the state file so a stale
