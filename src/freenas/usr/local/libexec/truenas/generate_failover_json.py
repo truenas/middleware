@@ -63,7 +63,7 @@ def main():
     }
 
     for i in Alias.objects.exclude(alias_vip=None).exclude(alias_vip=''):
-        data['ips'].append(str(i.alias_vip)
+        data['ips'].append(str(i.alias_vip))
 
     for item in Interfaces.objects.filter(int_critical=True):
         data['groups'][item.int_group].append(item.int_interface)
