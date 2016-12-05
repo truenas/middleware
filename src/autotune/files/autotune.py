@@ -220,6 +220,7 @@ def guess_kern_ipc_nmbclusters():
 def guess_net_inet_tcp_delayed_ack():
     """Set the TCP stack to not use delayed ACKs
 
+    See guess_kern_ipc_maxsockbuf().
     """
     return 0
 
