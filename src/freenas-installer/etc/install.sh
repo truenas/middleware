@@ -41,14 +41,21 @@ get_image_name()
     find $(get_product_path) -name "$AVATAR_PROJECT-$AVATAR_ARCH.img.xz" -type f
 }
 
-# Does nothing right now.
 # The old pre-install checks did several things
 # 1:  Don't allow going from FreeNAS to TrueNAS or vice versa
 # 2:  Don't allow downgrading.  (Not sure we can do that now.)
 # 3:  Check memory size and cpu speed.
+# This does memory size only for now.
 pre_install_check()
 {
-    true
+    # We need at least 4gbytes of RAM
+    local readonly minmem=$(expr 4 \* 1024 \* 1024 \* 1024)
+    local memsize=$(sysctl -n hw.physmem)
+
+    if [ ${memsize} -lt ${minmem} ]; then
+	dialog --clear --title "${AVATAR_PROJECT}" --yesno "You have less than the recommended amount of RAM (4GBytes), do you wish to continue even though performance may be horribly slow?" 7 74 || return 1
+    fi
+    return 0
 }
 # Convert /etc/version* to /etc/avatar.conf
 #
