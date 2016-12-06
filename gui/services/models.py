@@ -32,6 +32,7 @@ import subprocess
 import uuid
 
 from django.db import models
+from django.db.models import Q
 from django.utils.translation import ugettext_lazy as _
 from django.core.validators import (
     MinValueValidator, MaxValueValidator
@@ -772,6 +773,25 @@ class iSCSITargetPortalIP(Model):
             self.iscsi_target_portalip_ip,
             self.iscsi_target_portalip_port,
         )
+
+    def alua_ips(self):
+        from freenasUI.network.models import Interfaces
+        node_a = []
+        node_b = []
+        ifaces = Interfaces.objects.exclude(Q(int_vip=None) | Q(int_vip=''))
+        if self.iscsi_target_portalip_ip != '0.0.0.0':
+            ifaces = ifaces.filter(int_vip=self.iscsi_target_portalip_ip)
+        for iface in ifaces:
+            if iface.int_ipv4address:
+                node_a.append('{}:{}'.format(iface.int_ipv4address, self.iscsi_target_portalip_port))
+            if iface.int_ipv4address_b:
+                node_b.append('{}:{}'.format(iface.int_ipv4address_b, self.iscsi_target_portalip_port))
+            for alias in iface.alias_set.all():
+                if alias.alias_v4address:
+                    node_a.append('{}:{}'.format(alias.alias_v4address, self.iscsi_target_portalip_port))
+                if alias.alias_v4address_b:
+                    node_b.append('{}:{}'.format(alias.alias_v4address_b, self.iscsi_target_portalip_port))
+        return node_a, node_b
 
 
 class iSCSITargetAuthorizedInitiator(Model):

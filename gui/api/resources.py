@@ -75,6 +75,7 @@ from freenasUI.plugins.models import Plugins
 from freenasUI.plugins.utils import get_base_url, get_plugin_status
 from freenasUI.services.forms import iSCSITargetPortalIPForm
 from freenasUI.services.models import (
+    iSCSITargetGlobalConfiguration,
     iSCSITargetPortal, iSCSITargetPortalIP, FibreChannelToTarget
 )
 from freenasUI.sharing.models import NFS_Share, NFS_Share_Path
@@ -1731,11 +1732,22 @@ class ISCSIPortalResourceMixin(object):
 
     def dehydrate(self, bundle):
         bundle = super(ISCSIPortalResourceMixin, self).dehydrate(bundle)
-        listen = ["%s:%s" % (
-            p.iscsi_target_portalip_ip,
-            p.iscsi_target_portalip_port,
-        ) for p in bundle.obj.ips.all()]
-        bundle.data['iscsi_target_portal_ips'] = listen
+        globalconf = iSCSITargetGlobalConfiguration.objects.latest('id')
+        if globalconf.iscsi_alua:
+            listen_a = []
+            listen_b = []
+            for p in bundle.obj.ips.all():
+                ips = p.alua_ips()
+                listen_a.extend(ips[0])
+                listen_b.extend(ips[1])
+            bundle.data['iscsi_target_portal_ips_a'] = listen_a
+            bundle.data['iscsi_target_portal_ips_b'] = listen_b
+        else:
+            listen = ["%s:%s" % (
+                p.iscsi_target_portalip_ip,
+                p.iscsi_target_portalip_port,
+            ) for p in bundle.obj.ips.all()]
+            bundle.data['iscsi_target_portal_ips'] = listen
         for key in filter(
             lambda y: y.startswith('portalip_set'), bundle.data.keys()
         ):
