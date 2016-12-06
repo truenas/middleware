@@ -2,8 +2,8 @@
 # $FreeBSD: head/net-mgmt/collectd5/Makefile 414458 2016-05-02 16:08:56Z zeising $
 
 PORTNAME=	collectd
-PORTVERSION=	5.5.1
-PORTREVISION=	5
+PORTVERSION=	5.6.0
+PORTREVISION=	2
 CATEGORIES=	net-mgmt
 MASTER_SITES=	https://collectd.org/files/ \
 		http://collectd.org/files/
@@ -26,13 +26,14 @@ OPTIONS_DEFINE=		CGI DEBUG GCRYPT LIBDTRACE LIBZFS LOGSTASH VIRT
 OPTIONS_GROUP=		INPUT OUTPUT
 OPTIONS_GROUP_OUTPUT=	KAFKA MONGODB NOTIFYDESKTOP NOTIFYEMAIL RIEMANN RRDTOOL \
 			TSDB
-OPTIONS_GROUP_INPUT=	CURL CURL_JSON CURL_XML DBI IPMI JSON MEMCACHEC \
-			MODBUS MYSQL NUTUPS OLSRD ONEWIRE OPENLDAP \
+OPTIONS_GROUP_INPUT=	CHRONY CURL CURL_JSON CURL_XML DBI IPMI JSON MEMCACHEC \
+			MODBUS MQTT MYSQL NUTUPS OLSRD ONEWIRE OPENLDAP \
 			PERL PGSQL PINBA PING PYTHON RABBITMQ REDIS ROUTEROS \
 			SIGROK SNMP STATSD TOKYOTYRANT VARNISH XML \
 			XMMS ZOOKEEPER
 
 CGI_DESC=		Install collection.cgi (requires rrdtool)
+CHRONY_DESC=		Enable chronyd plugin
 CURL_DESC=		Enable curl-based plugins (apache, nginx, etc)
 CURL_JSON_DESC=		Enable curl_json plugin (implies curl and json)
 CURL_XML_DESC=		Enable ascent, bind, curl_xml plugins (implies curl and xml)
@@ -48,6 +49,7 @@ LOGSTASH_DESC=		Enable log_logstash plugin (requires json)
 MEMCACHEC_DESC=		Enable memcachec plugin
 MODBUS_DESC=		Enable modbus plugin
 MONGODB_DESC=		Enable write_mongodb plugin (BROKEN)
+MQTT_DESC=		Enable MQTT broker metrics
 MYSQL_DESC=		Enable mysql-based plugins
 NOTIFYDESKTOP_DESC=	Enable desktop notifications
 NOTIFYEMAIL_DESC=	Enable notifications via email
@@ -62,7 +64,7 @@ PING_DESC=		Enable ping plugin
 PYTHON_DESC=		Enable python-based plugins
 RABBITMQ_DESC=		Enable rabbitmq-based plugins
 REDIS_DESC=		Enable redis-based plugins
-RIEMANN_DESC=		Enable write_riemann plugin (via protobuf-c)
+RIEMANN_DESC=		Enable write_riemann plugin (via riemann-c-client)
 ROUTEROS_DESC=		Enable routeros plugin
 RRDTOOL_DESC=		Enable rrdtool plugin (also rrdcached plugin)
 SIGROK_DESC=		Enable sigrok plugin
@@ -118,6 +120,8 @@ CGI_RUN_DEPENDS=		p5-URI>=0:net/p5-URI \
 				p5-HTML-Parser>=0:www/p5-HTML-Parser
 CGI_IMPLIES=			RRDTOOL
 
+CHRONY_CONFIGURE_ENABLE=	chrony
+
 CURL_LIB_DEPENDS=		libcurl.so:ftp/curl
 CURL_CONFIGURE_ENABLE=		apache curl nginx write_http
 CURL_CONFIGURE_WITH=		libcurl=${LOCALBASE}
@@ -164,6 +168,10 @@ MONGODB_LIB_DEPENDS+=		libbson-1.0.so:devel/libbson
 MONGODB_CONFIGURE_ENABLE=	write_mongodb
 MONGODB_CONFIGURE_WITH=		libmongoc=${LOCALBASE}
 MONGODB_BROKEN=			fails to configure with write_mongodb option
+
+MQTT_LIB_DEPENDS=		libmosquitto.so:net/mosquitto
+MQTT_CONFIGURE_ENABLE=		mqtt
+MQTT_CONFIGURE_WITH=		libmosquitto=${LOCALBASE}
 
 MYSQL_USE=			mysql=yes
 MYSQL_CONFIGURE_ENABLE=		mysql
@@ -218,7 +226,7 @@ REDIS_LIB_DEPENDS=		libhiredis.so:databases/hiredis
 REDIS_CONFIGURE_ENABLE=		redis write_redis
 REDIS_CONFIGURE_WITH=		libhiredis=${LOCALBASE}
 
-RIEMANN_LIB_DEPENDS=		libprotobuf-c.so:devel/protobuf-c
+RIEMANN_LIB_DEPENDS=		libriemann-client.so:net-mgmt/riemann-c-client
 RIEMANN_CONFIGURE_ENABLE=	write_riemann
 
 ROUTEROS_LIB_DEPENDS=		librouteros.so:net/librouteros

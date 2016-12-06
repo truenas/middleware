@@ -1,2 +1,3 @@
-SHA256 (collectd-5.5.1.tar.bz2) = f9c5d526e1f0429a7db1ccd90bdf9e23923a2fd43b7285cfda8f0341e5c0bc3f
-SIZE (collectd-5.5.1.tar.bz2) = 1797852
+TIMESTAMP = 1480984620
+SHA256 (collectd-5.6.0.tar.bz2) = f0ffbbd91fac3682bd324a74b9b4c9eabe781394b303b5cfd457c4cfbe748623
+SIZE (collectd-5.6.0.tar.bz2) = 1818470
