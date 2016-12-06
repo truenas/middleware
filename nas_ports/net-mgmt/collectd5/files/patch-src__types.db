@@ -1,55 +1,51 @@
---- src/types.db.orig	2016-01-22 09:51:17 UTC
-+++ src/types.db
-@@ -129,6 +129,7 @@ mysql_innodb_rows	value:DERIVE:0:U
- mysql_select		value:DERIVE:0:U
- mysql_sort		value:DERIVE:0:U
- nfs_procedure		value:DERIVE:0:U
-+nfsstat		value:DERIVE:0:U
- nginx_connections	value:GAUGE:0:U
- nginx_requests		value:DERIVE:0:U
- node_octets		rx:DERIVE:0:U, tx:DERIVE:0:U
-@@ -240,3 +241,44 @@ arc_ratio		value:GAUGE:0:U
- arc_size		current:GAUGE:0:U, target:GAUGE:0:U, minlimit:GAUGE:0:U, maxlimit:GAUGE:0:U
- mysql_qcache		hits:COUNTER:0:U, inserts:COUNTER:0:U, not_cached:COUNTER:0:U, lowmem_prunes:COUNTER:0:U, queries_in_cache:GAUGE:0:U
- mysql_threads		running:GAUGE:0:U, connected:GAUGE:0:U, cached:GAUGE:0:U, created:COUNTER:0:U
-+
+--- src/types.db.orig	2016-12-05 23:26:09.171090174 -0500
++++ src/types.db	2016-12-05 23:29:02.811080742 -0500
+@@ -143,6 +143,7 @@
+ mysql_sort_rows         value:DERIVE:0:U
+ mysql_slow_queries      value:DERIVE:0:U
+ nfs_procedure           value:DERIVE:0:U
++nfsstat                 value:DERIVE:0:U
+ nginx_connections       value:GAUGE:0:U
+ nginx_requests          value:DERIVE:0:U
+ node_octets             rx:DERIVE:0:U, tx:DERIVE:0:U
+@@ -261,3 +262,40 @@
+ arc_size                current:GAUGE:0:U, target:GAUGE:0:U, minlimit:GAUGE:0:U, maxlimit:GAUGE:0:U
+ mysql_qcache            hits:COUNTER:0:U, inserts:COUNTER:0:U, not_cached:COUNTER:0:U, lowmem_prunes:COUNTER:0:U, queries_in_cache:GAUGE:0:U
+ mysql_threads           running:GAUGE:0:U, connected:GAUGE:0:U, cached:GAUGE:0:U, created:COUNTER:0:U
 +
 +# new zfs
-+
-+gauge_arcstats_raw       value:GAUGE:0:U 
-+gauge_arcstats_raw_arcmeta       value:GAUGE:0:U 
-+gauge_arcstats_raw_counts       value:GAUGE:0:U 
-+gauge_arcstats_raw_cp       value:GAUGE:0:U 
-+gauge_arcstats_raw_demand       value:GAUGE:0:U 
-+gauge_arcstats_raw_duplicate       value:GAUGE:0:U 
-+gauge_arcstats_raw_evict       value:GAUGE:0:U 
-+gauge_arcstats_raw_hash       value:GAUGE:0:U 
-+gauge_arcstats_raw_hits_misses       value:GAUGE:0:U 
-+gauge_arcstats_raw_l2       value:GAUGE:0:U 
-+gauge_arcstats_raw_l2_compress       value:GAUGE:0:U 
-+gauge_arcstats_raw_l2_free       value:GAUGE:0:U 
-+gauge_arcstats_raw_l2abort       value:GAUGE:0:U 
-+gauge_arcstats_raw_l2bytes       value:GAUGE:0:U 
-+gauge_arcstats_raw_l2evict       value:GAUGE:0:U 
-+gauge_arcstats_raw_l2write       value:GAUGE:0:U 
-+gauge_arcstats_raw_l2writes       value:GAUGE:0:U 
-+gauge_arcstats_raw_memcount       value:GAUGE:0:U 
-+gauge_arcstats_raw_mru       value:GAUGE:0:U 
-+gauge_arcstats_raw_prefetch       value:GAUGE:0:U 
-+gauge_arcstats_raw_size       value:GAUGE:0:U 
-+arcstat_ratio_arc				value:GAUGE:0:100.1
-+arcstat_ratio_mu				value:GAUGE:0:100.1
-+arcstat_ratio_l2				value:GAUGE:0:100.1
-+arcstat_ratio_data				value:GAUGE:0:100.1
-+arcstat_ratio_metadata				value:GAUGE:0:100.1
-+
++gauge_arcstats_raw               value:GAUGE:0:U
++gauge_arcstats_raw_arcmeta       value:GAUGE:0:U
++gauge_arcstats_raw_counts        value:GAUGE:0:U
++gauge_arcstats_raw_cp            value:GAUGE:0:U
++gauge_arcstats_raw_demand        value:GAUGE:0:U
++gauge_arcstats_raw_duplicate     value:GAUGE:0:U
++gauge_arcstats_raw_evict         value:GAUGE:0:U
++gauge_arcstats_raw_hash          value:GAUGE:0:U
++gauge_arcstats_raw_hits_misses   value:GAUGE:0:U
++gauge_arcstats_raw_l2            value:GAUGE:0:U
++gauge_arcstats_raw_l2_compress   value:GAUGE:0:U
++gauge_arcstats_raw_l2_free       value:GAUGE:0:U
++gauge_arcstats_raw_l2abort       value:GAUGE:0:U
++gauge_arcstats_raw_l2bytes       value:GAUGE:0:U
++gauge_arcstats_raw_l2evict       value:GAUGE:0:U
++gauge_arcstats_raw_l2write       value:GAUGE:0:U
++gauge_arcstats_raw_l2writes      value:GAUGE:0:U
++gauge_arcstats_raw_memcount      value:GAUGE:0:U
++gauge_arcstats_raw_mru           value:GAUGE:0:U
++gauge_arcstats_raw_prefetch      value:GAUGE:0:U
++gauge_arcstats_raw_size          value:GAUGE:0:U
++arcstat_ratio_arc                value:GAUGE:0:100.1
++arcstat_ratio_mu                 value:GAUGE:0:100.1
++arcstat_ratio_l2                 value:GAUGE:0:100.1
++arcstat_ratio_data               value:GAUGE:0:100.1
++arcstat_ratio_metadata           value:GAUGE:0:100.1
 +
 +# geom_stat
-+
-+geom_queue			length:GAUGE:0:1048576
-+geom_ops			length:GAUGE:0:4294967295
-+geom_ops_rwd		read:GAUGE:0:4294967295, write:GAUGE:0:4294967295, delete:GAUGE:0:4294967295
-+geom_latency		read:GAUGE:0:1048576, write:GAUGE:0:1048576, delete:GAUGE:0:1048576
-+geom_bw				read:GAUGE:0:4294967295, write:GAUGE:0:4294967295, delete:GAUGE:0:4294967295
-+geom_busy_percent	value:GAUGE:0:150.1
++geom_queue             length:GAUGE:0:1048576
++geom_ops               length:GAUGE:0:4294967295
++geom_ops_rwd           read:GAUGE:0:4294967295, write:GAUGE:0:4294967295, delete:GAUGE:0:4294967295
++geom_latency           read:GAUGE:0:1048576, write:GAUGE:0:1048576, delete:GAUGE:0:1048576
++geom_bw                read:GAUGE:0:4294967295, write:GAUGE:0:4294967295, delete:GAUGE:0:4294967295
++geom_busy_percent      value:GAUGE:0:150.1
 +
