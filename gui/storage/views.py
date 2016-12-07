@@ -1418,10 +1418,9 @@ def tasks_json(request, dataset=None):
     if p.returncode != 0:
         zfsout = []
 
-    mp = '/mnt/' + dataset
-
     task_list = []
     if dataset:
+        mp = '/mnt/' + dataset
         for line in zfsout:
             if not line:
                 continue
