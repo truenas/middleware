@@ -93,12 +93,6 @@ def compress_pipecmds(compression):
     return (compress, decompress)
 
 
-def rcro():
-    if is_truenas:
-        return '-o readonly=on '
-    else:
-        return ''
-
 #
 # Attempt to send a snapshot or increamental stream to remote.
 #
