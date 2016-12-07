@@ -402,7 +402,7 @@ class bsdUsersForm(ModelForm, bsdUserGroupMixin):
                 saved_home = self.bsdusr_home_saved
 
                 if home.endswith(bsdusr_username):
-                    if home != saved_home:
+                    if self.instance.id and home != saved_home:
                         self.bsdusr_home_copy = True
                     return home
 
@@ -414,7 +414,7 @@ class bsdUsersForm(ModelForm, bsdUserGroupMixin):
                         _('Home directory must end with username')
                     )
 
-                if home != saved_home:
+                if self.instance.id and home != saved_home:
                     self.bsdusr_home_copy = True
 
                 return home
@@ -516,7 +516,7 @@ class bsdUsersForm(ModelForm, bsdUserGroupMixin):
                 uid=self.cleaned_data['bsdusr_uid'],
                 gid=gid,
                 shell=str(self.cleaned_data['bsdusr_shell']),
-                homedir=str(self.cleaned_data['bsdusr_home']),
+                homedir=self.cleaned_data['bsdusr_home'].encode('utf8'),
                 homedir_mode=int(
                     self.cleaned_data.get('bsdusr_mode', '755'),
                     8
