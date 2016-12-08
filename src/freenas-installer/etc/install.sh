@@ -283,13 +283,12 @@ ask_upgrade_inplace()
 {
     local _tmpfile="/tmp/msg"
     cat << EOD > "${_tmpfile}"
-User configuration settings and storage volumes are preserved and not affected by this step.
-
+User configuration settings and storage volumes are preserved and not affected by this step.\n\n
 The boot device can be formatted to remove old versions, or the upgrade can be installed in a new boot environment without affecting any existing versions.
 EOD
     _msg=`cat "${_tmpfile}"`
     rm -f "${_tmpfile}"
-    dialog --trim --title "Update Method Selection" --yes-label "Install in new boot environment" --no-label "Format the boot device" --yesno "${_msg}" 0 0
+    dialog --trim --title "Update Method Selection" --no-label "Install in new boot environment" --yes-label "Format the boot device" --yesno "${_msg}" 0 0
     return $?
 }
 
