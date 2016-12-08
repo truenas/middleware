@@ -370,14 +370,9 @@ def run_updated(train, location, download=True, apply=False):
         return returncode, uuid
 
 
-def manual_update(path, sha256):
+def manual_update(path):
     from freenasUI.middleware.notifier import notifier
     from freenasUI.middleware.exceptions import MiddlewareError
-
-    # Verify integrity of uploaded image.
-    checksum = notifier().checksum(path)
-    if checksum != sha256.lower().strip():
-        raise MiddlewareError("Invalid update file, wrong checksum")
 
     # Validate that the image would pass all pre-install
     # requirements.
