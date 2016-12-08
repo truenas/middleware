@@ -22,9 +22,7 @@ middlewared_start() {
 	else
 		${command} -f -P ${pidfile} -r /usr/local/bin/middlewared -f --log-handler=file
 	fi
-	# FIXME: add midctl command to wait for server to be ready
-	# for now, the old and brave sleep
-	sleep 5
+	LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/midclt -t 30 waitready
 }
 
 name="middlewared"
