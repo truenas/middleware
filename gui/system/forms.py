@@ -910,7 +910,6 @@ class ManualUpdateWizard(FileWizard):
 
     def done(self, form_list, **kwargs):
         cleaned_data = self.get_all_cleaned_data()
-        assert ('sha256' in cleaned_data)
         updatefile = cleaned_data.get('updatefile')
 
         _n = notifier()
@@ -921,20 +920,14 @@ class ManualUpdateWizard(FileWizard):
                 s = _n.failover_rpc(timeout=10)
                 s.notifier('create_upload_location', None, None)
                 _n.sync_file_send(s, path, '/var/tmp/firmware/update.tar.xz')
-                s.update_manual(
-                    '/var/tmp/firmware/update.tar.xz',
-                    cleaned_data['sha256'].encode('ascii', 'ignore'),
-                )
+                s.update_manual('/var/tmp/firmware/update.tar.xz')
                 try:
                     s.reboot()
                 except:
                     pass
                 response = render_to_response('failover/update_standby.html')
             else:
-                manual_update(
-                    path,
-                    cleaned_data['sha256'].encode('ascii', 'ignore'),
-                )
+                manual_update(path)
                 self.request.session['allow_reboot'] = True
                 response = render_to_response('system/done.html', {
                     'retval': getattr(self, 'retval', None),
@@ -1324,10 +1317,6 @@ class ManualUpdateTemporaryLocationForm(Form):
 
 class ManualUpdateUploadForm(Form):
     updatefile = FileField(label=_("Update file to be installed"), required=True)
-    sha256 = forms.CharField(
-        label=_("SHA256 sum for the image"),
-        required=True
-    )
 
 
 class ConfigUploadForm(Form):
