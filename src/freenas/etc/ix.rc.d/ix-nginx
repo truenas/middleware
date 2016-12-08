@@ -216,8 +216,8 @@ __EOF__
 			fi
 
 			cat << __EOF__
-	listen			${addr}:${httpsport} default_server ssl spdy;
-	listen			[${addr6}]:${httpsport} default_server ssl spdy;
+	listen			${addr}:${httpsport} default_server ssl http2;
+	listen			[${addr6}]:${httpsport} default_server ssl http2;
 
 	ssl_certificate		"${httpdcert}";
 	ssl_certificate_key	"${httpdkey}";
