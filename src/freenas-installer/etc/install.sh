@@ -288,7 +288,7 @@ The boot device can be formatted to remove old versions, or the upgrade can be i
 EOD
     _msg=`cat "${_tmpfile}"`
     rm -f "${_tmpfile}"
-    dialog --trim --title "Update Method Selection" --no-label "Install in new boot environment" --yes-label "Format the boot device" --yesno "${_msg}" 0 0
+    dialog --trim --title "Update Method Selection" --yes-label "Install in new boot environment" --no-label "Format the boot device" --yesno "${_msg}" 0 0
     return $?
 }
 
@@ -912,7 +912,7 @@ menu_install()
 	fi
 	# Ask if we want to do a format or inplace upgrade
         if ${INTERACTIVE}; then
-	    if ! ask_upgrade_inplace ; then
+	    if ask_upgrade_inplace ; then
 		_upgrade_type="inplace"
 	    fi
 	fi
