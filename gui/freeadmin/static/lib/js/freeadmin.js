@@ -2569,6 +2569,8 @@ require([
                 Menu.openSystem(item.gname);
             } else if(item.type == 'opentasks') {
                 Menu.openTasks(item.gname);
+            } else if(item.type == 'openvm') {
+                Menu.openVM(item.gname);
             } else if(item.type == 'opennetwork') {
                 Menu.openNetwork(item.gname);
             } else if(item.type == 'en_dis_services') {

@@ -1051,3 +1051,17 @@ AFP_MAP_ACLS_CHOICES = (
 CLOUD_PROVIDERS = (
     ('AMAZON', _('Amazon S3')),
 )
+
+
+VM_BOOTLOADER = (
+    ('BHYVELOAD', _('Bhyve Load')),
+    ('UEFI', _('UEFI')),
+    ('GRUB', _('Grub')),
+)
+
+
+VM_DEVTYPES = (
+    ('NIC', _('Network Interface')),
+    ('DISK', _('Disk')),
+    ('CDROM', _('CD-ROM')),
+)
