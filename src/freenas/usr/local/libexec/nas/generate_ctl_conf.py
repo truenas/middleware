@@ -104,6 +104,12 @@ def main():
 
     client = Client()
 
+    # If anything goes wrong here set alua = False which will preserve existing behavior.
+    try:
+        alua = client.call('datastore.query', 'services.iSCSITargetGlobalConfiguration', [], {'get': True})['iscsi_alua']
+    except:
+        alua = False
+
     gconf = Struct(client.call('datastore.query', 'services.iSCSITargetGlobalConfiguration', None, {'get': True}))
 
     if gconf.iscsi_isns_servers:
@@ -138,11 +144,40 @@ def main():
             for i in client.call('datastore.query', 'services.iSCSITargetPortalIP', [('iscsi_target_portalip_portal', '=', portal.id)])
         ]
         for obj in listen:
-            if ':' in obj.iscsi_target_portalip_ip:
-                address = '[%s]' % obj.iscsi_target_portalip_ip
+            # Be paranoid and check for FreeNAS here.
+            if not alua or client.call('notifier.is_freenas'):
+                if ':' in obj.iscsi_target_portalip_ip:
+                    address = '[%s]' % obj.iscsi_target_portalip_ip
+                else:
+                    address = obj.iscsi_target_portalip_ip
             else:
-                address = obj.iscsi_target_portalip_ip
+                # The ALUA GUI is only available on HA TrueNAS systems.
+                node = client.call('notifier.failover_node')
+                # ALUA is on, do special handling for the listen IPs.
+                # Translate the VIP listen IP (in the database) to the corrosponding node specific IP.
+                if ':' in obj.iscsi_target_portalip_ip:
+                    address = '[%s]' % obj.iscsi_target_portalip_ip
+                else:
+                    address = obj.iscsi_target_portalip_ip
+                found = False
+                for net in client.call('datastore.query', 'network.Interfaces'):
+                    if net['int_vip'] == address:
+                        if node == 'A':
+                            address = net['int_ipv4address']
+                        else:
+                            address = net['int_ipv4address_b']
+                        found = True
+                        break
+                if not found:
+                    for alias in client.call('datastore.query', 'network.Alias'):
+                        if alias['alias_vip'] == address:
+                            if node == 'A':
+                                address = alias['alias_v4address']
+                            else:
+                                address = alias['alias_v4address_b']
+                            break
             addline("\tlisten %s:%s\n" % (address, obj.iscsi_target_portalip_port))
+
         addline("\toption ha_shared on\n")
         addline("}\n\n")
 
