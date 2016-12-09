@@ -307,10 +307,16 @@ class DatasetResource(DojoResource):
 
     def obj_create(self, bundle, **kwargs):
         bundle = self.full_hydrate(bundle)
+        extraProps = dict(bundle.data)
+        if 'name' in extraProps:
+            extraProps.pop('name',None)
+        if 'parent' in extraProps:
+            extraProps.pop('parent',None)
+
         err, msg = notifier().create_zfs_dataset(path='%s/%s' % (
             kwargs.get('parent').vol_name,
             bundle.data.get('name'),
-        ))
+        ),props=extraProps)
         if err:
             bundle.errors['__all__'] = msg
             raise ImmediateHttpResponse(
