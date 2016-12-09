@@ -242,7 +242,7 @@ def send_mail(
     error = False
     errmsg = ''
     em = Email.objects.all().order_by('-id')[0]
-    if not to:
+    if not to or not to[0]:
         to = [bsdUsers.objects.get(bsdusr_username='root').bsdusr_email]
         if not to[0]:
             return False, 'Email address for root is not configured'
