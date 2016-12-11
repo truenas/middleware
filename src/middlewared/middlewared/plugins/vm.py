@@ -6,6 +6,7 @@ import gevent
 import netif
 import os
 import subprocess
+import sysctl
 
 
 class VMManager(object):
@@ -64,11 +65,8 @@ class VMSupervisor(object):
             args += [
                 '-l', 'bootrom,/usr/local/share/uefi-firmware/BHYVE_UEFI{}.fd'.format('_CSM' if self.vm['bootloader'] == 'UEFI_CSM' else ''),
             ]
-            idx = 3
-        else:
-            idx = 1
 
-        nid = Nid(idx)
+        nid = Nid(3)
         for device in self.vm['devices']:
             if device['dtype'] == 'DISK':
                 if device['attributes'].get('mode') == 'AHCI':
@@ -144,6 +142,17 @@ class VMService(CRUDService):
     def __init__(self, *args, **kwargs):
         super(VMService, self).__init__(*args, **kwargs)
         self._manager = VMManager(self)
+
+    def flags(self):
+        data = {}
+
+        vmx = sysctl.filter('hw.vmm.vmx.initialized')
+        data['intel_vmx'] = True if vmx and vmx[0].value else False
+
+        ug = sysctl.filter('hw.vmm.vmx.cap.unrestricted_guest')
+        data['unrestricted_guest'] = True if ug and ug[0].value else False
+
+        return data
 
     def query(self, filters=None, options=None):
         options = options or {}

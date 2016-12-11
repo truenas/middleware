@@ -29,10 +29,13 @@ from django.shortcuts import render
 from freenasUI.freeadmin.apppool import appPool
 from freenasUI.freeadmin.views import JsonResp
 from freenasUI.middleware.client import client
-from freenasUI.vm import models
+from freenasUI.vm import models, utils
 
 
 def home(request):
+
+    if not utils.vm_enabled():
+        return render(request, 'vm/disabled.html')
 
     view = appPool.hook_app_index('vm', request)
     view = filter(None, view)
