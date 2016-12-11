@@ -1,6 +1,7 @@
 from middlewared.service import CRUDService
 from middlewared.utils import Popen
 
+import gevent
 import subprocess
 
 
@@ -16,12 +17,12 @@ class VMSupervisor(object):
             '-A',
             '-P',
             '-H',
-            '-c', str(vm['vcpus']),
-            '-m', str(vm['memory']),
+            '-c', str(self.vm['vcpus']),
+            '-m', str(self.vm['memory']),
             '-l', 'com1,stdio',
         ]
 
-        if vm['bootloader'] == 'UEFI':
+        if self.vm['bootloader'] == 'UEFI':
             args.extend([
                 '-l', 'bootrom,/usr/local/share/uefi-firmware/BHYVE_UEFI.fd'
             ])
@@ -30,11 +31,16 @@ class VMSupervisor(object):
             args.extend(['-s', '0:0,hostbridge'])
             idx = 1
 
+        args.append(self.vm['name'])
+
+        self.service.logger.debug('Starting bhyve: {}'.format(' '.join(args)))
         proc = Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
         for line in proc.stdout:
-            self.service.logger.debug('{}: {}', self.vm['name'], line)
+            self.service.logger.debug('{}: {}'.format(self.vm['name'], line))
 
         proc.wait()
+
+        Popen(['bhyvectl', '--destroy', '--vm={}'.format(self.vm['name'])], stdout=subprocess.PIPE, stderr=subprocess.PIPE).wait()
 
 
 class VMService(CRUDService):
@@ -59,8 +65,9 @@ class VMService(CRUDService):
         return self.middleware.call('datastore.delete', 'vm.vm', id)
 
     def start(self, id):
-        vm = self.query(('id', '=', id), {'get': True})
+        vm = self.query([('id', '=', id)], {'get': True})
 
         supervisor = self.__vm[id] = VMSupervisor(self, vm)
+        gevent.spawn(supervisor.run)
 
         return True

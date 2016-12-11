@@ -129,7 +129,7 @@ define([
             }
 
             if(opened == false) {
-                openurl = this.urlTasks;
+                openurl = this.urlVM;
                 if(tab) {
                     openurl += '?tab='+tab;
                 }

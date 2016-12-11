@@ -81,3 +81,6 @@ class Device(Model):
     attributes = DictField(
         editable=False,
     )
+
+    def __unicode__(self):
+        return '{0}:{1}'.format(self.vm, self.get_dtype_display())

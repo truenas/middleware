@@ -3585,3 +3585,23 @@ class FCPortsResource(DojoResource):
 
 class FibreChannelToTargetResourceMixin:
     pass
+
+
+class DeviceResourceMixin(object):
+
+    def dehydrate(self, bundle):
+        bundle = super(DeviceResourceMixin, self).dehydrate(bundle)
+        if self.is_webclient(bundle.request):
+            bundle.data['vm'] = str(bundle.obj.vm)
+        return bundle
+
+
+class VMResourceMixin(object):
+
+    def dehydrate(self, bundle):
+        bundle = super(VMResourceMixin, self).dehydrate(bundle)
+        if self.is_webclient(bundle.request):
+            bundle.data['_device_url'] = reverse(
+                'freeadmin_vm_device_datagrid'
+            ) + '?id=%d' % bundle.obj.id
+        return bundle
