@@ -27,6 +27,10 @@ class VMForm(ModelForm):
                 c.call('vm.update', self.instance.id, cdata)
                 pk = self.instance.id
             else:
+                cdata['devices'] = [
+                    {'dtype': 'NIC', 'attributes': {'type': 'E1000'}},
+                    {'dtype': 'VNC', 'attributes': {'wait': True}},
+                ]
                 pk = c.call('vm.create', cdata)
         return models.VM.objects.get(pk=pk)
 

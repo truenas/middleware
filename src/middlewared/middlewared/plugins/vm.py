@@ -168,7 +168,14 @@ class VMService(CRUDService):
         return vm
 
     def do_create(self, data):
-        return self.middleware.call('datastore.insert', 'vm.vm', data)
+
+        devices = data.pop('devices')
+        pk = self.middleware.call('datastore.insert', 'vm.vm', data)
+
+        for device in devices:
+            device['vm'] = pk
+            self.middleware.call('datastore.insert', 'vm.device', device)
+        return pk
 
     def do_update(self, id, data):
         return self.middleware.call('datastore.update', 'vm.vm', id, data)
