@@ -3589,6 +3589,17 @@ class FibreChannelToTargetResourceMixin:
 
 class DeviceResourceMixin(object):
 
+    def build_filters(self, filters=None):
+        if filters is None:
+            filters = {}
+        orm_filters = super(
+            DeviceResourceMixin,
+            self).build_filters(filters)
+        vmid = filters.get("vm__id")
+        if vmid:
+            orm_filters["vm__id"] = vmid
+        return orm_filters
+
     def dehydrate(self, bundle):
         bundle = super(DeviceResourceMixin, self).dehydrate(bundle)
         if self.is_webclient(bundle.request):
