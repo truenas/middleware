@@ -1,4 +1,5 @@
 import logging
+import re
 
 from django.utils.translation import ugettext_lazy as _
 
@@ -19,6 +20,14 @@ class VMForm(ModelForm):
     class Meta:
         fields = '__all__'
         model = models.VM
+
+    def clean_name(self):
+        name = self.cleaned_data.get('name')
+        if name:
+            if not re.search(r'^[a-zA-Z _0-9]+$', name):
+                raise forms.ValidationError(_('Only alphanumeric characters are allowed.'))
+            name = name.replace(' ', '')
+        return name
 
     def save(self, **kwargs):
         with client as c:
