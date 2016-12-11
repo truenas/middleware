@@ -27,6 +27,9 @@
 from django.shortcuts import render
 
 from freenasUI.freeadmin.apppool import appPool
+from freenasUI.freeadmin.views import JsonResp
+from freenasUI.middleware.client import client
+from freenasUI.vm import models
 
 
 def home(request):
@@ -40,4 +43,26 @@ def home(request):
     return render(request, 'vm/index.html', {
         'focused_tab': request.GET.get('tab', 'vm.VM'),
         'hook_tabs': tabs,
+    })
+
+
+def start(request, id):
+    vm = models.VM.objects.get(id=id)
+    if request.method == 'POST':
+        with client as c:
+            c.call('vm.start', id)
+        return JsonResp(request, message='VM Started')
+    return render(request, "vm/start.html", {
+        'name': vm.name,
+    })
+
+
+def stop(request, id):
+    vm = models.VM.objects.get(id=id)
+    if request.method == 'POST':
+        with client as c:
+            c.call('vm.stop', id)
+        return JsonResp(request, message='VM Stopped')
+    return render(request, "vm/stop.html", {
+        'name': vm.name,
     })

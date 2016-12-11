@@ -115,7 +115,7 @@ class Int(Attribute):
 
     def clean(self, value):
         if not isinstance(value, int):
-            if isinstance(value, str) and value.isdigit():
+            if isinstance(value, (str, unicode)) and value.isdigit():
                 return int(value)
             raise Error(self.name, 'Not an integer')
         return value

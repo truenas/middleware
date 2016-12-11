@@ -45,6 +45,7 @@ class VM(Model):
     description = models.CharField(
         max_length=250,
         verbose_name=_('Description'),
+        blank=True,
     )
     vcpus = models.IntegerField(
         verbose_name=_('Virtual CPUs'),
@@ -57,7 +58,7 @@ class VM(Model):
         verbose_name=_('Boot Loader'),
         max_length=50,
         choices=choices.VM_BOOTLOADER,
-        default='GRUB',
+        default='UEFI',
     )
 
     class Meta:

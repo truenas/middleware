@@ -1054,9 +1054,10 @@ CLOUD_PROVIDERS = (
 
 
 VM_BOOTLOADER = (
-    ('BHYVELOAD', _('Bhyve Load')),
+    #('BHYVELOAD', _('Bhyve Load')),
     ('UEFI', _('UEFI')),
-    ('GRUB', _('Grub')),
+    ('UEFI_CSM', _('UEFI-CSM')),
+    #('GRUB', _('Grub')),
 )
 
 
@@ -1064,4 +1065,5 @@ VM_DEVTYPES = (
     ('NIC', _('Network Interface')),
     ('DISK', _('Disk')),
     ('CDROM', _('CD-ROM')),
+    ('VNC', _('VNC')),
 )

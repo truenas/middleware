@@ -1,0 +1,11 @@
+<div data-dojo-type="dijit.layout.TabContainer" style="width:100%;" id="tab_vm" data-dojo-props="doLayout:true, nested: true" title="{% trans "VMs" %}">
+
+{% for tab in hook_tabs %}
+    <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="title: '{{ tab.verbose_name|escapejs }}'
+    {% if focused_tab == tab.focus %}, selected: true{% endif %},
+    href: '{{ tab.url }}',
+    doLayout:false, refreshOnShow: true" class="objrefresh data_system_{{ tab.name }}" tab="{{ tab.focus }}" id="tab_{{ tab.name }}">
+    </div>
+{% endfor %}
+
+</div>

@@ -3604,4 +3604,23 @@ class VMResourceMixin(object):
             bundle.data['_device_url'] = reverse(
                 'freeadmin_vm_device_datagrid'
             ) + '?id=%d' % bundle.obj.id
+            info = ''
+            try:
+                with client as c:
+                    status = c.call('vm.status', bundle.obj.id)
+                    bundle.data['state'] = status['state']
+                    info += 'State: {}<br />'.format(status['state'])
+                    if status['state'] == 'RUNNING':
+                        bundle.data['_stop_url'] = reverse(
+                            'vm_stop', kwargs={'id': bundle.obj.id},
+                        )
+                    elif status['state'] == 'STOPPED':
+                        bundle.data['_start_url'] = reverse(
+                            'vm_start', kwargs={'id': bundle.obj.id},
+                        )
+            except:
+                log.warn('Failed to get status', exc_info=True)
+            if bundle.obj.device_set.filter(dtype='VNC').exists():
+                info += 'VNC Port: {}<br />'.format(5900 + bundle.obj.id)
+            bundle.data['info'] = info
         return bundle

@@ -64,7 +64,61 @@ class VMFAdmin(BaseFreeAdmin):
             }""" % {
                 'devices': _('Devices'),
             }}
+        actions['Start'] = {
+            'button_name': _('Start'),
+            'on_click': """function() {
+                var mybtn = this;
+                for (var i in grid.selection) {
+                    var data = grid.row(i).data;
+                    editObject('Start', data._start_url, [mybtn,]);
+                }
+            }""",
+            'on_select_after': """function(evt, actionName, action) {
+                for(var i=0;i < evt.rows.length;i++) {
+                    var row = evt.rows[i];
+                    if (row.data.state == 'RUNNING') {
+                        query(".grid" + actionName).forEach(function(item, idx) {
+                            domStyle.set(item, "display", "none");
+                        });
+                        break;
+                    }
+                }
+            }""",
+        }
+        actions['Stop'] = {
+            'button_name': _('Stop'),
+            'on_click': """function() {
+                var mybtn = this;
+                for (var i in grid.selection) {
+                    var data = grid.row(i).data;
+                    editObject('Stop', data._stop_url, [mybtn,]);
+                }
+            }""",
+            'on_select_after': """function(evt, actionName, action) {
+                for(var i=0;i < evt.rows.length;i++) {
+                    var row = evt.rows[i];
+                    if (row.data.state == 'STOPPED') {
+                        query(".grid" + actionName).forEach(function(item, idx) {
+                            domStyle.set(item, "display", "none");
+                        });
+                        break;
+                    }
+                }
+            }""",
+        }
         return actions
+
+    def get_datagrid_columns(self):
+        columns = super(VMFAdmin, self).get_datagrid_columns()
+        columns.insert(2, {
+            'name': 'info',
+            'label': _('Info'),
+            'sortable': False,
+            'formatter': """function(value,obj) {
+                return value;
+            }""",
+        })
+        return columns
 
 
 site.register(models.Device, DeviceFAdmin)

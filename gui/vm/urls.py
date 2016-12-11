@@ -30,4 +30,6 @@ from django.conf.urls import patterns, url
 urlpatterns = patterns(
     'freenasUI.vm.views',
     url(r'^$', 'home', name="vm_home"),
+    url(r'^start/(?P<id>\d+)/$', 'start', name="vm_start"),
+    url(r'^stop/(?P<id>\d+)/$', 'stop', name="vm_stop"),
 )
