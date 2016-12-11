@@ -29,13 +29,13 @@ class VMManager(object):
 
     def status(self, id):
         supervisor = self._vm.get(id)
-        if not supervisor:
+        if supervisor and supervisor.running():
             return {
-                'state': 'STOPPED',
+                'state': 'RUNNING',
             }
         else:
             return {
-                'state': 'RUNNING',
+                'state': 'STOPPED',
             }
 
 
@@ -88,7 +88,7 @@ class VMSupervisor(object):
                             bridge = iface
                             break
                     if not bridge:
-                        bridge = netif.create_interface('bridge')
+                        bridge = netif.get_interface(netif.create_interface('bridge'))
                     bridge.add_member(tapname)
 
                     defiface = Popen("route -nv show default|grep -w interface|awk '{ print $2 }'", stdout=subprocess.PIPE, shell=True).communicate()[0].strip()
@@ -132,6 +132,15 @@ class VMSupervisor(object):
         if self.proc:
             os.kill(self.proc.pid, 15)
             return True
+
+    def running(self):
+        if self.proc:
+            try:
+                os.kill(self.proc.pid, 0)
+            except OSError:
+                return False
+            return True
+        return False
 
 
 class VMService(CRUDService):
