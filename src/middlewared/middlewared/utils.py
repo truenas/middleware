@@ -1,5 +1,10 @@
+import sys
 import bsd
 import subprocess
+
+if '/usr/local/lib' not in sys.path:
+    sys.path.append('/usr/local/lib')
+from freenasOS import Configuration
 
 
 def django_modelobj_serialize(middleware, obj, extend=None):
@@ -86,3 +91,13 @@ def filter_list(_list, filters=None, options=None):
         return rv[0]
 
     return rv
+
+
+def sw_version_is_stable():
+
+    conf = Configuration.Configuration()
+
+    if 'stable' in conf.CurrentTrain().lower():
+        return True
+    else:
+        return False

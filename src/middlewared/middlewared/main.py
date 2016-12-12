@@ -2,7 +2,7 @@ from gevent import monkey
 monkey.patch_all()
 
 from .client import ejson as json
-from .utils import Popen
+from .utils import Popen, sw_version_is_stable
 from collections import OrderedDict, defaultdict
 from client.protocol import DDPProtocol
 from daemon import DaemonContext
@@ -402,9 +402,17 @@ class Middleware(object):
 
     def rollbar_report(self, exc_info):
 
-        # Allow rollbar to be disabled via sentinel file or environment var
+        # Allow rollbar to be disabled via sentinel file or environment var,
+        # if FreeNAS current train is STABLE, the sentinel file path will be /tmp/,
+        # otherwise it's path will be /data/ and can be persistent.
+        sentinel_file_path = '/data/.rollbar_disabled'
+        if sw_version_is_stable():
+            sentinel_file_path = '/tmp/.rollbar_disabled'
+
+        self.logger.debug('rollbar is disabled using sentinel file: {0}'.format(sentinel_file_path))
+
         if (
-            os.path.exists('/tmp/.rollbar_disabled') or
+            os.path.exists(sentinel_file_path) or
             'ROLLBAR_DISABLED' in os.environ
         ):
             return
