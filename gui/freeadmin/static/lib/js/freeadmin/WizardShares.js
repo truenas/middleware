@@ -204,13 +204,13 @@ define([
 
       me._storeUsers = new ItemFileReadStore({
         url: "/account/bsduser/json/?wizard=1",
-        clearOnClose: true,
+        clearOnClose: true
       });
       me._storeUsers.fetch();
 
       me._storeGroups = new ItemFileReadStore({
         url: "/account/bsdgroup/json/?wizard=1",
-        clearOnClose: true,
+        clearOnClose: true
       });
       me._storeGroups.fetch();
 
