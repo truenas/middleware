@@ -1,10 +1,12 @@
 from . import ejson as json
 from protocol import DDPProtocol
-from threading import Event
+from threading import Event, Thread
 from ws4py.client.threadedclient import WebSocketClient
 
 import argparse
+import socket
 import sys
+import time
 import uuid
 
 
@@ -192,6 +194,8 @@ def main():
 
     iparser = subparsers.add_parser('ping', help='Ping')
 
+    iparser = subparsers.add_parser('waitready', help='Wait server')
+
     iparser = subparsers.add_parser('sql', help='Run SQL command')
     iparser.add_argument('sql', nargs='+')
     args = parser.parse_args()
@@ -203,8 +207,8 @@ def main():
             except:
                 yield i
 
-    with Client(uri=args.uri) as c:
-        if args.name == 'call':
+    if args.name == 'call':
+        with Client(uri=args.uri) as c:
             try:
                 if args.username and args.password:
                     if not c.call('auth.login', args.username, args.password):
@@ -225,10 +229,12 @@ def main():
                 if not args.quiet:
                     print >> sys.stderr, e.trace['formatted']
                 sys.exit(1)
-        elif args.name == 'ping':
+    elif args.name == 'ping':
+        with Client(uri=args.uri) as c:
             if not c.ping():
                 sys.exit(1)
-        elif args.name == 'sql':
+    elif args.name == 'sql':
+        with Client(uri=args.uri) as c:
             try:
                 if args.username and args.password:
                     if not c.call('auth.login', args.username, args.password):
@@ -246,6 +252,31 @@ def main():
                         else:
                             data.append(str(f))
                     print '|'.join(data)
+    elif args.name == 'waitready':
+        """
+        This command is supposed to wait until we are able to connect
+        to middleware and perform a simple operation (core.ping)
+
+        Reason behind this is because middlewared starts and we have to
+        wait the boot process until it is ready to serve connections
+        """
+        def waitready(args):
+            while True:
+                try:
+                    with Client(uri=args.uri) as c:
+                        return c.call('core.ping')
+                except socket.error:
+                    time.sleep(0.2)
+                    continue
+
+        thread = Thread(target=waitready, args=[args])
+        thread.daemon = True
+        thread.start()
+        thread.join(args.timeout)
+        if thread.is_alive():
+            sys.exit(1)
+        else:
+            sys.exit(0)
 
 if __name__ == '__main__':
     main()
