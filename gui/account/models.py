@@ -178,7 +178,7 @@ class bsdUsers(Model):
 
     @property
     def bsdusr_sshpubkey(self):
-        keysfile = '%s/.ssh/authorized_keys' % self.bsdusr_home
+        keysfile = '%s/.ssh/authorized_keys' % self.bsdusr_home.encode('utf8')
         if not os.path.exists(keysfile):
             return ''
         try:
