@@ -77,10 +77,10 @@ class FormRender(template.Node):
 </td></tr>""" % (prefix,))
 
         if model:
-            for label, fields in model._admin.composed_fields:
+            for label, fields, help_text in model._admin.composed_fields:
                 for field in fields[1:]:
                     new_fields.remove(field)
-                composed[fields[0]] = (label, fields)
+                composed[fields[0]] = (label, fields, help_text)
 
         advanced_fields = getattr(form, 'advanced_fields', [])
         for field in new_fields:
@@ -88,7 +88,7 @@ class FormRender(template.Node):
             _hide = ' style="display:none;"' if not adv_mode and is_adv else ''
             is_adv = ' class="advancedField"' if is_adv else ''
             if field in composed:
-                label, fields = composed.get(field)
+                label, fields, help_text = composed.get(field)
                 html = u"""<tr><th><label%s>%s</label></th><td>""" % (
                     _hide,
                     label)
@@ -98,6 +98,13 @@ class FormRender(template.Node):
                         [conditional_escape(error) for error in bf.errors]
                     )
                     html += unicode(bf_errors) + unicode(bf)
+
+                if help_text:
+                    html += """<div data-dojo-type="dijit.Tooltip" data-dojo-props="connectId: '%(id)shelp', showDelay: 200">%(text)s</div><img id="%(id)shelp" src="/static/images/ui/MoreInformation_16x16px.png" style="width:16px; height: 16px; cursor: help;" />""" % {
+                        'id': bf.auto_id,
+                        'text': help_text,
+                    }
+
                 html += u"</td></tr>"
                 output.append(html)
             else:
