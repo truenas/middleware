@@ -52,11 +52,11 @@ class ReplicationService(Service):
             # which will then result in new host keys we need to grab
             ssh = self.middleware.call('datastore.query', 'services.ssh', None, {'get': True})
 
-        if not os.path.exists(user['bsdusr_home']):
+        if not os.path.exists(user['bsdusr_home'].encode('utf8')):
             raise ValueError('Homedir {} does not exist'.format(user['bsdusr_home']))
 
         # Write public key in user authorized_keys for SSH
-        authorized_keys_file = '{}/.ssh/authorized_keys'.format(user['bsdusr_home'])
+        authorized_keys_file = '{}/.ssh/authorized_keys'.format(user['bsdusr_home'].encode('utf8'))
         with open(authorized_keys_file, 'a+') as f:
             f.seek(0)
             if data['public-key'] not in f.read():
