@@ -2699,8 +2699,14 @@ class notifier:
             raise MiddlewareError('Failed to apply update %s: %s' % (str(cpe), cpe.output))
         finally:
             os.chdir('/')
-            os.unlink(path)
-            os.unlink(INSTALLFILE)
+            try:
+                os.unlink(path)
+            except OSError:
+                pass
+            try:
+                os.unlink(INSTALLFILE)
+            except OSError:
+                pass
         open(NEED_UPDATE_SENTINEL, 'w').close()
 
     def umount_filesystems_within(self, path):
