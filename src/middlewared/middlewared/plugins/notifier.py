@@ -19,6 +19,7 @@ from freenasUI.common.freenasldap import (
     FLAGS_DBINIT,
 )
 from freenasUI.common.samba import Samba4
+from freenasUI.common.warden import Warden
 from freenasUI.middleware import zfs
 from freenasUI.middleware.notifier import notifier
 from freenasUI.directoryservice.models import (
@@ -69,6 +70,14 @@ class NotifierService(Service):
         subsystem = getattr(fcommon, name)
         rv = getattr(subsystem, method)(*params)
         return rv
+
+    def warden(self, method, params=None, kwargs=None):
+        if params is None:
+            params = []
+        if kwargs is None:
+            kwargs = {}
+        method = getattr(Warden(), method)
+        return method(*params, **kwargs)
 
     def zpool_list(self, name=None):
         """Wrapper for zfs.zpool_list"""

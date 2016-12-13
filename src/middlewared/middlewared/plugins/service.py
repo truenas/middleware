@@ -268,16 +268,14 @@ class ServiceService(Service):
         self.middleware.call('routes.sync')
 
     def _stop_jails(self):
-        from freenasUI.jails.models import Jails
-        for jail in Jails.objects.all():
-            Warden().stop(jail=jail.jail_host)
+        for jail in self.middleware.call('datastore.query', 'jails.jails'):
+            self.middleware.call('notifier.warden', 'stop', [], {'jail': jail['jail_host']})
 
     def _start_jails(self):
         self._system("/usr/sbin/service ix-warden start")
-        from freenasUI.jails.models import Jails
-        for jail in Jails.objects.all():
-            if jail.jail_autostart:
-                Warden().start(jail=jail.jail_host)
+        for jail in self.middleware.call('datastore.query', 'jails.jails'):
+            if jail['jail_autostart']:
+                self.middleware.call('notifier.warden', 'start', [], {'jail': jail['jail_host']})
         self._system("/usr/sbin/service ix-plugins start")
         self.reload("http")
 
