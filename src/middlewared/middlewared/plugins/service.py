@@ -683,32 +683,6 @@ class ServiceService(Service):
                 res = True
         return res
 
-    def pluginjail_running(self, pjail=None):
-        running = False
-
-        try:
-            wlist = Warden().cached_list()
-            for wj in wlist:
-                wj = WardenJail(**wj)
-                if pjail and wj.host == pjail:
-                    if (
-                        wj.type == WARDEN_TYPE_PLUGINJAIL and
-                        wj.status == WARDEN_STATUS_RUNNING
-                    ):
-                        running = True
-                        break
-
-                elif (
-                    not pjail and wj.type == WARDEN_TYPE_PLUGINJAIL and
-                    wj.status == WARDEN_STATUS_RUNNING
-                ):
-                    running = True
-                    break
-        except:
-            pass
-
-        return running
-
     def start_ataidle(self, what=None):
         if what is not None:
             self._system("/usr/sbin/service ix-ataidle quietstart %s" % what)
