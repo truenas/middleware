@@ -488,24 +488,22 @@ class IPChoices(NICChoices):
         nolagg=False,
         novlan=False,
         exclude_configured=False,
-        include_vlan_parent=True,
-        alua=None
+        include_vlan_parent=True
     ):
         super(IPChoices, self).__init__(
             nolagg=nolagg,
             novlan=novlan,
             exclude_configured=exclude_configured,
-            include_vlan_parent=include_vlan_parent,
+            include_vlan_parent=include_vlan_parent
         )
 
-        self.alua = alua
         from freenasUI.middleware.notifier import notifier
         _n = notifier()
-        self.carp = False
+        carp = False
         if not _n.is_freenas():
             try:
                 if _n.failover_status() not in ('SINGLE', 'ERROR'):
-                    self.carp = True
+                    carp = True
             except sqlite3.OperationalError:
                 pass
 
@@ -514,25 +512,14 @@ class IPChoices(NICChoices):
             pipe = popen("/sbin/ifconfig %s" % iface)
             lines = pipe.read().strip().split('\n')
             for line in lines:
-                # If alua is True we want to strip out carp address
-                # if alua is False we want to strip out non-carp addresses
-                # if alua in None we want to preserve the existing behavior
-                if alua is False:
-                    if self.carp:
-                        reg = re.search(r' vhid (\d+)', line)
-                        if reg:
-                            pass
-                        else:
+                if carp:
+                    reg = re.search(r' vhid (\d+)', line)
+                    if reg:
+                        vhid = reg.group(1)
+                        if vhid in ('10', '20'):
                             continue
-                elif alua is True:
-                    if self.carp:
-                        reg = re.search(r' vhid (\d+)', line)
-                        if reg:
-                            continue
-                        else:
-                            pass
-                elif alua is None:
-                    pass
+                    else:
+                        continue
                 if line.startswith('\tinet6'):
                     if ipv6 is True:
                         self._IPlist.append(line.split(' ')[1].split('%')[0])
@@ -548,76 +535,7 @@ class IPChoices(NICChoices):
     def __iter__(self):
         if not self._IPlist:
             return iter([('0.0.0.0', '0.0.0.0')])
-        from freenasUI.network.models import Interfaces, Alias
-        from itertools import chain
-        self.iface = []
-        self.iface_b = []
-        self.alias = []
-        self.alias_b = []
-        self.wildcard = ['0.0.0.0']
-        if self.alua is True:
-            from freenasUI.middleware.notifier import notifier
-            _n = notifier()
-            self.nodename = _n.failover_node()
-            for i in self._IPlist:
-                if Interfaces.objects.filter(int_ipv4address=i):
-                    self.iface.append(i)
-                if Interfaces.objects.filter(int_ipv4address_b=i):
-                    self.iface_b.append(i)
-                if Alias.objects.filter(alias_v4address=i):
-                    self.alias.append(i)
-                if Alias.objects.filter(alias_v4address_b=i):
-                    self.alias_b.append(i)
-
-            def gen1():
-                if self.nodename == 'B':
-                    return iter(("%s" % Interfaces.objects.filter(int_ipv4address=i)[0].int_vip.exploded, "%s" % \
-                                 Interfaces.objects.filter(int_ipv4address=i)[0].int_ipv4address_b.exploded) for i in self.iface)
-                else:
-                    return iter(("%s" % Interfaces.objects.filter(int_ipv4address=i)[0].int_vip.exploded, "%s" % i) for i in self.iface)
-
-            def gen2():
-                if self.nodename == 'B':
-                    return iter(("%s" % Interfaces.objects.filter(int_ipv4address_b=i)[0].int_vip.exploded, "%s" % i) for i in self.iface_b)
-                else:
-                    return iter(("%s" % Interfaces.objects.filter(int_ipv4address_b=i)[0].int_vip.exploded, "%s" % \
-                                 Interfaces.objects.filter(int_ipv4address_b=i)[0].int_ipv4address.exploded) for i in self.iface_b)
-                    
-            def gen3():
-                if self.nodename == 'B':
-                    return iter(("%s" % Alias.objects.filter(alias_v4address=i)[0].alias_vip.exploded, "%s" % \
-                                 Alias.objects.filter(alias_v4address=i)[0].alias_v4address_b.exploded) for i in self.alias)
-                else:
-                    return iter(("%s" % Alias.objects.filter(alias_v4address=i)[0].alias_vip.exploded, "%s" % i) for i in self.alias)
-
-            def gen4():
-                if self.nodename == 'B':
-                    return iter(("%s" % Alias.objects.filter(alias_v4address_b=i)[0].alias_vip.exploded, "%s" % i) for i in self.alias_b)
-                else:
-                    return iter(("%s" % Alias.objects.filter(alias_v4address_b=i)[0].alias_vip.exploded, "%s" % \
-                                 Alias.objects.filter(alias_v4address_b=i)[0].alias_v4address.exploded) for i in self.alias_b)
-
-            def gen5():
-                return iter((i, i) for i in self.wildcard)
-
-            return chain(gen1(), gen2(), gen3(), gen4(), gen5())
-
-        elif self.alua is False and self.carp is True:
-            for i in self._IPlist:
-                if Interfaces.objects.filter(int_vip=i):
-                    self.iface.append(i)
-                if Alias.objects.filter(alias_vip=i):
-                    self.alias.append(i)
-            def gen1():
-                return iter((i, i) for i in self.iface)
-            def gen2():
-                return iter((i, i) for i in self.alias)
-            def gen3():
-                return iter((i, i) for i in self.wildcard)
-            return chain(gen1(), gen2(), gen3())
-        else:
-            self._IPlist.append('0.0.0.0')
-            return iter((i, i) for i in self._IPlist)
+        return iter((i, i) for i in self._IPlist)
 
 
 class TimeZoneChoices:
