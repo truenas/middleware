@@ -135,9 +135,9 @@ class ServiceService(Service):
 
             if pidfile:
                 procname = " " + procname if procname else ""
-                retval = self._pipeopen("/bin/pgrep -F %s%s" % (pidfile, procname)).wait()
+                retval = self._system("/bin/pgrep -F %s%s" % (pidfile, procname))
             else:
-                retval = self._pipeopen("/bin/pgrep %s" % (procname,)).wait()
+                retval = self._system("/bin/pgrep %s" % (procname,))
 
             if retval == 0:
                 return True
@@ -213,10 +213,10 @@ class ServiceService(Service):
         self._system("/usr/sbin/service django restart")
 
     def _start_webshell(self):
-        self._system_nolog("/usr/local/bin/python /usr/local/www/freenasUI/tools/webshell.py")
+        self._system("/usr/local/bin/python /usr/local/www/freenasUI/tools/webshell.py")
 
     def _start_backup(self):
-        self._system_nolog("/usr/local/bin/python /usr/local/www/freenasUI/tools/backup.py")
+        self._system("/usr/local/bin/python /usr/local/www/freenasUI/tools/backup.py")
 
     def _restart_webshell(self):
         try:
@@ -226,7 +226,7 @@ class ServiceService(Service):
                 time.sleep(0.2)
         except:
             pass
-        self._system_nolog("ulimit -n 1024 && /usr/local/bin/python /usr/local/www/freenasUI/tools/webshell.py")
+        self._system("ulimit -n 1024 && /usr/local/bin/python /usr/local/www/freenasUI/tools/webshell.py")
 
     def _restart_iscsitarget(self):
         self._system("/usr/sbin/service ix-ctld forcestart")
@@ -284,13 +284,13 @@ class ServiceService(Service):
         self._start_jails()
 
     def _stop_pbid(self):
-        self._system_nolog("/usr/sbin/service pbid stop")
+        self._system("/usr/sbin/service pbid stop")
 
     def _start_pbid(self):
-        self._system_nolog("/usr/sbin/service pbid start")
+        self._system("/usr/sbin/service pbid start")
 
     def _restart_pbid(self):
-        self._system_nolog("/usr/sbin/service pbid restart")
+        self._system("/usr/sbin/service pbid restart")
 
     def _reload_named(self):
         self._system("/usr/sbin/service named reload")
@@ -365,49 +365,49 @@ class ServiceService(Service):
 
     def _started_nis(self):
         res = False
-        if not self._system_nolog("/etc/directoryservice/NIS/ctl status"):
+        if not self._system("/etc/directoryservice/NIS/ctl status"):
             res = True
         return res
 
     def _start_nis(self):
         res = False
-        if not self._system_nolog("/etc/directoryservice/NIS/ctl start"):
+        if not self._system("/etc/directoryservice/NIS/ctl start"):
             res = True
         return res
 
     def _restart_nis(self):
         res = False
-        if not self._system_nolog("/etc/directoryservice/NIS/ctl restart"):
+        if not self._system("/etc/directoryservice/NIS/ctl restart"):
             res = True
         return res
 
     def _stop_nis(self):
         res = False
-        if not self._system_nolog("/etc/directoryservice/NIS/ctl stop"):
+        if not self._system("/etc/directoryservice/NIS/ctl stop"):
             res = True
         return res
 
     def _started_ldap(self):
-        if (self._system_nolog('/usr/sbin/service ix-ldap status') != 0):
+        if (self._system('/usr/sbin/service ix-ldap status') != 0):
             return False
 
         return self.middleware.call('notifier', 'ldap_status')
 
     def _start_ldap(self):
         res = False
-        if not self._system_nolog("/etc/directoryservice/LDAP/ctl start"):
+        if not self._system("/etc/directoryservice/LDAP/ctl start"):
             res = True
         return res
 
     def _stop_ldap(self):
         res = False
-        if not self._system_nolog("/etc/directoryservice/LDAP/ctl stop"):
+        if not self._system("/etc/directoryservice/LDAP/ctl stop"):
             res = True
         return res
 
     def _restart_ldap(self):
         res = False
-        if not self._system_nolog("/etc/directoryservice/LDAP/ctl restart"):
+        if not self._system("/etc/directoryservice/LDAP/ctl restart"):
             res = True
         return res
 
@@ -426,76 +426,76 @@ class ServiceService(Service):
 
     def _started_nt4(self):
         res = False
-        ret = self._system_nolog("service ix-nt4 status")
+        ret = self._system("service ix-nt4 status")
         if not ret:
             res = True
         return res
 
     def _start_nt4(self):
         res = False
-        ret = self._system_nolog("/etc/directoryservice/NT4/ctl start")
+        ret = self._system("/etc/directoryservice/NT4/ctl start")
         if not ret:
             res = True
         return res
 
     def _restart_nt4(self):
         res = False
-        ret = self._system_nolog("/etc/directoryservice/NT4/ctl restart")
+        ret = self._system("/etc/directoryservice/NT4/ctl restart")
         if not ret:
             res = True
         return res
 
     def _stop_nt4(self):
         res = False
-        self._system_nolog("/etc/directoryservice/NT4/ctl stop")
+        self._system("/etc/directoryservice/NT4/ctl stop")
         return res
 
     def _started_activedirectory(self):
         for srv in ('kinit', 'activedirectory', ):
-            if self._system_nolog('/usr/sbin/service ix-%s status' % (srv, )) != 0:
+            if self._system('/usr/sbin/service ix-%s status' % (srv, )) != 0:
                 return False
 
         return self.middleware.call('notifier', 'ad_status')
 
     def _start_activedirectory(self):
         res = False
-        if not self._system_nolog("/etc/directoryservice/ActiveDirectory/ctl start"):
+        if not self._system("/etc/directoryservice/ActiveDirectory/ctl start"):
             res = True
         return res
 
     def _stop_activedirectory(self):
         res = False
-        if not self._system_nolog("/etc/directoryservice/ActiveDirectory/ctl stop"):
+        if not self._system("/etc/directoryservice/ActiveDirectory/ctl stop"):
             res = True
         return res
 
     def _restart_activedirectory(self):
         res = False
-        if not self._system_nolog("/etc/directoryservice/ActiveDirectory/ctl restart"):
+        if not self._system("/etc/directoryservice/ActiveDirectory/ctl restart"):
             res = True
         return res
 
     def _started_domaincontroller(self):
         res = False
-        if not self._system_nolog("/etc/directoryservice/DomainController/ctl status"):
+        if not self._system("/etc/directoryservice/DomainController/ctl status"):
             res = True
         return res
 
     def _start_domaincontroller(self):
         res = False
-        if not self._system_nolog("/etc/directoryservice/DomainController/ctl start"):
+        if not self._system("/etc/directoryservice/DomainController/ctl start"):
             res = True
         return res
 
     def _stop_domaincontroller(self):
         res = False
-        if not self._system_nolog("/etc/directoryservice/DomainController/ctl stop"):
+        if not self._system("/etc/directoryservice/DomainController/ctl stop"):
             res = True
         return res
 
     def _restart_domaincontroller(self):
         res = False
-        if not self._system_nolog("/etc/directoryservice/DomainController/ctl restart"):
+        if not self._system("/etc/directoryservice/DomainController/ctl restart"):
             res = True
         return res
 
@@ -638,15 +638,15 @@ class ServiceService(Service):
 
     def _start_plugins(self, jail=None, plugin=None):
         if jail and plugin:
-            self._system_nolog("/usr/sbin/service ix-plugins forcestart %s:%s" % (jail, plugin))
+            self._system("/usr/sbin/service ix-plugins forcestart %s:%s" % (jail, plugin))
         else:
-            self._system_nolog("/usr/sbin/service ix-plugins forcestart")
+            self._system("/usr/sbin/service ix-plugins forcestart")
 
     def _stop_plugins(self, jail=None, plugin=None):
         if jail and plugin:
-            self._system_nolog("/usr/sbin/service ix-plugins forcestop %s:%s" % (jail, plugin))
+            self._system("/usr/sbin/service ix-plugins forcestop %s:%s" % (jail, plugin))
         else:
-            self._system_nolog("/usr/sbin/service ix-plugins forcestop")
+            self._system("/usr/sbin/service ix-plugins forcestop")
 
     def _restart_plugins(self, jail=None, plugin=None):
         self._stop_plugins(jail=jail, plugin=plugin)
@@ -655,10 +655,10 @@ class ServiceService(Service):
     def _started_plugins(self, jail=None, plugin=None):
         res = False
         if jail and plugin:
-            if self._system_nolog("/usr/sbin/service ix-plugins status %s:%s" % (jail, plugin)) == 0:
+            if self._system("/usr/sbin/service ix-plugins status %s:%s" % (jail, plugin)) == 0:
                 res = True
         else:
-            if self._system_nolog("/usr/sbin/service ix-plugins status") == 0:
+            if self._system("/usr/sbin/service ix-plugins status") == 0:
                 res = True
         return res
 
