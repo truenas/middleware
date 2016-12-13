@@ -106,24 +106,11 @@ class ISCSIPortalFAdmin(BaseFreeAdmin):
 
     def get_datagrid_columns(self):
         columns = super(ISCSIPortalFAdmin, self).get_datagrid_columns()
-        globalconf = models.iSCSITargetGlobalConfiguration.objects.latest('id')
-        if globalconf.iscsi_alua:
-            columns.insert(1, {
-                'name': 'iscsi_target_portal_ips_a',
-                'label': _('Listen (Node A)'),
-                'sortable': False,
-            })
-            columns.insert(2, {
-                'name': 'iscsi_target_portal_ips_b',
-                'label': _('Listen (Node B)'),
-                'sortable': False,
-            })
-        else:
-            columns.insert(1, {
-                'name': 'iscsi_target_portal_ips',
-                'label': _('Listen'),
-                'sortable': False,
-            })
+        columns.insert(1, {
+            'name': 'iscsi_target_portal_ips',
+            'label': _('Listen'),
+            'sortable': False,
+        })
         return columns
 
 
