@@ -388,22 +388,10 @@ class ServiceService(Service):
         return res
 
     def _started_ldap(self):
-        from freenasUI.common.freenasldap import FreeNAS_LDAP, FLAGS_DBINIT
-
         if (self._system_nolog('/usr/sbin/service ix-ldap status') != 0):
             return False
 
-        ret = False
-        try:
-            f = FreeNAS_LDAP(flags=FLAGS_DBINIT)
-            f.open()
-            if f.isOpen():
-                ret = True
-            f.close()
-        except:
-            pass
-
-        return ret
+        return self.middleware.call('notifier', 'ldap_status')
 
     def _start_ldap(self):
         res = False
@@ -463,19 +451,11 @@ class ServiceService(Service):
         return res
 
     def _started_activedirectory(self):
-        ret = False
-        from freenasUI.common.freenasldap import (FreeNAS_ActiveDirectory, FLAGS_DBINIT)
-
         for srv in ('kinit', 'activedirectory', ):
             if self._system_nolog('/usr/sbin/service ix-%s status' % (srv, )) != 0:
                 return False
 
-        try:
-            ret = FreeNAS_ActiveDirectory(flags=FLAGS_DBINIT).connected()
-        except:
-            pass
-
-        return ret
+        return self.middleware.call('notifier', 'ad_status')
 
     def _start_activedirectory(self):
         res = False
@@ -595,8 +575,7 @@ class ServiceService(Service):
         self._system("/usr/sbin/service nut_upslog restart")
 
     def _started_ups(self):
-        from freenasUI.services.models import UPS
-        mode = UPS.objects.order_by('-id')[0].ups_mode
+        mode = self.middleware.call('datastore.query', 'services.ups', [], {'order_by': ['-id'], 'get': True})['ups_mode']
         if mode == "master":
             svc = "ups"
         else:

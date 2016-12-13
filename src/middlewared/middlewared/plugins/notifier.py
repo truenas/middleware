@@ -120,6 +120,27 @@ class NotifierService(Service):
                 data[i] = getattr(ds, i)
         return data
 
+    def ldap_status(self):
+        ret = False
+        try:
+            f = FreeNAS_LDAP(flags=FLAGS_DBINIT)
+            f.open()
+            if f.isOpen():
+                ret = True
+            f.close()
+        except:
+            pass
+
+        return ret
+
+    def ad_status(self):
+        ret = False
+        try:
+            ret = FreeNAS_ActiveDirectory(flags=FLAGS_DBINIT).connected()
+        except:
+            pass
+        return ret
+
     def ds_get_idmap_object(self, ds_type, id, idmap_backend):
         """Temporary wrapper to serialize IDMAP objects"""
         obj = get_idmap_object(ds_type, id, idmap_backend)
