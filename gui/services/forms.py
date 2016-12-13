@@ -128,14 +128,14 @@ class servicesForm(ModelForm):
         self.enabled_svcs = []
         self.disabled_svcs = []
 
-        if obj.srv_service == 'cifs' and _notifier._started_domaincontroller():
+        if obj.srv_service == 'cifs' and _notifier.started('domaincontroller'):
             obj.srv_enable = True
             obj.save()
             started = True
 
         elif obj.srv_service == 'domaincontroller':
             if obj.srv_enable is True:
-                if _notifier._started_domaincontroller():
+                if _notifier.started('domaincontroller'):
                     started = _notifier.restart("domaincontroller")
                 else:
                     started = _notifier.start("domaincontroller")
@@ -144,7 +144,7 @@ class servicesForm(ModelForm):
 
         elif obj.srv_service == 'domaincontroller':
             if obj.srv_enable is True:
-                if _notifier._started_domaincontroller():
+                if _notifier.started('domaincontroller'):
                     started = _notifier.restart("domaincontroller")
                 else:
                     started = _notifier.start("domaincontroller")
