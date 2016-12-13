@@ -36,8 +36,8 @@ class StartNotify(threading.Thread):
                     # little bit for the daemon to write the PID
                     time.sleep(0.1)
                 if (
-                    os.path.exists(self._pidfile)
-                    and os.stat(self._pidfile).st_size > 0
+                    os.path.exists(self._pidfile) and
+                    os.stat(self._pidfile).st_size > 0
                 ):
                     break
             elif self._verb == "stop" and not os.path.exists(self._pidfile):
