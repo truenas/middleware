@@ -749,3 +749,10 @@ class ServiceService(Service):
     def _restart_saver(self):
         self._stop_saver()
         self._start_saver()
+
+    def _reload_disk(self):
+        self._system("/usr/sbin/service ix-fstab quietstart")
+        self._system("/usr/sbin/service ix-swap quietstart")
+        self._system("/usr/sbin/service swap quietstart")
+        self._system("/usr/sbin/service mountlate quietstart")
+        self.restart("collectd")
