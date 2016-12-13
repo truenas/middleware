@@ -1,3 +1,4 @@
+import gevent
 import os
 import signal
 import threading
@@ -67,7 +68,52 @@ class ServiceService(Service):
     }
 
     def query(self, filters=None, options=None):
-        pass
+        if options is None:
+            options = {}
+        options['suffix'] = 'srv_'
+
+        services = self.middleware.call('datastore.query', 'services.services', filters, options)
+
+        # In case a single service has been requested
+        if not isinstance(services, list):
+            services = [services]
+
+        jobs = {
+            gevent.spawn(self._get_status, entry): entry
+            for entry in services
+        }
+        gevent.joinall(list(jobs.keys()), timeout=15)
+
+        def result(greenlet):
+            """
+            Method to handle results of the greenlets.
+            In case a greenlet has timed out, provide UNKNOWN state
+            """
+            if greenlet.value is None:
+                entry = jobs.get(greenlet)
+                entry['state'] = 'UNKNOWN'
+                entry['pids'] = []
+                return entry
+            else:
+                return greenlet.value
+
+        services = gevent.pool.Group().map(result, jobs)
+        return services
+
+    def _get_status(self, service):
+        running, pids = self._started(service['service'])
+
+        if running:
+            state = 'RUNNING'
+        else:
+            if service['enable']:
+                state = 'CRASHED'
+            else:
+                state = 'STOPPED'
+
+        service['state'] = state
+        service['pids'] = pids
+        return service
 
     def _simplecmd(self, action, what):
         self.logger.debug("Calling: %s(%s) ", action, what)
@@ -134,17 +180,21 @@ class ServiceService(Service):
                 notify.join()
 
             if pidfile:
-                procname = " " + procname if procname else ""
-                retval = self._system("/bin/pgrep -F %s%s" % (pidfile, procname))
+                pgrep = "/bin/pgrep -F {}{}".format(
+                    pidfile,
+                    ' ' + procname if procname else '',
+                )
             else:
-                retval = self._system("/bin/pgrep %s" % (procname,))
+                pgrep = "/bin/pgrep {}".format(procname)
+            proc = Popen(pgrep, shell=True, stdout=PIPE, stderr=PIPE, close_fds=True)
+            data = proc.communicate()[0]
 
-            if retval == 0:
-                return True
-            else:
-                return False
-        else:
-            return False
+            if proc.returncode == 0:
+                return True, [
+                    int(i)
+                    for i in data.strip().split('\n') if i.isdigit()
+                ]
+        return False, []
 
     def start(self, what):
         """ Start the service specified by "what".
@@ -161,7 +211,7 @@ class ServiceService(Service):
         if callable(f):
             return f()
         else:
-            return self._started(what, sn)
+            return self._started(what, sn)[0]
 
     def stop(self, what):
         """ Stop the service specified by "what".
