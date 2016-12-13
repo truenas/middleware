@@ -68,9 +68,9 @@ class DatastoreService(Service):
         app, model = name.split('.', 1)
         return cache.get_model(app, model)
 
-    def __queryset_serialize(self, qs, extend=None):
+    def __queryset_serialize(self, qs, extend=None, field_suffix=None):
         for i in qs:
-            yield django_modelobj_serialize(self.middleware, i, extend=extend)
+            yield django_modelobj_serialize(self.middleware, i, extend=extend, field_suffix=field_suffix)
 
     @accepts(
         Str('name'),
@@ -136,7 +136,9 @@ class DatastoreService(Service):
         if options.get('count') is True:
             return qs.count()
 
-        result = list(self.__queryset_serialize(qs, extend=options.get('extend')))
+        result = list(self.__queryset_serialize(
+            qs, extend=options.get('extend'), field_suffix=options.get('suffix')
+        ))
 
         if options.get('get') is True:
             return result[0]
