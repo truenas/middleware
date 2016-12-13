@@ -20,7 +20,7 @@ from middlewared.utils import django_modelobj_serialize
 
 class DatastoreService(Service):
 
-    def _filters_to_queryset(self, filters):
+    def _filters_to_queryset(self, filters, field_suffix=None):
         opmap = {
             '=': 'exact',
             '!=': 'exact',
@@ -37,6 +37,8 @@ class DatastoreService(Service):
                 raise ValueError('Filter must be a list: {0}'.format(f))
             if len(f) == 3:
                 name, op, value = f
+                if field_suffix:
+                    name = field_suffix + name
                 if op not in opmap:
                     raise Exception("Invalid operation: {0}".format(op))
                 q = Q(**{'{0}__{1}'.format(name, opmap[op]): value})
@@ -47,7 +49,7 @@ class DatastoreService(Service):
                 op, value = f
                 if op == 'OR':
                     or_value = None
-                    for value in self._filters_to_queryset(value):
+                    for value in self._filters_to_queryset(value, field_suffix=field_suffix):
                         if or_value is None:
                             or_value = value
                         else:
@@ -80,6 +82,7 @@ class DatastoreService(Service):
             List('order_by'),
             Bool('count'),
             Bool('get'),
+            Str('suffix'),
             register=True,
         ),
     )
@@ -124,7 +127,7 @@ class DatastoreService(Service):
             qs = qs.extra(**extra)
 
         if filters:
-            qs = qs.filter(*self._filters_to_queryset(filters))
+            qs = qs.filter(*self._filters_to_queryset(filters, options.get('suffix')))
 
         order_by = options.get('order_by')
         if order_by:
@@ -178,7 +181,7 @@ class DatastoreService(Service):
                 continue
             if isinstance(field, ForeignKey):
                 data[field.name] = field.rel.to.objects.get(pk=data[field.name])
-        for k,v in data.items():
+        for k, v in data.iteritems():
             setattr(obj, k, v)
         obj.save()
         return obj.pk
