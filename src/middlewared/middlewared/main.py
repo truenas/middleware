@@ -473,7 +473,7 @@ def main():
 
     parser = argparse.ArgumentParser()
     parser.add_argument('restart', nargs='?')
-    parser.add_argument('--foregound', '-f', action='store_true')
+    parser.add_argument('--foreground', '-f', action='store_true')
     parser.add_argument('--debug-level', default='DEBUG', choices=[
         'DEBUG',
         'INFO',
@@ -489,7 +489,7 @@ def main():
     if args.log_handler:
         log_handlers = [args.log_handler]
     else:
-        log_handlers = ['console' if args.foregound else 'file']
+        log_handlers = ['console' if args.foreground else 'file']
 
     pidpath = '/var/run/middlewared.pid'
 
@@ -529,7 +529,7 @@ def main():
             }
         })
 
-        if not args.foregound:
+        if not args.foreground:
             daemonc = DaemonContext(
                 pidfile=TimeoutPIDLockFile(pidpath),
                 detach_process=True,
@@ -548,7 +548,7 @@ def main():
 
         Middleware().run()
     finally:
-        if not args.foregound:
+        if not args.foreground:
             daemonc.close()
 
 if __name__ == '__main__':
