@@ -1711,12 +1711,11 @@ class iSCSITargetPortalIPForm(ModelForm):
 
     def __init__(self, *args, **kwargs):
         super(iSCSITargetPortalIPForm, self).__init__(*args, **kwargs)
-        alua = models.iSCSITargetGlobalConfiguration.objects.all()[0].iscsi_alua
         self.fields['iscsi_target_portalip_ip'] = forms.ChoiceField(
             label=self.fields['iscsi_target_portalip_ip'].label,
         )
-        ips = [('', '------')]
-        ips.extend(list(choices.IPChoices(alua=alua)))
+        ips = [('', '------'), ('0.0.0.0', '0.0.0.0')]
+        ips.extend(list(choices.IPChoices()))
         self.fields['iscsi_target_portalip_ip'].choices = ips
         if not self.instance.id and not self.data:
             if not(
