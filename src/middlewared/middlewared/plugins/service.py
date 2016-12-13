@@ -57,7 +57,7 @@ class ServiceService(Service):
         'snmp': ('snmpd', '/var/run/net_snmpd.pid'),
         'ftp': ('proftpd', '/var/run/proftpd.pid'),
         'tftp': ('inetd', '/var/run/inetd.pid'),
-        'ctld': ('ctld', '/var/run/ctld.pid'),
+        'iscsitarget': ('ctld', '/var/run/ctld.pid'),
         'lldp': ('ladvd', '/var/run/ladvd.pid'),
         'ups': ('upsd', '/var/db/nut/upsd.pid'),
         'upsmon': ('upsmon', '/var/db/nut/upsmon.pid'),
@@ -148,10 +148,6 @@ class ServiceService(Service):
             StartNotify object if the service is known or None otherwise
         """
 
-        # FIXME: Ugly workaround for one service and multiple backend
-        if what == 'iscsitarget':
-            what = 'ctld'
-
         if what in self.SERVICE_DEFS:
             procname, pidfile = self.SERVICE_DEFS[what]
             sn = StartNotify(verb=verb, pidfile=pidfile)
@@ -169,10 +165,6 @@ class ServiceService(Service):
         Returns:
             True whether the service is alive, False otherwise
         """
-
-        # FIXME: Ugly workaround for one service and multiple backend
-        if what == 'iscsitarget':
-            what = 'ctld'
 
         if what in self.SERVICE_DEFS:
             procname, pidfile = self.SERVICE_DEFS[what]
