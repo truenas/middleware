@@ -2,8 +2,10 @@ import os
 import signal
 import threading
 import time
+from subprocess import PIPE
 
 from middlewared.service import Service
+from middlewared.utils import Popen
 
 
 class StartNotify(threading.Thread):
@@ -66,6 +68,29 @@ class ServiceService(Service):
 
     def query(self, filters=None, options=None):
         pass
+
+    def _simplecmd(self, action, what):
+        self.logger.debug("Calling: %s(%s) ", action, what)
+        f = getattr(self, '_' + action + '_' + what, None)
+        if f is None:
+            # Provide generic start/stop/restart verbs for rc.d scripts
+            if what in self.SERVICE_DEFS:
+                procname, pidfile = self.SERVICE_DEFS[what]
+                if procname:
+                    what = procname
+            if action in ("start", "stop", "restart", "reload"):
+                if action == 'restart':
+                    self._system("/usr/sbin/service " + what + " forcestop ")
+                self._system("/usr/sbin/service " + what + " " + action)
+            else:
+                raise ValueError("Internal error: Unknown command")
+        if f is not None:
+            f()
+
+    def _system(self, cmd):
+        proc = Popen(cmd, stdout=PIPE, stderr=PIPE, shell=True, close_fds=True)
+        proc.communicate()
+        return proc.returncode
 
     def _started_notify(self, verb, what):
         """
