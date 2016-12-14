@@ -585,7 +585,6 @@ class ServiceService(Service):
     def _restart_ftp(self):
         self._stop_ftp()
         self._start_ftp()
-        self._system("sleep 1")
 
     def _start_ftp(self):
         self._system("/usr/sbin/service ix-proftpd quietstart")
