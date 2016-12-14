@@ -165,7 +165,9 @@ class Application(WebSocketApplication):
                 sw_version = self.middleware.call('system.version')
             except:
                 self.logger.debug('Failed to get system version', exc_info=True)
-            gevent.spawn(self.trace.rollbar_report(sys.exc_info(), sw_version))
+
+            extra_log_files = (('/var/log/middlewared.log', 'middlewared_log'),)
+            gevent.spawn(self.trace.rollbar_report(sys.exc_info(), None, sw_version, extra_log_files))
 
     def subscribe(self, ident, name):
         self.__subscribed[ident] = name
