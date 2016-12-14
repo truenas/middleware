@@ -42,9 +42,9 @@ define([
         var me = this;
 
         if(me.state == 'RUNNING') {
-          me.dapLight.innerHTML = 'GREEN';
+          me.dapLight.src = '/static/images/ui/misc/green_light.png';
         } else {
-          me.dapLight.innerHTML = 'RED';
+          me.dapLight.src = '/static/images/ui/misc/red_light.png';
         }
 
         me.dapName.innerHTML = me.name;
