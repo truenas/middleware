@@ -7,7 +7,7 @@ from subprocess import PIPE
 
 from middlewared.schema import accepts, Str
 from middlewared.service import filterable, Service
-from middlewared.utils import Popen
+from middlewared.utils import Popen, filter_list
 
 
 class StartNotify(threading.Thread):
@@ -100,7 +100,7 @@ class ServiceService(Service):
                 return greenlet.value
 
         services = gevent.pool.Group().map(result, jobs)
-        return services
+        return filter_list(services, filters, options)
 
     @accepts(Str('service'))
     def start(self, service):
