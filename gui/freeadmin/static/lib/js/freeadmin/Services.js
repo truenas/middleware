@@ -61,21 +61,13 @@ define([
 
         var me = this;
 
-        if(me.state == 'RUNNING') {
-          me.dapLight.src = '/static/images/ui/misc/green_light.png';
-        } else {
-          me.dapLight.src = '/static/images/ui/misc/red_light.png';
-        }
-
         if(NAME_MAP[me.name]) {
           me.dapName.innerHTML = NAME_MAP[me.name];
         } else {
           me.dapName.innerHTML = me.name;
         }
 
-        me.startstop = new Button({
-          label: (me.enable) ? gettext('Stop Now') : gettext('Start Now')
-        }, me.dapStartStop);
+        me.startstop = new Button({}, me.dapStartStop);
 
         me.onboot = new CheckBox({
           checked: me.enable
@@ -83,14 +75,20 @@ define([
 
         on(me.startstop, "click", function() {
           me.startLoading();
-          if(me.enable) {
+          if(me.state == 'RUNNING') {
             Middleware.call('service.stop', [me.name], function(result) {
-              console.log("result", result);
+              if(!result) {
+                me.state = 'STOPPED';
+                me.sync();
+              }
               me.stopLoading();
             });
           } else {
             Middleware.call('service.start', [me.name], function(result) {
-              console.log("result", result);
+              if(result) {
+                me.state = 'RUNNING';
+                me.sync();
+              }
               me.stopLoading();
             });
           }
@@ -107,6 +105,7 @@ define([
           if(url)
             editObject('Settings', url);
         });
+        me.sync();
 
         this.inherited(arguments);
 
@@ -120,6 +119,15 @@ define([
         var me = this;
         me.startstop.set('disabled', false);
         me.onboot.set('disabled', false);
+      },
+      sync: function() {
+        var me = this;
+        if(me.state == 'RUNNING') {
+          me.dapLight.src = '/static/images/ui/misc/green_light.png';
+        } else {
+          me.dapLight.src = '/static/images/ui/misc/red_light.png';
+        }
+        me.startstop.set('label', (me.state == 'RUNNING') ? gettext('Stop Now') : gettext('Start Now'));
       }
     });
 
