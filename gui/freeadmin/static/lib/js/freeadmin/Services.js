@@ -131,7 +131,7 @@ define([
 
         me.urls = json.parse(me.urls);
 
-        Middleware.call('service.query', [], function(result) {
+        Middleware.call('service.query', [[], {"order_by": ["service"]}], function(result) {
           for(var i=0;i<result.length;i++) {
             var item = result[i];
             var service = Service({
