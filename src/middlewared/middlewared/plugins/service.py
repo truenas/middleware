@@ -5,7 +5,8 @@ import threading
 import time
 from subprocess import PIPE
 
-from middlewared.service import Service
+from middlewared.schema import accepts, Str
+from middlewared.service import filterable, Service
 from middlewared.utils import Popen
 
 
@@ -67,6 +68,7 @@ class ServiceService(Service):
         'backup': (None, '/var/run/backup.pid')
     }
 
+    @filterable
     def query(self, filters=None, options=None):
         if options is None:
             options = {}
@@ -188,14 +190,15 @@ class ServiceService(Service):
                 ]
         return False, []
 
-    def start(self, what):
-        """ Start the service specified by "what".
+    @accepts(Str('service'))
+    def start(self, service):
+        """ Start the service specified by `service`.
 
-        The helper will use method self._start_[what]() to start the service.
+        The helper will use method self._start_[service]() to start the service.
         If the method does not exist, it would fallback using service(8)."""
-        sn = self._started_notify("start", what)
-        self._simplecmd("start", what)
-        return self.started(what, sn)
+        sn = self._started_notify("start", service)
+        self._simplecmd("start", service)
+        return self.started(service, sn)
 
     def started(self, what, sn=None):
         """ Test if service specified by "what" has been started. """
@@ -205,35 +208,40 @@ class ServiceService(Service):
         else:
             return self._started(what, sn)[0]
 
-    def stop(self, what):
-        """ Stop the service specified by "what".
+    @accepts(Str('service'))
+    def stop(self, service):
+        """ Stop the service specified by `service`.
 
-        The helper will use method self._stop_[what]() to stop the service.
+        The helper will use method self._stop_[service]() to stop the service.
         If the method does not exist, it would fallback using service(8)."""
-        sn = self._started_notify("stop", what)
-        self._simplecmd("stop", what)
-        return self.started(what, sn)
+        sn = self._started_notify("stop", service)
+        self._simplecmd("stop", service)
+        return self.started(service, sn)
 
-    def restart(self, what):
-        """ Restart the service specified by "what".
+    @accepts(Str('service'))
+    def restart(self, service):
+        """
+        Restart the service specified by `service`.
 
-        The helper will use method self._restart_[what]() to restart the service.
+        The helper will use method self._restart_[service]() to restart the service.
         If the method does not exist, it would fallback using service(8)."""
-        sn = self._started_notify("restart", what)
-        self._simplecmd("restart", what)
-        return self.started(what, sn)
+        sn = self._started_notify("restart", service)
+        self._simplecmd("restart", service)
+        return self.started(service, sn)
 
-    def reload(self, what):
-        """ Reload the service specified by "what".
+    @accepts(Str('service'))
+    def reload(self, service):
+        """
+        Reload the service specified by `service`.
 
-        The helper will use method self._reload_[what]() to reload the service.
+        The helper will use method self._reload_[service]() to reload the service.
         If the method does not exist, the helper will try self.restart of the
         service instead."""
         try:
-            self._simplecmd("reload", what)
+            self._simplecmd("reload", service)
         except:
-            self.restart(what)
-        return self.started(what)
+            self.restart(service)
+        return self.started(service)
 
     def _start_webdav(self):
         self._system("/usr/sbin/service ix-apache onestart")
