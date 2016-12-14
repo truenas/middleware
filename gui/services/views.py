@@ -158,7 +158,23 @@ def core(request):
         'smart': smart,
         'ssh': ssh,
         'domaincontroller': domaincontroller,
-        'webdav': webdav
+        'webdav': webdav,
+        'urls': json.dumps({
+            'cifs': cifs.get_edit_url(),
+            'afp': afp.get_edit_url(),
+            'lldp': lldp.get_edit_url(),
+            'nfs': nfs.get_edit_url(),
+            'rsync': rsyncd.get_edit_url(),
+            'dynamicdns': dynamicdns.get_edit_url(),
+            'snmp': snmp.get_edit_url(),
+            'ups': ups.get_edit_url(),
+            'ftp': ftp.get_edit_url(),
+            'tftp': tftp.get_edit_url(),
+            'ssh': ssh.get_edit_url(),
+            'smartd': smart.get_edit_url(),
+            'webdav': webdav.get_edit_url(),
+            'domaincontroller': domaincontroller.get_edit_url(),
+        }),
     })
 
 
