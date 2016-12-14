@@ -27,8 +27,8 @@
 import json
 import logging
 import os
-import rollbar
 import sys
+import middlewared.logger as logger
 
 from django.http import HttpResponse, HttpResponseRedirect
 from django.views import debug
@@ -188,31 +188,18 @@ class ExceptionReporter(debug.ExceptionReporter):
 
 def server_error(request, *args, **kwargs):
     # Save exc info before next exception occurs
-    exc_info = sys.exc_info()
+    trace_rollbar = logger.Rollbar()
     try:
         tb = Advanced.objects.all().latest('id').adv_traceback
     except:
         tb = True
 
-    try:
-        # Allow rollbar to be disabled via sentinel file or environment var
-        if (
-            not os.path.exists('/tmp/.rollbar_disabled') and
-            'ROLLBAR_DISABLED' not in os.environ
-        ):
-            extra_data = {
-                'sw_version': get_sw_version(),
-            }
-            for path, name in (
-                ('/data/update.failed', 'update_failed'),
-                ('/var/log/debug.log', 'debug_log'),
-            ):
-                if os.path.exists(path):
-                    with open(path, 'r') as f:
-                        extra_data[name] = f.read()[-10240:]
-            rollbar.report_exc_info(exc_info, request, extra_data=extra_data)
-    except:
-        log.warn('Failed to report error', exc_info=True)
+    # Report error to Rollbar.
+    extra_log_files = (('/data/update.failed', 'update_failed'),
+                       ('/var/log/debug.log', 'debug_log'),
+                      )
+    trace_rollbar.rollbar_report(sys.exc_info(), request, sw_version, extra_log_files)
+
     try:
         if tb:
             reporter = ExceptionReporter(request, *exc_info)

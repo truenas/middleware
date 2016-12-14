@@ -5,8 +5,8 @@ import json
 import logging
 import os
 import re
-import rollbar
 import sys
+import middlewared.logger as logger
 
 from django.conf.urls import patterns, url, include
 from django.core.urlresolvers import reverse
@@ -32,6 +32,7 @@ class FreeAdminSite(object):
 
     def __init__(self):
         self._registry = {}
+        self.trace = logger.Rollbar()
 
     def register(
         self, model_or_iterable, admin_class=None, freeadmin=None, **options
@@ -233,17 +234,8 @@ class FreeAdminSite(object):
                 middleware_token = c.call('auth.generate_token', timeout=10)
         except Exception:
             middleware_token = None
-            extra_data = {
-                'sw_version': sw_version,
-            }
-            if os.path.exists('/var/log/middlewared.log'):
-                with open('/var/log/middlewared.log', 'r') as f:
-                    extra_data['middlewaredlog'] = f.read()[-10240:]
-            rollbar.report_exc_info(
-                sys.exc_info(),
-                request,
-                extra_data=extra_data,
-            )
+            extra_log_files = (('/var/log/middlewared.log', 'middlewared_log'),)
+            self.trace.rollbar_report(sys.exc_info(), request, sw_version, extra_log_files)
 
         return render(request, 'freeadmin/index.html', {
             'consolemsg': console,
