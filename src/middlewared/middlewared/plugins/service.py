@@ -196,6 +196,7 @@ class ServiceService(Service):
 
         The helper will use method self._start_[service]() to start the service.
         If the method does not exist, it would fallback using service(8)."""
+        self.middleware.call_hook('service.pre_start', service)
         sn = self._started_notify("start", service)
         self._simplecmd("start", service)
         return self.started(service, sn)
@@ -214,6 +215,7 @@ class ServiceService(Service):
 
         The helper will use method self._stop_[service]() to stop the service.
         If the method does not exist, it would fallback using service(8)."""
+        self.middleware.call_hook('service.pre_stop', service)
         sn = self._started_notify("stop", service)
         self._simplecmd("stop", service)
         return self.started(service, sn)
@@ -225,6 +227,7 @@ class ServiceService(Service):
 
         The helper will use method self._restart_[service]() to restart the service.
         If the method does not exist, it would fallback using service(8)."""
+        self.middleware.call_hook('service.pre_restart', service)
         sn = self._started_notify("restart", service)
         self._simplecmd("restart", service)
         return self.started(service, sn)
@@ -237,6 +240,7 @@ class ServiceService(Service):
         The helper will use method self._reload_[service]() to reload the service.
         If the method does not exist, the helper will try self.restart of the
         service instead."""
+        self.middleware.call_hook('service.pre_reload', service)
         try:
             self._simplecmd("reload", service)
         except:
