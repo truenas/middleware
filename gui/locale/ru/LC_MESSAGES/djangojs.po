@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:10-0700\n"
-"PO-Revision-Date: 2016-07-23 09:16+0000\n"
+"PO-Revision-Date: 2016-11-23 15:07+0000\n"
 "Last-Translator: mav <mav@freebsd.org>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: ru\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
 "n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1469265370.0\n"
+"X-POOTLE-MTIME: 1479913667.0\n"
 
 #~ msgid "Reporting"
 #~ msgstr "Отчёты"
@@ -656,4 +656,24 @@ msgstr ""
 
 #: freeadmin/static/lib/js/freeadmin.js:359
 msgid "Ok"
-msgstr ""
+msgstr "Ok"
+
+#: freeadmin/static/lib/js/alert.js:69
+msgid "Warning"
+msgstr "Внимание"
+
+#: freeadmin/static/lib/js/alert.js:73
+msgid "Critical"
+msgstr "Критично"
+
+#: freeadmin/static/lib/js/freeadmin.js:1425
+msgid "The action will result in migration of dataset."
+msgstr "Это действие приведет к миграции набора данных."
+
+#: freeadmin/static/lib/js/freeadmin.js:1425
+msgid "Some services will be restarted."
+msgstr "Некоторые сервисы будут перезапущены."
+
+#: freeadmin/static/lib/js/freeadmin.js:1438
+msgid "Continue"
+msgstr "Продолжить"

@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:00-0700\n"
-"PO-Revision-Date: 2016-09-04 17:37+0000\n"
+"PO-Revision-Date: 2016-12-13 16:15+0000\n"
 "Last-Translator: mav <mav@freebsd.org>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: uk\n"
@@ -18,7 +18,7 @@ msgstr ""
 "Plural-Forms: nplurals=3; plural=(n%10==1 && n%100!=11 ? 0 : n%10>=2 && "
 "n%10<=4 && (n%100<10 || n%100>=20) ? 1 : 2)\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1473010669.0\n"
+"X-POOTLE-MTIME: 1481645702.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -1192,7 +1192,6 @@ msgid "The plugins jail path cannot be a subset of the plugins archive path."
 msgstr "Шлях плагінів не може бути або містити шлях до архіву."
 
 #: plugins/forms.py:205 services/forms.py:148
-#, fuzzy
 msgid "The plugins archive path cannot be a subset of the plugins jail path."
 msgstr "Шлях плагінів не може бути або містити jail шлях."
 
@@ -5372,7 +5371,6 @@ msgid "Please wait..."
 msgstr "Будь ласка, зачекайте ..."
 
 #: templates/plugins/mountpoints.html:19
-#, fuzzy
 msgid "Edit Mount Point"
 msgstr "Точка монтування"
 
@@ -8802,7 +8800,6 @@ msgid "Jail root is not configured!"
 msgstr "Не встановлено корiнь jail!"
 
 #: jails/models.py:537
-#, fuzzy
 msgid "Filesystem"
 msgstr "Тип файлової системи"
 
@@ -8890,7 +8887,6 @@ msgstr "Підтвердіть пароль адміністратора дом�
 
 #: services/forms.py:758
 #: services/models.py:1612
-#, fuzzy
 msgid "Kerberos keytab"
 msgstr "Сервер Kerberos"
 
@@ -9558,7 +9554,6 @@ msgid "Certificate"
 msgstr "Сертифікат"
 
 #: services/forms.py:864
-#, fuzzy
 msgid "Incorrect password."
 msgstr "Пароль адміністратора"
 
@@ -9596,7 +9591,6 @@ msgstr "Налаштування контролера домену"
 
 #: templates/system/settings_edit.html:30
 #: templates/system/settings_edit.html:32
-#, fuzzy
 msgid "Set SSL Certificate"
 msgstr "Сертифікат SSL"
 
@@ -10018,7 +10012,6 @@ msgid "Idmap backend for winbind."
 msgstr ""
 
 #: freeadmin/navtree.py:256
-#, fuzzy
 msgid "Initial Wizard"
 msgstr "Ініціатор"
 
@@ -11157,7 +11150,6 @@ msgid "Unmount Failed (%(retcode)s) -> %(output)s"
 msgstr "Сбiй демонтування (%(retcode)s) -> %(output)s"
 
 #: jails/forms.py:218
-#, fuzzy
 msgid "Jail name cannot have '.'"
 msgstr "Ім'я користувача не може містити пробіли"
 
@@ -11236,7 +11228,6 @@ msgstr "Блочне сховище (iSCSI)"
 
 #: storage/admin.py:629
 #: storage/forms.py:1741
-#, fuzzy
 msgid "VMWare Sync"
 msgstr "Плагін"
 
@@ -11262,7 +11253,6 @@ msgstr ""
 
 #: storage/models.py:1098
 #: templates/storage/index.html:38
-#, fuzzy
 msgid "VMWare-Snapshot"
 msgstr "Знимок"
 
@@ -11342,9 +11332,8 @@ msgid "Verifying"
 msgstr "Перевіряється"
 
 #: system/alertmods/boot_volume_status.py:19
-#, fuzzy
 msgid "The boot volume status is %(status)s: %(message)s"
-msgstr "Том %(volume)s status is %(status)s: %(message)s"
+msgstr "Статус тому завантаження %(status)s: %(message)s"
 
 #: system/views.py:318
 msgid "Boot Environments successfully deleted."
@@ -12588,22 +12577,18 @@ msgid " TrueNAS Management IP Address"
 msgstr "IP адреса управління TrueNAS"
 
 #: vcp/models.py:49
-#, fuzzy
 msgid " vCenter Hostname/IP Address"
 msgstr "Ім'я сервера або IP адреса"
 
 #: vcp/models.py:55
-#, fuzzy
 msgid " vCenter Port"
 msgstr "Віддалений порт"
 
 #: vcp/models.py:60
-#, fuzzy
 msgid " vCenter User name"
 msgstr "Ім’я користувача"
 
 #: vcp/models.py:67
-#, fuzzy
 msgid " vCenter Password"
 msgstr "Змінити пароль"
 
@@ -12613,7 +12598,6 @@ msgstr "Версія"
 
 #: vcp/models.py:78
 #: vcp/models.py:79
-#, fuzzy
 msgid "VCenter Configuration"
 msgstr "Конфігурація"
 
@@ -13231,3 +13215,600 @@ msgstr ""
 "Команда, яка використовується для завершення роботи сервера. Ви можете "
 "використовувати призначену для користувача команду тут, щоб виконувати інші "
 "завдання перед shutdown.default: /sbin/shutdown -p now"
+
+#: choices.py:1045
+msgid "Rights"
+msgstr "Права"
+
+#: choices.py:1051
+msgid "Amazon S3"
+msgstr "Amazon S3"
+
+#: api/resources.py:655
+msgid "Volume is not encrypted."
+msgstr "Том не зашифрований."
+
+#: api/resources.py:1588
+msgid "Not ran since last boot"
+msgstr "Не виконувалося з моменту останнього завантаження"
+
+#: directoryservice/models.py:919
+msgid "User Base"
+msgstr "База Користувача"
+
+#: directoryservice/models.py:921
+msgid "DN of the user container in AD."
+msgstr "DN контейнера користувачів в AD."
+
+#: directoryservice/models.py:926
+msgid "Group Base"
+msgstr "База Групи"
+
+#: directoryservice/models.py:928
+msgid "DN of the group container in AD."
+msgstr "DN контейнера груп в AD."
+
+#: jails/forms.py:259
+msgid "You can either enter dhcp or static ip but not both"
+msgstr "Ви можете ввести або dhcp або статичний ip, але не обидва"
+
+#: jails/forms.py:1038
+msgid "This name is already in use."
+msgstr "Це ім'я вже використовується."
+
+#: jails/models.py:350
+msgid "Unable to delete associated periodic snapshot %(task)s:%(error)s"
+msgstr "Неможливо видалити пов'язаний періодичний знімок %(task)s:%(error)s"
+
+#: services/admin.py:113
+#, fuzzy
+msgid "Listen (Node A)"
+msgstr "IPMI (Вузол A)"
+
+#: services/admin.py:118
+#, fuzzy
+msgid "Listen (Node B)"
+msgstr "IPMI (Вузол B)"
+
+#: services/forms.py:903
+msgid "The community must contain only alphanumeric characters _ . spaces or -"
+msgstr "Спільнота має містити тільки букви, цифри, _ , пробіл або -"
+
+#: services/forms.py:1505
+msgid "Zvol \"%s\" does not exist"
+msgstr "ZVOL \"%s\" не існує"
+
+#: services/models.py:148
+#: services/models.py:304
+msgid ""
+"Use this option to override the username ('nobody' by default) which will be "
+"used for access to services which are specified as guest. Whatever "
+"privileges this user has will be available to any client connecting to the "
+"guest service. This user must exist in the password file, but does not "
+"require a valid login. The user root cannot be used as guest account."
+msgstr ""
+"Використовуйте цю опцію для зміни імені користувача ('nobody' типово), яке "
+"буде використовуватися для гостьового доступу до служб. Незалежно від "
+"привілеїв, цей користувач буде доступний для будь-якого клієнта, "
+"підключається до гостьової служби. Цей користувач повинен існувати у файлі "
+"паролів, але не вимагає коректного логіна. Суперкористувач (root) не може "
+"використовуватися як гостьовий аккаунт."
+
+#: services/models.py:177
+msgid "These parameters are added to the [global] section of smb.conf"
+msgstr "Ці параметри додаються до розділу [global] файлу smb.conf"
+
+#: services/models.py:220
+msgid ""
+"Specifies whether Samba should use (expensive) hostname lookups or use IP "
+"addresses instead. An example place where hostname lookups are currently "
+"used is when checking the hosts deny and hosts allow."
+msgstr ""
+"Вказує чи повинна samba використовувати (дороге) перетворення імен або "
+"використовувати замість них IP адреси. Як приклад використання імен можна "
+"називати списки дозволених і заборонених хостів."
+
+#: services/models.py:244
+msgid ""
+"This boolean parameter controls the behaviour of smbd(8) when receiving a "
+"protocol request of \"open for execution\" from a Windows client. With Samba "
+"3.6 and older, the execution right in the ACL was not checked, so a client "
+"could execute a file even if it did not have execute rights on the file. In "
+"Samba 4.0, this has been fixed, so that by default, i.e. when this parameter "
+"is set to \"False\", \"open for execution\" is now denied when execution "
+"permissions are not present. If this parameter is set to \"True\", Samba "
+"does not check execute permissions on \"open for execution\", thus re-"
+"establishing the behavior of Samba 3.6 "
+msgstr ""
+"Цей логічний параметр керує поведінкою smbd(8) при отриманні запиту \""
+"відкрити для виконання\" від клієнта Windows. Починаючи з Samba 3.6 і "
+"старше, право виконання в ACL не перевірялося, і клієнт міг виконувати "
+"файли, навіть якщо у нього не було права виконання. У Samba 4.0 це було "
+"виправлено, так що за замовчуванням, тобто, коли цей параметр відключений, \""
+"відкриття для виконання\" тепер заборонено якщо немає прав на виконання. "
+"Якщо цей параметр включений, Samba не перевіряє дозволу на виконання для \""
+"відкрити для виконання\", таким чином відновлюючи поведінку Samba 3.6 "
+
+#: services/models.py:265
+msgid ""
+"IP addresses to bind to. If none specified, all available interfaces that "
+"are up will be listened on."
+msgstr ""
+"IP-адреси для прив'язки. Якщо нічого не вказано, будуть прослуховуватися всі "
+"доступні інтерфейси."
+
+#: services/models.py:296
+msgid "Allows guest access to all Apple shares on this box."
+msgstr "Дозволяє гостьовий доступ на всі ресурси Apple на цьому сховищі."
+
+#: services/models.py:315
+msgid ""
+"IP addresses to advertise and listens to. If none specified, advertise the "
+"first IP address of the system, but to listen for any incoming request."
+msgstr ""
+"IP-адреси що анонсуються та слухаються. Якщо нічого не вказано, анонсується "
+"перший IP-адрес системи, але слухаються всі."
+
+#: services/models.py:333
+msgid "Enable/disable home directories for AFP user."
+msgstr "Включає/відключає домашні каталоги для користувача AFP."
+
+#: services/models.py:343
+msgid "When set, overrides the default Home Share Name."
+msgstr "Коли встановлено, підміняє параметр за замовчуванням Home Share Name."
+
+#: services/models.py:360
+msgid "Map ACLs"
+msgstr ""
+
+#: services/models.py:357
+msgid "These parameters are added to the [Global] section of afp.conf"
+msgstr "Ці параметри додаються до розділу [Global] файлу afp.conf"
+
+#: services/models.py:362
+msgid ""
+"How to map the effective permissions of authenticated users: Rights ("
+"default, Unix-style permissions), Mode (ACLs), or None"
+msgstr ""
+"Як відобразити діючі дозволи на авторизованих користувачів: Rights (за "
+"замовчуванням, права доступу Unix-стиль), Mode (ACL) або None"
+
+#: services/models.py:383
+msgid ""
+"Specifies how many servers to create. There should be enough to handle the "
+"maximum level of concurrency from clients, typically four to six."
+msgstr ""
+"Визначає, скільки серверів створити. Повинно бути достатньо ресурсів для "
+"обробки максимального рівня паралелізму клієнтів, як правило, від чотирьох "
+"до шести."
+
+#: services/models.py:421
+msgid ""
+"Select the IP addresses to listen to for NFS requests. If left unchecked, "
+"NFS will listen on all available addresses."
+msgstr ""
+"Виберіть IP адреси які будуть слухати NFS. Якщо нічого не вказано, NFS буде "
+"слухати все інтерфейси."
+
+#: services/models.py:442
+msgid ""
+"Forces the rpc.statd daemon to bind to the specified port, for both IPv4 and "
+"IPv6 address families."
+msgstr "Змушує демона rpc.statd використовувати вказаний порт для IPv4 та IPv6."
+
+#: services/models.py:451
+msgid ""
+"Force the rpc.lockd daemon to bind to the specified port, for both IPv4 and "
+"IPv6 address families."
+msgstr "Змушує демона rpc.lockd використовувати вказаний порт для IPv4 та IPv6"
+
+#: services/models.py:458
+msgid ""
+"Ignore the group membership sent on the wire by the NFS client and look up "
+"the group membership on the server.  Note that this option is mutually "
+"incompatible with the NFSv3 ownership model for NFSv4."
+msgstr ""
+"Ця опція ігнорує членство в групі прислане клієнтом NFS і перевіряє членство "
+"в групі на сервері.  Зверніть увагу, що ця опція взаємно несумісна з "
+"використанням моделі власності NFSv3 для NFSv4."
+
+#: services/models.py:467
+msgid "Enable/disable mountd logging into syslog."
+msgstr "Включити / виключити журнал mountd в syslog."
+
+#: services/models.py:473
+msgid "Enable/disable statd and lockd logging into syslog."
+msgstr "Включити / виключити журнал statd і lockd в syslog."
+
+#: services/models.py:507
+msgid "Enable iSCSI ALUA"
+msgstr "Включити iSCSI ALUA"
+
+#: services/models.py:509
+msgid "Enabling this feature requires initiator reconfiguration"
+msgstr "Включення цієї функції вимагає зміни конфігурації ініціатора"
+
+#: services/models.py:565
+msgid ""
+"Size of extent: 0 means auto, a raw number is bytes, or suffix with KB, MB, "
+"or TB for convenience."
+msgstr ""
+"Розмір екстента, 0 - авто, число - в байтах, або число з суфіксів KB, MB, TB "
+"для зручності."
+
+#: services/models.py:573
+msgid ""
+"Logical block length (512 by default). The recommended length for "
+"compatibility is 512."
+msgstr ""
+"Довжина логічного блоку (типово 512). Для сумісності рекомендується 512."
+
+#: services/models.py:581
+msgid ""
+"By default, the physical blocksize is reported as the ZFS block size, which "
+"can be up to 128K. Some initiators do not work with values above 4K. "
+"Checking this disables reporting the physical blocksize."
+msgstr ""
+"За умовчанням у ролі розміру фізичного блоку повідомляється розмір блоку "
+"ZFS, який може досягати 128К. Деякі ініціатори не працюють зі значеннями "
+"вище 4К. Включення цієї опції відключає повідомлення фізичного розміру блоку."
+
+#: services/models.py:597
+#: services/models.py:700
+msgid "A description can be entered here for your reference."
+msgstr "Тут ви можете ввести опис для довідки."
+
+#: services/models.py:626
+msgid ""
+"RPM reported to initiators for this extent/LUN. The default is SSD because "
+"Windows will attempt to defrag non SSD devices.  This is a pathological "
+"worst-case situation for ZFS.  VMWare gives the option to use SSD LUNs as "
+"swap devices. There is some value to picking a non-SSD RPM if your extent is "
+"indeed not SSDs and the initiator will be VMWare."
+msgstr ""
+"Частота обертання LUN яка буде повідомлена ініціатору. За замовчуванням "
+"вибрано SSD, щоб уникнути спроб дефрагментації диска з Windows.  Це було б "
+"найгіршим варіантом для ZFS.  VMWare дозволяє використовувати SSD як "
+"пристроїв підкачки, тому існує певний сенс у виборі іншого значення цього "
+"параметра якщо ваш накопичувач справді не SSD та ініціатором буде VMWare."
+
+#: services/models.py:1441
+msgid "Override the file creation mask (077 by default)."
+msgstr "Зміна маски створення файлів (077 типово)."
+
+#: services/models.py:1449
+msgid "Override the directory creation mask (077 by default)."
+msgstr "Зміна маски створення каталогів (0777 типово)."
+
+#: services/models.py:1479
+msgid ""
+"Cause the server to display the network information for the specified "
+"address to the client, on the assumption that IP address or DNS host is "
+"acting as a NAT gateway or port forwarder for the server."
+msgstr ""
+"Змусити сервер відображати мережеву інформацію для заданої IP адреси "
+"клієнта, припускаючи, що ця IP адреса або DNS хост виступає як NAT або на "
+"ньому прокинуті необхідні порти."
+
+#: services/models.py:1734
+msgid ""
+"Extra options to /usr/local/etc/ssh/sshd_config (usually empty). Note, "
+"incorrect entered options prevent SSH service to be started."
+msgstr ""
+"Додаткові опції /usr/local/etc/ssh/sshd_config (зазвичай пусто). Зверніть "
+"увагу, неправильно введені значення пошкоджують запуск служби SSH."
+
+#: services/models.py:1935
+msgid "Control the access a remote host has to this module"
+msgstr "Контролює доступ віддаленого хосту до цього модуля"
+
+#: services/models.py:1941
+msgid "Maximum number of simultaneous connections. Default is 0 (unlimited)."
+msgstr "Максимальне число одночасних підключень. Типово 0 (необмежено)."
+
+#: services/models.py:1948
+msgid ""
+"Specify the user name for file transfers to and from that module. In "
+"combination with the 'Group' option, this determines which file permissions "
+"are available. Leave this field empty to use default settings."
+msgstr ""
+"Цей параметр задає ім'я користувача для передачі файлів в/з модуля. У "
+"поєднанні з опцією 'Група' визначає можливі права для доступу до файлів. "
+"Залиште це поле порожнім, щоб використовувати типові налаштування."
+
+#: services/models.py:1958
+msgid ""
+"Specify the group name for file transfers to and from that module. Leave "
+"this field empty to use default settings."
+msgstr ""
+"Цей параметр вказує назву групи для передачі файлів в/з модуля. Залиште це "
+"поле порожнім, щоб використовувати типові налаштування."
+
+#: services/models.py:1964
+msgid ""
+"This option is a comma, space, or tab delimited set of hosts which are "
+"permitted to access this module. You can specify the hosts by name or IP "
+"number. Leave this field empty to use default settings."
+msgstr ""
+"Набір хостів розділених комою, пробілом або табуляцією, яким дозволений "
+"доступ до цього ресурсу. Ви можете вказати хости по імені або IP-адресам. "
+"Залиште це поле порожнім, щоб використовувати типові налаштування."
+
+#: services/models.py:1972
+msgid ""
+"A comma, space, or tab-delimited set of hosts which are NOT permitted to "
+"access this module. Where the lists conflict, the allow list takes "
+"precedence. In the event that it is necessary to deny all by default, use "
+"the keyword ALL (or the netmask 0.0.0.0/0) and then explicitly specify in "
+"the hosts allow parameter those hosts that should be permitted access. Leave "
+"this field empty to use default settings."
+msgstr ""
+"Набір хостів розділених комою, пробілом або табуляцією, яким НЕ дозволений "
+"доступ до цього ресурсу. При цьому конфлікт-лист дозволяє розставити "
+"пріоритети. У разі, якщо типово необхідно заборонити всі, використовуйте "
+"параметр ALL (або маску 0.0.0.0/0), а потім явно вкажіть хости, доступ яким "
+"дозволений. Залиште це поле порожнім, щоб використовувати типові "
+"налаштування."
+
+#: services/models.py:1984
+msgid ""
+"These parameters will be added to the module configuration in rsyncd.conf."
+msgstr "Ці параметри будуть додані до конфігурації модуля в rsyncd.conf."
+
+#: services/models.py:2006
+msgid ""
+"Set the interval between disk checks to N minutes. The default is 30 minutes."
+msgstr "Встановлює інтервал між перевірками диска N хвилин. Типово 30 хвилин."
+
+#: services/models.py:2018
+msgid ""
+"Report if the temperature has changed by at least N degrees Celsius since "
+"the last report. 0 to disable."
+msgstr ""
+"Повідомляє, якщо температура змінилася на N градусів Цельсія з моменту "
+"останнього повідомлення. 0 - для відключення."
+
+#: services/models.py:2024
+msgid ""
+"Report as informational in the system log if the temperature is greater or "
+"equal than N degrees Celsius. 0 to disable."
+msgstr ""
+"Повідомляти як iнформацiйне, якщо температура більше або дорівнює N градусів "
+"Цельсія. 0 - для відключення."
+
+#: services/models.py:2031
+msgid ""
+"Report as critical in the system log and send an email if the temperature is "
+"greater or equal than N degrees Celsius. 0 to disable."
+msgstr ""
+"Повідомляти як критичне, якщо температура більше або дорівнює N градусів "
+"Цельсія. 0 - для відключення."
+
+#: services/models.py:2039
+msgid "Destination email address. Separate email addresses with commas."
+msgstr "E-mail одержувача. Використовуйте кому для розділення адрес."
+
+#: services/models.py:2184
+msgid ""
+"The port on which WebDAV will run.<br>Do not use a port that is already in "
+"use by another service (e.g. 22 for SSH)."
+msgstr ""
+"Це порт, на якому працюватиме WebDAV.<br>Не використовуйте порт, який вже "
+"використовується іншою службою (наприклад, 22 використовується SSH)."
+
+#: services/models.py:2193
+msgid ""
+"The port on which Secure WebDAV will run.<br>Do not use a port that is "
+"already in use by another service (e.g. 22 for SSH)."
+msgstr ""
+"Це порт, на якому працюватиме Безпечний WebDAV.<br>Не використовуйте порт, "
+"який вже використовується іншою службою (наприклад, 22 використовується SSH)."
+
+#: services/models.py:2210
+msgid ""
+"Type of HTTP Authentication for WebDAV<br>Basic Auth: Password is sent over "
+"the network as plaintext (Avoid if HTTPS is disabled) <br>Digest Auth: The "
+"hash of the password is sent over the network (more secure)."
+msgstr ""
+"Тип HTTP аутентифікації для WebDAV<br>Basic Auth: Пароль відправляється по "
+"мережі у відкритому вигляді (уникайте, якщо HTTPS відключений)<br>Digest "
+"Auth: Хеш пароля відправляється по мережі (безпечніший)."
+
+#: sharing/admin.py:80
+msgid ""
+"full_audit VFS object is known to have file transfer issues with Windows 10. "
+"Do you wish to continue?"
+msgstr ""
+"full_audit об'єкт VFS відомий проблеми передачі файлів з ОС Windows 10. Ви "
+"хочете продовжити?"
+
+#: sharing/forms.py:464
+msgid "This option can only be used for datasets."
+msgstr "Ця опція може бути використана тільки для наборів даних."
+
+#: sharing/models.py:274
+msgid ""
+"These parameters are added to the [Volume] section of afp.conf. Add each "
+"different parameter on a newline"
+msgstr ""
+"Ці параметри додаються до розділу [Volume] файлу afp.conf. Додавайте кожен "
+"параметр з нового рядка"
+
+#: sharing/models.py:334
+msgid ""
+"The credentials of the specified user is used for remote access by root."
+msgstr ""
+"Повноваження зазначеного користувача використовується для віддаленого "
+"доступу root."
+
+#: sharing/models.py:345
+msgid ""
+"The credentials of the specified group is used for remote access by root."
+msgstr ""
+"Повноваження зазначеної групи використовуються для віддаленого доступу root."
+
+#: sharing/models.py:356
+msgid ""
+"The credentials of the specified user is used for remote access by all users."
+msgstr ""
+"Повноваження зазначеного користувача використовуються для віддаленого "
+"доступу всіх користувачів."
+
+#: sharing/models.py:367
+msgid ""
+"The credentials of the specified group is used for remote access by all "
+"users."
+msgstr ""
+"Повноваження зазначеної групи використовуються для віддаленого доступу всіх "
+"користувачів."
+
+#: storage/admin.py:144
+#: storage/forms.py:1196
+#: storage/forms.py:1429
+#: storage/forms.py:1513
+msgid "Comments"
+msgstr "Коментарі"
+
+#: storage/forms.py:2011
+msgid "Setup mode"
+msgstr "Режим установки"
+
+#: storage/forms.py:2013
+msgid "Manual"
+msgstr "Ручний"
+
+#: storage/forms.py:2014
+msgid "Semi-automatic"
+msgstr "Напівавтоматичний"
+
+#: storage/forms.py:2025
+msgid "Remote HTTP/HTTPS Port"
+msgstr "Віддалений порт HTTP/HTTPS"
+
+#: storage/forms.py:2030
+msgid "Remote HTTPS"
+msgstr "Віддалений HTTPS"
+
+#: storage/forms.py:2035
+msgid "Remote Auth Token"
+msgstr "Віддалений токен аутентифікації"
+
+#: storage/forms.py:2222
+msgid "I'm aware this will destroy snapshots of this zvol"
+msgstr "Я знаю, що це знищить знімки цього zvol"
+
+#: storage/forms.py:2039
+msgid ""
+"On the remote host go to Storage -> Replication Tasks, click the Temporary "
+"Auth Token button and paste the resulting value in to this field."
+msgstr ""
+"На віддалений хост перейдіть в Сховище -> Завдання реплікації, натисніть "
+"кнопку Тимчасовий токен аутентифікації і вставте отримане значення в цьому "
+"полі."
+
+#: storage/forms.py:2187
+msgid "Token is invalid."
+msgstr "Токен не вірний."
+
+#: storage/forms.py:2191
+msgid "Failed to connect to remote: %s"
+msgstr "Не вдалося підключитися: %s"
+
+#: system/forms.py:1003
+msgid "Invalid syslog server format"
+msgstr "Неправильний формат сервера syslog"
+
+#: system/forms.py:1285
+msgid "Location to temporarily store update file"
+msgstr "Місце тимчасового зберігання файлу оновлення"
+
+#: system/forms.py:1287
+msgid "The update file is temporarily stored here before being applied."
+msgstr "Файл оновлення буде тимчасово збережений тут до моменту застосування."
+
+#: system/forms.py:2613
+msgid ""
+"Cut and paste the contents of your certificate here.<br>Order in which you "
+"should paste this: <br>The Primary Certificate.<br>The Intermediate CA's "
+"Certificate(s) (optional).<br>The Root CA Certificate (optional)"
+msgstr ""
+"Виріжте і вставте вміст вашого сертифіката тут.<br>Порядок, в якому ви "
+"повинні вставити цю інформацію:<br>Первинний Сертифікат.<br>Сертифікат(и) "
+"Проміжного ЦС (опціонально).<br>Сертифікат кореневого центру сертифікації "
+"(опціонально)"
+
+#: system/forms.py:3004
+msgid "Access Key"
+msgstr "Ключ доступу"
+
+#: system/forms.py:3008
+msgid "Secret Key"
+msgstr "Таємний ключ"
+
+#: system/models.py:348
+msgid "Use FQDN for logging"
+msgstr "Використовувати FQDN для журналу"
+
+#: system/models.py:987
+msgid "Account Name"
+msgstr "Ім'я облікового запису"
+
+#: system/models.py:1003
+msgid "Cloud Credential"
+msgstr "Реквізити хмари"
+
+#: tasks/forms.py:76
+msgid "Invalid provider details."
+msgstr "Неправильні деталі постачальника."
+
+#: tasks/forms.py:83
+msgid "Invalid credential."
+msgstr "Неприпустимі реквізити."
+
+#: tasks/forms.py:86
+msgid "Bucket is required."
+msgstr "Потрібен bucket."
+
+#: tasks/hook.py:40
+#: tasks/models.py:103
+msgid "Cloud Sync"
+msgstr "Синхронізація з хмарою"
+
+#: tasks/models.py:54
+msgid "Credential"
+msgstr "Реквізити"
+
+#: tasks/models.py:98
+msgid "Disabling will not stop any syncs which are in progress."
+msgstr "Відключення не зупинить вже активні завдання синхронізації."
+
+#: tasks/models.py:104
+msgid "Cloud Syncs"
+msgstr "Синхронізації з хмарою"
+
+#: tasks/forms.py:96
+msgid "Folder \"%s\" does not exist."
+msgstr "Папка \"%s\" не існує."
+
+#: tasks/models.py:52
+msgid "Push - From local to remote. Pull - From remote to local."
+msgstr ""
+"Push - з локальної на віддалену машину. Pull - з віддаленої на локальну "
+"машину."
+
+#: tasks/views.py:53
+msgid "The cloud sync process has started"
+msgstr "Процес синхронізації запущений"
+
+#: templates/storage/replication_datagrid.html:17
+#: templates/storage/replication_datagrid.html:19
+msgid "Temporary Auth Token"
+msgstr "Тимчасовий токен аутентифікації"
+
+#: templates/system/config_upload.html:6
+msgid "All your passwords will be reset. Make sure to set them after reboot."
+msgstr "Всі паролі будуть скинуті. Встановіть їх після перезавантаження."
+
+#: templates/tasks/cloudsync_run.html:5
+msgid "Would you like to run this cloud sync now?"
+msgstr "Ви хочете виконати це завдання синхронізації зараз?"
