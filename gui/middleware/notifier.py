@@ -2715,6 +2715,7 @@ class notifier:
 
     def apply_update(self, path):
         from freenasUI.system.views import INSTALLFILE
+        import freenasOS.Configuration as Configuration
         dirpath = os.path.dirname(path)
         open(INSTALLFILE, 'w').close()
         try:
@@ -2722,6 +2723,9 @@ class notifier:
                 '/usr/local/bin/manifest_util sequence 2> /dev/null > {}/SEQUENCE'.format(dirpath),
                 shell=True,
             )
+            conf = Configuration.Configuration()
+            with open('{}/SERVER'.format(dirpath), 'w') as f:
+                f.write('%s' % conf.UpdateServerName())
             subprocess.check_output(
                 [
                     '/usr/local/bin/freenas-update',
