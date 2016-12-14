@@ -31,6 +31,24 @@ define([
       'iscsitarget': function() { Menu.openISCSI(); }
     };
 
+    var NAME_MAP = {
+      'afp': gettext('AFP'),
+      'domaincontroller': gettext('Domain Controller'),
+      'dynamicdns': gettext('Dynamic DNS'),
+      'ftp': gettext('FTP'),
+      'iscsitarget': gettext('iSCSI'),
+      'lldp': gettext('LLDP'),
+      'nfs': gettext('NFS'),
+      'rsync': gettext('Rsync'),
+      'smartd': gettext('S.M.A.R.T.'),
+      'snmp': gettext('SNMP'),
+      'ssh': gettext('SSH'),
+      'cifs': gettext('SMB'),
+      'tftp': gettext('TFTP'),
+      'ups': gettext('UPS'),
+      'webdav': gettext('WebDAV'),
+    }
+
     var Service = declare("freeadmin.Service", [ _Widget, _Templated ], {
       templateString: template,
       serviceList: null,
@@ -47,7 +65,11 @@ define([
           me.dapLight.src = '/static/images/ui/misc/red_light.png';
         }
 
-        me.dapName.innerHTML = me.name;
+        if(NAME_MAP[me.name]) {
+          me.dapName.innerHTML = NAME_MAP[me.name];
+        } else {
+          me.dapName.innerHTML = me.name;
+        }
 
         me.start = new Button({
           label: gettext('Start Now'),
