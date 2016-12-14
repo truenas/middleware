@@ -9037,7 +9037,7 @@ msgstr "Подтвердите пароль учетного имени доме
 #: services/forms.py:758
 #: services/models.py:1612
 msgid "Kerberos keytab"
-msgstr "Файл Kerberos Keytab"
+msgstr "Kerberos keytab"
 
 #: services/forms.py:1081
 msgid "LUN ID already exists."
@@ -10169,7 +10169,7 @@ msgstr ""
 
 #: freeadmin/navtree.py:256
 msgid "Initial Wizard"
-msgstr "Безопасная инициализация"
+msgstr "Помощник Инициализации"
 
 #: middleware/notifier.py:2222
 msgid "Failed to create group %s"

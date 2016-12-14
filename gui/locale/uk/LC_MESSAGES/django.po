@@ -1193,7 +1193,7 @@ msgstr "Шлях плагінів не може бути або містити �
 
 #: plugins/forms.py:205 services/forms.py:148
 msgid "The plugins archive path cannot be a subset of the plugins jail path."
-msgstr "Шлях плагінів не може бути або містити jail шлях."
+msgstr "Шлях до архіву плагінів не може бути частиною шляху до jail."
 
 #~ msgid "Plugins jail path"
 #~ msgstr "Jail шлях плагінів"
@@ -5372,7 +5372,7 @@ msgstr "Будь ласка, зачекайте ..."
 
 #: templates/plugins/mountpoints.html:19
 msgid "Edit Mount Point"
-msgstr "Точка монтування"
+msgstr "Редагувати точку монтування"
 
 #~ msgid "Delete Mount Point"
 #~ msgstr "Видалити точку монтування"
@@ -8801,7 +8801,7 @@ msgstr "Не встановлено корiнь jail!"
 
 #: jails/models.py:537
 msgid "Filesystem"
-msgstr "Тип файлової системи"
+msgstr "Файлова система"
 
 #: jails/utils.py:695
 msgid "You need to create a volume to proceed!"
@@ -8888,7 +8888,7 @@ msgstr "Підтвердіть пароль адміністратора дом�
 #: services/forms.py:758
 #: services/models.py:1612
 msgid "Kerberos keytab"
-msgstr "Сервер Kerberos"
+msgstr "Kerberos keytab"
 
 #: services/forms.py:1081
 msgid "LUN ID already exists."
@@ -9555,7 +9555,7 @@ msgstr "Сертифікат"
 
 #: services/forms.py:864
 msgid "Incorrect password."
-msgstr "Пароль адміністратора"
+msgstr "Невірний пароль."
 
 #: services/models.py:1623
 #: services/models.py:1835
@@ -9592,7 +9592,7 @@ msgstr "Налаштування контролера домену"
 #: templates/system/settings_edit.html:30
 #: templates/system/settings_edit.html:32
 msgid "Set SSL Certificate"
-msgstr "Сертифікат SSL"
+msgstr "Встановити сертифікат SSL"
 
 #: system/hook.py:22
 #: system/hook.py:24
@@ -10013,7 +10013,7 @@ msgstr ""
 
 #: freeadmin/navtree.py:256
 msgid "Initial Wizard"
-msgstr "Ініціатор"
+msgstr "Майстер початкової настройки"
 
 #: middleware/notifier.py:2222
 msgid "Failed to create group %s"
@@ -11151,7 +11151,7 @@ msgstr "Сбiй демонтування (%(retcode)s) -> %(output)s"
 
 #: jails/forms.py:218
 msgid "Jail name cannot have '.'"
-msgstr "Ім'я користувача не може містити пробіли"
+msgstr "Ім'я jail не може містити '.'"
 
 #: jails/forms.py:1070
 msgid "The path could not be umounted %(source)s: %(error)s"
@@ -11229,7 +11229,7 @@ msgstr "Блочне сховище (iSCSI)"
 #: storage/admin.py:629
 #: storage/forms.py:1741
 msgid "VMWare Sync"
-msgstr "Плагін"
+msgstr "VMWare Sync"
 
 #: storage/forms.py:1576
 msgid "Apply Owner (user)"
@@ -11254,7 +11254,7 @@ msgstr ""
 #: storage/models.py:1098
 #: templates/storage/index.html:38
 msgid "VMWare-Snapshot"
-msgstr "Знимок"
+msgstr "VMWare-Знимок"
 
 #: system/forms.py:1610
 msgid "Automatic - Pick reasonable defaults for available drives"
@@ -12578,19 +12578,19 @@ msgstr "IP адреса управління TrueNAS"
 
 #: vcp/models.py:49
 msgid " vCenter Hostname/IP Address"
-msgstr "Ім'я сервера або IP адреса"
+msgstr " vCenter Ім'я сервера або IP адреса"
 
 #: vcp/models.py:55
 msgid " vCenter Port"
-msgstr "Віддалений порт"
+msgstr " vCenter Порт"
 
 #: vcp/models.py:60
 msgid " vCenter User name"
-msgstr "Ім’я користувача"
+msgstr " vCenter Ім’я користувача"
 
 #: vcp/models.py:67
 msgid " vCenter Password"
-msgstr "Змінити пароль"
+msgstr " vCenter Пароль"
 
 #: vcp/models.py:74
 msgid "version"
@@ -12599,7 +12599,7 @@ msgstr "Версія"
 #: vcp/models.py:78
 #: vcp/models.py:79
 msgid "VCenter Configuration"
-msgstr "Конфігурація"
+msgstr "Конфігурація VCenter"
 
 #: vcp/nav.py:44
 msgid "vCenter Plugin Configuration"
