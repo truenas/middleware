@@ -11,6 +11,7 @@ define([
   "dijit/form/Button",
   "dijit/form/CheckBox",
   "dijit/form/Form",
+  "dojox/widget/Standby",
   "dojo/text!freeadmin/templates/service_entry.html",
   ], function(
   declare,
@@ -25,6 +26,7 @@ define([
   Button,
   CheckBox,
   Form,
+  Standby,
   template) {
 
     var URL_MAP = {
@@ -71,26 +73,27 @@ define([
           me.dapName.innerHTML = me.name;
         }
 
-        me.start = new Button({
-          label: gettext('Start Now'),
-          disabled: (me.enable) ? true : false
-        }, me.dapStart);
-
-        me.stop = new Button({
-          label: gettext('Stop Now'),
-          disabled: (!me.enable) ? true : false
-        }, me.dapStop);
+        me.startstop = new Button({
+          label: (me.enable) ? gettext('Stop Now') : gettext('Start Now')
+        }, me.dapStartStop);
 
         me.onboot = new CheckBox({
           checked: me.enable
         }, me.dapOnBoot);
 
-        on(me.start, "click", function() {
-          me.disableAll();
-          Middleware.call('service.start', [me.name], function(result) {
-            console.log("result", result);
-            me.enableAll();
-          });
+        on(me.startstop, "click", function() {
+          me.startLoading();
+          if(me.enable) {
+            Middleware.call('service.stop', [me.name], function(result) {
+              console.log("result", result);
+              me.stopLoading();
+            });
+          } else {
+            Middleware.call('service.start', [me.name], function(result) {
+              console.log("result", result);
+              me.stopLoading();
+            });
+          }
         });
 
         domStyle.set(me.dapSettings, "cursor", "pointer");
@@ -108,16 +111,14 @@ define([
         this.inherited(arguments);
 
       },
-      disableAll: function() {
+      startLoading: function() {
         var me = this;
-        me.start.set('disabled', true);
-        me.stop.set('disabled', true);
+        me.startstop.set('disabled', true);
         me.onboot.set('disabled', true);
       },
-      enableAll: function() {
+      stopLoading: function() {
         var me = this;
-        me.start.set('disabled', (me.enable) ? true : false);
-        me.stop.set('disabled', (!me.enable) ? true : false);
+        me.startstop.set('disabled', false);
         me.onboot.set('disabled', false);
       }
     });
