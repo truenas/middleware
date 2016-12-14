@@ -102,6 +102,63 @@ class ServiceService(Service):
         services = gevent.pool.Group().map(result, jobs)
         return services
 
+    @accepts(Str('service'))
+    def start(self, service):
+        """ Start the service specified by `service`.
+
+        The helper will use method self._start_[service]() to start the service.
+        If the method does not exist, it would fallback using service(8)."""
+        self.middleware.call_hook('service.pre_start', service)
+        sn = self._started_notify("start", service)
+        self._simplecmd("start", service)
+        return self.started(service, sn)
+
+    def started(self, what, sn=None):
+        """ Test if service specified by "what" has been started. """
+        f = getattr(self, '_started_' + what, None)
+        if callable(f):
+            return f()
+        else:
+            return self._started(what, sn)[0]
+
+    @accepts(Str('service'))
+    def stop(self, service):
+        """ Stop the service specified by `service`.
+
+        The helper will use method self._stop_[service]() to stop the service.
+        If the method does not exist, it would fallback using service(8)."""
+        self.middleware.call_hook('service.pre_stop', service)
+        sn = self._started_notify("stop", service)
+        self._simplecmd("stop", service)
+        return self.started(service, sn)
+
+    @accepts(Str('service'))
+    def restart(self, service):
+        """
+        Restart the service specified by `service`.
+
+        The helper will use method self._restart_[service]() to restart the service.
+        If the method does not exist, it would fallback using service(8)."""
+        self.middleware.call_hook('service.pre_restart', service)
+        sn = self._started_notify("restart", service)
+        self._simplecmd("restart", service)
+        return self.started(service, sn)
+
+    @accepts(Str('service'))
+    def reload(self, service):
+        """
+        Reload the service specified by `service`.
+
+        The helper will use method self._reload_[service]() to reload the service.
+        If the method does not exist, the helper will try self.restart of the
+        service instead."""
+        self.middleware.call_hook('service.pre_reload', service)
+        try:
+            self._simplecmd("reload", service)
+        except:
+            self.restart(service)
+        return self.started(service)
+
     def _get_status(self, service):
         running, pids = self._started(service['service'])
 
@@ -189,63 +246,6 @@ class ServiceService(Service):
                     for i in data.strip().split('\n') if i.isdigit()
                 ]
         return False, []
-
-    @accepts(Str('service'))
-    def start(self, service):
-        """ Start the service specified by `service`.
-
-        The helper will use method self._start_[service]() to start the service.
-        If the method does not exist, it would fallback using service(8)."""
-        self.middleware.call_hook('service.pre_start', service)
-        sn = self._started_notify("start", service)
-        self._simplecmd("start", service)
-        return self.started(service, sn)
-
-    def started(self, what, sn=None):
-        """ Test if service specified by "what" has been started. """
-        f = getattr(self, '_started_' + what, None)
-        if callable(f):
-            return f()
-        else:
-            return self._started(what, sn)[0]
-
-    @accepts(Str('service'))
-    def stop(self, service):
-        """ Stop the service specified by `service`.
-
-        The helper will use method self._stop_[service]() to stop the service.
-        If the method does not exist, it would fallback using service(8)."""
-        self.middleware.call_hook('service.pre_stop', service)
-        sn = self._started_notify("stop", service)
-        self._simplecmd("stop", service)
-        return self.started(service, sn)
-
-    @accepts(Str('service'))
-    def restart(self, service):
-        """
-        Restart the service specified by `service`.
-
-        The helper will use method self._restart_[service]() to restart the service.
-        If the method does not exist, it would fallback using service(8)."""
-        self.middleware.call_hook('service.pre_restart', service)
-        sn = self._started_notify("restart", service)
-        self._simplecmd("restart", service)
-        return self.started(service, sn)
-
-    @accepts(Str('service'))
-    def reload(self, service):
-        """
-        Reload the service specified by `service`.
-
-        The helper will use method self._reload_[service]() to reload the service.
-        If the method does not exist, the helper will try self.restart of the
-        service instead."""
-        self.middleware.call_hook('service.pre_reload', service)
-        try:
-            self._simplecmd("reload", service)
-        except:
-            self.restart(service)
-        return self.started(service)
 
     def _start_webdav(self):
         self._system("/usr/sbin/service ix-apache onestart")
