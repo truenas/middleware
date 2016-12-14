@@ -26,7 +26,6 @@
 
 import json
 import logging
-import os
 import sys
 import middlewared.logger as logger
 
@@ -188,6 +187,7 @@ class ExceptionReporter(debug.ExceptionReporter):
 
 def server_error(request, *args, **kwargs):
     # Save exc info before next exception occurs
+    exc_info = sys.exc_info()
     trace_rollbar = logger.Rollbar()
     try:
         tb = Advanced.objects.all().latest('id').adv_traceback
@@ -195,10 +195,10 @@ def server_error(request, *args, **kwargs):
         tb = True
 
     # Report error to Rollbar.
+    sw_version = get_sw_version()
     extra_log_files = (('/data/update.failed', 'update_failed'),
-                       ('/var/log/debug.log', 'debug_log'),
-                      )
-    trace_rollbar.rollbar_report(sys.exc_info(), request, sw_version, extra_log_files)
+                       ('/var/log/debug.log', 'debug_log'),)
+    trace_rollbar.rollbar_report(exc_info, request, sw_version, extra_log_files)
 
     try:
         if tb:

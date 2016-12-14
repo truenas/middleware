@@ -3,7 +3,6 @@ from functools import update_wrapper
 import hashlib
 import json
 import logging
-import os
 import re
 import sys
 import middlewared.logger as logger
