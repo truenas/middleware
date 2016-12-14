@@ -119,6 +119,10 @@ class DatastoreService(Service):
         model = self.__get_model(name)
         if options is None:
             options = {}
+        else:
+            # We do not want to make changes to original options
+            # which might happen with "suffix"
+            options = options.copy()
 
         qs = model.objects.all()
 
@@ -126,11 +130,21 @@ class DatastoreService(Service):
         if extra:
             qs = qs.extra(**extra)
 
+        suffix = options.get('suffix')
+
         if filters:
-            qs = qs.filter(*self._filters_to_queryset(filters, options.get('suffix')))
+            qs = qs.filter(*self._filters_to_queryset(filters, suffix))
 
         order_by = options.get('order_by')
         if order_by:
+            if suffix:
+                # Do not change original order_by
+                order_by = order_by[:]
+                for i, order in enumerate(order_by):
+                    if order.startswith('-'):
+                        order_by[i] = '-' + suffix + order[1:]
+                    else:
+                        order_by[i] = suffix + order
             qs = qs.order_by(*order_by)
 
         if options.get('count') is True:
