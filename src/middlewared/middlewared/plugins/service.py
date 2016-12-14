@@ -357,9 +357,7 @@ class ServiceService(Service):
         self._system("/usr/sbin/service ix-localtime quietstart")
         self._system("/usr/sbin/service ix-ntpd quietstart")
         self._system("/usr/sbin/service ntpd restart")
-        c = self._open_db()
-        c.execute("SELECT stg_timezone FROM system_settings ORDER BY -id LIMIT 1")
-        os.environ['TZ'] = c.fetchone()[0]
+        os.environ['TZ'] = self.middleware.call('datastore.query', 'system.settings', [], {'order_by': ['-id'], 'get': True})['stg_timezone']
         time.tzset()
 
     def _restart_smartd(self):
