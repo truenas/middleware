@@ -179,7 +179,7 @@ class DatastoreService(Service):
             if isinstance(field, ForeignKey):
                 data[field.name] = field.rel.to.objects.get(pk=data[field.name])
         for k,v in data.items():
-            setattr(obj, k ,v)
+            setattr(obj, k, v)
         obj.save()
         return obj.pk
 

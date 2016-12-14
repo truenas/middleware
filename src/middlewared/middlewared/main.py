@@ -521,5 +521,6 @@ def main():
         if not args.foreground:
             daemonc.close()
 
+
 if __name__ == '__main__':
     main()
