@@ -2,7 +2,7 @@ from gevent import monkey
 monkey.patch_all()
 
 from .client import ejson as json
-from .utils import Popen, sw_version_is_stable
+from .utils import Popen
 from collections import OrderedDict, defaultdict
 from client.protocol import DDPProtocol
 from daemon import DaemonContext
@@ -21,7 +21,6 @@ import linecache
 import logging
 import logging.config
 import os
-import rollbar
 import setproctitle
 import signal
 import subprocess
@@ -29,6 +28,7 @@ import sys
 import traceback
 import types
 import uuid
+import logger
 
 
 class Application(WebSocketApplication):
@@ -41,6 +41,7 @@ class Application(WebSocketApplication):
         self.handshake = False
         self.logger = logging.getLogger('application')
         self.sessionid = str(uuid.uuid4())
+        self.trace = logger.Rollbar()
 
         """
         Callback index registered by services. They are blocking.
@@ -159,7 +160,12 @@ class Application(WebSocketApplication):
         except Exception as e:
             self.send_error(message, str(e), sys.exc_info())
             self.middleware.logger.warn('Exception while calling {}(*{})'.format(message['method'], message.get('params')), exc_info=True)
-            gevent.spawn(self.middleware.rollbar_report, sys.exc_info())
+
+            try:
+                sw_version = self.middleware.call('system.version')
+            except:
+                self.logger.debug('Failed to get system version', exc_info=True)
+            gevent.spawn(self.trace.rollbar_report(sys.exc_info(), sw_version))
 
     def subscribe(self, ident, name):
         self.__subscribed[ident] = name
@@ -260,18 +266,11 @@ class Middleware(object):
         self.__wsclients = {}
         self.__server_threads = []
         self.__init_services()
-        self.__init_rollbar()
         self.__plugins_load()
 
     def __init_services(self):
         from middlewared.service import CoreService
         self.add_service(CoreService(self))
-
-    def __init_rollbar(self):
-        rollbar.init(
-            'caf06383cba14d5893c4f4d0a40c33a9',
-            'production' if 'DEVELOPER_MODE' not in os.environ else 'development'
-        )
 
     def __plugins_load(self):
         from middlewared.service import Service, CRUDService, ConfigService
@@ -399,37 +398,6 @@ class Middleware(object):
                 wsclient.send_event(name, event_type, **kwargs)
             except:
                 self.logger.warn('Failed to send event {} to {}'.format(name, sessionid), exc_info=True)
-
-    def rollbar_report(self, exc_info):
-
-        # Allow rollbar to be disabled via sentinel file or environment var,
-        # if FreeNAS current train is STABLE, the sentinel file path will be /tmp/,
-        # otherwise it's path will be /data/ and can be persistent.
-        sentinel_file_path = '/data/.rollbar_disabled'
-        if sw_version_is_stable():
-            sentinel_file_path = '/tmp/.rollbar_disabled'
-
-        self.logger.debug('rollbar is disabled using sentinel file: {0}'.format(sentinel_file_path))
-
-        if (
-            os.path.exists(sentinel_file_path) or
-            'ROLLBAR_DISABLED' in os.environ
-        ):
-            return
-
-        extra_data = {}
-        try:
-            extra_data['sw_version'] = self.call('system.version')
-        except:
-            self.logger.debug('Failed to get system version', exc_info=True)
-
-        for path, name in (
-            ('/var/log/middlewared.log', 'middlewared_log'),
-        ):
-            if os.path.exists(path):
-                with open(path, 'r') as f:
-                    extra_data[name] = f.read()[-10240:]
-        rollbar.report_exc_info(exc_info, extra_data=extra_data)
 
     def run(self):
 
