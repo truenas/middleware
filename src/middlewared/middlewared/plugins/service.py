@@ -334,7 +334,7 @@ class ServiceService(Service):
 
     def _restart_webdav(self, **kwargs):
         self._service("apache24", "stop", force=True, **kwargs)
-        self._service("ix-apache", "start", force=True **kwargs)
+        self._service("ix-apache", "start", force=True, **kwargs)
         self._service("apache24", "restart", **kwargs)
 
     def _reload_webdav(self, **kwargs):
