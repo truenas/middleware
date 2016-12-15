@@ -54,6 +54,7 @@ define([
     var Service = declare("freeadmin.Service", [ _Widget, _Templated ], {
       templateString: template,
       serviceList: null,
+      sid: null,
       name: null,
       state: null,
       enable: null,
@@ -98,6 +99,14 @@ define([
               me.stopLoading();
             });
           }
+        });
+
+        on(me.onboot, 'click', function(ev) {
+          var value = (me.onboot.get('value') == 'on') ? true : false;
+          me.startLoading();
+          Middleware.call('service.update', [me.sid, {'enable': value}], function(result) {
+            me.stopLoading();
+          });
         });
 
         domStyle.set(me.dapSettings, "cursor", "pointer");
@@ -153,6 +162,7 @@ define([
             var item = result[i];
             var service = Service({
               serviceList: me,
+              sid: item.id,
               name: item.service,
               state: item.state,
               enable: item.enable
