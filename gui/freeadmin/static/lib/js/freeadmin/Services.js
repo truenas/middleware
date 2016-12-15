@@ -73,6 +73,12 @@ define([
           checked: me.enable
         }, me.dapOnBoot);
 
+        me.standby = new Standby({
+          target: me.domNode,
+        });
+        document.body.appendChild(me.standby.domNode);
+        me.standby.startup();
+
         on(me.startstop, "click", function() {
           me.startLoading();
           if(me.state == 'RUNNING') {
@@ -114,11 +120,13 @@ define([
         var me = this;
         me.startstop.set('disabled', true);
         me.onboot.set('disabled', true);
+        me.standby.show();
       },
       stopLoading: function() {
         var me = this;
         me.startstop.set('disabled', false);
         me.onboot.set('disabled', false);
+        me.standby.hide();
       },
       sync: function() {
         var me = this;
