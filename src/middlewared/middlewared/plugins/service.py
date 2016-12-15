@@ -5,7 +5,7 @@ import threading
 import time
 from subprocess import PIPE
 
-from middlewared.schema import accepts, Str
+from middlewared.schema import accepts, Bool, Dict, Int, Str
 from middlewared.service import filterable, Service
 from middlewared.utils import Popen, filter_list
 
@@ -101,6 +101,23 @@ class ServiceService(Service):
 
         services = gevent.pool.Group().map(result, jobs)
         return filter_list(services, filters, options)
+
+    @accepts(
+        Int('id'),
+        Dict(
+            'service-update',
+            Bool('enable'),
+        ),
+    )
+    def update(self, id, data):
+        """
+        Update service entry of `id`.
+
+        Currently it only accepts `enable` option which means whether the
+        service should start on boot.
+
+        """
+        return self.middleware.call('datastore.update', 'services.services', id, {'srv_enable': data['enable']})
 
     @accepts(Str('service'))
     def start(self, service):
