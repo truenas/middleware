@@ -119,15 +119,25 @@ class ServiceService(Service):
         """
         return self.middleware.call('datastore.update', 'services.services', id, {'srv_enable': data['enable']})
 
-    @accepts(Str('service'))
-    def start(self, service):
+    @accepts(
+        Str('service'),
+        Dict(
+            'service-control',
+            Bool('onetime'),
+        ),
+    )
+    def start(self, service, options=None):
         """ Start the service specified by `service`.
 
         The helper will use method self._start_[service]() to start the service.
         If the method does not exist, it would fallback using service(8)."""
+        if options is None:
+            options = {
+                'onetime': True,
+            }
         self.middleware.call_hook('service.pre_start', service)
         sn = self._started_notify("start", service)
-        self._simplecmd("start", service)
+        self._simplecmd("start", service, options)
         return self.started(service, sn)
 
     def started(self, what, sn=None):
@@ -138,42 +148,72 @@ class ServiceService(Service):
         else:
             return self._started(what, sn)[0]
 
-    @accepts(Str('service'))
-    def stop(self, service):
+    @accepts(
+        Str('service'),
+        Dict(
+            'service-control',
+            Bool('onetime'),
+        ),
+    )
+    def stop(self, service, options=None):
         """ Stop the service specified by `service`.
 
         The helper will use method self._stop_[service]() to stop the service.
         If the method does not exist, it would fallback using service(8)."""
+        if options is None:
+            options = {
+                'onetime': True,
+            }
         self.middleware.call_hook('service.pre_stop', service)
         sn = self._started_notify("stop", service)
-        self._simplecmd("stop", service)
+        self._simplecmd("stop", service, options)
         return self.started(service, sn)
 
-    @accepts(Str('service'))
-    def restart(self, service):
+    @accepts(
+        Str('service'),
+        Dict(
+            'service-control',
+            Bool('onetime'),
+        ),
+    )
+    def restart(self, service, options=None):
         """
         Restart the service specified by `service`.
 
         The helper will use method self._restart_[service]() to restart the service.
         If the method does not exist, it would fallback using service(8)."""
+        if options is None:
+            options = {
+                'onetime': True,
+            }
         self.middleware.call_hook('service.pre_restart', service)
         sn = self._started_notify("restart", service)
-        self._simplecmd("restart", service)
+        self._simplecmd("restart", service, options)
         return self.started(service, sn)
 
-    @accepts(Str('service'))
-    def reload(self, service):
+    @accepts(
+        Str('service'),
+        Dict(
+            'service-control',
+            Bool('onetime'),
+        ),
+    )
+    def reload(self, service, options=None):
         """
         Reload the service specified by `service`.
 
         The helper will use method self._reload_[service]() to reload the service.
         If the method does not exist, the helper will try self.restart of the
         service instead."""
+        if options is None:
+            options = {
+                'onetime': True,
+            }
         self.middleware.call_hook('service.pre_reload', service)
         try:
-            self._simplecmd("reload", service)
+            self._simplecmd("reload", service, options)
         except:
-            self.restart(service)
+            self.restart(service, options)
         return self.started(service)
 
     def _get_status(self, service):
@@ -191,7 +231,7 @@ class ServiceService(Service):
         service['pids'] = pids
         return service
 
-    def _simplecmd(self, action, what):
+    def _simplecmd(self, action, what, options=None):
         self.logger.debug("Calling: %s(%s) ", action, what)
         f = getattr(self, '_' + action + '_' + what, None)
         if f is None:
@@ -206,13 +246,34 @@ class ServiceService(Service):
                 self._system("/usr/sbin/service " + what + " " + action)
             else:
                 raise ValueError("Internal error: Unknown command")
-        if f is not None:
-            f()
+        else:
+            f(**(options or {}))
 
     def _system(self, cmd):
         proc = Popen(cmd, stdout=PIPE, stderr=PIPE, shell=True, close_fds=True)
         proc.communicate()
         return proc.returncode
+
+    def _service(self, service, verb, **options):
+        onetime = options.get('onetime')
+        force = options.get('force')
+        quiet = options.get('quiet')
+
+        # force comes before one which comes before quiet
+        # they are mutually exclusive
+        preverb = ''
+        if force:
+            preverb = 'force'
+        elif onetime:
+            preverb = 'one'
+        elif quiet:
+            preverb = 'quiet'
+
+        return self._system('/usr/sbin/service {} {}{}'.format(
+            service,
+            preverb,
+            verb,
+        ))
 
     def _started_notify(self, verb, what):
         """
@@ -264,32 +325,32 @@ class ServiceService(Service):
                 ]
         return False, []
 
-    def _start_webdav(self):
-        self._system("/usr/sbin/service ix-apache onestart")
-        self._system("/usr/sbin/service apache24 start")
+    def _start_webdav(self, **kwargs):
+        self._service("ix-apache", "onestart", **kwargs)
+        self._service("apache24", "start", **kwargs)
 
-    def _stop_webdav(self):
-        self._system("/usr/sbin/service apache24 stop")
+    def _stop_webdav(self, **kwargs):
+        self._service("apache24", "stop", **kwargs)
 
-    def _restart_webdav(self):
-        self._system("/usr/sbin/service apache24 forcestop")
-        self._system("/usr/sbin/service ix-apache onestart")
-        self._system("/usr/sbin/service apache24 restart")
+    def _restart_webdav(self, **kwargs):
+        self._service("apache24", "stop", force=True, **kwargs)
+        self._service("ix-apache", "onestart", **kwargs)
+        self._service("apache24", "restart", **kwargs)
 
-    def _reload_webdav(self):
-        self._system("/usr/sbin/service ix-apache onestart")
-        self._system("/usr/sbin/service apache24 reload")
+    def _reload_webdav(self, **kwargs):
+        self._service("ix-apache", "onestart", **kwargs)
+        self._service("apache24", "reload", **kwargs)
 
-    def _restart_django(self):
-        self._system("/usr/sbin/service django restart")
+    def _restart_django(self, **kwargs):
+        self._service("django", "restart", **kwargs)
 
-    def _start_webshell(self):
+    def _start_webshell(self, **kwargs):
         self._system("/usr/local/bin/python /usr/local/www/freenasUI/tools/webshell.py")
 
-    def _start_backup(self):
+    def _start_backup(self, **kwargs):
         self._system("/usr/local/bin/python /usr/local/www/freenasUI/tools/backup.py")
 
-    def _restart_webshell(self):
+    def _restart_webshell(self, **kwargs):
         try:
             with open('/var/run/webshell.pid', 'r') as f:
                 pid = f.read()
@@ -299,196 +360,196 @@ class ServiceService(Service):
             pass
         self._system("ulimit -n 1024 && /usr/local/bin/python /usr/local/www/freenasUI/tools/webshell.py")
 
-    def _restart_iscsitarget(self):
-        self._system("/usr/sbin/service ix-ctld forcestart")
-        self._system("/usr/sbin/service ctld forcestop")
-        self._system("/usr/sbin/service ix-ctld quietstart")
-        self._system("/usr/sbin/service ctld restart")
+    def _restart_iscsitarget(self, **kwargs):
+        self._service("ix-ctld", "start", force=True, **kwargs)
+        self._service("ctld", "stop", force=True, **kwargs)
+        self._service("ix-ctld", "start", quiet=True, **kwargs)
+        self._service("ctld", "restart", **kwargs)
 
-    def _start_iscsitarget(self):
-        self._system("/usr/sbin/service ix-ctld quietstart")
-        self._system("/usr/sbin/service ctld start")
+    def _start_iscsitarget(self, **kwargs):
+        self._service("ix-ctld", "start", quiet=True, **kwargs)
+        self._service("ctld", "start", **kwargs)
 
-    def _stop_iscsitarget(self):
-        self._system("/usr/sbin/service ix-ctld forcestop")
-        self._system("/usr/sbin/service ctld forcestop")
+    def _stop_iscsitarget(self, **kwargs):
+        self._service("ix-ctld", "stop", force=True, **kwargs)
+        self._service("ctld", "stop", force=True, **kwargs)
 
-    def _reload_iscsitarget(self):
-        self._system("/usr/sbin/service ix-ctld quietstart")
-        self._system("/usr/sbin/service ctld reload")
+    def _reload_iscsitarget(self, **kwargs):
+        self._service("ix-ctld", "start", quiet=True, **kwargs)
+        self._service("ctld", "reload", **kwargs)
 
-    def _start_collectd(self):
-        self._system("/usr/sbin/service ix-collectd quietstart")
-        self._system("/usr/sbin/service collectd restart")
+    def _start_collectd(self, **kwargs):
+        self._service("ix-collectd", "start", quiet=True, **kwargs)
+        self._service("collectd", "restart", **kwargs)
 
-    def _restart_collectd(self):
-        self._system("/usr/sbin/service collectd stop")
-        self._system("/usr/sbin/service ix-collectd quietstart")
-        self._system("/usr/sbin/service collectd start")
+    def _restart_collectd(self, **kwargs):
+        self._service("collectd", "stop", **kwargs)
+        self._service("ix-collectd", "start", quiet=True, **kwargs)
+        self._service("collectd", "start", **kwargs)
 
-    def _start_sysctl(self):
-        self._system("/usr/sbin/service sysctl start")
-        self._system("/usr/sbin/service ix-sysctl quietstart")
+    def _start_sysctl(self, **kwargs):
+        self._service("sysctl", "start", **kwargs)
+        self._service("ix-sysctl", "start", quiet=True, **kwargs)
 
-    def _reload_sysctl(self):
-        self._system("/usr/sbin/service sysctl start")
-        self._system("/usr/sbin/service ix-sysctl reload")
+    def _reload_sysctl(self, **kwargs):
+        self._service("sysctl", "start", **kwargs)
+        self._service("ix-sysctl", "reload", **kwargs)
 
-    def _start_network(self):
+    def _start_network(self, **kwargs):
         self.middleware.call('interfaces.sync')
         self.middleware.call('routes.sync')
 
-    def _stop_jails(self):
+    def _stop_jails(self, **kwargs):
         for jail in self.middleware.call('datastore.query', 'jails.jails'):
             self.middleware.call('notifier.warden', 'stop', [], {'jail': jail['jail_host']})
 
-    def _start_jails(self):
-        self._system("/usr/sbin/service ix-warden start")
+    def _start_jails(self, **kwargs):
+        self._service("ix-warden", "start", **kwargs)
         for jail in self.middleware.call('datastore.query', 'jails.jails'):
             if jail['jail_autostart']:
                 self.middleware.call('notifier.warden', 'start', [], {'jail': jail['jail_host']})
-        self._system("/usr/sbin/service ix-plugins start")
+        self._service("ix-plugins", "start", **kwargs)
         self.reload("http")
 
-    def _restart_jails(self):
+    def _restart_jails(self, **kwargs):
         self._stop_jails()
         self._start_jails()
 
-    def _stop_pbid(self):
-        self._system("/usr/sbin/service pbid stop")
+    def _stop_pbid(self, **kwargs):
+        self._service("pbid", "stop", **kwargs)
 
-    def _start_pbid(self):
-        self._system("/usr/sbin/service pbid start")
+    def _start_pbid(self, **kwargs):
+        self._service("pbid", "start", **kwargs)
 
-    def _restart_pbid(self):
-        self._system("/usr/sbin/service pbid restart")
+    def _restart_pbid(self, **kwargs):
+        self._service("pbid", "restart", **kwargs)
 
-    def _reload_named(self):
-        self._system("/usr/sbin/service named reload")
+    def _reload_named(self, **kwargs):
+        self._service("named", "reload", **kwargs)
 
-    def _reload_hostname(self):
+    def _reload_hostname(self, **kwargs):
         self._system('/bin/hostname ""')
-        self._system("/usr/sbin/service ix-hostname quietstart")
-        self._system("/usr/sbin/service hostname quietstart")
-        self._system("/usr/sbin/service collectd stop")
-        self._system("/usr/sbin/service ix-collectd quietstart")
-        self._system("/usr/sbin/service collectd start")
+        self._service("ix-hostname", "start", quiet=True, **kwargs)
+        self._service("hostname", "start", quiet=True, **kwargs)
+        self._service("collectd", "stop", **kwargs)
+        self._service("ix-collectd", "start", quiet=True, **kwargs)
+        self._service("collectd", "start", **kwargs)
 
-    def _reload_resolvconf(self):
+    def _reload_resolvconf(self, **kwargs):
         self._reload_hostname()
-        self._system("/usr/sbin/service ix-resolv quietstart")
+        self._service("ix-resolv", "start", quiet=True, **kwargs)
 
-    def _reload_networkgeneral(self):
+    def _reload_networkgeneral(self, **kwargs):
         self._reload_resolvconf()
-        self._system("/usr/sbin/service routing restart")
+        self._service("routing", "restart", **kwargs)
 
-    def _reload_timeservices(self):
-        self._system("/usr/sbin/service ix-localtime quietstart")
-        self._system("/usr/sbin/service ix-ntpd quietstart")
-        self._system("/usr/sbin/service ntpd restart")
+    def _reload_timeservices(self, **kwargs):
+        self._service("ix-localtime", "start", quiet=True, **kwargs)
+        self._service("ix-ntpd", "start", quiet=True, **kwargs)
+        self._service("ntpd", "restart", **kwargs)
         os.environ['TZ'] = self.middleware.call('datastore.query', 'system.settings', [], {'order_by': ['-id'], 'get': True})['stg_timezone']
         time.tzset()
 
-    def _restart_smartd(self):
-        self._system("/usr/sbin/service ix-smartd quietstart")
-        self._system("/usr/sbin/service smartd forcestop")
-        self._system("/usr/sbin/service smartd restart")
+    def _restart_smartd(self, **kwargs):
+        self._service("ix-smartd", "start", quiet=True, **kwargs)
+        self._service("smartd", "stop", force=True, **kwargs)
+        self._service("smartd", "restart", **kwargs)
 
-    def _reload_ssh(self):
-        self._system("/usr/sbin/service ix-sshd quietstart")
-        self._system("/usr/sbin/service ix_register reload")
-        self._system("/usr/sbin/service openssh reload")
-        self._system("/usr/sbin/service ix_sshd_save_keys quietstart")
+    def _reload_ssh(self, **kwargs):
+        self._service("ix-sshd", "start", quiet=True, **kwargs)
+        self._service("ix_register", "reload", **kwargs)
+        self._service("openssh", "reload", **kwargs)
+        self._service("ix_sshd_save_keys", "start", quiet=True, **kwargs)
 
-    def _start_ssh(self):
-        self._system("/usr/sbin/service ix-sshd quietstart")
-        self._system("/usr/sbin/service ix_register reload")
-        self._system("/usr/sbin/service openssh start")
-        self._system("/usr/sbin/service ix_sshd_save_keys quietstart")
+    def _start_ssh(self, **kwargs):
+        self._service("ix-sshd", "start", quiet=True, **kwargs)
+        self._service("ix_register", "reload", **kwargs)
+        self._service("openssh", "start", **kwargs)
+        self._service("ix_sshd_save_keys", "start", quiet=True, **kwargs)
 
-    def _stop_ssh(self):
-        self._system("/usr/sbin/service openssh forcestop")
-        self._system("/usr/sbin/service ix_register reload")
+    def _stop_ssh(self, **kwargs):
+        self._service("openssh", "stop", force=True, **kwargs)
+        self._service("ix_register", "reload", **kwargs)
 
-    def _restart_ssh(self):
-        self._system("/usr/sbin/service ix-sshd quietstart")
-        self._system("/usr/sbin/service openssh forcestop")
-        self._system("/usr/sbin/service ix_register reload")
-        self._system("/usr/sbin/service openssh restart")
-        self._system("/usr/sbin/service ix_sshd_save_keys quietstart")
+    def _restart_ssh(self, **kwargs):
+        self._service("ix-sshd", "start", quiet=True, **kwargs)
+        self._service("openssh", "stop", force=True, **kwargs)
+        self._service("ix_register", "reload", **kwargs)
+        self._service("openssh", "restart", **kwargs)
+        self._service("ix_sshd_save_keys", "start", quiet=True, **kwargs)
 
-    def _reload_rsync(self):
-        self._system("/usr/sbin/service ix-rsyncd quietstart")
-        self._system("/usr/sbin/service rsyncd restart")
+    def _reload_rsync(self, **kwargs):
+        self._service("ix-rsyncd", "start", quiet=True, **kwargs)
+        self._service("rsyncd", "restart", **kwargs)
 
-    def _restart_rsync(self):
+    def _restart_rsync(self, **kwargs):
         self._stop_rsync()
         self._start_rsync()
 
-    def _start_rsync(self):
-        self._system("/usr/sbin/service ix-rsyncd quietstart")
-        self._system("/usr/sbin/service rsyncd start")
+    def _start_rsync(self, **kwargs):
+        self._service("ix-rsyncd", "start", quiet=True, **kwargs)
+        self._service("rsyncd", "start", **kwargs)
 
-    def _stop_rsync(self):
-        self._system("/usr/sbin/service rsyncd forcestop")
+    def _stop_rsync(self, **kwargs):
+        self._service("rsyncd", "stop", force=True, **kwargs)
 
-    def _started_nis(self):
+    def _started_nis(self, **kwargs):
         res = False
         if not self._system("/etc/directoryservice/NIS/ctl status"):
             res = True
         return res
 
-    def _start_nis(self):
+    def _start_nis(self, **kwargs):
         res = False
         if not self._system("/etc/directoryservice/NIS/ctl start"):
             res = True
         return res
 
-    def _restart_nis(self):
+    def _restart_nis(self, **kwargs):
         res = False
         if not self._system("/etc/directoryservice/NIS/ctl restart"):
             res = True
         return res
 
-    def _stop_nis(self):
+    def _stop_nis(self, **kwargs):
         res = False
         if not self._system("/etc/directoryservice/NIS/ctl stop"):
             res = True
         return res
 
-    def _started_ldap(self):
+    def _started_ldap(self, **kwargs):
         if (self._system('/usr/sbin/service ix-ldap status') != 0):
             return False
 
         return self.middleware.call('notifier', 'ldap_status')
 
-    def _start_ldap(self):
+    def _start_ldap(self, **kwargs):
         res = False
         if not self._system("/etc/directoryservice/LDAP/ctl start"):
             res = True
         return res
 
-    def _stop_ldap(self):
+    def _stop_ldap(self, **kwargs):
         res = False
         if not self._system("/etc/directoryservice/LDAP/ctl stop"):
             res = True
         return res
 
-    def _restart_ldap(self):
+    def _restart_ldap(self, **kwargs):
         res = False
         if not self._system("/etc/directoryservice/LDAP/ctl restart"):
             res = True
         return res
 
-    def _start_lldp(self):
-        self._system("/usr/sbin/service ladvd start")
+    def _start_lldp(self, **kwargs):
+        self._service("ladvd", "start", **kwargs)
 
-    def _stop_lldp(self):
-        self._system("/usr/sbin/service ladvd forcestop")
+    def _stop_lldp(self, **kwargs):
+        self._service("ladvd", "stop", force=True, **kwargs)
 
-    def _restart_lldp(self):
-        self._system("/usr/sbin/service ladvd forcestop")
-        self._system("/usr/sbin/service ladvd restart")
+    def _restart_lldp(self, **kwargs):
+        self._service("ladvd", "stop", force=True, **kwargs)
+        self._service("ladvd", "restart", **kwargs)
 
     def _clear_activedirectory_config(self):
         self._system("/bin/rm -f /etc/directoryservice/ActiveDirectory/config")
@@ -519,130 +580,130 @@ class ServiceService(Service):
         self._system("/etc/directoryservice/NT4/ctl stop")
         return res
 
-    def _started_activedirectory(self):
+    def _started_activedirectory(self, **kwargs):
         for srv in ('kinit', 'activedirectory', ):
             if self._system('/usr/sbin/service ix-%s status' % (srv, )) != 0:
                 return False
 
         return self.middleware.call('notifier', 'ad_status')
 
-    def _start_activedirectory(self):
+    def _start_activedirectory(self, **kwargs):
         res = False
         if not self._system("/etc/directoryservice/ActiveDirectory/ctl start"):
             res = True
         return res
 
-    def _stop_activedirectory(self):
+    def _stop_activedirectory(self, **kwargs):
         res = False
         if not self._system("/etc/directoryservice/ActiveDirectory/ctl stop"):
             res = True
         return res
 
-    def _restart_activedirectory(self):
+    def _restart_activedirectory(self, **kwargs):
         res = False
         if not self._system("/etc/directoryservice/ActiveDirectory/ctl restart"):
             res = True
         return res
 
-    def _started_domaincontroller(self):
+    def _started_domaincontroller(self, **kwargs):
         res = False
         if not self._system("/etc/directoryservice/DomainController/ctl status"):
             res = True
         return res
 
-    def _start_domaincontroller(self):
+    def _start_domaincontroller(self, **kwargs):
         res = False
         if not self._system("/etc/directoryservice/DomainController/ctl start"):
             res = True
         return res
 
-    def _stop_domaincontroller(self):
+    def _stop_domaincontroller(self, **kwargs):
         res = False
         if not self._system("/etc/directoryservice/DomainController/ctl stop"):
             res = True
         return res
 
-    def _restart_domaincontroller(self):
+    def _restart_domaincontroller(self, **kwargs):
         res = False
         if not self._system("/etc/directoryservice/DomainController/ctl restart"):
             res = True
         return res
 
-    def _restart_syslogd(self):
-        self._system("/usr/sbin/service ix-syslogd quietstart")
+    def _restart_syslogd(self, **kwargs):
+        self._service("ix-syslogd", "start", quiet=True, **kwargs)
         self._system("/etc/local/rc.d/syslog-ng restart")
 
-    def _start_syslogd(self):
-        self._system("/usr/sbin/service ix-syslogd quietstart")
+    def _start_syslogd(self, **kwargs):
+        self._service("ix-syslogd", "start", quiet=True, **kwargs)
         self._system("/etc/local/rc.d/syslog-ng start")
 
-    def _stop_syslogd(self):
+    def _stop_syslogd(self, **kwargs):
         self._system("/etc/local/rc.d/syslog-ng stop")
 
-    def _reload_syslogd(self):
-        self._system("/usr/sbin/service ix-syslogd quietstart")
+    def _reload_syslogd(self, **kwargs):
+        self._service("ix-syslogd", "start", quiet=True, **kwargs)
         self._system("/etc/local/rc.d/syslog-ng reload")
 
-    def _start_tftp(self):
-        self._system("/usr/sbin/service ix-inetd quietstart")
-        self._system("/usr/sbin/service inetd start")
+    def _start_tftp(self, **kwargs):
+        self._service("ix-inetd", "start", quiet=True, **kwargs)
+        self._service("inetd", "start", **kwargs)
 
-    def _reload_tftp(self):
-        self._system("/usr/sbin/service ix-inetd quietstart")
-        self._system("/usr/sbin/service inetd forcestop")
-        self._system("/usr/sbin/service inetd restart")
+    def _reload_tftp(self, **kwargs):
+        self._service("ix-inetd", "start", quiet=True, **kwargs)
+        self._service("inetd", "stop", force=True, **kwargs)
+        self._service("inetd", "restart", **kwargs)
 
-    def _restart_tftp(self):
-        self._system("/usr/sbin/service ix-inetd quietstart")
-        self._system("/usr/sbin/service inetd forcestop")
-        self._system("/usr/sbin/service inetd restart")
+    def _restart_tftp(self, **kwargs):
+        self._service("ix-inetd", "start", quiet=True, **kwargs)
+        self._service("inetd", "stop", force=True, **kwargs)
+        self._service("inetd", "restart", **kwargs)
 
-    def _restart_cron(self):
-        self._system("/usr/sbin/service ix-crontab quietstart")
+    def _restart_cron(self, **kwargs):
+        self._service("ix-crontab", "start", quiet=True, **kwargs)
 
-    def _start_motd(self):
-        self._system("/usr/sbin/service ix-motd quietstart")
-        self._system("/usr/sbin/service motd quietstart")
+    def _start_motd(self, **kwargs):
+        self._service("ix-motd", "start", quiet=True, **kwargs)
+        self._service("motd", "start", quiet=True, **kwargs)
 
-    def _start_ttys(self):
-        self._system("/usr/sbin/service ix-ttys quietstart")
+    def _start_ttys(self, **kwargs):
+        self._service("ix-ttys", "start", quiet=True, **kwargs)
 
-    def _reload_ftp(self):
-        self._system("/usr/sbin/service ix-proftpd quietstart")
-        self._system("/usr/sbin/service proftpd restart")
+    def _reload_ftp(self, **kwargs):
+        self._service("ix-proftpd", "start", quiet=True, **kwargs)
+        self._service("proftpd", "restart", **kwargs)
 
-    def _restart_ftp(self):
+    def _restart_ftp(self, **kwargs):
         self._stop_ftp()
         self._start_ftp()
 
-    def _start_ftp(self):
-        self._system("/usr/sbin/service ix-proftpd quietstart")
-        self._system("/usr/sbin/service proftpd start")
+    def _start_ftp(self, **kwargs):
+        self._service("ix-proftpd", "start", quiet=True, **kwargs)
+        self._service("proftpd", "start", **kwargs)
 
-    def _stop_ftp(self):
-        self._system("/usr/sbin/service proftpd forcestop")
+    def _stop_ftp(self, **kwargs):
+        self._service("proftpd", "stop", force=True, **kwargs)
 
-    def _start_ups(self):
-        self._system("/usr/sbin/service ix-ups quietstart")
-        self._system("/usr/sbin/service nut start")
-        self._system("/usr/sbin/service nut_upsmon start")
-        self._system("/usr/sbin/service nut_upslog start")
+    def _start_ups(self, **kwargs):
+        self._service("ix-ups", "start", quiet=True, **kwargs)
+        self._service("nut", "start", **kwargs)
+        self._service("nut_upsmon", "start", **kwargs)
+        self._service("nut_upslog", "start", **kwargs)
 
-    def _stop_ups(self):
-        self._system("/usr/sbin/service nut_upslog forcestop")
-        self._system("/usr/sbin/service nut_upsmon forcestop")
-        self._system("/usr/sbin/service nut forcestop")
+    def _stop_ups(self, **kwargs):
+        self._service("nut_upslog", "stop", force=True, **kwargs)
+        self._service("nut_upsmon", "stop", force=True, **kwargs)
+        self._service("nut", "stop", force=True, **kwargs)
 
-    def _restart_ups(self):
-        self._system("/usr/sbin/service ix-ups quietstart")
-        self._system("/usr/sbin/service nut forcestop")
-        self._system("/usr/sbin/service nut_upsmon forcestop")
-        self._system("/usr/sbin/service nut_upslog forcestop")
-        self._system("/usr/sbin/service nut restart")
-        self._system("/usr/sbin/service nut_upsmon restart")
-        self._system("/usr/sbin/service nut_upslog restart")
+    def _restart_ups(self, **kwargs):
+        self._service("ix-ups", "start", quiet=True, **kwargs)
+        self._service("nut", "stop", force=True, **kwargs)
+        self._service("nut_upsmon", "stop", force=True, **kwargs)
+        self._service("nut_upslog", "stop", force=True, **kwargs)
+        self._service("nut", "restart", **kwargs)
+        self._service("nut_upsmon", "restart", **kwargs)
+        self._service("nut_upslog", "restart", **kwargs)
 
-    def _started_ups(self):
+    def _started_ups(self, **kwargs):
         mode = self.middleware.call('datastore.query', 'services.ups', [], {'order_by': ['-id'], 'get': True})['ups_mode']
         if mode == "master":
             svc = "ups"
@@ -651,154 +712,150 @@ class ServiceService(Service):
         sn = self._started_notify("start", "upsmon")
         return self._started(svc, sn)
 
-    def _load_afp(self):
-        self._system("/usr/sbin/service ix-afpd quietstart")
-        self._system("/usr/sbin/service netatalk quietstart")
+    def _start_afp(self, **kwargs):
+        self._service("ix-afpd", "start", **kwargs)
+        self._service("netatalk", "start", **kwargs)
 
-    def _start_afp(self):
-        self._system("/usr/sbin/service ix-afpd start")
-        self._system("/usr/sbin/service netatalk start")
-
-    def _stop_afp(self):
-        self._system("/usr/sbin/service netatalk forcestop")
+    def _stop_afp(self, **kwargs):
+        self._service("netatalk", "stop", force=True, **kwargs)
         # when netatalk stops if afpd or cnid_metad is stuck
         # they'll get left behind, which can cause issues
         # restarting netatalk.
         self._system("pkill -9 afpd")
         self._system("pkill -9 cnid_metad")
 
-    def _restart_afp(self):
+    def _restart_afp(self, **kwargs):
         self._stop_afp()
         self._start_afp()
 
-    def _reload_afp(self):
-        self._system("/usr/sbin/service ix-afpd quietstart")
+    def _reload_afp(self, **kwargs):
+        self._service("ix-afpd", "start", quiet=True, **kwargs)
         self._system("killall -1 netatalk")
 
-    def _reload_nfs(self):
-        self._system("/usr/sbin/service ix-nfsd quietstart")
+    def _reload_nfs(self, **kwargs):
+        self._service("ix-nfsd", "start", quiet=True, **kwargs)
 
-    def _restart_nfs(self):
-        self._stop_nfs()
-        self._start_nfs()
+    def _restart_nfs(self, **kwargs):
+        self._stop_nfs(**kwargs)
+        self._start_nfs(**kwargs)
 
-    def _stop_nfs(self):
-        self._system("/usr/sbin/service lockd forcestop")
-        self._system("/usr/sbin/service statd forcestop")
-        self._system("/usr/sbin/service nfsd forcestop")
-        self._system("/usr/sbin/service mountd forcestop")
-        self._system("/usr/sbin/service nfsuserd forcestop")
-        self._system("/usr/sbin/service gssd forcestop")
-        self._system("/usr/sbin/service rpcbind forcestop")
+    def _stop_nfs(self, **kwargs):
+        self._service("lockd", "stop", force=True, **kwargs)
+        self._service("statd", "stop", force=True, **kwargs)
+        self._service("nfsd", "stop", force=True, **kwargs)
+        self._service("mountd", "stop", force=True, **kwargs)
+        self._service("nfsuserd", "stop", force=True, **kwargs)
+        self._service("gssd", "stop", force=True, **kwargs)
+        self._service("rpcbind", "stop", force=True, **kwargs)
 
-    def _start_nfs(self):
-        self._system("/usr/sbin/service ix-nfsd quietstart")
-        self._system("/usr/sbin/service rpcbind quietstart")
-        self._system("/usr/sbin/service gssd quietstart")
-        self._system("/usr/sbin/service nfsuserd quietstart")
-        self._system("/usr/sbin/service mountd quietstart")
-        self._system("/usr/sbin/service nfsd quietstart")
-        self._system("/usr/sbin/service statd quietstart")
-        self._system("/usr/sbin/service lockd quietstart")
+    def _start_nfs(self, **kwargs):
+        self._service("ix-nfsd", "start", quiet=True, **kwargs)
+        self._service("rpcbind", "start", quiet=True, **kwargs)
+        self._service("gssd", "start", quiet=True, **kwargs)
+        self._service("nfsuserd", "start", quiet=True, **kwargs)
+        self._service("mountd", "start", quiet=True, **kwargs)
+        self._service("nfsd", "start", quiet=True, **kwargs)
+        self._service("statd", "start", quiet=True, **kwargs)
+        self._service("lockd", "start", quiet=True, **kwargs)
 
-    def _force_stop_jail(self):
-        self._system("/usr/sbin/service jail forcestop")
+    def _force_stop_jail(self, **kwargs):
+        self._service("jail", "stop", force=True, **kwargs)
 
-    def _start_plugins(self, jail=None, plugin=None):
+    def _start_plugins(self, jail=None, plugin=None, **kwargs):
         if jail and plugin:
             self._system("/usr/sbin/service ix-plugins forcestart %s:%s" % (jail, plugin))
         else:
-            self._system("/usr/sbin/service ix-plugins forcestart")
+            self._service("ix-plugins", "start", force=True, **kwargs)
 
-    def _stop_plugins(self, jail=None, plugin=None):
+    def _stop_plugins(self, jail=None, plugin=None, **kwargs):
         if jail and plugin:
             self._system("/usr/sbin/service ix-plugins forcestop %s:%s" % (jail, plugin))
         else:
-            self._system("/usr/sbin/service ix-plugins forcestop")
+            self._service("ix-plugins", "stop", force=True, **kwargs)
 
     def _restart_plugins(self, jail=None, plugin=None):
         self._stop_plugins(jail=jail, plugin=plugin)
         self._start_plugins(jail=jail, plugin=plugin)
 
-    def _started_plugins(self, jail=None, plugin=None):
+    def _started_plugins(self, jail=None, plugin=None, **kwargs):
         res = False
         if jail and plugin:
             if self._system("/usr/sbin/service ix-plugins status %s:%s" % (jail, plugin)) == 0:
                 res = True
         else:
-            if self._system("/usr/sbin/service ix-plugins status") == 0:
+            if self._service("ix-plugins", "status", **kwargs) == 0:
                 res = True
         return res
 
-    def _restart_dynamicdns(self):
-        self._system("/usr/sbin/service ix-inadyn quietstart")
-        self._system("/usr/sbin/service inadyn-mt forcestop")
-        self._system("/usr/sbin/service inadyn-mt restart")
+    def _restart_dynamicdns(self, **kwargs):
+        self._service("ix-inadyn", "start", quiet=True, **kwargs)
+        self._service("inadyn-mt", "stop", force=True, **kwargs)
+        self._service("inadyn-mt", "restart", **kwargs)
 
-    def _restart_system(self):
+    def _restart_system(self, **kwargs):
         self._system("/bin/sleep 3 && /sbin/shutdown -r now &")
 
-    def _stop_system(self):
+    def _stop_system(self, **kwargs):
         self._system("/sbin/shutdown -p now")
 
-    def _reload_cifs(self):
-        self._system("/usr/sbin/service ix-pre-samba quietstart")
-        self._system("/usr/sbin/service samba_server forcereload")
-        self._system("/usr/sbin/service ix-post-samba quietstart")
-        self._system("/usr/sbin/service mdnsd restart")
+    def _reload_cifs(self, **kwargs):
+        self._service("ix-pre-samba", "start", quiet=True, **kwargs)
+        self._service("samba_server", "reload", force=True, **kwargs)
+        self._service("ix-post-samba", "start", quiet=True, **kwargs)
+        self._service("mdnsd", "restart", **kwargs)
         # After mdns is restarted we need to reload netatalk to have it rereregister
         # with mdns. Ticket #7133
-        self._system("/usr/sbin/service netatalk reload")
+        self._service("netatalk", "reload", **kwargs)
 
-    def _restart_cifs(self):
-        self._system("/usr/sbin/service ix-pre-samba quietstart")
-        self._system("/usr/sbin/service samba_server forcestop")
-        self._system("/usr/sbin/service samba_server quietrestart")
-        self._system("/usr/sbin/service ix-post-samba quietstart")
-        self._system("/usr/sbin/service mdnsd restart")
+    def _restart_cifs(self, **kwargs):
+        self._service("ix-pre-samba", "start", quiet=True, **kwargs)
+        self._service("samba_server", "stop", force=True, **kwargs)
+        self._service("samba_server", "restart", quiet=True, **kwargs)
+        self._service("ix-post-samba", "start", quiet=True, **kwargs)
+        self._service("mdnsd", "restart", **kwargs)
         # After mdns is restarted we need to reload netatalk to have it rereregister
         # with mdns. Ticket #7133
-        self._system("/usr/sbin/service netatalk reload")
+        self._service("netatalk", "reload", **kwargs)
 
-    def _start_cifs(self):
-        self._system("/usr/sbin/service ix-pre-samba quietstart")
-        self._system("/usr/sbin/service samba_server quietstart")
-        self._system("/usr/sbin/service ix-post-samba quietstart")
+    def _start_cifs(self, **kwargs):
+        self._service("ix-pre-samba", "start", quiet=True, **kwargs)
+        self._service("samba_server", "start", quiet=True, **kwargs)
+        self._service("ix-post-samba", "start", quiet=True, **kwargs)
 
-    def _stop_cifs(self):
-        self._system("/usr/sbin/service samba_server forcestop")
-        self._system("/usr/sbin/service ix-post-samba quietstart")
+    def _stop_cifs(self, **kwargs):
+        self._service("samba_server", "stop", force=True, **kwargs)
+        self._service("ix-post-samba", "start", quiet=True, **kwargs)
 
-    def _start_snmp(self):
-        self._system("/usr/sbin/service ix-snmpd quietstart")
-        self._system("/usr/sbin/service snmpd quietstart")
+    def _start_snmp(self, **kwargs):
+        self._service("ix-snmpd", "start", quiet=True, **kwargs)
+        self._service("snmpd", "start", quiet=True, **kwargs)
 
-    def _stop_snmp(self):
-        self._system("/usr/sbin/service snmpd quietstop")
+    def _stop_snmp(self, **kwargs):
+        self._service("snmpd", "stop", quiet=True, **kwargs)
         # The following is required in addition to just `snmpd`
         # to kill the `freenas-snmpd.py` daemon
-        self._system("/usr/sbin/service ix-snmpd quietstop")
+        self._service("ix-snmpd", "stop", quiet=True, **kwargs)
 
-    def _restart_snmp(self):
-        self._system("/usr/sbin/service ix-snmpd quietstart")
-        self._system("/usr/sbin/service snmpd forcestop")
-        self._system("/usr/sbin/service snmpd quietstart")
+    def _restart_snmp(self, **kwargs):
+        self._service("ix-snmpd", "start", quiet=True, **kwargs)
+        self._service("snmpd", "stop", force=True, **kwargs)
+        self._service("snmpd", "start", quiet=True, **kwargs)
 
-    def _restart_http(self):
-        self._system("/usr/sbin/service ix-nginx quietstart")
-        self._system("/usr/sbin/service ix_register reload")
-        self._system("/usr/sbin/service nginx restart")
+    def _restart_http(self, **kwargs):
+        self._service("ix-nginx", "start", quiet=True, **kwargs)
+        self._service("ix_register", "reload", **kwargs)
+        self._service("nginx", "restart", **kwargs)
 
-    def _reload_http(self):
-        self._system("/usr/sbin/service ix-nginx quietstart")
-        self._system("/usr/sbin/service ix_register reload")
-        self._system("/usr/sbin/service nginx reload")
+    def _reload_http(self, **kwargs):
+        self._service("ix-nginx", "start", quiet=True, **kwargs)
+        self._service("ix_register", "reload", **kwargs)
+        self._service("nginx", "reload", **kwargs)
 
-    def _reload_loader(self):
-        self._system("/usr/sbin/service ix-loader reload")
+    def _reload_loader(self, **kwargs):
+        self._service("ix-loader", "reload", **kwargs)
 
-    def _start_loader(self):
-        self._system("/usr/sbin/service ix-loader quietstart")
+    def _start_loader(self, **kwargs):
+        self._service("ix-loader", "start", quiet=True, **kwargs)
 
     def __saver_loaded(self):
         pipe = os.popen("kldstat|grep daemon_saver")
@@ -806,33 +863,32 @@ class ServiceService(Service):
         pipe.close()
         return (len(out) > 0)
 
-    def _start_saver(self):
+    def _start_saver(self, **kwargs):
         if not self.__saver_loaded():
             self._system("kldload daemon_saver")
 
-    def _stop_saver(self):
+    def _stop_saver(self, **kwargs):
         if self.__saver_loaded():
             self._system("kldunload daemon_saver")
 
-    def _restart_saver(self):
+    def _restart_saver(self, **kwargs):
         self._stop_saver()
         self._start_saver()
 
-    def _reload_disk(self):
-        self._system("/usr/sbin/service ix-fstab quietstart")
-        self._system("/usr/sbin/service ix-swap quietstart")
-        self._system("/usr/sbin/service swap quietstart")
-        self._system("/usr/sbin/service mountlate quietstart")
+    def _reload_disk(self, **kwargs):
+        self._service("ix-fstab", "start", quiet=True, **kwargs)
+        self._service("ix-swap", "start", quiet=True, **kwargs)
+        self._service("swap", "start", quiet=True, **kwargs)
+        self._service("mountlate", "start", quiet=True, **kwargs)
         self.restart("collectd")
 
-    def _reload_user(self):
-        self._system("/usr/sbin/service ix-passwd quietstart")
-        self._system("/usr/sbin/service ix-aliases quietstart")
-        self._system("/usr/sbin/service ix-sudoers quietstart")
+    def _reload_user(self, **kwargs):
+        self._service("ix-passwd", "start", quiet=True, **kwargs)
+        self._service("ix-aliases", "start", quiet=True, **kwargs)
+        self._service("ix-sudoers", "start", quiet=True, **kwargs)
         self.reload("cifs")
 
-
-    def _restart_system_datasets(self):
+    def _restart_system_datasets(self, **kwargs):
         systemdataset = self.system_dataset_create()
         if systemdataset is None:
             return None
