@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:10-0700\n"
-"PO-Revision-Date: 2016-07-27 17:55+0000\n"
+"PO-Revision-Date: 2016-12-08 14:02+0000\n"
 "Last-Translator: Tonnes <tonnes.mb@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: nl\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1469642155.0\n"
+"X-POOTLE-MTIME: 1481205740.0\n"
 
 #~ msgid "Reporting"
 #~ msgstr "Rapporteren"
@@ -670,3 +670,25 @@ msgstr ""
 #: freeadmin/static/lib/js/freeadmin.js:359
 msgid "Ok"
 msgstr "OK"
+
+#: freeadmin/static/lib/js/alert.js:69
+msgid "Warning"
+msgstr "Waarschuwing"
+
+#: freeadmin/static/lib/js/alert.js:73
+msgid "Critical"
+msgstr "Kritiek"
+
+#: freeadmin/static/lib/js/freeadmin.js:1425
+#, fuzzy
+msgid "The action will result in migration of dataset."
+msgstr "De actie resulteert in migratie van de gegevensset."
+
+#: freeadmin/static/lib/js/freeadmin.js:1425
+#, fuzzy
+msgid "Some services will be restarted."
+msgstr "Sommige services zullen opnieuw worden gestart."
+
+#: freeadmin/static/lib/js/freeadmin.js:1438
+msgid "Continue"
+msgstr "Doorgaan"

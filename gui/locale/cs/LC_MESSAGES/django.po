@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:07-0700\n"
-"PO-Revision-Date: 2016-08-01 13:07+0000\n"
+"PO-Revision-Date: 2016-12-08 13:12+0000\n"
 "Last-Translator: Pavel <pavel.borecki@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: cs\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1470056833.0\n"
+"X-POOTLE-MTIME: 1481202742.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -3613,7 +3613,6 @@ msgid "All Directories"
 msgstr "Všechny složky"
 
 #: sharing/models.py:274
-#, fuzzy
 msgid ""
 "Allow mounting of any subdirectory under this mount point if selected. "
 "Otherwise, only the top level directory can be mounted."
@@ -7288,7 +7287,6 @@ msgid "Jail root is not configured!"
 msgstr "Není nastavená kořenová složka vyhrazeného prostředí!"
 
 #: jails/models.py:537
-#, fuzzy
 msgid "Filesystem"
 msgstr "Typ souborového systému"
 
@@ -7563,7 +7561,6 @@ msgid "Hostname of the kerberos server to use."
 msgstr ""
 
 #: services/models.py:1657
-#, fuzzy
 msgid "Kerberos Password Server"
 msgstr "Kerberos server"
 
@@ -8383,7 +8380,6 @@ msgstr "Stahování z %(url)s se nezdařilo: %(error)s"
 
 #: services/forms.py:758
 #: services/models.py:1612
-#, fuzzy
 msgid "Kerberos keytab"
 msgstr "Kerberos server"
 
@@ -9481,7 +9477,6 @@ msgid "Certificate"
 msgstr "Certifikát"
 
 #: services/forms.py:864
-#, fuzzy
 msgid "Incorrect password."
 msgstr "nové heslo"
 
@@ -9519,7 +9514,6 @@ msgstr "Nastavení řadiče domény"
 
 #: templates/system/settings_edit.html:30
 #: templates/system/settings_edit.html:32
-#, fuzzy
 msgid "Set SSL Certificate"
 msgstr "Certifikát SSL"
 
@@ -11270,7 +11264,6 @@ msgid "Verifying"
 msgstr "Ověřování…"
 
 #: system/alertmods/boot_volume_status.py:19
-#, fuzzy
 msgid "The boot volume status is %(status)s: %(message)s"
 msgstr "Stav svazku %(volume) je %(status): %(message)s"
 
@@ -12562,22 +12555,18 @@ msgid " TrueNAS Management IP Address"
 msgstr " IP adresa správního rozhraní TrueNAS"
 
 #: vcp/models.py:49
-#, fuzzy
 msgid " vCenter Hostname/IP Address"
 msgstr "Název stroje nebo jeho IP adresa"
 
 #: vcp/models.py:55
-#, fuzzy
 msgid " vCenter Port"
 msgstr "Port na protistraně"
 
 #: vcp/models.py:60
-#, fuzzy
 msgid " vCenter User name"
 msgstr "Uživatelské jméno"
 
 #: vcp/models.py:67
-#, fuzzy
 msgid " vCenter Password"
 msgstr "Změnit heslo"
 
@@ -12587,7 +12576,6 @@ msgstr "verze"
 
 #: vcp/models.py:78
 #: vcp/models.py:79
-#, fuzzy
 msgid "VCenter Configuration"
 msgstr "Nastavení"
 
@@ -13230,3 +13218,652 @@ msgstr ""
 "Příkaz sloužící k vypnutí serveru. V jeho rámci je možné začlenit své "
 "vlastní příkazy, které provést před vypnutím. Pokud není zadáno, bude "
 "použito výchozí: /sbin/shutdown -p now"
+
+#: choices.py:1045
+msgid "Rights"
+msgstr "Práva"
+
+#: choices.py:1051
+msgid "Amazon S3"
+msgstr "Amazon S3"
+
+#: api/resources.py:655
+msgid "Volume is not encrypted."
+msgstr "Svazek není šifrovaný."
+
+#: api/resources.py:1588
+msgid "Not ran since last boot"
+msgstr "Nebylo spuštěno od minulého startu systému"
+
+#: directoryservice/models.py:919
+msgid "User Base"
+msgstr "Základ uživatelů"
+
+#: directoryservice/models.py:921
+msgid "DN of the user container in AD."
+msgstr ""
+"Rozlišený název (DN) sekce Active Directory, ve které se nacházejí "
+"uživatelské účty."
+
+#: directoryservice/models.py:926
+msgid "Group Base"
+msgstr "Základ skupin"
+
+#: directoryservice/models.py:928
+msgid "DN of the group container in AD."
+msgstr ""
+"Rozlišený název (DN) sekce Active Directory, ve které se nacházejí účty "
+"skupin."
+
+#: jails/forms.py:259
+msgid "You can either enter dhcp or static ip but not both"
+msgstr "Použít je možné dhcp nebo statickou IP adresu ale ne obojí naráz"
+
+#: jails/forms.py:1038
+msgid "This name is already in use."
+msgstr "Tento název je už používán."
+
+#: jails/models.py:350
+msgid "Unable to delete associated periodic snapshot %(task)s:%(error)s"
+msgstr ""
+"Nedaří se smazat související pravidelné pořizování zachyceného stavu "
+"%(task)s:%(error)s"
+
+#: services/admin.py:113
+msgid "Listen (Node A)"
+msgstr "Čekat na spojení (uzel A)"
+
+#: services/admin.py:118
+msgid "Listen (Node B)"
+msgstr "Čekat na spojení (uzel B)"
+
+#: services/forms.py:903
+msgid "The community must contain only alphanumeric characters _ . or -"
+msgstr ""
+"„komunita“ (= heslo v SNMP terminologii) může obsahovat pouze písmena a "
+"číslice, dále znaky „_“ (podtržítko) a „-“ (spojovník)"
+
+#: services/forms.py:903
+msgid "The community must contain only alphanumeric characters _ . spaces or -"
+msgstr ""
+"„komunita“ (= heslo v SNMP terminologii) může obsahovat pouze písmena a "
+"číslice, dále znaky „_“ (podtržítko) a „-“ (spojovník)"
+
+#: services/forms.py:1505
+msgid "Zvol \"%s\" does not exist"
+msgstr "ZFS svazek „%s“ neexistuje"
+
+#: services/models.py:148
+#: services/models.py:304
+msgid ""
+"Use this option to override the username ('nobody' by default) which will be "
+"used for access to services which are specified as guest. Whatever "
+"privileges this user has will be available to any client connecting to the "
+"guest service. This user must exist in the password file, but does not "
+"require a valid login. The user root cannot be used as guest account."
+msgstr ""
+"Slouží k přepsání uživatelského jména („nobody“ ve výchozím nastavení), "
+"které bude použito pro přístup ke službám bez přihlašování. Přístupová práva "
+"tohoto uživatele budou propůjčena všem, kteří se připojí k takové službě. Je "
+"třeba, aby zmíněný uživatel existoval v souboru passwd, platné přihlášení "
+"však není vyžadováno. Účet správce systému (root) nemůže být použit jako "
+"účet hosta."
+
+#: services/models.py:177
+msgid "These parameters are added to the [global] section of smb.conf"
+msgstr "Tyto parametry jsou přidány do sekce [global] souboru smb.conf"
+
+#: services/models.py:220
+msgid ""
+"Specifies whether Samba should use (expensive) hostname lookups or use IP "
+"addresses instead. An example place where hostname lookups are currently "
+"used is when checking the hosts deny and hosts allow."
+msgstr ""
+"Určuje, zda má samba používat (náročný) překlad IP adres na názvů strojů či "
+"namísto toho použít jen IP adresy. Příkladem použití překladu na názvy "
+"strojů je v současnosti jejich použití v seznamech strojů, ze kterých je "
+"povolen či odepřen přístup ke sdílením."
+
+#: services/models.py:244
+msgid ""
+"This boolean parameter controls the behaviour of smbd(8) when receiving a "
+"protocol request of \"open for execution\" from a Windows client. With Samba "
+"3.6 and older, the execution right in the ACL was not checked, so a client "
+"could execute a file even if it did not have execute rights on the file. In "
+"Samba 4.0, this has been fixed, so that by default, i.e. when this parameter "
+"is set to \"False\", \"open for execution\" is now denied when execution "
+"permissions are not present. If this parameter is set to \"True\", Samba "
+"does not check execute permissions on \"open for execution\", thus re-"
+"establishing the behavior of Samba 3.6 "
+msgstr ""
+"Tento parametr určuje chování služby smbd(8), když od Windows klienta obdrží "
+"požadavek „otevřít pro spuštění“. U Samba verze 3.6 a starších, nebylo "
+"oprávnění pro spouštění kontrolováno vůči ACL seznamům, takže klient mohl "
+"soubor spustit, i když neměl potřebné oprávnění. V Samba 4.0 toto bylo "
+"opraveno, takže ve výchozím stavu, tj. když je tento parametr nastaven na "
+"„False“ (ne), je v případě, že není příslušné oprávnění, „otevřít pro "
+"spuštění“ odepřeno. Je-li tento parametr nastaven na „True“ (ano), Samba "
+"nekontroluje oprávnění pro „otevřít pro spuštění“ a chová se tak tedy "
+"stejně, jako Samba 3.6 "
+
+#: services/models.py:265
+msgid ""
+"IP addresses to bind to. If none specified, all available interfaces that "
+"are up will be listened on."
+msgstr ""
+"IP adresy, na které navázat. Pokud není zadáno, bude spojení očekáváno na "
+"všech aktivních rozhraních."
+
+#: services/models.py:296
+msgid "Allows guest access to all Apple shares on this box."
+msgstr ""
+"Umožnit nepřihlášeným uživatelům (hostům) přistupovat ke všem sdílením Apple "
+"(AFP) na tomto FreeNAS systému."
+
+#: services/models.py:315
+msgid ""
+"IP addresses to advertise and listens to. If none specified, advertise the "
+"first IP address of the system, but to listen for any incoming request."
+msgstr ""
+"IP adresy na kterých nabízet a očekávat spojení. Pokud není zadáno, bude "
+"nabízena první z IP adres systému, ale spojení bude očekáváno na všech."
+
+#: services/models.py:333
+msgid "Enable/disable home directories for AFP user."
+msgstr "Umožnit/neumožnit uživatelům protokolu afp mít zde domovské složky."
+
+#: services/models.py:343
+msgid "When set, overrides the default Home Share Name."
+msgstr "Pokud je nastaveno, přepíše výchozí název domovského sdílení."
+
+#: services/models.py:360
+msgid "Map ACLs"
+msgstr "Mapovat ACL seznamy"
+
+#: services/models.py:362
+msgid "How to map the effective permissions of authenticated users."
+msgstr "Jak mapovat skutečná oprávnění ověřených uživatelů."
+
+#: services/models.py:357
+msgid "These parameters are added to the [Global] section of afp.conf"
+msgstr "Tyto parametry jsou přidány do sekce [Global] souboru afp.conf"
+
+#: services/models.py:362
+msgid ""
+"How to map the effective permissions of authenticated users: Rights ("
+"default, Unix-style permissions)Mode (ACls), or None"
+msgstr ""
+"Jak mapovat skutečná oprávnění ověřených uživatelů: Práva (výchozí, unixová "
+"oprávnění)Režim (ACL seznamy), nebo Žádné"
+
+#: services/models.py:362
+msgid ""
+"How to map the effective permissions of authenticated users: Rights ("
+"default, Unix-style permissions), Mode (ACLs), or None"
+msgstr ""
+"Jak mapovat skutečná oprávnění ověřených uživatelů: Práva (výchozí, unixová "
+"oprávnění), Režim (ACL seznamy), nebo Žádné"
+
+#: services/models.py:383
+msgid ""
+"Specifies how many servers to create. There should be enough to handle the "
+"maximum level of concurrency from clients, typically four to six."
+msgstr ""
+"Určuje kolik instancí serveru vytvořit. Je třeba, aby tento počet byl "
+"dostatečný i pro zvládnutí nejvyšší úrovně souběžných požadavků od jeho "
+"klientů, obvykle 4 až 6."
+
+#: services/models.py:421
+msgid ""
+"Select the IP addresses to listen to for NFS requests. If left unchecked, "
+"NFS will listen on all available addresses."
+msgstr ""
+"Vyberte IP adresy, na kterých očekávat NFS požadavky. Pokud není zaškrtnuto, "
+"bude spojení očekáváno na všech dostupných adresách."
+
+#: services/models.py:442
+msgid ""
+"Forces the rpc.statd daemon to bind to the specified port, for both IPv4 and "
+"IPv6 address families."
+msgstr ""
+"Tato volba vynutí, aby proces služby rpc.statd očekával spojení na zadaném "
+"portu a to pro protokoly IPv4 i IPv6."
+
+#: services/models.py:451
+msgid ""
+"Force the rpc.lockd daemon to bind to the specified port, for both IPv4 and "
+"IPv6 address families."
+msgstr ""
+"Tato volba vynutí, aby proces služby rpc.lockd očekával spojení na zadaném "
+"portu a to pro protokoly IPv4 i IPv6."
+
+#: services/models.py:458
+msgid ""
+"Ignore the group membership sent on the wire by the NFS client and look up "
+"the group membership on the server.  Note that this option is mutually "
+"incompatible with the NFSv3 ownership model for NFSv4."
+msgstr ""
+"Zapnutím této předvolby je ignorováno tvrzení NFS klienta, ohledně členství "
+"ve skupině a namísto toho je tato informace zjišťována na serveru. Tuto "
+"volbu nelze použít současně s „Používat u NFS verze 4 stejný model "
+"vlastnictví jako u verze 3“."
+
+#: services/models.py:467
+msgid "Enable/disable mountd logging into syslog."
+msgstr "Tato předvolba zapne/vypne zaznamenávání událostí z mountd do syslog."
+
+#: services/models.py:473
+msgid "Enable/disable statd and lockd logging into syslog."
+msgstr ""
+"Tato předvolba zapne/vypne zaznamenávání událostí ze statd a lockd do syslog."
+
+#: services/models.py:507
+msgid "Enable iSCSI ALUA"
+msgstr "Zapnout asymetrický přístup k iSCSI logickým jednotkám (ALUA)"
+
+#: services/models.py:509
+msgid "Enabling this feature requires initiator reconfiguration"
+msgstr "Zapnutí této funkce vyžaduje znovunastavení iniciátoru"
+
+#: services/models.py:565
+msgid ""
+"Size of extent: 0 means auto, a raw number is bytes, or suffix with KB, MB, "
+"or TB for convenience."
+msgstr ""
+"Velikost úložné jednotky: 0 (nula) znamená automaticky, číslo bez uvedení "
+"jednotek znamená bajty, případně je možné (pro snazší zadávání) použít "
+"přípony KB, MB nebo TB."
+
+#: services/models.py:573
+msgid ""
+"Logical block length (512 by default). The recommended length for "
+"compatibility is 512."
+msgstr ""
+"Délka logického bloku (výchozí je 512). Z důvodu slučitelnosti je doporučeno "
+"použít právě oněch 512."
+
+#: services/models.py:581
+msgid ""
+"By default, the physical blocksize is reported as the ZFS block size, which "
+"can be up to 128K. Some initiators do not work with values above 4K. "
+"Checking this disables reporting the physical blocksize."
+msgstr ""
+"Ve výchozím stavu je velikost ZFS bloku hlášena stejná, jako ta fyzického, "
+"což může být až 128K. Některé iniciátory ovšem nepracují s hodnotami nad 4K, "
+"proto je zaškrtnutím této volby možné vypnout hlášení velikosti fyzického "
+"bloku."
+
+#: services/models.py:597
+#: services/models.py:700
+msgid "A description can be entered here for your reference."
+msgstr "Sem můžete zadat popis pro svou informaci."
+
+#: services/models.py:626
+msgid ""
+"RPM reported to initiators for this extent/LUN. The default is SSD because "
+"Windows will attempt to defrag non SSD devices.  This is a pathological "
+"worst-case situation for ZFS.  VMWare gives the option to use SSD LUNs as "
+"swap devices. There is some value to picking a non-SSD RPM if your extent is "
+"indeed not SSDs and the initiator will be VMWare."
+msgstr ""
+"Otáčky disků, hlášené iniciátorům pro tuto úložnou jednotku / LUN. Výchozí "
+"je SSD, protože systém MS Windows se ostatní typy zařízení snaží "
+"defragmentovat. A to by pro ZFS nebylo dobré. VMWare umožňuje LUN, hlásící "
+"se jako SSD, použít pro odkládání stránek paměti („swap“). A v případě, že "
+"úložná jednotka není SSD a iniciátor je VMWare, jsou zde k dispozici "
+"příslušné hodnoty."
+
+#: services/models.py:1441
+msgid "Override the file creation mask (077 by default)."
+msgstr "Přepsání masky vytváření souborů (výchozí hodnota je 077)."
+
+#: services/models.py:1449
+msgid "Override the directory creation mask (077 by default)."
+msgstr "Přepsání masky vytváření složek (výchozí hodnota 0777)."
+
+#: services/models.py:1479
+msgid ""
+"Cause the server to display the network information for the specified "
+"address to the client, on the assumption that IP address or DNS host is "
+"acting as a NAT gateway or port forwarder for the server."
+msgstr ""
+"Způsobí, že server klientovi zobrazí informace o dané síťové adrese, za "
+"předpokladu, že IP adresa nebo systém s DNS se pro server chová jako brána "
+"pro překlad adres (NAT) nebo předává porty."
+
+#: services/models.py:1734
+msgid ""
+"Extra options to /usr/local/etc/ssh/sshd_config (usually empty). Note, "
+"incorrect entered options prevent SSH service to be started."
+msgstr ""
+"Další možnosti pro /usr/local/etc/ssh/sshd_config (obvykle prázdné). "
+"Poznamenejme, že nesprávně zadané předvolby zabrání službě SSH ve spuštění."
+
+#: services/models.py:1935
+msgid "Control the access a remote host has to this module"
+msgstr ""
+"Toto určuje jaké možnosti přístupu bude mít protější stroj k tomuto modulu"
+
+#: services/models.py:1941
+msgid "Maximum number of simultaneous connections. Default is 0 (unlimited)."
+msgstr ""
+"Nejvyšší umožněný počet současných připojení. Výchozí je 0 (nula) – "
+"neomezeno."
+
+#: services/models.py:1948
+msgid ""
+"Specify the user name for file transfers to and from that module. In "
+"combination with the 'Group' option, this determines which file permissions "
+"are available. Leave this field empty to use default settings."
+msgstr ""
+"Určuje uživatelské jméno, kterým provádět přenosy souborů do a z modulu. Ve "
+"spojení s volbou „Skupina“ toto určuje, jaká práva na soubory budou k "
+"dispozici. Pro výchozí nastavení ponechte tuto kolonku prázdnou."
+
+#: services/models.py:1958
+msgid ""
+"Specify the group name for file transfers to and from that module. Leave "
+"this field empty to use default settings."
+msgstr ""
+"Určuje název skupiny, kterou provádět přenosy souborů do a z modulu. Pro "
+"výchozí nastavení ponechte tuto kolonku prázdnou."
+
+#: services/models.py:1964
+msgid ""
+"This option is a comma, space, or tab delimited set of hosts which are "
+"permitted to access this module. You can specify the hosts by name or IP "
+"number. Leave this field empty to use default settings."
+msgstr ""
+"Tato předvolba je čárkou, mezerou či tabulátorem oddělovaný seznam systémů, "
+"ze kterých je dovoleno přistupovat k tomuto modulu. Systémy můžete určit "
+"jejich názvy či IP adresami. Pro výchozí nastavení ponechte tuto kolonku "
+"prázdnou."
+
+#: services/models.py:1972
+msgid ""
+"A comma, space, or tab-delimited set of hosts which are NOT permitted to "
+"access this module. Where the lists conflict, the allow list takes "
+"precedence. In the event that it is necessary to deny all by default, use "
+"the keyword ALL (or the netmask 0.0.0.0/0) and then explicitly specify in "
+"the hosts allow parameter those hosts that should be permitted access. Leave "
+"this field empty to use default settings."
+msgstr ""
+"Tato volba je čárkami, mezerami či tabulátory oddělený seznam systémů, "
+"kterým NENÍ povoleno přistupovat k tomuto modulu. V případě uvedení v obou, "
+"je seznam povolených důležitější. V případě, že je třeba odepřít všem (kdo "
+"nejsou uvedeni v povolených), použijte klíčové slovo ALL (případně masku "
+"sítě 0.0.0.0/0) a poté výslovně uvést v seznamu povolených hostů ty, kteří "
+"přístup mít mají. Pro výchozí nastavení ponechte tuto kolonku prázdnou."
+
+#: services/models.py:1984
+msgid ""
+"These parameters will be added to the module configuration in rsyncd.conf."
+msgstr ""
+"Tyto parametry budou přidány do nastavení modulu v souboru rsyncd.conf ."
+
+#: services/models.py:2006
+msgid ""
+"Set the interval between disk checks to N minutes. The default is 30 minutes."
+msgstr ""
+"Nastaví časový úsek mezi kontrolami disků na N minut. Výchozí hodnota je 30 "
+"minut."
+
+#: services/models.py:2018
+msgid ""
+"Report if the temperature has changed by at least N degrees Celsius since "
+"the last report. 0 to disable."
+msgstr ""
+"Hlásit, pokud se teplota změnila přinejmenším o N stupňů Celsia od "
+"předchozího hlášení. Vypíná se zadáním 0 (nula)."
+
+#: services/models.py:2024
+msgid ""
+"Report as informational in the system log if the temperature is greater or "
+"equal than N degrees Celsius. 0 to disable."
+msgstr ""
+"Hlásit jako informaci v záznamu událostí v systému, pokud je teplota vyšší "
+"nebo rovná N stupňům Celsia. Vypíná se zadáním 0 (nula)."
+
+#: services/models.py:2031
+msgid ""
+"Report as critical in the system log and send an email if the temperature is "
+"greater or equal than N degrees Celsius. 0 to disable."
+msgstr ""
+"Hlásit jako kritické v záznamu událostí v systému a poslat e-mail pokud je "
+"teplota vyšší nebo rovná N stupňům Celsia. Vypíná se zadáním 0 (nula)."
+
+#: services/models.py:2039
+msgid "Destination email address. Separate email addresses with commas."
+msgstr "Cílová e-mailová adresa. Vícero položek oddělujte je čárkou."
+
+#: services/models.py:2184
+msgid ""
+"The port on which WebDAV will run.<br>Do not use a port that is already in "
+"use by another service (e.g. 22 for SSH)."
+msgstr ""
+"Port na kterém bude poskytována služba WebDAV.<br>Nepoužívejte port, který "
+"je už používán jinou službou (např. 22 pro SSH)."
+
+#: services/models.py:2193
+msgid ""
+"The port on which Secure WebDAV will run.<br>Do not use a port that is "
+"already in use by another service (e.g. 22 for SSH)."
+msgstr ""
+"Toto je port na kterém bude poskytována služba zabezpečeného WebDAV.<br>"
+"Nepoužívejte port, který je už používán jinou službou (např. 22 pro SSH)."
+
+#: services/models.py:2210
+msgid ""
+"Type of HTTP Authentication for WebDAV<br>Basic Auth: Password is sent over "
+"the network as plaintext (Avoid if HTTPS is disabled) <br>Digest Auth: The "
+"hash of the password is sent over the network (more secure)."
+msgstr ""
+"Typ HTTP ověřování pro WebDAV<br>Jednoduché ověřování: Heslo je po síti "
+"posíláno jako čitelný text (nepoužívat, pokud je vypnuto HTTPS)<br>Ověřování "
+"otiskem: po síti je posílán pouze otisk hesla (bezpečnější)."
+
+#: sharing/admin.py:80
+msgid ""
+"full_audit VFS object is known to have file transfer issues with Windows 10. "
+"Do you wish to continue?"
+msgstr ""
+"O objektu virtuálního souborového systému (VFS) „full_audit“ je známo, že "
+"způsobuje v případě systému Windows 10 problémy při přenosu souborů. Opravdu "
+"pokračovat?"
+
+#: sharing/forms.py:464
+msgid "This option can only be used for datasets."
+msgstr "Tuto předvolbu je možné použít pouze pro datové sady."
+
+#: sharing/models.py:334
+msgid ""
+"The credentials of the specified user is used for remote access by root."
+msgstr ""
+"Přihlašovací údaje zadaného uživatele jsou použity pro vzdálený přístup "
+"správce systému (root)."
+
+#: sharing/models.py:274
+msgid ""
+"These parameters are added to the [Volume] section of afp.conf. Add each "
+"different parameter on a newline"
+msgstr ""
+"Tyto parametry jsou přidány do sekce [Volume] (svazek)  souboru afp.conf. "
+"Každý z parametrů uveďte na zvlášť řádek"
+
+#: sharing/models.py:345
+msgid ""
+"The credentials of the specified group is used for remote access by root."
+msgstr ""
+"Přihlašovací údaje zadané skupiny jsou použity pro vzdálený přístup správce "
+"systému (root)."
+
+#: sharing/models.py:356
+msgid ""
+"The credentials of the specified user is used for remote access by all users."
+msgstr ""
+"Přihlašovací údaje zadaného uživatele jsou použity pro vzdálený přístup "
+"všemi uživateli."
+
+#: sharing/models.py:367
+msgid ""
+"The credentials of the specified group is used for remote access by all "
+"users."
+msgstr ""
+"Přihlašovací údaje zadané skupiny jsou použity pro vzdálený přístup všemi "
+"uživateli."
+
+#: storage/admin.py:144
+#: storage/forms.py:1196
+#: storage/forms.py:1429
+#: storage/forms.py:1513
+msgid "Comments"
+msgstr "Poznámky"
+
+#: storage/forms.py:2011
+msgid "Setup mode"
+msgstr "Režim nastavování"
+
+#: storage/forms.py:2013
+msgid "Manual"
+msgstr "Ruční"
+
+#: storage/forms.py:2014
+msgid "Semi-automatic"
+msgstr "Poloautomatické"
+
+#: storage/forms.py:2025
+msgid "Remote HTTP/HTTPS Port"
+msgstr "HTTP/HTTPS port na protistraně"
+
+#: storage/forms.py:2030
+msgid "Remote HTTPS"
+msgstr "HTTPS na protistraně"
+
+#: storage/forms.py:2035
+msgid "Remote Auth Token"
+msgstr "Ověřovací token na protistraně"
+
+#: storage/forms.py:2039
+msgid ""
+"On the remote host go to Storage -> Replication Tasks, click the Temporary "
+"Auth Token button and paste the resulting value in to this field."
+msgstr ""
+"Na stroji na protější straně přejděte do Úložiště -> Replikační úlohy, "
+"klikněte na „Dočasný ověřovací token“ a obdrženou hodnotu vložte do této "
+"kolonky."
+
+#: storage/forms.py:2222
+msgid "I'm aware this will destroy snapshots of this zvol"
+msgstr "Beru na vědomí, že toto zničí zachycené stavy tohoto ZFS svazku"
+
+#: storage/forms.py:2187
+msgid "Token is invalid."
+msgstr "Token není platný."
+
+#: storage/forms.py:2191
+msgid "Failed to connect to remote: %s"
+msgstr "Připojení k protistraně se nezdařilo: %s"
+
+#: system/forms.py:1003
+msgid "Invalid syslog server format"
+msgstr "Neplatný formát syslog serveru"
+
+#: system/forms.py:1285
+#, fuzzy
+msgid "Location to temporarily store update file"
+msgstr "Místo pro dočasné umístění aktualizačního souboru"
+
+#: system/forms.py:1287
+#, fuzzy
+msgid "The update file is temporarily stored here before being applied."
+msgstr ""
+"Systém toto umístění použije pro dočasné uložení aktualizačního souboru před "
+"tím, než bude nainstalován."
+
+#: system/forms.py:2613
+msgid ""
+"Cut and paste the contents of your certificate here.<br>Order in which you "
+"should paste this: <br>The Primary Certificate.<br>The Intermediate CA's "
+"Certificate(s) (optional).<br>The Root CA Certificate (optional)"
+msgstr ""
+"Sem zkopírujte obsah certifikátu.<br>A to v následujícím pořadí: <br>Hlavní "
+"certifikát.<br>Certifikát zprostředkujících cert. autorit (nemusí být).<br>"
+"Certifikát kořenové cert. autority (nemusí být)"
+
+#: system/forms.py:3004
+msgid "Access Key"
+msgstr "Přístupový klíč"
+
+#: system/forms.py:3008
+msgid "Secret Key"
+msgstr "Tajný klíč"
+
+#: system/models.py:348
+msgid "Use FQDN for logging"
+msgstr "V záznamu událostí používat úplné doménové názvy"
+
+#: system/models.py:987
+msgid "Account Name"
+msgstr "Název účtu"
+
+#: system/models.py:1003
+msgid "Cloud Credential"
+msgstr "Přihlašovací údaje pro cloudovou službu"
+
+#: tasks/forms.py:76
+msgid "Invalid provider details."
+msgstr "Neplatné údaje o poskytovateli."
+
+#: tasks/forms.py:83
+msgid "Invalid credential."
+msgstr "Neplatné přihlašovací údaje."
+
+#: tasks/forms.py:86
+msgid "Bucket is required."
+msgstr "Je vyžadován prostředek (bucket)."
+
+#: tasks/hook.py:40
+#: tasks/models.py:103
+msgid "Cloud Sync"
+msgstr "Synchronizace s cloudem"
+
+#: tasks/models.py:54
+msgid "Credential"
+msgstr "Přihlašovací údaj"
+
+#: tasks/models.py:98
+msgid "Disabling will not stop any syncs which are in progress."
+msgstr "Vypnutí nepovede k zastavení žádné z už probíhajících synchronizací."
+
+#: tasks/models.py:104
+msgid "Cloud Syncs"
+msgstr "Synchronizace s cloudem"
+
+#: tasks/forms.py:96
+msgid "Folder \"%s\" does not exist."
+msgstr "Složka „%s“ neexistuje."
+
+#: tasks/models.py:52
+msgid "Push - From local to remote. Pull - From remote to local."
+msgstr ""
+"Odesílat – z místního na vzdálený stroj. Přijímat – ze vzdáleného na místní "
+"stroj."
+
+#: tasks/views.py:53
+msgid "The cloud sync process has started"
+msgstr "Proces synchronizace s cloudem byl spuštěn"
+
+#: templates/storage/replication_datagrid.html:17
+#: templates/storage/replication_datagrid.html:19
+msgid "Temporary Auth Token"
+msgstr "Dočasný ověřovací token"
+
+#: templates/system/config_upload.html:6
+msgid "All your passwords will be reset. Make sure to set them after reboot."
+msgstr ""
+"Veškerá hesla budou vrácena na výchozí hodnoty, proto je nezapomeňte po "
+"restartu znovu nastavit."
+
+#: templates/tasks/cloudsync_run.html:5
+msgid "Would you like to run this cloud sync now?"
+msgstr "Chcete spustit tuto úlohu synchronizace s cloudem nyní?"
