@@ -1,6 +1,7 @@
 define([
   "dojo/_base/declare",
   "dojo/_base/lang",
+  "dojo/dom-construct",
   "dojo/dom-style",
   "dojo/json",
   "dojo/on",
@@ -16,6 +17,7 @@ define([
   ], function(
   declare,
   lang,
+  domConstruct,
   domStyle,
   json,
   on,
@@ -57,7 +59,8 @@ define([
       sid: null,
       name: null,
       state: null,
-      enable: null,
+      enable: null, /* start on boot? */
+      disabled: null, /* cannot start/stop/onboot for some reason */
       postCreate: function() {
 
         var me = this;
@@ -122,6 +125,12 @@ define([
         });
         me.sync();
 
+        if(me.disabled) {
+          me.startstop.set('disabled', true);
+          me.onboot.set('disabled', true);
+          domConstruct.destroy(me.dapLight);
+        }
+
         this.inherited(arguments);
 
       },
@@ -151,11 +160,13 @@ define([
     var ServiceList = declare("freeadmin.ServiceList", [ _Widget, _Templated ], {
       templateString: '<div data-dojo-attach-point="dapServiceList"><table data-dojo-attach-point="dapTable" style="padding-left: 0px;"></table></div>',
       urls: null,
+      disabled: null,
       postCreate: function() {
 
         var me = this;
 
         me.urls = json.parse(me.urls);
+        me.disabled = json.parse(me.disabled);
 
         Middleware.call('service.query', [[], {"order_by": ["service"]}], function(result) {
           for(var i=0;i<result.length;i++) {
@@ -165,7 +176,8 @@ define([
               sid: item.id,
               name: item.service,
               state: item.state,
-              enable: item.enable
+              enable: item.enable,
+              disabled: me.disabled[item.service]
             })
             me.dapTable.appendChild(service.domNode);
           }
