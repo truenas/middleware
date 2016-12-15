@@ -662,6 +662,11 @@ def reboot(request):
 
 
 def reboot_run(request):
+    # We need to stop nginx right away to make sure
+    # UI dont think we have rebooted while we have not.
+    # This could happen if reboot takes too long to shutdown services.
+    # See #19458
+    notifier().stop("nginx")
     notifier().restart("system")
     return HttpResponse('OK')
 
