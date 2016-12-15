@@ -74,10 +74,6 @@ def core(request):
             }
             break
 
-    disabled['domaincontroller'] = {
-        'reason': _('A directory service is already enabled.'),
-    }
-
     try:
         afp = models.AFP.objects.order_by("-id")[0]
     except IndexError:
