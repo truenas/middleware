@@ -326,7 +326,7 @@ class ServiceService(Service):
         return False, []
 
     def _start_webdav(self, **kwargs):
-        self._service("ix-apache", "onestart", **kwargs)
+        self._service("ix-apache", "start", force=True, **kwargs)
         self._service("apache24", "start", **kwargs)
 
     def _stop_webdav(self, **kwargs):
@@ -334,11 +334,11 @@ class ServiceService(Service):
 
     def _restart_webdav(self, **kwargs):
         self._service("apache24", "stop", force=True, **kwargs)
-        self._service("ix-apache", "onestart", **kwargs)
+        self._service("ix-apache", "start", force=True **kwargs)
         self._service("apache24", "restart", **kwargs)
 
     def _reload_webdav(self, **kwargs):
-        self._service("ix-apache", "onestart", **kwargs)
+        self._service("ix-apache", "start", force=True, **kwargs)
         self._service("apache24", "reload", **kwargs)
 
     def _restart_django(self, **kwargs):
