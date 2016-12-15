@@ -824,3 +824,20 @@ class ServiceService(Service):
         self._system("/usr/sbin/service swap quietstart")
         self._system("/usr/sbin/service mountlate quietstart")
         self.restart("collectd")
+
+    def _reload_user(self):
+        self._system("/usr/sbin/service ix-passwd quietstart")
+        self._system("/usr/sbin/service ix-aliases quietstart")
+        self._system("/usr/sbin/service ix-sudoers quietstart")
+        self.reload("cifs")
+
+
+    def _restart_system_datasets(self):
+        systemdataset = self.system_dataset_create()
+        if systemdataset is None:
+            return None
+        if systemdataset.sys_syslog_usedataset:
+            self.restart("syslogd")
+        self.restart("cifs")
+        if systemdataset.sys_rrd_usedataset:
+            self.restart("collectd")

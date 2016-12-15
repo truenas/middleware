@@ -1715,12 +1715,6 @@ class notifier:
             finally:
                 pass
 
-    def _reload_user(self):
-        self._system("/usr/sbin/service ix-passwd quietstart")
-        self._system("/usr/sbin/service ix-aliases quietstart")
-        self._system("/usr/sbin/service ix-sudoers quietstart")
-        self.reload("cifs")
-
     def winacl_reset(self, path, owner=None, group=None, exclude=None):
         if exclude is None:
             exclude = []
@@ -4713,16 +4707,6 @@ class notifier:
         #    '/usr/local/bin/ipmitool sol set enabled true 1'
         # )
         return rv
-
-    def _restart_system_datasets(self):
-        systemdataset = self.system_dataset_create()
-        if systemdataset is None:
-            return None
-        if systemdataset.sys_syslog_usedataset:
-            self.restart("syslogd")
-        self.restart("cifs")
-        if systemdataset.sys_rrd_usedataset:
-            self.restart("collectd")
 
     def dataset_init_unix(self, dataset):
         """path = "/mnt/%s" % dataset"""
