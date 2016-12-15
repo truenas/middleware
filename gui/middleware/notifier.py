@@ -242,7 +242,7 @@ class notifier:
 
     def start(self, what):
         with client as c:
-            return c.call('service.start', what)
+            return c.call('service.start', what, {'onetime': False})
 
     def started(self, what):
         with client as c:
@@ -250,15 +250,15 @@ class notifier:
 
     def stop(self, what):
         with client as c:
-            return c.call('service.stop', what)
+            return c.call('service.stop', what, {'onetime': False})
 
     def restart(self, what):
         with client as c:
-            return c.call('service.restart', what)
+            return c.call('service.restart', what, {'onetime': False})
 
     def reload(self, what):
         with client as c:
-            return c.call('service.reload', what)
+            return c.call('service.reload', what, {'onetime': False})
 
     """
     The following plugins methods violate the service layer
