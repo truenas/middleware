@@ -140,13 +140,15 @@ class ServiceService(Service):
         self._simplecmd("start", service, options)
         return self.started(service, sn)
 
-    def started(self, what, sn=None):
-        """ Test if service specified by "what" has been started. """
-        f = getattr(self, '_started_' + what, None)
-        if callable(f):
-            return f()
-        else:
-            return self._started(what, sn)[0]
+    def started(self, service, sn=None):
+        """
+        Test if service specified by `service` has been started.
+        """
+        if sn:
+            sn.join()
+
+        svc = self.query([('service', '=', service)], {'get': True})
+        return svc['state'] == 'RUNNING'
 
     @accepts(
         Str('service'),
@@ -217,7 +219,12 @@ class ServiceService(Service):
         return self.started(service)
 
     def _get_status(self, service):
-        running, pids = self._started(service['service'])
+        f = getattr(self, '_started_' + service['service'], None)
+        if callable(f):
+            running = f()
+            pids = []  # TODO: make _started_service() return pids?
+        else:
+            running, pids = self._started(service['service'])
 
         if running:
             state = 'RUNNING'
