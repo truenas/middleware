@@ -18,8 +18,6 @@ import gevent
 import imp
 import inspect
 import linecache
-import logging
-import logging.config
 import os
 import setproctitle
 import signal
@@ -39,7 +37,7 @@ class Application(WebSocketApplication):
         super(Application, self).__init__(*args, **kwargs)
         self.authenticated = self._check_permission()
         self.handshake = False
-        self.logger = logging.getLogger('application')
+        self.logger = logger.Logger('application')
         self.sessionid = str(uuid.uuid4())
         self.trace = logger.Rollbar()
 
@@ -102,7 +100,7 @@ class Application(WebSocketApplication):
                 _locals.update(arginfo.locals.items())
 
             except Exception:
-                self.logger.exception('Error while extracting arguments from frames.')
+                self.logger.critical_msg('Error while extracting arguments from frames.')
 
             if argspec:
                 cur_frame['argspec'] = argspec
@@ -159,12 +157,12 @@ class Application(WebSocketApplication):
             })
         except Exception as e:
             self.send_error(message, str(e), sys.exc_info())
-            self.middleware.logger.warn('Exception while calling {}(*{})'.format(message['method'], message.get('params')), exc_info=True)
+            self.middleware.logger.warn_msg('Exception while calling {}(*{})'.format(message['method'], message.get('params')), exc_info=True)
 
             try:
                 sw_version = self.middleware.call('system.version')
             except:
-                self.logger.debug('Failed to get system version', exc_info=True)
+                self.logger.debug_msg('Failed to get system version', exc_info=True)
 
             extra_log_files = (('/var/log/middlewared.log', 'middlewared_log'),)
             gevent.spawn(self.trace.rollbar_report(sys.exc_info(), None, sw_version, extra_log_files))
@@ -206,7 +204,7 @@ class Application(WebSocketApplication):
             try:
                 method(self)
             except:
-                self.logger.error('Failed to run on_close callback.', exc_info=True)
+                self.logger.error_msg('Failed to run on_close callback.', exc_info=True)
 
         self.middleware.unregister_wsclient(self)
 
@@ -216,7 +214,7 @@ class Application(WebSocketApplication):
             try:
                 method(self, message)
             except:
-                self.logger.error('Failed to run on_message callback.', exc_info=True)
+                self.logger.error_msg('Failed to run on_message callback.', exc_info=True)
 
         if message['msg'] == 'connect':
             if message.get('version') != '1':
@@ -261,7 +259,7 @@ class Application(WebSocketApplication):
 class Middleware(object):
 
     def __init__(self):
-        self.logger = logging.getLogger('middleware')
+        self.logger = logger.Logger('middleware')
         self.__jobs = JobsQueue(self)
         self.__schemas = {}
         self.__services = {}
@@ -280,7 +278,7 @@ class Middleware(object):
             os.path.dirname(os.path.realpath(__file__)),
             'plugins',
         )
-        self.logger.debug('Loading plugins from {0}'.format(plugins_dir))
+        self.logger.debug_msg('Loading plugins from {0}'.format(plugins_dir))
         if not os.path.exists(plugins_dir):
             raise ValueError('plugins dir not found')
 
@@ -327,7 +325,7 @@ class Middleware(object):
             if resolved == 0:
                 raise ValueError("Not all could be resolved")
 
-        self.logger.debug('All plugins loaded')
+        self.logger.debug_msg('All plugins loaded')
 
     def register_wsclient(self, client):
         self.__wsclients[client.sessionid] = client
@@ -399,7 +397,7 @@ class Middleware(object):
             try:
                 wsclient.send_event(name, event_type, **kwargs)
             except:
-                self.logger.warn('Failed to send event {} to {}'.format(name, sessionid), exc_info=True)
+                self.logger.warn_msg('Failed to send event {} to {}'.format(name, sessionid), exc_info=True)
 
     def run(self):
 
@@ -422,17 +420,20 @@ class Middleware(object):
             gevent.spawn(restserver.serve_forever),
             gevent.spawn(self.__jobs.run),
         ]
-        self.logger.debug('Accepting connections')
+        self.logger.debug_msg('Accepting connections')
         gevent.joinall(self.__server_threads)
 
     def kill(self):
-        self.logger.info('Killall server threads')
+        self.logger.info_msg('Killall server threads')
         gevent.killall(self.__server_threads)
 
         sys.exit(0)
 
 
 def main():
+    #  Logger
+    _logger = logger.Logger('middleware')
+
     # Workaround for development
     modpath = os.path.realpath(os.path.join(
         os.path.dirname(os.path.realpath(__file__)),
@@ -469,57 +470,27 @@ def main():
                 pid = int(f.read().strip())
             os.kill(pid, 15)
 
-    try:
-        logging.config.dictConfig({
-            'version': 1,
-            'formatters': {
-                'simple': {
-                    'format': '[%(asctime)s %(filename)s:%(lineno)s] (%(levelname)s) %(message)s'
-                },
-            },
-            'handlers': {
-                'console': {
-                    'level': 'DEBUG',
-                    'class': 'logging.StreamHandler',
-                    'formatter': 'simple',
-                },
-                'file': {
-                    'level': 'DEBUG',
-                    'class': 'logging.handlers.RotatingFileHandler',
-                    'filename': '/var/log/middlewared.log',
-                    'formatter': 'simple',
-                }
-            },
-            'loggers': {
-                '': {
-                    'handlers': log_handlers,
-                    'level': args.debug_level,
-                    'propagate': True,
-                },
-            }
-        })
-
-        if not args.foreground:
-            daemonc = DaemonContext(
-                pidfile=TimeoutPIDLockFile(pidpath),
-                detach_process=True,
-                stdout=logging._handlers['file'].stream,
-                stderr=logging._handlers['file'].stream,
-                files_preserve=[logging._handlers['file'].stream],
+    if not args.foreground:
+        _logger.configure_logging('file')
+        daemonc = DaemonContext(
+            pidfile=TimeoutPIDLockFile(pidpath),
+            detach_process=True,
             )
-            daemonc.open()
-        elif 'file' in log_handlers:
-            sys.stdout = logging._handlers['file'].stream
-            sys.stderr = logging._handlers['file'].stream
+        daemonc.open()
+    elif 'file' in log_handlers:
+        _logger.configure_logging('file')
+    elif 'console' in log_handlers:
+        _logger.configure_logging('console')
+    else:
+        _logger.configure_logging('both')
 
-        setproctitle.setproctitle('middlewared')
-        # Workaround to tell django to not set up logging on its own
-        os.environ['MIDDLEWARED'] = str(os.getpid())
+    setproctitle.setproctitle('middlewared')
+    # Workaround to tell django to not set up logging on its own
+    os.environ['MIDDLEWARED'] = str(os.getpid())
 
-        Middleware().run()
-    finally:
-        if not args.foreground:
-            daemonc.close()
+    Middleware().run()
+    if not args.foreground:
+        daemonc.close()
 
 
 if __name__ == '__main__':
