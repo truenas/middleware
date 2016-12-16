@@ -19,7 +19,8 @@ class WSClient(WebSocketClient):
     def connect(self):
         self.sock.settimeout(10)
         rv = super(WSClient, self).connect()
-        self.sock.settimeout(None)
+        if self.sock:
+            self.sock.settimeout(None)
         return rv
 
     def opened(self):
