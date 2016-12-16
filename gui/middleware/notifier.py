@@ -1928,7 +1928,8 @@ class notifier:
 
         ret = self._system_nolog('/sbin/zpool detach %s %s' % (vol_name, label))
 
-        self.sync_encrypted(volume)
+        if not isinstance(volume, basestring):
+            self.sync_encrypted(volume)
 
         if from_disk:
             # TODO: This operation will cause damage to disk data which should be limited
