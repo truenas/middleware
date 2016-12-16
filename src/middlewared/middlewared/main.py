@@ -255,7 +255,7 @@ class Application(WebSocketApplication):
         if message['msg'] == 'sub':
             self.subscribe(message['id'], message['name'])
         elif message['msg'] == 'unsub':
-            self.unsubscribe(message['name'])
+            self.unsubscribe(message['id'])
 
 
 class Middleware(object):
