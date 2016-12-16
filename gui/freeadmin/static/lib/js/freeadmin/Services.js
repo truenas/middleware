@@ -161,12 +161,15 @@ define([
       templateString: '<div data-dojo-attach-point="dapServiceList"><table data-dojo-attach-point="dapTable" style="padding-left: 0px;"></table></div>',
       urls: null,
       disabled: null,
+      _subId: null,
       postCreate: function() {
 
         var me = this;
 
         me.urls = json.parse(me.urls);
         me.disabled = json.parse(me.disabled);
+
+        me.services = {};
 
         Middleware.call('service.query', [[], {"order_by": ["service"]}], function(result) {
           for(var i=0;i<result.length;i++) {
@@ -180,11 +183,26 @@ define([
               disabled: me.disabled[item.service]
             })
             me.dapTable.appendChild(service.domNode);
+            me.services[item.id] = service;
           }
         });
 
+        this._subId = Middleware.sub('service.query', function(type, message) {
+          if(type == 'CHANGED' && me.services[message.fields.id]) {
+            var service = me.services[message.fields.id];
+            service.state = message.fields.state;
+            service.enable = message.fields.enable;
+            service.sync();
+          }
+        });
+
+
         this.inherited(arguments);
 
+      },
+      destroy: function() {
+        if(this._subId) Middleware.unsub(this._subId);
+        this.inherited(arguments);
       }
     });
 
