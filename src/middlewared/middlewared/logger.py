@@ -12,7 +12,7 @@ class Rollbar(object):
     def __init__(self):
         self.sentinel_file_path = '/data/.rollbar_disabled'
         self.logger = Logger('application')
-        self.logger.configure_logging('console') # Araujo
+        self.logger.configure_logging('console')
         rollbar.init(
             'caf06383cba14d5893c4f4d0a40c33a9',
             'production' if 'DEVELOPER_MODE' not in os.environ else 'development'
@@ -111,7 +111,6 @@ class Logger(object):
         self.file_handler.setLevel(logging.DEBUG)
         self.file_handler.setFormatter(file_formatter)
 
-
         for handler in logging.root.handlers:
             if 'file' not in handler.get_name():
                 logging.root.addHandler(self.file_handler)
@@ -121,7 +120,6 @@ class Logger(object):
         console_formatter = logging.Formatter(
             "[%(asctime)s] (%(levelname)s) [%(funcName)s(): %(lineno)s] - %(message)s",
             "%Y/%m/%d %H:%M:%S")
-
 
         self.console_handler.setLevel(logging.DEBUG)
         self.console_handler.setFormatter(console_formatter)
@@ -191,41 +189,41 @@ class Logger(object):
         logging.critical(message, exc_info=exc_info)
 
     def error_msg(self, message=None, exc_info=False):
-         """Wrapper for logging.error().
+        """Wrapper for logging.error().
 
             Args:
                     message (str): The message to be printed.
                     exc_info (bool): True to output the exception information, False by default.
         """
-       self._set_level(self.LOGGING_LEVEL['ERROR'])
+        self._set_level(self.LOGGING_LEVEL['ERROR'])
         logging.error(message, exc_info=exc_info)
 
     def warn_msg(self, message=None, exc_info=False):
         """Wrapper for logging.warn().
 
-           Args:
+            Args:
                    message (str): The message to be printed.
                    exc_info (bool): True to output the exception information, False by default.
-       """
-       self._set_level(self.LOGGING_LEVEL['WARNING'])
+        """
+        self._set_level(self.LOGGING_LEVEL['WARNING'])
         logging.warn(message, exc_info=exc_info)
 
     def info_msg(self, message=None, exc_info=False):
-       """Wrapper for logging.info().
+        """Wrapper for logging.info().
 
-           Args:
+            Args:
                    message (str): The message to be printed.
                    exc_info (bool): True to output the exception information, False by default.
-       """
-       self._set_level(self.LOGGING_LEVEL['INFO'])
+        """
+        self._set_level(self.LOGGING_LEVEL['INFO'])
         logging.info(message, exc_info=exc_info)
 
     def debug_msg(self, message=None, exc_info=False):
-       """Wrapper for logging.msg().
+        """Wrapper for logging.msg().
 
-           Args:
+            Args:
                    message (str): The message to be printed.
                    exc_info (bool): True to output the exception information, False by default.
-       """
-       self._set_level(self.LOGGING_LEVEL['DEBUG'])
+        """
+        self._set_level(self.LOGGING_LEVEL['DEBUG'])
         logging.debug(message, exc_info=exc_info)
