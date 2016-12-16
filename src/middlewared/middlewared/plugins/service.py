@@ -561,21 +561,21 @@ class ServiceService(Service):
             res = True
         return res
 
-    def _start_nt4(self):
+    def _start_nt4(self, **kwargs):
         res = False
         ret = self._system("/etc/directoryservice/NT4/ctl start")
         if not ret:
             res = True
         return res
 
-    def _restart_nt4(self):
+    def _restart_nt4(self, **kwargs):
         res = False
         ret = self._system("/etc/directoryservice/NT4/ctl restart")
         if not ret:
             res = True
         return res
 
-    def _stop_nt4(self):
+    def _stop_nt4(self, **kwargs):
         res = False
         self._system("/etc/directoryservice/NT4/ctl stop")
         return res
