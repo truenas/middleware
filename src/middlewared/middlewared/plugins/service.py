@@ -148,6 +148,7 @@ class ServiceService(Service):
             sn.join()
 
         svc = self.query([('service', '=', service)], {'get': True})
+        self.middleware.send_event('service.query', 'CHANGED', fields=svc)
         return svc['state'] == 'RUNNING'
 
     @accepts(
