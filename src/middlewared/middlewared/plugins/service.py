@@ -222,8 +222,7 @@ class ServiceService(Service):
     def _get_status(self, service):
         f = getattr(self, '_started_' + service['service'], None)
         if callable(f):
-            running = f()
-            pids = []  # TODO: make _started_service() return pids?
+            running, pids = f()
         else:
             running, pids = self._started(service['service'])
 
@@ -505,7 +504,7 @@ class ServiceService(Service):
         res = False
         if not self._system("/etc/directoryservice/NIS/ctl status"):
             res = True
-        return res
+        return res, []
 
     def _start_nis(self, **kwargs):
         res = False
@@ -527,9 +526,8 @@ class ServiceService(Service):
 
     def _started_ldap(self, **kwargs):
         if (self._system('/usr/sbin/service ix-ldap status') != 0):
-            return False
-
-        return self.middleware.call('notifier', 'ldap_status')
+            return False, []
+        return self.middleware.call('notifier', 'ldap_status'), []
 
     def _start_ldap(self, **kwargs):
         res = False
@@ -567,7 +565,7 @@ class ServiceService(Service):
         ret = self._system("service ix-nt4 status")
         if not ret:
             res = True
-        return res
+        return res, []
 
     def _start_nt4(self, **kwargs):
         res = False
@@ -591,9 +589,8 @@ class ServiceService(Service):
     def _started_activedirectory(self, **kwargs):
         for srv in ('kinit', 'activedirectory', ):
             if self._system('/usr/sbin/service ix-%s status' % (srv, )) != 0:
-                return False
-
-        return self.middleware.call('notifier', 'ad_status')
+                return False, []
+        return self.middleware.call('notifier', 'ad_status'), []
 
     def _start_activedirectory(self, **kwargs):
         res = False
@@ -617,7 +614,7 @@ class ServiceService(Service):
         res = False
         if not self._system("/etc/directoryservice/DomainController/ctl status"):
             res = True
-        return res
+        return res, []
 
     def _start_domaincontroller(self, **kwargs):
         res = False
@@ -717,8 +714,7 @@ class ServiceService(Service):
             svc = "ups"
         else:
             svc = "upsmon"
-        sn = self._started_notify("start", svc)
-        return self._started(svc, sn)
+        return self._started(svc)
 
     def _start_afp(self, **kwargs):
         self._service("ix-afpd", "start", **kwargs)
@@ -793,7 +789,7 @@ class ServiceService(Service):
         else:
             if self._service("ix-plugins", "status", **kwargs) == 0:
                 res = True
-        return res
+        return res, []
 
     def _restart_dynamicdns(self, **kwargs):
         self._service("ix-inadyn", "start", quiet=True, **kwargs)
