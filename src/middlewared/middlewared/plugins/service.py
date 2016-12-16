@@ -409,7 +409,7 @@ class ServiceService(Service):
             if jail['jail_autostart']:
                 self.middleware.call('notifier.warden', 'start', [], {'jail': jail['jail_host']})
         self._service("ix-plugins", "start", **kwargs)
-        self.reload("http")
+        self.reload("http", kwargs)
 
     def _restart_jails(self, **kwargs):
         self._stop_jails()
@@ -880,20 +880,20 @@ class ServiceService(Service):
         self._service("ix-swap", "start", quiet=True, **kwargs)
         self._service("swap", "start", quiet=True, **kwargs)
         self._service("mountlate", "start", quiet=True, **kwargs)
-        self.restart("collectd")
+        self.restart("collectd", kwargs)
 
     def _reload_user(self, **kwargs):
         self._service("ix-passwd", "start", quiet=True, **kwargs)
         self._service("ix-aliases", "start", quiet=True, **kwargs)
         self._service("ix-sudoers", "start", quiet=True, **kwargs)
-        self.reload("cifs")
+        self.reload("cifs", kwargs)
 
     def _restart_system_datasets(self, **kwargs):
         systemdataset = self.system_dataset_create()
         if systemdataset is None:
             return None
         if systemdataset.sys_syslog_usedataset:
-            self.restart("syslogd")
-        self.restart("cifs")
+            self.restart("syslogd", kwargs)
+        self.restart("cifs", kwargs)
         if systemdataset.sys_rrd_usedataset:
-            self.restart("collectd")
+            self.restart("collectd", kwargs)
