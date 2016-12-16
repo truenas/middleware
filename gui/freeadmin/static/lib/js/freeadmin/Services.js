@@ -158,7 +158,7 @@ define([
     });
 
     var ServiceList = declare("freeadmin.ServiceList", [ _Widget, _Templated ], {
-      templateString: '<div data-dojo-attach-point="dapServiceList"><table data-dojo-attach-point="dapTable" style="padding-left: 0px;"></table></div>',
+      templateString: '<div><div data-dojo-attach-point="dapLoading"><div class="dijitIconLoading"></div> Loading...</div><div data-dojo-attach-point="dapServiceList"><table data-dojo-attach-point="dapTable" style="padding-left: 0px;"></table></div></div>',
       urls: null,
       disabled: null,
       _subId: null,
@@ -185,6 +185,7 @@ define([
             me.dapTable.appendChild(service.domNode);
             me.services[item.id] = service;
           }
+          domStyle.set(me.dapLoading, "display", "none");
         });
 
         this._subId = Middleware.sub('service.query', function(type, message) {
