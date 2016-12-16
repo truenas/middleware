@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:03-0700\n"
-"PO-Revision-Date: 2016-08-18 15:26+0000\n"
+"PO-Revision-Date: 2016-12-12 11:25+0000\n"
 "Last-Translator: Tonnes <tonnes.mb@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: nl\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n != 1);\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1471534001.0\n"
+"X-POOTLE-MTIME: 1481541904.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -1399,8 +1399,8 @@ msgid ""
 "The contact must contain only alphanumeric characters, _, - or a valid e-"
 "mail address"
 msgstr ""
-"Het contactveld moet alleen alfanumerieke tekens, _, - of een geldig "
-"e-mailadres bevatten"
+"Het contactveld mag alleen alfanumerieke tekens, _, - of een geldig e-"
+"mailadres bevatten"
 
 #: services/forms.py:382
 msgid "The community must contain only alphanumeric characters, _ or -"
@@ -1711,7 +1711,7 @@ msgid ""
 "Use this option to override the directory creation mask (0777 by default)."
 msgstr ""
 "Gebruik deze optie om het masker voor het aanmaken van mappen te "
-"overschrijven (standaard 0777)."
+"overschrijven (0777 is standaard)."
 
 #~ msgid "Large RW support"
 #~ msgstr "Large RW ondersteuning"
@@ -2247,8 +2247,8 @@ msgid ""
 "You may specify logical block length (512 by default). The recommended "
 "length for compatibility is 512."
 msgstr ""
-"U kunt de logische bloklengte opgeven (512 is standaard). De aanbevolen "
-"lengte voor compatibiliteit is 512."
+"U kunt de lengte van logische blokken opgeven (512 is standaard). De "
+"aanbevolen lengte voor compatibiliteit is 512."
 
 #: services/models.py:703 services/models.py:724
 #: templates/services/iscsi_assoctargets.html:5
@@ -3019,7 +3019,7 @@ msgid ""
 "Leave this field empty to use default settings"
 msgstr ""
 "Deze optie is een door een komma, spatie of tab gescheiden set van hosts die "
-"deze module NIET mogen benaderen. Waar de lijst conflicteert heeft de lijst "
+"deze module NIET mogen benaderen. Waar de lijst conflicteert, heeft de lijst "
 "met toegestane hosts voorrang. Als het nodig is om alles standaard geen "
 "toegang te geven, gebruikt u het trefwoord ALL (of het netmask 0.0.0.0/0) en "
 "voegt u aan de parameter toegestane hosts expliciet de hosts toe die wel "
@@ -3261,11 +3261,11 @@ msgid ""
 "Leave this field empty to use default settings."
 msgstr ""
 "Deze optie is een door een komma, spatie of tab gescheiden set van hosts die "
-"deze share NIET mogen benaderen. Waar de lijst conflicteert heeft de lijst "
+"deze share NIET mogen benaderen. Waar de lijst conflicteert, heeft de lijst "
 "met toegestane hosts voorrang. Als het nodig is om alles standaard geen "
 "toegang te geven, gebruikt u het trefwoord ALL (of het netmask 0.0.0.0/0) en "
 "voegt u aan de parameter toegestane hosts expliciet de hosts toe die wel "
-"toegang dienen te hebben. Laat dit veld leeg voor de standaardinstellingen"
+"toegang dienen te hebben. Laat dit veld leeg voor de standaardinstellingen."
 
 #: sharing/models.py:83
 msgid "These parameters are added to [Share] section of smb.conf"
@@ -5289,7 +5289,7 @@ msgstr "Standaardroute"
 
 #: templates/network/summary.html:46
 msgid "No default route defined"
-msgstr "Geen standaardroute gedefinieerd"
+msgstr "Bepaalt de toegang die een externe host tot deze module heeft"
 
 #~ msgid "Edit VLAN"
 #~ msgstr "VLAN Wijzigen"
@@ -5506,7 +5506,7 @@ msgstr "Gekoppelde doelen"
 
 #: templates/services/iscsi_assoctargets.html:31
 msgid "No associated targets defined"
-msgstr "Geen verbonden doelen gedefinieerd"
+msgstr "Geen gekoppelde doelen gedefinieerd"
 
 #~ msgid "Add Extent to Target"
 #~ msgstr "Extent Toevoegen Aan Doel"
@@ -9876,10 +9876,10 @@ msgid ""
 msgstr ""
 "Definieert het schema dat idmap_ad moet gebruiken bij het raadplegen van "
 "Active Directory betreffende gebruikers- en groepsinformatie. Dit kan zowel "
-"de bijgeleverde RFC2307-schemaondersteuning in Windows 2003 R2 zijn als het "
-"Service for Unix (SFU)-schema. Kies 'sfu' voor SFU 3.0 of 3.5, kies 'sfu20' "
-"voor SFU 2.0. Houd er rekening mee dat lidmaatschap van een primaire groep "
-"momenteel altijd wordt berekend via het LDAP-kenmerk 'primaryGroupID'."
+"de bijgeleverde RFC2307-schemaondersteuning in Windows 2003 R2 als het "
+"Service for Unix (SFU)-schema zijn. Kies 'sfu' voor SFU 3.0 of 3.5, kies "
+"'sfu20' voor SFU 2.0. Houd er rekening mee dat lidmaatschap van een primaire "
+"groep momenteel altijd wordt berekend via het LDAP-kenmerk 'primaryGroupID'."
 
 #: directoryservice/models.py:156
 msgid "sfu"
@@ -11033,7 +11033,7 @@ msgid ""
 "are up will be listened on."
 msgstr ""
 "IP-adres(sen) waarmee wordt gebonden. Als niets is opgegeven, wordt op alle "
-"beschikbare actieve interfaces geluisterd."
+"actieve beschikbare interfaces geluisterd."
 
 #: storage/nav.py:56
 #: templates/storage/volume_datagrid.html:17
@@ -11085,7 +11085,7 @@ msgid ""
 "are up will be listened on."
 msgstr ""
 "IP-adres(sen) waarmee wordt gebonden. Als niets is opgegeven, wordt op alle "
-"beschikbare actieve interfaces geluisterd."
+"actieve beschikbare interfaces geluisterd."
 
 #: storage/forms.py:1964
 msgid "Only one replication allowed per dataset."
@@ -12855,22 +12855,22 @@ msgstr " IP-adres voor TrueNAS-beheer"
 #: vcp/models.py:49
 #, fuzzy
 msgid " vCenter Hostname/IP Address"
-msgstr "Hostnaam of IP-adres"
+msgstr " vCenter-hostnaam/-IP-adres"
 
 #: vcp/models.py:55
 #, fuzzy
 msgid " vCenter Port"
-msgstr "Externe poort"
+msgstr " vCenter-poort"
 
 #: vcp/models.py:60
 #, fuzzy
 msgid " vCenter User name"
-msgstr "Gebruikersnaam"
+msgstr " vCenter-gebruikersnaam"
 
 #: vcp/models.py:67
 #, fuzzy
 msgid " vCenter Password"
-msgstr "Wachtwoord Wijzigen"
+msgstr " vCenter-wachtwoord"
 
 #: vcp/models.py:74
 msgid "version"
@@ -12878,7 +12878,6 @@ msgstr "versie"
 
 #: vcp/models.py:78
 #: vcp/models.py:79
-#, fuzzy
 msgid "VCenter Configuration"
 msgstr "Configuratie"
 
@@ -13114,7 +13113,6 @@ msgid "Support >16 groups"
 msgstr ">16 groepen ondersteunen"
 
 #: services/models.py:424
-#, fuzzy
 msgid ""
 "This option ignores the group membership sent on the wire by the NFS client "
 "and looks up the group membership on the server."
@@ -13425,7 +13423,6 @@ msgid "Syslog level"
 msgstr "Syslog-niveau"
 
 #: system/models.py:138
-#, fuzzy
 msgid ""
 "Specifies which messages will be logged by server. INFO and VERBOSE log "
 "transactions that server performs on behalf of the client. f_is_debug "
@@ -13483,7 +13480,6 @@ msgstr ""
 "alleen IPv4-adressen)"
 
 #: system/alertmods/nfs_bindaddr.py:15
-#, fuzzy
 msgid "NFS services could not bind specific IPs, using wildcard"
 msgstr ""
 "NFS-services konden bepaalde IP-adressen niet binden; jokerteken wordt "
@@ -13518,3 +13514,661 @@ msgstr ""
 "De gebruikte opdracht voor het afsluiten van de server. U kunt hier een "
 "eigen opdracht gebruiken om voor shutdown.default: /sbin/shutdown -p now "
 "andere taken uit te voeren"
+
+#: choices.py:780
+#, fuzzy
+msgid "auth+!data"
+msgstr "auth+!gegevens"
+
+#: choices.py:1045
+msgid "Rights"
+msgstr "Rechten"
+
+#: choices.py:1051
+msgid "Amazon S3"
+msgstr "Amazon S3"
+
+#: api/resources.py:655
+msgid "Volume is not encrypted."
+msgstr "Volume is niet versleuteld."
+
+#: api/resources.py:1588
+#, fuzzy
+msgid "Not ran since last boot"
+msgstr "Niet uitgevoerd sinds laatste keer opstarten"
+
+#: directoryservice/models.py:919
+#, fuzzy
+msgid "User Base"
+msgstr "Gebruikersnaam"
+
+#: directoryservice/models.py:921
+msgid "DN of the user container in AD."
+msgstr "DN van de gebruikerscontainer in AD."
+
+#: directoryservice/models.py:926
+#, fuzzy
+msgid "Group Base"
+msgstr "Groepsnaam"
+
+#: directoryservice/models.py:928
+msgid "DN of the group container in AD."
+msgstr "DN van de groepscontainer in AD."
+
+#: jails/forms.py:259
+#, fuzzy
+msgid "You can either enter dhcp or static ip but not both"
+msgstr "U kunt dhcp of static ip invoeren, maar niet allebei"
+
+#: jails/forms.py:1038
+msgid "This name is already in use."
+msgstr "Deze naam wordt al gebruikt."
+
+#: jails/models.py:350
+#, fuzzy
+msgid "Unable to delete associated periodic snapshot %(task)s:%(error)s"
+msgstr ""
+"Kan gekoppelde periodieke momentopname %(task)s niet verwijderen:%(error)s"
+
+#: services/admin.py:113
+#, fuzzy
+msgid "Listen (Node A)"
+msgstr "Luisteren (Node A)"
+
+#: services/admin.py:118
+#, fuzzy
+msgid "Listen (Node B)"
+msgstr "Luisteren (Node B)"
+
+#: services/forms.py:903
+msgid "The community must contain only alphanumeric characters _ . spaces or -"
+msgstr "De community mag alleen alfanumerieke tekens, _ . spaties of - bevatten"
+
+#: services/forms.py:1505
+msgid "Zvol \"%s\" does not exist"
+msgstr "Zvol '%s' bestaat niet"
+
+#: services/models.py:148
+#: services/models.py:304
+msgid ""
+"Use this option to override the username ('nobody' by default) which will be "
+"used for access to services which are specified as guest. Whatever "
+"privileges this user has will be available to any client connecting to the "
+"guest service. This user must exist in the password file, but does not "
+"require a valid login. The user root cannot be used as guest account."
+msgstr ""
+"Gebruik deze optie voor het vervangen van de gebruikersnaam (standaard "
+"'nobody') die wordt gebruikt voor toegang tot services die als gast zijn "
+"opgegeven. Bevoegdheden voor deze gebruiker zijn beschikbaar voor clients "
+"die verbinding maken met de gastservice. Deze gebruiker moet in het "
+"wachtwoordbestand bestaan, maar vereist geen geldige aanmelding. De "
+"gebruiker root kan niet als gastaccount worden gebruikt."
+
+#: services/models.py:177
+msgid "These parameters are added to the [global] section of smb.conf"
+msgstr "Deze parameters worden aan de sectie [global] van smb.conf toegevoegd"
+
+#: services/models.py:220
+msgid ""
+"Specifies whether Samba should use (expensive) hostname lookups or use IP "
+"addresses instead. An example place where hostname lookups are currently "
+"used is when checking the hosts deny and hosts allow."
+msgstr ""
+"Geeft aan of samba (dure) hostnaam-zoekopdrachten moet gebruiken, of in "
+"plaats daarvan IP-adressen. Een voorbeeldplaats waar hostnaam-zoekopdrachten "
+"momenteel worden gebruikt, is bij het controleren van de geweigerde en "
+"toegestane hosts."
+
+#: services/models.py:244
+msgid ""
+"This boolean parameter controls the behaviour of smbd(8) when receiving a "
+"protocol request of \"open for execution\" from a Windows client. With Samba "
+"3.6 and older, the execution right in the ACL was not checked, so a client "
+"could execute a file even if it did not have execute rights on the file. In "
+"Samba 4.0, this has been fixed, so that by default, i.e. when this parameter "
+"is set to \"False\", \"open for execution\" is now denied when execution "
+"permissions are not present. If this parameter is set to \"True\", Samba "
+"does not check execute permissions on \"open for execution\", thus re-"
+"establishing the behavior of Samba 3.6 "
+msgstr ""
+"Deze boolean parameter bepaalt het gedrag van smbd(8) tijdens de ontvangst "
+"van een protocolaanvraag van 'open for execution' vanaf een Windows-client. "
+"Bij Samba 3.6 en lager werd de uitvoermachtiging in de ACL niet "
+"gecontroleerd, zodat een client een bestand ook kon uitvoeren als het geen "
+"uitvoerrechten op het bestand had. In Samba 4.0 is dit verholpen, zodat "
+"wanneer bv. deze parameter is ingesteld op 'False', 'open for execution' nu "
+"standaard wordt geweigerd als de uitvoermachtiging ontbreekt. Als deze "
+"parameter is ingesteld op 'True', controleert Samba geen uitvoermachtiging "
+"bij 'open for execution', en wordt dus het gedrag van Samba 3.6 aangehouden "
+
+#: services/models.py:265
+msgid ""
+"IP addresses to bind to. If none specified, all available interfaces that "
+"are up will be listened on."
+msgstr ""
+"IP-adressen waarmee wordt gebonden. Als niets is opgegeven, wordt op alle "
+"actieve beschikbare interfaces geluisterd."
+
+#: services/models.py:296
+msgid "Allows guest access to all Apple shares on this box."
+msgstr "Staat gasttoegang tot alle Apple-shares op deze machine toe."
+
+#: services/models.py:315
+msgid ""
+"IP addresses to advertise and listens to. If none specified, advertise the "
+"first IP address of the system, but to listen for any incoming request."
+msgstr ""
+"IP-adressen voor aankondigingen en waarop wordt geluisterd. Als niets is "
+"opgegeven, wordt het eerste IP-adres van het systeem aangekondigd, maar naar "
+"alle inkomende aanvragen geluisterd."
+
+#: services/models.py:333
+msgid "Enable/disable home directories for AFP user."
+msgstr "Basismappen voor AFP-gebruiker in-/uitschakelen."
+
+#: services/models.py:343
+msgid "When set, overrides the default Home Share Name."
+msgstr "Overschrijft de standaardnaam van basis-share wanneer ingesteld."
+
+#: services/models.py:360
+#, fuzzy
+msgid "Map ACLs"
+msgstr "ACL's toewijzen"
+
+#: services/models.py:357
+msgid "These parameters are added to the [Global] section of afp.conf"
+msgstr "Deze parameters worden aan de sectie [global] van afp.conf toegevoegd"
+
+#: services/models.py:362
+msgid ""
+"How to map the effective permissions of authenticated users: Rights ("
+"default, Unix-style permissions), Mode (ACLs), or None"
+msgstr ""
+"De effectieve machtigingen van geverifieerde gebruikers toewijzen: Rechten ("
+"standaard, machtigingen in Unix-stijl), Modus (ACL's), of Geen"
+
+#: services/models.py:383
+msgid ""
+"Specifies how many servers to create. There should be enough to handle the "
+"maximum level of concurrency from clients, typically four to six."
+msgstr ""
+"Geeft het aantal aan te maken servers aan. Er moeten er genoeg zijn om het "
+"maximale niveau van gelijktijdige verbindingen van clients te kunnen "
+"afhandelen, meestal 4 tot 6."
+
+#: services/models.py:421
+msgid ""
+"Select the IP addresses to listen to for NFS requests. If left unchecked, "
+"NFS will listen on all available addresses."
+msgstr ""
+"Selecteer de IP-adressen waarop naar NFS-aanvragen wordt geluisterd. Als dit "
+"niet is aangevinkt, luistert NFS op alle beschikbare adressen."
+
+#: services/models.py:442
+msgid ""
+"Forces the rpc.statd daemon to bind to the specified port, for both IPv4 and "
+"IPv6 address families."
+msgstr ""
+"Dwingt de rpc.statd-daemon tot het binden aan de opgegeven poort, zowel voor "
+"IPv4- als IPv6-adresfamilies."
+
+#: services/models.py:451
+msgid ""
+"Force the rpc.lockd daemon to bind to the specified port, for both IPv4 and "
+"IPv6 address families."
+msgstr ""
+"De rpc.lockd-daemon dwingen tot het binden aan de opgegeven poort, zowel "
+"voor IPv4- als IPv6-adresfamilies."
+
+#: services/models.py:458
+msgid ""
+"Ignore the group membership sent on the wire by the NFS client and look up "
+"the group membership on the server.  Note that this option is mutually "
+"incompatible with the NFSv3 ownership model for NFSv4."
+msgstr ""
+"Het groepslidmaatschap dat simultaan door de NFS-client is verstuurd negeren "
+"en het groepslidmaatschap op de server opzoeken. Houd er rekening mee dat "
+"deze optie wederzijds incompatibel is met het NFSv3-eigendomsmodel voor "
+"NFSv4."
+
+#: services/models.py:467
+msgid "Enable/disable mountd logging into syslog."
+msgstr "Mountd-logboekregistratie in syslog inschakelen."
+
+#: services/models.py:473
+msgid "Enable/disable statd and lockd logging into syslog."
+msgstr "Statd- en lockd-registratie in syslog inschakelen."
+
+#: services/models.py:507
+msgid "Enable iSCSI ALUA"
+msgstr "iSCSI ALUA inschakelen"
+
+#: services/models.py:509
+#, fuzzy
+msgid "Enabling this feature requires initiator reconfiguration"
+msgstr "Inschakelen van deze functie vereist herconfiguratie van initiator"
+
+#: services/models.py:565
+msgid ""
+"Size of extent: 0 means auto, a raw number is bytes, or suffix with KB, MB, "
+"or TB for convenience."
+msgstr ""
+"Grootte van extent: 0 is auto, een grof aantal in bytes, of laten volgen "
+"door KB, MB, of TB voor het gemak."
+
+#: services/models.py:573
+msgid ""
+"Logical block length (512 by default). The recommended length for "
+"compatibility is 512."
+msgstr ""
+"Lengte van logisch blok (512 is standaard). De aanbevolen lengte voor "
+"compatibiliteit is 512."
+
+#: services/models.py:581
+msgid ""
+"By default, the physical blocksize is reported as the ZFS block size, which "
+"can be up to 128K. Some initiators do not work with values above 4K. "
+"Checking this disables reporting the physical blocksize."
+msgstr ""
+"Standaard wordt de fysieke blokgrootte gemeld als de ZFS-blokgrootte, die "
+"tot 128K kan zijn. Sommige initiators werken niet met waarden boven 4K. "
+"Aanvinken hiervan schakelt het melden van de fysieke blokgrootte uit."
+
+#: services/models.py:597
+#: services/models.py:700
+msgid "A description can be entered here for your reference."
+msgstr "Hier kan een beschrijving worden ingevoerd voor eigen referentie."
+
+#: services/models.py:626
+msgid ""
+"RPM reported to initiators for this extent/LUN. The default is SSD because "
+"Windows will attempt to defrag non SSD devices.  This is a pathological "
+"worst-case situation for ZFS.  VMWare gives the option to use SSD LUNs as "
+"swap devices. There is some value to picking a non-SSD RPM if your extent is "
+"indeed not SSDs and the initiator will be VMWare."
+msgstr ""
+"Aan initiators gemelde RPM voor deze extent/LUN. De standaard is SSD, omdat "
+"Windows niet-SSD-apparaten zal proberen te defragmenteren. Dit is een "
+"pathologische worst-case-situatie voor ZFS. VMware biedt de optie voor het "
+"gebruik van SSD-LUN's als wisselapparaten. Het heeft toegevoegde waarde om "
+"een niet-SSD-RPM te kiezen als uw extent inderdaad geen SSD is en de "
+"initiator VMware zal zijn."
+
+#: services/models.py:1441
+msgid "Override the file creation mask (077 by default)."
+msgstr "Het bestandsaanmaakmasker overschrijven (077 is standaard)."
+
+#: services/models.py:1449
+msgid "Override the directory creation mask (077 by default)."
+msgstr ""
+"Het masker voor het aanmaken van mappen overschrijven (077 is standaard)."
+
+#: services/models.py:1479
+msgid ""
+"Cause the server to display the network information for the specified "
+"address to the client, on the assumption that IP address or DNS host is "
+"acting as a NAT gateway or port forwarder for the server."
+msgstr ""
+"Zorgt ervoor dat de server netwerkgegevens over het opgegeven adres naar de "
+"client weergeeft, ervan uitgaande dat het IP-adres of de DNS-host als een "
+"NAT-gateway of port forwarder voor de server optreedt."
+
+#: services/models.py:1734
+msgid ""
+"Extra options to /usr/local/etc/ssh/sshd_config (usually empty). Note, "
+"incorrect entered options prevent SSH service to be started."
+msgstr ""
+"Extra opties voor /usr/local/etc/ssh/sshd_config (doorgaans leeg). Opmerking:"
+" verkeerd ingevoerde opties weerhouden de SSH-service ervan te worden "
+"gestart."
+
+#: services/models.py:1935
+msgid "Control the access a remote host has to this module"
+msgstr "Bepaalt de toegang die een externe host tot deze module heeft"
+
+#: services/models.py:1941
+msgid "Maximum number of simultaneous connections. Default is 0 (unlimited)."
+msgstr "Maximale aantal gelijktijdige verbindingen. Standaard is 0 (onbeperkt)."
+
+#: services/models.py:1948
+msgid ""
+"Specify the user name for file transfers to and from that module. In "
+"combination with the 'Group' option, this determines which file permissions "
+"are available. Leave this field empty to use default settings."
+msgstr ""
+"Geef de gebruikersnaam op voor bestandsoverdrachten naar en van die module. "
+"In combinatie met de optie 'Groep' bepaalt dit welke bestandsmachtigingen "
+"beschikbaar zijn. Laat dit veld leeg om de standaardinstellingen te "
+"gebruiken."
+
+#: services/models.py:1958
+msgid ""
+"Specify the group name for file transfers to and from that module. Leave "
+"this field empty to use default settings."
+msgstr ""
+"Geef de groepsnaam op voor bestandsoverdrachten naar en van die module. Laat "
+"dit veld leeg om de standaardinstellingen te gebruiken."
+
+#: services/models.py:1964
+msgid ""
+"This option is a comma, space, or tab delimited set of hosts which are "
+"permitted to access this module. You can specify the hosts by name or IP "
+"number. Leave this field empty to use default settings."
+msgstr ""
+"Deze optie is een door een komma, spatie of tab gescheiden set van hosts die "
+"deze module mogen benaderen. U kunt de hosts als naam of IP-nummer opgeven. "
+"Laat dit veld leeg om de standaardinstellingen te gebruiken."
+
+#: services/models.py:1972
+msgid ""
+"A comma, space, or tab-delimited set of hosts which are NOT permitted to "
+"access this module. Where the lists conflict, the allow list takes "
+"precedence. In the event that it is necessary to deny all by default, use "
+"the keyword ALL (or the netmask 0.0.0.0/0) and then explicitly specify in "
+"the hosts allow parameter those hosts that should be permitted access. Leave "
+"this field empty to use default settings."
+msgstr ""
+"Deze optie is een door een komma, spatie of tab gescheiden set van hosts die "
+"deze module NIET mogen benaderen. Waar de lijst conflicteert, heeft de lijst "
+"met toegestane hosts voorrang. Als het nodig is om alles standaard geen "
+"toegang te geven, gebruikt u het trefwoord ALL (of het netmask 0.0.0.0/0) en "
+"voegt u aan de parameter toegestane hosts expliciet de hosts toe die wel "
+"toegang dienen te hebben. Laat dit veld leeg voor de standaardinstellingen."
+
+#: services/models.py:1984
+msgid ""
+"These parameters will be added to the module configuration in rsyncd.conf."
+msgstr ""
+"Deze parameters zullen aan de moduleconfiguratie in rsyncd.conf worden "
+"toegevoegd."
+
+#: services/models.py:2006
+msgid ""
+"Set the interval between disk checks to N minutes. The default is 30 minutes."
+msgstr ""
+"Stel het interval tussen schijfcontroles in op N minuten. De standaardwaarde "
+"is 30 minuten."
+
+#: services/models.py:2018
+msgid ""
+"Report if the temperature has changed by at least N degrees Celsius since "
+"the last report. 0 to disable."
+msgstr ""
+"Rapporteren als de temperatuur sinds de vorige rapportage minstens N graden "
+"Celsius is gewijzigd. 0 om uit te schakelen."
+
+#: services/models.py:2024
+msgid ""
+"Report as informational in the system log if the temperature is greater or "
+"equal than N degrees Celsius. 0 to disable."
+msgstr ""
+"Rapporteren als informatief in het systeemlogboek als de temperatuur hoger "
+"dan of gelijk is aan N graden Celsius. 0 om uit te schakelen."
+
+#: services/models.py:2031
+msgid ""
+"Report as critical in the system log and send an email if the temperature is "
+"greater or equal than N degrees Celsius. 0 to disable."
+msgstr ""
+"Rapporteren als kritiek in het systeemlogboek en een e-mail verzenden als de "
+"temperatuur hoger dan of gelijk is aan N graden Celsius. 0 om uit te "
+"schakelen."
+
+#: services/models.py:2039
+msgid "Destination email address. Separate email addresses with commas."
+msgstr "E-mailadres van bestemming. Scheid e-mailadressen met komma's."
+
+#: services/models.py:2184
+msgid ""
+"The port on which WebDAV will run.<br>Do not use a port that is already in "
+"use by another service (e.g. 22 for SSH)."
+msgstr ""
+"De poort waarop WebDAV zal werken.<br>Gebruik geen poort die al door een "
+"andere service wordt gebruikt (bv. 22 voor SSH)."
+
+#: services/models.py:2193
+msgid ""
+"The port on which Secure WebDAV will run.<br>Do not use a port that is "
+"already in use by another service (e.g. 22 for SSH)."
+msgstr ""
+"De poort waarop Secure WebDAV zal werken.<br>Gebruik geen poort die al door "
+"een andere service wordt gebruikt (bv. 22 voor SSH)."
+
+#: services/models.py:2210
+msgid ""
+"Type of HTTP Authentication for WebDAV<br>Basic Auth: Password is sent over "
+"the network as plaintext (Avoid if HTTPS is disabled) <br>Digest Auth: The "
+"hash of the password is sent over the network (more secure)."
+msgstr ""
+"Type HTTP-authenticatie voor WebDAV<br>Basisauth.: wachtwoord wordt als "
+"platte tekst over het netwerk verzonden (Vermijden als HTTPS is "
+"uitgeschakeld) <br>Digest-auth.: hash van het wachtwoord wordt over het "
+"netwerk verzonden (veiliger)."
+
+#: sharing/admin.py:80
+#, fuzzy
+msgid ""
+"full_audit VFS object is known to have file transfer issues with Windows 10. "
+"Do you wish to continue?"
+msgstr ""
+"Van VFS-object full_audit is bekend dat het problemen met "
+"bestandsoverdrachten oplevert in Windows 10. Wilt u doorgaan?"
+
+#: sharing/forms.py:464
+msgid "This option can only be used for datasets."
+msgstr "Deze optie kan alleen voor gegevenssets worden gebruikt."
+
+#: sharing/models.py:334
+#, fuzzy
+msgid ""
+"The credentials of the specified user is used for remote access by root."
+msgstr ""
+"De referenties van de opgegeven gebruiker worden gebruikt voor externe "
+"toegang door root."
+
+#: sharing/models.py:274
+#, fuzzy
+msgid ""
+"These parameters are added to the [Volume] section of afp.conf. Add each "
+"different parameter on a newline"
+msgstr ""
+"Deze parameters worden aan de sectie [volume] van afp.conf toegevoegd. Voeg "
+"elke parameter toe op een eigen nieuwe regel"
+
+#: sharing/models.py:345
+#, fuzzy
+msgid ""
+"The credentials of the specified group is used for remote access by root."
+msgstr ""
+"De referenties van de opgegeven groep worden gebruikt voor externe toegang "
+"door root."
+
+#: sharing/models.py:356
+#, fuzzy
+msgid ""
+"The credentials of the specified user is used for remote access by all users."
+msgstr ""
+"De referenties van de opgegeven gebruiker worden gebruikt voor externe "
+"toegang door alle gebruikers."
+
+#: sharing/models.py:367
+#, fuzzy
+msgid ""
+"The credentials of the specified group is used for remote access by all "
+"users."
+msgstr ""
+"De referenties van de opgegeven groep worden gebruikt voor externe toegang "
+"door alle gebruikers."
+
+#: storage/admin.py:144
+#: storage/forms.py:1196
+#: storage/forms.py:1429
+#: storage/forms.py:1513
+msgid "Comments"
+msgstr "Opmerkingen"
+
+#: storage/forms.py:2011
+#, fuzzy
+msgid "Setup mode"
+msgstr "Installatiemodus"
+
+#: storage/forms.py:2013
+msgid "Manual"
+msgstr "Handmatig"
+
+#: storage/forms.py:2014
+msgid "Semi-automatic"
+msgstr "Semiautomatisch"
+
+#: storage/forms.py:2025
+msgid "Remote HTTP/HTTPS Port"
+msgstr "Externe HTTP/HTTPS-poort"
+
+#: storage/forms.py:2030
+#, fuzzy
+msgid "Remote HTTPS"
+msgstr "Externe host"
+
+#: storage/forms.py:2035
+#, fuzzy
+msgid "Remote Auth Token"
+msgstr "Externe hostsleutel"
+
+#: storage/forms.py:2039
+msgid ""
+"On the remote host go to Storage -> Replication Tasks, click the Temporary "
+"Auth Token button and paste the resulting value in to this field."
+msgstr ""
+"Ga op de externe host naar Opslag -> Replicatietaken, klik op de knop "
+"Tijdelijke autorisatietoken en plak de resulterende waarde in dit veld."
+
+#: storage/forms.py:2222
+msgid "I'm aware this will destroy snapshots of this zvol"
+msgstr "Ik weet dat dit momentopnamen van dit zvol zal vernietigen"
+
+#: storage/forms.py:2330
+msgid "Remove passphrase"
+msgstr "Wachtwoordzin verwijderen"
+
+#: storage/forms.py:2187
+msgid "Token is invalid."
+msgstr "Token is ongeldig."
+
+#: storage/forms.py:2191
+msgid "Failed to connect to remote: %s"
+msgstr "Verbinden met externe host is mislukt: %s"
+
+#: storage/views.py:1341
+msgid "Disks successfully edited"
+msgstr "Schijven met succes bewerkt"
+
+#: system/forms.py:1003
+#, fuzzy
+msgid "Invalid syslog server format"
+msgstr "Ongeldige notatie van syslog-server"
+
+#: system/forms.py:1285
+#, fuzzy
+msgid "Location to temporarily store update file"
+msgstr "Locatie om het updatebestand tijdelijk te bewaren"
+
+#: system/forms.py:1287
+#, fuzzy
+msgid "The update file is temporarily stored here before being applied."
+msgstr ""
+"Het systeem zal deze locatie gebruiken om het firmwarebestand tijdelijk te "
+"bewaren voordat het wordt toegepast."
+
+#: system/forms.py:2613
+#, fuzzy
+msgid ""
+"Cut and paste the contents of your certificate here.<br>Order in which you "
+"should paste this: <br>The Primary Certificate.<br>The Intermediate CA's "
+"Certificate(s) (optional).<br>The Root CA Certificate (optional)"
+msgstr ""
+"Knip en plak hier de inhoud van uw certificaat.<br>Volgorde waarin deze "
+"dient te worden geplakt: <br>Het primaire certificaat<br>Certifica(a)t(en) "
+"van tussenliggende CA's (optioneel)<br>Het certificaat van de basis-CA "
+"(optioneel)"
+
+#: system/forms.py:3004
+msgid "Access Key"
+msgstr "Sneltoets"
+
+#: system/forms.py:3008
+msgid "Secret Key"
+msgstr "Geheime sleutel"
+
+#: system/models.py:348
+msgid "Use FQDN for logging"
+msgstr "FQDN gebruiken voor logboekregistratie"
+
+#: system/models.py:987
+msgid "Account Name"
+msgstr "Accountnaam"
+
+#: system/models.py:1003
+#, fuzzy
+msgid "Cloud Credential"
+msgstr "Cloudreferentie"
+
+#: tasks/forms.py:76
+msgid "Invalid provider details."
+msgstr "Ongeldige providergegevens."
+
+#: tasks/forms.py:83
+#, fuzzy
+msgid "Invalid credential."
+msgstr "Ongeldige referentie."
+
+#: tasks/forms.py:86
+#, fuzzy
+msgid "Bucket is required."
+msgstr "Er is een keytab vereist."
+
+#: tasks/hook.py:40
+#: tasks/models.py:103
+#, fuzzy
+msgid "Cloud Sync"
+msgstr "Cloudsynchronisatie"
+
+#: tasks/models.py:54
+#, fuzzy
+msgid "Credential"
+msgstr "Referentie"
+
+#: tasks/models.py:98
+msgid "Disabling will not stop any syncs which are in progress."
+msgstr "Uitschakelen zal synchronisaties die worden uitgevoerd niet stoppen."
+
+#: tasks/models.py:104
+#, fuzzy
+msgid "Cloud Syncs"
+msgstr "Cloudsynchronisaties"
+
+#: tasks/forms.py:96
+msgid "Folder \"%s\" does not exist."
+msgstr "Map '%s' bestaat niet."
+
+#: tasks/models.py:52
+msgid "Push - From local to remote. Pull - From remote to local."
+msgstr "Push - van lokaal naar extern. Pull - van extern naar lokaal."
+
+#: tasks/views.py:53
+msgid "The cloud sync process has started"
+msgstr "Het cloudsynchronisatieproces is gestart"
+
+#: templates/storage/replication_datagrid.html:17
+#: templates/storage/replication_datagrid.html:19
+msgid "Temporary Auth Token"
+msgstr "Tijdelijke autorisatietoken"
+
+#: templates/system/config_upload.html:6
+msgid "All your passwords will be reset. Make sure to set them after reboot."
+msgstr ""
+"Al uw wachtwoorden zullen worden geherinitialiseerd. Stel deze in na het "
+"herstarten."
+
+#: templates/tasks/cloudsync_run.html:5
+msgid "Would you like to run this cloud sync now?"
+msgstr "Wilt u deze cloudsynchronisatie nu uitvoeren?"

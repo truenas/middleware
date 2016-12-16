@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:10-0700\n"
-"PO-Revision-Date: 2016-07-26 19:54+0000\n"
+"PO-Revision-Date: 2016-10-18 19:29+0000\n"
 "Last-Translator: Pavel <pavel.borecki@gmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: cs\n"
@@ -17,7 +17,7 @@ msgstr ""
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;\n"
 "X-Generator: Pootle 2.5.0\n"
-"X-POOTLE-MTIME: 1469562895.0\n"
+"X-POOTLE-MTIME: 1476818943.0\n"
 
 #~ msgid "Reporting"
 #~ msgstr "Reportování"
@@ -670,3 +670,23 @@ msgstr ""
 #: freeadmin/static/lib/js/freeadmin.js:359
 msgid "Ok"
 msgstr "Ok"
+
+#: freeadmin/static/lib/js/alert.js:69
+msgid "Warning"
+msgstr "Varování"
+
+#: freeadmin/static/lib/js/alert.js:73
+msgid "Critical"
+msgstr "Kritické"
+
+#: freeadmin/static/lib/js/freeadmin.js:1425
+msgid "The action will result in migration of dataset."
+msgstr "Tato akce vyústí v migraci datové sady."
+
+#: freeadmin/static/lib/js/freeadmin.js:1425
+msgid "Some services will be restarted."
+msgstr "Některé služby budou zrestartovány."
+
+#: freeadmin/static/lib/js/freeadmin.js:1438
+msgid "Continue"
+msgstr "Pokračovat"
