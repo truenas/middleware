@@ -716,7 +716,7 @@ class ServiceService(Service):
             svc = "ups"
         else:
             svc = "upsmon"
-        sn = self._started_notify("start", "upsmon")
+        sn = self._started_notify("start", svc)
         return self._started(svc, sn)
 
     def _start_afp(self, **kwargs):
