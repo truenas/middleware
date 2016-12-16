@@ -16,6 +16,7 @@ define([
       constructor: function(kwArgs) {
         var me = this;
         this._pending = {};
+        this._subs = {};
         lang.mixin(this, kwArgs);
         this._ddp = new ddp.default({
           endpoint: (window.location.protocol == 'http:' ? 'ws://' : 'wss://') + window.location.host + '/websocket',
@@ -23,6 +24,8 @@ define([
         });
         this._ddp.on("connected", lang.hitch(me, me.onConnect));
         this._ddp.on("result", lang.hitch(me, me.onResult));
+        this._ddp.on("ready", lang.hitch(me, me.onReady));
+        this._ddp.on("changed", lang.hitch(me, me.onChanged));
 
         var timer = new timing.Timer(1000*50);
         timer.onTick = lang.hitch(me, me.ping);
@@ -50,6 +53,40 @@ define([
         } else {
           console.log("Unknown message: ", message);
         }
+      },
+      onReady: function(message) {
+        console.log(message);
+      },
+      onChanged: function(message) {
+        if(!this._subs[message.collection]) {
+          return;
+        }
+        for(var i=0;i<this._subs[message.collection].length;i++) {
+          var sub = this._subs[message.collection][i];
+          sub['callback']('CHANGED', message);
+        }
+      },
+      sub: function(name, callback) {
+        var subId = this._ddp.sub(name);
+        if(!this._subs[name]) {
+          this._subs[name] = [];
+        }
+        this._subs[name].push({
+          callback: callback,
+          subId: subId
+        });
+        return subId;
+      },
+      unsub: function(subId) {
+        for(key in this._subs) {
+          for(var i=0;i<this._subs[key].length;i++) {
+            var item = this._subs[key][i];
+            if(item.subId == subId) {
+              this._subs[key].splice(i, 1);
+            }
+          }
+        }
+        this._ddp.unsub(subId);
       },
       call: function(method, args, onSuccess, onError) {
         var mid = this._ddp.method(method, args);
