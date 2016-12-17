@@ -8,15 +8,16 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:05-0700\n"
-"PO-Revision-Date: 2016-12-09 17:05+0000\n"
-"Last-Translator: BouRock <hitowerdigit@hotmail.com>\n"
-"Language-Team: LANGUAGE <LL@li.org>\n"
+"PO-Revision-Date: 2016-12-17 20:01+0000\n"
+"Last-Translator: Burak <hitowerdigit@hotmail.com>\n"
+"Language-Team: Turkish "
+"<http://weblate.trueos.org/projects/freenas/django/tr/>\n"
 "Language: tr\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=2; plural=(n > 1)\n"
-"X-Generator: Pootle 2.5.0\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"X-Generator: Weblate 2.10-dev\n"
 "X-POOTLE-MTIME: 1481303146.0\n"
 
 #: choices.py:40
@@ -503,7 +504,7 @@ msgstr "Adınız ve soyadınız geçersiz karakterler içeriyor (%s)."
 #: system/models.py:243 templates/account/bsdusers.html:5
 #: templates/account/bsdusers.html.py:84
 msgid "Username"
-msgstr "Kullanıcı Adı"
+msgstr "Kullanıcı adı"
 
 #: account/forms.py:223
 msgid "Required. 16 characters or fewer. Letters, digits and ./-/_ only."
@@ -2225,7 +2226,7 @@ msgstr "Mantıksal birim için seri numarası"
 #: templates/services/iscsi_extents.html:6
 #: templates/services/iscsi_targets.html:7 templates/system/smarttest.html:5
 msgid "Type"
-msgstr "Tür"
+msgstr "Türü"
 
 #: services/models.py:654
 msgid "Logical Unit Type mapped to LUN."
@@ -5734,6 +5735,9 @@ msgid_plural ""
 "        This will delete all files within the dataset and child datasets.\n"
 "        "
 msgstr[0] ""
+"\n"
+"        Bu, veri kümesi içindeki tüm dosyaları silecek.\n"
+"        "
 
 #: templates/storage/dataset_edit.html:2
 msgid "Edit Dataset"
@@ -8792,7 +8796,7 @@ msgstr "Ek şunu ekle:"
 
 #: templates/freeadmin/generic_model_datagrid.html:10
 msgid "Add"
-msgstr "Eklenecek:"
+msgstr "Ekle"
 
 #: templates/jails/index.html:32
 msgid "Templates"
@@ -8923,7 +8927,7 @@ msgstr "Kafes kökü yapılandırılmadı!"
 
 #: jails/models.py:537
 msgid "Filesystem"
-msgstr "Dosya sistem türü"
+msgstr "Dosya sistem"
 
 #: jails/utils.py:695
 msgid "You need to create a volume to proceed!"
@@ -9006,7 +9010,7 @@ msgstr "Etki Alanı Hesabı Parolasını Onaylayın"
 #: services/forms.py:758
 #: services/models.py:1612
 msgid "Kerberos keytab"
-msgstr "Kerberos sunucusu"
+msgstr "Kerberos keytab"
 
 #: services/forms.py:1081
 msgid "LUN ID already exists."
@@ -9014,7 +9018,7 @@ msgstr "LUN ID zaten var."
 
 #: services/models.py:109
 msgid "Use syslog"
-msgstr ""
+msgstr "Syslog kullan"
 
 #: services/models.py:233
 msgid "Server minimum protocol"
