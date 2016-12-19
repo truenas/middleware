@@ -100,7 +100,7 @@ class Application(WebSocketApplication):
                 _locals.update(arginfo.locals.items())
 
             except Exception:
-                self.logger.critical_msg('Error while extracting arguments from frames.')
+                self.logger.critical_msg('Error while extracting arguments from frames.', exc_info=True)
 
             if argspec:
                 cur_frame['argspec'] = argspec
