@@ -124,8 +124,8 @@ class Logger(object):
         self.console_handler.setLevel(logging.DEBUG)
         self.console_handler.setFormatter(console_formatter)
 
-        for handler in logging.root.handlers:
-            pass
+        # Get the latest handler from handlers list to avoid add duplicated handler.
+        handler = logging.root.handlers[-1]
 
         if handler in logging.root.handlers:
             if self.console_handler.get_name() != handler.get_name():
