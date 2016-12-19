@@ -280,7 +280,7 @@ class bsdUsersForm(ModelForm, bsdUserGroupMixin):
                 [x for x in self.fields['bsdusr_group'].choices][1:]
             )
             self.fields['bsdusr_group'].required = False
-            self.bsdusr_home_saved = u'/nonexistent'
+            self.bsdusr_home_saved = '/nonexistent'
             self.bsdusr_home_copy = False
 
         elif self.instance.id:
@@ -294,7 +294,7 @@ class bsdUsersForm(ModelForm, bsdUserGroupMixin):
             del self.fields['bsdusr_creategroup']
             self.fields['bsdusr_group'].initial = self.instance.bsdusr_group
             self.advanced_fields = []
-            self.bsdusr_home_saved = self.instance.bsdusr_home
+            self.bsdusr_home_saved = self.instance.bsdusr_home.encode('utf8')
             self.bsdusr_home_copy = False
             self.fields.keyOrder.remove('bsdusr_mode')
             self.fields.keyOrder.insert(
@@ -305,8 +305,8 @@ class bsdUsersForm(ModelForm, bsdUserGroupMixin):
             self.fields['bsdusr_username'].widget.attrs['class'] = (
                 'dijitDisabled dijitTextBoxDisabled '
                 'dijitValidationTextBoxDisabled')
-            if os.path.exists(self.instance.bsdusr_home):
-                mode = os.stat(self.instance.bsdusr_home).st_mode & 0o777
+            if os.path.exists(self.instance.bsdusr_home.encode('utf8')):
+                mode = os.stat(self.instance.bsdusr_home.encode('utf8')).st_mode & 0o777
                 self.fields['bsdusr_mode'].initial = oct(mode)
             if self.instance.bsdusr_builtin:
                 self.fields['bsdusr_uid'].widget.attrs['readonly'] = True
@@ -568,11 +568,11 @@ class bsdUsersForm(ModelForm, bsdUserGroupMixin):
             homedir_mode = self.cleaned_data.get('bsdusr_mode')
             if (
                 not bsduser.bsdusr_builtin and homedir_mode is not None and
-                os.path.exists(bsduser.bsdusr_home)
+                os.path.exists(bsduser.bsdusr_home.encode('utf8'))
             ):
                 try:
                     homedir_mode = int(homedir_mode, 8)
-                    os.chmod(bsduser.bsdusr_home, homedir_mode)
+                    os.chmod(bsduser.bsdusr_home.encode('utf8'), homedir_mode)
                 except:
                     log.warn('Failed to set homedir mode', exc_info=True)
 
@@ -602,12 +602,12 @@ class bsdUsersForm(ModelForm, bsdUserGroupMixin):
         bsdusr_sshpubkey = self.cleaned_data.get('bsdusr_sshpubkey')
         if bsdusr_sshpubkey:
             _notifier.save_pubkey(
-                bsduser.bsdusr_home,
+                bsduser.bsdusr_home.encode('utf8'),
                 bsdusr_sshpubkey,
                 bsduser.bsdusr_username,
                 bsduser.bsdusr_group.bsdgrp_group)
         else:
-            _notifier.delete_pubkey(bsduser.bsdusr_home)
+            _notifier.delete_pubkey(bsduser.bsdusr_home.encode('utf8'))
         return bsduser
 
     def delete(self, **kwargs):
