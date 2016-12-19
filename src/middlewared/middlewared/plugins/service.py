@@ -147,9 +147,12 @@ class ServiceService(Service):
         if sn:
             sn.join()
 
-        svc = self.query([('service', '=', service)], {'get': True})
-        self.middleware.send_event('service.query', 'CHANGED', fields=svc)
-        return svc['state'] == 'RUNNING'
+        try:
+            svc = self.query([('service', '=', service)], {'get': True})
+            self.middleware.send_event('service.query', 'CHANGED', fields=svc)
+            return svc['state'] == 'RUNNING'
+        except IndexError:
+            return self._started(service)[0]
 
     @accepts(
         Str('service'),
