@@ -255,7 +255,7 @@ class Application(WebSocketApplication):
         if message['msg'] == 'sub':
             self.subscribe(message['id'], message['name'])
         elif message['msg'] == 'unsub':
-            self.unsubscribe(message['name'])
+            self.unsubscribe(message['id'])
 
 
 class Middleware(object):
@@ -266,6 +266,7 @@ class Middleware(object):
         self.__schemas = {}
         self.__services = {}
         self.__wsclients = {}
+        self.__hooks = defaultdict(list)
         self.__server_threads = []
         self.__init_services()
         self.__plugins_load()
@@ -334,6 +335,36 @@ class Middleware(object):
 
     def unregister_wsclient(self, client):
         self.__wsclients.pop(client.sessionid)
+
+    def register_hook(self, name, method, sync=True):
+        """
+        Register a hook under `name`.
+
+        The given `method` will be called whenever using call_hook.
+        Args:
+            name(str): name of the hook, e.g. service.hook_name
+            method(callable): method to be called
+            sync(bool): whether the method should be called in a sync way
+        """
+        self.__hooks[name].append({
+            'method': method,
+            'sync': sync,
+        })
+
+    def call_hook(self, name, *args, **kwargs):
+        """
+        Call all hooks registered under `name` passing *args and **kwargs.
+        Args:
+            name(str): name of the hook, e.g. service.hook_name
+        """
+        for hook in self.__hooks[name]:
+            try:
+                if hook['sync']:
+                    hook['method'](*args, **kwargs)
+                else:
+                    gevent.spawn(hook['method'], *args, **kwargs)
+            except:
+                self.logger.error('Failed to run hook {}:{}(*{}, **{})'.format(name, hook['method'], args, kwargs), exc_info=True)
 
     def add_service(self, service):
         self.__services[service._config.namespace] = service
