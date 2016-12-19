@@ -219,7 +219,7 @@ class Logger(object):
         logging.info(message, exc_info=exc_info)
 
     def debug_msg(self, message=None, exc_info=False):
-        """Wrapper for logging.msg().
+        """Wrapper for logging.debug().
 
             Args:
                    message (str): The message to be printed.
