@@ -65,16 +65,13 @@ def index(request):
 
 def core(request):
 
-    try:
-        domaincontroller = models.DomainController.objects.order_by("-id")[0]
-    except IndexError:
-        domaincontroller = models.DomainController.objects.create()
+    disabled = {}
 
-    domaincontroller.onclick_enable = 'enable'
-    ds_status = get_directoryservice_status()
-    for key in ds_status:
-        if ds_status[key] is True and key != 'dc_enable':
-            domaincontroller.onclick_enable = 'disable'
+    for key, val in get_directoryservice_status().iteritems():
+        if val is True and key != 'dc_enable':
+            disabled['domaincontroller'] = {
+                'reason': _('A directory service is already enabled.'),
+            }
             break
 
     try:
@@ -86,6 +83,11 @@ def core(request):
         cifs = models.CIFS.objects.order_by("-id")[0]
     except IndexError:
         cifs = models.CIFS.objects.create()
+
+    try:
+        domaincontroller = models.DomainController.objects.order_by("-id")[0]
+    except IndexError:
+        domaincontroller = models.DomainController.objects.create()
 
     try:
         dynamicdns = models.DynamicDNS.objects.order_by("-id")[0]
@@ -142,23 +144,24 @@ def core(request):
     except IndexError:
         webdav = models.WebDAV.objects.create()
 
-    srv = models.services.objects.all()
     return render(request, 'services/core.html', {
-        'srv': srv,
-        'cifs': cifs,
-        'afp': afp,
-        'lldp': lldp,
-        'nfs': nfs,
-        'rsyncd': rsyncd,
-        'dynamicdns': dynamicdns,
-        'snmp': snmp,
-        'ups': ups,
-        'ftp': ftp,
-        'tftp': tftp,
-        'smart': smart,
-        'ssh': ssh,
-        'domaincontroller': domaincontroller,
-        'webdav': webdav
+        'urls': json.dumps({
+            'cifs': cifs.get_edit_url(),
+            'afp': afp.get_edit_url(),
+            'lldp': lldp.get_edit_url(),
+            'nfs': nfs.get_edit_url(),
+            'rsync': rsyncd.get_edit_url(),
+            'dynamicdns': dynamicdns.get_edit_url(),
+            'snmp': snmp.get_edit_url(),
+            'ups': ups.get_edit_url(),
+            'ftp': ftp.get_edit_url(),
+            'tftp': tftp.get_edit_url(),
+            'ssh': ssh.get_edit_url(),
+            'smartd': smart.get_edit_url(),
+            'webdav': webdav.get_edit_url(),
+            'domaincontroller': domaincontroller.get_edit_url(),
+        }),
+        'disabled': json.dumps(disabled),
     })
 
 
