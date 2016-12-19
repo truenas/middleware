@@ -65,6 +65,57 @@ from ipaddr import (
 log = logging.getLogger('services.form')
 
 
+class servicesForm(ModelForm):
+    """
+    This form is only used for API 1.0 compatibility
+    Services view now uses middlewared directly.
+    """
+
+    class Meta:
+        fields = '__all__'
+        model = models.services
+
+    def save(self, *args, **kwargs):
+        obj = super(servicesForm, self).save(*args, **kwargs)
+        _notifier = notifier()
+
+        if obj.srv_service == 'cifs' and _notifier.started('domaincontroller'):
+            obj.srv_enable = True
+            obj.save()
+            started = True
+
+        elif obj.srv_service == 'domaincontroller':
+            if obj.srv_enable is True:
+                if _notifier.started('domaincontroller'):
+                    started = _notifier.restart("domaincontroller")
+                else:
+                    started = _notifier.start("domaincontroller")
+            else:
+                started = _notifier.stop("domaincontroller")
+
+        else:
+            """
+            For now on, lets handle it properly for all services!
+            """
+            if obj.srv_enable:
+                started = _notifier.start(obj.srv_service)
+            else:
+                started = _notifier.stop(obj.srv_service)
+
+        self.started = started
+        if started is True:
+            if not obj.srv_enable:
+                obj.srv_enable = True
+                obj.save()
+
+        elif started is False:
+            if obj.srv_enable:
+                obj.srv_enable = False
+                obj.save()
+
+        return obj
+
+
 class CIFSForm(ModelForm):
 
     cifs_srv_bindip = forms.MultipleChoiceField(
