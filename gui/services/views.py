@@ -27,7 +27,6 @@ import json
 import logging
 import sysctl
 
-from django.http import HttpResponse
 from django.shortcuts import render
 from django.utils.translation import ugettext as _
 
@@ -42,7 +41,6 @@ from freenasUI.freeadmin.views import JsonResp
 from freenasUI.middleware.notifier import notifier
 from freenasUI.services import models
 from freenasUI.services.forms import (
-    servicesForm,
     CIFSForm
 )
 from freenasUI.system.models import Tunable
@@ -173,88 +171,6 @@ def iscsi(request):
         'gconfid': gconfid,
         'fc_enabled': fc_enabled(),
     })
-
-
-def servicesToggleView(request, formname):
-    form2namemap = {
-        'cifs_toggle': 'cifs',
-        'afp_toggle': 'afp',
-        'lldp_toggle': 'lldp',
-        'nfs_toggle': 'nfs',
-        'iscsitarget_toggle': 'iscsitarget',
-        'dynamicdns_toggle': 'dynamicdns',
-        'snmp_toggle': 'snmp',
-        'httpd_toggle': 'httpd',
-        'ftp_toggle': 'ftp',
-        'tftp_toggle': 'tftp',
-        'ssh_toggle': 'ssh',
-        'ldap_toggle': 'ldap',
-        'rsync_toggle': 'rsync',
-        'smartd_toggle': 'smartd',
-        'ups_toggle': 'ups',
-        'plugins_toggle': 'plugins',
-        'domaincontroller_toggle': 'domaincontroller',
-        'webdav_toggle': 'webdav'
-    }
-    changing_service = form2namemap[formname]
-    if changing_service == "":
-        raise "Unknown service - Invalid request?"
-
-    svc_entry = models.services.objects.get(srv_service=changing_service)
-    if svc_entry.srv_enable:
-        svc_entry.srv_enable = False
-    else:
-        svc_entry.srv_enable = True
-
-    if request.POST.get('force', None) == 'true':
-        force = True
-    else:
-        force = False
-
-    original_srv = svc_entry.srv_enable
-    mf = servicesForm(instance=svc_entry, data={
-        'srv_enable': svc_entry.srv_enable,
-        'srv_service': changing_service,
-    }, force=force)
-    if not mf.is_valid():
-        data = {
-            'events': mf._extra_events,
-        }
-        return HttpResponse(json.dumps(data), content_type="application/json")
-    svc_entry = mf.save()
-    events = []
-    mf.done(request, events)
-
-    error = False
-    message = False
-    if mf.started is True:
-        status = 'on'
-        if not original_srv:
-            error = True
-            message = _("The service could not be stopped.")
-
-    elif mf.started is False:
-        status = 'off'
-        if original_srv:
-            error = True
-            message = _("The service could not be started.")
-    else:
-        if svc_entry.srv_enable:
-            status = 'on'
-        else:
-            status = 'off'
-
-    data = {
-        'service': changing_service,
-        'status': status,
-        'error': error,
-        'message': message,
-        'enabled_svcs': mf.enabled_svcs,
-        'disabled_svcs': mf.disabled_svcs,
-        'events': events,
-    }
-
-    return HttpResponse(json.dumps(data), content_type="application/json")
 
 
 def enable(request, svc):
