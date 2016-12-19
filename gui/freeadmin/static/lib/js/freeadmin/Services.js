@@ -8,7 +8,9 @@ define([
   "dojo/request/xhr",
   "dijit/_Widget",
   "dijit/_TemplatedMixin",
+  "dijit/_base/manager",
   "dijit/registry",
+  "dijit/Dialog",
   "dijit/form/Button",
   "dijit/form/CheckBox",
   "dijit/form/Form",
@@ -24,7 +26,9 @@ define([
   xhr,
   _Widget,
   _Templated,
+  manager,
   registry,
+  Dialog,
   Button,
   CheckBox,
   Form,
@@ -83,26 +87,7 @@ define([
         document.body.appendChild(me.standby.domNode);
         me.standby.startup();
 
-        on(me.startstop, "click", function() {
-          me.startLoading();
-          if(me.state == 'RUNNING') {
-            Middleware.call('service.stop', [me.name], function(result) {
-              if(!result) {
-                me.state = 'STOPPED';
-                me.sync();
-              }
-              me.stopLoading();
-            });
-          } else {
-            Middleware.call('service.start', [me.name], function(result) {
-              if(result) {
-                me.state = 'RUNNING';
-                me.sync();
-              }
-              me.stopLoading();
-            });
-          }
-        });
+        on(me.startstop, "click", lang.hitch(me, me.precheck));
 
         on(me.onboot, 'click', function(ev) {
           var value = (me.onboot.get('value') == 'on') ? true : false;
@@ -154,6 +139,114 @@ define([
           me.dapLight.src = '/static/images/ui/misc/red_light.png';
         }
         me.startstop.set('label', (me.state == 'RUNNING') ? gettext('Stop Now') : gettext('Start Now'));
+      },
+      precheck: function() {
+        var me = this;
+        if(me.name == 'iscsitarget') {
+          me.startLoading();
+          Middleware.call('notifier.iscsi_active_connections', [], function(result) {
+            me.stopLoading();
+            if(result > 0) {
+
+              var dialog = new Dialog({
+                  title: gettext('Warning!'),
+                  parseOnLoad: true,
+                  closable: true,
+                  style: "max-width: 75%;max-height:70%;background-color:white;overflow:auto;",
+                  onHide: function() {
+                      setTimeout(lang.hitch(this, 'destroyRecursive'), manager.defaultDuration);
+                  }
+              });
+
+              var content = domConstruct.toDom('<p>You have ' + result + ' pending active iSCSI connection(s).</p><p>Are you sure you want to continue?</p><br/ >');
+
+              var confirmb = new Button({
+                label: gettext('Yes'),
+                onClick: function() {
+                  me.run();
+                  cancelDialog(this);
+                }
+              });
+              confirmb.placeAt(content);
+
+              var cancelb = new Button({
+                label: gettext('Cancel'),
+                onClick: function() {
+                  cancelDialog(this);
+                }
+              });
+              cancelb.placeAt(content);
+
+              dialog.set('content', content);
+              dialog.show();
+
+
+            } else {
+              me.run();
+            }
+          });
+        } else if(me.name == 'cifs') {
+          if(me.state != 'RUNNING') {
+            me.run();
+          } else {
+            me.startLoading();
+            Middleware.call('notifier.common', ['system', 'activedirectory_enabled'], function(result) {
+              me.stopLoading();
+              if(result) {
+
+                var dialog = new Dialog({
+                    title: gettext('Warning!'),
+                    parseOnLoad: true,
+                    closable: true,
+                    style: "max-width: 75%;max-height:70%;background-color:white;overflow:auto;",
+                    onHide: function() {
+                        setTimeout(lang.hitch(this, 'destroyRecursive'), manager.defaultDuration);
+                    }
+                });
+
+                var content = domConstruct.toDom('<p>Cannot disable SMB while ActiveDirectory is in use.</p><br/ >');
+
+                var okb = new Button({
+                  label: gettext('Ok'),
+                  onClick: function() {
+                    cancelDialog(this);
+                  }
+                });
+                okb.placeAt(content);
+
+                dialog.set('content', content);
+                dialog.show();
+
+
+              } else {
+                me.run();
+              }
+            });
+          }
+        } else {
+          me.run();
+        }
+      },
+      run: function() {
+        var me = this;
+        me.startLoading();
+        if(me.state == 'RUNNING') {
+          Middleware.call('service.stop', [me.name], function(result) {
+            if(!result) {
+              me.state = 'STOPPED';
+              me.sync();
+            }
+            me.stopLoading();
+          });
+        } else {
+          Middleware.call('service.start', [me.name], function(result) {
+            if(result) {
+              me.state = 'RUNNING';
+              me.sync();
+            }
+            me.stopLoading();
+          });
+        }
       }
     });
 
