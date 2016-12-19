@@ -896,11 +896,12 @@ class ServiceService(Service):
         self.reload("cifs", kwargs)
 
     def _restart_system_datasets(self, **kwargs):
-        systemdataset = self.system_dataset_create()
-        if systemdataset is None:
+        systemdataset = self.middleware.call('notifier.system_dataset_create')
+        if not systemdataset:
             return None
-        if systemdataset.sys_syslog_usedataset:
+        systemdataset = self.middleware.call('datastore.query', 'system.systemdataset', [], {'get': True})
+        if systemdataset['sys_syslog_usedataset']:
             self.restart("syslogd", kwargs)
         self.restart("cifs", kwargs)
-        if systemdataset.sys_rrd_usedataset:
+        if systemdataset['sys_rrd_usedataset']:
             self.restart("collectd", kwargs)
