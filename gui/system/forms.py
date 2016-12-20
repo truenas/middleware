@@ -205,6 +205,13 @@ class BootEnvRenameForm(Form):
         self._name = kwargs.pop('name')
         super(BootEnvRenameForm, self).__init__(*args, **kwargs)
 
+    def clean_name(self):
+        name = self.cleaned_data.get('name')
+        bad_chars = "/ *'\"?@"
+        if any(elem in name for elem in bad_chars):
+            raise forms.ValidationError(_('Name does not allow spaces and the following characters: /*\'"?@'))
+        return name
+
     def save(self, *args, **kwargs):
         rename = Update.RenameClone(
             self._name,
