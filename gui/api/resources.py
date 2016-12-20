@@ -2674,6 +2674,8 @@ class ServicesResourceMixin(object):
         service = self.__services.get(bundle.obj.srv_service)
         if service:
             bundle.data['srv_state'] = service['state']
+        else:
+            bundle.data['srv_state'] = 'UNKNOWN'
         return bundle
 
     def obj_get(self, bundle, **kwargs):
