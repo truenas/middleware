@@ -37,7 +37,7 @@ class Application(WebSocketApplication):
         super(Application, self).__init__(*args, **kwargs)
         self.authenticated = self._check_permission()
         self.handshake = False
-        self.logger = logger.Logger('application')
+        self.logger = logger.Logger()
         self.sessionid = str(uuid.uuid4())
         self.trace = logger.Rollbar()
 
@@ -259,7 +259,7 @@ class Application(WebSocketApplication):
 class Middleware(object):
 
     def __init__(self):
-        self.logger = logger.Logger('middleware')
+        self.logger = logger.Logger()
         self.__jobs = JobsQueue(self)
         self.__schemas = {}
         self.__services = {}
@@ -463,7 +463,7 @@ class Middleware(object):
 
 def main():
     #  Logger
-    _logger = logger.Logger('middleware')
+    _logger = logger.Logger()
 
     # Workaround for development
     modpath = os.path.realpath(os.path.join(

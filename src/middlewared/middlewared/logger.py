@@ -11,7 +11,7 @@ class Rollbar(object):
 
     def __init__(self):
         self.sentinel_file_path = '/data/.rollbar_disabled'
-        self.logger = Logger('application')
+        self.logger = Logger()
         self.logger.configure_logging('console')
         rollbar.init(
             'caf06383cba14d5893c4f4d0a40c33a9',
@@ -67,7 +67,62 @@ class Rollbar(object):
             self.logger.warn('[Rollbar] Failed to report error.', exc_info=True)
 
 
-class Logger(object):
+class LoggerFormatter(object):
+    """Subclass for Logger()."""
+
+    def __init__(self):
+        self.get_level = None
+
+    def __console_color(self):
+        """Set the color based on the log level.
+
+            Returns:
+                color_start (str): Returns the color code.
+        """
+        if self.get_level == self.LOGGING_LEVEL['CRITICAL']:
+            color_start = self.CONSOLE_COLOR_FORMATTER['HIGHRED']
+        elif self.get_level == self.LOGGING_LEVEL['ERROR']:
+            color_start = self.CONSOLE_COLOR_FORMATTER['RED']
+        elif self.get_level == self.LOGGING_LEVEL['WARNING']:
+            color_start = self.CONSOLE_COLOR_FORMATTER['YELLOW']
+        elif self.get_level == self.LOGGING_LEVEL['INFO']:
+            color_start = self.CONSOLE_COLOR_FORMATTER['GREEN']
+        elif self.get_level == self.LOGGING_LEVEL['DEBUG']:
+            color_start = self.CONSOLE_COLOR_FORMATTER['YELLOW']
+        else:
+            color_start = self.CONSOLE_COLOR_FORMATTER['RESET']
+
+        return color_start
+
+    def set_console_formatter(self):
+        """Set the format of console output.
+
+            Returns:
+                console_formatter (class): Returns a class of logging.Formatter()
+        """
+        color_start = self.__console_color()
+        color_reset = self.CONSOLE_COLOR_FORMATTER['RESET']
+
+        console_formatter = logging.Formatter(
+            "[%(asctime)s] " + color_start + "(%(levelname)s)" + color_reset + " [%(filename)s -> %(funcName)s(): %(lineno)s] - %(message)s",
+            "%Y/%m/%d %H:%M:%S")
+
+        return console_formatter
+
+    def set_log_formatter(self):
+        """Set the format of log output.
+
+            Returns:
+                file_formatter (class): Returns a class of logging.Formatter()
+        """
+        file_formatter = logging.Formatter(
+            "[%(asctime)s] (%(levelname)s) [%(filename)s -> %(funcName)s(): %(lineno)s] - %(message)s",
+            "%Y/%m/%d %H:%M:%S")
+
+        return file_formatter
+
+
+class Logger(LoggerFormatter):
     """Pseudo-Class for Logger - Wrapper for logging module"""
     DEFAULT_LOGGING = {
         'version': 1,
@@ -89,7 +144,7 @@ class Logger(object):
         'NOTSET': 0
         }
 
-    def __init__(self, application_name):
+    def __init__(self):
         self.logfile_path = '/var/log/middlewared.log'
         self.logfile_size = 10485760
         self.max_logfiles = 5
@@ -98,18 +153,16 @@ class Logger(object):
                                                                  backupCount=self.max_logfiles,
                                                                  encoding='utf-8')
         self.file_handler.set_name('file')
+        self.get_level = None
 
         self.console_handler = logging.StreamHandler()
         self.console_handler.set_name(__name__)
 
     def _set_output_file(self):
         """Set the output format for file log."""
-        file_formatter = logging.Formatter(
-            "[%(asctime)s] (%(levelname)s) [%(funcName)s(): %(lineno)s] - %(message)s",
-            "%Y/%m/%d %H:%M:%S")
 
         self.file_handler.setLevel(logging.DEBUG)
-        self.file_handler.setFormatter(file_formatter)
+        self.file_handler.setFormatter(self.set_log_formatter())
 
         for handler in logging.root.handlers:
             if 'file' not in handler.get_name():
@@ -117,12 +170,9 @@ class Logger(object):
 
     def _set_output_console(self):
         """Set the output format for console."""
-        console_formatter = logging.Formatter(
-            "[%(asctime)s] (%(levelname)s) [%(funcName)s(): %(lineno)s] - %(message)s",
-            "%Y/%m/%d %H:%M:%S")
 
         self.console_handler.setLevel(logging.DEBUG)
-        self.console_handler.setFormatter(console_formatter)
+        self.console_handler.setFormatter(self.set_console_formatter())
 
         # Get the latest handler from handlers list to avoid add duplicated handler.
         handler = logging.root.handlers[-1]
@@ -138,27 +188,7 @@ class Logger(object):
                     log_level (int): Log level number defined on logging module.
         """
         logging.root.setLevel(log_level)
-        get_level = logging.getLogger().getEffectiveLevel()
-
-        color_reset = self.CONSOLE_COLOR_FORMATTER['RESET']
-        if get_level == self.LOGGING_LEVEL['CRITICAL']:
-            color_start = self.CONSOLE_COLOR_FORMATTER['HIGHRED']
-        elif get_level == self.LOGGING_LEVEL['ERROR']:
-            color_start = self.CONSOLE_COLOR_FORMATTER['RED']
-        elif get_level == self.LOGGING_LEVEL['WARNING']:
-            color_start = self.CONSOLE_COLOR_FORMATTER['YELLOW']
-        elif get_level == self.LOGGING_LEVEL['INFO']:
-            color_start = self.CONSOLE_COLOR_FORMATTER['GREEN']
-        elif get_level == self.LOGGING_LEVEL['DEBUG']:
-            color_start = self.CONSOLE_COLOR_FORMATTER['YELLOW']
-        else:
-            color_start = self.CONSOLE_COLOR_FORMATTER['RESET']
-
-        console_formatter = logging.Formatter(
-            "[%(asctime)s] " + color_start + "(%(levelname)s)" + color_reset + " [%(funcName)s(): %(lineno)s] - %(message)s",
-            "%Y/%m/%d %H:%M:%S")
-
-        self.console_handler.setFormatter(console_formatter)
+        self.get_level = logging.getLogger().getEffectiveLevel()
 
     def configure_logging(self, output_option='file'):
         """Configure the log output to file, console or both.
