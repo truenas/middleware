@@ -102,6 +102,7 @@ from freenasUI.system.models import Update as mUpdate
 from freenasUI.system.utils import (
     BootEnv, get_pending_updates, debug_generate, factory_restore
 )
+from middlewared.client import ClientException
 from tastypie import fields, http
 from tastypie.http import (
     HttpAccepted, HttpCreated, HttpMethodNotAllowed, HttpMultipleChoices,
@@ -2656,9 +2657,12 @@ class ServicesResourceMixin(object):
 
     def dispatch_list(self, request, **kwargs):
         self.__services = {}
-        with client as c:
-            for service in c.call('service.query'):
-                self.__services[service['service']] = service
+        try:
+            with client as c:
+                for service in c.call('service.query'):
+                    self.__services[service['service']] = service
+        except ClientException:
+            log.debug('Failed to get service.query', exc_info=True)
         return super(ServicesResourceMixin, self).dispatch_list(request, **kwargs)
 
     def hydrate(self, bundle):
