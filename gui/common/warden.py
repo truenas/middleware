@@ -1112,7 +1112,7 @@ class Warden(warden_base):
         wlistcached = cache.get('wardenList')
 
         if wlistcached is None:
-                wlistcached = self.__call(warden_list(flags, **kwargs))
+                wlistcached = self.__call(warden_list(flags, **kwargs)) or []
                 cache.set('wardenList', wlistcached, 1)
         else:
                 # Reset cache timeout
