@@ -2654,12 +2654,22 @@ class ServicesResourceMixin(object):
     class Meta:
         allowed_methods = ['get', 'put']
 
+    def dispatch_list(self, request, **kwargs):
+        self.__services = {}
+        with client as c:
+            for service in c.call('service.query'):
+                self.__services[service['service']] = service
+        return super(ServicesResourceMixin, self).dispatch_list(request, **kwargs)
+
     def hydrate(self, bundle):
         bundle = super(ServicesResourceMixin, self).hydrate(bundle)
         return bundle
 
     def dehydrate(self, bundle):
         bundle = super(ServicesResourceMixin, self).hydrate(bundle)
+        service = self.__services.get(bundle.obj.srv_service)
+        if service:
+            bundle.data['srv_state'] = service['state']
         return bundle
 
     def obj_get(self, bundle, **kwargs):
