@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:07-0700\n"
-"PO-Revision-Date: 2016-12-19 12:26+0000\n"
+"PO-Revision-Date: 2016-12-20 06:34+0000\n"
 "Last-Translator: Pavel Borecki <pavel.borecki@gmail.com>\n"
 "Language-Team: Czech <http://weblate.trueos.org/projects/freenas/django/cs/>"
 "\n"
@@ -1167,8 +1167,7 @@ msgstr "Zobrazit vícelinková připojení"
 
 #: plugins/forms.py:55
 msgid "This IP is already in use."
-msgstr ""
-"Nevšímat si jakýchkoli mapovacích požadavků pro doménu BUILTIN (vestavěná)"
+msgstr "Tato IP adresa je už používaná."
 
 #~ msgid "Place to temporarily place PBI file"
 #~ msgstr "Místo pro dočasné uložení PBI souboru"
@@ -1467,7 +1466,7 @@ msgid "The email %(email)s is not valid"
 msgid_plural "The following emails are not valid: %(email)s"
 msgstr[0] "e-mailová adresa %(email)s není platná"
 msgstr[1] "e-mailové adresy nejsou platné: %(email)s"
-msgstr[2] "e-mailové adresy nejsou platné: %(email)s"
+msgstr[2] "e-mailových adres není platných: %(email)s"
 
 #: services/forms.py:437
 msgid "The UPS service failed to reload."
@@ -1608,8 +1607,8 @@ msgstr ""
 #: services/forms.py:803
 msgid "The file must exist if the extent size is set to auto (0)"
 msgstr ""
-"V případě nastavení velikosti úložné jednotku na automatickou (hodnota „0“ – "
-"nula), musí příslušný soubor existovat."
+"V případě nastavení velikosti úložné jednotky na automatickou (hodnota „0“ – "
+"nula) je třeba, aby příslušný soubor existoval."
 
 #~ msgid "Disk device"
 #~ msgstr "Disk"
@@ -1799,7 +1798,7 @@ msgstr "Vytvářet domovské složky"
 #: services/models.py:148
 msgid "Enable/disable home directories for samba user."
 msgstr ""
-"Vytvářet/nevytvářet domovské složky pro uživatelské účty pro samba uživatele"
+"Vytvářet/nevytvářet domovské složky pro uživatelské účty pro samba uživatele."
 
 #: services/models.py:151
 msgid "Enable home directories browsing"
@@ -1957,8 +1956,8 @@ msgid ""
 "details) will append the target name that is not starting with 'iqn.'"
 msgstr ""
 "Pokud název cíle NEzačíná řetězcem znaků „iqn.“, bude k němu připojen "
-"základní název (např. iqn.2007-09.jp.ne.peach.istgt, podrobnosti viz RFC "
-"3720 a 3721)."
+"základní název (např. iqn.2007-09.jp.ne.peach.istgt, podrobnosti viz normy "
+"RFC 3720 a 3721)."
 
 #: services/models.py:264
 msgid "Discovery Auth Method"
@@ -2047,7 +2046,7 @@ msgstr "Počáteční parametr iSCSI (výchozí hodnota je 2)."
 
 #: services/models.py:335
 msgid "DefaultTime2Retain"
-msgstr "Výchozí čas pozdržení."
+msgstr "Výchozí čas zadržení"
 
 #: services/models.py:336
 msgid "iSCSI initial parameter (60 by default)."
@@ -3271,7 +3270,7 @@ msgstr "Uživatel/skupina Maproot vylučuje Mapall"
 #: templates/plugins/index.html:15 templates/services/rsyncmod.html:5
 #: templates/sharing/apple.html:12 templates/sharing/windows.html:12
 msgid "Name"
-msgstr "Název"
+msgstr "Jméno"
 
 #: sharing/models.py:49
 msgid "Export Read Only"
@@ -4323,7 +4322,7 @@ msgstr "pravidelná pořizování zachyceného stavu"
 
 #: storage/nav.py:5 templates/menubar.html:17
 msgid "Storage"
-msgstr "úložiště"
+msgstr "Úložiště"
 
 #: storage/nav.py:24
 msgid "View Snapshots"
@@ -5203,7 +5202,7 @@ msgstr "KRITICKÉ"
 #: templates/system/reboot_dialog.html:11
 #: templates/system/shutdown_dialog.html:11
 msgid "Cancel"
-msgstr "Zrušit"
+msgstr "Storno"
 
 #: templates/freeadmin/generic_model_delete.html:14
 #, python-format
@@ -5881,7 +5880,7 @@ msgstr[1] ""
 msgstr[2] ""
 "\n"
 "        Toto smaže všechny soubory v této a podřízených datových sadách.\n"
-"       "
+"        "
 
 #: templates/storage/dataset_edit.html:2
 msgid "Edit Dataset"
@@ -6051,7 +6050,7 @@ msgstr "Naplánované pořizování zachyceného stavu"
 
 #: templates/storage/tasks.html:16
 msgid "There are no scheduled snapshots."
-msgstr "Nejsou naplánovaná žádná pravidelná pořizování zachycených stavů"
+msgstr "Nejsou naplánovaná žádná pravidelná pořizování zachycených stavů."
 
 #~ msgid "How"
 #~ msgstr "Jak"
@@ -6178,7 +6177,7 @@ msgstr "Přidat svazek"
 
 #: templates/storage/wizard.html:157
 msgid "Existing data will be cleared"
-msgstr "Stávající data budou vymazána"
+msgstr "Stávající data budou smazána"
 
 #: templates/storage/zpool_disk_replace.html:2
 msgid "Replace Disk"
@@ -7496,7 +7495,7 @@ msgstr ""
 "„False“ (ne), je v případě, že není příslušné oprávnění, „otevřít pro "
 "spuštění“ odepřeno. Je-li tento parametr nastaven na „True“ (ano), Samba "
 "nekontroluje oprávnění pro „otevřít pro spuštění“ a chová se tak tedy "
-"stejně, jako Samba 3.6"
+"stejně, jako Samba 3.6 "
 
 #: services/models.py:334
 msgid "Serve UDP NFS clients"
@@ -9831,7 +9830,8 @@ msgid ""
 "option from smb.conf."
 msgstr ""
 "Určuje základní adresářovou příponu pro položky mapování SID/uid/gid. Pokud "
-"není zadáno, idmap_ldap použije hodnotu volby „ldap idmap suffix“ ze smb.conf"
+"není zadáno, idmap_ldap použije hodnotu volby „ldap idmap suffix“ ze "
+"smb.conf."
 
 #: directoryservice/models.py:268
 msgid "User DN"
@@ -10235,7 +10235,7 @@ msgstr "Oblast Kerbera"
 
 #: services/views.py:269
 msgid "SMB successfully updated."
-msgstr "SMB bylo úspěšně zaktualizováno"
+msgstr "SMB bylo úspěšně zaktualizováno."
 
 #: sharing/models.py:290
 msgid "Security"
@@ -10508,7 +10508,7 @@ msgid ""
 "br />add the 'webdav' user & group to the share."
 msgstr ""
 "Změní vlastníka a skupinu sdílené složky (včetně všech podsložek) na webdav:"
-"webdav <br />Je-li vypnuto, bude třeba to udělat ručně.<br />"
+"webdav <br />Je-li vypnuto, bude třeba to udělat ručně."
 
 #: sharing/models.py:374
 msgid "WebDAV Share"
@@ -11789,7 +11789,7 @@ msgid ""
 msgstr ""
 "Pokud název cíle NEzačíná řetězcem znaků „iqn.“, „eui.“ či „naa“, bude k "
 "němu připojen tento základní název (např. iqn.2005-10.org.freenas.ctl, "
-"podrobnosti viz RFC 3720 a 3721)."
+"podrobnosti viz normy RFC 3720 a 3721)."
 
 #: services/models.py:437
 msgid "List of Internet Storage Name Service (iSNS) Servers"
@@ -11949,8 +11949,8 @@ msgstr "Vypnout UPS"
 #: services/models.py:1196
 msgid "Signal the UPS to power off after FreeNAS shuts down."
 msgstr ""
-"Signalizovat UPS zdroji, aby po vypnutí FreeNAS odpojil výstup napájení. ("
-"Pomůže k zapnutí stroje po obnovení dodávky napájení z rozvodné sítě.)"
+"Signalizovat UPS zdroji, aby po vypnutí FreeNAS odpojil výstup napájení ("
+"pomůže k zapnutí stroje po obnovení dodávky napájení z rozvodné sítě)."
 
 #: services/models.py:2027
 msgid ""
@@ -12913,8 +12913,8 @@ msgstr ""
 #: services/forms.py:1129
 msgid "LUN ID must be a positive integer"
 msgstr ""
-"Je třeba, aby identifikátor – číslo logické jednotky (LUN) byl celé kladné "
-"číslo."
+"Je třeba, aby identifikátor – číslo logické jednotky (LUN) – bylo celé "
+"kladné číslo."
 
 #: services/models.py:115
 msgid "Use syslog only"
@@ -13009,7 +13009,7 @@ msgstr ""
 msgid "You are not allowed to delete interfaces while failover is enabled."
 msgstr ""
 "Když je zapnuté přebírání funkce v případě výpadku (failover), není možné "
-"mazat síťová rozhraní"
+"mazat síťová rozhraní."
 
 #: services/views.py:296
 msgid "Idmap Range Low"
