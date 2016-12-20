@@ -178,7 +178,7 @@ class Logger(object):
 
         logging.root.setLevel(logging.DEBUG)
 
-    def critical_msg(self, message=None, exc_info=False):
+    def critical_msg(self, *args, **kwargs):
         """Wrapper for logging.critical().
 
             Args:
@@ -186,9 +186,9 @@ class Logger(object):
                     exc_info (bool): True to output the exception information, False by default.
         """
         self._set_level(self.LOGGING_LEVEL['CRITICAL'])
-        logging.critical(message, exc_info=exc_info)
+        logging.critical(*args, **kwargs)
 
-    def error_msg(self, message=None, exc_info=False):
+    def error_msg(self, *args, **kwargs):
         """Wrapper for logging.error().
 
             Args:
@@ -196,9 +196,9 @@ class Logger(object):
                     exc_info (bool): True to output the exception information, False by default.
         """
         self._set_level(self.LOGGING_LEVEL['ERROR'])
-        logging.error(message, exc_info=exc_info)
+        logging.error(*args, **kwargs)
 
-    def warn_msg(self, message=None, exc_info=False):
+    def warn_msg(self, *args, **kwargs):
         """Wrapper for logging.warn().
 
             Args:
@@ -206,9 +206,9 @@ class Logger(object):
                    exc_info (bool): True to output the exception information, False by default.
         """
         self._set_level(self.LOGGING_LEVEL['WARNING'])
-        logging.warn(message, exc_info=exc_info)
+        logging.warn(*args, **kwargs)
 
-    def info_msg(self, message=None, exc_info=False):
+    def info_msg(self, *args, **kwargs):
         """Wrapper for logging.info().
 
             Args:
@@ -216,9 +216,9 @@ class Logger(object):
                    exc_info (bool): True to output the exception information, False by default.
         """
         self._set_level(self.LOGGING_LEVEL['INFO'])
-        logging.info(message, exc_info=exc_info)
+        logging.info(*args, **kwargs)
 
-    def debug_msg(self, message=None, exc_info=False):
+    def debug_msg(self, *args, **kwargs):
         """Wrapper for logging.debug().
 
             Args:
@@ -226,4 +226,4 @@ class Logger(object):
                    exc_info (bool): True to output the exception information, False by default.
         """
         self._set_level(self.LOGGING_LEVEL['DEBUG'])
-        logging.debug(message, exc_info=exc_info)
+        logging.debug(*args, **kwargs)
