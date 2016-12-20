@@ -27,7 +27,6 @@ import json
 import logging
 import sysctl
 
-from django.http import HttpResponse
 from django.shortcuts import render
 from django.utils.translation import ugettext as _
 
@@ -42,7 +41,6 @@ from freenasUI.freeadmin.views import JsonResp
 from freenasUI.middleware.notifier import notifier
 from freenasUI.services import models
 from freenasUI.services.forms import (
-    servicesForm,
     CIFSForm
 )
 from freenasUI.system.models import Tunable
@@ -65,16 +63,13 @@ def index(request):
 
 def core(request):
 
-    try:
-        domaincontroller = models.DomainController.objects.order_by("-id")[0]
-    except IndexError:
-        domaincontroller = models.DomainController.objects.create()
+    disabled = {}
 
-    domaincontroller.onclick_enable = 'enable'
-    ds_status = get_directoryservice_status()
-    for key in ds_status:
-        if ds_status[key] is True and key != 'dc_enable':
-            domaincontroller.onclick_enable = 'disable'
+    for key, val in get_directoryservice_status().iteritems():
+        if val is True and key != 'dc_enable':
+            disabled['domaincontroller'] = {
+                'reason': _('A directory service is already enabled.'),
+            }
             break
 
     try:
@@ -86,6 +81,11 @@ def core(request):
         cifs = models.CIFS.objects.order_by("-id")[0]
     except IndexError:
         cifs = models.CIFS.objects.create()
+
+    try:
+        domaincontroller = models.DomainController.objects.order_by("-id")[0]
+    except IndexError:
+        domaincontroller = models.DomainController.objects.create()
 
     try:
         dynamicdns = models.DynamicDNS.objects.order_by("-id")[0]
@@ -142,23 +142,24 @@ def core(request):
     except IndexError:
         webdav = models.WebDAV.objects.create()
 
-    srv = models.services.objects.all()
     return render(request, 'services/core.html', {
-        'srv': srv,
-        'cifs': cifs,
-        'afp': afp,
-        'lldp': lldp,
-        'nfs': nfs,
-        'rsyncd': rsyncd,
-        'dynamicdns': dynamicdns,
-        'snmp': snmp,
-        'ups': ups,
-        'ftp': ftp,
-        'tftp': tftp,
-        'smart': smart,
-        'ssh': ssh,
-        'domaincontroller': domaincontroller,
-        'webdav': webdav
+        'urls': json.dumps({
+            'cifs': cifs.get_edit_url(),
+            'afp': afp.get_edit_url(),
+            'lldp': lldp.get_edit_url(),
+            'nfs': nfs.get_edit_url(),
+            'rsync': rsyncd.get_edit_url(),
+            'dynamicdns': dynamicdns.get_edit_url(),
+            'snmp': snmp.get_edit_url(),
+            'ups': ups.get_edit_url(),
+            'ftp': ftp.get_edit_url(),
+            'tftp': tftp.get_edit_url(),
+            'ssh': ssh.get_edit_url(),
+            'smartd': smart.get_edit_url(),
+            'webdav': webdav.get_edit_url(),
+            'domaincontroller': domaincontroller.get_edit_url(),
+        }),
+        'disabled': json.dumps(disabled),
     })
 
 
@@ -170,88 +171,6 @@ def iscsi(request):
         'gconfid': gconfid,
         'fc_enabled': fc_enabled(),
     })
-
-
-def servicesToggleView(request, formname):
-    form2namemap = {
-        'cifs_toggle': 'cifs',
-        'afp_toggle': 'afp',
-        'lldp_toggle': 'lldp',
-        'nfs_toggle': 'nfs',
-        'iscsitarget_toggle': 'iscsitarget',
-        'dynamicdns_toggle': 'dynamicdns',
-        'snmp_toggle': 'snmp',
-        'httpd_toggle': 'httpd',
-        'ftp_toggle': 'ftp',
-        'tftp_toggle': 'tftp',
-        'ssh_toggle': 'ssh',
-        'ldap_toggle': 'ldap',
-        'rsync_toggle': 'rsync',
-        'smartd_toggle': 'smartd',
-        'ups_toggle': 'ups',
-        'plugins_toggle': 'plugins',
-        'domaincontroller_toggle': 'domaincontroller',
-        'webdav_toggle': 'webdav'
-    }
-    changing_service = form2namemap[formname]
-    if changing_service == "":
-        raise "Unknown service - Invalid request?"
-
-    svc_entry = models.services.objects.get(srv_service=changing_service)
-    if svc_entry.srv_enable:
-        svc_entry.srv_enable = False
-    else:
-        svc_entry.srv_enable = True
-
-    if request.POST.get('force', None) == 'true':
-        force = True
-    else:
-        force = False
-
-    original_srv = svc_entry.srv_enable
-    mf = servicesForm(instance=svc_entry, data={
-        'srv_enable': svc_entry.srv_enable,
-        'srv_service': changing_service,
-    }, force=force)
-    if not mf.is_valid():
-        data = {
-            'events': mf._extra_events,
-        }
-        return HttpResponse(json.dumps(data), content_type="application/json")
-    svc_entry = mf.save()
-    events = []
-    mf.done(request, events)
-
-    error = False
-    message = False
-    if mf.started is True:
-        status = 'on'
-        if not original_srv:
-            error = True
-            message = _("The service could not be stopped.")
-
-    elif mf.started is False:
-        status = 'off'
-        if original_srv:
-            error = True
-            message = _("The service could not be started.")
-    else:
-        if svc_entry.srv_enable:
-            status = 'on'
-        else:
-            status = 'off'
-
-    data = {
-        'service': changing_service,
-        'status': status,
-        'error': error,
-        'message': message,
-        'enabled_svcs': mf.enabled_svcs,
-        'disabled_svcs': mf.disabled_svcs,
-        'events': events,
-    }
-
-    return HttpResponse(json.dumps(data), content_type="application/json")
 
 
 def enable(request, svc):
