@@ -74,6 +74,8 @@ class CertificateService(CRUDService):
                 certs.append(signing_CA['cert_certificate'])
                 signing_CA['cert_issuer'] = cert_issuer(signing_CA)
                 signing_CA = signing_CA['cert_issuer']
+
+        cert_obj = None
         try:
             for c in certs:
                 # XXX Why load certificate if we are going to dump it right after?
@@ -102,12 +104,13 @@ class CertificateService(CRUDService):
 
         cert['cert_internal'] = 'NO' if cert['cert_type'] in (CA_TYPE_EXISTING, CERT_TYPE_EXISTING) else 'YES'
 
+        obj = None
+        # date not applicable for CSR
+        cert['cert_from'] = None
+        cert['cert_until'] = None
         if cert['cert_type'] == CERT_TYPE_CSR:
             obj = csr_obj
-            # date not applicable for CSR
-            cert['cert_from'] = None
-            cert['cert_until'] = None
-        else:
+        elif cert_obj:
             obj = cert_obj
             notBefore = obj.get_notBefore()
             t1 = dateutil.parser.parse(notBefore)
@@ -119,10 +122,11 @@ class CertificateService(CRUDService):
             t2 = t1.astimezone(dateutil.tz.tzutc())
             cert['cert_until'] = t2.ctime()
 
-        cert['cert_DN'] = '/' + '/'.join([
-            '%s=%s' % (c[0], c[1])
-            for c in obj.get_subject().get_components()
-        ])
+        if obj:
+            cert['cert_DN'] = '/' + '/'.join([
+                '%s=%s' % (c[0], c[1])
+                for c in obj.get_subject().get_components()
+            ])
 
         return cert
 
