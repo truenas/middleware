@@ -1289,10 +1289,10 @@ class EmailForm(ModelForm):
 
 class ManualUpdateTemporaryLocationForm(Form):
     mountpoint = forms.ChoiceField(
-        label=_("Place to temporarily place update file"),
+        label=_("Location to temporarily store update file"),
         help_text=_(
-            "The system will use this place to temporarily store the "
-            "update file before it's being applied."),
+            "The update file is temporarily stored here "
+            "before being applied."),
         choices=(),
         widget=forms.Select(attrs={'class': 'required'}),
     )
