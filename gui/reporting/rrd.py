@@ -24,15 +24,15 @@
 #
 #####################################################################
 import glob
-import logging
 import os
 import re
 import tempfile
 import subprocess
+import middlewared.logger
 
 from freenasUI.common.pipesubr import pipeopen
 
-log = logging.getLogger('reporting.rrd')
+log = middlewared.logger.Logger('reporting.rrd')
 
 name2plugin = dict()
 

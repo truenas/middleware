@@ -23,7 +23,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
-import logging
+import middlewared.logger
 
 from collections import OrderedDict
 
@@ -38,7 +38,7 @@ from freenasUI.freeadmin.options import BaseFreeAdmin
 from freenasUI.freeadmin.site import site
 from freenasUI.plugins import models
 
-log = logging.getLogger('plugins.admin')
+log = middlewared.logger.Logger('plugins.admin')
 
 
 class PluginsFAdmin(BaseFreeAdmin):

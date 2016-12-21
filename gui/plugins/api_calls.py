@@ -25,8 +25,8 @@
 #####################################################################
 
 from subprocess import Popen, PIPE
-import logging
 import os
+import middlewared.logger
 
 from django.conf import settings
 from django.core import serializers
@@ -40,7 +40,7 @@ from freenasUI.jails.models import Jails, JailsConfiguration
 
 from jsonrpc import jsonrpc_method
 
-log = logging.getLogger("plugins.api_calls")
+log = middlewared.logger.Logger('plugins.api_calls')
 
 PLUGINS_API_VERSION = "2"
 

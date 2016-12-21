@@ -24,7 +24,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
-import logging
+import middlewared.logger
 
 from eventlet.green import urllib2
 
@@ -43,7 +43,7 @@ from freenasUI.common.warden import (
 )
 from freenasUI.support.utils import jails_enabled
 
-log = logging.getLogger('jails.nav')
+log = middlewared.logger.Logger('jails.nav')
 
 NAME = _('Jails')
 ICON = u'JailIcon'

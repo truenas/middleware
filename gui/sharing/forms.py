@@ -24,9 +24,9 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
-import logging
 import os
 import re
+import middlewared.logger
 
 from django.db.models import Q
 from django.utils.translation import ugettext_lazy as _
@@ -45,7 +45,7 @@ from ipaddr import (
     IPAddress, IPNetwork, AddressValueError, NetmaskValueError
 )
 
-log = logging.getLogger('sharing.forms')
+log = middlewared.logger.Logger('sharing.forms')
 
 
 class CIFS_ShareForm(ModelForm):

@@ -23,14 +23,14 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
-import logging
+import middlewared.logger
 
 from django.shortcuts import render
 
 from freenasUI.freeadmin.apppool import appPool
 from freenasUI.support.utils import fc_enabled
 
-log = logging.getLogger('sharing.views')
+log = middlewared.logger.Logger('sharing.views')
 
 
 def home(request):

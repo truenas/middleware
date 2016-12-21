@@ -1,8 +1,8 @@
-import logging
+import middlewared.logger
 
 from freenasUI.freeadmin.apppool import appPool
 
-log = logging.getLogger('freeadmin.hook')
+log = middlewared.logger.Logger('freeadmin.hook')
 
 
 class HookMetaclass(type):

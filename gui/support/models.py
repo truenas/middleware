@@ -23,14 +23,14 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
-import logging
+import middlewared.logger
 
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
 from freenasUI.freeadmin.models import Model
 
-log = logging.getLogger("support.models")
+log = middlewared.logger.Logger('support.models')
 
 
 class Support(Model):

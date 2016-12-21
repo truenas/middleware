@@ -23,7 +23,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
-import logging
+import middlewared.logger
 
 from django.core.urlresolvers import reverse
 from django.utils.translation import ugettext as _
@@ -37,7 +37,7 @@ from freenasUI.directoryservice import models
 from freenasUI.freeadmin.options import BaseFreeAdmin
 from freenasUI.freeadmin.site import site
 
-log = logging.getLogger('directoryservice.admin')
+log = middlewared.logger.Logger('directoryservice.admin')
 
 
 class ActiveDirectoryFAdmin(BaseFreeAdmin):

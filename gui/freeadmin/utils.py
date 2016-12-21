@@ -23,14 +23,14 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
-import logging
+import middlewared.logger
 
 from django.db.models import CASCADE
 from django.utils import translation
 
 from freenasUI.system.models import Settings
 
-log = logging.getLogger('freeadmin.utils')
+log = middlewared.logger.Logger('freeadmin.utils')
 
 
 def get_related_objects(obj):

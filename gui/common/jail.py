@@ -24,9 +24,9 @@
 #
 # $FreeBSD$
 #####################################################################
-import logging
+import middlewared.logger
 
-log = logging.getLogger('common.jail')
+log = middlewared.logger.Logger('common.jail')
 
 from freenasUI.common.cmd import cmd_arg, cmd_pipe
 

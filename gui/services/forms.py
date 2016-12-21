@@ -25,12 +25,13 @@
 #####################################################################
 from collections import OrderedDict
 import glob
-import logging
 import os
 import re
 import subprocess
 import hashlib
 import base64
+import middlewared.logger
+
 from django.core.validators import validate_email
 from django.utils.safestring import mark_safe
 from django.utils.translation import (
@@ -62,7 +63,7 @@ from ipaddr import (
     IPv4Address, IPv6Address,
 )
 
-log = logging.getLogger('services.form')
+log = middlewared.logger.Logger('services.form')
 
 
 class servicesForm(ModelForm):

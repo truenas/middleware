@@ -25,12 +25,12 @@
 # $FreeBSD$
 #####################################################################
 import glob
-import logging
 import os
 import select
 import string
+import middlewared.logger
 
-log = logging.getLogger('common.pbi')
+log = middlewared.logger.Logger('common.pbi')
 
 PBI_PATH = "/usr/local/sbin"
 PBI_APPDIR = "/var/pbi"

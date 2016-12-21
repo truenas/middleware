@@ -2,11 +2,11 @@ import cPickle
 import datetime
 import hashlib
 import imp
-import logging
 import os
 import socket
 import subprocess
 import time
+import middlewared.logger
 
 from django.utils.translation import ugettext_lazy as _
 
@@ -17,7 +17,7 @@ from freenasUI.middleware.notifier import notifier
 from freenasUI.system.models import Alert as mAlert
 from freenasUI.support.utils import get_license, new_ticket
 
-log = logging.getLogger('system.alert')
+log = middlewared.logger.Logger('system.alert')
 
 SENTINEL = "/data/noticket"
 

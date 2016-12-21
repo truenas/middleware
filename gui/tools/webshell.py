@@ -29,8 +29,6 @@
 from SimpleXMLRPCServer import SimpleXMLRPCDispatcher
 import array
 import fcntl
-import logging
-import logging.config
 import os
 import pty
 import signal
@@ -41,6 +39,7 @@ import SocketServer
 import termios
 import threading
 import time
+import middlewared.logger
 
 from setproctitle import setproctitle
 import daemon
@@ -55,8 +54,7 @@ os.environ['DJANGO_SETTINGS_MODULE'] = 'freenasUI.settings'
 
 from freenasUI.settings import LOGGING
 
-log = logging.getLogger('tools.webshell')
-logging.config.dictConfig(LOGGING)
+log = middlewared.logger.Logger('tools.webshell')
 
 
 class XMLRPCHandler(SocketServer.BaseRequestHandler):

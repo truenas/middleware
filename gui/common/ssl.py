@@ -23,12 +23,12 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
-import logging
 import re
+import middlewared.logger
 
 from OpenSSL import crypto
 
-log = logging.getLogger('common.ssl')
+log = middlewared.logger.Logger('common.ssl')
 CERT_CHAIN_REGEX = re.compile(r"(-{5}BEGIN[\s\w]+-{5}[^-]+-{5}END[\s\w]+-{5})+", re.M | re.S)
 
 

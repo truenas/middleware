@@ -23,9 +23,9 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
-import logging
 import os
 import re
+import middlewared.logger
 
 from django.forms.widgets import Widget, TextInput
 from django.forms.util import flatatt
@@ -51,7 +51,7 @@ import ipaddr
 
 MAC_RE = re.compile(r'^[0-9A-F]{12}$')
 
-log = logging.getLogger('freeadmin.forms')
+log = middlewared.logger.Logger('freeadmin.forms')
 
 
 class CronMultiple(DojoWidgetMixin, Widget):

@@ -27,10 +27,10 @@ from collections import namedtuple
 
 import ipaddress
 import json
-import logging
 import os
 import socket
 import urllib2
+import middlewared.logger
 
 from django.shortcuts import render
 from django.http import Http404, HttpResponse
@@ -70,7 +70,7 @@ from freenasUI.plugins.utils.fcgi_client import FCGIApp
 
 import freenasUI.plugins.api_calls
 
-log = logging.getLogger('plugins.views')
+log = middlewared.logger.Logger('plugins.views')
 
 
 def safe_unlink(path):

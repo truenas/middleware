@@ -25,7 +25,6 @@
 #
 
 import ctypes
-import logging
 import os
 import re
 import signal
@@ -33,8 +32,10 @@ import subprocess
 import tempfile
 import threading
 import time
+import middlewared.logger
 
-log = logging.getLogger('middleware.encryption')
+log = middlewared.logger.Logger('middleware.encryption')
+
 PROGRESS = 0.0
 
 

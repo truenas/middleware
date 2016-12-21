@@ -28,16 +28,16 @@
 import csv
 import cStringIO
 import freenasUI.settings
-import logging
 import os
 import re
 import sqlite3
 import copy
+import middlewared.logger
 
 from os import popen
 from django.utils.translation import ugettext_lazy as _
 
-log = logging.getLogger('choices')
+log = middlewared.logger.Logger('choices')
 
 HTAUTH_CHOICES = (
     ('basic', _('Basic Authentication')),

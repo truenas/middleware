@@ -25,14 +25,14 @@
 #
 from decimal import Decimal
 import bisect
-import logging
 import re
 import subprocess
+import middlewared.logger
 
 from django.utils.datastructures import SortedDict
 from django.utils.translation import ugettext_lazy as _
 
-log = logging.getLogger('middleware.zfs')
+log = middlewared.logger.Logger('middleware.zfs')
 
 ZPOOL_NAME_RE = r'[a-z][a-z0-9_\-\.]*'
 

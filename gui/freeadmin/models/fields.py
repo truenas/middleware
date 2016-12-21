@@ -25,8 +25,8 @@
 #
 #####################################################################
 import json
-import logging
 import re
+import middlewared.logger
 
 from django.core.exceptions import ValidationError
 from django.db import models
@@ -35,7 +35,8 @@ from django.utils.text import capfirst
 from south.modelsinspector import add_introspection_rules
 
 add_introspection_rules([], ["^(freenasUI\.)?freeadmin\.models\.fields\..*"])
-log = logging.getLogger('freeadmin.models.fields')
+
+log = middlewared.logger.Logger('freeadmin.models.fields')
 
 
 class DictField(models.Field):

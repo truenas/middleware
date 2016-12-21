@@ -24,8 +24,8 @@
 #
 #####################################################################
 import grp
-import logging
 import pwd
+import middlewared.logger
 
 from freenasUI.common.system import (
     activedirectory_enabled,
@@ -67,7 +67,7 @@ from freenasUI.common.freenasdc import (
     FreeNAS_DomainController_Users
 )
 
-log = logging.getLogger("common.freenasusers")
+log = middlewared.logger.Logger('common.freenasusers')
 
 
 U_AD_ENABLED = 0x00000001

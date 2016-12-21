@@ -27,7 +27,6 @@ from collections import OrderedDict, namedtuple
 import cPickle as pickle
 import datetime
 import json
-import logging
 import os
 import re
 import shutil
@@ -39,6 +38,7 @@ import urllib
 import xmlrpclib
 import traceback
 import sys
+import middlewared.logger
 
 from django.core.servers.basehttp import FileWrapper
 from django.core.urlresolvers import reverse
@@ -99,7 +99,7 @@ BOOTENV_DELETE_PROGRESS = '/tmp/.bootenv_bulkdelete'
 RE_DD = re.compile(r"^(\d+) bytes", re.M | re.S)
 PERFTEST_SIZE = 40 * 1024 * 1024 * 1024  # 40 GiB
 
-log = logging.getLogger('system.views')
+log = middlewared.logger.Logger('system.views')
 
 
 def _system_info(request=None):

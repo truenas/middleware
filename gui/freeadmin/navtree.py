@@ -24,9 +24,9 @@
 #
 #####################################################################
 import json
-import logging
 import re
 import urllib2
+import middlewared.logger
 
 from django.conf import settings
 from django.core.urlresolvers import NoReverseMatch, resolve, reverse
@@ -59,7 +59,7 @@ ssl._create_default_https_context = ssl._create_unverified_context
 ssl.create_default_context = ssl._create_unverified_context
 from eventlet import green, GreenPool
 
-log = logging.getLogger('freeadmin.navtree')
+log = middlewared.logger.Logger('freeadmin.navtree')
 
 
 class ModelFormsDict(dict):

@@ -25,8 +25,8 @@
 #
 #####################################################################
 import json
-import logging
 import os
+import middlewared.logger
 
 from django.http import HttpResponse
 from django.shortcuts import render
@@ -38,7 +38,7 @@ from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier
 from freenasUI.services.models import services
 
-log = logging.getLogger("directoryservice.views")
+log = middlewared.logger.Logger('directoryservice.views')
 
 
 def directoryservice_home(request):

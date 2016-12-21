@@ -25,10 +25,10 @@
 #
 #####################################################################
 import base64
-import logging
 import os
 import re
 import tempfile
+import middlewared.logger
 
 from ldap import LDAPError
 
@@ -55,7 +55,7 @@ from freenasUI.middleware.notifier import notifier
 from freenasUI.services.exceptions import ServiceFailed
 from freenasUI.services.models import CIFS
 
-log = logging.getLogger('directoryservice.form')
+log = middlewared.logger.Logger('directoryservice.form')
 
 
 class idmap_ad_Form(ModelForm):

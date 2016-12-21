@@ -25,11 +25,11 @@
 #
 #####################################################################
 import bisect
-import logging
+import middlewared.logger
 
 from django.core.urlresolvers import reverse
 
-log = logging.getLogger('freeadmin.tree.tree')
+log = middlewared.logger.Logger('freeadmin.tree.tree')
 
 
 class TreeType(object):

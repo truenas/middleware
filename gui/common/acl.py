@@ -24,16 +24,16 @@
 #
 #####################################################################
 import grp
-import logging
 import os
 import pwd
 import re
 import stat
+import middlewared.logger
 
 from pipes import quote
 from subprocess import Popen, PIPE
 
-log = logging.getLogger('common.acl')
+log = middlewared.logger.Logger('common.acl')
 
 GETFACL_PATH = "/bin/getfacl"
 SETFACL_PATH = "/bin/setfacl"

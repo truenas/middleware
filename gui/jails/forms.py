@@ -27,8 +27,8 @@
 import os
 import platform
 import re
-import logging
 import random
+import middlewared.logger
 
 from django.utils.translation import ugettext_lazy as _
 
@@ -100,7 +100,7 @@ from freenasUI.sharing.models import (
 )
 from freenasUI.services.models import iSCSITargetExtent
 
-log = logging.getLogger('jails.forms')
+log = middlewared.logger.Logger('jails.forms')
 
 
 class JailCreateForm(ModelForm):

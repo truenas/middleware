@@ -24,7 +24,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
-import logging
+import middlewared.logger
 import re
 
 from django.db import models
@@ -35,7 +35,7 @@ from freenasUI.freeadmin.models import Model, PathField
 from freenasUI.middleware.notifier import notifier
 from freenasUI.system.models import CertificateAuthority
 
-log = logging.getLogger("directoryservice.models")
+log = middlewared.logger.Logger('directoryservice.models')
 
 DS_TYPE_NONE = 0
 DS_TYPE_ACTIVEDIRECTORY = 1

@@ -29,8 +29,6 @@ import argparse
 import datetime
 import fcntl
 import gzip
-import logging
-import logging.config
 import os
 import os.path
 import pydoc
@@ -46,6 +44,7 @@ import tempfile
 import threading
 import time
 import json
+import middlewared.logger
 from paramiko import ssh_exception, sftp_client, transport, rsakey, dsskey
 
 import daemon
@@ -70,8 +69,8 @@ from freenasUI.common import humanize_size
 
 progress_old_done = 0
 progress_old_time = None
-log = logging.getLogger('tools.backup')
-logging.config.dictConfig(LOGGING)
+
+log = middlewared.logger.Logger('tools.backup')
 
 DATABASEFILE = '/data/freenas-v1.db'
 DBFILE = '/data/freenas-v1.db'

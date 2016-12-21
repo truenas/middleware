@@ -44,7 +44,6 @@ import errno
 import glob
 import grp
 import json
-import logging
 import os
 import pipes
 import platform
@@ -64,6 +63,7 @@ import types
 import crypt
 import string
 import random
+import middlewared.logger
 
 WWW_PATH = "/usr/local/www"
 FREENAS_PATH = os.path.join(WWW_PATH, "freenasUI")
@@ -127,7 +127,8 @@ from freenasUI.middleware.multipath import Multipath
 import sysctl
 
 RE_DSKNAME = re.compile(r'^([a-z]+)([0-9]+)$')
-log = logging.getLogger('middleware.notifier')
+
+log = middlewared.logger.Logger('middleware.notifier')
 
 
 def close_preexec():

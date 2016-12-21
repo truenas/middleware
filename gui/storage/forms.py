@@ -26,12 +26,12 @@
 from collections import defaultdict, OrderedDict
 from datetime import datetime, time
 from decimal import Decimal
-import logging
 import os
 import re
 import ssl
 import tempfile
 import uuid
+import middlewared.logger
 
 from django.contrib.formtools.wizard.views import SessionWizardView
 from django.core.files.storage import FileSystemStorage
@@ -68,7 +68,7 @@ from pysphere import VIServer
 
 attrs_dict = {'class': 'required', 'maxHeight': 200}
 
-log = logging.getLogger('storage.forms')
+log = middlewared.logger.Logger('storage.forms')
 
 DEDUP_WARNING = _(
     "Enabling dedup may have drastic performance implications,"

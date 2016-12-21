@@ -24,13 +24,13 @@
 #
 #####################################################################
 
-import logging
+import middlewared.logger
 
 from django.shortcuts import render
 
 from freenasUI.common.system import get_sw_name
 
-log = logging.getLogger("documentation.views")
+log = middlewared.logger.Logger('documentation.views')
 
 
 def documentation_home(request):

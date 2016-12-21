@@ -28,12 +28,11 @@
 
 import argparse
 import ctypes
-import logging
-import logging.config
 import os
 import pwd
 import subprocess
 import sys
+import middlewared.logger
 
 from setproctitle import setproctitle
 import daemon
@@ -53,8 +52,7 @@ cache.get_apps()
 
 from freenasUI.settings import LOGGING
 
-log = logging.getLogger('tools.runnow')
-logging.config.dictConfig(LOGGING)
+log = middlewared.logger.Logger('tools.runnow')
 
 from freenasUI.common.log import log_traceback
 from freenasUI.tasks.models import CronJob, Rsync

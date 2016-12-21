@@ -23,7 +23,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
-import logging
+import middlewared.logger
 
 from dojango import forms
 from dojango.forms import ModelForm as MF
@@ -32,7 +32,7 @@ from dojango.forms import Form as F
 from freenasUI.freeadmin.apppool import appPool
 from freenasUI.freeadmin.sqlite3_ha.base import NO_SYNC_MAP
 
-log = logging.getLogger('common.forms')
+log = middlewared.logger.Logger('common.forms')
 
 
 def mchoicefield(form, field, default):

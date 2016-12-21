@@ -1,11 +1,11 @@
-import logging
+import middlewared.logger
 
 from django.utils.translation import ugettext_lazy as _
 
 from freenasUI.freeadmin.tree import TreeNode
 from freenasUI.support.utils import fc_enabled
 
-log = logging.getLogger('services.nav')
+log = middlewared.logger.Logger('services.nav')
 
 NAME = _('Services')
 ICON = u'ServicesIcon'

@@ -25,9 +25,9 @@
 # SUCH DAMAGE.
 #
 
-import logging
 import os
 import sys
+import middlewared.logger
 
 sys.path.extend([
     '/usr/local/www',
@@ -50,7 +50,7 @@ from freenasUI.system.models import (
     CERT_TYPE_EXISTING,
 )
 
-log = logging.getLogger('tools.updatessl')
+log = middlewared.logger.Logger('tools.updatessl')
 
 
 def main(certfile, keyfile):

@@ -26,11 +26,11 @@
 
 from datetime import time
 import cPickle
-import logging
 import os
 import re
 import uuid
 import subprocess
+import middlewared.logger
 
 from django.db import models, transaction
 from django.utils.translation import ugettext as __, ugettext_lazy as _
@@ -40,7 +40,8 @@ from freenasUI.middleware import zfs
 from freenasUI.middleware.notifier import notifier
 from freenasUI.freeadmin.models import Model, UserField
 
-log = logging.getLogger('storage.models')
+log = middlewared.logger.Logger('storage.models')
+
 REPL_RESULTFILE = '/tmp/.repl-result'
 
 

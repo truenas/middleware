@@ -25,9 +25,9 @@
 #
 #####################################################################
 import crypt
-import logging
 import os
 import time
+import middlewared.logger
 
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
@@ -38,7 +38,7 @@ from freenasUI.common.system import domaincontroller_enabled
 from freenasUI.freeadmin.models import Model, PathField
 from freenasUI.middleware.notifier import notifier
 
-log = logging.getLogger('account.models')
+log = middlewared.logger.Logger('account.models')
 
 
 class bsdGroups(Model):

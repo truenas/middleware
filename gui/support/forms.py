@@ -23,7 +23,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
-import logging
+import middlewared.logger
 
 from django.utils.translation import ugettext as _
 
@@ -32,7 +32,7 @@ from licenselib.license import License
 from freenasUI.common.forms import Form, ModelForm
 from freenasUI.support import models
 
-log = logging.getLogger("support.forms")
+log = middlewared.logger.Logger('support.forms')
 
 
 class SupportForm(ModelForm):

@@ -24,13 +24,13 @@
 #
 #####################################################################
 import dateutil
-import logging
 import os
 import re
 import signal
 import string
 import time
 import uuid
+import middlewared.logger
 
 from dateutil import parser as dtparser
 
@@ -46,7 +46,7 @@ from freenasUI.freeadmin.models import DictField, Model, UserField
 from freenasUI.middleware.notifier import notifier
 from freenasUI.storage.models import Volume
 
-log = logging.getLogger('system.models')
+log = middlewared.logger.Logger('system.models')
 
 
 class Alert(Model):

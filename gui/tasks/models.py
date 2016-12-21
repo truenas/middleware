@@ -24,8 +24,8 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
-import logging
 import subprocess
+import middlewared.logger
 
 from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
@@ -37,7 +37,7 @@ from freenasUI.middleware.client import client
 from freenasUI.middleware.notifier import notifier
 from freenasUI.storage.models import Disk
 
-log = logging.getLogger('tasks.models')
+log = middlewared.logger.Logger('tasks.models')
 
 
 class CloudSync(Model):

@@ -24,7 +24,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
-import logging
+import middlewared.logger
 
 from django.db import models
 from django.db.models.base import ModelBase
@@ -38,7 +38,7 @@ from .fields import (
     UserField, GroupField, PathField, MACField, Network4Field, Network6Field
 )
 
-log = logging.getLogger('freeadmin.models')
+log = middlewared.logger.Logger('freeadmin.models')
 
 
 class FreeModelBase(ModelBase):

@@ -23,9 +23,9 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
-import logging
 import requests
 import shutil
+import middlewared.logger
 
 from django.forms import FileField, MultipleChoiceField
 from django.utils.translation import ugettext_lazy as _
@@ -39,7 +39,7 @@ from freenasUI.network.models import Alias, Interfaces
 from freenasUI.plugins import models
 from freenasUI.jails.utils import new_default_plugin_jail
 
-log = logging.getLogger('plugins.forms')
+log = middlewared.logger.Logger('plugins.forms')
 
 
 def _clean_jail_ipv4address(jip):

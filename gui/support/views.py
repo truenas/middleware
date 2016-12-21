@@ -25,11 +25,11 @@
 #####################################################################
 from collections import OrderedDict
 import json
-import logging
 import os
 import socket
 import subprocess
 import time
+import middlewared.logger
 
 from django.core.files.base import File
 from django.http import HttpResponse
@@ -45,7 +45,8 @@ from freenasUI.network.models import GlobalConfiguration
 from freenasUI.support import forms, utils
 from freenasUI.system.utils import debug_get_settings, debug_generate
 
-log = logging.getLogger("support.views")
+log = middlewared.logger.Logger('support.views')
+
 TICKET_PROGRESS = '/tmp/.ticketprogress'
 
 

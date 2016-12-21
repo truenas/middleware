@@ -23,8 +23,9 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
+import middlewared.logger
+
 from collections import OrderedDict
-import logging
 
 from django.conf import settings
 from django.core.urlresolvers import reverse
@@ -38,7 +39,7 @@ from freenasUI.freeadmin.site import site
 from freenasUI.freeadmin.options import BaseFreeAdmin
 from freenasUI.jails import models
 
-log = logging.getLogger('jails.admin')
+log = middlewared.logger.Logger('jails.admin')
 
 
 class JailsFAdmin(BaseFreeAdmin):

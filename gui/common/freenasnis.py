@@ -24,15 +24,15 @@
 #
 #####################################################################
 import grp
-import logging
 import os
 import pwd
+import middlewared.logger
 
 from freenasUI.common.cmd import cmd_pipe
 from freenasUI.common.freenascache import *
 from freenasUI.common.system import nis_objects
 
-log = logging.getLogger('common.freenasnis')
+log = middlewared.logger.Logger('common.freenasnis')
 
 YPCAT = "/usr/bin/ypcat"
 YPBIND = "/usr/sbin/ypbind"

@@ -23,9 +23,9 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
-import logging
 import os
 import re
+import middlewared.logger
 
 from django.contrib.auth import authenticate
 from django.core.urlresolvers import reverse
@@ -40,7 +40,7 @@ from freenasUI.freeadmin.forms import SelectMultipleField
 from freenasUI.storage.widgets import UnixPermissionField
 from freenasUI.middleware.notifier import notifier
 
-log = logging.getLogger('account.forms')
+log = middlewared.logger.Logger('account.forms')
 
 
 class NewPasswordForm(Form):

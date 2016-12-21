@@ -24,8 +24,8 @@
 #
 #####################################################################
 import json
-import logging
 import sysctl
+import middlewared.logger
 
 from django.shortcuts import render
 from django.utils.translation import ugettext as _
@@ -46,7 +46,7 @@ from freenasUI.services.forms import (
 from freenasUI.system.models import Tunable
 from freenasUI.support.utils import fc_enabled
 
-log = logging.getLogger("services.views")
+log = middlewared.logger.Logger('services.views')
 
 
 def index(request):
