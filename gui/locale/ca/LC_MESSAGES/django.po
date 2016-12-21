@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:05-0700\n"
-"PO-Revision-Date: 2016-12-20 16:46+0000\n"
+"PO-Revision-Date: 2016-12-21 17:47+0000\n"
 "Last-Translator: Davidmp <rbndavid@gmail.com>\n"
 "Language-Team: Catalan "
 "<http://weblate.trueos.org/projects/freenas/django/ca/>\n"
@@ -526,7 +526,7 @@ msgstr "Introdueix la mateixa contrasenya de dalt, per verificar-la."
 #: freeadmin/navtree.py:360 templates/account/bsdusers.html:8
 #: templates/account/bsdusers.html.py:87
 msgid "Shell"
-msgstr "Terminal"
+msgstr "Intèrpret d’ordres"
 
 #~ msgid "Disable password logins"
 #~ msgstr "Desactiva les contrasenyes al logins"
@@ -595,7 +595,7 @@ msgstr "Contrasenya desactivada, deixa-ho en blanc"
 #: services/forms.py:742 services/forms.py:1071 storage/forms.py:244
 #: system/forms.py:548
 msgid "This field is required."
-msgstr "Aquest camp és requereix."
+msgstr "Aquest camp és necessari."
 
 #~ msgid "Home directory has to start with /mnt or be /nonexistent"
 #~ msgstr "El directori home ha de començar amb /mnt/ o ser /nonexistent"
@@ -698,7 +698,7 @@ msgstr "Nom Complert"
 
 #: account/models.py:126 templates/account/bsdusers.html:90
 msgid "E-mail"
-msgstr "Correu electrònic"
+msgstr "Adreça electrònica"
 
 #: account/models.py:131 account/models.py:176 services/models.py:593
 #: services/models.py:1416 system/models.py:329 system/models.py:522
@@ -1300,7 +1300,7 @@ msgstr ""
 #: services/models.py:836 services/nav.py:215 templates/services/core.html:96
 #: templates/services/index.html:16
 msgid "Plugins"
-msgstr ""
+msgstr "Connectors"
 
 #: plugins/models.py:112 templates/plugins/mountpoints.html:4
 msgid "Source"
@@ -3215,7 +3215,7 @@ msgstr "Mòduls Rsync"
 #: services/nav.py:168 system/models.py:84 system/nav.py:28
 #: templates/system/settings.html:2
 msgid "Settings"
-msgstr "Ajustos"
+msgstr "Paràmetres"
 
 #: services/nav.py:186
 msgid "Management"
@@ -4925,7 +4925,7 @@ msgstr "Mode d'arxiu"
 #: templates/system/sysctl.html.py:27 templates/system/tunable.html:25
 #: templates/system/tunable.html.py:27
 msgid "Delete"
-msgstr "Esborrar"
+msgstr "Esborra"
 
 #: system/models.py:547
 msgid "Delete files on the receiving side that don't exist on sender"
@@ -5161,7 +5161,7 @@ msgstr "Avançat"
 #: templates/plugins/plugin_info.html:25
 #: templates/storage/scrub_confirm.html:14
 msgid "OK"
-msgstr "Correcte"
+msgstr "D'acord"
 
 #: templates/freeadmin/alert_status.html:10
 msgid "WARNING"
@@ -5185,7 +5185,7 @@ msgstr ""
 #: templates/system/reboot_dialog.html:11
 #: templates/system/shutdown_dialog.html:11
 msgid "Cancel"
-msgstr "Cancel·lar"
+msgstr "Cancel·la"
 
 #: templates/freeadmin/generic_model_delete.html:14
 #, python-format
@@ -5473,7 +5473,7 @@ msgstr ""
 #: templates/storage/zvol_confirm_delete.html:13
 #: templates/system/wizard.html:16
 msgid "Please wait..."
-msgstr "Si us plau, espera...."
+msgstr "Espereu, si us plau..."
 
 #: templates/plugins/mountpoints.html:19
 msgid "Edit Mount Point"
@@ -5723,7 +5723,7 @@ msgstr "Serveis"
 
 #: templates/services/plugins.html:54 templates/system/config_upload.html:2
 msgid "Update"
-msgstr "Actualitzar"
+msgstr "Actualitza"
 
 #: templates/services/plugins.html:56
 #, fuzzy
@@ -6103,7 +6103,7 @@ msgstr "Eliminar el Dataset"
 
 #: templates/storage/wizard.html:27
 msgid "Volume to extend"
-msgstr "Ruta del volum"
+msgstr "Volum per ampliar"
 
 #: templates/storage/wizard.html:37
 msgid "Member disks"
@@ -6130,11 +6130,11 @@ msgstr "Tipus de grup"
 
 #: templates/storage/wizard.html:156
 msgid "Add Volume"
-msgstr "Afegir volum"
+msgstr "Afegeix un volum"
 
 #: templates/storage/wizard.html:157
 msgid "Existing data will be cleared"
-msgstr "Les dades existents seran netejades"
+msgstr "Les dades existents s'esborraran"
 
 #: templates/storage/zpool_disk_replace.html:2
 #, fuzzy
@@ -7663,9 +7663,8 @@ msgid "The pool failed to upgraded: %s"
 msgstr "El volum a fallat en l'exportació"
 
 #: support/models.py:49
-#, fuzzy
 msgid "Support"
-msgstr "Suport EA"
+msgstr "Suport"
 
 #: system/forms.py:86
 #, fuzzy
@@ -7704,9 +7703,8 @@ msgid "WebGUI HTTP -> HTTPS Redirect"
 msgstr ""
 
 #: system/models.py:115
-#, fuzzy
 msgid "Directory Service"
-msgstr "Permís de directori"
+msgstr "Servei de directori"
 
 #: system/models.py:205
 #, fuzzy
@@ -8369,7 +8367,7 @@ msgstr ""
 
 #: storage/admin.py:36
 msgid "Wipe"
-msgstr ""
+msgstr "Esborra"
 
 #: storage/admin.py:136
 #, fuzzy
@@ -8532,9 +8530,8 @@ msgstr ""
 #: storage/nav.py:40
 #: templates/storage/volume_datagrid.html:6
 #: templates/storage/volume_datagrid.html:10
-#, fuzzy
 msgid "ZFS Volume Manager"
-msgstr "Nom del volum"
+msgstr "Gestor de volums ZFS"
 
 #: storage/views.py:783
 msgid "The scrub process has stopped"
@@ -8564,7 +8561,7 @@ msgstr "%s afegit amb èxit"
 
 #: support/models.py:40
 msgid "Subject"
-msgstr ""
+msgstr "Assumpte"
 
 #: support/models.py:41
 #, fuzzy
@@ -8771,9 +8768,8 @@ msgid "Scrub"
 msgstr "Comparticions NFS"
 
 #: templates/storage/wizard.html:92
-#, fuzzy
 msgid "Extend Volume"
-msgstr "Exportar un volum"
+msgstr "Amplia el volum"
 
 #: templates/storage/zfswizard.html:77
 #, fuzzy
@@ -8791,7 +8787,7 @@ msgstr "Afegir Zvol"
 
 #: templates/support/index.html:57
 msgid "Submit"
-msgstr ""
+msgstr "Envia"
 
 #: templates/system/firmware_wizard_0.html:6
 #: templates/system/firmware_wizard_1.html:21
@@ -9005,7 +9001,7 @@ msgstr ""
 #: jails/nav.py:47
 #: templates/jails/index.html:17
 msgid "Jails"
-msgstr ""
+msgstr "Gàbies"
 
 #: jails/models.py:91
 #, fuzzy
@@ -9456,9 +9452,8 @@ msgstr ""
 
 #: storage/forms.py:597
 #: templates/storage/zfswizard.html:41
-#, fuzzy
 msgid "Encryption"
-msgstr "Model d'autenticació"
+msgstr "Encriptació"
 
 #: storage/forms.py:605
 #: storage/forms.py:1448
@@ -9671,9 +9666,8 @@ msgid "Alert"
 msgstr ""
 
 #: templates/freeadmin/generic_model_datagrid.html:10
-#, fuzzy
 msgid "Add"
-msgstr "Afegir %s"
+msgstr "Afegeix"
 
 #: templates/freeadmin/generic_model_datagrid.html:177
 msgid "No entry has been found"
@@ -9984,9 +9978,8 @@ msgstr "Informal"
 #: tasks/nav.py:4
 #: templates/menubar.html:13
 #: templates/tasks/index.html:1
-#, fuzzy
 msgid "Tasks"
-msgstr "Rsyncs"
+msgstr "Tasques"
 
 #: templates/services/core.html:32
 #, fuzzy
@@ -10384,9 +10377,8 @@ msgid "Idmap backend for winbind."
 msgstr ""
 
 #: freeadmin/navtree.py:256
-#, fuzzy
 msgid "Initial Wizard"
-msgstr "Iniciador"
+msgstr "Auxiliar inicial"
 
 #: middleware/notifier.py:2222
 #, fuzzy
@@ -10478,9 +10470,8 @@ msgid "Are you sure?"
 msgstr "Estas segur que vols esborrar-ho?"
 
 #: templates/system/initialwizard_confirm.html:39
-#, fuzzy
 msgid "Confirm"
-msgstr "Configuració"
+msgstr "Confirmació"
 
 #: templates/system/initialwizard_confirm.html:46
 msgid "Return to Wizard"
@@ -10504,9 +10495,8 @@ msgid "Estimated Total Size"
 msgstr ""
 
 #: freeadmin/navtree.py:256
-#, fuzzy
 msgid "Wizard"
-msgstr "Iniciador"
+msgstr "Auxiliar"
 
 #: services/forms.py:302
 #, fuzzy
@@ -11303,9 +11293,8 @@ msgstr "Crear un volum ZFS"
 
 #: templates/system/upgrade_edit.html:13
 #: templates/system/upgrade_edit.html:15
-#, fuzzy
 msgid "Manual Update"
-msgstr "Aplicar Actualització"
+msgstr "Actualització manual"
 
 #: services/models.py:268
 msgid ""
@@ -11528,7 +11517,7 @@ msgstr "El mètode pot ser acceptat a la controladora"
 
 #: system/forms.py:1905
 msgid "Current Train"
-msgstr ""
+msgstr "Tren actual"
 
 #: system/forms.py:1930
 msgid "Train"
@@ -13111,9 +13100,8 @@ msgid "VCenter Configuration"
 msgstr "Configuració Global"
 
 #: vcp/nav.py:44
-#, fuzzy
 msgid "vCenter Plugin Configuration"
-msgstr "Configuració global de Target"
+msgstr "Configuració del connector"
 
 #: vcp/views.py:53
 msgid "vCenter plugin installed successfully."
