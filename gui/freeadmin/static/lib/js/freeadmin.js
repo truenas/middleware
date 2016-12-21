@@ -542,6 +542,22 @@ require([
 
     }
 
+    full_audit_enable = function() {
+        var vfsobject = registry.byId("select_from").get("value")[0]
+        if(vfsobject == 'full_audit'){
+            dialog = new Dialog({
+                title: gettext('Warning!'),
+                content: "Selecting full_audit VFS Module will disallow you <br/>to copy larger files to FreeNAS from Windows 10"
+                closable: true,
+                style: "max-width: 75%;max-height:70%;background-color:white;overflow:auto;",
+                onHide: function() {
+                setTimeout(lang.hitch(this, 'destroyRecursive'), manager.defaultDuration);
+                }
+            });
+            dialog.show();
+        }
+    }
+
     var canceled = false;
 
     toggleGeneric = function(checkboxid, farray, inverted) {
