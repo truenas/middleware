@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:05-0700\n"
-"PO-Revision-Date: 2016-12-17 20:01+0000\n"
+"PO-Revision-Date: 2016-12-21 12:09+0000\n"
 "Last-Translator: Burak <hitowerdigit@hotmail.com>\n"
 "Language-Team: Turkish "
 "<http://weblate.trueos.org/projects/freenas/django/tr/>\n"
@@ -9069,7 +9069,7 @@ msgstr "UDP NFS istemcilere hizmet et"
 
 #: services/models.py:418
 msgid "Enable multithreaded mode"
-msgstr ""
+msgstr "Çok iş parçacıklı kipi etkinleştir"
 
 #: services/models.py:874
 msgid "LUN ID"
@@ -9084,6 +9084,8 @@ msgid ""
 "The client IP is detected by calling 'url' from this 'ip_server_name:port'. "
 "Defaults to checkip.dyndns.org:80 /."
 msgstr ""
+"İstemci IP'si bu 'ip_sunucu_adı:b_noktası' adresinden çağrılan 'url' "
+"tarafından algılanır. Varsayılanı checkip.dyndns.org:80 /."
 
 #: services/models.py:1595
 msgid "Domain Account Name"
@@ -9103,7 +9105,7 @@ msgstr "Etki Alanı Hesabı parolası."
 
 #: services/models.py:1609
 msgid "Use keytab"
-msgstr ""
+msgstr "Keytab kullan"
 
 #: services/models.py:1613
 msgid "Kerberos keytab file"
@@ -9423,7 +9425,7 @@ msgstr "Sistem Günlüğü"
 
 #: system/models.py:1142
 msgid "RRD"
-msgstr ""
+msgstr "RRD"
 
 #: system/models.py:1146
 #: templates/system/settings.html:11
