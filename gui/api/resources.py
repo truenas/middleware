@@ -2655,7 +2655,7 @@ class ServicesResourceMixin(object):
     class Meta:
         allowed_methods = ['get', 'put']
 
-    def dispatch_list(self, request, **kwargs):
+    def dispatch(self, *args, **kwargs):
         self.__services = {}
         try:
             with client as c:
@@ -2663,7 +2663,7 @@ class ServicesResourceMixin(object):
                     self.__services[service['service']] = service
         except ClientException:
             log.debug('Failed to get service.query', exc_info=True)
-        return super(ServicesResourceMixin, self).dispatch_list(request, **kwargs)
+        return super(ServicesResourceMixin, self).dispatch(*args, **kwargs)
 
     def hydrate(self, bundle):
         bundle = super(ServicesResourceMixin, self).hydrate(bundle)
