@@ -991,6 +991,7 @@ def zpool_list(name=None):
         return rv[name]
     return rv
 
+
 def zdb():
     zfsproc = subprocess.Popen([
         '/usr/sbin/zdb',

@@ -63,7 +63,6 @@ cache.get_apps()
 
 from freenasUI.storage.models import Volume, Disk
 from freenasUI.system.models import Backup
-from freenasUI.settings import LOGGING
 from freenasUI.middleware import notifier
 from freenasUI.common import humanize_size
 
@@ -1066,6 +1065,7 @@ def main(argv):
 
     with context:
         main_loop()
+
 
 if __name__ == '__main__':
     main(sys.argv[1:])

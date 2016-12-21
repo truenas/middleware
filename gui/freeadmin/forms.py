@@ -142,7 +142,7 @@ class UserField(forms.ChoiceField):
                 url=("account_bsduser_json",),
                 choices=ulist
             )
-            #self.choices = ulist
+            # self.choices = ulist
 
     def clean(self, user):
         if not self.required and user in ('-----', '', None):
@@ -202,7 +202,7 @@ class GroupField(forms.ChoiceField):
                     key=lambda y: (y.gr_gid not in notbuiltin, y.gr_name)
                 )]
             )
-            #self.choices = glist
+            # self.choices = glist
             self.widget = FilteredSelectJSON(
                 attrs=self.widget.attrs,
                 url=("account_bsdgroup_json",),

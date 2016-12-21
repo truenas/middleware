@@ -187,7 +187,7 @@ class ExceptionReporter(debug.ExceptionReporter):
 def server_error(request, *args, **kwargs):
     # Save exc info before next exception occurs
     exc_info = sys.exc_info()
-    trace_rollbar = logger.Rollbar()
+    trace_rollbar = middlewared.logger.Rollbar()
     try:
         tb = Advanced.objects.all().latest('id').adv_traceback
     except:

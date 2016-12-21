@@ -92,14 +92,14 @@ HDDSTANDBY_CHOICES = (
 
 ADVPOWERMGMT_CHOICES = (
     ('Disabled', _('Disabled')),
-    ('1',   _('Level 1 - Minimum power usage with Standby (spindown)')),
-    ('64',  _('Level 64 - Intermediate power usage with Standby')),
+    ('1', _('Level 1 - Minimum power usage with Standby (spindown)')),
+    ('64', _('Level 64 - Intermediate power usage with Standby')),
     ('127', _('Level 127 - Intermediate power usage with Standby')),
     ('128',
         _('Level 128 - Minimum power usage without Standby (no spindown)')),
     ('192', _('Level 192 - Intermediate power usage without Standby')),
     ('254', _('Level 254 - Maximum performance, maximum power usage')),
-    )
+)
 ACOUSTICLVL_CHOICES = (
     ('Disabled', _('Disabled')),
     ('Minimum', _('Minimum')),

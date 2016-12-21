@@ -31,7 +31,7 @@ class JailsResourceTest(APITestCase):
         )
         self.assertHttpCreated(resp)
         self.assertValidJSON(resp.content)
-        #obj = models.Jails.objects.filter(jail_host='myjail')[0]
+        # obj = models.Jails.objects.filter(jail_host='myjail')[0]
 
         data = self.deserialize(resp)
         self.assertEqual(data, {
@@ -92,8 +92,8 @@ class JailsResourceTest(APITestCase):
             }
         )
         self.assertHttpAccepted(resp)
-        data = self.deserialize(resp)
-        #self.assertEqual(data['id'], obj.id)
+        # data = self.deserialize(resp)
+        # self.assertEqual(data['id'], obj.id)
 
     def test_Delete(self):
         resp = self.api_client.delete(

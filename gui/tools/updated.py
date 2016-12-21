@@ -44,8 +44,6 @@ sys.path.append('/usr/local/lib')
 
 os.environ['DJANGO_SETTINGS_MODULE'] = 'freenasUI.settings'
 
-from freenasUI.settings import LOGGING
-
 log = middlewared.logger.Logger('tools.updated')
 
 from freenasOS import Update, Manifest

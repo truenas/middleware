@@ -3071,7 +3071,7 @@ class notifier:
             systemdataset, basename = self.system_dataset_settings()
 
         if replications is None:
-            replications  = {}
+            replications = {}
 
         zfsproc = self._pipeopen("/sbin/zfs list -t volume -o name %s -H" % sort)
         zvols = set(filter(lambda y: y != '', zfsproc.communicate()[0].split('\n')))
@@ -5440,6 +5440,7 @@ def usage():
         change: notify change for a command (try self.reload; if unsuccessful do start)""" \
         % (os.path.basename(sys.argv[0]), )
     sys.exit(usage_str)
+
 
 # When running as standard-alone script
 if __name__ == '__main__':

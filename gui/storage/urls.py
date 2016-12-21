@@ -86,4 +86,4 @@ urlpatterns = patterns(
     url(r'^tasks/json/(?P<dataset>.+)/$', 'tasks_dataset_json', name="tasks_dataset_json"),
     url(r'^tasks/json/$', 'tasks_all_json', name="tasks_all_json"),
     url(r'^tasks/recursive/json/$', 'tasks_recursive_json', name="tasks_recursive_json"),
- )
+)

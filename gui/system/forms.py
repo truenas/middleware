@@ -1804,6 +1804,7 @@ class SharesBaseFormSet(BaseFormSet):
     def errors_json(self):
         return json.dumps(self.errors)
 
+
 InitialWizardShareFormSet = formset_factory(
     InitialWizardShareForm,
     formset=SharesBaseFormSet,

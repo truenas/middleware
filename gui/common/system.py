@@ -107,6 +107,7 @@ def get_freenas_var(var, default=None):
         val = default
     return val
 
+
 FREENAS_DATABASE = get_freenas_var("FREENAS_DATABASE", "/data/freenas-v1.db")
 
 

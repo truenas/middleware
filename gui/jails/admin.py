@@ -354,6 +354,7 @@ class JailMountPointFAdmin(BaseFreeAdmin):
         })
         return columns
 
+
 site.register(models.Jails, JailsFAdmin)
 site.register(models.JailsConfiguration, JailsConfigurationFAdmin)
 site.register(models.JailTemplate, JailTemplateFAdmin)
