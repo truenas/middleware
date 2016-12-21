@@ -37,7 +37,7 @@ class Application(WebSocketApplication):
         super(Application, self).__init__(*args, **kwargs)
         self.authenticated = self._check_permission()
         self.handshake = False
-        self.logger = logger.Logger()
+        self.logger = logger.Logger('application')
         self.sessionid = str(uuid.uuid4())
         self.trace = logger.Rollbar()
 
@@ -100,7 +100,7 @@ class Application(WebSocketApplication):
                 _locals.update(arginfo.locals.items())
 
             except Exception:
-                self.logger.critical_msg('Error while extracting arguments from frames.', exc_info=True)
+                self.logger.critical('Error while extracting arguments from frames.', exc_info=True)
 
             if argspec:
                 cur_frame['argspec'] = argspec
@@ -157,12 +157,12 @@ class Application(WebSocketApplication):
             })
         except Exception as e:
             self.send_error(message, str(e), sys.exc_info())
-            self.middleware.logger.warn_msg('Exception while calling {}(*{})'.format(message['method'], message.get('params')), exc_info=True)
+            self.middleware.logger.warn('Exception while calling {}(*{})'.format(message['method'], message.get('params')), exc_info=True)
 
             try:
                 sw_version = self.middleware.call('system.version')
             except:
-                self.logger.debug_msg('Failed to get system version', exc_info=True)
+                self.logger.debug('Failed to get system version', exc_info=True)
 
             extra_log_files = (('/var/log/middlewared.log', 'middlewared_log'),)
             gevent.spawn(self.trace.rollbar_report(sys.exc_info(), None, sw_version, extra_log_files))
@@ -204,7 +204,7 @@ class Application(WebSocketApplication):
             try:
                 method(self)
             except:
-                self.logger.error_msg('Failed to run on_close callback.', exc_info=True)
+                self.logger.error('Failed to run on_close callback.', exc_info=True)
 
         self.middleware.unregister_wsclient(self)
 
@@ -214,7 +214,7 @@ class Application(WebSocketApplication):
             try:
                 method(self, message)
             except:
-                self.logger.error_msg('Failed to run on_message callback.', exc_info=True)
+                self.logger.error('Failed to run on_message callback.', exc_info=True)
 
         if message['msg'] == 'connect':
             if message.get('version') != '1':
@@ -259,7 +259,7 @@ class Application(WebSocketApplication):
 class Middleware(object):
 
     def __init__(self):
-        self.logger = logger.Logger()
+        self.logger = logger.Logger('middlewared')
         self.__jobs = JobsQueue(self)
         self.__schemas = {}
         self.__services = {}
@@ -279,7 +279,7 @@ class Middleware(object):
             os.path.dirname(os.path.realpath(__file__)),
             'plugins',
         )
-        self.logger.debug_msg('Loading plugins from {0}'.format(plugins_dir))
+        self.logger.debug('Loading plugins from {0}'.format(plugins_dir))
         if not os.path.exists(plugins_dir):
             raise ValueError('plugins dir not found')
 
@@ -326,7 +326,7 @@ class Middleware(object):
             if resolved == 0:
                 raise ValueError("Not all could be resolved")
 
-        self.logger.debug_msg('All plugins loaded')
+        self.logger.debug('All plugins loaded')
 
     def register_wsclient(self, client):
         self.__wsclients[client.sessionid] = client
@@ -428,7 +428,7 @@ class Middleware(object):
             try:
                 wsclient.send_event(name, event_type, **kwargs)
             except:
-                self.logger.warn_msg('Failed to send event {} to {}'.format(name, sessionid), exc_info=True)
+                self.logger.warn('Failed to send event {} to {}'.format(name, sessionid), exc_info=True)
 
     def run(self):
 
@@ -451,11 +451,11 @@ class Middleware(object):
             gevent.spawn(restserver.serve_forever),
             gevent.spawn(self.__jobs.run),
         ]
-        self.logger.debug_msg('Accepting connections')
+        self.logger.debug('Accepting connections')
         gevent.joinall(self.__server_threads)
 
     def kill(self):
-        self.logger.info_msg('Killall server threads')
+        self.logger.info('Killall server threads')
         gevent.killall(self.__server_threads)
 
         sys.exit(0)
@@ -463,7 +463,7 @@ class Middleware(object):
 
 def main():
     #  Logger
-    _logger = logger.Logger()
+    _logger = logger.Logger('middlewared')
 
     # Workaround for development
     modpath = os.path.realpath(os.path.join(

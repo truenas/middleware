@@ -11,7 +11,7 @@ class Rollbar(object):
 
     def __init__(self):
         self.sentinel_file_path = '/data/.rollbar_disabled'
-        self.logger = Logger()
+        self.logger = Logger('rollbar')
         self.logger.configure_logging('console')
         rollbar.init(
             'caf06383cba14d5893c4f4d0a40c33a9',
@@ -32,7 +32,7 @@ class Rollbar(object):
             self.sentinel_file_path = '/tmp/.rollbar_disabled'
 
         if os.path.exists(self.sentinel_file_path) or 'ROLLBAR_DISABLED' in os.environ:
-            self.logger.debug_msg('rollbar is disabled using sentinel file: {0}'.format(self.sentinel_file_path))
+            self.logger.debug('rollbar is disabled using sentinel file: {0}'.format(self.sentinel_file_path))
             return True
         else:
             return False
@@ -144,19 +144,19 @@ class Logger(LoggerFormatter):
         'NOTSET': 0
         }
 
-    def __init__(self):
+    def __init__(self, application_name):
         self.logfile_path = '/var/log/middlewared.log'
         self.logfile_size = 10485760
         self.max_logfiles = 5
+        self.get_level = None
         self.file_handler = logging.handlers.RotatingFileHandler(self.logfile_path,
                                                                  maxBytes=self.logfile_size,
                                                                  backupCount=self.max_logfiles,
                                                                  encoding='utf-8')
-        self.file_handler.set_name('file')
-        self.get_level = None
+        self.file_handler.set_name(application_name)
 
         self.console_handler = logging.StreamHandler()
-        self.console_handler.set_name(__name__)
+        self.console_handler.set_name(application_name)
 
     def _set_output_file(self):
         """Set the output format for file log."""
@@ -208,7 +208,7 @@ class Logger(LoggerFormatter):
 
         logging.root.setLevel(logging.DEBUG)
 
-    def critical_msg(self, *args, **kwargs):
+    def critical(self, *args, **kwargs):
         """Wrapper for logging.critical().
 
             Args:
@@ -218,7 +218,7 @@ class Logger(LoggerFormatter):
         self._set_level(self.LOGGING_LEVEL['CRITICAL'])
         logging.critical(*args, **kwargs)
 
-    def error_msg(self, *args, **kwargs):
+    def error(self, *args, **kwargs):
         """Wrapper for logging.error().
 
             Args:
@@ -228,7 +228,7 @@ class Logger(LoggerFormatter):
         self._set_level(self.LOGGING_LEVEL['ERROR'])
         logging.error(*args, **kwargs)
 
-    def warn_msg(self, *args, **kwargs):
+    def warn(self, *args, **kwargs):
         """Wrapper for logging.warn().
 
             Args:
@@ -238,7 +238,7 @@ class Logger(LoggerFormatter):
         self._set_level(self.LOGGING_LEVEL['WARNING'])
         logging.warn(*args, **kwargs)
 
-    def info_msg(self, *args, **kwargs):
+    def info(self, *args, **kwargs):
         """Wrapper for logging.info().
 
             Args:
@@ -248,7 +248,7 @@ class Logger(LoggerFormatter):
         self._set_level(self.LOGGING_LEVEL['INFO'])
         logging.info(*args, **kwargs)
 
-    def debug_msg(self, *args, **kwargs):
+    def debug(self, *args, **kwargs):
         """Wrapper for logging.debug().
 
             Args:
