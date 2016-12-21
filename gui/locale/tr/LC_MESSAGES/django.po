@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:05-0700\n"
-"PO-Revision-Date: 2016-12-21 12:09+0000\n"
+"PO-Revision-Date: 2016-12-21 12:51+0000\n"
 "Last-Translator: Burak <hitowerdigit@hotmail.com>\n"
 "Language-Team: Turkish "
 "<http://weblate.trueos.org/projects/freenas/django/tr/>\n"
@@ -9675,7 +9675,7 @@ msgstr "SSL Sertifikasını Ayarla"
 #: system/hook.py:22
 #: system/hook.py:24
 msgid "Performance Test"
-msgstr ""
+msgstr "Performans Denemesi"
 
 #: system/views.py:545
 msgid "System dataset is required to perform this action."
@@ -10229,7 +10229,7 @@ msgstr "Bu isimde bir havuz zaten var."
 #: directoryservice/forms.py:341
 #: directoryservice/forms.py:448
 msgid "%s."
-msgstr ""
+msgstr "%s."
 
 #: directoryservice/forms.py:486
 #: directoryservice/models.py:700
@@ -10395,19 +10395,19 @@ msgstr "Sertifika İmzalama İsteği oluştur"
 
 #: choices.py:823
 msgid "512"
-msgstr ""
+msgstr "512"
 
 #: choices.py:824
 msgid "1024"
-msgstr ""
+msgstr "1024"
 
 #: choices.py:825
 msgid "2048"
-msgstr ""
+msgstr "2048"
 
 #: choices.py:826
 msgid "4096"
-msgstr ""
+msgstr "4096"
 
 #: choices.py:830
 msgid "SHA1"
@@ -10683,7 +10683,7 @@ msgstr "Sonraki Sertifika için seri no"
 #: system/forms.py:2282
 #: system/forms.py:2398
 msgid "Key Length"
-msgstr ""
+msgstr "Anahtar Uzunluğu"
 
 #: system/forms.py:2003
 #: system/forms.py:2095
@@ -10868,7 +10868,7 @@ msgstr "Anlık Görüntüler"
 
 #: templates/system/upgrade.html:22
 msgid "You're about to upgrade. The following packages will be changed:"
-msgstr ""
+msgstr "Yükseltmek üzeresiniz. Aşağıdaki paketler değiştirilecektir:"
 
 #: templates/system/upgrade.html:24
 msgid "Are you sure you want to continue?"
