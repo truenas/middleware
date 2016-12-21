@@ -162,6 +162,16 @@ class VolumeMixin(object):
         if models.Volume.objects.filter(vol_name=vname).exists():
             raise forms.ValidationError(
                 _("A volume with that name already exists."))
+        if vname in ('log',):
+            raise forms.ValidationError(_(u'\"log\" is a reserved word and thus cannot be used'))
+        elif re.search(r'^c[0-9].*', vname) or \
+                re.search(r'^mirror.*', vname) or \
+                re.search(r'^spare.*', vname) or \
+                re.search(r'^raidz.*', vname):
+            raise forms.ValidationError(_(
+                u"The volume name may NOT start with c[0-9], mirror, "
+                "raidz or spare"
+            ))
         return vname
 
 
