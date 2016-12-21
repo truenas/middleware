@@ -407,8 +407,9 @@ class HASQLiteCursorWrapper(Database.Cursor):
             except OperationalError as e:
                 if 'locked' not in e.message:
                     raise
-                if retries < 10:
+                if retries < 5:
                     time.sleep(0.3)
+                    retries += 1
                     continue
                 else:
                     raise
