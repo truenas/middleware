@@ -121,7 +121,7 @@ class InterfacesService(Service):
             except:
                 self.logger.error('Failed to configure {}'.format(interface), exc_info=True)
 
-        internal_interfaces = ['lo', 'pflog', 'pfsync', 'tun', 'tap']
+        internal_interfaces = ['lo', 'pflog', 'pfsync', 'tun', 'tap', 'bridge', 'epair']
         if not self.middleware.call('system.is_freenas'):
             internal_interfaces.extend(self.middleware.call('notifier.failover_internal_interfaces') or [])
         internal_interfaces = tuple(internal_interfaces)
