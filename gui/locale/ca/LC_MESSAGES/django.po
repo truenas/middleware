@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:05-0700\n"
-"PO-Revision-Date: 2016-12-21 17:47+0000\n"
+"PO-Revision-Date: 2016-12-22 17:04+0000\n"
 "Last-Translator: Davidmp <rbndavid@gmail.com>\n"
 "Language-Team: Catalan "
 "<http://weblate.trueos.org/projects/freenas/django/ca/>\n"
@@ -99,15 +99,15 @@ msgstr "UDMA-133"
 
 #: choices.py:67
 msgid "SATA 1.5Gbit/s"
-msgstr "SATA 1.5Gbit/s"
+msgstr "SATA 1.5 Gbit/s"
 
 #: choices.py:68
 msgid "SATA 3.0Gbit/s"
-msgstr "SATA 3.0Gbit/s"
+msgstr "SATA 3.0 Gbit/s"
 
 #: choices.py:72
 msgid "Always On"
-msgstr "Sempre encés"
+msgstr "Sempre actiu"
 
 #: choices.py:86 choices.py:95
 msgid "Disabled"
@@ -132,11 +132,11 @@ msgstr ""
 
 #: choices.py:91
 msgid "Level 192 - Intermediate power usage without Standby"
-msgstr "Nivell 192 Ús intermedi d'energia sense mode d'espera"
+msgstr "Nivell 192 - Ús intermedi d'energia sense mode d'espera"
 
 #: choices.py:92
 msgid "Level 254 - Maximum performance, maximum power usage"
-msgstr "Nivell 254 - Màxim rendiment, màxim ús d'energia"
+msgstr "Nivell 254 - Màxim rendiment, ús d'energia màxim"
 
 #: choices.py:96 choices.py:188
 msgid "Minimum"
@@ -144,7 +144,7 @@ msgstr "Mínim"
 
 #: choices.py:97
 msgid "Medium"
-msgstr "mig"
+msgstr "Mitjà"
 
 #: choices.py:98
 msgid "Maximum"
@@ -240,11 +240,11 @@ msgstr "Normal"
 
 #: choices.py:190
 msgid "Full"
-msgstr "Ple"
+msgstr "Complet"
 
 #: choices.py:191
 msgid "Debug"
-msgstr "Depurar"
+msgstr "Depuració"
 
 #~ msgid "Default"
 #~ msgstr "Per defecte"
@@ -263,11 +263,11 @@ msgstr "Noms en minúscules en ambdues direccions"
 
 #: choices.py:202
 msgid "Client sees lowercase, server sees uppercase"
-msgstr "Servidor veu majúscules, client veu minúscules"
+msgstr "El client veu minúscules, el servidor veu majúscules"
 
 #: choices.py:203
 msgid "Client sees uppercase, server sees lowercase"
-msgstr "Servidor veu minúscules, client veu majúscules"
+msgstr "El client veu majúscules, el servidor veu minúscules"
 
 #: choices.py:207
 msgid "File"
@@ -275,7 +275,7 @@ msgstr "Fitxer"
 
 #: choices.py:208
 msgid "Device"
-msgstr "Perifèric"
+msgstr "Dispositiu"
 
 #: choices.py:209
 msgid "ZFS Volume"
@@ -288,7 +288,7 @@ msgstr "Disc"
 
 #: choices.py:221
 msgid "read-write"
-msgstr "escriptura-lectura"
+msgstr "lectura-escriptura"
 
 #: choices.py:222
 msgid "read-only"
@@ -310,7 +310,7 @@ msgstr "CHAP mutu"
 
 #: choices.py:251
 msgid "UPS reaches low battery"
-msgstr "El SAI està amb bateria baixa"
+msgstr "El SAI està arribant a bateria baixa"
 
 #: choices.py:252
 msgid "UPS goes on battery"
@@ -330,26 +330,26 @@ msgstr "Requerit"
 
 #: choices.py:284 choices.py:290
 msgid "Inherit"
-msgstr "Heretat"
+msgstr "Hereta"
 
 #: choices.py:285
 msgid "On"
-msgstr "Encès"
+msgstr "Activat"
 
 #: choices.py:286 choices.py:291 choices.py:556
 msgid "Off"
-msgstr "Apagat"
+msgstr "Desactivat"
 
 #~ msgid "lzjb (recommended)"
 #~ msgstr "lzjb (recomenat)"
 
 #: choices.py:293
 msgid "gzip (default level, 6)"
-msgstr "gzip (nivell per defecte, 6)"
+msgstr "gzip (nivell per defecte: 6)"
 
 #: choices.py:294
 msgid "gzip (fastest)"
-msgstr "gzip (El més ràpid)"
+msgstr "gzip (el més ràpid)"
 
 #: choices.py:295
 msgid "gzip (maximum, slow)"
@@ -369,7 +369,7 @@ msgstr "Setmana(es)"
 
 #: choices.py:492
 msgid "Month(s)"
-msgstr "Mes(sos)"
+msgstr "Mes(os)"
 
 #: choices.py:493
 msgid "Year(s)"
@@ -391,11 +391,11 @@ msgstr "Només lectura"
 
 #: choices.py:505
 msgid "Write-only"
-msgstr "Només lectura"
+msgstr "Només escriptura"
 
 #: choices.py:506
 msgid "Read and Write"
-msgstr "Escriure i Llegir"
+msgstr "Lectura i escriptura"
 
 #: choices.py:510 choices.py:511
 #, python-format
@@ -424,39 +424,41 @@ msgstr "%(week)s setmana"
 
 #: choices.py:523
 msgid "Never - Check the device regardless of its power mode"
-msgstr "Mai - Comprova el perifèric sense tenir en compte el mode d'energia"
+msgstr "Mai - Comprova el dispositiu sense tenir en compte el mode d'energia"
 
 #: choices.py:524
 msgid "Sleep - Check the device unless it is in SLEEP mode"
-msgstr "Sleep - Comproba el perifèric menys quan és en mode SLEEP"
+msgstr ""
+"Aturada temporal - Comprova el dispositiu llevat que estigui en mode "
+"d'aturada temporal"
 
 #: choices.py:525
 msgid "Standby - Check the device unless it is in SLEEP or STANDBY mode"
 msgstr ""
-"Mode d'espera - Comprova el perifèric exceptuan quan és en mode d'espera o "
-"en mode SLEEP"
+"Mode d'espera - Comprova el dispositiu llevat que estigui mode d'aturada "
+"temporal o d'espera"
 
 #: choices.py:526
 msgid "Idle - Check the device unless it is in SLEEP, STANDBY or IDLE mode"
 msgstr ""
-"Inactiu - Comprova el dispositiu si no està en mode d'aturada temporal, "
-"d'espera o inactiu"
+"Inactiu - Comprova el dispositiu llevat qye estugui en mode d'aturada "
+"temporal, d'espera o inactiu"
 
 #: choices.py:530
 msgid "Long Self-Test"
-msgstr "Auto Comprovació llarga"
+msgstr "Autocomprovació llarga"
 
 #: choices.py:531
 msgid "Short Self-Test"
-msgstr "Auto comprovació curta"
+msgstr "Autocomprovació curta"
 
 #: choices.py:532
 msgid "Conveyance Self-Test (ATA  only)"
-msgstr "Auto Comprovació del transport (només per ATA)"
+msgstr "Autocomprovació del transport (només ATA)"
 
 #: choices.py:533
 msgid "Offline Immediate Test (ATA only)"
-msgstr "Comprovació inmediata fora de línea (només ATA)"
+msgstr "Comprovació immediata fora de línia (només ATA)"
 
 #: choices.py:562
 #, fuzzy
@@ -469,11 +471,11 @@ msgstr "Rsync sobre SSH"
 
 #: choices.py:567
 msgid "Push"
-msgstr ""
+msgstr "Empeny"
 
 #: choices.py:568
 msgid "Pull"
-msgstr ""
+msgstr "Estira"
 
 #: account/forms.py:54
 msgid "Your name cannot start with \"-\""
@@ -481,17 +483,17 @@ msgstr "El nom no pot començar amb \"-\""
 
 #: account/forms.py:57
 msgid "The character $ is only allowed as the final character"
-msgstr "El caràcter $ només està permès com caràcter final"
+msgstr "El caràcter $ només està permès com a caràcter final"
 
 #: account/forms.py:66
 #, python-format
 msgid "Your name contains invalid characters (%s)."
-msgstr "El nom conté caràcters invàlids (%s)."
+msgstr "El nom conté caràcters no vàlids (%s)."
 
 #: account/forms.py:79
 #, python-format
 msgid "Your full name contains invalid characters (%s)."
-msgstr "El nom complert conté caràcters invàlids (%s)."
+msgstr "El nom complet conté caràcters no vàlids (%s)."
 
 #: account/forms.py:220 account/forms.py:253 account/forms.py:497
 #: account/models.py:88 services/models.py:769 services/models.py:1126
@@ -502,11 +504,11 @@ msgstr "Nom d'usuari"
 
 #: account/forms.py:223
 msgid "Required. 16 characters or fewer. Letters, digits and ./-/_ only."
-msgstr "Requeriment: 16 caràcters o menys. només lletres, dígits i ./-/_ "
+msgstr "Requeriment: 16 caràcters o menys. Només lletres, dígits i ./-/_"
 
 #: account/forms.py:226
 msgid "This value may contain only letters, numbers and ./-/_ characters."
-msgstr "Aquest valor només pot contenir lletres, números i caràcters ./-/_ "
+msgstr "Aquest valor només pot contenir lletres, números i els caràcters ./-/_"
 
 #: account/forms.py:256 account/forms.py:499 services/models.py:773
 #: system/forms.py:331 system/models.py:250 templates/account/bsdusers.html:9
@@ -516,11 +518,11 @@ msgstr "Contrasenya"
 
 #: account/forms.py:260 account/forms.py:503 system/forms.py:335
 msgid "Password confirmation"
-msgstr "confirmació de la contrasenya"
+msgstr "Confirmació de la contrasenya"
 
 #: account/forms.py:262 account/forms.py:505 system/forms.py:337
 msgid "Enter the same password as above, for verification."
-msgstr "Introdueix la mateixa contrasenya de dalt, per verificar-la."
+msgstr "Escriviu la mateixa contrasenya, per verificar-la."
 
 #: account/forms.py:265 account/forms.py:558 account/models.py:115
 #: freeadmin/navtree.py:360 templates/account/bsdusers.html:8
@@ -533,11 +535,11 @@ msgstr "Intèrpret d’ordres"
 
 #: account/forms.py:271 account/forms.py:556
 msgid "Lock user"
-msgstr ""
+msgstr "Bloqueja l'usuari"
 
 #: account/forms.py:273
 msgid "Create a new primary group for the user"
-msgstr ""
+msgstr "Crea un grup primari nou per a l'usuari"
 
 #: account/forms.py:276
 msgid "Primary Group"
@@ -545,12 +547,11 @@ msgstr "Grup primari"
 
 #: account/forms.py:279 account/forms.py:563
 msgid "SSH Public Key"
-msgstr "Clau Pública SSH"
+msgstr "Clau pública SSH"
 
 #: account/forms.py:284 account/forms.py:549
-#, fuzzy
 msgid "Home Directory Mode"
-msgstr "Directori Home"
+msgstr "Mode del directori de l'usuari"
 
 #: account/forms.py:287 account/forms.py:804
 msgid "Auxiliary groups"
@@ -561,13 +562,13 @@ msgstr "Grups auxiliars"
 
 #: account/forms.py:360
 msgid "A user with that username already exists."
-msgstr "Un usuari amb aquest nom d'usuari ja existeix."
+msgstr "Ja existeix un usuari amb aquest nom."
 
 #: account/forms.py:369 storage/forms.py:281 system/forms.py:370
 #: system/forms.py:376 system/forms.py:382 system/forms.py:675
 #: system/forms.py:682
 msgid "This field is required"
-msgstr "El camp és obligatori"
+msgstr "Aquest camp és obligatori"
 
 #: account/forms.py:377 account/forms.py:529 account/forms.py:870
 #: services/forms.py:349 services/forms.py:466 sharing/forms.py:108
@@ -577,15 +578,15 @@ msgstr "Els dos camps de contrasenya no coincideixen."
 
 #: account/forms.py:386
 msgid "Home directory has to start with /mnt/ or be /nonexistent"
-msgstr "El directori home ha de començar amb /mnt/ o ser /noexistent"
+msgstr "El directori de l'usuari ha de començar amb /mnt/ o ser /noexistent"
 
 #: account/forms.py:401 account/forms.py:828
 msgid "A user cannot belong to more than 64 auxiliary groups"
-msgstr "Un usuari no pot pertanya a més de 64 grups auxiliars"
+msgstr "Un usuari no pot pertànyer a més de 64 grups auxiliars"
 
 #: account/forms.py:416 account/forms.py:653
 msgid "Home directory is not writable, leave this blank"
-msgstr "El directori home és no-escriptura, deixa-ho en blanc"
+msgstr "El directori de l'usuari no és d'escriptura. Deixeu-ho en blanc."
 
 #: account/forms.py:423
 msgid "Password is disabled, leave this blank"
