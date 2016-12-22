@@ -37,7 +37,8 @@ class Application(WebSocketApplication):
         super(Application, self).__init__(*args, **kwargs)
         self.authenticated = self._check_permission()
         self.handshake = False
-        self.logger = logger.Logger('application')
+        self.logger_name = logger.Logger('application')
+        self.logger = self.logger_name.getLogger()
         self.sessionid = str(uuid.uuid4())
         self.trace = logger.Rollbar()
 
@@ -157,7 +158,7 @@ class Application(WebSocketApplication):
             })
         except Exception as e:
             self.send_error(message, str(e), sys.exc_info())
-            self.middleware.logger.warn('Exception while calling {}(*{})'.format(message['method'], message.get('params')), exc_info=True)
+            self.logger.warn('Exception while calling {}(*{})'.format(message['method'], message.get('params')), exc_info=True)
 
             try:
                 sw_version = self.middleware.call('system.version')
@@ -259,7 +260,8 @@ class Application(WebSocketApplication):
 class Middleware(object):
 
     def __init__(self):
-        self.logger = logger.Logger('middlewared')
+        self.logger_name = logger.Logger('middlewared')
+        self.logger = self.logger_name.getLogger()
         self.__jobs = JobsQueue(self)
         self.__schemas = {}
         self.__services = {}
@@ -463,7 +465,8 @@ class Middleware(object):
 
 def main():
     #  Logger
-    _logger = logger.Logger('middlewared')
+    _logger = logger.Logger('middleware')
+    get_logger = _logger.getLogger()
 
     # Workaround for development
     modpath = os.path.realpath(os.path.join(
@@ -506,12 +509,18 @@ def main():
         daemonc = DaemonContext(
             pidfile=TimeoutPIDLockFile(pidpath),
             detach_process=True,
+            stdout = logger.LoggerStream(get_logger),
+            stderr = logger.LoggerStream(get_logger),
             )
         daemonc.open()
     elif 'file' in log_handlers:
         _logger.configure_logging('file')
+        sys.stdout = logger.LoggerStream(get_logger)
+        sys.stderr = logger.LoggerStream(get_logger)
     elif 'console' in log_handlers:
         _logger.configure_logging('console')
+        sys.stdout = logger.LoggerStream(get_logger)
+        sys.stderr = logger.LoggerStream(get_logger)
     else:
         _logger.configure_logging('both')
 

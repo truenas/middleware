@@ -1,4 +1,5 @@
 import os
+import sys
 import logging
 import logging.handlers
 from logging.config import dictConfig
@@ -104,7 +105,7 @@ class LoggerFormatter(object):
         color_reset = self.CONSOLE_COLOR_FORMATTER['RESET']
 
         console_formatter = logging.Formatter(
-            "[%(asctime)s] " + color_start + "(%(levelname)s)" + color_reset + " [%(filename)s -> %(funcName)s(): %(lineno)s] - %(message)s",
+                "[%(asctime)s] " + color_start + "(%(levelname)s)" + color_reset + " [Module: %(module)s, Call: %(name)s -> %(funcName)s(): %(lineno)s] - %(message)s",
             "%Y/%m/%d %H:%M:%S")
 
         return console_formatter
@@ -116,10 +117,21 @@ class LoggerFormatter(object):
                 file_formatter (class): Returns a class of logging.Formatter()
         """
         file_formatter = logging.Formatter(
-            "[%(asctime)s] (%(levelname)s) [%(filename)s -> %(funcName)s(): %(lineno)s] - %(message)s",
+                "[%(asctime)s] (%(levelname)s) [Module: %(module)s, Call: %(name)s -> %(funcName)s(): %(lineno)s] - %(message)s",
             "%Y/%m/%d %H:%M:%S")
 
         return file_formatter
+
+
+class LoggerStream(object):
+
+    def __init__(self, logger):
+        self.logger = logger
+        self.linebuf = ''
+
+    def write(self, buf):
+        for line in buf.rstrip().splitlines():
+            self.logger.debug(line.rstrip())
 
 
 class Logger(LoggerFormatter):
@@ -153,10 +165,11 @@ class Logger(LoggerFormatter):
                                                                  maxBytes=self.logfile_size,
                                                                  backupCount=self.max_logfiles,
                                                                  encoding='utf-8')
-        self.file_handler.set_name(application_name)
-
+        self.application_name = application_name
         self.console_handler = logging.StreamHandler()
-        self.console_handler.set_name(application_name)
+
+    def getLogger(self):
+        return logging.getLogger(self.application_name)
 
     def _set_output_file(self):
         """Set the output format for file log."""
@@ -164,9 +177,7 @@ class Logger(LoggerFormatter):
         self.file_handler.setLevel(logging.DEBUG)
         self.file_handler.setFormatter(self.set_log_formatter())
 
-        for handler in logging.root.handlers:
-            if 'file' not in handler.get_name():
-                logging.root.addHandler(self.file_handler)
+        logging.root.addHandler(self.file_handler)
 
     def _set_output_console(self):
         """Set the output format for console."""
@@ -174,21 +185,7 @@ class Logger(LoggerFormatter):
         self.console_handler.setLevel(logging.DEBUG)
         self.console_handler.setFormatter(self.set_console_formatter())
 
-        # Get the latest handler from handlers list to avoid add duplicated handler.
-        handler = logging.root.handlers[-1]
-
-        if handler in logging.root.handlers:
-            if self.console_handler.get_name() != handler.get_name():
-                logging.root.addHandler(self.console_handler)
-
-    def _set_level(self, log_level):
-        """Set a proper color output according the log level on console.
-
-            Args:
-                    log_level (int): Log level number defined on logging module.
-        """
-        logging.root.setLevel(log_level)
-        self.get_level = logging.getLogger().getEffectiveLevel()
+        logging.root.addHandler(self.console_handler)
 
     def configure_logging(self, output_option='file'):
         """Configure the log output to file, console or both.
@@ -207,53 +204,3 @@ class Logger(LoggerFormatter):
             self._set_output_file()
 
         logging.root.setLevel(logging.DEBUG)
-
-    def critical(self, *args, **kwargs):
-        """Wrapper for logging.critical().
-
-            Args:
-                    message (str): The message to be printed.
-                    exc_info (bool): True to output the exception information, False by default.
-        """
-        self._set_level(self.LOGGING_LEVEL['CRITICAL'])
-        logging.critical(*args, **kwargs)
-
-    def error(self, *args, **kwargs):
-        """Wrapper for logging.error().
-
-            Args:
-                    message (str): The message to be printed.
-                    exc_info (bool): True to output the exception information, False by default.
-        """
-        self._set_level(self.LOGGING_LEVEL['ERROR'])
-        logging.error(*args, **kwargs)
-
-    def warn(self, *args, **kwargs):
-        """Wrapper for logging.warn().
-
-            Args:
-                   message (str): The message to be printed.
-                   exc_info (bool): True to output the exception information, False by default.
-        """
-        self._set_level(self.LOGGING_LEVEL['WARNING'])
-        logging.warn(*args, **kwargs)
-
-    def info(self, *args, **kwargs):
-        """Wrapper for logging.info().
-
-            Args:
-                   message (str): The message to be printed.
-                   exc_info (bool): True to output the exception information, False by default.
-        """
-        self._set_level(self.LOGGING_LEVEL['INFO'])
-        logging.info(*args, **kwargs)
-
-    def debug(self, *args, **kwargs):
-        """Wrapper for logging.debug().
-
-            Args:
-                   message (str): The message to be printed.
-                   exc_info (bool): True to output the exception information, False by default.
-        """
-        self._set_level(self.LOGGING_LEVEL['DEBUG'])
-        logging.debug(*args, **kwargs)
