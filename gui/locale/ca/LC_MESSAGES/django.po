@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:05-0700\n"
-"PO-Revision-Date: 2016-12-22 17:04+0000\n"
+"PO-Revision-Date: 2016-12-22 18:01+0000\n"
 "Last-Translator: Davidmp <rbndavid@gmail.com>\n"
 "Language-Team: Catalan "
 "<http://weblate.trueos.org/projects/freenas/django/ca/>\n"
@@ -590,7 +590,7 @@ msgstr "El directori de l'usuari no és d'escriptura. Deixeu-ho en blanc."
 
 #: account/forms.py:423
 msgid "Password is disabled, leave this blank"
-msgstr "Contrasenya desactivada, deixa-ho en blanc"
+msgstr "La contrasenya està inhabilitada. Deixeu-ho en blanc."
 
 #: account/forms.py:429 plugins/forms.py:133 plugins/forms.py:260
 #: services/forms.py:742 services/forms.py:1071 storage/forms.py:244
@@ -603,15 +603,15 @@ msgstr "Aquest camp és necessari."
 
 #: account/forms.py:725
 msgid "Allow repeated GIDs"
-msgstr "Permet GIDs repetides"
+msgstr "Permet GIDs repetits"
 
 #: account/forms.py:739
 msgid "A group with that name already exists."
-msgstr "Un grup amb aquest nom ja existeix."
+msgstr "Ja existeix un grup amb aquest nom."
 
 #: account/forms.py:759
 msgid "A group with this gid already exists"
-msgstr "Un grup amb aquest gid ja existeix"
+msgstr "Ja existeix un grup amb aquest gid."
 
 #: account/forms.py:772
 msgid "Member users"
@@ -619,15 +619,15 @@ msgstr "Usuaris membres"
 
 #: account/forms.py:852
 msgid "New password"
-msgstr "Nova contrasenya"
+msgstr "Contrasenya nova"
 
 #: account/forms.py:856
 msgid "New password confirmation"
-msgstr "Confirmació de la nova contrasenya"
+msgstr "Confirmació de la contrasenya nova"
 
 #: account/forms.py:887
 msgid "Change root password as well"
-msgstr "Canviar també la contrasenya de root"
+msgstr "Canvia també la contrasenya d'administració"
 
 #: account/forms.py:896
 msgid "Old password"
@@ -636,23 +636,23 @@ msgstr "Contrasenya antiga"
 #: account/forms.py:914
 msgid "Your old password was entered incorrectly. Please enter it again."
 msgstr ""
-"La contrasenya antiga ha estat introduida incorrectament. Si us plau torna-"
-"hi."
+"La contrasenya antiga s'ha escrit incorrectament. Si us plau, torneu-ho a "
+"provar."
 
 #: account/forms.py:922
 msgid "Do you want to delete all users with this primary group?"
-msgstr "Vols esborrar tots els usuaris amb aquest grup primari?"
+msgstr "Voleu esborrar tots els usuaris d'aquest grup primari?"
 
 #: account/models.py:36 services/models.py:540 services/models.py:589
 #: templates/services/iscsi_auth.html:5
 #: templates/services/iscsi_authini.html:5
 #: templates/services/iscsi_portals.html:4
 msgid "Group ID"
-msgstr "ID de Grup"
+msgstr "ID de grup"
 
 #: account/models.py:41
 msgid "Group Name"
-msgstr "Nom del Grup"
+msgstr "Nom del grup"
 
 #: account/models.py:49 account/models.py:172 services/models.py:1423
 #: templates/account/bsdgroups.html:5 templates/account/bsdgroups.html:70
@@ -667,7 +667,7 @@ msgstr "Grups"
 #: account/models.py:67
 #, python-format
 msgid "Group %s is built-in and can not be deleted!"
-msgstr "El grup %s ve posat per definició i no es pot esborrar!"
+msgstr "El grup %s està integrat i no es pot esborrar!"
 
 #: account/models.py:82
 msgid "User ID"
@@ -679,11 +679,11 @@ msgstr "Usuari &"
 
 #: account/models.py:94
 msgid "Hashed UNIX password"
-msgstr "Contrasenya UNIX hashed"
+msgstr "Contrasenya UNIX amb coixinet"
 
 #: account/models.py:100
 msgid "Hashed SMB password"
-msgstr "Contrasenya SMB hashed"
+msgstr "Contrasenya SMB amb coixinet"
 
 #: account/models.py:105
 msgid "Primary Group ID"
@@ -691,11 +691,11 @@ msgstr "ID de grup primari"
 
 #: account/models.py:109
 msgid "Home Directory"
-msgstr "Directori Home"
+msgstr "Directori de l'usuari"
 
 #: account/models.py:119
 msgid "Full Name"
-msgstr "Nom Complert"
+msgstr "Nom complet"
 
 #: account/models.py:126 templates/account/bsdusers.html:90
 msgid "E-mail"
@@ -715,7 +715,7 @@ msgstr "Usuaris"
 #: account/models.py:151
 #, python-format
 msgid "User %s is built-in and can not be deleted!"
-msgstr "Usuari %s ve per definició i no pot ser esborrat!"
+msgstr "L' usuari %s està integrat i no es pot esborrar!"
 
 #: account/nav.py:5 templates/menubar.html:47
 msgid "Account"
@@ -754,11 +754,11 @@ msgstr "L'usuari %s no és vàlid."
 #: freeadmin/forms.py:149
 #, python-format
 msgid "The group %s is not valid."
-msgstr "El grup %s no és vàlid"
+msgstr "El grup %s no és vàlid."
 
 #: freeadmin/forms.py:174
 msgid "The path must reside within a volume mount point"
-msgstr "La ruta ha d'estar dintre un punt de muntatge d'un volum"
+msgstr "La ruta ha de ser dintre un punt de muntatge de volum"
 
 #: freeadmin/middleware.py:198 freeadmin/views.py:445 freeadmin/views.py:669
 #, python-format
@@ -768,39 +768,39 @@ msgstr "Error: %s"
 #: freeadmin/navtree.py:327
 #, python-format
 msgid "Add %s"
-msgstr "Afegir %s"
+msgstr "Afegeix %s"
 
 #: freeadmin/navtree.py:340
-#, fuzzy, python-format
+#, python-format
 msgid "View %s"
-msgstr "Veure tots %s"
+msgstr "Mostra %s"
 
 #: freeadmin/navtree.py:354
 msgid "Display System Processes"
-msgstr "Veure Procesos del Sistema"
+msgstr "Mostra els procesos del sistema"
 
 #: freeadmin/navtree.py:366 templates/system/reboot_dialog.html:14
 msgid "Reboot"
-msgstr "Reiniciar"
+msgstr "Reinicia"
 
 #: freeadmin/navtree.py:374 templates/system/shutdown_dialog.html:14
 msgid "Shutdown"
-msgstr "Apagar sistema"
+msgstr "Atura"
 
 #: freeadmin/navtree.py:408
 #, python-format
 msgid "Empty data returned from %s"
-msgstr ""
+msgstr "Buida les dades retornades de %s"
 
 #: freeadmin/navtree.py:411 services/views.py:77
 #, python-format
 msgid "Couldn't retrieve %(url)s: %(error)s"
-msgstr ""
+msgstr "No s'han pogut recuperar %(url)s: %(error)s"
 
 #: freeadmin/navtree.py:445
-#, fuzzy, python-format
+#, python-format
 msgid "An error occurred while unserializing from %(url)s: %(error)s"
-msgstr "Algun error ha succeït mentre s'etiquetaba el disc"
+msgstr "S'ha produït un error en revertir la seriació de %(url)s: %(error)s"
 
 #: freeadmin/views.py:257
 msgid "It was not possible to retrieve the current status"
@@ -818,19 +818,19 @@ msgstr "El servei ha fallat el reinici."
 #: freeadmin/views.py:781 freeadmin/views.py:786
 #, python-format
 msgid "%s successfully deleted."
-msgstr "%s esborrat amb èxit."
+msgstr "%s s'ha esborrat amb èxit."
 
 #: middleware/zfs.py:560 storage/models.py:579
 msgid "Error getting total space"
-msgstr "Error al obtenir l'epai total"
+msgstr "Error en obtenir l'espai total"
 
 #: middleware/zfs.py:567 storage/models.py:586
 msgid "Error getting available space"
-msgstr "Error al obtenir l'espai disponible"
+msgstr "Error en obtenir l'espai disponible"
 
 #: middleware/zfs.py:581 storage/models.py:600
 msgid "Error getting used space"
-msgstr "Error al obtenir l'espai utilitzat"
+msgstr "Error en obtenir l'espai usat"
 
 #: middleware/zfs.py:590 middleware/zfs.py:598 storage/models.py:95
 #: storage/models.py:608 storage/models.py:616
@@ -839,162 +839,161 @@ msgstr "Error"
 
 #: network/forms.py:41 network/models.py:86
 msgid "NIC"
-msgstr "Connexió de xarxa NIC"
+msgstr "NIC"
 
 #: network/forms.py:87 network/forms.py:100 network/forms.py:394
 #: network/forms.py:410
 #, python-format
 msgid "You cannot configure multiple interfaces with the same IP address (%s)"
-msgstr ""
+msgstr "No podeu configurar interfícies múltiples amb la mateixa adreça IP (%s)"
 
 #: network/forms.py:120
 msgid "You have to specify IPv4 address as well"
-msgstr "Has d'especificar una adreça IPv4"
+msgstr "També heu d'especificar una adreça IPv4"
 
 #: network/forms.py:124
 msgid "You have to choose IPv4 netmask as well"
-msgstr "Has d'escollir una màscara IPv4"
+msgstr "També heu d'escollir una màscara de xarxa IPv4"
 
 #: network/forms.py:131
 msgid "You have to specify IPv6 address as well"
-msgstr "Has d'especificar una adreça IPv6"
+msgstr "També heu d'especificar una adreça IPv6"
 
 #: network/forms.py:135
 msgid "You have to choose IPv6 netmask as well"
-msgstr "Has d'escollir una màscara de xarxa IPv6"
+msgstr "També heu d'escollir una màscara de xarxa IPv6"
 
 #: network/forms.py:140
 msgid "You have to choose between IPv4 or IPv6"
-msgstr "Has d'escollir entre Ipv4 o IPv6"
+msgstr "Heu d'escollir entre Ipv4 o IPv6"
 
 #: network/forms.py:160
 msgid "Loopback is not a valid nameserver"
-msgstr ""
+msgstr "Loopback no és un nom d'usuari vàlid."
 
 #: network/forms.py:163
 msgid "Unspecified addresses are not valid as nameservers"
-msgstr ""
+msgstr "Les adreces sense especificar no són vàlides com a noms de servidor."
 
 #: network/forms.py:167
-#, fuzzy
 msgid "This is not a valid nameserver address"
-msgstr "Al camp no té una adreça IP o xarxa vàlides"
+msgstr "No és una adreça de nom de servidor vàlida."
 
 #: network/forms.py:170
 msgid "169.254/16 subnet is not valid for nameserver"
-msgstr ""
+msgstr "Subxarxa 169.254/16 no és vàlid per al nom de servidor."
 
 #: network/forms.py:194
 msgid "Must fill out nameserver 2 before filling out nameserver 3"
-msgstr "Has d'omplir el nameserver 2 abans de posar el nameserver 3"
+msgstr "Heu d'omplir el nom de servidor 2 abans del nom de servidor 3."
 
 #: network/forms.py:197 network/forms.py:204 network/forms.py:215
 msgid "Required when using nameserver 3"
-msgstr "Requerit quan usis el nameserver 3"
+msgstr "Requerit quan s'usi el nom de servidor 3"
 
 #: network/forms.py:201
 msgid "Must fill out nameserver 1 before filling out nameserver 3"
-msgstr "Has d'omplir el nameserver 1 abans de posar el nameserver 3"
+msgstr "Heu d'omplir el nom de servidor 1 abans del nom de servidor 3."
 
 #: network/forms.py:212
 msgid "Must fill out nameserver 1 before filling out nameserver 2"
-msgstr "Has d'omplir el nameserver 1 abans de posar el nameserver 2"
+msgstr "Heu d'omplir el nom de servidor 1 abans del nom de servidor 2."
 
 #: network/forms.py:229
 msgid "Parent Interface"
-msgstr "Interfície Pare"
+msgstr "Interfície pare"
 
 #: network/forms.py:245
 msgid "The name must be vlanXX where XX is an integer"
-msgstr "El nomsde ha d'esser vlanXX on XX és un número integre"
+msgstr "El nom ha de ser vlanXX, en què XX és un número enter."
 
 #: network/forms.py:252
 msgid "VLAN Tags are 1 - 4095 inclusive"
-msgstr "Etiquetes VLAN van de 1 - 4095 incloses"
+msgstr "Les etiquetes VLAN són de 1 - 4095, inclosos."
 
 #: network/forms.py:275
 msgid "Physical NICs in the LAGG"
-msgstr "Tarjes de xarxa físiques NICs al LAGG"
+msgstr "NICs físiques al LAGG"
 
 #: network/forms.py:286
-#, fuzzy
 msgid "LAGG Physical NIC"
-msgstr "NIC (connexió de xarxa) física"
+msgstr "NIC física de LAGG"
 
 #: network/forms.py:360
 #, python-format
 msgid "The network '%s' is not valid, CIDR expected."
-msgstr "La xarxa '%s'  no és vàlida, s'esperava CIDR "
+msgstr "La xarxa \"%s\" no és vàlida, s'esperava CIDR."
 
 #: network/forms.py:428
 msgid "You have to specify IPv4 address as well per alias"
-msgstr ""
+msgstr "També heu d'especificar una adreça IPv4 per àlies."
 
 #: network/forms.py:432
 msgid "You have to choose IPv4 netmask as well per alias"
-msgstr ""
+msgstr "També heu d'escollir una màscara de xarxa IPv4 per àlies."
 
 #: network/forms.py:439
 msgid "You have to specify IPv6 address as well per alias"
-msgstr ""
+msgstr "També heu d'especificar una adreça IPv6 per àlies."
 
 #: network/forms.py:443
 msgid "You have to choose IPv6 netmask as well per alias"
-msgstr ""
+msgstr "També heu d'escollir una màscara de xarxa IPv6 per àlies."
 
 #: network/forms.py:448
 msgid "You have to choose between IPv4 or IPv6 per alias"
-msgstr "Has d'escollir entre IPv4 o IPv6 per l'alias"
+msgstr "Heu d'escollir entre IPv4 o IPv6 per àlies."
 
 #: network/forms.py:453
 msgid "You must specify either an valid IPv4 or IPv6 with maskbit per alias"
 msgstr ""
+"Heu d'especificar o bé una IPv4 o IPv6 vàlida amb bit de màscara per àlies."
 
 #: network/models.py:42 services/models.py:1284
 #: templates/system/system_info.html:5
 msgid "Hostname"
-msgstr "Hostname"
+msgstr "Nom d'amfitrió"
 
 #: network/models.py:46
 msgid "Domain"
-msgstr "Domain"
+msgstr "Domini"
 
 #: network/models.py:51
 msgid "IPv4 Default Gateway"
-msgstr "Pasarel.la IPv4 per defecte"
+msgstr "Pasarel·la IPv4 per defecte"
 
 #: network/models.py:56
 msgid "IPv6 Default Gateway"
-msgstr "Pasarel.la IPv6 per defecte"
+msgstr "Pasarel·la IPv6 per defecte"
 
 #: network/models.py:61
 msgid "Nameserver 1"
-msgstr "Nameserver 1"
+msgstr "Nom de servidor 1"
 
 #: network/models.py:66
 msgid "Nameserver 2"
-msgstr "Nameserver 2"
+msgstr "Nom de servidor 2"
 
 #: network/models.py:71
 msgid "Nameserver 3"
-msgstr "Nameserver 3"
+msgstr "Nom de servidor 3"
 
 #: network/models.py:76 network/models.py:77 network/nav.py:22
 #: templates/network/index.html:2
 msgid "Global Configuration"
-msgstr "Configuració Global"
+msgstr "Configuració global"
 
 #: network/models.py:87
 msgid "Pick your NIC"
-msgstr "Escull connexió de xarxa NIC"
+msgstr "Trieu la NIC"
 
 #: network/models.py:91
 msgid "Interface Name"
-msgstr "Nom de l'interfície"
+msgstr "Nom de la interfície"
 
 #: network/models.py:92
 msgid "Name your NIC."
-msgstr "Posa nom a la connexió de xarxa (NIC)."
+msgstr "Poseu nom a la NIC."
 
 #: network/models.py:95 templates/network/interface.html:7
 msgid "DHCP"
@@ -1004,8 +1003,8 @@ msgstr "DHCP"
 msgid ""
 "When enabled, use DHCP to obtain IPv4 address as well as default router, etc."
 msgstr ""
-"Quan sigui actiu, utilitzar el DHCP per obtenir l'adreça IPv4, així com el "
-"router per defecte, etc."
+"Quan estigui habilitat, useu el DHCP per obtenir l'adreça IPv4 així com "
+"l'encaminador per defecte, etc."
 
 #: network/models.py:99 network/models.py:215
 #: templates/network/interface.html:8 templates/network/summary.html:6
@@ -1018,12 +1017,13 @@ msgstr "Màscara IPv4 "
 
 #: network/models.py:112
 msgid "Auto configure IPv6"
-msgstr "Auto configurar IPv6"
+msgstr "Autoconfigura la IPv6"
 
 #: network/models.py:113
 msgid "When enabled, automatically configurate IPv6 address via rtsol(8)."
 msgstr ""
-"Quan sigui actiu, automàticament configurar l'adreça IPv6 via rtsol(8)."
+"Quan estigui habitada, configura automàticament l'adreça IPv6 a través de "
+"rtsol(8)."
 
 #: network/models.py:116 network/models.py:228
 #: templates/network/interface.html:10
@@ -1032,7 +1032,7 @@ msgstr "Adreça IPv6 "
 
 #: network/models.py:125 network/models.py:237
 msgid "IPv6 Prefix Length"
-msgstr ""
+msgstr "Llargada del prefix IPv6"
 
 #: network/models.py:130 network/models.py:358
 #: templates/network/interface.html:11
@@ -1063,11 +1063,10 @@ msgid "Virtual Interface"
 msgstr "Interfície virtual"
 
 #: network/models.py:266
-#, fuzzy
 msgid "Interface names must be vlanX where X is a number. Example: vlan0."
 msgstr ""
-"Els noms de les interfícies han d'esser vlanXX on XX és un número. Exemple "
-"vlan0."
+"Els noms de les interfícies han de ser vlanX, en què X és un número. Exemple:"
+" vlan0."
 
 #: network/models.py:271 templates/network/lagg_members.html:5
 #: templates/network/vlan.html:5
@@ -1100,11 +1099,11 @@ msgstr "Tipus de protocol"
 
 #: network/models.py:319 network/models.py:372 templates/network/index.html:13
 msgid "Link Aggregation"
-msgstr "Link Aggregation"
+msgstr "Agregació d'enllaços"
 
 #: network/models.py:320 network/models.py:373 network/nav.py:33
 msgid "Link Aggregations"
-msgstr "Link Aggregations"
+msgstr "Agregacions d'enllaços"
 
 #~ msgid "LAGG Interface group"
 #~ msgstr "Grup d'interfícies LAGG"
@@ -1115,15 +1114,15 @@ msgstr "Número de prioritat LAGG"
 
 #: network/models.py:354
 msgid "Physical NIC"
-msgstr "NIC (connexió de xarxa) física"
+msgstr "NIC física"
 
 #: network/models.py:384
 msgid "Destination network"
-msgstr "Xarxa de destí"
+msgstr "Xarxa de destinació"
 
 #: network/models.py:388 templates/network/staticroute.html:6
 msgid "Gateway"
-msgstr "Pasarel.la"
+msgstr "Pasarel·la"
 
 #: network/models.py:397
 msgid "Static Route"
@@ -1131,7 +1130,7 @@ msgstr "Ruta estàtica"
 
 #: network/models.py:398 templates/network/index.html:18
 msgid "Static Routes"
-msgstr "Rutas estatiques"
+msgstr "Rutes estàtiques"
 
 #: network/nav.py:6 templates/menubar.html:12
 msgid "Network"
@@ -1139,54 +1138,51 @@ msgstr "Xarxa"
 
 #: network/nav.py:14 templates/network/index.html:28
 msgid "Network Summary"
-msgstr "Sumari de xarxa"
+msgstr "Resum de la xarxa"
 
 #: network/nav.py:41
 msgid "Create Link Aggregation"
-msgstr "Crear Link Aggregation"
+msgstr "Crea una agregació d'enllaços"
 
 #: network/nav.py:50
-#, fuzzy
 msgid "View Link Aggregations"
-msgstr "Veure totes les Link Aggregations"
+msgstr "Mostra totes les agregacions d'enllaços"
 
 #~ msgid "LAGG successfully added"
 #~ msgstr "LAGG afegit amb èxit"
 
 #: plugins/forms.py:55
-#, fuzzy
 msgid "This IP is already in use."
-msgstr "Un grup amb aquest gid ja existeix"
+msgstr "Aquesta IP ja s'usa."
 
 #: plugins/forms.py:92
 msgid "Place to temporarily place PBI file"
-msgstr "Col.loca a un lloc temporal el fitxer de firmware"
+msgstr "Col·loca en un lloc temporal el fitxer PBI"
 
 #: plugins/forms.py:93
 msgid ""
 "The system will use this place to temporarily store the PBI file before it's "
 "installed."
 msgstr ""
-"El sistema utilitzara aquesta localització per emmagatzemar temporalment el "
-"fitxer del firmware abans de que s'apliqui."
+"El sistema usarà aquesta ubicació per emmagatzemar temporalment el fitxer "
+"PBI abans que s'instal·li."
 
 #: plugins/forms.py:119
-#, fuzzy
 msgid "PBI file to be installed"
-msgstr "nova imatge per ser instal·lada"
+msgstr "Fitxer PBI per instal·lar"
 
 #: plugins/forms.py:173
 msgid "You must turn off Plugins service before proceeding"
-msgstr ""
+msgstr "Heu d'aturar el servei de connectors abans de continuar"
 
 #: plugins/forms.py:183
 #, python-format
 msgid "The path %s already exists"
-msgstr "Un grup amb aquest gid ja existeix"
+msgstr "El camí %s ja existeix."
 
 #: plugins/forms.py:189
 msgid "The full jail path cannot exceed 76 characters"
-msgstr ""
+msgstr "El camí complet de la gàbia no pot excedir els 76 caràcters."
 
 #: plugins/forms.py:200
 msgid "The plugins jail path cannot be a subset of the plugins archive path."
