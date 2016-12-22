@@ -12,7 +12,6 @@ class Rollbar(object):
     def __init__(self):
         self.sentinel_file_path = '/data/.rollbar_disabled'
         self.logger = Logger('rollbar')
-        self.logger.configure_logging('console')
         rollbar.init(
             'caf06383cba14d5893c4f4d0a40c33a9',
             'production' if 'DEVELOPER_MODE' not in os.environ else 'development'
