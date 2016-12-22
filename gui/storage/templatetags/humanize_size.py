@@ -24,11 +24,15 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
+import logging
+
 from django import template
 
 from freenasUI.common import humanize_size
 
 register = template.Library()
+
+log = logging.getLogger('storage.templatetags')
 
 
 @register.filter('humanize_size')

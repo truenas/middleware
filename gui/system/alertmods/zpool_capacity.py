@@ -1,12 +1,12 @@
+import logging
 import subprocess
-import middlewared.logger
 
 from django.utils.translation import ugettext as _
 
 from freenasUI.system.alert import alertPlugins, Alert, BaseAlert
 from freenasUI.storage.models import Volume
 
-log = middlewared.logger.Logger('system.alertmods.zpool_capacity')
+log = logging.getLogger('system.alertmods.zpool_capacity')
 
 
 class ZpoolCapAlert(BaseAlert):

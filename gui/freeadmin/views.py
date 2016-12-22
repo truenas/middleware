@@ -25,8 +25,9 @@
 #####################################################################
 
 import json
+import logging
 import sys
-import middlewared.logger
+import middlewared.logger as logger
 
 from django.http import HttpResponse, HttpResponseRedirect
 from django.views import debug
@@ -36,7 +37,7 @@ from django.template.loader import get_template, render_to_string
 from freenasUI.common.system import get_sw_version
 from freenasUI.system.models import Advanced
 
-log = middlewared.logger.Logger('freeadmin.views')
+log = logging.getLogger('freeadmin.views')
 
 
 class JsonResp(HttpResponse):

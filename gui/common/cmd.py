@@ -24,9 +24,9 @@
 #
 # $FreeBSD$
 #####################################################################
-import middlewared.logger
+import logging
 
-log = middlewared.logger.Logger('common.cmd')
+log = logging.getLogger('common.cmd')
 
 
 class cmd_arg(object):

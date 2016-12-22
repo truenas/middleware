@@ -25,9 +25,9 @@
 #
 #####################################################################
 import base64
+import logging
 import re
 import urllib
-import middlewared.logger
 
 from django.contrib.auth import authenticate
 from django.db.models import FieldDoesNotExist
@@ -52,7 +52,7 @@ from tastypie.paginator import Paginator
 from tastypie.resources import DeclarativeMetaclass, ModelResource, Resource
 
 RE_SORT = re.compile(r'^sort\((.*)\)$')
-log = middlewared.logger.Logger('api.utils')
+log = logging.getLogger('api.utils')
 
 
 class DjangoAuthentication(Authentication):

@@ -23,14 +23,14 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
-import middlewared.logger
+import logging
 
 from freenasUI.common.acl import (
     Base_ACL_Exception, Base_ACL_pipe, Base_ACL_getfacl, Base_ACL_setfacl,
     Base_ACL_Hierarchy, Base_ACL_Entry, Base_ACL
 )
 
-log = middlewared.logger.Logger('commnon.freenasufs')
+log = logging.getLogger('commnon.freenasufs')
 
 
 #

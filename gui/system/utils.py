@@ -24,10 +24,10 @@
 #
 #####################################################################
 import json
+import logging
 import os
 import tarfile
 import signal
-import middlewared.logger
 
 from uuid import uuid4
 
@@ -39,7 +39,7 @@ from freenasOS import Update
 from freenasUI.common import humanize_size
 from freenasUI.common.pipesubr import pipeopen
 
-log = middlewared.logger.Logger('system.utils')
+log = logging.getLogger('system.utils')
 
 UPDATE_APPLIED_SENTINEL = '/tmp/.updateapplied'
 

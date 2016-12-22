@@ -25,7 +25,7 @@
 #
 #####################################################################
 
-import middlewared.logger
+import logging
 
 from dojango import forms
 from django.utils.translation import ugettext_lazy as _
@@ -36,7 +36,7 @@ from freenasUI.system.models import Settings
 
 from . import plugin, utils
 
-log = middlewared.logger.Logger('vcp.forms')
+log = logging.getLogger('vcp.forms')
 
 
 class VcenterConfigurationForm(ModelForm):

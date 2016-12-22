@@ -1,10 +1,10 @@
-import middlewared.logger
+import logging
 
 from django.test.client import Client
 
 from tastypie.test import ResourceTestCase, TestApiClient
 
-log = middlewared.logger.Logger('api.tests.utils')
+log = logging.getLogger('api.tests.utils')
 
 
 class BasicClient(Client):

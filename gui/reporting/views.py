@@ -23,8 +23,8 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
+import logging
 import os
-import middlewared.logger
 
 from django.http import HttpResponse
 from django.shortcuts import render
@@ -34,7 +34,7 @@ from freenasUI.reporting import rrd
 
 RRD_BASE_PATH = "/var/db/collectd/rrd/localhost"
 
-log = middlewared.logger.Logger('reporting.views')
+log = logging.getLogger('reporting.views')
 
 
 def _get_rrd_path():

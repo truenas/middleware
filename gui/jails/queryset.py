@@ -23,13 +23,13 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
-import middlewared.logger
+import logging
 
 from django.db.models.query import QuerySet
 
 from freenasUI.common.warden import Warden
 
-log = middlewared.logger.Logger('jails.queryset')
+log = logging.getLogger('jails.queryset')
 
 
 #

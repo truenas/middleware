@@ -25,7 +25,7 @@
 #
 #####################################################################
 import json
-import middlewared.logger
+import logging
 
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse, HttpResponseRedirect
@@ -56,7 +56,7 @@ from freenasUI.common.system import get_sw_login_version, get_sw_name
 from freenasUI.freeadmin.apppool import appPool
 from freenasUI.freeadmin.views import JsonResp
 
-log = middlewared.logger.Logger('account.views')
+log = logging.getLogger('account.views')
 
 
 def home(request):

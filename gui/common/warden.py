@@ -24,13 +24,13 @@
 #
 # $FreeBSD$
 #####################################################################
+import logging
 import os
 import string
-import middlewared.logger
 
 from django.core.cache import cache
 
-log = middlewared.logger.Logger('common.warden')
+log = logging.getLogger('common.warden')
 
 #
 # Python bindings for the PC-BSD warden

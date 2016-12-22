@@ -23,11 +23,11 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
-import middlewared.logger
+import logging
 
 from freenasUI.common.acl import *
 
-log = middlewared.logger.Logger('common.freenasnfsv4')
+log = logging.getLogger('common.freenasnfsv4')
 
 
 #

@@ -1,4 +1,4 @@
-import middlewared.logger
+import logging
 
 from collections import OrderedDict
 
@@ -15,7 +15,7 @@ from freenasUI.freeadmin.options import BaseFreeAdmin
 from freenasUI.freeadmin.site import site
 from freenasUI.system import models
 
-log = middlewared.logger.Logger('system.admin')
+log = logging.getLogger('system.admin')
 
 
 class BootStatusFAdmin(BaseFreeAdmin):

@@ -26,7 +26,7 @@
 
 import os
 import cPickle as pickle
-import middlewared.logger
+import logging
 
 from bsddb3 import db
 from freenasUI.common.system import (
@@ -38,7 +38,7 @@ from freenasUI.common.system import (
     nis_enabled
 )
 
-log = middlewared.logger.Logger('common.frenascache')
+log = logging.getLogger('common.frenascache')
 
 FREENAS_CACHEDIR = get_freenas_var("FREENAS_CACHEDIR", "/var/tmp/.cache")
 FREENAS_CACHEEXPIRE = int(get_freenas_var("FREENAS_CACHEEXPIRE", 60))

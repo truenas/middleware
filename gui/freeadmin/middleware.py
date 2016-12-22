@@ -26,10 +26,10 @@
 from cStringIO import StringIO
 
 import json
+import logging
 import re
 import sys
 import cProfile
-import middlewared.logger
 
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
@@ -47,7 +47,7 @@ from freenasUI.services.exceptions import ServiceFailed
 from freenasUI.services.models import RPCToken
 from freenasUI.system.models import Settings
 
-log = middlewared.logger.Logger('freeadmin.middleware')
+log = logging.getLogger('freeadmin.middleware')
 
 COMMENT_SYNTAX = (
     (re.compile(r'^application/(.*\+)?xml|text/html$', re.I), '<!--', '-->'),

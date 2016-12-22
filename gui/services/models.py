@@ -27,9 +27,9 @@
 import base64
 import hashlib
 import hmac
+import logging
 import subprocess
 import uuid
-import middlewared.logger
 
 from django.db import models
 from django.db.models import Q
@@ -51,7 +51,7 @@ from freenasUI.services.exceptions import ServiceFailed
 from freenasUI.storage.models import Disk
 from freenasUI.system.models import Certificate
 
-log = middlewared.logger.Logger('services.forms')
+log = logging.getLogger("services.forms")
 
 
 class services(Model):

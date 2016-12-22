@@ -24,8 +24,8 @@
 #
 #####################################################################
 import json
+import logging
 import re
-import middlewared.logger
 
 from django.utils.translation import ugettext as _
 
@@ -33,7 +33,7 @@ from freenasUI.middleware.notifier import notifier
 
 from ipaddr import IPv6Address
 
-log = middlewared.logger.Logger('plugins.utils')
+log = logging.getLogger('plugins.utils')
 
 
 def get_base_url(request=None):

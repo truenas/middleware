@@ -25,10 +25,10 @@
 # SUCH DAMAGE.
 #
 
+import logging
 import os
 import socket
 import sys
-import middlewared.logger
 
 sys.path.extend([
     '/usr/local/lib',
@@ -50,7 +50,7 @@ from freenasUI.middleware.notifier import notifier
 from freenasUI.system.models import Update as mUpdate
 from middlewared.plugins.update import get_changelog
 
-log = middlewared.logger.Logger('tools.update_check')
+log = logging.getLogger('tools.update_check')
 
 
 def main():

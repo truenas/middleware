@@ -1,7 +1,7 @@
+import logging
 import os
 import platform
 import time
-import middlewared.logger
 
 from django.utils.translation import ugettext as _
 
@@ -22,7 +22,7 @@ from freenasUI.middleware.notifier import notifier
 from freenasUI.middleware.zfs import list_datasets
 from freenasUI.storage.models import Volume
 
-log = middlewared.logger.Logger('jails.utils')
+log = logging.getLogger('jails.utils')
 
 JAILS_INDEX = "http://download.freenas.org"
 EXTRACT_TARBALL_STATUS_FILE = "/var/tmp/status"

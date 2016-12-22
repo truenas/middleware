@@ -1,10 +1,10 @@
 from __future__ import unicode_literals
 
+import logging
 import os
 import socket
 import threading
 import xmlrpclib
-import middlewared.logger
 
 from django.db.backends.sqlite3 import base as sqlite3base
 from lockfile import LockFile, LockTimeout
@@ -16,8 +16,7 @@ DatabaseError = sqlite3base.DatabaseError
 IntegrityError = sqlite3base.IntegrityError
 
 execute_sync = False
-
-log = middlewared.logger.Logger('freeadmin.sqlite3_ha')
+log = logging.getLogger('freeadmin.sqlite3_ha')
 
 
 """

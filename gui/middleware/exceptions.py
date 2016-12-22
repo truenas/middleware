@@ -23,9 +23,9 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-import middlewared.logger
+import logging
 
-log = middlewared.logger.Logger('middleware.exceptions')
+log = logging.getLogger('middleware.exceptions')
 
 
 class MiddlewareError(Exception):

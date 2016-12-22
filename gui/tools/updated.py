@@ -28,9 +28,10 @@
 
 import argparse
 import fcntl
+import logging
+import logging.config
 import os
 import sys
-import middlewared.logger
 
 from setproctitle import setproctitle
 import daemon
@@ -46,7 +47,8 @@ os.environ['DJANGO_SETTINGS_MODULE'] = 'freenasUI.settings'
 
 from freenasUI.settings import LOGGING
 
-log = middlewared.logger.Logger('tools.updated')
+log = logging.getLogger('tools.updated')
+logging.config.dictConfig(LOGGING)
 
 from freenasOS import Update, Manifest
 from freenasOS.Exceptions import ManifestInvalidSignature

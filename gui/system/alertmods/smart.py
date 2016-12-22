@@ -1,9 +1,9 @@
-import middlewared.logger
+import logging
 
 from freenasUI.services.utils import SmartAlert
 from freenasUI.system.alert import alertPlugins, Alert, BaseAlert
 
-log = middlewared.logger.Logger('system.alertmods.smart')
+log = logging.getLogger('system.alertmods.smart')
 
 
 class SMARTAlert(BaseAlert):

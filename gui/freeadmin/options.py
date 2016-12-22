@@ -26,8 +26,8 @@
 from collections import OrderedDict
 from functools import update_wrapper
 import json
+import logging
 import urllib
-import middlewared.logger
 
 from django import forms as dforms
 from django.conf.urls import patterns, url
@@ -47,7 +47,7 @@ from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.services.exceptions import ServiceFailed
 from tastypie.validation import FormValidation
 
-log = middlewared.logger.Logger('freeadmin.options')
+log = logging.getLogger('freeadmin.options')
 
 
 class FreeBaseInlineFormSet(BaseInlineFormSet):

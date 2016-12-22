@@ -1,9 +1,9 @@
 import glob
 import json
+import logging
 import os
 import pwd
 import subprocess
-import middlewared.logger
 
 from django.utils.translation import ugettext_lazy as _
 
@@ -18,7 +18,7 @@ from freenasUI.tasks import models
 
 from .widgets import CloudSyncWidget
 
-log = middlewared.logger.Logger('account.forms')
+log = logging.getLogger('tasks.forms')
 
 
 class CloudSyncForm(ModelForm):

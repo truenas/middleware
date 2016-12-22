@@ -2,10 +2,10 @@ from functools import update_wrapper
 
 import hashlib
 import json
+import logging
 import re
 import sys
 import middlewared.logger as logger
-import middlewared.logger
 
 from django.conf.urls import patterns, url, include
 from django.core.urlresolvers import reverse
@@ -20,7 +20,7 @@ from freenasUI.freeadmin.apppool import appPool
 from freenasUI.freeadmin.options import BaseFreeAdmin
 
 RE_ALERT = re.compile(r'^(?P<status>\w+)\[(?P<msgid>.+?)\]: (?P<message>.+)')
-log = middlewared.logger.Logger('freeadmin.site')
+log = logging.getLogger('freeadmin.site')
 
 
 class NotRegistered(Exception):

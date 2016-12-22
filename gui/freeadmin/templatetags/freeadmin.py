@@ -24,8 +24,8 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
+import logging
 import re
-import middlewared.logger
 
 from django import template
 from django.forms.forms import BoundField
@@ -36,7 +36,7 @@ from freenasUI.system.models import Advanced
 
 register = template.Library()
 
-log = middlewared.logger.Logger('freeadmin.templatetags')
+log = logging.getLogger('freeadmin.templatetags')
 
 
 class FormRender(template.Node):

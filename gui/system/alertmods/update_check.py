@@ -1,7 +1,6 @@
 import os
 import json
-import middlewared.logger
-
+import logging
 from django.utils.translation import ugettext as _
 from freenasOS.Update import PendingUpdates
 from freenasUI.middleware.notifier import notifier
@@ -11,7 +10,7 @@ from freenasUI.system.utils import is_update_applied
 
 UPDATE_APPLIED_SENTINEL = '/tmp/.updateapplied'
 
-log = middlewared.logger.Logger('update_check_alertmod')
+log = logging.getLogger('update_check_alertmod')
 
 
 class UpdateCheckAlert(BaseAlert):

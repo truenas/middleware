@@ -1,6 +1,6 @@
-import middlewared.logger
+import logging
 
-log = middlewared.logger.Logger('freeadmin.apppool')
+log = logging.getLogger('freeadmin.apppool')
 
 
 class AppPool(object):

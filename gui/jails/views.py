@@ -24,10 +24,10 @@
 #
 #####################################################################
 import json
+import logging
 import os
 import string
 import time
-import middlewared.logger
 
 from django.core.servers.basehttp import FileWrapper
 from django.http import HttpResponse
@@ -45,7 +45,7 @@ from freenasUI.common.warden import (
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier
 
-log = middlewared.logger.Logger('jails.views')
+log = logging.getLogger("jails.views")
 
 
 def jails_home(request):

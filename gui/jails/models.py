@@ -25,9 +25,9 @@
 #
 #####################################################################
 import glob
+import logging
 import os
 import re
-import middlewared.logger
 
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
@@ -49,7 +49,7 @@ from freenasUI.jails.queryset import JailsQuerySet
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier
 
-log = middlewared.logger.Logger('jails.models')
+log = logging.getLogger('jails.models')
 
 
 class JailsManager(models.Manager):

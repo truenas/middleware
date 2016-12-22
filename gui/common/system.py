@@ -25,6 +25,7 @@
 #
 #####################################################################
 import glob
+import logging
 import os
 import base64
 import pickle
@@ -34,8 +35,6 @@ import smtplib
 import sqlite3
 import subprocess
 import syslog
-import middlewared.logger
-
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.Utils import formatdate
@@ -49,8 +48,7 @@ RE_MOUNT = re.compile(
 )
 VERSION_FILE = '/etc/version'
 _VERSION = None
-
-log = middlewared.logger.Logger('common.system')
+log = logging.getLogger("common.system")
 
 
 def get_sw_version(strip_build_num=False):

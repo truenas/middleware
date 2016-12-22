@@ -24,11 +24,11 @@
 #
 #####################################################################
 from struct import pack
+import logging
 import os
 import re
 import socket
 import urllib2
-import middlewared.logger
 
 from django.core.validators import RegexValidator
 from django.db import transaction
@@ -48,7 +48,7 @@ from ipaddr import (
     IPNetwork,
 )
 
-log = middlewared.logger.Logger('network.forms')
+log = logging.getLogger('network.forms')
 SW_NAME = get_sw_name()
 
 

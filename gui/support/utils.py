@@ -1,16 +1,15 @@
 import json
+import logging
 import os
 import requests
 import simplejson
-import middlewared.logger
 
 from django.utils.translation import ugettext as _
 
 from licenselib.license import Features, License
 from freenasUI.common.system import get_sw_name
 
-log = middlewared.logger.Logger('support.utils')
-
+log = logging.getLogger('support.utils')
 ADDRESS = 'support-proxy.ixsystems.com'
 LICENSE_FILE = '/data/license'
 

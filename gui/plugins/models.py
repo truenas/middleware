@@ -24,9 +24,9 @@
 #
 #####################################################################
 import os
+import logging
 import platform
 import requests
-import middlewared.logger
 
 from django.db import models, transaction
 from django.utils.translation import ugettext_lazy as _
@@ -38,7 +38,7 @@ from freenasUI.jails.models import Jails, JailsConfiguration
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier
 
-log = middlewared.logger.Logger('plugins.models')
+log = logging.getLogger('plugins.models')
 
 
 class Plugins(Model):

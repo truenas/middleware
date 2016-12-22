@@ -25,13 +25,13 @@
 #####################################################################
 import base64
 import json
+import logging
 import os
 import re
 import subprocess
 import urllib
 import signal
 import sysctl
-import middlewared.logger
 
 from django.conf.urls import url
 from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
@@ -112,7 +112,7 @@ from tastypie.exceptions import ImmediateHttpResponse, NotFound
 from tastypie.utils import trailing_slash
 from tastypie.validation import FormValidation
 
-log = middlewared.logger.Logger('api.resources')
+log = logging.getLogger('api.resources')
 
 
 def _common_human_fields(bundle):

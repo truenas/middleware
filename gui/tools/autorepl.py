@@ -26,11 +26,11 @@
 
 import cPickle
 import datetime
+import logging
 import os
 import re
 import subprocess
 import sys
-import middlewared.logger
 
 sys.path.extend([
     '/usr/local/www',
@@ -164,7 +164,7 @@ def sendzfs(fromsnap, tosnap, dataset, localfs, remotefs, followdelete, throttle
         )
     return ("Succeeded" in msg or "failed to create mountpoint" in msg)
 
-log = middlewared.logger.Logger('tools.autorepl')
+log = logging.getLogger('tools.autorepl')
 
 # Set to True if verbose log desired
 debug = False

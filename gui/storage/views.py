@@ -25,6 +25,7 @@
 #####################################################################
 from collections import OrderedDict
 import json
+import logging
 import os
 import re
 import signal
@@ -33,7 +34,6 @@ import subprocess
 import traceback
 import sys
 import urllib
-import middlewared.logger
 from time import sleep
 
 from django.core.servers.basehttp import FileWrapper
@@ -58,7 +58,7 @@ from freenasUI.services.models import iSCSITargetExtent
 from freenasUI.storage import forms, models
 import socket
 
-log = middlewared.logger.Logger('storage.views')
+log = logging.getLogger('storage.views')
 
 
 # FIXME: Move to a utils module

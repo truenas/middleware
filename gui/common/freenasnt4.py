@@ -24,14 +24,14 @@
 #
 #####################################################################
 import grp
+import logging
 import os
 import pwd
-import middlewared.logger
 
 from freenasUI.common.freenascache import *
 from freenasUI.common.cmd import cmd_pipe
 
-log = middlewared.logger.Logger('common.freenasnt4')
+log = logging.getLogger('common.freenasnt4')
 
 WBINFO = "/usr/local/bin/wbinfo"
 FREENAS_NT4_SEPARATOR = '\\'

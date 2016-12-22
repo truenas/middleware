@@ -1,11 +1,11 @@
 import cPickle as pickle
+import logging
 import os
-import middlewared.logger
 
 from freenasUI.system.alert import alertPlugins, Alert, BaseAlert
 from lockfile import LockFile, LockTimeout
 
-log = middlewared.logger.Logger('system.alertmods.collectd')
+log = logging.getLogger('system.alertmods.collectd')
 
 COLLECTD_FILE = '/tmp/.collectdalert'
 

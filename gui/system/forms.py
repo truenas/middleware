@@ -29,12 +29,12 @@ from collections import defaultdict, OrderedDict
 from datetime import datetime
 import cPickle as pickle
 import json
+import logging
 import math
 import os
 import re
 import stat
 import subprocess
-import middlewared.logger
 
 from OpenSSL import crypto
 
@@ -113,8 +113,7 @@ from freenasUI.system.utils import manual_update
 from freenasUI.tasks.models import SMARTTest
 from common.ssl import CERT_CHAIN_REGEX
 
-log = middlewared.logger.Logger('system.forms')
-
+log = logging.getLogger('system.forms')
 WIZARD_PROGRESSFILE = '/tmp/.initialwizard_progress'
 
 

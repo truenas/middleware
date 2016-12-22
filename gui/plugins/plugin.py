@@ -1,10 +1,10 @@
 import hashlib
+import logging
 import os
 import platform
 import requests
 import re
 import urllib2
-import middlewared.logger
 
 from django.utils.translation import ugettext as _
 
@@ -21,8 +21,7 @@ PLUGINS_META = '%s/pbi-meta' % PLUGINS_INDEX
 PLUGINS_REPO = '%s/pbi-repo.rpo' % PLUGINS_META
 
 PROGRESS_FILE = "/tmp/.plugininstall_progess"
-
-log = middlewared.logger.Logger('plugins.plugin')
+log = logging.getLogger("plugins.plugin")
 
 
 class Plugin(object):

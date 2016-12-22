@@ -27,6 +27,7 @@ import asyncore
 import grp
 import ldap
 import ldap.sasl
+import logging
 import os
 import pwd
 import socket
@@ -35,7 +36,6 @@ import tempfile
 import time
 import types
 import ipaddr
-import middlewared.logger
 
 from dns import resolver
 from ldap.controls import SimplePagedResultsControl
@@ -66,7 +66,7 @@ from freenasUI.common.freenascache import (
     FLAGS_CACHE_WRITE_GROUP
 )
 
-log = middlewared.logger.Logger('common.freenasldap')
+log = logging.getLogger('common.freenasldap')
 
 FREENAS_LDAP_NOSSL = " off"
 FREENAS_LDAP_USESSL = "on"
