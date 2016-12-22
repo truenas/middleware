@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:05-0700\n"
-"PO-Revision-Date: 2016-12-21 12:51+0000\n"
+"PO-Revision-Date: 2016-12-22 13:23+0000\n"
 "Last-Translator: Burak <hitowerdigit@hotmail.com>\n"
 "Language-Team: Turkish "
 "<http://weblate.trueos.org/projects/freenas/django/tr/>\n"
@@ -9569,7 +9569,7 @@ msgstr ""
 
 #: network/admin.py:63
 msgid "Network connectivity will be interrupted"
-msgstr ""
+msgstr "Ağ bağlanabilirliği yarıda kesilecektir"
 
 #: services/models.py:117
 msgid "Domain logons"
@@ -9577,7 +9577,7 @@ msgstr "Etki alanı oturum açma bilgileri"
 
 #: network/admin.py:66
 msgid "Network connectivity will be interrupted. Do you want to proceed?"
-msgstr "Ağ bağlanabilirliği kesilecektir. Devam etmek istiyor musunuz?"
+msgstr "Ağ bağlanabilirliği yarıda kesilecektir. Devam etmek istiyor musunuz?"
 
 #: services/admin.py:67
 msgid "Enabling experimental target requires a reboot. Do you want to proceed?"
@@ -10151,19 +10151,19 @@ msgstr "Otomatik"
 
 #: system/forms.py:1227
 msgid "VMWare (RAID 10: Good Reliability, Good Performance)"
-msgstr ""
+msgstr "VMWare (RAID 10: İyi Güvenilirlik, İyi Performans)"
 
 #: system/forms.py:1231
 msgid "Backups (RAID Z2: Best Reliability, Less Storage)"
-msgstr ""
+msgstr "Yedeklemeler (RAID Z2: En İyi Güvenilirlik, Az Depolama)"
 
 #: system/forms.py:1235
 msgid "Media (RAID Z1: Less Reliability, More Storage)"
-msgstr ""
+msgstr "Ortam (RAID Z1: Az Güvenilirlik, Daha Fazla Depolama)"
 
 #: system/forms.py:1239
 msgid "Logs (RAID 0: No Reliability, Max Performance / Storage)"
-msgstr ""
+msgstr "Günlükler (RAID 0: Güvenilirlik Yok, En Fazla Performans / Depolama)"
 
 #: system/forms.py:1441
 msgid "No available disks have been found."
@@ -10881,7 +10881,7 @@ msgstr "Mevcut güncellemeler yok"
 #: templates/system/upgrade_edit.html:7
 #: templates/system/upgrade_edit.html:9
 msgid "Check for Updates"
-msgstr ""
+msgstr "Güncellemeleri Kontrol Et"
 
 #: templates/system/certificate_datagrid.html:4
 msgid "Import Certificate"
@@ -11006,7 +11006,7 @@ msgstr ""
 
 #: system/forms.py:1889
 msgid "Trains"
-msgstr ""
+msgstr "Çalışmalar"
 
 #: storage/admin.py:375
 msgid "Edit zvol"
@@ -11175,7 +11175,7 @@ msgstr "Şu Anki Çalışma"
 
 #: system/forms.py:1930
 msgid "Train"
-msgstr ""
+msgstr "Çalışma"
 
 #: system/forms.py:1993
 #: system/forms.py:2378
@@ -11229,7 +11229,7 @@ msgstr "Aşağıdaki paketler değiştirilecektir:"
 
 #: templates/system/update_select.html:13
 msgid "Choose which train you would like to check for updates"
-msgstr ""
+msgstr "Hangi çalışmanın güncellemelerini kontrol etmek istiyorsanız seçin"
 
 #: templates/system/update_select.html:20
 msgid "Check For Update"
@@ -11372,7 +11372,8 @@ msgstr "Ortam (RAID Z1: Orta Güvenilirlik, İyi Performans, Daha Fazla Depolama
 
 #: system/forms.py:1626
 msgid "Logs (RAID 0: No Reliability, Best Performance, Maximum Storage)"
-msgstr "Günlükler (RAID 0: Güvenilirlik Yok, İyi Performans, En Fazla Depolama)"
+msgstr ""
+"Günlükler (RAID 0: Güvenilirlik Yok, En İyi Performans, En Fazla Depolama)"
 
 #: system/forms.py:2752
 msgid "Datastore not found in the server."
@@ -11599,6 +11600,8 @@ msgid ""
 "Are you sure you want to continue? The system will be rebooted after updates "
 "are applied."
 msgstr ""
+"Devam etmek istediğinize emin misiniz? Güncellemeler uygulandıktan sonra "
+"sistem yeniden başlatılacaktır."
 
 #: templates/system/update_check.html:32
 msgid "The system will reboot"
@@ -11921,11 +11924,11 @@ msgstr "iSCSI Grupları"
 
 #: services/models.py:960
 msgid "Fiber Channel Target"
-msgstr ""
+msgstr "Fiber Kanal Hedefi"
 
 #: services/models.py:961
 msgid "Fiber Channel Targets"
-msgstr ""
+msgstr "Fiber Kanal Hedefleri"
 
 #: services/models.py:978
 msgid ""
@@ -12300,11 +12303,11 @@ msgstr "%s lisansı çözülemiyor"
 
 #: system/alertmods/license_expired.py:31
 msgid "Your %s license has expired"
-msgstr ""
+msgstr "%s lisansınızın süresi doldu"
 
 #: system/alertmods/license_expired.py:36
 msgid "Your %(sw_name)s license is going to expire in %(date)s"
-msgstr ""
+msgstr "%(sw_name)s lisansınızın süresi %(date)s içinde dolacak"
 
 #: system/alertmods/upgrade_failed.py:19
 msgid "Update failed. Check /data/update.failed for further details."
@@ -12362,7 +12365,7 @@ msgstr "ZFS"
 
 #: templates/services/iscsi.html:45
 msgid "Fiber Channel Ports"
-msgstr ""
+msgstr "Fiber Kanal Bağlantı Noktaları"
 
 #: templates/sharing/index.html:27
 msgid "Block"
@@ -12530,6 +12533,10 @@ msgid ""
 "Changelog:\n"
 "%(changelog)s\n"
 msgstr ""
+"%(train)s çalışması için yeni bir güncelleme mevcut.\n"
+"\n"
+"Değişiklikler:\n"
+"%(changelog)s\n"
 
 #: account/models.py:151
 msgid "This disables all forms of password login, including for sharing."
@@ -12638,6 +12645,8 @@ msgid ""
 "Firmware version %(fwversion)s does not match driver version %(drversion)s "
 "for /dev/mpr%(mpr)s"
 msgstr ""
+"/dev/mpr%(mpr)s için donanım yazılımı sürümü %(fwversion)s sürücü sürümü "
+"%(drversion)s ile eşleşmiyor"
 
 #: network/forms.py:320
 #: network/forms.py:324
@@ -12691,7 +12700,7 @@ msgstr " TrueNAS Yönetim IP Adresi"
 
 #: vcp/models.py:49
 msgid " vCenter Hostname/IP Address"
-msgstr " vCenter Anamakine Adı/IP Adresi"
+msgstr " vCenter Anamakine adı/IP Adresi"
 
 #: vcp/models.py:55
 msgid " vCenter Port"
@@ -12699,7 +12708,7 @@ msgstr " vCenter Bağlantı Noktası"
 
 #: vcp/models.py:60
 msgid " vCenter User name"
-msgstr " vCenter Kullanıcı Adı"
+msgstr " vCenter Kullanıcı adı"
 
 #: vcp/models.py:67
 msgid " vCenter Password"
@@ -12707,12 +12716,12 @@ msgstr " vCenter Parolası"
 
 #: vcp/models.py:74
 msgid "version"
-msgstr "sürümü"
+msgstr "sürüm"
 
 #: vcp/models.py:78
 #: vcp/models.py:79
 msgid "VCenter Configuration"
-msgstr "vCenter Yapılandırması"
+msgstr "VCenter Yapılandırması"
 
 #: vcp/nav.py:44
 msgid "vCenter Plugin Configuration"
@@ -12720,15 +12729,15 @@ msgstr "vCenter Eklenti Yapılandırması"
 
 #: vcp/views.py:53
 msgid "vCenter plugin installed successfully."
-msgstr ""
+msgstr "vCenter eklentisi başarılı olarak yüklendi."
 
 #: vcp/views.py:75
 msgid "vCenter plugin upgraded successfully."
-msgstr ""
+msgstr "vCenter eklentisi başarılı olarak yükseltildi."
 
 #: vcp/views.py:84
 msgid "vCenter plugin uninstalled successfully."
-msgstr ""
+msgstr "vCenter eklentisi başarılı olarak kaldırıldı."
 
 #: network/forms.py:280
 msgid "One interface must be marked critical for failover."
@@ -12788,7 +12797,7 @@ msgstr "Yükseltme gerekmez"
 
 #: vcp/views.py:126
 msgid "vCenter plugin is repaired successfully"
-msgstr ""
+msgstr "vCenter eklentisi başarılı olarak onarıldı"
 
 #: vcp/models.py:61
 msgid "An integer from 1 - 65535, generally will be 443"
@@ -12816,7 +12825,7 @@ msgstr ""
 
 #: templates/vcp/index.html:28
 msgid "Enable Vcenter Plugin over https:"
-msgstr ""
+msgstr "Https üzerinde vCenter Eklentisini etkinleştir:"
 
 #: templates/vcp/index.html:41
 msgid "Edit vCenter Auxiliary Settings"
@@ -12824,7 +12833,7 @@ msgstr "vCenter Yardımcı Ayarlarını Düzenle"
 
 #: vcp/models.py:93
 msgid "Enable Vcenter Plugin over https"
-msgstr ""
+msgstr "Https üzerinde vCenter Eklentisini etkinleştir"
 
 #: vcp/models.py:97
 #: vcp/models.py:98
