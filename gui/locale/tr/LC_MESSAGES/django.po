@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:05-0700\n"
-"PO-Revision-Date: 2016-12-22 13:23+0000\n"
+"PO-Revision-Date: 2016-12-22 17:05+0000\n"
 "Last-Translator: Burak <hitowerdigit@hotmail.com>\n"
 "Language-Team: Turkish "
 "<http://weblate.trueos.org/projects/freenas/django/tr/>\n"
@@ -8948,7 +8948,7 @@ msgstr "Yedekle"
 
 #: middleware/notifier.py:3822
 msgid "Init"
-msgstr "Init"
+msgstr "İlk"
 
 #: middleware/notifier.py:3824
 msgid "No carrier"
@@ -11241,7 +11241,7 @@ msgstr "Sökme Başarısız Oldu (%(retcode)s) -> %(output)s"
 
 #: jails/forms.py:218
 msgid "Jail name cannot have '.'"
-msgstr "Kafes adı '.' karakterine sahip olamaz"
+msgstr "Kafes adında '.' olamaz"
 
 #: jails/forms.py:1070
 msgid "The path could not be umounted %(source)s: %(error)s"
@@ -11348,7 +11348,7 @@ msgstr ""
 #: storage/models.py:1098
 #: templates/storage/index.html:38
 msgid "VMWare-Snapshot"
-msgstr "VMWare-Anlık Durum Görüntüsü"
+msgstr "VMWare-Anlık Görüntüsü"
 
 #: system/forms.py:1610
 msgid "Automatic - Pick reasonable defaults for available drives"
