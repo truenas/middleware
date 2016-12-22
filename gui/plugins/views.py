@@ -645,10 +645,11 @@ def plugin_fcgi_client(request, name, oid, path):
     # Always use Ipv4 to talk to plugins
     try:
         host_ip = get_ipv4_addr()
-        env['SERVER_ADDR'] = host_ip
-        env['HTTP_HOST'] = host_ip
+        if host_ip:
+            env['SERVER_ADDR'] = host_ip
+            env['HTTP_HOST'] = host_ip
     except:
-        pass
+        log.debug('Failed to get default ipv4 for plugin comm', exc_info=True)
 
     args = request.POST if request.method == "POST" else request.GET
     try:
