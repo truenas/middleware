@@ -18,8 +18,6 @@ import gevent
 import imp
 import inspect
 import linecache
-import logging
-import logging.config
 import os
 import setproctitle
 import signal
@@ -39,7 +37,8 @@ class Application(WebSocketApplication):
         super(Application, self).__init__(*args, **kwargs)
         self.authenticated = self._check_permission()
         self.handshake = False
-        self.logger = logging.getLogger('application')
+        self.logger_name = logger.Logger('application')
+        self.logger = self.logger_name.getLogger()
         self.sessionid = str(uuid.uuid4())
         self.trace = logger.Rollbar()
 
@@ -102,7 +101,7 @@ class Application(WebSocketApplication):
                 _locals.update(arginfo.locals.items())
 
             except Exception:
-                self.logger.exception('Error while extracting arguments from frames.')
+                self.logger.critical('Error while extracting arguments from frames.', exc_info=True)
 
             if argspec:
                 cur_frame['argspec'] = argspec
@@ -159,7 +158,7 @@ class Application(WebSocketApplication):
             })
         except Exception as e:
             self.send_error(message, str(e), sys.exc_info())
-            self.middleware.logger.warn('Exception while calling {}(*{})'.format(message['method'], message.get('params')), exc_info=True)
+            self.logger.warn('Exception while calling {}(*{})'.format(message['method'], message.get('params')), exc_info=True)
 
             try:
                 sw_version = self.middleware.call('system.version')
@@ -261,7 +260,8 @@ class Application(WebSocketApplication):
 class Middleware(object):
 
     def __init__(self):
-        self.logger = logging.getLogger('middleware')
+        self.logger_name = logger.Logger('middlewared')
+        self.logger = self.logger_name.getLogger()
         self.__jobs = JobsQueue(self)
         self.__schemas = {}
         self.__services = {}
@@ -464,6 +464,10 @@ class Middleware(object):
 
 
 def main():
+    #  Logger
+    _logger = logger.Logger('middleware')
+    get_logger = _logger.getLogger()
+
     # Workaround for development
     modpath = os.path.realpath(os.path.join(
         os.path.dirname(os.path.realpath(__file__)),
@@ -500,57 +504,33 @@ def main():
                 pid = int(f.read().strip())
             os.kill(pid, 15)
 
-    try:
-        logging.config.dictConfig({
-            'version': 1,
-            'formatters': {
-                'simple': {
-                    'format': '[%(asctime)s %(filename)s:%(lineno)s] (%(levelname)s) %(message)s'
-                },
-            },
-            'handlers': {
-                'console': {
-                    'level': 'DEBUG',
-                    'class': 'logging.StreamHandler',
-                    'formatter': 'simple',
-                },
-                'file': {
-                    'level': 'DEBUG',
-                    'class': 'logging.handlers.RotatingFileHandler',
-                    'filename': '/var/log/middlewared.log',
-                    'formatter': 'simple',
-                }
-            },
-            'loggers': {
-                '': {
-                    'handlers': log_handlers,
-                    'level': args.debug_level,
-                    'propagate': True,
-                },
-            }
-        })
-
-        if not args.foreground:
-            daemonc = DaemonContext(
-                pidfile=TimeoutPIDLockFile(pidpath),
-                detach_process=True,
-                stdout=logging._handlers['file'].stream,
-                stderr=logging._handlers['file'].stream,
-                files_preserve=[logging._handlers['file'].stream],
+    if not args.foreground:
+        _logger.configure_logging('file')
+        daemonc = DaemonContext(
+            pidfile=TimeoutPIDLockFile(pidpath),
+            detach_process=True,
+            stdout=logger.LoggerStream(get_logger),
+            stderr=logger.LoggerStream(get_logger),
             )
-            daemonc.open()
-        elif 'file' in log_handlers:
-            sys.stdout = logging._handlers['file'].stream
-            sys.stderr = logging._handlers['file'].stream
+        daemonc.open()
+    elif 'file' in log_handlers:
+        _logger.configure_logging('file')
+        sys.stdout = logger.LoggerStream(get_logger)
+        sys.stderr = logger.LoggerStream(get_logger)
+    elif 'console' in log_handlers:
+        _logger.configure_logging('console')
+        sys.stdout = logger.LoggerStream(get_logger)
+        sys.stderr = logger.LoggerStream(get_logger)
+    else:
+        _logger.configure_logging('both')
 
-        setproctitle.setproctitle('middlewared')
-        # Workaround to tell django to not set up logging on its own
-        os.environ['MIDDLEWARED'] = str(os.getpid())
+    setproctitle.setproctitle('middlewared')
+    # Workaround to tell django to not set up logging on its own
+    os.environ['MIDDLEWARED'] = str(os.getpid())
 
-        Middleware().run()
-    finally:
-        if not args.foreground:
-            daemonc.close()
+    Middleware().run()
+    if not args.foreground:
+        daemonc.close()
 
 
 if __name__ == '__main__':
