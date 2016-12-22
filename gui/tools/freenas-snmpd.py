@@ -322,7 +322,6 @@ class zpoolioWorker(threading.Thread):
                 zpoolio_one = rv.copy()
                 zpoolio_all = previous_values.copy()
 
-
 if __name__ == '__main__':
 
     pidfile = PidFile(PIDFILE)

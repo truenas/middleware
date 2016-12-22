@@ -1,4 +1,4 @@
-# +
+#+
 # Copyright 2010 iXsystems, Inc.
 # All rights reserved
 #
@@ -29,9 +29,10 @@ import middlewared.logger
 from django.db import models
 from django.db.models.base import ModelBase
 
+from freenasUI.common.log import log_traceback
 from freenasUI.freeadmin.apppool import appPool
 
-# FIXME: Backward compatible
+#FIXME: Backward compatible
 from .fields import (
     DictField,
     UserField, GroupField, PathField, MACField, Network4Field, Network6Field

@@ -56,5 +56,4 @@ class ZpoolCapAlert(BaseAlert):
                 )
         return alerts
 
-
 alertPlugins.register(ZpoolCapAlert)

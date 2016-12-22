@@ -36,5 +36,4 @@ class SSLAlert(BaseAlert):
             ) % {'CA_name': CA_name.split('_', 2)[-1]}))
         return alerts
 
-
 alertPlugins.register(SSLAlert)

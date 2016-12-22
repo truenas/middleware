@@ -69,7 +69,6 @@ def mapfromdata(input):
             m[dataset] = [(snapname, timestamp)]
     return m
 
-
 #
 # Return a pair of compression and decompress pipe commands
 #
@@ -165,7 +164,6 @@ def sendzfs(fromsnap, tosnap, dataset, localfs, remotefs, followdelete, throttle
         )
     return ("Succeeded" in msg or "failed to create mountpoint" in msg)
 
-
 log = middlewared.logger.Logger('tools.autorepl')
 
 # Set to True if verbose log desired
@@ -185,7 +183,6 @@ def exit_if_running(pid):
         sys.exit(0)
     except OSError:
         log.debug("Process %d gone" % (pid, ))
-
 
 appPool.hook_tool_run('autorepl')
 

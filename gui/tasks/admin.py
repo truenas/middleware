@@ -191,7 +191,6 @@ class SMARTTestFAdmin(BaseFreeAdmin):
             columns.insert(3 + idx, dict(column))
         return columns
 
-
 site.register(models.CloudSync, CloudSyncFAdmin)
 site.register(models.CronJob, CronJobFAdmin)
 site.register(models.Rsync, RsyncFAdmin)

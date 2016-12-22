@@ -46,6 +46,5 @@ from freenasUI.common.system import send_mail_queue
 def main():
     send_mail_queue()
 
-
 if __name__ == "__main__":
     main()

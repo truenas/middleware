@@ -1385,7 +1385,7 @@ class CommonZVol(object):
                     'It is not recommended to use more than 80% of your '
                     'available space for your zvol!'
                 ])
-        # else:
+        #else:
         #    self.fields['zvol_force'].widget = forms.widgets.HiddenInput()
 
     def clean_zvol_volsize(self):

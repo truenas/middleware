@@ -13,7 +13,7 @@ class SMARTDAlert(BaseAlert):
 
         if (services.objects.get(srv_service='smartd').srv_enable):
             # sysctl kern.vm_guest will return a hypervisor name, or the string "none" if FreeNAS is running on bare iron.
-            p0 = subprocess.Popen(["/sbin/sysctl", "-n", "kern.vm_guest"], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
+            p0 = subprocess.Popen(["/sbin/sysctl",  "-n",  "kern.vm_guest"], stdin=subprocess.PIPE, stdout=subprocess.PIPE)
             status = p0.communicate()[0].strip()
             # This really isn't confused with python None
             if status != "none":
@@ -32,6 +32,5 @@ class SMARTDAlert(BaseAlert):
             return None
 
         return alerts
-
 
 alertPlugins.register(SMARTDAlert)

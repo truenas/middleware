@@ -50,6 +50,8 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'freenasUI.settings')
 from django.db.models.loading import cache
 cache.get_apps()
 
+from freenasUI.settings import LOGGING
+
 log = middlewared.logger.Logger('tools.runnow')
 
 from freenasUI.common.log import log_traceback

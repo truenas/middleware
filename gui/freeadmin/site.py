@@ -326,5 +326,4 @@ class FreeAdminSite(object):
                 )
         return JsonResp(request, message="OK")
 
-
 site = FreeAdminSite()

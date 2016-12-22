@@ -976,7 +976,7 @@ def get_dmu_summary(Kstat):
     if "vfs.zfs.version.spa" not in Kstat:
         return output
 
-    # zfetch_max_streams = Kstat["kstat.zfs.misc.zfetchstats.max_streams"]
+    zfetch_max_streams = Kstat["kstat.zfs.misc.zfetchstats.max_streams"]
     zfetch_hits = Kstat["kstat.zfs.misc.zfetchstats.hits"]
     zfetch_misses = Kstat["kstat.zfs.misc.zfetchstats.misses"]
 

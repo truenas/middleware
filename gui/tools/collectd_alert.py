@@ -65,7 +65,7 @@ def main():
     if v["Severity"] == "OKAY":
         data.pop(k, None)
     else:
-        data[k] = v
+        data[k] = v;
 
     with open(COLLECTD_FILE, 'wb') as f:
         f.write(pickle.dumps(data))

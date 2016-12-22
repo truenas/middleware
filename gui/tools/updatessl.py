@@ -112,7 +112,6 @@ def usage():
         % (os.path.basename(sys.argv[0]), )
     sys.exit(usage_str)
 
-
 if __name__ == '__main__':
     if len(sys.argv) < 3:
         usage()

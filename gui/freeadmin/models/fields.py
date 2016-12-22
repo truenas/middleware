@@ -1,4 +1,4 @@
-# +
+#+
 # Copyright 2010 iXsystems, Inc.
 # All rights reserved
 #
@@ -66,7 +66,7 @@ class UserField(models.CharField):
         super(UserField, self).__init__(*args, **kwargs)
 
     def formfield(self, **kwargs):
-        # FIXME: Move to top (causes cycle-dependency)
+        #FIXME: Move to top (causes cycle-dependency)
         from freenasUI.freeadmin.forms import UserField as UF
         defaults = {'form_class': UF, 'exclude': self._exclude}
         kwargs.update(defaults)
@@ -75,7 +75,7 @@ class UserField(models.CharField):
 
 class GroupField(models.CharField):
     def formfield(self, **kwargs):
-        # FIXME: Move to top (causes cycle-dependency)
+        #FIXME: Move to top (causes cycle-dependency)
         from freenasUI.freeadmin.forms import GroupField as GF
         defaults = {'form_class': GF}
         kwargs.update(defaults)
@@ -97,7 +97,7 @@ class PathField(models.CharField):
         super(PathField, self).__init__(*args, **kwargs)
 
     def formfield(self, **kwargs):
-        # FIXME: Move to top (causes cycle-dependency)
+        #FIXME: Move to top (causes cycle-dependency)
         from freenasUI.freeadmin.forms import PathField as PF
         defaults = {
             'form_class': PF,
@@ -225,7 +225,7 @@ class Network4Field(models.CharField):
         super(Network4Field, self).__init__(*args, **kwargs)
 
     def formfield(self, **kwargs):
-        # FIXME: Move to top (causes cycle-dependency)
+        #FIXME: Move to top (causes cycle-dependency)
         from freenasUI.freeadmin.forms import Network4Field as NF
         defaults = {'form_class': NF}
         kwargs.update(defaults)
@@ -240,7 +240,7 @@ class Network6Field(models.CharField):
         super(Network6Field, self).__init__(*args, **kwargs)
 
     def formfield(self, **kwargs):
-        # FIXME: Move to top (causes cycle-dependency)
+        #FIXME: Move to top (causes cycle-dependency)
         from freenasUI.freeadmin.forms import Network6Field as NF
         defaults = {'form_class': NF}
         kwargs.update(defaults)

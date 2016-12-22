@@ -30,5 +30,4 @@ class VMWareSnapDeleteFailAlert(BaseAlert):
             }))
         return alerts
 
-
 alertPlugins.register(VMWareSnapDeleteFailAlert)

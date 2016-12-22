@@ -61,5 +61,4 @@ class MPSFirmwareAlert(BaseAlert):
 
         return alerts
 
-
 alertPlugins.register(MPSFirmwareAlert)
