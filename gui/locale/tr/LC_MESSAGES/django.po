@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:05-0700\n"
-"PO-Revision-Date: 2016-12-22 17:05+0000\n"
+"PO-Revision-Date: 2016-12-22 18:12+0000\n"
 "Last-Translator: Burak <hitowerdigit@hotmail.com>\n"
 "Language-Team: Turkish "
 "<http://weblate.trueos.org/projects/freenas/django/tr/>\n"
@@ -9262,6 +9262,8 @@ msgid ""
 "You are trying to add a virtual device consisting of %(addnum)s device(s) in "
 "a pool that has a virtual device consisted of %(vdevnum)s device(s)"
 msgstr ""
+"%(vdevnum)s cihaz(lar)ından oluşan bir sanal cihaza sahip bir havuzda "
+"%(addnum)s cihaz(lar)ından oluşan bir sanal cihaz eklemeye çalışıyorsunuz"
 
 #: storage/forms.py:597
 #: templates/storage/zfswizard.html:41
@@ -9582,6 +9584,8 @@ msgstr "Ağ bağlanabilirliği yarıda kesilecektir. Devam etmek istiyor musunuz
 #: services/admin.py:67
 msgid "Enabling experimental target requires a reboot. Do you want to proceed?"
 msgstr ""
+"Deneysel hedefi etkinleştirmek yeniden başlatma gerektirir. Devam etmek "
+"istiyor musunuz?"
 
 #: services/forms.py:1381
 msgid "Extent name must be unique."
@@ -9589,7 +9593,7 @@ msgstr "Kapsam adı benzersiz olmak zorundadır."
 
 #: services/models.py:414
 msgid "Enable experimental target"
-msgstr ""
+msgstr "Deneysel hedefi etkinleştir"
 
 #: account/forms.py:500
 msgid ""
@@ -9679,7 +9683,7 @@ msgstr "Performans Denemesi"
 
 #: system/views.py:545
 msgid "System dataset is required to perform this action."
-msgstr ""
+msgstr "Sistem veri kümesi bu eylemin yapılmasını gerektirir."
 
 #: templates/system/perftest.html:20
 msgid "You are about to start a performance test."
@@ -9706,6 +9710,8 @@ msgid ""
 "this parameter controls whether or not Sambashould obey PAM's account and "
 "session management directives"
 msgstr ""
+"Bu parametre, Samba'nın PAM'ın hesabına ve oturum yönetimi yönergelerine "
+"uyup uymaması gerektiğini denetler"
 
 #: services/models.py:591
 msgid "NAA...used only by the initiator"
@@ -10280,11 +10286,11 @@ msgstr ""
 
 #: directoryservice/models.py:581
 msgid "Principal"
-msgstr ""
+msgstr "Asıl"
 
 #: directoryservice/models.py:583
 msgid "Kerberos principal, eg: primary/instance@REALM"
-msgstr ""
+msgstr "Kerberos aslı, örneğin: birincil/benzeri@REALM"
 
 #: directoryservice/models.py:586
 msgid "Keytab"
@@ -10520,6 +10526,9 @@ msgid ""
 "This is the port at which WebDAV will run on.<br />Do not use a port that is "
 "already in use by another service (e.g. 22 for SSH)."
 msgstr ""
+"Bu, WebDAV'ın üzerinde çalışacağı bağlantı noktasıdır.<br />Başka bir hizmet "
+"tarafından zaten kullanılan bir bağlantı noktası kullanmayın (örn. SSH için "
+"22)."
 
 #: services/models.py:1736
 msgid "HTTPS Port"
@@ -10530,6 +10539,9 @@ msgid ""
 "This is the port at which Secure WebDAV will run on.<br />Do not use a port "
 "that is already in use by another service (e.g. 22 for SSH)."
 msgstr ""
+"Bu, Güvenli WebDAV'ın üzerinde çalışacağı bağlantı noktasıdır.<br />Başka "
+"bir hizmet tarafından zaten kullanılan bir bağlantı noktası kullanmayın ("
+"örn. SSH için 22)."
 
 # "password"un  karşılığı, şifre yani bir şeyi şifrelemek için kullanılan nesnesin sıfatı değildir. Orada sorulan, "geçiş kodu"  yani paroladır. Ordudaki parola işaret gibi. SÜrekli yanlış kullanılıyor bu yanlışı devam ettirmemek gerek. Hem Türkçe karşılığı ve hemde işlevsel ve mantıksal anlamı poroladır, şifre değil.
 #: services/models.py:1745
@@ -10550,6 +10562,10 @@ msgid ""
 "over the network as plaintext (Avoid if HTTPS is disabled)<br />Digest Auth: "
 "Hash of the password is sent over the network (more secure)"
 msgstr ""
+"WebDAV için HTTP Kimlik Doğrulaması türü<br />Temel Kimlik Doğrulaması: "
+"Parola ağ üzerinden düz metin olarak gönderilir (Eğer HTTPS "
+"etkisizleştirilirse kaçının)<br />Özet Kimlik Doğrulaması: Parolanın "
+"adreslemesi ağ üzerinden gönderilir (daha güvenli)"
 
 #: services/models.py:1761
 #: services/models.py:1762
@@ -10567,6 +10583,8 @@ msgid ""
 "This will be used to access your WebDAV share.<br />For e.g. http(s)://ip-of-"
 "freenas-machine:webdav_port/this_path_name"
 msgstr ""
+"Bu, WebDAV paylaşımınıza erişmek için kullanılacaktır.<br />Örneğin http(s"
+")://freenas-makinesi-ipsi:webdav_b_noktası/bu_yol_adı"
 
 #: sharing/models.py:357
 msgid "Change User & Group Ownership"
@@ -10941,6 +10959,8 @@ msgid ""
 "IP address(es) to bind to. If none specified, allavailable interfaces that "
 "are up will be listened on."
 msgstr ""
+"Bağlanması için IP adres(leri)i. Eğer hiçbiri belirtilmediyse, tüm "
+"kullanılabilir açık olan arayüzler dinlenecektir."
 
 #: storage/nav.py:56
 #: templates/storage/volume_datagrid.html:17
@@ -11125,6 +11145,8 @@ msgid ""
 "Check this if the remotepath specified does<br>not exist, and you want to "
 "create it."
 msgstr ""
+"Eğer belirtilen uzak yol mevcut değilse vebr>oluşturmak istiyorsanız bunu "
+"işaretleyin."
 
 #: tasks/forms.py:263
 msgid ""
@@ -11135,6 +11157,12 @@ msgid ""
 "to<br>255. Or it could also be that your SSH credentials (remote host,etc) "
 "are wrong."
 msgstr ""
+"Belirttiğiniz Uzak Yol mevcut değil ya da bir dizin değil.<br>Ya uzak "
+"makinede bir tane kendiniz oluşturun ya da <br>'rsync_create' alanını "
+"işaretleyin.<br>**Not**: Eğer uzak yol girildiyse, 255 karakteri aştıysa ve "
+"kesildiyse, bu<br> yine de olabilirdi, lütfen bunu 255 karaktere "
+"sınırlandırın.<br> Veya bu aynı zamanda yanlış olan SSH kimlik bilgileriniz ("
+"uzak anamakine, vb.) de olabilirdi."
 
 #: directoryservice/models.py:857
 msgid "SASL wrapping"
@@ -11233,7 +11261,7 @@ msgstr "Hangi çalışmanın güncellemelerini kontrol etmek istiyorsanız seçi
 
 #: templates/system/update_select.html:20
 msgid "Check For Update"
-msgstr ""
+msgstr "Güncellemeyi Kontrol Et"
 
 #: common/system.py:301
 msgid "Unmount Failed (%(retcode)s) -> %(output)s"
@@ -11265,11 +11293,11 @@ msgstr "iSNS Sunucuları"
 
 #: services/models.py:444
 msgid "Pool Available Size Threshold (%)"
-msgstr ""
+msgstr "Havuz Kullanılabilir Boyut Eşiği (%)"
 
 #: services/models.py:488
 msgid " Available Size Threshold (%)"
-msgstr ""
+msgstr " Kullanılabilir Boyut Eşiği (%)"
 
 #: services/models.py:1736
 msgid ""
@@ -11295,6 +11323,10 @@ msgid ""
 "the network as plaintext (Avoid if HTTPS is disabled)<br>Digest Auth: Hash "
 "of the password is sent over the network (more secure)"
 msgstr ""
+"WebDAV için HTTP Kimlik Doğrulaması türü<br>Temel Kimlik Doğrulaması: Parola "
+"ağ üzerinden düz metin olarak gönderilir (Eğer HTTPS etkisizleştirilirse "
+"kaçının)<br>Özet Kimlik Doğrulaması: Parolanın adreslemesi ağ üzerinden "
+"gönderilir (daha güvenli)"
 
 #: services/models.py:1767
 msgid "Webdav SSL Certificate"
@@ -11388,6 +11420,8 @@ msgid ""
 "Username on the above VMWare host with enough privileges to snapshot virtual "
 "machines."
 msgstr ""
+"Sanal makinelerin anlık görüntüsünü almak için yeterli yetkileri olan "
+"yukarıdaki VMware anamakinesi üzerindeki kullanıcı adı."
 
 #: system/models.py:907
 msgid "ZFS Filesystem"
@@ -11399,7 +11433,7 @@ msgstr "Veri Deposu"
 
 #: system/models.py:914
 msgid "The datastore on the VMWare side that the filesystem corresponds to."
-msgstr ""
+msgstr "Dosya sisteminin karşılık geldiği VMware tarafındaki veri deposu."
 
 #: system/models.py:920
 #: templates/system/index.html:33
@@ -12958,6 +12992,8 @@ msgid ""
 "This option ignores the group membership sent on the wire by the NFS client "
 "and looks up the group membership on the server."
 msgstr ""
+"Bu seçenek NFS istemcisi tarafından kablo üzerinde gönderilen grup üyeliğini "
+"yoksayar ve sunucuda grup üyeliğini arar."
 
 #: services/models.py:1576
 msgid "Bind Interfaces"
