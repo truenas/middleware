@@ -1,5 +1,4 @@
 import os
-import sys
 import logging
 import logging.handlers
 from logging.config import dictConfig
@@ -105,8 +104,7 @@ class LoggerFormatter(object):
         color_reset = self.CONSOLE_COLOR_FORMATTER['RESET']
 
         console_formatter = logging.Formatter(
-                "[%(asctime)s] " + color_start + "(%(levelname)s)" + color_reset + " [Module: %(module)s, Call: %(name)s -> %(funcName)s(): %(lineno)s] - %(message)s",
-            "%Y/%m/%d %H:%M:%S")
+            "[%(asctime)s] " + color_start + "(%(levelname)s)" + color_reset + " [Module: %(module)s, Call: %(name)s -> %(funcName)s(): %(lineno)s] - %(message)s", "%Y/%m/%d %H:%M:%S")
 
         return console_formatter
 
@@ -117,7 +115,7 @@ class LoggerFormatter(object):
                 file_formatter (class): Returns a class of logging.Formatter()
         """
         file_formatter = logging.Formatter(
-                "[%(asctime)s] (%(levelname)s) [Module: %(module)s, Call: %(name)s -> %(funcName)s(): %(lineno)s] - %(message)s",
+            "[%(asctime)s] (%(levelname)s) [Module: %(module)s, Call: %(name)s -> %(funcName)s(): %(lineno)s] - %(message)s",
             "%Y/%m/%d %H:%M:%S")
 
         return file_formatter

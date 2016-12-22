@@ -509,8 +509,8 @@ def main():
         daemonc = DaemonContext(
             pidfile=TimeoutPIDLockFile(pidpath),
             detach_process=True,
-            stdout = logger.LoggerStream(get_logger),
-            stderr = logger.LoggerStream(get_logger),
+            stdout=logger.LoggerStream(get_logger),
+            stderr=logger.LoggerStream(get_logger),
             )
         daemonc.open()
     elif 'file' in log_handlers:
