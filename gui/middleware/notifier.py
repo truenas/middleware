@@ -80,8 +80,10 @@ PWENC_PADDING = '{'
 PWENC_CHECK = 'Donuts!'
 BACKUP_SOCK = '/var/run/backupd.sock'
 
-sys.path.append(WWW_PATH)
-sys.path.append(FREENAS_PATH)
+if WWW_PATH not in sys.path:
+    sys.path.append(WWW_PATH)
+if FREENAS_PATH not in sys.path:
+    sys.path.append(FREENAS_PATH)
 
 os.environ["DJANGO_SETTINGS_MODULE"] = "freenasUI.settings"
 
