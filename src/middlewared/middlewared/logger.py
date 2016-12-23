@@ -183,10 +183,10 @@ class Logger(LoggerFormatter):
         logging.root.addHandler(console_handler)
 
     def configure_logging(self, output_option='file'):
-        """Configure the log output to file, console or both.
+        """Configure the log output to file or console.
 
             Args:
-                    output_option (str): Default is `file`, can be set to `console` or `both`.
+                    output_option (str): Default is `file`, can be set to `console`.
         """
 
         if output_option.lower() == 'console':
