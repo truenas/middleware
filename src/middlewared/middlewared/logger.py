@@ -59,9 +59,9 @@ class Rollbar(object):
                         extra_data[name] = absolute_file_path.read()[-10240:]
 
         try:
-            rollbar.report_exc_info(exc_info, request if request is not None else "", extra_data=extra_data)
+            rollbar.report_exc_info(exc_info, request or '', extra_data=extra_data)
         except:
-            pass  # We don't care about the exceptionof rollbar.
+            pass  # We don't care about the exception of rollbar.
 
 
 class LoggerFormatter(object):
