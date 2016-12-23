@@ -311,69 +311,6 @@ require([
 
     }
 
-    confirm_service = function(srv, msg) {
-
-        var dialog = new Dialog({
-            title: gettext('Warning!'),
-            parseOnLoad: true,
-            closable: true,
-            style: "max-width: 75%;max-height:70%;background-color:white;overflow:auto;",
-            onHide: function() {
-                setTimeout(lang.hitch(this, 'destroyRecursive'), manager.defaultDuration);
-            }
-        });
-
-        var content = domConstruct.toDom('<p>' + msg + '</p><p>Are you sure you want to continue?</p><br/ >');
-
-        var confirmb = new Button({
-          label: gettext('Yes'),
-          onClick: function() {
-            toggle_service(dom.byId(srv + "_toggle"), null, true);
-            cancelDialog(this);
-          }
-        });
-        confirmb.placeAt(content);
-
-        var cancelb = new Button({
-          label: gettext('Cancel'),
-          onClick: function() {
-            cancelDialog(this);
-          }
-        });
-        cancelb.placeAt(content);
-
-        dialog.set('content', content);
-        dialog.show();
-
-    }
-
-    deny_service = function(srv, msg) {
-
-        var dialog = new Dialog({
-            title: gettext('Warning!'),
-            parseOnLoad: true,
-            closable: true,
-            style: "max-width: 75%;max-height:70%;background-color:white;overflow:auto;",
-            onHide: function() {
-                setTimeout(lang.hitch(this, 'destroyRecursive'), manager.defaultDuration);
-            }
-        });
-
-        var content = domConstruct.toDom('<p>' + msg + '</p><br/ >');
-
-        var okb = new Button({
-          label: gettext('Ok'),
-          onClick: function() {
-            cancelDialog(this);
-          }
-        });
-        okb.placeAt(content);
-
-        dialog.set('content', content);
-        dialog.show();
-
-    }
-
     add_formset = function(a, url, name) {
         xhr.get(url, {
             query: {

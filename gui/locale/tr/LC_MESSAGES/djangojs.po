@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:10-0700\n"
-"PO-Revision-Date: 2016-09-11 16:43+0200\n"
+"PO-Revision-Date: 2016-10-19 05:44+0000\n"
 "Last-Translator: BouRock <hitowerdigit@hotmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: tr\n"
@@ -16,8 +16,8 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=1; plural=0\n"
-"X-Generator: Pootle 2.1.6\n"
-"X-POOTLE-MTIME: 1469291159.0\n"
+"X-Generator: Pootle 2.5.0\n"
+"X-POOTLE-MTIME: 1476855870.0\n"
 
 #~ msgid "Reporting"
 #~ msgstr "Raporlama"
@@ -394,7 +394,7 @@ msgstr "Parola boş olamaz."
 #: freeadmin/static/lib/js/freeadmin/Update.js:79
 #: freeadmin/static/lib/js/freeadmin/Update.js:81
 msgid "Manual Update"
-msgstr ""
+msgstr "Elle Güncelleme"
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:88
 #: freeadmin/static/lib/js/freeadmin/Update.js:90
@@ -669,3 +669,23 @@ msgstr ""
 #: freeadmin/static/lib/js/freeadmin.js:359
 msgid "Ok"
 msgstr "Tamam"
+
+#: freeadmin/static/lib/js/alert.js:69
+msgid "Warning"
+msgstr "Uyarı"
+
+#: freeadmin/static/lib/js/alert.js:73
+msgid "Critical"
+msgstr "Kritik"
+
+#: freeadmin/static/lib/js/freeadmin.js:1425
+msgid "The action will result in migration of dataset."
+msgstr "Eylem, veri kümesinin geçişiyle sonuçlanacak."
+
+#: freeadmin/static/lib/js/freeadmin.js:1425
+msgid "Some services will be restarted."
+msgstr "Bazı hizmetler yeniden başlatılacaktır."
+
+#: freeadmin/static/lib/js/freeadmin.js:1438
+msgid "Continue"
+msgstr "Devam"

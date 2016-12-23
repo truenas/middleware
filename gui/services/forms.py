@@ -66,85 +66,27 @@ log = logging.getLogger('services.form')
 
 
 class servicesForm(ModelForm):
+    """
+    This form is only used for API 1.0 compatibility
+    Services view now uses middlewared directly.
+    """
 
     class Meta:
         fields = '__all__'
         model = models.services
 
-    def __init__(self, *args, **kwargs):
-        self._force = kwargs.pop('force', False)
-        self._extra_events = []
-        super(servicesForm, self).__init__(*args, **kwargs)
-
-    def clean_srv_service(self):
-        service = self.cleaned_data.get('srv_service')
-        method = 'precheck_%s' % service
-        method = getattr(self, method, None)
-        if not self._force and method and callable(method):
-            rv = method(self.instance)
-            if rv:
-                self._extra_events.append(
-                    "confirm_service('%s', '%s');" % (
-                        service,
-                        rv,
-                    ),
-                )
-                raise forms.ValidationError('precheck')
-        deny_method = getattr(self, 'deny_precheck_%s' % service, None)
-        if not self._force and callable(deny_method):
-            rv = deny_method(self.instance)
-            if rv:
-                self._extra_events.append(
-                    "deny_service('%s', '%s');" % (
-                        service,
-                        rv,
-                    ),
-                )
-                raise forms.ValidationError('deny_precheck')
-        return service
-
-    def precheck_iscsitarget(self, obj):
-        if obj.srv_enable is False:
-            connections = notifier().iscsi_active_connections()
-            if connections > 0:
-                obj.srv_enable = True
-                obj.save()
-                notifier().start("iscsitarget")
-                return _('You have %d pending active iSCSI connection(s).' % (
-                    connections
-                ))
-
-    def deny_precheck_cifs(self, obj):
-        if obj.srv_enable is False and activedirectory_enabled():
-            obj.srv_enable= True
-            obj.save()
-            return _("Cannot disable SMB while ActiveDirectory is in use.")
-        return False
-
     def save(self, *args, **kwargs):
         obj = super(servicesForm, self).save(*args, **kwargs)
         _notifier = notifier()
 
-        self.enabled_svcs = []
-        self.disabled_svcs = []
-
-        if obj.srv_service == 'cifs' and _notifier._started_domaincontroller():
+        if obj.srv_service == 'cifs' and _notifier.started('domaincontroller'):
             obj.srv_enable = True
             obj.save()
             started = True
 
         elif obj.srv_service == 'domaincontroller':
             if obj.srv_enable is True:
-                if _notifier._started_domaincontroller():
-                    started = _notifier.restart("domaincontroller")
-                else:
-                    started = _notifier.start("domaincontroller")
-            else:
-                started = _notifier.stop("domaincontroller")
-
-        elif obj.srv_service == 'domaincontroller':
-            if obj.srv_enable is True:
-                if _notifier._started_domaincontroller():
+                if _notifier.started('domaincontroller'):
                     started = _notifier.restart("domaincontroller")
                 else:
                     started = _notifier.start("domaincontroller")
@@ -170,17 +112,8 @@ class servicesForm(ModelForm):
             if obj.srv_enable:
                 obj.srv_enable = False
                 obj.save()
-                if obj.srv_service == 'ups':
-                    _notifier.stop(obj.srv_service)
 
         return obj
-
-    def done(self, request=None, events=None, **kwargs):
-        if events is None:
-            events = []
-        if self._extra_events:
-            events.extend(self._extra_events)
-        return super(servicesForm, self).done(request=request, events=events, **kwargs)
 
 
 class CIFSForm(ModelForm):

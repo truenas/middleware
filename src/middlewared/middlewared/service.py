@@ -7,6 +7,7 @@ import sys
 
 from middlewared.schema import accepts, Dict, Int, Ref, Str
 from middlewared.utils import filter_list
+from middlewared.logger import Logger
 
 
 def item_method(fn):
@@ -84,7 +85,7 @@ class Service(object):
     __metaclass__ = ServiceBase
 
     def __init__(self, middleware):
-        self.logger = logging.getLogger(type(self).__class__.__name__)
+        self.logger = Logger(type(self).__class__.__name__).getLogger()
         self.middleware = middleware
 
 

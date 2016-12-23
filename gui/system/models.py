@@ -598,8 +598,8 @@ class CertificateBase(Model):
     cert_type = models.IntegerField()
     cert_name = models.CharField(
         max_length=120,
-        verbose_name=_("Name"),
-        help_text=_("Descriptive Name"),
+        verbose_name=_("Identifier"),
+        help_text=_('Internal identifier of the certificate. Only alphanumeric, "_" and "-" are allowed.'),
         unique=True,
     )
     cert_certificate = models.TextField(

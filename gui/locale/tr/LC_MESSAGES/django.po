@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:05-0700\n"
-"PO-Revision-Date: 2016-09-11 16:43+0200\n"
+"PO-Revision-Date: 2016-12-09 17:05+0000\n"
 "Last-Translator: BouRock <hitowerdigit@hotmail.com>\n"
 "Language-Team: LANGUAGE <LL@li.org>\n"
 "Language: tr\n"
@@ -16,8 +16,8 @@ msgstr ""
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=(n > 1)\n"
-"X-Generator: Pootle 2.1.6\n"
-"X-POOTLE-MTIME: 1469792686.0\n"
+"X-Generator: Pootle 2.5.0\n"
+"X-POOTLE-MTIME: 1481303146.0\n"
 
 #: choices.py:40
 msgid "Plain"
@@ -299,7 +299,7 @@ msgstr "okuma-yazma"
 
 #: choices.py:222
 msgid "read-only"
-msgstr "salt okunur"
+msgstr "salt-okunur"
 
 #: choices.py:226 choices.py:232 services/forms.py:634 services/forms.py:636
 #: services/forms.py:1058 templates/storage/scrub.html:24
@@ -401,7 +401,7 @@ msgstr "Salt-okunur"
 
 #: choices.py:505
 msgid "Write-only"
-msgstr "Sadece yazılır"
+msgstr "Sadece-yazılır"
 
 #: choices.py:506
 msgid "Read and Write"
@@ -537,7 +537,7 @@ msgstr "Kabuk"
 
 #: account/forms.py:269 account/forms.py:553
 msgid "Disable password logins"
-msgstr "Parolayla oturum açmayı etkisizleştir"
+msgstr "Parolayla oturum açmaları etkisizleştir"
 
 #: account/forms.py:271 account/forms.py:556
 msgid "Lock user"
@@ -1175,10 +1175,7 @@ msgstr "Bu IP adresi zaten kullanımda."
 
 #: plugins/forms.py:119
 msgid "PBI file to be installed"
-msgstr ""
-"PBI'lerin ne olduğunu bulmak için buraya tıklayın!<a "
-"href='http://www.pcbsd.org/en/package-management/' "
-"onclick='window.open(this.href);return false;'>"
+msgstr "Yüklenecek olan PBI dosyası"
 
 #~ msgid "You must turn off Plugins service before proceeding"
 #~ msgstr "Devam etmeden önce eklentiler servisini kapatmak gerekir."
@@ -5431,7 +5428,7 @@ msgstr "Kullanıcı adınız ve parolanız eşleşmedi. Lütfen tekrar deneyin."
 #: templates/registration/login.html:44
 #, python-format
 msgid "Welcome, %(username)s. Thanks for logging in."
-msgstr "Hoş Geldin, %(username)s. Oturum açtığın için teşekkürler."
+msgstr "Hoş geldin, %(username)s. Oturum açtığın için teşekkürler."
 
 #: templates/registration/login.html:46
 #, python-format
@@ -5758,7 +5755,7 @@ msgstr "Ayırmak istediğinize emin misiniz?"
 
 #: templates/storage/disk_offline.html:3
 msgid "Are you sure you want to offline?"
-msgstr "Çevrimdışı olmak istediğinize emin misiniz?"
+msgstr "Çevrimdışı yapmak istediğinize emin misiniz?"
 
 #: templates/storage/disk_remove.html:3
 msgid "Are you sure you want to remove?"
@@ -5865,7 +5862,7 @@ msgstr "Bu, ilerleme sırasında sistem ek yükünü artıracak"
 #: templates/storage/snapshot_confirm_rollback.html:7
 msgid "Are you sure you want to rollback dataset to this snapshot state?"
 msgstr ""
-"Veri kümsini bu anlık görüntü durumuna geri döndürmek istediğinize emin "
+"Veri kümesini bu anlık görüntü durumuna geri döndürmek istediğinize emin "
 "misiniz?"
 
 #: templates/storage/snapshots.html:21
@@ -8144,9 +8141,9 @@ msgid ""
 "impact your ability to access your data.<br /> Consider using compression "
 "instead."
 msgstr ""
-"Veri tekilleştirmenin etkinleştirilmesinin ciddi performans etkileri "
-"olabilir,<br /> bunun yanı sıra verilerinize erişim yeteneğinizi "
-"etkileyebilir.<br /> Bunun yerine sıkıştırma kullanmayı düşünün."
+"Veri tekilleştirmenin etkinleştirilmesinin, verilerinize erişim yeteneğinizi<"
+"br /> etkilemesinin yanısıra ciddi performans etkileri olabilir.<br /> Bunun "
+"yerine sıkıştırma kullanmayı düşünün."
 
 #: storage/forms.py:764
 msgid "Volume imported"
@@ -8905,7 +8902,7 @@ msgstr "Ana Dizin İçinde Oluştur"
 
 #: api/resources.py:992
 msgid "From %(begin)s through %(end)s, %(repeat)s"
-msgstr ""
+msgstr "%(begin)s ile %(end)s arasında, %(repeat)s artırımlı"
 
 #: api/resources.py:1864
 #: api/resources.py:1875
@@ -8925,7 +8922,6 @@ msgid "Jail root is not configured!"
 msgstr "Kafes kökü yapılandırılmadı!"
 
 #: jails/models.py:537
-#, fuzzy
 msgid "Filesystem"
 msgstr "Dosya sistem türü"
 
@@ -8960,7 +8956,7 @@ msgstr "Bozulmuş"
 
 #: middleware/notifier.py:3849
 msgid "Down"
-msgstr "Aşağı"
+msgstr "Kapalı"
 
 #: network/admin.py:39
 msgid "Media Status"
@@ -9009,7 +9005,6 @@ msgstr "Etki Alanı Hesabı Parolasını Onaylayın"
 
 #: services/forms.py:758
 #: services/models.py:1612
-#, fuzzy
 msgid "Kerberos keytab"
 msgstr "Kerberos sunucusu"
 
@@ -9352,7 +9347,7 @@ msgstr "Etkisizleştirme, işlemde olan herhangi bir çoğaltmayı durdurmayacak
 
 #: storage/models.py:946
 msgid "Sending %(snapshot)s (%(percent)s%%)"
-msgstr "%(snapshot)s (%%%(percent)s) gönderiliyor"
+msgstr "%(snapshot)s gönderiliyor (%%%(percent)s)"
 
 #: storage/models.py:951
 msgid "Sending"
@@ -9631,9 +9626,8 @@ msgid "Certificate"
 msgstr "Sertifika"
 
 #: services/forms.py:864
-#, fuzzy
 msgid "Incorrect password."
-msgstr "Root bağlanma parolası"
+msgstr "Yanlış parola."
 
 #: services/models.py:1623
 #: services/models.py:1835
@@ -9669,9 +9663,8 @@ msgstr "Etki Alanı Denetleyicisi Ayarları"
 
 #: templates/system/settings_edit.html:30
 #: templates/system/settings_edit.html:32
-#, fuzzy
 msgid "Set SSL Certificate"
-msgstr "SSL sertifikası"
+msgstr "SSL Sertifikasını Ayarla"
 
 #: system/hook.py:22
 #: system/hook.py:24
@@ -10098,9 +10091,8 @@ msgid "Idmap backend for winbind."
 msgstr "Winbind için ldmap arka ucu."
 
 #: freeadmin/navtree.py:256
-#, fuzzy
 msgid "Initial Wizard"
-msgstr "Başlatıcı"
+msgstr "Başlangıç Sihirbazı"
 
 #: middleware/notifier.py:2222
 msgid "Failed to create group %s"
@@ -10654,7 +10646,7 @@ msgstr ""
 
 #: system/forms.py:1062
 msgid "Update file to be installed"
-msgstr "Yüklenmesi için dosyayı gönder"
+msgstr "Yüklenecek güncelleme dosyası"
 
 #: system/forms.py:1924
 #: system/forms.py:1952
@@ -11242,13 +11234,12 @@ msgid "Unmount Failed (%(retcode)s) -> %(output)s"
 msgstr "Sökme Başarısız Oldu (%(retcode)s) -> %(output)s"
 
 #: jails/forms.py:218
-#, fuzzy
 msgid "Jail name cannot have '.'"
-msgstr "Kullanıcı adlarında boşluk olamaz"
+msgstr "Kafes adı '.' karakterine sahip olamaz"
 
 #: jails/forms.py:1070
 msgid "The path could not be umounted %(source)s: %(error)s"
-msgstr "Yol, %(source)s için bağlanamadı: %(error)s"
+msgstr "Yol, %(source)s için sökülemedi: %(error)s"
 
 #: jails/utils.py:609
 msgid "Unable to determine IPv6 for plugin"
@@ -11325,9 +11316,8 @@ msgstr "Blok (iSCSI)"
 
 #: storage/admin.py:629
 #: storage/forms.py:1741
-#, fuzzy
 msgid "VMWare Sync"
-msgstr "Eklentiler"
+msgstr "VMWare Eşitleme"
 
 #: storage/forms.py:1576
 msgid "Apply Owner (user)"
@@ -11351,7 +11341,6 @@ msgstr ""
 
 #: storage/models.py:1098
 #: templates/storage/index.html:38
-#, fuzzy
 msgid "VMWare-Snapshot"
 msgstr "VMWare-Anlık Durum Görüntüsü"
 
@@ -11369,7 +11358,7 @@ msgstr ""
 #: system/forms.py:1618
 msgid "Backups (RAID Z2: Good Reliability, Medium Performance, Medium Storage)"
 msgstr ""
-"Yedeklemeler (RAID Z2: İyi Güvenilirlik, Orta Performans, En Az Depolama)"
+"Yedeklemeler (RAID Z2: İyi Güvenilirlik, Orta Performans, Orta Depolama)"
 
 #: system/forms.py:1622
 msgid "Media (RAID Z1: Medium Reliability, Good Performance, More Storage)"
@@ -11425,16 +11414,15 @@ msgstr "TopluSil"
 
 #: system/views.py:1138
 msgid "Packages downloaded"
-msgstr "Paket indirildi"
+msgstr "Paketler indirildi"
 
 #: system/utils.py:230
 msgid "Verifying"
 msgstr "Doğrulanıyor"
 
 #: system/alertmods/boot_volume_status.py:19
-#, fuzzy
 msgid "The boot volume status is %(status)s: %(message)s"
-msgstr "Birim %(volume)s durumu %(status)s: %(message)s"
+msgstr "Önyükleme birimi durumu %(status)s: %(message)s"
 
 #: system/views.py:318
 msgid "Boot Environments successfully deleted."
@@ -11455,7 +11443,7 @@ msgstr "Önyükleme birimi durumu BOZUK"
 #: system/alertmods/update_check.py:30
 msgid "There is a new update available! Apply it in System -> Update tab."
 msgstr ""
-"Mevcut yeni bir güncelleme var! Sistem -> Güncelle sekmesinde uygulayın."
+"Mevcut yeni bir güncelleme var! Bunu Sistem -> Güncelle sekmesinde uygulayın."
 
 #: templates/system/boot_scrub.html:5
 msgid "Do you want to scrub your boot pool now?"
@@ -11865,9 +11853,9 @@ msgid ""
 "can be up to 128K. Some initiators do not work with values above 4K, "
 "checking this disables reporting the physical blocksize."
 msgstr ""
-"Varsayılan fiziksel blok boyutu, 128K boyuta kadar olabilen ZFS blok boyutu "
-"olarak bildirilir. Bazı başlatıcılar 4K üzerindeki değerler ile çalışmaz, "
-"bunu işaretlemek fiziksel blok boyutunu bildirmeyi etkisizleştirir."
+"Varsayılan olarak, fiziksel blok boyutu, 128K boyuta kadar olabilen ZFS blok "
+"boyutu olarak bildirilir. Bazı başlatıcılar 4K üzerindeki değerler ile "
+"çalışmaz, bunu işaretlemek fiziksel blok boyutunu bildirmeyi etkisizleştirir."
 
 #: services/models.py:512
 msgid "Available Space Threshold (%)"
@@ -11905,9 +11893,8 @@ msgstr ""
 "ilave edilecektir."
 
 #: services/models.py:835
-#, fuzzy
 msgid "Fiber Channel"
-msgstr "Değiştir"
+msgstr "Fiber Kanal"
 
 #: services/models.py:836
 msgid "Both"
@@ -12013,9 +12000,8 @@ msgstr ""
 "gönderilir (daha güvenli)"
 
 #: services/views.py:334
-#, fuzzy
 msgid "Fiber Channel Ports have been successfully changed."
-msgstr "Yaptığınız değişiklikler başarıyla güncellendi!"
+msgstr "Fiber Kanal Bağlantı Noktaları başarılı olarak değiştirildi."
 
 #: sharing/forms.py:291
 msgid "A share with this name already exists."
@@ -12698,35 +12684,29 @@ msgid " TrueNAS Management IP Address"
 msgstr " TrueNAS Yönetim IP Adresi"
 
 #: vcp/models.py:49
-#, fuzzy
 msgid " vCenter Hostname/IP Address"
-msgstr "Kontrolör IP adresi"
+msgstr " vCenter Anamakine Adı/IP Adresi"
 
 #: vcp/models.py:55
-#, fuzzy
 msgid " vCenter Port"
-msgstr "Uzak Bağlantı Noktası Numarası"
+msgstr " vCenter Bağlantı Noktası"
 
 #: vcp/models.py:60
-#, fuzzy
 msgid " vCenter User name"
-msgstr "Kullanıcı adı"
+msgstr " vCenter Kullanıcı Adı"
 
 #: vcp/models.py:67
-#, fuzzy
 msgid " vCenter Password"
-msgstr "Parola Değiştir"
+msgstr " vCenter Parolası"
 
 #: vcp/models.py:74
-#, fuzzy
 msgid "version"
-msgstr "Sürüm"
+msgstr "sürümü"
 
 #: vcp/models.py:78
 #: vcp/models.py:79
-#, fuzzy
 msgid "VCenter Configuration"
-msgstr "Yapılandırma"
+msgstr "vCenter Yapılandırması"
 
 #: vcp/nav.py:44
 msgid "vCenter Plugin Configuration"
@@ -12798,7 +12778,7 @@ msgstr "Uzak sistemdeki eski anlık görüntüleri sil"
 
 #: vcp/views.py:83
 msgid "Upgrade is not required"
-msgstr "Yükseltme gerekli değil"
+msgstr "Yükseltme gerekmez"
 
 #: vcp/views.py:126
 msgid "vCenter plugin is repaired successfully"
@@ -13345,3 +13325,637 @@ msgstr ""
 "Komut sunucuyu kapatmak için kullanılır. Kapatmadan önce diğer görevleri "
 "yapmak için burada özel bir komut kullanabilirsiniz. Varsayılan: /sbin/"
 "shutdown -p now"
+
+#: choices.py:1045
+msgid "Rights"
+msgstr "Haklar"
+
+#: choices.py:1051
+msgid "Amazon S3"
+msgstr "Amazon S3"
+
+#: api/resources.py:655
+msgid "Volume is not encrypted."
+msgstr "Birim şifrelenmemiş."
+
+#: api/resources.py:1588
+msgid "Not ran since last boot"
+msgstr "Son önyüklemeden bu yana çalışmadı"
+
+#: directoryservice/models.py:919
+msgid "User Base"
+msgstr "Kullanıcı Tabanlı"
+
+#: directoryservice/models.py:921
+msgid "DN of the user container in AD."
+msgstr "AD içinde kullanıcı kalıbının DN'i."
+
+#: directoryservice/models.py:926
+msgid "Group Base"
+msgstr "Grup Tabanlı"
+
+#: directoryservice/models.py:928
+msgid "DN of the group container in AD."
+msgstr "AD içinde grup kalıbının DN'i."
+
+#: jails/forms.py:259
+msgid "You can either enter dhcp or static ip but not both"
+msgstr "Ya dhcp ya da sabit ip girebilirsiniz ancak ikisi birden olmaz"
+
+#: jails/forms.py:1038
+msgid "This name is already in use."
+msgstr "Bu isim zaten kullanımda."
+
+#: jails/models.py:350
+msgid "Unable to delete associated periodic snapshot %(task)s:%(error)s"
+msgstr "İlişkilendirilmiş düzenli anlık görüntü %(task)s silinemiyor: %(error)s"
+
+#: services/admin.py:113
+msgid "Listen (Node A)"
+msgstr "Dinle (Düğüm A)"
+
+#: services/admin.py:118
+msgid "Listen (Node B)"
+msgstr "Dinle (Düğüm B)"
+
+#: services/forms.py:903
+msgid "The community must contain only alphanumeric characters _ . spaces or -"
+msgstr ""
+"Topluluk sadece alfasayısal karakterler _ . boşluklar veya - içermek zorunda"
+
+#: services/forms.py:903
+msgid "The community must contain only alphanumeric characters _ . or -"
+msgstr "Topluluk sadece alfasayısal karakterler _ . veya - içermek zorunda"
+
+#: services/forms.py:1505
+msgid "Zvol \"%s\" does not exist"
+msgstr "Zvol \"%s\" mevcut değil"
+
+#: services/models.py:148
+#: services/models.py:304
+msgid ""
+"Use this option to override the username ('nobody' by default) which will be "
+"used for access to services which are specified as guest. Whatever "
+"privileges this user has will be available to any client connecting to the "
+"guest service. This user must exist in the password file, but does not "
+"require a valid login. The user root cannot be used as guest account."
+msgstr ""
+"Misafir olarak belirtilen hizmetlere erişmek için kullanılacak olan "
+"kullanıcı adını (varsayılan 'nobody') geçersiz kılmak için bu seçeneği "
+"kullanın. Yetkiler ne olursa olsun bu kullanıcı misafir hizmete bağlanan "
+"herhangi bir istemci olabilecektir. Bu kullanıcı parola dosyasında olmak "
+"zorundadır, ancak geçerli bir oturum açma bilgisi gerekmez. Kullanıcı root, "
+"misafir hesabı olarak kullanılamaz."
+
+#: services/models.py:177
+msgid "These parameters are added to the [global] section of smb.conf"
+msgstr "Bu parametreler smb.conf dosyasının [global] bölümüne eklenir"
+
+#: services/models.py:220
+msgid ""
+"Specifies whether Samba should use (expensive) hostname lookups or use IP "
+"addresses instead. An example place where hostname lookups are currently "
+"used is when checking the hosts deny and hosts allow."
+msgstr ""
+"Samba'nın (pahalı) anamakine adı aramalarını kullanıp kullanmamasını ya da "
+"bunun yerine IP adresi kullanıp kullanmamasını belirler. Reddedilen "
+"anamakineler ve izin verilen anamakineler işaretlendiğinde şu anda "
+"kullanılan anamakine adı aramalarının yeri bir örnektir."
+
+#: services/models.py:244
+msgid ""
+"This boolean parameter controls the behaviour of smbd(8) when receiving a "
+"protocol request of \"open for execution\" from a Windows client. With Samba "
+"3.6 and older, the execution right in the ACL was not checked, so a client "
+"could execute a file even if it did not have execute rights on the file. In "
+"Samba 4.0, this has been fixed, so that by default, i.e. when this parameter "
+"is set to \"False\", \"open for execution\" is now denied when execution "
+"permissions are not present. If this parameter is set to \"True\", Samba "
+"does not check execute permissions on \"open for execution\", thus re-"
+"establishing the behavior of Samba 3.6 "
+msgstr ""
+"Bu boolean parametresi, bir Windows istemcisinden gelen \"çalıştırmak için "
+"aç\" protokol isteği aldığında smbd(8) davranışını denetler. Samba 3.6 ve "
+"daha eskisi ile ACL içindeki çalıştırma hakkı kontrol edilmezdi, bu yüzden "
+"bir istemci dosya üzerinde çalıştırma hakkına sahip olmasa bile dosyayı "
+"çalıştırabilirdi. Samba 4.0'da, bu düzeltildi, böylece bu varsayılandır, "
+"örn. bu parametre \"False\" olarak ayarlandığında, çalıştırma izinleri "
+"mevcut olmadığında \"çalıştırmak için aç\" artık reddedilir. Eğer parametre "
+"\"True\" olarak ayarlanırsa, Samba \"çalıştırmak için aç\" üzerinde "
+"çalıştırma izinlerini kontrol etmez, böylelikle Samba 3.6'nın davranışı "
+"yeniden kurulur "
+
+#: services/models.py:265
+msgid ""
+"IP addresses to bind to. If none specified, all available interfaces that "
+"are up will be listened on."
+msgstr ""
+"Bağlanması için IP adresleri. Eğer hiçbiri belirtilmediyse, tüm "
+"kullanılabilir açık olan arayüzler dinlenecektir."
+
+#: services/models.py:296
+msgid "Allows guest access to all Apple shares on this box."
+msgstr "Bu kutudaki tüm Apple paylaşımlarına misafir erişime izin verir."
+
+#: services/models.py:315
+msgid ""
+"IP addresses to advertise and listens to. If none specified, advertise the "
+"first IP address of the system, but to listen for any incoming request."
+msgstr ""
+"Duyurması ve dinlemesi için IP adresleri. Eğer hiçbiri belirtilmediyse, "
+"sistemin ilk IP adresini duyurur, ancak herhangi bir gelen isteği de dinler."
+
+#: services/models.py:333
+msgid "Enable/disable home directories for AFP user."
+msgstr "AFP kullanıcısı için ana dizinleri etkinleştirir/etkisizleştirir."
+
+#: services/models.py:343
+msgid "When set, overrides the default Home Share Name."
+msgstr "Ayarlandığında, varsayılan Ana Paylaşım Adı'nı geçersiz kılar."
+
+#: services/models.py:360
+msgid "Map ACLs"
+msgstr "ACL'leri Eşle"
+
+#: services/models.py:362
+msgid "How to map the effective permissions of authenticated users."
+msgstr "Kimliği doğrulanmış kullancıların etkili izinlerinin nasıl eşlendiği."
+
+#: services/models.py:357
+msgid "These parameters are added to the [Global] section of afp.conf"
+msgstr "Bu parametreler afp.conf dosyasının [Global] bölümüne eklenir"
+
+#: services/models.py:362
+msgid ""
+"How to map the effective permissions of authenticated users: Rights ("
+"default, Unix-style permissions)Mode (ACls), or None"
+msgstr ""
+"Kimliği doğrulanmış kullancıların etkili izinlerinin nasıl eşlendiği: Haklar "
+"(varsayılan, Unix-stili izinler) Kipi (ACl'ler), veya Hiçbiri"
+
+#: services/models.py:362
+msgid ""
+"How to map the effective permissions of authenticated users: Rights ("
+"default, Unix-style permissions), Mode (ACLs), or None"
+msgstr ""
+"Kimliği doğrulanmış kullancıların etkili izinlerinin nasıl eşlendiği: Haklar "
+"(varsayılan, Unix-stili izinler), Kip (ACL'ler), veya Hiçbiri"
+
+#: services/models.py:383
+msgid ""
+"Specifies how many servers to create. There should be enough to handle the "
+"maximum level of concurrency from clients, typically four to six."
+msgstr ""
+"Kaç tane sunucu oluşturulacağını belirler. Genellikle dört ila altı olan "
+"istemcilerden gelen en fazla uyumluluk seviyesini işlemek yeterli olmalıdır."
+
+#: services/models.py:421
+msgid ""
+"Select the IP addresses to listen to for NFS requests. If left unchecked, "
+"NFS will listen on all available addresses."
+msgstr ""
+"NFS isteklerini dinlemek için IP adreslerini seçin. Eğer işaretlenmeden "
+"bırakılırsa, NFS tüm mevcut adresleri dinleyecek."
+
+#: services/models.py:442
+msgid ""
+"Forces the rpc.statd daemon to bind to the specified port, for both IPv4 and "
+"IPv6 address families."
+msgstr ""
+"Her iki IPv4 ve IPv6 adresi aileleri için, belirtilen bağlantı noktasına "
+"rpc.statd arka plan programını bağlamaya zorlar."
+
+#: services/models.py:451
+msgid ""
+"Force the rpc.lockd daemon to bind to the specified port, for both IPv4 and "
+"IPv6 address families."
+msgstr ""
+"Her iki IPv4 ve IPv6 adresi aileleri için, belirtilen bağlantı noktasına "
+"rpc.statd arka plan programını bağlamaya zorlayın."
+
+#: services/models.py:458
+msgid ""
+"Ignore the group membership sent on the wire by the NFS client and look up "
+"the group membership on the server.  Note that this option is mutually "
+"incompatible with the NFSv3 ownership model for NFSv4."
+msgstr ""
+"Sunucudaki NFS istemcisi tarafından kablo üzerinde gönderilen grup üyeliğini "
+"yoksayar ve grup üyeliğini arar. Bu seçeneğin karşılıklı olarak NFSv4 için "
+"NFSv3 sahiplik modeli ile uyumsuz olduğunu unutmayın."
+
+#: services/models.py:467
+msgid "Enable/disable mountd logging into syslog."
+msgstr "Syslog içinde mountd günlüklemeyi etkinleştirir/etkisizleştirir."
+
+#: services/models.py:473
+msgid "Enable/disable statd and lockd logging into syslog."
+msgstr ""
+"Syslog içinde statd ve lockd günlüklemeyi etkinleştirir/etkisizleştirir."
+
+#: services/models.py:507
+msgid "Enable iSCSI ALUA"
+msgstr "iSCSI ALUA'yı etkinleştir"
+
+#: services/models.py:509
+msgid "Enabling this feature requires initiator reconfiguration"
+msgstr ""
+"Bu özelliği etkinleştirmek başlatıcıyı yeniden yapılandırmayı gerektirir"
+
+#: services/models.py:565
+msgid ""
+"Size of extent: 0 means auto, a raw number is bytes, or suffix with KB, MB, "
+"or TB for convenience."
+msgstr ""
+"Kapsam boyutu: 0 otomatik anlamına gelir, ham bir sayı bayttır ya da "
+"uyarlamak için sonek olarak KB, MB veya TB kullanılabilir."
+
+#: services/models.py:573
+msgid ""
+"Logical block length (512 by default). The recommended length for "
+"compatibility is 512."
+msgstr ""
+"Mantıksal blok uzunluğu (varsayılan 512). Uyumluluk için önerilen uzunluk "
+"512'dir."
+
+#: services/models.py:581
+msgid ""
+"By default, the physical blocksize is reported as the ZFS block size, which "
+"can be up to 128K. Some initiators do not work with values above 4K. "
+"Checking this disables reporting the physical blocksize."
+msgstr ""
+"Varsayılan olarak, fiziksel blok boyutu, 128K boyuta kadar olabilen ZFS blok "
+"boyutu olarak bildirilir. Bazı başlatıcılar 4K üzerindeki değerler ile "
+"çalışmaz. Bunu işaretlemek fiziksel blok boyutunu bildirmeyi etkisizleştirir."
+
+#: services/models.py:597
+#: services/models.py:700
+msgid "A description can be entered here for your reference."
+msgstr "Referansınız için buraya bir açıklama girilebilir."
+
+#: services/models.py:626
+msgid ""
+"RPM reported to initiators for this extent/LUN. The default is SSD because "
+"Windows will attempt to defrag non SSD devices.  This is a pathological "
+"worst-case situation for ZFS.  VMWare gives the option to use SSD LUNs as "
+"swap devices. There is some value to picking a non-SSD RPM if your extent is "
+"indeed not SSDs and the initiator will be VMWare."
+msgstr ""
+"RPM, bu kapsam/LUN için başlatıcılara bildirir. Varsayılan SSD'dir çünkü "
+"Windows SSD olmayan aygıtları birleştirmeyi deneyecektir. Bu, ZFS için tam "
+"bir en kötü durum senaryosudur. VMWare, takas aygıtları olarak SSD "
+"LUN'larını kullanmak için size seçenek verir. Eğer kapsamınız aslında "
+"SSD'ler değilse, SSD RPM'si olmayanı seçmek için bazı değerler vardır ve "
+"başlatıcı VMWare olacaktır."
+
+#: services/models.py:1441
+msgid "Override the file creation mask (077 by default)."
+msgstr "Dosya oluşturma maskesini geçersiz kılar (varsayılan 077)."
+
+#: services/models.py:1449
+msgid "Override the directory creation mask (077 by default)."
+msgstr "Dizin oluşturma maskesini geçersiz kılar (varsayılan 077)."
+
+#: services/models.py:1479
+msgid ""
+"Cause the server to display the network information for the specified "
+"address to the client, on the assumption that IP address or DNS host is "
+"acting as a NAT gateway or port forwarder for the server."
+msgstr ""
+"Sunucunun istemci için belirtilen adresin ağ bilgilerini görüntülemesine "
+"neden olur, varsayımda IP adresi veya DNS anamakinesi sunucu için bir NAT ağ "
+"geçidi veya bağlantı noktası yönlendiricisi olarak davranır."
+
+#: services/models.py:1734
+msgid ""
+"Extra options to /usr/local/etc/ssh/sshd_config (usually empty). Note, "
+"incorrect entered options prevent SSH service to be started."
+msgstr ""
+"/usr/local/etc/ssh/sshd_config (genellikle boş) için ek seçenekler. "
+"Unutmayın, yanlış girilen seçenekler SSH hizmetinin başlatılmasını engeller."
+
+#: services/models.py:1935
+msgid "Control the access a remote host has to this module"
+msgstr "Bu modüle sahip uzak bir anamakineye erişimi denetler"
+
+#: services/models.py:1941
+msgid "Maximum number of simultaneous connections. Default is 0 (unlimited)."
+msgstr "Eşzamanlı en fazla bağlantı sayısı. Varsayılan 0'dır (sınırsız)."
+
+#: services/models.py:1948
+msgid ""
+"Specify the user name for file transfers to and from that module. In "
+"combination with the 'Group' option, this determines which file permissions "
+"are available. Leave this field empty to use default settings."
+msgstr ""
+"Bu modüle ve modülden dosya aktarmaları için kullanıcı adını belirler. "
+"'Grup' seçeneği ile birleşmesi halinde bu hangi dosya izinlerinin mevcut "
+"olduğunu belirler. Varsayılan ayarları kullanmak için bu alanı boş bırakın."
+
+#: services/models.py:1958
+msgid ""
+"Specify the group name for file transfers to and from that module. Leave "
+"this field empty to use default settings."
+msgstr ""
+"Bu modüle ve modülden dosya aktarmaları için grup adını belirler. Varsayılan "
+"ayarları kullanmak için bu alanı boş bırakın."
+
+#: services/models.py:1964
+msgid ""
+"This option is a comma, space, or tab delimited set of hosts which are "
+"permitted to access this module. You can specify the hosts by name or IP "
+"number. Leave this field empty to use default settings."
+msgstr ""
+"Bu seçenek, bu modüle erişmeye izin veren virgül, boşluk veya sekme ile "
+"sınırlandırılan anamakineler kümesidir. Anamakineleri adına veya IP "
+"numarasına göre belirleyebilirsiniz. Varsayılan ayarları kullanmak için bu "
+"alanı boş bırakın."
+
+#: services/models.py:1972
+msgid ""
+"A comma, space, or tab-delimited set of hosts which are NOT permitted to "
+"access this module. Where the lists conflict, the allow list takes "
+"precedence. In the event that it is necessary to deny all by default, use "
+"the keyword ALL (or the netmask 0.0.0.0/0) and then explicitly specify in "
+"the hosts allow parameter those hosts that should be permitted access. Leave "
+"this field empty to use default settings."
+msgstr ""
+"Bu modüle erişmeye izin VERMEYEN virgül, boşluk veya sekme ile "
+"sınırlandırılan anamakineler kümesidir. Listelerin çakıştığı yerde izin "
+"verme listesi öncelikli olur. Varsayılan olarak tümünü reddetmenin gerekmesi "
+"halinde, ALL (veya 0.0.0.0/0 ağ maskesi) anahtar kelimesini kullanın ve "
+"ondan sonra erişime izin verilmesi gereken bu anamakinelere, izin verilen "
+"anamakineler parametresini açık bir şekilde belirleyin. Varsayılan ayarları "
+"kullanmak için bu alanı boş bırakın."
+
+#: services/models.py:1984
+msgid ""
+"These parameters will be added to the module configuration in rsyncd.conf."
+msgstr ""
+"Bu parametreler rsyncd.conf dosyasındaki modül yapılandırmasına eklenecektir."
+
+#: services/models.py:2006
+msgid ""
+"Set the interval between disk checks to N minutes. The default is 30 minutes."
+msgstr ""
+"Disk kontrolleri arasındaki aralığı N dakika olarak ayarlar. Varsayılan 30 "
+"dakikadır."
+
+#: services/models.py:2018
+msgid ""
+"Report if the temperature has changed by at least N degrees Celsius since "
+"the last report. 0 to disable."
+msgstr ""
+"Sıcaklık son bildirildiğinden bu yana en az N Santigrat derece değiştiyse "
+"bildirir. Etkisizleştirmek için 0."
+
+#: services/models.py:2024
+msgid ""
+"Report as informational in the system log if the temperature is greater or "
+"equal than N degrees Celsius. 0 to disable."
+msgstr ""
+"Sıcaklık N Santigrat dereceden daha büyük veya eşitse sistem günlüğünde "
+"bilgilendirme olarak bildirir. Etkisizleştirmek için 0."
+
+#: services/models.py:2031
+msgid ""
+"Report as critical in the system log and send an email if the temperature is "
+"greater or equal than N degrees Celsius. 0 to disable."
+msgstr ""
+"Sıcaklık N Santigrat dereceden daha büyük veya eşitse sistem günlüğünde "
+"kritik olarak bildirir ve bir e-posta gönderir. Etkisizleştirmek için 0."
+
+#: services/models.py:2039
+msgid "Destination email address. Separate email addresses with commas."
+msgstr "Hedef e-posta adresi. E-posta adreslerini virgüller ile ayırın."
+
+#: services/models.py:2184
+msgid ""
+"The port on which WebDAV will run.<br>Do not use a port that is already in "
+"use by another service (e.g. 22 for SSH)."
+msgstr ""
+"WebDAV'ın üzerinde çalışacağı bağlantı noktasıdır.<br>Başka bir hizmet "
+"tarafından zaten kullanılan bir bağlantı noktası kullanmayın (örn. SSH için "
+"22)."
+
+#: services/models.py:2193
+msgid ""
+"The port on which Secure WebDAV will run.<br>Do not use a port that is "
+"already in use by another service (e.g. 22 for SSH)."
+msgstr ""
+"Güvenli WebDAV'ın üzerinde çalışacağı bağlantı noktasıdır.<br>Başka bir "
+"hizmet tarafından zaten kullanılan bir bağlantı noktası kullanmayın (örn. "
+"SSH için 22)."
+
+#: services/models.py:2210
+msgid ""
+"Type of HTTP Authentication for WebDAV<br>Basic Auth: Password is sent over "
+"the network as plaintext (Avoid if HTTPS is disabled) <br>Digest Auth: The "
+"hash of the password is sent over the network (more secure)."
+msgstr ""
+"WebDAV için HTTP Kimlik Doğrulaması türü<br>Temel Kimlik Doğrulaması: Parola "
+"ağ üzerinden düz metin olarak gönderilir (Eğer HTTPS etkisizleştirilirse "
+"kaçının) <br>Özet Kimlik Doğrulaması: Parolanın adreslemesi ağ üzerinden "
+"gönderilir (daha güvenli)."
+
+#: sharing/admin.py:80
+msgid ""
+"full_audit VFS object is known to have file transfer issues with Windows 10. "
+"Do you wish to continue?"
+msgstr ""
+"full_audit VFS nesnesinin, Windows 10 ile olan dosya aktarım sorunlarına "
+"sahip olduğu bilinir. Devam etmek ister misiniz?"
+
+#: sharing/forms.py:464
+msgid "This option can only be used for datasets."
+msgstr "Bu seçenek sadece veri kümeleri için kullanılabilir."
+
+#: sharing/models.py:274
+msgid ""
+"These parameters are added to the [Volume] section of afp.conf. Add each "
+"different parameter on a newline"
+msgstr ""
+"Bu parametreler afp.conf dosyasının [Volume] bölümüne eklenir. Her farklı "
+"parametreyi yeni bir satıra ekleyin"
+
+#: sharing/models.py:334
+msgid ""
+"The credentials of the specified user is used for remote access by root."
+msgstr ""
+"Belirtilen kullanıcının kimlik bilgileri uzak erişim için root tarafından "
+"kullanılır."
+
+#: sharing/models.py:345
+msgid ""
+"The credentials of the specified group is used for remote access by root."
+msgstr ""
+"Belirtilen grubun kimlik bilgileri uzak erişim için root tarafından "
+"kullanılır."
+
+#: sharing/models.py:356
+msgid ""
+"The credentials of the specified user is used for remote access by all users."
+msgstr ""
+"Belirtilen kullanıcının kimlik bilgileri uzak erişim için tüm kullanıcılar "
+"tarafından kullanılır."
+
+#: sharing/models.py:367
+msgid ""
+"The credentials of the specified group is used for remote access by all "
+"users."
+msgstr ""
+"Belirtilen grubun kimlik bilgileri uzak erişim için tüm kullanıcılar "
+"tarafından kullanılır."
+
+#: storage/admin.py:144
+#: storage/forms.py:1196
+#: storage/forms.py:1429
+#: storage/forms.py:1513
+msgid "Comments"
+msgstr "Açıklamalar"
+
+#: storage/forms.py:2011
+msgid "Setup mode"
+msgstr "Kurulum kipi"
+
+#: storage/forms.py:2013
+msgid "Manual"
+msgstr "Elle"
+
+#: storage/forms.py:2014
+msgid "Semi-automatic"
+msgstr "Yarı-otomatik"
+
+#: storage/forms.py:2025
+msgid "Remote HTTP/HTTPS Port"
+msgstr "Uzak HTTP/HTTPS Bağlantı Noktası"
+
+#: storage/forms.py:2030
+msgid "Remote HTTPS"
+msgstr "Uzak HTTPS"
+
+#: storage/forms.py:2035
+msgid "Remote Auth Token"
+msgstr "Uzak Yetki Belirteci"
+
+# Burası neden çevrile miyor?
+#: storage/forms.py:2222
+msgid "I'm aware this will destroy snapshots of this zvol"
+msgstr "Bunun bu zvol anlık görüntülerini kaldıracağının farkındayım"
+
+#: storage/forms.py:2039
+msgid ""
+"On the remote host go to Storage -> Replication Tasks, click the Temporary "
+"Auth Token button and paste the resulting value in to this field."
+msgstr ""
+"Uzak anamakinede Depolama -> Çoğaltma Görevleri'ne gidin, Geçici Yetki "
+"Belirteci düğmesine tıklayın ve sonuçta oluşan değeri bu alana yapıştrın."
+
+#: storage/forms.py:2187
+msgid "Token is invalid."
+msgstr "Belirteç geçersiz."
+
+#: storage/forms.py:2191
+msgid "Failed to connect to remote: %s"
+msgstr "Uzağa bağlanma başarısız: %s"
+
+#: system/forms.py:1003
+msgid "Invalid syslog server format"
+msgstr "Geçersiz syslog sunucusu biçimi"
+
+#: system/forms.py:1285
+#, fuzzy
+msgid "Location to temporarily store update file"
+msgstr "Güncelleme dosyasını geçici olarak yerleştirmek için yer"
+
+#: system/forms.py:1287
+#, fuzzy
+msgid "The update file is temporarily stored here before being applied."
+msgstr ""
+"Sistem, yazılım uygulanmadan önce aygıt yazılımı dosyasını geçici olarak "
+"saklamak için bu yeri kullanacak."
+
+#: system/forms.py:2613
+msgid ""
+"Cut and paste the contents of your certificate here.<br>Order in which you "
+"should paste this: <br>The Primary Certificate.<br>The Intermediate CA's "
+"Certificate(s) (optional).<br>The Root CA Certificate (optional)"
+msgstr ""
+"Sertifikanızın içeriklerini kesin ve buraya yapıştırın.<br>Bunu sırası ile "
+"yapıştırmalısnız: <br>Birincil Sertifika.<br>Ara CA'ların Sertifika(ları)sı ("
+"isteğe bağlı).<br>Kök CA Sertifikası (isteğe bağlı)"
+
+#: system/forms.py:3004
+msgid "Access Key"
+msgstr "Erişim Anahtarı"
+
+#: system/forms.py:3008
+msgid "Secret Key"
+msgstr "Gizli Anahtar"
+
+#: system/models.py:348
+msgid "Use FQDN for logging"
+msgstr "Günlükleme için FQDN kullan"
+
+#: system/models.py:987
+msgid "Account Name"
+msgstr "Hesap Adı"
+
+#: system/models.py:1003
+msgid "Cloud Credential"
+msgstr "Bulut Kimlik Bilgisi"
+
+#: tasks/forms.py:76
+msgid "Invalid provider details."
+msgstr "Geçersiz sağlayıcı ayrıntıları."
+
+#: tasks/forms.py:83
+msgid "Invalid credential."
+msgstr "Geçersiz kimlik bilgisi."
+
+#: tasks/forms.py:86
+msgid "Bucket is required."
+msgstr "Demet gerekli."
+
+#: tasks/hook.py:40
+#: tasks/models.py:103
+msgid "Cloud Sync"
+msgstr "Bulut Eşitleme"
+
+#: tasks/models.py:54
+msgid "Credential"
+msgstr "Kimlik Bilgisi"
+
+#: tasks/models.py:98
+msgid "Disabling will not stop any syncs which are in progress."
+msgstr "Etkisizleştirme, işlemde olan herhangi bir eşitlemeyi durdurmayacak."
+
+#: tasks/models.py:104
+msgid "Cloud Syncs"
+msgstr "Bulut Eşitlemeleri"
+
+#: tasks/forms.py:96
+msgid "Folder \"%s\" does not exist."
+msgstr "Klasör \"%s\" mevcut değil."
+
+#: tasks/models.py:52
+msgid "Push - From local to remote. Pull - From remote to local."
+msgstr "Yolla - Yerelden uzağa. Al - Uzaktan yerele."
+
+#: tasks/views.py:53
+msgid "The cloud sync process has started"
+msgstr "Bulut eşitleme işlemi başladı"
+
+#: templates/storage/replication_datagrid.html:17
+#: templates/storage/replication_datagrid.html:19
+msgid "Temporary Auth Token"
+msgstr "Geçici Yetki Belirteci"
+
+#: templates/system/config_upload.html:6
+msgid "All your passwords will be reset. Make sure to set them after reboot."
+msgstr ""
+"Tüm parolalarınız sıfırlanacaktır. Yeniden başlatmadan sonra "
+"ayarladığınızdan emin olun."
+
+#: templates/tasks/cloudsync_run.html:5
+msgid "Would you like to run this cloud sync now?"
+msgstr "Bu bulut eşitlemeyi şimdi çalıştırmak ister misiniz?"

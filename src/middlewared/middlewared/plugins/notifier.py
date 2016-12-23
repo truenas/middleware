@@ -19,6 +19,7 @@ from freenasUI.common.freenasldap import (
     FLAGS_DBINIT,
 )
 from freenasUI.common.samba import Samba4
+from freenasUI.common.warden import Warden
 from freenasUI.middleware import zfs
 from freenasUI.middleware.notifier import notifier
 from freenasUI.directoryservice.models import (
@@ -70,6 +71,14 @@ class NotifierService(Service):
         rv = getattr(subsystem, method)(*params)
         return rv
 
+    def warden(self, method, params=None, kwargs=None):
+        if params is None:
+            params = []
+        if kwargs is None:
+            kwargs = {}
+        method = getattr(Warden(), method)
+        return method(*params, **kwargs)
+
     def zpool_list(self, name=None):
         """Wrapper for zfs.zpool_list"""
         return zfs.zpool_list(name)
@@ -110,6 +119,27 @@ class NotifierService(Service):
             if hasattr(ds, i):
                 data[i] = getattr(ds, i)
         return data
+
+    def ldap_status(self):
+        ret = False
+        try:
+            f = FreeNAS_LDAP(flags=FLAGS_DBINIT)
+            f.open()
+            if f.isOpen():
+                ret = True
+            f.close()
+        except:
+            pass
+
+        return ret
+
+    def ad_status(self):
+        ret = False
+        try:
+            ret = FreeNAS_ActiveDirectory(flags=FLAGS_DBINIT).connected()
+        except:
+            pass
+        return ret
 
     def ds_get_idmap_object(self, ds_type, id, idmap_backend):
         """Temporary wrapper to serialize IDMAP objects"""
