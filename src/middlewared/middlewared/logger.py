@@ -14,7 +14,7 @@ class Rollbar(object):
         rollbar.init(
             'caf06383cba14d5893c4f4d0a40c33a9',
             'production' if 'DEVELOPER_MODE' not in os.environ else 'development'
-            )
+        )
 
     def is_rollbar_disabled(self):
         """Check the existence of sentinel file and its absolute path
@@ -61,7 +61,7 @@ class Rollbar(object):
         try:
             rollbar.report_exc_info(exc_info, request if request is not None else "", extra_data=extra_data)
         except:
-            pass #  We don't care about the exceptionof rollbar.
+            pass  # We don't care about the exceptionof rollbar.
 
 
 class LoggerFormatter(object):
@@ -152,7 +152,7 @@ class Logger(LoggerFormatter):
         'RED': '\033[1;31m',  # (error)
         'HIGHRED': '\033[1;41m',  # (critical)
         'RESET': '\033[1;m',  # Reset
-        }
+    }
     LOGGING_LEVEL = {
         'CRITICAL': 50,
         'ERROR': 40,
@@ -160,7 +160,7 @@ class Logger(LoggerFormatter):
         'INFO': 20,
         'DEBUG': 10,
         'NOTSET': 0
-        }
+    }
 
     def __init__(self, application_name):
         self.get_level = None
