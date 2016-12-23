@@ -11,7 +11,6 @@ class Rollbar(object):
 
     def __init__(self):
         self.sentinel_file_path = '/data/.rollbar_disabled'
-        self.logger = Logger('rollbar')
         rollbar.init(
             'caf06383cba14d5893c4f4d0a40c33a9',
             'production' if 'DEVELOPER_MODE' not in os.environ else 'development'
@@ -31,7 +30,6 @@ class Rollbar(object):
             self.sentinel_file_path = '/tmp/.rollbar_disabled'
 
         if os.path.exists(self.sentinel_file_path) or 'ROLLBAR_DISABLED' in os.environ:
-            self.logger.debug('rollbar is disabled using sentinel file: {0}'.format(self.sentinel_file_path))
             return True
         else:
             return False
@@ -63,7 +61,7 @@ class Rollbar(object):
         try:
             rollbar.report_exc_info(exc_info, request if request is not None else "", extra_data=extra_data)
         except:
-            self.logger.warn('[Rollbar] Failed to report error.', exc_info=True)
+            pass #  We don't care about the exceptionof rollbar.
 
 
 class LoggerFormatter(object):
@@ -107,18 +105,6 @@ class LoggerFormatter(object):
 
         return console_formatter
 
-    def set_log_formatter(self):
-        """Set the format of log output.
-
-            Returns:
-                file_formatter (class): Returns a class of logging.Formatter()
-        """
-        file_formatter = logging.Formatter(
-            "[%(asctime)s] (%(levelname)s) [Module: %(module)s, Call: %(name)s -> %(funcName)s(): %(lineno)s] - %(message)s",
-            "%Y/%m/%d %H:%M:%S")
-
-        return file_formatter
-
 
 class LoggerStream(object):
 
@@ -136,7 +122,30 @@ class Logger(LoggerFormatter):
     DEFAULT_LOGGING = {
         'version': 1,
         'disable_existing_loggers': True,
-        }
+        'root': {
+            'level': 'NOTSET',
+            'handlers': ['file'],
+        },
+        'handlers': {
+            'file': {
+                'level': 'DEBUG',
+                'class': 'logging.handlers.RotatingFileHandler',
+                'filename': '/var/log/middlewared.log',
+                'mode': 'a',
+                'maxBytes': 10485760,
+                'backupCount': 5,
+                'encoding': 'utf-8',
+                'formatter': 'file',
+            },
+        },
+        'formatters': {
+            'file': {
+                'format': '[%(asctime)s] (%(levelname)s) [Module: %(module)s, Call: %(name)s -> %(funcName)s(): %(lineno)s] - %(message)s',
+                'datefmt': '%Y/%m/%d %H:%M:%S',
+            },
+        },
+    }
+
     CONSOLE_COLOR_FORMATTER = {
         'YELLOW': '\033[1;33m',  # (warning)
         'GREEN': '\033[1;32m',  # (info)
@@ -154,35 +163,24 @@ class Logger(LoggerFormatter):
         }
 
     def __init__(self, application_name):
-        self.logfile_path = '/var/log/middlewared.log'
-        self.logfile_size = 10485760
-        self.max_logfiles = 5
         self.get_level = None
-        self.file_handler = logging.handlers.RotatingFileHandler(self.logfile_path,
-                                                                 maxBytes=self.logfile_size,
-                                                                 backupCount=self.max_logfiles,
-                                                                 encoding='utf-8')
         self.application_name = application_name
-        self.console_handler = logging.StreamHandler()
 
     def getLogger(self):
         return logging.getLogger(self.application_name)
 
     def _set_output_file(self):
         """Set the output format for file log."""
-
-        self.file_handler.setLevel(logging.DEBUG)
-        self.file_handler.setFormatter(self.set_log_formatter())
-
-        logging.root.addHandler(self.file_handler)
+        dictConfig(self.DEFAULT_LOGGING)
 
     def _set_output_console(self):
         """Set the output format for console."""
 
-        self.console_handler.setLevel(logging.DEBUG)
-        self.console_handler.setFormatter(self.set_console_formatter())
+        console_handler = logging.StreamHandler()
+        console_handler.setLevel(logging.DEBUG)
+        console_handler.setFormatter(self.set_console_formatter())
 
-        logging.root.addHandler(self.console_handler)
+        logging.root.addHandler(console_handler)
 
     def configure_logging(self, output_option='file'):
         """Configure the log output to file, console or both.
@@ -190,13 +188,9 @@ class Logger(LoggerFormatter):
             Args:
                     output_option (str): Default is `file`, can be set to `console` or `both`.
         """
-        dictConfig(self.DEFAULT_LOGGING)
 
         if output_option.lower() == 'console':
             self._set_output_console()
-        elif output_option.lower() == 'both':
-            self._set_output_console()
-            self._set_output_file()
         else:
             self._set_output_file()
 
