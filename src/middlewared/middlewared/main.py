@@ -37,10 +37,9 @@ class Application(WebSocketApplication):
         super(Application, self).__init__(*args, **kwargs)
         self.authenticated = self._check_permission()
         self.handshake = False
-        self.logger_name = logger.Logger('application')
-        self.logger = self.logger_name.getLogger()
+        self.logger = logger.Logger('application').getLogger()
         self.sessionid = str(uuid.uuid4())
-        self.trace = logger.Rollbar()
+        self.rollbar = logger.Rollbar()
 
         """
         Callback index registered by services. They are blocking.
@@ -165,8 +164,12 @@ class Application(WebSocketApplication):
             except:
                 self.logger.debug('Failed to get system version', exc_info=True)
 
-            extra_log_files = (('/var/log/middlewared.log', 'middlewared_log'),)
-            gevent.spawn(self.trace.rollbar_report(sys.exc_info(), None, sw_version, extra_log_files))
+            if self.rollbar.is_rollbar_disabled():
+                self.logger.debug('[Rollbar] is disabled using sentinel file.')
+            else:
+                extra_log_files = (('/var/log/middlewared.log', 'middlewared_log'),)
+                gevent.spawn(self.rollbar.rollbar_report(sys.exc_info(), None, sw_version, extra_log_files))
+                self.logger.info('[Rollbar] report sent.')
 
     def subscribe(self, ident, name):
         self.__subscribed[ident] = name
@@ -522,7 +525,7 @@ def main():
         sys.stdout = logger.LoggerStream(get_logger)
         sys.stderr = logger.LoggerStream(get_logger)
     else:
-        _logger.configure_logging('both')
+        _logger.configure_logging('file')
 
     setproctitle.setproctitle('middlewared')
     # Workaround to tell django to not set up logging on its own
