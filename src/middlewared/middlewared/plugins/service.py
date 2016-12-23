@@ -534,7 +534,7 @@ class ServiceService(Service):
     def _started_ldap(self, **kwargs):
         if (self._system('/usr/sbin/service ix-ldap status') != 0):
             return False, []
-        return self.middleware.call('notifier', 'ldap_status'), []
+        return self.middleware.call('notifier.ldap_status'), []
 
     def _start_ldap(self, **kwargs):
         res = False
