@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:05-0700\n"
-"PO-Revision-Date: 2016-12-22 18:12+0000\n"
+"PO-Revision-Date: 2016-12-23 05:18+0000\n"
 "Last-Translator: Burak <hitowerdigit@hotmail.com>\n"
 "Language-Team: Turkish "
 "<http://weblate.trueos.org/projects/freenas/django/tr/>\n"
@@ -11016,13 +11016,15 @@ msgstr ""
 
 #: storage/forms.py:1964
 msgid "Only one replication allowed per dataset."
-msgstr ""
+msgstr "Veri kümesi başına sadece bir çoğaltmaya izin verildi."
 
 #: storage/forms.py:1973
 msgid ""
 "Only one replication allowed per dataset, including parent dataset set up "
 "recursively."
 msgstr ""
+"Veri kümesi başına sadece bir çoğaltmaya izin verildi, yinelemeli ana veri "
+"kümesini ayarlama dahil."
 
 #: system/forms.py:1889
 msgid "Trains"
@@ -12129,6 +12131,8 @@ msgid ""
 "Do not snapshot the system dataset. This is useful when replicating the root "
 "of a pool to the root of a pool of another FreeNAS system."
 msgstr ""
+"Sistem veri kümesinin anlık görüntüsünü almayın. Bu, bir havuzun kökünü "
+"başka bir FreeNAS sisteminin havuzunun köküne çoğaltırken faydalıdır."
 
 #: storage/models.py:1125
 msgid ""
@@ -12820,6 +12824,8 @@ msgid ""
 "Delete snapshots that are no longer available locally after successful "
 "replication of new snapshots"
 msgstr ""
+"Yeni anlık görüntülerin başarılı çoğaltılmasından sonra artık yerel olarak "
+"mevcut olmayan anlık görüntüleri siler"
 
 #: storage/models.py:910
 msgid "Delete stale snapshots on remote system"
@@ -12959,7 +12965,7 @@ msgstr ""
 
 #: system/forms.py:2219
 msgid "Something is seriously jacked up."
-msgstr ""
+msgstr "Bir şey ciddiye alındı."
 
 #: system/forms.py:2228
 msgid "Not a valid certificate."
