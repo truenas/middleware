@@ -31,7 +31,7 @@ import sys
 import os
 
 HERE = os.path.abspath(os.path.dirname(__file__))
-sys.path.append(os.path.join(HERE, ".."))
+sys.path.append(os.path.realpath(os.path.join(HERE, "..")))
 
 
 if __name__ == "__main__":
