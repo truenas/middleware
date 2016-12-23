@@ -12,18 +12,6 @@ ICON = u'SystemIcon'
 ORDER = 1
 
 
-class BackupMixin(object):
-
-    def pre_build_options(self):
-        # System dataset is a special case for now as it doesnt sync a single
-        # hidden field
-        if (
-            hasattr(notifier, 'failover_status') and
-            notifier().failover_status() == 'BACKUP'
-        ):
-            raise ValueError
-
-
 class Advanced(TreeNode):
 
     gname = 'Advanced'
@@ -87,7 +75,7 @@ class Info(TreeNode):
     order = -100
 
 
-class SystemDataset(BackupMixin, TreeNode):
+class SystemDataset(TreeNode):
 
     gname = 'SystemDataset'
     name = _(u'System Dataset')
@@ -113,7 +101,7 @@ class Update(TreeNode):
     icon = 'UpdateIcon'
 
 
-class CertificateAuthorityView(BackupMixin, TreeNode):
+class CertificateAuthorityView(TreeNode):
 
     gname = 'CertificateAuthority.View'
     name = _('CAs')
@@ -122,7 +110,7 @@ class CertificateAuthorityView(BackupMixin, TreeNode):
     order = 10
 
 
-class CertificateView(BackupMixin, TreeNode):
+class CertificateView(TreeNode):
 
     gname = 'Certificate.View'
     name = _('Certificates')
