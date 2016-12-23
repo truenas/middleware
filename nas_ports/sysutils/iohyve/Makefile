@@ -2,7 +2,7 @@
 
 PORTNAME=	iohyve
 PORTVERSION=	0.7.7
-PORTREVISION=	1
+PORTREVISION=	2
 CATEGORIES=	sysutils
 
 MAINTAINER=	lme@FreeBSD.org
@@ -19,5 +19,6 @@ NO_ARCH=	yes
 
 do-patch:
 	${REINPLACE_CMD} 's%\$$(PREFIX)%${STAGEDIR}/$$(PREFIX)%g' ${WRKSRC}/Makefile
+	${REINPLACE_CMD} 's%setup_freenas $$val%__setup_freenas $$val%g' ${WRKSRC}/lib/ioh-setup
 
 .include <bsd.port.mk>
