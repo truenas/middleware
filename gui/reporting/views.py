@@ -117,4 +117,5 @@ def generate(request):
         response['Content-type'] = 'image/png'
         return response
     except Exception, e:
-        log.debug("Failed to generate rrd graph: %s", e)
+        log.debug("Failed to generate rrd graph: %s", e, exc_info=True)
+        raise
