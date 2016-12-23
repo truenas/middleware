@@ -152,7 +152,11 @@ class ServiceService(Service):
             self.middleware.send_event('service.query', 'CHANGED', fields=svc)
             return svc['state'] == 'RUNNING'
         except IndexError:
-            return self._started(service)[0]
+            f = getattr(self, '_started_' + service, None)
+            if callable(f):
+                return f()[0]
+            else:
+                return self._started(service)[0]
 
     @accepts(
         Str('service'),
@@ -593,7 +597,7 @@ class ServiceService(Service):
         for srv in ('kinit', 'activedirectory', ):
             if self._system('/usr/sbin/service ix-%s status' % (srv, )) != 0:
                 return False, []
-        return self.middleware.call('notifier', 'ad_status'), []
+        return self.middleware.call('notifier.ad_status'), []
 
     def _start_activedirectory(self, **kwargs):
         res = False
