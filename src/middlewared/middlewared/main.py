@@ -168,7 +168,7 @@ class Application(WebSocketApplication):
                 self.logger.debug('[Rollbar] is disabled using sentinel file.')
             else:
                 extra_log_files = (('/var/log/middlewared.log', 'middlewared_log'),)
-                gevent.spawn(self.rollbar.rollbar_report(sys.exc_info(), None, sw_version, extra_log_files))
+                gevent.spawn(self.rollbar.rollbar_report, sys.exc_info(), None, sw_version, extra_log_files)
                 self.logger.info('[Rollbar] report sent.')
 
     def subscribe(self, ident, name):
