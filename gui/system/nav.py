@@ -44,6 +44,18 @@ class BootEnv(TreeNode):
     order = -92
 
 
+class CloudCredentials(TreeNode):
+
+    gname = 'CloudCredentials'
+    replace_only = True
+    append_to = 'system'
+
+    def pre_build_options(self):
+        if not notifier().is_freenas():
+            return
+        raise ValueError
+
+
 class Email(TreeNode):
 
     gname = 'Email'
