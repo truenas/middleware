@@ -6,13 +6,16 @@ from django.db import models
 from dojango import forms
 from dojango.forms import widgets
 
-from south.modelsinspector import add_introspection_rules
-add_introspection_rules([],
-    ["^freenasUI\.contrib\.IPAddressField\.IPAddressField"])
-add_introspection_rules([],
-    ["^freenasUI\.contrib\.IPAddressField\.IP4AddressField"])
-add_introspection_rules([],
-    ["^freenasUI\.contrib\.IPAddressField\.IP6AddressField"])
+try:
+    from south.modelsinspector import add_introspection_rules
+    add_introspection_rules([],
+        ["^freenasUI\.contrib\.IPAddressField\.IPAddressField"])
+    add_introspection_rules([],
+        ["^freenasUI\.contrib\.IPAddressField\.IP4AddressField"])
+    add_introspection_rules([],
+        ["^freenasUI\.contrib\.IPAddressField\.IP6AddressField"])
+except ImportError:
+    pass
 
 
 class IPNetworkWidget(widgets.TextInput):
@@ -66,7 +69,6 @@ class IPNetworkQuerySet(models.query.QuerySet):
 
 
 class IPNetworkField(models.Field):
-    __metaclass__ = models.SubfieldBase
     description = "IP Network Field with CIDR support"
     empty_strings_allowed = False
 
@@ -206,7 +208,6 @@ class IPAddressFieldBase(models.Field):
 
 
 class IPAddressField(IPAddressFieldBase):
-    __metaclass__ = models.SubfieldBase
 
     def formfield(self, **kwargs):
         defaults = {
@@ -218,7 +219,6 @@ class IPAddressField(IPAddressFieldBase):
 
 
 class IP4AddressField(IPAddressFieldBase):
-    __metaclass__ = models.SubfieldBase
     description = "IPv4 Address Field"
 
     def to_python(self, value):
@@ -243,7 +243,6 @@ class IP4AddressField(IPAddressFieldBase):
 
 
 class IP6AddressField(IPAddressFieldBase):
-    __metaclass__ = models.SubfieldBase
     description = "IPv6 Address Field"
 
     def to_python(self, value):
