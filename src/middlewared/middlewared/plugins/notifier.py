@@ -71,6 +71,16 @@ class NotifierService(Service):
         rv = getattr(subsystem, method)(*params)
         return rv
 
+    def pwenc_decrypt(self, encrypted=None):
+        """
+        Wrapper method to avoid traceback.
+        This is simply to keep old behavior in notifier.
+        """
+        try:
+            notifier().pwenc_decrypt(encrypted)
+        except:
+            return ''
+
     def warden(self, method, params=None, kwargs=None):
         if params is None:
             params = []
