@@ -29,6 +29,7 @@ import platform
 import re
 import logging
 import random
+import shutil
 
 from django.utils.translation import ugettext_lazy as _
 
@@ -90,6 +91,7 @@ from freenasUI.common.warden import (
     WARDEN_KEY_HOST,
 )
 from freenasUI.middleware.exceptions import MiddlewareError
+from freenasUI.middleware.notifier import notifier
 from freenasUI.storage.models import Volume
 from freenasUI.system.forms import clean_path_execbit
 from freenasUI.sharing.models import (
@@ -324,11 +326,24 @@ class JailCreateForm(ModelForm):
 
         createfile = "/var/tmp/.templatecreate"
         if not template:
+
+            # If for some reason warden does not list the template but the path
+            # exists, we shall try to nuke it
+            template_path = '{}/.warden-template-{}'.format(self.jc.jc_path, jail_type)
+            if os.path.exists(template_path):
+                try:
+                    notifier().destroy_zfs_dataset(template_path.replace('/mnt/', ''))
+                except:
+                    pass
+                try:
+                    shutil.rmtree(template_path)
+                except OSError:
+                    pass
+
             try:
                 cf = open(createfile, "a+")
                 cf.close()
                 w.template(**template_create_args)
-
             except Exception as e:
                 self.errors['__all__'] = self.error_class([_(e.message)])
                 if os.path.exists(createfile):
