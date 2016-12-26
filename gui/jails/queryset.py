@@ -37,8 +37,8 @@ log = logging.getLogger('jails.queryset')
 #
 class JailsQuerySet(QuerySet):
 
-    def __init__(self, model=None, query=None, using=None):
-        super(JailsQuerySet, self).__init__(model, query, using)
+    def __init__(self, *args, **kwargs):
+        super(JailsQuerySet, self).__init__(*args, **kwargs)
         self.__wlist_cache = None
         self.__wcount_cache = None
 
