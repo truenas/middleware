@@ -26,7 +26,7 @@
 #####################################################################
 import os
 
-from django.conf.urls import include, patterns, url
+from django.conf.urls import include, url
 from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 from django.views.static import serve
 from django.conf import settings
@@ -71,7 +71,7 @@ freeadmin.autodiscover()
 
 add_to_builtins('django.templatetags.i18n')
 
-urlpatterns = patterns('',
+urlpatterns = [
     url('^$', site.adminInterface, name="index"),
     (r'^static/(?P<path>.*)',
         public(serve),
@@ -81,16 +81,14 @@ urlpatterns = patterns('',
         {'document_root': '/usr/local/www/dojo'}),
     (r'^admin/', include(site.urls)),
     (r'^jsi18n/', 'django.views.i18n.javascript_catalog'),
-)
+]
 
 for app in settings.APP_MODULES:
-    urlpatterns += patterns(
-        '',
+    urlpatterns += [
         url(r'^%s/' % app.rsplit('.')[-1], include('%s.urls' % app)),
-    )
+    ]
 
-urlpatterns += patterns(
-    '',
+urlpatterns += [
     url(r'^api/', include(v1_api.urls)),
 )
 
