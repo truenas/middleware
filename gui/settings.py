@@ -43,7 +43,6 @@ LOGIN_URL = '/account/login/'
 LOGOUT_URL = '/account/logout/'
 
 ADMINS = (
-     ('iXsystems, Inc.', 'freenas@ixsystems.com'),
 )
 
 MANAGERS = ADMINS
@@ -136,11 +135,11 @@ TEMPLATES = [{
     'APP_DIRS': True,
     'OPTIONS': {
         'context_processors': [
-            'django.core.context_processors.request',
+            'django.template.context_processors.request',
             'django.contrib.auth.context_processors.auth',
-            'django.core.context_processors.i18n',
-            'django.core.context_processors.media',
-            'django.core.context_processors.static',
+            'django.template.context_processors.i18n',
+            'django.template.context_processors.media',
+            'django.template.context_processors.static',
             'dojango.context_processors.config',
         ],
         'builtins': [
