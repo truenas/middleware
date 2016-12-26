@@ -28,7 +28,7 @@ import os
 import re
 
 from django.forms.widgets import Widget, TextInput
-from django.forms.util import flatatt
+from django.forms.utils import flatatt
 from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe
 from django.utils.encoding import force_unicode
