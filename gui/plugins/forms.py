@@ -193,6 +193,7 @@ class PluginUpdateForm(Form):
 class ConfigurationForm(ModelForm):
 
     class Meta:
+        fields = '__all__'
         model = models.Configuration
 
     def __init__(self, *args, **kwargs):
