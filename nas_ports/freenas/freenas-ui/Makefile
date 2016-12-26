@@ -15,6 +15,7 @@ USES=		python
 
 RUN_DEPENDS=	${PYTHON_PKGNAMEPREFIX}django110>0:${PORTSDIR}/www/py-django110 \
 	${PYTHON_PKGNAMEPREFIX}uwsgi>0:${PORTSDIR}/www/uwsgi \
+	${PYTHON_PKGNAMEPREFIX}django-formtools>0:${PORTSDIR}/www/py-django-formtools \
 	${PYTHON_PKGNAMEPREFIX}django-tastypie>0:${PORTSDIR}/www/py-django-tastypie \
 	${PYTHON_PKGNAMEPREFIX}lockfile>0:${PORTSDIR}/devel/py-lockfile \
 	${PYTHON_PKGNAMEPREFIX}ipaddr>0:${PORTSDIR}/devel/py-ipaddr \
