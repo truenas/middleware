@@ -29,7 +29,7 @@ import os
 import string
 import time
 
-from django.core.servers.basehttp import FileWrapper
+from wsgiref.util import FileWrapper
 from django.http import HttpResponse
 from django.shortcuts import render
 from django.utils.translation import ugettext as _
