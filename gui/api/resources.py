@@ -33,12 +33,12 @@ import urllib
 import signal
 import sysctl
 
+from collections import OrderedDict
 from django.conf.urls import url
 from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
 from django.core.urlresolvers import reverse
 from django.db.models import Q
 from django.http import HttpResponse, QueryDict
-from django.utils.datastructures import SortedDict
 from django.utils.translation import ugettext as _
 
 from dojango.forms.models import inlineformset_factory
@@ -1010,7 +1010,7 @@ class VolumeResourceMixin(NestedMixin):
                     })
 
             if child.children:
-                _children = SortedDict()
+                _children = OrderedDict()
                 for child in child.children:
                     _children[child.name] = child
                 data['children'] = self._get_children(
