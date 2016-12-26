@@ -62,9 +62,6 @@ class JailsManager(models.Manager):
     def get_queryset(self):
         return JailsQuerySet(self.model)
 
-    def __getattr__(self, name):
-        return getattr(self.get_queryset(), name)
-
 
 class Jails(Model):
     objects = JailsManager()
@@ -115,10 +112,11 @@ class Jails(Model):
         null=True,
         verbose_name=_("IPv4 bridge aliases")
     )
-    jail_defaultrouter_ipv4 = models.IPAddressField(
+    jail_defaultrouter_ipv4 = models.GenericIPAddressField(
         max_length=120,
         blank=True,
         null=True,
+        protocol='IPv4',
         verbose_name=_("IPv4 default gateway")
     )
     jail_ipv6 = models.CharField(
@@ -269,7 +267,7 @@ class Jails(Model):
         return unicode(self.jail_host)
 
     def __init__(self, *args, **kwargs):
-        super(Jails, self).__init__(*args, **kwargs)
+        super(self.__class__, self).__init__(*args, **kwargs)
         self.__jail_path = None
         self.__jail_meta_path = None
 
