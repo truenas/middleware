@@ -42,7 +42,6 @@ log = logging.getLogger('freeadmin.models.fields')
 
 class DictField(models.Field):
     empty_strings_allowed = False
-    __metaclass__ = models.SubfieldBase
 
     def get_internal_type(self):
         return "TextField"
@@ -113,7 +112,6 @@ class PathField(models.CharField):
 
 class MACField(models.Field):
     empty_strings_allowed = False
-    __metaclass__ = models.SubfieldBase
 
     def __init__(self, *args, **kwargs):
         kwargs['max_length'] = 17
@@ -140,7 +138,6 @@ class MACField(models.Field):
 
 
 class MultiSelectField(models.Field):
-    __metaclass__ = models.SubfieldBase
 
     def get_internal_type(self):
         return "CharField"
