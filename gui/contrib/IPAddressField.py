@@ -6,17 +6,6 @@ from django.db import models
 from dojango import forms
 from dojango.forms import widgets
 
-try:
-    from south.modelsinspector import add_introspection_rules
-    add_introspection_rules([],
-        ["^freenasUI\.contrib\.IPAddressField\.IPAddressField"])
-    add_introspection_rules([],
-        ["^freenasUI\.contrib\.IPAddressField\.IP4AddressField"])
-    add_introspection_rules([],
-        ["^freenasUI\.contrib\.IPAddressField\.IP6AddressField"])
-except ImportError:
-    pass
-
 
 class IPNetworkWidget(widgets.TextInput):
     def render(self, name, value, attrs=None):
