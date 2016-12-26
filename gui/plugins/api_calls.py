@@ -189,7 +189,7 @@ def plugins_is_authenticated(request, sessionid):
             user = request.user
         else:
             return False
-    if user and user.is_authenticated():
+    if user and user.is_authenticated:
         return True
     return False
 
