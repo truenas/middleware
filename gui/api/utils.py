@@ -57,7 +57,7 @@ log = logging.getLogger('api.utils')
 
 class DjangoAuthentication(Authentication):
     def is_authenticated(self, request, **kwargs):
-        if request.user.is_authenticated():
+        if request.user.is_authenticated:
             return True
 
         # Allow access to the API of no root password has been set yet
