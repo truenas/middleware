@@ -490,9 +490,8 @@ class LAGGInterface(Model):
     # This model amends Interface to provide information regarding to a lagg
     # interface.
     # A corresponding interface is created as "laggX"
-    lagg_interface = models.ForeignKey(
+    lagg_interface = models.OneToOneField(
         Interfaces,
-        unique=True,
         verbose_name=_("Interface")
     )
     lagg_protocol = models.CharField(

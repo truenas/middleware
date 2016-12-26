@@ -684,7 +684,6 @@ class CertificateBase(Model):
     cert_serial = models.IntegerField(
         blank=True,
         null=True,
-        max_length=120,
         verbose_name=_("Serial"),
         help_text=_("Serial for next certificate"),
     )
