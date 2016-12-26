@@ -158,7 +158,6 @@ MIDDLEWARE_CLASSES = (
     'freenasUI.freeadmin.middleware.CatchError',
     'django.contrib.auth.middleware.AuthenticationMiddleware',
     'freenasUI.freeadmin.middleware.RequireLoginMiddleware',
-    'rollbar.contrib.django.middleware.RollbarNotifierMiddleware',
 )
 
 DOJANGO_DOJO_PROFILE = 'local_release'
