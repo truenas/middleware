@@ -137,7 +137,9 @@ class FilteredSelectJSON(forms.widgets.ComboBox):
         self.url = url
         super(FilteredSelectJSON, self).__init__(attrs, choices)
 
-    def render(self, name, value, attrs={}, choices=()):
+    def render(self, name, value, attrs=None):
+        if attrs is None:
+            attrs = {}
         self.url = reverse(*self.url)
         store = 'state' + attrs['id']
         attrs.update({
@@ -147,9 +149,7 @@ class FilteredSelectJSON(forms.widgets.ComboBox):
             'intermediateChanges': 'true',
             'displayedValue': value or '',
         })
-        ret = super(FilteredSelectJSON, self).render(
-            name, value, attrs, choices
-        )
+        ret = super(FilteredSelectJSON, self).render(name, value, attrs)
         ret = ret.split("</select>")
         ret = "".join(ret[:-1]) + """
         <script type="dojo/method" event="onChange" args="e">
