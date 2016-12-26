@@ -36,7 +36,7 @@ import sys
 import urllib
 from time import sleep
 
-from django.core.servers.basehttp import FileWrapper
+from wsgiref.util import FileWrapper
 from django.core.urlresolvers import reverse
 from django.db.models import Q
 from django.http import HttpResponse, HttpResponseRedirect
