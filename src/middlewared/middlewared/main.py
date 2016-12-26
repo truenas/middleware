@@ -39,7 +39,6 @@ class Application(WebSocketApplication):
         self.handshake = False
         self.logger = logger.Logger('application').getLogger()
         self.sessionid = str(uuid.uuid4())
-        self.rollbar = logger.Rollbar()
 
         """
         Callback index registered by services. They are blocking.
@@ -164,11 +163,11 @@ class Application(WebSocketApplication):
             except:
                 self.logger.debug('Failed to get system version', exc_info=True)
 
-            if self.rollbar.is_rollbar_disabled():
+            if self.middleware.rollbar.is_rollbar_disabled():
                 self.logger.debug('[Rollbar] is disabled using sentinel file.')
             else:
                 extra_log_files = (('/var/log/middlewared.log', 'middlewared_log'),)
-                gevent.spawn(self.rollbar.rollbar_report, sys.exc_info(), None, sw_version, extra_log_files)
+                gevent.spawn(self.middleware.rollbar.rollbar_report, sys.exc_info(), None, sw_version, extra_log_files)
                 self.logger.info('[Rollbar] report sent.')
 
     def subscribe(self, ident, name):
@@ -265,6 +264,7 @@ class Middleware(object):
     def __init__(self):
         self.logger_name = logger.Logger('middlewared')
         self.logger = self.logger_name.getLogger()
+        self.rollbar = logger.Rollbar()
         self.__jobs = JobsQueue(self)
         self.__schemas = {}
         self.__services = {}
