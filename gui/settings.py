@@ -53,11 +53,6 @@ DATABASE_PATH = '/data/freenas-v1.db'
 if '--database=factory' in sys.argv:
     DATABASE_PATH += '.factory'
 
-SOUTH_DATABASE_ADAPTERS = {
-    'default': 'south.db.sqlite3',
-    'factory': 'south.db.sqlite3',
-}
-
 DATABASES = {
     'default': {
         'ENGINE': 'freenasUI.freeadmin.sqlite3_ha',
@@ -210,7 +205,6 @@ INSTALLED_APPS = (
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.staticfiles',
-    'south',
     'dojango',
     'freenasUI.api',
     'freenasUI.freeadmin',
@@ -221,7 +215,6 @@ BLACKLIST_NAV = (
     'django.contrib.contenttypes',
     'django.contrib.sessions',
     'django.contrib.staticfiles',
-    'south',
     'dojango',
     'freeadmin',
 )

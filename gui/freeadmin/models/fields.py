@@ -32,9 +32,11 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils.text import capfirst
 
-from south.modelsinspector import add_introspection_rules
-
-add_introspection_rules([], ["^(freenasUI\.)?freeadmin\.models\.fields\..*"])
+try:
+    from south.modelsinspector import add_introspection_rules
+    add_introspection_rules([], ["^(freenasUI\.)?freeadmin\.models\.fields\..*"])
+except ImportError:
+    pass
 log = logging.getLogger('freeadmin.models.fields')
 
 
