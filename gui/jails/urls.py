@@ -36,7 +36,6 @@ from .views import (
 )
 
 urlpatterns = [
-    'freenasUI.jails.views',
     url(r'^home/$', jails_home, name="jails_home"),
     url(r'^configuration/$', jailsconfiguration, name="jailsconfiguration"),
     url(r'^edit/(?P<id>\d+)$', jail_edit, name="jail_edit"),

@@ -28,6 +28,7 @@ import os
 
 from django.conf.urls import include, url
 from django.contrib.staticfiles.urls import staticfiles_urlpatterns
+from django.views.i18n import javascript_catalog
 from django.views.static import serve
 from django.conf import settings
 
@@ -70,14 +71,14 @@ freeadmin.autodiscover()
 
 urlpatterns = [
     url('^$', site.adminInterface, name="index"),
-    (r'^static/(?P<path>.*)',
+    url(r'^static/(?P<path>.*)',
         public(serve),
         {'document_root': os.path.join(settings.HERE, "freeadmin/static")}),
-    (r'^dojango/dojo-media/release/[^/]+/(?P<path>.*)$',
+    url(r'^dojango/dojo-media/release/[^/]+/(?P<path>.*)$',
         public(serve),
         {'document_root': '/usr/local/www/dojo'}),
-    (r'^admin/', include(site.urls)),
-    (r'^jsi18n/', 'django.views.i18n.javascript_catalog'),
+    url(r'^admin/', include(site.urls)),
+    url(r'^jsi18n/', javascript_catalog),
 ]
 
 for app in settings.APP_MODULES:
