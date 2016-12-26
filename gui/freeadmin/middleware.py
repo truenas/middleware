@@ -118,9 +118,8 @@ def http_oauth(func):
                 return func(request, *args, **kwargs)
 
         except Exception, e:
-            pass
+            log.debug('OAuth authentication failed', exc_info=True)
 
-        # FIXME: better error handling
         return HttpResponse(json.dumps({
             'jsonrpc': json_params.get("jsonrpc", "2.0"),
             'error': {
