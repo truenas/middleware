@@ -78,7 +78,7 @@ urlpatterns = [
         public(serve),
         {'document_root': '/usr/local/www/dojo'}),
     url(r'^admin/', include(site.urls)),
-    url(r'^jsi18n/', javascript_catalog),
+    url(r'^jsi18n/', javascript_catalog, name='javascript_catalog'),
 ]
 
 for app in settings.APP_MODULES:
