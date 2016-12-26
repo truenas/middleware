@@ -7,7 +7,7 @@ import re
 import sys
 import middlewared.logger as logger
 
-from django.conf.urls import patterns, url, include
+from django.conf.urls import url, include
 from django.core.urlresolvers import reverse
 from django.db.models.base import ModelBase
 from django.http import HttpResponse, HttpResponseRedirect
@@ -159,8 +159,7 @@ class FreeAdminSite(object):
             return update_wrapper(wrapper, view)
 
         # Admin-site-wide views.
-        urlpatterns = patterns(
-            '',
+        urlpatterns = [
             url(r'^$',
                 wrap(self.adminInterface),
                 name='index'),
@@ -179,17 +178,16 @@ class FreeAdminSite(object):
             url(r'^alert/$',
                 wrap(self.alert_detail),
                 name="freeadmin_alert_detail"),
-        )
+        ]
 
         # Add in each model's views.
         for model_admin in self._registry.itervalues():
-            urlpatterns += patterns(
-                '',
+            urlpatterns += [
                 url(r'^%s/%s/' % (
                     model_admin.app_label,
                     model_admin.module_name,
                 ), include(model_admin.urls)),
-            )
+            ]
 
         return urlpatterns
 

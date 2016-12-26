@@ -24,9 +24,10 @@
 #
 #####################################################################
 
-from django.conf.urls import patterns, url
+from django.conf.urls import url
 
-urlpatterns = patterns(
-    'freenasUI.documentation.views',
-    url(r'^index/$', 'documentation_home', name="documentation_home"),
-)
+from .views import documentation_home
+
+urlpatterns = [
+    url(r'^index/$', documentation_home, name="documentation_home"),
+]
