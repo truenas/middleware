@@ -30,7 +30,6 @@ from django.conf.urls import include, url
 from django.contrib.staticfiles.urls import staticfiles_urlpatterns
 from django.views.static import serve
 from django.conf import settings
-from django.template.loader import add_to_builtins
 
 from freenasUI import freeadmin
 from freenasUI.api import v1_api
@@ -69,8 +68,6 @@ v1_api.register(VolumeImportResource())
 navtree.prepare_modelforms()
 freeadmin.autodiscover()
 
-add_to_builtins('django.templatetags.i18n')
-
 urlpatterns = [
     url('^$', site.adminInterface, name="index"),
     (r'^static/(?P<path>.*)',
@@ -90,6 +87,6 @@ for app in settings.APP_MODULES:
 
 urlpatterns += [
     url(r'^api/', include(v1_api.urls)),
-)
+]
 
 urlpatterns += staticfiles_urlpatterns()

@@ -128,10 +128,27 @@ STATICFILES_FINDERS = (
 )
 
 # List of callables that know how to import templates from various sources.
-TEMPLATE_LOADERS = (
-    'django.template.loaders.filesystem.Loader',
-    'django.template.loaders.app_directories.Loader',
-)
+TEMPLATES = [{
+    'BACKEND': 'django.template.backends.django.DjangoTemplates',
+    'DIRS': [
+        os.path.join(HERE, 'templates'),
+    ],
+    'APP_DIRS': True,
+    'OPTIONS': {
+        'context_processors': [
+            'django.core.context_processors.request',
+            'django.contrib.auth.context_processors.auth',
+            'django.core.context_processors.i18n',
+            'django.core.context_processors.media',
+            'django.core.context_processors.static',
+            'dojango.context_processors.config',
+        ],
+        'builtins': [
+            'django.contrib.staticfiles.templatetags.staticfiles',
+            'django.templatetags.i18n',
+        ],
+    },
+}]
 
 MIDDLEWARE_CLASSES = (
     'django.middleware.common.CommonMiddleware',
@@ -157,19 +174,6 @@ ROLLBAR = {
 }
 
 ROOT_URLCONF = 'freenasUI.urls'
-
-TEMPLATE_DIRS = (
-    os.path.join(HERE, 'templates'),
-)
-
-TEMPLATE_CONTEXT_PROCESSORS = (
-        'django.core.context_processors.request',
-        'django.contrib.auth.context_processors.auth',
-        "django.core.context_processors.i18n",
-        "django.core.context_processors.media",
-        "django.core.context_processors.static",
-        'dojango.context_processors.config',
-        )
 
 LOCALE_PATHS = (
     os.path.join(HERE, "locale"),
