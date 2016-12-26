@@ -50,6 +50,7 @@ from freenasUI.common.system import (
 )
 from freenasUI.freeadmin.forms import DirectoryBrowser
 from freenasUI.freeadmin.options import FreeBaseInlineFormSet
+from freenasUI.freeadmin.utils import key_order
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier
 from freenasUI.services import models
@@ -749,8 +750,7 @@ class DynamicDNSForm(ModelForm):
                 "dynamicdns", _("The DynamicDNS service failed to reload.")
             )
         return obj
-DynamicDNSForm.base_fields.keyOrder.remove('ddns_password2')
-DynamicDNSForm.base_fields.keyOrder.insert(5, 'ddns_password2')
+key_order(DynamicDNSForm, 5, 'ddns_password2')
 
 
 class SNMPForm(ModelForm):
@@ -894,10 +894,8 @@ class SNMPForm(ModelForm):
             raise ServiceFailed(
                 "snmp", _("The SNMP service failed to reload.")
             )
-SNMPForm.base_fields.keyOrder.remove('snmp_v3_password2')
-SNMPForm.base_fields.keyOrder.insert(7, 'snmp_v3_password2')
-SNMPForm.base_fields.keyOrder.remove('snmp_v3_privpassphrase2')
-SNMPForm.base_fields.keyOrder.insert(10, 'snmp_v3_privpassphrase2')
+key_order(SNMPForm, 7, 'snmp_v3_password2')
+key_order(SNMPForm, 10, 'snmp_v3_privpassphrase2')
 
 
 class UPSForm(ModelForm):
