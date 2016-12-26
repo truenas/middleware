@@ -68,11 +68,15 @@ def http_oauth(func):
         oauth_params = {}
 
         try:
-            for key in request.REQUEST:
+            for key in request.GET:
                 if key.startswith("oauth"):
-                    oauth_params[key] = request.REQUEST.get(key)
+                    oauth_params[key] = request.GET.get(key)
                 else:
                     json_params = json.loads(key)
+
+            for key in request.POST:
+                if key.startswith("oauth"):
+                    oauth_params[key] = request.POST.get(key)
 
             key = oauth_params.get("oauth_consumer_key", None)
             host = "%s://%s" % (
