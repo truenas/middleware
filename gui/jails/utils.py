@@ -1,14 +1,12 @@
 import logging
 import os
 import platform
+import shutil
 import time
 
 from django.utils.translation import ugettext as _
 
-from freenasUI.account.models import (
-    bsdGroups,
-    bsdUsers
-)
+from freenasUI.account.models import bsdUsers
 from freenasUI.common.sipcalc import sipcalc_type
 from freenasUI.common.pipesubr import pipeopen
 from freenasUI.common import warden
@@ -653,6 +651,20 @@ def new_default_plugin_jail(basename):
     os.environ['EXTRACT_TARBALL_STATUSFILE'] = warden.WARDEN_EXTRACT_STATUS_FILE
     createfile = "/var/tmp/.templatecreate"
     if not template:
+
+        # If for some reason warden does not list the template but the path
+        # exists, we shall try to nuke it
+        template_path = '{}/.warden-template-pluginjail'.format(jc.jc_path)
+        if os.path.exists(template_path):
+            try:
+                notifier().destroy_zfs_dataset(template_path.replace('/mnt/', ''))
+            except:
+                pass
+            try:
+                shutil.rmtree(template_path)
+            except OSError:
+                pass
+
         try:
             cf = open(createfile, "a+")
             cf.close()
@@ -720,6 +732,7 @@ def new_default_plugin_jail(basename):
     obj = Jails.objects.get(jail_host=jailname)
     add_media_user_and_group(obj.jail_path)
     return obj
+
 
 def jail_path_configured():
     """
