@@ -181,7 +181,7 @@ class Interfaces(Model):
         help_text=_("Pick your NIC")
     )
     int_name = models.CharField(
-        max_length="120",
+        max_length=120,
         verbose_name=_("Interface Name"),
         help_text=_("Name your NIC.")
     )

@@ -752,7 +752,7 @@ class iSCSITargetPortalIP(Model):
         verbose_name=_("Portal"),
         related_name='ips',
     )
-    iscsi_target_portalip_ip = models.IPAddressField(
+    iscsi_target_portalip_ip = models.GenericIPAddressField(
         verbose_name=_("IP Address"),
     )
     iscsi_target_portalip_port = models.SmallIntegerField(
