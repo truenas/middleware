@@ -289,7 +289,7 @@ class SelectMultipleWidget(forms.widgets.SelectMultiple):
         self._sorter = sorter
         super(SelectMultipleWidget, self).__init__(attrs, choices)
 
-    def render(self, name, value, attrs=None, choices=()):
+    def render(self, name, value, attrs=None):
 
         if value is None:
             value = []
@@ -306,15 +306,15 @@ class SelectMultipleWidget(forms.widgets.SelectMultiple):
                     break
 
         select_available = forms.widgets.SelectMultiple(
-            attrs={'size': 6}
+            attrs={'size': 6}, choices=unselected
         ).render(
-            'selecAt_from', value, {'id': 'select_from'}, unselected
+            'selecAt_from', value, {'id': 'select_from'},
         )
         select_available = ''.join(select_available.split('</select>')[:-1])
         select_selected = forms.widgets.SelectMultiple(
-            attrs={'size': 6}
+            attrs={'size': 6}, choices=selected
         ).render(
-            name, value, attrs, selected
+            name, value, attrs,
         )
         select_selected = ''.join(select_selected.split('</select>')[:-1])
         output = render_to_string('freeadmin/selectmultiple.html', {
