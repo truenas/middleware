@@ -7,10 +7,10 @@ import sys
 sys.path.append('/usr/local/www')
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'freenasUI.settings')
 
-# Make sure to load all modules
-from django.db.models.loading import cache
-cache.get_apps()
+import django
+django.setup()
 
+from django.apps import apps
 from django.db import connection
 from django.db.models import Q
 from django.db.models.fields.related import ForeignKey
@@ -66,7 +66,7 @@ class DatastoreService(Service):
         e.g. network.interfaces -> Interfaces
         """
         app, model = name.split('.', 1)
-        return cache.get_model(app, model)
+        return apps.get_model(app, model)
 
     def __queryset_serialize(self, qs, extend=None, field_suffix=None):
         for i in qs:
