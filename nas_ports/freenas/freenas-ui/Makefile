@@ -13,8 +13,8 @@ COMMENT=        FreeNAS UI
 PRODUCT?=
 USES=		python
 
-RUN_DEPENDS=	${PYTHON_PKGNAMEPREFIX}django16>0:${PORTSDIR}/www/py-django16 \
-	${PYTHON_PKGNAMEPREFIX}south>0:${PORTSDIR}/databases/py-south \
+RUN_DEPENDS=	${PYTHON_PKGNAMEPREFIX}django110>0:${PORTSDIR}/www/py-django110 \
+	${PYTHON_PKGNAMEPREFIX}uwsgi>0:${PORTSDIR}/www/uwsgi \
 	${PYTHON_PKGNAMEPREFIX}django-tastypie>0:${PORTSDIR}/www/py-django-tastypie \
 	${PYTHON_PKGNAMEPREFIX}lockfile>0:${PORTSDIR}/devel/py-lockfile \
 	${PYTHON_PKGNAMEPREFIX}ipaddr>0:${PORTSDIR}/devel/py-ipaddr \
