@@ -31,7 +31,7 @@ import os
 from django.conf import settings
 from django.core import serializers
 from django.contrib import auth
-from django.utils.importlib import import_module
+from importlib import import_module
 
 from freenasUI.api.utils import FreeBasicAuthentication
 from freenasUI.storage.models import Volume
