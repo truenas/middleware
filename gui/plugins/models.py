@@ -85,7 +85,6 @@ class Plugins(Model):
     )
 
     plugin_port = models.IntegerField(
-        max_length=120,
         verbose_name=_("Plugin TCP port"),
         help_text=_("Plugin TCP port"),
     )
