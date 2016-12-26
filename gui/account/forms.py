@@ -37,6 +37,7 @@ from freenasUI.account import models
 from freenasUI.common.forms import ModelForm, Form
 from freenasUI.common.pipesubr import pipeopen
 from freenasUI.freeadmin.forms import SelectMultipleField
+from freenasUI.freeadmin.utils import key_order
 from freenasUI.storage.widgets import UnixPermissionField
 from freenasUI.middleware.notifier import notifier
 
@@ -243,8 +244,7 @@ class bsdUsersForm(ModelForm, bsdUserGroupMixin):
                 new['bsdusr_group'] = ''
             args = (new,) + args[1:]
         super(bsdUsersForm, self).__init__(*args, **kwargs)
-        self.fields.keyOrder.remove('bsdusr_group')
-        self.fields.keyOrder.insert(3, 'bsdusr_group')
+        key_order(self, 3, 'bsdusr_group', instance=True)
         if self._api is True:
             del self.fields['bsdusr_password2']
         self.fields['bsdusr_shell'].choices = self._populate_shell_choices()
@@ -296,11 +296,7 @@ class bsdUsersForm(ModelForm, bsdUserGroupMixin):
             self.advanced_fields = []
             self.bsdusr_home_saved = self.instance.bsdusr_home.encode('utf8')
             self.bsdusr_home_copy = False
-            self.fields.keyOrder.remove('bsdusr_mode')
-            self.fields.keyOrder.insert(
-                len(self.fields.keyOrder) - 1,
-                'bsdusr_mode',
-            )
+            key_order(self, len(self.fields) - 1, 'bsdusr_mode', instance=True)
             self.fields['bsdusr_username'].widget.attrs['readonly'] = True
             self.fields['bsdusr_username'].widget.attrs['class'] = (
                 'dijitDisabled dijitTextBoxDisabled '

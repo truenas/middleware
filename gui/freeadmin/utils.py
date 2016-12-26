@@ -87,11 +87,15 @@ def key_order(form, index, name, instance=False):
 
     value = d.pop(name)
     new_d = OrderedDict()
+    added = False
     for i, kv in enumerate(d.iteritems()):
         k, v = kv
         if i == index:
             new_d[name] = value
+            added = True
         new_d[k] = v
+    if not added:
+        new_d[name] = value
 
     if instance:
         form.fields = new_d
