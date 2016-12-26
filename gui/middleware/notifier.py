@@ -5004,7 +5004,7 @@ class notifier:
             serial = ''
             v = geom.xpath("./provider/config/ident")
             if len(v) > 0:
-                serial = v[0].text
+                serial = v[0].text or ''
             v = geom.xpath("./provider/config/lunid")
             if len(v) > 0:
                 serial += v[0].text
