@@ -8,16 +8,17 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:07-0700\n"
-"PO-Revision-Date: 2016-01-19 22:30+0000\n"
-"Last-Translator: Michael <michaeleino@hotmail.com>\n"
-"Language-Team: LANGUAGE <LL@li.org>\n"
+"PO-Revision-Date: 2016-12-27 20:12+0000\n"
+"Last-Translator: Abdulrhman <mail1144@hotmail.com>\n"
+"Language-Team: Arabic <http://weblate.trueos.org/projects/freenas/django/ar/>"
+"\n"
 "Language: ar\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=6; plural=n==0 ? 0 : n==1 ? 1 : n==2 ? 2 : n%100>=3 "
-"&& n%100<=10 ? 3 : n%100>=11 && n%100<=99 ? 4 : 5;\n"
-"X-Generator: Pootle 2.5.0\n"
+"&& n%100<=10 ? 3 : n%100>=11 ? 4 : 5;\n"
+"X-Generator: Weblate 2.10-dev\n"
 "X-POOTLE-MTIME: 1453242630.0\n"
 
 #: choices.py:40
@@ -285,7 +286,7 @@ msgstr "جهاز"
 
 #: choices.py:209
 msgid "ZFS Volume"
-msgstr ""
+msgstr "حجم ZFS"
 
 #: choices.py:213 storage/models.py:443 templates/storage/autoimport.html:5
 #: templates/storage/import.html:18 templates/storage/wizard.html:114
@@ -348,7 +349,7 @@ msgstr "غير مفعل"
 
 #: choices.py:292
 msgid "lzjb (recommended)"
-msgstr ""
+msgstr "lzjb (موصى به)"
 
 #: choices.py:293
 msgid "gzip (default level, 6)"
@@ -505,11 +506,11 @@ msgstr "إسم المستخدم"
 
 #: account/forms.py:223
 msgid "Required. 16 characters or fewer. Letters, digits and ./-/_ only."
-msgstr ""
+msgstr "مطلوب. 16 حرفا أو أقل. الحروف والأرقام و./-/_ فقط."
 
 #: account/forms.py:226
 msgid "This value may contain only letters, numbers and ./-/_ characters."
-msgstr ""
+msgstr "قد تحتوي هذه القيمة فقط على الأحرف والأرقام والأحرف ./-/_."
 
 #: account/forms.py:256 account/forms.py:499 services/models.py:773
 #: system/forms.py:331 system/models.py:250 templates/account/bsdusers.html:9
@@ -533,7 +534,7 @@ msgstr "محرر سطر الأوامر"
 
 #: account/forms.py:269 account/forms.py:553
 msgid "Disable password logins"
-msgstr ""
+msgstr "تعطيل تسجيل الدخول كلمة المرور"
 
 #: account/forms.py:271 account/forms.py:556
 msgid "Lock user"
