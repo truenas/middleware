@@ -15,9 +15,8 @@ sys.path.extend(["/usr/local/www", "/usr/local/www/freenasUI"])
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'freenasUI.settings')
 
-# Make sure to load all modules
-from django.db.models.loading import cache
-cache.get_apps()
+import django
+django.setup()
 
 from freenasUI.common.system import get_sw_name, send_mail
 from freenasUI.system.models import Email
