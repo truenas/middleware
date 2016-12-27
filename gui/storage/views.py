@@ -1444,12 +1444,13 @@ def tasks_json(request, dataset=None):
     else:
         task_list = models.Task.objects.order_by("task_filesystem").all()
 
-    fields = models.Task._meta.get_all_field_names()
     for task in task_list:
         t = {}
-        for f in fields:
+        for f in models.Task._meta.get_fields():
+            if f.many_to_one or f.related_model:
+                continue
             try:
-                t[f] = str(getattr(task, f))
+                t[f.name] = str(getattr(task, f.name))
             except:
                 pass
         t['str'] = str(task)
@@ -1482,12 +1483,13 @@ def tasks_recursive_json(request, dataset=None):
             task_recursive=True
         )
 
-    fields = models.Task._meta.get_all_field_names()
     for task in task_list:
         t = {}
-        for f in fields:
+        for f in models.Task._meta.get_fields():
+            if f.many_to_one or f.related_model:
+                continue
             try:
-                t[f] = str(getattr(task, f))
+                t[f.name] = str(getattr(task, f.name))
             except:
                 pass
         t['str'] = str(task)
