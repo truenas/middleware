@@ -1263,8 +1263,11 @@ def main_menu():
         for index in menu_map:
             print "%d) %s" % (index, menu_map[index][0])
 
-        show_ip()
-
+        try:
+            show_ip()
+        except:
+            pass
+        
         try:
             ch = int(raw_input(_("Enter an option from 1-%d: ") % (menu_max)))
         except ValueError:
