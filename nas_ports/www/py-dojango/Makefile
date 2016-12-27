@@ -3,6 +3,7 @@
 
 PORTNAME=	dojango
 PORTVERSION=	0.5.9
+PORTREVISION=	1
 CATEGORIES=	www python java
 PKGNAMEPREFIX=	${PYTHON_PKGNAMEPREFIX}
 
@@ -13,9 +14,9 @@ USES=		python
 USE_PYTHON=	distutils autoplist
 
 USE_GITHUB=	yes
-GH_ACCOUNT=	ofirr
+GH_ACCOUNT=	william-gr
 GH_PROJECT=	dojango
-GH_TAGNAME=	2b0aecb
+GH_TAGNAME=	7477cee
 
 RUN_DEPENDS=	${PYTHON_PKGNAMEPREFIX}django110>0:www/py-django110
 
