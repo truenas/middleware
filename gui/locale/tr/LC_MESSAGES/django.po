@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:05-0700\n"
-"PO-Revision-Date: 2016-12-23 05:18+0000\n"
+"PO-Revision-Date: 2016-12-27 08:04+0000\n"
 "Last-Translator: Burak <hitowerdigit@hotmail.com>\n"
 "Language-Team: Turkish "
 "<http://weblate.trueos.org/projects/freenas/django/tr/>\n"
@@ -1452,8 +1452,7 @@ msgstr "Alfasayısal karakterler, \".\", \"-\" ve \"_\" kullanın."
 #, python-format
 msgid "The email %(email)s is not valid"
 msgid_plural "The following emails are not valid: %(email)s"
-msgstr[0] "Bu e-posta geçerli değildir: %(email)"
-msgstr[1] "Aşağıdaki e-postalar geçerli değildir: %(email)"
+msgstr[0] "Bu e-posta(lar) geçerli değil: %(email)s"
 
 #: services/forms.py:437
 msgid "The UPS service failed to reload."
@@ -9468,7 +9467,6 @@ msgstr ""
 "anda %%%(capacity)d."
 
 #: templates/freeadmin/generic_model_delete.html:19
-#, fuzzy
 msgid ""
 "There is %(related_num)s related entry that will also be deleted as it "
 "depend upon this item"
@@ -9476,8 +9474,7 @@ msgid_plural ""
 "There are %(related_num)s related entries that will also be deleted as they "
 "depend upon this item"
 msgstr[0] ""
-"%(related_num)s ilgili kayıtlar bulunmaktadır. Bunu silerseniz ilgili "
-"bağımlı kayıtlarda silinecektir."
+"Bu öğeye bağlı aynı zamanda silinecek olan %(related_num)s ilgili giriş var"
 
 #: templates/reporting/index.html:3
 msgid "CPU"
