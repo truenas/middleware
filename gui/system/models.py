@@ -49,13 +49,17 @@ from freenasUI.storage.models import Volume
 log = logging.getLogger('system.models')
 
 
+def time_now():
+    return int(time.time())
+
+
 class Alert(Model):
     node = models.CharField(default='A', max_length=100)
     message_id = models.CharField(
         max_length=100,
     )
     dismiss = models.BooleanField(default=True)
-    timestamp = models.IntegerField(default=lambda: int(time.time()))
+    timestamp = models.IntegerField(default=time_now)
 
     class Meta:
         unique_together = (
