@@ -35,7 +35,7 @@ RUN_DEPENDS=	${PYTHON_PKGNAMEPREFIX}django110>0:${PORTSDIR}/www/py-django110 \
 	${PYTHON_PKGNAMEPREFIX}ujson>0:${PORTSDIR}/devel/py-ujson \
 	${PYTHON_PKGNAMEPREFIX}oauth2>0:${PORTSDIR}/net/py-oauth2 \
 	${PYTHON_PKGNAMEPREFIX}eventlet>0:${PORTSDIR}/net/py-eventlet \
-	${PYTHON_PKGNAMEPREFIX}django-json-rpc>0:${PORTSDIR}/www/py-django-rpc-json \
+	${PYTHON_PKGNAMEPREFIX}django-json-rpc>0:${PORTSDIR}/www/py-django-json-rpc \
 	${PYTHON_PKGNAMEPREFIX}sqlparse>0:${PORTSDIR}/databases/py-sqlparse \
 	${PYTHON_PKGNAMEPREFIX}licenselib>0:${PORTSDIR}/freenas/py-licenselib \
 	${PYTHON_PKGNAMEPREFIX}bsd>0:${PORTSDIR}/freenas/py-bsd \
