@@ -227,7 +227,7 @@ def main():
                 else:
                     print(json.dumps(rv))
             except ClientException as e:
-                if not args.quiet:
+                if not args.quiet and e.trace:
                     print >> sys.stderr, e.trace['formatted']
                 sys.exit(1)
     elif args.name == 'ping':
