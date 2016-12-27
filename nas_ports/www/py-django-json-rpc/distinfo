@@ -1,2 +1,3 @@
-SHA256 (django-json-rpc-0.6.2.tar.bz2) = 732e7c0817c5838afdff2e419313222c88924ce0de9b4cda648a5ab2015625da
-SIZE (django-json-rpc-0.6.2.tar.bz2) = 264513
+TIMESTAMP = 1482858969
+SHA256 (django-json-rpc-0.7.2.tar.gz) = f148adc3adbcf596400a30e0f6123f75706ef912260e1d14dda01252c4495be9
+SIZE (django-json-rpc-0.7.2.tar.gz) = 99599
