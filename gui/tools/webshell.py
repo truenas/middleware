@@ -142,9 +142,7 @@ def main(argv):
         working_directory='/root',
         umask=0o002,
         pidfile=pidfile,
-        stdout=sys.stdout,
-        stdin=sys.stdin,
-        stderr=sys.stderr,
+        detach_process=True,
     )
 
     with context:
