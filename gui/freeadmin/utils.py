@@ -45,8 +45,7 @@ def get_related_objects(obj):
     relnum = 0
     for related in [
         f for f in obj._meta.get_fields()
-        if (f.one_to_many or f.one_to_one)
-        and f.auto_created and not f.concrete
+        if (f.one_to_many or f.one_to_one) and f.auto_created and not f.concrete
     ]:
 
         # Do not acount if it is not going to CASCADE
@@ -87,7 +86,6 @@ def key_order(form, index, name, instance=False):
         d = form.fields
     else:
         d = form.base_fields
-
 
     value = d.pop(name)
     new_d = OrderedDict()
