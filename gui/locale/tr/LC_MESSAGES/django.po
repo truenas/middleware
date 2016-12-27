@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:05-0700\n"
-"PO-Revision-Date: 2016-12-27 11:03+0000\n"
+"PO-Revision-Date: 2016-12-27 11:09+0000\n"
 "Last-Translator: Burak <hitowerdigit@hotmail.com>\n"
 "Language-Team: Turkish "
 "<http://weblate.trueos.org/projects/freenas/django/tr/>\n"
@@ -9521,7 +9521,7 @@ msgstr "Bu işlem geri alınamaz!"
 
 #: templates/storage/volumestatus_datagrid.html:6
 msgid "Resilver"
-msgstr ""
+msgstr "Onar"
 
 #: templates/storage/volumestatus_datagrid.html:17
 #: templates/storage/volumestatus_datagrid.html:33
@@ -9541,7 +9541,7 @@ msgid ""
 "Some storage pools are doing resilver/scrub, are you really sure you want to "
 "proceed with <strong>REBOOT</strong>?"
 msgstr ""
-"Bazı depolama havuzları resilver/temizleme işlemi yapıyor, <strong>YENİDEN "
+"Bazı depolama havuzları onarma/temizleme işlemi yapıyor, <strong>YENİDEN "
 "BAŞLATMA</strong> işlemi ile devam etmek istediğinize gerçekten emin misiniz?"
 
 #: templates/system/rsync_run.html:5
@@ -9553,7 +9553,7 @@ msgid ""
 "Some storage pools are doing resilver/scrub, are you really sure you want to "
 "proceed with <strong>SHUTDOWN</strong>?"
 msgstr ""
-"Bazı depolama havuzları resilver/temizleme işlemi yapıyor, "
+"Bazı depolama havuzları onarma/temizleme işlemi yapıyor, "
 "<strong>KAPATMA</strong> işlemi ile devam etmek istediğinize gerçekten emin "
 "misiniz?"
 
