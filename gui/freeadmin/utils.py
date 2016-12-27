@@ -43,7 +43,11 @@ def get_related_objects(obj):
     """
     reldict = {}
     relnum = 0
-    for related in obj._meta.get_all_related_objects():
+    for related in [
+        f for f in obj._meta.get_fields()
+        if (f.one_to_many or f.one_to_one)
+        and f.auto_created and not f.concrete
+    ]:
 
         # Do not acount if it is not going to CASCADE
         if related.field.rel.on_delete is not CASCADE:
