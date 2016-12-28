@@ -1386,16 +1386,16 @@ class NFSShareResourceMixin(object):
         errors = {}
         if not valid:
             for frm in formset:
-                errors.update(frm._errors)
+                errors.update(frm.errors)
         valid &= form.is_valid(formsets={
             'formset_nfs_share_path': {
                 'instance': formset,
             },
         })
         if errors:
-            form._errors.update(errors)
-        if form._errors:
-            bundle.errors = dict(form._errors)
+            form.errors.update(errors)
+        if form.errors:
+            bundle.errors = dict(form.errors)
         return valid
 
     def save_m2m(self, m2m_bundle):
@@ -1499,11 +1499,11 @@ class InterfacesResourceMixin(object):
         errors = {}
         if not valid:
             for form in formset:
-                errors.update(form._errors)
+                errors.update(form.errors)
         valid &= form.is_valid()
         if errors:
-            form._errors.update(errors)
-        bundle.errors = dict(form._errors)
+            form.errors.update(errors)
+        bundle.errors = dict(form.errors)
         return valid
 
     def save_m2m(self, m2m_bundle):
@@ -1795,11 +1795,11 @@ class ISCSIPortalResourceMixin(object):
         errors = {}
         if not valid:
             for form in formset:
-                errors.update(form._errors)
+                errors.update(form.errors)
         valid &= form.is_valid()
         if errors:
-            form._errors.update(errors)
-        bundle.errors = dict(form._errors)
+            form.errors.update(errors)
+        bundle.errors = dict(form.errors)
         return valid
 
     def save_m2m(self, m2m_bundle):
