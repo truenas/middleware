@@ -32,5 +32,6 @@ urlpatterns = patterns(
     url(r'^$', 'home', name="tasks_home"),
     url(r'^cloudsync/(?P<oid>\d+)/run/$', 'cloudsync_run', name="cloudsync_run"),
     url(r'^cron/(?P<oid>\d+)/run/$', 'cron_run', name="cron_run"),
+    url(r'^rsync/keyscan/$', 'rsync_keyscan', name="tasks_rsync_keyscan"),
     url(r'^rsync/(?P<oid>\d+)/run/$', 'rsync_run', name="rsync_run"),
 )

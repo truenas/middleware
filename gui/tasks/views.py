@@ -26,10 +26,14 @@
 #####################################################################
 from django.shortcuts import render
 from django.utils.translation import ugettext as _
+from django.http import HttpResponse
 
 from freenasUI.freeadmin.apppool import appPool
 from freenasUI.freeadmin.views import JsonResp
 from freenasUI.tasks import models
+from freenasUI.account.models import bsdUsers
+import subprocess
+import json
 
 
 def home(request):
@@ -77,3 +81,43 @@ def rsync_run(request, oid):
     return render(request, 'tasks/rsync_run.html', {
         'rsync': rsync,
     })
+
+
+def rsync_keyscan(request):
+    ruser = request.POST.get("user")
+    rhost = request.POST.get("host")
+    rport = request.POST.get("port")
+    if not ruser:
+        data = {'error': True, 'errmsg': _('Please enter a username')}
+        return HttpResponse(json.dumps(data))
+    else:
+        user = bsdUsers.objects.get(bsdusr_username=ruser)
+        ruser_path = user.bsdusr_home
+
+    if not rhost:
+        data = {'error': True, 'errmsg': _('Please enter a hostname')}
+    else:
+        if '@' in rhost:
+            remote = rhost.split("@")
+            remote_host = remote[1]
+        else:
+            remote_host = rhost
+
+        proc = subprocess.Popen([
+            "/usr/bin/ssh-keyscan",
+            "-p", str(rport),
+            "-T", "2",
+            str(remote_host),
+        ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        host_key, errmsg = proc.communicate()
+        if proc.returncode == 0 and host_key:
+            with open(ruser_path + "/.ssh/known_hosts", "a") as myfile:
+                myfile.write(host_key)
+            data = {'error': False}
+        elif not errmsg:
+            errmsg = _("Key could not be retrieved for unknown reason")
+            data = {'error': True, 'errmsg': errmsg}
+        else:
+            data = {'error': True, 'errmsg': errmsg}
+
+    return HttpResponse(json.dumps(data))

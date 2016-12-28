@@ -7,3 +7,12 @@ addToStack(function() {
 });
 </script>
 {% endblock %}
+
+{% block buttons_extra %}
+<button id="btn_Rsync_SSHKeyScan" data-dojo-type="dijit.form.Button">
+  {% trans "SSH Key Scan" %}
+  <script type="dojo/event" data-dojo-event="onClick" data-dojo-args="e">
+    rsync_sshKeyScan('{% url "tasks_rsync_keyscan" %}', this);
+  </script>
+</button>
+{% endblock %}
