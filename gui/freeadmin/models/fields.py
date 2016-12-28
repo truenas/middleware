@@ -169,6 +169,15 @@ class MultiSelectField(models.Field):
         elif isinstance(value, list):
             return ','.join(value)
 
+    def from_db_value(self, value, expression, connection, context):
+        if isinstance(value, basestring):
+            if value:
+                return value.split(',')
+            else:
+                return []
+        elif isinstance(value, list):
+            return value
+
     def to_python(self, value):
         if isinstance(value, list):
             return value
