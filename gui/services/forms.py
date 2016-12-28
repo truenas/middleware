@@ -384,8 +384,7 @@ class NFSForm(ModelForm):
             if self.instance.id and self.instance.nfs_srv_bindip
             else ''
         )
-        self.fields.keyOrder.remove('nfs_srv_bindip')
-        self.fields.keyOrder.insert(2, 'nfs_srv_bindip')
+        key_order(self, 2, 'nfs_srv_bindip', instance=True)
 
         self.fields['nfs_srv_mountd_port'].label = (
             self.fields['nfs_srv_mountd_port'].label.lower()
@@ -1048,15 +1047,16 @@ class iSCSITargetAuthCredentialForm(ModelForm):
             del self.fields['iscsi_target_auth_secret2']
             del self.fields['iscsi_target_auth_peersecret2']
         else:
-            self.fields.keyOrder = [
-                'iscsi_target_auth_tag',
-                'iscsi_target_auth_user',
-                'iscsi_target_auth_secret',
-                'iscsi_target_auth_secret2',
-                'iscsi_target_auth_peeruser',
-                'iscsi_target_auth_peersecret',
-                'iscsi_target_auth_peersecret2'
-            ]
+            # FIXME: no keyOrder in OrderedDict
+            #self.fields.keyOrder = [
+            #    'iscsi_target_auth_tag',
+            #    'iscsi_target_auth_user',
+            #    'iscsi_target_auth_secret',
+            #    'iscsi_target_auth_secret2',
+            #    'iscsi_target_auth_peeruser',
+            #    'iscsi_target_auth_peersecret',
+            #    'iscsi_target_auth_peersecret2'
+            #]
 
             ins = kwargs.get("instance", None)
             if ins:
@@ -1310,8 +1310,7 @@ class iSCSITargetExtentForm(ModelForm):
 
     def __init__(self, *args, **kwargs):
         super(iSCSITargetExtentForm, self).__init__(*args, **kwargs)
-        self.fields.keyOrder.remove('iscsi_target_extent_type')
-        self.fields.keyOrder.insert(1, 'iscsi_target_extent_type')
+        key_order(self, 1, 'iscsi_target_extent_type', instance=True)
 
         if not self._api:
             self.fields['iscsi_target_extent_disk'] = forms.ChoiceField(
@@ -1325,8 +1324,7 @@ class iSCSITargetExtentForm(ModelForm):
                 required=False,
             )
 
-        self.fields.keyOrder.remove('iscsi_target_extent_disk')
-        self.fields.keyOrder.insert(2, 'iscsi_target_extent_disk')
+        key_order(self, 2, 'iscsi_target_extent_disk', instance=True)
 
         if self.instance.id:
 
