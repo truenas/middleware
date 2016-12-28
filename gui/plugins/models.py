@@ -78,14 +78,13 @@ class Plugins(Model):
         default=False
     )
 
-    plugin_ip = models.IPAddressField(
+    plugin_ip = models.GenericIPAddressField(
         max_length=120,
         verbose_name=_("Plugin IP address"),
         help_text=_("Plugin IP address")
     )
 
     plugin_port = models.IntegerField(
-        max_length=120,
         verbose_name=_("Plugin TCP port"),
         help_text=_("Plugin TCP port"),
     )

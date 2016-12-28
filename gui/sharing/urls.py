@@ -23,10 +23,11 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
-from django.conf.urls import patterns, url
+from django.conf.urls import url
 
-urlpatterns = patterns(
-    'freenasUI.sharing.views',
-    url(r'^home/$', 'home', name="sharing_home"),
-    url(r'^fc_ports/$', 'fc_ports', name="sharing_fc_ports"),
-)
+from .views import home, fc_ports
+
+urlpatterns = [
+    url(r'^home/$', home, name="sharing_home"),
+    url(r'^fc_ports/$', fc_ports, name="sharing_fc_ports"),
+]

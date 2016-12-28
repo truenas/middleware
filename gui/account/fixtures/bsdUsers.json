@@ -1,1 +1,562 @@
-[{"pk": 1, "model": "account.bsdusers", "fields": {"bsdusr_full_name": "root", "bsdusr_username": "root", "bsdusr_uid": 0, "bsdusr_group": 1, "bsdusr_unixhash": "*", "bsdusr_shell": "/bin/csh", "bsdusr_builtin": true, "bsdusr_home": "/root", "bsdusr_smbhash": "*"}}, {"pk": 2, "model": "account.bsdusers", "fields": {"bsdusr_full_name": "Owner of many system processes", "bsdusr_username": "daemon", "bsdusr_uid": 1, "bsdusr_group": 2, "bsdusr_unixhash": "*", "bsdusr_shell": "/usr/sbin/nologin", "bsdusr_builtin": true, "bsdusr_home": "/root", "bsdusr_smbhash": "*"}}, {"pk": 3, "model": "account.bsdusers", "fields": {"bsdusr_full_name": "System &", "bsdusr_username": "operator", "bsdusr_uid": 2, "bsdusr_group": 6, "bsdusr_unixhash": "*", "bsdusr_shell": "/usr/sbin/nologin", "bsdusr_builtin": true, "bsdusr_home": "/", "bsdusr_smbhash": "*"}}, {"pk": 4, "model": "account.bsdusers", "fields": {"bsdusr_full_name": "Binaries Commands and Source", "bsdusr_username": "bin", "bsdusr_uid": 3, "bsdusr_group": 8, "bsdusr_unixhash": "*", "bsdusr_shell": "/usr/sbin/nologin", "bsdusr_builtin": true, "bsdusr_home": "/", "bsdusr_smbhash": "*"}}, {"pk": 5, "model": "account.bsdusers", "fields": {"bsdusr_full_name": "Tty Sandbox", "bsdusr_username": "tty", "bsdusr_uid": 4, "bsdusr_group": 28, "bsdusr_unixhash": "*", "bsdusr_shell": "/usr/sbin/nologin", "bsdusr_builtin": true, "bsdusr_home": "/", "bsdusr_smbhash": "*"}}, {"pk": 6, "model": "account.bsdusers", "fields": {"bsdusr_full_name": "KMem Sandbox", "bsdusr_username": "kmem", "bsdusr_uid": 5, "bsdusr_group": 3, "bsdusr_unixhash": "*", "bsdusr_shell": "/usr/sbin/nologin", "bsdusr_builtin": true, "bsdusr_home": "/", "bsdusr_smbhash": "*"}}, {"pk": 7, "model": "account.bsdusers", "fields": {"bsdusr_full_name": "Games pseudo-user", "bsdusr_username": "games", "bsdusr_uid": 7, "bsdusr_group": 11, "bsdusr_unixhash": "*", "bsdusr_shell": "/usr/sbin/nologin", "bsdusr_builtin": true, "bsdusr_home": "/", "bsdusr_smbhash": "*"}}, {"pk": 8, "model": "account.bsdusers", "fields": {"bsdusr_full_name": "News Subsystem", "bsdusr_username": "news", "bsdusr_uid": 8, "bsdusr_group": 9, "bsdusr_unixhash": "*", "bsdusr_shell": "/usr/sbin/nologin", "bsdusr_builtin": true, "bsdusr_home": "/", "bsdusr_smbhash": "*"}}, {"pk": 9, "model": "account.bsdusers", "fields": {"bsdusr_full_name": "Mister Man Pages", "bsdusr_username": "man", "bsdusr_uid": 9, "bsdusr_group": 10, "bsdusr_unixhash": "*", "bsdusr_shell": "/usr/sbin/nologin", "bsdusr_builtin": true, "bsdusr_home": "/usr/share/man", "bsdusr_smbhash": "*"}}, {"pk": 10, "model": "account.bsdusers", "fields": {"bsdusr_full_name": "Secure Shell Daemon", "bsdusr_username": "sshd", "bsdusr_uid": 22, "bsdusr_group": 14, "bsdusr_unixhash": "*", "bsdusr_shell": "/usr/sbin/nologin", "bsdusr_builtin": true, "bsdusr_home": "/var/empty", "bsdusr_smbhash": "*"}}, {"pk": 11, "model": "account.bsdusers", "fields": {"bsdusr_full_name": "Sendmail Submission User", "bsdusr_username": "smmsp", "bsdusr_uid": 25, "bsdusr_group": 15, "bsdusr_unixhash": "*", "bsdusr_shell": "/usr/sbin/nologin", "bsdusr_builtin": true, "bsdusr_home": "/var/spool/clientmqueue", "bsdusr_smbhash": "*"}}, {"pk": 12, "model": "account.bsdusers", "fields": {"bsdusr_full_name": "Sendmail Default User", "bsdusr_username": "mailnull", "bsdusr_uid": 26, "bsdusr_group": 16, "bsdusr_unixhash": "*", "bsdusr_shell": "/usr/sbin/nologin", "bsdusr_builtin": true, "bsdusr_home": "/var/spool/mqueue", "bsdusr_smbhash": "*"}}, {"pk": 13, "model": "account.bsdusers", "fields": {"bsdusr_full_name": "Bind Sandbox", "bsdusr_username": "bind", "bsdusr_uid": 53, "bsdusr_group": 18, "bsdusr_unixhash": "*", "bsdusr_shell": "/usr/sbin/nologin", "bsdusr_builtin": true, "bsdusr_home": "/", "bsdusr_smbhash": "*"}}, {"pk": 14, "model": "account.bsdusers", "fields": {"bsdusr_full_name": "Packet Filter pseudo-user", "bsdusr_username": "proxy", "bsdusr_uid": 62, "bsdusr_group": 19, "bsdusr_unixhash": "*", "bsdusr_shell": "/usr/sbin/nologin", "bsdusr_builtin": true, "bsdusr_home": "/nonexistent", "bsdusr_smbhash": "*"}}, {"pk": 15, "model": "account.bsdusers", "fields": {"bsdusr_full_name": "pflogd privsep user", "bsdusr_username": "_pflogd", "bsdusr_uid": 64, "bsdusr_group": 21, "bsdusr_unixhash": "*", "bsdusr_shell": "/usr/sbin/nologin", "bsdusr_builtin": true, "bsdusr_home": "/var/empty", "bsdusr_smbhash": "*"}}, {"pk": 16, "model": "account.bsdusers", "fields": {"bsdusr_full_name": "dhcp programs", "bsdusr_username": "_dhcp", "bsdusr_uid": 65, "bsdusr_group": 22, "bsdusr_unixhash": "*", "bsdusr_shell": "/usr/sbin/nologin", "bsdusr_builtin": true, "bsdusr_home": "/var/empty", "bsdusr_smbhash": "*"}}, {"pk": 17, "model": "account.bsdusers", "fields": {"bsdusr_full_name": "UUCP pseudo-user", "bsdusr_username": "uucp", "bsdusr_uid": 66, "bsdusr_group": 23, "bsdusr_unixhash": "*", "bsdusr_shell": "/usr/local/libexec/uucp/uucico", "bsdusr_builtin": true, "bsdusr_home": "/var/spool/uucppublic", "bsdusr_smbhash": "*"}}, {"pk": 18, "model": "account.bsdusers", "fields": {"bsdusr_full_name": "Post Office Owner", "bsdusr_username": "pop", "bsdusr_uid": 68, "bsdusr_group": 7, "bsdusr_unixhash": "*", "bsdusr_shell": "/usr/sbin/nologin", "bsdusr_builtin": true, "bsdusr_home": "/nonexistent", "bsdusr_smbhash": "*"}}, {"pk": 19, "model": "account.bsdusers", "fields": {"bsdusr_full_name": "World Wide Web Owner", "bsdusr_username": "www", "bsdusr_uid": 80, "bsdusr_group": 27, "bsdusr_unixhash": "*", "bsdusr_shell": "/usr/sbin/nologin", "bsdusr_builtin": true, "bsdusr_home": "/nonexistent", "bsdusr_smbhash": "*"}}, {"pk": 20, "model": "account.bsdusers", "fields": {"bsdusr_full_name": "Unprivileged user", "bsdusr_username": "nobody", "bsdusr_uid": 65534, "bsdusr_group": 29, "bsdusr_unixhash": "*", "bsdusr_shell": "/usr/sbin/nologin", "bsdusr_builtin": true, "bsdusr_home": "/nonexistent", "bsdusr_smbhash": "*"}}]
+[
+{
+    "model": "account.bsdusers",
+    "pk": 1,
+    "fields": {
+        "bsdusr_uid": 0,
+        "bsdusr_username": "root",
+        "bsdusr_unixhash": "*",
+        "bsdusr_smbhash": "",
+        "bsdusr_group": 1,
+        "bsdusr_home": "/root",
+        "bsdusr_shell": "/bin/csh",
+        "bsdusr_full_name": "root",
+        "bsdusr_builtin": true,
+        "bsdusr_email": "william88@gmail.com",
+        "bsdusr_password_disabled": false,
+        "bsdusr_locked": false,
+        "bsdusr_sudo": false,
+        "bsdusr_microsoft_account": false
+    }
+},
+{
+    "model": "account.bsdusers",
+    "pk": 2,
+    "fields": {
+        "bsdusr_uid": 1,
+        "bsdusr_username": "daemon",
+        "bsdusr_unixhash": "*",
+        "bsdusr_smbhash": "*",
+        "bsdusr_group": 2,
+        "bsdusr_home": "/root",
+        "bsdusr_shell": "/usr/sbin/nologin",
+        "bsdusr_full_name": "Owner of many system processes",
+        "bsdusr_builtin": true,
+        "bsdusr_email": "",
+        "bsdusr_password_disabled": false,
+        "bsdusr_locked": false,
+        "bsdusr_sudo": false,
+        "bsdusr_microsoft_account": false
+    }
+},
+{
+    "model": "account.bsdusers",
+    "pk": 3,
+    "fields": {
+        "bsdusr_uid": 2,
+        "bsdusr_username": "operator",
+        "bsdusr_unixhash": "*",
+        "bsdusr_smbhash": "*",
+        "bsdusr_group": 6,
+        "bsdusr_home": "/",
+        "bsdusr_shell": "/usr/sbin/nologin",
+        "bsdusr_full_name": "System &",
+        "bsdusr_builtin": true,
+        "bsdusr_email": "",
+        "bsdusr_password_disabled": false,
+        "bsdusr_locked": false,
+        "bsdusr_sudo": false,
+        "bsdusr_microsoft_account": false
+    }
+},
+{
+    "model": "account.bsdusers",
+    "pk": 4,
+    "fields": {
+        "bsdusr_uid": 3,
+        "bsdusr_username": "bin",
+        "bsdusr_unixhash": "*",
+        "bsdusr_smbhash": "*",
+        "bsdusr_group": 8,
+        "bsdusr_home": "/",
+        "bsdusr_shell": "/usr/sbin/nologin",
+        "bsdusr_full_name": "Binaries Commands and Source",
+        "bsdusr_builtin": true,
+        "bsdusr_email": "",
+        "bsdusr_password_disabled": false,
+        "bsdusr_locked": false,
+        "bsdusr_sudo": false,
+        "bsdusr_microsoft_account": false
+    }
+},
+{
+    "model": "account.bsdusers",
+    "pk": 5,
+    "fields": {
+        "bsdusr_uid": 4,
+        "bsdusr_username": "tty",
+        "bsdusr_unixhash": "*",
+        "bsdusr_smbhash": "*",
+        "bsdusr_group": 28,
+        "bsdusr_home": "/",
+        "bsdusr_shell": "/usr/sbin/nologin",
+        "bsdusr_full_name": "Tty Sandbox",
+        "bsdusr_builtin": true,
+        "bsdusr_email": "",
+        "bsdusr_password_disabled": false,
+        "bsdusr_locked": false,
+        "bsdusr_sudo": false,
+        "bsdusr_microsoft_account": false
+    }
+},
+{
+    "model": "account.bsdusers",
+    "pk": 6,
+    "fields": {
+        "bsdusr_uid": 5,
+        "bsdusr_username": "kmem",
+        "bsdusr_unixhash": "*",
+        "bsdusr_smbhash": "*",
+        "bsdusr_group": 3,
+        "bsdusr_home": "/",
+        "bsdusr_shell": "/usr/sbin/nologin",
+        "bsdusr_full_name": "KMem Sandbox",
+        "bsdusr_builtin": true,
+        "bsdusr_email": "",
+        "bsdusr_password_disabled": false,
+        "bsdusr_locked": false,
+        "bsdusr_sudo": false,
+        "bsdusr_microsoft_account": false
+    }
+},
+{
+    "model": "account.bsdusers",
+    "pk": 7,
+    "fields": {
+        "bsdusr_uid": 7,
+        "bsdusr_username": "games",
+        "bsdusr_unixhash": "*",
+        "bsdusr_smbhash": "*",
+        "bsdusr_group": 11,
+        "bsdusr_home": "/",
+        "bsdusr_shell": "/usr/sbin/nologin",
+        "bsdusr_full_name": "Games pseudo-user",
+        "bsdusr_builtin": true,
+        "bsdusr_email": "",
+        "bsdusr_password_disabled": false,
+        "bsdusr_locked": false,
+        "bsdusr_sudo": false,
+        "bsdusr_microsoft_account": false
+    }
+},
+{
+    "model": "account.bsdusers",
+    "pk": 8,
+    "fields": {
+        "bsdusr_uid": 8,
+        "bsdusr_username": "news",
+        "bsdusr_unixhash": "*",
+        "bsdusr_smbhash": "*",
+        "bsdusr_group": 9,
+        "bsdusr_home": "/",
+        "bsdusr_shell": "/usr/sbin/nologin",
+        "bsdusr_full_name": "News Subsystem",
+        "bsdusr_builtin": true,
+        "bsdusr_email": "",
+        "bsdusr_password_disabled": false,
+        "bsdusr_locked": false,
+        "bsdusr_sudo": false,
+        "bsdusr_microsoft_account": false
+    }
+},
+{
+    "model": "account.bsdusers",
+    "pk": 9,
+    "fields": {
+        "bsdusr_uid": 9,
+        "bsdusr_username": "man",
+        "bsdusr_unixhash": "*",
+        "bsdusr_smbhash": "*",
+        "bsdusr_group": 10,
+        "bsdusr_home": "/usr/share/man",
+        "bsdusr_shell": "/usr/sbin/nologin",
+        "bsdusr_full_name": "Mister Man Pages",
+        "bsdusr_builtin": true,
+        "bsdusr_email": "",
+        "bsdusr_password_disabled": false,
+        "bsdusr_locked": false,
+        "bsdusr_sudo": false,
+        "bsdusr_microsoft_account": false
+    }
+},
+{
+    "model": "account.bsdusers",
+    "pk": 10,
+    "fields": {
+        "bsdusr_uid": 22,
+        "bsdusr_username": "sshd",
+        "bsdusr_unixhash": "*",
+        "bsdusr_smbhash": "*",
+        "bsdusr_group": 14,
+        "bsdusr_home": "/var/empty",
+        "bsdusr_shell": "/usr/sbin/nologin",
+        "bsdusr_full_name": "Secure Shell Daemon",
+        "bsdusr_builtin": true,
+        "bsdusr_email": "",
+        "bsdusr_password_disabled": false,
+        "bsdusr_locked": false,
+        "bsdusr_sudo": false,
+        "bsdusr_microsoft_account": false
+    }
+},
+{
+    "model": "account.bsdusers",
+    "pk": 11,
+    "fields": {
+        "bsdusr_uid": 25,
+        "bsdusr_username": "smmsp",
+        "bsdusr_unixhash": "*",
+        "bsdusr_smbhash": "*",
+        "bsdusr_group": 15,
+        "bsdusr_home": "/var/spool/clientmqueue",
+        "bsdusr_shell": "/usr/sbin/nologin",
+        "bsdusr_full_name": "Sendmail Submission User",
+        "bsdusr_builtin": true,
+        "bsdusr_email": "",
+        "bsdusr_password_disabled": false,
+        "bsdusr_locked": false,
+        "bsdusr_sudo": false,
+        "bsdusr_microsoft_account": false
+    }
+},
+{
+    "model": "account.bsdusers",
+    "pk": 12,
+    "fields": {
+        "bsdusr_uid": 26,
+        "bsdusr_username": "mailnull",
+        "bsdusr_unixhash": "*",
+        "bsdusr_smbhash": "*",
+        "bsdusr_group": 16,
+        "bsdusr_home": "/var/spool/mqueue",
+        "bsdusr_shell": "/usr/sbin/nologin",
+        "bsdusr_full_name": "Sendmail Default User",
+        "bsdusr_builtin": true,
+        "bsdusr_email": "",
+        "bsdusr_password_disabled": false,
+        "bsdusr_locked": false,
+        "bsdusr_sudo": false,
+        "bsdusr_microsoft_account": false
+    }
+},
+{
+    "model": "account.bsdusers",
+    "pk": 13,
+    "fields": {
+        "bsdusr_uid": 53,
+        "bsdusr_username": "bind",
+        "bsdusr_unixhash": "*",
+        "bsdusr_smbhash": "*",
+        "bsdusr_group": 18,
+        "bsdusr_home": "/",
+        "bsdusr_shell": "/usr/sbin/nologin",
+        "bsdusr_full_name": "Bind Sandbox",
+        "bsdusr_builtin": true,
+        "bsdusr_email": "",
+        "bsdusr_password_disabled": false,
+        "bsdusr_locked": false,
+        "bsdusr_sudo": false,
+        "bsdusr_microsoft_account": false
+    }
+},
+{
+    "model": "account.bsdusers",
+    "pk": 14,
+    "fields": {
+        "bsdusr_uid": 62,
+        "bsdusr_username": "proxy",
+        "bsdusr_unixhash": "*",
+        "bsdusr_smbhash": "*",
+        "bsdusr_group": 19,
+        "bsdusr_home": "/nonexistent",
+        "bsdusr_shell": "/usr/sbin/nologin",
+        "bsdusr_full_name": "Packet Filter pseudo-user",
+        "bsdusr_builtin": true,
+        "bsdusr_email": "",
+        "bsdusr_password_disabled": false,
+        "bsdusr_locked": false,
+        "bsdusr_sudo": false,
+        "bsdusr_microsoft_account": false
+    }
+},
+{
+    "model": "account.bsdusers",
+    "pk": 15,
+    "fields": {
+        "bsdusr_uid": 64,
+        "bsdusr_username": "_pflogd",
+        "bsdusr_unixhash": "*",
+        "bsdusr_smbhash": "*",
+        "bsdusr_group": 21,
+        "bsdusr_home": "/var/empty",
+        "bsdusr_shell": "/usr/sbin/nologin",
+        "bsdusr_full_name": "pflogd privsep user",
+        "bsdusr_builtin": true,
+        "bsdusr_email": "",
+        "bsdusr_password_disabled": false,
+        "bsdusr_locked": false,
+        "bsdusr_sudo": false,
+        "bsdusr_microsoft_account": false
+    }
+},
+{
+    "model": "account.bsdusers",
+    "pk": 16,
+    "fields": {
+        "bsdusr_uid": 65,
+        "bsdusr_username": "_dhcp",
+        "bsdusr_unixhash": "*",
+        "bsdusr_smbhash": "*",
+        "bsdusr_group": 22,
+        "bsdusr_home": "/var/empty",
+        "bsdusr_shell": "/usr/sbin/nologin",
+        "bsdusr_full_name": "dhcp programs",
+        "bsdusr_builtin": true,
+        "bsdusr_email": "",
+        "bsdusr_password_disabled": false,
+        "bsdusr_locked": false,
+        "bsdusr_sudo": false,
+        "bsdusr_microsoft_account": false
+    }
+},
+{
+    "model": "account.bsdusers",
+    "pk": 17,
+    "fields": {
+        "bsdusr_uid": 66,
+        "bsdusr_username": "uucp",
+        "bsdusr_unixhash": "*",
+        "bsdusr_smbhash": "*",
+        "bsdusr_group": 23,
+        "bsdusr_home": "/var/spool/uucppublic",
+        "bsdusr_shell": "/usr/local/libexec/uucp/uucico",
+        "bsdusr_full_name": "UUCP pseudo-user",
+        "bsdusr_builtin": true,
+        "bsdusr_email": "",
+        "bsdusr_password_disabled": false,
+        "bsdusr_locked": false,
+        "bsdusr_sudo": false,
+        "bsdusr_microsoft_account": false
+    }
+},
+{
+    "model": "account.bsdusers",
+    "pk": 18,
+    "fields": {
+        "bsdusr_uid": 68,
+        "bsdusr_username": "pop",
+        "bsdusr_unixhash": "*",
+        "bsdusr_smbhash": "*",
+        "bsdusr_group": 7,
+        "bsdusr_home": "/nonexistent",
+        "bsdusr_shell": "/usr/sbin/nologin",
+        "bsdusr_full_name": "Post Office Owner",
+        "bsdusr_builtin": true,
+        "bsdusr_email": "",
+        "bsdusr_password_disabled": false,
+        "bsdusr_locked": false,
+        "bsdusr_sudo": false,
+        "bsdusr_microsoft_account": false
+    }
+},
+{
+    "model": "account.bsdusers",
+    "pk": 19,
+    "fields": {
+        "bsdusr_uid": 80,
+        "bsdusr_username": "www",
+        "bsdusr_unixhash": "*",
+        "bsdusr_smbhash": "*",
+        "bsdusr_group": 27,
+        "bsdusr_home": "/nonexistent",
+        "bsdusr_shell": "/usr/sbin/nologin",
+        "bsdusr_full_name": "World Wide Web Owner",
+        "bsdusr_builtin": true,
+        "bsdusr_email": "",
+        "bsdusr_password_disabled": false,
+        "bsdusr_locked": false,
+        "bsdusr_sudo": false,
+        "bsdusr_microsoft_account": false
+    }
+},
+{
+    "model": "account.bsdusers",
+    "pk": 20,
+    "fields": {
+        "bsdusr_uid": 65534,
+        "bsdusr_username": "nobody",
+        "bsdusr_unixhash": "*",
+        "bsdusr_smbhash": "*",
+        "bsdusr_group": 29,
+        "bsdusr_home": "/nonexistent",
+        "bsdusr_shell": "/usr/sbin/nologin",
+        "bsdusr_full_name": "Unprivileged user",
+        "bsdusr_builtin": true,
+        "bsdusr_email": "",
+        "bsdusr_password_disabled": false,
+        "bsdusr_locked": false,
+        "bsdusr_sudo": false,
+        "bsdusr_microsoft_account": false
+    }
+},
+{
+    "model": "account.bsdusers",
+    "pk": 21,
+    "fields": {
+        "bsdusr_uid": 200,
+        "bsdusr_username": "avahi",
+        "bsdusr_unixhash": "*",
+        "bsdusr_smbhash": "*",
+        "bsdusr_group": 30,
+        "bsdusr_home": "/nonexistent",
+        "bsdusr_shell": "/usr/sbin/nologin",
+        "bsdusr_full_name": "avahi user",
+        "bsdusr_builtin": true,
+        "bsdusr_email": "",
+        "bsdusr_password_disabled": false,
+        "bsdusr_locked": false,
+        "bsdusr_sudo": false,
+        "bsdusr_microsoft_account": false
+    }
+},
+{
+    "model": "account.bsdusers",
+    "pk": 22,
+    "fields": {
+        "bsdusr_uid": 201,
+        "bsdusr_username": "messagebus",
+        "bsdusr_unixhash": "*",
+        "bsdusr_smbhash": "*",
+        "bsdusr_group": 31,
+        "bsdusr_home": "/nonexistent",
+        "bsdusr_shell": "/usr/sbin/nologin",
+        "bsdusr_full_name": "messagebus user",
+        "bsdusr_builtin": true,
+        "bsdusr_email": "",
+        "bsdusr_password_disabled": false,
+        "bsdusr_locked": false,
+        "bsdusr_sudo": false,
+        "bsdusr_microsoft_account": false
+    }
+},
+{
+    "model": "account.bsdusers",
+    "pk": 23,
+    "fields": {
+        "bsdusr_uid": 14,
+        "bsdusr_username": "ftp",
+        "bsdusr_unixhash": "*",
+        "bsdusr_smbhash": "*",
+        "bsdusr_group": 12,
+        "bsdusr_home": "/nonexistent",
+        "bsdusr_shell": "/bin/csh",
+        "bsdusr_full_name": "",
+        "bsdusr_builtin": true,
+        "bsdusr_email": "",
+        "bsdusr_password_disabled": false,
+        "bsdusr_locked": false,
+        "bsdusr_sudo": false,
+        "bsdusr_microsoft_account": false
+    }
+},
+{
+    "model": "account.bsdusers",
+    "pk": 24,
+    "fields": {
+        "bsdusr_uid": 78,
+        "bsdusr_username": "auditdistd",
+        "bsdusr_unixhash": "*",
+        "bsdusr_smbhash": "*",
+        "bsdusr_group": 26,
+        "bsdusr_home": "/var/empty",
+        "bsdusr_shell": "/usr/sbin/nologin",
+        "bsdusr_full_name": "Auditdistd unprivileged user",
+        "bsdusr_builtin": true,
+        "bsdusr_email": "",
+        "bsdusr_password_disabled": false,
+        "bsdusr_locked": false,
+        "bsdusr_sudo": false,
+        "bsdusr_microsoft_account": false
+    }
+},
+{
+    "model": "account.bsdusers",
+    "pk": 25,
+    "fields": {
+        "bsdusr_uid": 845,
+        "bsdusr_username": "hast",
+        "bsdusr_unixhash": "*",
+        "bsdusr_smbhash": "*",
+        "bsdusr_group": 32,
+        "bsdusr_home": "/var/empty",
+        "bsdusr_shell": "/usr/sbin/nologin",
+        "bsdusr_full_name": "HAST unprivileged user",
+        "bsdusr_builtin": true,
+        "bsdusr_email": "",
+        "bsdusr_password_disabled": false,
+        "bsdusr_locked": false,
+        "bsdusr_sudo": false,
+        "bsdusr_microsoft_account": false
+    }
+},
+{
+    "model": "account.bsdusers",
+    "pk": 26,
+    "fields": {
+        "bsdusr_uid": 79,
+        "bsdusr_username": "ladvd",
+        "bsdusr_unixhash": "*",
+        "bsdusr_smbhash": "*",
+        "bsdusr_group": 33,
+        "bsdusr_home": "/var/empty",
+        "bsdusr_shell": "/usr/sbin/nologin",
+        "bsdusr_full_name": "ladvd user",
+        "bsdusr_builtin": true,
+        "bsdusr_email": "",
+        "bsdusr_password_disabled": false,
+        "bsdusr_locked": false,
+        "bsdusr_sudo": false,
+        "bsdusr_microsoft_account": false
+    }
+},
+{
+    "model": "account.bsdusers",
+    "pk": 27,
+    "fields": {
+        "bsdusr_uid": 666,
+        "bsdusr_username": "webdav",
+        "bsdusr_unixhash": "*",
+        "bsdusr_smbhash": "*",
+        "bsdusr_group": 34,
+        "bsdusr_home": "/var/empty",
+        "bsdusr_shell": "/usr/sbin/nologin",
+        "bsdusr_full_name": "WebDAV Anonymous User",
+        "bsdusr_builtin": true,
+        "bsdusr_email": "",
+        "bsdusr_password_disabled": false,
+        "bsdusr_locked": false,
+        "bsdusr_sudo": false,
+        "bsdusr_microsoft_account": false
+    }
+},
+{
+    "model": "account.bsdusers",
+    "pk": 28,
+    "fields": {
+        "bsdusr_uid": 8675309,
+        "bsdusr_username": "media",
+        "bsdusr_unixhash": "*",
+        "bsdusr_smbhash": "*",
+        "bsdusr_group": 35,
+        "bsdusr_home": "/var/empty",
+        "bsdusr_shell": "/usr/sbin/nologin",
+        "bsdusr_full_name": "Media User",
+        "bsdusr_builtin": true,
+        "bsdusr_email": "",
+        "bsdusr_password_disabled": false,
+        "bsdusr_locked": false,
+        "bsdusr_sudo": false,
+        "bsdusr_microsoft_account": false
+    }
+}
+]

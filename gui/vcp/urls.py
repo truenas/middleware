@@ -25,13 +25,16 @@
 #
 #####################################################################
 
-from django.conf.urls import patterns, url
+from django.conf.urls import url
 
-urlpatterns = patterns(
-    'freenasUI.vcp.views',
-    url(r'^home/$', 'vcp_home', name='vcp_home'),
-    url(r'^uninstall/$', 'vcp_uninstall', name='vcp_uninstall'),
-    url(r'^upgrade/$', 'vcp_upgrade', name='vcp_upgrade'),
-    url(r'^repair/$', 'vcp_repair', name='vcp_repair'),
-    url(r"^aux/$", "vcp_vcenterauxsettings", name="vcp_vcenterauxsettings"),
+from .views import (
+    vcp_home, vcp_uninstall, vcp_upgrade, vcp_repair, vcp_vcenterauxsettings
 )
+
+urlpatterns = [
+    url(r'^home/$', vcp_home, name='vcp_home'),
+    url(r'^uninstall/$', vcp_uninstall, name='vcp_uninstall'),
+    url(r'^upgrade/$', vcp_upgrade, name='vcp_upgrade'),
+    url(r'^repair/$', vcp_repair, name='vcp_repair'),
+    url(r"^aux/$", vcp_vcenterauxsettings, name="vcp_vcenterauxsettings"),
+]

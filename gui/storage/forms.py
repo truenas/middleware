@@ -33,7 +33,7 @@ import ssl
 import tempfile
 import uuid
 
-from django.contrib.formtools.wizard.views import SessionWizardView
+from formtools.wizard.views import SessionWizardView
 from django.core.files.storage import FileSystemStorage
 from django.core.urlresolvers import reverse
 from django.db import transaction

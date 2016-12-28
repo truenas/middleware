@@ -18,12 +18,13 @@ post-install()
 		mkdir -p /data
 	fi
         cd ${dstCR}
-	env FREENAS_INSTALL=yes %%PYTHON_CMD%% manage.py syncdb --noinput --migrate --traceback
+	env FREENAS_INSTALL=yes /usr/local/sbin/migrate93 -f /data/freenas-v1.db
 	# Lets be evil here and kill pkg(8) if this fails
 	# because pkg does not check return code of POST-INSTALL script
 	if [ $? -ne 0 ]; then
 		/usr/bin/procstat -h $$|awk '{print $2}'|xargs kill -9
 	fi
+	env FREENAS_INSTALL=yes %%PYTHON_CMD%% manage.py migrate --fake-initial --noinput --traceback
 	%%PYTHON_CMD%% manage.py collectstatic --noinput
 	%%PYTHON_CMD%% tools/compilemsgs.py
         cd /data

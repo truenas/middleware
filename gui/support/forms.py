@@ -37,6 +37,7 @@ log = logging.getLogger("support.forms")
 
 class SupportForm(ModelForm):
     class Meta:
+        fields = '__all__'
         model = models.Support
 
     def __init__(self, *args, **kwargs):

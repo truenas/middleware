@@ -30,7 +30,7 @@ import logging
 import urllib
 
 from django import forms as dforms
-from django.conf.urls import patterns, url
+from django.conf.urls import url
 from django.core.urlresolvers import reverse
 from django.db.models.fields.related import ForeignKey
 from django.http import HttpResponse
@@ -211,8 +211,7 @@ class BaseFreeAdmin(object):
         info = self.app_label, self.module_name
 
         if self._model:
-            urlpatterns = patterns(
-                '',
+            urlpatterns = [
                 url(r'^add/(?P<mf>.+?)?$',
                     wrap(self.add),
                     name='freeadmin_%s_%s_add' % info),
@@ -225,11 +224,10 @@ class BaseFreeAdmin(object):
                 url(r'^empty-formset/$',
                     wrap(self.empty_formset),
                     name='freeadmin_%s_%s_empty_formset' % info),
-            )
+            ]
         else:
-            urlpatterns = patterns('')
-        urlpatterns += patterns(
-            '',
+            urlpatterns = []
+        urlpatterns += [
             url(r'^datagrid/$',
                 wrap(self.datagrid),
                 name='freeadmin_%s_%s_datagrid' % info),
@@ -239,7 +237,7 @@ class BaseFreeAdmin(object):
             url(r'^actions/$',
                 wrap(self.actions),
                 name='freeadmin_%s_%s_actions' % info),
-        )
+        ]
         return urlpatterns
 
     @property

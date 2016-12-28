@@ -25,6 +25,7 @@
 #####################################################################
 import logging
 
+from collections import OrderedDict
 from django.db.models import CASCADE
 from django.utils import translation
 
@@ -42,7 +43,10 @@ def get_related_objects(obj):
     """
     reldict = {}
     relnum = 0
-    for related in obj._meta.get_all_related_objects():
+    for related in [
+        f for f in obj._meta.get_fields()
+        if (f.one_to_many or f.one_to_one) and f.auto_created and not f.concrete
+    ]:
 
         # Do not acount if it is not going to CASCADE
         if related.field.rel.on_delete is not CASCADE:
@@ -74,3 +78,28 @@ def get_related_objects(obj):
 def set_language():
     language = Settings.objects.order_by('-id')[0].stg_language
     translation.activate(language)
+
+
+def key_order(form, index, name, instance=False):
+
+    if instance:
+        d = form.fields
+    else:
+        d = form.base_fields
+
+    value = d.pop(name)
+    new_d = OrderedDict()
+    added = False
+    for i, kv in enumerate(d.iteritems()):
+        k, v = kv
+        if i == index:
+            new_d[name] = value
+            added = True
+        new_d[k] = v
+    if not added:
+        new_d[name] = value
+
+    if instance:
+        form.fields = new_d
+    else:
+        form.base_fields = new_d

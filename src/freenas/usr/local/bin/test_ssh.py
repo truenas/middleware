@@ -35,9 +35,8 @@ sys.path.append('/usr/local/www/freenasUI')
 
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'freenasUI.settings')
 
-# Make sure to load all modules
-from django.db.models.loading import cache
-cache.get_apps()
+import django
+django.setup()
 
 from freenasUI.storage.models import Replication
 

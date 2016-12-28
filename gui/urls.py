@@ -26,11 +26,11 @@
 #####################################################################
 import os
 
-from django.conf.urls import include, patterns, url
+from django.conf.urls import include, url
 from django.contrib.staticfiles.urls import staticfiles_urlpatterns
+from django.views.i18n import javascript_catalog
 from django.views.static import serve
 from django.conf import settings
-from django.template.loader import add_to_builtins
 
 from freenasUI import freeadmin
 from freenasUI.api import v1_api
@@ -69,29 +69,25 @@ v1_api.register(VolumeImportResource())
 navtree.prepare_modelforms()
 freeadmin.autodiscover()
 
-add_to_builtins('django.templatetags.i18n')
-
-urlpatterns = patterns('',
+urlpatterns = [
     url('^$', site.adminInterface, name="index"),
-    (r'^static/(?P<path>.*)',
+    url(r'^static/(?P<path>.*)',
         public(serve),
         {'document_root': os.path.join(settings.HERE, "freeadmin/static")}),
-    (r'^dojango/dojo-media/release/[^/]+/(?P<path>.*)$',
+    url(r'^dojango/dojo-media/release/[^/]+/(?P<path>.*)$',
         public(serve),
         {'document_root': '/usr/local/www/dojo'}),
-    (r'^admin/', include(site.urls)),
-    (r'^jsi18n/', 'django.views.i18n.javascript_catalog'),
-)
+    url(r'^admin/', include(site.urls)),
+    url(r'^jsi18n/', javascript_catalog, name='javascript_catalog'),
+]
 
 for app in settings.APP_MODULES:
-    urlpatterns += patterns(
-        '',
+    urlpatterns += [
         url(r'^%s/' % app.rsplit('.')[-1], include('%s.urls' % app)),
-    )
+    ]
 
-urlpatterns += patterns(
-    '',
+urlpatterns += [
     url(r'^api/', include(v1_api.urls)),
-)
+]
 
 urlpatterns += staticfiles_urlpatterns()

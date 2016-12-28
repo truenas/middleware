@@ -1,1 +1,352 @@
-[{"pk": 1, "model": "account.bsdgroups", "fields": {"bsdgrp_group": "wheel", "bsdgrp_gid": 0, "bsdgrp_builtin": true}}, {"pk": 2, "model": "account.bsdgroups", "fields": {"bsdgrp_group": "daemon", "bsdgrp_gid": 1, "bsdgrp_builtin": true}}, {"pk": 3, "model": "account.bsdgroups", "fields": {"bsdgrp_group": "kmem", "bsdgrp_gid": 2, "bsdgrp_builtin": true}}, {"pk": 4, "model": "account.bsdgroups", "fields": {"bsdgrp_group": "sys", "bsdgrp_gid": 3, "bsdgrp_builtin": true}}, {"pk": 5, "model": "account.bsdgroups", "fields": {"bsdgrp_group": "tty", "bsdgrp_gid": 4, "bsdgrp_builtin": true}}, {"pk": 6, "model": "account.bsdgroups", "fields": {"bsdgrp_group": "operator", "bsdgrp_gid": 5, "bsdgrp_builtin": true}}, {"pk": 7, "model": "account.bsdgroups", "fields": {"bsdgrp_group": "mail", "bsdgrp_gid": 6, "bsdgrp_builtin": true}}, {"pk": 8, "model": "account.bsdgroups", "fields": {"bsdgrp_group": "bin", "bsdgrp_gid": 7, "bsdgrp_builtin": true}}, {"pk": 9, "model": "account.bsdgroups", "fields": {"bsdgrp_group": "news", "bsdgrp_gid": 8, "bsdgrp_builtin": true}}, {"pk": 10, "model": "account.bsdgroups", "fields": {"bsdgrp_group": "man", "bsdgrp_gid": 9, "bsdgrp_builtin": true}}, {"pk": 11, "model": "account.bsdgroups", "fields": {"bsdgrp_group": "games", "bsdgrp_gid": 13, "bsdgrp_builtin": true}}, {"pk": 12, "model": "account.bsdgroups", "fields": {"bsdgrp_group": "ftp", "bsdgrp_gid": 14, "bsdgrp_builtin": true}}, {"pk": 13, "model": "account.bsdgroups", "fields": {"bsdgrp_group": "staff", "bsdgrp_gid": 20, "bsdgrp_builtin": true}}, {"pk": 14, "model": "account.bsdgroups", "fields": {"bsdgrp_group": "sshd", "bsdgrp_gid": 22, "bsdgrp_builtin": true}}, {"pk": 15, "model": "account.bsdgroups", "fields": {"bsdgrp_group": "smmsp", "bsdgrp_gid": 25, "bsdgrp_builtin": true}}, {"pk": 16, "model": "account.bsdgroups", "fields": {"bsdgrp_group": "mailnull", "bsdgrp_gid": 26, "bsdgrp_builtin": true}}, {"pk": 17, "model": "account.bsdgroups", "fields": {"bsdgrp_group": "guest", "bsdgrp_gid": 31, "bsdgrp_builtin": true}}, {"pk": 18, "model": "account.bsdgroups", "fields": {"bsdgrp_group": "bind", "bsdgrp_gid": 53, "bsdgrp_builtin": true}}, {"pk": 19, "model": "account.bsdgroups", "fields": {"bsdgrp_group": "proxy", "bsdgrp_gid": 62, "bsdgrp_builtin": true}}, {"pk": 20, "model": "account.bsdgroups", "fields": {"bsdgrp_group": "authpf", "bsdgrp_gid": 63, "bsdgrp_builtin": true}}, {"pk": 21, "model": "account.bsdgroups", "fields": {"bsdgrp_group": "_pflogd", "bsdgrp_gid": 64, "bsdgrp_builtin": true}}, {"pk": 22, "model": "account.bsdgroups", "fields": {"bsdgrp_group": "_dhcp", "bsdgrp_gid": 65, "bsdgrp_builtin": true}}, {"pk": 23, "model": "account.bsdgroups", "fields": {"bsdgrp_group": "uucp", "bsdgrp_gid": 66, "bsdgrp_builtin": true}}, {"pk": 24, "model": "account.bsdgroups", "fields": {"bsdgrp_group": "dialer", "bsdgrp_gid": 68, "bsdgrp_builtin": true}}, {"pk": 25, "model": "account.bsdgroups", "fields": {"bsdgrp_group": "network", "bsdgrp_gid": 69, "bsdgrp_builtin": true}}, {"pk": 26, "model": "account.bsdgroups", "fields": {"bsdgrp_group": "audit", "bsdgrp_gid": 77, "bsdgrp_builtin": true}}, {"pk": 27, "model": "account.bsdgroups", "fields": {"bsdgrp_group": "www", "bsdgrp_gid": 80, "bsdgrp_builtin": true}}, {"pk": 28, "model": "account.bsdgroups", "fields": {"bsdgrp_group": "nogroup", "bsdgrp_gid": 65533, "bsdgrp_builtin": true}}, {"pk": 29, "model": "account.bsdgroups", "fields": {"bsdgrp_group": "nobody", "bsdgrp_gid": 65534, "bsdgrp_builtin": true}}]
+[
+{
+    "model": "account.bsdgroups",
+    "pk": 1,
+    "fields": {
+        "bsdgrp_gid": 0,
+        "bsdgrp_group": "wheel",
+        "bsdgrp_builtin": true,
+        "bsdgrp_sudo": false
+    }
+},
+{
+    "model": "account.bsdgroups",
+    "pk": 2,
+    "fields": {
+        "bsdgrp_gid": 1,
+        "bsdgrp_group": "daemon",
+        "bsdgrp_builtin": true,
+        "bsdgrp_sudo": false
+    }
+},
+{
+    "model": "account.bsdgroups",
+    "pk": 3,
+    "fields": {
+        "bsdgrp_gid": 2,
+        "bsdgrp_group": "kmem",
+        "bsdgrp_builtin": true,
+        "bsdgrp_sudo": false
+    }
+},
+{
+    "model": "account.bsdgroups",
+    "pk": 4,
+    "fields": {
+        "bsdgrp_gid": 3,
+        "bsdgrp_group": "sys",
+        "bsdgrp_builtin": true,
+        "bsdgrp_sudo": false
+    }
+},
+{
+    "model": "account.bsdgroups",
+    "pk": 5,
+    "fields": {
+        "bsdgrp_gid": 4,
+        "bsdgrp_group": "tty",
+        "bsdgrp_builtin": true,
+        "bsdgrp_sudo": false
+    }
+},
+{
+    "model": "account.bsdgroups",
+    "pk": 6,
+    "fields": {
+        "bsdgrp_gid": 5,
+        "bsdgrp_group": "operator",
+        "bsdgrp_builtin": true,
+        "bsdgrp_sudo": false
+    }
+},
+{
+    "model": "account.bsdgroups",
+    "pk": 7,
+    "fields": {
+        "bsdgrp_gid": 6,
+        "bsdgrp_group": "mail",
+        "bsdgrp_builtin": true,
+        "bsdgrp_sudo": false
+    }
+},
+{
+    "model": "account.bsdgroups",
+    "pk": 8,
+    "fields": {
+        "bsdgrp_gid": 7,
+        "bsdgrp_group": "bin",
+        "bsdgrp_builtin": true,
+        "bsdgrp_sudo": false
+    }
+},
+{
+    "model": "account.bsdgroups",
+    "pk": 9,
+    "fields": {
+        "bsdgrp_gid": 8,
+        "bsdgrp_group": "news",
+        "bsdgrp_builtin": true,
+        "bsdgrp_sudo": false
+    }
+},
+{
+    "model": "account.bsdgroups",
+    "pk": 10,
+    "fields": {
+        "bsdgrp_gid": 9,
+        "bsdgrp_group": "man",
+        "bsdgrp_builtin": true,
+        "bsdgrp_sudo": false
+    }
+},
+{
+    "model": "account.bsdgroups",
+    "pk": 11,
+    "fields": {
+        "bsdgrp_gid": 13,
+        "bsdgrp_group": "games",
+        "bsdgrp_builtin": true,
+        "bsdgrp_sudo": false
+    }
+},
+{
+    "model": "account.bsdgroups",
+    "pk": 12,
+    "fields": {
+        "bsdgrp_gid": 14,
+        "bsdgrp_group": "ftp",
+        "bsdgrp_builtin": true,
+        "bsdgrp_sudo": false
+    }
+},
+{
+    "model": "account.bsdgroups",
+    "pk": 13,
+    "fields": {
+        "bsdgrp_gid": 20,
+        "bsdgrp_group": "staff",
+        "bsdgrp_builtin": true,
+        "bsdgrp_sudo": false
+    }
+},
+{
+    "model": "account.bsdgroups",
+    "pk": 14,
+    "fields": {
+        "bsdgrp_gid": 22,
+        "bsdgrp_group": "sshd",
+        "bsdgrp_builtin": true,
+        "bsdgrp_sudo": false
+    }
+},
+{
+    "model": "account.bsdgroups",
+    "pk": 15,
+    "fields": {
+        "bsdgrp_gid": 25,
+        "bsdgrp_group": "smmsp",
+        "bsdgrp_builtin": true,
+        "bsdgrp_sudo": false
+    }
+},
+{
+    "model": "account.bsdgroups",
+    "pk": 16,
+    "fields": {
+        "bsdgrp_gid": 26,
+        "bsdgrp_group": "mailnull",
+        "bsdgrp_builtin": true,
+        "bsdgrp_sudo": false
+    }
+},
+{
+    "model": "account.bsdgroups",
+    "pk": 17,
+    "fields": {
+        "bsdgrp_gid": 31,
+        "bsdgrp_group": "guest",
+        "bsdgrp_builtin": true,
+        "bsdgrp_sudo": false
+    }
+},
+{
+    "model": "account.bsdgroups",
+    "pk": 18,
+    "fields": {
+        "bsdgrp_gid": 53,
+        "bsdgrp_group": "bind",
+        "bsdgrp_builtin": true,
+        "bsdgrp_sudo": false
+    }
+},
+{
+    "model": "account.bsdgroups",
+    "pk": 19,
+    "fields": {
+        "bsdgrp_gid": 62,
+        "bsdgrp_group": "proxy",
+        "bsdgrp_builtin": true,
+        "bsdgrp_sudo": false
+    }
+},
+{
+    "model": "account.bsdgroups",
+    "pk": 20,
+    "fields": {
+        "bsdgrp_gid": 63,
+        "bsdgrp_group": "authpf",
+        "bsdgrp_builtin": true,
+        "bsdgrp_sudo": false
+    }
+},
+{
+    "model": "account.bsdgroups",
+    "pk": 21,
+    "fields": {
+        "bsdgrp_gid": 64,
+        "bsdgrp_group": "_pflogd",
+        "bsdgrp_builtin": true,
+        "bsdgrp_sudo": false
+    }
+},
+{
+    "model": "account.bsdgroups",
+    "pk": 22,
+    "fields": {
+        "bsdgrp_gid": 65,
+        "bsdgrp_group": "_dhcp",
+        "bsdgrp_builtin": true,
+        "bsdgrp_sudo": false
+    }
+},
+{
+    "model": "account.bsdgroups",
+    "pk": 23,
+    "fields": {
+        "bsdgrp_gid": 66,
+        "bsdgrp_group": "uucp",
+        "bsdgrp_builtin": true,
+        "bsdgrp_sudo": false
+    }
+},
+{
+    "model": "account.bsdgroups",
+    "pk": 24,
+    "fields": {
+        "bsdgrp_gid": 68,
+        "bsdgrp_group": "dialer",
+        "bsdgrp_builtin": true,
+        "bsdgrp_sudo": false
+    }
+},
+{
+    "model": "account.bsdgroups",
+    "pk": 25,
+    "fields": {
+        "bsdgrp_gid": 69,
+        "bsdgrp_group": "network",
+        "bsdgrp_builtin": true,
+        "bsdgrp_sudo": false
+    }
+},
+{
+    "model": "account.bsdgroups",
+    "pk": 26,
+    "fields": {
+        "bsdgrp_gid": 77,
+        "bsdgrp_group": "audit",
+        "bsdgrp_builtin": true,
+        "bsdgrp_sudo": false
+    }
+},
+{
+    "model": "account.bsdgroups",
+    "pk": 27,
+    "fields": {
+        "bsdgrp_gid": 80,
+        "bsdgrp_group": "www",
+        "bsdgrp_builtin": true,
+        "bsdgrp_sudo": false
+    }
+},
+{
+    "model": "account.bsdgroups",
+    "pk": 28,
+    "fields": {
+        "bsdgrp_gid": 65533,
+        "bsdgrp_group": "nogroup",
+        "bsdgrp_builtin": true,
+        "bsdgrp_sudo": false
+    }
+},
+{
+    "model": "account.bsdgroups",
+    "pk": 29,
+    "fields": {
+        "bsdgrp_gid": 65534,
+        "bsdgrp_group": "nobody",
+        "bsdgrp_builtin": true,
+        "bsdgrp_sudo": false
+    }
+},
+{
+    "model": "account.bsdgroups",
+    "pk": 30,
+    "fields": {
+        "bsdgrp_gid": 200,
+        "bsdgrp_group": "avahi",
+        "bsdgrp_builtin": true,
+        "bsdgrp_sudo": false
+    }
+},
+{
+    "model": "account.bsdgroups",
+    "pk": 31,
+    "fields": {
+        "bsdgrp_gid": 201,
+        "bsdgrp_group": "messagebus",
+        "bsdgrp_builtin": true,
+        "bsdgrp_sudo": false
+    }
+},
+{
+    "model": "account.bsdgroups",
+    "pk": 32,
+    "fields": {
+        "bsdgrp_gid": 845,
+        "bsdgrp_group": "hast",
+        "bsdgrp_builtin": true,
+        "bsdgrp_sudo": false
+    }
+},
+{
+    "model": "account.bsdgroups",
+    "pk": 33,
+    "fields": {
+        "bsdgrp_gid": 78,
+        "bsdgrp_group": "ladvd",
+        "bsdgrp_builtin": true,
+        "bsdgrp_sudo": false
+    }
+},
+{
+    "model": "account.bsdgroups",
+    "pk": 34,
+    "fields": {
+        "bsdgrp_gid": 666,
+        "bsdgrp_group": "webdav",
+        "bsdgrp_builtin": true,
+        "bsdgrp_sudo": false
+    }
+},
+{
+    "model": "account.bsdgroups",
+    "pk": 35,
+    "fields": {
+        "bsdgrp_gid": 8675309,
+        "bsdgrp_group": "media",
+        "bsdgrp_builtin": true,
+        "bsdgrp_sudo": false
+    }
+}
+]

@@ -32,15 +32,11 @@ from django.core.exceptions import ValidationError
 from django.db import models
 from django.utils.text import capfirst
 
-from south.modelsinspector import add_introspection_rules
-
-add_introspection_rules([], ["^(freenasUI\.)?freeadmin\.models\.fields\..*"])
 log = logging.getLogger('freeadmin.models.fields')
 
 
 class DictField(models.Field):
     empty_strings_allowed = False
-    __metaclass__ = models.SubfieldBase
 
     def get_internal_type(self):
         return "TextField"
@@ -111,7 +107,6 @@ class PathField(models.CharField):
 
 class MACField(models.Field):
     empty_strings_allowed = False
-    __metaclass__ = models.SubfieldBase
 
     def __init__(self, *args, **kwargs):
         kwargs['max_length'] = 17
@@ -138,7 +133,6 @@ class MACField(models.Field):
 
 
 class MultiSelectField(models.Field):
-    __metaclass__ = models.SubfieldBase
 
     def get_internal_type(self):
         return "CharField"

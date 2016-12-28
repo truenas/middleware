@@ -192,7 +192,6 @@ class CIFS(Model):
         help_text=_("Enable/disable AIO support."),
     )
     cifs_srv_aio_rs = models.IntegerField(
-        max_length=120,
         verbose_name=_("Minimum AIO read size"),
         help_text=_("Samba will read asynchronously if request size is "
                     "larger than this value."),
@@ -200,7 +199,6 @@ class CIFS(Model):
         editable=False,
     )
     cifs_srv_aio_ws = models.IntegerField(
-        max_length=120,
         verbose_name=_("Minimum AIO write size"),
         help_text=_("Samba will write asynchronously if request size is "
                     "larger than this value."),
@@ -322,7 +320,6 @@ class AFP(Model):
         default='',
     )
     afp_srv_connections_limit = models.IntegerField(
-        max_length=120,
         verbose_name=_('Max. Connections'),
         validators=[MinValueValidator(1), MaxValueValidator(1000)],
         help_text=_("Maximum number of connections permitted via AFP. The "
@@ -573,7 +570,6 @@ class iSCSITargetExtent(Model):
                     ", or suffix with KB, MB, or TB for convenience."),
     )
     iscsi_target_extent_blocksize = models.IntegerField(
-        max_length=4,
         choices=choices.TARGET_BLOCKSIZE_CHOICES,
         default=choices.TARGET_BLOCKSIZE_CHOICES[0][0],
         verbose_name=_("Logical Block Size"),
@@ -696,7 +692,6 @@ class iSCSITargetExtent(Model):
 
 class iSCSITargetPortal(Model):
     iscsi_target_portal_tag = models.IntegerField(
-        max_length=120,
         default=1,
         verbose_name=_("Portal Group ID"),
     )
@@ -713,7 +708,6 @@ class iSCSITargetPortal(Model):
         verbose_name=_("Discovery Auth Method")
     )
     iscsi_target_portal_discoveryauthgroup = models.IntegerField(
-        max_length=120,
         verbose_name=_("Discovery Auth Group"),
         blank=True,
         null=True,
@@ -752,7 +746,7 @@ class iSCSITargetPortalIP(Model):
         verbose_name=_("Portal"),
         related_name='ips',
     )
-    iscsi_target_portalip_ip = models.IPAddressField(
+    iscsi_target_portalip_ip = models.GenericIPAddressField(
         verbose_name=_("IP Address"),
     )
     iscsi_target_portalip_port = models.SmallIntegerField(
@@ -1004,7 +998,6 @@ class iSCSITargetGroups(Model):
         help_text=_("The authentication method accepted by the target."),
     )
     iscsi_target_authgroup = models.IntegerField(
-        max_length=120,
         verbose_name=_("Authentication Group ID"),
         null=True,
         blank=True,

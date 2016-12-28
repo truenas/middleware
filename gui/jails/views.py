@@ -29,7 +29,7 @@ import os
 import string
 import time
 
-from django.core.servers.basehttp import FileWrapper
+from wsgiref.util import FileWrapper
 from django.http import HttpResponse
 from django.shortcuts import render
 from django.utils.translation import ugettext as _
@@ -501,9 +501,10 @@ def jail_zfsrmsnap(request, id):
 def jail_info(request, id):
     data = {}
 
-    fields = models.Jails._meta.get_all_field_names()
-    for f in fields:
-        data[f] = None
+    for f in models.Jails._meta.get_fields():
+        if f.many_to_one or f.related_model:
+            continue
+        data[f.name] = None
 
     try:
         jail = models.Jails.objects.get(pk=id)
@@ -520,9 +521,10 @@ def jail_info(request, id):
 def jail_template_info(request, name):
     data = {}
 
-    fields = models.JailTemplate._meta.get_all_field_names()
-    for f in fields:
-        data[f] = None
+    for f in models.JailTemplate._meta.get_fields():
+        if f.many_to_one or f.related_model:
+            continue
+        data[f.name] = None
 
     if name:
         jt = models.JailTemplate.objects.filter(jt_name=name)
@@ -598,9 +600,10 @@ def jail_template_delete(request, id):
 def jailsconfiguration_info(request):
     data = {}
 
-    fields = models.JailsConfiguration._meta.get_all_field_names()
-    for f in fields:
-        data[f] = None
+    for f in models.JailsConfiguration._meta.get_fields():
+        if f.many_to_one or f.related_model:
+            continue
+        data[f.name] = None
 
     try:
         jc = models.JailsConfiguration.objects.all()[0]

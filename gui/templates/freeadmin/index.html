@@ -1,7 +1,7 @@
 {% extends "base.html" %}
 
 {% block dojango_header_extra %}
-<script type="text/javascript" src="{% url "django.views.i18n.javascript_catalog" %}"></script>
+<script type="text/javascript" src="{% url "javascript_catalog" %}"></script>
 <script type="text/javascript" src="{{ STATIC_URL }}lib/js/freeadmin.js?cache={{ cache_hash }}"></script>
 <script type="text/javascript" src="{{ STATIC_URL }}lib/js/license.js?cache={{ cache_hash }}"></script>
 <script type="text/javascript" src="{{ STATIC_URL }}lib/js/top.js?cache={{ cache_hash }}"></script>

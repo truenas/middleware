@@ -24,14 +24,15 @@
 #
 #####################################################################
 
-from django.conf.urls import patterns, url
+from django.conf.urls import url
 
-urlpatterns = patterns(
-    'freenasUI.services.views',
-    url(r'^index/$', 'index', name="services_home"),
-    url(r'^cifs/$', 'services_cifs', name="services_cifs"),
-    url(r'^core/$', 'core', name="services_core"),
-    url(r'^iscsi/$', 'iscsi', name="services_iscsi"),
-    url(r'enable/(?P<svc>\w+)/.*$', 'enable', name="services_enable"),
-    url(r'fibrechanneltotarget/$', 'fibrechanneltotarget', name="services_fibrechanneltotarget"),
-)
+from .views import index, services_cifs, core, iscsi, enable, fibrechanneltotarget
+
+urlpatterns = [
+    url(r'^index/$', index, name="services_home"),
+    url(r'^cifs/$', services_cifs, name="services_cifs"),
+    url(r'^core/$', core, name="services_core"),
+    url(r'^iscsi/$', iscsi, name="services_iscsi"),
+    url(r'enable/(?P<svc>\w+)/.*$', enable, name="services_enable"),
+    url(r'fibrechanneltotarget/$', fibrechanneltotarget, name="services_fibrechanneltotarget"),
+]

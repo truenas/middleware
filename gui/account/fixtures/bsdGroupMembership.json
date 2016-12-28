@@ -1,0 +1,10 @@
+[
+{
+    "model": "account.bsdgroupmembership",
+    "pk": 1,
+    "fields": {
+        "bsdgrpmember_group": 6,
+        "bsdgrpmember_user": 17
+    }
+}
+]

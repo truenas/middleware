@@ -85,9 +85,8 @@ if __name__ == '__main__':
 
         os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'freenasUI.settings')
 
-        # Make sure to load all modules
-        from django.db.models.loading import cache
-        cache.get_apps()
+        import django
+        django.setup()
 
         from freenasUI.freeadmin.utils import set_language
         from freenasUI.system import alert

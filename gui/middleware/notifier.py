@@ -87,12 +87,14 @@ if FREENAS_PATH not in sys.path:
 
 os.environ["DJANGO_SETTINGS_MODULE"] = "freenasUI.settings"
 
+import django
+from django.apps import apps
+
+# Avoid calling setup again which may dead-lock
+if not apps.app_configs:
+    django.setup()
+
 from django.db.models import Q
-
-# Make sure to load all modules
-from django.db.models.loading import cache
-cache.get_apps()
-
 from django.utils.translation import ugettext as _
 
 from freenasUI.common.acl import (ACL_FLAGS_OS_WINDOWS, ACL_WINDOWS_FILE,
