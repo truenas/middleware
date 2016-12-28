@@ -135,7 +135,6 @@ HW_PHYSMEM_GB = HW_PHYSMEM / GB
 DEF_KNOBS = {
     'loader': {
         'vm.kmem_size',
-        'vfs.zfs.arc_max',
     },
     'sysctl': {
         'kern.ipc.maxsockbuf',
@@ -162,6 +161,7 @@ DEF_KNOBS = {
         'vfs.zfs.top_maxinflight',
         'vfs.zfs.metaslab.lba_weighting_enabled',
         'vfs.zfs.zfetch.max_distance',
+        'vfs.zfs.arc_max',
     },
 }
 
