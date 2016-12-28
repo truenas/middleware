@@ -2298,6 +2298,9 @@ class CertificateAuthorityImportForm(ModelForm):
             raise forms.ValidationError(_(
                 "{0} is a reserved internal keyword for Certificate Management".format(name)
             ))
+        reg = re.search(r'^[a-z0-9_\-]+$', name or '', re.I)
+        if not reg:
+            raise forms.ValidationError(_('Use alphanumeric characters, "_" and "-".'))
         return name
 
     def clean_cert_passphrase(self):
@@ -2436,6 +2439,9 @@ class CertificateAuthorityCreateInternalForm(ModelForm):
             raise forms.ValidationError(_(
                 "{0} is a reserved internal keyword for Certificate Management".format(name)
             ))
+        reg = re.search(r'^[a-z0-9_\-]+$', name or '', re.I)
+        if not reg:
+            raise forms.ValidationError(_('Use alphanumeric characters, "_" and "-".'))
         return name
 
     def save(self):
@@ -2564,6 +2570,9 @@ class CertificateAuthorityCreateIntermediateForm(ModelForm):
             raise forms.ValidationError(_(
                 "{0} is a reserved internal keyword for Certificate Management".format(name)
             ))
+        reg = re.search(r'^[a-z0-9_\-]+$', name or '', re.I)
+        if not reg:
+            raise forms.ValidationError(_('Use alphanumeric characters, "_" and "-".'))
         return name
 
     def save(self):
@@ -2799,6 +2808,9 @@ class CertificateImportForm(ModelForm):
             raise forms.ValidationError(_(
                 "{0} is a reserved internal keyword for Certificate Management".format(name)
             ))
+        reg = re.search(r'^[a-z0-9_\-]+$', name or '', re.I)
+        if not reg:
+            raise forms.ValidationError(_('Use alphanumeric characters, "_" and "-".'))
         return name
 
     def save(self):
@@ -2917,14 +2929,13 @@ class CertificateCreateInternalForm(ModelForm):
             raise forms.ValidationError(
                 "A certificate with this name already exists."
             )
-        if name.find('"') != -1:
-            raise forms.ValidationError(
-                """You cannnot issue a certificate with a `"` in its name"""
-            )
         if name in ("external", "self-signed", "external - signature pending"):
             raise forms.ValidationError(_(
                 "{0} is a reserved internal keyword for Certificate Management".format(name)
             ))
+        reg = re.search(r'^[a-z0-9_\-]+$', name or '', re.I)
+        if not reg:
+            raise forms.ValidationError(_('Use alphanumeric characters, "_" and "-".'))
         return name
 
     def save(self):
@@ -3063,6 +3074,9 @@ class CertificateCreateCSRForm(ModelForm):
             raise forms.ValidationError(_(
                 "{0} is a reserved internal keyword for Certificate Management".format(name)
             ))
+        reg = re.search(r'^[a-z0-9_\-]+$', name or '', re.I)
+        if not reg:
+            raise forms.ValidationError(_('Use alphanumeric characters, "_" and "-".'))
         return name
 
     def save(self):
