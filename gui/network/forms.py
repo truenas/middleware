@@ -43,10 +43,8 @@ from freenasUI.contrib.IPAddressField import IP4AddressFormField
 from freenasUI.freeadmin.sqlite3_ha.base import DBSync
 from freenasUI.middleware.notifier import notifier
 from freenasUI.network import models
-from ipaddr import (
-    IPAddress, AddressValueError,
-    IPNetwork,
-)
+from freenasUI.freeadmin.utils import key_order
+from ipaddr import IPAddress, AddressValueError, IPNetwork
 
 log = logging.getLogger('network.forms')
 SW_NAME = get_sw_name()
@@ -461,8 +459,7 @@ class IPMIForm(Form):
             choices=channels,
             label=_('Channel'),
         )
-        self.fields.keyOrder.remove('channel')
-        self.fields.keyOrder.insert(0, 'channel')
+        key_order(self, 0, 'channel', instance=True)
 
     def clean_ipmi_password2(self):
         ipmi_password1 = self.cleaned_data.get("ipmi_password1", "")
