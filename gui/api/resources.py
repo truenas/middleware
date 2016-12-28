@@ -463,6 +463,9 @@ class VolumeResourceMixin(NestedMixin):
 
     class Meta:
         validation = FormValidation(form_class=VolumeManagerForm)
+        filtering = {
+            'vol_name': ['exact'],
+        }
 
     def obj_get(self, bundle, **kwargs):
         if 'pk' in kwargs and not kwargs['pk'].isdigit():
@@ -2654,6 +2657,9 @@ class ServicesResourceMixin(object):
 
     class Meta:
         allowed_methods = ['get', 'put']
+        filtering = {
+            'srv_service': ['exact'],
+        }
 
     def dispatch(self, *args, **kwargs):
         self.__services = {}
