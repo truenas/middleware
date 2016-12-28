@@ -607,7 +607,7 @@ class TaskFAdmin(BaseFreeAdmin):
     icon_object = u"SnapIcon"
     extra_js = u"taskrepeat_checkings();"
     composed_fields = (
-        ('Lifetime', ('task_ret_count', 'task_ret_unit')),
+        ('Snapshot Lifetime', ('task_ret_count', 'task_ret_unit'), 'The amount of time these snapshots are retained before being automatically deleted'),
     )
     resource_mixin = TaskResourceMixin
     exclude_fields = (
