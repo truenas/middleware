@@ -70,6 +70,16 @@ class NotifierService(Service):
         rv = getattr(subsystem, method)(*params)
         return rv
 
+    def pwenc_decrypt(self, encrypted=None):
+        """
+        Wrapper method to avoid traceback.
+        This is simply to keep old behavior in notifier.
+        """
+        try:
+            notifier().pwenc_decrypt(encrypted)
+        except:
+            return ''
+
     def zpool_list(self, name=None):
         """Wrapper for zfs.zpool_list"""
         return zfs.zpool_list(name)
