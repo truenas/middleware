@@ -525,8 +525,9 @@ def jail_template_info(request, name):
         data[f] = None
 
     if name:
-        jt = models.JailTemplate.objects.get(jt_name=name)
-        if jt:
+        jt = models.JailTemplate.objects.filter(jt_name=name)
+        if jt.exists():
+            jt = jt[0]
             for k in data.keys():
                 data[k] = getattr(jt, k)
             data['jt_instances'] = jt.jt_instances
