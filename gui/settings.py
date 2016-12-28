@@ -194,10 +194,6 @@ DIR_BLACKLIST = [
 ]
 APP_MODULES = []
 
-MIGRATION_MODULES = {
-    'api': 'api.db_migrations',
-}
-
 for entry in os.listdir(HERE):
     if entry in DIR_BLACKLIST:
         continue
@@ -205,9 +201,6 @@ for entry in os.listdir(HERE):
         continue
     if os.path.isdir(os.path.join(HERE, entry)):
         APP_MODULES.append('freenasUI.%s' % entry)
-        # Temporary workaround so south migrations call still
-        # live on migrations/ directory
-        MIGRATION_MODULES[entry] = 'freenasUI.%s.db_migrations' % entry
 
 INSTALLED_APPS = (
     'django.contrib.auth',
