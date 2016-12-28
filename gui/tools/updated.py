@@ -45,6 +45,9 @@ sys.path.append('/usr/local/lib')
 
 os.environ['DJANGO_SETTINGS_MODULE'] = 'freenasUI.settings'
 
+import django
+django.setup()
+
 from freenasUI.settings import LOGGING
 
 log = logging.getLogger('tools.updated')

@@ -68,11 +68,15 @@ def http_oauth(func):
         oauth_params = {}
 
         try:
-            for key in request.REQUEST:
+            for key in request.GET:
                 if key.startswith("oauth"):
-                    oauth_params[key] = request.REQUEST.get(key)
+                    oauth_params[key] = request.GET.get(key)
                 else:
                     json_params = json.loads(key)
+
+            for key in request.POST:
+                if key.startswith("oauth"):
+                    oauth_params[key] = request.POST.get(key)
 
             key = oauth_params.get("oauth_consumer_key", None)
             host = "%s://%s" % (
@@ -114,9 +118,8 @@ def http_oauth(func):
                 return func(request, *args, **kwargs)
 
         except Exception, e:
-            pass
+            log.debug('OAuth authentication failed', exc_info=True)
 
-        # FIXME: better error handling
         return HttpResponse(json.dumps({
             'jsonrpc': json_params.get("jsonrpc", "2.0"),
             'error': {

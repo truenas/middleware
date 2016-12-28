@@ -35,8 +35,8 @@ sys.path.extend([
 
 os.environ["DJANGO_SETTINGS_MODULE"] = "freenasUI.settings"
 
-from django.db.models.loading import cache
-cache.get_apps()
+import django
+django.setup()
 
 from freenasUI.common.system import (
     ldap_enabled,

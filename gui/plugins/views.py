@@ -593,7 +593,7 @@ def get_ipv4_addr():
             netmask = unicode(hex_to_cidr(int(i['netmask'], 0)))
             ipv4_obj = ipaddress.ip_interface('%s/%s' % (ipv4addr, netmask))
             ipv4_network = ipv4_obj.network
-            if ipv4gateway in ipv4_network:
+            if ipv4gateway_obj in ipv4_network:
                 return ipv4addr
 
 @public

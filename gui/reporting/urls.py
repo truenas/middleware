@@ -23,22 +23,23 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
-from django.conf.urls import patterns, url
+from django.conf.urls import url
 
 from freenasUI.freeadmin.apppool import appPool
 from .hook import ReportingHook
+from .views import index, generic_graphs, generate
+
 appPool.register(ReportingHook)
 
-urlpatterns = patterns(
-    'freenasUI.reporting.views',
-    url(r'^$', 'index', name="reporting_index"),
-    url(r'^cpu/$', 'generic_graphs', {'names': ['cpu', 'load']}, name="reporting_cpu"),
-    url(r'^disk/$', 'generic_graphs', {'names': ['disk', 'diskgeombusy', 'diskgeomlatency', 'diskgeomopsrwd', 'diskgeomqueue']}, name="reporting_disk"),
-    url(r'^memory/$', 'generic_graphs', {'names': ['memory', 'swap']}, name="reporting_memory"),
-    url(r'^network/$', 'generic_graphs', {'names': ['interface']}, name="reporting_network"),
-    url(r'^partition/$', 'generic_graphs', {'names': ['df']}, name="reporting_partition"),
-    url(r'^system/$', 'generic_graphs', {'names': ['processes', 'uptime']}, name="reporting_system"),
-    url(r'^target/$', 'generic_graphs', {'names': ['ctl']}, name="reporting_target"),
-    url(r'^zfs/$', 'generic_graphs', {'names': ['arcsize', 'arcratio', 'arcresult']}, name="reporting_zfs"),
-    url(r'^generate/$', 'generate', name="reporting_generate"),
-)
+urlpatterns = [
+    url(r'^$', index, name="reporting_index"),
+    url(r'^cpu/$', generic_graphs, {'names': ['cpu', 'load']}, name="reporting_cpu"),
+    url(r'^disk/$', generic_graphs, {'names': ['disk', 'diskgeombusy', 'diskgeomlatency', 'diskgeomopsrwd', 'diskgeomqueue']}, name="reporting_disk"),
+    url(r'^memory/$', generic_graphs, {'names': ['memory', 'swap']}, name="reporting_memory"),
+    url(r'^network/$', generic_graphs, {'names': ['interface']}, name="reporting_network"),
+    url(r'^partition/$', generic_graphs, {'names': ['df']}, name="reporting_partition"),
+    url(r'^system/$', generic_graphs, {'names': ['processes', 'uptime']}, name="reporting_system"),
+    url(r'^target/$', generic_graphs, {'names': ['ctl']}, name="reporting_target"),
+    url(r'^zfs/$', generic_graphs, {'names': ['arcsize', 'arcratio', 'arcresult']}, name="reporting_zfs"),
+    url(r'^generate/$', generate, name="reporting_generate"),
+]

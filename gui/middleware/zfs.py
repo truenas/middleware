@@ -29,7 +29,7 @@ import logging
 import re
 import subprocess
 
-from django.utils.datastructures import SortedDict
+from collections import OrderedDict
 from django.utils.translation import ugettext_lazy as _
 
 log = logging.getLogger('middleware.zfs')
@@ -424,7 +424,7 @@ class Dev(Tnode):
             self.disk = search[0].text
 
 
-class ZFSList(SortedDict):
+class ZFSList(OrderedDict):
 
     pools = None
 

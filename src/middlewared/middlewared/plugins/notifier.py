@@ -7,9 +7,8 @@ if '/usr/local/www' not in sys.path:
     sys.path.append('/usr/local/www')
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'freenasUI.settings')
 
-# Make sure to load all modules
-from django.db.models.loading import cache
-cache.get_apps()
+import django
+django.setup()
 
 from freenasUI import choices
 from freenasUI import common as fcommon

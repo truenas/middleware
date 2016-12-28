@@ -40,7 +40,7 @@ import xmlrpclib
 import traceback
 import sys
 
-from django.core.servers.basehttp import FileWrapper
+from wsgiref.util import FileWrapper
 from django.core.urlresolvers import reverse
 from django.db import transaction
 from django.http import (

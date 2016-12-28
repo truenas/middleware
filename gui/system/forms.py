@@ -41,7 +41,7 @@ from OpenSSL import crypto
 from ldap import LDAPError
 
 from django.conf import settings
-from django.contrib.formtools.wizard.views import SessionWizardView
+from formtools.wizard.views import SessionWizardView
 from django.core.files.storage import FileSystemStorage
 from django.db import transaction
 from django.db.models import Q

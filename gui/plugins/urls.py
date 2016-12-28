@@ -24,26 +24,31 @@
 #
 #####################################################################
 
-from django.conf.urls import patterns, url
+from django.conf.urls import url
 
 from jsonrpc import jsonrpc_site
 import freenasUI.plugins.views
 
-urlpatterns = patterns(
-    'freenasUI.plugins.views',
-    url(r'^plugin/home/$', 'home', name="plugins_home"),
-    url(r'^plugin/plugins/$', 'plugins', name="plugins_plugins"),
-    url(r'^plugin/install/(?P<oid>[0-9a-f]{1,64})/$', 'install_available', name="plugins_install_available"),
-    url(r'^plugin/upload/(?P<jail_id>\d+)/$', 'upload', name="plugins_upload"),
-    url(r'^plugin/upload/$', 'upload_nojail', name="plugins_upload_nojail"),
-    url(r'^plugin/upload/progress/$', 'upload_progress', name="plugins_upload_progress"),
-    url(r'^plugin/install/progress/$', 'install_progress', name="plugins_install_progress"),
-    url(r'^plugin/edit/(?P<plugin_id>\d+)/$', 'plugin_edit', name="plugin_edit"),
-    url(r'^plugin/info/(?P<plugin_id>\d+)/$', 'plugin_info', name="plugin_info"),
-    url(r'^plugin/available/icon/(?P<oid>[0-9a-f]{1,64})/$', 'plugin_available_icon', name="plugin_available_icon"),
-    url(r'^plugin/installed/icon/(?P<plugin_name>[^/]+)/(?P<oid>[0-9a-f]{1,64})/$', 'plugin_installed_icon', name="plugin_installed_icon"),
-    url(r'^plugin/update/(?P<oid>[0-9a-f]{1,64})/$', 'plugin_update', name="plugin_update"),
-    url(r'^plugin/update/progress/$', 'update_progress', name="plugins_update_progress"),
-    url(r'^json-rpc/v1/', jsonrpc_site.dispatch, name="plugins_jsonrpc_v1"),
-    url(r'^(?P<name>[^/]+)/(?P<oid>\d+)/(?P<path>.+)$', 'plugin_fcgi_client', name="plugin_fcgi_client"),
+from .views import (
+    home, plugins, install_available, upload, upload_nojail, upload_progress,
+    install_progress, plugin_edit, plugin_info, plugin_available_icon,
+    plugin_installed_icon, plugin_update, update_progress, plugin_fcgi_client,
 )
+
+urlpatterns = [
+    url(r'^plugin/home/$', home, name="plugins_home"),
+    url(r'^plugin/plugins/$', plugins, name="plugins_plugins"),
+    url(r'^plugin/install/(?P<oid>[0-9a-f]{1,64})/$', install_available, name="plugins_install_available"),
+    url(r'^plugin/upload/(?P<jail_id>\d+)/$', upload, name="plugins_upload"),
+    url(r'^plugin/upload/$', upload_nojail, name="plugins_upload_nojail"),
+    url(r'^plugin/upload/progress/$', upload_progress, name="plugins_upload_progress"),
+    url(r'^plugin/install/progress/$', install_progress, name="plugins_install_progress"),
+    url(r'^plugin/edit/(?P<plugin_id>\d+)/$', plugin_edit, name="plugin_edit"),
+    url(r'^plugin/info/(?P<plugin_id>\d+)/$', plugin_info, name="plugin_info"),
+    url(r'^plugin/available/icon/(?P<oid>[0-9a-f]{1,64})/$', plugin_available_icon, name="plugin_available_icon"),
+    url(r'^plugin/installed/icon/(?P<plugin_name>[^/]+)/(?P<oid>[0-9a-f]{1,64})/$', plugin_installed_icon, name="plugin_installed_icon"),
+    url(r'^plugin/update/(?P<oid>[0-9a-f]{1,64})/$', plugin_update, name="plugin_update"),
+    url(r'^plugin/update/progress/$', update_progress, name="plugins_update_progress"),
+    url(r'^json-rpc/v1/', jsonrpc_site.dispatch, name="plugins_jsonrpc_v1"),
+    url(r'^(?P<name>[^/]+)/(?P<oid>\d+)/(?P<path>.+)$', plugin_fcgi_client, name="plugin_fcgi_client"),
+]

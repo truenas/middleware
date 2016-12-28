@@ -33,12 +33,12 @@ import urllib
 import signal
 import sysctl
 
+from collections import OrderedDict
 from django.conf.urls import url
 from django.core.exceptions import MultipleObjectsReturned, ObjectDoesNotExist
 from django.core.urlresolvers import reverse
 from django.db.models import Q
 from django.http import HttpResponse, QueryDict
-from django.utils.datastructures import SortedDict
 from django.utils.translation import ugettext as _
 
 from dojango.forms.models import inlineformset_factory
@@ -463,6 +463,9 @@ class VolumeResourceMixin(NestedMixin):
 
     class Meta:
         validation = FormValidation(form_class=VolumeManagerForm)
+        filtering = {
+            'vol_name': ['exact'],
+        }
 
     def obj_get(self, bundle, **kwargs):
         if 'pk' in kwargs and not kwargs['pk'].isdigit():
@@ -1010,7 +1013,7 @@ class VolumeResourceMixin(NestedMixin):
                     })
 
             if child.children:
-                _children = SortedDict()
+                _children = OrderedDict()
                 for child in child.children:
                     _children[child.name] = child
                 data['children'] = self._get_children(
@@ -2654,6 +2657,9 @@ class ServicesResourceMixin(object):
 
     class Meta:
         allowed_methods = ['get', 'put']
+        filtering = {
+            'srv_service': ['exact'],
+        }
 
     def dispatch(self, *args, **kwargs):
         self.__services = {}

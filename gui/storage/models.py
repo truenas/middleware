@@ -1003,7 +1003,6 @@ class Task(Model):
     task_interval = models.PositiveIntegerField(
         default=60,
         choices=choices.TASK_INTERVAL,
-        max_length=120,
         verbose_name=_("Interval"),
         help_text=_(
             "How much time has been passed between two snapshot attempts."),

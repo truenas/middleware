@@ -117,7 +117,7 @@ class TreeType(object):
                 if self.kwargs['app'].startswith('freenasUI.'):
                     self.kwargs['app'] = self.kwargs['app'].split('freenasUI.')[1]
             self.url = reverse(
-                self.view, args=self.args, kwargs=self.kwargs, prefix='/'
+                self.view, args=self.args, kwargs=self.kwargs
             )
         elif not self.url and self.view:
             self.url = '#'

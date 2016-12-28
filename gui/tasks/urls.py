@@ -24,13 +24,13 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
-from django.conf.urls import patterns, url
+from django.conf.urls import url
 
+from .views import home, cloudsync_run, cron_run, rsync_run
 
-urlpatterns = patterns(
-    'freenasUI.tasks.views',
-    url(r'^$', 'home', name="tasks_home"),
-    url(r'^cloudsync/(?P<oid>\d+)/run/$', 'cloudsync_run', name="cloudsync_run"),
-    url(r'^cron/(?P<oid>\d+)/run/$', 'cron_run', name="cron_run"),
-    url(r'^rsync/(?P<oid>\d+)/run/$', 'rsync_run', name="rsync_run"),
-)
+urlpatterns = [
+    url(r'^$', home, name="tasks_home"),
+    url(r'^cloudsync/(?P<oid>\d+)/run/$', cloudsync_run, name="cloudsync_run"),
+    url(r'^cron/(?P<oid>\d+)/run/$', cron_run, name="cron_run"),
+    url(r'^rsync/(?P<oid>\d+)/run/$', rsync_run, name="rsync_run"),
+]

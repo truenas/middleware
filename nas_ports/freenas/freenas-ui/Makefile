@@ -13,8 +13,10 @@ COMMENT=        FreeNAS UI
 PRODUCT?=
 USES=		python
 
-RUN_DEPENDS=	${PYTHON_PKGNAMEPREFIX}django16>0:${PORTSDIR}/www/py-django16 \
-	${PYTHON_PKGNAMEPREFIX}south>0:${PORTSDIR}/databases/py-south \
+RUN_DEPENDS=	${PYTHON_PKGNAMEPREFIX}django110>0:${PORTSDIR}/www/py-django110 \
+	samba44>0:${PORTSDIR}/net/samba44 \
+	uwsgi>0:${PORTSDIR}/www/uwsgi \
+	${PYTHON_PKGNAMEPREFIX}django-formtools>0:${PORTSDIR}/www/py-django-formtools \
 	${PYTHON_PKGNAMEPREFIX}django-tastypie>0:${PORTSDIR}/www/py-django-tastypie \
 	${PYTHON_PKGNAMEPREFIX}lockfile>0:${PORTSDIR}/devel/py-lockfile \
 	${PYTHON_PKGNAMEPREFIX}ipaddr>0:${PORTSDIR}/devel/py-ipaddr \
@@ -31,6 +33,10 @@ RUN_DEPENDS=	${PYTHON_PKGNAMEPREFIX}django16>0:${PORTSDIR}/www/py-django16 \
 	${PYTHON_PKGNAMEPREFIX}openssl>0:${PORTSDIR}/security/py-openssl \
 	${PYTHON_PKGNAMEPREFIX}pycrypto>0:${PORTSDIR}/security/py-pycrypto \
 	${PYTHON_PKGNAMEPREFIX}simplejson>0:${PORTSDIR}/devel/py-simplejson \
+	${PYTHON_PKGNAMEPREFIX}ujson>0:${PORTSDIR}/devel/py-ujson \
+	${PYTHON_PKGNAMEPREFIX}oauth2>0:${PORTSDIR}/net/py-oauth2 \
+	${PYTHON_PKGNAMEPREFIX}eventlet>0:${PORTSDIR}/net/py-eventlet \
+	${PYTHON_PKGNAMEPREFIX}django-json-rpc>0:${PORTSDIR}/www/py-django-json-rpc \
 	${PYTHON_PKGNAMEPREFIX}sqlparse>0:${PORTSDIR}/databases/py-sqlparse \
 	${PYTHON_PKGNAMEPREFIX}licenselib>0:${PORTSDIR}/freenas/py-licenselib \
 	${PYTHON_PKGNAMEPREFIX}bsd>0:${PORTSDIR}/freenas/py-bsd \
@@ -39,7 +45,8 @@ RUN_DEPENDS=	${PYTHON_PKGNAMEPREFIX}django16>0:${PORTSDIR}/www/py-django16 \
 	${PYTHON_PKGNAMEPREFIX}pysphere-freenas>0:${PORTSDIR}/net/py-pysphere-freenas \
 	pyvmomi>0:${PORTSDIR}/net/py-pyvmomi \
 	dmidecode>0:${PORTSDIR}/sysutils/dmidecode \
-	freenas-pkgtools>0:${PORTSDIR}/freenas/freenas-pkgtools
+	freenas-pkgtools>0:${PORTSDIR}/freenas/freenas-pkgtools \
+	freenas-migrate93>0:${PORTSDIR}/freenas/freenas-migrate93
 
 EXTRACT_ONLY=
 WRKSRC=/usr/freenasUI

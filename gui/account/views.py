@@ -334,6 +334,6 @@ def login_wrapper(
         reverse('account_logout'),
     ):
         response._headers['location'] = ('Location', '/')
-    elif request.user.is_authenticated():
+    elif request.user.is_authenticated:
         return HttpResponseRedirect('/')
     return response
