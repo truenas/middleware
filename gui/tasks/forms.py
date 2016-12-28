@@ -15,6 +15,7 @@ from freenasUI.middleware.client import client
 from freenasUI.middleware.notifier import notifier
 from freenasUI.system.models import CloudCredentials
 from freenasUI.tasks import models
+from freenasUI.freeadmin.utils import key_order
 
 from .widgets import CloudSyncWidget
 
@@ -54,8 +55,7 @@ class CloudSyncForm(ModelForm):
 
     def __init__(self, *args, **kwargs):
         super(CloudSyncForm, self).__init__(*args, **kwargs)
-        self.fields.keyOrder.remove('attributes')
-        self.fields.keyOrder.insert(2, 'attributes')
+        key_order(self, 2, 'attributes', instance=True)
         mchoicefield(self, 'month', [
             1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12
         ])
@@ -441,8 +441,7 @@ class SMARTTestForm(ModelForm):
                 if everyx == hours:
                     ins.smarttest_hour = '*/%d' % gap
         super(SMARTTestForm, self).__init__(*args, **kwargs)
-        self.fields.keyOrder.remove('smarttest_disks')
-        self.fields.keyOrder.insert(0, 'smarttest_disks')
+        key_order(self, 0, 'smarttest_disks', instance=True)
         mchoicefield(self, 'smarttest_month', [
             1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12
         ])
