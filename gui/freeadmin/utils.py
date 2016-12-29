@@ -51,7 +51,10 @@ def get_related_objects(obj):
         # Do not acount if it is not going to CASCADE
         if related.field.rel.on_delete is not CASCADE:
             continue
-        relset = getattr(obj, related.get_accessor_name())
+        try:
+            relset = getattr(obj, related.get_accessor_name())
+        except:
+            continue
         qs = relset.all()
         count = qs.count()
         if count == 0:
