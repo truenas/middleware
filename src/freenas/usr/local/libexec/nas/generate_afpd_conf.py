@@ -35,7 +35,7 @@ def main():
     else:
         cf_contents.append("\tvol dbnest = yes\n")
     if afp.afp_srv_global_aux:
-        cf_contents.append("\t%s" % afp.afp_srv_global_aux.encode('utf8'))
+        cf_contents.append("\t%s\n" % afp.afp_srv_global_aux.encode('utf8'))
 
     if afp.afp_srv_map_acls:
         cf_contents.append("\tmap acls = %s\n" % afp.afp_srv_map_acls)
