@@ -193,6 +193,8 @@ class IPAddressFieldBase(models.Field):
     def get_prep_value(self, value):
         if isinstance(value, _IPAddrBase):
             value = '%s' % value
+        if value is None:
+            return ''
         return unicode(value)
 
 
