@@ -124,6 +124,8 @@ _interface_config()
                                 fi
 			elif [ "$(ha_hardware)" = "SBB" ]; then
 				internal_iface="ix0"
+			elif [ "$(ha_hardware)" = "AIC" ]; then
+				internal_iface="ntb0"
 			elif [ "$(ha_hardware)" = "ULTIMATE" ]; then
 				internal_iface="igb1"
 			fi
