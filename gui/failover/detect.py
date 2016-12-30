@@ -99,9 +99,21 @@ def ha_mode():
             '-s', 'baseboard-product-name',
         ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         board = proc.communicate()[0].strip()
-        # Check for SBB
-        # Everything else is called ULTIMATE since we can't reliably determine it
-        hardware = 'SBB' if board == 'X8DTS' else 'ULTIMATE'
+        # If we've gotten this far it's because we were unable to
+        # detect ourselves as an echostream.
+        if board == 'LIBRA':
+            hardware = 'AIC'
+        elif board == 'X8DTS':
+            hardware = 'SBB'
+        else:
+            # At this point we are not an echostream or an SBB or an AIC
+            # however before we call ourselves an ULTIMATE we are going
+            # to check for X8 versus X9 hardware.  All ultimates were
+            # SM X8 so if we are not an X8...something is wrong.
+            if board.startswith('X8'):
+                hardware = 'ULTIMATE'
+            else:
+                hardware = 'FAULT'
 
         mode = '%s:%s' % (hardware, node)
         with open(HA_MODE_FILE, 'w') as f:
