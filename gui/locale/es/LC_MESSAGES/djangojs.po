@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:10-0700\n"
-"PO-Revision-Date: 2017-01-02 13:14+0000\n"
+"PO-Revision-Date: 2017-01-03 18:12+0000\n"
 "Last-Translator: Jonay Santana <jonay.santana@gmail.com>\n"
 "Language-Team: Spanish "
 "<http://weblate.trueos.org/projects/freenas/djangojs/es/>\n"
@@ -119,7 +119,7 @@ msgstr "La caché no se pudo reconstruir."
 
 #: freeadmin/static/lib/js/freeadmin/Menu.js:134
 msgid "Shares"
-msgstr ""
+msgstr "Compartidos"
 
 #: freeadmin/static/lib/js/freeadmin/Menu.js:213
 msgid "Jails"
