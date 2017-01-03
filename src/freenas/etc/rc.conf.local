@@ -126,12 +126,20 @@ _interface_config()
 				internal_iface="ix0"
 			elif [ "$(ha_hardware)" = "AIC" ]; then
 				internal_iface="ntb0"
+				if [ "${node}" = "A" ]; then
+					ether="02:8c:97:2e:a5:01"
+				else
+					ether="02:8c:97:2e:a5:02"
+				fi
 			elif [ "$(ha_hardware)" = "ULTIMATE" ]; then
 				internal_iface="igb1"
 			fi
 			echo "ifconfig_${internal_iface}=\"inet ${internal_ip}/24\""
 			echo "ifconfig_${internal_iface}_alias0=\"inet vhid 10 advskew ${carp1_skew} alias ${carp1_addr}\""
 			echo "ifconfig_${internal_iface}_alias1=\"inet vhid 20 advskew ${carp2_skew} alias ${carp2_addr}\""
+			if [ -n "${ether}" ]; then
+				echo "ifconfig_${internal_iface}_alias2=\"ether ${ether}\""
+			fi
 		fi
 	fi
 
