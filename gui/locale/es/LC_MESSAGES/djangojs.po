@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:10-0700\n"
-"PO-Revision-Date: 2017-01-03 18:12+0000\n"
+"PO-Revision-Date: 2017-01-04 20:49+0000\n"
 "Last-Translator: Jonay Santana <jonay.santana@gmail.com>\n"
 "Language-Team: Spanish "
 "<http://weblate.trueos.org/projects/freenas/djangojs/es/>\n"
@@ -123,36 +123,35 @@ msgstr "Compartidos"
 
 #: freeadmin/static/lib/js/freeadmin/Menu.js:213
 msgid "Jails"
-msgstr ""
+msgstr "Jaulas"
 
 #: freeadmin/static/lib/js/freeadmin/Menu.js:400
 msgid "Support"
-msgstr ""
+msgstr "Soporte"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:124
 msgid "Size"
-msgstr ""
+msgstr "Tamaño"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:263
 msgid "drives"
-msgstr ""
+msgstr "unidades"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:265
 msgid "drive"
-msgstr ""
+msgstr "unidad"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:267
 msgid "show"
-msgstr ""
+msgstr "mostrar"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:277
 msgid "no more drives"
-msgstr ""
+msgstr "ninguna unidad más"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:335
-#, fuzzy
 msgid "Disk size mismatch"
-msgstr "Desconexión de Disco"
+msgstr "Disparidad de tamaños de disco"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:520
 msgid ""
@@ -174,44 +173,47 @@ msgstr ""
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:666
 msgid "Capacity"
-msgstr ""
+msgstr "Capacidad"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:974
 msgid "Drag and drop this to resize"
-msgstr ""
+msgstr "Arrastre y suelte para ajustar el tamaño"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1018
 msgid "Add Volume"
-msgstr ""
+msgstr "Añadir volumen"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1018
 msgid "Existing data will be cleared"
-msgstr ""
+msgstr "Los datos previos se eliminarán"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1019
 msgid "Extend Volume"
-msgstr ""
+msgstr "Extender volumen"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1066
 msgid "Volume Name"
-msgstr ""
+msgstr "Nombre del volumen"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1067
 msgid "Volume to extend"
-msgstr ""
+msgstr "Volumen a extender"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1068
+#, fuzzy
 msgid ""
 "Extending an encrypted volume will reset the passphrase and recovery key!"
 msgstr ""
+"¡Extender un volumen encriptado reseteará la contraseña y la clave de "
+"recuperación!"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1069
 msgid "Encryption"
-msgstr ""
+msgstr "Encriptación"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1071
 msgid "Available disks"
-msgstr ""
+msgstr "Discos disponibles"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1072
 msgid "Volume layout"
@@ -219,132 +221,135 @@ msgstr ""
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1073
 msgid "Estimated capacity"
-msgstr ""
+msgstr "Capacidad estimada"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1194
 msgid "Add Extra Device"
-msgstr ""
+msgstr "Añadir dispositivo extra"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1212
 msgid "Cancel"
-msgstr ""
+msgstr "Cancelar"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1219
 msgid "Manual setup"
-msgstr ""
+msgstr "Configuración manual"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1225
 msgid "ZFS Volume Manager"
-msgstr ""
+msgstr "Administrador de volumen ZFS"
 
 #: freeadmin/static/lib/js/freeadmin/WebShell.js:77
 msgid "Shell"
-msgstr ""
+msgstr "Intérprete de comandos"
 
 #: freeadmin/static/lib/js/freeadmin/WebShell.js:90
 #: freeadmin/static/lib/js/freeadmin/WebShell.js:114
 msgid "Paste"
-msgstr ""
+msgstr "Pegar"
 
 #: freeadmin/static/lib/js/freeadmin/form/PathSelector.js:80
 #: freeadmin/static/lib/js/freeadmin/form/PathSelector.js:85
 msgid "Browse"
-msgstr ""
+msgstr "Navegar"
 
 #: freeadmin/static/lib/js/freeadmin/form/PathSelector.js:83
 #: freeadmin/static/lib/js/freeadmin/form/PathSelector.js:88
 msgid "Close"
-msgstr ""
+msgstr "Cerrar"
 
 #: freeadmin/static/lib/js/freeadmin.js:918
 msgid "Confirm"
-msgstr ""
+msgstr "Confirmar"
 
 #: freeadmin/static/lib/js/freeadmin/Menu.js:49
 msgid "System"
-msgstr ""
+msgstr "Sistema"
 
 #: freeadmin/static/lib/js/freeadmin/Menu.js:94
 msgid "Tasks"
-msgstr ""
+msgstr "Tareas"
 
 #: freeadmin/static/lib/js/freeadmin/Menu.js:92
-#, fuzzy
 msgid "Network"
-msgstr "Configuración de Red"
+msgstr "Red"
 
 #: freeadmin/static/lib/js/freeadmin/Menu.js:182
 msgid "Sharing"
-msgstr ""
+msgstr "Compartiendo"
 
 #: freeadmin/static/lib/js/freeadmin/Menu.js:521
 msgid "Directory Service"
-msgstr ""
+msgstr "Servicio de directorios"
 
 #: freeadmin/static/lib/js/freeadmin.js:1772
 #: freeadmin/static/lib/js/freeadmin.js:1863
 msgid "Initial Wizard"
-msgstr ""
+msgstr "Asistente inicial"
 
 #: freeadmin/static/lib/js/freeadmin/WizardShares.js:68
 msgid "Share name"
-msgstr ""
+msgstr "Nombre de la compartición"
 
 #: freeadmin/static/lib/js/freeadmin/WizardShares.js:74
 msgid ""
 "This field may only contain alphanumeric and the following characters: \"_\""
 ", \"-\", \".\"."
 msgstr ""
+"Este campo sólo puede contener alfanuméricos y los siguientes caracteres: \""
+"_\", \"-\", \".\"."
 
 #: freeadmin/static/lib/js/freeadmin/WizardShares.js:129
 msgid "Specify the size using B, K, M, G, T prefixes."
-msgstr ""
+msgstr "Especifique el tamaño usando los prefijos B, K, M, G y T."
 
 #: freeadmin/static/lib/js/freeadmin/WizardShares.js:133
 msgid "Add"
-msgstr ""
+msgstr "Añadir"
 
 #: freeadmin/static/lib/js/freeadmin/WizardShares.js:140
 msgid "Delete"
-msgstr ""
+msgstr "Borrar"
 
 #: freeadmin/static/lib/js/freeadmin/WizardShares.js:153
 msgid "Update"
-msgstr ""
+msgstr "Actualización"
 
 #: freeadmin/static/lib/js/freeadmin/WizardShares.js:184
 msgid "Ownership"
-msgstr ""
+msgstr "Propiedad"
 
 #: freeadmin/static/lib/js/freeadmin/WizardShares.js:210
 msgid "This user does not exist."
-msgstr ""
+msgstr "Este usuario no existe."
 
 #: freeadmin/static/lib/js/freeadmin/WizardShares.js:246
 msgid "This group does not exist."
-msgstr ""
+msgstr "Este grupo no existe."
 
 #: freeadmin/static/lib/js/freeadmin/WizardShares.js:278
 msgid "Return"
-msgstr ""
+msgstr "Volver"
 
 #: freeadmin/static/lib/js/freeadmin.js:1772
 msgid "Wizard"
-msgstr ""
+msgstr "Asistente"
 
 #: freeadmin/static/lib/js/freeadmin/WizardShares.js:242
 msgid "Paswords do not match."
-msgstr ""
+msgstr "Las contraseñas no coinciden."
 
 #: freeadmin/static/lib/js/freeadmin.js:374
 msgid "Warning!"
-msgstr ""
+msgstr "¡Alerta!"
 
 #: freeadmin/static/lib/js/freeadmin.js:376
 msgid ""
 "This option DISABLES ENCRYPTION for replication tasks and should ONLY be "
 "used on a secure LAN!"
 msgstr ""
+"¡Esta opción DESACTIVA LA ENCRIPTACIÓN para las tareas de replicación, y "
+"SÓLO debiera de usarse en una LAN segura!"
 
 #: freeadmin/static/lib/js/freeadmin.js:376
 msgid "Are you sure you want to do this?"
