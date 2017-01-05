@@ -8,16 +8,17 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:04-0700\n"
-"PO-Revision-Date: 2016-02-14 08:48+0000\n"
-"Last-Translator: ookris <krzysztof.janiczek@gmail.com>\n"
-"Language-Team: LANGUAGE <LL@li.org>\n"
+"PO-Revision-Date: 2017-01-05 16:38+0000\n"
+"Last-Translator: Piotr P. Kozlowski <ja@ppkozlowski.pl>\n"
+"Language-Team: Polish <http://weblate.trueos.org/projects/freenas/django/pl/>"
+"\n"
 "Language: pl\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=3; plural=(n==1 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 "
-"|| n%100>=20) ? 1 : 2)\n"
-"X-Generator: Pootle 2.5.0\n"
+"Plural-Forms: nplurals=3; plural=n==1 ? 0 : n%10>=2 && n%10<=4 && (n%100<10 "
+"|| n%100>=20) ? 1 : 2;\n"
+"X-Generator: Weblate 2.10-dev\n"
 "X-POOTLE-MTIME: 1455439739.0\n"
 
 #: choices.py:40
@@ -6021,9 +6022,8 @@ msgstr "Usuń zbiór danych"
 #~ msgstr "Brak zdefiniowanych wolumenów"
 
 #: templates/storage/wizard.html:27
-#, fuzzy
 msgid "Volume to extend"
-msgstr "Ścieżka wolumenu"
+msgstr "Wolumen do powiększenia"
 
 #: templates/storage/wizard.html:37
 msgid "Member disks"
@@ -8447,9 +8447,8 @@ msgstr ""
 #: storage/nav.py:40
 #: templates/storage/volume_datagrid.html:6
 #: templates/storage/volume_datagrid.html:10
-#, fuzzy
 msgid "ZFS Volume Manager"
-msgstr "Nazwa wolumenu"
+msgstr "Menadżer wolumenów ZFS"
 
 #: storage/views.py:783
 msgid "The scrub process has stopped"
@@ -8696,9 +8695,8 @@ msgid "Scrub"
 msgstr "Udział UNIX"
 
 #: templates/storage/wizard.html:92
-#, fuzzy
 msgid "Extend Volume"
-msgstr "Export wolumenu"
+msgstr "Powiększ wolumen"
 
 #: templates/storage/zfswizard.html:77
 #, fuzzy
@@ -8885,7 +8883,7 @@ msgstr ""
 #: jails/nav.py:47
 #: templates/jails/index.html:17
 msgid "Jails"
-msgstr "Jails"
+msgstr ""
 
 #: jails/models.py:91
 #, fuzzy
@@ -9329,9 +9327,8 @@ msgstr ""
 
 #: storage/forms.py:597
 #: templates/storage/zfswizard.html:41
-#, fuzzy
 msgid "Encryption"
-msgstr "Model autentykacji"
+msgstr "Szyfrowanie"
 
 #: storage/forms.py:605
 #: storage/forms.py:1448
@@ -10323,9 +10320,8 @@ msgid "Are you sure?"
 msgstr "Jesteś pewien że chcesz usunąć?"
 
 #: templates/system/initialwizard_confirm.html:39
-#, fuzzy
 msgid "Confirm"
-msgstr "Konfiguracja"
+msgstr "Potwierdź"
 
 #: templates/system/initialwizard_confirm.html:46
 msgid "Return to Wizard"
