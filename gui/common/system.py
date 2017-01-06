@@ -35,6 +35,7 @@ import smtplib
 import sqlite3
 import subprocess
 import syslog
+import ntplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.Utils import formatdate
@@ -820,3 +821,15 @@ def compare_netbios_names(netbiosname1, netbiosname2, validate_func=validate_net
                 return True
 
     return False
+
+def test_ntp_server(addr):
+    client = ntplib.NTPClient()
+    server_alive = False
+    try:
+        response = client.request(addr)
+        if response.version:
+            server_alive = True
+    except:
+        pass
+
+    return server_alive
