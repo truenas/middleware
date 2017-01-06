@@ -1,8 +1,9 @@
 # Created by: Eduard Martinescu
-# $FreeBSD: head/sysutils/smartmontools/Makefile 412136 2016-03-29 20:52:11Z amdmi3 $
+# $FreeBSD$
 
 PORTNAME=	smartmontools
 PORTVERSION=	6.5
+PORTREVISION=	1
 CATEGORIES=	sysutils
 MASTER_SITES=	SF
 
@@ -21,6 +22,7 @@ SHEBANG_FILES=	examplescripts/Example5
 GNU_CONFIGURE=	yes
 CONFIGURE_ARGS=	--disable-dependency-tracking \
 		--enable-sample \
+		--with-nvme-devicescan=yes \
 		--with-initscriptdir=${PREFIX}/etc/rc.d
 
 SUB_FILES=	pkg-message smart
