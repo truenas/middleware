@@ -12,7 +12,7 @@ add a line like the following to /etc/periodic.conf:
 substituting the appropriate device names for your SMART-capable disks.
 
 To enable drive monitoring, you can use %%PREFIX%%/sbin/smartd.
-A sample configuration file has been installed as 
+A sample configuration file has been installed as
 %%PREFIX%%/etc/smartd.conf.sample
 Copy this file to %%PREFIX%%/etc/smartd.conf and edit appropriately
 
