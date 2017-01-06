@@ -58,6 +58,7 @@ from freenasOS import Configuration, Update
 from freenasUI import choices
 from freenasUI.account.models import bsdGroups, bsdUsers
 from freenasUI.common import humanize_size, humanize_number_si
+from freenasUI.common.system import test_ntp_server
 from freenasUI.common.forms import ModelForm, Form
 from freenasUI.common.freenasldap import (
     FreeNAS_ActiveDirectory,
@@ -1084,14 +1085,12 @@ class NTPForm(ModelForm):
 
     def clean_ntp_address(self):
         addr = self.cleaned_data.get("ntp_address")
-        p1 = subprocess.Popen(
-            ["/usr/sbin/ntpdate", "-q", addr],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE
-        )
-        p1.communicate()
-        if p1.returncode != 0:
+
+        ntp_test = test_ntp_server(addr)
+
+        if ntp_test is False:
             self.usable = False
+
         return addr
 
     def clean_ntp_maxpoll(self):
