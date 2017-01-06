@@ -1,6 +1,5 @@
 # -*- coding: utf-8 -*-
 from south.v2 import DataMigration
-from django.db.models import Q
 
 
 class Migration(DataMigration):
@@ -11,7 +10,7 @@ class Migration(DataMigration):
         to a sysctl.
         """
         for tun in orm['system.Tunable'].objects.filter(
-            Q(tun_var='vfs.zfs.arc_max') | Q(tun_type='loader')
+            tun_type='loader', tun_var='vfs.zfs.arc_max'
         ):
             tun.tun_type = 'sysctl'
             tun.save()
