@@ -822,6 +822,7 @@ def compare_netbios_names(netbiosname1, netbiosname2, validate_func=validate_net
 
     return False
 
+
 def test_ntp_server(addr):
     client = ntplib.NTPClient()
     server_alive = False
