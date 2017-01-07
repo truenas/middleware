@@ -21,21 +21,15 @@ hasspace()
 setuser()
 {
 	local user="${1}"
-	if hasspace "${user}"; then
-		user=$(getent passwd "${user}"|cut -f3 -d:)
-	fi
 
-	echo "${user}" | sed -E 's/\\/\\\\/'
+	echo "\"${user}\"" | sed -E 's/\\/\\\\/'
 }
 
 setgroup()
 {
 	local group="${1}"
-	if hasspace "${group}"; then
-		group=$(getent group "${group}"|cut -f3 -d:)
-	fi
 
-	echo "${group}" | sed -E 's/\\/\\\\/'
+	echo "\"${group}\"" | sed -E 's/\\/\\\\/'
 }
 
 #
