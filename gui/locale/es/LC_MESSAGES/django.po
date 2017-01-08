@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:07-0700\n"
-"PO-Revision-Date: 2017-01-04 20:45+0000\n"
+"PO-Revision-Date: 2017-01-08 19:36+0000\n"
 "Last-Translator: Jonay Santana <jonay.santana@gmail.com>\n"
 "Language-Team: Spanish "
 "<http://weblate.trueos.org/projects/freenas/django/es/>\n"
@@ -11117,9 +11117,8 @@ msgstr "Crear un Volumen ZFS en %(name)s"
 
 #: templates/system/upgrade_edit.html:13
 #: templates/system/upgrade_edit.html:15
-#, fuzzy
 msgid "Manual Update"
-msgstr "Aplicar actualización"
+msgstr "Actualización manual"
 
 #: services/models.py:268
 msgid ""
