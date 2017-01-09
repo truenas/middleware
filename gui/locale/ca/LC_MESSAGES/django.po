@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:05-0700\n"
-"PO-Revision-Date: 2016-12-23 12:55+0000\n"
+"PO-Revision-Date: 2017-01-09 16:27+0000\n"
 "Last-Translator: Davidmp <rbndavid@gmail.com>\n"
 "Language-Team: Catalan "
 "<http://weblate.trueos.org/projects/freenas/django/ca/>\n"
@@ -1545,55 +1545,55 @@ msgid "Controller Auth Group"
 msgstr "Grup d'autenticació del controlador"
 
 #: services/forms.py:620
-#, fuzzy
 msgid ""
 "The istgtcontrol can access the targets with correct userand secret in "
 "specific Auth Group."
 msgstr ""
-"El istgtcontrol pot accedir els targets amb l'usuari i secret correctes al "
-"Grup d'autenticació específic."
+"L'istgtcontrol pot accedir a les destinacions amb l'usuari i el secret "
+"correctes al grup d'autenticació específic."
 
 #: services/forms.py:623 services/models.py:268
 msgid "Discovery Auth Group"
-msgstr "Grup d'autenticació Discovery"
+msgstr "Grup d'autenticació de descobriment"
 
 #: services/forms.py:656
 #, python-format
 msgid "This value must be between %(start)d and %(end)d, inclusive."
-msgstr "Aquest valor ha de estar entre %(start) i %(end), inclosos."
+msgstr "Aquest valor ha de ser entre %(start) i %(end), inclosos."
 
 #: services/forms.py:669
 msgid ""
 "This field is required if discovery method is set to CHAP or CHAP Mutual."
 msgstr ""
-"Aquest camp es requerit si el mètode de descobriment està posat a  CHAP o "
-"CHAP Mutual."
+"Aquest camp és necessari si el mètode de descobriment està establert a CHAP "
+"o CHAP Mutu."
 
 #: services/forms.py:717
 msgid ""
 "This field is required whether CHAP or Mutual CHAP are set for Controller "
 "Auth Method."
 msgstr ""
+"Aquest camp és necessari si CHAP o CHAP Mutu estan establerts per al mètode "
+"d'autenticació de controlador."
 
 #: services/forms.py:730
-#, fuzzy
 msgid "This is not a valid network"
-msgstr "Això no és una màscara valida"
+msgstr "Això no és una xarxa vàlida"
 
 #: services/forms.py:771
 msgid "You need to specify a filepath, not a directory."
-msgstr "Necesites especificar una ruta a fitxer, no un directori."
+msgstr "Cal especificar un camí de fitxer, no un directori."
 
 #: services/forms.py:776
 msgid "You need to specify a file inside your volume/dataset."
-msgstr "Necessites especificar un fitxer dins el teu volum/dataset."
+msgstr "Cal especificar un fitxer dins el vostre volum/conjunt de dades."
 
 #: services/forms.py:781
 msgid ""
 "Your path to the extent must reside inside a volume/dataset mount point."
 msgstr ""
-"La teva ruta al Extent ha de estar dintre un punt de muntatge d'un volum/"
-"dataset."
+"El camí a l'extensió ha de ser dins un punt de muntatge d'un volum/conjunt "
+"de dades."
 
 #: services/forms.py:795
 msgid ""
