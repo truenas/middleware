@@ -25,8 +25,8 @@ post-install()
 		/usr/bin/procstat -h $$|awk '{print $2}'|xargs kill -9
 	fi
 	env FREENAS_INSTALL=yes %%PYTHON_CMD%% manage.py migrate --fake-initial --noinput --traceback
-	exec %%PYTHON_CMD%% manage.py collectstatic --noinput
-	exec %%PYTHON_CMD%% tools/compilemsgs.py
+	%%PYTHON_CMD%% manage.py collectstatic --noinput
+	%%PYTHON_CMD%% tools/compilemsgs.py
         cd /data
 	cp freenas-v1.db factory-v1.db
 	chown -R www:www /data
