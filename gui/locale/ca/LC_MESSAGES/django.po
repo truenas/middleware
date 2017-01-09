@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:05-0700\n"
-"PO-Revision-Date: 2017-01-09 16:27+0000\n"
+"PO-Revision-Date: 2017-01-09 17:52+0000\n"
 "Last-Translator: Davidmp <rbndavid@gmail.com>\n"
 "Language-Team: Catalan "
 "<http://weblate.trueos.org/projects/freenas/django/ca/>\n"
@@ -1599,12 +1599,12 @@ msgstr ""
 msgid ""
 "This value can be a size in bytes, or can be postfixed with KB, MB, GB, TB"
 msgstr ""
-"Aquest valor ha de ser una mida en bytes o pot estar post fixat amb KB, MB, "
-"GB, TB"
+"Aquest valor pot ser una mida en bytes o pot estar postfixat amb KB, MB, GB, "
+"TB"
 
 #: services/forms.py:803
 msgid "The file must exist if the extent size is set to auto (0)"
-msgstr ""
+msgstr "El fitxer ha d'existir si la mida d'extensió està establerta a auto (0)"
 
 #~ msgid "Disk device"
 #~ msgstr "Dispositiu de disc"
@@ -1612,18 +1612,19 @@ msgstr ""
 #: services/forms.py:948
 #, python-format
 msgid "Your Portal Group ID cannot be higher than %d"
-msgstr "El teu ID del portal de grup no pot ser superior de %d"
+msgstr "El vostre ID de portal de grup no pot ser superior a %d"
 
 #, python-format
 #~ msgid "Your Group ID cannot be higher than %d"
 #~ msgstr "El teu grop ID no pot set superior de %d"
 
 #: services/forms.py:1019
-#, fuzzy
 msgid ""
 "The field is a not a valid IP address or network. The keyword \"ALL\" can be "
 "used to allow everything."
-msgstr "Al camp no té una adreça IP o xarxa vàlides"
+msgstr ""
+"El camp no és una adreça IP o xarxa vàlides. La paraula clau \"ALL\" es pot "
+"usar per permetre-ho tot."
 
 #: services/forms.py:1032
 msgid "Authentication Group number"
@@ -1631,11 +1632,11 @@ msgstr "Numero d'autenticació de grup"
 
 #: services/forms.py:1063
 msgid "Use alphanumeric characters, \".\", \"-\" and \":\"."
-msgstr ""
+msgstr "Useu caràcters alfanumèrics, \".\", \"-\" i \":\"."
 
 #: services/forms.py:1091
 msgid "Delete underlying file"
-msgstr "Esborrar el fitxer subjacent"
+msgstr "Elimina el fitxer subjacent"
 
 #: services/forms.py:1108 templates/freeadmin/generic_model_delete.html:24
 #: templates/plugins/plugin_confirm_delete.html:10
@@ -1643,12 +1644,11 @@ msgstr "Esborrar el fitxer subjacent"
 #: templates/storage/snapshot_confirm_delete_bulk.html:5
 #: templates/storage/zvol_confirm_delete.html:7
 msgid "Are you sure you want to delete?"
-msgstr "Estas segur que vols esborrar-ho?"
+msgstr "Segur que voleu eliminar-lo?"
 
 #: services/forms.py:1147
-#, fuzzy
 msgid "The S.M.A.R.T. service failed to reload."
-msgstr "El servei SNMP ha fallat la recàrrega"
+msgstr "El servei S.M.A.R.T. ha fallat la recàrrega."
 
 #: services/models.py:51
 msgid "Service"
@@ -1662,7 +1662,7 @@ msgstr ""
 
 #: services/models.py:55
 msgid "Enable Service"
-msgstr "Activar servei"
+msgstr "Habilita el servei"
 
 #: services/models.py:58 services/models.py:59 services/nav.py:8
 #: templates/menubar.html:27
@@ -1677,7 +1677,7 @@ msgstr "Model d'autenticació"
 msgid ""
 "Using Active Directory or LDAP authentication will supersede this option"
 msgstr ""
-"Fer servir Active Directory o utenticació LDAP substituirà aquesta opció"
+"Fer servir Active Directory o autenticació LDAP substituirà aquesta opció"
 
 #: services/models.py:77
 msgid "NetBIOS name"
@@ -1692,8 +1692,8 @@ msgid ""
 "Workgroup the server will appear to be in when queried by clients (maximum "
 "15 characters)."
 msgstr ""
-"El nom del grup de treball apareixerá al ser demanat pels clients (màxim 15 "
-"caràcters)."
+"El grup de treball on semblarà ser el servidor quan els clients el consultin "
+"(màxim 15 caràcters)."
 
 #: services/models.py:88
 msgid "Server description. This can usually be left blank."
@@ -1701,23 +1701,23 @@ msgstr "Descripció del servidor. Es pot deixar en blanc."
 
 #: services/models.py:94
 msgid "DOS charset"
-msgstr "joc de caràcters DOS "
+msgstr "Joc de caràcters DOS"
 
 #: services/models.py:100
 msgid "UNIX charset"
-msgstr "joc de caràcters UNIX"
+msgstr "Joc de caràcters UNIX"
 
 #: services/models.py:106
 msgid "Log level"
-msgstr "Nivell de log"
+msgstr "Nivell de registre"
 
 #: services/models.py:109
 msgid "Local Master"
-msgstr "Master local"
+msgstr "Mestre local"
 
 #: services/models.py:111
 msgid "Time Server for Domain"
-msgstr "Servidor de temps pel domini"
+msgstr "Servidor d'hora per al domini"
 
 #: services/models.py:116 services/models.py:214
 msgid "Guest account"
@@ -1731,21 +1731,22 @@ msgid ""
 "guest service. This user must exist in the password file, but does not "
 "require a valid login. The user root can not be used as guest account."
 msgstr ""
-"Utilitzeu aquesta opció per sobreescriure l'username ('nobody' per defecte) "
-"el cual es farà servir per accedir a serveis especificats com a 'guest'. "
-"Siguin els que siguin els privilegis que té aquest usuari, estarà disponible "
-"per qualsevol client conectant-se al servei 'guest'. Aquest usuari ha "
-"d'existir al fitxer password, però no requereix tenir un login vàlid. "
-"L'usuari root no pot ser usat com a compte guest."
+"Useu aquesta opció per sobreescriure el nom d'usuari (\"nobody\", ningú, per "
+"defecte) que es farà servir per accedir a serveis especificats com a "
+"convidat. Siguin els que siguin els privilegis que té aquest usuari, estarà "
+"disponible per a qualsevol client que es connecti al servei \"guest\", "
+"convidat. Aquest usuari ha d'existir al fitxer de contrasenya, però no "
+"requereix una entrada vàlida. L'usuari d'arrel no es pot usar com a compte "
+"de convidat."
 
 #: services/models.py:121 services/models.py:1013
 msgid "File mask"
-msgstr "màscara de l'arxiu"
+msgstr "Màscara del fitxer"
 
 #: services/models.py:123
 msgid "Use this option to override the file creation mask (0666 by default)."
 msgstr ""
-"Utilitza aquesta opció per anular la màscara de creació d'arxiu  (0666 per "
+"Usa aquesta opció per anular la màscara de creació de fitxer (0666 per "
 "defecte)."
 
 #: services/models.py:127 services/models.py:1019
@@ -1756,8 +1757,8 @@ msgstr "Màscara de directori"
 msgid ""
 "Use this option to override the directory creation mask (0777 by default)."
 msgstr ""
-"Utilitza aquesta opció per anular la màscara de creació de directori (0777 "
-"per defecte)."
+"Usa aquesta opció per anular la màscara de creació de directori (0777 per "
+"defecte)."
 
 #~ msgid "Large RW support"
 #~ msgstr "RW suport gran (Large RW support)"
@@ -1771,98 +1772,97 @@ msgstr "Suport EA"
 
 #: services/models.py:138
 msgid "Support DOS File Attributes"
-msgstr "Suport per atributs d'arxius DOS"
+msgstr "Suport per a atributs de fitxers DOS"
 
 #: services/models.py:140
 msgid "Allow Empty Password"
-msgstr "Permetre contrasenya buida"
+msgstr "Permet la contrasenya buida"
 
 #: services/models.py:142 services/models.py:787 services/models.py:874
 #: services/models.py:1084 services/models.py:1373 services/models.py:1438
 msgid "Auxiliary parameters"
-msgstr "parametres auxiliars"
+msgstr "Paràmetres auxiliars"
 
 #: services/models.py:144
-#, fuzzy
 msgid "These parameters are added to [global] section of smb.conf"
-msgstr "Aquests paràmetres son afegits a la secció [Global] del smb.conf"
+msgstr "Aquests paràmetres s'afegeixen a la secció [global] de smb.conf"
 
 #: services/models.py:147
 msgid "Enable home directories"
-msgstr "Activa directoris home"
+msgstr "Habilita els directoris de l'usuari"
 
 #: services/models.py:148
 msgid "Enable/disable home directories for samba user."
-msgstr "Això activa/desactiva els directoris home per l'usuari samba."
+msgstr ""
+"Això habilita/inhabilita els directoris de l'usuari per a l'usuari samba."
 
 #: services/models.py:151
 msgid "Enable home directories browsing"
-msgstr "Activa explorar els directoris home"
+msgstr "Habilita explorar els directoris de l'usuari"
 
 #: services/models.py:152
 msgid "Enable/disable home directories browsing for samba user."
 msgstr ""
-"Això activa/desactiva l'exploració dels directoris home per l'usuari samba."
+"Habilita/inhabilita l'exploració dels directoris de l'usuari per a l'usuari "
+"samba."
 
 #: services/models.py:156
 msgid "Home directories"
-msgstr "Directoris Home"
+msgstr "Directoris d'usuari"
 
 #: services/models.py:160
-#, fuzzy
 msgid "Homes auxiliary parameters"
-msgstr "parametres auxiliars"
+msgstr "Paràmetres auxiliars"
 
 #: services/models.py:162
-#, fuzzy
 msgid "These parameters are added to [homes] section of smb.conf"
-msgstr "Aquests paràmetres s'afegiran a la secció [Share] de smb.conf"
+msgstr "Aquests paràmetres s'afegeixen a la secció [homes] de smb.conf"
 
 #: services/models.py:165
 msgid "Unix Extensions"
-msgstr ""
+msgstr "Extensions d'Unix"
 
 #: services/models.py:167
 msgid ""
 "These extensions enable Samba to better serve UNIX SMB clients by "
 "supporting features such as symbolic links, hard links, etc..."
 msgstr ""
+"Aquestes extensions habiliten Samba per servir millor clients UNIX SMB "
+"admetent funcions com ara els enllaços simbòlics, enllaços durs, etc."
 
 #: services/models.py:171
 msgid "Enable AIO"
-msgstr "Activa AIO"
+msgstr "Habilita AIO"
 
 #: services/models.py:172
 msgid "Enable/disable AIO support."
-msgstr "Això activa/desactiva el suport AIO"
+msgstr "Això habilita/inhabilita el suport d'AIO."
 
 #: services/models.py:176
 msgid "Minimum AIO read size"
-msgstr "Tamnay mínim de lectura AIO"
+msgstr "Mida mínima de lectura d'AIO"
 
 #: services/models.py:177
-#, fuzzy
 msgid ""
 "Samba will read asynchronously if request size is larger than this value."
 msgstr ""
-"Samba llegirà de manera asíncrona si request size és més gran que aquest "
-"valor.La lectura per defecte és 1."
+"Samba llegirà de manera asíncrona si \"request size\" (sol·licitud de mida) "
+"és superior a aquest valor."
 
 #: services/models.py:182
 msgid "Minimum AIO write size"
-msgstr "Mida d'escriptura AIO minima"
+msgstr "Mida mínima d'escriptura AIO"
 
 #: services/models.py:183
-#, fuzzy
 msgid ""
 "Samba will write asynchronously if request size is larger than this value."
 msgstr ""
-"Samba llegirà de manera asíncrona si request size és més gran que aquest "
-"valor.La lectura per defecte és 1."
+"Samba llegirà de manera asíncrona si \"request size\" (sol·licitud de mida) "
+"és superior a aquest valor."
 
 #: services/models.py:187
 msgid "Zeroconf share discovery"
-msgstr ""
+msgstr "Descobriment de compartició Zeroconf"
 
 #: services/models.py:189
 msgid ""
@@ -1870,6 +1870,9 @@ msgid ""
 "to automatically discover the SMB shares on the system similar to the "
 "Computer Browser service in Windows."
 msgstr ""
+"El suport de Zeroconf a través d'Avahi permet que els clients (el Mac OSX "
+"finder concretament) descobreixin automàticament les comparticions SMB al "
+"sistema, similar al servei Computer Browser a Windows."
 
 #: services/models.py:193 services/models.py:194
 #: templates/services/core.html:26
@@ -1888,11 +1891,13 @@ msgstr "SMB"
 
 #: services/models.py:207
 msgid "Guest Access"
-msgstr "Accés convidat"
+msgstr "Accés de convidat"
 
 #: services/models.py:208
 msgid "Allows guest access to all apple shares on this box."
-msgstr "Permet l'accés convidat a tots els share d'Apple en aquesta caixa."
+msgstr ""
+"Permet l'accés de convidat a totes les comparticions d'Apple en aquesta "
+"màquina."
 
 #: services/models.py:219
 #, fuzzy
@@ -1900,10 +1905,11 @@ msgid "Max. Connections"
 msgstr "Connexions màximes"
 
 #: services/models.py:221
-#, fuzzy
 msgid ""
 "Maximum number of connections permitted via AFP. The default limit is 50."
-msgstr "Nombre màxim de connexions a cada sessió (8 per defecte)."
+msgstr ""
+"El nombre màxim de connexions permeses a través d'AFP. El límit per defecte "
+"és 50."
 
 #: services/models.py:226 services/models.py:227
 #: templates/services/core.html:4
@@ -1919,9 +1925,9 @@ msgid ""
 "Specifies how many servers to create. There should be enough to handle the "
 "maximum level of concurrency from its clients, typically four to six."
 msgstr ""
-"Especifica quant servidors s'han de crear. Hi ha d'haver suficients per "
-"manejar el nivell màxim de concurrencies dels seus clients, normament entre "
-"4 i 6."
+"Especifica quants servidors s'han de crear. N'hi ha d'haver prou per "
+"gestionar el nivell màxim de concurrències dels clients, normalment entre 4 "
+"i 6."
 
 #~ msgid "Asynchronous mode"
 #~ msgstr "Mode asíncron"
@@ -1947,20 +1953,20 @@ msgid ""
 "The base name (e.g. iqn.2007-09.jp.ne.peach.istgt, see RFC 3720 and 3721 for "
 "details) will append the target name that is not starting with 'iqn.'"
 msgstr ""
-"El nom base (ex. iqn.2007-09.jp.ne.peach.istgt, mirar RFC 3720 3721 per "
-"detalls) s'afegira al nom de destí que no comenci per 'iqn.'"
+"El nom base (p. ex. iqn.2007-09.jp.ne.peach.istgt, vegeu RFC 3720 i 3721 per "
+"a més detalls) s'afegira al nom de destinació que no comenci per \"iqn.\""
 
 #: services/models.py:264
 msgid "Discovery Auth Method"
-msgstr "Mètode de descobriment automàtic"
+msgstr "Mètode d'autenticació de descobriment"
 
 #: services/models.py:275
 msgid "I/O Timeout"
-msgstr "I/O timeout"
+msgstr "Temps d'espera d'E/S"
 
 #: services/models.py:276
 msgid "I/O timeout in seconds (30 by default)."
-msgstr "I/O timeout en segons (per defecte 30 segons)."
+msgstr "Temps d'espera d'E/S en segons (30 per defecte)."
 
 #: services/models.py:281
 msgid "NOPIN Interval"
@@ -1976,7 +1982,7 @@ msgstr "Sessions màximes"
 
 #: services/models.py:288
 msgid "Maximum number of sessions holding at same time (16 by default)."
-msgstr "Nombre màxim de sessions al mateix moment (16 per defecte)."
+msgstr "El nombre màxim de sessions al mateix moment (16 per defecte)."
 
 #: services/models.py:293
 msgid "Max. connections"
@@ -1984,11 +1990,11 @@ msgstr "Connexions màximes"
 
 #: services/models.py:294
 msgid "Maximum number of connections in each session (8 by default)."
-msgstr "Nombre màxim de connexions a cada sessió (8 per defecte)."
+msgstr "El nombre màxim de connexions a cada sessió (8 per defecte)."
 
 #: services/models.py:299
 msgid "Max. pre-send R2T"
-msgstr "Pre-enviamnet R2T màxim"
+msgstr "Preenviament R2T màxim"
 
 #: services/models.py:300
 msgid ""
