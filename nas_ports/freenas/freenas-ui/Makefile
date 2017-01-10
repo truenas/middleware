@@ -46,7 +46,8 @@ RUN_DEPENDS=	${PYTHON_PKGNAMEPREFIX}django110>0:${PORTSDIR}/www/py-django110 \
 	pyvmomi>0:${PORTSDIR}/net/py-pyvmomi \
 	dmidecode>0:${PORTSDIR}/sysutils/dmidecode \
 	freenas-pkgtools>0:${PORTSDIR}/freenas/freenas-pkgtools \
-	freenas-migrate93>0:${PORTSDIR}/freenas/freenas-migrate93
+	freenas-migrate93>0:${PORTSDIR}/freenas/freenas-migrate93 \
+	${PYTHON_PKGNAMEPREFIX}ntplib>0:${PORTSDIR}/net/py-ntplib
 
 EXTRACT_ONLY=
 WRKSRC=/usr/freenasUI
