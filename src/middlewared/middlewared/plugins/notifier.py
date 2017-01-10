@@ -2,6 +2,7 @@ from middlewared.service import Service
 
 import os
 import sys
+import logging
 
 if '/usr/local/www' not in sys.path:
     sys.path.append('/usr/local/www')
@@ -37,6 +38,9 @@ from freenasUI.directoryservice.models import (
 from freenasUI.directoryservice.utils import get_idmap_object
 
 from middlewared.utils import django_modelobj_serialize
+
+
+logger = logging.getLogger('plugins.notifier')
 
 
 class NotifierService(Service):
@@ -76,8 +80,12 @@ class NotifierService(Service):
         This is simply to keep old behavior in notifier.
         """
         try:
-            notifier().pwenc_decrypt(encrypted)
+            return notifier().pwenc_decrypt(encrypted)
         except:
+            logger.debug(
+                'notifier.pwenc_decrypt: Failed to decrypt the pass for {0}'.format(encrypted),
+                exc_info=True
+            )
             return ''
 
     def warden(self, method, params=None, kwargs=None):
