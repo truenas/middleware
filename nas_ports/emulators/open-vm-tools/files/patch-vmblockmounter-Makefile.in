@@ -1,0 +1,12 @@
+--- vmblockmounter/Makefile.in.orig	2013-12-27 17:42:57.000000000 +0000
++++ vmblockmounter/Makefile.in	2013-12-27 17:44:31.000000000 +0000
+@@ -644,9 +644,6 @@
+ @FREEBSD_TRUE@install-exec-hook:
+ @FREEBSD_TRUE@	mv $(DESTDIR)$(sbindir)/mount.vmblock \
+ @FREEBSD_TRUE@		$(DESTDIR)$(sbindir)/mount_vmblock
+-@FREEBSD_TRUE@	-$(MKDIR_P) $(DESTDIR)/sbin
+-@FREEBSD_TRUE@	-$(LN_S) $(DESTDIR)$(sbindir)/mount_vmblock \
+-@FREEBSD_TRUE@		$(DESTDIR)/sbin/mount_vmblock &> /dev/null
+ @FREEBSD_TRUE@uninstall-hook:
+ @FREEBSD_TRUE@	rm -f $(DESTDIR)$(sbindir)/mount_vmblock
+ @FREEBSD_FALSE@install-exec-hook:
