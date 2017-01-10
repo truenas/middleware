@@ -1,0 +1,10 @@
+--- scripts/linux/pam.d/vmtoolsd.orig	2013-09-23 15:51:10 UTC
++++ scripts/linux/pam.d/vmtoolsd
+@@ -1,7 +1,3 @@
+ #%PAM-1.0
+-auth       sufficient       pam_unix2.so nullok
+ auth       sufficient       pam_unix.so shadow nullok
+-auth       required         pam_unix_auth.so shadow nullok
+-account    sufficient       pam_unix2.so
+ account    sufficient       pam_unix.so
+-account    required         pam_unix_acct.so

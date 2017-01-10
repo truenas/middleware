@@ -1,0 +1,13 @@
+The Open Virtual Machine Tools (open-vm-tools) are the open source
+implementation of VMware Tools. They are a set of guest operating
+system virtualization components that enhance performance and user
+experience of virtual machines. As virtualization technology rapidly
+becomes mainstream, each virtualization solution provider implements
+their own set of tools and utilities to supplement the guest virtual
+machine. However, most of the implementations are proprietary and
+are tied to a specific virtualization platform.
+
+This port replaces the vmware guest ports and the binary only vmware
+tools ports in the ports tree.
+
+WWW: http://open-vm-tools.sourceforge.net

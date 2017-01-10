@@ -1,0 +1,11 @@
+--- scripts/Makefile.in.orig	2010-05-22 04:41:58.000000000 +0200
++++ scripts/Makefile.in	2010-05-22 04:43:57.000000000 +0200
+@@ -236,7 +236,7 @@
+ top_srcdir = @top_srcdir@
+ defaultscripts = poweron-vm-default poweroff-vm-default \
+ 	suspend-vm-default resume-vm-default
+-confdir = /etc/vmware-tools
++confdir = ${prefix}/share/vmware-tools
+ conf_SCRIPTS = ./common/vm-support ./common/statechange.subr \
+ 	$(defaultscripts)
+ vmwsrcdir = $(confdir)/scripts/vmware

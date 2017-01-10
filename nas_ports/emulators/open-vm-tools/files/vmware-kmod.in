@@ -1,0 +1,101 @@
+#!/bin/sh
+#
+# $FreeBSD$
+#
+
+# PROVIDE: vmware-kmod
+# REQUIRE: FILESYSTEMS ldconfig
+# BEFORE: netif
+
+. /etc/rc.subr
+
+# Global
+checkvm_cmd="%%PREFIX%%/bin/vmware-checkvm > /dev/null"
+
+# Functions
+vmware_mod_load()
+{
+	echo -n "Loading $1 kernel module: "
+	kldstat -n %%PREFIX%%/lib/vmware-tools/modules/drivers/$1.ko >/dev/null 2>&1
+	if [ "$?" = "0" ]; then
+		echo "already loaded."
+	else
+		kldload %%PREFIX%%/lib/vmware-tools/modules/drivers/$1.ko >/dev/null 2>&1
+		if [ "$?" = "0" ]; then
+			echo "done."
+		else
+			echo "failed."
+		fi
+	fi
+}
+vmware_mod_status()
+{
+	echo -n "Checking $1 kernel module: "
+	kldstat -n %%PREFIX%%/lib/vmware-tools/modules/drivers/$1.ko >/dev/null 2>&1
+	if [ "$?" = "0" ]; then
+		echo "loaded."
+	else
+		echo "not loaded"
+	fi
+}
+
+# VMware kernel module: vmmemctl
+kernel_mod="vmmemctl"
+name="vmware_guest_${kernel_mod}"
+rcvar=vmware_guest_${kernel_mod}_enable
+extra_commands="status"
+status_cmd="vmware_mod_status ${kernel_mod}"
+start_precmd="${checkvm_cmd}"
+start_cmd="vmware_mod_load ${kernel_mod}"
+stop_precmd="${checkvm_cmd}"
+stop_cmd=":"
+
+load_rc_config $name
+[ -z "$vmware_guest_vmmemctl_enable" ] && vmware_guest_vmmemctl_enable="NO"
+[ -n "$vmware_guest_kmod_enable" ] && vmware_guest_vmmemctl_enable="$vmware_guest_kmod_enable"
+run_rc_command "$1"
+
+# VMware kernel module: vmxnet
+kernel_mod="vmxnet"
+name="vmware_guest_${kernel_mod}"
+rcvar=vmware_guest_${kernel_mod}_enable
+extra_commands="status"
+status_cmd="vmware_mod_status ${kernel_mod}"
+start_precmd="${checkvm_cmd}"
+start_cmd="vmware_mod_load ${kernel_mod}"
+stop_precmd="${checkvm_cmd}"
+stop_cmd=":"
+
+load_rc_config $name
+[ -z "$vmware_guest_vmxnet_enable" ] && vmware_guest_vmxnet_enable="NO"
+run_rc_command "$1"
+
+# VMware kernel module: vmblock
+kernel_mod="vmblock"
+name="vmware_guest_${kernel_mod}"
+rcvar=vmware_guest_${kernel_mod}_enable
+extra_commands="status"
+status_cmd="vmware_mod_status ${kernel_mod}"
+start_precmd="${checkvm_cmd}"
+start_cmd="vmware_mod_load ${kernel_mod}"
+stop_precmd="${checkvm_cmd}"
+stop_cmd=":"
+
+load_rc_config $name
+[ -z "$vmware_guest_vmblock_enable" ] && vmware_guest_vmblock_enable="NO"
+run_rc_command "$1"
+
+# VMware kernel module: vmhgfs
+kernel_mod="vmhgfs"
+name="vmware_guest_${kernel_mod}"
+rcvar=vmware_guest_${kernel_mod}_enable
+extra_commands="status"
+status_cmd="vmware_mod_status ${kernel_mod}"
+start_precmd="${checkvm_cmd}"
+start_cmd="vmware_mod_load ${kernel_mod}"
+stop_precmd="${checkvm_cmd}"
+stop_cmd=":"
+
+load_rc_config $name
+[ -z "$vmware_guest_vmhgfs_enable" ] && vmware_guest_vmhgfs_enable="NO"
+run_rc_command "$1"

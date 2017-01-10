@@ -1,0 +1,170 @@
+--- modules/freebsd/vmhgfs/vnops.c.orig	2009-02-18 17:02:35.000000000 +0900
++++ modules/freebsd/vmhgfs/vnops.c	2009-03-01 17:47:10.000000000 +0900
+@@ -325,7 +325,11 @@
+ */
+ {
+    struct vnode *vp = ap->a_vp;
++#if __FreeBSD_version >= 800001
++   int mode = ap->a_accmode;
++#else
+    int mode = ap->a_mode;
++#endif
+    HgfsAccessMode accessMode = 0;
+    Bool isDir = vp->v_type == VDIR;
+    if (mode & VREAD) {
+--- modules/freebsd/vmblock/vfsops.c.orig	2009-03-18 03:03:21.000000000 -0400
++++ modules/freebsd/vmblock/vfsops.c	2009-05-23 02:25:50.892549675 -0400
+@@ -126,6 +126,11 @@
+    char *target;
+    int len, error = 0;
+ 
++#if __FreeBSD_version >= 800087
++   struct thread *td;
++   td = curthread;
++#endif
++
+    VMBLOCKDEBUG("VMBlockVFSMount(mp = %p)\n", (void *)mp);
+ 
+    /*
+@@ -273,6 +278,11 @@
+    int error;
+    int flags = 0, removed = 0;
+ 
++#if __FreeBSD_version >= 800087
++   struct thread *td;
++   td = curthread;
++#endif
++
+    VMBLOCKDEBUG("VMBlockVFSUnmount: mp = %p\n", (void *)mp);
+ 
+    xmp = MNTTOVMBLOCKMNT(mp);
+@@ -448,10 +458,15 @@
+ VMBlockVFSSync(struct mount *mp,        // Ignored
+                int waitfor)             // Ignored
+ #else
++#if __FreeBSD_version >= 800087
++VMBlockVFSSync(struct mount *mp,
++               int waitfor)
++#else
+ VMBlockVFSSync(struct mount *mp,        // Ignored
+                int waitfor,             // Ignored
+                struct thread *td)       // Ignored
+ #endif
++#endif
+ {
+    return 0;
+ }
+--- modules/freebsd/vmhgfs/vfsops.c.orig	2009-03-18 03:03:26.000000000 -0400
++++ modules/freebsd/vmhgfs/vfsops.c	2009-05-23 02:56:39.608109670 -0400
+@@ -109,8 +109,12 @@
+  */
+ 
+ static int
++#if __FreeBSD_version >= 800087
++HgfsVfsMount(struct mount *mp)
++#else
+ HgfsVfsMount(struct mount *mp,  // IN: structure representing the file system
+              struct thread *td) // IN: thread which is mounting the file system
++#endif
+ {
+    HgfsSuperInfo *sip;
+    struct vnode *vp;
+@@ -122,6 +126,10 @@
+    int *uid = NULL;
+    Bool *gidSet = NULL;
+    int *gid = NULL;
++#if __FreeBSD_version >= 800087
++   struct thread *td;
++   td = curthread;
++#endif
+ 
+    /*
+     * - Examine/validate mount flags from userland.
+@@ -145,7 +153,11 @@
+     * Since Hgfs requires the caller to be root, only allow mount attempts made
+     * by the superuser.
+     */
++#if __FreeBSD_version >= 800001
++   if ((ret = priv_check(td, PRIV_VFS_MOUNT)) != 0) {
++#else
+    if ((ret = suser(td)) != 0) {
++#endif
+       return ret;
+    }
+ 
+@@ -277,11 +289,19 @@
+  */
+ 
+ static int
++#if __FreeBSD_version >= 800087
++HgfsVfsUnmount(struct mount *mp, int mntflags)
++#else
+ HgfsVfsUnmount(struct mount *mp, int mntflags, struct thread *td)
++#endif
+ {
+    HgfsSuperInfo *sip;
+    int ret = 0;
+    int flags = 0;
++#if __FreeBSD_version >= 800087
++   struct thread *td;
++   td = curthread;
++#endif
+ 
+    sip = (HgfsSuperInfo *)mp->mnt_data;
+ 
+@@ -348,10 +368,18 @@
+  */
+ 
+ static int
++#if __FreeBSD_version >= 800087
++HgfsVfsStatfs(struct mount *mp, struct statfs *sbp)
++#else
+ HgfsVfsStatfs(struct mount *mp, struct statfs *sbp, struct thread *td)
++#endif
+ {
+    int ret = 0;
+    struct vnode *vp;
++#if __FreeBSD_version >= 800087
++   struct thread *td;
++   td = curthread;
++#endif
+ 
+    /* We always want HGFS_BLOCKSIZE to be a power of two */
+    ASSERT_ON_COMPILE(HGFS_IS_POWER_OF_TWO(HGFS_BLOCKSIZE));
+@@ -361,8 +389,11 @@
+     * we got from a call to vfs_getnewfsid() in HgfsVfsMount()
+     */
+    bcopy(&mp->mnt_stat, sbp, sizeof mp->mnt_stat);
+-
++#if __FreeBSD_version >= 800087
++   ret = HgfsVfsRoot(mp, LK_SHARED, &vp);
++#else
+    ret = HgfsVfsRoot(mp, LK_SHARED, &vp, td);
++#endif
+    if (ret) {
+       DEBUG(VM_DEBUG_FAIL, "HgfsVfsRoot failed\n");
+       return ret;
+@@ -397,13 +428,23 @@
+  */
+ 
+ static int
++#if __FreeBSD_version >= 800087
++HgfsVfsRoot(struct mount *mp,
++            int flags,
++	    struct vnode **vpp)
++#else
+ HgfsVfsRoot(struct mount *mp,   // IN: Filesystem structure
+             int flags,          // IN: Flags to vget
+             struct vnode **vpp, // OUT: Address of root vnode
+             struct thread *td)  // IN: Thread structure
++#endif
+ {
+    HgfsSuperInfo *sip = (HgfsSuperInfo *)mp->mnt_data;
+    int ret = 0;
++#if __FreeBSD_version >= 800087
++   struct thread *td;
++   td = curthread;
++#endif
+ 
+    *vpp = NULL;
+ 
