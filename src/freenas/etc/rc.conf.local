@@ -134,12 +134,18 @@ _interface_config()
 			elif [ "$(ha_hardware)" = "ULTIMATE" ]; then
 				internal_iface="igb1"
 			fi
-			echo "ifconfig_${internal_iface}=\"inet ${internal_ip}/24\""
-			echo "ifconfig_${internal_iface}_alias0=\"inet vhid 10 advskew ${carp1_skew} alias ${carp1_addr}\""
-			echo "ifconfig_${internal_iface}_alias1=\"inet vhid 20 advskew ${carp2_skew} alias ${carp2_addr}\""
+			local a=0
 			if [ -n "${ether}" ]; then
-				echo "ifconfig_${internal_iface}_alias2=\"ether ${ether}\""
+				echo "ifconfig_${internal_iface}=\"ether ${ether}\""
+				echo "ifconfig_${internal_iface}_alias${a}=\"inet ${internal_ip}/24\""
+				a=$(( $a + 1 ))
+			else
+				echo "ifconfig_${internal_iface}=\"inet ${internal_ip}/24\""
 			fi
+			echo "ifconfig_${internal_iface}_alias${a}=\"inet vhid 10 advskew ${carp1_skew} alias ${carp1_addr}\""
+			a=$(( $a + 1 ))
+			echo "ifconfig_${internal_iface}_alias${a}=\"inet vhid 20 advskew ${carp2_skew} alias ${carp2_addr}\""
+			a=$(( $a + 1 ))
 		fi
 	fi
 
