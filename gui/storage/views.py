@@ -370,7 +370,7 @@ def volimport(request):
             # Usage: sockscopy vol_to_import fs_type dest_path socket_path
             subprocess.Popen([
                 "/usr/local/bin/sockscopy",
-                "dev/{0}".format(form.cleaned_data.get('volume_disks')),
+                "/dev/{0}".format(form.cleaned_data.get('volume_disks')),
                 form.cleaned_data.get('volume_fstype').lower(),
                 form.cleaned_data.get('volume_dest_path'),
                 SOCKIMP
