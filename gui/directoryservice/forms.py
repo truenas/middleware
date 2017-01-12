@@ -627,7 +627,7 @@ class ActiveDirectoryForm(ModelForm):
     def save(self):
         enable = self.cleaned_data.get("ad_enable")
         if self.__original_changed():
-            notifier()._clear_activedirectory_config()
+            notifier().clear_activedirectory_config()
 
         started = notifier().started("activedirectory")
         obj = super(ActiveDirectoryForm, self).save()

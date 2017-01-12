@@ -264,6 +264,10 @@ class notifier:
         with client as c:
             return c.call('service.reload', what, {'onetime': False})
 
+    def clear_activedirectory_config(self):
+        with client as c:
+            return c.call('service._clear_activedirectory_config')
+
     """
     The following plugins methods violate the service layer
     and are staying here now for compatibility.
