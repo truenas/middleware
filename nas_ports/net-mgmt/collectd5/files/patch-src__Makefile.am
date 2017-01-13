@@ -1,23 +1,6 @@
---- src/Makefile.am.orig	2016-02-07 17:59:05.611217011 +0100
-+++ src/Makefile.am	2016-02-07 18:01:14.773208616 +0100
-@@ -7,14 +7,14 @@
- PLUGIN_LDFLAGS = -module -avoid-version -export-symbols-regex '\<module_register\>'
- 
- if COMPILER_IS_GCC
--AM_CFLAGS = -Wall -Werror
-+AM_CFLAGS = -Wall 
- endif
- 
- AM_CPPFLAGS = -I$(srcdir)/daemon
- AM_CPPFLAGS += -DPREFIX='"${prefix}"'
- AM_CPPFLAGS += -DCONFIGFILE='"${sysconfdir}/${PACKAGE_NAME}.conf"'
- AM_CPPFLAGS += -DLOCALSTATEDIR='"${localstatedir}"'
--AM_CPPFLAGS += -DPKGLOCALSTATEDIR='"${localstatedir}/lib/${PACKAGE_NAME}"'
-+AM_CPPFLAGS += -DPKGLOCALSTATEDIR='"${localstatedir}/db/${PACKAGE_NAME}"'
- if BUILD_FEATURE_DAEMON
- AM_CPPFLAGS += -DPIDFILE='"${localstatedir}/run/${PACKAGE_NAME}.pid"'
- endif
-@@ -211,6 +211,12 @@
+--- src/Makefile.am.orig	2016-12-05 22:31:47.362315174 -0500
++++ src/Makefile.am	2016-12-05 23:06:43.545170696 -0500
+@@ -267,6 +267,12 @@
  endif
  endif
  
@@ -30,7 +13,7 @@
  if BUILD_PLUGIN_CPU
  pkglib_LTLIBRARIES += cpu.la
  cpu_la_SOURCES = cpu.c
-@@ -218,7 +224,7 @@
+@@ -274,7 +280,7 @@
  cpu_la_LDFLAGS = $(PLUGIN_LDFLAGS)
  cpu_la_LIBADD =
  if BUILD_WITH_LIBKSTAT
@@ -39,7 +22,34 @@
  endif
  if BUILD_WITH_LIBDEVINFO
  cpu_la_LIBADD += -ldevinfo
-@@ -303,7 +309,7 @@
+@@ -306,6 +312,14 @@
+ csv_la_LDFLAGS = $(PLUGIN_LDFLAGS)
+ endif
+ 
++if BUILD_PLUGIN_CTL
++pkglib_LTLIBRARIES += ctl.la
++ctl_la_SOURCES = ctl.c
++ctl_la_LDFLAGS = $(PLUGIN_LDFLAGS)
++ctl_la_CFLAGS = $(AM_CFLAGS) $(BUILD_WITH_LIBXML2_CFLAGS)
++ctl_la_LIBADD = $(BUILD_WITH_LIBXML2_LIBS)
++endif
++
+ if BUILD_PLUGIN_CURL
+ pkglib_LTLIBRARIES += curl.la
+ curl_la_SOURCES = curl.c \
+@@ -349,6 +363,11 @@
+ df_la_SOURCES = df.c
+ df_la_LDFLAGS = $(PLUGIN_LDFLAGS)
+ df_la_LIBADD = libmount.la
++df_la_CPPFLAGS = $(AM_CPPFLAGS)
++if BUILD_WITH_LIBZFS
++df_la_CPPFLAGS += $(BUILD_WITH_LIBZFS_CPPFLAGS)
++df_la_LDFLAGS += $(BUILD_WITH_LIBZFS_LDFLAGS)
++endif
+ endif
+ 
+ if BUILD_PLUGIN_DISK
+@@ -358,7 +377,7 @@
  disk_la_LDFLAGS = $(PLUGIN_LDFLAGS)
  disk_la_LIBADD =
  if BUILD_WITH_LIBKSTAT
@@ -48,17 +58,20 @@
  endif
  if BUILD_WITH_LIBDEVINFO
  disk_la_LIBADD += -ldevinfo
-@@ -321,6 +327,9 @@
- if BUILD_WITH_PERFSTAT
- disk_la_LIBADD += -lperfstat
- endif
-+if BUILD_FREEBSD
-+disk_la_LIBADD += -ldevstat -lgeom
-+endif
+@@ -435,6 +454,12 @@
+ filecount_la_LDFLAGS = $(PLUGIN_LDFLAGS)
  endif
  
- if BUILD_PLUGIN_DNS
-@@ -408,7 +417,7 @@
++if BUILD_PLUGIN_GEOM_STAT
++pkglib_LTLIBRARIES += geom_stat.la
++geom_stat_la_SOURCES = geom_stat.c
++geom_stat_la_LDFLAGS = -module -avoid-version -ldevstat -lkvm -lgeom lbsdxml -lsbuf
++endif
++
+ if BUILD_PLUGIN_GMOND
+ pkglib_LTLIBRARIES += gmond.la
+ gmond_la_SOURCES = gmond.c
+@@ -481,7 +506,7 @@
  interface_la_LIBADD += $(BUILD_WITH_LIBSTATGRAB_LDFLAGS)
  else
  if BUILD_WITH_LIBKSTAT
@@ -67,7 +80,7 @@
  endif
  if BUILD_WITH_LIBDEVINFO
  interface_la_LIBADD += -ldevinfo
-@@ -591,7 +600,7 @@
+@@ -669,7 +694,7 @@
  memory_la_LDFLAGS = $(PLUGIN_LDFLAGS)
  memory_la_LIBADD =
  if BUILD_WITH_LIBKSTAT
@@ -76,7 +89,25 @@
  endif
  if BUILD_WITH_LIBDEVINFO
  memory_la_LIBADD += -ldevinfo
-@@ -964,7 +973,7 @@
+@@ -760,6 +785,17 @@
+ nfs_la_LDFLAGS = $(PLUGIN_LDFLAGS)
+ endif
+ 
++if BUILD_PLUGIN_NFSSTAT
++pkglib_LTLIBRARIES += nfsstat.la
++nfsstat_la_SOURCES = nfsstat.c
++nfsstat_la_LDFLAGS = $(PLUGIN_LDFLAGS)
++nfsstat_la_CPPFLAGS = $(AM_CPPFLAGS)
++if BUILD_WITH_LIBDTRACE
++nfsstat_la_CPPFLAGS += $(BUILD_WITH_LIBDTRACE_CPPFLAGS)
++nfsstat_la_LDFLAGS += $(BUILD_WITH_LIBDTRACE_LDFLAGS)
++endif
++endif
++
+ if BUILD_PLUGIN_FSCACHE
+ pkglib_LTLIBRARIES += fscache.la
+ fscache_la_SOURCES = fscache.c
+@@ -1034,7 +1070,7 @@
  swap_la_LDFLAGS = $(PLUGIN_LDFLAGS)
  swap_la_LIBADD =
  if BUILD_WITH_LIBKSTAT
@@ -85,7 +116,7 @@
  endif
  if BUILD_WITH_LIBDEVINFO
  swap_la_LIBADD += -ldevinfo
-@@ -1010,7 +1019,7 @@
+@@ -1080,7 +1116,7 @@
  pkglib_LTLIBRARIES += tape.la
  tape_la_SOURCES = tape.c
  tape_la_LDFLAGS = $(PLUGIN_LDFLAGS)
@@ -94,7 +125,7 @@
  endif
  
  if BUILD_PLUGIN_TARGET_NOTIFICATION
-@@ -1116,7 +1125,7 @@
+@@ -1184,7 +1220,7 @@
  uptime_la_LDFLAGS = $(PLUGIN_LDFLAGS)
  uptime_la_LIBADD =
  if BUILD_WITH_LIBKSTAT
@@ -103,25 +134,31 @@
  endif
  if BUILD_WITH_PERFSTAT
  uptime_la_LIBADD += -lperfstat
-@@ -1275,7 +1284,7 @@
- # zfs_arc requires no library on linux
- else
- # solaris
+@@ -1340,7 +1376,19 @@
+ zfs_arc_la_LIBADD = -lm
+ endif
+ if BUILD_SOLARIS
 -zfs_arc_la_LIBADD = -lkstat
 +zfs_arc_la_LIBADD = $(BUILD_WITH_LIBKSTAT_LIBS)
++endif
++endif
++
++if BUILD_PLUGIN_ZFS_ARC_V2
++pkglib_LTLIBRARIES += zfs_arc_v2.la
++zfs_arc_v2_la_SOURCES = zfs_arc_v2.c
++zfs_arc_v2_la_CFLAGS = $(AM_CFLAGS)
++zfs_arc_v2_la_LDFLAGS = -module -avoid-version
++if BUILD_FREEBSD
++zfs_arc_v2_la_LIBADD = -lm
++else
++zfs_arc_v2_la_LIBADD = -lkstat
  endif
  endif
- endif
-@@ -1364,12 +1373,7 @@
  
- install-exec-hook:
- 	$(mkinstalldirs) $(DESTDIR)$(sysconfdir)
--	if test -e $(DESTDIR)$(sysconfdir)/collectd.conf; \
--	then \
--		$(INSTALL) -m 0640 collectd.conf $(DESTDIR)$(sysconfdir)/collectd.conf.pkg-orig; \
--	else \
--		$(INSTALL) -m 0640 collectd.conf $(DESTDIR)$(sysconfdir)/collectd.conf; \
--	fi; \
+@@ -1439,6 +1487,7 @@
+ 	else \
+ 		$(INSTALL) -m 0640 collectd.conf $(DESTDIR)$(sysconfdir)/collectd.conf; \
+ 	fi; \
 +	$(INSTALL) -m 0640 collectd.conf $(DESTDIR)$(sysconfdir)/collectd.conf.sample
  	$(mkinstalldirs) $(DESTDIR)$(pkgdatadir)
  	$(INSTALL) -m 0644 $(srcdir)/types.db $(DESTDIR)$(pkgdatadir)/types.db;
