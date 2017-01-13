@@ -1,17 +1,5 @@
-diff -ruNp src/collectd.conf.in src/collectd.conf.in
---- src/collectd.conf.in	2016-01-19 16:06:34.000000000 +0200
-+++ src/collectd.conf.in	2016-01-19 16:07:01.710329000 +0200
-@@ -89,6 +89,7 @@
- @BUILD_PLUGIN_CPU_TRUE@@BUILD_PLUGIN_CPU_TRUE@LoadPlugin cpu
- #@BUILD_PLUGIN_CPUFREQ_TRUE@LoadPlugin cpufreq
- @LOAD_PLUGIN_CSV@LoadPlugin csv
-+#@BUILD_PLUGIN_CTL_TRUE@LoadPlugin ctl
- #@BUILD_PLUGIN_CURL_TRUE@LoadPlugin curl
- #@BUILD_PLUGIN_CURL_JSON_TRUE@LoadPlugin curl_json
- #@BUILD_PLUGIN_CURL_XML_TRUE@LoadPlugin curl_xml
-diff -ruNp src/ctl.c src/ctl.c
---- src/ctl.c	1970-01-01 03:00:00.000000000 +0300
-+++ src/ctl.c	2016-01-19 16:07:01.643785000 +0200
+--- src/ctl.c.orig	2016-05-22 07:58:08 UTC
++++ src/ctl.c
 @@ -0,0 +1,407 @@
 +/**
 + * collectd - src/ctl.c 
@@ -420,56 +408,3 @@ diff -ruNp src/ctl.c src/ctl.c
 +	plugin_register_shutdown ("ctl", ctl_shutdown);
 +	plugin_register_read ("ctl", ctl_read);
 +} /* void module_register */
-diff -ruNp src/Makefile.am src/Makefile.am
---- src/Makefile.am.orig	2016-02-25 22:22:04.875948843 +0100
-+++ src/Makefile.am	2016-02-25 22:22:51.164945836 +0100
-@@ -251,6 +251,14 @@ csv_la_SOURCES = csv.c
- csv_la_LDFLAGS = $(PLUGIN_LDFLAGS)
- endif
- 
-+if BUILD_PLUGIN_CTL
-+pkglib_LTLIBRARIES += ctl.la
-+ctl_la_SOURCES = ctl.c
-+ctl_la_LDFLAGS = $(PLUGIN_LDFLAGS)
-+ctl_la_CFLAGS = $(AM_CFLAGS) $(BUILD_WITH_LIBXML2_CFLAGS)
-+ctl_la_LIBADD = $(BUILD_WITH_LIBXML2_LIBS)
-+endif
-+
- if BUILD_PLUGIN_CURL
- pkglib_LTLIBRARIES += curl.la
- curl_la_SOURCES = curl.c
-diff -ruNp configure.ac configure.ac
---- configure.ac.orig	2016-02-25 22:05:19.224020045 +0100
-+++ configure.ac	2016-02-25 22:05:23.166018912 +0100
-@@ -5164,6 +5164,7 @@ plugin_cpu="no"
- plugin_cpufreq="no"
- plugin_curl_json="no"
- plugin_curl_xml="no"
-+plugin_ctl="no"
- plugin_df="no"
- plugin_disk="no"
- plugin_drbd="no"
-@@ -5268,6 +5269,7 @@ fi
- 
- if test "x$ac_system" = "xFreeBSD"
- then
-+	plugin_ctl="yes"
- 	plugin_disk="yes"
-         plugin_zfs_arc="yes"
-         plugin_zfs_arc_v2="yes"
-@@ -5548,6 +5550,7 @@ AC_PLUGIN([cputemp],     [yes],         
- AC_PLUGIN([cpufreq],     [$plugin_cpufreq],    [CPU frequency statistics])
- AC_PLUGIN([cpu],         [$plugin_cpu],        [CPU usage statistics])
- AC_PLUGIN([csv],         [yes],                [CSV output plugin])
-+AC_PLUGIN([ctl],         [$plugin_ctl],        [CAM Target Layer statistics])
- AC_PLUGIN([curl],        [$with_libcurl],      [CURL generic web statistics])
- AC_PLUGIN([curl_json],   [$plugin_curl_json],    [CouchDB statistics])
- AC_PLUGIN([curl_xml],   [$plugin_curl_xml],    [CURL generic xml statistics])
-@@ -5929,6 +5932,7 @@ Configuration:
-     cpu . . . . . . . . . $enable_cpu
-     cpufreq . . . . . . . $enable_cpufreq
-     csv . . . . . . . . . $enable_csv
-+    ctl . . . . . . . . . $enable_ctl
-     curl  . . . . . . . . $enable_curl
-     curl_json . . . . . . $enable_curl_json
-     curl_xml  . . . . . . $enable_curl_xml

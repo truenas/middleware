@@ -32,9 +32,9 @@ lib/collectd/disk.so
 lib/collectd/dns.so
 lib/collectd/email.so
 lib/collectd/exec.so
-lib/collectd/fhcount.so
 lib/collectd/filecount.so
-%%STATGRAB%%lib/collectd/interface.so
+lib/collectd/geom_stat.so
+lib/collectd/interface.so
 %%IPMI%%lib/collectd/ipmi.so
 lib/collectd/load.so
 %%LOGSTASH%%lib/collectd/log_logstash.so
@@ -54,6 +54,7 @@ lib/collectd/network.so
 %%CURL%%lib/collectd/nginx.so
 %%NOTIFYDESKTOP%%lib/collectd/notify_desktop.so
 %%NOTIFYEMAIL%%lib/collectd/notify_email.so
+lib/collectd/nfsstat.so
 lib/collectd/ntpd.so
 %%NUTUPS%%lib/collectd/nut.so
 %%OLSRD%%lib/collectd/olsrd.so
@@ -103,11 +104,11 @@ lib/collectd/write_log.so
 %%MONGODB%%lib/collectd/write_mongodb.so
 %%REDIS%%lib/collectd/write_redis.so
 %%RIEMANN%%lib/collectd/write_riemann.so
+%%TSDB%%lib/collectd/write_tsdb.so
 %%XMMS%%lib/collectd/xmms.so
 lib/collectd/zfs_arc.so
-%%ZOOKEEPER%%lib/collectd/zookeeper.so
 lib/collectd/zfs_arc_v2.so
-lib/collectd/geom_stat.so
+%%ZOOKEEPER%%lib/collectd/zookeeper.so
 libdata/pkgconfig/libcollectdclient.pc
 %%DATADIR%%/postgresql_default.conf
 %%DATADIR%%/types.db

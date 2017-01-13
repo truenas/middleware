@@ -67,7 +67,7 @@
         {{ wizard.form.volume_type.errors }}
         <ul>
         {% for cid, clabel in wizard.form.volume_type.field.choices %}
-        <li><input data-dojo-type="dijit.form.RadioButton" name="{{ wizard.form.volume_type.html_name }}" type="radio" value="{{ cid }}" {% if cid not in wizard.form.types_avail %}disabled="disabled" class="dijitDisabled"{% endif %} {% if wizard.form.volume_type.data = cid %}checked="checked"{% else %}{% if not wizard.form.volume_type.data and wizard.form.volume_type.field.initial = cid %}checked="checked"{% endif %}{% endif %}/> {{ clabel }}
+        <li><input data-dojo-type="dijit.form.RadioButton" name="{{ wizard.form.volume_type.html_name }}" type="radio" value="{{ cid }}" {% if cid not in wizard.form.types_avail %}disabled="disabled" class="dijitDisabled"{% endif %} {% if wizard.form.volume_type.data == cid %}checked="checked"{% else %}{% if not wizard.form.volume_type.data and wizard.form.volume_type.field.initial == cid %}checked="checked"{% endif %}{% endif %}/> {{ clabel }}
         {% endfor %}</li>
         </ul>
     </fieldset>
