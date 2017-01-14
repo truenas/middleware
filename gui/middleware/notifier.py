@@ -803,14 +803,6 @@ class notifier:
         altroot = 'none' if path else '/mnt'
         mountpoint = path if path else ('/%s' % (z_name, ))
 
-        larger_ashift = 0
-        try:
-            larger_ashift = int(self.sysctl("vfs.zfs.vdev.larger_ashift_minimal"))
-        except AssertionError:
-            pass
-        if larger_ashift == 0:
-            self._system("/sbin/sysctl vfs.zfs.vdev.larger_ashift_minimal=1")
-
         p1 = self._pipeopen(
             "zpool create -o cachefile=/data/zfs/zpool.cache "
             "-o failmode=continue "
@@ -821,10 +813,6 @@ class notifier:
         if p1.wait() != 0:
             error = ", ".join(p1.communicate()[1].split('\n'))
             raise MiddlewareError('Unable to create the pool: %s' % error)
-
-        # Restore previous larger ashift state.
-        if larger_ashift == 0:
-            self._system("/sbin/sysctl vfs.zfs.vdev.larger_ashift_minimal=0")
 
         # We've our pool, lets retrieve the GUID
         p1 = self._pipeopen("zpool get guid %s" % z_name)
@@ -868,20 +856,8 @@ class notifier:
         vdevs = self.__prepare_zfs_vdev(group['disks'], swapsize, encrypt, volume)
         z_vdev += " ".join([''] + vdevs)
 
-        larger_ashift = 0
-        try:
-            larger_ashift = int(self.sysctl("vfs.zfs.vdev.larger_ashift_minimal"))
-        except AssertionError:
-            pass
-        if larger_ashift == 0:
-            self._system("/sbin/sysctl vfs.zfs.vdev.larger_ashift_minimal=1")
-
         # Finally, attach new groups to the zpool.
         self._system("zpool add -f %s %s" % (z_name, z_vdev))
-
-        # Restore previous larger ashift state.
-        if larger_ashift == 0:
-            self._system("/sbin/sysctl vfs.zfs.vdev.larger_ashift_minimal=0")
 
         # TODO: geli detach -l
         self.reload('disk')
@@ -1124,20 +1100,6 @@ class notifier:
                     EncryptedDisk.objects.filter(encrypted_volume=volume, encrypted_disk=from_diskobj[0]).delete()
                 devname = self.__encrypt_device("gptid/%s" % uuid[0].text, to_disk, volume, passphrase=passphrase)
 
-        use_ashift = 0
-        try:
-            if zfs.zfs_ashift_from_label(str(volume.vol_name), from_label) == 12:
-                use_ashift = 1
-        except:
-            log.warn('Failed to get ashift', exc_info=True)
-        larger_ashift = 1
-        try:
-            larger_ashift = int(self.sysctl("vfs.zfs.vdev.larger_ashift_minimal"))
-        except AssertionError:
-            pass
-        if larger_ashift != use_ashift:
-            self._system("/sbin/sysctl vfs.zfs.vdev.larger_ashift_minimal={}".format(use_ashift))
-
         if force:
             try:
                 self.disk_wipe(devname.replace('/dev/', ''), mode='quick')
@@ -1164,10 +1126,6 @@ class notifier:
             if encrypt:
                 self._system('/sbin/geli detach %s' % (devname, ))
             raise MiddlewareError('Disk replacement failed: "%s"' % error)
-
-        # Restore previous larger ashift state.
-        if larger_ashift != use_ashift:
-            self._system("/sbin/sysctl vfs.zfs.vdev.larger_ashift_minimal={}".format(larger_ashift))
 
         if to_swap:
             self._system('/sbin/geli onetime /dev/%s' % (to_swap))
