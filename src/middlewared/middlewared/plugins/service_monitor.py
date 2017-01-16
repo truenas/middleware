@@ -103,6 +103,9 @@ class ServiceMonitor(object):
         elif self.counter <= 0:
             self.logger.debug("[ServiceMonitoring] We reached the maximum number of attempts to recover service %s, we won't try again" % (self.service_name))
             self.destroyServiceThread(self.service_name)
+            file_error = '/tmp/.' + self.service_name + '.service_monitor'
+            with open(file_error, 'w') as _file:
+                _file.write("We reached the maximum number of %d attempts to recover service %s, we won't try again\n" % (self.retry, self.service_name))
 
     def start(self):
         """Start a thread."""
