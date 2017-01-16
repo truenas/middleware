@@ -626,6 +626,14 @@ class ActiveDirectoryForm(ModelForm):
 
     def save(self):
         enable = self.cleaned_data.get("ad_enable")
+        enable_monitoring = self.cleaned_data.get("ad_enable_monitor")
+        monit_frequency = self.cleaned_data.get("ad_monitor_frequency")
+        monit_retry = self.cleaned_data.get("ad_recover_retry")
+        fqdn = self.cleaned_data.get("ad_domainname")
+        if enable_monitoring:
+            notifier().enable_service_monitoring(monit_frequency, monit_retry, fqdn, 'activedirectory')
+        else:
+            notifier().disable_service_monitoring(monit_frequency, monit_retry, fqdn, 'activedirectory')
         if self.__original_changed():
             notifier().clear_activedirectory_config()
 
