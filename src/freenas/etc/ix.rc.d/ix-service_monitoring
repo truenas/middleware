@@ -1,0 +1,28 @@
+#!/bin/sh
+#
+# $FreeBSD$
+#
+
+# PROVIDE: ix-service_monitoring
+# REQUIRE: LOGIN
+
+. /etc/rc.freenas
+
+start()
+{
+	echo "Starting service monitoring."
+	/usr/local/libexec/nas/service_monitor.py start
+}
+
+stop()
+{
+	echo "Stopping service monitoring."
+	/usr/local/libexec/nas/service_monitor.py stop 
+}
+
+name="ix-service_monitoring"
+start_cmd='start'
+stop_cmd='stop'
+            
+load_rc_config $name
+run_rc_command "$1"
