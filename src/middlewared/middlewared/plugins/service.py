@@ -1,7 +1,6 @@
 import gevent
 import os
 import signal
-import socket
 import threading
 import time
 from subprocess import PIPE
