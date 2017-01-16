@@ -630,10 +630,6 @@ class ActiveDirectoryForm(ModelForm):
         monit_frequency = self.cleaned_data.get("ad_monitor_frequency")
         monit_retry = self.cleaned_data.get("ad_recover_retry")
         fqdn = self.cleaned_data.get("ad_domainname")
-        if enable_monitoring:
-            notifier().enable_service_monitoring(monit_frequency, monit_retry, fqdn, 'activedirectory')
-        else:
-            notifier().disable_service_monitoring(monit_frequency, monit_retry, fqdn, 'activedirectory')
         if self.__original_changed():
             notifier().clear_activedirectory_config()
 
@@ -651,6 +647,11 @@ class ActiveDirectoryForm(ModelForm):
         self.cifs.cifs_srv_netbiosalias = self.cleaned_data.get("ad_netbiosalias")
         self.cifs.save()
 
+        if enable_monitoring and enable:
+            notifier().enable_service_monitoring(monit_frequency, monit_retry, fqdn, 'activedirectory')
+        else:
+            notifier().disable_service_monitoring(monit_frequency, monit_retry, fqdn, 'activedirectory')
+
         if enable:
             if started is True:
                 started = notifier().restart("activedirectory")
@@ -666,6 +667,7 @@ class ActiveDirectoryForm(ModelForm):
         else:
             if started is True:
                 started = notifier().stop("activedirectory")
+
         return obj
 
 
