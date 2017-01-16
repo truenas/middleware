@@ -1,5 +1,5 @@
---- src/cputemp.c.orig	2016-02-08 14:46:20.889059587 +0100
-+++ src/cputemp.c	2016-02-08 14:46:08.184486113 +0100
+--- src/cputemp.c.orig	2016-05-22 07:58:08 UTC
++++ src/cputemp.c
 @@ -0,0 +1,97 @@
 +//+
 +// Copyright 2016 iXsystems, Inc.
