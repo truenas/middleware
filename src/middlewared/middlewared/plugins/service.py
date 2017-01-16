@@ -922,6 +922,7 @@ class ServiceService(Service):
                 service_name (str): Same name used to start/stop/restart method.
 
         """
+        self.logger.debug("[ServiceMonitoring] Add %s service, frequency: %d, retry: %d" % (service_name, frequency, retry))
         t = ServiceMonitor(frequency, retry, fqdn, service_port, service_name)
         t.createServiceThread()
         t.start()
@@ -939,5 +940,6 @@ class ServiceService(Service):
                 service_name (str): Same name used to start/stop/restart method.
 
         """
+        self.logger.debug("[ServiceMonitoring] Remove %s service, frequency: %d, retry: %d" % (service_name, frequency, retry))
         t = ServiceMonitor(frequency, retry, fqdn, service_port, service_name)
         t.destroyServiceThread(service_name)
