@@ -5,6 +5,7 @@ from freenasUI.middleware.client import client
 
 CURRENT_MONITOR_THREAD = {}
 
+
 class ServiceMonitor(object):
     """Main-Class for service monitoring."""
 
@@ -100,7 +101,7 @@ class ServiceMonitor(object):
             CURRENT_MONITOR_THREAD[self.thread.name] = self.thread
             self.thread.start()
         elif self.counter <= 0:
-            self.logger.debug("[ServiceMonitoring] We reached the maximum number of attempts to recover service %s, we won't try again" % (service_name))
+            self.logger.debug("[ServiceMonitoring] We reached the maximum number of attempts to recover service %s, we won't try again" % (self.service_name))
             self.destroyServiceThread(self.service_name)
 
     def start(self):
