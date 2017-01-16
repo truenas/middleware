@@ -17,4 +17,5 @@ class ServiceMonitor(BaseAlert):
 
         return alerts
 
+
 alertPlugins.register(ServiceMonitor)
