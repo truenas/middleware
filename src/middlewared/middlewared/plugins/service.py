@@ -1,6 +1,7 @@
 import gevent
 import os
 import signal
+import socket
 import threading
 import time
 from subprocess import PIPE
@@ -8,6 +9,7 @@ from subprocess import PIPE
 from middlewared.schema import accepts, Bool, Dict, Int, Str
 from middlewared.service import filterable, Service
 from middlewared.utils import Popen, filter_list
+from middlewared.plugins.service_monitor import ServiceMonitor
 
 
 class StartNotify(threading.Thread):
@@ -909,3 +911,34 @@ class ServiceService(Service):
         self.restart("cifs", kwargs)
         if systemdataset['sys_rrd_usedataset']:
             self.restart("collectd", kwargs)
+
+    def enable_test_service_connection(self, frequency, retry, fqdn, service_port, service_name):
+        """Enable service monitoring.
+
+        Args:
+                frequency (int): How often we will check the connection.
+                retry (int): How many times we will try to restart the service.
+                fqdn (str): The hostname and domainname where we will try to connect.
+                service_port (int): The service port number.
+                service_name (str): Same name used to start/stop/restart method.
+
+        """
+        t = ServiceMonitor(frequency, retry, fqdn, service_port, service_name)
+        t.createServiceThread()
+        t.start()
+
+    def disable_test_service_connection(self, frequency, retry, fqdn, service_port, service_name):
+        """Disable service monitoring.
+
+        XXX: This method will be simplified.
+
+        Args:
+                frequency (int): How often we will check the connection.
+                retry (int): How many times we will try to restart the service.
+                fqdn (str): The hostname and domainname where we will try to connect.
+                service_port (int): The service port number.
+                service_name (str): Same name used to start/stop/restart method.
+
+        """
+        t = ServiceMonitor(frequency, retry, fqdn, service_port, service_name)
+        t.destroyServiceThread(service_name)
