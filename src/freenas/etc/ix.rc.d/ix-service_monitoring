@@ -11,6 +11,7 @@
 start()
 {
 	echo "Starting service monitoring."
+	rm -f /tmp/.*service_monitor
 	/usr/local/libexec/nas/service_monitor.py start
 }
 
