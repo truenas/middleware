@@ -35,7 +35,7 @@ class ServiceMonitor(object):
             self.connected = True
         except Exception as error:
             self.connected = False
-            self.logger.debug("[ServiceMonitoring] Cannot connect: %s:%d" % (fqdn, service_port))
+            self.logger.debug("[ServiceMonitoring] Cannot connect: %s:%d with error: %s" % (fqdn, service_port, error))
             with client as c:
                 return c.call('service.restart', service_name, {'onetime': True})
         finally:
