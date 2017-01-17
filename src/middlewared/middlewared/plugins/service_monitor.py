@@ -1,4 +1,5 @@
 import socket
+import random
 import threading
 import middlewared.logger
 from freenasUI.middleware.client import client
@@ -33,8 +34,8 @@ class ServiceMonitor(object):
             bind.connect((fqdn, service_port))
             self.connected = True
         except Exception as error:
-            self.logger.debug("[ServiceMonitoring] Cannot connect: %s:%d with error: %s" % (fqdn, service_port, error))
             self.connected = False
+            self.logger.debug("[ServiceMonitoring] Cannot connect: %s:%d" % (fqdn, service_port))
             with client as c:
                 return c.call('service.restart', service_name, {'onetime': True})
         finally:
@@ -89,6 +90,10 @@ class ServiceMonitor(object):
 
         if self.connected is False:
             self.counter -= 1
+            _random = str(random.randint(1, 1000))
+            file_error = '/tmp/.' + _random + self.service_name + '.service_monitor'
+            with open(file_error, 'w') as _file:
+                _file.write("We tried %d attempts to recover service %s\n" % (self.retry - self.counter, self.service_name))
         else:
             self.counter = self.retry
 
