@@ -1,0 +1,111 @@
+'\" t
+.\"     Title: ldbedit
+.\"    Author: [see the "AUTHOR" section]
+.\" Generator: DocBook XSL Stylesheets v1.76.1 <http://docbook.sf.net/>
+.\"      Date: 01/29/2013
+.\"    Manual: System Administration tools
+.\"    Source: LDB 1.1
+.\"  Language: English
+.\"
+.TH "LDBEDIT" "1" "01/29/2013" "LDB 1\&.1" "System Administration tools"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+ldbedit \- Edit LDB databases using your preferred editor
+.SH "SYNOPSIS"
+.HP \w'\fBldbedit\fR\ 'u
+\fBldbedit\fR [\-?] [\-\-usage] [\-s\ base|one|sub] [\-b\ basedn] [\-a] [\-e\ editor] [\-H\ LDB\-URL] [expression] [attributes...]
+.SH "DESCRIPTION"
+.PP
+ldbedit is a utility that allows you to edit LDB entries (in tdb files, sqlite files or LDAP servers) using your preferred editor\&. ldbedit generates an LDIF file based on your query, allows you to edit the LDIF, and then merges that LDIF back into the LDB backend\&.
+.SH "OPTIONS"
+.PP
+\-?, \-\-help
+.RS 4
+Show list of available options, and a phrase describing what that option does\&.
+.RE
+.PP
+\-\-usage
+.RS 4
+Show list of available options\&. This is similar to the help option, however it does not provide any description, and is hence shorter\&.
+.RE
+.PP
+\-H <ldb\-url>
+.RS 4
+LDB URL to connect to\&. For a tdb database, this will be of the form tdb://\fIfilename\fR\&. For a LDAP connection over unix domain sockets, this will be of the form ldapi://\fIsocket\fR\&. For a (potentially remote) LDAP connection over TCP, this will be of the form ldap://\fIhostname\fR\&. For an SQLite database, this will be of the form sqlite://\fIfilename\fR\&.
+.RE
+.PP
+\-s one|sub|base
+.RS 4
+Search scope to use\&. One\-level, subtree or base\&.
+.RE
+.PP
+\-a, \-all
+.RS 4
+Edit all records\&. This allows you to apply the same change to a number of records at once\&. You probably want to combine this with an expression of the form "objectclass=*"\&.
+.RE
+.PP
+\-e editor, \-\-editor editor
+.RS 4
+Specify the editor that should be used (overrides the VISUAL and EDITOR environment variables)\&. If this option is not used, and neither VISUAL nor EDITOR environment variables are set, then the vi editor will be used\&.
+.RE
+.PP
+\-b basedn
+.RS 4
+Specify Base Distinguished Name to use\&.
+.RE
+.PP
+\-v, \-\-verbose
+.RS 4
+Make ldbedit more verbose about the operations that are being performed\&. Without this option, ldbedit will only provide a summary change line\&.
+.RE
+.SH "ENVIRONMENT"
+.PP
+LDB_URL
+.RS 4
+LDB URL to connect to\&. This can be overridden by using the \-H command\-line option\&.)
+.RE
+.PP
+VISUAL and EDITOR
+.RS 4
+Environment variables used to determine what editor to use\&. VISUAL takes precedence over EDITOR, and both are overridden by the \-e command\-line option\&.
+.RE
+.SH "VERSION"
+.PP
+This man page is correct for version 1\&.1 of LDB\&.
+.SH "SEE ALSO"
+.PP
+ldb(3), ldbmodify(1), ldbdel(1), ldif(5), vi(1)
+.SH "AUTHOR"
+.PP
+ldb was written by
+\m[blue]\fBAndrew Tridgell\fR\m[]\&\s-2\u[1]\d\s+2\&.
+.PP
+If you wish to report a problem or make a suggestion then please see the
+\m[blue]\fB\%http://ldb.samba.org/\fR\m[]
+web site for current contact and maintainer information\&.
+.PP
+This manpage was written by Jelmer Vernooij and updated by Brad Hards\&.
+.SH "NOTES"
+.IP " 1." 4
+Andrew Tridgell
+.RS 4
+\%http://samba.org/~tridge/
+.RE
