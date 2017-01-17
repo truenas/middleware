@@ -14,6 +14,7 @@ class ServiceMonitor(BaseAlert):
                 with open(full_path, 'r') as _file:
                     for alert_line in _file:
                         alerts.append(Alert(Alert.WARN, alert_line))
+                os.remove(full_path)
 
         return alerts
 
