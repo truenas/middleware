@@ -1,0 +1,133 @@
+'\" t
+.\"     Title: gentest
+.\"    Author: [see the "AUTHOR" section]
+.\" Generator: DocBook XSL Stylesheets v1.76.1 <http://docbook.sf.net/>
+.\"      Date: 03/26/2015
+.\"    Manual: Test Suite
+.\"    Source: Samba 4.0
+.\"  Language: English
+.\"
+.TH "GENTEST" "1" "03/26/2015" "Samba 4\&.0" "Test Suite"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+gentest \- Run random generic SMB operations against two SMB servers and show the differences in behavior
+.SH "SYNOPSIS"
+.HP \w'\fBgentest\fR\ 'u
+\fBgentest\fR {//server1/share1} {//server2/share2} {\-U\ user%pass} {\-U\ user%pass} [\-s\ seed] [\-o\ numops] [\-a] [\-A] [\-i\ FILE] [\-O] [\-S\ FILE] [\-L] [\-F] [\-C] [\-X]
+.SH "DESCRIPTION"
+.PP
+gentest
+is a utility for detecting differences in behaviour between SMB servers\&. It will run a random set of generic operations against
+\fI//server1/share1\fR
+and then the same random set against
+\fI//server2/share2\fR
+and display the differences in the responses it gets\&.
+.PP
+This utility is used by the Samba team to find differences in behaviour between Samba and Windows servers\&.
+.SH "OPTIONS"
+.PP
+\-U user%pass
+.RS 4
+Specify the user and password to use when logging on on the shares\&. This parameter is mandatory and has to be specified twice\&.
+.RE
+.PP
+\-s seed
+.RS 4
+Seed the random number generator with the specified value\&.
+.RE
+.PP
+\-o numops
+.RS 4
+Set the number of operations to perform\&.
+.RE
+.PP
+\-a
+.RS 4
+Print the operations that are performed\&.
+.RE
+.PP
+\-A
+.RS 4
+Backtrack to find minimal number of operations required to make the response to a certain call differ\&.
+.RE
+.PP
+\-i FILE
+.RS 4
+Specify a file containing the names of fields that have to be ignored (such as time fields)\&. See below for a description of the file format\&.
+.RE
+.PP
+\-O
+.RS 4
+Enable oplocks\&.
+.RE
+.PP
+\-S FILE
+.RS 4
+Set preset seeds file\&. The default is
+gentest_seeds\&.dat\&.
+.RE
+.PP
+\-L
+.RS 4
+Use preset seeds
+.RE
+.PP
+\-F
+.RS 4
+Fast reconnect (just close files)
+.RE
+.PP
+\-C
+.RS 4
+Continuous analysis mode
+.RE
+.PP
+\-X
+.RS 4
+Analyse even when the test succeeded\&.
+.RE
+.SH "VERSION"
+.PP
+This man page is correct for version 4\&.0 of the Samba suite\&.
+.SH "SEE ALSO"
+.PP
+Samba
+.SH "AUTHOR"
+.PP
+This utility is part of the
+\m[blue]\fBSamba\fR\m[]\&\s-2\u[1]\d\s+2
+suite, which is developed by the global
+\m[blue]\fBSamba Team\fR\m[]\&\s-2\u[2]\d\s+2\&.
+.PP
+gentest was written by Andrew Tridgell\&.
+.PP
+This manpage was written by Jelmer Vernooij\&.
+.SH "NOTES"
+.IP " 1." 4
+Samba
+.RS 4
+\%http://www.samba.org/
+.RE
+.IP " 2." 4
+Samba Team
+.RS 4
+\%http://www.samba.org/samba/team/
+.RE

@@ -1,0 +1,11 @@
+--- ./wscript.orig	2013-01-27 11:51:43.000000000 +0000
++++ ./wscript	2013-01-29 23:01:21.749877676 +0000
+@@ -106,7 +106,7 @@
+ 
+     if not 'PACKAGE_VERSION' in bld.env:
+         bld.env.PACKAGE_VERSION = VERSION
+-        bld.env.PKGCONFIGDIR = '${LIBDIR}/pkgconfig'
++        bld.env.PKGCONFIGDIR = '%%PKGCONFIGDIR%%'
+ 
+     if not bld.CONFIG_SET('USING_SYSTEM_PYLDB_UTIL'):
+         bld.SAMBA_LIBRARY('pyldb-util',
