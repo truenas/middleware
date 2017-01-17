@@ -1,0 +1,8 @@
+tevent is a simple library that can handle the main event loop for an
+application. It supports three kinds of events: timed events, file
+descriptors becoming readable or writable and signals.
+
+Talloc is used for memory management, both internally and for private
+data provided by users of the library.
+
+WWW: http://www.samba.org/
