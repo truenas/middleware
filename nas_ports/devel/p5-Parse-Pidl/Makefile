@@ -17,7 +17,7 @@ RUN_DEPENDS:=		${BUILD_DEPENDS}
 
 CONFLICTS=
 
-SAMBA4_PORT?=		samba44
+SAMBA4_PORT?=		samba45
 SAMBA4_SUBPORT=		yes
 
 MASTERDIR=		${.CURDIR}/../../net/${SAMBA4_PORT}
@@ -34,4 +34,4 @@ post-extract:
 
 # Ugly hack
 WRKSRC=			/usr/samba_src/pidl
-DISTNAME=		${SAMBA4_BASENAME}-4-3-stable
+DISTNAME=		${SAMBA4_BASENAME}-4-5-stable
