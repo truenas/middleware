@@ -664,9 +664,9 @@ class ActiveDirectoryForm(ModelForm):
                 started = notifier().stop("activedirectory")
 
         if enable_monitoring and enable:
-            notifier().enable_service_monitoring(monit_frequency, monit_retry, fqdn, 'activedirectory')
+            notifier().enable_service_monitoring(monit_frequency, monit_retry, fqdn, 3268, 'activedirectory')
         else:
-            notifier().disable_service_monitoring(monit_frequency, monit_retry, fqdn, 'activedirectory')
+            notifier().disable_service_monitoring(monit_frequency, monit_retry, fqdn, 3268, 'activedirectory')
 
         return obj
 
