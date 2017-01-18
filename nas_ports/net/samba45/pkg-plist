@@ -690,6 +690,7 @@ libexec/ctdb/tests/pkt_write_test
 libexec/ctdb/tests/porting_tests
 libexec/ctdb/tests/protocol_client_test
 libexec/ctdb/tests/protocol_types_test
+libexec/ctdb/tests/protocol_util_test
 libexec/ctdb/tests/rb_test
 libexec/ctdb/tests/reqid_test
 libexec/ctdb/tests/srvid_test
