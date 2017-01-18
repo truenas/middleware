@@ -51,8 +51,6 @@ class ServiceMonitor(object):
 
         self.thread = threading.Timer(self.frequency, self.func_handler)
         self.thread.name = self.service_name
-        self.thread.fqdn = self.fqdn
-        self.thread.frequency = self.frequency
         self.thread.setDaemon(False)
         CURRENT_MONITOR_THREAD[self.thread.name] = self.thread
 
@@ -65,9 +63,9 @@ class ServiceMonitor(object):
         Returns:
                     bool: True if it is already running or False otherwise.
         """
-        for _name in CURRENT_MONITOR_THREAD.keys():
-            if _name == service_name:
-                return True
+        current_thread = CURRENT_MONITOR_THREAD.get(service_name)
+        if current_thread:
+            return True
         return False
 
     def destroyServiceThread(self, service_name):
@@ -77,17 +75,15 @@ class ServiceMonitor(object):
         Args:
                     service_name (str): Same name used to start/stop/restart method.
         """
-        for _name in CURRENT_MONITOR_THREAD.keys():
-            if _name == service_name:
-                current_thread = CURRENT_MONITOR_THREAD[_name]
+        current_thread = CURRENT_MONITOR_THREAD.get(service_name)
+        if current_thread:
                 current_thread.cancel()
-                del CURRENT_MONITOR_THREAD[_name]
+                del CURRENT_MONITOR_THREAD[service_name]
 
     def func_handler(self):
         """This is a recursive method where will launch a thread with timer
         calling another method.
         """
-
         if self.connected is False:
             self.counter -= 1
             _random = str(random.randint(1, 1000))
@@ -100,10 +96,7 @@ class ServiceMonitor(object):
         if self.isThreadExist(self.service_name) and self.counter > 0:
             self.destroyServiceThread(self.service_name)
             self.func_call(self.fqdn, self.service_port, self.service_name)
-            self.thread = threading.Timer(self.frequency, self.func_handler)
-            self.thread.name = self.service_name
-            self.thread.setDaemon(False)
-            CURRENT_MONITOR_THREAD[self.thread.name] = self.thread
+            self.createServiceThread()
             self.thread.start()
         elif self.counter <= 0:
             self.logger.debug("[ServiceMonitoring] We reached the maximum number of attempts to recover service %s, we won't try again" % (self.service_name))
@@ -111,6 +104,7 @@ class ServiceMonitor(object):
             file_error = '/tmp/.' + self.service_name + '.service_monitor'
             with open(file_error, 'w') as _file:
                 _file.write("We reached the maximum number of %d attempts to recover service %s, we won't try again\n" % (self.retry, self.service_name))
+
 
     def start(self):
         """Start a thread."""
