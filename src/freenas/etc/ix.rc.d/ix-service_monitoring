@@ -5,7 +5,6 @@
 
 # PROVIDE: ix-service_monitoring
 # REQUIRE: LOGIN
-# BEFORE: ix-ataidle
 
 . /etc/rc.freenas
 
