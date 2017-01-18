@@ -229,6 +229,9 @@ libexec/ctdb/smnotify
 %%PYTHON_SITELIBDIR%%/samba/common.py
 %%PYTHON_SITELIBDIR%%/samba/credentials.so
 %%PYTHON_SITELIBDIR%%/samba/dbchecker.py
+%%PYTHON_SITELIBDIR%%/samba/dsdb_dns.so
+%%PYTHON_SITELIBDIR%%/samba/remove_dc.py
+%%PYTHON_SITELIBDIR%%/samba/subnets.py
 %%PYTHON_SITELIBDIR%%/samba/dcerpc/__init__.py
 %%PYTHON_SITELIBDIR%%/samba/dcerpc/atsvc.so
 %%PYTHON_SITELIBDIR%%/samba/dcerpc/auth.so
