@@ -1,0 +1,5 @@
+tabletext is a Python library to format (pretty-print) tabular data as 
+text tables. Its goal is to be as simple as possible, while allowing
+optional customization of the output.
+
+WWW: https://pypi.python.org/pypi/tabletext
