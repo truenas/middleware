@@ -369,12 +369,12 @@ class notifier:
         else:
             # The GPT header takes about 34KB + alignment, round it to 100
             if size - 100 <= swapgb * 1024 * 1024:
-                raise MiddlewareError('Your disk size must be higher than %dGB' % (swapgb, ))
+                raise MiddlewareError('Disk size must be larger than %dGB' % (swapgb, ))
             # HACK: force the wipe at the end of the disk to always succeed. This
             # is a lame workaround.
             self._system("dd if=/dev/zero of=/dev/%s bs=1m oseek=%s" % (
                 devname,
-                size / 1024 - 32,
+                (size / 1048576) - 32,
             ))
 
         commands = []
