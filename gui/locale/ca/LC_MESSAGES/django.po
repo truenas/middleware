@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:05-0700\n"
-"PO-Revision-Date: 2017-01-09 17:52+0000\n"
+"PO-Revision-Date: 2017-01-20 13:50+0000\n"
 "Last-Translator: Davidmp <rbndavid@gmail.com>\n"
 "Language-Team: Catalan "
 "<http://weblate.trueos.org/projects/freenas/django/ca/>\n"
@@ -722,9 +722,8 @@ msgid "Account"
 msgstr "Compte"
 
 #: account/nav.py:13 templates/account/index.html:2
-#, fuzzy
 msgid "Admin Account"
-msgstr "Compte"
+msgstr "Compte d'administració"
 
 #~ msgid "Change Password"
 #~ msgstr "Canviar Contrasenya"
@@ -1053,9 +1052,8 @@ msgid "Alias"
 msgstr "Alias"
 
 #: network/models.py:254
-#, fuzzy
 msgid "Aliases"
-msgstr "Alias"
+msgstr "Àlies"
 
 #: network/models.py:265 templates/network/lagg.html:5
 #: templates/network/vlan.html:4
@@ -1298,7 +1296,7 @@ msgstr "Connectors"
 
 #: plugins/models.py:112 templates/plugins/mountpoints.html:4
 msgid "Source"
-msgstr ""
+msgstr "Font"
 
 #: plugins/models.py:117 templates/network/staticroute.html:5
 #: templates/plugins/mountpoints.html:5
@@ -1474,9 +1472,8 @@ msgid "The UPS service failed to reload."
 msgstr "El servei UPS ha fallat la recàrrega."
 
 #: services/forms.py:442
-#, fuzzy
 msgid "Confirm Administrator Password"
-msgstr "Contrasenya de l'Administrador"
+msgstr "Confirmeu la contrasenya de l'administrador"
 
 #: services/forms.py:479
 msgid "The activedirectory service failed to reload."
@@ -1900,7 +1897,6 @@ msgstr ""
 "màquina."
 
 #: services/models.py:219
-#, fuzzy
 msgid "Max. Connections"
 msgstr "Connexions màximes"
 
@@ -2071,9 +2067,8 @@ msgid "Logical Unit Controller TCP port (3261 by default)"
 msgstr "Port TCP de la Unitat Lògica del Controller (LUC) (Per defecte 3261)"
 
 #: services/models.py:358
-#, fuzzy
 msgid "Controller Authorized Network"
-msgstr "Màscara autoritzada del Controller"
+msgstr "Xarxa autoritzada del controlador"
 
 #: services/models.py:360
 #, fuzzy
