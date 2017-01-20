@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:05-0700\n"
-"PO-Revision-Date: 2016-12-27 11:09+0000\n"
+"PO-Revision-Date: 2017-01-20 12:07+0000\n"
 "Last-Translator: Burak <hitowerdigit@hotmail.com>\n"
 "Language-Team: Turkish "
 "<http://weblate.trueos.org/projects/freenas/django/tr/>\n"
@@ -10867,7 +10867,7 @@ msgstr "CSR başarılı olarak düzenlendi."
 
 #: templates/freeadmin/generic_model_delete.html:31
 msgid "Are you sure you want to delete %(verbose_name)s %(object)s?"
-msgstr "%(verbose_name)s %(object)s silmek istediğinize emin misiniz?"
+msgstr "%(verbose_name)s %(object)s öğesini silmek istediğinize emin misiniz?"
 
 #: templates/services/core.html:170
 msgid "WebDAV Settings"
@@ -10922,7 +10922,7 @@ msgstr "Sertifika İmzalama İsteği Oluştur"
 
 #: templates/system/bootenv_delete.html:4
 msgid "Are you sure you want to delete %(name)s?"
-msgstr "%(name)s silmek istediğinize emin misiniz?"
+msgstr "%(name)s öğesini silmek istediğinize emin misiniz?"
 
 #: templates/system/bootenv_datagrid.html:9
 msgid "Create Boot"
