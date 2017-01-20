@@ -666,8 +666,15 @@ def reboot_run(request):
     # UI dont think we have rebooted while we have not.
     # This could happen if reboot takes too long to shutdown services.
     # See #19458
-    notifier().stop("nginx")
-    notifier().restart("system")
+    # IMPORTANT: do not sync this change stopping the nginx service if
+    # we are running on a TrueNAS HA system since that stops the nginx
+    # on the soon-to-be master node too! see #20384
+    _n = notifier()
+    if not _n.is_freenas() and _n.failover_licensed():
+        _n.stop("nginx", sync=False)
+    else:
+        _n.stop("nginx")
+    _n.restart("system")
     return HttpResponse('OK')
 
 
