@@ -1070,7 +1070,7 @@ def generate_smb4_shares(client, smb4_shares):
             confset2(smb4_shares, "comment = %s",
                      share.cifs_comment.encode('utf8'))
         confset1(smb4_shares, "printable = no")
-        confset1(smb4_shares, "veto files = /.snapshot/.windows/.mac/.zfs/")
+        confset1(smb4_shares, "veto files = /.snapshot/.windows/.mac/.zfs/.stfolder/.stignore")
         confset2(smb4_shares, "writeable = %s",
                  "no" if share.cifs_ro else "yes")
         confset2(smb4_shares, "browseable = %s",
