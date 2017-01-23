@@ -675,27 +675,14 @@ class NISForm(ModelForm):
     def save(self):
         enable = self.cleaned_data.get("nis_enable")
 
-        # XXX: We need to have a method to test server connection.
-        try:
-            started = notifier().started("nis")
-        except:
-            raise ServiceFailed("nis", _("Failed to check NIS status."))
-        finally:
-            super(NISForm, self).save()
+        started = notifier().started("nis")
+        super(NISForm, self).save()
 
         if enable:
             if started is True:
-                try:
-                    started = notifier().restart("nis")
-                    log.debug("Try to restart: %s", started)
-                except:
-                    raise ServiceFailed("nis", _("NIS failed to restart."))
+                started = notifier().restart("nis")
             if started is False:
-                try:
-                    started = notifier().start("nis")
-                    log.debug("Try to start: %s", started)
-                except:
-                    raise ServiceFailed("nis", _("NIS failed to start."))
+                started = notifier().start("nis")
             if started is False:
                 self.instance.ad_enable = False
                 super(NISForm, self).save()
