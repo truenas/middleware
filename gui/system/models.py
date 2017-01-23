@@ -353,6 +353,11 @@ class Advanced(Model):
         default=False,
     )
 
+    adv_ixalert = models.BooleanField(
+        verbose_name=_("Enable automatic support alerts to iXsystems"),
+        default=True,
+    )
+
     class Meta:
         verbose_name = _("Advanced")
 
