@@ -206,17 +206,31 @@ class BootEnvRenameForm(Form):
         self._name = kwargs.pop('name')
         super(BootEnvRenameForm, self).__init__(*args, **kwargs)
 
+    def is_duplicated_name(self, name):
+        beadm_names = subprocess.Popen("beadm list | awk '{print $7}'",
+                                       shell=True, stdout=subprocess.PIPE,
+                                       stderr=subprocess.PIPE).communicate()[0].split('\n')
+        beadm_names = filter(None, beadm_names)
+        if name in beadm_names:
+            return True
+        else:
+            return False
+
     def clean_name(self):
         name = self.cleaned_data.get('name')
         bad_chars = "/ *'\"?@"
         if any(elem in name for elem in bad_chars):
             raise forms.ValidationError(_('Name does not allow spaces and the following characters: /*\'"?@'))
-        return name
+        else:
+            if self.is_duplicated_name(name):
+                raise forms.ValidationError(_('The name %s already exist.') % (name))
+            return name
 
     def save(self, *args, **kwargs):
+        new_name = self.cleaned_data.get('name')
         rename = Update.RenameClone(
             self._name,
-            self.cleaned_data.get('name'),
+            new_name,
         )
         if rename is False:
             raise MiddlewareError(_('Failed to rename Boot Environment.'))
