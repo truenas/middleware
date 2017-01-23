@@ -5,6 +5,7 @@
 
 # PROVIDE: ix-service_monitoring
 # REQUIRE: LOGIN
+# BEFORE: automount
 
 . /etc/rc.freenas
 
