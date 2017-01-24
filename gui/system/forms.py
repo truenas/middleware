@@ -1162,6 +1162,7 @@ class AdvancedForm(ModelForm):
         self.instance._original_adv_fqdn_syslog = self.instance.adv_fqdn_syslog
         if notifier().is_freenas():
             del self.fields['adv_ixalert']
+            del self.fields['adv_ixfailsafe_email']
 
     def save(self):
         super(AdvancedForm, self).save()
