@@ -353,6 +353,14 @@ class Advanced(Model):
         verbose_name=_("Enable automatic support alerts to iXsystems"),
         default=True,
     )
+    adv_ixfailsafe_email = models.EmailField(
+        verbose_name=_('Failsafe Support Contact'),
+        help_text=_(
+            'Additional email address for iXsystems support to contact in case'
+            ' of failure.'
+        ),
+        blank=True,
+    )
 
     class Meta:
         verbose_name = _("Advanced")
