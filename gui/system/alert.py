@@ -211,6 +211,10 @@ class AlertPlugins:
         else:
             company = 'Unknown'
 
+        adv = Advanced.objects.order_by('-id')[0]
+        if adv.adv_ixfailsafe_email:
+            msgs += ['', 'Failsafe Support Contact: {}'.format(adv.adv_ixfailsafe_email)]
+
         success, msg, ticketnum = new_ticket({
             'title': 'Automatic alert (%s)' % serial,
             'body': '\n'.join(msgs),
