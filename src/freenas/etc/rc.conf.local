@@ -541,6 +541,10 @@ _gen_conf()
 		fi
 	fi
 
+	if ! is_freenas; then
+		echo "vaaiserver_enable=\"YES\""
+	fi
+
 	_count_config zfs_enable storage_volume vol_fstype =\'ZFS\'
 	_count_config fusefs_enable storage_volume vol_fstype =\'NTFS\'
 	_count_config fusefs_safe storage_volume vol_fstype =\'NTFS\'
