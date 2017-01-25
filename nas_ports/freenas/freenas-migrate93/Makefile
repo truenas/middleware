@@ -1,7 +1,7 @@
 # $FreeBSD$
 
 PORTNAME=	freenas-migrate93
-PORTVERSION=	20170124
+PORTVERSION=	20170125
 CATEGORIES=	freenas
 VALID_CATEGORIES+=	freenas
 
@@ -15,15 +15,19 @@ RUN_DEPENDS=	python>0:${PORTSDIR}/lang/python \
 
 USES=		python
 USE_GITHUB=	yes
-GH_TUPLE+=	freenas:freenas-migrate93:12eba8a \
+GH_TUPLE+=	freenas:freenas-migrate93:adc7e14 \
 		freenas:django:84e267c:django
 
 NO_BUILD=	yes
+PRODUCT?=
 
 do-install:
 	${MKDIR} ${STAGEDIR}${PREFIX}/lib/migrate93
 	cd ${WRKSRC} && ${COPYTREE_SHARE} src ${STAGEDIR}${PREFIX}/lib/migrate93/
 	cd ${WRKSRC} && ${COPYTREE_SHARE} freenasUI ${STAGEDIR}${PREFIX}/lib/migrate93/
+.if ${PRODUCT} == "TrueNAS"
+	cd /usr/truenas/south_migrations && ${COPYTREE_SHARE} "." ${STAGEDIR}${PREFIX}/lib/migrate93/freenasUI/
+.endif
 	cd ${WRKSRC_django} && ${COPYTREE_SHARE} django ${STAGEDIR}${PREFIX}/lib/migrate93/
 	${INSTALL_SCRIPT} ${WRKSRC}/sbin/migrate93 ${STAGEDIR}${PREFIX}/sbin/
 	${PYTHON_CMD} -m compileall ${STAGEDIR}${PREFIX}/lib/migrate93
