@@ -2,7 +2,7 @@
 
 PORTNAME=	freenas-migrate93
 PORTVERSION=	20170125
-PORTREVISION=	3
+PORTREVISION=	4
 CATEGORIES=	freenas
 VALID_CATEGORIES+=	freenas
 
@@ -16,7 +16,7 @@ RUN_DEPENDS=	python>0:${PORTSDIR}/lang/python \
 
 USES=		python
 USE_GITHUB=	yes
-GH_TUPLE+=	freenas:freenas-migrate93:adc7e14 \
+GH_TUPLE+=	freenas:freenas-migrate93:b02969a \
 		freenas:django:84e267c:django
 
 NO_BUILD=	yes
