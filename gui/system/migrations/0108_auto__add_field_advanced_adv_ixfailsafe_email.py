@@ -7,15 +7,15 @@ from south.v2 import SchemaMigration
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
-        # Adding field 'Advanced.adv_ixalert'
-        db.add_column(u'system_advanced', 'adv_ixalert',
-                      self.gf('django.db.models.fields.BooleanField')(default=1 if os.path.exists('/data/noticket') else 0),
+        # Adding field 'Advanced.adv_ixfailsafe_email'
+        db.add_column(u'system_advanced', 'adv_ixfailsafe_email',
+                      self.gf('django.db.models.fields.EmailField')(default=''),
                       keep_default=False)
 
 
     def backwards(self, orm):
-        # Deleting field 'Advanced.adv_ixalert'
-        db.delete_column(u'system_advanced', 'adv_ixalert')
+        # Deleting field 'Advanced.adv_ixfailsafe_email'
+        db.delete_column(u'system_advanced', 'adv_ixfailsafe_email')
 
 
     models = {
@@ -32,8 +32,8 @@ class Migration(SchemaMigration):
             'adv_debugkernel': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'adv_fqdn_syslog': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
             'adv_graphite': ('django.db.models.fields.CharField', [], {'default': "''", 'max_length': '120', 'blank': 'True'}),
-            'adv_ixalert': ('django.db.models.fields.BooleanField', [], {
-'default': 'True'}),
+            'adv_ixalert': ('django.db.models.fields.BooleanField', [], {'default': 'True'}),
+            'adv_ixfailsafe_email': ('django.db.models.fields.EmailField', [], {'default': "''"}),
             'adv_motd': ('django.db.models.fields.TextField', [], {'default': "'Welcome'", 'max_length': '1024'}),
             'adv_periodic_notifyuser': ('freenasUI.freeadmin.models.fields.UserField', [], {'default': "'root'", 'max_length': '120'}),
             'adv_powerdaemon': ('django.db.models.fields.BooleanField', [], {'default': 'False'}),
