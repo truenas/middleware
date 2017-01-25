@@ -64,7 +64,7 @@ from freenasUI.choices import NICChoices, LAGGType
 from freenasUI.common import i18n
 from freenasUI.network.models import GlobalConfiguration, Interfaces, \
 	LAGGInterface, LAGGInterfaceMembers, StaticRoute, VLAN
-from freenasUI.system.models import Settings
+from freenasUI.system.models import Advanced, Settings
 from freenasUI.middleware.notifier import notifier
 
 from requests.packages.urllib3 import poolmanager
@@ -1085,6 +1085,26 @@ def shell(*args):
     return os.system("/usr/bin/su -l root")
 
 
+def automatic_ix_alert(*args):
+    adv = Advanced.objects.order_by('-id')[0]
+    if adv.adv_ixalert:
+        text = _("enabled")
+    else:
+        text = _("disabled")
+    print _("Automatic suport alerts to iXsystems: %s") % text
+    while True:
+        if adv.adv_ixalert:
+            ret = raw_input(_("Disable (y/n): "))
+        else:
+            ret = raw_input(_("Enable (y/n): "))
+        if ret.lower().startswith("y"):
+            adv.adv_ixalert = not adv.adv_ixalert
+            adv.save()
+            return True
+        if ret.lower().startswith("n"):
+            return False
+
+
 def reboot(*args):
     while True:
         ret = raw_input(_("Confirm reboot (y/n): "))
@@ -1233,7 +1253,11 @@ def main_menu():
         [ _("Restore volume from a backup"), restore_from_backup ],
         [ _("Reboot"), reboot ],
         [ _("Shutdown"), shutdown],
-              ]
+    ]
+
+    if not notifier().is_freenas():
+        menu.insert(12, [ _("Toggle automatic support alerts to iXsystems"), automatic_ix_alert ])
+
     menu_map = {}
     menu_max = 0
     for item in menu:
