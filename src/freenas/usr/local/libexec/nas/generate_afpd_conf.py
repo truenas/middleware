@@ -1,6 +1,18 @@
 #!/usr/local/bin/python
+import netif
 from middlewared.client import Client
 from middlewared.client.utils import Struct
+
+def get_interface(ipaddress):
+    get_all_ifaces = netif.list_interfaces()
+    ifaces = []
+    for iface in get_all_ifaces.iterkeys():
+        all_ip = [a.__getstate__()['address'] for a in netif.get_interface(iface).addresses if a.af == netif.AddressFamily.INET]
+        is_ip_exist = list(set(ipaddress).intersection(all_ip))
+        if is_ip_exist:
+            ifaces.append(iface)
+
+    return ifaces
 
 
 def main():
@@ -27,6 +39,8 @@ def main():
 
     if afp.afp_srv_bindip:
         cf_contents.append("\tafp listen = %s\n" % ' '.join(afp.afp_srv_bindip))
+        ifaces = get_interface(afp.afp_srv_bindip)
+        cf_contents.append("\tafp interfaces = %s\n" % ' '.join(ifaces))
     cf_contents.append("\tmax connections = %s\n" % afp.afp_srv_connections_limit)
     cf_contents.append("\tmimic model = RackMac\n")
     if afp.afp_srv_dbpath:
