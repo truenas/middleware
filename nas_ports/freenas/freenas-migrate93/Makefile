@@ -2,7 +2,7 @@
 
 PORTNAME=	freenas-migrate93
 PORTVERSION=	20170125
-PORTREVISION=	1
+PORTREVISION=	2
 CATEGORIES=	freenas
 VALID_CATEGORIES+=	freenas
 
@@ -22,6 +22,8 @@ GH_TUPLE+=	freenas:freenas-migrate93:adc7e14 \
 NO_BUILD=	yes
 PRODUCT?=
 
+.include <bsd.port.pre.mk>
+
 do-install:
 	${MKDIR} ${STAGEDIR}${PREFIX}/lib/migrate93
 	cd ${WRKSRC} && ${COPYTREE_SHARE} src ${STAGEDIR}${PREFIX}/lib/migrate93/
@@ -37,4 +39,4 @@ do-install:
 		| ${AWK} '{print length, $$0}' | ${SORT} -rn \
 		| ${AWK} '{print "lib/migrate93/"$$2 }' >> ${TMPPLIST})
 
-.include <bsd.port.mk>
+.include <bsd.port.post.mk>
