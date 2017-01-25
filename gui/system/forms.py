@@ -1160,6 +1160,8 @@ class AdvancedForm(ModelForm):
         self.instance._original_adv_periodic_notifyuser = self.instance.adv_periodic_notifyuser
         self.instance._original_adv_graphite = self.instance.adv_graphite
         self.instance._original_adv_fqdn_syslog = self.instance.adv_fqdn_syslog
+        if notifier().is_freenas():
+            del self.fields['adv_ixalert']
 
     def save(self):
         super(AdvancedForm, self).save()
