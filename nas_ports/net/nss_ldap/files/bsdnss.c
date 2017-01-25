@@ -1,8 +1,7 @@
-#include <sys/param.h>
-#include <netinet/in.h>
-
 #include <errno.h>
 #include <stdlib.h>
+#include <sys/param.h>
+#include <netinet/in.h>
 #include <pwd.h>
 #include <grp.h>
 #include <nss.h>
@@ -40,14 +39,6 @@ extern enum nss_status _nss_ldap_gethostbyaddr_r (struct in_addr * addr, int len
 			   struct hostent * result, char *buffer,
 			   size_t buflen, int *errnop, int *h_errnop);
 
-struct __netgrent;
-extern enum nss_status _nss_ldap_netgrp_load_result(struct __netgrent *result,
-			   char **hostp, char **userp, char **domp);
-extern enum nss_status _nss_ldap_getnetgrent_r(struct __netgrent *result, char *buffer,
-			   size_t buflen, int *errnop);
-extern enum nss_status _nss_ldap_setnetgrent(char *group, struct __netgrent *result);
-extern enum nss_status _nss_ldap_endnetgrent(struct __netgrent *result);
-
 NSS_METHOD_PROTOTYPE(__nss_compat_getgrnam_r);
 NSS_METHOD_PROTOTYPE(__nss_compat_getgrgid_r);
 NSS_METHOD_PROTOTYPE(__nss_compat_getgrent_r);
@@ -64,10 +55,6 @@ NSS_METHOD_PROTOTYPE(__nss_compat_endpwent);
 NSS_METHOD_PROTOTYPE(__nss_compat_gethostbyname);
 NSS_METHOD_PROTOTYPE(__nss_compat_gethostbyname2);
 NSS_METHOD_PROTOTYPE(__nss_compat_gethostbyaddr);
-
-static NSS_METHOD_PROTOTYPE(__nss_compat_getnetgrent_r);
-static NSS_METHOD_PROTOTYPE(__nss_compat_setnetgrent);
-static NSS_METHOD_PROTOTYPE(__nss_compat_endnetgrent);
 
 static ns_mtab methods[] = {
 { NSDB_GROUP, "getgrnam_r", __nss_compat_getgrnam_r, _nss_ldap_getgrnam_r },
@@ -86,10 +73,6 @@ static ns_mtab methods[] = {
 { NSDB_HOSTS, "gethostbyname", __nss_compat_gethostbyname, _nss_ldap_gethostbyname_r },
 { NSDB_HOSTS, "gethostbyaddr", __nss_compat_gethostbyaddr, _nss_ldap_gethostbyaddr_r },
 { NSDB_HOSTS, "gethostbyname2", __nss_compat_gethostbyname2, _nss_ldap_gethostbyname2_r },
-
-{ NSDB_NETGROUP, "getnetgrent_r", __nss_compat_getnetgrent_r, _nss_ldap_getnetgrent_r },
-{ NSDB_NETGROUP, "setnetgrent", __nss_compat_setnetgrent, _nss_ldap_setnetgrent },
-{ NSDB_NETGROUP, "endnetgrent", __nss_compat_endnetgrent, _nss_ldap_endnetgrent },
 
 { NSDB_GROUP_COMPAT, "getgrnam_r", __nss_compat_getgrnam_r, _nss_ldap_getgrnam_r },
 { NSDB_GROUP_COMPAT, "getgrgid_r", __nss_compat_getgrgid_r, _nss_ldap_getgrgid_r },
@@ -233,68 +216,4 @@ static int __freebsd_getgroupmembership(void *retval, void *mdata, va_list ap)
 	free(tmpgroups);
 
 	return __nss_compat_result(s, err);
-}
-
-static void *_netgr_result;
-
-static int
-__nss_compat_getnetgrent_r(void *retval, void *mdata, va_list ap)
-{
-	char **hostp, **userp, **domp;
-	char *buffer;
-	size_t bufsize;
-	enum nss_status rv;
-	int *errorp;
-	int ret;
-
-	hostp = va_arg(ap, char **);
-	userp = va_arg(ap, char **);
-	domp = va_arg(ap, char **);
-	buffer = va_arg(ap, char *);
-	bufsize = va_arg(ap, size_t);
-	errorp = va_arg(ap, int *);
-
-	do {
-		*errorp = 0;
-		rv = _nss_ldap_getnetgrent_r(_netgr_result, buffer, bufsize,
-		    errorp);
-		ret = __nss_compat_result(rv, *errorp);
-		if (ret != NS_SUCCESS)
-			return (ret);
-		rv = _nss_ldap_netgrp_load_result(_netgr_result, hostp, userp,
-		    domp);
-		ret = __nss_compat_result(rv, 0);
-	} while (ret == NS_TRYAGAIN);
-
-	return (NS_SUCCESS);
-}
-
-extern size_t _nss_ldap_netgrent_sz;
-
-static int
-__nss_compat_setnetgrent(void *retval, void *mdata, va_list ap)
-{
-	const char *netgroup;
-	int ret;
-
-	netgroup = va_arg(ap, const char *);
-
-	if (_netgr_result != NULL)
-		free(_netgr_result);
-	_netgr_result = calloc(1, _nss_ldap_netgrent_sz);
-	if (_netgr_result == NULL)
-		return (NS_TRYAGAIN);
-
-	return (_nss_ldap_setnetgrent(netgroup, _netgr_result));
-}
-
-static int
-__nss_compat_endnetgrent(void *retval, void *mdata, va_list ap)
-{
-	int ret;
-
-	ret = _nss_ldap_endnetgrent(_netgr_result);
-	free(_netgr_result);
-	_netgr_result = NULL;
-	return (ret);
 }
