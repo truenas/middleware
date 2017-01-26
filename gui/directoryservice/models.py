@@ -871,7 +871,7 @@ class ActiveDirectory(DirectoryServiceBase):
     ad_monitor_frequency = models.IntegerField(
             verbose_name=_("AD check connectivity frequency (seconds)"),
             default=60,
-            validators=[MaxValueValidator(3600), MinValueValidator(60)],
+            validators=[MaxValueValidator(3600), MinValueValidator(30)],
             help_text=_("How often to verify that AD servers are active"),
             blank=False
     )
