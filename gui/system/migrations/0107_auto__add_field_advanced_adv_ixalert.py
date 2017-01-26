@@ -4,14 +4,21 @@ from south.db import db
 from south.v2 import SchemaMigration
 
 
+NO_TICKET = '/data/noticket'
+
 class Migration(SchemaMigration):
 
     def forwards(self, orm):
         # Adding field 'Advanced.adv_ixalert'
         db.add_column(u'system_advanced', 'adv_ixalert',
-                      self.gf('django.db.models.fields.BooleanField')(default=1 if os.path.exists('/data/noticket') else 0),
+                      self.gf('django.db.models.fields.BooleanField')(default=0 if os.path.exists(NO_TICKET) else 1),
                       keep_default=False)
 
+        if os.path.exists(NO_TICKET):
+            try:
+                os.unlink(NO_TICKET)
+            except:
+                pass
 
     def backwards(self, orm):
         # Deleting field 'Advanced.adv_ixalert'
