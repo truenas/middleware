@@ -8,15 +8,16 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:09-0700\n"
-"PO-Revision-Date: 2016-05-10 15:44+0000\n"
-"Last-Translator: fenderbob <Roberto.bagnato94@gmail.com>\n"
-"Language-Team: LANGUAGE <LL@li.org>\n"
+"PO-Revision-Date: 2017-01-26 15:39+0000\n"
+"Last-Translator: giulio zanardi <giulioza@me.com>\n"
+"Language-Team: Italian "
+"<http://weblate.trueos.org/projects/freenas/django/it/>\n"
 "Language: it\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Pootle 2.5.0\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
+"X-Generator: Weblate 2.10-dev\n"
 "X-POOTLE-MTIME: 1462895071.0\n"
 
 #: choices.py:40
@@ -1179,7 +1180,7 @@ msgstr "File PBI da installare"
 
 #: plugins/forms.py:189
 msgid "The full jail path cannot exceed 76 characters"
-msgstr ""
+msgstr "L'intero percorso jail non può superare i 76 caratteri"
 
 #: plugins/forms.py:200
 #, fuzzy
@@ -1206,7 +1207,7 @@ msgstr "Indirizzo IP della Jail"
 #: plugins/forms.py:222
 #, fuzzy
 msgid "Jail IPv4 Netmask"
-msgstr "Netmask IPv4"
+msgstr "Maschera jail IPv4"
 
 #~ msgid "Plugins archive Path"
 #~ msgstr "Percorso completo dei plugin"
@@ -1220,7 +1221,7 @@ msgstr "Montato?"
 
 #: plugins/forms.py:314
 msgid "The full path cannot exceed 88 characters"
-msgstr "Il percorso non può superare 88 caratteri"
+msgstr "Il percorso completo non può superare 88 caratteri"
 
 #, python-format
 #~ msgid "The path could not be mounted %s"
@@ -1392,8 +1393,9 @@ msgstr ""
 "Il valore deve essere compreso tra 1024 e 65535 inclusi. 0 per default."
 
 #: services/forms.py:215
+#, fuzzy
 msgid "This must be higher than minimum passive port"
-msgstr ""
+msgstr "Questo deve essere superiore al minimo della porta passiva"
 
 #: services/forms.py:235
 msgid "This field is required for anonymous login"
@@ -13775,38 +13777,53 @@ msgid "Allow the zvol to consume more than 80% of available space"
 msgstr ""
 
 #: system/models.py:149
+#, fuzzy
 msgid ""
 "Specifies the server and port syslog messages will be sent to.  The accepted "
 "format is hostname:port or ip:port, if :port is not specified it will "
 "default to port 514 (this field currently only takes IPv4 addresses)"
 msgstr ""
+"Specifica il server e la porta per i messaggi syslog che devono essere "
+"inviati. Il formato accettato è hostname:port oppure ip:port, se :port  non "
+"è specificato verrà impostato su porta 514 (questo campo attualmente "
+"richiede solo indirizzi IPv4)"
 
 #: system/alertmods/nfs_bindaddr.py:15
 #, fuzzy
 msgid "NFS services could not bind specific IPs, using wildcard"
-msgstr "L'indirizzo WebGUI non può essere collegato a %s; utilizzo le wildcard"
+msgstr ""
+"Il serivizio NFS non può essere collegato a un indirizzo ip specifico; "
+"utilizza le wildcard"
 
 #: jails/forms.py:247
 #: jails/forms.py:872
+#, fuzzy
 msgid "You have entered an existing MAC Address.Please enter a new one."
-msgstr ""
+msgstr "Hai inserito un indirizzo MAC esistente. Prego inserirne uno nuovo"
 
 #: jails/forms.py:238
+#, fuzzy
 msgid ""
 "Valid characters for jail names are letters, numbers, dashes, or underscores."
 msgstr ""
+"I caratteri per i nome delle jail sono lettere, numeri punti oppure trattini"
 
 #: services/forms.py:95
+#, fuzzy
 msgid "Cannot disable SMB while ActiveDirectory is in use."
-msgstr ""
+msgstr "Non è possibile disattivare SMB se ActiveDirectory è in uso."
 
 #: services/models.py:1295
 #, fuzzy
 msgid "Shutdown Command"
-msgstr "Metodo di Shutdown"
+msgstr "Comando di spegimento"
 
 #: services/models.py:1298
+#, fuzzy
 msgid ""
 "The command used to shutdown the server. You can use a custom command here "
 "to perform other tasks before shutdown.default: /sbin/shutdown -p now"
 msgstr ""
+"Il comando è usato per spegnere il server. Puoi usare il comando con "
+"parametri per effettuare altre operazioni prima dello spegnimento. "
+"predefinito: /sbin/shutdown -p now"
