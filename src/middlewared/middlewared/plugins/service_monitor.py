@@ -37,7 +37,7 @@ class ServiceMonitor(object):
             self.connected = False
             self.logger.debug("[ServiceMonitoring] Cannot connect: %s:%d with error: %s" % (fqdn, service_port, error))
             with client as c:
-                return c.call('service.restart', service_name, {'onetime': True})
+                return c.call('service.restart', service_name, {'onetime': True}, timeout=60)
         finally:
             bind.close()
 
@@ -84,6 +84,7 @@ class ServiceMonitor(object):
         """This is a recursive method where will launch a thread with timer
         calling another method.
         """
+        self.logger.debug("====> THREADS: %s" % (CURRENT_MONITOR_THREAD))
         if self.connected is False:
             self.counter -= 1
             _random = str(random.randint(1, 1000))
@@ -104,7 +105,6 @@ class ServiceMonitor(object):
             file_error = '/tmp/.' + self.service_name + '.service_monitor'
             with open(file_error, 'w') as _file:
                 _file.write("We reached the maximum number of %d attempts to recover service %s, we won't try again\n" % (self.retry, self.service_name))
-
 
     def start(self):
         """Start a thread."""
