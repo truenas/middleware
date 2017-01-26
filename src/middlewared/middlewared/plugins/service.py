@@ -759,7 +759,7 @@ class ServiceService(Service):
         self._service("gssd", "stop", force=True, **kwargs)
         self._service("rpcbind", "stop", force=True, **kwargs)
         if not self.middleware.call('system.is_freenas'):
-            self._service("vaaiserver", "stop", quiet=True, **kwargs)
+            self._service("vaaiserver", "stop", force=True, **kwargs)
 
     def _start_nfs(self, **kwargs):
         self._service("ix-nfsd", "start", quiet=True, **kwargs)
