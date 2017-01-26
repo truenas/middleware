@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:09-0700\n"
-"PO-Revision-Date: 2017-01-26 15:39+0000\n"
+"PO-Revision-Date: 2017-01-26 15:43+0000\n"
 "Last-Translator: giulio zanardi <giulioza@me.com>\n"
 "Language-Team: Italian "
 "<http://weblate.trueos.org/projects/freenas/django/it/>\n"
@@ -13747,8 +13747,9 @@ msgid "WARNING! Failed to query IPMI data, standby node is down."
 msgstr ""
 
 #: jails/forms.py:610
+#, fuzzy
 msgid "Jail dataset created on a share"
-msgstr ""
+msgstr "Set di dati della jail creato in una condivisione"
 
 #: jails/views.py:584
 #, fuzzy
@@ -13764,17 +13765,20 @@ msgid "This option enable mountd logging into syslog."
 msgstr ""
 
 #: services/models.py:462
+#, fuzzy
 msgid "Log rpc.statd(8) and rpc.lockd(8)"
-msgstr ""
+msgstr "Log rpc.statd(8) e rpc.lockd(8)"
 
 #: services/models.py:464
+#, fuzzy
 msgid "This option enable statd and lockd logging into syslog."
-msgstr ""
+msgstr "Questa opzione permette a statd e lockd di accedere a syslog."
 
 #: storage/forms.py:1437
 #: storage/forms.py:1509
+#, fuzzy
 msgid "Allow the zvol to consume more than 80% of available space"
-msgstr ""
+msgstr "Lasciare che il zvol consumi più del 80% di spazio disponibile"
 
 #: system/models.py:149
 #, fuzzy
