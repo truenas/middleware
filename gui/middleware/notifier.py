@@ -268,16 +268,6 @@ class notifier:
         with client as c:
             return c.call('service._clear_activedirectory_config')
 
-    def enable_service_monitoring(self, frequency, retry, fqdn, service_port, service_name):
-        log.debug("[ServiceMonitoring] Add %s service, frequency: %d, retry: %d" % (service_name, frequency, retry))
-        with client as c:
-            return c.call('service.enable_test_service_connection', frequency, retry, fqdn, service_port, service_name)
-
-    def disable_service_monitoring(self, frequency, retry, fqdn, service_port, service_name):
-        log.debug("[ServiceMonitoring] Remove %s service, frequency: %d, retry: %d" % (service_name, frequency, retry))
-        with client as c:
-            return c.call('service.disable_test_service_connection', frequency, retry, fqdn, service_port, service_name)
-
     """
     The following plugins methods violate the service layer
     and are staying here now for compatibility.
