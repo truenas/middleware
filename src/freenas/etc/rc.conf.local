@@ -498,6 +498,10 @@ _gen_conf()
 
 	if [ "$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT srv_enable from services_services WHERE srv_service = 'nfs'")" = 1 ]; then
 
+		if ! is_freenas; then
+			echo "vaaiserver_enable=\"YES\""
+		fi
+
 		# NFS service is enabled
 		if [ "$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT nfs_srv_v4 FROM services_nfs")" = 1 ]; then
 			# NFSv4 is enabled
@@ -539,10 +543,6 @@ _gen_conf()
 				echo "gssd_enable=\"YES\""
 			fi
 		fi
-	fi
-
-	if ! is_freenas; then
-		echo "vaaiserver_enable=\"YES\""
 	fi
 
 	_count_config zfs_enable storage_volume vol_fstype =\'ZFS\'
