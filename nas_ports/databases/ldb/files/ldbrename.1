@@ -1,0 +1,81 @@
+'\" t
+.\"     Title: ldbrename
+.\"    Author: [see the "AUTHOR" section]
+.\" Generator: DocBook XSL Stylesheets v1.76.1 <http://docbook.sf.net/>
+.\"      Date: 01/29/2013
+.\"    Manual: System Administration tools
+.\"    Source: LDB 1.1
+.\"  Language: English
+.\"
+.TH "LDBRENAME" "1" "01/29/2013" "LDB 1\&.1" "System Administration tools"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+ldbrename \- Edit LDB databases using your favorite editor
+.SH "SYNOPSIS"
+.HP \w'\fBldbrename\fR\ 'u
+\fBldbrename\fR [\-h] [\-o\ options] {olddn} {newdb}
+.SH "DESCRIPTION"
+.PP
+ldbrename is a utility that allows you to rename trees in an LDB database based by DN\&. This utility takes two arguments: the original DN name of the top element and the DN to change it to\&.
+.SH "OPTIONS"
+.PP
+\-h
+.RS 4
+Show list of available options\&.
+.RE
+.PP
+\-H <ldb\-url>
+.RS 4
+LDB URL to connect to\&. See ldb(3) for details\&.
+.RE
+.PP
+\-o options
+.RS 4
+Extra ldb options, such as modules\&.
+.RE
+.SH "ENVIRONMENT"
+.PP
+LDB_URL
+.RS 4
+LDB URL to connect to (can be overrided by using the \-H command\-line option\&.)
+.RE
+.SH "VERSION"
+.PP
+This man page is correct for version 1\&.1 of LDB\&.
+.SH "SEE ALSO"
+.PP
+ldb(3), ldbmodify, ldbdel, ldif(5)
+.SH "AUTHOR"
+.PP
+ldb was written by
+\m[blue]\fBAndrew Tridgell\fR\m[]\&\s-2\u[1]\d\s+2\&.
+.PP
+If you wish to report a problem or make a suggestion then please see the
+\m[blue]\fB\%http://ldb.samba.org/\fR\m[]
+web site for current contact and maintainer information\&.
+.PP
+This manpage was written by Jelmer Vernooij\&.
+.SH "NOTES"
+.IP " 1." 4
+Andrew Tridgell
+.RS 4
+\%http://samba.org/~tridge/
+.RE

@@ -759,6 +759,8 @@ class ServiceService(Service):
         self._service("nfsuserd", "stop", force=True, **kwargs)
         self._service("gssd", "stop", force=True, **kwargs)
         self._service("rpcbind", "stop", force=True, **kwargs)
+        if not self.middleware.call('system.is_freenas'):
+            self._service("vaaiserver", "stop", force=True, **kwargs)
 
     def _start_nfs(self, **kwargs):
         self._service("ix-nfsd", "start", quiet=True, **kwargs)
@@ -769,6 +771,8 @@ class ServiceService(Service):
         self._service("nfsd", "start", quiet=True, **kwargs)
         self._service("statd", "start", quiet=True, **kwargs)
         self._service("lockd", "start", quiet=True, **kwargs)
+        if not self.middleware.call('system.is_freenas'):
+            self._service("vaaiserver", "start", quiet=True, **kwargs)
 
     def _force_stop_jail(self, **kwargs):
         self._service("jail", "stop", force=True, **kwargs)

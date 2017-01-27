@@ -14,12 +14,10 @@ from freenasUI.common.locks import lock
 from freenasUI.common.system import send_mail, get_sw_version
 from freenasUI.freeadmin.hook import HookMetaclass
 from freenasUI.middleware.notifier import notifier
-from freenasUI.system.models import Alert as mAlert
+from freenasUI.system.models import Advanced, Alert as mAlert
 from freenasUI.support.utils import get_license, new_ticket
 
 log = logging.getLogger('system.alert')
-
-SENTINEL = "/data/noticket"
 
 
 def alert_node():
@@ -213,6 +211,10 @@ class AlertPlugins:
         else:
             company = 'Unknown'
 
+        adv = Advanced.objects.order_by('-id')[0]
+        if adv.adv_ixfailsafe_email:
+            msgs += ['', 'Failsafe Support Contact: {}'.format(adv.adv_ixfailsafe_email)]
+
         success, msg, ticketnum = new_ticket({
             'title': 'Automatic alert (%s)' % serial,
             'body': '\n'.join(msgs),
@@ -336,7 +338,8 @@ class AlertPlugins:
                 ])
                 if hardware == lasthardware:
                     hardware = []
-            if hardware and not os.path.exists(SENTINEL):
+            adv = Advanced.objects.order_by('-id')[0]
+            if hardware and adv.adv_ixalert:
                 self.ticket(hardware)
 
         with open(self.ALERT_FILE, 'w') as f:

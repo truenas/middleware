@@ -74,10 +74,10 @@ class Client(object):
         self._pings = {}
         if uri is None:
             uri = 'ws://127.0.0.1:6000/websocket'
-        self._ws = WSClient(uri, client=self)
         self._closed = Event()
-        self._ws.connect()
         self._connected = Event()
+        self._ws = WSClient(uri, client=self)
+        self._ws.connect()
         self._connected.wait(5)
         self._event_callbacks = {}
         if not self._connected.is_set():

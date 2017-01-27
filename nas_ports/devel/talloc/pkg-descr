@@ -1,0 +1,4 @@
+A hierarchical pool based memory allocator with destructors. It uses
+reference counting to determine when memory should be freed.
+
+WWW: http://talloc.samba.org/
