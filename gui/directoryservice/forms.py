@@ -52,6 +52,7 @@ from freenasUI.common.system import (
 )
 from freenasUI.directoryservice import models, utils
 from freenasUI.middleware.notifier import notifier
+from freenasUI.middleware.client import client
 from freenasUI.services.exceptions import ServiceFailed
 from freenasUI.services.models import CIFS
 
@@ -626,6 +627,10 @@ class ActiveDirectoryForm(ModelForm):
 
     def save(self):
         enable = self.cleaned_data.get("ad_enable")
+        enable_monitoring = self.cleaned_data.get("ad_enable_monitor")
+        monit_frequency = self.cleaned_data.get("ad_monitor_frequency")
+        monit_retry = self.cleaned_data.get("ad_recover_retry")
+        fqdn = self.cleaned_data.get("ad_domainname")
         if self.__original_changed():
             notifier().clear_activedirectory_config()
 
@@ -658,6 +663,15 @@ class ActiveDirectoryForm(ModelForm):
         else:
             if started is True:
                 started = notifier().stop("activedirectory")
+
+        with client as c:
+            if enable_monitoring and enable:
+                log.debug("[ServiceMonitoring] Add %s service, frequency: %d, retry: %d" % ('activedirectory', monit_frequency, monit_retry))
+                c.call('service.enable_test_service_connection', monit_frequency, monit_retry, fqdn, 3268, 'activedirectory')
+            else:
+                log.debug("[ServiceMonitoring] Remove %s service, frequency: %d, retry: %d" % ('activedirectory', monit_frequency, monit_retry))
+                c.call('service.disable_test_service_connection', monit_frequency, monit_retry, fqdn, 3268, 'activedirectory')
+
         return obj
 
 
