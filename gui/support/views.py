@@ -36,6 +36,7 @@ from django.http import HttpResponse
 from django.shortcuts import render
 from django.utils.translation import ugettext as _
 from django.views.decorators.http import require_POST
+from wsgiref.util import FileWrapper
 
 from freenasUI.common.system import get_sw_name, get_sw_version
 from freenasUI.freeadmin.apppool import appPool
@@ -259,3 +260,14 @@ def ticket_progress(request):
         except:
             data = {'indeterminate': True}
     return HttpResponse(json.dumps(data), content_type='application/json')
+
+
+def donwload_guide(request):
+    if not notifier().is_freenas():
+        pdf_path = '/usr/local/www/data/docs/TrueNAS.pdf'
+        with open(pdf_path, 'rb') as f:
+            wrapper = FileWrapper(f)
+            response = HttpResponse(wrapper, content_type='application/pdf')
+            response['Content-Length'] = os.path.getsize(pdf_path)
+            response['Content-Disposition'] = 'attachment; filename=TrueNAS_Userguide.pdf'
+            return response
