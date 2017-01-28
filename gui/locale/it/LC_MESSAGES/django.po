@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:09-0700\n"
-"PO-Revision-Date: 2017-01-27 22:55+0000\n"
+"PO-Revision-Date: 2017-01-28 14:35+0000\n"
 "Last-Translator: giulio zanardi <giulioza@me.com>\n"
 "Language-Team: Italian "
 "<http://weblate.trueos.org/projects/freenas/django/it/>\n"
@@ -6408,6 +6408,8 @@ msgid ""
 "The following IPs are bind to iSCSI Portal but were not found in the system: "
 "%s"
 msgstr ""
+"I seguenti IP sono legati alla porta iSCSI ma non sono stati trovati nel "
+"sistema: %s"
 
 #: tools/alert.py:177
 msgid "Critical Alerts"
@@ -7045,15 +7047,15 @@ msgstr "Dati"
 
 #: choices.py:711
 msgid "auth"
-msgstr ""
+msgstr "Autenticazione"
 
 #: choices.py:714
 msgid "ctrl+!data"
-msgstr ""
+msgstr "Control+!dati"
 
 #: choices.py:716
 msgid "auth+!data"
-msgstr ""
+msgstr "Autenticazione+!dati"
 
 #: account/forms.py:58
 msgid "Confirm New Password"
@@ -7067,7 +7069,7 @@ msgstr ""
 
 #: account/models.py:139
 msgid "Built-in User"
-msgstr ""
+msgstr "Utente integrato"
 
 #: api/resources.py:888
 #: storage/models.py:745
@@ -7089,11 +7091,11 @@ msgstr ""
 #: jails/admin.py:265
 #: jails/models.py:434
 msgid "URL"
-msgstr ""
+msgstr "URL"
 
 #: jails/forms.py:90
 msgid "type"
-msgstr ""
+msgstr "Tipo"
 
 #: jails/forms.py:182
 #: jails/forms.py:629
