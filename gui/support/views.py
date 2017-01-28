@@ -262,7 +262,7 @@ def ticket_progress(request):
     return HttpResponse(json.dumps(data), content_type='application/json')
 
 
-def donwload_guide(request):
+def download_guide(request):
     if not notifier().is_freenas():
         pdf_path = '/usr/local/www/data/docs/TrueNAS.pdf'
         with open(pdf_path, 'rb') as f:
