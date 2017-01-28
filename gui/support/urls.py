@@ -28,7 +28,7 @@ from django.conf.urls import url
 
 from .views import (
     index, license_update, license_status, ticket, ticket_categories, ticket_progress,
-    donwload_guide
+    download_guide
 )
 
 
@@ -39,5 +39,5 @@ urlpatterns = [
     url(r'^ticket/$', ticket, name="support_ticket"),
     url(r'^ticket/categories/$', ticket_categories, name="support_ticket_categories"),
     url(r'^ticket/progress/$', ticket_progress, name="support_ticket_progress"),
-    url(r'^guide/$', donwload_guide, name="donwload_guide"),
+    url(r'^guide/$', download_guide, name="download_guide"),
 ]
