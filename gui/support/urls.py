@@ -34,4 +34,5 @@ urlpatterns = patterns(
     url(r'^ticket/$', 'ticket', name="support_ticket"),
     url(r'^ticket/categories/$', 'ticket_categories', name="support_ticket_categories"),
     url(r'^ticket/progress/$', 'ticket_progress', name="support_ticket_progress"),
+    url(r'^guide/$', 'download_guide', name="download_guide")
 )
