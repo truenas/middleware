@@ -58,6 +58,7 @@ import stat
 from subprocess import Popen, PIPE
 import subprocess
 import sys
+import tarfile
 import tempfile
 import time
 import types
@@ -3141,6 +3142,22 @@ class notifier:
             with open(config_file_name, 'wb') as config_file_fd:
                 for chunk in uploaded_file_fd.chunks():
                     config_file_fd.write(chunk)
+
+            """
+            First we try to open the file as a tar file.
+            We expect the tar file to contain at least the freenas-v1.db.
+            It can also contain the pwenc_secret file.
+            If we cannot open it as a tar, we try to proceed as it was the
+            raw database file.
+            """
+            try:
+                with tarfile.open(config_file_name) as tar:
+                    bundle = True
+                    tmpdir = tempfile.mkdtemp(dir='/var/tmp/firmware')
+                    tar.extractall(path=tmpdir)
+                    config_file_name = os.path.join(tmpdir, 'freenas-v1.db')
+            except tarfile.ReadError:
+                bundle = False
             conn = sqlite3.connect(config_file_name)
             try:
                 cur = conn.cursor()
@@ -3167,6 +3184,11 @@ class notifier:
             return False, _('The uploaded file is not valid.')
 
         shutil.move(config_file_name, '/data/uploaded.db')
+        if bundle:
+            secret = os.path.join(tmpdir, 'pwenc_secret')
+            if os.path.exists(secret):
+                shutil.move(secret, PWENC_FILE_SECRET)
+
         # Now we must run the migrate operation in the case the db is older
         open(NEED_UPDATE_SENTINEL, 'w+').close()
 
