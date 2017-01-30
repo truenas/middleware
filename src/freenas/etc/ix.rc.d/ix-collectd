@@ -140,12 +140,12 @@ generate_collectd()
 		    rm "${i}"
 	    fi
     done
-    # If there isn't a symlink hostname -> localhost make it.
-    if ! [ -L "${hostname}" ]; then
-            if [ -e "${hostname}" ]; then
-                    rm -rf ${hostname}
+    # If there isn't a symlink localhost -> hostname make it.
+    if ! [ -L "${hostname}" ] && [ "localhost" != "${hostname}" ]; then
+            if [ -e "localhost" ]; then
+                    rm -rf localhost
             fi
-	    ln -s localhost "${hostname}"
+	    ln -s "${hostname}" localhost
     fi
     cfg="/usr/local/etc/collectd.conf"
     cat << EOF > $cfg
