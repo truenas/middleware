@@ -11,7 +11,7 @@
     <button id="btn_{% cls_name form %}_SvCfg" data-dojo-type="dijit.form.Button">
         {% trans "Save Config" %}
         <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
-            window.location='{% url "system_configsave" %}';
+            editObject('{% trans "Save Config"|escapejs %}', '{% url "system_configsave" %}');
         </script>
     </button>
     <button id="btn_{% cls_name form %}_UpCfg" data-dojo-type="dijit.form.Button" type="button">
