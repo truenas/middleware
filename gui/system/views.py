@@ -34,6 +34,8 @@ import shutil
 import socket
 import subprocess
 import sysctl
+import tarfile
+import tempfile
 import time
 import urllib
 import xmlrpclib
@@ -574,10 +576,40 @@ def config_upload(request):
 
 def config_save(request):
 
-    hostname = GlobalConfiguration.objects.all().order_by('-id')[0].gc_hostname
-    filename = '/data/freenas-v1.db'
+    if request.method == 'POST':
+        form = forms.ConfigSaveForm(request.POST)
+        if form.is_valid():
+            return JsonResp(
+                request,
+                message=_("Config download is starting..."),
+                events=['window.location="%s?secret=%s"' % (
+                    reverse('system_configdownload'),
+                    '1' if form.cleaned_data.get('secret') else '0'
+                )]
+            )
+    else:
+        form = forms.ConfigSaveForm()
+
+    return render(request, 'system/config_save.html', {
+        'form': form,
+    })
+
+
+def config_download(request):
+    if request.GET.get('secret') == '0':
+        filename = '/data/freenas-v1.db'
+        bundle = False
+    else:
+        bundle = True
+        filename = tempfile.mkstemp()[1]
+        os.chmod(filename, 0o600)
+        with tarfile.open(filename, 'w') as tar:
+            tar.add('/data/freenas-v1.db', arcname='freenas-v1.db')
+            tar.add('/data/pwenc_secret', arcname='pwenc_secret')
+
     wrapper = FileWrapper(file(filename))
 
+    hostname = GlobalConfiguration.objects.all().order_by('-id')[0].gc_hostname
     freenas_build = "UNKNOWN"
     try:
         with open(VERSION_FILE) as d:
@@ -589,12 +621,19 @@ def config_save(request):
         wrapper, content_type='application/octet-stream'
     )
     response['Content-Length'] = os.path.getsize(filename)
-    response['Content-Disposition'] = \
-        'attachment; filename="%s-%s-%s.db"' % (
+    response['Content-Disposition'] = (
+        'attachment; filename="%s-%s-%s.%s"' % (
             hostname.encode('utf-8'),
             freenas_build,
-            time.strftime('%Y%m%d%H%M%S'))
-    return response
+            time.strftime('%Y%m%d%H%M%S'),
+            'tar' if bundle else 'db',
+        )
+    )
+    try:
+        return response
+    finally:
+        if bundle:
+            os.unlink(filename)
 
 
 def reporting(request):

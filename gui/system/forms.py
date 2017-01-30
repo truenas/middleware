@@ -1346,6 +1346,14 @@ class ConfigUploadForm(Form):
     config = FileField(label=_("New config to be installed"))
 
 
+class ConfigSaveForm(Form):
+    secret = forms.BooleanField(
+        label=_('Export Password Secret Seed'),
+        initial=False,
+        required=False,
+    )
+
+
 """
 TODO: Move to a unittest .py file.
 
