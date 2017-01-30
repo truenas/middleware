@@ -52,7 +52,8 @@ path=${django_path}
 host=${django_host}
 port=${django_port}
 start_cmd="start_command"
-procname="/usr/local/bin/python"
+sig_stop="INT"
+procname="/usr/local/bin/uwsgi"
 
 start_command()
 {
