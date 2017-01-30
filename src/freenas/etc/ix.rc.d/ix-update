@@ -44,8 +44,9 @@ db_update_real()
 	echo "Applying database schema changes"
 
 	touch /tmp/.sqlite3_ha_skip
+	/usr/local/sbin/migrate93 -f /data/freenas-v1.db
 	yes | /usr/local/bin/python \
-	    /usr/local/www/freenasUI/manage.py migrate --merge > \
+	    /usr/local/www/freenasUI/manage.py migrate --fake-initial > \
 		$UPDATE_FAILED_LOG 2>&1
 	if [ $? -ne 0 ]; then
 		rm -f /tmp/.sqlite3_ha_skip
