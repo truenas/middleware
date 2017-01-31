@@ -57,7 +57,7 @@ case "$daily_status_3ware_raid_enable" in
 	case "$daily_status_3ware_raid_persist_alarms" in
 	[Yy][Ee][Ss])
 		if test ! -f ${alarms_log}.today; then
-			touch ${alarms_log}.today
+			echo > ${alarms_log}.today
 		fi
 		mv -f ${alarms_log}.today ${alarms_log}.yesterday
 		${tw_cli} alarms > ${alarms_log}.today

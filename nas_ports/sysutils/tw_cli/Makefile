@@ -2,7 +2,7 @@
 
 PORTNAME=	tw_cli
 PORTVERSION=	9.5.5
-PORTREVISION=	2
+PORTREVISION=	3
 CATEGORIES=	sysutils
 MASTER_SITES=	https://docs.broadcom.com/docs-and-downloads/raid-controllers/raid-controllers-common-files/
 DISTNAME=	CLI_freebsd-from_the_10-2-2-1_9-5-5-1_codesets
