@@ -108,7 +108,10 @@ class bsdUserGroupMixin:
         INVALID_CHARS = ' ,\t:+&#%\^()!@~\*?<>=|\\/"'
         invalids = []
         for char in bsdusr_username:
-            if char in INVALID_CHARS and char not in invalids:
+            # INVALID_CHARS nor 8-bit characters are allowed
+            if (
+                char in INVALID_CHARS and char not in invalids
+            ) or ord(char) & 0x80:
                 invalids.append(char)
         if invalids:
             raise forms.ValidationError(
