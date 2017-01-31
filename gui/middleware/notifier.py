@@ -4152,7 +4152,7 @@ class notifier:
                 if not qs.exists():
                     ed = EncryptedDisk()
                     ed.encrypted_volume = vol
-                    ed.encrypted_provider = dev[:-4]
+                    ed.encrypted_provider = prov
                     disk = Disk.objects.filter(disk_name=dev.disk, disk_enabled=True)
                     if disk.exists():
                         disk = disk[0]
