@@ -199,6 +199,8 @@ def order_vfs_objects(vfs_objects):
             vfs_objects_ordered.append('catia')
         vfs_objects_ordered.append('fruit')
         vfs_objects_ordered.append('streams_xattr')
+    if not 'fruit' in vfs_objects and 'streams_xattr' in vfs_objects:
+        vfs_objects_ordered.append('streams_xattr')
     if 'aio_pthread' in vfs_objects:
         vfs_objects_ordered.append('aio_pthread')
 
