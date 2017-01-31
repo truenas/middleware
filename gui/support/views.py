@@ -265,9 +265,8 @@ def ticket_progress(request):
 def download_guide(request):
     if not notifier().is_freenas():
         pdf_path = '/usr/local/www/data/docs/TrueNAS.pdf'
-        with open(pdf_path, 'rb') as f:
-            wrapper = FileWrapper(f)
-            response = HttpResponse(wrapper, content_type='application/pdf')
-            response['Content-Length'] = os.path.getsize(pdf_path)
-            response['Content-Disposition'] = 'attachment; filename=TrueNAS_Userguide.pdf'
-            return response
+        wrapper = FileWrapper(file(pdf_path))
+        response = HttpResponse(wrapper, content_type='application/pdf')
+        response['Content-Length'] = os.path.getsize(pdf_path)
+        response['Content-Disposition'] = 'attachment; filename=TrueNAS_Userguide.pdf'
+        return response
