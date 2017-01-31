@@ -581,6 +581,8 @@ def get_ipv4_addr():
     gc = GlobalConfiguration.objects.all()[0]
 
     ipv4gateway = gc.gc_ipv4gateway
+    if not ipv4gateway:
+        return
     ipv4gateway_obj = ipaddress.ip_interface(ipv4gateway)
 
     _n = notifier()
