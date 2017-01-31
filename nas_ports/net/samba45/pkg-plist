@@ -694,6 +694,7 @@ libexec/ctdb/tests/protocol_util_test
 libexec/ctdb/tests/rb_test
 libexec/ctdb/tests/reqid_test
 libexec/ctdb/tests/srvid_test
+libexec/ctdb/tests/test_mutex_raw
 libexec/ctdb/tests/transaction_loop
 libexec/ctdb/tests/update_record
 libexec/ctdb/tests/update_record_persistent
