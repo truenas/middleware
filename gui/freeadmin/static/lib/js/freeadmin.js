@@ -1460,7 +1460,7 @@ require([
                 id: "Warning_box_dialog",
                 content: domConstruct.create(
                     "p", {
-                        innerHTML: gettext("The action will result in migration of dataset.") + "<br />" + gettext("Some services will be restarted.")
+                        innerHTML: gettext("The action will result in migration of dataset.") + "<br />" + gettext("Some services will be restarted.") + "<br />" + gettext("NOTE: This is just a warning, to perform the operation you must click Save.")
                     }
                 ),
                 onHide: function () {
