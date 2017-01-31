@@ -664,13 +664,12 @@ class ActiveDirectoryForm(ModelForm):
             if started is True:
                 started = notifier().stop("activedirectory")
 
-        with client as c:
-            if enable_monitoring and enable:
-                log.debug("[ServiceMonitoring] Add %s service, frequency: %d, retry: %d" % ('activedirectory', monit_frequency, monit_retry))
-                c.call('service.enable_test_service_connection', monit_frequency, monit_retry, fqdn, 3268, 'activedirectory')
-            else:
-                log.debug("[ServiceMonitoring] Remove %s service, frequency: %d, retry: %d" % ('activedirectory', monit_frequency, monit_retry))
-                c.call('service.disable_test_service_connection', monit_frequency, monit_retry, fqdn, 3268, 'activedirectory')
+        if enable_monitoring and enable:
+            log.debug("[ServiceMonitoring] Add %s service, frequency: %d, retry: %d" % ('activedirectory', monit_frequency, monit_retry))
+            notifier().enable_test_service_connection(monit_frequency, monit_retry, fqdn, 3268, 'activedirectory')
+        else:
+            log.debug("[ServiceMonitoring] Remove %s service, frequency: %d, retry: %d" % ('activedirectory', monit_frequency, monit_retry))
+            notifier().disable_test_service_connection(monit_frequency, monit_retry, fqdn, 3268, 'activedirectory')
 
         return obj
 
