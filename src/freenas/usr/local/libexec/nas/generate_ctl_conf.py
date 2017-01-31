@@ -1,7 +1,36 @@
 #!/usr/local/bin/python2
 from middlewared.client import Client
 from middlewared.client.utils import Struct
+import logging
+import logging.config
 import os
+
+log = logging.getLogger('clt.conf.py')
+
+logging.config.dictConfig({
+    'version': 1,
+    'disable_existing_loggers': False,
+    'formatters': {
+        'simple': {
+            'format': '[%(name)s:%(lineno)s] %(message)s'
+        },
+    },
+    'handlers': {
+        'syslog': {
+            'level': 'DEBUG',
+            'class': 'logging.handlers.SysLogHandler',
+            'formatter': 'simple',
+        }
+    },
+    'loggers': {
+        '': {
+            'handlers': ['syslog'],
+            'level': 'DEBUG',
+            'propagate': True,
+        },
+    }
+})
+
 
 # NOTE
 # Normally global variables are a bad idea, and this is no
@@ -154,6 +183,10 @@ def main():
     for extent in client.call('datastore.query', 'services.iSCSITargetExtent'):
         extent = Struct(extent)
         path = extent.iscsi_target_extent_path
+        if not path:
+            log.warn('Path for extent id %d is null, skipping', extent.id)
+            continue
+
         poolname = None
         lunthreshold = None
         if extent.iscsi_target_extent_type == 'Disk':
