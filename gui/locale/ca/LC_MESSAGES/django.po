@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:05-0700\n"
-"PO-Revision-Date: 2017-01-20 13:50+0000\n"
+"PO-Revision-Date: 2017-02-01 16:46+0000\n"
 "Last-Translator: Davidmp <rbndavid@gmail.com>\n"
 "Language-Team: Catalan "
 "<http://weblate.trueos.org/projects/freenas/django/ca/>\n"
@@ -1997,8 +1997,9 @@ msgid ""
 "Maximum number of pre-send R2T in each connection (32 by default). The "
 "actual number is limited to QueueDepth of the target."
 msgstr ""
-"Nombre màxim de pre envimaents R2T en cada conexió (32 per defecte). El "
-"nombre actual és limitat la Profunditat de la cua (QueueDepth) del target."
+"Nombre màxim de preenvimaents R2T a cada connexió (32 per defecte). El "
+"nombre actual és limitat a la profunditat de la cua (QueueDepth) de la "
+"destinació."
 
 #: services/models.py:305
 msgid "MaxOutstandingR2T"
@@ -2006,23 +2007,23 @@ msgstr "MaxOutstandingR2T"
 
 #: services/models.py:306
 msgid "iSCSI initial parameter (16 by default)."
-msgstr "Paràmetre inicial iSCSI (16 per defecte)."
+msgstr "Paràmetre iSCSI inicial (16 per defecte)."
 
 #: services/models.py:311
 msgid "First burst length"
-msgstr "Longitud del primer buffer"
+msgstr "Longitud de la primera ràfega"
 
 #: services/models.py:312
 msgid "iSCSI initial parameter (65536 by default)."
-msgstr "paràmetre d'inici iSCSI (65536 per defecte)."
+msgstr "Paràmetre iSCSI inicial (65536 per defecte)."
 
 #: services/models.py:317
 msgid "Max burst length"
-msgstr "Longitud màxima de salva (burst)"
+msgstr "Longitud màxima de la ràfega"
 
 #: services/models.py:318 services/models.py:324
 msgid "iSCSI initial parameter (262144 by default)."
-msgstr "Paràmetre d'inici iSCSI (262144 per defecte)."
+msgstr "Paràmetre iSCSI inicial (262144 per defecte)."
 
 #: services/models.py:323
 msgid "Max receive data segment length"
@@ -2030,110 +2031,110 @@ msgstr "Longitud màxima del segment de dades rebudes"
 
 #: services/models.py:329
 msgid "DefaultTime2Wait"
-msgstr "DefaultTime2Wait"
+msgstr "Estona_d'espera_per_defecte"
 
 #: services/models.py:330
 msgid "iSCSI initial parameter (2 by default)."
-msgstr "Paràmetre inicial iSCSI (2 per defecte)."
+msgstr "Paràmetre iSCSI inicial (2 per defecte)."
 
 #: services/models.py:335
 msgid "DefaultTime2Retain"
-msgstr "DefaultTime2Retain"
+msgstr "Estona_de retenció_per_defecte"
 
 #: services/models.py:336
 msgid "iSCSI initial parameter (60 by default)."
-msgstr "Paràmetre inicial iSCSI (60 per defecte)."
+msgstr "Paràmetre iSCSI inicial (60 per defecte)."
 
 #: services/models.py:341
 msgid "Enable LUC"
-msgstr "Activa LUC"
+msgstr "Habilita LUC"
 
 #: services/models.py:345
 msgid "Controller IP address"
-msgstr "Adreça IP del Controller"
+msgstr "Adreça IP del controlador"
 
 #: services/models.py:346
 msgid "Logical Unit Controller IP address (127.0.0.1(localhost) by default)"
 msgstr ""
-"Adreça IP de la Unitat Lògica del Controller (LUC) (per defecte 127.0.0.1 "
+"Adreça IP de la unitat lògica del controlador (LUC) (per defecte 127.0.0.1 "
 "(localhost))"
 
 #: services/models.py:351
 msgid "Controller TCP port"
-msgstr "Port TCP del Controller"
+msgstr "Port TCP del controlador"
 
 #: services/models.py:352
 msgid "Logical Unit Controller TCP port (3261 by default)"
-msgstr "Port TCP de la Unitat Lògica del Controller (LUC) (Per defecte 3261)"
+msgstr "Port TCP de la unitat lògica del controlador (per defecte 3261)"
 
 #: services/models.py:358
 msgid "Controller Authorized Network"
 msgstr "Xarxa autoritzada del controlador"
 
 #: services/models.py:360
-#, fuzzy
 msgid "Logical Unit Controller Authorized netmask (127.0.0.0/8 by default)"
 msgstr ""
-"Màscara autoritzada de la Unitat Lògica del Controller (LUC) (Per defecte "
-"255.255.255.0) "
+"Màscara autoritzada de la unitat lògica del controlador (per defecte "
+"127.0.0.0/8)"
 
 #: services/models.py:368
 msgid "Controller Auth Method"
-msgstr "Mètode d'autorització del Controller"
+msgstr "Mètode d'autorització del controlador"
 
 #: services/models.py:369
 msgid "The method can be accepted in the controller."
-msgstr "El mètode pot ser acceptat a la controladora"
+msgstr "El mètode pot ser acceptat al controlador."
 
 #: services/models.py:375
 msgid ""
 "The istgtcontrol can access the targets with correct user and secret in "
 "specific Auth Group."
 msgstr ""
-"El istgtcontrol pot accedir els targets amb l'usuari i secret correctes al "
-"Grup d'autenticació específic."
+"L'istgtcontrol pot accedir a les destinacions amb l'usuari i el secret "
+"correctes al grup d'autenticació específic."
 
 #: services/models.py:382 services/models.py:383
 #: templates/services/iscsi.html:2
 msgid "Target Global Configuration"
-msgstr "Configuració global de Target"
+msgstr "Configuració global de la destinació"
 
 #: services/models.py:396
 msgid "Extent Name"
-msgstr "Nom de l'Extent"
+msgstr "Nom de l'extensió"
 
 #: services/models.py:397
 msgid "String identifier of the extent."
-msgstr "Cadena que identifica l'Extent"
+msgstr "Cadena que identifica l'extensió."
 
 #: services/models.py:401
 msgid "Extent Type"
-msgstr "Tipus d'Extent"
+msgstr "Tipus d'extensió"
 
 #: services/models.py:402
 msgid "Type used as extent."
-msgstr "Tipus utilitzat com a Extent"
+msgstr "Tipus utilitzat com a extensió."
 
 #: services/models.py:407
 msgid "Path to the extent"
-msgstr "Ruta a l'Extent"
+msgstr "Camí a l'extensió"
 
 #: services/models.py:408
 msgid "File path (e.g. /mnt/sharename/extent/extent0) used as extent."
 msgstr ""
-"Ruta al fitxer (p.e. /mnt/sharename/extent/extent0) utilitzat com a Extent."
+"Camí del fitxer (p.e. /mnt/sharename/extent/extent0) utilitzat com a "
+"extensió."
 
 #: services/models.py:413
 msgid "Extent size"
-msgstr "Tamany de l'Extent."
+msgstr "Mida de l'extensió"
 
 #: services/models.py:414
 msgid ""
 "Size of extent, 0 means auto, a raw number is bytes, or suffix with KB, MB, "
 "TB for convenience."
 msgstr ""
-"Tamany de l'Extent, 0 vol dir automàtic, només un número és el tamany en "
-"bytes, o un sufix KB, MB, TB segons convingui."
+"Mida de l'extensió: 0 vol dir automàtic, només un número és la mida en "
+"bytes, o amb un sufix KB, MB, TB segons convingui."
 
 #: services/models.py:419 services/models.py:480 services/models.py:557
 #: services/models.py:1395 sharing/models.py:43 sharing/models.py:262
@@ -2148,17 +2149,17 @@ msgstr "Comentari"
 
 #: services/models.py:420 services/models.py:481 services/models.py:558
 msgid "You may enter a description here for your reference."
-msgstr "Aquí pots entrar una descripció com a referència."
+msgstr "Aquí podeu escriure una descripció com a referència."
 
 #: services/models.py:423 services/models.py:730
 #: templates/services/iscsi_assoctargets.html:6
 #: templates/services/iscsi_dextents.html:5
 msgid "Extent"
-msgstr "Extent"
+msgstr "Extensió"
 
 #: services/models.py:475 services/models.py:664
 msgid "Portal Group ID"
-msgstr "ID del Grup de Portal "
+msgstr "ID del Grup de portal"
 
 #: services/models.py:485 services/models.py:519
 msgid "Portal"
@@ -2170,9 +2171,8 @@ msgid "IP Address"
 msgstr "Adreça IPv4"
 
 #: services/models.py:534
-#, fuzzy
 msgid "Portal IP"
-msgstr "Portal"
+msgstr "IP del portal"
 
 #: services/models.py:544 templates/services/iscsi_authini.html:6
 msgid "Initiators"
@@ -2183,8 +2183,8 @@ msgid ""
 "Initiator authorized to access to the iSCSI target. It takes a name or 'ALL' "
 "for any initiators."
 msgstr ""
-"Iniciador autoritzat a accedir a l target iSCSI. S'ha de posar un nom o be "
-"'ALL' per tots els iniciadors."
+"Iniciador autoritzat a accedir a la destinació iSCSI. Admet un nom o be \""
+"ALL\" per a qualsevol iniciador."
 
 #: services/models.py:550
 msgid "Authorized network"
@@ -2195,8 +2195,8 @@ msgid ""
 "Network authorized to access to the iSCSI target. It takes IP or CIDR "
 "addresses or 'ALL' for any IPs."
 msgstr ""
-"Xarxa autoritzada a accedir al target iSCSI. S'ha de posar una IP, o adreces "
-"CIDR, o 'ALL' per qualsevol IP."
+"Xarxa autoritzada a accedir al target iSCSI. Admet una IP, o adreces CIDR, o "
+"\"ALL\" per a qualsevol IP."
 
 #: services/models.py:562
 msgid "Initiator"
@@ -2205,8 +2205,8 @@ msgstr "Iniciador"
 #: services/models.py:594
 msgid "Target side user name. It is usually the initiator name by default."
 msgstr ""
-"Nom d'usuari del cantó del Target. Normalment per defecte és el nom del "
-"iniciador."
+"Nom d'usuari de la banda de la destinació. Normalment, per defecte, és el "
+"nom del iniciador."
 
 #: services/models.py:604
 msgid "Peer User"
@@ -2222,11 +2222,11 @@ msgstr "Accés autoritzat"
 
 #: services/models.py:615
 msgid "Authorized Accesses"
-msgstr "Accés autoritzat"
+msgstr "Accessos autoritzats"
 
 #: services/models.py:632
 msgid "Target Name"
-msgstr "Nom del Target"
+msgstr "Nom de la destinació"
 
 #: services/models.py:633
 msgid "Base Name will be appended automatically when starting without 'iqn.'."
