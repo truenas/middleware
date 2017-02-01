@@ -632,7 +632,7 @@ class ActiveDirectoryForm(ModelForm):
         monit_retry = self.cleaned_data.get("ad_recover_retry")
         fqdn = self.cleaned_data.get("ad_domainname")
         if self.__original_changed():
-            notifier().clear_activedirectory_config()
+            notifier()._clear_activedirectory_config()
 
         started = notifier().started("activedirectory")
         obj = super(ActiveDirectoryForm, self).save()
