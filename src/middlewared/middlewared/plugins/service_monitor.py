@@ -2,7 +2,7 @@ import socket
 import random
 import threading
 import middlewared.logger
-from freenasUI.middleware.client import client
+from middlewared.client import Client
 
 CURRENT_MONITOR_THREAD = {}
 
@@ -30,13 +30,14 @@ class ServiceMonitor(object):
                 service_name (str): Same name used to start/stop/restart method.
         """
         bind = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        client = Client()
         try:
             bind.connect((fqdn, service_port))
             self.connected = True
         except Exception as error:
             self.connected = False
             self.logger.debug("[ServiceMonitoring] Cannot connect: %s:%d with error: %s" % (fqdn, service_port, error))
-            self.middleware.call('notifier.restart', 'activedirectory')
+            client.call('notifier.restart', 'activedirectory')
         finally:
             bind.close()
 
