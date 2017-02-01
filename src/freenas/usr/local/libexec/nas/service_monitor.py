@@ -10,9 +10,9 @@ class RCDServiceMonitoring(object):
         ad = Struct(client.call('datastore.query', 'directoryservice.activedirectory', None, {'get': True}))
         if ad.ad_enable_monitor and ad.ad_enable:
             if option == 'start':
-                return client.call('service.enable_test_service_connection', ad.ad_monitor_frequency, ad.ad_recover_retry, ad.ad_domainname, 3268, 'activedirectory')
+                return client.call('notifier.enable_test_service_connection', ad.ad_monitor_frequency, ad.ad_recover_retry, ad.ad_domainname, 3268, 'activedirectory')
             elif option == 'stop':
-                return client.call('service.disable_test_service_connection', ad.ad_monitor_frequency, ad.ad_recover_retry, ad.ad_domainname, 3268, 'activedirectory')
+                return client.call('notifier.disable_test_service_connection', ad.ad_monitor_frequency, ad.ad_recover_retry, ad.ad_domainname, 3268, 'activedirectory')
 
 
 def main(option):
