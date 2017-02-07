@@ -706,6 +706,21 @@ def add_ldap_section(client, sc):
         ldap_section.ldap_default_authtok_type = 'password'
         ldap_section.ldap_default_authtok = ldap.bindpw
 
+    homedir_path = None
+
+    try:
+        for share in client.call('datastore.query', 'sharing.CIFS_Share'):
+            share = Struct(share)
+            if share.cifs_home and share.cifs_path:
+                homedir_path = share.cifs_path
+                break
+    except:
+        pass
+
+    if homedir_path:
+        sssd_mkdir("%s/%s" % (homedir_path, ldap_cookie))
+        ldap_section.override_homedir = "%s/%%d/%%u" % homedir_path
+
     sc[ldap_domain] = ldap_section
     sc['sssd'].add_domain(ldap_cookie)
     sc['sssd'].add_newline()
@@ -794,12 +809,9 @@ def add_activedirectory_section(client, sc):
         for share in client.call('datastore.query', 'sharing.cifs_share'):
             share = Struct(share)
             if share.cifs_home and share.cifs_path:
-                if ad.use_default_domain:
-                    homedir_path = "%s/%%u" % share.cifs_path
-                else:
-                    homedir_path = "%s/%%d/%%u" % share.cifs_path
-
+                homedir_path = "%s/%%d/%%u" % share.cifs_path
                 ad_section.override_homedir = homedir_path
+                break
 
     except Exception:
         pass
