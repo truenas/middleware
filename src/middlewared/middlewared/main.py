@@ -1,25 +1,18 @@
-from gevent import monkey
-monkey.patch_all()
-
+from .apidocs import app as apidocs_app
 from .client import ejson as json
+from .client.protocol import DDPProtocol
+from .job import Job, JobsQueue
+from .restful import RESTfulAPI
 from .utils import Popen
 from collections import OrderedDict, defaultdict
-from client.protocol import DDPProtocol
 from daemon import DaemonContext
 from daemon.pidfile import TimeoutPIDLockFile
-from gevent.wsgi import WSGIServer
-from geventwebsocket import WebSocketServer, WebSocketApplication, Resource
-from job import Job, JobsQueue
-from restful import RESTfulAPI
-from apidocs import app as apidocs_app
 
 import argparse
-import gevent
 import imp
 import inspect
 import linecache
 import os
-import setproctitle
 import signal
 import subprocess
 import sys
@@ -273,6 +266,7 @@ class Middleware(object):
         self.__server_threads = []
         self.__init_services()
         self.__plugins_load()
+        self.__threadpool = ThreadPool(5)
 
     def __init_services(self):
         from middlewared.service import CoreService
@@ -530,7 +524,7 @@ def main():
     else:
         _logger.configure_logging('file')
 
-    setproctitle.setproctitle('middlewared')
+    #setproctitle.setproctitle('middlewared')
     # Workaround to tell django to not set up logging on its own
     os.environ['MIDDLEWARED'] = str(os.getpid())
 

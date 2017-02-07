@@ -239,7 +239,8 @@ class UpdateService(Service):
         new_manifest = Manifest.Manifest(require_signature=True)
         new_manifest.LoadPath('{}/MANIFEST'.format(location))
 
-        Update.ApplyUpdate(
+        self.middleware.thread_run(
+            Update.ApplyUpdate,
             location,
             install_handler=handler.install_handler,
         )

@@ -1,5 +1,5 @@
 from . import ejson as json
-from protocol import DDPProtocol
+from .protocol import DDPProtocol
 from threading import Event, Thread
 from ws4py.client.threadedclient import WebSocketClient
 
@@ -215,7 +215,7 @@ def main():
                     if not c.call('auth.login', args.username, args.password):
                         raise ValueError('Invalid username or password')
             except Exception as e:
-                print "Failed to login: ", e
+                print("Failed to login: ", e)
                 sys.exit(0)
             try:
                 kwargs = {}
@@ -228,7 +228,7 @@ def main():
                     print(json.dumps(rv))
             except ClientException as e:
                 if not args.quiet and e.trace:
-                    print >> sys.stderr, e.trace['formatted']
+                    print(e.trace['formatted'], file=sys.stderr)
                 sys.exit(1)
     elif args.name == 'ping':
         with Client(uri=args.uri) as c:
@@ -241,7 +241,7 @@ def main():
                     if not c.call('auth.login', args.username, args.password):
                         raise ValueError('Invalid username or password')
             except Exception as e:
-                print "Failed to login: ", e
+                print("Failed to login: ", e)
                 sys.exit(0)
             rv = c.call('datastore.sql', args.sql[0])
             if rv:
@@ -252,7 +252,7 @@ def main():
                             data.append(str(int(f)))
                         else:
                             data.append(str(f))
-                    print '|'.join(data)
+                    print('|'.join(data))
     elif args.name == 'waitready':
         """
         This command is supposed to wait until we are able to connect
