@@ -300,6 +300,22 @@ def get_server_role(client):
     return role
 
 
+def get_cifs_homedir(client):
+    cifs_homedir = "/home"
+
+    shares = client.call('datastore.query', 'sharing.CIFS_Share')
+    if len(shares) == 0:
+        return
+
+    for share in shares:
+        share = Struct(share)
+        if share.cifs_home and share.cifs_path:
+            cifs_homedir = share.cifs_path
+            break
+
+    return cifs_homedir
+
+
 def confset1(conf, line, space=4):
     if line:
         conf.append(' ' * space + line)
@@ -760,8 +776,8 @@ def add_activedirectory_conf(client, smb4_conf):
              ad.ad_ldap_sasl_wrapping)
 
     confset1(smb4_conf, "template shell = /bin/sh")
-    confset2(smb4_conf, "template homedir = %s",
-             "/home/%D/%U" if not ad.ad_use_default_domain else "/home/%U")
+    cifs_homedir = "%s/%%D/%%U" % get_cifs_homedir(client) 
+    confset2(smb4_conf, "template homedir = %s", cifs_homedir)
 
 
 def add_domaincontroller_conf(client, smb4_conf):
@@ -1043,11 +1059,16 @@ def generate_smb4_shares(client, smb4_shares):
             valid_users = "%U"
 
             if client.call('notifier.common', 'system', 'activedirectory_enabled'):
+                valid_users_path = "%D/%U"
+                valid_users = "%D\%U"
+
                 try:
-                    ad = Struct(client.call('datastore.query', 'directoryservice.ActiveDirectory', None, {'get': True}))
-                    if not ad.ad_use_default_domain:
-                        valid_users_path = "%D/%U"
-                        valid_users = "%D\%U"
+                    ad = Struct(client.call('notifier.directoryservice', 'AD'))
+                    for w in ad.workgroups:
+                        homedir_path = "%s/%s" % (share.cifs_path, w)
+                        if not os.access(homedir_path, os.F_OK):
+                            smb4_mkdir(homedir_path)
+
                 except:
                     pass
 
