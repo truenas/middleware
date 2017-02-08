@@ -3,7 +3,7 @@
 
 PORTNAME=	sssd
 DISTVERSION=	1.11.7
-PORTREVISION=	4
+PORTREVISION=	3
 CATEGORIES=	security
 MASTER_SITES=	https://fedorahosted.org/released/${PORTNAME}/ \
 		http://mirrors.rit.edu/zi/
