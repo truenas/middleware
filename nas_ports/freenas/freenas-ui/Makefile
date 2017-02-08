@@ -41,7 +41,6 @@ RUN_DEPENDS=	${PYTHON_PKGNAMEPREFIX}django110>0:${PORTSDIR}/www/py-django110 \
 	${PYTHON_PKGNAMEPREFIX}bsd>0:${PORTSDIR}/freenas/py-bsd \
 	${PYTHON_PKGNAMEPREFIX}middlewared>0:${PORTSDIR}/freenas/py-middlewared \
 	${PYTHON_PKGNAMEPREFIX}rollbar>0:${PORTSDIR}/www/py-rollbar \
-	${PYTHON_PKGNAMEPREFIX}pysphere-freenas>0:${PORTSDIR}/net/py-pysphere-freenas \
 	pyvmomi>0:${PORTSDIR}/net/py-pyvmomi \
 	dmidecode>0:${PORTSDIR}/sysutils/dmidecode \
 	freenas-pkgtools>0:${PORTSDIR}/freenas/freenas-pkgtools \
