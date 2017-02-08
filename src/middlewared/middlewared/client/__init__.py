@@ -1,1 +1,1 @@
-from .client import Client, ClientException
+from .client import Client, ClientException, CallTimeout

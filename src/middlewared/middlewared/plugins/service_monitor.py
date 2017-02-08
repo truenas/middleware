@@ -2,7 +2,7 @@ import socket
 import random
 import threading
 import middlewared.logger
-from middlewared.client import Client
+from middlewared.client import Client, CallTimeout
 
 CURRENT_MONITOR_THREAD = {}
 
@@ -37,7 +37,11 @@ class ServiceMonitor(object):
         except Exception as error:
             self.connected = False
             self.logger.debug("[ServiceMonitoring] Cannot connect: %s:%d with error: %s" % (fqdn, service_port, error))
-            client.call('notifier.restart', 'activedirectory')
+            try:
+                client.call('notifier.restart', 'activedirectory', timeout=60)
+            except CallTimeout:
+                # We might have a websocket timeout and it is not a problem.
+                pass
         finally:
             bind.close()
 
