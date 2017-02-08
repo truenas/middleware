@@ -23,7 +23,7 @@ RUN_DEPENDS=	${PYTHON_PKGNAMEPREFIX}django110>0:${PORTSDIR}/www/py-django110 \
 	${PYTHON_PKGNAMEPREFIX}bsddb3>0:${PORTSDIR}/databases/py-bsddb3 \
 	${PYTHON_PKGNAMEPREFIX}libxml2>0:${PORTSDIR}/textproc/py-libxml2 \
 	${PYTHON_PKGNAMEPREFIX}polib>0:${PORTSDIR}/devel/py-polib \
-	${PYTHON_PKGNAMEPREFIX}ldap>0:${PORTSDIR}/net/py-ldap \
+	${PYTHON_PKGNAMEPREFIX}pyldap>0:${PORTSDIR}/net/py-pyldap \
 	${PYTHON_PKGNAMEPREFIX}dojango>0:${PORTSDIR}/www/py-dojango \
 	${PYTHON_PKGNAMEPREFIX}sysctl>0:${PORTSDIR}/devel/py-sysctl \
 	${PYTHON_PKGNAMEPREFIX}lxml>0:${PORTSDIR}/devel/py-lxml \
