@@ -37,7 +37,7 @@ class ServiceMonitor(object):
         except Exception as error:
             self.connected = False
             self.logger.debug("[ServiceMonitoring] Cannot connect: %s:%d with error: %s" % (fqdn, service_port, error))
-            client.call('notifier.restart', 'activedirectory')
+            client.call('notifier.restart', 'activedirectory', timeout=60)
         finally:
             bind.close()
 
