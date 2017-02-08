@@ -2,7 +2,7 @@ import socket
 import random
 import threading
 import middlewared.logger
-from freenasUI.middleware.client import client
+from middlewared.client import Client, CallTimeout
 
 CURRENT_MONITOR_THREAD = {}
 
@@ -36,8 +36,12 @@ class ServiceMonitor(object):
         except Exception as error:
             self.connected = False
             self.logger.debug("[ServiceMonitoring] Cannot connect: %s:%d with error: %s" % (fqdn, service_port, error))
-            with client as c:
-                return c.call('service.restart', service_name, {'onetime': True}, timeout=60)
+            with Client as c:
+                try:
+                    c.call('service.restart', service_name, {'onetime': True}, timeout=60)
+                except CallTimeout:
+                    # We might have a websocket timeout and it is not a problem.
+                    pass
         finally:
             bind.close()
 
