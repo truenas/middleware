@@ -1,0 +1,5 @@
+extras is a set of extensions to the Python standard library, originally written
+to make the code within testtools cleaner, but now split out for general use
+outside of a testing context.
+
+WWW: https://pypi.python.org/pypi/extras/
