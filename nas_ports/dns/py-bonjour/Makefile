@@ -1,23 +1,22 @@
 # $FreeBSD$
 
-PORTNAME=	pybonjour
+PORTNAME=	bonjour
 PORTVERSION=	1.1.1
 CATEGORIES=	dns python
-MASTER_SITES=	GOOGLE_CODE
 PKGNAMEPREFIX=	${PYTHON_PKGNAMEPREFIX}
 
-MAINTAINER=	jpaetzel@FreeBSD.org
-COMMENT=	Python interface to bonjour
+LIB_DEPENDS=	libdns_sd.so.1:net/mDNSResponder
 
-LICENSE=	MIT
+MAINTAINER=	dev@ixsystems.com
+COMMENT=	pybonjour 1.1.1 for Python 3
 
 USES=		python
-USE_PYTHON=	distutils autoplist
+USE_PYTHON=	autoplist distutils
+USE_GITHUB=	yes
+GH_ACCOUNT=	depl0y
+GH_PROJECT=	pybonjour-python3
+GH_TAGNAME=	2c8283f
 
-OPTIONS_SINGLE=			ZEROCONF
-OPTIONS_SINGLE_ZEROCONF=	AVAHI MDNSRESPONDER
-OPTIONS_DEFAULT=		MDNSRESPONDER
-AVAHI_LIB_DEPENDS=		libdns_sd.so:net/avahi-libdns
-MDNSRESPONDER_LIB_DEPENDS=	libdns_sd.so:net/mDNSResponder
+NO_ARCH=	yes
 
 .include <bsd.port.mk>
