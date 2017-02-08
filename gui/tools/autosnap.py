@@ -33,7 +33,8 @@ import sys
 import uuid
 import ssl
 
-from pysphere import VIServer
+from pyVim import connect
+from pyVmomi import vim, vmodl
 
 # Monkey patch ssl checking to get back to Python 2.7.8 behavior
 ssl._create_default_https_context = ssl._create_unverified_context

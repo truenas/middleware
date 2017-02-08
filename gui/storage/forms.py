@@ -64,7 +64,8 @@ from freenasUI.storage import models
 from freenasUI.storage.widgets import UnixPermissionField
 from freenasUI.support.utils import dedup_enabled
 from middlewared.client import Client
-from pysphere import VIServer
+from pyVim import connect, task
+from pyVmomi import vim, vmodl
 
 attrs_dict = {'class': 'required', 'maxHeight': 200}
 
@@ -1814,9 +1815,8 @@ class ManualSnapshotForm(Form):
         snapvms = []
         for obj in models.VMWarePlugin.objects.filter(filesystem=self._fs):
             ssl._create_default_https_context = ssl._create_unverified_context
-            server = VIServer()
             try:
-                server.connect(obj.hostname, obj.username, obj.get_password())
+                server = connect(host=obj.hostname, user=obj.username, pwd=obj.get_password())
             except:
                 continue
             vmlist = server.get_registered_vms(status='poweredOn')
@@ -2698,7 +2698,6 @@ class VMWarePluginForm(ModelForm):
         return password
 
     def clean(self):
-        from pysphere import VIServer
         ssl._create_default_https_context = ssl._create_unverified_context
         cdata = self.cleaned_data
         if (
@@ -2706,11 +2705,10 @@ class VMWarePluginForm(ModelForm):
             cdata.get('password')
         ):
             try:
-                server = VIServer()
-                server.connect(
-                    cdata.get('hostname'),
-                    cdata.get('username'),
-                    cdata.get('password'),
+                server = connect(
+                    host=cdata.get('hostname'),
+                    user=cdata.get('username'),
+                    pwd=cdata.get('password'),
                     sock_timeout=7,
                 )
                 ds = server.get_datastores()
