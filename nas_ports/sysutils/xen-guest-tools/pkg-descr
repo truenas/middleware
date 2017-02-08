@@ -1,0 +1,4 @@
+These tools are useful for debugging Xen related problems when one
+does not have access to the dom0 or wants to view the entries from
+domU's perspective. These work on FreeBSD VMs using the XEN (i386)
+kernel or the XENHVM kernel.
