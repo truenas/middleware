@@ -24,12 +24,12 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
-from django.conf.urls import patterns, url
+from django.conf.urls import url
 
+from .views import start, stop, home
 
-urlpatterns = patterns(
-    'freenasUI.vm.views',
-    url(r'^$', 'home', name="vm_home"),
-    url(r'^start/(?P<id>\d+)/$', 'start', name="vm_start"),
-    url(r'^stop/(?P<id>\d+)/$', 'stop', name="vm_stop"),
-)
+urlpatterns = [
+    url(r'^$', home, name="vm_home"),
+    url(r'^start/(?P<id>\d+)/$', start, name="vm_start"),
+    url(r'^stop/(?P<id>\d+)/$', stop, name="vm_stop"),
+]
