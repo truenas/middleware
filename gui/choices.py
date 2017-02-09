@@ -940,7 +940,7 @@ class COUNTRY_CHOICES(object):
         self.__country_columns = None
         self.__country_list = []
 
-        with open(self.__country_file, 'r') as csvfile:
+        with open(self.__country_file, 'r', encoding='utf8') as csvfile:
             reader = csv.reader(csvfile)
 
             i = 0
