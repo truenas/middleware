@@ -1021,7 +1021,7 @@ class ActiveDirectory(DirectoryServiceBase):
                     "enforcing the usage of signed LDAP connections (e.g. "
                     "Windows 2000 SP3 or higher). LDAP sign and seal can be "
                     "controlled with the registry key \"HKLM\System\\"
-                    "CurrentControlSet\Services\NTDS\Parameters\\"
+                    "CurrentControlSet\\Services\NTDS\\Parameters\\"
                     "LDAPServerIntegrity\" on the Windows server side."
                     ),
         default='plain'
