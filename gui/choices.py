@@ -709,8 +709,8 @@ class KBDMAP_CHOICES(object):
     def __iter__(self):
         if not os.path.exists(self.INDEX):
             return
-        with open(self.INDEX, 'r') as f:
-            d = f.read()
+        with open(self.INDEX, 'rb') as f:
+            d = f.read().decode('utf8', 'ignore')
         _all = re.findall(r'^(?P<name>[^#\s]+?)\.kbd:en:(?P<desc>.+)$', d, re.M)
         for name, desc in _all:
             yield name, desc
