@@ -264,7 +264,7 @@ class Jails(Model):
         return str(self.jail_host)
 
     def __unicode__(self):
-        return unicode(self.jail_host)
+        return str(self.jail_host)
 
     def __init__(self, *args, **kwargs):
         super(self.__class__, self).__init__(*args, **kwargs)
@@ -679,8 +679,8 @@ class JailMountPoint(Model):
     )
 
     class Meta:
-        verbose_name = _(u"Storage")
-        verbose_name_plural = _(u"Storage")
+        verbose_name = _("Storage")
+        verbose_name_plural = _("Storage")
 
     def __unicode__(self):
         return self.source
@@ -700,7 +700,7 @@ class JailMountPoint(Model):
     @property
     def destination_jail(self):
         jc = JailsConfiguration.objects.order_by("-id")[0]
-        return u"%s/%s%s" % (jc.jc_path, self.jail, self.destination)
+        return "%s/%s%s" % (jc.jc_path, self.jail, self.destination)
 
     def mount(self):
         mntopts = None

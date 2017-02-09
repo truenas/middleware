@@ -86,33 +86,33 @@ class JsonResp(HttpResponse):
             error = False
             errors = {}
             if self.form.errors:
-                for key, val in self.form.errors.items():
+                for key, val in list(self.form.errors.items()):
                     if key == '__all__':
                         field = self.__class__.form_field_all(self.form)
-                        errors[field] = [unicode(v) for v in val]
+                        errors[field] = [str(v) for v in val]
                     else:
-                        errors[key] = [unicode(v) for v in val]
+                        errors[key] = [str(v) for v in val]
                 error = True
 
-            for name, fsinfo in self.formsets.items():
+            for name, fsinfo in list(self.formsets.items()):
                 fs = fsinfo['instance']
                 fserrors = fs.non_form_errors()
                 if fserrors:
                     error = True
-                    errors["%s-__all__" % name] = [unicode(e) for e in fserrors]
+                    errors["%s-__all__" % name] = [str(e) for e in fserrors]
 
                 for i, form in enumerate(fs.forms):
                     if form.errors:
                         error = True
-                        for key, val in form.errors.items():
+                        for key, val in list(form.errors.items()):
                             if key == '__all__':
                                 field = self.__class__.form_field_all(form)
-                                errors[field] = [unicode(v) for v in val]
+                                errors[field] = [str(v) for v in val]
                             else:
                                 errors["%s-%s" % (
                                     form.prefix,
                                     key,
-                                )] = [unicode(v) for v in val]
+                                )] = [str(v) for v in val]
             data.update({
                 'error': error,
                 'errors': errors,

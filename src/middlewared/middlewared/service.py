@@ -74,16 +74,14 @@ class ServiceBase(type):
         if config:
             config_attrs.update({
                 k: v
-                for k, v in config.__dict__.items() if not k.startswith('_')
+                for k, v in list(config.__dict__.items()) if not k.startswith('_')
             })
 
         klass._config = type('Config', (), config_attrs)
         return klass
 
 
-class Service(object):
-    __metaclass__ = ServiceBase
-
+class Service(object, metaclass=ServiceBase):
     def __init__(self, middleware):
         self.logger = Logger(type(self).__class__.__name__).getLogger()
         self.middleware = middleware
@@ -119,7 +117,7 @@ class CoreService(Service):
     def get_jobs(self, filters=None, options=None):
         """Get the long running jobs."""
         jobs = filter_list([
-            i.__encode__() for i in self.middleware.get_jobs().all().values()
+            i.__encode__() for i in list(self.middleware.get_jobs().all().values())
         ], filters, options)
         return jobs
 
@@ -141,7 +139,7 @@ class CoreService(Service):
     def get_services(self):
         """Returns a list of all registered services."""
         services = {}
-        for k, v in self.middleware.get_services().items():
+        for k, v in list(self.middleware.get_services().items()):
             if v._config.private is True:
                 continue
             if isinstance(v, CRUDService):
@@ -151,7 +149,7 @@ class CoreService(Service):
             else:
                 _typ = 'service'
             services[k] = {
-                'config': {k: v for k, v in v._config.__dict__.items() if not k.startswith('_')},
+                'config': {k: v for k, v in list(v._config.__dict__.items()) if not k.startswith('_')},
                 'type': _typ,
             }
         return services

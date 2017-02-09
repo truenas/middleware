@@ -133,7 +133,7 @@ if __name__ == '__main__':
         log.debug("Entered in daemon context")
         try:
             main(args)
-        except Exception, e:
+        except Exception as e:
             log.debug('Exception on run now')
             log_traceback(log=log)
 

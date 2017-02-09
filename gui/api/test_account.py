@@ -57,21 +57,21 @@ class UsersResourceTest(APITestCase):
         self.assertHttpOK(resp)
         data = self.deserialize(resp)
         self.assertTrue({
-            u'id': obj.id,
-            u'bsdusr_uid': 1100,
-            u'bsdusr_username': u'juca',
-            u'bsdusr_shell': u'/usr/local/bin/bash',
-            u'bsdusr_email': u'',
-            u'bsdusr_group': 1101,
-            u'bsdusr_home': u'/nonexistent',
-            u'bsdusr_full_name': u'Juca Xunda',
-            u'bsdusr_builtin': False,
-            u'bsdusr_unixhash': u'*',
-            u'bsdusr_smbhash': u'*',
-            u'bsdusr_password_disabled': False,
-            u'bsdusr_locked': False,
-            u'bsdusr_sudo': False,
-            u'bsdusr_sshpubkey': u'',
+            'id': obj.id,
+            'bsdusr_uid': 1100,
+            'bsdusr_username': 'juca',
+            'bsdusr_shell': '/usr/local/bin/bash',
+            'bsdusr_email': '',
+            'bsdusr_group': 1101,
+            'bsdusr_home': '/nonexistent',
+            'bsdusr_full_name': 'Juca Xunda',
+            'bsdusr_builtin': False,
+            'bsdusr_unixhash': '*',
+            'bsdusr_smbhash': '*',
+            'bsdusr_password_disabled': False,
+            'bsdusr_locked': False,
+            'bsdusr_sudo': False,
+            'bsdusr_sshpubkey': '',
         } in data)
 
     def test_Update(self):
@@ -209,10 +209,10 @@ class GroupsResourceTest(APITestCase):
         data = self.deserialize(resp)
         self.assertEqual(data, {
             'id': 2,
-            u'bsdgrp_builtin': False,
-            u'bsdgrp_gid': 1100,
-            u'bsdgrp_group': u'testgroup',
-            u'bsdgrp_sudo': False,
+            'bsdgrp_builtin': False,
+            'bsdgrp_gid': 1100,
+            'bsdgrp_group': 'testgroup',
+            'bsdgrp_sudo': False,
         })
 
     def test_Retrieve(self):
@@ -227,11 +227,11 @@ class GroupsResourceTest(APITestCase):
         self.assertHttpOK(resp)
         data = self.deserialize(resp)
         self.assertTrue({
-            u'id': obj.id,
-            u'bsdgrp_builtin': False,
-            u'bsdgrp_gid': 1100,
-            u'bsdgrp_group': u'testgroup',
-            u'bsdgrp_sudo': False,
+            'id': obj.id,
+            'bsdgrp_builtin': False,
+            'bsdgrp_gid': 1100,
+            'bsdgrp_group': 'testgroup',
+            'bsdgrp_sudo': False,
         } in data)
 
     def test_Update(self):

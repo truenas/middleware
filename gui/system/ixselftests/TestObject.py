@@ -1,4 +1,4 @@
-from __future__ import print_function
+
 
 from . import (_module_dir, _module_name)
 from . import TestStatus

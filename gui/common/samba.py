@@ -99,7 +99,7 @@ class Samba4(object):
         try:
             buf = buf[0][1]
             for line in buf.splitlines():
-                print >> sys.stdout, "%s" % line
+                print("%s" % line, file=sys.stdout)
 
         except:
             pass
@@ -230,11 +230,11 @@ class Samba4(object):
         try:
             with open(sentinel_file, 'w') as f:
                 f.close()
-            os.chmod(sentinel_file, 0400)
+            os.chmod(sentinel_file, 0o400)
             ret = True
 
         except Exception as e:
-            print >> sys.stderr, "Unable to create %s: %s" % (sentinel_file, e)
+            print("Unable to create %s: %s" % (sentinel_file, e), file=sys.stderr)
             ret = False
 
         return ret
@@ -248,7 +248,7 @@ class Samba4(object):
                 ret = True
 
             except Exception as e:
-                print >> sys.stderr, "Unable to remove %s: %s" % (sentinel_file, e)
+                print("Unable to remove %s: %s" % (sentinel_file, e), file=sys.stderr)
                 ret = False
 
         return ret

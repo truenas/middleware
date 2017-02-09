@@ -109,7 +109,7 @@ class JobsQueue(object):
         # waiting for the same lock
         self.queue_event.set()
 
-    def next(self):
+    def __next__(self):
         """
         This is a blocking method.
         Returns when there is a new job ready to run.
@@ -139,7 +139,7 @@ class JobsQueue(object):
 
     def run(self):
         while True:
-            job = self.next()
+            job = next(self)
             gevent.spawn(job.run, self)
 
 

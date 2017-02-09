@@ -25,7 +25,7 @@
 # SUCH DAMAGE.
 #
 
-import cPickle as pickle
+import pickle as pickle
 import logging
 import os
 import re
@@ -309,7 +309,7 @@ if len(mp_to_task_map) > 0:
                         else:
                             snapshots[(fs, snap_ret_policy, False)] = snap_infodict
 
-    list_mp = mp_to_task_map.keys()
+    list_mp = list(mp_to_task_map.keys())
 
     for mpkey in list_mp:
         tasklist = mp_to_task_map[mpkey]
@@ -339,8 +339,8 @@ if len(mp_to_task_map) > 0:
     # exists with that name.  If the snapshot task on tank/b runs first then
     # the entire recursive snapshot task on tank will fail, and the next minute it
     # will run again.
-    rec = [x for x in mp_to_task_map.keys() if x[2] is True]
-    nonrec = [x for x in mp_to_task_map.keys() if x[2] is False]
+    rec = [x for x in list(mp_to_task_map.keys()) if x[2] is True]
+    nonrec = [x for x in list(mp_to_task_map.keys()) if x[2] is False]
     for nr in nonrec:
         for r in rec:
             if (nr[0] + '/').startswith(r[0] + '/') and nr[1] == r[1]:
@@ -353,7 +353,7 @@ if len(mp_to_task_map) > 0:
                     log.warn("Error removing snapshot task: %s" % nr[0])
                 break
 
-    for mpkey, tasklist in mp_to_task_map.items():
+    for mpkey, tasklist in list(mp_to_task_map.items()):
         fs, expire, recursive = mpkey
         if recursive:
             rflag = ' -r'

@@ -62,7 +62,7 @@ log = logging.getLogger('account.views')
 def home(request):
 
     view = appPool.hook_app_index('account', request)
-    view = filter(None, view)
+    view = [_f for _f in view if _f]
     if view:
         return view[0]
 
@@ -303,7 +303,7 @@ def login_wrapper(
     # Overload hook_app_index to shortcut passive node
     # Doing that in another layer will use too many reasources
     view = appPool.hook_app_index('account_login', request)
-    view = filter(None, view)
+    view = [_f for _f in view if _f]
     if view:
         return view[0]
 

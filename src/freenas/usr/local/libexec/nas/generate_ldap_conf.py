@@ -28,7 +28,7 @@ def ldap_conf_ldap(client, ldap_conf):
         f.write("TLS_REQCERT allow\n")
 
     f.close()
-    os.chmod(ldap_conf, 0644)
+    os.chmod(ldap_conf, 0o644)
 
 
 def ldap_conf_activedirectory(client, ldap_conf):
@@ -74,7 +74,7 @@ def ldap_conf_activedirectory(client, ldap_conf):
             if key in config:
                 f.write("%s %s\n" % (key, config[key]))
         f.close()
-    os.chmod(ldap_conf, 0644)
+    os.chmod(ldap_conf, 0o644)
 
 
 def main():

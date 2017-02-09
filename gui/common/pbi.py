@@ -744,7 +744,7 @@ class pbid(pbi_base):
             kq = select.kqueue()
             kq.control(evts, 0, 0)
             timeout = True
-            for i in xrange(30):
+            for i in range(30):
                 kq.control(None, 2, 1)
                 if len(glob.glob('%s/*.time' % PBID_INDEXDIR)) > 0:
                     timeout = False

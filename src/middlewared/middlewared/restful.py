@@ -93,7 +93,7 @@ class RESTfulAPI(object):
         # Keep methods cached for future lookups
         self._methods = {}
         self._methods_by_service = defaultdict(dict)
-        for methodname, method in self.middleware.call('core.get_methods').items():
+        for methodname, method in list(self.middleware.call('core.get_methods').items()):
             self._methods[methodname] = method
             self._methods_by_service[methodname.rsplit('.', 1)[0]][methodname] = method
 
@@ -103,7 +103,7 @@ class RESTfulAPI(object):
         return self.app
 
     def register_resources(self):
-        for name, service in self.middleware.call('core.get_services').items():
+        for name, service in list(self.middleware.call('core.get_services').items()):
 
             kwargs = {}
             blacklist_methods = []
@@ -119,11 +119,11 @@ class RESTfulAPI(object):
             if service['type'] == 'crud':
                 kwargs['get'] = '{}.query'.format(name)
                 kwargs['post'] = '{}.create'.format(name)
-                blacklist_methods.extend(kwargs.values())
+                blacklist_methods.extend(list(kwargs.values()))
             elif service['type'] == 'config':
                 kwargs['get'] = '{}.config'.format(name)
                 kwargs['put'] = '{}.update'.format(name)
-                blacklist_methods.extend(kwargs.values())
+                blacklist_methods.extend(list(kwargs.values()))
 
             service_resource = Resource(self, self.middleware, name.replace('.', '/'), **kwargs)
 
@@ -137,10 +137,10 @@ class RESTfulAPI(object):
                     'delete': '{}.delete'.format(name),
                     'put': '{}.update'.format(name),
                 }
-                blacklist_methods.extend(kwargs.values())
+                blacklist_methods.extend(list(kwargs.values()))
                 subresource = Resource(self, self.middleware, 'id/{id}', parent=service_resource, **kwargs)
 
-            for methodname, method in self._methods_by_service[name].items():
+            for methodname, method in list(self._methods_by_service[name].items()):
                 if methodname in blacklist_methods:
                     continue
                 short_methodname = methodname.rsplit('.', 1)[-1]
@@ -190,7 +190,7 @@ class Resource(object):
             self.put = put
 
         self.rest.app.add_route('/api/v2.0/' + self.get_path(), self)
-        print("add route", self.get_path())
+        print(("add route", self.get_path()))
 
     def __getattr__(self, attr):
         if attr in ('on_get', 'on_post', 'on_delete', 'on_put'):
@@ -219,7 +219,7 @@ class Resource(object):
     def _filterable_args(self, req):
         filters = []
         options = {}
-        for key, val in req.params.items():
+        for key, val in list(req.params.items()):
             if '__' in key:
                 field, op = key.split('__', 1)
             else:

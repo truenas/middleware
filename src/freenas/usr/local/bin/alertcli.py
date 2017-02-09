@@ -42,4 +42,4 @@ import freenasUI.system.alert
 if os.path.exists("/tmp/alert"):
     alert = pickle.load(open("/tmp/alert", "r"))
     for item in alert['alerts']:
-        print item
+        print(item)

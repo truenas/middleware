@@ -33,7 +33,7 @@ import ssl
 import subprocess
 import traceback
 import sys
-import urllib
+import urllib.request, urllib.parse, urllib.error
 from time import sleep
 
 from wsgiref.util import FileWrapper
@@ -76,7 +76,7 @@ def _diskcmp(a, b):
 def home(request):
 
     view = appPool.hook_app_index('storage', request)
-    view = filter(None, view)
+    view = [_f for _f in view if _f]
     if view:
         return view[0]
 
@@ -171,7 +171,7 @@ def volumemanager(request):
     disks = []
     # Grab disk list
     # Root device already ruled out
-    for disk, info in _n.get_disks().items():
+    for disk, info in list(_n.get_disks().items()):
         disks.append(forms.Disk(
             info['devname'],
             info['capacity'],
@@ -205,15 +205,15 @@ def volumemanager(request):
             'serial': d.serial,
         })
 
-    bysize = OrderedDict(sorted(bysize.iteritems(), reverse=True))
+    bysize = OrderedDict(sorted(iter(bysize.items()), reverse=True))
 
     swap = Advanced.objects.latest('id').adv_swapondrive
 
     encwarn = (
-        u'<span style="color: red; font-size:110%%;">%s</span>'
-        u'<p>%s</p>'
-        u'<p>%s</p>'
-        u'<p>%s</p>'
+        '<span style="color: red; font-size:110%%;">%s</span>'
+        '<p>%s</p>'
+        '<p>%s</p>'
+        '<p>%s</p>'
     ) % (
         _('WARNING!'),
         _(
@@ -288,7 +288,7 @@ def volumemanager_zfs(request):
             zpoolfields = re.compile(r'zpool_(.+)')
             zfsextra = [
                 (zpoolfields.search(i).group(1), i, request.POST.get(i))
-                for i in request.POST.keys() if zpoolfields.match(i)
+                for i in list(request.POST.keys()) if zpoolfields.match(i)
             ]
 
     else:
@@ -545,7 +545,7 @@ def dataset_edit(request, dataset_name):
                     request,
                     message=_("Dataset successfully edited."))
             else:
-                for field, err in errors.items():
+                for field, err in list(errors.items()):
                     dataset_form._errors[field] = dataset_form.error_class([
                         err,
                     ])
@@ -666,7 +666,7 @@ def zvol_edit(request, name):
                     request,
                     message=_("Zvol successfully edited."))
             else:
-                for field, err in errors.items():
+                for field, err in list(errors.items()):
                     form._errors[field] = form.error_class([
                         err,
                     ])
@@ -680,7 +680,7 @@ def zvol_edit(request, name):
 
 
 def mp_permission(request, path):
-    path = urllib.unquote_plus(path)
+    path = urllib.parse.unquote_plus(path)
     # FIXME: dojo cannot handle urls partially urlencoded %2F => /
     if not path.startswith('/'):
         path = '/' + path
@@ -880,7 +880,7 @@ def volume_detach(request, vid):
     usedsize = humanize_size(usedbytes)
     services = {
         key: val
-        for key, val in volume.has_attachments().items() if len(val) > 0
+        for key, val in list(volume.has_attachments().items()) if len(val) > 0
     }
     if volume.vol_encrypt > 0:
         request.session["allow_gelikey"] = True
@@ -901,8 +901,8 @@ def volume_detach(request, vid):
                     message=_("The volume has been successfully detached"),
                     events=events,
                 )
-            except ServiceFailed, e:
-                return JsonResp(request, error=True, message=unicode(e))
+            except ServiceFailed as e:
+                return JsonResp(request, error=True, message=str(e))
     else:
         form = forms.VolumeExport(instance=volume, services=services)
     return render(request, 'storage/volume_detach.html', {
@@ -1088,7 +1088,7 @@ def disk_wipe_progress(request, devname):
                     except:
                         pass
 
-    except Exception, e:
+    except Exception as e:
         log.warn("Could not check for disk wipe progress: %s", e)
         indeterminate = True
 
@@ -1399,11 +1399,11 @@ def vmwareplugin_datastores(request):
             pwd=password,
             sock_timeout=7,
         )
-        data['value'] = server.get_datastores().values()
+        data['value'] = list(server.get_datastores().values())
         server.disconnect()
-    except Exception, e:
+    except Exception as e:
         data['error'] = True
-        data['errmsg'] = unicode(e).encode('utf8')
+        data['errmsg'] = str(e).encode('utf8')
     return HttpResponse(
         json.dumps(data),
         content_type='application/json',

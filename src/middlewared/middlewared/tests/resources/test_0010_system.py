@@ -7,7 +7,7 @@ class SystemTestCase(RESTTestCase):
         r = self.client.get('system/version')
         self.assertEqual(r.status_code, 200, msg=r.text)
         data = r.json()
-        self.assertIsInstance(data, unicode)
+        self.assertIsInstance(data, str)
 
     def test_041_info(self):
         r = self.client.get('system/info')

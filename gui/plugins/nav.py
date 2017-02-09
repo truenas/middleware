@@ -28,7 +28,7 @@ from django.utils.translation import ugettext_lazy as _
 from freenasUI.support.utils import jails_enabled
 
 NAME = _('Plugins')
-ICON = u'PluginIcon'
+ICON = 'PluginIcon'
 BLACKLIST = [
     'Plugins',
     'Available',

@@ -47,24 +47,24 @@ if sanity:
             domaincontroller_enabled() or
             ldap_enabled() or
             nt4_enabled()):
-        print "A directory service is enabled, aborting without making changes."
+        print("A directory service is enabled, aborting without making changes.")
         exit(1)
 
-    print "detected SID: %s\n" % sidval
+    print("detected SID: %s\n" % sidval)
     from freenasUI.services.models import CIFS
     cifs = CIFS.objects.all()[0]
-    print "database SID: %s\n" % cifs.cifs_SID
+    print("database SID: %s\n" % cifs.cifs_SID)
     if cifs.cifs_SID != sidval:
         cifs.cifs_SID = sidval
-        print "Saving detected SID to the database"
+        print("Saving detected SID to the database")
         cifs.save()
-        print "Please either reboot the system or run the following commands as root:"
-        print "service samba_server stop"
-        print "service ix-pre-samba start"
-        print "service samba_server start"
+        print("Please either reboot the system or run the following commands as root:")
+        print("service samba_server stop")
+        print("service ix-pre-samba start")
+        print("service samba_server start")
     else:
-        print "Database SID is the same as the detected SID. Nothing to do."
+        print("Database SID is the same as the detected SID. Nothing to do.")
         exit(0)
 else:
-    print "Multiple SIDs detected, aborting without making changes."
+    print("Multiple SIDs detected, aborting without making changes.")
     exit(2)

@@ -10,7 +10,7 @@ from dojango.forms import widgets
 class IPNetworkWidget(widgets.TextInput):
     def render(self, name, value, attrs=None):
         if isinstance(value, _IPAddrBase):
-            value = u'%s' % value
+            value = '%s' % value
         return super(IPNetworkWidget, self).render(name, value, attrs)
 
 
@@ -73,7 +73,7 @@ class IPNetworkField(models.Field):
 
         try:
             return IPNetwork(value.encode('latin-1'))
-        except Exception, e:
+        except Exception as e:
             raise ValidationError("Invalid IP address: %s" % e)
 
     def get_prep_lookup(self, lookup_type, value):
@@ -88,7 +88,7 @@ class IPNetworkField(models.Field):
     def get_prep_value(self, value):
         if isinstance(value, _IPAddrBase):
             value = '%s' % value
-        return unicode(value)
+        return str(value)
 
     def formfield(self, **kwargs):
         defaults = {
@@ -112,7 +112,7 @@ class IPAddressFormFieldBase(forms.CharField):
         else:
             try:
                 return IPAddress(value.encode('latin-1'))
-            except Exception, e:
+            except Exception as e:
                 raise ValidationError("Invalid IP address: %s" % e)
 
 
@@ -134,7 +134,7 @@ class IP4AddressFormField(IPAddressFormFieldBase):
         else:
             try:
                 return IPAddress(value.encode('latin-1'), version=4)
-            except Exception, e:
+            except Exception as e:
                 raise ValidationError("Invalid IPv4 address: %s" % e)
 
     def validate(self, value):
@@ -154,7 +154,7 @@ class IP6AddressFormField(IPAddressFormFieldBase):
         else:
             try:
                 return IPAddress(value.encode('latin-1'), version=6)
-            except Exception, e:
+            except Exception as e:
                 raise ValidationError("Invalid IPv6 address: %s" % e)
 
     def validate(self, value):
@@ -195,7 +195,7 @@ class IPAddressFieldBase(models.Field):
             value = '%s' % value
         if value is None:
             return ''
-        return unicode(value)
+        return str(value)
 
 
 class IPAddressField(IPAddressFieldBase):

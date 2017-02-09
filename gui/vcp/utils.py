@@ -25,12 +25,12 @@
 #
 #####################################################################
 
-from __future__ import with_statement
+
 
 import shutil
 import os
 import base64
-import ConfigParser
+import configparser
 import subprocess
 import time
 from contextlib import closing
@@ -38,7 +38,7 @@ from subprocess import Popen, PIPE
 from django.conf import settings
 from Crypto.Cipher import DES
 from zipfile import ZipFile
-from ConfigParser import SafeConfigParser
+from configparser import SafeConfigParser
 
 
 def vcp_enabled():
@@ -59,11 +59,11 @@ def get_management_ips():
     p1 = Popen(["ifconfig", "-lu"], stdin=PIPE, stdout=PIPE)
     p1.wait()
     int_list = p1.communicate()[0].split('\n')[0].split(' ')
-    int_list = filter(lambda y: y not in (
+    int_list = [y for y in int_list if y not in (
         'lo0',
         'pfsync0',
         'pflog0',
-    ), int_list)
+    )]
     str_IP = []
     str_IP.append('--Select--')
     ifaces = {}
@@ -289,7 +289,7 @@ def create_propertyFile(
         port,
         enc_key):
     try:
-        Config = ConfigParser.ConfigParser()
+        Config = configparser.ConfigParser()
         cfgfile = open(fpath, 'w')
         Config.add_section('installation_parameter')
         Config.set('installation_parameter', 'ip', host_ip)

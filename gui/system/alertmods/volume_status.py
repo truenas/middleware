@@ -5,9 +5,8 @@ from freenasUI.system.alert import alertPlugins, Alert, BaseAlert
 from freenasUI.middleware.notifier import notifier
 
 
-class VolumeStatusAlert(BaseAlert):
+class VolumeStatusAlert(BaseAlert, metaclass=HookMetaclass):
 
-    __metaclass__ = HookMetaclass
     __hook_reverse_order__ = False
     name = 'VolumeStatus'
 

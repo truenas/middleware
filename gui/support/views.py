@@ -245,7 +245,7 @@ def ticket_categories(request):
 
     if success:
         data['categories'] = OrderedDict(
-            sorted([('------', '')] + msg.items(), key=lambda y: y[0].lower())
+            sorted([('------', '')] + list(msg.items()), key=lambda y: y[0].lower())
         )
     else:
         data['message'] = msg

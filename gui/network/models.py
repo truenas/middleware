@@ -145,7 +145,7 @@ class GlobalConfiguration(Model):
             setattr(self, "_orig_%s" % name, self.__dict__.get(name))
 
     def __unicode__(self):
-        return u'%s' % self.id
+        return '%s' % self.id
 
     def get_hostname(self):
         _n = notifier()
@@ -267,7 +267,7 @@ class Interfaces(Model):
     def __unicode__(self):
         if not self.int_name:
             return self.int_interface
-        return u'%s' % self.int_name
+        return '%s' % self.int_name
 
     def __init__(self, *args, **kwargs):
         super(Interfaces, self).__init__(*args, **kwargs)
@@ -289,7 +289,7 @@ class Interfaces(Model):
                 random.SystemRandom().choice(
                     string.ascii_letters + string.digits
                 )
-                for n in xrange(16)
+                for n in range(16)
             ])
         return super(Interfaces, self).save(*args, **kwargs)
 
@@ -414,11 +414,11 @@ class Alias(Model):
 
     def __unicode__(self):
         if self.alias_v4address:
-            return u'%s:%s' % (
+            return '%s:%s' % (
                 self.alias_interface.int_name,
                 self.alias_v4address)
         elif self.alias_v6address:
-            return u'%s:%s' % (
+            return '%s:%s' % (
                 self.alias_interface.int_name,
                 self.alias_v6address)
 
@@ -478,10 +478,10 @@ class VLAN(Model):
         ordering = ["vlan_vint"]
 
     class FreeAdmin:
-        icon_object = u"VLANIcon"
-        icon_model = u"VLANIcon"
-        icon_add = u"AddVLANIcon"
-        icon_view = u"ViewAllVLANsIcon"
+        icon_object = "VLANIcon"
+        icon_model = "VLANIcon"
+        icon_add = "AddVLANIcon"
+        icon_view = "ViewAllVLANsIcon"
 
 
 class LAGGInterface(Model):
@@ -575,10 +575,10 @@ class StaticRoute(Model):
         ordering = ["sr_destination", "sr_gateway"]
 
     class FreeAdmin:
-        icon_object = u"StaticRouteIcon"
-        icon_model = u"StaticRouteIcon"
-        icon_add = u"AddStaticRouteIcon"
-        icon_view = u"ViewAllStaticRoutesIcon"
+        icon_object = "StaticRouteIcon"
+        icon_model = "StaticRouteIcon"
+        icon_add = "AddStaticRouteIcon"
+        icon_view = "ViewAllStaticRoutesIcon"
 
     def __unicode__(self):
         return self.sr_destination

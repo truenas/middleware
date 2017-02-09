@@ -46,7 +46,7 @@ from freenasUI.support.utils import jails_enabled
 log = logging.getLogger('jails.nav')
 
 NAME = _('Jails')
-ICON = u'JailIcon'
+ICON = 'JailIcon'
 BLACKLIST = [
     'JailsManager',
     'JailsQuerySet',
@@ -70,8 +70,8 @@ class AddJail(TreeNode):
     gname = 'Jails.Add'
     app_name = 'jails'
     model = 'Jails'
-    name = _(u'Add Jail')
-    icon = u'JailAddIcon'
+    name = _('Add Jail')
+    icon = 'JailAddIcon'
     type = 'object'
     view = 'freeadmin_jails_jails_add'
     order = O_ADDJAIL
@@ -85,8 +85,8 @@ class AddJailTemplate(TreeNode):
     global O_ADDJAILTEMPLATE
 
     gname = 'JailTemplate.Add'
-    name = _(u'Add Jail Templates')
-    icon = u'JailAddIcon'
+    name = _('Add Jail Templates')
+    icon = 'JailAddIcon'
     type = 'object'
     view = 'freeadmin_jails_jailtemplate_add'
     order = O_ADDJAILTEMPLATE
@@ -100,7 +100,7 @@ class ViewJails(TreeNode):
     global O_VIEWJAIL
 
     gname = 'Jails.View'
-    name = _(u'View Jails')
+    name = _('View Jails')
     icon = 'JailIcon'
     type = 'openjails'
     order = O_VIEWJAIL
@@ -114,7 +114,7 @@ class ViewJailTemplate(TreeNode):
     global O_VIEWJAILTEMPLATE
 
     gname = 'JailTemplate.View'
-    name = _(u'View Jail Templates')
+    name = _('View Jail Templates')
     icon = 'JailIcon'
     type = 'openjails'
     order = O_VIEWJAILTEMPLATE
@@ -129,8 +129,8 @@ class ViewJailsConfiguration(TreeNode):
 
     gname = 'JailsConfiguration'
     append_to = 'jails'
-    name = _(u'Configuration')
-    icon = u'SettingsIcon'
+    name = _('Configuration')
+    icon = 'SettingsIcon'
     type = 'openjails'
     order = O_JAILSCONFIGURATION
 
@@ -144,7 +144,7 @@ def plugin_fetch(args):
         plugin.id
     )
     try:
-        opener = urllib2.build_opener()
+        opener = urllib.request.build_opener()
         opener.addheaders = [(
             'Cookie', 'sessionid=%s' % (
                 request.COOKIES.get("sessionid", ''),
@@ -156,7 +156,7 @@ def plugin_fetch(args):
         if not data:
             log.warn(_("Empty data returned from %s") % (url,))
 
-    except Exception, e:
+    except Exception as e:
         log.warn(_("Couldn't retrieve %(url)s: %(error)s") % {
             'url': url,
             'error': e,
@@ -219,7 +219,7 @@ def init(tree_roots, nav, request):
 
 
 class Base(object):
-    def new_jail_node(self, jail, icon=u'JailIcon'):
+    def new_jail_node(self, jail, icon='JailIcon'):
         jail_node = TreeNode()
 
         jail_node.gname = jail.jail_host
@@ -237,7 +237,7 @@ class Base(object):
         jail_node_view.view = 'jail_edit'
         jail_node_view.kwargs = {'id': jail.id}
         jail_node_view.model = 'Jails'
-        jail_node_view.icon = u'SettingsIcon'
+        jail_node_view.icon = 'SettingsIcon'
         jail_node_view.app_name = 'jails'
 
         return jail_node_view
@@ -246,8 +246,8 @@ class Base(object):
         storage_node = TreeNode()
 
         storage_node.gname = 'Storage'
-        storage_node.name = _(u'Storage')
-        storage_node.icon = u'JailStorageIcon'
+        storage_node.name = _('Storage')
+        storage_node.icon = 'JailStorageIcon'
 
         return storage_node
 
@@ -260,7 +260,7 @@ class Base(object):
         storage_node_view.view = 'freeadmin_jails_jailmountpoint_edit'
         storage_node_view.kwargs = {'oid': nmp.id}
         storage_node_view.model = 'JailMountPoint'
-        storage_node_view.icon = u'SettingsIcon'
+        storage_node_view.icon = 'SettingsIcon'
         storage_node_view.app_name = 'jails'
 
         return storage_node_view
@@ -274,7 +274,7 @@ class Base(object):
         storage_node_add.view = 'jail_storage_add'
         storage_node_add.kwargs = {'jail_id': jail.id}
         storage_node_add.model = 'JailMountPoint'
-        storage_node_add.icon = u'JailStorageIcon'
+        storage_node_add.icon = 'JailStorageIcon'
         storage_node_add.app_name = 'jails'
 
         return storage_node_add

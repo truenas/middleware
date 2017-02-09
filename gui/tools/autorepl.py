@@ -24,7 +24,7 @@
 # SUCH DAMAGE.
 #
 
-import cPickle
+import pickle
 import datetime
 import logging
 import os
@@ -229,7 +229,7 @@ log.debug("temp log file: %s" % (templog, ))
 try:
     with open(REPL_RESULTFILE, 'rb') as f:
         data = f.read()
-    results = cPickle.loads(data)
+    results = pickle.loads(data)
 except:
     results = {}
 
@@ -237,7 +237,7 @@ except:
 def write_results():
     global results
     with open(REPL_RESULTFILE, 'w') as f:
-        f.write(cPickle.dumps(results))
+        f.write(pickle.dumps(results))
 
 system_re = re.compile('^[^/]+/.system.*')
 
@@ -482,7 +482,7 @@ Hello,
 
     previously_deleted = "/"
     l = len(localfs)
-    total_datasets = len(tasks.keys())
+    total_datasets = len(list(tasks.keys()))
     if total_datasets == 0:
         results[replication.id] = 'Up to date'
         write_results()
@@ -496,7 +496,7 @@ Hello,
     # This is because in case datasets being remounted we need to make sure
     # tank/foo is mounted after tank/foo/bar and the latter does not get hidden.
     # See #12455
-    for dataset in sorted(tasks.keys(), key=lambda y: len(y.split('/')), reverse=True):
+    for dataset in sorted(list(tasks.keys()), key=lambda y: len(y.split('/')), reverse=True):
         tasklist = tasks[dataset]
         current_dataset += 1
         reached_last = (current_dataset == total_datasets)

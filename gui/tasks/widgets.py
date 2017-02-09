@@ -49,4 +49,4 @@ class CloudSyncWidget(DojoWidgetMixin, Widget):
             ).replace('"', '&quot;')),
         }
         final_attrs = self.build_attrs(attrs, name=name, **extra_attrs)
-        return mark_safe(u'<div%s></div>' % (flatatt(final_attrs),))
+        return mark_safe('<div%s></div>' % (flatatt(final_attrs),))

@@ -80,7 +80,7 @@ def auth_group_config(auth_tag=None, auth_list=None, auth_type=None, initiator=N
             elif " " in initiator.iscsi_target_initiator_initiators:
                 sep = " "
             inames = initiator.iscsi_target_initiator_initiators.strip('\n').split(sep)
-            inames = filter(lambda x: x != 'ALL' and x != '', inames)
+            inames = [x for x in inames if x != 'ALL' and x != '']
         if initiator.iscsi_target_initiator_auth_network:
             sep = "\n"
             if "," in initiator.iscsi_target_initiator_auth_network:
@@ -88,7 +88,7 @@ def auth_group_config(auth_tag=None, auth_list=None, auth_type=None, initiator=N
             elif " " in initiator.iscsi_target_initiator_auth_network:
                 sep = " "
             inets = initiator.iscsi_target_initiator_auth_network.strip('\n').split(sep)
-            inets = filter(lambda x: x != 'ALL' and x != '', inets)
+            inets = [x for x in inets if x != 'ALL' and x != '']
 
     # If nothing left after filtering, then we are done.
     if not inames and not inets and not auth_list and (auth_type == 'None' or auth_type == 'auto'):
@@ -232,7 +232,7 @@ def main():
         addline("\tserial \"%s\"\n" % (extent.iscsi_target_extent_serial, ))
         padded_serial = extent.iscsi_target_extent_serial
         if not extent.iscsi_target_extent_xen:
-            for i in xrange(31 - len(extent.iscsi_target_extent_serial)):
+            for i in range(31 - len(extent.iscsi_target_extent_serial)):
                 padded_serial += " "
         addline('\tdevice-id "iSCSI Disk      %s"\n' % padded_serial)
         if size != "0":
@@ -334,7 +334,7 @@ def main():
                                                t2e.iscsi_extent.iscsi_target_extent_name))
         addline("}\n\n")
 
-    os.umask(077)
+    os.umask(0o77)
     # Write out the CTL config file
     fh = open(ctl_config, "w")
     for line in cf_contents:

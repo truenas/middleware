@@ -27,7 +27,7 @@
 
 from collections import defaultdict, OrderedDict
 from datetime import datetime
-import cPickle as pickle
+import pickle as pickle
 import json
 import logging
 import math
@@ -210,7 +210,7 @@ class BootEnvRenameForm(Form):
         beadm_names = subprocess.Popen("beadm list | awk '{print $7}'",
                                        shell=True, stdout=subprocess.PIPE,
                                        stderr=subprocess.PIPE).communicate()[0].split('\n')
-        beadm_names = filter(None, beadm_names)
+        beadm_names = [_f for _f in beadm_names if _f]
         if name in beadm_names:
             return True
         else:
@@ -271,7 +271,7 @@ class BootEnvPoolAttachForm(Form):
             capacity = humanize_number_si(int(capacity))
             diskchoices[devname] = "%s (%s)" % (devname, capacity)
 
-        choices = diskchoices.items()
+        choices = list(diskchoices.items())
         choices.sort(key=lambda a: float(
             re.sub(r'^.*?([0-9]+)[^0-9]*([0-9]*).*$', r'\1.\2', a[0])
         ))
@@ -323,7 +323,7 @@ class BootEnvPoolReplaceForm(Form):
             capacity = humanize_number_si(int(capacity))
             diskchoices[devname] = "%s (%s)" % (devname, capacity)
 
-        choices = diskchoices.items()
+        choices = list(diskchoices.items())
         choices.sort(key=lambda a: float(
             re.sub(r'^.*?([0-9]+)[^0-9]*([0-9]*).*$', r'\1.\2', a[0])
         ))
@@ -403,7 +403,7 @@ class InitialWizard(CommonWizard):
     def get_context_data(self, form, **kwargs):
         context = super(InitialWizard, self).get_context_data(form, **kwargs)
         if self.steps.last:
-            context['form_list'] = self.get_form_list().keys()
+            context['form_list'] = list(self.get_form_list().keys())
         return context
 
     def done(self, form_list, **kwargs):
@@ -826,7 +826,7 @@ class InitialWizard(CommonWizard):
                     nt4 = NT4.objects.create()
 
                 nt4data = nt4.__dict__
-                for name, value in cleaned_data.items():
+                for name, value in list(cleaned_data.items()):
                     if not name.startswith('ds_nt4'):
                         continue
                     nt4data[name.replace('ds_', '')] = value
@@ -1547,12 +1547,12 @@ class InitialWizardDSForm(Form):
     def __init__(self, *args, **kwargs):
         super(InitialWizardDSForm, self).__init__(*args, **kwargs)
 
-        for fname, field in NISForm().fields.items():
+        for fname, field in list(NISForm().fields.items()):
             if fname.find('enable') == -1:
                 self.fields['ds_%s' % fname] = field
                 field.required = False
 
-        for fname, field in NT4Form().fields.items():
+        for fname, field in list(NT4Form().fields.items()):
             if (
                 fname.find('enable') == -1 and
                 fname not in NT4Form.advanced_fields
@@ -1561,7 +1561,7 @@ class InitialWizardDSForm(Form):
                 field.required = False
 
         pertype = defaultdict(list)
-        for fname in self.fields.keys():
+        for fname in list(self.fields.keys()):
             if fname.startswith('ds_ad_'):
                 pertype['ad'].append('id_ds-%s' % fname)
             elif fname.startswith('ds_ldap_'):
@@ -1689,7 +1689,7 @@ class InitialWizardDSForm(Form):
         elif cdata.get('ds_type') == 'nis':
             values = []
             empty = True
-            for fname in self.fields.keys():
+            for fname in list(self.fields.keys()):
                 if fname.startswith('ds_nis_'):
                     value = cdata.get(fname)
                     values.append((fname, value))
@@ -1708,7 +1708,7 @@ class InitialWizardDSForm(Form):
         elif cdata.get('ds_type') == 'nt4':
             values = []
             empty = True
-            for fname in self.fields.keys():
+            for fname in list(self.fields.keys()):
                 if fname.startswith('ds_nt4_'):
                     value = cdata.get(fname)
                     values.append((fname, value))
@@ -1812,14 +1812,14 @@ class SharesBaseFormSet(BaseFormSet):
         Returns an array suitable to use in the dojo memory store.
         """
         keys = defaultdict(dict)
-        for key, val in self.data.items():
+        for key, val in list(self.data.items()):
             reg = self.RE_FIELDS.search(key)
             if not reg:
                 continue
             idx, name = reg.groups()
             keys[idx][name] = val
 
-        return json.dumps(keys.values())
+        return json.dumps(list(keys.values()))
 
     def errors_json(self):
         return json.dumps(self.errors)
@@ -1895,7 +1895,7 @@ class InitialWizardVolumeForm(Form):
     def _get_unused_disks_by_size(cls):
         disks = cls._get_unused_disks()
         bysize = defaultdict(list)
-        for disk, attrs in disks.items():
+        for disk, attrs in list(disks.items()):
             size = int(attrs['capacity'])
             # Some disks might have a few sectors of difference.
             # We still want to group them together.
@@ -1907,7 +1907,7 @@ class InitialWizardVolumeForm(Form):
     @staticmethod
     def _higher_disks_group(bysize):
         higher = (None, 0)
-        for size, _disks in bysize.items():
+        for size, _disks in list(bysize.items()):
             if len(_disks) > higher[1]:
                 higher = (size, len(_disks))
         return higher
@@ -1942,7 +1942,7 @@ class InitialWizardVolumeForm(Form):
             ),
             ('stripe', lambda y: True),
         ))
-        for name, func in check.items():
+        for name, func in list(check.items()):
             if func(num):
                 return name
         return 'stripe'
@@ -2052,7 +2052,7 @@ class InitialWizardVolumeForm(Form):
 
     def _get_disk_size(self, disk, bysize):
         size = None
-        for _size, disks in bysize.items():
+        for _size, disks in list(bysize.items()):
             if disk in disks:
                 size = _size
                 break
@@ -2061,7 +2061,7 @@ class InitialWizardVolumeForm(Form):
     def _groups_to_disks_size(self, bysize, groups, swapsize):
         size = 0
         disks = []
-        for group in groups.values():
+        for group in list(groups.values()):
             lower = None
             for disk in group['disks']:
                 _size = self._get_disk_size(disk, bysize)
@@ -2176,7 +2176,7 @@ class InitialWizardSystemForm(Form):
     def __init__(self, *args, **kwargs):
         super(InitialWizardSystemForm, self).__init__(*args, **kwargs)
         self._instance = models.Email.objects.order_by('-id')[0]
-        for fname, field in EmailForm(instance=self._instance).fields.items():
+        for fname, field in list(EmailForm(instance=self._instance).fields.items()):
             self.fields[fname] = field
             field.initial = getattr(self._instance, fname, None)
             field.required = False
@@ -2193,7 +2193,7 @@ class InitialWizardSystemForm(Form):
     def clean(self):
         em = EmailForm(self.cleaned_data, instance=self._instance)
         if self.cleaned_data.get('em_fromemail') and not em.is_valid():
-            for fname, errors in em._errors.items():
+            for fname, errors in list(em._errors.items()):
                 self._errors[fname] = errors
         return self.cleaned_data
 
@@ -2486,7 +2486,7 @@ class CertificateAuthorityCreateInternalForm(ModelForm):
             crypto.dump_certificate(crypto.FILETYPE_PEM, cert)
         self.instance.cert_privatekey = \
             crypto.dump_privatekey(crypto.FILETYPE_PEM, key)
-        self.instance.cert_serial = 02
+        self.instance.cert_serial = 0o2
 
         super(CertificateAuthorityCreateInternalForm, self).save()
 
@@ -2627,7 +2627,7 @@ class CertificateAuthorityCreateIntermediateForm(ModelForm):
         ])
 
         cert.set_serial_number(signing_cert.cert_serial)
-        self.instance.cert_serial = 03
+        self.instance.cert_serial = 0o3
         sign_certificate(cert, signkey, self.instance.cert_digest_algorithm)
 
         self.instance.cert_certificate = \

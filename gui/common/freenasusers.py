@@ -150,7 +150,7 @@ class FreeNAS_Local_Group(object):
     def __get_group(self, group, data=None):
         if not data and (
             isinstance(group, int) or (
-                isinstance(group, (str, unicode)) and group.isdigit()
+                isinstance(group, str) and group.isdigit()
             )
         ):
             objects = bsdGroups_objects(bsdgrp_gid=group)
@@ -234,7 +234,7 @@ class FreeNAS_Groups(object):
 
         self.__bsd_groups = []
         objects = bsdGroups_objects()
-        for group, obj in objects.items():
+        for group, obj in list(objects.items()):
             self.__bsd_groups.append(FreeNAS_Group(group, data=obj, dflags=0))
 
     def __len__(self):
@@ -266,7 +266,7 @@ class FreeNAS_Local_User(object):
     def __get_user(self, user, data=None):
         if not data and (
             isinstance(user, int) or
-            (isinstance(user, (str, unicode)) and user.isdigit())
+            (isinstance(user, str) and user.isdigit())
         ):
             objects = bsdUsers_objects(bsdusr_uid=user)
             if objects:
@@ -351,7 +351,7 @@ class FreeNAS_Users(object):
 
         self.__bsd_users = []
         objects = bsdUsers_objects()
-        for username, obj in objects.items():
+        for username, obj in list(objects.items()):
             self.__bsd_users.append(
                 FreeNAS_User(username, data=obj, dflags=0)
             )

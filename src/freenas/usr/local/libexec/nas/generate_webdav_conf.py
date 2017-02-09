@@ -48,7 +48,7 @@ def _chownrecur(path, uid, gid):
 
 
 def dav_passwd_change(passwd, auth_type):
-    if isinstance(passwd, unicode):
+    if isinstance(passwd, str):
         passwd = passwd.encode('utf8')
     if auth_type == 'basic':
         with open("/etc/local/apache24/webdavhtbasic", "wb+") as f:
@@ -127,7 +127,7 @@ def main():
     # one. Take care of necessary permissions whilst creating it!
     oscmd = "/etc/local/apache24/var"
     if not os.path.isdir(oscmd):
-        os.mkdir(oscmd, 0774)
+        os.mkdir(oscmd, 0o774)
     _chownrecur(oscmd, pwd.getpwnam("webdav").pw_uid, grp.getgrnam("webdav").gr_gid)
 
     # Now getting to the actual webdav share details and all

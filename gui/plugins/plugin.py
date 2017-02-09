@@ -4,7 +4,7 @@ import os
 import platform
 import requests
 import re
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 
 from django.utils.translation import ugettext as _
 
@@ -106,7 +106,7 @@ class Plugin(object):
                 rv = self.__download(rpath, path)
                 if rv:
                     break
-            except Exception, e:
+            except Exception as e:
                 log.debug(
                     "Failed to download %s (%s): %s",
                     url,
@@ -124,12 +124,12 @@ class Plugin(object):
         return rv
 
     def __download(self, url, path):
-        response = urllib2.urlopen(url)
+        response = urllib.request.urlopen(url)
         try:
             total_size = int(
                 response.info().getheader('Content-Length').strip()
             )
-        except Exception, e:
+        except Exception as e:
             log.debug(
                 "Error getting Content-Length header (%s): %s",
                 type(e).__class__,
@@ -573,7 +573,7 @@ class Available(object):
             file=ie[5],
             hash=ie[3],
             urls=urls,
-            size=(long(ie[9]) * 1024)
+            size=(int(ie[9]) * 1024)
         )
 
     def all(self):

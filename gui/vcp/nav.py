@@ -25,7 +25,7 @@
 #
 #####################################################################
 
-import utils
+from . import utils
 
 from django.utils.translation import ugettext_lazy as _
 from freenasUI.freeadmin.tree import TreeNode
@@ -40,8 +40,8 @@ class VcenterConfigurationView(TreeNode):
     model = 'VcenterConfiguration'
     type = 'openvcp'
     app_name = 'vcenter'
-    name = _(u'vCenter Plugin Configuration')
-    icon = u'SettingsIcon'
+    name = _('vCenter Plugin Configuration')
+    icon = 'SettingsIcon'
 
 
 def init(tree_roots, nav, request):

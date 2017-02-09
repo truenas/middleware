@@ -27,7 +27,7 @@
 import base64
 import logging
 import re
-import urllib
+import urllib.request, urllib.parse, urllib.error
 
 from django.contrib.auth import authenticate
 from django.db.models import FieldDoesNotExist
@@ -233,14 +233,14 @@ class ResourceMixin(object):
             return super(ResourceMixin, self).dispatch(
                 request_type, request, *args, **kwargs
             )
-        except (MiddlewareError, ServiceFailed, UnsupportedFormat), e:
+        except (MiddlewareError, ServiceFailed, UnsupportedFormat) as e:
             log_traceback(log=log)
             raise ImmediateHttpResponse(
                 response=self.error_response(request, {
-                    'error_message': unicode(e),
+                    'error_message': str(e),
                 })
             )
-        except Exception, e:
+        except Exception as e:
             log_traceback(log=log)
             raise
 
@@ -265,7 +265,7 @@ class DojoModelResource(ResourceMixin, ModelResource):
         Dojo aware filtering
         """
         fields = []
-        for key in options.keys():
+        for key in list(options.keys()):
             if RE_SORT.match(key):
                 fields = RE_SORT.search(key).group(1)
                 fields = [f.strip() for f in fields.split(',')]
@@ -312,7 +312,7 @@ class DojoModelResource(ResourceMixin, ModelResource):
 
         # Remove all "private" attributes
         data = dict(bundle.obj.__dict__)
-        for key, val in data.items():
+        for key, val in list(data.items()):
             if key.startswith('_'):
                 del data[key]
                 continue
@@ -338,10 +338,10 @@ class DojoModelResource(ResourceMixin, ModelResource):
         passed to the API and will faill serialization
         """
         querydict = data.copy()
-        for key, val in querydict.items():
+        for key, val in list(querydict.items()):
             if val is None:
                 del querydict[key]
-        querydict = QueryDict(urllib.urlencode(querydict, doseq=True))
+        querydict = QueryDict(urllib.parse.urlencode(querydict, doseq=True))
 
         # Allow one form validation for each method
         method_validation = '%s_validation' % bundle.request.method.lower()
@@ -394,16 +394,14 @@ class DojoModelResource(ResourceMixin, ModelResource):
         return bundle
 
 
-class DojoResource(ResourceMixin, Resource):
-
-    __metaclass__ = DjangoDeclarativeMetaclass
+class DojoResource(ResourceMixin, Resource, metaclass=DjangoDeclarativeMetaclass):
 
     def _apply_sorting(self, options=None):
         """
         Dojo aware filtering
         """
         fields = []
-        for key in options.keys():
+        for key in list(options.keys()):
             if RE_SORT.match(key):
                 fields = RE_SORT.search(key).group(1)
                 fields = [f.strip() for f in fields.split(',')]

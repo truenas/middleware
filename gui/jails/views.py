@@ -148,7 +148,7 @@ def jail_start(request, id):
                 message=_("Jail successfully started.")
             )
 
-        except Exception, e:
+        except Exception as e:
             return JsonResp(request, error=True, message=repr(e))
 
     else:
@@ -169,7 +169,7 @@ def jail_stop(request, id):
                 message=_("Jail successfully stopped.")
             )
 
-        except Exception, e:
+        except Exception as e:
             return JsonResp(request, error=True, message=repr(e))
 
     else:
@@ -191,7 +191,7 @@ def jail_restart(request, id):
                 message=_("Jail successfully restarted.")
             )
 
-        except Exception, e:
+        except Exception as e:
             return JsonResp(request, error=True, message=repr(e))
 
     else:
@@ -213,7 +213,7 @@ def jail_delete(request, id):
             )
         except MiddlewareError:
             raise
-        except Exception, e:
+        except Exception as e:
             return JsonResp(request, error=True, message=repr(e))
 
     else:
@@ -508,7 +508,7 @@ def jail_info(request, id):
 
     try:
         jail = models.Jails.objects.get(pk=id)
-        for k in data.keys():
+        for k in list(data.keys()):
             data[k] = getattr(jail, k)
 
     except:
@@ -530,7 +530,7 @@ def jail_template_info(request, name):
         jt = models.JailTemplate.objects.filter(jt_name=name)
         if jt.exists():
             jt = jt[0]
-            for k in data.keys():
+            for k in list(data.keys()):
                 data[k] = getattr(jt, k)
             data['jt_instances'] = jt.jt_instances
 
@@ -588,7 +588,7 @@ def jail_template_delete(request, id):
             )
         except MiddlewareError:
             raise
-        except Exception, e:
+        except Exception as e:
             return JsonResp(request, error=True, message=repr(e))
 
     else:
@@ -611,7 +611,7 @@ def jailsconfiguration_info(request):
     except:
         pass
 
-    for k in data.keys():
+    for k in list(data.keys()):
         data[k] = getattr(jc, k)
 
     content = json.dumps(data)

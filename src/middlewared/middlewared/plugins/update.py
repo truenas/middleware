@@ -146,7 +146,7 @@ class UpdateService(Service):
         conf.LoadTrainsConfig()
         trains = conf.AvailableTrains() or []
         if trains:
-            trains = trains.keys()
+            trains = list(trains.keys())
         if not data['upd_train'] or data['upd_train'] not in trains:
             return conf.CurrentTrain()
 

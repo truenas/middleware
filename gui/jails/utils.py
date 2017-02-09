@@ -618,7 +618,7 @@ def new_default_plugin_jail(basename):
                 raise MiddlewareError(_("Unable to determine IPv6 for plugin"))
 
     jailname = None
-    for i in xrange(1, 1000):
+    for i in range(1, 1000):
         tmpname = "%s_%d" % (basename, i)
         jails = Jails.objects.filter(jail_host=tmpname)
         if not jails:
@@ -713,7 +713,7 @@ def new_default_plugin_jail(basename):
 
         w.create(**create_args)
 
-    except Exception, e:
+    except Exception as e:
         raise MiddlewareError(_("Failed to install plugin: %s") % e)
 
     jaildir = "%s/%s" % (jc.jc_path, jailname)
@@ -769,7 +769,7 @@ def jail_auto_configure():
     basename = "%s/jails" % volume.vol_name
 
     name = basename
-    for i in xrange(2, 100):
+    for i in range(2, 100):
         datasets = list_datasets(
             path="/mnt/%s" % name,
             recursive=False,
@@ -820,7 +820,7 @@ def add_media_user_and_group(jail_path):
         media_user.bsdusr_group.bsdgrp_group,
         media_user.bsdusr_group.bsdgrp_gid)
     chroot_groupadd_cmd = "/usr/sbin/chroot '%s' %s" % (jail_path, groupadd_cmd)
-    print chroot_groupadd_cmd
+    print(chroot_groupadd_cmd)
 
     userdel_cmd = "/usr/sbin/pw userdel '%s'" % media_user.bsdusr_username
     chroot_userdel_cmd = "/usr/sbin/chroot '%s' %s" % (jail_path, userdel_cmd)

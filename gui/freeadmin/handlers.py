@@ -56,9 +56,9 @@ class SysLogHandler(logging.Handler):
         # Log everything in english for now as console is not unicode ready
         with translation.override('en'):
             if hasattr(record.msg, '_proxy____kw'):
-                record.msg = unicode(record.msg)
+                record.msg = str(record.msg)
             msg = self.format(record)
-        if isinstance(msg, unicode):
+        if isinstance(msg, str):
             msg = msg.encode('utf-8')
         """
         syslog has a character limit per message
@@ -68,7 +68,7 @@ class SysLogHandler(logging.Handler):
         it could be a little higher.
         """
         num_msgs = int(math.ceil(len(msg) / 950.0))
-        for i in xrange(num_msgs):
+        for i in range(num_msgs):
             if num_msgs == i - 1:
                 _msg = msg[950 * i:]
             else:

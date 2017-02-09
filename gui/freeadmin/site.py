@@ -181,7 +181,7 @@ class FreeAdminSite(object):
         ]
 
         # Add in each model's views.
-        for model_admin in self._registry.itervalues():
+        for model_admin in self._registry.values():
             urlpatterns += [
                 url(r'^%s/%s/' % (
                     model_admin.app_label,
@@ -202,7 +202,7 @@ class FreeAdminSite(object):
         from freenasUI.middleware.client import client
 
         view = appPool.hook_app_index('freeadmin', request)
-        view = filter(None, view)
+        view = [_f for _f in view if _f]
         if view:
             return view[0]
 
@@ -260,7 +260,7 @@ class FreeAdminSite(object):
             navtree.generate(request)
             final = navtree.dijitTree(request.user)
             data = json.dumps(final)
-        except Exception, e:
+        except Exception as e:
             log.debug(
                 "Fatal error while generating the tree json: %s",
                 e,

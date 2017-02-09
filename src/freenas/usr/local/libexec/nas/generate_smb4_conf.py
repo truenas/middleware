@@ -53,11 +53,11 @@ log = logging.getLogger('generate_smb4_conf')
 
 def debug_SID(str):
     if str:
-        print >> sys.stderr, "XXX: %s" % str
+        print("XXX: %s" % str, file=sys.stderr)
     p = pipeopen("/usr/local/bin/net -d 0 getlocalsid")
     out, _ = p.communicate()
     if out:
-        print >> sys.stderr, "XXX: %s" % out
+        print("XXX: %s" % out, file=sys.stderr)
 
 
 def smb4_get_system_SID():
@@ -145,20 +145,20 @@ def smb4_set_SID(client):
     if database_SID:
         if not system_SID:
             if not smb4_set_system_SID(database_SID):
-                print >> sys.stderr, "Unable to set SID to %s" % database_SID
+                print("Unable to set SID to %s" % database_SID, file=sys.stderr)
         else:
             if database_SID != system_SID:
                 if not smb4_set_system_SID(database_SID):
-                    print >> sys.stderr, ("Unable to set SID to "
-                                          "%s" % database_SID)
+                    print(("Unable to set SID to "
+                                          "%s" % database_SID), file=sys.stderr)
 
     else:
         if not system_SID:
-            print >> sys.stderr, ("Unable to figure out SID, things are "
-                                  "seriously jacked!")
+            print(("Unable to figure out SID, things are "
+                                  "seriously jacked!"), file=sys.stderr)
 
         if not smb4_set_system_SID(system_SID):
-            print >> sys.stderr, "Unable to set SID to %s" % system_SID
+            print("Unable to set SID to %s" % system_SID, file=sys.stderr)
         else:
             smb4_set_database_SID(client, system_SID)
 
@@ -535,11 +535,11 @@ def set_idmap_rfc2307_secret(client):
         for line in net_out[0].split('\n'):
             if not line:
                 continue
-            print line
+            print(line)
 
     ret = True
     if p.returncode != 0:
-        print >> sys.stderr, "Failed to set idmap secret!"
+        print("Failed to set idmap secret!", file=sys.stderr)
         ret = False
 
     return ret
@@ -678,7 +678,7 @@ def set_ldap_password(client):
             for line in out[1].split('\n'):
                 if not line:
                     continue
-                print line
+                print(line)
 
 
 def add_ldap_conf(client, smb4_conf):
@@ -734,7 +734,7 @@ def add_activedirectory_conf(client, smb4_conf):
 
     try:
         os.makedirs(cachedir)
-        os.chmod(cachedir, 0755)
+        os.chmod(cachedir, 0o755)
     except:
         pass
 
@@ -926,7 +926,7 @@ def generate_smb4_conf(client, smb4_conf, role):
     confset1(smb4_conf, "max log size = 51200")
 
     confset2(smb4_conf, "max open files = %d",
-             long(get_sysctl('kern.maxfilesperproc')) - 25)
+             int(get_sysctl('kern.maxfilesperproc')) - 25)
 
     if cifs.cifs_srv_loglevel and cifs.cifs_srv_loglevel is not True:
         loglevel = cifs.cifs_srv_loglevel
@@ -1079,7 +1079,7 @@ def generate_smb4_shares(client, smb4_shares):
             confset2(smb4_shares, "valid users = %s", valid_users)
 
             if share.cifs_path:
-                cifs_homedir_path = (u"%s/%s" %
+                cifs_homedir_path = ("%s/%s" %
                                      (share.cifs_path, valid_users_path))
                 confset2(smb4_shares, "path = %s",
                          cifs_homedir_path.encode('utf8'))
@@ -1196,24 +1196,24 @@ def generate_smbusers(client):
         for u in users:
             u = Struct(u)
             f.write("%s = %s\n" % (u.bsdusr_username, u.bsdusr_email))
-    os.chmod("/usr/local/etc/smbusers", 0644)
+    os.chmod("/usr/local/etc/smbusers", 0o644)
 
 
 def provision_smb4(client):
     if not client.call('notifier.samba4', 'domain_provision'):
-        print >> sys.stderr, "Failed to provision domain"
+        print("Failed to provision domain", file=sys.stderr)
         return False
 
     if not client.call('notifier.samba4', 'disable_password_complexity'):
-        print >> sys.stderr, "Failed to disable password complexity"
+        print("Failed to disable password complexity", file=sys.stderr)
         return False
 
     if not client.call('notifier.samba4', 'set_min_pwd_length'):
-        print >> sys.stderr, "Failed to set minimum password length"
+        print("Failed to set minimum password length", file=sys.stderr)
         return False
 
     if not client.call('notifier.samba4', 'set_administrator_password'):
-        print >> sys.stderr, "Failed to set administrator password"
+        print("Failed to set administrator password", file=sys.stderr)
         return False
 
     if not client.call('notifier.samba4', 'domain_sentinel_file_create'):
@@ -1245,7 +1245,7 @@ def smb4_setup(client):
     smb4_mkdir("/var/run/samba4")
 
     smb4_mkdir("/var/log/samba4")
-    os.chmod("/var/log/samba4", 0755)
+    os.chmod("/var/log/samba4", 0o755)
 
     smb4_unlink("/usr/local/etc/smb.conf")
     smb4_unlink("/usr/local/etc/smb4.conf")
@@ -1277,15 +1277,15 @@ def smb4_setup(client):
             try:
                 os.rename(statedir, olddir)
             except Exception as e:
-                print >> sys.stderr, "Unable to rename '%s' to '%s' (%s)" % (
-                    statedir, olddir, e)
+                print("Unable to rename '%s' to '%s' (%s)" % (
+                    statedir, olddir, e), file=sys.stderr)
                 sys.exit(1)
 
         try:
             os.symlink(basename_realpath, statedir)
         except Exception as e:
-            print >> sys.stderr, ("Unable to create symlink '%s' -> '%s' (%s)"
-                                  % (basename_realpath, statedir, e))
+            print(("Unable to create symlink '%s' -> '%s' (%s)"
+                                  % (basename_realpath, statedir, e)), file=sys.stderr)
             sys.exit(1)
 
     if os.path.islink(statedir) and not os.path.exists(statedir_realpath):
@@ -1293,9 +1293,9 @@ def smb4_setup(client):
         smb4_mkdir(statedir)
 
     smb4_mkdir("/var/db/samba4/private")
-    os.chmod("/var/db/samba4/private", 0700)
+    os.chmod("/var/db/samba4/private", 0o700)
 
-    os.chmod(statedir, 0755)
+    os.chmod(statedir, 0o755)
 #    smb4_set_SID()
 
 
@@ -1333,7 +1333,7 @@ def do_migration(client, old_samba4_datasets):
         client.call('notifier.destroy_zfs_dataset', old_samba4_datasets[0], True)
 
     except Exception as e:
-        print >> sys.stderr, e
+        print(e, file=sys.stderr)
 
     return True
 
@@ -1362,7 +1362,7 @@ def smb4_import_users(client, smb_conf_path, smb4_tdb, exportfile=None):
             line = line.strip()
             if not line:
                 continue
-            print line
+            print(line)
 
     os.unlink(tmpfile)
     smb4_users = get_smb4_users(client)
@@ -1380,7 +1380,7 @@ def smb4_import_users(client, smb_conf_path, smb4_tdb, exportfile=None):
         smbpasswd_out = p.communicate()
 
         if p.returncode != 0:
-            print >> sys.stderr, "Failed to disable %s" % user
+            print("Failed to disable %s" % user, file=sys.stderr)
             continue
 
         if smbpasswd_out and smbpasswd_out[0]:
@@ -1388,7 +1388,7 @@ def smb4_import_users(client, smb_conf_path, smb4_tdb, exportfile=None):
                 line = line.strip()
                 if not line:
                     continue
-                print line
+                print(line)
 
 
 def smb4_grant_user_rights(user):
@@ -1418,7 +1418,7 @@ def smb4_grant_user_rights(user):
         for line in net_out[0].split('\n'):
             if not line:
                 continue
-            print line
+            print(line)
 
     if p.returncode != 0:
         return False
@@ -1506,21 +1506,21 @@ def smb4_backup_tdbfile(tdb_src, tdb_dst):
         db_r = tdb.open(tdb_src, flags=os.O_RDONLY)
 
     except Exception as e:
-        print >> sys.stderr, "Unable to open %s: %s" % (tdb_src, e)
+        print("Unable to open %s: %s" % (tdb_src, e), file=sys.stderr)
         log.error("Unable to open {0}: {1}".format(tdb_src, e))
         log_traceback(log=log)
         return False
 
     try:
-        db_w = tdb.open(tdb_dst, flags=os.O_RDWR | os.O_CREAT, mode=0600)
+        db_w = tdb.open(tdb_dst, flags=os.O_RDWR | os.O_CREAT, mode=0o600)
 
     except Exception as e:
-        print >> sys.stderr, "Unable to open %s: %s" % (tdb_dst, e)
+        print("Unable to open %s: %s" % (tdb_dst, e), file=sys.stderr)
         log.error("Unable to open {0}: {1}".format(tdb_dst, e))
         log_traceback(log=log)
         return False
 
-    for key in db_r.iterkeys():
+    for key in db_r.keys():
         try:
             db_w.transaction_start()
             db_w[key] = db_r.get(key)
@@ -1528,7 +1528,7 @@ def smb4_backup_tdbfile(tdb_src, tdb_dst):
             db_w.transaction_commit()
 
         except Exception as e:
-            print >> sys.stderr, "Transaction for key %s failed: %s" % (key, e)
+            print("Transaction for key %s failed: %s" % (key, e), file=sys.stderr)
             log.error("Transaction for key {0} failed: {1}".format(key, e))
             log_traceback(log=log)
             db_w.transaction_cancel()
@@ -1544,7 +1544,7 @@ def smb4_restore_tdbfile(tdb_src, tdb_dst):
         db_r = tdb.open(tdb_src, flags=os.O_RDONLY)
 
     except Exception as e:
-        print >> sys.stderr, "Unable to open %s: %s" % (tdb_src, e)
+        print("Unable to open %s: %s" % (tdb_src, e), file=sys.stderr)
         log.error("Unable to open {0}: {1}".format(tdb_src, e))
         log_traceback(log=log)
         return False
@@ -1552,12 +1552,12 @@ def smb4_restore_tdbfile(tdb_src, tdb_dst):
     try:
         db_w = tdb.open(tdb_dst, flags=os.O_RDWR)
     except Exception as e:
-        print >> sys.stderr, "Unable to open %s: %s" % (tdb_dst, e)
+        print("Unable to open %s: %s" % (tdb_dst, e), file=sys.stderr)
         log.error("Unable to open {0}: {1}".format(tdb_dst, e))
         log_traceback(log=log)
         return False
 
-    for key in db_r.iterkeys():
+    for key in db_r.keys():
         try:
             db_w.transaction_start()
 
@@ -1569,7 +1569,7 @@ def smb4_restore_tdbfile(tdb_src, tdb_dst):
             db_w.transaction_commit()
 
         except Exception as e:
-            print >> sys.stderr, "Transaction for key %s failed: %s" % (key, e)
+            print("Transaction for key %s failed: %s" % (key, e), file=sys.stderr)
             log.error("Transaction for key {0} failed: {1}".format(key, e))
             log_traceback(log=log)
             db_w.transaction_cancel()

@@ -24,4 +24,4 @@ class AuthTestCase(RESTTestCase):
         ])
         self.assertEqual(r.status_code, 200, msg=r.text)
         data = r.json()
-        self.assertIsInstance(data, unicode)
+        self.assertIsInstance(data, str)

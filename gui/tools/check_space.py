@@ -103,12 +103,12 @@ def main(argv):
         stdin=subprocess.PIPE)
     output = pipe.communicate()[0]
     if pipe.returncode != 0:
-        print "Dataset not found"
+        print("Dataset not found")
         sys.exit(1)
 
     reg = re.search(r'^%s\b.*' % (args.dataset, ), output, re.M)
     if not reg:
-        print "Dataset not found"
+        print("Dataset not found")
         sys.exit(1)
     line = reg.group(0)
     o_used, o_avail, o_refer = line.split('\t')[1:4]

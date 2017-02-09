@@ -67,7 +67,7 @@ def plugin2graphs(name):
 def index(request):
 
     view = appPool.hook_app_index('reporting', request)
-    view = filter(None, view)
+    view = [_f for _f in view if _f]
     if view:
         return view[0]
 
@@ -110,12 +110,12 @@ def generate(request):
         try:
             os.unlink(path)
             os.close(fd)
-        except OSError, e:
+        except OSError as e:
             log.warn("Failed to remove reporting temp file: %s", e)
 
         response = HttpResponse(data)
         response['Content-type'] = 'image/png'
         return response
-    except Exception, e:
+    except Exception as e:
         log.debug("Failed to generate rrd graph: %s", e, exc_info=True)
         raise

@@ -107,7 +107,7 @@ class NotifierService(Service):
         def serialize(i):
             data = {}
             if isinstance(i, zfs.ZFSList):
-                for k, v in i.items():
+                for k, v in list(i.items()):
                     data[k] = serialize(v)
             elif isinstance(i, (zfs.ZFSVol, zfs.ZFSDataset)):
                 data = i.__dict__

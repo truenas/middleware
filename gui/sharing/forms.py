@@ -168,7 +168,7 @@ class CIFS_ShareForm(ModelForm):
         if path and not os.path.exists(path):
             try:
                 os.makedirs(path)
-            except OSError, e:
+            except OSError as e:
                 raise MiddlewareError(_(
                     'Failed to create %(path)s: %(error)s' % {
                         'path': path,
@@ -307,7 +307,7 @@ class AFP_ShareForm(ModelForm):
             raise forms.ValidationError(
                 _("The umask must be between 000 and 777.")
             )
-        for i in xrange(len(umask)):
+        for i in range(len(umask)):
             if int(umask[i]) > 7 or int(umask[i]) < 0:
                 raise forms.ValidationError(
                     _("The umask must be between 000 and 777.")
@@ -320,7 +320,7 @@ class AFP_ShareForm(ModelForm):
         if path and not os.path.exists(path):
             try:
                 os.makedirs(path)
-            except OSError, e:
+            except OSError as e:
                 raise MiddlewareError(_(
                     'Failed to create %(path)s: %(error)s' % {
                         'path': path,
@@ -488,7 +488,7 @@ class NFS_ShareForm(ModelForm):
                 continue
             if share.nfs_network:
                 used_networks.extend(
-                    map(lambda y: (y, stdev), share.nfs_network.split(" "))
+                    [(y, stdev) for y in share.nfs_network.split(" ")]
                 )
             else:
                 used_networks.append(('0.0.0.0/0', stdev))
@@ -558,7 +558,7 @@ class NFS_SharePathForm(ModelForm):
         if path and not os.path.exists(path):
             try:
                 os.makedirs(path)
-            except OSError, e:
+            except OSError as e:
                 raise MiddlewareError(_(
                     'Failed to create %(path)s: %(error)s' % {
                         'path': path,

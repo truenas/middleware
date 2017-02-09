@@ -35,24 +35,24 @@ class ActiveDirectoryResourceTest(APITestCase):
         self.assertHttpOK(resp)
         data = self.deserialize(resp)
         self.assertEqual(data, {
-            u'id': self._obj.id,
-            u'ad_bindname': u'',
-            u'ad_bindpw': u'',
-            u'ad_allow_trusted_doms': False,
-            u'ad_dcname': u'',
-            u'ad_dns_timeout': 10,
-            u'ad_domainname': u'',
-            u'ad_gcname': u'',
-            u'ad_idmap_backend': u'rid',
-            u'ad_netbiosname': u'NAS',
-            u'ad_timeout': 10,
-            u'ad_unix_extensions': False,
-            u'ad_use_default_domain': False,
-            u'ad_use_keytab': False,
-            u'ad_verbose_logging': False,
-            u'ad_certificate': u'',
-            u'ad_enable': False,
-            u'ad_ssl': u'off',
+            'id': self._obj.id,
+            'ad_bindname': '',
+            'ad_bindpw': '',
+            'ad_allow_trusted_doms': False,
+            'ad_dcname': '',
+            'ad_dns_timeout': 10,
+            'ad_domainname': '',
+            'ad_gcname': '',
+            'ad_idmap_backend': 'rid',
+            'ad_netbiosname': 'NAS',
+            'ad_timeout': 10,
+            'ad_unix_extensions': False,
+            'ad_use_default_domain': False,
+            'ad_use_keytab': False,
+            'ad_verbose_logging': False,
+            'ad_certificate': '',
+            'ad_enable': False,
+            'ad_ssl': 'off',
         })
 
     def test_Update(self):
@@ -107,23 +107,23 @@ class LDAPResourceTest(APITestCase):
         self.assertHttpOK(resp)
         data = self.deserialize(resp)
         self.assertEqual(data, {
-            u'id': self._obj.id,
-            u'ldap_anonbind': False,
-            u'ldap_basedn': u'',
-            u'ldap_groupsuffix': u'',
-            u'ldap_hostname': u'',
-            u'ldap_machinesuffix': u'',
-            u'ldap_passwordsuffix': u'',
-            u'ldap_basedn': u'',
-            u'ldap_bindpw': u'',
-            u'ldap_binddn': u'',
-            u'ldap_ssl': u'off',
-            u'ldap_idmap_backend': u'ldap',
-            u'ldap_usersuffix': u'',
-            u'ldap_sudosuffix': u'',
-            u'ldap_use_default_domain': False,
-            u'ldap_enable': False,
-            u'ldap_certfile': u'',
+            'id': self._obj.id,
+            'ldap_anonbind': False,
+            'ldap_basedn': '',
+            'ldap_groupsuffix': '',
+            'ldap_hostname': '',
+            'ldap_machinesuffix': '',
+            'ldap_passwordsuffix': '',
+            'ldap_basedn': '',
+            'ldap_bindpw': '',
+            'ldap_binddn': '',
+            'ldap_ssl': 'off',
+            'ldap_idmap_backend': 'ldap',
+            'ldap_usersuffix': '',
+            'ldap_sudosuffix': '',
+            'ldap_use_default_domain': False,
+            'ldap_enable': False,
+            'ldap_certfile': '',
         })
 
     def test_Update(self):
@@ -175,12 +175,12 @@ class NISResourceTest(APITestCase):
         self.assertHttpOK(resp)
         data = self.deserialize(resp)
         self.assertEqual(data, {
-            u'id': self._obj.id,
-            u'nis_domain': u'',
-            u'nis_manycast': False,
-            u'nis_secure_mode': False,
-            u'nis_servers': u'',
-            u'nis_enable': False,
+            'id': self._obj.id,
+            'nis_domain': '',
+            'nis_manycast': False,
+            'nis_secure_mode': False,
+            'nis_servers': '',
+            'nis_enable': False,
         })
 
     def test_Update(self):
@@ -233,15 +233,15 @@ class NT4ResourceTest(APITestCase):
         self.assertHttpOK(resp)
         data = self.deserialize(resp)
         self.assertEqual(data, {
-            u'id': self._obj.id,
-            u'nt4_adminname': u'',
-            u'nt4_adminpw': u'',
-            u'nt4_dcname': u'',
-            u'nt4_netbiosname': u'NAS',
-            u'nt4_workgroup': u'',
-            u'nt4_idmap_backend': u'rid',
-            u'nt4_use_default_domain': False,
-            u'nt4_enable': False,
+            'id': self._obj.id,
+            'nt4_adminname': '',
+            'nt4_adminpw': '',
+            'nt4_dcname': '',
+            'nt4_netbiosname': 'NAS',
+            'nt4_workgroup': '',
+            'nt4_idmap_backend': 'rid',
+            'nt4_use_default_domain': False,
+            'nt4_enable': False,
         })
 
     def test_Update(self):

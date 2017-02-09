@@ -243,7 +243,7 @@ class bsdUsers(Model):
         if self.bsdusr_unixhash:
             if self.bsdusr_unixhash == 'x' or self.bsdusr_unixhash == '*':
                 return False
-            if isinstance(raw_password, unicode):
+            if isinstance(raw_password, str):
                 raw_password = raw_password.encode('utf-8')
             return crypt.crypt(
                 raw_password, str(self.bsdusr_unixhash)
@@ -267,7 +267,7 @@ class bsdUsers(Model):
             if delete_group and not gobj.bsdgrp_builtin and count == 0 and count2 == 0:
                 gobj.delete(reload=False, pwdelete=False)
         except:
-            log.warn(u'Failed to delete primary group of %s', self, exc_info=True)
+            log.warn('Failed to delete primary group of %s', self, exc_info=True)
         cifs = CIFS.objects.latest('id')
         if cifs:
             if cifs.cifs_srv_guest == self.bsdusr_username:

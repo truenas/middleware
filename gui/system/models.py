@@ -234,10 +234,10 @@ class NTPServer(Model):
         ordering = ["ntp_address"]
 
     class FreeAdmin:
-        icon_model = u"NTPServerIcon"
-        icon_object = u"NTPServerIcon"
-        icon_view = u"ViewNTPServerIcon"
-        icon_add = u"AddNTPServerIcon"
+        icon_model = "NTPServerIcon"
+        icon_object = "NTPServerIcon"
+        icon_view = "ViewNTPServerIcon"
+        icon_add = "AddNTPServerIcon"
 
 
 class Advanced(Model):
@@ -466,7 +466,7 @@ class Tunable(Model):
     )
 
     def __unicode__(self):
-        return unicode(self.tun_var)
+        return str(self.tun_var)
 
     def delete(self):
         super(Tunable, self).delete()
@@ -481,10 +481,10 @@ class Tunable(Model):
         ordering = ["tun_var"]
 
     class FreeAdmin:
-        icon_model = u"TunableIcon"
-        icon_object = u"TunableIcon"
-        icon_add = u"AddTunableIcon"
-        icon_view = u"ViewTunableIcon"
+        icon_model = "TunableIcon"
+        icon_object = "TunableIcon"
+        icon_add = "AddTunableIcon"
+        icon_view = "ViewTunableIcon"
 
 
 class SystemDataset(Model):
@@ -522,10 +522,10 @@ class SystemDataset(Model):
 
     class FreeAdmin:
         deletable = False
-        icon_model = u"SystemDatasetIcon"
-        icon_object = u"SystemDatasetIcon"
-        icon_view = u"SystemDatasetIcon"
-        icon_add = u"SystemDatasetIcon"
+        icon_model = "SystemDatasetIcon"
+        icon_object = "SystemDatasetIcon"
+        icon_view = "SystemDatasetIcon"
+        icon_add = "SystemDatasetIcon"
 
     def __init__(self, *args, **kwargs):
         super(SystemDataset, self).__init__(*args, **kwargs)
@@ -578,7 +578,7 @@ class Update(Model):
         conf.LoadTrainsConfig()
         trains = conf.AvailableTrains() or []
         if trains:
-            trains = trains.keys()
+            trains = list(trains.keys())
         if not self.upd_train or self.upd_train not in trains:
             return conf.CurrentTrain()
         return self.upd_train
@@ -789,7 +789,7 @@ class CertificateBase(Model):
         self.__load_thingy()
 
         if not os.path.exists(self.cert_root_path):
-            os.mkdir(self.cert_root_path, 0755)
+            os.mkdir(self.cert_root_path, 0o755)
 
     def __unicode__(self):
         return self.cert_name
@@ -943,7 +943,7 @@ class CertificateAuthority(CertificateBase):
 
         self.cert_root_path = "%s/CA" % self.cert_root_path
         if not os.path.exists(self.cert_root_path):
-            os.mkdir(self.cert_root_path, 0755)
+            os.mkdir(self.cert_root_path, 0o755)
 
     def delete(self):
         temp_cert_name = self.cert_name

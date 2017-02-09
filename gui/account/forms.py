@@ -379,10 +379,10 @@ class bsdUsersForm(ModelForm, bsdUserGroupMixin):
                     _("Home directory cannot contain colons")
                 )
 
-            if home == u'/nonexistent':
+            if home == '/nonexistent':
                 return home
 
-            if home.startswith(u'/mnt/'):
+            if home.startswith('/mnt/'):
                 bsdusr_username = self.cleaned_data.get('bsdusr_username', '')
                 saved_home = self.bsdusr_home_saved
 
@@ -449,7 +449,7 @@ class bsdUsersForm(ModelForm, bsdUserGroupMixin):
         if (
             bsdusr_home and cleaned_data.get('bsdusr_sshpubkey') and
             (
-                not bsdusr_home.startswith(u'/mnt/') and (
+                not bsdusr_home.startswith('/mnt/') and (
                     self.instance.id is None or
                     (self.instance.id and self.instance.bsdusr_uid != 0)
                 )
