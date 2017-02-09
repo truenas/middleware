@@ -30,7 +30,7 @@ import re
 from django import template
 from django.forms.forms import BoundField
 from django.utils.html import conditional_escape
-from django.utils.encoding import force_unicode
+from django.utils.encoding import force_str
 
 from freenasUI.system.models import Advanced
 
@@ -64,7 +64,7 @@ class FormRender(template.Node):
         top_errors = form.non_field_errors()
         if top_errors:
             output.append("<tr><td colspan=\"2\">%s</td></tr>" % (
-                force_unicode(top_errors),
+                force_str(top_errors),
             ))
         else:
             if form.prefix:

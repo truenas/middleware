@@ -31,7 +31,7 @@ from django.forms.widgets import Widget, TextInput
 from django.forms.utils import flatatt
 from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe
-from django.utils.encoding import force_unicode
+from django.utils.encoding import force_str
 from django.utils.translation import ugettext_lazy as _
 
 from dojango import forms
@@ -63,7 +63,7 @@ class CronMultiple(DojoWidgetMixin, Widget):
         final_attrs = self.build_attrs(
             attrs, name=name, **{'data-dojo-name': name}
         )
-        final_attrs['value'] = force_unicode(value)
+        final_attrs['value'] = force_str(value)
         if value.startswith('*/'):
             final_attrs['typeChoice'] = "every"
         elif re.search(r'^[0-9].*', value):
