@@ -38,7 +38,7 @@ import syslog
 import ntplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from email.Utils import formatdate
+from email.utils import formatdate
 from datetime import datetime, timedelta
 from django.utils.translation import ugettext_lazy as _
 from lockfile import LockFile, LockTimeout
