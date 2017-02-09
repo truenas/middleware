@@ -58,8 +58,6 @@ class SysLogHandler(logging.Handler):
             if hasattr(record.msg, '_proxy____kw'):
                 record.msg = str(record.msg)
             msg = self.format(record)
-        if isinstance(msg, str):
-            msg = msg.encode('utf-8')
         """
         syslog has a character limit per message
         split the message in chuncks
