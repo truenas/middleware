@@ -47,7 +47,7 @@ class DictField(models.Field):
         return json.dumps(value)
 
     def from_db_value(self, value, expression, connection, context):
-       return self.to_python(value)
+        return self.to_python(value)
 
     def to_python(self, value):
         if not value:
