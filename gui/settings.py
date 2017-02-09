@@ -177,6 +177,7 @@ LOCALE_PATHS = (
 SESSION_ENGINE = 'django.contrib.sessions.backends.file'
 
 DIR_BLACKLIST = [
+    '__pycache__',
     'templates',
     'fnstatic',
     'middleware',
