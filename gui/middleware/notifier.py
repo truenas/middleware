@@ -862,6 +862,7 @@ class notifier:
         self._system("/usr/sbin/service nfsuserd forcestop")
         self._system("/usr/sbin/service gssd forcestop")
         self._system("/usr/sbin/service rpcbind forcestop")
+        self._system("/usr/sbin/service vaaiserver forcestop")
 
     def _start_nfs(self):
         self._system("/usr/sbin/service ix-nfsd quietstart")
@@ -872,6 +873,7 @@ class notifier:
         self._system("/usr/sbin/service nfsd quietstart")
         self._system("/usr/sbin/service statd quietstart")
         self._system("/usr/sbin/service lockd quietstart")
+        self._system("/usr/sbin/service vaaiserver quietstart")
 
     def _force_stop_jail(self):
         self._system("/usr/sbin/service jail forcestop")
