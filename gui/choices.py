@@ -878,7 +878,7 @@ class SERIAL_CHOICES(object):
             pipe = popen("/usr/sbin/devinfo -u | "
                          "awk '/^I\/O ports:/, /^I\/O memory addresses:/' | "
                          "sed -En 's/ *([0-9a-fA-Fx]+).*\(uart[0-9]+\)/\\1/p'")
-            ports = [y for y in pipe.read().strip().strip('\n').split('\n') if True if y else False]
+            ports = [y for y in pipe.read().strip().strip('\n').split('\n') if y]
             if not ports:
                 ports = ['0x2f8']
             for p in ports:
