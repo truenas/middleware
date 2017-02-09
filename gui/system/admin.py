@@ -302,7 +302,7 @@ class CertificateFAdmin(BaseFreeAdmin):
     def get_actions(self):
         actions = OrderedDict()
 
-	hide_me = """function(evt, actionName, action) {
+        hide_me = """function(evt, actionName, action) {
               for(var i=0;i < evt.rows.length;i++) {
                 var row = evt.rows[i];
                 if(%s) {
