@@ -405,7 +405,7 @@ class HASQLiteCursorWrapper(Database.Cursor):
             try:
                 rv = method(self, *args, **kwargs)
             except OperationalError as e:
-                if 'locked' not in e.message:
+                if 'locked' not in str(e):
                     raise
                 if retries < 5:
                     time.sleep(0.3)
