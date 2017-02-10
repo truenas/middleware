@@ -241,7 +241,7 @@ class FreeAdminSite(object):
             'sw_name': get_sw_name(),
             'sw_version': sw_version,
             'sw_version_footer': sw_version_footer,
-            'cache_hash': hashlib.md5(sw_version).hexdigest(),
+            'cache_hash': hashlib.md5(sw_version.encode('utf8')).hexdigest(),
             'css_hook': appPool.get_base_css(request),
             'js_hook': appPool.get_base_js(request),
             'menu_hook': appPool.get_top_menu(request),
