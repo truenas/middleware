@@ -10,8 +10,6 @@ class VMHook(AppHook):
     name = 'vm'
 
     def hook_app_tabs_vm(self, request):
-        from freenasUI.middleware.notifier import notifier
-
         tabs = [{
             'name': 'VM',
             'focus': 'vm.VM.View',
