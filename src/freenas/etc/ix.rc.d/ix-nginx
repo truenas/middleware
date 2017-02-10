@@ -152,7 +152,7 @@ generate_nginx_conf()
 	local vcenter_https="${7}"
 	local working_ssl=false
 	local dhparams_file="/data/dhparam.pem"
-	local dojo=$(env PYTHONPATH=/usr/local/www/freenasUI/ /usr/local/bin/python -B -S -c 'import settings; print settings.DOJANGO_DOJO_VERSION')
+	local dojo=$(env PYTHONPATH=/usr/local/www/freenasUI/ /usr/local/bin/python -B -S -c 'import settings; print(settings.DOJANGO_DOJO_VERSION)')
 
 	[ -s /data/dhparam.pem ] || openssl dhparam -rand - 2048 > /data/dhparam.pem
 	[ -s /data/dhparam1024.pem ] || openssl dhparam -rand - 1024 > /data/dhparam1024.pem
