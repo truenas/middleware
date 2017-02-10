@@ -191,7 +191,7 @@ def config_share_for_zfs(share):
 def order_vfs_objects(vfs_objects):
     vfs_objects_ordered = []
     for obj in vfs_objects:
-        if obj not in ('aio_pthread', 'catia', 'fruit', 'streams_xattr'):
+        if obj not in ('aio_pthread', 'catia', 'fruit', 'recycle', 'streams_xattr'):
             vfs_objects_ordered.append(obj)
 
     if 'fruit' in vfs_objects:
@@ -201,6 +201,8 @@ def order_vfs_objects(vfs_objects):
         vfs_objects_ordered.append('streams_xattr')
     if not 'fruit' in vfs_objects and 'streams_xattr' in vfs_objects:
         vfs_objects_ordered.append('streams_xattr')
+    if 'recycle' in vfs_objects:
+        vfs_objects_ordered.append('recycle')
     if 'aio_pthread' in vfs_objects:
         vfs_objects_ordered.append('aio_pthread')
 
