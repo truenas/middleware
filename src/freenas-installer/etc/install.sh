@@ -318,51 +318,33 @@ EOD
     return $?
 }
 
-install_grub() {
-	local _disk _disks
-	local _mnt
-	local _grub_args
+install_loader() {
+    local _disk _disks
+    local _mnt
 
-	_mnt="$1"
-	shift
+    _mnt="$1"
+    shift
 
-	_disks="$*"
+    _disks="$*"
 
-	# Install grub
-	# /usr/local/etc got changed to a symlink to /etc/local
-	ln -s /conf/base/etc/local ${_mnt}/etc/local
-	chroot ${_mnt} /sbin/zpool set cachefile=/boot/zfs/rpool.cache freenas-boot
-	chroot ${_mnt} /etc/rc.d/ldconfig start
-	/usr/bin/sed -i.bak -e 's,^ROOTFS=.*$,ROOTFS=freenas-boot/ROOT/${BENAME},g' ${_mnt}/usr/local/sbin/beadm ${_mnt}/conf/base/etc/local/grub.d/10_ktrueos
-	# Having 10_ktruos.bak in place causes grub-mkconfig to
-	# create two boot menu items.  So let's move it out of place
-	mkdir -p /tmp/bakup
-	mv ${_mnt}/conf/base/etc/local/grub.d/10_ktrueos.bak /tmp/bakup
-	for _disk in ${_disks}; do
-	    _grub_args=""
-	    if [ "$BOOTMODE" = "efi" ] ; then
-		# EFI Mode
-		sed -i '' 's|GRUB_TERMINAL_OUTPUT=console|GRUB_TERMINAL_OUTPUT=gfxterm|g' ${_mnt}/conf/base/etc/local/default/grub
-		glabel label efibsd /dev/${_disk}p1
-		mkdir -p ${_mnt}/boot/efi
-		mount -t msdosfs /dev/${_disk}p1 ${_mnt}/boot/efi
-		_grub_args="--efi-directory=/boot/efi --removable --target=x86_64-efi"
-	        echo "chroot ${_mnt} /usr/local/sbin/grub-install ${_grub_args} /dev/${_disk}"
-	        chroot ${_mnt} /usr/local/sbin/grub-install ${_grub_args} /dev/${_disk}
-		umount -f ${_mnt}/boot/efi
-	    else
-		# BIOS Mode
-	        chroot ${_mnt} /usr/local/sbin/grub-install --modules='zfs part_gpt' ${_grub_args} /dev/${_disk}
-	    fi
-	done
-	chroot ${_mnt} /usr/local/sbin/beadm activate ${BENAME}
-	chroot ${_mnt} /usr/local/sbin/grub-mkconfig -o /boot/grub/grub.cfg > /dev/null 2>&1
-	# And now move the backup files back in place
-	mv ${_mnt}/usr/local/sbin/beadm.bak ${_mnt}/usr/local/sbin/beadm
-	mv /tmp/bakup/10_ktrueos.bak ${_mnt}/conf/base/etc/local/grub.d/10_ktrueos
-	# And clean up the annoying symlink
-	rm -f ${_mnt}/etc/local
-	return 0
+    for _disk in $_disks
+    do
+	if [ "$BOOTMODE" = "efi" ] ; then
+	    echo "Stamping EFI loader on: ${_disk}"
+	    mkdir -p /tmp/efi
+	    mount -t msdosfs /dev/${_disk}p1 /tmp/efi
+	    gpart bootcode -b /boot/pmbr -p /boot/gptzfsboot -i 1 /dev/${_disk}
+	    # Copy the .efi file
+	    mkdir -p ${_mnt}/boot/efi/efi/boot
+	    cp ${_mnt}/boot/boot1.efi ${_mnt}/boot/efi/efi/boot/BOOTx64.efi
+	    umount /tmp/efi
+	else
+	    echo "Stamping GPT loader on: ${_disk}"
+	    gpart bootcode -b /boot/pmbr -p /boot/gptzfsboot -i 1 /dev/${_disk}
+	fi
+    done
+
+    return 0
 }
 
 mount_disk() {
@@ -375,8 +357,6 @@ mount_disk() {
 	_mnt="$1"
 	mkdir -p "${_mnt}"
 	mount -t zfs -o noatime freenas-boot/ROOT/${BENAME} ${_mnt}
-	mkdir -p ${_mnt}/boot/grub
-	mount -t zfs -o noatime freenas-boot/grub ${_mnt}/boot/grub
 	mkdir -p ${_mnt}/data
 	return 0
 }
@@ -400,7 +380,7 @@ create_partitions() {
 	  fi
 	else
 	  # BIOS Mode
-          if ! gpart add -t bios-boot -i 1 -s 512k ${_disk}; then
+          if ! gpart add -t freebsd-boot -i 1 -s 512k ${_disk}; then
 	    return 1
 	  fi
 	fi
@@ -495,7 +475,6 @@ partition_disk() {
 	zfs set compress=lz4 freenas-boot
 	zfs create -o canmount=off freenas-boot/ROOT
 	zfs create -o mountpoint=legacy freenas-boot/ROOT/${BENAME}
-	zfs create -o mountpoint=legacy freenas-boot/grub
 
 	return 0
 }
@@ -747,8 +726,6 @@ create_be()
   # Mount the new BE datasets
   mkdir -p ${1}
   mount -t zfs freenas-boot/ROOT/${BENAME} ${1} || return 1
-  mkdir -p ${1}/boot/grub
-  mount -t zfs -o noatime freenas-boot/grub ${1}/boot/grub
   mkdir -p ${1}/data
 
   return 0
@@ -1078,7 +1055,6 @@ menu_install()
     /usr/local/bin/freenas-install -P /.mount/${OS}/Packages -M /.mount/${OS}-MANIFEST /tmp/data
     
     rm -f /tmp/data/conf/default/etc/fstab /tmp/data/conf/base/etc/fstab
-    echo "freenas-boot/grub	/boot/grub	zfs	rw,noatime	1	0" > /tmp/data/etc/fstab
     if is_truenas; then
        make_swap ${_realdisks}
     fi
@@ -1125,14 +1101,14 @@ menu_install()
     # XXX: Fixup
     # tar cf - -C /tmp/data/conf/base etc | tar xf - -C /tmp/data/
     
-    # grub and beadm will need a devfs
+    # beadm will need a devfs
     mount -t devfs devfs /tmp/data/dev
     # Create a temporary /var
     mount -t tmpfs tmpfs /tmp/data/var
     chroot /tmp/data /usr/sbin/mtree -deUf /etc/mtree/BSD.var.dist -p /var
     # Set default boot filesystem
     zpool set bootfs=freenas-boot/ROOT/${BENAME} freenas-boot
-    install_grub /tmp/data ${_realdisks}
+    install_loader /tmp/data ${_realdisks}
     
 #    set +x
     if [ -d /tmp/data_preserved ]; then
@@ -1157,7 +1133,6 @@ menu_install()
     # Finally, before we unmount, start a srub.
     # zpool scrub freenas-boot || true
 
-    umount /tmp/data/boot/grub
     umount /tmp/data/dev
     umount /tmp/data/var
     umount /tmp/data/
