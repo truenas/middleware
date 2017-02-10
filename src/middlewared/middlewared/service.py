@@ -207,7 +207,7 @@ class CoreService(Service):
                     """
                     sections = re.split(r'^.. (.+?)::$', doc, flags=re.M)
                     doc = sections[0]
-                    for i in range((len(sections) - 1) / 2):
+                    for i in range(int((len(sections) - 1) / 2)):
                         idx = (i + 1) * 2 - 1
                         reg = re.search(r'examples(?:\((.+)\))?', sections[idx])
                         if reg is None:
