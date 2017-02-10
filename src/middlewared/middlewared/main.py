@@ -1,3 +1,6 @@
+from gevent import monkey
+monkey.patch_all()
+
 from .apidocs import app as apidocs_app
 from .client import ejson as json
 from .client.protocol import DDPProtocol
@@ -7,8 +10,12 @@ from .utils import Popen
 from collections import OrderedDict, defaultdict
 from daemon import DaemonContext
 from daemon.pidfile import TimeoutPIDLockFile
+from gevent.threadpool import ThreadPool
+from gevent.wsgi import WSGIServer
+from geventwebsocket import WebSocketServer, WebSocketApplication, Resource
 
 import argparse
+import gevent
 import imp
 import inspect
 import linecache
