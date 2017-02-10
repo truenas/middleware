@@ -104,3 +104,14 @@ def sw_version_is_stable():
         return True
     else:
         return False
+
+
+class Nid(object):
+
+    def __init__(self, _id):
+        self._id = _id
+
+    def __call__(self):
+        num = self._id
+        self._id += 1
+        return num
