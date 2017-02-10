@@ -177,7 +177,6 @@ class VMService(CRUDService):
         return vm
 
     def do_create(self, data):
-
         devices = data.pop('devices')
         pk = self.middleware.call('datastore.insert', 'vm.vm', data)
 
