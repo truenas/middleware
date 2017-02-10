@@ -3,7 +3,7 @@
 
 PORTNAME=	sysctl
 PORTVERSION=	0.2
-PORTREVISION=	1
+PORTREVISION=	2
 CATEGORIES=	devel python
 PKGNAMEPREFIX=	${PYTHON_PKGNAMEPREFIX}
 
@@ -17,6 +17,6 @@ USE_PYTHON=	distutils autoplist
 USE_GITHUB=	yes
 GH_ACCOUNT=	william-gr
 GH_PROJECT=	py-sysctl
-GH_TAGNAME=	dc2b2ca
+GH_TAGNAME=	563f461
 
 .include <bsd.port.mk>
