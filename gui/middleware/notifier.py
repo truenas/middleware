@@ -5401,16 +5401,18 @@ class notifier:
         from freenasUI.common.system import backup_database
         backup_database()
 
-    def fc_enabled(self, iscsi=None):
+    def alua_enabled(self):
+        if self.is_freenas() or not self.failover_licensed():
+            return False
         ret = None
         from freenasUI.support.utils import fc_enabled
-        if iscsi:
-            from freenasUI.services.models import iSCSITargetGlobalConfiguration
-            qs = iSCSITargetGlobalConfiguration.objects.all()
-            if qs:
-                ret = qs[0].iscsi_alua
-                return fc_enabled() or ret
-        return fc_enabled()
+        if fc_enabled():
+            return True
+        from freenasUI.services.models import iSCSITargetGlobalConfiguration
+        qs = iSCSITargetGlobalConfiguration.objects.all()
+        if qs:
+            return qs[0].iscsi_alua
+        return False
 
 
 def crypt_makeSalt():

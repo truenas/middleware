@@ -120,26 +120,16 @@ loader_ha()
 {
 	local node
 
-	if [ "$(LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/midclt call system.is_freenas)" = "True" ]; then
-		echo "kern.cam.ctl.ha_id=0"
-	else
+	if [ "$(LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/midclt call notifier.alua_enabled)" = "True" ]; then
 		node=$(ha_node)
-		if [ "$(LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/midclt call notifier.failover_licensed)" = "True" ]; then
-			# the trailing true sets iscsi=True to the fc_enabled method
-			if [ "$(LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/midclt call notifier.fc_enabled true)" = "True" ]; then
-				if [ "${node}" = "A" ]; then
-					echo "kern.cam.ctl.ha_id=1"
-				elif [ "${node}" = "B" ]; then
-					echo "kern.cam.ctl.ha_id=2"
-				fi
-			else
-				echo "kern.cam.ctl.ha_id=0"
-			fi
-		else
-			echo "kern.cam.ctl.ha_id=0"
+		if [ "${node}" = "A" ]; then
+			echo "kern.cam.ctl.ha_id=1"
+		elif [ "${node}" = "B" ]; then
+			echo "kern.cam.ctl.ha_id=2"
 		fi
+	else
+		echo "kern.cam.ctl.ha_id=0"
 	fi
-
 }
 
 do_autotune()
