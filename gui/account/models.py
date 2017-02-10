@@ -243,8 +243,8 @@ class bsdUsers(Model):
         if self.bsdusr_unixhash:
             if self.bsdusr_unixhash == 'x' or self.bsdusr_unixhash == '*':
                 return False
-            if isinstance(raw_password, str):
-                raw_password = raw_password.encode('utf-8')
+            if isinstance(raw_password, bytes):
+                raw_password = raw_password.decode('utf-8')
             return crypt.crypt(
                 raw_password, str(self.bsdusr_unixhash)
             ) == str(self.bsdusr_unixhash)
