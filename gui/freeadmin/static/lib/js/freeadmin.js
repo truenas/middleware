@@ -1389,6 +1389,34 @@ require([
 
     }
 
+    deviceTypeToggle = function() {
+
+        var dtype = registry.byId("id_dtype");
+        var cdrom_path = registry.byId("id_CDROM_path").domNode.parentNode.parentNode;
+        var disk_mode = registry.byId("id_DISK_mode").domNode.parentNode.parentNode;
+        var disk_zvol = registry.byId("id_DISK_zvol").domNode.parentNode.parentNode;
+        var nic_type = registry.byId("id_NIC_type").domNode.parentNode.parentNode;
+        var vnc_wait = registry.byId("id_VNC_wait").domNode.parentNode.parentNode;
+
+        domStyle.set(cdrom_path, "display", "none");
+        domStyle.set(disk_mode, "display", "none");
+        domStyle.set(disk_zvol, "display", "none");
+        domStyle.set(nic_type, "display", "none");
+        domStyle.set(vnc_wait, "display", "none");
+
+        if(dtype.get('value') == 'DISK') {
+          domStyle.set(disk_mode, "display", "");
+          domStyle.set(disk_zvol, "display", "");
+        } else if(dtype.get('value') == 'CDROM') {
+          domStyle.set(cdrom_path, "display", "");
+        } else if(dtype.get('value') == 'NIC') {
+          domStyle.set(nic_type, "display", "");
+        } else if(dtype.get('value') == 'VNC') {
+          domStyle.set(vnc_wait, "display", "");
+        }
+
+    }
+
     systemDatasetMigration = function() {
         sys_dataset_pool = registry.byId('id_sys_pool')
         if (!sys_dataset_pool._isReset) {
@@ -2569,6 +2597,8 @@ require([
                 Menu.openSystem(item.gname);
             } else if(item.type == 'opentasks') {
                 Menu.openTasks(item.gname);
+            } else if(item.type == 'openvm') {
+                Menu.openVM(item.gname);
             } else if(item.type == 'opennetwork') {
                 Menu.openNetwork(item.gname);
             } else if(item.type == 'en_dis_services') {

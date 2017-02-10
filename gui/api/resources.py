@@ -3585,3 +3585,53 @@ class FCPortsResource(DojoResource):
 
 class FibreChannelToTargetResourceMixin:
     pass
+
+
+class DeviceResourceMixin(object):
+
+    def build_filters(self, filters=None):
+        if filters is None:
+            filters = {}
+        orm_filters = super(
+            DeviceResourceMixin,
+            self).build_filters(filters)
+        vmid = filters.get("vm__id")
+        if vmid:
+            orm_filters["vm__id"] = vmid
+        return orm_filters
+
+    def dehydrate(self, bundle):
+        bundle = super(DeviceResourceMixin, self).dehydrate(bundle)
+        if self.is_webclient(bundle.request):
+            bundle.data['vm'] = str(bundle.obj.vm)
+        return bundle
+
+
+class VMResourceMixin(object):
+
+    def dehydrate(self, bundle):
+        bundle = super(VMResourceMixin, self).dehydrate(bundle)
+        if self.is_webclient(bundle.request):
+            bundle.data['_device_url'] = reverse(
+                'freeadmin_vm_device_datagrid'
+            ) + '?id=%d' % bundle.obj.id
+            info = ''
+            try:
+                with client as c:
+                    status = c.call('vm.status', bundle.obj.id)
+                    bundle.data['state'] = status['state']
+                    info += 'State: {}<br />'.format(status['state'])
+                    if status['state'] == 'RUNNING':
+                        bundle.data['_stop_url'] = reverse(
+                            'vm_stop', kwargs={'id': bundle.obj.id},
+                        )
+                    elif status['state'] == 'STOPPED':
+                        bundle.data['_start_url'] = reverse(
+                            'vm_start', kwargs={'id': bundle.obj.id},
+                        )
+            except:
+                log.warn('Failed to get status', exc_info=True)
+            if bundle.obj.device_set.filter(dtype='VNC').exists():
+                info += 'VNC Port: {}<br />'.format(5900 + bundle.obj.id)
+            bundle.data['info'] = info
+        return bundle

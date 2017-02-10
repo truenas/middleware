@@ -1141,6 +1141,11 @@ table.grid tr {
     width:16px;
     height:16px;
 }
+.VMIcon {
+    background-image:url('/static/images/ui/tree/vm.png');
+    width:16px;
+    height:16px;
+}
 .dijitTextArea {
     min-height:60px;
 }
