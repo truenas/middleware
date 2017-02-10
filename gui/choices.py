@@ -664,7 +664,7 @@ class UPSDRIVER_CHOICES(object):
     def __iter__(self):
         if os.path.exists("/conf/base/etc/local/nut/driver.list"):
             with open('/conf/base/etc/local/nut/driver.list', 'rb') as f:
-                d = f.read()
+                d = f.read().decode('utf8', 'ignore')
             r = io.StringIO()
             for line in re.sub(r'[ \t]+', ' ', d, flags=re.M).split('\n'):
                 r.write(line.strip() + '\n')
@@ -680,7 +680,7 @@ class UPSDRIVER_CHOICES(object):
                 if row[last].find(' (experimental)') != -1:
                     row[last] = row[last].replace(' (experimental)', '').strip()
                 for i, field in enumerate(list(row)):
-                    row[i] = field.decode('utf8')
+                    row[i] = field
                 yield ("$".join([row[last], row[3]]), "%s (%s)" %
                        (" ".join(row[0:last]), row[last]))
 
