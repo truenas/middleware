@@ -30,9 +30,7 @@ from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
 from freenasUI import choices
-from freenasUI.freeadmin.models import DictField, Model, PathField
-from freenasUI.middleware.client import client
-from freenasUI.middleware.notifier import notifier
+from freenasUI.freeadmin.models import DictField, Model
 
 log = logging.getLogger('vm.models')
 
