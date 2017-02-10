@@ -101,7 +101,7 @@ class LoggerFormatter(object):
         color_reset = self.CONSOLE_COLOR_FORMATTER['RESET']
 
         console_formatter = logging.Formatter(
-            "[%(asctime)s] " + color_start + "(%(levelname)s)" + color_reset + " [Module: %(module)s, Call: %(name)s -> %(funcName)s(): %(lineno)s] - %(message)s", "%Y/%m/%d %H:%M:%S")
+            "[%(asctime)s] " + color_start + "(%(levelname)s)" + color_reset + " Call: %(name)s, %(funcName)s(): %(lineno)s - %(message)s", "%Y/%m/%d %H:%M:%S")
 
         return console_formatter
 
@@ -140,7 +140,7 @@ class Logger(LoggerFormatter):
         },
         'formatters': {
             'file': {
-                'format': '[%(asctime)s] (%(levelname)s) [Module: %(module)s, Call: %(name)s -> %(funcName)s(): %(lineno)s] - %(message)s',
+                'format': '[%(asctime)s] (%(levelname)s) Call: %(name)s, %(funcName)s(): %(lineno)s - %(message)s',
                 'datefmt': '%Y/%m/%d %H:%M:%S',
             },
         },
