@@ -190,7 +190,7 @@ class Resource(object):
             self.put = put
 
         self.rest.app.add_route('/api/v2.0/' + self.get_path(), self)
-        print(("add route", self.get_path()))
+        self.middleware.logger.debug("add route {}".format(self.get_path()))
 
     def __getattr__(self, attr):
         if attr in ('on_get', 'on_post', 'on_delete', 'on_put'):
