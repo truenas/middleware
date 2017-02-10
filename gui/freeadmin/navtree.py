@@ -111,7 +111,7 @@ class NavTree(object):
                 globals(),
                 locals(),
                 [name],
-                -1)
+                0)
             return mod
         except ImportError as ie:
             log.debug("Unable to import '%s' '%s': %s", where, name, ie)
