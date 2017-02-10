@@ -141,7 +141,7 @@ class Application(WebSocketApplication):
             '/usr/bin/sockstat', '-46c', '-p', remote_port
         ], stdout=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=True)
         for line in proc.communicate()[0].strip().splitlines()[1:]:
-            cols = line.split()
+            cols = line.decode('utf8').split()
             if cols[-2] == remote and cols[0] == 'root':
                 return True
         return False
