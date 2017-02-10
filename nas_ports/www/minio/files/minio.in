@@ -1,0 +1,23 @@
+#!/bin/sh
+
+# PROVIDE: minio
+# KEYWORD: shutdown
+
+minio_enable="${minio_enable-NO}"
+minio_config="${minio_config-/etc/minio}"
+minio_disks="${minio_disks}"
+minio_address="${minio_address-:443}"
+
+. /etc/rc.subr
+
+load_rc_config ${name}
+
+name=minio
+rcvar=minio_enable
+
+pidfile="/var/run/${name}.pid"
+
+command="/usr/sbin/daemon"
+command_args="-c -f -p ${pidfile} /usr/local/bin/${name} -C \"${minio_config}\" server --address=\"${minio_address}\" ${minio_disks}"
+
+run_rc_command "$1"
