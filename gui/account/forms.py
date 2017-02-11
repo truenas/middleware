@@ -494,7 +494,7 @@ class bsdUsersForm(ModelForm, bsdUserGroupMixin):
                 ),
                 fullname=self.cleaned_data['bsdusr_full_name'].encode(
                     'utf8', 'ignore'
-                ).replace(':', ''),
+                ).replace(b':', b''),
                 password=self.cleaned_data['bsdusr_password'].encode(
                     'utf8', 'ignore'
                 ),
