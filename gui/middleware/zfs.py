@@ -795,8 +795,8 @@ def parse_status(name, doc, data):
                 line[1:]
             ).groups()
             read, write, cksum = 0, 0, 0
-        ident = len(spaces) / 2
-        if ident < 2 and ident < lastident:
+        ident = int(len(spaces) / 2)
+        if ident < 2 and lastident is not None and ident < lastident:
             for x in range(lastident - ident):
                 pnode = pnode.parent
 
