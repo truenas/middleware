@@ -210,6 +210,7 @@ def zfs_zilstat_ops(interval):
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         preexec_fn=os.setsid,
+        encoding='utf8',
     )
     ppid = zilstatproc.pid
     with lock:

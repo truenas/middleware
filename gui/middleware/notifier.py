@@ -163,7 +163,7 @@ class notifier(metaclass=HookMetaclass):
         try:
             p = Popen(
                 "(" + command + ") 2>&1",
-                stdin=PIPE, stdout=PIPE, stderr=PIPE, shell=True, preexec_fn=close_preexec, close_fds=False)
+                stdin=PIPE, stdout=PIPE, stderr=PIPE, shell=True, preexec_fn=close_preexec, close_fds=False, encoding='utf8')
             syslog.openlog(self.IDENTIFIER, facility=syslog.LOG_DAEMON)
             for line in p.stdout:
                 syslog.syslog(syslog.LOG_NOTICE, line)
@@ -199,7 +199,7 @@ class notifier(metaclass=HookMetaclass):
     def _pipeopen(self, command, logger=log):
         if logger:
             logger.debug("Popen()ing: %s", command)
-        return Popen(command, stdin=PIPE, stdout=PIPE, stderr=PIPE, shell=True, preexec_fn=close_preexec, close_fds=False)
+        return Popen(command, stdin=PIPE, stdout=PIPE, stderr=PIPE, shell=True, preexec_fn=close_preexec, close_fds=False, encoding='utf8')
 
     def _pipeerr(self, command, good_status=0):
         proc = self._pipeopen(command)
@@ -1951,7 +1951,7 @@ class notifier(metaclass=HookMetaclass):
                     "/usr/bin/tar",
                     "-xSJpf",  # -S for sparse
                     path,
-                ], stderr=f)
+                ], stderr=f, encoding='utf8')
                 RE_TAR = re.compile(r"^In: (\d+)", re.M | re.S)
                 while True:
                     if proc.poll() is not None:
@@ -2723,7 +2723,7 @@ class notifier(metaclass=HookMetaclass):
                     listing.remove(part)
 
             for part in listing:
-                p1 = Popen(["/usr/sbin/diskinfo", part], stdin=PIPE, stdout=PIPE)
+                p1 = Popen(["/usr/sbin/diskinfo", part], stdin=PIPE, stdout=PIPE, encoding='utf8')
                 info = p1.communicate()[0].split('\t')
                 partitions.update({
                     part: {
@@ -3695,7 +3695,7 @@ class notifier(metaclass=HookMetaclass):
 
         args = self.get_smartctl_args(devname)
 
-        p1 = Popen(["/usr/local/sbin/smartctl", "-i"] + args, stdout=PIPE)
+        p1 = Popen(["/usr/local/sbin/smartctl", "-i"] + args, stdout=PIPE, encoding='utf8')
         output = p1.communicate()[0]
         search = re.search(r'Serial Number:\s+(?P<serial>.+)', output, re.I)
         if search:
@@ -4584,7 +4584,7 @@ class notifier(metaclass=HookMetaclass):
                 "if=/dev/zero" if mode == 'full' else "if=/dev/random",
                 "of=/dev/%s" % (devname, ),
                 "bs=1m",
-            ], stdout=subprocess.PIPE, stderr=stderr)
+            ], stdout=subprocess.PIPE, stderr=stderr, encoding='utf8')
             with open('/var/tmp/disk_wipe_%s.pid' % (devname, ), 'w') as f:
                 f.write(str(pipe.pid))
             pipe.communicate()

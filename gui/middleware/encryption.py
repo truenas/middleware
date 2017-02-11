@@ -50,7 +50,7 @@ class RandomWorker(threading.Thread):
         pipe = subprocess.Popen([
             "/usr/sbin/diskinfo",
             dev,
-        ], stdout=subprocess.PIPE)
+        ], stdout=subprocess.PIPE, encoding='utf8')
         output = pipe.communicate()[0]
         self._size = output.split()[2]
 

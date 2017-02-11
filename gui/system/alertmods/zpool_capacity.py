@@ -26,7 +26,7 @@ class ZpoolCapAlert(BaseAlert):
                 "-H",
                 "-o", "cap",
                 pool.encode('utf8'),
-            ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            ], stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf8')
             data = proc.communicate()[0]
             if proc.returncode != 0:
                 continue

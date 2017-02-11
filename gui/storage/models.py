@@ -87,7 +87,7 @@ class Volume(Model):
                 "-H", "-o", "property,value",
                 "all",
                 str(self.vol_name),
-            ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            ], stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf8')
             data = proc.communicate()[0].strip('\n')
             for line in data.split('\n'):
                 if not line.startswith('feature') or '\t' not in line:
@@ -739,7 +739,9 @@ class Disk(Model):
         p1 = subprocess.Popen(
             ["/usr/sbin/diskinfo", self.devname],
             stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE)
+            stderr=subprocess.PIPE,
+            enconding='utf8',
+        )
         if p1.wait() == 0:
             out = p1.communicate()[0]
             return out.split('\t')[3]

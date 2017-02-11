@@ -207,9 +207,13 @@ class BootEnvRenameForm(Form):
         super(BootEnvRenameForm, self).__init__(*args, **kwargs)
 
     def is_duplicated_name(self, name):
-        beadm_names = subprocess.Popen("beadm list | awk '{print $7}'",
-                                       shell=True, stdout=subprocess.PIPE,
-                                       stderr=subprocess.PIPE).communicate()[0].split('\n')
+        beadm_names = subprocess.Popen(
+            "beadm list | awk '{print $7}'",
+            shell=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            encoding='utf8',
+        ).communicate()[0].split('\n')
         beadm_names = [_f for _f in beadm_names if _f]
         if name in beadm_names:
             return True
@@ -635,10 +639,13 @@ class InitialWizard(CommonWizard):
                         nic = list(choices.NICChoices(
                             nolagg=True, novlan=True, exclude_configured=False)
                         )[0][0]
-                        mac = subprocess.Popen("ifconfig %s ether| grep ether | "
-                                               "awk '{print $2}'|tr -d :" % (nic, ),
-                                               shell=True,
-                                               stdout=subprocess.PIPE).communicate()[0]
+                        mac = subprocess.Popen(
+                            "ifconfig %s ether| grep ether | "
+                            "awk '{print $2}'|tr -d :" % (nic, ),
+                            shell=True,
+                            stdout=subprocess.PIPE,
+                            encoding='utf8',
+                        ).communicate()[0]
                         ltg = iSCSITargetExtent.objects.order_by('-id')
                         if ltg.count() > 0:
                             lid = ltg[0].id

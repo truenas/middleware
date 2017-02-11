@@ -406,7 +406,8 @@ class Dev(Tnode):
                 p1 = subprocess.Popen(
                     ["/usr/sbin/zdb", "-U", "/data/zfs/zpool.cache", "-C", pool.name],
                     stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE)
+                    stderr=subprocess.PIPE,
+                    encoding='utf8')
                 zdb = p1.communicate()[0]
                 if p1.returncode == 0:
                     reg = re.search(
@@ -896,7 +897,8 @@ def zfs_list(path="", recursive=False, hierarchical=False, include_root=False,
     zfsproc = subprocess.Popen(
         args,
         stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE)
+        stderr=subprocess.PIPE,
+        encoding='utf8')
 
     zfs_output, zfs_err = zfsproc.communicate()
     zfs_output = zfs_output.split('\n')
@@ -969,7 +971,7 @@ def zpool_list(name=None):
         '-o', 'name,size,alloc,free,cap',
         '-p',
         '-H',
-    ] + ([name] if name else []), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    ] + ([name] if name else []), stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf8')
 
     output = zfsproc.communicate()[0].strip('\n')
     if zfsproc.returncode != 0:
@@ -996,7 +998,7 @@ def zdb():
         '/usr/sbin/zdb',
         '-C',
         '-U', '/data/zfs/zpool.cache',
-    ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    ], stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf8')
     data = zfsproc.communicate()[0]
     rv = {}
     lines_ptr = {0: rv}

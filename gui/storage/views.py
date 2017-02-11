@@ -134,7 +134,7 @@ def replications_keyscan(request):
             "-p", str(port),
             "-T", "2",
             str(host),
-        ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        ], stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf8')
         key, errmsg = proc.communicate()
         if proc.returncode == 0 and key:
             data = {'error': False, 'key': key}
@@ -1074,7 +1074,7 @@ def disk_wipe_progress(request, devname):
                 pipe = subprocess.Popen([
                     "/usr/sbin/diskinfo",
                     devname,
-                ], stdout=subprocess.PIPE)
+                ], stdout=subprocess.PIPE, encoding='utf8')
                 output = pipe.communicate()[0]
                 size = output.split()[2]
                 received = transf[-1]

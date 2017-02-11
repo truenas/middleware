@@ -27,6 +27,7 @@ class VolumeVersionAlert(BaseAlert):
             shell=True,
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
+            encoding='utf8',
         )
         output = proc.communicate()[0].strip(' ').strip('\n')
         if output:

@@ -2125,7 +2125,7 @@ class JailsResourceMixin(NestedMixin):
 
     def dispatch_list(self, request, **kwargs):
         proc = subprocess.Popen(
-            ["/usr/sbin/jls"], stdout=subprocess.PIPE, stderr=subprocess.PIPE
+            ["/usr/sbin/jls"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf8'
         )
         self.__jls = proc.communicate()[0]
         return super(JailsResourceMixin, self).dispatch_list(request, **kwargs)
@@ -3468,7 +3468,7 @@ class FCPortsResource(DojoResource):
             "/usr/sbin/ctladm",
             "portlist",
             "-x",
-        ], stdout=subprocess.PIPE)
+        ], stdout=subprocess.PIPE, encoding='utf8')
         data = proc.communicate()[0]
         doc = etree.fromstring(data)
         results = []

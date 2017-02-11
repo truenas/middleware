@@ -100,7 +100,8 @@ def main(argv):
         "-Hr",
     ],
         stdout=subprocess.PIPE,
-        stdin=subprocess.PIPE)
+        stdin=subprocess.PIPE,
+        encoding='utf8')
     output = pipe.communicate()[0]
     if pipe.returncode != 0:
         print("Dataset not found")

@@ -395,7 +395,8 @@ def mount(dev, path, mntopts=None, fstype=None):
     proc = subprocess.Popen(
         mount_cmd + opts + fstype + [dev, path],
         stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE
+        stderr=subprocess.PIPE,
+        encoding='utf8',
     )
     output = proc.communicate()
 
@@ -419,7 +420,9 @@ def umount(path, force=False):
     proc = subprocess.Popen(
         cmdlst,
         stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE)
+        stderr=subprocess.PIPE,
+        encoding='utf8',
+    )
     output = proc.communicate()
 
     if proc.returncode != 0:

@@ -524,10 +524,12 @@ def extent_serial():
         nic = list(choices.NICChoices(nolagg=True,
                                       novlan=True,
                                       exclude_configured=False))[0][0]
-        mac = subprocess.Popen("ifconfig %s ether| grep ether | "
-                               "awk '{print $2}'|tr -d :" % (nic, ),
-                               shell=True,
-                               stdout=subprocess.PIPE).communicate()[0]
+        mac = subprocess.Popen(
+            "ifconfig %s ether| grep ether | "
+            "awk '{print $2}'|tr -d :" % (nic, ),
+            shell=True,
+            stdout=subprocess.PIPE,
+            encoding='utf8').communicate()[0]
         ltg = iSCSITargetExtent.objects.order_by('-id')
         if ltg.count() > 0:
             lid = ltg[0].id

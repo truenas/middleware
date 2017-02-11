@@ -1401,7 +1401,8 @@ class iSCSITargetExtentForm(ModelForm):
             """| /usr/bin/cut -d" " -f1` | /usr/bin/cut -f1,3""",
             shell=True,
             stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE)
+            stderr=subprocess.PIPE,
+            encoding='utf8')
         gate_diskinfo = gate_pipe.communicate()[0].strip().split('\n')
         for disk in gate_diskinfo:
             if disk:
