@@ -1,0 +1,10 @@
+===========================================================================
+
+Note that some standard Python modules are provided as separate ports
+as they require additional dependencies. They are available as:
+
+py%%PYTHON_SUFFIX%%-gdbm       databases/py%%PYTHON_SUFFIX%%-gdbm
+py%%PYTHON_SUFFIX%%-sqlite3    databases/py%%PYTHON_SUFFIX%%-sqlite3
+py%%PYTHON_SUFFIX%%-tkinter    x11-toolkits/py%%PYTHON_SUFFIX%%-tkinter
+
+===========================================================================

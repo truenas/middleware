@@ -1,0 +1,63 @@
+# Description: Remove duplicate CFLAGS, CPPFLAGS, LDFLAGS by stripping CONFIGURE_*
+# Submitted by: koobs (r326729)
+# TODO: Upstream
+
+# Description: Create symlinks for non-ABI-suffixed python*-config and ABI-suffixed python-*.pc
+# Submitted by: antoine@ (r358029)
+# TODO: Upstream
+
+--- Makefile.pre.in.orig	2016-12-26 00:30:30.873942000 +0800
++++ Makefile.pre.in	2016-12-26 02:51:45.233175000 +0800
+@@ -80,23 +80,20 @@
+ OPT=		@OPT@
+ BASECFLAGS=	@BASECFLAGS@
+ BASECPPFLAGS=	@BASECPPFLAGS@
+-CONFIGURE_CFLAGS=	@CFLAGS@
+ # CFLAGS_NODIST is used for building the interpreter and stdlib C extensions.
+ # Use it when a compiler flag should _not_ be part of the distutils CFLAGS
+ # once Python is installed (Issue #21121).
+ CONFIGURE_CFLAGS_NODIST=@CFLAGS_NODIST@
+-CONFIGURE_CPPFLAGS=	@CPPFLAGS@
+-CONFIGURE_LDFLAGS=	@LDFLAGS@
+ # Avoid assigning CFLAGS, LDFLAGS, etc. so users can use them on the
+ # command line to append to these values without stomping the pre-set
+ # values.
+-PY_CFLAGS=	$(BASECFLAGS) $(OPT) $(CONFIGURE_CFLAGS) $(CFLAGS) $(EXTRA_CFLAGS)
++PY_CFLAGS=	$(BASECFLAGS) $(OPT) $(CFLAGS) $(EXTRA_CFLAGS)
+ PY_CFLAGS_NODIST=$(CONFIGURE_CFLAGS_NODIST) $(CFLAGS_NODIST)
+ # Both CPPFLAGS and LDFLAGS need to contain the shell's value for setup.py to
+ # be able to build extension modules using the directories specified in the
+ # environment variables
+-PY_CPPFLAGS=	$(BASECPPFLAGS) -I. -I$(srcdir)/Include $(CONFIGURE_CPPFLAGS) $(CPPFLAGS)
+-PY_LDFLAGS=	$(CONFIGURE_LDFLAGS) $(LDFLAGS)
++PY_CPPFLAGS=	$(BASECPPFLAGS) -I. -I$(srcdir)/Include $(CPPFLAGS)
++PY_LDFLAGS=	$(LDFLAGS)
+ NO_AS_NEEDED=	@NO_AS_NEEDED@
+ LDLAST=		@LDLAST@
+ SGI_ABI=	@SGI_ABI@
+@@ -1145,12 +1142,6 @@
+ 	else true; \
+ 	fi
+ 	(cd $(DESTDIR)$(BINDIR); $(LN) -s python$(VERSION)$(EXE) python3$(EXE))
+-	-if test "$(VERSION)" != "$(LDVERSION)"; then \
+-		rm -f $(DESTDIR)$(BINDIR)/python$(VERSION)-config; \
+-		(cd $(DESTDIR)$(BINDIR); $(LN) -s python$(LDVERSION)-config python$(VERSION)-config); \
+-		rm -f $(DESTDIR)$(LIBPC)/python-$(LDVERSION).pc; \
+-		(cd $(DESTDIR)$(LIBPC); $(LN) -s python-$(VERSION).pc python-$(LDVERSION).pc); \
+-	fi
+ 	-rm -f $(DESTDIR)$(BINDIR)/python3-config
+ 	(cd $(DESTDIR)$(BINDIR); $(LN) -s python$(VERSION)-config python3-config)
+ 	-rm -f $(DESTDIR)$(LIBPC)/python3.pc
+@@ -1412,6 +1403,12 @@
+ 	$(INSTALL_SCRIPT) $(srcdir)/install-sh $(DESTDIR)$(LIBPL)/install-sh
+ 	$(INSTALL_SCRIPT) python-config.py $(DESTDIR)$(LIBPL)/python-config.py
+ 	$(INSTALL_SCRIPT) python-config $(DESTDIR)$(BINDIR)/python$(LDVERSION)-config
++	-if test "$(VERSION)" != "$(LDVERSION)"; then \
++		rm -f $(DESTDIR)$(BINDIR)/python$(VERSION)-config; \
++		(cd $(DESTDIR)$(BINDIR); $(LN) -s python$(LDVERSION)-config python$(VERSION)-config); \
++		rm -f $(DESTDIR)$(LIBPC)/python-$(LDVERSION).pc; \
++		(cd $(DESTDIR)$(LIBPC); $(LN) -s python-$(VERSION).pc python-$(LDVERSION).pc); \
++	fi
+ 	@if [ -s Modules/python.exp -a \
+ 		"`echo $(MACHDEP) | sed 's/^\(...\).*/\1/'`" = "aix" ]; then \
+ 		echo; echo "Installing support files for building shared extension modules on AIX:"; \
