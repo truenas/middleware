@@ -517,6 +517,9 @@ class ZFSDataset(object):
     def __repr__(self):
         return "<Dataset: %s>" % self.path
 
+    def __lt__(self, other):
+        return self.path < other.path
+
     @property
     def full_name(self):
         if self.pool:
