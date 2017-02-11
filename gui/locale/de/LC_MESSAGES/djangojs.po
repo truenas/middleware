@@ -8,15 +8,16 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:10-0700\n"
-"PO-Revision-Date: 2016-06-09 17:51+0000\n"
-"Last-Translator: freenasuser12123 <muhr_rene@hotmail.com>\n"
-"Language-Team: LANGUAGE <LL@li.org>\n"
+"PO-Revision-Date: 2017-02-11 20:48+0000\n"
+"Last-Translator: Ettore Atalan <atalanttore@googlemail.com>\n"
+"Language-Team: German "
+"<http://weblate.trueos.org/projects/freenas/djangojs/de/>\n"
 "Language: de\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Pootle 2.5.0\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
+"X-Generator: Weblate 2.10-dev\n"
 "X-POOTLE-MTIME: 1465494660.0\n"
 
 #~ msgid "Reporting"
@@ -259,30 +260,27 @@ msgstr "Datenträger-Name"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1219
 msgid "Manual setup"
-msgstr ""
+msgstr "Manuelle Einrichtung"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1225
-#, fuzzy
 msgid "ZFS Volume Manager"
-msgstr "Datenträger-Name"
+msgstr "ZFS-Datenträgerverwaltung"
 
 #: freeadmin/static/lib/js/freeadmin.js:918
 msgid "Confirm"
-msgstr ""
+msgstr "Bestätigen"
 
 #: freeadmin/static/lib/js/freeadmin/Menu.js:49
-#, fuzzy
 msgid "System"
-msgstr "Warnsystem"
+msgstr "System"
 
 #: freeadmin/static/lib/js/freeadmin/Menu.js:94
 msgid "Tasks"
 msgstr ""
 
 #: freeadmin/static/lib/js/freeadmin/Menu.js:92
-#, fuzzy
 msgid "Network"
-msgstr "Netzwerkeinstellungen"
+msgstr "Netzwerk"
 
 #: freeadmin/static/lib/js/freeadmin/Menu.js:182
 #, fuzzy
@@ -291,7 +289,7 @@ msgstr "Freigaben"
 
 #: freeadmin/static/lib/js/freeadmin/Menu.js:521
 msgid "Directory Service"
-msgstr ""
+msgstr "Verzeichnisdienst"
 
 #: freeadmin/static/lib/js/freeadmin.js:1772
 #: freeadmin/static/lib/js/freeadmin.js:1863
@@ -299,9 +297,8 @@ msgid "Initial Wizard"
 msgstr ""
 
 #: freeadmin/static/lib/js/freeadmin/WizardShares.js:68
-#, fuzzy
 msgid "Share name"
-msgstr "Freigaben"
+msgstr "Freigabename"
 
 #: freeadmin/static/lib/js/freeadmin/WizardShares.js:74
 msgid ""
@@ -315,15 +312,15 @@ msgstr ""
 
 #: freeadmin/static/lib/js/freeadmin/WizardShares.js:133
 msgid "Add"
-msgstr ""
+msgstr "Hinzufügen"
 
 #: freeadmin/static/lib/js/freeadmin/WizardShares.js:140
 msgid "Delete"
-msgstr ""
+msgstr "Löschen"
 
 #: freeadmin/static/lib/js/freeadmin/WizardShares.js:153
 msgid "Update"
-msgstr ""
+msgstr "Aktualisieren"
 
 #: freeadmin/static/lib/js/freeadmin/WizardShares.js:184
 msgid "Ownership"
@@ -331,11 +328,11 @@ msgstr ""
 
 #: freeadmin/static/lib/js/freeadmin/WizardShares.js:210
 msgid "This user does not exist."
-msgstr ""
+msgstr "Dieser Benutzer ist nicht vorhanden."
 
 #: freeadmin/static/lib/js/freeadmin/WizardShares.js:246
 msgid "This group does not exist."
-msgstr ""
+msgstr "Diese Gruppe ist nicht vorhanden."
 
 #: freeadmin/static/lib/js/freeadmin/WizardShares.js:278
 msgid "Return"
@@ -343,15 +340,15 @@ msgstr ""
 
 #: freeadmin/static/lib/js/freeadmin.js:1772
 msgid "Wizard"
-msgstr ""
+msgstr "Assistent"
 
 #: freeadmin/static/lib/js/freeadmin/WizardShares.js:242
 msgid "Paswords do not match."
-msgstr ""
+msgstr "Passwörter stimmen nicht überein."
 
 #: freeadmin/static/lib/js/freeadmin.js:374
 msgid "Warning!"
-msgstr ""
+msgstr "Warnung!"
 
 #: freeadmin/static/lib/js/freeadmin.js:376
 msgid ""
@@ -361,57 +358,57 @@ msgstr ""
 
 #: freeadmin/static/lib/js/freeadmin.js:376
 msgid "Are you sure you want to do this?"
-msgstr ""
+msgstr "Sind Sie sicher, dass Sie dies machen möchten?"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1190
 msgid "Manual Setup"
-msgstr ""
+msgstr "Manuelle Einrichtung"
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:82
 msgid "Check For Updates"
-msgstr ""
+msgstr "Auf Aktualisierungen prüfen"
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:86
 msgid "Apply Pending Updates"
-msgstr ""
+msgstr "Ausstehende Aktualisierungen anwenden"
 
 #: freeadmin/static/lib/js/freeadmin.js:1287
 msgid "Hostname cannot be blank."
-msgstr ""
+msgstr "Hostname darf nicht leer sein."
 
 #: freeadmin/static/lib/js/freeadmin.js:1290
 msgid "Username cannot be blank."
-msgstr ""
+msgstr "Benutzername darf nicht leer sein."
 
 #: freeadmin/static/lib/js/freeadmin.js:1293
 msgid "Password cannot be blank."
-msgstr ""
+msgstr "Passwort darf nicht leer sein."
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:79
 #: freeadmin/static/lib/js/freeadmin/Update.js:81
 msgid "Manual Update"
-msgstr ""
+msgstr "Manuelle Aktualisierung"
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:88
 #: freeadmin/static/lib/js/freeadmin/Update.js:90
 msgid "Check Now"
-msgstr ""
+msgstr "Jetzt prüfen"
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:142
 msgid "Yes"
-msgstr ""
+msgstr "Ja"
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:151
 msgid "No"
-msgstr ""
+msgstr "Nein"
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:166
 msgid "Loading..."
-msgstr ""
+msgstr "Ladevorgang..."
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:167
 msgid "No pending updates have been found."
-msgstr ""
+msgstr "Es wurden keine ausstehenden Aktualisierungen gefunden."
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:104
 #: freeadmin/static/lib/js/freeadmin/Update.js:106
@@ -420,11 +417,11 @@ msgstr ""
 
 #: freeadmin/static/lib/js/freeadmin/WizardShares.js:245
 msgid "Passwords do not match."
-msgstr ""
+msgstr "Passwörter stimmen nicht überein."
 
 #: freeadmin/static/lib/js/freeadmin.js:260
 msgid "Restarting WebGUI"
-msgstr ""
+msgstr "WebGUI wird neu gestartet"
 
 #: freeadmin/static/lib/js/freeadmin.js:1157
 msgid "Active Directory IDMAP change!"
@@ -485,11 +482,11 @@ msgstr ""
 
 #: freeadmin/static/lib/js/freeadmin/Menu.js:512
 msgid "Documentation"
-msgstr ""
+msgstr "Dokumentation"
 
 #: freeadmin/static/lib/js/freeadmin/SupportTicket.js:115
 msgid "Username"
-msgstr ""
+msgstr "Benutzername"
 
 #: freeadmin/static/lib/js/freeadmin/SupportTicket.js:116
 msgid "If you do not have an account, please"
@@ -505,11 +502,11 @@ msgstr ""
 
 #: freeadmin/static/lib/js/freeadmin/SupportTicket.js:226
 msgid "Submit"
-msgstr ""
+msgstr "Absenden"
 
 #: freeadmin/static/lib/js/freeadmin/SupportTicket.js:326
 msgid "This field is required."
-msgstr ""
+msgstr "Dieses Feld ist erforderlich."
 
 #: freeadmin/static/lib/js/freeadmin/SupportTicket.js:361
 msgid "Uploading attachments to host"
@@ -521,7 +518,7 @@ msgstr ""
 
 #: freeadmin/static/lib/js/freeadmin/SupportTicket.js:372
 msgid "Submitting ticket"
-msgstr ""
+msgstr "Ticket wird gesendet"
 
 #: freeadmin/static/lib/js/freeadmin/SupportTicket.js:377
 msgid "Uploading attachments from host to the ticket"
@@ -533,11 +530,11 @@ msgstr ""
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:88
 msgid "Loading"
-msgstr ""
+msgstr "Ladevorgang"
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:89
 msgid "Automatically check for updates"
-msgstr ""
+msgstr "Automatisch auf Aktualisierungen prüfen"
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:90
 msgid "Current Train"
@@ -545,11 +542,11 @@ msgstr ""
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:91
 msgid "Update Server"
-msgstr ""
+msgstr "Server aktualisieren"
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:92
 msgid "Pending Updates"
-msgstr ""
+msgstr "Ausstehende Aktualisierungen"
 
 #: freeadmin/static/lib/js/freeadmin/Menu.js:185
 msgid "vCenter Plugin Configuration"
@@ -567,48 +564,47 @@ msgstr ""
 
 #: freeadmin/static/lib/js/freeadmin/SupportTicket.js:117
 msgid "Password"
-msgstr ""
+msgstr "Passwort"
 
 #: freeadmin/static/lib/js/freeadmin/SupportTicket.js:118
 msgid "Name"
-msgstr ""
+msgstr "Name"
 
 #: freeadmin/static/lib/js/freeadmin/SupportTicket.js:119
 msgid "E-mail"
-msgstr ""
+msgstr "E-Mail"
 
 #: freeadmin/static/lib/js/freeadmin/SupportTicket.js:120
 msgid "Phone"
-msgstr ""
+msgstr "Telefon"
 
 #: freeadmin/static/lib/js/freeadmin/SupportTicket.js:121
 msgid "Type"
-msgstr ""
+msgstr "Typ"
 
 #: freeadmin/static/lib/js/freeadmin/SupportTicket.js:122
 msgid "Category"
-msgstr ""
+msgstr "Kategorie"
 
 #: freeadmin/static/lib/js/freeadmin/SupportTicket.js:123
 msgid "Environment"
-msgstr ""
+msgstr "Umgebung"
 
 #: freeadmin/static/lib/js/freeadmin/SupportTicket.js:124
 msgid "Criticality"
-msgstr ""
+msgstr "Kritikalität"
 
 #: freeadmin/static/lib/js/freeadmin/SupportTicket.js:126
 msgid "Subject"
-msgstr ""
+msgstr "Betreff"
 
 #: freeadmin/static/lib/js/freeadmin/SupportTicket.js:127
-#, fuzzy
 msgid "Description"
-msgstr "Verschlüsselung"
+msgstr "Beschreibung"
 
 #: freeadmin/static/lib/js/freeadmin/SupportTicket.js:128
 msgid "Attachments"
-msgstr ""
+msgstr "Anhänge"
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:161
 msgid ""
@@ -631,7 +627,7 @@ msgstr ""
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:176
 msgid "OK"
-msgstr ""
+msgstr "OK"
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:226
 msgid ""
@@ -641,4 +637,4 @@ msgstr ""
 
 #: freeadmin/static/lib/js/freeadmin.js:359
 msgid "Ok"
-msgstr ""
+msgstr "Ok"
