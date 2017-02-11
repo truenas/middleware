@@ -222,7 +222,7 @@ def main():
                 if args.timeout:
                     kwargs['timeout'] = args.timeout
                 rv = c.call(args.method[0], *list(from_json(args.method[1:])), **kwargs)
-                if isinstance(rv, (int, str, unicode)):
+                if isinstance(rv, (int, str)):
                     print(rv)
                 else:
                     print(json.dumps(rv))
