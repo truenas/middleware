@@ -2,7 +2,6 @@
 from middlewared.client import Client
 
 import os
-import string
 import sys
 
 
@@ -66,9 +65,9 @@ def main():
         for key in nsswitch_conf:
             line = "%s: %s\n" % (
                 key.strip(),
-                string.join([x.strip() for x in nsswitch_conf[key]], ' ')
+                ' '.join([x.strip() for x in nsswitch_conf[key]])
             )
-            os.write(fd, line)
+            os.write(fd, line.encode('utf8'))
         os.close(fd)
 
     except Exception as e:
