@@ -28,7 +28,6 @@ import logging
 import os
 import re
 import signal
-import string
 import time
 import uuid
 
@@ -851,7 +850,7 @@ class CertificateBase(Model):
         parts = []
         for c in self.__get_thingy().get_subject().get_components():
             parts.append("%s=%s" % (c[0], c[1]))
-        DN = "/%s" % string.join(parts, '/')
+        DN = "/%s" % '/'.join(parts)
         return DN
 
     #

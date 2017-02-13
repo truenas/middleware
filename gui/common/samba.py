@@ -25,7 +25,6 @@
 #####################################################################
 import os
 import sys
-import string
 
 from freenasUI.common.pipesubr import pipeopen
 from freenasUI.services.models import DomainController
@@ -177,7 +176,7 @@ class Samba4(object):
 
     def group_addmembers(self, group, members):
         return self.samba_tool(
-            "group addmembers", None, [group, string.join(members, ',')]
+            "group addmembers", None, [group, ','.join(members)]
         )
 
     def group_delete(self, group):
@@ -217,7 +216,7 @@ class Samba4(object):
 
     def group_removemembers(self, group, members):
         return self.samba_tool(
-            "group removemembers", None, [group, string.join(members, ',')]
+            "group removemembers", None, [group, ','.join(members)]
         )
 
     def sentinel_file_exists(self, sentinel_file):

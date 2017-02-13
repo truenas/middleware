@@ -26,7 +26,6 @@
 import json
 import logging
 import os
-import string
 import time
 
 from wsgiref.util import FileWrapper
@@ -288,7 +287,7 @@ def jail_progress(request):
                     if len(parts) > 1:
                         percent = parts[1][:-1]
 
-            buf = string.join(buf)
+            buf = ' '.join(buf)
             size = len(buf)
 
         if not percent:

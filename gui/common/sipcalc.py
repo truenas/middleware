@@ -24,8 +24,6 @@
 #
 # $FreeBSD$
 #####################################################################
-import string
-
 from freenasUI.common.pipesubr import pipeopen
 
 SIPCALC_PATH = "/usr/local/bin/sipcalc"
@@ -55,7 +53,7 @@ class sipcalc_base_type(object):
         self.sipcalc_out = kwargs.get('sipcalc_out', None)
         if self.sipcalc_out is None:
             p1 = pipeopen(
-                string.join(self.sipcalc_args, ' '),
+                ' '.join(self.sipcalc_args),
                 allowfork=True,
                 important=False,
             )

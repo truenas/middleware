@@ -3,7 +3,6 @@
 import cmd
 import os
 import re
-import string
 import sys
 
 sys.path.extend([
@@ -125,7 +124,7 @@ Available options:
         
         set_method = getattr(self, "set_%s" % args[0]) 
         if set_method:
-            set_method(string.join(args[1:], ' '))
+            set_method('' .join(args[1:]))
 
     def do_get(self, arg):
         args = arg.split()
@@ -490,7 +489,7 @@ Available options:
         try:
             results = results[0][1] 
             for key in results:
-                val = string.join(results[key], ' ')
+                val = ' '.join(results[key])
                 print >> sys.stdout, "%s: %s" % (key, val)
         except:
             pass
@@ -506,7 +505,7 @@ Available options:
         try:
             for i in results:
                 for key in i[1]:
-                    val = string.join(i[1][key], ' ')
+                    val = ' '.join(i[1][key])
                     print >> sys.stdout, "%s: %s"  % (key, val)
                 print >> sys.stdout, "\n"
         except:
@@ -656,7 +655,7 @@ def main():
         adts.cmdloop()
 
     try:
-        adts.onecmd(string.join(sys.argv[1:], ' '))
+        adts.onecmd(' '.join(sys.argv[1:]))
 
     except Exception as e:
         print >> sys.stderr, "ERROR: %s" % e

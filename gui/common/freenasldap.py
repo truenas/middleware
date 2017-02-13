@@ -31,7 +31,6 @@ import logging
 import os
 import pwd
 import socket
-import string
 import tempfile
 import time
 import types
@@ -710,7 +709,7 @@ class FreeNAS_LDAP_Base(FreeNAS_LDAP_Directory):
                 self.keytab_principal
             ]
 
-            (returncode, stdout, stderr) = run(string.join(args, ' '), timeout=self.timeout)
+            (returncode, stdout, stderr) = run(' '.join(args), timeout=self.timeout)
             if returncode == 0:
                 kinit = True
                 res = True
@@ -737,7 +736,7 @@ class FreeNAS_LDAP_Base(FreeNAS_LDAP_Directory):
                 "%s" % principal
             ]
 
-            (returncode, stdout, stderr) = run(string.join(args, ' '), timeout=self.timeout)
+            (returncode, stdout, stderr) = run(' '.join(args), timeout=self.timeout)
             if returncode == 0:
                 kinit = True
                 res = True
@@ -1478,7 +1477,7 @@ class FreeNAS_ActiveDirectory_Base(object):
                 self.keytab_principal
             ]
 
-            (returncode, stdout, stderr) = run(string.join(args, ' '), timeout=self.timeout)
+            (returncode, stdout, stderr) = run(' '.join(args), timeout=self.timeout)
             if returncode != 0:
                 res = False
 
@@ -1504,7 +1503,7 @@ class FreeNAS_ActiveDirectory_Base(object):
                 "%s" % principal
             ]
 
-            (returncode, stdout, stderr) = run(string.join(args, ' '), timeout=self.timeout)
+            (returncode, stdout, stderr) = run(' '.join(args), timeout=self.timeout)
             if returncode != 0:
                 res = False
 
@@ -2407,7 +2406,7 @@ class FreeNAS_ActiveDirectory_Base(object):
             "-l"
         ]
 
-        (returncode, stdout, stderr) = run(string.join(args, ' '), timeout=self.timeout)
+        (returncode, stdout, stderr) = run(' '.join(args), timeout=self.timeout)
         if returncode == 0:
             res = True
 

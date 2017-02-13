@@ -4,7 +4,6 @@ from middlewared.client.utils import Struct
 
 import os
 import re
-import string
 import sys
 import tempfile
 
@@ -46,7 +45,7 @@ class SSSDBase(object):
             parts = line.split(' ')
             if len(parts) > 2:
                 key = parts[0]
-                val = string.join(parts[2:], ' ')
+                val = ' '.join(parts[2:])
                 self._config.append({key: val})
 
     def get_section_type(self):
@@ -66,7 +65,7 @@ class SSSDBase(object):
                 elif isinstance(pair, str):
                     line = "%s" % pair
                 lines.append(line.strip())
-            str = string.join(lines, '\n')
+            str = '\n'.join(lines)
         return "%s" % str
 
     def generate_header(self):
@@ -105,7 +104,7 @@ class SSSDBase(object):
                 elif isinstance(pair, str):
                     line = "%s" % pair
                 lines.append(line.strip())
-            str = string.join(lines, '\n')
+            str = '\n'.join(lines)
 
         return "%s\n" % str
 
@@ -200,7 +199,7 @@ class SSSDSectionSSSD(SSSDSectionBase):
                 if d == domain:
                     return
             domains.append(domain)
-            self.domains = string.join(domains, ',')
+            self.domains = ','.join(domains)
 
     def remove_domain(self, domain):
         domains = []
@@ -211,7 +210,7 @@ class SSSDSectionSSSD(SSSDSectionBase):
                 continue
             else:
                 domains.append(domain)
-        self.domains = string.join(domains, ',')
+        self.domains = ','.join(domains)
 
     def get_domains(self):
         domains = []
@@ -235,7 +234,7 @@ class SSSDSectionSSSD(SSSDSectionBase):
                 if s == service:
                     return
             services.append(service)
-            self.services = string.join(services, ',')
+            self.services = ','.join(services)
 
     def remove_service(self, service):
         services = []
@@ -246,7 +245,7 @@ class SSSDSectionSSSD(SSSDSectionBase):
                 continue
             else:
                 services.append(service)
-        self.services = string.join(services, ',')
+        self.services = ','.join(services)
 
     def get_services(self):
         services = []
@@ -902,6 +901,7 @@ def main():
         add_ldap_section(client, sc)
 
     sc.save(SSSD_CONFIGFILE)
+
 
 if __name__ == '__main__':
     main()

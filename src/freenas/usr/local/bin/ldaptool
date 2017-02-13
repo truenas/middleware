@@ -3,7 +3,6 @@
 import cmd
 import os
 import re
-import string
 import sys
 
 sys.path.extend([
@@ -103,7 +102,7 @@ Available options:
         
         set_method = getattr(self, "set_%s" % args[0]) 
         if set_method:
-            set_method(string.join(args[1:], ' '))
+            set_method(' '.join(args[1:]))
 
     def do_get(self, arg):
         args = arg.split()
@@ -412,7 +411,7 @@ def main():
         ldapts.cmdloop()
 
     try:
-        ldapts.onecmd(string.join(sys.argv[1:], ' '))
+        ldapts.onecmd(' '.join(sys.argv[1:]))
 
     except Exception as e:
         print >> sys.stderr, "ERROR: %s" % e

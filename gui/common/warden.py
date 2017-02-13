@@ -26,7 +26,6 @@
 #####################################################################
 import logging
 import os
-import string
 
 from django.core.cache import cache
 
@@ -710,7 +709,7 @@ class warden_list(warden_base):
                         val = None
                         parts = line.split()
                         if len(parts) > 1:
-                            val = string.join(parts[1:], ' ').strip()
+                            val = ' '.join(parts[1:]).strip()
                         jail[themap[k]] = val
         if jail:
             jails.append(jail)
@@ -874,7 +873,7 @@ class warden_template(warden_base):
                         val = None
                         parts = line.split()
                         if len(parts) > 1:
-                            val = string.join(parts[1:], ' ').strip()
+                            val = ' '.join(parts[1:]).strip()
                         template[themap[k]] = val
         if template:
             templates.append(template)
