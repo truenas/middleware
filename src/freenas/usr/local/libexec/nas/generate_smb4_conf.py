@@ -7,7 +7,7 @@ import pwd
 import re
 import sys
 import socket
-import tdb
+import subprocess
 import tempfile
 import time
 import logging
@@ -1501,81 +1501,44 @@ def smb4_map_groups(client):
 
 
 def smb4_backup_tdbfile(tdb_src, tdb_dst):
-    try:
-        db_r = tdb.open(tdb_src, flags=os.O_RDONLY)
-
-    except Exception as e:
-        print("Unable to open %s: %s" % (tdb_src, e), file=sys.stderr)
-        log.error("Unable to open {0}: {1}".format(tdb_src, e))
+    proc = subprocess.Popen(
+        "/usr/local/bin/tdbdump {} | /usr/local/bin/tdbrestore {}".format(
+            tdb_src,
+            tdb_dst,
+        ),
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        shell=True,
+        encoding='utf8',
+    )
+    err = proc.communicate()[1]
+    if proc.returncode != 0:
+        log.error("Failed to dump and restore tdb: {}".format(err))
         log_traceback(log=log)
         return False
 
-    try:
-        db_w = tdb.open(tdb_dst, flags=os.O_RDWR | os.O_CREAT, mode=0o600)
-
-    except Exception as e:
-        print("Unable to open %s: %s" % (tdb_dst, e), file=sys.stderr)
-        log.error("Unable to open {0}: {1}".format(tdb_dst, e))
-        log_traceback(log=log)
-        return False
-
-    for key in db_r.keys():
-        try:
-            db_w.transaction_start()
-            db_w[key] = db_r.get(key)
-            db_w.transaction_prepare_commit()
-            db_w.transaction_commit()
-
-        except Exception as e:
-            print("Transaction for key %s failed: %s" % (key, e), file=sys.stderr)
-            log.error("Transaction for key {0} failed: {1}".format(key, e))
-            log_traceback(log=log)
-            db_w.transaction_cancel()
-
-    db_r.close()
-    db_w.close()
+    if os.path.exists(tdb_dst):
+        os.chmod(tdb_dst, 0o600)
 
     return True
 
 
 def smb4_restore_tdbfile(tdb_src, tdb_dst):
-    try:
-        db_r = tdb.open(tdb_src, flags=os.O_RDONLY)
-
-    except Exception as e:
-        print("Unable to open %s: %s" % (tdb_src, e), file=sys.stderr)
-        log.error("Unable to open {0}: {1}".format(tdb_src, e))
+    proc = subprocess.Popen(
+        "/usr/local/bin/tdbdump {} | /usr/local/bin/tdbrestore {}".format(
+            tdb_src,
+            tdb_dst,
+        ),
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        shell=True,
+        encoding='utf8',
+    )
+    err = proc.communicate()[1]
+    if proc.returncode != 0:
+        log.error("Failed to dump and restore tdb: {}".format(err))
         log_traceback(log=log)
         return False
-
-    try:
-        db_w = tdb.open(tdb_dst, flags=os.O_RDWR)
-    except Exception as e:
-        print("Unable to open %s: %s" % (tdb_dst, e), file=sys.stderr)
-        log.error("Unable to open {0}: {1}".format(tdb_dst, e))
-        log_traceback(log=log)
-        return False
-
-    for key in db_r.keys():
-        try:
-            db_w.transaction_start()
-
-            db_w.lock_all()
-            db_w[key] = db_r.get(key)
-            db_w.unlock_all()
-
-            db_w.transaction_prepare_commit()
-            db_w.transaction_commit()
-
-        except Exception as e:
-            print("Transaction for key %s failed: %s" % (key, e), file=sys.stderr)
-            log.error("Transaction for key {0} failed: {1}".format(key, e))
-            log_traceback(log=log)
-            db_w.transaction_cancel()
-
-    db_r.close()
-    db_w.close()
-
     return True
 
 
