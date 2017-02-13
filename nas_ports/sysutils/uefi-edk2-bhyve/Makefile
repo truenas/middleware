@@ -12,7 +12,7 @@ LICENSE=	BSD2CLAUSE
 
 BUILD_DEPENDS=	bash:shells/bash \
 		nasm:devel/nasm \
-		${PYTHON_LIBDIR}/lib-dynload/_sqlite3.so:databases/py-sqlite3
+		${PYTHON_LIBDIR}/lib-dynload/_sqlite3.so:databases/py27-sqlite3
 
 USES=		gmake \
 		python:2,build
