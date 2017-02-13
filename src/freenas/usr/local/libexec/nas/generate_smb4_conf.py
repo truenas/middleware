@@ -7,7 +7,6 @@ import pwd
 import re
 import sys
 import socket
-import string
 import tdb
 import tempfile
 import time
@@ -524,7 +523,7 @@ def set_idmap_rfc2307_secret(client):
     ]
 
     net_cmd = "%s '%s' '%s'" % (
-        string.join(args, ' '),
+        ' '.join(args),
         domain,
         idmap.idmap_rfc2307_ldap_user_dn_password
     )
@@ -891,7 +890,7 @@ def generate_smb4_conf(client, smb4_conf, role):
     if cifs.cifs_srv_bindip:
         interfaces = []
 
-        bindips = string.join(cifs.cifs_srv_bindip, ' ')
+        bindips = ' '.join(cifs.cifs_srv_bindip)
         if role != 'dc':
             bindips = "127.0.0.1 %s" % bindips
 
@@ -915,7 +914,7 @@ def generate_smb4_conf(client, smb4_conf, role):
                 interfaces.append(bindip)
 
         if interfaces:
-            confset2(smb4_conf, "interfaces = %s", string.join(interfaces))
+            confset2(smb4_conf, "interfaces = %s", ' '.join(interfaces))
         confset1(smb4_conf, "bind interfaces only = yes")
 
     confset1(smb4_conf, "encrypt passwords = yes")
@@ -1355,7 +1354,7 @@ def smb4_import_users(client, smb_conf_path, smb4_tdb, exportfile=None):
         # smb4_unlink(exportfile)
         args.append("-e tdbsam:%s" % exportfile)
 
-    p = pipeopen(string.join(args, ' '))
+    p = pipeopen(' '.join(args))
     pdbedit_out = p.communicate()
     if pdbedit_out and pdbedit_out[0]:
         for line in pdbedit_out[0].split('\n'):
@@ -1407,9 +1406,9 @@ def smb4_grant_user_rights(user):
     ]
 
     net_cmd = "%s %s %s" % (
-        string.join(args, ' '),
+        ' '.join(args),
         user,
-        string.join(rights, ' ')
+        ' '.join(rights)
     )
 
     p = pipeopen(net_cmd)
@@ -1433,7 +1432,7 @@ def smb4_grant_rights():
         "-L"
     ]
 
-    p = pipeopen(string.join(args, ' '))
+    p = pipeopen(' '.join(args))
     pdbedit_out = p.communicate()
     if pdbedit_out and pdbedit_out[0]:
         for line in pdbedit_out[0].split('\n'):
