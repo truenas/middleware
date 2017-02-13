@@ -6,7 +6,7 @@
 minio_enable="${minio_enable-NO}"
 minio_config="${minio_config-/etc/minio}"
 minio_disks="${minio_disks}"
-minio_address="${minio_address-:443}"
+minio_address="${minio_address-:9000}"
 
 . /etc/rc.subr
 
