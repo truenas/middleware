@@ -41,6 +41,7 @@ from Crypto.Cipher import AES
 import bsd
 import ctypes
 import errno
+from functools import cmp_to_key
 import glob
 import grp
 import json
@@ -796,7 +797,7 @@ class notifier(metaclass=HookMetaclass):
                 return 1
             return 0
 
-        for vgrp in sorted(list(groups.values()), cmp=stripe_first):
+        for vgrp in sorted(list(groups.values()), key=cmp_to_key(stripe_first)):
             vgrp_type = vgrp['type']
             if vgrp_type != 'stripe':
                 z_vdev += " " + vgrp_type
