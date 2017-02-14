@@ -551,7 +551,7 @@ class InitialWizard(CommonWizard):
                     if not qs.exists():
                         if share_usercreate:
                             if share_userpw:
-                                password = share_userpw.encode('utf8')
+                                password = share_userpw
                                 password_disabled = False
                             else:
                                 password = '!'
