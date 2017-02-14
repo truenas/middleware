@@ -5266,15 +5266,13 @@ class notifier:
                 raise MiddlewareError('Unable to GPT format the disk "%s"' % devname)
         return boottype
 
-    def _bootenv_install_grub(self, boottype, devname):
+    def _bootenv_install_loader(self, boottype, devname):
         if boottype == 'EFI':
             self._system("mount -t msdosfs /dev/%sp1 /boot/efi" % devname)
-        self._system("/usr/local/sbin/grub-install --modules='zfs part_gpt' %s /dev/%s" % (
-            "--efi-directory=/boot/efi --removable --target=x86_64-efi" if boottype == 'EFI' else '',
-            devname,
-        ))
-        if boottype == 'EFI':
+            self._system("cp /boot/boot1.efi /boot/efi/efi/boot/BOOTx64.efi")
             self._pipeopen("umount /boot/efi").communicate()
+        else:
+            self._system("gpart bootcode -b /boot/pmbr -p /boot/gptzfsboot -i 1 /dev/%sp1" % devname)
 
     def bootenv_attach_disk(self, label, devname):
         """Attach a new disk to the pool"""
@@ -5299,7 +5297,7 @@ class notifier:
             raise MiddlewareError('Failed to attach disk: %s' % err)
 
         time.sleep(10)
-        self._bootenv_install_grub(boottype, devname)
+        self._bootenv_install_loader(boottype, devname)
 
         return True
 
@@ -5327,7 +5325,7 @@ class notifier:
             raise MiddlewareError('Failed to attach disk: %s' % err)
 
         time.sleep(10)
-        self._bootenv_install_grub(boottype, devname)
+        self._bootenv_install_loader(boottype, devname)
 
         return True
 
