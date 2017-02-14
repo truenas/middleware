@@ -191,6 +191,9 @@ http {
     #gzip  on;
     #upload_store /var/tmp/firmware;
     client_body_temp_path /var/tmp/firmware;
+
+    error_log /var/log/nginx/error.log error;
+    access_log var/log/nginx/access.log combined;
     
     server {
         server_name  localhost;
@@ -347,6 +350,10 @@ __EOF__
 	echo "}";
 
 	} > ${HTTPDCONF}
+
+	if [ ! -d "/var/log/nginx" ]; then
+		mkdir -p /var/log/nginx
+	fi
 
 }
 
