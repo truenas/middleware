@@ -40,7 +40,7 @@ class FreeNASBMCAlert(BaseAlert):
                         'Mini has an available IPMI firmware update, please '
                         'click <a href="%s" target="_blank">here</a> for '
                         'installation instructions'
-                    ) % 'https://support.ixsystems.com/index.php?/Knowledgebase/Article/View/288',
+                    ) % 'https://support.ixsystems.com/index.php?/Knowledgebase/Article/View/287',
                 )
             )
         return alerts
