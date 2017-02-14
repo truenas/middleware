@@ -225,6 +225,7 @@ class FreeAdminSite(object):
         except:
             wizard = False
         sw_version = get_sw_version()
+        sw_version_footer = get_sw_version(strip_build_num=True).split('-', 1)[-1]
 
         try:
             with client as c:
@@ -239,6 +240,7 @@ class FreeAdminSite(object):
             'hostname': hostname,
             'sw_name': get_sw_name(),
             'sw_version': sw_version,
+            'sw_version_footer': sw_version_footer,
             'cache_hash': hashlib.md5(sw_version).hexdigest(),
             'css_hook': appPool.get_base_css(request),
             'js_hook': appPool.get_base_js(request),
