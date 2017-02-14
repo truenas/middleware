@@ -340,6 +340,7 @@ install_loader() {
 	    umount /tmp/efi
 	else
 	    echo "Stamping GPT loader on: ${_disk}"
+	    gpart modify -i 1 -t freebsd-boot ${_disk}
 	    chroot ${_mnt} gpart bootcode -b /boot/pmbr -p /boot/gptzfsboot -i 1 /dev/${_disk}
 	fi
     done
@@ -690,6 +691,12 @@ create_be()
   # When upgrading, we will simply create a new BE dataset and install
   # fresh into that, so old datasets are not lost
   zpool import -N -f freenas-boot || return 1
+
+  # First we need to nuke any old grub dataset
+  if zfs list freenas-boot/grub >/dev/null 2>/dev/null ; then
+      echo "Removing GRUB dataset"
+      zfs destroy -R -f freenas-boot/grub
+  fi
 
   # Create the new BE
   zfs create -o mountpoint=legacy freenas-boot/ROOT/${BENAME} || return 1
