@@ -26,7 +26,7 @@ class FreeNASBMCAlert(BaseAlert):
             try:
                 fwver = [int(i) for i in fwver.split('.')]
             except ValueError:
-                log.warn('Fail to parse BMC firmware version: {}'.format(fwver))
+                log.warn('Failed to parse BMC firmware version: {}'.format(fwver))
                 return alerts
 
             if len(fwver) < 2 or not(fwver[0] == 0 and fwver[1] < 30):
