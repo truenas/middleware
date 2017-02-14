@@ -76,13 +76,11 @@ class NewPasswordForm(Form):
             )
             if qs.exists():
                 user = qs[0]
-                user.set_password(
-                    self.cleaned_data['password'].encode('utf-8'),
-                )
+                user.set_password(self.cleaned_data['password'])
                 user.save()
                 self.user_cache = authenticate(
                     username=user.bsdusr_username,
-                    password=self.cleaned_data['password'].encode('utf-8'),
+                    password=self.cleaned_data['password'],
                 )
                 notifier().reload("user")
         return valid
@@ -283,15 +281,15 @@ class bsdUsersForm(ModelForm, bsdUserGroupMixin):
             del self.fields['bsdusr_creategroup']
             self.fields['bsdusr_group'].initial = self.instance.bsdusr_group
             self.advanced_fields = []
-            self.bsdusr_home_saved = self.instance.bsdusr_home.encode('utf8')
+            self.bsdusr_home_saved = self.instance.bsdusr_home
             self.bsdusr_home_copy = False
             key_order(self, len(self.fields) - 1, 'bsdusr_mode', instance=True)
             self.fields['bsdusr_username'].widget.attrs['readonly'] = True
             self.fields['bsdusr_username'].widget.attrs['class'] = (
                 'dijitDisabled dijitTextBoxDisabled '
                 'dijitValidationTextBoxDisabled')
-            if os.path.exists(self.instance.bsdusr_home.encode('utf8')):
-                mode = os.stat(self.instance.bsdusr_home.encode('utf8')).st_mode & 0o777
+            if os.path.exists(self.instance.bsdusr_home):
+                mode = os.stat(self.instance.bsdusr_home).st_mode & 0o777
                 self.fields['bsdusr_mode'].initial = oct(mode)
             if self.instance.bsdusr_builtin:
                 self.fields['bsdusr_uid'].widget.attrs['readonly'] = True
@@ -489,19 +487,13 @@ class bsdUsersForm(ModelForm, bsdUserGroupMixin):
             else:
                 gid = group.bsdgrp_gid
             uid, gid, unixhash, smbhash = _notifier.user_create(
-                username=self.cleaned_data['bsdusr_username'].encode(
-                    'utf8', 'ignore'
-                ),
-                fullname=self.cleaned_data['bsdusr_full_name'].encode(
-                    'utf8', 'ignore'
-                ).replace(b':', b''),
-                password=self.cleaned_data['bsdusr_password'].encode(
-                    'utf8', 'ignore'
-                ),
+                username=self.cleaned_data['bsdusr_username'],
+                fullname=self.cleaned_data['bsdusr_full_name'].replace(':', ''),
+                password=self.cleaned_data['bsdusr_password'],
                 uid=self.cleaned_data['bsdusr_uid'],
                 gid=gid,
                 shell=str(self.cleaned_data['bsdusr_shell']),
-                homedir=self.cleaned_data['bsdusr_home'].encode('utf8'),
+                homedir=self.cleaned_data['bsdusr_home'],
                 homedir_mode=int(
                     self.cleaned_data.get('bsdusr_mode', '755'),
                     8
@@ -543,8 +535,8 @@ class bsdUsersForm(ModelForm, bsdUserGroupMixin):
                 bsdusr_password2 = self.cleaned_data["bsdusr_password2"]
             if bsdusr_password and (bsdusr_password == bsdusr_password2):
                 unixhash, smbhash = _notifier.user_changepassword(
-                    username=bsduser.bsdusr_username.encode('utf8'),
-                    password=bsdusr_password.encode('utf8'),
+                    username=bsduser.bsdusr_username,
+                    password=bsdusr_password,
                 )
                 bsduser.bsdusr_unixhash = unixhash
                 bsduser.bsdusr_smbhash = smbhash
@@ -553,11 +545,11 @@ class bsdUsersForm(ModelForm, bsdUserGroupMixin):
             homedir_mode = self.cleaned_data.get('bsdusr_mode')
             if (
                 not bsduser.bsdusr_builtin and homedir_mode is not None and
-                os.path.exists(bsduser.bsdusr_home.encode('utf8'))
+                os.path.exists(bsduser.bsdusr_home)
             ):
                 try:
                     homedir_mode = int(homedir_mode, 8)
-                    os.chmod(bsduser.bsdusr_home.encode('utf8'), homedir_mode)
+                    os.chmod(bsduser.bsdusr_home, homedir_mode)
                 except:
                     log.warn('Failed to set homedir mode', exc_info=True)
 
@@ -587,12 +579,12 @@ class bsdUsersForm(ModelForm, bsdUserGroupMixin):
         bsdusr_sshpubkey = self.cleaned_data.get('bsdusr_sshpubkey')
         if bsdusr_sshpubkey:
             _notifier.save_pubkey(
-                bsduser.bsdusr_home.encode('utf8'),
+                bsduser.bsdusr_home,
                 bsdusr_sshpubkey,
                 bsduser.bsdusr_username,
                 bsduser.bsdusr_group.bsdgrp_group)
         else:
-            _notifier.delete_pubkey(bsduser.bsdusr_home.encode('utf8'))
+            _notifier.delete_pubkey(bsduser.bsdusr_home)
         return bsduser
 
     def delete(self, **kwargs):
