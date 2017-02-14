@@ -22,9 +22,7 @@ To build the system (experts only):
   * sysutils/cdrtools
   * archivers/pxz
   * lang/python3 
-  * sysutils/grub2-pcbsd
   * sysutils/xorriso
-  * sysutils/grub2-efi
   * py27-sphinx
   * py27-sphinxcontrib-httpdomain-1.2.1
   (and all the dependencies that these ports/pkgs install, of course)

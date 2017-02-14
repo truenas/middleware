@@ -198,10 +198,6 @@ generate_boot_loader_conf_local()
         fi
 
 	update_persistent_file /boot/loader.conf.local $tmp
-
-	if [ $? = 0 -o $first_install = 1 ]; then
-	    /usr/local/sbin/grub-mkconfig -o /boot/grub/grub.cfg > /dev/null
-	fi
 }
 
 generate_loader_confs()
