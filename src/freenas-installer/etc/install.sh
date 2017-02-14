@@ -333,14 +333,14 @@ install_loader() {
 	    echo "Stamping EFI loader on: ${_disk}"
 	    mkdir -p /tmp/efi
 	    mount -t msdosfs /dev/${_disk}p1 /tmp/efi
-	    gpart bootcode -b /boot/pmbr -p /boot/gptzfsboot -i 1 /dev/${_disk}
+	    chroot ${_mnt} gpart bootcode -b /boot/pmbr -p /boot/gptzfsboot -i 1 /dev/${_disk}
 	    # Copy the .efi file
 	    mkdir -p ${_mnt}/boot/efi/efi/boot
 	    cp ${_mnt}/boot/boot1.efi ${_mnt}/boot/efi/efi/boot/BOOTx64.efi
 	    umount /tmp/efi
 	else
 	    echo "Stamping GPT loader on: ${_disk}"
-	    gpart bootcode -b /boot/pmbr -p /boot/gptzfsboot -i 1 /dev/${_disk}
+	    chroot ${_mnt} gpart bootcode -b /boot/pmbr -p /boot/gptzfsboot -i 1 /dev/${_disk}
 	fi
     done
 
