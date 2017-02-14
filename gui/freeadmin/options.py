@@ -981,7 +981,7 @@ grid.on(".dgrid-row:dblclick", function(evt) {
 
             data = {
                 'name': field.name,
-                'label': field.verbose_name.encode('utf-8'),
+                'label': field.verbose_name,
             }
 
             """
