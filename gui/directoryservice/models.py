@@ -160,7 +160,7 @@ class idmap_base(Model):
         if 'idmap_ds_id' in kwargs:
             self.idmap_ds_id = kwargs['idmap_ds_id']
 
-    def __unicode__(self):
+    def __str__(self):
         return self.idmap_backend_name
 
     class Meta:
@@ -703,7 +703,7 @@ class KerberosRealm(Model):
         blank=True
     )
 
-    def __unicode__(self):
+    def __str__(self):
         return self.krb_realm
 
 
@@ -725,7 +725,7 @@ class KerberosKeytab(Model):
         ).delete()
         super(KerberosKeytab, self).delete()
 
-    def __unicode__(self):
+    def __str__(self):
         return self.keytab_name
 
 
@@ -753,7 +753,7 @@ class KerberosPrincipal(Model):
         verbose_name=_("Date")
     )
 
-    def __unicode__(self):
+    def __str__(self):
         return self.principal_name
 
 

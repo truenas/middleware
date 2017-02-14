@@ -117,7 +117,7 @@ class CloudSync(Model):
         verbose_name_plural = _("Cloud Syncs")
         ordering = ["description"]
 
-    def __unicode__(self):
+    def __str__(self):
         return self.description
 
     def get_human_minute(self):
@@ -245,7 +245,7 @@ class CronJob(Model):
         verbose_name_plural = _("Cron Jobs")
         ordering = ["cron_description", "cron_user"]
 
-    def __unicode__(self):
+    def __str__(self):
         if self.cron_description:
             return self.cron_description
         return "%d (%s)" % (self.id, self.cron_user)
@@ -363,7 +363,7 @@ class InitShutdown(Model):
         verbose_name=_("When"),
     )
 
-    def __unicode__(self):
+    def __str__(self):
         if self.ini_type == 'command':
             name = self.ini_command
         else:
@@ -547,7 +547,7 @@ class Rsync(Model):
         verbose_name_plural = _("Rsync Tasks")
         ordering = ["rsync_path", "rsync_desc"]
 
-    def __unicode__(self):
+    def __str__(self):
         if self.rsync_desc:
             return self.rsync_desc
         elif self.rsync_mode == 'module':
@@ -773,7 +773,7 @@ class SMARTTest(Model):
             labels.append(str(wchoices[str(w)]))
         return ', '.join(labels)
 
-    def __unicode__(self):
+    def __str__(self):
         if self.smarttest_disks.count() > 3:
             disks = [d.disk_name for d in self.smarttest_disks.all()[:3]]
             disks = ', '.join(disks) + '...'

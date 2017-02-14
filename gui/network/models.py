@@ -144,8 +144,8 @@ class GlobalConfiguration(Model):
         ):
             setattr(self, "_orig_%s" % name, self.__dict__.get(name))
 
-    def __unicode__(self):
-        return '%s' % self.id
+    def __str__(self):
+        return str(self.id)
 
     def get_hostname(self):
         _n = notifier()
@@ -264,10 +264,10 @@ class Interfaces(Model):
         blank=True
     )
 
-    def __unicode__(self):
+    def __str__(self):
         if not self.int_name:
             return self.int_interface
-        return '%s' % self.int_name
+        return str(self.int_name)
 
     def __init__(self, *args, **kwargs):
         super(Interfaces, self).__init__(*args, **kwargs)
@@ -412,7 +412,7 @@ class Alias(Model):
         help_text=""
     )
 
-    def __unicode__(self):
+    def __str__(self):
         if self.alias_v4address:
             return '%s:%s' % (
                 self.alias_interface.int_name,
@@ -464,7 +464,7 @@ class VLAN(Model):
         blank=True
     )
 
-    def __unicode__(self):
+    def __str__(self):
         return self.vlan_vint
 
     def delete(self):
@@ -504,7 +504,7 @@ class LAGGInterface(Model):
         verbose_name_plural = _("Link Aggregations")
         ordering = ["lagg_interface"]
 
-    def __unicode__(self):
+    def __str__(self):
         interface_list = LAGGInterfaceMembers.objects.filter(
             lagg_interfacegroup=self.id)
         if interface_list is not None:
@@ -545,7 +545,7 @@ class LAGGInterfaceMembers(Model):
         verbose_name=_("Options")
     )
 
-    def __unicode__(self):
+    def __str__(self):
         return self.lagg_physnic
 
     class Meta:
@@ -580,7 +580,7 @@ class StaticRoute(Model):
         icon_add = "AddStaticRouteIcon"
         icon_view = "ViewAllStaticRoutesIcon"
 
-    def __unicode__(self):
+    def __str__(self):
         return self.sr_destination
 
     def save(self, *args, **kwargs):

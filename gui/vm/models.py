@@ -63,7 +63,7 @@ class VM(Model):
         verbose_name = _(u"VM")
         verbose_name_plural = _(u"VMs")
 
-    def __unicode__(self):
+    def __str__(self):
         return self.name
 
 
@@ -81,5 +81,5 @@ class Device(Model):
         editable=False,
     )
 
-    def __unicode__(self):
+    def __str__(self):
         return '{0}:{1}'.format(self.vm, self.get_dtype_display())

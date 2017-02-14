@@ -263,9 +263,6 @@ class Jails(Model):
     def __str__(self):
         return str(self.jail_host)
 
-    def __unicode__(self):
-        return str(self.jail_host)
-
     def __init__(self, *args, **kwargs):
         super(self.__class__, self).__init__(*args, **kwargs)
         self.__jail_path = None
@@ -621,7 +618,7 @@ class JailTemplate(Model):
 
         return instances
 
-    def __unicode__(self):
+    def __str__(self):
         return self.jt_name
 
     def delete(self, force=False):
@@ -682,7 +679,7 @@ class JailMountPoint(Model):
         verbose_name = _("Storage")
         verbose_name_plural = _("Storage")
 
-    def __unicode__(self):
+    def __str__(self):
         return self.source
 
     def delete(self, *args, **kwargs):

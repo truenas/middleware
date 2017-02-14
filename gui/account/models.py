@@ -67,7 +67,7 @@ class bsdGroups(Model):
         verbose_name_plural = _("Groups")
         ordering = ['bsdgrp_builtin', 'bsdgrp_group']
 
-    def __unicode__(self):
+    def __str__(self):
         return self.bsdgrp_group
 
     def delete(self, using=None, reload=True, pwdelete=True):
@@ -195,15 +195,12 @@ class bsdUsers(Model):
         verbose_name_plural = _("Users")
         ordering = ['bsdusr_builtin', 'bsdusr_username']
 
-    def __unicode__(self):
+    def __str__(self):
         return self.bsdusr_username
 
     def get_username(self):
         "Return the identifying username for this User"
         return getattr(self, self.USERNAME_FIELD)
-
-    def __str__(self):
-        return self.get_username()
 
     def natural_key(self):
         return (self.get_username(),)
@@ -301,7 +298,7 @@ class bsdGroupMembership(Model):
         verbose_name = _("Group Membership")
         verbose_name_plural = _("Group Memberships")
 
-    def __unicode__(self):
+    def __str__(self):
         return "%s:%s" % (
             self.bsdgrpmember_group.bsdgrp_group,
             self.bsdgrpmember_user.bsdusr_username,

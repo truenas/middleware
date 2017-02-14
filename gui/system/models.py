@@ -219,7 +219,7 @@ class NTPServer(Model):
         ),
     )
 
-    def __unicode__(self):
+    def __str__(self):
         return self.ntp_address
 
     def delete(self):
@@ -464,7 +464,7 @@ class Tunable(Model):
         verbose_name=_("Enabled"),
     )
 
-    def __unicode__(self):
+    def __str__(self):
         return str(self.tun_var)
 
     def delete(self):
@@ -790,7 +790,7 @@ class CertificateBase(Model):
         if not os.path.exists(self.cert_root_path):
             os.mkdir(self.cert_root_path, 0o755)
 
-    def __unicode__(self):
+    def __str__(self):
         return self.cert_name
 
     @property
@@ -1004,7 +1004,7 @@ class CloudCredentials(Model):
         editable=False,
     )
 
-    def __unicode__(self):
+    def __str__(self):
         return self.name
 
     class Meta:

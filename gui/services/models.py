@@ -70,11 +70,8 @@ class services(Model):
         verbose_name = _("Services")
         verbose_name_plural = _("Services")
 
-    def __unicode__(self):
+    def __str__(self):
         return self.srv_service
-
-    def save(self, *args, **kwargs):
-        super(services, self).save(*args, **kwargs)
 
 
 class CIFS(Model):
@@ -649,7 +646,7 @@ class iSCSITargetExtent(Model):
         verbose_name_plural = _("Extents")
         ordering = ["iscsi_target_extent_name"]
 
-    def __unicode__(self):
+    def __str__(self):
         return str(self.iscsi_target_extent_name)
 
     def get_device(self):
@@ -719,7 +716,7 @@ class iSCSITargetPortal(Model):
         verbose_name = _("Portal")
         verbose_name_plural = _("Portals")
 
-    def __unicode__(self):
+    def __str__(self):
         if self.iscsi_target_portal_comment != "":
             return "%s (%s)" % (
                 self.iscsi_target_portal_tag,
@@ -764,7 +761,7 @@ class iSCSITargetPortalIP(Model):
         verbose_name = _("Portal IP")
         verbose_name_plural = _("Portal IPs")
 
-    def __unicode__(self):
+    def __str__(self):
         return "%s:%d" % (
             self.iscsi_target_portalip_ip,
             self.iscsi_target_portalip_port,
@@ -830,7 +827,7 @@ class iSCSITargetAuthorizedInitiator(Model):
         nav_extra = {'order': 0}
         resource_name = 'services/iscsi/authorizedinitiator'
 
-    def __unicode__(self):
+    def __str__(self):
         if self.iscsi_target_initiator_comment != "":
             return "%s (%s)" % (
                 self.iscsi_target_initiator_tag,
@@ -923,7 +920,7 @@ class iSCSITargetAuthCredential(Model):
             )
         super(iSCSITargetAuthCredential, self).save(*args, **kwargs)
 
-    def __unicode__(self):
+    def __str__(self):
         return str(self.iscsi_target_auth_tag)
 
 
@@ -959,7 +956,7 @@ class iSCSITarget(Model):
         verbose_name_plural = _("Targets")
         ordering = ['iscsi_target_name']
 
-    def __unicode__(self):
+    def __str__(self):
         return self.iscsi_target_name
 
     def delete(self):
@@ -1012,7 +1009,7 @@ class iSCSITargetGroups(Model):
                     "both none and authentication."),
     )
 
-    def __unicode__(self):
+    def __str__(self):
         return 'iSCSI Target Group (%s,%d)' % (
             self.iscsi_target,
             self.id,
@@ -1050,7 +1047,7 @@ class iSCSITargetToExtent(Model):
             'iscsi_extent',
         )
 
-    def __unicode__(self):
+    def __str__(self):
         return str(self.iscsi_target) + ' / ' + str(self.iscsi_extent)
 
     def delete(self):
@@ -2016,7 +2013,7 @@ class RsyncMod(Model):
         menu_child_of = 'services.Rsync'
         icon_model = "rsyncModIcon"
 
-    def __unicode__(self):
+    def __str__(self):
         return str(self.rsyncmod_name)
 
 
