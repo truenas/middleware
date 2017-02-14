@@ -138,12 +138,12 @@ ix_syslogd_start()
 			if [ -z "${rp}" ]
 			then
 				rm -f /var/log
-				mkdir -p /var/log
+				cp -a /conf/base/var/log /var/
 			else
 				local datestr="$(date +'%Y%m%d%H%M%S')"
 				rm -f /var/log
 				mv "/var/log" "/var/log.${datestr}"
-				mkdir -p /var/log
+				cp -a /conf/base/var/log /var/
 			fi
 		fi
 		/usr/local/bin/midclt call core.reconfigure_logging > /dev/null
@@ -160,12 +160,12 @@ ix_syslogd_start()
 			if [ -z "${rp}" ]
 			then
 				rm -f /var/log
-				mkdir -p /var/log
+				cp -a /conf/base/var/log /var/
 			else
 				local datestr="$(date +'%Y%m%d%H%M%S')"
 				rm -f /var/log
 				mv "/var/log" "/var/log.${datestr}"
-				mkdir -p /var/log
+				cp -a /conf/base/var/log /var/
 			fi
 		fi
 
@@ -221,7 +221,7 @@ ix_syslogd_start()
 	#	directory, so create the log directory and sync files.
 	#
 	else
-		mkdir -p ${mp}/log
+		cp -a /conf/base/var/log ${mp}/
 		chmod 755 ${mp}/log
 		chown root:wheel ${mp}/log
 
