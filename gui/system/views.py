@@ -623,7 +623,7 @@ def config_download(request):
     response['Content-Length'] = os.path.getsize(filename)
     response['Content-Disposition'] = (
         'attachment; filename="%s-%s-%s.%s"' % (
-            hostname.encode('utf-8'),
+            hostname,
             freenas_build,
             time.strftime('%Y%m%d%H%M%S'),
             'tar' if bundle else 'db',
@@ -815,7 +815,7 @@ class DojoFileStore(object):
         self.filterVolumes = filterVolumes
         if self.filterVolumes:
             self.mp = [
-                os.path.abspath(('/mnt/%s' % v.vol_name).encode('utf8'))
+                os.path.abspath('/mnt/%s' % v.vol_name)
                 for v in Volume.objects.filter(vol_fstype='ZFS')
             ]
 
@@ -825,8 +825,6 @@ class DojoFileStore(object):
         # as single slash.
         if self.path.startswith('//'):
             self.path = self.path[1:]
-
-        self.path = self.path.encode('utf8')
 
         self.dirsonly = dirsonly
         if self.dirsonly:
@@ -897,11 +895,11 @@ class DojoFileStore(object):
 def directory_browser(request, path='/'):
     """ This view provides the ajax driven directory browser callback """
 
-    directories = list(DojoFileStore(
+    directories = DojoFileStore(
         path,
         dirsonly=True,
         root=request.GET.get("root", "/"),
-    ).items())
+    ).items()
     context = directories
     content = json.dumps(context)
     return HttpResponse(content, content_type='application/json')
@@ -910,11 +908,11 @@ def directory_browser(request, path='/'):
 def file_browser(request, path='/'):
     """ This view provides the ajax driven directory browser callback """
 
-    directories = list(DojoFileStore(
+    directories = DojoFileStore(
         path,
         dirsonly=False,
         root=request.GET.get("root", "/"),
-    ).items())
+    ).items()
     context = directories
     content = json.dumps(context)
     return HttpResponse(content, content_type='application/json')
@@ -1003,7 +1001,7 @@ def debug_download(request):
     else:
         debug_file = dump
         extension = 'tgz'
-        hostname = '-%s' % gc.gc_hostname.encode('utf-8')
+        hostname = '-%s' % gc.gc_hostname
 
     wrapper = FileWrapper(file(debug_file))
     response = StreamingHttpResponse(
