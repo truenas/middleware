@@ -1552,8 +1552,8 @@ class notifier(metaclass=HookMetaclass):
         ret = False
         proc = self._pipeopen(command % (
             type,
-            unixgroup.encode('utf8'),
-            ntgroup.encode('utf8')
+            unixgroup,
+            ntgroup,
         ))
         proc.communicate()
         if proc.returncode == 0:
@@ -1701,14 +1701,14 @@ class notifier(metaclass=HookMetaclass):
         if exclude is None:
             exclude = []
 
-        if isinstance(owner, str):
-            owner = owner.encode('utf-8')
+        if isinstance(owner, bytes):
+            owner = owner.decode('utf-8')
 
-        if isinstance(group, str):
-            group = group.encode('utf-8')
+        if isinstance(group, bytes):
+            group = group.decode('utf-8')
 
-        if isinstance(path, str):
-            path = path.encode('utf-8')
+        if isinstance(path, bytes):
+            path = path.decode('utf-8')
 
         winacl = os.path.join(path, ACL_WINDOWS_FILE)
         winexists = (ACL.get_acl_ostype(path) == ACL_FLAGS_OS_WINDOWS)
@@ -1738,17 +1738,17 @@ class notifier(metaclass=HookMetaclass):
         if exclude is None:
             exclude = []
 
-        if isinstance(group, str):
-            group = group.encode('utf-8')
+        if isinstance(group, bytes):
+            group = group.decode('utf-8')
 
-        if isinstance(user, str):
-            user = user.encode('utf-8')
+        if isinstance(user, bytes):
+            user = user.decode('utf-8')
 
-        if isinstance(mode, str):
-            mode = mode.encode('utf-8')
+        if isinstance(mode, bytes):
+            mode = mode.decode('utf-8')
 
-        if isinstance(path, str):
-            path = path.encode('utf-8')
+        if isinstance(path, bytes):
+            path = path.decode('utf-8')
 
         winacl = os.path.join(path, ACL_WINDOWS_FILE)
         macacl = os.path.join(path, ACL_MAC_FILE)
@@ -2505,7 +2505,7 @@ class notifier(metaclass=HookMetaclass):
 
         for mp in mountpoints:
             fp = "%s/%s%s" % (jc.jc_path, jail_name, mp.destination)
-            p = pipeopen("/sbin/mount_nullfs '%s' '%s'" % (mp.source.encode('utf8'), fp.encode('utf8')))
+            p = pipeopen("/sbin/mount_nullfs '%s' '%s'" % (mp.source, fp))
             out = p.communicate()
             if p.returncode != 0:
                 raise MiddlewareError(out[1])
@@ -3285,8 +3285,8 @@ class notifier(metaclass=HookMetaclass):
         """
         name = str(name)
         item = str(item)
-        if isinstance(value, str):
-            value = value.encode('utf8')
+        if isinstance(value, bytes):
+            value = value.decode('utf8')
         else:
             value = str(value)
         if recursive:
@@ -5257,8 +5257,8 @@ class notifier(metaclass=HookMetaclass):
         return secret
 
     def pwenc_encrypt(self, text):
-        if isinstance(text, str):
-            text = text.encode('utf8')
+        if isinstance(text, bytes):
+            text = text.decode('utf8')
         from Crypto.Random import get_random_bytes
         from Crypto.Util import Counter
         pad = lambda x: x + (PWENC_BLOCK_SIZE - len(x) % PWENC_BLOCK_SIZE) * PWENC_PADDING
@@ -5270,7 +5270,7 @@ class notifier(metaclass=HookMetaclass):
             counter=Counter.new(64, prefix=nonce),
         )
         encoded = base64.b64encode(nonce + cipher.encrypt(pad(text)))
-        return encoded
+        return encoded.decode()
 
     def pwenc_decrypt(self, encrypted=None):
         if not encrypted:
