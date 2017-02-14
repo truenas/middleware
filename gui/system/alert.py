@@ -160,7 +160,7 @@ class AlertPlugins:
             try:
                 imp.load_module(f, fp, pathname, description)
             except:
-                log.error("Failed to load alert plugin: %s", f)
+                log.error("Failed to load alert plugin: %s", f, exc_info=True)
             finally:
                 if fp:
                     fp.close()
