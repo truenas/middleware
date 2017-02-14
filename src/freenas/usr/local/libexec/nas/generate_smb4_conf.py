@@ -211,7 +211,7 @@ def order_vfs_objects(vfs_objects):
 def config_share_for_vfs_objects(share, vfs_objects):
     if vfs_objects:
         vfs_objects = order_vfs_objects(vfs_objects)
-        confset2(share, "vfs objects = %s", ' '.join(vfs_objects).encode('utf8'))
+        confset2(share, "vfs objects = %s", ' '.join(vfs_objects))
 
 
 def extend_vfs_objects_for_zfs(path, vfs_objects):
@@ -942,8 +942,7 @@ def generate_smb4_conf(client, smb4_conf, role):
     confset1(smb4_conf, "printcap name = /dev/null")
     confset1(smb4_conf, "disable spoolss = yes")
     confset1(smb4_conf, "getwd cache = yes")
-    confset2(smb4_conf, "guest account = %s",
-             cifs.cifs_srv_guest.encode('utf8'))
+    confset2(smb4_conf, "guest account = %s", cifs.cifs_srv_guest)
     confset1(smb4_conf, "map to guest = Bad User")
     confset2(smb4_conf, "obey pam restrictions = %s",
              "yes" if cifs.cifs_srv_obey_pam_restrictions else "no")
@@ -1033,8 +1032,7 @@ def generate_smb4_conf(client, smb4_conf, role):
     if cifs.cifs_srv_loglevel and cifs.cifs_srv_loglevel is not True:
         confset2(smb4_conf, "log level = %s", cifs.cifs_srv_loglevel)
 
-    smb_options = cifs.cifs_srv_smb_options.encode('utf-8')
-    smb_options = smb_options.strip()
+    smb_options = cifs.cifs_srv_smb_options.strip()
     for line in smb_options.split('\n'):
         line = line.strip()
         if not line:
@@ -1051,7 +1049,7 @@ def generate_smb4_shares(client, smb4_shares):
     for share in shares:
         share = Struct(share)
         if (not share.cifs_home and
-                not os.path.isdir(share.cifs_path.encode('utf8'))):
+                not os.path.isdir(share.cifs_path)):
             continue
 
         confset1(smb4_shares, "\n")
@@ -1080,19 +1078,16 @@ def generate_smb4_shares(client, smb4_shares):
             if share.cifs_path:
                 cifs_homedir_path = ("%s/%s" %
                                      (share.cifs_path, valid_users_path))
-                confset2(smb4_shares, "path = %s",
-                         cifs_homedir_path.encode('utf8'))
+                confset2(smb4_shares, "path = %s", cifs_homedir_path)
             if share.cifs_comment:
                 confset2(smb4_shares,
-                         "comment = %s", share.cifs_comment.encode('utf8'))
+                         "comment = %s", share.cifs_comment)
             else:
                 confset1(smb4_shares, "comment = Home Directories")
         else:
-            confset2(smb4_shares, "[%s]",
-                     share.cifs_name.encode('utf8'), space=0)
-            confset2(smb4_shares, "path = %s", share.cifs_path.encode('utf8'))
-            confset2(smb4_shares, "comment = %s",
-                     share.cifs_comment.encode('utf8'))
+            confset2(smb4_shares, "[%s]", share.cifs_name, space=0)
+            confset2(smb4_shares, "path = %s", share.cifs_path)
+            confset2(smb4_shares, "comment = %s", share.cifs_comment)
         confset1(smb4_shares, "printable = no")
         confset1(smb4_shares, "veto files = /.snapshot/.windows/.mac/.zfs/")
         confset2(smb4_shares, "writeable = %s",
@@ -1147,7 +1142,6 @@ def generate_smb4_shares(client, smb4_shares):
             line = line.strip()
             if not line:
                 continue
-            line = line.encode('utf-8')
             confset1(smb4_shares, line)
 
 
