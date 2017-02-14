@@ -1230,13 +1230,14 @@ def volume_key_download(request, object_id):
         return HttpResponseRedirect('/')
 
     geli_keyfile = volume.get_geli_keyfile()
-    wrapper = FileWrapper(file(geli_keyfile))
+    with open(geli_keyfile, 'rb') as f:
+        wrapper = FileWrapper(f)
 
-    response = HttpResponse(wrapper, content_type='application/octet-stream')
-    response['Content-Length'] = os.path.getsize(geli_keyfile)
-    response['Content-Disposition'] = 'attachment; filename=geli.key'
-    del request.session["allow_gelikey"]
-    return response
+        response = HttpResponse(wrapper, content_type='application/octet-stream')
+        response['Content-Length'] = os.path.getsize(geli_keyfile)
+        response['Content-Disposition'] = 'attachment; filename=geli.key'
+        del request.session["allow_gelikey"]
+        return response
 
 
 def volume_rekey(request, object_id):
