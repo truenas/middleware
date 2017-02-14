@@ -17,6 +17,8 @@ from freenasUI.middleware.notifier import notifier
 from freenasUI.system.models import Advanced, Alert as mAlert
 from freenasUI.support.utils import get_license, new_ticket
 
+from lxml import etree
+
 log = logging.getLogger('system.alert')
 
 
@@ -176,7 +178,20 @@ class AlertPlugins:
         msgs = []
         for alert in alerts:
             if alert.getId() not in dismisseds:
-                msgs.append(unicode(alert).encode('utf8'))
+                """
+                This is all to allow <a> tags in alert messages.
+                We need to strip out all the tags so we can send a
+                plain text email.
+                """
+                msg = unicode(alert).encode('utf8')
+                msgnode = etree.fromstring('<msg>{}</msg>'.format(msg))
+                for i in msgnode.xpath('//a'):
+                    new = etree.Element('span')
+                    new.text = '{} ({})'.format(i.text, i.attrib['href'])
+                    msgnode.replace(i, new)
+
+                etree.strip_tags(msgnode, '*')
+                msgs.append(msgnode.text)
         if len(msgs) == 0:
             return
 
