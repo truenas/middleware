@@ -73,7 +73,8 @@ def pipeopen(command, important=True, logger=log, allowfork=False, quiet=True, c
 
     return Popen(
         args, stdin=PIPE, stdout=PIPE, stderr=PIPE,
-        close_fds=close_fds, preexec_fn=preexec_fn
+        close_fds=close_fds, preexec_fn=preexec_fn,
+        encoding='utf8',
     )
 
 
