@@ -193,7 +193,7 @@ http {
     client_body_temp_path /var/tmp/firmware;
 
     error_log /var/log/nginx/error.log error;
-    access_log var/log/nginx/access.log combined;
+    access_log /var/log/nginx/access.log combined;
     
     server {
         server_name  localhost;
