@@ -1,6 +1,6 @@
 <div data-dojo-type="dijit.layout.BorderContainer" id="footer" data-dojo-props="gutters:false, baseClass: 'NoGutter'">
-<div data-dojo-type="dijit.layout.ContentPane" id="footerPane" data-dojo-props="region:'left'">
-{{ sw_name }}&reg; &copy; 2017 - <a href="http://www.ixsystems.com" target="_blank" title="iXsystems, Inc."> iXsystems, Inc.</a> - {{sw_version|slice:"8:-14"}}
+<div data-dojo-type="dijit.layout.ContentPane" id="footerPane" data-dojo-props="region:'left'" style="width: auto">
+{{ sw_name }}&reg; &copy; 2017 - <a href="http://www.ixsystems.com" target="_blank" title="iXsystems, Inc."> iXsystems, Inc.</a> - {{sw_version_footer}}
 </div>
 <div data-dojo-type="dijit.layout.ContentPane" id="footerMessages" data-dojo-props="region:'center'">
 <pre class="message" id="msg_output" onClick="dijit.byId('log_dialog').show();"></pre>
