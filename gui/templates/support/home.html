@@ -66,6 +66,7 @@
         {% if f.1 == 1 %}{% trans "E16 Enclosure" %}{% endif %}
         {% if f.1 == 2 %}{% trans "E24 Enclosure" %}{% endif %}
         {% if f.1 == 3 %}{% trans "E60 Enclosure" %}{% endif %}: {{ f.0 }}<br />
+        {% if f.1 == 4 %}{% trans "ES60 Enclosure" %}{% endif %}: {{ f.0 }}<br />
       {% empty %}
         {% trans "None" %}
       {% endfor %}
