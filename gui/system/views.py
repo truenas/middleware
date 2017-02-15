@@ -806,6 +806,8 @@ class DojoFileStore(object):
 
     def children(self, entry):
         _children = []
+        if not os.path.exists(entry):
+            return _children
         for _entry in sorted(os.listdir(entry)):
             # FIXME: better extendable way to exclude files
             if _entry.startswith(".") or _entry == 'md_size':
