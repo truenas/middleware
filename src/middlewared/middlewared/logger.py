@@ -101,7 +101,9 @@ class LoggerFormatter(object):
         color_reset = self.CONSOLE_COLOR_FORMATTER['RESET']
 
         console_formatter = logging.Formatter(
-            "[%(asctime)s] " + color_start + "(%(levelname)s)" + color_reset + " Call: %(name)s, %(funcName)s(): %(lineno)s - %(message)s", "%Y/%m/%d %H:%M:%S")
+            "[%(asctime)s] " + color_start + "(%(levelname)s)" + color_reset + " %(name)s.%(funcName)s:%(lineno)d - %(message)s",
+            datefmt="%y/%m/%d %H:%M:%S",
+        )
 
         return console_formatter
 
