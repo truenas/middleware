@@ -506,7 +506,7 @@ class SystemDataset(Model):
         verbose_name=_("Syslog")
     )
     sys_rrd_usedataset = models.BooleanField(
-        default=False,
+        default=True,
         verbose_name=_("Reporting Database"),
         help_text=_(
             'Save the Round-Robin Database (RRD) used by system statistics '
