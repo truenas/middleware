@@ -430,5 +430,5 @@ class DNSService(Service):
 
         proc = Popen([
             '/sbin/resolvconf', '-a', 'lo0'
-        ], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        ], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf8')
         proc.communicate(input=resolvconf)
