@@ -30,8 +30,7 @@ pbid_start()
 
 	echo "Starting ${name}..."
 
-	(nice $command) &
-	echo "$!" > ${pidfile}
+	/usr/sbin/daemon -f -p ${pidfile} ${command}
 }
 
 pbid_stop()
@@ -47,7 +46,7 @@ pbid_stop()
 
 	echo "Stopping ${name}..."
         kill -9 "`cat ${pidfile}`"
-	rm "${pidfile}"
+	rm -f "${pidfile}"
 }
 
 
