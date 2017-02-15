@@ -32,6 +32,7 @@ def django_modelobj_serialize(middleware, obj, extend=None, field_suffix=None):
 
 
 def Popen(*args, **kwargs):
+    kwargs.setdefault('encoding', 'utf8')
     return subprocess.Popen(*args, **kwargs)
 
 
