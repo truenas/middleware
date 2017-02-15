@@ -2,6 +2,7 @@
 
 PORTNAME=	nomad
 PORTVERSION=	0.5.0
+PORTREVISION=	1
 DISTVERSIONPREFIX=	v
 CATEGORIES=	sysutils
 
@@ -11,7 +12,6 @@ COMMENT=	Cluster manager and scheduler
 LICENSE=	MPL
 
 BUILD_DEPENDS=	go>=1.7:lang/go
-RUN_DEPENDS=	go>=1.7:lang/go
 
 ONLY_FOR_ARCHS=	amd64
 
