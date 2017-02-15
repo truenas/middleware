@@ -2127,7 +2127,7 @@ class notifier:
                               the user.
             MiddlewareError - failed to run pw useradd successfully.
         """
-        command = '/usr/sbin/pw useradd "%s" -o -c "%s" -d "%s" -s "%s"' % \
+        command = '/usr/sbin/pw useradd -n "%s" -o -c "%s" -d "%s" -s "%s"' % \
             (username, fullname, homedir, shell, )
         if password_disabled:
             command += ' -h -'
