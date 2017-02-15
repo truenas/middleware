@@ -1,0 +1,233 @@
+'\" t
+.\"     Title: ntlm_auth4
+.\"    Author: [see the "AUTHOR" section]
+.\" Generator: DocBook XSL Stylesheets v1.76.1 <http://docbook.sf.net/>
+.\"      Date: 05/30/2015
+.\"    Manual: User Commands
+.\"    Source: Samba 4.0
+.\"  Language: English
+.\"
+.TH "NTLM_AUTH4" "1" "05/30/2015" "Samba 4\&.0" "User Commands"
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.\" http://bugs.debian.org/507673
+.\" http://lists.gnu.org/archive/html/groff/2009-02/msg00013.html
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+ntlm_auth4 \- tool to allow external access to Winbind\*(Aqs NTLM authentication function
+.SH "SYNOPSIS"
+.HP \w'\fBntlm_auth4\fR\ 'u
+\fBntlm_auth4\fR [\-d\ debuglevel] [\-l\ logdir] [\-s\ <smb\ config\ file>]
+.SH "DESCRIPTION"
+.PP
+This tool is part of the
+\fBsamba\fR(7)
+suite\&.
+.PP
+\fBntlm_auth4\fR
+is a helper utility that authenticates users using NT/LM authentication\&. It returns 0 if the users is authenticated successfully and 1 if access was denied\&. ntlm_auth4 uses winbind to access the user and authentication data for a domain\&. This utility is only indended to be used by other programs (currently squid)\&.
+.SH "OPERATIONAL REQUIREMENTS"
+.PP
+The
+\fBwinbindd\fR(8)
+daemon must be operational for many of these commands to function\&.
+.PP
+Some of these commands also require access to the directory
+winbindd_privileged
+in
+$LOCKDIR\&. This should be done either by running this command as root or providing group access to the
+winbindd_privileged
+directory\&. For security reasons, this directory should not be world\-accessable\&.
+.SH "OPTIONS"
+.PP
+\-\-helper\-protocol=PROTO
+.RS 4
+Operate as a stdio\-based helper\&. Valid helper protocols are:
+.PP
+squid\-2\&.4\-basic
+.RS 4
+Server\-side helper for use with Squid 2\&.4\*(Aqs basic (plaintext) authentication\&.
+.RE
+.PP
+squid\-2\&.5\-basic
+.RS 4
+Server\-side helper for use with Squid 2\&.5\*(Aqs basic (plaintext) authentication\&.
+.RE
+.PP
+squid\-2\&.5\-ntlmssp
+.RS 4
+Server\-side helper for use with Squid 2\&.5\*(Aqs NTLMSSP authentication\&.
+.sp
+Requires access to the directory
+winbindd_privileged
+in
+$LOCKDIR\&. The protocol used is described here:
+\m[blue]\fBhttp://devel\&.squid\-cache\&.org/ntlm/squid_helper_protocol\&.html\fR\m[]
+.RE
+.PP
+ntlmssp\-client\-1
+.RS 4
+Cleint\-side helper for use with arbitary external programs that may wish to use Samba\*(Aqs NTLMSSP authentication knowlege\&.
+.sp
+This helper is a client, and as such may be run by any user\&. The protocol used is effectivly the reverse of the previous protocol\&.
+.RE
+.PP
+gss\-spnego
+.RS 4
+Server\-side helper that implements GSS\-SPNEGO\&. This uses a protocol that is almost the same as
+\fBsquid\-2\&.5\-ntlmssp\fR, but has some subtle differences that are undocumented outside the source at this stage\&.
+.sp
+Requires access to the directory
+winbindd_privileged
+in
+$LOCKDIR\&.
+.RE
+.PP
+gss\-spnego\-client
+.RS 4
+Client\-side helper that implements GSS\-SPNEGO\&. This also uses a protocol similar to the above helpers, but is currently undocumented\&.
+.RE
+.RE
+.PP
+\-\-username=USERNAME
+.RS 4
+Specify username of user to authenticate
+.RE
+.PP
+\-\-domain=DOMAIN
+.RS 4
+Specify domain of user to authenticate
+.RE
+.PP
+\-\-workstation=WORKSTATION
+.RS 4
+Specify the workstation the user authenticated from
+.RE
+.PP
+\-\-challenge=STRING
+.RS 4
+NTLM challenge (in HEXADECIMAL)
+.RE
+.PP
+\-\-lm\-response=RESPONSE
+.RS 4
+LM Response to the challenge (in HEXADECIMAL)
+.RE
+.PP
+\-\-nt\-response=RESPONSE
+.RS 4
+NT or NTLMv2 Response to the challenge (in HEXADECIMAL)
+.RE
+.PP
+\-\-password=PASSWORD
+.RS 4
+User\*(Aqs plaintext password
+.sp
+If not specified on the command line, this is prompted for when required\&.
+.RE
+.PP
+\-\-request\-lm\-key
+.RS 4
+Retreive LM session key
+.RE
+.PP
+\-\-request\-nt\-key
+.RS 4
+Request NT key
+.RE
+.PP
+\-\-diagnostics
+.RS 4
+Perform Diagnostics on the authentication chain\&. Uses the password from
+\fB\-\-password\fR
+or prompts for one\&.
+.RE
+.PP
+\-\-require\-membership\-of={SID|Name}
+.RS 4
+Require that a user be a member of specified group (either name or SID) for authentication to succeed\&.
+.RE
+.SH "EXAMPLE SETUP"
+.PP
+To setup ntlm_auth4 for use by squid 2\&.5, with both basic and NTLMSSP authentication, the following should be placed in the
+squid\&.conf
+file\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+auth_param ntlm program ntlm_auth4 \-\-helper\-protocol=squid\-2\&.5\-ntlmssp
+auth_param basic program ntlm_auth4 \-\-helper\-protocol=squid\-2\&.5\-basic
+auth_param basic children 5
+auth_param basic realm Squid proxy\-caching web server
+auth_param basic credentialsttl 2 hours
+.fi
+.if n \{\
+.RE
+.\}
+.if n \{\
+.sp
+.\}
+.RS 4
+.it 1 an-trap
+.nr an-no-space-flag 1
+.nr an-break-flag 1
+.br
+.ps +1
+\fBNote\fR
+.ps -1
+.br
+.PP
+This example assumes that ntlm_auth4 has been installed into your path, and that the group permissions on
+winbindd_privileged
+are as described above\&.
+.sp .5v
+.RE
+.PP
+To setup ntlm_auth4 for use by squid 2\&.5 with group limitation in addition to the above example, the following should be added to the
+squid\&.conf
+file\&.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+auth_param ntlm program ntlm_auth4 \-\-helper\-protocol=squid\-2\&.5\-ntlmssp \-\-require\-membership\-of=\*(AqWORKGROUP\eDomain Users\*(Aq
+auth_param basic program ntlm_auth4 \-\-helper\-protocol=squid\-2\&.5\-basic \-\-require\-membership\-of=\*(AqWORKGROUP\eDomain Users\*(Aq
+.fi
+.if n \{\
+.RE
+.\}
+.SH "TROUBLESHOOTING"
+.PP
+If you\*(Aqre experiencing problems with authenticating Internet Explorer running under MS Windows 9X or Millenium Edition against ntlm_auth4\*(Aqs NTLMSSP authentication helper (\-\-helper\-protocol=squid\-2\&.5\-ntlmssp), then please read
+\m[blue]\fBthe Microsoft Knowledge Base article #239869 and follow instructions described there\fR\m[]\&\s-2\u[1]\d\s+2\&.
+.SH "VERSION"
+.PP
+This man page is correct for version 3\&.0 of the Samba suite\&.
+.SH "AUTHOR"
+.PP
+The original Samba software and related utilities were created by Andrew Tridgell\&. Samba is now developed by the Samba Team as an Open Source project similar to the way the Linux kernel is developed\&.
+.PP
+The ntlm_auth4 manpage was written by Jelmer Vernooij and Andrew Bartlett\&.
+.SH "NOTES"
+.IP " 1." 4
+the Microsoft Knowledge Base article #239869 and follow instructions described there
+.RS 4
+\%http://support.microsoft.com/support/kb/articles/Q239/8/69.ASP
+.RE
