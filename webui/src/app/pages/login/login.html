@@ -1,0 +1,34 @@
+<div class="auth-main">
+  <div class="auth-block">
+    <div *ngIf="_ws.connected != true">
+      Connecting to WebSocket...
+    </div>
+
+    <form [formGroup]="form" class="form-horizontal" *ngIf="_ws.connected == true" [ngBusy]="busy">
+    <h1>FreeNAS</h1>
+      <div *ngIf="failed == true" class="form-group">
+        Username or password invalid!
+      </div>
+
+      <div class="form-group row" [ngClass]="{'has-error': (!username.valid && username.touched), 'has-success': (username.valid && username.touched)}">
+        <label for="inputUsername" class="col-sm-2 control-label">Username</label>
+
+        <div class="col-sm-10">
+          <input [formControl]="username" type="username" class="form-control" id="inputUsername" placeholder="Username">
+        </div>
+      </div>
+      <div class="form-group row" [ngClass]="{'has-error': (!password.valid && password.touched), 'has-success': (password.valid && password.touched)}">
+        <label for="inputPassword3" class="col-sm-2 control-label">Password</label>
+
+        <div class="col-sm-10">
+          <input [formControl]="password" type="password" class="form-control" id="inputPassword3" placeholder="Password">
+        </div>
+      </div>
+      <div class="form-group row">
+        <div class="offset-sm-2 col-sm-10">
+          <button [disabled]="!form.valid && !submitted" type="button" (click)="onSubmit(form.value)" class="btn btn-default btn-auth">Sign in</button>
+        </div>
+      </div>
+    </form>
+  </div>
+</div>

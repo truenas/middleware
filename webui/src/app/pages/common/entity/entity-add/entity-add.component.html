@@ -1,0 +1,13 @@
+<ba-card>
+<form (ngSubmit)="onSubmit()" [formGroup]="formGroup" [ngBusy]="busy">
+  <div *ngIf="error" [innerHTML]="error" class="form-error">
+  </div>
+
+    <dynamic-form-bootstrap-control #component *ngFor="let controlModel of conf.formModel"
+                                    [controlGroup]="formGroup"
+                                    [model]="controlModel"
+                                    [hasErrorMessaging]="controlModel.hasErrorMessages">
+    </dynamic-form-bootstrap-control>
+   <button class="btn btn-primary" type="submit">Add</button>
+</form>
+</ba-card>
