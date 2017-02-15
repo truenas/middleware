@@ -53,9 +53,9 @@ set_user_sysctls()
 
 start_sysctl()
 {
+	set_autotune_sysctls
 	RO_FREENAS_CONFIG=$(ro_sqlite ${name} 2> /tmp/${name}.fail && rm /tmp/${name}.fail)
 	trap 'rm -f ${RO_FREENAS_CONFIG}' EXIT
-	set_autotune_sysctls
 	set_user_sysctls
 }
 
