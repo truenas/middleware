@@ -87,7 +87,10 @@ class Disk(object):
         reg = re.search(r'^(.*?)([0-9]+)', devname)
         if reg:
             self.dtype, number = reg.groups()
-        self.number = int(number)
+            self.number = int(number)
+        else:
+            self.dtype = devname
+            self.number = None
         self.size = size
         self.serial = serial
         self.human_size = humanize_number_si(size)
