@@ -51,6 +51,8 @@ usage()
 	Usage: $0 <options>
 	Where options are:
 	    -$email_opt		Email debug log to this comma-delimited list of email addresses
+	    -A		Dump all debug information
+
 __EOF__
 
 	local i=1
@@ -97,7 +99,7 @@ send_email()
 		# encode it, and attach it with the proper mime type
 		#
 		encoded="$(base64 -e "${afile}")"
-			
+
 		cat<<-EOF>"${mfile}"
 		Content-Transfer-Encoding: 7bit
 		Content-Type: multipart/mixed; boundary="${boundary}"
@@ -171,7 +173,7 @@ get_module_options()
 
 		#
 		# Export each module into our environment with its option
-		# so that we can map it to the options specified on the 
+		# so that we can map it to the options specified on the
 		# command line
 		#
 		export "$(echo module_func_${opt})=${m}_func"
@@ -199,7 +201,7 @@ get_module_options()
 # module_help()
 #
 #   This function is what gets displayed when the command line options are shown when
-#   usage() is called. 
+#   usage() is called.
 #
 # module_directory()
 #
@@ -207,7 +209,7 @@ get_module_options()
 #
 # module_func()
 #
-#   This function is what gets run when the command line option is specified. 
+#   This function is what gets run when the command line option is specified.
 #
 main()
 {
@@ -230,9 +232,9 @@ main()
 		$email_opt)
 			email="${OPTARG}"
 			;;
-        A)
-            all_debug=true
-            ;;
+	A)
+	    all_debug=true
+	    ;;
 		[${opts}])
 			has_debug_command=true
 			;;
@@ -298,7 +300,7 @@ main()
 				then
 					fp="${FREENAS_DEBUG_DIRECTORY}/${directory}"
 					mkdir -p "${fp}"
-	
+
 					eval "${func}" 2>&1|tee -a "${fp}/dump.txt"
 				fi
 			fi
