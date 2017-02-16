@@ -38,6 +38,10 @@ import time
 import ipaddr
 import requests
 
+# Only root can run it.
+if os.geteuid() != 0:
+    exit("This command must be run with root privileges.")
+
 WWW_PATH = "/usr/local/www"
 FREENAS_PATH = os.path.join(WWW_PATH, "freenasUI")
 NETWORK_PATH = os.path.join(FREENAS_PATH, "network")
@@ -89,7 +93,7 @@ def quad_to_cidr(quad):
     vals = { 0:True, 128:True, 192:True,
              224:True, 240:True, 248:True,
              252:True, 254:True, 255:True }
-	
+
     count = 0
     octets = quad.split('.')
     for octet in octets:
@@ -1290,7 +1294,7 @@ def main_menu():
             show_ip()
         except:
             pass
-        
+
         try:
             ch = int(raw_input(_("Enter an option from 1-%d: ") % (menu_max)))
         except ValueError:
