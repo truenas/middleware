@@ -87,7 +87,7 @@ class LoggerFormatter(logging.Formatter):
         """Set the color based on the log level.
 
             Returns:
-                color_start (str): Returns the color code.
+                logging.Formatter class.
         """
 
         if record.levelno == self.LOGGING_LEVEL['CRITICAL']:
