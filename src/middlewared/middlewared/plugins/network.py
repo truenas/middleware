@@ -210,13 +210,18 @@ class InterfacesService(Service):
                     }))
                 else:
                     self.logger.info('Unable to get address from dhclient')
+            if data[ipv6_field] and has_ipv6 is False:
+                addrs_database.add(self.alias_to_addr({
+                    'address': data[ipv6_field],
+                    'netmask': data['int_v6netmaskbit'],
+                }))
         else:
             if data[ipv4_field]:
                 addrs_database.add(self.alias_to_addr({
                     'address': data[ipv4_field],
                     'netmask': data['int_v4netmaskbit'],
                 }))
-            if data[ipv6_field]:
+            if data[ipv6_field] and has_ipv6 is False:
                 addrs_database.add(self.alias_to_addr({
                     'address': data[ipv6_field],
                     'netmask': data['int_v6netmaskbit'],
@@ -269,10 +274,7 @@ class InterfacesService(Service):
 
         # Remove addresses configured and not in database
         for addr in (addrs_configured - addrs_database):
-            if (
-                addr.af == netif.AddressFamily.INET6 and
-                str(addr.address).startswith('fe80::')
-            ):
+            if has_ipv6 and str(addr.address).startswith('fe80::'):
                 continue
             self.logger.debug('{}: removing {}'.format(name, addr))
             iface.remove_address(addr)
