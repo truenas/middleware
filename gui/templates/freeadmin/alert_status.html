@@ -15,7 +15,7 @@
         {% endif %}
     {% endif %}
     </span>
-    {{ alert.getDatetime }} - {{ alert.getMessage }}</li>
+    {{ alert.getDatetime }} - {{ alert.getMessage|safe }}</li>
 {% empty %}
   <li>The system has no alerts</li>
 {% endfor %}
