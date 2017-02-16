@@ -249,7 +249,6 @@ class InterfacesService(Service):
                     'address': alias[alias_ipv6_field],
                     'netmask': alias['alias_v6netmaskbit'],
                 }))
-                has_ipv6 = True
 
             if alias['alias_vip']:
                 addrs_database.add(self.alias_to_addr({
