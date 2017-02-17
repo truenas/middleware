@@ -1340,7 +1340,7 @@ def smb4_import_users(client, smb_conf_path, smb4_tdb, exportfile=None):
     args = [
         "/usr/local/bin/pdbedit",
         "-d 0",
-        "-i smbpasswd:%s" % t.name,
+        "-i smbpasswd:%s" % f.name,
         "-s %s" % smb_conf_path
     ]
 
