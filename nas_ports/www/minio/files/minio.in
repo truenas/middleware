@@ -18,7 +18,7 @@ rcvar=minio_enable
 pidfile="/var/run/${name}.pid"
 
 command="/usr/sbin/daemon"
-command_args="-c -f -p ${pidfile} /usr/local/bin/${name} -C \"${minio_config}\" server --address=\"${minio_address}\" ${minio_disks}"
+command_args="-o /var/log/minio.log -c -p ${pidfile} /usr/local/bin/${name} -C \"${minio_config}\" server --address=\"${minio_address}\" ${minio_disks}"
 
 stop_cmd="minio_stop"
 status_cmd="minio_status"
