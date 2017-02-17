@@ -1332,15 +1332,15 @@ def do_migration(client, old_samba4_datasets):
 
 
 def smb4_import_users(client, smb_conf_path, smb4_tdb, exportfile=None):
-    (fd, tmpfile) = tempfile.mkstemp(dir="/tmp")
+    f = tempfile.NamedTemporaryFile(mode='w+', dir="/tmp")
     for line in smb4_tdb:
-        os.write(fd, line + '\n')
-    os.close(fd)
+        f.write(line + '\n')
+    f.flush()
 
     args = [
         "/usr/local/bin/pdbedit",
         "-d 0",
-        "-i smbpasswd:%s" % tmpfile,
+        "-i smbpasswd:%s" % t.name,
         "-s %s" % smb_conf_path
     ]
 
@@ -1357,7 +1357,7 @@ def smb4_import_users(client, smb_conf_path, smb4_tdb, exportfile=None):
                 continue
             print(line)
 
-    os.unlink(tmpfile)
+    f.close()
     smb4_users = get_smb4_users(client)
     for u in smb4_users:
         u = Struct(u)
