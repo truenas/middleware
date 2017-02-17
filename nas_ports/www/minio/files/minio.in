@@ -5,7 +5,7 @@
 
 minio_enable="${minio_enable-NO}"
 minio_config="${minio_config-%%PREFIX%%/etc/minio}"
-minio_env="${minio_env-%%PREFIX%%/etc/minio.conf}"
+minio_env=${minio_env:=""}
 minio_disks="${minio_disks}"
 minio_address="${minio_address-:9000}"
 
@@ -19,15 +19,10 @@ rcvar=minio_enable
 pidfile="/var/run/${name}.pid"
 
 command="/usr/sbin/daemon"
-command_args="-o /var/log/minio.log -c -p ${pidfile} /usr/local/bin/${name} -C \"${minio_config}\" server --address=\"${minio_address}\" ${minio_disks}"
+command_args="-o /var/log/minio.log -c -p ${pidfile} /usr/bin/env ${minio_env} /usr/local/bin/${name} -C \"${minio_config}\" server --address=\"${minio_address}\" ${minio_disks}"
 
 stop_cmd="minio_stop"
 status_cmd="minio_status"
-
-if [ -e "$minio_env" ] ; then
-  # Source optional minio env file
-  . ${minio_env}
-fi
 
 minio_stop()
 {
