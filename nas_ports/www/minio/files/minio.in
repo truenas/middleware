@@ -4,7 +4,8 @@
 # KEYWORD: shutdown
 
 minio_enable="${minio_enable-NO}"
-minio_config="${minio_config-/etc/minio}"
+minio_config="${minio_config-%%PREFIX%%/etc/minio}"
+minio_env="${minio_env-%%PREFIX%%/etc/minio.conf}"
 minio_disks="${minio_disks}"
 minio_address="${minio_address-:9000}"
 
@@ -22,6 +23,11 @@ command_args="-o /var/log/minio.log -c -p ${pidfile} /usr/local/bin/${name} -C \
 
 stop_cmd="minio_stop"
 status_cmd="minio_status"
+
+if [ -e "$minio_env" ] ; then
+  # Source optional minio env file
+  . ${minio_env}
+fi
 
 minio_stop()
 {
