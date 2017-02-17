@@ -20,4 +20,52 @@ pidfile="/var/run/${name}.pid"
 command="/usr/sbin/daemon"
 command_args="-c -f -p ${pidfile} /usr/local/bin/${name} -C \"${minio_config}\" server --address=\"${minio_address}\" ${minio_disks}"
 
+stop_cmd="minio_stop"
+status_cmd="minio_status"
+
+minio_stop()
+{
+	rc_pid=$(minio_check_pidfile $pidfile)
+
+	if [ -z "$rc_pid" ]; then
+		[ -n "$rc_fast" ] && return 0
+		echo "${name} not running? (check $pidfile)."
+		return 1
+	fi
+
+	echo "Stopping ${name}."
+	kill ${rc_pid} 2> /dev/null
+}
+
+minio_status()
+{
+	rc_pid=$(minio_check_pidfile $pidfile)
+
+	if [ -z "$rc_pid" ]; then
+		[ -n "$rc_fast" ] && return 0
+		echo "${name} not running? (check $pidfile)."
+		return 1
+	fi
+	echo "${name} is running as pid ${rc_pid}."
+}
+
+minio_check_pidfile()
+{
+	_pidfile=$1
+	if [ -z "$_pidfile" ]; then
+		err 3 'USAGE: minio_check_pidfile pidfile'
+	fi
+	if [ ! -f $_pidfile ]; then
+		debug "pid file ($_pidfile): not readable."
+		return
+	fi
+	read _pid _junk < $_pidfile
+	if [ -z "$_pid" ]; then
+		debug "pid file ($_pidfile): no pid in file."
+		return
+	fi
+
+	pgrep minio
+}
+
 run_rc_command "$1"
