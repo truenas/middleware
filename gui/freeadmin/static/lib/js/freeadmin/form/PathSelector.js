@@ -33,7 +33,11 @@ define([
                 gettext = function(s) { return s; }
             }
             var target;
-            if(this.dirsonly) {
+
+            if (document.getElementById('dirsonly') !== null)
+                this.dirsonly = document.getElementById('dirsonly').value;
+
+            if(this.dirsonly == true) {
                 target = '/system/lsdir/';
             } else {
                 target = '/system/lsfiles/';
