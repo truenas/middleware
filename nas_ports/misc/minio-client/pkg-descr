@@ -1,0 +1,4 @@
+Minio Client is a replacement for ls, cp, mkdir, diff and rsync commands for
+filesystems and object storage.
+
+WWW: https://minio.io/downloads/#minio-client
