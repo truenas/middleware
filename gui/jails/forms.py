@@ -310,7 +310,7 @@ class JailCreateForm(ModelForm):
         except Exception as e:
             self.errors['__all__'] = self.error_class([_(e.message)])
             return
-         
+
         template_create_args['nick'] = template.jt_name
         template_create_args['tar'] = template.jt_url
         template_create_args['flags'] = WARDEN_TEMPLATE_FLAGS_CREATE | \
