@@ -303,7 +303,14 @@ class JailCreateForm(ModelForm):
         jail_type = self.cleaned_data['jail_type']
         if not jail_type:
             jail_type = 'standard'
-        template = JailTemplate.objects.get(jt_name=jail_type)
+
+        # Don't backtrace if template doesn't exist
+        try:
+            template = JailTemplate.objects.get(jt_name=jail_type)
+        except Exception as e:
+            self.errors['__all__'] = self.error_class([_(e.message)])
+            return
+         
         template_create_args['nick'] = template.jt_name
         template_create_args['tar'] = template.jt_url
         template_create_args['flags'] = WARDEN_TEMPLATE_FLAGS_CREATE | \
