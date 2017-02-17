@@ -93,7 +93,14 @@ do
   if [ -z "${ID}" ]
   then
     continue
-  fi  
+  fi
+
+  if [ "$(eval echo \$__usedjid${ID})" = "true" ]; then
+    ID="$(get_next_id "${JDIR}")"
+    echo "$ID" > ${jail}/id
+  else
+    eval __usedjid${ID}=true
+  fi
 
   HOST="$(warden_get_host "${jailfp}")"
   JAILNAME=`echo ${jail}|sed 's|.meta$||'|sed 's|^.||'`
