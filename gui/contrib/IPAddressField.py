@@ -72,7 +72,7 @@ class IPNetworkField(models.Field):
             return value
 
         try:
-            return IPNetwork(value.encode('latin-1'))
+            return IPNetwork(value)
         except Exception as e:
             raise ValidationError("Invalid IP address: %s" % e)
 
@@ -111,7 +111,7 @@ class IPAddressFormFieldBase(forms.CharField):
             return ""
         else:
             try:
-                return IPAddress(value.encode('latin-1'))
+                return IPAddress(value)
             except Exception as e:
                 raise ValidationError("Invalid IP address: %s" % e)
 
@@ -133,7 +133,7 @@ class IP4AddressFormField(IPAddressFormFieldBase):
             return ""
         else:
             try:
-                return IPAddress(value.encode('latin-1'), version=4)
+                return IPAddress(value, version=4)
             except Exception as e:
                 raise ValidationError("Invalid IPv4 address: %s" % e)
 
@@ -153,7 +153,7 @@ class IP6AddressFormField(IPAddressFormFieldBase):
             return ""
         else:
             try:
-                return IPAddress(value.encode('latin-1'), version=6)
+                return IPAddress(value, version=6)
             except Exception as e:
                 raise ValidationError("Invalid IPv6 address: %s" % e)
 
@@ -177,7 +177,7 @@ class IPAddressFieldBase(models.Field):
         if value == "None":
             return ""
         else:
-            return IPAddress(value.encode('latin-1'))
+            return IPAddress(value)
 
     def get_prep_lookup(self, lookup_type, value):
         if lookup_type == 'exact':
@@ -222,7 +222,7 @@ class IP4AddressField(IPAddressFieldBase):
         if value == "None":
             return ""
         else:
-            return IPAddress(value.encode('latin-1'), version=4)
+            return IPAddress(value, version=4)
 
     def formfield(self, **kwargs):
         defaults = {
@@ -246,7 +246,7 @@ class IP6AddressField(IPAddressFieldBase):
         if value == "None":
             return ""
         else:
-            return IPAddress(value.encode('latin-1'), version=6)
+            return IPAddress(value, version=6)
 
     def formfield(self, **kwargs):
         defaults = {
