@@ -2,7 +2,8 @@
 
 PORTNAME=	minio-client
 PORTVERSION=	2017.02.06.20.16.19
-CATEGORIES=	www
+PORTREVISION=	1
+CATEGORIES=	misc
 
 MAINTAINER=	jhixson@gmail.com
 COMMENT=	Replacement for ls, cp, mkdir, diff and rsync commands for filesystems and object storage
