@@ -89,14 +89,6 @@ class NewPasswordForm(Form):
 
 
 class bsdUserGroupMixin:
-    def _populate_shell_choices(self):
-        with open('/etc/shells') as fd:
-            shells = map(str.rstrip,
-                         filter(lambda x: x.startswith('/'), fd.readlines()))
-        shell_dict = {}
-        for shell in shells + ['/sbin/nologin']:
-            shell_dict[shell] = os.path.basename(shell)
-        return shell_dict.items()
 
     def pw_checkname(self, bsdusr_username):
         if bsdusr_username.startswith('-'):
@@ -188,10 +180,6 @@ class bsdUsersForm(ModelForm, bsdUserGroupMixin):
         label=_("Primary Group"),
         queryset=models.bsdGroups.objects.all(),
         required=False)
-    bsdusr_shell = forms.ChoiceField(
-        label=_("Shell"),
-        initial=u'/bin/csh',
-        choices=())
     bsdusr_creategroup = forms.BooleanField(
         label=_("Create a new primary group for the user"),
         required=False,
@@ -250,8 +238,6 @@ class bsdUsersForm(ModelForm, bsdUserGroupMixin):
         key_order(self, 3, 'bsdusr_group', instance=True)
         if self._api is True:
             del self.fields['bsdusr_password2']
-        self.fields['bsdusr_shell'].choices = self._populate_shell_choices()
-        self.fields['bsdusr_shell'].choices.sort()
         self.fields['bsdusr_to_group'].choices = [
             (x.id, x.bsdgrp_group)
             for x in models.bsdGroups.objects.all()

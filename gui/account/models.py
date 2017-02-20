@@ -33,6 +33,7 @@ from django.core.validators import MinValueValidator, MaxValueValidator
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
+from freenasUI import choices
 from freenasUI.common.samba import Samba4
 from freenasUI.common.system import domaincontroller_enabled
 from freenasUI.freeadmin.models import Model, PathField
@@ -132,7 +133,8 @@ class bsdUsers(Model):
     bsdusr_shell = models.CharField(
         max_length=120,
         default='/bin/csh',
-        verbose_name=_("Shell")
+        verbose_name=_("Shell"),
+        choices=choices.SHELL_CHOICES(),
     )
     bsdusr_full_name = models.CharField(
         max_length=120,
