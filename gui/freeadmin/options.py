@@ -305,7 +305,7 @@ class BaseFreeAdmin(object):
                         globals(),
                         locals(),
                         [inline],
-                        -1)
+                        0)
                     inline = getattr(_temp, inline)
 
                     if formset:
@@ -405,7 +405,7 @@ class BaseFreeAdmin(object):
                         globals(),
                         locals(),
                         [inline],
-                        -1)
+                        0)
                     inline = getattr(_temp, inline)
 
                     if formset:
@@ -509,7 +509,7 @@ class BaseFreeAdmin(object):
                         globals(),
                         locals(),
                         [inline],
-                        -1)
+                        0)
                     inline = getattr(_temp, inline)
 
                     if formset:
@@ -621,7 +621,7 @@ class BaseFreeAdmin(object):
                         globals(),
                         locals(),
                         [inline],
-                        -1)
+                        0)
                     inline = getattr(_temp, inline)
 
                     if formset:
@@ -752,7 +752,7 @@ class BaseFreeAdmin(object):
                 globals(),
                 locals(),
                 [m._admin.delete_form],
-                -1)
+                0)
             form = getattr(_temp, m._admin.delete_form)
         except:
             form = None
@@ -865,7 +865,7 @@ class BaseFreeAdmin(object):
                     globals(),
                     locals(),
                     [_inline],
-                    -1)
+                    0)
                 inline = getattr(_temp, _inline)
                 if formset:
                     formset = getattr(_temp, formset)
