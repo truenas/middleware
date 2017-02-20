@@ -54,7 +54,6 @@ class DeviceForm(ModelForm):
         label=_('CD-ROM (ISO)'),
         required=False,
         dirsonly=False,
-        filesonly=True,
     )
     DISK_zvol = forms.ChoiceField(
         label=_('ZVol'),
