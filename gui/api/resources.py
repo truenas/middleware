@@ -1982,8 +1982,8 @@ class BsdUserResourceMixin(NestedMixin):
     def dehydrate(self, bundle):
         bundle = super(BsdUserResourceMixin, self).dehydrate(bundle)
         bundle.data['bsdusr_sshpubkey'] = bundle.obj.bsdusr_sshpubkey
-        bundle.data['bsdusr_group'] = bundle.obj.bsdusr_group.bsdgrp_gid
         if self.is_webclient(bundle.request):
+            bundle.data['bsdusr_group'] = bundle.obj.bsdusr_group.bsdgrp_gid
             bundle.data['_edit_url'] += 'bsdUsersForm'
             if bundle.obj.bsdusr_builtin:
                 bundle.data['_edit_url'] += '?deletable=false'
