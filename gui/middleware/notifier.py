@@ -169,9 +169,9 @@ class notifier:
             syslog.openlog(self.IDENTIFIER, facility=syslog.LOG_DAEMON)
             for line in p.stdout:
                 syslog.syslog(syslog.LOG_NOTICE, line)
+            syslog.closelog()
             p.wait()
             ret = p.returncode
-            syslog.closelog()
         finally:
             libc.sigprocmask(signal.SIGQUIT, pomask, None)
         log.debug("Executed: %s -> %s", command, ret)
