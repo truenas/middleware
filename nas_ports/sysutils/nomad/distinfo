@@ -1,6 +1,6 @@
-TIMESTAMP = 1479585907
-SHA256 (hashicorp-nomad-v0.5.0_GH0.tar.gz) = a7d9126b4ce7937dbf3c72f14172261ddf59e88f4c2e4b7167601ab3ca421059
-SIZE (hashicorp-nomad-v0.5.0_GH0.tar.gz) = 17718704
+TIMESTAMP = 1486944099
+SHA256 (hashicorp-nomad-v0.5.4_GH0.tar.gz) = 5571ee16b24dc4f13971cb3dfaecc67ad5e9db6efb644a409e79187a95564276
+SIZE (hashicorp-nomad-v0.5.4_GH0.tar.gz) = 17839018
 SHA256 (kardianos-govendor-v1.0.8_GH0.tar.gz) = 7e887b84c7a9278473f39ae8a74440ffc17b329aa193e9304d170d458f8785c7
 SIZE (kardianos-govendor-v1.0.8_GH0.tar.gz) = 114321
 SHA256 (mitchellh-gox-v0.3.0_GH0.tar.gz) = 29dc6b689f670a5444cc54cd9111549ccb01501901bc9197d0e1325a35157802

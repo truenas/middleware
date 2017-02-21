@@ -1001,6 +1001,24 @@ class COUNTRY_CHOICES(object):
                     for c in self.__country_list)
 
 
+class SHELL_CHOICES(object):
+
+    SHELSS = '/etc/shells'
+
+    def __init__(self):
+        with open('/etc/shells', 'r') as f:
+            shells = list(map(
+                str.rstrip,
+                [x for x in f.readlines() if x.startswith('/')]
+            ))
+        self._dict = {}
+        for shell in shells + ['/sbin/nologin']:
+            self._dict[shell] = os.path.basename(shell)
+
+    def __iter__(self):
+        return iter(sorted(list(self._dict.items())))
+
+
 NSS_INFO_CHOICES = (
     ('sfu', 'sfu'),
     ('sfu20', 'sfu20'),
