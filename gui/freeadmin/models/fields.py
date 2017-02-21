@@ -87,7 +87,7 @@ class PathField(models.CharField):
     def __init__(self, *args, **kwargs):
         self.abspath = kwargs.pop("abspath", True)
         self.includes = kwargs.pop("includes", [])
-        self.dirsonly = kwargs.pop("dirsonly", False)
+        self.dirsonly = kwargs.pop("dirsonly", True)
         self.filesonly = kwargs.pop("filesonly", False)
         kwargs['max_length'] = 255
         if kwargs.get('blank', False):
