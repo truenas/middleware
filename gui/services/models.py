@@ -2265,3 +2265,41 @@ class WebDAV(Model):
     class FreeAdmin:
         deletable = False
         icon_model = u"WebDAVShareIcon"
+
+
+class S3(Model):
+    s3_bindip = models.CharField(
+        blank=True,
+        max_length=128,
+        verbose_name=_("IP Address"),
+        help_text=_("Select the IP address to listen to for S3 requests. "
+            "If left unchecked, S3 will listen on all available addresses")
+    )
+    s3_bindport = models.SmallIntegerField(
+        verbose_name=_("Port"),
+        default=9000,
+        validators=[MinValueValidator(1), MaxValueValidator(65535)]
+    )
+    s3_access_key = models.CharField(
+        verbose_name=_("Access Key"),
+        max_length=128,
+        blank=True, 
+        null=True,
+        help_text=_("S3 username")
+    )
+    s3_secret_key = models.CharField(
+        verbose_name=_("Secret Key"),
+        max_length=128,
+        blank=True, 
+        null=True,
+        help_text=_("S3 password")
+    )
+    s3_browser = models.BooleanField(
+        default=False,
+        verbose_name=_("Enable Browser"),
+        help_text=_("This will enable the web UI for the S3 service.")
+    )
+
+    class Meta:
+        verbose_name = _("S3")
+        verbose_name_plural = _("S3")
