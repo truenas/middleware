@@ -78,7 +78,7 @@ class DirectoryBrowser(TextInput):
         super(DirectoryBrowser, self).__init__(*args, **kwargs)
         self.attrs.update({
             'dojoType': 'freeadmin.form.PathSelector',
-            'dirsonly': dirsonly,
+            'dirsonly': str(dirsonly),
         })
 
 
@@ -234,8 +234,8 @@ class PathField(forms.CharField):
         self.abspath = kwargs.pop('abspath', True)
         self.includes = kwargs.pop('includes', [])
         self.widget = DirectoryBrowser(
-            dirsonly=self.dirsonly,
-            filesonly=self.filesonly
+            dirsonly=str(self.dirsonly),
+            filesonly=str(self.filesonly)
         )
         super(PathField, self).__init__(*args, **kwargs)
 
