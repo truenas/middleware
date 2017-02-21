@@ -6,6 +6,25 @@ import django.core.validators
 from django.db import migrations, models
 import freenasUI.freeadmin.models.fields
 
+import sys
+
+def add_s3_to_services(apps, schema_editor):
+    services = apps.get_model("services", "services")
+    s3 = services.objects.create()
+    s3.srv_service = "s3"
+    s3.srv_enable = False
+    try:
+        s3.save() 
+    except Exception as e:
+        print >> sys.stderr, "ERROR: unable to add S3 service: %s" % e
+
+def remove_s3_from_services(apps, schema_editor):
+    services = apps.get_model("services", "services")
+    s3 = services.objects.get(srv_service="s3")
+    try:
+        s3.delete()
+    except Exception as e:
+        print >> sys.stderr, "ERROR: unable to remove S3 service: %s" % e
 
 class Migration(migrations.Migration):
 
@@ -29,4 +48,8 @@ class Migration(migrations.Migration):
                 'verbose_name_plural': 'S3',
             },
         ),
+        migrations.RunPython(
+            add_s3_to_services,
+            reverse_code=remove_s3_from_services
+        )
     ]
