@@ -58,6 +58,7 @@ import stat
 from subprocess import Popen, PIPE
 import subprocess
 import sys
+import syslog
 import tempfile
 import threading
 import time
@@ -195,10 +196,14 @@ class notifier:
         libc.sigprocmask(signal.SIGQUIT, pmask, pomask)
         try:
             p = Popen(
-                "(" + command + ") 2>&1 | logger -p daemon.notice -t %s" % (self.IDENTIFIER, ),
+                "(" + command + ") 2>&1",
                 stdin=PIPE, stdout=PIPE, stderr=PIPE, shell=True, preexec_fn=close_preexec, close_fds=False)
-            p.communicate()
+            syslog.openlog(self.IDENTIFIER, facility=syslog.LOG_DAEMON)
+            for line in p.stdout:
+                syslog.syslog(syslog.LOG_NOTICE, line)
+            p.wait()
             ret = p.returncode
+            syslog.closelog()
         finally:
             libc.sigprocmask(signal.SIGQUIT, pomask, None)
         log.debug("Executed: %s -> %s", command, ret)
