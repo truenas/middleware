@@ -2126,6 +2126,13 @@ class S3Form(ModelForm):
         required=False,
     )
 
+    def __init__(self, *args, **kwargs):
+        super(S3Form, self).__init__(*args, **kwargs)
+
+    def save(self):
+        obj = super(S3Form, self).save()
+        return obj
+
     class Meta:
         fields = '__all__'
         model = models.S3
