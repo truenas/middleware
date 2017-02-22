@@ -41,7 +41,8 @@ from freenasUI.freeadmin.views import JsonResp
 from freenasUI.middleware.notifier import notifier
 from freenasUI.services import models
 from freenasUI.services.forms import (
-    CIFSForm
+    CIFSForm,
+    S3Form
 )
 from freenasUI.system.models import Tunable
 from freenasUI.support.utils import fc_enabled
