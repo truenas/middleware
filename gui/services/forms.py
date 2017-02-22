@@ -2116,3 +2116,16 @@ class WebDAVForm(ModelForm):
     def done(self, *args, **kwargs):
         if self._has_changed('webdav_certssl'):
             notifier().start_ssl("webdav")
+
+
+class S3Form(ModelForm):
+    s3_secret_key2 = forms.CharField(
+        max_length=128,
+        label=_("Confirm S3 Key"),
+        widget=forms.widgets.PasswordInput(),
+        required=False,
+    )
+
+    class Meta:
+        fields = '__all__'
+        model = models.S3
