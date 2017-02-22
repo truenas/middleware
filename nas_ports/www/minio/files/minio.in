@@ -5,9 +5,10 @@
 
 minio_enable="${minio_enable-NO}"
 minio_config="${minio_config-%%PREFIX%%/etc/minio}"
-minio_env=${minio_env:=""}
-minio_disks="${minio_disks}"
+minio_disks="${minio_disks-/var/db/minio}"
 minio_address="${minio_address-:9000}"
+minio_user="${minio_user-minio}"
+minio_group="${minio_group-minio}"
 
 . /etc/rc.subr
 
@@ -19,19 +20,25 @@ load_rc_config ${name}
 
 pidfile="/var/run/${name}.pid"
 command="/usr/sbin/daemon"
-command_args="-c -p ${pidfile} /usr/local/bin/${name} -C \"${minio_config}\" server --address=\"${minio_address}\" --quiet ${minio_disks}"
+command_args="-c -p ${pidfile} /usr/bin/env ${minio_env} ${procname} -C \"${minio_config}\" server --address=\"${minio_address}\" --quiet ${minio_disks}"
 
 start_precmd="minio_startprecmd"
 
 minio_startprecmd()
 {
 	if [ ! -e "${pidfile}" ]; then
-		install "/dev/null" "${pidfile}"
+		install -o "${minio_user}" -g "${minio_group}" "/dev/null" "${pidfile}"
 	fi
 
 	if [ ! -d "${minio_config}" ]; then
-		mkdir -p "${minio_config}"
+		install -d -o "${minio_user}" -g "${minio_group}" "${minio_config}"
 	fi
+
+	for disk in "${minio_disks}"; do
+		if [ ! -d "${disk}" ]; then
+			install -d -o "${minio_user}" -g "${minio_group}" "${disk}"
+		fi
+	done
 }
 
 run_rc_command "$1"

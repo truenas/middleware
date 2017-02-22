@@ -414,7 +414,7 @@ consul:*:469:
 serf:*:470:
 vault:*:471:
 nomad:*:472:
-# free: 473
+minio:*:473:
 # free: 474
 # free: 475
 # free: 476
