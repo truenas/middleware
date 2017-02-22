@@ -2303,7 +2303,8 @@ class S3(Model):
         verbose_name=_("Mode"),
         max_length=120,
         choices=choices.S3_MODES,
-        default="local"
+        default="local",
+        help_text=_("This doesn't do anything yet.")
     )
     s3_disks = models.CharField(
         verbose_name=_("Disks"),
