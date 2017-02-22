@@ -11,8 +11,6 @@ minio_address="${minio_address-:9000}"
 
 . /etc/rc.subr
 
-load_rc_config ${name}
-
 name=minio
 rcvar=minio_enable
 
@@ -69,4 +67,5 @@ minio_check_pidfile()
 	pgrep minio
 }
 
+load_rc_config ${name}
 run_rc_command "$1"
