@@ -2265,3 +2265,59 @@ class WebDAV(Model):
     class FreeAdmin:
         deletable = False
         icon_model = u"WebDAVShareIcon"
+
+
+class S3(Model):
+    s3_bindip = models.CharField(
+        verbose_name=_("IP Address"),
+        max_length=128,
+        blank=True,
+        help_text=_("Select the IP address to listen to for S3 requests. "
+            "If left unchecked, S3 will listen on all available addresses")
+    )
+    s3_bindport = models.SmallIntegerField(
+        verbose_name=_("Port"),
+        default=9000,
+        validators=[MinValueValidator(1), MaxValueValidator(65535)]
+    )
+    s3_access_key = models.CharField(
+        verbose_name=_("Access Key"),
+        max_length=128,
+        blank=True, 
+        null=True,
+        help_text=_("S3 username")
+    )
+    s3_secret_key = models.CharField(
+        verbose_name=_("Secret Key"),
+        max_length=128,
+        blank=True, 
+        null=True,
+        help_text=_("S3 password")
+    )
+    s3_browser = models.BooleanField(
+        verbose_name=_("Enable Browser"),
+        default=False,
+        help_text=_("This will enable the web UI for the S3 service.")
+    )
+    s3_mode = models.CharField(
+        verbose_name=_("Mode"),
+        max_length=120,
+        choices=choices.S3_MODES,
+        default="local",
+        help_text=_("This doesn't do anything yet.")
+    )
+    s3_disks = models.CharField(
+        verbose_name=_("Disks"),
+        max_length=8192,
+        blank=True,
+        null=True,
+        help_text=_("S3 filesystem disk(s)")
+    )
+
+    class Meta:
+        verbose_name = _("S3")
+        verbose_name_plural = _("S3")
+
+    class FreeAdmin:
+        deletable = False
+        icon_model = u"S3Icon"
