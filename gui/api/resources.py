@@ -1170,7 +1170,7 @@ class VolumeResourceMixin(NestedMixin):
         if not _format:
             _format = 'application/json'
         deserialized = self._meta.serializer.deserialize(
-            bundle.request.body,
+            bundle.request.body or '{}',
             format=_format,
         )
         bundle.obj.delete(
