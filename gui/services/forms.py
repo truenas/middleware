@@ -2143,4 +2143,7 @@ class S3Form(ModelForm):
 
     class Meta:
         fields = '__all__'
+        widgets = {
+            's3_secret_key': forms.widgets.PasswordInput(render_value=False),
+        }
         model = models.S3
