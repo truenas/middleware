@@ -154,3 +154,12 @@ class RsyncModView(TreeNode):
     view = u'freeadmin_services_rsyncmod_datagrid'
     icon = u'ViewAllrsyncModIcon'
     append_to = 'services.Rsync.RsyncMod'
+
+
+class S3View(TreeNode):
+
+    gname = 'services.S3'
+    name = _(u'S3')
+    type = u'object'
+    view = u'services_s3'
+    #icon = u'S3Icon'
