@@ -2128,6 +2128,14 @@ class S3Form(ModelForm):
 
     def __init__(self, *args, **kwargs):
         super(S3Form, self).__init__(*args, **kwargs)
+        key_order(self, 1, 's3_bindip', instance=True)
+        key_order(self, 2, 's3_bindport', instance=True)
+        key_order(self, 3, 's3_access_key', instance=True)
+        key_order(self, 4, 's3_secret_key', instance=True)
+        key_order(self, 5, 's3_secret_key2', instance=True)
+        key_order(self, 6, 's3_disks', instance=True)
+        key_order(self, 7, 's3_mode', instance=True)
+        key_order(self, 8, 's3_browser', instance=True)
 
     def save(self):
         obj = super(S3Form, self).save()
