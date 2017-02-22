@@ -19,7 +19,7 @@ load_rc_config ${name}
 
 pidfile="/var/run/${name}.pid"
 command="/usr/sbin/daemon"
-command_args="-c -p ${pidfile} /usr/local/bin/${name} -C \"${minio_config}\" server --address=\"${minio_address}\" ${minio_disks} >>/var/log/minio.log 2>&1"
+command_args="-c -p ${pidfile} /usr/local/bin/${name} -C \"${minio_config}\" server --address=\"${minio_address}\" --quiet ${minio_disks}"
 
 start_precmd="minio_startprecmd"
 
