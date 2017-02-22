@@ -26,7 +26,15 @@
 
 from django.conf.urls import url
 
-from .views import index, services_cifs, core, iscsi, enable, fibrechanneltotarget
+from .views import (
+    index,
+    services_cifs,
+    services_s3,
+    core,
+    iscsi,
+    enable,
+    fibrechanneltotarget
+)
 
 urlpatterns = [
     url(r'^index/$', index, name="services_home"),
