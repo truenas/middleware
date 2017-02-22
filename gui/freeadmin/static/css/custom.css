@@ -487,6 +487,11 @@ table.grid tr {
     width:16px;
     height:16px;
 }
+.S3Icon {
+    background-image:url('/static/images/ui/tree/s3.png');
+    width:16px;
+    height:16px;
+}
 .StorageIcon {
     background-image:url('/static/images/ui/tree/storage.png');
     width:16px;

@@ -163,4 +163,4 @@ class S3View(TreeNode):
     name = _(u'S3')
     type = u'object'
     view = u'services_s3'
-    icon = u'ServicesIcon'
+    icon = u'S3Icon'
