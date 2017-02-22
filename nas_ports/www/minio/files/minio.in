@@ -14,10 +14,11 @@ minio_address="${minio_address-:9000}"
 name=minio
 rcvar=minio_enable
 
-pidfile="/var/run/${name}.pid"
+load_rc_config ${name}
 
+pidfile="/var/run/${name}.pid"
 command="/usr/sbin/daemon"
-command_args="-c -p ${pidfile} /usr/bin/env ${minio_env} /usr/local/bin/${name} -C \"${minio_config}\" server --address=\"${minio_address}\" ${minio_disks} >>/var/log/minio.log 2>&1"
+command_args="-c -p ${pidfile} /usr/local/bin/${name} -C \"${minio_config}\" server --address=\"${minio_address}\" ${minio_disks} >>/var/log/minio.log 2>&1"
 
 stop_cmd="minio_stop"
 status_cmd="minio_status"
@@ -67,5 +68,4 @@ minio_check_pidfile()
 	pgrep minio
 }
 
-load_rc_config ${name}
 run_rc_command "$1"
