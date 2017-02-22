@@ -50,6 +50,7 @@ from freenasUI.common.system import (
 )
 from freenasUI.freeadmin.forms import DirectoryBrowser
 from freenasUI.freeadmin.options import FreeBaseInlineFormSet
+from freenasUI.jails.models import JailsConfiguration
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier
 from freenasUI.services import models
@@ -1524,8 +1525,15 @@ class iSCSITargetExtentForm(ModelForm):
             if _type == 'File':
                 raise forms.ValidationError(_('This field is required.'))
             return None
+
+        # Avoid create an extent inside a jail_root.
+        jail_root = JailsConfiguration.objects.order_by("-id")[0]
+        if (os.path.realpath(jail_root.jc_path) in os.path.realpath(path)):
+            raise forms.ValidationError(_("You need to specify a filepath outside of jail_root."))
+
         if (os.path.exists(path) and not os.path.isfile(path)) or path[-1] == '/':
             raise forms.ValidationError(_("You need to specify a filepath, not a directory."))
+
         valid = False
         for v in Volume.objects.all():
             mp_path = '/mnt/%s' % v.vol_name
@@ -1535,6 +1543,7 @@ class iSCSITargetExtentForm(ModelForm):
                 )
             if path.startswith(mp_path + '/'):
                 valid = True
+
         if not valid:
             raise forms.ValidationError(_("Your path to the extent must reside inside a volume/dataset mount point."))
         return path
