@@ -2119,6 +2119,12 @@ class WebDAVForm(ModelForm):
 
 
 class S3Form(ModelForm):
+    s3_bindip = forms.ChoiceField(
+        label=models.S3._meta.get_field("s3_bindip").verbose_name,
+        widget=forms.widgets.FilteringSelect(),
+        required=False,
+        choices=(),
+    )
     s3_secret_key2 = forms.CharField(
         max_length=128,
         label=_("Confirm S3 Key"),
@@ -2136,6 +2142,16 @@ class S3Form(ModelForm):
         key_order(self, 6, 's3_disks', instance=True)
         key_order(self, 7, 's3_mode', instance=True)
         key_order(self, 8, 's3_browser', instance=True)
+
+        self.fields['s3_bindip'].choices = [('0.0.0.0','0.0.0.0')] + list(choices.IPChoices())
+        if self.instance.id and self.instance.s3_bindip:
+            bindips = []
+            for ip in self.instance.s3_bindip:
+                bindips.append(ip.encode('utf-8'))
+
+            self.fields['s3_bindip'].initial = (bindips)
+        else:
+            self.fields['s3_bindip'].initial = ('')
 
     def save(self):
         obj = super(S3Form, self).save()
