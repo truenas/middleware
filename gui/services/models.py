@@ -2316,3 +2316,7 @@ class S3(Model):
     class Meta:
         verbose_name = _("S3")
         verbose_name_plural = _("S3")
+
+    class FreeAdmin:
+        deletable = False
+        icon_model = u"S3Icon"
