@@ -541,8 +541,9 @@ def is_jail_root_shared(jail_root):
     paths.extend([w.webdav_path for w in WebDAV_Share.objects.all()])
     extents = iSCSITargetExtent.objects.filter(iscsi_target_extent_type='File')
     for e in extents:
-        if e.iscsi_target_extent_path.rpartition('/')[0] == jail_root:
-            paths.append(e.iscsi_target_extent_path.rpartition('/')[0])
+        if os.path.realpath(jail_root) in os.path.realpath(e.iscsi_target_extent_path.rpartition('/')[0]):
+            paths.append(jail_root)
+
     for path in paths:
         if jail_root.startswith(path):
             return True
