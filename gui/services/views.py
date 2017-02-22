@@ -118,6 +118,11 @@ def core(request):
         rsyncd = models.Rsyncd.objects.create()
 
     try:
+        s3 = models.S3.objects.order_by("-id")[0]
+    except IndexError:
+        s3 = models.S3.objects.create()
+
+    try:
         smart = models.SMART.objects.order_by("-id")[0]
     except IndexError:
         smart = models.SMART.objects.create()
@@ -150,6 +155,7 @@ def core(request):
             'nfs': nfs.get_edit_url(),
             'rsync': rsyncd.get_edit_url(),
             'dynamicdns': dynamicdns.get_edit_url(),
+            's3': s3.get_edit_url(),
             'snmp': snmp.get_edit_url(),
             'ups': ups.get_edit_url(),
             'ftp': ftp.get_edit_url(),
@@ -324,3 +330,24 @@ def fibrechanneltotarget(request):
         request,
         message=_('Fibre Channel Ports have been successfully changed.'),
     )
+
+
+def services_s3(request):
+    try:
+        s3 = models.S3.objects.all()[0]
+    except:
+        s3 = models.S3()
+
+    if request.method == "POST":
+        form = S3Form(request.POST, instance=s3)
+        if form.is_valid():
+            form.save()
+        else:
+            return JsonResp(request, form=form)
+
+    else:
+        form = S3Form(instance=s3)
+
+    return render(request, 'services/s3.html', {
+        'form': form,
+    })
