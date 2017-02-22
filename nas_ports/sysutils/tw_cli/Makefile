@@ -2,9 +2,9 @@
 
 PORTNAME=	tw_cli
 PORTVERSION=	9.5.5
-PORTREVISION=	1
+PORTREVISION=	3
 CATEGORIES=	sysutils
-MASTER_SITES=	http://www.avagotech.com/docs-and-downloads/raid-controllers/raid-controllers-common-files/
+MASTER_SITES=	https://docs.broadcom.com/docs-and-downloads/raid-controllers/raid-controllers-common-files/
 DISTNAME=	CLI_freebsd-from_the_10-2-2-1_9-5-5-1_codesets
 DIST_SUBDIR=	3dm2
 
@@ -12,11 +12,12 @@ MAINTAINER=	jpaetzel@FreeBSD.org
 COMMENT=	3ware storage controllers management CLI
 
 LICENSE=	tw_cli
-LICENSE_NAME=	LSI
-LICENSE_TEXT=	${RESTRICTED}
-LICENSE_PERMS=	no-dist-mirror no-dist-sell no-pkg-mirror no-pkg-sell auto-accept
+LICENSE_NAME=	BROADCOM
+LICENSE_TEXT=	Source recipient must acknowledge license.\
+		Reproduction or redistribution prohibited.\
+		See https://www.broadcom.com/cs/Satellite?pagename=AVG2/Utilities/EulaMsg
 
-RESTRICTED=	Source recipient must acknowledge license. Reproduction or redistribution prohibited. See http://www.lsi.com/Pages/user/eula.aspx
+LICENSE_PERMS=	no-dist-mirror no-dist-sell no-pkg-mirror no-pkg-sell auto-accept
 
 USES=		zip
 
