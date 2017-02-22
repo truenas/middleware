@@ -31,6 +31,7 @@ from .views import index, services_cifs, core, iscsi, enable, fibrechanneltotarg
 urlpatterns = [
     url(r'^index/$', index, name="services_home"),
     url(r'^cifs/$', services_cifs, name="services_cifs"),
+    url(r'^s3/$', services_cifs, name="services_s3"),
     url(r'^core/$', core, name="services_core"),
     url(r'^iscsi/$', iscsi, name="services_iscsi"),
     url(r'enable/(?P<svc>\w+)/.*$', enable, name="services_enable"),
