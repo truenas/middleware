@@ -48,6 +48,7 @@ define([
       'lldp': gettext('LLDP'),
       'nfs': gettext('NFS'),
       'rsync': gettext('Rsync'),
+      's3': gettext('S3'),
       'smartd': gettext('S.M.A.R.T.'),
       'snmp': gettext('SNMP'),
       'ssh': gettext('SSH'),
