@@ -1085,3 +1085,8 @@ VM_DEVTYPES = (
     ('CDROM', _('CD-ROM')),
     ('VNC', _('VNC')),
 )
+
+S3_MODES = (
+    ('local', _('local')),
+    ('distributed', _('distributed'))
+)
