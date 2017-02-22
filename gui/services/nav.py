@@ -15,6 +15,7 @@ BLACKLIST = [
     'iSCSITargetGroups',
     'RPCToken',
     'CIFS',
+    'S3',
 ]
 ORDER = 40
 
@@ -162,4 +163,4 @@ class S3View(TreeNode):
     name = _(u'S3')
     type = u'object'
     view = u'services_s3'
-    #icon = u'S3Icon'
+    icon = u'ServicesIcon'
