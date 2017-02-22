@@ -42,6 +42,8 @@ class Migration(migrations.Migration):
                 ('s3_access_key', models.CharField(blank=True, help_text='S3 username', max_length=128, null=True, verbose_name='Access Key')),
                 ('s3_secret_key', models.CharField(blank=True, help_text='S3 password', max_length=128, null=True, verbose_name='Secret Key')),
                 ('s3_browser', models.BooleanField(default=False, help_text='This will enable the web UI for the S3 service.', verbose_name='Enable Browser')),
+                ('s3_mode', models.CharField(choices=[(b'local', 'local'), (b'distributed', 'distributed')], default=b'local', max_length=120, verbose_name='Mode')),
+                ('s3_disks', models.CharField(blank=True, help_text='S3 filesystem disk(s)', max_length=8192, null=True, verbose_name='Disks')),
             ],
             options={
                 'verbose_name': 'S3',

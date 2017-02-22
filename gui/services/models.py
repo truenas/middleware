@@ -2269,9 +2269,9 @@ class WebDAV(Model):
 
 class S3(Model):
     s3_bindip = models.CharField(
-        blank=True,
-        max_length=128,
         verbose_name=_("IP Address"),
+        max_length=128,
+        blank=True,
         help_text=_("Select the IP address to listen to for S3 requests. "
             "If left unchecked, S3 will listen on all available addresses")
     )
@@ -2295,9 +2295,22 @@ class S3(Model):
         help_text=_("S3 password")
     )
     s3_browser = models.BooleanField(
-        default=False,
         verbose_name=_("Enable Browser"),
+        default=False,
         help_text=_("This will enable the web UI for the S3 service.")
+    )
+    s3_mode = models.CharField(
+        verbose_name=_("Mode"),
+        max_length=120,
+        choices=choices.S3_MODES,
+        default="local"
+    )
+    s3_disks = models.CharField(
+        verbose_name=_("Disks"),
+        max_length=8192,
+        blank=True,
+        null=True,
+        help_text=_("S3 filesystem disk(s)")
     )
 
     class Meta:
