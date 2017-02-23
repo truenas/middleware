@@ -334,8 +334,8 @@ install_loader() {
 	    mkdir -p /tmp/efi
 	    mount -t msdosfs /dev/${_disk}p1 /tmp/efi
 	    # Copy the .efi file
-	    mkdir -p ${_mnt}/boot/efi/efi/boot
-	    cp ${_mnt}/boot/boot1.efi ${_mnt}/boot/efi/efi/boot/BOOTx64.efi
+	    mkdir -p /tmp/efi/efi/boot
+	    cp ${_mnt}/boot/boot1.efi /tmp/efi/efi/boot/BOOTx64.efi
 	    umount /tmp/efi
 	else
 	    echo "Stamping GPT loader on: ${_disk}"
