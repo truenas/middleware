@@ -215,7 +215,12 @@ class VolumeManagerForm(VolumeMixin, Form):
         )
         self._formset = vdevFormSet(self.data, prefix='layout')
         self._formset.pform = self
-        return valid and self._formset.is_valid()
+        fsvalid = self._formset.is_valid()
+        if not fsvalid:
+            nonformerrors = self._formset.non_form_errors()
+            if nonformerrors:
+                self._errors['__all__'] = self.error_class(nonformerrors)
+        return valid and fsvalid
 
     def clean(self):
         vname = (

@@ -1028,6 +1028,7 @@ class VolumeResourceMixin(NestedMixin):
         if 'layout' not in bundle.data:
             return bundle
         layout = bundle.data.pop('layout')
+        i = -1
         for i, item in enumerate(layout):
             disks = item.get("disks")
             vtype = item.get("vdevtype")
