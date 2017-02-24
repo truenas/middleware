@@ -95,6 +95,10 @@ cifs_func()
 	done
 	section_footer
 
+	section_header "smbd -b"
+	smbd -b
+	section_footer
+
 	section_header "net getlocalsid"
 	net getlocalsid
 	section_footer
