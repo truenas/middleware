@@ -52,6 +52,7 @@ CONFIGURE_ARGS+=	--mandir="${MANPREFIX}/man" \
 			--with-privileged-socket-dir="${SAMBA4_RUNDIR}" \
 			--with-statedir="${SAMBA4_LOCKDIR}" \
 			--with-cachedir="${SAMBA4_LOCKDIR}" \
+			--with-lockdir="${SAMBA4_LOCKDIR}" \
 			--with-privatedir="${SAMBA4_PRIVATEDIR}" \
 			--with-logfilebase="${SAMBA4_LOGDIR}"
 # Flags
