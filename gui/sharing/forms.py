@@ -244,13 +244,13 @@ class AFP_ShareForm(ModelForm):
             err_n = False
             err_a = False
             try:
-                IPNetwork(n.encode('utf-8'))
+                IPNetwork(n)
                 if n.find("/") == -1:
                     raise ValueError(n)
             except (AddressValueError, NetmaskValueError, ValueError):
                 err_n = True
             try:
-                IPAddress(n.encode('utf-8'))
+                IPAddress(n)
             except (AddressValueError, ValueError):
                 err_a = True
             if (err_n and err_a) or (not err_n and not err_a):
@@ -268,13 +268,13 @@ class AFP_ShareForm(ModelForm):
             err_n = False
             err_a = False
             try:
-                IPNetwork(n.encode('utf-8'))
+                IPNetwork(n)
                 if n.find("/") == -1:
                     raise ValueError(n)
             except (AddressValueError, NetmaskValueError, ValueError):
                 err_n = True
             try:
-                IPAddress(n.encode('utf-8'))
+                IPAddress(n)
             except (AddressValueError, ValueError):
                 err_a = True
             if (err_n and err_a) or (not err_n and not err_a):
@@ -362,7 +362,7 @@ class NFS_ShareForm(ModelForm):
             return net
         for n in net.split(' '):
             try:
-                IPNetwork(n.encode('utf-8'))
+                IPNetwork(n)
                 if n.find("/") == -1:
                     raise ValueError(n)
             except (AddressValueError, NetmaskValueError, ValueError):
