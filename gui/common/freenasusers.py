@@ -158,7 +158,7 @@ class FreeNAS_Local_Group(object):
                 group = objects[int(group)]['bsdgrp_group']
 
         try:
-            self._gr = grp.getgrnam(group.encode('utf-8'))
+            self._gr = grp.getgrnam(group)
         except Exception as e:
             log.debug("Exception on grfunc: {0}".format(e))
             self._gr = None
@@ -273,7 +273,7 @@ class FreeNAS_Local_User(object):
                 user = objects[int(user)]['bsdusr_username']
 
         try:
-            self._pw = pwd.getpwnam(user.encode('utf-8'))
+            self._pw = pwd.getpwnam(user)
 
         except Exception as e:
             log.debug("Exception on pwfunc: {0}".format(e))
