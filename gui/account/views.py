@@ -128,7 +128,7 @@ def json_users(request, exclude=None):
         if idx > 50:
             break
         if (
-            (query is None or user.pw_name.startswith(query.encode('utf8'))) and
+            (query is None or user.pw_name.startswith(query)) and
             user.pw_name not in exclude and user.pw_name not in curr_users
         ):
             json_user['items'].append({
@@ -175,7 +175,7 @@ def json_users(request, exclude=None):
                 if idx > 50:
                     break
                 if (
-                    (query is None or user.startswith(query.encode('utf8'))) and
+                    (query is None or user.startswith(query)) and
                     user not in exclude
                 ):
                     json_user['items'].append({
@@ -213,7 +213,7 @@ def json_groups(request):
     ):
         if idx > 50:
             break
-        if ((query is None or grp.gr_name.startswith(query.encode('utf8'))) and
+        if ((query is None or grp.gr_name.startswith(query)) and
             grp.gr_name not in curr_groups):
             json_group['items'].append({
                 'id': grp.gr_name,
@@ -258,7 +258,7 @@ def json_groups(request):
             for group in groups._get_uncached_groupnames():
                 if idx > 50:
                     break
-                if query is None or group.startswith(query.encode('utf8')):
+                if query is None or group.startswith(query):
                     json_group['items'].append({
                         'id': '%s_%s' % (
                             wizard_ds.get('ds_type'),
