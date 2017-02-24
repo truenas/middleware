@@ -1125,7 +1125,7 @@ class UnixTransport(xmlrpc.client.Transport):
         self.make_connection(host)
 
         try:
-            self.sock.send(request_body + "\n")
+            self.sock.send((request_body + "\n").encode('utf8'))
             p, u = self.getparser()
 
             while 1:
@@ -1154,9 +1154,9 @@ class MyServer(xmlrpc.client.ServerProxy):
         self.__handler = "/"
         self.__host = addr
         self.__transport = UnixTransport()
-        self.__encoding = None
+        self.__encoding = None or 'utf-8'
         self.__verbose = 0
-        self.__allow_none = 0
+        self.__allow_none = False
 
     def __request(self, methodname, params):
         # call a method on the remote server
@@ -1181,6 +1181,8 @@ class MyServer(xmlrpc.client.ServerProxy):
         return response
 
     def __getattr__(self, name):
+        if name.startswith('_'):
+            return object.__getattr__(self, name)
         # magic method dispatcher
         return xmlrpc.client._Method(self.__request, name)
 

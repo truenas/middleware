@@ -62,7 +62,7 @@ logging.config.dictConfig(LOGGING)
 class XMLRPCHandler(socketserver.BaseRequestHandler):
 
     def handle(self):
-        buff = ''
+        buff = b''
         while True:
             data = self.request.recv(1024)
             if not data:
@@ -367,8 +367,7 @@ class Terminal:
     # UTF-8 functions
     def utf8_decode(self, d):
         o = ''
-        for c in d:
-            char = ord(c)
+        for char in d:
             if self.utf8_units_count != self.utf8_units_received:
                 self.utf8_units_received += 1
                 if (char & 0xc0) == 0x80:
@@ -385,7 +384,7 @@ class Terminal:
                     self.utf8_units_count = 0
             else:
                 if (char & 0x80) == 0x00:
-                    o += c
+                    o += chr(char)
                 elif (char & 0xe0) == 0xc0:
                     self.utf8_units_count = 1
                     self.utf8_char = char & 0x1f
@@ -1166,8 +1165,7 @@ class Terminal:
 
     def pipe(self, d):
         o = ''
-        for c in d:
-            char = ord(c)
+        for char in d:
             if self.vt100_keyfilter_escape:
                 self.vt100_keyfilter_escape = False
                 try:
@@ -1177,7 +1175,7 @@ class Terminal:
                         o += self.vt100_keyfilter_ansikeys[c]
                 except KeyError:
                     pass
-            elif c == '~':
+            elif chr(char) == '~':
                 self.vt100_keyfilter_escape = True
             elif char == 127:
                 if self.vt100_mode_backspace:
@@ -1185,7 +1183,7 @@ class Terminal:
                 else:
                     o += chr(127)
             else:
-                o += c
+                o += chr(char)
                 if self.vt100_mode_lfnewline and char == 13:
                     o += chr(10)
         return o
@@ -1240,7 +1238,6 @@ class Terminal:
                         dump += chr(char)
             dump += "\n"
         # Encode in UTF-8
-        dump = dump.encode('utf-8')
         dump += '</span>'
         # Cache dump
         if self.dump_cache == dump:
@@ -1466,7 +1463,7 @@ class Multiplex:
             term = self.session[sid]['term']
             d = term.pipe(d)
             fd = self.session[sid]['fd']
-            os.write(fd, d)
+            os.write(fd, d.encode('utf-8'))
         except (IOError, OSError):
             return False
         return True
