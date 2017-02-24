@@ -302,7 +302,7 @@ class RsyncForm(ModelForm):
         exists or not. Returns TRUE rpath is a directory
         and exists, else FALSE"""
 
-        ruser = self.cleaned_data.get("rsync_user").encode('utf8')
+        ruser = self.cleaned_data.get("rsync_user")
         rhost = str(self.cleaned_data.get("rsync_remotehost"))
         if '@' in rhost:
             remote = rhost
@@ -312,7 +312,7 @@ class RsyncForm(ModelForm):
                 rhost,
             )
         rport = str(self.cleaned_data.get("rsync_remoteport"))
-        rpath = self.cleaned_data.get("rsync_remotepath").encode('utf8')
+        rpath = self.cleaned_data.get("rsync_remotepath")
         proc = subprocess.Popen(
             """su -m "%s" -c 'ssh -p %s -o "BatchMode yes" -o """
             """"ConnectTimeout=5" %s test -d \\""%s"\\"' """
