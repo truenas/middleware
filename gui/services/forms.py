@@ -145,7 +145,7 @@ class CIFSForm(ModelForm):
         if self.instance.id and self.instance.cifs_srv_bindip:
             bindips = []
             for ip in self.instance.cifs_srv_bindip:
-                bindips.append(ip.encode('utf-8'))
+                bindips.append(ip)
 
             self.fields['cifs_srv_bindip'].initial = (bindips)
         else:
@@ -238,7 +238,7 @@ class CIFSForm(ModelForm):
         bind = []
         for ip in ips:
             try:
-                IPAddress(ip.encode('utf-8'))
+                IPAddress(ip)
             except:
                 raise forms.ValidationError(
                     "This is not a valid IP: %s" % (ip, )
@@ -289,7 +289,7 @@ class AFPForm(ModelForm):
         if self.instance.id and self.instance.afp_srv_bindip:
             bindips = []
             for ip in self.instance.afp_srv_bindip:
-                bindips.append(ip.encode('utf-8'))
+                bindips.append(ip)
 
             self.fields['afp_srv_bindip'].initial = (bindips)
         else:
@@ -302,7 +302,7 @@ class AFPForm(ModelForm):
         bind = []
         for ip in ips:
             try:
-                IPAddress(ip.encode('utf-8'))
+                IPAddress(ip)
             except:
                 raise forms.ValidationError(
                     "This is not a valid IP: %s" % (ip, )
@@ -381,7 +381,7 @@ class NFSForm(ModelForm):
                 )
         self.fields['nfs_srv_bindip'].choices = list(choices.IPChoices())
         self.fields['nfs_srv_bindip'].initial = (
-            self.instance.nfs_srv_bindip.encode('utf-8').split(',')
+            self.instance.nfs_srv_bindip.split(',')
             if self.instance.id and self.instance.nfs_srv_bindip
             else ''
         )
@@ -420,7 +420,7 @@ class NFSForm(ModelForm):
         bind = []
         for ip in ips:
             try:
-                IPAddress(ip.encode('utf-8'))
+                IPAddress(ip)
             except:
                 raise forms.ValidationError(
                     "This is not a valid IP: %s" % (ip, )
@@ -601,7 +601,7 @@ class SSHForm(ModelForm):
                 return obj
             with open(keyfile, "rb") as f:
                 pubkey = f.read().strip().split(None, 3)[1]
-            decoded_key = base64.b64decode(pubkey.encode("ascii"))
+            decoded_key = base64.b64decode(pubkey)
             key_digest = hashlib.sha256(decoded_key).digest()
             ssh_fingerprint = (b"SHA256:" + base64.b64encode(key_digest).replace(b"=", b"")).decode("utf-8")
             # using log.error since it logs to /var/log/messages, /var/log/debug.log as well as /dev/console all at once
@@ -1702,10 +1702,10 @@ class iSCSITargetAuthorizedInitiatorForm(ModelForm):
             if auth_network == 'ALL':
                 continue
             try:
-                IPNetwork(auth_network.encode('utf-8'))
+                IPNetwork(auth_network)
             except (NetmaskValueError, ValueError):
                 try:
-                    IPAddress(auth_network.encode('utf-8'))
+                    IPAddress(auth_network)
                 except (AddressValueError, ValueError):
                     raise forms.ValidationError(
                         _(
