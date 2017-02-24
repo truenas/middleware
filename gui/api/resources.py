@@ -1263,8 +1263,11 @@ class ReplicationResourceMixin(object):
                 bundle.data['repl_remote_dedicateduser'] = bundle.obj.repl_remote.ssh_remote_dedicateduser
             if 'repl_remote_cipher' not in bundle.data:
                 bundle.data['repl_remote_cipher'] = bundle.obj.repl_remote.ssh_cipher
-            if 'repl_remote_cipher' not in bundle.data:
+            if 'repl_remote_hostkey' not in bundle.data:
                 bundle.data['repl_remote_hostkey'] = bundle.obj.repl_remote.ssh_remote_hostkey
+        else:
+            if 'repl_remote_mode' not in bundle.data:
+                bundle.data['repl_remote_mode'] = 'MANUAL'
 
         return bundle
 
