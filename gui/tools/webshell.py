@@ -1170,9 +1170,9 @@ class Terminal:
                 self.vt100_keyfilter_escape = False
                 try:
                     if self.vt100_mode_cursorkey:
-                        o += self.vt100_keyfilter_appkeys[c]
+                        o += self.vt100_keyfilter_appkeys[chr(char)]
                     else:
-                        o += self.vt100_keyfilter_ansikeys[c]
+                        o += self.vt100_keyfilter_ansikeys[chr(char)]
                 except KeyError:
                     pass
             elif chr(char) == '~':
