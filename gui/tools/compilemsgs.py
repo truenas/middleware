@@ -45,7 +45,7 @@ def pocompile(src, dest):
 
     po = polib.pofile(src)
     for entry in po:
-        translated = entry.msgstr.encode('ascii', 'ignore')
+        translated = entry.msgstr.encode('ascii', 'ignore').decode('ascii')
         if not translated:
             continue
 
