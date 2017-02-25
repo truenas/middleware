@@ -1397,12 +1397,14 @@ require([
         var disk_zvol = registry.byId("id_DISK_zvol").domNode.parentNode.parentNode;
         var nic_type = registry.byId("id_NIC_type").domNode.parentNode.parentNode;
         var vnc_wait = registry.byId("id_VNC_wait").domNode.parentNode.parentNode;
+        var vnc_port = registry.byId("id_VNC_port").domNode.parentNode.parentNode;
 
         domStyle.set(cdrom_path, "display", "none");
         domStyle.set(disk_mode, "display", "none");
         domStyle.set(disk_zvol, "display", "none");
         domStyle.set(nic_type, "display", "none");
         domStyle.set(vnc_wait, "display", "none");
+        domStyle.set(vnc_port, "display", "none");
 
         if(dtype.get('value') == 'DISK') {
           domStyle.set(disk_mode, "display", "");
@@ -1412,6 +1414,7 @@ require([
         } else if(dtype.get('value') == 'NIC') {
           domStyle.set(nic_type, "display", "");
         } else if(dtype.get('value') == 'VNC') {
+          domStyle.set(vnc_port, "display", "");
           domStyle.set(vnc_wait, "display", "");
         }
 

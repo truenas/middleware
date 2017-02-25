@@ -1,6 +1,7 @@
 import logging
 import re
 
+from django.core.validators import RegexValidator
 from django.utils.translation import ugettext_lazy as _
 
 from dojango import forms
@@ -38,7 +39,7 @@ class VMForm(ModelForm):
             else:
                 cdata['devices'] = [
                     {'dtype': 'NIC', 'attributes': {'type': 'E1000'}},
-                    {'dtype': 'VNC', 'attributes': {'wait': True}},
+                    {'dtype': 'VNC', 'attributes': {'wait': True, 'vnc_port': VNC_port}},
                 ]
                 pk = c.call('vm.create', cdata)
         return models.VM.objects.get(pk=pk)
@@ -77,6 +78,13 @@ class DeviceForm(ModelForm):
         required=False,
         initial='E1000',
     )
+    VNC_port = forms.CharField(
+        label=_('VNC port'),
+        required=True,
+        initial=0,
+        help_text=_("You can specify the VNC port or 0 for auto."),
+        validators=[RegexValidator("^[0-9]*$", "Only integer is accepted")],
+    )
     VNC_wait = forms.BooleanField(
         label=_('Wait to boot'),
         required=False,
@@ -113,9 +121,16 @@ class DeviceForm(ModelForm):
                 self.fields['NIC_type'].initial = self.instance.attributes.get('type')
             elif self.instance.dtype == 'VNC':
                 self.fields['VNC_wait'].initial = self.instance.attributes.get('wait')
+                self.fields['VNC_port'].initial = self.instance.attributes.get('vnc_port')
 
     def clean(self):
         vm = self.cleaned_data.get('vm')
+        vnc_port = self.cleaned_data.get('VNC_port')
+        new_vnc_port = 5900
+        if vnc_port == '0':
+            new_vnc_port = new_vnc_port + int(vm.id)
+            self.cleaned_data['VNC_port'] = str(new_vnc_port)
+
         if self.cleaned_data.get('dtype') == 'VNC':
             if vm and vm.bootloader not in ('UEFI', 'UEFI_CSM'):
                 self._errors['dtype'] = self.error_class([
@@ -142,6 +157,7 @@ class DeviceForm(ModelForm):
         elif self.cleaned_data['dtype'] == 'VNC':
             obj.attributes = {
                 'wait': self.cleaned_data['VNC_wait'],
+                'vnc_port': self.cleaned_data['VNC_port'],
             }
         obj.save()
         return obj
