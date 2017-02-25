@@ -39,7 +39,7 @@ class VMForm(ModelForm):
             else:
                 cdata['devices'] = [
                     {'dtype': 'NIC', 'attributes': {'type': 'E1000'}},
-                    {'dtype': 'VNC', 'attributes': {'wait': True, 'vnc_port': VNC_port}},
+                    {'dtype': 'VNC', 'attributes': {'wait': True, 'vnc_port': 0}},
                 ]
                 pk = c.call('vm.create', cdata)
         return models.VM.objects.get(pk=pk)
