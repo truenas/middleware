@@ -18,7 +18,7 @@ RUN_DEPENDS=	npm2>0:${PORTSDIR}/www/npm2
 BUILD_DEPENDS=	rsync>0:${PORTSDIR}/net/rsync
 
 NO_BUILD=	yes
-WRKSRC=		/usr/nas_source/webui
+WRKSRC=		/usr/webui
 
 checksum:
 	${ECHO_CMD} ${.TARGET} not needed because building direct
