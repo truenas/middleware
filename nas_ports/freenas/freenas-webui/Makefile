@@ -25,7 +25,7 @@ checksum:
 
 fetch:
 	${MKDIR} ${WRKDIR}
-	(cd ${WRKSRC} && ${LOCALBASE}/bin/npm install && ${LOCALBASE}/bin/npm build:prod)
+	(cd ${WRKSRC} && ${LOCALBASE}/bin/npm install && ${LOCALBASE}/bin/npm run build:prod)
 
 extract:
 	:
