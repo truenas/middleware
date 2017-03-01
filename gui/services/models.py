@@ -623,7 +623,7 @@ class iSCSITargetExtent(Model):
     iscsi_target_extent_rpm = models.CharField(
         blank=False,
         max_length=20,
-        default=choices.EXTENT_RPM_CHOICES[1][1],
+        default='SSD',
         choices=choices.EXTENT_RPM_CHOICES,
         verbose_name=_("LUN RPM"),
         help_text=_("RPM reported to initiators for this extent/LUN. The "
