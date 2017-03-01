@@ -121,4 +121,16 @@ class SystemHook(AppHook):
             'url': reverse('support_home'),
         })
 
+        if not notifier().is_freenas():
+            try:
+                support = models.Support.objects.order_by('-id')[0]
+            except IndexError:
+                support = models.Support.objects.create()
+            tabs.insert(10, {
+                'name': 'Proactive Support',
+                'focus': 'system.ProactiveSupport',
+                'verbose_name': _('Proactive Support'),
+                'url': support.get_edit_url() + '?inline=true',
+            })
+
         return tabs
