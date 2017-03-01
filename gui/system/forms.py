@@ -3240,3 +3240,10 @@ class BackupForm(Form):
                 _("The two password fields didn't match.")
             )
         return pwd2
+
+
+class SupportForm(ModelForm):
+
+    class Meta:
+        model = models.Support
+        fields = '__all__'

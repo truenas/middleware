@@ -353,19 +353,6 @@ class Advanced(Model):
         default=False,
     )
 
-    adv_ixalert = models.BooleanField(
-        verbose_name=_("Enable automatic support alerts to iXsystems"),
-        default=True,
-    )
-    adv_ixfailsafe_email = models.EmailField(
-        verbose_name=_('Failsafe Support Contact'),
-        help_text=_(
-            'Additional email address for iXsystems support to contact in case'
-            ' of failure.'
-        ),
-        blank=True,
-    )
-
     class Meta:
         verbose_name = _("Advanced")
 
@@ -1070,3 +1057,53 @@ class Backup(Model):
 
     class Meta:
         verbose_name = _("System Backup")
+
+
+class Support(models.Model):
+    enabled = models.BooleanField(
+        verbose_name=_("Enable automatic support alerts to iXsystems"),
+        default=False,
+    )
+    name = models.CharField(
+        verbose_name=_('Name of Primary Contact'),
+        max_length=200,
+        blank=True,
+    )
+    title = models.CharField(
+        verbose_name=_('Title'),
+        max_length=200,
+        blank=True,
+    )
+    email = models.EmailField(
+        verbose_name=_('E-mail'),
+        max_length=200,
+        blank=True,
+    )
+    phone = models.CharField(
+        verbose_name=_('Phone'),
+        max_length=200,
+        blank=True,
+    )
+    secondary_name = models.CharField(
+        verbose_name=_('Name of Secondary Contact'),
+        max_length=200,
+        blank=True,
+    )
+    seconday_title = models.CharField(
+        verbose_name=_('Secondary Title'),
+        max_length=200,
+        blank=True,
+    )
+    secondary_email = models.EmailField(
+        verbose_name=_('Secondary E-mail'),
+        max_length=200,
+        blank=True,
+    )
+    secondary_phone = models.CharField(
+        verbose_name=_('Secondary Phone'),
+        max_length=200,
+        blank=True,
+    )
+
+    class FreeAdmin:
+        deletable = False
