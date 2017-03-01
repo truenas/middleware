@@ -5,8 +5,6 @@ from django.utils.html import escapejs
 from django.utils.translation import ugettext as _
 
 from freenasUI.freeadmin.hook import AppHook
-from freenasUI.support.utils import get_license
-from licenselib.license import ContractType
 
 
 class SystemHook(AppHook):
@@ -123,15 +121,8 @@ class SystemHook(AppHook):
             'url': reverse('support_home'),
         })
 
-        license, error = get_license()
-        if not notifier().is_freenas() and license and license.contract_type in (
-            ContractType.silver.value,
-            ContractType.gold.value,
-        ):
-            try:
-                support = models.Support.objects.order_by('-id')[0]
-            except IndexError:
-                support = models.Support.objects.create()
+        available, support = models.Support.is_available()
+        if available:
             tabs.insert(11, {
                 'name': 'Proactive Support',
                 'focus': 'system.ProactiveSupport',

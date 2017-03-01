@@ -1110,13 +1110,25 @@ class Support(Model):
     class FreeAdmin:
         deletable = False
 
-    def is_enabled(self):
+    @classmethod
+    def is_available(cls, support=None):
+        if notifier().is_freenas():
+            return False, support
+        if support is None:
+            try:
+                support = cls.objects.order_by('-id')[0]
+            except IndexError:
+                support = cls.objects.create()
+
         license, error = get_license()
         if license is None:
-            return False
+            return False, support
         if license.contract_type in (
             ContractType.silver.value,
             ContractType.gold.value,
         ):
-            return True
-        return False
+            return True, support
+        return False, support
+
+    def is_enabled(self):
+        return self.is_available(support=self)[0] and self.enabled
