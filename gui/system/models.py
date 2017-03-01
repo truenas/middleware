@@ -1107,6 +1107,9 @@ class Support(Model):
         blank=True,
     )
 
+    class Meta:
+        verbose_name = _("Proactive Support")
+
     class FreeAdmin:
         deletable = False
 
