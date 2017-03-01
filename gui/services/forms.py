@@ -1526,10 +1526,12 @@ class iSCSITargetExtentForm(ModelForm):
                 raise forms.ValidationError(_('This field is required.'))
             return None
 
-        # Avoid create an extent inside a jail_root.
-        jail_root = JailsConfiguration.objects.order_by("-id")[0]
-        if (os.path.realpath(jail_root.jc_path) in os.path.realpath(path)):
-            raise forms.ValidationError(_("You need to specify a filepath outside of jail_root."))
+        # Avoid create an extent inside a jail root
+        jc = JailsConfiguration.objects.order_by("-id")
+        if jc.exists():
+            jc_path = jc[0].jc_path
+            if (os.path.realpath(jc_path) in os.path.realpath(path)):
+                raise forms.ValidationError(_("You need to specify a filepath outside of jail root."))
 
         if (os.path.exists(path) and not os.path.isfile(path)) or path[-1] == '/':
             raise forms.ValidationError(_("You need to specify a filepath, not a directory."))
