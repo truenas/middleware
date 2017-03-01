@@ -45,6 +45,8 @@ from freenasUI import choices
 from freenasUI.freeadmin.models import DictField, Model, UserField
 from freenasUI.middleware.notifier import notifier
 from freenasUI.storage.models import Volume
+from freenasUI.support.utils import get_license
+from licenselib.license import ContractType
 
 log = logging.getLogger('system.models')
 
@@ -1107,3 +1109,14 @@ class Support(models.Model):
 
     class FreeAdmin:
         deletable = False
+
+    def is_enabled(self):
+        license, error = get_license()
+        if license is None:
+            return False
+        if license.contract_type in (
+            ContractType.silver.value,
+            ContractType.gold.value,
+        ):
+            return True
+        return False

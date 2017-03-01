@@ -14,7 +14,7 @@ from freenasUI.common.locks import lock
 from freenasUI.common.system import send_mail, get_sw_version
 from freenasUI.freeadmin.hook import HookMetaclass
 from freenasUI.middleware.notifier import notifier
-from freenasUI.system.models import Advanced, Alert as mAlert
+from freenasUI.system.models import Alert as mAlert, Support
 from freenasUI.support.utils import get_license, new_ticket
 
 from lxml import etree
@@ -204,7 +204,7 @@ class AlertPlugins:
             text='\n'.join(msgs)
         )
 
-    def ticket(self, alerts):
+    def ticket(self, support, alerts):
         node = alert_node()
         dismisseds = [a.message_id
                       for a in mAlert.objects.filter(dismiss=True, node=node)]
@@ -226,9 +226,8 @@ class AlertPlugins:
         else:
             company = 'Unknown'
 
-        adv = Advanced.objects.order_by('-id')[0]
-        if adv.adv_ixfailsafe_email:
-            msgs += ['', 'Failsafe Support Contact: {}'.format(adv.adv_ixfailsafe_email)]
+        if support.email:
+            msgs += ['', 'Failsafe Support Contact: {}'.format(support.email)]
 
         success, msg, ticketnum = new_ticket({
             'title': 'Automatic alert (%s)' % serial,
@@ -353,9 +352,12 @@ class AlertPlugins:
                 ])
                 if hardware == lasthardware:
                     hardware = []
-            adv = Advanced.objects.order_by('-id')[0]
-            if hardware and adv.adv_ixalert:
-                self.ticket(hardware)
+            try:
+                support = Support.objects.order_by('-id')[0]
+            except IndexError:
+                support = Support.objects.create()
+            if hardware and support.is_enabled():
+                self.ticket(support, hardware)
 
         with open(self.ALERT_FILE, 'w') as f:
             cPickle.dump({
