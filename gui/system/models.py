@@ -1061,7 +1061,7 @@ class Backup(Model):
         verbose_name = _("System Backup")
 
 
-class Support(models.Model):
+class Support(Model):
     enabled = models.BooleanField(
         verbose_name=_("Enable automatic support alerts to iXsystems"),
         default=False,
