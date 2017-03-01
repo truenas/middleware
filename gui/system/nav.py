@@ -1,6 +1,7 @@
 from django.utils.translation import ugettext_lazy as _
 from freenasUI.freeadmin.tree import TreeNode
 from freenasUI.middleware.notifier import notifier
+from freenasUI.system.models import Support
 
 BLACKLIST = [
     'NTPServer',
@@ -131,10 +132,23 @@ class CertificateView(BackupMixin, TreeNode):
     order = 15
 
 
-class Support(TreeNode):
+class SupportTree(TreeNode):
 
     gname = 'Support'
     name = _(u'Support')
     icon = u"SupportIcon"
     type = 'opensystem'
     order = 20
+
+
+class ProactiveSupport(TreeNode):
+
+    gname = 'ProactiveSupport'
+    name = _(u'Proactive Support')
+    icon = u"SupportIcon"
+    type = 'opensystem'
+    order = 25
+
+    def pre_build_options(self):
+        if not Support.is_available()[0]:
+            raise ValueError
