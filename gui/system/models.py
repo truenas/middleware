@@ -1112,6 +1112,13 @@ class Support(Model):
 
     @classmethod
     def is_available(cls, support=None):
+        """
+        Checks whether the Proactive Support tab should be shown.
+        It should only be for TrueNAS and Siver/Gold Customers.
+
+        Returns:
+            tuple(bool, Support instance)
+        """
         if notifier().is_freenas():
             return False, support
         if support is None:
@@ -1131,4 +1138,10 @@ class Support(Model):
         return False, support
 
     def is_enabled(self):
+        """
+        Returns if the proactive support is enabled.
+        This means if certain failures should be reported to iXsystems.
+        Returns:
+            bool
+        """
         return self.is_available(support=self)[0] and self.enabled
