@@ -119,6 +119,9 @@ cifs_func()
 	net status shares
 	section_footer
 
+	section_header "ACLs"
+	sharesec --view-all
+	section_footer
 
 	#
 	#	Dump CIFS users and groups
