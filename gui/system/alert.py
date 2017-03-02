@@ -235,7 +235,7 @@ class AlertPlugins:
             ('secondary_title', 'Secondary Contact Title'),
             ('secondary_email', 'Secondary Contact E-mail'),
             ('secondary_phone', 'Secondary Contact Phone'),
-        )
+        ):
             value = getattr(support, name)
             if value:
                 msgs += ['', '{}: {}'.format(verbose_name, value)]
