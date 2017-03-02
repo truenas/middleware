@@ -1065,6 +1065,7 @@ class Support(Model):
     enabled = models.BooleanField(
         verbose_name=_("Enable automatic support alerts to iXsystems"),
         default=False,
+        null=True,
     )
     name = models.CharField(
         verbose_name=_('Name of Primary Contact'),
@@ -1091,7 +1092,7 @@ class Support(Model):
         max_length=200,
         blank=True,
     )
-    seconday_title = models.CharField(
+    secondary_title = models.CharField(
         verbose_name=_('Secondary Title'),
         max_length=200,
         blank=True,
