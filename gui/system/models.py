@@ -1091,7 +1091,7 @@ class Support(Model):
         max_length=200,
         blank=True,
     )
-    seconday_title = models.CharField(
+    secondary_title = models.CharField(
         verbose_name=_('Secondary Title'),
         max_length=200,
         blank=True,
