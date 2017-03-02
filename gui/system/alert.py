@@ -226,8 +226,19 @@ class AlertPlugins:
         else:
             company = 'Unknown'
 
-        if support.email:
-            msgs += ['', 'Failsafe Support Contact: {}'.format(support.email)]
+        for name, verbose_name in (
+            ('name', 'Contact Name'),
+            ('title', 'Contact Title'),
+            ('email', 'Contact E-mail'),
+            ('phone', 'Contact Phone'),
+            ('secondary_name', 'Secondary Contact Name'),
+            ('secondary_title', 'Secondary Contact Title'),
+            ('secondary_email', 'Secondary Contact E-mail'),
+            ('secondary_phone', 'Secondary Contact Phone'),
+        )
+            value = getattr(support, name)
+            if value:
+                msgs += ['', '{}: {}'.format(verbose_name, value)]
 
         success, msg, ticketnum = new_ticket({
             'title': 'Automatic alert (%s)' % serial,
