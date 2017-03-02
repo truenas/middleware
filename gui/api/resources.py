@@ -3636,7 +3636,7 @@ class VMResourceMixin(object):
             except:
                 log.warn('Failed to get status', exc_info=True)
             if bundle.obj.device_set.filter(dtype='VNC').exists():
-                vnc_port = bundle.obj.device_set.filter(dtype='VNC').values_list('attributes', flat=True)[0]['vnc_port']
+                vnc_port = bundle.obj.device_set.filter(dtype='VNC').values_list('attributes', flat=True)[0].get('vnc_port', 5900 + bundle.obj.id)
                 info += 'VNC Port: {}<br />'.format(vnc_port)
             bundle.data['info'] = info
         return bundle

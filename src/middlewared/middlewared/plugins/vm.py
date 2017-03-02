@@ -106,7 +106,7 @@ class VMSupervisor(object):
                 else:
                     wait = ''
 
-                vnc_port = int(device['attributes'].get('vnc_port'))
+                vnc_port = int(device['attributes'].get('vnc_port', 5900 + self.vm['id']))
 
                 args += [
                     '-s', '29,fbuf,tcp=0.0.0.0:{},w=1024,h=768,{}'.format(vnc_port, wait),
