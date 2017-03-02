@@ -54,7 +54,6 @@ from freenasUI.directoryservice import models, utils
 from freenasUI.middleware.notifier import notifier
 from freenasUI.services.exceptions import ServiceFailed
 from freenasUI.services.models import CIFS
-from middlewared.client import Client
 
 log = logging.getLogger('directoryservice.form')
 
@@ -627,10 +626,6 @@ class ActiveDirectoryForm(ModelForm):
 
     def save(self):
         enable = self.cleaned_data.get("ad_enable")
-        enable_monitoring = self.cleaned_data.get("ad_enable_monitor")
-        monit_frequency = self.cleaned_data.get("ad_monitor_frequency")
-        monit_retry = self.cleaned_data.get("ad_recover_retry")
-        fqdn = self.cleaned_data.get("ad_domainname")
         if self.__original_changed():
             notifier()._clear_activedirectory_config()
 
@@ -663,15 +658,6 @@ class ActiveDirectoryForm(ModelForm):
         else:
             if started is True:
                 started = notifier().stop("activedirectory")
-
-        with Client() as client:
-            if enable_monitoring and enable:
-                log.debug("[ServiceMonitoring] Add %s service, frequency: %d, retry: %d" % ('activedirectory', monit_frequency, monit_retry))
-                client.call('notifier.enable_test_service_connection', monit_frequency, monit_retry, fqdn, 3268, 'activedirectory')
-            else:
-                log.debug("[ServiceMonitoring] Remove %s service, frequency: %d, retry: %d" % ('activedirectory', monit_frequency, monit_retry))
-                client.call('notifier.disable_test_service_connection', monit_frequency, monit_retry, fqdn, 3268, 'activedirectory')
-
         return obj
 
 
@@ -689,27 +675,14 @@ class NISForm(ModelForm):
     def save(self):
         enable = self.cleaned_data.get("nis_enable")
 
-        # XXX: We need to have a method to test server connection.
-        try:
-            started = notifier().started("nis")
-        except:
-            raise ServiceFailed("nis", _("Failed to check NIS status."))
-        finally:
-            super(NISForm, self).save()
+        started = notifier().started("nis")
+        super(NISForm, self).save()
 
         if enable:
             if started is True:
-                try:
-                    started = notifier().restart("nis")
-                    log.debug("Try to restart: %s", started)
-                except:
-                    raise ServiceFailed("nis", _("NIS failed to restart."))
+                started = notifier().restart("nis")
             if started is False:
-                try:
-                    started = notifier().start("nis")
-                    log.debug("Try to start: %s", started)
-                except:
-                    raise ServiceFailed("nis", _("NIS failed to start."))
+                started = notifier().start("nis")
             if started is False:
                 self.instance.ad_enable = False
                 super(NISForm, self).save()

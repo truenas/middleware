@@ -126,7 +126,6 @@ from freenasUI.middleware.client import client
 from freenasUI.middleware.encryption import random_wipe
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.multipath import Multipath
-from middlewared.plugins.service_monitor import ServiceMonitor
 import sysctl
 
 RE_DSKNAME = re.compile(r'^([a-z]+)([0-9]+)$')
@@ -6114,36 +6113,6 @@ class notifier:
                 return fc_enabled() or ret
         return fc_enabled()
 
-    def enable_test_service_connection(self, frequency, retry, fqdn, service_port, service_name):
-        """Enable service monitoring.
-
-        Args:
-                frequency (int): How often we will check the connection.
-                retry (int): How many times we will try to restart the service.
-                fqdn (str): The hostname and domainname where we will try to connect.
-                service_port (int): The service port number.
-                service_name (str): Same name used to start/stop/restart method.
-        """
-        log.debug("[ServiceMonitoring] Add %s service, frequency: %d, retry: %d" % (service_name, frequency, retry))
-        t = ServiceMonitor(frequency, retry, fqdn, service_port, service_name)
-        t.createServiceThread()
-        t.start()
-
-    def disable_test_service_connection(self, frequency, retry, fqdn, service_port, service_name):
-        """Disable service monitoring.
-
-        XXX: This method will be simplified.
-
-        Args:
-                frequency (int): How often we will check the connection.
-                retry (int): How many times we will try to restart the service.
-                fqdn (str): The hostname and domainname where we will try to connect.
-                service_port (int): The service port number.
-                service_name (str): Same name used to start/stop/restart method.
-        """
-        log.debug("[ServiceMonitoring] Remove %s service, frequency: %d, retry: %d" % (service_name, frequency, retry))
-        t = ServiceMonitor(frequency, retry, fqdn, service_port, service_name)
-        t.destroyServiceThread(service_name)
 
 def crypt_makeSalt():
     return '$6$' + ''.join(random.choice(string.ascii_uppercase + string.ascii_lowercase + string.digits + '.' + '/') for _ in range(16))
