@@ -33,6 +33,7 @@ import uuid
 import subprocess
 
 from django.db import models, transaction
+from django.db.models import Q
 from django.utils.translation import ugettext as __, ugettext_lazy as _
 
 from freenasUI import choices
