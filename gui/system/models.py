@@ -1059,7 +1059,7 @@ class Backup(Model):
 
 
 class Support(Model):
-    enabled = models.BooleanField(
+    enabled = models.NullBooleanField(
         verbose_name=_("Enable automatic support alerts to iXsystems"),
         default=False,
         null=True,
