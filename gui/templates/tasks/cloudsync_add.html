@@ -1,5 +1,5 @@
 {% extends "freeadmin/generic_model_add.html" %}
 {% block form %}
-<p style="max-width: 420px;">{% trans "Warning: You are setting up a Cloud Sync task to a third party commercial vendor (e.g. Amazon S3) not directly affiliated with iXsystems. You should fully understand their pricing policies and services before you proceed and attempt to set up any Cloud Sync task. iXsystems is not responsible for any charges you may occurred from using these third party vendors with our Cloud Sync feature on TrueNAS." %}</p>
+<p style="max-width: 420px;">{% trans "Warning: This Cloud Sync task might go to a third part commercial vendor not directly affiliated with iXsystems. Please investigate and fully understand that vendor's pricing policies and services before creating any Cloud Sync task. iXsystems is not responsible for any charges incurred from the use of third party vendors with the Cloud Sync feature." %}</p>
 {{ block.super }}
 {% endblock %}
