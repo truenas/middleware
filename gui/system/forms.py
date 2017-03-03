@@ -3236,6 +3236,9 @@ class SupportForm(ModelForm):
     class Meta:
         model = models.Support
         fields = '__all__'
+        widgets = {
+            'enabled': forms.widgets.CheckboxInput(),
+        }
 
     def __init__(self, *args, **kwargs):
         super(SupportForm, self).__init__(*args, **kwargs)
@@ -3250,6 +3253,9 @@ class SupportForm(ModelForm):
                 if name == 'enabled':
                     continue
                 field.widget.attrs['disabled'] = 'disabled'
+
+    def clean_enabled(self):
+        return self.cleaned_data.get('enabled') in ('True', '1')
 
     def clean(self):
         data = self.cleaned_data
