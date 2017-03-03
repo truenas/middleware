@@ -984,7 +984,7 @@ def debug(request):
             try:
                 s = _n.failover_rpc()
                 s.ping()
-            except socket.error:
+            except:
                 return render(request, 'failover/failover_down.html')
         return render(request, 'system/debug.html')
     debug_generate()
