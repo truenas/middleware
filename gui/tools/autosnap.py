@@ -342,7 +342,7 @@ if len(mp_to_task_map) > 0:
     nonrec = [x for x in mp_to_task_map.keys() if x[2] is False]
     for nr in nonrec:
         for r in rec:
-            if (nr[0] + '/').startswith(r[0]):
+            if (nr[0] + '/').startswith(r[0] + '/') and nr[1] == r[1]:
                 # Delete this item from the dict of snaps to be taken
                 # as it is going to be taken by a recusive task on a
                 # dataset above it.
