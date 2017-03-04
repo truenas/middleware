@@ -309,6 +309,7 @@ __EOF__
 
         location /ui {
             alias /usr/local/www/webui;
+        }
 
         location /websocket {
             proxy_pass http://127.0.0.1:6000/websocket;

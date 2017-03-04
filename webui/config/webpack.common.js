@@ -28,7 +28,7 @@ const AOT = helpers.hasNpmFlag('aot');
 const METADATA = {
   title: 'FreeNAS',
   description: 'FreeNAS WebUI 2.0',
-  baseUrl: 'ui/',
+  baseUrl: '/ui/',
   isDevServer: helpers.isWebpackDevServer()
 };
 
