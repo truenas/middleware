@@ -1012,7 +1012,7 @@ class SHELL_CHOICES(object):
                 [x for x in f.readlines() if x.startswith('/')]
             ))
         self._dict = {}
-        for shell in shells + ['/sbin/nologin']:
+        for shell in shells + ['/usr/sbin/nologin']:
             self._dict[shell] = os.path.basename(shell)
 
     def __iter__(self):
@@ -1084,4 +1084,9 @@ VM_DEVTYPES = (
     ('DISK', _('Disk')),
     ('CDROM', _('CD-ROM')),
     ('VNC', _('VNC')),
+)
+
+S3_MODES = (
+    ('local', _('local')),
+    ('distributed', _('distributed'))
 )

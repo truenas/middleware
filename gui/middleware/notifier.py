@@ -58,6 +58,7 @@ import stat
 from subprocess import Popen, PIPE
 import subprocess
 import sys
+import syslog
 import tarfile
 import tempfile
 import time
@@ -163,9 +164,13 @@ class notifier:
         libc.sigprocmask(signal.SIGQUIT, pmask, pomask)
         try:
             p = Popen(
-                "(" + command + ") 2>&1 | logger -p daemon.notice -t %s" % (self.IDENTIFIER, ),
+                "(" + command + ") 2>&1",
                 stdin=PIPE, stdout=PIPE, stderr=PIPE, shell=True, preexec_fn=close_preexec, close_fds=False)
-            p.communicate()
+            syslog.openlog(self.IDENTIFIER, facility=syslog.LOG_DAEMON)
+            for line in p.stdout:
+                syslog.syslog(syslog.LOG_NOTICE, line)
+            syslog.closelog()
+            p.wait()
             ret = p.returncode
         finally:
             libc.sigprocmask(signal.SIGQUIT, pomask, None)
@@ -2632,13 +2637,16 @@ class notifier:
         sum = hasher.communicate()[0].split('\n')[0]
         return sum
 
-    def get_disks(self):
+    def get_disks(self, unused=False):
         """
         Grab usable disks and pertinent info about them
         This accounts for:
             - all the disks the OS found
                 (except the ones that are providers for multipath)
             - multipath geoms providers
+
+        Arguments:
+            unused(bool) - return only disks unused by volume or extent disk
 
         Returns:
             Dict of disks
@@ -2671,6 +2679,23 @@ class notifier:
                 if consumer.lunid and mp.devname in disksd:
                     disksd[mp.devname]['ident'] = consumer.lunid
                     break
+
+        if unused:
+            """
+            Remove disks that are in use by volumes or disk extent
+            """
+            from freenasUI.storage.models import Volume
+            from freenasUI.services.models import iSCSITargetExtent
+
+            for v in Volume.objects.all():
+                for d in v.get_disks():
+                    if d in disksd:
+                        del disksd[d]
+
+            for e in iSCSITargetExtent.objects.filter(iscsi_target_extent_type='Disk'):
+                d = i.get_device()[5:]
+                if d in diskd:
+                    del disksd[d]
 
         return disksd
 

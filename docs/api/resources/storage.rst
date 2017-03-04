@@ -1291,6 +1291,10 @@ Create resource
    :json boolean repl_enabled: enable replication
    :json string repl_filesystem: filesystem to replicate
    :json string repl_lastsnapshot: last snapshot sent to remote side
+   :json string repl_remote_mode: MANUAL or SEMIAUTOMATIC
+   :json string repl_remote_http_port: HTTP port of remote for SEMIAUTOMATIC mode
+   :json boolean repl_remote_https: HTTPS (true|false) of remote for SEMIAUTOMATIC mode
+   :json boolean repl_remote_token: remote auth token for SEMIAUTOMATIC mode
    :json string repl_remote_hostname: remote hostname
    :json integer repl_remote_port: remote ssh port
    :json string repl_remote_hostkey: remote ssh public key

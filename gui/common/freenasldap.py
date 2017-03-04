@@ -157,7 +157,6 @@ class FreeNAS_LDAP_Directory(object):
 
         self.filter = kwargs.get('filter', None)
         self.attributes = kwargs.get('attributes', None)
-
         self.pagesize = 0
         if 'pagesize' in kwargs and kwargs['pagesize'] is not None:
             self.pagesize = kwargs['pagesize']
@@ -1149,7 +1148,15 @@ class FreeNAS_ActiveDirectory_Base(object):
                 "looking up SRV records for %s",
                 host
             )
-            answers = resolver.query(host, 'SRV')
+
+            dns_query = resolver.Resolver()
+            dns_query.lifetime = 10.0
+
+            try:
+                answers = dns_query.query(host, 'SRV')
+            except resolver.Timeout:
+                return srv_records
+
             srv_records = sorted(
                 answers,
                 key=lambda a: (int(a.priority), int(a.weight))

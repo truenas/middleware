@@ -1,0 +1,16 @@
+<ba-card>
+  <div [dragula]='"pool-vdev"' #dnd [style.minHeight]="'100px'" [style.width]="'100%'">
+  </div>
+  <div class="row">
+    <div class="col-md-11">
+      <select [(ngModel)]="type" (change)="onTypeChange($event)" class="form-control">
+        <option value="stripe">Stripe</option>
+        <option value="mirror" *ngIf="getDisks().length >= 2">Mirror</option>
+        <option value="raidz1" *ngIf="getDisks().length >= 3">Raid-z</option>
+        <option value="raidz2" *ngIf="getDisks().length >= 4">Raid-z2</option>
+        <option value="raidz3" *ngIf="getDisks().length >= 5">Raid-z3</option>
+      </select>
+    </div>
+    <div class="col-md-1" [style.textAlign]="right"><button class="btn" *ngIf="removable" (click)="remove()">X</button></div>
+  </div>
+</ba-card>

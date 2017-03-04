@@ -95,6 +95,10 @@ cifs_func()
 	done
 	section_footer
 
+	section_header "smbd -b"
+	smbd -b
+	section_footer
+
 	section_header "net getlocalsid"
 	net getlocalsid
 	section_footer
@@ -115,6 +119,9 @@ cifs_func()
 	net status shares
 	section_footer
 
+	section_header "ACLs"
+	sharesec --view-all
+	section_footer
 
 	#
 	#	Dump CIFS users and groups

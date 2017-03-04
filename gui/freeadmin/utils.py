@@ -27,6 +27,7 @@ import logging
 
 from collections import OrderedDict
 from django.db.models import CASCADE
+from django.db.models.fields.related import OneToOneRel
 from django.utils import translation
 
 from freenasUI.system.models import Settings
@@ -48,18 +49,22 @@ def get_related_objects(obj):
         if (f.one_to_many or f.one_to_one) and f.auto_created and not f.concrete
     ]:
 
-        # Do not acount if it is not going to CASCADE
+        # Do not account if it is not going to CASCADE
         if related.field.rel.on_delete is not CASCADE:
             continue
         try:
             relset = getattr(obj, related.get_accessor_name())
         except:
             continue
-        qs = relset.all()
-        count = qs.count()
-        if count == 0:
-            continue
-        relnum += count
+        if isinstance(related, OneToOneRel):
+            qs = [relset]
+            relnum += 1
+        else:
+            qs = relset.all()
+            count = qs.count()
+            if count == 0:
+                continue
+            relnum += count
 
         for o in qs:
             _reld, _reln = get_related_objects(o)

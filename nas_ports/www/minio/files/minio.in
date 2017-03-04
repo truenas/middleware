@@ -5,68 +5,40 @@
 
 minio_enable="${minio_enable-NO}"
 minio_config="${minio_config-%%PREFIX%%/etc/minio}"
-minio_env=${minio_env:=""}
-minio_disks="${minio_disks}"
+minio_disks="${minio_disks-/var/db/minio}"
 minio_address="${minio_address-:9000}"
+minio_user="${minio_user-minio}"
+minio_group="${minio_group-minio}"
 
 . /etc/rc.subr
 
-load_rc_config ${name}
-
 name=minio
+procname="%%PREFIX%%/bin/minio"
 rcvar=minio_enable
 
+load_rc_config ${name}
+
 pidfile="/var/run/${name}.pid"
-
 command="/usr/sbin/daemon"
-command_args="-c -p ${pidfile} /usr/bin/env ${minio_env} /usr/local/bin/${name} -C \"${minio_config}\" server --address=\"${minio_address}\" ${minio_disks} >>/var/log/minio.log 2>&1"
+command_args="-c -p ${pidfile} /usr/bin/env ${minio_env} ${procname} -C \"${minio_config}\" server --address=\"${minio_address}\" --quiet ${minio_disks}"
 
-stop_cmd="minio_stop"
-status_cmd="minio_status"
+start_precmd="minio_startprecmd"
 
-minio_stop()
+minio_startprecmd()
 {
-	rc_pid=$(minio_check_pidfile $pidfile)
-
-	if [ -z "$rc_pid" ]; then
-		[ -n "$rc_fast" ] && return 0
-		echo "${name} not running? (check $pidfile)."
-		return 1
+	if [ ! -e "${pidfile}" ]; then
+		install -o "${minio_user}" -g "${minio_group}" "/dev/null" "${pidfile}"
 	fi
 
-	echo "Stopping ${name}."
-	kill ${rc_pid} 2> /dev/null
-}
-
-minio_status()
-{
-	rc_pid=$(minio_check_pidfile $pidfile)
-
-	if [ -z "$rc_pid" ]; then
-		[ -n "$rc_fast" ] && return 0
-		echo "${name} not running? (check $pidfile)."
-		return 1
-	fi
-	echo "${name} is running as pid ${rc_pid}."
-}
-
-minio_check_pidfile()
-{
-	_pidfile=$1
-	if [ -z "$_pidfile" ]; then
-		err 3 'USAGE: minio_check_pidfile pidfile'
-	fi
-	if [ ! -f $_pidfile ]; then
-		debug "pid file ($_pidfile): not readable."
-		return
-	fi
-	read _pid _junk < $_pidfile
-	if [ -z "$_pid" ]; then
-		debug "pid file ($_pidfile): no pid in file."
-		return
+	if [ ! -d "${minio_config}" ]; then
+		install -d -o "${minio_user}" -g "${minio_group}" "${minio_config}"
 	fi
 
-	pgrep minio
+	for disk in "${minio_disks}"; do
+		if [ ! -d "${disk}" ]; then
+			install -d -o "${minio_user}" -g "${minio_group}" "${disk}"
+		fi
+	done
 }
 
 run_rc_command "$1"

@@ -1028,6 +1028,7 @@ class VolumeResourceMixin(NestedMixin):
         if 'layout' not in bundle.data:
             return bundle
         layout = bundle.data.pop('layout')
+        i = -1
         for i, item in enumerate(layout):
             disks = item.get("disks")
             vtype = item.get("vdevtype")
@@ -1170,7 +1171,7 @@ class VolumeResourceMixin(NestedMixin):
         if not _format:
             _format = 'application/json'
         deserialized = self._meta.serializer.deserialize(
-            bundle.request.body,
+            bundle.request.body or '{}',
             format=_format,
         )
         bundle.obj.delete(
@@ -1262,8 +1263,11 @@ class ReplicationResourceMixin(object):
                 bundle.data['repl_remote_dedicateduser'] = bundle.obj.repl_remote.ssh_remote_dedicateduser
             if 'repl_remote_cipher' not in bundle.data:
                 bundle.data['repl_remote_cipher'] = bundle.obj.repl_remote.ssh_cipher
-            if 'repl_remote_cipher' not in bundle.data:
+            if 'repl_remote_hostkey' not in bundle.data:
                 bundle.data['repl_remote_hostkey'] = bundle.obj.repl_remote.ssh_remote_hostkey
+        else:
+            if 'repl_remote_mode' not in bundle.data:
+                bundle.data['repl_remote_mode'] = 'MANUAL'
 
         return bundle
 
@@ -1982,8 +1986,8 @@ class BsdUserResourceMixin(NestedMixin):
     def dehydrate(self, bundle):
         bundle = super(BsdUserResourceMixin, self).dehydrate(bundle)
         bundle.data['bsdusr_sshpubkey'] = bundle.obj.bsdusr_sshpubkey
+        bundle.data['bsdusr_group'] = bundle.obj.bsdusr_group.bsdgrp_gid
         if self.is_webclient(bundle.request):
-            bundle.data['bsdusr_group'] = bundle.obj.bsdusr_group.bsdgrp_gid
             bundle.data['_edit_url'] += 'bsdUsersForm'
             if bundle.obj.bsdusr_builtin:
                 bundle.data['_edit_url'] += '?deletable=false'
@@ -3632,6 +3636,7 @@ class VMResourceMixin(object):
             except:
                 log.warn('Failed to get status', exc_info=True)
             if bundle.obj.device_set.filter(dtype='VNC').exists():
-                info += 'VNC Port: {}<br />'.format(5900 + bundle.obj.id)
+                vnc_port = bundle.obj.device_set.filter(dtype='VNC').values_list('attributes', flat=True)[0].get('vnc_port', 5900 + bundle.obj.id)
+                info += 'VNC Port: {}<br />'.format(vnc_port)
             bundle.data['info'] = info
         return bundle

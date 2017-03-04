@@ -1,0 +1,27 @@
+  <ba-card class="systeminfo col-xlg-6 col-xl-6 col-lg-12 col-sm-12 col-xs-12" title="System Information" baCardClass="traffic-panel">
+    <div class="row">
+      <div class="col-md-3">Uptime</div>
+      <div class="col-md-9">{{ info.uptime }}</div>
+    </div>
+    <div class="row">
+      <div class="col-md-3">Version</div>
+      <div class="col-md-9">{{ info.version }}</div>
+    </div>
+    <div class="row">
+      <div class="col-md-3">Model</div>
+      <div class="col-md-9">{{ info.model }}</div>
+    </div>
+    <div class="row">
+      <div class="col-md-3">Avarage Load</div>
+      <div class="col-md-9">{{ info.loadavg }}</div>
+    </div>
+    <div class="row">
+      <div class="col-md-3">Physical Memory</div>
+      <div class="col-md-9">{{ info.physmem }}</div>
+    </div>
+  </ba-card>
+  <ba-card *ngFor="let graph of graphs" class="col-xlg-6 col-xl-6 col-lg-12 col-sm-12 col-xs-12"
+           [title]="graph.title" baCardClass="">
+    <line-chart [dataList]="graph.dataList" [legends]="graph.legends" [type]="graph.type || 'Line'" [series]="graph.series"></line-chart>
+  </ba-card>
+<div class="clearfix"></div>

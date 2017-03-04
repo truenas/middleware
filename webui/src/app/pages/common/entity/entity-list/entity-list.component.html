@@ -1,0 +1,21 @@
+<button *ngIf="conf.route_add" class="btn btn-primary btn-add" (click)="doAdd()">Add</button>
+
+<ba-card>
+<table class="table table-striped table-bordered tree" style="width: 100%;" [ngBusy]="busy">
+ <thead>
+   <tr role="row">
+     <th *ngFor="let i of conf.columns">{{ i.title }}</th>
+     <th>Actions</th>
+   </tr>
+  </thead>
+  <tbody>
+   <tr *ngFor="let i of rows" [class]="trClass(i)">
+     <td *ngFor="let c of conf.columns; let idx = index"><span *ngIf="idx == 0"><span *ngFor="let lvl of i._level | range">&nbsp;&nbsp;&nbsp;</span></span><a>{{ rowValue(i, c.name) }}</a></td>
+     <td><app-entity-list-actions [entity]="this" [row]="i"></app-entity-list-actions></td>
+   </tr>
+   <tr *ngIf="rows.length == 0">
+     <td [attr.colspan]="conf.columns.length + 1">No entries have been found.</td>
+   </tr>
+  </tbody>
+</table>
+</ba-card>

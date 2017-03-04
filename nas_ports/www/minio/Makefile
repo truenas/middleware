@@ -27,6 +27,9 @@ PLIST_FILES=	bin/minio
 
 USE_RC_SUBR=	minio
 
+USERS=	minio
+GROUPS=	minio
+
 do-build:
 	cd ${GO_WRKSRC}; ${SETENV} ${MAKE_ENV} \
 		go build -ldflags "-X main.GitDescribe=${DISTVERSIONFULL}" -o bin/minio

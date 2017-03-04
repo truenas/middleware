@@ -79,7 +79,6 @@ adctl_start()
 
 	if ! AD_init
 	then
-		activedirectory_set 0
 		return 1
 	fi
 
@@ -108,7 +107,6 @@ adctl_start()
 	adctl_cmd ${service} ix-kinit quietstart
 	if ! adctl_cmd ${service} ix-kinit status
 	then
-		activedirectory_set 0
 		return 1
 	fi
 
@@ -127,12 +125,10 @@ adctl_start()
 
 	if ! adctl_cmd ${service} ix-activedirectory quietstart
 	then
-		activedirectory_set 0
 		return 1
 	fi
 	if ! adctl_cmd ${service} ix-activedirectory status
 	then
-		activedirectory_set 0
 		return 1
 	fi
 
@@ -184,33 +180,28 @@ adctl_stop()
 	then
 		adctl_cmd ${service} samba_server forcestop
 		srv_set cifs 0
-		activedirectory_set 0
 		adctl_cmd ${service} ix-pre-samba start
 
 	elif [ "${prev_cifs_started}" = "0" -a "${cifs_started}" = "1" ]
 	then
 		adctl_cmd ${service} samba_server forcestop
 		srv_set cifs 0
-		activedirectory_set 0
 		adctl_cmd ${service} ix-pre-samba start
 
 	elif [ "${prev_cifs_started}" = "1" -a "${cifs_started}" = "0" ]
 	then
 		adctl_cmd ${service} samba_server forcestop
-		activedirectory_set 0
 		srv_set cifs 1
 		cifs_start
 
 	elif [ "${prev_cifs_started}" = "1" -a "${cifs_started}" = "1" ]		
 	then
 		adctl_cmd ${service} samba_server forcestop
-		activedirectory_set 0
 		srv_set cifs 1
 		cifs_start
 	fi
 
 	adctl_cmd ${service} ix-kinit forcestop
-	activedirectory_set 0
 	rm -f "${status_file}"
 
 	adctl_cmd ${service} ix-hostname quietstart

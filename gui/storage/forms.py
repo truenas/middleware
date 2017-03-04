@@ -215,7 +215,12 @@ class VolumeManagerForm(VolumeMixin, Form):
         )
         self._formset = vdevFormSet(self.data, prefix='layout')
         self._formset.pform = self
-        return valid and self._formset.is_valid()
+        fsvalid = self._formset.is_valid()
+        if not fsvalid:
+            nonformerrors = self._formset.non_form_errors()
+            if nonformerrors:
+                self._errors['__all__'] = self.error_class(nonformerrors)
+        return valid and fsvalid
 
     def clean(self):
         vname = (
@@ -2026,6 +2031,7 @@ class ReplicationForm(ModelForm):
             ('MANUAL', _('Manual')),
             ('SEMIAUTOMATIC', _('Semi-automatic')),
         ),
+        initial='MANUAL',
     )
     repl_remote_hostname = forms.CharField(label=_("Remote hostname"))
     repl_remote_port = forms.IntegerField(
@@ -2038,6 +2044,7 @@ class ReplicationForm(ModelForm):
         label=_('Remote HTTP/HTTPS Port'),
         max_length=200,
         initial=80,
+        required=False,
     )
     repl_remote_https = forms.BooleanField(
         label=_('Remote HTTPS'),

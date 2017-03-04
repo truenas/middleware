@@ -48,12 +48,14 @@ get_image_name()
 # This does memory size only for now.
 pre_install_check()
 {
-    # We need at least 4gbytes of RAM
-    local readonly minmem=$(expr 4 \* 1024 \* 1024 \* 1024)
+    # We need at least 4 GB of RAM
+    local readonly minmemgb = 4
+    local readonly minmem=$(expr ${minmemgb} \* 1024 \* 1024 \* 1024)
     local memsize=$(sysctl -n hw.physmem)
 
     if [ ${memsize} -lt ${minmem} ]; then
-	dialog --clear --title "${AVATAR_PROJECT}" --yesno "You have less than the recommended amount of RAM (4GBytes), do you wish to continue even though performance may be horribly slow?" 7 74 || return 1
+	dialog --clear --title "${AVATAR_PROJECT}" --defaultno \
+	--yesno "This computer has less than the recommended ${minmemgb} GB of RAM.\n\nPerformance might be very slow.  Continue installation?" 7 74 || return 1
     fi
     return 0
 }

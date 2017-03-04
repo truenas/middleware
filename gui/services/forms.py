@@ -51,6 +51,7 @@ from freenasUI.common.system import (
 from freenasUI.freeadmin.forms import DirectoryBrowser
 from freenasUI.freeadmin.options import FreeBaseInlineFormSet
 from freenasUI.freeadmin.utils import key_order
+from freenasUI.jails.models import JailsConfiguration
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier
 from freenasUI.services import models
@@ -1453,8 +1454,17 @@ class iSCSITargetExtentForm(ModelForm):
             if _type == 'File':
                 raise forms.ValidationError(_('This field is required.'))
             return None
+
+        # Avoid create an extent inside a jail root
+        jc = JailsConfiguration.objects.order_by("-id")
+        if jc.exists():
+            jc_path = jc[0].jc_path
+            if (os.path.realpath(jc_path) in os.path.realpath(path)):
+                raise forms.ValidationError(_("You need to specify a filepath outside of jail root."))
+
         if (os.path.exists(path) and not os.path.isfile(path)) or path[-1] == '/':
             raise forms.ValidationError(_("You need to specify a filepath, not a directory."))
+
         valid = False
         for v in Volume.objects.all():
             mp_path = '/mnt/%s' % v.vol_name
@@ -1464,6 +1474,7 @@ class iSCSITargetExtentForm(ModelForm):
                 )
             if path.startswith(mp_path + '/'):
                 valid = True
+
         if not valid:
             raise forms.ValidationError(_("Your path to the extent must reside inside a volume/dataset mount point."))
         return path
@@ -2116,3 +2127,50 @@ class WebDAVForm(ModelForm):
     def done(self, *args, **kwargs):
         if self._has_changed('webdav_certssl'):
             notifier().start_ssl("webdav")
+
+
+class S3Form(ModelForm):
+    s3_bindip = forms.ChoiceField(
+        label=models.S3._meta.get_field("s3_bindip").verbose_name,
+        widget=forms.widgets.FilteringSelect(),
+        required=False,
+        choices=(),
+    )
+    s3_secret_key2 = forms.CharField(
+        max_length=128,
+        label=_("Confirm S3 Key"),
+        widget=forms.widgets.PasswordInput(),
+        required=False,
+    )
+
+    def __init__(self, *args, **kwargs):
+        super(S3Form, self).__init__(*args, **kwargs)
+        key_order(self, 1, 's3_bindip', instance=True)
+        key_order(self, 2, 's3_bindport', instance=True)
+        key_order(self, 3, 's3_access_key', instance=True)
+        key_order(self, 4, 's3_secret_key', instance=True)
+        key_order(self, 5, 's3_secret_key2', instance=True)
+        key_order(self, 6, 's3_disks', instance=True)
+        key_order(self, 7, 's3_mode', instance=True)
+        key_order(self, 8, 's3_browser', instance=True)
+
+        self.fields['s3_bindip'].choices = [('0.0.0.0','0.0.0.0')] + list(choices.IPChoices())
+        if self.instance.id and self.instance.s3_bindip:
+            bindips = []
+            for ip in self.instance.s3_bindip:
+                bindips.append(ip.encode('utf-8'))
+
+            self.fields['s3_bindip'].initial = (bindips)
+        else:
+            self.fields['s3_bindip'].initial = ('')
+
+    def save(self):
+        obj = super(S3Form, self).save()
+        return obj
+
+    class Meta:
+        fields = '__all__'
+        widgets = {
+            's3_secret_key': forms.widgets.PasswordInput(render_value=False),
+        }
+        model = models.S3

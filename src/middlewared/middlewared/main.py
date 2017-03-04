@@ -435,9 +435,14 @@ class Middleware(object):
             except:
                 self.logger.warn('Failed to send event {} to {}'.format(name, sessionid), exc_info=True)
 
+    def pdb(self):
+        import pdb
+        pdb.set_trace()
+
     def run(self):
 
         gevent.signal(signal.SIGTERM, self.kill)
+        gevent.signal(signal.SIGUSR1, self.pdb)
 
         Application.middleware = self
         wsserver = WebSocketServer(('127.0.0.1', 6000), Resource(OrderedDict([
@@ -522,8 +527,6 @@ def main():
         sys.stderr = logger.LoggerStream(get_logger)
     elif 'console' in log_handlers:
         _logger.configure_logging('console')
-        sys.stdout = logger.LoggerStream(get_logger)
-        sys.stderr = logger.LoggerStream(get_logger)
     else:
         _logger.configure_logging('file')
 

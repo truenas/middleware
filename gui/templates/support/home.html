@@ -4,8 +4,13 @@
 {% if allow_update %}
 <div data-dojo-type="dijit/form/Button">
   {% trans "Update License" %}
-  <script type="dojo/method" data-dojo-event="onClick">
-    editObject('{% trans "Update License"|escapejs %}', '{% url "support_license_update" %}', [this, ]);
+  <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="e, e2">
+    var me = this;
+    require([
+      "dijit/registry"
+    ], function(registry) {
+      editObject('{% trans "Update License"|escapejs %}', '{% url "support_license_update" %}', [registry.getEnclosingWidget(me.domNode.parentNode.parentNode.parentNode.parentNode.parentNode.parentNode), ]);
+    });
   </script>
 </div>
 {% endif %}
