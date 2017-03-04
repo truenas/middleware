@@ -13,3 +13,6 @@
 /sbin/
 .git-repo-setting
 nas_source/
+webui/node_modules/
+webui/dll/
+webui/dist/
