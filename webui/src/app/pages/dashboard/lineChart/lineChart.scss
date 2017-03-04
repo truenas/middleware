@@ -1,0 +1,53 @@
+.dashboard-line-chart {
+  width: 100%;
+  height: 340px;
+  margin-top: -10px;
+}
+
+$ct-series-colors: (#d70206 #f05b4f #f4c63d #d17905 #453d3f #59922b #0544d3 #6b0392 #f05b4f);
+
+.ct-label {
+  color: white;
+}
+
+
+.ct-legend {
+    position: relative;
+    z-index: 10;
+    list-style-type: none;
+
+    li {
+        position: relative;
+        padding-left: 23px;
+        margin-left: 23px;
+        margin-bottom: 3px;
+        float: left;
+    }
+
+    li:before {
+        width: 12px;
+        height: 12px;
+        position: absolute;
+        left: 0;
+        content: '';
+        border: 3px solid transparent;
+        border-radius: 2px;
+    }
+
+    li.inactive:before {
+        background: transparent;
+    }
+
+    &.ct-legend-inside {
+        position: absolute;
+        top: 0;
+        right: 0;
+    }
+
+    @for $i from 0 to length($ct-series-colors) {
+        .ct-series-#{$i}:before {
+            background-color: nth($ct-series-colors, $i + 1);
+            border-color: nth($ct-series-colors, $i + 1);
+        }
+    }
+}

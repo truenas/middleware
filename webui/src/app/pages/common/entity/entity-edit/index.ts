@@ -1,0 +1,1 @@
+export { EntityEditComponent } from './entity-edit.component';
