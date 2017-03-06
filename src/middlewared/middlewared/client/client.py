@@ -177,9 +177,6 @@ class Client(object):
         # Wait for websocketclient thread to close
         self._closed.wait(1)
 
-    def __del__(self):
-        self.close()
-
 
 def main():
     parser = argparse.ArgumentParser()
