@@ -684,7 +684,7 @@ class iSCSITargetExtent(Model):
     def save(self, *args, **kwargs):
         if not self.iscsi_target_extent_naa:
             self.iscsi_target_extent_naa = '0x6589cfc000000%s' % (
-                hashlib.sha256(str(uuid.uuid4())).hexdigest()[0:19]
+                hashlib.sha256(str(uuid.uuid4()).encode()).hexdigest()[0:19]
             )
         return super(iSCSITargetExtent, self).save(*args, **kwargs)
 
@@ -2074,7 +2074,7 @@ class RPCToken(Model):
 
     @classmethod
     def new(cls):
-        key = str(uuid.uuid4())
+        key = str(uuid.uuid4()).encode()
         h = hmac.HMAC(key=key, digestmod=hashlib.sha512)
         secret = str(h.hexdigest())
         instance = cls.objects.create(
