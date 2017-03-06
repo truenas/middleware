@@ -650,9 +650,9 @@ class ActiveDirectoryForm(ModelForm):
 
         if enable:
             if started is True:
-                started = notifier().restart("activedirectory")
+                started = notifier().restart("activedirectory", timeout=90)
             if started is False:
-                started = notifier().start("activedirectory")
+                started = notifier().start("activedirectory", timeout=90)
             if started is False:
                 self.instance.ad_enable = False
                 super(ActiveDirectoryForm, self).save()
@@ -662,7 +662,7 @@ class ActiveDirectoryForm(ModelForm):
                 )
         else:
             if started is True:
-                started = notifier().stop("activedirectory")
+                started = notifier().stop("activedirectory", timeout=60)
 
         with client as c:
             if enable_monitoring and enable:
