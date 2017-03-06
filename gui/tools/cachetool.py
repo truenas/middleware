@@ -27,8 +27,6 @@
 import os
 import sys
 
-from string import join
-
 sys.path.extend([
     '/usr/local/www',
     '/usr/local/www/freenasUI'
@@ -72,7 +70,7 @@ from freenasUI.common.freenasusers import (
 
 
 def usage(keys):
-    print("Usage: %s <%s>" % (sys.argv[0], join(keys, '|')), file=sys.stderr)
+    print("Usage: %s <%s>" % (sys.argv[0], '|'.join(keys, '|'), file=sys.stderr)
     sys.exit(1)
 
 
@@ -608,7 +606,7 @@ def _cache_check_default(**kwargs):
         try:
             parts = arg.split('=')
             key = parts[0]
-            val = join(parts[1:], '=')
+            val = '='.join(parts[1:])
 
         except:
             continue
