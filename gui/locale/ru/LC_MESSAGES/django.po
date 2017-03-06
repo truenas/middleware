@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:06-0700\n"
-"PO-Revision-Date: 2016-12-21 16:27+0000\n"
-"Last-Translator: Alexander Motin <mav@ixsystems.com>\n"
+"PO-Revision-Date: 2017-03-06 19:47+0000\n"
+"Last-Translator: Koljasha <koljasha@gmail.com>\n"
 "Language-Team: Russian "
 "<http://weblate.trueos.org/projects/freenas/django/ru/>\n"
 "Language: ru\n"
@@ -705,7 +705,7 @@ msgstr "Полное Имя"
 
 #: account/models.py:126 templates/account/bsdusers.html:90
 msgid "E-mail"
-msgstr "E-mail"
+msgstr "Электронная почта"
 
 #: account/models.py:131 account/models.py:176 services/models.py:593
 #: services/models.py:1416 system/models.py:329 system/models.py:522
@@ -2197,8 +2197,7 @@ msgstr "Имя цели"
 
 #: services/models.py:633
 msgid "Base Name will be appended automatically when starting without 'iqn.'."
-msgstr ""
-"Базовое имя будет добавлено ​​автоматически если не начинается с 'iqn.'."
+msgstr "Базовое имя будет добавлено автоматически если не начинается с 'iqn.'."
 
 #: services/models.py:640
 msgid "Target Alias"
@@ -3110,7 +3109,7 @@ msgstr ""
 
 #: services/models.py:1480
 msgid "Critical"
-msgstr "Критический"
+msgstr "Критично"
 
 #: services/models.py:1484
 msgid "Email to report"
@@ -3655,7 +3654,7 @@ msgstr "Общие ресурсы Unix (NFS)"
 
 #: sharing/nav.py:4 templates/menubar.html:22
 msgid "Sharing"
-msgstr "Общие ресурсы"
+msgstr "Общий доступ"
 
 #~ msgid "Enter positive number (optionally suffixed by K, M, G, T), or, 0"
 #~ msgstr "Введите положительное число (опционально с суффиксом K, М, G, T) или 0"
@@ -5135,7 +5134,7 @@ msgstr "Запущенные процессы"
 #: templates/freeadmin/index.html:38 templates/freeadmin/index.html.py:44
 #: templates/freeadmin/index.html:49
 msgid "Loading..."
-msgstr "Загрузка..."
+msgstr "Загрузка…"
 
 #: templates/freeadmin/index.html:53
 msgid "Help & Support"
@@ -5378,7 +5377,7 @@ msgstr "Шаг %(step)s из %(step_count)s"
 #: templates/storage/zvol_confirm_delete.html:13
 #: templates/system/wizard.html:16
 msgid "Please wait..."
-msgstr "Пожалуйста, подождите..."
+msgstr "Подождите..."
 
 #~ msgid "Edit Mount Point"
 #~ msgstr "Редактировать точку монтирования"
@@ -5707,15 +5706,18 @@ msgid_plural ""
 "        "
 msgstr[0] ""
 "\n"
-"Это приведет к удалению всех файлов в наборе данных.\n"
+"        Это приведет к удалению всех файлов в наборе данных.\n"
+"        "
 msgstr[1] ""
 "\n"
-"Это приведет к удалению всех файлов в наборе данных и дочерних наборов "
-"данных.\n"
+"        Это приведет к удалению всех файлов в наборе данных и дочерних "
+"наборов данных.\n"
+"        "
 msgstr[2] ""
 "\n"
-"Это приведет к удалению всех файлов в наборе данных и дочерних наборов "
-"данных.\n"
+"        Это приведет к удалению всех файлов в наборе данных и дочерних "
+"наборов данных.\n"
+"        "
 
 #: templates/storage/dataset_edit.html:2
 msgid "Edit Dataset"
@@ -6000,7 +6002,7 @@ msgstr "Добавить том"
 
 #: templates/storage/wizard.html:157
 msgid "Existing data will be cleared"
-msgstr "Существующие данные будут стёрты"
+msgstr "Существующие данные будут очищены"
 
 #: templates/storage/zpool_disk_replace.html:2
 msgid "Replace Disk"
@@ -7456,7 +7458,7 @@ msgstr "Не начинать репликачию после"
 #: templates/storage/volume_datagrid.html:6
 #: templates/storage/volume_datagrid.html:10
 msgid "ZFS Volume Manager"
-msgstr "Управление томами ZFS"
+msgstr "Менеджер томов ZFS"
 
 #: storage/nav.py:52
 #: templates/storage/volume_datagrid.html:20
@@ -9087,7 +9089,7 @@ msgstr ""
 "что по умолчанию, то есть, когда этот параметр отключен, \"открытие для "
 "исполнения\" теперь запрещено если нет прав на исполнение. Если этот "
 "параметр включен, Samba не проверяет разрешения на исполнение для \"открыть "
-"для исполнения\", таким образом восстанавливая поведение Samba 3.6"
+"для исполнения\", таким образом восстанавливая поведение Samba 3.6 "
 
 #: services/models.py:334
 msgid "Serve UDP NFS clients"
@@ -9115,43 +9117,43 @@ msgstr ""
 
 #: services/models.py:1292
 msgid "TLS allow dot login"
-msgstr ""
+msgstr "TLS разрешено для точки входа"
 
 #: services/models.py:1296
 msgid "TLS allow per user"
-msgstr ""
+msgstr "TLS разрешено для каждого пользователя"
 
 #: services/models.py:1300
 msgid "TLS common name required"
-msgstr ""
+msgstr "TLS требует общее название"
 
 #: services/models.py:1304
 msgid "TLS enable diagnostics"
-msgstr ""
+msgstr "TLS включить диагностику"
 
 #: services/models.py:1308
 msgid "TLS export certificate data"
-msgstr ""
+msgstr "TLS экспорт данных сертификатов"
 
 #: services/models.py:1312
 msgid "TLS no certificate request"
-msgstr ""
+msgstr "TLS нет соответствующего запроса сертификата"
 
 #: services/models.py:1316
 msgid "TLS no empty fragments"
-msgstr ""
+msgstr "TLS нет пустых фрагментов"
 
 #: services/models.py:1320
 msgid "TLS no session reuse required"
-msgstr ""
+msgstr "TLS не требуется повторного сеанса"
 
 #: services/models.py:1324
 msgid "TLS export standard vars"
-msgstr ""
+msgstr "TLS экспорт стандартных переменных"
 
 #: services/models.py:1328
 msgid "TLS use implicit SSL"
-msgstr ""
+msgstr "TLS использовать неявное SSL"
 
 #: services/models.py:1332
 msgid "TLS DNS name required"
@@ -9159,7 +9161,7 @@ msgstr "Необходимо TLS DNS имя"
 
 #: services/models.py:1336
 msgid "TLS IP address required"
-msgstr ""
+msgstr "TLS обязательный IP адресс"
 
 #: services/models.py:1595
 msgid "Domain Account Name"
@@ -9179,7 +9181,7 @@ msgstr "Пароль учетной записи домена."
 
 #: services/models.py:1609
 msgid "Use keytab"
-msgstr ""
+msgstr "Используйте Keytab"
 
 #: services/models.py:1613
 msgid "Kerberos keytab file"
@@ -9233,15 +9235,15 @@ msgstr "Роль сервера"
 
 #: services/models.py:2075
 msgid "DNS Backend"
-msgstr ""
+msgstr "DNS задняя часть"
 
 #: services/models.py:2076
 msgid "DNS Backend, eg SAMBA_INTERNAL"
-msgstr ""
+msgstr "DNS задняя часть, например SAMBA_INTERNAL"
 
 #: services/models.py:2082
 msgid "DNS Forwarder"
-msgstr ""
+msgstr "DNS экспедитор"
 
 #: services/models.py:2083
 msgid "DNS Forwarder IP Address"
@@ -9249,11 +9251,11 @@ msgstr "IP-адрес DNS Forwarder'а"
 
 #: services/models.py:2087
 msgid "Domain Forest Level"
-msgstr ""
+msgstr "Уровень доменного леса"
 
 #: services/models.py:2088
 msgid "Domain and Forest Level, eg 2003"
-msgstr ""
+msgstr "Домен и уровень леса, например 2003"
 
 #: sharing/models.py:48
 msgid "Apply Default Permissions"
@@ -9367,7 +9369,7 @@ msgstr "Шифрование"
 #: storage/forms.py:601
 #: templates/storage/zfswizard.html:51
 msgid "Initialize Safely"
-msgstr "Безопасная инициализация"
+msgstr "Инициализировать безопасно"
 
 #: storage/forms.py:906
 msgid ""
@@ -9697,11 +9699,11 @@ msgstr "Включено"
 
 #: directoryservice/models.py:295
 msgid "Bind DN"
-msgstr ""
+msgstr "Привязать DN"
 
 #: directoryservice/models.py:302
 msgid "Bind password"
-msgstr ""
+msgstr "Привязать пароль"
 
 #: services/forms.py:753
 #: services/forms.py:896
@@ -9899,7 +9901,7 @@ msgstr "sfu20"
 #: directoryservice/models.py:163
 #: directoryservice/models.py:164
 msgid "AD Idmap"
-msgstr ""
+msgstr "AD Idmap"
 
 #: directoryservice/models.py:182
 msgid "Range Size"
@@ -9940,7 +9942,7 @@ msgstr "Игнорировать любые запросы маппинга дл
 #: directoryservice/models.py:210
 #: directoryservice/models.py:211
 msgid "AutoRID Idmap"
-msgstr ""
+msgstr "AutoRID Idmap"
 
 #: directoryservice/models.py:229
 msgid "Name Map"
@@ -9959,7 +9961,7 @@ msgstr ""
 #: directoryservice/models.py:239
 #: directoryservice/models.py:240
 msgid "Hash Idmap"
-msgstr ""
+msgstr "Hash Idmap"
 
 #: directoryservice/models.py:261
 msgid ""
@@ -9996,12 +9998,12 @@ msgstr "Указывает LDAP сервер для преобразования
 #: directoryservice/models.py:288
 #: directoryservice/models.py:289
 msgid "LDAP Idmap"
-msgstr ""
+msgstr "LDAP Idmap"
 
 #: directoryservice/models.py:308
 #: directoryservice/models.py:309
 msgid "NSS Idmap"
-msgstr ""
+msgstr "NSS Idmap"
 
 #: directoryservice/models.py:327
 msgid "LDAP Server"
@@ -10021,7 +10023,7 @@ msgstr "отдельный"
 
 #: directoryservice/models.py:341
 msgid "User Bind Path"
-msgstr ""
+msgstr "Путь привязки пользователя"
 
 #: directoryservice/models.py:343
 msgid ""
@@ -10032,7 +10034,7 @@ msgstr ""
 
 #: directoryservice/models.py:348
 msgid "Group Bind Path"
-msgstr ""
+msgstr "Путь привязки группы"
 
 #: directoryservice/models.py:350
 msgid ""
@@ -10041,7 +10043,7 @@ msgstr "Задает путь привязки, где объекты групп
 
 #: directoryservice/models.py:355
 msgid "User CN"
-msgstr ""
+msgstr "Пользователь CN"
 
 #: directoryservice/models.py:356
 msgid "Query cn attribute instead of uid attribute for the user name in LDAP."
@@ -10090,7 +10092,7 @@ msgstr ""
 
 #: directoryservice/models.py:391
 msgid "LDAP User DN"
-msgstr ""
+msgstr "LDAP пользователь DN"
 
 #: directoryservice/models.py:394
 msgid ""
@@ -10118,17 +10120,17 @@ msgstr ""
 #: directoryservice/models.py:413
 #: directoryservice/models.py:414
 msgid "RFC2307 Idmap"
-msgstr ""
+msgstr "RFC2307 Idmap"
 
 #: directoryservice/models.py:433
 #: directoryservice/models.py:434
 msgid "RID Idmap"
-msgstr ""
+msgstr "RID Idmap"
 
 #: directoryservice/models.py:453
 #: directoryservice/models.py:454
 msgid "TDB Idmap"
-msgstr ""
+msgstr "TDB Idmap"
 
 #: directoryservice/models.py:474
 msgid ""
@@ -10143,7 +10145,7 @@ msgstr ""
 #: directoryservice/models.py:481
 #: directoryservice/models.py:482
 msgid "TDB2 Idmap"
-msgstr ""
+msgstr "TDB2 Idmap"
 
 #: directoryservice/models.py:549
 msgid "Domain administrator account name"
@@ -10162,17 +10164,17 @@ msgstr "Использовать домен по умолчанию"
 #: directoryservice/models.py:702
 #: directoryservice/models.py:867
 msgid "Idmap backend"
-msgstr ""
+msgstr "Idmap задняя часть"
 
 #: directoryservice/models.py:566
 #: directoryservice/models.py:705
 #: directoryservice/models.py:870
 msgid "Idmap backend for winbind."
-msgstr ""
+msgstr "Задняя часть Idmap для winbind."
 
 #: freeadmin/navtree.py:256
 msgid "Initial Wizard"
-msgstr "Помощник Инициализации"
+msgstr "Мастер начальной настройки"
 
 #: middleware/notifier.py:2222
 msgid "Failed to create group %s"
@@ -10258,7 +10260,7 @@ msgstr "Вы уверены?"
 
 #: templates/system/initialwizard_confirm.html:39
 msgid "Confirm"
-msgstr "Подтвердить"
+msgstr "Подтвердите"
 
 #: templates/system/initialwizard_confirm.html:46
 msgid "Return to Wizard"
@@ -10304,7 +10306,7 @@ msgstr "Пул с таким именем уже существует."
 #: directoryservice/forms.py:341
 #: directoryservice/forms.py:448
 msgid "%s."
-msgstr ""
+msgstr "%s."
 
 #: directoryservice/forms.py:486
 #: directoryservice/models.py:700
@@ -10322,7 +10324,7 @@ msgstr "Область Kerberos."
 
 #: directoryservice/models.py:552
 msgid "KDC"
-msgstr ""
+msgstr "KDC"
 
 #: directoryservice/models.py:554
 msgid "KDC for this realm."
@@ -10354,15 +10356,15 @@ msgstr ""
 
 #: directoryservice/models.py:581
 msgid "Principal"
-msgstr ""
+msgstr "Основной"
 
 #: directoryservice/models.py:583
 msgid "Kerberos principal, eg: primary/instance@REALM"
-msgstr ""
+msgstr "Основной Kerberos, например primary/instance@REALM"
 
 #: directoryservice/models.py:586
 msgid "Keytab"
-msgstr ""
+msgstr "Keytab"
 
 #: directoryservice/models.py:753
 #: directoryservice/models.py:913
@@ -10469,19 +10471,19 @@ msgstr "Создать запрос на подписание сертифика
 
 #: choices.py:823
 msgid "512"
-msgstr ""
+msgstr "512"
 
 #: choices.py:824
 msgid "1024"
-msgstr ""
+msgstr "1024"
 
 #: choices.py:825
 msgid "2048"
-msgstr ""
+msgstr "2048"
 
 #: choices.py:826
 msgid "4096"
-msgstr ""
+msgstr "4096"
 
 #: choices.py:830
 msgid "SHA1"
@@ -10514,7 +10516,7 @@ msgstr "При загрузке"
 #: directoryservice/models.py:228
 #: directoryservice/models.py:229
 msgid "ADEX Idmap"
-msgstr ""
+msgstr "ADEX Idmap"
 
 #: api/resources.py:2490
 msgid "Now"
@@ -10551,7 +10553,7 @@ msgstr "Механизм idmap"
 
 #: directoryservice/models.py:1056
 msgid "Samba Schema"
-msgstr ""
+msgstr "Схема Samba"
 
 #: jails/forms.py:92
 msgid "Template"
@@ -10648,6 +10650,8 @@ msgid ""
 "This will be used to access your WebDAV share.<br />For e.g. http(s)://ip-of-"
 "freenas-machine:webdav_port/this_path_name"
 msgstr ""
+"Будет использоваться для доступа к вашей части WebDAV.<br /> Например, http(s"
+")://ip-of-freenas-machine:webdav_port/this_path_name"
 
 #: sharing/models.py:357
 msgid "Change User & Group Ownership"
@@ -11107,7 +11111,7 @@ msgstr "ZVOL успешно изменен."
 
 #: directoryservice/models.py:853
 msgid "Winbind NSS Info"
-msgstr ""
+msgstr "Информация Winbind NSS"
 
 #: directoryservice/models.py:854
 msgid ""
@@ -11359,7 +11363,7 @@ msgstr "Порог доступного места для пула (%)"
 
 #: services/models.py:488
 msgid " Available Size Threshold (%)"
-msgstr "Порог доступного места (%)"
+msgstr " Порог доступного места (%)"
 
 #: services/models.py:1736
 msgid ""
@@ -11782,7 +11786,7 @@ msgstr "Настройки Kerberos"
 
 #: directoryservice/models.py:1140
 msgid "LDAP Schema type."
-msgstr ""
+msgstr "Тип схемы LDAP."
 
 #: freeadmin/navtree.py:249
 #: templates/menubar.html:73
@@ -11812,7 +11816,7 @@ msgstr ""
 
 #: jails/models.py:554
 msgid "mtree"
-msgstr ""
+msgstr "mtree"
 
 #: jails/models.py:555
 msgid "The mtree file for the template"
@@ -11988,7 +11992,7 @@ msgid ""
 "Base Name will be appended automatically when starting without 'iqn.', "
 "'eui.' or 'naa.'."
 msgstr ""
-"Базовое имя будет добавлено ​​автоматически если не начинается с 'iqn.', "
+"Базовое имя будет добавлено автоматически если не начинается с 'iqn.', "
 "'eui.' или 'naa.'."
 
 #: services/models.py:835
@@ -12521,15 +12525,15 @@ msgstr "Дополнительное оборудование"
 
 #: templates/support/home.html:58
 msgid "E16 Enclosure"
-msgstr ""
+msgstr "Приложение E16"
 
 #: templates/support/home.html:59
 msgid "E24 Enclosure"
-msgstr ""
+msgstr "Приложение E24"
 
 #: templates/support/home.html:60
 msgid "E60 Enclosure"
-msgstr ""
+msgstr "Приложение E60"
 
 #: templates/support/home.html:69
 msgid "License is not valid! Contact iXsystems support."
@@ -12664,12 +12668,12 @@ msgstr "Алгоритм шифрования"
 
 #: directoryservice/models.py:747
 msgid "Principal name"
-msgstr ""
+msgstr "Основное имя"
 
 #: directoryservice/models.py:962
 #: directoryservice/models.py:1198
 msgid "Kerberos Principal"
-msgstr ""
+msgstr "Основной Kerberos"
 
 #: network/forms.py:254
 msgid "The following VHIDs are already in use: %s"
@@ -12767,23 +12771,23 @@ msgstr "vCenter"
 
 #: vcp/models.py:41
 msgid " TrueNAS Management IP Address"
-msgstr "IP адрес управления TrueNAS"
+msgstr " IP адрес управления TrueNAS"
 
 #: vcp/models.py:49
 msgid " vCenter Hostname/IP Address"
-msgstr "Имя хоста или IP адрес vCenter"
+msgstr " Имя хоста или IP адрес vCenter"
 
 #: vcp/models.py:55
 msgid " vCenter Port"
-msgstr "Порт vCenter"
+msgstr " Порт vCenter"
 
 #: vcp/models.py:60
 msgid " vCenter User name"
-msgstr "Имя пользователя vCenter"
+msgstr " Имя пользователя vCenter"
 
 #: vcp/models.py:67
 msgid " vCenter Password"
-msgstr "Пароль vCenter"
+msgstr " Пароль vCenter"
 
 #: vcp/models.py:74
 msgid "version"
@@ -12800,7 +12804,7 @@ msgstr "Настройка плагина vCenter"
 
 #: vcp/views.py:53
 msgid "vCenter plugin installed successfully."
-msgstr "Плагин vCenter успешно установлен"
+msgstr "Плагин vCenter успешно установлен."
 
 #: vcp/views.py:75
 msgid "vCenter plugin upgraded successfully."
@@ -12875,11 +12879,11 @@ msgstr "Целое число от 1 до 65535, по умолчанию 443"
 
 #: vcp/models.py:66
 msgid " vCenter Username"
-msgstr "Имя пользователя vCenter"
+msgstr " Имя пользователя vCenter"
 
 #: vcp/models.py:76
 msgid " version"
-msgstr "Версия"
+msgstr " Версия"
 
 #: vcp/views.py:80
 msgid "There are No updates available at this time."
@@ -12920,7 +12924,7 @@ msgstr "Включить vCenter Plugin через HTTPS:"
 
 #: vcp/models.py:93
 msgid " Enable vCenter Plugin over https"
-msgstr "Включить vCenter Plugin через HTTPS"
+msgstr " Включить vCenter Plugin через HTTPS"
 
 #: services/models.py:837
 msgid "Fibre Channel"
@@ -13298,7 +13302,7 @@ msgstr "Вы уверены, что хотите удалить флаг уде�
 #: templates/system/update.html:21
 #: templates/system/update_check.html:22
 msgid "%(update_applied_msg)s"
-msgstr ""
+msgstr "%(update_applied_msg)s"
 
 #: choices.py:757
 msgid "Emergency"
@@ -13306,7 +13310,7 @@ msgstr "Экстренно"
 
 #: choices.py:761
 msgid "Warning"
-msgstr "Предупреждение"
+msgstr "Внимание"
 
 #: choices.py:762
 msgid "Notice"
@@ -13548,7 +13552,7 @@ msgstr "Когда установлено, отменяет значение п�
 
 #: services/models.py:360
 msgid "Map ACLs"
-msgstr ""
+msgstr "Карта ACLs"
 
 #: services/models.py:357
 msgid "These parameters are added to the [Global] section of afp.conf"
@@ -13597,7 +13601,8 @@ msgstr ""
 msgid ""
 "Force the rpc.lockd daemon to bind to the specified port, for both IPv4 and "
 "IPv6 address families."
-msgstr "Заставляет демона rpc.lockd использовать указанный порт для IPv4 и IPv6"
+msgstr ""
+"Заставляет демона rpc.lockd использовать указанный порт для IPv4 и IPv6."
 
 #: services/models.py:458
 msgid ""
