@@ -46,6 +46,7 @@ from wsgiref.util import FileWrapper
 from django.core.urlresolvers import reverse
 from django.db import transaction
 from django.http import (
+    FileResponse,
     HttpResponse,
     HttpResponseRedirect,
     StreamingHttpResponse,
@@ -1003,9 +1004,8 @@ def debug_download(request):
         extension = 'tgz'
         hostname = '-%s' % gc.gc_hostname
 
-    wrapper = FileWrapper(file(debug_file))
-    response = StreamingHttpResponse(
-        wrapper,
+    response = FileResponse(
+        open(debug_file, 'rb'),
         content_type='application/octet-stream',
     )
     response['Content-Length'] = os.path.getsize(debug_file)
@@ -1014,7 +1014,6 @@ def debug_download(request):
             hostname,
             time.strftime('%Y%m%d%H%M%S'),
             extension)
-
     return response
 
 
