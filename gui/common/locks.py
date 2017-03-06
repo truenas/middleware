@@ -58,10 +58,13 @@ class MountLock:
         # Don't spread lock file descriptors to child processes.
         flags = fcntl.FD_CLOEXEC | fcntl.fcntl(self._fd, fcntl.F_GETFL)
         fcntl.fcntl(self._fd, fcntl.F_SETFL, flags)
-        if blocking:
-            self.__enter__ = self.lock
+        self.blocking = blocking
+
+    def __enter__(self):
+        if self.blocking:
+            return self.lock()
         else:
-            self.__enter__ = self.lock_try
+            return self.lock_try()
 
     def __del__(self):
         if self._fd:
