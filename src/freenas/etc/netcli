@@ -1142,7 +1142,7 @@ def get_urls(addrs, ipv6=False):
 
         ips = []
         if ip == '*':
-            p1 = subprocess.Popen('ifconfig -a %s | grep %s | cut -f2 -d" "' % inet, shell=True, stdout=subprocess.PIPE)
+            p1 = subprocess.Popen('ifconfig -a %s | grep %s | cut -f2 -d" "' % inet, shell=True, stdout=subprocess.PIPE, encoding='utf8')
             out = p1.communicate()[0].strip('\n').strip(' ').split('\n')
             if out:
                 ips = out
@@ -1189,7 +1189,7 @@ def get_urls(addrs, ipv6=False):
 
 
 def show_ip():
-    p1 = subprocess.Popen("sockstat -46P tcp |awk '{ if ($2 == \"nginx\" && $7 == \"*:*\") print $5\",\"$6 }'|sort|uniq", shell=True, stdout=subprocess.PIPE)
+    p1 = subprocess.Popen("sockstat -46P tcp |awk '{ if ($2 == \"nginx\" && $7 == \"*:*\") print $5\",\"$6 }'|sort|uniq", shell=True, stdout=subprocess.PIPE, encoding='utf8')
 
     addrsv4 = []
     addrsv6 = []
