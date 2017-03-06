@@ -37,7 +37,7 @@ class LDAPToolShell(cmd.Cmd):
             self.lc.open() 
 
         except Exception as e:
-            print >> sys.stderr, "ERROR: %s" % e
+            print("ERROR: %s" % e, file=sys.stderr)
             sys.exit(1)
 
         self.lo = LDAP.objects.all()[0]
@@ -87,15 +87,15 @@ class LDAPToolShell(cmd.Cmd):
             [ "ssl", "SSL/TLS" ],
         ]
 
-        print >> sys.stderr, """\
+        print("""\
 [set|get] <option> <value>
   eg: set hostname ldap.example.com
   eg: get hostname
 
 Available options:
-        """
+        """, file=sys.stderr)
         for opts in options:
-            print >> sys.stderr, "  %-32s %s" % (opts[0], opts[1])
+            print("  %-32s %s" % (opts[0], opts[1]), file=sys.stderr)
 
     def do_set(self, arg):
         args = arg.split()
@@ -110,7 +110,7 @@ Available options:
         try:
             get_method = getattr(self, "get_%s" % args[0])
         except Exception as e:
-            print >> sys.stderr, "ERROR: %s" % e
+            print("ERROR: %s" % e, file=sys.stderr)
             get_method = None
 
         if get_method:
@@ -186,12 +186,12 @@ Available options:
             if re.match('\S+\s+', str(val)):
                 val = "\"%s\"" % val
 
-            print >> sys.stdout, "%s=%s" % (
+            print("%s=%s" % (
                 k, val if val != None else ''
-            )
+            ), file=sys.stdout)
 
     def get_binddn(self, args):
-        print >> sys.stdout, self.lc.binddn
+        print(self.lc.binddn, file=sys.stdout)
 
     def set_binddn(self, args):
         val = None
@@ -205,7 +205,7 @@ Available options:
             ldap.save()
     
     def get_hostname(self, args):
-        print >> sys.stdout, self.lc.hostname
+        print(self.lc.hostname, file=sys.stdout)
 
     def set_hostname(self, args):
         val = None
@@ -219,7 +219,7 @@ Available options:
             ldap.save()
 
     def get_usersuffix(self, args):
-        print >> sys.stdout, self.lc.usersuffix
+        print(self.lc.usersuffix, file=sys.stdout)
 
     def set_usersuffix(self, args):
         val = None
@@ -233,7 +233,7 @@ Available options:
             ldap.save()
 
     def get_groupsuffix(self, args):
-        print >> sys.stdout, self.lc.groupsuffix
+        print(self.lc.groupsuffix, file=sys.stdout)
 
     def set_groupsuffix(self, args):
         val = None
@@ -247,7 +247,7 @@ Available options:
             ldap.save()
 
     def get_machinesuffix(self, args):
-        print >> sys.stdout, self.lc.machinesuffix
+        print(self.lc.machinesuffix, file=sys.stdout)
 
     def set_machinesuffix(self, args):
         val = None
@@ -261,7 +261,7 @@ Available options:
             ldap.save()
 
     def get_passwordsuffix(self, args):
-        print >> sys.stdout, self.lc.passwordsuffix
+        print(self.lc.passwordsuffix, file=sys.stdout)
 
     def set_passwordsuffix(self, args):
         val = None
@@ -275,7 +275,7 @@ Available options:
             ldap.save()
 
     def get_sudosuffix(self, args):
-        print >> sys.stdout, self.lc.sudosuffix
+        print(self.lc.sudosuffix, file=sys.stdout)
 
     def set_sudosuffix(self, args):
         val = None
@@ -289,84 +289,84 @@ Available options:
             ldap.save()
     
     def get_basedn(self, args):
-        print >> sys.stdout, self.lc.basedn
+        print(self.lc.basedn, file=sys.stdout)
 
     def set_basedn(self, args):
         self.lc.basedn = args
         self.lc.reload() 
     
     def get_krb_realm(self, args):
-        print >> sys.stdout, self.lc.krb_realm
+        print(self.lc.krb_realm, file=sys.stdout)
 
     def set_krb_realm(self, args):
         for arg in args:
             self.lc.krb_realm = arg
     
     def get_krb_kdc(self, args):
-        print >> sys.stdout, self.lc.krb_kdc
+        print(self.lc.krb_kdc, file=sys.stdout)
 
     def set_krb_kdc(self, args):
         for arg in args:
             self.lc.krb_kdc = arg
     
     def get_krb_admin_server(self, args):
-        print >> sys.stdout, self.lc.krb_admin_server
+        print(self.lc.krb_admin_server, file=sys.stdout)
 
     def set_krb_admin_server(self, args):
         for arg in args:
             self.lc.krb_admin_server = arg
     
     def get_krb_kpasswd_server(self, args):
-        print >> sys.stdout, self.lc.krb_kpasswd_server
+        print(self.lc.krb_kpasswd_server, file=sys.stdout)
 
     def set_krb_kpasswd_server(self, args):
         for arg in args:
             self.lc.krb_kpasswd_server = arg
     
     def get_keytab_principal(self, args):
-        print >> sys.stdout, self.lc.keytab_principal
+        print(self.lc.keytab_principal, file=sys.stdout)
 
     def set_keytab_principal(self, args):
         for arg in args:
             self.lc.keytab_principal = arg
 
     def get_keytab_file(self, args):
-        print >> sys.stdout, self.lc.keytab_file
+        print(self.lc.keytab_file, file=sys.stdout)
 
     def set_keytab_file(self, args):
         for arg in args:
             self.lc.keytab_file = arg
 
     def get_certfile(self, args):
-        print >> sys.stdout, self.lc.certfile
+        print(self.lc.certfile, file=sys.stdout)
 
     def set_certfile(self, args):
         for arg in args:
             self.lc.certfile = arg
 
     def get_use_default_domain(self, args):
-        print >> sys.stdout, self.lc.use_default_domain
+        print(self.lc.use_default_domain, file=sys.stdout)
 
     def set_use_default_domain(self, args):
         for arg in args:
             self.lc.use_default_domain = arg
 
     def get_has_samba_schema(self, args):
-        print >> sys.stdout, self.lc.has_samba_schema
+        print(self.lc.has_samba_schema, file=sys.stdout)
 
     def set_has_samba_schema(self, args):
         for arg in args:
             self.lc.has_samba_schema = arg
 
     def get_ssl(self, args):
-        print >> sys.stdout, self.lc.ssl
+        print(self.lc.ssl, file=sys.stdout)
 
     def set_ssl(self, args):
         for arg in args:
             self.lc.has_samba_schema = arg
 
     def get_timeout(self, args):
-        print >> sys.stdout, self.adc.timeout
+        print(self.adc.timeout, file=sys.stdout)
 
     def set_timeout(self, args):
         val = None
@@ -374,17 +374,17 @@ Available options:
         ldap = self.lo   
         for arg in args:
             if not arg.isdigit():
-                print >> sys.stderr, "not an integer"
+                print("not an integer", file=sys.stderr)
                 return   
 
-            val = long(arg)
+            val = int(arg)
    
         if val != None:   
             ldap.ldap_timeout = val
             ldap.save()
 
     def get_dns_timeout(self, args):
-        print >> sys.stdout, self.lc.dns_timeout
+        print(self.lc.dns_timeout, file=sys.stdout)
 
     def set_dns_timeout(self, args):   
         val = None
@@ -392,10 +392,10 @@ Available options:
         ldap = self.lo
         for arg in args:
             if not arg.isdigit():
-                print >> sys.stderr, "not an integer"
+                print("not an integer", file=sys.stderr)
                 return
 
-            val = long(arg)
+            val = int(arg)
 
         if val != None:
             ldap.ldap_dns_timeout = val
@@ -414,7 +414,7 @@ def main():
         ldapts.onecmd(' '.join(sys.argv[1:]))
 
     except Exception as e:
-        print >> sys.stderr, "ERROR: %s" % e
+        print("ERROR: %s" % e, file=sys.stderr)
         ret = 1
 
     sys.exit(ret)

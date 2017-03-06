@@ -35,7 +35,7 @@ class ADToolShell(cmd.Cmd):
         try:
             self.adc = ActiveDirectoryConfig(flags=FLAGS_DBINIT)
         except Exception as e:
-            print >> sys.stderr, "ERROR: %s" % e
+            print("ERROR: %s" % e, file=sys.stderr)
             sys.exit(1)
 
         self.ado = ActiveDirectory.objects.all()[0]
@@ -108,16 +108,16 @@ class ADToolShell(cmd.Cmd):
             [ "joined", "joined status for domain" ]
         ]
 
-        print >> sys.stderr, """\
+        print("""\
 [set|get] <option> <value> [DOMAIN=domain.. SITE=site..]:
   eg: set dchost dc0.example.com
   eg: get dchost 
   eg: get dchost DOMAIN=example.com
 
 Available options:
-        """
+        """, file=sys.stderr)
         for opts in options:
-            print >> sys.stderr, "  %-32s %s" % (opts[0], opts[1])
+            print("  %-32s %s" % (opts[0], opts[1]), file=sys.stderr)
 
     def do_set(self, arg):
         args = arg.split()
@@ -132,7 +132,7 @@ Available options:
         try:
             get_method = getattr(self, "get_%s" % args[0])
         except Exception as e:
-            print >> sys.stderr, "ERROR: %s" % e
+            print("ERROR: %s" % e, file=sys.stderr)
             get_method = None
 
         if get_method:
@@ -235,12 +235,12 @@ Available options:
             if re.match('\S+\s+', str(val)):
                 val = "\"%s\"" % val
 
-            print >> sys.stdout, "%s=%s" % (
+            print("%s=%s" % (
                 k, val if val != None else ''
-            )
+            ), file=sys.stdout)
 
     def get_verbose_logging(self, args):
-        print >> sys.stdout, self.adc.verbose_logging
+        print(self.adc.verbose_logging, file=sys.stdout)
     
     def set_verbose_logging(self, args):
         val = None
@@ -254,7 +254,7 @@ Available options:
             ad.save()
     
     def get_timeout(self, args):
-        print >> sys.stdout, self.adc.timeout
+        print(self.adc.timeout, file=sys.stdout)
     
     def set_timeout(self, args):
         val = None
@@ -262,17 +262,17 @@ Available options:
         ad = self.ado
         for arg in args:
             if not arg.isdigit():
-                print >> sys.stderr, "not an integer"
+                print("not an integer", file=sys.stderr)
                 return
            
-            val = long(arg)
+            val = int(arg)
     
         if val != None:
             ad.ad_timeout = val 
             ad.save()
     
     def get_dns_timeout(self, args):
-        print >> sys.stdout, self.adc.dns_timeout
+        print(self.adc.dns_timeout, file=sys.stdout)
     
     def set_dns_timeout(self, args):
         val = None
@@ -280,31 +280,31 @@ Available options:
         ad = self.ado
         for arg in args:
             if not arg.isdigit():
-                print >> sys.stderr, "not an integer"
+                print("not an integer", file=sys.stderr)
                 return
            
-            val = long(arg)
+            val = int(arg)
     
         if val != None:
             ad.ad_dns_timeout = val 
             ad.save()
 
     def get_ssl(self, args):
-        print >> sys.stdout, self.adc.ssl
+        print(self.adc.ssl, file=sys.stdout)
 
     def set_ssl(self, args):
         for arg in args:
             self.adc.ssl = arg
 
     def get_certificate(self, args):
-        print >> sys.stdout, self.adc.certfile
+        print(self.adc.certfile, file=sys.stdout)
 
     def set_certificate(self, args):
         for arg in args:
             self.adc.certfile = arg
 
     def get_bindname(self, args):
-        print >> sys.stdout, self.adc.bindname
+        print(self.adc.bindname, file=sys.stdout)
 
     def set_bindname(self, args):
         val = None
@@ -318,7 +318,7 @@ Available options:
             ad.save()
     
     def get_domainname(self, args):
-        print >> sys.stdout, self.adc.domainname
+        print(self.adc.domainname, file=sys.stdout)
 
     def set_domainname(self, args):
         val = None
@@ -332,32 +332,32 @@ Available options:
             ad.save()
     
     def get_basedn(self, args):
-        print >> sys.stdout, self.adc.basedn
+        print(self.adc.basedn, file=sys.stdout)
 
     def set_basedn(self, args):
         self.adc.basedn = args
         self.adc.reload() 
     
     def get_binddn(self, args):
-        print >> sys.stdout, self.adc.binddn
+        print(self.adc.binddn, file=sys.stdout)
 
     def set_binddn(self, args):
         pass
 
     def get_userdn(self, args):
-        print >> sys.stdout, self.adc.userdn
+        print(self.adc.userdn, file=sys.stdout)
 
     def set_userdn(self, args):
         pass
 
     def get_groupdn(self, args):
-        print >> sys.stdout, self.adc.groupdn
+        print(self.adc.groupdn, file=sys.stdout)
 
     def set_groupdn(self, args):
         pass
 
     def get_netbiosname(self, args):
-        print >> sys.stdout, self.adc.netbiosname
+        print(self.adc.netbiosname, file=sys.stdout)
 
     def set_netbiosname(self, args):
         for arg in args:
@@ -370,115 +370,115 @@ Available options:
         return self.set_netbiosname(args)
 
     def get_machine(self, args):
-        print >> sys.stdout, self.adc.machine
+        print(self.adc.machine, file=sys.stdout)
 
     def set_machine(self, args):
         for arg in args:
             self.adc.machine = arg
 
     def get_site(self, args):
-        print >> sys.stdout, self.adc.site
+        print(self.adc.site, file=sys.stdout)
 
     def get_dcname(self, args):
-        print >> sys.stdout, self.adc.dcname
+        print(self.adc.dcname, file=sys.stdout)
 
     def set_dcname(self, args):
         for arg in args:
             self.adc.dcname = arg
     
     def get_dchost(self, args):
-        print >> sys.stdout, self.adc.dchost
+        print(self.adc.dchost, file=sys.stdout)
 
     def set_dchost(self, args):
         for arg in args:
             self.adc.dchost = arg
     
     def get_dcport(self, args):
-        print >> sys.stdout, self.adc.dcport
+        print(self.adc.dcport, file=sys.stdout)
 
     def set_dcport(self, args):
         for arg in args:
-            self.adc.dcport = long(arg)
+            self.adc.dcport = int(arg)
     
     def get_gcname(self, args):
-        print >> sys.stdout, self.adc.gcname
+        print(self.adc.gcname, file=sys.stdout)
 
     def set_gcname(self, args):
         for arg in args:
             self.adc.gcname = arg
     
     def get_gchost(self, args):
-        print >> sys.stdout, self.adc.gchost
+        print(self.adc.gchost, file=sys.stdout)
 
     def set_gchost(self, args):
         for arg in args:
             self.adc.gchost = arg
     
     def get_gcport(self, args):
-        print >> sys.stdout, self.adc.gcport
+        print(self.adc.gcport, file=sys.stdout)
 
     def set_gcport(self, args):
         for arg in args:
-            self.adc.gcport = long(arg)
+            self.adc.gcport = int(arg)
 
     def get_krbname(self, args):
-        print >> sys.stdout, self.adc.krbname
+        print(self.adc.krbname, file=sys.stdout)
 
     def set_krbname(self, args):
         for arg in args:
             self.adc.krbname = arg
     
     def get_krbhost(self, args):
-        print >> sys.stdout, self.adc.krbhost
+        print(self.adc.krbhost, file=sys.stdout)
 
     def set_krbhost(self, args):
         for arg in args:
             self.adc.krbhost = arg
     
     def get_krbport(self, args):
-        print >> sys.stdout, self.adc.krbport
+        print(self.adc.krbport, file=sys.stdout)
 
     def set_krbport(self, args):
         for arg in args:
-            self.adc.krbport = long(arg)
+            self.adc.krbport = int(arg)
     
     def get_kpwdname(self, args):
-        print >> sys.stdout, self.adc.kpwdname
+        print(self.adc.kpwdname, file=sys.stdout)
 
     def set_kpwdname(self, args):
         for arg in args:
             self.adc.kpwdname = arg
     
     def get_kpwdhost(self, args):
-        print >> sys.stdout, self.adc.kpwdhost
+        print(self.adc.kpwdhost, file=sys.stdout)
 
     def set_kpwdhost(self, args):
         for arg in args:
             self.adc.kpwdhost = arg
     
     def get_kpwdport(self, args):
-        print >> sys.stdout, self.adc.kpwdport
+        print(self.adc.kpwdport, file=sys.stdout)
 
     def set_kpwdport(self, args):
         for arg in args:
-            self.adc.kpwdport = long(arg)
+            self.adc.kpwdport = int(arg)
     
     def get_krb_realm(self, args):
-        print >> sys.stdout, self.adc.krb_realm
+        print(self.adc.krb_realm, file=sys.stdout)
 
     def set_krb_realm(self, args):
         for arg in args:
             self.adc.krb_realm = arg 
    
     def get_keytab_principal(self, args):
-        print >> sys.stdout, self.adc.keytab_principal
+        print(self.adc.keytab_principal, file=sys.stdout)
 
     def set_keytab_principal(self, args):
         for arg in args:
             self.adc.keytab_principal = arg
 
     def get_keytab_file(self, args):
-        print >> sys.stdout, self.adc.keytab_file
+        print(self.adc.keytab_file, file=sys.stdout)
 
     def set_keytab_file(self, args):
         for arg in args:
@@ -490,15 +490,15 @@ Available options:
             results = results[0][1] 
             for key in results:
                 val = ' '.join(results[key])
-                print >> sys.stdout, "%s: %s" % (key, val)
+                print("%s: %s" % (key, val), file=sys.stdout)
         except:
             pass
 
     def get_rootdn(self, args):
-        print >> sys.stdout, self.adc.get_rootDN()
+        print(self.adc.get_rootDN(), file=sys.stdout)
 
     def get_config(self, args):
-        print >> sys.stdout, self.adc.get_config()
+        print(self.adc.get_config(), file=sys.stdout)
 
     def get_partitions(self, args):
         results = self.adc.get_partitions()
@@ -506,16 +506,16 @@ Available options:
             for i in results:
                 for key in i[1]:
                     val = ' '.join(i[1][key])
-                    print >> sys.stdout, "%s: %s"  % (key, val)
-                print >> sys.stdout, "\n"
+                    print("%s: %s"  % (key, val), file=sys.stdout)
+                print("\n", file=sys.stdout)
         except:
             pass
 
     def get_root_domain(self, args):
-        print >> sys.stdout, self.adc.get_root_domain()
+        print(self.adc.get_root_domain(), file=sys.stdout)
 
     def get_domain(self, args):
-        print >> sys.stdout, self.adc.get_domain()
+        print(self.adc.get_domain(), file=sys.stdout)
 
     def get_domains(self, args):
         pass
@@ -540,7 +540,7 @@ Available options:
 
         ldap_servers = self.adc.get_ldap_servers(domain, site)
         for ldap_server in ldap_servers:
-            print >> sys.stdout, ldap_server
+            print(ldap_server, file=sys.stdout)
 
     def set_ldap_servers(self, args):
         pass
@@ -552,20 +552,20 @@ Available options:
 
         domain_controllers = self.adc.get_domain_controllers(domain, site)
         for domain_controller in domain_controllers:
-            print >> sys.stdout, domain_controller
+            print(domain_controller, file=sys.stdout)
 
     def set_domain_controllers(self, args):
         pass
     
     def get_primary_domain_controllers(self, args):
         domain, site = self.domain_site_parse(args)
-        print 'domain = ', domain
+        print('domain = ', domain)
         if not domain:
             domain = self.adc.domainname 
 
         primary_domain_controllers = self.adc.get_primary_domain_controllers(domain)
         for primary_domain_controller in primary_domain_controllers:
-            print >> sys.stdout, primary_domain_controller
+            print(primary_domain_controller, file=sys.stdout)
 
     def set_primary_domain_controllers(self, args):
         pass
@@ -578,7 +578,7 @@ Available options:
         global_catalog_servers = self.adc.get_global_catalog_servers(
             domain, site)
         for global_catalog_server in global_catalog_servers:
-            print >> sys.stdout, global_catalog_server
+            print(global_catalog_server, file=sys.stdout)
 
     def set_global_catalog_servers(self, args):
         pass
@@ -591,7 +591,7 @@ Available options:
         forest_global_catalog_servers = \
             self.adc.get_forest_global_catalog_servers(domain, site)
         for forest_global_catalog_server in forest_global_catalog_servers:
-            print >> sys.stdout, forest_global_catalog_server
+            print(forest_global_catalog_server, file=sys.stdout)
 
     def set_forest_global_catalog_servers(self, args):
         pass
@@ -603,7 +603,7 @@ Available options:
 
         kerberos_servers = self.adc.get_kerberos_servers(domain, site)
         for kerberos_server in kerberos_servers:
-            print >> sys.stdout, kerberos_server
+            print(kerberos_server, file=sys.stdout)
 
     def set_kerberos_servers(self, args):
         pass
@@ -616,7 +616,7 @@ Available options:
         kerberos_domain_controllers = \
             self.adc.get_kerberos_domain_controllers(domain, site)
         for kerberos_domain_controller in kerberos_domain_controllers:
-            print >> sys.stdout, kerberos_domain_controller
+            print(kerberos_domain_controller, file=sys.stdout)
 
     def set_kerberos_domain_controllers(self, args):
         pass
@@ -628,7 +628,7 @@ Available options:
 
         kpasswd_servers = self.adc.get_kpasswd_servers(domain)
         for kpasswd_server in kpasswd_servers:
-            print >> sys.stdout, kpasswd_server
+            print(kpasswd_server, file=sys.stdout)
 
     def set_kpasswd_servers(self, args):
         pass
@@ -638,7 +638,7 @@ Available options:
         if self.adc.joined():
             joined = "1"
 
-        print >> sys.stdout, joined
+        print(joined, file=sys.stdout)
 
     def set_joined(self, args):
         pass
@@ -658,7 +658,7 @@ def main():
         adts.onecmd(' '.join(sys.argv[1:]))
 
     except Exception as e:
-        print >> sys.stderr, "ERROR: %s" % e
+        print("ERROR: %s" % e, file=sys.stderr)
         ret = 1
 
     sys.exit(ret)
