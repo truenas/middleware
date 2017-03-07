@@ -35,6 +35,10 @@ geom_func()
 	geom_inode=$(ls -i /sbin/geom|awk '{ print $1 }')
 	classes=$(ls -i /sbin|grep "^${geom_inode}"|awk '{ print $2 }')
 
+	section_header "GEOM disks (geom disk list)"
+	geom disk list
+	section_footer
+
 	section_header "GEOM classes"
 	for c in ${classes}
 	do
