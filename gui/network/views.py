@@ -106,7 +106,7 @@ def network(request):
 
 def summary(request):
 
-    p1 = Popen(["ifconfig", "-lu"], stdin=PIPE, stdout=PIPE)
+    p1 = Popen(["ifconfig", "-lu"], stdin=PIPE, stdout=PIPE, encoding='utf8')
     p1.wait()
     int_list = p1.communicate()[0].split('\n')[0].split(' ')
     int_list = [y for y in int_list if y not in (
@@ -120,7 +120,7 @@ def summary(request):
 
         ifaces[iface] = {'v4': [], 'v6': []}
         p1 = Popen(["ifconfig", iface, "inet"], stdin=PIPE, stdout=PIPE)
-        p2 = Popen(["grep", "inet "], stdin=p1.stdout, stdout=PIPE)
+        p2 = Popen(["grep", "inet "], stdin=p1.stdout, stdout=PIPE, encoding='utf8')
         output = p2.communicate()[0]
         if p2.returncode == 0:
             for line in output.split('\n'):
@@ -159,7 +159,7 @@ def summary(request):
                 })
 
     p1 = Popen(["cat", "/etc/resolv.conf"], stdin=PIPE, stdout=PIPE)
-    p2 = Popen(["grep", "nameserver"], stdin=p1.stdout, stdout=PIPE)
+    p2 = Popen(["grep", "nameserver"], stdin=p1.stdout, stdout=PIPE, encoding='utf8')
     p1.wait()
     p2.wait()
     nss = []
@@ -171,7 +171,7 @@ def summary(request):
 
     p1 = Popen(["netstat", "-rn"], stdin=PIPE, stdout=PIPE)
     p2 = Popen(["grep", "^default"], stdin=p1.stdout, stdout=PIPE)
-    p3 = Popen(["awk", "{print $2}"], stdin=p2.stdout, stdout=PIPE)
+    p3 = Popen(["awk", "{print $2}"], stdin=p2.stdout, stdout=PIPE, encoding='utf8')
     p1.wait()
     p2.wait()
     p3.wait()
