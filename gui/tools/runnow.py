@@ -1,4 +1,4 @@
-#!/usr/local/bin/python2
+#!/usr/local/bin/python3
 #
 # Copyright 2015 iXsystems, Inc.
 # All rights reserved

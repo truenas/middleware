@@ -317,7 +317,6 @@ class CronJob(Model):
 
     def run(self):
         proc = subprocess.Popen([
-            "/usr/local/bin/python2",
             "/usr/local/www/freenasUI/tools/runnow.py",
             "-t", "cronjob",
             "-i", str(self.id),
@@ -677,7 +676,6 @@ class Rsync(Model):
 
     def run(self):
         proc = subprocess.Popen([
-            "/usr/local/bin/python2",
             "/usr/local/www/freenasUI/tools/runnow.py",
             "-t", "rsync",
             "-i", str(self.id),
