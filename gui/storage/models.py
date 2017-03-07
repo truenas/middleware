@@ -444,7 +444,7 @@ class Volume(Model):
         super(Volume, self).save(*args, **kwargs)
 
     def __unicode__(self):
-        return "%s (%s)" % (self.vol_name, self.vol_fstype)
+        return self.vol_name
 
     def _get__zplist(self):
         if not hasattr(self, '__zplist'):
