@@ -929,9 +929,9 @@ class LDAPForm(ModelForm):
 
         if enable:
             if started is True:
-                started = notifier().restart("ldap")
+                started = notifier().restart("ldap", timeout=90)
             if started is False:
-                started = notifier().start("ldap")
+                started = notifier().start("ldap", timeout=90)
             if started is False:
                 self.instance.ldap_enable = False
                 super(LDAPForm, self).save()
