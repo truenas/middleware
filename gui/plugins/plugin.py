@@ -222,7 +222,7 @@ class Available(object):
         if r.status_code != requests.codes.ok:
             return False
 
-        with open(rpath, "w") as f:
+        with open(rpath, "wb") as f:
             for byte in r:
                 f.write(byte)
             f.close()
@@ -439,7 +439,7 @@ class Available(object):
         icon = None
         if icon_path:
             try:
-                with open(icon_path, 'r') as f:
+                with open(icon_path, 'rb') as f:
                     icon = f.read()
                     f.close()
 
