@@ -51,4 +51,12 @@ ipmi_func()
 	section_header "ipmitool mc info"
 	ipmitool mc info
 	section_footer
+
+	section_header "ipmitool sel time get"
+	ipmitool sel time get
+	section_footer
+
+	section_header "System Time"
+	date
+	section_footer
 }
