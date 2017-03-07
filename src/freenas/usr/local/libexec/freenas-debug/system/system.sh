@@ -76,6 +76,10 @@ system_func()
 	vmstat -i
 	section_footer
 
+	section_header "vmstat -m"
+	vmstat -m
+	section_footer
+
 	section_header "vmstat -z"
 	vmstat -z
 	section_footer
