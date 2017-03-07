@@ -56,7 +56,7 @@ def get_management_ips():
     from freenasUI.network.models import Interfaces
     qs = Interfaces.objects.all().exclude(Q(int_vip=None)|Q(int_vip=''))
     vips = [str(i.int_vip) for i in qs]
-    p1 = Popen(["ifconfig", "-lu"], stdin=PIPE, stdout=PIPE)
+    p1 = Popen(["ifconfig", "-lu"], stdin=PIPE, stdout=PIPE, encoding='utf8')
     p1.wait()
     int_list = p1.communicate()[0].split('\n')[0].split(' ')
     int_list = [y for y in int_list if y not in (
@@ -71,7 +71,7 @@ def get_management_ips():
 
         ifaces[iface] = {'v4': [], 'v6': []}
         p1 = Popen(["ifconfig", iface, "inet"], stdin=PIPE, stdout=PIPE)
-        p2 = Popen(["grep", "inet "], stdin=p1.stdout, stdout=PIPE)
+        p2 = Popen(["grep", "inet "], stdin=p1.stdout, stdout=PIPE, encoding='utf8')
         output = p2.communicate()[0]
         if p2.returncode == 0:
             for line in output.split('\n'):
@@ -100,7 +100,7 @@ def get_management_ips():
                 })
 
         p1 = Popen(["ifconfig", iface, "inet6"], stdin=PIPE, stdout=PIPE)
-        p2 = Popen(["grep", "inet6 "], stdin=p1.stdout, stdout=PIPE)
+        p2 = Popen(["grep", "inet6 "], stdin=p1.stdout, stdout=PIPE, encoding='utf8')
         output = p2.communicate()[0]
         if p2.returncode == 0:
             for line in output.split('\n'):
@@ -113,7 +113,7 @@ def get_management_ips():
                 })
 
     p1 = Popen(["cat", "/etc/resolv.conf"], stdin=PIPE, stdout=PIPE)
-    p2 = Popen(["grep", "nameserver"], stdin=p1.stdout, stdout=PIPE)
+    p2 = Popen(["grep", "nameserver"], stdin=p1.stdout, stdout=PIPE, encoding='utf8')
     p1.wait()
     p2.wait()
     nss = []
@@ -125,7 +125,7 @@ def get_management_ips():
 
     p1 = Popen(["netstat", "-rn"], stdin=PIPE, stdout=PIPE)
     p2 = Popen(["grep", "^default"], stdin=p1.stdout, stdout=PIPE)
-    p3 = Popen(["awk", "{print $2}"], stdin=p2.stdout, stdout=PIPE)
+    p3 = Popen(["awk", "{print $2}"], stdin=p2.stdout, stdout=PIPE, encoding='utf8')
     p1.wait()
     p2.wait()
     p3.wait()
@@ -147,12 +147,14 @@ def get_thumb_print(ip, port):
                 port +
                 " < /dev/null | openssl x509 -outform PEM > servercert.pem"],
             stdout=subprocess.PIPE,
-            shell=True)
+            shell=True,
+            encoding='utf8')
         time.sleep(2)
         proc = subprocess.Popen(
             ["openssl x509 -noout -in servercert.pem -fingerprint -sha1"],
             stdout=subprocess.PIPE,
-            shell=True)
+            shell=True,
+            encoding='utf8')
         (out, err) = proc.communicate()
         thumb_print = out.split('=')[1].lstrip().rstrip()
         os.remove('servercert.pem')
