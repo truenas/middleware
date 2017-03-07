@@ -59,7 +59,7 @@ def unblock_sigchld():
 #
 # https://bugs.freenas.org/issues/15817
 #
-def pipeopen(command, important=True, logger=log, allowfork=False, quiet=True, close_fds=False):
+def pipeopen(command, important=True, logger=log, allowfork=False, quiet=True, close_fds=True):
     if not quiet:
         logger.log(
             logging.NOTICE if important else logging.DEBUG,
