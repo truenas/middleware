@@ -471,7 +471,10 @@ class JailCreateForm(ModelForm):
 
             jail_set_args['flags'] = jail_flags
             try:
-                w.set(**jail_set_args)
+                # Do not try to set options if no other options other than
+                # jail and flags were set.
+                if len(jail_set_args) > 2:
+                    w.set(**jail_set_args)
             except Exception as e:
                 self.errors['__all__'] = self.error_class([_(e.message)])
                 return
