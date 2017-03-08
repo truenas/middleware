@@ -1068,6 +1068,7 @@ class Warden(warden_base):
                 tmp = obj.run()
             except Exception as e:
                 log.debug("Warden.__call: Failed with '%s'", e)
+                raise
             if tmp is not None and len(tmp) > 1:
                 if hasattr(obj, "parse"):
                     return obj.parse(tmp)
