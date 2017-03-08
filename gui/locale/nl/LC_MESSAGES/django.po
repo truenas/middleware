@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:03-0700\n"
-"PO-Revision-Date: 2017-03-06 10:51+0000\n"
+"PO-Revision-Date: 2017-03-08 13:39+0000\n"
 "Last-Translator: Ton <tonnes.mb@gmail.com>\n"
 "Language-Team: Dutch <http://weblate.trueos.org/projects/freenas/django/nl/>"
 "\n"
@@ -5289,7 +5289,7 @@ msgstr "Standaardroute"
 
 #: templates/network/summary.html:46
 msgid "No default route defined"
-msgstr "Bepaalt de toegang die een externe host tot deze module heeft"
+msgstr "Geen standaardroute gedefinieerd"
 
 #~ msgid "Edit VLAN"
 #~ msgstr "VLAN Wijzigen"
