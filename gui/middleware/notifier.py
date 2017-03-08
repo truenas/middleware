@@ -3170,8 +3170,15 @@ class notifier:
             os.unlink("/data/freenas-v1.db.factory")
         save_path = os.getcwd()
         os.chdir(FREENAS_PATH)
-        rv = self._system("/usr/local/bin/python manage.py syncdb --noinput --migrate --database=factory")
-        if rv != 0:
+        proc = self._pipeopen("/usr/local/sbin/migrate93 -f /data/freenas-v1.db.factory")
+        error = proc.communicate()[1]
+        if proc.returncode != 0:
+            log.warn('Failed to create factory database: %s', error)
+            raise MiddlewareError("Factory reset has failed, check /var/log/messages")
+        proc = self._pipeopen("/usr/local/bin/python manage.py migrate --noinput --fake-initial --database factory")
+        error = proc.communicate()[1]
+        if proc.returncode != 0:
+            log.warn('Failed to create factory database: %s', error)
             raise MiddlewareError("Factory reset has failed, check /var/log/messages")
         self._system("mv /data/freenas-v1.db.factory /data/freenas-v1.db")
         os.chdir(save_path)
