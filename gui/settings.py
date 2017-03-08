@@ -48,9 +48,6 @@ ADMINS = (
 MANAGERS = ADMINS
 
 DATABASE_PATH = '/data/freenas-v1.db'
-# Workaround bug in south database name
-if '--database=factory' in sys.argv:
-    DATABASE_PATH += '.factory'
 
 DATABASES = {
     'default': {
@@ -60,7 +57,7 @@ DATABASES = {
     },
     'factory': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': DATABASE_PATH,
+        'NAME': DATABASE_PATH + '.factory',
     }
 }
 
