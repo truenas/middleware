@@ -17,7 +17,7 @@ LOGFILE = '/data/hba_firmware_flash.log'
 LOGLINES = []
 
 MPS_VERSION = 20
-MPR_VERSION = 9
+MPR_VERSION = 14
 
 UPDATE_SUCCESS = []
 UPDATE_FAIL = []
