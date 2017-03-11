@@ -11,7 +11,7 @@ log = logging.getLogger('FreeNASBMCAlert')
 
 class FreeNASBMCAlert(BaseAlert):
 
-    interval = 60
+    fire_once = True
 
     def run(self):
         alerts = []
