@@ -700,8 +700,8 @@ __EOF__
 	    --visit-items \
 	    --passwordform "Enter your root password; cancel for no root password" \
 	    10 50 0 \
-	    "Password:" 1 1 "" 0 20 25 20 \
-	    "Confirm Password:" 2 1 "" 2 20 25 20 \
+	    "Password:" 1 1 "" 0 20 25 50 \
+	    "Confirm Password:" 2 1 "" 2 20 25 50 \
 	    3> ${_tmpfile}
 
 	if [ $? -ne 0 ]; then
