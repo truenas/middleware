@@ -1,5 +1,5 @@
---- modules/freebsd/vmmemctl/os.c.orig	2013-09-23 10:51:10.000000000 -0500
-+++ modules/freebsd/vmmemctl/os.c	2014-04-23 15:51:43.823041178 -0500
+--- modules/freebsd/vmmemctl/os.c.orig	2013-09-23 08:51:10.000000000 -0700
++++ modules/freebsd/vmmemctl/os.c	2017-02-20 21:19:02.000000000 -0800
 @@ -37,9 +37,11 @@
  #include <sys/param.h>
  #include <sys/systm.h>
@@ -12,7 +12,7 @@
  #include <sys/sysctl.h>
  
  #include <vm/vm.h>
-@@ -223,7 +225,11 @@ static __inline__ unsigned long os_ffz(u
+@@ -223,7 +225,11 @@
  unsigned long
  OS_ReservedPageGetLimit(void)
  {
@@ -24,7 +24,7 @@
  }
  
  
-@@ -295,7 +301,13 @@ OS_ReservedPageGetHandle(PA64 pa)     //
+@@ -295,7 +301,13 @@
  Mapping
  OS_MapPageHandle(PageHandle handle)     // IN
  {
@@ -38,7 +38,7 @@
     vm_page_t page = (vm_page_t)handle;
  
     if (!res) {
-@@ -352,7 +364,11 @@ void
+@@ -352,7 +364,11 @@
  OS_UnmapPage(Mapping mapping)           // IN
  {
     pmap_qremove((vm_offset_t)mapping, 1);
@@ -50,7 +50,7 @@
  }
  
  
-@@ -360,7 +376,11 @@ static void
+@@ -360,7 +376,11 @@
  os_pmap_alloc(os_pmap *p) // IN
  {
     /* number of pages (div. 8) */
@@ -62,7 +62,7 @@
  
     /*
      * expand to nearest word boundary 
-@@ -369,14 +389,23 @@ os_pmap_alloc(os_pmap *p) // IN
+@@ -369,14 +389,23 @@
     p->size = (p->size + sizeof(unsigned long) - 1) & 
                           ~(sizeof(unsigned long) - 1);
  
@@ -86,7 +86,7 @@
     p->size = 0;
     p->bitmap = NULL;
  }
-@@ -449,12 +478,31 @@ os_kmem_free(vm_page_t page) // IN
+@@ -449,12 +478,31 @@
     os_state *state = &global_state;
     os_pmap *pmap = &state->pmap;
  
@@ -123,7 +123,7 @@
  }
  
  
-@@ -466,8 +514,19 @@ os_kmem_alloc(int alloc_normal_failed) /
+@@ -466,8 +514,19 @@
     os_state *state = &global_state;
     os_pmap *pmap = &state->pmap;
  
@@ -143,7 +143,7 @@
        return NULL;
     }
  
-@@ -488,6 +547,11 @@ os_kmem_alloc(int alloc_normal_failed) /
+@@ -488,6 +547,11 @@
     if (!page) {
        os_pmap_putindex(pmap, pindex);
     }
@@ -155,3 +155,12 @@
  
     return page;
  }
+@@ -824,7 +888,7 @@
+ static void
+ vmmemctl_init_sysctl(void)
+ {
+-   oid =  sysctl_add_oid(NULL, SYSCTL_STATIC_CHILDREN(_vm), OID_AUTO,
++   oid =  SYSCTL_ADD_OID(NULL, SYSCTL_STATIC_CHILDREN(_vm), OID_AUTO,
+                          BALLOON_NAME, CTLTYPE_STRING | CTLFLAG_RD,
+                          0, 0, vmmemctl_sysctl, "A",
+                          BALLOON_NAME_VERBOSE);
