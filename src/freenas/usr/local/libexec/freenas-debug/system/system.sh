@@ -68,12 +68,16 @@ system_func()
 	dmesg -a
 	section_footer
 
-	section_header "procstat -akk"
-	procstat -akk
+	section_header "vmstat -ia"
+	vmstat -ia
 	section_footer
 
-	section_header "vmstat -i"
-	vmstat -i
+	section_header "top -SHIz -d 1"
+	top -SHIz -d 1
+	section_footer
+
+	section_header "procstat -akk"
+	procstat -akk
 	section_footer
 
 	section_header "vmstat -m"
