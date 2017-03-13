@@ -50,6 +50,7 @@ class BaseAlert(object):
 
     alert = None
     interval = 0
+    fire_once = False
     name = None
 
     def __init__(self, alert):
@@ -291,6 +292,8 @@ class AlertPlugins:
         for instance in self.mods:
             try:
                 if instance.name in results:
+                    if instance.fire_once:
+                        continue
                     if results.get(instance.name).get(
                         'lastrun'
                     ) > time.time() - (instance.interval * 60):
