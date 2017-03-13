@@ -805,20 +805,20 @@ class FreeNAS_LDAP_Base(FreeNAS_LDAP_Directory):
             filter = '(&(|(objectclass=person)' \
                 '(objectclass=posixaccount)' \
                 '(objectclass=account))' \
-                '(uidnumber=%d))' % user.encode('utf-8')
+                '(uidnumber=%d))' % user
 
         elif user.isdigit():
             filter = '(&(|(objectclass=person)' \
                 '(objectclass=posixaccount)' \
                 '(objectclass=account))' \
-                '(uidnumber=%s))' % user.encode('utf-8')
+                '(uidnumber=%s))' % user
         else:
             filter = (
                 '(&(|(objectclass=person)'
                 '(objectclass=posixaccount)'
                 '(objectclass=account))'
                 '(|(uid=%s)(cn=%s)))'
-            ) % (user.encode('utf-8'), user.encode('utf-8'))
+            ) % (user, user)
 
         basedn = None
         if self.usersuffix and self.basedn:
@@ -889,16 +889,16 @@ class FreeNAS_LDAP_Base(FreeNAS_LDAP_Directory):
         if isinstance(group, int):
             filter = '(&(|(objectclass=posixgroup)' \
                 '(objectclass=group))' \
-                '(gidnumber=%d))' % group.encode('utf-8')
+                '(gidnumber=%d))' % group
 
         elif group.isdigit():
             filter = '(&(|(objectclass=posixgroup)' \
                 '(objectclass=group))' \
-                '(gidnumber=%s))' % group.encode('utf-8')
+                '(gidnumber=%s))' % group
         else:
             filter = '(&(|(objectclass=posixgroup)' \
                 '(objectclass=group))' \
-                '(cn=%s))' % group.encode('utf-8')
+                '(cn=%s))' % group
 
         if self.groupsuffix:
             basedn = "%s,%s" % (self.groupsuffix, self.basedn)
@@ -2110,7 +2110,7 @@ class FreeNAS_ActiveDirectory_Base(object):
 
         scope = ldap.SCOPE_SUBTREE
         filter = '(&(|(objectclass=user)(objectclass=person))' \
-            '(sAMAccountName=%s))' % user.encode('utf-8')
+            '(sAMAccountName=%s))' % user
         attributes = ['distinguishedName']
         results = self._search(
             self.dchandle, self.basedn, scope, filter, attributes
@@ -2134,7 +2134,7 @@ class FreeNAS_ActiveDirectory_Base(object):
         ad_user = None
         scope = ldap.SCOPE_SUBTREE
         filter = '(&(|(objectclass=user)(objectclass=person))' \
-            '(sAMAccountName=%s))' % user.encode('utf-8')
+            '(sAMAccountName=%s))' % user
         results = self._search(
             self.dchandle, self.basedn, scope, filter, self.attributes
         )
@@ -2189,8 +2189,7 @@ class FreeNAS_ActiveDirectory_Base(object):
             return None
 
         scope = ldap.SCOPE_SUBTREE
-        filter = '(&(objectclass=group)(sAMAccountName=%s))' % \
-            group.encode('utf-8')
+        filter = '(&(objectclass=group)(sAMAccountName=%s))' % group
         attributes = ['distinguishedName']
         results = self._search(
             self.dchandle, self.basedn, scope, filter, attributes
@@ -2213,8 +2212,7 @@ class FreeNAS_ActiveDirectory_Base(object):
 
         ad_group = None
         scope = ldap.SCOPE_SUBTREE
-        filter = '(&(objectclass=group)(sAMAccountName=%s))' % \
-            group.encode('utf-8')
+        filter = '(&(objectclass=group)(sAMAccountName=%s))' % group
         results = self._search(
             self.dchandle, self.basedn, scope, filter, self.attributes
         )
@@ -3223,13 +3221,13 @@ class FreeNAS_ActiveDirectory_Group(FreeNAS_ActiveDirectory):
             g = group
         elif self.use_default_domain:
             g = "{}".format(
-                ad_group[1]['sAMAccountName'][0] if ad_group else group
+                ad_group[1]['sAMAccountName'][0].decode('utf8') if ad_group else group
             )
         else:
             g = "{}{}{}".format(
                 netbiosname,
                 FREENAS_AD_SEPARATOR,
-                ad_group[1]['sAMAccountName'][0] if ad_group else group
+                ad_group[1]['sAMAccountName'][0].decode('utf8') if ad_group else group
             )
 
         try:
@@ -3449,13 +3447,13 @@ class FreeNAS_ActiveDirectory_User(FreeNAS_ActiveDirectory):
             u = user
         elif self.use_default_domain:
             u = "{}".format(
-                ad_user[1]['sAMAccountName'][0] if ad_user else user
+                ad_user[1]['sAMAccountName'][0].decode('utf8') if ad_user else user
             )
         else:
             u = "{}{}{}".format(
                 netbiosname,
                 FREENAS_AD_SEPARATOR,
-                ad_user[1]['sAMAccountName'][0] if ad_user else user
+                ad_user[1]['sAMAccountName'][0].decode('utf8') if ad_user else user
             )
 
         try:

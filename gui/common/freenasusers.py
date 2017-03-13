@@ -343,7 +343,7 @@ class FreeNAS_Users(object):
                 self.__users = dir(**kwargs)
 
             except Exception as e:
-                log.error("Directory Users could not be retrieved: {0}".format(str(e)))
+                log.error("Directory Users could not be retrieved: {0}".format(str(e)), exc_info=True)
                 self.__users = None
 
         if self.__users is None:

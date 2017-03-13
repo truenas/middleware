@@ -142,6 +142,8 @@ class FreeNAS_BaseCache(object):
         return pickle.loads(self.__cache.get(key))
 
     def __setitem__(self, key, value, overwrite=False):
+        if isinstance(key, str):
+            key = key.encode('utf8')
         haskey = key in self.__cache
         if (haskey and overwrite) or (not haskey):
             self.__cache[key] = pickle.dumps(value)
