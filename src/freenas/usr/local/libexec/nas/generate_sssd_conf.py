@@ -88,10 +88,10 @@ class SSSDBase(object):
         return ret
 
     def __str__(self):
-        str = None
+        out = None
 
         if self.is_empty():
-            str = self.get_header()
+            out = self.get_header()
         else:
             lines = []
             header = self.get_header()
@@ -104,9 +104,9 @@ class SSSDBase(object):
                 elif isinstance(pair, str):
                     line = "%s" % pair
                 lines.append(line.strip())
-            str = '\n'.join(lines)
+            out = '\n'.join(lines)
 
-        return "%s\n" % str
+        return "%s\n" % out
 
     def __len__(self):
         len = 0
