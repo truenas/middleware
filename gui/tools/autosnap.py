@@ -197,7 +197,7 @@ def doesVMSnapshotByNameExists(vm, snapshotName):
         snaps = vm.snapshot.rootSnapshotList
         for snap in snaps:
             if snap.name == snapshotName:
-                return True
+                return snap
     except:
         log.debug('Exception in doesVMSnapshotByNameExists')
     return False
@@ -422,7 +422,7 @@ if len(mp_to_task_map) > 0:
                 if doesVMDependOnDataStore(vm, vmsnapobj.datastore):
                     try:
                         if canSnapshotVM(vm):
-                            if not doesVMSnapshotByNameExists(vm, vmsnapname):
+                            if doesVMSnapshotByNameExists(vm, vmsnapname) is False:
                                 # have we already created a snapshot of the VM for this volume
                                 # iteration? can happen if the VM uses two datasets (a and b)
                                 # where both datasets are mapped to the same ZFS volume in FreeNAS.
@@ -540,12 +540,13 @@ Hello,
                 if (vm_uuid, vm.name) not in snapvmfails[vmsnapobj] and vm_uuid not in snapvmskips[vmsnapobj]:
                     # The test above is paranoia.  It shouldn't be possible for a vm to
                     # be in more than one of the three dictionaries.
+                    snap = doesVMSnapshotByNameExists(vm, vmsnapname)
                     try:
-                        vm.delete_named_snapshot(vmsnapname)
+                        if snap is not False:
+                            VimTask.WaitForTask(snap.RemoveSnapshot_Task(True))
                     except:
-                        log.debug("Exception delete_named_snapshot %s %s",
-                                  vm.get_property('path'), vmsnapname)
-                        snapdeletefails.append(vm.get_property('path'))
+                        log.debug("Exception removing snapshot %s %s", vm.name, vmsnapname, exc_info=True)
+                        snapdeletefails.append(vm.name)
 
             # Send out email alerts for VMware snapshot deletions that failed.
             # Also put the failures into a sentinel file that the alert
@@ -557,7 +558,7 @@ Hello,
                             fails = pickle.load(f)
                 except:
                     fails = {}
-                fails[snapname] = [vm.get_property('path') for vm in snapdeletefails]
+                fails[snapname] = snapdeletefails
                 with LockFile(VMWARESNAPDELETE_FAILS) as lock:
                     with open(VMWARESNAPDELETE_FAILS, 'wb') as f:
                         pickle.dump(fails, f)
@@ -568,7 +569,7 @@ Hello,
 Hello,
     The following VM snapshot(s) failed to delete %s:
 %s
-""" % (snapname, '    \n'.join(fails[snapname])),
+""" % (snapname, '    \n'.join(snapdeletefails)),
                     channel='snapvmware'
                 )
             connect.Disconnect(si)
