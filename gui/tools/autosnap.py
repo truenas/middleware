@@ -33,8 +33,8 @@ import sys
 import uuid
 import ssl
 
-from pyVim import connect
-from pyVmomi import vim, vmodl
+from pyVim import connect, task as VimTask
+from pyVmomi import vim
 
 # Monkey patch ssl checking to get back to Python 2.7.8 behavior
 ssl._create_default_https_context = ssl._create_unverified_context
@@ -161,17 +161,19 @@ def doesVMDependOnDataStore(vm, dataStore):
     try:
         # simple case, VM config data is on a datastore.
         # not sure how critical it is to snapshot the store that has config data, but best to do so
-        if vm.get_property('path').startswith("[%s]" % dataStore):
-            return True
+        for i in vm.datastore:
+            if i.info.name.startswith(dataStore):
+                return True
         # check if VM has disks on the data store
         # we check both "diskDescriptor" and "diskExtent" types of files
-        disks = vm.get_property("disks")
-        for disk in disks:
-            for file in disk["files"]:
-                if file["name"].startswith("[%s]" % dataStore):
+        for device in vm.config.hardware.device:
+            if device.backing is None:
+                continue
+            if hasattr(device.backing, 'fileName'):
+                if device.backing.datastore.info.name == dataStore:
                     return True
     except:
-        log.debug('Exception in doesVMDependOnDataStore')
+        log.debug('Exception in doesVMDependOnDataStore', exc_info=True)
     return False
 
 
@@ -179,23 +181,22 @@ def doesVMDependOnDataStore(vm, dataStore):
 def canSnapshotVM(vm):
     try:
         # check for PCI pass-through devices
-        devs = vm.get_property('devices')
-        for dev in devs:
-            if devs[dev]['type'] == "VirtualPCIPassthrough":
+        for device in vm.config.hardware.device:
+            if isinstance(device, vim.VirtualPCIPassthrough):
                 return False
         # consider supporting more cases of VMs that can't be snapshoted
         # https://kb.vmware.com/selfservice/microsites/search.do?language=en_US&cmd=displayKC&externalId=1006392
     except:
-        log.debug('Exception in canSnapshotVM')
+        log.debug('Exception in canSnapshotVM', exc_info=True)
     return True
 
 
 # check if there is already a snapshot by a given name
 def doesVMSnapshotByNameExists(vm, snapshotName):
     try:
-        snaps = vm.get_snapshots()
+        snaps = vm.snapshot.rootSnapshotList
         for snap in snaps:
-            if snap.get_name() == snapshotName:
+            if snap.name == snapshotName:
                 return True
     except:
         log.debug('Exception in doesVMSnapshotByNameExists')
@@ -379,9 +380,7 @@ if len(mp_to_task_map) > 0:
             # No recursive snapshot, filesystem must equal fs
             qs = VMWarePlugin.objects.filter(filesystem=fs)
 
-        if qs:
-            server = VIServer()
-
+        if qs.exists():
             # Generate a unique snapshot name that (hopefully) won't collide with anything
             # that exists on the VMWare side.
             vmsnapname = str(uuid.uuid4())
@@ -407,27 +406,31 @@ if len(mp_to_task_map) > 0:
             snapvmfails[vmsnapobj] = []
             snapvmskips[vmsnapobj] = []
             try:
-                server.connect(vmsnapobj.hostname,
-                               vmsnapobj.username,
-                               vmsnapobj.get_password())
+                ssl_context = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
+                ssl_context.verify_mode = ssl.CERT_NONE
+                si = connect(host=vmsnapobj.hostname, user=vmsnapobj.username, pwd=vmsnapobj.get_password(), sslContext=ssl_context)
+                content = si.RetrieveContent()
             except:
-                log.warn("VMware login failed to %s", vmsnapobj.hostname)
+                log.warn("VMware login failed to %s", vmsnapobj.hostname, exc_info=True)
                 # TODO: This should generate an alert.
                 continue
             # There's no point to even consider VMs that are paused or powered off.
-            vmlist = server.get_registered_vms(status='poweredOn')
-            for vm in vmlist:
-                vmobj = server.get_vm_by_path(vm)
-                if doesVMDependOnDataStore(vmobj, vmsnapobj.datastore):
+            vm_view = content.viewManager.CreateContainerView(content.rootFolder, [vim.VirtualMachine], True)
+            for vm in vm_view.view:
+                if vm.summary.runtime.powerState != 'poweredOn':
+                    continue
+                if doesVMDependOnDataStore(vm, vmsnapobj.datastore):
                     try:
-                        if canSnapshotVM(vmobj):
-                            if not doesVMSnapshotByNameExists(vmobj, vmsnapname):
+                        if canSnapshotVM(vm):
+                            if not doesVMSnapshotByNameExists(vm, vmsnapname):
                                 # have we already created a snapshot of the VM for this volume
                                 # iteration? can happen if the VM uses two datasets (a and b)
                                 # where both datasets are mapped to the same ZFS volume in FreeNAS.
-                                vmobj.create_snapshot(vmsnapname,
-                                                      description=vmsnapdescription,
-                                                      memory=False)
+                                VimTask.WaitForTask(vm.CreateSnapshot_Task(
+                                    name=vmsnapname,
+                                    description=vmsnapdescription,
+                                    memory=False, quiesce=False,
+                                ))
                             else:
                                 log.debug("Not creating snapshot %s for VM %s because it "
                                           "already exists", vmsnapname, vm)
@@ -441,14 +444,13 @@ if len(mp_to_task_map) > 0:
                             log.log(logging.NOTICE, "Can't snapshot VM %s that depends on "
                                     "datastore %s and filesystem %s."
                                     " Possibly using PT devices. Skipping.",
-                                    vm, vmsnapobj.datastore, fs)
-                            snapvmskips[vmsnapobj].append(vmobj)
+                                    vm.name, vmsnapobj.datastore, fs)
+                            snapvmskips[vmsnapobj].append(vm.config.uuid)
                     except:
-                        log.warn("Snapshot of VM %s failed", vm)
-                        snapvmfails[vmsnapobj].append(vmobj)
-                    snapvms[vmsnapobj].append(vmobj)
-            if server.is_connected():
-                server.disconnect()
+                        log.warn("Snapshot of VM %s failed", vm.name)
+                        snapvmfails[vmsnapobj].append((vm.config.uuid, vm.name))
+                    snapvms[vmsnapobj].append(vm.config.uuid)
+            connect.Disconnect(si)
         # At this point we've completed snapshotting VMs.
 
         # Send out email alerts for VMs we tried to snapshot that failed.
@@ -463,7 +465,7 @@ if len(mp_to_task_map) > 0:
                 except:
                     fails = {}
                 # vmitem.get_property('path') is the reverse of server.get_vm_by_path(vm)
-                fails[snapname] = [vmitem.get_property('path') for vmitem in snapvmfails[vmsnapobj]]
+                fails[snapname] = [i[1] for i in snapvmfails[vmsnapobj]]
                 with LockFile(VMWARE_FAILS) as lock:
                     with open(VMWARE_FAILS, 'wb') as f:
                         pickle.dump(fails, f)
@@ -521,17 +523,21 @@ Hello,
 
         for vmsnapobj in qs:
             try:
-                server.connect(vmsnapobj.hostname,
-                               vmsnapobj.username,
-                               vmsnapobj.get_password())
+                ssl_context = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
+                ssl_context.verify_mode = ssl.CERT_NONE
+                si = connect(host=vmsnapobj.hostname, user=vmsnapobj.username, pwd=vmsnapobj.get_password(), sslContext=ssl_context)
             except:
                 # TODO: We need to alert here as this will leave
                 # dangling VMWare snapshots.
                 log.warn("VMware login failed to %s", vmsnapobj.hostname)
                 continue
             # vm is an object, so we'll dereference that object anywhere it's user facing.
-            for vm in snapvms[vmsnapobj]:
-                if vm not in snapvmfails[vmsnapobj] and vm not in snapvmskips[vmsnapobj]:
+            for vm_uuid in snapvms[vmsnapobj]:
+                vm = si.content.searchIndex.FindByUuid(None, vm_uuid, True)
+                if not vm:
+                    log.debug("Could not find VM %s", vm_uuid)
+                    continue
+                if (vm_uuid, vm.name) not in snapvmfails[vmsnapobj] and vm_uuid not in snapvmskips[vmsnapobj]:
                     # The test above is paranoia.  It shouldn't be possible for a vm to
                     # be in more than one of the three dictionaries.
                     try:
@@ -565,8 +571,7 @@ Hello,
 """ % (snapname, '    \n'.join(fails[snapname])),
                     channel='snapvmware'
                 )
-            if server.is_connected():
-                server.disconnect()
+            connect.Disconnect(si)
 
     MNTLOCK.lock()
     if not autorepl_running():
