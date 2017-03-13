@@ -3,7 +3,7 @@
 
 PORTNAME=		open-vm-tools
 PORTVERSION=		${BUILD_VER}
-PORTREVISION=		15
+PORTREVISION=		17
 PORTEPOCH=		1
 CATEGORIES=		emulators
 MASTER_SITES=		SF/${PORTNAME}/${PORTNAME}/stable-9.4.x
@@ -42,7 +42,7 @@ ICU_LIB_DEPENDS=	libicuuc.so:devel/icu
 
 WRKSRC=			${WRKDIR}/open-vm-tools-${RELEASE_VER}-${BUILD_VER}
 GNU_CONFIGURE=		yes
-USES=			pkgconfig kmod libtool
+USES=			pathfix pkgconfig kmod libtool
 USE_GNOME=		glib20
 USE_LDCONFIG=		yes
 CPPFLAGS+=		-Wno-deprecated-declarations
@@ -64,11 +64,12 @@ CONFLICTS=		open-vm-tools-nox11-[0-9]*
 CONFLICTS=		open-vm-tools-[0-9]*
 .endif
 
-.include <bsd.port.pre.mk>
+BROKEN_aarch64=		Fails to configure: error: Unknown architecture
 
-.if ${ARCH} == "sparc64"
-IGNORE=		not yet ported to sparc64
-.endif
+NOT_FOR_ARCHS=		sparc64
+NOT_FOR_ARCHS_REASON=	not yet ported to this architecture
+
+.include <bsd.port.pre.mk>
 
 post-build:
 	cd ${WRKSRC}/modules && ${SETENV} ${MAKE_ENV} ${MAKE} ${MAKE_ARGS}
