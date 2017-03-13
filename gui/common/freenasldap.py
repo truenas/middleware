@@ -2685,12 +2685,12 @@ class FreeNAS_ActiveDirectory_Users(FreeNAS_ActiveDirectory):
 
                 u = u[1]
                 if self.use_default_domain:
-                    sAMAccountName = u['sAMAccountName'][0]
+                    sAMAccountName = u['sAMAccountName'][0].decode('utf8')
                 else:
                     sAMAccountName = "{}{}{}".format(
                         n,
                         FREENAS_AD_SEPARATOR,
-                        u['sAMAccountName'][0]
+                        u['sAMAccountName'][0].decode('utf8')
                     )
 
                 self.__usernames.append(sAMAccountName)
@@ -2994,12 +2994,12 @@ class FreeNAS_ActiveDirectory_Groups(FreeNAS_ActiveDirectory):
                 CN = str(g[0])
 
                 if self.use_default_domain:
-                    sAMAccountName = g[1]['sAMAccountName'][0]
+                    sAMAccountName = g[1]['sAMAccountName'][0].decode('utf8')
                 else:
                     sAMAccountName = "{}{}{}".format(
                         n,
                         FREENAS_AD_SEPARATOR,
-                        g[1]['sAMAccountName'][0]
+                        g[1]['sAMAccountName'][0].decode('utf8')
                     )
 
                 self.__groupnames.append(sAMAccountName)
@@ -3068,8 +3068,6 @@ class FreeNAS_LDAP_Group(FreeNAS_LDAP):
 
         self._gr = None
         if group:
-            if isinstance(group, str):
-                group = group.decode('utf-8')
             self.__get_group(group)
 
         log.debug("FreeNAS_LDAP_Group.__init__: leave")
@@ -3149,9 +3147,6 @@ class FreeNAS_ActiveDirectory_Group(FreeNAS_ActiveDirectory):
         return obj
 
     def __init__(self, group, **kwargs):
-        if isinstance(group, str):
-            group = group.decode('utf-8')
-
         log.debug("FreeNAS_ActiveDirectory_Group.__init__: enter")
         log.debug("FreeNAS_ActiveDirectory_Group.__init__: group = %s", group)
 
@@ -3296,8 +3291,6 @@ class FreeNAS_LDAP_User(FreeNAS_LDAP):
 
         self._pw = None
         if user:
-            if isinstance(user, str):
-                user = user.decode('utf-8')
             self.__get_user(user)
 
         log.debug("FreeNAS_LDAP_User.__init__: leave")
@@ -3384,9 +3377,6 @@ class FreeNAS_ActiveDirectory_User(FreeNAS_ActiveDirectory):
         return obj
 
     def __init__(self, user, **kwargs):
-        if isinstance(user, str):
-            user = user.decode('utf-8')
-
         log.debug("FreeNAS_ActiveDirectory_User.__init__: enter")
         log.debug("FreeNAS_ActiveDirectory_User.__init__: user = %s", user)
 

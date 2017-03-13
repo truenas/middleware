@@ -96,6 +96,7 @@ class UserField(forms.ChoiceField):
             try:
                 FreeNAS_User(rv, flags=FLAGS_DBINIT)
             except:
+                log.warn('Failed to get user', exc_info=True)
                 rv = 'nobody'
         return rv
 
@@ -144,6 +145,7 @@ class UserField(forms.ChoiceField):
         try:
             u = FreeNAS_User(user, flags=FLAGS_DBINIT)
         except:
+            log.warn('Failed to get user', exc_info=True)
             u = None
 
         if u is None:
