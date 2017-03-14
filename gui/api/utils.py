@@ -27,12 +27,16 @@
 import base64
 import logging
 import re
+import six
+import sys
+import traceback
 import urllib.request, urllib.parse, urllib.error
 
 from django.contrib.auth import authenticate
+from django.core.exceptions import ObjectDoesNotExist
 from django.db.models import FieldDoesNotExist
 from django.db.models.fields.related import ForeignKey
-from django.http import QueryDict
+from django.http import Http404, QueryDict
 
 from freenasUI.account.models import bsdUsers
 from freenasUI.common.log import log_traceback
@@ -46,10 +50,10 @@ from tastypie.authentication import (
 )
 from tastypie import fields, http
 from tastypie.authorization import Authorization
-from tastypie.exceptions import ImmediateHttpResponse, UnsupportedFormat
+from tastypie.exceptions import ImmediateHttpResponse, NotFound, UnsupportedFormat
 from tastypie.http import HttpUnauthorized
 from tastypie.paginator import Paginator
-from tastypie.resources import DeclarativeMetaclass, ModelResource, Resource
+from tastypie.resources import DeclarativeMetaclass, ModelResource, Resource, sanitize
 
 RE_SORT = re.compile(r'^sort\((.*)\)$')
 log = logging.getLogger('api.utils')
@@ -224,9 +228,17 @@ class ResourceMixin(object):
         )
         return response
 
-    def _handle_500(self, *args, **kwargs):
+    def _handle_500(self, request, exception, *args, **kwargs):
         log_traceback(log=log)
-        return super(ResourceMixin, self)._handle_500(*args, **kwargs)
+        if isinstance(exception, (NotFound, ObjectDoesNotExist, Http404, UnsupportedFormat)):
+            return super(ResourceMixin, self)._handle_500(request, exception, *args, **kwargs)
+        else:
+            the_trace = '\n'.join(traceback.format_exception(*(sys.exc_info())))
+            data = {
+                "error_message": sanitize(six.text_type(exception)),
+                "traceback": the_trace,
+            }
+            return self.error_response(request, data, response_class=http.HttpApplicationError)
 
     def dispatch(self, request_type, request, *args, **kwargs):
         try:
