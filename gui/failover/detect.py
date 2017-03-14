@@ -24,7 +24,7 @@ def ha_mode():
         proc = subprocess.Popen([
             '/usr/local/sbin/dmidecode',
             '-s', 'system-uuid',
-        ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        ], stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf8')
         systemuuid = proc.communicate()[0].strip()
         if systemuuid == 'B9E1B270-1B0C-48C7-99C8-BFB965D71584':
             node = 'A'
@@ -44,7 +44,7 @@ def ha_mode():
             proc = subprocess.Popen([
                 '/usr/sbin/getencstat',
                 '-v', enclosure,
-            ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            ], stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf8')
             encstat = proc.communicate()[0].strip()
             echostream = re.search(ECHOSTREAM_MAGIC, encstat, re.M)
             if echostream:
@@ -74,7 +74,7 @@ def ha_mode():
     proc = subprocess.Popen([
         '/usr/local/sbin/dmidecode',
         '-s', 'system-serial-number',
-    ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    ], stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf8')
     serial = proc.communicate()[0].strip()
 
     # Laziest import as possible
@@ -97,7 +97,7 @@ def ha_mode():
         proc = subprocess.Popen([
             '/usr/local/sbin/dmidecode',
             '-s', 'baseboard-product-name',
-        ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        ], stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf8')
         board = proc.communicate()[0].strip()
         # If we've gotten this far it's because we were unable to
         # detect ourselves as an echostream.
