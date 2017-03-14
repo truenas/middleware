@@ -252,7 +252,7 @@ class Job(object):
             if self.options.get('process'):
                 proc = Popen([
                     '/usr/bin/env',
-                    'python2',
+                    'python3',
                     os.path.join(
                         os.path.dirname(os.path.realpath(__file__)),
                         'job_process.py',
