@@ -1252,7 +1252,8 @@ class ReplicationResourceMixin(object):
     def hydrate(self, bundle):
         bundle = super(ReplicationResourceMixin, self).hydrate(bundle)
         if bundle.obj.id:
-            bundle.data['repl_remote_hostname'] = bundle.obj.repl_remote.ssh_remote_hostname
+            if 'repl_remote_hostname' not in bundle.data:
+                bundle.data['repl_remote_hostname'] = bundle.obj.repl_remote.ssh_remote_hostname
             if 'repl_remote_port' not in bundle.data:
                 bundle.data['repl_remote_port'] = bundle.obj.repl_remote.ssh_remote_port
             if 'repl_remote_dedicateduser_enabled' not in bundle.data:
