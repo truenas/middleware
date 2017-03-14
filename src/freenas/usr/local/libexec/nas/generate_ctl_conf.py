@@ -1,4 +1,4 @@
-#!/usr/local/bin/python2
+#!/usr/local/bin/python
 from middlewared.client import Client
 from middlewared.client.utils import Struct
 import logging
