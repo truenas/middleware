@@ -366,6 +366,9 @@ class ZVolResource(DojoResource):
 
     name = fields.CharField(attribute='name')
     volsize = fields.IntegerField(attribute='volsize')
+    refer = fields.IntegerField(attribute='refer')
+    used = fields.IntegerField(attribute='used')
+    avail = fields.IntegerField(attribute='avail')
 
     class Meta:
         allowed_methods = ['get', 'post', 'delete', 'put']
