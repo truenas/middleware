@@ -51,6 +51,11 @@ consul_startprecmd()
                 install -d -o ${consul_user} -g ${consul_group} ${consul_dir}
         fi
 
+	chown ${consul_user}:${consul_group} ${consul_dir}
+
+	if [ ! -d "%%PREFIX%%/etc/consul.d" ] ; then
+		mkdir -p %%PREFIX%%/etc/consul.d
+	fi
 }
 
 run_rc_command "$1"
