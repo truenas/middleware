@@ -52,9 +52,9 @@ if __name__ == "__main__":
     elif cmd == 'status':
         rv = escrowctl.status()
         if rv:
-            print "Escrow have the passphrase"
+            print("Escrow have the passphrase")
         else:
-            print "Escrow running without passphrase"
+            print("Escrow running without passphrase")
     elif cmd == 'attachall':
         with tempfile.NamedTemporaryFile() as tmp:
             tmp.file.write(escrowctl.getkey() or "")
@@ -71,7 +71,7 @@ if __name__ == "__main__":
                         try:
                             open('/dev/%s' % ed.encrypted_disk.devname, 'w').close()
                         except Exception as e:
-                            print('Failed to open dev %s to rescan' % ed.encrypted_disk.devname)
+                            print(('Failed to open dev %s to rescan' % ed.encrypted_disk.devname))
                             log.warn('Failed to open dev %s to rescan' % ed.encrypted_disk.devname)
                     provider = ed.encrypted_provider
                     if not os.path.exists('/dev/%s.eli' % provider):
@@ -82,7 +82,7 @@ if __name__ == "__main__":
                 for proc in procs:
                     msg = proc.communicate()[1]
                     if proc.returncode != 0:
-                        print ("Unable to attach GELI provider: %s" % (msg))
+                        print(("Unable to attach GELI provider: %s" % (msg)))
                         log.warn("Unable to attach GELI provider: %s", (msg))
                         failed_drive += 1
                 importcmd = "zpool import -f -R /mnt %s" % (vol.vol_name)
@@ -91,7 +91,7 @@ if __name__ == "__main__":
                 if proc.returncode != 0:
                     failed_volume += 1
             if failed_drive > 0:
-                print "ERROR: %d drives can not be attached" % (failed_drive)
+                print("ERROR: %d drives can not be attached" % (failed_drive))
             rv = (failed_volume == 0)
             try:
                 if rv:
@@ -114,7 +114,7 @@ if __name__ == "__main__":
                 s = notifier().failover_rpc()
                 s.enc_setkey(passphrase)
             except:
-                print "Failed to set key on standby node, is it down?"
+                print("Failed to set key on standby node, is it down?")
             if not args.key_only:
                 notifier().failover_force_master()
     else:
@@ -124,17 +124,17 @@ if __name__ == "__main__":
                 s = notifier().failover_rpc()
                 rv = s.enc_setkey(passphrase)
             else:
-                print "ERROR: passphrase unavailable."
+                print("ERROR: passphrase unavailable.")
         elif cmd == 'syncfrompeer':
             s = notifier().failover_rpc()
             passphrase = s.enc_getkey()
             rv = escrowctl.setkey(passphrase)
         if not rv:
-            print "Error"
+            print("Error")
 
     if rv:
-        print "Succeeded."
+        print("Succeeded.")
         sys.exit(0)
     else:
-        print "Failed."
+        print("Failed.")
         sys.exit(1)
