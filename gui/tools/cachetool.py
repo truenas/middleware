@@ -70,7 +70,7 @@ from freenasUI.common.freenasusers import (
 
 
 def usage(keys):
-    print("Usage: %s <%s>" % (sys.argv[0], '|'.join(keys, '|'), file=sys.stderr)
+    print("Usage: %s <%s>" % (sys.argv[0], '|'.join(keys)), file=sys.stderr)
     sys.exit(1)
 
 
@@ -731,6 +731,7 @@ def main():
     kwargs['args'] = sys.argv[2:]
 
     (cache_funcs[sys.argv[1]])(**kwargs)
+
 
 if __name__ == '__main__':
     main()
