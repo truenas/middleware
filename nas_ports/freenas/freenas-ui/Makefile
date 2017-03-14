@@ -21,9 +21,8 @@ RUN_DEPENDS=	${PYTHON_PKGNAMEPREFIX}django110>0:${PORTSDIR}/www/py-django110 \
 	${PYTHON_PKGNAMEPREFIX}lockfile>0:${PORTSDIR}/devel/py-lockfile \
 	${PYTHON_PKGNAMEPREFIX}ipaddr>0:${PORTSDIR}/devel/py-ipaddr \
 	${PYTHON_PKGNAMEPREFIX}bsddb3>0:${PORTSDIR}/databases/py-bsddb3 \
-	${PYTHON_PKGNAMEPREFIX}libxml2>0:${PORTSDIR}/textproc/py-libxml2 \
 	${PYTHON_PKGNAMEPREFIX}polib>0:${PORTSDIR}/devel/py-polib \
-	${PYTHON_PKGNAMEPREFIX}ldap>0:${PORTSDIR}/net/py-ldap \
+	${PYTHON_PKGNAMEPREFIX}pyldap>0:${PORTSDIR}/net/py-pyldap \
 	${PYTHON_PKGNAMEPREFIX}dojango>0:${PORTSDIR}/www/py-dojango \
 	${PYTHON_PKGNAMEPREFIX}sysctl>0:${PORTSDIR}/devel/py-sysctl \
 	${PYTHON_PKGNAMEPREFIX}lxml>0:${PORTSDIR}/devel/py-lxml \
@@ -42,7 +41,6 @@ RUN_DEPENDS=	${PYTHON_PKGNAMEPREFIX}django110>0:${PORTSDIR}/www/py-django110 \
 	${PYTHON_PKGNAMEPREFIX}bsd>0:${PORTSDIR}/freenas/py-bsd \
 	${PYTHON_PKGNAMEPREFIX}middlewared>0:${PORTSDIR}/freenas/py-middlewared \
 	${PYTHON_PKGNAMEPREFIX}rollbar>0:${PORTSDIR}/www/py-rollbar \
-	${PYTHON_PKGNAMEPREFIX}pysphere-freenas>0:${PORTSDIR}/net/py-pysphere-freenas \
 	pyvmomi>0:${PORTSDIR}/net/py-pyvmomi \
 	dmidecode>0:${PORTSDIR}/sysutils/dmidecode \
 	freenas-pkgtools>0:${PORTSDIR}/freenas/freenas-pkgtools \

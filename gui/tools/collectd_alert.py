@@ -1,4 +1,4 @@
-#!/usr/local/bin/python2.7
+#!/usr/local/bin/python
 #
 # Copyright (c) 2017 iXsystems, Inc.
 # All rights reserved.
@@ -25,7 +25,7 @@
 # SUCH DAMAGE.
 #
 
-import cPickle as pickle
+import pickle as pickle
 import os
 import re
 import sys
@@ -56,10 +56,10 @@ def main():
     v = dict(re.findall(r"(?P<name>.*?): (?P<value>.*?)\n", text))
 
     k = v["Plugin"]
-    if "PluginInstance" in v.keys():
+    if "PluginInstance" in list(v.keys()):
         k += "-" + v["PluginInstance"]
     k += "/" + v["Type"]
-    if "TypeInstance" in v.keys():
+    if "TypeInstance" in list(v.keys()):
         k += "-" + v["TypeInstance"]
 
     if v["Severity"] == "OKAY":

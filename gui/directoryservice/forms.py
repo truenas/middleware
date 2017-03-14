@@ -441,7 +441,7 @@ class ActiveDirectoryForm(ModelForm):
         parts = ad_dcname.split(':')
         ad_dcname = parts[0]
         if len(parts) > 1 and parts[1].isdigit():
-            ad_dcport = long(parts[1])
+            ad_dcport = int(parts[1])
 
         errors = []
         try:
@@ -473,7 +473,7 @@ class ActiveDirectoryForm(ModelForm):
         parts = ad_gcname.split(':')
         ad_gcname = parts[0]
         if len(parts) > 1 and parts[1].isdigit():
-            ad_gcport = long(parts[1])
+            ad_gcport = int(parts[1])
 
         errors = []
         try:

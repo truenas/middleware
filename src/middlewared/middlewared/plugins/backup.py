@@ -1,5 +1,6 @@
 from middlewared.schema import accepts, Bool, Dict, Int, Ref, Str
 from middlewared.service import CRUDService, Service, item_method, job, private
+from middlewared.utils import Popen
 
 import boto3
 import gevent
@@ -250,7 +251,7 @@ region = {region}
                 read_buffer = ''
                 while True:
                     read = proc.stderr.readline()
-                    if read == b'':
+                    if read == '':
                         break
                     read_buffer += read
                     if len(read_buffer) > 10240:
@@ -262,7 +263,7 @@ region = {region}
                             job.set_progress(None, transferred)
                 return read_buffer
 
-            proc = subprocess.Popen(
+            proc = Popen(
                 args,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,

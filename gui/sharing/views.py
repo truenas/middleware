@@ -36,7 +36,7 @@ log = logging.getLogger('sharing.views')
 def home(request):
 
     view = appPool.hook_app_index('sharing', request)
-    view = filter(None, view)
+    view = [_f for _f in view if _f]
     if view:
         return view[0]
 

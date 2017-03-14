@@ -177,6 +177,7 @@ LOCALE_PATHS = (
 SESSION_ENGINE = 'django.contrib.sessions.backends.file'
 
 DIR_BLACKLIST = [
+    '__pycache__',
     'templates',
     'fnstatic',
     'middleware',
@@ -276,6 +277,6 @@ LOGGING = {
 SECRET_KEY = "."
 
 try:
-    from local_settings import *
+    from .local_settings import *
 except:
     pass

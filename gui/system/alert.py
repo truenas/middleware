@@ -1,4 +1,4 @@
-import cPickle
+import pickle
 import datetime
 import hashlib
 import imp
@@ -44,9 +44,7 @@ class BaseAlertMetaclass(type):
         return klass
 
 
-class BaseAlert(object):
-
-    __metaclass__ = BaseAlertMetaclass
+class BaseAlert(object, metaclass=BaseAlertMetaclass):
 
     alert = None
     interval = 0
@@ -138,9 +136,7 @@ class Alert(object):
         return datetime.datetime.fromtimestamp(self._timestamp)
 
 
-class AlertPlugins:
-
-    __metaclass__ = HookMetaclass
+class AlertPlugins(metaclass=HookMetaclass):
 
     ALERT_FILE = '/var/tmp/alert'
 
@@ -184,7 +180,7 @@ class AlertPlugins:
                 We need to strip out all the tags so we can send a
                 plain text email.
                 """
-                msg = unicode(alert).encode('utf8')
+                msg = str(alert)
                 msgnode = etree.fromstring('<msg>{}</msg>'.format(msg))
                 for i in msgnode.xpath('//a'):
                     new = etree.Element('span')
@@ -212,13 +208,14 @@ class AlertPlugins:
         msgs = []
         for alert in alerts:
             if alert.getId() not in dismisseds:
-                msgs.append(unicode(alert).encode('utf8'))
+                msgs.append(str(alert).encode('utf8'))
         if len(msgs) == 0:
             return
 
         serial = subprocess.Popen(
             ['/usr/local/sbin/dmidecode', '-s', 'system-serial-number'],
-            stdout=subprocess.PIPE
+            stdout=subprocess.PIPE,
+            encoding='utf8',
         ).communicate()[0].split('\n')[0].upper()
 
         license, reason = get_license()
@@ -276,7 +273,7 @@ class AlertPlugins:
         if os.path.exists(self.ALERT_FILE):
             with open(self.ALERT_FILE, 'r') as f:
                 try:
-                    obj = cPickle.load(f)
+                    obj = pickle.load(f)
                 except:
                     pass
 
@@ -304,7 +301,7 @@ class AlertPlugins:
                         continue
                 rv = instance.run()
                 if rv:
-                    alerts = filter(None, rv)
+                    alerts = [_f for _f in rv if _f]
                     for alert in alerts:
                         ids.append(alert.getId())
                         update_or_create = False
@@ -338,7 +335,7 @@ class AlertPlugins:
                     'alerts': rv,
                 }
 
-            except Exception, e:
+            except Exception as e:
                 log.debug("Alert module '%s' failed: %s", instance, e, exc_info=True)
                 log.error("Alert module '%s' failed: %s", instance, e)
 
@@ -373,8 +370,8 @@ class AlertPlugins:
             if hardware and support.is_enabled():
                 self.ticket(support, hardware)
 
-        with open(self.ALERT_FILE, 'w') as f:
-            cPickle.dump({
+        with open(self.ALERT_FILE, 'wb') as f:
+            pickle.dump({
                 'last': time.time(),
                 'alerts': rvs,
                 'results': results,
@@ -384,8 +381,8 @@ class AlertPlugins:
     def get_alerts(self):
         if not os.path.exists(self.ALERT_FILE):
             return []
-        with open(self.ALERT_FILE, 'r') as f:
-            return cPickle.load(f)['alerts']
+        with open(self.ALERT_FILE, 'rb') as f:
+            return pickle.load(f)['alerts']
 
 
 alertPlugins = AlertPlugins()

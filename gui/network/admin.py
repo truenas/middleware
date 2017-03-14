@@ -58,10 +58,10 @@ class InterfacesFAdmin(NetworkInterruptMixin, BaseFreeAdmin):
     create_modelform = "InterfacesForm"
     delete_form = "InterfacesDeleteForm"
     edit_modelform = "InterfacesEditForm"
-    icon_object = u"InterfacesIcon"
-    icon_model = u"InterfacesIcon"
-    icon_add = u"AddInterfaceIcon"
-    icon_view = u"ViewAllInterfacesIcon"
+    icon_object = "InterfacesIcon"
+    icon_model = "InterfacesIcon"
+    icon_add = "AddInterfaceIcon"
+    icon_view = "ViewAllInterfacesIcon"
     inlines = [
         {
             'form': 'AliasForm',
@@ -106,10 +106,10 @@ class InterfacesFAdmin(NetworkInterruptMixin, BaseFreeAdmin):
 
 class LAGGInterfaceFAdmin(NetworkInterruptMixin, BaseFreeAdmin):
 
-    icon_object = u"VLANIcon"
-    icon_model = u"VLANIcon"
-    icon_add = u"AddVLANIcon"
-    icon_view = u"ViewAllVLANsIcon"
+    icon_object = "VLANIcon"
+    icon_model = "VLANIcon"
+    icon_add = "AddVLANIcon"
+    icon_view = "ViewAllVLANsIcon"
     create_modelform = "LAGGInterfaceForm"
     resource_mixin = LAGGInterfaceResourceMixin
 
@@ -153,8 +153,8 @@ class LAGGInterfaceFAdmin(NetworkInterruptMixin, BaseFreeAdmin):
 
 class LAGGInterfaceMembersFAdmin(BaseFreeAdmin):
 
-    icon_object = u"LAGGIcon"
-    icon_model = u"LAGGIcon"
+    icon_object = "LAGGIcon"
+    icon_model = "LAGGIcon"
     resource_mixin = LAGGInterfaceMembersResourceMixin
 
     def get_datagrid_filters(self, request):
@@ -165,10 +165,10 @@ class LAGGInterfaceMembersFAdmin(BaseFreeAdmin):
 
 class VLANFAdmin(NetworkInterruptMixin, BaseFreeAdmin):
 
-    icon_object = u"VLANIcon"
-    icon_model = u"VLANIcon"
-    icon_add = u"AddVLANIcon"
-    icon_view = u"ViewAllVLANsIcon"
+    icon_object = "VLANIcon"
+    icon_model = "VLANIcon"
+    icon_add = "AddVLANIcon"
+    icon_view = "ViewAllVLANsIcon"
 
 
 site.register(models.GlobalConfiguration, GlobalConfigurationFAdmin)

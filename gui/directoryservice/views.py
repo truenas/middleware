@@ -44,7 +44,7 @@ log = logging.getLogger("directoryservice.views")
 def directoryservice_home(request):
 
     view = appPool.hook_app_index('directoryservice', request)
-    view = filter(None, view)
+    view = [_f for _f in view if _f]
     if view:
         return view[0]
 

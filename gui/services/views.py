@@ -53,7 +53,7 @@ log = logging.getLogger("services.views")
 def index(request):
 
     view = appPool.hook_app_index('sharing', request)
-    view = filter(None, view)
+    view = [_f for _f in view if _f]
     if view:
         return view[0]
 
@@ -66,7 +66,7 @@ def core(request):
 
     disabled = {}
 
-    for key, val in get_directoryservice_status().iteritems():
+    for key, val in get_directoryservice_status().items():
         if val is True and key != 'dc_enable':
             disabled['domaincontroller'] = {
                 'reason': _('A directory service is already enabled.'),
@@ -318,7 +318,7 @@ def fibrechanneltotarget(request):
     if i > 0:
         notifier().reload("iscsitarget")
 
-    for mibname, val in sysctl_set.items():
+    for mibname, val in list(sysctl_set.items()):
         role = sysctl.filter('dev.isp.%s.role' % mibname)
         if role:
             role = role[0]

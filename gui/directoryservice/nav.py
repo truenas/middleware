@@ -29,7 +29,7 @@ from freenasUI.freeadmin.tree import TreeNode
 
 
 NAME = _('Directory Service')
-ICON = u'DirectoryServiceIcon'
+ICON = 'DirectoryServiceIcon'
 BLACKLIST = [
     'ActiveDirectory',
     'LDAP',
@@ -58,7 +58,7 @@ class ActiveDirectoryView(TreeNode):
     name = _('Active Directory')
     app_name = 'activedirectory'
     type = 'opendirectoryservice'
-    icon = u'ActiveDirectoryIcon'
+    icon = 'ActiveDirectoryIcon'
     append_to = 'directoryservice'
     order = 0
 
@@ -69,7 +69,7 @@ class NT4View(TreeNode):
     name = _('NT4')
     app_name = 'nt4'
     type = 'opendirectoryservice'
-    icon = u'NT4Icon'
+    icon = 'NT4Icon'
     append_to = 'directoryservice'
     order = 15
 
@@ -80,7 +80,7 @@ class NISView(TreeNode):
     name = _('NIS')
     app_name = 'nis'
     type = 'opendirectoryservice'
-    icon = u'NISIcon'
+    icon = 'NISIcon'
     append_to = 'directoryservice'
     order = 10
 
@@ -91,7 +91,7 @@ class LDAPView(TreeNode):
     name = _('LDAP')
     app_name = 'ldap'
     type = 'opendirectoryservice'
-    icon = u'LDAPIcon'
+    icon = 'LDAPIcon'
     append_to = 'directoryservice'
     order = 5
 
@@ -102,7 +102,7 @@ class KerberosRealmView(TreeNode):
     name = _('Kerberos Realms')
     app_name = 'kerberosrealm'
     type = 'opendirectoryservice'
-    icon = u'KerberosRealmIcon'
+    icon = 'KerberosRealmIcon'
     append_to = 'directoryservice'
     order = 20
 
@@ -113,7 +113,7 @@ class KerberosKeytabView(TreeNode):
     name = _('Kerberos Keytabs')
     app_name = 'kerberoskeytab'
     type = 'opendirectoryservice'
-    icon = u'KerberosKeytabIcon'
+    icon = 'KerberosKeytabIcon'
     append_to = 'directoryservice'
     order = 25
 
@@ -124,6 +124,6 @@ class KerberosSettingsView(TreeNode):
     name = _('Kerberos Settings')
     app_name = 'kerberossettings'
     type = 'opendirectoryservice'
-    icon = u'SettingsIcon'
+    icon = 'SettingsIcon'
     append_to = 'directoryservice'
     order = 30

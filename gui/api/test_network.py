@@ -29,18 +29,18 @@ class InterfaceResourceTest(APITestCase):
 
         data = self.deserialize(resp)
         self.assertEqual(data, {
-            u'id': 1,
-            u'int_dhcp': False,
-            u'int_interface': u'em1',
-            u'int_ipv4address': u'192.168.50.5',
-            u'int_ipv6address': u'',
-            u'int_ipv6auto': False,
-            u'int_name': u'lan',
-            u'int_options': u'',
-            u'int_v4netmaskbit': u'24',
-            u'int_v6netmaskbit': u'',
-            u'ipv4_addresses': [u'192.168.50.5/24'],
-            u'ipv6_addresses': []
+            'id': 1,
+            'int_dhcp': False,
+            'int_interface': 'em1',
+            'int_ipv4address': '192.168.50.5',
+            'int_ipv6address': '',
+            'int_ipv6auto': False,
+            'int_name': 'lan',
+            'int_options': '',
+            'int_v4netmaskbit': '24',
+            'int_v6netmaskbit': '',
+            'ipv4_addresses': ['192.168.50.5/24'],
+            'ipv6_addresses': []
         })
 
     def test_Retrieve(self):
@@ -58,18 +58,18 @@ class InterfaceResourceTest(APITestCase):
         self.assertHttpOK(resp)
         data = self.deserialize(resp)
         self.assertEqual(data, [{
-            u'id': obj.id,
-            u'int_dhcp': False,
-            u'int_interface': u'em1',
-            u'int_ipv4address': u'192.168.50.5',
-            u'int_ipv6address': u'',
-            u'int_ipv6auto': False,
-            u'int_name': u'lan',
-            u'int_options': u'',
-            u'int_v4netmaskbit': u'24',
-            u'int_v6netmaskbit': u'',
-            u'ipv4_addresses': [u'192.168.50.5/24'],
-            u'ipv6_addresses': []
+            'id': obj.id,
+            'int_dhcp': False,
+            'int_interface': 'em1',
+            'int_ipv4address': '192.168.50.5',
+            'int_ipv6address': '',
+            'int_ipv6auto': False,
+            'int_name': 'lan',
+            'int_options': '',
+            'int_v4netmaskbit': '24',
+            'int_v6netmaskbit': '',
+            'ipv4_addresses': ['192.168.50.5/24'],
+            'ipv6_addresses': []
         }])
 
     def test_Update(self):
@@ -129,10 +129,10 @@ class StaticRouteResourceTest(APITestCase):
 
         data = self.deserialize(resp)
         self.assertEqual(data, {
-            u'id': 1,
-            u'sr_description': u'test route',
-            u'sr_destination': u'192.168.1.111/24',
-            u'sr_gateway': u'192.168.3.1'
+            'id': 1,
+            'sr_description': 'test route',
+            'sr_destination': '192.168.1.111/24',
+            'sr_gateway': '192.168.3.1'
         })
 
     def test_Retrieve(self):
@@ -148,10 +148,10 @@ class StaticRouteResourceTest(APITestCase):
         self.assertHttpOK(resp)
         data = self.deserialize(resp)
         self.assertEqual(data, [{
-            u'id': obj.id,
-            u'sr_description': u'test route',
-            u'sr_destination': u'192.168.1.111/24',
-            u'sr_gateway': u'192.168.3.1'
+            'id': obj.id,
+            'sr_description': 'test route',
+            'sr_destination': '192.168.1.111/24',
+            'sr_gateway': '192.168.3.1'
         }])
 
     def test_Update(self):
@@ -209,11 +209,11 @@ class VLANResourceTest(APITestCase):
 
         data = self.deserialize(resp)
         self.assertEqual(data, {
-            u'id': 1,
-            u'vlan_description': u'',
-            u'vlan_pint': u'em1',
-            u'vlan_tag': 0,
-            u'vlan_vint': u'vlan0'
+            'id': 1,
+            'vlan_description': '',
+            'vlan_pint': 'em1',
+            'vlan_tag': 0,
+            'vlan_vint': 'vlan0'
         })
 
     def test_Retrieve(self):
@@ -229,11 +229,11 @@ class VLANResourceTest(APITestCase):
         self.assertHttpOK(resp)
         data = self.deserialize(resp)
         self.assertEqual(data, [{
-            u'id': obj.id,
-            u'vlan_description': u'',
-            u'vlan_pint': u'em1',
-            u'vlan_tag': 0,
-            u'vlan_vint': u'vlan0'
+            'id': obj.id,
+            'vlan_description': '',
+            'vlan_pint': 'em1',
+            'vlan_tag': 0,
+            'vlan_vint': 'vlan0'
         }])
 
     def test_Update(self):
@@ -293,18 +293,18 @@ class GlobalConfigurationResourceTest(APITestCase):
         self.assertHttpOK(resp)
         data = self.deserialize(resp)
         self.assertEqual(data, {
-            u'id': self._gc.id,
-            u'gc_domain': u'local',
-            u'gc_hostname': u'nas',
-            u'gc_hosts': u'',
-            u'gc_ipv4gateway': u'',
-            u'gc_ipv6gateway': u'',
-            u'gc_nameserver1': u'',
-            u'gc_nameserver2': u'',
-            u'gc_nameserver3': u'',
-            u'gc_httpproxy': u'',
-            u'gc_netwait_enabled': False,
-            u'gc_netwait_ip': u'',
+            'id': self._gc.id,
+            'gc_domain': 'local',
+            'gc_hostname': 'nas',
+            'gc_hosts': '',
+            'gc_ipv4gateway': '',
+            'gc_ipv6gateway': '',
+            'gc_nameserver1': '',
+            'gc_nameserver2': '',
+            'gc_nameserver3': '',
+            'gc_httpproxy': '',
+            'gc_netwait_enabled': False,
+            'gc_netwait_ip': '',
         })
 
     def test_Update(self):
@@ -349,9 +349,9 @@ class LAGGResourceTest(APITestCase):
 
         data = self.deserialize(resp)
         self.assertEqual(data, {
-            u'id': 1,
-            u'lagg_interface': u'lagg0',
-            u'lagg_protocol': u'roundrobin'
+            'id': 1,
+            'lagg_interface': 'lagg0',
+            'lagg_protocol': 'roundrobin'
         })
 
     def test_Retrieve(self):
@@ -373,9 +373,9 @@ class LAGGResourceTest(APITestCase):
         self.assertHttpOK(resp)
         data = self.deserialize(resp)
         self.assertEqual(data, [{
-            u'id': obj.id,
-            u'lagg_interface': u'lagg0',
-            u'lagg_protocol': u'roundrobin'
+            'id': obj.id,
+            'lagg_interface': 'lagg0',
+            'lagg_protocol': 'roundrobin'
         }])
 
     def test_Update(self):

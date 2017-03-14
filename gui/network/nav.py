@@ -6,17 +6,17 @@ from freenasUI.middleware.notifier import notifier
 from . import models
 
 NAME = _('Network')
-ICON = u'NetworkIcon'
+ICON = 'NetworkIcon'
 BLACKLIST = ['LAGGInterfaceMembers', 'Alias', 'LAGGInterface']
 ORDER = 10
 
 
 class IPMI(TreeNode):
 
-    gname = u'IPMI'
-    name = _(u'IPMI')
+    gname = 'IPMI'
+    name = _('IPMI')
     type = 'opennetwork'
-    icon = u'IPMIIcon'
+    icon = 'IPMIIcon'
     append_to = 'network'
 
     def pre_build_options(self):
@@ -26,10 +26,10 @@ class IPMI(TreeNode):
 
 class IPMI_B(TreeNode):
 
-    gname = u'IPMI_B'
-    name = _(u'IPMI')
+    gname = 'IPMI_B'
+    name = _('IPMI')
     type = 'opennetwork'
-    icon = u'IPMIIcon'
+    icon = 'IPMIIcon'
     append_to = 'network'
 
     def pre_build_options(self):
@@ -50,17 +50,17 @@ class IPMI_B(TreeNode):
 class NetSummary(TreeNode):
 
     gname = 'NetworkSummary'
-    name = _(u'Network Summary')
+    name = _('Network Summary')
     type = 'opennetwork'
-    icon = u'SettingsIcon'
+    icon = 'SettingsIcon'
 
 
 class GlobalConf(TreeNode):
 
     gname = 'GlobalConfiguration'
-    name = _(u'Global Configuration')
+    name = _('Global Configuration')
     type = 'opennetwork'
-    icon = u'SettingsIcon'
+    icon = 'SettingsIcon'
     append_to = 'network'
 
 
@@ -69,26 +69,26 @@ class Linkss(TreeNode):
     gname = 'LAGGInterface'
     model = 'LAGGInterface'
     app_name = 'network'
-    name = _(u'Link Aggregations')
-    icon = u'LAGGIcon'
+    name = _('Link Aggregations')
+    icon = 'LAGGIcon'
 
     def __init__(self, *args, **kwargs):
 
         super(Linkss, self).__init__(*args, **kwargs)
 
         laggadd = TreeNode('Add')
-        laggadd.name = _(u'Create Link Aggregation')
+        laggadd.name = _('Create Link Aggregation')
         laggadd.view = 'freeadmin_network_lagginterface_add'
         laggadd.type = 'object'
-        laggadd.icon = u'AddLAGGIcon'
+        laggadd.icon = 'AddLAGGIcon'
         laggadd.model = 'LAGGInterface'
         laggadd.app_name = 'network'
 
         laggview = TreeNode('View')
         laggview.gname = 'View'
-        laggview.name = _(u'View Link Aggregations')
+        laggview.name = _('View Link Aggregations')
         laggview.type = 'opennetwork'
-        laggview.icon = u'ViewAllLAGGsIcon'
+        laggview.icon = 'ViewAllLAGGsIcon'
         laggview.model = 'LAGGInterface'
         laggview.app_name = 'network'
         self.append_children([laggadd, laggview])
@@ -99,7 +99,7 @@ class Linkss(TreeNode):
             if laggs.count() > 0:
                 nav = TreeNode()
                 nav.name = name
-                nav.icon = u'LAGGIcon'
+                nav.icon = 'LAGGIcon'
                 nav._children = []
                 self.append_child(nav)
 
@@ -107,7 +107,7 @@ class Linkss(TreeNode):
 
                 subnav = TreeNode()
                 subnav.name = lagg.lagg_interface.int_name
-                subnav.icon = u'LAGGIcon'
+                subnav.icon = 'LAGGIcon'
                 subnav._children = []
                 nav.append_child(subnav)
 
@@ -118,7 +118,7 @@ class Linkss(TreeNode):
                     subsubnav = TreeNode()
                     subsubnav.name = member.lagg_physnic
                     subsubnav.type = 'editobject'
-                    subsubnav.icon = u'LAGGIcon'
+                    subsubnav.icon = 'LAGGIcon'
                     subsubnav.view = 'freeadmin_network_lagginterfacemembers_edit'
                     subsubnav.app_name = 'network'
                     subsubnav.model = 'LAGGInterfaceMembers' + lagg.lagg_interface.int_name

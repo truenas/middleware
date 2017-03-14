@@ -105,10 +105,10 @@ def main():
 
 if __name__ == '__main__':
     try:
-        print json.dumps(main())
+        print(json.dumps(main()))
     except Exception as e:
-        print json.dumps({
+        print(json.dumps({
             'exception': ''.join(traceback.format_exception(*sys.exc_info())),
-            'error': unicode(e),
-        })
+            'error': str(e),
+        }))
         sys.exit(2)

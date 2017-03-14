@@ -33,18 +33,18 @@ class CronJobResourceTest(APITestCase):
 
         data = self.deserialize(resp)
         self.assertEqual(data, {
-            u'id': 1,
-            u'cron_command': u'ls /',
-            u'cron_daymonth': u'*',
-            u'cron_dayweek': u'*',
-            u'cron_description': u'',
-            u'cron_enabled': True,
-            u'cron_hour': u'*',
-            u'cron_minute': u'*/20',
-            u'cron_month': u'*',
-            u'cron_stderr': False,
-            u'cron_stdout': True,
-            u'cron_user': u'root',
+            'id': 1,
+            'cron_command': 'ls /',
+            'cron_daymonth': '*',
+            'cron_dayweek': '*',
+            'cron_description': '',
+            'cron_enabled': True,
+            'cron_hour': '*',
+            'cron_minute': '*/20',
+            'cron_month': '*',
+            'cron_stderr': False,
+            'cron_stdout': True,
+            'cron_user': 'root',
         })
 
     def test_Retrieve(self):
@@ -59,18 +59,18 @@ class CronJobResourceTest(APITestCase):
         self.assertHttpOK(resp)
         data = self.deserialize(resp)
         self.assertEqual(data, [{
-            u'id': obj.id,
-            u'cron_command': u'ls /',
-            u'cron_daymonth': u'*',
-            u'cron_dayweek': u'*',
-            u'cron_description': u'',
-            u'cron_enabled': True,
-            u'cron_hour': u'*',
-            u'cron_minute': u'00',
-            u'cron_month': u'*',
-            u'cron_stderr': False,
-            u'cron_stdout': True,
-            u'cron_user': u'root',
+            'id': obj.id,
+            'cron_command': 'ls /',
+            'cron_daymonth': '*',
+            'cron_dayweek': '*',
+            'cron_description': '',
+            'cron_enabled': True,
+            'cron_hour': '*',
+            'cron_minute': '00',
+            'cron_month': '*',
+            'cron_stderr': False,
+            'cron_stdout': True,
+            'cron_user': 'root',
         }])
 
     def test_Update(self):
@@ -130,11 +130,11 @@ class InitShutdownResourceTest(APITestCase):
 
         data = self.deserialize(resp)
         self.assertEqual(data, {
-            u'id': 1,
-            u'ini_command': u'echo "init" > /tmp/init',
-            u'ini_script': None,
-            u'ini_type': u'command',
-            u'ini_when': u'postinit'
+            'id': 1,
+            'ini_command': 'echo "init" > /tmp/init',
+            'ini_script': None,
+            'ini_type': 'command',
+            'ini_when': 'postinit'
         })
 
     def test_Retrieve(self):
@@ -150,11 +150,11 @@ class InitShutdownResourceTest(APITestCase):
         self.assertHttpOK(resp)
         data = self.deserialize(resp)
         self.assertEqual(data, [{
-            u'id': obj.id,
-            u'ini_command': u'echo "init" > /tmp/init',
-            u'ini_script': None,
-            u'ini_type': u'command',
-            u'ini_when': u'postinit'
+            'id': obj.id,
+            'ini_command': 'echo "init" > /tmp/init',
+            'ini_script': None,
+            'ini_type': 'command',
+            'ini_when': 'postinit'
         }])
 
     def test_Update(self):
@@ -229,31 +229,31 @@ class RsyncResourceTest(APITestCase):
 
         data = self.deserialize(resp)
         self.assertEqual(data, {
-            u'id': 1,
-            u'rsync_archive': False,
-            u'rsync_compress': True,
-            u'rsync_daymonth': u'*',
-            u'rsync_dayweek': u'*',
-            u'rsync_delete': False,
-            u'rsync_desc': u'',
-            u'rsync_direction': u'push',
-            u'rsync_enabled': True,
-            u'rsync_extra': u'',
-            u'rsync_hour': u'*',
-            u'rsync_minute': u'*/20',
-            u'rsync_mode': u'module',
-            u'rsync_month': u'*',
-            u'rsync_path': u'/mnt/tank',
-            u'rsync_preserveattr': False,
-            u'rsync_preserveperm': False,
-            u'rsync_quiet': False,
-            u'rsync_recursive': True,
-            u'rsync_remotehost': u'testhost',
-            u'rsync_remotemodule': u'testmodule',
-            u'rsync_remotepath': u'',
-            u'rsync_remoteport': 22,
-            u'rsync_times': True,
-            u'rsync_user': u'root'
+            'id': 1,
+            'rsync_archive': False,
+            'rsync_compress': True,
+            'rsync_daymonth': '*',
+            'rsync_dayweek': '*',
+            'rsync_delete': False,
+            'rsync_desc': '',
+            'rsync_direction': 'push',
+            'rsync_enabled': True,
+            'rsync_extra': '',
+            'rsync_hour': '*',
+            'rsync_minute': '*/20',
+            'rsync_mode': 'module',
+            'rsync_month': '*',
+            'rsync_path': '/mnt/tank',
+            'rsync_preserveattr': False,
+            'rsync_preserveperm': False,
+            'rsync_quiet': False,
+            'rsync_recursive': True,
+            'rsync_remotehost': 'testhost',
+            'rsync_remotemodule': 'testmodule',
+            'rsync_remotepath': '',
+            'rsync_remoteport': 22,
+            'rsync_times': True,
+            'rsync_user': 'root'
         })
 
     def test_Retrieve(self):
@@ -268,31 +268,31 @@ class RsyncResourceTest(APITestCase):
         self.assertHttpOK(resp)
         data = self.deserialize(resp)
         self.assertEqual(data, [{
-            u'id': obj.id,
-            u'rsync_archive': False,
-            u'rsync_compress': True,
-            u'rsync_daymonth': u'*',
-            u'rsync_dayweek': u'*',
-            u'rsync_delete': False,
-            u'rsync_desc': u'',
-            u'rsync_direction': u'push',
-            u'rsync_enabled': True,
-            u'rsync_extra': u'',
-            u'rsync_hour': u'*',
-            u'rsync_minute': u'00',
-            u'rsync_mode': u'module',
-            u'rsync_month': u'*',
-            u'rsync_path': u'/mnt',
-            u'rsync_preserveattr': False,
-            u'rsync_preserveperm': False,
-            u'rsync_quiet': False,
-            u'rsync_recursive': True,
-            u'rsync_remotehost': u'',
-            u'rsync_remotemodule': u'',
-            u'rsync_remotepath': u'',
-            u'rsync_remoteport': 22,
-            u'rsync_times': True,
-            u'rsync_user': u'root'
+            'id': obj.id,
+            'rsync_archive': False,
+            'rsync_compress': True,
+            'rsync_daymonth': '*',
+            'rsync_dayweek': '*',
+            'rsync_delete': False,
+            'rsync_desc': '',
+            'rsync_direction': 'push',
+            'rsync_enabled': True,
+            'rsync_extra': '',
+            'rsync_hour': '*',
+            'rsync_minute': '00',
+            'rsync_mode': 'module',
+            'rsync_month': '*',
+            'rsync_path': '/mnt',
+            'rsync_preserveattr': False,
+            'rsync_preserveperm': False,
+            'rsync_quiet': False,
+            'rsync_recursive': True,
+            'rsync_remotehost': '',
+            'rsync_remotemodule': '',
+            'rsync_remotepath': '',
+            'rsync_remoteport': 22,
+            'rsync_times': True,
+            'rsync_user': 'root'
         }])
 
     def test_Update(self):
@@ -361,14 +361,14 @@ class SMARTTestResourceTest(APITestCase):
 
         data = self.deserialize(resp)
         self.assertEqual(data, {
-            u'id': 1,
-            u'smarttest_daymonth': u'*',
-            u'smarttest_dayweek': u'*',
-            u'smarttest_desc': u'',
-            u'smarttest_disks': [1, 2],
-            u'smarttest_hour': u'*',
-            u'smarttest_month': u'*',
-            u'smarttest_type': u'L'
+            'id': 1,
+            'smarttest_daymonth': '*',
+            'smarttest_dayweek': '*',
+            'smarttest_desc': '',
+            'smarttest_disks': [1, 2],
+            'smarttest_hour': '*',
+            'smarttest_month': '*',
+            'smarttest_type': 'L'
         })
 
     def test_Retrieve(self):
@@ -384,14 +384,14 @@ class SMARTTestResourceTest(APITestCase):
         self.assertHttpOK(resp)
         data = self.deserialize(resp)
         self.assertEqual(data, [{
-            u'id': obj.id,
-            u'smarttest_daymonth': u'*',
-            u'smarttest_dayweek': u'*',
-            u'smarttest_desc': u'',
-            u'smarttest_disks': [1, 2],
-            u'smarttest_hour': u'*',
-            u'smarttest_month': u'*',
-            u'smarttest_type': u'L'
+            'id': obj.id,
+            'smarttest_daymonth': '*',
+            'smarttest_dayweek': '*',
+            'smarttest_desc': '',
+            'smarttest_disks': [1, 2],
+            'smarttest_hour': '*',
+            'smarttest_month': '*',
+            'smarttest_type': 'L'
         }])
 
     def test_Update(self):

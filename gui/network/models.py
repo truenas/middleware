@@ -144,8 +144,8 @@ class GlobalConfiguration(Model):
         ):
             setattr(self, "_orig_%s" % name, self.__dict__.get(name))
 
-    def __unicode__(self):
-        return u'%s' % self.id
+    def __str__(self):
+        return str(self.id)
 
     def get_hostname(self):
         _n = notifier()
@@ -264,10 +264,10 @@ class Interfaces(Model):
         blank=True
     )
 
-    def __unicode__(self):
+    def __str__(self):
         if not self.int_name:
             return self.int_interface
-        return u'%s' % self.int_name
+        return str(self.int_name)
 
     def __init__(self, *args, **kwargs):
         super(Interfaces, self).__init__(*args, **kwargs)
@@ -289,7 +289,7 @@ class Interfaces(Model):
                 random.SystemRandom().choice(
                     string.ascii_letters + string.digits
                 )
-                for n in xrange(16)
+                for n in range(16)
             ])
         return super(Interfaces, self).save(*args, **kwargs)
 
@@ -412,13 +412,13 @@ class Alias(Model):
         help_text=""
     )
 
-    def __unicode__(self):
+    def __str__(self):
         if self.alias_v4address:
-            return u'%s:%s' % (
+            return '%s:%s' % (
                 self.alias_interface.int_name,
                 self.alias_v4address)
         elif self.alias_v6address:
-            return u'%s:%s' % (
+            return '%s:%s' % (
                 self.alias_interface.int_name,
                 self.alias_v6address)
 
@@ -464,7 +464,7 @@ class VLAN(Model):
         blank=True
     )
 
-    def __unicode__(self):
+    def __str__(self):
         return self.vlan_vint
 
     def delete(self):
@@ -478,10 +478,10 @@ class VLAN(Model):
         ordering = ["vlan_vint"]
 
     class FreeAdmin:
-        icon_object = u"VLANIcon"
-        icon_model = u"VLANIcon"
-        icon_add = u"AddVLANIcon"
-        icon_view = u"ViewAllVLANsIcon"
+        icon_object = "VLANIcon"
+        icon_model = "VLANIcon"
+        icon_add = "AddVLANIcon"
+        icon_view = "ViewAllVLANsIcon"
 
 
 class LAGGInterface(Model):
@@ -504,7 +504,7 @@ class LAGGInterface(Model):
         verbose_name_plural = _("Link Aggregations")
         ordering = ["lagg_interface"]
 
-    def __unicode__(self):
+    def __str__(self):
         interface_list = LAGGInterfaceMembers.objects.filter(
             lagg_interfacegroup=self.id)
         if interface_list is not None:
@@ -545,7 +545,7 @@ class LAGGInterfaceMembers(Model):
         verbose_name=_("Options")
     )
 
-    def __unicode__(self):
+    def __str__(self):
         return self.lagg_physnic
 
     class Meta:
@@ -575,12 +575,12 @@ class StaticRoute(Model):
         ordering = ["sr_destination", "sr_gateway"]
 
     class FreeAdmin:
-        icon_object = u"StaticRouteIcon"
-        icon_model = u"StaticRouteIcon"
-        icon_add = u"AddStaticRouteIcon"
-        icon_view = u"ViewAllStaticRoutesIcon"
+        icon_object = "StaticRouteIcon"
+        icon_model = "StaticRouteIcon"
+        icon_add = "AddStaticRouteIcon"
+        icon_view = "ViewAllStaticRoutesIcon"
 
-    def __unicode__(self):
+    def __str__(self):
         return self.sr_destination
 
     def save(self, *args, **kwargs):

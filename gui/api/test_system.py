@@ -27,13 +27,13 @@ class NTPServerResourceTest(APITestCase):
 
         data = self.deserialize(resp)
         self.assertEqual(data, {
-            u'id': 1,
-            u'ntp_address': u'0.freebsd.pool.ntp.org',
-            u'ntp_burst': False,
-            u'ntp_iburst': True,
-            u'ntp_maxpoll': 10,
-            u'ntp_minpoll': 6,
-            u'ntp_prefer': False
+            'id': 1,
+            'ntp_address': '0.freebsd.pool.ntp.org',
+            'ntp_burst': False,
+            'ntp_iburst': True,
+            'ntp_maxpoll': 10,
+            'ntp_minpoll': 6,
+            'ntp_prefer': False
         })
 
     def test_Retrieve(self):
@@ -47,13 +47,13 @@ class NTPServerResourceTest(APITestCase):
         self.assertHttpOK(resp)
         data = self.deserialize(resp)
         self.assertEqual(data, [{
-            u'id': obj.id,
-            u'ntp_address': u'0.freebsd.pool.ntp.org',
-            u'ntp_burst': False,
-            u'ntp_iburst': True,
-            u'ntp_maxpoll': 10,
-            u'ntp_minpoll': 6,
-            u'ntp_prefer': False
+            'id': obj.id,
+            'ntp_address': '0.freebsd.pool.ntp.org',
+            'ntp_burst': False,
+            'ntp_iburst': True,
+            'ntp_maxpoll': 10,
+            'ntp_minpoll': 6,
+            'ntp_prefer': False
         }])
 
     def test_Update(self):
@@ -105,12 +105,12 @@ class TunableResourceTest(APITestCase):
 
         data = self.deserialize(resp)
         self.assertEqual(data, {
-            u'id': 1,
-            u'tun_comment': u'',
-            u'tun_enabled': True,
-            u'tun_value': u'YES',
-            u'tun_var': u'xhci_load',
-            u'tun_type': u'loader',
+            'id': 1,
+            'tun_comment': '',
+            'tun_enabled': True,
+            'tun_value': 'YES',
+            'tun_var': 'xhci_load',
+            'tun_type': 'loader',
         })
 
     def test_Retrieve(self):
@@ -125,12 +125,12 @@ class TunableResourceTest(APITestCase):
         self.assertHttpOK(resp)
         data = self.deserialize(resp)
         self.assertEqual(data, [{
-            u'id': obj.id,
-            u'tun_comment': u'',
-            u'tun_enabled': True,
-            u'tun_value': u'YES',
-            u'tun_var': u'xhci_load',
-            u'tun_type': u'loader',
+            'id': obj.id,
+            'tun_comment': '',
+            'tun_enabled': True,
+            'tun_value': 'YES',
+            'tun_var': 'xhci_load',
+            'tun_type': 'loader',
         }])
 
     def test_Update(self):
@@ -186,18 +186,18 @@ class SettingsResourceTest(APITestCase):
         self.assertHttpOK(resp)
         data = self.deserialize(resp)
         self.assertEqual(data, {
-            u'id': self._settings.id,
-            u'stg_guiaddress': u'0.0.0.0',
-            u'stg_guihttpsport': 443,
-            u'stg_guiport': 80,
-            u'stg_guihttpsredirect': True,
-            u'stg_guiprotocol': u'http',
-            u'stg_guiv6address': u'::',
-            u'stg_kbdmap': u'',
-            u'stg_language': u'en',
-            u'stg_syslogserver': u'',
-            u'stg_timezone': u'America/Los_Angeles',
-            u'stg_wizardshown': False
+            'id': self._settings.id,
+            'stg_guiaddress': '0.0.0.0',
+            'stg_guihttpsport': 443,
+            'stg_guiport': 80,
+            'stg_guihttpsredirect': True,
+            'stg_guiprotocol': 'http',
+            'stg_guiv6address': '::',
+            'stg_kbdmap': '',
+            'stg_language': 'en',
+            'stg_syslogserver': '',
+            'stg_timezone': 'America/Los_Angeles',
+            'stg_wizardshown': False
         })
 
     def test_Update(self):
@@ -243,23 +243,23 @@ class AdvancedResourceTest(APITestCase):
         self.assertHttpOK(resp)
         data = self.deserialize(resp)
         self.assertEqual(data, {
-            u'id': self._advanced.id,
-            u'adv_advancedmode': False,
-            u'adv_anonstats': True,
-            u'adv_anonstats_token': u'',
-            u'adv_autotune': False,
-            u'adv_consolemenu': False,
-            u'adv_consolemsg': True,
-            u'adv_consolescreensaver': False,
-            u'adv_debugkernel': False,
-            u'adv_motd': u'Welcome',
-            u'adv_powerdaemon': False,
-            u'adv_serialconsole': False,
-            u'adv_serialport': u'0x2f8',
-            u'adv_serialspeed': u'9600',
-            u'adv_swapondrive': 2,
-            u'adv_traceback': True,
-            u'adv_uploadcrash': True,
+            'id': self._advanced.id,
+            'adv_advancedmode': False,
+            'adv_anonstats': True,
+            'adv_anonstats_token': '',
+            'adv_autotune': False,
+            'adv_consolemenu': False,
+            'adv_consolemsg': True,
+            'adv_consolescreensaver': False,
+            'adv_debugkernel': False,
+            'adv_motd': 'Welcome',
+            'adv_powerdaemon': False,
+            'adv_serialconsole': False,
+            'adv_serialport': '0x2f8',
+            'adv_serialspeed': '9600',
+            'adv_swapondrive': 2,
+            'adv_traceback': True,
+            'adv_uploadcrash': True,
         })
 
     def test_Update(self):
@@ -309,14 +309,14 @@ class EmailResourceTest(APITestCase):
         self.assertHttpOK(resp)
         data = self.deserialize(resp)
         self.assertEqual(data, {
-            u'id': self._obj.id,
-            u'em_fromemail': u'',
-            u'em_outgoingserver': u'',
-            u'em_pass': None,
-            u'em_port': 25,
-            u'em_security': u'plain',
-            u'em_smtp': False,
-            u'em_user': None,
+            'id': self._obj.id,
+            'em_fromemail': '',
+            'em_outgoingserver': '',
+            'em_pass': None,
+            'em_port': 25,
+            'em_security': 'plain',
+            'em_smtp': False,
+            'em_user': None,
         })
 
     def test_Update(self):
@@ -368,16 +368,16 @@ class SSLResourceTest(APITestCase):
         self.assertHttpOK(resp)
         data = self.deserialize(resp)
         self.assertEqual(data, {
-            u'id': self._obj.id,
-            u'ssl_certfile': u'',
-            u'ssl_city': None,
-            u'ssl_common': None,
-            u'ssl_country': None,
-            u'ssl_email': None,
-            u'ssl_org': None,
-            u'ssl_passphrase': None,
-            u'ssl_state': None,
-            u'ssl_unit': None
+            'id': self._obj.id,
+            'ssl_certfile': '',
+            'ssl_city': None,
+            'ssl_common': None,
+            'ssl_country': None,
+            'ssl_email': None,
+            'ssl_org': None,
+            'ssl_passphrase': None,
+            'ssl_state': None,
+            'ssl_unit': None
         })
 
     def test_Update(self):

@@ -8,10 +8,10 @@ from freenasUI.sharing import models
 
 class AFPShareFAdmin(BaseFreeAdmin):
 
-    icon_model = u"AppleShareIcon"
-    icon_add = u"AddAppleShareIcon"
-    icon_view = u"ViewAllAppleSharesIcon"
-    icon_object = u"AppleShareIcon"
+    icon_model = "AppleShareIcon"
+    icon_add = "AddAppleShareIcon"
+    icon_view = "ViewAllAppleSharesIcon"
+    icon_object = "AppleShareIcon"
     advanced_fields = (
         'afp_allow',
         'afp_cachecnid',
@@ -42,10 +42,10 @@ class AFPShareFAdmin(BaseFreeAdmin):
 
 class CIFSShareFAdmin(BaseFreeAdmin):
 
-    icon_model = u"WindowsShareIcon"
-    icon_add = u"AddWindowsShareIcon"
-    icon_view = u"ViewAllWindowsSharesIcon"
-    icon_object = u"WindowsShareIcon"
+    icon_model = "WindowsShareIcon"
+    icon_add = "AddWindowsShareIcon"
+    icon_view = "ViewAllWindowsSharesIcon"
+    icon_object = "WindowsShareIcon"
     advanced_fields = (
         'cifs_auxsmbconf',
         'cifs_browsable',
@@ -84,10 +84,10 @@ class CIFSShareFAdmin(BaseFreeAdmin):
 
 class NFSShareFAdmin(BaseFreeAdmin):
 
-    icon_model = u"UNIXShareIcon"
-    icon_add = u"AddUNIXShareIcon"
-    icon_view = u"ViewAllUNIXSharesIcon"
-    icon_object = u"UNIXShareIcon"
+    icon_model = "UNIXShareIcon"
+    icon_add = "AddUNIXShareIcon"
+    icon_view = "ViewAllUNIXSharesIcon"
+    icon_object = "UNIXShareIcon"
     inlines = [
         {
             'form': 'NFS_SharePathForm',
@@ -124,10 +124,10 @@ class NFSShareFAdmin(BaseFreeAdmin):
 
 class WebDAVShareFAdmin(BaseFreeAdmin):
   
-    icon_model = u"WebDAVShareIcon"
-    icon_add = u"AddWebDAVShareIcon"
-    icon_view = u"ViewAllWebDAVSharesIcon"
-    icon_object = u"WebDAVShareIcon"
+    icon_model = "WebDAVShareIcon"
+    icon_add = "AddWebDAVShareIcon"
+    icon_view = "ViewAllWebDAVSharesIcon"
+    icon_object = "WebDAVShareIcon"
     fields = (
           'webdav_name',
           'webdav_comment',

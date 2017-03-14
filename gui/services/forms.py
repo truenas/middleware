@@ -145,7 +145,7 @@ class CIFSForm(ModelForm):
         if self.instance.id and self.instance.cifs_srv_bindip:
             bindips = []
             for ip in self.instance.cifs_srv_bindip:
-                bindips.append(ip.encode('utf-8'))
+                bindips.append(ip)
 
             self.fields['cifs_srv_bindip'].initial = (bindips)
         else:
@@ -179,7 +179,7 @@ class CIFSForm(ModelForm):
 
     def __check_octet(self, v):
         try:
-            if v != "" and (int(v, 8) & ~011777):
+            if v != "" and (int(v, 8) & ~0o11777):
                 raise ValueError
         except:
             raise forms.ValidationError(_("This is not a valid mask"))
@@ -238,7 +238,7 @@ class CIFSForm(ModelForm):
         bind = []
         for ip in ips:
             try:
-                IPAddress(ip.encode('utf-8'))
+                IPAddress(ip)
             except:
                 raise forms.ValidationError(
                     "This is not a valid IP: %s" % (ip, )
@@ -289,7 +289,7 @@ class AFPForm(ModelForm):
         if self.instance.id and self.instance.afp_srv_bindip:
             bindips = []
             for ip in self.instance.afp_srv_bindip:
-                bindips.append(ip.encode('utf-8'))
+                bindips.append(ip)
 
             self.fields['afp_srv_bindip'].initial = (bindips)
         else:
@@ -302,7 +302,7 @@ class AFPForm(ModelForm):
         bind = []
         for ip in ips:
             try:
-                IPAddress(ip.encode('utf-8'))
+                IPAddress(ip)
             except:
                 raise forms.ValidationError(
                     "This is not a valid IP: %s" % (ip, )
@@ -381,7 +381,7 @@ class NFSForm(ModelForm):
                 )
         self.fields['nfs_srv_bindip'].choices = list(choices.IPChoices())
         self.fields['nfs_srv_bindip'].initial = (
-            self.instance.nfs_srv_bindip.encode('utf-8').split(',')
+            self.instance.nfs_srv_bindip.split(',')
             if self.instance.id and self.instance.nfs_srv_bindip
             else ''
         )
@@ -420,7 +420,7 @@ class NFSForm(ModelForm):
         bind = []
         for ip in ips:
             try:
-                IPAddress(ip.encode('utf-8'))
+                IPAddress(ip)
             except:
                 raise forms.ValidationError(
                     "This is not a valid IP: %s" % (ip, )
@@ -601,7 +601,7 @@ class SSHForm(ModelForm):
                 return obj
             with open(keyfile, "rb") as f:
                 pubkey = f.read().strip().split(None, 3)[1]
-            decoded_key = base64.b64decode(pubkey.encode("ascii"))
+            decoded_key = base64.b64decode(pubkey)
             key_digest = hashlib.sha256(decoded_key).digest()
             ssh_fingerprint = (b"SHA256:" + base64.b64encode(key_digest).replace(b"=", b"")).decode("utf-8")
             # using log.error since it logs to /var/log/messages, /var/log/debug.log as well as /dev/console all at once
@@ -638,7 +638,7 @@ class RsyncModForm(ModelForm):
         name = self.cleaned_data['rsyncmod_name']
         if re.search(r'[/\]]', name):
             raise forms.ValidationError(
-                _(u"The name cannot contain slash or a closing square backet.")
+                _("The name cannot contain slash or a closing square backet.")
             )
         name = name.strip()
         return name
@@ -819,7 +819,7 @@ class SNMPForm(ModelForm):
             validate_email(contact)
         elif not re.match(r'^[-_a-zA-Z0-9\s]+$', contact):
             raise forms.ValidationError(
-                _(u"The contact must contain only alphanumeric characters, _, "
+                _("The contact must contain only alphanumeric characters, _, "
                     "- or a valid e-mail address")
             )
         return contact
@@ -834,7 +834,7 @@ class SNMPForm(ModelForm):
                 return community
         if not re.match(r'^[-_.a-zA-Z0-9\s]+$', community):
             raise forms.ValidationError(
-                _(u"The community must contain only alphanumeric characters "
+                _("The community must contain only alphanumeric characters "
                     "_ . spaces or -")
             )
         return community
@@ -919,7 +919,7 @@ class UPSForm(ModelForm):
             self.fields['ups_shutdowntimer'].widget.attrs['class'] = (
                 'dijitDisabled dijitTextBoxDisabled '
                 'dijitValidationTextBoxDisabled')
-        ports = filter(lambda x: x.find('.') == -1, glob.glob('/dev/cua*'))
+        ports = [x for x in glob.glob('/dev/cua*') if x.find('.') == -1]
         ports.extend(glob.glob('/dev/ugen*'))
         self.fields['ups_port'] = forms.ChoiceField(
             label=_("Port"),
@@ -1163,7 +1163,7 @@ class iSCSITargetToExtentForm(ModelForm):
     def __init__(self, *args, **kwargs):
         super(iSCSITargetToExtentForm, self).__init__(*args, **kwargs)
         choices = tuple(
-            [(x, x) for x in xrange(25)]
+            [(x, x) for x in range(25)]
         )
         self.fields['iscsi_lunid'] = forms.CharField(
             label=self.fields['iscsi_lunid'].label,
@@ -1176,7 +1176,7 @@ class iSCSITargetToExtentForm(ModelForm):
         lunid = self.cleaned_data.get('iscsi_lunid')
         if not lunid:
             return None
-        if isinstance(lunid, (str, unicode)) and not lunid.isdigit():
+        if isinstance(lunid, str) and not lunid.isdigit():
             raise forms.ValidationError(_("LUN ID must be a positive integer"))
         return lunid
 
@@ -1373,7 +1373,7 @@ class iSCSITargetExtentForm(ModelForm):
         snaps = []
         for volume in Volume.objects.filter(vol_fstype__exact='ZFS'):
             zvols = _notifier.list_zfs_vols(volume.vol_name, sort='name')
-            for zvol, attrs in zvols.items():
+            for zvol, attrs in list(zvols.items()):
                 if "zvol/" + zvol not in used_zvol:
                     diskchoices["zvol/" + zvol] = "%s (%s)" % (
                         zvol,
@@ -1389,7 +1389,7 @@ class iSCSITargetExtentForm(ModelForm):
         # Grab partition list
         # NOTE: This approach may fail if device nodes are not accessible.
         disks = _notifier.get_disks()
-        for name, disk in disks.items():
+        for name, disk in list(disks.items()):
             if name in used_disks:
                 continue
             capacity = humanize_size(disk['capacity'])
@@ -1401,14 +1401,15 @@ class iSCSITargetExtentForm(ModelForm):
             """| /usr/bin/cut -d" " -f1` | /usr/bin/cut -f1,3""",
             shell=True,
             stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE)
+            stderr=subprocess.PIPE,
+            encoding='utf8')
         gate_diskinfo = gate_pipe.communicate()[0].strip().split('\n')
         for disk in gate_diskinfo:
             if disk:
                 devname, capacity = disk.split('\t')
                 capacity = humanize_size(capacity)
                 diskchoices[devname] = "%s (%s)" % (devname, capacity)
-        return diskchoices.items()
+        return list(diskchoices.items())
 
     def clean_iscsi_target_extent_name(self):
         name = self.cleaned_data.get('iscsi_target_extent_name')
@@ -1582,7 +1583,7 @@ class iSCSITargetExtentForm(ModelForm):
             if not os.path.exists(dirs):
                 try:
                     os.makedirs(dirs)
-                except Exception, e:
+                except Exception as e:
                     log.error("Unable to create dirs for extent file: %s", e)
             if not os.path.exists(path):
                 size = self.cleaned_data["iscsi_target_extent_filesize"]
@@ -1701,10 +1702,10 @@ class iSCSITargetAuthorizedInitiatorForm(ModelForm):
             if auth_network == 'ALL':
                 continue
             try:
-                IPNetwork(auth_network.encode('utf-8'))
+                IPNetwork(auth_network)
             except (NetmaskValueError, ValueError):
                 try:
-                    IPAddress(auth_network.encode('utf-8'))
+                    IPAddress(auth_network)
                 except (AddressValueError, ValueError):
                     raise forms.ValidationError(
                         _(
@@ -1776,7 +1777,7 @@ class iSCSITargetForm(ModelForm):
             qs = qs.exclude(id=self.instance.id)
         if qs.exists():
             raise forms.ValidationError(
-                _(u'A target with that name already exists.')
+                _('A target with that name already exists.')
             )
         return name
 

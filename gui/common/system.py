@@ -38,7 +38,7 @@ import syslog
 import ntplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from email.Utils import formatdate
+from email.utils import formatdate
 from datetime import datetime, timedelta
 from django.utils.translation import ugettext_lazy as _
 from lockfile import LockFile, LockTimeout
@@ -250,7 +250,7 @@ def send_mail(
     if attachments:
         msg = MIMEMultipart()
         msg.preamble = text
-        map(lambda attachment: msg.attach(attachment), attachments)
+        list(map(lambda attachment: msg.attach(attachment), attachments))
     else:
         msg = MIMEText(text, _charset='utf-8')
     if subject:
@@ -266,7 +266,7 @@ def send_mail(
 
     if not extra_headers:
         extra_headers = {}
-    for key, val in extra_headers.items():
+    for key, val in list(extra_headers.items()):
         if key in msg:
             msg.replace_header(key, val)
         else:
@@ -375,10 +375,10 @@ def is_mounted(**kwargs):
 def mount(dev, path, mntopts=None, fstype=None):
     mount_cmd = ['/sbin/mount']
 
-    if isinstance(dev, unicode):
+    if isinstance(dev, str):
         dev = dev.encode('utf-8')
 
-    if isinstance(path, unicode):
+    if isinstance(path, str):
         path = path.encode('utf-8')
 
     if mntopts:
@@ -395,7 +395,8 @@ def mount(dev, path, mntopts=None, fstype=None):
     proc = subprocess.Popen(
         mount_cmd + opts + fstype + [dev, path],
         stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE
+        stderr=subprocess.PIPE,
+        encoding='utf8',
     )
     output = proc.communicate()
 
@@ -419,7 +420,9 @@ def umount(path, force=False):
     proc = subprocess.Popen(
         cmdlst,
         stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE)
+        stderr=subprocess.PIPE,
+        encoding='utf8',
+    )
     output = proc.communicate()
 
     if proc.returncode != 0:
@@ -580,7 +583,7 @@ def domaincontroller_objects():
     objects = []
     for row in results:
         obj = {}
-        for key in row.keys():
+        for key in list(row.keys()):
             obj[key] = row[key]
         objects.append(obj)
 
@@ -617,7 +620,7 @@ def nt4_objects():
     objects = []
     for row in results:
         obj = {}
-        for key in row.keys():
+        for key in list(row.keys()):
             obj[key] = row[key]
         objects.append(obj)
 
@@ -660,13 +663,10 @@ def kerberoskeytab_objects():
 
 def exclude_path(path, exclude):
 
-    if isinstance(path, unicode):
+    if isinstance(path, str):
         path = path.encode('utf8')
 
-    exclude = map(
-        lambda y: y.encode('utf8') if isinstance(y, unicode) else y,
-        exclude
-    )
+    exclude = [y.encode('utf8') if isinstance(y, str) else y for y in exclude]
 
     fine_grained = []
     for e in exclude:
@@ -707,7 +707,7 @@ def backup_database():
     # Legacy format
     files = glob.glob('%s/*.db' % systempath)
     reg = re.compile(r'.*(\d{4}-\d{2}-\d{2})-(\d+)\.db$')
-    files = filter(lambda y: reg.match(y), files)
+    files = [y for y in files if reg.match(y)]
     for f in files:
         try:
             os.unlink(f)

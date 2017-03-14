@@ -20,10 +20,10 @@ class BsdUserFAdmin(BaseFreeAdmin):
     object_filters = {'bsdusr_builtin__exact': False}
     object_num = -1
 
-    icon_object = u"UserIcon"
-    icon_model = u"UsersIcon"
-    icon_add = u"AddUserIcon"
-    icon_view = u"ViewAllUsersIcon"
+    icon_object = "UserIcon"
+    icon_model = "UsersIcon"
+    icon_add = "AddUserIcon"
+    icon_view = "ViewAllUsersIcon"
 
     resource_mixin = BsdUserResourceMixin
     resource_name = 'account/users'
@@ -114,10 +114,10 @@ class BsdGroupFAdmin(BaseFreeAdmin):
     object_filters = {'bsdgrp_builtin__exact': False}
     object_num = -1
 
-    icon_object = u"GroupIcon"
-    icon_model = u"GroupsIcon"
-    icon_add = u"AddGroupIcon"
-    icon_view = u"ViewAllGroupsIcon"
+    icon_object = "GroupIcon"
+    icon_model = "GroupsIcon"
+    icon_add = "AddGroupIcon"
+    icon_view = "ViewAllGroupsIcon"
 
     resource_mixin = BsdGroupResourceMixin
     resource_name = 'account/groups'

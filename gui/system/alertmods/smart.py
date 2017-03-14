@@ -14,7 +14,7 @@ class SMARTAlert(BaseAlert):
         alerts = []
 
         with SmartAlert() as sa:
-            for msgs in sa.data.itervalues():
+            for msgs in sa.data.values():
                 if not msgs:
                     continue
                 for msg in msgs:

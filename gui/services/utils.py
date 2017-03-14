@@ -23,7 +23,7 @@
 # SUCH DAMAGE.
 #
 
-import cPickle as pickle
+import pickle as pickle
 import os
 
 from lockfile import LockFile, LockTimeout

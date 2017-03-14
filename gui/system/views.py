@@ -24,7 +24,7 @@
 #
 #####################################################################
 from collections import OrderedDict, namedtuple
-import cPickle as pickle
+import pickle as pickle
 import datetime
 import json
 import logging
@@ -37,8 +37,8 @@ import sysctl
 import tarfile
 import tempfile
 import time
-import urllib
-import xmlrpclib
+import urllib.request, urllib.parse, urllib.error
+import xmlrpc.client
 import traceback
 import sys
 
@@ -46,6 +46,7 @@ from wsgiref.util import FileWrapper
 from django.core.urlresolvers import reverse
 from django.db import transaction
 from django.http import (
+    FileResponse,
     HttpResponse,
     HttpResponseRedirect,
     StreamingHttpResponse,
@@ -316,7 +317,7 @@ def bootenv_scrub(request):
         try:
             notifier().zfs_scrub('freenas-boot')
             return JsonResp(request, message=_("Scrubbing the Boot Pool..."))
-        except Exception, e:
+        except Exception as e:
             return JsonResp(request, error=True, message=repr(e))
     return render(request, 'system/boot_scrub.html')
 
@@ -566,7 +567,7 @@ def config_upload(request):
             if os.path.isdir(FIRMWARE_DIR):
                 shutil.rmtree(FIRMWARE_DIR + '/')
         os.mkdir(FIRMWARE_DIR)
-        os.chmod(FIRMWARE_DIR, 01777)
+        os.chmod(FIRMWARE_DIR, 0o1777)
         form = forms.ConfigUploadForm()
 
         return render(request, 'system/config_upload.html', {
@@ -623,7 +624,7 @@ def config_download(request):
     response['Content-Length'] = os.path.getsize(filename)
     response['Content-Disposition'] = (
         'attachment; filename="%s-%s-%s.%s"' % (
-            hostname.encode('utf-8'),
+            hostname,
             freenas_build,
             time.strftime('%Y%m%d%H%M%S'),
             'tar' if bundle else 'db',
@@ -756,7 +757,7 @@ def testmail(request):
 
     fromwizard = False
     data = request.POST.copy()
-    for key, value in data.items():
+    for key, value in list(data.items()):
         if key.startswith('system-'):
             fromwizard = True
             data[key.replace('system-', '')] = value
@@ -815,7 +816,7 @@ class DojoFileStore(object):
         self.filterVolumes = filterVolumes
         if self.filterVolumes:
             self.mp = [
-                os.path.abspath((u'/mnt/%s' % v.vol_name).encode('utf8'))
+                os.path.abspath('/mnt/%s' % v.vol_name)
                 for v in Volume.objects.filter(vol_fstype='ZFS')
             ]
 
@@ -825,8 +826,6 @@ class DojoFileStore(object):
         # as single slash.
         if self.path.startswith('//'):
             self.path = self.path[1:]
-
-        self.path = self.path.encode('utf8')
 
         self.dirsonly = dirsonly
         if self.dirsonly:
@@ -888,7 +887,7 @@ class DojoFileStore(object):
         item['$ref'] = os.path.abspath(
             reverse(self._lookupurl, kwargs={
                 'path': path,
-            }) + '?root=%s' % urllib.quote_plus(self.root),
+            }) + '?root=%s' % urllib.parse.quote_plus(self.root),
         )
         item['id'] = item['$ref']
         return item
@@ -1003,11 +1002,10 @@ def debug_download(request):
     else:
         debug_file = dump
         extension = 'tgz'
-        hostname = '-%s' % gc.gc_hostname.encode('utf-8')
+        hostname = '-%s' % gc.gc_hostname
 
-    wrapper = FileWrapper(file(debug_file))
-    response = StreamingHttpResponse(
-        wrapper,
+    response = FileResponse(
+        open(debug_file, 'rb'),
         content_type='application/octet-stream',
     )
     response['Content-Length'] = os.path.getsize(debug_file)
@@ -1016,7 +1014,6 @@ def debug_download(request):
             hostname,
             time.strftime('%Y%m%d%H%M%S'),
             extension)
-
     return response
 
 
@@ -1114,7 +1111,7 @@ def backup_abort(request):
         return redirect('/system/backup')
 
 
-class UnixTransport(xmlrpclib.Transport):
+class UnixTransport(xmlrpc.client.Transport):
     def make_connection(self, addr):
         self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         self.sock.connect(addr)
@@ -1127,7 +1124,7 @@ class UnixTransport(xmlrpclib.Transport):
         self.make_connection(host)
 
         try:
-            self.sock.send(request_body + "\n")
+            self.sock.send((request_body + "\n").encode('utf8'))
             p, u = self.getparser()
 
             while 1:
@@ -1140,7 +1137,7 @@ class UnixTransport(xmlrpclib.Transport):
             p.close()
 
             return u.close()
-        except xmlrpclib.Fault:
+        except xmlrpc.client.Fault:
             raise
         except Exception:
             # All unexpected errors leave connection in
@@ -1149,21 +1146,21 @@ class UnixTransport(xmlrpclib.Transport):
             raise
 
 
-class MyServer(xmlrpclib.ServerProxy):
+class MyServer(xmlrpc.client.ServerProxy):
 
     def __init__(self, addr):
 
         self.__handler = "/"
         self.__host = addr
         self.__transport = UnixTransport()
-        self.__encoding = None
+        self.__encoding = None or 'utf-8'
         self.__verbose = 0
-        self.__allow_none = 0
+        self.__allow_none = False
 
     def __request(self, methodname, params):
         # call a method on the remote server
 
-        request = xmlrpclib.dumps(
+        request = xmlrpc.client.dumps(
             params,
             methodname,
             encoding=self.__encoding,
@@ -1183,8 +1180,10 @@ class MyServer(xmlrpclib.ServerProxy):
         return response
 
     def __getattr__(self, name):
+        if name.startswith('_'):
+            return object.__getattr__(self, name)
         # magic method dispatcher
-        return xmlrpclib._Method(self.__request, name)
+        return xmlrpc.client._Method(self.__request, name)
 
 
 @never_cache
@@ -1203,7 +1202,7 @@ def terminal(request):
         try:
             alive = multiplex.proc_keepalive(sid, jid, shell, w, h)
             break
-        except Exception, e:
+        except Exception as e:
             notifier().restart("webshell")
             time.sleep(0.5)
 
@@ -1212,7 +1211,7 @@ def terminal(request):
             if k:
                 multiplex.proc_write(
                     sid,
-                    xmlrpclib.Binary(bytearray(k.encode('utf-8')))
+                    xmlrpc.client.Binary(bytearray(k.encode('utf-8')))
                 )
             time.sleep(0.002)
             content_data = '<?xml version="1.0" encoding="UTF-8"?>' + \
@@ -1223,7 +1222,7 @@ def terminal(request):
             response = HttpResponse('Disconnected')
             response.status_code = 400
             return response
-    except (KeyError, ValueError, IndexError, xmlrpclib.Fault), e:
+    except (KeyError, ValueError, IndexError, xmlrpc.client.Fault) as e:
         response = HttpResponse('Invalid parameters: %s' % e)
         response.status_code = 400
         return response
@@ -1317,7 +1316,7 @@ def update_apply(request):
                     pass
 
                 rv['exit'] = exit
-                handler = namedtuple('Handler', rv.keys())(**rv)
+                handler = namedtuple('Handler', list(rv.keys()))(**rv)
 
             else:
                 handler = UpdateHandler(uuid=uuid)
@@ -1443,7 +1442,7 @@ def update_check(request):
                     pass
 
                 rv['exit'] = exit
-                handler = namedtuple('Handler', rv.keys())(**rv)
+                handler = namedtuple('Handler', list(rv.keys()))(**rv)
             else:
                 handler = UpdateHandler(uuid=uuid)
             if handler.error is not False:
@@ -1556,9 +1555,9 @@ def update_verify(request):
         try:
             log.debug("Starting VerifyUpdate")
             error_flag, ed, warn_flag, wl = Configuration.do_verify(handler.verify_handler)
-        except Exception, e:
+        except Exception as e:
             log.debug("VerifyUpdate Exception ApplyUpdate: %s" % e)
-            handler.error = unicode(e)
+            handler.error = str(e)
         handler.finished = True
         handler.dump()
         log.debug("VerifyUpdate finished!")

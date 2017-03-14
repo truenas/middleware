@@ -9,8 +9,8 @@ COMMENT=	Python client for nomad
 
 LICENSE=	MIT
 
-BUILD_DEPENDS=	${PYTHON_PKGNAMEPREFIX}requests>=2.10.0:www/py3-requests
-RUN_DEPENDS=	${PYTHON_PKGNAMEPREFIX}requests>=2.10.0:www/py3-requests
+BUILD_DEPENDS=	${PYTHON_PKGNAMEPREFIX}requests>=2.10.0:www/py-requests
+RUN_DEPENDS=	${PYTHON_PKGNAMEPREFIX}requests>=2.10.0:www/py-requests
 
 USE_GITHUB=	yes
 GH_ACCOUNT=	jrxFive

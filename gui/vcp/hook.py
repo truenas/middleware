@@ -27,7 +27,7 @@
 
 from django.utils.translation import ugettext as _
 from freenasUI.freeadmin.hook import AppHook
-from utils import vcp_enabled
+from .utils import vcp_enabled
 
 
 class VcpHook(AppHook):

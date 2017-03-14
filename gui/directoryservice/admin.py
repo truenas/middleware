@@ -44,49 +44,49 @@ class ActiveDirectoryFAdmin(BaseFreeAdmin):
     create_modelform = "ActiveDirectoryForm"
     deletable = False
     edit_modelform = "ActiveDirectoryForm"
-    icon_object = u"ActiveDirectoryIcon"
-    icon_model = u"ActiveDirectoryIcon"
-    icon_add = u"ActiveDirectoryIcon"
-    icon_view = u"ActiveDirectoryIcon"
+    icon_object = "ActiveDirectoryIcon"
+    icon_model = "ActiveDirectoryIcon"
+    icon_add = "ActiveDirectoryIcon"
+    icon_view = "ActiveDirectoryIcon"
 
 
 class LDAPFAdmin(BaseFreeAdmin):
     create_modelform = "LDAPForm"
     deletable = False
     edit_modelform = "LDAPForm"
-    icon_object = u"LDAPIcon"
-    icon_model = u"LDAPIcon"
-    icon_add = u"LDAPIcon"
-    icon_view = u"LDAPIcon"
+    icon_object = "LDAPIcon"
+    icon_model = "LDAPIcon"
+    icon_add = "LDAPIcon"
+    icon_view = "LDAPIcon"
 
 
 class NISFAdmin(BaseFreeAdmin):
     create_modelform = "NISForm"
     deletable = False
     edit_modelform = "NISForm"
-    icon_object = u"NISIcon"
-    icon_model = u"NISIcon"
-    icon_add = u"NISIcon"
-    icon_view = u"NISIcon"
+    icon_object = "NISIcon"
+    icon_model = "NISIcon"
+    icon_add = "NISIcon"
+    icon_view = "NISIcon"
 
 
 class NT4FAdmin(BaseFreeAdmin):
     create_modelform = "NT4Form"
     deletable = False
     edit_modelform = "NT4Form"
-    icon_object = u"NT4Icon"
-    icon_model = u"NT4Icon"
-    icon_add = u"NT4Icon"
-    icon_view = u"NT4Icon"
+    icon_object = "NT4Icon"
+    icon_model = "NT4Icon"
+    icon_add = "NT4Icon"
+    icon_view = "NT4Icon"
 
 
 class KerberosRealmFAdmin(BaseFreeAdmin):
     create_modelform = "KerberosRealmForm"
     edit_modelform = "KerberosRealmForm"
-    icon_object = u"KerberosRealmIcon"
-    icon_model = u"KerberosRealmIcon"
-    icon_add = u"KerberosRealmIcon"
-    icon_view = u"KerberosRealmIcon"
+    icon_object = "KerberosRealmIcon"
+    icon_model = "KerberosRealmIcon"
+    icon_add = "KerberosRealmIcon"
+    icon_view = "KerberosRealmIcon"
 
     resource_mixin = KerberosRealmResourceMixin
 
@@ -94,10 +94,10 @@ class KerberosRealmFAdmin(BaseFreeAdmin):
 class KerberosKeytabFAdmin(BaseFreeAdmin):
     create_modelform = "KerberosKeytabCreateForm"
     edit_modelform = "KerberosKeytabEditForm"
-    icon_object = u"KerberosKeytabIcon"
-    icon_model = u"KerberosKeytabIcon"
-    icon_add = u"KerberosKeytabIcon"
-    icon_view = u"KerberosKeytabIcon"
+    icon_object = "KerberosKeytabIcon"
+    icon_model = "KerberosKeytabIcon"
+    icon_add = "KerberosKeytabIcon"
+    icon_view = "KerberosKeytabIcon"
 
     resource_mixin = KerberosKeytabResourceMixin
 
@@ -120,10 +120,10 @@ class KerberosKeytabFAdmin(BaseFreeAdmin):
 class KerberosSettingsFAdmin(BaseFreeAdmin):
     create_modelform = "KerberosSettingsForm"
     edit_modelform = "KerberosSettingsForm"
-    icon_object = u"SettingsIcon"
-    icon_model = u"SettingsIcon"
-    icon_add = u"SettingsIcon"
-    icon_view = u"SettingsIcon"
+    icon_object = "SettingsIcon"
+    icon_model = "SettingsIcon"
+    icon_add = "SettingsIcon"
+    icon_view = "SettingsIcon"
     deletable = False
 
     resource_mixin = KerberosSettingsResourceMixin

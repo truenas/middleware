@@ -216,7 +216,7 @@ class Tnode(object):
         """
         Print the tree similar to zpool status
         """
-        print '   ' * level + node.name
+        print('   ' * level + node.name)
         for child in node.children:
             node.pprint(child, level + 1)
 
@@ -406,7 +406,8 @@ class Dev(Tnode):
                 p1 = subprocess.Popen(
                     ["/usr/sbin/zdb", "-U", "/data/zfs/zpool.cache", "-C", pool.name],
                     stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE)
+                    stderr=subprocess.PIPE,
+                    encoding='utf8')
                 zdb = p1.communicate()[0]
                 if p1.returncode == 0:
                     reg = re.search(
@@ -464,7 +465,7 @@ class ZFSList(OrderedDict):
     def __getitem__(self, item):
         if isinstance(item, slice):
             zlist = []
-            for datasets in self.pools.values():
+            for datasets in list(self.pools.values()):
                 zlist.extend(datasets)
             return zlist.__getitem__(item)
         else:
@@ -516,6 +517,9 @@ class ZFSDataset(object):
     def __repr__(self):
         return "<Dataset: %s>" % self.path
 
+    def __lt__(self, other):
+        return self.path < other.path
+
     @property
     def full_name(self):
         if self.pool:
@@ -530,7 +534,7 @@ class ZFSDataset(object):
         try:
             return int((float(self.used) / float(self.avail + self.used)) * 100.0)
         except:
-            return _(u"Error")
+            return _("Error")
 
     used_pct = property(_get_used_pct)
 
@@ -576,6 +580,9 @@ class ZFSVol(object):
     def __repr__(self):
         return "<ZFSVol: %s>" % self.path
 
+    def __lt__(self, other):
+        return self.path < other.path
+
     @property
     def full_name(self):
         if self.pool:
@@ -590,7 +597,7 @@ class ZFSVol(object):
         try:
             return int((float(self.used) / float(self.avail + self.used)) * 100.0)
         except:
-            return _(u"Error")
+            return _("Error")
 
     used_pct = property(_get_used_pct)
 
@@ -627,7 +634,7 @@ class Snapshot(object):
         self.vmsynced = vmsynced
 
     def __repr__(self):
-        return u"<Snapshot: %s>" % self.fullname
+        return "<Snapshot: %s>" % self.fullname
 
     @property
     def fullname(self):
@@ -791,8 +798,8 @@ def parse_status(name, doc, data):
                 line[1:]
             ).groups()
             read, write, cksum = 0, 0, 0
-        ident = len(spaces) / 2
-        if ident < 2 and ident < lastident:
+        ident = int(len(spaces) / 2)
+        if ident < 2 and lastident is not None and ident < lastident:
             for x in range(lastident - ident):
                 pnode = pnode.parent
 
@@ -896,7 +903,8 @@ def zfs_list(path="", recursive=False, hierarchical=False, include_root=False,
     zfsproc = subprocess.Popen(
         args,
         stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE)
+        stderr=subprocess.PIPE,
+        encoding='utf8')
 
     zfs_output, zfs_err = zfsproc.communicate()
     zfs_output = zfs_output.split('\n')
@@ -969,7 +977,7 @@ def zpool_list(name=None):
         '-o', 'name,size,alloc,free,cap',
         '-p',
         '-H',
-    ] + ([name] if name else []), stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    ] + ([name] if name else []), stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf8')
 
     output = zfsproc.communicate()[0].strip('\n')
     if zfsproc.returncode != 0:
@@ -996,7 +1004,7 @@ def zdb():
         '/usr/sbin/zdb',
         '-C',
         '-U', '/data/zfs/zpool.cache',
-    ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    ], stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf8')
     data = zfsproc.communicate()[0]
     rv = {}
     lines_ptr = {0: rv}
@@ -1016,7 +1024,7 @@ def zdb():
 
 def zdb_find(where, method):
     found = False
-    for k, v in where.iteritems():
+    for k, v in where.items():
         if k == '_parent':
             continue
         if isinstance(v, dict):

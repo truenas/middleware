@@ -67,7 +67,7 @@ class bsdGroups(Model):
         verbose_name_plural = _("Groups")
         ordering = ['bsdgrp_builtin', 'bsdgrp_group']
 
-    def __unicode__(self):
+    def __str__(self):
         return self.bsdgrp_group
 
     def delete(self, using=None, reload=True, pwdelete=True):
@@ -76,9 +76,9 @@ class bsdGroups(Model):
                 "Group %s is built-in and can not be deleted!"
             ) % (self.bsdgrp_group))
         if pwdelete:
-            notifier().user_deletegroup(self.bsdgrp_group.encode('utf-8'))
+            notifier().user_deletegroup(self.bsdgrp_group)
         if domaincontroller_enabled():
-            Samba4().group_delete(self.bsdgrp_group.encode('utf-8'))
+            Samba4().group_delete(self.bsdgrp_group)
         super(bsdGroups, self).delete(using)
         if reload:
             notifier().reload("user")
@@ -180,7 +180,7 @@ class bsdUsers(Model):
 
     @property
     def bsdusr_sshpubkey(self):
-        keysfile = '%s/.ssh/authorized_keys' % self.bsdusr_home.encode('utf8')
+        keysfile = '%s/.ssh/authorized_keys' % self.bsdusr_home
         if not os.path.exists(keysfile):
             return ''
         try:
@@ -195,15 +195,12 @@ class bsdUsers(Model):
         verbose_name_plural = _("Users")
         ordering = ['bsdusr_builtin', 'bsdusr_username']
 
-    def __unicode__(self):
+    def __str__(self):
         return self.bsdusr_username
 
     def get_username(self):
         "Return the identifying username for this User"
         return getattr(self, self.USERNAME_FIELD)
-
-    def __str__(self):
-        return self.get_username()
 
     def natural_key(self):
         return (self.get_username(),)
@@ -230,7 +227,7 @@ class bsdUsers(Model):
             time.sleep(0.1)
             return
         unixhash, smbhash = notifier().user_changepassword(
-            username=self.bsdusr_username.encode('utf-8'),
+            username=self.bsdusr_username,
             password=password,
         )
         self.bsdusr_unixhash = unixhash
@@ -243,8 +240,8 @@ class bsdUsers(Model):
         if self.bsdusr_unixhash:
             if self.bsdusr_unixhash == 'x' or self.bsdusr_unixhash == '*':
                 return False
-            if isinstance(raw_password, unicode):
-                raw_password = raw_password.encode('utf-8')
+            if isinstance(raw_password, bytes):
+                raw_password = raw_password.decode('utf-8')
             return crypt.crypt(
                 raw_password, str(self.bsdusr_unixhash)
             ) == str(self.bsdusr_unixhash)
@@ -255,9 +252,9 @@ class bsdUsers(Model):
             raise ValueError(_(
                 "User %s is built-in and can not be deleted!"
             ) % (self.bsdusr_username))
-        notifier().user_deleteuser(self.bsdusr_username.encode('utf-8'))
+        notifier().user_deleteuser(self.bsdusr_username)
         if domaincontroller_enabled():
-            Samba4().user_delete(self.bsdusr_username.encode('utf-8'))
+            Samba4().user_delete(self.bsdusr_username)
         try:
             gobj = self.bsdusr_group
             count = bsdGroupMembership.objects.filter(
@@ -267,7 +264,7 @@ class bsdUsers(Model):
             if delete_group and not gobj.bsdgrp_builtin and count == 0 and count2 == 0:
                 gobj.delete(reload=False, pwdelete=False)
         except:
-            log.warn(u'Failed to delete primary group of %s', self, exc_info=True)
+            log.warn('Failed to delete primary group of %s', self, exc_info=True)
         cifs = CIFS.objects.latest('id')
         if cifs:
             if cifs.cifs_srv_guest == self.bsdusr_username:
@@ -301,7 +298,7 @@ class bsdGroupMembership(Model):
         verbose_name = _("Group Membership")
         verbose_name_plural = _("Group Memberships")
 
-    def __unicode__(self):
+    def __str__(self):
         return "%s:%s" % (
             self.bsdgrpmember_group.bsdgrp_group,
             self.bsdgrpmember_user.bsdusr_username,

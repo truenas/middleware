@@ -6,7 +6,7 @@ from middlewared.client.utils import Struct
 def get_interface(ipaddress):
     get_all_ifaces = netif.list_interfaces()
     ifaces = []
-    for iface in get_all_ifaces.iterkeys():
+    for iface in get_all_ifaces.keys():
         all_ip = [a.__getstate__()['address'] for a in netif.get_interface(iface).addresses if a.af == netif.AddressFamily.INET]
         is_ip_exist = list(set(ipaddress).intersection(all_ip))
         if is_ip_exist:

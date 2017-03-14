@@ -31,7 +31,7 @@ from django.forms.widgets import Widget, TextInput
 from django.forms.utils import flatatt
 from django.template.loader import render_to_string
 from django.utils.safestring import mark_safe
-from django.utils.encoding import force_unicode
+from django.utils.encoding import force_str
 from django.utils.translation import ugettext_lazy as _
 
 from dojango import forms
@@ -63,12 +63,12 @@ class CronMultiple(DojoWidgetMixin, Widget):
         final_attrs = self.build_attrs(
             attrs, name=name, **{'data-dojo-name': name}
         )
-        final_attrs['value'] = force_unicode(value)
+        final_attrs['value'] = force_str(value)
         if value.startswith('*/'):
             final_attrs['typeChoice'] = "every"
         elif re.search(r'^[0-9].*', value):
             final_attrs['typeChoice'] = "selected"
-        return mark_safe(u'<div%s></div>' % (flatatt(final_attrs),))
+        return mark_safe('<div%s></div>' % (flatatt(final_attrs),))
 
 
 class DirectoryBrowser(TextInput):
@@ -96,6 +96,7 @@ class UserField(forms.ChoiceField):
             try:
                 FreeNAS_User(rv, flags=FLAGS_DBINIT)
             except:
+                log.warn('Failed to get user', exc_info=True)
                 rv = 'nobody'
         return rv
 
@@ -126,15 +127,9 @@ class UserField(forms.ChoiceField):
                 ).values_list('bsdusr_uid')
             ]
             ulist.extend(
-                map(
-                    lambda x: (x.pw_name, x.pw_name, ),
-                    sorted(filter(
-                        lambda y: (
+                [(x.pw_name, x.pw_name, ) for x in sorted([y for y in users if (
                             y is not None and y.pw_name not in self._exclude
-                        ),
-                        users
-                    ), key=lambda y: (y.pw_uid not in notbuiltin, y.pw_name))
-                )
+                        )], key=lambda y: (y.pw_uid not in notbuiltin, y.pw_name))]
             )
 
             self.widget = FilteredSelectJSON(
@@ -150,6 +145,7 @@ class UserField(forms.ChoiceField):
         try:
             u = FreeNAS_User(user, flags=FLAGS_DBINIT)
         except:
+            log.warn('Failed to get user', exc_info=True)
             u = None
 
         if u is None:
@@ -345,11 +341,11 @@ class Network4Field(forms.CharField):
             return value
         try:
             value = str(ipaddr.IPv4Network(value))
-        except ipaddr.AddressValueError, e:
+        except ipaddr.AddressValueError as e:
             raise forms.ValidationError(
                 _("Invalid address: %s") % e
             )
-        except ipaddr.NetmaskValueError, e:
+        except ipaddr.NetmaskValueError as e:
             raise forms.ValidationError(
                 _("Invalid network: %s") % e
             )
@@ -369,11 +365,11 @@ class Network6Field(forms.CharField):
             return value
         try:
             value = str(ipaddr.IPv6Network(value))
-        except ipaddr.AddressValueError, e:
+        except ipaddr.AddressValueError as e:
             raise forms.ValidationError(
                 _("Invalid address: %s") % e
             )
-        except ipaddr.NetmaskValueError, e:
+        except ipaddr.NetmaskValueError as e:
             raise forms.ValidationError(
                 _("Invalid network: %s") % e
             )
@@ -393,7 +389,7 @@ class WarningWidgetMixin(object):
 
     def render(self, *args, **kwargs):
         rendered = super(WarningWidgetMixin, self).render(*args, **kwargs)
-        return u"%s<br />\n%s" % (self.text, rendered)
+        return "%s<br />\n%s" % (self.text, rendered)
 
 
 class WarningSelect(WarningWidgetMixin, forms.widgets.Select):

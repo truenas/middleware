@@ -1,4 +1,4 @@
-#!/usr/local/bin/python2
+#!/usr/local/bin/python3
 #
 # Copyright 2015 iXsystems, Inc.
 # All rights reserved
@@ -71,7 +71,7 @@ def main(args):
         attr = 'rsync_user'
 
     obj = model.objects.get(id=args.id)
-    user = getattr(obj, attr).encode('utf8')
+    user = getattr(obj, attr)
 
     libc = ctypes.cdll.LoadLibrary("libc.so.7")
     libutil = ctypes.cdll.LoadLibrary("libutil.so.9")
@@ -133,7 +133,7 @@ if __name__ == '__main__':
         log.debug("Entered in daemon context")
         try:
             main(args)
-        except Exception, e:
+        except Exception as e:
             log.debug('Exception on run now')
             log_traceback(log=log)
 

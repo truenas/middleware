@@ -27,7 +27,7 @@ from collections import OrderedDict
 from functools import update_wrapper
 import json
 import logging
-import urllib
+import urllib.request, urllib.parse, urllib.error
 
 from django import forms as dforms
 from django.conf.urls import url
@@ -282,7 +282,7 @@ class BaseFreeAdmin(object):
                     try:
                         mf = navtree._modelforms[m][m._admin.edit_modelform]
                     except:
-                        mf = navtree._modelforms[m].values()[-1]
+                        mf = list(navtree._modelforms[m].values())[-1]
             else:
                 mf = navtree._modelforms[m][mf]
 
@@ -305,7 +305,7 @@ class BaseFreeAdmin(object):
                         globals(),
                         locals(),
                         [inline],
-                        -1)
+                        0)
                     inline = getattr(_temp, inline)
 
                     if formset:
@@ -339,7 +339,7 @@ class BaseFreeAdmin(object):
                     except dforms.ValidationError:
                         pass
 
-            for name, fsinfo in formsets.items():
+            for name, fsinfo in list(formsets.items()):
                 for frm in fsinfo['instance'].forms:
                     valid &= frm.is_valid()
                 valid &= fsinfo['instance'].is_valid()
@@ -360,7 +360,7 @@ class BaseFreeAdmin(object):
                         )
                 try:
                     mf.save()
-                    for name, fsinfo in formsets.items():
+                    for name, fsinfo in list(formsets.items()):
                         fsinfo['instance'].save()
                     events = []
                     if hasattr(mf, "done") and callable(mf.done):
@@ -373,12 +373,12 @@ class BaseFreeAdmin(object):
                             m._meta.verbose_name,
                         ),
                         events=events)
-                except MiddlewareError, e:
+                except MiddlewareError as e:
                     return JsonResp(
                         request,
                         error=True,
-                        message=_(u"Error: %s") % unicode(e))
-                except ServiceFailed, e:
+                        message=_("Error: %s") % str(e))
+                except ServiceFailed as e:
                     return JsonResp(
                         request,
                         error=True,
@@ -405,7 +405,7 @@ class BaseFreeAdmin(object):
                         globals(),
                         locals(),
                         [inline],
-                        -1)
+                        0)
                     inline = getattr(_temp, inline)
 
                     if formset:
@@ -487,7 +487,7 @@ class BaseFreeAdmin(object):
                 try:
                     mf = navtree._modelforms[m][m.FreeAdmin.edit_modelform]
                 except:
-                    mf = navtree._modelforms[m].values()[-1]
+                    mf = list(navtree._modelforms[m].values())[-1]
             else:
                 mf = navtree._modelforms[m][mf]
 
@@ -509,7 +509,7 @@ class BaseFreeAdmin(object):
                         globals(),
                         locals(),
                         [inline],
-                        -1)
+                        0)
                     inline = getattr(_temp, inline)
 
                     if formset:
@@ -543,7 +543,7 @@ class BaseFreeAdmin(object):
                     except dforms.ValidationError:
                         pass
 
-            for name, fsinfo in formsets.items():
+            for name, fsinfo in list(formsets.items()):
                 for frm in fsinfo['instance'].forms:
                     valid &= frm.is_valid()
                 valid &= fsinfo['instance'].is_valid()
@@ -564,7 +564,7 @@ class BaseFreeAdmin(object):
                         )
                 try:
                     mf.save()
-                    for name, fsinfo in formsets.items():
+                    for name, fsinfo in list(formsets.items()):
                         fsinfo['instance'].save()
                     events = []
                     if hasattr(mf, "done") and callable(mf.done):
@@ -586,19 +586,19 @@ class BaseFreeAdmin(object):
                                 m._meta.verbose_name,
                             ),
                             events=events)
-                except ServiceFailed, e:
+                except ServiceFailed as e:
                     return JsonResp(
                         request,
                         form=mf,
                         error=True,
                         message=_("The service failed to restart."),
                         events=["serviceFailed(\"%s\")" % e.service])
-                except MiddlewareError, e:
+                except MiddlewareError as e:
                     return JsonResp(
                         request,
                         form=mf,
                         error=True,
-                        message=_(u"Error: %s") % unicode(e))
+                        message=_("Error: %s") % str(e))
             else:
                 return JsonResp(request, form=mf, formsets=formsets)
 
@@ -621,7 +621,7 @@ class BaseFreeAdmin(object):
                         globals(),
                         locals(),
                         [inline],
-                        -1)
+                        0)
                     inline = getattr(_temp, inline)
 
                     if formset:
@@ -752,7 +752,7 @@ class BaseFreeAdmin(object):
                 globals(),
                 locals(),
                 [m._admin.delete_form],
-                -1)
+                0)
             form = getattr(_temp, m._admin.delete_form)
         except:
             form = None
@@ -764,7 +764,7 @@ class BaseFreeAdmin(object):
                 try:
                     mf = navtree._modelforms[m][m._admin.edit_modelform]
                 except:
-                    mf = navtree._modelforms[m].values()[-1]
+                    mf = list(navtree._modelforms[m].values())[-1]
             else:
                 mf = navtree._modelforms[m][mf]
 
@@ -865,7 +865,7 @@ class BaseFreeAdmin(object):
                     globals(),
                     locals(),
                     [_inline],
-                    -1)
+                    0)
                 inline = getattr(_temp, _inline)
                 if formset:
                     formset = getattr(_temp, formset)
@@ -925,7 +925,7 @@ grid.on(".dgrid-row:dblclick", function(evt) {
 
         filters = self.get_datagrid_filters(request)
         if filters:
-            filters = "?%s" % urllib.urlencode(filters)
+            filters = "?%s" % urllib.parse.urlencode(filters)
         else:
             filters = ''
 
@@ -981,7 +981,7 @@ grid.on(".dgrid-row:dblclick", function(evt) {
 
             data = {
                 'name': field.name,
-                'label': field.verbose_name.encode('utf-8'),
+                'label': str(field.verbose_name),
             }
 
             """

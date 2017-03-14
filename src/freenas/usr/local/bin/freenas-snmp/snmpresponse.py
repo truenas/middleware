@@ -40,8 +40,8 @@ def printValue(value, oid):
     if type(value).__name__ == 'function':
         value = value(oid)
     # Otherwise assume it's a two-tuple of type and value.
-    print value[0]
-    print value[1]
+    print(value[0])
+    print(value[1])
 
 
 def respond_to(operation, req_oid, result):
@@ -50,11 +50,11 @@ def respond_to(operation, req_oid, result):
     if operation == '-g':
         for oid, value in result:
             if oid == req_oid:
-                print oid
+                print(oid)
                 printValue(value, oid)
     elif operation == '-n':
         for oid, value in result:
             if oid_compare(oid, req_oid) == 1:
-                print oid
+                print(oid)
                 printValue(value, oid)
                 break

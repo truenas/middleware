@@ -80,10 +80,10 @@ class VcenterConfiguration(Model):
         verbose_name_plural = _("vCenter Configurations")
 
     class FreeAdmin:
-        icon_model = u'VsphereIcon'
-        icon_object = u'VsphereIcon'
-        icon_view = u'VsphereIcon'
-        icon_add = u'VsphereIcon'
+        icon_model = 'VsphereIcon'
+        icon_object = 'VsphereIcon'
+        icon_view = 'VsphereIcon'
+        icon_add = 'VsphereIcon'
 
 
 class VcenterAuxSettings(Model):
@@ -99,4 +99,4 @@ class VcenterAuxSettings(Model):
 
     class FreeAdmin:
         deletable = False
-        icon_model = u"SettingsIcon"
+        icon_model = "SettingsIcon"

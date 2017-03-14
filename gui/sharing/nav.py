@@ -5,7 +5,7 @@ from freenasUI.support.utils import fc_enabled
 
 NAME = _('Sharing')
 BLACKLIST = ['NFS_Share_Path']
-ICON = u'SharingIcon'
+ICON = 'SharingIcon'
 ORDER = 30
 
 
@@ -43,13 +43,13 @@ class ISCSI(TreeNode):
 
     order = 40
     gname = 'ISCSI'
-    type = u'iscsi'
-    icon = u'iSCSIIcon'
+    type = 'iscsi'
+    icon = 'iSCSIIcon'
 
     @property
     def rename(self):
-        return u'%s (%s%s)' % (
+        return '%s (%s%s)' % (
             _('Block'),
             _('iSCSI'),
-            u'/' + unicode(_('FC')) if fc_enabled() else '',
+            '/' + str(_('FC')) if fc_enabled() else '',
         )

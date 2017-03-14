@@ -49,7 +49,7 @@ SI_MAP = OrderedDict((
 
 def __humanize_number_common(number, maptbl):
     number = int(number)
-    for suffix, factor in maptbl.items():
+    for suffix, factor in list(maptbl.items()):
         if number > factor:
             return ('%.1f %s' % (number / factor, suffix))
     return number

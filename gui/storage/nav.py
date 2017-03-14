@@ -1,11 +1,11 @@
 from django.utils.translation import ugettext_lazy as _
 from freenasUI.freeadmin.tree import TreeNode
 from freenasUI.middleware.notifier import notifier
-import models
+from . import models
 
 NAME = _('Storage')
 BLACKLIST = ['Disk', 'ReplRemote', 'Volume']
-ICON = u'StorageIcon'
+ICON = 'StorageIcon'
 ORDER = 20
 
 
@@ -33,9 +33,9 @@ class ViewScrub(TreeNode):
 class ViewSnap(TreeNode):
 
     gname = 'Snapshots.View'
-    name = _(u'Snapshots')
+    name = _('Snapshots')
     type = 'openstorage'
-    icon = u'ViewAllPeriodicSnapIcon'
+    icon = 'ViewAllPeriodicSnapIcon'
 
 
 class ViewVMWare(TreeNode):
@@ -48,10 +48,10 @@ class ViewVMWare(TreeNode):
 class AddVolume(TreeNode):
 
     gname = 'Add'
-    name = _(u'Volume Manager')
+    name = _('Volume Manager')
     view = 'storage_volumemanager'
     type = 'volumewizard'
-    icon = u'AddVolumeIcon'
+    icon = 'AddVolumeIcon'
     app_name = 'storage'
     model = 'Volumes'
     skip = True
@@ -61,10 +61,10 @@ class AddVolume(TreeNode):
 class ImportDisk(TreeNode):
 
     gname = 'Import'
-    name = _(u'Import Disk')
+    name = _('Import Disk')
     view = 'storage_import'
     type = 'volumewizard'
-    icon = u'ImportVolumeIcon'
+    icon = 'ImportVolumeIcon'
     app_name = 'storage'
     model = 'Volume'
     skip = True
@@ -73,10 +73,10 @@ class ImportDisk(TreeNode):
 class ViewDisks(TreeNode):
 
     gname = 'ViewDisks'
-    name = _(u'View Disks')
+    name = _('View Disks')
     view = 'freeadmin_storage_disk_datagrid'
     type = 'view'
-    icon = u'ViewAllVolumesIcon'
+    icon = 'ViewAllVolumesIcon'
     app_name = 'storage'
     model = 'Disk'
     skip = True
@@ -85,10 +85,10 @@ class ViewDisks(TreeNode):
 class ViewEnclosure(TreeNode):
 
     gname = 'ViewEnclosure'
-    name = _(u'View Enclosure')
+    name = _('View Enclosure')
     view = 'storage_enclosure_status'
     type = 'view'
-    icon = u'ViewAllVolumesIcon'
+    icon = 'ViewAllVolumesIcon'
     app_name = 'storage'
     model = 'Disk'
     skip = True
@@ -97,10 +97,10 @@ class ViewEnclosure(TreeNode):
 class ViewMultipaths(TreeNode):
 
     gname = 'storage.View.Multipaths'
-    name = _(u'View Multipaths')
+    name = _('View Multipaths')
     view = 'storage_multipath_status'
     type = 'view'
-    icon = u'ViewAllVolumesIcon'
+    icon = 'ViewAllVolumesIcon'
     app_name = 'storage'
     model = 'Disk'
     skip = True
@@ -109,10 +109,10 @@ class ViewMultipaths(TreeNode):
 class ImportVolume(TreeNode):
 
     gname = 'ImportVolume'
-    name = _(u'Import Volume')
+    name = _('Import Volume')
     view = 'storage_autoimport'
     type = 'volumewizard'
-    icon = u'ImportVolumeIcon'
+    icon = 'ImportVolumeIcon'
     app_name = 'storage'
     model = 'Volume'
     skip = True
@@ -121,10 +121,10 @@ class ImportVolume(TreeNode):
 class ViewVolumes(TreeNode):
 
     gname = 'View'
-    name = _(u'View Volumes')
-    view = u'storage_home'
+    name = _('View Volumes')
+    view = 'storage_home'
     type = 'openstorage'
-    icon = u'ViewAllVolumesIcon'
+    icon = 'ViewAllVolumesIcon'
     app_name = 'storage'
     model = 'Volumes'
     skip = True
@@ -133,9 +133,9 @@ class ViewVolumes(TreeNode):
 class AddZVol(TreeNode):
 
     gname = 'storage.ZVol.Add'
-    name = _(u'Create zvol')
+    name = _('Create zvol')
     view = 'storage_zvol'
-    icon = u'AddZFSVolumeIcon'
+    icon = 'AddZFSVolumeIcon'
     type = 'object'
     app_name = 'storage'
     model = 'Volumes'
@@ -145,9 +145,9 @@ class AddZVol(TreeNode):
 class CreatePeriodicSnap(TreeNode):
 
     gname = 'Add'
-    name = _(u'Add Periodic Snapshot')
+    name = _('Add Periodic Snapshot')
     view = 'freeadmin_storage_task_add'
-    icon = u'CreatePeriodicSnapIcon'
+    icon = 'CreatePeriodicSnapIcon'
     type = 'object'
     app_name = 'storage'
     model = 'Task'
@@ -157,8 +157,8 @@ class CreatePeriodicSnap(TreeNode):
 class Volumes(TreeNode):
 
     gname = 'Volumes'
-    name = _(u'Volumes')
-    icon = u'VolumesIcon'
+    name = _('Volumes')
+    icon = 'VolumesIcon'
     order = -1
 
     def _gen_dataset(self, node, dataset):
@@ -167,23 +167,23 @@ class Volumes(TreeNode):
 
         nav = TreeNode(dataset.name)
         nav.name = dataset.mountpoint
-        nav.icon = u'VolumesIcon'
+        nav.icon = 'VolumesIcon'
 
         ds = TreeNode('Dataset')
-        ds.name = _(u'Create Dataset')
+        ds.name = _('Create Dataset')
         ds.view = 'storage_dataset'
-        ds.icon = u'AddDatasetIcon'
+        ds.icon = 'AddDatasetIcon'
         ds.type = 'object'
         ds.kwargs = {'fs': dataset.path}
         nav.append_child(ds)
 
         subnav = TreeNode('ChangePermissions')
-        subnav.name = _(u'Change Permissions')
+        subnav.name = _('Change Permissions')
         subnav.type = 'editobject'
         subnav.view = 'storage_mp_permission'
         subnav.kwargs = {'path': dataset.mountpoint}
         subnav.model = 'Volumes'
-        subnav.icon = u'ChangePasswordIcon'
+        subnav.icon = 'ChangePasswordIcon'
         subnav.app_name = 'storage'
 
         zv = AddZVol()
@@ -221,13 +221,13 @@ class Volumes(TreeNode):
             nav.order = -i.id
             nav.model = 'Volume'
             nav.kwargs = {'oid': i.id, 'model': 'Volume'}
-            nav.icon = u'VolumesIcon'
+            nav.icon = 'VolumesIcon'
 
             if i.vol_fstype == 'ZFS':
                 ds = TreeNode('Dataset')
-                ds.name = _(u'Create Dataset')
+                ds.name = _('Create Dataset')
                 ds.view = 'storage_dataset'
-                ds.icon = u'AddDatasetIcon'
+                ds.icon = 'AddDatasetIcon'
                 ds.type = 'object'
                 ds.kwargs = {'fs': i.vol_name}
                 nav.append_child(ds)
@@ -242,12 +242,12 @@ class Volumes(TreeNode):
             subnav.view = 'storage_mp_permission'
             subnav.kwargs = {'path': i.vol_path}
             subnav.model = 'Volume'
-            subnav.icon = u'ChangePasswordIcon'
+            subnav.icon = 'ChangePasswordIcon'
             subnav.app_name = 'storage'
 
             datasets = i.get_datasets(hierarchical=True)
             if datasets:
-                for name, d in datasets.items():
+                for name, d in list(datasets.items()):
                     # TODO: non-recursive algo
                     self._gen_dataset(nav, d)
 

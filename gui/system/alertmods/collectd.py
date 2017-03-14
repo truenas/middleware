@@ -1,4 +1,4 @@
-import cPickle as pickle
+import pickle as pickle
 import logging
 import os
 
@@ -34,7 +34,7 @@ class CollectdAlert(BaseAlert):
 
         lock.release()
 
-        for k, v in data.items():
+        for k, v in list(data.items()):
             if v['Severity'] == 'WARNING':
                 l = Alert.WARN
             else:

@@ -26,7 +26,7 @@
 #####################################################################
 
 import csv
-import cStringIO
+import io
 import freenasUI.settings
 import logging
 import os
@@ -107,34 +107,34 @@ ACOUSTICLVL_CHOICES = (
     ('Maximum', _('Maximum')),
 )
 
-temp = [str(x) for x in xrange(0, 12)]
+temp = [str(x) for x in range(0, 12)]
 MINUTES1_CHOICES = tuple(zip(temp, temp))
 
-temp = [str(x) for x in xrange(12, 24)]
+temp = [str(x) for x in range(12, 24)]
 MINUTES2_CHOICES = tuple(zip(temp, temp))
 
-temp = [str(x) for x in xrange(24, 36)]
+temp = [str(x) for x in range(24, 36)]
 MINUTES3_CHOICES = tuple(zip(temp, temp))
 
-temp = [str(x) for x in xrange(36, 48)]
+temp = [str(x) for x in range(36, 48)]
 MINUTES4_CHOICES = tuple(zip(temp, temp))
 
-temp = [str(x) for x in xrange(48, 60)]
+temp = [str(x) for x in range(48, 60)]
 MINUTES5_CHOICES = tuple(zip(temp, temp))
 
-temp = [str(x) for x in xrange(0, 12)]
+temp = [str(x) for x in range(0, 12)]
 HOURS1_CHOICES = tuple(zip(temp, temp))
 
-temp = [str(x) for x in xrange(12, 24)]
+temp = [str(x) for x in range(12, 24)]
 HOURS2_CHOICES = tuple(zip(temp, temp))
 
-temp = [str(x) for x in xrange(1, 13)]
+temp = [str(x) for x in range(1, 13)]
 DAYS1_CHOICES = tuple(zip(temp, temp))
 
-temp = [str(x) for x in xrange(13, 25)]
+temp = [str(x) for x in range(13, 25)]
 DAYS2_CHOICES = tuple(zip(temp, temp))
 
-temp = [str(x) for x in xrange(25, 32)]
+temp = [str(x) for x in range(25, 32)]
 DAYS3_CHOICES = tuple(zip(temp, temp))
 
 MONTHS_CHOICES = (
@@ -353,9 +353,7 @@ class NICChoices(object):
         pipe = popen("/sbin/ifconfig -l")
         self._NIClist = pipe.read().strip().split(' ')
         # Remove lo0 from choices
-        self._NIClist = filter(
-            lambda y: y not in ('lo0', 'pfsync0', 'pflog0', 'ipfw0'),
-            self._NIClist)
+        self._NIClist = [y for y in self._NIClist if y not in ('lo0', 'pfsync0', 'pflog0', 'ipfw0')]
 
         from freenasUI.middleware.notifier import notifier
         # Remove internal interfaces for failover
@@ -666,8 +664,8 @@ class UPSDRIVER_CHOICES(object):
     def __iter__(self):
         if os.path.exists("/conf/base/etc/local/nut/driver.list"):
             with open('/conf/base/etc/local/nut/driver.list', 'rb') as f:
-                d = f.read()
-            r = cStringIO.StringIO()
+                d = f.read().decode('utf8', 'ignore')
+            r = io.StringIO()
             for line in re.sub(r'[ \t]+', ' ', d, flags=re.M).split('\n'):
                 r.write(line.strip() + '\n')
             r.seek(0)
@@ -682,9 +680,9 @@ class UPSDRIVER_CHOICES(object):
                 if row[last].find(' (experimental)') != -1:
                     row[last] = row[last].replace(' (experimental)', '').strip()
                 for i, field in enumerate(list(row)):
-                    row[i] = field.decode('utf8')
-                yield (u"$".join([row[last], row[3]]), u"%s (%s)" %
-                       (u" ".join(row[0:last]), row[last]))
+                    row[i] = field
+                yield ("$".join([row[last], row[3]]), "%s (%s)" %
+                       (" ".join(row[0:last]), row[last]))
 
 
 LDAP_SSL_CHOICES = (
@@ -711,8 +709,8 @@ class KBDMAP_CHOICES(object):
     def __iter__(self):
         if not os.path.exists(self.INDEX):
             return
-        with open(self.INDEX, 'r') as f:
-            d = f.read()
+        with open(self.INDEX, 'rb') as f:
+            d = f.read().decode('utf8', 'ignore')
         _all = re.findall(r'^(?P<name>[^#\s]+?)\.kbd:en:(?P<desc>.+)$', d, re.M)
         for name, desc in _all:
             yield name, desc
@@ -880,10 +878,7 @@ class SERIAL_CHOICES(object):
             pipe = popen("/usr/sbin/devinfo -u | "
                          "awk '/^I\/O ports:/, /^I\/O memory addresses:/' | "
                          "sed -En 's/ *([0-9a-fA-Fx]+).*\(uart[0-9]+\)/\\1/p'")
-            ports = filter(
-                lambda y: True if y else False,
-                pipe.read().strip().strip('\n').split('\n')
-            )
+            ports = [y for y in pipe.read().strip().strip('\n').split('\n') if y]
             if not ports:
                 ports = ['0x2f8']
             for p in ports:
@@ -945,7 +940,7 @@ class COUNTRY_CHOICES(object):
         self.__country_columns = None
         self.__country_list = []
 
-        with open(self.__country_file, 'r') as csvfile:
+        with open(self.__country_file, 'r', encoding='utf8') as csvfile:
             reader = csv.reader(csvfile)
 
             i = 0

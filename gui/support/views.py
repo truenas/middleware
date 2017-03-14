@@ -186,7 +186,8 @@ def ticket(request):
 
         serial = subprocess.Popen(
             ['/usr/local/sbin/dmidecode', '-s', 'system-serial-number'],
-            stdout=subprocess.PIPE
+            stdout=subprocess.PIPE,
+            encoding='utf8',
         ).communicate()[0].split('\n')[0].upper()
 
         license, reason = utils.get_license()
@@ -245,7 +246,7 @@ def ticket_categories(request):
 
     if success:
         data['categories'] = OrderedDict(
-            sorted([('------', '')] + msg.items(), key=lambda y: y[0].lower())
+            sorted([('------', '')] + list(msg.items()), key=lambda y: y[0].lower())
         )
     else:
         data['message'] = msg
