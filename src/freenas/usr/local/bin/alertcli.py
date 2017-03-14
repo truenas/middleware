@@ -40,6 +40,6 @@ django.setup()
 import freenasUI.system.alert
 
 if os.path.exists("/tmp/alert"):
-    alert = pickle.load(open("/tmp/alert", "r"))
+    alert = pickle.load(open("/tmp/alert", "rb"))
     for item in alert['alerts']:
         print(item)
