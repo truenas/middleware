@@ -153,4 +153,4 @@ def ha_hardware():
 if __name__ == '__main__':
     if '/usr/local/www' not in sys.path:
         sys.path.append('/usr/local/www')
-    print ha_mode()
+    print(ha_mode())
