@@ -22,34 +22,34 @@ def main(command, quiet):
     if command == "status":
         ret = client.call('notifier.failover_status')
         if ret == "MASTER":
-            print "Node status: Active"
+            print("Node status: Active")
         elif ret == "BACKUP":
-            print "Node status: Passive"
+            print("Node status: Passive")
         elif ret == "ELECTING":
-            print "Node status: Electing master node"
+            print("Node status: Electing master node")
         elif ret == "IMPORTING":
-            print "Node status: Transitioning to Active"
+            print("Node status: Transitioning to Active")
         elif ret == "ERROR":
-            print "Node status: Faulted"
+            print("Node status: Faulted")
         elif ret == "SINGLE":
             if not quiet:
-                print "Node status: Not an HA node"
+                print("Node status: Not an HA node")
             sys.exit(0)
         elif ret == "UNKNOWN" and fo_exists:
-            print "Node status: Passive (Master mode unreachable)"
+            print("Node status: Passive (Master mode unreachable)")
 
         if fo_exists:
             ret = client.call('notifier.failover_disabled_reasons')
             if 'NO_FAILOVER' in ret:
-                print "Failover status: Administratively Disabled"
+                print("Failover status: Administratively Disabled")
             elif 'NO_PONG' in ret:
-                print "Failover status: Unavailable (remote node not responding)"
+                print("Failover status: Unavailable (remote node not responding)")
             elif 'NO_VOLUME' in ret or 'NO_VIP' in ret:
-                print "Failover status: Unavailable (failover not configured)"
+                print("Failover status: Unavailable (failover not configured)")
             else:
-                print "Failover status: Enabled"
+                print("Failover status: Enabled")
         else:
-                print "Failover status: Not configured"
+                print("Failover status: Not configured")
 
     elif command == "enable":
         if not fo_exists:
@@ -61,14 +61,14 @@ def main(command, quiet):
                 client.call('notifier.failover_remote_hactl', 'enable')
                 client.call('datastore.update', 'failover.failover', failover['id'], {'disabled': False})
                 os.system("/usr/sbin/service ix-devd start")
-                print "Failover enabled."
+                print("Failover enabled.")
                 sys.exit(0)
             except Exception as e:
-                print "Unable to contact remote node.  Failover not enabled."
-                print e
+                print("Unable to contact remote node.  Failover not enabled.")
+                print(e)
                 sys.exit(2)
         else:
-            print "Failover not disabled.  Cannot enable!"
+            print("Failover not disabled.  Cannot enable!")
             sys.exit(3)
     elif command == "disable":
         if not fo_exists:
@@ -91,28 +91,28 @@ def main(command, quiet):
                     ret = False
             if ret is not False:
                 client.call('datastore.update', 'failover.failover', failover['id'], {'disabled': True, 'master': True if status == "master" else False})
-                print "Failover disabled."
+                print("Failover disabled.")
                 os.system("/usr/sbin/service ix-devd start")
                 sys.exit(0)
             else:
-                print "Unable to contact remote node.  Failover not disabled."
+                print("Unable to contact remote node.  Failover not disabled.")
                 sys.exit(3)
         else:
-            print "Failover not enabled.  Cannot disable!"
+            print("Failover not enabled.  Cannot disable!")
 
     elif command == "takeover":
         ret = client.call('notifier.failover_status')
         if ret != "BACKUP":
-            print "Cannot takeover volume, not passive"
+            print("Cannot takeover volume, not passive")
             sys.exit(5)
-        print "This will likely cause the active node to reboot."
+        print("This will likely cause the active node to reboot.")
         while True:
-            ret = raw_input("Are you sure you wish to proceed with making "
+            ret = input("Are you sure you wish to proceed with making "
                             "this node active? (y/n): ")
             if ret.lower() == "y":
                 break
             elif ret.lower() == "n":
-                print "Takeover cancelled."
+                print("Takeover cancelled.")
                 sys.exit(1)
             else:
                 continue
@@ -120,16 +120,16 @@ def main(command, quiet):
     elif command == "giveback":
         ret = client.call('notifier.failover_status')
         if ret == "BACKUP":
-            print "Cannot giveback volume.  This unit is not Active!"
+            print("Cannot giveback volume.  This unit is not Active!")
             sys.exit(6)
-        print "Volume giveback will reboot this node."
+        print("Volume giveback will reboot this node.")
         while True:
-            ret = raw_input("Are you sure you wish to proceed with making "
+            ret = input("Are you sure you wish to proceed with making "
                             "the other node active? (y/n): ")
             if ret.lower() == "y":
                 break
             elif ret.lower() == "n":
-                print "Giveback cancelled."
+                print("Giveback cancelled.")
                 sys.exit(1)
             else:
                 continue
