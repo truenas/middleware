@@ -2515,7 +2515,7 @@ class SnapshotResource(DojoResource):
         snap = snap[0][0]
 
         try:
-            notifier().destroy_zfs_dataset(path=kwargs['pk'].encode('utf8'))
+            notifier().destroy_zfs_dataset(path=kwargs['pk'])
         except MiddlewareError as e:
             raise ImmediateHttpResponse(
                 response=self.error_response(bundle.request, {
