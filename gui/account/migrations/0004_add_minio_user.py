@@ -26,7 +26,7 @@ def add_minio_user(apps, schema_editor):
         user.save()
 
     except Exception as e:
-        print "ERROR: unable to create minio user/group: ", e
+        print("ERROR: unable to create minio user/group: ", e)
 
 def remove_minio_user(apps, schema_editor):
     try:
@@ -38,7 +38,7 @@ def remove_minio_user(apps, schema_editor):
         ).delete()
 
     except Exception as e:
-        print "ERROR: unable to remove minio user/group: ", e
+        print("ERROR: unable to remove minio user/group: ", e)
 
 class Migration(migrations.Migration):
 
