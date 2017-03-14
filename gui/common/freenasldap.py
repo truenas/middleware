@@ -2828,9 +2828,9 @@ class FreeNAS_LDAP_Groups(FreeNAS_LDAP):
 
             g = g[1]
             if 'sAMAccountName' in g:
-                cn = g['sAMAccountName'][0]
+                cn = g['sAMAccountName'][0].decode('utf8')
             else:
-                cn = g['cn'][0]
+                cn = g['cn'][0].decode('utf8')
 
             self.__groupnames.append(cn)
 
@@ -3101,7 +3101,7 @@ class FreeNAS_LDAP_Group(FreeNAS_LDAP):
             # parts = self.host.split('.')
             # host = parts[0].upper()
 
-            cn = ldap_group[1]['cn'][0]
+            cn = ldap_group[1]['cn'][0].decode('utf8')
             try:
                 gr = grp.getgrnam(cn)
 
@@ -3109,9 +3109,7 @@ class FreeNAS_LDAP_Group(FreeNAS_LDAP):
                 gr = None
 
         else:
-            if type(group) in (
-                int, int
-            ) or group.isdigit():
+            if type(group) is int or group.isdigit():
                 try:
                     gr = grp.getgrgid(group)
                 except:
@@ -3325,25 +3323,21 @@ class FreeNAS_LDAP_User(FreeNAS_LDAP):
             # host = parts[0].upper()
 
             if 'sAMAccountName' in ldap_user[1]:
-                uid = ldap_user[1]['sAMAccountName'][0]
+                uid = ldap_user[1]['sAMAccountName'][0].decode('utf8')
             elif 'uid' in ldap_user[1]:
-                uid = ldap_user[1]['uid'][0]
+                uid = ldap_user[1]['uid'][0].decode('utf8')
             else:
-                uid = ldap_user[1]['cn'][0]
+                uid = ldap_user[1]['cn'][0].decode('utf8')
 
             try:
                 pw = pwd.getpwnam(uid)
-
             except:
                 pw = None
 
         else:
-            if type(user) in (
-                int, int
-            ) or user.isdigit():
+            if type(user) is int or user.isdigit():
                 try:
                     pw = pwd.getpwuid(user)
-
                 except:
                     pw = None
 
