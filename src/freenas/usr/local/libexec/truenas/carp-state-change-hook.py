@@ -82,6 +82,7 @@ def run(cmd):
         stderr=subprocess.PIPE,
         stdout=subprocess.PIPE,
         shell=True,
+        encoding='utf8',
     )
     output = proc.communicate()[0]
     return (proc.returncode, output.strip('\n'))
@@ -176,7 +177,7 @@ def main(subsystem, event):
                         sys.exit()
                 except Exception as e:
                     log.info("Failed to contact the other node", exc_info=True)
-                    print e, "Failed to contact the other node"
+                    print(e, "Failed to contact the other node")
 
                 masterret = False
                 for vol in fobj['volumes'] + fobj['phrasedvolumes']:
@@ -258,7 +259,7 @@ def carp_master(fobj, state_file, ifname, vhid, event, user_override, forcetakeo
 
     if not forcetakeover:
         totoutput = 0
-        for group, carpint in fobj['groups'].items():
+        for group, carpint in list(fobj['groups'].items()):
             for i in carpint:
                 error, output = run("ifconfig %s | grep 'carp: BACKUP' | wc -l" % i)
                 totoutput += int(output)
@@ -560,7 +561,7 @@ def carp_backup(fobj, state_file, ifname, vhid, event, user_override):
                 sys.exit(0)
 
     totoutput = 0
-    for group, carpint in fobj['groups'].items():
+    for group, carpint in list(fobj['groups'].items()):
         for i in carpint:
             error, output = run("ifconfig %s | grep 'carp: MASTER' | wc -l" % i)
             totoutput += int(output)
