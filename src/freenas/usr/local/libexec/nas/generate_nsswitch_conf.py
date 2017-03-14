@@ -2,7 +2,6 @@
 from middlewared.client import Client
 
 import os
-import string
 import sys
 
 
@@ -62,17 +61,17 @@ def main():
             nsswitch_conf['hosts'].append('nis')
 
     try:
-        fd = os.open(NSSWITCH_CONF_PATH, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0644)
+        fd = os.open(NSSWITCH_CONF_PATH, os.O_WRONLY | os.O_CREAT | os.O_TRUNC, 0o644)
         for key in nsswitch_conf:
             line = "%s: %s\n" % (
                 key.strip(),
-                string.join(map(lambda x: x.strip(), nsswitch_conf[key]), ' ')
+                ' '.join([x.strip() for x in nsswitch_conf[key]])
             )
-            os.write(fd, line)
+            os.write(fd, line.encode('utf8'))
         os.close(fd)
 
     except Exception as e:
-        print >> sys.stderr, "can't create %s: %s" % (NSSWITCH_CONF_PATH, e)
+        print("can't create %s: %s" % (NSSWITCH_CONF_PATH, e), file=sys.stderr)
         sys.exit(1)
 
 if __name__ == '__main__':

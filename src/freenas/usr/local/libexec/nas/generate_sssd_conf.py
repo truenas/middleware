@@ -4,7 +4,6 @@ from middlewared.client.utils import Struct
 
 import os
 import re
-import string
 import sys
 import tempfile
 
@@ -46,7 +45,7 @@ class SSSDBase(object):
             parts = line.split(' ')
             if len(parts) > 2:
                 key = parts[0]
-                val = string.join(parts[2:], ' ')
+                val = ' '.join(parts[2:])
                 self._config.append({key: val})
 
     def get_section_type(self):
@@ -61,26 +60,26 @@ class SSSDBase(object):
             for pair in self._config:
                 lines = []
                 if isinstance(pair, dict):
-                    for key in pair.keys():
+                    for key in list(pair.keys()):
                         line = "%s = %s" % (key, pair[key])
-                elif isinstance(pair, basestring):
+                elif isinstance(pair, str):
                     line = "%s" % pair
                 lines.append(line.strip())
-            str = string.join(lines, '\n')
+            str = '\n'.join(lines)
         return "%s" % str
 
     def generate_header(self):
         if not self.is_empty():
-            print >> self.stdout, self.get_header()
+            print(self.get_header(), file=self.stdout)
 
     def generate_config(self):
         if not self.is_empty():
             for pair in self._config:
                 try:
-                    for key in pair.keys():
-                        print >> self.stdout, "%s = %s" % (key, pair[key])
+                    for key in list(pair.keys()):
+                        print("%s = %s" % (key, pair[key]), file=self.stdout)
                 except:
-                        print >> self.stdout, "%s" % pair
+                        print("%s" % pair, file=self.stdout)
 
     def is_empty(self):
         ret = True
@@ -89,10 +88,10 @@ class SSSDBase(object):
         return ret
 
     def __str__(self):
-        str = None
+        out = None
 
         if self.is_empty():
-            str = self.get_header()
+            out = self.get_header()
         else:
             lines = []
             header = self.get_header()
@@ -100,14 +99,14 @@ class SSSDBase(object):
                 lines.append(header.strip())
             for pair in self._config:
                 if isinstance(pair, dict):
-                    for key in pair.keys():
+                    for key in list(pair.keys()):
                         line = "%s = %s" % (key, pair[key])
-                elif isinstance(pair, basestring):
+                elif isinstance(pair, str):
                     line = "%s" % pair
                 lines.append(line.strip())
-            str = string.join(lines, '\n')
+            out = '\n'.join(lines)
 
-        return "%s\n" % str
+        return "%s\n" % out
 
     def __len__(self):
         len = 0
@@ -168,7 +167,7 @@ class SSSDSectionBase(SSSDBase):
     def __iter__(self):
         for pair in self._config:
             if isinstance(pair, dict):
-                yield pair.keys()[0]
+                yield list(pair.keys())[0]
             else:
                 yield pair
 
@@ -200,7 +199,7 @@ class SSSDSectionSSSD(SSSDSectionBase):
                 if d == domain:
                     return
             domains.append(domain)
-            self.domains = string.join(domains, ',')
+            self.domains = ','.join(domains)
 
     def remove_domain(self, domain):
         domains = []
@@ -211,7 +210,7 @@ class SSSDSectionSSSD(SSSDSectionBase):
                 continue
             else:
                 domains.append(domain)
-        self.domains = string.join(domains, ',')
+        self.domains = ','.join(domains)
 
     def get_domains(self):
         domains = []
@@ -235,7 +234,7 @@ class SSSDSectionSSSD(SSSDSectionBase):
                 if s == service:
                     return
             services.append(service)
-            self.services = string.join(services, ',')
+            self.services = ','.join(services)
 
     def remove_service(self, service):
         services = []
@@ -246,7 +245,7 @@ class SSSDSectionSSSD(SSSDSectionBase):
                 continue
             else:
                 services.append(service)
-        self.services = string.join(services, ',')
+        self.services = ','.join(services)
 
     def get_services(self):
         services = []
@@ -341,7 +340,7 @@ class SSSDSectionContainer(object):
     def __setitem__(self, name, value):
         if name != 'sections':
             for section in self.sections:
-                key = section.keys()[0]
+                key = list(section.keys())[0]
                 if key == name:
                     section[key] = value
                     return
@@ -355,7 +354,7 @@ class SSSDSectionContainer(object):
         if name != 'sections':
             section = None
             for s in self.sections:
-                key = s.keys()[0]
+                key = list(s.keys())[0]
                 if key == name:
                     section = s[key]
             return section
@@ -370,7 +369,7 @@ class SSSDSectionContainer(object):
         i = 0
         while i < len(self.sections):
             s = self.sections[i]
-            key = s.keys()[0]
+            key = list(s.keys())[0]
             if key == name:
                 del self.sections[i]
                 break
@@ -378,12 +377,12 @@ class SSSDSectionContainer(object):
 
     def __iter__(self):
         for section in self.sections:
-            yield section[section.keys()[0]]
+            yield section[list(section.keys())[0]]
 
     def keys(self):
         keys = []
         for section in self.sections:
-            keys.append(section.keys()[0])
+            keys.append(list(section.keys())[0])
         return keys
 
     def order(self):
@@ -395,7 +394,7 @@ class SSSDSectionContainer(object):
                 if st in s:
                     sections.append({st: s[st]})
                 elif st == 'domain':
-                    key = s.keys()[0]
+                    key = list(s.keys())[0]
                     if key.startswith('domain'):
                         sections.append({key: s[key]})
 
@@ -534,7 +533,7 @@ class SSSDConf(SSSDBase):
         return keys
 
     def __iter__(self):
-        for key in self.keys():
+        for key in list(self.keys()):
             yield self.sections[key]
 
     def __getitem__(self, name):
@@ -563,11 +562,11 @@ class SSSDConf(SSSDBase):
         if path:
             stdout = open(path, "w")
 
-        print >> stdout, self.__str__()
+        print(self.__str__(), file=stdout)
 
         if path:
             stdout.close()
-            os.chmod(path, 0600)
+            os.chmod(path, 0o600)
 
 
 def activedirectory_has_unix_extensions(client):
@@ -596,7 +595,7 @@ def sssd_setup():
 
     if os.path.exists(SSSD_CONFIGFILE):
         os.chown(SSSD_CONFIGFILE, 0, 0)
-        os.chmod(SSSD_CONFIGFILE, 0600)
+        os.chmod(SSSD_CONFIGFILE, 0o600)
 
 
 def add_ldap_section(client, sc):
@@ -610,7 +609,7 @@ def add_ldap_section(client, sc):
     ldap_domain = 'domain/%s' % ldap_cookie
 
     ldap_section = None
-    for key in sc.keys():
+    for key in list(sc.keys()):
         if key == ldap_domain:
             ldap_section = sc[key]
             break
@@ -633,7 +632,7 @@ def add_ldap_section(client, sc):
     ]
 
     for d in ldap_defaults:
-        key = d.keys()[0]
+        key = list(d.keys())[0]
         if key not in ldap_section:
             setattr(ldap_section, key, d[key])
 
@@ -746,7 +745,7 @@ def add_activedirectory_section(client, sc):
     ad_domain = 'domain/%s' % ad_cookie
 
     ad_section = None
-    for key in sc.keys():
+    for key in list(sc.keys()):
         if key == ad_domain:
             ad_section = sc[key]
             break
@@ -785,7 +784,7 @@ def add_activedirectory_section(client, sc):
 
     if use_ad_provider:
         for d in ad_defaults:
-            key = d.keys()[0]
+            key = list(d.keys())[0]
             if key.startswith("ldap_") and key in d:
                 del d[key]
             elif key.endswith("_provider"):
@@ -798,7 +797,7 @@ def add_activedirectory_section(client, sc):
     for d in ad_defaults:
         if not d:
             continue
-        key = d.keys()[0]
+        key = list(d.keys())[0]
         if key not in ad_section:
             setattr(ad_section, key, d[key])
 
@@ -902,6 +901,7 @@ def main():
         add_ldap_section(client, sc)
 
     sc.save(SSSD_CONFIGFILE)
+
 
 if __name__ == '__main__':
     main()

@@ -57,9 +57,7 @@ class RRDMeta(type):
         return klass
 
 
-class RRDBase(object):
-
-    __metaclass__ = RRDMeta
+class RRDBase(object, metaclass=RRDMeta):
 
     base_path = None
     identifier = None

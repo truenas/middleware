@@ -28,7 +28,7 @@ import logging
 import os
 import re
 import socket
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 
 from django.core.validators import RegexValidator
 from django.db import transaction
@@ -564,17 +564,17 @@ class GlobalConfigurationForm(ModelForm):
         nameserver3 = cleaned_data.get("gc_nameserver3")
         if nameserver3:
             if nameserver2 == "":
-                msg = _(u"Must fill out nameserver 2 before "
+                msg = _("Must fill out nameserver 2 before "
                         "filling out nameserver 3")
                 self._errors["gc_nameserver3"] = self.error_class([msg])
-                msg = _(u"Required when using nameserver 3")
+                msg = _("Required when using nameserver 3")
                 self._errors["gc_nameserver2"] = self.error_class([msg])
                 del cleaned_data["gc_nameserver2"]
             if nameserver1 == "":
-                msg = _(u"Must fill out nameserver 1 before "
+                msg = _("Must fill out nameserver 1 before "
                         "filling out nameserver 3")
                 self._errors["gc_nameserver3"] = self.error_class([msg])
-                msg = _(u"Required when using nameserver 3")
+                msg = _("Required when using nameserver 3")
                 self._errors["gc_nameserver1"] = self.error_class([msg])
                 del cleaned_data["gc_nameserver1"]
             if nameserver1 == "" or nameserver2 == "":
@@ -582,10 +582,10 @@ class GlobalConfigurationForm(ModelForm):
         elif nameserver2:
             if nameserver1 == "":
                 del cleaned_data["gc_nameserver2"]
-                msg = _(u"Must fill out nameserver 1 before "
+                msg = _("Must fill out nameserver 1 before "
                         "filling out nameserver 2")
                 self._errors["gc_nameserver2"] = self.error_class([msg])
-                msg = _(u"Required when using nameserver 3")
+                msg = _("Required when using nameserver 3")
                 self._errors["gc_nameserver1"] = self.error_class([msg])
                 del cleaned_data["gc_nameserver1"]
         return cleaned_data
@@ -624,7 +624,7 @@ class GlobalConfigurationForm(ModelForm):
                 del os.environ['https_proxy']
 
         # Reset global opener so ProxyHandler can be recalculated
-        urllib2.install_opener(None)
+        urllib.request.install_opener(None)
 
         return retval
 

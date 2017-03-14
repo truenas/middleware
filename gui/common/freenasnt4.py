@@ -329,7 +329,7 @@ class FreeNAS_NT4_Users(FreeNAS_NT4):
                 try:
                     pw = pwd.getpwnam(sAMAccountName)
 
-                except Exception, e:
+                except Exception as e:
                     log.debug("Error on getpwname: %s", e)
                     continue
 
@@ -542,12 +542,12 @@ class FreeNAS_NT4_User(FreeNAS_NT4):
         log.debug("FreeNAS_NT4_User.__get_user: user = %s", user)
         log.debug("FreeNAS_NT4_User.__get_user: domain = %s", domain)
 
-        if (self.flags & FLAGS_CACHE_READ_USER) and self.__ucache.has_key(user):
+        if (self.flags & FLAGS_CACHE_READ_USER) and user in self.__ucache:
             log.debug("FreeNAS_NT4_User.__get_user: user in cache")
             return self.__ucache[user]
 
         pw = None
-        if (self.flags & FLAGS_CACHE_READ_USER) and self.__ducache.has_key(self.__key):
+        if (self.flags & FLAGS_CACHE_READ_USER) and self.__key in self.__ducache:
             log.debug("FreeNAS_NT4_User.__get_user: NT4 user in cache")
             nt4_user = self.__ducache[self.__key]
 
@@ -614,12 +614,12 @@ class FreeNAS_NT4_Group(FreeNAS_NT4):
         log.debug("FreeNAS_NT4_Group.__get_group: group = %s", group)
         log.debug("FreeNAS_NT4_Group.__get_group: domain = %s", domain)
 
-        if (self.flags & FLAGS_CACHE_READ_GROUP) and self.__gcache.has_key(group):
+        if (self.flags & FLAGS_CACHE_READ_GROUP) and group in self.__gcache:
             log.debug("FreeNAS_NT4_User.__get_group: group in cache")
             return self.__gcache[group]
 
         g = gr = None
-        if (self.flags & FLAGS_CACHE_READ_GROUP) and self.__dgcache.has_key(self.__key):
+        if (self.flags & FLAGS_CACHE_READ_GROUP) and self.__key in self.__dgcache:
             log.debug("FreeNAS_NT4_Group.__get_group: AD group in cache")
             nt4_group = self.__dgcache[self.__key]
 

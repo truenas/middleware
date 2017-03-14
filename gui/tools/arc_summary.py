@@ -99,7 +99,7 @@ def get_Kstat():
 
 def div1():
     sys.stdout.write("\n")
-    for i in xrange(18):
+    for i in range(18):
         sys.stdout.write("%s" % "----")
     sys.stdout.write("\n")
 

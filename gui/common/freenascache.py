@@ -25,7 +25,7 @@
 #####################################################################
 
 import os
-import cPickle as pickle
+import pickle as pickle
 import logging
 
 from bsddb3 import db
@@ -106,7 +106,7 @@ class FreeNAS_BaseCache(object):
         self.__dbenv.open(
             self.cachedir,
             db.DB_INIT_CDB | db.DB_INIT_MPOOL | db.DB_CREATE,
-            0700
+            0o700
         )
 
         self.__cache = db.DB(self.__dbenv)
@@ -142,25 +142,27 @@ class FreeNAS_BaseCache(object):
         return pickle.loads(self.__cache.get(key))
 
     def __setitem__(self, key, value, overwrite=False):
-        haskey = self.__cache.has_key(key)
+        if isinstance(key, str):
+            key = key.encode('utf8')
+        haskey = key in self.__cache
         if (haskey and overwrite) or (not haskey):
             self.__cache[key] = pickle.dumps(value)
 
     def has_key(self, key):
-        return self.__cache.has_key(key)
+        return key in self.__cache
 
     def keys(self):
-        return self.__cache.keys()
+        return list(self.__cache.keys())
 
     def values(self):
         cache_values = []
-        for key in self.__cache.keys():
+        for key in list(self.__cache.keys()):
             cache_values.append(pickle.loads(self.__cache[key]))
         return cache_values
 
     def items(self):
         cache_items = []
-        for key in self.__cache.keys():
+        for key in list(self.__cache.keys()):
             cache_items.append((key, pickle.loads(self.__cache[key])))
         return cache_items
 
@@ -168,7 +170,7 @@ class FreeNAS_BaseCache(object):
         return (len(self.__cache) == 0)
 
     def expire(self):
-        for key in self.__cache.keys():
+        for key in list(self.__cache.keys()):
             self.__cache.delete(key)
         self.__cache.close()
         os.unlink(self.__cachefile)
@@ -184,7 +186,7 @@ class FreeNAS_BaseCache(object):
         if not key:
             return False
 
-        haskey = self.__cache.has_key(key)
+        haskey = key in self.__cache
         if (haskey and overwrite) or (not haskey):
             self.__cache[key] = pickle.dumps(entry)
 

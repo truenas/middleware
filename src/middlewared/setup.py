@@ -3,9 +3,11 @@ from setuptools import setup
 
 install_requires = [
     'ws4py',
-    'gevent',
-    'gevent-websocket',
+    'python-dateutil',
+    'falcon',
+    'markdown',
     'Flask',
+    #'setproctitle',
 ]
 
 setup(

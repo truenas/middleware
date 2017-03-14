@@ -26,7 +26,7 @@ def add_consul_user(apps, schema_editor):
         user.save()
 
     except Exception as e:
-        print "ERROR: unable to create consul user/group: ", e
+        print("ERROR: unable to create consul user/group: ", e)
 
 def remove_consul_user(apps, schema_editor):
     try:
@@ -38,7 +38,7 @@ def remove_consul_user(apps, schema_editor):
         ).delete()
 
     except Exception as e:
-        print "ERROR: unable to remove consul user/group: ", e
+        print("ERROR: unable to remove consul user/group: ", e)
 
 class Migration(migrations.Migration):
 

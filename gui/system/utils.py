@@ -347,7 +347,7 @@ def run_updated(train, location, download=True, apply=False):
         os.close(readfd)
         os.dup2(writefd, 1)
         os.close(writefd)
-        for i in xrange(3, 1024):
+        for i in range(3, 1024):
             try:
                 os.close(i)
             except OSError:
@@ -388,7 +388,7 @@ def manual_update(path):
     notifier().apply_update(path)
     try:
         notifier().destroy_upload_location()
-    except Exception, e:
+    except Exception as e:
         log.warn("Failed to destroy upload location: %s", e.value)
 
 

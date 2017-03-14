@@ -74,7 +74,7 @@ def create_self_signed_CA(cert_info):
         crypto.X509Extension("subjectKeyIdentifier", False, "hash",
                              subject=cert),
     ])
-    cert.set_serial_number(01)
+    cert.set_serial_number(0o1)
     sign_certificate(cert, key, cert_info['digest_algorithm'])
     return (cert, key)
 

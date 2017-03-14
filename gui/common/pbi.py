@@ -28,7 +28,6 @@ import glob
 import logging
 import os
 import select
-import string
 
 log = logging.getLogger('common.pbi')
 
@@ -460,7 +459,7 @@ class pbi_browser(pbi_base):
             line = line.strip()
             parts = line.split(':')
             if len(parts) > 1:
-                app[parts[0].strip()] = string.join(parts[1:]).strip()
+                app[parts[0].strip()] = ' '.join(parts[1:]).strip()
             if line.startswith("Description"):
                 apps.append(app)
                 app = {}
@@ -476,7 +475,7 @@ class pbi_browser(pbi_base):
             line = line.strip()
             parts = line.split(':')
             if len(parts) > 1:
-                category[parts[0].strip()] = string.join(parts[1:]).strip()
+                category[parts[0].strip()] = ' '.join(parts[1:]).strip()
             if line.startswith("Description"):
                 categories.append(category)
                 category = {}
@@ -604,7 +603,7 @@ class pbi_listrepo(pbi_base):
                 continue
 
             parts = line.split()
-            repos.append((parts[0].strip(), string.join(parts[1:]).strip()))
+            repos.append((parts[0].strip(), ' '.join(parts[1:]).strip()))
 
         return repos
 
@@ -744,7 +743,7 @@ class pbid(pbi_base):
             kq = select.kqueue()
             kq.control(evts, 0, 0)
             timeout = True
-            for i in xrange(30):
+            for i in range(30):
                 kq.control(None, 2, 1)
                 if len(glob.glob('%s/*.time' % PBID_INDEXDIR)) > 0:
                     timeout = False

@@ -43,7 +43,7 @@ log = logging.getLogger('plugins.admin')
 
 class PluginsFAdmin(BaseFreeAdmin):
 
-    icon_model = u"PluginsIcon"
+    icon_model = "PluginsIcon"
 
     resource_mixin = PluginsResourceMixin
 
@@ -55,7 +55,7 @@ class PluginsFAdmin(BaseFreeAdmin):
 
 class AvailableFAdmin(BaseFreeAdmin):
 
-    icon_model = u"PluginsIcon"
+    icon_model = "PluginsIcon"
 
     resource = AvailablePluginsResource
 

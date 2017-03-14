@@ -35,9 +35,9 @@ class CIFSResourceTest(CommonMixin, APITestCase):
             self.get_api_url(),
             format='json',
             data={
-                u'cifs_guestonly': True,
-                u'cifs_name': u'test share',
-                u'cifs_path': u'/mnt/tank/',
+                'cifs_guestonly': True,
+                'cifs_name': 'test share',
+                'cifs_path': '/mnt/tank/',
             }
         )
         self.assertHttpCreated(resp)
@@ -45,20 +45,20 @@ class CIFSResourceTest(CommonMixin, APITestCase):
 
         data = self.deserialize(resp)
         self.assertEqual(data, {
-            u'id': 1,
-            u'cifs_name': u'test share',
-            u'cifs_comment': u'',
-            u'cifs_path': u'/mnt/tank',
-            u'cifs_default_permissions': True,
-            u'cifs_guestok': False,
-            u'cifs_guestonly': True,
-            u'cifs_hostsallow': u'',
-            u'cifs_hostsdeny': u'',
-            u'cifs_recyclebin': False,
-            u'cifs_ro': False,
-            u'cifs_showhiddenfiles': False,
-            u'cifs_auxsmbconf': u'',
-            u'cifs_browsable': True,
+            'id': 1,
+            'cifs_name': 'test share',
+            'cifs_comment': '',
+            'cifs_path': '/mnt/tank',
+            'cifs_default_permissions': True,
+            'cifs_guestok': False,
+            'cifs_guestonly': True,
+            'cifs_hostsallow': '',
+            'cifs_hostsdeny': '',
+            'cifs_recyclebin': False,
+            'cifs_ro': False,
+            'cifs_showhiddenfiles': False,
+            'cifs_auxsmbconf': '',
+            'cifs_browsable': True,
         })
 
     def test_Retrieve(self):
@@ -76,20 +76,20 @@ class CIFSResourceTest(CommonMixin, APITestCase):
         data = self.deserialize(resp)
         self.assertEqual(data, [
             {
-                u'id': obj.id,
-                u'cifs_name': u'test share',
-                u'cifs_comment': u'comment',
-                u'cifs_path': u'/mnt/',
-                u'cifs_default_permissions': True,
-                u'cifs_guestok': True,
-                u'cifs_guestonly': False,
-                u'cifs_hostsallow': u'',
-                u'cifs_hostsdeny': u'',
-                u'cifs_recyclebin': False,
-                u'cifs_ro': False,
-                u'cifs_showhiddenfiles': False,
-                u'cifs_auxsmbconf': u'',
-                u'cifs_browsable': True,
+                'id': obj.id,
+                'cifs_name': 'test share',
+                'cifs_comment': 'comment',
+                'cifs_path': '/mnt/',
+                'cifs_default_permissions': True,
+                'cifs_guestok': True,
+                'cifs_guestonly': False,
+                'cifs_hostsallow': '',
+                'cifs_hostsdeny': '',
+                'cifs_recyclebin': False,
+                'cifs_ro': False,
+                'cifs_showhiddenfiles': False,
+                'cifs_auxsmbconf': '',
+                'cifs_browsable': True,
             }
         ])
 
@@ -105,7 +105,7 @@ class CIFSResourceTest(CommonMixin, APITestCase):
             '%s%d/' % (self.get_api_url(), obj.id),
             format='json',
             data={
-                u'cifs_guestonly': True,
+                'cifs_guestonly': True,
             }
         )
         self.assertHttpOK(resp)
@@ -139,8 +139,8 @@ class AFPResourceTest(CommonMixin, APITestCase):
             self.get_api_url(),
             format='json',
             data={
-                u'afp_name': u'test share',
-                u'afp_path': u'/mnt/tank',
+                'afp_name': 'test share',
+                'afp_path': '/mnt/tank',
             }
         )
         self.assertHttpCreated(resp)
@@ -148,21 +148,21 @@ class AFPResourceTest(CommonMixin, APITestCase):
 
         data = self.deserialize(resp)
         self.assertEqual(data, {
-            u'id': 1,
-            u'afp_allow': u'',
-            u'afp_comment': u'',
-            u'afp_deny': u'',
-            u'afp_dperm': u'755',
-            u'afp_fperm': u'644',
-            u'afp_name': u'test share',
-            u'afp_nodev': False,
-            u'afp_nostat': False,
-            u'afp_path': u'/mnt/tank',
-            u'afp_ro': u'',
-            u'afp_rw': u'',
-            u'afp_timemachine': False,
-            u'afp_umask': u'000',
-            u'afp_upriv': True,
+            'id': 1,
+            'afp_allow': '',
+            'afp_comment': '',
+            'afp_deny': '',
+            'afp_dperm': '755',
+            'afp_fperm': '644',
+            'afp_name': 'test share',
+            'afp_nodev': False,
+            'afp_nostat': False,
+            'afp_path': '/mnt/tank',
+            'afp_ro': '',
+            'afp_rw': '',
+            'afp_timemachine': False,
+            'afp_umask': '000',
+            'afp_upriv': True,
         })
 
     def test_Retrieve(self):
@@ -177,21 +177,21 @@ class AFPResourceTest(CommonMixin, APITestCase):
         self.assertHttpOK(resp)
         data = self.deserialize(resp)
         self.assertEqual(data, [{
-            u'id': obj.id,
-            u'afp_allow': u'',
-            u'afp_comment': u'',
-            u'afp_deny': u'',
-            u'afp_dperm': u'755',
-            u'afp_fperm': u'644',
-            u'afp_name': u'test share',
-            u'afp_nodev': False,
-            u'afp_nostat': False,
-            u'afp_path': u'/mnt/tank',
-            u'afp_ro': u'',
-            u'afp_rw': u'',
-            u'afp_timemachine': False,
-            u'afp_umask': u'000',
-            u'afp_upriv': True,
+            'id': obj.id,
+            'afp_allow': '',
+            'afp_comment': '',
+            'afp_deny': '',
+            'afp_dperm': '755',
+            'afp_fperm': '644',
+            'afp_name': 'test share',
+            'afp_nodev': False,
+            'afp_nostat': False,
+            'afp_path': '/mnt/tank',
+            'afp_ro': '',
+            'afp_rw': '',
+            'afp_timemachine': False,
+            'afp_umask': '000',
+            'afp_upriv': True,
         }])
 
     def test_Update(self):
@@ -204,7 +204,7 @@ class AFPResourceTest(CommonMixin, APITestCase):
             '%s%d/' % (self.get_api_url(), obj.id),
             format='json',
             data={
-                u'afp_upriv': False,
+                'afp_upriv': False,
             }
         )
         self.assertHttpOK(resp)
@@ -233,8 +233,8 @@ class NFSResourceTest(CommonMixin, APITestCase):
             self.get_api_url(),
             format='json',
             data={
-                u'nfs_comment': u'test share',
-                u'nfs_paths': [u'/mnt/tank'],
+                'nfs_comment': 'test share',
+                'nfs_paths': ['/mnt/tank'],
             }
         )
         self.assertHttpCreated(resp)
@@ -242,19 +242,19 @@ class NFSResourceTest(CommonMixin, APITestCase):
 
         data = self.deserialize(resp)
         self.assertEqual(data, {
-            u'id': 1,
-            u'nfs_comment': u'test share',
-            u'nfs_hosts': u'',
-            u'nfs_mapall_group': u'',
-            u'nfs_mapall_user': u'',
-            u'nfs_maproot_group': u'',
-            u'nfs_maproot_user': u'',
-            u'nfs_network': u'',
-            u'nfs_paths': [u'/mnt/tank'],
-            u'nfs_alldirs': False,
-            u'nfs_quiet': False,
-            u'nfs_ro': False,
-            u'nfs_security': []
+            'id': 1,
+            'nfs_comment': 'test share',
+            'nfs_hosts': '',
+            'nfs_mapall_group': '',
+            'nfs_mapall_user': '',
+            'nfs_maproot_group': '',
+            'nfs_maproot_user': '',
+            'nfs_network': '',
+            'nfs_paths': ['/mnt/tank'],
+            'nfs_alldirs': False,
+            'nfs_quiet': False,
+            'nfs_ro': False,
+            'nfs_security': []
         })
 
     def test_Retrieve(self):
@@ -268,19 +268,19 @@ class NFSResourceTest(CommonMixin, APITestCase):
         self.assertHttpOK(resp)
         data = self.deserialize(resp)
         self.assertEqual(data, [{
-            u'id': obj.id,
-            u'nfs_alldirs': False,
-            u'nfs_comment': u'test share',
-            u'nfs_hosts': u'',
-            u'nfs_mapall_group': u'',
-            u'nfs_mapall_user': u'',
-            u'nfs_maproot_group': u'',
-            u'nfs_maproot_user': u'',
-            u'nfs_network': u'',
-            u'nfs_paths': [],
-            u'nfs_quiet': False,
-            u'nfs_ro': False,
-            u'nfs_security': []
+            'id': obj.id,
+            'nfs_alldirs': False,
+            'nfs_comment': 'test share',
+            'nfs_hosts': '',
+            'nfs_mapall_group': '',
+            'nfs_mapall_user': '',
+            'nfs_maproot_group': '',
+            'nfs_maproot_user': '',
+            'nfs_network': '',
+            'nfs_paths': [],
+            'nfs_quiet': False,
+            'nfs_ro': False,
+            'nfs_security': []
         }])
 
     def test_Update(self):
@@ -291,8 +291,8 @@ class NFSResourceTest(CommonMixin, APITestCase):
             '%s%d/' % (self.get_api_url(), obj.id),
             format='json',
             data={
-                u'nfs_ro': True,
-                u'nfs_paths': [u'/mnt/tank'],  #FIXME: nfs paths validation
+                'nfs_ro': True,
+                'nfs_paths': ['/mnt/tank'],  #FIXME: nfs paths validation
             }
         )
         self.assertHttpOK(resp)

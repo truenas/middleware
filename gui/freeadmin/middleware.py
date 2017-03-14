@@ -23,7 +23,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
-from cStringIO import StringIO
+from io import StringIO
 
 import json
 import logging
@@ -102,7 +102,7 @@ def http_oauth(func):
                 server.verify_request(oreq, cons, None)
                 authorized = True
 
-            except Exception, e:
+            except Exception as e:
                 log.debug("auth error = %s" % e)
                 authorized = False
 
@@ -117,7 +117,7 @@ def http_oauth(func):
             if authorized:
                 return func(request, *args, **kwargs)
 
-        except Exception, e:
+        except Exception as e:
             log.debug('OAuth authentication failed', exc_info=True)
 
         return HttpResponse(json.dumps({
@@ -204,9 +204,9 @@ class CatchError(object):
             kwargs = {
                 'error': True,
                 'message': _("Error: %s") % (
-                    unicode(excp.value)
+                    str(excp.value)
                     if exc_info[0] is not OperationalError
-                    else unicode(excp.message)
+                    else str(excp.message)
                 ),
             }
             return JsonResp(request, **kwargs)

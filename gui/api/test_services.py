@@ -45,14 +45,14 @@ class AFPResourceTest(APITestCase):
         self.assertHttpOK(resp)
         data = self.deserialize(resp)
         self.assertEqual(data, {
-            u'id': obj.id,
-            u'afp_srv_connections_limit': 50,
-            u'afp_srv_guest': False,
-            u'afp_srv_guest_user': u'nobody',
-            u'afp_srv_homedir': None,
-            u'afp_srv_homedir_enable': False,
-            u'afp_srv_dbpath': None,
-            u'afp_srv_global_aux': u'',
+            'id': obj.id,
+            'afp_srv_connections_limit': 50,
+            'afp_srv_guest': False,
+            'afp_srv_guest_user': 'nobody',
+            'afp_srv_homedir': None,
+            'afp_srv_homedir_enable': False,
+            'afp_srv_dbpath': None,
+            'afp_srv_global_aux': '',
         })
 
     def test_Update(self):
@@ -114,37 +114,37 @@ class CIFSResourceTest(APITestCase):
         self.assertHttpOK(resp)
         data = self.deserialize(resp)
         self.assertEqual(data, {
-            u'id': obj.id,
-            u'cifs_SID': None,
-            u'cifs_srv_aio_enable': False,
-            u'cifs_srv_aio_rs': 4096,
-            u'cifs_srv_aio_ws': 4096,
-            u'cifs_srv_allow_execute_always': True,
-            u'cifs_srv_description': u'',
-            u'cifs_srv_dirmask': u'',
-            u'cifs_srv_domain_logons': False,
-            u'cifs_srv_doscharset': u'CP437',
-            u'cifs_srv_filemask': u'',
-            u'cifs_srv_guest': u'nobody',
-            u'cifs_srv_homedir': None,
-            u'cifs_srv_homedir_aux': u'',
-            u'cifs_srv_homedir_browseable_enable': False,
-            u'cifs_srv_homedir_enable': False,
-            u'cifs_srv_hostlookup': True,
-            u'cifs_srv_localmaster': False,
-            u'cifs_srv_loglevel': u'0',
-            u'cifs_srv_max_protocol': u'SMB2',
-            u'cifs_srv_min_protocol': u'',
-            u'cifs_srv_syslog': False,
-            u'cifs_srv_netbiosname': u'',
-            u'cifs_srv_nullpw': False,
-            u'cifs_srv_obey_pam_restrictions': True,
-            u'cifs_srv_smb_options': u'',
-            u'cifs_srv_timeserver': False,
-            u'cifs_srv_unixcharset': u'UTF-8',
-            u'cifs_srv_unixext': True,
-            u'cifs_srv_workgroup': u'',
-            u'cifs_srv_zeroconf': True
+            'id': obj.id,
+            'cifs_SID': None,
+            'cifs_srv_aio_enable': False,
+            'cifs_srv_aio_rs': 4096,
+            'cifs_srv_aio_ws': 4096,
+            'cifs_srv_allow_execute_always': True,
+            'cifs_srv_description': '',
+            'cifs_srv_dirmask': '',
+            'cifs_srv_domain_logons': False,
+            'cifs_srv_doscharset': 'CP437',
+            'cifs_srv_filemask': '',
+            'cifs_srv_guest': 'nobody',
+            'cifs_srv_homedir': None,
+            'cifs_srv_homedir_aux': '',
+            'cifs_srv_homedir_browseable_enable': False,
+            'cifs_srv_homedir_enable': False,
+            'cifs_srv_hostlookup': True,
+            'cifs_srv_localmaster': False,
+            'cifs_srv_loglevel': '0',
+            'cifs_srv_max_protocol': 'SMB2',
+            'cifs_srv_min_protocol': '',
+            'cifs_srv_syslog': False,
+            'cifs_srv_netbiosname': '',
+            'cifs_srv_nullpw': False,
+            'cifs_srv_obey_pam_restrictions': True,
+            'cifs_srv_smb_options': '',
+            'cifs_srv_timeserver': False,
+            'cifs_srv_unixcharset': 'UTF-8',
+            'cifs_srv_unixext': True,
+            'cifs_srv_workgroup': '',
+            'cifs_srv_zeroconf': True
         })
 
     def test_Update(self):
@@ -200,15 +200,15 @@ class DynamicDNSResourceTest(APITestCase):
         self.assertHttpOK(resp)
         data = self.deserialize(resp)
         self.assertEqual(data, {
-            u'id': obj.id,
-            u'ddns_domain': u'',
-            u'ddns_fupdateperiod': u'',
-            u'ddns_ipserver': u'',
-            u'ddns_options': u'',
-            u'ddns_password': u'',
-            u'ddns_provider': u'dyndns@dyndns.org',
-            u'ddns_updateperiod': u'',
-            u'ddns_username': u'',
+            'id': obj.id,
+            'ddns_domain': '',
+            'ddns_fupdateperiod': '',
+            'ddns_ipserver': '',
+            'ddns_options': '',
+            'ddns_password': '',
+            'ddns_provider': 'dyndns@dyndns.org',
+            'ddns_updateperiod': '',
+            'ddns_username': '',
         })
 
     def test_Update(self):
@@ -263,48 +263,48 @@ class FTPResourceTest(APITestCase):
         self.assertHttpOK(resp)
         data = self.deserialize(resp)
         self.assertEqual(data, {
-            u'id': obj.id,
-            u'ftp_anonpath': None,
-            u'ftp_anonuserbw': 0,
-            u'ftp_anonuserdlbw': 0,
-            u'ftp_banner': u'',
-            u'ftp_clients': 32,
-            u'ftp_defaultroot': False,
-            u'ftp_dirmask': u'077',
-            u'ftp_filemask': u'077',
-            u'ftp_fxp': False,
-            u'ftp_ident': False,
-            u'ftp_ipconnections': 0,
-            u'ftp_localuserbw': 0,
-            u'ftp_localuserdlbw': 0,
-            u'ftp_loginattempt': 3,
-            u'ftp_masqaddress': u'',
-            u'ftp_onlyanonymous': False,
-            u'ftp_onlylocal': False,
-            u'ftp_options': u'',
-            u'ftp_passiveportsmax': 0,
-            u'ftp_passiveportsmin': 0,
-            u'ftp_port': 21,
-            u'ftp_resume': False,
-            u'ftp_reversedns': False,
-            u'ftp_rootlogin': False,
-            u'ftp_ssltls_certfile': u'',
-            u'ftp_timeout': 120,
-            u'ftp_tls': False,
-            u'ftp_tls_opt_allow_client_renegotiations': False,
-            u'ftp_tls_opt_allow_dot_login': False,
-            u'ftp_tls_opt_allow_per_user': False,
-            u'ftp_tls_opt_common_name_required': False,
-            u'ftp_tls_opt_dns_name_required': False,
-            u'ftp_tls_opt_enable_diags': False,
-            u'ftp_tls_opt_export_cert_data': False,
-            u'ftp_tls_opt_ip_address_required': False,
-            u'ftp_tls_opt_no_cert_request': False,
-            u'ftp_tls_opt_no_empty_fragments': False,
-            u'ftp_tls_opt_no_session_reuse_required': False,
-            u'ftp_tls_opt_stdenvvars': False,
-            u'ftp_tls_opt_use_implicit_ssl': False,
-            u'ftp_tls_policy': u'on'
+            'id': obj.id,
+            'ftp_anonpath': None,
+            'ftp_anonuserbw': 0,
+            'ftp_anonuserdlbw': 0,
+            'ftp_banner': '',
+            'ftp_clients': 32,
+            'ftp_defaultroot': False,
+            'ftp_dirmask': '077',
+            'ftp_filemask': '077',
+            'ftp_fxp': False,
+            'ftp_ident': False,
+            'ftp_ipconnections': 0,
+            'ftp_localuserbw': 0,
+            'ftp_localuserdlbw': 0,
+            'ftp_loginattempt': 3,
+            'ftp_masqaddress': '',
+            'ftp_onlyanonymous': False,
+            'ftp_onlylocal': False,
+            'ftp_options': '',
+            'ftp_passiveportsmax': 0,
+            'ftp_passiveportsmin': 0,
+            'ftp_port': 21,
+            'ftp_resume': False,
+            'ftp_reversedns': False,
+            'ftp_rootlogin': False,
+            'ftp_ssltls_certfile': '',
+            'ftp_timeout': 120,
+            'ftp_tls': False,
+            'ftp_tls_opt_allow_client_renegotiations': False,
+            'ftp_tls_opt_allow_dot_login': False,
+            'ftp_tls_opt_allow_per_user': False,
+            'ftp_tls_opt_common_name_required': False,
+            'ftp_tls_opt_dns_name_required': False,
+            'ftp_tls_opt_enable_diags': False,
+            'ftp_tls_opt_export_cert_data': False,
+            'ftp_tls_opt_ip_address_required': False,
+            'ftp_tls_opt_no_cert_request': False,
+            'ftp_tls_opt_no_empty_fragments': False,
+            'ftp_tls_opt_no_session_reuse_required': False,
+            'ftp_tls_opt_stdenvvars': False,
+            'ftp_tls_opt_use_implicit_ssl': False,
+            'ftp_tls_policy': 'on'
         })
 
     def test_Update(self):
@@ -360,10 +360,10 @@ class LLDPResourceTest(APITestCase):
         self.assertHttpOK(resp)
         data = self.deserialize(resp)
         self.assertEqual(data, {
-            u'id': self._obj.id,
-            u'lldp_intdesc': True,
-            u'lldp_country': u'',
-            u'lldp_location': u'',
+            'id': self._obj.id,
+            'lldp_intdesc': True,
+            'lldp_country': '',
+            'lldp_location': '',
         })
 
     def test_Update(self):
@@ -416,15 +416,15 @@ class NFSResourceTest(APITestCase):
         self.assertHttpOK(resp)
         data = self.deserialize(resp)
         self.assertEqual(data, {
-            u'id': obj.id,
-            u'nfs_srv_allow_nonroot': False,
-            u'nfs_srv_bindip': u'',
-            u'nfs_srv_mountd_port': None,
-            u'nfs_srv_rpclockd_port': None,
-            u'nfs_srv_rpcstatd_port': None,
-            u'nfs_srv_servers': 4,
-            u'nfs_srv_udp': False,
-            u'nfs_srv_v4': False
+            'id': obj.id,
+            'nfs_srv_allow_nonroot': False,
+            'nfs_srv_bindip': '',
+            'nfs_srv_mountd_port': None,
+            'nfs_srv_rpclockd_port': None,
+            'nfs_srv_rpcstatd_port': None,
+            'nfs_srv_servers': 4,
+            'nfs_srv_udp': False,
+            'nfs_srv_v4': False
         })
 
     def test_Update(self):
@@ -478,9 +478,9 @@ class RsyncdResourceTest(APITestCase):
         self.assertHttpOK(resp)
         data = self.deserialize(resp)
         self.assertEqual(data, {
-            u'id': obj.id,
-            u'rsyncd_auxiliary': u'',
-            u'rsyncd_port': 873
+            'id': obj.id,
+            'rsyncd_auxiliary': '',
+            'rsyncd_port': 873
         })
 
     def test_Update(self):
@@ -540,17 +540,17 @@ class RsyncModResourceTest(APITestCase):
 
         data = self.deserialize(resp)
         self.assertEqual(data, {
-            u'id': 1,
-            u'rsyncmod_auxiliary': u'',
-            u'rsyncmod_comment': u'',
-            u'rsyncmod_group': u'nobody',
-            u'rsyncmod_hostsallow': u'',
-            u'rsyncmod_hostsdeny': u'',
-            u'rsyncmod_maxconn': 0,
-            u'rsyncmod_mode': u'rw',
-            u'rsyncmod_name': u'testmod',
-            u'rsyncmod_path': u'/mnt/tank',
-            u'rsyncmod_user': u'nobody'
+            'id': 1,
+            'rsyncmod_auxiliary': '',
+            'rsyncmod_comment': '',
+            'rsyncmod_group': 'nobody',
+            'rsyncmod_hostsallow': '',
+            'rsyncmod_hostsdeny': '',
+            'rsyncmod_maxconn': 0,
+            'rsyncmod_mode': 'rw',
+            'rsyncmod_name': 'testmod',
+            'rsyncmod_path': '/mnt/tank',
+            'rsyncmod_user': 'nobody'
         })
 
     def test_Retrieve(self):
@@ -565,17 +565,17 @@ class RsyncModResourceTest(APITestCase):
         self.assertHttpOK(resp)
         data = self.deserialize(resp)
         self.assertEqual(data, [{
-            u'id': obj.id,
-            u'rsyncmod_auxiliary': u'',
-            u'rsyncmod_comment': u'',
-            u'rsyncmod_group': u'nobody',
-            u'rsyncmod_hostsallow': u'',
-            u'rsyncmod_hostsdeny': u'',
-            u'rsyncmod_maxconn': 0,
-            u'rsyncmod_mode': u'rw',
-            u'rsyncmod_name': u'testmod',
-            u'rsyncmod_path': u'/mnt/tank',
-            u'rsyncmod_user': u'nobody'
+            'id': obj.id,
+            'rsyncmod_auxiliary': '',
+            'rsyncmod_comment': '',
+            'rsyncmod_group': 'nobody',
+            'rsyncmod_hostsallow': '',
+            'rsyncmod_hostsdeny': '',
+            'rsyncmod_maxconn': 0,
+            'rsyncmod_mode': 'rw',
+            'rsyncmod_name': 'testmod',
+            'rsyncmod_path': '/mnt/tank',
+            'rsyncmod_user': 'nobody'
         }])
 
     def test_Update(self):
@@ -635,7 +635,7 @@ class servicesResourceTest(APITestCase):
         self.assertHttpOK(resp)
         data = self.deserialize(resp)
         self.assertEqual(data, [{
-            u'srv_service': u'ftp', u'srv_enable': False, u'id': 1,
+            'srv_service': 'ftp', 'srv_enable': False, 'id': 1,
         }])
 
     def test_Update(self):
@@ -687,13 +687,13 @@ class SMARTResourceTest(APITestCase):
         self.assertHttpOK(resp)
         data = self.deserialize(resp)
         self.assertEqual(data, {
-            u'id': obj.id,
-            u'smart_critical': 0,
-            u'smart_difference': 0,
-            u'smart_email': u'',
-            u'smart_informational': 0,
-            u'smart_interval': 30,
-            u'smart_powermode': u'never'
+            'id': obj.id,
+            'smart_critical': 0,
+            'smart_difference': 0,
+            'smart_email': '',
+            'smart_informational': 0,
+            'smart_interval': 30,
+            'smart_powermode': 'never'
         })
 
     def test_Update(self):
@@ -747,12 +747,12 @@ class SNMPResourceTest(APITestCase):
         self.assertHttpOK(resp)
         data = self.deserialize(resp)
         self.assertEqual(data, {
-            u'id': obj.id,
-            u'snmp_community': u'public',
-            u'snmp_contact': u'',
-            u'snmp_location': u'',
-            u'snmp_options': u'',
-            u'snmp_traps': False
+            'id': obj.id,
+            'snmp_community': 'public',
+            'snmp_contact': '',
+            'snmp_location': '',
+            'snmp_options': '',
+            'snmp_traps': False
         })
 
     def test_Update(self):
@@ -808,24 +808,24 @@ class SSHResourceTest(APITestCase):
         self.assertHttpOK(resp)
         data = self.deserialize(resp)
         self.assertEqual(data, {
-            u'id': obj.id,
-            u'ssh_compression': False,
-            u'ssh_host_dsa_key': u'',
-            u'ssh_host_dsa_key_pub': u'',
-            u'ssh_host_ecdsa_key': u'',
-            u'ssh_host_ecdsa_key_pub': u'',
-            u'ssh_host_key': u'',
-            u'ssh_host_key_pub': u'',
-            u'ssh_host_rsa_key': u'',
-            u'ssh_host_rsa_key_pub': u'',
-            u'ssh_options': u'',
-            u'ssh_passwordauth': False,
-            u'ssh_privatekey': u'',
-            u'ssh_rootlogin': False,
-            u'ssh_sftp_log_facility': u'',
-            u'ssh_sftp_log_level': u'',
-            u'ssh_tcpfwd': False,
-            u'ssh_tcpport': 22
+            'id': obj.id,
+            'ssh_compression': False,
+            'ssh_host_dsa_key': '',
+            'ssh_host_dsa_key_pub': '',
+            'ssh_host_ecdsa_key': '',
+            'ssh_host_ecdsa_key_pub': '',
+            'ssh_host_key': '',
+            'ssh_host_key_pub': '',
+            'ssh_host_rsa_key': '',
+            'ssh_host_rsa_key_pub': '',
+            'ssh_options': '',
+            'ssh_passwordauth': False,
+            'ssh_privatekey': '',
+            'ssh_rootlogin': False,
+            'ssh_sftp_log_facility': '',
+            'ssh_sftp_log_level': '',
+            'ssh_tcpfwd': False,
+            'ssh_tcpport': 22
         })
 
     def test_Update(self):
@@ -887,13 +887,13 @@ class TFTPResourceTest(APITestCase):
         self.assertHttpOK(resp)
         data = self.deserialize(resp)
         self.assertEqual(data, {
-            u'id': obj.id,
-            u'tftp_directory': u'',
-            u'tftp_newfiles': False,
-            u'tftp_options': u'',
-            u'tftp_port': 69,
-            u'tftp_umask': u'022',
-            u'tftp_username': u'nobody'
+            'id': obj.id,
+            'tftp_directory': '',
+            'tftp_newfiles': False,
+            'tftp_options': '',
+            'tftp_port': 69,
+            'tftp_umask': '022',
+            'tftp_username': 'nobody'
         })
 
     def test_Update(self):
@@ -952,10 +952,10 @@ class iSCSITargetGlobalConfigurationResourceTest(APITestCase):
         self.assertHttpOK(resp)
         data = self.deserialize(resp)
         self.assertEqual(data, {
-            u'id': self._obj.id,
-            u'iscsi_basename': u'iqn.2005-10.org.freenas.ctl',
-            u'iscsi_discoveryauthgroup': None,
-            u'iscsi_discoveryauthmethod': u'Auto'
+            'id': self._obj.id,
+            'iscsi_basename': 'iqn.2005-10.org.freenas.ctl',
+            'iscsi_discoveryauthgroup': None,
+            'iscsi_discoveryauthmethod': 'Auto'
         })
 
     def test_Update(self):
@@ -1018,14 +1018,14 @@ class iSCSITargetExtentResourceTest(APITestCase):
 
         data = self.deserialize(resp)
         self.assertEqual(data, {
-            u'id': 1,
-            u'iscsi_target_extent_comment': u'',
-            u'iscsi_target_extent_filesize': u'10MB',
-            u'iscsi_target_extent_insecure_tpc': True,
-            u'iscsi_target_extent_naa': u'0x3424a029e4881552',
-            u'iscsi_target_extent_name': u'extent',
-            u'iscsi_target_extent_path': u'/mnt/tank/iscsi',
-            u'iscsi_target_extent_type': u'File'
+            'id': 1,
+            'iscsi_target_extent_comment': '',
+            'iscsi_target_extent_filesize': '10MB',
+            'iscsi_target_extent_insecure_tpc': True,
+            'iscsi_target_extent_naa': '0x3424a029e4881552',
+            'iscsi_target_extent_name': 'extent',
+            'iscsi_target_extent_path': '/mnt/tank/iscsi',
+            'iscsi_target_extent_type': 'File'
         })
 
     def test_Retrieve(self):
@@ -1042,14 +1042,14 @@ class iSCSITargetExtentResourceTest(APITestCase):
         self.assertHttpOK(resp)
         data = self.deserialize(resp)
         self.assertEqual(data, [{
-            u'id': obj.id,
-            u'iscsi_target_extent_comment': u'',
-            u'iscsi_target_extent_filesize': u'10MB',
-            u'iscsi_target_extent_insecure_tpc': True,
-            u'iscsi_target_extent_naa': u'',
-            u'iscsi_target_extent_name': u'extent',
-            u'iscsi_target_extent_path': u'/mnt/tank/iscsi',
-            u'iscsi_target_extent_type': u'File'
+            'id': obj.id,
+            'iscsi_target_extent_comment': '',
+            'iscsi_target_extent_filesize': '10MB',
+            'iscsi_target_extent_insecure_tpc': True,
+            'iscsi_target_extent_naa': '',
+            'iscsi_target_extent_name': 'extent',
+            'iscsi_target_extent_path': '/mnt/tank/iscsi',
+            'iscsi_target_extent_type': 'File'
         }])
 
     def test_Update(self):
@@ -1122,11 +1122,11 @@ class iSCSITargetAuthorizedInitiatorResourceTest(APITestCase):
 
         data = self.deserialize(resp)
         self.assertEqual(data, {
-            u'id': 1,
-            u'iscsi_target_initiator_auth_network': u'ALL',
-            u'iscsi_target_initiator_comment': u'',
-            u'iscsi_target_initiator_initiators': u'ALL',
-            u'iscsi_target_initiator_tag': 1
+            'id': 1,
+            'iscsi_target_initiator_auth_network': 'ALL',
+            'iscsi_target_initiator_comment': '',
+            'iscsi_target_initiator_initiators': 'ALL',
+            'iscsi_target_initiator_tag': 1
         })
 
     def test_Retrieve(self):
@@ -1141,11 +1141,11 @@ class iSCSITargetAuthorizedInitiatorResourceTest(APITestCase):
         self.assertHttpOK(resp)
         data = self.deserialize(resp)
         self.assertEqual(data, [{
-            u'id': obj.id,
-            u'iscsi_target_initiator_auth_network': u'ALL',
-            u'iscsi_target_initiator_comment': u'',
-            u'iscsi_target_initiator_initiators': u'ALL',
-            u'iscsi_target_initiator_tag': 1
+            'id': obj.id,
+            'iscsi_target_initiator_auth_network': 'ALL',
+            'iscsi_target_initiator_comment': '',
+            'iscsi_target_initiator_initiators': 'ALL',
+            'iscsi_target_initiator_tag': 1
         }])
 
     def test_Update(self):
@@ -1210,12 +1210,12 @@ class iSCSITargetAuthCredentialResourceTest(APITestCase):
 
         data = self.deserialize(resp)
         self.assertEqual(data, {
-            u'id': 1,
-            u'iscsi_target_auth_peersecret': u'peersecret',
-            u'iscsi_target_auth_peeruser': u'peeruser',
-            u'iscsi_target_auth_secret': u'secret',
-            u'iscsi_target_auth_tag': 1,
-            u'iscsi_target_auth_user': u'user'
+            'id': 1,
+            'iscsi_target_auth_peersecret': 'peersecret',
+            'iscsi_target_auth_peeruser': 'peeruser',
+            'iscsi_target_auth_secret': 'secret',
+            'iscsi_target_auth_tag': 1,
+            'iscsi_target_auth_user': 'user'
         })
 
     def test_Retrieve(self):
@@ -1232,12 +1232,12 @@ class iSCSITargetAuthCredentialResourceTest(APITestCase):
         self.assertHttpOK(resp)
         data = self.deserialize(resp)
         self.assertEqual(data, [{
-            u'id': obj.id,
-            u'iscsi_target_auth_peersecret': u'peersecret',
-            u'iscsi_target_auth_peeruser': u'peeruser',
-            u'iscsi_target_auth_secret': u'secret',
-            u'iscsi_target_auth_tag': 1,
-            u'iscsi_target_auth_user': u'user'
+            'id': obj.id,
+            'iscsi_target_auth_peersecret': 'peersecret',
+            'iscsi_target_auth_peeruser': 'peeruser',
+            'iscsi_target_auth_secret': 'secret',
+            'iscsi_target_auth_tag': 1,
+            'iscsi_target_auth_user': 'user'
         }])
 
     def test_Update(self):
@@ -1306,16 +1306,16 @@ class iSCSITargetResourceTest(APITestCase):
 
         data = self.deserialize(resp)
         self.assertEqual(data, {
-            u'id': 1,
-            u'iscsi_target_alias': None,
-            u'iscsi_target_authgroup': None,
-            u'iscsi_target_authtype': u'Auto',
-            u'iscsi_target_initialdigest': u'Auto',
-            u'iscsi_target_initiatorgroup': 1,
-            u'iscsi_target_logical_blocksize': 512,
-            u'iscsi_target_name': u'target',
-            u'iscsi_target_portalgroup': 1,
-            u'iscsi_target_serial': u'10000001',
+            'id': 1,
+            'iscsi_target_alias': None,
+            'iscsi_target_authgroup': None,
+            'iscsi_target_authtype': 'Auto',
+            'iscsi_target_initialdigest': 'Auto',
+            'iscsi_target_initiatorgroup': 1,
+            'iscsi_target_logical_blocksize': 512,
+            'iscsi_target_name': 'target',
+            'iscsi_target_portalgroup': 1,
+            'iscsi_target_serial': '10000001',
         })
 
     def test_Retrieve(self):
@@ -1331,16 +1331,16 @@ class iSCSITargetResourceTest(APITestCase):
         self.assertHttpOK(resp)
         data = self.deserialize(resp)
         self.assertEqual(data, [{
-            u'id': obj.id,
-            u'iscsi_target_alias': None,
-            u'iscsi_target_authgroup': None,
-            u'iscsi_target_authtype': u'Auto',
-            u'iscsi_target_initialdigest': u'Auto',
-            u'iscsi_target_initiatorgroup': 1,
-            u'iscsi_target_logical_blocksize': 512,
-            u'iscsi_target_name': u'target',
-            u'iscsi_target_portalgroup': 1,
-            u'iscsi_target_serial': u'10000001',
+            'id': obj.id,
+            'iscsi_target_alias': None,
+            'iscsi_target_authgroup': None,
+            'iscsi_target_authtype': 'Auto',
+            'iscsi_target_initialdigest': 'Auto',
+            'iscsi_target_initiatorgroup': 1,
+            'iscsi_target_logical_blocksize': 512,
+            'iscsi_target_name': 'target',
+            'iscsi_target_portalgroup': 1,
+            'iscsi_target_serial': '10000001',
         }])
 
     def test_Update(self):
@@ -1413,10 +1413,10 @@ class iSCSITargetToExtentResourceTest(APITestCase):
 
         data = self.deserialize(resp)
         self.assertEqual(data, {
-            u'id': 1,
-            u'iscsi_extent': 1,
-            u'iscsi_lunid': None,
-            u'iscsi_target': 1,
+            'id': 1,
+            'iscsi_extent': 1,
+            'iscsi_lunid': None,
+            'iscsi_target': 1,
         })
 
     def test_Retrieve(self):
@@ -1431,10 +1431,10 @@ class iSCSITargetToExtentResourceTest(APITestCase):
         self.assertHttpOK(resp)
         data = self.deserialize(resp)
         self.assertEqual(data, [{
-            u'id': obj.id,
-            u'iscsi_extent': 1,
-            u'iscsi_lunid': None,
-            u'iscsi_target': 1,
+            'id': obj.id,
+            'iscsi_extent': 1,
+            'iscsi_lunid': None,
+            'iscsi_target': 1,
         }])
 
     def test_Update(self):
@@ -1495,10 +1495,10 @@ class iSCSITargetPortalResourceTest(APITestCase):
 
         data = self.deserialize(resp)
         self.assertEqual(data, {
-            u'id': 1,
-            u'iscsi_target_portal_comment': u'comment',
-            u'iscsi_target_portal_ips': [u'0.0.0.0:3260'],
-            u'iscsi_target_portal_tag': 1
+            'id': 1,
+            'iscsi_target_portal_comment': 'comment',
+            'iscsi_target_portal_ips': ['0.0.0.0:3260'],
+            'iscsi_target_portal_tag': 1
         })
 
     def test_Retrieve(self):
@@ -1514,10 +1514,10 @@ class iSCSITargetPortalResourceTest(APITestCase):
         self.assertHttpOK(resp)
         data = self.deserialize(resp)
         self.assertEqual(data, [{
-            u'id': obj.id,
-            u'iscsi_target_portal_comment': u'',
-            u'iscsi_target_portal_ips': [u'0.0.0.0:3260'],
-            u'iscsi_target_portal_tag': 1
+            'id': obj.id,
+            'iscsi_target_portal_comment': '',
+            'iscsi_target_portal_ips': ['0.0.0.0:3260'],
+            'iscsi_target_portal_tag': 1
         }])
 
     def test_Update(self):
@@ -1582,24 +1582,24 @@ class UPSResourceTest(APITestCase):
         self.assertHttpOK(resp)
         data = self.deserialize(resp)
         self.assertEqual(data, {
-            u'id': self._obj.id,
-            u'ups_description': u'',
-            u'ups_driver': u'',
-            u'ups_emailnotify': False,
-            u'ups_extrausers': u'',
-            u'ups_identifier': u'ups',
-            u'ups_mode': u'master',
-            u'ups_monpwd': u'fixmepass',
-            u'ups_monuser': u'upsmon',
-            u'ups_options': u'',
-            u'ups_port': u'',
-            u'ups_remotehost': u'',
-            u'ups_remoteport': 3493,
-            u'ups_rmonitor': False,
-            u'ups_shutdown': u'batt',
-            u'ups_shutdowntimer': 30,
-            u'ups_subject': u'UPS report generated by %h',
-            u'ups_toemail': u''
+            'id': self._obj.id,
+            'ups_description': '',
+            'ups_driver': '',
+            'ups_emailnotify': False,
+            'ups_extrausers': '',
+            'ups_identifier': 'ups',
+            'ups_mode': 'master',
+            'ups_monpwd': 'fixmepass',
+            'ups_monuser': 'upsmon',
+            'ups_options': '',
+            'ups_port': '',
+            'ups_remotehost': '',
+            'ups_remoteport': 3493,
+            'ups_rmonitor': False,
+            'ups_shutdown': 'batt',
+            'ups_shutdowntimer': 30,
+            'ups_subject': 'UPS report generated by %h',
+            'ups_toemail': ''
         })
 
     def test_Update(self):

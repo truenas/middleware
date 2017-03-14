@@ -16,7 +16,7 @@ class ReplicationService(Service):
             "-p", str(port),
             "-T", "2",
             str(host),
-        ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        ], stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf8')
         key, errmsg = proc.communicate()
         if proc.returncode != 0 or not key:
             if not errmsg:
@@ -56,7 +56,7 @@ class ReplicationService(Service):
             raise ValueError('Homedir {} does not exist'.format(user['bsdusr_home']))
 
         # Write public key in user authorized_keys for SSH
-        authorized_keys_file = '{}/.ssh/authorized_keys'.format(user['bsdusr_home'].encode('utf8'))
+        authorized_keys_file = '{}/.ssh/authorized_keys'.format(user['bsdusr_home'])
         with open(authorized_keys_file, 'a+') as f:
             f.seek(0)
             if data['public-key'] not in f.read():
@@ -64,9 +64,9 @@ class ReplicationService(Service):
 
         ssh_hostkey = '{0} {1}\n{0} {2}\n{0} {3}\n'.format(
             data['hostname'],
-            base64.b64decode(ssh['ssh_host_rsa_key_pub']),
-            base64.b64decode(ssh['ssh_host_ecdsa_key_pub']),
-            base64.b64decode(ssh['ssh_host_ed25519_key_pub']),
+            base64.b64decode(ssh['ssh_host_rsa_key_pub'].encode()).decode(),
+            base64.b64decode(ssh['ssh_host_ecdsa_key_pub'].encode()).decode(),
+            base64.b64decode(ssh['ssh_host_ed25519_key_pub'].encode()).decode(),
         )
 
         return {

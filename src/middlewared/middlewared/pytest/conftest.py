@@ -1,5 +1,5 @@
 import pytest
-import ConfigParser
+import configparser
 
 from client import Client
 
@@ -7,7 +7,7 @@ from client import Client
 class ConfigTarget(object):
 
     def __init__(self):
-        self.config = ConfigParser.ConfigParser()
+        self.config = configparser.ConfigParser()
         self.file_path = 'target.conf'
         self.config_section = 'Target'
         self.config.read(self.file_path)

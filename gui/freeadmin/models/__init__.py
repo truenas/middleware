@@ -56,9 +56,7 @@ class FreeModelBase(ModelBase):
         return new_class
 
 
-class Model(models.Model):
-    __metaclass__ = FreeModelBase
-
+class Model(models.Model, metaclass=FreeModelBase):
     class Meta:
         abstract = True
 

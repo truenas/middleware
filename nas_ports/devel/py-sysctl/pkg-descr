@@ -1,0 +1,6 @@
+Python wrapper for the sysctl system functions.
+
+It provides a very simple interface to query for sysctls and to change
+their values in a pythonic way.
+
+WWW: https://github.com/williambr/py-sysctl

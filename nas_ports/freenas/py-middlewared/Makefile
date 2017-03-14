@@ -14,7 +14,7 @@ USE_PYTHON=	autoplist distutils
 EXTRACT_ONLY=
 
 RUN_DEPENDS=	${PYTHON_PKGNAMEPREFIX}gevent>0:${PORTSDIR}/devel/py-gevent \
-		${PYTHON_PKGNAMEPREFIX}gevent-websocket>0:${PORTSDIR}/www/py-gevent-websocket \
+		${PYTHON_PKGNAMEPREFIX}karellen-geventws>0:${PORTSDIR}/www/py-karellen-geventws \
 		${PYTHON_PKGNAMEPREFIX}ws4py>0:${PORTSDIR}/www/py-ws4py \
 		${PYTHON_PKGNAMEPREFIX}falcon>0:${PORTSDIR}/www/py-falcon \
 		${PYTHON_PKGNAMEPREFIX}Flask>0:${PORTSDIR}/www/py-flask \
@@ -22,6 +22,7 @@ RUN_DEPENDS=	${PYTHON_PKGNAMEPREFIX}gevent>0:${PORTSDIR}/devel/py-gevent \
 		${PYTHON_PKGNAMEPREFIX}netif>0:${PORTSDIR}/net/py-netif \
 		${PYTHON_PKGNAMEPREFIX}bsd>0:${PORTSDIR}/freenas/py-bsd \
 		${PYTHON_PKGNAMEPREFIX}rollbar>0:${PORTSDIR}/www/py-rollbar \
+		${PYTHON_PKGNAMEPREFIX}markdown>0:${PORTSDIR}/textproc/py-markdown \
 		rclone>0:${PORTSDIR}/net/rclone
 
 USE_RC_SUBR=	middlewared

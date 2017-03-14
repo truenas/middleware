@@ -24,4 +24,4 @@ def test_generate_token(auth_prepare, data_random):
     generate_token = auth_prepare.connect.post('auth/generate_token', data=data_random)
 
     assert generate_token.status_code == 200
-    assert isinstance(generate_token.json(), unicode) is True
+    assert isinstance(generate_token.json(), str) is True

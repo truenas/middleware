@@ -55,7 +55,7 @@ def unprettyprint(ster):
             num = float(ster[:-1]) * size_dict[ster[-1]]
         except:
             pass
-    return long(num)
+    return int(num)
 
 
 # Our custom terminate signal handler
@@ -72,7 +72,7 @@ def cust_terminate(signal_number, stack_frame):
             # Maybe this process has already ended?
             pass
     exception = SystemExit(
-        u"\nfreenas-snmpd Terminating on SIGTERM\n")
+        "\nfreenas-snmpd Terminating on SIGTERM\n")
     raise exception
 
 
@@ -210,6 +210,7 @@ def zfs_zilstat_ops(interval):
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
         preexec_fn=os.setsid,
+        encoding='utf8',
     )
     ppid = zilstatproc.pid
     with lock:

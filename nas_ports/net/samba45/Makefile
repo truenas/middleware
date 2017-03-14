@@ -93,8 +93,8 @@ LIB_DEPENDS+=		libdbus-glib-1.so:${PORTSDIR}/devel/dbus-glib
 # IDL compiler
 BUILD_DEPENDS+=		p5-Parse-Pidl>=4.3.0:${PORTSDIR}/devel/p5-Parse-Pidl
 # 
-BUILD_DEPENDS+=		${PYTHON_PKGNAMEPREFIX}dnspython>=1.9.4:${PORTSDIR}/dns/py-dnspython
-RUN_DEPENDS+=		${PYTHON_PKGNAMEPREFIX}dnspython>=1.9.4:${PORTSDIR}/dns/py-dnspython
+BUILD_DEPENDS+=		${PYTHON_PKGNAMEPREFIX}dnspython2>=1.9.4:${PORTSDIR}/dns/py-dnspython2
+RUN_DEPENDS+=		${PYTHON_PKGNAMEPREFIX}dnspython2>=1.9.4:${PORTSDIR}/dns/py-dnspython2
 
 
 # Using the bundled versions. Will make this conditional later.

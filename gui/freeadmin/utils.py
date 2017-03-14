@@ -68,7 +68,7 @@ def get_related_objects(obj):
 
         for o in qs:
             _reld, _reln = get_related_objects(o)
-            for key, val in _reld.items():
+            for key, val in list(_reld.items()):
                 if key in reldict:
                     reldict[key] += list(val)
                 else:
@@ -98,7 +98,7 @@ def key_order(form, index, name, instance=False):
     value = d.pop(name)
     new_d = OrderedDict()
     added = False
-    for i, kv in enumerate(d.iteritems()):
+    for i, kv in enumerate(d.items()):
         k, v = kv
         if i == index:
             new_d[name] = value

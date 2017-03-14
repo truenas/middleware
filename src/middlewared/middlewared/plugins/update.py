@@ -146,7 +146,7 @@ class UpdateService(Service):
         conf.LoadTrainsConfig()
         trains = conf.AvailableTrains() or []
         if trains:
-            trains = trains.keys()
+            trains = list(trains.keys())
         if not data['upd_train'] or data['upd_train'] not in trains:
             return conf.CurrentTrain()
 
@@ -239,7 +239,8 @@ class UpdateService(Service):
         new_manifest = Manifest.Manifest(require_signature=True)
         new_manifest.LoadPath('{}/MANIFEST'.format(location))
 
-        Update.ApplyUpdate(
+        self.middleware.thread_run(
+            Update.ApplyUpdate,
             location,
             install_handler=handler.install_handler,
         )

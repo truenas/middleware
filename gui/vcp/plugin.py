@@ -28,12 +28,12 @@
 import requests
 import ssl
 import datetime
-import utils
-import ConfigParser
+from . import utils
+import configparser
 import os
 from django.conf import settings
 from pyVmomi import vim
-from ConfigParser import SafeConfigParser
+from configparser import SafeConfigParser
 from pyVim.connect import SmartConnect
 
 
@@ -133,7 +133,7 @@ class PluginManager:
             ext.resourceList = resource_list
 
             return ext
-        except ConfigParser.NoOptionError as ex:
+        except configparser.NoOptionError as ex:
             return 'Property Missing : ' + str(ex)
         except Exception as ex:
             return str(ex).replace("'", "").replace("<", "").replace(">", "")
@@ -150,7 +150,7 @@ class PluginManager:
             try:
                 ssl._create_default_https_context = ssl._create_unverified_context
             except AttributeError:
-                print 'Error ssl'
+                print('Error ssl')
             context = ssl.SSLContext(ssl.PROTOCOL_TLSv1)
             context.verify_mode = ssl.CERT_NONE
             si = SmartConnect("https", vc_ip, int(port), usernName, password, sslContext=context)
@@ -172,7 +172,7 @@ class PluginManager:
             try:
                 ssl._create_default_https_context = ssl._create_unverified_context
             except AttributeError:
-                print 'Error ssl'
+                print('Error ssl')
             context = ssl.SSLContext(ssl.PROTOCOL_TLSv1)
             context.verify_mode = ssl.CERT_NONE
             si = SmartConnect("https", vc_ip, int(port), usernName, password, sslContext=context)
@@ -196,7 +196,7 @@ class PluginManager:
             try:
                 ssl._create_default_https_context = ssl._create_unverified_context
             except AttributeError:
-                print 'Error ssl'
+                print('Error ssl')
             context = ssl.SSLContext(ssl.PROTOCOL_TLSv1)
             context.verify_mode = ssl.CERT_NONE
             si = SmartConnect("https", vc_ip, int(port), usernName, password, sslContext=context)
@@ -216,7 +216,7 @@ class PluginManager:
             try:
                 ssl._create_default_https_context = ssl._create_unverified_context
             except AttributeError:
-                print 'Error ssl'
+                print('Error ssl')
             context = ssl.SSLContext(ssl.PROTOCOL_TLSv1)
             context.verify_mode = ssl.CERT_NONE
             si = SmartConnect("https", vc_ip, int(port), usernName, password, sslContext=context)
@@ -240,7 +240,7 @@ class PluginManager:
             try:
                 ssl._create_default_https_context = ssl._create_unverified_context
             except AttributeError:
-                print 'Error ssl'
+                print('Error ssl')
             context = ssl.SSLContext(ssl.PROTOCOL_TLSv1)
             context.verify_mode = ssl.CERT_NONE
             si = SmartConnect("https", vc_ip, int(port), usernName, password, sslContext=context)

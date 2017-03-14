@@ -41,6 +41,7 @@ from Crypto.Cipher import AES
 import bsd
 import ctypes
 import errno
+from functools import cmp_to_key
 import glob
 import grp
 import json
@@ -140,9 +141,7 @@ def close_preexec():
     bsd.closefrom(3)
 
 
-class notifier:
-
-    __metaclass__ = HookMetaclass
+class notifier(metaclass=HookMetaclass):
 
     from os import system as __system
     from pwd import getpwnam as ___getpwnam
@@ -165,7 +164,7 @@ class notifier:
         try:
             p = Popen(
                 "(" + command + ") 2>&1",
-                stdin=PIPE, stdout=PIPE, stderr=PIPE, shell=True, preexec_fn=close_preexec, close_fds=False)
+                stdin=PIPE, stdout=PIPE, stderr=PIPE, shell=True, preexec_fn=close_preexec, close_fds=False, encoding='utf8')
             syslog.openlog(self.IDENTIFIER, facility=syslog.LOG_DAEMON)
             for line in p.stdout:
                 syslog.syslog(syslog.LOG_NOTICE, line)
@@ -201,7 +200,7 @@ class notifier:
     def _pipeopen(self, command, logger=log):
         if logger:
             logger.debug("Popen()ing: %s", command)
-        return Popen(command, stdin=PIPE, stdout=PIPE, stderr=PIPE, shell=True, preexec_fn=close_preexec, close_fds=False)
+        return Popen(command, stdin=PIPE, stdout=PIPE, stderr=PIPE, shell=True, preexec_fn=close_preexec, close_fds=False, encoding='utf8')
 
     def _pipeerr(self, command, good_status=0):
         proc = self._pipeopen(command)
@@ -798,7 +797,7 @@ class notifier:
                 return 1
             return 0
 
-        for vgrp in sorted(groups.values(), cmp=stripe_first):
+        for vgrp in sorted(list(groups.values()), key=cmp_to_key(stripe_first)):
             vgrp_type = vgrp['type']
             if vgrp_type != 'stripe':
                 z_vdev += " " + vgrp_type
@@ -890,8 +889,8 @@ class notifier:
         else:
             options = " "
         if props:
-            assert isinstance(props, types.DictType)
-            for k in props.keys():
+            assert isinstance(props, dict)
+            for k in list(props.keys()):
                 if props[k] != 'inherit':
                     options += "-o %s=%s " % (k, props[k])
         zfsproc = self._pipeopen("/sbin/zfs create %s -V '%s' '%s'" % (options, size, name))
@@ -903,8 +902,8 @@ class notifier:
         """Internal procedure to create ZFS volume"""
         options = " "
         if props:
-            assert isinstance(props, types.DictType)
-            for k in props.keys():
+            assert isinstance(props, dict)
+            for k in list(props.keys()):
                 if props[k] != 'inherit':
                     options += "-o %s=%s " % (k, props[k])
         zfsproc = self._pipeopen("/sbin/zfs create %s '%s'" % (options, path))
@@ -1194,7 +1193,7 @@ class notifier:
            (more technically speaking, a replaced disk.  The replacement actually
            creates a mirror for the device to be replaced)"""
 
-        if isinstance(volume, basestring):
+        if isinstance(volume, str):
             vol_name = volume
         else:
             assert volume.vol_fstype == 'ZFS'
@@ -1215,7 +1214,7 @@ class notifier:
 
         ret = self._system_nolog('/sbin/zpool detach %s %s' % (vol_name, label))
 
-        if not isinstance(volume, basestring):
+        if not isinstance(volume, str):
             self.sync_encrypted(volume)
 
         if from_disk:
@@ -1293,10 +1292,7 @@ class notifier:
             p1 = self._pipeopen('mount -p')
             stdout = p1.communicate()[0]
             if not p1.returncode:
-                flines = filter(
-                    lambda x: x and x.split()[0] == '/dev/ufs/' + name,
-                    stdout.splitlines()
-                )
+                flines = [x for x in stdout.splitlines() if x and x.split()[0] == '/dev/ufs/' + name]
                 if flines:
                     return flines[0].split()[1]
 
@@ -1557,8 +1553,8 @@ class notifier:
         ret = False
         proc = self._pipeopen(command % (
             type,
-            unixgroup.encode('utf8'),
-            ntgroup.encode('utf8')
+            unixgroup,
+            ntgroup,
         ))
         proc.communicate()
         if proc.returncode == 0:
@@ -1679,7 +1675,7 @@ class notifier:
         except:
             pass
 
-        saved_umask = os.umask(077)
+        saved_umask = os.umask(0o77)
         if not os.path.isdir(sshpath):
             os.makedirs(sshpath)
         if not os.path.isdir(sshpath):
@@ -1706,14 +1702,14 @@ class notifier:
         if exclude is None:
             exclude = []
 
-        if isinstance(owner, types.UnicodeType):
-            owner = owner.encode('utf-8')
+        if isinstance(owner, bytes):
+            owner = owner.decode('utf-8')
 
-        if isinstance(group, types.UnicodeType):
-            group = group.encode('utf-8')
+        if isinstance(group, bytes):
+            group = group.decode('utf-8')
 
-        if isinstance(path, types.UnicodeType):
-            path = path.encode('utf-8')
+        if isinstance(path, bytes):
+            path = path.decode('utf-8')
 
         winacl = os.path.join(path, ACL_WINDOWS_FILE)
         winexists = (ACL.get_acl_ostype(path) == ACL_FLAGS_OS_WINDOWS)
@@ -1727,7 +1723,7 @@ class notifier:
         if group is not None:
             args = "%s -G '%s'" % (args, group)
         apply_paths = exclude_path(path, exclude)
-        apply_paths = map(lambda y: (y, ' -r '), apply_paths)
+        apply_paths = [(y, ' -r ') for y in apply_paths]
         if len(apply_paths) > 1:
             apply_paths.insert(0, (path, ''))
         for apath, flags in apply_paths:
@@ -1743,17 +1739,17 @@ class notifier:
         if exclude is None:
             exclude = []
 
-        if isinstance(group, types.UnicodeType):
-            group = group.encode('utf-8')
+        if isinstance(group, bytes):
+            group = group.decode('utf-8')
 
-        if isinstance(user, types.UnicodeType):
-            user = user.encode('utf-8')
+        if isinstance(user, bytes):
+            user = user.decode('utf-8')
 
-        if isinstance(mode, types.UnicodeType):
-            mode = mode.encode('utf-8')
+        if isinstance(mode, bytes):
+            mode = mode.decode('utf-8')
 
-        if isinstance(path, types.UnicodeType):
-            path = path.encode('utf-8')
+        if isinstance(path, bytes):
+            path = path.decode('utf-8')
 
         winacl = os.path.join(path, ACL_WINDOWS_FILE)
         macacl = os.path.join(path, ACL_MAC_FILE)
@@ -1786,7 +1782,7 @@ class notifier:
             args += " -a reset "
             if recursive:
                 apply_paths = exclude_path(path, exclude)
-                apply_paths = map(lambda y: (y, ' -r '), apply_paths)
+                apply_paths = [(y, ' -r ') for y in apply_paths]
                 if len(apply_paths) > 1:
                     apply_paths.insert(0, (path, ''))
             else:
@@ -1800,7 +1796,7 @@ class notifier:
         else:
             if recursive:
                 apply_paths = exclude_path(path, exclude)
-                apply_paths = map(lambda y: (y, '-R'), apply_paths)
+                apply_paths = [(y, '-R') for y in apply_paths]
                 if len(apply_paths) > 1:
                     apply_paths.insert(0, (path, ''))
             else:
@@ -1956,7 +1952,7 @@ class notifier:
                     "/usr/bin/tar",
                     "-xSJpf",  # -S for sparse
                     path,
-                ], stderr=f)
+                ], stderr=f, encoding='utf8')
                 RE_TAR = re.compile(r"^In: (\d+)", re.M | re.S)
                 while True:
                     if proc.poll() is not None:
@@ -2228,7 +2224,7 @@ class notifier:
                 oauth_file
             )
 
-            fd = os.open(oauth_file, os.O_WRONLY | os.O_CREAT, 0600)
+            fd = os.open(oauth_file, os.O_WRONLY | os.O_CREAT, 0o600)
             os.write(fd, "key = %s\n" % rpctoken.key)
             os.write(fd, "secret = %s\n" % rpctoken.secret)
             os.close(fd)
@@ -2239,7 +2235,7 @@ class notifier:
                 newplugin.append(plugin)
                 log.debug("install_pbi: plugin saved to database")
                 ret = True
-            except Exception, e:
+            except Exception as e:
                 log.debug("install_pbi: FAIL! %s", e)
                 ret = False
 
@@ -2500,7 +2496,7 @@ class notifier:
             oauth_file,
         )
 
-        fd = os.open(oauth_file, os.O_WRONLY | os.O_CREAT, 0600)
+        fd = os.open(oauth_file, os.O_WRONLY | os.O_CREAT, 0o600)
         os.write(fd, "key = %s\n" % rpctoken.key)
         os.write(fd, "secret = %s\n" % rpctoken.secret)
         os.close(fd)
@@ -2510,7 +2506,7 @@ class notifier:
 
         for mp in mountpoints:
             fp = "%s/%s%s" % (jc.jc_path, jail_name, mp.destination)
-            p = pipeopen("/sbin/mount_nullfs '%s' '%s'" % (mp.source.encode('utf8'), fp.encode('utf8')))
+            p = pipeopen("/sbin/mount_nullfs '%s' '%s'" % (mp.source, fp))
             out = p.communicate()
             if p.returncode != 0:
                 raise MiddlewareError(out[1])
@@ -2561,7 +2557,7 @@ class notifier:
                 plugin.delete()
                 ret = True
 
-            except Exception, err:
+            except Exception as err:
                 log.debug("delete_pbi: unable to delete pbi %s from database (%s)", plugin, err)
                 ret = False
 
@@ -2715,7 +2711,7 @@ class notifier:
         return disksd
 
     def get_partitions(self, try_disks=True):
-        disks = self.get_disks().keys()
+        disks = list(self.get_disks().keys())
         partitions = {}
         for disk in disks:
 
@@ -2728,7 +2724,7 @@ class notifier:
                     listing.remove(part)
 
             for part in listing:
-                p1 = Popen(["/usr/sbin/diskinfo", part], stdin=PIPE, stdout=PIPE)
+                p1 = Popen(["/usr/sbin/diskinfo", part], stdin=PIPE, stdout=PIPE, encoding='utf8')
                 info = p1.communicate()[0].split('\t')
                 partitions.update({
                     part: {
@@ -2809,7 +2805,7 @@ class notifier:
             status = res.split('id: %s\n' % zid)[1].split('pool:')[0]
             try:
                 roots = zfs.parse_status(pool, doc, 'id: %s\n%s' % (zid, status))
-            except Exception, e:
+            except Exception as e:
                 log.warn("Error parsing %s: %s", pool, e)
                 continue
 
@@ -3080,7 +3076,7 @@ class notifier:
             replications = {}
 
         zfsproc = self._pipeopen("/sbin/zfs list -t volume -o name %s -H" % sort)
-        zvols = set(filter(lambda y: y != '', zfsproc.communicate()[0].split('\n')))
+        zvols = set([y for y in zfsproc.communicate()[0].split('\n') if y != ''])
         volnames = set([o.vol_name for o in Volume.objects.filter(vol_fstype='ZFS')])
 
         fieldsflag = '-o name,used,available,referenced,mountpoint,freenas:vmsynced'
@@ -3290,8 +3286,8 @@ class notifier:
         """
         name = str(name)
         item = str(item)
-        if isinstance(value, unicode):
-            value = value.encode('utf8')
+        if isinstance(value, bytes):
+            value = value.decode('utf8')
         else:
             value = str(value)
         if recursive:
@@ -3337,7 +3333,7 @@ class notifier:
                 output = zfsproc.communicate()[0]
                 if output != '':
                     snapshots_list = output.splitlines()
-                for snapshot_item in filter(None, snapshots_list):
+                for snapshot_item in [_f for _f in snapshots_list if _f]:
                     snapshot = snapshot_item.split('\t')[0]
                     self._system("/sbin/zfs release -r freenas:repl %s" % (snapshot))
         except IOError:
@@ -3367,10 +3363,7 @@ class notifier:
                 # Only if all ports are ACTIVE,COLLECTING,DISTRIBUTING
                 # it is considered active
 
-                portsok = len(filter(
-                    lambda y: y == 'ACTIVE,COLLECTING,DISTRIBUTING',
-                    ports
-                ))
+                portsok = len([y for y in ports if y == 'ACTIVE,COLLECTING,DISTRIBUTING'])
                 if portsok == len(ports):
                     return _('Active')
                 elif portsok > 0:
@@ -3703,7 +3696,7 @@ class notifier:
 
         args = self.get_smartctl_args(devname)
 
-        p1 = Popen(["/usr/local/sbin/smartctl", "-i"] + args, stdout=PIPE)
+        p1 = Popen(["/usr/local/sbin/smartctl", "-i"] + args, stdout=PIPE, encoding='utf8')
         output = p1.communicate()[0]
         search = re.search(r'Serial Number:\s+(?P<serial>.+)', output, re.I)
         if search:
@@ -4274,7 +4267,7 @@ class notifier:
         ])
         if not numbers:
             numbers = [0]
-        for number in xrange(1, numbers[-1] + 2):
+        for number in range(1, numbers[-1] + 2):
             if number not in numbers:
                 break
         else:
@@ -4341,7 +4334,7 @@ class notifier:
             serials[(serial, size)].append(name)
             serials[(serial, size)].sort(key=lambda x: int(x[2:]))
 
-        disks_pairs = [disks for disks in serials.values()]
+        disks_pairs = [disks for disks in list(serials.values())]
         disks_pairs.sort(key=lambda x: int(x[0][2:]))
 
         for disks in disks_pairs:
@@ -4410,7 +4403,7 @@ class notifier:
         blacklist_devs = self._find_root_devs()
         device_blacklist_re = re.compile('a?cd[0-9]+')
 
-        return filter(lambda x: not device_blacklist_re.match(x) and x not in blacklist_devs, disks)
+        return [x for x in disks if not device_blacklist_re.match(x) and x not in blacklist_devs]
 
     def retaste_disks(self):
         """
@@ -4472,7 +4465,7 @@ class notifier:
         """
         Tiny wrapper for sysctl module for compatibility
         """
-        sysc = sysctl.filter(unicode(name))
+        sysc = sysctl.filter(str(name))
         if sysc:
             return sysc[0].value
         raise ValueError(name)
@@ -4592,7 +4585,7 @@ class notifier:
                 "if=/dev/zero" if mode == 'full' else "if=/dev/random",
                 "of=/dev/%s" % (devname, ),
                 "bs=1m",
-            ], stdout=subprocess.PIPE, stderr=stderr)
+            ], stdout=subprocess.PIPE, stderr=stderr, encoding='utf8')
             with open('/var/tmp/disk_wipe_%s.pid' % (devname, ), 'w') as f:
                 f.write(str(pipe.pid))
             pipe.communicate()
@@ -4917,7 +4910,7 @@ class notifier:
             if os.path.exists(SYSTEMPATH):
                 try:
                     os.rmdir(SYSTEMPATH)
-                except Exception, e:
+                except Exception as e:
                     log.debug("Failed to delete %s: %s", SYSTEMPATH, e)
             return systemdataset
 
@@ -4967,7 +4960,7 @@ class notifier:
                 self._system('/sbin/sysctl kern.corefile=\'%s/%%N.core\'' % (
                     corepath,
                 ))
-                os.chmod(corepath, 0775)
+                os.chmod(corepath, 0o775)
 
             self.nfsv4link()
 
@@ -4991,12 +4984,12 @@ class notifier:
             'zfs list -H -o name %s' % ' '.join(
                 [
                     "%s" % name
-                    for name in legacydatasets.values() + newdatasets.values()
+                    for name in list(legacydatasets.values()) + list(newdatasets.values())
                 ]
             )
         )
         output = proc.communicate()[0].strip('\n').split('\n')
-        for ident, name in legacydatasets.items():
+        for ident, name in list(legacydatasets.items()):
             if name in output:
                 newname = newdatasets.get(ident)
                 if newname not in output:
@@ -5230,7 +5223,7 @@ class notifier:
 
         secret = Random.new().read(PWENC_BLOCK_SIZE)
         with open(PWENC_FILE_SECRET, 'wb') as f:
-            os.chmod(PWENC_FILE_SECRET, 0600)
+            os.chmod(PWENC_FILE_SECRET, 0o600)
             f.write(secret)
 
         settings.stg_pwenc_check = self.pwenc_encrypt(PWENC_CHECK)
@@ -5265,8 +5258,8 @@ class notifier:
         return secret
 
     def pwenc_encrypt(self, text):
-        if isinstance(text, unicode):
-            text = text.encode('utf8')
+        if isinstance(text, bytes):
+            text = text.decode('utf8')
         from Crypto.Random import get_random_bytes
         from Crypto.Util import Counter
         pad = lambda x: x + (PWENC_BLOCK_SIZE - len(x) % PWENC_BLOCK_SIZE) * PWENC_PADDING
@@ -5278,7 +5271,7 @@ class notifier:
             counter=Counter.new(64, prefix=nonce),
         )
         encoded = base64.b64encode(nonce + cipher.encrypt(pad(text)))
-        return encoded
+        return encoded.decode()
 
     def pwenc_decrypt(self, encrypted=None):
         if not encrypted:
@@ -5292,7 +5285,7 @@ class notifier:
             AES.MODE_CTR,
             counter=Counter.new(64, prefix=nonce),
         )
-        return cipher.decrypt(encrypted).rstrip(PWENC_PADDING).decode('utf8')
+        return cipher.decrypt(encrypted).decode('utf8').rstrip(PWENC_PADDING)
 
     def _bootenv_partition(self, devname):
         commands = []
@@ -5489,4 +5482,4 @@ if __name__ == '__main__':
             usage()
         res = f(*sys.argv[2:])
         if res is not None:
-            print res
+            print(res)

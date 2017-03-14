@@ -35,24 +35,24 @@ class JailsResourceTest(APITestCase):
 
         data = self.deserialize(resp)
         self.assertEqual(data, {
-            u'id': 1,
-            u'jail_alias_bridge_ipv4': None,
-            u'jail_alias_bridge_ipv6': None,
-            u'jail_alias_ipv4': None,
-            u'jail_alias_ipv6': None,
-            u'jail_autostart': False,
-            u'jail_bridge_ipv4': u'',
-            u'jail_bridge_ipv6': u'',
-            u'jail_defaultrouter_ipv4': u'',
-            u'jail_defaultrouter_ipv6': u'',
-            u'jail_host': u'myjail',
-            u'jail_ipv4': u'',
-            u'jail_ipv6': u'',
-            u'jail_mac': u'',
-            u'jail_nat': False,
-            u'jail_status': u'',
-            u'jail_type': u'pluginjail',
-            u'jail_vnet': False
+            'id': 1,
+            'jail_alias_bridge_ipv4': None,
+            'jail_alias_bridge_ipv6': None,
+            'jail_alias_ipv4': None,
+            'jail_alias_ipv6': None,
+            'jail_autostart': False,
+            'jail_bridge_ipv4': '',
+            'jail_bridge_ipv6': '',
+            'jail_defaultrouter_ipv4': '',
+            'jail_defaultrouter_ipv6': '',
+            'jail_host': 'myjail',
+            'jail_ipv4': '',
+            'jail_ipv6': '',
+            'jail_mac': '',
+            'jail_nat': False,
+            'jail_status': '',
+            'jail_type': 'pluginjail',
+            'jail_vnet': False
         })
 
     def test_Retrieve(self):
@@ -63,24 +63,24 @@ class JailsResourceTest(APITestCase):
         self.assertHttpOK(resp)
         data = self.deserialize(resp)
         self.assertEqual(data, [{
-            u'id': 1,
-            u'jail_alias_bridge_ipv4': None,
-            u'jail_alias_bridge_ipv6': None,
-            u'jail_alias_ipv4': None,
-            u'jail_alias_ipv6': None,
-            u'jail_autostart': False,
-            u'jail_bridge_ipv4': u'',
-            u'jail_bridge_ipv6': u'',
-            u'jail_defaultrouter_ipv4': u'',
-            u'jail_defaultrouter_ipv6': u'',
-            u'jail_host': u'myjail',
-            u'jail_ipv4': u'',
-            u'jail_ipv6': u'',
-            u'jail_mac': u'',
-            u'jail_nat': False,
-            u'jail_status': u'',
-            u'jail_type': u'pluginjail',
-            u'jail_vnet': False
+            'id': 1,
+            'jail_alias_bridge_ipv4': None,
+            'jail_alias_bridge_ipv6': None,
+            'jail_alias_ipv4': None,
+            'jail_alias_ipv6': None,
+            'jail_autostart': False,
+            'jail_bridge_ipv4': '',
+            'jail_bridge_ipv6': '',
+            'jail_defaultrouter_ipv4': '',
+            'jail_defaultrouter_ipv6': '',
+            'jail_host': 'myjail',
+            'jail_ipv4': '',
+            'jail_ipv6': '',
+            'jail_mac': '',
+            'jail_nat': False,
+            'jail_status': '',
+            'jail_type': 'pluginjail',
+            'jail_vnet': False
         }])
 
     def test_Update(self):
@@ -129,14 +129,14 @@ class JailsConfigurationResourceTest(APITestCase):
         self.assertHttpOK(resp)
         data = self.deserialize(resp)
         self.assertEqual(data, [{
-            u'id': self._obj.id,
-            u'jc_ipv4_network': u'192.168.3.0/24',
-            u'jc_ipv4_network_end': u'192.168.3.254',
-            u'jc_ipv4_network_start': u'192.168.3.67',
-            u'jc_ipv6_network': u'',
-            u'jc_ipv6_network_end': u'',
-            u'jc_ipv6_network_start': u'',
-            u'jc_path': u''
+            'id': self._obj.id,
+            'jc_ipv4_network': '192.168.3.0/24',
+            'jc_ipv4_network_end': '192.168.3.254',
+            'jc_ipv4_network_start': '192.168.3.67',
+            'jc_ipv6_network': '',
+            'jc_ipv6_network_end': '',
+            'jc_ipv6_network_start': '',
+            'jc_path': ''
         }])
 
     def test_Update(self):

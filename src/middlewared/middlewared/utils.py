@@ -32,13 +32,7 @@ def django_modelobj_serialize(middleware, obj, extend=None, field_suffix=None):
 
 
 def Popen(*args, **kwargs):
-
-    def preexec_fn():
-        bsd.closefrom(3)
-
-    if kwargs.get('close_fds') is True and 'preexec_fn' not in kwargs:
-        kwargs['preexec_fn'] = preexec_fn
-        kwargs['close_fds'] = False
+    kwargs.setdefault('encoding', 'utf8')
     return subprocess.Popen(*args, **kwargs)
 
 

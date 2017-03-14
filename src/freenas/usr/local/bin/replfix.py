@@ -29,7 +29,7 @@
 # and test for arbitrary hold names
 # Also removes freenas:state properties used by the old replicator
 
-import cPickle
+import pickle
 import datetime
 import logging
 import os
@@ -113,7 +113,7 @@ def RemoteFix(testonly = False, debug = False):
         
         log.debug("rzfscmd = %s" % rzfscmd)
         if debug:
-            print >> sys.stderr, rzfscmd
+            print(rzfscmd, file=sys.stderr)
             
         if testonly:
             log.debug("%s %s" % (sshcmd, rzfscmd))
@@ -136,7 +136,7 @@ def RemoteFix(testonly = False, debug = False):
                     remote_dataset = "%s%s" % (ds.partition('/')[1], ds.partition('/')[2])
                     rzfscmd = "zfs inherit readonly %s%s" % (remotefs, remote_dataset)
                     if debug:
-                        print >> sys.stderr, "rzfscmd = %s" % rzfscmd
+                        print("rzfscmd = %s" % rzfscmd, file=sys.stderr)
                     log.debug("%s %s" % (sshcmd, rzfscmd))
                     if not testonly:
                         rzfsproc = pipeopen("%s %s" % (sshcmd, rzfscmd))
@@ -164,7 +164,7 @@ def main(no_delete, hold, dataset, skipstate, remote=False, debug=False, testonl
     snaplist = os.popen("zfs list -H -t snapshot -o name").readlines()
     snaplist = [x for x in snaplist if not x.startswith("freenas-boot")]
                         
-    print "Checking for holds"
+    print("Checking for holds")
     hold_delete = False
     for snap in snaplist:
         ret = os.popen("zfs holds %s" % snap).readlines()
@@ -172,33 +172,33 @@ def main(no_delete, hold, dataset, skipstate, remote=False, debug=False, testonl
             for item in ret[1:]:
                 if item.split()[1] == hold:
                     if no_delete or testonly:
-                        print "%s hold found on %s" % (hold, snap)
+                        print("%s hold found on %s" % (hold, snap))
                     else:
-                        print "Destroying %s hold on %s" % (hold, snap)
+                        print("Destroying %s hold on %s" % (hold, snap))
                         zfscmd = "zfs release %s %s" % (item.split()[1], snap)
                         if debug:
-                            print zfscmd
+                            print(zfscmd)
                         ret = os.system(zfscmd)
                         if ret != 0:
-                            print "Error releasing hold on %s" % snap
+                            print("Error releasing hold on %s" % snap)
                         else:
                             hold_delete = True
     if not hold_delete:
-        print "No holds found"
+        print("No holds found")
 
     if not skipstate:
         poollist = os.popen("zpool list -H -o name").readlines()
         for pool in poollist:
             pool = pool.strip()
             if pool != "freenas-boot":
-                print "Removing freenas:state on %s" % pool
+                print("Removing freenas:state on %s" % pool)
                 zfscmd = "zfs inherit -r freenas:state %s" % pool
                 if debug or testonly:
-                    print zfscmd
+                    print(zfscmd)
                 if not testonly:
                     ret = os.system(zfscmd)
                     if ret != 0:
-                        print "Error removing freenas:state on %s" % pool
+                        print("Error removing freenas:state on %s" % pool)
 
     if remote:
         RemoteFix(testonly = testonly, debug = debug)

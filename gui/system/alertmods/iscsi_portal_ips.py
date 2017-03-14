@@ -14,7 +14,7 @@ class PortalIPAlert(BaseAlert):
             return None
         with open(PORTAL_IP_FILE) as f:
             ips = f.read().split('\n')
-            ips = filter(lambda y: bool(y), ips)
+            ips = [y for y in ips if bool(y)]
             return [
                 Alert(
                     Alert.WARN,

@@ -35,4 +35,4 @@ class ServiceFailed(Exception):
         return repr(self.value)
 
     def __unicode__(self):
-        return unicode(self.value)
+        return str(self.value)

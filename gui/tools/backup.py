@@ -39,7 +39,7 @@ import shutil
 import subprocess
 import sys
 import socket
-import SocketServer
+import socketserver
 import stat
 import re
 import tempfile
@@ -85,7 +85,7 @@ def main_loop():
     if os.path.exists(SOCKFILE):
         os.unlink(SOCKFILE)
 
-    server = SocketServer.UnixStreamServer(SOCKFILE, CommandHandler)
+    server = socketserver.UnixStreamServer(SOCKFILE, CommandHandler)
     server.context = BackupContext()
     server.context.shutdown = server.shutdown
     os.chmod(SOCKFILE, 0o700)
@@ -112,10 +112,10 @@ class BackupContext:
         self.done_size = 0
 
 
-class CommandHandler(SocketServer.StreamRequestHandler):
+class CommandHandler(socketserver.StreamRequestHandler):
     def setup(self):
         self.context = self.server.context
-        return SocketServer.StreamRequestHandler.setup(self)
+        return socketserver.StreamRequestHandler.setup(self)
 
     def handle(self):
         while True:
@@ -136,7 +136,7 @@ class CommandHandler(SocketServer.StreamRequestHandler):
             }
 
             cmdname = args.pop('cmd')
-            if cmdname not in commands.keys():
+            if cmdname not in list(commands.keys()):
                 self.respond(status='ERROR', msg='Unknown command')
                 continue
 
@@ -260,7 +260,7 @@ class BackupWorker(threading.Thread):
                         })
 
                 vol['datasets'] = []
-                for dname, dset in v.get_datasets(include_root=True).items():
+                for dname, dset in list(v.get_datasets(include_root=True).items()):
                     opts = nf.zfs_get_options(dname)
                     vol['datasets'].append({
                         'name': dname,
@@ -269,7 +269,7 @@ class BackupWorker(threading.Thread):
                     })
 
                 vol['zvols'] = []
-                for zname, zvol in v.get_zvols().items():
+                for zname, zvol in list(v.get_zvols().items()):
                     vol['zvols'].append({
                         'name': zname,
                         'size': zvol['volsize'],
@@ -454,7 +454,7 @@ class RestoreWorker(object):
 
         def run(self):
             # Calculate size
-            for name, i in self.volumes.items():
+            for name, i in list(self.volumes.items()):
                 if i['fstype'] == 'ZFS':
                     try:
                         self.context.estimated_size += self.sftp.stat(os.path.join('volumes', name + '.zfs')).st_size
@@ -463,7 +463,7 @@ class RestoreWorker(object):
                         return
 
             # Do actual restore
-            for name, i in self.volumes.items():
+            for name, i in list(self.volumes.items()):
                 self.context.status_msg = 'Reconstructing data of volume {}'.format(name)
                 oldcwd = os.getcwd()
 
@@ -522,7 +522,7 @@ class RestoreWorker(object):
         return (None, 'no match')
 
     def reconstruct_zfs_volume(self, name, volume):
-        print('Attempting to reconstruct volume {}:'.format(name))
+        print(('Attempting to reconstruct volume {}:'.format(name)))
 
         vol = Volume.objects.get(vol_guid=volume['guid'])
         if vol is None:
@@ -531,7 +531,7 @@ class RestoreWorker(object):
 
         # 1. Check if we already imported that volume
         if vol.status not in ('UNKNOWN', 'LOCKED'):
-            print '    Pool already imported and online'
+            print('    Pool already imported and online')
             return True
 
         # 2. Try to recreate pool
@@ -539,7 +539,7 @@ class RestoreWorker(object):
         for catname in ('data', 'cache', 'spares', 'logs'):
             groups = volume['{}-vdevs'.format(catname)]
             for group in groups:
-                print('    Group: {}'.format(group['name']))
+                print(('    Group: {}'.format(group['name'])))
 
                 grp = {
                     'type': group['type'],
@@ -551,10 +551,10 @@ class RestoreWorker(object):
                     disk, match = self.guess_disk(vdev)
                     if disk is None:
                         print('not found')
-                        print('    Reconstruction of volume {} aborted due to lack of matching device'.format(name))
+                        print(('    Reconstruction of volume {} aborted due to lack of matching device'.format(name)))
                         return False
 
-                    print('found {} [{} match]'.format(disk, match))
+                    print(('found {} [{} match]'.format(disk, match)))
                     self.used_disks.append(disk)
                     self.notifier.unlabel_disk(disk)
                     grp['disks'].append(disk)
@@ -566,20 +566,20 @@ class RestoreWorker(object):
         # 3. Recreate datasets
         print('    Recreating datasets:')
         for dset in volume['datasets']:
-            print('\t{}'.format(dset['name']))
+            print(('\t{}'.format(dset['name'])))
             self.notifier.create_zfs_dataset(dset['name'], {'mountpoint': dset['mountpoint']}, _restart_collectd=False)
 
         # 4. Recreate zvols
         if len(volume['zvols']) > 0:
             print('    Recreating zvols:')
             for zvol in volume['zvols']:
-                print('\t{} [{}]'.format(zvol['name'], humanize_size(zvol['size'])))
+                print(('\t{} [{}]'.format(zvol['name'], humanize_size(zvol['size']))))
                 self.notifier.create_zfs_vol(zvol['name'], zvol['size'])
 
         return True
 
     def reconstruct_ufs_volume(self, name, volume):
-        print('Attempting to reconstruct volume {}:'.format(name))
+        print(('Attempting to reconstruct volume {}:'.format(name)))
 
         vol = Volume.objects.get(vol_name=name)
         if vol is None:
@@ -590,7 +590,7 @@ class RestoreWorker(object):
         return True
 
     def reconstruct_volumes(self, volumes):
-        for name, i in volumes.items():
+        for name, i in list(volumes.items()):
             if i['fstype'] == 'ZFS':
                 if not self.reconstruct_zfs_volume(name, i):
                     return False
@@ -598,10 +598,10 @@ class RestoreWorker(object):
         return True
 
     def print_backup_details(self, backup):
-        print('    Directory name: {}'.format(backup.name))
-        print('    Created at: {}'.format(backup.created_at))
-        print('    Created using {}'.format(backup.build))
-        print('    Backup {}'.format('contains data' if backup.with_data else 'doesn\'t contain data'))
+        print(('    Directory name: {}'.format(backup.name)))
+        print(('    Created at: {}'.format(backup.created_at)))
+        print(('    Created using {}'.format(backup.build)))
+        print(('    Backup {}'.format('contains data' if backup.with_data else 'doesn\'t contain data')))
 
         if backup.with_data and backup.compressed:
             print('    Backup data is compressed')
@@ -646,7 +646,7 @@ class RestoreWorker(object):
             backup = backups[0]
             print('Found single backup in given directory:')
             self.print_backup_details(backup)
-            if raw_input('Restore whole FreeNAS installation from that backup? (y/n): ').lower() == 'y':
+            if input('Restore whole FreeNAS installation from that backup? (y/n): ').lower() == 'y':
                 return backup
             else:
                 return None
@@ -658,7 +658,7 @@ class RestoreWorker(object):
 
         pydoc.pager(buffer)
 
-        choose = raw_input('Type backup no. to restore or leave field blank to use newest one: ')
+        choose = input('Type backup no. to restore or leave field blank to use newest one: ')
         if not choose.strip().isdigit():
             idx = 0
         else:
@@ -667,13 +667,13 @@ class RestoreWorker(object):
         backup = backups[idx]
         print('Backup details:')
         self.print_backup_details(backup)
-        if raw_input('Restore whole FreeNAS installation from that backup? (y/n): ').lower() == 'y':
+        if input('Restore whole FreeNAS installation from that backup? (y/n): ').lower() == 'y':
             return backup
         else:
             return None
 
     def change_dir(self):
-        self.context.remote_directory = raw_input('Specify another directory or leave empty to abort: ')
+        self.context.remote_directory = input('Specify another directory or leave empty to abort: ')
         return len(self.context.remote_directory) != 0
 
     def run(self):
@@ -904,21 +904,21 @@ def ask(context, backup=True):
             print('WARNING: Encrypted volumes will be skipped.')
 
     while True:
-        context.hostport = raw_input("Hostname or IP address: ")
-        context.username = raw_input("Username: ")
-        context.password = raw_input("Password (leave empty to use key authentication): ")
-        context.remote_directory = raw_input("Remote directory: ")
+        context.hostport = input("Hostname or IP address: ")
+        context.username = input("Username: ")
+        context.password = input("Password (leave empty to use key authentication): ")
+        context.remote_directory = input("Remote directory: ")
 
         if len(context.password) == 0:
             context.use_key = True
 
         if backup:
-            context.backup_data = raw_input("Backup data? (y/n): ").lower() == 'y'
-            print('Backup data {}selected'.format('' if context.backup_data else 'not '))
-            context.compressed = raw_input("Compress data? (y/n): ").lower() == 'y'
-            print('Compress data {}selected'.format('' if context.compressed else 'not '))
+            context.backup_data = input("Backup data? (y/n): ").lower() == 'y'
+            print(('Backup data {}selected'.format('' if context.backup_data else 'not ')))
+            context.compressed = input("Compress data? (y/n): ").lower() == 'y'
+            print(('Compress data {}selected'.format('' if context.compressed else 'not ')))
 
-        answer = raw_input('Are these values OK? (y/n/q): ').lower()
+        answer = input('Are these values OK? (y/n/q): ').lower()
         if answer == 'y':
             break
 
@@ -995,9 +995,9 @@ def backup(argv):
 
     context.backup_thread.join()
     if context.failed_msg is not None:
-        print(context.failed_msg)
+        print((context.failed_msg))
 
-    raw_input("Press enter to exit.")
+    input("Press enter to exit.")
     sys.exit(1)
 
 
@@ -1009,9 +1009,9 @@ def restore(argv):
     sys.stdout.write('\n')
 
     if context.failed_msg is not None:
-        print(context.failed_msg)
+        print((context.failed_msg))
 
-    raw_input("Press enter to exit.")
+    input("Press enter to exit.")
     sys.exit(1)
 
 
@@ -1033,7 +1033,7 @@ def files_preserve_by_path(*paths):
             return False
 
     fd_max = getrlimit(RLIMIT_NOFILE)[1]
-    return [i for i in xrange(fd_max) if fd_wanted(fd)]
+    return [i for i in range(fd_max) if fd_wanted(fd)]
 
 
 def main(argv):

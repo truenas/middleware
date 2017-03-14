@@ -35,9 +35,7 @@ class TestCaseMeta(type):
         return new_class
 
 
-class APITestCase(ResourceTestCase):
-
-    __metaclass__ = TestCaseMeta
+class APITestCase(ResourceTestCase, metaclass=TestCaseMeta):
 
     maxDiff = None
     resource_name = None

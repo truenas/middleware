@@ -1,17 +1,18 @@
 from gevent import monkey
 monkey.patch_all()
 
+from .apidocs import app as apidocs_app
 from .client import ejson as json
+from .client.protocol import DDPProtocol
+from .job import Job, JobsQueue
+from .restful import RESTfulAPI
 from .utils import Popen
 from collections import OrderedDict, defaultdict
-from client.protocol import DDPProtocol
 from daemon import DaemonContext
 from daemon.pidfile import TimeoutPIDLockFile
+from gevent.threadpool import ThreadPool
 from gevent.wsgi import WSGIServer
 from geventwebsocket import WebSocketServer, WebSocketApplication, Resource
-from job import Job, JobsQueue
-from restful import RESTfulAPI
-from apidocs import app as apidocs_app
 
 import argparse
 import gevent
@@ -19,14 +20,13 @@ import imp
 import inspect
 import linecache
 import os
-import setproctitle
 import signal
 import subprocess
 import sys
 import traceback
 import types
 import uuid
-import logger
+from . import logger
 
 
 class Application(WebSocketApplication):
@@ -96,7 +96,7 @@ class Application(WebSocketApplication):
                 if arginfo.keywords is not None:
                     keywordspec = arginfo.keywords
 
-                _locals.update(arginfo.locals.items())
+                _locals.update(list(arginfo.locals.items()))
 
             except Exception:
                 self.logger.critical('Error while extracting arguments from frames.', exc_info=True)
@@ -108,7 +108,7 @@ class Application(WebSocketApplication):
             if keywordspec:
                 cur_frame['keywordspec'] = keywordspec
             if _locals:
-                cur_frame['locals'] = {k: repr(v) for k, v in _locals.iteritems()}
+                cur_frame['locals'] = {k: repr(v) for k, v in _locals.items()}
 
             frames.append(cur_frame)
 
@@ -178,7 +178,7 @@ class Application(WebSocketApplication):
 
     def send_event(self, name, event_type, **kwargs):
         found = False
-        for i in self.__subscribed.itervalues():
+        for i in self.__subscribed.values():
             if i == name or i == '*':
                 found = True
                 break
@@ -273,6 +273,7 @@ class Middleware(object):
         self.__server_threads = []
         self.__init_services()
         self.__plugins_load()
+        self.__threadpool = ThreadPool(5)
 
     def __init_services(self):
         from middlewared.service import CoreService
@@ -315,7 +316,7 @@ class Middleware(object):
         # to make sure every schema is patched and references match
         from middlewared.schema import resolver  # Lazy import so namespace match
         to_resolve = []
-        for service in self.__services.values():
+        for service in list(self.__services.values()):
             for attr in dir(service):
                 to_resolve.append(getattr(service, attr))
         resolved = 0
@@ -429,7 +430,7 @@ class Middleware(object):
 
     def send_event(self, name, event_type, **kwargs):
         assert event_type in ('ADDED', 'CHANGED', 'REMOVED')
-        for sessionid, wsclient in self.__wsclients.iteritems():
+        for sessionid, wsclient in self.__wsclients.items():
             try:
                 wsclient.send_event(name, event_type, **kwargs)
             except:
@@ -530,7 +531,7 @@ def main():
     else:
         _logger.configure_logging('file')
 
-    setproctitle.setproctitle('middlewared')
+    #setproctitle.setproctitle('middlewared')
     # Workaround to tell django to not set up logging on its own
     os.environ['MIDDLEWARED'] = str(os.getpid())
 

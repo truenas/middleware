@@ -25,7 +25,7 @@
 #####################################################################
 
 from datetime import time
-import cPickle
+import pickle
 import logging
 import os
 import re
@@ -87,7 +87,7 @@ class Volume(Model):
                 "-H", "-o", "property,value",
                 "all",
                 str(self.vol_name),
-            ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            ], stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf8')
             data = proc.communicate()[0].strip('\n')
             for line in data.split('\n'):
                 if not line.startswith('feature') or '\t' not in line:
@@ -127,7 +127,7 @@ class Volume(Model):
                     self._disks = n.get_disks_from_provider(prov) \
                         if prov is not None else []
             return self._disks
-        except Exception, e:
+        except Exception as e:
             log.debug(
                 "Exception on retrieving disks for %s: %s",
                 self.vol_name,
@@ -167,13 +167,13 @@ class Volume(Model):
                 else:
                     self._status = status
             return self._status
-        except Exception, e:
+        except Exception as e:
             if self.is_decrypted():
                 log.debug(
                     "Exception on retrieving status for %s: %s",
                     self.vol_name,
                     e)
-                return _(u"Error")
+                return _("Error")
     status = property(_get_status)
 
     def get_geli_keyfile(self):
@@ -309,7 +309,7 @@ class Volume(Model):
         n = notifier()
         if cascade:
 
-            reloads = map(sum, zip(reloads, self.delete_attachments()))
+            reloads = list(map(sum, list(zip(reloads, self.delete_attachments()))))
 
             zvols = n.list_zfs_vols(self.vol_name)
             for zvol in zvols:
@@ -320,21 +320,21 @@ class Volume(Model):
                     if destroy:
                         notifier().destroy_zfs_vol(zvol)
                     qs.delete()
-                reloads = map(sum, zip(
+                reloads = list(map(sum, list(zip(
                     reloads, (False, False, False, True, False,
                               reload_collectd)
-                ))
+                ))))
 
         else:
 
             attachments = self.has_attachments()
-            reloads = map(
+            reloads = list(map(
                 sum,
-                zip(
+                list(zip(
                     reloads,
                     [len(attachments[svc]) for svc in svcs]
-                )
-            )
+                ))
+            ))
 
         # Delete scheduled snapshots for this volume
         Task.objects.filter(
@@ -443,7 +443,7 @@ class Volume(Model):
             self.vol_encryptkey = str(uuid.uuid4())
         super(Volume, self).save(*args, **kwargs)
 
-    def __unicode__(self):
+    def __str__(self):
         return self.vol_name
 
     def _get__zplist(self):
@@ -473,7 +473,7 @@ class Volume(Model):
                 return self._vfs.f_bavail * self._vfs.f_frsize
         except:
             if self.is_decrypted():
-                return __(u"Error getting available space")
+                return __("Error getting available space")
             else:
                 return __("Locked")
 
@@ -492,7 +492,7 @@ class Volume(Model):
             return self._get_used_bytes()
         except:
             if self.is_decrypted():
-                return __(u"Error getting used space")
+                return __("Error getting used space")
             else:
                 return __("Locked")
 
@@ -503,9 +503,9 @@ class Volume(Model):
             else:
                 availpct = 100 * (self._vfs.f_blocks - self._vfs.f_bavail) / \
                     self._vfs.f_blocks
-            return u"%d%%" % availpct
+            return "%d%%" % availpct
         except:
-            return __(u"Error")
+            return __("Error")
 
     _vfs = property(_get__vfs)
     _zplist = property(_get__zplist, _set__zplist)
@@ -568,30 +568,30 @@ class Scrub(Model):
         verbose_name_plural = _("Scrubs")
         ordering = ["scrub_volume__vol_name"]
 
-    def __unicode__(self):
+    def __str__(self):
         return self.scrub_volume.vol_name
 
     def get_human_minute(self):
         if self.scrub_minute == '*':
-            return _(u'Every minute')
+            return _('Every minute')
         elif self.scrub_minute.startswith('*/'):
-            return _(u'Every {0} minute(s)').format(self.scrub_minute.split('*/')[1])
+            return _('Every {0} minute(s)').format(self.scrub_minute.split('*/')[1])
         else:
             return self.scrub_minute
 
     def get_human_hour(self):
         if self.scrub_hour == '*':
-            return _(u'Every hour')
+            return _('Every hour')
         elif self.scrub_hour.startswith('*/'):
-            return _(u'Every {0} hour(s)').format(self.scrub_hour.split('*/')[1])
+            return _('Every {0} hour(s)').format(self.scrub_hour.split('*/')[1])
         else:
             return self.scrub_hour
 
     def get_human_daymonth(self):
         if self.scrub_daymonth == '*':
-            return _(u'Everyday')
+            return _('Everyday')
         elif self.scrub_daymonth.startswith('*/'):
-            return _(u'Every {0} days').format(self.scrub_daymonth.split('*/')[1])
+            return _('Every {0} days').format(self.scrub_daymonth.split('*/')[1])
         else:
             return self.scrub_daymonth
 
@@ -602,7 +602,7 @@ class Scrub(Model):
         mchoices = dict(choices.MONTHS_CHOICES)
         labels = []
         for m in months:
-            labels.append(unicode(mchoices[m]))
+            labels.append(str(mchoices[m]))
         return ', '.join(labels)
 
     def get_human_dayweek(self):
@@ -613,14 +613,14 @@ class Scrub(Model):
         weeks = self.scrub_dayweek.split(',')
         if len(weeks) == 7 or self.scrub_dayweek == '*':
             return _('Everyday')
-        if weeks == map(str, xrange(1, 6)):
+        if weeks == list(map(str, range(1, 6))):
             return _('Weekdays')
-        if weeks == map(str, xrange(6, 8)):
+        if weeks == list(map(str, range(6, 8))):
             return _('Weekends')
         wchoices = dict(choices.WEEKDAYS_CHOICES)
         labels = []
         for w in weeks:
-            labels.append(unicode(wchoices[str(w)]))
+            labels.append(str(wchoices[str(w)]))
         return ', '.join(labels)
 
     def delete(self):
@@ -739,7 +739,9 @@ class Disk(Model):
         p1 = subprocess.Popen(
             ["/usr/sbin/diskinfo", self.devname],
             stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE)
+            stderr=subprocess.PIPE,
+            enconding='utf8',
+        )
         if p1.wait() == 0:
             out = p1.communicate()[0]
             return out.split('\t')[3]
@@ -766,8 +768,8 @@ class Disk(Model):
         verbose_name_plural = _("Disks")
         ordering = ["disk_subsystem", "disk_number"]
 
-    def __unicode__(self):
-        return unicode(self.disk_name)
+    def __str__(self):
+        return str(self.disk_name)
 
 
 class EncryptedDisk(Model):
@@ -817,16 +819,16 @@ class ReplRemote(Model):
     )
 
     class Meta:
-        verbose_name = _(u"Remote Replication Host")
-        verbose_name_plural = _(u"Remote Replication Hosts")
+        verbose_name = _("Remote Replication Host")
+        verbose_name_plural = _("Remote Replication Hosts")
 
     def delete(self):
         rv = super(ReplRemote, self).delete()
         notifier().reload("ssh")
         return rv
 
-    def __unicode__(self):
-        return u"%s:%s" % (self.ssh_remote_hostname, self.ssh_remote_port)
+    def __str__(self):
+        return "%s:%s" % (self.ssh_remote_hostname, self.ssh_remote_port)
 
 
 class Replication(Model):
@@ -894,11 +896,11 @@ class Replication(Model):
     )
 
     class Meta:
-        verbose_name = _(u"Replication Task")
-        verbose_name_plural = _(u"Replication Tasks")
+        verbose_name = _("Replication Task")
+        verbose_name_plural = _("Replication Tasks")
         ordering = ["repl_filesystem"]
 
-    def __unicode__(self):
+    def __str__(self):
         return '%s -> %s:%s' % (
             self.repl_filesystem,
             self.repl_remote.ssh_remote_hostname,
@@ -911,7 +913,7 @@ class Replication(Model):
         with open(REPL_RESULTFILE, 'rb') as f:
             data = f.read()
         try:
-            results = cPickle.loads(data)
+            results = pickle.loads(data)
             return results[self.id]
         except:
             return None
@@ -946,11 +948,11 @@ class Replication(Model):
             with open(REPL_RESULTFILE, 'rb') as f:
                 data = f.read()
             try:
-                results = cPickle.loads(data)
+                results = pickle.loads(data)
                 results.pop(self.id, None)
                 with open(REPL_RESULTFILE, 'w') as f:
-                    f.write(cPickle.dumps(results))
-            except Exception, e:
+                    f.write(pickle.dumps(results))
+            except Exception as e:
                 log.debug('Failed to remove replication from state file %s', e)
         progressfile = '/tmp/.repl_progress_%d' % self.id
         if os.path.exists(progressfile):
@@ -1027,7 +1029,7 @@ class Task(Model):
         verbose_name=_("Enabled"),
     )
 
-    def __unicode__(self):
+    def __str__(self):
         return '%s - every %s - %d%s' % (
             self.task_filesystem,
             self.get_task_interval_display(),
@@ -1050,8 +1052,8 @@ class Task(Model):
             pass
 
     class Meta:
-        verbose_name = _(u"Periodic Snapshot Task")
-        verbose_name_plural = _(u"Periodic Snapshot Tasks")
+        verbose_name = _("Periodic Snapshot Task")
+        verbose_name_plural = _("Periodic Snapshot Tasks")
         ordering = ["task_filesystem"]
 
 
@@ -1090,7 +1092,7 @@ class VMWarePlugin(Model):
         verbose_name = _('VMware-Snapshot')
         verbose_name_plural = _('VMware-Snapshots')
 
-    def __unicode__(self):
+    def __str__(self):
         return self.hostname
 
     def set_password(self, passwd):

@@ -39,7 +39,7 @@ def ldap_conf_ldap(client, ldap_conf):
         f.write(ldap.ldap_auxiliary_parameters)
 
     f.close()
-    os.chmod(ldap_conf, 0644)
+    os.chmod(ldap_conf, 0o644)
 
 
 def main():

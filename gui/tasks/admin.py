@@ -40,10 +40,10 @@ human_colums = [
 
 class CloudSyncFAdmin(BaseFreeAdmin):
 
-    icon_model = u"cronJobIcon"
-    icon_object = u"cronJobIcon"
-    icon_add = u"AddcronJobIcon"
-    icon_view = u"ViewcronJobIcon"
+    icon_model = "cronJobIcon"
+    icon_object = "cronJobIcon"
+    icon_add = "AddcronJobIcon"
+    icon_view = "ViewcronJobIcon"
     exclude_fields = (
         'id',
         'daymonth',
@@ -85,10 +85,10 @@ class CloudSyncFAdmin(BaseFreeAdmin):
 
 class CronJobFAdmin(BaseFreeAdmin):
 
-    icon_model = u"cronJobIcon"
-    icon_object = u"cronJobIcon"
-    icon_add = u"AddcronJobIcon"
-    icon_view = u"ViewcronJobIcon"
+    icon_model = "cronJobIcon"
+    icon_object = "cronJobIcon"
+    icon_add = "AddcronJobIcon"
+    icon_view = "ViewcronJobIcon"
     exclude_fields = (
         'id',
         'cron_daymonth',
@@ -123,10 +123,10 @@ class CronJobFAdmin(BaseFreeAdmin):
 
 class RsyncFAdmin(BaseFreeAdmin):
 
-    icon_model = u"rsyncIcon"
-    icon_object = u"rsyncIcon"
-    icon_add = u"AddrsyncTaskIcon"
-    icon_view = u"ViewrsyncTaskIcon"
+    icon_model = "rsyncIcon"
+    icon_object = "rsyncIcon"
+    icon_add = "AddrsyncTaskIcon"
+    icon_view = "ViewrsyncTaskIcon"
     exclude_fields = (
         'id',
         'rsync_mode',
@@ -171,10 +171,10 @@ class RsyncFAdmin(BaseFreeAdmin):
 
 class SMARTTestFAdmin(BaseFreeAdmin):
 
-    icon_model = u"SMARTIcon"
-    icon_object = u"SMARTIcon"
-    icon_add = u"AddSMARTTestIcon"
-    icon_view = u"ViewSMARTTestIcon"
+    icon_model = "SMARTIcon"
+    icon_object = "SMARTIcon"
+    icon_add = "AddSMARTTestIcon"
+    icon_view = "ViewSMARTTestIcon"
     exclude_fields = (
         'id',
         'smarttest_daymonth',

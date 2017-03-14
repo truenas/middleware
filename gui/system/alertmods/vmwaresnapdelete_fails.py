@@ -1,4 +1,4 @@
-import cPickle as pickle
+import pickle as pickle
 
 from django.utils.translation import ugettext as _
 
@@ -20,7 +20,7 @@ class VMWareSnapDeleteFailAlert(BaseAlert):
             return None
 
         alerts = []
-        for snapname, vms in fails.items():
+        for snapname, vms in list(fails.items()):
             alerts.append(Alert(Alert.WARN, _(
                 'VMWare snapshot deletion %(snap)s failed for the following VMs: '
                 '%(vms)s'

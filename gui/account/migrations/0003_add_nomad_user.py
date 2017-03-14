@@ -26,7 +26,7 @@ def add_nomad_user(apps, schema_editor):
         user.save()
 
     except Exception as e:
-        print "ERROR: unable to create nomad user/group: ", e
+        print("ERROR: unable to create nomad user/group: ", e)
 
 def remove_nomad_user(apps, schema_editor):
     try:
@@ -38,7 +38,7 @@ def remove_nomad_user(apps, schema_editor):
         ).delete()
 
     except Exception as e:
-        print "ERROR: unable to remove nomad user/group: ", e
+        print("ERROR: unable to remove nomad user/group: ", e)
 
 class Migration(migrations.Migration):
 
