@@ -1404,7 +1404,7 @@ def vmwareplugin_datastores(request):
         server.disconnect()
     except Exception as e:
         data['error'] = True
-        data['errmsg'] = str(e).encode('utf8')
+        data['errmsg'] = str(e)
     return HttpResponse(
         json.dumps(data),
         content_type='application/json',
