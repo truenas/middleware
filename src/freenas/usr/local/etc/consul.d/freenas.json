@@ -1,0 +1,15 @@
+{
+  "service": {
+    "name": "nas-health",
+    "tags": ["primary"],
+    "address": "",
+    "port": 80,
+    "enableTagOverride": false,
+    "checks": [
+      {
+        "script": "/usr/local/etc/consul-checks/freenas_health.sh",
+        "interval": "120s"
+      }
+    ]
+  }
+}
