@@ -235,7 +235,9 @@ class FreeNAS_Groups(object):
         self.__bsd_groups = []
         objects = bsdGroups_objects()
         for group, obj in list(objects.items()):
-            self.__bsd_groups.append(FreeNAS_Group(group, data=obj, dflags=0))
+            grpobj = FreeNAS_Group(group, data=obj, dflags=0)
+            if grpobj:
+                self.__bsd_groups.append(grpobj)
 
     def __len__(self):
         return len(self.__bsd_groups) + len(self.__groups)
@@ -352,9 +354,9 @@ class FreeNAS_Users(object):
         self.__bsd_users = []
         objects = bsdUsers_objects()
         for username, obj in list(objects.items()):
-            self.__bsd_users.append(
-                FreeNAS_User(username, data=obj, dflags=0)
-            )
+            usrobj = FreeNAS_User(username, data=obj, dflags=0)
+            if usrobj:
+                self.__bsd_users.append(usrobj)
 
     def __len__(self):
         return len(self.__bsd_users) + len(self.__users)
