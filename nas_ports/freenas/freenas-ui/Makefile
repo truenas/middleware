@@ -72,7 +72,7 @@ RUN_DEPENDS+=	truenas-files>0:${PORTSDIR}/truenas/truenas-files
 
 do-install:
 	${RM} -f ${PLIST}
-	${PYTHON_CMD} -m compileall ${STAGEDIR}${PREFIX}/www/freenasUI
+	${PYTHON_CMD} -m compileall ${WRKSRC}/
 	${ECHO_CMD} "@owner www"  >> ${PLIST}
 	${ECHO_CMD} "@group www"  >> ${PLIST}
 	${ECHO_CMD} "@comment files" >> ${PLIST}
