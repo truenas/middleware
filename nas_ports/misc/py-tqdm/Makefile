@@ -13,7 +13,7 @@ LICENSE=	MIT
 
 USE_GITHUB=	yes
 
-USES=		python
+USES?=		python
 USE_PYTHON=	autoplist distutils
 NO_ARCH=	yes
 
