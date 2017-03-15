@@ -1,0 +1,16 @@
+{
+  "service": {
+    "name": "nfs",
+    "tags": ["primary"],
+    "address": "",
+    "port": 2049,
+    "enableTagOverride": false,
+    "checks": [
+      {
+        "tcp": "localhost:2049",
+        "interval": "60s",
+        "timeout": "3s"
+      }
+    ]
+  }
+}
