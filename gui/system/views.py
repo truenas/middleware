@@ -25,7 +25,6 @@
 #####################################################################
 from collections import OrderedDict, namedtuple
 import cPickle as pickle
-import datetime
 import json
 import logging
 import os
@@ -979,100 +978,6 @@ def debug_download(request):
             extension)
 
     return response
-
-
-def backup(request):
-    # Check if any backup is currently running
-    backups = models.Backup.objects.all().order_by('-id')
-
-    if len(backups) < 1 or backups[0].bak_acknowledged:
-        # No backup is pending, can schedule next one
-
-        if request.method == 'POST':
-            backup_form = forms.BackupForm(request.POST)
-            if backup_form.is_valid():
-                backup = models.Backup()
-                backup.bak_started_at = datetime.datetime.now()
-                backup.save()
-                transaction.commit()
-
-                args = {
-                    'cmd': 'START',
-                    'hostport': backup_form.cleaned_data['backup_hostname'],
-                    'username': backup_form.cleaned_data['backup_username'],
-                    'password': backup_form.cleaned_data['backup_password'],
-                    'directory': backup_form.cleaned_data['backup_directory'],
-                    'with-data': backup_form.cleaned_data['backup_data'],
-                    'compression': backup_form.cleaned_data['backup_compression'],
-                    'use-keys': backup_form.cleaned_data['backup_auth_keys'],
-                    'backup-id': backup.id
-                }
-
-                notifier().start('backup')
-                response = notifier().call_backupd(args)
-
-                if response['status'] != 'OK':
-                    return JsonResp(request, error=True, message='Could not communicate with backup daemon')
-
-                return render(request, 'system/backup_progress.html')
-            else:
-                return JsonResp(request, form=backup_form)
-
-        backup_form = forms.BackupForm()
-        return render(request, 'system/backup.html', {
-            'form': backup_form
-        })
-    elif backups[0].bak_finished or backups[0].bak_failed:
-        if request.method == 'POST':
-            backups[0].bak_acknowledged = True
-            backups[0].save()
-            return JsonResp(request, message='Backup dismissed')
-
-        return render(request, 'system/backup_acknowledge.html', {'backup': backups[0]})
-    else:
-        return render(request, 'system/backup_progress.html')
-
-
-def backup_progress(request):
-    # Check if any backup is currently running
-    backup = models.Backup.objects.all().order_by('-id').first()
-
-    if backup.bak_finished:
-        data = {'status': 'finished', 'message': backup.bak_status}
-        return HttpResponse(json.dumps(data), content_type='application/json')
-
-    if backup.bak_failed:
-        data = {'status': 'error', 'message': backup.bak_status}
-        return HttpResponse(json.dumps(data), content_type='application/json')
-
-    response = notifier().call_backupd({'cmd': 'PROGRESS'})
-    if response['status'] != 'OK':
-        data = {'status': 'error', 'message': 'Could not communicate with backup daemon'}
-        return HttpResponse(json.dumps(data), content_type='application/json')
-
-    data = {
-        'status': 'running',
-        'percent': response['percentage'],
-        'message': response['message']
-    }
-
-    return HttpResponse(json.dumps(data), content_type='application/json')
-
-
-def backup_abort(request):
-    # Check if any backup is currently running
-    backups = models.Backup.objects.all().order_by('-bak_started_at')
-
-    if len(backups) < 1 or backups[0].bak_finished:
-        pass
-
-    if request.method == 'POST':
-        # User wants to abort a backup
-        response = notifier().call_backupd({'cmd': 'ABORT'})
-        if response['status'] != 'OK':
-            return redirect('/system/backup')
-
-        return redirect('/system/backup')
 
 
 class UnixTransport(xmlrpclib.Transport):
