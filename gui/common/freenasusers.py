@@ -173,16 +173,19 @@ class FreeNAS_Group(object):
             dflags = _get_dflags()
 
         obj = None
-        if dflags & U_AD_ENABLED:
-            obj = FreeNAS_ActiveDirectory_Group(group, **kwargs)
-        elif dflags & U_NT4_ENABLED:
-            obj = FreeNAS_NT4_Group(group, **kwargs)
-        elif dflags & U_NIS_ENABLED:
-            obj = FreeNAS_NIS_Group(group, **kwargs)
-        elif dflags & U_LDAP_ENABLED:
-            obj = FreeNAS_LDAP_Group(group, **kwargs)
-        elif dflags & U_DC_ENABLED:
-            obj = FreeNAS_DomainController_Group(group, **kwargs)
+        try:
+            if dflags & U_AD_ENABLED:
+                obj = FreeNAS_ActiveDirectory_Group(group, **kwargs)
+            elif dflags & U_NT4_ENABLED:
+                obj = FreeNAS_NT4_Group(group, **kwargs)
+            elif dflags & U_NIS_ENABLED:
+                obj = FreeNAS_NIS_Group(group, **kwargs)
+            elif dflags & U_LDAP_ENABLED:
+                obj = FreeNAS_LDAP_Group(group, **kwargs)
+            elif dflags & U_DC_ENABLED:
+                obj = FreeNAS_DomainController_Group(group, **kwargs)
+        except:
+            log.debug('Failed to get group from directory service, falling back to local', exc_info=True)
 
         if obj is None:
             obj = FreeNAS_Local_Group(group, **kwargs)
@@ -293,16 +296,19 @@ class FreeNAS_User(object):
         data = kwargs.pop('data', None)
 
         obj = None
-        if dflags & U_AD_ENABLED:
-            obj = FreeNAS_ActiveDirectory_User(user, **kwargs)
-        elif dflags & U_NT4_ENABLED:
-            obj = FreeNAS_NT4_User(user, **kwargs)
-        elif dflags & U_NIS_ENABLED:
-            obj = FreeNAS_NIS_User(user, **kwargs)
-        elif dflags & U_LDAP_ENABLED:
-            obj = FreeNAS_LDAP_User(user, **kwargs)
-        elif dflags & U_DC_ENABLED:
-            obj = FreeNAS_DomainController_User(user, **kwargs)
+        try:
+            if dflags & U_AD_ENABLED:
+                obj = FreeNAS_ActiveDirectory_User(user, **kwargs)
+            elif dflags & U_NT4_ENABLED:
+                obj = FreeNAS_NT4_User(user, **kwargs)
+            elif dflags & U_NIS_ENABLED:
+                obj = FreeNAS_NIS_User(user, **kwargs)
+            elif dflags & U_LDAP_ENABLED:
+                obj = FreeNAS_LDAP_User(user, **kwargs)
+            elif dflags & U_DC_ENABLED:
+                obj = FreeNAS_DomainController_User(user, **kwargs)
+        except:
+            log.debug('Failed to get user from directory service, falling back to local', exc_info=True)
 
         if not obj:
             obj = FreeNAS_Local_User(user, data=data, **kwargs)
