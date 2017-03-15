@@ -189,6 +189,9 @@ class FreeNAS_LDAP_Directory(object):
 
     def _logex(self, ex):
         log.debug("FreeNAS_LDAP_Directory[ERROR]: An LDAP Exception occured", exc_info=True)
+        if not hasattr(ex, '__iter__'):
+            log.debug('FreeNAS_LDAP_Directory[ERROR]: %s', ex, exc_info=True)
+            return
         for e in ex:
             if 'info' in e:
                 log.debug(
