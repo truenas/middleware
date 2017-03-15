@@ -70,8 +70,9 @@ checksum fetch:
 RUN_DEPENDS+=	truenas-files>0:${PORTSDIR}/truenas/truenas-files
 .endif
 
-pre-install:
+do-install:
 	${RM} -f ${PLIST}
+	${PYTHON_CMD} -m compileall ${STAGEDIR}${PREFIX}/www/freenasUI
 	${ECHO_CMD} "@owner www"  >> ${PLIST}
 	${ECHO_CMD} "@group www"  >> ${PLIST}
 	${ECHO_CMD} "@comment files" >> ${PLIST}
@@ -84,7 +85,6 @@ pre-install:
 		| ${SED} -e 's|^/usr/|/www/|' -e 's|^/||' -e 's|^|@dirrm |' \
 		| ${SORT} -r >> ${PLIST}
 
-do-install:
 	${RM} -fr ${STAGEDIR}${PREFIX}/www/freenasUI
 	${MKDIR} ${STAGEDIR}${PREFIX}/www/freenasUI
 	${CP} -a ${WRKSRC}/ ${STAGEDIR}${PREFIX}/www/freenasUI
