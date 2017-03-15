@@ -52,8 +52,6 @@ WRKSRC=/usr/freenasUI
 
 NO_BUILD=yes
 
-PLIST=		${WRKDIR}/plist
-
 MAKE_JOBS_UNSAFE=yes
 
 ALL_TARGET=obj all
@@ -71,19 +69,18 @@ RUN_DEPENDS+=	truenas-files>0:${PORTSDIR}/truenas/truenas-files
 .endif
 
 do-install:
-	${RM} -f ${PLIST}
 	${PYTHON_CMD} -m compileall ${WRKSRC}/
-	${ECHO_CMD} "@owner www"  >> ${PLIST}
-	${ECHO_CMD} "@group www"  >> ${PLIST}
-	${ECHO_CMD} "@comment files" >> ${PLIST}
+	${ECHO_CMD} "@owner www"  >> ${TMPPLIST}
+	${ECHO_CMD} "@group www"  >> ${TMPPLIST}
+	${ECHO_CMD} "@comment files" >> ${TMPPLIST}
 	${FIND} ${WRKSRC} -type f | \
 		${SED} -e 's|^/usr/|/www/|' -e 's|^/||' \
-		| ${SORT} >> ${PLIST}
-	${ECHO_CMD} www/freenasUI/local_settings.py >> ${PLIST}
-	${ECHO_CMD} "@comment directories" >> ${PLIST}
+		| ${SORT} >> ${TMPPLIST}
+	${ECHO_CMD} www/freenasUI/local_settings.py >> ${TMPPLIST}
+	${ECHO_CMD} "@comment directories" >> ${TMPPLIST}
 	${FIND} ${WRKSRC} -type d \
 		| ${SED} -e 's|^/usr/|/www/|' -e 's|^/||' -e 's|^|@dirrm |' \
-		| ${SORT} -r >> ${PLIST}
+		| ${SORT} -r >> ${TMPPLIST}
 
 	${RM} -fr ${STAGEDIR}${PREFIX}/www/freenasUI
 	${MKDIR} ${STAGEDIR}${PREFIX}/www/freenasUI
