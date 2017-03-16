@@ -83,7 +83,7 @@ class CertificateService(CRUDService):
                 # Logic copied from freenasUI
                 cert_obj = crypto.load_certificate(crypto.FILETYPE_PEM, c)
                 cert['cert_chain_list'].append(
-                    crypto.dump_certificate(crypto.FILETYPE_PEM, cert_obj)
+                    crypto.dump_certificate(crypto.FILETYPE_PEM, cert_obj).decode()
                 )
         except:
             logger.debug('Failed to load certificate {0}'.format(cert['cert_name']), exc_info=True)
@@ -91,14 +91,14 @@ class CertificateService(CRUDService):
         try:
             if cert['cert_privatekey']:
                 key_obj = crypto.load_privatekey(crypto.FILETYPE_PEM, cert['cert_privatekey'])
-                cert['cert_privatekey'] = crypto.dump_privatekey(crypto.FILETYPE_PEM, key_obj)
+                cert['cert_privatekey'] = crypto.dump_privatekey(crypto.FILETYPE_PEM, key_obj).decode()
         except:
             logger.debug('Failed to load privatekey {0}'.format(cert['cert_name']), exc_info=True)
 
         try:
             if cert['cert_CSR']:
                 csr_obj = crypto.load_certificate_request(crypto.FILETYPE_PEM, cert['cert_CSR'])
-                cert['cert_CSR'] = crypto.dump_certificate_request(crypto.FILETYPE_PEM, csr_obj)
+                cert['cert_CSR'] = crypto.dump_certificate_request(crypto.FILETYPE_PEM, csr_obj).decode()
         except:
             logger.debug('Failed to load csr {0}'.format(cert['cert_name']), exc_info=True)
 
@@ -124,7 +124,7 @@ class CertificateService(CRUDService):
 
         if obj:
             cert['cert_DN'] = '/' + '/'.join([
-                '%s=%s' % (c[0], c[1])
+                '%s=%s' % (c[0].decode(), c[1].decode())
                 for c in obj.get_subject().get_components()
             ])
 
