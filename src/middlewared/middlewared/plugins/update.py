@@ -110,7 +110,7 @@ def get_changelog(train, start='', end=''):
     changelog = conf.GetChangeLog(train=train)
     if not changelog:
         return None
-    return parse_changelog(changelog.read(), start, end)
+    return parse_changelog(changelog.read().decode('utf8', 'ignore'), start, end)
 
 
 def parse_changelog(changelog, start='', end=''):
