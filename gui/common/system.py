@@ -329,7 +329,7 @@ def get_fstype(path):
     if not os.access(path, os.F_OK):
         return None
 
-    lines = subprocess.check_output(['/bin/df', '-T', path]).splitlines()
+    lines = subprocess.check_output(['/bin/df', '-T', path], encoding='utf8').splitlines()
 
     out = (lines[len(lines) - 1]).split()
 
@@ -346,7 +346,7 @@ def get_mounted_filesystems():
     """
     mounted = []
 
-    lines = subprocess.check_output(['/sbin/mount']).splitlines()
+    lines = subprocess.check_output(['/sbin/mount'], encoding='utf8').splitlines()
 
     for line in lines:
         reg = RE_MOUNT.search(line)

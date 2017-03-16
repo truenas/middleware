@@ -278,7 +278,7 @@ def main():
         try:
             if args.debug:
                 print("[DEBUG]: running " + cmdname)
-            log['cmdout'][cmdname] = subprocess.check_output(cmds_to_log[cmdname], stderr=subprocess.STDOUT)
+            log['cmdout'][cmdname] = subprocess.check_output(cmds_to_log[cmdname], stderr=subprocess.STDOUT, encoding='utf8')
             if cmdname == 'dmidecode':
                 if args.debug:
                     print("[DEBUG]: running parseDMI " + cmdname)
