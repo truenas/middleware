@@ -45,7 +45,6 @@ from wsgiref.util import FileWrapper
 from django.core.urlresolvers import reverse
 from django.db import transaction
 from django.http import (
-    FileResponse,
     HttpResponse,
     HttpResponseRedirect,
     StreamingHttpResponse,
@@ -607,7 +606,7 @@ def config_download(request):
             tar.add('/data/freenas-v1.db', arcname='freenas-v1.db')
             tar.add('/data/pwenc_secret', arcname='pwenc_secret')
 
-    wrapper = FileWrapper(file(filename))
+    wrapper = FileWrapper(open(filename, 'rb'))
 
     hostname = GlobalConfiguration.objects.all().order_by('-id')[0].gc_hostname
     freenas_build = "UNKNOWN"
@@ -1003,8 +1002,8 @@ def debug_download(request):
         extension = 'tgz'
         hostname = '-%s' % gc.gc_hostname
 
-    response = FileResponse(
-        open(debug_file, 'rb'),
+    response = StreamingHttpResponse(
+        FileWrapper(open(debug_file, 'rb')),
         content_type='application/octet-stream',
     )
     response['Content-Length'] = os.path.getsize(debug_file)
