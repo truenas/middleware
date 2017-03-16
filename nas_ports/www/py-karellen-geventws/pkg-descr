@@ -1,5 +1,0 @@
-This is a Karellen fork of gevent-websocket. The goal of this fork is to maintain the project to support Python 3.3, 3.4 and 3.5+ as well as latest WS standards errata.
-
-karellen-geventws is a WebSocket library for the gevent networking library.
-
-WWW: https://github.com/karellen/karellen-geventws

@@ -1,7 +1,0 @@
-The smartmontools package contains two utility programs (smartctl and smartd)
-to control and monitor storage systems using the Self-Monitoring, Analysis
-and Reporting Technology System (S.M.A.R.T.) built into most modern ATA and
-SCSI hard disks.  It is derived from the smartsuite package, and includes
-support for ATA/ATAPI/SATA disks and SCSI disks and tape devices.
-
-WWW: http://www.smartmontools.org

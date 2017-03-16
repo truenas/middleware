@@ -1,4 +1,0 @@
-Backport of Python 3.3's standard library module lzma for LZMA/XY compressed
-files
-
-WWW: https://github.com/peterjc/backports.lzma
