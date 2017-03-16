@@ -2628,9 +2628,9 @@ class CertificateAuthorityCreateIntermediateForm(ModelForm):
         cacert = crypto.load_certificate(crypto.FILETYPE_PEM, signing_cert.cert_certificate)
         cert.set_issuer(cacert.get_subject())
         cert.add_extensions([
-            crypto.X509Extension("basicConstraints", True, "CA:TRUE, pathlen:0"),
-            crypto.X509Extension("keyUsage", True, "keyCertSign, cRLSign"),
-            crypto.X509Extension("subjectKeyIdentifier", False, "hash", subject=cert),
+            crypto.X509Extension(b"basicConstraints", True, b"CA:TRUE, pathlen:0"),
+            crypto.X509Extension(b"keyUsage", True, b"keyCertSign, cRLSign"),
+            crypto.X509Extension(b"subjectKeyIdentifier", False, b"hash", subject=cert),
         ])
 
         cert.set_serial_number(signing_cert.cert_serial)
@@ -2994,8 +2994,7 @@ class CertificateCreateInternalForm(ModelForm):
         cacert = crypto.load_certificate(crypto.FILETYPE_PEM, signing_cert.cert_certificate)
         cert.set_issuer(cacert.get_subject())
         cert.add_extensions([
-            crypto.X509Extension("subjectKeyIdentifier", False, "hash",
-                                 subject=cert),
+            crypto.X509Extension(b"subjectKeyIdentifier", False, b"hash", subject=cert),
         ])
 
         cert_serial = signing_cert.cert_serial
