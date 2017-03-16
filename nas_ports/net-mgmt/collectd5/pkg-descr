@@ -1,6 +1,0 @@
-collectd is a small daemon written in C for performance. It reads various
-system & network statistics along with updating output RRD or CSV files.
-The daemon is very fast and allows for frequent polling of values, with
-support for polling as frequent as every 10 seconds.
-
-WWW: https://www.collectd.org/

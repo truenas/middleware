@@ -1,5 +1,0 @@
-@sample etc/nss_mdns.conf.sample
-lib/nss_mdns.so
-lib/nss_mdns.so.1
-man/man5/nss_mdns.conf.5.gz
-%%EXAMPLESDIR%%/nss_mdns.conf

@@ -1,5 +1,0 @@
---- po/LINGUAS.orig	2015-01-30 16:30:32 UTC
-+++ po/LINGUAS
-@@ -1 +1 @@
--ast ca da de de@hebrew de_CH en@arabic en@cyrillic en@greek en@hebrew en@piglatin en@quot eo es fi fr gl hu id it ja lt nb nl pa pl pt_BR ru sl sv tr uk vi zh_CN zh_TW
-+ast ca da de eo es fi fr gl hu id it ja lt nb nl pa pl pt_BR ru sl sv tr uk vi zh_CN zh_TW

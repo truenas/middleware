@@ -1,8 +1,0 @@
-GNU GRUB is a multiboot boot loader.  It was derived from GRUB, the GRand
-Unified Bootloader, which was originally designed and implemented by Erich
-Stefan Boleyn.
-
-This port builds the GRUB x86_64-efi boot modules, allowing grub-install
-or grub-mkrescue to install with EFI support.
-
-WWW: http://www.gnu.org/software/grub/

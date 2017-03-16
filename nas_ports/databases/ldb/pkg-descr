@@ -1,9 +1,0 @@
-ldb is a LDAP-like embedded database.
-
-ldb provides a fast database with an LDAP-like API designed to be used
-within an application.
-
-In some ways it can be seen as a intermediate solution between key-value
-pair databases and a real LDAP database.
-
-WWW: http://ldb.samba.org/
