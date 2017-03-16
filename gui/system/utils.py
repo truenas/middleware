@@ -366,7 +366,7 @@ def run_updated(train, location, download=True, apply=False):
         returncode >>= 8
         uuid = os.read(readfd, 1024)
         if uuid:
-            uuid = uuid.strip('\n')
+            uuid = uuid.decode().strip('\n')
         return returncode, uuid
 
 
