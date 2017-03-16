@@ -849,7 +849,7 @@ class CertificateBase(Model):
 
         parts = []
         for c in self.__get_thingy().get_subject().get_components():
-            parts.append("%s=%s" % (c[0], c[1]))
+            parts.append("%s=%s" % (c[0].decode(), c[1].decode('utf8')))
         DN = "/%s" % '/'.join(parts)
         return DN
 
