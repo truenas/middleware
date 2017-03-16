@@ -207,7 +207,7 @@ class UpdateHandler(object):
 
     def dump(self):
         with LockFile(self.DUMPFILE) as lock:
-            with open(self.DUMPFILE, 'wb') as f:
+            with open(self.DUMPFILE, 'w') as f:
                 data = {
                     'apply': self.apply,
                     'error': self.error,
