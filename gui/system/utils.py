@@ -273,7 +273,7 @@ class VerifyHandler(object):
 
     def dump(self):
         with LockFile(self.DUMPFILE) as lock:
-            with open(self.DUMPFILE, 'wb') as f:
+            with open(self.DUMPFILE, 'w') as f:
                 data = {
                     'error': self.error,
                     'finished': self.finished,
@@ -290,7 +290,7 @@ class VerifyHandler(object):
         if not os.path.exists(self.DUMPFILE):
             return None
         with LockFile(self.DUMPFILE) as lock:
-            with open(self.DUMPFILE, 'rb') as f:
+            with open(self.DUMPFILE, 'r') as f:
                 data = json.loads(f.read())
         self.details = data.get('details', '')
         self.error = data['error']
