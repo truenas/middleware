@@ -26,7 +26,7 @@ const ngcWebpack = require('ngc-webpack');
 const HMR = helpers.hasProcessFlag('hot');
 const AOT = helpers.hasNpmFlag('aot');
 const METADATA = {
-  title: 'FreeNAS',
+  title: 'FreeNAS 9.10',
   description: 'FreeNAS WebUI 2.0',
   baseUrl: '/ui/',
   isDevServer: helpers.isWebpackDevServer()
