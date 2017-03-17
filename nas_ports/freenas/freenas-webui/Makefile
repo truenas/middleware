@@ -14,8 +14,8 @@ EXTRACT_ONLY=
 
 FETCH_DEPENDS=	npm3>0:${PORTSDIR}/www/npm3 \
 		git>0:${PORTSDIR}/devel/git
-RUN_DEPENDS=	npm3>0:${PORTSDIR}/www/npm3
-BUILD_DEPENDS=	rsync>0:${PORTSDIR}/net/rsync
+BUILD_DEPENDS=	rsync>0:${PORTSDIR}/net/rsync \
+		npm3>0:${PORTSDIR}/www/npm3
 
 NO_BUILD=	yes
 WRKSRC=		/usr/webui
