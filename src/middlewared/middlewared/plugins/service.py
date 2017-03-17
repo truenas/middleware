@@ -913,7 +913,10 @@ class ServiceService(Service):
             self.restart("syslogd", kwargs)
         self.restart("cifs", kwargs)
         if systemdataset['sys_rrd_usedataset']:
-            self.restart("collectd", kwargs)
+            # Restarting collectd may take a long time and there is no
+            # benefit in waiting for it since even if it fails it wont
+            # tell the user anything useful.
+            gevent.spawn(self.restart, "collectd", kwargs)
 
     def enable_test_service_connection(self, frequency, retry, fqdn, service_port, service_name):
         """Enable service monitoring.
