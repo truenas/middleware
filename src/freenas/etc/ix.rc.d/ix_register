@@ -19,7 +19,7 @@ stop_cmd=":"
 
 ix_register_start()
 {
-	daemon -c -p ${pid} -r /usr/local/libexec/nas/register_mdns.py
+	daemon -c -f -p ${pid} -r /usr/local/libexec/nas/register_mdns.py
 }
 
 ix_register_reload()
