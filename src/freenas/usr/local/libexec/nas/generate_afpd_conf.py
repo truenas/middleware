@@ -129,7 +129,7 @@ def main():
             cf_contents.append("\tacls = yes\n")
         # Do not fail if aux params are not properly entered by the user
         try:
-            aux_params = ["\t{0}\n".format(p.encode('utf8')) for p in share.afp_auxparams.split("\n")]
+            aux_params = ["\t{0}\n".format(p) for p in share.afp_auxparams.split("\n")]
         except:
             pass
         else:
