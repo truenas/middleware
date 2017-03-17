@@ -946,6 +946,8 @@ def generate_smb4_conf(client, smb4_conf, role):
     confset1(smb4_conf, "map to guest = Bad User")
     confset2(smb4_conf, "obey pam restrictions = %s",
              "yes" if cifs.cifs_srv_obey_pam_restrictions else "no")
+    confset2(smb4_conf, "ntlm auth = %s",
+             "yes" if cifs.cifs_srv_ntlmv1_auth else "no")
     confset1(smb4_conf, "directory name cache size = 0")
     confset1(smb4_conf, "kernel change notify = no")
 
@@ -1025,7 +1027,8 @@ def generate_smb4_conf(client, smb4_conf, role):
 
     confset2(smb4_conf, "create mask = %s", cifs.cifs_srv_filemask)
     confset2(smb4_conf, "directory mask = %s", cifs.cifs_srv_dirmask)
-    confset1(smb4_conf, "client ntlmv2 auth = yes")
+    confset2(smb4_conf, "client ntlmv2 auth = %s",
+             "yes" if not cifs.cifs_srv_ntlmv1_auth else "no")
     confset2(smb4_conf, "dos charset = %s", cifs.cifs_srv_doscharset)
     confset2(smb4_conf, "unix charset = %s", cifs.cifs_srv_unixcharset)
 
