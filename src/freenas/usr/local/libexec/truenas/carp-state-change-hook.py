@@ -258,21 +258,32 @@ def carp_master(fobj, state_file, ifname, vhid, event, user_override, forcetakeo
             sys.exit(0)
 
     if not forcetakeover:
-        totoutput = 0
+        """
+        We check if we have at least one BACKUP interface per group.
+        If that turns out to be true we ignore the MASTER state in one of the
+        interfaces, otherwise we assume master.
+        """
+        ignoreall = True
         for group, carpint in list(fobj['groups'].items()):
+            totoutput = 0
+            ignore = False
             for i in carpint:
                 error, output = run("ifconfig %s | grep 'carp: BACKUP' | wc -l" % i)
                 totoutput += int(output)
 
                 if not error and totoutput > 0:
-                    log.warn(
-                        'Ignoring UP state on %s because we still have interfaces that are'
-                        ' BACKUP.', ifname
-                    )
-                    run_async('echo "$(date), $(hostname), %s assumed master while other '
-                              'interfaces are still in slave mode." | mail -s "Failover WARNING"'
-                              ' root' % ifname)
-                    sys.exit(1)
+                    ignore = True
+        ignoreall &= ignore
+
+        if ignoreall:
+            log.warn(
+                'Ignoring UP state on %s because we still have interfaces that are'
+                ' BACKUP.', ifname
+            )
+            run_async('echo "$(date), $(hostname), %s assumed master while other '
+                      'interfaces are still in slave mode." | mail -s "Failover WARNING"'
+                      ' root' % ifname)
+            sys.exit(1)
 
     if not forcetakeover:
         run('pkill -9 -f fenced')
@@ -560,17 +571,29 @@ def carp_backup(fobj, state_file, ifname, vhid, event, user_override):
                          "%s seconds.", ifname, sleeper)
                 sys.exit(0)
 
-    totoutput = 0
+    """
+    We check if we have at least one MASTER interface per group.
+    If that turns out to be true we ignore the BACKUP state in one of the
+    interfaces, otherwise we assume backup demoting carps.
+    """
+    ignoreall = True
     for group, carpint in list(fobj['groups'].items()):
+        totoutput = 0
+        ignore = False
         for i in carpint:
             error, output = run("ifconfig %s | grep 'carp: MASTER' | wc -l" % i)
             totoutput += int(output)
 
             if not error and totoutput > 0:
-                log.warn(
-                    'Ignoring DOWN state on %s because we still have interfaces that '
-                    'are UP.', ifname)
-                sys.exit(1)
+                ignore = True
+                break
+        ignoreall &= ignore
+
+    if ignoreall:
+        log.warn(
+            'Ignoring DOWN state on %s because we still have interfaces that '
+            'are UP.', ifname)
+        sys.exit(1)
 
     # Start the critical section
     try:
