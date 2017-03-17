@@ -344,11 +344,11 @@ install_grub() {
 	    _grub_args=""
 	    if [ "$BOOTMODE" = "efi" ] ; then
 		# EFI Mode
-		sed -i '' 's|GRUB_TERMINAL_OUTPUT=console|GRUB_TERMINAL_OUTPUT=gfxterm|g' ${_mnt}/conf/base/etc/local/default/grub
 		glabel label efibsd /dev/${_disk}p1
 		mkdir -p ${_mnt}/boot/efi
 		mount -t msdosfs /dev/${_disk}p1 ${_mnt}/boot/efi
 		_grub_args="--efi-directory=/boot/efi --removable --target=x86_64-efi"
+		export GRUB_TERMINAL_OUTPUT="gfxterm"
 	        echo "chroot ${_mnt} /usr/local/sbin/grub-install ${_grub_args} /dev/${_disk}"
 	        chroot ${_mnt} /usr/local/sbin/grub-install ${_grub_args} /dev/${_disk}
 		umount -f ${_mnt}/boot/efi
