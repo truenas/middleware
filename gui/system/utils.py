@@ -74,7 +74,7 @@ def create_update_alert(update_version):
     # rebooted. This is to catch the corner case when the update.py
     # daemon errors out AFTER an update was applied and its BootEnv
     # created (and sometimes even activated)
-    with open(UPDATE_APPLIED_SENTINEL, 'wb+') as f:
+    with open(UPDATE_APPLIED_SENTINEL, 'w+') as f:
         f.write(json.dumps({'update_version': update_version}))
     # Now send SIGUSR1 (signal 10) to the alertd daemon (to rescan
     # alertmods)
