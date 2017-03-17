@@ -314,6 +314,14 @@ for replication in replication_tasks:
         snaplist = [x for x in snaplist if not system_re.match(x)]
         map_source = mapfromdata(snaplist)
 
+    rzfscmd = '"zfs list -H -o name,readonly -t filesystem,volume -r %s"' % (remotefs_final.split('/')[0])
+    sshproc = pipeopen('%s %s' % (sshcmd, rzfscmd))
+    output, error = sshproc.communicate()
+    remote_zfslist = {}
+    for i in re.sub(r'[ \t]+', ' ', output, flags=re.M).splitlines():
+        data = i.split()
+        remote_zfslist[data[0]] = {'readonly': data[1] == 'on'}
+
     # Attempt to create the remote dataset.  If it fails, we don't care at this point.
     rzfscmd = "zfs create -o readonly=on "
     ds = ''
@@ -321,13 +329,16 @@ for replication in replication_tasks:
         localfs_tmp = "%s/%s" % (localfs, localfs)
     else:
         localfs_tmp = localfs
-    for dir in localfs_tmp.partition("/")[2].split("/"):
+    for dir in (remotefs.partition("/")[2] + "/" + localfs_tmp.partition("/")[2]).split("/"):
         # If this test fails there is no need to create datasets on the remote side
         # eg: tank -> tank replication
         if '/' in remotefs or '/' in localfs:
             ds = os.path.join(ds, dir)
+            ds_full = '%s/%s' % (remotefs.split('/')[0], ds)
+            if ds_full in remote_zfslist:
+                continue
             log.debug("ds = %s, remotefs = %s" % (ds, remotefs))
-            sshproc = pipeopen('%s %s %s/%s' % (sshcmd, rzfscmd, remotefs, ds), quiet=True)
+            sshproc = pipeopen('%s %s %s' % (sshcmd, rzfscmd, ds_full), quiet=True)
             output, error = sshproc.communicate()
             error = error.strip('\n').strip('\r').replace('WARNING: ENABLED NONE CIPHER', '')
             # Debugging code
