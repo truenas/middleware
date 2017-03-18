@@ -15,5 +15,8 @@ class ConsulService(Service):
         c = consul.Consul()
         index = None
         index, data = c.kv.get(key, index=index)
-        return data['Value'].decode("utf-8") 
+        if data is not None:
+            return data['Value'].decode("utf-8")
+        else:
+            return ""
 
