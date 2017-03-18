@@ -426,8 +426,11 @@ def debug_generate():
 
     standby_debug = None
     if not _n.is_freenas() and _n.failover_licensed():
-        s = _n.failover_rpc()
-        standby_debug = s.debug()
+        try:
+            s = _n.failover_rpc()
+            standby_debug = s.debug()
+        except:
+            log.error('Failed to get debug from standby node', exc_info=True)
 
     with mntlock(mntpt=mntpt):
 
