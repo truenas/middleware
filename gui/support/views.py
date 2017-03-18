@@ -109,8 +109,8 @@ def license_update(request):
     eula = None
     if not notifier().is_freenas():
         if os.path.exists('/usr/local/share/truenas/eula'):
-            with open('/usr/local/share/truenas/eula', 'r') as f:
-                eula = f.read().decode('utf8')
+            with open('/usr/local/share/truenas/eula', 'r', encoding='utf8') as f:
+                eula = f.read()
 
     return render(request, 'support/license_update.html', {
         'eula': eula,
