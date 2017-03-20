@@ -137,10 +137,10 @@ _interface_config()
 			local a=0
 			if [ -n "${ether}" ]; then
 				echo "ifconfig_${internal_iface}=\"ether ${ether}\""
-				echo "ifconfig_${internal_iface}_alias${a}=\"inet ${internal_ip}/24\""
+				echo "ifconfig_${internal_iface}_alias${a}=\"inet ${internal_ip}/24 descr Interlink\""
 				a=$(( $a + 1 ))
 			else
-				echo "ifconfig_${internal_iface}=\"inet ${internal_ip}/24\""
+				echo "ifconfig_${internal_iface}=\"inet ${internal_ip}/24 descr Interlink\""
 			fi
 			echo "ifconfig_${internal_iface}_alias${a}=\"inet vhid 10 advskew ${carp1_skew} alias ${carp1_addr}\""
 			a=$(( $a + 1 ))
@@ -154,8 +154,8 @@ _interface_config()
 
 	# Traverse the network interface table and generate rc.conf style
 	# configuration.
-	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT id, int_interface, int_dhcp, int_ipv4address, int_ipv4address_b, int_v4netmaskbit, int_ipv6auto, int_ipv6address, int_v6netmaskbit, int_vip, int_vhid, int_pass, int_options FROM network_interfaces ORDER BY id" | \
-	while read interface_id interface dodhcp ipv4addr ipv4addr_b ipv4netmask doipv6auto ipv6addr ipv6netmask int_vip int_vhid int_pass options; do
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT id, int_interface, int_dhcp, int_ipv4address, int_ipv4address_b, int_v4netmaskbit, int_ipv6auto, int_ipv6address, int_v6netmaskbit, int_vip, int_vhid, int_pass, int_critical, int_group, int_options FROM network_interfaces ORDER BY id" | \
+	while read interface_id interface dodhcp ipv4addr ipv4addr_b ipv4netmask doipv6auto ipv6addr ipv6netmask int_vip int_vhid int_pass critical group options; do
 		if [ "$(ha_node)" = "B" ]; then
 			ipv4addr=${ipv4addr_b}
 		fi
@@ -192,7 +192,11 @@ _interface_config()
 					carp1_skew="1"
 				fi
 			fi
-			echo "ifconfig_${interface}_alias0=\"vhid ${int_vhid} advskew ${carp1_skew}${int_passopt} alias ${int_vip}/32\""
+			echo -n "ifconfig_${interface}_alias0=\"vhid ${int_vhid} advskew ${carp1_skew}${int_passopt} alias ${int_vip}/32"
+			if [ -n "${critical}" ]; then
+				echo -n " descr CriticalGroup${group}"
+			fi
+			echo \"
 			eval counter_${interface}=1
 
 		fi
