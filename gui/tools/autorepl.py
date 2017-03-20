@@ -130,7 +130,7 @@ def sendzfs(fromsnap, tosnap, dataset, localfs, remotefs, followdelete, throttle
     replcmd = '%s%s/bin/dd obs=1m 2> /dev/null | /bin/dd obs=1m 2> /dev/null | /usr/local/bin/pipewatcher $$ | %s "%s/sbin/zfs receive -F -d \'%s\' && echo Succeeded"' % (compress, throttle, sshcmd, decompress, remotefs)
     log.debug('Sending zfs snapshot: %s | %s', ' '.join(cmd), replcmd)
     with open(templog, 'w+') as f:
-        readobj = os.fdopen(readfd, 'r', 0)
+        readobj = os.fdopen(readfd, 'rb', 0)
         proc = subprocess.Popen(
             replcmd,
             shell=True,
@@ -287,7 +287,7 @@ for replication in replication_tasks:
                   ' -o ConnectTimeout=7')
 
     if dedicateduser:
-        sshcmd = "%s -l %s" % (sshcmd, dedicateduser.encode('utf-8'))
+        sshcmd = "%s -l %s" % (sshcmd, dedicateduser)
 
     sshcmd = '%s -p %d %s' % (sshcmd, remote_port, remote)
 
