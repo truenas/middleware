@@ -198,7 +198,7 @@ def doesVMSnapshotByNameExists(vm, snapshotName):
         snaps = vm.snapshot.rootSnapshotList
         for snap in snaps:
             if snap.name == snapshotName:
-                return snap
+                return snap.snapshot
     except:
         log.debug('Exception in doesVMSnapshotByNameExists')
     return False
