@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:10-0700\n"
-"PO-Revision-Date: 2017-03-20 12:15+0000\n"
+"PO-Revision-Date: 2017-03-20 12:51+0000\n"
 "Last-Translator: Michael Arlt <michaelarlt78@googlemail.com>\n"
 "Language-Team: German "
 "<http://weblate.trueos.org/projects/freenas/djangojs/de/>\n"
@@ -632,6 +632,8 @@ msgid ""
 "You're not allowed to change away from the nightly train, it is considered a "
 "downgrade."
 msgstr ""
+"Ihnen ist es nicht erlaubt vom nächtlichen Updatepfad wegzugehen, dies wird "
+"als Zurückstufung angesehen."
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:161
 #: freeadmin/static/lib/js/freeadmin/Update.js:162
@@ -639,12 +641,16 @@ msgid ""
 "If you have an existing boot environment that uses that train, boot into it "
 "in order to upgrade that train."
 msgstr ""
+"Falls Sie eine existierende Startumgebung haben, welche diesen Updatepfad "
+"benutzt, starten Sie diese um den Updatepfad zu aktualisieren."
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:162
 msgid ""
 "Changing minor version is considered a downgrade, thus not a supported "
 "operation."
 msgstr ""
+"Das Wechseln einer Hauptversion wird als Zurückstufung angesehen, daher "
+"keine unterstützte Operation."
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:176
 msgid "OK"
