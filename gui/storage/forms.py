@@ -928,7 +928,7 @@ class AutoImportDecryptForm(Form):
         for vol in models.Volume.objects.filter(vol_encrypt__gt=0):
             for disk in vol.get_disks():
                 for geli in list(gelis):
-                    if '%sp' % disk in geli[1]:
+                    if geli[1].startswith('%sp' % disk):
                         gelis.remove(geli)
         return gelis
 
