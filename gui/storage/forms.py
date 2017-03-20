@@ -65,7 +65,9 @@ from freenasUI.storage import models
 from freenasUI.storage.widgets import UnixPermissionField
 from freenasUI.support.utils import dedup_enabled
 from middlewared.client import Client
-from pyVim import connect
+from pyVim import connect, task as VimTask
+from pyVmomi import vim
+
 
 attrs_dict = {'class': 'required', 'maxHeight': 200}
 
@@ -1811,17 +1813,27 @@ class ManualSnapshotForm(Form):
         vmsnapdescription = str(datetime.now()).split('.')[0] + " FreeNAS Created Snapshot"
         snapvms = []
         for obj in models.VMWarePlugin.objects.filter(filesystem=self._fs):
-            ssl._create_default_https_context = ssl._create_unverified_context
             try:
-                server = connect(host=obj.hostname, user=obj.username, pwd=obj.get_password())
+                ssl_context = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
+                ssl_context.verify_mode = ssl.CERT_NONE
+
+                si = connect.SmartConnect(host=obj.hostname, user=obj.username, pwd=obj.get_password(), sslContext=ssl_context)
             except:
                 continue
-            vmlist = server.get_registered_vms(status='poweredOn')
-            for vm in vmlist:
-                if vm.startswith("[%s]" % obj.datastore):
-                    vm1 = server.get_vm_by_path(vm)
-                    vm1.create_snapshot(vmsnapname, description=vmsnapdescription, memory=False)
-                    snapvms.append(vm1)
+            content = si.RetrieveContent()
+            vm_view = content.viewManager.CreateContainerView(content.rootFolder, [vim.VirtualMachine], True)
+            for vm in vm_view.view:
+                if vm.summary.runtime.powerState != 'poweredOn':
+                    continue
+                for i in vm.datastore:
+                    if i.info.name == obj.datastore:
+                        VimTask.WaitForTask(vm.CreateSnapshot_Task(
+                            name=vmsnapname,
+                            description=vmsnapdescription,
+                            memory=False, quiesce=False,
+                        ))
+                        snapvms.append(vm)
+                        break
 
         try:
             notifier().zfs_mksnap(
@@ -1831,7 +1843,12 @@ class ManualSnapshotForm(Form):
                 len(snapvms))
         finally:
             for vm in snapvms:
-                vm.delete_named_snapshot(vmsnapname)
+                tree = vm.snapshot.rootSnapshotList
+                while tree[0].childSnapshotList is not None:
+                    snap = tree[0]
+                    if snap.name == vmsnapname:
+                        VimTask.WaitForTask(snap.snapshot.RemoveSnapshot_Task(True))
+                    tree = tree[0].childSnapshotList
 
 
 class CloneSnapshotForm(Form):
