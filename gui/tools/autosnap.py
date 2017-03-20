@@ -414,7 +414,10 @@ if len(mp_to_task_map) > 0:
                 content = si.RetrieveContent()
             except Exception as e:
                 log.warn("VMware login failed to %s", vmsnapobj.hostname, exc_info=True)
-                vmlogin_fails[vmsnapobj.id] = str(e)
+                if hasattr(e, 'msg'):
+                    vmlogin_fails[vmsnapobj.id] = e.msg
+                else:
+                    vmlogin_fails[vmsnapobj.id] = str(e)
                 continue
             # There's no point to even consider VMs that are paused or powered off.
             vm_view = content.viewManager.CreateContainerView(content.rootFolder, [vim.VirtualMachine], True)
