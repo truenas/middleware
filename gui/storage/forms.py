@@ -56,6 +56,7 @@ from freenasUI.freeadmin.forms import (
 )
 from freenasUI.freeadmin.views import JsonResp
 from freenasUI.middleware import zfs
+from freenasUI.middleware.client import client
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier
 from freenasUI.services.exceptions import ServiceFailed
@@ -64,8 +65,7 @@ from freenasUI.storage import models
 from freenasUI.storage.widgets import UnixPermissionField
 from freenasUI.support.utils import dedup_enabled
 from middlewared.client import Client
-from pyVim import connect, task
-from pyVmomi import vim, vmodl
+from pyVim import connect
 
 attrs_dict = {'class': 'required', 'maxHeight': 200}
 
@@ -2692,25 +2692,25 @@ class VMWarePluginForm(ModelForm):
         return password
 
     def clean(self):
-        ssl._create_default_https_context = ssl._create_unverified_context
         cdata = self.cleaned_data
         if (
             cdata.get('hostname') and cdata.get('username') and
             cdata.get('password')
         ):
             try:
-                server = connect(
-                    host=cdata.get('hostname'),
-                    user=cdata.get('username'),
-                    pwd=cdata.get('password'),
-                    sock_timeout=7,
-                )
-                ds = server.get_datastores()
-                if not(ds and cdata.get('datastore') in list(ds.values())):
+                with client as c:
+                    ds = c.call('vmware.get_datastores', {
+                        'hostname': cdata.get('hostname'),
+                        'username': cdata.get('username'),
+                        'password': cdata.get('password'),
+                    })
+                datastores = []
+                for i in ds.values():
+                    datastores += i.keys()
+                if cdata.get('datastore') not in datastores:
                     self._errors['datastore'] = self.error_class([_(
                         'Datastore not found in the server.'
                     )])
-                server.disconnect()
             except Exception as e:
                 self._errors['__all__'] = self.error_class([_(
                     'Failed to connect: %s'
