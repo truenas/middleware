@@ -76,6 +76,7 @@ log = logging.getLogger('tools.autosnap')
 MNTLOCK = mntlock()
 
 VMWARE_FAILS = '/var/tmp/.vmwaresnap_fails'
+VMWARELOGIN_FAILS = '/var/tmp/.vmwarelogin_fails'
 VMWARESNAPDELETE_FAILS = '/var/tmp/.vmwaresnapdelete_fails'
 
 # Set to True if verbose log desired
@@ -401,6 +402,7 @@ if len(mp_to_task_map) > 0:
         # over all the VMWare tasks for a given ZFS filesystem, do all the VMWare snapshotting
         # then take the ZFS snapshot, then iterate again over all the VMWare "tasks" and undo
         # all the snaps we created in the first place.
+        vmlogin_fails = {}
         for vmsnapobj in qs:
             snapvms[vmsnapobj] = []
             snapvmfails[vmsnapobj] = []
@@ -410,9 +412,9 @@ if len(mp_to_task_map) > 0:
                 ssl_context.verify_mode = ssl.CERT_NONE
                 si = connect(host=vmsnapobj.hostname, user=vmsnapobj.username, pwd=vmsnapobj.get_password(), sslContext=ssl_context)
                 content = si.RetrieveContent()
-            except:
+            except Exception as e:
                 log.warn("VMware login failed to %s", vmsnapobj.hostname, exc_info=True)
-                # TODO: This should generate an alert.
+                vmlogin_fails[vmsnapobj.id] = str(e)
                 continue
             # There's no point to even consider VMs that are paused or powered off.
             vm_view = content.viewManager.CreateContainerView(content.rootFolder, [vim.VirtualMachine], True)
@@ -452,6 +454,13 @@ if len(mp_to_task_map) > 0:
                     snapvms[vmsnapobj].append(vm.config.uuid)
             connect.Disconnect(si)
         # At this point we've completed snapshotting VMs.
+
+        try:
+            with LockFile(VMWARELOGIN_FAILS) as lock:
+                with open(VMWARELOGIN_FAILS, 'rb') as f:
+                    pickle.dump(vmlogin_fails, f)
+        except:
+            log.debug('Failed to write vmware login fails file', exc_info=True)
 
         # Send out email alerts for VMs we tried to snapshot that failed.
         # Also put the failures into a sentinel file that the alert
