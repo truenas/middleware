@@ -412,7 +412,7 @@ if len(mp_to_task_map) > 0:
                 server.connect(vmsnapobj.hostname,
                                vmsnapobj.username,
                                vmsnapobj.get_password())
-            except:
+            except Exception as e:
                 log.warn("VMware login failed to %s", vmsnapobj.hostname)
                 if hasattr(e, 'msg'):
                     vmlogin_fails[vmsnapobj.id] = e.msg
