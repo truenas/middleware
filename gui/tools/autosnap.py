@@ -410,7 +410,7 @@ if len(mp_to_task_map) > 0:
             try:
                 ssl_context = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
                 ssl_context.verify_mode = ssl.CERT_NONE
-                si = connect(host=vmsnapobj.hostname, user=vmsnapobj.username, pwd=vmsnapobj.get_password(), sslContext=ssl_context)
+                si = connect.SmartConnect(host=vmsnapobj.hostname, user=vmsnapobj.username, pwd=vmsnapobj.get_password(), sslContext=ssl_context)
                 content = si.RetrieveContent()
             except Exception as e:
                 log.warn("VMware login failed to %s", vmsnapobj.hostname, exc_info=True)
@@ -534,7 +534,7 @@ Hello,
             try:
                 ssl_context = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
                 ssl_context.verify_mode = ssl.CERT_NONE
-                si = connect(host=vmsnapobj.hostname, user=vmsnapobj.username, pwd=vmsnapobj.get_password(), sslContext=ssl_context)
+                si = connect.SmartConnect(host=vmsnapobj.hostname, user=vmsnapobj.username, pwd=vmsnapobj.get_password(), sslContext=ssl_context)
             except:
                 # TODO: We need to alert here as this will leave
                 # dangling VMWare snapshots.
