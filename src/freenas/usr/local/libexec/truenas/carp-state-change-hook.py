@@ -268,12 +268,12 @@ def carp_master(fobj, state_file, ifname, vhid, event, user_override, forcetakeo
             totoutput = 0
             ignore = False
             for i in carpint:
-                error, output = run("ifconfig %s | grep 'carp: BACKUP' | wc -l" % i)
+                error, output = run("ifconfig %s | grep -c 'carp: BACKUP'" % i)
                 totoutput += int(output)
 
                 if not error and totoutput > 0:
                     ignore = True
-        ignoreall &= ignore
+            ignoreall &= ignore
 
         if ignoreall:
             log.warn(
@@ -581,7 +581,7 @@ def carp_backup(fobj, state_file, ifname, vhid, event, user_override):
         totoutput = 0
         ignore = False
         for i in carpint:
-            error, output = run("ifconfig %s | grep 'carp: MASTER' | wc -l" % i)
+            error, output = run("ifconfig %s | grep -c 'carp: MASTER'" % i)
             totoutput += int(output)
 
             if not error and totoutput > 0:
