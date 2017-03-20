@@ -1,6 +1,6 @@
 import ssl
 
-from middlewared.schema import Dict, Ref, Str, accepts
+from middlewared.schema import Dict, Int, Ref, Str, accepts
 from middlewared.service import Service
 
 from pyVim import connect
@@ -35,7 +35,6 @@ class VMWareService(Service):
         """
         ssl_context = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
         ssl_context.verify_mode = ssl.CERT_NONE
-
         server_instance = connect.SmartConnect(
             host=data['hostname'],
             user=data['username'],
@@ -70,3 +69,32 @@ class VMWareService(Service):
 
         connect.Disconnect(server_instance)
         return datastores
+
+    @accepts(Int('pk'))
+    def get_virtual_machines(self, pk):
+
+        item = self.query([('id', '=', pk)], {'get': True})
+
+        ssl_context = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
+        ssl_context.verify_mode = ssl.CERT_NONE
+        server_instance = connect.SmartConnect(
+            host=item['hostname'],
+            user=item['username'],
+            pwd=item['password'],
+            sslContext=ssl_context,
+        )
+
+        content = server_instance.RetrieveContent()
+        objview = content.viewManager.CreateContainerView(content.rootFolder, [vim.VirtualMachine], True)
+        vm_view = objview.view
+        objview.Destroy()
+
+        vms = {}
+        for vm in vm_view:
+            data = {
+                'uuid': vm.config.uuid,
+                'name': vm.name,
+                'power_state': vm.summary.runtime.powerState,
+            }
+            vms[vm.config.uuid] = data
+        return vms

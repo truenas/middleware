@@ -196,9 +196,12 @@ def canSnapshotVM(vm):
 def doesVMSnapshotByNameExists(vm, snapshotName):
     try:
         snaps = vm.snapshot.rootSnapshotList
-        for snap in snaps:
+        tree = vm.snapshot.rootSnapshotList
+        while tree[0].childSnapshotList is not None:
+            snap = tree[0]
             if snap.name == snapshotName:
-                return snap
+                return snap.snapshot
+            tree = tree[0].childSnapshotList
     except:
         log.debug('Exception in doesVMSnapshotByNameExists')
     return False
