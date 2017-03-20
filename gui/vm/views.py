@@ -38,7 +38,7 @@ def home(request):
         return render(request, 'vm/disabled.html')
 
     view = appPool.hook_app_index('vm', request)
-    view = filter(None, view)
+    view = list(filter(None, view))
     if view:
         return view[0]
 
