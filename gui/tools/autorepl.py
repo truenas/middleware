@@ -236,7 +236,7 @@ except:
 
 def write_results():
     global results
-    with open(REPL_RESULTFILE, 'w') as f:
+    with open(REPL_RESULTFILE, 'wb') as f:
         f.write(pickle.dumps(results))
 
 system_re = re.compile('^[^/]+/.system.*')
