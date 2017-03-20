@@ -1377,9 +1377,6 @@ def disk_editbulk(request):
 
 
 def vmwareplugin_datastores(request):
-    from pyVim import connect, task
-    from pyVmomi import vim, vmodl
-    ssl._create_default_https_context = ssl._create_unverified_context
     data = {
         'error': False,
     }
@@ -1394,14 +1391,15 @@ def vmwareplugin_datastores(request):
             password = vmware.get_password()
         else:
             password = ''
-        server = connect(
-            host=request.POST.get('hostname'),
-            user=request.POST.get('username'),
-            pwd=password,
-            sock_timeout=7,
-        )
-        data['value'] = list(server.get_datastores().values())
-        server.disconnect()
+        with client as c:
+            ds = c.call('vmware.get_datastores', {
+                'hostname': request.POST.get('hostname'),
+                'username': request.POST.get('username'),
+                'password': password,
+            })
+        data['value'] = []
+        for i in ds.values():
+            data['value'] += i.keys()
     except Exception as e:
         data['error'] = True
         data['errmsg'] = str(e)
