@@ -1848,6 +1848,8 @@ class ManualSnapshotForm(Form):
                     snap = tree[0]
                     if snap.name == vmsnapname:
                         VimTask.WaitForTask(snap.snapshot.RemoveSnapshot_Task(True))
+                    if len(tree[0].childSnapshotList) < 1:
+                        break
                     tree = tree[0].childSnapshotList
 
 

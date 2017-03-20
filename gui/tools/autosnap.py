@@ -201,6 +201,8 @@ def doesVMSnapshotByNameExists(vm, snapshotName):
             snap = tree[0]
             if snap.name == snapshotName:
                 return snap.snapshot
+            if len(tree[0].childSnapshotList) < 1:
+                break
             tree = tree[0].childSnapshotList
     except:
         log.debug('Exception in doesVMSnapshotByNameExists')
