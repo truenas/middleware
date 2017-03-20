@@ -1101,7 +1101,7 @@ class VMWarePlugin(Model):
         verbose_name_plural = _('VMware-Snapshots')
 
     def __unicode__(self):
-        return self.hostname
+        return '{}:{}'.format(self.hostname, self.datastore)
 
     def set_password(self, passwd):
         self.password = notifier().pwenc_encrypt(passwd)
