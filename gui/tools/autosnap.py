@@ -414,7 +414,10 @@ if len(mp_to_task_map) > 0:
                                vmsnapobj.get_password())
             except:
                 log.warn("VMware login failed to %s", vmsnapobj.hostname)
-                vmlogin_fails[vmsnapobj.id] = str(e)
+                if hasattr(e, 'msg'):
+                    vmlogin_fails[vmsnapobj.id] = e.msg
+                else:
+                    vmlogin_fails[vmsnapobj.id] = str(e)
                 continue
             # There's no point to even consider VMs that are paused or powered off.
             vmlist = server.get_registered_vms(status='poweredOn')
