@@ -457,7 +457,7 @@ if len(mp_to_task_map) > 0:
 
         try:
             with LockFile(VMWARELOGIN_FAILS) as lock:
-                with open(VMWARELOGIN_FAILS, 'rb') as f:
+                with open(VMWARELOGIN_FAILS, 'wb') as f:
                     pickle.dump(vmlogin_fails, f)
         except:
             log.debug('Failed to write vmware login fails file', exc_info=True)
