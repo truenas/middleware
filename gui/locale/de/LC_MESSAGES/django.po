@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:01-0700\n"
-"PO-Revision-Date: 2017-03-20 12:11+0000\n"
+"PO-Revision-Date: 2017-03-20 13:07+0000\n"
 "Last-Translator: Michael Arlt <michaelarlt78@googlemail.com>\n"
 "Language-Team: German <http://weblate.trueos.org/projects/freenas/django/de/>"
 "\n"
@@ -6459,11 +6459,13 @@ msgstr "Der Status von Volume %(volume)s ist %(status)s"
 #~ "Die WebGUI Adresse konnte nicht an %s gebunden werden. Verwende Wildcard"
 
 #: tools/alert.py:147
-#, fuzzy, python-format
+#, python-format
 msgid ""
 "The following IPs are bind to iSCSI Portal but were not found in the system: "
 "%s"
-msgstr "Folgende Mehrwegpfade sind nicht optimal: %s"
+msgstr ""
+"Folgende IP-Adressen sind mit iSCSI-Portal verknüpft, wurden aber nicht im "
+"System gefunden: %s"
 
 #: tools/alert.py:177
 msgid "Critical Alerts"
@@ -7213,7 +7215,7 @@ msgstr "Neues Passwort bestätigen"
 
 #: account/forms.py:514
 msgid "Home directory cannot contain colons"
-msgstr ""
+msgstr "Das Homeverzeichnis kann keine Doppelpunkte enthalten."
 
 #: api/resources.py:888
 #: storage/models.py:745
@@ -7228,7 +7230,7 @@ msgstr "an jedem %(Tag)en"
 
 #: api/resources.py:992
 msgid "From %(begin)s through %(end)s, %(repeat)s"
-msgstr ""
+msgstr "Von %(begin) bis %(end), %(repeat)s"
 
 #: jails/forms.py:90
 msgid "type"
@@ -7237,39 +7239,35 @@ msgstr "Typ"
 #: jails/forms.py:182
 #: jails/forms.py:629
 msgid "No jail root configured."
-msgstr ""
+msgstr "Kein jail root konfiguriert."
 
 #: jails/forms.py:906
 msgid "The path could not be mounted %(source)s: %(error)s"
 msgstr "Der Pfad konnte nicht eingebunden werden %(source)s: %(error)s"
 
 #: jails/models.py:103
-#, fuzzy
 msgid "IPv4 bridge address"
-msgstr "IPv6-Bridge Aliase"
+msgstr "IPv4-Bridge Adresse"
 
 #: jails/models.py:110
-#, fuzzy
 msgid "IPv4 bridge netmask"
-msgstr "Netzmaske (IPv4)"
+msgstr "IPv4 bridge Netzmaske"
 
 #: jails/models.py:128
 msgid "IPv6 address"
 msgstr "IPv6 Adresse"
 
 #: jails/models.py:332
-#, fuzzy
 msgid "Jail Root"
-msgstr "Jail Verzeichnis"
+msgstr "Jail Root"
 
 #: jails/models.py:333
 msgid "Path where to store jail data"
-msgstr ""
+msgstr "Pfad wo jail Daten gespeichert werden"
 
 #: jails/models.py:338
-#, fuzzy
 msgid "IPv4 network range for jails and plugins"
-msgstr "IPv6 Netzwerk Startadresse für Jails und PlugIns"
+msgstr "IPv4 Netzwerkbereich für Jails und PlugIns"
 
 #: jails/models.py:343
 msgid "IPv4 network start address for jails and plugins"
@@ -7288,21 +7286,20 @@ msgid "IPv6 Network End Address"
 msgstr "IPv6-Netzwerkendadresse"
 
 #: jails/models.py:366
-#, fuzzy
 msgid "Collection URL"
-msgstr "Verbindungen"
+msgstr "Sammel URL"
 
 #: jails/models.py:368
 msgid "URL for the jails index"
-msgstr ""
+msgstr "URL für den jails index"
 
 #: jails/models.py:486
 msgid "Template must have 0 instances!"
-msgstr ""
+msgstr "Template muss 0 Instanzen haben!"
 
 #: jails/models.py:493
 msgid "Jail root is not configured!"
-msgstr ""
+msgstr "Jail root ist nicht konfiguriert!"
 
 #: jails/models.py:513
 #: jails/models.py:514
@@ -7319,17 +7316,15 @@ msgstr "Dateisystem"
 
 #: jails/utils.py:695
 msgid "You need to create a volume to proceed!"
-msgstr ""
+msgstr "Sie müssen ein Laufwerk erstellen um fortzufahren!"
 
 #: jails/utils.py:714
-#, fuzzy
 msgid "Failed to create dataset %(name)s: %(error)s"
-msgstr "Konnte %(url)s nicht empfangen: %(error)s"
+msgstr "Konnte Datensatz %(name)s nicht erstellen: %(error)s"
 
 #: jails/utils.py:739
-#, fuzzy
 msgid "Failed to create directory %(name)s: %(error)s"
-msgstr "Konnte %(url)s nicht empfangen: %(error)s"
+msgstr "Konnte Verzeichnis %(name)s nicht erstellen: %(error)s"
 
 #: jails/views.py:95
 msgid "Jail successfully edited."
@@ -7345,7 +7340,7 @@ msgstr "Jail-Vorlage erfolgreich bearbeitet."
 
 #: middleware/notifier.py:3068
 msgid "No RPC Token!"
-msgstr ""
+msgstr "Kein RPC Token!"
 
 #: middleware/notifier.py:3824
 msgid "No carrier"
@@ -7353,7 +7348,7 @@ msgstr "Kein Träger"
 
 #: middleware/notifier.py:3849
 msgid "Down"
-msgstr ""
+msgstr "Runter"
 
 #: middleware/zfs.py:673
 #: middleware/zfs.py:732
@@ -7365,10 +7360,9 @@ msgid "The IP \"%s\" is not valid"
 msgstr "Die IP \"%s\" ist ungültig"
 
 #: network/forms.py:477
-#, fuzzy
 msgid "The name must be vlanX where X is a number. Example: vlan0"
 msgstr ""
-"Schnittstellennamen müssen vlanXX heißen, wobei XX für eine Nummer steht. "
+"Schnittstellennamen müssen vlanX heißen, wobei X für eine Nummer steht. "
 "Beispiel: vlan0."
 
 #: network/models.py:82
@@ -7377,11 +7371,11 @@ msgstr "Funktion netwait aktivieren"
 
 #: network/models.py:93
 msgid "Netwait IP list"
-msgstr ""
+msgstr "Netwait IP Liste"
 
 #: network/models.py:102
 msgid "Host name data base"
-msgstr ""
+msgstr "Hostnamen Datenbank"
 
 #: network/models.py:415
 msgid "LAGG Interface Group"
@@ -7389,15 +7383,13 @@ msgstr "LAGG-Schnittstellengruppe"
 
 # laut Wikipedia ist 1:1 Wiedergabe OK
 #: network/models.py:441
-#, fuzzy
 msgid "Link Aggregation Member"
-msgstr "Link Aggregation"
+msgstr "Link Aggregation Mitglied"
 
 # "Link Aggregation" wie bei Wikipedia nicht übersetzen
 #: network/models.py:442
-#, fuzzy
 msgid "Link Aggregation Members"
-msgstr "Link Aggregationen"
+msgstr "Link Aggregation Mitglieder"
 
 #: network/nav.py:17
 #: templates/network/index.html:14
@@ -7409,13 +7401,14 @@ msgid ""
 "Click here to find out what PBI's are!<a href='http://www.pcbsd.org/en"
 "/package-management/' onclick='window.open(this.href);return false;'>"
 msgstr ""
+"Hier klicken um zu erfahren was PBI's sind!<a href='http://www.pcbsd.org/en"
+"/package-management/' onclick='window.open(this.href);return false;'>"
 
 # pbi sollte nicht übersetzt werden, da weder "Firmware" noch "Image" zutreffend ist: Andere Paketverwaltungen übersetzen das auch nicht, wie .rpm (Suse/Redhat) oder .deb (Debian/Ubuntu)
 # Ich schlage einheitliche Schreibweise in Großbuchstaben vor.
 #: plugins/forms.py:100
-#, fuzzy
 msgid "Plugin Jail"
-msgstr "Plugins Jail PBI"
+msgstr "Plugin Jail"
 
 #: plugins/forms.py:101
 #, fuzzy
