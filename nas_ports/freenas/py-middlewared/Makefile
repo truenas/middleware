@@ -13,6 +13,7 @@ USES=		python
 USE_PYTHON=	autoplist distutils
 EXTRACT_ONLY=
 
+BUILD_DEPENDS= ${PYTHON_PKGNAMEPREFIX}fastentrypoints>0:${PORTSDIR}/devel/py-fastentrypoints
 RUN_DEPENDS=	${PYTHON_PKGNAMEPREFIX}gevent>0:${PORTSDIR}/devel/py-gevent \
 		${PYTHON_PKGNAMEPREFIX}karellen-geventws>0:${PORTSDIR}/www/py-karellen-geventws \
 		${PYTHON_PKGNAMEPREFIX}ws4py>0:${PORTSDIR}/www/py-ws4py \
@@ -23,7 +24,6 @@ RUN_DEPENDS=	${PYTHON_PKGNAMEPREFIX}gevent>0:${PORTSDIR}/devel/py-gevent \
 		${PYTHON_PKGNAMEPREFIX}bsd>0:${PORTSDIR}/freenas/py-bsd \
 		${PYTHON_PKGNAMEPREFIX}rollbar>0:${PORTSDIR}/www/py-rollbar \
 		${PYTHON_PKGNAMEPREFIX}markdown>0:${PORTSDIR}/textproc/py-markdown \
-		${PYTHON_PKGNAMEPREFIX}fastentrypoints>0:${PORTSDIR}/devel/py-fastentrypoints \
 		rclone>0:${PORTSDIR}/net/rclone
 
 USE_RC_SUBR=	middlewared
