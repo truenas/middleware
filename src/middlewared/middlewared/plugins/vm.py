@@ -69,7 +69,7 @@ class VMSupervisor(object):
         nid = Nid(3)
         for device in self.vm['devices']:
             if device['dtype'] == 'DISK':
-                if device['attributes'].get('mode') == 'AHCI':
+                if device['attributes'].get('type') == 'AHCI':
                     args += ['-s', '{},ahci-hd,{}'.format(nid(), device['attributes']['path'])]
                 else:
                     args += ['-s', '{},virtio-blk,{}'.format(nid(), device['attributes']['path'])]
