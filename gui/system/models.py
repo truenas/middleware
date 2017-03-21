@@ -45,6 +45,8 @@ from freenasUI import choices
 from freenasUI.freeadmin.models import DictField, Model, UserField
 from freenasUI.middleware.notifier import notifier
 from freenasUI.storage.models import Volume
+from freenasUI.support.utils import get_license
+from licenselib.license import ContractType
 
 log = logging.getLogger('system.models')
 
@@ -347,19 +349,6 @@ class Advanced(Model):
     adv_fqdn_syslog = models.BooleanField(
         verbose_name=_("Use FQDN for logging"),
         default=False,
-    )
-
-    adv_ixalert = models.BooleanField(
-        verbose_name=_("Enable automatic support alerts to iXsystems"),
-        default=True,
-    )
-    adv_ixfailsafe_email = models.EmailField(
-        verbose_name=_('Failsafe Support Contact'),
-        help_text=_(
-            'Additional email address for iXsystems support to contact in case'
-            ' of failure.'
-        ),
-        blank=True,
     )
 
     class Meta:
@@ -1067,3 +1056,93 @@ class Backup(Model):
 
     class Meta:
         verbose_name = _("System Backup")
+
+
+class Support(Model):
+    enabled = models.NullBooleanField(
+        verbose_name=_("Enable automatic support alerts to iXsystems"),
+        default=False,
+        null=True,
+    )
+    name = models.CharField(
+        verbose_name=_('Name of Primary Contact'),
+        max_length=200,
+        blank=True,
+    )
+    title = models.CharField(
+        verbose_name=_('Title'),
+        max_length=200,
+        blank=True,
+    )
+    email = models.EmailField(
+        verbose_name=_('E-mail'),
+        max_length=200,
+        blank=True,
+    )
+    phone = models.CharField(
+        verbose_name=_('Phone'),
+        max_length=200,
+        blank=True,
+    )
+    secondary_name = models.CharField(
+        verbose_name=_('Name of Secondary Contact'),
+        max_length=200,
+        blank=True,
+    )
+    secondary_title = models.CharField(
+        verbose_name=_('Secondary Title'),
+        max_length=200,
+        blank=True,
+    )
+    secondary_email = models.EmailField(
+        verbose_name=_('Secondary E-mail'),
+        max_length=200,
+        blank=True,
+    )
+    secondary_phone = models.CharField(
+        verbose_name=_('Secondary Phone'),
+        max_length=200,
+        blank=True,
+    )
+
+    class Meta:
+        verbose_name = _("Proactive Support")
+
+    class FreeAdmin:
+        deletable = False
+
+    @classmethod
+    def is_available(cls, support=None):
+        """
+        Checks whether the Proactive Support tab should be shown.
+        It should only be for TrueNAS and Siver/Gold Customers.
+
+        Returns:
+            tuple(bool, Support instance)
+        """
+        if notifier().is_freenas():
+            return False, support
+        if support is None:
+            try:
+                support = cls.objects.order_by('-id')[0]
+            except IndexError:
+                support = cls.objects.create()
+
+        license, error = get_license()
+        if license is None:
+            return False, support
+        if license.contract_type in (
+            ContractType.silver.value,
+            ContractType.gold.value,
+        ):
+            return True, support
+        return False, support
+
+    def is_enabled(self):
+        """
+        Returns if the proactive support is enabled.
+        This means if certain failures should be reported to iXsystems.
+        Returns:
+            bool
+        """
+        return self.is_available(support=self)[0] and self.enabled
