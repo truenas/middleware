@@ -313,7 +313,7 @@ class VolumeManagerForm(VolumeMixin, Form):
         notifier().reload("disk")
         if not add:
             notifier().start("ix-syslogd")
-            notifier().restart("system_datasets")
+            notifier().restart("system_datasets", timeout=50)
         # For scrub cronjob
         if volume.vol_fstype == 'ZFS':
             notifier().restart("cron")
