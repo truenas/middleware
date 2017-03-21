@@ -76,6 +76,7 @@ log = logging.getLogger('tools.autosnap')
 MNTLOCK = mntlock()
 
 VMWARE_FAILS = '/var/tmp/.vmwaresnap_fails'
+VMWARELOGIN_FAILS = '/var/tmp/.vmwarelogin_fails'
 VMWARESNAPDELETE_FAILS = '/var/tmp/.vmwaresnapdelete_fails'
 
 # Set to True if verbose log desired
@@ -402,6 +403,7 @@ if len(mp_to_task_map) > 0:
         # over all the VMWare tasks for a given ZFS filesystem, do all the VMWare snapshotting
         # then take the ZFS snapshot, then iterate again over all the VMWare "tasks" and undo
         # all the snaps we created in the first place.
+        vmlogin_fails = {}
         for vmsnapobj in qs:
             snapvms[vmsnapobj] = []
             snapvmfails[vmsnapobj] = []
@@ -410,9 +412,12 @@ if len(mp_to_task_map) > 0:
                 server.connect(vmsnapobj.hostname,
                                vmsnapobj.username,
                                vmsnapobj.get_password())
-            except:
+            except Exception as e:
                 log.warn("VMware login failed to %s", vmsnapobj.hostname)
-                # TODO: This should generate an alert.
+                if hasattr(e, 'msg'):
+                    vmlogin_fails[vmsnapobj.id] = e.msg
+                else:
+                    vmlogin_fails[vmsnapobj.id] = str(e)
                 continue
             # There's no point to even consider VMs that are paused or powered off.
             vmlist = server.get_registered_vms(status='poweredOn')
@@ -450,6 +455,13 @@ if len(mp_to_task_map) > 0:
             if server.is_connected():
                 server.disconnect()
         # At this point we've completed snapshotting VMs.
+
+        try:
+            with LockFile(VMWARELOGIN_FAILS) as lock:
+                with open(VMWARELOGIN_FAILS, 'wb') as f:
+                    pickle.dump(vmlogin_fails, f)
+        except:
+            log.debug('Failed to write vmware login fails file', exc_info=True)
 
         # Send out email alerts for VMs we tried to snapshot that failed.
         # Also put the failures into a sentinel file that the alert
