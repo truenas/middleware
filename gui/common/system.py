@@ -159,7 +159,7 @@ class MailQueue(object):
 
     def __exit__(self, typ, value, traceback):
 
-        with open(self.QUEUE_FILE, 'w+') as f:
+        with open(self.QUEUE_FILE, 'wb+') as f:
             if self.queue:
                 f.write(pickle.dumps(self.queue))
 
