@@ -121,4 +121,13 @@ class SystemHook(AppHook):
             'url': reverse('support_home'),
         })
 
+        available, support = models.Support.is_available()
+        if available:
+            tabs.insert(11, {
+                'name': 'Proactive Support',
+                'focus': 'system.ProactiveSupport',
+                'verbose_name': _('Proactive Support'),
+                'url': support.get_edit_url() + '?inline=true',
+            })
+
         return tabs

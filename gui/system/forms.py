@@ -1160,9 +1160,6 @@ class AdvancedForm(ModelForm):
         self.instance._original_adv_periodic_notifyuser = self.instance.adv_periodic_notifyuser
         self.instance._original_adv_graphite = self.instance.adv_graphite
         self.instance._original_adv_fqdn_syslog = self.instance.adv_fqdn_syslog
-        if notifier().is_freenas():
-            del self.fields['adv_ixalert']
-            del self.fields['adv_ixfailsafe_email']
 
     def save(self):
         super(AdvancedForm, self).save()
@@ -3232,3 +3229,41 @@ class BackupForm(Form):
                 _("The two password fields didn't match.")
             )
         return pwd2
+
+
+class SupportForm(ModelForm):
+
+    class Meta:
+        model = models.Support
+        fields = '__all__'
+        widgets = {
+            'enabled': forms.widgets.CheckboxInput(),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super(SupportForm, self).__init__(*args, **kwargs)
+        self.fields['enabled'].widget.attrs['onChange'] = (
+            'javascript:toggleGeneric("id_enabled", ["id_name", "id_title", '
+            '"id_email", "id_phone", "id_secondary_name", "id_secondary_title", '
+            '"id_secondary_email", "id_secondary_phone"], true);'
+        )
+
+        if self.instance.id and not self.instance.enabled:
+            for name, field in self.fields.items():
+                if name == 'enabled':
+                    continue
+                field.widget.attrs['disabled'] = 'disabled'
+
+    def clean_enabled(self):
+        return self.cleaned_data.get('enabled') in ('True', '1')
+
+    def clean(self):
+        data = self.cleaned_data
+        for name in self.fields.keys():
+            if name == 'enabled':
+                continue
+            if data.get('enabled') and not data.get(name):
+                self._errors[name] = self.error_class([_(
+                    'This field is required.'
+                )])
+        return data
