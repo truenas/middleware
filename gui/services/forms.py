@@ -2165,6 +2165,24 @@ class S3Form(ModelForm):
         else:
             self.fields['s3_bindip'].initial = ('')
 
+    def clean_s3_access_key(self):
+        s3_access_key = self.cleaned_data.get("s3_access_key")
+        s3_access_key_len = len(s3_access_key)
+        if s3_access_key_len < 5 or s3_access_key_len > 20:
+            raise forms.ValidationError(
+                _("S3 access key should be 5 to 20 characters in length.")
+            )
+        return s3_access_key
+
+    def clean_s3_secret_key(self):
+        s3_secret_key = self.cleaned_data.get("s3_secret_key")
+        s3_secret_key_len = len(s3_secret_key)
+        if s3_secret_key_len < 5 or s3_secret_key_len > 20:
+            raise forms.ValidationError(
+                _("S3 secret key should be 8 to 40 characters in length.")
+            )
+        return s3_secret_key
+
     def save(self):
         obj = super(S3Form, self).save()
         return obj
