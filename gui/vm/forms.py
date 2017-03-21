@@ -117,6 +117,7 @@ class DeviceForm(ModelForm):
                 self.fields['CDROM_path'].initial = self.instance.attributes.get('path', '')
             elif self.instance.dtype == 'DISK':
                 self.fields['DISK_zvol'].initial = self.instance.attributes.get('path', '').replace('/dev/', '')
+                self.fields['DISK_mode'].initial = self.instance.attributes.get('type')
             elif self.instance.dtype == 'NIC':
                 self.fields['NIC_type'].initial = self.instance.attributes.get('type')
             elif self.instance.dtype == 'VNC':
@@ -145,6 +146,7 @@ class DeviceForm(ModelForm):
         if self.cleaned_data['dtype'] == 'DISK':
             obj.attributes = {
                 'path': '/dev/' + self.cleaned_data['DISK_zvol'],
+                'type': self.cleaned_data['DISK_mode'],
             }
         elif self.cleaned_data['dtype'] == 'CDROM':
             obj.attributes = {
