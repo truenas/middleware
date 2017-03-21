@@ -23,6 +23,7 @@ RUN_DEPENDS=	${PYTHON_PKGNAMEPREFIX}gevent>0:${PORTSDIR}/devel/py-gevent \
 		${PYTHON_PKGNAMEPREFIX}bsd>0:${PORTSDIR}/freenas/py-bsd \
 		${PYTHON_PKGNAMEPREFIX}rollbar>0:${PORTSDIR}/www/py-rollbar \
 		${PYTHON_PKGNAMEPREFIX}markdown>0:${PORTSDIR}/textproc/py-markdown \
+		${PYTHON_PKGNAMEPREFIX}fastentrypoints>0:${PORTSDIR}/devel/py-fastentrypoints \
 		rclone>0:${PORTSDIR}/net/rclone
 
 USE_RC_SUBR=	middlewared
