@@ -204,9 +204,7 @@ def _get_smtp_server(timeout=300, local_hostname=None):
         if em.em_security == 'tls':
             server.starttls()
     if em.em_smtp:
-        server.login(
-            em.em_user.encode('utf-8'),
-            em.em_pass.encode('utf-8'))
+        server.login(em.em_user, em.em_pass)
     return server
 
 
