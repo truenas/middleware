@@ -33,6 +33,7 @@ import uuid
 import subprocess
 
 from django.db import models, transaction
+from django.db.models import Q
 from django.utils.translation import ugettext as __, ugettext_lazy as _
 
 from freenasUI import choices
@@ -199,13 +200,6 @@ class Volume(Model):
                     break
         return self.__is_decrypted
 
-    def is_my_path(self, path):
-        if path == self.vol_path:
-            return True
-        # Using stat.st_dev is not pratical because ZFS datasets are
-        # different filesystem from a OS point of view
-        return os.path.commonprefix([self.vol_path, path]) == self.vol_path
-
     def has_attachments(self):
         """
         Return a dict composed by the name of services and ids of shares
@@ -229,15 +223,12 @@ class Volume(Model):
             'collectd': [],
         }
 
-        for cifs in CIFS_Share.objects.filter(cifs_path__startswith=self.vol_path):
-            if self.is_my_path(cifs.cifs_path):
-                attachments['cifs'].append(cifs.id)
-        for afp in AFP_Share.objects.filter(afp_path__startswith=self.vol_path):
-            if self.is_my_path(afp.afp_path):
-                attachments['afp'].append(afp.id)
-        for nfsp in NFS_Share_Path.objects.filter(path__startswith=self.vol_path):
-            if (self.is_my_path(nfsp.path)
-                    and nfsp.share.id not in attachments['nfs']):
+        for cifs in CIFS_Share.objects.filter(Q(cifs_path=self.vol_path) | Q(cifs_path__startswith=self.vol_path + '/')):
+            attachments['cifs'].append(cifs.id)
+        for afp in AFP_Share.objects.filter(Q(afp_path=self.vol_path) | Q(afp_path__startswith=self.vol_path + '/')):
+            attachments['afp'].append(afp.id)
+        for nfsp in NFS_Share_Path.objects.filter(Q(path=self.vol_path) | Q(path__startswith=self.vol_path + '/')):
+            if nfsp.share.id not in attachments['nfs']:
                 attachments['nfs'].append(nfsp.share.id)
         # TODO: Refactor this into something not this ugly.  The problem
         #       is that iSCSI Extent is not stored in proper relationship
