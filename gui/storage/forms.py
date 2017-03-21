@@ -2617,7 +2617,7 @@ class UnlockPassphraseForm(Form):
         for svc in self.cleaned_data.get("services"):
             _notifier.restart(svc)
         _notifier.start("ix-warden")
-        _notifier.restart("system_datasets")
+        _notifier.restart("system_datasets", timeout=50)
         _notifier.reload("disk")
         if not _notifier.is_freenas() and _notifier.failover_licensed():
             from freenasUI.failover.enc_helper import LocalEscrowCtl

@@ -896,7 +896,10 @@ class ServiceService(Service):
         self._service("ix-swap", "start", quiet=True, **kwargs)
         self._service("swap", "start", quiet=True, **kwargs)
         self._service("mountlate", "start", quiet=True, **kwargs)
-        self.restart("collectd", kwargs)
+        # Restarting collectd may take a long time and there is no
+        # benefit in waiting for it since even if it fails it wont
+        # tell the user anything useful.
+        gevent.spawn(self.restart, "collectd", kwargs)
 
     def _reload_user(self, **kwargs):
         self._service("ix-passwd", "start", quiet=True, **kwargs)
