@@ -12,10 +12,10 @@ COMMENT=	Angular 2 Web User Interface for FreeNAS
 
 EXTRACT_ONLY=
 
-FETCH_DEPENDS=	npm3>0:${PORTSDIR}/www/npm3 \
-		git>0:${PORTSDIR}/devel/git
-BUILD_DEPENDS=	rsync>0:${PORTSDIR}/net/rsync \
-		npm3>0:${PORTSDIR}/www/npm3
+FETCH_DEPENDS=	npm3>0:www/npm3 \
+		git>0:devel/git
+BUILD_DEPENDS=	rsync>0:net/rsync \
+		npm3>0:www/npm3
 
 NO_BUILD=	yes
 WRKSRC=		/usr/webui
