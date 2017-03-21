@@ -13,39 +13,39 @@ COMMENT=        FreeNAS UI
 PRODUCT?=
 USES=		python
 
-RUN_DEPENDS=	${PYTHON_PKGNAMEPREFIX}django110>0:${PORTSDIR}/www/py-django110 \
-	samba45>0:${PORTSDIR}/net/samba45 \
-	uwsgi>0:${PORTSDIR}/www/uwsgi \
-	${PYTHON_PKGNAMEPREFIX}django-formtools>0:${PORTSDIR}/www/py-django-formtools \
-	${PYTHON_PKGNAMEPREFIX}django-tastypie>0:${PORTSDIR}/www/py-django-tastypie \
-	${PYTHON_PKGNAMEPREFIX}lockfile>0:${PORTSDIR}/devel/py-lockfile \
-	${PYTHON_PKGNAMEPREFIX}ipaddr>0:${PORTSDIR}/devel/py-ipaddr \
-	${PYTHON_PKGNAMEPREFIX}bsddb3>0:${PORTSDIR}/databases/py-bsddb3 \
-	${PYTHON_PKGNAMEPREFIX}polib>0:${PORTSDIR}/devel/py-polib \
-	${PYTHON_PKGNAMEPREFIX}pyldap>0:${PORTSDIR}/net/py-pyldap \
-	${PYTHON_PKGNAMEPREFIX}dojango>0:${PORTSDIR}/www/py-dojango \
-	${PYTHON_PKGNAMEPREFIX}sysctl>0:${PORTSDIR}/devel/py-sysctl \
-	${PYTHON_PKGNAMEPREFIX}lxml>0:${PORTSDIR}/devel/py-lxml \
-	${PYTHON_PKGNAMEPREFIX}pybonjour>0:${PORTSDIR}/dns/py-bonjour \
-	${PYTHON_PKGNAMEPREFIX}dnspython>0:${PORTSDIR}/dns/py-dnspython \
-	${PYTHON_PKGNAMEPREFIX}requests>0:${PORTSDIR}/www/py-requests \
-	${PYTHON_PKGNAMEPREFIX}openssl>0:${PORTSDIR}/security/py-openssl \
-	${PYTHON_PKGNAMEPREFIX}pycrypto>0:${PORTSDIR}/security/py-pycrypto \
-	${PYTHON_PKGNAMEPREFIX}simplejson>0:${PORTSDIR}/devel/py-simplejson \
-	${PYTHON_PKGNAMEPREFIX}ujson>0:${PORTSDIR}/devel/py-ujson \
-	${PYTHON_PKGNAMEPREFIX}oauth2>0:${PORTSDIR}/net/py-oauth2 \
-	${PYTHON_PKGNAMEPREFIX}eventlet>0:${PORTSDIR}/net/py-eventlet \
-	${PYTHON_PKGNAMEPREFIX}django-json-rpc>0:${PORTSDIR}/www/py-django-json-rpc \
-	${PYTHON_PKGNAMEPREFIX}sqlparse>0:${PORTSDIR}/databases/py-sqlparse \
-	${PYTHON_PKGNAMEPREFIX}licenselib>0:${PORTSDIR}/freenas/py-licenselib \
-	${PYTHON_PKGNAMEPREFIX}bsd>0:${PORTSDIR}/freenas/py-bsd \
-	${PYTHON_PKGNAMEPREFIX}middlewared>0:${PORTSDIR}/freenas/py-middlewared \
-	${PYTHON_PKGNAMEPREFIX}rollbar>0:${PORTSDIR}/www/py-rollbar \
-	pyvmomi>0:${PORTSDIR}/net/py-pyvmomi \
-	dmidecode>0:${PORTSDIR}/sysutils/dmidecode \
-	freenas-pkgtools>0:${PORTSDIR}/freenas/freenas-pkgtools \
-	freenas-migrate93>0:${PORTSDIR}/freenas/freenas-migrate93 \
-	${PYTHON_PKGNAMEPREFIX}ntplib>0:${PORTSDIR}/net/py-ntplib
+RUN_DEPENDS=	${PYTHON_PKGNAMEPREFIX}django110>0:www/py-django110 \
+	samba45>0:net/samba45 \
+	uwsgi>0:www/uwsgi \
+	${PYTHON_PKGNAMEPREFIX}django-formtools>0:www/py-django-formtools \
+	${PYTHON_PKGNAMEPREFIX}django-tastypie>0:www/py-django-tastypie \
+	${PYTHON_PKGNAMEPREFIX}lockfile>0:devel/py-lockfile \
+	${PYTHON_PKGNAMEPREFIX}ipaddr>0:devel/py-ipaddr \
+	${PYTHON_PKGNAMEPREFIX}bsddb3>0:databases/py-bsddb3 \
+	${PYTHON_PKGNAMEPREFIX}polib>0:devel/py-polib \
+	${PYTHON_PKGNAMEPREFIX}pyldap>0:net/py-pyldap \
+	${PYTHON_PKGNAMEPREFIX}dojango>0:www/py-dojango \
+	${PYTHON_PKGNAMEPREFIX}sysctl>0:devel/py-sysctl \
+	${PYTHON_PKGNAMEPREFIX}lxml>0:devel/py-lxml \
+	${PYTHON_PKGNAMEPREFIX}pybonjour>0:dns/py-bonjour \
+	${PYTHON_PKGNAMEPREFIX}dnspython>0:dns/py-dnspython \
+	${PYTHON_PKGNAMEPREFIX}requests>0:www/py-requests \
+	${PYTHON_PKGNAMEPREFIX}openssl>0:security/py-openssl \
+	${PYTHON_PKGNAMEPREFIX}pycrypto>0:security/py-pycrypto \
+	${PYTHON_PKGNAMEPREFIX}simplejson>0:devel/py-simplejson \
+	${PYTHON_PKGNAMEPREFIX}ujson>0:devel/py-ujson \
+	${PYTHON_PKGNAMEPREFIX}oauth2>0:net/py-oauth2 \
+	${PYTHON_PKGNAMEPREFIX}eventlet>0:net/py-eventlet \
+	${PYTHON_PKGNAMEPREFIX}django-json-rpc>0:www/py-django-json-rpc \
+	${PYTHON_PKGNAMEPREFIX}sqlparse>0:databases/py-sqlparse \
+	${PYTHON_PKGNAMEPREFIX}licenselib>0:freenas/py-licenselib \
+	${PYTHON_PKGNAMEPREFIX}bsd>0:freenas/py-bsd \
+	${PYTHON_PKGNAMEPREFIX}middlewared>0:freenas/py-middlewared \
+	${PYTHON_PKGNAMEPREFIX}rollbar>0:www/py-rollbar \
+	pyvmomi>0:net/py-pyvmomi \
+	dmidecode>0:sysutils/dmidecode \
+	freenas-pkgtools>0:freenas/freenas-pkgtools \
+	freenas-migrate93>0:freenas/freenas-migrate93 \
+	${PYTHON_PKGNAMEPREFIX}ntplib>0:net/py-ntplib
 
 EXTRACT_ONLY=
 WRKSRC=/usr/freenasUI

@@ -17,7 +17,7 @@ COMMENT=        Python libzfs bindings
 USES=		python
 USE_PYTHON=	autoplist distutils
 EXTRACT_ONLY=
-BUILD_DEPENDS=  ${LOCALBASE}/bin/cython:${PORTSDIR}/lang/cython
+BUILD_DEPENDS=  ${LOCALBASE}/bin/cython:lang/cython
 
 WRKSRC?=/usr/nas_source/py-libzfs
 
