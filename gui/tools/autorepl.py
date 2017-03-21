@@ -329,11 +329,13 @@ for replication in replication_tasks:
         localfs_tmp = "%s/%s" % (localfs, localfs)
     else:
         localfs_tmp = localfs
-    for dir in (remotefs.partition("/")[2] + "/" + localfs_tmp.partition("/")[2]).split("/"):
+    for direc in (remotefs.partition("/")[2] + "/" + localfs_tmp.partition("/")[2]).split("/"):
         # If this test fails there is no need to create datasets on the remote side
         # eg: tank -> tank replication
+        if not direc:
+            continue
         if '/' in remotefs or '/' in localfs:
-            ds = os.path.join(ds, dir)
+            ds = os.path.join(ds, direc)
             ds_full = '%s/%s' % (remotefs.split('/')[0], ds)
             if ds_full in remote_zfslist:
                 continue
