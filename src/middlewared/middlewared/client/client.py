@@ -224,8 +224,11 @@ def main():
                 else:
                     print(json.dumps(rv))
             except ClientException as e:
-                if not args.quiet and e.trace:
-                    print(e.trace['formatted'], file=sys.stderr)
+                if not args.quiet:
+                    if e.error:
+                        print(e.error, file=sys.stderr)
+                    if e.trace:
+                        print(e.trace['formatted'], file=sys.stderr)
                 sys.exit(1)
     elif args.name == 'ping':
         with Client(uri=args.uri) as c:
