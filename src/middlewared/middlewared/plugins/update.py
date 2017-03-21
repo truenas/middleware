@@ -2,6 +2,7 @@ from middlewared.schema import accepts, Dict, Str
 from middlewared.service import job, Service
 
 import re
+import socket
 import sys
 
 if '/usr/local/lib' not in sys.path:
@@ -245,4 +246,54 @@ class UpdateService(Service):
             install_handler=handler.install_handler,
         )
         self.middleware.call('cache.put', 'update.applied', True)
+        return True
+
+    @accepts()
+    @job(lock='updatedownload')
+    def download(self, job):
+        train = self.get_train()
+        location = self.middleware.call('notifier.get_update_location')
+
+        Update.DownloadUpdate(
+            train,
+            location,
+        )
+        update = Update.CheckForUpdates(train=train, cache_dir=location)
+
+        if not update:
+            return False
+
+        try:
+            notified = self.middleware.call('cache.get', 'update.notified')
+        except Exception:
+            notified = False
+
+        if not notified:
+            self.middleware.call('cache.put', 'update.notified', True)
+            conf = Configuration.Configuration()
+            sys_mani = conf.SystemManifest()
+            if sys_mani:
+                sequence = sys_mani.Sequence()
+            else:
+                sequence = ''
+
+            changelog = get_changelog(train, start=sequence, end=update.Sequence())
+            hostname = socket.gethostname()
+
+            try:
+                # FIXME: Translation
+                self.middleware.call('mail.send', {
+                    'subject': '{}: {}'.format(hostname, 'Update Available'),
+                    'text': '''A new update is available for the %(train)s train.
+Version: %(version)s
+Changelog:
+%(changelog)s
+''' % {
+                        'train': train,
+                        'version': update.Version(),
+                        'changelog': changelog,
+                    },
+                })
+            except Exception:
+                log.warn('Failed to send email about new update', exc_info=True)
         return True
