@@ -1,3 +1,4 @@
+import fastentrypoints
 from setuptools import setup
 
 
@@ -12,7 +13,7 @@ install_requires = [
 
 setup(
     name='middlewared',
-    description='FreeNAS Middleware Daemon ',
+    description='FreeNAS Middleware Daemon',
     packages=[
         'middlewared',
         'middlewared.client',
@@ -33,7 +34,6 @@ setup(
         'Intended Audience :: Developers',
         'License :: OSI Approved :: BSD License',
         'Programming Language :: Python',
-        'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
     ],
     install_requires=install_requires,
