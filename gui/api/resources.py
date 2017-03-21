@@ -501,7 +501,7 @@ class VolumeResourceMixin(NestedMixin):
             ),
             url(
                 r"^(?P<resource_name>%s)/(?P<pk>\w[\w/-]*)/zvols/"
-                "(?P<pk2>\w[\w/-]*)%s$" % (
+                "(?P<pk2>\w[\w/\-\._]*)%s$" % (
                     self._meta.resource_name, trailing_slash()
                 ),
                 self.wrap_view('zvols_detail'),
