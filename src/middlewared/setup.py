@@ -1,4 +1,8 @@
-import fastentrypoints
+try:
+    import fastentrypoints
+except ImportError:
+    import sys
+    print("fastentrypoints module not found. entry points will be slower.", file=sys.stderr)
 from setuptools import setup
 
 
