@@ -4,6 +4,7 @@
 #
 
 # PROVIDE: ix-loader
+# BEFORE: FILESYSTEMS
 # REQUIRE: ix-update
 
 . /etc/rc.freenas

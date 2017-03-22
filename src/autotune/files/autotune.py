@@ -127,7 +127,7 @@ def sysctl_int(oid):
 
 
 # TrueNAS HA heads may have slighty different available memory
-HW_PHYSMEM = int(round(sysctl_int('hw.physmem'), -7))
+HW_PHYSMEM = sysctl_int('hw.physmem') / 10000000 * 10000000
 HW_PHYSMEM_GB = HW_PHYSMEM / GB
 
 # If you add a dictionary key here be sure to add it
