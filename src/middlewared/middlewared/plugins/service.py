@@ -493,6 +493,26 @@ class ServiceService(Service):
         self._service("openssh", "restart", **kwargs)
         self._service("ix_sshd_save_keys", "start", quiet=True, **kwargs)
 
+    def _start_s3(self, **kwargs):
+        self.logger.debug("XXX: _start_s3")
+        self._service("minio", "start", quiet=True, **kwargs)
+
+    def _stop_s3(self, **kwargs):
+        self.logger.debug("XXX: _stop_s3")
+        self._service("minio", "stop", quiet=True, **kwargs)
+
+    def _restart_s3(self, **kwargs):
+        self.logger.debug("XXX: _restart_s3")
+        self._service("minio", "restart", quiet=True, **kwargs)
+
+    def _started_s3(self, **kwargs):
+        self.logger.debug("XXX: _started_s3")
+        res = False
+        if not self._system("service minio status"):
+            res = True
+        self.logger.debug("XXX: _started: res = %s", res)
+        return res, []
+
     def _reload_rsync(self, **kwargs):
         self._service("ix-rsyncd", "start", quiet=True, **kwargs)
         self._service("rsyncd", "restart", **kwargs)

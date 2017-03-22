@@ -2165,6 +2165,44 @@ class S3Form(ModelForm):
         else:
             self.fields['s3_bindip'].initial = ('')
 
+        if self.instance.s3_secret_key:
+            self.fields['s3_secret_key'].required = False
+        if self._api is True:
+            del self.fields['s3_secret_key2']
+
+    def clean_s3_access_key(self):
+        s3_access_key = self.cleaned_data.get("s3_access_key")
+        s3_access_key_len = len(s3_access_key)
+        if s3_access_key_len < 5 or s3_access_key_len > 20:
+            raise forms.ValidationError(
+                _("S3 access key should be 5 to 20 characters in length.")
+            )
+        return s3_access_key
+
+    def clean_s3_secret_key(self):
+        s3_secret_key = self.cleaned_data.get("s3_secret_key")
+        s3_secret_key_len = len(s3_secret_key)
+        if s3_secret_key_len < 5 or s3_secret_key_len > 20:
+            raise forms.ValidationError(
+                _("S3 secret key should be 8 to 40 characters in length.")
+            )
+        return s3_secret_key
+
+    def clean_s3_secret_key2(self):
+        s3_secret_key1 = self.cleaned_data.get("s3_secret_key")
+        s3_secret_key2 = self.cleaned_data.get("s3_secret_key2")
+        if s3_secret_key1 != s3_secret_key2:
+            raise forms.ValidationError(
+                _("The two password fields didn't match.")
+            )
+        return s3_secret_key2 
+
+    def clean(self):
+        cdata = self.cleaned_data
+        if not cdata.get("s3_secret_key"):
+            cdata["s3_secret_key"] = self.instance.s3_secret_key
+        return cdata
+
     def save(self):
         obj = super(S3Form, self).save()
         return obj
