@@ -14,7 +14,7 @@ PRODUCT?=
 USES=		python
 
 RUN_DEPENDS=	${PYTHON_PKGNAMEPREFIX}django110>0:www/py-django110 \
-	samba45>0:net/samba45 \
+	samba46>0:net/samba46 \
 	uwsgi>0:www/uwsgi \
 	${PYTHON_PKGNAMEPREFIX}django-formtools>0:www/py-django-formtools \
 	${PYTHON_PKGNAMEPREFIX}django-tastypie>0:www/py-django-tastypie \
