@@ -1,4 +1,4 @@
-@version:3.6
+@version:3.7
 
 #
 # This sample configuration file is essentially equilivent to the stock
