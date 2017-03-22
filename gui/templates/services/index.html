@@ -4,15 +4,4 @@
   doLayout: false,
   {% if toggleCore %}toggleCore: '{{ toggleCore|escapejs }}',{% endif %}
   refreshOnShow: true" class="objrefresh data_services_services" id="servicesTab_Core">
-    <script type="dojo/event" data-dojo-event="onLoad" data-dojo-args="data">
-      var me = this;
-      require(["dojo/dom"], function(dom) {
-        if(me.toggleCore) {
-          var svc = dom.byId(me.toggleCore + "_toggle");
-          toggle_service(svc);
-          me.toggleCore = null;
-        }
-      });
-      domaincontroller_mutex_toggle();
-    </script>
   </div>

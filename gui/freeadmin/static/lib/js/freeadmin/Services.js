@@ -92,10 +92,7 @@ define([
 
         on(me.onboot, 'click', function(ev) {
           var value = (me.onboot.get('value') == 'on') ? true : false;
-          me.startLoading();
-          Middleware.call('service.update', [me.sid, {'enable': value}], function(result) {
-            me.stopLoading();
-          });
+          me.startOnBoot(value);
         });
 
         domStyle.set(me.dapSettings, "cursor", "pointer");
@@ -119,6 +116,14 @@ define([
 
         this.inherited(arguments);
 
+      },
+      startOnBoot: function(value) {
+        var me = this;
+        me.startLoading();
+        me.onboot.set('checked', value);
+        Middleware.call('service.update', [me.sid, {'enable': value}], function(result) {
+          me.stopLoading();
+        });
       },
       startLoading: function() {
         var me = this;
@@ -280,6 +285,22 @@ define([
             me.services[item.id] = service;
           }
           domStyle.set(me.dapLoading, "display", "none");
+          var parentPane = registry.getEnclosingWidget(me.domNode.parentNode);
+          if(parentPane && parentPane.toggleCore) {
+            var service = null;
+            for(var i in me.services) {
+              if(me.services[i].name == parentPane.toggleCore) {
+                service = me.services[i];
+              }
+            }
+            if(service) {
+              service.startOnBoot(!service.enable);
+              if(service.state != 'RUNNING') {
+                service.run();
+              }
+            }
+          }
+
         });
 
         this._subId = Middleware.sub('service.query', function(type, message) {
@@ -290,7 +311,6 @@ define([
             service.sync();
           }
         });
-
 
         this.inherited(arguments);
 
