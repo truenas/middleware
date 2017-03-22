@@ -351,54 +351,6 @@ require([
         });
     }
 
-    toggle_service = function(obj, onSuccess, force) {
-        var td = obj.parentNode;
-        var n = domConstruct.create("div", {  }, td);
-        domClass.add(n, "dijitIconLoading");
-        domStyle.set(n, "height", "25px");
-        domStyle.set(n, "float", "left");
-
-        xhr.post("/services/toggle/"+obj.name+"/", {
-            data: {"force": force},
-            handleAs: "json",
-            headers: {"X-CSRFToken": CSRFToken}
-            }).then(function(data) {
-                if(data.status == 'on') {
-                    obj.src = '/static/images/ui/buttons/on.png';
-                } else if(data.status == 'off') {
-                    obj.src = '/static/images/ui/buttons/off.png';
-                }
-                if(data.error) {
-                    setMessage(data.message, "error");
-                }
-                domConstruct.destroy(n);
-                for(svc in data.enabled_svcs) {
-                    var img = query("img[name=" + data.enabled_svcs[svc] + "_toggle]")[0];
-                    img.src = '/static/images/ui/buttons/on.png';
-                }
-                for(svc in data.disabled_svcs) {
-                    var img = query("img[name=" + data.disabled_svcs[svc] + "_toggle]")[0];
-                    img.src = '/static/images/ui/buttons/off.png';
-                }
-                if(onSuccess) onSuccess();
-
-                if(data.events) {
-                    for(i=0;i<data.events.length;i++){
-                        try {
-                            eval(data.events[i]);
-                        } catch(e) {
-                            console.log(e);
-                        }
-                    }
-                }
-
-            },
-            function(error) {
-                //alert
-            });
-
-    }
-
     addStorageJailChange = function(box) {
       var destination = registry.byId("id_destination");
       var jail = registry.byId("id_jail");
