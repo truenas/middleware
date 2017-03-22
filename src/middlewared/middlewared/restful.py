@@ -1,97 +1,36 @@
+from aiohttp import web
 from collections import defaultdict
-from datetime import datetime
 
 import base64
 import binascii
-import falcon
-import json
-import types
+
+from .client import ejson as json
 
 
-class JsonEncoder(json.JSONEncoder):
-    def default(self, obj):
-        if isinstance(obj, datetime):
-            return str(obj)
-        elif isinstance(obj, types.GeneratorType):
-            return list(obj)
-        return json.JSONEncoder.default(self, obj)
+def authenticate(middleware, req):
 
+    auth = req.headers.get('Authorization')
+    if auth is None or not auth.startswith('Basic '):
+        raise web.HTTPUnauthorized()
+    try:
+        username, password = base64.b64decode(auth[6:]).decode('utf8').split(':', 1)
+    except binascii.Error:
+        raise web.HTTPUnauthorized()
 
-class JSONTranslator(object):
-
-    def process_request(self, req, resp):
-        if req.content_length in (None, 0):
-            return
-
-        body = req.stream.read()
-        if not body:
-            return
-
-        if 'application/json' not in req.content_type:
-            return
-
-        try:
-            req.context['doc'] = json.loads(body.decode('utf-8'))
-        except (ValueError, UnicodeDecodeError):
-            raise falcon.HTTPError(
-                falcon.HTTP_753,
-                'Malformed JSON',
-                'Could not decode the request body. The JSON was incorrect or '
-                'not encoded as UTF-8.'
-            )
-
-    def process_response(self, req, resp, resource):
-        if 'result' in req.context:
-            resp.body = JsonEncoder(indent=True).encode(req.context['result'])
-
-
-class AuthMiddleware(object):
-
-    def __init__(self, middleware):
-        self.middleware = middleware
-
-    def process_request(self, req, resp):
-        # Do not require auth to access index
-        if req.relative_uri == '/':
-            return
-
-        auth = req.get_header("Authorization")
-        if auth is None or not auth.startswith('Basic '):
-            raise falcon.HTTPUnauthorized(
-                'Authorization token required',
-                'Provide a Basic Authentication header',
-                ['Basic realm="FreeNAS"'],
-            )
-        try:
-            username, password = base64.b64decode(auth[6:]).decode('utf8').split(':', 1)
-        except binascii.Error:
-            raise falcon.HTTPUnauthorized(
-                'Invalid Authorization token',
-                'Provide a valid Basic Authentication header',
-                ['Basic realm="FreeNAS"'],
-            )
-
-        try:
-            if not self.middleware.call('auth.check_user', username, password):
-                raise falcon.HTTPUnauthorized(
-                    'Invalid credentials',
-                    'Verify your credentials and try again.',
-                    ['Basic realm="FreeNAS"'],
-                )
-        except falcon.HTTPUnauthorized:
-            raise
-        except Exception as e:
-            raise falcon.HTTPUnauthorized('Unknown authentication error', str(e), ['Basic realm="FreeNAS"'])
+    try:
+        if not middleware.call('auth.check_user', username, password):
+            raise web.HTTPUnauthorized()
+    except web.HTTPUnauthorized:
+        raise
+    except Exception as e:
+        raise web.HTTPUnauthorized()
 
 
 class RESTfulAPI(object):
 
-    def __init__(self, middleware):
+    def __init__(self, middleware, app):
         self.middleware = middleware
-        self.app = falcon.API(middleware=[
-            JSONTranslator(),
-            AuthMiddleware(middleware),
-        ])
+        self.app = app
 
         # Keep methods cached for future lookups
         self._methods = {}
@@ -185,14 +124,15 @@ class Resource(object):
 
         if delete:
             self.delete = delete
+            self.rest.app.router.add_route('DELETE', '/api/v2.0/' + self.get_path(), self.on_delete)
         if get:
             self.get = get
+            self.rest.app.router.add_route('GET', '/api/v2.0/' + self.get_path(), self.on_get)
         if post:
             self.post = post
         if put:
             self.put = put
 
-        self.rest.app.add_route('/api/v2.0/' + self.get_path(), self)
         self.middleware.logger.debug("add route {}".format(self.get_path()))
 
     def __getattr__(self, attr):
@@ -203,8 +143,10 @@ class Resource(object):
             if object.__getattribute__(self, method) is None:
                 return None
 
-            def on_method(req, resp, **kwargs):
-                return do(method, req, resp, **kwargs)
+            def on_method(req, *args, **kwargs):
+                resp = web.Response()
+                authenticate(self.middleware, req)
+                return do(method, req, resp, *args, **kwargs)
 
             return on_method
         return object.__getattribute__(self, attr)
@@ -222,7 +164,7 @@ class Resource(object):
     def _filterable_args(self, req):
         filters = []
         options = {}
-        for key, val in list(req.params.items()):
+        for key, val in list(req.query.items()):
             if '__' in key:
                 field, op = key.split('__', 1)
             else:
@@ -279,14 +221,14 @@ class Resource(object):
         the form of "get_{get,post,put,delete}_args", e.g.:
 
           def get_post_args(self, req, resp, **kwargs):
-              return [req.context['doc'], True, False]
+              return [await req.json(), True, False]
         """
         get_method_args = getattr(self, 'get_{}_args'.format(http_method), None)
         if get_method_args is not None:
             method_args = get_method_args(req, resp, **kwargs)
         else:
             if http_method in ('post', 'put'):
-                method_args = req.context.get('doc', [])
+                method_args = req.json() or []
             elif http_method == 'get' and method['filterable']:
                 method_args = self._filterable_args(req)
             else:
@@ -299,4 +241,5 @@ class Resource(object):
         if method.get('item_method') is True:
             method_args.insert(0, kwargs['id'])
 
-        req.context['result'] = self.middleware.call(methodname, *method_args)
+        resp.body = json.dumps(self.middleware.call(methodname, *method_args), indent=True)
+        return resp

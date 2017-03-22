@@ -1,26 +1,21 @@
-from gevent import monkey
-monkey.patch_all()
-
 from .apidocs import app as apidocs_app
 from .client import ejson as json
-from .client.protocol import DDPProtocol
 from .job import Job, JobsQueue
 from .restful import RESTfulAPI
 from .schema import Error as SchemaError
 from .service import CallError, CallException
-from collections import OrderedDict, defaultdict
+from aiohttp import web
+from aiohttp_wsgi import WSGIHandler
+from collections import defaultdict
 from daemon import DaemonContext
 from daemon.pidfile import TimeoutPIDLockFile
-from gevent.threadpool import ThreadPool
-from gevent.wsgi import WSGIServer
-from geventwebsocket import WebSocketServer, WebSocketApplication, Resource
 
 import argparse
+import asyncio
 import binascii
 import cgi
 import errno
 import gevent
-import greenlet
 import imp
 import inspect
 import linecache
@@ -35,12 +30,12 @@ import uuid
 from . import logger
 
 
-class Application(WebSocketApplication):
+class Application(object):
 
-    protocol_class = DDPProtocol
-
-    def __init__(self, *args, **kwargs):
-        super(Application, self).__init__(*args, **kwargs)
+    def __init__(self, middleware, request, response):
+        self.middleware = middleware
+        self.request = request
+        self.response = response
         self.authenticated = False
         self.handshake = False
         self.logger = logger.Logger('application').getLogger()
@@ -54,7 +49,6 @@ class Application(WebSocketApplication):
           on_close(app)
         """
         self.__callbacks = defaultdict(list)
-
         self.__subscribed = {}
 
     def register_callback(self, name, method):
@@ -62,7 +56,7 @@ class Application(WebSocketApplication):
         self.__callbacks[name].append(method)
 
     def _send(self, data):
-        self.ws.send(json.dumps(data))
+        self.response.send_json(data)
 
     def _tb_error(self, exc_info):
         klass, exc, trace = exc_info
@@ -164,8 +158,9 @@ class Application(WebSocketApplication):
             if self.middleware.crash_reporting.is_disabled():
                 self.logger.debug('[Crash Reporting] is disabled using sentinel file.')
             else:
-                extra_log_files = (('/var/log/middlewared.log', 'middlewared_log'),)
-                gevent.spawn(self.middleware.crash_reporting.report, sys.exc_info(), None, extra_log_files)
+                pass
+                #extra_log_files = (('/var/log/middlewared.log', 'middlewared_log'),)
+                #gevent.spawn(self.middleware.crash_reporting.report, sys.exc_info(), None, extra_log_files)
 
     def subscribe(self, ident, name):
         self.__subscribed[ident] = name
@@ -501,7 +496,8 @@ class Middleware(object):
                 if hook['sync']:
                     hook['method'](*args, **kwargs)
                 else:
-                    gevent.spawn(hook['method'], *args, **kwargs)
+                    pass
+                    #gevent.spawn(hook['method'], *args, **kwargs)
             except:
                 self.logger.error('Failed to run hook {}:{}(*{}, **{})'.format(name, hook['method'], args, kwargs), exc_info=True)
 
@@ -606,82 +602,51 @@ class Middleware(object):
         import pdb
         pdb.set_trace()
 
-    def green_monitor(self):
-        """
-        Start point method for setting up greenlet trace for finding
-        out blocked green threads.
-        """
-        self._green_hub = gevent.hub.get_hub()
-        self._green_active = None
-        self._green_counter = 0
-        greenlet.settrace(self._green_callback)
-        monkey.get_original('_thread', 'start_new_thread')(self._green_monitor_thread, ())
-        self._green_main_threadid = monkey.get_original('_thread', 'get_ident')()
+    async def ws_handler(self, request):
+        ws = web.WebSocketResponse()
+        await ws.prepare(request)
 
-    def _green_callback(self, event, args):
-        """
-        This method is called for several events in the greenlet.
-        We use this to keep track of how many switches have happened.
-        """
-        if event == 'switch':
-            origin, target = args
-            self._green_active = target
-            self._green_counter += 1
+        connection = Application(self, request, ws)
+        connection.on_open()
 
-    def _green_monitor_thread(self):
-        sleep = monkey.get_original('time', 'sleep')
-        while True:
-            # Check every 2 seconds for blocked green threads.
-            # This could be a knob in the future.
-            sleep(2)
-            # If there have been no greenlet switches since last time we
-            # checked it means we are likely stuck in the same green thread
-            # for more time than we would like to!
-            if self._green_counter == 0:
-                active = self._green_active
-                # greenlet hub is OK since its the thread waiting for IO.
-                if active not in (None, self._green_hub):
-                    frame = sys._current_frames()[self._green_main_threadid]
-                    stack = traceback.format_stack(frame)
-                    err_log = ["Green thread seems blocked:\n"] + stack
-                    self.logger.warn(''.join(err_log))
+        # FIXME: ghetto
+        #ws.authenticated = await check_local(*request.transport.get_extra_info('peername'))
 
-            # A race condition may happen here but its fairly rare.
-            self._green_counter = 0
+        async for msg in ws:
+            x = json.loads(msg.data)
+            try:
+                connection.on_message(x)
+            except Exception as e:
+                await ws.close(message=str(e).encode('utf-8'))
+
+        connection.on_close()
+        return ws
 
     def run(self):
         if self.loop_monitor:
-            self.green_monitor()
+            #self.green_monitor()
+            pass
 
-        gevent.signal(signal.SIGTERM, self.kill)
-        gevent.signal(signal.SIGUSR1, self.pdb)
+        loop = asyncio.get_event_loop()
 
-        Application.middleware = self
-        wsserver = WebSocketServer(('0.0.0.0', 6000), Resource(OrderedDict([
-            ('/websocket', Application),
-        ])))
+        loop.add_signal_handler(signal.SIGTERM, self.kill)
+        loop.add_signal_handler(signal.SIGUSR1, self.pdb)
 
-        restful_api = RESTfulAPI(self)
+        app = web.Application(loop=loop)
+        app.router.add_route('GET', '/websocket', self.ws_handler)
 
         apidocs_app.middleware = self
-        apidocsserver = WSGIServer(('127.0.0.1', 8001), apidocs_app)
-        restserver = WSGIServer(('127.0.0.1', 8002), restful_api.get_app())
-        fileserver = WSGIServer(('127.0.0.1', 8003), FileApplication(self))
+        app.router.add_route("*", "/api/docs/{path_info:.*}", WSGIHandler(apidocs_app))
+        #fileserver = WSGIServer(('127.0.0.1', 8003), FileApplication(self))
 
-        self.__server_threads = [
-            gevent.spawn(wsserver.serve_forever),
-            gevent.spawn(apidocsserver.serve_forever),
-            gevent.spawn(restserver.serve_forever),
-            gevent.spawn(fileserver.serve_forever),
-            gevent.spawn(self.__jobs.run),
-        ]
+        #restful_api = RESTfulAPI(self, app)
+
         self.logger.debug('Accepting connections')
-
-        gevent.joinall(self.__server_threads)
+        web.run_app(app, host='0.0.0.0', port=6000, access_log=None)
 
     def kill(self):
         self.logger.info('Killall server threads')
-        gevent.killall(self.__server_threads)
+        asyncio.get_event_loop().stop()
         sys.exit(0)
 
 

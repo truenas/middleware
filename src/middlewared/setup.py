@@ -10,7 +10,7 @@ from setuptools import setup
 install_requires = [
     'ws4py',
     'python-dateutil',
-    'falcon',
+    'aiohttp_wsgi',
     'markdown',
     'Flask',
     'setproctitle',
