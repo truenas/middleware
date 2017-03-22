@@ -2,7 +2,7 @@
 #
 #
 # PROVIDE: django
-# REQUIRE: DAEMON postrandom
+# REQUIRE: DAEMON
 # KEYWORD: shutdown
 #
 
