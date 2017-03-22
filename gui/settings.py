@@ -226,6 +226,10 @@ FORCE_SCRIPT_NAME = ''
 ALLOWED_HOSTS = ['*']
 
 AUTH_USER_MODEL = 'account.bsdUsers'
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+    'freenasUI.middleware.auth.AuthTokenBackend',
+]
 
 SOUTH_TESTS_MIGRATE = False
 

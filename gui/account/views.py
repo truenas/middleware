@@ -27,10 +27,12 @@
 import json
 import logging
 
+from django.contrib.auth import authenticate
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.utils.translation import ugettext as _
+from django.contrib.auth import login as auth_login
 from django.contrib.auth.views import login
 from django.contrib.auth import REDIRECT_FIELD_NAME
 from django.contrib.auth.forms import AuthenticationForm
@@ -299,6 +301,12 @@ def login_wrapper(
     shutdown, reboot or logout pages,
     instead redirect to /
     """
+
+    auth_token = request.GET.get('auth_token')
+    if auth_token:
+        user = authenticate(auth_token=auth_token)
+        if user:
+            auth_login(request, user, 'freenasUI.middleware.auth.AuthTokenBackend')
 
     # Overload hook_app_index to shortcut passive node
     # Doing that in another layer will use too many reasources
