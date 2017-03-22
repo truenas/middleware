@@ -305,7 +305,7 @@ start_jail_vimage()
      sysctl net.inet6.ip6.forwarding=1
   fi
 
-  if [ "$(sysrc firewall_enable)" != "YES" -o "$(sysrc firewall_type)" != "open" ] ; then
+  if [ "$(sysrc -n firewall_enable)" != "YES" -o "$(sysrc -n firewall_type)" != "open" ] ; then
      sysrc firewall_enable="YES"
      sysrc firewall_type="open"
 
