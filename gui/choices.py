@@ -1050,6 +1050,8 @@ class CIFS_VFS_OBJECTS(object):
                 f = f.replace('.so', '')
                 if f not in self.__vfs_exclude:
                     self.__vfs_modules.append(f)
+        else:
+            self.__vfs_modules += ['streams_xattr', 'aio_pthread']
 
     def __iter__(self):
         return iter((m, m) for m in sorted(self.__vfs_modules))
