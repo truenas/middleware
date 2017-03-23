@@ -14,7 +14,6 @@ PRODUCT?=
 USES=		python
 
 RUN_DEPENDS=	${PYTHON_PKGNAMEPREFIX}django110>0:www/py-django110 \
-	samba46>0:net/samba46 \
 	uwsgi>0:www/uwsgi \
 	${PYTHON_PKGNAMEPREFIX}django-formtools>0:www/py-django-formtools \
 	${PYTHON_PKGNAMEPREFIX}django-tastypie>0:www/py-django-tastypie \
@@ -41,11 +40,11 @@ RUN_DEPENDS=	${PYTHON_PKGNAMEPREFIX}django110>0:www/py-django110 \
 	${PYTHON_PKGNAMEPREFIX}bsd>0:freenas/py-bsd \
 	${PYTHON_PKGNAMEPREFIX}middlewared>0:freenas/py-middlewared \
 	${PYTHON_PKGNAMEPREFIX}rollbar>0:www/py-rollbar \
+	${PYTHON_PKGNAMEPREFIX}ntplib>0:net/py-ntplib \
 	pyvmomi>0:net/py-pyvmomi \
 	dmidecode>0:sysutils/dmidecode \
 	freenas-pkgtools>0:freenas/freenas-pkgtools \
-	freenas-migrate93>0:freenas/freenas-migrate93 \
-	${PYTHON_PKGNAMEPREFIX}ntplib>0:net/py-ntplib
+	freenas-migrate93>0:freenas/freenas-migrate93
 
 EXTRACT_ONLY=
 WRKSRC=/usr/freenasUI
