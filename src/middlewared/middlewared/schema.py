@@ -68,6 +68,11 @@ class Attribute(object):
             middleware.add_schema(self)
         return self
 
+class Any(Attribute):
+
+    def to_json_schema(self):
+        return {'type': 'any'}
+
 
 class Str(EnumMixin, Attribute):
 
