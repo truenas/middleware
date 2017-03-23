@@ -281,7 +281,6 @@ class ServiceService(Service):
         onetime = options.get('onetime')
         force = options.get('force')
         quiet = options.get('quiet')
-        nopipe = options.get('nopipe')
 
         # force comes before one which comes before quiet
         # they are mutually exclusive
