@@ -130,8 +130,10 @@ class Resource(object):
             self.rest.app.router.add_route('GET', '/api/v2.0/' + self.get_path(), self.on_get)
         if post:
             self.post = post
+            self.rest.app.router.add_route('POST', '/api/v2.0/' + self.get_path(), self.on_post)
         if put:
             self.put = put
+            self.rest.app.router.add_route('PUT', '/api/v2.0/' + self.get_path(), self.on_put)
 
         self.middleware.logger.debug("add route {}".format(self.get_path()))
 
@@ -143,10 +145,10 @@ class Resource(object):
             if object.__getattribute__(self, method) is None:
                 return None
 
-            def on_method(req, *args, **kwargs):
+            async def on_method(req, *args, **kwargs):
                 resp = web.Response()
                 authenticate(self.middleware, req)
-                return do(method, req, resp, *args, **kwargs)
+                return await do(method, req, resp, *args, **kwargs)
 
             return on_method
         return object.__getattribute__(self, attr)
@@ -211,7 +213,7 @@ class Resource(object):
 
         return [filters, options]
 
-    def do(self, http_method, req, resp, **kwargs):
+    async def do(self, http_method, req, resp, **kwargs):
         assert http_method in ('delete', 'get', 'post', 'put')
 
         methodname = getattr(self, http_method)
@@ -228,7 +230,10 @@ class Resource(object):
             method_args = get_method_args(req, resp, **kwargs)
         else:
             if http_method in ('post', 'put'):
-                method_args = req.json() or []
+                try:
+                    method_args = await req.json()
+                except Exception:
+                    method_args = []
             elif http_method == 'get' and method['filterable']:
                 method_args = self._filterable_args(req)
             else:
@@ -241,5 +246,5 @@ class Resource(object):
         if method.get('item_method') is True:
             method_args.insert(0, kwargs['id'])
 
-        resp.body = json.dumps(self.middleware.call(methodname, *method_args), indent=True)
+        resp.text = json.dumps(self.middleware.call(methodname, *method_args), indent=True)
         return resp
