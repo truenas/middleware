@@ -50,6 +50,7 @@ class StartNotify(threading.Thread):
 class ServiceService(Service):
 
     SERVICE_DEFS = {
+        's3': ('minio', '/var/run/minio.pid'),
         'ssh': ('sshd', '/var/run/sshd.pid'),
         'rsync': ('rsync', '/var/run/rsyncd.pid'),
         'nfs': ('nfsd', None),
@@ -264,8 +265,15 @@ class ServiceService(Service):
         else:
             f(**(options or {}))
 
-    def _system(self, cmd):
-        proc = Popen(cmd, stdout=PIPE, stderr=PIPE, shell=True, close_fds=True)
+    def _system(self, cmd, options=None):
+        stdout = PIPE
+        if options and 'stdout' in options:
+            stdout = options['stdout']
+        stderr = PIPE 
+        if options and 'stderr' in options:
+            stderr = options['stderr']
+
+        proc = Popen(cmd, stdout=stdout, stderr=stderr, shell=True, close_fds=True)
         proc.communicate()
         return proc.returncode
 
@@ -273,6 +281,7 @@ class ServiceService(Service):
         onetime = options.get('onetime')
         force = options.get('force')
         quiet = options.get('quiet')
+        nopipe = options.get('nopipe')
 
         # force comes before one which comes before quiet
         # they are mutually exclusive
@@ -288,7 +297,7 @@ class ServiceService(Service):
             service,
             preverb,
             verb,
-        ))
+        ), options)
 
     def _started_notify(self, verb, what):
         """
@@ -494,24 +503,7 @@ class ServiceService(Service):
         self._service("ix_sshd_save_keys", "start", quiet=True, **kwargs)
 
     def _start_s3(self, **kwargs):
-        self.logger.debug("XXX: _start_s3")
-        self._service("minio", "start", quiet=True, **kwargs)
-
-    def _stop_s3(self, **kwargs):
-        self.logger.debug("XXX: _stop_s3")
-        self._service("minio", "stop", quiet=True, **kwargs)
-
-    def _restart_s3(self, **kwargs):
-        self.logger.debug("XXX: _restart_s3")
-        self._service("minio", "restart", quiet=True, **kwargs)
-
-    def _started_s3(self, **kwargs):
-        self.logger.debug("XXX: _started_s3")
-        res = False
-        if not self._system("service minio status"):
-            res = True
-        self.logger.debug("XXX: _started: res = %s", res)
-        return res, []
+        self._service("minio", "start", quiet=True, stdout=None, stderr=None, **kwargs)
 
     def _reload_rsync(self, **kwargs):
         self._service("ix-rsyncd", "start", quiet=True, **kwargs)
