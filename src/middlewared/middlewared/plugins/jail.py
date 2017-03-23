@@ -36,9 +36,12 @@ class JailService(Service):
                   Bool("full"),
                   Bool("header"),
                   ))
-    def list(self, lst_type, options={}):
+    def list(self, lst_type, options=None):
         """Lists either 'all', 'base', 'template'"""
         lst_type = lst_type.lower()
+
+        if options is None:
+            options = {}
 
         if lst_type == "release":
             lst_type = "base"
