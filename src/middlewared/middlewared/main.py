@@ -14,6 +14,7 @@ import argparse
 import asyncio
 import binascii
 import cgi
+import concurrent.futures
 import errno
 import gevent
 import imp
@@ -134,10 +135,10 @@ class Application(object):
             },
         })
 
-    def call_method(self, message):
+    async def call_method(self, message):
 
         try:
-            result = self.middleware.call_method(self, message)
+            result = await self.middleware.call_method(self, message)
             if isinstance(result, Job):
                 result = result.id
             elif isinstance(result, types.GeneratorType):
@@ -207,7 +208,7 @@ class Application(object):
 
         self.middleware.unregister_wsclient(self)
 
-    def on_message(self, message):
+    async def on_message(self, message):
         # Run callbacks registered in plugins for on_message
         for method in self.__callbacks['on_message']:
             try:
@@ -222,7 +223,7 @@ class Application(object):
                     'version': '1',
                 })
             else:
-                self.middleware.call_hook('core.on_connect', app=self)
+                await self.middleware.call_hook('core.on_connect', app=self)
                 self._send({
                     'msg': 'connected',
                     'session': self.sessionid,
@@ -238,7 +239,7 @@ class Application(object):
             return
 
         if message['msg'] == 'method':
-            gevent.spawn(self.call_method, message)
+            asyncio.ensure_future(self.call_method(message))
             return
         elif message['msg'] == 'ping':
             pong = {'msg': 'pong'}
@@ -384,7 +385,9 @@ class Middleware(object):
         self.logger = logger.Logger('middlewared').getLogger()
         self.crash_reporting = logger.CrashReporting()
         self.loop_monitor = loop_monitor
-        self.__threadpool = ThreadPool(5)  # Init before plugins are loaded
+        self.__threadpool = concurrent.futures.ThreadPoolExecutor(
+            max_workers=5,
+        )
         self.__jobs = JobsQueue(self)
         self.__schemas = {}
         self.__services = {}
@@ -485,7 +488,7 @@ class Middleware(object):
             'sync': sync,
         })
 
-    def call_hook(self, name, *args, **kwargs):
+    async def call_hook(self, name, *args, **kwargs):
         """
         Call all hooks registered under `name` passing *args and **kwargs.
         Args:
@@ -494,10 +497,9 @@ class Middleware(object):
         for hook in self.__hooks[name]:
             try:
                 if hook['sync']:
-                    hook['method'](*args, **kwargs)
+                    await hook['method'](*args, **kwargs)
                 else:
-                    pass
-                    #gevent.spawn(hook['method'], *args, **kwargs)
+                    asyncio.ensure_future(hook['method'], *args, **kwargs)
             except:
                 self.logger.error('Failed to run hook {}:{}(*{}, **{})'.format(name, hook['method'], args, kwargs), exc_info=True)
 
@@ -523,15 +525,18 @@ class Middleware(object):
     def get_jobs(self):
         return self.__jobs
 
-    def threaded(self, method, *args, **kwargs):
+    async def threaded(self, method, *args, **kwargs):
         """
         Runs method in a native thread using gevent.ThreadPool.
         This prevents a CPU intensive or non-greenlet friendly method
         to block the event loop indefinitely.
         """
-        return self.__threadpool.apply(method, args, kwargs)
+        loop = asyncio.get_event_loop()
+        task = loop.run_in_executor(self.__threadpool, method, *args, **kwargs)
+        await task
+        return task.result()
 
-    def _call(self, name, methodobj, params, app=None):
+    async def _call(self, name, methodobj, params, app=None):
 
         args = []
         if hasattr(methodobj, '_pass_app'):
@@ -553,7 +558,10 @@ class Middleware(object):
         if job:
             return job
         else:
-            return methodobj(*args)
+            if asyncio.iscoroutinefunction(methodobj):
+                return await methodobj(*args)
+            else:
+                return methodobj(*args)
 
     def _method_lookup(self, name):
         if '.' not in name:
@@ -565,7 +573,7 @@ class Middleware(object):
             raise CallError(f'Method "{method_name}" not found in "{service}"', errno.ENOENT)
         return methodobj
 
-    def call_method(self, app, message):
+    async def call_method(self, app, message):
         """Call method from websocket"""
         params = message.get('params') or []
         methodobj = self._method_lookup(message['method'])
@@ -574,11 +582,11 @@ class Middleware(object):
             app.send_error(message, errno.EACCES, 'Not authenticated')
             return
 
-        return self._call(message['method'], methodobj, params, app=app)
+        return await self._call(message['method'], methodobj, params, app=app)
 
-    def call(self, name, *params):
+    async def call(self, name, *params):
         methodobj = self._method_lookup(name)
-        return self._call(name, methodobj, params)
+        return await self._call(name, methodobj, params)
 
     def event_subscribe(self, name, handler):
         """
@@ -609,13 +617,10 @@ class Middleware(object):
         connection = Application(self, request, ws)
         connection.on_open()
 
-        # FIXME: ghetto
-        #ws.authenticated = await check_local(*request.transport.get_extra_info('peername'))
-
         async for msg in ws:
             x = json.loads(msg.data)
             try:
-                connection.on_message(x)
+                await connection.on_message(x)
             except Exception as e:
                 await ws.close(message=str(e).encode('utf-8'))
 
@@ -639,10 +644,12 @@ class Middleware(object):
         app.router.add_route("*", "/api/docs/{path_info:.*}", WSGIHandler(apidocs_app))
         #fileserver = WSGIServer(('127.0.0.1', 8003), FileApplication(self))
 
-        #restful_api = RESTfulAPI(self, app)
+        restful_api = RESTfulAPI(self, app)
+        #loop.ensure_future(restful_api.register_resources())
 
         self.logger.debug('Accepting connections')
         web.run_app(app, host='0.0.0.0', port=6000, access_log=None)
+        loop.run_forever()
 
     def kill(self):
         self.logger.info('Killall server threads')

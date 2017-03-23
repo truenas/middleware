@@ -209,7 +209,7 @@ class ServiceService(CRUDService):
             Bool('onetime'),
         ),
     )
-    def reload(self, service, options=None):
+    async def reload(self, service, options=None):
         """
         Reload the service specified by `service`.
 
@@ -222,7 +222,7 @@ class ServiceService(CRUDService):
             }
         self.middleware.call_hook('service.pre_reload', service)
         try:
-            self._simplecmd("reload", service, options)
+            await self._simplecmd("reload", service, options)
         except:
             self.restart(service, options)
         return self.started(service)
@@ -246,7 +246,7 @@ class ServiceService(CRUDService):
         service['pids'] = pids
         return service
 
-    def _simplecmd(self, action, what, options=None):
+    async def _simplecmd(self, action, what, options=None):
         self.logger.debug("Calling: %s(%s) ", action, what)
         f = getattr(self, '_' + action + '_' + what, None)
         if f is None:
@@ -257,14 +257,14 @@ class ServiceService(CRUDService):
                     what = procname
             if action in ("start", "stop", "restart", "reload"):
                 if action == 'restart':
-                    self._system("/usr/sbin/service " + what + " forcestop ")
-                self._system("/usr/sbin/service " + what + " " + action)
+                    await self._system("/usr/sbin/service " + what + " forcestop ")
+                await self._system("/usr/sbin/service " + what + " " + action)
             else:
                 raise ValueError("Internal error: Unknown command")
         else:
-            f(**(options or {}))
+            await f(**(options or {}))
 
-    def _system(self, cmd, options=None):
+    async def _system(self, cmd, options=None):
         stdout = PIPE
         if options and 'stdout' in options:
             stdout = options['stdout']
@@ -272,11 +272,11 @@ class ServiceService(CRUDService):
         if options and 'stderr' in options:
             stderr = options['stderr']
 
-        proc = Popen(cmd, stdout=stdout, stderr=stderr, shell=True, close_fds=True)
-        proc.communicate()
+        proc = await Popen(cmd, stdout=stdout, stderr=stderr, shell=True, close_fds=True)
+        await proc.communicate()
         return proc.returncode
 
-    def _service(self, service, verb, **options):
+    async def _service(self, service, verb, **options):
         onetime = options.get('onetime')
         force = options.get('force')
         quiet = options.get('quiet')
@@ -291,7 +291,7 @@ class ServiceService(CRUDService):
         elif quiet:
             preverb = 'quiet'
 
-        return self._system('/usr/sbin/service {} {}{}'.format(
+        return await self._system('/usr/sbin/service {} {}{}'.format(
             service,
             preverb,
             verb,
@@ -906,11 +906,11 @@ class ServiceService(CRUDService):
         self._stop_saver()
         self._start_saver()
 
-    def _reload_disk(self, **kwargs):
-        self._service("ix-fstab", "start", quiet=True, **kwargs)
-        self._service("ix-swap", "start", quiet=True, **kwargs)
-        self._service("swap", "start", quiet=True, **kwargs)
-        self._service("mountlate", "start", quiet=True, **kwargs)
+    async def _reload_disk(self, **kwargs):
+        await self._service("ix-fstab", "start", quiet=True, **kwargs)
+        await self._service("ix-swap", "start", quiet=True, **kwargs)
+        await self._service("swap", "start", quiet=True, **kwargs)
+        await self._service("mountlate", "start", quiet=True, **kwargs)
         # Restarting collectd may take a long time and there is no
         # benefit in waiting for it since even if it fails it wont
         # tell the user anything useful.

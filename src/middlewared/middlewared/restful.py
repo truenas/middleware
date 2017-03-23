@@ -7,7 +7,7 @@ import binascii
 from .client import ejson as json
 
 
-def authenticate(middleware, req):
+async def authenticate(middleware, req):
 
     auth = req.headers.get('Authorization')
     if auth is None or not auth.startswith('Basic '):
@@ -18,7 +18,7 @@ def authenticate(middleware, req):
         raise web.HTTPUnauthorized()
 
     try:
-        if not middleware.call('auth.check_user', username, password):
+        if not await middleware.call('auth.check_user', username, password):
             raise web.HTTPUnauthorized()
     except web.HTTPUnauthorized:
         raise
@@ -35,17 +35,15 @@ class RESTfulAPI(object):
         # Keep methods cached for future lookups
         self._methods = {}
         self._methods_by_service = defaultdict(dict)
-        for methodname, method in list(self.middleware.call('core.get_methods').items()):
-            self._methods[methodname] = method
-            self._methods_by_service[methodname.rsplit('.', 1)[0]][methodname] = method
-
-        self.register_resources()
 
     def get_app(self):
         return self.app
 
-    def register_resources(self):
-        for name, service in list(self.middleware.call('core.get_services').items()):
+    async def register_resources(self):
+        for methodname, method in list(await self.middleware.call('core.get_methods').items()):
+            self._methods[methodname] = method
+            self._methods_by_service[methodname.rsplit('.', 1)[0]][methodname] = method
+        for name, service in list(await self.middleware.call('core.get_services').items()):
 
             kwargs = {}
             blacklist_methods = []
@@ -246,5 +244,5 @@ class Resource(object):
         if method.get('item_method') is True:
             method_args.insert(0, kwargs['id'])
 
-        resp.text = json.dumps(self.middleware.call(methodname, *method_args), indent=True)
+        resp.text = json.dumps(await self.middleware.call(methodname, *method_args), indent=True)
         return resp

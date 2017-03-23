@@ -155,23 +155,23 @@ class AuthService(Service):
             return False
 
 
-def check_permission(app):
+async def check_permission(app):
     """
     Authenticates connections comming from loopback and from
     root user.
     """
-    remote_addr = app.ws.environ['REMOTE_ADDR']
-    remote_port = app.ws.environ['REMOTE_PORT']
+    remote_addr, remote_port = app.request.transport.get_extra_info('peername')
 
     if remote_addr not in ('127.0.0.1', '::1'):
         return
 
     remote = '{0}:{1}'.format(remote_addr, remote_port)
 
-    proc = Popen([
-        '/usr/bin/sockstat', '-46c', '-p', remote_port
+    proc = await Popen([
+        '/usr/bin/sockstat', '-46c', '-p', str(remote_port)
     ], stdout=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=True)
-    for line in proc.communicate()[0].strip().splitlines()[1:]:
+    data = await proc.communicate()
+    for line in data[0].strip().splitlines()[1:]:
         cols = line.split()
         if cols[-2] == remote and cols[0] == 'root':
             app.authenticated = True

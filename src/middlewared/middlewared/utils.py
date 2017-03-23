@@ -1,3 +1,4 @@
+import asyncio
 import sys
 import subprocess
 
@@ -39,9 +40,13 @@ def django_modelobj_serialize(middleware, obj, extend=None, field_prefix=None):
     return data
 
 
-def Popen(*args, **kwargs):
+def Popen(args, **kwargs):
     kwargs.setdefault('encoding', 'utf8')
-    return subprocess.Popen(*args, **kwargs)
+    shell = kwargs.pop('shell', None)
+    if shell:
+        return asyncio.create_subprocess_shell(*args, **kwargs)
+    else:
+        return asyncio.create_subprocess_exec(*args, **kwargs)
 
 
 def run(*args, **kwargs):
