@@ -124,7 +124,7 @@ _interface_config()
                                 fi
 			elif [ "$(ha_hardware)" = "SBB" ]; then
 				internal_iface="ix0"
-			elif [ "$(ha_hardware)" = "AIC" ]; then
+			elif [ "$(ha_hardware)" = "AIC" -o "$(ha_hardware)" = "PUMA" ]; then
 				internal_iface="ntb0"
 				if [ "${node}" = "A" ]; then
 					ether="02:8c:97:2e:a5:01"
