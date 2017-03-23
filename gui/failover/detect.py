@@ -75,7 +75,7 @@ def ha_mode():
         '/usr/local/sbin/dmidecode',
         '-s', 'system-serial-number',
     ], stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf8')
-    serial = proc.communicate()[0].strip()
+    serial = proc.communicate()[0].split('\n', 1)[0].strip()
 
     # Laziest import as possible
     from freenasUI.support.utils import get_license
@@ -98,11 +98,13 @@ def ha_mode():
             '/usr/local/sbin/dmidecode',
             '-s', 'baseboard-product-name',
         ], stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf8')
-        board = proc.communicate()[0].strip()
+        board = proc.communicate()[0].split('\n', 1)[0].strip()
         # If we've gotten this far it's because we were unable to
         # detect ourselves as an echostream.
         if board == 'LIBRA':
             hardware = 'AIC'
+        elif board.startswith('PUMA'):
+            hardware = 'PUMA'
         elif board == 'X8DTS':
             hardware = 'SBB'
         else:
