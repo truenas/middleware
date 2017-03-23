@@ -68,9 +68,9 @@ class JailService(Service):
 
         if "template" in prop.split("=")[0]:
             if "template" in path and prop != "template=no":
-                raise RuntimeError("{uuid} ({tag}) is already a template!")
+                raise RuntimeError(f"{uuid} ({tag}) is already a template!")
             elif "template" not in path and prop != "template=yes":
-                raise RuntimeError("{uuid} ({tag}) is already a jail!")
+                raise RuntimeError(f"{uuid} ({tag}) is already a jail!")
 
         if plugin:
             _prop = prop.split(".")
@@ -94,9 +94,9 @@ class JailService(Service):
 
         if "template" in prop.split("=")[0]:
             if "template" in path and prop != "template=no":
-                raise RuntimeError("{uuid} ({tag}) is already a template!")
+                raise RuntimeError(f"{uuid} ({tag}) is already a template!")
             elif "template" not in path and prop != "template=yes":
-                raise RuntimeError("{uuid} ({tag}) is already a jail!")
+                raise RuntimeError(f"{uuid} ({tag}) is already a jail!")
 
         if plugin:
             _prop = prop.split(".")
