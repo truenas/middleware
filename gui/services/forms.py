@@ -2140,9 +2140,16 @@ class S3Form(ModelForm):
     s3_secret_key2 = forms.CharField(
         max_length=128,
         label=_("Confirm S3 Key"),
-        widget=forms.widgets.PasswordInput(),
+        widget=forms.widgets.PasswordInput(render_value=True),
         required=False,
     )
+
+    class Meta:
+        fields = '__all__'
+        widgets = {
+            's3_secret_key': forms.widgets.PasswordInput(render_value=True),
+        }
+        model = models.S3
 
     def __init__(self, *args, **kwargs):
         super(S3Form, self).__init__(*args, **kwargs)
@@ -2165,8 +2172,8 @@ class S3Form(ModelForm):
         else:
             self.fields['s3_bindip'].initial = ('')
 
-        if self.instance.s3_secret_key:
-            self.fields['s3_secret_key'].required = False
+        if self.instance.id:
+            self.fields['s3_secret_key2'].initial = self.instance.s3_secret_key
         if self._api is True:
             del self.fields['s3_secret_key2']
 
@@ -2206,10 +2213,3 @@ class S3Form(ModelForm):
     def save(self):
         obj = super(S3Form, self).save()
         return obj
-
-    class Meta:
-        fields = '__all__'
-        widgets = {
-            's3_secret_key': forms.widgets.PasswordInput(render_value=False),
-        }
-        model = models.S3
