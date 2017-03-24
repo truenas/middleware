@@ -2314,7 +2314,7 @@ class S3(Model):
         default="local",
         help_text=_("This doesn't do anything yet.")
     )
-    s3_disks = models.CharField(
+    s3_disks = PathField(
         verbose_name=_("Disks"),
         max_length=8192,
         blank=True,
