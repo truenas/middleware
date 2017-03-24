@@ -58,7 +58,7 @@ import ssl
 ssl._create_default_https_context = ssl._create_unverified_context
 ssl.create_default_context = ssl._create_unverified_context
 from eventlet import GreenPool
-from eventlet.green.urllib import green_request
+from eventlet.green.urllib import request as green_request
 
 log = logging.getLogger('freeadmin.navtree')
 
