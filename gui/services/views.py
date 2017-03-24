@@ -352,7 +352,7 @@ def services_s3(request):
     if s3.s3_bindip == "0.0.0.0":
         s3_ui_url = "http://%s:%s" % (request.META['HTTP_HOST'].split(':')[0], s3.s3_bindport)
 
-    s3_started = notifier().started("s3")
+    s3_started = notifier().started("s3") and s3.s3_browser
 
     return render(request, 'services/s3.html', {
         'form': form,
