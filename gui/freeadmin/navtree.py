@@ -26,7 +26,7 @@
 import json
 import logging
 import re
-import urllib.request, urllib.error, urllib.parse
+import urllib.request
 
 from django.conf import settings
 from django.core.urlresolvers import NoReverseMatch, resolve, reverse
@@ -57,7 +57,8 @@ import ssl
 # Its horrible, but nothing much I can do about it
 ssl._create_default_https_context = ssl._create_unverified_context
 ssl.create_default_context = ssl._create_unverified_context
-from eventlet import green, GreenPool
+from eventlet import GreenPool
+from eventlet.green.urllib import green_request
 
 log = logging.getLogger('freeadmin.navtree')
 
@@ -433,9 +434,7 @@ class NavTree(object):
                     model.__module__ in (
                         modname,
                         'freenasUI.' + modname,
-                    )
-                    and
-                    model in self._modelforms
+                    ) and model in self._modelforms
                 ):
                     log.debug("Model %s does not have a ModelForm", model)
                     continue
@@ -552,9 +551,9 @@ class NavTree(object):
     def _plugin_fetch(self, args):
         plugin, host, request, timeout = args
         if re.match('^.+\[.+\]', host, re.I):
-            url_lib_to_use = urllib2
+            url_lib_to_use = urllib.request
         else:
-            url_lib_to_use = green.urllib2
+            url_lib_to_use = green_request
 
         data = None
         url = "%s/plugins/%s/%d/_s/treemenu" % (host, plugin.plugin_name, plugin.id)
@@ -742,5 +741,6 @@ class NavTree(object):
         for n in self._build_nav(user):
             items.append(self.dehydrate(n, uid=uid))
         return items
+
 
 navtree = NavTree()
