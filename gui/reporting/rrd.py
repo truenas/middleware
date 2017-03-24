@@ -111,7 +111,7 @@ class RRDBase(object, metaclass=RRDMeta):
     def _sort_disks(entry):
         reg = re.search('(.+?)(\d+)$', entry)
         if not reg:
-            return entry
+            return (entry, )
         if reg:
             return (reg.group(1), int(reg.group(2)))
 
