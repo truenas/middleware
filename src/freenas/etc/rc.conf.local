@@ -440,6 +440,9 @@ _s3_config()
 			MINIO_SECRET_KEY=${s3_secret_key} \\
 			"
 __MINIO__
+		if [ "${s3_browser}" = "0" ]; then
+			echo MINIO_BROWSER=off
+		fi
 	done
 }
 
