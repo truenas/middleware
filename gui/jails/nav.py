@@ -26,7 +26,7 @@
 #####################################################################
 import logging
 
-from eventlet.green.urllib import urllib_request
+from eventlet.green.urllib import request as urllib_request
 
 from django.utils.translation import ugettext_lazy as _
 
