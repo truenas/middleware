@@ -3111,7 +3111,13 @@ class notifier(metaclass=HookMetaclass):
                     ):
                         continue
                     snaps = replications[repl]
-                    remotename = '%s@%s' % (fs.replace(repl.repl_filesystem, repl.repl_zfs), name)
+                    # Make sure remote snapshot is checked correctly
+                    # when destination is root dataset
+                    if '/' not in repl.repl_zfs:
+                        replace = '{}/{}'.format(repl.repl_zfs, repl.repl_filesystem.rsplit('/')[-1])
+                    else:
+                        replace = repl.repl_zfs,
+                    remotename = '%s@%s' % (fs.replace(repl.repl_filesystem, replace), name)
                     if remotename in snaps:
                         replication = 'OK'
                         # TODO: Multiple replication tasks
