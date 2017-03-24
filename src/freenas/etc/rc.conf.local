@@ -174,10 +174,9 @@ _interface_config()
 			while read lagg_physnic; do
 				echo -n " laggport ${lagg_physnic}"
 			done
-		else
-			if [ -n "${options}" ]; then
-				echo -n " ${options}"
-			fi
+		fi
+		if [ -n "${options}" ]; then
+			echo -n " ${options}"
 		fi
 		echo \"
 
