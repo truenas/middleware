@@ -332,7 +332,6 @@ def fibrechanneltotarget(request):
         message=_('Fibre Channel Ports have been successfully changed.'),
     )
 
-
 def services_s3(request):
     try:
         s3 = models.S3.objects.all()[0]
@@ -349,6 +348,13 @@ def services_s3(request):
     else:
         form = S3Form(instance=s3)
 
+    s3_ui_url = "http://%s:%s" % (s3.s3_bindip, s3.s3_bindport)
+    if s3.s3_bindip == "0.0.0.0":
+        s3_ui_url = "http://%s:%s" % (request.META['HTTP_HOST'].split(':')[0], s3.s3_bindport)
+
     return render(request, 'services/s3.html', {
         'form': form,
+        's3': s3,
+        's3_ui_url': s3_ui_url
     })
+
