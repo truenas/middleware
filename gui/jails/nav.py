@@ -26,7 +26,7 @@
 #####################################################################
 import logging
 
-from eventlet.green import urllib2
+from eventlet.green.urllib import urllib_request
 
 from django.utils.translation import ugettext_lazy as _
 
@@ -144,7 +144,7 @@ def plugin_fetch(args):
         plugin.id
     )
     try:
-        opener = urllib.request.build_opener()
+        opener = urllib_request.build_opener()
         opener.addheaders = [(
             'Cookie', 'sessionid=%s' % (
                 request.COOKIES.get("sessionid", ''),
