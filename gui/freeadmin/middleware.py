@@ -206,7 +206,7 @@ class CatchError(object):
                 'message': _("Error: %s") % (
                     str(excp.value)
                     if exc_info[0] is not OperationalError
-                    else str(excp.message)
+                    else str(excp)
                 ),
             }
             return JsonResp(request, **kwargs)

@@ -673,7 +673,7 @@ def new_default_plugin_jail(basename):
         except Exception as e:
             if os.path.exists(createfile):
                 os.unlink(createfile)
-            raise MiddlewareError(e.message)
+            raise MiddlewareError(e)
 
         template_list_flags = {}
         template_list_flags['flags'] = warden.WARDEN_TEMPLATE_FLAGS_LIST
