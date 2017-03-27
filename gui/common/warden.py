@@ -399,9 +399,7 @@ class WardenTemplate(object):
 
 class warden_base(object):
     def __init__(self, cmd, objflags, flags=WARDEN_FLAGS_NONE, **kwargs):
-        log.debug("warden_base.__init__: enter")
-        log.debug("warden_base.__init__: cmd = %s", cmd)
-        log.debug("warden_base.__init__: flags = 0x%08x", flags + 0)
+        log.debug("warden_base.__init__: cmd = %s - flags = 0x%08x", cmd, flags + 0)
 
         self.cmd = cmd
         self.flags = flags
@@ -409,6 +407,7 @@ class warden_base(object):
         self.wtmp = None
         self.jdir = None
         self.release = None
+        self.pipeopen_kwargs = kwargs.get('pipeopen_kwargs', None) or {}
 
         if not hasattr(self, "jail"):
             self.jail = None
@@ -453,7 +452,7 @@ class warden_base(object):
             cmd = "%s %d %s" % (JEXEC_PATH, jid, cmd.strip())
 
         log.debug("warden_base.cmd = %s", cmd)
-        pobj = warden_pipe(cmd, self.pipe_func)
+        pobj = warden_pipe(cmd, self.pipe_func, pipeopen_kwargs=self.pipeopen_kwargs)
         self.error = pobj.error
         if self.error:
             msg = self.error
@@ -1133,7 +1132,10 @@ class Warden(warden_base):
         return rv
 
     def start(self, flags=WARDEN_FLAGS_NONE, **kwargs):
-        return self.__call(warden_start(flags, **kwargs))
+        return self.__call(warden_start(flags, pipeopen_kwargs={
+            'env': {'PATH': '/sbin:/bin:/usr/sbin:/usr/bin:/usr/games:/usr/local/sbin:/usr/local/bin:/root/bin'},
+            'start_new_session': True,
+        }, **kwargs))
 
     def stop(self, flags=WARDEN_FLAGS_NONE, **kwargs):
         return self.__call(warden_stop(flags, **kwargs))
