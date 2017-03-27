@@ -12,6 +12,13 @@ class CacheService(Service):
         self.__cache = {}
 
     @accepts(Str('key'))
+    def has_key(self, key):
+        """
+        Check if given `key` is in cache.
+        """
+        return key in self.__cache
+
+    @accepts(Str('key'))
     def get(self, key):
         return self.__cache[key]
 
