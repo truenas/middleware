@@ -94,13 +94,13 @@ def encode_pair(name, value):
     """
     nameLength = len(name)
     if nameLength < 128:
-        s = bytearray(chr(nameLength))
+        s = bytearray(chr(nameLength).encode())
     else:
         s = bytearray(struct.pack('!L', nameLength | 0x80000000))
 
     valueLength = len(value)
     if valueLength < 128:
-        s += chr(valueLength)
+        s += chr(valueLength).encode()
     else:
         s += struct.pack('!L', valueLength | 0x80000000)
 
@@ -203,7 +203,7 @@ class Record(object):
         if self.contentLength:
             self._sendall(sock, self.contentData)
         if self.paddingLength:
-            self._sendall(sock, '\x00' * self.paddingLength)
+            self._sendall(sock, b'\x00' * self.paddingLength)
 
 
 class FCGIApp(object):
@@ -377,7 +377,7 @@ class FCGIApp(object):
         data = []
         for name, value in list(params.items()):
             data.append(encode_pair(name, value))
-        data = bytearray('').join(data)
+        data = bytearray(b'').join(data)
         rec.contentData = data
         rec.contentLength = len(data)
         rec.write(sock)
