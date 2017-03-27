@@ -61,9 +61,9 @@ def get_base_url(request=None):
 def get_plugin_status(args):
     plugin, host, request = args
     if re.match('^.+\[.+\]', host, re.I):
-        import urllib.request, urllib.error, urllib.parse
+        import urllib.request as urllib_request
     else:
-        from eventlet.green import urllib2
+        from eventlet.green.urllib import request as urllib_request
 
     url = "%s/plugins/%s/%d/_s/status" % (
         host,
@@ -76,7 +76,7 @@ def get_plugin_status(args):
         return plugin, data, jail_status
 
     try:
-        opener = urllib.request.build_opener()
+        opener = urllib_request.build_opener()
         opener.addheaders = [
             ('Cookie', 'sessionid=%s' % (
                 request.COOKIES.get("sessionid", ''),
@@ -96,9 +96,9 @@ def get_plugin_status(args):
 def get_plugin_start(args):
     plugin, host, request = args
     if re.match('^.+\[.+\]', host, re.I):
-        import urllib.request, urllib.error, urllib.parse
+        import urllib.request as urllib_request
     else:
-        from eventlet.green import urllib2
+        from eventlet.green.urllib import request as urllib_request
 
     url = "%s/plugins/%s/%d/_s/start" % (
         host,
@@ -111,7 +111,7 @@ def get_plugin_start(args):
         return plugin, data, jail_status
 
     try:
-        opener = urllib.request.build_opener()
+        opener = urllib_request.build_opener()
         opener.addheaders = [
             ('Cookie', 'sessionid=%s' % (
                 request.COOKIES.get("sessionid", ''),
@@ -131,9 +131,9 @@ def get_plugin_start(args):
 def get_plugin_stop(args):
     plugin, host, request = args
     if re.match('^.+\[.+\]', host, re.I):
-        import urllib.request, urllib.error, urllib.parse
+        import urllib.request as urllib_request
     else:
-        from eventlet.green import urllib2
+        from eventlet.green.urllib import request as urllib_request
 
     url = "%s/plugins/%s/%d/_s/stop" % (
         host,
@@ -146,7 +146,7 @@ def get_plugin_stop(args):
         return plugin, data, jail_status
 
     try:
-        opener = urllib.request.build_opener()
+        opener = urllib_request.build_opener()
         opener.addheaders = [
             ('Cookie', 'sessionid=%s' % (
                 request.COOKIES.get("sessionid", ''),
