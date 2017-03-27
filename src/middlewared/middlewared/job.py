@@ -226,7 +226,7 @@ class Job(object):
 
     def set_progress(self, percent, description=None, extra=None):
         if percent is not None:
-            assert isinstance(percent, int)
+            assert isinstance(percent, (int, float))
             self.progress['percent'] = percent
         if description:
             self.progress['description'] = description
