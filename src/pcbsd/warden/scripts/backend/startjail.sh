@@ -629,7 +629,7 @@ else
     jexec ${JID} ${sCmd} 2>&1
   else
     warden_print "Starting jail with: /etc/rc"
-    jexec ${JID} /bin/sh /etc/rc > /dev/null 2>&1
+    jexec ${JID} /bin/sh /etc/rc > /dev/null 2>&1 &
   fi
 fi
 
