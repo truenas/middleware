@@ -2175,7 +2175,7 @@ class notifier(metaclass=HookMetaclass):
 
             plugin.plugin_path = prefix
             plugin.plugin_enabled = True
-            plugin.plugin_ip = jail.ip
+            plugin.plugin_ip = jail.ip or '-'
             plugin.plugin_name = name
             plugin.plugin_arch = arch
             plugin.plugin_version = version
