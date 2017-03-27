@@ -177,7 +177,10 @@ class UpdateService(Service):
             }
         """
 
-        applied = self.middleware.call('cache.get', 'update.applied')
+        try:
+            applied = self.middleware.call('cache.get', 'update.applied')
+        except Exception:
+            applied = False
         if applied is True:
             return {'status': 'REBOOT_REQUIRED'}
 
