@@ -30,7 +30,7 @@ import json
 import logging
 import os
 import socket
-import urllib.request, urllib.error, urllib.parse
+import urllib.request
 
 from django.shortcuts import render
 from django.http import Http404, HttpResponse
@@ -337,10 +337,13 @@ def install_progress(request):
     if os.path.exists(PROGRESS_FILE):
         data = {'step': 1}
         with open(PROGRESS_FILE, 'r') as f:
+            current = 0
             try:
-                current = int(f.readlines()[-1].strip())
+                read = f.readlines()[-1].strip()
+                if read:
+                    current = int(read)
             except:
-                pass
+                log.debug('Failed to read progress file', exc_info=True)
         data['percent'] = current
         if current == 100:
             safe_unlink(PROGRESS_FILE)
