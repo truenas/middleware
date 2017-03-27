@@ -111,13 +111,13 @@ class testhandler(asyncore.dispatcher_with_send):
         with data_lock:
             tmp_data = data_dict
         a = self.recv(8192)
-        if a.startswith('get_progress'):
-            self.buffer = json.dumps(tmp_data)
-        elif a.startswith('stop'):
+        if a.startswith(b'get_progress'):
+            self.buffer = json.dumps(tmp_data).encode('utf8')
+        elif a.startswith(b'stop'):
             raise asyncore.ExitNow(
                 'User Terminated Import of Volume: {0}'.format(tmp_data['volume'])
             )
-        elif a.startswith('done'):
+        elif a.startswith(b'done'):
             raise asyncore.ExitNow(
                 'Import of Volume: {0} Successfully Done'.format(tmp_data['volume'])
             )
@@ -127,7 +127,7 @@ class testhandler(asyncore.dispatcher_with_send):
 
     def handle_write(self):
         self.socket.sendall(self.buffer)
-        self.buffer = ''
+        self.buffer = b''
 
     def handle_close(self):
         self.close()
@@ -223,7 +223,7 @@ if __name__ == '__main__':
                     'Error occured whilst mounting {0} as {1} filesystem. Error {2}'.format(
                         data_dict["volume"],
                         fstype,
-                        e.message + " ")
+                        str(e) + " ")
                 )
 
         proc_stdout_orig = NamedTemporaryFile(mode="wb", bufsize=0, delete=False)
@@ -231,7 +231,7 @@ if __name__ == '__main__':
         # whilst it is being written to
         # If you happen to come across this and know of a better solution then fix
         data_dict['stdout_file'] = proc_stdout_orig.name
-        proc_stdout = open(proc_stdout_orig.name, 'r', buffering=0)
+        proc_stdout = open(proc_stdout_orig.name, 'rb', buffering=0)
 
         line = [
             RSYNC_CMD,
