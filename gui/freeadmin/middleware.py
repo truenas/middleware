@@ -86,6 +86,8 @@ def http_oauth(func):
             uurl = host + request.path
 
             oreq = oauth.Request(request.method, uurl, oauth_params, '', False)
+            # FIXME: oauth2 bytes vs str issue in signature check
+            oreq['oauth_signature'] = oreq['oauth_signature'].encode()
             server = oauth.Server()
 
             secret = None
@@ -103,7 +105,7 @@ def http_oauth(func):
                 authorized = True
 
             except Exception as e:
-                log.debug("auth error = %s" % e)
+                log.debug("auth error = %s" % e, exc_info=True)
                 authorized = False
 
             if request.method == "POST":

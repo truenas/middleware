@@ -143,7 +143,7 @@ class Record(object):
             dataLen = len(data)
             recvLen += dataLen
             length -= dataLen
-        return ''.join(dataList), recvLen
+        return b''.join(dataList), recvLen
     _recvall = staticmethod(_recvall)
 
     def read(self, sock):
@@ -290,14 +290,14 @@ class FCGIApp(object):
         # application is expected to do the same.)
         sock.close()
 
-        result = ''.join(result)
+        result = b''.join(result)
 
         # Parse response headers from FCGI_STDOUT
         status = '200 OK'
         headers = []
         pos = 0
         while True:
-            eolpos = result.find('\n', pos)
+            eolpos = result.find(b'\n', pos)
             if eolpos < 0:
                 break
             line = result[pos:eolpos - 1]
@@ -312,16 +312,16 @@ class FCGIApp(object):
                 break
 
             # TODO: Better error handling
-            header, value = line.split(':', 1)
+            header, value = line.split(b':', 1)
             header = header.strip().lower()
             value = value.strip()
 
-            if header == 'status':
+            if header == b'status':
                 # Special handling of Status header
                 status = value
-                if status.find(' ') < 0:
+                if status.find(b' ') < 0:
                     # Append a dummy reason phrase if one was not provided
-                    status += ' FCGIApp'
+                    status += b' FCGIApp'
             else:
                 headers.append((header, value))
 
