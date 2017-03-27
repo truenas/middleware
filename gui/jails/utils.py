@@ -820,7 +820,6 @@ def add_media_user_and_group(jail_path):
         media_user.bsdusr_group.bsdgrp_group,
         media_user.bsdusr_group.bsdgrp_gid)
     chroot_groupadd_cmd = "/usr/sbin/chroot '%s' %s" % (jail_path, groupadd_cmd)
-    print(chroot_groupadd_cmd)
 
     userdel_cmd = "/usr/sbin/pw userdel '%s'" % media_user.bsdusr_username
     chroot_userdel_cmd = "/usr/sbin/chroot '%s' %s" % (jail_path, userdel_cmd)
