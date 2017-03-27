@@ -186,13 +186,12 @@ class cmd_arg(object):
 
 class cmd_pipe(object):
     def __init__(self, cmd, func=None, **kwargs):
-        log.debug("cmd_pipe.__init__: enter")
-        log.debug("cmd_pipe.__init__: cmd = %s", cmd)
+        log.debug("cmd_pipe.__init__: cmd = %s, kwargs = %s", cmd, kwargs)
 
         from freenasUI.common.pipesubr import pipeopen
 
         self.error = None
-        self.__pipe = pipeopen(cmd, allowfork=True, important=False, close_fds=True)
+        self.__pipe = pipeopen(cmd, allowfork=False, important=True, close_fds=True, **(kwargs.get('pipeopen_kwargs', None) or {}))
 
         self.__stdin = self.__pipe.stdin
         self.__stdout = self.__pipe.stdout
