@@ -127,7 +127,7 @@ class Plugin(object):
         response = urllib.request.urlopen(url)
         try:
             total_size = int(
-                response.info().getheader('Content-Length').strip()
+                response.getheader('Content-Length').strip()
             )
         except Exception as e:
             log.debug(
