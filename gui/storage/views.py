@@ -317,7 +317,7 @@ def get_import_progress_from_socket(s=None, n=4096):
             s.connect(SOCKIMP)
             s.setblocking(0)
             close_sock = True
-        s.send("get_progress")
+        s.send(b"get_progress")
         packet = s.recv(n)
         while packet:
             data += packet
@@ -412,14 +412,14 @@ def volimport_abort(request):
                 'traceback': traceback.format_exc() if sys.exc_info()[0] else False
             }
         if data["status"] == "finished":
-            s.send("done")
+            s.send(b"done")
             s.close()
             return JsonResp(request, message=_("Volume successfully Imported."))
         if data["status"] == "error":
-            s.send("stop")
+            s.send(b"stop")
             s.close()
             return JsonResp(request, message=_("Error Importing Volume"))
-        s.send("stop")
+        s.send(b"stop")
         s.close()
         return render(
             request,
