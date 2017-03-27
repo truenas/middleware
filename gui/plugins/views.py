@@ -339,9 +339,9 @@ def install_progress(request):
         with open(PROGRESS_FILE, 'r') as f:
             current = 0
             try:
-                read = f.readlines()[-1].strip()
+                read = f.readlines()
                 if read:
-                    current = int(read)
+                    current = int(read[-1].strip())
             except:
                 log.debug('Failed to read progress file', exc_info=True)
         data['percent'] = current
