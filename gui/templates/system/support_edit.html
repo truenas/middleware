@@ -5,3 +5,14 @@ As a Silver / Gold Support Coverage Level Customer, you have the option to enabl
 {% endif %}
 {{ block.super }}
 {% endblock %}
+{% block buttons %}
+{% if form.instance.is_available.0 %}
+{{ block.super }}
+{% else %}
+    <tr>
+        <td colspan="2">
+		<button id="btn_{{ model_name }}_Ok" data-dojo-type="dijit.form.Button" disabled="disabled">Upgrade to Silver/Gold support for this feature</button>
+        </td>
+    </tr>
+{% endif %}
+{% endblock %}

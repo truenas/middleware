@@ -44,6 +44,7 @@ class SystemHook(AppHook):
         from freenasUI.freeadmin.sqlite3_ha.base import NO_SYNC_MAP
         from freenasUI.middleware.notifier import notifier
         from freenasUI.system import models
+        from freenasUI.support.utils import get_license
         tabmodels = [
             models.Settings,
             models.Advanced,
@@ -121,8 +122,9 @@ class SystemHook(AppHook):
             'url': reverse('support_home'),
         })
 
-        available, support = models.Support.is_available()
-        if available:
+        license = get_license()[0]
+        if license is not None and not notifier().is_freenas():
+            support = models.Support.objects.order_by('-id')[0]
             tabs.insert(11, {
                 'name': 'Proactive Support',
                 'focus': 'system.ProactiveSupport',
