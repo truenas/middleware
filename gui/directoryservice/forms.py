@@ -938,7 +938,7 @@ class LDAPForm(ModelForm):
                 raise ServiceFailed("ldap", _("LDAP failed to reload."))
         else:
             if started is True:
-                started = notifier().stop("ldap")
+                started = notifier().stop("ldap", timeout=90)
 
         return obj
 
