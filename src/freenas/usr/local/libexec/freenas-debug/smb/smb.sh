@@ -27,10 +27,10 @@
 #####################################################################
 
 
-cifs_opt() { echo C; }
-cifs_help() { echo "Dump CIFS Configuration"; }
-cifs_directory() { echo "CIFS"; }
-cifs_func()
+smb_opt() { echo C; }
+smb_help() { echo "Dump SMB Configuration"; }
+smb_directory() { echo "SMB"; }
+smb_func()
 {
 	local workgroup
 	local netbiosname
@@ -59,8 +59,15 @@ cifs_func()
 		enabled="ENABLED"
 	fi
 
-	section_header "CIFS Status"
-	echo "CIFS is ${enabled}"
+	section_header "SMB Status"
+	echo "SMB is ${enabled}"
+	section_footer
+
+	#
+	#	Dump samba version
+	#
+	section_header "smbd -V"
+	smbd -V
 	section_footer
 
 
@@ -74,9 +81,9 @@ cifs_func()
 	local IFS="|"
 
 	#
-	#	Dump CIFS shares
+	#	Dump SMB shares
 	#
-	section_header "CIFS Shares & Permissions"
+	section_header "SMB Shares & Permissions"
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
 	SELECT
 		cifs_path,
@@ -95,6 +102,9 @@ cifs_func()
 	done
 	section_footer
 
+	#
+	#	Dump samba build options
+	#
 	section_header "smbd -b"
 	smbd -b
 	section_footer
@@ -124,7 +134,7 @@ cifs_func()
 	section_footer
 
 	#
-	#	Dump CIFS users and groups
+	#	Dump SMB users and groups
 	#
 	section_header "Users and Groups"
 	section_header "Users"
