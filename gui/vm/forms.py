@@ -39,7 +39,7 @@ class VMForm(ModelForm):
             else:
                 cdata['devices'] = [
                     {'dtype': 'NIC', 'attributes': {'type': 'E1000'}},
-                    {'dtype': 'VNC', 'attributes': {'wait': True, 'vnc_port': 0}},
+                    {'dtype': 'VNC', 'attributes': {'wait': True}},
                 ]
                 pk = c.call('vm.create', cdata)
         return models.VM.objects.get(pk=pk)
@@ -80,7 +80,7 @@ class DeviceForm(ModelForm):
     )
     VNC_port = forms.CharField(
         label=_('VNC port'),
-        required=True,
+        required=False,
         initial=0,
         help_text=_("You can specify the VNC port or 0 for auto."),
         validators=[RegexValidator("^[0-9]*$", "Only integer is accepted")],
