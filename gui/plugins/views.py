@@ -331,8 +331,11 @@ def install_available(request, oid):
 # XXX This needs a better implementation.. but will do for now ;-)
 #
 def install_progress(request):
-    jc = JailsConfiguration.objects.order_by("-id")[0]
-    logfile = '%s/warden.log' % jc.jc_path
+    try:
+        jc = JailsConfiguration.objects.order_by("-id")[0]
+        logfile = '%s/warden.log' % jc.jc_path
+    except IndexError:
+        logfile = '/tmp/warden.log'
     data = {}
     if os.path.exists(PROGRESS_FILE):
         data = {'step': 1}
