@@ -423,11 +423,6 @@ class NavTree(object):
                     continue
 
                 if c in BLACKLIST:
-                    log.debug(
-                        "Model %s from app %s blacklisted, skipping",
-                        c,
-                        app,
-                    )
                     continue
 
                 if not (
@@ -436,7 +431,6 @@ class NavTree(object):
                         'freenasUI.' + modname,
                     ) and model in self._modelforms
                 ):
-                    log.debug("Model %s does not have a ModelForm", model)
                     continue
 
                 if (
