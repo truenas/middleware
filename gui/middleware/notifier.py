@@ -4183,7 +4183,15 @@ class notifier(metaclass=HookMetaclass):
             """
             Parse zpool status to get encrypted providers
             """
-            zpool = self.zpool_parse(vol.vol_name)
+            if not vol.is_decrypted():
+                continue
+
+            try:
+                zpool = self.zpool_parse(vol.vol_name)
+            except Exception:
+                log.warn('Failed to parse encrypted pool', exc_info=True)
+                continue
+
             provs = []
             for dev in zpool.get_devs():
                 if not dev.name.endswith(".eli"):
