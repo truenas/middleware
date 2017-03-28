@@ -227,9 +227,12 @@ define([
           value = value.replace("\\", "\\\\");
           me._storeUsers.fetch({query: {name: value}, onComplete: function(results) {
             if(results.length > 0) {
-            found = true;
+              me._ownershipUserCreate.set('disabled', true);
+              me._ownershipUserCreate.set('value', false);
+              found = true;
             } else {
-            found = false;
+              me._ownershipUserCreate.set('disabled', false);
+              found = false;
             }
           }});
           if(!found && !me._ownershipUserCreate.get("value")) {
@@ -238,14 +241,12 @@ define([
           return true;
         }
       }, me.dapOwnershipUser);
-      on(me._ownershipUser, "search", function(results, query, opts) {
-        if(results.length > 0) {
-          me._ownershipUserCreate.set('disabled', true);
-          me._ownershipUserCreate.set('value', false);
-        } else {
-          me._ownershipUserCreate.set('disabled', false);
-        }
-
+      on(me._ownershipUser, "click", function() {
+        me._storeUsers.url = me._storeUsers.url.split('?')[0];
+        me._storeUsers.close();
+        me._storeUsers.fetch();
+      })
+      on(me._ownershipUser, "change", function() {
         var t = me._ownershipUser.get('displayedValue');
         me._storeUsers.url = me._storeUsers.url.split('?')[0] + '?wizard=1&q='+t;
         me._storeUsers.close();
@@ -282,9 +283,9 @@ define([
         }
       });
       new Tooltip({
-        connectId: ["ownershipUserCreateHelp"], 
+        connectId: ["ownershipUserCreateHelp"],
        label: "To create a new user, type in the username and then check this box"
-      }); 
+      });
 
       me._ownershipGroup = new ComboBox({
         required: true,
@@ -299,9 +300,12 @@ define([
           value = value.replace("\\", "\\\\");
           me._storeGroups.fetch({query: {name: value}, onComplete: function(results) {
             if(results.length > 0) {
-            found = true;
+              found = true;
+              me._ownershipGroupCreate.set('disabled', true);
+              me._ownershipGroupCreate.set('value', false);
             } else {
-            found = false;
+              me._ownershipGroupCreate.set('disabled', false);
+              found = false;
             }
           }});
           if(!found && !me._ownershipGroupCreate.get("value")) {
@@ -310,14 +314,12 @@ define([
           return true;
         }
       }, me.dapOwnershipGroup);
-      on(me._ownershipGroup, "search", function(results, query, opts) {
-        if(results.length > 0) {
-          me._ownershipGroupCreate.set('disabled', true);
-          me._ownershipGroupCreate.set('value', false);
-        } else {
-          me._ownershipGroupCreate.set('disabled', false);
-        }
-
+      on(me._ownershipGroup, "click", function() {
+        me._storeGroups.url = me._storeGroups.url.split('?')[0];
+        me._storeGroups.close();
+        me._storeGroups.fetch();
+      });
+      on(me._ownershipGroup, "change", function() {
         var t = me._ownershipGroup.get('displayedValue');
         me._storeGroups.url = me._storeGroups.url.split('?')[0] + '?wizard=1&q='+t;
         me._storeGroups.close();
