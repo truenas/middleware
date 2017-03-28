@@ -2934,6 +2934,7 @@ class notifier(metaclass=HookMetaclass):
     def volume_import(self, volume_name, volume_id, key=None, passphrase=None, enc_disks=None):
         from django.db import transaction
         from freenasUI.storage.models import Disk, EncryptedDisk, Scrub, Volume
+        from freenasUI.sharing.models import AFP_Share, CIFS_Share, NFS_Share_Path, WebDAV_Share
         from freenasUI.system.alert import alertPlugins
 
         if enc_disks is None:
@@ -3001,6 +3002,21 @@ class notifier(metaclass=HookMetaclass):
             if passfile:
                 os.unlink(passfile)
             raise
+
+        # In case volume was exported at some point and shares
+        # were not deleted we need to restart/reload shares
+        path = f'/mnt/{volume_name}'
+        if AFP_Share.objects.filter(Q(afp_path=path) | Q(afp_path__startswith=f'{path}/')).exists():
+            self.reload('afp')
+
+        if CIFS_Share.objects.filter(Q(cifs_path=path) | Q(cifs_path__startswith=f'{path}/')).exists():
+            self.reload('cifs')
+
+        if NFS_Share_Path.objects.filter(Q(path=path) | Q(path__startswith=f'{path}/')).exists():
+            self.restart('nfs')
+
+        if WebDAV_Share.objects.filter(Q(webdav_path=path) | Q(webdav_path__startswith=f'{path}/')).exists():
+            self.reload('webdav')
 
         self.reload("disk")
         self.start("ix-system")
