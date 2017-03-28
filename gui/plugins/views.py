@@ -658,11 +658,14 @@ def plugin_fcgi_client(request, name, oid, path):
 
     args = request.POST if request.method == "POST" else request.GET
     try:
-        status, headers, body, raw = app(env, args=args)
+        status, headers, body, err = app(env, args=args)
     except socket.error as e:
         resp = HttpResponse(str(e))
         resp.status_code = 503
         return resp
+
+    if err:
+        log.debug('Error in FastCGI proxy call %r', err)
 
     resp = HttpResponse(body)
     for header, value in headers:
