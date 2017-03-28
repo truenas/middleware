@@ -1976,7 +1976,7 @@ class InitialWizardVolumeForm(Form):
             elif num < 18:
                 mod = num % 2
                 rows = 2
-                perrow = (num - mod) / 2
+                perrow = int((num - mod) / 2)
                 vdevtype = cls._grp_type(perrow)
             elif num >= 18:
                 div9 = int(num / 9)
@@ -2025,7 +2025,7 @@ class InitialWizardVolumeForm(Form):
         grpid = 0
 
         if grptype == 'raid10':
-            for i in range(len(maindisks) / 2):
+            for i in range(int(len(maindisks) / 2)):
                 groups[grpid] = {
                     'type': 'mirror',
                     'disks': maindisks[i * 2:2 * (i + 1)],
@@ -2038,11 +2038,11 @@ class InitialWizardVolumeForm(Form):
                 optimalrow = 10
             else:
                 optimalrow = 11
-            div = len(maindisks) / optimalrow
+            div = int(len(maindisks) / optimalrow)
             mod = len(maindisks) % optimalrow
             if mod >= 2:
                 div += 1
-            perrow = len(maindisks) / (div if div else 1)
+            perrow = int(len(maindisks) / (div if div else 1))
             for i in range(div):
                 groups[grpid] = {
                     'type': grptype,
