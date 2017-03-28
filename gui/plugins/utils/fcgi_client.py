@@ -266,7 +266,7 @@ class FCGIApp(object):
         # Main loop. Process FCGI_STDOUT, FCGI_STDERR, FCGI_END_REQUEST
         # records from the application.
         result = []
-        err = ''
+        err = b''
         while True:
             inrec = Record()
             inrec.read(sock)
