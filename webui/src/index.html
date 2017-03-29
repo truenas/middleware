@@ -15,7 +15,9 @@
   <% } %>
 
   <!-- base url -->
+<% if (!htmlWebpackPlugin.options.metadata.isDevServer) { %>
   <base href="<%= htmlWebpackPlugin.options.metadata.baseUrl %>">
+<% } %>
 
 
 </head>
