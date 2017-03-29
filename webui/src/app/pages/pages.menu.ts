@@ -8,6 +8,23 @@ export const PAGES_MENU = [
     order: 0
   },
   {
+    title: 'System',
+    icon: 'ion-android-options',
+    selected: false,
+    expanded: false,
+    order: 0,
+    children: [
+      {
+        path: ['system', 'general'],
+        title: 'General',
+        icon: 'ion-earth',
+        selected: false,
+        expanded: false,
+        order: 0
+      },
+    ]
+  },
+  {
     title: 'Accounts',
     icon: 'ion-person-stalker',
     selected: false,

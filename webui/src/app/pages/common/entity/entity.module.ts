@@ -7,6 +7,7 @@ import { DynamicFormsBootstrapUIModule } from '@ng2-dynamic-forms/ui-bootstrap';
 import { BusyModule } from 'angular2-busy';
 
 import { EntityAddComponent } from './entity-add/entity-add.component';
+import { EntityConfigComponent } from './entity-config/entity-config.component';
 import { EntityDeleteComponent } from './entity-delete/entity-delete.component';
 import { EntityEditComponent } from './entity-edit/entity-edit.component';
 import { EntityListComponent } from './entity-list/entity-list.component';
@@ -27,6 +28,7 @@ import { RestService, WebSocketService } from '../../../services/index';
   ],
   declarations: [
     EntityAddComponent,
+    EntityConfigComponent,
     EntityDeleteComponent,
     EntityEditComponent,
     EntityListComponent,
@@ -35,6 +37,7 @@ import { RestService, WebSocketService } from '../../../services/index';
   ],
   exports: [
     EntityAddComponent,
+    EntityConfigComponent,
     EntityDeleteComponent,
     EntityEditComponent,
     EntityListComponent,
