@@ -22,6 +22,14 @@ export const PAGES_MENU = [
         expanded: false,
         order: 0
       },
+      {
+        path: ['system', 'advanced'],
+        title: 'Advanced',
+        icon: 'ion-ios-cog',
+        selected: false,
+        expanded: false,
+        order: 0
+      },
     ]
   },
   {

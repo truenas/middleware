@@ -46,7 +46,6 @@ export class WebSocketService {
   onconnect() {
     while(this.pendingMessages.length > 0) {
       let payload = this.pendingMessages.pop();
-      console.log("pending", payload);
       this.send(payload);
     }
   }
