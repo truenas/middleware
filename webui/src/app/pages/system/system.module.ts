@@ -9,6 +9,7 @@ import { BusyModule } from 'angular2-busy';
 import { EntityModule } from '../common/entity/entity.module';
 import { routing } from './system.routing';
 
+import { AdvancedComponent } from './advanced/';
 import { GeneralComponent } from './general/';
 
 @NgModule({
@@ -24,6 +25,7 @@ import { GeneralComponent } from './general/';
     routing
   ],
   declarations: [
+    AdvancedComponent,
     GeneralComponent,
   ],
   providers: [
