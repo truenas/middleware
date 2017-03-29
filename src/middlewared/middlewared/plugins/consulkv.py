@@ -12,7 +12,7 @@ class ConsulService(Service):
         Sets `key` with `value` in Consul KV.
         """
         c = consul.Consul()
-        return c.kv.put(key, value)
+        return c.kv.put(str(key), str(value))
 
     @accepts(Str('key'))
     def get_kv(self, key):
@@ -26,3 +26,11 @@ class ConsulService(Service):
             return data['Value'].decode("utf-8")
         else:
             return ""
+
+    @accepts(Str('key'))
+    def delete_kv(self, key):
+        """
+        Delete a `key` in Consul KV.
+        """
+        c = consul.Consul()
+        return c.kv.delete(str(key))
