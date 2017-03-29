@@ -24,9 +24,7 @@ export class AdvancedComponent {
     new DynamicSelectModel({
       id: 'adv_serialport',
       label: 'Serial Port',
-      options: [
-        { label: '0x3f8', value: '0x3f8' },
-      ],
+      options: [],
     }),
     new DynamicSelectModel({
       id: 'adv_serialspeed',
@@ -62,6 +60,12 @@ export class AdvancedComponent {
   }
 
   afterInit(entityEdit: any) {
+    entityEdit.ws.call('device.get_info', ['SERIAL']).subscribe((res) => {
+      let adv_serialport = <DynamicSelectModel<string>> this.formService.findById("adv_serialport", this.formModel);
+      res.forEach((item) => {
+        adv_serialport.add({ label: item.name + ' (' + item.start + ')', value: item.start });
+      });
+    });
   }
 
 }
