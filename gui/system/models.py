@@ -716,7 +716,7 @@ class CertificateBase(Model):
 
     def get_fingerprint(self):
         cert = self.get_certificate()
-        return cert.digest("sha1").encode('utf8')
+        return cert.digest("sha1").decode()
 
     def get_certificate_chain(self):
         regex = re.compile(r"(-{5}BEGIN[\s\w]+-{5}[^-]+-{5}END[\s\w]+-{5})+", re.M | re.S)
