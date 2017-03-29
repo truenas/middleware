@@ -271,7 +271,6 @@ module.exports = function (options) {
        */
       new CopyWebpackPlugin([
         {from: 'src/assets', to: 'assets'},
-        {from: 'node_modules/ckeditor', to: 'ckeditor'},
         {from: 'src/meta'}
       ]),
 

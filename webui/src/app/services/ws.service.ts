@@ -12,7 +12,8 @@ export class WebSocketService {
   onCloseSubject: Subject<any>;
   onOpenSubject: Subject<any>;
   pendingCalls: any;
-  socket: any;
+  pendingMessages: any[] = [];
+  socket: WebSocket;
   connected: boolean = false;
   loggedIn: boolean = false;
   @LocalStorage() username;
@@ -40,6 +41,14 @@ export class WebSocketService {
       "version": "1",
       "suppoer": ["1"]
     }));
+  }
+
+  onconnect() {
+    while(this.pendingMessages.length > 0) {
+      let payload = this.pendingMessages.pop();
+      console.log("pending", payload);
+      this.send(payload);
+    }
   }
 
   onclose(event) {
@@ -77,12 +86,21 @@ export class WebSocketService {
     } else if(data.msg == "connected") {
       this.connected = true;
       setTimeout(this.ping.bind(this), 20000);
+      this.onconnect();
     } else if(data.msg == "pong") {
       // pass
     } else {
       console.log("Unknown message: ", data);
     }
 
+  }
+
+  send(payload) {
+    if(this.socket.readyState == WebSocket.OPEN) {
+      this.socket.send(JSON.stringify(payload));
+    } else {
+      this.pendingMessages.push(payload);
+    }
   }
 
   call(method, params?: any): Observable<any> {
@@ -102,7 +120,7 @@ export class WebSocketService {
         "observer": observer,
       });
 
-      this.socket.send(JSON.stringify(payload));
+      this.send(payload);
     });
 
     return source;
