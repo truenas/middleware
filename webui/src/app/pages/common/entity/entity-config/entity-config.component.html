@@ -4,7 +4,7 @@
   <div *ngIf="error" [innerHTML]="error" class="form-error"></div>
 
     <dynamic-form-bootstrap-control #component *ngFor="let controlModel of conf.formModel"
-                                    [controlGroup]="formGroup"
+                                    [group]="formGroup"
                                     [model]="controlModel"
                                     [hasErrorMessaging]="controlModel.hasErrorMessages">
     </dynamic-form-bootstrap-control>
