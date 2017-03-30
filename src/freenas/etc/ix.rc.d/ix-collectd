@@ -161,7 +161,6 @@ LoadPlugin ctl
 LoadPlugin df
 LoadPlugin disk
 LoadPlugin exec
-LoadPlugin geom_stat
 LoadPlugin interface
 LoadPlugin load
 LoadPlugin memory
@@ -228,10 +227,6 @@ LoadPlugin zfs_arc_v2
 </Plugin>
 
 <Plugin "zfs_arc">
-</Plugin>
-
-<Plugin "geom_stat">
-	Filter "^([a]?da|ciss|md|mfi|md|nvd|xbd|vtbd)[0123456789]+(p[0123456789]+)?(\.eli)?$"
 </Plugin>
 
 <Plugin "df">
