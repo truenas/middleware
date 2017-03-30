@@ -8,15 +8,16 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:10-0700\n"
-"PO-Revision-Date: 2014-07-24 10:02+0000\n"
-"Last-Translator: btjordi <jordiborras83@gmail.com>\n"
-"Language-Team: LANGUAGE <LL@li.org>\n"
+"PO-Revision-Date: 2016-12-22 16:36+0000\n"
+"Last-Translator: Davidmp <rbndavid@gmail.com>\n"
+"Language-Team: Catalan "
+"<http://weblate.trueos.org/projects/freenas/djangojs/ca/>\n"
 "Language: ca\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Pootle 2.5.0\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
+"X-Generator: Weblate 2.10-dev\n"
 "X-POOTLE-MTIME: 1406196131.0\n"
 
 #~ msgid "Reporting"
@@ -24,7 +25,7 @@ msgstr ""
 
 #: freeadmin/static/lib/js/freeadmin.js:68
 msgid "Settings"
-msgstr "Ajustos"
+msgstr "Paràmetres"
 
 #: freeadmin/static/lib/js/freeadmin.js:79
 msgid "System Information"
@@ -32,7 +33,7 @@ msgstr "Informació del sistema"
 
 #: freeadmin/static/lib/js/freeadmin.js:119
 msgid "Network Settings"
-msgstr "Ajustos de la xarxa"
+msgstr "Paràmetres de la xarxa"
 
 #: freeadmin/static/lib/js/freeadmin.js:190
 msgid "Services"
@@ -44,13 +45,12 @@ msgstr "Compte"
 
 #: freeadmin/static/lib/js/freeadmin.js:270
 msgid "Storage"
-msgstr "Magatzem"
+msgstr "Emmagatzematge"
 
 #: freeadmin/static/lib/js/freeadmin.js:500
 #: freeadmin/static/lib/js/freeadmin.js:523
-#, fuzzy
 msgid "Some error occurred"
-msgstr "Hi ha hagut algun error!"
+msgstr "Hi ha hagut algun error"
 
 #~ msgid "Edit"
 #~ msgstr "Editar"
@@ -60,15 +60,15 @@ msgstr "Hi ha hagut algun error!"
 
 #: freeadmin/static/lib/js/freeadmin.js:547
 msgid "Wipe"
-msgstr ""
+msgstr "Esborra"
 
 #: freeadmin/static/lib/js/freeadmin.js:551
 msgid "Wipe Disk"
-msgstr "Editar disc"
+msgstr "Esborra el disc"
 
 #: freeadmin/static/lib/js/freeadmin.js:862
 msgid "Please wait..."
-msgstr ""
+msgstr "Espereu, si us plau..."
 
 #: freeadmin/static/lib/js/freeadmin.js:927
 msgid "An error occurred!"
@@ -76,7 +76,7 @@ msgstr "Hi ha hagut algun error!"
 
 #: freeadmin/static/lib/js/freeadmin/form/Cron.js:45
 msgid "Each selected"
-msgstr "Cada un seleccionat"
+msgstr "Cada selecció"
 
 #: freeadmin/static/lib/js/freeadmin/form/Cron.js:97
 msgid "Every N"
@@ -99,60 +99,59 @@ msgstr "Cada N"
 
 #: freeadmin/static/lib/js/alert.js:77
 msgid "Alert System"
-msgstr ""
+msgstr "Sistema d'alerta"
 
 #: freeadmin/static/lib/js/freeadmin.js:258
 msgid "Enable service"
-msgstr ""
+msgstr "Habilita el servei"
 
 #: freeadmin/static/lib/js/freeadmin.js:784
 msgid "The cache is being rebuilt."
-msgstr ""
+msgstr "Es reconstrueix la cau."
 
 #: freeadmin/static/lib/js/freeadmin.js:786
 msgid "The cache could not be rebuilt: "
-msgstr ""
+msgstr "Es reconstrueix la cau: "
 
 #: freeadmin/static/lib/js/freeadmin/Menu.js:134
 msgid "Shares"
-msgstr ""
+msgstr "Comparticions"
 
 #: freeadmin/static/lib/js/freeadmin/Menu.js:213
 msgid "Jails"
-msgstr ""
+msgstr "Gàbies"
 
 #: freeadmin/static/lib/js/freeadmin/Menu.js:252
 msgid "Plugins"
-msgstr ""
+msgstr "Connectors"
 
 #: freeadmin/static/lib/js/freeadmin/Menu.js:400
 msgid "Support"
-msgstr ""
+msgstr "Suport"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:124
 msgid "Size"
-msgstr ""
+msgstr "Mida"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:263
 msgid "drives"
-msgstr ""
+msgstr "dispositius"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:265
 msgid "drive"
-msgstr ""
+msgstr "dispositiu"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:267
 msgid "show"
-msgstr ""
+msgstr "mostra-ho"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:277
 msgid "no more drives"
-msgstr ""
+msgstr "no hi ha més dispositius"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:335
-#, fuzzy
 msgid "Disk size mismatch"
-msgstr "Extreure disc"
+msgstr "La mida de disc no coincideix"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:520
 msgid ""
@@ -162,6 +161,11 @@ msgid ""
 "href='http://doc.freenas.org/index.php/Volumes#ZFS_Volume_Manager' "
 "target='_blank'>documentation</a>."
 msgstr ""
+"La configuració és òptima!<br /><br />Això vol dir que tindreu el millor "
+"rendiment possible per a aquest nombre de discs i tipus de grup de discs.<br "
+"/><br />Per a més explicacions, vegeu <a "
+"href='http://doc.freenas.org/index.php/Volumes#ZFS_Volume_Manager' "
+"target='_blank'>documentation</a>."
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:525
 msgid ""
@@ -171,436 +175,466 @@ msgid ""
 "href='http://doc.freenas.org/index.php/Volumes#ZFS_Volume_Manager' "
 "target='_blank'>documentation</a>."
 msgstr ""
+"La configuració no és òptima!<br /><br />Això vol dir que no tindreu el "
+"millor rendiment possible per a aquest nombre de discs i tipus de grup de "
+"discs.<br /><br />Per a més explicacions, vegeu <a "
+"href='http://doc.freenas.org/index.php/Volumes#ZFS_Volume_Manager' "
+"target='_blank'>documentation</a>."
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:666
 msgid "Capacity"
-msgstr ""
+msgstr "Capacitat"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:974
 msgid "Drag and drop this to resize"
-msgstr ""
+msgstr "Arrossegueu-ho i deixeu-ho anar per canviar-ne la mida"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1018
 msgid "Add Volume"
-msgstr ""
+msgstr "Afegeix un volum"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1018
 msgid "Existing data will be cleared"
-msgstr ""
+msgstr "Les dades existents s'esborraran"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1019
 msgid "Extend Volume"
-msgstr ""
+msgstr "Amplia el volum"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1066
 msgid "Volume Name"
-msgstr ""
+msgstr "Nom del volum"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1067
 msgid "Volume to extend"
-msgstr ""
+msgstr "Volum per ampliar"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1068
 msgid ""
 "Extending an encrypted volume will reset the passphrase and recovery key!"
 msgstr ""
+"Ampliar un volum encriptat en restablirà la contrasenya i la clau de "
+"recuperació!"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1069
 msgid "Encryption"
-msgstr ""
+msgstr "Encriptació"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1071
 msgid "Available disks"
-msgstr ""
+msgstr "Discs disponibles"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1072
 msgid "Volume layout"
-msgstr ""
+msgstr "Disposició del volum"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1073
 msgid "Estimated capacity"
-msgstr ""
+msgstr "Capacitat estimada"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1194
 msgid "Add Extra Device"
-msgstr ""
+msgstr "Afegeix un dispositiu extra"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1212
 msgid "Cancel"
-msgstr ""
+msgstr "Cancel·la"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1219
 msgid "Manual setup"
-msgstr ""
+msgstr "Configuració manual"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1225
 msgid "ZFS Volume Manager"
-msgstr ""
+msgstr "Gestor de volums ZFS"
 
 #: freeadmin/static/lib/js/freeadmin/WebShell.js:77
 msgid "Shell"
-msgstr ""
+msgstr "Intèrpret d’ordres"
 
 #: freeadmin/static/lib/js/freeadmin/WebShell.js:90
 #: freeadmin/static/lib/js/freeadmin/WebShell.js:114
 msgid "Paste"
-msgstr ""
+msgstr "Enganxa"
 
 #: freeadmin/static/lib/js/freeadmin/form/PathSelector.js:80
 #: freeadmin/static/lib/js/freeadmin/form/PathSelector.js:85
 msgid "Browse"
-msgstr ""
+msgstr "Navega"
 
 #: freeadmin/static/lib/js/freeadmin/form/PathSelector.js:83
 #: freeadmin/static/lib/js/freeadmin/form/PathSelector.js:88
 msgid "Close"
-msgstr ""
+msgstr "Tanca"
 
 #: freeadmin/static/lib/js/freeadmin.js:918
 msgid "Confirm"
-msgstr ""
+msgstr "Confirmació"
 
 #: freeadmin/static/lib/js/freeadmin/Menu.js:49
 msgid "System"
-msgstr ""
+msgstr "Sistema"
 
 #: freeadmin/static/lib/js/freeadmin/Menu.js:94
 msgid "Tasks"
-msgstr ""
+msgstr "Tasques"
 
 #: freeadmin/static/lib/js/freeadmin/Menu.js:92
-#, fuzzy
 msgid "Network"
-msgstr "Ajustos de la xarxa"
+msgstr "Xarxa"
 
 #: freeadmin/static/lib/js/freeadmin/Menu.js:182
 msgid "Sharing"
-msgstr ""
+msgstr "Compartició"
 
 #: freeadmin/static/lib/js/freeadmin/Menu.js:521
 msgid "Directory Service"
-msgstr ""
+msgstr "Servei de directori"
 
 #: freeadmin/static/lib/js/freeadmin.js:1772
 #: freeadmin/static/lib/js/freeadmin.js:1863
 msgid "Initial Wizard"
-msgstr ""
+msgstr "Auxiliar inicial"
 
 #: freeadmin/static/lib/js/freeadmin/WizardShares.js:68
 msgid "Share name"
-msgstr ""
+msgstr "Nom de compartició"
 
 #: freeadmin/static/lib/js/freeadmin/WizardShares.js:74
 msgid ""
 "This field may only contain alphanumeric and the following characters: \"_\""
 ", \"-\", \".\"."
 msgstr ""
+"Aquest camp només pot contenir caràcters alfanumèrics i els següents: \"_\", "
+"\"-\", \".\"."
 
 #: freeadmin/static/lib/js/freeadmin/WizardShares.js:129
 msgid "Specify the size using B, K, M, G, T prefixes."
-msgstr ""
+msgstr "Especifiqueu-ne la mida amb els prefixos B, K, M, G, T."
 
 #: freeadmin/static/lib/js/freeadmin/WizardShares.js:133
 msgid "Add"
-msgstr ""
+msgstr "Afegeix"
 
 #: freeadmin/static/lib/js/freeadmin/WizardShares.js:140
 msgid "Delete"
-msgstr ""
+msgstr "Esborra"
 
 #: freeadmin/static/lib/js/freeadmin/WizardShares.js:153
 msgid "Update"
-msgstr ""
+msgstr "Actualitza"
 
 #: freeadmin/static/lib/js/freeadmin/WizardShares.js:184
 msgid "Ownership"
-msgstr ""
+msgstr "Pertinença"
 
 #: freeadmin/static/lib/js/freeadmin/WizardShares.js:210
 msgid "This user does not exist."
-msgstr ""
+msgstr "Aquest usuari no existeix."
 
 #: freeadmin/static/lib/js/freeadmin/WizardShares.js:246
 msgid "This group does not exist."
-msgstr ""
+msgstr "Aquest grup no existeix."
 
 #: freeadmin/static/lib/js/freeadmin/WizardShares.js:278
 msgid "Return"
-msgstr ""
+msgstr "Retorn"
 
 #: freeadmin/static/lib/js/freeadmin.js:1772
 msgid "Wizard"
-msgstr ""
+msgstr "Auxiliar"
 
 #: freeadmin/static/lib/js/freeadmin/WizardShares.js:242
 msgid "Paswords do not match."
-msgstr ""
+msgstr "Les contrasenyes no coincideixen."
 
 #: freeadmin/static/lib/js/freeadmin.js:374
 msgid "Warning!"
-msgstr ""
+msgstr "Avís!"
 
 #: freeadmin/static/lib/js/freeadmin.js:376
 msgid ""
 "This option DISABLES ENCRYPTION for replication tasks and should ONLY be "
 "used on a secure LAN!"
 msgstr ""
+"Aquesta opció INHABILITA L'ENCRIPTACIÓ per a les tasques de replicació i "
+"només s'ha d'usar en una LAN segura!"
 
 #: freeadmin/static/lib/js/freeadmin.js:376
 msgid "Are you sure you want to do this?"
-msgstr ""
+msgstr "Segur que voleu fer-ho?"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1190
 msgid "Manual Setup"
-msgstr ""
+msgstr "Configuració manual"
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:82
 msgid "Check For Updates"
-msgstr ""
+msgstr "Comprova si hi ha actualitzacions"
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:86
 msgid "Apply Pending Updates"
-msgstr ""
+msgstr "Aplica les actualitzacions pendents"
 
 #: freeadmin/static/lib/js/freeadmin.js:1287
 msgid "Hostname cannot be blank."
-msgstr ""
+msgstr "El nom d'amfitrió no pot estar en blanc."
 
 #: freeadmin/static/lib/js/freeadmin.js:1290
 msgid "Username cannot be blank."
-msgstr ""
+msgstr "El nom d'usuari no pot estar en blanc."
 
 #: freeadmin/static/lib/js/freeadmin.js:1293
 msgid "Password cannot be blank."
-msgstr ""
+msgstr "La contrasenya no pot estar en blanc."
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:79
 #: freeadmin/static/lib/js/freeadmin/Update.js:81
 msgid "Manual Update"
-msgstr ""
+msgstr "Actualització manual"
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:88
 #: freeadmin/static/lib/js/freeadmin/Update.js:90
 msgid "Check Now"
-msgstr ""
+msgstr "Comprova-ho ara"
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:142
 msgid "Yes"
-msgstr ""
+msgstr "Sí"
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:151
 msgid "No"
-msgstr ""
+msgstr "No"
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:166
 msgid "Loading..."
-msgstr ""
+msgstr "Carregant..."
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:167
 msgid "No pending updates have been found."
-msgstr ""
+msgstr "No s'han trobat actualitzacions pendents."
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:104
 #: freeadmin/static/lib/js/freeadmin/Update.js:106
 msgid "Verify Install"
-msgstr ""
+msgstr "Verifica la instal·lació"
 
 #: freeadmin/static/lib/js/freeadmin/WizardShares.js:245
 msgid "Passwords do not match."
-msgstr ""
+msgstr "Les contrasenyes no coincideixen."
 
 #: freeadmin/static/lib/js/freeadmin.js:260
 msgid "Restarting WebGUI"
-msgstr ""
+msgstr "Es reinicia la interfície web"
 
 #: freeadmin/static/lib/js/freeadmin.js:1157
 msgid "Active Directory IDMAP change!"
-msgstr ""
+msgstr "Canvi d'Active Directory IDMAP!"
 
 #: freeadmin/static/lib/js/freeadmin.js:1162
 msgid ""
 "<font color='red'>STOP</font>: Do you know what you are doing?<br /><br />"
-msgstr ""
+msgstr "<font color='red'>UN MOMENT!</font> Ja sabeu el que feu?<br /><br />"
 
 #: freeadmin/static/lib/js/freeadmin.js:1163
 msgid ""
 "The idmap_ad plugin provides a way for Winbind to read id mappings from<br />"
 msgstr ""
+"El connector idmap_ad proporciona una manera perquè Winbind llegeixi "
+"mapatges d'id des<br />"
 
 #: freeadmin/static/lib/js/freeadmin.js:1164
 msgid "an AD server that uses RFC2307/SFU schema extensions. This module<br />"
 msgstr ""
+"d'un servidor AD que usi extensions d'esquema RFC2307/SFU. Aquest mòdul<br />"
 
 #: freeadmin/static/lib/js/freeadmin.js:1165
 msgid ""
 "implements only the \"idmap\" API, and is READONLY. Mappings must be<br />"
 msgstr ""
+"implementa només l'API \"idmap\" i és només de lectura. Els mapatges han de "
+"ser<br />"
 
 #: freeadmin/static/lib/js/freeadmin.js:1166
 msgid "provided in advance by the administrator by adding the uidNumber<br />"
 msgstr ""
+"proporcionats per endavant per l'administrador afegint els atributs del "
+"número<br />"
 
 #: freeadmin/static/lib/js/freeadmin.js:1167
 msgid ""
 "attributes for users and gidNumber attributes for groups in the AD.<br />"
 msgstr ""
+"d'uid per a usuaris i atributs del número gid per a grups de l'AD.<br />"
 
 #: freeadmin/static/lib/js/freeadmin.js:1168
 msgid ""
 "Winbind will only map users that have a uidNumber and whose primary<br />"
 msgstr ""
+"El Winbind només maparà usuaris que tinguin un número d'uid i que el seu "
+"grup<br />"
 
 #: freeadmin/static/lib/js/freeadmin.js:1169
 msgid ""
 "group have a gidNumber attribute set. It is however recommended that<br />"
 msgstr ""
+"primari tingui establert un atribut de número gid. Tanmateix, és recomanable "
+"que<br />"
 
 #: freeadmin/static/lib/js/freeadmin.js:1170
 msgid ""
 "all groups in use have gidNumber attributes assigned, otherwise they<br />"
 msgstr ""
+"tots els grups en ús tinguin atributs de número gid assignats; si no, no<br "
+"/>"
 
 #: freeadmin/static/lib/js/freeadmin.js:1171
 msgid "are not working.<br /><br />"
-msgstr ""
+msgstr "funcionen.<br /><br />"
 
 #: freeadmin/static/lib/js/freeadmin.js:1172
 msgid ""
 "<font color='red'>STOP</font>: If your Active Directory is not configured "
 "for this, it will not work.<br><br>"
 msgstr ""
+"<font color='red'>UN MOMENT</font>! Si el vostre Active Directory no està "
+"configurat per a això, no funcionarà.<br><br>"
 
 #: freeadmin/static/lib/js/freeadmin/Menu.js:512
 msgid "Documentation"
-msgstr ""
+msgstr "Documentació"
 
 #: freeadmin/static/lib/js/freeadmin/SupportTicket.js:115
 msgid "Username"
-msgstr ""
+msgstr "Nom d'usuari"
 
 #: freeadmin/static/lib/js/freeadmin/SupportTicket.js:116
 msgid "If you do not have an account, please"
-msgstr ""
+msgstr "Si no en teniu cap compte, si us plau,"
 
 #: freeadmin/static/lib/js/freeadmin/SupportTicket.js:116
 msgid "register"
-msgstr ""
+msgstr "registreu-vos-hi."
 
 #: freeadmin/static/lib/js/freeadmin/SupportTicket.js:117
 msgid "Attach Debug Info"
-msgstr ""
+msgstr "Adjunta informació de depurció"
 
 #: freeadmin/static/lib/js/freeadmin/SupportTicket.js:226
 msgid "Submit"
-msgstr ""
+msgstr "Envia"
 
 #: freeadmin/static/lib/js/freeadmin/SupportTicket.js:326
 msgid "This field is required."
-msgstr ""
+msgstr "Aquest camp és necessari."
 
 #: freeadmin/static/lib/js/freeadmin/SupportTicket.js:361
 msgid "Uploading attachments to host"
-msgstr ""
+msgstr "Carregant adjunts a l'amfitrió"
 
 #: freeadmin/static/lib/js/freeadmin/SupportTicket.js:367
 msgid "Generating debug info"
-msgstr ""
+msgstr "Generant la informació de depuració"
 
 #: freeadmin/static/lib/js/freeadmin/SupportTicket.js:372
 msgid "Submitting ticket"
-msgstr ""
+msgstr "Enviant el tiquet"
 
 #: freeadmin/static/lib/js/freeadmin/SupportTicket.js:377
 msgid "Uploading attachments from host to the ticket"
-msgstr ""
+msgstr "Carregant adjunts des de l'amfitrió al tiquet"
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:86
 msgid "Train Descriptions"
-msgstr ""
+msgstr "Descripcions de trens"
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:88
 msgid "Loading"
-msgstr ""
+msgstr "Carregant"
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:89
 msgid "Automatically check for updates"
-msgstr ""
+msgstr "Comprova si hi ha actualitzacions automàticament"
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:90
 msgid "Current Train"
-msgstr ""
+msgstr "Tren actual"
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:91
 msgid "Update Server"
-msgstr ""
+msgstr "Servidor d'actualització"
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:92
 msgid "Pending Updates"
-msgstr ""
+msgstr "Actualitzacions pendents"
 
 #: freeadmin/static/lib/js/freeadmin/Menu.js:185
 msgid "vCenter Plugin Configuration"
-msgstr ""
+msgstr "Configuració del connector"
 
 #: freeadmin/static/lib/js/freeadmin.js:1343
 msgid "Decreasing WebGUI https security!"
-msgstr ""
+msgstr "Es redueix la seguretat d'https de la interfície gràfica!"
 
 #: freeadmin/static/lib/js/freeadmin.js:1348
 msgid ""
 "<font color='red'>Warning: Selecting this reduces your https security.<br /><"
 "br />"
 msgstr ""
+"<font color='red'>Avís: seleccionar això redueix la seguretat d'https.<br /><"
+"br />"
 
 #: freeadmin/static/lib/js/freeadmin/SupportTicket.js:117
 msgid "Password"
-msgstr ""
+msgstr "Contrasenya"
 
 #: freeadmin/static/lib/js/freeadmin/SupportTicket.js:118
 msgid "Name"
-msgstr ""
+msgstr "Nom"
 
 #: freeadmin/static/lib/js/freeadmin/SupportTicket.js:119
 msgid "E-mail"
-msgstr ""
+msgstr "Adreça electrònica"
 
 #: freeadmin/static/lib/js/freeadmin/SupportTicket.js:120
 msgid "Phone"
-msgstr ""
+msgstr "Telèfon"
 
 #: freeadmin/static/lib/js/freeadmin/SupportTicket.js:121
 msgid "Type"
-msgstr ""
+msgstr "Tipus"
 
 #: freeadmin/static/lib/js/freeadmin/SupportTicket.js:122
 msgid "Category"
-msgstr ""
+msgstr "Categoria"
 
 #: freeadmin/static/lib/js/freeadmin/SupportTicket.js:123
 msgid "Environment"
-msgstr ""
+msgstr "Entorn"
 
 #: freeadmin/static/lib/js/freeadmin/SupportTicket.js:124
 msgid "Criticality"
-msgstr ""
+msgstr "Criticitat"
 
 #: freeadmin/static/lib/js/freeadmin/SupportTicket.js:126
 msgid "Subject"
-msgstr ""
+msgstr "Assumpte"
 
 #: freeadmin/static/lib/js/freeadmin/SupportTicket.js:127
 msgid "Description"
-msgstr ""
+msgstr "Descripció"
 
 #: freeadmin/static/lib/js/freeadmin/SupportTicket.js:128
 msgid "Attachments"
-msgstr ""
+msgstr "Adjunts"
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:161
 msgid ""
 "You're not allowed to change away from the nightly train, it is considered a "
 "downgrade."
 msgstr ""
+"No teniu permís per allunyar-vos del tren nocturn, es considera una "
+"degradació."
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:161
 #: freeadmin/static/lib/js/freeadmin/Update.js:162
@@ -608,23 +642,29 @@ msgid ""
 "If you have an existing boot environment that uses that train, boot into it "
 "in order to upgrade that train."
 msgstr ""
+"Si teniu un entorn d'arrencada existent que usa aquest tren, arrenqueu-lo "
+"per tal d'actualitzar-ne el tren."
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:162
 msgid ""
 "Changing minor version is considered a downgrade, thus not a supported "
 "operation."
 msgstr ""
+"El canvi de versió menor es considera una degradació; per tant, no és una "
+"operació admesa."
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:176
 msgid "OK"
-msgstr ""
+msgstr "D'acord"
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:226
 msgid ""
 "WARNING: Changing to a nightly train is a one way street. Changing back to "
 "stable is not supported!"
 msgstr ""
+"AVÍS: el canvi a un tren nocturn és un carrer d'un sentit. Tornar a la "
+"versió estable no és compatible!"
 
 #: freeadmin/static/lib/js/freeadmin.js:359
 msgid "Ok"
-msgstr ""
+msgstr "D'acord"

@@ -8,15 +8,16 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:09-0700\n"
-"PO-Revision-Date: 2016-05-10 15:44+0000\n"
-"Last-Translator: fenderbob <Roberto.bagnato94@gmail.com>\n"
-"Language-Team: LANGUAGE <LL@li.org>\n"
+"PO-Revision-Date: 2017-01-28 14:35+0000\n"
+"Last-Translator: giulio zanardi <giulioza@me.com>\n"
+"Language-Team: Italian "
+"<http://weblate.trueos.org/projects/freenas/django/it/>\n"
 "Language: it\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Pootle 2.5.0\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
+"X-Generator: Weblate 2.10-dev\n"
 "X-POOTLE-MTIME: 1462895071.0\n"
 
 #: choices.py:40
@@ -1179,7 +1180,7 @@ msgstr "File PBI da installare"
 
 #: plugins/forms.py:189
 msgid "The full jail path cannot exceed 76 characters"
-msgstr ""
+msgstr "L'intero percorso jail non può superare i 76 caratteri"
 
 #: plugins/forms.py:200
 #, fuzzy
@@ -1206,7 +1207,7 @@ msgstr "Indirizzo IP della Jail"
 #: plugins/forms.py:222
 #, fuzzy
 msgid "Jail IPv4 Netmask"
-msgstr "Netmask IPv4"
+msgstr "Maschera jail IPv4"
 
 #~ msgid "Plugins archive Path"
 #~ msgstr "Percorso completo dei plugin"
@@ -1220,7 +1221,7 @@ msgstr "Montato?"
 
 #: plugins/forms.py:314
 msgid "The full path cannot exceed 88 characters"
-msgstr "Il percorso non può superare 88 caratteri"
+msgstr "Il percorso completo non può superare 88 caratteri"
 
 #, python-format
 #~ msgid "The path could not be mounted %s"
@@ -1392,8 +1393,9 @@ msgstr ""
 "Il valore deve essere compreso tra 1024 e 65535 inclusi. 0 per default."
 
 #: services/forms.py:215
+#, fuzzy
 msgid "This must be higher than minimum passive port"
-msgstr ""
+msgstr "Questo deve essere superiore al minimo della porta passiva"
 
 #: services/forms.py:235
 msgid "This field is required for anonymous login"
@@ -2375,6 +2377,8 @@ msgid ""
 "Jail name can only contain letters, numbers and hyphens. It must not end "
 "with a hyphen."
 msgstr ""
+"Il nome di una Jail può contenere solo lettere, numeri e trattini. Non può "
+"finire con un trattino."
 
 #~ msgid "Jail IP address"
 #~ msgstr "Indirizzo IP della Jail"
@@ -3760,12 +3764,15 @@ msgstr "Il percorso non è una cartella."
 #: storage/forms.py:264
 msgid "You cannot select an existing ZFS volume and specify a new volume name"
 msgstr ""
+"Non puoi selezionare un volume ZFS esistente  e specificarne un nome nuovo"
 
 #: storage/forms.py:269
 msgid ""
 "You must specify a new volume name or select an existing ZFS volume to "
 "append a virtual device"
 msgstr ""
+"Devi specificare un nuovo nome o selezionare un volume ZFS esistente per "
+"aggiungere una periferica virtuale"
 
 #~ msgid "You must select a filesystem"
 #~ msgstr "Selezionare un filesystem"
@@ -3999,11 +4006,11 @@ msgstr "Veloce"
 
 #: storage/forms.py:1272
 msgid "Full with zeros"
-msgstr ""
+msgstr "Completare con degli zero"
 
 #: storage/forms.py:1273
 msgid "Full with random data"
-msgstr ""
+msgstr "Completare con dei dati casuali"
 
 #: storage/models.py:50
 msgid "File System Type"
@@ -4263,7 +4270,7 @@ msgstr "Intervallo"
 
 #: storage/models.py:749
 msgid "How much time has been passed between two snapshot attempts."
-msgstr ""
+msgstr "Quanto tempo è trascorso tra due tentativi di catturare lo schermo."
 
 #: storage/models.py:756
 msgid "Occurrence"
@@ -4469,7 +4476,7 @@ msgstr ""
 #: system/forms.py:496
 #, python-format
 msgid "The following disks already have tests for this type: %s"
-msgstr ""
+msgstr "I seguenti dischi hanno già controlli di questo tipo: %s"
 
 #: system/forms.py:507
 msgid "Place to temporarily place firmware file"
@@ -4529,7 +4536,7 @@ msgstr "Lingua"
 
 #: system/models.py:67
 msgid "Console Keyboard Map"
-msgstr ""
+msgstr "Mappa della tastiera per la Console"
 
 #: system/models.py:74
 msgid "Timezone"
@@ -4670,8 +4677,9 @@ msgid "Show tracebacks in case of fatal errors"
 msgstr "Mostra i tracebacks in caso di errore fatale"
 
 #: system/models.py:185
+#, fuzzy
 msgid "Show advanced fields by default"
-msgstr ""
+msgstr "Mostra i campi avanzati predefiniti"
 
 #: system/models.py:188
 msgid "Enable autotune"
@@ -4843,8 +4851,9 @@ msgid "Remote Path"
 msgstr "Host Remoto"
 
 #: system/models.py:477
+#, fuzzy
 msgid "Path on remote host to rsync to, e.g. /mnt/tank"
-msgstr ""
+msgstr "Percorso sul host remoto da rsync a, esempio. /mnt/tank"
 
 #: system/models.py:481 templates/system/rsync.html:8
 #, fuzzy
@@ -4855,6 +4864,8 @@ msgstr "Directory"
 msgid ""
 "Push - From local to remote machine. Pull - From remote to local machine."
 msgstr ""
+"Spingere - dalla macchina locale a quella remota. Tirare - dalla macchina "
+"remota alla macchina locale."
 
 #: system/models.py:527
 msgid "Recurse into directories"
@@ -5406,12 +5417,12 @@ msgstr "Route di default non definita"
 
 #: templates/plugins/done.html:13
 msgid "Installed..."
-msgstr ""
+msgstr "Istallato..."
 
 #: templates/plugins/index.html:5 templates/plugins/index.html.py:7
 #: templates/services/plugins.html:5 templates/services/plugins.html.py:7
 msgid "Install Plugin"
-msgstr ""
+msgstr "Istalla estensione"
 
 #: templates/plugins/index.html:31
 msgid "Info"
@@ -5419,7 +5430,7 @@ msgstr "Informazioni"
 
 #: templates/plugins/index.html:33
 msgid "Plugin info"
-msgstr ""
+msgstr "Info estensione"
 
 #: templates/plugins/index.html:39
 #, fuzzy
@@ -5433,7 +5444,7 @@ msgstr "Elimina replicazione"
 
 #: templates/plugins/index.html:55
 msgid "No plugins installed"
-msgstr ""
+msgstr "Nessuna estensione installata"
 
 #: templates/plugins/jail_import.html:2
 #, fuzzy
@@ -5447,7 +5458,7 @@ msgstr "Passo %(step)s di %(step_count)s"
 
 #: templates/plugins/jailpbi.html:18
 msgid "Upload Jail PBI"
-msgstr ""
+msgstr "Depositare Jail PBI"
 
 #: templates/plugins/jailpbi.html:21 templates/plugins/plugin_info.html:27
 #: templates/storage/disk_detach.html:13
@@ -5550,7 +5561,7 @@ msgstr "Impostazioni AFP"
 
 #: templates/services/core.html:105
 msgid "Install Jail PBI"
-msgstr ""
+msgstr "Installare Jail PBI"
 
 #: templates/services/core.html:117
 msgid "Rsync Settings"
@@ -5668,7 +5679,7 @@ msgstr "Ascolta"
 
 #: templates/services/iscsi_portals.html:18
 msgid "No IP defined for this Portal"
-msgstr ""
+msgstr "IP non è stato definito per questo Portale"
 
 #~ msgid "Edit Portal"
 #~ msgstr "Modifica portale"
@@ -5708,7 +5719,7 @@ msgstr "Versione SO"
 
 #: templates/services/plugins.html:32
 msgid "PBI"
-msgstr ""
+msgstr "PBI"
 
 #: templates/services/plugins.html:33
 #, fuzzy
@@ -5726,7 +5737,7 @@ msgstr "Elimina replicazione"
 
 #: templates/services/plugins.html:71
 msgid "No available plugins services"
-msgstr ""
+msgstr "Servizi per le estensioni non disponibili"
 
 #: templates/services/pluginsjail_delete.html:4
 msgid "All the files within the plugins jail will be permanently deleted."
@@ -6397,6 +6408,8 @@ msgid ""
 "The following IPs are bind to iSCSI Portal but were not found in the system: "
 "%s"
 msgstr ""
+"I seguenti IP sono legati alla porta iSCSI ma non sono stati trovati nel "
+"sistema: %s"
 
 #: tools/alert.py:177
 msgid "Critical Alerts"
@@ -7034,15 +7047,15 @@ msgstr "Dati"
 
 #: choices.py:711
 msgid "auth"
-msgstr ""
+msgstr "Autenticazione"
 
 #: choices.py:714
 msgid "ctrl+!data"
-msgstr ""
+msgstr "Control+!dati"
 
 #: choices.py:716
 msgid "auth+!data"
-msgstr ""
+msgstr "Autenticazione+!dati"
 
 #: account/forms.py:58
 msgid "Confirm New Password"
@@ -7056,7 +7069,7 @@ msgstr ""
 
 #: account/models.py:139
 msgid "Built-in User"
-msgstr ""
+msgstr "Utente integrato"
 
 #: api/resources.py:888
 #: storage/models.py:745
@@ -7078,11 +7091,11 @@ msgstr ""
 #: jails/admin.py:265
 #: jails/models.py:434
 msgid "URL"
-msgstr ""
+msgstr "URL"
 
 #: jails/forms.py:90
 msgid "type"
-msgstr ""
+msgstr "Tipo"
 
 #: jails/forms.py:182
 #: jails/forms.py:629
@@ -13745,8 +13758,9 @@ msgid "WARNING! Failed to query IPMI data, standby node is down."
 msgstr ""
 
 #: jails/forms.py:610
+#, fuzzy
 msgid "Jail dataset created on a share"
-msgstr ""
+msgstr "Set di dati della jail creato in una condivisione"
 
 #: jails/views.py:584
 #, fuzzy
@@ -13762,51 +13776,69 @@ msgid "This option enable mountd logging into syslog."
 msgstr ""
 
 #: services/models.py:462
+#, fuzzy
 msgid "Log rpc.statd(8) and rpc.lockd(8)"
-msgstr ""
+msgstr "Log rpc.statd(8) e rpc.lockd(8)"
 
 #: services/models.py:464
+#, fuzzy
 msgid "This option enable statd and lockd logging into syslog."
-msgstr ""
+msgstr "Questa opzione permette a statd e lockd di accedere a syslog."
 
 #: storage/forms.py:1437
 #: storage/forms.py:1509
+#, fuzzy
 msgid "Allow the zvol to consume more than 80% of available space"
-msgstr ""
+msgstr "Lasciare che il zvol consumi più del 80% di spazio disponibile"
 
 #: system/models.py:149
+#, fuzzy
 msgid ""
 "Specifies the server and port syslog messages will be sent to.  The accepted "
 "format is hostname:port or ip:port, if :port is not specified it will "
 "default to port 514 (this field currently only takes IPv4 addresses)"
 msgstr ""
+"Specifica il server e la porta per i messaggi syslog che devono essere "
+"inviati. Il formato accettato è hostname:port oppure ip:port, se :port  non "
+"è specificato verrà impostato su porta 514 (questo campo attualmente "
+"richiede solo indirizzi IPv4)"
 
 #: system/alertmods/nfs_bindaddr.py:15
 #, fuzzy
 msgid "NFS services could not bind specific IPs, using wildcard"
-msgstr "L'indirizzo WebGUI non può essere collegato a %s; utilizzo le wildcard"
+msgstr ""
+"Il serivizio NFS non può essere collegato a un indirizzo ip specifico; "
+"utilizza le wildcard"
 
 #: jails/forms.py:247
 #: jails/forms.py:872
+#, fuzzy
 msgid "You have entered an existing MAC Address.Please enter a new one."
-msgstr ""
+msgstr "Hai inserito un indirizzo MAC esistente. Prego inserirne uno nuovo"
 
 #: jails/forms.py:238
+#, fuzzy
 msgid ""
 "Valid characters for jail names are letters, numbers, dashes, or underscores."
 msgstr ""
+"I caratteri per i nome delle jail sono lettere, numeri punti oppure trattini"
 
 #: services/forms.py:95
+#, fuzzy
 msgid "Cannot disable SMB while ActiveDirectory is in use."
-msgstr ""
+msgstr "Non è possibile disattivare SMB se ActiveDirectory è in uso."
 
 #: services/models.py:1295
 #, fuzzy
 msgid "Shutdown Command"
-msgstr "Metodo di Shutdown"
+msgstr "Comando di spegimento"
 
 #: services/models.py:1298
+#, fuzzy
 msgid ""
 "The command used to shutdown the server. You can use a custom command here "
 "to perform other tasks before shutdown.default: /sbin/shutdown -p now"
 msgstr ""
+"Il comando è usato per spegnere il server. Puoi usare il comando con "
+"parametri per effettuare altre operazioni prima dello spegnimento. "
+"predefinito: /sbin/shutdown -p now"

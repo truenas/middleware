@@ -8,15 +8,16 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:05-0700\n"
-"PO-Revision-Date: 2016-12-09 17:05+0000\n"
-"Last-Translator: BouRock <hitowerdigit@hotmail.com>\n"
-"Language-Team: LANGUAGE <LL@li.org>\n"
+"PO-Revision-Date: 2017-01-20 12:07+0000\n"
+"Last-Translator: Burak <hitowerdigit@hotmail.com>\n"
+"Language-Team: Turkish "
+"<http://weblate.trueos.org/projects/freenas/django/tr/>\n"
 "Language: tr\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=2; plural=(n > 1)\n"
-"X-Generator: Pootle 2.5.0\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"X-Generator: Weblate 2.10-dev\n"
 "X-POOTLE-MTIME: 1481303146.0\n"
 
 #: choices.py:40
@@ -503,7 +504,7 @@ msgstr "Adınız ve soyadınız geçersiz karakterler içeriyor (%s)."
 #: system/models.py:243 templates/account/bsdusers.html:5
 #: templates/account/bsdusers.html.py:84
 msgid "Username"
-msgstr "Kullanıcı Adı"
+msgstr "Kullanıcı adı"
 
 #: account/forms.py:223
 msgid "Required. 16 characters or fewer. Letters, digits and ./-/_ only."
@@ -1451,8 +1452,7 @@ msgstr "Alfasayısal karakterler, \".\", \"-\" ve \"_\" kullanın."
 #, python-format
 msgid "The email %(email)s is not valid"
 msgid_plural "The following emails are not valid: %(email)s"
-msgstr[0] "Bu e-posta geçerli değildir: %(email)"
-msgstr[1] "Aşağıdaki e-postalar geçerli değildir: %(email)"
+msgstr[0] "Bu e-posta(lar) geçerli değil: %(email)s"
 
 #: services/forms.py:437
 msgid "The UPS service failed to reload."
@@ -2225,7 +2225,7 @@ msgstr "Mantıksal birim için seri numarası"
 #: templates/services/iscsi_extents.html:6
 #: templates/services/iscsi_targets.html:7 templates/system/smarttest.html:5
 msgid "Type"
-msgstr "Tür"
+msgstr "Türü"
 
 #: services/models.py:654
 msgid "Logical Unit Type mapped to LUN."
@@ -5734,6 +5734,9 @@ msgid_plural ""
 "        This will delete all files within the dataset and child datasets.\n"
 "        "
 msgstr[0] ""
+"\n"
+"        Bu, veri kümesi içindeki tüm dosyaları silecek.\n"
+"        "
 
 #: templates/storage/dataset_edit.html:2
 msgid "Edit Dataset"
@@ -8792,7 +8795,7 @@ msgstr "Ek şunu ekle:"
 
 #: templates/freeadmin/generic_model_datagrid.html:10
 msgid "Add"
-msgstr "Eklenecek:"
+msgstr "Ekle"
 
 #: templates/jails/index.html:32
 msgid "Templates"
@@ -8923,7 +8926,7 @@ msgstr "Kafes kökü yapılandırılmadı!"
 
 #: jails/models.py:537
 msgid "Filesystem"
-msgstr "Dosya sistem türü"
+msgstr "Dosya sistem"
 
 #: jails/utils.py:695
 msgid "You need to create a volume to proceed!"
@@ -8944,7 +8947,7 @@ msgstr "Yedekle"
 
 #: middleware/notifier.py:3822
 msgid "Init"
-msgstr "Init"
+msgstr "İlk"
 
 #: middleware/notifier.py:3824
 msgid "No carrier"
@@ -9006,7 +9009,7 @@ msgstr "Etki Alanı Hesabı Parolasını Onaylayın"
 #: services/forms.py:758
 #: services/models.py:1612
 msgid "Kerberos keytab"
-msgstr "Kerberos sunucusu"
+msgstr "Kerberos keytab"
 
 #: services/forms.py:1081
 msgid "LUN ID already exists."
@@ -9014,7 +9017,7 @@ msgstr "LUN ID zaten var."
 
 #: services/models.py:109
 msgid "Use syslog"
-msgstr ""
+msgstr "Syslog kullan"
 
 #: services/models.py:233
 msgid "Server minimum protocol"
@@ -9065,7 +9068,7 @@ msgstr "UDP NFS istemcilere hizmet et"
 
 #: services/models.py:418
 msgid "Enable multithreaded mode"
-msgstr ""
+msgstr "Çok iş parçacıklı kipi etkinleştir"
 
 #: services/models.py:874
 msgid "LUN ID"
@@ -9080,6 +9083,8 @@ msgid ""
 "The client IP is detected by calling 'url' from this 'ip_server_name:port'. "
 "Defaults to checkip.dyndns.org:80 /."
 msgstr ""
+"İstemci IP'si bu 'ip_sunucu_adı:b_noktası' adresinden çağrılan 'url' "
+"tarafından algılanır. Varsayılanı checkip.dyndns.org:80 /."
 
 #: services/models.py:1595
 msgid "Domain Account Name"
@@ -9099,7 +9104,7 @@ msgstr "Etki Alanı Hesabı parolası."
 
 #: services/models.py:1609
 msgid "Use keytab"
-msgstr ""
+msgstr "Keytab kullan"
 
 #: services/models.py:1613
 msgid "Kerberos keytab file"
@@ -9256,6 +9261,8 @@ msgid ""
 "You are trying to add a virtual device consisting of %(addnum)s device(s) in "
 "a pool that has a virtual device consisted of %(vdevnum)s device(s)"
 msgstr ""
+"%(vdevnum)s cihaz(lar)ından oluşan bir sanal cihaza sahip bir havuzda "
+"%(addnum)s cihaz(lar)ından oluşan bir sanal cihaz eklemeye çalışıyorsunuz"
 
 #: storage/forms.py:597
 #: templates/storage/zfswizard.html:41
@@ -9419,7 +9426,7 @@ msgstr "Sistem Günlüğü"
 
 #: system/models.py:1142
 msgid "RRD"
-msgstr ""
+msgstr "RRD"
 
 #: system/models.py:1146
 #: templates/system/settings.html:11
@@ -9460,7 +9467,6 @@ msgstr ""
 "anda %%%(capacity)d."
 
 #: templates/freeadmin/generic_model_delete.html:19
-#, fuzzy
 msgid ""
 "There is %(related_num)s related entry that will also be deleted as it "
 "depend upon this item"
@@ -9468,8 +9474,7 @@ msgid_plural ""
 "There are %(related_num)s related entries that will also be deleted as they "
 "depend upon this item"
 msgstr[0] ""
-"%(related_num)s ilgili kayıtlar bulunmaktadır. Bunu silerseniz ilgili "
-"bağımlı kayıtlarda silinecektir."
+"Bu öğeye bağlı aynı zamanda silinecek olan %(related_num)s ilgili giriş var"
 
 #: templates/reporting/index.html:3
 msgid "CPU"
@@ -9516,7 +9521,7 @@ msgstr "Bu işlem geri alınamaz!"
 
 #: templates/storage/volumestatus_datagrid.html:6
 msgid "Resilver"
-msgstr ""
+msgstr "Onar"
 
 #: templates/storage/volumestatus_datagrid.html:17
 #: templates/storage/volumestatus_datagrid.html:33
@@ -9536,7 +9541,7 @@ msgid ""
 "Some storage pools are doing resilver/scrub, are you really sure you want to "
 "proceed with <strong>REBOOT</strong>?"
 msgstr ""
-"Bazı depolama havuzları resilver/temizleme işlemi yapıyor, <strong>YENİDEN "
+"Bazı depolama havuzları onarma/temizleme işlemi yapıyor, <strong>YENİDEN "
 "BAŞLATMA</strong> işlemi ile devam etmek istediğinize gerçekten emin misiniz?"
 
 #: templates/system/rsync_run.html:5
@@ -9548,7 +9553,7 @@ msgid ""
 "Some storage pools are doing resilver/scrub, are you really sure you want to "
 "proceed with <strong>SHUTDOWN</strong>?"
 msgstr ""
-"Bazı depolama havuzları resilver/temizleme işlemi yapıyor, "
+"Bazı depolama havuzları onarma/temizleme işlemi yapıyor, "
 "<strong>KAPATMA</strong> işlemi ile devam etmek istediğinize gerçekten emin "
 "misiniz?"
 
@@ -9563,7 +9568,7 @@ msgstr ""
 
 #: network/admin.py:63
 msgid "Network connectivity will be interrupted"
-msgstr ""
+msgstr "Ağ bağlanabilirliği yarıda kesilecektir"
 
 #: services/models.py:117
 msgid "Domain logons"
@@ -9571,11 +9576,13 @@ msgstr "Etki alanı oturum açma bilgileri"
 
 #: network/admin.py:66
 msgid "Network connectivity will be interrupted. Do you want to proceed?"
-msgstr "Ağ bağlanabilirliği kesilecektir. Devam etmek istiyor musunuz?"
+msgstr "Ağ bağlanabilirliği yarıda kesilecektir. Devam etmek istiyor musunuz?"
 
 #: services/admin.py:67
 msgid "Enabling experimental target requires a reboot. Do you want to proceed?"
 msgstr ""
+"Deneysel hedefi etkinleştirmek yeniden başlatma gerektirir. Devam etmek "
+"istiyor musunuz?"
 
 #: services/forms.py:1381
 msgid "Extent name must be unique."
@@ -9583,7 +9590,7 @@ msgstr "Kapsam adı benzersiz olmak zorundadır."
 
 #: services/models.py:414
 msgid "Enable experimental target"
-msgstr ""
+msgstr "Deneysel hedefi etkinleştir"
 
 #: account/forms.py:500
 msgid ""
@@ -9669,11 +9676,11 @@ msgstr "SSL Sertifikasını Ayarla"
 #: system/hook.py:22
 #: system/hook.py:24
 msgid "Performance Test"
-msgstr ""
+msgstr "Performans Denemesi"
 
 #: system/views.py:545
 msgid "System dataset is required to perform this action."
-msgstr ""
+msgstr "Sistem veri kümesi bu eylemin yapılmasını gerektirir."
 
 #: templates/system/perftest.html:20
 msgid "You are about to start a performance test."
@@ -9700,6 +9707,8 @@ msgid ""
 "this parameter controls whether or not Sambashould obey PAM's account and "
 "session management directives"
 msgstr ""
+"Bu parametre, Samba'nın PAM'ın hesabına ve oturum yönetimi yönergelerine "
+"uyup uymaması gerektiğini denetler"
 
 #: services/models.py:591
 msgid "NAA...used only by the initiator"
@@ -10145,19 +10154,19 @@ msgstr "Otomatik"
 
 #: system/forms.py:1227
 msgid "VMWare (RAID 10: Good Reliability, Good Performance)"
-msgstr ""
+msgstr "VMWare (RAID 10: İyi Güvenilirlik, İyi Performans)"
 
 #: system/forms.py:1231
 msgid "Backups (RAID Z2: Best Reliability, Less Storage)"
-msgstr ""
+msgstr "Yedeklemeler (RAID Z2: En İyi Güvenilirlik, Az Depolama)"
 
 #: system/forms.py:1235
 msgid "Media (RAID Z1: Less Reliability, More Storage)"
-msgstr ""
+msgstr "Ortam (RAID Z1: Az Güvenilirlik, Daha Fazla Depolama)"
 
 #: system/forms.py:1239
 msgid "Logs (RAID 0: No Reliability, Max Performance / Storage)"
-msgstr ""
+msgstr "Günlükler (RAID 0: Güvenilirlik Yok, En Fazla Performans / Depolama)"
 
 #: system/forms.py:1441
 msgid "No available disks have been found."
@@ -10223,7 +10232,7 @@ msgstr "Bu isimde bir havuz zaten var."
 #: directoryservice/forms.py:341
 #: directoryservice/forms.py:448
 msgid "%s."
-msgstr ""
+msgstr "%s."
 
 #: directoryservice/forms.py:486
 #: directoryservice/models.py:700
@@ -10274,11 +10283,11 @@ msgstr ""
 
 #: directoryservice/models.py:581
 msgid "Principal"
-msgstr ""
+msgstr "Asıl"
 
 #: directoryservice/models.py:583
 msgid "Kerberos principal, eg: primary/instance@REALM"
-msgstr ""
+msgstr "Kerberos aslı, örneğin: birincil/benzeri@REALM"
 
 #: directoryservice/models.py:586
 msgid "Keytab"
@@ -10389,19 +10398,19 @@ msgstr "Sertifika İmzalama İsteği oluştur"
 
 #: choices.py:823
 msgid "512"
-msgstr ""
+msgstr "512"
 
 #: choices.py:824
 msgid "1024"
-msgstr ""
+msgstr "1024"
 
 #: choices.py:825
 msgid "2048"
-msgstr ""
+msgstr "2048"
 
 #: choices.py:826
 msgid "4096"
-msgstr ""
+msgstr "4096"
 
 #: choices.py:830
 msgid "SHA1"
@@ -10514,6 +10523,9 @@ msgid ""
 "This is the port at which WebDAV will run on.<br />Do not use a port that is "
 "already in use by another service (e.g. 22 for SSH)."
 msgstr ""
+"Bu, WebDAV'ın üzerinde çalışacağı bağlantı noktasıdır.<br />Başka bir hizmet "
+"tarafından zaten kullanılan bir bağlantı noktası kullanmayın (örn. SSH için "
+"22)."
 
 #: services/models.py:1736
 msgid "HTTPS Port"
@@ -10524,6 +10536,9 @@ msgid ""
 "This is the port at which Secure WebDAV will run on.<br />Do not use a port "
 "that is already in use by another service (e.g. 22 for SSH)."
 msgstr ""
+"Bu, Güvenli WebDAV'ın üzerinde çalışacağı bağlantı noktasıdır.<br />Başka "
+"bir hizmet tarafından zaten kullanılan bir bağlantı noktası kullanmayın ("
+"örn. SSH için 22)."
 
 # "password"un  karşılığı, şifre yani bir şeyi şifrelemek için kullanılan nesnesin sıfatı değildir. Orada sorulan, "geçiş kodu"  yani paroladır. Ordudaki parola işaret gibi. SÜrekli yanlış kullanılıyor bu yanlışı devam ettirmemek gerek. Hem Türkçe karşılığı ve hemde işlevsel ve mantıksal anlamı poroladır, şifre değil.
 #: services/models.py:1745
@@ -10544,6 +10559,10 @@ msgid ""
 "over the network as plaintext (Avoid if HTTPS is disabled)<br />Digest Auth: "
 "Hash of the password is sent over the network (more secure)"
 msgstr ""
+"WebDAV için HTTP Kimlik Doğrulaması türü<br />Temel Kimlik Doğrulaması: "
+"Parola ağ üzerinden düz metin olarak gönderilir (Eğer HTTPS "
+"etkisizleştirilirse kaçının)<br />Özet Kimlik Doğrulaması: Parolanın "
+"adreslemesi ağ üzerinden gönderilir (daha güvenli)"
 
 #: services/models.py:1761
 #: services/models.py:1762
@@ -10561,6 +10580,8 @@ msgid ""
 "This will be used to access your WebDAV share.<br />For e.g. http(s)://ip-of-"
 "freenas-machine:webdav_port/this_path_name"
 msgstr ""
+"Bu, WebDAV paylaşımınıza erişmek için kullanılacaktır.<br />Örneğin http(s"
+")://freenas-makinesi-ipsi:webdav_b_noktası/bu_yol_adı"
 
 #: sharing/models.py:357
 msgid "Change User & Group Ownership"
@@ -10677,7 +10698,7 @@ msgstr "Sonraki Sertifika için seri no"
 #: system/forms.py:2282
 #: system/forms.py:2398
 msgid "Key Length"
-msgstr ""
+msgstr "Anahtar Uzunluğu"
 
 #: system/forms.py:2003
 #: system/forms.py:2095
@@ -10846,7 +10867,7 @@ msgstr "CSR başarılı olarak düzenlendi."
 
 #: templates/freeadmin/generic_model_delete.html:31
 msgid "Are you sure you want to delete %(verbose_name)s %(object)s?"
-msgstr "%(verbose_name)s %(object)s silmek istediğinize emin misiniz?"
+msgstr "%(verbose_name)s %(object)s öğesini silmek istediğinize emin misiniz?"
 
 #: templates/services/core.html:170
 msgid "WebDAV Settings"
@@ -10862,7 +10883,7 @@ msgstr "Anlık Görüntüler"
 
 #: templates/system/upgrade.html:22
 msgid "You're about to upgrade. The following packages will be changed:"
-msgstr ""
+msgstr "Yükseltmek üzeresiniz. Aşağıdaki paketler değiştirilecektir:"
 
 #: templates/system/upgrade.html:24
 msgid "Are you sure you want to continue?"
@@ -10875,7 +10896,7 @@ msgstr "Mevcut güncellemeler yok"
 #: templates/system/upgrade_edit.html:7
 #: templates/system/upgrade_edit.html:9
 msgid "Check for Updates"
-msgstr ""
+msgstr "Güncellemeleri Kontrol Et"
 
 #: templates/system/certificate_datagrid.html:4
 msgid "Import Certificate"
@@ -10901,7 +10922,7 @@ msgstr "Sertifika İmzalama İsteği Oluştur"
 
 #: templates/system/bootenv_delete.html:4
 msgid "Are you sure you want to delete %(name)s?"
-msgstr "%(name)s silmek istediğinize emin misiniz?"
+msgstr "%(name)s öğesini silmek istediğinize emin misiniz?"
 
 #: templates/system/bootenv_datagrid.html:9
 msgid "Create Boot"
@@ -10935,6 +10956,8 @@ msgid ""
 "IP address(es) to bind to. If none specified, allavailable interfaces that "
 "are up will be listened on."
 msgstr ""
+"Bağlanması için IP adres(leri)i. Eğer hiçbiri belirtilmediyse, tüm "
+"kullanılabilir açık olan arayüzler dinlenecektir."
 
 #: storage/nav.py:56
 #: templates/storage/volume_datagrid.html:17
@@ -10990,17 +11013,19 @@ msgstr ""
 
 #: storage/forms.py:1964
 msgid "Only one replication allowed per dataset."
-msgstr ""
+msgstr "Veri kümesi başına sadece bir çoğaltmaya izin verildi."
 
 #: storage/forms.py:1973
 msgid ""
 "Only one replication allowed per dataset, including parent dataset set up "
 "recursively."
 msgstr ""
+"Veri kümesi başına sadece bir çoğaltmaya izin verildi, yinelemeli ana veri "
+"kümesini ayarlama dahil."
 
 #: system/forms.py:1889
 msgid "Trains"
-msgstr ""
+msgstr "Çalışmalar"
 
 #: storage/admin.py:375
 msgid "Edit zvol"
@@ -11119,6 +11144,8 @@ msgid ""
 "Check this if the remotepath specified does<br>not exist, and you want to "
 "create it."
 msgstr ""
+"Eğer belirtilen uzak yol mevcut değilse vebr>oluşturmak istiyorsanız bunu "
+"işaretleyin."
 
 #: tasks/forms.py:263
 msgid ""
@@ -11129,6 +11156,12 @@ msgid ""
 "to<br>255. Or it could also be that your SSH credentials (remote host,etc) "
 "are wrong."
 msgstr ""
+"Belirttiğiniz Uzak Yol mevcut değil ya da bir dizin değil.<br>Ya uzak "
+"makinede bir tane kendiniz oluşturun ya da <br>'rsync_create' alanını "
+"işaretleyin.<br>**Not**: Eğer uzak yol girildiyse, 255 karakteri aştıysa ve "
+"kesildiyse, bu<br> yine de olabilirdi, lütfen bunu 255 karaktere "
+"sınırlandırın.<br> Veya bu aynı zamanda yanlış olan SSH kimlik bilgileriniz ("
+"uzak anamakine, vb.) de olabilirdi."
 
 #: directoryservice/models.py:857
 msgid "SASL wrapping"
@@ -11169,7 +11202,7 @@ msgstr "Şu Anki Çalışma"
 
 #: system/forms.py:1930
 msgid "Train"
-msgstr ""
+msgstr "Çalışma"
 
 #: system/forms.py:1993
 #: system/forms.py:2378
@@ -11223,11 +11256,11 @@ msgstr "Aşağıdaki paketler değiştirilecektir:"
 
 #: templates/system/update_select.html:13
 msgid "Choose which train you would like to check for updates"
-msgstr ""
+msgstr "Hangi çalışmanın güncellemelerini kontrol etmek istiyorsanız seçin"
 
 #: templates/system/update_select.html:20
 msgid "Check For Update"
-msgstr ""
+msgstr "Güncellemeyi Kontrol Et"
 
 #: common/system.py:301
 msgid "Unmount Failed (%(retcode)s) -> %(output)s"
@@ -11235,7 +11268,7 @@ msgstr "Sökme Başarısız Oldu (%(retcode)s) -> %(output)s"
 
 #: jails/forms.py:218
 msgid "Jail name cannot have '.'"
-msgstr "Kafes adı '.' karakterine sahip olamaz"
+msgstr "Kafes adında '.' olamaz"
 
 #: jails/forms.py:1070
 msgid "The path could not be umounted %(source)s: %(error)s"
@@ -11259,11 +11292,11 @@ msgstr "iSNS Sunucuları"
 
 #: services/models.py:444
 msgid "Pool Available Size Threshold (%)"
-msgstr ""
+msgstr "Havuz Kullanılabilir Boyut Eşiği (%)"
 
 #: services/models.py:488
 msgid " Available Size Threshold (%)"
-msgstr ""
+msgstr " Kullanılabilir Boyut Eşiği (%)"
 
 #: services/models.py:1736
 msgid ""
@@ -11289,6 +11322,10 @@ msgid ""
 "the network as plaintext (Avoid if HTTPS is disabled)<br>Digest Auth: Hash "
 "of the password is sent over the network (more secure)"
 msgstr ""
+"WebDAV için HTTP Kimlik Doğrulaması türü<br>Temel Kimlik Doğrulaması: Parola "
+"ağ üzerinden düz metin olarak gönderilir (Eğer HTTPS etkisizleştirilirse "
+"kaçının)<br>Özet Kimlik Doğrulaması: Parolanın adreslemesi ağ üzerinden "
+"gönderilir (daha güvenli)"
 
 #: services/models.py:1767
 msgid "Webdav SSL Certificate"
@@ -11342,7 +11379,7 @@ msgstr ""
 #: storage/models.py:1098
 #: templates/storage/index.html:38
 msgid "VMWare-Snapshot"
-msgstr "VMWare-Anlık Durum Görüntüsü"
+msgstr "VMWare-Anlık Görüntüsü"
 
 #: system/forms.py:1610
 msgid "Automatic - Pick reasonable defaults for available drives"
@@ -11366,7 +11403,8 @@ msgstr "Ortam (RAID Z1: Orta Güvenilirlik, İyi Performans, Daha Fazla Depolama
 
 #: system/forms.py:1626
 msgid "Logs (RAID 0: No Reliability, Best Performance, Maximum Storage)"
-msgstr "Günlükler (RAID 0: Güvenilirlik Yok, İyi Performans, En Fazla Depolama)"
+msgstr ""
+"Günlükler (RAID 0: Güvenilirlik Yok, En İyi Performans, En Fazla Depolama)"
 
 #: system/forms.py:2752
 msgid "Datastore not found in the server."
@@ -11381,6 +11419,8 @@ msgid ""
 "Username on the above VMWare host with enough privileges to snapshot virtual "
 "machines."
 msgstr ""
+"Sanal makinelerin anlık görüntüsünü almak için yeterli yetkileri olan "
+"yukarıdaki VMware anamakinesi üzerindeki kullanıcı adı."
 
 #: system/models.py:907
 msgid "ZFS Filesystem"
@@ -11392,7 +11432,7 @@ msgstr "Veri Deposu"
 
 #: system/models.py:914
 msgid "The datastore on the VMWare side that the filesystem corresponds to."
-msgstr ""
+msgstr "Dosya sisteminin karşılık geldiği VMware tarafındaki veri deposu."
 
 #: system/models.py:920
 #: templates/system/index.html:33
@@ -11593,6 +11633,8 @@ msgid ""
 "Are you sure you want to continue? The system will be rebooted after updates "
 "are applied."
 msgstr ""
+"Devam etmek istediğinize emin misiniz? Güncellemeler uygulandıktan sonra "
+"sistem yeniden başlatılacaktır."
 
 #: templates/system/update_check.html:32
 msgid "The system will reboot"
@@ -11915,11 +11957,11 @@ msgstr "iSCSI Grupları"
 
 #: services/models.py:960
 msgid "Fiber Channel Target"
-msgstr ""
+msgstr "Fiber Kanal Hedefi"
 
 #: services/models.py:961
 msgid "Fiber Channel Targets"
-msgstr ""
+msgstr "Fiber Kanal Hedefleri"
 
 #: services/models.py:978
 msgid ""
@@ -12086,6 +12128,8 @@ msgid ""
 "Do not snapshot the system dataset. This is useful when replicating the root "
 "of a pool to the root of a pool of another FreeNAS system."
 msgstr ""
+"Sistem veri kümesinin anlık görüntüsünü almayın. Bu, bir havuzun kökünü "
+"başka bir FreeNAS sisteminin havuzunun köküne çoğaltırken faydalıdır."
 
 #: storage/models.py:1125
 msgid ""
@@ -12294,11 +12338,11 @@ msgstr "%s lisansı çözülemiyor"
 
 #: system/alertmods/license_expired.py:31
 msgid "Your %s license has expired"
-msgstr ""
+msgstr "%s lisansınızın süresi doldu"
 
 #: system/alertmods/license_expired.py:36
 msgid "Your %(sw_name)s license is going to expire in %(date)s"
-msgstr ""
+msgstr "%(sw_name)s lisansınızın süresi %(date)s içinde dolacak"
 
 #: system/alertmods/upgrade_failed.py:19
 msgid "Update failed. Check /data/update.failed for further details."
@@ -12356,7 +12400,7 @@ msgstr "ZFS"
 
 #: templates/services/iscsi.html:45
 msgid "Fiber Channel Ports"
-msgstr ""
+msgstr "Fiber Kanal Bağlantı Noktaları"
 
 #: templates/sharing/index.html:27
 msgid "Block"
@@ -12524,6 +12568,10 @@ msgid ""
 "Changelog:\n"
 "%(changelog)s\n"
 msgstr ""
+"%(train)s çalışması için yeni bir güncelleme mevcut.\n"
+"\n"
+"Değişiklikler:\n"
+"%(changelog)s\n"
 
 #: account/models.py:151
 msgid "This disables all forms of password login, including for sharing."
@@ -12632,6 +12680,8 @@ msgid ""
 "Firmware version %(fwversion)s does not match driver version %(drversion)s "
 "for /dev/mpr%(mpr)s"
 msgstr ""
+"/dev/mpr%(mpr)s için donanım yazılımı sürümü %(fwversion)s sürücü sürümü "
+"%(drversion)s ile eşleşmiyor"
 
 #: network/forms.py:320
 #: network/forms.py:324
@@ -12685,7 +12735,7 @@ msgstr " TrueNAS Yönetim IP Adresi"
 
 #: vcp/models.py:49
 msgid " vCenter Hostname/IP Address"
-msgstr " vCenter Anamakine Adı/IP Adresi"
+msgstr " vCenter Anamakine adı/IP Adresi"
 
 #: vcp/models.py:55
 msgid " vCenter Port"
@@ -12693,7 +12743,7 @@ msgstr " vCenter Bağlantı Noktası"
 
 #: vcp/models.py:60
 msgid " vCenter User name"
-msgstr " vCenter Kullanıcı Adı"
+msgstr " vCenter Kullanıcı adı"
 
 #: vcp/models.py:67
 msgid " vCenter Password"
@@ -12701,12 +12751,12 @@ msgstr " vCenter Parolası"
 
 #: vcp/models.py:74
 msgid "version"
-msgstr "sürümü"
+msgstr "sürüm"
 
 #: vcp/models.py:78
 #: vcp/models.py:79
 msgid "VCenter Configuration"
-msgstr "vCenter Yapılandırması"
+msgstr "VCenter Yapılandırması"
 
 #: vcp/nav.py:44
 msgid "vCenter Plugin Configuration"
@@ -12714,15 +12764,15 @@ msgstr "vCenter Eklenti Yapılandırması"
 
 #: vcp/views.py:53
 msgid "vCenter plugin installed successfully."
-msgstr ""
+msgstr "vCenter eklentisi başarılı olarak yüklendi."
 
 #: vcp/views.py:75
 msgid "vCenter plugin upgraded successfully."
-msgstr ""
+msgstr "vCenter eklentisi başarılı olarak yükseltildi."
 
 #: vcp/views.py:84
 msgid "vCenter plugin uninstalled successfully."
-msgstr ""
+msgstr "vCenter eklentisi başarılı olarak kaldırıldı."
 
 #: network/forms.py:280
 msgid "One interface must be marked critical for failover."
@@ -12771,6 +12821,8 @@ msgid ""
 "Delete snapshots that are no longer available locally after successful "
 "replication of new snapshots"
 msgstr ""
+"Yeni anlık görüntülerin başarılı çoğaltılmasından sonra artık yerel olarak "
+"mevcut olmayan anlık görüntüleri siler"
 
 #: storage/models.py:910
 msgid "Delete stale snapshots on remote system"
@@ -12782,7 +12834,7 @@ msgstr "Yükseltme gerekmez"
 
 #: vcp/views.py:126
 msgid "vCenter plugin is repaired successfully"
-msgstr ""
+msgstr "vCenter eklentisi başarılı olarak onarıldı"
 
 #: vcp/models.py:61
 msgid "An integer from 1 - 65535, generally will be 443"
@@ -12810,7 +12862,7 @@ msgstr ""
 
 #: templates/vcp/index.html:28
 msgid "Enable Vcenter Plugin over https:"
-msgstr ""
+msgstr "Https üzerinde vCenter Eklentisini etkinleştir:"
 
 #: templates/vcp/index.html:41
 msgid "Edit vCenter Auxiliary Settings"
@@ -12818,7 +12870,7 @@ msgstr "vCenter Yardımcı Ayarlarını Düzenle"
 
 #: vcp/models.py:93
 msgid "Enable Vcenter Plugin over https"
-msgstr ""
+msgstr "Https üzerinde vCenter Eklentisini etkinleştir"
 
 #: vcp/models.py:97
 #: vcp/models.py:98
@@ -12910,7 +12962,7 @@ msgstr ""
 
 #: system/forms.py:2219
 msgid "Something is seriously jacked up."
-msgstr ""
+msgstr "Bir şey ciddiye alındı."
 
 #: system/forms.py:2228
 msgid "Not a valid certificate."
@@ -12943,6 +12995,8 @@ msgid ""
 "This option ignores the group membership sent on the wire by the NFS client "
 "and looks up the group membership on the server."
 msgstr ""
+"Bu seçenek NFS istemcisi tarafından kablo üzerinde gönderilen grup üyeliğini "
+"yoksayar ve sunucuda grup üyeliğini arar."
 
 #: services/models.py:1576
 msgid "Bind Interfaces"
@@ -13009,6 +13063,11 @@ msgid ""
 "that is preventing the machine from binding to the domain, you will not be "
 "able to set permissions using the GUI with this turned on."
 msgstr ""
+"Eğer Active Directory kullanıcılarını ve gruplarını önbelleklemeyi "
+"etkisizleştirmek istiyorsanız bunu ayarlayın. UYARI: Sadece, eğer etki "
+"alanından makineye bağlanmayı önleyen büyük bir sayıda kullanıcılara ve "
+"gruplara sahipseniz bu seçeneği kullanın, bunun açılması ile GKA'nü "
+"kullanarak izinleri ayarlayamayacaksnız."
 
 #: network/forms.py:385
 msgid "You are not allowed to delete interfaces while failover is enabled."
@@ -13041,9 +13100,9 @@ msgid ""
 "binding to the domain with a large number of users and groups."
 msgstr ""
 "Eğer Active Directory kullanıcılarını ve gruplarını önbelleklemeyi "
-"etkisizleştirmek istiyorsanız bunu ayarlayın. Eğer büyük bir sayıdaki "
-"kullanıcıları ve grupları etki alanına bağlamada zorluk çekiyor ve yavaşlık "
-"yaşıyorsanız bu seçeneği kullanın."
+"etkisizleştirmek istiyorsanız bunu ayarlayın. Eğer büyük bir sayıda "
+"kullanıcıları ve grupları olan etki alanına bağlamada zorluk çekiyor ve "
+"yavaşlık yaşıyorsanız bu seçeneği kullanın."
 
 #: system/forms.py:2081
 msgid "Empty Certificate!"
