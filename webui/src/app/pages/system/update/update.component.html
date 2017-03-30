@@ -1,0 +1,42 @@
+<ba-card class="col-xlg-12 col-xl-12 col-lg-12 col-sm-12 col-xs-12" [ngBusy]="busy">
+  <div class="form-group row">
+    <input type="checkbox" id="autocheck" />
+    <label for="autocheck">Automatically check for new updates</label>
+  </div>
+  <div class="row">
+    <div class="md-12">
+      <button class="btn btn-primary" (click)="check()">Check Now</button>
+      <button class="btn btn-primary" (click)="update()" [disabled]="status != 'AVAILABLE' && !updating">Update and Reboot</button>
+    </div>
+  </div>
+  <div class="row">
+    <div class="md-12">
+      <table *ngIf="status == 'AVAILABLE' && !updating" class="table table-striped table-sm">
+        <thead>
+          <tr>
+            <th>Name</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let p of packages">
+            <td>{{ p.name }}</td>
+          </tr>
+          <tr *ngIf="packages.length == 0">
+            <td>No update has been found</td>
+          </tr>
+        </tbody>
+      </table>
+      <div *ngIf="updating">
+        <span *ngIf="!progress.description">
+          Updating...
+        </span>
+        <span *ngIf="job && job.progress && job.progress.description">
+          {{ job.progress.description }}
+        </span>
+      </div>
+      <div *ngIf="updated">
+        Update is complete, reboot the machine yourself because I'm tired!
+      </div>
+    </div>
+  </div>
+</ba-card>

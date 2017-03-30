@@ -8,15 +8,16 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:07-0700\n"
-"PO-Revision-Date: 2016-02-27 17:30+0000\n"
-"Last-Translator: hartel <hartel@gmail.com>\n"
-"Language-Team: LANGUAGE <LL@li.org>\n"
+"PO-Revision-Date: 2017-01-08 19:36+0000\n"
+"Last-Translator: Jonay Santana <jonay.santana@gmail.com>\n"
+"Language-Team: Spanish "
+"<http://weblate.trueos.org/projects/freenas/django/es/>\n"
 "Language: es\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Pootle 2.5.0\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
+"X-Generator: Weblate 2.10-dev\n"
 "X-POOTLE-MTIME: 1456594208.0\n"
 
 #: choices.py:40
@@ -527,7 +528,7 @@ msgstr "Repita la misma contraseña de antes, para verificarla."
 #: freeadmin/navtree.py:360 templates/account/bsdusers.html:8
 #: templates/account/bsdusers.html.py:87
 msgid "Shell"
-msgstr "Terminal"
+msgstr "Intérprete de comandos"
 
 #~ msgid "Disable password logins"
 #~ msgstr "Deshabilitado el inicio de sesión con contraseña"
@@ -3618,7 +3619,7 @@ msgstr "Compartido Unix (NFS)"
 
 #: sharing/nav.py:4 templates/menubar.html:22
 msgid "Sharing"
-msgstr "Compartido"
+msgstr "Compartiendo"
 
 #~ msgid "Enter positive number (optionally suffixed by K, M, G, T), or, 0"
 #~ msgstr ""
@@ -5965,11 +5966,11 @@ msgstr "Tipo de grupo"
 
 #: templates/storage/wizard.html:156
 msgid "Add Volume"
-msgstr "Añadir Volumen"
+msgstr "Añadir volumen"
 
 #: templates/storage/wizard.html:157
 msgid "Existing data will be cleared"
-msgstr "Los datos existentes serán borrados"
+msgstr "Los datos previos se eliminarán"
 
 #: templates/storage/zpool_disk_replace.html:2
 msgid "Replace Disk"
@@ -6053,7 +6054,7 @@ msgstr ""
 #: templates/system/reboot_dialog.html:3
 #: templates/system/shutdown_dialog.html:3
 msgid "Warning!"
-msgstr "Precaución!"
+msgstr "¡Alerta!"
 
 #: templates/system/reboot_dialog.html:4
 msgid ""
@@ -7646,9 +7647,8 @@ msgid "The pool failed to upgraded: %s"
 msgstr "El volumen falló al exportar"
 
 #: support/models.py:49
-#, fuzzy
 msgid "Support"
-msgstr "Soporte EA"
+msgstr "Soporte"
 
 #: system/forms.py:86
 #, fuzzy
@@ -7690,9 +7690,8 @@ msgid "WebGUI HTTP -> HTTPS Redirect"
 msgstr "Redirección de WebGUI HTTP -> HTTPS"
 
 #: system/models.py:115
-#, fuzzy
 msgid "Directory Service"
-msgstr "Permisos de Directorios"
+msgstr "Servicio de directorios"
 
 #: system/models.py:205
 #, fuzzy
@@ -8495,9 +8494,8 @@ msgstr "Enviando"
 #: storage/nav.py:40
 #: templates/storage/volume_datagrid.html:6
 #: templates/storage/volume_datagrid.html:10
-#, fuzzy
 msgid "ZFS Volume Manager"
-msgstr "Editor de Volumenes"
+msgstr "Administrador de volumen ZFS"
 
 #: storage/views.py:783
 #, fuzzy
@@ -8759,9 +8757,8 @@ msgid "Scrub"
 msgstr "Reconstrucción ZFS (ZFS Scrub)"
 
 #: templates/storage/wizard.html:92
-#, fuzzy
 msgid "Extend Volume"
-msgstr "Exportar Volumen"
+msgstr "Extender volumen"
 
 #: templates/storage/zfswizard.html:77
 #, fuzzy
@@ -8913,7 +8910,7 @@ msgstr "Esto no debería suceder, pero la jaula no pudo ser encontrada."
 #: jails/nav.py:47
 #: templates/jails/index.html:17
 msgid "Jails"
-msgstr "jaulas"
+msgstr "Jaulas"
 
 #: jails/models.py:91
 msgid "IPv4 netmask"
@@ -9331,9 +9328,8 @@ msgstr "Necesitas un grupo de discos de datos"
 
 #: storage/forms.py:597
 #: templates/storage/zfswizard.html:41
-#, fuzzy
 msgid "Encryption"
-msgstr "Modelo de Encriptado"
+msgstr "Encriptación"
 
 #: storage/forms.py:605
 #: storage/forms.py:1448
@@ -9565,9 +9561,8 @@ msgid "Alert"
 msgstr "Alerta"
 
 #: templates/freeadmin/generic_model_datagrid.html:10
-#, fuzzy
 msgid "Add"
-msgstr "Añadir %s"
+msgstr "Añadir"
 
 #: templates/freeadmin/generic_model_delete.html:19
 #, fuzzy
@@ -9791,9 +9786,8 @@ msgstr "Informal"
 #: tasks/nav.py:4
 #: templates/menubar.html:13
 #: templates/tasks/index.html:1
-#, fuzzy
 msgid "Tasks"
-msgstr "Tareas RSyncs"
+msgstr "Tareas"
 
 #: templates/services/core.html:32
 #, fuzzy
@@ -10230,9 +10224,8 @@ msgid "Idmap backend for winbind."
 msgstr "backend ldmap para winbind"
 
 #: freeadmin/navtree.py:256
-#, fuzzy
 msgid "Initial Wizard"
-msgstr "Iniciador"
+msgstr "Asistente inicial"
 
 #: middleware/notifier.py:2222
 msgid "Failed to create group %s"
@@ -10324,9 +10317,8 @@ msgid "Are you sure?"
 msgstr "¿Está seguro de que quiere borrar?"
 
 #: templates/system/initialwizard_confirm.html:39
-#, fuzzy
 msgid "Confirm"
-msgstr "Configuración"
+msgstr "Confirmar"
 
 #: templates/system/initialwizard_confirm.html:46
 msgid "Return to Wizard"
@@ -10350,7 +10342,6 @@ msgid "Estimated Total Size"
 msgstr ""
 
 #: freeadmin/navtree.py:256
-#, fuzzy
 msgid "Wizard"
 msgstr "Asistente"
 
@@ -11126,9 +11117,8 @@ msgstr "Crear un Volumen ZFS en %(name)s"
 
 #: templates/system/upgrade_edit.html:13
 #: templates/system/upgrade_edit.html:15
-#, fuzzy
 msgid "Manual Update"
-msgstr "Aplicar actualización"
+msgstr "Actualización manual"
 
 #: services/models.py:268
 msgid ""

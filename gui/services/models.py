@@ -2082,7 +2082,7 @@ class RPCToken(Model):
     @classmethod
     def new(cls):
         key = str(uuid.uuid4())
-        h = hmac.HMAC(key=key, digestmod=hashlib.sha512)
+        h = hmac.HMAC(key=key.encode(), digestmod=hashlib.sha512)
         secret = str(h.hexdigest())
         instance = cls.objects.create(
             key=key,

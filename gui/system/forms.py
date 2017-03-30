@@ -3518,9 +3518,13 @@ class SupportForm(ModelForm):
             '"id_secondary_email", "id_secondary_phone"], true);'
         )
 
-        if self.instance.id and not self.instance.enabled:
+        # If proactive support is not available disable all fields
+        available = self.instance.is_available(support=self.instance)[0]
+        if not available:
+            self.fields['enabled'].label += ' (Silver/Gold support only)'
+        if (self.instance.id and not self.instance.enabled) or not available:
             for name, field in self.fields.items():
-                if name == 'enabled':
+                if available and name == 'enabled':
                     continue
                 field.widget.attrs['disabled'] = 'disabled'
 

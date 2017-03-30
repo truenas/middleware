@@ -1,7 +1,7 @@
 <ba-card>
 <form (ngSubmit)="onSubmit()" [formGroup]="formGroup" [ngBusy]="busy">
-  <div *ngIf="error" [innerHTML]="error" class="form-error">
-  </div>
+  <div *ngIf="success">Successfully updated.</div>
+  <div *ngIf="error" [innerHTML]="error" class="form-error"></div>
 
     <dynamic-form-bootstrap-control #component *ngFor="let controlModel of conf.formModel"
                                     [group]="formGroup"

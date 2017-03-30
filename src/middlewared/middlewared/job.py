@@ -232,9 +232,7 @@ class Job(object):
             self.progress['description'] = description
         if extra:
             self.progress['extra'] = extra
-        self.middleware.send_event('core.get_jobs', 'CHANGED', id=self.id, fields={
-            'progress': self.progress,
-        })
+        self.middleware.send_event('core.get_jobs', 'CHANGED', id=self.id, fields=self.__encode__())
 
     def run(self, queue):
         """
