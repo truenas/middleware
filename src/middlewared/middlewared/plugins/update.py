@@ -217,7 +217,9 @@ class UpdateService(Service):
         return data
 
     @accepts(Str('path'))
-    def get_pending(self, path):
+    def get_pending(self, path=None):
+        if path is None:
+            path = self.middleware.call('notifier.get_update_location')
         data = []
         changes = Update.PendingUpdatesChanges(path)
         if changes:

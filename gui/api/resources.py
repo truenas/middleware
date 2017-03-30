@@ -3333,9 +3333,8 @@ class UpdateResourceMixin(NestedMixin):
             s = notifier().failover_rpc()
             data = s.update_pending()
         else:
-            path = notifier().get_update_location()
             with client as c:
-                data = c.call('update.get_pending', path)
+                data = c.call('update.get_pending')
         return self.create_response(
             request,
             data,
