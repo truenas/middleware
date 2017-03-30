@@ -88,6 +88,7 @@ from freenasUI.directoryservice.models import (
     NT4,
 )
 from freenasUI.freeadmin.views import JsonResp
+from freenasUI.freeadmin.utils import key_order
 from freenasUI.middleware.client import client
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier
@@ -1457,6 +1458,261 @@ class TunableForm(ModelForm):
             notifier().reload("loader")
         else:
             notifier().reload("sysctl")
+
+
+class ConsulAlertsForm(ModelForm):
+
+    # Common fields between all API
+    username = forms.CharField(
+        max_length=255,
+        label=_("Username"),
+        help_text=_("Username"),
+        required=False,
+    )
+    password = forms.CharField(
+        max_length=255,
+        label=_("Password"),
+        help_text=_("Password"),
+        required=False,
+    )
+    cluster_name = forms.CharField(
+        max_length=255,
+        label=_("Cluster name"),
+        help_text=_("The name of the cluster"),
+        required=False,
+    )
+    url = forms.CharField(
+        max_length=255,
+        label=_("URL"),
+        help_text=_("The incoming-webhook url"),
+        required=False,
+    )
+
+    # Influxdb
+    host = forms.CharField(
+        max_length=255,
+        label=_("Host"),
+        help_text=_("Influxdb Host"),
+        required=False,
+    )
+    database = forms.CharField(
+        max_length=255,
+        label=_("Database"),
+        help_text=_("Influxdb database name"),
+        required=False,
+    )
+    series_name = forms.CharField(
+        max_length=255,
+        label=_("Series"),
+        help_text=_("Influxdb series name for the points"),
+        required=False,
+    )
+
+    # Slack
+    channel = forms.CharField(
+        max_length=255,
+        label=_("Channel"),
+        help_text=_("The channel to post the notification"),
+        required=False,
+    )
+    icon_url = forms.CharField(
+        max_length=255,
+        label=_("URL icon"),
+        help_text=_("URL of a custom image for the notification"),
+        required=False,
+    )
+    detailed = forms.BooleanField(
+        label=_("Detailed"),
+        help_text=_("Enable pretty Slack notifications"),
+        initial=False,
+        required=False,
+    )
+
+    # Mattermost
+    team = forms.CharField(
+        max_length=255,
+        label=_("Team"),
+        help_text=_("The mattermost team"),
+        required=False,
+    )
+
+    # PagerDuty
+    service_key = forms.CharField(
+        max_length=255,
+        label=_("Service key"),
+        help_text=_("Service key to access PagerDuty"),
+        required=False,
+    )
+    client_name = forms.CharField(
+        max_length=255,
+        label=_("Client name"),
+        help_text=_("The monitoring client name"),
+        required=False,
+    )
+
+    # HipChat
+    hfrom = forms.CharField(
+        max_length=20,
+        label=_("From"),
+        help_text=_("The name to send notification"),
+        required=False,
+    )
+    base_url = forms.CharField(
+        max_length=255,
+        initial="https://api.hipchat.com/v2/",
+        label=_("URL"),
+        help_text=_("HipChat base url"),
+        required=False,
+    )
+    room_id = forms.CharField(
+        max_length=50,
+        label=_("Room"),
+        help_text=_("The room to post to"),
+        required=False,
+    )
+    auth_token = forms.CharField(
+        max_length=255,
+        label=_("Token"),
+        help_text=_("Authentication token"),
+        required=False,
+    )
+
+    # OpsGenie
+    api_key = forms.CharField(
+        max_length=255,
+        label=_("API Key"),
+        help_text=_("API Key"),
+        required=False,
+    )
+
+    # AWS SNS
+    region = forms.CharField(
+        max_length=255,
+        label=_("Region"),
+        help_text=_("AWS Region"),
+        required=False,
+    )
+    topic_arn = forms.CharField(
+        max_length=255,
+        label=_("ARN"),
+        help_text=_("Topic ARN to publish to"),
+        required=False,
+    )
+
+    # VictorOps
+    routing_key = forms.CharField(
+        max_length=255,
+        label=_("Routing Key"),
+        help_text=_("Routing Key"),
+        required=False,
+    )
+
+
+    class Meta:
+        fields = '__all__'
+        model = models.ConsulAlerts
+        ''' CHECK IT '''
+
+    def __init__(self, *args, **kwargs):
+        super(ConsulAlertsForm, self).__init__(*args, **kwargs)
+        self.fields['consulalert_type'].widget.attrs['onChange'] = (
+            "consulTypeToggle();"
+        )
+        key_order(self, len(self.fields) - 1, 'enabled', instance=True)
+
+        if self.instance.id:
+            if self.instance.consulalert_type == 'InfluxDB':
+                self.fields['host'].initial = self.instance.attributes.get('host')
+                self.fields['username'].initial = self.instance.attributes.get('username')
+                self.fields['password'].initial = self.instance.attributes.get('password')
+                self.fields['database'].initial = self.instance.attributes.get('database')
+                self.fields['series_name'].initial = self.instance.attributes.get('series_name')
+                self.fields['enabled'].initial = self.instance.attributes.get('enabled')
+            elif self.instance.consulalert_type == 'Slack':
+                self.fields['cluster_name'].initial = self.instance.attributes.get('cluster_name')
+                self.fields['url'].initial = self.instance.attributes.get('url')
+                self.fields['channel'].initial = self.instance.attributes.get('channel')
+                self.fields['username'].initial = self.instance.attributes.get('username')
+                self.fields['icon_url'].initial = self.instance.attributes.get('icon_url')
+                self.fields['detailed'].initial = self.instance.attributes.get('detailed')
+                self.fields['enabled'].initial = self.instance.attributes.get('enabled')
+            elif self.instance.consulalert_type == 'Mattermost':
+                self.fields['cluster_name'].initial = self.instance.attributes.get('cluster_name')
+                self.fields['url'].initial = self.instance.attributes.get('url')
+                self.fields['username'].initial = self.instance.attributes.get('username')
+                self.fields['password'].initial = self.instance.attributes.get('password')
+                self.fields['team'].initial = self.instance.attributes.get('team')
+                self.fields['channel'].initial = self.instance.attributes.get('channel')
+                self.fields['enabled'].initial = self.instance.attributes.get('enabled')
+            elif self.instance.consulalert_type == 'PagerDuty':
+                self.fields['service_key'].initial = self.instance.attributes.get('service_key')
+                self.fields['client_name'].initial = self.instance.attributes.get('client_name')
+                self.fields['enabled'].initial = self.instance.attributes.get('enabled')
+            elif self.instance.consulalert_type == 'HipChat':
+                self.fields['hfrom'].initial = self.instance.attributes.get('hfrom')
+                self.fields['cluster_name'].initial = self.instance.attributes.get('cluster_name')
+                self.fields['base_url'].initial = self.instance.attributes.get('base_url')
+                self.fields['room_id'].initial = self.instance.attributes.get('room_id')
+                self.fields['auth_token'].initial = self.instance.attributes.get('auth_token')
+                self.fields['enabled'].initial = self.instance.attributes.get('enabled')
+            elif self.instance.consulalert_type == 'OpsGenie':
+                self.fields['cluster_name'].initial = self.instance.attributes.get('cluster_name')
+                self.fields['api_key'].initial = self.instance.attributes.get('api_key')
+                self.fields['enabled'].initial = self.instance.attributes.get('enabled')
+            elif self.instance.consulalert_type == 'AWS-SNS':
+                self.fields['region'].initial = self.instance.attributes.get('region')
+                self.fields['topic_arn'].initial = self.instance.attributes.get('topic_arn')
+                self.fields['enabled'].initial = self.instance.attributes.get('enabled')
+            elif self.instance.consulalert_type == 'VictorOps':
+                self.fields['api_key'].initial = self.instance.attributes.get('api_key')
+                self.fields['routing_key'].initial = self.instance.attributes.get('routing_key')
+                self.fields['enabled'].initial = self.instance.attributes.get('enabled')
+
+    def save(self, *args, **kwargs):
+        kwargs['commit'] = False
+        objs = super(ConsulAlertsForm, self).save(*args, **kwargs)
+
+        if objs:
+            objs.attributes = {
+                "username": self.cleaned_data.get('username'),
+                "password": self.cleaned_data.get('password'),
+                "host": self.cleaned_data.get('host'),
+                "url": self.cleaned_data.get('url'),
+                "database": self.cleaned_data.get('database'),
+                "series_name": self.cleaned_data.get('series_name'),
+                "cluster_name": self.cleaned_data.get('cluster_name'),
+                "channel": self.cleaned_data.get('channel'),
+                "icon_url": self.cleaned_data.get('icon_url'),
+                "detailed": self.cleaned_data.get('detailed'),
+                "team": self.cleaned_data.get('team'),
+                "service_key": self.cleaned_data.get('service_key'),
+                "client_name": self.cleaned_data.get('client_name'),
+                "hfrom": self.cleaned_data.get('hfrom'),
+                "base_url": self.cleaned_data.get('base_url'),
+                "room_id": self.cleaned_data.get('room_id'),
+                "auth_token": self.cleaned_data.get('auth_token'),
+                "api_key": self.cleaned_data.get('api_key'),
+                "enabled": self.cleaned_data.get('enabled'),
+                "region": self.cleaned_data.get('region'),
+                "topic_arn": self.cleaned_data.get('topic_arn'),
+                "routing_key": self.cleaned_data.get('routing_key')
+            }
+            objs.save()
+
+        cdata = self.cleaned_data
+        with client as c:
+            c.call('consul.do_create', cdata)
+
+        notifier().restart("consul-alerts")
+
+        return objs
+
+    def delete(self, *args, **kwargs):
+        with client as c:
+            c.call('consul.do_delete', self.instance.consulalert_type, self.instance.attributes)
+
+        notifier().restart("consul-alerts")
+        self.instance.delete()
 
 
 class SystemDatasetForm(ModelForm):

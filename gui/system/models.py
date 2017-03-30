@@ -485,6 +485,43 @@ class Tunable(Model):
         icon_add = "AddTunableIcon"
         icon_view = "ViewTunableIcon"
 
+class ConsulAlerts(Model):
+
+    consulalert_type = models.CharField(
+        verbose_name=_('Service Name'),
+        max_length=20,
+        choices=choices.CONSULALERTS_TYPES,
+        default='PagerDuty',
+    )
+    attributes = DictField(
+        editable=False,
+        verbose_name=_("Attributes"),
+    )
+    enabled = models.BooleanField(
+        verbose_name=_("Enabled"),
+        default=False,
+    )
+
+    class Meta:
+        verbose_name = _("Alert")
+        verbose_name_plural = _("Consul Alerts")
+        ordering = ["consulalert_type"]
+
+
+    class FreeAdmin:
+        icon_model = "ConsulAlertsIcon"
+        icon_object = "ConsulAlertsIcon"
+        icon_add = "AddConsulAlertsIcon"
+        icon_view = "ViewConsulAlertsIcon"
+
+        exclude_fields = (
+            'attributes',
+            'id',
+        )
+
+    def __str__(self):
+        return self.consulalert_type
+
 
 class SystemDataset(Model):
     sys_pool = models.CharField(

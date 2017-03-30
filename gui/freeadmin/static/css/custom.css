@@ -976,6 +976,21 @@ table.grid tr {
     width:16px;
     height:16px;
 }
+.AddConsulAlertsIcon {
+    background-image:url('/static/images/ui/tree/add_consulalert.png');
+    width:16px;
+    height:16px;
+}
+.ViewConsulAlertsIcon {
+    background-image:url('/static/images/ui/tree/view_consulalert.png');
+    width:16px;
+    height:16px;
+}
+.ConsulAlertsIcon {
+    background-image:url('/static/images/ui/tree/consulalert.png');
+    width:16px;
+    height:16px;
+}
 .NTPServerIcon {
     background-image:url('/static/images/ui/tree/NTP_Servers_16x16px.png');
     width:16px;

@@ -891,6 +891,17 @@ TUNABLE_TYPES = (
     ('sysctl', _('Sysctl')),
 )
 
+CONSULALERTS_TYPES = (
+    ('InfluxDB', _('InfluxDB')),
+    ('Slack', _('Slack')),
+    ('Mattermost', _('Mattermost')),
+    ('PagerDuty', _('PagerDuty')),
+    ('HipChat', _('HipChat')),
+    ('OpsGenie', _('OpsGenie')),
+    ('AWS-SNS', _('AWS-SNS')),
+    ('VictorOps', _('VictorOps')),
+)
+
 IDMAP_CHOICES = (
     ('ad', _('ad')),
     ('adex', _('adex')),
