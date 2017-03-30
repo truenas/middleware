@@ -20,6 +20,8 @@ export class WebSocketService {
   @LocalStorage() password;
   redirectUrl: string = '';
 
+  private subscriptions: Map<string, Array<any>> = new Map<string, Array<any>>();
+
   constructor(private _router: Router) {
     this.onOpenSubject = new Subject();
     this.onCloseSubject = new Subject();
@@ -86,6 +88,16 @@ export class WebSocketService {
       this.connected = true;
       setTimeout(this.ping.bind(this), 20000);
       this.onconnect();
+    } else if(data.msg == "added") {
+      // pass
+    } else if(data.msg == "changed") {
+      this.subscriptions.forEach((v, k) => {
+        if(k == '*' || k == data.collection) {
+          v.forEach((item) => {
+            item.next(data);
+          });
+        }
+      });
     } else if(data.msg == "pong") {
       // pass
     } else {
@@ -100,6 +112,28 @@ export class WebSocketService {
     } else {
       this.pendingMessages.push(payload);
     }
+  }
+
+  subscribe(name): Observable<any> {
+    let source = Observable.create((observer) => {
+      if(this.subscriptions.has(name)) {
+        this.subscriptions.get(name).push(observer);
+      } else {
+        this.subscriptions.set(name, [observer]);
+      }
+    });
+    return source;
+  }
+
+  unsubscribe(observer) {
+    // FIXME: just does not have a good performance :)
+    this.subscriptions.forEach((v, k) => {
+      v.forEach((item) => {
+        if(item === observer) {
+          v.splice(v.indexOf(item), 1);
+        }
+      });
+    });
   }
 
   call(method, params?: any): Observable<any> {
@@ -126,6 +160,22 @@ export class WebSocketService {
 
   }
 
+  job(method, params?: any): Observable<any> {
+    let source = Observable.create((observer) => {
+      this.call(method, params).subscribe((job_id) => {
+        this.subscribe("core.get_jobs").subscribe((res) => {
+          if(res.id == job_id) {
+            observer.next(res.fields);
+            if(res.fields.state == 'SUCCESS' || res.fields.state == 'FAILED') {
+              observer.complete();
+            }
+          }
+        });
+      });
+    });
+    return source;
+  }
+
   login(username, password): Observable<any> {
     this.username = username;
     this.password = password;
@@ -133,6 +183,13 @@ export class WebSocketService {
       this.call('auth.login', [username, password]).subscribe((result) => {
         if(result === true) {
           this.loggedIn = true;
+
+          // Subscribe to all events by default
+          this.send({
+            "id": UUID.UUID(),
+            "name": "*",
+            "msg": "sub",
+          });
         } else {
           this.loggedIn = false;
         }
