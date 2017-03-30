@@ -60,7 +60,6 @@ export class UpdateComponent implements OnInit {
       },
       () => {},
       () => {
-        this.updating = false;
         if(this.job.state == 'SUCCESS') {
           this.updated = true;
         }
