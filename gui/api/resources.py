@@ -99,9 +99,7 @@ from freenasUI.system.forms import (
     ManualUpdateWizard,
 )
 from freenasUI.system.models import Update as mUpdate
-from freenasUI.system.utils import (
-    BootEnv, get_pending_updates, debug_generate, factory_restore
-)
+from freenasUI.system.utils import BootEnv, debug_generate, factory_restore
 from middlewared.client import ClientException
 from tastypie import fields, http
 from tastypie.http import (
@@ -3336,7 +3334,8 @@ class UpdateResourceMixin(NestedMixin):
             data = s.update_pending()
         else:
             path = notifier().get_update_location()
-            data = get_pending_updates(path)
+            with client as c:
+                data = c.call('update.get_pending', path)
         return self.create_response(
             request,
             data,
