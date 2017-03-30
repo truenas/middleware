@@ -11,6 +11,7 @@ import { routing } from './system.routing';
 
 import { AdvancedComponent } from './advanced/';
 import { GeneralComponent } from './general/';
+import { UpdateComponent } from './update/';
 
 @NgModule({
   imports: [
@@ -27,6 +28,7 @@ import { GeneralComponent } from './general/';
   declarations: [
     AdvancedComponent,
     GeneralComponent,
+    UpdateComponent,
   ],
   providers: [
   ]
