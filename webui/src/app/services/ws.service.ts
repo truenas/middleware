@@ -36,11 +36,11 @@ export class WebSocketService {
 
   onopen(event) {
     this.onOpenSubject.next(true);
-    this.socket.send(JSON.stringify({
+    this.send({
       "msg": "connect",
       "version": "1",
-      "suppoer": ["1"]
-    }));
+      "support": ["1"]
+    });
   }
 
   onconnect() {
