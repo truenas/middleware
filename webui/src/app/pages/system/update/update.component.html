@@ -1,0 +1,30 @@
+<ba-card class="col-xlg-12 col-xl-12 col-lg-12 col-sm-12 col-xs-12">
+  <div class="form-group row">
+    <input type="checkbox" id="autocheck" />
+    <label for="autocheck">Automatically check for new updates</label>
+  </div>
+  <div class="row">
+    <div class="md-12">
+      <button class="btn btn-primary">Check Now</button>
+    </div>
+  </div>
+  <div class="row">
+    <div class="md-12">
+      <table class="table">
+        <thead>
+          <tr>
+            <th>Name</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let p of packages">
+            <td>{{ p.name }}</td>
+          </tr>
+          <tr *ngIf="packages.length == 0">
+            <td>No update has been found</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</ba-card>

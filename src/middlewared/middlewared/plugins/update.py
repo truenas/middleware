@@ -216,6 +216,38 @@ class UpdateService(Service):
         data['version'] = manifest.Version()
         return data
 
+    @accepts(Str('path'))
+    def get_pending(self, path=None):
+        if path is None:
+            path = self.middleware.call('notifier.get_update_location')
+        data = []
+        changes = Update.PendingUpdatesChanges(path)
+        if changes:
+            if changes.get("Reboot", True) is False:
+                for svc in changes.get("Restart", []):
+                    data.append({
+                        'operation': svc,
+                        'name': Update.GetServiceDescription(svc),
+                    })
+            for new, op, old in changes['Packages']:
+                if op == 'upgrade':
+                    name = '%s-%s -> %s-%s' % (
+                        old.Name(),
+                        old.Version(),
+                        new.Name(),
+                        new.Version(),
+                    )
+                elif op == 'install':
+                    name = '%s-%s' % (new.Name(), new.Version())
+                else:
+                    name = '%s-%s' % (old.Name(), old.Version())
+
+                data.append({
+                    'operation': op,
+                    'name': name,
+                })
+        return data
+
     @accepts(Dict(
         'update-check-available',
         Str('train', required=False),
