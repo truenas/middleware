@@ -16,39 +16,6 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.CreateModel(
-            name='Jails',
-            fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('jail_host', models.CharField(max_length=120, verbose_name='Jail Name')),
-                ('jail_type', models.CharField(max_length=120, verbose_name='Type')),
-                ('jail_ipv4', models.CharField(blank=True, max_length=120, null=True, verbose_name='IPv4 address')),
-                ('jail_ipv4_netmask', models.CharField(blank=True, choices=choices.v4NetmaskBitList, default='', max_length=3, verbose_name='IPv4 netmask')),
-                ('jail_alias_ipv4', models.CharField(blank=True, max_length=120, null=True, verbose_name='IPv4 aliases')),
-                ('jail_bridge_ipv4', models.CharField(blank=True, max_length=120, null=True, verbose_name='IPv4 bridge address')),
-                ('jail_bridge_ipv4_netmask', models.CharField(blank=True, choices=choices.v4NetmaskBitList, default='', max_length=3, verbose_name='IPv4 bridge netmask')),
-                ('jail_alias_bridge_ipv4', models.CharField(blank=True, max_length=120, null=True, verbose_name='IPv4 bridge aliases')),
-                ('jail_defaultrouter_ipv4', models.GenericIPAddressField(blank=True, null=True, protocol='IPv4', verbose_name='IPv4 default gateway')),
-                ('jail_ipv6', models.CharField(blank=True, max_length=120, null=True, verbose_name='IPv6 address')),
-                ('jail_ipv6_prefix', models.CharField(blank=True, choices=choices.v6NetmaskBitList, default='', max_length=4, verbose_name='IPv6 prefix length')),
-                ('jail_alias_ipv6', models.CharField(blank=True, max_length=120, null=True, verbose_name='IPv6 aliases')),
-                ('jail_bridge_ipv6', models.CharField(blank=True, max_length=120, null=True, verbose_name='IPv6 bridge address')),
-                ('jail_bridge_ipv6_prefix', models.CharField(blank=True, choices=choices.v6NetmaskBitList, default='', max_length=4, verbose_name='IPv6 bridge prefix length')),
-                ('jail_alias_bridge_ipv6', models.CharField(blank=True, max_length=120, null=True, verbose_name='IPv6 bridge aliases')),
-                ('jail_defaultrouter_ipv6', models.GenericIPAddressField(blank=True, null=True, protocol='IPv6', verbose_name='IPv6 default gateway')),
-                ('jail_mac', models.CharField(blank=True, max_length=120, null=True, verbose_name='MAC')),
-                ('jail_iface', models.CharField(blank=True, choices=choices.NICChoices(exclude_configured=False), default='', max_length=300, verbose_name='NIC')),
-                ('jail_flags', models.TextField(blank=True, help_text="Comma delimited list of sysctl's", verbose_name='Sysctls')),
-                ('jail_autostart', models.BooleanField(default=True, max_length=120, verbose_name='Autostart')),
-                ('jail_status', models.CharField(max_length=120, verbose_name='Status')),
-                ('jail_vnet', models.BooleanField(default=True, max_length=120, verbose_name='VIMAGE')),
-                ('jail_nat', models.BooleanField(default=False, verbose_name='NAT')),
-            ],
-            options={
-                'verbose_name': 'Jail',
-                'verbose_name_plural': 'Jails',
-            },
-        ),
-        migrations.CreateModel(
             name='JailMountPoint',
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
