@@ -315,3 +315,25 @@ class JailService(Service):
             IOCClean().clean_templates()
 
         return True
+
+    @accepts(Str("jail"), List("command"), Dict("options",
+                                               Str("host_user",
+                                                   default="root"),
+                                               Str("jail_user")))
+    def exec(self, jail, command, options):
+        """Issues a command inside a jail."""
+        from iocage.lib.ioc_exec import IOCExec
+
+        tag, uuid, path = self.check_jail_existence(jail)
+        host_user = options.get("host_user", None)
+        jail_user = options.get("jail_user", None)
+
+        # We may be getting ';', '&&' and so forth. Adding the shell for
+        # safety.
+        if len(command) == 1:
+            command = ["/bin/sh", "-c"] + command
+
+        msg, _ = IOCExec(command, uuid, tag, path, host_user,
+                         jail_user).exec_jail()
+
+        return msg.decode("utf-8")
