@@ -2,7 +2,6 @@ from middlewared.schema import accepts, Any, Str
 from middlewared.service import Service
 
 import consul
-import middlewared.logger
 
 
 class ConsulService(Service):
