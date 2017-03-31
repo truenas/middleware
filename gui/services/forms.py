@@ -2148,6 +2148,7 @@ class S3Form(ModelForm):
         fields = '__all__'
         widgets = {
             's3_secret_key': forms.widgets.PasswordInput(render_value=True),
+            's3_bindport': forms.widgets.TextInput(),
         }
         model = models.S3
 
