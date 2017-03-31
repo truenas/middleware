@@ -4,6 +4,7 @@
 
 from django.db import migrations, models
 import freenasUI.freeadmin.models.fields
+from freenasUI import choices
 
 
 class Migration(migrations.Migration):
@@ -14,6 +15,39 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
+        migrations.CreateModel(
+            name='Jails',
+            fields=[
+                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
+                ('jail_host', models.CharField(max_length=120, verbose_name='Jail Name')),
+                ('jail_type', models.CharField(max_length=120, verbose_name='Type')),
+                ('jail_ipv4', models.CharField(blank=True, max_length=120, null=True, verbose_name='IPv4 address')),
+                ('jail_ipv4_netmask', models.CharField(blank=True, choices=choices.v4NetmaskBitList, default='', max_length=3, verbose_name='IPv4 netmask')),
+                ('jail_alias_ipv4', models.CharField(blank=True, max_length=120, null=True, verbose_name='IPv4 aliases')),
+                ('jail_bridge_ipv4', models.CharField(blank=True, max_length=120, null=True, verbose_name='IPv4 bridge address')),
+                ('jail_bridge_ipv4_netmask', models.CharField(blank=True, choices=choices.v4NetmaskBitList, default='', max_length=3, verbose_name='IPv4 bridge netmask')),
+                ('jail_alias_bridge_ipv4', models.CharField(blank=True, max_length=120, null=True, verbose_name='IPv4 bridge aliases')),
+                ('jail_defaultrouter_ipv4', models.GenericIPAddressField(blank=True, null=True, protocol='IPv4', verbose_name='IPv4 default gateway')),
+                ('jail_ipv6', models.CharField(blank=True, max_length=120, null=True, verbose_name='IPv6 address')),
+                ('jail_ipv6_prefix', models.CharField(blank=True, choices=choices.v6NetmaskBitList, default='', max_length=4, verbose_name='IPv6 prefix length')),
+                ('jail_alias_ipv6', models.CharField(blank=True, max_length=120, null=True, verbose_name='IPv6 aliases')),
+                ('jail_bridge_ipv6', models.CharField(blank=True, max_length=120, null=True, verbose_name='IPv6 bridge address')),
+                ('jail_bridge_ipv6_prefix', models.CharField(blank=True, choices=choices.v6NetmaskBitList, default='', max_length=4, verbose_name='IPv6 bridge prefix length')),
+                ('jail_alias_bridge_ipv6', models.CharField(blank=True, max_length=120, null=True, verbose_name='IPv6 bridge aliases')),
+                ('jail_defaultrouter_ipv6', models.GenericIPAddressField(blank=True, null=True, protocol='IPv6', verbose_name='IPv6 default gateway')),
+                ('jail_mac', models.CharField(blank=True, max_length=120, null=True, verbose_name='MAC')),
+                ('jail_iface', models.CharField(blank=True, choices=choices.NICChoices(exclude_configured=False), default='', max_length=300, verbose_name='NIC')),
+                ('jail_flags', models.TextField(blank=True, help_text="Comma delimited list of sysctl's", verbose_name='Sysctls')),
+                ('jail_autostart', models.BooleanField(default=True, max_length=120, verbose_name='Autostart')),
+                ('jail_status', models.CharField(max_length=120, verbose_name='Status')),
+                ('jail_vnet', models.BooleanField(default=True, max_length=120, verbose_name='VIMAGE')),
+                ('jail_nat', models.BooleanField(default=False, verbose_name='NAT')),
+            ],
+            options={
+                'verbose_name': 'Jail',
+                'verbose_name_plural': 'Jails',
+            },
+        ),
         migrations.CreateModel(
             name='JailMountPoint',
             fields=[
@@ -53,8 +87,8 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('jt_name', models.CharField(max_length=120, unique=True, verbose_name='Name')),
-                ('jt_os', models.CharField(choices=[(b'FreeBSD', b'FreeBSD'), (b'Linux', b'Linux')], max_length=120, verbose_name='OS')),
-                ('jt_arch', models.CharField(choices=[(b'x64', b'x64'), (b'x86', b'x86')], max_length=120, verbose_name='Architecture')),
+                ('jt_os', models.CharField(choices=choices.JAIL_TEMPLATE_OS_CHOICES, max_length=120, verbose_name='OS')),
+                ('jt_arch', models.CharField(choices=choices.JAIL_TEMPLATE_ARCH_CHOICES, max_length=120, verbose_name='Architecture')),
                 ('jt_url', models.CharField(max_length=255, verbose_name='URL')),
                 ('jt_mtree', models.CharField(blank=True, help_text='The mtree file for the template', max_length=255, verbose_name='mtree')),
                 ('jt_system', models.BooleanField(default=False, help_text='If this is a system template, it will not be visible in the UI and will only be used internally.', verbose_name='System')),

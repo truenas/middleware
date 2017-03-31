@@ -5,6 +5,7 @@
 from django.db import migrations, models
 import django.db.models.deletion
 import freenasUI.freeadmin.models.fields
+from freenasUI import choices
 
 
 class Migration(migrations.Migration):
@@ -23,7 +24,7 @@ class Migration(migrations.Migration):
                 ('ad_domainname', models.CharField(help_text='Domain Name, eg example.com', max_length=120, verbose_name='Domain Name (DNS/Realm-Name)')),
                 ('ad_bindname', models.CharField(blank=True, help_text='Domain account name to bind as', max_length=120, verbose_name='Domain Account Name')),
                 ('ad_bindpw', models.CharField(blank=True, help_text='Domain Account password.', max_length=120, verbose_name='Domain Account Password')),
-                ('ad_ssl', models.CharField(choices=[(b'off', 'Off'), (b'on', 'SSL'), (b'start_tls', 'TLS')], default=b'off', help_text='This parameter specifies whether to use SSL/TLS, e.g. on/off/start_tls', max_length=120, verbose_name='Encryption Mode')),
+                ('ad_ssl', models.CharField(choices=choices.LDAP_SSL_CHOICES, default='off', help_text='This parameter specifies whether to use SSL/TLS, e.g. on/off/start_tls', max_length=120, verbose_name='Encryption Mode')),
                 ('ad_verbose_logging', models.BooleanField(default=False, verbose_name='Verbose logging')),
                 ('ad_unix_extensions', models.BooleanField(default=False, help_text='Set this if your Active Directory has UNIX extensions.', verbose_name='UNIX extensions')),
                 ('ad_allow_trusted_doms', models.BooleanField(default=False, help_text='Set this if you want to allow Trusted Domains.', verbose_name='Allow Trusted Domains')),
@@ -37,11 +38,14 @@ class Migration(migrations.Migration):
                 ('ad_gcname', models.CharField(blank=True, help_text='FQDN of the global catalog server to use.', max_length=120, null=True, verbose_name='Global Catalog Server')),
                 ('ad_timeout', models.IntegerField(default=60, help_text='Timeout for AD related commands.', verbose_name='AD timeout')),
                 ('ad_dns_timeout', models.IntegerField(default=60, help_text='Timeout for AD DNS queries.', verbose_name='DNS timeout')),
-                ('ad_idmap_backend', models.CharField(choices=[(b'ad', 'ad'), (b'adex', 'adex'), (b'autorid', 'autorid'), (b'hash', 'hash'), (b'ldap', 'ldap'), (b'nss', 'nss'), (b'rfc2307', 'rfc2307'), (b'rid', 'rid'), (b'tdb', 'tdb'), (b'tdb2', 'tdb2')], default=b'rid', help_text='Idmap backend for winbind.', max_length=120, verbose_name='Idmap backend')),
-                ('ad_nss_info', models.CharField(blank=True, choices=[(b'sfu', b'sfu'), (b'sfu20', b'sfu20'), (b'rfc2307', b'rfc2307')], help_text="This parameter is designed to control how Winbind retrieves Name Service Information to construct a user's home directory and login", max_length=120, null=True, verbose_name='Winbind NSS Info')),
-                ('ad_ldap_sasl_wrapping', models.CharField(choices=[(b'plain', b'plain'), (b'sign', b'sign'), (b'seal', b'seal')], default=b'plain', help_text='The client ldap sasl wrapping defines whether ldap traffic will be signed or signed and encrypted (sealed).This option is needed in the case of Domain Controllers enforcing the usage of signed LDAP connections (e.g. Windows 2000 SP3 or higher). LDAP sign and seal can be controlled with the registry key "HKLM\\System\\CurrentControlSet\\Services\\NTDS\\Parameters\\LDAPServerIntegrity" on the Windows server side.', max_length=120, verbose_name='SASL wrapping')),
+                ('ad_idmap_backend', models.CharField(choices=choices.IDMAP_CHOICES, default='rid', help_text='Idmap backend for winbind.', max_length=120, verbose_name='Idmap backend')),
+                ('ad_nss_info', models.CharField(blank=True, choices=choices.NSS_INFO_CHOICES, help_text="This parameter is designed to control how Winbind retrieves Name Service Information to construct a user's home directory and login", max_length=120, null=True, verbose_name='Winbind NSS Info')),
+                ('ad_ldap_sasl_wrapping', models.CharField(choices=choices.LDAP_SASL_WRAPPING_CHOICES, default='plain', help_text='The client ldap sasl wrapping defines whether ldap traffic will be signed or signed and encrypted (sealed).This option is needed in the case of Domain Controllers enforcing the usage of signed LDAP connections (e.g. Windows 2000 SP3 or higher). LDAP sign and seal can be controlled with the registry key "HKLM\\System\\CurrentControlSet\\Services\\NTDS\\Parameters\\LDAPServerIntegrity" on the Windows server side.', max_length=120, verbose_name='SASL wrapping')),
                 ('ad_enable', models.BooleanField(default=False, verbose_name='Enable')),
                 ('ad_certificate', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, to='system.CertificateAuthority', verbose_name='Certificate')),
+                ('ad_enable_monitor', models.BooleanField(default=False, help_text='Restarts AD automatically if the service is disconnected', verbose_name='Enable Monitoring')),
+                ('ad_monitor_frequency', models.IntegerField(default=60, help_text='How often to verify that AD servers are active', validators=[django.core.validators.MaxValueValidator(3600), django.core.validators.MinValueValidator(30)], verbose_name='AD check connectivity frequency (seconds)')),
+                ('ad_recover_retry', models.IntegerField(default=10, help_text='How many times we will try to recover the connection with AD server, if the value is 0, it will try forever', validators=[django.core.validators.MaxValueValidator(500), django.core.validators.MinValueValidator(1)], verbose_name='How many recovery attempts')),
             ],
             options={
                 'verbose_name': 'Active Directory',
@@ -56,7 +60,7 @@ class Migration(migrations.Migration):
                 ('idmap_ds_id', models.PositiveIntegerField(null=True)),
                 ('idmap_ad_range_low', models.IntegerField(default=10000, verbose_name='Range Low')),
                 ('idmap_ad_range_high', models.IntegerField(default=90000000, verbose_name='Range High')),
-                ('idmap_ad_schema_mode', models.CharField(choices=[(b'rfc2307', 'rfc2307'), (b'sfu', 'sfu'), (b'sfu20', 'sfu20')], default=b'rfc2307', help_text='Defines the schema that idmap_ad should use when querying Active Directory regarding user and group information. This can be either the RFC2307 schema support included in Windows 2003 R2 or the Service for Unix (SFU) schema. For SFU 3.0 or 3.5 please choose "sfu", for SFU 2.0 please choose "sfu20". Please note that primary group membership is currently always calculated via the "primaryGroupID" LDAP attribute.', max_length=120, verbose_name='Schema Mode')),
+                ('idmap_ad_schema_mode', models.CharField(choices=[('rfc2307', 'rfc2307'), ('sfu', 'sfu'), ('sfu20', 'sfu20')], default='rfc2307', help_text='Defines the schema that idmap_ad should use when querying Active Directory regarding user and group information. This can be either the RFC2307 schema support included in Windows 2003 R2 or the Service for Unix (SFU) schema. For SFU 3.0 or 3.5 please choose "sfu", for SFU 2.0 please choose "sfu20". Please note that primary group membership is currently always calculated via the "primaryGroupID" LDAP attribute.', max_length=120, verbose_name='Schema Mode')),
             ],
             options={
                 'verbose_name': 'AD Idmap',
@@ -120,7 +124,7 @@ class Migration(migrations.Migration):
                 ('idmap_ldap_ldap_base_dn', models.CharField(blank=True, help_text='Defines the directory base suffix to use for SID/uid/gid mapping entries. If not defined, idmap_ldap will default to using the "ldap idmap suffix" option from smb.conf.', max_length=120, verbose_name='Base DN')),
                 ('idmap_ldap_ldap_user_dn', models.CharField(blank=True, help_text='Defines the user DN to be used for authentication. The secret for authenticating this user should be stored with net idmap secret (see net(8)). If absent, the ldap credentials from the ldap passdb configuration are used, and if these are also absent, an anonymous bind will be performed as last fallback.', max_length=120, verbose_name='User DN')),
                 ('idmap_ldap_ldap_url', models.CharField(help_text='Specifies the LDAP server to use for SID/uid/gid map entries.', max_length=255, verbose_name='URL')),
-                ('idmap_ldap_ssl', models.CharField(choices=[(b'off', 'Off'), (b'on', 'SSL'), (b'start_tls', 'TLS')], default=b'off', help_text='This parameter specifies whether to use SSL/TLS, e.g. on/off/start_tls', max_length=120, verbose_name='Encryption Mode')),
+                ('idmap_ldap_ssl', models.CharField(choices=choices.LDAP_SSL_CHOICES, default='off', help_text='This parameter specifies whether to use SSL/TLS, e.g. on/off/start_tls', max_length=120, verbose_name='Encryption Mode')),
                 ('idmap_ldap_certificate', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, to='system.CertificateAuthority', verbose_name='Certificate')),
             ],
             options={
@@ -150,7 +154,7 @@ class Migration(migrations.Migration):
                 ('idmap_ds_id', models.PositiveIntegerField(null=True)),
                 ('idmap_rfc2307_range_low', models.IntegerField(default=10000, verbose_name='Range Low')),
                 ('idmap_rfc2307_range_high', models.IntegerField(default=90000000, verbose_name='Range High')),
-                ('idmap_rfc2307_ldap_server', models.CharField(choices=[(b'ad', 'ad'), (b'stand-alone', 'stand-alone')], default=b'ad', help_text='Defines the type of LDAP server to use. This can either be the LDAP server provided by the Active Directory server (ad) or a stand-alone LDAP server.', max_length=120, verbose_name='LDAP Server')),
+                ('idmap_rfc2307_ldap_server', models.CharField(choices=[('ad', 'ad'), ('stand-alone', 'stand-alone')], default='ad', help_text='Defines the type of LDAP server to use. This can either be the LDAP server provided by the Active Directory server (ad) or a stand-alone LDAP server.', max_length=120, verbose_name='LDAP Server')),
                 ('idmap_rfc2307_bind_path_user', models.CharField(help_text='Specifies the bind path where user objects can be found in the LDAP server.', max_length=120, verbose_name='User Bind Path')),
                 ('idmap_rfc2307_bind_path_group', models.CharField(help_text='Specifies the bind path where group objects can be found in the LDAP server.', max_length=120, verbose_name='Group Bind Path')),
                 ('idmap_rfc2307_user_cn', models.BooleanField(default=False, help_text='Query cn attribute instead of uid attribute for the user name in LDAP.', verbose_name='User CN')),
@@ -160,7 +164,7 @@ class Migration(migrations.Migration):
                 ('idmap_rfc2307_ldap_user_dn', models.CharField(blank=True, help_text='Defines the user DN to be used for authentication. The secret for authenticating this user should be stored with net idmap secret (see net(8)). If absent, an anonymous bind will be performed.', max_length=120, verbose_name='LDAP User DN')),
                 ('idmap_rfc2307_ldap_user_dn_password', models.CharField(blank=True, help_text='Password for LDAP User DN', max_length=120, verbose_name='LDAP User DN Password')),
                 ('idmap_rfc2307_ldap_realm', models.CharField(blank=True, help_text='Defines the realm to use in the user and group names. This is only required when using cn_realm together with a stand-alone ldap server.', max_length=120, verbose_name='LDAP Realm')),
-                ('idmap_rfc2307_ssl', models.CharField(choices=[(b'off', 'Off'), (b'on', 'SSL'), (b'start_tls', 'TLS')], default=b'off', help_text='This parameter specifies whether to use SSL/TLS, e.g. on/off/start_tls', max_length=120, verbose_name='Encryption Mode')),
+                ('idmap_rfc2307_ssl', models.CharField(choices=choices.LDAP_SSL_CHOICES, default='off', help_text='This parameter specifies whether to use SSL/TLS, e.g. on/off/start_tls', max_length=120, verbose_name='Encryption Mode')),
                 ('idmap_rfc2307_certificate', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, to='system.CertificateAuthority', verbose_name='Certificate')),
             ],
             options={
@@ -275,13 +279,13 @@ class Migration(migrations.Migration):
                 ('ldap_passwordsuffix', models.CharField(blank=True, help_text='This parameter specifies the suffix that is used for passwords when these are added to the LDAP directory, e.g. ou=Passwords', max_length=120, verbose_name='Password Suffix')),
                 ('ldap_machinesuffix', models.CharField(blank=True, help_text='This parameter specifies the suffix that is used for machines when these are added to the LDAP directory, e.g. ou=Computers', max_length=120, verbose_name='Machine Suffix')),
                 ('ldap_sudosuffix', models.CharField(blank=True, help_text='This parameter specifies the suffix that is used for the SUDO configuration in the LDAP directory, e.g. ou=SUDOers', max_length=120, verbose_name='SUDO Suffix')),
-                ('ldap_ssl', models.CharField(choices=[(b'off', 'Off'), (b'on', 'SSL'), (b'start_tls', 'TLS')], default=b'off', help_text='This parameter specifies whether to use SSL/TLS, e.g. on/off/start_tls', max_length=120, verbose_name='Encryption Mode')),
+                ('ldap_ssl', models.CharField(choices=choices.LDAP_SSL_CHOICES, default='off', help_text='This parameter specifies whether to use SSL/TLS, e.g. on/off/start_tls', max_length=120, verbose_name='Encryption Mode')),
                 ('ldap_timeout', models.IntegerField(default=10, help_text='Timeout for LDAP related commands.', verbose_name='LDAP timeout')),
                 ('ldap_dns_timeout', models.IntegerField(default=10, help_text='Timeout for LDAP DNS queries.', verbose_name='DNS timeout')),
-                ('ldap_idmap_backend', models.CharField(choices=[(b'ad', 'ad'), (b'adex', 'adex'), (b'autorid', 'autorid'), (b'hash', 'hash'), (b'ldap', 'ldap'), (b'nss', 'nss'), (b'rfc2307', 'rfc2307'), (b'rid', 'rid'), (b'tdb', 'tdb'), (b'tdb2', 'tdb2')], default=b'ldap', help_text='Idmap backend for winbind.', max_length=120, verbose_name='Idmap Backend')),
+                ('ldap_idmap_backend', models.CharField(choices=choices.IDMAP_CHOICES, default='ldap', help_text='Idmap backend for winbind.', max_length=120, verbose_name='Idmap Backend')),
                 ('ldap_has_samba_schema', models.BooleanField(default=False, verbose_name='Samba Schema')),
                 ('ldap_auxiliary_parameters', models.TextField(blank=True, help_text='These parameters are added to sssd.conf', verbose_name='Auxiliary Parameters')),
-                ('ldap_schema', models.CharField(choices=[(b'rfc2307', b'rfc2307'), (b'rfc2307bis', b'rfc2307bis')], default=b'rfc2307', help_text='LDAP Schema type.', max_length=120, verbose_name=b'Schema')),
+                ('ldap_schema', models.CharField(choices=choices.LDAP_SCHEMA_CHOICES, default='rfc2307', help_text='LDAP Schema type.', max_length=120, verbose_name='Schema')),
                 ('ldap_enable', models.BooleanField(default=False, verbose_name='Enable')),
                 ('ldap_certificate', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, to='system.CertificateAuthority', verbose_name='Certificate')),
                 ('ldap_kerberos_principal', models.ForeignKey(blank=True, null=True, on_delete=django.db.models.deletion.SET_NULL, to='directoryservice.KerberosPrincipal', verbose_name='Kerberos Principal')),
@@ -316,7 +320,7 @@ class Migration(migrations.Migration):
                 ('nt4_adminname', models.CharField(help_text='Domain administrator account name', max_length=120, verbose_name='Administrator Name')),
                 ('nt4_adminpw', models.CharField(help_text='Domain administrator account password.', max_length=120, verbose_name='Administrator Password')),
                 ('nt4_use_default_domain', models.BooleanField(default=False, help_text='Set this if you want to use the default domain for users and groups.', verbose_name='Use Default Domain')),
-                ('nt4_idmap_backend', models.CharField(choices=[(b'ad', 'ad'), (b'adex', 'adex'), (b'autorid', 'autorid'), (b'hash', 'hash'), (b'ldap', 'ldap'), (b'nss', 'nss'), (b'rfc2307', 'rfc2307'), (b'rid', 'rid'), (b'tdb', 'tdb'), (b'tdb2', 'tdb2')], default=b'rid', help_text='Idmap backend for winbind.', max_length=120, verbose_name='Idmap backend')),
+                ('nt4_idmap_backend', models.CharField(choices=choices.IDMAP_CHOICES, default='rid', help_text='Idmap backend for winbind.', max_length=120, verbose_name='Idmap backend')),
                 ('nt4_enable', models.BooleanField(default=False, verbose_name='Enable')),
             ],
             options={

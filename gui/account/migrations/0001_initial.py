@@ -8,6 +8,7 @@ from django.db import migrations, models
 import django.db.models.deletion
 import freenasUI.account.models
 import freenasUI.freeadmin.models.fields
+from freenasUI import choices
 import json
 import os
 
@@ -74,10 +75,10 @@ class Migration(migrations.Migration):
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('bsdusr_uid', models.IntegerField(validators=[django.core.validators.MinValueValidator(0), django.core.validators.MaxValueValidator(4294967295)], verbose_name='User ID')),
                 ('bsdusr_username', models.CharField(default='User &', max_length=16, unique=True, verbose_name='Username')),
-                ('bsdusr_unixhash', models.CharField(blank=True, default=b'*', max_length=128, verbose_name='Hashed UNIX password')),
-                ('bsdusr_smbhash', models.CharField(blank=True, default=b'*', max_length=128, verbose_name='Hashed SMB password')),
-                ('bsdusr_home', freenasUI.freeadmin.models.fields.PathField(default=b'/nonexistent', max_length=255, verbose_name='Home Directory')),
-                ('bsdusr_shell', models.CharField(default=b'/bin/csh', max_length=120, verbose_name='Shell')),
+                ('bsdusr_unixhash', models.CharField(blank=True, default='*', max_length=128, verbose_name='Hashed UNIX password')),
+                ('bsdusr_smbhash', models.CharField(blank=True, default='*', max_length=128, verbose_name='Hashed SMB password')),
+                ('bsdusr_home', freenasUI.freeadmin.models.fields.PathField(default='/nonexistent', max_length=255, verbose_name='Home Directory')),
+                ('bsdusr_shell', models.CharField(choices=choices.SHELL_CHOICES(), default='/bin/csh', max_length=120, verbose_name='Shell')),
                 ('bsdusr_full_name', models.CharField(max_length=120, verbose_name='Full Name')),
                 ('bsdusr_builtin', models.BooleanField(default=False, editable=False, verbose_name='Built-in User')),
                 ('bsdusr_email', models.EmailField(blank=True, max_length=254, verbose_name='E-mail')),

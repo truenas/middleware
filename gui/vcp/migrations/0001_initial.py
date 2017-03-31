@@ -29,9 +29,9 @@ class Migration(migrations.Migration):
             name='VcenterConfiguration',
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('vc_management_ip', models.CharField(default=b'1', help_text='Please select the TrueNAS interface that vCenter Web client can route to.', max_length=120, verbose_name=' TrueNAS Management IP Address')),
-                ('vc_ip', models.CharField(default=b'', max_length=120, verbose_name=' vCenter Hostname/IP Address')),
-                ('vc_port', models.CharField(default=b'443', max_length=5, validators=[django.core.validators.RegexValidator(message=b'Please Enter a whole number.', regex=b'^\\+?1?\\d{1,5}$')], verbose_name=' vCenter Port')),
+                ('vc_management_ip', models.CharField(default='1', help_text='Please select the TrueNAS interface that vCenter Web client can route to.', max_length=120, verbose_name=' TrueNAS Management IP Address')),
+                ('vc_ip', models.CharField(default='', max_length=120, verbose_name=' vCenter Hostname/IP Address')),
+                ('vc_port', models.CharField(default='443', max_length=5, validators=[django.core.validators.RegexValidator(message='Please Enter a whole number.', regex='^\\+?1?\\d{1,5}$')], verbose_name=' vCenter Port')),
                 ('vc_username', models.CharField(max_length=120, verbose_name=' vCenter Username')),
                 ('vc_password', models.CharField(max_length=120, verbose_name=' vCenter Password')),
                 ('vc_version', models.CharField(blank=True, max_length=120, null=True, verbose_name=' version')),
