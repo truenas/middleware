@@ -250,3 +250,33 @@ class JailService(Service):
                   short=short, basejail=basejail, empty=empty).create_jail()
 
         return True
+
+    @accepts(Str("jail"), Dict("options",
+                  Str("action"),
+                  Str("source"),
+                  Str("destination"),
+                  Str("fstype"),
+                  Str("fsoptions"),
+                  Str("dump"),
+                  Str("_pass"),
+                  ))
+    def fstab(self, jail, options):
+        """
+        Adds an fstab mount to the jail, mounts if the jail is running.
+        """
+        from iocage.lib.ioc_fstab import IOCFstab
+        self.check_dataset_existence()
+
+        tag, uuid, path = self.check_jail_existence(jail)
+        action = options.get("action", None)
+        source = options.get("source", None)
+        destination = options.get("destination", None)
+        fstype = options.get("fstype", None)
+        fsoptions = options.get("fsoptions", None)
+        dump = options.get("dump", None)
+        _pass = options.get("_pass", None)
+
+        IOCFstab(uuid, tag, action, source, destination, fstype, fsoptions,
+                 dump, _pass)
+
+        return True
