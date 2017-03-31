@@ -123,8 +123,9 @@ class NotifierService(Service):
             workgroups = []
             domains = ds.get_domains()
             for d in domains:
-                netbiosname = d['nETBIOSName']
-                workgroups.append(netbiosname)
+                if 'nETBIOSName' in d:
+                    netbiosname = d['nETBIOSName']
+                    workgroups.append(netbiosname)
             ds.workgroups = workgroups
         elif name == 'LDAP':
             ds = FreeNAS_LDAP(flags=FLAGS_DBINIT)
