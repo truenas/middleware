@@ -34,6 +34,9 @@
           {{ job.progress.description }}
         </span>
       </div>
+      <div *ngIf="status == 'UNAVAILABLE'">
+        No update is available.
+      </div>
       <div *ngIf="updated">
         Update is complete, reboot the machine yourself because I'm tired!
       </div>
