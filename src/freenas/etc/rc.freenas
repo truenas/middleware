@@ -735,7 +735,7 @@ jail_post_start()
 		local control="${plugin_path}/control"
 
 		echo jexec ${jid} "${control}" start "${jip}" "${plugin_port}"
-		jexec ${jid} "${control}" start "${jip}" "${plugin_port}"
+		jexec ${jid} env LD_LIBRARY_PATH=/usr/local/lib/compat "${control}" start "${jip}" "${plugin_port}"
 	done
 }
 
