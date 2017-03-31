@@ -661,10 +661,10 @@ def kerberoskeytab_objects():
 
 def exclude_path(path, exclude):
 
-    if isinstance(path, str):
-        path = path.encode('utf8')
+    if isinstance(path, bytes):
+        path = path.decode('utf8')
 
-    exclude = [y.encode('utf8') if isinstance(y, str) else y for y in exclude]
+    exclude = [y.decode('utf8') if isinstance(y, bytes) else y for y in exclude]
 
     fine_grained = []
     for e in exclude:
