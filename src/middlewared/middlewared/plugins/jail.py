@@ -280,3 +280,22 @@ class JailService(Service):
                  dump, _pass)
 
         return True
+
+    @accepts(Str("pool"))
+    def activate(self, pool):
+        """Activates a pool for iocage usage, and deactivates the rest."""
+        import libzfs
+
+        zfs = libzfs.ZFS(history=True, history_prefix="<iocage>")
+        pools = zfs.pools
+        prop = "org.freebsd.ioc:active"
+
+        for _pool in pools:
+            if _pool.name == pool:
+                ds = zfs.get_dataset(_pool.name)
+                ds.properties[prop].value = "yes"
+            else:
+                ds = zfs.get_dataset(_pool.name)
+                ds.properties[prop].value = "no"
+
+        return True
