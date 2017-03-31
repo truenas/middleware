@@ -2213,4 +2213,15 @@ class S3Form(ModelForm):
 
     def save(self):
         obj = super(S3Form, self).save()
+        path = self.cleaned_data.get("s3_disks")
+        if not path:
+            return
+        try:
+            path = path.decode('utf-8')
+        except Exception as e:
+            log.debug("ERROR: unable to decode string %s", e)
+            pass
+        if notifier().mp_get_owner(path) != "minio":
+            # Currently not working because of python byte string
+            notifier().winacl_reset(path=path, owner="minio", group="minio")
         return obj
