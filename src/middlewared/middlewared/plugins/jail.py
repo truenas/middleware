@@ -299,3 +299,19 @@ class JailService(Service):
                 ds.properties[prop].value = "no"
 
         return True
+
+    @accepts(Str("ds_type", enum=["ALL", "JAIL", "TEMPLATE", "RELEASE"]))
+    def clean(self, ds_type):
+        """Cleans all iocage datasets of ds_type"""
+        from iocage.lib.ioc_clean import IOCClean
+
+        if ds_type == "JAIL":
+            IOCClean().clean_jails()
+        elif ds_type == "ALL":
+            IOCClean().clean_all()
+        elif ds_type == "RELEASE":
+            pass
+        elif ds_type == "TEMPLATE":
+            IOCClean().clean_templates()
+
+        return True
