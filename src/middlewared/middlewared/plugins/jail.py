@@ -43,6 +43,8 @@ class JailService(Service):
                   ))
     def list(self, lst_type, options=None):
         """Lists either 'all', 'base', 'template'"""
+        self.check_dataset_existence()
+
         lst_type = lst_type.lower()
 
         if options is None:
@@ -134,6 +136,7 @@ class JailService(Service):
     def fetch(self, job, options):
         """Fetches a release or plugin."""
         from iocage.lib.ioc_fetch import IOCFetch
+        self.check_dataset_existence()
 
         release = options.get("release", None)
         server = options.get("server", "ftp.freebsd.org")
@@ -221,6 +224,7 @@ class JailService(Service):
     def create(self, options):
         """Creates a jail."""
         from iocage.lib.ioc_create import IOCCreate
+        self.check_dataset_existence()
 
         release = options.get("release", None)
         template = options.get("template", None)
