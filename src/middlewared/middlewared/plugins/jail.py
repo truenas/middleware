@@ -337,3 +337,31 @@ class JailService(Service):
                          jail_user).exec_jail()
 
         return msg.decode("utf-8")
+
+    @accepts(Str("jail"))
+    @job(lock=lambda args: f"jail_update:{args[-1]}")
+    def update(self, job, jail):
+        # FIXME: No-op until I change iocage behavior with freebsd-update
+        # not existing.
+        # TODO: upgrade needs to be broken out of cli.
+        """Updates specified jail to latest patch level."""
+        from iocage.lib.ioc_fetch import IOCFetch
+
+        tag, uuid, path = self.check_jail_existence(jail)
+        status, jid = IOCList.list_get_jid(uuid)
+        conf = IOCJson(path).json_load()
+        started = False
+
+        if conf["type"] == "jail":
+            if not status:
+                self.start(jail)
+                started = True
+        else:
+            return False
+
+        IOCFetch(conf["cloned_release"]).fetch_update(True, uuid, tag)
+
+        if started:
+            self.stop(jail)
+
+        return True
