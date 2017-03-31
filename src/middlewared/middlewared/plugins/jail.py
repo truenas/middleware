@@ -12,11 +12,16 @@ class JailService(Service):
     def __init__(self, *args):
         super(JailService, self).__init__(*args)
 
-    def test(self):
-        return self.list("ALL", {"full": True, "header": True})
+    @private
+    def check_dataset_existence(self):
+        from iocage.lib.ioc_check import IOCCheck
+
+        IOCCheck()
 
     @private
     def check_jail_existence(self, jail):
+        self.check_dataset_existence()
+
         jails, paths = IOCList("uuid").list_datasets()
         _jail = {tag: uuid for (tag, uuid) in jails.items() if
                  uuid.startswith(jail) or tag == jail}
