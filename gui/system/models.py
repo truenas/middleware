@@ -504,7 +504,7 @@ class ConsulAlerts(Model):
 
     class Meta:
         verbose_name = _("Alert")
-        verbose_name_plural = _("Consul Alerts")
+        verbose_name_plural = _("Alerts")
         ordering = ["consulalert_type"]
 
 
