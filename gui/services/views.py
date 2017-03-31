@@ -342,6 +342,10 @@ def services_s3(request):
         form = S3Form(request.POST, instance=s3)
         if form.is_valid():
             form.save()
+            return JsonResp(
+                request,
+                message=_("S3 successfully edited.")
+            ) 
         else:
             return JsonResp(request, form=form)
 
