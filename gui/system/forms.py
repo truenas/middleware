@@ -1611,7 +1611,6 @@ class ConsulAlertsForm(ModelForm):
     class Meta:
         fields = '__all__'
         model = models.ConsulAlerts
-        ''' CHECK IT '''
 
     def __init__(self, *args, **kwargs):
         super(ConsulAlertsForm, self).__init__(*args, **kwargs)
