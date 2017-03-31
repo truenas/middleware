@@ -8,16 +8,17 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:05-0700\n"
-"PO-Revision-Date: 2015-11-17 14:48+0000\n"
-"Last-Translator: laurb <laurfb@gmail.com>\n"
-"Language-Team: LANGUAGE <LL@li.org>\n"
+"PO-Revision-Date: 2017-03-31 13:14+0000\n"
+"Last-Translator: Laurentiu <laurb@tvriasi.ro>\n"
+"Language-Team: Romanian "
+"<http://weblate.trueos.org/projects/freenas/django/ro/>\n"
 "Language: ro\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=3; plural=(n==1 ? 0 : (n==0 || (n%100 > 0 && n%100 < "
-"20)) ? 1 : 2);;\n"
-"X-Generator: Pootle 2.5.0\n"
+"Plural-Forms: nplurals=3; plural=n==1 ? 0 : (n==0 || (n%100 > 0 && n%100 < "
+"20)) ? 1 : 2;\n"
+"X-Generator: Weblate 2.10-dev\n"
 "X-POOTLE-MTIME: 1447771727.0\n"
 
 #: choices.py:40
@@ -8924,18 +8925,16 @@ msgid "Jail root must be on a volume or dataset!"
 msgstr "Jail root trebuie să fie într-un volum sau dataset!"
 
 #: jails/models.py:178
-#, fuzzy
 msgid "Comma delimited list of sysctl's"
-msgstr "Lista de servere NIS separate prin virgulă."
+msgstr "Lista de variabile sysctl separate prin virgulă."
 
 #: jails/models.py:493
 msgid "Jail root is not configured!"
 msgstr "Jail root neconfigurat!"
 
 #: jails/models.py:537
-#, fuzzy
 msgid "Filesystem"
-msgstr "Tip sistem fişiere"
+msgstr "Sistem de fişiere"
 
 #: jails/utils.py:695
 msgid "You need to create a volume to proceed!"
@@ -8985,19 +8984,17 @@ msgstr "Proxy HTTP"
 #: network/nav.py:17
 #: templates/network/index.html:14
 msgid "IPMI"
-msgstr ""
+msgstr "IPMI"
 
 #: network/views.py:66
-#, fuzzy
 msgid "IPMI successfully edited"
-msgstr "adăugat cu succes"
+msgstr "IPMI editat cu succes"
 
 #: network/views.py:68
 msgid "IPMI failed"
-msgstr ""
+msgstr "Eroare IPMI"
 
 #: plugins/admin.py:73
-#, fuzzy
 msgid "Install plugin"
 msgstr "Instalare plugin"
 
@@ -9006,9 +9003,8 @@ msgid "jail not found"
 msgstr "Zona jail nu a fost găsită"
 
 #: services/forms.py:220
-#, fuzzy
 msgid "This path does not exist."
-msgstr "Calea %s nu există"
+msgstr "Calea nu există."
 
 #: services/forms.py:222
 msgid "This path is not a directory."
@@ -9020,9 +9016,8 @@ msgstr "Confirmă parola Administratorului de Domeniu"
 
 #: services/forms.py:758
 #: services/models.py:1612
-#, fuzzy
 msgid "Kerberos keytab"
-msgstr "Fişier chei Kerberos"
+msgstr "Fişier keytab Kerberos"
 
 #: services/forms.py:1081
 msgid "LUN ID already exists."
@@ -9030,7 +9025,7 @@ msgstr "Acest ID LUN există deja."
 
 #: services/models.py:109
 msgid "Use syslog"
-msgstr ""
+msgstr "Utilizare syslog"
 
 #: services/models.py:233
 msgid "Server minimum protocol"
@@ -9064,6 +9059,16 @@ msgid ""
 "does not check execute permissions on \"open for execution\", thus re-"
 "establishing the behaviour of Samba 3.6 "
 msgstr ""
+"Acest parametru bolean controlează comportamentul smbd(8) când primește o "
+"cerere pentru protocolul de ”deschidere pentru execuare” din partea unui "
+"client Windows. Pentru Samba 3.6 și versiuni mai vechi drepturile de "
+"execuție în ACL nu sunt verificate astfel încât un client poate executa un "
+"fișier chiar dacă nu are acest drept. În Samba 4.0 acest lucru a fost "
+"rezolvat astfel încât, în mod implicit, acest parametru este setat ca ”Fals” "
+"iar protocolul ”deschis pentru executare” nu este posibil dacă permisiunile "
+"de execuție nu sunt active. dacă acest parametru este setat pe ”Adevărat” "
+"Samba nu va verifica existanța permisiunilor de execuție  ”deschis pentru "
+"executare”, simulând practic funcționalitatea Samba 3.6. "
 
 #: services/models.py:334
 msgid "Serve UDP NFS clients"
@@ -9071,22 +9076,23 @@ msgstr "Deservire clienți UDP NFS"
 
 #: services/models.py:418
 msgid "Enable multithreaded mode"
-msgstr ""
+msgstr "Activare mod multithread"
 
 #: services/models.py:874
 msgid "LUN ID"
-msgstr ""
+msgstr "ID LUN"
 
 #: services/models.py:914
-#, fuzzy
 msgid "IP Server"
-msgstr "Server NTP"
+msgstr "Server IP"
 
 #: services/models.py:916
 msgid ""
 "The client IP is detected by calling 'url' from this 'ip_server_name:port'. "
 "Defaults to checkip.dyndns.org:80 /."
 msgstr ""
+"IP-ul clientului este detectat din url-ul 'ip_server_name:port'. Implicit "
+"checkip.dyndns.org:80 /."
 
 #: services/models.py:1595
 msgid "Domain Account Name"
@@ -9106,7 +9112,7 @@ msgstr "Parolă cont administrator domeniu."
 
 #: services/models.py:1609
 msgid "Use keytab"
-msgstr ""
+msgstr "Utilizare keytab"
 
 #: services/models.py:1613
 msgid "Kerberos keytab file"
@@ -9118,7 +9124,7 @@ msgstr "Descriere interfață"
 
 #: services/models.py:1852
 msgid "Save received info in interface description / alias"
-msgstr ""
+msgstr "Salvare informații în descrierea interfeței / alias"
 
 #: services/models.py:1855
 msgid "Country Code"
@@ -9128,24 +9134,26 @@ msgstr "Cod de țară"
 msgid ""
 "Specify a two-letterISO 3166 country code (required for LLDPlocation support)"
 msgstr ""
+"Specifică codul de țară prin două litere conform ISO 3166 (necesar pentru "
+"suportul LLDPlocation)"
 
 #: services/models.py:1866
 msgid "Specify the physical location of the host"
-msgstr ""
+msgstr "Specifică locația fizică a gazdei"
 
 #: services/models.py:1871
 #: services/models.py:1872
 #: templates/services/core.html:76
 msgid "LLDP"
-msgstr ""
+msgstr "LLDP"
 
 #: services/models.py:2058
 msgid "Realm"
-msgstr ""
+msgstr "Realm"
 
 #: services/models.py:2059
 msgid "Realm Name, eg EXAMPLE.ORG"
-msgstr ""
+msgstr "Nume Realm, ex. EXEMPLU.ORG"
 
 #: services/models.py:2064
 msgid "Domain Name in old format, eg EXAMPLE"
@@ -9158,37 +9166,35 @@ msgstr "Rol server"
 
 #: services/models.py:2075
 msgid "DNS Backend"
-msgstr ""
+msgstr "Backend DNS"
 
 #: services/models.py:2076
 msgid "DNS Backend, eg SAMBA_INTERNAL"
-msgstr ""
+msgstr "Backend DNS, ex. SAMBA_INTERNAL"
 
 #: services/models.py:2082
 msgid "DNS Forwarder"
-msgstr ""
+msgstr "Forwarder DNS"
 
 #: services/models.py:2083
-#, fuzzy
 msgid "DNS Forwarder IP Address"
-msgstr "Adresa IP controler"
+msgstr "Adresa IP forwarder DNS"
 
 #: services/models.py:2087
 msgid "Domain Forest Level"
-msgstr ""
+msgstr "Nivel Domain Forest"
 
 #: services/models.py:2088
 msgid "Domain and Forest Level, eg 2003"
-msgstr ""
+msgstr "Nivel Domeniu și Forest, ex. 2003"
 
 #: sharing/models.py:48
-#, fuzzy
 msgid "Apply Default Permissions"
-msgstr "Permisiuni implicite fişier"
+msgstr "Aplicare permisiuni implicite"
 
 #: sharing/models.py:49
 msgid "Recursively set sane default windows permissions on share"
-msgstr ""
+msgstr "Aplicare recursivă permisiuni implicite sigure pe partajare"
 
 #: sharing/models.py:87
 msgid ""
@@ -9210,9 +9216,8 @@ msgid ""
 msgstr ""
 
 #: sharing/models.py:94
-#, fuzzy
 msgid "Inherit ACL's"
-msgstr "Moştenit"
+msgstr "ACL-uri moștenite"
 
 #: sharing/models.py:96
 msgid ""
@@ -9225,7 +9230,6 @@ msgid ""
 msgstr ""
 
 #: sharing/models.py:246
-#, fuzzy
 msgid ""
 "Allow mounting of any subdirectory under this mount point ifselected. "
 "Otherwise, only the top level directory can be mounted."
@@ -9247,17 +9251,19 @@ msgstr "Blocare volum"
 
 #: storage/admin.py:349
 msgid "Upgrade"
-msgstr ""
+msgstr "Upgradare"
 
 #: storage/forms.py:120
 msgid "Specify the size with IEC suffixes or 0, e.g. 10 GiB"
-msgstr ""
+msgstr "Specifică dimensiunea cu sufixe IEC sau 0, ex. 10GiB"
 
 #: storage/forms.py:558
 msgid ""
 "You are trying to add a virtual device of type '%(addtype)s' in a pool that "
 "has a virtual device of type '%(vdevtype)s'"
 msgstr ""
+"Încercați să adăugați un dispozitiv virtual de tipul '%(addtype)s' într-un "
+"pool care are un dispozitiv virtual de tipul '%(vdevtype)s'"
 
 #: storage/forms.py:568
 msgid ""
