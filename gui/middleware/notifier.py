@@ -2491,10 +2491,10 @@ class notifier(metaclass=HookMetaclass):
             oauth_file,
         )
 
-        fd = os.open(oauth_file, os.O_WRONLY | os.O_CREAT, 0o600)
-        os.write(fd, "key = %s\n" % rpctoken.key)
-        os.write(fd, "secret = %s\n" % rpctoken.secret)
-        os.close(fd)
+        with open(oauth_file, 'w') as f:
+            os.chmod(oauth_file, 0o600)
+            f.write("key = %s\n" % rpctoken.key)
+            f.write("secret = %s\n" % rpctoken.secret)
 
         self._system("/usr/sbin/service ix-plugins forcestop %s:%s" % (jail, newname))
         self._system("/usr/sbin/service ix-plugins forcestart %s:%s" % (jail, newname))
