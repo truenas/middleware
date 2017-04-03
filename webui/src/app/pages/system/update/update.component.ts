@@ -17,6 +17,7 @@ export class UpdateComponent implements OnInit {
   private updated: boolean = false;
   private progress: Object = {};
   private job: any = {};
+  private error: string;
 
   private busy: Subscription;
 
@@ -28,6 +29,7 @@ export class UpdateComponent implements OnInit {
   }
 
   check() {
+    this.error = null;
     this.busy = this.ws.call('update.check_available').subscribe((res) => {
       this.status = res.status;
       if(res.status == 'AVAILABLE') {
@@ -48,10 +50,13 @@ export class UpdateComponent implements OnInit {
           }
         });
       }
+    }, (err) => {
+      this.error = err.error;
     });
   }
 
   update() {
+    this.error = null;
     this.updating = true;
     this.ws.job('update.update', []).subscribe(
       (res) => {

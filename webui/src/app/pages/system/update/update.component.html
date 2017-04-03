@@ -26,7 +26,7 @@
           </tr>
         </tbody>
       </table>
-      <div *ngIf="updating">
+      <div *ngIf="updating" bsModal role="dialog">
         <span *ngIf="!progress.description">
           Updating...
         </span>
@@ -39,6 +39,9 @@
       </div>
       <div *ngIf="updated">
         Update is complete, reboot the machine yourself because I'm tired!
+      </div>
+      <div *ngIf="error">
+        {{ error }}
       </div>
     </div>
   </div>

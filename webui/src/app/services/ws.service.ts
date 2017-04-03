@@ -79,6 +79,7 @@ export class WebSocketService {
       this.pendingCalls.delete(data.id);
       if(data.error) {
         console.log("Error: ", data.error);
+        call.observer.error(data.error);
       }
       if(call.observer) {
         call.observer.next(data.result);
