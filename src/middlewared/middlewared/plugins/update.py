@@ -240,7 +240,12 @@ class UpdateService(Service):
                 elif op == 'install':
                     name = '%s-%s' % (new.Name(), new.Version())
                 else:
-                    name = '%s-%s' % (old.Name(), old.Version())
+                    # Its unclear why "delete" would feel out new
+                    # instead of old, sounds like a pkgtools bug?
+                    if old:
+                        name = '%s-%s' % (old.Name(), old.Version())
+                    else:
+                        name = '%s-%s' % (new.Name(), new.Version())
 
                 data.append({
                     'operation': op,
