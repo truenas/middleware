@@ -720,7 +720,13 @@ _gen_conf()
 _NEWSUM=$(md5 -q ${FREENAS_CONFIG})
 _OLDSUM=$(cat ${FREENAS_CONFIG_MD5} 2> /dev/null)
 if [ ! "${_NEWSUM}" = "${_OLDSUM}" -a ! -f "${NEED_UPDATE_SENTINEL}" ]; then
-	_gen_conf > ${FREENAS_RC}
+	# There are some circunstances which make concurrent runs of
+	# this script possible, e.g. devd carp script
+	# To make it atomic generate to a tmp file first then move it.
+	# See #23047
+	tmpfile=$(/usr/bin/mktemp /var/tmp/rc.conf.XXXXXXXXX)
+	_gen_conf > ${tmpfile}
+	mv ${tmpfile} ${FREENAS_RC}
 	echo ${_NEWSUM} > ${FREENAS_CONFIG_MD5}
 fi
 
