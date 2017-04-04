@@ -97,7 +97,7 @@ class ConsulService(Service):
         """
         Helper to delete keys into consul.
 
-        Note: The sample applies for 'from' like explained on _insert_keys().
+        Note: The same applies for 'from' like explained on _insert_keys().
         """
         new_dict = self._api_keywords(api_keywords, data)
 
