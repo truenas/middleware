@@ -1,7 +1,8 @@
 <ba-card class="col-xlg-12 col-xl-12 col-lg-12 col-sm-12 col-xs-12" [ngBusy]="busy">
-  <div class="form-group row">
-    <input type="checkbox" id="autocheck" />
-    <label for="autocheck">Automatically check for new updates</label>
+  <div class="row">
+    <div class="md-6">
+      <ba-checkbox [(ngModel)]="autoCheck" type="checkbox" id="autocheck" [label]="'Automatically check for new updates'" [ngModelOptions]="{standalone: true}" (change)="toggleAutoCheck()"></ba-checkbox>
+    </div>
   </div>
   <div class="row">
     <div class="md-12">

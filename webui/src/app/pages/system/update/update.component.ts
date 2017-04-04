@@ -18,14 +18,24 @@ export class UpdateComponent implements OnInit {
   private progress: Object = {};
   private job: any = {};
   private error: string;
+  private autoCheck = false;
 
   private busy: Subscription;
 
-  constructor(protected router: Router, protected route: ActivatedRoute, protected rest: RestService, protected ws: WebSocketService) {
-
-  }
+  constructor(protected router: Router, protected route: ActivatedRoute, protected rest: RestService, protected ws: WebSocketService) { }
 
   ngOnInit() {
+    this.busy = this.rest.get('system/update', {}).subscribe((res) => {
+      this.autoCheck = res.data.upd_autocheck;
+    });
+  }
+
+  toggleAutoCheck() {
+    this.busy = this.rest.put('system/update', {
+      body: JSON.stringify({upd_autocheck: !this.autoCheck})
+    }).subscribe((res) => {
+      // verify auto check
+    });
   }
 
   check() {
