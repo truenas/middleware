@@ -200,7 +200,7 @@ class UpdateService(Service):
         if applied is True:
             return {'status': 'REBOOT_REQUIRED'}
 
-        train = (attrs or {}).get('train') or self.get_train()
+        train = (attrs or {}).get('train') or self.get_trains()['selected']
 
         handler = CheckUpdateHandler()
         manifest = CheckForUpdates(
@@ -279,7 +279,7 @@ class UpdateService(Service):
         """
         Downloads (if not already in cache) and apply an update.
         """
-        train = (attrs or {}).get('train') or self.get_train()
+        train = (attrs or {}).get('train') or self.get_trains()['selected']
         location = self.middleware.call('notifier.get_update_location')
 
         handler = UpdateHandler(self, job)
@@ -306,7 +306,7 @@ class UpdateService(Service):
     @accepts()
     @job(lock='updatedownload')
     def download(self, job):
-        train = self.get_train()
+        train = self.get_trains()['selected']
         location = self.middleware.call('notifier.get_update_location')
 
         Update.DownloadUpdate(
