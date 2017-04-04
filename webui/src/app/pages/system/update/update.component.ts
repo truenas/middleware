@@ -60,16 +60,29 @@ export class UpdateComponent implements OnInit {
         res.changes.forEach((item) => {
           if(item.operation == 'upgrade') {
             this.packages.push({
+              operation: 'Upgrade',
               name: item.old.name + '-' + item.old.version + ' -> ' + item.new.name + '-' + item.new.version,
             });
           } else if (item.operation == 'install') {
             this.packages.push({
+              operation: 'Install',
               name: item.new.name + '-' + item.new.version,
             });
+          } else if (item.operation == 'delete') {
+            // FIXME: For some reason new is populated instead of old?
+            if(item.old) {
+              this.packages.push({
+                operation: 'Delete',
+                name: item.old.name + '-' + item.old.version,
+              });
+            } else if(item.new) {
+              this.packages.push({
+                operation: 'Delete',
+                name: item.new.name + '-' + item.new.version,
+              });
+            }
           } else {
-            this.packages.push({
-              name: item.old.name + '-' + item.old.version,
-            });
+            console.error("Unknown operation:", item.operation)
           }
         });
       }

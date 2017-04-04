@@ -20,11 +20,13 @@
       <table *ngIf="status == 'AVAILABLE' && !updating" class="table table-striped table-sm">
         <thead>
           <tr>
+            <th>Operation</th>
             <th>Name</th>
           </tr>
         </thead>
         <tbody>
           <tr *ngFor="let p of packages">
+            <td>{{ p.operation }}</td>
             <td>{{ p.name }}</td>
           </tr>
           <tr *ngIf="packages.length == 0">
