@@ -10,7 +10,7 @@ class ConsulService(Service):
     SLACK_API = ['cluster-name', 'url', 'channel', 'username', 'icon-url', 'detailed', 'enabled']
     MATTERMOST_API = ['cluster', 'url', 'username', 'password', 'team', 'channel', 'enabled']
     PAGERDUTY_API = ['service-key', 'client-name', 'enabled']
-    HIPCHAT_API = ['from', 'cluster-name', 'base-url', 'room-id', 'auth-token', 'enabled'] # from
+    HIPCHAT_API = ['from', 'cluster-name', 'base-url', 'room-id', 'auth-token', 'enabled']
     OPSGENIE_API = ['cluster-name', 'api-key', 'enabled']
     AWSSNS_API = ['reigion', 'topic-arn', 'enabled']
     VICTOROPS_API = ['api-key', 'routing-key', 'enabled']
@@ -19,6 +19,9 @@ class ConsulService(Service):
     def set_kv(self, key, value):
         """
         Sets `key` with `value` in Consul KV.
+
+        Returns:
+                    bool: True if it added successful the value or otherwise False.
         """
         c = consul.Consul()
         return c.kv.put(str(key), str(value))
@@ -27,6 +30,9 @@ class ConsulService(Service):
     def get_kv(self, key):
         """
         Gets value of `key` in Consul KV.
+
+        Returns:
+                    str: Return the value or an empty string.
         """
         c = consul.Consul()
         index = None
@@ -40,11 +46,20 @@ class ConsulService(Service):
     def delete_kv(self, key):
         """
         Delete a `key` in Consul KV.
+
+        Returns:
+                    bool: True if it could delete the data or otherwise False.
         """
         c = consul.Consul()
         return c.kv.delete(str(key))
 
     def _convert_keys(self, data):
+        """
+        Transforms key values that contains "_" to values with "-"
+
+        Returns:
+                    dict: With the values on keys using "-".
+        """
         for key in data.keys():
             new_key = key.replace("_", "-")
             if new_key != key:
@@ -54,11 +69,23 @@ class ConsulService(Service):
         return data
 
     def _api_keywords(self, api_list, data):
+        """
+        Helper to convert the API list into a dict.
+
+        Returns:
+                    dict: With the API_LIST.
+        """
         new_dict = {k: data.get(k, None) for k in api_list}
 
         return new_dict
 
     def _insert_keys(self, prefix, data, api_keywords):
+        """
+        Helper to insert keys into consul.
+
+        Note: because 'from' is a reserved word in Python, we can't
+        use it directly and instead we use hfrom and convert it later.
+        """
         new_dict = self._api_keywords(api_keywords, data)
 
         for k, v in new_dict.items():
@@ -67,6 +94,11 @@ class ConsulService(Service):
             self.set_kv(prefix + k, v)
 
     def _delete_keys(self, prefix, data, api_keywords):
+        """
+        Helper to delete keys into consul.
+
+        Note: The sample applies for 'from' like explained on _insert_keys().
+        """
         new_dict = self._api_keywords(api_keywords, data)
 
         for k in new_dict.keys():
@@ -75,6 +107,9 @@ class ConsulService(Service):
             self.delete_kv(prefix + k)
 
     def do_create(self, data):
+        """
+        Helper to insert keys into consul based on the service API.
+        """
         consul_prefix = 'consul-alerts/config/notifiers/'
         cdata = self._convert_keys(data)
 
@@ -99,6 +134,9 @@ class ConsulService(Service):
             self._insert_keys(consul_prefix, cdata, self.VICTOROPS_API)
 
     def do_delete(self, alert_service, data):
+        """
+        Helper to delete the keys from consul based on the service API.
+        """
         consul_prefix = 'consul-alerts/config/notifiers/' + alert_service.lower() + '/'
         cdata = self._convert_keys(data)
 
