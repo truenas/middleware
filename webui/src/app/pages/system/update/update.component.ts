@@ -22,7 +22,8 @@ export class UpdateComponent implements OnInit {
   private train: string;
   private trains: any[];
 
-  private busy, busy2: Subscription;
+  private busy: Subscription;
+  private busy2: Subscription;
 
   constructor(protected router: Router, protected route: ActivatedRoute, protected rest: RestService, protected ws: WebSocketService) { }
 
