@@ -19,15 +19,28 @@ export class UpdateComponent implements OnInit {
   private job: any = {};
   private error: string;
   private autoCheck = false;
+  private train: string;
+  private trains: any[];
 
-  private busy: Subscription;
+  private busy, busy2: Subscription;
 
   constructor(protected router: Router, protected route: ActivatedRoute, protected rest: RestService, protected ws: WebSocketService) { }
 
   ngOnInit() {
     this.busy = this.rest.get('system/update', {}).subscribe((res) => {
       this.autoCheck = res.data.upd_autocheck;
+      this.train = res.data.upd_train;
     });
+    this.ws.call('update.get_trains').subscribe((res) => {
+      console.log(res);
+      this.trains = [];
+      for(let i in res.trains) {
+        this.trains.push({
+          name: i
+        });
+      }
+      this.train = res.selected;
+    })
   }
 
   toggleAutoCheck() {
@@ -40,7 +53,7 @@ export class UpdateComponent implements OnInit {
 
   check() {
     this.error = null;
-    this.busy = this.ws.call('update.check_available').subscribe((res) => {
+    this.busy = this.ws.call('update.check_available', [{train: this.train}]).subscribe((res) => {
       this.status = res.status;
       if(res.status == 'AVAILABLE') {
         this.packages = [];
@@ -68,7 +81,7 @@ export class UpdateComponent implements OnInit {
   update() {
     this.error = null;
     this.updating = true;
-    this.ws.job('update.update', []).subscribe(
+    this.ws.job('update.update', [{train: this.train}]).subscribe(
       (res) => {
         this.job = res;
         this.progress = res.progress;

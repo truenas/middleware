@@ -1,17 +1,22 @@
-<ba-card class="col-xlg-12 col-xl-12 col-lg-12 col-sm-12 col-xs-12" [ngBusy]="busy">
-  <div class="row">
-    <div class="md-6">
+<ba-card class="col-xlg-12 col-xl-12 col-lg-12 col-sm-12 col-xs-12 col-md-12" [ngBusy]="busy">
+  <div class="row form-group">
+    <div class="col-md-6">
       <ba-checkbox [(ngModel)]="autoCheck" type="checkbox" id="autocheck" [label]="'Automatically check for new updates'" [ngModelOptions]="{standalone: true}" (change)="toggleAutoCheck()"></ba-checkbox>
+    </div>
+    <div class="col-md-6">
+      <select class="form-control" [(ngModel)]="train">
+        <option *ngFor="let train of trains" [value]="train.name">{{ train.name }}</option>
+      </select>
     </div>
   </div>
   <div class="row">
-    <div class="md-12">
+    <div class="col-md-12">
       <button class="btn btn-primary" (click)="check()">Check Now</button>
       <button class="btn btn-primary" (click)="update()" [disabled]="status != 'AVAILABLE' && !updating">Update and Reboot</button>
     </div>
   </div>
   <div class="row">
-    <div class="md-12">
+    <div class="col-md-12">
       <table *ngIf="status == 'AVAILABLE' && !updating" class="table table-striped table-sm">
         <thead>
           <tr>
