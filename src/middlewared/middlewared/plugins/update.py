@@ -8,7 +8,7 @@ import sys
 if '/usr/local/lib' not in sys.path:
     sys.path.append('/usr/local/lib')
 
-from freenasOS import Configuration, Manifest, Update
+from freenasOS import Configuration, Manifest, Update, Train
 from freenasOS.Update import CheckForUpdates, GetServiceDescription
 
 
@@ -138,18 +138,34 @@ def parse_changelog(changelog, start='', end=''):
 
 class UpdateService(Service):
 
-    def get_train(self):
+    def get_trains(self):
         """
-        Returns currently configured train
+        Returns available trains dict and the currently configured train as well as the
+        train of currently booted environment.
         """
         data = self.middleware.call('datastore.config', 'system.update')
         conf = Configuration.Configuration()
         conf.LoadTrainsConfig()
-        trains = conf.AvailableTrains() or []
-        if trains:
-            trains = list(trains.keys())
-        if not data['upd_train'] or data['upd_train'] not in trains:
-            return conf.CurrentTrain()
+
+        selected = None
+        trains = {}
+        for name, descr in (conf.AvailableTrains() or {}).items():
+            train = conf._trains.get(name)
+            if train is None:
+                train = Train.Train(name, descr)
+            if not selected and data['upd_train'] == train.Name():
+                selected = data['upd_train']
+            trains[train.Name()] = {
+                'description': train.Description(),
+                'sequence': train.LastSequence(),
+            }
+        if not data['upd_train'] or not selected:
+            selected = conf.CurrentTrain()
+        return {
+            'trains': trains,
+            'current': conf.CurrentTrain(),
+            'selected': selected,
+        }
 
     @accepts(Dict(
         'update-check-available',
