@@ -31,7 +31,7 @@ export class UpdateComponent implements OnInit {
       this.autoCheck = res.data.upd_autocheck;
       this.train = res.data.upd_train;
     });
-    this.ws.call('update.get_trains').subscribe((res) => {
+    this.busy2 = this.ws.call('update.get_trains').subscribe((res) => {
       console.log(res);
       this.trains = [];
       for(let i in res.trains) {

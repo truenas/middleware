@@ -1,4 +1,4 @@
-<ba-card class="col-xlg-12 col-xl-12 col-lg-12 col-sm-12 col-xs-12 col-md-12" [ngBusy]="busy">
+<ba-card class="col-xlg-12 col-xl-12 col-lg-12 col-sm-12 col-xs-12 col-md-12" [ngBusy]="[busy, busy2]">
   <div class="row form-group">
     <div class="col-md-6">
       <ba-checkbox [(ngModel)]="autoCheck" type="checkbox" id="autocheck" [label]="'Automatically check for new updates'" [ngModelOptions]="{standalone: true}" (change)="toggleAutoCheck()"></ba-checkbox>
