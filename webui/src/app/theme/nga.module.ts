@@ -3,6 +3,7 @@ import { CommonModule }  from '@angular/common';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { NgUploaderModule } from 'ngx-uploader';
+import { ModalModule } from 'ng2-bootstrap/modal';
 
 import {
   BaThemeConfig
@@ -20,6 +21,7 @@ import {
   BaCheckbox,
   BaContentTop,
   BaFullCalendar,
+  BaJob,
   BaMenuItem,
   BaMenu,
   BaMsgCenter,
@@ -63,6 +65,7 @@ const NGA_COMPONENTS = [
   BaCheckbox,
   BaContentTop,
   BaFullCalendar,
+  BaJob,
   BaMenuItem,
   BaMenu,
   BaMsgCenter,
@@ -109,6 +112,7 @@ const NGA_VALIDATORS = [
     FormsModule,
     ReactiveFormsModule,
     NgUploaderModule,
+    ModalModule.forRoot(),
   ],
   exports: [
     ...NGA_PIPES,

@@ -1,7 +1,8 @@
-import { ApplicationRef, Component, Injector, OnInit, ViewContainerRef } from '@angular/core';
+import { ApplicationRef, Component, Injector, OnInit, ViewChild } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 
 import { RestService, WebSocketService } from '../../../services/';
+import { BaJob } from '../../../theme/components';
 
 import { Subscription } from 'rxjs';
 
@@ -21,6 +22,8 @@ export class UpdateComponent implements OnInit {
   private autoCheck = false;
   private train: string;
   private trains: any[];
+
+  @ViewChild(BaJob) baJob: BaJob;
 
   private busy: Subscription;
   private busy2: Subscription;
@@ -93,20 +96,7 @@ export class UpdateComponent implements OnInit {
   }
 
   update() {
-    this.error = null;
-    this.updating = true;
-    this.ws.job('update.update', [{train: this.train}]).subscribe(
-      (res) => {
-        this.job = res;
-        this.progress = res.progress;
-      },
-      () => {},
-      () => {
-        if(this.job.state == 'SUCCESS') {
-          this.updated = true;
-        }
-      }
-    );
+    this.baJob.show();
   }
 
 }
