@@ -4,6 +4,7 @@ import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { NgUploaderModule } from 'ngx-uploader';
 import { ModalModule } from 'ng2-bootstrap/modal';
+import { ProgressbarModule } from 'ng2-bootstrap/progressbar';
 
 import {
   BaThemeConfig
@@ -113,6 +114,7 @@ const NGA_VALIDATORS = [
     ReactiveFormsModule,
     NgUploaderModule,
     ModalModule.forRoot(),
+    ProgressbarModule.forRoot(),
   ],
   exports: [
     ...NGA_PIPES,

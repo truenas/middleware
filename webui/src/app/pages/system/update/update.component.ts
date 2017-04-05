@@ -96,7 +96,16 @@ export class UpdateComponent implements OnInit {
   }
 
   update() {
-    this.baJob.show();
+    this.baJob.setCall('update.update', [{train: this.train}]);
+    this.baJob.submit();
+  }
+
+  onProgress(progress) {
+    console.log("here", progress);
+  }
+
+  onSuccess(job) {
+    console.log("success", job);
   }
 
 }

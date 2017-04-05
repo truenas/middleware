@@ -43,4 +43,4 @@
     </div>
   </div>
 </ba-card>
-<ba-job></ba-job>
+<ba-job [title]="'Update'" (progress)="onProgress($event)" (failure)="onFailure($event)" (success)="onSuccess($event)"></ba-job>
