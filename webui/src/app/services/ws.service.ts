@@ -56,6 +56,7 @@ export class WebSocketService {
     this.connected = false;
     this.onCloseSubject.next(true);
     setTimeout(this.connect.bind(this), 5000);
+    this._router.navigate(['/login']);
   }
 
   ping() {
