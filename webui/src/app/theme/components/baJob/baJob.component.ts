@@ -17,6 +17,7 @@ export class BaJob {
   private method: string;
   private args: any[] = [];
   @Input() title: string = '';
+  @Input() showCloseButton: boolean = true;
 
   @Output() progress = new EventEmitter();
   @Output() success = new EventEmitter();
@@ -34,6 +35,10 @@ export class BaJob {
     }
   }
 
+  setDescription(desc: string) {
+    this.description = desc;
+  }
+
   @HostListener('progress', ['$event'])
   public onProgress(progress) {
     if(progress.description) {
@@ -42,6 +47,11 @@ export class BaJob {
     if(progress.percent) {
       this.progressTotalPercent = progress.percent;
     }
+  }
+
+  @HostListener('failure', ['$event'])
+  public onFailure(job) {
+    this.description = job.error;
   }
 
   public show() {
@@ -60,9 +70,9 @@ export class BaJob {
       () => {},
       () => {
         if(this.job.state == 'SUCCESS') {
-          this.failure.emit(this.job);
-        } else if(this.job.state == 'FAILED') {
           this.success.emit(this.job);
+        } else if(this.job.state == 'FAILED') {
+          this.failure.emit(this.job);
         }
       }
     );

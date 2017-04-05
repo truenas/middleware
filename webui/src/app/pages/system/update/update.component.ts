@@ -101,11 +101,14 @@ export class UpdateComponent implements OnInit {
   }
 
   onProgress(progress) {
-    console.log("here", progress);
+
   }
 
   onSuccess(job) {
-    console.log("success", job);
+    this.baJob.setDescription('Update has completed. Rebooting...')
+  }
+
+  onFailure(job) {
   }
 
 }

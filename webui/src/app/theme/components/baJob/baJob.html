@@ -1,4 +1,4 @@
-<div class="modal fade" bsModal #modal="bs-modal" [config]="{backdrop: 'static'}" tabindex="-1" role="dialog" aria-hidden="true">
+<div class="modal fade" bsModal #modal="bs-modal" [config]="{backdrop: 'static', ignoreBackdropClick: true, keyboard: false}" tabindex="-1" role="dialog" aria-hidden="true">
   <div class="modal-dialog modal-sm">
     <div class="modal-content">
       <div class="modal-header">
@@ -10,8 +10,14 @@
       -->
       </div>
       <div class="modal-body">
-        <progressbar class="progress progress-striped active" [animate]="true" [value]="progressTotalPercent" type="success">{{ progressTotalPercent }}%</progressbar>
+        <div *ngIf="job && job.state == 'RUNNING'">
+          <progressbar class="progress progress-striped active" [animate]="true" [value]="progressTotalPercent" type="success">{{ progressTotalPercent }}%</progressbar>
+        </div>
         <span *ngIf="description">{{ description }}</span>
+        <span *ngIf="!description">Starting job...</span>
+      </div>
+      <div *ngIf="showCloseButton || (job && job.state == 'FAILED')" class="modal-footer">
+        <button type="button" class="btn btn-default" (click)="modal.hide()">Close</button>
       </div>
     </div>
   </div>

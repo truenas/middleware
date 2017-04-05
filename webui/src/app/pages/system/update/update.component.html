@@ -11,12 +11,15 @@
   </div>
   <div class="row">
     <div class="col-md-12">
-      <button class="btn btn-primary" (click)="check()">Check Now</button>
+      <button class="btn btn-primary" (click)="check()" [disabled]="status == 'REBOOT_REQUIRED'">Check Now</button>
       <button class="btn btn-primary" (click)="update()" [disabled]="status != 'AVAILABLE' && !updating">Update and Reboot</button>
     </div>
   </div>
   <div class="row">
     <div class="col-md-12">
+      <div *ngIf="status == 'REBOOT_REQUIRED'">
+        An update has already been applied. Please reboot.
+      </div>
       <table *ngIf="status == 'AVAILABLE' && !updating" class="table table-striped table-sm">
         <thead>
           <tr>
@@ -43,4 +46,4 @@
     </div>
   </div>
 </ba-card>
-<ba-job [title]="'Update'" (progress)="onProgress($event)" (failure)="onFailure($event)" (success)="onSuccess($event)"></ba-job>
+<ba-job [title]="'Update'" [showCloseButton]="false" (progress)="onProgress($event)" (failure)="onFailure($event)" (success)="onSuccess($event)"></ba-job>
