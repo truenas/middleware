@@ -30,7 +30,7 @@ export class WebSocketService {
   }
 
   connect() {
-    this.socket = new WebSocket('ws://' + window.location.host + '/websocket');
+    this.socket = new WebSocket((window.location.protocol == 'https:' ? 'wss://' : 'ws://') + window.location.host + '/websocket');
     this.socket.onmessage = this.onmessage.bind(this);
     this.socket.onopen = this.onopen.bind(this);
     this.socket.onclose = this.onclose.bind(this);
