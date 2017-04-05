@@ -392,15 +392,7 @@ class Middleware(object):
     def get_jobs(self):
         return self.__jobs
 
-    def call_method(self, app, message):
-        """Call method from websocket"""
-        params = message.get('params') or []
-        service, method_name = message['method'].rsplit('.', 1)
-        methodobj = getattr(self.get_service(service), method_name)
-
-        if not app.authenticated and not hasattr(methodobj, '_no_auth_required'):
-            app.send_error(message, 'Not authenticated')
-            return
+    def _call(self, name, methodobj, params, app=None):
 
         args = []
         if hasattr(methodobj, '_pass_app'):
@@ -411,7 +403,7 @@ class Middleware(object):
         job_options = getattr(methodobj, '_job', None)
         if job_options:
             # Create a job instance with required args
-            job = Job(self, message['method'], methodobj, args, job_options)
+            job = Job(self, name, methodobj, args, job_options)
             # Add the job to the queue.
             # At this point an `id` is assinged to the job.
             self.__jobs.add(job)
@@ -424,9 +416,22 @@ class Middleware(object):
         else:
             return methodobj(*args)
 
-    def call(self, method, *params):
-        service, method = method.rsplit('.', 1)
-        return getattr(self.get_service(service), method)(*params)
+    def call_method(self, app, message):
+        """Call method from websocket"""
+        params = message.get('params') or []
+        service, method_name = message['method'].rsplit('.', 1)
+        methodobj = getattr(self.get_service(service), method_name)
+
+        if not app.authenticated and not hasattr(methodobj, '_no_auth_required'):
+            app.send_error(message, 'Not authenticated')
+            return
+
+        return self._call(message['method'], methodobj, params, app=app)
+
+    def call(self, name, *params):
+        service, method = name.rsplit('.', 1)
+        methodobj = getattr(self.get_service(service), method)
+        return self._call(name, methodobj, params)
 
     def send_event(self, name, event_type, **kwargs):
         assert event_type in ('ADDED', 'CHANGED', 'REMOVED')
