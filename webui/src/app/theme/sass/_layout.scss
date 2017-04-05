@@ -104,38 +104,6 @@ a {
   }
 }
 
-.al-share {
-  margin: -6px 0 0 12px;
-  padding: 0;
-  list-style: none;
-  float: left;
-  li {
-    list-style: none;
-    float: left;
-    margin-left: 16px;
-    i {
-      cursor: pointer;
-      transition: all 0.1s ease;
-      color: white;
-      padding: 6px;
-      box-sizing: content-box;
-      font-size: 16px;
-      &:hover {
-        transform: scale(1.2);
-      }
-    }
-    i.fa-facebook-square {
-      color: $facebook-color;
-    }
-    i.fa-twitter-square {
-      color: $twitter-color;
-    }
-    i.fa-google-plus-square {
-      color: $google-color;
-    }
-  }
-}
-
 .al-content {
   padding: 8px 32px 8px 40px;
 }
