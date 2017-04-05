@@ -1,4 +1,4 @@
-from middlewared.schema import accepts, Dict, Str
+from middlewared.schema import accepts, Bool, Dict, Str
 from middlewared.service import job, Service
 
 import re
@@ -270,8 +270,9 @@ class UpdateService(Service):
         return data
 
     @accepts(Dict(
-        'update-check-available',
+        'update',
         Str('train', required=False),
+        Bool('reboot', default=False),
         required=False,
     ))
     @job(lock='update', process=True)
@@ -301,6 +302,9 @@ class UpdateService(Service):
             install_handler=handler.install_handler,
         )
         self.middleware.call('cache.put', 'update.applied', True)
+
+        if attrs.get('reboot'):
+            self.middleware.call('system.reboot', {'delay': 10})
         return True
 
     @accepts()
