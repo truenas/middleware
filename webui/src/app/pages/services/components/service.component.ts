@@ -13,7 +13,7 @@ import { Subscription } from 'rxjs';
         {{ status.label }}
       </div>
 
-      <div class="col-md-2">
+      <div class="col-md-3">
         <button class="btn btn-primary" (click)="toggle()">
           <span *ngIf="status.state != 'RUNNING'">Start</span>
           <span *ngIf="status.state == 'RUNNING'">Stop</span>
