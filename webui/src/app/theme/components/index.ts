@@ -8,7 +8,6 @@ export * from './baCard';
 export * from './baAmChart';
 export * from './baChartistChart';
 export * from './baBackTop';
-export * from './baFullCalendar';
 export * from './baPictureUploader';
 export * from './baCheckbox';
 export * from './baMultiCheckbox';
