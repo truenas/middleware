@@ -31,6 +31,14 @@ export const PAGES_MENU = [
         order: 0
       },
       {
+        path: ['system', 'email'],
+        title: 'Email',
+        icon: 'ion-email',
+        selected: false,
+        expanded: false,
+        order: 0
+      },
+      {
         path: ['system', 'update'],
         title: 'Update',
         icon: 'ion-arrow-up-a',

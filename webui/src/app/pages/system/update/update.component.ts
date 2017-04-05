@@ -49,7 +49,7 @@ export class UpdateComponent implements OnInit {
 
   toggleAutoCheck() {
     this.busy = this.rest.put('system/update', {
-      body: JSON.stringify({upd_autocheck: !this.autoCheck})
+      body: JSON.stringify({ upd_autocheck: !this.autoCheck })
     }).subscribe((res) => {
       // verify auto check
     });
@@ -57,7 +57,7 @@ export class UpdateComponent implements OnInit {
 
   check() {
     this.error = null;
-    this.busy = this.ws.call('update.check_available', [{train: this.train}]).subscribe((res) => {
+    this.busy = this.ws.call('update.check_available', [{ train: this.train }]).subscribe((res) => {
       this.status = res.status;
       if(res.status == 'AVAILABLE') {
         this.packages = [];
@@ -67,12 +67,12 @@ export class UpdateComponent implements OnInit {
               operation: 'Upgrade',
               name: item.old.name + '-' + item.old.version + ' -> ' + item.new.name + '-' + item.new.version,
             });
-          } else if (item.operation == 'install') {
+          } else if(item.operation == 'install') {
             this.packages.push({
               operation: 'Install',
               name: item.new.name + '-' + item.new.version,
             });
-          } else if (item.operation == 'delete') {
+          } else if(item.operation == 'delete') {
             // FIXME: For some reason new is populated instead of old?
             if(item.old) {
               this.packages.push({
@@ -96,7 +96,7 @@ export class UpdateComponent implements OnInit {
   }
 
   update() {
-    this.baJob.setCall('update.update', [{train: this.train}]);
+    this.baJob.setCall('update.update', [{ train: this.train }]);
     this.baJob.submit();
   }
 

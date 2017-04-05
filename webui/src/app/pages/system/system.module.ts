@@ -9,6 +9,7 @@ import { EntityModule } from '../common/entity/entity.module';
 import { routing } from './system.routing';
 
 import { AdvancedComponent } from './advanced/';
+import { EmailComponent } from './email/';
 import { GeneralComponent } from './general/';
 import { UpdateComponent } from './update/';
 
@@ -25,6 +26,7 @@ import { UpdateComponent } from './update/';
   ],
   declarations: [
     AdvancedComponent,
+    EmailComponent,
     GeneralComponent,
     UpdateComponent,
   ],
