@@ -1,8 +1,8 @@
 import { Component, EventEmitter, HostListener, Input, Output, ViewChild } from '@angular/core';
 
 import { WebSocketService } from '../../../services/';
-import { ModalDirective } from 'ng2-bootstrap/modal';
-import { ProgressbarComponent } from 'ng2-bootstrap/progressbar';
+import { ModalDirective } from 'ngx-bootstrap/modal';
+import { ProgressbarComponent } from 'ngx-bootstrap/progressbar';
 
 @Component({
   selector: 'ba-job',
@@ -67,7 +67,7 @@ export class BaJob {
           this.progress.emit(res.progress);
         }
       },
-      () => {},
+      () => { },
       () => {
         if(this.job.state == 'SUCCESS') {
           this.success.emit(this.job);

@@ -1,10 +1,10 @@
-import { NgModule, ModuleWithProviders }      from '@angular/core';
-import { CommonModule }  from '@angular/common';
+import { NgModule, ModuleWithProviders } from '@angular/core';
+import { CommonModule } from '@angular/common';
 import { ReactiveFormsModule, FormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
 import { NgUploaderModule } from 'ngx-uploader';
-import { ModalModule } from 'ng2-bootstrap/modal';
-import { ProgressbarModule } from 'ng2-bootstrap/progressbar';
+import { ModalModule } from 'ngx-bootstrap/modal';
+import { ProgressbarModule } from 'ngx-bootstrap/progressbar';
 import { BusyModule } from 'angular2-busy';
 
 import {
@@ -126,7 +126,7 @@ const NGA_VALIDATORS = [
 })
 export class NgaModule {
   static forRoot(): ModuleWithProviders {
-    return <ModuleWithProviders> {
+    return <ModuleWithProviders>{
       ngModule: NgaModule,
       providers: [
         BaThemeConfigProvider,
