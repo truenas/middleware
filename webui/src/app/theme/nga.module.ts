@@ -5,6 +5,7 @@ import { RouterModule } from '@angular/router';
 import { NgUploaderModule } from 'ngx-uploader';
 import { ModalModule } from 'ngx-bootstrap/modal';
 import { ProgressbarModule } from 'ngx-bootstrap/progressbar';
+import { AlertModule } from 'ngx-bootstrap/alert';
 import { BusyModule } from 'angular2-busy';
 
 import {
@@ -110,11 +111,13 @@ const NGA_VALIDATORS = [
     FormsModule,
     ReactiveFormsModule,
     NgUploaderModule,
+    AlertModule.forRoot(),
     BusyModule,
     ModalModule.forRoot(),
     ProgressbarModule.forRoot(),
   ],
   exports: [
+    AlertModule,
     BusyModule,
     ...NGA_PIPES,
     ...NGA_DIRECTIVES,
