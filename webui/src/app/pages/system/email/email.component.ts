@@ -34,10 +34,6 @@ export class EmailComponent {
         { label: 'TLS', value: 'tls' },
       ],
     }),
-    new DynamicInputModel({
-      id: 'stg_guihttpsport',
-      label: 'GUI HTTPS Port',
-    }),
     new DynamicCheckboxModel({
       id: 'em_smtp',
       label: 'SMTP Authentication',
