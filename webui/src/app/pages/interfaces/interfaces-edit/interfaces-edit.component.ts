@@ -11,8 +11,8 @@ import { RestService } from '../../../services/rest.service';
 export class InterfacesEditComponent {
 
   protected resource_name: string = 'network/interface/';
-  protected route_delete: string[] = ['interfaces', 'delete'];
-  protected route_success: string[] = ['interfaces'];
+  protected route_delete: string[] = ['network', 'interfaces', 'delete'];
+  protected route_success: string[] = ['network', 'interfaces'];
 
   protected formModel: DynamicFormControlModel[] = [
     new DynamicInputModel({

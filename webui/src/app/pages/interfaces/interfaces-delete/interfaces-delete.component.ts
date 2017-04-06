@@ -10,7 +10,7 @@ import { RestService } from '../../../services/rest.service';
 export class InterfacesDeleteComponent {
 
   protected resource_name: string = 'network/interface/';
-  protected route_success: string[] = ['interfaces'];
+  protected route_success: string[] = ['network', 'interfaces'];
 
   constructor(protected router: Router, protected route: ActivatedRoute, protected rest: RestService, protected _injector: Injector, protected _appRef: ApplicationRef) {
 
