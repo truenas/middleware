@@ -36,7 +36,6 @@ export class UpdateComponent implements OnInit {
       this.train = res.data.upd_train;
     });
     this.busy2 = this.ws.call('update.get_trains').subscribe((res) => {
-      console.log(res);
       this.trains = [];
       for(let i in res.trains) {
         this.trains.push({
@@ -96,7 +95,7 @@ export class UpdateComponent implements OnInit {
   }
 
   update() {
-    this.baJob.setCall('update.update', [{ train: this.train }]);
+    this.baJob.setCall('update.update', [{ train: this.train, reboot: true }]);
     this.baJob.submit();
   }
 
