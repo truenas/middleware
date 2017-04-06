@@ -49,7 +49,7 @@ export class UpdateComponent implements OnInit {
 
   toggleAutoCheck() {
     this.busy = this.rest.put('system/update', {
-      body: JSON.stringify({ upd_autocheck: !this.autoCheck })
+      body: JSON.stringify({ upd_autocheck: this.autoCheck })
     }).subscribe((res) => {
       // verify auto check
     });
