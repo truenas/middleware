@@ -1,3 +1,5 @@
+<ng-template [ngTemplateOutlet]="templateTop" [ngTemplateOutletContext]="this"></ng-template>
+
 <alert *ngIf="success" type="success">Successfully updated.</alert>
 <alert *ngIf="error" type="danger"><span [innerHTML]="error"></span></alert>
 <ba-card>
