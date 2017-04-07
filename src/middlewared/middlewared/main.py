@@ -25,6 +25,7 @@ import subprocess
 import sys
 import traceback
 import types
+import urllib.parse
 import uuid
 from . import logger
 
@@ -280,17 +281,34 @@ class DownloadApplication(object):
             start_response('404 Not found', [])
             return ['']
 
-        # FIXME: add authentication
-        # environ['QUERY_STRING']
-        return self.download(job, start_response)
+        qs = urllib.parse.parse_qs(environ['QUERY_STRING'])
+        denied = False
+        filename = None
+        if 'auth_token' not in qs:
+            denied = True
+        else:
+            auth_token = qs.get('auth_token')[0]
+            token = self.middleware.call('auth.get_token', auth_token)
+            if not token:
+                denied = True
+            else:
+                if (token['attributes'] or {}).get('job') != job_id:
+                    denied = True
+                else:
+                    filename = token['attributes'].get('filename')
+        if denied:
+            start_response('401 Access Denied', [])
+            return ['']
+        return self.download(job, filename, start_response)
 
-    def download(self, job, start_response):
+    def download(self, job, filename, start_response):
         start_response('200 OK', [
             ('Content-Type', 'application/octet-stream'),
-            ('Content-Disposition', 'attachment; filename="FIXME"'),
+            ('Content-Disposition', f'attachment; filename="{filename}"'),
             ('Transfer-Encoding', 'chunked'),
         ])
 
+        f = None
         try:
             f = gevent.fileobject.FileObject(job.read_fd, 'rb', close=False)
             while True:
@@ -300,8 +318,9 @@ class DownloadApplication(object):
                 yield read
 
         finally:
-            f.close()
-            os.close(job.read_fd)
+            if f:
+                f.close()
+                os.close(job.read_fd)
 
 
 class Middleware(object):

@@ -24,7 +24,7 @@ class ConfigService(Service):
             options = {}
 
         if not options.get('secretseed'):
-            bundle = True
+            bundle = False
             filename = '/data/freenas-v1.db'
         else:
             bundle = True

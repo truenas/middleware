@@ -5,7 +5,7 @@ import logging
 import re
 import sys
 
-from middlewared.schema import accepts, Dict, Int, Ref, Str
+from middlewared.schema import accepts, Dict, Int, List, Ref, Str
 from middlewared.utils import filter_list
 from middlewared.logger import Logger
 
@@ -239,6 +239,22 @@ class CoreService(Service):
         "ping" protocol message.
         """
         return 'pong'
+
+    @accepts(
+        Str('method'),
+        List('args'),
+        Str('filename'),
+    )
+    def download(self, method, args, filename):
+        """
+        Core helper to call a job marked for download.
+
+        Returns the job id and the authentication token.
+        """
+        job_id = self.middleware.call(method, *args)
+        job = self.middleware.get_jobs().all().get(job_id)
+        token = self.middleware.call('auth.generate_token', 300, {'filename': filename, 'job': job_id})
+        return job_id, token
 
     @private
     def reconfigure_logging(self):
