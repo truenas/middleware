@@ -388,3 +388,24 @@ class JailService(Service):
             self.stop(jail)
 
         return True
+
+    @accepts(Str("jail"))
+    @job(lock=lambda args: f"jail_export:{args[-1]}")
+    def export(self, job, jail):
+        """Exports jail to zip file"""
+        from iocage.lib.ioc_image import IOCImage
+        tag, uuid, path = self.check_jail_existence(jail)
+        status, jid = IOCList.list_get_jid(uuid)
+        conf = IOCJson(path).json_load()
+        started = False
+
+        if status:
+            self.stop(jail)
+            started = True
+
+        IOCImage().export_jail(uuid, tag, path)
+
+        if started:
+            self.start(jail)
+
+        return True
