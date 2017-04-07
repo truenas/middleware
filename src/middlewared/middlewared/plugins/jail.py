@@ -409,3 +409,13 @@ class JailService(Service):
             self.start(jail)
 
         return True
+
+    @accepts(Str("jail"))
+    @job(lock=lambda args: f"jail_import:{args[-1]}")
+    def _import(self, job, jail):
+        """Imports jail from zip file"""
+        from iocage.lib.ioc_image import IOCImage
+
+        IOCImage().import_jail(jail)
+
+        return True
