@@ -11,6 +11,7 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'freenasUI.settings')
 import django
 django.setup()
 
+from django.conf import settings
 from freenasUI import choices
 from freenasUI import common as fcommon
 from freenasUI.common.freenasldap import (
@@ -234,3 +235,7 @@ class NotifierService(Service):
                 v = str(v)
             _choices.append((k, v))
         return _choices
+
+    def gui_languages(self):
+        """Temporary wrapper to return available languages in django"""
+        return settings.LANGUAGES
