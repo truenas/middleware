@@ -18,12 +18,13 @@ def item_method(fn):
     return fn
 
 
-def job(lock=None, process=False):
+def job(lock=None, process=False, pipe=False):
     """Flag method as a long running job."""
     def check_job(fn):
         fn._job = {
             'lock': lock,
             'process': process,
+            'pipe': pipe,
         }
         return fn
     return check_job

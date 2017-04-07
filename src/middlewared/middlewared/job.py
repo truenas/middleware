@@ -191,6 +191,14 @@ class Job(object):
         self.time_started = datetime.now()
         self.time_finished = None
 
+        # If Job is marked as pipe we open a pipe()
+        # so the job can read/write and the other end can read/write it
+        if self.options.get('pipe'):
+            self.read_fd, self.write_fd = os.pipe()
+        else:
+            self.read_fd = None
+            self.write_fd = None
+
     def set_id(self, id):
         self.id = id
 

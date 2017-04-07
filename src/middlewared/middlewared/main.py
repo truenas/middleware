@@ -259,6 +259,51 @@ class Application(WebSocketApplication):
             self.unsubscribe(message['id'])
 
 
+class DownloadApplication(object):
+
+    def __init__(self, middleware):
+        self.middleware = middleware
+
+    def __call__(self, environ, start_response):
+        # Path is in the form of:
+        # /_download/{jobid}?auth_token=XXX
+        path = environ['PATH_INFO'][1:].split('/')
+
+        if not path[-1].isdigit():
+            start_response('404 Not found', [])
+            return ['']
+
+        job_id = int(path[-1])
+        jobs = self.middleware.get_jobs().all()
+        job = jobs.get(job_id)
+        if not job:
+            start_response('404 Not found', [])
+            return ['']
+
+        # FIXME: add authentication
+        # environ['QUERY_STRING']
+        return self.download(job, start_response)
+
+    def download(self, job, start_response):
+        start_response('200 OK', [
+            ('Content-Type', 'application/octet-stream'),
+            ('Content-Disposition', 'attachment; filename="FIXME"'),
+            ('Transfer-Encoding', 'chunked'),
+        ])
+
+        try:
+            f = gevent.fileobject.FileObject(job.read_fd, 'rb', close=False)
+            while True:
+                read = f.read(1024)
+                if read == b'':
+                    break
+                yield read
+
+        finally:
+            f.close()
+            os.close(job.read_fd)
+
+
 class Middleware(object):
 
     def __init__(self):
@@ -460,11 +505,13 @@ class Middleware(object):
         apidocs_app.middleware = self
         apidocsserver = WSGIServer(('127.0.0.1', 8001), apidocs_app)
         restserver = WSGIServer(('127.0.0.1', 8002), restful_api.get_app())
+        downloadserver = WSGIServer(('127.0.0.1', 8003), DownloadApplication(self))
 
         self.__server_threads = [
             gevent.spawn(wsserver.serve_forever),
             gevent.spawn(apidocsserver.serve_forever),
             gevent.spawn(restserver.serve_forever),
+            gevent.spawn(downloadserver.serve_forever),
             gevent.spawn(self.__jobs.run),
         ]
         self.logger.debug('Accepting connections')
