@@ -218,6 +218,17 @@ class AlertResource(DojoResource):
         return bundle
 
 
+class SettingsResourceMixin(object):
+
+    def dehydrate(self, bundle):
+        bundle = super(SettingsResourceMixin, self).dehydrate(bundle)
+        if bundle.obj.stg_guicertificate:
+            bundle.data['stg_guicertificate'] = bundle.obj.stg_guicertificate.id
+        else:
+            bundle.data['stg_guicertificate'] = None
+        return bundle
+
+
 class DiskResourceMixin(object):
 
     class Meta:
