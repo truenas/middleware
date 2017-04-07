@@ -223,6 +223,14 @@ class NotifierService(Service):
             args = []
         attr = getattr(choices, name)
         if callable(attr):
-            return list(attr(*args))
+            rv = list(attr(*args))
         else:
-            return attr
+            rv = attr
+        # We need to make sure the label is str and not django
+        # translation proxy
+        _choices = []
+        for k, v in rv:
+            if not isinstance(v, str):
+                v = str(v)
+            _choices.append((k, v))
+        return _choices
