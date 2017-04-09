@@ -249,7 +249,7 @@ class CoreService(Service):
         """
         Core helper to call a job marked for download.
 
-        Returns the job id and the authentication token.
+        Returns the job id and the URL for download.
         """
         job_id = self.middleware.call(method, *args)
         token = self.middleware.call('auth.generate_token', 300, {'filename': filename, 'job': job_id})
