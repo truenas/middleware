@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:05-0700\n"
-"PO-Revision-Date: 2017-03-31 13:14+0000\n"
+"PO-Revision-Date: 2017-04-09 15:47+0000\n"
 "Last-Translator: Laurentiu <laurb@tvriasi.ro>\n"
 "Language-Team: Romanian "
 "<http://weblate.trueos.org/projects/freenas/django/ro/>\n"
@@ -9270,43 +9270,41 @@ msgid ""
 "You are trying to add a virtual device consisting of %(addnum)s device(s) in "
 "a pool that has a virtual device consisted of %(vdevnum)s device(s)"
 msgstr ""
+"Încercați să adăugați un dispozitiv virtual constând din %(addnum) "
+"dispozitive într-un pool care are un dispozitiv virtual format din %(vdevnum)"
+" dispozitive"
 
 #: storage/forms.py:597
 #: templates/storage/zfswizard.html:41
-#, fuzzy
 msgid "Encryption"
-msgstr "Cheie criptare"
+msgstr "Criptare"
 
 #: storage/forms.py:601
 #: templates/storage/zfswizard.html:51
 msgid "Initialize Safely"
-msgstr ""
+msgstr "Inițializare mod siguranță"
 
 #: storage/forms.py:906
-#, fuzzy
 msgid ""
 "The selected disks were not verified for these import rules. Filesystem "
 "check failed."
 msgstr ""
-"Discurile selectate nu au fost verificate pentru a se conforma cu aceste "
-"reguli"
+"Discurile selectate nu au fost verificate pentru aceste reguli de import. "
+"Verificarea sistemului de fișiere a eșuat."
 
 #: storage/forms.py:1422
-#, fuzzy
 msgid "Share type"
-msgstr "Comentariu partajare"
+msgstr "Tip partajare"
 
 #: storage/forms.py:1431
 #: storage/forms.py:1436
-#, fuzzy
 msgid "0=Unlimited; example: 1 GiB"
-msgstr "0=Nelimitat; de ex. 1g"
+msgstr "0=Nelimitat; exemplu: 1 GiB"
 
 #: storage/forms.py:1441
 #: storage/forms.py:1446
-#, fuzzy
 msgid "0=None; example: 1 GiB"
-msgstr "0=Nimic; de ex. 1g"
+msgstr "0=Nimic; exemplu:. 1 GiB"
 
 #: storage/forms.py:1506
 msgid ""
@@ -9334,7 +9332,7 @@ msgstr ""
 
 #: storage/forms.py:1655
 msgid "Specify the size with IEC suffixes, e.g. 10 GiB"
-msgstr ""
+msgstr "Specifică dimensiunea cu sufix IEC, ex. 10 GiB"
 
 #: storage/forms.py:1684
 msgid "Permission Type"
@@ -9353,31 +9351,24 @@ msgid "Root password"
 msgstr "Parolă Root"
 
 #: storage/models.py:856
-#, fuzzy
 msgid "Last snapshot sent to remote side"
-msgstr ""
-"Ultimul punct de restaurare trimis părţii remote (lăsaţi cîmpul necompletat "
-"pentru o replicare completă)"
+msgstr "Ultimul snapshot trimis către zona remote"
 
 #: storage/models.py:886
-#, fuzzy
 msgid "Replication Stream Compression"
-msgstr "Activităţi replicare"
+msgstr "Compresie flux replicare"
 
 #: storage/models.py:909
-#, fuzzy
 msgid "Disabling will not stop any replications which are in progress."
-msgstr ""
-"Dezactivarea opțiuniii va opri orice acțiune nouă de replicare să fie "
-"programată. Nu va opri însă replicările active sau deja programate."
+msgstr "Dezactivarea opțiuniii nu va opri replicările active."
 
 #: storage/models.py:946
 msgid "Sending %(snapshot)s (%(percent)s%%)"
-msgstr ""
+msgstr "Trimitere %(snapshot)s (%(percent)s%%)"
 
 #: storage/models.py:951
 msgid "Sending"
-msgstr ""
+msgstr "Trimitere"
 
 #: storage/views.py:980
 msgid "Volume locked"
@@ -9389,14 +9380,14 @@ msgstr "Structura pool nu a putut fi upgradată: %s"
 
 #: storage/views.py:1154
 msgid "The pool has been upgraded"
-msgstr ""
+msgstr "Acest pool a fost upgradat"
 
 #: system/admin.py:59
 #: system/admin.py:66
 #: system/admin.py:106
 #: system/admin.py:113
 msgid "Run Now"
-msgstr ""
+msgstr "Execută acum"
 
 #: system/forms.py:1018
 msgid "This variable already exists"
@@ -9422,118 +9413,111 @@ msgstr "HTTP WebGUI -> Redirectare HTTPS"
 msgid ""
 "Redirect HTTP (port 80) to HTTPS when only the HTTPS protocol is enabled"
 msgstr ""
+"Redirectează traficul HTTP (port 80) către HTTPS atunci când doar protocolul "
+"HTTPS este activat"
 
 #: system/models.py:203
-#, fuzzy
 msgid "Set this to match your serial port address (0x3f8, 0x2f8, etc.)"
-msgstr "Introduceți viteza portului serial"
+msgstr ""
+"Introduceți aici adresa portului dumneavostră serial (0x3f8, 0x2f8, etc.)"
 
 #: system/models.py:205
-#, fuzzy
 msgid "Serial Port Address"
-msgstr "Viteza portului serial"
+msgstr "Adresa portului serial"
 
 #: system/models.py:1133
 msgid "Pool"
-msgstr ""
+msgstr "Pool"
 
 #: system/models.py:1138
-#, fuzzy
 msgid "Syslog"
-msgstr "Server syslog"
+msgstr "Syslog"
 
 #: system/models.py:1142
 msgid "RRD"
-msgstr ""
+msgstr "RRD"
 
 #: system/models.py:1146
 #: templates/system/settings.html:11
-#, fuzzy
 msgid "System Dataset"
-msgstr "Modificare set date"
+msgstr "Sistem de date system"
 
 #: system/views.py:191
-#, fuzzy
 msgid "The cron process has started"
-msgstr "Procesul de verificare a început"
+msgstr "Procesul cron a început"
 
 #: system/views.py:541
-#, fuzzy
 msgid "The rsync process has started"
-msgstr "Procesul de verificare a început"
+msgstr "Procesul rsync a început"
 
 #: system/alertmods/lsi_firmware.py:34
 msgid ""
 "Firmware version %(fwversion)s does not match driver version %(drversion)s "
 "for /dev/mps%(mps)s"
 msgstr ""
+"Versiunea firmware %(fwversion) nu se potrivește cu versiunea driverului "
+"%(drversion) pentru /dev/mps%(mps)"
 
 #: system/alertmods/replication_status.py:17
 msgid "Replication %(replication)s failed: %(message)s"
-msgstr ""
+msgstr "Eroare replicare %(replication): %(message)"
 
 #: system/alertmods/volume_version.py:24
 #: system/alertmods/volume_version.py:44
-#, fuzzy
 msgid "You need to upgrade the volume %s"
-msgstr "Va trebui să creați mai întîi un volum ZFS!"
+msgstr "Va trebui să upgradați volumul %s"
 
 #: system/alertmods/zpool_capacity.py:28
 msgid ""
 "The capacity for the volume '%(volume)s' is currently at %(capacity)d%%, "
 "while the recommended value is below 80%%."
 msgstr ""
+"Capacitatea volumului '%(volume)s' este acum la %(capacity)d%%, în timp ce "
+"valoarea recomandată este sub 80%%."
 
 #: templates/reporting/index.html:3
 msgid "CPU"
-msgstr ""
+msgstr "CPU"
 
 #: templates/reporting/index.html:11
-#, fuzzy
 msgid "Partition"
-msgstr "Opţiune pornire"
+msgstr "Partiție"
 
 #: templates/services/core.html:82
-#, fuzzy
 msgid "LLDP Settings"
-msgstr "Setări LDAP"
+msgstr "Setări LLDP"
 
 #: templates/storage/lock.html:3
-#, fuzzy
 msgid "Do you want to lock this volume?"
-msgstr "Deblocați acest volum?"
+msgstr "Blocați acest volum?"
 
 #: templates/storage/rekey.html:6
-#, fuzzy
 msgid ""
 "Remember to create a new passphrase as this action removes the current "
 "passphrase"
 msgstr ""
-"Amintiți-vă să adăugați o cheie nouă de recuperare întrucît prin această "
+"Amintiți-vă să creați o cheie nouă de protecție întrucît prin această "
 "acțiune veți invalida cheia curentă"
 
 #: templates/storage/replication_datagrid.html:16
-#, fuzzy
 msgid ""
 "ATTENTION: A periodic snapshot of a given ZFS Volume/Dataset is required to "
 "create a replication task"
 msgstr ""
-"ATENȚIE: Pentru a crea o acțiune de replicare e nevoie de crearea periodică "
-"a punctelor de restaurare pentru sistemul de fișiere/volumul ZFS dat"
+"ATENȚIE: Pentru a crea o acțiune de replicare este nevoie să realizați "
+"periodic snapshot-uri pentru Volumele/Deturile de date ZFS curente"
 
 #: templates/storage/snapshots.html:102
-#, fuzzy
 msgid "Replication"
-msgstr "Replicare ZFS"
+msgstr "Replicare"
 
 #: templates/storage/upgrade_confirm.html:5
-#, fuzzy
 msgid "Are you sure you want to upgrade your pool?"
-msgstr "Confirmați ștergerea?"
+msgstr "Doriți upgradarea pool-ului?"
 
 #: templates/storage/upgrade_confirm.html:5
 msgid "This operation is irreversible!"
-msgstr ""
+msgstr "Operațiunea este ireversibilă!"
 
 #: templates/storage/volumestatus_datagrid.html:6
 msgid "Resilver"
@@ -9542,17 +9526,15 @@ msgstr ""
 #: templates/storage/volumestatus_datagrid.html:17
 #: templates/storage/volumestatus_datagrid.html:33
 msgid "Date"
-msgstr ""
+msgstr "Date"
 
 #: templates/storage/zfswizard.html:77
-#, fuzzy
 msgid "Deduplication"
-msgstr "Deduplicare ZFS"
+msgstr "Deduplicare"
 
 #: templates/system/cron_run.html:5
-#, fuzzy
 msgid "Would you like to run this cron job now?"
-msgstr "Activaţi acest serviciu?"
+msgstr "Rulați acest task cron acum?"
 
 #: templates/system/reboot_dialog2.html:4
 msgid ""
