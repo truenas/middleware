@@ -1,0 +1,14 @@
+<ng-template [ngTemplateOutlet]="templateTop" [ngTemplateOutletContext]="this"></ng-template>
+
+<alert *ngIf="success" type="success">{{ successMessage }}</alert>
+<alert *ngIf="error" type="danger"><span [innerHTML]="error"></span></alert>
+<ba-card>
+  <form (ngSubmit)="onSubmit()" [formGroup]="formGroup" [ngBusy]="[parentBusy, busy]">
+
+    <dynamic-form-bootstrap-control #component *ngFor="let controlModel of conf.formModel" [group]="formGroup" [model]="controlModel"
+      [hasErrorMessaging]="controlModel.hasErrorMessages">
+    </dynamic-form-bootstrap-control>
+    <button class="btn btn-primary" type="submit">OK</button>
+
+  </form>
+</ba-card>

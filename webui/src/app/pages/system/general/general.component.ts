@@ -1,11 +1,16 @@
 import { Component } from '@angular/core';
+import { Router } from '@angular/router';
 
 import { DynamicFormControlModel, DynamicFormService, DynamicCheckboxModel, DynamicInputModel, DynamicSelectModel, DynamicRadioGroupModel } from '@ng2-dynamic-forms/core';
 import { RestService } from '../../../services/rest.service';
 
 @Component({
   selector: 'app-general',
-  template: `<entity-config [conf]="this"></entity-config>`
+  template: `
+  <p>
+    <button class="btn btn-primary" (click)="gotoSaveConfig()">Save Config</button>
+  </p>
+  <entity-config [conf]="this"></entity-config>`
 })
 export class GeneralComponent {
 
@@ -76,7 +81,7 @@ export class GeneralComponent {
   private stg_sysloglevel: DynamicSelectModel<string>;
   private stg_syslogserver: DynamicSelectModel<string>;
 
-  constructor(protected rest: RestService, protected formService: DynamicFormService) {
+  constructor(protected rest: RestService, protected router: Router, protected formService: DynamicFormService) {
 
   }
 
@@ -132,6 +137,10 @@ export class GeneralComponent {
       });
     });
 
+  }
+
+  gotoSaveConfig() {
+    this.router.navigate(new Array('/pages').concat(['system', 'general', 'config-save']));
   }
 
 }
