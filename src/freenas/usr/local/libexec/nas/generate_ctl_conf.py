@@ -95,7 +95,7 @@ def auth_group_config(auth_tag=None, auth_list=None, auth_type=None, initiator=N
         return False
 
     # There are some real paremeters, so write the auth group.
-    addline("auth-group ag%s {\n" % auth_tag)
+    addline("auth-group %s {\n" % auth_tag)
     for name in inames:
         addline("""\tinitiator-name "%s"\n""" % name.lstrip())
     for name in inets:
@@ -151,17 +151,15 @@ def main():
             ]
         else:
             auth_list = []
-        agname = '4pg%d' % portal.iscsi_target_portal_tag
-        auth = auth_group_config(auth_tag=agname,
+        agname = 'ag4pg%d' % portal.iscsi_target_portal_tag
+        if not auth_group_config(auth_tag=agname,
                                  auth_list=auth_list,
-                                 auth_type=portal.iscsi_target_portal_discoveryauthmethod)
+                                 auth_type=portal.iscsi_target_portal_discoveryauthmethod):
+            agname = "no-authentication"
 
         addline("portal-group pg%s {\n" % portal.iscsi_target_portal_tag)
         addline("\tdiscovery-filter portal-name\n")
-        if auth:
-            addline("\tdiscovery-auth-group ag%s\n" % agname)
-        else:
-            addline("\tdiscovery-auth-group no-authentication\n")
+        addline("\tdiscovery-auth-group %s\n" % agname)
         listen = [
             Struct(i)
             for i in client.call('datastore.query', 'services.iSCSITargetPortalIP', [('iscsi_target_portalip_portal', '=', portal.id)])
@@ -287,7 +285,7 @@ def main():
                 ]
             else:
                 auth_list = []
-            agname = '4tg%d_%d' % (target.id, grp.id)
+            agname = 'ag4tg%d_%d' % (target.id, grp.id)
             if auth_group_config(auth_tag=agname,
                                  auth_list=auth_list,
                                  auth_type=grp.iscsi_target_authtype,
@@ -313,7 +311,7 @@ def main():
             agname = authgroups.get(grp.id) or None
             addline("\tportal-group pg%d %s\n" % (
                 grp.iscsi_target_portalgroup.iscsi_target_portal_tag,
-                'ag' + agname if agname else 'no-authentication',
+                agname if agname else 'no-authentication',
             ))
         addline("\n")
         used_lunids = [
