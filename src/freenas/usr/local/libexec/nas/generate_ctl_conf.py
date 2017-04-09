@@ -224,6 +224,7 @@ def main():
                     except OSError:
                         pass
         addline("lun \"%s\" {\n" % extent.iscsi_target_extent_name)
+        addline("\tctl-lun %d\n" % (extent.id - 1))
         size = extent.iscsi_target_extent_filesize
         addline("\tpath \"%s\"\n" % path)
         addline("\tblocksize %s\n" % extent.iscsi_target_extent_blocksize)
