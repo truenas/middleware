@@ -217,6 +217,10 @@ module.exports = function (options) {
         '/api/v1.0/*': {
           target: 'http://' + METADATA.remote,
           secure: false
+        },
+        '/_download/*': {
+          target: 'http://' + METADATA.remote,
+          secure: false
         }
       }
     },
