@@ -1,0 +1,16 @@
+<alert *ngIf="success" type="success">{{ successMessage }}</alert>
+<alert *ngIf="error" type="danger"><span [innerHTML]="error"></span></alert>
+
+<alert type="info">
+  <strong>The system will reboot to perform this operation!</strong><br /> All password will be reset in case your configuration
+  bundle does not include the password secret seed.</alert>
+<ba-card>
+  <form (ngSubmit)="onSubmit($event)" [ngBusy]="sub">
+
+    <input type="file" ngFileSelect [options]="options" (onUpload)="handleUpload($event)">
+
+    <button class="btn btn-primary" type="submit">OK</button>
+
+  </form>
+</ba-card>
+<ba-job [jobId]="jobId" [title]="'Upload Config'" [showCloseButton]="false" (success)="onJobSuccess($event)"></ba-job>
