@@ -12,7 +12,7 @@ import { routing } from './system.routing';
 
 import { AdvancedComponent } from './advanced/';
 import { EmailComponent } from './email/';
-import { GeneralComponent, ConfigSaveComponent, ConfigUploadComponent } from './general/';
+import { GeneralComponent, ConfigSaveComponent, ConfigUploadComponent, ConfigResetComponent } from './general/';
 import { UpdateComponent } from './update/';
 
 @NgModule({
@@ -34,6 +34,7 @@ import { UpdateComponent } from './update/';
     GeneralComponent,
     ConfigSaveComponent,
     ConfigUploadComponent,
+    ConfigResetComponent,
     UpdateComponent,
   ],
   providers: [
