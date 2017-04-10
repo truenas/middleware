@@ -46,3 +46,27 @@ class ConfigService(Service):
 
         if bundle:
             os.remove(filename)
+
+    @accepts()
+    @job(pipe=True)
+    def upload(self, job):
+        """
+        Accepts a configuration file via job pipe.
+        """
+        f = gevent.fileobject.FileObject(job.read_fd, 'rb', close=False)
+        nreads = 0
+        filename = tempfile.mktemp(dir='/var/tmp/firmware')
+        with open(filename, 'wb') as f_tmp:
+            while True:
+                read = f.read(1024)
+                if read == b'':
+                    break
+                f_tmp.write(read)
+                nreads += 1
+                if nreads > 10240:
+                    # FIXME: transfer to a file on disk
+                    raise ValueError('File is bigger than 10MiB')
+        rv = self.middleware.call('notifier.config_upload', filename)
+        if not rv[0]:
+            raise ValueError(rv[1])
+        self.middleware.call('system.reboot', {'delay': 10})

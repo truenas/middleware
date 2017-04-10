@@ -371,6 +371,7 @@ class FileApplication(object):
                 read = form['file'].file.read(1024)
                 if read == b'':
                     break
+                f.write(read)
         finally:
             if f:
                 f.close()
