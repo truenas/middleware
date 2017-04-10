@@ -15,6 +15,8 @@ from gevent.wsgi import WSGIServer
 from geventwebsocket import WebSocketServer, WebSocketApplication, Resource
 
 import argparse
+import binascii
+import cgi
 import gevent
 import imp
 import inspect
@@ -260,7 +262,7 @@ class Application(WebSocketApplication):
             self.unsubscribe(message['id'])
 
 
-class DownloadApplication(object):
+class FileApplication(object):
 
     def __init__(self, middleware):
         self.middleware = middleware
@@ -269,6 +271,16 @@ class DownloadApplication(object):
         # Path is in the form of:
         # /_download/{jobid}?auth_token=XXX
         path = environ['PATH_INFO'][1:].split('/')
+
+        if path[0] == '_download':
+            return self.download(path, environ, start_response)
+        elif path[0] == '_upload':
+            return self.upload(path, environ, start_response)
+        else:
+            start_response('404 Not found', [])
+            return ['']
+
+    def download(self, path, environ, start_response):
 
         if not path[-1].isdigit():
             start_response('404 Not found', [])
@@ -299,9 +311,7 @@ class DownloadApplication(object):
         if denied:
             start_response('401 Access Denied', [])
             return ['']
-        return self.download(job, filename, start_response)
 
-    def download(self, job, filename, start_response):
         start_response('200 OK', [
             ('Content-Type', 'application/octet-stream'),
             ('Content-Disposition', f'attachment; filename="{filename}"'),
@@ -322,6 +332,56 @@ class DownloadApplication(object):
                 f.close()
                 os.close(job.read_fd)
 
+    def upload(self, path, environ, start_response):
+
+        denied = True
+        auth = environ.get('HTTP_AUTHORIZATION')
+        if auth:
+            if auth.startswith('Basic '):
+                try:
+                    auth = binascii.a2b_base64(auth[6:]).decode()
+                    if ':' in auth:
+                        user, password = auth.split(':', 1)
+                        if self.middleware.call('auth.check_user', user, password):
+                            denied = False
+                except binascii.Error:
+                    pass
+        if denied:
+            start_response('401 Access Denied', [])
+            return ['']
+
+        #qs = urllib.parse.parse_qs(environ['QUERY_STRING'])
+        form = cgi.FieldStorage(environ=environ, fp=environ['wsgi.input'])
+        if 'data' not in form or 'file' not in form:
+            start_response('405 Method Not Allowed', [])
+            return ['']
+
+        try:
+            data = json.loads(form['data'].file.read())
+            job_id = self.middleware.call(data['method'], *(data.get('params') or []))
+            job = self.middleware.get_jobs().all()[job_id]
+        except Exception:
+            start_response('405 Method Not Allowed', [])
+            return [b'Invalid data']
+
+        f = None
+        try:
+            f = gevent.fileobject.FileObject(job.write_fd, 'wb', close=False)
+            while True:
+                read = form['file'].file.read(1024)
+                if read == b'':
+                    break
+        finally:
+            if f:
+                f.close()
+                os.close(job.write_fd)
+
+        start_response('200 OK', [
+            ('Content-Type', 'application/json'),
+        ])
+        yield json.dumps({
+            'job_id': job_id,
+        }).encode('utf8')
 
 class Middleware(object):
 
@@ -524,7 +584,7 @@ class Middleware(object):
         apidocs_app.middleware = self
         apidocsserver = WSGIServer(('127.0.0.1', 8001), apidocs_app)
         restserver = WSGIServer(('127.0.0.1', 8002), restful_api.get_app())
-        downloadserver = WSGIServer(('127.0.0.1', 8003), DownloadApplication(self))
+        downloadserver = WSGIServer(('127.0.0.1', 8003), FileApplication(self))
 
         self.__server_threads = [
             gevent.spawn(wsserver.serve_forever),
