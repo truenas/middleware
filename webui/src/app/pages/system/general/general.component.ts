@@ -11,6 +11,7 @@ import { RestService } from '../../../services/rest.service';
     <button class="btn btn-primary" (click)="gotoSaveConfig()">Save Config</button>
     <button class="btn btn-primary" (click)="gotoUploadConfig()">Upload Config</button>
     <button class="btn btn-primary" (click)="gotoResetConfig()">Reset Config</button>
+    <button class="btn btn-primary" (click)="gotoNTPServers()">NTP Servers</button>
   </p>
   <entity-config [conf]="this"></entity-config>`
 })
@@ -151,6 +152,10 @@ export class GeneralComponent {
 
   gotoResetConfig() {
     this.router.navigate(new Array('/pages').concat(['system', 'general', 'config-reset']));
+  }
+
+  gotoNTPServers() {
+    this.router.navigate(new Array('/pages').concat(['system', 'ntpservers']));
   }
 
 }

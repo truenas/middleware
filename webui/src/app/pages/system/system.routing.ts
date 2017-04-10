@@ -14,5 +14,6 @@ export const routes: Routes = [
   { path: 'email', component: EmailComponent },
   { path: 'advanced', component: AdvancedComponent },
   { path: 'update', component: UpdateComponent },
+  { path: 'ntpservers', loadChildren: 'app/pages/system/ntpservers/ntpservers.module#NTPServersModule' },
 ];
 export const routing: ModuleWithProviders = RouterModule.forChild(routes);

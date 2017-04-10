@@ -49,7 +49,7 @@ export class EntityAddComponent implements OnInit {
       value = this.conf.clean.bind(this.conf)(value);
     }
 
-    this.busy = this.rest.post(this.conf.resource_name, {
+    this.busy = this.rest.post(this.conf.resource_name + '/', {
       body: JSON.stringify(value),
     }).subscribe((res) => {
       this.router.navigate(new Array('/pages').concat(this.conf.route_success));
