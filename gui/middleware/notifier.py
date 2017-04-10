@@ -3196,13 +3196,8 @@ class notifier(metaclass=HookMetaclass):
         self._system("mv /data/freenas-v1.db.factory /data/freenas-v1.db")
         os.chdir(save_path)
 
-    def config_upload(self, uploaded_file_fd):
-        config_file_name = tempfile.mktemp(dir='/var/tmp/firmware')
+    def config_upload(self, config_file_name):
         try:
-            with open(config_file_name, 'wb') as config_file_fd:
-                for chunk in uploaded_file_fd.chunks():
-                    config_file_fd.write(chunk)
-
             """
             First we try to open the file as a tar file.
             We expect the tar file to contain at least the freenas-v1.db.
