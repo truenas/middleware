@@ -37,10 +37,15 @@ class VMForm(ModelForm):
                 c.call('vm.update', self.instance.id, cdata)
                 pk = self.instance.id
             else:
-                cdata['devices'] = [
-                    {'dtype': 'NIC', 'attributes': {'type': 'E1000'}},
-                    {'dtype': 'VNC', 'attributes': {'wait': True}},
-                ]
+                if self.instance.bootloader == 'UEFI':
+                    cdata['devices'] = [
+                        {'dtype': 'NIC', 'attributes': {'type': 'E1000'}},
+                        {'dtype': 'VNC', 'attributes': {'wait': True}},
+                    ]
+                else:
+                    cdata['devices'] = [
+                        {'dtype': 'NIC', 'attributes': {'type': 'E1000'}},
+                    ]
                 pk = c.call('vm.create', cdata)
         return models.VM.objects.get(pk=pk)
 
@@ -132,15 +137,10 @@ class DeviceForm(ModelForm):
             new_vnc_port = new_vnc_port + int(vm.id)
             self.cleaned_data['VNC_port'] = str(new_vnc_port)
 
-        if self.cleaned_data.get('dtype') == 'VNC':
-            if vm and vm.bootloader not in ('UEFI', 'UEFI_CSM'):
-                self._errors['dtype'] = self.error_class([
-                    _('VNC is only allowed for UEFI')
-                ])
-                self.cleaned_data.pop('dtype', None)
         return self.cleaned_data
 
     def save(self, *args, **kwargs):
+        vm = self.cleaned_data.get('vm')
         kwargs['commit'] = False
         obj = super(DeviceForm, self).save(*args, **kwargs)
         if self.cleaned_data['dtype'] == 'DISK':
@@ -157,9 +157,16 @@ class DeviceForm(ModelForm):
                 'type': self.cleaned_data['NIC_type'],
             }
         elif self.cleaned_data['dtype'] == 'VNC':
-            obj.attributes = {
-                'wait': self.cleaned_data['VNC_wait'],
-                'vnc_port': self.cleaned_data['VNC_port'],
-            }
+            if vm.bootloader == 'UEFI':
+                obj.attributes = {
+                    'wait': self.cleaned_data['VNC_wait'],
+                    'vnc_port': self.cleaned_data['VNC_port'],
+                }
+            else:
+                self._errors['dtype'] = self.error_class([_('VNC is only allowed for UEFI')])
+                self.cleaned_data.pop('VNC_port', None)
+                self.cleaned_data.pop('VNC_wait', None)
+                return obj
+
         obj.save()
         return obj
