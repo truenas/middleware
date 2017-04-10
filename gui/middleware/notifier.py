@@ -3790,7 +3790,8 @@ class notifier(metaclass=HookMetaclass):
             return None
 
         tp = search.group("type")
-        value = search.group("value")
+        # We need to escape single quotes to html entity
+        value = search.group("value").replace("'", "%27")
 
         if tp == 'uuid':
             search = doc.xpath("//class[name = 'PART']/geom//config[rawuuid = '%s']/../../name" % value)
