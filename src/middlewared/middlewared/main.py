@@ -22,6 +22,7 @@ import imp
 import inspect
 import linecache
 import os
+import setproctitle
 import signal
 import subprocess
 import sys
@@ -350,7 +351,6 @@ class FileApplication(object):
             start_response('401 Access Denied', [])
             return ['']
 
-        #qs = urllib.parse.parse_qs(environ['QUERY_STRING'])
         form = cgi.FieldStorage(environ=environ, fp=environ['wsgi.input'])
         if 'data' not in form or 'file' not in form:
             start_response('405 Method Not Allowed', [])
@@ -382,6 +382,7 @@ class FileApplication(object):
         yield json.dumps({
             'job_id': job_id,
         }).encode('utf8')
+
 
 class Middleware(object):
 
@@ -662,7 +663,7 @@ def main():
     else:
         _logger.configure_logging('file')
 
-    #setproctitle.setproctitle('middlewared')
+    setproctitle.setproctitle('middlewared')
     # Workaround to tell django to not set up logging on its own
     os.environ['MIDDLEWARED'] = str(os.getpid())
 
