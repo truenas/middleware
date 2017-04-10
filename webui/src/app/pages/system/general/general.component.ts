@@ -9,6 +9,7 @@ import { RestService } from '../../../services/rest.service';
   template: `
   <p>
     <button class="btn btn-primary" (click)="gotoSaveConfig()">Save Config</button>
+    <button class="btn btn-primary" (click)="gotoUploadConfig()">Upload Config</button>
   </p>
   <entity-config [conf]="this"></entity-config>`
 })
@@ -141,6 +142,10 @@ export class GeneralComponent {
 
   gotoSaveConfig() {
     this.router.navigate(new Array('/pages').concat(['system', 'general', 'config-save']));
+  }
+
+  gotoUploadConfig() {
+    this.router.navigate(new Array('/pages').concat(['system', 'general', 'config-upload']));
   }
 
 }

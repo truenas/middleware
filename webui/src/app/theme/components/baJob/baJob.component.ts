@@ -18,6 +18,7 @@ export class BaJob {
   private args: any[] = [];
   @Input() title: string = '';
   @Input() showCloseButton: boolean = true;
+  @Input() jobId: Number;
 
   @Output() progress = new EventEmitter();
   @Output() success = new EventEmitter();
@@ -56,10 +57,32 @@ export class BaJob {
 
   public show() {
     this.modal.show();
+    this.ws.call('core.get_jobs', [[['id', '=', this.jobId]]]).subscribe((res) => {
+      if(res.length > 0) {
+        this.jobUpdate(res[0]);
+      }
+    })
+    this.ws.subscribe("core.get_jobs").subscribe((res) => {
+      if(res.id == this.jobId) {
+        this.jobUpdate(res);
+      }
+    });
+  }
+
+  jobUpdate(job) {
+    this.job = job;
+    if(job.progress) {
+      this.progress.emit(job.progress);
+    }
+    if(job.state == 'SUCCESS') {
+      this.success.emit(this.job);
+    } else if(job.state == 'FAILED') {
+      this.failure.emit(this.job);
+    }
   }
 
   public submit() {
-    this.show();
+    this.modal.show();
     this.ws.job(this.method, this.args).subscribe(
       (res) => {
         this.job = res;
