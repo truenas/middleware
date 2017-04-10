@@ -108,7 +108,7 @@ from freenasUI.sharing.models import (
     NFS_Share,
     NFS_Share_Path,
 )
-from freenasUI.storage.forms import VolumeAutoImportForm
+from freenasUI.storage.forms import VolumeAutoImportForm, VolumeMixin
 from freenasUI.storage.models import Disk, Volume, Scrub
 from freenasUI.system import models
 from freenasUI.system.utils import manual_update
@@ -2093,7 +2093,7 @@ InitialWizardShareFormSet = formset_factory(
 )
 
 
-class InitialWizardVolumeForm(Form):
+class InitialWizardVolumeForm(VolumeMixin, Form):
 
     volume_name = forms.CharField(
         label=_('Pool Name'),
@@ -2355,17 +2355,6 @@ class InitialWizardVolumeForm(Form):
                 groups = self._grp_predefined(bysize, _type)
             types[_type] = self._groups_to_disks_size(bysize, groups, swapsize)
         return json.dumps(types)
-
-    def clean_volume_name(self):
-        volume_name = self.cleaned_data.get('volume_name')
-        if not volume_name:
-            return volume_name
-        qs = Volume.objects.filter(vol_name=volume_name)
-        if qs.exists():
-            raise forms.ValidationError(
-                _("A pool with this name already exists.")
-            )
-        return volume_name
 
     def clean(self):
         volume_type = self.cleaned_data.get('volume_type')
