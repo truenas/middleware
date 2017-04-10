@@ -221,6 +221,10 @@ module.exports = function (options) {
         '/_download/*': {
           target: 'http://' + METADATA.remote,
           secure: false
+        },
+        '/_upload/*': {
+          target: 'http://' + METADATA.remote,
+          secure: false
         }
       }
     },
