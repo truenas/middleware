@@ -2220,9 +2220,9 @@ class InitialWizardVolumeForm(VolumeMixin, Form):
             num = len(devs)
             if num in (4, 8):
                 mod = 0
-                perrow = num / 2
+                perrow = int(num / 2)
                 rows = 2
-                vdevtype = cls._grp_type(num / 2)
+                vdevtype = cls._grp_type(int(num / 2))
             elif num < 12:
                 mod = 0
                 perrow = num
