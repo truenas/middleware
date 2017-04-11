@@ -7,7 +7,7 @@ import { NgUploaderOptions, NgFileSelectDirective, UploadedFile } from 'ngx-uplo
 import { Subscription, Observable, Observer } from 'rxjs';
 
 @Component({
-  selector: 'config-save',
+  selector: 'config-upload',
   templateUrl: 'config-upload.component.html'
 })
 export class ConfigUploadComponent {

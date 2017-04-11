@@ -21,7 +21,9 @@ export class CommonFormComponent implements OnInit, OnDestroy {
   @Input('conf') conf: any;
   @Input('busy') parentBusy: any = null;
   @Input() successMessage: string = 'Form has been successfully submitted.';
+
   @Output() save = new EventEmitter();
+  @Output('success') successEvent = new EventEmitter();
 
   templateTop: TemplateRef<any>;
   @ContentChildren(EntityTemplateDirective) templates: QueryList<EntityTemplateDirective>;
@@ -75,13 +77,14 @@ export class CommonFormComponent implements OnInit, OnDestroy {
     */
     if(this.conf.resource_name) {
 
-      this.busy = this.rest.put(this.conf.resource_name + '/', {
+      this.busy = this.rest.post(this.conf.resource_name + '/', {
         body: JSON.stringify(value),
       }).subscribe((res) => {
         if(this.conf.route_success) {
           this.router.navigate(new Array('/pages').concat(this.conf.route_success));
         } else {
           this.success = true;
+          this.successEvent.emit();
         }
       }, (res) => {
         new EntityUtils().handleError(this, res);
