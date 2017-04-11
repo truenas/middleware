@@ -219,7 +219,7 @@ def main():
         else:
             # One portal group for non-HA and CARP HA cases.
             addline("portal-group pg%d {\n" % pg.iscsi_target_portal_tag)
-            addline("\ttag %d\n" % pg.iscsi_target_portal_tag)
+            addline("\ttag 0x%04x\n" % pg.iscsi_target_portal_tag)
             addline("\tdiscovery-filter portal-name\n")
             addline("\tdiscovery-auth-group %s\n" % agname)
             for i in listen:
