@@ -1226,10 +1226,8 @@ class iSCSITargetGlobalConfigurationForm(ModelForm):
 
     def __init__(self, *args, **kwargs):
         super(iSCSITargetGlobalConfigurationForm, self).__init__(*args, **kwargs)
-        # Disable ALUA for now
-        #_n = notifier()
-        #if not (not _n.is_freenas() and _n.failover_licensed()):
-        if True:
+        _n = notifier()
+        if not (not _n.is_freenas() and _n.failover_licensed()):
             del self.fields['iscsi_alua']
 
     def _clean_number_range(self, field, start, end):
