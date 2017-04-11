@@ -935,7 +935,7 @@ class Replication(Model):
                 else:
                     return _('Sending')
         if self.repl_lastresult:
-            return self.repl_lastresult
+            return self.repl_lastresult['msg']
 
     def delete(self):
         try:

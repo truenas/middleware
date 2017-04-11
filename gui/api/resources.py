@@ -1261,6 +1261,12 @@ class ReplicationResourceMixin(object):
         )
         if 'repl_remote' in bundle.data:
             del bundle.data['repl_remote']
+        result = bundle.obj.repl_lastresult or {}
+        if 'last_snapshot' in result:
+            last_snapshot = result['last_snapshot']
+        else:
+            last_snapshot = 'Not ran since boot'
+        bundle.data['repl_lastsnapshot'] = last_snapshot
         return bundle
 
     def hydrate(self, bundle):
