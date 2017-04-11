@@ -512,11 +512,7 @@ class IPChoices(NICChoices):
             for line in lines:
                 if carp:
                     reg = re.search(r' vhid (\d+)', line)
-                    if reg:
-                        vhid = reg.group(1)
-                        if vhid in ('10', '20'):
-                            continue
-                    else:
+                    if not reg:
                         continue
                 if line.startswith('\tinet6'):
                     if ipv6 is True:
