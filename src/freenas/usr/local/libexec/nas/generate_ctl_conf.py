@@ -134,6 +134,8 @@ def main():
     client = Client()
 
     gconf = Struct(client.call('datastore.query', 'services.iSCSITargetGlobalConfiguration', None, {'get': True}))
+    if gconf.iscsi_alua:
+        node = client.call('notifier.failover_node')
 
     if gconf.iscsi_isns_servers:
         for server in gconf.iscsi_isns_servers.split(' '):
@@ -141,37 +143,89 @@ def main():
 
     # Generate the portal-group section
     addline('portal-group default {\n}\n\n')
-    for portal in client.call('datastore.query', 'services.iSCSITargetPortal'):
-        portal = Struct(portal)
+    for pg in client.call('datastore.query', 'services.iSCSITargetPortal'):
+        pg = Struct(pg)
         # Prepare auth group for the portal group
-        if portal.iscsi_target_portal_discoveryauthgroup:
+        if pg.iscsi_target_portal_discoveryauthgroup:
             auth_list = [
                 Struct(i)
-                for i in client.call('datastore.query', 'services.iSCSITargetAuthCredential', [('iscsi_target_auth_tag', '=', portal.iscsi_target_portal_discoveryauthgroup)])
+                for i in client.call('datastore.query', 'services.iSCSITargetAuthCredential', [('iscsi_target_auth_tag', '=', pg.iscsi_target_portal_discoveryauthgroup)])
             ]
         else:
             auth_list = []
-        agname = 'ag4pg%d' % portal.iscsi_target_portal_tag
+        agname = 'ag4pg%d' % pg.iscsi_target_portal_tag
         if not auth_group_config(auth_tag=agname,
                                  auth_list=auth_list,
-                                 auth_type=portal.iscsi_target_portal_discoveryauthmethod):
+                                 auth_type=pg.iscsi_target_portal_discoveryauthmethod):
             agname = "no-authentication"
 
-        addline("portal-group pg%s {\n" % portal.iscsi_target_portal_tag)
-        addline("\tdiscovery-filter portal-name\n")
-        addline("\tdiscovery-auth-group %s\n" % agname)
-        listen = [
+        # Prepare IPs to listen on for all portal groups.
+        portals = [
             Struct(i)
-            for i in client.call('datastore.query', 'services.iSCSITargetPortalIP', [('iscsi_target_portalip_portal', '=', portal.id)])
+            for i in client.call('datastore.query', 'services.iSCSITargetPortalIP', [('iscsi_target_portalip_portal', '=', pg.id)])
         ]
-        for obj in listen:
-            if ':' in obj.iscsi_target_portalip_ip:
-                address = '[%s]' % obj.iscsi_target_portalip_ip
+        listen = []
+        listenA = []
+        listenB = []
+        for portal in portals:
+            if ':' in portal.iscsi_target_portalip_ip:
+                address = '[%s]' % portal.iscsi_target_portalip_ip
             else:
-                address = obj.iscsi_target_portalip_ip
-            addline("\tlisten %s:%s\n" % (address, obj.iscsi_target_portalip_port))
-        addline("\toption ha_shared on\n")
-        addline("}\n\n")
+                address = portal.iscsi_target_portalip_ip
+            found = False
+            if gconf.iscsi_alua:
+                if address == "0.0.0.0":
+                    listenA.append("%s:%s" % (address, portal.iscsi_target_portalip_port))
+                    listenB.append("%s:%s" % (address, portal.iscsi_target_portalip_port))
+                    found = True
+                    break
+                if not found:
+                    for net in client.call('datastore.query', 'network.Interfaces'):
+                        if net['int_vip'] == address and net['int_ipv4address'] and net['int_ipv4address_b']:
+                            listenA.append("%s:%s" % (net['int_ipv4address'], portal.iscsi_target_portalip_port))
+                            listenB.append("%s:%s" % (net['int_ipv4address_b'], portal.iscsi_target_portalip_port))
+                            found = True
+                            break
+                if not found:
+                    for alias in client.call('datastore.query', 'network.Alias'):
+                        if alias['alias_vip'] == address and alias['alias_v4address'] and alias['alias_v4address_b']:
+                            listenA.append("%s:%s" % (alias['alias_v4address'], portal.iscsi_target_portalip_port))
+                            listenB.append("%s:%s" % (alias['alias_v4address_b'], portal.iscsi_target_portalip_port))
+                            found = True
+                            break
+            else:
+                listen.append("%s:%s" % (address, portal.iscsi_target_portalip_port))
+
+        if gconf.iscsi_alua:
+            # Two portal groups for ALUA HA case.
+            addline("portal-group pg%dA {\n" % pg.iscsi_target_portal_tag)
+            addline("\ttag 0x%04x\n" % pg.iscsi_target_portal_tag)
+            addline("\tdiscovery-filter portal-name\n")
+            addline("\tdiscovery-auth-group %s\n" % agname)
+            for i in listenA:
+                addline("\tlisten %s\n" % i)
+            if node != "A":
+                addline("\tforeign\n")
+            addline("}\n")
+            addline("portal-group pg%dB {\n" % pg.iscsi_target_portal_tag)
+            addline("\ttag 0x%04x\n" % (pg.iscsi_target_portal_tag + 0x8000))
+            addline("\tdiscovery-filter portal-name\n")
+            addline("\tdiscovery-auth-group %s\n" % agname)
+            for i in listenB:
+                addline("\tlisten %s\n" % i)
+            if node != "B":
+                addline("\tforeign\n")
+            addline("}\n\n")
+        else:
+            # One portal group for non-HA and CARP HA cases.
+            addline("portal-group pg%d {\n" % pg.iscsi_target_portal_tag)
+            addline("\ttag %d\n" % pg.iscsi_target_portal_tag)
+            addline("\tdiscovery-filter portal-name\n")
+            addline("\tdiscovery-auth-group %s\n" % agname)
+            for i in listen:
+                addline("\tlisten %s\n" % i)
+            addline("\toption ha_shared on\n")
+            addline("}\n\n")
 
     # Cache zpool threshold
     poolthreshold = {}
@@ -308,11 +362,12 @@ def main():
 
         for grp in client.call('datastore.query', 'services.iscsitargetgroups', [('iscsi_target', '=', target.id)]):
             grp = Struct(grp)
-            agname = authgroups.get(grp.id) or None
-            addline("\tportal-group pg%d %s\n" % (
-                grp.iscsi_target_portalgroup.iscsi_target_portal_tag,
-                agname if agname else 'no-authentication',
-            ))
+            agname = authgroups.get(grp.id) or 'no-authentication'
+            if gconf.iscsi_alua:
+                addline("\tportal-group pg%dA %s\n" % (grp.iscsi_target_portalgroup.iscsi_target_portal_tag, agname))
+                addline("\tportal-group pg%dB %s\n" % (grp.iscsi_target_portalgroup.iscsi_target_portal_tag, agname))
+            else:
+                addline("\tportal-group pg%d %s\n" % (grp.iscsi_target_portalgroup.iscsi_target_portal_tag, agname))
         addline("\n")
         used_lunids = [
             o['iscsi_lunid']
