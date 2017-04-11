@@ -34,6 +34,8 @@ class IPMI_B(TreeNode):
 
     def pre_build_options(self):
         _n = notifier()
+        if not _n.ipmi_loaded():
+            raise ValueError
         if _n.is_freenas():
             raise ValueError
 
