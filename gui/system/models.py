@@ -55,12 +55,13 @@ def time_now():
 
 
 class Alert(Model):
+    """
+    Model to keep track of dismissed alerts.
+    """
     node = models.CharField(default='A', max_length=100)
     message_id = models.CharField(
         max_length=100,
     )
-    dismiss = models.BooleanField(default=True)
-    timestamp = models.IntegerField(default=time_now)
 
     class Meta:
         unique_together = (
