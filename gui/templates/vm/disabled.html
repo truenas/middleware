@@ -4,5 +4,7 @@
 </b>
 <br />
 <span style="padding: 10px;">
-  At this time only Intel CPU with unrestricted guest feature is allowed.
+  At this time Intel CPU with Extended Page Tables (EPT) is supported.
+  To run guests with more than one vCPU on Intel CPU, it requires VMX unrestricted mode support (UG).
+  For AMD CPU it requires Rapid Virtualization Indexing (RVI) or Nested Page Tables (NPT) support.
 </span>

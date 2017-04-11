@@ -6,5 +6,7 @@ def vm_enabled():
         flags = c.call('vm.flags')
         if flags['intel_vmx'] and flags['unrestricted_guest']:
             return True
+        elif flags['amd_rvi'] and flags['amd_asids']:
+            return True
         else:
             return False
