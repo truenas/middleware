@@ -18,6 +18,7 @@ import argparse
 import binascii
 import cgi
 import gevent
+import greenlet
 import imp
 import inspect
 import linecache
@@ -571,7 +572,51 @@ class Middleware(object):
         import pdb
         pdb.set_trace()
 
+    def green_monitor(self):
+        """
+        Start point method for setting up greenlet trace for finding
+        out blocked green threads.
+        """
+        self._green_hub = gevent.hub.get_hub()
+        self._green_active = None
+        self._green_counter = 0
+        greenlet.settrace(self._green_callback)
+        monkey.get_original('_thread', 'start_new_thread')(self._green_monitor_thread, ())
+        self._green_main_threadid = monkey.get_original('_thread', 'get_ident')()
+
+    def _green_callback(self, event, args):
+        """
+        This method is called for several events in the greenlet.
+        We use this to keep track of how many switches have happened.
+        """
+        if event == 'switch':
+            origin, target = args
+            self._green_active = target
+            self._green_counter += 1
+
+    def _green_monitor_thread(self):
+        sleep = monkey.get_original('time', 'sleep')
+        while True:
+            # Check every 2 seconds for blocked green threads.
+            # This could be a knob in the future.
+            sleep(2)
+            # If there have been no greenlet switches since last time we
+            # checked it means we are likely stuck in the same green thread
+            # for more time than we would like to!
+            if self._green_counter == 0:
+                active = self._green_active
+                # greenlet hub is OK since its the thread waiting for IO.
+                if active not in (None, self._green_hub):
+                    frame = sys._current_frames()[self._green_main_threadid]
+                    stack = traceback.format_stack(frame)
+                    err_log = ["Green thread seems blocked:\n"] + stack
+                    self.logger.warn(''.join(err_log))
+
+            # A race condition may happen here but its fairly rare.
+            self._green_counter = 0
+
     def run(self):
+        self.green_monitor()
 
         gevent.signal(signal.SIGTERM, self.kill)
         gevent.signal(signal.SIGUSR1, self.pdb)
