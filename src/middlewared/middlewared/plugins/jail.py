@@ -293,10 +293,10 @@ class JailService(Service):
         for _pool in pools:
             if _pool.name == pool:
                 ds = zfs.get_dataset(_pool.name)
-                ds.properties[prop].value = "yes"
+                ds.properties[prop] = libzfs.ZFSUserProperty("yes")
             else:
                 ds = zfs.get_dataset(_pool.name)
-                ds.properties[prop].value = "no"
+                ds.properties[prop] = libzfs.ZFSUserProperty("no")
 
         return True
 
