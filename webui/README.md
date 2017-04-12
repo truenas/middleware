@@ -34,7 +34,8 @@ $ npm install
 Start development server pointing to your FreeNAS machine (in this example, address is 192.168.0.50):
 
 ```sh
-$ env REMOTE=192.168.0.50 npm run server:dev
+$ env REMOTE=192.168.0.50
+$ npm run server:dev
 ```
 
 This should open the browser with the WebUI, by default http://localhost:3000.
