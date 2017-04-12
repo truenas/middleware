@@ -89,6 +89,12 @@ def get_idmap_object(obj_type, obj_id, idmap_type):
             idmap_ds_id=obj_id
         )
 
+    elif idmap_type == "fruit":
+        idmap = models.idmap_fruit.objects.get(
+            idmap_ds_type=obj_type,
+            idmap_ds_id=obj_id
+        )
+
     elif idmap_type == "hash":
         idmap = models.idmap_hash.objects.get(
             idmap_ds_type=obj_type,
@@ -155,6 +161,10 @@ def get_idmap(obj_type, obj_id, idmap_type):
     elif idmap_type == "autorid":
         if not idmap:
             idmap = models.idmap_autorid()
+
+    elif idmap_type == "fruit":
+        if not idmap:
+            idmap = models.idmap_fruit()
 
     elif idmap_type == "hash":
         if not idmap:

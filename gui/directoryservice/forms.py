@@ -89,6 +89,16 @@ class idmap_autorid_Form(ModelForm):
         ]
 
 
+class idmap_fruit_Form(ModelForm):
+    class Meta:
+        fields = '__all__'
+        model = models.idmap_fruit
+        exclude = [
+            'idmap_ds_type',
+            'idmap_ds_id'
+        ]
+
+
 class idmap_hash_Form(ModelForm):
     class Meta:
         fields = '__all__'

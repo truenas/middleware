@@ -93,6 +93,7 @@ IDMAP_TYPE_RID = 7
 IDMAP_TYPE_TDB = 8
 IDMAP_TYPE_TDB2 = 9
 IDMAP_TYPE_ADEX = 10
+IDMAP_TYPE_FRUIT = 11
 
 
 def idmap_to_enum(idmap_type):
@@ -101,6 +102,7 @@ def idmap_to_enum(idmap_type):
         'ad': IDMAP_TYPE_AD,
         'adex': IDMAP_TYPE_ADEX,
         'autorid': IDMAP_TYPE_AUTORID,
+        'fruit': IDMAP_TYPE_FRUIT,
         'hash': IDMAP_TYPE_HASH,
         'ldap': IDMAP_TYPE_LDAP,
         'nss': IDMAP_TYPE_NSS,
@@ -124,6 +126,7 @@ def enum_to_idmap(enum):
         IDMAP_TYPE_AD: 'ad',
         IDMAP_TYPE_ADEX: 'adex',
         IDMAP_TYPE_AUTORID: 'autorid',
+        IDMAP_TYPE_FRUIT: 'fruit',
         IDMAP_TYPE_HASH: 'hash',
         IDMAP_TYPE_LDAP: 'ldap',
         IDMAP_TYPE_NSS: 'nss',
@@ -284,6 +287,30 @@ class idmap_autorid(idmap_base):
 
     class FreeAdmin:
         resource_name = 'directoryservice/idmap/autorid'
+
+
+class idmap_fruit(idmap_base):
+    idmap_fruit_range_low = models.IntegerField(
+        verbose_name=_("Range Low"),
+        default=90000001
+    )
+    idmap_fruit_range_high = models.IntegerField(
+        verbose_name=_("Range High"),
+        default=100000000
+    )
+
+    def __init__(self, *args, **kwargs):
+        super(idmap_fruit, self).__init__(*args, **kwargs)
+
+        self.idmap_backend_type = IDMAP_TYPE_FRUIT
+        self.idmap_backend_name = enum_to_idmap(self.idmap_backend_type)
+
+    class Meta:
+        verbose_name = _("Fruit Idmap")
+        verbose_name_plural = _("Fruit Idmap")
+
+    class FreeAdmin:
+        resource_name = 'directoryservice/idmap/fruit'
 
 
 class idmap_hash(idmap_base):

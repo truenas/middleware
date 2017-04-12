@@ -901,6 +901,7 @@ IDMAP_CHOICES = (
     ('ad', _('ad')),
     ('adex', _('adex')),
     ('autorid', _('autorid')),
+    ('fruit', _('fruit')),
     ('hash', _('hash')),
     ('ldap', _('ldap')),
     ('nss', _('nss')),
