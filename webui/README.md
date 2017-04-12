@@ -11,6 +11,13 @@ This is the project for the new angular.io (4.x) WebUI for FreeNAS 11. It is mea
 
 # Getting started
 
+Install the development requirements (FreeBSD):
+
+```sh
+# pkg install node6
+# pkg install npm3
+```
+
 Checkout FreeNAS git repository:
 
 ```sh
