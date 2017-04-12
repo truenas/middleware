@@ -17,3 +17,9 @@ from django.core.wsgi import get_wsgi_application
 os.environ.setdefault("DJANGO_SETTINGS_MODULE", "freenasUI.settings")
 
 application = get_wsgi_application()
+try:
+    # Fake a request so most modules are imported at this time
+    # instead of the first user request.
+    application({'REQUEST_METHOD': 'HEAD', 'wsgi.input': 'DUMMY', 'SERVER_NAME': 'localhost', 'SERVER_PORT': 80}, lambda x, y: None)
+except Exception:
+    pass
