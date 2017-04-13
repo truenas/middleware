@@ -12,7 +12,7 @@ import { RestService, WebSocketService } from '../../../services/';
 })
 export class VmAddComponent {
 
-  protected resource_name: string = 'vm/vm/';
+  protected resource_name: string = 'vm/vm';
   protected route_success: string[] = ['vm'];
   protected formModel: DynamicFormControlModel[] = [
     new DynamicInputModel({

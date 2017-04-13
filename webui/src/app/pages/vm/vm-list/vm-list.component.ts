@@ -1,8 +1,14 @@
-import { Component } from '@angular/core';
+import { Component, ElementRef, OnInit } from '@angular/core';
+import { Router } from '@angular/router';
+import { GlobalState } from '../../../global.state';
+import { RestService, WebSocketService } from '../../../services/';
+import { Subscription } from 'rxjs';
 
 @Component({
-  selector: 'app-user-list',
-  template: `<entity-list [conf]="this"></entity-list>`
+  selector: 'app-vm-list',
+  template: `
+  <entity-list [conf]="this"></entity-list>
+  `
 })
 export class VmListComponent {
 
@@ -11,10 +17,12 @@ export class VmListComponent {
   protected route_edit: string[] = ['vm', 'edit'];
   protected route_delete: string[] = ['vm', 'delete'];
 
+  constructor(protected router: Router, protected rest: RestService, protected ws: WebSocketService) {}
+
   public columns:Array<any> = [
     {title: 'Name', name: 'name'},
     {title: 'Description', name: 'description'},
-    {title: 'Info', name: ''},
+    {title: 'Info', name: 'devices'},
     {title: 'Virtual CPUs', name: 'vcpus'},
     {title: 'Memory Size (MiB)', name: 'memory'},
     {title: 'Boot Loader Type', name: 'bootloader'},
@@ -29,6 +37,26 @@ export class VmListComponent {
       return false;
     }
     return true;
+  }
+
+  getActions(row) {
+    let actions = [];
+    actions.push({
+        label: "Start",
+    });
+    actions.push({
+        label: "Edit",
+        onClick: (row) => {
+            this.router.navigate(new Array('/pages').concat(["vm", "edit", row.id]));
+        }
+    });
+    actions.push({
+        label: "Delete",
+        onClick: (row) => {
+            this.router.navigate(new Array('/pages').concat(["vm", "delete", row.id]));
+        },
+    });
+    return actions;
   }
 
 }
