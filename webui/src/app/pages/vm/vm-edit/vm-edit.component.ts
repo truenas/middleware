@@ -56,17 +56,4 @@ export class VmEditComponent {
     });
   }
 
-  clean(data) {
-    delete data['groups'];
-    if (data['bsdusr_builtin']) {
-      delete data['bsdusr_gecos'];
-      delete data['bsdusr_homedir'];
-      delete data['bsdusr_username'];
-      delete data['bsdusr_gid'];
-      delete data['bsdusr_uid'];
-    }
-    delete data['bsdusr_builtin'];
-    return data;
-  }
-
 }
