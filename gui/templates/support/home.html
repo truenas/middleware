@@ -61,10 +61,10 @@
       {% for f in license.features %}
         {% if f.value == 1 %}{% trans "Deduplication" %}<br />{% endif %}
         {% if f.value == 2 %}{% trans "Jails/Plugins" %}<br />{% endif %}
-        {% if f.value == 4 %}{% trans "Fibre Channel" %}<br />{% endif %}
       {% empty %}
         {% trans "None" %}
       {% endfor %}
+      {% if fc_enabled %}{% trans "Fibre Channel" %}<br />{% endif %}
     </td>
     <th>{% trans "Additional Hardware" %}</th>
     <td>
