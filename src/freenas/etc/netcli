@@ -1198,13 +1198,15 @@ def show_ip():
 
     if urls:
         print()
-        print(_("You may try the following URLs to access the web user interface:"))
+        print(_("The web user interface is at:"))
         print()
 
         for url in sorted(urls):
             print(url)
     else:
-        print(_("No configured interfaces were found. Try to do it manually."))
+        print()
+        print(_("No configured network interfaces found."))
+        print(_("Please configure network interfaces manually."))
     print()
 
 def system_update():
@@ -1238,11 +1240,11 @@ def main_menu():
         [ _("Configure Static Routes"), configure_static_routes ],
         [ _("Configure DNS"), configure_dns ],
         [ _("Reset Root Password"), reset_root_pw ],
-        [ _("Reset to factory defaults"), reset_factory_defaults ],
+        [ _("Reset to Factory Defaults"), reset_factory_defaults ],
         [ _("Shell"), shell ],
         [ _("System Update (requires networking)"), system_update ],
         [ _("Reboot"), reboot ],
-        [ _("Shutdown"), shutdown],
+        [ _("Shut Down"), shutdown],
     ]
 
     if not notifier().is_freenas() and Support.is_available()[0]:
