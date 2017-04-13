@@ -63,6 +63,7 @@ from ipaddr import (
     IPAddress, IPNetwork, AddressValueError, NetmaskValueError,
     IPv4Address, IPv6Address,
 )
+from freenasUI.freeadmin.utils import key_order
 
 log = logging.getLogger('services.form')
 
@@ -1048,16 +1049,8 @@ class iSCSITargetAuthCredentialForm(ModelForm):
             del self.fields['iscsi_target_auth_secret2']
             del self.fields['iscsi_target_auth_peersecret2']
         else:
-            # FIXME: no keyOrder in OrderedDict
-            #self.fields.keyOrder = [
-            #    'iscsi_target_auth_tag',
-            #    'iscsi_target_auth_user',
-            #    'iscsi_target_auth_secret',
-            #    'iscsi_target_auth_secret2',
-            #    'iscsi_target_auth_peeruser',
-            #    'iscsi_target_auth_peersecret',
-            #    'iscsi_target_auth_peersecret2'
-            #]
+            key_order(self, 3, 'iscsi_target_auth_secret2', instance=True)
+            key_order(self, 6, 'iscsi_target_auth_peersecret2', instance=True)
 
             ins = kwargs.get("instance", None)
             if ins:
