@@ -2491,10 +2491,10 @@ class notifier(metaclass=HookMetaclass):
             oauth_file,
         )
 
-        fd = os.open(oauth_file, os.O_WRONLY | os.O_CREAT, 0o600)
-        os.write(fd, "key = %s\n" % rpctoken.key)
-        os.write(fd, "secret = %s\n" % rpctoken.secret)
-        os.close(fd)
+        with open(oauth_file, 'w') as f:
+            os.chmod(oauth_file, 0o600)
+            f.write("key = %s\n" % rpctoken.key)
+            f.write("secret = %s\n" % rpctoken.secret)
 
         self._system("/usr/sbin/service ix-plugins forcestop %s:%s" % (jail, newname))
         self._system("/usr/sbin/service ix-plugins forcestart %s:%s" % (jail, newname))
@@ -3196,13 +3196,8 @@ class notifier(metaclass=HookMetaclass):
         self._system("mv /data/freenas-v1.db.factory /data/freenas-v1.db")
         os.chdir(save_path)
 
-    def config_upload(self, uploaded_file_fd):
-        config_file_name = tempfile.mktemp(dir='/var/tmp/firmware')
+    def config_upload(self, config_file_name):
         try:
-            with open(config_file_name, 'wb') as config_file_fd:
-                for chunk in uploaded_file_fd.chunks():
-                    config_file_fd.write(chunk)
-
             """
             First we try to open the file as a tar file.
             We expect the tar file to contain at least the freenas-v1.db.
@@ -3790,7 +3785,8 @@ class notifier(metaclass=HookMetaclass):
             return None
 
         tp = search.group("type")
-        value = search.group("value")
+        # We need to escape single quotes to html entity
+        value = search.group("value").replace("'", "%27")
 
         if tp == 'uuid':
             search = doc.xpath("//class[name = 'PART']/geom//config[rawuuid = '%s']/../../name" % value)

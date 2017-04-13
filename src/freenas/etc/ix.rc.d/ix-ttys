@@ -9,98 +9,13 @@
 
 . /etc/rc.subr
 
-netcli_enable()
-{
-	local serspeed=$(${FREENAS_SQLITE_CMD} ${RO_FREENAS_CONFIG} "SELECT adv_serialspeed FROM system_advanced ORDER BY id DESC LIMIT 1")
-	local tmp
-
-	tmp=$(mktemp /tmp/tmp.XXXXXX)
-	sed -E -e "s,^(ttyv0.*)Pc(.*)\$,\1freenas\2," /etc/ttys > "${tmp}"
-
-	if [ -s "${tmp}" ]; then
-		mv "${tmp}" /etc/ttys
-	else
-		rm -f "$tmp"
-	fi
-
-	tmp=$(mktemp /tmp/tmp.XXXXXX)
-	sed -E -e "s,^(sercons.*)std\.[0-9]+(.*)\$,\1freenas_serial${serspeed}\2," /etc/ttys > "${tmp}"
-	if [ -s "${tmp}" ]; then
-		mv "${tmp}" /etc/ttys
-	else
-		rm -f "$tmp"
-	fi
-}
-
-netcli_disable()
-{
-	local tmp
-	local serspeed=$(${FREENAS_SQLITE_CMD} ${RO_FREENAS_CONFIG} "SELECT adv_serialspeed FROM system_advanced ORDER BY id DESC LIMIT 1")
-
-	tmp=$(mktemp /tmp/tmp.XXXXXX)
-	sed -E -e "s,^(ttyv0.*)freenas(.*)\$,\1Pc\2," /etc/ttys > "${tmp}"
-
-	if [ -s "${tmp}" ]; then
-		mv "${tmp}" /etc/ttys
-	else
-		rm -f "$tmp"
-	fi
-
-	tmp=$(mktemp /tmp/tmp.XXXXXX)
-	sed -E -e "s,^(sercons.*)freenas_serial[0-9]+(.*)\$,\1std.${serspeed}\2," /etc/ttys > "${tmp}"
-	if [ -s "${tmp}" ]; then
-		mv "${tmp}" /etc/ttys
-	else
-		rm -f "$tmp"
-	fi
-}
-
-serial_enable()
-{
-	local serspeed=$(${FREENAS_SQLITE_CMD} ${RO_FREENAS_CONFIG} "SELECT adv_serialspeed FROM system_advanced ORDER BY id DESC LIMIT 1")
-	local tmp
-	tmp=$(mktemp /tmp/tmp.XXXXXX)
-
-	sed -E -e "s,^(sercons.*)off(.*)\$,\1on\2," \
-		  /etc/ttys > "${tmp}"
-
-	if [ -s "${tmp}" ]; then
-		mv "${tmp}" /etc/ttys
-	else
-		rm -f "$tmp"
-	fi
-
-	sercons=`conscontrol | grep Configured | cut -f 2 -d \  | tr , \\\\n | grep -vE 'ttyv[0-9]+' |head -n 1`
-	if [ "${sercons}ZZZ" == "ZZZ" ] ; then
-		sercons="ttyu0"
-	fi
-
-	ln -sf ${sercons} /dev/sercons
-}
-
-serial_disable()
-{
-	local tmp
-
-	tmp=$(mktemp /tmp/tmp.XXXXXX)
-
-	sed -E -e "s,^(sercons.*)on(.*)\$,\1off\2," \
-		  /etc/ttys > "${tmp}"
-
-	if [ -s "${tmp}" ]; then
-		mv "${tmp}" /etc/ttys
-	else
-		rm -f "$tmp"
-	fi
-	rm -f /dev/sercons
-}
-
 update_ttys()
 {
 	local IFS="|"
-	local f="adv_consolemenu adv_serialconsole"
+	local f="adv_consolemenu adv_serialconsole adv_serialspeed adv_serialport"
 	eval local $f
 	local sf=$(var_to_sf $f)
+	local serspeed serdev tmp tmp2
 
 	RO_FREENAS_CONFIG=$(ro_sqlite ${name} 2> /tmp/${name}.fail && rm /tmp/${name}.fail)
 	trap 'rm -f ${RO_FREENAS_CONFIG}' EXIT
@@ -118,15 +33,46 @@ update_ttys()
 	" | \
 	while eval read $f
 	do
-		case "${adv_serialconsole}" in 
-			0) serial_disable ;;
-			1) serial_enable ;;
-		esac
+		# If serial console is disabled, keep speed set by loader.
+		if [ "$adv_serialconsole" -eq "1" ]; then
+			serspeed=".${adv_serialspeed}"
+		else
+			serspeed=""
+		fi
 
-		case "${adv_consolemenu}" in
-			0) netcli_disable ;;
-			1) netcli_enable ;;
-		esac
+		# Setup VGA and UART TTYs according to console configuration.
+		tmp=$(mktemp /tmp/tmp.XXXXXX)
+		if [ "${adv_consolemenu}" -eq "1" ]; then
+			sed -E -e "s,^(ttyv0.*)Pc(.*)\$,\1freenas\2," /etc/ttys | \
+			    sed -E -e "s,^(ttyu.*)(freenas|3wire)(\.[0-9]+)?(.*)\$,\1freenas${serspeed}\4," > "${tmp}"
+		else
+			sed -E -e "s,^(ttyv0.*)freenas(.*)\$,\1Pc\2," /etc/ttys | \
+			    sed -E -e "s,^(ttyu.*)(freenas|3wire)(\.[0-9]+)?(.*)\$,\13wire${serspeed}\4," > "${tmp}"
+		fi
+
+		# Forcefully enable TTY on configured UART port in case it
+		# is different from console port.  It may happen since we
+		# can not enable/change serial console port without reboot.
+		tmp2=$(mktemp /tmp/tmp.XXXXXX)
+		if [ "$adv_serialconsole" -eq "1" ]; then
+			serdev=`devinfo -u | grep -E "${adv_serialport}.*\(uart[0-9]+\)" | sed -E -e "s,.*\(uart([0-9]+)\).*,ttyu\1,"`
+			if [ -n "$serdev" ]; then
+				sed -E -e "s,^(ttyu.*)on([ \t].*)\$,\1onifconsole\2," "${tmp}" | \
+				    sed -E -e "s,^(${serdev}.*)onifconsole(.*)\$,\1on\2," > "${tmp2}"
+			else
+				sed -E -e "s,^(ttyu.*)on([ \t].*)\$,\1onifconsole\2," "${tmp}" > "${tmp2}"
+			fi
+		else
+			sed -E -e "s,^(ttyu.*)on([ \t].*)\$,\1onifconsole\2," "${tmp}" > "${tmp2}"
+		fi
+
+		rm -f "$tmp"
+		if [ -s "${tmp2}" ]; then
+			mv "${tmp2}" /etc/ttys
+		else
+			rm -f "$tmp2"
+		fi
+
 		kill -HUP 1
 		break
 	done

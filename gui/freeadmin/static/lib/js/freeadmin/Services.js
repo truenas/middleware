@@ -271,6 +271,7 @@ define([
         me.services = {};
 
         Middleware.call('service.query', [[], {"order_by": ["service"]}], function(result) {
+          var smb_service, smb_index = 0;
           for(var i=0;i<result.length;i++) {
             var item = result[i];
             var service = Service({
@@ -281,8 +282,21 @@ define([
               enable: item.enable,
               disabled: me.disabled[item.service]
             })
-            me.dapTable.appendChild(service.domNode);
+            // cifs/smb does before SNMP
+            if(item.service == 'snmp') {
+              smb_index = i - 1;
+            }
+            if(item.service == 'cifs') {
+              smb_service = service;
+            } else {
+              me.dapTable.appendChild(service.domNode);
+            }
             me.services[item.id] = service;
+          }
+          // Workaround to put SMB in the right spot, since its still
+          // called "cifs" in the backend.
+          if(smb_service) {
+            me.dapTable.insertBefore(smb_service.domNode, me.dapTable.childNodes[smb_index]);
           }
           domStyle.set(me.dapLoading, "display", "none");
           var parentPane = registry.getEnclosingWidget(me.domNode.parentNode);

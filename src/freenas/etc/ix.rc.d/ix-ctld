@@ -24,14 +24,14 @@ generate_ctl()
 		elif [ "${node}" = "B" ]; then
 			/sbin/sysctl kern.cam.ctl.ha_peer="connect 169.254.10.1" >/dev/null
 		fi
+	else
+		/sbin/sysctl -q kern.cam.ctl.ha_peer="" >/dev/null
 	fi
 }
 
 stop_ctl()
 {
-	if [ "$(/usr/local/bin/midclt call system.is_freenas)" = "False" ]; then
-		/sbin/sysctl -q kern.cam.ctl.ha_peer=""
-	fi
+	/sbin/sysctl -q kern.cam.ctl.ha_peer="" >/dev/null
 }
 		
 name="ix-ctld"

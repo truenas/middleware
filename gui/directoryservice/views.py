@@ -270,6 +270,27 @@ def directoryservice_idmap_autorid(request, id):
     })
 
 
+def directoryservice_idmap_fruit(request, id):
+    idmap_fruit = models.idmap_fruit.objects.get(id=id)
+
+    if request.method == "POST":
+        form = forms.idmap_fruit_Form(request.POST, instance=idmap_fruit)
+        if form.is_valid(): 
+            form.save()
+            return JsonResp(
+                request,
+                message="Idmap fruit successfully edited."
+            )
+        else:
+            return JsonResp(request, form=form)
+    else:
+        form = forms.idmap_fruit_Form(instance=idmap_fruit)
+
+    return render(request, 'directoryservice/idmap_fruit.html', {
+        'form': form
+    })
+
+
 def directoryservice_idmap_hash(request, id):
     idmap_hash = models.idmap_hash.objects.get(id=id)
 

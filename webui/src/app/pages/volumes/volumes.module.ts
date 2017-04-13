@@ -5,7 +5,6 @@ import { RouterModule } from '@angular/router';
 import { NgaModule } from '../../theme/nga.module';
 import { DynamicFormsCoreModule } from '@ng2-dynamic-forms/core';
 import { DynamicFormsBootstrapUIModule } from '@ng2-dynamic-forms/ui-bootstrap';
-import { BusyModule } from 'angular2-busy';
 
 import { EntityModule } from '../common/entity/entity.module';
 import { routing }       from './volumes.routing';
@@ -24,7 +23,6 @@ import { VolumeDeleteComponent } from './volume-delete/';
     RouterModule,
     DragulaModule,
     EntityModule,
-    BusyModule,
     DynamicFormsCoreModule.forRoot(),
     DynamicFormsBootstrapUIModule,
     CommonModule,

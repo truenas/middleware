@@ -15,16 +15,21 @@ from gevent.wsgi import WSGIServer
 from geventwebsocket import WebSocketServer, WebSocketApplication, Resource
 
 import argparse
+import binascii
+import cgi
 import gevent
+import greenlet
 import imp
 import inspect
 import linecache
 import os
+import setproctitle
 import signal
 import subprocess
 import sys
 import traceback
 import types
+import urllib.parse
 import uuid
 from . import logger
 
@@ -259,6 +264,128 @@ class Application(WebSocketApplication):
             self.unsubscribe(message['id'])
 
 
+class FileApplication(object):
+
+    def __init__(self, middleware):
+        self.middleware = middleware
+
+    def __call__(self, environ, start_response):
+        # Path is in the form of:
+        # /_download/{jobid}?auth_token=XXX
+        path = environ['PATH_INFO'][1:].split('/')
+
+        if path[0] == '_download':
+            return self.download(path, environ, start_response)
+        elif path[0] == '_upload':
+            return self.upload(path, environ, start_response)
+        else:
+            start_response('404 Not found', [])
+            return ['']
+
+    def download(self, path, environ, start_response):
+
+        if not path[-1].isdigit():
+            start_response('404 Not found', [])
+            return ['']
+
+        job_id = int(path[-1])
+        jobs = self.middleware.get_jobs().all()
+        job = jobs.get(job_id)
+        if not job:
+            start_response('404 Not found', [])
+            return ['']
+
+        qs = urllib.parse.parse_qs(environ['QUERY_STRING'])
+        denied = False
+        filename = None
+        if 'auth_token' not in qs:
+            denied = True
+        else:
+            auth_token = qs.get('auth_token')[0]
+            token = self.middleware.call('auth.get_token', auth_token)
+            if not token:
+                denied = True
+            else:
+                if (token['attributes'] or {}).get('job') != job_id:
+                    denied = True
+                else:
+                    filename = token['attributes'].get('filename')
+        if denied:
+            start_response('401 Access Denied', [])
+            return ['']
+
+        start_response('200 OK', [
+            ('Content-Type', 'application/octet-stream'),
+            ('Content-Disposition', f'attachment; filename="{filename}"'),
+            ('Transfer-Encoding', 'chunked'),
+        ])
+
+        f = None
+        try:
+            f = gevent.fileobject.FileObject(job.read_fd, 'rb', close=False)
+            while True:
+                read = f.read(1024)
+                if read == b'':
+                    break
+                yield read
+
+        finally:
+            if f:
+                f.close()
+                os.close(job.read_fd)
+
+    def upload(self, path, environ, start_response):
+
+        denied = True
+        auth = environ.get('HTTP_AUTHORIZATION')
+        if auth:
+            if auth.startswith('Basic '):
+                try:
+                    auth = binascii.a2b_base64(auth[6:]).decode()
+                    if ':' in auth:
+                        user, password = auth.split(':', 1)
+                        if self.middleware.call('auth.check_user', user, password):
+                            denied = False
+                except binascii.Error:
+                    pass
+        if denied:
+            start_response('401 Access Denied', [])
+            return ['']
+
+        form = cgi.FieldStorage(environ=environ, fp=environ['wsgi.input'])
+        if 'data' not in form or 'file' not in form:
+            start_response('405 Method Not Allowed', [])
+            return ['']
+
+        try:
+            data = json.loads(form['data'].file.read())
+            job_id = self.middleware.call(data['method'], *(data.get('params') or []))
+            job = self.middleware.get_jobs().all()[job_id]
+        except Exception:
+            start_response('405 Method Not Allowed', [])
+            return [b'Invalid data']
+
+        f = None
+        try:
+            f = gevent.fileobject.FileObject(job.write_fd, 'wb', close=False)
+            while True:
+                read = form['file'].file.read(1024)
+                if read == b'':
+                    break
+                f.write(read)
+        finally:
+            if f:
+                f.close()
+                os.close(job.write_fd)
+
+        start_response('200 OK', [
+            ('Content-Type', 'application/json'),
+        ])
+        yield json.dumps({
+            'job_id': job_id,
+        }).encode('utf8')
+
+
 class Middleware(object):
 
     def __init__(self):
@@ -392,15 +519,7 @@ class Middleware(object):
     def get_jobs(self):
         return self.__jobs
 
-    def call_method(self, app, message):
-        """Call method from websocket"""
-        params = message.get('params') or []
-        service, method_name = message['method'].rsplit('.', 1)
-        methodobj = getattr(self.get_service(service), method_name)
-
-        if not app.authenticated and not hasattr(methodobj, '_no_auth_required'):
-            app.send_error(message, 'Not authenticated')
-            return
+    def _call(self, name, methodobj, params, app=None):
 
         args = []
         if hasattr(methodobj, '_pass_app'):
@@ -411,7 +530,7 @@ class Middleware(object):
         job_options = getattr(methodobj, '_job', None)
         if job_options:
             # Create a job instance with required args
-            job = Job(self, message['method'], methodobj, args, job_options)
+            job = Job(self, name, methodobj, args, job_options)
             # Add the job to the queue.
             # At this point an `id` is assinged to the job.
             self.__jobs.add(job)
@@ -424,9 +543,22 @@ class Middleware(object):
         else:
             return methodobj(*args)
 
-    def call(self, method, *params):
-        service, method = method.rsplit('.', 1)
-        return getattr(self.get_service(service), method)(*params)
+    def call_method(self, app, message):
+        """Call method from websocket"""
+        params = message.get('params') or []
+        service, method_name = message['method'].rsplit('.', 1)
+        methodobj = getattr(self.get_service(service), method_name)
+
+        if not app.authenticated and not hasattr(methodobj, '_no_auth_required'):
+            app.send_error(message, 'Not authenticated')
+            return
+
+        return self._call(message['method'], methodobj, params, app=app)
+
+    def call(self, name, *params):
+        service, method = name.rsplit('.', 1)
+        methodobj = getattr(self.get_service(service), method)
+        return self._call(name, methodobj, params)
 
     def send_event(self, name, event_type, **kwargs):
         assert event_type in ('ADDED', 'CHANGED', 'REMOVED')
@@ -440,7 +572,51 @@ class Middleware(object):
         import pdb
         pdb.set_trace()
 
+    def green_monitor(self):
+        """
+        Start point method for setting up greenlet trace for finding
+        out blocked green threads.
+        """
+        self._green_hub = gevent.hub.get_hub()
+        self._green_active = None
+        self._green_counter = 0
+        greenlet.settrace(self._green_callback)
+        monkey.get_original('_thread', 'start_new_thread')(self._green_monitor_thread, ())
+        self._green_main_threadid = monkey.get_original('_thread', 'get_ident')()
+
+    def _green_callback(self, event, args):
+        """
+        This method is called for several events in the greenlet.
+        We use this to keep track of how many switches have happened.
+        """
+        if event == 'switch':
+            origin, target = args
+            self._green_active = target
+            self._green_counter += 1
+
+    def _green_monitor_thread(self):
+        sleep = monkey.get_original('time', 'sleep')
+        while True:
+            # Check every 2 seconds for blocked green threads.
+            # This could be a knob in the future.
+            sleep(2)
+            # If there have been no greenlet switches since last time we
+            # checked it means we are likely stuck in the same green thread
+            # for more time than we would like to!
+            if self._green_counter == 0:
+                active = self._green_active
+                # greenlet hub is OK since its the thread waiting for IO.
+                if active not in (None, self._green_hub):
+                    frame = sys._current_frames()[self._green_main_threadid]
+                    stack = traceback.format_stack(frame)
+                    err_log = ["Green thread seems blocked:\n"] + stack
+                    self.logger.warn(''.join(err_log))
+
+            # A race condition may happen here but its fairly rare.
+            self._green_counter = 0
+
     def run(self):
+        self.green_monitor()
 
         gevent.signal(signal.SIGTERM, self.kill)
         gevent.signal(signal.SIGUSR1, self.pdb)
@@ -455,11 +631,13 @@ class Middleware(object):
         apidocs_app.middleware = self
         apidocsserver = WSGIServer(('127.0.0.1', 8001), apidocs_app)
         restserver = WSGIServer(('127.0.0.1', 8002), restful_api.get_app())
+        downloadserver = WSGIServer(('127.0.0.1', 8003), FileApplication(self))
 
         self.__server_threads = [
             gevent.spawn(wsserver.serve_forever),
             gevent.spawn(apidocsserver.serve_forever),
             gevent.spawn(restserver.serve_forever),
+            gevent.spawn(downloadserver.serve_forever),
             gevent.spawn(self.__jobs.run),
         ]
         self.logger.debug('Accepting connections')
@@ -531,7 +709,7 @@ def main():
     else:
         _logger.configure_logging('file')
 
-    #setproctitle.setproctitle('middlewared')
+    setproctitle.setproctitle('middlewared')
     # Workaround to tell django to not set up logging on its own
     os.environ['MIDDLEWARED'] = str(os.getpid())
 

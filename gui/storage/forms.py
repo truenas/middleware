@@ -675,7 +675,7 @@ class ZFSVolumeWizardForm(forms.Form):
         else:
             group_type = self.cleaned_data['group_type']
 
-        with transaction.commit_on_success():
+        with transaction.atomic():
             vols = models.Volume.objects.filter(
                 vol_name=volume_name,
                 vol_fstype='ZFS'

@@ -5,6 +5,7 @@ from __future__ import unicode_literals
 from django.db import migrations, models
 import django.db.models.deletion
 import freenasUI.freeadmin.models.fields
+from freenasUI import choices
 
 
 class Migration(migrations.Migration):
@@ -19,7 +20,7 @@ class Migration(migrations.Migration):
             name='Device',
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('dtype', models.CharField(choices=[(b'NIC', 'Network Interface'), (b'DISK', 'Disk'), (b'CDROM', 'CD-ROM'), (b'VNC', 'VNC')], max_length=50, verbose_name='Type')),
+                ('dtype', models.CharField(choices=choices.VM_DEVTYPES, max_length=50, verbose_name='Type')),
                 ('attributes', freenasUI.freeadmin.models.fields.DictField(editable=False)),
             ],
             options={
@@ -34,7 +35,7 @@ class Migration(migrations.Migration):
                 ('description', models.CharField(blank=True, max_length=250, verbose_name='Description')),
                 ('vcpus', models.IntegerField(default=1, verbose_name='Virtual CPUs')),
                 ('memory', models.IntegerField(verbose_name='Memory Size (MiB)')),
-                ('bootloader', models.CharField(choices=[(b'UEFI', 'UEFI'), (b'UEFI_CSM', 'UEFI-CSM')], default=b'UEFI', max_length=50, verbose_name='Boot Loader')),
+                ('bootloader', models.CharField(choices=choices.VM_BOOTLOADER, default='UEFI', max_length=50, verbose_name='Boot Loader')),
             ],
             options={
                 'verbose_name': 'VM',

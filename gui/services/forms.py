@@ -1226,10 +1226,8 @@ class iSCSITargetGlobalConfigurationForm(ModelForm):
 
     def __init__(self, *args, **kwargs):
         super(iSCSITargetGlobalConfigurationForm, self).__init__(*args, **kwargs)
-        # Disable ALUA for now
-        #_n = notifier()
-        #if not (not _n.is_freenas() and _n.failover_licensed()):
-        if True:
+        _n = notifier()
+        if not (not _n.is_freenas() and _n.failover_licensed()):
             del self.fields['iscsi_alua']
 
     def _clean_number_range(self, field, start, end):
@@ -2148,6 +2146,7 @@ class S3Form(ModelForm):
         fields = '__all__'
         widgets = {
             's3_secret_key': forms.widgets.PasswordInput(render_value=True),
+            's3_bindport': forms.widgets.TextInput(),
         }
         model = models.S3
 
@@ -2212,4 +2211,15 @@ class S3Form(ModelForm):
 
     def save(self):
         obj = super(S3Form, self).save()
+        path = self.cleaned_data.get("s3_disks")
+        if not path:
+            return
+        try:
+            path = path.decode('utf-8')
+        except Exception as e:
+            log.debug("ERROR: unable to decode string %s", e)
+            pass
+        if notifier().mp_get_owner(path) != "minio":
+            # Currently not working because of python byte string
+            notifier().winacl_reset(path=path, owner="minio", group="minio")
         return obj

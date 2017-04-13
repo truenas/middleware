@@ -13,13 +13,14 @@ import { Subscription } from 'rxjs';
         {{ status.label }}
       </div>
 
-      <div class="col-md-2">
+      <div class="col-md-1">
         <button class="btn btn-primary" (click)="toggle()">
           <span *ngIf="status.state != 'RUNNING'">Start</span>
           <span *ngIf="status.state == 'RUNNING'">Stop</span>
         </button>
-        &nbsp; &nbsp;
-        <input type="checkbox" [checked]="status.enable" (click)="enableToggle()" /> Start on Boot
+      </div>
+      <div class="col-md-2">
+        <ba-checkbox [(ngModel)]="status.enable" (change)="enableToggle($event)" [label]="'Start on Boot'"></ba-checkbox>
       </div>
     </div>
   </ba-card>
@@ -37,14 +38,14 @@ export class Service {
   toggle() {
 
     let rpc: string;
-    if (this.status.state != 'RUNNING') {
+    if(this.status.state != 'RUNNING') {
       rpc = 'service.start';
     } else {
       rpc = 'service.stop';
     }
 
     this.busy = this.ws.call(rpc, [this.status.service]).subscribe((res) => {
-      if (res) {
+      if(res) {
         this.status.state = 'RUNNING';
       } else {
         this.status.state = 'STOPPED';
@@ -53,10 +54,10 @@ export class Service {
 
   }
 
-  enableToggle() {
+  enableToggle($event: any) {
 
-    this.busy = this.ws.call('service.update', [this.status.id, { enable: !this.status.enable }]).subscribe((res) => {
-      if (res) {
+    this.busy = this.ws.call('service.update', [this.status.id, { enable: this.status.enable }]).subscribe((res) => {
+      if(!res) {
         this.status.enable = !this.status.enable;
       }
     });

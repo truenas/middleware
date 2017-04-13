@@ -2,6 +2,16 @@
 Release Notes
 =============
 
+Release notes for the FreeNAS 9.10 API.
+
+Resources
+---------
+
+* Resources removed
+
+ - SSL: /api/v1.0/system/ssl/
+
+
 Release notes for the FreeNAS 9.3 API.
 
 

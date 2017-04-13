@@ -31,6 +31,14 @@ export const PAGES_MENU = [
         order: 0
       },
       {
+        path: ['system', 'email'],
+        title: 'Email',
+        icon: 'ion-email',
+        selected: false,
+        expanded: false,
+        order: 0
+      },
+      {
         path: ['system', 'update'],
         title: 'Update',
         icon: 'ion-arrow-up-a',
@@ -66,12 +74,21 @@ export const PAGES_MENU = [
     ],
   },
   {
-    path: ['interfaces'],
-    title: 'Interfaces',
+    title: 'Network',
     icon: 'ion-network',
     selected: false,
     expanded: false,
-    order: 0
+    order: 0,
+    children: [
+      {
+        path: ['network', 'interfaces'],
+        title: 'Interfaces',
+        icon: 'ion-network',
+        selected: false,
+        expanded: false,
+        order: 0
+      },
+    ]
   },
   {
     path: ['volumes'],

@@ -164,6 +164,12 @@ class VMService(CRUDService):
         ug = sysctl.filter('hw.vmm.vmx.cap.unrestricted_guest')
         data['unrestricted_guest'] = True if ug and ug[0].value else False
 
+        rvi = sysctl.filter('hw.vmm.svm.features')
+        data['amd_rvi'] = True if rvi and rvi[0].value != 0 else False
+
+        asids = sysctl.filter('hw.vmm.svm.num_asids')
+        data['amd_asids'] = True if asids and asids[0].value !=0 else False
+
         return data
 
     def query(self, filters=None, options=None):

@@ -44,7 +44,7 @@ class Migration(migrations.Migration):
                 ('plugin_name', models.CharField(help_text='Name of the plugin', max_length=120, verbose_name='Plugin name')),
                 ('plugin_pbiname', models.CharField(help_text='Info name of the plugin', max_length=120, verbose_name='Plugin info name')),
                 ('plugin_version', models.CharField(help_text='Version of the plugin', max_length=120, verbose_name='Plugin version')),
-                ('plugin_api_version', models.CharField(default=b'1', max_length=20, verbose_name='Plugin API version')),
+                ('plugin_api_version', models.CharField(default='1', max_length=20, verbose_name='Plugin API version')),
                 ('plugin_arch', models.CharField(help_text='Plugin architecture', max_length=120, verbose_name='Plugin architecture')),
                 ('plugin_enabled', models.BooleanField(default=False, help_text='Plugin enabled', verbose_name='Plugin enabled')),
                 ('plugin_ip', models.GenericIPAddressField(help_text='Plugin IP address', verbose_name='Plugin IP address')),

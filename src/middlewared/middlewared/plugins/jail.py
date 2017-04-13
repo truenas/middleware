@@ -12,11 +12,16 @@ class JailService(Service):
     def __init__(self, *args):
         super(JailService, self).__init__(*args)
 
-    def test(self):
-        return self.list("ALL", {"full": True, "header": True})
+    @private
+    def check_dataset_existence(self):
+        from iocage.lib.ioc_check import IOCCheck
+
+        IOCCheck()
 
     @private
     def check_jail_existence(self, jail):
+        self.check_dataset_existence()
+
         jails, paths = IOCList("uuid").list_datasets()
         _jail = {tag: uuid for (tag, uuid) in jails.items() if
                  uuid.startswith(jail) or tag == jail}
@@ -38,6 +43,8 @@ class JailService(Service):
                   ))
     def list(self, lst_type, options=None):
         """Lists either 'all', 'base', 'template'"""
+        self.check_dataset_existence()
+
         lst_type = lst_type.lower()
 
         if options is None:
@@ -129,6 +136,7 @@ class JailService(Service):
     def fetch(self, job, options):
         """Fetches a release or plugin."""
         from iocage.lib.ioc_fetch import IOCFetch
+        self.check_dataset_existence()
 
         release = options.get("release", None)
         server = options.get("server", "ftp.freebsd.org")
@@ -216,6 +224,7 @@ class JailService(Service):
     def create(self, options):
         """Creates a jail."""
         from iocage.lib.ioc_create import IOCCreate
+        self.check_dataset_existence()
 
         release = options.get("release", None)
         template = options.get("template", None)
@@ -239,5 +248,174 @@ class JailService(Service):
 
         IOCCreate(release, props, 0, pkglist, template=template,
                   short=short, basejail=basejail, empty=empty).create_jail()
+
+        return True
+
+    @accepts(Str("jail"), Dict("options",
+                  Str("action"),
+                  Str("source"),
+                  Str("destination"),
+                  Str("fstype"),
+                  Str("fsoptions"),
+                  Str("dump"),
+                  Str("_pass"),
+                  ))
+    def fstab(self, jail, options):
+        """
+        Adds an fstab mount to the jail, mounts if the jail is running.
+        """
+        from iocage.lib.ioc_fstab import IOCFstab
+        self.check_dataset_existence()
+
+        tag, uuid, path = self.check_jail_existence(jail)
+        action = options.get("action", None)
+        source = options.get("source", None)
+        destination = options.get("destination", None)
+        fstype = options.get("fstype", None)
+        fsoptions = options.get("fsoptions", None)
+        dump = options.get("dump", None)
+        _pass = options.get("_pass", None)
+
+        IOCFstab(uuid, tag, action, source, destination, fstype, fsoptions,
+                 dump, _pass)
+
+        return True
+
+    @accepts(Str("pool"))
+    def activate(self, pool):
+        """Activates a pool for iocage usage, and deactivates the rest."""
+        import libzfs
+
+        zfs = libzfs.ZFS(history=True, history_prefix="<iocage>")
+        pools = zfs.pools
+        prop = "org.freebsd.ioc:active"
+
+        for _pool in pools:
+            if _pool.name == pool:
+                ds = zfs.get_dataset(_pool.name)
+                ds.properties[prop] = libzfs.ZFSUserProperty("yes")
+            else:
+                ds = zfs.get_dataset(_pool.name)
+                ds.properties[prop] = libzfs.ZFSUserProperty("no")
+
+        return True
+
+    @accepts(Str("ds_type", enum=["ALL", "JAIL", "TEMPLATE", "RELEASE"]))
+    def clean(self, ds_type):
+        """Cleans all iocage datasets of ds_type"""
+        from iocage.lib.ioc_clean import IOCClean
+
+        if ds_type == "JAIL":
+            IOCClean().clean_jails()
+        elif ds_type == "ALL":
+            IOCClean().clean_all()
+        elif ds_type == "RELEASE":
+            pass
+        elif ds_type == "TEMPLATE":
+            IOCClean().clean_templates()
+
+        return True
+
+    @accepts(Str("jail"), List("command"), Dict("options",
+                                               Str("host_user",
+                                                   default="root"),
+                                               Str("jail_user")))
+    def exec(self, jail, command, options):
+        """Issues a command inside a jail."""
+        from iocage.lib.ioc_exec import IOCExec
+
+        tag, uuid, path = self.check_jail_existence(jail)
+        host_user = options.get("host_user", None)
+        jail_user = options.get("jail_user", None)
+
+        # We may be getting ';', '&&' and so forth. Adding the shell for
+        # safety.
+        if len(command) == 1:
+            command = ["/bin/sh", "-c"] + command
+
+        msg, _ = IOCExec(command, uuid, tag, path, host_user,
+                         jail_user).exec_jail()
+
+        return msg.decode("utf-8")
+
+    @accepts(Str("jail"))
+    @job(lock=lambda args: f"jail_update:{args[-1]}")
+    def update(self, job, jail):
+        """Updates specified jail to latest patch level."""
+        from iocage.lib.ioc_fetch import IOCFetch
+
+        tag, uuid, path = self.check_jail_existence(jail)
+        status, jid = IOCList.list_get_jid(uuid)
+        conf = IOCJson(path).json_load()
+        started = False
+
+        if conf["type"] == "jail":
+            if not status:
+                self.start(jail)
+                started = True
+        else:
+            return False
+
+        IOCFetch(conf["cloned_release"]).fetch_update(True, uuid, tag)
+
+        if started:
+            self.stop(jail)
+
+        return True
+
+    @accepts(Str("jail"), Str("release"))
+    @job(lock=lambda args: f"jail_upgrade:{args[-1]}")
+    def upgrade(self, job, jail, release):
+        """Upgrades specified jail to specified RELEASE."""
+        from iocage.lib.ioc_upgrade import IOCUpgrade
+
+        tag, uuid, path = self.check_jail_existence(jail)
+        status, jid = IOCList.list_get_jid(uuid)
+        conf = IOCJson(path).json_load()
+        root_path = f"{path}/root"
+        started = False
+
+        if conf["type"] == "jail":
+            if not status:
+                self.start(jail)
+                started = True
+        else:
+            return False
+
+        IOCUpgrade(conf, release, root_path).upgrade_jail()
+
+        if started:
+            self.stop(jail)
+
+        return True
+
+    @accepts(Str("jail"))
+    @job(lock=lambda args: f"jail_export:{args[-1]}")
+    def export(self, job, jail):
+        """Exports jail to zip file"""
+        from iocage.lib.ioc_image import IOCImage
+        tag, uuid, path = self.check_jail_existence(jail)
+        status, jid = IOCList.list_get_jid(uuid)
+        conf = IOCJson(path).json_load()
+        started = False
+
+        if status:
+            self.stop(jail)
+            started = True
+
+        IOCImage().export_jail(uuid, tag, path)
+
+        if started:
+            self.start(jail)
+
+        return True
+
+    @accepts(Str("jail"))
+    @job(lock=lambda args: f"jail_import:{args[-1]}")
+    def _import(self, job, jail):
+        """Imports jail from zip file"""
+        from iocage.lib.ioc_image import IOCImage
+
+        IOCImage().import_jail(jail)
 
         return True

@@ -1,4 +1,4 @@
-import { Component, ViewContainerRef } from '@angular/core';
+import { Component } from '@angular/core';
 import { Router } from '@angular/router';
 
 import { DynamicFormControlModel, DynamicFormService, DynamicCheckboxModel, DynamicInputModel, DynamicSelectModel, DynamicRadioGroupModel } from '@ng2-dynamic-forms/core';
@@ -11,7 +11,7 @@ import { RestService, WebSocketService } from '../../../services/';
 })
 export class InterfacesAddComponent {
 
-  protected route_success: string[] = ['interfaces'];
+  protected route_success: string[] = ['network', 'interfaces'];
   protected resource_name: string = 'network/interface/';
 
   protected formModel: DynamicFormControlModel[] = [
@@ -41,7 +41,7 @@ export class InterfacesAddComponent {
     new DynamicSelectModel({
       id: 'int_v4netmaskbit',
       label: 'IPv4 Netmask',
-      options: Array(32).fill(0).map((x,i) => { return {label: String(32 - i), value: String(32 - i)}; }),
+      options: Array(32).fill(0).map((x, i) => { return { label: String(32 - i), value: String(32 - i) }; }),
       relation: [
         {
           action: "DISABLE",

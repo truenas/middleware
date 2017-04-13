@@ -274,7 +274,7 @@ class FreeAdminSite(object):
     def alert_status(self, request):
         from freenasUI.system.models import Alert
         from freenasUI.system.alert import alert_node, alertPlugins
-        dismisseds = [a.message_id for a in Alert.objects.filter(node=alert_node(), dismiss=True)]
+        dismisseds = [a.message_id for a in Alert.objects.filter(node=alert_node())]
         alerts = alertPlugins.get_alerts()
         current = 'OK'
         for alert in alerts:
@@ -294,7 +294,7 @@ class FreeAdminSite(object):
     def alert_detail(self, request):
         from freenasUI.system.models import Alert
         from freenasUI.system.alert import alert_node, alertPlugins
-        dismisseds = [a.message_id for a in Alert.objects.filter(node=alert_node(), dismiss=True)]
+        dismisseds = [a.message_id for a in Alert.objects.filter(node=alert_node())]
         alerts = alertPlugins.get_alerts()
         return render(request, "freeadmin/alert_status.html", {
             'alerts': alerts,
@@ -312,18 +312,10 @@ class FreeAdminSite(object):
         try:
             alert = Alert.objects.get(node=alert_node(), message_id=msgid)
             if dismiss == "0":
-                alert.dismiss = False
-                alert.save()
-            elif dismiss == "1":
-                alert.dismiss = True
-                alert.save()
+                alert.delete()
         except Alert.DoesNotExist:
             if dismiss == "1":
-                alert = Alert.objects.create(
-                    node=alert_node(),
-                    message_id=msgid,
-                    dismiss=True,
-                )
+                alert = Alert.objects.create(node=alert_node(), message_id=msgid)
         return JsonResp(request, message="OK")
 
 site = FreeAdminSite()

@@ -6,6 +6,7 @@ import django.core.validators
 from django.db import migrations, models
 import django.db.models.deletion
 import freenasUI.contrib.IPAddressField
+from freenasUI import choices
 
 
 class Migration(migrations.Migration):
@@ -20,13 +21,13 @@ class Migration(migrations.Migration):
             name='Alias',
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('alias_vip', freenasUI.contrib.IPAddressField.IP4AddressField(blank=True, default=b'', verbose_name='Virtual IPv4')),
-                ('alias_v4address', freenasUI.contrib.IPAddressField.IP4AddressField(blank=True, default=b'', verbose_name='IPv4 Address')),
-                ('alias_v4address_b', freenasUI.contrib.IPAddressField.IP4AddressField(blank=True, default=b'', verbose_name='IPv4 Address')),
-                ('alias_v4netmaskbit', models.CharField(blank=True, choices=[(b'32', b'/32 (255.255.255.255)'), (b'31', b'/31 (255.255.255.254)'), (b'30', b'/30 (255.255.255.252)'), (b'29', b'/29 (255.255.255.248)'), (b'28', b'/28 (255.255.255.240)'), (b'27', b'/27 (255.255.255.224)'), (b'26', b'/26 (255.255.255.192)'), (b'25', b'/25 (255.255.255.128)'), (b'24', b'/24 (255.255.255.0)'), (b'23', b'/23 (255.255.254.0)'), (b'22', b'/22 (255.255.252.0)'), (b'21', b'/21 (255.255.248.0)'), (b'20', b'/20 (255.255.240.0)'), (b'19', b'/19 (255.255.224.0)'), (b'18', b'/18 (255.255.192.0)'), (b'17', b'/17 (255.255.128.0)'), (b'16', b'/16 (255.255.0.0)'), (b'15', b'/15 (255.254.0.0)'), (b'14', b'/14 (255.252.0.0)'), (b'13', b'/13 (255.248.0.0)'), (b'12', b'/12 (255.240.0.0)'), (b'11', b'/11 (255.224.0.0)'), (b'10', b'/10 (255.192.0.0)'), (b'9', b'/9 (255.128.0.0)'), (b'8', b'/8 (255.0.0.0)'), (b'7', b'/7 (254.0.0.0)'), (b'6', b'/6 (252.0.0.0)'), (b'5', b'/5 (248.0.0.0)'), (b'4', b'/4 (240.0.0.0)'), (b'3', b'/3 (224.0.0.0)'), (b'2', b'/2 (192.0.0.0)'), (b'1', b'/1 (128.0.0.0)')], default=b'', help_text=b'', max_length=3, verbose_name='IPv4 Netmask')),
-                ('alias_v6address', freenasUI.contrib.IPAddressField.IP6AddressField(blank=True, default=b'', verbose_name='IPv6 Address')),
-                ('alias_v6address_b', freenasUI.contrib.IPAddressField.IP6AddressField(blank=True, default=b'', verbose_name='IPv6 Address')),
-                ('alias_v6netmaskbit', models.CharField(blank=True, choices=[(b'0', b'/0'), (b'4', b'/4'), (b'8', b'/8'), (b'12', b'/12'), (b'16', b'/16'), (b'20', b'/20'), (b'24', b'/24'), (b'28', b'/28'), (b'32', b'/32'), (b'36', b'/36'), (b'40', b'/40'), (b'44', b'/44'), (b'48', b'/48'), (b'52', b'/52'), (b'56', b'/56'), (b'60', b'/60'), (b'64', b'/64'), (b'68', b'/68'), (b'72', b'/72'), (b'76', b'/76'), (b'80', b'/80'), (b'84', b'/84'), (b'88', b'/88'), (b'92', b'/92'), (b'96', b'/96'), (b'100', b'/100'), (b'104', b'/104'), (b'108', b'/108'), (b'112', b'/112'), (b'116', b'/116'), (b'120', b'/120'), (b'124', b'/124'), (b'128', b'/128')], default=b'', help_text=b'', max_length=3, verbose_name='IPv6 Prefix Length')),
+                ('alias_vip', freenasUI.contrib.IPAddressField.IP4AddressField(blank=True, default='', verbose_name='Virtual IPv4')),
+                ('alias_v4address', freenasUI.contrib.IPAddressField.IP4AddressField(blank=True, default='', verbose_name='IPv4 Address')),
+                ('alias_v4address_b', freenasUI.contrib.IPAddressField.IP4AddressField(blank=True, default='', verbose_name='IPv4 Address')),
+                ('alias_v4netmaskbit', models.CharField(blank=True, choices=choices.v4NetmaskBitList, default='', help_text='', max_length=3, verbose_name='IPv4 Netmask')),
+                ('alias_v6address', freenasUI.contrib.IPAddressField.IP6AddressField(blank=True, default='', verbose_name='IPv6 Address')),
+                ('alias_v6address_b', freenasUI.contrib.IPAddressField.IP6AddressField(blank=True, default='', verbose_name='IPv6 Address')),
+                ('alias_v6netmaskbit', models.CharField(blank=True, choices=choices.v6NetmaskBitList, default='', help_text='', max_length=3, verbose_name='IPv6 Prefix Length')),
             ],
             options={
                 'verbose_name': 'Alias',
@@ -37,18 +38,18 @@ class Migration(migrations.Migration):
             name='GlobalConfiguration',
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('gc_hostname', models.CharField(default=b'nas', max_length=120, validators=[django.core.validators.RegexValidator(regex=b'^[a-zA-Z\\.\\-\\_0-9]+$')], verbose_name='Hostname')),
-                ('gc_hostname_b', models.CharField(blank=True, max_length=120, null=True, validators=[django.core.validators.RegexValidator(regex=b'^[a-zA-Z\\.\\-\\_0-9]+$')], verbose_name='Hostname')),
-                ('gc_domain', models.CharField(default=b'local', max_length=120, validators=[django.core.validators.RegexValidator(regex=b'^[a-zA-Z\\.\\-\\_0-9]+$')], verbose_name='Domain')),
-                ('gc_ipv4gateway', freenasUI.contrib.IPAddressField.IP4AddressField(blank=True, default=b'', verbose_name='IPv4 Default Gateway')),
-                ('gc_ipv6gateway', freenasUI.contrib.IPAddressField.IP6AddressField(blank=True, default=b'', verbose_name='IPv6 Default Gateway')),
-                ('gc_nameserver1', freenasUI.contrib.IPAddressField.IPAddressField(blank=True, default=b'', verbose_name='Nameserver 1')),
-                ('gc_nameserver2', freenasUI.contrib.IPAddressField.IPAddressField(blank=True, default=b'', verbose_name='Nameserver 2')),
-                ('gc_nameserver3', freenasUI.contrib.IPAddressField.IPAddressField(blank=True, default=b'', verbose_name='Nameserver 3')),
+                ('gc_hostname', models.CharField(default='nas', max_length=120, validators=[django.core.validators.RegexValidator(regex='^[a-zA-Z\\.\\-\\_0-9]+$')], verbose_name='Hostname')),
+                ('gc_hostname_b', models.CharField(blank=True, max_length=120, null=True, validators=[django.core.validators.RegexValidator(regex='^[a-zA-Z\\.\\-\\_0-9]+$')], verbose_name='Hostname')),
+                ('gc_domain', models.CharField(default='local', max_length=120, validators=[django.core.validators.RegexValidator(regex='^[a-zA-Z\\.\\-\\_0-9]+$')], verbose_name='Domain')),
+                ('gc_ipv4gateway', freenasUI.contrib.IPAddressField.IP4AddressField(blank=True, default='', verbose_name='IPv4 Default Gateway')),
+                ('gc_ipv6gateway', freenasUI.contrib.IPAddressField.IP6AddressField(blank=True, default='', verbose_name='IPv6 Default Gateway')),
+                ('gc_nameserver1', freenasUI.contrib.IPAddressField.IPAddressField(blank=True, default='', verbose_name='Nameserver 1')),
+                ('gc_nameserver2', freenasUI.contrib.IPAddressField.IPAddressField(blank=True, default='', verbose_name='Nameserver 2')),
+                ('gc_nameserver3', freenasUI.contrib.IPAddressField.IPAddressField(blank=True, default='', verbose_name='Nameserver 3')),
                 ('gc_httpproxy', models.CharField(blank=True, max_length=255, verbose_name='HTTP Proxy')),
                 ('gc_netwait_enabled', models.BooleanField(default=False, help_text='If enabled, delays the start of network-reliant services until interface is up and ICMP packets to a destination defined in netwait ip list are flowing.  Link state is examined first, followed by "pinging" an IP address to verify network usability.  If no destination can be reached or timeouts are exceeded, network services are started anyway with no guarantee that the network is usable.', verbose_name='Enable netwait feature')),
                 ('gc_netwait_ip', models.CharField(blank=True, help_text='Space-delimited list of IP addresses to ping(8). If multiple IP addresses are specified, each will be tried until one is successful or the list is exhausted. If it is empty the default gateway will be used.', max_length=300, verbose_name='Netwait IP list')),
-                ('gc_hosts', models.TextField(blank=True, default=b'', help_text='This field is appended to /etc/hosts which contains information regarding known hosts on the network. hosts(5)', verbose_name='Host name data base')),
+                ('gc_hosts', models.TextField(blank=True, default='', help_text='This field is appended to /etc/hosts which contains information regarding known hosts on the network. hosts(5)', verbose_name='Host name data base')),
             ],
             options={
                 'verbose_name': 'Global Configuration',
@@ -62,12 +63,12 @@ class Migration(migrations.Migration):
                 ('int_interface', models.CharField(help_text='Pick your NIC', max_length=300, verbose_name='NIC')),
                 ('int_name', models.CharField(help_text='Name your NIC.', max_length=120, verbose_name='Interface Name')),
                 ('int_dhcp', models.BooleanField(default=False, help_text='When enabled, use DHCP to obtain IPv4 address as well as default router, etc.', verbose_name='DHCP')),
-                ('int_ipv4address', freenasUI.contrib.IPAddressField.IPAddressField(blank=True, default=b'', verbose_name='IPv4 Address')),
-                ('int_ipv4address_b', freenasUI.contrib.IPAddressField.IPAddressField(blank=True, default=b'', verbose_name='IPv4 Address')),
-                ('int_v4netmaskbit', models.CharField(blank=True, choices=[(b'32', b'/32 (255.255.255.255)'), (b'31', b'/31 (255.255.255.254)'), (b'30', b'/30 (255.255.255.252)'), (b'29', b'/29 (255.255.255.248)'), (b'28', b'/28 (255.255.255.240)'), (b'27', b'/27 (255.255.255.224)'), (b'26', b'/26 (255.255.255.192)'), (b'25', b'/25 (255.255.255.128)'), (b'24', b'/24 (255.255.255.0)'), (b'23', b'/23 (255.255.254.0)'), (b'22', b'/22 (255.255.252.0)'), (b'21', b'/21 (255.255.248.0)'), (b'20', b'/20 (255.255.240.0)'), (b'19', b'/19 (255.255.224.0)'), (b'18', b'/18 (255.255.192.0)'), (b'17', b'/17 (255.255.128.0)'), (b'16', b'/16 (255.255.0.0)'), (b'15', b'/15 (255.254.0.0)'), (b'14', b'/14 (255.252.0.0)'), (b'13', b'/13 (255.248.0.0)'), (b'12', b'/12 (255.240.0.0)'), (b'11', b'/11 (255.224.0.0)'), (b'10', b'/10 (255.192.0.0)'), (b'9', b'/9 (255.128.0.0)'), (b'8', b'/8 (255.0.0.0)'), (b'7', b'/7 (254.0.0.0)'), (b'6', b'/6 (252.0.0.0)'), (b'5', b'/5 (248.0.0.0)'), (b'4', b'/4 (240.0.0.0)'), (b'3', b'/3 (224.0.0.0)'), (b'2', b'/2 (192.0.0.0)'), (b'1', b'/1 (128.0.0.0)')], default=b'', help_text=b'', max_length=3, verbose_name='IPv4 Netmask')),
+                ('int_ipv4address', freenasUI.contrib.IPAddressField.IPAddressField(blank=True, default='', verbose_name='IPv4 Address')),
+                ('int_ipv4address_b', freenasUI.contrib.IPAddressField.IPAddressField(blank=True, default='', verbose_name='IPv4 Address')),
+                ('int_v4netmaskbit', models.CharField(blank=True, choices=choices.v4NetmaskBitList, default='', help_text='', max_length=3, verbose_name='IPv4 Netmask')),
                 ('int_ipv6auto', models.BooleanField(default=False, help_text='When enabled, automatically configurate IPv6 address via rtsol(8).', verbose_name='Auto configure IPv6')),
-                ('int_ipv6address', freenasUI.contrib.IPAddressField.IPAddressField(blank=True, default=b'', verbose_name='IPv6 Address')),
-                ('int_v6netmaskbit', models.CharField(blank=True, choices=[(b'0', b'/0'), (b'4', b'/4'), (b'8', b'/8'), (b'12', b'/12'), (b'16', b'/16'), (b'20', b'/20'), (b'24', b'/24'), (b'28', b'/28'), (b'32', b'/32'), (b'36', b'/36'), (b'40', b'/40'), (b'44', b'/44'), (b'48', b'/48'), (b'52', b'/52'), (b'56', b'/56'), (b'60', b'/60'), (b'64', b'/64'), (b'68', b'/68'), (b'72', b'/72'), (b'76', b'/76'), (b'80', b'/80'), (b'84', b'/84'), (b'88', b'/88'), (b'92', b'/92'), (b'96', b'/96'), (b'100', b'/100'), (b'104', b'/104'), (b'108', b'/108'), (b'112', b'/112'), (b'116', b'/116'), (b'120', b'/120'), (b'124', b'/124'), (b'128', b'/128')], default=b'', help_text=b'', max_length=4, verbose_name='IPv6 Prefix Length')),
+                ('int_ipv6address', freenasUI.contrib.IPAddressField.IPAddressField(blank=True, default='', verbose_name='IPv6 Address')),
+                ('int_v6netmaskbit', models.CharField(blank=True, choices=choices.v6NetmaskBitList, default='', help_text='', max_length=4, verbose_name='IPv6 Prefix Length')),
                 ('int_vip', freenasUI.contrib.IPAddressField.IPAddressField(blank=True, null=True, verbose_name='Virtual IP')),
                 ('int_vhid', models.PositiveIntegerField(blank=True, null=True, verbose_name='Virtual Host ID')),
                 ('int_pass', models.CharField(blank=True, editable=False, max_length=100, verbose_name='Password')),
@@ -85,7 +86,7 @@ class Migration(migrations.Migration):
             name='LAGGInterface',
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('lagg_protocol', models.CharField(choices=[(b'failover', b'Failover'), (b'fec', b'FEC'), (b'lacp', b'LACP'), (b'loadbalance', b'Load Balance'), (b'roundrobin', b'Round Robin'), (b'none', b'None')], max_length=120, verbose_name='Protocol Type')),
+                ('lagg_protocol', models.CharField(choices=choices.LAGGType, max_length=120, verbose_name='Protocol Type')),
                 ('lagg_interface', models.OneToOneField(on_delete=django.db.models.deletion.CASCADE, to='network.Interfaces', verbose_name='Interface')),
             ],
             options={

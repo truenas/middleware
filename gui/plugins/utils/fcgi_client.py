@@ -119,7 +119,7 @@ class Record(object):
         self.requestId = requestId
         self.contentLength = 0
         self.paddingLength = 0
-        self.contentData = ''
+        self.contentData = b''
 
     def _recvall(sock, length):
         """

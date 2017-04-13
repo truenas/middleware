@@ -55,26 +55,27 @@ class NetworkHook(AppHook):
                 'url': url,
             })
 
+        index = 2
         if _n.ipmi_loaded():
-            tabs.insert(2, {
+            tabs.insert(index, {
                 'name': 'IPMI',
                 'focus': 'network.IPMI',
                 'verbose_name': _('IPMI'),
                 'url': reverse('network_ipmi'),
             })
-
-        index = 3
-        if not _n.is_freenas() and _n.failover_licensed():
-            node = _n.failover_node()
-            tabs.insert(index, {
-                'name': 'IPMI_B',
-                'focus': 'network.IPMI_B',
-                'verbose_name': _('IPMI (Node %s)') % ('B' if node == 'A' else 'A'),
-                'url': reverse('failover_ipmi'),
-            })
             index += 1
 
-        tabs.insert(index, {
+            if not _n.is_freenas() and _n.failover_licensed():
+                node = _n.failover_node()
+                tabs.insert(index, {
+                    'name': 'IPMI_B',
+                    'focus': 'network.IPMI_B',
+                    'verbose_name': _('IPMI (Node %s)') % ('B' if node == 'A' else 'A'),
+                    'url': reverse('failover_ipmi'),
+                })
+                index += 1
+
+        tabs.insert(index + 1, {
             'name': 'NetworkSummary',
             'focus': 'network.NetworkSummary',
             'verbose_name': _('Network Summary'),

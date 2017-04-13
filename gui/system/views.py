@@ -547,7 +547,11 @@ def config_upload(request):
         }
 
         if form.is_valid():
-            success, errmsg = notifier().config_upload(request.FILES['config'])
+            config_file_name = tempfile.mktemp(dir='/var/tmp/firmware')
+            with open(config_file_name, 'wb') as config_file_fd:
+                for chunk in request.FILES['config'].chunks():
+                    config_file_fd.write(chunk)
+            success, errmsg = notifier().config_upload(config_file_name)
             if not success:
                 form._errors['__all__'] = \
                     form.error_class([errmsg])

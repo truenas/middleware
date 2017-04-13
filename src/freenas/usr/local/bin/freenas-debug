@@ -50,8 +50,8 @@ usage()
 	cat<<-__EOF__
 	Usage: $0 <options>
 	Where options are:
-	    -$email_opt		Email debug log to this comma-delimited list of email addresses
-	    -A		Dump all debug information
+	    -$email_opt	Email debug log to this comma-delimited list of email addresses
+	    -A	Dump all debug information
 
 __EOF__
 
@@ -63,7 +63,7 @@ __EOF__
 		local var=\$$(echo "module_help_${opt}")
 		local help=$(eval "echo ${var}")
 
-		echo -e "    -${opt}\t\t$(eval ${help})"
+		echo -e "    -${opt}\t$(eval ${help})"
 		i=$((${i} + 1))
 	done
 

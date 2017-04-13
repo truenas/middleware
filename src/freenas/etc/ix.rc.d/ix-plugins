@@ -272,7 +272,7 @@ plugins_status()
 			continue
 		fi
 
-		jexec ${jid} "${path}/control" status 2>/dev/null
+		jexec ${jid} env LD_LIBRARY_PATH=/usr/local/lib/compat "${path}/control" status 2>/dev/null
 		if [ "$?" != "0" ]
 		then
 			touch "${tmpfile}"

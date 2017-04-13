@@ -9,6 +9,7 @@ from django.utils.translation import ugettext as _
 from freenasUI.api.resources import (
     CertificateAuthorityResourceMixin,
     CertificateResourceMixin,
+    SettingsResourceMixin,
     UpdateResourceMixin,
 )
 from freenasUI.freeadmin.options import BaseFreeAdmin
@@ -137,14 +138,7 @@ class SettingsFAdmin(BaseFreeAdmin):
 
     deletable = False
 
-    def get_extra_context(self, action, **kwargs):
-        try:
-            ssl = models.SSL.objects.order_by("-id")[0]
-        except:
-            ssl = None
-        return {
-            'ssl': ssl,
-        }
+    resource_mixin = SettingsResourceMixin
 
 
 class CertificateAuthorityFAdmin(BaseFreeAdmin):

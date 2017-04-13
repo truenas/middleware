@@ -5,7 +5,7 @@ import logging
 import re
 import sys
 
-from middlewared.schema import accepts, Dict, Int, Ref, Str
+from middlewared.schema import accepts, Dict, Int, List, Ref, Str
 from middlewared.utils import filter_list
 from middlewared.logger import Logger
 
@@ -18,12 +18,13 @@ def item_method(fn):
     return fn
 
 
-def job(lock=None, process=False):
+def job(lock=None, process=False, pipe=False):
     """Flag method as a long running job."""
     def check_job(fn):
         fn._job = {
             'lock': lock,
             'process': process,
+            'pipe': pipe,
         }
         return fn
     return check_job
@@ -238,6 +239,21 @@ class CoreService(Service):
         "ping" protocol message.
         """
         return 'pong'
+
+    @accepts(
+        Str('method'),
+        List('args'),
+        Str('filename'),
+    )
+    def download(self, method, args, filename):
+        """
+        Core helper to call a job marked for download.
+
+        Returns the job id and the URL for download.
+        """
+        job_id = self.middleware.call(method, *args)
+        token = self.middleware.call('auth.generate_token', 300, {'filename': filename, 'job': job_id})
+        return job_id, f'/_download/{job_id}?auth_token={token}'
 
     @private
     def reconfigure_logging(self):

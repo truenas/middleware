@@ -11,6 +11,7 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'freenasUI.settings')
 import django
 django.setup()
 
+from django.conf import settings
 from freenasUI import choices
 from freenasUI import common as fcommon
 from freenasUI.common.freenasldap import (
@@ -26,6 +27,7 @@ from freenasUI.directoryservice.models import (
     IDMAP_TYPE_AD,
     IDMAP_TYPE_ADEX,
     IDMAP_TYPE_AUTORID,
+    IDMAP_TYPE_FRUIT,
     IDMAP_TYPE_HASH,
     IDMAP_TYPE_LDAP,
     IDMAP_TYPE_NSS,
@@ -123,8 +125,9 @@ class NotifierService(Service):
             workgroups = []
             domains = ds.get_domains()
             for d in domains:
-                netbiosname = d['nETBIOSName']
-                workgroups.append(netbiosname)
+                if 'nETBIOSName' in d:
+                    netbiosname = d['nETBIOSName']
+                    workgroups.append(netbiosname)
             ds.workgroups = workgroups
         elif name == 'LDAP':
             ds = FreeNAS_LDAP(flags=FLAGS_DBINIT)
@@ -189,6 +192,7 @@ class NotifierService(Service):
             IDMAP_TYPE_AD: 'IDMAP_TYPE_AD',
             IDMAP_TYPE_ADEX: 'IDMAP_TYPE_ADEX',
             IDMAP_TYPE_AUTORID: 'IDMAP_TYPE_AUTORID',
+            IDMAP_TYPE_FRUIT: 'IDMAP_TYPE_FRUIT',
             IDMAP_TYPE_HASH: 'IDMAP_TYPE_HASH',
             IDMAP_TYPE_LDAP: 'IDMAP_TYPE_LDAP',
             IDMAP_TYPE_NSS: 'IDMAP_TYPE_NSS',
@@ -222,6 +226,18 @@ class NotifierService(Service):
             args = []
         attr = getattr(choices, name)
         if callable(attr):
-            return list(attr(*args))
+            rv = list(attr(*args))
         else:
-            return attr
+            rv = attr
+        # We need to make sure the label is str and not django
+        # translation proxy
+        _choices = []
+        for k, v in rv:
+            if not isinstance(v, str):
+                v = str(v)
+            _choices.append((k, v))
+        return _choices
+
+    def gui_languages(self):
+        """Temporary wrapper to return available languages in django"""
+        return settings.LANGUAGES

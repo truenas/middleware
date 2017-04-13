@@ -70,6 +70,10 @@ __EOF__
 		if ! echo "$options"| grep -q "NoneEnabled"; then
 		    echo "NoneEnabled yes" >> $cfg
 		fi
+		# Add aes128-cbc by default. See #20044
+		if ! echo "$options"| grep -qi "Ciphers "; then
+		    echo "Ciphers +aes128-cbc" >> $cfg
+		fi
 	    fi
 	    if [ "$ssh_tcpport" -gt 0 ]; then
 		echo "Port $ssh_tcpport" >> $cfg

@@ -384,6 +384,18 @@ def configure_idmap_autorid(smb4_conf, idmap, domain):
     ))
 
 
+def configure_idmap_fruit(smb4_conf, idmap, domain):
+    confset1(smb4_conf, "idmap config %s: backend = %s" % (
+        domain,
+        idmap.idmap_backend_name
+    ))
+    confset1(smb4_conf, "idmap config %s: range = %d-%d" % (
+        domain,
+        idmap.idmap_fruit_range_low,
+        idmap.idmap_fruit_range_high
+    ))
+
+
 def configure_idmap_hash(smb4_conf, idmap, domain):
     confset1(smb4_conf, "idmap config %s: backend = %s" % (
         domain,
@@ -588,6 +600,7 @@ IDMAP_FUNCTIONS = {
     'IDMAP_TYPE_AD': configure_idmap_ad,
     'IDMAP_TYPE_ADEX': configure_idmap_ad,
     'IDMAP_TYPE_AUTORID': configure_idmap_autorid,
+    'IDMAP_TYPE_FRUIT': configure_idmap_fruit,
     'IDMAP_TYPE_HASH': configure_idmap_hash,
     'IDMAP_TYPE_LDAP': configure_idmap_ldap,
     'IDMAP_TYPE_NSS': configure_idmap_nss,

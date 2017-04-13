@@ -28,7 +28,7 @@
 
 
 verify_opt() { echo v; }
-verify_help() { echo "Dump Boot System File Verification Status and Inconsistencies (if any)"; }
+verify_help() { echo "Dump Boot System File Verification Status and Inconsistencies"; }
 verify_directory() { echo "Verify"; }
 verify_func()
 {

@@ -38,6 +38,7 @@ BLACKLIST = [
     'idmap_ad',
     'idmap_adex',
     'idmap_autorid',
+    'idmap_fruit',
     'idmap_hash',
     'idmap_ldap',
     'idmap_nss',

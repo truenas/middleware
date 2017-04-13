@@ -909,14 +909,14 @@ class Replication(Model):
     @property
     def repl_lastresult(self):
         if not os.path.exists(REPL_RESULTFILE):
-            return 'Waiting'
+            return {'msg': 'Waiting'}
         with open(REPL_RESULTFILE, 'rb') as f:
             data = f.read()
         try:
             results = pickle.loads(data)
             return results[self.id]
         except:
-            return None
+            return {'msg': None}
 
     @property
     def status(self):
@@ -935,7 +935,7 @@ class Replication(Model):
                 else:
                     return _('Sending')
         if self.repl_lastresult:
-            return self.repl_lastresult
+            return self.repl_lastresult['msg']
 
     def delete(self):
         try:

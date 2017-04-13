@@ -218,6 +218,17 @@ class AlertResource(DojoResource):
         return bundle
 
 
+class SettingsResourceMixin(object):
+
+    def dehydrate(self, bundle):
+        bundle = super(SettingsResourceMixin, self).dehydrate(bundle)
+        if bundle.obj.stg_guicertificate:
+            bundle.data['stg_guicertificate'] = bundle.obj.stg_guicertificate.id
+        else:
+            bundle.data['stg_guicertificate'] = None
+        return bundle
+
+
 class DiskResourceMixin(object):
 
     class Meta:
@@ -1250,6 +1261,12 @@ class ReplicationResourceMixin(object):
         )
         if 'repl_remote' in bundle.data:
             del bundle.data['repl_remote']
+        result = bundle.obj.repl_lastresult or {}
+        if 'last_snapshot' in result:
+            last_snapshot = result['last_snapshot']
+        else:
+            last_snapshot = 'Not ran since boot'
+        bundle.data['repl_lastsnapshot'] = last_snapshot
         return bundle
 
     def hydrate(self, bundle):

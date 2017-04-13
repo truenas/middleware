@@ -31,11 +31,12 @@ from .views import (
     directoryservice_kerberoskeytab_delete,
     directoryservice_kerberoskeytab_add,
     directoryservice_idmap_ad, directoryservice_idmap_adex,
-    directoryservice_idmap_autorid, directoryservice_idmap_hash,
-    directoryservice_idmap_ldap, directoryservice_idmap_nss,
-    directoryservice_idmap_rfc2307, directoryservice_idmap_rid,
-    directoryservice_idmap_tdb, directoryservice_idmap_tdb2,
-    directoryservice_idmap_backend, directoryservice_clearcache,
+    directoryservice_idmap_autorid, directoryservice_idmap_fruit,
+    directoryservice_idmap_hash, directoryservice_idmap_ldap,
+    directoryservice_idmap_nss, directoryservice_idmap_rfc2307,
+    directoryservice_idmap_rid, directoryservice_idmap_tdb,
+    directoryservice_idmap_tdb2, directoryservice_idmap_backend,
+    directoryservice_clearcache,
 )
 
 
@@ -59,6 +60,8 @@ urlpatterns = [
         name="directoryservice_idmap_adex"),
     url(r"^idmap_autorid/(?P<id>\d+)/$", directoryservice_idmap_autorid,
         name="directoryservice_idmap_autorid"),
+    url(r"^idmap_fruit/(?P<id>\d+)/$", directoryservice_idmap_fruit,
+        name="directoryservice_idmap_fruit"),
     url(r"^idmap_hash/(?P<id>\d+)/$", directoryservice_idmap_hash,
         name="directoryservice_idmap_hash"),
     url(r"^idmap_ldap/(?P<id>\d+)/$", directoryservice_idmap_ldap,

@@ -18,10 +18,12 @@ const LoaderOptionsPlugin = require('webpack/lib/LoaderOptionsPlugin');
 const ENV = process.env.ENV = process.env.NODE_ENV = 'development';
 const HOST = process.env.HOST || 'localhost';
 const PORT = process.env.PORT || 3000;
+const REMOTE = process.env.REMOTE || 'localhost';
 const HMR = helpers.hasProcessFlag('hot');
 const METADATA = webpackMerge(commonConfig({env: ENV}).metadata, {
   host: HOST,
   port: PORT,
+  remote: REMOTE,
   ENV: ENV,
   HMR: HMR
 });
@@ -205,6 +207,25 @@ module.exports = function (options) {
       watchOptions: {
         aggregateTimeout: 300,
         poll: 1000
+      },
+      proxy: {
+        '/websocket': {
+          target: 'ws://' + METADATA.remote,
+          secure: false,
+          ws: true
+        },
+        '/api/v1.0/*': {
+          target: 'http://' + METADATA.remote,
+          secure: false
+        },
+        '/_download/*': {
+          target: 'http://' + METADATA.remote,
+          secure: false
+        },
+        '/_upload/*': {
+          target: 'http://' + METADATA.remote,
+          secure: false
+        }
       }
     },
 

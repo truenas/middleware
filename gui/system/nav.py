@@ -94,6 +94,13 @@ class TunableView(TreeNode):
     append_to = 'system.Tunable'
 
 
+class ConsulAlertsView(TreeNode):
+
+    gname = 'View'
+    type = 'opensystem'
+    append_to = 'system.ConsulAlerts'
+
+
 class Update(TreeNode):
 
     gname = 'Update'

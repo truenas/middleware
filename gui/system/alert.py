@@ -170,8 +170,7 @@ class AlertPlugins(metaclass=HookMetaclass):
 
     def email(self, alerts):
         node = alert_node()
-        dismisseds = [a.message_id
-                      for a in mAlert.objects.filter(dismiss=True, node=node)]
+        dismisseds = [a.message_id for a in mAlert.objects.filter(node=node)]
         msgs = []
         for alert in alerts:
             if alert.getId() not in dismisseds:
@@ -203,8 +202,7 @@ class AlertPlugins(metaclass=HookMetaclass):
 
     def ticket(self, support, alerts):
         node = alert_node()
-        dismisseds = [a.message_id
-                      for a in mAlert.objects.filter(dismiss=True, node=node)]
+        dismisseds = [a.message_id for a in mAlert.objects.filter(node=node)]
         msgs = []
         for alert in alerts:
             if alert.getId() not in dismisseds:
@@ -283,8 +281,7 @@ class AlertPlugins(metaclass=HookMetaclass):
             results = obj['results']
         rvs = []
         node = alert_node()
-        dismisseds = [a.message_id
-                      for a in mAlert.objects.filter(node=node, dismiss=True)]
+        dismisseds = [a.message_id for a in mAlert.objects.filter(node=node)]
         ids = []
         for instance in self.mods:
             try:
@@ -304,7 +301,6 @@ class AlertPlugins(metaclass=HookMetaclass):
                     alerts = [_f for _f in rv if _f]
                     for alert in alerts:
                         ids.append(alert.getId())
-                        update_or_create = False
                         if instance.name in results:
                             found = False
                             for i in (results[instance.name]['alerts'] or []):
@@ -313,19 +309,6 @@ class AlertPlugins(metaclass=HookMetaclass):
                                     break
                             if found is not False:
                                 alert.setTimestamp(found.getTimestamp())
-                            else:
-                                update_or_create = True
-                        else:
-                            update_or_create = True
-
-                        if update_or_create:
-                            qs = mAlert.objects.filter(message_id=alert.getId(), node=node)
-                            if qs.exists():
-                                qs[0].timestamp = alert.getTimestamp()
-                                qs[0].save()
-                            else:
-                                mAlert.objects.create(node=node, message_id=alert.getId(),
-                                                      timestamp=alert.getTimestamp(), dismiss=False)
 
                         if alert.getId() in dismisseds:
                             alert.setDismiss(True)

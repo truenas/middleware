@@ -1,4 +1,4 @@
-import { ApplicationRef, Component, Injector, OnInit, ViewContainerRef } from '@angular/core';
+import { Component } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 
 import { DynamicFormControlModel, DynamicFormService, DynamicCheckboxModel, DynamicInputModel, DynamicSelectModel, DynamicRadioGroupModel } from '@ng2-dynamic-forms/core';
@@ -11,8 +11,8 @@ import { RestService } from '../../../services/rest.service';
 export class InterfacesEditComponent {
 
   protected resource_name: string = 'network/interface/';
-  protected route_delete: string[] = ['interfaces', 'delete'];
-  protected route_success: string[] = ['interfaces'];
+  protected route_delete: string[] = ['network', 'interfaces', 'delete'];
+  protected route_success: string[] = ['network', 'interfaces'];
 
   protected formModel: DynamicFormControlModel[] = [
     new DynamicInputModel({
@@ -65,7 +65,7 @@ export class InterfacesEditComponent {
     }),
   ];
 
-  constructor(protected router: Router, protected route: ActivatedRoute, protected rest: RestService, protected formService: DynamicFormService, protected _injector: Injector, protected _appRef: ApplicationRef) {
+  constructor(protected router: Router, protected route: ActivatedRoute, protected rest: RestService, protected formService: DynamicFormService) {
 
   }
 

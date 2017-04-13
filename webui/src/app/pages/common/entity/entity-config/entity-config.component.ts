@@ -1,4 +1,4 @@
-import { ApplicationRef, Component, Injector, Input, OnDestroy, OnInit, ViewChildren } from '@angular/core';
+import { Component, ContentChildren, Input, OnDestroy, OnInit, QueryList, TemplateRef, ViewChildren } from '@angular/core';
 import { FormControl, FormGroup, Validators } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 
@@ -7,6 +7,7 @@ import { RestService, WebSocketService } from '../../../../services/';
 
 import { Subscription } from 'rxjs';
 import { EntityUtils } from '../utils';
+import { EntityTemplateDirective } from '../entity-template.directive';
 
 import * as _ from 'lodash';
 
@@ -20,6 +21,8 @@ export class EntityConfigComponent implements OnInit, OnDestroy {
   @Input('conf') conf: any;
 
   protected formGroup: FormGroup;
+  templateTop: TemplateRef<any>;
+  @ContentChildren(EntityTemplateDirective) templates: QueryList<EntityTemplateDirective>;
 
   @ViewChildren('component') components;
 
@@ -30,8 +33,16 @@ export class EntityConfigComponent implements OnInit, OnDestroy {
   public success: boolean = false;
   public data: Object = {};
 
-  constructor(protected router: Router, protected route: ActivatedRoute, protected rest: RestService, protected ws: WebSocketService, protected formService: DynamicFormService, protected _injector: Injector, protected _appRef: ApplicationRef) {
+  constructor(protected router: Router, protected route: ActivatedRoute, protected rest: RestService, protected ws: WebSocketService, protected formService: DynamicFormService) {
 
+  }
+
+  ngAfterViewInit() {
+    this.templates.forEach((item) => {
+      if(item.type == 'TOP') {
+        this.templateTop = item.templateRef;
+      }
+    });
   }
 
   ngOnInit() {
