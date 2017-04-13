@@ -146,7 +146,7 @@ def summary(request):
                 })
 
         p1 = Popen(["ifconfig", iface, "inet6"], stdin=PIPE, stdout=PIPE)
-        p2 = Popen(["grep", "inet6 "], stdin=p1.stdout, stdout=PIPE)
+        p2 = Popen(["grep", "inet6 "], stdin=p1.stdout, stdout=PIPE, encoding='utf8')
         output = p2.communicate()[0]
         if p2.returncode == 0:
             for line in output.split('\n'):
