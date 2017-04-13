@@ -8,15 +8,16 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:05-0700\n"
-"PO-Revision-Date: 2014-11-24 00:47+0000\n"
-"Last-Translator: ede_web <edgar.oliveira.8@gmail.com>\n"
-"Language-Team: LANGUAGE <LL@li.org>\n"
+"PO-Revision-Date: 2017-04-11 16:22+0000\n"
+"Last-Translator: Eric Loewenthal <ericloewe@outlook.com>\n"
+"Language-Team: Portuguese "
+"<http://weblate.trueos.org/projects/freenas/django/pt/>\n"
 "Language: pt\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=2; plural=(n > 1);\n"
-"X-Generator: Pootle 2.5.0\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
+"X-Generator: Weblate 2.10-dev\n"
 "X-POOTLE-MTIME: 1416790032.0\n"
 
 #: choices.py:40
@@ -520,8 +521,9 @@ msgstr "Introduza a mesma palavra-passe que em acima, para verificação."
 #: account/forms.py:265 account/forms.py:558 account/models.py:115
 #: freeadmin/navtree.py:360 templates/account/bsdusers.html:8
 #: templates/account/bsdusers.html.py:87
+#, fuzzy
 msgid "Shell"
-msgstr "Consola"
+msgstr "Shell"
 
 #~ msgid "Disable password logins"
 #~ msgstr "Desactivar inícios de sessão"
@@ -3640,6 +3642,7 @@ msgid "Unix (NFS) Shares"
 msgstr "Partilhas (NFS) Unix"
 
 #: sharing/nav.py:4 templates/menubar.html:22
+#, fuzzy
 msgid "Sharing"
 msgstr "Partilha"
 
@@ -3667,40 +3670,41 @@ msgid "Specify custom path"
 msgstr "Especifique caminho personalizado"
 
 #: storage/forms.py:163
-#, fuzzy
 msgid "Volume add"
-msgstr "Nome do volume"
+msgstr "Adicionar volume"
 
 #: storage/forms.py:175
 msgid ""
 "Leaving this blank will give the volume a default path of /mnt/${VOLUME_NAME}"
 msgstr ""
-"Deixando em branco dará o volume um caminho padrão de /mnt/${VOLUME_NAME}"
+"Deixando em branco dará ao volume um caminho padrão de /mnt/${NOME_DO_VOLUME}"
 
 #: storage/forms.py:233
 msgid ""
 "The volume name must start with letters and may include numbers, \"-\", \"_"
 "\" and \".\" ."
 msgstr ""
-"O nome do volume deve começar com letras e podem incluir números, \"-\", \"_"
-"\" e \".\" ."
+"O nome do volume deve começar com letras e pode incluir números, \"-\", \"_\""
+" e \".\" ."
 
 #: storage/forms.py:236
-#, fuzzy
 msgid "A volume with that name already exists."
-msgstr "Um grupo com esse nome já existe."
+msgstr "Já existe um grupo com esse nome."
 
 #: storage/forms.py:252
+#, fuzzy
 msgid "Path does not exist."
-msgstr "Caminho não existe."
+msgstr "O caminho não existe."
 
 #: storage/forms.py:255
 msgid "Path is not a directory."
-msgstr "Caminho não é uma pasta."
+msgstr "O caminho não é uma pasta."
 
 #: storage/forms.py:264
 msgid "You cannot select an existing ZFS volume and specify a new volume name"
 msgstr ""
+"Não é possível escolher um volume ZFS existente e especificar um novo nome "
+"para o volume"
 
 #: storage/forms.py:269
 msgid ""
@@ -4939,7 +4943,7 @@ msgstr "Reportar"
 
 #: system/nav.py:20
 msgid "System Information"
-msgstr "Informação do Sistema"
+msgstr "Informações do Sistema"
 
 #: system/views.py:129
 msgid "The uploaded file is not valid."
@@ -6060,7 +6064,7 @@ msgstr "Adicionar Volume"
 
 #: templates/storage/wizard.html:157
 msgid "Existing data will be cleared"
-msgstr "Informação existente será apagada"
+msgstr "Os dados existentes serão eliminados"
 
 #: templates/storage/zpool_disk_replace.html:2
 msgid "Replace Disk"
@@ -7480,9 +7484,8 @@ msgid "The pool failed to upgraded: %s"
 msgstr "O volume falhou na exportação"
 
 #: support/models.py:49
-#, fuzzy
 msgid "Support"
-msgstr "EA Suporte"
+msgstr "Suporte"
 
 #: system/forms.py:86
 #, fuzzy
@@ -8358,9 +8361,8 @@ msgstr ""
 #: storage/nav.py:40
 #: templates/storage/volume_datagrid.html:6
 #: templates/storage/volume_datagrid.html:10
-#, fuzzy
 msgid "ZFS Volume Manager"
-msgstr "Nome do volume"
+msgstr "Gestor de Volumes ZFS"
 
 #: storage/views.py:783
 msgid "The scrub process has stopped"
@@ -8602,9 +8604,8 @@ msgid "Scrub"
 msgstr "NFS Partilhas"
 
 #: templates/storage/wizard.html:92
-#, fuzzy
 msgid "Extend Volume"
-msgstr "Exportar volume"
+msgstr "Extender Volume"
 
 #: templates/storage/zfswizard.html:77
 #, fuzzy
@@ -9281,9 +9282,8 @@ msgstr ""
 
 #: storage/forms.py:597
 #: templates/storage/zfswizard.html:41
-#, fuzzy
 msgid "Encryption"
-msgstr "Modo de Encriptação"
+msgstr "Encriptação"
 
 #: storage/forms.py:605
 #: storage/forms.py:1448
@@ -9835,9 +9835,8 @@ msgstr "Informal"
 #: tasks/nav.py:4
 #: templates/menubar.html:13
 #: templates/tasks/index.html:1
-#, fuzzy
 msgid "Tasks"
-msgstr "Tarefas Rsync"
+msgstr "Tarefas"
 
 #: templates/services/core.html:32
 #, fuzzy
@@ -10237,7 +10236,7 @@ msgstr ""
 #: freeadmin/navtree.py:256
 #, fuzzy
 msgid "Initial Wizard"
-msgstr "Iniciador"
+msgstr "Assistente de Configuração Inicial"
 
 #: middleware/notifier.py:2222
 #, fuzzy
@@ -10330,9 +10329,8 @@ msgid "Are you sure?"
 msgstr "Tem a certeza que pretende apagar?"
 
 #: templates/system/initialwizard_confirm.html:39
-#, fuzzy
 msgid "Confirm"
-msgstr "Configurar"
+msgstr "Confirmar"
 
 #: templates/system/initialwizard_confirm.html:46
 msgid "Return to Wizard"

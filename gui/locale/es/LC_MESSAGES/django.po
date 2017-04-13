@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:07-0700\n"
-"PO-Revision-Date: 2017-01-08 19:36+0000\n"
-"Last-Translator: Jonay Santana <jonay.santana@gmail.com>\n"
+"PO-Revision-Date: 2017-04-06 17:46+0000\n"
+"Last-Translator: Johnn <johnn@globalworks.cat>\n"
 "Language-Team: Spanish "
 "<http://weblate.trueos.org/projects/freenas/django/es/>\n"
 "Language: es\n"
@@ -940,9 +940,8 @@ msgid "You have to specify IPv6 address as well per alias"
 msgstr "Has de especificar la dirección IPv6 y también el alias"
 
 #: network/forms.py:443
-#, fuzzy
 msgid "You have to choose IPv6 netmask as well per alias"
-msgstr "Información Winbind NSS"
+msgstr "Tienes que elegir la máscara de red IPv6 también por alias"
 
 #: network/forms.py:448
 msgid "You have to choose between IPv4 or IPv6 per alias"
@@ -7030,7 +7029,7 @@ msgstr "Añadir plantilla de jaula"
 
 #: jails/utils.py:695
 msgid "You need to create a volume to proceed!"
-msgstr ""
+msgstr "¡Necesita crear un volumen para continuar!"
 
 #: jails/utils.py:714
 msgid "Failed to create dataset %(name)s: %(error)s"
@@ -7090,7 +7089,7 @@ msgstr "Habilitar configuración optimizada por defecto"
 
 #: network/models.py:93
 msgid "Netwait IP list"
-msgstr ""
+msgstr "Lista de IP de Netwait"
 
 #: network/models.py:102
 msgid "Host name data base"
@@ -7146,9 +7145,8 @@ msgid "Jail does not exist"
 msgstr "La ruta no existe."
 
 #: services/forms.py:220
-#, fuzzy
 msgid "This path does not exist."
-msgstr "La ruta %s no existe"
+msgstr "La ruta no existe"
 
 #: services/forms.py:222
 msgid "This path is not a directory."
@@ -7178,15 +7176,15 @@ msgstr "Ya existe un objetivo con este nombre."
 
 #: services/models.py:233
 msgid "Server minimum protocol"
-msgstr ""
+msgstr "Protocolo mínimo del servidor"
 
 #: services/models.py:235
 msgid "The minimum protocol version that will be supported by the server"
-msgstr ""
+msgstr "La versión mínima del protocolo que será soportada por el servidor"
 
 #: services/models.py:243
 msgid "The highest protocol version that will be supported by the server"
-msgstr ""
+msgstr "La versión de protocolo más alta que será soportada por el servidor"
 
 #: services/models.py:248
 msgid ""
@@ -7221,7 +7219,7 @@ msgstr "Dirección IPv4 enalzada"
 
 #: services/models.py:418
 msgid "Enable multithreaded mode"
-msgstr ""
+msgstr "Habilitar el modo multiproceso"
 
 #: services/models.py:914
 msgid "IP Server"
@@ -7246,6 +7244,8 @@ msgid ""
 "For local users, only allow access to user home directory unless the user is "
 "a member of group wheel."
 msgstr ""
+"Para usuarios locales, sólo permita el acceso al directorio personal del "
+"usuario a menos que el usuario sea miembro del de grupo."
 
 #: services/models.py:1278
 #, fuzzy
@@ -7273,9 +7273,8 @@ msgid "TLS no session reuse required"
 msgstr "No se requiere reutilizacion de la sesión TLS"
 
 #: services/models.py:1332
-#, fuzzy
 msgid "TLS DNS name required"
-msgstr "Es necesario un numero."
+msgstr "TLS DNS nombre requerido"
 
 #: services/models.py:1449
 msgid "SFTP Log Facility"
@@ -7296,7 +7295,7 @@ msgstr "Password de cuenta de dominio"
 
 #: services/models.py:1609
 msgid "Use keytab"
-msgstr ""
+msgstr "Usar Keytab"
 
 #: services/models.py:1613
 msgid "Kerberos keytab file"
@@ -7304,7 +7303,7 @@ msgstr "Archivo keytab de Kerberos"
 
 #: services/models.py:1629
 msgid "Set this if you want to allow Trusted Domains."
-msgstr ""
+msgstr "Establezca esta opción si desea permitir dominios de confianza."
 
 #: services/models.py:1651
 #, fuzzy
@@ -7313,11 +7312,11 @@ msgstr "Fichero keytab de Kerberos"
 
 #: services/models.py:1652
 msgid "Hostname of the kerberos server to use."
-msgstr ""
+msgstr "Nombre de host del servidor kerberos a utilizar."
 
 #: services/models.py:1657
 msgid "Kerberos Password Server"
-msgstr ""
+msgstr "Kerberos Contraseña del Servidor"
 
 #: services/models.py:1710
 msgid "NIS domain"
@@ -7329,9 +7328,8 @@ msgstr "Hace que ypbind se ejecute en modo seguro."
 
 #: services/models.py:1735
 #: services/models.py:1736
-#, fuzzy
 msgid "NIS Domain"
-msgstr "Dominio"
+msgstr "NIS Dominio"
 
 #: services/models.py:1850
 #, fuzzy
@@ -7347,10 +7345,12 @@ msgstr "Pais"
 msgid ""
 "Specify a two-letterISO 3166 country code (required for LLDPlocation support)"
 msgstr ""
+"Especifique un código de país de dos letras ISO 3166 (necesario para el "
+"soporte de ubicación LLDP)"
 
 #: services/models.py:1866
 msgid "Specify the physical location of the host"
-msgstr ""
+msgstr "Especificar la ubicación física del host"
 
 #: services/models.py:2009
 msgid "Informational"
