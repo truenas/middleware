@@ -27,6 +27,7 @@ import json
 import logging
 import sysctl
 
+from django.core.urlresolvers import reverse
 from django.shortcuts import render
 from django.utils.translation import ugettext as _
 
@@ -150,13 +151,13 @@ def core(request):
 
     return render(request, 'services/core.html', {
         'urls': json.dumps({
-            'cifs': cifs.get_edit_url(),
+            'cifs': reverse('services_cifs'),
             'afp': afp.get_edit_url(),
             'lldp': lldp.get_edit_url(),
             'nfs': nfs.get_edit_url(),
             'rsync': rsyncd.get_edit_url(),
             'dynamicdns': dynamicdns.get_edit_url(),
-            's3': s3.get_edit_url(),
+            's3': reverse('services_s3'),
             'snmp': snmp.get_edit_url(),
             'ups': ups.get_edit_url(),
             'ftp': ftp.get_edit_url(),

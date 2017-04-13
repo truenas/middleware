@@ -2322,16 +2322,6 @@ class S3(Model):
         help_text=_("S3 filesystem disk(s)")
     )
 
-    #
-    # There is probably a better way to do this but I don't know how. I
-    # need to be able to click the edit wrench in services and override
-    # freeadmin from handling the form. This works  ;-)
-    #
-    def get_edit_url(self):
-        return "%s?deletable=false" % (
-            reverse('services_s3')
-        )
-
     class Meta:
         verbose_name = _("S3")
         verbose_name_plural = _("S3")
