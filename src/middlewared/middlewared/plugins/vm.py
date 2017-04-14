@@ -83,7 +83,7 @@ class VMSupervisor(object):
                 # If Bridge
                 if True:
                     bridge = None
-                    for name, iface in netif.list_interfaces().items():
+                    for name, iface in list(netif.list_interfaces().items()):
                         if name.startswith('bridge'):
                             bridge = iface
                             break
