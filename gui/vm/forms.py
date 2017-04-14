@@ -22,6 +22,12 @@ class VMForm(ModelForm):
         fields = '__all__'
         model = models.VM
 
+    def get_cpu_flags(self):
+        cpu_flags = {}
+        with client as c:
+            cpu_flags = c.call('vm.flags')
+        return cpu_flags
+
     def clean_name(self):
         name = self.cleaned_data.get('name')
         if name:
@@ -29,6 +35,21 @@ class VMForm(ModelForm):
                 raise forms.ValidationError(_('Only alphanumeric characters are allowed.'))
             name = name.replace(' ', '')
         return name
+
+    def clean_vcpus(self):
+        cpu_flags = self.get_cpu_flags()
+        vcpus = self.cleaned_data.get('vcpus')
+
+        if cpu_flags.get('intel_vmx'):
+            if vcpus > 1 and cpu_flags.get('unrestricted_guest') is False:
+                raise forms.ValidationError(_('Only one Virtual CPU is allowed in this system.'))
+            else:
+                return vcpus
+        elif cpu_flags.get('amd_rvi'):
+            if vcpus > 1 and cpu_flags.get('amd_asids') is False:
+                raise forms.ValidationError(_('Only one Virtual CPU is allowed in this system.'))
+            else:
+                return vcpus
 
     def save(self, **kwargs):
         with client as c:
