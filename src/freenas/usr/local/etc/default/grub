@@ -15,7 +15,11 @@ if [ $(/usr/local/bin/sqlite3 /data/freenas-v1.db "SELECT adv_serialconsole FROM
         port=$(/usr/local/bin/sqlite3 /data/freenas-v1.db "SELECT adv_serialport FROM system_advanced")
         speed=$(/usr/local/bin/sqlite3 /data/freenas-v1.db "SELECT adv_serialspeed FROM system_advanced")
         unit=$(/usr/sbin/devinfo -u |awk -v port=$port '$1 ~ port { print $2 }' |tr -dc 0-9)
-        GRUB_SERIAL_COMMAND="serial --port=$port --speed=$speed --unit=$unit"
+	# From a fresh install with serial enabled its most likely these values have not been hand-set
+	# by the user (yet). Let grub auto-detect do its thing in that case.
+	if [ -n "$port" -a -n "$speed" -a -n "$unit" ] ; then
+		GRUB_SERIAL_COMMAND="serial --port=$port --speed=$speed --unit=$unit"
+	fi
         GRUB_TERMINAL_INPUT="console serial"
         GRUB_TERMINAL_OUTPUT="console serial"
         unset port speed unit
