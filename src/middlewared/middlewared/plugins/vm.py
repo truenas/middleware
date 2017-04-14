@@ -83,7 +83,7 @@ class VMSupervisor(object):
                 # If Bridge
                 if True:
                     bridge = None
-                    for name, iface in netif.list_interfaces().items():
+                    for name, iface in list(netif.list_interfaces().items()):
                         if name.startswith('bridge'):
                             bridge = iface
                             break
@@ -168,7 +168,7 @@ class VMService(CRUDService):
         data['amd_rvi'] = True if rvi and rvi[0].value != 0 else False
 
         asids = sysctl.filter('hw.vmm.svm.num_asids')
-        data['amd_asids'] = True if asids and asids[0].value !=0 else False
+        data['amd_asids'] = True if asids and asids[0].value != 0 else False
 
         return data
 
