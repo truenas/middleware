@@ -3408,7 +3408,7 @@ class UpdateResourceMixin(NestedMixin):
         conf.LoadTrainsConfig()
         trains = conf.AvailableTrains() or []
         if trains:
-            trains = list(trains.keys())
+            trains = list(filter(lambda x: not x.lower().startswith('freenas-corral'), trains.keys()))
 
         seltrain = update.get_train()
         if seltrain in conf._trains:

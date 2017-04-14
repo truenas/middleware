@@ -342,6 +342,10 @@ install_grub() {
 	mv ${_mnt}/conf/base/etc/local/grub.d/10_ktrueos.bak /tmp/bakup
 	for _disk in ${_disks}; do
 	    _grub_args=""
+            GRUBSERIAL=`kenv grub.serialmode`
+	    if [ "$GRUBSERIAL" = "YES" ] ; then
+	       chroot ${_mnt} /usr/local/bin/sqlite3 /data/freenas-v1.db "update system_advanced set adv_serialconsole = 1"
+            fi
 	    if [ "$BOOTMODE" = "efi" ] ; then
 		# EFI Mode
 		glabel label efibsd /dev/${_disk}p1
@@ -458,7 +462,7 @@ partition_disk() {
 	local _disks _disksparts
 	local _mirror
 	local _minsize
-	
+
 	_disks=$*
 
 	# Erase both typical metadata area.
@@ -469,12 +473,12 @@ partition_disk() {
 	done
 
 	_minsize=$(get_minimum_size ${_disks})
-	
+
 	if [ "${_minsize}" = "0k" ]; then
 	    echo "Disk is too small to install ${AVATAR_PROJECT}" 1>&2
 	    return 1
 	fi
-	
+
 	_disksparts=$(for _disk in ${_disks}; do
 	    create_partitions ${_disk} ${_minsize} >&2
 	    if [ "$BOOTMODE" != "efi" ] ; then
@@ -1058,7 +1062,7 @@ menu_install()
       partition_disk ${_realdisks}
       mount_disk /tmp/data
     fi
-    
+
     if [ -d /tmp/data_preserved ]; then
 	cp -pR /tmp/data_preserved/. /tmp/data/data
 	# we still need the newer version we are upgrading to's
@@ -1078,7 +1082,7 @@ menu_install()
 
     # Tell it to look in /.mount for the packages.
     /usr/local/bin/freenas-install -P /.mount/${OS}/Packages -M /.mount/${OS}-MANIFEST /tmp/data
-    
+
     rm -f /tmp/data/conf/default/etc/fstab /tmp/data/conf/base/etc/fstab
     echo "freenas-boot/grub	/boot/grub	zfs	rw,noatime	1	0" > /tmp/data/etc/fstab
     if is_truenas; then

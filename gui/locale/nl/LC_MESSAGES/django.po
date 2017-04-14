@@ -8,7 +8,7 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:03-0700\n"
-"PO-Revision-Date: 2017-03-08 13:39+0000\n"
+"PO-Revision-Date: 2017-04-09 14:31+0000\n"
 "Last-Translator: Ton <tonnes.mb@gmail.com>\n"
 "Language-Team: Dutch <http://weblate.trueos.org/projects/freenas/django/nl/>"
 "\n"
@@ -4058,7 +4058,6 @@ msgid "Enable S.M.A.R.T."
 msgstr "S.M.A.R.T. inschakelen"
 
 #: storage/models.py:385
-#, fuzzy
 msgid "S.M.A.R.T. extra options"
 msgstr "Extra opties voor S.M.A.R.T."
 
