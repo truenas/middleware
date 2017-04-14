@@ -11,6 +11,10 @@ alias la	ls -a
 alias lf	ls -FA
 alias ll	ls -lA
 
+# Decrease likelihood of filesystem metadata corruption on [CF,SD,USB]
+# persistent media by setting '-o noatime'.
+alias mountrw	mount -o noatime -uw
+
 # A righteous umask
 umask 22
 
@@ -30,19 +34,13 @@ if ($?prompt) then
 		bindkey "^W" backward-delete-word
 		bindkey -k up history-search-backward
 		bindkey -k down history-search-forward
+
+		# bind Delete, Home, End, and Insert keys
+		bindkey "\e[1~" beginning-of-line # Home
+		bindkey "\e[7~" beginning-of-line # Home rxvt
+		bindkey "\e[2~" overwrite-mode # Ins
+		bindkey "\e[3~" delete-char # Delete
+		bindkey "\e[4~" end-of-line # End
+		bindkey "\e[8~" end-of-line # End rxvt
 	endif
-endif
-
-# Decrease likelihood of filesystem metadata corruption on [CF,SD,USB]
-# persistent media by setting '-o noatime'.
-alias mountrw	mount -o noatime -uw
-
-#Bind Delete, Home, End and Insert keys
-if ($?tcsh && $?prompt) then
-bindkey "\e[1~" beginning-of-line # Home
-bindkey "\e[7~" beginning-of-line # Home rxvt
-bindkey "\e[2~" overwrite-mode # Ins
-bindkey "\e[3~" delete-char # Delete
-bindkey "\e[4~" end-of-line # End
-bindkey "\e[8~" end-of-line # End rxvt
 endif
