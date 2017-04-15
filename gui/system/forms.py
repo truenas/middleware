@@ -1178,14 +1178,12 @@ class AdvancedForm(ModelForm):
         if self.instance._original_adv_powerdaemon != self.instance.adv_powerdaemon:
             notifier().restart("powerd")
         if self.instance._original_adv_serialconsole != self.instance.adv_serialconsole:
-            notifier().start("ix-device_hints")
             notifier().start("ttys")
             if not loader_reloaded:
                 notifier().reload("loader")
                 loader_reloaded = True
         elif (self.instance._original_adv_serialspeed != self.instance.adv_serialspeed or
                 self.instance._original_adv_serialport != self.instance.adv_serialport):
-            notifier().start("ix-device_hints")
             if not loader_reloaded:
                 notifier().reload("loader")
                 loader_reloaded = True
