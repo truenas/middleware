@@ -342,9 +342,19 @@ install_grub() {
 	mv ${_mnt}/conf/base/etc/local/grub.d/10_ktrueos.bak /tmp/bakup
 	for _disk in ${_disks}; do
 	    _grub_args=""
+	    # If the installer was booted with serial mode enabled, we should
+	    # save these values to the installed system
             GRUBSERIAL=`kenv grub.serialmode`
 	    if [ "$GRUBSERIAL" = "YES" ] ; then
 	       chroot ${_mnt} /usr/local/bin/sqlite3 /data/freenas-v1.db "update system_advanced set adv_serialconsole = 1"
+               SERIALSPEED=`kenv grub.serialspeed`
+	       if [ "$SERIALSPEED" != "AUTO" ] ; then
+	          chroot ${_mnt} /usr/local/bin/sqlite3 /data/freenas-v1.db "update system_advanced set adv_serialspeed = $SERIALSPEED"
+	       fi
+               SERIALPORT=`kenv grub.serialport`
+	       if [ "$SERIALPORT" != "AUTO" ] ; then
+	          chroot ${_mnt} /usr/local/bin/sqlite3 /data/freenas-v1.db "update system_advanced set adv_serialport = $SERIALPORT"
+	       fi
             fi
 	    if [ "$BOOTMODE" = "efi" ] ; then
 		# EFI Mode
