@@ -28,6 +28,7 @@ import base64
 import logging
 import os
 import re
+import sysctl
 import tempfile
 
 from ldap import LDAPError
@@ -635,6 +636,20 @@ class ActiveDirectoryForm(ModelForm):
 
         return cdata
 
+    def get_timeout(self, what, default=0):
+        oid = 'freenas.directoryservice.activedirectory.timeout.%s' % what
+        value = default
+
+        try:
+            timeout = sysctl.filter(oid)[0]
+            if timeout.value > 0:
+                value = timeout.value 
+            
+        except Exception as e:
+            log.debug("sysctl: unable to get value for oid %s", oid)
+
+        return value
+
     def save(self):
         enable = self.cleaned_data.get("ad_enable")
         enable_monitoring = self.cleaned_data.get("ad_enable_monitor")
@@ -660,9 +675,24 @@ class ActiveDirectoryForm(ModelForm):
 
         if enable:
             if started is True:
-                started = notifier().restart("activedirectory", timeout=90)
+                timeout = self.get_timeout("restart",  90*2)
+                try:
+                    started = notifier().restart("activedirectory", timeout=timeout)
+                except Exception as e:
+                    raise ServiceFailed(
+                        "activedirectory",
+                        _("Active Directory restart timed out after %d seconds." % timeout),
+                    )
+                
             if started is False:
-                started = notifier().start("activedirectory", timeout=90)
+                timeout = self.get_timeout("start",  90)
+                try:
+                    started = notifier().start("activedirectory", timeout=timeout)
+                except Exception as e:
+                    raise ServiceFailed(
+                        "activedirectory",
+                        _("Active Directory start timed out after %d seconds." % timeout),
+                    )
             if started is False:
                 self.instance.ad_enable = False
                 super(ActiveDirectoryForm, self).save()
@@ -672,7 +702,14 @@ class ActiveDirectoryForm(ModelForm):
                 )
         else:
             if started is True:
-                started = notifier().stop("activedirectory", timeout=60)
+                timeout = self.get_timeout("stop",  60)
+                try:
+                    started = notifier().stop("activedirectory", timeout=timeout)
+                except Exception as e:
+                    raise ServiceFailed(
+                        "activedirectory",
+                        _("Active Directory stop timed out after %d seconds." % timeout),
+                    )
 
         with client as c:
             if enable_monitoring and enable:
