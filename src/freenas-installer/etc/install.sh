@@ -344,8 +344,8 @@ install_grub() {
 	    _grub_args=""
 	    # If the installer was booted with serial mode enabled, we should
 	    # save these values to the installed system
-            GRUBSERIAL=`kenv grub.serialmode`
-	    if [ "$GRUBSERIAL" = "YES" ] ; then
+	    USESERIAL=$((`sysctl -n debug.boothowto` & 0x1000))
+	    if [ "$USESERIAL" -ne 0 ] ; then
 	       chroot ${_mnt} /usr/local/bin/sqlite3 /data/freenas-v1.db "update system_advanced set adv_serialconsole = 1"
                SERIALSPEED=`kenv grub.serialspeed`
 	       if [ "$SERIALSPEED" != "AUTO" ] ; then
