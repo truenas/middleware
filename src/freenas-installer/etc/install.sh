@@ -347,12 +347,12 @@ install_grub() {
 	    USESERIAL=$((`sysctl -n debug.boothowto` & 0x1000))
 	    if [ "$USESERIAL" -ne 0 ] ; then
 	       chroot ${_mnt} /usr/local/bin/sqlite3 /data/freenas-v1.db "update system_advanced set adv_serialconsole = 1"
-               SERIALSPEED=`kenv grub.serialspeed`
-	       if [ "$SERIALSPEED" != "AUTO" ] ; then
+	       SERIALSPEED=`kenv hw.uart.console | sed -En 's/.*br:([0-9x]+).*/\1/p'`
+	       if [ -n "$SERIALSPEED" ] ; then
 	          chroot ${_mnt} /usr/local/bin/sqlite3 /data/freenas-v1.db "update system_advanced set adv_serialspeed = $SERIALSPEED"
 	       fi
-               SERIALPORT=`kenv grub.serialport`
-	       if [ "$SERIALPORT" != "AUTO" ] ; then
+	       SERIALPORT=`kenv hw.uart.console | sed -En 's/.*io:([0-9x]+).*/\1/p'`
+	       if [ -n "$SERIALPORT" ] ; then
 	          chroot ${_mnt} /usr/local/bin/sqlite3 /data/freenas-v1.db "update system_advanced set adv_serialport = $SERIALPORT"
 	       fi
             fi
