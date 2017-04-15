@@ -320,6 +320,25 @@ EOD
     return $?
 }
 
+save_grub_serial() {
+    _mnt="$1"
+
+    # If the installer was booted with serial mode enabled, we should
+    # save these values to the installed system
+    USESERIAL=$((`sysctl -n debug.boothowto` & 0x1000))
+    if [ "$USESERIAL" -eq 0 ] ; then return 0; fi
+
+    chroot ${_mnt} /usr/local/bin/sqlite3 /data/freenas-v1.db "update system_advanced set adv_serialconsole = 1"
+    SERIALSPEED=`kenv hw.uart.console | sed -En 's/.*br:([0-9x]+).*/\1/p'`
+    if [ -n "$SERIALSPEED" ] ; then
+       chroot ${_mnt} /usr/local/bin/sqlite3 /data/freenas-v1.db "update system_advanced set adv_serialspeed = $SERIALSPEED"
+    fi
+    SERIALPORT=`kenv hw.uart.console | sed -En 's/.*io:([0-9x]+).*/\1/p'`
+    if [ -n "$SERIALPORT" ] ; then
+       chroot ${_mnt} /usr/local/bin/sqlite3 /data/freenas-v1.db "update system_advanced set adv_serialport = $SERIALPORT"
+    fi
+}
+
 install_grub() {
 	local _disk _disks
 	local _mnt
@@ -342,20 +361,6 @@ install_grub() {
 	mv ${_mnt}/conf/base/etc/local/grub.d/10_ktrueos.bak /tmp/bakup
 	for _disk in ${_disks}; do
 	    _grub_args=""
-	    # If the installer was booted with serial mode enabled, we should
-	    # save these values to the installed system
-	    USESERIAL=$((`sysctl -n debug.boothowto` & 0x1000))
-	    if [ "$USESERIAL" -ne 0 ] ; then
-	       chroot ${_mnt} /usr/local/bin/sqlite3 /data/freenas-v1.db "update system_advanced set adv_serialconsole = 1"
-	       SERIALSPEED=`kenv hw.uart.console | sed -En 's/.*br:([0-9x]+).*/\1/p'`
-	       if [ -n "$SERIALSPEED" ] ; then
-	          chroot ${_mnt} /usr/local/bin/sqlite3 /data/freenas-v1.db "update system_advanced set adv_serialspeed = $SERIALSPEED"
-	       fi
-	       SERIALPORT=`kenv hw.uart.console | sed -En 's/.*io:([0-9x]+).*/\1/p'`
-	       if [ -n "$SERIALPORT" ] ; then
-	          chroot ${_mnt} /usr/local/bin/sqlite3 /data/freenas-v1.db "update system_advanced set adv_serialport = $SERIALPORT"
-	       fi
-            fi
 	    if [ "$BOOTMODE" = "efi" ] ; then
 		# EFI Mode
 		glabel label efibsd /dev/${_disk}p1
@@ -1148,6 +1153,7 @@ menu_install()
     chroot /tmp/data /usr/sbin/mtree -deUf /etc/mtree/BSD.var.dist -p /var
     # Set default boot filesystem
     zpool set bootfs=freenas-boot/ROOT/${BENAME} freenas-boot
+    save_grub_serial /tmp/data
     install_grub /tmp/data ${_realdisks}
     
 #    set +x
