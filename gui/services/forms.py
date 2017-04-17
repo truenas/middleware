@@ -2169,6 +2169,8 @@ class S3Form(ModelForm):
         if self._api is True:
             del self.fields['s3_secret_key2']
 
+        self.fields['s3_mode'].widget = forms.widgets.HiddenInput()
+
     def clean_s3_access_key(self):
         s3_access_key = self.cleaned_data.get("s3_access_key")
         s3_access_key_len = len(s3_access_key)
