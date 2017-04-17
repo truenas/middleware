@@ -9,7 +9,7 @@ import filesize from 'filesize.js';
     {{ data.devname }} ({{ capacity }})
   </span>
   `,
-  styles: ['span { min-width: 120px; margin: 5px; padding: 4px; margin-top: 4px; border: 1px solid #ddd; }'],
+  styles: ['span { float: letf; display:inline-block; margin: 5px; padding: 1px; margin-top: 4px; border: 1px solid #ddd; }'],
 })
 export class DiskComponent implements OnInit {
 
