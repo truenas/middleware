@@ -1036,20 +1036,17 @@ class KerberosKeytabCreateForm(ModelForm):
         encoded = None
         if hasattr(keytab_file, 'temporary_file_path'):
             filename = keytab_file.temporary_file_path()
-            with open(filename, "r") as f:
+            with open(filename, "rb") as f:
                 keytab_contents = f.read()
-                encoded = base64.b64encode(keytab_contents)
-                f.close()
+                encoded = base64.b64encode(keytab_contents).decode()
         else:
             filename = tempfile.mktemp(dir='/tmp')
             with open(filename, 'wb+') as f:
                 for c in keytab_file.chunks():
                     f.write(c)
-                f.close()
-            with open(filename, "r") as f:
+            with open(filename, "rb") as f:
                 keytab_contents = f.read()
-                encoded = base64.b64encode(keytab_contents)
-                f.close()
+                encoded = base64.b64encode(keytab_contents).decode()
             os.unlink(filename)
 
         return encoded
@@ -1064,10 +1061,9 @@ class KerberosKeytabCreateForm(ModelForm):
         )
 
         tmpfile = tempfile.mktemp(dir="/tmp")
-        with open(tmpfile, 'w') as f:
+        with open(tmpfile, 'wb') as f:
             decoded = base64.b64decode(keytab_file)
             f.write(decoded)
-            f.close()
 
         (res, out, err) = run("/usr/sbin/ktutil -vk '%s' list" % tmpfile)
         if res != 0:
@@ -1099,7 +1095,7 @@ class KerberosKeytabCreateForm(ModelForm):
                     ret = True
 
                 except Exception as e:
-                    log.debug("save_principals(): %s", e)
+                    log.debug("save_principals(): %s", e, exc_info=True)
                     ret = False
 
         return ret
