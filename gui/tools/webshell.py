@@ -1042,7 +1042,7 @@ class Terminal:
             if p[0] >= '<' and p[0] <= '?':
                 prefix = p[0]
                 p = p[1:]
-            p = p.split(';')
+            p = p.strip(';').split(';')
         else:
             p = ''
         # Process parameters
