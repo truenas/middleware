@@ -196,8 +196,11 @@ def server_error(request, *args, **kwargs):
 
     # Report error to Rollbar.
     sw_version = get_sw_version()
-    extra_log_files = (('/data/update.failed', 'update_failed'),
-                       ('/var/log/debug.log', 'debug_log'),)
+    extra_log_files = (
+        ('/data/update.failed', 'update_failed'),
+        ('/var/log/debug.log', 'debug_log'),
+        ('/var/log/middlewared.log', 'middlewared_log'),
+    )
     trace_rollbar.rollbar_report(exc_info, request, sw_version, extra_log_files)
 
     try:
