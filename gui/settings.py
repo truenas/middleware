@@ -231,7 +231,6 @@ AUTHENTICATION_BACKENDS = [
     'freenasUI.middleware.auth.AuthTokenBackend',
 ]
 
-SOUTH_TESTS_MIGRATE = False
 TASTYPIE_DEFAULT_FORMATS = ['json']
 
 FILE_UPLOAD_MAX_MEMORY_SIZE = 33554432
