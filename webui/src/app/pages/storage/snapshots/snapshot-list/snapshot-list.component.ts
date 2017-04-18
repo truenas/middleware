@@ -26,4 +26,11 @@ export class SnapshotListComponent {
     sorting: {columns: this.columns},
   };
 
+  isActionVisible(actionId: string, row: any) {
+    if(actionId == 'edit') {
+      return false;
+    }
+    return true;
+  }
+
 }
