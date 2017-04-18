@@ -7,7 +7,6 @@ import { Component } from '@angular/core';
 export class SnapshotListComponent {
 
   protected resource_name: string = 'storage/snapshot';
-  protected route_add: string[] = ['storage', 'snapshots', 'add'];
   protected route_delete: string[] = ['storage', 'snapshots', 'delete'];
 //  protected route_clone: string[] = ['snapshot', 'clone'];
 
@@ -27,7 +26,7 @@ export class SnapshotListComponent {
   };
 
   isActionVisible(actionId: string, row: any) {
-    if(actionId == 'edit') {
+    if(actionId == 'edit' || actionId == 'add') {
       return false;
     }
     return true;
