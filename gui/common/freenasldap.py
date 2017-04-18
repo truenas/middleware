@@ -2520,17 +2520,16 @@ class FreeNAS_LDAP_Users(FreeNAS_LDAP):
 
             u = u[1]
             if 'sAMAccountName' in u:
-                uid = u['sAMAccountName'][0]
+                uid = u['sAMAccountName'][0].decode()
             elif 'uid' in u:
-                uid = u['uid'][0]
+                uid = u['uid'][0].decode()
             else:
-                uid = u['cn'][0]
+                uid = u['cn'][0].decode()
 
             self.__usernames.append(uid)
 
             try:
                 pw = pwd.getpwnam(uid)
-
             except:
                 continue
 
