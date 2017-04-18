@@ -631,13 +631,13 @@ class Middleware(object):
         apidocs_app.middleware = self
         apidocsserver = WSGIServer(('127.0.0.1', 8001), apidocs_app)
         restserver = WSGIServer(('127.0.0.1', 8002), restful_api.get_app())
-        downloadserver = WSGIServer(('127.0.0.1', 8003), FileApplication(self))
+        fileserver = WSGIServer(('127.0.0.1', 8003), FileApplication(self))
 
         self.__server_threads = [
             gevent.spawn(wsserver.serve_forever),
             gevent.spawn(apidocsserver.serve_forever),
             gevent.spawn(restserver.serve_forever),
-            gevent.spawn(downloadserver.serve_forever),
+            gevent.spawn(fileserver.serve_forever),
             gevent.spawn(self.__jobs.run),
         ]
         self.logger.debug('Accepting connections')
@@ -646,7 +646,6 @@ class Middleware(object):
     def kill(self):
         self.logger.info('Killall server threads')
         gevent.killall(self.__server_threads)
-
         sys.exit(0)
 
 
