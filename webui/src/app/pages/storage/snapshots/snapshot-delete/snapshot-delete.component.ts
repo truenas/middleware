@@ -7,5 +7,5 @@ import { Component } from '@angular/core';
 export class SnapshotDeleteComponent {
 
   protected resource_name: string = 'storage/snapshot';
-  protected route_success: string[] = ['storage', 'snapshot'];
+  protected route_success: string[] = ['storage', 'snapshots'];
 }

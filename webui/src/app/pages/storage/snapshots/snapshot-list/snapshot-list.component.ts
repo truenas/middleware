@@ -7,8 +7,8 @@ import { Component } from '@angular/core';
 export class SnapshotListComponent {
 
   protected resource_name: string = 'storage/snapshot';
-  protected route_add: string[] = ['storage', 'snapshot', 'add'];
-  protected route_delete: string[] = ['storage', 'snapshot', 'delete'];
+  protected route_add: string[] = ['storage', 'snapshots', 'add'];
+  protected route_delete: string[] = ['storage', 'snapshots', 'delete'];
 //  protected route_clone: string[] = ['snapshot', 'clone'];
 
   public columns:Array<any> = [

@@ -12,8 +12,8 @@ import { RestService } from '../../../../services/';
 })
 export class SnapshotAddComponent {
 
-  protected route_success: string[] = ['storage', 'snapshot'];
   protected resource_name: string = 'storage/snapshot/';
+  protected route_success: string[] = ['storage', 'snapshots'];
   /*
   protected formModel: DynamicFormControlModel[] = [
     new DynamicInputModel({
