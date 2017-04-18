@@ -2,6 +2,7 @@ from middlewared.schema import accepts, Int, Str, Dict, List, Ref
 from middlewared.service import CRUDService
 from middlewared.utils import Nid, Popen
 
+import errno
 import gevent
 import netif
 import os
@@ -133,7 +134,12 @@ class VMSupervisor(object):
 
     def stop(self):
         if self.proc:
-            os.kill(self.proc.pid, 15)
+            try:
+                os.kill(self.proc.pid, 15)
+            except ProcessLookupError as e:
+                # Already stopped, process do not exist anymore
+                if e.errno != errno.ESRCH:
+                    raise
             return True
 
     def running(self):
