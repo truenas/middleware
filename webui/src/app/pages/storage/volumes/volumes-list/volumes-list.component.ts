@@ -13,7 +13,7 @@ import filesize from 'filesize.js';
 export class VolumesListComponent {
 
   protected resource_name: string = 'storage/volume/';
-  protected route_add: string[] = ['volumes', 'manager'];
+  protected route_add: string[] = ['storage', 'volumes', 'manager'];
 
   constructor(_rest: RestService, private _router: Router, _state: GlobalState, _eRef: ElementRef) {
 
@@ -47,7 +47,7 @@ export class VolumesListComponent {
       actions.push({
         label: "Delete",
         onClick: (row) => {
-          this._router.navigate(new Array('/pages').concat(["volumes", "delete", row.id]));
+          this._router.navigate(new Array('/pages').concat(["storage", "volumes", "delete", row.id]));
         }
       });
     }
@@ -55,14 +55,14 @@ export class VolumesListComponent {
       actions.push({
         label: "Add Dataset",
         onClick: (row) => {
-          this._router.navigate(new Array('/pages').concat(["volumes", "id", row.path.split('/')[0], "dataset", "add", row.path]));
+          this._router.navigate(new Array('/pages').concat(["storage", "volumes", "id", row.path.split('/')[0], "dataset", "add", row.path]));
         }
       });
       if(row.path.indexOf('/') != -1) {
         actions.push({
           label: "Delete Dataset",
           onClick: (row) => {
-            this._router.navigate(new Array('/pages').concat(["volumes", "id", row.path.split('/')[0], "dataset", "delete", row.path]));
+            this._router.navigate(new Array('/pages').concat(["storage", "volumes", "id", row.path.split('/')[0], "dataset", "delete", row.path]));
           }
         });
       }

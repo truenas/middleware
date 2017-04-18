@@ -16,7 +16,7 @@ export class DatasetDeleteComponent {
   protected pk: any;
   protected path: string;
   private sub: Subscription;
-  protected route_success: string[] = ['volumes'];
+  protected route_success: string[] = ['storage', 'volumes'];
   get resource_name(): string {
     return 'storage/volume/' + this.pk + '/datasets/';
   }

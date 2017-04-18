@@ -10,6 +10,6 @@ import { RestService } from '../../../../services/rest.service';
 export class VolumeDeleteComponent {
 
   protected resource_name: string = 'storage/volume/';
-  protected route_success: string[] = ['volumes'];
+  protected route_success: string[] = ['storage', 'volumes'];
 
 }

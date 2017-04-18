@@ -9,7 +9,7 @@ export class SnapshotDeleteComponent {
   protected pk: any;
   protected path: string;
   //protected resource_name: string = 'storage/snapshot';
-  protected route_success: string[] = ['snapshot'];
+  protected route_success: string[] = ['storage', 'snapshot'];
   get resource_name(): string {
     return 'storage/snapshot/' + this.pk;
   }
