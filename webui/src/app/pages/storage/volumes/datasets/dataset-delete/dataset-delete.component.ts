@@ -2,8 +2,8 @@ import { Component } from '@angular/core';
 import { FormGroup, } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 
-import { GlobalState } from '../../../global.state';
-import { RestService, WebSocketService } from '../../../../services/';
+import { GlobalState } from '../../../../global.state';
+import { RestService, WebSocketService } from '../../../../../services/';
 
 import { Subscription } from 'rxjs';
 

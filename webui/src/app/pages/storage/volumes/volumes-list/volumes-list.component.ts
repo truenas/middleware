@@ -1,8 +1,8 @@
 import { Component, ElementRef, OnInit } from '@angular/core';
 import { Router } from '@angular/router';
 
-import { GlobalState } from '../../../global.state';
-import { RestService } from '../../../services/rest.service';
+import { GlobalState } from '../../../../global.state';
+import { RestService } from '../../../../services/rest.service';
 
 import filesize from 'filesize.js';
 

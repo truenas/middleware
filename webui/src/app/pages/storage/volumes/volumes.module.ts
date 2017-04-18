@@ -2,11 +2,11 @@ import { NgModule }      from '@angular/core';
 import { CommonModule }  from '@angular/common';
 import { FormsModule, ReactiveFormsModule } from '@angular/forms';
 import { RouterModule } from '@angular/router';
-import { NgaModule } from '../../theme/nga.module';
+import { NgaModule } from '../../../theme/nga.module';
 import { DynamicFormsCoreModule } from '@ng2-dynamic-forms/core';
 import { DynamicFormsBootstrapUIModule } from '@ng2-dynamic-forms/ui-bootstrap';
 
-import { EntityModule } from '../common/entity/entity.module';
+import { EntityModule } from '../../common/entity/entity.module';
 import { routing }       from './volumes.routing';
 
 import { DragulaModule } from 'ng2-dragula';
