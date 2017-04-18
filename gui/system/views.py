@@ -92,7 +92,6 @@ from freenasUI.system.utils import (
 )
 from middlewared.plugins.update import CheckUpdateHandler, get_changelog, parse_changelog
 
-GRAPHS_DIR = '/var/db/graphs'
 VERSION_FILE = '/etc/version'
 PGFILE = '/tmp/.extract_progress'
 INSTALLFILE = '/tmp/.upgrade_install'
