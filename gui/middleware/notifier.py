@@ -406,9 +406,9 @@ class notifier(metaclass=HookMetaclass):
 
         for command in commands:
             proc = self._pipeopen(command)
-            proc.wait()
+            error = proc.communicate()[1]
             if proc.returncode != 0:
-                raise MiddlewareError('Unable to GPT format the disk "%s"' % devname)
+                raise MiddlewareError(f'Unable to GPT format the disk "{devname}": {error}')
 
         # We might need to sync with reality (e.g. devname -> uuid)
         # Invalidating confxml is required or changes wont be seen
