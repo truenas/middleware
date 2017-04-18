@@ -1,4 +1,8 @@
-import { Component } from '@angular/core';
+import { Component, ElementRef } from '@angular/core';
+import { Router } from '@angular/router';
+
+import { GlobalState } from '../../../../global.state';
+import { RestService } from '../../../../services/rest.service';
 
 @Component({
   selector: 'app-snapshot-list',
@@ -25,11 +29,39 @@ export class SnapshotListComponent {
     sorting: {columns: this.columns},
   };
 
+  constructor(_rest: RestService, private _router: Router, _state: GlobalState, _eRef: ElementRef) {
+  }
+
   isActionVisible(actionId: string, row: any) {
     if(actionId == 'edit' || actionId == 'add') {
       return false;
     }
     return true;
+  }
+
+  getActions(row) {
+    let actions = [];
+    actions.push({
+      label: "Delete",
+      onClick: (row) => {
+        this._router.navigate(new Array('/pages').concat(["storage", "snapshots", "delete", row.id]));
+      }
+    });
+    actions.push({
+      label: "Clone",
+      onClick: (row) => {
+        this._router.navigate(new Array('/pages').concat(["storage", "snapshots", "clone", row.id]));
+      }
+    });
+    if(row.mostrecent) {
+      actions.push({
+        label: "Rollback",
+        onClick: (row) => {
+          this._router.navigate(new Array('/pages').concat(["storage", "snapshots", "rollback", row.id]));
+        }
+      });
+    }
+    return actions;
   }
 
 }
