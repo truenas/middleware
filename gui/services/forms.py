@@ -2124,6 +2124,7 @@ class WebDAVForm(ModelForm):
 class S3Form(ModelForm):
     s3_bindip = forms.ChoiceField(
         label=models.S3._meta.get_field("s3_bindip").verbose_name,
+        help_text=models.S3._meta.get_field("s3_bindip").help_text,
         widget=forms.widgets.FilteringSelect(),
         required=False,
         choices=(),
