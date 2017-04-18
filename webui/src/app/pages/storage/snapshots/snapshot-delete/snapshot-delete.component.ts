@@ -8,4 +8,5 @@ export class SnapshotDeleteComponent {
 
   protected resource_name: string = 'storage/snapshot';
   protected route_success: string[] = ['storage', 'snapshots'];
+  protected skipGet: boolean = true;
 }
