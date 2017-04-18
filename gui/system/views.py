@@ -1790,7 +1790,6 @@ def certificate_to_json(certtype):
             'cert_certificate_path': certtype.cert_certificate_path,
             'cert_privatekey_path': certtype.cert_privatekey_path,
             'cert_CSR_path': certtype.cert_CSR_path,
-            'cert_issuer': certtype.cert_issuer,
             'cert_ncertificates': certtype.cert_ncertificates,
             'cert_DN': certtype.cert_DN,
             'cert_from': certtype.cert_from,
@@ -1810,6 +1809,11 @@ def certificate_to_json(certtype):
         data['cert_signedby'] = "%s" % certtype.cert_signedby
     except:
         data['cert_signedby'] = None
+
+    try:
+        data['cert_issuer'] = "%s" % certtype.cert_issuer
+    except Exception:
+        data['cert_issuer'] = None
 
     content = json.dumps(data)
     return HttpResponse(content, content_type='application/json')
