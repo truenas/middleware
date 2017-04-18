@@ -320,7 +320,7 @@ EOD
     return $?
 }
 
-save_grub_serial() {
+save_serial_settings() {
     _mnt="$1"
 
     # If the installer was booted with serial mode enabled, we should
@@ -353,7 +353,6 @@ install_grub() {
 	# /usr/local/etc got changed to a symlink to /etc/local
 	ln -s /conf/base/etc/local ${_mnt}/etc/local
 	chroot ${_mnt} /sbin/zpool set cachefile=/boot/zfs/rpool.cache freenas-boot
-	chroot ${_mnt} /etc/rc.d/ldconfig start
 	/usr/bin/sed -i.bak -e 's,^ROOTFS=.*$,ROOTFS=freenas-boot/ROOT/${BENAME},g' ${_mnt}/usr/local/sbin/beadm ${_mnt}/conf/base/etc/local/grub.d/10_ktrueos
 	# Having 10_ktruos.bak in place causes grub-mkconfig to
 	# create two boot menu items.  So let's move it out of place
@@ -1151,9 +1150,13 @@ menu_install()
     # Create a temporary /var
     mount -t tmpfs tmpfs /tmp/data/var
     chroot /tmp/data /usr/sbin/mtree -deUf /etc/mtree/BSD.var.dist -p /var
+    # We need this hack due to sqlite3 called from rc.conf.local.
+    chroot /tmp/data /sbin/ldconfig /usr/local/lib
+    chroot /tmp/data /etc/rc.d/ldconfig forcestart
+    # Save current serial console settings into database.
+    save_serial_settings /tmp/data
     # Set default boot filesystem
     zpool set bootfs=freenas-boot/ROOT/${BENAME} freenas-boot
-    save_grub_serial /tmp/data
     install_grub /tmp/data ${_realdisks}
     
 #    set +x
