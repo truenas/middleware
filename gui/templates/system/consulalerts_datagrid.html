@@ -1,6 +1,6 @@
 {% extends "freeadmin/generic_model_datagrid.html" %}
 {% block actions_static_buttons %}
-<button id="btnDatagrid_Replication_Add" data-dojo-type="dijit.form.Button" type="button" class="left">
+<button id="btnDatagrid_Consul_Add" data-dojo-type="dijit.form.Button" type="button" class="left">
 <p>{% trans "Add Services" %}</p>
 <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
 	editObject('{% trans "Add Services"|escapejs %}', '{{ model.get_add_url }}', [this,]);
