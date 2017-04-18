@@ -947,13 +947,15 @@ def manualupdate_progress(request):
 
 def initialwizard_progress(request):
     data = {}
-    if os.path.exists(forms.WIZARD_PROGRESSFILE):
+    try:
         with open(forms.WIZARD_PROGRESSFILE, 'rb') as f:
             data = f.read()
         try:
             data = pickle.loads(data)
-        except:
+        except Exception:
             data = {}
+    except FileNotFoundError:
+        data = {}
     content = json.dumps(data)
     return HttpResponse(content, content_type='application/json')
 
