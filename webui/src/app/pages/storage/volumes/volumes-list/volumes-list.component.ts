@@ -58,6 +58,13 @@ export class VolumesListComponent {
           this._router.navigate(new Array('/pages').concat(["storage", "volumes", "id", row.path.split('/')[0], "dataset", "add", row.path]));
         }
       });
+      actions.push({
+        label: "Create Snapshot",
+        onClick: (row) => {
+          this._router.navigate(new Array('/pages').concat(["storage", "snapshots", "id", row.path.split('/')[0], "add"]));
+        }
+      });
+
       if(row.path.indexOf('/') != -1) {
         actions.push({
           label: "Delete Dataset",

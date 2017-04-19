@@ -12,6 +12,7 @@ import { SnapshotListComponent } from './snapshot-list/';
 import { SnapshotDeleteComponent } from './snapshot-delete/';
 import { SnapshotCloneComponent } from './snapshot-clone/';
 import { SnapshotRollbackComponent } from './snapshot-rollback/';
+import { SnapshotAddComponent } from './snapshot-add/';
 
 @NgModule({
   imports: [
@@ -28,7 +29,8 @@ import { SnapshotRollbackComponent } from './snapshot-rollback/';
     SnapshotListComponent,
     SnapshotDeleteComponent,
     SnapshotCloneComponent,
-    SnapshotRollbackComponent
+    SnapshotRollbackComponent,
+    SnapshotAddComponent
   ],
   providers: [
   ]
