@@ -161,6 +161,11 @@ class UpdateService(Service):
             }
         if not data['upd_train'] or not selected:
             selected = conf.CurrentTrain()
+
+        # Temporary hack to force switch to 11 Nightlies from 9.10
+        if selected == 'FreeNAS-9.10-Nightlies':
+            if 'FreeNAS-11-Nightlies' in trains:
+                selected = 'FreeNAS-11-Nightlies'
         return {
             'trains': trains,
             'current': conf.CurrentTrain(),
