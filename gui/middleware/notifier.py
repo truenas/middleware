@@ -373,12 +373,12 @@ class notifier(metaclass=HookMetaclass):
         swapsize = swapsize * 1024 * 1024 * 2
         # Round up to nearest whole integral multiple of 128 and subtract by 34
         # so next partition starts at mutiple of 128.
-        swapsize = ((swapsize + 127) / 128) * 128
+        swapsize = (int((swapsize + 127) / 128)) * 128
         # To be safe, wipe out the disk, both ends... before we start
         self._system("dd if=/dev/zero of=/dev/%s bs=1m count=32" % (devname, ))
         try:
             p1 = self._pipeopen("diskinfo %s" % (devname, ))
-            size = int(re.sub(r'\s+', ' ', p1.communicate()[0]).split()[2]) / (1024)
+            size = int(int(re.sub(r'\s+', ' ', p1.communicate()[0]).split()[2]) / (1024))
         except:
             log.error("Unable to determine size of %s", devname)
         else:
@@ -389,7 +389,7 @@ class notifier(metaclass=HookMetaclass):
             # is a lame workaround.
             self._system("dd if=/dev/zero of=/dev/%s bs=1m oseek=%s" % (
                 devname,
-                size / 1024 - 32,
+                int(size / 1024) - 32,
             ))
 
         commands = []
@@ -2084,7 +2084,7 @@ class notifier(metaclass=HookMetaclass):
                     reg = RE_TAR.findall(line)
                     if reg:
                         current = Decimal(reg[-1])
-                        percent = (current / size) * 100
+                        percent = int((current / size) * 100)
                         fp.write("2|%d\n" % percent)
                         fp.flush()
             err = proc.communicate()[1]
@@ -4688,13 +4688,13 @@ class notifier(metaclass=HookMetaclass):
             )
         try:
             p1 = self._pipeopen("diskinfo %s" % (devname, ))
-            size = int(re.sub(r'\s+', ' ', p1.communicate()[0]).split()[2]) / (1024)
+            size = int(int(re.sub(r'\s+', ' ', p1.communicate()[0]).split()[2]) / (1024))
         except:
             log.error("Unable to determine size of %s", devname)
         else:
             pipe = self._pipeopen("dd if=/dev/zero of=/dev/%s bs=1m oseek=%s" % (
                 devname,
-                size / 1024 - 32,
+                int(size / 1024) - 32,
             ))
             pipe.communicate()
 
@@ -5463,14 +5463,14 @@ class notifier(metaclass=HookMetaclass):
         self._system("dd if=/dev/zero of=/dev/%s bs=1m count=32" % (devname, ))
         try:
             p1 = self._pipeopen("diskinfo %s" % (devname, ))
-            size = int(re.sub(r'\s+', ' ', p1.communicate()[0]).split()[2]) / (1024)
+            size = int(int(re.sub(r'\s+', ' ', p1.communicate()[0]).split()[2]) / (1024))
         except:
             log.error("Unable to determine size of %s", devname)
         else:
             # HACK: force the wipe at the end of the disk to always succeed. This # is a lame workaround.
             self._system("dd if=/dev/zero of=/dev/%s bs=1m oseek=%s" % (
                 devname,
-                size / 1024 - 32,
+                int(size / 1024) - 32,
             ))
 
         boottype = self._bootenv_partition(devname)
@@ -5491,14 +5491,14 @@ class notifier(metaclass=HookMetaclass):
         self._system("dd if=/dev/zero of=/dev/%s bs=1m count=32" % (devname, ))
         try:
             p1 = self._pipeopen("diskinfo %s" % (devname, ))
-            size = int(re.sub(r'\s+', ' ', p1.communicate()[0]).split()[2]) / (1024)
+            size = int(int(re.sub(r'\s+', ' ', p1.communicate()[0]).split()[2]) / (1024))
         except:
             log.error("Unable to determine size of %s", devname)
         else:
             # HACK: force the wipe at the end of the disk to always succeed. This # is a lame workaround.
             self._system("dd if=/dev/zero of=/dev/%s bs=1m oseek=%s" % (
                 devname,
-                size / 1024 - 32,
+                int(size / 1024) - 32,
             ))
 
         boottype = self._bootenv_partition(devname)
