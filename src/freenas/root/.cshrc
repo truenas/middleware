@@ -30,9 +30,6 @@ if ($?prompt) then
 	set history = 500
 	set savehist = 500
 	set mail = (/var/mail/$USER)
-
-	# render man pages correctly
-	setenv LANG en_US
 	if ( $?tcsh ) then
 		bindkey "^W" backward-delete-word
 		bindkey -k up history-search-backward

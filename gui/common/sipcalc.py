@@ -496,7 +496,7 @@ class sipcalc_ipv6_type(sipcalc_base_type):
                 else:
                     tbnum = "0%s" % tbnum
 
-                dnum /= 2
+                dnum = int(dnum / 2)
                 if dnum < 1:
                     break
 

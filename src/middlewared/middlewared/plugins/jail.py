@@ -1,10 +1,10 @@
 import os
 
-from middlewared.service import Service, private, job
-from middlewared.schema import accepts, Str, Dict, Bool, List
+from iocage.lib.ioc_json import IOCJson
 # iocage's imports are per command, these are just general facilities
 from iocage.lib.ioc_list import IOCList
-from iocage.lib.ioc_json import IOCJson
+from middlewared.schema import Bool, Dict, List, Str, accepts
+from middlewared.service import Service, job, private
 
 
 class JailService(Service):
@@ -53,7 +53,7 @@ class JailService(Service):
         if lst_type == "release":
             lst_type = "base"
 
-        full = options.get("full", False)
+        full = options.get("full", True)
         hdr = options.get("header", False)
 
         if lst_type == "plugins":
@@ -71,8 +71,8 @@ class JailService(Service):
                                ))
     def set(self, jail, options):
         """Sets a jail property."""
-        prop = options.get("prop", None)
-        plugin = options.get("plugin", False)
+        prop = options["prop"]
+        plugin = options["plugin"]
 
         tag, uuid, path = self.check_jail_existence(jail)
 
@@ -97,8 +97,8 @@ class JailService(Service):
                                ))
     def get(self, jail, options):
         """Gets a jail property."""
-        prop = options.get("prop", None)
-        plugin = options.get("plugin", False)
+        prop = options["prop"]
+        plugin = options["plugin"]
 
         tag, uuid, path = self.check_jail_existence(jail)
 
@@ -125,25 +125,25 @@ class JailService(Service):
         return IOCJson(path).json_get_value(prop)
 
     @accepts(Dict("options",
-             Str("release"),
-             Str("server"),
-             Str("user"),
-             Str("password"),
-             Str("plugin_file"),
-             Str("props"),
-             ))
+                  Str("release"),
+                  Str("server", default="ftp.freebsd.org"),
+                  Str("user", default="anonymous"),
+                  Str("password", default="anonymous@"),
+                  Str("plugin_file"),
+                  Str("props"),
+                  ))
     @job(lock=lambda args: f"jail_fetch:{args[-1]}")
     def fetch(self, job, options):
         """Fetches a release or plugin."""
         from iocage.lib.ioc_fetch import IOCFetch
         self.check_dataset_existence()
 
-        release = options.get("release", None)
-        server = options.get("server", "ftp.freebsd.org")
-        user = options.get("user", "anonymous")
-        password = options.get("password", "anonymous@")
-        plugin_file = options.get("plugin_file", None)
-        props = options.get("props", None)
+        release = options["release"]
+        server = options["server"]
+        user = options["user"]
+        password = options["password"]
+        plugin_file = options["plugin_file"]
+        props = options["props"]
 
         if plugin_file:
             IOCFetch("", server, user, password).fetch_plugin(plugin_file,
@@ -212,28 +212,28 @@ class JailService(Service):
             raise RuntimeError(f"{jail} already stopped")
 
     @accepts(Dict("options",
-             Str("release"),
-             Str("template"),
-             Str("pkglist"),
-             # Str("uuid"),
-             Bool("basejail"),
-             Bool("empty"),
-             Bool("short"),
-             List("props"),
-             ))
+                  Str("release"),
+                  Str("template"),
+                  Str("pkglist"),
+                  Str("uuid"),
+                  Bool("basejail"),
+                  Bool("empty"),
+                  Bool("short"),
+                  List("props"),
+                  ))
     def create(self, options):
         """Creates a jail."""
         from iocage.lib.ioc_create import IOCCreate
         self.check_dataset_existence()
 
-        release = options.get("release", None)
-        template = options.get("template", None)
-        pkglist = options.get("pkglist", None)
-        # uuid = options.get("uuid", None)  Not in 0.9.7
-        basejail = options.get("basejail", False)
-        empty = options.get("empty", False)
-        short = options.get("short", False)
-        props = options.get("props", [])
+        release = options["release"]
+        template = options["template"]
+        pkglist = options["pkglist"]
+        uuid = options["uuid"]
+        basejail = options["basejail"]
+        empty = options["empty"]
+        short = options["short"]
+        props = options["props"]
         pool = IOCJson().json_get_value("pool")
         iocroot = IOCJson(pool).json_get_value("iocroot")
 
@@ -247,7 +247,8 @@ class JailService(Service):
             pass
 
         IOCCreate(release, props, 0, pkglist, template=template,
-                  short=short, basejail=basejail, empty=empty).create_jail()
+                  short=short, uuid=uuid, basejail=basejail,
+                  empty=empty).create_jail()
 
         return True
 
@@ -268,13 +269,13 @@ class JailService(Service):
         self.check_dataset_existence()
 
         tag, uuid, path = self.check_jail_existence(jail)
-        action = options.get("action", None)
-        source = options.get("source", None)
-        destination = options.get("destination", None)
-        fstype = options.get("fstype", None)
-        fsoptions = options.get("fsoptions", None)
-        dump = options.get("dump", None)
-        _pass = options.get("_pass", None)
+        action = options["action"]
+        source = options["source"]
+        destination = options["destination"]
+        fstype = options["fstype"]
+        fsoptions = options["fsoptions"]
+        dump = options["dump"]
+        _pass = options["_pass"]
 
         IOCFstab(uuid, tag, action, source, destination, fstype, fsoptions,
                  dump, _pass)
@@ -317,16 +318,16 @@ class JailService(Service):
         return True
 
     @accepts(Str("jail"), List("command"), Dict("options",
-                                               Str("host_user",
-                                                   default="root"),
-                                               Str("jail_user")))
+                                                Str("host_user",
+                                                    default="root"),
+                                                Str("jail_user")))
     def exec(self, jail, command, options):
         """Issues a command inside a jail."""
         from iocage.lib.ioc_exec import IOCExec
 
         tag, uuid, path = self.check_jail_existence(jail)
-        host_user = options.get("host_user", None)
-        jail_user = options.get("jail_user", None)
+        host_user = options["host_user"]
+        jail_user = options["jail_user"]
 
         # We may be getting ';', '&&' and so forth. Adding the shell for
         # safety.
@@ -396,7 +397,6 @@ class JailService(Service):
         from iocage.lib.ioc_image import IOCImage
         tag, uuid, path = self.check_jail_existence(jail)
         status, jid = IOCList.list_get_jid(uuid)
-        conf = IOCJson(path).json_load()
         started = False
 
         if status:

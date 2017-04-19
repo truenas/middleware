@@ -1,4 +1,4 @@
-#!/usr/bin/env python3
+#!/usr/local/bin/python3
 from middlewared.client import Client
 from middlewared.service import Service, CRUDService, ConfigService
 

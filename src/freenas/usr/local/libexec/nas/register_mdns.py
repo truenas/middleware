@@ -54,7 +54,7 @@ def main():
         t.daemon = False
         t.start()
 
-        t = threading.Thread(target=register, args=(hostname, '_middlewared-http._tcp.', http_port))
+        t = threading.Thread(target=register, args=(hostname, '_middlwre-http._tcp.', http_port))
         t.daemon = False
         t.start()
 
@@ -66,7 +66,7 @@ def main():
         t.daemon = False
         t.start()
 
-        t = threading.Thread(target=register, args=(hostname, '_middlewared-https._tcp.', https_port))
+        t = threading.Thread(target=register, args=(hostname, '_middlwre-https._tcp.', https_port))
         t.daemon = False
         t.start()
 

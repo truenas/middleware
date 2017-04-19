@@ -368,6 +368,21 @@ class AFP(Model):
         choices=choices.AFP_MAP_ACLS_CHOICES,
         default='rights'
     )
+    afp_srv_chmod_request = models.CharField(
+        verbose_name=_("Chmod Request"),
+        max_length=120,
+        help_text=_(
+            "Advanced permission control that deals with ACLs."
+            "\nignore - UNIX chmod() requests are completely ignored, use this"
+            "option to allow the parent directory's ACL inheritance full"
+            "control over new items."
+            "\npreserve - preserve ZFS ACEs for named users and groups or"
+            "POSIX ACL group mask"
+            "\nsimple - just to a chmod() as requested without any extra steps"
+        ),
+        choices=choices.AFP_CHMOD_REQUEST_CHOICES,
+        default='preserve'
+    )
 
     class Meta:
         verbose_name = _("AFP")
@@ -2278,25 +2293,24 @@ class S3(Model):
         verbose_name=_("IP Address"),
         max_length=128,
         blank=True,
-        help_text=_(
-            "Select the IP address to listen to for S3 requests. "
-            "If left unchecked, S3 will listen on all available addresses",
-        ),
+        help_text=_("Select the IP address to listen to for S3 requests. "
+            "If left unchecked, S3 will listen on all available addresses"),
     )
     s3_bindport = models.SmallIntegerField(
         verbose_name=_("Port"),
         default=9000,
-        validators=[MinValueValidator(1), MaxValueValidator(65535)]
+        validators=[MinValueValidator(1), MaxValueValidator(65535)],
+        help_text=_("TCP port on which to provide the S3 service (default 9000)"),
     )
     s3_access_key = models.CharField(
-        verbose_name=_("Access Key"),
+        verbose_name=_("Access key of 5 to 20 characters in length"),
         max_length=128,
         blank=True,
         null=True,
         help_text=_("S3 username")
     )
     s3_secret_key = models.CharField(
-        verbose_name=_("Secret Key"),
+        verbose_name=_("Secret key of 8 to 40 characters in length"),
         max_length=128,
         blank=True,
         null=True,
@@ -2305,21 +2319,21 @@ class S3(Model):
     s3_browser = models.BooleanField(
         verbose_name=_("Enable Browser"),
         default=False,
-        help_text=_("This will enable the web UI for the S3 service.")
+        help_text=_("Enable the web user interface for the S3 service")
     )
     s3_mode = models.CharField(
         verbose_name=_("Mode"),
         max_length=120,
         choices=choices.S3_MODES,
         default="local",
-        help_text=_("This doesn't do anything yet.")
+        help_text=_("This doesn't do anything yet")
     )
     s3_disks = PathField(
         verbose_name=_("Disks"),
         max_length=8192,
         blank=True,
         null=True,
-        help_text=_("S3 filesystem disk(s)")
+        help_text=_("S3 filesystem directory")
     )
 
     class Meta:

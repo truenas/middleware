@@ -1,7 +1,8 @@
-from middlewared.schema import accepts, Int
+from middlewared.schema import accepts, Int, Str, Dict, List, Ref
 from middlewared.service import CRUDService
 from middlewared.utils import Nid, Popen
 
+import errno
 import gevent
 import netif
 import os
@@ -133,7 +134,12 @@ class VMSupervisor(object):
 
     def stop(self):
         if self.proc:
-            os.kill(self.proc.pid, 15)
+            try:
+                os.kill(self.proc.pid, 15)
+            except ProcessLookupError as e:
+                # Already stopped, process do not exist anymore
+                if e.errno != errno.ESRCH:
+                    raise
             return True
 
     def running(self):
@@ -156,6 +162,7 @@ class VMService(CRUDService):
         self._manager = VMManager(self)
 
     def flags(self):
+        """Returns a dictionary with CPU flags for bhyve."""
         data = {}
 
         vmx = sysctl.filter('hw.vmm.vmx.initialized')
@@ -172,6 +179,7 @@ class VMService(CRUDService):
 
         return data
 
+    @accepts(Ref('query-filters'), Ref('query-options'))
     def query(self, filters=None, options=None):
         options = options or {}
         options['extend'] = 'vm._extend_vm'
@@ -185,7 +193,17 @@ class VMService(CRUDService):
             vm['devices'].append(device)
         return vm
 
+    @accepts(Dict(
+        'data',
+        Str('name'),
+        Str('description'),
+        Int('vcpus'),
+        Int('memory'),
+        Str('bootloader'),
+        List("devices"),
+        ))
     def do_create(self, data):
+        """Create a VM."""
         devices = data.pop('devices')
         pk = self.middleware.call('datastore.insert', 'vm.vm', data)
 
@@ -194,22 +212,36 @@ class VMService(CRUDService):
             self.middleware.call('datastore.insert', 'vm.device', device)
         return pk
 
+    @accepts(Int('id'), Dict(
+        'data',
+        Str('name'),
+        Str('description'),
+        Int('vcpus'),
+        Int('memory'),
+        Str('bootloader'),
+        ))
     def do_update(self, id, data):
+        """Update all information of a specific VM."""
         return self.middleware.call('datastore.update', 'vm.vm', id, data)
 
+    @accepts(Int('id'))
     def do_delete(self, id):
+        """Delete a VM."""
         return self.middleware.call('datastore.delete', 'vm.vm', id)
 
     @accepts(Int('id'))
     def start(self, id):
+        """Start a VM."""
         return self._manager.start(id)
 
     @accepts(Int('id'))
     def stop(self, id):
+        """Stop a VM."""
         return self._manager.stop(id)
 
     @accepts(Int('id'))
     def status(self, id):
+        """Get the status of a VM, if it is RUNNING or STOPPED."""
         return self._manager.status(id)
 
 

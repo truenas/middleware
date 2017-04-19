@@ -3,7 +3,7 @@ import { Router } from '@angular/router';
 
 import { DragulaService } from 'ng2-dragula';
 
-import { WebSocketService, RestService } from '../../../services/';
+import { WebSocketService, RestService } from '../../../../services/';
 import { DiskComponent } from './disk/';
 import { VdevComponent } from './vdev/';
 

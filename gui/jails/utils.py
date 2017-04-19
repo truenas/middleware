@@ -115,7 +115,7 @@ def get_ipv4_exclude_dict():
             ipv4_exclude_dict[str(sc)] = sc
 
         if j['bridge_ipv4']:
-            parts = j['ipv4'].split('/')
+            parts = j['bridge_ipv4'].split('/')
             if len(parts) == 2:
                 mask = int(parts[1])
             sc = sipcalc_type("%s/%d" % (

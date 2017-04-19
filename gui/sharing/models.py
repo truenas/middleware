@@ -139,6 +139,7 @@ class CIFS_Share(Model):
 
     def delete(self, *args, **kwargs):
         super(CIFS_Share, self).delete(*args, **kwargs)
+        notifier().sharesec_delete(self.cifs_name)
         notifier().reload("cifs")
 
     class Meta:

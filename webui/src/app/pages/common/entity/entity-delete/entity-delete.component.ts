@@ -35,11 +35,13 @@ export class EntityDeleteComponent implements OnInit, OnDestroy {
       } else {
         this.pk = params['pk'];
       }
-      this.rest.get(this.conf.resource_name + '/' + this.pk + '/', {}).subscribe((res) => {
-        this.data = res.data;
-      }, () => {
-        alert("Ooops! Failed to get!");
-      });
+      if (!this.conf.skipGet) {
+        this.rest.get(this.conf.resource_name + '/' + this.pk + '/', {}).subscribe((res) => {
+          this.data = res.data;
+        }, () => {
+          alert("Ooops! Failed to get!");
+        });
+      }
     });
   }
 

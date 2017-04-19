@@ -614,11 +614,18 @@ class Update(Model):
         conf = Configuration.Configuration()
         conf.LoadTrainsConfig()
         trains = conf.AvailableTrains() or []
+        current = None
         if trains:
             trains = list(trains.keys())
         if not self.upd_train or self.upd_train not in trains:
-            return conf.CurrentTrain()
-        return self.upd_train
+            current = conf.CurrentTrain()
+        if current is None:
+            current = self.upd_train
+        # Temporary hack to force switch to 11 Nightlies from 9.10
+        if current == 'FreeNAS-9.10-Nightlies':
+            if 'FreeNAS-11-Nightlies' in trains:
+                current = 'FreeNAS-11-Nightlies'
+        return current
 
     def get_system_train(self):
         from freenasOS import Configuration

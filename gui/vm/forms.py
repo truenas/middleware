@@ -154,7 +154,7 @@ class DeviceForm(ModelForm):
         vm = self.cleaned_data.get('vm')
         vnc_port = self.cleaned_data.get('VNC_port')
         new_vnc_port = 5900
-        if vnc_port == '0':
+        if vm and vnc_port == '0':
             new_vnc_port = new_vnc_port + int(vm.id)
             self.cleaned_data['VNC_port'] = str(new_vnc_port)
 

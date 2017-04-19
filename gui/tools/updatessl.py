@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/local/bin/python
 #
 # Copyright (c) 2011 iXsystems, Inc.
 # All rights reserved.

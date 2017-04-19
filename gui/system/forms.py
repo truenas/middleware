@@ -42,6 +42,7 @@ from ldap import LDAPError
 
 from django.conf import settings
 from formtools.wizard.views import SessionWizardView
+from django.core.cache import cache
 from django.core.files.storage import FileSystemStorage
 from django.db import transaction
 from django.db.models import Q
@@ -1048,12 +1049,13 @@ class SettingsForm(ModelForm):
         return cdata
 
     def save(self):
-        super(SettingsForm, self).save()
+        obj = super(SettingsForm, self).save()
         if (self.instance._original_stg_sysloglevel != self.instance.stg_sysloglevel or
                 self.instance._original_stg_syslogserver != self.instance.stg_syslogserver):
             notifier().restart("syslogd")
-
+        cache.set('guiLanguage', obj.stg_language)
         notifier().reload("timeservices")
+        return obj
 
     def done(self, request, events):
         if (
@@ -1178,14 +1180,12 @@ class AdvancedForm(ModelForm):
         if self.instance._original_adv_powerdaemon != self.instance.adv_powerdaemon:
             notifier().restart("powerd")
         if self.instance._original_adv_serialconsole != self.instance.adv_serialconsole:
-            notifier().start("ix-device_hints")
             notifier().start("ttys")
             if not loader_reloaded:
                 notifier().reload("loader")
                 loader_reloaded = True
         elif (self.instance._original_adv_serialspeed != self.instance.adv_serialspeed or
                 self.instance._original_adv_serialport != self.instance.adv_serialport):
-            notifier().start("ix-device_hints")
             if not loader_reloaded:
                 notifier().reload("loader")
                 loader_reloaded = True

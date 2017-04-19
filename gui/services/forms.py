@@ -2124,6 +2124,7 @@ class WebDAVForm(ModelForm):
 class S3Form(ModelForm):
     s3_bindip = forms.ChoiceField(
         label=models.S3._meta.get_field("s3_bindip").verbose_name,
+        help_text=models.S3._meta.get_field("s3_bindip").help_text,
         widget=forms.widgets.FilteringSelect(),
         required=False,
         choices=(),
@@ -2168,6 +2169,8 @@ class S3Form(ModelForm):
             self.fields['s3_secret_key2'].initial = self.instance.s3_secret_key
         if self._api is True:
             del self.fields['s3_secret_key2']
+
+        self.fields['s3_mode'].widget = forms.widgets.HiddenInput()
 
     def clean_s3_access_key(self):
         s3_access_key = self.cleaned_data.get("s3_access_key")
