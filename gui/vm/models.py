@@ -65,9 +65,17 @@ class VM(Model):
             ('Bhyve', _('Virtual Machine')),
             ('Container Provider', _('Docker VM')),
         ),
-        default='Bhyve',
+        default='Container Provider',
     )
-
+    container_type = models.CharField(
+        verbose_name=_('Container Type'),
+        max_length=50,
+        choices=(
+            ('Rancher', _('Rancher Labs')),
+            ('Portainer', _('Portainer')),
+        ),
+        default='Rancher',
+    )
     class Meta:
         verbose_name = _(u"VM")
         verbose_name_plural = _(u"VMs")

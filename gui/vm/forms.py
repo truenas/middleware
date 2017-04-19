@@ -19,16 +19,6 @@ log = logging.getLogger('vm.forms')
 
 class VMForm(ModelForm):
 
-    container_type = forms.ChoiceField(
-        label=_("Container Provider"),
-        choices=(
-            ('Rancher', _('Rancher Labs')),
-            ('Portainer', _('Portainer')),
-        ),
-        required=False,
-        initial='Rancher',
-    )
-
 
     class Meta:
         fields = '__all__'
@@ -72,6 +62,9 @@ class VMForm(ModelForm):
     def save(self, **kwargs):
         with client as c:
             cdata = self.cleaned_data
+            if self.instance.vm_type == 'Bhyve':
+                cdata['container_type'] = "None"
+
             if self.instance.id:
                 c.call('vm.update', self.instance.id, cdata)
                 pk = self.instance.id

@@ -1375,12 +1375,14 @@ require([
     vmTypeToggle = function() {
         var vm_type = registry.byId("id_vm_type");
         var container_type = registry.byId("id_container_type").domNode.parentNode.parentNode;
+        var c_type = registry.byId("id_container_type")
 
         domStyle.set(container_type, "display", "none");
 
         console.debug(vm_type.get('value'));
         if (vm_type.get('value') == 'Container Provider') {
             console.debug('Got INSIDE');
+            console.debug(c_type.get('value'));
             domStyle.set(container_type, "display", "");
         } else {
             console.debug('Got OUTSIDE');

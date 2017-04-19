@@ -201,7 +201,7 @@ class VMService(CRUDService):
     def do_create(self, data):
         """Create a VM."""
         devices = data.pop('devices')
-        container = data.pop('container_type')
+
         pk = self.middleware.call('datastore.insert', 'vm.vm', data)
 
         for device in devices:
@@ -216,6 +216,8 @@ class VMService(CRUDService):
         Int('vcpus'),
         Int('memory'),
         Str('bootloader'),
+        Str('vm_type'),
+        Str('container_type'),
         ))
     def do_update(self, id, data):
         """Update all information of a specific VM."""
