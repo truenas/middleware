@@ -117,6 +117,7 @@ export class WebSocketService {
   }
 
   subscribe(name): Observable<any> {
+    debugger;
     let source = Observable.create((observer) => {
       if(this.subscriptions.has(name)) {
         this.subscriptions.get(name).push(observer);
