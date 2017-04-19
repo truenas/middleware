@@ -14,7 +14,8 @@ export class SnapshotRollbackComponent implements OnInit{
 
   protected resource_name: string = 'storage/snapshot';
   protected route_success: string[] = ['storage', 'snapshots'];
-  protected skipGet: boolean = true;
+  protected pk: string;
+
 
   constructor(protected router: Router, protected route: ActivatedRoute, protected rest: RestService, protected _injector: Injector, protected _appRef: ApplicationRef) {
   }
@@ -26,10 +27,9 @@ export class SnapshotRollbackComponent implements OnInit{
   }
 
   doSubmit() {
-  	debugger;
     let data = {"force": true};
- 
-    this.busy = this.rest.post(this.resource_name + '/' + this.pk + '/rollback/', {
+
+    this.rest.post(this.resource_name + '/' + this.pk + '/rollback/', {
       body: JSON.stringify(data),
     }).subscribe((res) => {
       this.router.navigate(new Array('/pages').concat(this.route_success));
@@ -39,10 +39,6 @@ export class SnapshotRollbackComponent implements OnInit{
   }
 
   doCancel() {
-    let route = this.route_cancel;
-    if(!route) {
-      route = this.route_success;
-    }
-    this.router.navigate(new Array('/pages').concat(route));
+    this.router.navigate(new Array('/pages').concat(this.route_success));
   }
 }
