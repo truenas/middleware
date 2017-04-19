@@ -39,7 +39,6 @@ export class SnapshotCloneComponent implements OnInit{
   }
 
   ngOnInit() {
-    // this.formModel[0].valueUpdates.next("Foo");
     this.route.params.subscribe(params => {
         this.pk = params['pk'];
     });
