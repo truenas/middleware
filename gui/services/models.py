@@ -371,21 +371,17 @@ class AFP(Model):
     afp_srv_chmod_request = models.CharField(
         verbose_name=_("Chmod Request"),
         max_length=120,
-        help_text=_("""
-            Advanced permission control that deals with ACLs.
-
-            ignore - UNIX chmod() requests are completely ignored, use this
-            option to allow the parent directory's ACL inheritance full
-            control over new items.
-
-            preserve - preserve ZFS ACEs for named users and groups or
-            POSIX ACL group mask
-
-            simple - just to a chmod() as requested without any extra steps
-            """
+        help_text=_(
+            "Advanced permission control that deals with ACLs."
+            "\nignore - UNIX chmod() requests are completely ignored, use this"
+            "option to allow the parent directory's ACL inheritance full"
+            "control over new items."
+            "\npreserve - preserve ZFS ACEs for named users and groups or"
+            "POSIX ACL group mask"
+            "\nsimple - just to a chmod() as requested without any extra steps"
         ),
         choices=choices.AFP_CHMOD_REQUEST_CHOICES,
-        default='preserve' 
+        default='preserve'
     )
 
     class Meta:
