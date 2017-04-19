@@ -8,6 +8,7 @@ from dojango import forms
 from freenasUI.common import humanize_size
 from freenasUI.common.forms import ModelForm
 from freenasUI.freeadmin.forms import PathField
+from freenasUI.freeadmin.utils import key_order
 from freenasUI.middleware.client import client
 from freenasUI.middleware.notifier import notifier
 from freenasUI.storage.models import Volume
@@ -18,9 +19,26 @@ log = logging.getLogger('vm.forms')
 
 class VMForm(ModelForm):
 
+    container_type = forms.ChoiceField(
+        label=_("Container Provider"),
+        choices=(
+            ('Rancher', _('Rancher Labs')),
+            ('Portainer', _('Portainer')),
+        ),
+        required=False,
+        initial='Rancher',
+    )
+
+
     class Meta:
         fields = '__all__'
         model = models.VM
+
+    def __init__(self, *args, **kwargs):
+        super(VMForm, self).__init__(*args, **kwargs)
+        self.fields['vm_type'].widget.attrs['onChange'] = ("vmTypeToggle();")
+        key_order(self, 0, 'vm_type', instance=True)
+        key_order(self, 1, 'container_type', instance=True)
 
     def get_cpu_flags(self):
         cpu_flags = {}

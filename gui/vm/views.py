@@ -29,7 +29,11 @@ from django.shortcuts import render
 from freenasUI.freeadmin.apppool import appPool
 from freenasUI.freeadmin.views import JsonResp
 from freenasUI.middleware.client import client
-from freenasUI.vm import models, utils
+from freenasUI.vm import models, utils, forms
+
+import logging
+
+log = logging.getLogger('vm.views')
 
 
 def home(request):

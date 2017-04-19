@@ -58,6 +58,15 @@ class VM(Model):
         choices=choices.VM_BOOTLOADER,
         default='UEFI',
     )
+    vm_type = models.CharField(
+        verbose_name=_('VM Type'),
+        max_length=50,
+        choices=(
+            ('Bhyve', _('Virtual Machine')),
+            ('Container Provider', _('Docker VM')),
+        ),
+        default='Bhyve',
+    )
 
     class Meta:
         verbose_name = _(u"VM")
