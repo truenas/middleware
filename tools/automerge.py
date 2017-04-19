@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/local/bin/python
 """
 Simple script to automerge commits to external repositories and branches.
 

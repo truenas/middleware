@@ -1,4 +1,3 @@
-#!/usr/bin/env python
 # Copyright (c) 2011 iXsystems, Inc.
 # All rights reserved.
 #
