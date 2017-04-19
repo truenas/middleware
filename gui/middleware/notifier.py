@@ -1703,6 +1703,16 @@ class notifier(metaclass=HookMetaclass):
 
         return share
 
+    def smb_share_to_path(self, share): 
+        from freenasUI.sharing.models import CIFS_Share
+
+        try:
+            path = CIFS_Share.objects.get(cifs_name=share)
+        except:
+            path = None
+
+        return path
+
     def owner_to_SID(self, owner):
         if not owner:
             return None
@@ -1741,9 +1751,11 @@ class notifier(metaclass=HookMetaclass):
         log.debug("group_to_SID: %s -> %s", group, SID)
         return SID
 
-    def sharesec_reset(self, share, owner=None, group=None):
+    def sharesec_add(self, share, owner, group):
         if not share:
             return False
+
+        log.debug("sharesec_add: adding '%s:%s' ACL on %s", owner, group, share)
 
         add_args = ""
         sharesec = "/usr/local/bin/sharesec"
@@ -1756,22 +1768,44 @@ class notifier(metaclass=HookMetaclass):
         if group and group_SID: 
             add_args += ",%s:ALLOWED/0/FULL" % group_SID
         add_args = add_args.lstrip(',')
- 
-        delete_cmd = "%s %s -D" % (sharesec, share)
 
-        try:
-            proc = self._pipeopen(delete_cmd).communicate()
-        except: 
-            log.debug("sharesec_reset: %s failed", delete_cmd)
-
+        ret = True
         if add_args: 
             add_cmd = "%s %s -a '%s'" % (sharesec, share, add_args)
             try:
                 proc = self._pipeopen(add_cmd).communicate()
             except: 
-                log.debug("sharesec_reset: %s failed", delete_cmd)
+                log.debug("sharesec_add: %s failed", add_cmd)
+                ret = False
 
-        return True
+        return ret
+
+    def sharesec_delete(self, share):
+        if not share:
+            return False
+
+        log.debug("sharesec_delete: deleting ACL on %s", share)
+
+        sharesec = "/usr/local/bin/sharesec"
+        delete_cmd = "%s %s -D" % (sharesec, share)
+
+        ret = True
+        try:
+            proc = self._pipeopen(delete_cmd).communicate()
+        except: 
+            log.debug("sharesec_delete: %s failed", delete_cmd)
+            ret = False
+
+        return ret
+
+    def sharesec_reset(self, share, owner=None, group=None):
+        if not share:
+            return False
+
+        log.debug("sharesec_reset: resetting %s to '%s:%s'", share, owner, group)
+
+        self.sharesec_delete(share)
+        return self.sharesec_add(share, owner, group)
    
     def winacl_reset(self, path, owner=None, group=None, exclude=None):
         if exclude is None:
@@ -1888,6 +1922,10 @@ class notifier(metaclass=HookMetaclass):
                     self._system("/usr/sbin/chown %s :'%s' '%s'" % (flags, group, apath))
                 if mode is not None:
                     self._system("/bin/chmod %s %s '%s'" % (flags, mode, apath))
+
+        share = self.path_to_smb_share(path)
+        if share:
+            self.sharesec_reset(share, user, group)
 
     def mp_get_permission(self, path):
         if os.path.isdir(path):
