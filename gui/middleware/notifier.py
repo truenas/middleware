@@ -1693,6 +1693,86 @@ class notifier(metaclass=HookMetaclass):
             finally:
                 pass
 
+    def path_to_smb_share(self, path):
+        from freenasUI.sharing.models import CIFS_Share
+
+        try:
+            share = CIFS_Share.objects.get(cifs_path=path)
+        except:
+            share = None
+
+        return share
+
+    def owner_to_SID(self, owner):
+        if not owner:
+            return None
+
+        proc = self._pipeopen("/usr/local/bin/wbinfo -n '%s'" % owner)
+
+        info, err = proc.communicate()
+        if proc.returncode != 0:
+            log.debug("owner_to_SID: error %s", err)
+            return None
+
+        try:
+            SID = info.split(' ')[0].strip()
+        except:
+            SID = None
+
+        log.debug("owner_to_SID: %s -> %s", owner, SID)
+        return SID
+
+    def group_to_SID(self, group):
+        if not group:
+            return None
+
+        proc = self._pipeopen("/usr/local/bin/wbinfo -n '%s'" % group)
+
+        info, err = proc.communicate()
+        if proc.returncode != 0:
+            log.debug("group_to_SID: error %s", err)
+            return None
+
+        try:
+            SID = info.split(' ')[0].strip()
+        except:
+            SID = None
+
+        log.debug("group_to_SID: %s -> %s", group, SID)
+        return SID
+
+    def sharesec_reset(self, share, owner=None, group=None):
+        if not share:
+            return False
+
+        add_args = ""
+        sharesec = "/usr/local/bin/sharesec"
+
+        owner_SID = self.owner_to_SID(owner)
+        group_SID = self.group_to_SID(group)
+
+        if owner and owner_SID:
+            add_args += ",%s:ALLOWED/0/FULL" %  owner_SID
+        if group and group_SID: 
+            add_args += ",%s:ALLOWED/0/FULL" % group_SID
+        add_args = add_args.lstrip(',')
+ 
+        delete_cmd = "%s %s -D" % (sharesec, share)
+
+        try:
+            proc = self._pipeopen(delete_cmd).communicate()
+        except: 
+            log.debug("sharesec_reset: %s failed", delete_cmd)
+
+        if add_args: 
+            add_cmd = "%s %s -a '%s'" % (sharesec, share, add_args)
+            try:
+                proc = self._pipeopen(add_cmd).communicate()
+            except: 
+                log.debug("sharesec_reset: %s failed", delete_cmd)
+
+        return True
+   
     def winacl_reset(self, path, owner=None, group=None, exclude=None):
         if exclude is None:
             exclude = []
@@ -1706,12 +1786,15 @@ class notifier(metaclass=HookMetaclass):
         if isinstance(path, bytes):
             path = path.decode('utf-8')
 
-        winacl = os.path.join(path, ACL_WINDOWS_FILE)
+        aclfile = os.path.join(path, ACL_WINDOWS_FILE)
         winexists = (ACL.get_acl_ostype(path) == ACL_FLAGS_OS_WINDOWS)
         if not winexists:
-            open(winacl, 'a').close()
+            open(aclfile, 'a').close()
 
-        script = "/usr/local/bin/winacl"
+        share = self.path_to_smb_share(path)
+        self.sharesec_reset(share, owner, group)
+
+        winacl = "/usr/local/bin/winacl"
         args = "-a reset"
         if owner is not None:
             args = "%s -O '%s'" % (args, owner)
@@ -1723,8 +1806,8 @@ class notifier(metaclass=HookMetaclass):
             apply_paths.insert(0, (path, ''))
         for apath, flags in apply_paths:
             fargs = args + "%s -p '%s' -x" % (flags, apath)
-            cmd = "%s %s" % (script, fargs)
-            log.debug("XXX: CMD = %s", cmd)
+            cmd = "%s %s" % (winacl, fargs)
+            log.debug("winacl_reset: cmd = %s", cmd)
             self._system(cmd)
 
     def mp_change_permission(self, path='/mnt', user=None, group=None,

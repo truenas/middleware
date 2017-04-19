@@ -200,7 +200,12 @@ class CIFS_ShareForm(ModelForm):
         if self.instance._original_cifs_default_permissions != \
             self.instance.cifs_default_permissions and \
             self.instance.cifs_default_permissions == True:
-            notifier().winacl_reset(path=self.instance.cifs_path)
+            try:  
+                (owner, group) = notifier().mp_get_owner(self.instance.cifs_path)
+            except:
+                (owner, group) = ('root', 'wheel')
+            notifier().winacl_reset(path=self.instance.cifs_path,
+                owner=owner, group=group)
 
 
 class AFP_ShareForm(ModelForm):
