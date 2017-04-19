@@ -1070,6 +1070,13 @@ AFP_MAP_ACLS_CHOICES = (
 )
 
 
+AFP_CHMOD_REQUEST_CHOICES = (
+    ('ignore', _('Ignore')),
+    ('preserve', _('Preserve')),
+    ('simple', _('Simple')),
+)
+
+
 CLOUD_PROVIDERS = (
     ('AMAZON', _('Amazon S3')),
 )
