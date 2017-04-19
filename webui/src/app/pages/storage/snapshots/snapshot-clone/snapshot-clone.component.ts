@@ -56,7 +56,6 @@ export class SnapshotCloneComponent implements OnInit{
     }).subscribe((res) => {
       this.router.navigate(new Array('/pages').concat(this.route_success));
     }, (res) => {
-        debugger;
       new EntityUtils().handleError(this, res);
     });
   }
