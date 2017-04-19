@@ -53,10 +53,19 @@ class Rollbar(object):
             self.logger.debug('Failed to get system version', exc_info=True)
 
         if all(t_log_files):
+            payload_size = 0
             for path, name in t_log_files:
                 if os.path.exists(path):
                     with open(path, 'r') as absolute_file_path:
-                        extra_data[name] = absolute_file_path.read()[-10240:]
+                        contents = absolute_file_path.read()[-10240:]
+                        # Rollbar has a limit for the whole report payload
+                        # (128KiB, but thats including all metadata, not just
+                        # these files. Lets skip the file if its hits a
+                        # reasonable limit
+                        if len(contents) + payload_size > 61440:
+                            continue
+                        extra_data[name] = contents
+                        payload_size += len(contents)
 
         try:
             rollbar.report_exc_info(exc_info, request or '', extra_data=extra_data)
