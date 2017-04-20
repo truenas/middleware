@@ -3253,7 +3253,7 @@ class notifier(metaclass=HookMetaclass):
                     if '/' not in repl.repl_zfs:
                         replace = '{}/{}'.format(repl.repl_zfs, repl.repl_filesystem.rsplit('/')[-1])
                     else:
-                        replace = repl.repl_zfs,
+                        replace = repl.repl_zfs
                     remotename = '%s@%s' % (fs.replace(repl.repl_filesystem, replace), name)
                     if remotename in snaps:
                         replication = 'OK'
