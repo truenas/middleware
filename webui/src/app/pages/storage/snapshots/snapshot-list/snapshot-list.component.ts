@@ -3,6 +3,7 @@ import { Router } from '@angular/router';
 
 import { GlobalState } from '../../../../global.state';
 import { RestService } from '../../../../services/rest.service';
+import filesize from 'filesize.js';
 
 @Component({
   selector: 'app-snapshot-list',
@@ -12,15 +13,9 @@ export class SnapshotListComponent {
 
   protected resource_name: string = 'storage/snapshot';
   protected route_delete: string[] = ['storage', 'snapshots', 'delete'];
-//  protected route_clone: string[] = ['snapshot', 'clone'];
 
   public columns:Array<any> = [
-    {title: 'Filesystem', name: 'filesystem'},
     {title: 'Fullname', name: 'fullname'},
-    {title: 'Id', name: 'id'},
-    {title: 'Most Recent', name: 'mostrecent'},
-    {title: 'Name', name: 'name'},
-    {title: 'Parent Type', name: 'parent_type'},
     {title: 'Used', name: 'used'},
     {title: 'Refer', name: 'refer'}
   ];
@@ -28,6 +23,17 @@ export class SnapshotListComponent {
     paging: true,
     sorting: {columns: this.columns},
   };
+
+  rowValue(row, attr) {
+    switch(attr) {
+      case 'used':
+        return filesize(row[attr]);
+      case 'refer':
+        return filesize(row[attr]);
+      default:
+        return row[attr];
+    }
+  }
 
   constructor(_rest: RestService, private _router: Router, _state: GlobalState, _eRef: ElementRef) {
   }
