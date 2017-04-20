@@ -69,7 +69,7 @@ class VMForm(ModelForm):
                 c.call('vm.update', self.instance.id, cdata)
                 pk = self.instance.id
             else:
-                if self.instance.bootloader == 'UEFI':
+                if self.instance.bootloader == 'UEFI' and self.instance.vm_type != 'Container Provider':
                     cdata['devices'] = [
                         {'dtype': 'NIC', 'attributes': {'type': 'E1000'}},
                         {'dtype': 'VNC', 'attributes': {'wait': True}},
@@ -171,16 +171,26 @@ class DeviceForm(ModelForm):
 
         return self.cleaned_data
 
+    def is_container(self, vm_type):
+        if vm_type == 'Container Provider':
+            return True
+        else:
+            return False
+
     def save(self, *args, **kwargs):
         vm = self.cleaned_data.get('vm')
         kwargs['commit'] = False
         obj = super(DeviceForm, self).save(*args, **kwargs)
+
+
         if self.cleaned_data['dtype'] == 'DISK':
             obj.attributes = {
                 'path': '/dev/' + self.cleaned_data['DISK_zvol'],
                 'type': self.cleaned_data['DISK_mode'],
             }
         elif self.cleaned_data['dtype'] == 'CDROM':
+            if self.is_container(vm.vm_type):
+                self._errors['dtype'] = self.error_class([_('Not allowed to add a CDROM on VM Container')])
             obj.attributes = {
                 'path': self.cleaned_data['CDROM_path'],
             }
@@ -189,7 +199,7 @@ class DeviceForm(ModelForm):
                 'type': self.cleaned_data['NIC_type'],
             }
         elif self.cleaned_data['dtype'] == 'VNC':
-            if vm.bootloader == 'UEFI':
+            if vm.bootloader == 'UEFI' and self.is_container is False:
                 obj.attributes = {
                     'wait': self.cleaned_data['VNC_wait'],
                     'vnc_port': self.cleaned_data['VNC_port'],
