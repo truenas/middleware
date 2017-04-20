@@ -1,0 +1,14 @@
+.state-label-stopped {
+	padding-left: 0px;
+    padding-right: 0px;
+    background-color: red;
+    text-align: center;
+}
+
+.state-label-running {
+	padding-left: 0px;
+    padding-right: 0px;
+    background-color: green;
+    text-align: center;
+    font-style: italic;
+}
