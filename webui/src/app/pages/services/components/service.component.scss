@@ -1,0 +1,16 @@
+.state-label-stopped {
+    background-color: red;
+    text-align: center;
+}
+
+.state-label-running {
+    background-color: green;
+    text-align: center;
+    font-style: italic;
+}
+
+.v-center {
+	height: 30px;
+	display: table-cell;
+	vertical-align: middle;
+}
