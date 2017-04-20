@@ -191,7 +191,7 @@ _interface_config()
 					carp1_skew="1"
 				fi
 			fi
-			echo -n "ifconfig_${interface}_alias0=\"vhid ${int_vhid} advskew ${carp1_skew}${int_passopt} alias ${int_vip}/32"
+			echo -n "ifconfig_${interface}_alias0=\"inet vhid ${int_vhid} advskew ${carp1_skew}${int_passopt} alias ${int_vip}/32"
 			if [ -n "${critical}" ]; then
 				echo -n " descr CriticalGroup${group}"
 			fi
