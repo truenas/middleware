@@ -730,14 +730,17 @@ _gen_conf()
 		if /sbin/sysctl hw.model | grep -q AMD; then
 			echo "watchdogd_enable=\"NO\""
 		else
-			if [ "$(/usr/local/sbin/dmidecode -s baseboard-product-name)" = "X9DR3-F" -o "$(/usr/local/sbin/dmidecode -s baseboard-product-name)" = "X9DR3-LN4F+" ] ; then
+			local product
+			product=`/usr/local/sbin/dmidecode -s baseboard-product-name | /usr/bin/head -n 1`
+			if [ "${product}" = "X9DR3-F" -o "${product}" = "X9DR3-LN4F+" ] ; then
 				echo "watchdogd_enable=\"NO\""
-			fi
-			if [ "$(/usr/local/sbin/dmidecode -s baseboard-product-name)" = "C2750D4I" -o "$(/usr/local/sbin/dmidecode -s baseboard-product-name)" = "C2550D4I" ] ; then
+			elif [ "${product}" = "C2750D4I" -o "${product}" = "C2550D4I" ] ; then
 				echo "watchdogd_flags=\"-t 30 --softtimeout --softtimeout-action log,printf --pretimeout 15 --pretimeout-action log,printf -e 'sleep 1' -w -T 3\""
+				echo "watchdogd_enable=\"YES\""
+			else
+				echo "watchdogd_flags=\"--pretimeout 5 --pretimeout-action log,printf\""
+				echo "watchdogd_enable=\"YES\""
 			fi
-
-			echo "watchdogd_enable=\"YES\""
 		fi
 	else
 		echo "ataidle_enable=\"NO\""
