@@ -1824,9 +1824,3 @@ def CA_info(request, id):
     return certificate_to_json(
         models.CertificateAuthority.objects.get(pk=int(id))
     )
-
-
-def certificate_info(request, id):
-    return certificate_to_json(
-        models.Certificate.objects.get(pk=int(id))
-    )
