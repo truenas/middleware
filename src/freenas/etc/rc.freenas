@@ -944,6 +944,7 @@ do_timeout_wait()
 			check_process "${pid_args}"
 			if [ "$?" != "0" ]
 			then
+				ret=0
 				break
 			fi
 
