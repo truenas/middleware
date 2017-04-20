@@ -47,7 +47,7 @@ export class SnapshotAddComponent implements OnInit{
         this.pk = params['pk'];
     });
     let placeholder = this.formService.findById("name", this.formModel) as DynamicInputModel;
-    placeholder.valueUpdates.next(this.pk + "-manual-" + moment().format('DDMMYYYY'));
+    placeholder.valueUpdates.next("manual-" + moment().format('YYYYMMDD'));
     this.formGroup = this.formService.createFormGroup(this.formModel);
   }
 
