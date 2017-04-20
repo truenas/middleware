@@ -1,7 +1,8 @@
+import errno
 import ssl
 
 from middlewared.schema import Dict, Int, Ref, Str, accepts
-from middlewared.service import Service
+from middlewared.service import CallError, Service
 
 from pyVim import connect
 from pyVmomi import vim
@@ -33,14 +34,17 @@ class VMWareService(Service):
         """
         Get datastores from VMWare.
         """
-        ssl_context = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
-        ssl_context.verify_mode = ssl.CERT_NONE
-        server_instance = connect.SmartConnect(
-            host=data['hostname'],
-            user=data['username'],
-            pwd=data['password'],
-            sslContext=ssl_context,
-        )
+        try:
+            ssl_context = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
+            ssl_context.verify_mode = ssl.CERT_NONE
+            server_instance = connect.SmartConnect(
+                host=data['hostname'],
+                user=data['username'],
+                pwd=data['password'],
+                sslContext=ssl_context,
+            )
+        except vim.fault.InvalidLogin as e:
+            raise CallError(e.msg, errno.EPERM)
 
         content = server_instance.RetrieveContent()
         objview = content.viewManager.CreateContainerView(
