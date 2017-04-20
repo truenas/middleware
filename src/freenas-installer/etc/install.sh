@@ -335,7 +335,7 @@ save_serial_settings() {
     fi
     SERIALPORT=`kenv hw.uart.console | sed -En 's/.*io:([0-9a-fx]+).*/\1/p'`
     if [ -n "$SERIALPORT" ] ; then
-       chroot ${_mnt} /usr/local/bin/sqlite3 /data/freenas-v1.db "update system_advanced set adv_serialport = $SERIALPORT"
+       chroot ${_mnt} /usr/local/bin/sqlite3 /data/freenas-v1.db "update system_advanced set adv_serialport = '$SERIALPORT'"
     fi
 }
 
