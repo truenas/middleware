@@ -1,5 +1,6 @@
 from collections import defaultdict
 
+import errno
 import inspect
 import logging
 import re
@@ -51,6 +52,21 @@ def private(fn):
 def filterable(fn):
     fn._filterable = True
     return accepts(Ref('query-filters'), Ref('query-options'))(fn)
+
+
+class CallException(Exception):
+    pass
+
+
+class CallError(CallException):
+
+    def __init__(self, errmsg, errno=errno.EFAULT):
+        self.errmsg = errmsg
+        self.errno = errno
+
+    def __str__(self):
+        errcode = errno.errorcode.get(self.errno, 'EUNKNOWN')
+        return f'[{errcode}] {self.errmsg}'
 
 
 class ServiceBase(type):

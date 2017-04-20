@@ -6,6 +6,7 @@ from .client import ejson as json
 from .client.protocol import DDPProtocol
 from .job import Job, JobsQueue
 from .restful import RESTfulAPI
+from .service import CallException
 from .utils import Popen
 from collections import OrderedDict, defaultdict
 from daemon import DaemonContext
@@ -159,6 +160,10 @@ class Application(WebSocketApplication):
                 'msg': 'result',
                 'result': self.middleware.call_method(self, message),
             })
+        except CallException as e:
+            # CallException and subclasses are the way to gracefully
+            # send errors to the client
+            self.send_error(message, str(e), sys.exc_info())
         except Exception as e:
             self.send_error(message, str(e), sys.exc_info())
             self.logger.warn('Exception while calling {}(*{})'.format(message['method'], message.get('params')), exc_info=True)
