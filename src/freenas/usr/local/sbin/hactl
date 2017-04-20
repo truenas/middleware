@@ -116,7 +116,7 @@ def main(command, quiet):
                 sys.exit(1)
             else:
                 continue
-        client.call('notifier.failover_force_master')
+        client.call('notifier.failover_force_master', timeout=100)
     elif command == "giveback":
         ret = client.call('notifier.failover_status')
         if ret == "BACKUP":
