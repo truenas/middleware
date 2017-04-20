@@ -1,16 +1,31 @@
 import { ApplicationRef, Component, Injector, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+import { FormGroup } from '@angular/forms';
+import * as _ from 'lodash';
 
 import { DynamicFormControlModel, DynamicFormService, DynamicCheckboxModel, DynamicInputModel, DynamicSelectModel, DynamicRadioGroupModel } from '@ng2-dynamic-forms/core';
-import { RestService } from '../../../services/rest.service';
+import { GlobalState } from '../../../global.state';
+import { RestService, WebSocketService } from '../../../services/';
+
+
 
 @Component({
   selector: 'app-email',
-  template: `<entity-config [conf]="this"></entity-config>`
+  template: `
+  <entity-config [conf]="this"></entity-config>
+  <button class="btn btn-primary" (click)="sendMail()">Send Test Email</button>
+  `
 })
 export class EmailComponent {
 
   protected resource_name: string = 'system/email';
+  private formGroup: FormGroup;
+  protected custActions: any[]=[
+    {
+      "name":"Send Test Mail",
+      "function": this.sendMail
+    }
+  ];
 
   protected formModel: DynamicFormControlModel[] = [
     new DynamicInputModel({
@@ -85,11 +100,16 @@ export class EmailComponent {
     }),
   ];
 
-  constructor() {
+  constructor(protected router: Router, protected rest: RestService, protected ws: WebSocketService, protected formService: DynamicFormService, protected _injector: Injector, protected _appRef: ApplicationRef, protected _state: GlobalState) {
 
   }
 
+  sendMail() :void {
+    let value = _.cloneDeep(this.formGroup.value);
+  }
+
   afterInit(entityEdit: any) {
+    this.formGroup = entityEdit.formGroup;
   }
 
 }

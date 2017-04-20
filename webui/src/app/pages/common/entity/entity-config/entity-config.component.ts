@@ -33,6 +33,7 @@ export class EntityConfigComponent implements OnInit, OnDestroy {
   public success: boolean = false;
   public data: Object = {};
 
+
   constructor(protected router: Router, protected route: ActivatedRoute, protected rest: RestService, protected ws: WebSocketService, protected formService: DynamicFormService) {
 
   }
