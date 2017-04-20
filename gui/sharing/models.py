@@ -117,7 +117,7 @@ class CIFS_Share(Model):
         verbose_name=_('VFS Objects'),
         max_length=255,
         blank=True,
-        default='streams_xattr,aio_pthread',
+        default='zfs_space,zfsacl,streams_xattr,aio_pthread',
         choices=list(choices.CIFS_VFS_OBJECTS())
     )
     cifs_storage_task = models.ForeignKey(

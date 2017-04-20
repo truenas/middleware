@@ -215,6 +215,8 @@ def config_share_for_vfs_objects(share, vfs_objects):
 
 
 def extend_vfs_objects_for_zfs(path, vfs_objects):
+    return 
+
     if is_within_zfs(path):
         vfs_objects.extend([
             'zfs_space',

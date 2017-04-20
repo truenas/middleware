@@ -1048,8 +1048,6 @@ class CIFS_VFS_OBJECTS(object):
         self.__vfs_exclude = [
             'shadow_copy2',
             'recycle',
-            'zfs_space',
-            'zfsacl',
         ]
 
         if os.path.exists(self.__vfs_module_path):
