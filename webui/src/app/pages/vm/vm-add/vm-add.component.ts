@@ -25,10 +25,12 @@ export class VmAddComponent {
     }),
     new DynamicInputModel({
         id: 'vcpus',
+        inputType: 'number',
         label: 'Virtual CPUs',
     }),
     new DynamicInputModel({
       id: 'memory',
+      inputType: 'number',
       label: 'Memory Size (MiB)',
     }),
     new DynamicSelectModel({
@@ -44,7 +46,7 @@ export class VmAddComponent {
   }
 
   afterInit(entityAdd: any) {
-    entityAdd.ws.call('notifier.choices', ['VM_BOOTLOADER']).subscribe((res) => { 
+    entityAdd.ws.call('notifier.choices', ['VM_BOOTLOADER']).subscribe((res) => {
       this.bootloader = <DynamicSelectModel<string>> this.formService.findById("bootloader", this.formModel);
       this.bootloader_type = res;
       res.forEach((item) => {
