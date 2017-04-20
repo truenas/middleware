@@ -221,7 +221,8 @@ class JailService(Service):
                   Bool("short"),
                   List("props"),
                   ))
-    def create(self, options):
+    @job()
+    def create(self, job, options):
         """Creates a jail."""
         from iocage.lib.ioc_create import IOCCreate
         self.check_dataset_existence()
