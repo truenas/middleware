@@ -64,29 +64,45 @@ static MALLOC_DEFINE(M_FREENAS_SYSCTL,
 static struct sysctl_ctx_list g_freenas_sysctl_ctx;
 static struct sysctl_oid *g_freenas_sysctl_tree;
 
+struct fstring {
+	char *value;
+	size_t size;
+};
+
 struct service_timeout {
 	unsigned long start;
 	unsigned long stop;
 	unsigned long restart;
 };
 
+struct service_error {
+	struct fstring last_error;
+};
+
 static struct {
+#define DSSTRSIZE	1024
+
 	struct service_timeout ds_st;
+	struct service_error ds_se;
 
 	struct {
 		struct service_timeout ds_st;
+		struct service_error ds_se;
 	} activedirectory;
 
 	struct {
 		struct service_timeout ds_st;
+		struct service_error ds_se;
 	} ldap;
 
 	struct nt4 {
 		struct service_timeout ds_st;
+		struct service_error ds_se;
 	} nt4;
 
 	struct nis {
 		struct service_timeout ds_st;
+		struct service_error ds_se;
 	} nis;
 	
 } *g_directoryservice;
@@ -197,6 +213,23 @@ freenas_sysctl_add_timeout_tree(struct sysctl_ctx_list *ctx,
 	return (0);
 }
 
+static int
+freenas_sysctl_add_error_tree(struct sysctl_ctx_list *ctx,
+	struct sysctl_oid *root, struct service_error *se)
+{
+	struct sysctl_oid *errortree;
+
+	if ((errortree = SYSCTL_ADD_NODE(ctx, SYSCTL_CHILDREN(root),
+		OID_AUTO, "error", CTLFLAG_RW, NULL, NULL)) == NULL) {
+		return (-1);
+	}
+
+	SYSCTL_ADD_STRING(ctx, SYSCTL_CHILDREN(errortree), OID_AUTO,
+		"last_error", CTLFLAG_RW, se->last_error.value,
+		se->last_error.size, "last error message");
+
+	return (0);
+}
 
 static int
 freenas_sysctl_account_init(void)
@@ -227,8 +260,25 @@ freenas_sysctl_directoryservice_init(void)
 {
 	struct sysctl_oid *dstree, *tmptree;
 
+	/* TODO: break into functions for each tree */
+
+	/* Directory service memory allocations */
 	g_directoryservice = malloc(sizeof(*g_directoryservice),
 		M_FREENAS_SYSCTL, M_ZERO | M_WAITOK);
+	g_directoryservice->ds_se.last_error.value = \
+		malloc(DSSTRSIZE, M_FREENAS_SYSCTL, M_ZERO | M_WAITOK);
+	g_directoryservice->ds_se.last_error.size = DSSTRSIZE;
+
+	/* Active Directory memory allocations */
+	g_directoryservice->activedirectory.ds_se.last_error.value = \
+		malloc(DSSTRSIZE, M_FREENAS_SYSCTL, M_ZERO | M_WAITOK);
+	g_directoryservice->activedirectory.ds_se.last_error.size = DSSTRSIZE;
+
+	/* LDAP memory allocations */
+	g_directoryservice->ldap.ds_se.last_error.value = \
+		malloc(DSSTRSIZE, M_FREENAS_SYSCTL, M_ZERO | M_WAITOK);
+	g_directoryservice->ldap.ds_se.last_error.size = DSSTRSIZE;
+
 
 	/* Directory Service node */
 	if ((dstree = SYSCTL_ADD_NODE(&g_freenas_sysctl_ctx,
@@ -239,6 +289,10 @@ freenas_sysctl_directoryservice_init(void)
 	if ((freenas_sysctl_add_timeout_tree(&g_freenas_sysctl_ctx,
 		dstree, &g_directoryservice->ds_st)) != 0) {
 		FAILRET("Failed to add directoryservice timeout node.\n", -1);
+	}
+	if ((freenas_sysctl_add_error_tree(&g_freenas_sysctl_ctx,
+		dstree, &g_directoryservice->ds_se)) != 0) {
+		FAILRET("Failed to add directoryservice error node.\n", -1);
 	}
 
 	/* Active Directory node */
@@ -251,6 +305,11 @@ freenas_sysctl_directoryservice_init(void)
 		tmptree, &g_directoryservice->activedirectory.ds_st)) != 0) {
 		FAILRET("Failed to add activedirectory timeout node.\n", -1);
 	}
+	if ((freenas_sysctl_add_error_tree(&g_freenas_sysctl_ctx,
+		tmptree, &g_directoryservice->activedirectory.ds_se)) != 0) {
+		FAILRET("Failed to add activedirectory error node.\n", -1);
+	}
+
 
 	/* LDAP node */
 	if ((tmptree = SYSCTL_ADD_NODE(&g_freenas_sysctl_ctx,
@@ -261,6 +320,10 @@ freenas_sysctl_directoryservice_init(void)
 	if ((freenas_sysctl_add_timeout_tree(&g_freenas_sysctl_ctx,
 		tmptree, &g_directoryservice->ldap.ds_st)) != 0) {
 		FAILRET("Failed to add ldap timeout node.\n", -1);
+	}
+	if ((freenas_sysctl_add_error_tree(&g_freenas_sysctl_ctx,
+		tmptree, &g_directoryservice->ldap.ds_se)) != 0) {
+		FAILRET("Failed to add ldap error node.\n", -1);
 	}
 
 	/* NT4 node */
@@ -291,6 +354,12 @@ freenas_sysctl_directoryservice_init(void)
 static int
 freenas_sysctl_directoryservice_fini(void)
 {
+	free(g_directoryservice->ldap.ds_se.last_error.value,
+		M_FREENAS_SYSCTL);
+	free(g_directoryservice->activedirectory.ds_se.last_error.value,
+		M_FREENAS_SYSCTL);
+	free(g_directoryservice->ds_se.last_error.value,
+		M_FREENAS_SYSCTL);
 	free(g_directoryservice, M_FREENAS_SYSCTL);
 	return (0);
 }
