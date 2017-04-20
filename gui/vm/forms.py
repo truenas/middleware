@@ -182,7 +182,6 @@ class DeviceForm(ModelForm):
         kwargs['commit'] = False
         obj = super(DeviceForm, self).save(*args, **kwargs)
 
-
         if self.cleaned_data['dtype'] == 'DISK':
             obj.attributes = {
                 'path': '/dev/' + self.cleaned_data['DISK_zvol'],
