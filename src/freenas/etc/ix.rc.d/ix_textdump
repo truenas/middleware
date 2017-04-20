@@ -28,8 +28,9 @@ ix_textdump_start()
 	ddb script "kdb.enter.sysctl=watchdog 38; capture on"
 	ddb script "kdb.enter.default=write cn_mute 1; watchdog 38; capture on; bt; show allpcpu; ps; alltrace; write cn_mute 0; textdump dump; reset"
 	sysctl debug.ddb.textdump.pending=1
-        sysctl debug.debugger_on_panic=1
-        mkdir -p "/data/crash"
+	sysctl debug.debugger_on_panic=1
+	sysctl debug.ddb.capture.bufsize=524288
+	mkdir -p "/data/crash"
 	chmod 775 "/data/crash"
 }
 
