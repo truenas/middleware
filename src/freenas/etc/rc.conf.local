@@ -725,7 +725,6 @@ _gen_conf()
 		echo "ataidle_enable=\"YES\""
 		# Needed to use pbi repositories
 		echo "pbid_enable=\"YES\""
-		echo "vboxnet_enable=\"YES\""
 		# Bug #7337 -- blacklist AMD systems for now
 		if /sbin/sysctl hw.model | grep -q AMD; then
 			echo "watchdogd_enable=\"NO\""
