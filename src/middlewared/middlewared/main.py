@@ -155,10 +155,13 @@ class Application(WebSocketApplication):
     def call_method(self, message):
 
         try:
+            result = self.middleware.call_method(self, message)
+            if isinstance(result, Job):
+                result = result.id
             self._send({
                 'id': message['id'],
                 'msg': 'result',
-                'result': self.middleware.call_method(self, message),
+                'result': result,
             })
         except CallException as e:
             # CallException and subclasses are the way to gracefully
@@ -544,7 +547,7 @@ class Middleware(object):
 
         args.extend(params)
         if job:
-            return job.id
+            return job
         else:
             return methodobj(*args)
 
