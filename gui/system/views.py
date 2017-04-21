@@ -793,8 +793,8 @@ def testmail(request):
     if request.is_ajax():
         sw_name = get_sw_name()
         error, errmsg = send_mail(
-            subject=_('Test message from %s') % sw_name,
-            text=_('This is a message test from %s') % sw_name,
+            subject=_(f'Test message from your {sw_name} system hostname {socket.gethostname()}'),
+            text=_(f'This is a message test from {sw_name}'),
             to=[email],
             timeout=10)
     if error:
