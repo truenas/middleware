@@ -117,7 +117,6 @@ export class EmailComponent {
     let mailObj = {
         "subject": "This is test email",
         "text": "test test",
-        "to": ["vaibhav.rbs@gmail.com"]
     };
     this.ws.call('mail.send', [mailObj]).subscribe((res) => {
       // do success stuff here
