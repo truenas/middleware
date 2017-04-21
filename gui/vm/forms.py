@@ -32,7 +32,7 @@ class VMForm(ModelForm):
         name = self.cleaned_data.get('name')
         if name:
             if not re.search(r'^[a-zA-Z _0-9]+$', name):
-                raise forms.ValidationError(_('Only alphanumeric characters are allowed.'))
+                raise forms.ValidationError(_('Only alphanumeric characters are allowed and maximum of 150 characters.'))
             name = name.replace(' ', '')
         return name
 
