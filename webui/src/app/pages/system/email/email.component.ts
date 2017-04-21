@@ -20,13 +20,16 @@ export class EmailComponent {
 
   protected resource_name: string = 'system/email';
   private formGroup: FormGroup;
+  /*
+  // this is a more generic way to add sent test email button
+  // I am not there yet :(
   protected custActions: any[]=[
     {
       "name":"Send Test Mail",
-      "function": this.sendMail
+      "function": this.sendMail.bind(this)
     }
   ];
-
+  */
   protected formModel: DynamicFormControlModel[] = [
     new DynamicInputModel({
       id: 'em_fromemail',
@@ -104,12 +107,24 @@ export class EmailComponent {
 
   }
 
-  sendMail() :void {
-    let value = _.cloneDeep(this.formGroup.value);
-  }
-
   afterInit(entityEdit: any) {
     this.formGroup = entityEdit.formGroup;
+    this.ws = entityEdit.ws;
   }
+
+  sendMail() :void {
+    let value = _.cloneDeep(this.formGroup.value);
+    let mailObj = {
+        "subject": "This is test email",
+        "text": "test test",
+        "to": ["vaibhav.rbs@gmail.com"]
+    };
+    this.ws.call('mail.send', [mailObj]).subscribe((res) => {
+      // do success stuff here
+      //alert("Hey user it succeeded");
+      console.log(res)
+    });
+  }
+
 
 }
