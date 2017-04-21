@@ -244,7 +244,7 @@ def send_mail(
     if not to:
         to = [bsdUsers.objects.get(bsdusr_username='root').bsdusr_email]
         if not to[0]:
-            return False, 'Email address for root is not configured'
+            return True, 'Email address for root is not configured'
     if attachments:
         msg = MIMEMultipart()
         msg.preamble = text
