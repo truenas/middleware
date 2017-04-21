@@ -1,11 +1,11 @@
 import { ApplicationRef, Component, Injector, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
-import { FormGroup } from '@angular/forms';
 import * as _ from 'lodash';
 
 import { DynamicFormControlModel, DynamicFormService, DynamicCheckboxModel, DynamicInputModel, DynamicSelectModel, DynamicRadioGroupModel } from '@ng2-dynamic-forms/core';
 import { GlobalState } from '../../../global.state';
 import { RestService, WebSocketService } from '../../../services/';
+import { EntityConfigComponent } from '../../common/entity/entity-config/';
 
 
 
@@ -19,7 +19,7 @@ import { RestService, WebSocketService } from '../../../services/';
 export class EmailComponent {
 
   protected resource_name: string = 'system/email';
-  private formGroup: FormGroup;
+  private entityEdit: EntityConfigComponent;
   /*
   // this is a more generic way to add sent test email button
   // I am not there yet :(
@@ -108,22 +108,23 @@ export class EmailComponent {
   }
 
   afterInit(entityEdit: any) {
-    this.formGroup = entityEdit.formGroup;
-    this.ws = entityEdit.ws;
+    this.entityEdit = entityEdit;
   }
 
   sendMail() :void {
-    let value = _.cloneDeep(this.formGroup.value);
+    let value = _.cloneDeep(this.entityEdit.formGroup.value);
     let mailObj = {
-        "subject": "This is test email",
-        "text": "test test",
+        "subject": "Test message from FreeNAS",
+        "text": "This is a test message from FreeNAS",
     };
     this.ws.call('mail.send', [mailObj]).subscribe((res) => {
-      // do success stuff here
-      //alert("Hey user it succeeded");
-      console.log(res)
+      if (res[0]) {
+        this.entityEdit.error = res[1];
+      } else {
+        this.entityEdit.error = "";
+        alert("Test email sent successfully!");
+      }
     });
   }
-
 
 }
