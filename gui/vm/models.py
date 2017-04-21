@@ -28,6 +28,7 @@ import logging
 
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
+from django.core.validators import MaxValueValidator, MinValueValidator
 
 from freenasUI import choices
 from freenasUI.freeadmin.models import DictField, Model
@@ -51,6 +52,7 @@ class VM(Model):
         verbose_name=_('Virtual CPUs'),
         help_text=_('Number of virtual CPUs allocated to the VM.'),
         default=1,
+        validators=[MinValueValidator(1), MaxValueValidator(16)],
     )
     memory = models.IntegerField(
         verbose_name=_('Memory Size (MiB)'),
