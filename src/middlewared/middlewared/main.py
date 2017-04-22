@@ -367,8 +367,7 @@ class FileApplication(object):
 
         try:
             data = json.loads(form['data'].file.read())
-            job_id = self.middleware.call(data['method'], *(data.get('params') or []))
-            job = self.middleware.get_jobs().all()[job_id]
+            job = self.middleware.call(data['method'], *(data.get('params') or []))
         except Exception:
             start_response('405 Method Not Allowed', [])
             return [b'Invalid data']
@@ -390,7 +389,7 @@ class FileApplication(object):
             ('Content-Type', 'application/json'),
         ])
         yield json.dumps({
-            'job_id': job_id,
+            'job_id': job.id,
         }).encode('utf8')
 
 

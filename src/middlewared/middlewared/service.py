@@ -267,9 +267,9 @@ class CoreService(Service):
 
         Returns the job id and the URL for download.
         """
-        job_id = self.middleware.call(method, *args)
+        job = self.middleware.call(method, *args)
         token = self.middleware.call('auth.generate_token', 300, {'filename': filename, 'job': job_id})
-        return job_id, f'/_download/{job_id}?auth_token={token}'
+        return job.id, f'/_download/{job_id}?auth_token={token}'
 
     @private
     def reconfigure_logging(self):
