@@ -298,7 +298,6 @@ PWEncryptionChoices = (
 
 LAGGType = (
     ('failover',    'Failover'),
-    ('fec',         'FEC'),
     ('lacp',        'LACP'),
     ('loadbalance', 'Load Balance'),
     ('roundrobin',  'Round Robin'),
