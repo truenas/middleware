@@ -900,7 +900,7 @@ ro_sqlite()
 	echo ${ret}
 }
 
-check_process()
+fncheck_process()
 {
 	ps -p "$1" > /dev/null 2>&1
 	return $?
@@ -914,7 +914,7 @@ kill_process()
 	kill ${pid} >/dev/null 2>&1
 	ret=$?
 
-	check_process "${pid}"
+	fncheck_process "${pid}"
 	if [ "$?" != "0" ]
 	then
 		kill -9 "${pid}" > /dev/null 2>&1
@@ -942,7 +942,7 @@ do_timeout_wait()
 
 		while [ "${i}" -lt "${timeout}" ]
 		do
-			check_process "${pid_args}"
+			fncheck_process "${pid_args}"
 			if [ "$?" != "0" ]
 			then
 				ret=0
@@ -953,7 +953,7 @@ do_timeout_wait()
 			$((i+=1)) >/dev/null 2>&1
 		done
 
-		check_process "${pid_args}"
+		fncheck_process "${pid_args}"
 		if [ "$?" = "0" ]
 		then
 			kill_process ${pid_args}
