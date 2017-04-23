@@ -1316,20 +1316,24 @@ require([
         var rpathval = registry.byId("id_rsync_validate_rpath");
         var path = registry.byId("id_rsync_remotepath");
         var port = registry.byId("id_rsync_remoteport");
+        var keyscan = registry.byId("id_rsync_remotekeyscan");
         var trm = modname.domNode.parentNode.parentNode;
         var trp = path.domNode.parentNode.parentNode;
         var trpo = port.domNode.parentNode.parentNode;
         var trpa = rpathval.domNode.parentNode.parentNode;
+        var trs = keyscan.domNode.parentNode.parentNode;
         if(select.get('value') == 'ssh') {
             domStyle.set(trm, "display", "none");
             domStyle.set(trp, "display", "table-row");
             domStyle.set(trpo, "display", "table-row");
             domStyle.set(trpa, "display", "table-row");
+            domStyle.set(trs, "display", "table-row");
         } else {
             domStyle.set(trm, "display", "table-row");
             domStyle.set(trp, "display", "none");
             domStyle.set(trpo, "display", "none");
             domStyle.set(trpa, "display", "none");
+            domStyle.set(trs, "display", "none");
         }
 
     }

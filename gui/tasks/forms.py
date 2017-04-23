@@ -233,6 +233,15 @@ class RsyncForm(ModelForm):
             " And/Or you do not want validation to be done."
         ),
     )
+    rsync_remotekeyscan = forms.BooleanField(
+        initial=False,
+        label=_("Remote Host Keyscan"),
+        required=False,
+        help_text=_(
+            "Enable it if you want to validate rpath without "
+            "doing ssh to the remote host"
+        ),
+    )
 
     class Meta:
 
@@ -245,6 +254,7 @@ class RsyncForm(ModelForm):
             'rsync_remotemodule',
             'rsync_remotepath',
             'rsync_validate_rpath',
+            'rsync_remotekeyscan',
             'rsync_direction',
             'rsync_desc',
             'rsync_minute',
@@ -320,6 +330,31 @@ class RsyncForm(ModelForm):
         proc.wait()
         return proc.returncode == 0
 
+    def ssh_host_keyscan(self):
+        rkeyscan = self.cleaned_data.get("rsync_remotekeyscan")
+        if rkeyscan:
+            rhost = str(self.cleaned_data.get("rsync_remotehost"))
+            if '@' in rhost:
+                remote = rhost.split("@")
+                remote_host = remote[1]
+            else:
+                remote_host = rhost
+            rport = str(self.cleaned_data.get("rsync_remoteport"))
+            proc = subprocess.Popen([
+                "/usr/bin/ssh-keyscan",
+                "-p", str(rport),
+                "-t", "rsa",
+                str(remote_host),
+            ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            host_key, errmsg = proc.communicate()
+            if proc.returncode == 0 and host_key:
+                with open("/root/.ssh/known_hosts", "a") as myfile:
+                    myfile.write(host_key)
+                return proc.returncode == 0
+            elif not errmsg:
+                errmsg = _("Key could not be retrieved for unknown reason")
+            return errmsg
+
     def clean_rsync_user(self):
         user = self.cleaned_data.get("rsync_user")
         # Windows users can have spaces in their usernames
@@ -381,7 +416,7 @@ class RsyncForm(ModelForm):
         if 'rsync_user' in cdata and not (
             self.cleaned_data.get("rsync_mode") == 'module' or
             not self.cleaned_data.get("rsync_validate_rpath") or
-            self.check_rpath_exists()
+            self.check_rpath_exists() or self.ssh_host_keyscan()
         ):
             self._errors["rsync_remotepath"] = self.error_class([_(
                 "The Remote Path you specified does not exist or is not a "
@@ -391,6 +426,8 @@ class RsyncForm(ModelForm):
                 "entered<br> exceeded 255 characters and was truncated, please"
                 " restrict it to<br>255. Or it could also be that your SSH "
                 "credentials (remote host,etc) are wrong."
+                "<br>It is also possible if you have not done ssh to your remote "
+                "host even once. <br>In that case, enable 'Remote Host Keyscan' on the form."
             )])
         return cdata
 
