@@ -1,17 +1,35 @@
 import { ApplicationRef, Component, Injector, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
+import * as _ from 'lodash';
 
 import { DynamicFormControlModel, DynamicFormService, DynamicCheckboxModel, DynamicInputModel, DynamicSelectModel, DynamicRadioGroupModel } from '@ng2-dynamic-forms/core';
-import { RestService } from '../../../services/rest.service';
+import { GlobalState } from '../../../global.state';
+import { RestService, WebSocketService } from '../../../services/';
+import { EntityConfigComponent } from '../../common/entity/entity-config/';
+
+
 
 @Component({
   selector: 'app-email',
-  template: `<entity-config [conf]="this"></entity-config>`
+  template: `
+  <entity-config [conf]="this"></entity-config>
+  <button class="btn btn-primary" (click)="sendMail()">Send Test Email</button>
+  `
 })
 export class EmailComponent {
 
   protected resource_name: string = 'system/email';
-
+  private entityEdit: EntityConfigComponent;
+  /*
+  // this is a more generic way to add sent test email button
+  // I am not there yet :(
+  protected custActions: any[]=[
+    {
+      "name":"Send Test Mail",
+      "function": this.sendMail.bind(this)
+    }
+  ];
+  */
   protected formModel: DynamicFormControlModel[] = [
     new DynamicInputModel({
       id: 'em_fromemail',
@@ -85,11 +103,32 @@ export class EmailComponent {
     }),
   ];
 
-  constructor() {
+  constructor(protected router: Router, protected rest: RestService, protected ws: WebSocketService, protected formService: DynamicFormService, protected _injector: Injector, protected _appRef: ApplicationRef, protected _state: GlobalState) {
 
   }
 
   afterInit(entityEdit: any) {
+    this.entityEdit = entityEdit;
+  }
+
+  sendMail() :void {
+    let value = _.cloneDeep(this.entityEdit.formGroup.value);
+    let mailObj = {
+        "subject": "Test message from FreeNAS",
+        "text": "This is a test message from FreeNAS",
+    };
+    // TODO fix callback Hell!!
+    this.ws.call('system.info').subscribe((res)=>{
+      mailObj['subject'] += " hostname: " + res['hostname'];
+      this.ws.call('mail.send', [mailObj]).subscribe((res) => {
+        if (res[0]) {
+          this.entityEdit.error = res[1];
+        } else {
+          this.entityEdit.error = "";
+          alert("Test email sent successfully!");
+        }
+      });
+    });
   }
 
 }
