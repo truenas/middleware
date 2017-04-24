@@ -627,6 +627,8 @@ class GlobalConfigurationForm(ModelForm):
         ):
             # this supersedes all since it has hostname and resolvconf reloads folded in it
             whattoreload = "networkgeneral"
+            with client as c:
+                c.call('routes.sync')
 
         notifier().reload(whattoreload)
 

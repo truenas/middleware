@@ -342,6 +342,10 @@ class RoutesService(Service):
     def sync(self):
         config = self.middleware.call('datastore.query', 'network.globalconfiguration', [], {'get': True})
 
+        # Generate dhclient.conf so we can ignore routes (def gw) option
+        # in case there is one explictly set in network config
+        self.middleware.call('etc.generate', 'network')
+
         ipv4_gateway = config['gc_ipv4gateway'] or None
         if not ipv4_gateway:
             interface = self.middleware.call('datastore.query', 'network.interfaces', [('int_dhcp', '=', True)])
