@@ -117,13 +117,17 @@ export class EmailComponent {
         "subject": "Test message from FreeNAS",
         "text": "This is a test message from FreeNAS",
     };
-    this.ws.call('mail.send', [mailObj]).subscribe((res) => {
-      if (res[0]) {
-        this.entityEdit.error = res[1];
-      } else {
-        this.entityEdit.error = "";
-        alert("Test email sent successfully!");
-      }
+    // TODO fix callback Hell!!
+    this.ws.call('system.info').subscribe((res)=>{
+      mailObj['subject'] += " hostname: " + res['hostname'];
+      this.ws.call('mail.send', [mailObj]).subscribe((res) => {
+        if (res[0]) {
+          this.entityEdit.error = res[1];
+        } else {
+          this.entityEdit.error = "";
+          alert("Test email sent successfully!");
+        }
+      });
     });
   }
 
