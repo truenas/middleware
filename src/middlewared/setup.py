@@ -1,3 +1,4 @@
+import os
 try:
     import fastentrypoints
 except ImportError:
@@ -15,6 +16,25 @@ install_requires = [
     'setproctitle',
 ]
 
+
+def get_etc_files(*args, **kwargs):
+    """
+    Recursive get dirs from middlewared/etc_files/.
+    This is required for the etc plugin.
+    """
+    base_path = os.path.join(
+        os.path.dirname(os.path.realpath(__file__)),
+        'middlewared',
+        'etc_files',
+    )
+    for root, dirs, files in os.walk(base_path):
+        if base_path == root:
+            yield 'etc_files/*'
+        else:
+            entry = root.replace(base_path, 'etc_files')
+            yield f'{entry}/*'
+
+
 setup(
     name='middlewared',
     description='FreeNAS Middleware Daemon',
@@ -29,6 +49,7 @@ setup(
             'templates/websocket/*',
             'templates/*.*',
         ],
+        'middlewared': get_etc_files(),
     },
     include_package_data=True,
     license='BSD',
