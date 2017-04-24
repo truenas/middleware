@@ -242,7 +242,7 @@ define([
         }
       }, me.dapOwnershipUser);
       on(me._ownershipUser, "click", function() {
-        me._storeUsers.url = me._storeUsers.url.split('?')[0];
+        me._storeUsers.url = me._storeUsers.url.split('?')[0] + '?wizard=1';
         me._storeUsers.close();
         me._storeUsers.fetch();
       })
@@ -315,7 +315,7 @@ define([
         }
       }, me.dapOwnershipGroup);
       on(me._ownershipGroup, "click", function() {
-        me._storeGroups.url = me._storeGroups.url.split('?')[0];
+        me._storeGroups.url = me._storeGroups.url.split('?')[0] + '?wizard=1';
         me._storeGroups.close();
         me._storeGroups.fetch();
       });

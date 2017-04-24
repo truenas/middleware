@@ -33,6 +33,7 @@ import cProfile
 
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
+from django.core.cache import cache
 from django.db.utils import OperationalError
 from django.http import HttpResponse
 from django.utils import translation
@@ -181,9 +182,11 @@ class LocaleMiddleware(object):
                     break
 
         if not language:
-            # FIXME: we could avoid this db hit using a cache,
-            # invalidated when settings are edited
-            language = Settings.objects.order_by('-id')[0].stg_language
+            # Avoid hitting database every request
+            language = cache.get('guiLanguage')
+            if language is None:
+                language = Settings.objects.order_by('-id')[0].stg_language
+                cache.set('guiLanguage', language)
 
         translation.activate(language)
 

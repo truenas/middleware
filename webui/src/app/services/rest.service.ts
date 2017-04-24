@@ -33,7 +33,7 @@ export class RestService {
       total = range.split('/');
       total = new Number(total[total.length - 1]);
     }
-    if(res.status != 204) {
+    if(res.status !== 204 && res.status !== 202 && res.status !== 201) {
       data = res.json();
     }
     return {

@@ -27,6 +27,7 @@
 import json
 import logging
 import sys
+from middlewared.client import ClientException
 import middlewared.logger as logger
 
 from django.http import HttpResponse, HttpResponseRedirect
@@ -196,11 +197,14 @@ def server_error(request, *args, **kwargs):
 
     # Report error to Rollbar.
     sw_version = get_sw_version()
-    extra_log_files = (
-        ('/data/update.failed', 'update_failed'),
+    extra_log_files = [
         ('/var/log/debug.log', 'debug_log'),
-        ('/var/log/middlewared.log', 'middlewared_log'),
-    )
+        ('/data/update.failed', 'update_failed'),
+    ]
+    # If the exception comes from middleware client lets append the log
+    # since middlewared itself might be stuck
+    if issubclass(exc_info[0], ClientException):
+        extra_log_files.insert(0, ('/var/log/middlewared.log', 'middlewared_log'))
     trace_rollbar.rollbar_report(exc_info, request, sw_version, extra_log_files)
 
     try:

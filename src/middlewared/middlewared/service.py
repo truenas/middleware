@@ -1,5 +1,6 @@
 from collections import defaultdict
 
+import errno
 import inspect
 import logging
 import re
@@ -51,6 +52,21 @@ def private(fn):
 def filterable(fn):
     fn._filterable = True
     return accepts(Ref('query-filters'), Ref('query-options'))(fn)
+
+
+class CallException(Exception):
+    pass
+
+
+class CallError(CallException):
+
+    def __init__(self, errmsg, errno=errno.EFAULT):
+        self.errmsg = errmsg
+        self.errno = errno
+
+    def __str__(self):
+        errcode = errno.errorcode.get(self.errno, 'EUNKNOWN')
+        return f'[{errcode}] {self.errmsg}'
 
 
 class ServiceBase(type):
@@ -251,9 +267,9 @@ class CoreService(Service):
 
         Returns the job id and the URL for download.
         """
-        job_id = self.middleware.call(method, *args)
+        job = self.middleware.call(method, *args)
         token = self.middleware.call('auth.generate_token', 300, {'filename': filename, 'job': job_id})
-        return job_id, f'/_download/{job_id}?auth_token={token}'
+        return job.id, f'/_download/{job_id}?auth_token={token}'
 
     @private
     def reconfigure_logging(self):

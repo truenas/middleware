@@ -1107,13 +1107,6 @@ require([
         generic_certificate_autopopulate(
             '/system/CA/info/' + signedby_id + '/'
         );
-    }   
-
-    certificate_autopopulate = function() {
-        var signedby_id = registry.byId("id_cert_signedby").get("value");
-        generic_certificate_autopopulate(
-            '/system/certificate/info/' + signedby_id + '/'
-        );
     }
 
     get_directoryservice_set = function(enable) {

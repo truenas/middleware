@@ -3,8 +3,8 @@ import { FormGroup, } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 
 import { DynamicFormControlModel, DynamicFormService, DynamicCheckboxModel, DynamicInputModel, DynamicSelectModel, DynamicRadioGroupModel } from '@ng2-dynamic-forms/core';
-import { GlobalState } from '../../../global.state';
-import { RestService, WebSocketService } from '../../../../services/';
+import { GlobalState } from '../../../../global.state';
+import { RestService, WebSocketService } from '../../../../../services/';
 
 import { Subscription } from 'rxjs';
 
@@ -17,7 +17,7 @@ export class DatasetAddComponent {
   protected pk: any;
   protected path: string;
   private sub: Subscription;
-  protected route_success: string[] = ['volumes'];
+  protected route_success: string[] = ['storage', 'volumes'];
   get resource_name(): string {
     return 'storage/volume/' + this.pk + '/datasets/';
   }

@@ -56,7 +56,7 @@ from .views import (
     CA_export_certificate, CA_export_privatekey, CA_info,
     certificate_import, certificate_create_internal, certificate_edit, CSR_edit,
     certificate_create_CSR, certificate_export_certificate, certificate_export_privatekey,
-    certificate_export_certificate_and_privatekey, certificate_info,
+    certificate_export_certificate_and_privatekey
 )
 
 
@@ -146,5 +146,4 @@ urlpatterns = [
     url(r'^certificate/export/certificate/(?P<id>\d+)$', certificate_export_certificate, name="certificate_export_certificate"),
     url(r'^certificate/export/privatekey/(?P<id>\d+)$', certificate_export_privatekey, name="certificate_export_privatekey"),
     url(r'^certificate/export/certificate/privatekey/(?P<id>\d+)$', certificate_export_certificate_and_privatekey, name="certificate_export_certificate_and_privatekey"),
-    url(r'^certificate/info/(?P<id>\d+)/$', certificate_info, name="certificate_info"),
 ]

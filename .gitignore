@@ -20,3 +20,4 @@ nas_source/
 webui/node_modules/
 webui/dll/
 webui/dist/
+npm-debug.log

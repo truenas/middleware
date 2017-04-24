@@ -42,6 +42,7 @@ from ldap import LDAPError
 
 from django.conf import settings
 from formtools.wizard.views import SessionWizardView
+from django.core.cache import cache
 from django.core.files.storage import FileSystemStorage
 from django.db import transaction
 from django.db.models import Q
@@ -1048,12 +1049,13 @@ class SettingsForm(ModelForm):
         return cdata
 
     def save(self):
-        super(SettingsForm, self).save()
+        obj = super(SettingsForm, self).save()
         if (self.instance._original_stg_sysloglevel != self.instance.stg_sysloglevel or
                 self.instance._original_stg_syslogserver != self.instance.stg_syslogserver):
             notifier().restart("syslogd")
-
+        cache.set('guiLanguage', obj.stg_language)
         notifier().reload("timeservices")
+        return obj
 
     def done(self, request, events):
         if (
@@ -2094,7 +2096,7 @@ InitialWizardShareFormSet = formset_factory(
 class InitialWizardVolumeForm(VolumeMixin, Form):
 
     volume_name = forms.CharField(
-        label=_('Pool Name'),
+        label=_('Volume Name'),
         max_length=200,
     )
     volume_type = forms.ChoiceField(
@@ -2109,23 +2111,23 @@ class InitialWizardVolumeForm(VolumeMixin, Form):
         self.fields['volume_type'].choices = (
             (
                 'auto',
-                _('Automatic - Pick reasonable defaults for available drives')
+                _('Automatic (Reasonable defaults using the available drives)')
             ),
             (
                 'raid10',
-                _('Virtualization (RAID 10: Good Reliability, Better Performance, Minimum Storage)')
+                _('Virtualization (RAID 10: Moderate Redundancy, Maximum Performance, Minimum Capacity)')
             ),
             (
                 'raidz2',
-                _('Backups (RAID Z2: Good Reliability, Medium Performance, Medium Storage)')
+                _('Backups (RAID Z2: Moderate Redundancy, Moderate Performance, Moderate Capacity)')
             ),
             (
                 'raidz1',
-                _('Media (RAID Z1: Medium Reliability, Good Performance, More Storage)')
+                _('Media (RAID Z1: Minimum Redundancy, Moderate Performance, Moderate Capacity)')
             ),
             (
                 'stripe',
-                _('Logs (RAID 0: No Reliability, Best Performance, Maximum Storage)')
+                _('Logs (RAID 0: No Redundancy, Maximum Performance, Maximum Capacity)')
             ),
         )
 
@@ -3189,7 +3191,7 @@ class CertificateCreateInternalForm(ModelForm):
             )
         )
         self.fields['cert_signedby'].widget.attrs["onChange"] = (
-            "javascript:certificate_autopopulate();"
+            "javascript:CA_autopopulate();"
         )
 
     def clean_cert_name(self):

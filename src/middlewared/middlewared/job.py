@@ -171,6 +171,7 @@ class Job(object):
     """
 
     def __init__(self, middleware, method_name, method, args, options):
+        self._finished = Event()
         self.middleware = middleware
         self.method_name = method_name
         self.method = method
@@ -242,6 +243,10 @@ class Job(object):
             self.progress['extra'] = extra
         self.middleware.send_event('core.get_jobs', 'CHANGED', id=self.id, fields=self.__encode__())
 
+    def wait(self):
+        self._finished.wait()
+        return self.result
+
     def run(self, queue):
         """
         Run a Job and set state/result accordingly.
@@ -296,6 +301,7 @@ class Job(object):
             raise
         finally:
             queue.release_lock(self)
+            self._finished.set()
             self.middleware.send_event('core.get_jobs', 'CHANGED', id=self.id, fields=self.__encode__())
 
     def __encode__(self):
