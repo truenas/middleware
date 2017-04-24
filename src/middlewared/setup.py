@@ -12,7 +12,7 @@ install_requires = [
     'falcon',
     'markdown',
     'Flask',
-    #'setproctitle',
+    'setproctitle',
 ]
 
 setup(
