@@ -6,3 +6,4 @@ def render(service, middleware):
         '/usr/sbin/pwd_mkdb',
         '/etc/master.passwd',
     ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    proc.communicate()
