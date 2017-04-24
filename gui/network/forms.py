@@ -41,6 +41,7 @@ from freenasUI.common.forms import Form, ModelForm
 from freenasUI.common.system import get_sw_name
 from freenasUI.contrib.IPAddressField import IP4AddressFormField
 from freenasUI.freeadmin.sqlite3_ha.base import DBSync
+from freenasUI.middleware.client import client
 from freenasUI.middleware.notifier import notifier
 from freenasUI.network import models
 from freenasUI.freeadmin.utils import key_order
@@ -369,12 +370,28 @@ class InterfacesForm(ModelForm):
     def delete(self, *args, **kwargs):
         with DBSync():
             super(InterfacesForm, self).delete(*args, **kwargs)
-        notifier().start("network")
+        with client as c:
+            c.call('interfaces.sync')
+            try:
+                c.call('routes.sync')
+            except Exception:
+                # Syncing routes may fail if the interface changes network
+                # and old default gateway is still in place
+                # TODO: Issue an warning
+                pass
 
     def done(self, *args, **kwargs):
         super(InterfacesForm, self).done(*args, **kwargs)
         if notifier().is_freenas():
-            notifier().start("network")
+            with client as c:
+                c.call('interfaces.sync')
+                try:
+                    c.call('routes.sync')
+                except Exception:
+                    # Syncing routes may fail if the interface changes network
+                    # and old default gateway is still in place
+                    # TODO: Issue an warning
+                    pass
 
 
 class InterfacesDeleteForm(forms.Form):
