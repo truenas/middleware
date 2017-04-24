@@ -1,4 +1,5 @@
 import errno
+import socket
 import ssl
 
 from middlewared.schema import Dict, Int, Ref, Str, accepts
@@ -45,6 +46,8 @@ class VMWareService(Service):
             )
         except vim.fault.InvalidLogin as e:
             raise CallError(e.msg, errno.EPERM)
+        except socket.gaierror as e:
+            raise CallError(str(e), e.errno)
 
         content = server_instance.RetrieveContent()
         objview = content.viewManager.CreateContainerView(
