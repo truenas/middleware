@@ -72,14 +72,14 @@ class Client(object):
     def __init__(self, uri=None):
         self._calls = {}
         self._pings = {}
+        self._event_callbacks = {}
         if uri is None:
             uri = 'ws://127.0.0.1:6000/websocket'
         self._closed = Event()
         self._connected = Event()
         self._ws = WSClient(uri, client=self)
         self._ws.connect()
-        self._connected.wait(5)
-        self._event_callbacks = {}
+        self._connected.wait(10)
         if not self._connected.is_set():
             raise ClientException('Failed connection handshake')
 

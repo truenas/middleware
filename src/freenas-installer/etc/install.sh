@@ -349,6 +349,9 @@ install_grub() {
 
 	_disks="$*"
 
+	if is_truenas; then
+		gmirror destroy -f swap || true
+	fi
 	# Install grub
 	# /usr/local/etc got changed to a symlink to /etc/local
 	ln -s /conf/base/etc/local ${_mnt}/etc/local

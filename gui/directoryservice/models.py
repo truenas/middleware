@@ -905,7 +905,7 @@ class ActiveDirectory(DirectoryServiceBase):
     ad_recover_retry = models.IntegerField(
             verbose_name=_("How many recovery attempts"),
             default=10,
-            validators=[MaxValueValidator(500), MinValueValidator(1)],
+            validators=[MaxValueValidator(500), MinValueValidator(0)],
             help_text=_("How many times we will try to recover the connection with AD server, if the value is 0, it will try forever"),
             blank=False
     )

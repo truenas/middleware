@@ -124,7 +124,7 @@ export class ManagerComponent implements OnInit {
         layout: layout
       })
     }).subscribe((res) => {
-      this.router.navigate(['/pages', 'volumes']);
+      this.router.navigate(['/pages', 'storage','volumes']);
     }, (res) => {
       if (res.code == 409) {
         this.error = '';

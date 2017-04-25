@@ -9,6 +9,9 @@
       [hasErrorMessaging]="controlModel.hasErrorMessages">
     </dynamic-form-bootstrap-control>
     <button class="btn btn-primary" type="submit">Update</button>
+    <span *ngFor="let custBtn of conf.custActions">
+      <button class="btn btn-primary" type="button" (click)="custBtn['function']()">{{custBtn.name}}</button>
+    </span>
     <button *ngIf="conf.route_delete" class="btn btn-danger" type="button" (click)="gotoDelete()">Delete</button>
 
   </form>
