@@ -25,3 +25,5 @@ def test_generate_token(conn, data_random):
 
     assert generate_token.status_code == 200
     assert isinstance(generate_token.json(), str) is True
+
+    assert conn.ws.call('auth.token', generate_token.json()) is True
