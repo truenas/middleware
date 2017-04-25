@@ -1,5 +1,4 @@
 import sys
-import bsd
 import subprocess
 
 if '/usr/local/lib' not in sys.path:
