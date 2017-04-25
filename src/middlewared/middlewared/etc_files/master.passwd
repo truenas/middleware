@@ -1,4 +1,4 @@
-% for user in middleware.call('datastore.query', 'account.bsdusers', [], {'suffix': 'bsdusr_', 'order_by': ['-builtin', 'uid']}):
+% for user in middleware.call('datastore.query', 'account.bsdusers', [], {'prefix': 'bsdusr_', 'order_by': ['-builtin', 'uid']}):
 <%
 if user['password_disabled']:
     passwd = "*"
