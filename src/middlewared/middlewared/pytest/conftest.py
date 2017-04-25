@@ -30,15 +30,15 @@ class ConfigTarget(object):
 class Connection(object):
 
     def __init__(self):
-        conf = ConfigTarget()
+        self.conf = ConfigTarget()
         self.rest = Client(
-            f'http://{conf.target_hostname()}',
-            conf.target_api(),
-            conf.target_username(),
-            conf.target_password(),
+            f'http://{self.conf.target_hostname()}',
+            self.conf.target_api(),
+            self.conf.target_username(),
+            self.conf.target_password(),
         )
-        self.ws = WSClient(f'ws://{conf.target_hostname()}/websocket')
-        self.ws.call('auth.login', conf.target_username(), conf.target_password())
+        self.ws = WSClient(f'ws://{self.conf.target_hostname()}/websocket')
+        self.ws.call('auth.login', self.conf.target_username(), self.conf.target_password())
 
 connection = Connection()
 
