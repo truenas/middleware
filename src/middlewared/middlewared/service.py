@@ -289,3 +289,11 @@ class CoreService(Service):
                 stream.close()
             except:
                 pass
+
+    @private
+    @job()
+    def job(self, job):
+        """
+        Private no-op method to test a job, simply returning `true`.
+        """
+        return True
