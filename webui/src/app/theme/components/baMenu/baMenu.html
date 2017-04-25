@@ -7,14 +7,14 @@
       *ngFor="let item of menuItems"></ba-menu-item>
   </ul>
 
-  <div class="dropup" class="power-button">
+  <div class="dropdown" class="power-button">
   	<button class="dropdown-toggle power-button" data-toggle="dropdown">
   		<i class="ion-power power-button-icon"></i>
   	</button>
  
-  	<ul class="dropup-menu power-dropdown-menu">
-  		<li class="dropdown-item">AA</li>
-  		<li class="dropdown-item">BB</li>
+  	<ul class="dropdown-menu power-dropdown-menu">
+  		<li class="dropdown-item" (click)="onShutdown()">Shutdown</li>
+  		<li class="dropdown-item" (click)="onReboot()">Reboot</li>
   	</ul>
   </div>
 
