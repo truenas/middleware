@@ -185,6 +185,10 @@ class Application(WebSocketApplication):
 
     def subscribe(self, ident, name):
         self.__subscribed[ident] = name
+        self._send({
+            'msg': 'ready',
+            'subs': [ident],
+        })
 
     def unsubscribe(self, ident):
         self.__subscribed.pop(ident)
