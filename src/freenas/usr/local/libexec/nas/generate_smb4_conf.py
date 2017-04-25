@@ -49,6 +49,9 @@ from freenasUI.common.log import log_traceback
 
 log = logging.getLogger('generate_smb4_conf')
 
+def qw(w):
+    return '"%s"' % w.replace('"', '\\"')
+
 
 def debug_SID(str):
     if str:
@@ -1096,7 +1099,7 @@ def generate_smb4_shares(client, smb4_shares):
             if share.cifs_path:
                 cifs_homedir_path = ("%s/%s" %
                                      (share.cifs_path, valid_users_path))
-                confset2(smb4_shares, "path = %s", cifs_homedir_path)
+                confset2(smb4_shares, "path = %s", qw(cifs_homedir_path))
             if share.cifs_comment:
                 confset2(smb4_shares,
                          "comment = %s", share.cifs_comment)
@@ -1104,7 +1107,7 @@ def generate_smb4_shares(client, smb4_shares):
                 confset1(smb4_shares, "comment = Home Directories")
         else:
             confset2(smb4_shares, "[%s]", share.cifs_name, space=0)
-            confset2(smb4_shares, "path = %s", share.cifs_path)
+            confset2(smb4_shares, "path = %s", qw(share.cifs_path))
             confset2(smb4_shares, "comment = %s", share.cifs_comment)
         confset1(smb4_shares, "printable = no")
         confset1(smb4_shares, "veto files = /.snapshot/.windows/.mac/.zfs/")
