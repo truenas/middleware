@@ -1,5 +1,5 @@
 from middlewared.schema import accepts, Int, Str, Dict, List, Ref
-from middlewared.service import CRUDService
+from middlewared.service import CRUDService, job
 from middlewared.utils import Nid, Popen
 from urllib.request import urlretrieve
 
@@ -10,7 +10,6 @@ import netif
 import os
 import subprocess
 import sysctl
-import _thread
 
 class VMManager(object):
 
@@ -265,13 +264,10 @@ class VMService(CRUDService):
         log_file.close()
 
     @accepts(Str('url'), Str('file_name'))
-    def fetch_image(self, url, file_name):
+    @job(lock='container')
+    def fetch_image(self, job, url, file_name):
         """Fetch an image from a given URL and save to a file."""
-        try:
-            _thread.start_new_thread(urlretrieve, (url, file_name, self.fetch_hookreport))
-            return True
-        except:
-            return False
+        urlretrieve(url, file_name, self.fetch_hookreport)
 
     def fetch_report(self):
         """Helper that returns a string with the download progress."""
