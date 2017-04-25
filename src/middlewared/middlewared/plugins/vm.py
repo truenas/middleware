@@ -1,14 +1,16 @@
 from middlewared.schema import accepts, Int, Str, Dict, List, Ref
 from middlewared.service import CRUDService
 from middlewared.utils import Nid, Popen
+from urllib.request import urlretrieve
 
+import middlewared.logger
 import errno
 import gevent
 import netif
 import os
 import subprocess
 import sysctl
-
+import _thread
 
 class VMManager(object):
 
@@ -248,6 +250,34 @@ class VMService(CRUDService):
     def status(self, id):
         """Get the status of a VM, if it is RUNNING or STOPPED."""
         return self._manager.status(id)
+
+    def fetch_hookreport(self, blocknum, blocksize, totalsize):
+        """Hook to report the download progress."""
+        log_file = open('/var/tmp/.container_download.log', 'w')
+        readchunk = blocknum * blocksize
+        if totalsize > 0:
+            percent = readchunk * 1e2 / totalsize
+            progress = "\r%5.1f%% %*d / %d" % (percent, len(str(totalsize)), readchunk, totalsize)
+            log_file.write(progress)
+        else:
+            read_dw = 'read %d\n' % (readchunk,)
+            log_file.write(read_dw)
+        log_file.close()
+
+    @accepts(Str('url'), Str('file_name'))
+    def fetch_image(self, url, file_name):
+        """Fetch an image from a given URL and save to a file."""
+        try:
+            _thread.start_new_thread(urlretrieve, (url, file_name, self.fetch_hookreport))
+            return True
+        except:
+            return False
+
+    def fetch_report(self):
+        """Helper that returns a string with the download progress."""
+        with open('/var/tmp/.container_download.log', 'r') as log_file:
+            return log_file.readlines()[1]
+
 
 
 def kmod_load():
