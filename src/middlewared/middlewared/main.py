@@ -254,7 +254,8 @@ class Application(WebSocketApplication):
             return
 
         if message['msg'] == 'method':
-            self.call_method(message)
+            gevent.spawn(self.call_method, message)
+            return
         elif message['msg'] == 'ping':
             pong = {'msg': 'pong'}
             if 'id' in message:
