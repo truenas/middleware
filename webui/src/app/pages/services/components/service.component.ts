@@ -11,7 +11,7 @@ import { Subscription } from 'rxjs';
   <ba-card>
     <div [ngBusy]="busy" class="row">
       <div class="col-md-2">
-        {{ status.label }}
+        <span>{{ status.label }}</span>
       </div>
 
       <div class="col-md-1" [ngClass]="status.state == 'RUNNING' ? 'state-label-running' : 'state-label-stopped'">
