@@ -36,13 +36,6 @@ import { Subscription } from 'rxjs';
           <span>Edit</span>
         </button>
       </div>
-
-      <div class="col-md-1">
-        <button class="btn btn-primary">
-          <i class="ion-wrench"></i>
-          <span>Edit</span>
-        </button>
-      </div>
     </div>
   </ba-card>
   `,
