@@ -51,6 +51,12 @@ class VMSupervisor(object):
         self.proc = None
         self.taps = []
 
+    def is_container(self, vm):
+        if self.vm['vm_type'] == 'Container Provider':
+            return True
+        else:
+            return False
+
     def run(self):
         args = [
             'bhyve',
