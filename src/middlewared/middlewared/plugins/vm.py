@@ -15,8 +15,9 @@ import sysctl
 logger = middlewared.logger.Logger('vm').getLogger()
 
 CONTAINER_IMAGES = {
-        "coreos": "https://stable.release.core-os.net/amd64-usr/current/coreos_production_image.bin.bz2",
-    }
+    "coreos": "https://stable.release.core-os.net/amd64-usr/current/coreos_production_image.bin.bz2",
+}
+
 
 class VMManager(object):
 
@@ -191,7 +192,6 @@ class VMService(CRUDService):
         self._manager = VMManager(self)
         self.vmutils = VMUtils
 
-
     def flags(self):
         """Returns a dictionary with CPU flags for bhyve."""
         data = {}
@@ -235,7 +235,7 @@ class VMService(CRUDService):
         Str('vm_type'),
         Str('container_type'),
         Str('container_path'),
-        ))
+    ))
     def do_create(self, data):
         """Create a VM."""
         devices = data.pop('devices')
@@ -270,7 +270,7 @@ class VMService(CRUDService):
         Str('bootloader'),
         Str('vm_type'),
         Str('container_type'),
-        ))
+    ))
     def do_update(self, id, data):
         """Update all information of a specific VM."""
         return self.middleware.call('datastore.update', 'vm.vm', id, data)
@@ -318,6 +318,7 @@ def kmod_load():
         Popen(['/sbin/kldload', 'vmm'])
     if 'nmdm.ko' not in kldstat:
         Popen(['/sbin/kldload', 'nmdm'])
+
 
 def setup(middleware):
     gevent.spawn(kmod_load)
