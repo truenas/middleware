@@ -31,7 +31,7 @@ from django.utils.translation import ugettext_lazy as _
 from django.core.validators import MaxValueValidator, MinValueValidator
 
 from freenasUI import choices
-from freenasUI.freeadmin.models import DictField, Model
+from freenasUI.freeadmin.models import DictField, Model, PathField
 
 log = logging.getLogger('vm.models')
 
@@ -85,6 +85,12 @@ class VM(Model):
         ),
         default='Rancher',
     )
+    container_path = PathField(
+        verbose_name=_("Path"),
+        help_text=_('Path where a small pre built image will be downloaded.'),
+        blank=True
+    )
+
     class Meta:
         verbose_name = _(u"VM")
         verbose_name_plural = _(u"VMs")
