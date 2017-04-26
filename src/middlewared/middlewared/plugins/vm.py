@@ -158,10 +158,9 @@ class VMService(CRUDService):
     class Config:
         namespace = 'vm'
 
-    def __init__(self, job, *args, **kwargs):
-        super(VMService, self).__init__(job, *args, **kwargs)
+    def __init__(self, *args, **kwargs):
+        super(VMService, self).__init__(*args, **kwargs)
         self._manager = VMManager(self)
-        self.job = job
 
     def flags(self):
         """Returns a dictionary with CPU flags for bhyve."""
