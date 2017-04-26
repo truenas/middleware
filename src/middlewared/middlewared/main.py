@@ -7,6 +7,7 @@ from .client.protocol import DDPProtocol
 from .job import Job, JobsQueue
 from .restful import RESTfulAPI
 from .service import CallException
+from .utils import Popen
 from collections import OrderedDict, defaultdict
 from daemon import DaemonContext
 from daemon.pidfile import TimeoutPIDLockFile
@@ -25,6 +26,7 @@ import linecache
 import os
 import setproctitle
 import signal
+import subprocess
 import sys
 import traceback
 import types
