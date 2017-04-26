@@ -11,11 +11,11 @@ import { Subscription } from 'rxjs';
   <ba-card>
     <div [ngBusy]="busy" class="row">
       <div class="col-md-2">
-        <span>{{ status.label }}</span>
+        <span class="v-center">{{ status.label }}</span>
       </div>
 
-      <div class="col-md-1" [ngClass]="status.state == 'RUNNING' ? 'state-label-running' : 'state-label-stopped'">
-        {{status.state}}
+      <div class="col-md-1">
+        <span [ngClass]="status.state == 'RUNNING' ? 'state-label-running' : 'state-label-stopped'" class="v-center">{{ status.state }}</span>
       </div>
 
       <div class="col-md-2">
@@ -27,7 +27,14 @@ import { Subscription } from 'rxjs';
       </div>
 
       <div class="col-md-2">
-        <ba-checkbox [(ngModel)]="status.enable" (change)="enableToggle($event)" [label]="'Start on Boot'"></ba-checkbox>
+        <ba-checkbox [(ngModel)]="status.enable" (change)="enableToggle($event)" [label]="'Start on Boot'" [baCheckboxClass]="'v-center'"></ba-checkbox>
+      </div>
+
+      <div class="col-md-1">
+        <button class="btn btn-primary">
+          <i class="ion-wrench"></i>
+          <span>Edit</span>
+        </button>
       </div>
 
       <div class="col-md-1">
