@@ -1755,11 +1755,16 @@ class SystemDatasetForm(ModelForm):
             except:
                 raise MiddlewareError(_("Unable to migrate system dataset!"))
 
+        if self.instance._original_sys_rrd_usedataset != self.instance.sys_rrd_usedataset:
+            # Stop collectd to flush data
+            notifier().stop("collectd")
+
         notifier().restart("system_datasets")
 
         if self.instance._original_sys_syslog_usedataset != self.instance.sys_syslog_usedataset:
             notifier().restart("syslogd")
         if self.instance._original_sys_rrd_usedataset != self.instance.sys_rrd_usedataset:
+            notifier().system_dataset_rrd_toggle()
             notifier().restart("collectd")
 
 
