@@ -56,7 +56,6 @@ class VMForm(ModelForm):
             cdata = self.cleaned_data
             if self.instance.id:
                 c.call('vm.update', self.instance.id, cdata)
-                pk = self.instance.id
             else:
                 if self.instance.bootloader == 'UEFI':
                     cdata['devices'] = [
@@ -67,8 +66,8 @@ class VMForm(ModelForm):
                     cdata['devices'] = [
                         {'dtype': 'NIC', 'attributes': {'type': 'E1000'}},
                     ]
-                pk = c.call('vm.create', cdata)
-        return models.VM.objects.get(pk=pk)
+                self.instance = models.VM.objects.get(pk=c.call('vm.create', cdata))
+        return self.instance
 
     def delete(self, **kwargs):
         with client as c:
