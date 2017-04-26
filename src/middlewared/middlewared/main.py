@@ -114,7 +114,12 @@ class Application(WebSocketApplication):
             if keywordspec:
                 cur_frame['keywordspec'] = keywordspec
             if _locals:
-                cur_frame['locals'] = {k: repr(v) for k, v in _locals.items()}
+                try:
+                    cur_frame['locals'] = {k: repr(v) for k, v in _locals.items()}
+                except Exception:
+                    # repr() may fail since it may be one of the reasons
+                    # of the exception
+                    cur_frame['locals'] = {}
 
             frames.append(cur_frame)
 
