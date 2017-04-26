@@ -25,6 +25,7 @@ RUN_DEPENDS=	${PYTHON_PKGNAMEPREFIX}gevent>0:devel/py-gevent \
 		${PYTHON_PKGNAMEPREFIX}rollbar>0:www/py-rollbar \
 		${PYTHON_PKGNAMEPREFIX}markdown>0:textproc/py-markdown \
 		${PYTHON_PKGNAMEPREFIX}mako>0:textproc/py-mako \
+		${PYTHON_PKGNAMEPREFIX}psutil>0:sysutils/py-psutil \
 		rclone>0:net/rclone
 
 USE_RC_SUBR=	middlewared

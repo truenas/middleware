@@ -14,6 +14,7 @@ install_requires = [
     'markdown',
     'Flask',
     'setproctitle',
+    'psutil',
 ]
 
 
