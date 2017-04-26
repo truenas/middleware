@@ -702,7 +702,7 @@ def add_ldap_conf(client, smb4_conf):
     try:
         ldap = Struct(client.call('datastore.query', 'directoryservice.LDAP', None, {'get': True}))
         ldap.ds_type = 2  # FIXME: DS_TYPE_LDAP = 2
-        cifs = Struct(client.call('datastore.query', 'services.CIFS', None, {'get': True}))
+        cifs = Struct(client.call('cifs.config'))
     except:
         return
 
