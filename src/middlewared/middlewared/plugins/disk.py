@@ -1,10 +1,9 @@
-from middlewared.schema import accepts, Ref
-from middlewared.service import private, Service
+from middlewared.service import filterable, private, Service
 
 
 class DiskService(Service):
 
-    @accepts(Ref('query-filters'), Ref('query-options'))
+    @filterable
     def query(self, filters=None, options=None):
         if filters is None:
             filters = []
