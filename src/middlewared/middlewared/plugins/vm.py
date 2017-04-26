@@ -11,6 +11,7 @@ import os
 import subprocess
 import sysctl
 
+
 class VMManager(object):
 
     def __init__(self, service):
@@ -255,7 +256,6 @@ class VMService(CRUDService):
         readchunk = blocknum * blocksize
         if totalsize > 0:
             percent = readchunk * 1e2 / totalsize
-            progress = "\r%5.1f%% %*d / %d" % (percent, len(str(totalsize)), readchunk, totalsize)
             job.set_progress(int(percent), 'Downloading', {'downloaded': readchunk, 'total': totalsize})
 
     @accepts(Str('url'), Str('file_name'))
@@ -265,13 +265,13 @@ class VMService(CRUDService):
         urlretrieve(url, file_name,
                     lambda nb, bs, fs, job=job: self.fetch_hookreport(nb, bs, fs, job))
 
+
 def kmod_load():
     kldstat = Popen(['/sbin/kldstat'], stdout=subprocess.PIPE).communicate()[0]
     if 'vmm.ko' not in kldstat:
         Popen(['/sbin/kldload', 'vmm'])
     if 'nmdm.ko' not in kldstat:
         Popen(['/sbin/kldload', 'nmdm'])
-
 
 def setup(middleware):
     gevent.spawn(kmod_load)
