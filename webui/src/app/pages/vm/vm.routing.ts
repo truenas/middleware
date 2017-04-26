@@ -7,6 +7,9 @@ import { VmEditComponent } from './vm-edit/index';
 import { VmDeleteComponent } from './vm-delete/index';
 import { DeviceListComponent } from './devices/device-list/';
 import { DeviceCdromAddComponent } from './devices/device-cdrom-add/';
+import { DeviceNicAddComponent } from './devices/device-nic-add/';
+import { DeviceDiskAddComponent } from './devices/device-disk-add/';
+import { DeviceVncAddComponent } from './devices/device-vnc-add/';
 
 
 export const routes: Routes = [
@@ -15,6 +18,9 @@ export const routes: Routes = [
   { path: 'delete/:pk', component: VmDeleteComponent },
   { path: ':pk/devices', component: DeviceListComponent },
   { path: ':pk/devices/cdrom/add', component: DeviceCdromAddComponent },
+  { path: ':pk/devices/disk/add', component: DeviceDiskAddComponent },  
+  { path: ':pk/devices/nic/add', component: DeviceNicAddComponent },
+  { path: ':pk/devices/vnc/add', component: DeviceVncAddComponent },
   { path: '', component: VmListComponent, pathMatch: 'full' },
 ];
 export const routing: ModuleWithProviders = RouterModule.forChild(routes);

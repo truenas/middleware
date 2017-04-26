@@ -7,7 +7,7 @@ import { GlobalState } from '../../../../global.state';
 import { RestService, WebSocketService } from '../../../../services/';
 
 @Component({
-  selector: 'app-device-add',
+  selector: 'app-device-disk-add',
   template: `<entity-add [conf]="this"></entity-add>`
 })
 export class DeviceDiskAddComponent {

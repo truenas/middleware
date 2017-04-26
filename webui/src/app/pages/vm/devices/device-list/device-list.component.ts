@@ -44,6 +44,24 @@ export class DeviceListComponent {
             this.router.navigate(new Array('/pages').concat(["vm", this.pk, "devices", "cdrom", "add" ]));
         }
     });
+    actions.push({
+        label: "Add NIC",
+        onClick: () => {
+            this.router.navigate(new Array('/pages').concat(["vm", this.pk, "devices", "nic", "add" ]));
+        }
+    });
+    actions.push({
+        label: "Add Disk",
+        onClick: () => {
+            this.router.navigate(new Array('/pages').concat(["vm", this.pk, "devices", "disk", "add" ]));
+        }
+    });
+    actions.push({
+        label: "Add VNC",
+        onClick: () => {
+            this.router.navigate(new Array('/pages').concat(["vm", this.pk, "devices", "vnc", "add" ]));
+        }
+    });
     return actions;
   }
 

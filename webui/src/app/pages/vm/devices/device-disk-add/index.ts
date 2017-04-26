@@ -1,1 +1,1 @@
-export { DeviceAddComponent } from './device-add.component';
+export { DeviceDiskAddComponent } from './device-disk-add.component';
