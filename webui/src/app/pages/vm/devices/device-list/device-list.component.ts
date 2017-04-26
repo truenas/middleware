@@ -41,7 +41,6 @@ export class DeviceListComponent {
     actions.push({
         label: "Add CDROM",
         onClick: () => {
-            debugger;
             this.router.navigate(new Array('/pages').concat(["vm", this.pk, "devices", "cdrom", "add" ]));
         }
     });
