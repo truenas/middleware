@@ -290,7 +290,7 @@ class bsdUsersForm(ModelForm, bsdUserGroupMixin):
                 'dijitValidationTextBoxDisabled')
             if os.path.exists(self.instance.bsdusr_home):
                 mode = os.stat(self.instance.bsdusr_home).st_mode & 0o777
-                self.fields['bsdusr_mode'].initial = oct(mode)
+                self.fields['bsdusr_mode'].initial = oct(mode)[2:]
             if self.instance.bsdusr_builtin:
                 self.fields['bsdusr_uid'].widget.attrs['readonly'] = True
                 self.fields['bsdusr_uid'].widget.attrs['class'] = (
