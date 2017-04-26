@@ -16,8 +16,8 @@ export class VmAddComponent {
   protected route_success: string[] = ['vm'];
   protected formModel: DynamicFormControlModel[] = [
     new DynamicInputModel({
-      id: 'name',
-      label: 'Name',
+        id: 'name',
+        label: 'Name',
     }),
     new DynamicInputModel({
         id: 'description',
@@ -26,12 +26,14 @@ export class VmAddComponent {
     new DynamicInputModel({
         id: 'vcpus',
         inputType: 'number',
+        min: 0,
         label: 'Virtual CPUs',
     }),
     new DynamicInputModel({
-      id: 'memory',
-      inputType: 'number',
-      label: 'Memory Size (MiB)',
+        id: 'memory',
+        inputType: 'number',
+        min: 0,
+        label: 'Memory Size (MiB)',
     }),
     new DynamicSelectModel({
         id: 'bootloader',
