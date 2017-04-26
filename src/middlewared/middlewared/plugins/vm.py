@@ -158,9 +158,10 @@ class VMService(CRUDService):
     class Config:
         namespace = 'vm'
 
-    def __init__(self, *args, **kwargs):
-        super(VMService, self).__init__(*args, **kwargs)
+    def __init__(self, job, *args, **kwargs):
+        super(VMService, self).__init__(job, *args, **kwargs)
         self._manager = VMManager(self)
+        self.job = job
 
     def flags(self):
         """Returns a dictionary with CPU flags for bhyve."""
@@ -250,31 +251,20 @@ class VMService(CRUDService):
         """Get the status of a VM, if it is RUNNING or STOPPED."""
         return self._manager.status(id)
 
-    def fetch_hookreport(self, blocknum, blocksize, totalsize):
+    def fetch_hookreport(self, blocknum, blocksize, totalsize, job):
         """Hook to report the download progress."""
-        log_file = open('/var/tmp/.container_download.log', 'w')
         readchunk = blocknum * blocksize
         if totalsize > 0:
             percent = readchunk * 1e2 / totalsize
             progress = "\r%5.1f%% %*d / %d" % (percent, len(str(totalsize)), readchunk, totalsize)
-            log_file.write(progress)
-        else:
-            read_dw = 'read %d\n' % (readchunk,)
-            log_file.write(read_dw)
-        log_file.close()
+            job.set_progress(int(percent), 'Downloading', {'downloaded': readchunk, 'total': totalsize})
 
     @accepts(Str('url'), Str('file_name'))
     @job(lock='container')
     def fetch_image(self, job, url, file_name):
         """Fetch an image from a given URL and save to a file."""
-        urlretrieve(url, file_name, self.fetch_hookreport)
-
-    def fetch_report(self):
-        """Helper that returns a string with the download progress."""
-        with open('/var/tmp/.container_download.log', 'r') as log_file:
-            return log_file.readlines()[1]
-
-
+        urlretrieve(url, file_name,
+                    lambda nb, bs, fs, job=job: self.fetch_hookreport(nb, bs, fs, job))
 
 def kmod_load():
     kldstat = Popen(['/sbin/kldstat'], stdout=subprocess.PIPE).communicate()[0]
