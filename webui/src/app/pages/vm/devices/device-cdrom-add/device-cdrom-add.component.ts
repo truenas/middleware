@@ -10,6 +10,7 @@ import { RestService, WebSocketService } from '../../../../services/';
   selector: 'app-device-add',
   template: `<device-add [conf]="this"></device-add>`
 })
+
 export class DeviceCdromAddComponent {
 
   protected resource_name: string = 'vm/device';

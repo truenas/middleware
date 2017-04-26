@@ -9,6 +9,7 @@ import { EntityModule } from '../common/entity/entity.module';
 import { routing }       from './vm.routing';
 
 import { DeviceAddComponent } from './devices/device-add/device-add.component';
+
 import { VmListComponent } from './vm-list/';
 import { VmAddComponent } from './vm-add/';
 import { VmEditComponent } from './vm-edit/';
