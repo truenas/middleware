@@ -8,7 +8,7 @@ import { RestService, WebSocketService } from '../../../../services/';
 
 @Component({
   selector: 'app-device-add',
-  template: `<entity-add [conf]="this"></entity-add>`
+  template: `<device-add [conf]="this"></device-add>`
 })
 export class DeviceCdromAddComponent {
 
