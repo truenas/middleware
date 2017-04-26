@@ -33,6 +33,9 @@ export class EntityListComponent implements OnInit {
 
   ngOnInit() {
     this.getData();
+    if (this.conf.afterInit) {
+        this.conf.afterInit(this);
+    }
   }
 
   getData() {
@@ -117,6 +120,14 @@ export class EntityListComponent implements OnInit {
           },
         },
       ]
+    }
+  }
+
+  getAddActions() {
+    if (this.conf.getAddActions) {
+      return this.conf.getAddActions();
+    } else {
+      return [];
     }
   }
 

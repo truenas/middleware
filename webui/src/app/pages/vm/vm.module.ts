@@ -12,6 +12,8 @@ import { VmListComponent } from './vm-list/';
 import { VmAddComponent } from './vm-add/';
 import { VmEditComponent } from './vm-edit/';
 import { VmDeleteComponent } from './vm-delete/';
+import { DeviceListComponent } from './devices/device-list';
+import { DeviceCdromAddComponent } from './devices/device-cdrom-add';
 
 @NgModule({
   imports: [
@@ -29,6 +31,8 @@ import { VmDeleteComponent } from './vm-delete/';
     VmAddComponent,
     VmEditComponent,
     VmDeleteComponent,
+    DeviceListComponent,
+    DeviceCdromAddComponent,
   ],
   providers: [
   ]

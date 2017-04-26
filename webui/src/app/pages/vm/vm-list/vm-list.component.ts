@@ -56,6 +56,12 @@ export class VmListComponent {
             this.router.navigate(new Array('/pages').concat(["vm", "delete", row.id]));
         },
     });
+    actions.push({
+        label: "Devices",
+        onClick: (row) => {
+            this.router.navigate(new Array('/pages').concat(["vm", row.id, "devices"]));
+        }
+    });
     return actions;
   }
 
