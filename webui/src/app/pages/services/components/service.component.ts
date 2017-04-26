@@ -14,7 +14,7 @@ import { Subscription } from 'rxjs';
         <span class="v-center">{{ status.label }}</span>
       </div>
 
-      <div class="col-md-1">
+      <div class="col-md-2">
         <span [ngClass]="status.state == 'RUNNING' ? 'state-label-running' : 'state-label-stopped'" class="v-center">{{ status.state }}</span>
       </div>
 

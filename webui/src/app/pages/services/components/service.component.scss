@@ -1,12 +1,18 @@
 .state-label-stopped {
     background-color: red;
     text-align: center;
+    border-radius: 5px;
+    padding-left: 5px;
+    padding-right: 5px;
 }
 
 .state-label-running {
     background-color: green;
     text-align: center;
     font-style: italic;
+    border-radius: 5px;
+    padding-left: 5px;
+    padding-right: 5px;
 }
 
 .v-center {
