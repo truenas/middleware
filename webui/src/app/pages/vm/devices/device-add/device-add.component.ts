@@ -49,8 +49,13 @@ export class DeviceAddComponent implements OnInit {
       value = this.conf.clean.bind(this.conf)(value);
     }
 
-    this.busy = this.rest.post(this.conf.resource_name + '/', {
-      body: JSON.stringify(value),
+    let values = {};
+    values['attributes'] = JSON.stringify(value);
+    values['dtype'] = this.conf.dtype;
+    values['vm_id'] = this.conf.pk;
+
+    this.rest.post(this.conf.resource_name + '/', {
+      body: JSON.stringify(values),
     }).subscribe((res) => {
       this.router.navigate(new Array('/pages').concat(this.conf.route_success));
     }, (res) => {

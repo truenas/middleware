@@ -22,6 +22,7 @@ export class DeviceCdromAddComponent {
         label: 'CDROM Path',
     }),
   ];
+  protected dtype: string = 'CDROM';
 
   afterInit() {
     this.route.params.subscribe(params => {
