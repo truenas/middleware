@@ -536,6 +536,14 @@ class Middleware(object):
     def get_jobs(self):
         return self.__jobs
 
+    def threaded(self, method, *args, **kwargs):
+        """
+        Runs method in a native thread using gevent.ThreadPool.
+        This prevents a CPU intensive or non-greenlet friendly method
+        to block the event loop indefinitely.
+        """
+        return self.__threadpool.apply(method, args, kwargs)
+
     def _call(self, name, methodobj, params, app=None):
 
         args = []
