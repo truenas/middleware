@@ -1,6 +1,7 @@
 from middlewared.schema import accepts, Int, Str, Dict, List, Ref
 from middlewared.service import CRUDService, job
 from middlewared.utils import Nid, Popen
+from middlewared.client import Client, CallTimeout
 from urllib.request import urlretrieve
 
 import middlewared.logger
@@ -11,6 +12,11 @@ import os
 import subprocess
 import sysctl
 
+logger = middlewared.logger.Logger('vm').getLogger()
+
+CONTAINER_IMAGES = {
+        "coreos": "https://stable.release.core-os.net/amd64-usr/current/coreos_production_image.bin.bz2",
+    }
 
 class VMManager(object):
 
@@ -50,12 +56,7 @@ class VMSupervisor(object):
         self.vm = vm
         self.proc = None
         self.taps = []
-
-    def is_container(self, vm):
-        if self.vm['vm_type'] == 'Container Provider':
-            return True
-        else:
-            return False
+        self.vmutils = VMUtils
 
     def run(self):
         args = [
@@ -74,6 +75,9 @@ class VMSupervisor(object):
             args += [
                 '-l', 'bootrom,/usr/local/share/uefi-firmware/BHYVE_UEFI{}.fd'.format('_CSM' if self.vm['bootloader'] == 'UEFI_CSM' else ''),
             ]
+
+        if self.vmutils.is_container(self.vm) is True:
+            logger.debug("====> RUNNING CONTAINER")
 
         nid = Nid(3)
         for device in self.vm['devices']:
@@ -160,6 +164,23 @@ class VMSupervisor(object):
         return False
 
 
+class VMUtils(object):
+
+    def is_container(data):
+        if data.get('vm_type') == 'Container Provider':
+            return True
+        else:
+            return False
+
+    def create_images_path(data):
+        images_path = data.get('container_path') + '/.container_images/'
+        dir_path = os.path.dirname(images_path)
+        if not os.path.exists(dir_path):
+            os.makedirs(dir_path)
+
+        return dir_path
+
+
 class VMService(CRUDService):
 
     class Config:
@@ -168,6 +189,8 @@ class VMService(CRUDService):
     def __init__(self, *args, **kwargs):
         super(VMService, self).__init__(*args, **kwargs)
         self._manager = VMManager(self)
+        self.vmutils = VMUtils
+
 
     def flags(self):
         """Returns a dictionary with CPU flags for bhyve."""
@@ -211,12 +234,27 @@ class VMService(CRUDService):
         List("devices"),
         Str('vm_type'),
         Str('container_type'),
+        Str('container_path'),
         ))
     def do_create(self, data):
         """Create a VM."""
         devices = data.pop('devices')
 
         pk = self.middleware.call('datastore.insert', 'vm.vm', data)
+
+        if self.vmutils.is_container(data) is True:
+            logger.debug("===> Creating directories")
+            image_url = CONTAINER_IMAGES.get('coreos')
+            image_path = self.vmutils.create_images_path(data) + '/' + image_url.split('/')[-1]
+
+            with Client() as c:
+                try:
+                    c.call('vm.fetch_image', image_url, image_path)
+                except CallTimeout:
+                    logger.debug("===> Problem to connect with the middlewared.")
+                    raise
+
+            logger.debug("===> Fetching image: %s" % (image_path))
 
         for device in devices:
             device['vm'] = pk
@@ -268,8 +306,10 @@ class VMService(CRUDService):
     @job(lock='container')
     def fetch_image(self, job, url, file_name):
         """Fetch an image from a given URL and save to a file."""
-        urlretrieve(url, file_name,
-                    lambda nb, bs, fs, job=job: self.fetch_hookreport(nb, bs, fs, job))
+        if os.path.exists(file_name) is False:
+            logger.debug("===> Downloading: %s" % (url))
+            urlretrieve(url, file_name,
+                        lambda nb, bs, fs, job=job: self.fetch_hookreport(nb, bs, fs, job))
 
 
 def kmod_load():
