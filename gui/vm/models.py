@@ -87,8 +87,7 @@ class VM(Model):
     )
     container_path = PathField(
         verbose_name=_("Path"),
-        help_text=_('Path where a small pre built image will be downloaded.'),
-        blank=True
+        help_text=_('Path where a small pre built image will be downloaded.')
     )
 
     class Meta:
