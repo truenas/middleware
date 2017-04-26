@@ -24,6 +24,7 @@ import imp
 import inspect
 import linecache
 import os
+import psutil
 import setproctitle
 import signal
 import subprocess
@@ -141,20 +142,26 @@ class Application(WebSocketApplication):
 
     def _check_permission(self):
         remote_addr = self.ws.environ['REMOTE_ADDR']
-        remote_port = self.ws.environ['REMOTE_PORT']
+        remote_port = int(self.ws.environ['REMOTE_PORT'])
 
         if remote_addr not in ('127.0.0.1', '::1'):
             return False
 
-        remote = '{0}:{1}'.format(remote_addr, remote_port)
-
-        proc = Popen([
-            '/usr/bin/sockstat', '-46c', '-p', remote_port
-        ], stdout=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=True)
-        for line in proc.communicate()[0].strip().splitlines()[1:]:
-            cols = line.split()
-            if cols[-2] == remote and cols[0] == 'root':
-                return True
+        for c in psutil.net_connections(kind='tcp'):
+            if c.status != 'ESTABLISHED':
+                continue
+            if c.laddr != (remote_addr, remote_port):
+                continue
+            if c.raddr not in (
+                ('127.0.0.1', 6000),
+                ('::', 6000),
+            ):
+                continue
+            try:
+                if psutil.Process(c.pid).uids().effective == 0:
+                    return True
+            except psutil.NoSuchProcess:
+                pass
         return False
 
     def call_method(self, message):
