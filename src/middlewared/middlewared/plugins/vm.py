@@ -15,7 +15,7 @@ import sysctl
 logger = middlewared.logger.Logger('vm').getLogger()
 
 CONTAINER_IMAGES = {
-    "coreos": "https://stable.release.core-os.net/amd64-usr/current/coreos_production_image.bin.bz2",
+    "CoreOS": "https://stable.release.core-os.net/amd64-usr/current/coreos_production_image.bin.bz2",
 }
 
 
@@ -243,8 +243,7 @@ class VMService(CRUDService):
         pk = self.middleware.call('datastore.insert', 'vm.vm', data)
 
         if self.vmutils.is_container(data) is True:
-            logger.debug("===> Creating directories")
-            image_url = CONTAINER_IMAGES.get('coreos')
+            image_url = CONTAINER_IMAGES.get(data.get('container_type'))
             image_path = self.vmutils.create_images_path(data) + '/' + image_url.split('/')[-1]
 
             with Client() as c:

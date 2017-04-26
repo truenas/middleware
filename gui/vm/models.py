@@ -80,7 +80,7 @@ class VM(Model):
         verbose_name=_('Container Type'),
         max_length=50,
         choices=(
-            ('Rancher', _('Rancher Labs')),
+            ('CoreOS', _('CoreOS Linux')),
             ('Portainer', _('Portainer')),
         ),
         default='Rancher',
