@@ -61,6 +61,10 @@ class VMWareService(Service):
         for esxi_host in esxi_hosts:
             storage_system = esxi_host.configManager.storageSystem
             datastores_host = {}
+
+            if storage_system.fileSystemVolumeInfo is None:
+                continue
+
             for host_mount_info in storage_system.fileSystemVolumeInfo.mountInfo:
                 if host_mount_info.volume.type != 'VMFS':
                     continue
