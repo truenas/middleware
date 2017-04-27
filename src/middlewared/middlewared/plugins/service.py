@@ -74,7 +74,7 @@ class ServiceService(Service):
     def query(self, filters=None, options=None):
         if options is None:
             options = {}
-        options['suffix'] = 'srv_'
+        options['prefix'] = 'srv_'
 
         services = self.middleware.call('datastore.query', 'services.services', filters, options)
 

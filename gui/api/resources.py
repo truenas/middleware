@@ -2658,7 +2658,7 @@ class FTPResourceMixin(object):
                     assert len(fmask) == 3
                     fmask = int(fmask, 8)
                     fmask = (~fmask & 0o666)
-                    bundle.data['ftp_filemask'] = oct(fmask)
+                    bundle.data['ftp_filemask'] = oct(fmask)[2:]
                 except:
                     pass
 
@@ -2668,7 +2668,7 @@ class FTPResourceMixin(object):
                     assert len(dmask) == 3
                     dmask = int(dmask, 8)
                     dmask = (~dmask & 0o777)
-                    bundle.data['ftp_dirmask'] = oct(dmask)
+                    bundle.data['ftp_dirmask'] = oct(dmask)[2:]
                 except:
                     pass
         return bundle

@@ -89,7 +89,6 @@ class Samba4(object):
             'dns-backend': dc.dc_dns_backend,
             'server-role': dc.dc_role,
             'function-level': dc.dc_forest_level,
-            'use-ntvfs': None,
             'use-rfc2307': None
         }
 

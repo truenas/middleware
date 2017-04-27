@@ -62,10 +62,7 @@ class InterfacesService(Service):
                 netif.create_interface(name)
                 iface = netif.get_interface(name)
 
-            if lagg['lagg_protocol'] == 'fec':
-                protocol = netif.AggregationProtocol.ETHERCHANNEL
-            else:
-                protocol = getattr(netif.AggregationProtocol, lagg['lagg_protocol'].upper())
+            protocol = getattr(netif.AggregationProtocol, lagg['lagg_protocol'].upper())
             if iface.protocol != protocol:
                 self.logger.info('{}: changing protocol to {}'.format(name, protocol))
                 iface.protocol = protocol
@@ -344,6 +341,10 @@ class RoutesService(Service):
 
     def sync(self):
         config = self.middleware.call('datastore.query', 'network.globalconfiguration', [], {'get': True})
+
+        # Generate dhclient.conf so we can ignore routes (def gw) option
+        # in case there is one explictly set in network config
+        self.middleware.call('etc.generate', 'network')
 
         ipv4_gateway = config['gc_ipv4gateway'] or None
         if not ipv4_gateway:

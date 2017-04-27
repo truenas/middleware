@@ -1,0 +1,22 @@
+#!/bin/sh
+#
+# $FreeBSD$
+#
+
+# PROVIDE: ix-etc
+# REQUIRE: earlykld
+# BEFORE: fsck
+
+. /etc/rc.subr
+
+generate_etc()
+{
+	LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/midclt call etc.generate_all > /dev/null
+}
+
+name="ix-etc"
+start_cmd='generate_etc'
+stop_cmd=':'
+
+load_rc_config $name
+run_rc_command "$1"

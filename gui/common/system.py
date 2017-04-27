@@ -106,7 +106,7 @@ def get_freenas_var(var, default=None):
         val = default
     return val
 
-FREENAS_DATABASE = get_freenas_var("FREENAS_DATABASE", "/data/freenas-v1.db")
+FREENAS_DATABASE = get_freenas_var("FREENAS_CONFIG", "/data/freenas-v1.db")
 
 
 class QueueItem(object):
@@ -244,7 +244,7 @@ def send_mail(
     if not to:
         to = [bsdUsers.objects.get(bsdusr_username='root').bsdusr_email]
         if not to[0]:
-            return False, 'Email address for root is not configured'
+            return True, 'Email address for root is not configured'
     if attachments:
         msg = MIMEMultipart()
         msg.preamble = text
@@ -591,7 +591,7 @@ def domaincontroller_objects():
 
 
 def nt4_enabled():
-    db = get_freenas_var("FREENAS_DATABASE", "/data/freenas-v1.db")
+    db = get_freenas_var("FREENAS_CONFIG", "/data/freenas-v1.db")
     h = sqlite3.connect(db)
     c = h.cursor()
 

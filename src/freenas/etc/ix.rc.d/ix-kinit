@@ -76,6 +76,11 @@ kerberos_start_activedirectory()
 		AD_log "kerberos_start: ${ok}"
 		rm -f "${pwfile}"
 
+		if [ "${res}" != 0 ]
+		then
+			return 1
+		fi
+
 		i=0
 		timeout="$(AD_get ad_timeout)"
 		while [ "${i}" -lt "${timeout}" ]
@@ -99,7 +104,7 @@ kerberos_start_activedirectory()
 
 		AD_log "kerberos_start: /usr/bin/kinit --renewable " \
 			"--password-file=${pwfile} ${principal}"
-		__AD_tc ${timeout} /usr/bin/kinit --renewable \
+		timeout_wait ${timeout} /usr/bin/kinit --renewable \
 			--password-file="${pwfile}" "${principal}"
 		res=$?
 
@@ -111,6 +116,11 @@ kerberos_start_activedirectory()
 
 		AD_log "kerberos_start: ${ok}"
 		rm -f "${pwfile}"
+
+		if [ "${res}" != 0 ]
+		then
+			return 1
+		fi
 
 		i=0
 		timeout="$(AD_get ad_timeout)"
@@ -225,7 +235,7 @@ kerberos_start_ldap()
 
 		LDAP_log "kerberos_start: /usr/bin/kinit --renewable " \
 			"--password-file=${pwfile} ${principal}"
-		__LDAP_tc ${timeout} /usr/bin/kinit --renewable \
+		timeout_wait ${timeout} /usr/bin/kinit --renewable \
 			--password-file="${pwfile}" "${principal}"
 		res=$?
 
@@ -237,6 +247,11 @@ kerberos_start_ldap()
 
 		LDAP_log "kerberos_start: ${ok}"
 		rm -f "${pwfile}"
+
+		if [ "${res}" != 0 ]
+		then
+			return 1
+		fi
 
 		i=0
 		timeout="$(LDAP_get ldap_timeout)"

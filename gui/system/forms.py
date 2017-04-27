@@ -1755,11 +1755,16 @@ class SystemDatasetForm(ModelForm):
             except:
                 raise MiddlewareError(_("Unable to migrate system dataset!"))
 
+        if self.instance._original_sys_rrd_usedataset != self.instance.sys_rrd_usedataset:
+            # Stop collectd to flush data
+            notifier().stop("collectd")
+
         notifier().restart("system_datasets")
 
         if self.instance._original_sys_syslog_usedataset != self.instance.sys_syslog_usedataset:
             notifier().restart("syslogd")
         if self.instance._original_sys_rrd_usedataset != self.instance.sys_rrd_usedataset:
+            notifier().system_dataset_rrd_toggle()
             notifier().restart("collectd")
 
 
@@ -2096,7 +2101,7 @@ InitialWizardShareFormSet = formset_factory(
 class InitialWizardVolumeForm(VolumeMixin, Form):
 
     volume_name = forms.CharField(
-        label=_('Pool Name'),
+        label=_('Volume Name'),
         max_length=200,
     )
     volume_type = forms.ChoiceField(
@@ -2111,23 +2116,23 @@ class InitialWizardVolumeForm(VolumeMixin, Form):
         self.fields['volume_type'].choices = (
             (
                 'auto',
-                _('Automatic - Pick reasonable defaults for available drives')
+                _('Automatic (Reasonable defaults using the available drives)')
             ),
             (
                 'raid10',
-                _('Virtualization (RAID 10: Good Reliability, Better Performance, Minimum Storage)')
+                _('Virtualization (RAID 10: Moderate Redundancy, Maximum Performance, Minimum Capacity)')
             ),
             (
                 'raidz2',
-                _('Backups (RAID Z2: Good Reliability, Medium Performance, Medium Storage)')
+                _('Backups (RAID Z2: Moderate Redundancy, Moderate Performance, Moderate Capacity)')
             ),
             (
                 'raidz1',
-                _('Media (RAID Z1: Medium Reliability, Good Performance, More Storage)')
+                _('Media (RAID Z1: Minimum Redundancy, Moderate Performance, Moderate Capacity)')
             ),
             (
                 'stripe',
-                _('Logs (RAID 0: No Reliability, Best Performance, Maximum Storage)')
+                _('Logs (RAID 0: No Redundancy, Maximum Performance, Maximum Capacity)')
             ),
         )
 
@@ -3191,7 +3196,7 @@ class CertificateCreateInternalForm(ModelForm):
             )
         )
         self.fields['cert_signedby'].widget.attrs["onChange"] = (
-            "javascript:certificate_autopopulate();"
+            "javascript:CA_autopopulate();"
         )
 
     def clean_cert_name(self):

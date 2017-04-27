@@ -335,7 +335,7 @@ save_serial_settings() {
     fi
     SERIALPORT=`kenv hw.uart.console | sed -En 's/.*io:([0-9a-fx]+).*/\1/p'`
     if [ -n "$SERIALPORT" ] ; then
-       chroot ${_mnt} /usr/local/bin/sqlite3 /data/freenas-v1.db "update system_advanced set adv_serialport = $SERIALPORT"
+       chroot ${_mnt} /usr/local/bin/sqlite3 /data/freenas-v1.db "update system_advanced set adv_serialport = '$SERIALPORT'"
     fi
 }
 
@@ -479,6 +479,9 @@ partition_disk() {
 
 	_disks=$*
 
+	if is_truenas; then
+		gmirror destroy -f swap || true
+	fi
 	# Erase both typical metadata area.
 	for _disk in ${_disks}; do
 	    gpart destroy -F ${_disk} >/dev/null 2>&1 || true

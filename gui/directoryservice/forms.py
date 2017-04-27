@@ -643,8 +643,8 @@ class ActiveDirectoryForm(ModelForm):
         try:
             timeout = sysctl.filter(oid)[0]
             if timeout.value > 0:
-                value = timeout.value 
-            
+                value = timeout.value
+
         except Exception as e:
             log.debug("sysctl: unable to get value for oid %s", oid)
 

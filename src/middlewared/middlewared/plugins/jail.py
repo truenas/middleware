@@ -221,7 +221,8 @@ class JailService(Service):
                   Bool("short"),
                   List("props"),
                   ))
-    def create(self, options):
+    @job()
+    def create(self, job, options):
         """Creates a jail."""
         from iocage.lib.ioc_create import IOCCreate
         self.check_dataset_existence()
@@ -242,9 +243,7 @@ class JailService(Service):
 
         if not os.path.isdir(f"{iocroot}/releases/{release}") and not \
                 template and not empty:
-            # FIXME: List index out of range
-            # self.fetch(options={"release": release})
-            pass
+            self.middleware.call('jail.fetch', {"release": release}).wait()
 
         IOCCreate(release, props, 0, pkglist, template=template,
                   short=short, uuid=uuid, basejail=basejail,

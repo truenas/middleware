@@ -38,7 +38,7 @@ class SystemHook(AppHook):
             encoding='utf8',
         ).communicate()[0].split('\n')[0].upper()
         if serial.startswith('A1-') or serial.startswith('R1-'):
-            arr.append({'name': _('Serial'), 'value': serial})
+            arr.append({'name': _('Serial Number'), 'value': serial})
         return arr
 
     def hook_app_tabs_system(self, request):
