@@ -26,7 +26,7 @@ sysrrd_disable()
 	else
 		field="sys_uuid"
 	fi
-	uuid=$(eval echo $(midclt call datastore.config system.systemdataset | jq .${field}))
+	uuid=$(eval echo $(/usr/local/bin/midclt call datastore.config system.systemdataset | /usr/local/bin/jq .${field}))
 	rrdpath="/var/db/system/rrd-${uuid}"
 
 	# Create tar from system dataset rrd which ix-collectd understands
