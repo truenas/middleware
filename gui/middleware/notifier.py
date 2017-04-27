@@ -5774,6 +5774,37 @@ class notifier:
                     os.unlink(item)
                 self._createlink(syspath, item)
 
+    def system_dataset_rrd_toggle(self):
+        sysdataset, basename = self.system_dataset_settings()
+
+        # Path where collectd stores files
+        rrd_path = '/var/db/collectd/rrd'
+        # Path where rrd fies are stored in system dataset
+        rrd_syspath = f'/var/db/system/rrd-{sysdataset.get_sys_uuid()}'
+
+        if sysdataset.sys_rrd_usedataset:
+            # Move from tmpfs to system dataset
+            if os.path.exists(rrd_path):
+                if os.path.islink(rrd_path):
+                    # rrd path is already a link
+                    # so there is nothing we can do about it
+                    return False
+                proc = self._pipeopen(f'rsync -a {rrd_path}/ {rrd_syspath}/')
+                proc.communicate()
+                return proc.returncode == 0
+        else:
+            # Move from system dataset to tmpfs
+            if os.path.exists(rrd_path):
+                if os.path.islink(rrd_path):
+                    os.unlink(rrd_path)
+            else:
+                os.makedirs(rrd_path)
+            proc = self._pipeopen(f'rsync -a {rrd_syspath}/ {rrd_path}/')
+            proc.communicate()
+            return proc.returncode == 0
+        return False
+
+
     def system_dataset_migrate(self, _from, _to):
 
         rsyncs = (
