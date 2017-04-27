@@ -20,7 +20,7 @@ class Migration(DataMigration):
             return
 
         for sys in orm['system.SystemDataset'].objects.all():
-            if sys.sys_pool == 'freenas-boot':
+            if sys.sys_pool != 'freenas-boot':
                 continue
             sys.sys_rrd_usedataset = False
             sys.save()
