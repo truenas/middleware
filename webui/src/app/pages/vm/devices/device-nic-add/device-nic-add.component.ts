@@ -7,34 +7,42 @@ import { GlobalState } from '../../../../global.state';
 import { RestService, WebSocketService } from '../../../../services/';
 
 @Component({
-  selector: 'app-device-add',
-  template: `<entity-add [conf]="this"></entity-add>`
+  selector: 'app-device-nic-add',
+  template: `<device-add [conf]="this"></device-add>`
 })
 export class DeviceNicAddComponent {
 
   protected resource_name: string = 'vm/device';
   protected pk: any;
-  protected route_success: string[] = ['vm', this.pk, 'devices'];
+  protected route_success: string[];
+  private nicType: DynamicSelectModel<string>;
+
+  protected dtype: string = 'NIC';
 
   protected formModel: DynamicFormControlModel[] = [
     new DynamicSelectModel({
-        id: 'path',
+        id: 'type',
         label: 'Network Interface',
-         options: [
-                { label: 'Intel', value: 'E1000' },
-                { label: 'VirtIO', value: 'VIRTIO' },
-              ]
     }),
   ];
 
-  afterInit() {
-    this.route.params.subscribe(params => {
-        this.pk = params['pk'];
-    });
-  }
 
   constructor(protected router: Router, protected route: ActivatedRoute, protected rest: RestService, protected ws: WebSocketService, protected formService: DynamicFormService, protected _injector: Injector, protected _appRef: ApplicationRef, protected _state: GlobalState) {
 
   }
+
+  afterInit(entityAdd: any) {
+    this.route.params.subscribe(params => {
+        this.pk = params['pk'];
+        this.route_success = ['vm', this.pk, 'devices'];
+    });
+    entityAdd.ws.call('notifier.choices', ['VM_NICTYPES']).subscribe((res) => {
+      this.nicType = <DynamicSelectModel<string>>this.formService.findById("type", this.formModel);
+      res.forEach((item) => {
+        this.nicType.add({ label: item[1], value: item[0] });
+      });
+    });
+  }
+
 
 }

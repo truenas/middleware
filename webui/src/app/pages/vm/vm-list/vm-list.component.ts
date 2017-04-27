@@ -22,7 +22,7 @@ export class VmListComponent {
   public columns:Array<any> = [
     {title: 'Name', name: 'name'},
     {title: 'Description', name: 'description'},
-    {title: 'Info', name: 'devices'},
+    {title: 'Info', name: 'info'},
     {title: 'Virtual CPUs', name: 'vcpus'},
     {title: 'Memory Size (MiB)', name: 'memory'},
     {title: 'Boot Loader Type', name: 'bootloader'},

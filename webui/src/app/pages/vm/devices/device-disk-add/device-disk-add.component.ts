@@ -14,7 +14,7 @@ export class DeviceDiskAddComponent {
 
   protected resource_name: string = 'vm/device';
   protected pk: any;
-  protected route_success: string[] = ['vm', this.pk, 'devices'];
+  protected route_success: string[];
   protected formModel: DynamicFormControlModel[] = [
     new DynamicInputModel({
       id: 'zvol',
@@ -33,6 +33,7 @@ export class DeviceDiskAddComponent {
   afterInit() {
     this.route.params.subscribe(params => {
         this.pk = params['pk'];
+        this.route_success = ['vm', this.pk, 'devices'];
     });
   }
 

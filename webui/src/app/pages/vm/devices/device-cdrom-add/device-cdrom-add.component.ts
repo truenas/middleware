@@ -7,7 +7,7 @@ import { GlobalState } from '../../../../global.state';
 import { RestService, WebSocketService } from '../../../../services/';
 
 @Component({
-  selector: 'app-device-add',
+  selector: 'app-device-cdrom-add',
   template: `<device-add [conf]="this"></device-add>`
 })
 
@@ -15,7 +15,7 @@ export class DeviceCdromAddComponent {
 
   protected resource_name: string = 'vm/device';
   protected pk: any;
-  protected route_success: string[] = ['vm', this.pk, 'devices'];
+  protected route_success: string[];
   protected formModel: DynamicFormControlModel[] = [
     new DynamicInputModel({
         id: 'path',
@@ -27,6 +27,7 @@ export class DeviceCdromAddComponent {
   afterInit() {
     this.route.params.subscribe(params => {
         this.pk = params['pk'];
+        this.route_success = ['vm', this.pk, 'devices'];
     });
   }
 
