@@ -44,7 +44,7 @@ class VMWareService(Service):
                 pwd=data['password'],
                 sslContext=ssl_context,
             )
-        except vim.fault.InvalidLogin as e:
+        except (vim.fault.InvalidLogin, vim.fault.NoPermission) as e:
             raise CallError(e.msg, errno.EPERM)
         except socket.gaierror as e:
             raise CallError(str(e), e.errno)
