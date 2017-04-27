@@ -1097,6 +1097,16 @@ VM_DEVTYPES = (
     ('VNC', _('VNC')),
 )
 
+VM_NICTYPES = (
+    ('E1000', _('Intel e82545 (e1000)')),
+    ('VIRTIO', _('VirtIO')),    
+)
+
+VM_DISKMODETYPES = (
+    ('AHCI', _('AHCI')),
+    ('VIRTIO', _('VirtIO')),
+)
+
 S3_MODES = (
     ('local', _('local')),
     ('distributed', _('distributed'))
