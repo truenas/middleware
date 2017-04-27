@@ -16,7 +16,7 @@ sysrrd_disable()
 	local node field uuid rrdpath
 
 	# Skip if no sentinel file was found
-	if [ ! -f "${SYSRRD_SENTINEL}" ];
+	if [ ! -f "${SYSRRD_SENTINEL}" ]; then
 		return 0
 	fi
 
@@ -31,7 +31,7 @@ sysrrd_disable()
 
 	# Create tar from system dataset rrd which ix-collectd understands
 	if [ -d "${rrdpath}" ]; then
-		tar cf /data/rrd_dir.tar.bz2 -s ',^\.,collectd/rrd,' -C ${rrdpath}
+		tar cjf /data/rrd_dir.tar.bz2 -s ',^\.,collectd/rrd,' -C ${rrdpath} .
 	fi
 	rm -f ${SYSRRD_SENTINEL}
 }
