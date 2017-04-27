@@ -1,5 +1,5 @@
-TIMESTAMP = 1490649328
-SHA256 (freenas-freenas-migrate93-20170327-db37e06_GH0.tar.gz) = 5a9c6de239f63421b38c1b10ce3f54484e42e2ba278985f653d974b00278a3ac
-SIZE (freenas-freenas-migrate93-20170327-db37e06_GH0.tar.gz) = 558487
+TIMESTAMP = 1493294527
+SHA256 (freenas-freenas-migrate93-20170427-18c6cd6_GH0.tar.gz) = 7829947abd36563afff749c7bfba5d85aaa1d5624cd7a3839ea077ba2648820b
+SIZE (freenas-freenas-migrate93-20170427-18c6cd6_GH0.tar.gz) = 559087
 SHA256 (freenas-django-168674c_GH0.tar.gz) = 716eece458e8bfa6c116a6013949fd5f71674e2d43344a4d62cc5f674ac4e7d3
 SIZE (freenas-django-168674c_GH0.tar.gz) = 6722135
