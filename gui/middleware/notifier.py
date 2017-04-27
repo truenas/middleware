@@ -5780,7 +5780,7 @@ class notifier:
         # Path where collectd stores files
         rrd_path = '/var/db/collectd/rrd'
         # Path where rrd fies are stored in system dataset
-        rrd_syspath = f'/var/db/system/rrd-{sysdataset.get_sys_uuid()}'
+        rrd_syspath = '/var/db/system/rrd-{0}'.format(sysdataset.get_sys_uuid())
 
         if sysdataset.sys_rrd_usedataset:
             # Move from tmpfs to system dataset
@@ -5789,7 +5789,7 @@ class notifier:
                     # rrd path is already a link
                     # so there is nothing we can do about it
                     return False
-                proc = self._pipeopen(f'rsync -a {rrd_path}/ {rrd_syspath}/')
+                proc = self._pipeopen('rsync -a {0}/ {1}/'.format(rrd_path, rrd_syspath))
                 proc.communicate()
                 return proc.returncode == 0
         else:
@@ -5799,7 +5799,7 @@ class notifier:
                     os.unlink(rrd_path)
             else:
                 os.makedirs(rrd_path)
-            proc = self._pipeopen(f'rsync -a {rrd_syspath}/ {rrd_path}/')
+            proc = self._pipeopen('rsync -a {0}/ {1}/'.format(rrd_syspath, rrd_path))
             proc.communicate()
             return proc.returncode == 0
         return False
