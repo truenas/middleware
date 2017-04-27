@@ -1,6 +1,7 @@
 import { ApplicationRef, Component, Injector, OnInit } from '@angular/core';
 import { ActivatedRoute, Router } from '@angular/router';
 import * as _ from 'lodash';
+import { Subscription } from 'rxjs';
 
 import { DynamicFormControlModel, DynamicFormService, DynamicCheckboxModel, DynamicInputModel, DynamicSelectModel, DynamicRadioGroupModel } from '@ng2-dynamic-forms/core';
 import { GlobalState } from '../../../global.state';
@@ -13,23 +14,14 @@ import { EntityConfigComponent } from '../../common/entity/entity-config/';
   selector: 'app-email',
   template: `
   <entity-config [conf]="this"></entity-config>
-  <button class="btn btn-primary" (click)="sendMail()">Send Test Email</button>
+  <button class="btn btn-primary" (click)="sendMail()" [ngBusy]="sendEmailBusy">Send Test Email</button>
   `
 })
 export class EmailComponent {
 
   protected resource_name: string = 'system/email';
   private entityEdit: EntityConfigComponent;
-  /*
-  // this is a more generic way to add sent test email button
-  // I am not there yet :(
-  protected custActions: any[]=[
-    {
-      "name":"Send Test Mail",
-      "function": this.sendMail.bind(this)
-    }
-  ];
-  */
+  private sendEmailBusy: Subscription;
   protected formModel: DynamicFormControlModel[] = [
     new DynamicInputModel({
       id: 'em_fromemail',
@@ -118,7 +110,7 @@ export class EmailComponent {
         "text": "This is a test message from FreeNAS",
     };
     // TODO fix callback Hell!!
-    this.ws.call('system.info').subscribe((res)=>{
+    this.sendEmailBusy = this.ws.call('system.info').subscribe((res)=>{
       mailObj['subject'] += " hostname: " + res['hostname'];
       this.ws.call('mail.send', [mailObj]).subscribe((res) => {
         if (res[0]) {
