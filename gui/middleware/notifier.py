@@ -351,7 +351,7 @@ class notifier(metaclass=HookMetaclass):
         else:
             self._system("/usr/sbin/service ix-ssl quietstart")
 
-    def _open_db(self, ret_conn=False):
+    def _open_db(self):
         """Open and return a cursor object for database access."""
         try:
             from freenasUI.settings import DATABASES
@@ -361,9 +361,7 @@ class notifier(metaclass=HookMetaclass):
 
         conn = sqlite3.connect(dbname)
         c = conn.cursor()
-        if ret_conn:
-            return c, conn
-        return c
+        return c, conn
 
     def __gpt_labeldisk(self, type, devname, swapsize=2):
         """Label the whole disk with GPT under the desired label and type"""
@@ -2442,9 +2440,12 @@ class notifier(metaclass=HookMetaclass):
         if not plugin:
             raise MiddlewareError("plugin is NULL")
 
-        (c, conn) = self._open_db(ret_conn=True)
-        c.execute("SELECT plugin_jail FROM plugins_plugins WHERE id = %d" % plugin.id)
-        row = c.fetchone()
+        (c, conn) = self._open_db()
+        try:
+            c.execute("SELECT plugin_jail FROM plugins_plugins WHERE id = %d" % plugin.id)
+            row = c.fetchone()
+        finally:
+            conn.close()
         if not row:
             log.debug("update_pbi: plugins plugin not in database")
             return False
@@ -2694,9 +2695,12 @@ class notifier(metaclass=HookMetaclass):
             log.debug("stat %s: %s", rpath, e)
             return False
 
-        (c, conn) = self._open_db(ret_conn=True)
-        c.execute("SELECT jc_path FROM jails_jailsconfiguration LIMIT 1")
-        row = c.fetchone()
+        (c, conn) = self._open_db()
+        try:
+            c.execute("SELECT jc_path FROM jails_jailsconfiguration LIMIT 1")
+            row = c.fetchone()
+        finally:
+            conn.close()
         if not row:
             log.debug("contains_jail_root: jails not configured")
             return False
