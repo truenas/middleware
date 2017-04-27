@@ -50,9 +50,9 @@ export class DeviceAddComponent implements OnInit {
     }
 
     let values = {};
-    values['attributes'] = JSON.stringify(value);
+    values['attributes'] = value;
     values['dtype'] = this.conf.dtype;
-    values['vm_id'] = this.conf.pk;
+    values['vm'] = this.conf.pk;
 
     this.rest.post(this.conf.resource_name + '/', {
       body: JSON.stringify(values),
