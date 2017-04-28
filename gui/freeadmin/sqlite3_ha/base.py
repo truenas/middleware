@@ -412,7 +412,12 @@ class HASQLiteCursorWrapper(Database.Cursor):
                     retries += 1
                     continue
                 else:
-                    raise
+                    try:
+                        from freenasUI.freeadmin.utils import log_db_locked
+                        log_db_locked()
+                    except Exception:
+                        pass
+                    raise e
             break
         return rv
 

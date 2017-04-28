@@ -27,6 +27,7 @@ export const routes: Routes = [
       { path: 'sharing/nfs', loadChildren: 'app/pages/sharing/nfs/nfs.module#NFSModule' },
       { path: 'sharing/smb', loadChildren: 'app/pages/sharing/smb/smb.module#SMBModule' },
       { path: 'services', loadChildren: 'app/pages/services/services.module#ServicesModule' },
+      { path: 'vm', loadChildren: 'app/pages/vm/vm.module#VmModule' },
       { path: '', redirectTo: 'dashboard', pathMatch: 'full' },
     ]
   },

@@ -1,6 +1,7 @@
 from . import ejson as json
 from .protocol import DDPProtocol
-from threading import Event, Thread
+from collections import defaultdict
+from threading import Event, Lock, Thread
 from ws4py.client.threadedclient import WebSocketClient
 
 import argparse
@@ -71,6 +72,9 @@ class Client(object):
 
     def __init__(self, uri=None):
         self._calls = {}
+        self._jobs = defaultdict(dict)
+        self._jobs_lock = Lock()
+        self._jobs_watching = False
         self._pings = {}
         self._event_callbacks = {}
         if uri is None:
@@ -115,14 +119,22 @@ class Client(object):
                 call.returned.set()
                 self._unregister_call(call)
         elif msg in ('added', 'changed', 'removed'):
-            if self.event_callback:
+            if self._event_callbacks:
                 if '*' in self._event_callbacks:
-                    self._event_callbacks['*'](msg.upper(), **message)
-                if collection in self._event_callbacks:
-                    self._event_callbacks[collection](msg.upper(), **message)
-
-    def register_event_callback(self, name, callback):
-        self._event_callbacks[name] = callback
+                    event = self._event_callbacks['*']
+                    event['callback'](msg.upper(), **message)
+                if message['collection'] in self._event_callbacks:
+                    event = self._event_callbacks[message['collection']]
+                    event['callback'](msg.upper(), **message)
+        elif msg == 'ready':
+            for subid in message['subs']:
+                # FIXME: We may need to keep a different index for id
+                # so we don't hve to iterate through all.
+                # This is fine for just a dozen subscriptions
+                for event in self._event_callbacks.values():
+                    if subid == event['id']:
+                        event['ready'].set()
+                        break
 
     def on_open(self):
         self._send({
@@ -140,8 +152,44 @@ class Client(object):
     def _unregister_call(self, call):
         self._calls.pop(call.id, None)
 
+    def _jobs_callback(self, mtype, **message):
+        """
+        Method to process the received job events.
+        """
+        fields = message.get('fields')
+        job_id = fields['id']
+        with self._jobs_lock:
+            if fields:
+                if mtype == 'ADDED':
+                    self._jobs[job_id].update(fields)
+                elif mtype == 'CHANGED':
+                    job = self._jobs[job_id]
+                    job.update(fields)
+                    if fields['state'] in ('SUCCESS', 'FAILED'):
+                        # If an Event already exist we just set it to mark it finished.
+                        # Otherwise we create a new Event.
+                        # This is to prevent a race-condition of job finishing before
+                        # the client can create the Event.
+                        event = job.get('__ready')
+                        if event is None:
+                            event = job['__ready'] = Event()
+                        event.set()
+
+    def _jobs_subscribe(self):
+        """
+        Subscribe to job updates, calling `_jobs_callback` on every new event.
+        """
+        self._jobs_watching = True
+        self.subscribe('core.get_jobs', self._jobs_callback)
+
     def call(self, method, *params, **kwargs):
         timeout = kwargs.pop('timeout', 30)
+        job = kwargs.pop('job', False)
+
+        # We need to make sure we are subscribed to receive job updates
+        if job and not self._jobs_watching:
+            self._jobs_subscribe()
+
         c = Call(method, params)
         self._register_call(c)
         self._send({
@@ -158,7 +206,46 @@ class Client(object):
         if c.error:
             raise ClientException(c.error, c.trace)
 
+        if job:
+            job_id = c.result
+            # If a job event has been received already then we must set an Event
+            # to wait for this job to finish.
+            # Otherwise we create a new stub for the job with the Event for when
+            # the job event arrives to use existing event.
+            with self._jobs_lock:
+                job = self._jobs.get(job_id)
+                if job:
+                    event = job.get('__ready')
+                    if event is None:
+                        event = job['__ready'] = Event()
+                else:
+                    event = self._jobs[job_id] = {'__ready': Event()}
+
+            # Wait indefinitely for the job event with state SUCCESS/FAILED
+            event.wait()
+            job = self._jobs.pop(job_id, None)
+            if job is None:
+                raise ClientException('No job event was received.')
+            if job['state'] != 'SUCCESS':
+                raise ClientException(job['error'], job['exception'])
+            return job['result']
+
         return c.result
+
+    def subscribe(self, name, callback):
+        ready = Event()
+        _id = str(uuid.uuid4())
+        self._event_callbacks[name] = {
+            'id': _id,
+            'callback': callback,
+            'ready': ready,
+        }
+        self._send({
+            'msg': 'sub',
+            'id': _id,
+            'name': name,
+        })
+        ready.wait()
 
     def ping(self, timeout=10):
         _id = str(uuid.uuid4())

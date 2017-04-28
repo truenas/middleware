@@ -56,3 +56,10 @@ label.custom-checkbox {
     margin-right: 10px;
   }
 }
+
+/* custom class for service page */
+div.v-center > label {
+    height: 30px;
+    display: table-cell;
+    vertical-align: middle;
+}

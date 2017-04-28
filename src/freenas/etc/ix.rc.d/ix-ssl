@@ -12,6 +12,7 @@
 
 generate_ssl_certificates()
 {
+	sed -i '' '1,/^RANDFILE/ s,^RANDFILE.*,RANDFILE = /tmp/.rnd,' /etc/ssl/openssl.cnf
 	/usr/local/libexec/nas/generate_ssl_certificates.py
 }
 

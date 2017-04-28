@@ -114,7 +114,12 @@ class Application(WebSocketApplication):
             if keywordspec:
                 cur_frame['keywordspec'] = keywordspec
             if _locals:
-                cur_frame['locals'] = {k: repr(v) for k, v in _locals.items()}
+                try:
+                    cur_frame['locals'] = {k: repr(v) for k, v in _locals.items()}
+                except Exception:
+                    # repr() may fail since it may be one of the reasons
+                    # of the exception
+                    cur_frame['locals'] = {}
 
             frames.append(cur_frame)
 
@@ -185,6 +190,10 @@ class Application(WebSocketApplication):
 
     def subscribe(self, ident, name):
         self.__subscribed[ident] = name
+        self._send({
+            'msg': 'ready',
+            'subs': [ident],
+        })
 
     def unsubscribe(self, ident):
         self.__subscribed.pop(ident)
@@ -254,7 +263,8 @@ class Application(WebSocketApplication):
             return
 
         if message['msg'] == 'method':
-            self.call_method(message)
+            gevent.spawn(self.call_method, message)
+            return
         elif message['msg'] == 'ping':
             pong = {'msg': 'pong'}
             if 'id' in message:
@@ -525,6 +535,14 @@ class Middleware(object):
 
     def get_jobs(self):
         return self.__jobs
+
+    def threaded(self, method, *args, **kwargs):
+        """
+        Runs method in a native thread using gevent.ThreadPool.
+        This prevents a CPU intensive or non-greenlet friendly method
+        to block the event loop indefinitely.
+        """
+        return self.__threadpool.apply(method, args, kwargs)
 
     def _call(self, name, methodobj, params, app=None):
 

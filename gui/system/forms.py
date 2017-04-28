@@ -1755,11 +1755,16 @@ class SystemDatasetForm(ModelForm):
             except:
                 raise MiddlewareError(_("Unable to migrate system dataset!"))
 
+        if self.instance._original_sys_rrd_usedataset != self.instance.sys_rrd_usedataset:
+            # Stop collectd to flush data
+            notifier().stop("collectd")
+
         notifier().restart("system_datasets")
 
         if self.instance._original_sys_syslog_usedataset != self.instance.sys_syslog_usedataset:
             notifier().restart("syslogd")
         if self.instance._original_sys_rrd_usedataset != self.instance.sys_rrd_usedataset:
+            notifier().system_dataset_rrd_toggle()
             notifier().restart("collectd")
 
 
@@ -3429,10 +3434,11 @@ class CloudCredentialsForm(ModelForm):
             }
             if self.instance.id:
                 c.call('backup.credential.update', self.instance.id, data)
-                pk = self.instance.id
             else:
-                pk = c.call('backup.credential.create', data)
-        return models.CloudCredentials.objects.get(pk=pk)
+                self.instance = models.CloudCredentials.objects.get(
+                    pk=c.call('backup.credential.create', data)
+                )
+        return self.instance
 
     def delete(self, *args, **kwargs):
         with client as c:

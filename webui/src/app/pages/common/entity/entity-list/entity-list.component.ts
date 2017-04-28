@@ -32,7 +32,13 @@ export class EntityListComponent implements OnInit {
   constructor(protected rest: RestService, protected router: Router, protected _state: GlobalState, protected _eRef: ElementRef) { }
 
   ngOnInit() {
+    if (this.conf.preInit) {
+        this.conf.preInit(this);
+    }
     this.getData();
+    if (this.conf.afterInit) {
+        this.conf.afterInit(this);
+    }
   }
 
   getData() {
@@ -117,6 +123,14 @@ export class EntityListComponent implements OnInit {
           },
         },
       ]
+    }
+  }
+
+  getAddActions() {
+    if (this.conf.getAddActions) {
+      return this.conf.getAddActions();
+    } else {
+      return [];
     }
   }
 

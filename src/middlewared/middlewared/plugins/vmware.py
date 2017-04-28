@@ -44,7 +44,7 @@ class VMWareService(Service):
                 pwd=data['password'],
                 sslContext=ssl_context,
             )
-        except vim.fault.InvalidLogin as e:
+        except (vim.fault.InvalidLogin, vim.fault.NoPermission) as e:
             raise CallError(e.msg, errno.EPERM)
         except socket.gaierror as e:
             raise CallError(str(e), e.errno)
@@ -61,6 +61,10 @@ class VMWareService(Service):
         for esxi_host in esxi_hosts:
             storage_system = esxi_host.configManager.storageSystem
             datastores_host = {}
+
+            if storage_system.fileSystemVolumeInfo is None:
+                continue
+
             for host_mount_info in storage_system.fileSystemVolumeInfo.mountInfo:
                 if host_mount_info.volume.type != 'VMFS':
                     continue

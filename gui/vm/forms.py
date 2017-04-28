@@ -5,6 +5,7 @@ from django.core.validators import RegexValidator
 from django.utils.translation import ugettext_lazy as _
 
 from dojango import forms
+from freenasUI import choices
 from freenasUI.common import humanize_size
 from freenasUI.common.forms import ModelForm
 from freenasUI.freeadmin.forms import PathField
@@ -68,7 +69,6 @@ class VMForm(ModelForm):
 
             if self.instance.id:
                 c.call('vm.update', self.instance.id, cdata)
-                pk = self.instance.id
             else:
                 if self.instance.bootloader == 'UEFI' and self.instance.vm_type != 'Container Provider':
                     cdata['devices'] = [
@@ -79,8 +79,8 @@ class VMForm(ModelForm):
                     cdata['devices'] = [
                         {'dtype': 'NIC', 'attributes': {'type': 'E1000'}},
                     ]
-                pk = c.call('vm.create', cdata)
-        return models.VM.objects.get(pk=pk)
+                self.instance = models.VM.objects.get(pk=c.call('vm.create', cdata))
+        return self.instance
 
     def delete(self, **kwargs):
         with client as c:
@@ -100,19 +100,13 @@ class DeviceForm(ModelForm):
     )
     DISK_mode = forms.ChoiceField(
         label=_('Mode'),
-        choices=(
-            ('AHCI', _('AHCI')),
-            ('VIRTIO', _('VirtIO')),
-        ),
+        choices=choices.VM_DISKMODETYPES,
         required=False,
         initial='AHCI',
     )
     NIC_type = forms.ChoiceField(
         label=_('Adapter Type'),
-        choices=(
-            ('E1000', _('Intel e82545 (e1000)')),
-            ('VIRTIO', _('VirtIO')),
-        ),
+        choices=choices.VM_NICTYPES,
         required=False,
         initial='E1000',
     )

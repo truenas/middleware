@@ -157,4 +157,37 @@ export const PAGES_MENU = [
     expanded: false,
     order: 0
   },
+  {
+    title: 'VM/Container',
+    icon: 'ion-monitor',
+    selected: false,
+    expanded: false,
+    order: 0,
+    children: [
+      {
+        path: ['vm'],
+        title: 'VMs',
+        icon: 'ion-ios-monitor',
+        selected: false,
+        expanded: false,
+        order: 0
+      },
+      {
+        path: ['vm', 'Jail'],
+        title: 'Jails',
+        icon: 'ion-social-freebsd-devil',
+        selected: false,
+        expanded: false,
+        order: 0
+      },
+      {
+        path: ['vm', 'Plugins'],
+        title: 'Plugins',
+        icon: 'ion-ios-keypad',
+        selected: false,
+        expanded: false,
+        order: 0
+      },
+    ],
+  },
 ];

@@ -1,1 +1,17 @@
 @import '../../sass/conf/conf';
+
+.power-button {
+	width: inherit;
+	background-color: #282828;
+    border-color: #282828;
+    color: #ffffff;
+}
+
+.power-dropdown-menu {
+	top: 80%;
+	width: inherit;
+}
+
+.power-button-icon {
+	color: #ffffff;
+}

@@ -351,7 +351,7 @@ class notifier(metaclass=HookMetaclass):
         else:
             self._system("/usr/sbin/service ix-ssl quietstart")
 
-    def _open_db(self, ret_conn=False):
+    def _open_db(self):
         """Open and return a cursor object for database access."""
         try:
             from freenasUI.settings import DATABASES
@@ -361,9 +361,7 @@ class notifier(metaclass=HookMetaclass):
 
         conn = sqlite3.connect(dbname)
         c = conn.cursor()
-        if ret_conn:
-            return c, conn
-        return c
+        return c, conn
 
     def __gpt_labeldisk(self, type, devname, swapsize=2):
         """Label the whole disk with GPT under the desired label and type"""
@@ -2442,9 +2440,12 @@ class notifier(metaclass=HookMetaclass):
         if not plugin:
             raise MiddlewareError("plugin is NULL")
 
-        (c, conn) = self._open_db(ret_conn=True)
-        c.execute("SELECT plugin_jail FROM plugins_plugins WHERE id = %d" % plugin.id)
-        row = c.fetchone()
+        (c, conn) = self._open_db()
+        try:
+            c.execute("SELECT plugin_jail FROM plugins_plugins WHERE id = %d" % plugin.id)
+            row = c.fetchone()
+        finally:
+            conn.close()
         if not row:
             log.debug("update_pbi: plugins plugin not in database")
             return False
@@ -2694,9 +2695,12 @@ class notifier(metaclass=HookMetaclass):
             log.debug("stat %s: %s", rpath, e)
             return False
 
-        (c, conn) = self._open_db(ret_conn=True)
-        c.execute("SELECT jc_path FROM jails_jailsconfiguration LIMIT 1")
-        row = c.fetchone()
+        (c, conn) = self._open_db()
+        try:
+            c.execute("SELECT jc_path FROM jails_jailsconfiguration LIMIT 1")
+            row = c.fetchone()
+        finally:
+            conn.close()
         if not row:
             log.debug("contains_jail_root: jails not configured")
             return False
@@ -5254,6 +5258,37 @@ class notifier(metaclass=HookMetaclass):
                 if os.path.islink(item):
                     os.unlink(item)
                 self._createlink(syspath, item)
+
+    def system_dataset_rrd_toggle(self):
+        sysdataset, basename = self.system_dataset_settings()
+
+        # Path where collectd stores files
+        rrd_path = '/var/db/collectd/rrd'
+        # Path where rrd fies are stored in system dataset
+        rrd_syspath = f'/var/db/system/rrd-{sysdataset.get_sys_uuid()}'
+
+        if sysdataset.sys_rrd_usedataset:
+            # Move from tmpfs to system dataset
+            if os.path.exists(rrd_path):
+                if os.path.islink(rrd_path):
+                    # rrd path is already a link
+                    # so there is nothing we can do about it
+                    return False
+                proc = self._pipeopen(f'rsync -a {rrd_path}/ {rrd_syspath}/')
+                proc.communicate()
+                return proc.returncode == 0
+        else:
+            # Move from system dataset to tmpfs
+            if os.path.exists(rrd_path):
+                if os.path.islink(rrd_path):
+                    os.unlink(rrd_path)
+            else:
+                os.makedirs(rrd_path)
+            proc = self._pipeopen(f'rsync -a {rrd_syspath}/ {rrd_path}/')
+            proc.communicate()
+            return proc.returncode == 0
+        return False
+
 
     def system_dataset_migrate(self, _from, _to):
 

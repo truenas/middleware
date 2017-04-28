@@ -6,21 +6,35 @@ import { Subscription } from 'rxjs';
 
 @Component({
   selector: 'service',
+  styleUrls: ['./service.component.scss'],
   template: `
   <ba-card>
     <div [ngBusy]="busy" class="row">
-      <div class="col-md-1">
-        {{ status.label }}
+      <div class="col-md-2">
+        <span class="v-center">{{ status.label }}</span>
       </div>
 
-      <div class="col-md-1">
+      <div class="col-md-2">
+        <span [ngClass]="status.state == 'RUNNING' ? 'state-label-running' : 'state-label-stopped'" class="v-center">{{ status.state }}</span>
+      </div>
+
+      <div class="col-md-2">
         <button class="btn btn-primary" (click)="toggle()">
+          <i [ngClass]="status.state == 'RUNNING' ? 'ion-stop' : 'ion-power'"></i>
           <span *ngIf="status.state != 'RUNNING'">Start</span>
           <span *ngIf="status.state == 'RUNNING'">Stop</span>
         </button>
       </div>
+
       <div class="col-md-2">
-        <ba-checkbox [(ngModel)]="status.enable" (change)="enableToggle($event)" [label]="'Start on Boot'"></ba-checkbox>
+        <ba-checkbox [(ngModel)]="status.enable" (change)="enableToggle($event)" [label]="'Start on Boot'" [baCheckboxClass]="'v-center'"></ba-checkbox>
+      </div>
+
+      <div class="col-md-1">
+        <button class="btn btn-primary">
+          <i class="ion-wrench"></i>
+          <span>Edit</span>
+        </button>
       </div>
     </div>
   </ba-card>

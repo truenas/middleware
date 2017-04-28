@@ -1,10 +1,5 @@
 {% extends "freeadmin/generic_model_datagrid.html" %}
 {% block actions_static_buttons %}
-<button id="btnDatagrid_Consul_Add" data-dojo-type="dijit.form.Button" type="button" class="left">
-<p>{% trans "Add Services" %}</p>
-<script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
-	editObject('{% trans "Add Service"|escapejs %}', '{{ model.get_add_url }}', [this,]);
-</script>
-</button>
+{{ block.super }}
 <p style="margin:10px; text-indent: 5em;">{% trans "Alerts marked WARN or CRITICAL are sent to these alert services." %}</p>
 {% endblock %}
