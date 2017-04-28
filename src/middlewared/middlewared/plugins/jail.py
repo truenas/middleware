@@ -159,7 +159,7 @@ class JailService(Service):
         """Takes a jail and destroys it."""
         from iocage.lib.ioc_destroy import IOCDestroy
 
-        _, uuid, path = self.check_jail_existence(jail)
+        tag, uuid, path = self.check_jail_existence(jail)
         conf = IOCJson(path).json_load()
         status, _ = IOCList().list_get_jid(uuid)
 
