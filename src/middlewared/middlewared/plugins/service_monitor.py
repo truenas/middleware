@@ -14,6 +14,7 @@ class ServiceMonitor(object):
         self.frequency = frequency
         self.retry = retry
         self.counter = retry
+        self.forever = True if self.retry is 0 else False
         self.connected = True
         self.func_call = self.test_connection
         self.fqdn = fqdn
@@ -36,7 +37,7 @@ class ServiceMonitor(object):
         except Exception as error:
             self.connected = False
             self.logger.debug("[ServiceMonitoring] Cannot connect: %s:%d with error: %s" % (fqdn, service_port, error))
-            with Client as c:
+            with Client() as c:
                 try:
                     c.call('service.restart', service_name, {'onetime': True}, timeout=60)
                 except CallTimeout:
@@ -88,7 +89,11 @@ class ServiceMonitor(object):
         """This is a recursive method where will launch a thread with timer
         calling another method.
         """
-        self.logger.debug("====> THREADS: %s" % (CURRENT_MONITOR_THREAD))
+
+        if self.forever is True:
+            self.counter = 100
+            self.retry = 100
+
         if self.connected is False:
             self.counter -= 1
             _random = str(random.randint(1, 1000))

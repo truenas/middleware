@@ -1741,15 +1741,20 @@ class FreeNAS_ActiveDirectory_Base(object):
             network = site_dn = None
             if 'cn' in s[1]:
                 network = s[1]['cn'][0]
+                if isinstance(network, bytes):  
+                    network = network.decode('utf-8')
+
             else:
                 # if the network is None no point calculating
                 # anything more so ....
                 continue
             if 'siteObject' in s[1]:
                 site_dn = s[1]['siteObject'][0]
+                if isinstance(site_dn, bytes):
+                    site_dn = site_dn.decode('utf-8')
+
             # Note should/can we do the same skip as done for `network`
             # the site_dn none too?
-
             st = ipaddr.IPNetwork(network)
 
             if st.version == 4:
@@ -1771,6 +1776,8 @@ class FreeNAS_ActiveDirectory_Base(object):
                             sinfo = self.get_sites(distinguishedname=site_dn)[0]
                             if sinfo and len(sinfo) > 1:
                                 ipv4_site = sinfo[1]['cn'][0]
+                                if isinstance(ipv4_site, bytes):
+                                    ipv4_site = ipv4_site.decode('utf-8')
                                 break
                     if ipv4_site is not None:
                         break
@@ -1784,6 +1791,8 @@ class FreeNAS_ActiveDirectory_Base(object):
                             sinfo = self.get_sites(distinguishedname=site_dn)[0]
                             if sinfo and len(sinfo) > 1:
                                 ipv6_site = sinfo[1]['cn'][0]
+                                if isinstance(ipv6_site, bytes):
+                                    ipv6_site = ipv6_site.decode('utf-8')
                                 break
                         if ipv6_site is not None:
                             break
@@ -2520,17 +2529,16 @@ class FreeNAS_LDAP_Users(FreeNAS_LDAP):
 
             u = u[1]
             if 'sAMAccountName' in u:
-                uid = u['sAMAccountName'][0]
+                uid = u['sAMAccountName'][0].decode()
             elif 'uid' in u:
-                uid = u['uid'][0]
+                uid = u['uid'][0].decode()
             else:
-                uid = u['cn'][0]
+                uid = u['cn'][0].decode()
 
             self.__usernames.append(uid)
 
             try:
                 pw = pwd.getpwnam(uid)
-
             except:
                 continue
 

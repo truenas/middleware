@@ -91,12 +91,30 @@ export const PAGES_MENU = [
     ]
   },
   {
-    path: ['volumes'],
-    title: 'Volumes',
+    path: ['storage'],
+    title: 'Storage',
     icon: 'ion-cube',
     selected: false,
     expanded: false,
-    order: 0
+    order: 0,
+    children: [
+      {
+        path: ['storage', 'volumes'],
+        title: 'Volumes',
+        icon: 'ion-cube',
+        selected: false,
+        expanded: false,
+        order: 0,
+      },
+      {
+        path: ['storage', 'snapshots'],
+        title: 'Snapshots',
+        icon: 'ion-network',
+        selected: false,
+        expanded: false,
+        order: 0
+      }, 
+    ]
   },
   {
     title: 'Sharing',
@@ -138,5 +156,38 @@ export const PAGES_MENU = [
     selected: false,
     expanded: false,
     order: 0
+  },
+  {
+    title: 'VM/Container',
+    icon: 'ion-monitor',
+    selected: false,
+    expanded: false,
+    order: 0,
+    children: [
+      {
+        path: ['vm'],
+        title: 'VMs',
+        icon: 'ion-ios-monitor',
+        selected: false,
+        expanded: false,
+        order: 0
+      },
+      {
+        path: ['vm', 'Jail'],
+        title: 'Jails',
+        icon: 'ion-social-freebsd-devil',
+        selected: false,
+        expanded: false,
+        order: 0
+      },
+      {
+        path: ['vm', 'Plugins'],
+        title: 'Plugins',
+        icon: 'ion-ios-keypad',
+        selected: false,
+        expanded: false,
+        order: 0
+      },
+    ],
   },
 ];

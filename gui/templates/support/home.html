@@ -64,6 +64,7 @@
       {% empty %}
         {% trans "None" %}
       {% endfor %}
+      {% if fc_enabled %}{% trans "Fibre Channel" %}<br />{% endif %}
     </td>
     <th>{% trans "Additional Hardware" %}</th>
     <td>

@@ -1,3 +1,4 @@
+import datetime
 import json
 import logging
 import os
@@ -76,11 +77,21 @@ def jails_enabled():
 
 def fc_enabled():
     license, reason = get_license()
+    if not license:
+        return False
     sw_name = get_sw_name().lower()
-    if sw_name == 'truenas' and (
-        license and Features.fibrechannel in license.features
-    ):
-        return True
+    if sw_name == 'truenas':
+        # Licenses issued before 2017-04-14 had a bug in the feature bit
+        # for fibre channel, which means they were issue having
+        # dedup+jails instead.
+        if (
+            Features.fibrechannel in license.features
+        ) or (
+            Features.dedup in license.features and
+            Features.jails in license.features and
+            license.contract_start < datetime.date(2017, 4, 14)
+        ):
+            return True
     return False
 
 

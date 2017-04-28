@@ -5,6 +5,7 @@ from django.core.validators import RegexValidator
 from django.utils.translation import ugettext_lazy as _
 
 from dojango import forms
+from freenasUI import choices
 from freenasUI.common import humanize_size
 from freenasUI.common.forms import ModelForm
 from freenasUI.freeadmin.forms import PathField
@@ -22,20 +23,40 @@ class VMForm(ModelForm):
         fields = '__all__'
         model = models.VM
 
+    def get_cpu_flags(self):
+        cpu_flags = {}
+        with client as c:
+            cpu_flags = c.call('vm.flags')
+        return cpu_flags
+
     def clean_name(self):
         name = self.cleaned_data.get('name')
         if name:
             if not re.search(r'^[a-zA-Z _0-9]+$', name):
-                raise forms.ValidationError(_('Only alphanumeric characters are allowed.'))
+                raise forms.ValidationError(_('Only alphanumeric characters are allowed and maximum of 150 characters.'))
             name = name.replace(' ', '')
         return name
+
+    def clean_vcpus(self):
+        cpu_flags = self.get_cpu_flags()
+        vcpus = self.cleaned_data.get('vcpus')
+
+        if cpu_flags.get('intel_vmx'):
+            if vcpus > 1 and cpu_flags.get('unrestricted_guest') is False:
+                raise forms.ValidationError(_('Only one Virtual CPU is allowed in this system.'))
+            else:
+                return vcpus
+        elif cpu_flags.get('amd_rvi'):
+            if vcpus > 1 and cpu_flags.get('amd_asids') is False:
+                raise forms.ValidationError(_('Only one Virtual CPU is allowed in this system.'))
+            else:
+                return vcpus
 
     def save(self, **kwargs):
         with client as c:
             cdata = self.cleaned_data
             if self.instance.id:
                 c.call('vm.update', self.instance.id, cdata)
-                pk = self.instance.id
             else:
                 if self.instance.bootloader == 'UEFI':
                     cdata['devices'] = [
@@ -46,8 +67,8 @@ class VMForm(ModelForm):
                     cdata['devices'] = [
                         {'dtype': 'NIC', 'attributes': {'type': 'E1000'}},
                     ]
-                pk = c.call('vm.create', cdata)
-        return models.VM.objects.get(pk=pk)
+                self.instance = models.VM.objects.get(pk=c.call('vm.create', cdata))
+        return self.instance
 
     def delete(self, **kwargs):
         with client as c:
@@ -67,19 +88,13 @@ class DeviceForm(ModelForm):
     )
     DISK_mode = forms.ChoiceField(
         label=_('Mode'),
-        choices=(
-            ('AHCI', _('AHCI')),
-            ('VIRTIO', _('VirtIO')),
-        ),
+        choices=choices.VM_DISKMODETYPES,
         required=False,
         initial='AHCI',
     )
     NIC_type = forms.ChoiceField(
         label=_('Adapter Type'),
-        choices=(
-            ('E1000', _('Intel e82545 (e1000)')),
-            ('VIRTIO', _('VirtIO')),
-        ),
+        choices=choices.VM_NICTYPES,
         required=False,
         initial='E1000',
     )
@@ -133,7 +148,7 @@ class DeviceForm(ModelForm):
         vm = self.cleaned_data.get('vm')
         vnc_port = self.cleaned_data.get('VNC_port')
         new_vnc_port = 5900
-        if vnc_port == '0':
+        if vm and vnc_port == '0':
             new_vnc_port = new_vnc_port + int(vm.id)
             self.cleaned_data['VNC_port'] = str(new_vnc_port)
 

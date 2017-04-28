@@ -39,14 +39,19 @@ MAKE_JOBS_UNSAFE=yes
 do-build:
 	${MAKE} -C ${WRKSRC}/extract-tarball   obj
 	${MAKE} -C ${WRKSRC}/extract-tarball  all
+	${MAKE} -C ${WRKSRC}/freenas-sysctl obj
+	${MAKE} -C ${WRKSRC}/freenas-sysctl all
 	${MAKE} -C ${WRKSRC}/winacl   obj
 	${MAKE} -C ${WRKSRC}/winacl  all
 
 do-install:
 	mkdir -p ${STAGEDIR}${PREFIX}/usr/local/bin
 	mkdir -p ${STAGEDIR}${PREFIX}/usr/local/bin/freenas-snmp
+	mkdir -p ${STAGEDIR}${PREFIX}/boot/modules
+
 	${MAKE} -C ${WRKSRC}/extract-tarball  BINDIR=${STAGEDIR}${PREFIX}/usr/local/bin install
 	${MAKE} -C ${WRKSRC}/winacl  BINDIR=${STAGEDIR}${PREFIX}/usr/local/bin install
+	${MAKE} -C ${WRKSRC}/freenas-sysctl KMODDIR=${STAGEDIR}${PREFIX}/boot/modules install
 	#
 	# Adding autotune
 	#

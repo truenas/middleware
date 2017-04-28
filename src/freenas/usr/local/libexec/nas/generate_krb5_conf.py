@@ -444,7 +444,11 @@ def main():
     realms = client.call('datastore.query', 'directoryservice.KerberosRealm')
 
     try:
-        settings = Struct(client.call('datastore.config', 'directoryservice.KerberosSettings'))
+        settings = client.call('datastore.query', 'directoryservice.KerberosSettings')
+        if settings:
+            settings = Struct(settings[0])
+        else:
+            settings = None
     except:
         settings = None
 

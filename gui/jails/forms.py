@@ -353,7 +353,7 @@ class JailCreateForm(ModelForm):
                 w.template(**template_create_args)
             except Exception as e:
                 log.debug('Failed to create template', exc_info=True)
-                self.errors['__all__'] = self.error_class([_(e)])
+                self.errors['__all__'] = self.error_class([str(e)])
                 if os.path.exists(createfile):
                     os.unlink(createfile)
                 return

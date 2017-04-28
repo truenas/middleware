@@ -20,7 +20,7 @@ from middlewared.utils import django_modelobj_serialize
 
 class DatastoreService(Service):
 
-    def _filters_to_queryset(self, filters, field_suffix=None):
+    def _filters_to_queryset(self, filters, field_prefix=None):
         opmap = {
             '=': 'exact',
             '!=': 'exact',
@@ -37,8 +37,8 @@ class DatastoreService(Service):
                 raise ValueError('Filter must be a list: {0}'.format(f))
             if len(f) == 3:
                 name, op, value = f
-                if field_suffix:
-                    name = field_suffix + name
+                if field_prefix:
+                    name = field_prefix + name
                 if op not in opmap:
                     raise Exception("Invalid operation: {0}".format(op))
                 q = Q(**{'{0}__{1}'.format(name, opmap[op]): value})
@@ -49,7 +49,7 @@ class DatastoreService(Service):
                 op, value = f
                 if op == 'OR':
                     or_value = None
-                    for value in self._filters_to_queryset(value, field_suffix=field_suffix):
+                    for value in self._filters_to_queryset(value, field_prefix=field_prefix):
                         if or_value is None:
                             or_value = value
                         else:
@@ -68,9 +68,9 @@ class DatastoreService(Service):
         app, model = name.split('.', 1)
         return apps.get_model(app, model)
 
-    def __queryset_serialize(self, qs, extend=None, field_suffix=None):
-        for i in qs:
-            yield django_modelobj_serialize(self.middleware, i, extend=extend, field_suffix=field_suffix)
+    def __queryset_serialize(self, qs, extend=None, field_prefix=None):
+        for i in self.middleware.threaded(lambda: list(qs)):
+            yield django_modelobj_serialize(self.middleware, i, extend=extend, field_prefix=field_prefix)
 
     @accepts(
         Str('name'),
@@ -82,7 +82,7 @@ class DatastoreService(Service):
             List('order_by'),
             Bool('count'),
             Bool('get'),
-            Str('suffix'),
+            Str('prefix'),
             register=True,
         ),
     )
@@ -121,7 +121,7 @@ class DatastoreService(Service):
             options = {}
         else:
             # We do not want to make changes to original options
-            # which might happen with "suffix"
+            # which might happen with "prefix"
             options = options.copy()
 
         qs = model.objects.all()
@@ -130,28 +130,28 @@ class DatastoreService(Service):
         if extra:
             qs = qs.extra(**extra)
 
-        suffix = options.get('suffix')
+        prefix = options.get('prefix')
 
         if filters:
-            qs = qs.filter(*self._filters_to_queryset(filters, suffix))
+            qs = qs.filter(*self._filters_to_queryset(filters, prefix))
 
         order_by = options.get('order_by')
         if order_by:
-            if suffix:
+            if prefix:
                 # Do not change original order_by
                 order_by = order_by[:]
                 for i, order in enumerate(order_by):
                     if order.startswith('-'):
-                        order_by[i] = '-' + suffix + order[1:]
+                        order_by[i] = '-' + prefix + order[1:]
                     else:
-                        order_by[i] = suffix + order
+                        order_by[i] = prefix + order
             qs = qs.order_by(*order_by)
 
         if options.get('count') is True:
             return qs.count()
 
         result = list(self.__queryset_serialize(
-            qs, extend=options.get('extend'), field_suffix=options.get('suffix')
+            qs, extend=options.get('extend'), field_prefix=options.get('prefix')
         ))
 
         if options.get('get') is True:
@@ -197,7 +197,7 @@ class DatastoreService(Service):
                 continue
             if isinstance(field, ForeignKey):
                 data[field.name] = field.rel.to.objects.get(pk=data[field.name])
-        for k, v in data.items():
+        for k, v in list(data.items()):
             setattr(obj, k, v)
         obj.save()
         return obj.pk

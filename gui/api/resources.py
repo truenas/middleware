@@ -2658,7 +2658,7 @@ class FTPResourceMixin(object):
                     assert len(fmask) == 3
                     fmask = int(fmask, 8)
                     fmask = (~fmask & 0o666)
-                    bundle.data['ftp_filemask'] = oct(fmask)
+                    bundle.data['ftp_filemask'] = oct(fmask)[2:]
                 except:
                     pass
 
@@ -2668,7 +2668,7 @@ class FTPResourceMixin(object):
                     assert len(dmask) == 3
                     dmask = int(dmask, 8)
                     dmask = (~dmask & 0o777)
-                    bundle.data['ftp_dirmask'] = oct(dmask)
+                    bundle.data['ftp_dirmask'] = oct(dmask)[2:]
                 except:
                     pass
         return bundle
@@ -3408,7 +3408,7 @@ class UpdateResourceMixin(NestedMixin):
         conf.LoadTrainsConfig()
         trains = conf.AvailableTrains() or []
         if trains:
-            trains = list(trains.keys())
+            trains = list(filter(lambda x: not x.lower().startswith('freenas-corral'), trains.keys()))
 
         seltrain = update.get_train()
         if seltrain in conf._trains:
@@ -3632,28 +3632,35 @@ class VMResourceMixin(object):
 
     def dehydrate(self, bundle):
         bundle = super(VMResourceMixin, self).dehydrate(bundle)
-        if self.is_webclient(bundle.request):
-            bundle.data['_device_url'] = reverse(
-                'freeadmin_vm_device_datagrid'
-            ) + '?id=%d' % bundle.obj.id
-            info = ''
-            try:
-                with client as c:
-                    status = c.call('vm.status', bundle.obj.id)
-                    bundle.data['state'] = status['state']
-                    info += 'State: {}<br />'.format(status['state'])
-                    if status['state'] == 'RUNNING':
-                        bundle.data['_stop_url'] = reverse(
-                            'vm_stop', kwargs={'id': bundle.obj.id},
-                        )
-                    elif status['state'] == 'STOPPED':
-                        bundle.data['_start_url'] = reverse(
-                            'vm_start', kwargs={'id': bundle.obj.id},
-                        )
-            except:
-                log.warn('Failed to get status', exc_info=True)
+        state = 'UNKNOWN'
+        device_start_url = device_stop_url = info = ''
+        try:
+            with client as c:
+                status = c.call('vm.status', bundle.obj.id)
+                state = status['state']
+                info += 'State: {}<br />'.format(status['state'])
+        except:
+            log.warn('Failed to get status', exc_info=True)
+        finally:
+            if self.is_webclient(bundle.request):
+                if state == 'RUNNING':
+                    device_stop_url = reverse(
+                        'vm_stop', kwargs={'id': bundle.obj.id},
+                    )
+                elif state == 'STOPPED':
+                    device_start_url = reverse(
+                        'vm_start', kwargs={'id': bundle.obj.id},
+                    )
+                bundle.data.update({
+                    '_device_url': reverse('freeadmin_vm_device_datagrid') + '?id=%d' % bundle.obj.id,
+                    '_stop_url': device_stop_url,
+                    '_start_url': device_start_url
+                })
             if bundle.obj.device_set.filter(dtype='VNC').exists():
                 vnc_port = bundle.obj.device_set.filter(dtype='VNC').values_list('attributes', flat=True)[0].get('vnc_port', 5900 + bundle.obj.id)
                 info += 'VNC Port: {}<br />'.format(vnc_port)
-            bundle.data['info'] = info
+            bundle.data.update({
+                'info': info,
+                'state': state
+            })
         return bundle

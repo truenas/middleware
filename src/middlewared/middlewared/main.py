@@ -6,6 +6,7 @@ from .client import ejson as json
 from .client.protocol import DDPProtocol
 from .job import Job, JobsQueue
 from .restful import RESTfulAPI
+from .service import CallException
 from .utils import Popen
 from collections import OrderedDict, defaultdict
 from daemon import DaemonContext
@@ -113,7 +114,12 @@ class Application(WebSocketApplication):
             if keywordspec:
                 cur_frame['keywordspec'] = keywordspec
             if _locals:
-                cur_frame['locals'] = {k: repr(v) for k, v in _locals.items()}
+                try:
+                    cur_frame['locals'] = {k: repr(v) for k, v in _locals.items()}
+                except Exception:
+                    # repr() may fail since it may be one of the reasons
+                    # of the exception
+                    cur_frame['locals'] = {}
 
             frames.append(cur_frame)
 
@@ -154,11 +160,18 @@ class Application(WebSocketApplication):
     def call_method(self, message):
 
         try:
+            result = self.middleware.call_method(self, message)
+            if isinstance(result, Job):
+                result = result.id
             self._send({
                 'id': message['id'],
                 'msg': 'result',
-                'result': self.middleware.call_method(self, message),
+                'result': result,
             })
+        except CallException as e:
+            # CallException and subclasses are the way to gracefully
+            # send errors to the client
+            self.send_error(message, str(e), sys.exc_info())
         except Exception as e:
             self.send_error(message, str(e), sys.exc_info())
             self.logger.warn('Exception while calling {}(*{})'.format(message['method'], message.get('params')), exc_info=True)
@@ -177,6 +190,10 @@ class Application(WebSocketApplication):
 
     def subscribe(self, ident, name):
         self.__subscribed[ident] = name
+        self._send({
+            'msg': 'ready',
+            'subs': [ident],
+        })
 
     def unsubscribe(self, ident):
         self.__subscribed.pop(ident)
@@ -246,7 +263,8 @@ class Application(WebSocketApplication):
             return
 
         if message['msg'] == 'method':
-            self.call_method(message)
+            gevent.spawn(self.call_method, message)
+            return
         elif message['msg'] == 'ping':
             pong = {'msg': 'pong'}
             if 'id' in message:
@@ -359,8 +377,7 @@ class FileApplication(object):
 
         try:
             data = json.loads(form['data'].file.read())
-            job_id = self.middleware.call(data['method'], *(data.get('params') or []))
-            job = self.middleware.get_jobs().all()[job_id]
+            job = self.middleware.call(data['method'], *(data.get('params') or []))
         except Exception:
             start_response('405 Method Not Allowed', [])
             return [b'Invalid data']
@@ -382,7 +399,7 @@ class FileApplication(object):
             ('Content-Type', 'application/json'),
         ])
         yield json.dumps({
-            'job_id': job_id,
+            'job_id': job.id,
         }).encode('utf8')
 
 
@@ -519,6 +536,14 @@ class Middleware(object):
     def get_jobs(self):
         return self.__jobs
 
+    def threaded(self, method, *args, **kwargs):
+        """
+        Runs method in a native thread using gevent.ThreadPool.
+        This prevents a CPU intensive or non-greenlet friendly method
+        to block the event loop indefinitely.
+        """
+        return self.__threadpool.apply(method, args, kwargs)
+
     def _call(self, name, methodobj, params, app=None):
 
         args = []
@@ -539,7 +564,7 @@ class Middleware(object):
 
         args.extend(params)
         if job:
-            return job.id
+            return job
         else:
             return methodobj(*args)
 
@@ -631,13 +656,13 @@ class Middleware(object):
         apidocs_app.middleware = self
         apidocsserver = WSGIServer(('127.0.0.1', 8001), apidocs_app)
         restserver = WSGIServer(('127.0.0.1', 8002), restful_api.get_app())
-        downloadserver = WSGIServer(('127.0.0.1', 8003), FileApplication(self))
+        fileserver = WSGIServer(('127.0.0.1', 8003), FileApplication(self))
 
         self.__server_threads = [
             gevent.spawn(wsserver.serve_forever),
             gevent.spawn(apidocsserver.serve_forever),
             gevent.spawn(restserver.serve_forever),
-            gevent.spawn(downloadserver.serve_forever),
+            gevent.spawn(fileserver.serve_forever),
             gevent.spawn(self.__jobs.run),
         ]
         self.logger.debug('Accepting connections')
@@ -646,7 +671,6 @@ class Middleware(object):
     def kill(self):
         self.logger.info('Killall server threads')
         gevent.killall(self.__server_threads)
-
         sys.exit(0)
 
 

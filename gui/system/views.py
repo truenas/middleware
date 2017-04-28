@@ -92,7 +92,6 @@ from freenasUI.system.utils import (
 )
 from middlewared.plugins.update import CheckUpdateHandler, get_changelog, parse_changelog
 
-GRAPHS_DIR = '/var/db/graphs'
 VERSION_FILE = '/etc/version'
 PGFILE = '/tmp/.extract_progress'
 INSTALLFILE = '/tmp/.upgrade_install'
@@ -794,8 +793,8 @@ def testmail(request):
     if request.is_ajax():
         sw_name = get_sw_name()
         error, errmsg = send_mail(
-            subject=_('Test message from %s') % sw_name,
-            text=_('This is a message test from %s') % sw_name,
+            subject=_(f'Test message from your {sw_name} system hostname {socket.gethostname()}'),
+            text=_(f'This is a message test from {sw_name}'),
             to=[email],
             timeout=10)
     if error:
@@ -947,13 +946,15 @@ def manualupdate_progress(request):
 
 def initialwizard_progress(request):
     data = {}
-    if os.path.exists(forms.WIZARD_PROGRESSFILE):
+    try:
         with open(forms.WIZARD_PROGRESSFILE, 'rb') as f:
             data = f.read()
         try:
             data = pickle.loads(data)
-        except:
+        except Exception:
             data = {}
+    except FileNotFoundError:
+        data = {}
     content = json.dumps(data)
     return HttpResponse(content, content_type='application/json')
 
@@ -1790,7 +1791,6 @@ def certificate_to_json(certtype):
             'cert_certificate_path': certtype.cert_certificate_path,
             'cert_privatekey_path': certtype.cert_privatekey_path,
             'cert_CSR_path': certtype.cert_CSR_path,
-            'cert_issuer': certtype.cert_issuer,
             'cert_ncertificates': certtype.cert_ncertificates,
             'cert_DN': certtype.cert_DN,
             'cert_from': certtype.cert_from,
@@ -1811,6 +1811,11 @@ def certificate_to_json(certtype):
     except:
         data['cert_signedby'] = None
 
+    try:
+        data['cert_issuer'] = "%s" % certtype.cert_issuer
+    except Exception:
+        data['cert_issuer'] = None
+
     content = json.dumps(data)
     return HttpResponse(content, content_type='application/json')
 
@@ -1818,10 +1823,4 @@ def certificate_to_json(certtype):
 def CA_info(request, id):
     return certificate_to_json(
         models.CertificateAuthority.objects.get(pk=int(id))
-    )
-
-
-def certificate_info(request, id):
-    return certificate_to_json(
-        models.Certificate.objects.get(pk=int(id))
     )

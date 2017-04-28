@@ -119,10 +119,9 @@ class CloudSyncForm(ModelForm):
             cdata['credential'] = cdata['attributes'].pop('credential')
             if self.instance.id:
                 c.call('backup.update', self.instance.id, cdata)
-                pk = self.instance.id
             else:
-                pk = c.call('backup.create', cdata)
-        return models.CloudSync.objects.get(pk=pk)
+                self.instance = models.CloudSync.objects.get(pk=c.call('backup.create', cdata))
+        return self.instance
 
     def delete(self, **kwargs):
         with client as c:

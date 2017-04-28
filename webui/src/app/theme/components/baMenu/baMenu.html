@@ -6,6 +6,18 @@
       (toggleSubMenu)="toggleSubMenu($event)"
       *ngFor="let item of menuItems"></ba-menu-item>
   </ul>
+
+  <div class="dropdown" class="power-button">
+  	<button class="dropdown-toggle power-button" data-toggle="dropdown">
+  		<i class="ion-power power-button-icon"></i>
+  	</button>
+ 
+  	<ul class="dropdown-menu power-dropdown-menu">
+  		<li class="dropdown-item" (click)="onShutdown()">Shutdown</li>
+  		<li class="dropdown-item" (click)="onReboot()">Reboot</li>
+  	</ul>
+  </div>
+
   <div class="sidebar-hover-elem" [ngStyle]="{top: hoverElemTop + 'px', height: hoverElemHeight + 'px'}"
        [ngClass]="{'show-hover-elem': showHoverElem }"></div>
 </aside>

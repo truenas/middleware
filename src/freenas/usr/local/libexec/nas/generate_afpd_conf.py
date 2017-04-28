@@ -54,6 +54,9 @@ def main():
     if afp.afp_srv_map_acls:
         cf_contents.append("\tmap acls = %s\n" % afp.afp_srv_map_acls)
 
+    if afp.afp_srv_chmod_request:
+        cf_contents.append("\tchmod request = %s\n" % afp.afp_srv_chmod_request)
+
     if afp.afp_srv_map_acls == 'mode' and client.call('notifier.common', 'system', 'activedirectory_enabled'):
         map_acls_mode = True
 

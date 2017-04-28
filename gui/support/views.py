@@ -63,6 +63,7 @@ def index(request):
     context = {
         'sw_name': sw_name,
         'license': license,
+        'fc_enabled': utils.fc_enabled(),
         'allow_update': allow_update,
     }
     for c in appPool.hook_view_context('support.index', request):

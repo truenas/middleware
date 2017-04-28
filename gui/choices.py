@@ -298,7 +298,6 @@ PWEncryptionChoices = (
 
 LAGGType = (
     ('failover',    'Failover'),
-    ('fec',         'FEC'),
     ('lacp',        'LACP'),
     ('loadbalance', 'Load Balance'),
     ('roundrobin',  'Round Robin'),
@@ -1048,8 +1047,6 @@ class CIFS_VFS_OBJECTS(object):
         self.__vfs_exclude = [
             'shadow_copy2',
             'recycle',
-            'zfs_space',
-            'zfsacl',
         ]
 
         if os.path.exists(self.__vfs_module_path):
@@ -1067,6 +1064,13 @@ AFP_MAP_ACLS_CHOICES = (
     ('none', _('None')),
     ('rights', _('Rights')),
     ('mode', _('Mode')),
+)
+
+
+AFP_CHMOD_REQUEST_CHOICES = (
+    ('ignore', _('Ignore')),
+    ('preserve', _('Preserve')),
+    ('simple', _('Simple')),
 )
 
 
@@ -1088,6 +1092,16 @@ VM_DEVTYPES = (
     ('DISK', _('Disk')),
     ('CDROM', _('CD-ROM')),
     ('VNC', _('VNC')),
+)
+
+VM_NICTYPES = (
+    ('E1000', _('Intel e82545 (e1000)')),
+    ('VIRTIO', _('VirtIO')),    
+)
+
+VM_DISKMODETYPES = (
+    ('AHCI', _('AHCI')),
+    ('VIRTIO', _('VirtIO')),
 )
 
 S3_MODES = (

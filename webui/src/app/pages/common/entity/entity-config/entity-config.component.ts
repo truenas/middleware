@@ -20,7 +20,7 @@ export class EntityConfigComponent implements OnInit, OnDestroy {
 
   @Input('conf') conf: any;
 
-  protected formGroup: FormGroup;
+  public formGroup: FormGroup;
   templateTop: TemplateRef<any>;
   @ContentChildren(EntityTemplateDirective) templates: QueryList<EntityTemplateDirective>;
 
@@ -32,6 +32,7 @@ export class EntityConfigComponent implements OnInit, OnDestroy {
   public error: string;
   public success: boolean = false;
   public data: Object = {};
+
 
   constructor(protected router: Router, protected route: ActivatedRoute, protected rest: RestService, protected ws: WebSocketService, protected formService: DynamicFormService) {
 

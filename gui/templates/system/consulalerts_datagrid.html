@@ -1,0 +1,5 @@
+{% extends "freeadmin/generic_model_datagrid.html" %}
+{% block actions_static_buttons %}
+{{ block.super }}
+<p style="margin:10px; text-indent: 5em;">{% trans "Alerts marked WARN or CRITICAL are sent to these alert services." %}</p>
+{% endblock %}

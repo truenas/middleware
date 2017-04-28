@@ -418,6 +418,7 @@ def update_progress(request):
 
 
 def upload(request, jail_id=-1):
+    jail_id = int(jail_id)
     try:
         jc = JailsConfiguration.objects.all()[0]
     except:

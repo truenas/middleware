@@ -4,7 +4,7 @@
       Connecting to WebSocket...
     </div>
 
-    <form [formGroup]="form" class="form-horizontal" *ngIf="_ws.connected == true" [ngBusy]="busy">
+    <form [formGroup]="form" class="form-horizontal" *ngIf="_ws.connected == true" [ngBusy]="busy" (ngSubmit)="onSubmit(form.value)">
     <h1>FreeNAS</h1>
       <div *ngIf="failed == true" class="form-group">
         Username or password invalid!
@@ -26,7 +26,7 @@
       </div>
       <div class="form-group row">
         <div class="offset-sm-2 col-sm-5">
-          <button [disabled]="!form.valid && !submitted" type="button" (click)="onSubmit(form.value)" class="btn btn-default btn-auth">Sign in</button>
+          <button [disabled]="!form.valid && !submitted" type="submit" class="btn btn-default btn-auth">Sign in</button>
         </div>
         <div class="col-sm-5">
           <a href="/">Go back to classic UI</a>

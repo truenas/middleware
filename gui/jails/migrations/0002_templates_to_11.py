@@ -20,11 +20,11 @@ def is_standard_x86(str):
 
 
 def is_pluginjail_x86(str):
-    return str.lower() == "pluginjail"
+    return str.lower() == "pluginjail-x86"
 
 
 def is_pluginjail_x64(str):
-    return str.lower() == "pluginjail-x86"
+    return str.lower() == "pluginjail"
 
 
 def is_freenas_url(str):

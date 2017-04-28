@@ -873,7 +873,8 @@ Create resource
 
         {
                 "dataset": "tank",
-                "name": "test"
+                "name": "test",
+                "recursive": true
         }
 
    **Example response**:
@@ -897,6 +898,7 @@ Create resource
 
    :json string dataset: name of dataset to snapshot
    :json string name: name of the snapshot
+   :json boolean recursive: True if you want it to recursively snapshot the dataset
    :reqheader Content-Type: the request content type
    :resheader Content-Type: the response content type
    :statuscode 201: no error

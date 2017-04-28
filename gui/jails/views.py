@@ -41,6 +41,7 @@ from freenasUI.common.warden import (
     Warden,
     WARDEN_EXPORT_FLAGS_DIR
 )
+from freenasUI.middleware.client import client
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier
 
@@ -141,7 +142,8 @@ def jail_start(request, id):
     if request.method == 'POST':
         try:
             notifier().reload("http")  # Jail IP reflects nginx plugins.conf
-            Warden().start(jail=jail.jail_host)
+            with client as c:
+                c.call('notifier.warden', 'start', None, {'jail': jail.jail_host})
             return JsonResp(
                 request,
                 message=_("Jail successfully started.")
@@ -183,8 +185,9 @@ def jail_restart(request, id):
 
     if request.method == 'POST':
         try:
-            Warden().stop(jail=jail.jail_host)
-            Warden().start(jail=jail.jail_host)
+            with client as c:
+                c.call('notifier.warden', 'stop', None, {'jail': jail.jail_host})
+                c.call('notifier.warden', 'start', None, {'jail': jail.jail_host})
             return JsonResp(
                 request,
                 message=_("Jail successfully restarted.")

@@ -243,7 +243,7 @@ class FCGIApp(object):
         self._fcgiParams(sock, requestId, params)
         self._fcgiParams(sock, requestId, {})
 
-        data = urllib.parse.urlencode(args)
+        data = urllib.parse.urlencode(args).encode()
         while True:
             rec = Record(FCGI_STDIN, requestId)
             length = min(4096, len(data))

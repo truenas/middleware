@@ -60,7 +60,7 @@ class ConsulService(Service):
         Returns:
                     dict: With the values on keys using "-".
         """
-        for key in data.keys():
+        for key in list(data.keys()):
             new_key = key.replace("_", "-")
             if new_key != key:
                 data[new_key] = data[key]
@@ -88,7 +88,7 @@ class ConsulService(Service):
         """
         new_dict = self._api_keywords(api_keywords, data)
 
-        for k, v in new_dict.items():
+        for k, v in list(new_dict.items()):
             if k == 'hfrom':
                 k = 'from'
             self.set_kv(prefix + k, v)
@@ -101,7 +101,7 @@ class ConsulService(Service):
         """
         new_dict = self._api_keywords(api_keywords, data)
 
-        for k in new_dict.keys():
+        for k in list(new_dict.keys()):
             if k == 'hfrom':
                 k = 'from'
             self.delete_kv(prefix + k)

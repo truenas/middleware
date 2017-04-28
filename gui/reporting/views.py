@@ -97,6 +97,9 @@ def generate(request):
         step = request.GET.get("step", "0")
         identifier = request.GET.get("identifier")
 
+        if not plugin:
+            return HttpResponse(content_type='image/png')
+
         plugin = plugin(
             base_path=_get_rrd_path(),
             unit=unit,

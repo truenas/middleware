@@ -351,7 +351,7 @@ class notifier(metaclass=HookMetaclass):
         else:
             self._system("/usr/sbin/service ix-ssl quietstart")
 
-    def _open_db(self, ret_conn=False):
+    def _open_db(self):
         """Open and return a cursor object for database access."""
         try:
             from freenasUI.settings import DATABASES
@@ -361,9 +361,7 @@ class notifier(metaclass=HookMetaclass):
 
         conn = sqlite3.connect(dbname)
         c = conn.cursor()
-        if ret_conn:
-            return c, conn
-        return c
+        return c, conn
 
     def __gpt_labeldisk(self, type, devname, swapsize=2):
         """Label the whole disk with GPT under the desired label and type"""
@@ -373,12 +371,12 @@ class notifier(metaclass=HookMetaclass):
         swapsize = swapsize * 1024 * 1024 * 2
         # Round up to nearest whole integral multiple of 128 and subtract by 34
         # so next partition starts at mutiple of 128.
-        swapsize = ((swapsize + 127) / 128) * 128
+        swapsize = (int((swapsize + 127) / 128)) * 128
         # To be safe, wipe out the disk, both ends... before we start
         self._system("dd if=/dev/zero of=/dev/%s bs=1m count=32" % (devname, ))
         try:
             p1 = self._pipeopen("diskinfo %s" % (devname, ))
-            size = int(re.sub(r'\s+', ' ', p1.communicate()[0]).split()[2]) / (1024)
+            size = int(int(re.sub(r'\s+', ' ', p1.communicate()[0]).split()[2]) / (1024))
         except:
             log.error("Unable to determine size of %s", devname)
         else:
@@ -389,7 +387,7 @@ class notifier(metaclass=HookMetaclass):
             # is a lame workaround.
             self._system("dd if=/dev/zero of=/dev/%s bs=1m oseek=%s" % (
                 devname,
-                size / 1024 - 32,
+                int(size / 1024) - 32,
             ))
 
         commands = []
@@ -406,9 +404,9 @@ class notifier(metaclass=HookMetaclass):
 
         for command in commands:
             proc = self._pipeopen(command)
-            proc.wait()
+            error = proc.communicate()[1]
             if proc.returncode != 0:
-                raise MiddlewareError('Unable to GPT format the disk "%s"' % devname)
+                raise MiddlewareError(f'Unable to GPT format the disk "{devname}": {error}')
 
         # We might need to sync with reality (e.g. devname -> uuid)
         # Invalidating confxml is required or changes wont be seen
@@ -1693,6 +1691,120 @@ class notifier(metaclass=HookMetaclass):
             finally:
                 pass
 
+    def path_to_smb_share(self, path):
+        from freenasUI.sharing.models import CIFS_Share
+
+        try:
+            share = CIFS_Share.objects.get(cifs_path=path)
+        except:
+            share = None
+
+        return share
+
+    def smb_share_to_path(self, share): 
+        from freenasUI.sharing.models import CIFS_Share
+
+        try:
+            path = CIFS_Share.objects.get(cifs_name=share)
+        except:
+            path = None
+
+        return path
+
+    def owner_to_SID(self, owner):
+        if not owner:
+            return None
+
+        proc = self._pipeopen("/usr/local/bin/wbinfo -n '%s'" % owner)
+
+        info, err = proc.communicate()
+        if proc.returncode != 0:
+            log.debug("owner_to_SID: error %s", err)
+            return None
+
+        try:
+            SID = info.split(' ')[0].strip()
+        except:
+            SID = None
+
+        log.debug("owner_to_SID: %s -> %s", owner, SID)
+        return SID
+
+    def group_to_SID(self, group):
+        if not group:
+            return None
+
+        proc = self._pipeopen("/usr/local/bin/wbinfo -n '%s'" % group)
+
+        info, err = proc.communicate()
+        if proc.returncode != 0:
+            log.debug("group_to_SID: error %s", err)
+            return None
+
+        try:
+            SID = info.split(' ')[0].strip()
+        except:
+            SID = None
+
+        log.debug("group_to_SID: %s -> %s", group, SID)
+        return SID
+
+    def sharesec_add(self, share, owner, group):
+        if not share:
+            return False
+
+        log.debug("sharesec_add: adding '%s:%s' ACL on %s", owner, group, share)
+
+        add_args = ""
+        sharesec = "/usr/local/bin/sharesec"
+
+        owner_SID = self.owner_to_SID(owner)
+        group_SID = self.group_to_SID(group)
+
+        if owner and owner_SID:
+            add_args += ",%s:ALLOWED/0/FULL" %  owner_SID
+        if group and group_SID: 
+            add_args += ",%s:ALLOWED/0/FULL" % group_SID
+        add_args = add_args.lstrip(',')
+
+        ret = True
+        if add_args: 
+            add_cmd = "%s %s -a '%s'" % (sharesec, share, add_args)
+            try:
+                proc = self._pipeopen(add_cmd).communicate()
+            except: 
+                log.debug("sharesec_add: %s failed", add_cmd)
+                ret = False
+
+        return ret
+
+    def sharesec_delete(self, share):
+        if not share:
+            return False
+
+        log.debug("sharesec_delete: deleting ACL on %s", share)
+
+        sharesec = "/usr/local/bin/sharesec"
+        delete_cmd = "%s %s -D" % (sharesec, share)
+
+        ret = True
+        try:
+            proc = self._pipeopen(delete_cmd).communicate()
+        except: 
+            log.debug("sharesec_delete: %s failed", delete_cmd)
+            ret = False
+
+        return ret
+
+    def sharesec_reset(self, share, owner=None, group=None):
+        if not share:
+            return False
+
+        log.debug("sharesec_reset: resetting %s to '%s:%s'", share, owner, group)
+
+        self.sharesec_delete(share)
+        return self.sharesec_add(share, owner, group)
+   
     def winacl_reset(self, path, owner=None, group=None, exclude=None):
         if exclude is None:
             exclude = []
@@ -1706,12 +1818,15 @@ class notifier(metaclass=HookMetaclass):
         if isinstance(path, bytes):
             path = path.decode('utf-8')
 
-        winacl = os.path.join(path, ACL_WINDOWS_FILE)
+        aclfile = os.path.join(path, ACL_WINDOWS_FILE)
         winexists = (ACL.get_acl_ostype(path) == ACL_FLAGS_OS_WINDOWS)
         if not winexists:
-            open(winacl, 'a').close()
+            open(aclfile, 'a').close()
 
-        script = "/usr/local/bin/winacl"
+        share = self.path_to_smb_share(path)
+        self.sharesec_reset(share, owner, group)
+
+        winacl = "/usr/local/bin/winacl"
         args = "-a reset"
         if owner is not None:
             args = "%s -O '%s'" % (args, owner)
@@ -1723,8 +1838,8 @@ class notifier(metaclass=HookMetaclass):
             apply_paths.insert(0, (path, ''))
         for apath, flags in apply_paths:
             fargs = args + "%s -p '%s' -x" % (flags, apath)
-            cmd = "%s %s" % (script, fargs)
-            log.debug("XXX: CMD = %s", cmd)
+            cmd = "%s %s" % (winacl, fargs)
+            log.debug("winacl_reset: cmd = %s", cmd)
             self._system(cmd)
 
     def mp_change_permission(self, path='/mnt', user=None, group=None,
@@ -1805,6 +1920,10 @@ class notifier(metaclass=HookMetaclass):
                     self._system("/usr/sbin/chown %s :'%s' '%s'" % (flags, group, apath))
                 if mode is not None:
                     self._system("/bin/chmod %s %s '%s'" % (flags, mode, apath))
+
+        share = self.path_to_smb_share(path)
+        if share:
+            self.sharesec_reset(share, user, group)
 
     def mp_get_permission(self, path):
         if os.path.isdir(path):
@@ -1963,7 +2082,7 @@ class notifier(metaclass=HookMetaclass):
                     reg = RE_TAR.findall(line)
                     if reg:
                         current = Decimal(reg[-1])
-                        percent = (current / size) * 100
+                        percent = int((current / size) * 100)
                         fp.write("2|%d\n" % percent)
                         fp.flush()
             err = proc.communicate()[1]
@@ -2321,9 +2440,12 @@ class notifier(metaclass=HookMetaclass):
         if not plugin:
             raise MiddlewareError("plugin is NULL")
 
-        (c, conn) = self._open_db(ret_conn=True)
-        c.execute("SELECT plugin_jail FROM plugins_plugins WHERE id = %d" % plugin.id)
-        row = c.fetchone()
+        (c, conn) = self._open_db()
+        try:
+            c.execute("SELECT plugin_jail FROM plugins_plugins WHERE id = %d" % plugin.id)
+            row = c.fetchone()
+        finally:
+            conn.close()
         if not row:
             log.debug("update_pbi: plugins plugin not in database")
             return False
@@ -2573,9 +2695,12 @@ class notifier(metaclass=HookMetaclass):
             log.debug("stat %s: %s", rpath, e)
             return False
 
-        (c, conn) = self._open_db(ret_conn=True)
-        c.execute("SELECT jc_path FROM jails_jailsconfiguration LIMIT 1")
-        row = c.fetchone()
+        (c, conn) = self._open_db()
+        try:
+            c.execute("SELECT jc_path FROM jails_jailsconfiguration LIMIT 1")
+            row = c.fetchone()
+        finally:
+            conn.close()
         if not row:
             log.debug("contains_jail_root: jails not configured")
             return False
@@ -3132,7 +3257,7 @@ class notifier(metaclass=HookMetaclass):
                     if '/' not in repl.repl_zfs:
                         replace = '{}/{}'.format(repl.repl_zfs, repl.repl_filesystem.rsplit('/')[-1])
                     else:
-                        replace = repl.repl_zfs,
+                        replace = repl.repl_zfs
                     remotename = '%s@%s' % (fs.replace(repl.repl_filesystem, replace), name)
                     if remotename in snaps:
                         replication = 'OK'
@@ -4567,13 +4692,13 @@ class notifier(metaclass=HookMetaclass):
             )
         try:
             p1 = self._pipeopen("diskinfo %s" % (devname, ))
-            size = int(re.sub(r'\s+', ' ', p1.communicate()[0]).split()[2]) / (1024)
+            size = int(int(re.sub(r'\s+', ' ', p1.communicate()[0]).split()[2]) / (1024))
         except:
             log.error("Unable to determine size of %s", devname)
         else:
             pipe = self._pipeopen("dd if=/dev/zero of=/dev/%s bs=1m oseek=%s" % (
                 devname,
-                size / 1024 - 32,
+                int(size / 1024) - 32,
             ))
             pipe.communicate()
 
@@ -5134,6 +5259,37 @@ class notifier(metaclass=HookMetaclass):
                     os.unlink(item)
                 self._createlink(syspath, item)
 
+    def system_dataset_rrd_toggle(self):
+        sysdataset, basename = self.system_dataset_settings()
+
+        # Path where collectd stores files
+        rrd_path = '/var/db/collectd/rrd'
+        # Path where rrd fies are stored in system dataset
+        rrd_syspath = f'/var/db/system/rrd-{sysdataset.get_sys_uuid()}'
+
+        if sysdataset.sys_rrd_usedataset:
+            # Move from tmpfs to system dataset
+            if os.path.exists(rrd_path):
+                if os.path.islink(rrd_path):
+                    # rrd path is already a link
+                    # so there is nothing we can do about it
+                    return False
+                proc = self._pipeopen(f'rsync -a {rrd_path}/ {rrd_syspath}/')
+                proc.communicate()
+                return proc.returncode == 0
+        else:
+            # Move from system dataset to tmpfs
+            if os.path.exists(rrd_path):
+                if os.path.islink(rrd_path):
+                    os.unlink(rrd_path)
+            else:
+                os.makedirs(rrd_path)
+            proc = self._pipeopen(f'rsync -a {rrd_syspath}/ {rrd_path}/')
+            proc.communicate()
+            return proc.returncode == 0
+        return False
+
+
     def system_dataset_migrate(self, _from, _to):
 
         rsyncs = (
@@ -5342,14 +5498,14 @@ class notifier(metaclass=HookMetaclass):
         self._system("dd if=/dev/zero of=/dev/%s bs=1m count=32" % (devname, ))
         try:
             p1 = self._pipeopen("diskinfo %s" % (devname, ))
-            size = int(re.sub(r'\s+', ' ', p1.communicate()[0]).split()[2]) / (1024)
+            size = int(int(re.sub(r'\s+', ' ', p1.communicate()[0]).split()[2]) / (1024))
         except:
             log.error("Unable to determine size of %s", devname)
         else:
             # HACK: force the wipe at the end of the disk to always succeed. This # is a lame workaround.
             self._system("dd if=/dev/zero of=/dev/%s bs=1m oseek=%s" % (
                 devname,
-                size / 1024 - 32,
+                int(size / 1024) - 32,
             ))
 
         boottype = self._bootenv_partition(devname)
@@ -5370,14 +5526,14 @@ class notifier(metaclass=HookMetaclass):
         self._system("dd if=/dev/zero of=/dev/%s bs=1m count=32" % (devname, ))
         try:
             p1 = self._pipeopen("diskinfo %s" % (devname, ))
-            size = int(re.sub(r'\s+', ' ', p1.communicate()[0]).split()[2]) / (1024)
+            size = int(int(re.sub(r'\s+', ' ', p1.communicate()[0]).split()[2]) / (1024))
         except:
             log.error("Unable to determine size of %s", devname)
         else:
             # HACK: force the wipe at the end of the disk to always succeed. This # is a lame workaround.
             self._system("dd if=/dev/zero of=/dev/%s bs=1m oseek=%s" % (
                 devname,
-                size / 1024 - 32,
+                int(size / 1024) - 32,
             ))
 
         boottype = self._bootenv_partition(devname)
