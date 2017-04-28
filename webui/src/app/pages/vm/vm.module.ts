@@ -19,6 +19,7 @@ import { DeviceCdromAddComponent } from './devices/device-cdrom-add/';
 import { DeviceNicAddComponent } from './devices/device-nic-add/';
 import { DeviceDiskAddComponent } from './devices/device-disk-add/';
 import { DeviceVncAddComponent } from './devices/device-vnc-add/';
+import { DeviceDeleteComponent } from './devices/device-delete/';
 
 @NgModule({
   imports: [
@@ -41,7 +42,8 @@ import { DeviceVncAddComponent } from './devices/device-vnc-add/';
     DeviceAddComponent,
     DeviceNicAddComponent,
     DeviceDiskAddComponent,
-    DeviceVncAddComponent
+    DeviceVncAddComponent,
+    DeviceDeleteComponent
   ],
   providers: [
   ]
