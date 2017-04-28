@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:10-0700\n"
-"PO-Revision-Date: 2017-01-05 16:38+0000\n"
-"Last-Translator: Piotr P. Kozlowski <ja@ppkozlowski.pl>\n"
+"PO-Revision-Date: 2017-04-14 16:36+0000\n"
+"Last-Translator: Karol Zientek <karol.zientek001@protonmail.com>\n"
 "Language-Team: Polish "
 "<http://weblate.trueos.org/projects/freenas/djangojs/pl/>\n"
 "Language: pl\n"
@@ -165,7 +165,7 @@ msgstr "Anuluj"
 
 #: freeadmin/static/lib/js/freeadmin/WebShell.js:77
 msgid "Shell"
-msgstr "Linia komend"
+msgstr "Powłoka"
 
 #: freeadmin/static/lib/js/freeadmin/form/PathSelector.js:83
 #: freeadmin/static/lib/js/freeadmin/form/PathSelector.js:88
@@ -481,7 +481,7 @@ msgstr ""
 
 #: freeadmin/static/lib/js/freeadmin/SupportTicket.js:115
 msgid "Username"
-msgstr ""
+msgstr "Nazwa użytkownika"
 
 #: freeadmin/static/lib/js/freeadmin/SupportTicket.js:116
 msgid "If you do not have an account, please"
@@ -559,7 +559,7 @@ msgstr ""
 
 #: freeadmin/static/lib/js/freeadmin/SupportTicket.js:117
 msgid "Password"
-msgstr ""
+msgstr "Hasło"
 
 #: freeadmin/static/lib/js/freeadmin/SupportTicket.js:118
 msgid "Name"
