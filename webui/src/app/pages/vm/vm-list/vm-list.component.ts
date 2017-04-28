@@ -17,6 +17,7 @@ export class VmListComponent {
   protected route_edit: string[] = ['vm', 'edit'];
   protected route_delete: string[] = ['vm', 'delete'];
 
+
   constructor(protected router: Router, protected rest: RestService, protected ws: WebSocketService) {}
 
   public columns:Array<any> = [
@@ -26,6 +27,7 @@ export class VmListComponent {
     {title: 'Virtual CPUs', name: 'vcpus'},
     {title: 'Memory Size (MiB)', name: 'memory'},
     {title: 'Boot Loader Type', name: 'bootloader'},
+    {title: 'State', name: 'state'},
   ];
   public config:any = {
     paging: true,
@@ -33,7 +35,9 @@ export class VmListComponent {
   };
 
   isActionVisible(actionId: string, row: any) {
-    if(actionId == 'delete' && row.id === true) {
+    if (actionId == 'start' && row.state == 'RUNNING') {
+      return false;
+    } else if(actionId == 'stop' && row.state == 'STOPPED') {
       return false;
     }
     return true;
@@ -42,7 +46,20 @@ export class VmListComponent {
   getActions(row) {
     let actions = [];
     actions.push({
+        id: "start",
         label: "Start",
+        onClick: (row) => {
+            this.ws.call('vm.start', [row.id]).subscribe((res) => {
+            });
+        }
+    });
+    actions.push({
+        id: "stop",
+        label: "Stop",
+        onClick: (row) => {
+            this.ws.call('vm.stop', [row.id]).subscribe((res) => {
+            });
+        }
     });
     actions.push({
         label: "Edit",
