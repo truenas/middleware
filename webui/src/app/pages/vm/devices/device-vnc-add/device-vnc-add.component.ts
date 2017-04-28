@@ -15,6 +15,7 @@ export class DeviceVncAddComponent {
   protected resource_name: string = 'vm/device';
   protected pk: any;
   protected route_success: string[];
+  protected vm: string;
   protected formModel: DynamicFormControlModel[] = [
     new DynamicInputModel({
         id: 'port',
@@ -28,11 +29,12 @@ export class DeviceVncAddComponent {
       label: 'wait on boot',
     }),
   ];
-   protected dtype: string = 'CDROM';
+  protected dtype: string = 'VNC';
   afterInit() {
     this.route.params.subscribe(params => {
         this.pk = params['pk'];
-        this.route_success = ['vm', this.pk, 'devices'];
+        this.vm = params['name'];
+        this.route_success = ['vm', this.pk, 'devices', this.vm];
     });
   }
   constructor(protected router: Router, protected route: ActivatedRoute, protected rest: RestService, protected ws: WebSocketService, protected formService: DynamicFormService, protected _injector: Injector, protected _appRef: ApplicationRef, protected _state: GlobalState) {

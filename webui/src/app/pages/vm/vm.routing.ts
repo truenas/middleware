@@ -16,11 +16,11 @@ export const routes: Routes = [
   { path: 'add', component: VmAddComponent },
   { path: 'edit/:pk', component: VmEditComponent },
   { path: 'delete/:pk', component: VmDeleteComponent },
-  { path: ':pk/devices', component: DeviceListComponent },
-  { path: ':pk/devices/cdrom/add', component: DeviceCdromAddComponent },
-  { path: ':pk/devices/disk/add', component: DeviceDiskAddComponent },  
-  { path: ':pk/devices/nic/add', component: DeviceNicAddComponent },
-  { path: ':pk/devices/vnc/add', component: DeviceVncAddComponent },
+  { path: ':pk/devices/:name', component: DeviceListComponent },
+  { path: ':pk/devices/:name/cdrom/add', component: DeviceCdromAddComponent },
+  { path: ':pk/devices/:name/disk/add', component: DeviceDiskAddComponent },
+  { path: ':pk/devices/:name/nic/add', component: DeviceNicAddComponent },
+  { path: ':pk/devices/:name/vnc/add', component: DeviceVncAddComponent },
   { path: '', component: VmListComponent, pathMatch: 'full' },
 ];
 export const routing: ModuleWithProviders = RouterModule.forChild(routes);

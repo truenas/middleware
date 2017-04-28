@@ -59,7 +59,7 @@ export class VmListComponent {
     actions.push({
         label: "Devices",
         onClick: (row) => {
-            this.router.navigate(new Array('/pages').concat(["vm", row.id, "devices"]));
+            this.router.navigate(new Array('/pages').concat(["vm", row.id, "devices", row.name]));
         }
     });
     return actions;

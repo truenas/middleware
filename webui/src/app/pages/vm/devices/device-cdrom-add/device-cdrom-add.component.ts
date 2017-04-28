@@ -16,6 +16,7 @@ export class DeviceCdromAddComponent {
   protected resource_name: string = 'vm/device';
   protected pk: any;
   protected route_success: string[];
+  protected vm: string;
   protected formModel: DynamicFormControlModel[] = [
     new DynamicInputModel({
         id: 'path',
@@ -27,7 +28,8 @@ export class DeviceCdromAddComponent {
   afterInit() {
     this.route.params.subscribe(params => {
         this.pk = params['pk'];
-        this.route_success = ['vm', this.pk, 'devices'];
+        this.vm = params['name'];
+        this.route_success = ['vm', this.pk, 'devices', this.vm];
     });
   }
 

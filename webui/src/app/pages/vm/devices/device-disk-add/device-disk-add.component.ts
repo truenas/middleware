@@ -14,7 +14,10 @@ export class DeviceDiskAddComponent {
 
   protected resource_name: string = 'vm/device';
   protected pk: any;
+  protected vm: string;
   protected route_success: string[];
+  protected dtype: string = 'DISK';
+  private diskModeType: DynamicSelectModel<string>;
   protected formModel: DynamicFormControlModel[] = [
     new DynamicInputModel({
       id: 'zvol',
@@ -23,17 +26,20 @@ export class DeviceDiskAddComponent {
     new DynamicSelectModel({
       id: 'mode',
       label: 'Mode',
-      options: [
-        { label: 'AHCI', value: "AHCI" },
-        { label: 'VirtIO', value: "VirtIO" },
-      ],
     }),
   ];
 
-  afterInit() {
+  afterInit(deviceAdd: any) {
     this.route.params.subscribe(params => {
         this.pk = params['pk'];
-        this.route_success = ['vm', this.pk, 'devices'];
+        this.vm = params['name'];
+        this.route_success = ['vm', this.pk, 'devices', this.vm];
+    });
+    deviceAdd.ws.call('notifier.choices', ['VM_DISKMODETYPES']).subscribe((res) => {
+      this.diskModeType = <DynamicSelectModel<string>>this.formService.findById("mode", this.formModel);
+      res.forEach((item) => {
+        this.diskModeType.add({ label: item[1], value: item[0] });
+      });
     });
   }
 

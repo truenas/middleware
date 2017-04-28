@@ -15,6 +15,7 @@ export class DeviceNicAddComponent {
   protected resource_name: string = 'vm/device';
   protected pk: any;
   protected route_success: string[];
+  protected vm: string;
   private nicType: DynamicSelectModel<string>;
 
   protected dtype: string = 'NIC';
@@ -34,7 +35,8 @@ export class DeviceNicAddComponent {
   afterInit(entityAdd: any) {
     this.route.params.subscribe(params => {
         this.pk = params['pk'];
-        this.route_success = ['vm', this.pk, 'devices'];
+        this.vm = params['name'];
+        this.route_success = ['vm', this.pk, 'devices', this.vm];
     });
     entityAdd.ws.call('notifier.choices', ['VM_NICTYPES']).subscribe((res) => {
       this.nicType = <DynamicSelectModel<string>>this.formService.findById("type", this.formModel);
