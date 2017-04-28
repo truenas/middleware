@@ -16,7 +16,7 @@ def test_stats_get_dataset_info(conn):
             assert isinstance(req.json(), dict) is True
 
 
-def test_stats_get_sources(conn):
+def test_stats_get_data(conn):
     sources = conn.rest.get('stats/get_sources').json()
 
     # test only the first 5 sources
