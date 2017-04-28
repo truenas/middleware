@@ -1,7 +1,7 @@
-from middlewared.service import filterable, private, Service
+from middlewared.service import filterable, private, CRUDService
 
 
-class DiskService(Service):
+class DiskService(CRUDService):
 
     @filterable
     def query(self, filters=None, options=None):
