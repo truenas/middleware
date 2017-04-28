@@ -11,6 +11,15 @@ import subprocess
 
 
 def dhclient_status(interface):
+    """
+    Get the current status of dhclient for a given `interface`.
+
+    Args:
+        interface (str): name of the interface
+
+    Returns:
+        tuple(bool, pid): if dhclient is running follow its pid.
+    """
     pidfile = '/var/run/dhclient.{}.pid'.format(interface)
     pid = None
     if os.path.exists(pidfile):
@@ -31,8 +40,17 @@ def dhclient_status(interface):
     return running, pid
 
 
-def dhclient_leases(name):
-    leasesfile = '/var/db/dhclient.leases.{}'.format(name)
+def dhclient_leases(interface):
+    """
+    Reads the leases file for `interface` and returns the content.
+
+    Args:
+        interface (str): name of the interface.
+
+    Returns:
+        str: content of dhclient leases file for `interface`.
+    """
+    leasesfile = '/var/db/dhclient.leases.{}'.format(interface)
     if os.path.exists(leasesfile):
         with open(leasesfile, 'r') as f:
             return f.read()
@@ -40,6 +58,7 @@ def dhclient_leases(name):
 
 class InterfacesService(Service):
 
+    @private
     def sync(self):
         """
         Sync interfaces configured in database to the OS.
@@ -339,6 +358,7 @@ class InterfacesService(Service):
 
 class RoutesService(Service):
 
+    @private
     def sync(self):
         config = self.middleware.call('datastore.query', 'network.globalconfiguration', [], {'get': True})
 
@@ -399,6 +419,7 @@ class RoutesService(Service):
 
 class DNSService(Service):
 
+    @private
     def sync(self):
         domain = None
         nameservers = []
