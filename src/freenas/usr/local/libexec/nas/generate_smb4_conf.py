@@ -87,6 +87,31 @@ def smb4_get_system_SID():
     return SID
 
 
+def smb4_get_domain_SID():
+    SID = None
+
+    p = pipeopen("/usr/local/bin/net -d 0 getdomainsid")
+    net_out = p.communicate()
+    if p.returncode != 0:
+        return None
+    if not net_out:
+        return None
+
+    net_out = net_out[0]
+
+    parts = net_out.split()
+    try:
+        SID = parts[5]
+    except Exception as e:
+        log.debug(
+            'The following exception occured while trying to obtain system SID: {0}'.format(e)
+        )
+        log_traceback(log=log)
+        SID = None
+
+    return SID
+
+
 def smb4_get_database_SID(client):
     SID = None
 
@@ -119,6 +144,21 @@ def smb4_set_system_SID(SID):
     return True
 
 
+def smb4_set_domain_SID(SID):
+    if not SID:
+        return False
+
+    p = pipeopen("/usr/local/bin/net -d 0 setdomainsid %s" % SID)
+    net_out = p.communicate()
+    if p.returncode != 0:
+        log.error('Failed to setlocalsid with the following error: {0}'.format(net_out[1]))
+        return False
+    if not net_out:
+        return False
+
+    return True
+
+
 def smb4_set_database_SID(client, SID):
     ret = False
     if not SID:
@@ -140,17 +180,24 @@ def smb4_set_database_SID(client, SID):
     return ret
 
 
-def smb4_set_SID(client):
+def smb4_set_SID(client, role):
+    get_sid_func = smb4_get_system_SID
+    set_sid_func = smb4_set_system_SID
+
+    if role == 'dc':
+        get_sid_func = smb4_get_domain_SID
+        set_sid_func = smb4_set_domain_SID
+
     database_SID = smb4_get_database_SID(client)
-    system_SID = smb4_get_system_SID()
+    system_SID = get_sid_func()
 
     if database_SID:
         if not system_SID:
-            if not smb4_set_system_SID(database_SID):
+            if not set_sid_func(database_SID):
                 print("Unable to set SID to %s" % database_SID, file=sys.stderr)
         else:
             if database_SID != system_SID:
-                if not smb4_set_system_SID(database_SID):
+                if not set_sid_func(database_SID):
                     print(("Unable to set SID to "
                                           "%s" % database_SID), file=sys.stderr)
 
@@ -159,7 +206,7 @@ def smb4_set_SID(client):
             print(("Unable to figure out SID, things are "
                                   "seriously jacked!"), file=sys.stderr)
 
-        if not smb4_set_system_SID(system_SID):
+        if not set_sid_func(system_SID):
             print("Unable to set SID to %s" % system_SID, file=sys.stderr)
         else:
             smb4_set_database_SID(client, system_SID)
@@ -1214,7 +1261,7 @@ def generate_smbusers(client):
 
 
 def provision_smb4(client):
-    if not client.call('notifier.samba4', 'domain_provision'):
+    if not client.call('notifier.samba4', 'domain_provision', timeout=300):
         print("Failed to provision domain", file=sys.stderr)
         return False
 
@@ -1604,7 +1651,7 @@ def main():
         for line in smb4_shares:
             f.write(line + '\n')
 
-    smb4_set_SID(client)
+    smb4_set_SID(client, role)
 
     if role == 'member' and smb4_ldap_enabled(client):
         set_ldap_password(client)
