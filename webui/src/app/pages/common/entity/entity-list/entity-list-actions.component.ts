@@ -11,7 +11,7 @@ import { Subscription } from 'rxjs';
   selector: 'app-entity-list-actions',
   template: `
     <span *ngFor="let action of actions">
-      <button *ngIf="action.visible" class="btn" (click)="action.onClick(this.row)">{{ action?.label }}</button>
+      <button class="btn" (click)="action.onClick(this.row)">{{ action?.label }}</button>
     </span>
   `
 })

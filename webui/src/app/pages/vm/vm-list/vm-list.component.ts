@@ -17,6 +17,7 @@ export class VmListComponent {
   protected route_edit: string[] = ['vm', 'edit'];
   protected route_delete: string[] = ['vm', 'delete'];
 
+  private busy: Subscription;
 
   constructor(protected router: Router, protected rest: RestService, protected ws: WebSocketService) {}
 
@@ -34,31 +35,21 @@ export class VmListComponent {
     sorting: {columns: this.columns},
   };
 
-  isActionVisible(actionId: string, row: any) {
-    if (actionId == 'start' && row.state == 'RUNNING') {
-      return false;
-    } else if(actionId == 'stop' && row.state == 'STOPPED') {
-      return false;
-    }
-    return true;
-  }
-
   getActions(row) {
     let actions = [];
     actions.push({
         id: "start",
-        label: "Start",
+        label: row.state == "RUNNING" ? "Stop" : "Start",
         onClick: (row) => {
-            this.ws.call('vm.start', [row.id]).subscribe((res) => {
-            });
-        }
-    });
-    actions.push({
-        id: "stop",
-        label: "Stop",
-        onClick: (row) => {
-            this.ws.call('vm.stop', [row.id]).subscribe((res) => {
-            });
+          let rpc: string;
+          if(row.state != 'RUNNING') {
+            rpc = 'vm.start';
+          } else {
+            rpc = 'vm.stop';
+          }
+          this.ws.call(rpc, [row.id]).subscribe((res) => {
+            //console.log(res);
+          });
         }
     });
     actions.push({
