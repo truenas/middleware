@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:01-0700\n"
-"PO-Revision-Date: 2017-03-20 13:07+0000\n"
-"Last-Translator: Michael Arlt <michaelarlt78@googlemail.com>\n"
+"PO-Revision-Date: 2017-05-01 12:31+0000\n"
+"Last-Translator: Ettore Atalan <atalanttore@googlemail.com>\n"
 "Language-Team: German <http://weblate.trueos.org/projects/freenas/django/de/>"
 "\n"
 "Language: de\n"
@@ -7419,7 +7419,7 @@ msgstr ""
 
 #: plugins/forms.py:210
 msgid "Unable to set repository: %s"
-msgstr ""
+msgstr "Repositorium kann nicht festgelegt werden: %s"
 
 #: plugins/models.py:112
 msgid "Plugin"
@@ -7467,15 +7467,15 @@ msgstr "Es existiert bereits eine Gruppe mit diesem Namen."
 
 #: services/models.py:233
 msgid "Server minimum protocol"
-msgstr ""
+msgstr "Server-Mindestprotokoll"
 
 #: services/models.py:235
 msgid "The minimum protocol version that will be supported by the server"
-msgstr ""
+msgstr "Die minimale Protokollversion, die vom Server unterstützt wird"
 
 #: services/models.py:243
 msgid "The highest protocol version that will be supported by the server"
-msgstr ""
+msgstr "Die höchste Protokollversion, die vom Server unterstützt wird"
 
 #: services/models.py:248
 msgid ""
@@ -7537,7 +7537,7 @@ msgstr "SSL/TLS einschalten"
 
 #: services/models.py:1285
 msgid "TLS policy"
-msgstr ""
+msgstr "TLS-Richtlinie"
 
 #: services/models.py:1288
 msgid "TLS allow client renegotiations"
@@ -7562,7 +7562,7 @@ msgstr "Die Anzahl wird benötigt"
 
 #: services/models.py:1340
 msgid "Certificate and private key"
-msgstr ""
+msgstr "Zertifikat und privater Schlüssel"
 
 #: services/models.py:1449
 msgid "SFTP Log Facility"
@@ -7604,7 +7604,7 @@ msgstr ""
 
 #: services/models.py:1657
 msgid "Kerberos Password Server"
-msgstr ""
+msgstr "Kerberos-Passwortserver"
 
 #: services/models.py:1710
 #, fuzzy
