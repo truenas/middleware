@@ -1,5 +1,6 @@
-from middlewared.service import Service
+from middlewared.service import CallError, Service
 
+import errno
 import os
 import sys
 import logging
@@ -35,7 +36,6 @@ from freenasUI.directoryservice.models import (
     IDMAP_TYPE_RID,
     IDMAP_TYPE_TDB,
     IDMAP_TYPE_TDB2,
-    DS_TYPE_CIFS,
 )
 from freenasUI.directoryservice.utils import get_idmap_object
 
@@ -224,7 +224,10 @@ class NotifierService(Service):
         """Temporary wrapper to get to UI choices"""
         if args is None:
             args = []
-        attr = getattr(choices, name)
+        try:
+            attr = getattr(choices, name)
+        except AttributeError as e:
+            raise CallError(str(e), errno.ENOENT)
         if callable(attr):
             rv = list(attr(*args))
         else:
