@@ -1096,7 +1096,7 @@ VM_DEVTYPES = (
 
 VM_NICTYPES = (
     ('E1000', _('Intel e82545 (e1000)')),
-    ('VIRTIO', _('VirtIO')),    
+    ('VIRTIO', _('VirtIO')),
 )
 
 VM_DISKMODETYPES = (

@@ -29,7 +29,6 @@ class VMForm(ModelForm):
         super(VMForm, self).__init__(*args, **kwargs)
         self.fields['vm_type'].widget.attrs['onChange'] = ("vmTypeToggle();")
         key_order(self, 0, 'vm_type', instance=True)
-        key_order(self, 1, 'container_type', instance=True)
         key_order(self, 6, 'container_path', instance=True)
 
     def get_cpu_flags(self):
@@ -64,8 +63,6 @@ class VMForm(ModelForm):
     def save(self, **kwargs):
         with client as c:
             cdata = self.cleaned_data
-            if self.instance.vm_type == 'Bhyve':
-                cdata['container_type'] = "None"
 
             if self.instance.id:
                 c.call('vm.update', self.instance.id, cdata)

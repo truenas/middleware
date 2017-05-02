@@ -76,18 +76,10 @@ class VM(Model):
         ),
         default='Container Provider',
     )
-    container_type = models.CharField(
-        verbose_name=_('Container Type'),
-        max_length=50,
-        choices=(
-            ('CoreOS + Rancher', _('Rancher')),
-            ('CoreOS', _('CoreOS Linux')),
-        ),
-        default='Rancher',
-    )
     container_path = PathField(
         verbose_name=_("Path"),
-        help_text=_('Path where a small pre built image will be downloaded.')
+        help_text=_('Path where a small pre built image will be downloaded.'),
+        blank=True
     )
 
     class Meta:
