@@ -41,14 +41,16 @@ class PluginManager:
 
     property_file_path = settings.HERE + '/vcp/Extensionconfig.ini.dist'
     resurce_folder_path = settings.HERE + '/vcp/vcp_locales'
+    privGroupName = 'iXSystems'
 
     def create_event_keyvalue_pairs(self):
         try:
             eri_list = []
             for file in os.listdir(self.resurce_folder_path):
-                file = open(self.resurce_folder_path + '/' + file)
                 eri = vim.Extension.ResourceInfo()
-                eri.module = 'task'
+                #Read locale file from vcp_locale
+                eri.module = file.split("_")[0]
+                file = open(self.resurce_folder_path + '/' + file, 'r')
                 for line in file:
                     if len(line) > 2 and '=' in line:
                         if 'locale' in line:
@@ -80,6 +82,7 @@ class PluginManager:
             key = cp.get('RegisterParam', 'key')
             events = cp.get('RegisterParam', 'events').split(",")
             tasks = cp.get('RegisterParam', 'tasks').split(",")
+            privs = cp.get('RegisterParam', 'auth').split(",")
             version = utils.get_plugin_version()
             if 'Not available' in version:
                 return version
@@ -125,8 +128,17 @@ class PluginManager:
                 ext_type_info.taskID = t
                 task_info.append(ext_type_info)
 
+            #Register custom privileges required for vcp RBAC
+            priv_info = []
+            for priv in privs:
+                ext_type_info = vim.Extension.PrivilegeInfo()
+                ext_type_info.privID = priv
+                ext_type_info.privGroupName = self.privGroupName
+                priv_info.append(ext_type_info)
+
             ext.taskList = task_info
             ext.eventList = event_info
+            ext.privilegeList = priv_info
             resource_list = self.create_event_keyvalue_pairs()
             if isinstance(resource_list, str):
                 return resource_list
