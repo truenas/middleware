@@ -142,7 +142,7 @@ class PBIUploadForm(Form):
             except MiddlewareError as e:
                 raise e
             except Exception as e:
-                raise MiddlewareError(e)
+                raise MiddlewareError(str(e))
 
             pjail = jail.jail_host
         if notifier().install_pbi(pjail, newplugin):
