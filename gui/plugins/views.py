@@ -622,7 +622,10 @@ def plugin_fcgi_client(request, name, oid, path):
         raise Http404
 
     plugin = qs[0]
-    jail = Jails.objects.filter(jail_host=plugin.plugin_jail)[0]
+    try:
+        jail = Jails.objects.filter(jail_host=plugin.plugin_jail)[0]
+    except IndexError:
+        raise Http404
     jail_ip = jail.jail_ipv4_addr
 
     fastcgi_env_path = "%s/%s/%s/fastcgi_env" % (
