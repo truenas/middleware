@@ -310,6 +310,12 @@ class VMService(CRUDService):
             urlretrieve(url, file_name,
                         lambda nb, bs, fs, job=job: self.fetch_hookreport(nb, bs, fs, job))
 
+    def decompress_bzip(self, job, src, dst):
+        count = 1
+        with open(dst, 'wb') as dst_file, bz2.BZ2File(src, 'rb') as src_file:
+            for data in iter(lambda: src_file.read(100 * 1024), b''):
+                dst_file.write(data)
+
 
 def kmod_load():
     kldstat = Popen(['/sbin/kldstat'], stdout=subprocess.PIPE).communicate()[0]
