@@ -8,6 +8,7 @@ data = {
     'key4': 4.0,
 }
 
+
 @pytest.mark.parametrize('kv', list(data.items()))
 def test_cache_put(conn, kv):
     key, value = kv
