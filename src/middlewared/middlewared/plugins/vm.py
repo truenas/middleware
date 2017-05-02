@@ -11,12 +11,14 @@ import netif
 import os
 import subprocess
 import sysctl
+import bz2
 
 logger = middlewared.logger.Logger('vm').getLogger()
 
 CONTAINER_IMAGES = {
     "CoreOS": "https://stable.release.core-os.net/amd64-usr/current/coreos_production_image.bin.bz2",
 }
+BUFSIZE = 65536
 
 
 class VMManager(object):
@@ -292,12 +294,20 @@ class VMService(CRUDService):
         """Get the status of a VM, if it is RUNNING or STOPPED."""
         return self._manager.status(id)
 
-    def fetch_hookreport(self, blocknum, blocksize, totalsize, job):
+    def fetch_hookreport(self, blocknum, blocksize, totalsize, job, file_name):
         """Hook to report the download progress."""
         readchunk = blocknum * blocksize
         if totalsize > 0:
             percent = readchunk * 1e2 / totalsize
             job.set_progress(int(percent), 'Downloading', {'downloaded': readchunk, 'total': totalsize})
+
+        if int(percent) == 100:
+            with Client() as c:
+                try:
+                    c.call('vm.decompress_bzip', file_name, '/mnt/ssd/coreos.img')
+                except CallTimeout:
+                    logger.debug("===> Problem to connect with the middlewared.")
+
 
     @accepts(Str('url'), Str('file_name'))
     @job(lock='container')
@@ -306,12 +316,32 @@ class VMService(CRUDService):
         if os.path.exists(file_name) is False:
             logger.debug("===> Downloading: %s" % (url))
             urlretrieve(url, file_name,
-                        lambda nb, bs, fs, job=job: self.fetch_hookreport(nb, bs, fs, job))
+                        lambda nb, bs, fs, job=job: self.fetch_hookreport(nb, bs, fs, job, file_name))
+        else:
+            with Client() as c:
+                try:
+                    c.call('vm.decompress_bzip', file_name, '/mnt/ssd/coreos.img')
+                except CallTimeout:
+                    logger.debug("===> Problem to connect with the middlewared.")
 
-    def decompress_bzip(self, src, dst):
-        count = 1
+    def decompress_hookreport(self, dst_file, job):
+        totalsize = 4756340736 # XXX: It will be parsed from a sha256 file.
+        fd = os.open(dst_file, os.O_RDONLY)
+        try:
+            size = os.lseek(fd, 0, os.SEEK_END)
+        finally:
+            os.close(fd)
+
+        percent = (size / totalsize) * 100
+        job.set_progress(int(percent), 'Decompress', {'decompressed': size, 'total': totalsize})
+
+    @accepts(Str('src'), Str('dst'))
+    @job(lock='decompress', process=True)
+    def decompress_bzip(self, job, src, dst):
+        logger.debug("==> SRC: %s DST: %s" % (src, dst))
         with open(dst, 'wb') as dst_file, bz2.BZ2File(src, 'rb') as src_file:
-            for data in iter(lambda: src_file.read(100 * 1024), b''):
+            for data in iter(lambda: src_file.read(BUFSIZE), b''):
+                self.decompress_hookreport(dst, job)
                 dst_file.write(data)
 
 
