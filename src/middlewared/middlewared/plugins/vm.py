@@ -233,7 +233,6 @@ class VMService(CRUDService):
         Str('bootloader'),
         List("devices"),
         Str('vm_type'),
-        Str('container_type'),
         Str('container_path'),
     ))
     def do_create(self, data):
@@ -243,7 +242,7 @@ class VMService(CRUDService):
         pk = self.middleware.call('datastore.insert', 'vm.vm', data)
 
         if self.vmutils.is_container(data) is True:
-            image_url = CONTAINER_IMAGES.get(data.get('container_type'))
+            image_url = CONTAINER_IMAGES.get('CoreOS')
             image_path = self.vmutils.create_images_path(data) + '/' + image_url.split('/')[-1]
 
             with Client() as c:
@@ -268,7 +267,6 @@ class VMService(CRUDService):
         Int('memory'),
         Str('bootloader'),
         Str('vm_type'),
-        Str('container_type'),
     ))
     def do_update(self, id, data):
         """Update all information of a specific VM."""
