@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:04-0700\n"
-"PO-Revision-Date: 2017-01-05 16:38+0000\n"
-"Last-Translator: Piotr P. Kozlowski <ja@ppkozlowski.pl>\n"
+"PO-Revision-Date: 2017-04-14 16:38+0000\n"
+"Last-Translator: Karol Zientek <karol.zientek001@protonmail.com>\n"
 "Language-Team: Polish <http://weblate.trueos.org/projects/freenas/django/pl/>"
 "\n"
 "Language: pl\n"
@@ -840,6 +840,8 @@ msgstr "Interfejs sieciowy"
 #, python-format
 msgid "You cannot configure multiple interfaces with the same IP address (%s)"
 msgstr ""
+"Nie możesz skonfigurować kilku interfejsów używając tego samego adresu IP "
+"(%s)"
 
 #: network/forms.py:120
 msgid "You have to specify IPv4 address as well"
@@ -863,16 +865,15 @@ msgstr "Musisz wybrać pomiędzy IPv4 a IPv6"
 
 #: network/forms.py:160
 msgid "Loopback is not a valid nameserver"
-msgstr ""
+msgstr "Pętla zwrotna nie jest poprawnym serwerem nazw"
 
 #: network/forms.py:163
 msgid "Unspecified addresses are not valid as nameservers"
-msgstr ""
+msgstr "Niezdefiniowane adresy nie są uważane jako serwery nazw"
 
 #: network/forms.py:167
-#, fuzzy
 msgid "This is not a valid nameserver address"
-msgstr "W polu nie znajduje się prawidłowy adres IP lub sieć"
+msgstr "To nie jest poprawny adres serwera DNS"
 
 #: network/forms.py:170
 msgid "169.254/16 subnet is not valid for nameserver"
@@ -1210,7 +1211,7 @@ msgstr "Zamontowany?"
 
 #: plugins/forms.py:314
 msgid "The full path cannot exceed 88 characters"
-msgstr ""
+msgstr "Pełna ścieżka nie może przekraczać 88 znaków"
 
 #, python-format
 #~ msgid "The path could not be mounted %s"
@@ -1232,7 +1233,7 @@ msgstr "Nazwa pluginu"
 
 #: plugins/models.py:44
 msgid "Plugin info name"
-msgstr ""
+msgstr "Nazwa informacji o pluginie"
 
 #: plugins/models.py:45
 msgid "Info name of the plugin"
@@ -1252,7 +1253,7 @@ msgstr "Wersja API pluginu"
 
 #: plugins/models.py:62 plugins/models.py:63
 msgid "Plugin architecture"
-msgstr ""
+msgstr "Architektura pluginu"
 
 #: plugins/models.py:67 plugins/models.py:68
 #: templates/plugins/plugin_info.html:9
@@ -1271,9 +1272,8 @@ msgid "Plugin TCP port"
 msgstr "Port TCP pluginu"
 
 #: plugins/models.py:86
-#, fuzzy
 msgid "Plugin archive path"
-msgstr "Nazwa domeny"
+msgstr "Ścieżka archiwum pluginu"
 
 #: plugins/models.py:87 services/models.py:830
 msgid "Path where the plugins are saved after installation"
@@ -1427,6 +1427,8 @@ msgid ""
 "The contact must contain only alphanumeric characters, _, - or a valid e-"
 "mail address"
 msgstr ""
+"Kontakt musi zawierać tylko i wyłącznie znaki alfanumeryczne, bądź poprawny "
+"adres e-mail"
 
 #: services/forms.py:382
 msgid "The community must contain only alphanumeric characters, _ or -"
@@ -1443,7 +1445,7 @@ msgstr "Port"
 
 #: services/forms.py:415
 msgid "Use alphanumeric characters, \".\", \"-\" and \"_\"."
-msgstr ""
+msgstr "Używaj znaków alfanumerycznych: \".\", \"-\" i \"_\"."
 
 #: services/forms.py:427 services/forms.py:1137
 #, python-format

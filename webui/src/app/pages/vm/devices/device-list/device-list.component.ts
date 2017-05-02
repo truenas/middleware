@@ -14,8 +14,8 @@ import { Subscription } from 'rxjs';
 export class DeviceListComponent {
 
   protected resource_name: string;
-  protected route_edit: string[] = ['vm', 'devices', 'edit'];
-  protected route_delete: string[] = ['vm', 'devices', 'delete'];
+  protected route_edit: string[];
+  protected route_delete: string[];
   protected pk: any;
   protected vm: string;
   private sub: Subscription;
@@ -70,7 +70,9 @@ export class DeviceListComponent {
     this.sub = this.aroute.params.subscribe(params => {
       this.pk = params['pk'];
       this.vm = params['name'];
-      // this is filter by vm's id to show devices belonging to that VM.
+      this.route_edit = ['vm', this.pk, 'devices', this.vm, 'edit'];
+      this.route_delete = ['vm', this.pk, 'devices', this.vm, 'delete'];
+      // this is filter by vm's id to show devices belonging to that VM
       this.resource_name = 'vm/device/?vm__id=' + this.pk;
     });
   }

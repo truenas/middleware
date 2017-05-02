@@ -354,5 +354,5 @@ Changelog:
                     },
                 })
             except Exception:
-                log.warn('Failed to send email about new update', exc_info=True)
+                self.logger.warn('Failed to send email about new update', exc_info=True)
         return True

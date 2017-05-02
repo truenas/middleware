@@ -1588,12 +1588,12 @@ class LAGGInterfaceResourceMixin(object):
 
 class LAGGInterfaceMembersResourceMixin(object):
 
-    def build_filters(self, filters=None):
+    def build_filters(self, filters=None, ignore_bad_filters=True):
         if filters is None:
             filters = {}
         orm_filters = super(
             LAGGInterfaceMembersResourceMixin,
-            self).build_filters(filters)
+            self).build_filters(filters, ignore_bad_filters)
         lagggrp = filters.get("lagg_interfacegroup__id")
         if lagggrp:
             orm_filters["lagg_interfacegroup__id"] = lagggrp
@@ -3610,12 +3610,12 @@ class FibreChannelToTargetResourceMixin:
 
 class DeviceResourceMixin(object):
 
-    def build_filters(self, filters=None):
+    def build_filters(self, filters=None, ignore_bad_filters=True):
         if filters is None:
             filters = {}
         orm_filters = super(
             DeviceResourceMixin,
-            self).build_filters(filters)
+            self).build_filters(filters, ignore_bad_filters)
         vmid = filters.get("vm__id")
         if vmid:
             orm_filters["vm__id"] = vmid

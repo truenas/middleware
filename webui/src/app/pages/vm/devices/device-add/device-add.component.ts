@@ -5,6 +5,7 @@ import { DynamicFormControlModel, DynamicFormService } from '@ng2-dynamic-forms/
 
 import { GlobalState } from '../../../../global.state';
 import { RestService, WebSocketService } from '../../../../services/';
+import { Location } from '@angular/common';
 
 import { Subscription } from 'rxjs';
 import { EntityUtils } from '../../../common/entity/utils';
@@ -26,13 +27,17 @@ export class DeviceAddComponent implements OnInit {
 
   private busy: Subscription;
 
-  constructor(protected router: Router, protected rest: RestService, protected ws: WebSocketService, protected formService: DynamicFormService, protected _injector: Injector, protected _appRef: ApplicationRef, protected _state: GlobalState) {
+  constructor(protected router: Router, protected rest: RestService, protected ws: WebSocketService, protected formService: DynamicFormService, protected _injector: Injector, protected _appRef: ApplicationRef, protected _state: GlobalState, private location: Location) {
 
   }
 
   ngOnInit() {
     this.formGroup = this.formService.createFormGroup(this.conf.formModel);
     this.conf.afterInit(this);
+  }
+
+  goBack() {
+    this.location.back();
   }
 
   onSubmit() {

@@ -167,7 +167,7 @@ class JailService(Service):
             from iocage.lib.ioc_stop import IOCStop
             IOCStop(uuid, tag, path, conf, silent=True)
 
-        IOCDestroy(uuid, tag, path).destroy_jail()
+        IOCDestroy().destroy_jail(path)
 
         return True
 

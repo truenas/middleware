@@ -1,13 +1,13 @@
 FreeNAS 11 WebUI
 ================
 
-This is the project for the new angular.io (4.x) WebUI for FreeNAS 11. It is meant to coexist with current FreeNAS 9.10 Django/Dojo WebUI.
+This is the project for the new angular.io (4.x) WebUI for FreeNAS 11. It is meant to coexist with current FreeNAS 11 Django/Dojo WebUI.
 
 # Development requirements
 
   - npm 3
   - Node.js >= 5, < 7
-  - Running FreeNAS 9.10 Nightly (Virtual?) Machine
+  - Running FreeNAS 11 Nightly (Virtual?) Machine
 
 
 # Getting started

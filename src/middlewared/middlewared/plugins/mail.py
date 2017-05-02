@@ -1,5 +1,5 @@
 from middlewared.schema import Bool, Dict, Int, List, Str, accepts
-from middlewared.service import Service
+from middlewared.service import ConfigService
 
 import os
 import sys
@@ -14,7 +14,11 @@ django.setup()
 from freenasUI.common.system import send_mail
 
 
-class MailService(Service):
+class MailService(ConfigService):
+
+    @accepts()
+    def config(self):
+        return self.middleware.call('datastore.config', 'system.email')
 
     @accepts(Dict(
         'mail-message',

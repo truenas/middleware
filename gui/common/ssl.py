@@ -45,6 +45,10 @@ def create_certificate(cert_info):
     cert.get_subject().L = cert_info['city']
     cert.get_subject().O = cert_info['organization']
     cert.get_subject().CN = cert_info['common']
+    # Add subject alternate name in addition to CN
+    cert.add_extensions([crypto.X509Extension(
+        "subjectAltName".encode('utf-8'), False, f"URI:https://{cert_info['common']}".encode('utf-8')
+    )])
     cert.get_subject().emailAddress = cert_info['email']
 
     serial = cert_info.get('serial')
@@ -89,6 +93,10 @@ def create_certificate_signing_request(cert_info):
     req.get_subject().L = cert_info['city']
     req.get_subject().O = cert_info['organization']
     req.get_subject().CN = cert_info['common']
+    # Add subject alternate name in addition to CN
+    req.add_extensions([crypto.X509Extension(
+        "subjectAltName".encode('utf-8'), False, f"URI:https://{cert_info['common']}".encode('utf-8')
+    )])
     req.get_subject().emailAddress = cert_info['email']
 
     req.set_pubkey(key)
