@@ -41,7 +41,7 @@ from django.http import Http404, QueryDict
 from freenasUI.account.models import bsdUsers
 from freenasUI.common.log import log_traceback
 from freenasUI.freeadmin.apppool import appPool
-from freenasUI.freeadmin.models.fields import MultiSelectField
+from freenasUI.freeadmin.models.fields import DictField, MultiSelectField
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.services.exceptions import ServiceFailed
 
@@ -269,6 +269,8 @@ class DojoModelResource(ResourceMixin, ModelResource):
     def api_field_from_django_field(cls, f, default=fields.CharField):
         if isinstance(f, MultiSelectField):
             return fields.ListField
+        if isinstance(f, DictField):
+            return fields.DictField
         else:
             return super(DojoModelResource, cls).api_field_from_django_field(f, default=default)
 
