@@ -20,6 +20,10 @@ class VMHook(AppHook):
         return tabs
 
     def top_menu(self, request):
+        from freenasUI.middleware.notifier import notifier
+        if not notifier().is_freenas():
+            return []
+
         return [
             {
                 'name': _('VMs'),
