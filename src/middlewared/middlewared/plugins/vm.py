@@ -20,7 +20,11 @@ class VMManager(object):
     def start(self, id):
         vm = self.service.query([('id', '=', id)], {'get': True})
         self._vm[id] = VMSupervisor(self, vm)
-        gevent.spawn(self._vm[id].run)
+        try:
+            gevent.spawn(self._vm[id].run)
+            return True
+        except:
+            raise
 
     def stop(self, id):
         supervisor = self._vm.get(id)
