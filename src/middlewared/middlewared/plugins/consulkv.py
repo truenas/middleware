@@ -1,8 +1,10 @@
 from middlewared.schema import accepts, Any, Str
 from middlewared.service import Service
+import middlewared.logger
 
 import consul
 
+logger = middlewared.logger.Logger('consul').getLogger()
 
 class ConsulService(Service):
 
@@ -24,7 +26,11 @@ class ConsulService(Service):
                     bool: True if it added successful the value or otherwise False.
         """
         c = consul.Consul()
-        return c.kv.put(str(key), str(value))
+        try:
+            return c.kv.put(str(key), str(value))
+        except Exception as err:
+            logger.error('===> Consul module error: %s %s' % (err.message, err.args))
+            return False
 
     @accepts(Str('key'))
     def get_kv(self, key):
