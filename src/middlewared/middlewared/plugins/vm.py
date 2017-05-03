@@ -1,5 +1,5 @@
-from middlewared.schema import accepts, filterable, Int, Str, Dict, List, Ref
-from middlewared.service import CRUDService
+from middlewared.schema import accepts, Int, Str, Dict, List, Ref
+from middlewared.service import filterable, CRUDService
 from middlewared.utils import Nid, Popen
 
 import errno
