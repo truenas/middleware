@@ -1,4 +1,4 @@
-from middlewared.schema import accepts, Int, Str, Dict, List, Ref
+from middlewared.schema import accepts, filterable, Int, Str, Dict, List, Ref
 from middlewared.service import CRUDService
 from middlewared.utils import Nid, Popen
 
@@ -165,6 +165,7 @@ class VMService(CRUDService):
         super(VMService, self).__init__(*args, **kwargs)
         self._manager = VMManager(self)
 
+    @accepts()
     def flags(self):
         """Returns a dictionary with CPU flags for bhyve."""
         data = {}
@@ -183,7 +184,7 @@ class VMService(CRUDService):
 
         return data
 
-    @accepts(Ref('query-filters'), Ref('query-options'))
+    @filterable
     def query(self, filters=None, options=None):
         options = options or {}
         options['extend'] = 'vm._extend_vm'
