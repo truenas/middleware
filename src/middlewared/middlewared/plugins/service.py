@@ -269,7 +269,7 @@ class ServiceService(Service):
         stdout = PIPE
         if options and 'stdout' in options:
             stdout = options['stdout']
-        stderr = PIPE 
+        stderr = PIPE
         if options and 'stderr' in options:
             stderr = options['stderr']
 
