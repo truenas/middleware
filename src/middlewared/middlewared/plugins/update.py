@@ -138,6 +138,7 @@ def parse_changelog(changelog, start='', end=''):
 
 class UpdateService(Service):
 
+    @accepts()
     def get_trains(self):
         """
         Returns available trains dict and the currently configured train as well as the
