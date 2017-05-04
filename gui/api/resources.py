@@ -97,6 +97,7 @@ from freenasUI.system.forms import (
     CertificateAuthorityCreateInternalForm,
     CertificateAuthorityCreateIntermediateForm,
     CertificateAuthorityImportForm,
+    CertificateCreateCSRForm,
     CertificateCreateInternalForm,
     CertificateImportForm,
     ManualUpdateTemporaryLocationForm,
@@ -2963,6 +2964,12 @@ class CertificateResourceMixin(object):
     def prepend_urls(self):
         return [
             url(
+                r"^(?P<resource_name>%s)/csr%s$" % (
+                    self._meta.resource_name, trailing_slash()
+                ),
+                self.wrap_view('csr'),
+            ),
+            url(
                 r"^(?P<resource_name>%s)/import%s$" % (
                     self._meta.resource_name, trailing_slash()
                 ),
@@ -2975,6 +2982,28 @@ class CertificateResourceMixin(object):
                 self.wrap_view('internal'),
             ),
         ]
+
+    def csr(self, request, **kwargs):
+        self.method_check(request, allowed=['post'])
+        self.is_authenticated(request)
+
+        if request.body:
+            deserialized = self.deserialize(
+                request,
+                request.body,
+                format=request.META.get('CONTENT_TYPE', 'application/json'),
+            )
+        else:
+            deserialized = {}
+
+        form = CertificateCreateCSRForm(data=deserialized)
+        if not form.is_valid():
+            raise ImmediateHttpResponse(
+                response=self.error_response(request, form.errors)
+            )
+        else:
+            form.save()
+        return HttpResponse('Certificate Signing Request created.', status=202)
 
     def importcert(self, request, **kwargs):
         self.method_check(request, allowed=['post'])
