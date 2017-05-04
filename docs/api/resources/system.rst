@@ -794,8 +794,62 @@ Create Internal CA
    :json string cert_email: cetificate email
    :json string cert_organization: certificate organization
    :json string cert_digest_algorithm: digest algorithm (SHA1, SHA224, SHA256, SHA384, SHA512)
-   :json string cert_lifetime: certificate lifetime in days
-   :json string cert_key_length: certificate key length (1024, 2048, 4096)
+   :json integer cert_lifetime: certificate lifetime in days
+   :json integer cert_key_length: certificate key length (1024, 2048, 4096)
+   :reqheader Content-Type: the request content type
+   :resheader Content-Type: the response content type
+   :statuscode 201: no error
+
+
+Create Intermediate CA
+++++++++++++++++++++++
+
+.. http:post:: /api/v1.0/system/certificateauthority/intermediate/
+
+   Creates a CA and returns the object.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      POST /api/v1.0/system/certificateauthority/intermediate/ HTTP/1.1
+      Content-Type: application/json
+
+        {
+                "cert_city": "San Jose",
+                "cert_email": "example@ixsystems.com",
+                "cert_common": "FreeNAS",
+                "cert_country": "US",
+                "cert_digest_algorithm": "SHA256",
+                "cert_lifetime": 3650,
+                "cert_name": "intermediateca",
+                "cert_organization": "iXsystems",
+                "cert_state": "CA",
+                "cert_key_length": 2048,
+                "cert_signedby": 1
+        }
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 201 Created
+      Vary: Accept
+      Content-Type: application/json
+
+        Certificate Authority created.
+
+   :json string cert_name: identifier
+   :json string cert_common: certificate common name
+   :json string cert_city: certificate city
+   :json string cert_state: certificate state
+   :json string cert_country: certificate country (2 chars)
+   :json string cert_email: cetificate email
+   :json string cert_organization: certificate organization
+   :json string cert_digest_algorithm: digest algorithm (SHA1, SHA224, SHA256, SHA384, SHA512)
+   :json integer cert_lifetime: certificate lifetime in days
+   :json integer cert_key_length: certificate key length (1024, 2048, 4096)
+   :json integer cert_signedby: id of the certificate authority
    :reqheader Content-Type: the request content type
    :resheader Content-Type: the response content type
    :statuscode 201: no error
@@ -951,9 +1005,61 @@ Create Internal Certificate
    :json string cert_email: cetificate email
    :json string cert_organization: certificate organization
    :json string cert_digest_algorithm: digest algorithm (SHA1, SHA224, SHA256, SHA384, SHA512)
-   :json interger cert_lifetime: certificate lifetime in days
-   :json interger cert_key_length: certificate key length (1024, 2048, 4096)
-   :json interger cert_signedby: id of the certificate authority
+   :json integer cert_lifetime: certificate lifetime in days
+   :json integer cert_key_length: certificate key length (1024, 2048, 4096)
+   :json integer cert_signedby: id of the certificate authority
+   :reqheader Content-Type: the request content type
+   :resheader Content-Type: the response content type
+   :statuscode 201: no error
+
+
+Create CSR
+++++++++++
+
+.. http:post:: /api/v1.0/system/certificate/csr/
+
+   Creates a CSR and returns the object.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      POST /api/v1.0/system/certificate/csr/ HTTP/1.1
+      Content-Type: application/json
+
+        {
+                "cert_city": "San Jose",
+                "cert_email": "example@ixsystems.com",
+                "cert_common": "FreeNAS",
+                "cert_country": "US",
+                "cert_digest_algorithm": "SHA256",
+                "cert_lifetime": 3650,
+                "cert_name": "csr",
+                "cert_organization": "iXsystems",
+                "cert_state": "CA",
+                "cert_key_length": 2048
+        }
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 201 Created
+      Vary: Accept
+      Content-Type: application/json
+
+        Certificate Signing Request created.
+
+   :json string cert_name: identifier
+   :json string cert_common: certificate common name
+   :json string cert_city: certificate city
+   :json string cert_state: certificate state
+   :json string cert_country: certificate country (2 chars)
+   :json string cert_email: cetificate email
+   :json string cert_organization: certificate organization
+   :json string cert_digest_algorithm: digest algorithm (SHA1, SHA224, SHA256, SHA384, SHA512)
+   :json integer cert_lifetime: certificate lifetime in days
+   :json integer cert_key_length: certificate key length (1024, 2048, 4096)
    :reqheader Content-Type: the request content type
    :resheader Content-Type: the response content type
    :statuscode 201: no error
