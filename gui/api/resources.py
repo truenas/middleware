@@ -3647,6 +3647,7 @@ class VMResourceMixin(object):
                     device_stop_url = reverse(
                         'vm_stop', kwargs={'id': bundle.obj.id},
                     )
+                    info+= 'Com Port: /dev/nmdm{}B<br />'.format(bundle.obj.id)
                 elif state == 'STOPPED':
                     device_start_url = reverse(
                         'vm_start', kwargs={'id': bundle.obj.id},
