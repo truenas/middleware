@@ -273,5 +273,19 @@ def kmod_load():
         Popen(['/sbin/kldload', 'nmdm'])
 
 
+def _event_system_ready(middleware, event_type, args):
+    """
+    Method called when system is ready, supposed to start VMs
+    flagged that way.
+    """
+    if args['id'] != 'ready':
+        return
+    # TODO: add autostart option
+    for vm in middleware.call('vm.query'):
+        #middleware.call('vm.start', vm['id'])
+        pass
+
+
 def setup(middleware):
     gevent.spawn(kmod_load)
+    middleware.event_subscribe('system', _event_system_ready)
