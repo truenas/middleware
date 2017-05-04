@@ -94,6 +94,7 @@ from freenasUI.system.alert import alertPlugins, Alert
 from freenasUI.system.forms import (
     BootEnvAddForm,
     BootEnvRenameForm,
+    CertificateAuthorityCreateInternalForm,
     ManualUpdateTemporaryLocationForm,
     ManualUpdateUploadForm,
     ManualUpdateWizard,
@@ -2808,6 +2809,38 @@ class KerberosSettingsResourceMixin(object):
 
 
 class CertificateAuthorityResourceMixin(object):
+
+    def prepend_urls(self):
+        return [
+            url(
+                r"^(?P<resource_name>%s)/internal%s$" % (
+                    self._meta.resource_name, trailing_slash()
+                ),
+                self.wrap_view('internal'),
+            ),
+        ]
+
+    def internal(self, request, **kwargs):
+        self.method_check(request, allowed=['post'])
+        self.is_authenticated(request)
+
+        if request.body:
+            deserialized = self.deserialize(
+                request,
+                request.body,
+                format=request.META.get('CONTENT_TYPE', 'application/json'),
+            )
+        else:
+            deserialized = {}
+
+        form = CertificateAuthorityCreateInternalForm(data=deserialized)
+        if not form.is_valid():
+            raise ImmediateHttpResponse(
+                response=self.error_response(request, form.errors)
+            )
+        else:
+            form.save()
+        return HttpResponse('Certificated Authority created.', status=202)
 
     def dehydrate(self, bundle):
         bundle = super(CertificateAuthorityResourceMixin,
