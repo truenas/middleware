@@ -694,7 +694,7 @@ List resource
 
 .. http:get:: /api/v1.0/system/certificateauthority/
 
-   Returns a list of all tunables.
+   Returns a list of all CAs.
 
    **Example request**:
 
@@ -853,6 +853,164 @@ Delete resource
    .. sourcecode:: http
 
       DELETE /api/v1.0/system/certificateauthority/1/ HTTP/1.1
+      Content-Type: application/json
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 204 No Response
+      Vary: Accept
+      Content-Type: application/json
+
+   :statuscode 204: no error
+
+
+Certificate
+-----------
+
+The Certificate resource represents SSL Certificates.
+
+List resource
++++++++++++++
+
+.. http:get:: /api/v1.0/system/certificate/
+
+   Returns a list of certificates.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      GET /api/v1.0/system/certificate/ HTTP/1.1
+      Content-Type: application/json
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 200 OK
+      Vary: Accept
+      Content-Type: application/json
+
+      [
+        {
+
+        }
+      ]
+
+   :query offset: offset number. default is 0
+   :query limit: limit number. default is 20
+   :resheader Content-Type: content type of the response
+   :statuscode 200: no error
+
+
+Create Internal Certificate
++++++++++++++++++++++++++++
+
+.. http:post:: /api/v1.0/system/certificate/internal/
+
+   Creates a Certificate and returns the object.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      POST /api/v1.0/system/certificate/internal/ HTTP/1.1
+      Content-Type: application/json
+
+        {
+                "cert_city": "San Jose",
+                "cert_email": "example@ixsystems.com",
+                "cert_common": "FreeNAS",
+                "cert_country": "US",
+                "cert_digest_algorithm": "SHA256",
+                "cert_lifetime": 3650,
+                "cert_name": "internalcert",
+                "cert_organization": "iXsystems",
+                "cert_state": "CA",
+                "cert_key_length": 2048,
+                "cert_signedby": 1
+        }
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 201 Created
+      Vary: Accept
+      Content-Type: application/json
+
+        Certificate created.
+
+   :json string cert_name: identifier
+   :json string cert_common: certificate common name
+   :json string cert_city: certificate city
+   :json string cert_state: certificate state
+   :json string cert_country: certificate country (2 chars)
+   :json string cert_email: cetificate email
+   :json string cert_organization: certificate organization
+   :json string cert_digest_algorithm: digest algorithm (SHA1, SHA224, SHA256, SHA384, SHA512)
+   :json interger cert_lifetime: certificate lifetime in days
+   :json interger cert_key_length: certificate key length (1024, 2048, 4096)
+   :json interger cert_signedby: id of the certificate authority
+   :reqheader Content-Type: the request content type
+   :resheader Content-Type: the response content type
+   :statuscode 201: no error
+
+
+Import CA
++++++++++
+
+.. http:post:: /api/v1.0/system/certificate/import/
+
+   Imports a Certificate and returns the object.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      POST /api/v1.0/system/certificate/import/ HTTP/1.1
+      Content-Type: application/json
+
+        {
+                "cert_name": "importcertificate",
+                "cert_certificate": "-----BEGIN CERTIFICATE-----\nMIIDqjCCApKgAwIBAgIBAjANBgkqhkiG9w0BAQsFADB5MQswCQYDVQQGEwJVUzEL\nMAkGA1UECAwCQ0ExETAPBgNVBAcMCFNhbiBKb3NlMRIwEAYDVQQKDAlpWHN5c3Rl\nbXMxEDAOBgNVBAMMB0ZyZWVOQVMxJDAiBgkqhkiG9w0BCQEWFWV4YW1wbGVAaXhz\neXN0ZW1zLmNvbTAeFw0xNzA1MDQxOTEzMzVaFw0yNzA1MDIxOTEzMzVaMHkxCzAJ\nBgNVBAYTAlVTMQswCQYDVQQIDAJDQTERMA8GA1UEBwwIU2FuIEpvc2UxEjAQBgNV\nBAoMCWlYc3lzdGVtczEQMA4GA1UEAwwHRnJlZU5BUzEkMCIGCSqGSIb3DQEJARYV\nZXhhbXBsZUBpeHN5c3RlbXMuY29tMIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIB\nCgKCAQEAz6ok2HVC6Pl/Ezv67nZncgyr6US5479bzIsRXZLuXS8NIElVbTlIOAOD\nQobXEZnuAhg4gNk5KaU4yAg79pKE6VbKBQs0DI1kULjkUEL7Z9Hd9p31wvGUJJQm\nPwHMLMnfmzyy8M4b+bpeSafjjk3zOopBP2/mJcnY/4q/Qi++lkY7yz+GW3YgHL3c\nh2XkoA1Q+oMN39uZ+HnGhmjiiIyfwbtgCRfsw70bg20XsrvnX9lSAFZyAzgYt6nP\n4Ms27Z3hCFuXm05azM9/loTZU++egxR3rJ9j9xzd/FOW5PYXCFh7UiMKKPWQjYi4\nit2GyPAsrkyHgsrkuINEKQJ7fmHIvwIDAQABoz0wOzAaBgNVHREEEzARhg9odHRw\nczovL0ZyZWVOQVMwHQYDVR0OBBYEFBcQve6AOOh9DWK6ctdV+b/uQAWfMA0GCSqG\nSIb3DQEBCwUAA4IBAQBYSLv0VliKo9QTPkT2qgZr9TVhjSjx0G+EmlnOdUuAYe2b\nhj8myxdzNNa5nrHcXN/aVRI7vcRQy575jpGIvZ914U4l28XHgLFtfgkxjh/FLZii\nFv3bwqZKLZYQgt/4r301+FMMJK3bpR3WSyiDYdDvcuYRMGX76mNbJ/V6q2pI0lqi\nFXebaYXyIOaAORzC/ltlZxgF23zNqqMB16MzS/u5kvdcTHwI3peiPDr0FjM2zyOv\nZrQ3Dk7KyQ/bvNwu1wHIigY9xinEnzyv5iuZ4p55zugw8kbe0QnlIgUO6YY4wjdC\nXGFhV/08YraeY9rkB6X+ygRDzaFtg9Jve1cFploo\n-----END CERTIFICATE-----\n",
+                "cert_privatekey": "-----BEGIN PRIVATE KEY-----\nMIIEvwIBADANBgkqhkiG9w0BAQEFAASCBKkwggSlAgEAAoIBAQDPqiTYdULo+X8T\nO/rudmdyDKvpRLnjv1vMixFdku5dLw0gSVVtOUg4A4NChtcRme4CGDiA2TkppTjI\nCDv2koTpVsoFCzQMjWRQuORQQvtn0d32nfXC8ZQklCY/Acwsyd+bPLLwzhv5ul5J\np+OOTfM6ikE/b+Ylydj/ir9CL76WRjvLP4ZbdiAcvdyHZeSgDVD6gw3f25n4ecaG\naOKIjJ/Bu2AJF+zDvRuDbReyu+df2VIAVnIDOBi3qc/gyzbtneEIW5ebTlrMz3+W\nhNlT756DFHesn2P3HN38U5bk9hcIWHtSIwoo9ZCNiLiK3YbI8CyuTIeCyuS4g0Qp\nAnt+Yci/AgMBAAECggEBAKiE2zepGO40obG7J+vhvBqqO8ul0PAHtvgrFqGH/dUy\nvIUp3aAwLvH9r8QJ5nfLIYEjpJ6zKJcqFAUH4Zk7143/txsWt1tEVlbHY8faQ2hB\nv81E7E4RevWgH9VboRPrkoDIZjHSIJOscJ13F8vAaBRmY4KWTP73aRgewQx18ETD\nLJ/uwL/XD4wQ0GzxTregJYdjg6ePB4tVoTwR0jxF/8QUj/xHluGGxqhkwkSpTCMY\n6o0L1hj6Zqvq1kkH/xkOqiP6Bs8o0Aa+i8jqbm4o6575LAPnoJ1Dq5TdIK/ph1Jx\n4zKnNbo7ep8gY6mcznzF6bWmKlip4KUwddaZcA+sNAkCgYEA+VOSjXsbX9RQWVNH\nf20qi7d2/gHYeiErfhWZQU7/tRFF3vsfmI9bpqdimrSf3ItEyIBjz28fZzk3dvCF\nVVg0pwD8KL8HhITJh1fouT2QivDQVoCnAxTl72Xn20FnvMUK7cPtGzl0Ai14PxNJ\ndp8GPFSfWPaEvp2zQNFYVeErKG0CgYEA1TkY86ByFxmOa6bnhHfRGCnVXEIaLRJg\nh0m+be+PWivQklr0mjoev8lmnKi4C9RoHAyPVJl+sJF1M21T/67ANPd2kDLGBmoS\nXe3RYYjdgEWYu5/VpCiaHcW9VuymKMx+UiiFp2E3TEW9KE42jyDgd9+kvSVaokew\nXle4mBXF0lsCgYAeH3i/WzZNd6tVf3hN7vSK+NmJitOKveMxUo63k0HVsIaOkCyb\nFAbwtZx2MIh37uOajdiBQV277O/EkP6q9wM1gir1CU9xNVHb5kUZzFRgVQP2z4he\nGPJG4DsJBHfyGKRfYaKN/X0EnlW+2SexCzmHpHm0F+Sl2wvDMwfHKHM8aQKBgQCe\nPUKcQ52IMSo2EGbPM5CU6y7xygjdHD9RB9RwiBIOLGgcxa2z66A4WwJxDvGPrfIZ\npuSUN1oDNeAR63gkT49Lf7+Y4mV+CyhYVw9F4CnqcTwZOlR2AL/nioGqyfPCYYj5\n9iLChm5gh30LNYheDlsn+2yqBtfNiYCFc3qGO9pU8wKBgQC/XpN2+wUQp+pv4YgC\np/Is/Lve2C/Rp/C3Za7Dx05uqTG9xnktISufXTuM0jU3EP7ismjtNQOy+alcu+7t\n27nuoLf6EWiUeIIEPovFLNxvKnHaIdjNpuIyY1oup7RSSGx1IfeuRdBi+3e4pi2N\njJOOCAmlr2acAI3jR3ZLOsSPzA==\n-----END PRIVATE KEY-----\n",
+                "cert_serial": null
+        }
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 201 Created
+      Vary: Accept
+      Content-Type: application/json
+
+        Certificate imported.
+
+   :json string cert_name: identifier
+   :json string cert_certificate: encoded certificate
+   :json string cert_privatekey: encoded private key (if any)
+   :json integer cert_serial: certificate serial
+   :reqheader Content-Type: the request content type
+   :resheader Content-Type: the response content type
+   :statuscode 201: no error
+
+
+Delete resource
++++++++++++++++
+
+.. http:delete:: /api/v1.0/system/certificate/(int:id)/
+
+   Delete Certificate `id`.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      DELETE /api/v1.0/system/certificate/1/ HTTP/1.1
       Content-Type: application/json
 
    **Example response**:
