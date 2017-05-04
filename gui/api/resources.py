@@ -97,6 +97,7 @@ from freenasUI.system.forms import (
     CertificateAuthorityCreateInternalForm,
     CertificateAuthorityCreateIntermediateForm,
     CertificateAuthorityImportForm,
+    CertificateImportForm,
     ManualUpdateTemporaryLocationForm,
     ManualUpdateUploadForm,
     ManualUpdateWizard,
@@ -2818,7 +2819,7 @@ class CertificateAuthorityResourceMixin(object):
                 r"^(?P<resource_name>%s)/import%s$" % (
                     self._meta.resource_name, trailing_slash()
                 ),
-                self.wrap_view('import'),
+                self.wrap_view('importcert'),
             ),
             url(
                 r"^(?P<resource_name>%s)/intermediate%s$" % (
@@ -2834,7 +2835,7 @@ class CertificateAuthorityResourceMixin(object):
             ),
         ]
 
-    def import(self, request, **kwargs):
+    def importcert(self, request, **kwargs):
         self.method_check(request, allowed=['post'])
         self.is_authenticated(request)
 
@@ -2957,6 +2958,38 @@ class CertificateAuthorityResourceMixin(object):
 
 
 class CertificateResourceMixin(object):
+
+    def prepend_urls(self):
+        return [
+            url(
+                r"^(?P<resource_name>%s)/import%s$" % (
+                    self._meta.resource_name, trailing_slash()
+                ),
+                self.wrap_view('importcert'),
+            ),
+        ]
+
+    def importcert(self, request, **kwargs):
+        self.method_check(request, allowed=['post'])
+        self.is_authenticated(request)
+
+        if request.body:
+            deserialized = self.deserialize(
+                request,
+                request.body,
+                format=request.META.get('CONTENT_TYPE', 'application/json'),
+            )
+        else:
+            deserialized = {}
+
+        form = CertificateImportForm(data=deserialized)
+        if not form.is_valid():
+            raise ImmediateHttpResponse(
+                response=self.error_response(request, form.errors)
+            )
+        else:
+            form.save()
+        return HttpResponse('Certificate imported.', status=202)
 
     def dehydrate(self, bundle):
         bundle = super(CertificateResourceMixin, self).dehydrate(bundle)
