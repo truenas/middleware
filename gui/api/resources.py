@@ -97,6 +97,7 @@ from freenasUI.system.forms import (
     CertificateAuthorityCreateInternalForm,
     CertificateAuthorityCreateIntermediateForm,
     CertificateAuthorityImportForm,
+    CertificateCreateInternalForm,
     CertificateImportForm,
     ManualUpdateTemporaryLocationForm,
     ManualUpdateUploadForm,
@@ -2967,6 +2968,12 @@ class CertificateResourceMixin(object):
                 ),
                 self.wrap_view('importcert'),
             ),
+            url(
+                r"^(?P<resource_name>%s)/internal%s$" % (
+                    self._meta.resource_name, trailing_slash()
+                ),
+                self.wrap_view('internal'),
+            ),
         ]
 
     def importcert(self, request, **kwargs):
@@ -2990,6 +2997,28 @@ class CertificateResourceMixin(object):
         else:
             form.save()
         return HttpResponse('Certificate imported.', status=202)
+
+    def internal(self, request, **kwargs):
+        self.method_check(request, allowed=['post'])
+        self.is_authenticated(request)
+
+        if request.body:
+            deserialized = self.deserialize(
+                request,
+                request.body,
+                format=request.META.get('CONTENT_TYPE', 'application/json'),
+            )
+        else:
+            deserialized = {}
+
+        form = CertificateCreateInternalForm(data=deserialized)
+        if not form.is_valid():
+            raise ImmediateHttpResponse(
+                response=self.error_response(request, form.errors)
+            )
+        else:
+            form.save()
+        return HttpResponse('Certificate created.', status=202)
 
     def dehydrate(self, bundle):
         bundle = super(CertificateResourceMixin, self).dehydrate(bundle)
