@@ -1,8 +1,9 @@
 from middlewared.schema import accepts, Dict, Str
-from middlewared.service import private, Service
+from middlewared.service import private, CallError, Service
 from middlewared.utils import Popen
 
 import base64
+import errno
 import os
 import subprocess
 
@@ -43,6 +44,9 @@ class ReplicationService(Service):
         except IndexError:
             raise ValueError('User "{}" does not exist'.format(data.get('user')))
 
+        if user['bsdusr_home'].startswith('/nonexistent'):
+            raise CallError(f'User home directory does not exist', errno.ENOENT)
+
         # Make sure SSH is enabled
         if not service['srv_enable']:
             self.middleware.call('datastore.update', 'services.services', service['id'], {'srv_enable': True})
@@ -52,11 +56,17 @@ class ReplicationService(Service):
             # which will then result in new host keys we need to grab
             ssh = self.middleware.call('datastore.query', 'services.ssh', None, {'get': True})
 
-        if not os.path.exists(user['bsdusr_home'].encode('utf8')):
+        if not os.path.exists(user['bsdusr_home']):
             raise ValueError('Homedir {} does not exist'.format(user['bsdusr_home']))
 
+        # If .ssh dir does not exist, create it
+        dotsshdir = os.path.join(user['bsdusr_home'], '.ssh')
+        if not os.path.exists(dotsshdir):
+            os.mkdir(dotsshdir)
+            os.chown(dotsshdir, user['bsdusr_uid'], user['bsdusr_group']['bsdgrp_gid'])
+
         # Write public key in user authorized_keys for SSH
-        authorized_keys_file = '{}/.ssh/authorized_keys'.format(user['bsdusr_home'])
+        authorized_keys_file = f'{dotsshdir}/authorized_keys'
         with open(authorized_keys_file, 'a+') as f:
             f.seek(0)
             if data['public-key'] not in f.read():
