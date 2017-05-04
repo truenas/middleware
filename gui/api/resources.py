@@ -2857,7 +2857,7 @@ class CertificateAuthorityResourceMixin(object):
             )
         else:
             form.save()
-        return HttpResponse('Certificated Authority imported.', status=202)
+        return HttpResponse('Certificate Authority imported.', status=201)
 
     def intermediate(self, request, **kwargs):
         self.method_check(request, allowed=['post'])
@@ -2879,7 +2879,7 @@ class CertificateAuthorityResourceMixin(object):
             )
         else:
             form.save()
-        return HttpResponse('Certificated Authority created.', status=202)
+        return HttpResponse('Certificate Authority created.', status=201)
 
     def internal(self, request, **kwargs):
         self.method_check(request, allowed=['post'])
@@ -2901,7 +2901,7 @@ class CertificateAuthorityResourceMixin(object):
             )
         else:
             form.save()
-        return HttpResponse('Certificated Authority created.', status=202)
+        return HttpResponse('Certificate Authority created.', status=201)
 
     def dehydrate(self, bundle):
         bundle = super(CertificateAuthorityResourceMixin,
@@ -3003,7 +3003,7 @@ class CertificateResourceMixin(object):
             )
         else:
             form.save()
-        return HttpResponse('Certificate Signing Request created.', status=202)
+        return HttpResponse('Certificate Signing Request created.', status=201)
 
     def importcert(self, request, **kwargs):
         self.method_check(request, allowed=['post'])
@@ -3025,7 +3025,7 @@ class CertificateResourceMixin(object):
             )
         else:
             form.save()
-        return HttpResponse('Certificate imported.', status=202)
+        return HttpResponse('Certificate imported.', status=201)
 
     def internal(self, request, **kwargs):
         self.method_check(request, allowed=['post'])
@@ -3047,7 +3047,7 @@ class CertificateResourceMixin(object):
             )
         else:
             form.save()
-        return HttpResponse('Certificate created.', status=202)
+        return HttpResponse('Certificate created.', status=201)
 
     def dehydrate(self, bundle):
         bundle = super(CertificateResourceMixin, self).dehydrate(bundle)
