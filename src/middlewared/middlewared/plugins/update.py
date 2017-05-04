@@ -309,7 +309,7 @@ class UpdateService(Service):
         return True
 
     @accepts()
-    @job(lock='updatedownload')
+    @job(lock='updatedownload', process=True)
     def download(self, job):
         train = self.get_trains()['selected']
         location = self.middleware.call('notifier.get_update_location')
@@ -323,10 +323,12 @@ class UpdateService(Service):
         if not update:
             return False
 
+        notified = False
         try:
-            notified = self.middleware.call('cache.get', 'update.notified')
+            if self.middleware.call('cache.has_key', 'update.notified'):
+                notified = self.middleware.call('cache.get', 'update.notified')
         except Exception:
-            notified = False
+            pass
 
         if not notified:
             self.middleware.call('cache.put', 'update.notified', True)
