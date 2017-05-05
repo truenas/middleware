@@ -143,9 +143,12 @@ class VMSupervisor(object):
     def destroy_vm(self):
         self.logger.warn("===> DESTROYING VM: %s ID: %s BHYVE_CODE: %s" % (self.vm['name'], self.vm['id'], self.bhyve_error))
         bhyve_error = Popen(['bhyvectl', '--destroy', '--vm={}'.format(self.vm['name'])], stdout=subprocess.PIPE, stderr=subprocess.PIPE).wait()
+        self.manager._vm.pop(self.vm['id'], None)
+        self.destroy_tap()
+
+    def destroy_tap(self):
         while self.taps:
             netif.destroy_interface(self.taps.pop())
-        self.manager._vm.pop(self.vm['id'], None)
 
     def stop(self):
         if self.proc:
@@ -155,6 +158,7 @@ class VMSupervisor(object):
                 # Already stopped, process do not exist anymore
                 if e.errno != errno.ESRCH:
                     raise
+            self.destroy_tap()
             return True
 
     def running(self):
