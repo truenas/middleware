@@ -21,7 +21,7 @@ do_postinit()
 
 	# Send event to middlewared saying we are late enough in the process
 	# to call it ready
-	/usr/local/bin/midclt call core.event_send system ADDED '{"id": "ready"}'
+	/usr/local/bin/midclt call core.event_send system ADDED '{"id": "ready"}' > /dev/null
 
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
 	"SELECT $sf FROM tasks_initshutdown WHERE ini_when = 'postinit' ORDER BY id" | \
