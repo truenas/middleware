@@ -140,12 +140,13 @@ class VMSupervisor(object):
         elif self.bhyve_error in (1, 2, 3):
             self.logger.info("===> STOPPING VM: {0} ID: {1} BHYVE_CODE: {2}".format(self.vm['name'], self.vm['id'], self.bhyve_error))
             self.manager.stop(self.vm['id'])
-            self.destroy_vm()
-        elif self.bhyve_error not in (0, 1, 2, 3):
+        elif self.bhyve_error not in (0, 1, 2, 3, None):
+            self.logger.info("===> ERROR VM: {0} ID: {1} BHYVE_CODE: {2}".format(self.vm['name'], self.vm['id'], self.bhyve_error))
             self.destroy_vm()
 
     def destroy_vm(self):
         self.logger.warn("===> DESTROYING VM: {0} ID: {1} BHYVE_CODE: {2}".format(self.vm['name'], self.vm['id'], self.bhyve_error))
+        # XXX: We need to catch the bhyvectl return error.
         bhyve_error = Popen(['bhyvectl', '--destroy', '--vm={}'.format(self.vm['name'])], stdout=subprocess.PIPE, stderr=subprocess.PIPE).wait()
         self.manager._vm.pop(self.vm['id'], None)
         self.destroy_tap()
@@ -162,7 +163,8 @@ class VMSupervisor(object):
                 # Already stopped, process do not exist anymore
                 if e.errno != errno.ESRCH:
                     raise
-            self.destroy_tap()
+            # XXX: For now we destroy the VM, but we need to be able to wake up it after stop.
+            self.destroy_vm()
             return True
 
     def running(self):
@@ -269,6 +271,17 @@ class VMService(CRUDService):
     def status(self, id):
         """Get the status of a VM, if it is RUNNING or STOPPED."""
         return self._manager.status(id)
+
+    @accepts(Int('id'))
+    def restart(self, id):
+        """ Restart a VM."""
+        stop_vm = self.stop(id)
+
+        if stop_vm is True:
+            start_vm = self.start(id)
+            return start_vm
+        else:
+            return stop_vm
 
 
 def kmod_load():
