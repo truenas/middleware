@@ -413,6 +413,7 @@ class Middleware(object):
         self.__schemas = {}
         self.__services = {}
         self.__wsclients = {}
+        self.__event_subs = defaultdict(list)
         self.__hooks = defaultdict(list)
         self.__server_threads = []
         self.__init_services()
@@ -585,6 +586,12 @@ class Middleware(object):
         methodobj = getattr(self.get_service(service), method)
         return self._call(name, methodobj, params)
 
+    def event_subscribe(self, name, handler):
+        """
+        Internal way for middleware/plugins to subscribe to events.
+        """
+        self.__event_subs[name].append(handler)
+
     def send_event(self, name, event_type, **kwargs):
         assert event_type in ('ADDED', 'CHANGED', 'REMOVED')
         for sessionid, wsclient in self.__wsclients.items():
@@ -592,6 +599,10 @@ class Middleware(object):
                 wsclient.send_event(name, event_type, **kwargs)
             except:
                 self.logger.warn('Failed to send event {} to {}'.format(name, sessionid), exc_info=True)
+
+        # Send event also for internally subscribed plugins
+        for handler in self.__event_subs.get(name, []):
+            gevent.spawn(handler, self, event_type, kwargs)
 
     def pdb(self):
         import pdb
