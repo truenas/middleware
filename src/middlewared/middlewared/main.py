@@ -6,7 +6,8 @@ from .client import ejson as json
 from .client.protocol import DDPProtocol
 from .job import Job, JobsQueue
 from .restful import RESTfulAPI
-from .service import CallException
+from .schema import Error as SchemaError
+from .service import CallError, CallException
 from .utils import Popen
 from collections import OrderedDict, defaultdict
 from daemon import DaemonContext
@@ -18,6 +19,7 @@ from geventwebsocket import WebSocketServer, WebSocketApplication, Resource
 import argparse
 import binascii
 import cgi
+import errno
 import gevent
 import greenlet
 import imp
@@ -168,7 +170,7 @@ class Application(WebSocketApplication):
                 'msg': 'result',
                 'result': result,
             })
-        except CallException as e:
+        except (CallException, SchemaError) as e:
             # CallException and subclasses are the way to gracefully
             # send errors to the client
             self.send_error(message, str(e), sys.exc_info())
@@ -569,11 +571,20 @@ class Middleware(object):
         else:
             return methodobj(*args)
 
+    def _method_lookup(self, name):
+        if '.' not in name:
+            raise CallError('Invalid method name', errno.EBADMSG)
+        try:
+            service, method_name = name.rsplit('.', 1)
+            methodobj = getattr(self.get_service(service), method_name)
+        except AttributeError:
+            raise CallError(f'Method "{method_name}" not found in "{service}"', errno.ENOENT)
+        return methodobj
+
     def call_method(self, app, message):
         """Call method from websocket"""
         params = message.get('params') or []
-        service, method_name = message['method'].rsplit('.', 1)
-        methodobj = getattr(self.get_service(service), method_name)
+        methodobj = self._method_lookup(message['method'])
 
         if not app.authenticated and not hasattr(methodobj, '_no_auth_required'):
             app.send_error(message, 'Not authenticated')
@@ -582,8 +593,7 @@ class Middleware(object):
         return self._call(message['method'], methodobj, params, app=app)
 
     def call(self, name, *params):
-        service, method = name.rsplit('.', 1)
-        methodobj = getattr(self.get_service(service), method)
+        methodobj = self._method_lookup(name)
         return self._call(name, methodobj, params)
 
     def event_subscribe(self, name, handler):
