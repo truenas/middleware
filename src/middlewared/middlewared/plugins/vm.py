@@ -130,18 +130,18 @@ class VMSupervisor(object):
         # all other non-zero status codes are errors
         self.bhyve_error = self.proc.wait()
         if self.bhyve_error == 0:
-            self.logger.info("===> REBOOTING VM: %s ID: %s BHYVE_CODE: %s" % (self.vm['name'], self.vm['id'], self.bhyve_error))
+            self.logger.info("===> REBOOTING VM: {0} ID: {1} BHYVE_CODE: {2}".format(self.vm['name'], self.vm['id'], self.bhyve_error))
             self.manager.stop(self.vm['id'])
             self.manager.start(self.vm['id'])
         elif self.bhyve_error in (1, 2, 3):
-            self.logger.info("===> STOPPING VM: %s ID: %s BHYVE_CODE: %s" % (self.vm['name'], self.vm['id'], self.bhyve_error))
+            self.logger.info("===> STOPPING VM: {0} ID: {1} BHYVE_CODE: {2}".format(self.vm['name'], self.vm['id'], self.bhyve_error))
             self.manager.stop(self.vm['id'])
             self.destroy_vm()
         elif self.bhyve_error not in (0, 1, 2, 3):
             self.destroy_vm()
 
     def destroy_vm(self):
-        self.logger.warn("===> DESTROYING VM: %s ID: %s BHYVE_CODE: %s" % (self.vm['name'], self.vm['id'], self.bhyve_error))
+        self.logger.warn("===> DESTROYING VM: {0} ID: {1} BHYVE_CODE: {2}".format(self.vm['name'], self.vm['id'], self.bhyve_error))
         bhyve_error = Popen(['bhyvectl', '--destroy', '--vm={}'.format(self.vm['name'])], stdout=subprocess.PIPE, stderr=subprocess.PIPE).wait()
         self.manager._vm.pop(self.vm['id'], None)
         self.destroy_tap()
