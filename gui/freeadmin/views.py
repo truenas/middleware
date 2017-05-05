@@ -26,6 +26,7 @@
 
 import json
 import logging
+import socket
 import sys
 from middlewared.client import ClientException
 import middlewared.logger as logger
@@ -203,7 +204,7 @@ def server_error(request, *args, **kwargs):
     ]
     # If the exception comes from middleware client lets append the log
     # since middlewared itself might be stuck
-    if issubclass(exc_info[0], ClientException):
+    if issubclass(exc_info[0], (ClientException, socket.timeout)):
         extra_log_files.insert(0, ('/var/log/middlewared.log', 'middlewared_log'))
     trace_rollbar.rollbar_report(exc_info, request, sw_version, extra_log_files)
 
