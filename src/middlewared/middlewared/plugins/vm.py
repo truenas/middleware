@@ -1,4 +1,4 @@
-from middlewared.schema import accepts, Int, Str, Dict, List, Ref
+from middlewared.schema import accepts, Int, Str, Dict, List, Ref, Bool
 from middlewared.service import filterable, CRUDService
 from middlewared.utils import Nid, Popen
 
@@ -224,7 +224,8 @@ class VMService(CRUDService):
         Int('vcpus'),
         Int('memory'),
         Str('bootloader'),
-        List("devices"),
+        List('devices'),
+        Bool('autostart'),
         ))
     def do_create(self, data):
         """Create a VM."""
@@ -243,6 +244,7 @@ class VMService(CRUDService):
         Int('vcpus'),
         Int('memory'),
         Str('bootloader'),
+        Bool('autostart'),
         ))
     def do_update(self, id, data):
         """Update all information of a specific VM."""
@@ -284,10 +286,9 @@ def _event_system_ready(middleware, event_type, args):
     """
     if args['id'] != 'ready':
         return
-    # TODO: add autostart option
-    for vm in middleware.call('vm.query'):
-        #middleware.call('vm.start', vm['id'])
-        pass
+
+    for vm in middleware.call('vm.query', [('autostart', '=', True)]):
+        middleware.call('vm.start', vm['id'])
 
 
 def setup(middleware):
