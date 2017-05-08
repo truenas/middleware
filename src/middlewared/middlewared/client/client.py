@@ -5,10 +5,14 @@ from threading import Event, Lock, Thread
 from ws4py.client.threadedclient import WebSocketClient
 
 import argparse
+import os
 import socket
 import sys
 import time
 import uuid
+
+
+CALL_TIMEOUT = int(os.environ.get('CALL_TIMEOUT', 60))
 
 
 class WSClient(WebSocketClient):
@@ -183,7 +187,7 @@ class Client(object):
         self.subscribe('core.get_jobs', self._jobs_callback)
 
     def call(self, method, *params, **kwargs):
-        timeout = kwargs.pop('timeout', 30)
+        timeout = kwargs.pop('timeout', CALL_TIMEOUT)
         job = kwargs.pop('job', False)
 
         # We need to make sure we are subscribed to receive job updates
@@ -365,6 +369,7 @@ def main():
             sys.exit(1)
         else:
             sys.exit(0)
+
 
 if __name__ == '__main__':
     main()
