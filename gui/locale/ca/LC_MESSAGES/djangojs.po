@@ -1,33 +1,33 @@
-# SOME DESCRIPTIVE TITLE.
-# Copyright (C) YEAR THE PACKAGE'S COPYRIGHT HOLDER
-# This file is distributed under the same license as the PACKAGE package.
-# FIRST AUTHOR <EMAIL@ADDRESS>, YEAR.
-#
 msgid ""
 msgstr ""
-"Project-Id-Version: PACKAGE VERSION\n"
+"Project-Id-Version: Catalan (FreeNAS)\n"
 "Report-Msgid-Bugs-To: \n"
-"POT-Creation-Date: 2012-06-04 02:10-0700\n"
-"PO-Revision-Date: 2016-12-22 16:36+0000\n"
-"Last-Translator: Davidmp <rbndavid@gmail.com>\n"
+"POT-Creation-Date: 2017-05-08 16:21+0000\n"
+"PO-Revision-Date: 2017-05-08 18:42+0200\n"
+"Last-Translator: \n"
 "Language-Team: Catalan "
-"<http://weblate.trueos.org/projects/freenas/djangojs/ca/>\n"
+"<http://weblate.trueos.org/projects/freenas/django/ca/>\n"
 "Language: ca\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=2; plural=n != 1;\n"
-"X-Generator: Weblate 2.10-dev\n"
+"X-Generator: Poedit 1.8.7.1\n"
 "X-POOTLE-MTIME: 1406196131.0\n"
 
 #~ msgid "Reporting"
-#~ msgstr "Presentar informe"
+#~ msgstr "Reportant"
 
 #: freeadmin/static/lib/js/freeadmin.js:68
+#: services/nav.py:168,
+#: system/models.py:84,
+#: system/nav.py:28,
+#: templates/system/settings.html:2
 msgid "Settings"
 msgstr "Paràmetres"
 
 #: freeadmin/static/lib/js/freeadmin.js:79
+#: system/nav.py:20
 msgid "System Information"
 msgstr "Informació del sistema"
 
@@ -36,14 +36,22 @@ msgid "Network Settings"
 msgstr "Paràmetres de la xarxa"
 
 #: freeadmin/static/lib/js/freeadmin.js:190
+#: services/models.py:58,
+#: services/models.py:59,
+#: services/nav.py:8,
+#: templates/menubar.html:27
 msgid "Services"
 msgstr "Serveis"
 
 #: freeadmin/static/lib/js/freeadmin.js:231
+#: account/nav.py:5,
+#: templates/menubar.html:47
 msgid "Account"
 msgstr "Compte"
 
 #: freeadmin/static/lib/js/freeadmin.js:270
+#: storage/nav.py:5,
+#: templates/menubar.html:17
 msgid "Storage"
 msgstr "Emmagatzematge"
 
@@ -59,6 +67,7 @@ msgstr "Hi ha hagut algun error"
 #~ msgstr "Editar disc"
 
 #: freeadmin/static/lib/js/freeadmin.js:547
+#: storage/admin.py:36
 msgid "Wipe"
 msgstr "Esborra"
 
@@ -67,6 +76,13 @@ msgid "Wipe Disk"
 msgstr "Esborra el disc"
 
 #: freeadmin/static/lib/js/freeadmin.js:862
+#: templates/plugins/jailpbi.html:21,
+#: templates/plugins/plugin_info.html:27,
+#: templates/storage/disk_detach.html:13,
+#: templates/storage/snapshot_confirm_rollback.html:13,
+#: templates/storage/volume_detach.html:26,
+#: templates/storage/zvol_confirm_delete.html:13,
+#: templates/system/wizard.html:16
 msgid "Please wait..."
 msgstr "Espereu, si us plau..."
 
@@ -118,18 +134,32 @@ msgid "Shares"
 msgstr "Comparticions"
 
 #: freeadmin/static/lib/js/freeadmin/Menu.js:213
+#: jails/hook.py:13,
+#: jails/models.py:324,
+#: jails/models.py:325,
+#: jails/nav.py:47,
+#: templates/jails/index.html:17
 msgid "Jails"
 msgstr "Gàbies"
 
 #: freeadmin/static/lib/js/freeadmin/Menu.js:252
+#: plugins/models.py:96,
+#: plugins/models.py:97,
+#: services/models.py:835,
+#: services/models.py:836,
+#: services/nav.py:215,
+#: templates/services/core.html:96,
+#: templates/services/index.html:16
 msgid "Plugins"
 msgstr "Connectors"
 
 #: freeadmin/static/lib/js/freeadmin/Menu.js:400
+#: support/models.py:49
 msgid "Support"
 msgstr "Suport"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:124
+#: templates/storage/volumes.html:62
 msgid "Size"
 msgstr "Mida"
 
@@ -190,14 +220,17 @@ msgid "Drag and drop this to resize"
 msgstr "Arrossegueu-ho i deixeu-ho anar per canviar-ne la mida"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1018
+#: templates/storage/wizard.html:156
 msgid "Add Volume"
 msgstr "Afegeix un volum"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1018
+#: templates/storage/wizard.html:157
 msgid "Existing data will be cleared"
 msgstr "Les dades existents s'esborraran"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1019
+#: templates/storage/wizard.html:92
 msgid "Extend Volume"
 msgstr "Amplia el volum"
 
@@ -206,6 +239,7 @@ msgid "Volume Name"
 msgstr "Nom del volum"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1067
+#: templates/storage/wizard.html:27
 msgid "Volume to extend"
 msgstr "Volum per ampliar"
 
@@ -217,6 +251,8 @@ msgstr ""
 "recuperació!"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1069
+#: storage/forms.py:597,
+#: templates/storage/zfswizard.html:41
 msgid "Encryption"
 msgstr "Encriptació"
 
@@ -237,6 +273,20 @@ msgid "Add Extra Device"
 msgstr "Afegeix un dispositiu extra"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1212
+#: templates/freeadmin/generic_form.html:19,
+#: templates/freeadmin/generic_model_add.html:53,
+#: templates/freeadmin/generic_model_delete.html:33,
+#: templates/freeadmin/generic_model_edit.html:64,
+#: templates/plugins/plugin_confirm_delete.html:16,
+#: templates/storage/disk_detach.html:16,
+#: templates/storage/geom_disk_replace.html:18,
+#: templates/storage/import.html:46,
+#: templates/storage/snapshot_confirm_rollback.html:17,
+#: templates/storage/volume_detach.html:30,
+#: templates/storage/wizard.html:160,
+#: templates/storage/zvol_confirm_delete.html:16,
+#: templates/system/reboot_dialog.html:11,
+#: templates/system/shutdown_dialog.html:11
 msgid "Cancel"
 msgstr "Cancel·la"
 
@@ -245,10 +295,19 @@ msgid "Manual setup"
 msgstr "Configuració manual"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1225
+#: storage/nav.py:40,
+#: templates/storage/volume_datagrid.html:6,
+#: templates/storage/volume_datagrid.html:10
 msgid "ZFS Volume Manager"
 msgstr "Gestor de volums ZFS"
 
 #: freeadmin/static/lib/js/freeadmin/WebShell.js:77
+#: account/forms.py:265,
+#: account/forms.py:558,
+#: account/models.py:115,
+#: freeadmin/navtree.py:360,
+#: templates/account/bsdusers.html:8,
+#: templates/account/bsdusers.html.py:87
 msgid "Shell"
 msgstr "Intèrpret d’ordres"
 
@@ -268,31 +327,43 @@ msgid "Close"
 msgstr "Tanca"
 
 #: freeadmin/static/lib/js/freeadmin.js:918
+#: templates/system/initialwizard_confirm.html:39
 msgid "Confirm"
 msgstr "Confirmació"
 
 #: freeadmin/static/lib/js/freeadmin/Menu.js:49
+#: system/nav.py:5,
+#: templates/menubar.html:7
 msgid "System"
 msgstr "Sistema"
 
 #: freeadmin/static/lib/js/freeadmin/Menu.js:94
+#: tasks/nav.py:4,
+#: templates/menubar.html:13,
+#: templates/tasks/index.html:1
 msgid "Tasks"
 msgstr "Tasques"
 
 #: freeadmin/static/lib/js/freeadmin/Menu.js:92
+#: network/nav.py:6,
+#: templates/menubar.html:12
 msgid "Network"
 msgstr "Xarxa"
 
 #: freeadmin/static/lib/js/freeadmin/Menu.js:182
+#: sharing/nav.py:4,
+#: templates/menubar.html:22
 msgid "Sharing"
 msgstr "Compartició"
 
 #: freeadmin/static/lib/js/freeadmin/Menu.js:521
+#: system/models.py:115
 msgid "Directory Service"
 msgstr "Servei de directori"
 
 #: freeadmin/static/lib/js/freeadmin.js:1772
 #: freeadmin/static/lib/js/freeadmin.js:1863
+#: freeadmin/navtree.py:256
 msgid "Initial Wizard"
 msgstr "Auxiliar inicial"
 
@@ -313,14 +384,63 @@ msgid "Specify the size using B, K, M, G, T prefixes."
 msgstr "Especifiqueu-ne la mida amb els prefixos B, K, M, G, T."
 
 #: freeadmin/static/lib/js/freeadmin/WizardShares.js:133
+#: templates/freeadmin/generic_model_datagrid.html:10
 msgid "Add"
 msgstr "Afegeix"
 
 #: freeadmin/static/lib/js/freeadmin/WizardShares.js:140
+#: system/models.py:546,
+#: templates/freeadmin/generic_model_edit.html:89,
+#: templates/network/interface.html:32,
+#: templates/network/lagg.html:44,
+#: templates/network/lagg_members.html:24,
+#: templates/network/lagg_members.html:26,
+#: templates/network/staticroute.html:24,
+#: templates/network/vlan.html:25,
+#: templates/plugins/index.html:45,
+#: templates/plugins/mountpoints.html:23,
+#: templates/services/iscsi_assoctargets.html:22,
+#: templates/services/iscsi_assoctargets.html:24,
+#: templates/services/iscsi_auth.html:24,
+#: templates/services/iscsi_auth.html:26,
+#: templates/services/iscsi_authini.html:26,
+#: templates/services/iscsi_authini.html:28,
+#: templates/services/iscsi_dextents.html:24,
+#: templates/services/iscsi_dextents.html:26,
+#: templates/services/iscsi_extents.html:24,
+#: templates/services/iscsi_extents.html:26,
+#: templates/services/iscsi_portals.html:30,
+#: templates/services/iscsi_targets.html:24,
+#: templates/services/iscsi_targets.html:26,
+#: templates/services/plugins.html:60,
+#: templates/services/pluginsjail_edit.html:14,
+#: templates/services/rsyncmod.html:24,
+#: templates/services/rsyncmod.html:26,
+#: templates/sharing/apple.html:33,
+#: templates/sharing/unix.html:33,
+#: templates/sharing/windows.html:37,
+#: templates/storage/scrub.html:33,
+#: templates/storage/scrub.html.py:35,
+#: templates/storage/tasks.html:138,
+#: templates/storage/tasks.html.py:140,
+#: templates/system/cronjob.html:32,
+#: templates/system/cronjob.html.py:34,
+#: templates/system/ntpserver.html:29,
+#: templates/system/ntpserver.html.py:31,
+#: templates/system/rsync.html:39,
+#: templates/system/rsync.html.py:41,
+#: templates/system/smarttest.html:29,
+#: templates/system/smarttest.html.py:31,
+#: templates/system/sysctl.html:25,
+#: templates/system/sysctl.html.py:27,
+#: templates/system/tunable.html:25,
+#: templates/system/tunable.html.py:27
 msgid "Delete"
 msgstr "Esborra"
 
 #: freeadmin/static/lib/js/freeadmin/WizardShares.js:153
+#: templates/services/plugins.html:54,
+#: templates/system/config_upload.html:2
 msgid "Update"
 msgstr "Actualitza"
 
@@ -341,6 +461,7 @@ msgid "Return"
 msgstr "Retorn"
 
 #: freeadmin/static/lib/js/freeadmin.js:1772
+#: freeadmin/navtree.py:256
 msgid "Wizard"
 msgstr "Auxiliar"
 
@@ -349,6 +470,8 @@ msgid "Paswords do not match."
 msgstr "Les contrasenyes no coincideixen."
 
 #: freeadmin/static/lib/js/freeadmin.js:374
+#: templates/system/reboot_dialog.html:3,
+#: templates/system/shutdown_dialog.html:3
 msgid "Warning!"
 msgstr "Avís!"
 
@@ -390,6 +513,8 @@ msgstr "La contrasenya no pot estar en blanc."
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:79
 #: freeadmin/static/lib/js/freeadmin/Update.js:81
+#: templates/system/upgrade_edit.html:13,
+#: templates/system/upgrade_edit.html:15
 msgid "Manual Update"
 msgstr "Actualització manual"
 
@@ -399,14 +524,34 @@ msgid "Check Now"
 msgstr "Comprova-ho ara"
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:142
+#: templates/freeadmin/generic_model_delete.html:30,
+#: templates/plugins/plugin_confirm_delete.html:14,
+#: templates/services/enable.html:6,
+#: templates/storage/dataset_confirm_delete.html:17,
+#: templates/storage/disk_detach.html:11,
+#: templates/storage/disk_offline.html:5,
+#: templates/storage/disk_remove.html:5,
+#: templates/storage/disk_wipe.html:7,
+#: templates/storage/snapshot_confirm_delete.html:5,
+#: templates/storage/snapshot_confirm_delete_bulk.html:7,
+#: templates/storage/snapshot_confirm_rollback.html:11,
+#: templates/storage/tasks.html:35,
+#: templates/storage/volume_detach.html:24,
+#: templates/storage/zvol_confirm_delete.html:11,
+#: templates/system/config_restore.html:5
 msgid "Yes"
 msgstr "Sí"
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:151
+#: templates/services/enable.html:16,
+#: templates/storage/tasks.html:37
 msgid "No"
 msgstr "No"
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:166
+#: templates/freeadmin/index.html:38,
+#: templates/freeadmin/index.html.py:44,
+#: templates/freeadmin/index.html:49
 msgid "Loading..."
 msgstr "Carregant..."
 
@@ -501,10 +646,20 @@ msgstr ""
 "configurat per a això, no funcionarà.<br><br>"
 
 #: freeadmin/static/lib/js/freeadmin/Menu.js:512
+#: templates/freeadmin/index.html:89
 msgid "Documentation"
 msgstr "Documentació"
 
 #: freeadmin/static/lib/js/freeadmin/SupportTicket.js:115
+#: account/forms.py:220,
+#: account/forms.py:253,
+#: account/forms.py:497,
+#: account/models.py:88,
+#: services/models.py:769,
+#: services/models.py:1126,
+#: system/models.py:243,
+#: templates/account/bsdusers.html:5,
+#: templates/account/bsdusers.html.py:84
 msgid "Username"
 msgstr "Nom d'usuari"
 
@@ -521,10 +676,18 @@ msgid "Attach Debug Info"
 msgstr "Adjunta informació de depurció"
 
 #: freeadmin/static/lib/js/freeadmin/SupportTicket.js:226
+#: templates/support/index.html:57
 msgid "Submit"
 msgstr "Envia"
 
 #: freeadmin/static/lib/js/freeadmin/SupportTicket.js:326
+#: account/forms.py:429,
+#: plugins/forms.py:133,
+#: plugins/forms.py:260,
+#: services/forms.py:742,
+#: services/forms.py:1071,
+#: storage/forms.py:244,
+#: system/forms.py:548
 msgid "This field is required."
 msgstr "Aquest camp és necessari."
 
@@ -557,6 +720,7 @@ msgid "Automatically check for updates"
 msgstr "Comprova si hi ha actualitzacions automàticament"
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:90
+#: system/forms.py:1905
 msgid "Current Train"
 msgstr "Tren actual"
 
@@ -569,6 +733,7 @@ msgid "Pending Updates"
 msgstr "Actualitzacions pendents"
 
 #: freeadmin/static/lib/js/freeadmin/Menu.js:185
+#: vcp/nav.py:44
 msgid "vCenter Plugin Configuration"
 msgstr "Configuració del connector"
 
@@ -585,14 +750,34 @@ msgstr ""
 "br />"
 
 #: freeadmin/static/lib/js/freeadmin/SupportTicket.js:117
+#: account/forms.py:256,
+#: account/forms.py:499,
+#: services/models.py:773,
+#: system/forms.py:331,
+#: system/models.py:250,
+#: templates/account/bsdusers.html:9,
+#: templates/account/bsdusers.html.py:88
 msgid "Password"
 msgstr "Contrasenya"
 
 #: freeadmin/static/lib/js/freeadmin/SupportTicket.js:118
+#: sharing/models.py:39,
+#: sharing/models.py:113,
+#: storage/models.py:45,
+#: storage/models.py:326,
+#: storage/views.py:246,
+#: templates/network/interface.html:6,
+#: templates/network/summary.html:5,
+#: templates/plugins/index.html:15,
+#: templates/services/rsyncmod.html:5,
+#: templates/sharing/apple.html:12,
+#: templates/sharing/windows.html:12
 msgid "Name"
 msgstr "Nom"
 
 #: freeadmin/static/lib/js/freeadmin/SupportTicket.js:119
+#: account/models.py:126,
+#: templates/account/bsdusers.html:90
 msgid "E-mail"
 msgstr "Adreça electrònica"
 
@@ -601,6 +786,12 @@ msgid "Phone"
 msgstr "Telèfon"
 
 #: freeadmin/static/lib/js/freeadmin/SupportTicket.js:121
+#: services/models.py:653,
+#: system/models.py:665,
+#: templates/services/iscsi_dextents.html:6,
+#: templates/services/iscsi_extents.html:6,
+#: templates/services/iscsi_targets.html:7,
+#: templates/system/smarttest.html:5
 msgid "Type"
 msgstr "Tipus"
 
@@ -617,10 +808,22 @@ msgid "Criticality"
 msgstr "Criticitat"
 
 #: freeadmin/static/lib/js/freeadmin/SupportTicket.js:126
+#: support/models.py:40
 msgid "Subject"
 msgstr "Assumpte"
 
 #: freeadmin/static/lib/js/freeadmin/SupportTicket.js:127
+#: network/models.py:278,
+#: network/models.py:392,
+#: services/models.py:86,
+#: services/models.py:916,
+#: storage/models.py:211,
+#: storage/models.py:352,
+#: storage/views.py:248,
+#: templates/network/staticroute.html:7,
+#: templates/network/vlan.html:7,
+#: templates/system/cronjob.html:4,
+#: templates/system/smarttest.html:6
 msgid "Description"
 msgstr "Descripció"
 
@@ -654,6 +857,14 @@ msgstr ""
 "operació admesa."
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:176
+#: templates/freeadmin/alert_status.html:6,
+#: templates/freeadmin/generic_form.html:15,
+#: templates/freeadmin/generic_model_add.html:50,
+#: templates/freeadmin/generic_model_edit.html:59,
+#: templates/plugins/jailpbi.html:16,
+#: templates/plugins/plugin_edit.html:2,
+#: templates/plugins/plugin_info.html:25,
+#: templates/storage/scrub_confirm.html:14
 msgid "OK"
 msgstr "D'acord"
 
