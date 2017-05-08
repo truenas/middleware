@@ -24,6 +24,7 @@
 #
 #####################################################################
 from collections import OrderedDict
+from functools import cmp_to_key
 import json
 import logging
 import os
@@ -33,7 +34,7 @@ import ssl
 import subprocess
 import traceback
 import sys
-import urllib
+import urllib.request, urllib.parse, urllib.error
 from time import sleep
 
 from wsgiref.util import FileWrapper
@@ -63,20 +64,19 @@ log = logging.getLogger('storage.views')
 
 # FIXME: Move to a utils module
 def _diskcmp(a, b):
-    rega = re.search(r'^([a-z/]+)(\d+)$', a[1])
-    regb = re.search(r'^([a-z/]+)(\d+)$', b[1])
+    rega = re.search(r'^([a-z/]+)(\d+)$', a.dev)
+    regb = re.search(r'^([a-z/]+)(\d+)$', b.dev)
     if not(rega and regb):
         return 0
-    return cmp(
-        (a[0], rega.group(1), int(rega.group(2))),
-        (b[0], regb.group(1), int(regb.group(2))),
-    )
+    la = (a.size, rega.group(1), int(rega.group(2)))
+    lb = (b.size, regb.group(1), int(regb.group(2)))
+    return (la > lb) - (la < lb)
 
 
 def home(request):
 
     view = appPool.hook_app_index('storage', request)
-    view = filter(None, view)
+    view = [_f for _f in view if _f]
     if view:
         return view[0]
 
@@ -134,7 +134,7 @@ def replications_keyscan(request):
             "-p", str(port),
             "-T", "2",
             str(host),
-        ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        ], stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf8')
         key, errmsg = proc.communicate()
         if proc.returncode == 0 and key:
             data = {'error': False, 'key': key}
@@ -171,13 +171,13 @@ def volumemanager(request):
     disks = []
     # Grab disk list
     # Root device already ruled out
-    for disk, info in _n.get_disks().items():
+    for disk, info in list(_n.get_disks().items()):
         disks.append(forms.Disk(
             info['devname'],
             info['capacity'],
             serial=info.get('ident')
         ))
-    disks = sorted(disks, key=lambda x: (x.size, x.dev), cmp=_diskcmp)
+    disks = sorted(disks, key=cmp_to_key(_diskcmp))
 
     # Exclude what's already added
     used_disks = []
@@ -205,15 +205,15 @@ def volumemanager(request):
             'serial': d.serial,
         })
 
-    bysize = OrderedDict(sorted(bysize.iteritems(), reverse=True))
+    bysize = OrderedDict(sorted(iter(bysize.items()), reverse=True))
 
     swap = Advanced.objects.latest('id').adv_swapondrive
 
     encwarn = (
-        u'<span style="color: red; font-size:110%%;">%s</span>'
-        u'<p>%s</p>'
-        u'<p>%s</p>'
-        u'<p>%s</p>'
+        '<span style="color: red; font-size:110%%;">%s</span>'
+        '<p>%s</p>'
+        '<p>%s</p>'
+        '<p>%s</p>'
     ) % (
         _('WARNING!'),
         _(
@@ -288,7 +288,7 @@ def volumemanager_zfs(request):
             zpoolfields = re.compile(r'zpool_(.+)')
             zfsextra = [
                 (zpoolfields.search(i).group(1), i, request.POST.get(i))
-                for i in request.POST.keys() if zpoolfields.match(i)
+                for i in list(request.POST.keys()) if zpoolfields.match(i)
             ]
 
     else:
@@ -317,7 +317,7 @@ def get_import_progress_from_socket(s=None, n=4096):
             s.connect(SOCKIMP)
             s.setblocking(0)
             close_sock = True
-        s.send("get_progress")
+        s.send(b"get_progress")
         packet = s.recv(n)
         while packet:
             data += packet
@@ -412,14 +412,14 @@ def volimport_abort(request):
                 'traceback': traceback.format_exc() if sys.exc_info()[0] else False
             }
         if data["status"] == "finished":
-            s.send("done")
+            s.send(b"done")
             s.close()
             return JsonResp(request, message=_("Volume successfully Imported."))
         if data["status"] == "error":
-            s.send("stop")
+            s.send(b"stop")
             s.close()
             return JsonResp(request, message=_("Error Importing Volume"))
-        s.send("stop")
+        s.send(b"stop")
         s.close()
         return render(
             request,
@@ -545,7 +545,7 @@ def dataset_edit(request, dataset_name):
                     request,
                     message=_("Dataset successfully edited."))
             else:
-                for field, err in errors.items():
+                for field, err in list(errors.items()):
                     dataset_form._errors[field] = dataset_form.error_class([
                         err,
                     ])
@@ -666,7 +666,7 @@ def zvol_edit(request, name):
                     request,
                     message=_("Zvol successfully edited."))
             else:
-                for field, err in errors.items():
+                for field, err in list(errors.items()):
                     form._errors[field] = form.error_class([
                         err,
                     ])
@@ -680,7 +680,7 @@ def zvol_edit(request, name):
 
 
 def mp_permission(request, path):
-    path = urllib.unquote_plus(path)
+    path = urllib.parse.unquote_plus(path)
     # FIXME: dojo cannot handle urls partially urlencoded %2F => /
     if not path.startswith('/'):
         path = '/' + path
@@ -880,7 +880,7 @@ def volume_detach(request, vid):
     usedsize = humanize_size(usedbytes)
     services = {
         key: val
-        for key, val in volume.has_attachments().items() if len(val) > 0
+        for key, val in list(volume.has_attachments().items()) if len(val) > 0
     }
     if volume.vol_encrypt > 0:
         request.session["allow_gelikey"] = True
@@ -901,8 +901,8 @@ def volume_detach(request, vid):
                     message=_("The volume has been successfully detached"),
                     events=events,
                 )
-            except ServiceFailed, e:
-                return JsonResp(request, error=True, message=unicode(e))
+            except ServiceFailed as e:
+                return JsonResp(request, error=True, message=str(e))
     else:
         form = forms.VolumeExport(instance=volume, services=services)
     return render(request, 'storage/volume_detach.html', {
@@ -1074,7 +1074,7 @@ def disk_wipe_progress(request, devname):
                 pipe = subprocess.Popen([
                     "/usr/sbin/diskinfo",
                     devname,
-                ], stdout=subprocess.PIPE)
+                ], stdout=subprocess.PIPE, encoding='utf8')
                 output = pipe.communicate()[0]
                 size = output.split()[2]
                 received = transf[-1]
@@ -1088,7 +1088,7 @@ def disk_wipe_progress(request, devname):
                     except:
                         pass
 
-    except Exception, e:
+    except Exception as e:
         log.warn("Could not check for disk wipe progress: %s", e)
         indeterminate = True
 
@@ -1230,13 +1230,14 @@ def volume_key_download(request, object_id):
         return HttpResponseRedirect('/')
 
     geli_keyfile = volume.get_geli_keyfile()
-    wrapper = FileWrapper(file(geli_keyfile))
+    with open(geli_keyfile, 'rb') as f:
+        wrapper = FileWrapper(f)
 
-    response = HttpResponse(wrapper, content_type='application/octet-stream')
-    response['Content-Length'] = os.path.getsize(geli_keyfile)
-    response['Content-Disposition'] = 'attachment; filename=geli.key'
-    del request.session["allow_gelikey"]
-    return response
+        response = HttpResponse(wrapper, content_type='application/octet-stream')
+        response['Content-Length'] = os.path.getsize(geli_keyfile)
+        response['Content-Disposition'] = 'attachment; filename=geli.key'
+        del request.session["allow_gelikey"]
+        return response
 
 
 def volume_rekey(request, object_id):
@@ -1376,8 +1377,6 @@ def disk_editbulk(request):
 
 
 def vmwareplugin_datastores(request):
-    from pysphere import VIServer
-    ssl._create_default_https_context = ssl._create_unverified_context
     data = {
         'error': False,
     }
@@ -1392,18 +1391,18 @@ def vmwareplugin_datastores(request):
             password = vmware.get_password()
         else:
             password = ''
-        server = VIServer()
-        server.connect(
-            request.POST.get('hostname'),
-            request.POST.get('username'),
-            password,
-            sock_timeout=7,
-        )
-        data['value'] = server.get_datastores().values()
-        server.disconnect()
-    except Exception, e:
+        with client as c:
+            ds = c.call('vmware.get_datastores', {
+                'hostname': request.POST.get('hostname'),
+                'username': request.POST.get('username'),
+                'password': password,
+            })
+        data['value'] = []
+        for i in ds.values():
+            data['value'] += i.keys()
+    except Exception as e:
         data['error'] = True
-        data['errmsg'] = unicode(e).encode('utf8')
+        data['errmsg'] = str(e)
     return HttpResponse(
         json.dumps(data),
         content_type='application/json',

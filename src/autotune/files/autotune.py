@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/local/bin/python
 """
 Autotuning program.
 
@@ -126,7 +126,8 @@ def sysctl_int(oid):
     return int(sysctl(oid))
 
 
-HW_PHYSMEM = sysctl_int('hw.physmem')
+# TrueNAS HA heads may have slighty different available memory
+HW_PHYSMEM = sysctl_int('hw.physmem') / 10000000 * 10000000
 HW_PHYSMEM_GB = HW_PHYSMEM / GB
 
 # If you add a dictionary key here be sure to add it

@@ -1,19 +1,21 @@
 import pytest
-import ConfigParser
+import configparser
 
 from client import Client
+
+from middlewared.client import Client as WSClient
 
 
 class ConfigTarget(object):
 
     def __init__(self):
-        self.config = ConfigParser.ConfigParser()
+        self.config = configparser.ConfigParser()
         self.file_path = 'target.conf'
         self.config_section = 'Target'
         self.config.read(self.file_path)
 
-    def target_uri(self):
-        return self.config.get(self.config_section, 'uri')
+    def target_hostname(self):
+        return self.config.get(self.config_section, 'hostname')
 
     def target_api(self):
         return self.config.get(self.config_section, 'api')
@@ -25,14 +27,22 @@ class ConfigTarget(object):
         return self.config.get(self.config_section, 'password')
 
 
-class Authentication(object):
+class Connection(object):
 
     def __init__(self):
-        conf = ConfigTarget()
-        self.connect = Client(conf.target_uri(), conf.target_api(),
-                              conf.target_username(), conf.target_password())
+        self.conf = ConfigTarget()
+        self.rest = Client(
+            f'http://{self.conf.target_hostname()}',
+            self.conf.target_api(),
+            self.conf.target_username(),
+            self.conf.target_password(),
+        )
+        self.ws = WSClient(f'ws://{self.conf.target_hostname()}/websocket')
+        self.ws.call('auth.login', self.conf.target_username(), self.conf.target_password())
 
+connection = Connection()
 
 @pytest.fixture
-def auth_prepare():
-    return Authentication()
+def conn():
+    global connection
+    return connection

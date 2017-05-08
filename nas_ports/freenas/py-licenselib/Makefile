@@ -10,8 +10,6 @@ VALID_CATEGORIES+=freenas
 MAINTAINER=	wg@FreeBSD.org
 COMMENT=	License library for FreeNAS/TrueNAS
 
-RUN_DEPENDS=	${PYTHON_PKGNAMEPREFIX}enum34>=:${PORTSDIR}/devel/py-enum34
-
 USES=		python
 USE_PYTHON=	autoplist distutils
 

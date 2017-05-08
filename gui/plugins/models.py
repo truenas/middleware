@@ -107,10 +107,10 @@ class Plugins(Model):
     )
 
     class Meta:
-        verbose_name = _(u"Plugin")
-        verbose_name_plural = _(u"Plugins")
+        verbose_name = _("Plugin")
+        verbose_name_plural = _("Plugins")
 
-    def __unicode__(self):
+    def __str__(self):
         return self.plugin_name
 
     def _service_control(self, request, action):
@@ -216,8 +216,8 @@ class Kmod(Model):
     class Meta:
         verbose_name = _("Plugin Kernel Module")
 
-    def __unicode__(self):
-        return u'%s (%s)' % (self.module, self.plugin.plugin_name)
+    def __str__(self):
+        return '%s (%s)' % (self.module, self.plugin.plugin_name)
 
     def save(self, *args, **kwargs):
         if self.order is None:

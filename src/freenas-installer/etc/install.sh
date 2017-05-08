@@ -48,12 +48,14 @@ get_image_name()
 # This does memory size only for now.
 pre_install_check()
 {
-    # We need at least 4gbytes of RAM
-    local readonly minmem=$(expr 4 \* 1024 \* 1024 \* 1024)
+    # We need at least 4 GB of RAM
+    local readonly minmemgb=4
+    local readonly minmem=$(expr ${minmemgb} \* 1024 \* 1024 \* 1024)
     local memsize=$(sysctl -n hw.physmem)
 
     if [ ${memsize} -lt ${minmem} ]; then
-	dialog --clear --title "${AVATAR_PROJECT}" --yesno "You have less than the recommended amount of RAM (4GBytes), do you wish to continue even though performance may be horribly slow?" 7 74 || return 1
+	dialog --clear --title "${AVATAR_PROJECT}" --defaultno \
+	--yesno "This computer has less than the recommended ${minmemgb} GB of RAM.\n\nPerformance might be very slow.  Continue installation?" 7 74 || return 1
     fi
     return 0
 }
@@ -347,6 +349,25 @@ install_loader() {
     return 0
 }
 
+save_serial_settings() {
+    _mnt="$1"
+
+    # If the installer was booted with serial mode enabled, we should
+    # save these values to the installed system
+    USESERIAL=$((`sysctl -n debug.boothowto` & 0x1000))
+    if [ "$USESERIAL" -eq 0 ] ; then return 0; fi
+
+    chroot ${_mnt} /usr/local/bin/sqlite3 /data/freenas-v1.db "update system_advanced set adv_serialconsole = 1"
+    SERIALSPEED=`kenv hw.uart.console | sed -En 's/.*br:([0-9]+).*/\1/p'`
+    if [ -n "$SERIALSPEED" ] ; then
+       chroot ${_mnt} /usr/local/bin/sqlite3 /data/freenas-v1.db "update system_advanced set adv_serialspeed = $SERIALSPEED"
+    fi
+    SERIALPORT=`kenv hw.uart.console | sed -En 's/.*io:([0-9a-fx]+).*/\1/p'`
+    if [ -n "$SERIALPORT" ] ; then
+       chroot ${_mnt} /usr/local/bin/sqlite3 /data/freenas-v1.db "update system_advanced set adv_serialport = '$SERIALPORT'"
+    fi
+}
+
 mount_disk() {
 	local _mnt
 
@@ -436,9 +457,12 @@ partition_disk() {
 	local _disks _disksparts
 	local _mirror
 	local _minsize
-	
+
 	_disks=$*
 
+	if is_truenas; then
+		gmirror destroy -f swap || true
+	fi
 	# Erase both typical metadata area.
 	for _disk in ${_disks}; do
 	    gpart destroy -F ${_disk} >/dev/null 2>&1 || true
@@ -447,12 +471,12 @@ partition_disk() {
 	done
 
 	_minsize=$(get_minimum_size ${_disks})
-	
+
 	if [ "${_minsize}" = "0k" ]; then
 	    echo "Disk is too small to install ${AVATAR_PROJECT}" 1>&2
 	    return 1
 	fi
-	
+
 	_disksparts=$(for _disk in ${_disks}; do
 	    create_partitions ${_disk} ${_minsize} >&2
 	    if [ "$BOOTMODE" != "efi" ] ; then
@@ -648,8 +672,8 @@ __EOF__
 	    --visit-items \
 	    --passwordform "Enter your root password; cancel for no root password" \
 	    10 50 0 \
-	    "Password:" 1 1 "" 0 20 25 20 \
-	    "Confirm Password:" 2 1 "" 2 20 25 20 \
+	    "Password:" 1 1 "" 0 20 25 50 \
+	    "Confirm Password:" 2 1 "" 2 20 25 50 \
 	    3> ${_tmpfile}
 
 	if [ $? -ne 0 ]; then
@@ -1026,7 +1050,7 @@ menu_install()
       partition_disk ${_realdisks}
       mount_disk /tmp/data
     fi
-    
+
     if [ -d /tmp/data_preserved ]; then
 	cp -pR /tmp/data_preserved/. /tmp/data/data
 	# we still need the newer version we are upgrading to's
@@ -1046,7 +1070,7 @@ menu_install()
 
     # Tell it to look in /.mount for the packages.
     /usr/local/bin/freenas-install -P /.mount/${OS}/Packages -M /.mount/${OS}-MANIFEST /tmp/data
-    
+
     rm -f /tmp/data/conf/default/etc/fstab /tmp/data/conf/base/etc/fstab
     if is_truenas; then
        make_swap ${_realdisks}
@@ -1099,6 +1123,11 @@ menu_install()
     # Create a temporary /var
     mount -t tmpfs tmpfs /tmp/data/var
     chroot /tmp/data /usr/sbin/mtree -deUf /etc/mtree/BSD.var.dist -p /var
+    # We need this hack due to sqlite3 called from rc.conf.local.
+    chroot /tmp/data /sbin/ldconfig /usr/local/lib
+    chroot /tmp/data /etc/rc.d/ldconfig forcestart
+    # Save current serial console settings into database.
+    save_serial_settings /tmp/data
     # Set default boot filesystem
     zpool set bootfs=freenas-boot/ROOT/${BENAME} freenas-boot
     install_loader /tmp/data ${_realdisks}

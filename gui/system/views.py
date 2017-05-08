@@ -24,8 +24,7 @@
 #
 #####################################################################
 from collections import OrderedDict, namedtuple
-import cPickle as pickle
-import datetime
+import pickle as pickle
 import json
 import logging
 import os
@@ -37,8 +36,8 @@ import sysctl
 import tarfile
 import tempfile
 import time
-import urllib
-import xmlrpclib
+import urllib.request, urllib.parse, urllib.error
+import xmlrpc.client
 import traceback
 import sys
 
@@ -93,7 +92,6 @@ from freenasUI.system.utils import (
 )
 from middlewared.plugins.update import CheckUpdateHandler, get_changelog, parse_changelog
 
-GRAPHS_DIR = '/var/db/graphs'
 VERSION_FILE = '/etc/version'
 PGFILE = '/tmp/.extract_progress'
 INSTALLFILE = '/tmp/.upgrade_install'
@@ -316,7 +314,7 @@ def bootenv_scrub(request):
         try:
             notifier().zfs_scrub('freenas-boot')
             return JsonResp(request, message=_("Scrubbing the Boot Pool..."))
-        except Exception, e:
+        except Exception as e:
             return JsonResp(request, error=True, message=repr(e))
     return render(request, 'system/boot_scrub.html')
 
@@ -548,7 +546,11 @@ def config_upload(request):
         }
 
         if form.is_valid():
-            success, errmsg = notifier().config_upload(request.FILES['config'])
+            config_file_name = tempfile.mktemp(dir='/var/tmp/firmware')
+            with open(config_file_name, 'wb') as config_file_fd:
+                for chunk in request.FILES['config'].chunks():
+                    config_file_fd.write(chunk)
+            success, errmsg = notifier().config_upload(config_file_name)
             if not success:
                 form._errors['__all__'] = \
                     form.error_class([errmsg])
@@ -566,7 +568,7 @@ def config_upload(request):
             if os.path.isdir(FIRMWARE_DIR):
                 shutil.rmtree(FIRMWARE_DIR + '/')
         os.mkdir(FIRMWARE_DIR)
-        os.chmod(FIRMWARE_DIR, 01777)
+        os.chmod(FIRMWARE_DIR, 0o1777)
         form = forms.ConfigUploadForm()
 
         return render(request, 'system/config_upload.html', {
@@ -607,7 +609,7 @@ def config_download(request):
             tar.add('/data/freenas-v1.db', arcname='freenas-v1.db')
             tar.add('/data/pwenc_secret', arcname='pwenc_secret')
 
-    wrapper = FileWrapper(file(filename))
+    wrapper = FileWrapper(open(filename, 'rb'))
 
     hostname = GlobalConfiguration.objects.all().order_by('-id')[0].gc_hostname
     freenas_build = "UNKNOWN"
@@ -623,7 +625,7 @@ def config_download(request):
     response['Content-Length'] = os.path.getsize(filename)
     response['Content-Disposition'] = (
         'attachment; filename="%s-%s-%s.%s"' % (
-            hostname.encode('utf-8'),
+            hostname,
             freenas_build,
             time.strftime('%Y%m%d%H%M%S'),
             'tar' if bundle else 'db',
@@ -756,7 +758,7 @@ def testmail(request):
 
     fromwizard = False
     data = request.POST.copy()
-    for key, value in data.items():
+    for key, value in list(data.items()):
         if key.startswith('system-'):
             fromwizard = True
             data[key.replace('system-', '')] = value
@@ -791,8 +793,8 @@ def testmail(request):
     if request.is_ajax():
         sw_name = get_sw_name()
         error, errmsg = send_mail(
-            subject=_('Test message from %s') % sw_name,
-            text=_('This is a message test from %s') % sw_name,
+            subject=_(f'Test message from your {sw_name} system hostname {socket.gethostname()}'),
+            text=_(f'This is a message test from {sw_name}'),
             to=[email],
             timeout=10)
     if error:
@@ -815,7 +817,7 @@ class DojoFileStore(object):
         self.filterVolumes = filterVolumes
         if self.filterVolumes:
             self.mp = [
-                os.path.abspath((u'/mnt/%s' % v.vol_name).encode('utf8'))
+                os.path.abspath('/mnt/%s' % v.vol_name)
                 for v in Volume.objects.filter(vol_fstype='ZFS')
             ]
 
@@ -825,8 +827,6 @@ class DojoFileStore(object):
         # as single slash.
         if self.path.startswith('//'):
             self.path = self.path[1:]
-
-        self.path = self.path.encode('utf8')
 
         self.dirsonly = dirsonly
         if self.dirsonly:
@@ -888,7 +888,7 @@ class DojoFileStore(object):
         item['$ref'] = os.path.abspath(
             reverse(self._lookupurl, kwargs={
                 'path': path,
-            }) + '?root=%s' % urllib.quote_plus(self.root),
+            }) + '?root=%s' % urllib.parse.quote_plus(self.root),
         )
         item['id'] = item['$ref']
         return item
@@ -946,13 +946,15 @@ def manualupdate_progress(request):
 
 def initialwizard_progress(request):
     data = {}
-    if os.path.exists(forms.WIZARD_PROGRESSFILE):
+    try:
         with open(forms.WIZARD_PROGRESSFILE, 'rb') as f:
             data = f.read()
         try:
             data = pickle.loads(data)
-        except:
+        except Exception:
             data = {}
+    except FileNotFoundError:
+        data = {}
     content = json.dumps(data)
     return HttpResponse(content, content_type='application/json')
 
@@ -984,7 +986,7 @@ def debug(request):
             try:
                 s = _n.failover_rpc()
                 s.ping()
-            except socket.error:
+            except:
                 return render(request, 'failover/failover_down.html')
         return render(request, 'system/debug.html')
     debug_generate()
@@ -1003,11 +1005,10 @@ def debug_download(request):
     else:
         debug_file = dump
         extension = 'tgz'
-        hostname = '-%s' % gc.gc_hostname.encode('utf-8')
+        hostname = '-%s' % gc.gc_hostname
 
-    wrapper = FileWrapper(file(debug_file))
     response = StreamingHttpResponse(
-        wrapper,
+        FileWrapper(open(debug_file, 'rb')),
         content_type='application/octet-stream',
     )
     response['Content-Length'] = os.path.getsize(debug_file)
@@ -1016,105 +1017,10 @@ def debug_download(request):
             hostname,
             time.strftime('%Y%m%d%H%M%S'),
             extension)
-
     return response
 
 
-def backup(request):
-    # Check if any backup is currently running
-    backups = models.Backup.objects.all().order_by('-id')
-
-    if len(backups) < 1 or backups[0].bak_acknowledged:
-        # No backup is pending, can schedule next one
-
-        if request.method == 'POST':
-            backup_form = forms.BackupForm(request.POST)
-            if backup_form.is_valid():
-                backup = models.Backup()
-                backup.bak_started_at = datetime.datetime.now()
-                backup.save()
-                transaction.commit()
-
-                args = {
-                    'cmd': 'START',
-                    'hostport': backup_form.cleaned_data['backup_hostname'],
-                    'username': backup_form.cleaned_data['backup_username'],
-                    'password': backup_form.cleaned_data['backup_password'],
-                    'directory': backup_form.cleaned_data['backup_directory'],
-                    'with-data': backup_form.cleaned_data['backup_data'],
-                    'compression': backup_form.cleaned_data['backup_compression'],
-                    'use-keys': backup_form.cleaned_data['backup_auth_keys'],
-                    'backup-id': backup.id
-                }
-
-                notifier().start('backup')
-                response = notifier().call_backupd(args)
-
-                if response['status'] != 'OK':
-                    return JsonResp(request, error=True, message='Could not communicate with backup daemon')
-
-                return render(request, 'system/backup_progress.html')
-            else:
-                return JsonResp(request, form=backup_form)
-
-        backup_form = forms.BackupForm()
-        return render(request, 'system/backup.html', {
-            'form': backup_form
-        })
-    elif backups[0].bak_finished or backups[0].bak_failed:
-        if request.method == 'POST':
-            backups[0].bak_acknowledged = True
-            backups[0].save()
-            return JsonResp(request, message='Backup dismissed')
-
-        return render(request, 'system/backup_acknowledge.html', {'backup': backups[0]})
-    else:
-        return render(request, 'system/backup_progress.html')
-
-
-def backup_progress(request):
-    # Check if any backup is currently running
-    backup = models.Backup.objects.all().order_by('-id').first()
-
-    if backup.bak_finished:
-        data = {'status': 'finished', 'message': backup.bak_status}
-        return HttpResponse(json.dumps(data), content_type='application/json')
-
-    if backup.bak_failed:
-        data = {'status': 'error', 'message': backup.bak_status}
-        return HttpResponse(json.dumps(data), content_type='application/json')
-
-    response = notifier().call_backupd({'cmd': 'PROGRESS'})
-    if response['status'] != 'OK':
-        data = {'status': 'error', 'message': 'Could not communicate with backup daemon'}
-        return HttpResponse(json.dumps(data), content_type='application/json')
-
-    data = {
-        'status': 'running',
-        'percent': response['percentage'],
-        'message': response['message']
-    }
-
-    return HttpResponse(json.dumps(data), content_type='application/json')
-
-
-def backup_abort(request):
-    # Check if any backup is currently running
-    backups = models.Backup.objects.all().order_by('-bak_started_at')
-
-    if len(backups) < 1 or backups[0].bak_finished:
-        pass
-
-    if request.method == 'POST':
-        # User wants to abort a backup
-        response = notifier().call_backupd({'cmd': 'ABORT'})
-        if response['status'] != 'OK':
-            return redirect('/system/backup')
-
-        return redirect('/system/backup')
-
-
-class UnixTransport(xmlrpclib.Transport):
+class UnixTransport(xmlrpc.client.Transport):
     def make_connection(self, addr):
         self.sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
         self.sock.connect(addr)
@@ -1127,7 +1033,7 @@ class UnixTransport(xmlrpclib.Transport):
         self.make_connection(host)
 
         try:
-            self.sock.send(request_body + "\n")
+            self.sock.send((request_body + "\n").encode('utf8'))
             p, u = self.getparser()
 
             while 1:
@@ -1140,7 +1046,7 @@ class UnixTransport(xmlrpclib.Transport):
             p.close()
 
             return u.close()
-        except xmlrpclib.Fault:
+        except xmlrpc.client.Fault:
             raise
         except Exception:
             # All unexpected errors leave connection in
@@ -1149,21 +1055,21 @@ class UnixTransport(xmlrpclib.Transport):
             raise
 
 
-class MyServer(xmlrpclib.ServerProxy):
+class MyServer(xmlrpc.client.ServerProxy):
 
     def __init__(self, addr):
 
         self.__handler = "/"
         self.__host = addr
         self.__transport = UnixTransport()
-        self.__encoding = None
+        self.__encoding = None or 'utf-8'
         self.__verbose = 0
-        self.__allow_none = 0
+        self.__allow_none = False
 
     def __request(self, methodname, params):
         # call a method on the remote server
 
-        request = xmlrpclib.dumps(
+        request = xmlrpc.client.dumps(
             params,
             methodname,
             encoding=self.__encoding,
@@ -1183,8 +1089,10 @@ class MyServer(xmlrpclib.ServerProxy):
         return response
 
     def __getattr__(self, name):
+        if name.startswith('_'):
+            return object.__getattr__(self, name)
         # magic method dispatcher
-        return xmlrpclib._Method(self.__request, name)
+        return xmlrpc.client._Method(self.__request, name)
 
 
 @never_cache
@@ -1203,7 +1111,7 @@ def terminal(request):
         try:
             alive = multiplex.proc_keepalive(sid, jid, shell, w, h)
             break
-        except Exception, e:
+        except Exception as e:
             notifier().restart("webshell")
             time.sleep(0.5)
 
@@ -1212,7 +1120,7 @@ def terminal(request):
             if k:
                 multiplex.proc_write(
                     sid,
-                    xmlrpclib.Binary(bytearray(k.encode('utf-8')))
+                    xmlrpc.client.Binary(bytearray(k.encode('utf-8')))
                 )
             time.sleep(0.002)
             content_data = '<?xml version="1.0" encoding="UTF-8"?>' + \
@@ -1223,7 +1131,7 @@ def terminal(request):
             response = HttpResponse('Disconnected')
             response.status_code = 400
             return response
-    except (KeyError, ValueError, IndexError, xmlrpclib.Fault), e:
+    except (KeyError, ValueError, IndexError, xmlrpc.client.Fault) as e:
         response = HttpResponse('Invalid parameters: %s' % e)
         response.status_code = 400
         return response
@@ -1317,7 +1225,7 @@ def update_apply(request):
                     pass
 
                 rv['exit'] = exit
-                handler = namedtuple('Handler', rv.keys())(**rv)
+                handler = namedtuple('Handler', list(rv.keys()))(**rv)
 
             else:
                 handler = UpdateHandler(uuid=uuid)
@@ -1443,7 +1351,7 @@ def update_check(request):
                     pass
 
                 rv['exit'] = exit
-                handler = namedtuple('Handler', rv.keys())(**rv)
+                handler = namedtuple('Handler', list(rv.keys()))(**rv)
             else:
                 handler = UpdateHandler(uuid=uuid)
             if handler.error is not False:
@@ -1556,9 +1464,9 @@ def update_verify(request):
         try:
             log.debug("Starting VerifyUpdate")
             error_flag, ed, warn_flag, wl = Configuration.do_verify(handler.verify_handler)
-        except Exception, e:
+        except Exception as e:
             log.debug("VerifyUpdate Exception ApplyUpdate: %s" % e)
-            handler.error = unicode(e)
+            handler.error = str(e)
         handler.finished = True
         handler.dump()
         log.debug("VerifyUpdate finished!")
@@ -1883,7 +1791,6 @@ def certificate_to_json(certtype):
             'cert_certificate_path': certtype.cert_certificate_path,
             'cert_privatekey_path': certtype.cert_privatekey_path,
             'cert_CSR_path': certtype.cert_CSR_path,
-            'cert_issuer': certtype.cert_issuer,
             'cert_ncertificates': certtype.cert_ncertificates,
             'cert_DN': certtype.cert_DN,
             'cert_from': certtype.cert_from,
@@ -1904,6 +1811,11 @@ def certificate_to_json(certtype):
     except:
         data['cert_signedby'] = None
 
+    try:
+        data['cert_issuer'] = "%s" % certtype.cert_issuer
+    except Exception:
+        data['cert_issuer'] = None
+
     content = json.dumps(data)
     return HttpResponse(content, content_type='application/json')
 
@@ -1911,10 +1823,4 @@ def certificate_to_json(certtype):
 def CA_info(request, id):
     return certificate_to_json(
         models.CertificateAuthority.objects.get(pk=int(id))
-    )
-
-
-def certificate_info(request, id):
-    return certificate_to_json(
-        models.Certificate.objects.get(pk=int(id))
     )

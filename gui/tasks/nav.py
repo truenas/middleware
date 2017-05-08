@@ -4,7 +4,7 @@ from freenasUI.middleware.notifier import notifier
 
 NAME = _('Tasks')
 BLACKLIST = []
-ICON = u'TasksIcon'
+ICON = 'TasksIcon'
 ORDER = 5
 
 

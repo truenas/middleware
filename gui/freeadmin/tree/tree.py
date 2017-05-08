@@ -63,7 +63,7 @@ class TreeType(object):
     def __init__(self, gname=None, **kwargs):
         self._children = []
 
-        for key, val in kwargs.items():
+        for key, val in list(kwargs.items()):
             if hasattr(self, key):
                 setattr(self, key, val)
             else:
@@ -75,7 +75,7 @@ class TreeType(object):
         if gname is not None:
             self.gname = str(gname)
         elif self.gname is None:
-            self.gname = unicode(self.name)
+            self.gname = str(self.name)
 
     def __setattr__(self, name, value):
         if not hasattr(self, name):
@@ -109,7 +109,7 @@ class TreeType(object):
         return self.name
 
     def __repr__(self):
-        return u"<TreeType '%s'>" % self.name
+        return "<TreeType '%s'>" % self.name
 
     def get_absolute_url(self):
         if not self.url and self.view:
@@ -193,7 +193,7 @@ class TreeType(object):
         elif len(mypath) > len(path):
             return False
 
-        for idx in xrange(len(mypath)):
+        for idx in range(len(mypath)):
             if mypath[idx] != path[idx]:
                 return False
 
@@ -289,7 +289,7 @@ class TreeRoots(object):
             yield root
 
     def __repr__(self):
-        return u"<TreeRoots: %s>" % repr(self._roots['main'])
+        return "<TreeRoots: %s>" % repr(self._roots['main'])
 
     def clear(self):
         self._roots.clear()
@@ -300,7 +300,7 @@ tree_roots = TreeRoots()
 def _unserialize_node(entry):
     children = entry.pop('children', [])
     node = TreeNode()
-    for key, val in entry.items():
+    for key, val in list(entry.items()):
         setattr(node, key, val)
 
     for c in children:

@@ -119,10 +119,9 @@ class CloudSyncForm(ModelForm):
             cdata['credential'] = cdata['attributes'].pop('credential')
             if self.instance.id:
                 c.call('backup.update', self.instance.id, cdata)
-                pk = self.instance.id
             else:
-                pk = c.call('backup.create', cdata)
-        return models.CloudSync.objects.get(pk=pk)
+                self.instance = models.CloudSync.objects.get(pk=c.call('backup.create', cdata))
+        return self.instance
 
     def delete(self, **kwargs):
         with client as c:
@@ -302,7 +301,7 @@ class RsyncForm(ModelForm):
         exists or not. Returns TRUE rpath is a directory
         and exists, else FALSE"""
 
-        ruser = self.cleaned_data.get("rsync_user").encode('utf8')
+        ruser = self.cleaned_data.get("rsync_user")
         rhost = str(self.cleaned_data.get("rsync_remotehost"))
         if '@' in rhost:
             remote = rhost
@@ -312,7 +311,7 @@ class RsyncForm(ModelForm):
                 rhost,
             )
         rport = str(self.cleaned_data.get("rsync_remoteport"))
-        rpath = self.cleaned_data.get("rsync_remotepath").encode('utf8')
+        rpath = self.cleaned_data.get("rsync_remotepath")
         proc = subprocess.Popen(
             """su -m "%s" -c 'ssh -p %s -o "BatchMode yes" -o """
             """"ConnectTimeout=5" %s test -d \\""%s"\\"' """
@@ -429,7 +428,7 @@ class SMARTTestForm(ModelForm):
             elif ',' in ins.smarttest_daymonth:
                 days = [int(day) for day in ins.smarttest_daymonth.split(',')]
                 gap = days[1] - days[0]
-                everyx = range(0, 32, gap)[1:]
+                everyx = list(range(0, 32, gap))[1:]
                 if everyx == days:
                     ins.smarttest_daymonth = '*/%d' % gap
             if ins.smarttest_hour == "..":
@@ -437,7 +436,7 @@ class SMARTTestForm(ModelForm):
             elif ',' in ins.smarttest_hour:
                 hours = [int(hour) for hour in ins.smarttest_hour.split(',')]
                 gap = hours[1] - hours[0]
-                everyx = range(0, 24, gap)
+                everyx = list(range(0, 24, gap))
                 if everyx == hours:
                     ins.smarttest_hour = '*/%d' % gap
         super(SMARTTestForm, self).__init__(*args, **kwargs)

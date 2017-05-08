@@ -206,7 +206,7 @@ def __fs_mountpoints_get(request):
         datasets = v.get_datasets()
 
         if datasets:
-            for name, dataset in datasets.items():
+            for name, dataset in list(datasets.items()):
                 path_list.append(dataset.mountpoint)
 
     return path_list

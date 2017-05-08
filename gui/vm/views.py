@@ -38,7 +38,7 @@ def home(request):
         return render(request, 'vm/disabled.html')
 
     view = appPool.hook_app_index('vm', request)
-    view = filter(None, view)
+    view = list(filter(None, view))
     if view:
         return view[0]
 
@@ -67,5 +67,15 @@ def stop(request, id):
             c.call('vm.stop', id)
         return JsonResp(request, message='VM Stopped')
     return render(request, "vm/stop.html", {
+        'name': vm.name,
+    })
+
+def restart(request, id):
+    vm = models.VM.objects.get(id=id)
+    if request.method == 'POST':
+        with client as c:
+            c.call('vm.restart', id)
+        return JsonResp(request, message='VM Restarted')
+    return render(request, "vm/restart.html", {
         'name': vm.name,
     })

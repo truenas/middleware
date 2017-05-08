@@ -29,7 +29,7 @@ import logging
 import os
 import re
 import subprocess
-import urllib
+import urllib.request, urllib.parse, urllib.error
 import signal
 import sysctl
 
@@ -94,14 +94,18 @@ from freenasUI.system.alert import alertPlugins, Alert
 from freenasUI.system.forms import (
     BootEnvAddForm,
     BootEnvRenameForm,
+    CertificateAuthorityCreateInternalForm,
+    CertificateAuthorityCreateIntermediateForm,
+    CertificateAuthorityImportForm,
+    CertificateCreateCSRForm,
+    CertificateCreateInternalForm,
+    CertificateImportForm,
     ManualUpdateTemporaryLocationForm,
     ManualUpdateUploadForm,
     ManualUpdateWizard,
 )
 from freenasUI.system.models import Update as mUpdate
-from freenasUI.system.utils import (
-    BootEnv, get_pending_updates, debug_generate, factory_restore
-)
+from freenasUI.system.utils import BootEnv, debug_generate, factory_restore
 from middlewared.client import ClientException
 from tastypie import fields, http
 from tastypie.http import (
@@ -220,6 +224,17 @@ class AlertResource(DojoResource):
         return bundle
 
 
+class SettingsResourceMixin(object):
+
+    def dehydrate(self, bundle):
+        bundle = super(SettingsResourceMixin, self).dehydrate(bundle)
+        if bundle.obj.stg_guicertificate:
+            bundle.data['stg_guicertificate'] = bundle.obj.stg_guicertificate.id
+        else:
+            bundle.data['stg_guicertificate'] = None
+        return bundle
+
+
 class DiskResourceMixin(object):
 
     class Meta:
@@ -292,7 +307,7 @@ class Uid(object):
         self._start = start
         self._counter = start
 
-    def next(self):
+    def __next__(self):
         number = self._counter
         self._counter += 1
         return number
@@ -366,6 +381,9 @@ class ZVolResource(DojoResource):
 
     name = fields.CharField(attribute='name')
     volsize = fields.IntegerField(attribute='volsize')
+    refer = fields.IntegerField(attribute='refer')
+    used = fields.IntegerField(attribute='used')
+    avail = fields.IntegerField(attribute='avail')
 
     class Meta:
         allowed_methods = ['get', 'post', 'delete', 'put']
@@ -498,7 +516,7 @@ class VolumeResourceMixin(NestedMixin):
             ),
             url(
                 r"^(?P<resource_name>%s)/(?P<pk>\w[\w/-]*)/zvols/"
-                "(?P<pk2>\w[\w/-]*)%s$" % (
+                "(?P<pk2>\w[\w/\-\._]*)%s$" % (
                     self._meta.resource_name, trailing_slash()
                 ),
                 self.wrap_view('zvols_detail'),
@@ -876,7 +894,7 @@ class VolumeResourceMixin(NestedMixin):
                 if key == 'data' and isinstance(current, zfs.Root):
                     parent.update(data)
                 else:
-                    data['id'] = uid.next()
+                    data['id'] = next(uid)
                     parent['children'].append(data)
 
                 for child in current:
@@ -921,12 +939,12 @@ class VolumeResourceMixin(NestedMixin):
     def _get_children(self, bundle, vol, children, uid):
         rv = []
         attr_fields = ('avail', 'used', 'used_pct')
-        for path, child in children.items():
+        for path, child in list(children.items()):
             if child.name.startswith('.'):
                 continue
 
             data = {
-                'id': uid.next(),
+                'id': next(uid),
                 'name': child.name.rsplit('/', 1)[-1],
                 'type': 'dataset' if child.category == 'filesystem' else 'zvol',
                 'status': '-',
@@ -1028,6 +1046,7 @@ class VolumeResourceMixin(NestedMixin):
         if 'layout' not in bundle.data:
             return bundle
         layout = bundle.data.pop('layout')
+        i = -1
         for i, item in enumerate(layout):
             disks = item.get("disks")
             vtype = item.get("vdevtype")
@@ -1052,7 +1071,7 @@ class VolumeResourceMixin(NestedMixin):
     def dehydrate(self, bundle):
         bundle = super(VolumeResourceMixin, self).dehydrate(bundle)
 
-        for key in bundle.data.keys():
+        for key in list(bundle.data.keys()):
             if key.startswith('layout-'):
                 del bundle.data[key]
 
@@ -1170,7 +1189,7 @@ class VolumeResourceMixin(NestedMixin):
         if not _format:
             _format = 'application/json'
         deserialized = self._meta.serializer.deserialize(
-            bundle.request.body,
+            bundle.request.body or '{}',
             format=_format,
         )
         bundle.obj.delete(
@@ -1248,12 +1267,19 @@ class ReplicationResourceMixin(object):
         )
         if 'repl_remote' in bundle.data:
             del bundle.data['repl_remote']
+        result = bundle.obj.repl_lastresult or {}
+        if 'last_snapshot' in result:
+            last_snapshot = result['last_snapshot']
+        else:
+            last_snapshot = 'Not ran since boot'
+        bundle.data['repl_lastsnapshot'] = last_snapshot
         return bundle
 
     def hydrate(self, bundle):
         bundle = super(ReplicationResourceMixin, self).hydrate(bundle)
         if bundle.obj.id:
-            bundle.data['repl_remote_hostname'] = bundle.obj.repl_remote.ssh_remote_hostname
+            if 'repl_remote_hostname' not in bundle.data:
+                bundle.data['repl_remote_hostname'] = bundle.obj.repl_remote.ssh_remote_hostname
             if 'repl_remote_port' not in bundle.data:
                 bundle.data['repl_remote_port'] = bundle.obj.repl_remote.ssh_remote_port
             if 'repl_remote_dedicateduser_enabled' not in bundle.data:
@@ -1262,8 +1288,11 @@ class ReplicationResourceMixin(object):
                 bundle.data['repl_remote_dedicateduser'] = bundle.obj.repl_remote.ssh_remote_dedicateduser
             if 'repl_remote_cipher' not in bundle.data:
                 bundle.data['repl_remote_cipher'] = bundle.obj.repl_remote.ssh_cipher
-            if 'repl_remote_cipher' not in bundle.data:
+            if 'repl_remote_hostkey' not in bundle.data:
                 bundle.data['repl_remote_hostkey'] = bundle.obj.repl_remote.ssh_remote_hostkey
+        else:
+            if 'repl_remote_mode' not in bundle.data:
+                bundle.data['repl_remote_mode'] = 'MANUAL'
 
         return bundle
 
@@ -1280,7 +1309,7 @@ class TaskResourceMixin(object):
             wchoices = dict(choices.WEEKDAYS_CHOICES)
             labels = []
             for w in eval(bundle.obj.task_byweekday + ','):
-                labels.append(unicode(wchoices[str(w)]))
+                labels.append(str(wchoices[str(w)]))
             days = ', '.join(labels)
             repeat = _('on every %(days)s') % {
                 'days': days,
@@ -1335,11 +1364,11 @@ class NFSShareResourceMixin(object):
     def dehydrate(self, bundle):
         bundle = super(NFSShareResourceMixin, self).dehydrate(bundle)
         if self.is_webclient(bundle.request):
-            bundle.data['nfs_paths'] = u"%s" % ', '.join(bundle.obj.nfs_paths)
+            bundle.data['nfs_paths'] = "%s" % ', '.join(bundle.obj.nfs_paths)
         else:
             bundle.data['nfs_paths'] = bundle.obj.nfs_paths
 
-        for key in bundle.data.keys():
+        for key in list(bundle.data.keys()):
             if key.startswith('path_set'):
                 del bundle.data[key]
         return bundle
@@ -1438,7 +1467,7 @@ class InterfacesResourceMixin(object):
         bundle.data['int_aliases'] = [
             a.alias_network for a in bundle.obj.alias_set.all()
         ]
-        for key in bundle.data.keys():
+        for key in list(bundle.data.keys()):
             if key.startswith('alias_set'):
                 del bundle.data[key]
 
@@ -1546,7 +1575,7 @@ class LAGGInterfaceResourceMixin(object):
         if 'lagg_interface_id' in bundle.data:
             del bundle.data['lagg_interface_id']
         if self.is_webclient(bundle.request):
-            bundle.data['lagg_interface'] = unicode(bundle.obj)
+            bundle.data['lagg_interface'] = str(bundle.obj)
             bundle.data['_edit_url'] = reverse(
                 'freeadmin_network_interfaces_edit',
                 kwargs={
@@ -1565,12 +1594,12 @@ class LAGGInterfaceResourceMixin(object):
 
 class LAGGInterfaceMembersResourceMixin(object):
 
-    def build_filters(self, filters=None):
+    def build_filters(self, filters=None, ignore_bad_filters=True):
         if filters is None:
             filters = {}
         orm_filters = super(
             LAGGInterfaceMembersResourceMixin,
-            self).build_filters(filters)
+            self).build_filters(filters, ignore_bad_filters)
         lagggrp = filters.get("lagg_interfacegroup__id")
         if lagggrp:
             orm_filters["lagg_interfacegroup__id"] = lagggrp
@@ -1580,7 +1609,7 @@ class LAGGInterfaceMembersResourceMixin(object):
         bundle = super(LAGGInterfaceMembersResourceMixin, self).dehydrate(
             bundle
         )
-        bundle.data['lagg_interfacegroup'] = unicode(
+        bundle.data['lagg_interfacegroup'] = str(
             bundle.obj.lagg_interfacegroup
         )
         return bundle
@@ -1603,7 +1632,7 @@ class CloudSyncResourceMixin(NestedMixin):
             bundle.data['_run_url'] = reverse('cloudsync_run', kwargs={
                 'oid': bundle.obj.id
             })
-            bundle.data['credential'] = unicode(bundle.obj.credential)
+            bundle.data['credential'] = str(bundle.obj.credential)
         job = self.__jobs.get(bundle.obj.id)
         if job:
             if job['state'] == 'RUNNING':
@@ -1752,9 +1781,7 @@ class ISCSIPortalResourceMixin(object):
                 p.iscsi_target_portalip_port,
             ) for p in bundle.obj.ips.all()]
             bundle.data['iscsi_target_portal_ips'] = listen
-        for key in filter(
-            lambda y: y.startswith('portalip_set'), bundle.data.keys()
-        ):
+        for key in [y for y in list(bundle.data.keys()) if y.startswith('portalip_set')]:
             del bundle.data[key]
         return bundle
 
@@ -1923,7 +1950,7 @@ class BsdUserResourceMixin(NestedMixin):
             bsdgrp_group__in=deserialized
         )]
 
-        data = QueryDict(urllib.urlencode({'bsduser_to_group': ids}, doseq=True))
+        data = QueryDict(urllib.parse.urlencode({'bsduser_to_group': ids}, doseq=True))
 
         form = bsdUserToGroupForm(userid=obj.id, data=data)
         if not form.is_valid():
@@ -1982,8 +2009,8 @@ class BsdUserResourceMixin(NestedMixin):
     def dehydrate(self, bundle):
         bundle = super(BsdUserResourceMixin, self).dehydrate(bundle)
         bundle.data['bsdusr_sshpubkey'] = bundle.obj.bsdusr_sshpubkey
+        bundle.data['bsdusr_group'] = bundle.obj.bsdusr_group.bsdgrp_gid
         if self.is_webclient(bundle.request):
-            bundle.data['bsdusr_group'] = bundle.obj.bsdusr_group.bsdgrp_gid
             bundle.data['_edit_url'] += 'bsdUsersForm'
             if bundle.obj.bsdusr_builtin:
                 bundle.data['_edit_url'] += '?deletable=false'
@@ -2076,7 +2103,7 @@ class JailsResourceMixin(NestedMixin):
         try:
             Warden().stop(jail=obj.jail_host)
             Warden().start(jail=obj.jail_host)
-        except Exception, e:
+        except Exception as e:
             raise ImmediateHttpResponse(
                 response=self.error_response(request, {
                     'error': e,
@@ -2094,7 +2121,7 @@ class JailsResourceMixin(NestedMixin):
         notifier().reload("http")
         try:
             Warden().start(jail=obj.jail_host)
-        except Exception, e:
+        except Exception as e:
             raise ImmediateHttpResponse(
                 response=self.error_response(request, {
                     'error': e,
@@ -2112,7 +2139,7 @@ class JailsResourceMixin(NestedMixin):
         notifier().reload("http")
         try:
             Warden().stop(jail=obj.jail_host)
-        except Exception, e:
+        except Exception as e:
             raise ImmediateHttpResponse(
                 response=self.error_response(request, {
                     'error': e,
@@ -2123,7 +2150,7 @@ class JailsResourceMixin(NestedMixin):
 
     def dispatch_list(self, request, **kwargs):
         proc = subprocess.Popen(
-            ["/usr/sbin/jls"], stdout=subprocess.PIPE, stderr=subprocess.PIPE
+            ["/usr/sbin/jls"], stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf8'
         )
         self.__jls = proc.communicate()[0]
         return super(JailsResourceMixin, self).dispatch_list(request, **kwargs)
@@ -2271,7 +2298,7 @@ class PluginsResourceMixin(NestedMixin):
             success, errmsg = obj.service_start(request)
             if success is not True:
                 raise ValueError(errmsg)
-        except Exception, e:
+        except Exception as e:
             raise ImmediateHttpResponse(
                 response=self.error_response(request, {
                     'error': e,
@@ -2289,7 +2316,7 @@ class PluginsResourceMixin(NestedMixin):
             success, errmsg = obj.service_stop(request)
             if success is not True:
                 raise ValueError(errmsg)
-        except Exception, e:
+        except Exception as e:
             raise ImmediateHttpResponse(
                 response=self.error_response(request, {
                     'error': e,
@@ -2397,7 +2424,7 @@ class SnapshotResource(DojoResource):
             times, make sure we don't do that.
             """
             found = False
-            for _repl, snaps in repli.items():
+            for _repl, snaps in list(repli.items()):
                 if (
                     _repl.repl_remote.ssh_remote_hostname == repl.repl_remote.ssh_remote_hostname and
                     _repl.repl_remote.ssh_remote_port == repl.repl_remote.ssh_remote_port
@@ -2411,7 +2438,7 @@ class SnapshotResource(DojoResource):
         snapshots = notifier().zfs_snapshot_list(replications=repli)
 
         results = []
-        for snaps in snapshots.values():
+        for snaps in list(snapshots.values()):
             results.extend(snaps)
         FIELD_MAP = {
             'extra': 'mostrecent',
@@ -2473,16 +2500,16 @@ class SnapshotResource(DojoResource):
         )
         try:
             notifier().zfs_mksnap(**deserialized)
-        except MiddlewareError, e:
+        except MiddlewareError as e:
             raise ImmediateHttpResponse(
                 response=self.error_response(request, {
                     'error': e.value,
                 })
             )
-        snap = notifier().zfs_snapshot_list(path='%s@%s' % (
+        snap = list(notifier().zfs_snapshot_list(path='%s@%s' % (
             deserialized['dataset'],
             deserialized['name'],
-        )).values()[0][0]
+        )).values())[0][0]
         bundle = self.full_dehydrate(
             self.build_bundle(obj=snap, request=request)
         )
@@ -2500,10 +2527,10 @@ class SnapshotResource(DojoResource):
                 })
             )
         dataset, name = kwargs['pk'].split('@', 1)
-        snap = notifier().zfs_snapshot_list(path='%s@%s' % (
+        snap = list(notifier().zfs_snapshot_list(path='%s@%s' % (
             dataset,
             name,
-        )).values()
+        )).values())
         if not snap:
             raise ImmediateHttpResponse(
                 response=self.error_response(bundle.request, {
@@ -2513,8 +2540,8 @@ class SnapshotResource(DojoResource):
         snap = snap[0][0]
 
         try:
-            notifier().destroy_zfs_dataset(path=kwargs['pk'].encode('utf8'))
-        except MiddlewareError, e:
+            notifier().destroy_zfs_dataset(path=kwargs['pk'])
+        except MiddlewareError as e:
             raise ImmediateHttpResponse(
                 response=self.error_response(bundle.request, {
                     'error': e.value,
@@ -2637,7 +2664,7 @@ class FTPResourceMixin(object):
                     assert len(fmask) == 3
                     fmask = int(fmask, 8)
                     fmask = (~fmask & 0o666)
-                    bundle.data['ftp_filemask'] = oct(fmask)
+                    bundle.data['ftp_filemask'] = oct(fmask)[2:]
                 except:
                     pass
 
@@ -2647,7 +2674,7 @@ class FTPResourceMixin(object):
                     assert len(dmask) == 3
                     dmask = int(dmask, 8)
                     dmask = (~dmask & 0o777)
-                    bundle.data['ftp_dirmask'] = oct(dmask)
+                    bundle.data['ftp_dirmask'] = oct(dmask)[2:]
                 except:
                     pass
         return bundle
@@ -2788,6 +2815,94 @@ class KerberosSettingsResourceMixin(object):
 
 class CertificateAuthorityResourceMixin(object):
 
+    def prepend_urls(self):
+        return [
+            url(
+                r"^(?P<resource_name>%s)/import%s$" % (
+                    self._meta.resource_name, trailing_slash()
+                ),
+                self.wrap_view('importcert'),
+            ),
+            url(
+                r"^(?P<resource_name>%s)/intermediate%s$" % (
+                    self._meta.resource_name, trailing_slash()
+                ),
+                self.wrap_view('intermediate'),
+            ),
+            url(
+                r"^(?P<resource_name>%s)/internal%s$" % (
+                    self._meta.resource_name, trailing_slash()
+                ),
+                self.wrap_view('internal'),
+            ),
+        ]
+
+    def importcert(self, request, **kwargs):
+        self.method_check(request, allowed=['post'])
+        self.is_authenticated(request)
+
+        if request.body:
+            deserialized = self.deserialize(
+                request,
+                request.body,
+                format=request.META.get('CONTENT_TYPE', 'application/json'),
+            )
+        else:
+            deserialized = {}
+
+        form = CertificateAuthorityImportForm(data=deserialized)
+        if not form.is_valid():
+            raise ImmediateHttpResponse(
+                response=self.error_response(request, form.errors)
+            )
+        else:
+            form.save()
+        return HttpResponse('Certificate Authority imported.', status=201)
+
+    def intermediate(self, request, **kwargs):
+        self.method_check(request, allowed=['post'])
+        self.is_authenticated(request)
+
+        if request.body:
+            deserialized = self.deserialize(
+                request,
+                request.body,
+                format=request.META.get('CONTENT_TYPE', 'application/json'),
+            )
+        else:
+            deserialized = {}
+
+        form = CertificateAuthorityCreateIntermediateForm(data=deserialized)
+        if not form.is_valid():
+            raise ImmediateHttpResponse(
+                response=self.error_response(request, form.errors)
+            )
+        else:
+            form.save()
+        return HttpResponse('Certificate Authority created.', status=201)
+
+    def internal(self, request, **kwargs):
+        self.method_check(request, allowed=['post'])
+        self.is_authenticated(request)
+
+        if request.body:
+            deserialized = self.deserialize(
+                request,
+                request.body,
+                format=request.META.get('CONTENT_TYPE', 'application/json'),
+            )
+        else:
+            deserialized = {}
+
+        form = CertificateAuthorityCreateInternalForm(data=deserialized)
+        if not form.is_valid():
+            raise ImmediateHttpResponse(
+                response=self.error_response(request, form.errors)
+            )
+        else:
+            form.save()
+        return HttpResponse('Certificate Authority created.', status=201)
+
     def dehydrate(self, bundle):
         bundle = super(CertificateAuthorityResourceMixin,
                        self).dehydrate(bundle)
@@ -2845,6 +2960,94 @@ class CertificateAuthorityResourceMixin(object):
 
 
 class CertificateResourceMixin(object):
+
+    def prepend_urls(self):
+        return [
+            url(
+                r"^(?P<resource_name>%s)/csr%s$" % (
+                    self._meta.resource_name, trailing_slash()
+                ),
+                self.wrap_view('csr'),
+            ),
+            url(
+                r"^(?P<resource_name>%s)/import%s$" % (
+                    self._meta.resource_name, trailing_slash()
+                ),
+                self.wrap_view('importcert'),
+            ),
+            url(
+                r"^(?P<resource_name>%s)/internal%s$" % (
+                    self._meta.resource_name, trailing_slash()
+                ),
+                self.wrap_view('internal'),
+            ),
+        ]
+
+    def csr(self, request, **kwargs):
+        self.method_check(request, allowed=['post'])
+        self.is_authenticated(request)
+
+        if request.body:
+            deserialized = self.deserialize(
+                request,
+                request.body,
+                format=request.META.get('CONTENT_TYPE', 'application/json'),
+            )
+        else:
+            deserialized = {}
+
+        form = CertificateCreateCSRForm(data=deserialized)
+        if not form.is_valid():
+            raise ImmediateHttpResponse(
+                response=self.error_response(request, form.errors)
+            )
+        else:
+            form.save()
+        return HttpResponse('Certificate Signing Request created.', status=201)
+
+    def importcert(self, request, **kwargs):
+        self.method_check(request, allowed=['post'])
+        self.is_authenticated(request)
+
+        if request.body:
+            deserialized = self.deserialize(
+                request,
+                request.body,
+                format=request.META.get('CONTENT_TYPE', 'application/json'),
+            )
+        else:
+            deserialized = {}
+
+        form = CertificateImportForm(data=deserialized)
+        if not form.is_valid():
+            raise ImmediateHttpResponse(
+                response=self.error_response(request, form.errors)
+            )
+        else:
+            form.save()
+        return HttpResponse('Certificate imported.', status=201)
+
+    def internal(self, request, **kwargs):
+        self.method_check(request, allowed=['post'])
+        self.is_authenticated(request)
+
+        if request.body:
+            deserialized = self.deserialize(
+                request,
+                request.body,
+                format=request.META.get('CONTENT_TYPE', 'application/json'),
+            )
+        else:
+            deserialized = {}
+
+        form = CertificateCreateInternalForm(data=deserialized)
+        if not form.is_valid():
+            raise ImmediateHttpResponse(
+                response=self.error_response(request, form.errors)
+            )
+        else:
+            form.save()
+        return HttpResponse('Certificate created.', status=201)
 
     def dehydrate(self, bundle):
         bundle = super(CertificateResourceMixin, self).dehydrate(bundle)
@@ -3073,7 +3276,7 @@ class BootEnvResource(NestedMixin, DojoResource):
                 if key == 'data' and isinstance(current, zfs.Root):
                     parent.update(data)
                 else:
-                    data['id'] = uid.next()
+                    data['id'] = next(uid)
                     parent['children'].append(data)
 
                 for child in current:
@@ -3329,8 +3532,8 @@ class UpdateResourceMixin(NestedMixin):
             s = notifier().failover_rpc()
             data = s.update_pending()
         else:
-            path = notifier().get_update_location()
-            data = get_pending_updates(path)
+            with client as c:
+                data = c.call('update.get_pending')
         return self.create_response(
             request,
             data,
@@ -3387,7 +3590,7 @@ class UpdateResourceMixin(NestedMixin):
         conf.LoadTrainsConfig()
         trains = conf.AvailableTrains() or []
         if trains:
-            trains = trains.keys()
+            trains = list(filter(lambda x: not x.lower().startswith('freenas-corral'), trains.keys()))
 
         seltrain = update.get_train()
         if seltrain in conf._trains:
@@ -3466,7 +3669,7 @@ class FCPortsResource(DojoResource):
             "/usr/sbin/ctladm",
             "portlist",
             "-x",
-        ], stdout=subprocess.PIPE)
+        ], stdout=subprocess.PIPE, encoding='utf8')
         data = proc.communicate()[0]
         doc = etree.fromstring(data)
         results = []
@@ -3589,12 +3792,12 @@ class FibreChannelToTargetResourceMixin:
 
 class DeviceResourceMixin(object):
 
-    def build_filters(self, filters=None):
+    def build_filters(self, filters=None, ignore_bad_filters=True):
         if filters is None:
             filters = {}
         orm_filters = super(
             DeviceResourceMixin,
-            self).build_filters(filters)
+            self).build_filters(filters, ignore_bad_filters)
         vmid = filters.get("vm__id")
         if vmid:
             orm_filters["vm__id"] = vmid
@@ -3611,27 +3814,40 @@ class VMResourceMixin(object):
 
     def dehydrate(self, bundle):
         bundle = super(VMResourceMixin, self).dehydrate(bundle)
-        if self.is_webclient(bundle.request):
-            bundle.data['_device_url'] = reverse(
-                'freeadmin_vm_device_datagrid'
-            ) + '?id=%d' % bundle.obj.id
-            info = ''
-            try:
-                with client as c:
-                    status = c.call('vm.status', bundle.obj.id)
-                    bundle.data['state'] = status['state']
-                    info += 'State: {}<br />'.format(status['state'])
-                    if status['state'] == 'RUNNING':
-                        bundle.data['_stop_url'] = reverse(
-                            'vm_stop', kwargs={'id': bundle.obj.id},
-                        )
-                    elif status['state'] == 'STOPPED':
-                        bundle.data['_start_url'] = reverse(
-                            'vm_start', kwargs={'id': bundle.obj.id},
-                        )
-            except:
-                log.warn('Failed to get status', exc_info=True)
+        state = 'UNKNOWN'
+        device_start_url = device_stop_url = device_restart_url = info = ''
+        try:
+            with client as c:
+                status = c.call('vm.status', bundle.obj.id)
+                state = status['state']
+                info += 'State: {}<br />'.format(status['state'])
+        except:
+            log.warn('Failed to get status', exc_info=True)
+        finally:
+            if self.is_webclient(bundle.request):
+                if state == 'RUNNING':
+                    device_stop_url = reverse(
+                        'vm_stop', kwargs={'id': bundle.obj.id},
+                    )
+                    device_restart_url = reverse(
+                        'vm_restart', kwargs={'id': bundle.obj.id},
+                    )
+                    info += 'Com Port: /dev/nmdm{}B<br />'.format(bundle.obj.id)
+                elif state == 'STOPPED':
+                    device_start_url = reverse(
+                        'vm_start', kwargs={'id': bundle.obj.id},
+                    )
+                bundle.data.update({
+                    '_device_url': reverse('freeadmin_vm_device_datagrid') + '?id=%d' % bundle.obj.id,
+                    '_stop_url': device_stop_url,
+                    '_start_url': device_start_url,
+                    '_restart_url': device_restart_url
+                })
             if bundle.obj.device_set.filter(dtype='VNC').exists():
-                info += 'VNC Port: {}<br />'.format(5900 + bundle.obj.id)
-            bundle.data['info'] = info
+                vnc_port = bundle.obj.device_set.filter(dtype='VNC').values_list('attributes', flat=True)[0].get('vnc_port', 5900 + bundle.obj.id)
+                info += 'VNC Port: {}<br />'.format(vnc_port)
+            bundle.data.update({
+                'info': info,
+                'state': state
+            })
         return bundle

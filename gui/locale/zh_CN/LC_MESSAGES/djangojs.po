@@ -8,15 +8,16 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:10-0700\n"
-"PO-Revision-Date: 2016-05-15 07:07+0000\n"
-"Last-Translator: jimhu <jimhuyiwei@me.com>\n"
-"Language-Team: LANGUAGE <LL@li.org>\n"
+"PO-Revision-Date: 2017-03-07 08:29+0000\n"
+"Last-Translator: XY.Chen <chenxinyv@gmail.com>\n"
+"Language-Team: Simplified Chinese "
+"<http://weblate.trueos.org/projects/freenas/djangojs/zh_Hans/>\n"
 "Language: zh_CN\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=1; plural=0\n"
-"X-Generator: Pootle 2.5.0\n"
+"Plural-Forms: nplurals=1; plural=0;\n"
+"X-Generator: Weblate 2.10-dev\n"
 "X-POOTLE-MTIME: 1463296042.0\n"
 
 #~ msgid "Reporting"
@@ -118,8 +119,9 @@ msgid "The cache could not be rebuilt: "
 msgstr "无法刷新缓存："
 
 #: freeadmin/static/lib/js/freeadmin/Menu.js:134
+#, fuzzy
 msgid "Shares"
-msgstr ""
+msgstr "共享"
 
 #: freeadmin/static/lib/js/freeadmin/Menu.js:213
 msgid "Jails"
@@ -161,6 +163,9 @@ msgid ""
 "href='http://doc.freenas.org/index.php/Volumes#ZFS_Volume_Manager' "
 "target='_blank'>documentation</a>."
 msgstr ""
+"您的配置是最佳化的！<br /> <br />这意味着你可以在这种类型和数量的磁盘组下获得最好的性能。<br /><br />需要进一步说明请参阅 <a "
+"href='http://doc.freenas.org/index.php/Volumes#ZFS_Volume_Manager' "
+"target='_blank'>参考文档</a>."
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:525
 msgid ""
@@ -170,6 +175,9 @@ msgid ""
 "href='http://doc.freenas.org/index.php/Volumes#ZFS_Volume_Manager' "
 "target='_blank'>documentation</a>."
 msgstr ""
+"您的配置没有优化！<br /> <br />这意味着你不能在这种类型和数量的磁盘组下获得最好的性能。<br /><br />需要进一步说明请参阅 <a "
+"href='http://doc.freenas.org/index.php/Volumes#ZFS_Volume_Manager' "
+"target='_blank'>参考文档</a>."
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:666
 msgid "Capacity"
@@ -185,7 +193,7 @@ msgstr "添加卷"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1018
 msgid "Existing data will be cleared"
-msgstr "已存在的数据将被清空"
+msgstr "数据将被清空"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1019
 msgid "Extend Volume"
@@ -234,7 +242,7 @@ msgstr "手动安装"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1225
 msgid "ZFS Volume Manager"
-msgstr ""
+msgstr "ZFS 卷管理"
 
 #: freeadmin/static/lib/js/freeadmin/WebShell.js:77
 msgid "Shell"
@@ -269,7 +277,7 @@ msgstr "任务"
 
 #: freeadmin/static/lib/js/freeadmin/Menu.js:92
 msgid "Network"
-msgstr "网络配置"
+msgstr "网络"
 
 #: freeadmin/static/lib/js/freeadmin/Menu.js:182
 msgid "Sharing"
@@ -277,7 +285,7 @@ msgstr "共享"
 
 #: freeadmin/static/lib/js/freeadmin/Menu.js:521
 msgid "Directory Service"
-msgstr "Directory Service"
+msgstr "目录服务"
 
 #: freeadmin/static/lib/js/freeadmin.js:1772
 #: freeadmin/static/lib/js/freeadmin.js:1863

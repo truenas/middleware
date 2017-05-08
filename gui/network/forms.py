@@ -28,7 +28,7 @@ import logging
 import os
 import re
 import socket
-import urllib2
+import urllib.request, urllib.error, urllib.parse
 
 from django.core.validators import RegexValidator
 from django.db import transaction
@@ -41,6 +41,7 @@ from freenasUI.common.forms import Form, ModelForm
 from freenasUI.common.system import get_sw_name
 from freenasUI.contrib.IPAddressField import IP4AddressFormField
 from freenasUI.freeadmin.sqlite3_ha.base import DBSync
+from freenasUI.middleware.client import client
 from freenasUI.middleware.notifier import notifier
 from freenasUI.network import models
 from freenasUI.freeadmin.utils import key_order
@@ -369,12 +370,28 @@ class InterfacesForm(ModelForm):
     def delete(self, *args, **kwargs):
         with DBSync():
             super(InterfacesForm, self).delete(*args, **kwargs)
-        notifier().start("network")
+        with client as c:
+            c.call('interfaces.sync')
+            try:
+                c.call('routes.sync')
+            except Exception:
+                # Syncing routes may fail if the interface changes network
+                # and old default gateway is still in place
+                # TODO: Issue an warning
+                pass
 
     def done(self, *args, **kwargs):
         super(InterfacesForm, self).done(*args, **kwargs)
         if notifier().is_freenas():
-            notifier().start("network")
+            with client as c:
+                c.call('interfaces.sync')
+                try:
+                    c.call('routes.sync')
+                except Exception:
+                    # Syncing routes may fail if the interface changes network
+                    # and old default gateway is still in place
+                    # TODO: Issue an warning
+                    pass
 
 
 class InterfacesDeleteForm(forms.Form):
@@ -564,17 +581,17 @@ class GlobalConfigurationForm(ModelForm):
         nameserver3 = cleaned_data.get("gc_nameserver3")
         if nameserver3:
             if nameserver2 == "":
-                msg = _(u"Must fill out nameserver 2 before "
+                msg = _("Must fill out nameserver 2 before "
                         "filling out nameserver 3")
                 self._errors["gc_nameserver3"] = self.error_class([msg])
-                msg = _(u"Required when using nameserver 3")
+                msg = _("Required when using nameserver 3")
                 self._errors["gc_nameserver2"] = self.error_class([msg])
                 del cleaned_data["gc_nameserver2"]
             if nameserver1 == "":
-                msg = _(u"Must fill out nameserver 1 before "
+                msg = _("Must fill out nameserver 1 before "
                         "filling out nameserver 3")
                 self._errors["gc_nameserver3"] = self.error_class([msg])
-                msg = _(u"Required when using nameserver 3")
+                msg = _("Required when using nameserver 3")
                 self._errors["gc_nameserver1"] = self.error_class([msg])
                 del cleaned_data["gc_nameserver1"]
             if nameserver1 == "" or nameserver2 == "":
@@ -582,10 +599,10 @@ class GlobalConfigurationForm(ModelForm):
         elif nameserver2:
             if nameserver1 == "":
                 del cleaned_data["gc_nameserver2"]
-                msg = _(u"Must fill out nameserver 1 before "
+                msg = _("Must fill out nameserver 1 before "
                         "filling out nameserver 2")
                 self._errors["gc_nameserver2"] = self.error_class([msg])
-                msg = _(u"Required when using nameserver 3")
+                msg = _("Required when using nameserver 3")
                 self._errors["gc_nameserver1"] = self.error_class([msg])
                 del cleaned_data["gc_nameserver1"]
         return cleaned_data
@@ -610,6 +627,8 @@ class GlobalConfigurationForm(ModelForm):
         ):
             # this supersedes all since it has hostname and resolvconf reloads folded in it
             whattoreload = "networkgeneral"
+            with client as c:
+                c.call('routes.sync')
 
         notifier().reload(whattoreload)
 
@@ -624,7 +643,7 @@ class GlobalConfigurationForm(ModelForm):
                 del os.environ['https_proxy']
 
         # Reset global opener so ProxyHandler can be recalculated
-        urllib2.install_opener(None)
+        urllib.request.install_opener(None)
 
         return retval
 

@@ -106,6 +106,27 @@ class VMFAdmin(BaseFreeAdmin):
                 }
             }""",
         }
+        actions['Restart'] = {
+            'button_name': _('Restart'),
+            'on_click': """function() {
+                var mybtn = this;
+                for (var i in grid.selection) {
+                    var data = grid.row(i).data;
+                    editObject('Restart', data._restart_url, [mybtn,]);
+                }
+            }""",
+            'on_select_after': """function(evt, actionName, action) {
+                for(var i=0;i < evt.rows.length;i++) {
+                    var row = evt.rows[i];
+                    if (row.data.state == 'STOPPED') {
+                        query(".grid" + actionName).forEach(function(item, idx) {
+                            domStyle.set(item, "display", "none");
+                        });
+                        break;
+                    }
+                }
+            }""",
+        }
         return actions
 
     def get_datagrid_columns(self):

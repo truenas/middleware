@@ -150,7 +150,7 @@ class FreeNAS_Local_Group(object):
     def __get_group(self, group, data=None):
         if not data and (
             isinstance(group, int) or (
-                isinstance(group, (str, unicode)) and group.isdigit()
+                isinstance(group, str) and group.isdigit()
             )
         ):
             objects = bsdGroups_objects(bsdgrp_gid=group)
@@ -158,7 +158,7 @@ class FreeNAS_Local_Group(object):
                 group = objects[int(group)]['bsdgrp_group']
 
         try:
-            self._gr = grp.getgrnam(group.encode('utf-8'))
+            self._gr = grp.getgrnam(group)
         except Exception as e:
             log.debug("Exception on grfunc: {0}".format(e))
             self._gr = None
@@ -173,16 +173,19 @@ class FreeNAS_Group(object):
             dflags = _get_dflags()
 
         obj = None
-        if dflags & U_AD_ENABLED:
-            obj = FreeNAS_ActiveDirectory_Group(group, **kwargs)
-        elif dflags & U_NT4_ENABLED:
-            obj = FreeNAS_NT4_Group(group, **kwargs)
-        elif dflags & U_NIS_ENABLED:
-            obj = FreeNAS_NIS_Group(group, **kwargs)
-        elif dflags & U_LDAP_ENABLED:
-            obj = FreeNAS_LDAP_Group(group, **kwargs)
-        elif dflags & U_DC_ENABLED:
-            obj = FreeNAS_DomainController_Group(group, **kwargs)
+        try:
+            if dflags & U_AD_ENABLED:
+                obj = FreeNAS_ActiveDirectory_Group(group, **kwargs)
+            elif dflags & U_NT4_ENABLED:
+                obj = FreeNAS_NT4_Group(group, **kwargs)
+            elif dflags & U_NIS_ENABLED:
+                obj = FreeNAS_NIS_Group(group, **kwargs)
+            elif dflags & U_LDAP_ENABLED:
+                obj = FreeNAS_LDAP_Group(group, **kwargs)
+            elif dflags & U_DC_ENABLED:
+                obj = FreeNAS_DomainController_Group(group, **kwargs)
+        except:
+            log.debug('Failed to get group from directory service, falling back to local', exc_info=True)
 
         if obj is None:
             obj = FreeNAS_Local_Group(group, **kwargs)
@@ -234,8 +237,10 @@ class FreeNAS_Groups(object):
 
         self.__bsd_groups = []
         objects = bsdGroups_objects()
-        for group, obj in objects.items():
-            self.__bsd_groups.append(FreeNAS_Group(group, data=obj, dflags=0))
+        for group, obj in list(objects.items()):
+            grpobj = FreeNAS_Group(group, data=obj, dflags=0)
+            if grpobj:
+                self.__bsd_groups.append(grpobj)
 
     def __len__(self):
         return len(self.__bsd_groups) + len(self.__groups)
@@ -266,14 +271,14 @@ class FreeNAS_Local_User(object):
     def __get_user(self, user, data=None):
         if not data and (
             isinstance(user, int) or
-            (isinstance(user, (str, unicode)) and user.isdigit())
+            (isinstance(user, str) and user.isdigit())
         ):
             objects = bsdUsers_objects(bsdusr_uid=user)
             if objects:
                 user = objects[int(user)]['bsdusr_username']
 
         try:
-            self._pw = pwd.getpwnam(user.encode('utf-8'))
+            self._pw = pwd.getpwnam(user)
 
         except Exception as e:
             log.debug("Exception on pwfunc: {0}".format(e))
@@ -291,16 +296,19 @@ class FreeNAS_User(object):
         data = kwargs.pop('data', None)
 
         obj = None
-        if dflags & U_AD_ENABLED:
-            obj = FreeNAS_ActiveDirectory_User(user, **kwargs)
-        elif dflags & U_NT4_ENABLED:
-            obj = FreeNAS_NT4_User(user, **kwargs)
-        elif dflags & U_NIS_ENABLED:
-            obj = FreeNAS_NIS_User(user, **kwargs)
-        elif dflags & U_LDAP_ENABLED:
-            obj = FreeNAS_LDAP_User(user, **kwargs)
-        elif dflags & U_DC_ENABLED:
-            obj = FreeNAS_DomainController_User(user, **kwargs)
+        try:
+            if dflags & U_AD_ENABLED:
+                obj = FreeNAS_ActiveDirectory_User(user, **kwargs)
+            elif dflags & U_NT4_ENABLED:
+                obj = FreeNAS_NT4_User(user, **kwargs)
+            elif dflags & U_NIS_ENABLED:
+                obj = FreeNAS_NIS_User(user, **kwargs)
+            elif dflags & U_LDAP_ENABLED:
+                obj = FreeNAS_LDAP_User(user, **kwargs)
+            elif dflags & U_DC_ENABLED:
+                obj = FreeNAS_DomainController_User(user, **kwargs)
+        except:
+            log.debug('Failed to get user from directory service, falling back to local', exc_info=True)
 
         if not obj:
             obj = FreeNAS_Local_User(user, data=data, **kwargs)
@@ -343,7 +351,7 @@ class FreeNAS_Users(object):
                 self.__users = dir(**kwargs)
 
             except Exception as e:
-                log.error("Directory Users could not be retrieved: {0}".format(str(e)))
+                log.error("Directory Users could not be retrieved: {0}".format(str(e)), exc_info=True)
                 self.__users = None
 
         if self.__users is None:
@@ -351,10 +359,10 @@ class FreeNAS_Users(object):
 
         self.__bsd_users = []
         objects = bsdUsers_objects()
-        for username, obj in objects.items():
-            self.__bsd_users.append(
-                FreeNAS_User(username, data=obj, dflags=0)
-            )
+        for username, obj in list(objects.items()):
+            usrobj = FreeNAS_User(username, data=obj, dflags=0)
+            if usrobj:
+                self.__bsd_users.append(usrobj)
 
     def __len__(self):
         return len(self.__bsd_users) + len(self.__users)

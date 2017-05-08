@@ -14,9 +14,7 @@
 #
 generate_fstab_real()
 {
-	if [ "${freenas}" = "True" ]; then
-		echo "fdescfs	/dev/fd	fdescfs rw	0 0"
-	fi
+	echo "fdescfs	/dev/fd	fdescfs rw	0 0"
 	local IFS="|"
 	local fstype volumename newmp mountpoint mpoptions device fs
 
@@ -80,6 +78,7 @@ create_mirrored_swap()
 
 generate_fstab_swap()
 {
+	freenas=$(LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/midclt call system.is_freenas)
 	if [ "${freenas}" = "True" ]; then
 		local IFS=\|
 		local encrypted_swap swap_suffix

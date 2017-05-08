@@ -54,11 +54,19 @@ def main():
         t.daemon = False
         t.start()
 
+        t = threading.Thread(target=register, args=(hostname, '_middlwre-http._tcp.', http_port))
+        t.daemon = False
+        t.start()
+
     if (webui[0]['stg_guiprotocol'] == 'https' or
             webui[0]['stg_guiprotocol'] == 'httphttps'):
         https_port = int(webui[0]['stg_guihttpsport'] or 443)
         t = threading.Thread(target=register,
                              args=(hostname, '_https._tcp.', https_port))
+        t.daemon = False
+        t.start()
+
+        t = threading.Thread(target=register, args=(hostname, '_middlwre-https._tcp.', https_port))
         t.daemon = False
         t.start()
 

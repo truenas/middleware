@@ -533,10 +533,10 @@ class VolumeStatusFAdmin(BaseFreeAdmin):
 
 class ScrubFAdmin(BaseFreeAdmin):
 
-    icon_model = u"cronJobIcon"
-    icon_object = u"cronJobIcon"
-    icon_add = u"AddcronJobIcon"
-    icon_view = u"ViewcronJobIcon"
+    icon_model = "cronJobIcon"
+    icon_object = "cronJobIcon"
+    icon_add = "AddcronJobIcon"
+    icon_view = "ViewcronJobIcon"
     resource_mixin = ScrubResourceMixin
     exclude_fields = (
         'id',
@@ -601,11 +601,11 @@ class ScrubFAdmin(BaseFreeAdmin):
 
 class TaskFAdmin(BaseFreeAdmin):
 
-    icon_model = u"SnapIcon"
-    icon_add = u"CreatePeriodicSnapIcon"
-    icon_view = u"ViewAllPeriodicSnapIcon"
-    icon_object = u"SnapIcon"
-    extra_js = u"taskrepeat_checkings();"
+    icon_model = "SnapIcon"
+    icon_add = "CreatePeriodicSnapIcon"
+    icon_view = "ViewAllPeriodicSnapIcon"
+    icon_object = "SnapIcon"
+    extra_js = "taskrepeat_checkings();"
     composed_fields = (
         ('Snapshot Lifetime', ('task_ret_count', 'task_ret_unit'), 'The amount of time these snapshots are retained before being automatically deleted'),
     )
@@ -652,10 +652,10 @@ class TaskFAdmin(BaseFreeAdmin):
 
 class ReplicationFAdmin(BaseFreeAdmin):
 
-    icon_model = u"ReplIcon"
-    icon_add = u"AddReplIcon"
-    icon_view = u"ViewAllReplIcon"
-    icon_object = u"ReplIcon"
+    icon_model = "ReplIcon"
+    icon_add = "AddReplIcon"
+    icon_view = "ViewAllReplIcon"
+    icon_object = "ReplIcon"
     resource_mixin = ReplicationResourceMixin
     exclude_fields = (
         'id',

@@ -27,10 +27,12 @@
 import json
 import logging
 
+from django.contrib.auth import authenticate
 from django.core.urlresolvers import reverse
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
 from django.utils.translation import ugettext as _
+from django.contrib.auth import login as auth_login
 from django.contrib.auth.views import login
 from django.contrib.auth import REDIRECT_FIELD_NAME
 from django.contrib.auth.forms import AuthenticationForm
@@ -62,7 +64,7 @@ log = logging.getLogger('account.views')
 def home(request):
 
     view = appPool.hook_app_index('account', request)
-    view = filter(None, view)
+    view = [_f for _f in view if _f]
     if view:
         return view[0]
 
@@ -128,7 +130,7 @@ def json_users(request, exclude=None):
         if idx > 50:
             break
         if (
-            (query is None or user.pw_name.startswith(query.encode('utf8'))) and
+            (query is None or user.pw_name.startswith(query)) and
             user.pw_name not in exclude and user.pw_name not in curr_users
         ):
             json_user['items'].append({
@@ -175,7 +177,7 @@ def json_users(request, exclude=None):
                 if idx > 50:
                     break
                 if (
-                    (query is None or user.startswith(query.encode('utf8'))) and
+                    (query is None or user.startswith(query)) and
                     user not in exclude
                 ):
                     json_user['items'].append({
@@ -213,7 +215,7 @@ def json_groups(request):
     ):
         if idx > 50:
             break
-        if ((query is None or grp.gr_name.startswith(query.encode('utf8'))) and
+        if ((query is None or grp.gr_name.startswith(query)) and
             grp.gr_name not in curr_groups):
             json_group['items'].append({
                 'id': grp.gr_name,
@@ -258,7 +260,7 @@ def json_groups(request):
             for group in groups._get_uncached_groupnames():
                 if idx > 50:
                     break
-                if query is None or group.startswith(query.encode('utf8')):
+                if query is None or group.startswith(query):
                     json_group['items'].append({
                         'id': '%s_%s' % (
                             wizard_ds.get('ds_type'),
@@ -300,10 +302,16 @@ def login_wrapper(
     instead redirect to /
     """
 
+    auth_token = request.GET.get('auth_token')
+    if auth_token:
+        user = authenticate(auth_token=auth_token)
+        if user:
+            auth_login(request, user, 'freenasUI.middleware.auth.AuthTokenBackend')
+
     # Overload hook_app_index to shortcut passive node
     # Doing that in another layer will use too many reasources
     view = appPool.hook_app_index('account_login', request)
-    view = filter(None, view)
+    view = [_f for _f in view if _f]
     if view:
         return view[0]
 

@@ -49,6 +49,8 @@ default:\
 #	autobaud code in getty, and likewise can
 #	be assigned to any table desired (hopefully the same speed).
 #
+std:\
+	:np:sp#0:
 a|std.110|110-baud:\
 	:np:nd#1:cd#1:uc:sp#110:
 b|std.134|134.5-baud:\
@@ -219,6 +221,8 @@ al.230400:\
 # Entries for 3-wire serial terminals.  These don't supply carrier, so
 # clocal needs to be set, and crtscts needs to be unset.
 #
+3wire:\
+	:np:nc:sp#0:
 3wire.9600|9600-3wire:\
 	:np:nc:sp#9600:
 3wire.19200|19200-3wire:\
@@ -236,14 +240,14 @@ al.230400:\
 # FreeNAS menu system entry
 #
 FreeNAS|freenas|FreeNAS Menu:\
-	:ht:np:sp#15200:lo=/etc/netcli.sh:al=root:
-freenas_serial9600:\
-	:ht:np:sp#9600:lo=/etc/netcli.sh:al=root:
-freenas_serial19200:\
-	:ht:np:sp#19200:lo=/etc/netcli.sh:al=root:
-freenas_serial38400:\
-	:ht:np:sp#38400:lo=/etc/netcli.sh:al=root:
-freenas_serial57600:\
-	:ht:np:sp#57600:lo=/etc/netcli.sh:al=root:
-freenas_serial115200:\
-	:ht:np:sp#115200:lo=/etc/netcli.sh:al=root:
+	:ht:np:nc:sp#0:lo=/etc/netcli.sh:al=root:
+freenas.9600:\
+	:ht:np:nc:sp#9600:lo=/etc/netcli.sh:al=root:
+freenas.19200:\
+	:ht:np:nc:sp#19200:lo=/etc/netcli.sh:al=root:
+freenas.38400:\
+	:ht:np:nc:sp#38400:lo=/etc/netcli.sh:al=root:
+freenas.57600:\
+	:ht:np:nc:sp#57600:lo=/etc/netcli.sh:al=root:
+freenas.115200:\
+	:ht:np:nc:sp#115200:lo=/etc/netcli.sh:al=root:

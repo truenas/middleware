@@ -139,10 +139,10 @@ class PBIUploadForm(Form):
             # FIXME: Better base name, using pbi_info
             try:
                 jail = new_default_plugin_jail("customplugin")
-            except MiddlewareError, e:
+            except MiddlewareError as e:
                 raise e
-            except Exception, e:
-                raise MiddlewareError(e)
+            except Exception as e:
+                raise MiddlewareError(str(e))
 
             pjail = jail.jail_host
         if notifier().install_pbi(pjail, newplugin):
@@ -212,7 +212,7 @@ class ConfigurationForm(ModelForm):
                     for chunk in r.iter_content(chunk_size=1024):
                         if chunk:
                             f.write(chunk)
-            except Exception, e:
+            except Exception as e:
                 raise forms.ValidationError(
                     _('Unable to set repository: %s') % e
                 )

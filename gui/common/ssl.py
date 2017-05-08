@@ -45,6 +45,10 @@ def create_certificate(cert_info):
     cert.get_subject().L = cert_info['city']
     cert.get_subject().O = cert_info['organization']
     cert.get_subject().CN = cert_info['common']
+    # Add subject alternate name in addition to CN
+    cert.add_extensions([crypto.X509Extension(
+        "subjectAltName".encode('utf-8'), False, f"URI:https://{cert_info['common']}".encode('utf-8')
+    )])
     cert.get_subject().emailAddress = cert_info['email']
 
     serial = cert_info.get('serial')
@@ -67,14 +71,11 @@ def create_self_signed_CA(cert_info):
     cert = create_certificate(cert_info)
     cert.set_pubkey(key)
     cert.add_extensions([
-        crypto.X509Extension("basicConstraints", True,
-                             "CA:TRUE"),
-        crypto.X509Extension("keyUsage", True,
-                             "keyCertSign, cRLSign"),
-        crypto.X509Extension("subjectKeyIdentifier", False, "hash",
-                             subject=cert),
+        crypto.X509Extension(b"basicConstraints", True, b"CA:TRUE"),
+        crypto.X509Extension(b"keyUsage", True, b"keyCertSign, cRLSign"),
+        crypto.X509Extension(b"subjectKeyIdentifier", False, b"hash", subject=cert),
     ])
-    cert.set_serial_number(01)
+    cert.set_serial_number(0o1)
     sign_certificate(cert, key, cert_info['digest_algorithm'])
     return (cert, key)
 
@@ -92,6 +93,10 @@ def create_certificate_signing_request(cert_info):
     req.get_subject().L = cert_info['city']
     req.get_subject().O = cert_info['organization']
     req.get_subject().CN = cert_info['common']
+    # Add subject alternate name in addition to CN
+    req.add_extensions([crypto.X509Extension(
+        "subjectAltName".encode('utf-8'), False, f"URI:https://{cert_info['common']}".encode('utf-8')
+    )])
     req.get_subject().emailAddress = cert_info['email']
 
     req.set_pubkey(key)
@@ -111,7 +116,7 @@ def load_certificate(buf):
     cert_info['common'] = cert.get_subject().CN
     cert_info['email'] = cert.get_subject().emailAddress
 
-    signature_algorithm = cert.get_signature_algorithm()
+    signature_algorithm = cert.get_signature_algorithm().decode()
     m = re.match('^(.+)[Ww]ith', signature_algorithm)
     if m:
         cert_info['digest_algorithm'] = m.group(1).upper()
@@ -130,7 +135,7 @@ def load_certificate_signing_request(buf):
     cert_info['common'] = cert.get_subject().CN
     cert_info['email'] = cert.get_subject().emailAddress
 
-    signature_algorithm = cert.get_signature_algorithm()
+    signature_algorithm = cert.get_signature_algorithm().decode()
     m = re.match('^(.+)[Ww]ith', signature_algorithm)
     if m:
         cert_info['digest_algorithm'] = m.group(1).upper()

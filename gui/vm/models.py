@@ -28,6 +28,7 @@ import logging
 
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
+from django.core.validators import MaxValueValidator, MinValueValidator
 
 from freenasUI import choices
 from freenasUI.freeadmin.models import DictField, Model
@@ -39,31 +40,44 @@ class VM(Model):
     name = models.CharField(
         max_length=150,
         verbose_name=_('Name'),
+        help_text=_('Name of the virtual machine.'),
     )
     description = models.CharField(
         max_length=250,
         verbose_name=_('Description'),
+        help_text=_('A short description of the virtual machine.'),
         blank=True,
     )
     vcpus = models.IntegerField(
         verbose_name=_('Virtual CPUs'),
+        help_text=_('Number of virtual CPUs allocated to the VM.'),
         default=1,
+        validators=[MinValueValidator(1), MaxValueValidator(16)],
     )
     memory = models.IntegerField(
         verbose_name=_('Memory Size (MiB)'),
+        help_text=_('Megabytes of RAM for the virtual machine.'
+                    'This memory will be allocated when the VM is running '
+                    'and not available to the host system or other VMs.'),
     )
     bootloader = models.CharField(
-        verbose_name=_('Boot Loader'),
+        verbose_name=_('Boot Method'),
         max_length=50,
+        help_text=_('System boot method and architecture.'),
         choices=choices.VM_BOOTLOADER,
         default='UEFI',
+    )
+    autostart = models.BooleanField(
+        verbose_name=_('Autostart'),
+        help_text=_('Guest VM will start on boot.'),
+        default=True,
     )
 
     class Meta:
         verbose_name = _(u"VM")
         verbose_name_plural = _(u"VMs")
 
-    def __unicode__(self):
+    def __str__(self):
         return self.name
 
 
@@ -81,5 +95,5 @@ class Device(Model):
         editable=False,
     )
 
-    def __unicode__(self):
+    def __str__(self):
         return '{0}:{1}'.format(self.vm, self.get_dtype_display())

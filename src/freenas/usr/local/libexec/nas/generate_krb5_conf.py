@@ -125,7 +125,7 @@ class KerberosConfig(object):
                     pair.append(stack.pop())
 
                 except:
-                    print >> sys.stderr, "ERROR: syntax error near '='"
+                    print("ERROR: syntax error near '='", file=sys.stderr)
                     sys.exit(1)
 
             elif tok == '{':
@@ -136,7 +136,7 @@ class KerberosConfig(object):
                     )
 
                 except:
-                    print >> sys.stderr, "ERROR: syntax error near '{'"
+                    print("ERROR: syntax error near '{'", file=sys.stderr)
                     sys.exit(1)
 
                 ptr.append(collection)
@@ -149,7 +149,7 @@ class KerberosConfig(object):
                     ptr = ptr[len(ptr) - 1]
 
                 except:
-                    print >> sys.stderr, "ERROR: syntax error near '}'"
+                    print("ERROR: syntax error near '}'", file=sys.stderr)
                     sys.exit(1)
 
             else:
@@ -163,7 +163,7 @@ class KerberosConfig(object):
                         )
 
                     except:
-                        print >> sys.stderr, "ERROR: syntax error"
+                        print("ERROR: syntax error", file=sys.stderr)
                         sys.exit(1)
 
                     pair = []
@@ -380,25 +380,25 @@ class KerberosConfig(object):
     def generate_bindings(self, bindings, tab=4, stdout=sys.stdout):
         if len(bindings) != 0:
             if bindings.name != None:
-                print >> stdout, "%s%s = {" % (
+                print("%s%s = {" % (
                     "".rjust(tab), bindings.name
-                )
+                ), file=stdout)
             for binding in bindings:
                 self.generate_bindings(binding, tab + 4, stdout)
             if bindings.name != None:
-                print >> stdout, "%s}" % "".rjust(tab)
+                print("%s}" % "".rjust(tab), file=stdout)
 
         else:
-            print >> stdout, "%s%s = %s" % (
+            print("%s%s = %s" % (
                 "".rjust(tab), bindings.name, bindings.value
-            )
+            ), file=stdout)
 
     def generate_section(self, section, tab=0, stdout=sys.stdout):
-        print >> stdout, "%s[%s]" % (
+        print("%s[%s]" % (
             "".rjust(tab), section.section_name
-        )
+        ), file=stdout)
         self.generate_bindings(section.bindings, tab + 4, stdout)
-        print >> stdout, ""
+        print("", file=stdout)
 
     def generate_krb5_conf(self, stdout=sys.stdout):
         for section in self.sections:
@@ -444,7 +444,11 @@ def main():
     realms = client.call('datastore.query', 'directoryservice.KerberosRealm')
 
     try:
-        settings = Struct(client.call('datastore.config', 'directoryservice.KerberosSettings'))
+        settings = client.call('datastore.query', 'directoryservice.KerberosSettings')
+        if settings:
+            settings = Struct(settings[0])
+        else:
+            settings = None
     except:
         settings = None
 

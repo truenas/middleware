@@ -27,21 +27,21 @@ class DiskResourceTest(APITestCase):
         self.assertHttpOK(resp)
         data = self.deserialize(resp)
         self.assertEqual(data, [{
-            u'disk_acousticlevel': u'Disabled',
-            u'disk_advpowermgmt': u'Disabled',
-            u'disk_description': u'',
-            u'disk_enabled': True,
-            u'disk_hddstandby': u'Always On',
-            u'disk_identifier': u'',
-            u'disk_multipath_member': u'',
-            u'disk_multipath_name': u'',
-            u'disk_name': u'ada1',
-            u'disk_serial': u'',
-            u'disk_size': u'',
-            u'disk_smartoptions': u'',
-            u'disk_togglesmart': True,
-            u'disk_transfermode': u'Auto',
-            u'id': obj.id,
+            'disk_acousticlevel': 'Disabled',
+            'disk_advpowermgmt': 'Disabled',
+            'disk_description': '',
+            'disk_enabled': True,
+            'disk_hddstandby': 'Always On',
+            'disk_identifier': '',
+            'disk_multipath_member': '',
+            'disk_multipath_name': '',
+            'disk_name': 'ada1',
+            'disk_serial': '',
+            'disk_size': '',
+            'disk_smartoptions': '',
+            'disk_togglesmart': True,
+            'disk_transfermode': 'Auto',
+            'id': obj.id,
         }])
 
     def test_Update(self):
@@ -197,16 +197,16 @@ class ScrubResourceTest(APITestCase):
 
         data = self.deserialize(resp)
         self.assertEqual(data, {
-            u'id': 1,
-            u'scrub_daymonth': u'*',
-            u'scrub_dayweek': u'7',
-            u'scrub_description': u'',
-            u'scrub_enabled': True,
-            u'scrub_hour': u'00',
-            u'scrub_minute': u'00',
-            u'scrub_month': u'*',
-            u'scrub_threshold': 35,
-            u'scrub_volume': u'tank',
+            'id': 1,
+            'scrub_daymonth': '*',
+            'scrub_dayweek': '7',
+            'scrub_description': '',
+            'scrub_enabled': True,
+            'scrub_hour': '00',
+            'scrub_minute': '00',
+            'scrub_month': '*',
+            'scrub_threshold': 35,
+            'scrub_volume': 'tank',
         })
 
     def test_Retrieve(self):
@@ -220,16 +220,16 @@ class ScrubResourceTest(APITestCase):
         self.assertHttpOK(resp)
         data = self.deserialize(resp)
         self.assertEqual(data, [{
-            u'id': obj.id,
-            u'scrub_daymonth': u'*',
-            u'scrub_dayweek': u'7',
-            u'scrub_description': u'',
-            u'scrub_enabled': True,
-            u'scrub_hour': u'00',
-            u'scrub_minute': u'00',
-            u'scrub_month': u'*',
-            u'scrub_threshold': 35,
-            u'scrub_volume': u'tank'
+            'id': obj.id,
+            'scrub_daymonth': '*',
+            'scrub_dayweek': '7',
+            'scrub_description': '',
+            'scrub_enabled': True,
+            'scrub_hour': '00',
+            'scrub_minute': '00',
+            'scrub_month': '*',
+            'scrub_threshold': 35,
+            'scrub_volume': 'tank'
         }])
 
     def test_Update(self):
@@ -295,17 +295,17 @@ class TaskResourceTest(APITestCase):
 
         data = self.deserialize(resp)
         self.assertEqual(data, {
-            u'id': 1,
-            u'task_begin': u'09:00:00',
-            u'task_byweekday': u'1,2,3,4,5',
-            u'task_enabled': True,
-            u'task_end': u'18:00:00',
-            u'task_filesystem': u'tank',
-            u'task_interval': 60,
-            u'task_recursive': False,
-            u'task_repeat_unit': u'weekly',
-            u'task_ret_count': 2,
-            u'task_ret_unit': u'week',
+            'id': 1,
+            'task_begin': '09:00:00',
+            'task_byweekday': '1,2,3,4,5',
+            'task_enabled': True,
+            'task_end': '18:00:00',
+            'task_filesystem': 'tank',
+            'task_interval': 60,
+            'task_recursive': False,
+            'task_repeat_unit': 'weekly',
+            'task_ret_count': 2,
+            'task_ret_unit': 'week',
         })
 
     def test_Retrieve(self):
@@ -319,17 +319,17 @@ class TaskResourceTest(APITestCase):
         self.assertHttpOK(resp)
         data = self.deserialize(resp)
         self.assertEqual(data, [{
-            u'id': obj.id,
-            u'task_begin': u'09:00:00',
-            u'task_byweekday': u'1,2,3,4,5',  #FIXME: array
-            u'task_enabled': True,
-            u'task_end': u'18:00:00',
-            u'task_filesystem': u'tank',
-            u'task_interval': 60,
-            u'task_recursive': False,
-            u'task_repeat_unit': u'weekly',
-            u'task_ret_count': 2,
-            u'task_ret_unit': u'week',
+            'id': obj.id,
+            'task_begin': '09:00:00',
+            'task_byweekday': '1,2,3,4,5',  #FIXME: array
+            'task_enabled': True,
+            'task_end': '18:00:00',
+            'task_filesystem': 'tank',
+            'task_interval': 60,
+            'task_recursive': False,
+            'task_repeat_unit': 'weekly',
+            'task_ret_count': 2,
+            'task_ret_unit': 'week',
         }])
 
     def test_Update(self):
@@ -397,23 +397,23 @@ class ReplicationResourceTest(APITestCase):
 
         data = self.deserialize(resp)
         self.assertEqual(data, {
-            u'id': 1,
-            u'repl_begin': u'00:00:00',
-            u'repl_enabled': True,
-            u'repl_end': u'23:59:00',
-            u'repl_filesystem': u'tank',
-            u'repl_lastsnapshot': u'',
-            u'repl_limit': 0,
-            u'repl_userepl': False,
-            u'repl_zfs': u'tank',
-            u'repl_remote_dedicateduser': None,
-            u'repl_remote_dedicateduser_enabled': False,
-            u'repl_remote_cipher': u'standard',
-            u'repl_remote_hostkey': u'AAAA',
-            u'repl_remote_hostname': u'testhost',
-            u'repl_remote_port': 22,
-            u'repl_compression': u'lz4',
-            u'repl_status': u'Waiting',
+            'id': 1,
+            'repl_begin': '00:00:00',
+            'repl_enabled': True,
+            'repl_end': '23:59:00',
+            'repl_filesystem': 'tank',
+            'repl_lastsnapshot': '',
+            'repl_limit': 0,
+            'repl_userepl': False,
+            'repl_zfs': 'tank',
+            'repl_remote_dedicateduser': None,
+            'repl_remote_dedicateduser_enabled': False,
+            'repl_remote_cipher': 'standard',
+            'repl_remote_hostkey': 'AAAA',
+            'repl_remote_hostname': 'testhost',
+            'repl_remote_port': 22,
+            'repl_compression': 'lz4',
+            'repl_status': 'Waiting',
         })
 
     def test_Retrieve(self):
@@ -434,23 +434,23 @@ class ReplicationResourceTest(APITestCase):
         self.assertHttpOK(resp)
         data = self.deserialize(resp)
         self.assertEqual(data, [{
-            u'id': obj.id,
-            u'repl_begin': u'00:00:00',
-            u'repl_enabled': True,
-            u'repl_end': u'23:59:00',
-            u'repl_filesystem': u'tank',
-            u'repl_lastsnapshot': u'',
-            u'repl_limit': 0,
-            u'repl_userepl': False,
-            u'repl_zfs': u'tank',
-            u'repl_remote_dedicateduser': None,
-            u'repl_remote_dedicateduser_enabled': False,
-            u'repl_remote_cipher': u'standard',
-            u'repl_remote_hostkey': u'AAAA',
-            u'repl_remote_hostname': u'testhost',
-            u'repl_remote_port': 22,
-            u'repl_compression': u'lz4',
-            u'repl_status': u'Waiting',
+            'id': obj.id,
+            'repl_begin': '00:00:00',
+            'repl_enabled': True,
+            'repl_end': '23:59:00',
+            'repl_filesystem': 'tank',
+            'repl_lastsnapshot': '',
+            'repl_limit': 0,
+            'repl_userepl': False,
+            'repl_zfs': 'tank',
+            'repl_remote_dedicateduser': None,
+            'repl_remote_dedicateduser_enabled': False,
+            'repl_remote_cipher': 'standard',
+            'repl_remote_hostkey': 'AAAA',
+            'repl_remote_hostname': 'testhost',
+            'repl_remote_port': 22,
+            'repl_compression': 'lz4',
+            'repl_status': 'Waiting',
         }])
 
     def test_Update(self):

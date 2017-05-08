@@ -45,10 +45,10 @@ class JailsFAdmin(BaseFreeAdmin):
 
     create_modelform = "JailCreateForm"
     edit_modelform = "JailsEditForm"
-    icon_object = u"ServicesIcon"
-    icon_model = u"ServicesIcon"
-    icon_add = u"ServicesIcon"
-    icon_view = u"ServicesIcon"
+    icon_object = "ServicesIcon"
+    icon_model = "ServicesIcon"
+    icon_add = "ServicesIcon"
+    icon_view = "ServicesIcon"
 
     resource_mixin = JailsResourceMixin
     exclude_fields = [
@@ -274,10 +274,10 @@ class JailTemplateFAdmin(BaseFreeAdmin):
 
     create_modelform = "JailTemplateCreateForm"
     edit_modelform = "JailTemplateEditForm"
-    icon_object = u"ServicesIcon"
-    icon_model = u"ServicesIcon"
-    icon_add = u"ServicesIcon"
-    icon_view = u"ServicesIcon"
+    icon_object = "ServicesIcon"
+    icon_model = "ServicesIcon"
+    icon_add = "ServicesIcon"
+    icon_view = "ServicesIcon"
 
     resource_mixin = JailTemplateResourceMixin
     resource_name = 'jails/templates'
@@ -336,10 +336,10 @@ class JailTemplateFAdmin(BaseFreeAdmin):
 
 class JailMountPointFAdmin(BaseFreeAdmin):
 
-    icon_model = u"MountPointIcon"
-    icon_object = u"MountPointIcon"
-    icon_add = u"AddMountPointIcon"
-    icon_view = u"ViewMountPointIcon"
+    icon_model = "MountPointIcon"
+    icon_object = "MountPointIcon"
+    icon_add = "AddMountPointIcon"
+    icon_view = "ViewMountPointIcon"
 
     resource_mixin = JailMountPointResourceMixin
     resource_name = 'jails/mountpoints'

@@ -51,6 +51,7 @@ from freenasUI.common.system import (
 from freenasUI.freeadmin.forms import DirectoryBrowser
 from freenasUI.freeadmin.options import FreeBaseInlineFormSet
 from freenasUI.freeadmin.utils import key_order
+from freenasUI.jails.models import JailsConfiguration
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier
 from freenasUI.services import models
@@ -62,6 +63,7 @@ from ipaddr import (
     IPAddress, IPNetwork, AddressValueError, NetmaskValueError,
     IPv4Address, IPv6Address,
 )
+from freenasUI.freeadmin.utils import key_order
 
 log = logging.getLogger('services.form')
 
@@ -144,7 +146,7 @@ class CIFSForm(ModelForm):
         if self.instance.id and self.instance.cifs_srv_bindip:
             bindips = []
             for ip in self.instance.cifs_srv_bindip:
-                bindips.append(ip.encode('utf-8'))
+                bindips.append(ip)
 
             self.fields['cifs_srv_bindip'].initial = (bindips)
         else:
@@ -178,7 +180,7 @@ class CIFSForm(ModelForm):
 
     def __check_octet(self, v):
         try:
-            if v != "" and (int(v, 8) & ~011777):
+            if v != "" and (int(v, 8) & ~0o11777):
                 raise ValueError
         except:
             raise forms.ValidationError(_("This is not a valid mask"))
@@ -237,7 +239,7 @@ class CIFSForm(ModelForm):
         bind = []
         for ip in ips:
             try:
-                IPAddress(ip.encode('utf-8'))
+                IPAddress(ip)
             except:
                 raise forms.ValidationError(
                     "This is not a valid IP: %s" % (ip, )
@@ -288,7 +290,7 @@ class AFPForm(ModelForm):
         if self.instance.id and self.instance.afp_srv_bindip:
             bindips = []
             for ip in self.instance.afp_srv_bindip:
-                bindips.append(ip.encode('utf-8'))
+                bindips.append(ip)
 
             self.fields['afp_srv_bindip'].initial = (bindips)
         else:
@@ -301,7 +303,7 @@ class AFPForm(ModelForm):
         bind = []
         for ip in ips:
             try:
-                IPAddress(ip.encode('utf-8'))
+                IPAddress(ip)
             except:
                 raise forms.ValidationError(
                     "This is not a valid IP: %s" % (ip, )
@@ -380,7 +382,7 @@ class NFSForm(ModelForm):
                 )
         self.fields['nfs_srv_bindip'].choices = list(choices.IPChoices())
         self.fields['nfs_srv_bindip'].initial = (
-            self.instance.nfs_srv_bindip.encode('utf-8').split(',')
+            self.instance.nfs_srv_bindip.split(',')
             if self.instance.id and self.instance.nfs_srv_bindip
             else ''
         )
@@ -419,7 +421,7 @@ class NFSForm(ModelForm):
         bind = []
         for ip in ips:
             try:
-                IPAddress(ip.encode('utf-8'))
+                IPAddress(ip)
             except:
                 raise forms.ValidationError(
                     "This is not a valid IP: %s" % (ip, )
@@ -600,7 +602,7 @@ class SSHForm(ModelForm):
                 return obj
             with open(keyfile, "rb") as f:
                 pubkey = f.read().strip().split(None, 3)[1]
-            decoded_key = base64.b64decode(pubkey.encode("ascii"))
+            decoded_key = base64.b64decode(pubkey)
             key_digest = hashlib.sha256(decoded_key).digest()
             ssh_fingerprint = (b"SHA256:" + base64.b64encode(key_digest).replace(b"=", b"")).decode("utf-8")
             # using log.error since it logs to /var/log/messages, /var/log/debug.log as well as /dev/console all at once
@@ -637,7 +639,7 @@ class RsyncModForm(ModelForm):
         name = self.cleaned_data['rsyncmod_name']
         if re.search(r'[/\]]', name):
             raise forms.ValidationError(
-                _(u"The name cannot contain slash or a closing square backet.")
+                _("The name cannot contain slash or a closing square backet.")
             )
         name = name.strip()
         return name
@@ -818,7 +820,7 @@ class SNMPForm(ModelForm):
             validate_email(contact)
         elif not re.match(r'^[-_a-zA-Z0-9\s]+$', contact):
             raise forms.ValidationError(
-                _(u"The contact must contain only alphanumeric characters, _, "
+                _("The contact must contain only alphanumeric characters, _, "
                     "- or a valid e-mail address")
             )
         return contact
@@ -833,7 +835,7 @@ class SNMPForm(ModelForm):
                 return community
         if not re.match(r'^[-_.a-zA-Z0-9\s]+$', community):
             raise forms.ValidationError(
-                _(u"The community must contain only alphanumeric characters "
+                _("The community must contain only alphanumeric characters "
                     "_ . spaces or -")
             )
         return community
@@ -918,7 +920,7 @@ class UPSForm(ModelForm):
             self.fields['ups_shutdowntimer'].widget.attrs['class'] = (
                 'dijitDisabled dijitTextBoxDisabled '
                 'dijitValidationTextBoxDisabled')
-        ports = filter(lambda x: x.find('.') == -1, glob.glob('/dev/cua*'))
+        ports = [x for x in glob.glob('/dev/cua*') if x.find('.') == -1]
         ports.extend(glob.glob('/dev/ugen*'))
         self.fields['ups_port'] = forms.ChoiceField(
             label=_("Port"),
@@ -1047,16 +1049,8 @@ class iSCSITargetAuthCredentialForm(ModelForm):
             del self.fields['iscsi_target_auth_secret2']
             del self.fields['iscsi_target_auth_peersecret2']
         else:
-            # FIXME: no keyOrder in OrderedDict
-            #self.fields.keyOrder = [
-            #    'iscsi_target_auth_tag',
-            #    'iscsi_target_auth_user',
-            #    'iscsi_target_auth_secret',
-            #    'iscsi_target_auth_secret2',
-            #    'iscsi_target_auth_peeruser',
-            #    'iscsi_target_auth_peersecret',
-            #    'iscsi_target_auth_peersecret2'
-            #]
+            key_order(self, 3, 'iscsi_target_auth_secret2', instance=True)
+            key_order(self, 6, 'iscsi_target_auth_peersecret2', instance=True)
 
             ins = kwargs.get("instance", None)
             if ins:
@@ -1162,7 +1156,7 @@ class iSCSITargetToExtentForm(ModelForm):
     def __init__(self, *args, **kwargs):
         super(iSCSITargetToExtentForm, self).__init__(*args, **kwargs)
         choices = tuple(
-            [(x, x) for x in xrange(25)]
+            [(x, x) for x in range(25)]
         )
         self.fields['iscsi_lunid'] = forms.CharField(
             label=self.fields['iscsi_lunid'].label,
@@ -1175,7 +1169,7 @@ class iSCSITargetToExtentForm(ModelForm):
         lunid = self.cleaned_data.get('iscsi_lunid')
         if not lunid:
             return None
-        if isinstance(lunid, (str, unicode)) and not lunid.isdigit():
+        if isinstance(lunid, str) and not lunid.isdigit():
             raise forms.ValidationError(_("LUN ID must be a positive integer"))
         return lunid
 
@@ -1225,10 +1219,8 @@ class iSCSITargetGlobalConfigurationForm(ModelForm):
 
     def __init__(self, *args, **kwargs):
         super(iSCSITargetGlobalConfigurationForm, self).__init__(*args, **kwargs)
-        # Disable ALUA for now
-        #_n = notifier()
-        #if not (not _n.is_freenas() and _n.failover_licensed()):
-        if True:
+        _n = notifier()
+        if not (not _n.is_freenas() and _n.failover_licensed()):
             del self.fields['iscsi_alua']
 
     def _clean_number_range(self, field, start, end):
@@ -1372,7 +1364,7 @@ class iSCSITargetExtentForm(ModelForm):
         snaps = []
         for volume in Volume.objects.filter(vol_fstype__exact='ZFS'):
             zvols = _notifier.list_zfs_vols(volume.vol_name, sort='name')
-            for zvol, attrs in zvols.items():
+            for zvol, attrs in list(zvols.items()):
                 if "zvol/" + zvol not in used_zvol:
                     diskchoices["zvol/" + zvol] = "%s (%s)" % (
                         zvol,
@@ -1388,7 +1380,7 @@ class iSCSITargetExtentForm(ModelForm):
         # Grab partition list
         # NOTE: This approach may fail if device nodes are not accessible.
         disks = _notifier.get_disks()
-        for name, disk in disks.items():
+        for name, disk in list(disks.items()):
             if name in used_disks:
                 continue
             capacity = humanize_size(disk['capacity'])
@@ -1400,14 +1392,15 @@ class iSCSITargetExtentForm(ModelForm):
             """| /usr/bin/cut -d" " -f1` | /usr/bin/cut -f1,3""",
             shell=True,
             stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE)
+            stderr=subprocess.PIPE,
+            encoding='utf8')
         gate_diskinfo = gate_pipe.communicate()[0].strip().split('\n')
         for disk in gate_diskinfo:
             if disk:
                 devname, capacity = disk.split('\t')
                 capacity = humanize_size(capacity)
                 diskchoices[devname] = "%s (%s)" % (devname, capacity)
-        return diskchoices.items()
+        return list(diskchoices.items())
 
     def clean_iscsi_target_extent_name(self):
         name = self.cleaned_data.get('iscsi_target_extent_name')
@@ -1453,8 +1446,17 @@ class iSCSITargetExtentForm(ModelForm):
             if _type == 'File':
                 raise forms.ValidationError(_('This field is required.'))
             return None
+
+        # Avoid create an extent inside a jail root
+        jc = JailsConfiguration.objects.order_by("-id")
+        if jc.exists():
+            jc_path = jc[0].jc_path
+            if (os.path.realpath(jc_path) in os.path.realpath(path)):
+                raise forms.ValidationError(_("You need to specify a filepath outside of jail root."))
+
         if (os.path.exists(path) and not os.path.isfile(path)) or path[-1] == '/':
             raise forms.ValidationError(_("You need to specify a filepath, not a directory."))
+
         valid = False
         for v in Volume.objects.all():
             mp_path = '/mnt/%s' % v.vol_name
@@ -1464,6 +1466,7 @@ class iSCSITargetExtentForm(ModelForm):
                 )
             if path.startswith(mp_path + '/'):
                 valid = True
+
         if not valid:
             raise forms.ValidationError(_("Your path to the extent must reside inside a volume/dataset mount point."))
         return path
@@ -1571,7 +1574,7 @@ class iSCSITargetExtentForm(ModelForm):
             if not os.path.exists(dirs):
                 try:
                     os.makedirs(dirs)
-                except Exception, e:
+                except Exception as e:
                     log.error("Unable to create dirs for extent file: %s", e)
             if not os.path.exists(path):
                 size = self.cleaned_data["iscsi_target_extent_filesize"]
@@ -1690,10 +1693,10 @@ class iSCSITargetAuthorizedInitiatorForm(ModelForm):
             if auth_network == 'ALL':
                 continue
             try:
-                IPNetwork(auth_network.encode('utf-8'))
+                IPNetwork(auth_network)
             except (NetmaskValueError, ValueError):
                 try:
-                    IPAddress(auth_network.encode('utf-8'))
+                    IPAddress(auth_network)
                 except (AddressValueError, ValueError):
                     raise forms.ValidationError(
                         _(
@@ -1765,7 +1768,7 @@ class iSCSITargetForm(ModelForm):
             qs = qs.exclude(id=self.instance.id)
         if qs.exists():
             raise forms.ValidationError(
-                _(u'A target with that name already exists.')
+                _('A target with that name already exists.')
             )
         return name
 
@@ -2116,3 +2119,103 @@ class WebDAVForm(ModelForm):
     def done(self, *args, **kwargs):
         if self._has_changed('webdav_certssl'):
             notifier().start_ssl("webdav")
+
+
+class S3Form(ModelForm):
+    s3_bindip = forms.ChoiceField(
+        label=models.S3._meta.get_field("s3_bindip").verbose_name,
+        help_text=models.S3._meta.get_field("s3_bindip").help_text,
+        widget=forms.widgets.FilteringSelect(),
+        required=False,
+        choices=(),
+    )
+    s3_secret_key2 = forms.CharField(
+        max_length=128,
+        label=_("Confirm S3 Key"),
+        widget=forms.widgets.PasswordInput(render_value=True),
+        required=False,
+    )
+
+    class Meta:
+        fields = '__all__'
+        widgets = {
+            's3_secret_key': forms.widgets.PasswordInput(render_value=True),
+            's3_bindport': forms.widgets.TextInput(),
+        }
+        model = models.S3
+
+    def __init__(self, *args, **kwargs):
+        super(S3Form, self).__init__(*args, **kwargs)
+        key_order(self, 1, 's3_bindip', instance=True)
+        key_order(self, 2, 's3_bindport', instance=True)
+        key_order(self, 3, 's3_access_key', instance=True)
+        key_order(self, 4, 's3_secret_key', instance=True)
+        key_order(self, 5, 's3_secret_key2', instance=True)
+        key_order(self, 6, 's3_disks', instance=True)
+        key_order(self, 7, 's3_mode', instance=True)
+        key_order(self, 8, 's3_browser', instance=True)
+
+        self.fields['s3_bindip'].choices = [('0.0.0.0','0.0.0.0')] + list(choices.IPChoices())
+        if self.instance.id and self.instance.s3_bindip:
+            bindips = []
+            for ip in self.instance.s3_bindip:
+                bindips.append(ip.encode('utf-8'))
+
+            self.fields['s3_bindip'].initial = (bindips)
+        else:
+            self.fields['s3_bindip'].initial = ('')
+
+        if self.instance.id:
+            self.fields['s3_secret_key2'].initial = self.instance.s3_secret_key
+        if self._api is True:
+            del self.fields['s3_secret_key2']
+
+        self.fields['s3_mode'].widget = forms.widgets.HiddenInput()
+
+    def clean_s3_access_key(self):
+        s3_access_key = self.cleaned_data.get("s3_access_key")
+        s3_access_key_len = len(s3_access_key)
+        if s3_access_key_len < 5 or s3_access_key_len > 20:
+            raise forms.ValidationError(
+                _("S3 access key should be 5 to 20 characters in length.")
+            )
+        return s3_access_key
+
+    def clean_s3_secret_key(self):
+        s3_secret_key = self.cleaned_data.get("s3_secret_key")
+        s3_secret_key_len = len(s3_secret_key)
+        if s3_secret_key_len < 5 or s3_secret_key_len > 20:
+            raise forms.ValidationError(
+                _("S3 secret key should be 8 to 40 characters in length.")
+            )
+        return s3_secret_key
+
+    def clean_s3_secret_key2(self):
+        s3_secret_key1 = self.cleaned_data.get("s3_secret_key")
+        s3_secret_key2 = self.cleaned_data.get("s3_secret_key2")
+        if s3_secret_key1 != s3_secret_key2:
+            raise forms.ValidationError(
+                _("The two password fields didn't match.")
+            )
+        return s3_secret_key2 
+
+    def clean(self):
+        cdata = self.cleaned_data
+        if not cdata.get("s3_secret_key"):
+            cdata["s3_secret_key"] = self.instance.s3_secret_key
+        return cdata
+
+    def save(self):
+        obj = super(S3Form, self).save()
+        path = self.cleaned_data.get("s3_disks")
+        if not path:
+            return
+        try:
+            path = path.decode('utf-8')
+        except Exception as e:
+            log.debug("ERROR: unable to decode string %s", e)
+            pass
+        if notifier().mp_get_owner(path) != "minio":
+            # Currently not working because of python byte string
+            notifier().winacl_reset(path=path, owner="minio", group="minio")
+        return obj

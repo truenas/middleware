@@ -38,9 +38,9 @@ from collections import defaultdict, OrderedDict
 from decimal import Decimal
 import base64
 from Crypto.Cipher import AES
-import bsd
 import ctypes
 import errno
+from functools import cmp_to_key
 import glob
 import grp
 import json
@@ -58,6 +58,7 @@ import stat
 from subprocess import Popen, PIPE
 import subprocess
 import sys
+import syslog
 import tarfile
 import tempfile
 import time
@@ -135,13 +136,7 @@ RE_DSKNAME = re.compile(r'^([a-z]+)([0-9]+)$')
 log = logging.getLogger('middleware.notifier')
 
 
-def close_preexec():
-    bsd.closefrom(3)
-
-
-class notifier:
-
-    __metaclass__ = HookMetaclass
+class notifier(metaclass=HookMetaclass):
 
     from os import system as __system
     from pwd import getpwnam as ___getpwnam
@@ -163,9 +158,13 @@ class notifier:
         libc.sigprocmask(signal.SIGQUIT, pmask, pomask)
         try:
             p = Popen(
-                "(" + command + ") 2>&1 | logger -p daemon.notice -t %s" % (self.IDENTIFIER, ),
-                stdin=PIPE, stdout=PIPE, stderr=PIPE, shell=True, preexec_fn=close_preexec, close_fds=False)
-            p.communicate()
+                "(" + command + ") 2>&1",
+                stdin=PIPE, stdout=PIPE, stderr=PIPE, shell=True, close_fds=True, encoding='utf8')
+            syslog.openlog(self.IDENTIFIER, facility=syslog.LOG_DAEMON)
+            for line in p.stdout:
+                syslog.syslog(syslog.LOG_NOTICE, line)
+            syslog.closelog()
+            p.wait()
             ret = p.returncode
         finally:
             libc.sigprocmask(signal.SIGQUIT, pomask, None)
@@ -185,7 +184,7 @@ class notifier:
         try:
             p = Popen(
                 "(" + command + ") >/dev/null 2>&1",
-                stdin=PIPE, stdout=PIPE, stderr=PIPE, shell=True, preexec_fn=close_preexec, close_fds=False)
+                stdin=PIPE, stdout=PIPE, stderr=PIPE, shell=True, close_fds=True)
             p.communicate()
             retval = p.returncode
         finally:
@@ -196,7 +195,7 @@ class notifier:
     def _pipeopen(self, command, logger=log):
         if logger:
             logger.debug("Popen()ing: %s", command)
-        return Popen(command, stdin=PIPE, stdout=PIPE, stderr=PIPE, shell=True, preexec_fn=close_preexec, close_fds=False)
+        return Popen(command, stdin=PIPE, stdout=PIPE, stderr=PIPE, shell=True, close_fds=True, encoding='utf8')
 
     def _pipeerr(self, command, good_status=0):
         proc = self._pipeopen(command)
@@ -245,25 +244,40 @@ class notifier:
             f = getattr(self, '_destroy_' + what)
             f(objectid)
 
-    def start(self, what):
+    def start(self, what, timeout=None):
+        kwargs = {}
+        if timeout:
+            kwargs['timeout'] = timeout
         with client as c:
-            return c.call('service.start', what, {'onetime': False})
+            return c.call('service.start', what, {'onetime': False}, **kwargs)
 
-    def started(self, what):
+    def started(self, what, timeout=None):
+        kwargs = {}
+        if timeout:
+            kwargs['timeout'] = timeout
         with client as c:
-            return c.call('service.started', what)
+            return c.call('service.started', what, **kwargs)
 
-    def stop(self, what):
+    def stop(self, what, timeout=None):
+        kwargs = {}
+        if timeout:
+            kwargs['timeout'] = timeout
         with client as c:
-            return c.call('service.stop', what, {'onetime': False})
+            return c.call('service.stop', what, {'onetime': False}, **kwargs)
 
-    def restart(self, what):
+    def restart(self, what, timeout=None):
+        kwargs = {}
+        if timeout:
+            kwargs['timeout'] = timeout
         with client as c:
-            return c.call('service.restart', what, {'onetime': False})
+            return c.call('service.restart', what, {'onetime': False}, **kwargs)
 
-    def reload(self, what):
+    def reload(self, what, timeout=None):
+        kwargs = {}
+        if timeout:
+            kwargs['timeout'] = timeout
         with client as c:
-            return c.call('service.reload', what, {'onetime': False})
+            return c.call('service.reload', what, {'onetime': False}, **kwargs)
 
     def clear_activedirectory_config(self):
         with client as c:
@@ -337,7 +351,7 @@ class notifier:
         else:
             self._system("/usr/sbin/service ix-ssl quietstart")
 
-    def _open_db(self, ret_conn=False):
+    def _open_db(self):
         """Open and return a cursor object for database access."""
         try:
             from freenasUI.settings import DATABASES
@@ -347,9 +361,7 @@ class notifier:
 
         conn = sqlite3.connect(dbname)
         c = conn.cursor()
-        if ret_conn:
-            return c, conn
-        return c
+        return c, conn
 
     def __gpt_labeldisk(self, type, devname, swapsize=2):
         """Label the whole disk with GPT under the desired label and type"""
@@ -359,12 +371,12 @@ class notifier:
         swapsize = swapsize * 1024 * 1024 * 2
         # Round up to nearest whole integral multiple of 128 and subtract by 34
         # so next partition starts at mutiple of 128.
-        swapsize = ((swapsize + 127) / 128) * 128
+        swapsize = (int((swapsize + 127) / 128)) * 128
         # To be safe, wipe out the disk, both ends... before we start
         self._system("dd if=/dev/zero of=/dev/%s bs=1m count=32" % (devname, ))
         try:
             p1 = self._pipeopen("diskinfo %s" % (devname, ))
-            size = int(re.sub(r'\s+', ' ', p1.communicate()[0]).split()[2]) / (1024)
+            size = int(int(re.sub(r'\s+', ' ', p1.communicate()[0]).split()[2]) / (1024))
         except:
             log.error("Unable to determine size of %s", devname)
         else:
@@ -375,7 +387,7 @@ class notifier:
             # is a lame workaround.
             self._system("dd if=/dev/zero of=/dev/%s bs=1m oseek=%s" % (
                 devname,
-                size / 1024 - 32,
+                int(size / 1024) - 32,
             ))
 
         commands = []
@@ -392,9 +404,9 @@ class notifier:
 
         for command in commands:
             proc = self._pipeopen(command)
-            proc.wait()
+            error = proc.communicate()[1]
             if proc.returncode != 0:
-                raise MiddlewareError('Unable to GPT format the disk "%s"' % devname)
+                raise MiddlewareError(f'Unable to GPT format the disk "{devname}": {error}')
 
         # We might need to sync with reality (e.g. devname -> uuid)
         # Invalidating confxml is required or changes wont be seen
@@ -778,7 +790,7 @@ class notifier:
                 return 1
             return 0
 
-        for vgrp in sorted(groups.values(), cmp=stripe_first):
+        for vgrp in sorted(list(groups.values()), key=cmp_to_key(stripe_first)):
             vgrp_type = vgrp['type']
             if vgrp_type != 'stripe':
                 z_vdev += " " + vgrp_type
@@ -870,8 +882,8 @@ class notifier:
         else:
             options = " "
         if props:
-            assert isinstance(props, types.DictType)
-            for k in props.keys():
+            assert isinstance(props, dict)
+            for k in list(props.keys()):
                 if props[k] != 'inherit':
                     options += "-o %s=%s " % (k, props[k])
         zfsproc = self._pipeopen("/sbin/zfs create %s -V '%s' '%s'" % (options, size, name))
@@ -883,8 +895,8 @@ class notifier:
         """Internal procedure to create ZFS volume"""
         options = " "
         if props:
-            assert isinstance(props, types.DictType)
-            for k in props.keys():
+            assert isinstance(props, dict)
+            for k in list(props.keys()):
                 if props[k] != 'inherit':
                     options += "-o %s=%s " % (k, props[k])
         zfsproc = self._pipeopen("/sbin/zfs create %s '%s'" % (options, path))
@@ -1174,7 +1186,7 @@ class notifier:
            (more technically speaking, a replaced disk.  The replacement actually
            creates a mirror for the device to be replaced)"""
 
-        if isinstance(volume, basestring):
+        if isinstance(volume, str):
             vol_name = volume
         else:
             assert volume.vol_fstype == 'ZFS'
@@ -1195,7 +1207,7 @@ class notifier:
 
         ret = self._system_nolog('/sbin/zpool detach %s %s' % (vol_name, label))
 
-        if not isinstance(volume, basestring):
+        if not isinstance(volume, str):
             self.sync_encrypted(volume)
 
         if from_disk:
@@ -1273,10 +1285,7 @@ class notifier:
             p1 = self._pipeopen('mount -p')
             stdout = p1.communicate()[0]
             if not p1.returncode:
-                flines = filter(
-                    lambda x: x and x.split()[0] == '/dev/ufs/' + name,
-                    stdout.splitlines()
-                )
+                flines = [x for x in stdout.splitlines() if x and x.split()[0] == '/dev/ufs/' + name]
                 if flines:
                     return flines[0].split()[1]
 
@@ -1537,8 +1546,8 @@ class notifier:
         ret = False
         proc = self._pipeopen(command % (
             type,
-            unixgroup.encode('utf8'),
-            ntgroup.encode('utf8')
+            unixgroup,
+            ntgroup,
         ))
         proc.communicate()
         if proc.returncode == 0:
@@ -1659,7 +1668,7 @@ class notifier:
         except:
             pass
 
-        saved_umask = os.umask(077)
+        saved_umask = os.umask(0o77)
         if not os.path.isdir(sshpath):
             os.makedirs(sshpath)
         if not os.path.isdir(sshpath):
@@ -1682,38 +1691,155 @@ class notifier:
             finally:
                 pass
 
+    def path_to_smb_share(self, path):
+        from freenasUI.sharing.models import CIFS_Share
+
+        try:
+            share = CIFS_Share.objects.get(cifs_path=path)
+        except:
+            share = None
+
+        return share
+
+    def smb_share_to_path(self, share): 
+        from freenasUI.sharing.models import CIFS_Share
+
+        try:
+            path = CIFS_Share.objects.get(cifs_name=share)
+        except:
+            path = None
+
+        return path
+
+    def owner_to_SID(self, owner):
+        if not owner:
+            return None
+
+        proc = self._pipeopen("/usr/local/bin/wbinfo -n '%s'" % owner)
+
+        info, err = proc.communicate()
+        if proc.returncode != 0:
+            log.debug("owner_to_SID: error %s", err)
+            return None
+
+        try:
+            SID = info.split(' ')[0].strip()
+        except:
+            SID = None
+
+        log.debug("owner_to_SID: %s -> %s", owner, SID)
+        return SID
+
+    def group_to_SID(self, group):
+        if not group:
+            return None
+
+        proc = self._pipeopen("/usr/local/bin/wbinfo -n '%s'" % group)
+
+        info, err = proc.communicate()
+        if proc.returncode != 0:
+            log.debug("group_to_SID: error %s", err)
+            return None
+
+        try:
+            SID = info.split(' ')[0].strip()
+        except:
+            SID = None
+
+        log.debug("group_to_SID: %s -> %s", group, SID)
+        return SID
+
+    def sharesec_add(self, share, owner, group):
+        if not share:
+            return False
+
+        log.debug("sharesec_add: adding '%s:%s' ACL on %s", owner, group, share)
+
+        add_args = ""
+        sharesec = "/usr/local/bin/sharesec"
+
+        owner_SID = self.owner_to_SID(owner)
+        group_SID = self.group_to_SID(group)
+
+        if owner and owner_SID:
+            add_args += ",%s:ALLOWED/0/FULL" %  owner_SID
+        if group and group_SID: 
+            add_args += ",%s:ALLOWED/0/FULL" % group_SID
+        add_args = add_args.lstrip(',')
+
+        ret = True
+        if add_args: 
+            add_cmd = "%s %s -a '%s'" % (sharesec, share, add_args)
+            try:
+                proc = self._pipeopen(add_cmd).communicate()
+            except: 
+                log.debug("sharesec_add: %s failed", add_cmd)
+                ret = False
+
+        return ret
+
+    def sharesec_delete(self, share):
+        if not share:
+            return False
+
+        log.debug("sharesec_delete: deleting ACL on %s", share)
+
+        sharesec = "/usr/local/bin/sharesec"
+        delete_cmd = "%s %s -D" % (sharesec, share)
+
+        ret = True
+        try:
+            proc = self._pipeopen(delete_cmd).communicate()
+        except: 
+            log.debug("sharesec_delete: %s failed", delete_cmd)
+            ret = False
+
+        return ret
+
+    def sharesec_reset(self, share, owner=None, group=None):
+        if not share:
+            return False
+
+        log.debug("sharesec_reset: resetting %s to '%s:%s'", share, owner, group)
+
+        self.sharesec_delete(share)
+        return self.sharesec_add(share, owner, group)
+   
     def winacl_reset(self, path, owner=None, group=None, exclude=None):
         if exclude is None:
             exclude = []
 
-        if isinstance(owner, types.UnicodeType):
-            owner = owner.encode('utf-8')
+        if isinstance(owner, bytes):
+            owner = owner.decode('utf-8')
 
-        if isinstance(group, types.UnicodeType):
-            group = group.encode('utf-8')
+        if isinstance(group, bytes):
+            group = group.decode('utf-8')
 
-        if isinstance(path, types.UnicodeType):
-            path = path.encode('utf-8')
+        if isinstance(path, bytes):
+            path = path.decode('utf-8')
 
-        winacl = os.path.join(path, ACL_WINDOWS_FILE)
+        aclfile = os.path.join(path, ACL_WINDOWS_FILE)
         winexists = (ACL.get_acl_ostype(path) == ACL_FLAGS_OS_WINDOWS)
         if not winexists:
-            open(winacl, 'a').close()
+            open(aclfile, 'a').close()
 
-        script = "/usr/local/bin/winacl"
+        share = self.path_to_smb_share(path)
+        self.sharesec_reset(share, owner, group)
+
+        winacl = "/usr/local/bin/winacl"
         args = "-a reset"
         if owner is not None:
             args = "%s -O '%s'" % (args, owner)
         if group is not None:
             args = "%s -G '%s'" % (args, group)
         apply_paths = exclude_path(path, exclude)
-        apply_paths = map(lambda y: (y, ' -r '), apply_paths)
+        apply_paths = [(y, ' -r ') for y in apply_paths]
         if len(apply_paths) > 1:
             apply_paths.insert(0, (path, ''))
         for apath, flags in apply_paths:
             fargs = args + "%s -p '%s' -x" % (flags, apath)
-            cmd = "%s %s" % (script, fargs)
-            log.debug("XXX: CMD = %s", cmd)
+            cmd = "%s %s" % (winacl, fargs)
+            log.debug("winacl_reset: cmd = %s", cmd)
             self._system(cmd)
 
     def mp_change_permission(self, path='/mnt', user=None, group=None,
@@ -1723,17 +1849,17 @@ class notifier:
         if exclude is None:
             exclude = []
 
-        if isinstance(group, types.UnicodeType):
-            group = group.encode('utf-8')
+        if isinstance(group, bytes):
+            group = group.decode('utf-8')
 
-        if isinstance(user, types.UnicodeType):
-            user = user.encode('utf-8')
+        if isinstance(user, bytes):
+            user = user.decode('utf-8')
 
-        if isinstance(mode, types.UnicodeType):
-            mode = mode.encode('utf-8')
+        if isinstance(mode, bytes):
+            mode = mode.decode('utf-8')
 
-        if isinstance(path, types.UnicodeType):
-            path = path.encode('utf-8')
+        if isinstance(path, bytes):
+            path = path.decode('utf-8')
 
         winacl = os.path.join(path, ACL_WINDOWS_FILE)
         macacl = os.path.join(path, ACL_MAC_FILE)
@@ -1766,7 +1892,7 @@ class notifier:
             args += " -a reset "
             if recursive:
                 apply_paths = exclude_path(path, exclude)
-                apply_paths = map(lambda y: (y, ' -r '), apply_paths)
+                apply_paths = [(y, ' -r ') for y in apply_paths]
                 if len(apply_paths) > 1:
                     apply_paths.insert(0, (path, ''))
             else:
@@ -1780,7 +1906,7 @@ class notifier:
         else:
             if recursive:
                 apply_paths = exclude_path(path, exclude)
-                apply_paths = map(lambda y: (y, '-R'), apply_paths)
+                apply_paths = [(y, '-R') for y in apply_paths]
                 if len(apply_paths) > 1:
                     apply_paths.insert(0, (path, ''))
             else:
@@ -1794,6 +1920,10 @@ class notifier:
                     self._system("/usr/sbin/chown %s :'%s' '%s'" % (flags, group, apath))
                 if mode is not None:
                     self._system("/bin/chmod %s %s '%s'" % (flags, mode, apath))
+
+        share = self.path_to_smb_share(path)
+        if share:
+            self.sharesec_reset(share, user, group)
 
     def mp_get_permission(self, path):
         if os.path.isdir(path):
@@ -1936,7 +2066,7 @@ class notifier:
                     "/usr/bin/tar",
                     "-xSJpf",  # -S for sparse
                     path,
-                ], stderr=f)
+                ], stderr=f, encoding='utf8')
                 RE_TAR = re.compile(r"^In: (\d+)", re.M | re.S)
                 while True:
                     if proc.poll() is not None:
@@ -1952,7 +2082,7 @@ class notifier:
                     reg = RE_TAR.findall(line)
                     if reg:
                         current = Decimal(reg[-1])
-                        percent = (current / size) * 100
+                        percent = int((current / size) * 100)
                         fp.write("2|%d\n" % percent)
                         fp.flush()
             err = proc.communicate()[1]
@@ -2164,7 +2294,7 @@ class notifier:
 
             plugin.plugin_path = prefix
             plugin.plugin_enabled = True
-            plugin.plugin_ip = jail.ip
+            plugin.plugin_ip = jail.ip or '-'
             plugin.plugin_name = name
             plugin.plugin_arch = arch
             plugin.plugin_version = version
@@ -2208,10 +2338,10 @@ class notifier:
                 oauth_file
             )
 
-            fd = os.open(oauth_file, os.O_WRONLY | os.O_CREAT, 0600)
-            os.write(fd, "key = %s\n" % rpctoken.key)
-            os.write(fd, "secret = %s\n" % rpctoken.secret)
-            os.close(fd)
+            with open(oauth_file, 'w') as f:
+                os.chmod(oauth_file, 0o600)
+                f.write("key = %s\n" % rpctoken.key)
+                f.write("secret = %s\n" % rpctoken.secret)
 
             try:
                 log.debug("install_pbi: trying to save plugin to database")
@@ -2219,7 +2349,7 @@ class notifier:
                 newplugin.append(plugin)
                 log.debug("install_pbi: plugin saved to database")
                 ret = True
-            except Exception, e:
+            except Exception as e:
                 log.debug("install_pbi: FAIL! %s", e)
                 ret = False
 
@@ -2310,9 +2440,12 @@ class notifier:
         if not plugin:
             raise MiddlewareError("plugin is NULL")
 
-        (c, conn) = self._open_db(ret_conn=True)
-        c.execute("SELECT plugin_jail FROM plugins_plugins WHERE id = %d" % plugin.id)
-        row = c.fetchone()
+        (c, conn) = self._open_db()
+        try:
+            c.execute("SELECT plugin_jail FROM plugins_plugins WHERE id = %d" % plugin.id)
+            row = c.fetchone()
+        finally:
+            conn.close()
         if not row:
             log.debug("update_pbi: plugins plugin not in database")
             return False
@@ -2480,17 +2613,17 @@ class notifier:
             oauth_file,
         )
 
-        fd = os.open(oauth_file, os.O_WRONLY | os.O_CREAT, 0600)
-        os.write(fd, "key = %s\n" % rpctoken.key)
-        os.write(fd, "secret = %s\n" % rpctoken.secret)
-        os.close(fd)
+        with open(oauth_file, 'w') as f:
+            os.chmod(oauth_file, 0o600)
+            f.write("key = %s\n" % rpctoken.key)
+            f.write("secret = %s\n" % rpctoken.secret)
 
         self._system("/usr/sbin/service ix-plugins forcestop %s:%s" % (jail, newname))
         self._system("/usr/sbin/service ix-plugins forcestart %s:%s" % (jail, newname))
 
         for mp in mountpoints:
             fp = "%s/%s%s" % (jc.jc_path, jail_name, mp.destination)
-            p = pipeopen("/sbin/mount_nullfs '%s' '%s'" % (mp.source.encode('utf8'), fp.encode('utf8')))
+            p = pipeopen("/sbin/mount_nullfs '%s' '%s'" % (mp.source, fp))
             out = p.communicate()
             if p.returncode != 0:
                 raise MiddlewareError(out[1])
@@ -2541,7 +2674,7 @@ class notifier:
                 plugin.delete()
                 ret = True
 
-            except Exception, err:
+            except Exception as err:
                 log.debug("delete_pbi: unable to delete pbi %s from database (%s)", plugin, err)
                 ret = False
 
@@ -2562,9 +2695,12 @@ class notifier:
             log.debug("stat %s: %s", rpath, e)
             return False
 
-        (c, conn) = self._open_db(ret_conn=True)
-        c.execute("SELECT jc_path FROM jails_jailsconfiguration LIMIT 1")
-        row = c.fetchone()
+        (c, conn) = self._open_db()
+        try:
+            c.execute("SELECT jc_path FROM jails_jailsconfiguration LIMIT 1")
+            row = c.fetchone()
+        finally:
+            conn.close()
         if not row:
             log.debug("contains_jail_root: jails not configured")
             return False
@@ -2632,13 +2768,16 @@ class notifier:
         sum = hasher.communicate()[0].split('\n')[0]
         return sum
 
-    def get_disks(self):
+    def get_disks(self, unused=False):
         """
         Grab usable disks and pertinent info about them
         This accounts for:
             - all the disks the OS found
                 (except the ones that are providers for multipath)
             - multipath geoms providers
+
+        Arguments:
+            unused(bool) - return only disks unused by volume or extent disk
 
         Returns:
             Dict of disks
@@ -2672,10 +2811,27 @@ class notifier:
                     disksd[mp.devname]['ident'] = consumer.lunid
                     break
 
+        if unused:
+            """
+            Remove disks that are in use by volumes or disk extent
+            """
+            from freenasUI.storage.models import Volume
+            from freenasUI.services.models import iSCSITargetExtent
+
+            for v in Volume.objects.all():
+                for d in v.get_disks():
+                    if d in disksd:
+                        del disksd[d]
+
+            for e in iSCSITargetExtent.objects.filter(iscsi_target_extent_type='Disk'):
+                d = i.get_device()[5:]
+                if d in diskd:
+                    del disksd[d]
+
         return disksd
 
     def get_partitions(self, try_disks=True):
-        disks = self.get_disks().keys()
+        disks = list(self.get_disks().keys())
         partitions = {}
         for disk in disks:
 
@@ -2688,7 +2844,7 @@ class notifier:
                     listing.remove(part)
 
             for part in listing:
-                p1 = Popen(["/usr/sbin/diskinfo", part], stdin=PIPE, stdout=PIPE)
+                p1 = Popen(["/usr/sbin/diskinfo", part], stdin=PIPE, stdout=PIPE, encoding='utf8')
                 info = p1.communicate()[0].split('\t')
                 partitions.update({
                     part: {
@@ -2769,7 +2925,7 @@ class notifier:
             status = res.split('id: %s\n' % zid)[1].split('pool:')[0]
             try:
                 roots = zfs.parse_status(pool, doc, 'id: %s\n%s' % (zid, status))
-            except Exception, e:
+            except Exception as e:
                 log.warn("Error parsing %s: %s", pool, e)
                 continue
 
@@ -2903,6 +3059,7 @@ class notifier:
     def volume_import(self, volume_name, volume_id, key=None, passphrase=None, enc_disks=None):
         from django.db import transaction
         from freenasUI.storage.models import Disk, EncryptedDisk, Scrub, Volume
+        from freenasUI.sharing.models import AFP_Share, CIFS_Share, NFS_Share_Path, WebDAV_Share
         from freenasUI.system.alert import alertPlugins
 
         if enc_disks is None:
@@ -2970,6 +3127,21 @@ class notifier:
             if passfile:
                 os.unlink(passfile)
             raise
+
+        # In case volume was exported at some point and shares
+        # were not deleted we need to restart/reload shares
+        path = f'/mnt/{volume_name}'
+        if AFP_Share.objects.filter(Q(afp_path=path) | Q(afp_path__startswith=f'{path}/')).exists():
+            self.reload('afp')
+
+        if CIFS_Share.objects.filter(Q(cifs_path=path) | Q(cifs_path__startswith=f'{path}/')).exists():
+            self.reload('cifs')
+
+        if NFS_Share_Path.objects.filter(Q(path=path) | Q(path__startswith=f'{path}/')).exists():
+            self.restart('nfs')
+
+        if WebDAV_Share.objects.filter(Q(webdav_path=path) | Q(webdav_path__startswith=f'{path}/')).exists():
+            self.reload('webdav')
 
         self.reload("disk")
         self.start("ix-system")
@@ -3040,7 +3212,7 @@ class notifier:
             replications = {}
 
         zfsproc = self._pipeopen("/sbin/zfs list -t volume -o name %s -H" % sort)
-        zvols = set(filter(lambda y: y != '', zfsproc.communicate()[0].split('\n')))
+        zvols = set([y for y in zfsproc.communicate()[0].split('\n') if y != ''])
         volnames = set([o.vol_name for o in Volume.objects.filter(vol_fstype='ZFS')])
 
         fieldsflag = '-o name,used,available,referenced,mountpoint,freenas:vmsynced'
@@ -3080,7 +3252,13 @@ class notifier:
                     ):
                         continue
                     snaps = replications[repl]
-                    remotename = '%s@%s' % (fs.replace(repl.repl_filesystem, repl.repl_zfs), name)
+                    # Make sure remote snapshot is checked correctly
+                    # when destination is root dataset
+                    if '/' not in repl.repl_zfs:
+                        replace = '{}/{}'.format(repl.repl_zfs, repl.repl_filesystem.rsplit('/')[-1])
+                    else:
+                        replace = repl.repl_zfs
+                    remotename = '%s@%s' % (fs.replace(repl.repl_filesystem, replace), name)
                     if remotename in snaps:
                         replication = 'OK'
                         # TODO: Multiple replication tasks
@@ -3130,19 +3308,21 @@ class notifier:
             os.unlink("/data/freenas-v1.db.factory")
         save_path = os.getcwd()
         os.chdir(FREENAS_PATH)
-        rv = self._system("/usr/local/bin/python manage.py syncdb --noinput --migrate --database=factory")
-        if rv != 0:
+        proc = self._pipeopen("/usr/local/sbin/migrate93 -f /data/freenas-v1.db.factory")
+        error = proc.communicate()[1]
+        if proc.returncode != 0:
+            log.warn('Failed to create factory database: %s', error)
+            raise MiddlewareError("Factory reset has failed, check /var/log/messages")
+        proc = self._pipeopen("/usr/local/bin/python manage.py migrate --noinput --fake-initial --database factory")
+        error = proc.communicate()[1]
+        if proc.returncode != 0:
+            log.warn('Failed to create factory database: %s', error)
             raise MiddlewareError("Factory reset has failed, check /var/log/messages")
         self._system("mv /data/freenas-v1.db.factory /data/freenas-v1.db")
         os.chdir(save_path)
 
-    def config_upload(self, uploaded_file_fd):
-        config_file_name = tempfile.mktemp(dir='/var/tmp/firmware')
+    def config_upload(self, config_file_name):
         try:
-            with open(config_file_name, 'wb') as config_file_fd:
-                for chunk in uploaded_file_fd.chunks():
-                    config_file_fd.write(chunk)
-
             """
             First we try to open the file as a tar file.
             We expect the tar file to contain at least the freenas-v1.db.
@@ -3243,8 +3423,8 @@ class notifier:
         """
         name = str(name)
         item = str(item)
-        if isinstance(value, unicode):
-            value = value.encode('utf8')
+        if isinstance(value, bytes):
+            value = value.decode('utf8')
         else:
             value = str(value)
         if recursive:
@@ -3290,7 +3470,7 @@ class notifier:
                 output = zfsproc.communicate()[0]
                 if output != '':
                     snapshots_list = output.splitlines()
-                for snapshot_item in filter(None, snapshots_list):
+                for snapshot_item in [_f for _f in snapshots_list if _f]:
                     snapshot = snapshot_item.split('\t')[0]
                     self._system("/sbin/zfs release -r freenas:repl %s" % (snapshot))
         except IOError:
@@ -3320,10 +3500,7 @@ class notifier:
                 # Only if all ports are ACTIVE,COLLECTING,DISTRIBUTING
                 # it is considered active
 
-                portsok = len(filter(
-                    lambda y: y == 'ACTIVE,COLLECTING,DISTRIBUTING',
-                    ports
-                ))
+                portsok = len([y for y in ports if y == 'ACTIVE,COLLECTING,DISTRIBUTING'])
                 if portsok == len(ports):
                     return _('Active')
                 elif portsok > 0:
@@ -3656,7 +3833,7 @@ class notifier:
 
         args = self.get_smartctl_args(devname)
 
-        p1 = Popen(["/usr/local/sbin/smartctl", "-i"] + args, stdout=PIPE)
+        p1 = Popen(["/usr/local/sbin/smartctl", "-i"] + args, stdout=PIPE, encoding='utf8')
         output = p1.communicate()[0]
         search = re.search(r'Serial Number:\s+(?P<serial>.+)', output, re.I)
         if search:
@@ -3733,7 +3910,8 @@ class notifier:
             return None
 
         tp = search.group("type")
-        value = search.group("value")
+        # We need to escape single quotes to html entity
+        value = search.group("value").replace("'", "%27")
 
         if tp == 'uuid':
             search = doc.xpath("//class[name = 'PART']/geom//config[rawuuid = '%s']/../../name" % value)
@@ -4142,7 +4320,15 @@ class notifier:
             """
             Parse zpool status to get encrypted providers
             """
-            zpool = self.zpool_parse(vol.vol_name)
+            if not vol.is_decrypted():
+                continue
+
+            try:
+                zpool = self.zpool_parse(vol.vol_name)
+            except Exception:
+                log.warn('Failed to parse encrypted pool', exc_info=True)
+                continue
+
             provs = []
             for dev in zpool.get_devs():
                 if not dev.name.endswith(".eli"):
@@ -4227,7 +4413,7 @@ class notifier:
         ])
         if not numbers:
             numbers = [0]
-        for number in xrange(1, numbers[-1] + 2):
+        for number in range(1, numbers[-1] + 2):
             if number not in numbers:
                 break
         else:
@@ -4294,7 +4480,7 @@ class notifier:
             serials[(serial, size)].append(name)
             serials[(serial, size)].sort(key=lambda x: int(x[2:]))
 
-        disks_pairs = [disks for disks in serials.values()]
+        disks_pairs = [disks for disks in list(serials.values())]
         disks_pairs.sort(key=lambda x: int(x[0][2:]))
 
         for disks in disks_pairs:
@@ -4363,7 +4549,7 @@ class notifier:
         blacklist_devs = self._find_root_devs()
         device_blacklist_re = re.compile('a?cd[0-9]+')
 
-        return filter(lambda x: not device_blacklist_re.match(x) and x not in blacklist_devs, disks)
+        return [x for x in disks if not device_blacklist_re.match(x) and x not in blacklist_devs]
 
     def retaste_disks(self):
         """
@@ -4425,7 +4611,7 @@ class notifier:
         """
         Tiny wrapper for sysctl module for compatibility
         """
-        sysc = sysctl.filter(unicode(name))
+        sysc = sysctl.filter(str(name))
         if sysc:
             return sysc[0].value
         raise ValueError(name)
@@ -4506,13 +4692,13 @@ class notifier:
             )
         try:
             p1 = self._pipeopen("diskinfo %s" % (devname, ))
-            size = int(re.sub(r'\s+', ' ', p1.communicate()[0]).split()[2]) / (1024)
+            size = int(int(re.sub(r'\s+', ' ', p1.communicate()[0]).split()[2]) / (1024))
         except:
             log.error("Unable to determine size of %s", devname)
         else:
             pipe = self._pipeopen("dd if=/dev/zero of=/dev/%s bs=1m oseek=%s" % (
                 devname,
-                size / 1024 - 32,
+                int(size / 1024) - 32,
             ))
             pipe.communicate()
 
@@ -4545,7 +4731,7 @@ class notifier:
                 "if=/dev/zero" if mode == 'full' else "if=/dev/random",
                 "of=/dev/%s" % (devname, ),
                 "bs=1m",
-            ], stdout=subprocess.PIPE, stderr=stderr)
+            ], stdout=subprocess.PIPE, stderr=stderr, encoding='utf8')
             with open('/var/tmp/disk_wipe_%s.pid' % (devname, ), 'w') as f:
                 f.write(str(pipe.pid))
             pipe.communicate()
@@ -4870,7 +5056,7 @@ class notifier:
             if os.path.exists(SYSTEMPATH):
                 try:
                     os.rmdir(SYSTEMPATH)
-                except Exception, e:
+                except Exception as e:
                     log.debug("Failed to delete %s: %s", SYSTEMPATH, e)
             return systemdataset
 
@@ -4920,7 +5106,7 @@ class notifier:
                 self._system('/sbin/sysctl kern.corefile=\'%s/%%N.core\'' % (
                     corepath,
                 ))
-                os.chmod(corepath, 0775)
+                os.chmod(corepath, 0o775)
 
             self.nfsv4link()
 
@@ -4944,12 +5130,12 @@ class notifier:
             'zfs list -H -o name %s' % ' '.join(
                 [
                     "%s" % name
-                    for name in legacydatasets.values() + newdatasets.values()
+                    for name in list(legacydatasets.values()) + list(newdatasets.values())
                 ]
             )
         )
         output = proc.communicate()[0].strip('\n').split('\n')
-        for ident, name in legacydatasets.items():
+        for ident, name in list(legacydatasets.items()):
             if name in output:
                 newname = newdatasets.get(ident)
                 if newname not in output:
@@ -5073,6 +5259,37 @@ class notifier:
                     os.unlink(item)
                 self._createlink(syspath, item)
 
+    def system_dataset_rrd_toggle(self):
+        sysdataset, basename = self.system_dataset_settings()
+
+        # Path where collectd stores files
+        rrd_path = '/var/db/collectd/rrd'
+        # Path where rrd fies are stored in system dataset
+        rrd_syspath = f'/var/db/system/rrd-{sysdataset.get_sys_uuid()}'
+
+        if sysdataset.sys_rrd_usedataset:
+            # Move from tmpfs to system dataset
+            if os.path.exists(rrd_path):
+                if os.path.islink(rrd_path):
+                    # rrd path is already a link
+                    # so there is nothing we can do about it
+                    return False
+                proc = self._pipeopen(f'rsync -a {rrd_path}/ {rrd_syspath}/')
+                proc.communicate()
+                return proc.returncode == 0
+        else:
+            # Move from system dataset to tmpfs
+            if os.path.exists(rrd_path):
+                if os.path.islink(rrd_path):
+                    os.unlink(rrd_path)
+            else:
+                os.makedirs(rrd_path)
+            proc = self._pipeopen(f'rsync -a {rrd_syspath}/ {rrd_path}/')
+            proc.communicate()
+            return proc.returncode == 0
+        return False
+
+
     def system_dataset_migrate(self, _from, _to):
 
         rsyncs = (
@@ -5183,7 +5400,7 @@ class notifier:
 
         secret = Random.new().read(PWENC_BLOCK_SIZE)
         with open(PWENC_FILE_SECRET, 'wb') as f:
-            os.chmod(PWENC_FILE_SECRET, 0600)
+            os.chmod(PWENC_FILE_SECRET, 0o600)
             f.write(secret)
 
         settings.stg_pwenc_check = self.pwenc_encrypt(PWENC_CHECK)
@@ -5218,8 +5435,8 @@ class notifier:
         return secret
 
     def pwenc_encrypt(self, text):
-        if isinstance(text, unicode):
-            text = text.encode('utf8')
+        if isinstance(text, bytes):
+            text = text.decode('utf8')
         from Crypto.Random import get_random_bytes
         from Crypto.Util import Counter
         pad = lambda x: x + (PWENC_BLOCK_SIZE - len(x) % PWENC_BLOCK_SIZE) * PWENC_PADDING
@@ -5231,7 +5448,7 @@ class notifier:
             counter=Counter.new(64, prefix=nonce),
         )
         encoded = base64.b64encode(nonce + cipher.encrypt(pad(text)))
-        return encoded
+        return encoded.decode()
 
     def pwenc_decrypt(self, encrypted=None):
         if not encrypted:
@@ -5245,7 +5462,7 @@ class notifier:
             AES.MODE_CTR,
             counter=Counter.new(64, prefix=nonce),
         )
-        return cipher.decrypt(encrypted).rstrip(PWENC_PADDING).decode('utf8')
+        return cipher.decrypt(encrypted).decode('utf8').rstrip(PWENC_PADDING)
 
     def _bootenv_partition(self, devname):
         commands = []
@@ -5279,14 +5496,14 @@ class notifier:
         self._system("dd if=/dev/zero of=/dev/%s bs=1m count=32" % (devname, ))
         try:
             p1 = self._pipeopen("diskinfo %s" % (devname, ))
-            size = int(re.sub(r'\s+', ' ', p1.communicate()[0]).split()[2]) / (1024)
+            size = int(int(re.sub(r'\s+', ' ', p1.communicate()[0]).split()[2]) / (1024))
         except:
             log.error("Unable to determine size of %s", devname)
         else:
             # HACK: force the wipe at the end of the disk to always succeed. This # is a lame workaround.
             self._system("dd if=/dev/zero of=/dev/%s bs=1m oseek=%s" % (
                 devname,
-                size / 1024 - 32,
+                int(size / 1024) - 32,
             ))
 
         boottype = self._bootenv_partition(devname)
@@ -5307,14 +5524,14 @@ class notifier:
         self._system("dd if=/dev/zero of=/dev/%s bs=1m count=32" % (devname, ))
         try:
             p1 = self._pipeopen("diskinfo %s" % (devname, ))
-            size = int(re.sub(r'\s+', ' ', p1.communicate()[0]).split()[2]) / (1024)
+            size = int(int(re.sub(r'\s+', ' ', p1.communicate()[0]).split()[2]) / (1024))
         except:
             log.error("Unable to determine size of %s", devname)
         else:
             # HACK: force the wipe at the end of the disk to always succeed. This # is a lame workaround.
             self._system("dd if=/dev/zero of=/dev/%s bs=1m oseek=%s" % (
                 devname,
-                size / 1024 - 32,
+                int(size / 1024) - 32,
             ))
 
         boottype = self._bootenv_partition(devname)
@@ -5440,4 +5657,4 @@ if __name__ == '__main__':
             usage()
         res = f(*sys.argv[2:])
         if res is not None:
-            print res
+            print(res)

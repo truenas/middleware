@@ -24,7 +24,7 @@ class MPSFirmwareAlert(BaseAlert):
             except:
                 continue
 
-        for number, mibs in mps.items():
+        for number, mibs in list(mps.items()):
             firmware = mibs.get('firmware_version')
             driver = mibs.get('driver_version')
             try:

@@ -1,4 +1,4 @@
-#!/usr/local/bin/python2
+#!/usr/local/bin/python
 
 import argparse
 import email
@@ -38,7 +38,7 @@ def do_sendmail(msg, to_addrs=None, parse_recipients=False):
     em = em_parser.parsestr(msg)
     if parse_recipients:
         # Strip away the comma based delimiters and whitespace.
-        to_addrs = map(str.strip, em.get('To').split(','))
+        to_addrs = list(map(str.strip, em.get('To').split(',')))
 
     if not to_addrs or not to_addrs[0]:
         to_addrs = ['root']
@@ -70,11 +70,8 @@ def do_sendmail(msg, to_addrs=None, parse_recipients=False):
             })
 
     if em.is_multipart():
-        margs['attachments'] = filter(
-            lambda part: part.get_content_maintype() != 'multipart',
-            em.walk()
-        )
-        margs['text'] = u"%s" % _(
+        margs['attachments'] = [part for part in em.walk() if part.get_content_maintype() != 'multipart']
+        margs['text'] = "%s" % _(
             'This is a MIME formatted message.  If you see '
             'this text it means that your email software '
             'does not support MIME formatted messages.')
@@ -103,7 +100,7 @@ def get_aliases():
                 break
             else:
                 doround = False
-            for key, val in aliases.iteritems():
+            for key, val in aliases.items():
                 if val in aliases:
                     aliases[key] = aliases[val]
                     doround = True

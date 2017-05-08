@@ -28,12 +28,12 @@
 import requests
 import ssl
 import datetime
-import utils
-import ConfigParser
+from . import utils
+import configparser
 import os
 from django.conf import settings
 from pyVmomi import vim
-from ConfigParser import SafeConfigParser
+from configparser import SafeConfigParser
 from pyVim.connect import SmartConnect
 
 
@@ -41,14 +41,16 @@ class PluginManager:
 
     property_file_path = settings.HERE + '/vcp/Extensionconfig.ini.dist'
     resurce_folder_path = settings.HERE + '/vcp/vcp_locales'
+    privGroupName = 'iXSystems'
 
     def create_event_keyvalue_pairs(self):
         try:
             eri_list = []
             for file in os.listdir(self.resurce_folder_path):
-                file = open(self.resurce_folder_path + '/' + file)
                 eri = vim.Extension.ResourceInfo()
-                eri.module = 'task'
+                #Read locale file from vcp_locale
+                eri.module = file.split("_")[0]
+                file = open(self.resurce_folder_path + '/' + file, 'r')
                 for line in file:
                     if len(line) > 2 and '=' in line:
                         if 'locale' in line:
@@ -80,6 +82,7 @@ class PluginManager:
             key = cp.get('RegisterParam', 'key')
             events = cp.get('RegisterParam', 'events').split(",")
             tasks = cp.get('RegisterParam', 'tasks').split(",")
+            privs = cp.get('RegisterParam', 'auth').split(",")
             version = utils.get_plugin_version()
             if 'Not available' in version:
                 return version
@@ -125,15 +128,24 @@ class PluginManager:
                 ext_type_info.taskID = t
                 task_info.append(ext_type_info)
 
+            #Register custom privileges required for vcp RBAC
+            priv_info = []
+            for priv in privs:
+                ext_type_info = vim.Extension.PrivilegeInfo()
+                ext_type_info.privID = priv
+                ext_type_info.privGroupName = self.privGroupName
+                priv_info.append(ext_type_info)
+
             ext.taskList = task_info
             ext.eventList = event_info
+            ext.privilegeList = priv_info
             resource_list = self.create_event_keyvalue_pairs()
             if isinstance(resource_list, str):
                 return resource_list
             ext.resourceList = resource_list
 
             return ext
-        except ConfigParser.NoOptionError as ex:
+        except configparser.NoOptionError as ex:
             return 'Property Missing : ' + str(ex)
         except Exception as ex:
             return str(ex).replace("'", "").replace("<", "").replace(">", "")
@@ -150,7 +162,7 @@ class PluginManager:
             try:
                 ssl._create_default_https_context = ssl._create_unverified_context
             except AttributeError:
-                print 'Error ssl'
+                print('Error ssl')
             context = ssl.SSLContext(ssl.PROTOCOL_TLSv1)
             context.verify_mode = ssl.CERT_NONE
             si = SmartConnect("https", vc_ip, int(port), usernName, password, sslContext=context)
@@ -172,7 +184,7 @@ class PluginManager:
             try:
                 ssl._create_default_https_context = ssl._create_unverified_context
             except AttributeError:
-                print 'Error ssl'
+                print('Error ssl')
             context = ssl.SSLContext(ssl.PROTOCOL_TLSv1)
             context.verify_mode = ssl.CERT_NONE
             si = SmartConnect("https", vc_ip, int(port), usernName, password, sslContext=context)
@@ -196,7 +208,7 @@ class PluginManager:
             try:
                 ssl._create_default_https_context = ssl._create_unverified_context
             except AttributeError:
-                print 'Error ssl'
+                print('Error ssl')
             context = ssl.SSLContext(ssl.PROTOCOL_TLSv1)
             context.verify_mode = ssl.CERT_NONE
             si = SmartConnect("https", vc_ip, int(port), usernName, password, sslContext=context)
@@ -216,7 +228,7 @@ class PluginManager:
             try:
                 ssl._create_default_https_context = ssl._create_unverified_context
             except AttributeError:
-                print 'Error ssl'
+                print('Error ssl')
             context = ssl.SSLContext(ssl.PROTOCOL_TLSv1)
             context.verify_mode = ssl.CERT_NONE
             si = SmartConnect("https", vc_ip, int(port), usernName, password, sslContext=context)
@@ -240,7 +252,7 @@ class PluginManager:
             try:
                 ssl._create_default_https_context = ssl._create_unverified_context
             except AttributeError:
-                print 'Error ssl'
+                print('Error ssl')
             context = ssl.SSLContext(ssl.PROTOCOL_TLSv1)
             context.verify_mode = ssl.CERT_NONE
             si = SmartConnect("https", vc_ip, int(port), usernName, password, sslContext=context)

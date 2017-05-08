@@ -873,7 +873,8 @@ Create resource
 
         {
                 "dataset": "tank",
-                "name": "test"
+                "name": "test",
+                "recursive": true
         }
 
    **Example response**:
@@ -897,6 +898,7 @@ Create resource
 
    :json string dataset: name of dataset to snapshot
    :json string name: name of the snapshot
+   :json boolean recursive: True if you want it to recursively snapshot the dataset
    :reqheader Content-Type: the request content type
    :resheader Content-Type: the response content type
    :statuscode 201: no error
@@ -1291,6 +1293,10 @@ Create resource
    :json boolean repl_enabled: enable replication
    :json string repl_filesystem: filesystem to replicate
    :json string repl_lastsnapshot: last snapshot sent to remote side
+   :json string repl_remote_mode: MANUAL or SEMIAUTOMATIC
+   :json string repl_remote_http_port: HTTP port of remote for SEMIAUTOMATIC mode
+   :json boolean repl_remote_https: HTTPS (true|false) of remote for SEMIAUTOMATIC mode
+   :json boolean repl_remote_token: remote auth token for SEMIAUTOMATIC mode
    :json string repl_remote_hostname: remote hostname
    :json integer repl_remote_port: remote ssh port
    :json string repl_remote_hostkey: remote ssh public key

@@ -1,4 +1,4 @@
-#!/usr/local/bin/python2
+#!/usr/local/bin/python3
 #
 # Copyright 2014 iXsystems, Inc.
 # All rights reserved
@@ -162,7 +162,7 @@ if __name__ == '__main__':
 
     handler = UpdateHandler(apply_=args.apply)
     handler.dump()
-    print handler.uuid
+    print(handler.uuid)
 
     sys.stdout.flush()
 
@@ -172,10 +172,10 @@ if __name__ == '__main__':
         log.debug("Entered in daemon context")
         try:
             main(handler, args)
-        except Exception, e:
+        except Exception as e:
             log.debug('Exception on update')
             log_traceback(log=log)
-            handler.error = unicode(e)
+            handler.error = str(e)
         handler.finished = True
         handler.dump()
 

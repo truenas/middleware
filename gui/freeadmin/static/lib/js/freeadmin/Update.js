@@ -164,8 +164,9 @@ define([
         var train_msg = {
             "NIGHTLY_DOWNGRADE": gettext("You're not allowed to change away from the nightly train, it is considered a downgrade.") + '<br />' + gettext("If you have an existing boot environment that uses that train, boot into it in order to upgrade that train."),
             "MINOR_DOWNGRADE": gettext("Changing minor version is considered a downgrade, thus not a supported operation.") + '<br />' + gettext("If you have an existing boot environment that uses that train, boot into it in order to upgrade that train."),
+            "MAJOR_DOWNGRADE": gettext("Changing major version is considered a downgrade, thus not a supported operation.") + '<br />' + gettext("If you have an existing boot environment that uses that train, boot into it in order to upgrade that train."),
         }
-        if(compare == "NIGHTLY_DOWNGRADE" || compare == "MINOR_DOWNGRADE") {
+        if(compare == "NIGHTLY_DOWNGRADE" || compare == "MINOR_DOWNGRADE" || compare == "MAJOR_DOWNGRADE") {
           var errorDialog = new Dialog({
             title: gettext("Confirm"),
             style: "background-color: white;",
@@ -310,7 +311,9 @@ define([
             return "NIGHTLY_DOWNGRADE";
           }
         }
-      } catch (e) {}
+      } catch (e) {
+        console.error("Failed to compare trains", e);
+      }
     },
     update: function(train) {
 

@@ -25,7 +25,6 @@
 #####################################################################
 import os
 import sys
-import string
 
 from freenasUI.common.pipesubr import pipeopen
 from freenasUI.services.models import DomainController
@@ -90,7 +89,7 @@ class Samba4(object):
             'dns-backend': dc.dc_dns_backend,
             'server-role': dc.dc_role,
             'function-level': dc.dc_forest_level,
-            'use-ntvfs': None,
+            'skip-sysvolacl': None,
             'use-rfc2307': None
         }
 
@@ -99,7 +98,7 @@ class Samba4(object):
         try:
             buf = buf[0][1]
             for line in buf.splitlines():
-                print >> sys.stdout, "%s" % line
+                print("%s" % line, file=sys.stdout)
 
         except:
             pass
@@ -177,7 +176,7 @@ class Samba4(object):
 
     def group_addmembers(self, group, members):
         return self.samba_tool(
-            "group addmembers", None, [group, string.join(members, ',')]
+            "group addmembers", None, [group, ','.join(members)]
         )
 
     def group_delete(self, group):
@@ -217,7 +216,7 @@ class Samba4(object):
 
     def group_removemembers(self, group, members):
         return self.samba_tool(
-            "group removemembers", None, [group, string.join(members, ',')]
+            "group removemembers", None, [group, ','.join(members)]
         )
 
     def sentinel_file_exists(self, sentinel_file):
@@ -230,11 +229,11 @@ class Samba4(object):
         try:
             with open(sentinel_file, 'w') as f:
                 f.close()
-            os.chmod(sentinel_file, 0400)
+            os.chmod(sentinel_file, 0o400)
             ret = True
 
         except Exception as e:
-            print >> sys.stderr, "Unable to create %s: %s" % (sentinel_file, e)
+            print("Unable to create %s: %s" % (sentinel_file, e), file=sys.stderr)
             ret = False
 
         return ret
@@ -248,7 +247,7 @@ class Samba4(object):
                 ret = True
 
             except Exception as e:
-                print >> sys.stderr, "Unable to remove %s: %s" % (sentinel_file, e)
+                print("Unable to remove %s: %s" % (sentinel_file, e), file=sys.stderr)
                 ret = False
 
         return ret

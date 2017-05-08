@@ -34,27 +34,32 @@ class SystemHook(AppHook):
         arr = []
         serial = subprocess.Popen(
             ['/usr/local/sbin/dmidecode', '-s', 'system-serial-number'],
-            stdout=subprocess.PIPE
+            stdout=subprocess.PIPE,
+            encoding='utf8',
         ).communicate()[0].split('\n')[0].upper()
         if serial.startswith('A1-') or serial.startswith('R1-'):
-            arr.append({'name': _('Serial'), 'value': serial})
+            arr.append({'name': _('Serial Number'), 'value': serial})
         return arr
 
     def hook_app_tabs_system(self, request):
         from freenasUI.freeadmin.sqlite3_ha.base import NO_SYNC_MAP
         from freenasUI.middleware.notifier import notifier
         from freenasUI.system import models
+        from freenasUI.support.utils import get_license
         tabmodels = [
             models.Settings,
             models.Advanced,
             models.Email,
             models.SystemDataset,
             models.Tunable,
+            models.ConsulAlerts,
             models.CertificateAuthority,
             models.Certificate,
         ]
 
+        idx_skip = 0
         if not notifier().is_freenas():
+            idx_skip += 1
             tabmodels.insert(5, models.CloudCredentials)
 
         tabs = []
@@ -114,11 +119,21 @@ class SystemHook(AppHook):
             'url': reverse('system_update_index'),
         })
 
-        tabs.insert(10, {
+        tabs.insert(11 + idx_skip, {
             'name': 'Support',
             'focus': 'system.Support',
             'verbose_name': _('Support'),
             'url': reverse('support_home'),
         })
+
+        license = get_license()[0]
+        if license is not None and not notifier().is_freenas():
+            support = models.Support.objects.order_by('-id')[0]
+            tabs.insert(12 + idx_skip, {
+                'name': 'Proactive Support',
+                'focus': 'system.ProactiveSupport',
+                'verbose_name': _('Proactive Support'),
+                'url': support.get_edit_url() + '?inline=true',
+            })
 
         return tabs

@@ -73,8 +73,8 @@ hardware_func()
 
 	section_footer
 
-	section_header "pciconf -lv"
-	pciconf -lv
+	section_header "pciconf -lvcb"
+	pciconf -lvcb
 	section_footer
 
 	section_header "devinfo -rv"

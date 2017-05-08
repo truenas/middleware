@@ -56,6 +56,7 @@ from freenasUI.freeadmin.forms import (
 )
 from freenasUI.freeadmin.views import JsonResp
 from freenasUI.middleware import zfs
+from freenasUI.middleware.client import client
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier
 from freenasUI.services.exceptions import ServiceFailed
@@ -64,7 +65,9 @@ from freenasUI.storage import models
 from freenasUI.storage.widgets import UnixPermissionField
 from freenasUI.support.utils import dedup_enabled
 from middlewared.client import Client
-from pysphere import VIServer
+from pyVim import connect, task as VimTask
+from pyVmomi import vim
+
 
 attrs_dict = {'class': 'required', 'maxHeight': 200}
 
@@ -104,11 +107,11 @@ class Disk(object):
         return self.size > other.size
 
     def __repr__(self):
-        return u'<Disk: %s>' % str(self)
+        return '<Disk: %s>' % str(self)
 
     def __str__(self):
         extra = ' %s' % (self.serial,) if self.serial else ''
-        return u'%s (%s)%s' % (self.dev, humanize_number_si(self.size), extra)
+        return '%s (%s)%s' % (self.dev, humanize_number_si(self.size), extra)
 
     def __iter__(self):
         yield self.dev
@@ -118,12 +121,12 @@ class Disk(object):
 def _clean_zfssize_fields(form, attrs, prefix):
 
     cdata = form.cleaned_data
-    for field in map(lambda x: prefix + x, attrs):
+    for field in [prefix + x for x in attrs]:
         if field not in cdata:
             cdata[field] = ''
 
     r = re.compile(r'^(\d+(?:\.\d+)?)([BKMGTP](?:iB)?)$', re.I)
-    msg = _(u"Specify the size with IEC suffixes or 0, e.g. 10 GiB")
+    msg = _("Specify the size with IEC suffixes or 0, e.g. 10 GiB")
 
     for attr in attrs:
         formfield = '%s%s' % (prefix, attr)
@@ -166,13 +169,13 @@ class VolumeMixin(object):
             raise forms.ValidationError(
                 _("A volume with that name already exists."))
         if vname in ('log',):
-            raise forms.ValidationError(_(u'\"log\" is a reserved word and thus cannot be used'))
+            raise forms.ValidationError(_('\"log\" is a reserved word and thus cannot be used'))
         elif re.search(r'^c[0-9].*', vname) or \
                 re.search(r'^mirror.*', vname) or \
                 re.search(r'^spare.*', vname) or \
                 re.search(r'^raidz.*', vname):
             raise forms.ValidationError(_(
-                u"The volume name may NOT start with c[0-9], mirror, "
+                "The volume name may NOT start with c[0-9], mirror, "
                 "raidz or spare"
             ))
         return vname
@@ -215,7 +218,12 @@ class VolumeManagerForm(VolumeMixin, Form):
         )
         self._formset = vdevFormSet(self.data, prefix='layout')
         self._formset.pform = self
-        return valid and self._formset.is_valid()
+        fsvalid = self._formset.is_valid()
+        if not fsvalid:
+            nonformerrors = self._formset.non_form_errors()
+            if nonformerrors:
+                self._errors['__all__'] = self.error_class(nonformerrors)
+        return valid and fsvalid
 
     def clean(self):
         vname = (
@@ -269,7 +277,7 @@ class VolumeManagerForm(VolumeMixin, Form):
                 }
 
             if add:
-                for gtype, group in grouped.items():
+                for gtype, group in list(grouped.items()):
                     notifier().zfs_volume_attach_group(
                         volume,
                         group)
@@ -305,7 +313,7 @@ class VolumeManagerForm(VolumeMixin, Form):
         notifier().reload("disk")
         if not add:
             notifier().start("ix-syslogd")
-            notifier().restart("system_datasets")
+            notifier().restart("system_datasets", timeout=50)
         # For scrub cronjob
         if volume.vol_fstype == 'ZFS':
             notifier().restart("cron")
@@ -551,7 +559,7 @@ class ZFSVolumeWizardForm(forms.Form):
 
         # Grab disk list
         # Root device already ruled out
-        for disk, info in _n.get_disks().items():
+        for disk, info in list(_n.get_disks().items()):
             serial = info.get('ident', '')
             if encs:
                 try:
@@ -621,17 +629,17 @@ class ZFSVolumeWizardForm(forms.Form):
 
         if len(disks) == 0 and models.Volume.objects.filter(
                 vol_name=volume_name).count() == 0:
-            msg = _(u"This field is required")
+            msg = _("This field is required")
             self._errors["volume_disks"] = self.error_class([msg])
             del cleaned_data["volume_disks"]
         if models.Volume.objects.filter(vol_name=volume_name).exclude(
                 vol_fstype='ZFS').count() > 0:
-            msg = _(u"You already have a volume with same name")
+            msg = _("You already have a volume with same name")
             self._errors["volume_name"] = self.error_class([msg])
             del cleaned_data["volume_name"]
 
         if volume_name in ('log',):
-            msg = _(u"\"log\" is a reserved word and thus cannot be used")
+            msg = _("\"log\" is a reserved word and thus cannot be used")
             self._errors["volume_name"] = self.error_class([msg])
             cleaned_data.pop("volume_name", None)
         elif re.search(r'^c[0-9].*', volume_name) or \
@@ -639,7 +647,7 @@ class ZFSVolumeWizardForm(forms.Form):
                 re.search(r'^spare.*', volume_name) or \
                 re.search(r'^raidz.*', volume_name):
             msg = _(
-                u"The volume name may NOT start with c[0-9], mirror, "
+                "The volume name may NOT start with c[0-9], mirror, "
                 "raidz or spare"
             )
             self._errors["volume_name"] = self.error_class([msg])
@@ -667,7 +675,7 @@ class ZFSVolumeWizardForm(forms.Form):
         else:
             group_type = self.cleaned_data['group_type']
 
-        with transaction.commit_on_success():
+        with transaction.atomic():
             vols = models.Volume.objects.filter(
                 vol_name=volume_name,
                 vol_fstype='ZFS'
@@ -689,7 +697,7 @@ class ZFSVolumeWizardForm(forms.Form):
             zpoolfields = re.compile(r'zpool_(.+)')
             grouped = OrderedDict()
             grouped['root'] = {'type': group_type, 'disks': disk_list}
-            for i, gtype in request.POST.items():
+            for i, gtype in list(request.POST.items()):
                 if zpoolfields.match(i):
                     if gtype == 'none':
                         continue
@@ -725,7 +733,7 @@ class ZFSVolumeWizardForm(forms.Form):
 
                 try:
                     notifier().zpool_enclosure_sync(volume.vol_name)
-                except Exception, e:
+                except Exception as e:
                     log.error("Error syncing enclosure: %s", e)
 
         # This must be outside transaction block to make sure the changes
@@ -777,13 +785,13 @@ class VolumeImportForm(Form):
         # Grab partition list
         # NOTE: This approach may fail if device nodes are not accessible.
         _parts = n.get_partitions()
-        for name, part in _parts.items():
+        for name, part in list(_parts.items()):
             for i in used_disks:
                 if re.search(r'^%s([ps]|$)' % i, part['devname']) is not None:
                     _parts.pop(name, None)
 
         parts = []
-        for name, part in _parts.items():
+        for name, part in list(_parts.items()):
             parts.append(Disk(part['devname'], part['capacity']))
 
         choices = sorted(parts)
@@ -798,14 +806,14 @@ class VolumeImportForm(Form):
             cleaned_data.get('volume_fstype', ''))
         if not isvalid:
             msg = _(
-                u"The selected disks were not verified for these import "
+                "The selected disks were not verified for these import "
                 "rules. Filesystem check failed."
             )
             self._errors["volume_fstype"] = self.error_class([msg])
         path = cleaned_data.get("volume_dest_path")
         if path is None or not os.path.exists(path):
             self._errors["volume_dest_path"] = self.error_class(
-                [_(u"The path %s does not exist.\
+                [_("The path %s does not exist.\
                     This must be a dataset/folder in an existing Volume" % path)])
         return cleaned_data
 
@@ -873,7 +881,7 @@ class AutoImportWizard(SessionWizardView):
 
         return JsonResp(
             self.request,
-            message=unicode(_("Volume imported")),
+            message=str(_("Volume imported")),
             events=events,
         )
 
@@ -922,7 +930,7 @@ class AutoImportDecryptForm(Form):
         for vol in models.Volume.objects.filter(vol_encrypt__gt=0):
             for disk in vol.get_disks():
                 for geli in list(gelis):
-                    if '%sp' % disk in geli[1]:
+                    if geli[1].startswith('%sp' % disk):
                         gelis.remove(geli)
         return gelis
 
@@ -1003,10 +1011,10 @@ class VolumeAutoImportForm(Form):
                 continue
             for vdev in vol['disks']['vdevs']:
                 for disk in vdev['disks']:
-                    if filter(lambda x: x is not None and re.search(
+                    if [x for x in used_disks if x is not None and re.search(
                         r'^%s([ps]|$)' % disk['name'],
                         x
-                    ), used_disks):
+                    )]:
                         vols.remove(vol)
                         break
                 else:
@@ -1030,7 +1038,7 @@ class VolumeAutoImportForm(Form):
                 name = "%s [%s]" % (vol['label'], vol['type'])
             volchoices["%s|%s" % (vol['label'], vol.get('id', ''))] = name
 
-        return volchoices.items()
+        return list(volchoices.items())
 
     def clean(self):
         cleaned_data = self.cleaned_data
@@ -1050,7 +1058,7 @@ class VolumeAutoImportForm(Form):
         else:
             if models.Volume.objects.filter(
                     vol_name=cleaned_data['volume']['label']).count() > 0:
-                msg = _(u"You already have a volume with same name")
+                msg = _("You already have a volume with same name")
                 self._errors["volume_id"] = self.error_class([msg])
                 del cleaned_data["volume_id"]
 
@@ -1176,7 +1184,7 @@ class DiskEditBulkForm(Form):
             elif initials['disk_togglesmart'] != disk.disk_togglesmart:
                 initials['disk_togglesmart'] = True
 
-        for key, val in initials.items():
+        for key, val in list(initials.items()):
             self.fields[key].initial = val
 
     def save(self):
@@ -1374,13 +1382,13 @@ class ZFSDataset(Form):
                 self._fs,
                 cleaned_data.get("dataset_name"))
             if len(zfs.list_datasets(path=full_dataset_name)) > 0:
-                msg = _(u"You already have a dataset with the same name")
+                msg = _("You already have a dataset with the same name")
                 self._errors["dataset_name"] = self.error_class([msg])
                 del cleaned_data["dataset_name"]
         return cleaned_data
 
     def set_error(self, msg):
-        msg = u"%s" % msg
+        msg = "%s" % msg
         self._errors['__all__'] = self.error_class([msg])
         del self.cleaned_data
 
@@ -1517,7 +1525,7 @@ class ZVol_EditForm(CommonZVol, Form):
         return cleaned_data
 
     def set_error(self, msg):
-        msg = u"%s" % msg
+        msg = "%s" % msg
         self._errors['__all__'] = self.error_class([msg])
         del self.cleaned_data
 
@@ -1591,7 +1599,7 @@ class ZVol_CreateForm(CommonZVol, Form):
         super(ZVol_CreateForm, self).__init__(*args, **kwargs)
         size = '%dK' % 2 ** ((numdisks * 4) - 1).bit_length()
 
-        if size in map(lambda y: y[0], choices.ZFS_VOLBLOCKSIZE):
+        if size in [y[0] for y in choices.ZFS_VOLBLOCKSIZE]:
             self.fields['zvol_blocksize'].initial = size
 
     def clean_zvol_name(self):
@@ -1609,7 +1617,7 @@ class ZVol_CreateForm(CommonZVol, Form):
             self.vol_name,
             cleaned_data.get("zvol_name"))
         if len(zfs.list_datasets(path=full_zvol_name)) > 0:
-            msg = _(u"You already have a dataset with the same name")
+            msg = _("You already have a dataset with the same name")
             self._errors["zvol_name"] = self.error_class([msg])
             del cleaned_data["zvol_name"]
 
@@ -1617,7 +1625,7 @@ class ZVol_CreateForm(CommonZVol, Form):
         return cleaned_data
 
     def set_error(self, msg):
-        msg = u"%s" % msg
+        msg = "%s" % msg
         self._errors['__all__'] = self.error_class([msg])
         del self.cleaned_data
 
@@ -1754,10 +1762,7 @@ class PeriodicSnapForm(ModelForm):
         volnames = [
             o.vol_name for o in models.Volume.objects.filter(vol_fstype='ZFS')
         ]
-        self.fields['task_filesystem'].choices = filter(
-            lambda y: y[0].split('/')[0] in volnames,
-            notifier().list_zfs_fsvols().items()
-        )
+        self.fields['task_filesystem'].choices = [y for y in list(notifier().list_zfs_fsvols().items()) if y[0].split('/')[0] in volnames]
         self.fields['task_repeat_unit'].widget = forms.HiddenInput()
 
     def clean_task_byweekday(self):
@@ -1808,18 +1813,27 @@ class ManualSnapshotForm(Form):
         vmsnapdescription = str(datetime.now()).split('.')[0] + " FreeNAS Created Snapshot"
         snapvms = []
         for obj in models.VMWarePlugin.objects.filter(filesystem=self._fs):
-            ssl._create_default_https_context = ssl._create_unverified_context
-            server = VIServer()
             try:
-                server.connect(obj.hostname, obj.username, obj.get_password())
+                ssl_context = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
+                ssl_context.verify_mode = ssl.CERT_NONE
+
+                si = connect.SmartConnect(host=obj.hostname, user=obj.username, pwd=obj.get_password(), sslContext=ssl_context)
             except:
                 continue
-            vmlist = server.get_registered_vms(status='poweredOn')
-            for vm in vmlist:
-                if vm.startswith("[%s]" % obj.datastore):
-                    vm1 = server.get_vm_by_path(vm)
-                    vm1.create_snapshot(vmsnapname, description=vmsnapdescription, memory=False)
-                    snapvms.append(vm1)
+            content = si.RetrieveContent()
+            vm_view = content.viewManager.CreateContainerView(content.rootFolder, [vim.VirtualMachine], True)
+            for vm in vm_view.view:
+                if vm.summary.runtime.powerState != 'poweredOn':
+                    continue
+                for i in vm.datastore:
+                    if i.info.name == obj.datastore:
+                        VimTask.WaitForTask(vm.CreateSnapshot_Task(
+                            name=vmsnapname,
+                            description=vmsnapdescription,
+                            memory=False, quiesce=False,
+                        ))
+                        snapvms.append(vm)
+                        break
 
         try:
             notifier().zfs_mksnap(
@@ -1829,7 +1843,14 @@ class ManualSnapshotForm(Form):
                 len(snapvms))
         finally:
             for vm in snapvms:
-                vm.delete_named_snapshot(vmsnapname)
+                tree = vm.snapshot.rootSnapshotList
+                while tree[0].childSnapshotList is not None:
+                    snap = tree[0]
+                    if snap.name == vmsnapname:
+                        VimTask.WaitForTask(snap.snapshot.RemoveSnapshot_Task(True))
+                    if len(tree[0].childSnapshotList) < 1:
+                        break
+                    tree = tree[0].childSnapshotList
 
 
 class CloneSnapshotForm(Form):
@@ -1957,7 +1978,7 @@ class ZFSDiskReplacementForm(Form):
             capacity = humanize_number_si(int(capacity))
             diskchoices[devname] = "%s (%s)" % (devname, capacity)
 
-        choices = diskchoices.items()
+        choices = list(diskchoices.items())
         choices.sort(key=lambda a: float(
             re.sub(r'^.*?([0-9]+)[^0-9]*([0-9]*).*$', r'\1.\2', a[0])
         ))
@@ -2026,6 +2047,7 @@ class ReplicationForm(ModelForm):
             ('MANUAL', _('Manual')),
             ('SEMIAUTOMATIC', _('Semi-automatic')),
         ),
+        initial='MANUAL',
     )
     repl_remote_hostname = forms.CharField(label=_("Remote hostname"))
     repl_remote_port = forms.IntegerField(
@@ -2038,6 +2060,7 @@ class ReplicationForm(ModelForm):
         label=_('Remote HTTP/HTTPS Port'),
         max_length=200,
         initial=80,
+        required=False,
     )
     repl_remote_https = forms.BooleanField(
         label=_('Remote HTTPS'),
@@ -2281,7 +2304,7 @@ class VolumeExport(Form):
         self.instance = kwargs.pop('instance', None)
         services = kwargs.pop('services', {})
         super(VolumeExport, self).__init__(*args, **kwargs)
-        if services.keys():
+        if list(services.keys()):
             self.fields['cascade'] = forms.BooleanField(
                 initial=True,
                 required=False,
@@ -2594,7 +2617,7 @@ class UnlockPassphraseForm(Form):
         for svc in self.cleaned_data.get("services"):
             _notifier.restart(svc)
         _notifier.start("ix-warden")
-        _notifier.restart("system_datasets")
+        _notifier.restart("system_datasets", timeout=50)
         _notifier.reload("disk")
         if not _notifier.is_freenas() and _notifier.failover_licensed():
             from freenasUI.failover.enc_helper import LocalEscrowCtl
@@ -2674,10 +2697,7 @@ class VMWarePluginForm(ModelForm):
         volnames = [
             o.vol_name for o in models.Volume.objects.filter(vol_fstype='ZFS')
         ]
-        self.fields['filesystem'].choices = filter(
-            lambda y: y[0].split('/')[0] in volnames,
-            notifier().list_zfs_fsvols().items()
-        )
+        self.fields['filesystem'].choices = [y for y in list(notifier().list_zfs_fsvols().items()) if y[0].split('/')[0] in volnames]
         if self.instance.id:
             self.fields['oid'].initial = self.instance.id
 
@@ -2691,28 +2711,26 @@ class VMWarePluginForm(ModelForm):
         return password
 
     def clean(self):
-        from pysphere import VIServer
-        ssl._create_default_https_context = ssl._create_unverified_context
         cdata = self.cleaned_data
         if (
             cdata.get('hostname') and cdata.get('username') and
             cdata.get('password')
         ):
             try:
-                server = VIServer()
-                server.connect(
-                    cdata.get('hostname'),
-                    cdata.get('username'),
-                    cdata.get('password'),
-                    sock_timeout=7,
-                )
-                ds = server.get_datastores()
-                if not(ds and cdata.get('datastore') in ds.values()):
+                with client as c:
+                    ds = c.call('vmware.get_datastores', {
+                        'hostname': cdata.get('hostname'),
+                        'username': cdata.get('username'),
+                        'password': cdata.get('password'),
+                    })
+                datastores = []
+                for i in ds.values():
+                    datastores += i.keys()
+                if cdata.get('datastore') not in datastores:
                     self._errors['datastore'] = self.error_class([_(
                         'Datastore not found in the server.'
                     )])
-                server.disconnect()
-            except Exception, e:
+            except Exception as e:
                 self._errors['__all__'] = self.error_class([_(
                     'Failed to connect: %s'
                 ) % e])

@@ -8,15 +8,16 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:05-0700\n"
-"PO-Revision-Date: 2014-11-24 00:47+0000\n"
-"Last-Translator: ede_web <edgar.oliveira.8@gmail.com>\n"
-"Language-Team: LANGUAGE <LL@li.org>\n"
+"PO-Revision-Date: 2017-04-18 18:37+0000\n"
+"Last-Translator: Eric Loewenthal <ericloewe@outlook.com>\n"
+"Language-Team: Portuguese "
+"<http://weblate.trueos.org/projects/freenas/django/pt/>\n"
 "Language: pt\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=2; plural=(n > 1);\n"
-"X-Generator: Pootle 2.5.0\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
+"X-Generator: Weblate 2.10-dev\n"
 "X-POOTLE-MTIME: 1416790032.0\n"
 
 #: choices.py:40
@@ -520,8 +521,9 @@ msgstr "Introduza a mesma palavra-passe que em acima, para verificação."
 #: account/forms.py:265 account/forms.py:558 account/models.py:115
 #: freeadmin/navtree.py:360 templates/account/bsdusers.html:8
 #: templates/account/bsdusers.html.py:87
+#, fuzzy
 msgid "Shell"
-msgstr "Consola"
+msgstr "Shell"
 
 #~ msgid "Disable password logins"
 #~ msgstr "Desactivar inícios de sessão"
@@ -3640,6 +3642,7 @@ msgid "Unix (NFS) Shares"
 msgstr "Partilhas (NFS) Unix"
 
 #: sharing/nav.py:4 templates/menubar.html:22
+#, fuzzy
 msgid "Sharing"
 msgstr "Partilha"
 
@@ -3667,40 +3670,41 @@ msgid "Specify custom path"
 msgstr "Especifique caminho personalizado"
 
 #: storage/forms.py:163
-#, fuzzy
 msgid "Volume add"
-msgstr "Nome do volume"
+msgstr "Adicionar volume"
 
 #: storage/forms.py:175
 msgid ""
 "Leaving this blank will give the volume a default path of /mnt/${VOLUME_NAME}"
 msgstr ""
-"Deixando em branco dará o volume um caminho padrão de /mnt/${VOLUME_NAME}"
+"Deixando em branco dará ao volume um caminho padrão de /mnt/${NOME_DO_VOLUME}"
 
 #: storage/forms.py:233
 msgid ""
 "The volume name must start with letters and may include numbers, \"-\", \"_"
 "\" and \".\" ."
 msgstr ""
-"O nome do volume deve começar com letras e podem incluir números, \"-\", \"_"
-"\" e \".\" ."
+"O nome do volume deve começar com letras e pode incluir números, \"-\", \"_\""
+" e \".\" ."
 
 #: storage/forms.py:236
-#, fuzzy
 msgid "A volume with that name already exists."
-msgstr "Um grupo com esse nome já existe."
+msgstr "Já existe um grupo com esse nome."
 
 #: storage/forms.py:252
+#, fuzzy
 msgid "Path does not exist."
-msgstr "Caminho não existe."
+msgstr "O caminho não existe."
 
 #: storage/forms.py:255
 msgid "Path is not a directory."
-msgstr "Caminho não é uma pasta."
+msgstr "O caminho não é uma pasta."
 
 #: storage/forms.py:264
 msgid "You cannot select an existing ZFS volume and specify a new volume name"
 msgstr ""
+"Não é possível escolher um volume ZFS existente e especificar um novo nome "
+"para o volume"
 
 #: storage/forms.py:269
 msgid ""
@@ -3761,9 +3765,8 @@ msgstr ""
 "pool"
 
 #: storage/forms.py:673
-#, fuzzy
 msgid "The SMART service failed to restart."
-msgstr "O serviço falhou no reinicio."
+msgstr "O serviço SMART falhou no reinício."
 
 #: storage/forms.py:679
 msgid "Dataset Name"
@@ -3899,9 +3902,8 @@ msgid "Remote hostname"
 msgstr "Hostname remoto"
 
 #: storage/forms.py:1126 storage/models.py:635
-#, fuzzy
 msgid "Remote port"
-msgstr "Host remoto"
+msgstr "Porta remota"
 
 #: storage/forms.py:1128 storage/models.py:639
 msgid "Remote hostkey"
@@ -3935,28 +3937,33 @@ msgid "Method"
 msgstr "Método de Autenticação"
 
 #: storage/forms.py:1271
+#, fuzzy
 msgid "Quick"
-msgstr ""
+msgstr "Rápido"
 
 #: storage/forms.py:1272
+#, fuzzy
 msgid "Full with zeros"
-msgstr ""
+msgstr "Cheio de zeros"
 
 #: storage/forms.py:1273
+#, fuzzy
 msgid "Full with random data"
-msgstr ""
+msgstr "Cheio de dados aleatórios"
 
 #: storage/models.py:50
 msgid "File System Type"
 msgstr "Tipo de Sistema de Ficheiros"
 
 #: storage/models.py:205 templates/storage/scrub.html:6
+#, fuzzy
 msgid "Threshold days"
-msgstr ""
+msgstr "Limite de dias"
 
 #: storage/models.py:207
+#, fuzzy
 msgid "Determine how many days shall be between scrubs"
-msgstr ""
+msgstr "Determina quantos dias haverá entre scrubs"
 
 #: storage/models.py:217 system/models.py:343 system/models.py:495
 #: templates/storage/scrub.html:7 templates/system/cronjob.html:5
@@ -4014,12 +4021,11 @@ msgstr "Activado"
 
 #: storage/models.py:248
 msgid "ZFS Scrub"
-msgstr ""
+msgstr "Scrub ZFS"
 
 #: storage/models.py:249
-#, fuzzy
 msgid "ZFS Scrubs"
-msgstr "NFS Partilhas"
+msgstr "Scrubs ZFS"
 
 #: storage/models.py:263 system/models.py:391 system/models.py:600
 msgid "Every minute"
@@ -4065,11 +4071,12 @@ msgstr "Fins de Semana"
 #: storage/models.py:340
 #, fuzzy
 msgid "Multipath name"
-msgstr "Nome do módulo"
+msgstr "Nome do multipath"
 
 #: storage/models.py:346
+#, fuzzy
 msgid "Multipath member"
-msgstr ""
+msgstr "Membro do multipath"
 
 #: storage/models.py:359 storage/views.py:249
 msgid "Transfer Mode"
@@ -4096,9 +4103,8 @@ msgid "S.M.A.R.T. extra options"
 msgstr "Opções extra do S.M.A.R.T"
 
 #: storage/models.py:444 system/models.py:660
-#, fuzzy
 msgid "Disks"
-msgstr "Disco"
+msgstr "Discos"
 
 #: storage/models.py:457
 msgid "Path to mount point"
@@ -4140,22 +4146,27 @@ msgid "Remote ZFS filesystem name"
 msgstr "Sistema de ficheiros ZFS remoto"
 
 #: storage/models.py:670
+#, fuzzy
 msgid ""
 "This should be the name of the ZFS filesystem on remote side. eg: poolname/"
 "datasetname not the mountpoint or filesystem path"
 msgstr ""
+"Este deverá ser o nome do sistema de ficheiros ZFS do lado remoto. Por "
+"exemplo: nomePool/nomeDataset - não o mountpoint ou o caminho do sistema de "
+"ficheiros."
 
 #: storage/models.py:676
 msgid "Recursively replicate and remove stale snapshot on remote side"
 msgstr "Recursivamente replicar e remover obsoleto instantâneo no lado remoto"
 
 #: storage/models.py:681
+#, fuzzy
 msgid "Initialize remote side for once. (May cause data loss on remote side!)"
-msgstr ""
+msgstr "Inicializar o lado remoto (Pode causar perda de dados do lado remoto!)"
 
 #: storage/models.py:686
 msgid "Limit (kB/s)"
-msgstr ""
+msgstr "Limite (kB/s)"
 
 #: storage/models.py:687
 msgid "Limit the replication speed. Unit in kilobytes/seconds. 0 = unlimited."
@@ -4939,7 +4950,7 @@ msgstr "Reportar"
 
 #: system/nav.py:20
 msgid "System Information"
-msgstr "Informação do Sistema"
+msgstr "Informações do Sistema"
 
 #: system/views.py:129
 msgid "The uploaded file is not valid."
@@ -6060,7 +6071,7 @@ msgstr "Adicionar Volume"
 
 #: templates/storage/wizard.html:157
 msgid "Existing data will be cleared"
-msgstr "Informação existente será apagada"
+msgstr "Os dados existentes serão eliminados"
 
 #: templates/storage/zpool_disk_replace.html:2
 msgid "Replace Disk"
@@ -7480,9 +7491,8 @@ msgid "The pool failed to upgraded: %s"
 msgstr "O volume falhou na exportação"
 
 #: support/models.py:49
-#, fuzzy
 msgid "Support"
-msgstr "EA Suporte"
+msgstr "Suporte"
 
 #: system/forms.py:86
 #, fuzzy
@@ -8358,9 +8368,8 @@ msgstr ""
 #: storage/nav.py:40
 #: templates/storage/volume_datagrid.html:6
 #: templates/storage/volume_datagrid.html:10
-#, fuzzy
 msgid "ZFS Volume Manager"
-msgstr "Nome do volume"
+msgstr "Gestor de Volumes ZFS"
 
 #: storage/views.py:783
 msgid "The scrub process has stopped"
@@ -8602,9 +8611,8 @@ msgid "Scrub"
 msgstr "NFS Partilhas"
 
 #: templates/storage/wizard.html:92
-#, fuzzy
 msgid "Extend Volume"
-msgstr "Exportar volume"
+msgstr "Extender Volume"
 
 #: templates/storage/zfswizard.html:77
 #, fuzzy
@@ -9281,9 +9289,8 @@ msgstr ""
 
 #: storage/forms.py:597
 #: templates/storage/zfswizard.html:41
-#, fuzzy
 msgid "Encryption"
-msgstr "Modo de Encriptação"
+msgstr "Encriptação"
 
 #: storage/forms.py:605
 #: storage/forms.py:1448
@@ -9835,9 +9842,8 @@ msgstr "Informal"
 #: tasks/nav.py:4
 #: templates/menubar.html:13
 #: templates/tasks/index.html:1
-#, fuzzy
 msgid "Tasks"
-msgstr "Tarefas Rsync"
+msgstr "Tarefas"
 
 #: templates/services/core.html:32
 #, fuzzy
@@ -10237,7 +10243,7 @@ msgstr ""
 #: freeadmin/navtree.py:256
 #, fuzzy
 msgid "Initial Wizard"
-msgstr "Iniciador"
+msgstr "Assistente de Configuração Inicial"
 
 #: middleware/notifier.py:2222
 #, fuzzy
@@ -10330,9 +10336,8 @@ msgid "Are you sure?"
 msgstr "Tem a certeza que pretende apagar?"
 
 #: templates/system/initialwizard_confirm.html:39
-#, fuzzy
 msgid "Confirm"
-msgstr "Configurar"
+msgstr "Confirmar"
 
 #: templates/system/initialwizard_confirm.html:46
 msgid "Return to Wizard"
@@ -13561,10 +13566,12 @@ msgstr ""
 msgid ""
 "Valid characters for jail names are letters, numbers, dashes, or underscores."
 msgstr ""
+"Os caracteres válidos para nomes de jails são letras, números, traços (\"-\")"
+" e underscores (\"_\")."
 
 #: services/forms.py:95
 msgid "Cannot disable SMB while ActiveDirectory is in use."
-msgstr ""
+msgstr "Não é possível desactivar SMB enquanto Active Directory estiver em uso."
 
 #: services/models.py:1295
 #, fuzzy
@@ -13576,3 +13583,6 @@ msgid ""
 "The command used to shutdown the server. You can use a custom command here "
 "to perform other tasks before shutdown.default: /sbin/shutdown -p now"
 msgstr ""
+"O comando utilizado para encerrar o servidor. Pode utilizar um comando "
+"personalizado para executar outras tarefas antes do encerramento. Por "
+"defeito: /sbin/shutdown -p now"

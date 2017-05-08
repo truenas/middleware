@@ -44,7 +44,7 @@ log = logging.getLogger("directoryservice.views")
 def directoryservice_home(request):
 
     view = appPool.hook_app_index('directoryservice', request)
-    view = filter(None, view)
+    view = [_f for _f in view if _f]
     if view:
         return view[0]
 
@@ -266,6 +266,27 @@ def directoryservice_idmap_autorid(request, id):
         form = forms.idmap_autorid_Form(instance=idmap_autorid)
 
     return render(request, 'directoryservice/idmap_autorid.html', {
+        'form': form
+    })
+
+
+def directoryservice_idmap_fruit(request, id):
+    idmap_fruit = models.idmap_fruit.objects.get(id=id)
+
+    if request.method == "POST":
+        form = forms.idmap_fruit_Form(request.POST, instance=idmap_fruit)
+        if form.is_valid(): 
+            form.save()
+            return JsonResp(
+                request,
+                message="Idmap fruit successfully edited."
+            )
+        else:
+            return JsonResp(request, form=form)
+    else:
+        form = forms.idmap_fruit_Form(instance=idmap_fruit)
+
+    return render(request, 'directoryservice/idmap_fruit.html', {
         'form': form
     })
 

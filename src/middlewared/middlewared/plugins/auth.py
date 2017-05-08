@@ -2,8 +2,8 @@ import crypt
 import time
 import uuid
 
-from middlewared.schema import Int, Str, accepts
-from middlewared.service import Service, no_auth_required, pass_app
+from middlewared.schema import Dict, Int, Str, accepts
+from middlewared.service import Service, no_auth_required, pass_app, private
 
 
 class AuthTokens(object):
@@ -24,7 +24,7 @@ class AuthTokens(object):
             return None
         return self.get_token(token_id)
 
-    def new(self, ttl):
+    def new(self, ttl, attrs=None):
         # Create a new token with given Time To Live
         token_id = str(uuid.uuid4())
         token = self.__tokens[token_id] = {
@@ -33,6 +33,7 @@ class AuthTokens(object):
             'last': int(time.time()),
             'ttl': ttl,
             'sessions': set(),
+            'attributes': attrs or {},
         }
         return token
 
@@ -80,12 +81,16 @@ class AuthService(Service):
             return False
         return crypt.crypt(password, user['bsdusr_unixhash']) == user['bsdusr_unixhash']
 
-    @accepts(Int('ttl', required=False))
-    def generate_token(self, ttl=None):
+    @accepts(Int('ttl', required=False), Dict('attrs', additional_attrs=True))
+    def generate_token(self, ttl=None, attrs=None):
         """Generate a token to be used for authentication."""
         if ttl is None:
             ttl = 600
-        return self.authtokens.new(ttl)['id']
+        return self.authtokens.new(ttl, attrs=attrs)['id']
+
+    @private
+    def get_token(self, token_id):
+        return self.authtokens.get_token(token_id)
 
     @no_auth_required
     @accepts(Str('username'), Str('password'))

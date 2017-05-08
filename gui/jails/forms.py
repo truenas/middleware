@@ -308,7 +308,7 @@ class JailCreateForm(ModelForm):
         try:
             template = JailTemplate.objects.get(jt_name=jail_type)
         except Exception as e:
-            self.errors['__all__'] = self.error_class([_(e.message)])
+            self.errors['__all__'] = self.error_class([_(e)])
             return
 
         template_create_args['nick'] = template.jt_name
@@ -352,7 +352,8 @@ class JailCreateForm(ModelForm):
                 cf.close()
                 w.template(**template_create_args)
             except Exception as e:
-                self.errors['__all__'] = self.error_class([_(e.message)])
+                log.debug('Failed to create template', exc_info=True)
+                self.errors['__all__'] = self.error_class([str(e)])
                 if os.path.exists(createfile):
                     os.unlink(createfile)
                 return
@@ -412,7 +413,8 @@ class JailCreateForm(ModelForm):
             w.create(**jail_create_args)
 
         except Exception as e:
-            self.errors['__all__'] = self.error_class([_(e.message)])
+            log.debug('Failed to create jail', exc_info=True)
+            self.errors['__all__'] = self.error_class([str(e)])
             if os.path.exists(createfile):
                 os.unlink(createfile)
             return
@@ -471,9 +473,13 @@ class JailCreateForm(ModelForm):
 
             jail_set_args['flags'] = jail_flags
             try:
-                w.set(**jail_set_args)
+                # Do not try to set options if no other options other than
+                # jail and flags were set.
+                if len(jail_set_args) > 2:
+                    w.set(**jail_set_args)
             except Exception as e:
-                self.errors['__all__'] = self.error_class([_(e.message)])
+                log.debug('Failed to set jail arguments', exc_info=True)
+                self.errors['__all__'] = self.error_class([_(e)])
                 return
 
         jail_nat = self.cleaned_data.get('jail_nat', None)
@@ -493,7 +499,8 @@ class JailCreateForm(ModelForm):
         try:
             w.set(**jail_set_args)
         except Exception as e:
-            self.errors['__all__'] = self.error_class([_(e.message)])
+            log.debug('Failed to set jail arguments', exc_info=True)
+            self.errors['__all__'] = self.error_class([_(e)])
             return
 
         jail_set_args = {}
@@ -511,20 +518,22 @@ class JailCreateForm(ModelForm):
             try:
                 w.set(**jail_set_args)
             except Exception as e:
-                self.errors['__all__'] = self.error_class([_(e.message)])
+                log.debug('Failed to set jail arguments', exc_info=True)
+                self.errors['__all__'] = self.error_class([_(e)])
                 return
 
         if self.cleaned_data['jail_autostart']:
             try:
                 w.auto(jail=jail_host)
             except Exception as e:
-                self.errors['__all__'] = self.error_class([_(e.message)])
+                self.errors['__all__'] = self.error_class([_(e)])
                 return
 
         try:
             w.start(jail=jail_host)
         except Exception as e:
-            self.errors['__all__'] = self.error_class([_(e.message)])
+            log.debug('Failed to start jail', exc_info=True)
+            self.errors['__all__'] = self.error_class([_(e)])
             return
 
         # Requery instance so we have everything up-to-date after save
@@ -541,7 +550,9 @@ def is_jail_root_shared(jail_root):
     paths.extend([w.webdav_path for w in WebDAV_Share.objects.all()])
     extents = iSCSITargetExtent.objects.filter(iscsi_target_extent_type='File')
     for e in extents:
-        paths.append(e.iscsi_target_extent_path.rpartition('/')[0])
+        if os.path.realpath(jail_root) in os.path.realpath(e.iscsi_target_extent_path.rpartition('/')[0]):
+            paths.append(jail_root)
+
     for path in paths:
         if jail_root.startswith(path):
             return True
@@ -559,7 +570,7 @@ def generate_randomMAC():
     first = first_byte << 4
     first = first | random.choice(local_list)
     val = [first, random.randint(0x00, 0xff), random.randint(0x00, 0xff), random.randint(0x00, 0xff), random.randint(0x00, 0xff), random.randint(0x00, 0xff)]
-    mac_address = ':'.join(map(lambda x: "%02x" % x, val))
+    mac_address = ':'.join(["%02x" % x for x in val])
     return mac_address
 
 
@@ -855,7 +866,7 @@ class JailsEditForm(ModelForm):
         try:
             self.jc = JailsConfiguration.objects.order_by("-id")[0]
         except Exception as e:
-            raise MiddlewareError(e.message)
+            raise MiddlewareError(e)
 
         jail_ipv4_dhcp = False
         jail_ipv6_autoconf = False
@@ -923,7 +934,7 @@ class JailsEditForm(ModelForm):
         try:
             jc = JailsConfiguration.objects.order_by("-id")[0]
         except Exception as e:
-            raise MiddlewareError(e.message)
+            raise MiddlewareError(e)
 
         if not jc.jc_path:
             raise MiddlewareError(_("No jail root configured."))
@@ -1210,7 +1221,7 @@ class JailMountPointForm(ModelForm):
 
         try:
             clean_path_execbit(self.jc.jc_path)
-        except forms.ValidationError, e:
+        except forms.ValidationError as e:
             self.errors['__all__'] = self.error_class(e.messages)
 
         pjlist = []
@@ -1258,7 +1269,7 @@ class JailMountPointForm(ModelForm):
         if mounted:
             try:
                 obj.mount()
-            except ValueError, e:
+            except ValueError as e:
                 raise MiddlewareError(
                     _("The path could not be mounted %(source)s: %(error)s") %
                     {
@@ -1269,7 +1280,7 @@ class JailMountPointForm(ModelForm):
         else:
             try:
                 obj.umount()
-            except ValueError, e:
+            except ValueError as e:
                 raise MiddlewareError(_(
                     "The path could not be umounted %(source)s: %(error)s" % {
                         'source': obj.source,

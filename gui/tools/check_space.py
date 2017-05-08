@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/local/bin/python
 #
 # Copyright (c) 2012 iXsystems, Inc.
 # All rights reserved.
@@ -100,15 +100,16 @@ def main(argv):
         "-Hr",
     ],
         stdout=subprocess.PIPE,
-        stdin=subprocess.PIPE)
+        stdin=subprocess.PIPE,
+        encoding='utf8')
     output = pipe.communicate()[0]
     if pipe.returncode != 0:
-        print "Dataset not found"
+        print("Dataset not found")
         sys.exit(1)
 
     reg = re.search(r'^%s\b.*' % (args.dataset, ), output, re.M)
     if not reg:
-        print "Dataset not found"
+        print("Dataset not found")
         sys.exit(1)
     line = reg.group(0)
     o_used, o_avail, o_refer = line.split('\t')[1:4]

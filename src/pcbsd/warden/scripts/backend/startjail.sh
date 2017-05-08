@@ -305,7 +305,7 @@ start_jail_vimage()
      sysctl net.inet6.ip6.forwarding=1
   fi
 
-  if [ "$(sysrc firewall_enable)" != "YES" -o "$(sysrc firewall_type)" != "open" ] ; then
+  if [ "$(sysrc -n firewall_enable)" != "YES" -o "$(sysrc -n firewall_type)" != "open" ] ; then
      sysrc firewall_enable="YES"
      sysrc firewall_type="open"
 
@@ -629,7 +629,7 @@ else
     jexec ${JID} ${sCmd} 2>&1
   else
     warden_print "Starting jail with: /etc/rc"
-    jexec ${JID} /bin/sh /etc/rc > /dev/null 2>&1
+    jexec ${JID} /bin/sh /etc/rc > /dev/null 2>&1 &
   fi
 fi
 

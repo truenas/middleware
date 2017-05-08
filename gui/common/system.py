@@ -38,7 +38,7 @@ import syslog
 import ntplib
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from email.Utils import formatdate
+from email.utils import formatdate
 from datetime import datetime, timedelta
 from django.utils.translation import ugettext_lazy as _
 from lockfile import LockFile, LockTimeout
@@ -106,7 +106,7 @@ def get_freenas_var(var, default=None):
         val = default
     return val
 
-FREENAS_DATABASE = get_freenas_var("FREENAS_DATABASE", "/data/freenas-v1.db")
+FREENAS_DATABASE = get_freenas_var("FREENAS_CONFIG", "/data/freenas-v1.db")
 
 
 class QueueItem(object):
@@ -159,7 +159,7 @@ class MailQueue(object):
 
     def __exit__(self, typ, value, traceback):
 
-        with open(self.QUEUE_FILE, 'w+') as f:
+        with open(self.QUEUE_FILE, 'wb+') as f:
             if self.queue:
                 f.write(pickle.dumps(self.queue))
 
@@ -204,9 +204,7 @@ def _get_smtp_server(timeout=300, local_hostname=None):
         if em.em_security == 'tls':
             server.starttls()
     if em.em_smtp:
-        server.login(
-            em.em_user.encode('utf-8'),
-            em.em_pass.encode('utf-8'))
+        server.login(em.em_user, em.em_pass)
     return server
 
 
@@ -246,11 +244,11 @@ def send_mail(
     if not to:
         to = [bsdUsers.objects.get(bsdusr_username='root').bsdusr_email]
         if not to[0]:
-            return False, 'Email address for root is not configured'
+            return True, 'Email address for root is not configured'
     if attachments:
         msg = MIMEMultipart()
         msg.preamble = text
-        map(lambda attachment: msg.attach(attachment), attachments)
+        list(map(lambda attachment: msg.attach(attachment), attachments))
     else:
         msg = MIMEText(text, _charset='utf-8')
     if subject:
@@ -266,7 +264,7 @@ def send_mail(
 
     if not extra_headers:
         extra_headers = {}
-    for key, val in extra_headers.items():
+    for key, val in list(extra_headers.items()):
         if key in msg:
             msg.replace_header(key, val)
         else:
@@ -329,7 +327,7 @@ def get_fstype(path):
     if not os.access(path, os.F_OK):
         return None
 
-    lines = subprocess.check_output(['/bin/df', '-T', path]).splitlines()
+    lines = subprocess.check_output(['/bin/df', '-T', path], encoding='utf8').splitlines()
 
     out = (lines[len(lines) - 1]).split()
 
@@ -346,7 +344,7 @@ def get_mounted_filesystems():
     """
     mounted = []
 
-    lines = subprocess.check_output(['/sbin/mount']).splitlines()
+    lines = subprocess.check_output(['/sbin/mount'], encoding='utf8').splitlines()
 
     for line in lines:
         reg = RE_MOUNT.search(line)
@@ -375,10 +373,10 @@ def is_mounted(**kwargs):
 def mount(dev, path, mntopts=None, fstype=None):
     mount_cmd = ['/sbin/mount']
 
-    if isinstance(dev, unicode):
+    if isinstance(dev, str):
         dev = dev.encode('utf-8')
 
-    if isinstance(path, unicode):
+    if isinstance(path, str):
         path = path.encode('utf-8')
 
     if mntopts:
@@ -395,7 +393,8 @@ def mount(dev, path, mntopts=None, fstype=None):
     proc = subprocess.Popen(
         mount_cmd + opts + fstype + [dev, path],
         stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE
+        stderr=subprocess.PIPE,
+        encoding='utf8',
     )
     output = proc.communicate()
 
@@ -419,7 +418,9 @@ def umount(path, force=False):
     proc = subprocess.Popen(
         cmdlst,
         stdout=subprocess.PIPE,
-        stderr=subprocess.PIPE)
+        stderr=subprocess.PIPE,
+        encoding='utf8',
+    )
     output = proc.communicate()
 
     if proc.returncode != 0:
@@ -580,7 +581,7 @@ def domaincontroller_objects():
     objects = []
     for row in results:
         obj = {}
-        for key in row.keys():
+        for key in list(row.keys()):
             obj[key] = row[key]
         objects.append(obj)
 
@@ -590,7 +591,7 @@ def domaincontroller_objects():
 
 
 def nt4_enabled():
-    db = get_freenas_var("FREENAS_DATABASE", "/data/freenas-v1.db")
+    db = get_freenas_var("FREENAS_CONFIG", "/data/freenas-v1.db")
     h = sqlite3.connect(db)
     c = h.cursor()
 
@@ -617,7 +618,7 @@ def nt4_objects():
     objects = []
     for row in results:
         obj = {}
-        for key in row.keys():
+        for key in list(row.keys()):
             obj[key] = row[key]
         objects.append(obj)
 
@@ -660,13 +661,10 @@ def kerberoskeytab_objects():
 
 def exclude_path(path, exclude):
 
-    if isinstance(path, unicode):
-        path = path.encode('utf8')
+    if isinstance(path, bytes):
+        path = path.decode('utf8')
 
-    exclude = map(
-        lambda y: y.encode('utf8') if isinstance(y, unicode) else y,
-        exclude
-    )
+    exclude = [y.decode('utf8') if isinstance(y, bytes) else y for y in exclude]
 
     fine_grained = []
     for e in exclude:
@@ -707,7 +705,7 @@ def backup_database():
     # Legacy format
     files = glob.glob('%s/*.db' % systempath)
     reg = re.compile(r'.*(\d{4}-\d{2}-\d{2})-(\d+)\.db$')
-    files = filter(lambda y: reg.match(y), files)
+    files = [y for y in files if reg.match(y)]
     for f in files:
         try:
             os.unlink(f)

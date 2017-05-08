@@ -9,7 +9,7 @@ class AppPool(object):
         self._registered = {}
 
     def __iter__(self):
-        for i in self._registered.values():
+        for i in list(self._registered.values()):
             yield i
 
     def register(self, hook):

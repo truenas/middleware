@@ -7,8 +7,7 @@ import pwd
 import re
 import sys
 import socket
-import string
-import tdb
+import subprocess
 import tempfile
 import time
 import logging
@@ -50,20 +49,48 @@ from freenasUI.common.log import log_traceback
 
 log = logging.getLogger('generate_smb4_conf')
 
+def qw(w):
+    return '"%s"' % w.replace('"', '\\"')
+
 
 def debug_SID(str):
     if str:
-        print >> sys.stderr, "XXX: %s" % str
+        print("XXX: %s" % str, file=sys.stderr)
     p = pipeopen("/usr/local/bin/net -d 0 getlocalsid")
     out, _ = p.communicate()
     if out:
-        print >> sys.stderr, "XXX: %s" % out
+        print("XXX: %s" % out, file=sys.stderr)
 
 
 def smb4_get_system_SID():
     SID = None
 
     p = pipeopen("/usr/local/bin/net -d 0 getlocalsid")
+    net_out = p.communicate()
+    if p.returncode != 0:
+        return None
+    if not net_out:
+        return None
+
+    net_out = net_out[0]
+
+    parts = net_out.split()
+    try:
+        SID = parts[5]
+    except Exception as e:
+        log.debug(
+            'The following exception occured while trying to obtain system SID: {0}'.format(e)
+        )
+        log_traceback(log=log)
+        SID = None
+
+    return SID
+
+
+def smb4_get_domain_SID():
+    SID = None
+
+    p = pipeopen("/usr/local/bin/net -d 0 getdomainsid")
     net_out = p.communicate()
     if p.returncode != 0:
         return None
@@ -117,6 +144,21 @@ def smb4_set_system_SID(SID):
     return True
 
 
+def smb4_set_domain_SID(SID):
+    if not SID:
+        return False
+
+    p = pipeopen("/usr/local/bin/net -d 0 setdomainsid %s" % SID)
+    net_out = p.communicate()
+    if p.returncode != 0:
+        log.error('Failed to setlocalsid with the following error: {0}'.format(net_out[1]))
+        return False
+    if not net_out:
+        return False
+
+    return True
+
+
 def smb4_set_database_SID(client, SID):
     ret = False
     if not SID:
@@ -138,27 +180,34 @@ def smb4_set_database_SID(client, SID):
     return ret
 
 
-def smb4_set_SID(client):
+def smb4_set_SID(client, role):
+    get_sid_func = smb4_get_system_SID
+    set_sid_func = smb4_set_system_SID
+
+    if role == 'dc':
+        get_sid_func = smb4_get_domain_SID
+        set_sid_func = smb4_set_domain_SID
+
     database_SID = smb4_get_database_SID(client)
-    system_SID = smb4_get_system_SID()
+    system_SID = get_sid_func()
 
     if database_SID:
         if not system_SID:
-            if not smb4_set_system_SID(database_SID):
-                print >> sys.stderr, "Unable to set SID to %s" % database_SID
+            if not set_sid_func(database_SID):
+                print("Unable to set SID to %s" % database_SID, file=sys.stderr)
         else:
             if database_SID != system_SID:
-                if not smb4_set_system_SID(database_SID):
-                    print >> sys.stderr, ("Unable to set SID to "
-                                          "%s" % database_SID)
+                if not set_sid_func(database_SID):
+                    print(("Unable to set SID to "
+                                          "%s" % database_SID), file=sys.stderr)
 
     else:
         if not system_SID:
-            print >> sys.stderr, ("Unable to figure out SID, things are "
-                                  "seriously jacked!")
+            print(("Unable to figure out SID, things are "
+                                  "seriously jacked!"), file=sys.stderr)
 
-        if not smb4_set_system_SID(system_SID):
-            print >> sys.stderr, "Unable to set SID to %s" % system_SID
+        if not set_sid_func(system_SID):
+            print("Unable to set SID to %s" % system_SID, file=sys.stderr)
         else:
             smb4_set_database_SID(client, system_SID)
 
@@ -212,10 +261,12 @@ def order_vfs_objects(vfs_objects):
 def config_share_for_vfs_objects(share, vfs_objects):
     if vfs_objects:
         vfs_objects = order_vfs_objects(vfs_objects)
-        confset2(share, "vfs objects = %s", ' '.join(vfs_objects).encode('utf8'))
+        confset2(share, "vfs objects = %s", ' '.join(vfs_objects))
 
 
 def extend_vfs_objects_for_zfs(path, vfs_objects):
+    return 
+
     if is_within_zfs(path):
         vfs_objects.extend([
             'zfs_space',
@@ -385,6 +436,18 @@ def configure_idmap_autorid(smb4_conf, idmap, domain):
     ))
 
 
+def configure_idmap_fruit(smb4_conf, idmap, domain):
+    confset1(smb4_conf, "idmap config %s: backend = %s" % (
+        domain,
+        idmap.idmap_backend_name
+    ))
+    confset1(smb4_conf, "idmap config %s: range = %d-%d" % (
+        domain,
+        idmap.idmap_fruit_range_low,
+        idmap.idmap_fruit_range_high
+    ))
+
+
 def configure_idmap_hash(smb4_conf, idmap, domain):
     confset1(smb4_conf, "idmap config %s: backend = %s" % (
         domain,
@@ -524,7 +587,7 @@ def set_idmap_rfc2307_secret(client):
     ]
 
     net_cmd = "%s '%s' '%s'" % (
-        string.join(args, ' '),
+        ' '.join(args),
         domain,
         idmap.idmap_rfc2307_ldap_user_dn_password
     )
@@ -535,11 +598,11 @@ def set_idmap_rfc2307_secret(client):
         for line in net_out[0].split('\n'):
             if not line:
                 continue
-            print line
+            print(line)
 
     ret = True
     if p.returncode != 0:
-        print >> sys.stderr, "Failed to set idmap secret!"
+        print("Failed to set idmap secret!", file=sys.stderr)
         ret = False
 
     return ret
@@ -589,6 +652,7 @@ IDMAP_FUNCTIONS = {
     'IDMAP_TYPE_AD': configure_idmap_ad,
     'IDMAP_TYPE_ADEX': configure_idmap_ad,
     'IDMAP_TYPE_AUTORID': configure_idmap_autorid,
+    'IDMAP_TYPE_FRUIT': configure_idmap_fruit,
     'IDMAP_TYPE_HASH': configure_idmap_hash,
     'IDMAP_TYPE_LDAP': configure_idmap_ldap,
     'IDMAP_TYPE_NSS': configure_idmap_nss,
@@ -678,14 +742,14 @@ def set_ldap_password(client):
             for line in out[1].split('\n'):
                 if not line:
                     continue
-                print line
+                print(line)
 
 
 def add_ldap_conf(client, smb4_conf):
     try:
         ldap = Struct(client.call('datastore.query', 'directoryservice.LDAP', None, {'get': True}))
         ldap.ds_type = 2  # FIXME: DS_TYPE_LDAP = 2
-        cifs = Struct(client.call('datastore.query', 'services.CIFS', None, {'get': True}))
+        cifs = Struct(client.call('cifs.config'))
     except:
         return
 
@@ -699,7 +763,7 @@ def add_ldap_conf(client, smb4_conf):
         )
     )
 
-    ldap_workgroup = cifs.cifs_srv_workgroup.upper()
+    ldap_workgroup = cifs.workgroup.upper()
 
     confset2(smb4_conf, "ldap admin dn = %s", ldap.ldap_binddn)
     confset2(smb4_conf, "ldap suffix = %s", ldap.ldap_basedn)
@@ -734,7 +798,7 @@ def add_activedirectory_conf(client, smb4_conf):
 
     try:
         os.makedirs(cachedir)
-        os.chmod(cachedir, 0755)
+        os.chmod(cachedir, 0o755)
     except:
         pass
 
@@ -795,8 +859,8 @@ def add_domaincontroller_conf(client, smb4_conf):
     # dcerpc_endpoint_servers = get_dcerpc_endpoint_servers()
 
     confset2(smb4_conf, "netbios name = %s", cifs.netbiosname.upper())
-    if cifs.cifs_srv_netbiosalias:
-        confset2(smb4_conf, "netbios aliases = %s", cifs.cifs_srv_netbiosalias.upper())
+    if cifs.netbiosalias:
+        confset2(smb4_conf, "netbios aliases = %s", cifs.netbiosalias.upper())
     confset2(smb4_conf, "workgroup = %s", dc.dc_domain.upper())
     confset2(smb4_conf, "realm = %s", dc.dc_realm)
     confset2(smb4_conf, "dns forwarder = %s", dc.dc_dns_forwarder)
@@ -808,8 +872,8 @@ def add_domaincontroller_conf(client, smb4_conf):
     #    string.join(dcerpc_endpoint_servers, ',').rstrip(','))
 
     ipv4_addrs = []
-    if cifs.cifs_srv_bindip:
-        for i in cifs.cifs_srv_bindip:
+    if cifs.bindip:
+        for i in cifs.bindip:
             try:
                 socket.inet_aton(i)
                 ipv4_addrs.append(i)
@@ -873,12 +937,12 @@ def generate_smb4_tdb(client, smb4_tdb):
 def generate_smb4_conf(client, smb4_conf, role):
     cifs = Struct(client.call('cifs.config'))
 
-    if not cifs.cifs_srv_guest:
-        cifs.cifs_srv_guest = 'ftp'
-    if not cifs.cifs_srv_filemask:
-        cifs.cifs_srv_filemask = "0666"
-    if not cifs.cifs_srv_dirmask:
-        cifs.cifs_srv_dirmask = "0777"
+    if not cifs.guest:
+        cifs.guest = 'ftp'
+    if not cifs.filemask:
+        cifs.filemask = "0666"
+    if not cifs.dirmask:
+        cifs.dirmask = "0777"
 
     # standard stuff... should probably do this differently
     confset1(smb4_conf, "[global]", space=0)
@@ -886,12 +950,12 @@ def generate_smb4_conf(client, smb4_conf, role):
     if os.path.exists("/usr/local/etc/smbusers"):
         confset1(smb4_conf, "username map = /usr/local/etc/smbusers")
 
-    confset2(smb4_conf, "server min protocol = %s", cifs.cifs_srv_min_protocol)
-    confset2(smb4_conf, "server max protocol = %s", cifs.cifs_srv_max_protocol)
-    if cifs.cifs_srv_bindip:
+    confset2(smb4_conf, "server min protocol = %s", cifs.min_protocol)
+    confset2(smb4_conf, "server max protocol = %s", cifs.max_protocol)
+    if cifs.bindip:
         interfaces = []
 
-        bindips = string.join(cifs.cifs_srv_bindip, ' ')
+        bindips = ' '.join(cifs.bindip)
         if role != 'dc':
             bindips = "127.0.0.1 %s" % bindips
 
@@ -915,7 +979,7 @@ def generate_smb4_conf(client, smb4_conf, role):
                 interfaces.append(bindip)
 
         if interfaces:
-            confset2(smb4_conf, "interfaces = %s", string.join(interfaces))
+            confset2(smb4_conf, "interfaces = %s", ' '.join(interfaces))
         confset1(smb4_conf, "bind interfaces only = yes")
 
     confset1(smb4_conf, "encrypt passwords = yes")
@@ -926,14 +990,14 @@ def generate_smb4_conf(client, smb4_conf, role):
     confset1(smb4_conf, "max log size = 51200")
 
     confset2(smb4_conf, "max open files = %d",
-             long(get_sysctl('kern.maxfilesperproc')) - 25)
+             int(get_sysctl('kern.maxfilesperproc')) - 25)
 
-    if cifs.cifs_srv_loglevel and cifs.cifs_srv_loglevel is not True:
-        loglevel = cifs.cifs_srv_loglevel
+    if cifs.loglevel and cifs.loglevel is not True:
+        loglevel = cifs.loglevel
     else:
         loglevel = "0"
 
-    if cifs.cifs_srv_syslog:
+    if cifs.syslog:
         confset1(smb4_conf, "logging = syslog:%s" % loglevel)
     else:
         confset1(smb4_conf, "logging = file")
@@ -943,11 +1007,12 @@ def generate_smb4_conf(client, smb4_conf, role):
     confset1(smb4_conf, "printcap name = /dev/null")
     confset1(smb4_conf, "disable spoolss = yes")
     confset1(smb4_conf, "getwd cache = yes")
-    confset2(smb4_conf, "guest account = %s",
-             cifs.cifs_srv_guest.encode('utf8'))
+    confset2(smb4_conf, "guest account = %s", cifs.guest)
     confset1(smb4_conf, "map to guest = Bad User")
     confset2(smb4_conf, "obey pam restrictions = %s",
-             "yes" if cifs.cifs_srv_obey_pam_restrictions else "no")
+             "yes" if cifs.obey_pam_restrictions else "no")
+    confset2(smb4_conf, "ntlm auth = %s",
+             "yes" if cifs.ntlmv1_auth else "no")
     confset1(smb4_conf, "directory name cache size = 0")
     confset1(smb4_conf, "kernel change notify = no")
 
@@ -955,31 +1020,31 @@ def generate_smb4_conf(client, smb4_conf, role):
              "panic action = /usr/local/libexec/samba/samba-backtrace")
     confset1(smb4_conf, "nsupdate command = /usr/local/bin/samba-nsupdate -g")
 
-    confset2(smb4_conf, "server string = %s", cifs.cifs_srv_description)
+    confset2(smb4_conf, "server string = %s", cifs.description)
     confset1(smb4_conf, "ea support = yes")
     confset1(smb4_conf, "store dos attributes = yes")
     confset1(smb4_conf, "lm announce = yes")
     confset2(smb4_conf, "hostname lookups = %s",
-             "yes" if cifs.cifs_srv_hostlookup else False)
+             "yes" if cifs.hostlookup else False)
     confset2(smb4_conf, "unix extensions = %s",
-             "no" if not cifs.cifs_srv_unixext else False)
+             "no" if not cifs.unixext else False)
     confset2(smb4_conf, "time server = %s",
-             "yes" if cifs.cifs_srv_timeserver else False)
+             "yes" if cifs.timeserver else False)
     confset2(smb4_conf, "null passwords = %s",
-             "yes" if cifs.cifs_srv_nullpw else False)
+             "yes" if cifs.nullpw else False)
     confset2(smb4_conf, "acl allow execute always = %s",
-             "true" if cifs.cifs_srv_allow_execute_always else "false")
+             "true" if cifs.allow_execute_always else "false")
     confset1(smb4_conf, "dos filemode = yes")
     confset2(smb4_conf, "multicast dns register = %s",
-             "yes" if cifs.cifs_srv_zeroconf else "no")
+             "yes" if cifs.zeroconf else "no")
 
     if not smb4_ldap_enabled(client):
         confset2(smb4_conf, "domain logons = %s",
-                 "yes" if cifs.cifs_srv_domain_logons else "no")
+                 "yes" if cifs.domain_logons else "no")
 
     if (not client.call('notifier.common', 'system', 'nt4_enabled') and not client.call('notifier.common', 'system', 'activedirectory_enabled')):
         confset2(smb4_conf, "local master = %s",
-                 "yes" if cifs.cifs_srv_localmaster else "no")
+                 "yes" if cifs.localmaster else "no")
 
     # 5 = DS_TYPE_CIFS
     idmap = Struct(client.call('notifier.ds_get_idmap_object', 5, cifs.id, 'tdb'))
@@ -1011,31 +1076,31 @@ def generate_smb4_conf(client, smb4_conf, role):
             add_activedirectory_conf(client, smb4_conf)
 
         confset2(smb4_conf, "netbios name = %s", cifs.netbiosname.upper())
-        if cifs.cifs_srv_netbiosalias:
-            confset2(smb4_conf, "netbios aliases = %s", cifs.cifs_srv_netbiosalias.upper())
+        if cifs.netbiosalias:
+            confset2(smb4_conf, "netbios aliases = %s", cifs.netbiosalias.upper())
 
     elif role == 'standalone':
         confset1(smb4_conf, "server role = standalone")
         confset2(smb4_conf, "netbios name = %s", cifs.netbiosname.upper())
-        if cifs.cifs_srv_netbiosalias:
-            confset2(smb4_conf, "netbios aliases = %s", cifs.cifs_srv_netbiosalias.upper())
-        confset2(smb4_conf, "workgroup = %s", cifs.cifs_srv_workgroup.upper())
+        if cifs.netbiosalias:
+            confset2(smb4_conf, "netbios aliases = %s", cifs.netbiosalias.upper())
+        confset2(smb4_conf, "workgroup = %s", cifs.workgroup.upper())
         confset1(smb4_conf, "security = user")
 
     if role != 'dc':
         confset1(smb4_conf, "pid directory = /var/run/samba")
 
-    confset2(smb4_conf, "create mask = %s", cifs.cifs_srv_filemask)
-    confset2(smb4_conf, "directory mask = %s", cifs.cifs_srv_dirmask)
-    confset1(smb4_conf, "client ntlmv2 auth = yes")
-    confset2(smb4_conf, "dos charset = %s", cifs.cifs_srv_doscharset)
-    confset2(smb4_conf, "unix charset = %s", cifs.cifs_srv_unixcharset)
+    confset2(smb4_conf, "create mask = %s", cifs.filemask)
+    confset2(smb4_conf, "directory mask = %s", cifs.dirmask)
+    confset2(smb4_conf, "client ntlmv2 auth = %s",
+             "yes" if not cifs.ntlmv1_auth else "no")
+    confset2(smb4_conf, "dos charset = %s", cifs.doscharset)
+    confset2(smb4_conf, "unix charset = %s", cifs.unixcharset)
 
-    if cifs.cifs_srv_loglevel and cifs.cifs_srv_loglevel is not True:
-        confset2(smb4_conf, "log level = %s", cifs.cifs_srv_loglevel)
+    if cifs.loglevel and cifs.loglevel is not True:
+        confset2(smb4_conf, "log level = %s", cifs.loglevel)
 
-    smb_options = cifs.cifs_srv_smb_options.encode('utf-8')
-    smb_options = smb_options.strip()
+    smb_options = cifs.smb_options.strip()
     for line in smb_options.split('\n'):
         line = line.strip()
         if not line:
@@ -1052,7 +1117,7 @@ def generate_smb4_shares(client, smb4_shares):
     for share in shares:
         share = Struct(share)
         if (not share.cifs_home and
-                not os.path.isdir(share.cifs_path.encode('utf8'))):
+                not os.path.isdir(share.cifs_path)):
             continue
 
         confset1(smb4_shares, "\n")
@@ -1079,21 +1144,18 @@ def generate_smb4_shares(client, smb4_shares):
             confset2(smb4_shares, "valid users = %s", valid_users)
 
             if share.cifs_path:
-                cifs_homedir_path = (u"%s/%s" %
+                cifs_homedir_path = ("%s/%s" %
                                      (share.cifs_path, valid_users_path))
-                confset2(smb4_shares, "path = %s",
-                         cifs_homedir_path.encode('utf8'))
+                confset2(smb4_shares, "path = %s", qw(cifs_homedir_path))
             if share.cifs_comment:
                 confset2(smb4_shares,
-                         "comment = %s", share.cifs_comment.encode('utf8'))
+                         "comment = %s", share.cifs_comment)
             else:
                 confset1(smb4_shares, "comment = Home Directories")
         else:
-            confset2(smb4_shares, "[%s]",
-                     share.cifs_name.encode('utf8'), space=0)
-            confset2(smb4_shares, "path = %s", share.cifs_path.encode('utf8'))
-            confset2(smb4_shares, "comment = %s",
-                     share.cifs_comment.encode('utf8'))
+            confset2(smb4_shares, "[%s]", share.cifs_name, space=0)
+            confset2(smb4_shares, "path = %s", qw(share.cifs_path))
+            confset2(smb4_shares, "comment = %s", share.cifs_comment)
         confset1(smb4_shares, "printable = no")
         confset1(smb4_shares, "veto files = /.snapshot/.windows/.mac/.zfs/")
         confset2(smb4_shares, "writeable = %s",
@@ -1148,7 +1210,6 @@ def generate_smb4_shares(client, smb4_shares):
             line = line.strip()
             if not line:
                 continue
-            line = line.encode('utf-8')
             confset1(smb4_shares, line)
 
 
@@ -1196,24 +1257,24 @@ def generate_smbusers(client):
         for u in users:
             u = Struct(u)
             f.write("%s = %s\n" % (u.bsdusr_username, u.bsdusr_email))
-    os.chmod("/usr/local/etc/smbusers", 0644)
+    os.chmod("/usr/local/etc/smbusers", 0o644)
 
 
 def provision_smb4(client):
-    if not client.call('notifier.samba4', 'domain_provision'):
-        print >> sys.stderr, "Failed to provision domain"
+    if not client.call('notifier.samba4', 'domain_provision', timeout=300):
+        print("Failed to provision domain", file=sys.stderr)
         return False
 
     if not client.call('notifier.samba4', 'disable_password_complexity'):
-        print >> sys.stderr, "Failed to disable password complexity"
+        print("Failed to disable password complexity", file=sys.stderr)
         return False
 
     if not client.call('notifier.samba4', 'set_min_pwd_length'):
-        print >> sys.stderr, "Failed to set minimum password length"
+        print("Failed to set minimum password length", file=sys.stderr)
         return False
 
     if not client.call('notifier.samba4', 'set_administrator_password'):
-        print >> sys.stderr, "Failed to set administrator password"
+        print("Failed to set administrator password", file=sys.stderr)
         return False
 
     if not client.call('notifier.samba4', 'domain_sentinel_file_create'):
@@ -1245,7 +1306,7 @@ def smb4_setup(client):
     smb4_mkdir("/var/run/samba4")
 
     smb4_mkdir("/var/log/samba4")
-    os.chmod("/var/log/samba4", 0755)
+    os.chmod("/var/log/samba4", 0o755)
 
     smb4_unlink("/usr/local/etc/smb.conf")
     smb4_unlink("/usr/local/etc/smb4.conf")
@@ -1277,15 +1338,15 @@ def smb4_setup(client):
             try:
                 os.rename(statedir, olddir)
             except Exception as e:
-                print >> sys.stderr, "Unable to rename '%s' to '%s' (%s)" % (
-                    statedir, olddir, e)
+                print("Unable to rename '%s' to '%s' (%s)" % (
+                    statedir, olddir, e), file=sys.stderr)
                 sys.exit(1)
 
         try:
             os.symlink(basename_realpath, statedir)
         except Exception as e:
-            print >> sys.stderr, ("Unable to create symlink '%s' -> '%s' (%s)"
-                                  % (basename_realpath, statedir, e))
+            print(("Unable to create symlink '%s' -> '%s' (%s)"
+                                  % (basename_realpath, statedir, e)), file=sys.stderr)
             sys.exit(1)
 
     if os.path.islink(statedir) and not os.path.exists(statedir_realpath):
@@ -1293,9 +1354,9 @@ def smb4_setup(client):
         smb4_mkdir(statedir)
 
     smb4_mkdir("/var/db/samba4/private")
-    os.chmod("/var/db/samba4/private", 0700)
+    os.chmod("/var/db/samba4/private", 0o700)
 
-    os.chmod(statedir, 0755)
+    os.chmod(statedir, 0o755)
 #    smb4_set_SID()
 
 
@@ -1333,21 +1394,21 @@ def do_migration(client, old_samba4_datasets):
         client.call('notifier.destroy_zfs_dataset', old_samba4_datasets[0], True)
 
     except Exception as e:
-        print >> sys.stderr, e
+        print(e, file=sys.stderr)
 
     return True
 
 
 def smb4_import_users(client, smb_conf_path, smb4_tdb, exportfile=None):
-    (fd, tmpfile) = tempfile.mkstemp(dir="/tmp")
+    f = tempfile.NamedTemporaryFile(mode='w+', dir="/tmp")
     for line in smb4_tdb:
-        os.write(fd, line + '\n')
-    os.close(fd)
+        f.write(line + '\n')
+    f.flush()
 
     args = [
         "/usr/local/bin/pdbedit",
         "-d 0",
-        "-i smbpasswd:%s" % tmpfile,
+        "-i smbpasswd:%s" % f.name,
         "-s %s" % smb_conf_path
     ]
 
@@ -1355,16 +1416,16 @@ def smb4_import_users(client, smb_conf_path, smb4_tdb, exportfile=None):
         # smb4_unlink(exportfile)
         args.append("-e tdbsam:%s" % exportfile)
 
-    p = pipeopen(string.join(args, ' '))
+    p = pipeopen(' '.join(args))
     pdbedit_out = p.communicate()
     if pdbedit_out and pdbedit_out[0]:
         for line in pdbedit_out[0].split('\n'):
             line = line.strip()
             if not line:
                 continue
-            print line
+            print(line)
 
-    os.unlink(tmpfile)
+    f.close()
     smb4_users = get_smb4_users(client)
     for u in smb4_users:
         u = Struct(u)
@@ -1380,7 +1441,7 @@ def smb4_import_users(client, smb_conf_path, smb4_tdb, exportfile=None):
         smbpasswd_out = p.communicate()
 
         if p.returncode != 0:
-            print >> sys.stderr, "Failed to disable %s" % user
+            print("Failed to disable %s" % user, file=sys.stderr)
             continue
 
         if smbpasswd_out and smbpasswd_out[0]:
@@ -1388,7 +1449,7 @@ def smb4_import_users(client, smb_conf_path, smb4_tdb, exportfile=None):
                 line = line.strip()
                 if not line:
                     continue
-                print line
+                print(line)
 
 
 def smb4_grant_user_rights(user):
@@ -1407,9 +1468,9 @@ def smb4_grant_user_rights(user):
     ]
 
     net_cmd = "%s %s %s" % (
-        string.join(args, ' '),
+        ' '.join(args),
         user,
-        string.join(rights, ' ')
+        ' '.join(rights)
     )
 
     p = pipeopen(net_cmd)
@@ -1418,7 +1479,7 @@ def smb4_grant_user_rights(user):
         for line in net_out[0].split('\n'):
             if not line:
                 continue
-            print line
+            print(line)
 
     if p.returncode != 0:
         return False
@@ -1433,7 +1494,7 @@ def smb4_grant_rights():
         "-L"
     ]
 
-    p = pipeopen(string.join(args, ' '))
+    p = pipeopen(' '.join(args))
     pdbedit_out = p.communicate()
     if pdbedit_out and pdbedit_out[0]:
         for line in pdbedit_out[0].split('\n'):
@@ -1502,81 +1563,44 @@ def smb4_map_groups(client):
 
 
 def smb4_backup_tdbfile(tdb_src, tdb_dst):
-    try:
-        db_r = tdb.open(tdb_src, flags=os.O_RDONLY)
-
-    except Exception as e:
-        print >> sys.stderr, "Unable to open %s: %s" % (tdb_src, e)
-        log.error("Unable to open {0}: {1}".format(tdb_src, e))
+    proc = subprocess.Popen(
+        "/usr/local/bin/tdbdump {} | /usr/local/bin/tdbrestore {}".format(
+            tdb_src,
+            tdb_dst,
+        ),
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        shell=True,
+        encoding='utf8',
+    )
+    err = proc.communicate()[1]
+    if proc.returncode != 0:
+        log.error("Failed to dump and restore tdb: {}".format(err))
         log_traceback(log=log)
         return False
 
-    try:
-        db_w = tdb.open(tdb_dst, flags=os.O_RDWR | os.O_CREAT, mode=0600)
-
-    except Exception as e:
-        print >> sys.stderr, "Unable to open %s: %s" % (tdb_dst, e)
-        log.error("Unable to open {0}: {1}".format(tdb_dst, e))
-        log_traceback(log=log)
-        return False
-
-    for key in db_r.iterkeys():
-        try:
-            db_w.transaction_start()
-            db_w[key] = db_r.get(key)
-            db_w.transaction_prepare_commit()
-            db_w.transaction_commit()
-
-        except Exception as e:
-            print >> sys.stderr, "Transaction for key %s failed: %s" % (key, e)
-            log.error("Transaction for key {0} failed: {1}".format(key, e))
-            log_traceback(log=log)
-            db_w.transaction_cancel()
-
-    db_r.close()
-    db_w.close()
+    if os.path.exists(tdb_dst):
+        os.chmod(tdb_dst, 0o600)
 
     return True
 
 
 def smb4_restore_tdbfile(tdb_src, tdb_dst):
-    try:
-        db_r = tdb.open(tdb_src, flags=os.O_RDONLY)
-
-    except Exception as e:
-        print >> sys.stderr, "Unable to open %s: %s" % (tdb_src, e)
-        log.error("Unable to open {0}: {1}".format(tdb_src, e))
+    proc = subprocess.Popen(
+        "/usr/local/bin/tdbdump {} | /usr/local/bin/tdbrestore {}".format(
+            tdb_src,
+            tdb_dst,
+        ),
+        stdout=subprocess.PIPE,
+        stderr=subprocess.PIPE,
+        shell=True,
+        encoding='utf8',
+    )
+    err = proc.communicate()[1]
+    if proc.returncode != 0:
+        log.error("Failed to dump and restore tdb: {}".format(err))
         log_traceback(log=log)
         return False
-
-    try:
-        db_w = tdb.open(tdb_dst, flags=os.O_RDWR)
-    except Exception as e:
-        print >> sys.stderr, "Unable to open %s: %s" % (tdb_dst, e)
-        log.error("Unable to open {0}: {1}".format(tdb_dst, e))
-        log_traceback(log=log)
-        return False
-
-    for key in db_r.iterkeys():
-        try:
-            db_w.transaction_start()
-
-            db_w.lock_all()
-            db_w[key] = db_r.get(key)
-            db_w.unlock_all()
-
-            db_w.transaction_prepare_commit()
-            db_w.transaction_commit()
-
-        except Exception as e:
-            print >> sys.stderr, "Transaction for key %s failed: %s" % (key, e)
-            log.error("Transaction for key {0} failed: {1}".format(key, e))
-            log_traceback(log=log)
-            db_w.transaction_cancel()
-
-    db_r.close()
-    db_w.close()
-
     return True
 
 
@@ -1627,7 +1651,7 @@ def main():
         for line in smb4_shares:
             f.write(line + '\n')
 
-    smb4_set_SID(client)
+    smb4_set_SID(client, role)
 
     if role == 'member' and smb4_ldap_enabled(client):
         set_ldap_password(client)

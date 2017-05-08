@@ -18,7 +18,9 @@ this.submitForm(this, e);
     {% block formset_top %}
     {% include "freeadmin/generic_model_inline.html" with position='top' %}
     {% endblock %}
+    {% block form %}
     {% admin_form form %}
+    {% endblock %}
     {% block formset_bottom %}
     {% include "freeadmin/generic_model_inline.html" with position='bottom' %}
     {% endblock %}

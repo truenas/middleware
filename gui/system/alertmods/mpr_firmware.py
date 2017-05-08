@@ -24,7 +24,7 @@ class MPRFirmwareAlert(BaseAlert):
             except:
                 continue
 
-        for number, mibs in mpr.items():
+        for number, mibs in list(mpr.items()):
             firmware = mibs.get('firmware_version')
             driver = mibs.get('driver_version')
             # For the 93xx controllers the firmware package

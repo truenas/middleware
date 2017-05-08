@@ -1,4 +1,0 @@
-Throttle is a simple pipe which rate limits data passed from standard
-input to output.
-
-WWW: http://klicman.org/throttle/

@@ -1,13 +1,18 @@
 from . import ejson as json
-from protocol import DDPProtocol
-from threading import Event, Thread
+from .protocol import DDPProtocol
+from collections import defaultdict
+from threading import Event, Lock, Thread
 from ws4py.client.threadedclient import WebSocketClient
 
 import argparse
+import os
 import socket
 import sys
 import time
 import uuid
+
+
+CALL_TIMEOUT = int(os.environ.get('CALL_TIMEOUT', 60))
 
 
 class WSClient(WebSocketClient):
@@ -71,15 +76,18 @@ class Client(object):
 
     def __init__(self, uri=None):
         self._calls = {}
+        self._jobs = defaultdict(dict)
+        self._jobs_lock = Lock()
+        self._jobs_watching = False
         self._pings = {}
+        self._event_callbacks = {}
         if uri is None:
             uri = 'ws://127.0.0.1:6000/websocket'
         self._closed = Event()
         self._connected = Event()
         self._ws = WSClient(uri, client=self)
         self._ws.connect()
-        self._connected.wait(5)
-        self._event_callbacks = {}
+        self._connected.wait(10)
         if not self._connected.is_set():
             raise ClientException('Failed connection handshake')
 
@@ -115,14 +123,22 @@ class Client(object):
                 call.returned.set()
                 self._unregister_call(call)
         elif msg in ('added', 'changed', 'removed'):
-            if self.event_callback:
+            if self._event_callbacks:
                 if '*' in self._event_callbacks:
-                    self._event_callbacks['*'](msg.upper(), **message)
-                if collection in self._event_callbacks:
-                    self._event_callbacks[collection](msg.upper(), **message)
-
-    def register_event_callback(self, name, callback):
-        self._event_callbacks[name] = callback
+                    event = self._event_callbacks['*']
+                    event['callback'](msg.upper(), **message)
+                if message['collection'] in self._event_callbacks:
+                    event = self._event_callbacks[message['collection']]
+                    event['callback'](msg.upper(), **message)
+        elif msg == 'ready':
+            for subid in message['subs']:
+                # FIXME: We may need to keep a different index for id
+                # so we don't hve to iterate through all.
+                # This is fine for just a dozen subscriptions
+                for event in self._event_callbacks.values():
+                    if subid == event['id']:
+                        event['ready'].set()
+                        break
 
     def on_open(self):
         self._send({
@@ -140,8 +156,44 @@ class Client(object):
     def _unregister_call(self, call):
         self._calls.pop(call.id, None)
 
+    def _jobs_callback(self, mtype, **message):
+        """
+        Method to process the received job events.
+        """
+        fields = message.get('fields')
+        job_id = fields['id']
+        with self._jobs_lock:
+            if fields:
+                if mtype == 'ADDED':
+                    self._jobs[job_id].update(fields)
+                elif mtype == 'CHANGED':
+                    job = self._jobs[job_id]
+                    job.update(fields)
+                    if fields['state'] in ('SUCCESS', 'FAILED'):
+                        # If an Event already exist we just set it to mark it finished.
+                        # Otherwise we create a new Event.
+                        # This is to prevent a race-condition of job finishing before
+                        # the client can create the Event.
+                        event = job.get('__ready')
+                        if event is None:
+                            event = job['__ready'] = Event()
+                        event.set()
+
+    def _jobs_subscribe(self):
+        """
+        Subscribe to job updates, calling `_jobs_callback` on every new event.
+        """
+        self._jobs_watching = True
+        self.subscribe('core.get_jobs', self._jobs_callback)
+
     def call(self, method, *params, **kwargs):
-        timeout = kwargs.pop('timeout', 30)
+        timeout = kwargs.pop('timeout', CALL_TIMEOUT)
+        job = kwargs.pop('job', False)
+
+        # We need to make sure we are subscribed to receive job updates
+        if job and not self._jobs_watching:
+            self._jobs_subscribe()
+
         c = Call(method, params)
         self._register_call(c)
         self._send({
@@ -158,7 +210,46 @@ class Client(object):
         if c.error:
             raise ClientException(c.error, c.trace)
 
+        if job:
+            job_id = c.result
+            # If a job event has been received already then we must set an Event
+            # to wait for this job to finish.
+            # Otherwise we create a new stub for the job with the Event for when
+            # the job event arrives to use existing event.
+            with self._jobs_lock:
+                job = self._jobs.get(job_id)
+                if job:
+                    event = job.get('__ready')
+                    if event is None:
+                        event = job['__ready'] = Event()
+                else:
+                    event = self._jobs[job_id] = {'__ready': Event()}
+
+            # Wait indefinitely for the job event with state SUCCESS/FAILED
+            event.wait()
+            job = self._jobs.pop(job_id, None)
+            if job is None:
+                raise ClientException('No job event was received.')
+            if job['state'] != 'SUCCESS':
+                raise ClientException(job['error'], job['exception'])
+            return job['result']
+
         return c.result
+
+    def subscribe(self, name, callback):
+        ready = Event()
+        _id = str(uuid.uuid4())
+        self._event_callbacks[name] = {
+            'id': _id,
+            'callback': callback,
+            'ready': ready,
+        }
+        self._send({
+            'msg': 'sub',
+            'id': _id,
+            'name': name,
+        })
+        ready.wait()
 
     def ping(self, timeout=10):
         _id = str(uuid.uuid4())
@@ -176,9 +267,6 @@ class Client(object):
         self._ws.close()
         # Wait for websocketclient thread to close
         self._closed.wait(1)
-
-    def __del__(self):
-        self.close()
 
 
 def main():
@@ -215,20 +303,23 @@ def main():
                     if not c.call('auth.login', args.username, args.password):
                         raise ValueError('Invalid username or password')
             except Exception as e:
-                print "Failed to login: ", e
+                print("Failed to login: ", e)
                 sys.exit(0)
             try:
                 kwargs = {}
                 if args.timeout:
                     kwargs['timeout'] = args.timeout
                 rv = c.call(args.method[0], *list(from_json(args.method[1:])), **kwargs)
-                if isinstance(rv, (int, str, unicode)):
+                if isinstance(rv, (int, str)):
                     print(rv)
                 else:
                     print(json.dumps(rv))
             except ClientException as e:
-                if not args.quiet and e.trace:
-                    print >> sys.stderr, e.trace['formatted']
+                if not args.quiet:
+                    if e.error:
+                        print(e.error, file=sys.stderr)
+                    if e.trace:
+                        print(e.trace['formatted'], file=sys.stderr)
                 sys.exit(1)
     elif args.name == 'ping':
         with Client(uri=args.uri) as c:
@@ -241,7 +332,7 @@ def main():
                     if not c.call('auth.login', args.username, args.password):
                         raise ValueError('Invalid username or password')
             except Exception as e:
-                print "Failed to login: ", e
+                print("Failed to login: ", e)
                 sys.exit(0)
             rv = c.call('datastore.sql', args.sql[0])
             if rv:
@@ -252,7 +343,7 @@ def main():
                             data.append(str(int(f)))
                         else:
                             data.append(str(f))
-                    print '|'.join(data)
+                    print('|'.join(data))
     elif args.name == 'waitready':
         """
         This command is supposed to wait until we are able to connect
@@ -278,6 +369,7 @@ def main():
             sys.exit(1)
         else:
             sys.exit(0)
+
 
 if __name__ == '__main__':
     main()

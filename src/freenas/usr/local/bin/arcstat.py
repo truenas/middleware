@@ -153,7 +153,7 @@ def kstat_update():
     global kstat
 
     p = Popen("/sbin/sysctl -q 'kstat.zfs.misc.arcstats'", stdin=PIPE,
-        stdout=PIPE, stderr=PIPE, shell=True, close_fds=True)
+        stdout=PIPE, stderr=PIPE, shell=True, close_fds=True, encoding='utf8')
     p.wait()
 
     k = p.communicate()[0].split('\n')

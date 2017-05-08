@@ -34,6 +34,7 @@ import uuid
 from django.db import models
 from django.db.models import Q
 from django.utils.translation import ugettext_lazy as _
+from django.core.urlresolvers import reverse
 from django.core.validators import (
     MinValueValidator, MaxValueValidator
 )
@@ -70,11 +71,8 @@ class services(Model):
         verbose_name = _("Services")
         verbose_name_plural = _("Services")
 
-    def __unicode__(self):
+    def __str__(self):
         return self.srv_service
-
-    def save(self, *args, **kwargs):
-        super(services, self).save(*args, **kwargs)
 
 
 class CIFS(Model):
@@ -259,6 +257,12 @@ class CIFS(Model):
         help_text=_("This parameter controls whether or not Samba should obey "
                     "PAM's account and session management directives"),
     )
+    cifs_srv_ntlmv1_auth = models.BooleanField(
+        verbose_name=_("NTLMv1 auth"),
+        default=False,
+        help_text=_("This parameter determines whether or not smbd(8) will attempt to"
+                    "authenticate users using the NTLMv1 encrypted password response"),
+    )
     cifs_srv_bindip = MultiSelectField(
         verbose_name=_("Bind IP Addresses"),
         help_text=_("IP addresses to bind to. If none specified, all "
@@ -274,12 +278,12 @@ class CIFS(Model):
     )
 
     class Meta:
-        verbose_name = _(u"SMB")
-        verbose_name_plural = _(u"SMB")
+        verbose_name = _("SMB")
+        verbose_name_plural = _("SMB")
 
     class FreeAdmin:
         deletable = False
-        icon_model = u"CIFSIcon"
+        icon_model = "CIFSIcon"
 
     def get_netbiosname(self):
         _n = notifier()
@@ -364,14 +368,29 @@ class AFP(Model):
         choices=choices.AFP_MAP_ACLS_CHOICES,
         default='rights'
     )
+    afp_srv_chmod_request = models.CharField(
+        verbose_name=_("Chmod Request"),
+        max_length=120,
+        help_text=_(
+            "Advanced permission control that deals with ACLs."
+            "\nignore - UNIX chmod() requests are completely ignored, use this"
+            "option to allow the parent directory's ACL inheritance full"
+            "control over new items."
+            "\npreserve - preserve ZFS ACEs for named users and groups or"
+            "POSIX ACL group mask"
+            "\nsimple - just to a chmod() as requested without any extra steps"
+        ),
+        choices=choices.AFP_CHMOD_REQUEST_CHOICES,
+        default='preserve'
+    )
 
     class Meta:
-        verbose_name = _(u"AFP")
-        verbose_name_plural = _(u"AFP")
+        verbose_name = _("AFP")
+        verbose_name_plural = _("AFP")
 
     class FreeAdmin:
         deletable = False
-        icon_model = u"AFPIcon"
+        icon_model = "AFPIcon"
 
 
 class NFS(Model):
@@ -508,13 +527,13 @@ class iSCSITargetGlobalConfiguration(Model):
     )
 
     class Meta:
-        verbose_name = _(u"Target Global Configuration")
-        verbose_name_plural = _(u"Target Global Configuration")
+        verbose_name = _("Target Global Configuration")
+        verbose_name_plural = _("Target Global Configuration")
 
     class FreeAdmin:
         deletable = False
         menu_child_of = "sharing.ISCSI"
-        icon_model = u"SettingsIcon"
+        icon_model = "SettingsIcon"
         nav_extra = {'type': 'iscsi', 'order': -10}
         resource_name = 'services/iscsi/globalconfiguration'
 
@@ -524,10 +543,12 @@ def extent_serial():
         nic = list(choices.NICChoices(nolagg=True,
                                       novlan=True,
                                       exclude_configured=False))[0][0]
-        mac = subprocess.Popen("ifconfig %s ether| grep ether | "
-                               "awk '{print $2}'|tr -d :" % (nic, ),
-                               shell=True,
-                               stdout=subprocess.PIPE).communicate()[0]
+        mac = subprocess.Popen(
+            "ifconfig %s ether| grep ether | "
+            "awk '{print $2}'|tr -d :" % (nic, ),
+            shell=True,
+            stdout=subprocess.PIPE,
+            encoding='utf8').communicate()[0]
         ltg = iSCSITargetExtent.objects.order_by('-id')
         if ltg.count() > 0:
             lid = ltg[0].id
@@ -623,7 +644,7 @@ class iSCSITargetExtent(Model):
     iscsi_target_extent_rpm = models.CharField(
         blank=False,
         max_length=20,
-        default=choices.EXTENT_RPM_CHOICES[1][1],
+        default='SSD',
         choices=choices.EXTENT_RPM_CHOICES,
         verbose_name=_("LUN RPM"),
         help_text=_("RPM reported to initiators for this extent/LUN. The "
@@ -647,8 +668,8 @@ class iSCSITargetExtent(Model):
         verbose_name_plural = _("Extents")
         ordering = ["iscsi_target_extent_name"]
 
-    def __unicode__(self):
-        return unicode(self.iscsi_target_extent_name)
+    def __str__(self):
+        return str(self.iscsi_target_extent_name)
 
     def get_device(self):
         if self.iscsi_target_extent_type not in ("Disk", "ZVOL"):
@@ -674,7 +695,7 @@ class iSCSITargetExtent(Model):
                     if not devname:
                         disk.disk_enabled = False
                         disk.save()
-            except Exception, e:
+            except Exception as e:
                 log.error("Unable to sync iSCSI extent delete: %s", e)
 
         for te in iSCSITargetToExtent.objects.filter(iscsi_extent=self):
@@ -685,7 +706,7 @@ class iSCSITargetExtent(Model):
     def save(self, *args, **kwargs):
         if not self.iscsi_target_extent_naa:
             self.iscsi_target_extent_naa = '0x6589cfc000000%s' % (
-                hashlib.sha256(str(uuid.uuid4())).hexdigest()[0:19]
+                hashlib.sha256(str(uuid.uuid4()).encode()).hexdigest()[0:19]
             )
         return super(iSCSITargetExtent, self).save(*args, **kwargs)
 
@@ -717,20 +738,20 @@ class iSCSITargetPortal(Model):
         verbose_name = _("Portal")
         verbose_name_plural = _("Portals")
 
-    def __unicode__(self):
+    def __str__(self):
         if self.iscsi_target_portal_comment != "":
-            return u"%s (%s)" % (
+            return "%s (%s)" % (
                 self.iscsi_target_portal_tag,
                 self.iscsi_target_portal_comment,
             )
         else:
-            return unicode(self.iscsi_target_portal_tag)
+            return str(self.iscsi_target_portal_tag)
 
     def delete(self):
         super(iSCSITargetPortal, self).delete()
         portals = iSCSITargetPortal.objects.all().order_by(
             'iscsi_target_portal_tag')
-        for portal, idx in zip(portals, xrange(1, len(portals) + 1)):
+        for portal, idx in zip(portals, range(1, len(portals) + 1)):
             portal.iscsi_target_portal_tag = idx
             portal.save()
         started = notifier().reload("iscsitarget")
@@ -762,7 +783,7 @@ class iSCSITargetPortalIP(Model):
         verbose_name = _("Portal IP")
         verbose_name_plural = _("Portal IPs")
 
-    def __unicode__(self):
+    def __str__(self):
         return "%s:%d" % (
             self.iscsi_target_portalip_ip,
             self.iscsi_target_portalip_port,
@@ -821,21 +842,21 @@ class iSCSITargetAuthorizedInitiator(Model):
 
     class FreeAdmin:
         menu_child_of = "sharing.ISCSI"
-        icon_object = u"InitiatorIcon"
-        icon_model = u"InitiatorIcon"
-        icon_add = u"AddInitiatorIcon"
-        icon_view = u"ViewAllInitiatorsIcon"
+        icon_object = "InitiatorIcon"
+        icon_model = "InitiatorIcon"
+        icon_add = "AddInitiatorIcon"
+        icon_view = "ViewAllInitiatorsIcon"
         nav_extra = {'order': 0}
         resource_name = 'services/iscsi/authorizedinitiator'
 
-    def __unicode__(self):
+    def __str__(self):
         if self.iscsi_target_initiator_comment != "":
-            return u"%s (%s)" % (
+            return "%s (%s)" % (
                 self.iscsi_target_initiator_tag,
                 self.iscsi_target_initiator_comment,
             )
         else:
-            return unicode(self.iscsi_target_initiator_tag)
+            return str(self.iscsi_target_initiator_tag)
 
     def delete(self):
         super(iSCSITargetAuthorizedInitiator, self).delete()
@@ -921,8 +942,8 @@ class iSCSITargetAuthCredential(Model):
             )
         super(iSCSITargetAuthCredential, self).save(*args, **kwargs)
 
-    def __unicode__(self):
-        return unicode(self.iscsi_target_auth_tag)
+    def __str__(self):
+        return str(self.iscsi_target_auth_tag)
 
 
 class iSCSITarget(Model):
@@ -957,7 +978,7 @@ class iSCSITarget(Model):
         verbose_name_plural = _("Targets")
         ordering = ['iscsi_target_name']
 
-    def __unicode__(self):
+    def __str__(self):
         return self.iscsi_target_name
 
     def delete(self):
@@ -1010,7 +1031,7 @@ class iSCSITargetGroups(Model):
                     "both none and authentication."),
     )
 
-    def __unicode__(self):
+    def __str__(self):
         return 'iSCSI Target Group (%s,%d)' % (
             self.iscsi_target,
             self.id,
@@ -1048,8 +1069,8 @@ class iSCSITargetToExtent(Model):
             'iscsi_extent',
         )
 
-    def __unicode__(self):
-        return unicode(self.iscsi_target) + u' / ' + unicode(self.iscsi_extent)
+    def __str__(self):
+        return str(self.iscsi_target) + ' / ' + str(self.iscsi_extent)
 
     def delete(self):
         super(iSCSITargetToExtent, self).delete()
@@ -1159,7 +1180,7 @@ class DynamicDNS(Model):
 
     class FreeAdmin:
         deletable = False
-        icon_model = u"DDNSIcon"
+        icon_model = "DDNSIcon"
 
 
 class SNMP(Model):
@@ -1243,7 +1264,7 @@ class SNMP(Model):
 
     class FreeAdmin:
         deletable = False
-        icon_model = u"SNMPIcon"
+        icon_model = "SNMPIcon"
         # advanced_fields = ('snmp_traps',)
 
 
@@ -1393,7 +1414,7 @@ class UPS(Model):
 
     class FreeAdmin:
         deletable = False
-        icon_model = u"UPSIcon"
+        icon_model = "UPSIcon"
 
 
 class FTP(Model):
@@ -1929,7 +1950,7 @@ class Rsyncd(Model):
     class FreeAdmin:
         deletable = False
         menu_child_of = "services.Rsync"
-        icon_model = u"rsyncdIcon"
+        icon_model = "rsyncdIcon"
 
 
 class RsyncMod(Model):
@@ -2012,10 +2033,10 @@ class RsyncMod(Model):
 
     class FreeAdmin:
         menu_child_of = 'services.Rsync'
-        icon_model = u"rsyncModIcon"
+        icon_model = "rsyncModIcon"
 
-    def __unicode__(self):
-        return unicode(self.rsyncmod_name)
+    def __str__(self):
+        return str(self.rsyncmod_name)
 
 
 class SMART(Model):
@@ -2065,7 +2086,7 @@ class SMART(Model):
 
     class FreeAdmin:
         deletable = False
-        icon_model = u"SMARTIcon"
+        icon_model = "SMARTIcon"
 
 
 class RPCToken(Model):
@@ -2076,7 +2097,7 @@ class RPCToken(Model):
     @classmethod
     def new(cls):
         key = str(uuid.uuid4())
-        h = hmac.HMAC(key=key, digestmod=hashlib.sha512)
+        h = hmac.HMAC(key=key.encode(), digestmod=hashlib.sha512)
         secret = str(h.hexdigest())
         instance = cls.objects.create(
             key=key,
@@ -2180,12 +2201,12 @@ class DomainController(Model):
         return obj
 
     class Meta:
-        verbose_name = _(u"Domain Controller")
-        verbose_name_plural = _(u"Domain Controller")
+        verbose_name = _("Domain Controller")
+        verbose_name_plural = _("Domain Controller")
 
     class FreeAdmin:
         deletable = False
-        icon_model = u"DomainControllerIcon"
+        icon_model = "DomainControllerIcon"
 
 
 class WebDAV(Model):
@@ -2259,9 +2280,66 @@ class WebDAV(Model):
         return super(WebDAV, self).save(*args, **kwargs)
 
     class Meta:
-        verbose_name = _(u"WebDAV")
-        verbose_name_plural = _(u"WebDAV")
+        verbose_name = _("WebDAV")
+        verbose_name_plural = _("WebDAV")
 
     class FreeAdmin:
         deletable = False
         icon_model = u"WebDAVShareIcon"
+
+
+class S3(Model):
+    s3_bindip = models.CharField(
+        verbose_name=_("IP Address"),
+        max_length=128,
+        blank=True,
+        help_text=_("Select the IP address to listen to for S3 requests. "
+            "If left unchecked, S3 will listen on all available addresses"),
+    )
+    s3_bindport = models.SmallIntegerField(
+        verbose_name=_("Port"),
+        default=9000,
+        validators=[MinValueValidator(1), MaxValueValidator(65535)],
+        help_text=_("TCP port on which to provide the S3 service (default 9000)"),
+    )
+    s3_access_key = models.CharField(
+        verbose_name=_("Access key of 5 to 20 characters in length"),
+        max_length=128,
+        blank=True,
+        null=True,
+        help_text=_("S3 username")
+    )
+    s3_secret_key = models.CharField(
+        verbose_name=_("Secret key of 8 to 40 characters in length"),
+        max_length=128,
+        blank=True,
+        null=True,
+        help_text=_("S3 password")
+    )
+    s3_browser = models.BooleanField(
+        verbose_name=_("Enable Browser"),
+        default=False,
+        help_text=_("Enable the web user interface for the S3 service")
+    )
+    s3_mode = models.CharField(
+        verbose_name=_("Mode"),
+        max_length=120,
+        choices=choices.S3_MODES,
+        default="local",
+        help_text=_("This doesn't do anything yet")
+    )
+    s3_disks = PathField(
+        verbose_name=_("Disks"),
+        max_length=8192,
+        blank=True,
+        null=True,
+        help_text=_("S3 filesystem directory")
+    )
+
+    class Meta:
+        verbose_name = _("S3")
+        verbose_name_plural = _("S3")
+
+    class FreeAdmin:
+        deletable = False
+        icon_model = u"S3Icon"

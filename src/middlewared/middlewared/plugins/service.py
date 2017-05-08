@@ -50,6 +50,7 @@ class StartNotify(threading.Thread):
 class ServiceService(Service):
 
     SERVICE_DEFS = {
+        's3': ('minio', '/var/run/minio.pid'),
         'ssh': ('sshd', '/var/run/sshd.pid'),
         'rsync': ('rsync', '/var/run/rsyncd.pid'),
         'nfs': ('nfsd', None),
@@ -73,7 +74,7 @@ class ServiceService(Service):
     def query(self, filters=None, options=None):
         if options is None:
             options = {}
-        options['suffix'] = 'srv_'
+        options['prefix'] = 'srv_'
 
         services = self.middleware.call('datastore.query', 'services.services', filters, options)
 
@@ -264,8 +265,15 @@ class ServiceService(Service):
         else:
             f(**(options or {}))
 
-    def _system(self, cmd):
-        proc = Popen(cmd, stdout=PIPE, stderr=PIPE, shell=True, close_fds=True)
+    def _system(self, cmd, options=None):
+        stdout = PIPE
+        if options and 'stdout' in options:
+            stdout = options['stdout']
+        stderr = PIPE
+        if options and 'stderr' in options:
+            stderr = options['stderr']
+
+        proc = Popen(cmd, stdout=stdout, stderr=stderr, shell=True, close_fds=True)
         proc.communicate()
         return proc.returncode
 
@@ -288,7 +296,7 @@ class ServiceService(Service):
             service,
             preverb,
             verb,
-        ))
+        ), options)
 
     def _started_notify(self, verb, what):
         """
@@ -492,6 +500,9 @@ class ServiceService(Service):
         self._service("ix_register", "reload", **kwargs)
         self._service("openssh", "restart", **kwargs)
         self._service("ix_sshd_save_keys", "start", quiet=True, **kwargs)
+
+    def _start_s3(self, **kwargs):
+        self._service("minio", "start", quiet=True, stdout=None, stderr=None, **kwargs)
 
     def _reload_rsync(self, **kwargs):
         self._service("ix-rsyncd", "start", quiet=True, **kwargs)
@@ -896,7 +907,10 @@ class ServiceService(Service):
         self._service("ix-swap", "start", quiet=True, **kwargs)
         self._service("swap", "start", quiet=True, **kwargs)
         self._service("mountlate", "start", quiet=True, **kwargs)
-        self.restart("collectd", kwargs)
+        # Restarting collectd may take a long time and there is no
+        # benefit in waiting for it since even if it fails it wont
+        # tell the user anything useful.
+        gevent.spawn(self.restart, "collectd", kwargs)
 
     def _reload_user(self, **kwargs):
         self._service("ix-passwd", "start", quiet=True, **kwargs)
@@ -913,7 +927,10 @@ class ServiceService(Service):
             self.restart("syslogd", kwargs)
         self.restart("cifs", kwargs)
         if systemdataset['sys_rrd_usedataset']:
-            self.restart("collectd", kwargs)
+            # Restarting collectd may take a long time and there is no
+            # benefit in waiting for it since even if it fails it wont
+            # tell the user anything useful.
+            gevent.spawn(self.restart, "collectd", kwargs)
 
     def enable_test_service_connection(self, frequency, retry, fqdn, service_port, service_name):
         """Enable service monitoring.

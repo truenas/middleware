@@ -1,13 +1,10 @@
 from django.utils.translation import ugettext as _
-from freenasUI.freeadmin.hook import HookMetaclass
 from freenasUI.system.alert import alertPlugins, Alert, BaseAlert
 from freenasUI.middleware.notifier import notifier
 
 
 class BootVolumeStatusAlert(BaseAlert):
 
-    __metaclass__ = HookMetaclass
-    __hook_reverse_order__ = False
     name = 'BootVolumeStatus'
 
     def on_volume_status_not_healthy(self, state, status):
@@ -30,5 +27,6 @@ class BootVolumeStatusAlert(BaseAlert):
                 self.on_volume_status_not_healthy(state, status)
             )
         return alerts
+
 
 alertPlugins.register(BootVolumeStatusAlert)

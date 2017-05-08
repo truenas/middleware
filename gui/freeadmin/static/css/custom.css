@@ -487,6 +487,11 @@ table.grid tr {
     width:16px;
     height:16px;
 }
+.S3Icon {
+    background-image:url('/static/images/ui/tree/s3.png');
+    width:16px;
+    height:16px;
+}
 .StorageIcon {
     background-image:url('/static/images/ui/tree/storage.png');
     width:16px;
@@ -968,6 +973,21 @@ table.grid tr {
 }
 .ViewTunableIcon {
     background-image:url('/static/images/ui/tree/view_tunables.png');
+    width:16px;
+    height:16px;
+}
+.AddConsulAlertsIcon {
+    background-image:url('/static/images/ui/tree/add_consulalert.png');
+    width:16px;
+    height:16px;
+}
+.ViewConsulAlertsIcon {
+    background-image:url('/static/images/ui/tree/view_consulalert.png');
+    width:16px;
+    height:16px;
+}
+.ConsulAlertsIcon {
+    background-image:url('/static/images/ui/tree/consulalert.png');
     width:16px;
     height:16px;
 }

@@ -7,8 +7,6 @@ from freenasUI.middleware.notifier import notifier
 
 class VolumeStatusAlert(BaseAlert):
 
-    __metaclass__ = HookMetaclass
-    __hook_reverse_order__ = False
     name = 'VolumeStatus'
 
     def on_volume_status_not_healthy(self, vol, state, status):
@@ -21,6 +19,9 @@ class VolumeStatusAlert(BaseAlert):
         }, hardware=True)
 
     def volumes_status_enabled(self):
+        if not notifier().is_freenas():
+            status = notifier().failover_status()
+            return status in ('MASTER', 'SINGLE')
         return True
 
     def run(self):
@@ -31,9 +32,12 @@ class VolumeStatusAlert(BaseAlert):
             if not vol.is_decrypted():
                 continue
             state, status = notifier().zpool_status(vol.vol_name)
-            if state == 'HEALTHY':
-                pass
-            else:
+            if state != 'HEALTHY':
+                if not notifier().is_freenas():
+                    try:
+                        notifier().zpool_enclosure_sync(vol.vol_name)
+                    except:
+                        pass
                 alerts.append(
                     self.on_volume_status_not_healthy(vol, state, status)
                 )

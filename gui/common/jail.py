@@ -24,6 +24,7 @@
 #
 # $FreeBSD$
 #####################################################################
+import json
 import logging
 
 log = logging.getLogger('common.jail')
@@ -41,6 +42,7 @@ class jail_pipe(cmd_pipe):
 
 class jail_exception(Exception):
     pass
+
 
 JAIL_PATH = "/usr/sbin/jail"
 
@@ -62,6 +64,7 @@ JLS_FLAGS_QUOTE = jail_arg(0x00000008, "-q")
 JLS_FLAGS_JAIL_PARAMETERS = jail_arg(0x00000010, "-s")
 JLS_FLAGS_SUMMARY = jail_arg(0x00000020, "-v")
 JLS_FLAGS_JID = jail_arg(0x00000040, "-j", True, "jid")
+JLS_FLAGS_JSON = jail_arg(0x00000080, "--libxo=json")
 JLS_FLAGS = [
     JLS_FLAGS_LIST_DYING,
     JLS_FLAGS_PRINT_HEADER,
@@ -69,7 +72,8 @@ JLS_FLAGS = [
     JLS_FLAGS_QUOTE,
     JLS_FLAGS_JAIL_PARAMETERS,
     JLS_FLAGS_SUMMARY,
-    JLS_FLAGS_JID
+    JLS_FLAGS_JID,
+    JLS_FLAGS_JSON,
 ]
 
 
@@ -153,7 +157,7 @@ class JailObject(object):
 
 
 class Jls(Jail_bait):
-    def __init__(self, flags=JLS_FLAGS_NONE, **kwargs):
+    def __init__(self, flags=JLS_FLAGS_JSON, **kwargs):
         log.debug("Jls.__init__: enter")
 
         super(Jls, self).__init__(JLS_PATH, JLS_FLAGS, flags, **kwargs)
@@ -173,19 +177,15 @@ class Jls(Jail_bait):
         out = super(Jls, self).run()
         code = out[0]
         if code == 0:
-            index = 0
             out = out[1]
-            for line in out.splitlines():
-                if index > 0:
-                    parts = line.split()
-                    if len(parts) == 4:
-                        self.__jails.append(JailObject(
-                            jid=parts[0],
-                            ip=parts[1],
-                            hostname=parts[2],
-                            path=parts[3]
-                        ))
-                index += 1
+            jails = json.loads(out)['jail-information']['jail']
+            for jail in jails:
+                self.__jails.append(JailObject(
+                    jid=jail['jid'],
+                    ip=jail['ipv4'],
+                    hostname=jail['hostname'],
+                    path=jail['path'],
+                ))
 
     def __len__(self):
         return len(self.__jails)

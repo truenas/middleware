@@ -109,7 +109,7 @@ class JobsQueue(object):
         # waiting for the same lock
         self.queue_event.set()
 
-    def next(self):
+    def __next__(self):
         """
         This is a blocking method.
         Returns when there is a new job ready to run.
@@ -139,7 +139,7 @@ class JobsQueue(object):
 
     def run(self):
         while True:
-            job = self.next()
+            job = next(self)
             gevent.spawn(job.run, self)
 
 
@@ -171,6 +171,7 @@ class Job(object):
     """
 
     def __init__(self, middleware, method_name, method, args, options):
+        self._finished = Event()
         self.middleware = middleware
         self.method_name = method_name
         self.method = method
@@ -190,6 +191,14 @@ class Job(object):
         }
         self.time_started = datetime.now()
         self.time_finished = None
+
+        # If Job is marked as pipe we open a pipe()
+        # so the job can read/write and the other end can read/write it
+        if self.options.get('pipe'):
+            self.read_fd, self.write_fd = os.pipe()
+        else:
+            self.read_fd = None
+            self.write_fd = None
 
     def set_id(self, id):
         self.id = id
@@ -226,15 +235,17 @@ class Job(object):
 
     def set_progress(self, percent, description=None, extra=None):
         if percent is not None:
-            assert isinstance(percent, int)
+            assert isinstance(percent, (int, float))
             self.progress['percent'] = percent
         if description:
             self.progress['description'] = description
         if extra:
             self.progress['extra'] = extra
-        self.middleware.send_event('core.get_jobs', 'CHANGED', id=self.id, fields={
-            'progress': self.progress,
-        })
+        self.middleware.send_event('core.get_jobs', 'CHANGED', id=self.id, fields=self.__encode__())
+
+    def wait(self):
+        self._finished.wait()
+        return self.result
 
     def run(self, queue):
         """
@@ -252,7 +263,7 @@ class Job(object):
             if self.options.get('process'):
                 proc = Popen([
                     '/usr/bin/env',
-                    'python2',
+                    'python3',
                     os.path.join(
                         os.path.dirname(os.path.realpath(__file__)),
                         'job_process.py',
@@ -290,6 +301,7 @@ class Job(object):
             raise
         finally:
             queue.release_lock(self)
+            self._finished.set()
             self.middleware.send_event('core.get_jobs', 'CHANGED', id=self.id, fields=self.__encode__())
 
     def __encode__(self):

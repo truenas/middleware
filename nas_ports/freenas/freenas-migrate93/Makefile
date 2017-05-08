@@ -1,22 +1,23 @@
 # $FreeBSD$
 
 PORTNAME=	freenas-migrate93
-PORTVERSION=	20170201
+PORTVERSION=	20170427
+PORTREVISION=	2
 CATEGORIES=	freenas
 VALID_CATEGORIES+=	freenas
 
 MAINTAINER=	dev@ixsystems.com
-COMMENT=	Tool to upgrade from 9.3 databases
+COMMENT=	Tool to upgrade from 9.X databases
 
 RUN_DEPENDS=	python>0:${PORTSDIR}/lang/python \
-		${PYTHON_PKGNAMEPREFIX}south>0:${PORTSDIR}/databases/py-south \
-		${PYTHON_PKGNAMEPREFIX}bsd>0:${PORTSDIR}/freenas/py-bsd \
-		${PYTHON_PKGNAMEPREFIX}lxml>0:${PORTSDIR}/devel/py-lxml
+		${PYTHON_PKGNAMEPREFIX}south>0:databases/py-south \
+		${PYTHON_PKGNAMEPREFIX}bsd>0:freenas/py-bsd \
+		${PYTHON_PKGNAMEPREFIX}lxml>0:devel/py-lxml
 
 USES=		python
 USE_GITHUB=	yes
-GH_TUPLE+=	freenas:freenas-migrate93:99342b4 \
-		freenas:django:84e267c:django
+GH_TUPLE+=	freenas:freenas-migrate93:5ee8b31 \
+		freenas:django:168674c:django
 
 NO_BUILD=	yes
 PRODUCT?=

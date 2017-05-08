@@ -30,6 +30,12 @@ post-install()
 	fi
 
 	env FREENAS_INSTALL=yes %%PYTHON_CMD%% manage.py migrate --fake-initial --noinput --traceback
+
+	# Same as before
+	if [ $? -ne 0 ]; then
+		/usr/bin/procstat -h $$|awk '{print $2}'|xargs kill -9
+	fi
+
         cd /data
 	cp freenas-v1.db factory-v1.db
 	chown -R www:www /data

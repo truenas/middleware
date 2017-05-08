@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/local/bin/python
 #-
 # Copyright (c) 2015 iXsystems, Inc.
 # All rights reserved.
@@ -43,9 +43,9 @@ from freenasUI.storage.models import Replication
 
 def fixkey(ip):
     """Return a host key or False"""
-    print "My idea of what the remote hostkey should be is wrong."
+    print("My idea of what the remote hostkey should be is wrong.")
     while True:
-        ret = raw_input("Would you like me to fix this? (y/n): ")
+        ret = input("Would you like me to fix this? (y/n): ")
         if ret.lower() == "y":
             # ssh-keyscan handles errors and timeouts for us
             # rep will either be a key or False.  All other errors
@@ -55,7 +55,7 @@ def fixkey(ip):
         elif ret.lower() == "n":
             return False
         else:
-            print "Please choose either y or n."
+            print("Please choose either y or n.")
             continue
 
 
@@ -96,14 +96,14 @@ def check_ssh(ip, port, user, key_file, retries=1):
                 paramiko.SSHException, socket.error) as e:
             # Errors that can't be automagically fixed.  Print them out to
             # give us a clue what's going wrong.
-            print e
+            print(e)
     return False
 
 replication_tasks = Replication.objects.all()
 for replication in replication_tasks:
-    print "Replication task: %s" % replication
+    print("Replication task: %s" % replication)
     if not replication.repl_enabled:
-        print("%s replication not enabled" % replication)
+        print(("%s replication not enabled" % replication))
     remote = replication.repl_remote.ssh_remote_hostname.__str__()
     remote_port = replication.repl_remote.ssh_remote_port
     if replication.repl_remote.ssh_remote_dedicateduser_enabled:
@@ -118,14 +118,14 @@ for replication in replication_tasks:
     # an ssh host key if ssh-keyscan was able to get the remote hostkey.
     ret = check_ssh(remote, remote_port, user, "/data/ssh/replication")
     if ret is True:
-        print "Status: OK"
-        print
+        print("Status: OK")
+        print()
     elif ret is False:
-        print "Status: Failed"
-        print
+        print("Status: Failed")
+        print()
     else:
         replication.repl_remote.ssh_remote_hostkey = ret
         replication.repl_remote.save()
         os.system("service ix-sshd start")
-        print "Status: Hostkeys fixed"
-        print
+        print("Status: Hostkeys fixed")
+        print()

@@ -1,3 +1,4 @@
+import datetime
 import json
 import logging
 import os
@@ -33,8 +34,8 @@ def get_license():
 
     try:
         license = License.load(license_file)
-    except Exception, e:
-        return None, unicode(e)
+    except Exception as e:
+        return None, str(e)
 
     return license, None
 
@@ -50,12 +51,12 @@ def fetch_categories(data):
             timeout=10,
         )
         data = r.json()
-    except simplejson.JSONDecodeError, e:
+    except simplejson.JSONDecodeError as e:
         log.debug("Failed to decode ticket attachment response: %s", r.text)
         return False, r.text
-    except requests.ConnectionError, e:
+    except requests.ConnectionError as e:
         return False, _('Connection failed: %s') % e
-    except requests.Timeout, e:
+    except requests.Timeout as e:
         return False, _('Connection timed out: %s') % e
 
     if 'error' in data:
@@ -76,11 +77,21 @@ def jails_enabled():
 
 def fc_enabled():
     license, reason = get_license()
+    if not license:
+        return False
     sw_name = get_sw_name().lower()
-    if sw_name == 'truenas' and (
-        license and Features.fibrechannel in license.features
-    ):
-        return True
+    if sw_name == 'truenas':
+        # Licenses issued before 2017-04-14 had a bug in the feature bit
+        # for fibre channel, which means they were issue having
+        # dedup+jails instead.
+        if (
+            Features.fibrechannel in license.features
+        ) or (
+            Features.dedup in license.features and
+            Features.jails in license.features and
+            license.contract_start < datetime.date(2017, 4, 14)
+        ):
+            return True
     return False
 
 
@@ -95,12 +106,12 @@ def new_ticket(data):
             timeout=10,
         )
         data = r.json()
-    except simplejson.JSONDecodeError, e:
+    except simplejson.JSONDecodeError as e:
         log.debug("Failed to decode ticket attachment response: %s", r.text)
         return False, r.text, None
-    except requests.ConnectionError, e:
+    except requests.ConnectionError as e:
         return False, _('Connection failed: %s') % e, None
-    except requests.Timeout, e:
+    except requests.Timeout as e:
         return False, _('Connection timed out: %s') % e, None
     if r.status_code != 200:
         log.debug('Support Ticket failed (%d): %s', r.status_code, r.text)
@@ -120,22 +131,22 @@ def ticket_attach(data, file_handler):
             files={'file': (file_handler.name, file_handler.file)},
         )
         data = r.json()
-    except simplejson.JSONDecodeError, e:
+    except simplejson.JSONDecodeError as e:
         log.debug("Failed to decode ticket attachment response: %s", r.text)
         return False, r.text
-    except requests.ConnectionError, e:
+    except requests.ConnectionError as e:
         return False, _('Connection failed: %s') % e
-    except requests.Timeout, e:
+    except requests.Timeout as e:
         return False, _('Connection timed out: %s') % e
 
     return (not data['error'], data['message'])
 
 
 if __name__ == '__main__':
-    print new_ticket({
+    print(new_ticket({
         'user': 'william',
         'password': '',
         'title': 'API Test',
         'body': 'Testing proxy',
         'version': '9.3-RELEASE'
-    })
+    }))

@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/local/bin/python
 #
 # Copyright 2012 iXsystems, Inc.
 # All rights reserved
@@ -26,7 +26,7 @@
 #
 #####################################################################
 
-from SimpleXMLRPCServer import SimpleXMLRPCDispatcher
+from xmlrpc.server import SimpleXMLRPCDispatcher
 import array
 import fcntl
 import logging
@@ -37,7 +37,7 @@ import signal
 import select
 import struct
 import sys
-import SocketServer
+import socketserver
 import termios
 import threading
 import time
@@ -59,10 +59,10 @@ log = logging.getLogger('tools.webshell')
 logging.config.dictConfig(LOGGING)
 
 
-class XMLRPCHandler(SocketServer.BaseRequestHandler):
+class XMLRPCHandler(socketserver.BaseRequestHandler):
 
     def handle(self):
-        buff = ''
+        buff = b''
         while True:
             data = self.request.recv(1024)
             if not data:
@@ -85,7 +85,7 @@ def main_loop():
     SOCKFILE = '/var/run/webshell.sock'
     if os.path.exists(SOCKFILE):
         os.unlink(SOCKFILE)
-    server = SocketServer.UnixStreamServer(SOCKFILE, XMLRPCHandler)
+    server = socketserver.UnixStreamServer(SOCKFILE, XMLRPCHandler)
     os.chmod(SOCKFILE, 0o700)
     dispatcher.register_instance(
         Multiplex("/usr/local/bin/bash", "xterm-color"))
@@ -362,20 +362,19 @@ class Terminal:
         self.cx = 0
         self.cy = 0
         # Tab stops
-        self.tab_stops = range(0, self.w, 8)
+        self.tab_stops = list(range(0, self.w, 8))
 
     # UTF-8 functions
     def utf8_decode(self, d):
         o = ''
-        for c in d:
-            char = ord(c)
+        for char in d:
             if self.utf8_units_count != self.utf8_units_received:
                 self.utf8_units_received += 1
                 if (char & 0xc0) == 0x80:
                     self.utf8_char = (self.utf8_char << 6) | (char & 0x3f)
                     if self.utf8_units_count == self.utf8_units_received:
                         if self.utf8_char < 0x10000:
-                            o += unichr(self.utf8_char)
+                            o += chr(self.utf8_char)
                         self.utf8_units_count = self.utf8_units_received = 0
                 else:
                     o += '?'
@@ -385,7 +384,7 @@ class Terminal:
                     self.utf8_units_count = 0
             else:
                 if (char & 0x80) == 0x00:
-                    o += c
+                    o += chr(char)
                 elif (char & 0xe0) == 0xc0:
                     self.utf8_units_count = 1
                     self.utf8_char = char & 0x1f
@@ -1043,7 +1042,7 @@ class Terminal:
             if p[0] >= '<' and p[0] <= '?':
                 prefix = p[0]
                 p = p[1:]
-            p = p.split(';')
+            p = p.strip(';').split(';')
         else:
             p = ''
         # Process parameters
@@ -1124,14 +1123,14 @@ class Terminal:
                         char_msb = char & 0xf0
                         if char_msb == 0x20:
                             # Intermediate bytes (added to function)
-                            self.vt100_parse_func += unichr(char)
+                            self.vt100_parse_func += chr(char)
                         elif (char_msb == 0x30 and
                                 self.vt100_parse_state == 'csi'):
                             # Parameter byte
-                            self.vt100_parse_param += unichr(char)
+                            self.vt100_parse_param += chr(char)
                         else:
                             # Function byte
-                            self.vt100_parse_func += unichr(char)
+                            self.vt100_parse_func += chr(char)
                             self.vt100_parse_process()
                         return True
         self.vt100_lastchar = char
@@ -1166,18 +1165,17 @@ class Terminal:
 
     def pipe(self, d):
         o = ''
-        for c in d:
-            char = ord(c)
+        for char in d:
             if self.vt100_keyfilter_escape:
                 self.vt100_keyfilter_escape = False
                 try:
                     if self.vt100_mode_cursorkey:
-                        o += self.vt100_keyfilter_appkeys[c]
+                        o += self.vt100_keyfilter_appkeys[chr(char)]
                     else:
-                        o += self.vt100_keyfilter_ansikeys[c]
+                        o += self.vt100_keyfilter_ansikeys[chr(char)]
                 except KeyError:
                     pass
-            elif c == '~':
+            elif chr(char) == '~':
                 self.vt100_keyfilter_escape = True
             elif char == 127:
                 if self.vt100_mode_backspace:
@@ -1185,13 +1183,13 @@ class Terminal:
                 else:
                     o += chr(127)
             else:
-                o += c
+                o += chr(char)
                 if self.vt100_mode_lfnewline and char == 13:
                     o += chr(10)
         return o
 
     def dump(self):
-        dump = u""
+        dump = ""
         attr_ = -1
         cx, cy = min(self.cx, self.w - 1), self.cy
         for y in range(0, self.h):
@@ -1206,7 +1204,7 @@ class Terminal:
                 # Attributes
                 if attr != attr_:
                     if attr_ != -1:
-                        dump += u'</span>'
+                        dump += '</span>'
                     bg = attr & 0x000f
                     fg = (attr & 0x00f0) >> 4
                     # Inverse
@@ -1222,7 +1220,7 @@ class Terminal:
                         ul = ' ul'
                     else:
                         ul = ''
-                    dump += u'<span class="shell_f%x shell_b%x%s">' % (
+                    dump += '<span class="shell_f%x shell_b%x%s">' % (
                         fg,
                         bg,
                         ul)
@@ -1237,10 +1235,9 @@ class Terminal:
                 else:
                     wx += self.utf8_charwidth(char)
                     if wx <= self.w:
-                        dump += unichr(char)
+                        dump += chr(char)
             dump += "\n"
         # Encode in UTF-8
-        dump = dump.encode('utf-8')
         dump += '</span>'
         # Cache dump
         if self.dump_cache == dump:
@@ -1320,7 +1317,7 @@ class Multiplex:
                         fd,
                         termios.TIOCSWINSZ,
                         struct.pack("HHHH", h, w, 0, 0))
-                except (IOError, OSError), e:
+                except (IOError, OSError) as e:
                     log.error(e)
                 self.session[sid]['term'].set_size(w, h)
                 self.session[sid]['w'] = w
@@ -1373,7 +1370,7 @@ class Multiplex:
                     )
                 else:
                     os.execve(shell, shell.split("/")[-1:], env)
-            except Exception, e:
+            except Exception as e:
                 log.error("Impossible to start a subshell (%r): %s", e, e)
             #self.proc_finish(sid)
             os._exit(0)
@@ -1389,7 +1386,7 @@ class Multiplex:
                     fd,
                     termios.TIOCSWINSZ,
                     struct.pack("HHHH", h, w, 0, 0))
-            except (IOError, OSError), e:
+            except (IOError, OSError) as e:
                 log.error("Unable to issue ioctl for terminal size: %s", e)
             return True
 
@@ -1424,7 +1421,7 @@ class Multiplex:
         return True
 
     def proc_buryall(self):
-        for sid in self.session.keys():
+        for sid in list(self.session.keys()):
             self.proc_bury(sid)
 
     # Read from process
@@ -1466,7 +1463,7 @@ class Multiplex:
             term = self.session[sid]['term']
             d = term.pipe(d)
             fd = self.session[sid]['fd']
-            os.write(fd, d)
+            os.write(fd, d.encode('utf-8'))
         except (IOError, OSError):
             return False
         return True
@@ -1482,7 +1479,7 @@ class Multiplex:
         fds = []
         fd2sid = {}
         now = time.time()
-        for sid in self.session.keys():
+        for sid in list(self.session.keys()):
             then = self.session[sid]['time']
             if (now - then) > 60:
                 self.proc_bury(sid)

@@ -48,7 +48,7 @@ from .views import (
     bootenv_unkeep, bootenv_datagrid, bootenv_datagrid_structure,
     bootenv_datagrid_actions, config_restore, config_save, config_download,
     config_upload, debug,
-    debug_download, backup, backup_progress, backup_abort, varlogmessages,
+    debug_download, varlogmessages,
     top, testmail, directory_browser, file_browser, restart_httpd, reload_httpd,
     restart_httpd_all, terminal, terminal_paste, update_index, update_apply,
     update_check, update_save, update_progress, update_verify, verify_progress,
@@ -56,7 +56,7 @@ from .views import (
     CA_export_certificate, CA_export_privatekey, CA_info,
     certificate_import, certificate_create_internal, certificate_edit, CSR_edit,
     certificate_create_CSR, certificate_export_certificate, certificate_export_privatekey,
-    certificate_export_certificate_and_privatekey, certificate_info,
+    certificate_export_certificate_and_privatekey
 )
 
 
@@ -114,9 +114,6 @@ urlpatterns = [
     url(r'^config/upload/$', config_upload, name='system_configupload'),
     url(r'^debug/$', debug, name='system_debug'),
     url(r'^debug/download/$', debug_download, name='system_debug_download'),
-    url(r'^backup/$', backup, name='system_backup'),
-    url(r'^backup/progress$', backup_progress, name='system_backup_progress'),
-    url(r'^backup/abort$', backup_abort, name='system_backup_abort'),
     url(r'^varlogmessages/(?P<lines>\d+)?/?$', varlogmessages, name="system_messages"),
     url(r'^top/', top, name="system_top"),
     url(r'^test-mail/$', testmail, name="system_testmail"),
@@ -149,5 +146,4 @@ urlpatterns = [
     url(r'^certificate/export/certificate/(?P<id>\d+)$', certificate_export_certificate, name="certificate_export_certificate"),
     url(r'^certificate/export/privatekey/(?P<id>\d+)$', certificate_export_privatekey, name="certificate_export_privatekey"),
     url(r'^certificate/export/certificate/privatekey/(?P<id>\d+)$', certificate_export_certificate_and_privatekey, name="certificate_export_certificate_and_privatekey"),
-    url(r'^certificate/info/(?P<id>\d+)/$', certificate_info, name="certificate_info"),
 ]

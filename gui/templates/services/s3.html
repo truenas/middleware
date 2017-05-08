@@ -1,0 +1,13 @@
+{% extends "freeadmin/generic_model_edit.html" %}
+
+{% block buttons_extra %}
+{% if s3_started %}
+<div data-dojo-type="dijit/form/Button">
+    {% trans "UI" %}
+    <script type="dojo/method" data-dojo-event="onClick">
+	/* Should this submit form with access & secret key? */
+        window.open("{{ s3_ui_url }}")
+    </script>
+</div>
+{% endif %}
+{% endblock %}

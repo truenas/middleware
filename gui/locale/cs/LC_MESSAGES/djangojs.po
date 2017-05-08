@@ -8,15 +8,16 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:10-0700\n"
-"PO-Revision-Date: 2016-10-18 19:29+0000\n"
-"Last-Translator: Pavel <pavel.borecki@gmail.com>\n"
-"Language-Team: LANGUAGE <LL@li.org>\n"
+"PO-Revision-Date: 2016-12-19 20:26+0000\n"
+"Last-Translator: Pavel Borecki <pavel.borecki@gmail.com>\n"
+"Language-Team: Czech "
+"<http://weblate.trueos.org/projects/freenas/djangojs/cs/>\n"
 "Language: cs\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
 "Plural-Forms: nplurals=3; plural=(n==1) ? 0 : (n>=2 && n<=4) ? 1 : 2;\n"
-"X-Generator: Pootle 2.5.0\n"
+"X-Generator: Weblate 2.10-dev\n"
 "X-POOTLE-MTIME: 1476818943.0\n"
 
 #~ msgid "Reporting"
@@ -188,7 +189,7 @@ msgstr "Přidat svazek"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1015
 msgid "Existing data will be cleared"
-msgstr "Existující data budou smazána"
+msgstr "Stávající data budou smazána"
 
 #: freeadmin/static/lib/js/freeadmin/VolumeManager.js:1016
 msgid "Extend Volume"
@@ -234,7 +235,7 @@ msgstr "Storno"
 
 #: freeadmin/static/lib/js/freeadmin/WebShell.js:77
 msgid "Shell"
-msgstr "Příkazový řádek"
+msgstr "Textové uživatelské rozhraní (shell)"
 
 #: freeadmin/static/lib/js/freeadmin/WebShell.js:90
 #: freeadmin/static/lib/js/freeadmin/WebShell.js:114
@@ -346,7 +347,7 @@ msgstr "Průvodce"
 
 #: freeadmin/static/lib/js/freeadmin/WizardShares.js:242
 msgid "Paswords do not match."
-msgstr ""
+msgstr "Zadání hesla se neshodují."
 
 #: freeadmin/static/lib/js/freeadmin.js:374
 msgid "Warning!"
@@ -370,7 +371,7 @@ msgstr "Ruční nastavení"
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:82
 msgid "Check For Updates"
-msgstr ""
+msgstr "Zkontrolovat dostupnost případných aktualizací"
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:86
 msgid "Apply Pending Updates"
@@ -528,7 +529,7 @@ msgstr "Odeslat"
 
 #: freeadmin/static/lib/js/freeadmin/SupportTicket.js:326
 msgid "This field is required."
-msgstr "Tuto kolonku je nutné vyplnit."
+msgstr "Tuto kolonku je třeba vyplnit."
 
 #: freeadmin/static/lib/js/freeadmin/SupportTicket.js:361
 msgid "Uploading attachments to host"
@@ -560,7 +561,7 @@ msgstr "Automaticky kontrolovat aktualizace"
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:90
 msgid "Current Train"
-msgstr "Stávající řada"
+msgstr "Nyní používaná řada"
 
 #: freeadmin/static/lib/js/freeadmin/Update.js:91
 msgid "Update Server"
@@ -572,7 +573,7 @@ msgstr "Čekající aktualizace"
 
 #: freeadmin/static/lib/js/freeadmin/Menu.js:185
 msgid "vCenter Plugin Configuration"
-msgstr "Nastavení zásuvného modulu pro vCenter"
+msgstr "Nastavení zásuvného modulu vCenter"
 
 #: freeadmin/static/lib/js/freeadmin.js:1343
 msgid "Decreasing WebGUI https security!"

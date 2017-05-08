@@ -9,6 +9,7 @@ from django.utils.translation import ugettext as _
 from freenasUI.api.resources import (
     CertificateAuthorityResourceMixin,
     CertificateResourceMixin,
+    SettingsResourceMixin,
     UpdateResourceMixin,
 )
 from freenasUI.freeadmin.options import BaseFreeAdmin
@@ -137,22 +138,15 @@ class SettingsFAdmin(BaseFreeAdmin):
 
     deletable = False
 
-    def get_extra_context(self, action, **kwargs):
-        try:
-            ssl = models.SSL.objects.order_by("-id")[0]
-        except:
-            ssl = None
-        return {
-            'ssl': ssl,
-        }
+    resource_mixin = SettingsResourceMixin
 
 
 class CertificateAuthorityFAdmin(BaseFreeAdmin):
 
-    icon_object = u"CertificateAuthorityIcon"
-    icon_model = u"CertiicateAuthorityIcon"
-    icon_add = u"CertificateAuthorityIcon"
-    icon_view = u"CertificateAuthorityIcon"
+    icon_object = "CertificateAuthorityIcon"
+    icon_model = "CertiicateAuthorityIcon"
+    icon_add = "CertificateAuthorityIcon"
+    icon_view = "CertificateAuthorityIcon"
 
     resource_mixin = CertificateAuthorityResourceMixin
 
@@ -262,10 +256,10 @@ class CertificateAuthorityFAdmin(BaseFreeAdmin):
 
 class CertificateFAdmin(BaseFreeAdmin):
 
-    icon_object = u"CertificateIcon"
-    icon_model = u"CertificateIcon"
-    icon_add = u"CertificateIcon"
-    icon_view = u"CertificateIcon"
+    icon_object = "CertificateIcon"
+    icon_model = "CertificateIcon"
+    icon_add = "CertificateIcon"
+    icon_view = "CertificateIcon"
 
     resource_mixin = CertificateResourceMixin
 
@@ -302,7 +296,7 @@ class CertificateFAdmin(BaseFreeAdmin):
     def get_actions(self):
         actions = OrderedDict()
 
-	hide_me = """function(evt, actionName, action) {
+        hide_me = """function(evt, actionName, action) {
               for(var i=0;i < evt.rows.length;i++) {
                 var row = evt.rows[i];
                 if(%s) {
@@ -408,10 +402,10 @@ class CloudCredentialsFAdmin(BaseFreeAdmin):
         'attributes',
     )
 
-    icon_object = u"CloudCredentialsIcon"
-    icon_model = u"CloudCredentialsIcon"
-    icon_add = u"CloudCredentialsAddIcon"
-    icon_view = u"CloudCredentialsViewIcon"
+    icon_object = "CloudCredentialsIcon"
+    icon_model = "CloudCredentialsIcon"
+    icon_add = "CloudCredentialsAddIcon"
+    icon_view = "CloudCredentialsViewIcon"
 
 
 class UpdateFAdmin(BaseFreeAdmin):

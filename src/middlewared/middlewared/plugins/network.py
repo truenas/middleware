@@ -11,6 +11,15 @@ import subprocess
 
 
 def dhclient_status(interface):
+    """
+    Get the current status of dhclient for a given `interface`.
+
+    Args:
+        interface (str): name of the interface
+
+    Returns:
+        tuple(bool, pid): if dhclient is running follow its pid.
+    """
     pidfile = '/var/run/dhclient.{}.pid'.format(interface)
     pid = None
     if os.path.exists(pidfile):
@@ -31,8 +40,17 @@ def dhclient_status(interface):
     return running, pid
 
 
-def dhclient_leases(name):
-    leasesfile = '/var/db/dhclient.leases.{}'.format(name)
+def dhclient_leases(interface):
+    """
+    Reads the leases file for `interface` and returns the content.
+
+    Args:
+        interface (str): name of the interface.
+
+    Returns:
+        str: content of dhclient leases file for `interface`.
+    """
+    leasesfile = '/var/db/dhclient.leases.{}'.format(interface)
     if os.path.exists(leasesfile):
         with open(leasesfile, 'r') as f:
             return f.read()
@@ -40,6 +58,7 @@ def dhclient_leases(name):
 
 class InterfacesService(Service):
 
+    @private
     def sync(self):
         """
         Sync interfaces configured in database to the OS.
@@ -62,10 +81,7 @@ class InterfacesService(Service):
                 netif.create_interface(name)
                 iface = netif.get_interface(name)
 
-            if lagg['lagg_protocol'] == 'fec':
-                protocol = netif.AggregationProtocol.ETHERCHANNEL
-            else:
-                protocol = getattr(netif.AggregationProtocol, lagg['lagg_protocol'].upper())
+            protocol = getattr(netif.AggregationProtocol, lagg['lagg_protocol'].upper())
             if iface.protocol != protocol:
                 self.logger.info('{}: changing protocol to {}'.format(name, protocol))
                 iface.protocol = protocol
@@ -154,7 +170,7 @@ class InterfacesService(Service):
     @private
     def alias_to_addr(self, alias):
         addr = netif.InterfaceAddress()
-        ip = ipaddress.ip_interface(u'{}/{}'.format(alias['address'], alias['netmask']))
+        ip = ipaddress.ip_interface('{}/{}'.format(alias['address'], alias['netmask']))
         addr.af = getattr(netif.AddressFamily, 'INET6' if ':' in alias['address'] else 'INET')
         addr.address = ip.ip
         addr.netmask = ip.netmask
@@ -342,8 +358,13 @@ class InterfacesService(Service):
 
 class RoutesService(Service):
 
+    @private
     def sync(self):
         config = self.middleware.call('datastore.query', 'network.globalconfiguration', [], {'get': True})
+
+        # Generate dhclient.conf so we can ignore routes (def gw) option
+        # in case there is one explictly set in network config
+        self.middleware.call('etc.generate', 'network')
 
         ipv4_gateway = config['gc_ipv4gateway'] or None
         if not ipv4_gateway:
@@ -359,7 +380,7 @@ class RoutesService(Service):
                         ipv4_gateway = reg_routers.group(1).split(' ')[0]
         routing_table = netif.RoutingTable()
         if ipv4_gateway:
-            ipv4_gateway = netif.Route(u'0.0.0.0', u'0.0.0.0', ipaddress.ip_address(unicode(ipv4_gateway)))
+            ipv4_gateway = netif.Route('0.0.0.0', '0.0.0.0', ipaddress.ip_address(str(ipv4_gateway)))
             ipv4_gateway.flags.add(netif.RouteFlags.STATIC)
             ipv4_gateway.flags.add(netif.RouteFlags.GATEWAY)
             # If there is a gateway but there is none configured, add it
@@ -378,7 +399,7 @@ class RoutesService(Service):
 
         ipv6_gateway = config['gc_ipv6gateway'] or None
         if ipv6_gateway:
-            ipv6_gateway = netif.Route(u'::', u'::', ipaddress.ip_address(unicode(ipv6_gateway)))
+            ipv6_gateway = netif.Route('::', '::', ipaddress.ip_address(str(ipv6_gateway)))
             ipv6_gateway.flags.add(netif.RouteFlags.STATIC)
             ipv6_gateway.flags.add(netif.RouteFlags.GATEWAY)
             # If there is a gateway but there is none configured, add it
@@ -398,6 +419,7 @@ class RoutesService(Service):
 
 class DNSService(Service):
 
+    @private
     def sync(self):
         domain = None
         nameservers = []

@@ -87,13 +87,13 @@ class ModelForm(AdvMixin, MF):
                     hasattr(notifier, 'failover_status') and
                     notifier().failover_status() == 'BACKUP'
                 ):
-                    for fname in self.fields.keys():
+                    for fname in list(self.fields.keys()):
                         if fname not in nosync['fields']:
                             del self.fields[fname]
 
         fname = str(type(self).__name__)
         appPool.hook_form_init(fname, self, *args, **kwargs)
-        for name, field in self.fields.items():
+        for name, field in list(self.fields.items()):
             if hasattr(field, "_reroll"):
                 field._reroll()
 
@@ -102,12 +102,12 @@ class ModelForm(AdvMixin, MF):
         <table></table>."""
         return self._html_output(
             normal_row=(
-                u'<tr%(html_class_attr)s><th>%(label)s</th><td>'
+                '<tr%(html_class_attr)s><th>%(label)s</th><td>'
                 '%(errors)s%(field)s</td></tr>'
             ),
-            error_row=u'<tr><td colspan="2">%s</td></tr>',
-            row_ender=u'</td></tr>',
-            help_text_html=u'<br />%s',
+            error_row='<tr><td colspan="2">%s</td></tr>',
+            row_ender='</td></tr>',
+            help_text_html='<br />%s',
             errors_on_separate_row=False)
 
     def clean(self, *args, **kwargs):
@@ -116,13 +116,13 @@ class ModelForm(AdvMixin, MF):
         Remove leading and trailing spaces from the fields
         See #3252 for why
         """
-        for fname, field in self.fields.items():
+        for fname, field in list(self.fields.items()):
             val = cdata.get(fname, None)
             if val is None:
                 continue
             if (
                 isinstance(field.widget, forms.widgets.ValidationTextInput) and
-                isinstance(val, unicode)
+                isinstance(val, str)
             ):
                 cdata[fname] = val.strip()
         return cdata
@@ -137,7 +137,7 @@ class ModelForm(AdvMixin, MF):
         if valid is False:
             return valid
         if formsets is not None:
-            for name, fsinfo in formsets.items():
+            for name, fsinfo in list(formsets.items()):
                 fs = fsinfo['instance']
                 methodname = "clean%s" % (name, )
                 if hasattr(self, methodname):
@@ -165,7 +165,7 @@ class Form(AdvMixin, F):
         super(Form, self).__init__(*args, **kwargs)
         fname = str(type(self).__name__)
         appPool.hook_form_init(fname, self, *args, **kwargs)
-        for name, field in self.fields.items():
+        for name, field in list(self.fields.items()):
             if hasattr(field, "_reroll"):
                 field._reroll()
 
@@ -174,12 +174,12 @@ class Form(AdvMixin, F):
         <table></table>."""
         return self._html_output(
             normal_row=(
-                u'<tr%(html_class_attr)s><th>%(label)s</th><td>'
+                '<tr%(html_class_attr)s><th>%(label)s</th><td>'
                 '%(errors)s%(field)s</td></tr>'
             ),
-            error_row=u'<tr><td colspan="2">%s</td></tr>',
-            row_ender=u'</td></tr>',
-            help_text_html=u'<br />%s',
+            error_row='<tr><td colspan="2">%s</td></tr>',
+            row_ender='</td></tr>',
+            help_text_html='<br />%s',
             errors_on_separate_row=False)
 
     def done(self, request=None, events=None, **kwargs):

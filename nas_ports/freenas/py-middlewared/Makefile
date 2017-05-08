@@ -13,16 +13,20 @@ USES=		python
 USE_PYTHON=	autoplist distutils
 EXTRACT_ONLY=
 
-RUN_DEPENDS=	${PYTHON_PKGNAMEPREFIX}gevent>0:${PORTSDIR}/devel/py-gevent \
-		${PYTHON_PKGNAMEPREFIX}gevent-websocket>0:${PORTSDIR}/www/py-gevent-websocket \
-		${PYTHON_PKGNAMEPREFIX}ws4py>0:${PORTSDIR}/www/py-ws4py \
-		${PYTHON_PKGNAMEPREFIX}falcon>0:${PORTSDIR}/www/py-falcon \
-		${PYTHON_PKGNAMEPREFIX}Flask>0:${PORTSDIR}/www/py-flask \
-		${PYTHON_PKGNAMEPREFIX}boto3>0:${PORTSDIR}/devel/py-boto3 \
-		${PYTHON_PKGNAMEPREFIX}netif>0:${PORTSDIR}/net/py-netif \
-		${PYTHON_PKGNAMEPREFIX}bsd>0:${PORTSDIR}/freenas/py-bsd \
-		${PYTHON_PKGNAMEPREFIX}rollbar>0:${PORTSDIR}/www/py-rollbar \
-		rclone>0:${PORTSDIR}/net/rclone
+BUILD_DEPENDS= ${PYTHON_PKGNAMEPREFIX}fastentrypoints>0:devel/py-fastentrypoints
+RUN_DEPENDS=	${PYTHON_PKGNAMEPREFIX}gevent>0:devel/py-gevent \
+		${PYTHON_PKGNAMEPREFIX}karellen-geventws>0:www/py-karellen-geventws \
+		${PYTHON_PKGNAMEPREFIX}ws4py>0:www/py-ws4py \
+		${PYTHON_PKGNAMEPREFIX}falcon>0:www/py-falcon \
+		${PYTHON_PKGNAMEPREFIX}Flask>0:www/py-flask \
+		${PYTHON_PKGNAMEPREFIX}boto3>0:devel/py-boto3 \
+		${PYTHON_PKGNAMEPREFIX}netif>0:net/py-netif \
+		${PYTHON_PKGNAMEPREFIX}bsd>0:freenas/py-bsd \
+		${PYTHON_PKGNAMEPREFIX}rollbar>0:www/py-rollbar \
+		${PYTHON_PKGNAMEPREFIX}markdown>0:textproc/py-markdown \
+		${PYTHON_PKGNAMEPREFIX}mako>0:textproc/py-mako \
+		${PYTHON_PKGNAMEPREFIX}psutil>0:sysutils/py-psutil \
+		rclone>0:net/rclone
 
 USE_RC_SUBR=	middlewared
 

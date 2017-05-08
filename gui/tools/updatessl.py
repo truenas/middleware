@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/local/bin/python
 #
 # Copyright (c) 2011 iXsystems, Inc.
 # All rights reserved.
@@ -66,13 +66,13 @@ def main(certfile, keyfile):
         with open(certfile, "r") as f:
             crt = f.read()
     except IOError:
-        print "Cannot read certfile specified at %s" % certfile
+        print("Cannot read certfile specified at %s" % certfile)
         sys.exit(1)
     try:
         with open(keyfile, "r") as f:
             key = f.read()
     except IOError:
-        print "Cannot read keyfile specified at %s" % keyfile
+        print("Cannot read keyfile specified at %s" % keyfile)
         sys.exit(1)
 
     # Now for the actual parsing to meet the new cert ui reqs

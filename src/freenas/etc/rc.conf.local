@@ -124,7 +124,7 @@ _interface_config()
                                 fi
 			elif [ "$(ha_hardware)" = "SBB" ]; then
 				internal_iface="ix0"
-			elif [ "$(ha_hardware)" = "AIC" ]; then
+			elif [ "$(ha_hardware)" = "AIC" -o "$(ha_hardware)" = "PUMA" ]; then
 				internal_iface="ntb0"
 				if [ "${node}" = "A" ]; then
 					ether="02:8c:97:2e:a5:01"
@@ -137,10 +137,10 @@ _interface_config()
 			local a=0
 			if [ -n "${ether}" ]; then
 				echo "ifconfig_${internal_iface}=\"ether ${ether}\""
-				echo "ifconfig_${internal_iface}_alias${a}=\"inet ${internal_ip}/24\""
+				echo "ifconfig_${internal_iface}_alias${a}=\"inet ${internal_ip}/24 descr Interlink\""
 				a=$(( $a + 1 ))
 			else
-				echo "ifconfig_${internal_iface}=\"inet ${internal_ip}/24\""
+				echo "ifconfig_${internal_iface}=\"inet ${internal_ip}/24 descr Interlink\""
 			fi
 			echo "ifconfig_${internal_iface}_alias${a}=\"inet vhid 10 advskew ${carp1_skew} alias ${carp1_addr}\""
 			a=$(( $a + 1 ))
@@ -154,8 +154,8 @@ _interface_config()
 
 	# Traverse the network interface table and generate rc.conf style
 	# configuration.
-	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT id, int_interface, int_dhcp, int_ipv4address, int_ipv4address_b, int_v4netmaskbit, int_ipv6auto, int_ipv6address, int_v6netmaskbit, int_vip, int_vhid, int_pass, int_options FROM network_interfaces ORDER BY id" | \
-	while read interface_id interface dodhcp ipv4addr ipv4addr_b ipv4netmask doipv6auto ipv6addr ipv6netmask int_vip int_vhid int_pass options; do
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT id, int_interface, int_dhcp, int_ipv4address, int_ipv4address_b, int_v4netmaskbit, int_ipv6auto, int_ipv6address, int_v6netmaskbit, int_vip, int_vhid, int_pass, int_critical, int_group, int_options FROM network_interfaces ORDER BY id" | \
+	while read interface_id interface dodhcp ipv4addr ipv4addr_b ipv4netmask doipv6auto ipv6addr ipv6netmask int_vip int_vhid int_pass critical group options; do
 		if [ "$(ha_node)" = "B" ]; then
 			ipv4addr=${ipv4addr_b}
 		fi
@@ -174,10 +174,9 @@ _interface_config()
 			while read lagg_physnic; do
 				echo -n " laggport ${lagg_physnic}"
 			done
-		else
-			if [ -n "${options}" ]; then
-				echo -n " ${options}"
-			fi
+		fi
+		if [ -n "${options}" ]; then
+			echo -n " ${options}"
 		fi
 		echo \"
 
@@ -192,7 +191,11 @@ _interface_config()
 					carp1_skew="1"
 				fi
 			fi
-			echo "ifconfig_${interface}_alias0=\"vhid ${int_vhid} advskew ${carp1_skew}${int_passopt} alias ${int_vip}/32\""
+			echo -n "ifconfig_${interface}_alias0=\"inet vhid ${int_vhid} advskew ${carp1_skew}${int_passopt} alias ${int_vip}/32"
+			if [ -n "${critical}" ]; then
+				echo -n " descr CriticalGroup${group}"
+			fi
+			echo \"
 			eval counter_${interface}=1
 
 		fi
@@ -400,6 +403,45 @@ _nut_config() {
 			echo "nut_upslog_enable=\"YES\""
 			echo "nut_upsmon_enable=\"YES\""
 		done
+	done
+}
+
+_s3_config()
+{
+	local IFS=\|
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "
+		SELECT
+			srv_enable as s3_enable,
+			s3_bindip,
+			s3_bindport,
+			s3_access_key,
+			s3_secret_key,
+			s3_browser,
+			s3_mode,
+			s3_disks
+		FROM
+			services_s3
+		LEFT OUTER JOIN
+			services_services
+		ON
+			(srv_service = 's3' AND srv_enable = '1')
+		ORDER BY
+			-services_s3.id
+		LIMIT 1
+	" |\
+	while read s3_enable s3_bindip s3_bindport s3_access_key \
+		s3_secret_key s3_browser s3_mode s3_disks; do
+		cat <<-__MINIO__
+			minio_enable="YES"
+			minio_disks="${s3_disks}"
+			minio_env="\\
+			MINIO_ACCESS_KEY=${s3_access_key} \\
+			MINIO_SECRET_KEY=${s3_secret_key} \\
+			"
+__MINIO__
+		if [ "${s3_browser}" = "0" ]; then
+			echo MINIO_BROWSER=off
+		fi
 	done
 }
 
@@ -651,6 +693,7 @@ _gen_conf()
 		echo "smartd_flags=\"-i ${inter}\""
 	done
 
+	_s3_config
 	_ssl_config
 
 	local kbdmap
@@ -682,19 +725,21 @@ _gen_conf()
 		echo "ataidle_enable=\"YES\""
 		# Needed to use pbi repositories
 		echo "pbid_enable=\"YES\""
-		echo "vboxnet_enable=\"YES\""
 		# Bug #7337 -- blacklist AMD systems for now
 		if /sbin/sysctl hw.model | grep -q AMD; then
 			echo "watchdogd_enable=\"NO\""
 		else
-			if [ "$(/usr/local/sbin/dmidecode -s baseboard-product-name)" = "X9DR3-F" -o "$(/usr/local/sbin/dmidecode -s baseboard-product-name)" = "X9DR3-LN4F+" ] ; then
+			local product
+			product=`/usr/local/sbin/dmidecode -s baseboard-product-name | /usr/bin/head -n 1`
+			if [ "${product}" = "X9DR3-F" -o "${product}" = "X9DR3-LN4F+" ] ; then
 				echo "watchdogd_enable=\"NO\""
-			fi
-			if [ "$(/usr/local/sbin/dmidecode -s baseboard-product-name)" = "C2750D4I" -o "$(/usr/local/sbin/dmidecode -s baseboard-product-name)" = "C2550D4I" ] ; then
+			elif [ "${product}" = "C2750D4I" -o "${product}" = "C2550D4I" ] ; then
 				echo "watchdogd_flags=\"-t 30 --softtimeout --softtimeout-action log,printf --pretimeout 15 --pretimeout-action log,printf -e 'sleep 1' -w -T 3\""
+				echo "watchdogd_enable=\"YES\""
+			else
+				echo "watchdogd_flags=\"--pretimeout 5 --pretimeout-action log,printf\""
+				echo "watchdogd_enable=\"YES\""
 			fi
-
-			echo "watchdogd_enable=\"YES\""
 		fi
 	else
 		echo "ataidle_enable=\"NO\""
@@ -720,7 +765,13 @@ _gen_conf()
 _NEWSUM=$(md5 -q ${FREENAS_CONFIG})
 _OLDSUM=$(cat ${FREENAS_CONFIG_MD5} 2> /dev/null)
 if [ ! "${_NEWSUM}" = "${_OLDSUM}" -a ! -f "${NEED_UPDATE_SENTINEL}" ]; then
-	_gen_conf > ${FREENAS_RC}
+	# There are some circunstances which make concurrent runs of
+	# this script possible, e.g. devd carp script
+	# To make it atomic generate to a tmp file first then move it.
+	# See #23047
+	tmpfile=$(/usr/bin/mktemp /var/tmp/rc.conf.XXXXXXXXX)
+	_gen_conf > ${tmpfile}
+	mv ${tmpfile} ${FREENAS_RC}
 	echo ${_NEWSUM} > ${FREENAS_CONFIG_MD5}
 fi
 

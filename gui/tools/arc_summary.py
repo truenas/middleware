@@ -78,7 +78,7 @@ def get_Kstat():
     sysctls = " ".join(str(x) for x in Kstats)
     p = Popen(
         "/sbin/sysctl -q %s" % sysctls, stdin=PIPE,
-        stdout=PIPE, stderr=PIPE, shell=True, close_fds=True)
+        stdout=PIPE, stderr=PIPE, shell=True, close_fds=True, encoding='utf8')
     p.wait()
 
     kstat_pull = p.communicate()[0].split('\n')
@@ -99,7 +99,7 @@ def get_Kstat():
 
 def div1():
     sys.stdout.write("\n")
-    for i in xrange(18):
+    for i in range(18):
         sys.stdout.write("%s" % "----")
     sys.stdout.write("\n")
 
@@ -263,6 +263,7 @@ def get_system_memory(Kstat):
             shell=True,
             stdout=PIPE,
             stderr=PIPE,
+            encoding='utf8',
         )
         try:
             swap_used = int(proc.communicate()[0])
@@ -353,8 +354,8 @@ def _system_memory(Kstat):
         /usr/bin/dc
     """
 
-    p1 = Popen(cmd1, stdin=PIPE, stdout=PIPE, stderr=PIPE, shell=True, close_fds=True)
-    p2 = Popen(cmd2, stdin=PIPE, stdout=PIPE, stderr=PIPE, shell=True, close_fds=True)
+    p1 = Popen(cmd1, stdin=PIPE, stdout=PIPE, stderr=PIPE, shell=True, close_fds=True, encoding='utf8')
+    p2 = Popen(cmd2, stdin=PIPE, stdout=PIPE, stderr=PIPE, shell=True, close_fds=True, encoding='utf8')
 
     ktext = D(p1.communicate()[0].strip())
     kdata = D(p2.communicate()[0].strip())
@@ -1093,7 +1094,7 @@ def _sysctl_summary(Kstat):
         tunables = " ".join(str(x) for x in Tunable)
         p = Popen(
             "/sbin/sysctl -qde %s" % tunables, stdin=PIPE,
-            stdout=PIPE, stderr=PIPE, shell=True, close_fds=True)
+            stdout=PIPE, stderr=PIPE, shell=True, close_fds=True, encoding='utf8')
         p.wait()
 
         descriptions = p.communicate()[0].split('\n')
@@ -1114,7 +1115,7 @@ def _sysctl_summary(Kstat):
     tunables = " ".join(str(x) for x in Tunable)
     p = Popen(
         "/sbin/sysctl -qe %s" % tunables, stdin=PIPE,
-        stdout=PIPE, stderr=PIPE, shell=True, close_fds=True)
+        stdout=PIPE, stderr=PIPE, shell=True, close_fds=True, encoding='utf8')
     p.wait()
 
     zfs_tunables = p.communicate()[0].split('\n')

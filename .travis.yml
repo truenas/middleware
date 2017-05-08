@@ -1,10 +1,10 @@
 language: python
 python:
-    - 2.7
+    - 3.6
 
 install:
     - sudo apt-get -qq update
     - sudo apt-get -y install git
-    - pip install flake8
+    - pip3 install flake8
 
 script: .travis/flake8.sh

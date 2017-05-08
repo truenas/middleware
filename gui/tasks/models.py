@@ -113,36 +113,36 @@ class CloudSync(Model):
     )
 
     class Meta:
-        verbose_name = _(u"Cloud Sync")
-        verbose_name_plural = _(u"Cloud Syncs")
+        verbose_name = _("Cloud Sync")
+        verbose_name_plural = _("Cloud Syncs")
         ordering = ["description"]
 
-    def __unicode__(self):
+    def __str__(self):
         return self.description
 
     def get_human_minute(self):
         if self.minute == '*':
-            return _(u'Every minute')
+            return _('Every minute')
         elif self.minute.startswith('*/'):
-            return _(u'Every {0} minute(s)').format(
+            return _('Every {0} minute(s)').format(
                 self.minute.split('*/')[1])
         else:
             return self.minute
 
     def get_human_hour(self):
         if self.hour == '*':
-            return _(u'Every hour')
+            return _('Every hour')
         elif self.hour.startswith('*/'):
-            return _(u'Every {0} hour(s)').format(
+            return _('Every {0} hour(s)').format(
                 self.hour.split('*/')[1])
         else:
             return self.hour
 
     def get_human_daymonth(self):
         if self.daymonth == '*':
-            return _(u'Everyday')
+            return _('Everyday')
         elif self.daymonth.startswith('*/'):
-            return _(u'Every {0} days').format(
+            return _('Every {0} days').format(
                 self.daymonth.split('*/')[1])
         else:
             return self.daymonth
@@ -154,21 +154,21 @@ class CloudSync(Model):
         mchoices = dict(choices.MONTHS_CHOICES)
         labels = []
         for m in months:
-            labels.append(unicode(mchoices[m]))
+            labels.append(str(mchoices[m]))
         return ', '.join(labels)
 
     def get_human_dayweek(self):
         weeks = self.dayweek.split(',')
         if len(weeks) == 7 or self.dayweek == '*':
             return _('Everyday')
-        if weeks == map(str, xrange(1, 6)):
+        if weeks == list(map(str, range(1, 6))):
             return _('Weekdays')
-        if weeks == map(str, xrange(6, 8)):
+        if weeks == list(map(str, range(6, 8))):
             return _('Weekends')
         wchoices = dict(choices.WEEKDAYS_CHOICES)
         labels = []
         for w in weeks:
-            labels.append(unicode(wchoices[str(w)]))
+            labels.append(str(wchoices[str(w)]))
         return ', '.join(labels)
 
     def run(self):
@@ -245,34 +245,34 @@ class CronJob(Model):
         verbose_name_plural = _("Cron Jobs")
         ordering = ["cron_description", "cron_user"]
 
-    def __unicode__(self):
+    def __str__(self):
         if self.cron_description:
             return self.cron_description
-        return u"%d (%s)" % (self.id, self.cron_user)
+        return "%d (%s)" % (self.id, self.cron_user)
 
     def get_human_minute(self):
         if self.cron_minute == '*':
-            return _(u'Every minute')
+            return _('Every minute')
         elif self.cron_minute.startswith('*/'):
-            return _(u'Every {0} minute(s)').format(
+            return _('Every {0} minute(s)').format(
                 self.cron_minute.split('*/')[1])
         else:
             return self.cron_minute
 
     def get_human_hour(self):
         if self.cron_hour == '*':
-            return _(u'Every hour')
+            return _('Every hour')
         elif self.cron_hour.startswith('*/'):
-            return _(u'Every {0} hour(s)').format(
+            return _('Every {0} hour(s)').format(
                 self.cron_hour.split('*/')[1])
         else:
             return self.cron_hour
 
     def get_human_daymonth(self):
         if self.cron_daymonth == '*':
-            return _(u'Everyday')
+            return _('Everyday')
         elif self.cron_daymonth.startswith('*/'):
-            return _(u'Every {0} days').format(
+            return _('Every {0} days').format(
                 self.cron_daymonth.split('*/')[1])
         else:
             return self.cron_daymonth
@@ -284,7 +284,7 @@ class CronJob(Model):
         mchoices = dict(choices.MONTHS_CHOICES)
         labels = []
         for m in months:
-            labels.append(unicode(mchoices[m]))
+            labels.append(str(mchoices[m]))
         return ', '.join(labels)
 
     def get_human_dayweek(self):
@@ -295,14 +295,14 @@ class CronJob(Model):
         weeks = self.cron_dayweek.split(',')
         if len(weeks) == 7 or self.cron_dayweek == '*':
             return _('Everyday')
-        if weeks == map(str, xrange(1, 6)):
+        if weeks == list(map(str, range(1, 6))):
             return _('Weekdays')
-        if weeks == map(str, xrange(6, 8)):
+        if weeks == list(map(str, range(6, 8))):
             return _('Weekends')
         wchoices = dict(choices.WEEKDAYS_CHOICES)
         labels = []
         for w in weeks:
-            labels.append(unicode(wchoices[str(w)]))
+            labels.append(str(wchoices[str(w)]))
         return ', '.join(labels)
 
     def commandline(self):
@@ -317,7 +317,6 @@ class CronJob(Model):
 
     def run(self):
         proc = subprocess.Popen([
-            "/usr/local/bin/python2",
             "/usr/local/www/freenasUI/tools/runnow.py",
             "-t", "cronjob",
             "-i", str(self.id),
@@ -363,12 +362,12 @@ class InitShutdown(Model):
         verbose_name=_("When"),
     )
 
-    def __unicode__(self):
+    def __str__(self):
         if self.ini_type == 'command':
             name = self.ini_command
         else:
             name = self.ini_script
-        return u"%s - %s" % (
+        return "%s - %s" % (
             self.get_ini_when_display(),
             name,
         )
@@ -379,10 +378,10 @@ class InitShutdown(Model):
 
     class FreeAdmin:
         # FIXME
-        icon_model = u"TunableIcon"
-        icon_object = u"TunableIcon"
-        icon_add = u"AddTunableIcon"
-        icon_view = u"ViewTunableIcon"
+        icon_model = "TunableIcon"
+        icon_object = "TunableIcon"
+        icon_add = "AddTunableIcon"
+        icon_view = "ViewTunableIcon"
         menu_child_of = 'tasks'
 
 
@@ -547,7 +546,7 @@ class Rsync(Model):
         verbose_name_plural = _("Rsync Tasks")
         ordering = ["rsync_path", "rsync_desc"]
 
-    def __unicode__(self):
+    def __str__(self):
         if self.rsync_desc:
             return self.rsync_desc
         elif self.rsync_mode == 'module':
@@ -557,27 +556,27 @@ class Rsync(Model):
 
     def get_human_minute(self):
         if self.rsync_minute == '*':
-            return _(u'Every minute')
+            return _('Every minute')
         elif self.rsync_minute.startswith('*/'):
-            return _(u'Every {0} minute(s)').format(
+            return _('Every {0} minute(s)').format(
                 self.rsync_minute.split('*/')[1])
         else:
             return self.rsync_minute
 
     def get_human_hour(self):
         if self.rsync_hour == '*':
-            return _(u'Every hour')
+            return _('Every hour')
         elif self.rsync_hour.startswith('*/'):
-            return _(u'Every {0} hour(s)').format(
+            return _('Every {0} hour(s)').format(
                 self.rsync_hour.split('*/')[1])
         else:
             return self.rsync_hour
 
     def get_human_daymonth(self):
         if self.rsync_daymonth == '*':
-            return _(u'Everyday')
+            return _('Everyday')
         elif self.rsync_daymonth.startswith('*/'):
-            return _(u'Every {0} days').format(
+            return _('Every {0} days').format(
                 self.rsync_daymonth.split('*/')[1])
         else:
             return self.rsync_daymonth
@@ -589,21 +588,21 @@ class Rsync(Model):
         mchoices = dict(choices.MONTHS_CHOICES)
         labels = []
         for m in months:
-            labels.append(unicode(mchoices[m]))
+            labels.append(str(mchoices[m]))
         return ', '.join(labels)
 
     def get_human_dayweek(self):
         weeks = self.rsync_dayweek.split(',')
         if len(weeks) == 7 or self.rsync_dayweek == '*':
             return _('Everyday')
-        if weeks == map(str, xrange(1, 6)):
+        if weeks == list(map(str, range(1, 6))):
             return _('Weekdays')
-        if weeks == map(str, xrange(6, 8)):
+        if weeks == list(map(str, range(6, 8))):
             return _('Weekends')
         wchoices = dict(choices.WEEKDAYS_CHOICES)
         labels = []
         for w in weeks:
-            labels.append(unicode(wchoices[str(w)]))
+            labels.append(str(wchoices[str(w)]))
         return ', '.join(labels)
 
     def commandline(self):
@@ -677,7 +676,6 @@ class Rsync(Model):
 
     def run(self):
         proc = subprocess.Popen([
-            "/usr/local/bin/python2",
             "/usr/local/www/freenasUI/tools/runnow.py",
             "-t", "rsync",
             "-i", str(self.id),
@@ -733,18 +731,18 @@ class SMARTTest(Model):
 
     def get_human_hour(self):
         if self.smarttest_hour in ('..', '*'):
-            return _(u'Every hour')
+            return _('Every hour')
         elif self.smarttest_hour.startswith('*/'):
-            return _(u'Every {0} hour(s)').format(
+            return _('Every {0} hour(s)').format(
                 self.smarttest_hour.split('*/')[1])
         else:
             return self.smarttest_hour
 
     def get_human_daymonth(self):
         if self.smarttest_daymonth in ('..', '*'):
-            return _(u'Everyday')
+            return _('Everyday')
         elif self.smarttest_daymonth.startswith('*/'):
-            return _(u'Every {0} days').format(
+            return _('Every {0} days').format(
                 self.smarttest_daymonth.split('*/')[1])
         else:
             return self.smarttest_daymonth
@@ -756,24 +754,24 @@ class SMARTTest(Model):
         mchoices = dict(choices.MONTHS_CHOICES)
         labels = []
         for m in months:
-            labels.append(unicode(mchoices[m]))
+            labels.append(str(mchoices[m]))
         return ', '.join(labels)
 
     def get_human_dayweek(self):
         weeks = self.smarttest_dayweek.split(',')
         if len(weeks) == 7:
             return _('Everyday')
-        if weeks == map(str, xrange(1, 6)):
+        if weeks == list(map(str, range(1, 6))):
             return _('Weekdays')
-        if weeks == map(str, xrange(6, 8)):
+        if weeks == list(map(str, range(6, 8))):
             return _('Weekends')
         wchoices = dict(choices.WEEKDAYS_CHOICES)
         labels = []
         for w in weeks:
-            labels.append(unicode(wchoices[str(w)]))
+            labels.append(str(wchoices[str(w)]))
         return ', '.join(labels)
 
-    def __unicode__(self):
+    def __str__(self):
         if self.smarttest_disks.count() > 3:
             disks = [d.disk_name for d in self.smarttest_disks.all()[:3]]
             disks = ', '.join(disks) + '...'

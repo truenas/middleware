@@ -8,15 +8,16 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:03-0700\n"
-"PO-Revision-Date: 2016-12-12 11:25+0000\n"
-"Last-Translator: Tonnes <tonnes.mb@gmail.com>\n"
-"Language-Team: LANGUAGE <LL@li.org>\n"
+"PO-Revision-Date: 2017-04-09 14:31+0000\n"
+"Last-Translator: Ton <tonnes.mb@gmail.com>\n"
+"Language-Team: Dutch <http://weblate.trueos.org/projects/freenas/django/nl/>"
+"\n"
 "Language: nl\n"
 "MIME-Version: 1.0\n"
 "Content-Type: text/plain; charset=UTF-8\n"
 "Content-Transfer-Encoding: 8bit\n"
-"Plural-Forms: nplurals=2; plural=(n != 1);\n"
-"X-Generator: Pootle 2.5.0\n"
+"Plural-Forms: nplurals=2; plural=n != 1;\n"
+"X-Generator: Weblate 2.10-dev\n"
 "X-POOTLE-MTIME: 1481541904.0\n"
 
 #: choices.py:40
@@ -692,7 +693,7 @@ msgstr "Volledige naam"
 
 #: account/models.py:126 templates/account/bsdusers.html:90
 msgid "E-mail"
-msgstr "E-mail"
+msgstr "E-mailadres"
 
 #: account/models.py:131 account/models.py:176 services/models.py:593
 #: services/models.py:1416 system/models.py:329 system/models.py:522
@@ -4058,11 +4059,7 @@ msgstr "S.M.A.R.T. inschakelen"
 
 #: storage/models.py:385
 msgid "S.M.A.R.T. extra options"
-msgstr ""
-"Het NFSv3-eigendomsmodel voor NFSv4 gebruiken. Dit omzeilt de noodzaak om "
-"gebruikers en groepen tussen de client en server te synchroniseren. Houd er "
-"rekening mee dat deze optie wederzijds incompatibel is met de optie voor > "
-"16 groepen."
+msgstr "Extra opties voor S.M.A.R.T."
 
 #: storage/models.py:444 system/models.py:660
 msgid "Disks"
@@ -5070,11 +5067,13 @@ msgid "Cancel"
 msgstr "Annuleren"
 
 #: templates/freeadmin/generic_model_delete.html:14
-#, python-format
+#, fuzzy, python-format
 msgid ""
 "There are %(related_num)s related entries that are going to be delete as "
 "well because depend on this"
 msgstr ""
+"Er zijn %(related_num)s gerelateerde vermeldingen die ook worden verwijderd, "
+"omdat ze hiervan afhankelijk zijn."
 
 #: templates/freeadmin/generic_model_delete.html:30
 #: templates/plugins/plugin_confirm_delete.html:14
@@ -5106,7 +5105,7 @@ msgstr "Actieve processen"
 #: templates/freeadmin/index.html:38 templates/freeadmin/index.html.py:44
 #: templates/freeadmin/index.html:49
 msgid "Loading..."
-msgstr "Bezig met laden..."
+msgstr "Laden..."
 
 #: templates/freeadmin/index.html:53
 msgid "Help & Support"
@@ -5289,7 +5288,7 @@ msgstr "Standaardroute"
 
 #: templates/network/summary.html:46
 msgid "No default route defined"
-msgstr "Bepaalt de toegang die een externe host tot deze module heeft"
+msgstr "Geen standaardroute gedefinieerd"
 
 #~ msgid "Edit VLAN"
 #~ msgstr "VLAN Wijzigen"
@@ -5316,7 +5315,7 @@ msgstr "Informatie"
 
 #: templates/plugins/index.html:33
 msgid "Plugin info"
-msgstr "Plugin Informatie"
+msgstr "Plug-in-info"
 
 #~ msgid "Edit Plugin"
 #~ msgstr "Wijzig Plugin"
@@ -5327,7 +5326,7 @@ msgstr "Plug-in verwijderen"
 
 #: templates/plugins/index.html:55
 msgid "No plugins installed"
-msgstr ""
+msgstr "Geen plug-ins geïnstalleerd"
 
 #: templates/plugins/jail_import.html:2
 msgid "Import"
@@ -5340,7 +5339,7 @@ msgstr "Stap %(step)s van %(step_count)s"
 
 #: templates/plugins/jailpbi.html:18
 msgid "Upload Jail PBI"
-msgstr ""
+msgstr "Jail-PBI uploaden"
 
 #: templates/plugins/jailpbi.html:21 templates/plugins/plugin_info.html:27
 #: templates/storage/disk_detach.html:13
@@ -5386,7 +5385,7 @@ msgstr "Welkom, %(username)s. Bedankt voor het aanmelden."
 #: templates/registration/login.html:46
 #, python-format
 msgid "Welcome to %(sw_name)s&trade; %(sw_login_version)s"
-msgstr ""
+msgstr "Welkom bij %(sw_name)s&trade; %(sw_login_version)s"
 
 #~ msgid "Please log in."
 #~ msgstr "Gelieve in te loggen."
@@ -5439,7 +5438,7 @@ msgstr "Plug-in-instellingen"
 
 #: templates/services/core.html:105
 msgid "Install Jail PBI"
-msgstr ""
+msgstr "Jail-PBI installeren"
 
 #: templates/services/core.html:117
 msgid "Rsync Settings"
@@ -5549,8 +5548,9 @@ msgid "Listen"
 msgstr "Luisteren"
 
 #: templates/services/iscsi_portals.html:18
+#, fuzzy
 msgid "No IP defined for this Portal"
-msgstr ""
+msgstr "Geen IP gedefinieerd voor dit portal"
 
 #~ msgid "Edit Portal"
 #~ msgstr "Wijzig Portaal"
@@ -5607,8 +5607,9 @@ msgid "No available plugins services"
 msgstr "Geen beschikbare plug-in-services"
 
 #: templates/services/pluginsjail_delete.html:4
+#, fuzzy
 msgid "All the files within the plugins jail will be permanently deleted."
-msgstr ""
+msgstr "Alle bestanden binnen de plug-in-jail worden definitief verwijderd."
 
 #: templates/services/pluginsjail_edit.html:12
 msgid "Delete Plugins Jail"
@@ -6045,7 +6046,7 @@ msgstr "Weet u zeker dat u de fabrieksconfiguratie wilt terugzetten?"
 
 #: templates/system/cronjob.html:41
 msgid "No cron jobs defined."
-msgstr "Geen cronjobs gedefinieerd"
+msgstr "Geen cronjobs gedefinieerd."
 
 #: templates/system/cronjob.html:47
 msgid "Add a cron job"
@@ -11025,7 +11026,7 @@ msgstr "Opstartomgeving %(name)s hernoemen"
 #: templates/system/upgrade_edit.html:13
 #: templates/system/upgrade_edit.html:15
 msgid "Manual Update"
-msgstr "Handmatige update"
+msgstr "Handmatig bijwerken"
 
 #: services/models.py:268
 msgid ""
@@ -11839,7 +11840,6 @@ msgstr "Type LDAP-schema."
 # Echter, User Guide = Gebruikershandleiding, Guided Tour = Rondleiding, Travel Guide = Reisgids. Handleiding lijkt daarom geschikter.
 #: freeadmin/navtree.py:249
 #: templates/menubar.html:73
-#, fuzzy
 msgid "Guide"
 msgstr "Handleiding"
 
@@ -11980,7 +11980,7 @@ msgid ""
 "'eui.' or 'naa.'"
 msgstr ""
 "De basisnaam (bv. iqn.2005-10.org.freenas.ctl, zie RFC 3720 en 3721 voor "
-"details) zal de doelnaam die niet met 'iqn.', 'eui.' of 'naa' begint "
+"details) zal de doelnaam die niet met 'iqn.', 'eui.' of 'naa.' begint "
 "toevoegen."
 
 #: services/models.py:437
@@ -12405,12 +12405,10 @@ msgid "Backup worker PID"
 msgstr "PID van backup worker"
 
 #: system/models.py:971
-#, fuzzy
 msgid "Started at"
 msgstr "Begonnen om"
 
 #: system/models.py:975
-#, fuzzy
 msgid "Finished at"
 msgstr "Voltooid om"
 
@@ -12940,10 +12938,13 @@ msgid "Recursively replicate child dataset's snapshots"
 msgstr "Momentopnamen van onderliggende gegevensset recursief repliceren"
 
 #: storage/models.py:910
+#, fuzzy
 msgid ""
 "Delete snapshots that are no longer available locally after successful "
 "replication of new snapshots"
 msgstr ""
+"Momentopnamen die na geslaagde replicatie van nieuwe momentopnamen lokaal "
+"niet meer beschikbaar zijn verwijderen"
 
 #: storage/models.py:910
 msgid "Delete stale snapshots on remote system"
@@ -13183,12 +13184,18 @@ msgid "Disable Active Directory user/group cache"
 msgstr "Cache voor Active Directory-gebruiker/-groep uitschakelen"
 
 #: directoryservice/models.py:954
+#, fuzzy
 msgid ""
 "Set this if you want to disable caching Active Directory users and groups. "
 "WARNING: Only use this option if you have a large number of users and groups "
 "that is preventing the machine from binding to the domain, you will not be "
 "able to set permissions using the GUI with this turned on."
 msgstr ""
+"Stel dit in als u het opslaan in cache van Active Directory-gebruikers en -"
+"groepen wilt uitschakelen. WAARSCHUWING: gebruik deze optie alleen als u een "
+"groot aantal gebruikers en groepen hebt die voorkomt dat de machine met het "
+"domein kan binden; u kunt geen machtigingen instellen via de GUI wanneer dit "
+"is ingeschakeld."
 
 #: network/forms.py:385
 msgid "You are not allowed to delete interfaces while failover is enabled."

@@ -11,9 +11,9 @@ MAINTAINER=     dev@ixsystems.com
 COMMENT=        Userguide for UI
 PRODUCT?=
 
-BUILD_DEPENDS=	sphinx-build:${PORTSDIR}/textproc/py-sphinx \
-		${PYTHON_PKGNAMEPREFIX}sphinxcontrib-httpdomain>0:${PORTSDIR}/textproc/py-sphinxcontrib-httpdomain \
-		${PYTHON_PKGNAMEPREFIX}sphinx_numfig>r0:${PORTSDIR}/textproc/py-sphinx_numfig
+BUILD_DEPENDS=	sphinx-build:textproc/py-sphinx \
+		${PYTHON_PKGNAMEPREFIX}sphinxcontrib-httpdomain>0:textproc/py-sphinxcontrib-httpdomain \
+		${PYTHON_PKGNAMEPREFIX}sphinx_numfig>r0:textproc/py-sphinx_numfig
 
 USES=	perl5 python:build
 
@@ -24,9 +24,9 @@ WRKSRC=		/usr/freenas_docs
 
 .if ${PRODUCT} == "TrueNAS"
 USES+=		gmake
-BUILD_DEPENDS+=	gmake>0:${PORTSDIR}/devel/gmake \
-		tex-formats>0:${PORTSDIR}/print/tex-formats \
-		tex-dvipsk>0:${PORTSDIR}/print/tex-dvipsk
+BUILD_DEPENDS+=	gmake>0:devel/gmake \
+		tex-formats>0:print/tex-formats \
+		tex-dvipsk>0:print/tex-dvipsk
 .endif
 
 

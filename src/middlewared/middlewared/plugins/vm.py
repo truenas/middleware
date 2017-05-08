@@ -1,7 +1,8 @@
-from middlewared.schema import accepts, Int
-from middlewared.service import CRUDService
+from middlewared.schema import accepts, Int, Str, Dict, List, Ref, Bool
+from middlewared.service import filterable, CRUDService
 from middlewared.utils import Nid, Popen
 
+import errno
 import gevent
 import netif
 import os
@@ -19,7 +20,11 @@ class VMManager(object):
     def start(self, id):
         vm = self.service.query([('id', '=', id)], {'get': True})
         self._vm[id] = VMSupervisor(self, vm)
-        gevent.spawn(self._vm[id].run)
+        try:
+            gevent.spawn(self._vm[id].run)
+            return True
+        except:
+            raise
 
     def stop(self, id):
         supervisor = self._vm.get(id)
@@ -47,6 +52,7 @@ class VMSupervisor(object):
         self.vm = vm
         self.proc = None
         self.taps = []
+        self.bhyve_error = None
 
     def run(self):
         args = [
@@ -69,7 +75,7 @@ class VMSupervisor(object):
         nid = Nid(3)
         for device in self.vm['devices']:
             if device['dtype'] == 'DISK':
-                if device['attributes'].get('mode') == 'AHCI':
+                if device['attributes'].get('type') == 'AHCI':
                     args += ['-s', '{},ahci-hd,{}'.format(nid(), device['attributes']['path'])]
                 else:
                     args += ['-s', '{},virtio-blk,{}'.format(nid(), device['attributes']['path'])]
@@ -83,7 +89,7 @@ class VMSupervisor(object):
                 # If Bridge
                 if True:
                     bridge = None
-                    for name, iface in netif.list_interfaces().items():
+                    for name, iface in list(netif.list_interfaces().items()):
                         if name.startswith('bridge'):
                             bridge = iface
                             break
@@ -105,8 +111,11 @@ class VMSupervisor(object):
                     wait = 'wait'
                 else:
                     wait = ''
+
+                vnc_port = int(device['attributes'].get('vnc_port', 5900 + self.vm['id']))
+
                 args += [
-                    '-s', '29,fbuf,tcp=0.0.0.0:{},w=1024,h=768,{}'.format(5900 + self.vm['id'], wait),
+                    '-s', '29,fbuf,tcp=0.0.0.0:{},w=1024,h=768,{}'.format(vnc_port, wait),
                     '-s', '30,xhci,tablet',
                 ]
 
@@ -117,20 +126,45 @@ class VMSupervisor(object):
         for line in self.proc.stdout:
             self.logger.debug('{}: {}'.format(self.vm['name'], line))
 
-        self.proc.wait()
+        # bhyve returns the following status code:
+        # 0 - VM has been reset
+        # 1 - VM has been powered off
+        # 2 - VM has been halted
+        # 3 - VM generated a triple fault
+        # all other non-zero status codes are errors
+        self.bhyve_error = self.proc.wait()
+        if self.bhyve_error == 0:
+            self.logger.info("===> REBOOTING VM: {0} ID: {1} BHYVE_CODE: {2}".format(self.vm['name'], self.vm['id'], self.bhyve_error))
+            self.manager.stop(self.vm['id'])
+            self.manager.start(self.vm['id'])
+        elif self.bhyve_error in (1, 2, 3):
+            self.logger.info("===> STOPPING VM: {0} ID: {1} BHYVE_CODE: {2}".format(self.vm['name'], self.vm['id'], self.bhyve_error))
+            self.manager.stop(self.vm['id'])
+        elif self.bhyve_error not in (0, 1, 2, 3, None):
+            self.logger.info("===> ERROR VM: {0} ID: {1} BHYVE_CODE: {2}".format(self.vm['name'], self.vm['id'], self.bhyve_error))
+            self.destroy_vm()
 
-        self.logger.info('Destroying {}'.format(self.vm['name']))
+    def destroy_vm(self):
+        self.logger.warn("===> DESTROYING VM: {0} ID: {1} BHYVE_CODE: {2}".format(self.vm['name'], self.vm['id'], self.bhyve_error))
+        # XXX: We need to catch the bhyvectl return error.
+        bhyve_error = Popen(['bhyvectl', '--destroy', '--vm={}'.format(self.vm['name'])], stdout=subprocess.PIPE, stderr=subprocess.PIPE).wait()
+        self.manager._vm.pop(self.vm['id'], None)
+        self.destroy_tap()
 
-        Popen(['bhyvectl', '--destroy', '--vm={}'.format(self.vm['name'])], stdout=subprocess.PIPE, stderr=subprocess.PIPE).wait()
-
+    def destroy_tap(self):
         while self.taps:
             netif.destroy_interface(self.taps.pop())
 
-        self.manager._vm.pop(self.vm['id'], None)
-
     def stop(self):
         if self.proc:
-            os.kill(self.proc.pid, 15)
+            try:
+                os.kill(self.proc.pid, 15)
+            except ProcessLookupError as e:
+                # Already stopped, process do not exist anymore
+                if e.errno != errno.ESRCH:
+                    raise
+            # XXX: For now we destroy the VM, but we need to be able to wake up it after stop.
+            self.destroy_vm()
             return True
 
     def running(self):
@@ -152,7 +186,9 @@ class VMService(CRUDService):
         super(VMService, self).__init__(*args, **kwargs)
         self._manager = VMManager(self)
 
+    @accepts()
     def flags(self):
+        """Returns a dictionary with CPU flags for bhyve."""
         data = {}
 
         vmx = sysctl.filter('hw.vmm.vmx.initialized')
@@ -161,8 +197,15 @@ class VMService(CRUDService):
         ug = sysctl.filter('hw.vmm.vmx.cap.unrestricted_guest')
         data['unrestricted_guest'] = True if ug and ug[0].value else False
 
+        rvi = sysctl.filter('hw.vmm.svm.features')
+        data['amd_rvi'] = True if rvi and rvi[0].value != 0 else False
+
+        asids = sysctl.filter('hw.vmm.svm.num_asids')
+        data['amd_asids'] = True if asids and asids[0].value != 0 else False
+
         return data
 
+    @filterable
     def query(self, filters=None, options=None):
         options = options or {}
         options['extend'] = 'vm._extend_vm'
@@ -176,7 +219,18 @@ class VMService(CRUDService):
             vm['devices'].append(device)
         return vm
 
+    @accepts(Dict(
+        'data',
+        Str('name'),
+        Str('description'),
+        Int('vcpus'),
+        Int('memory'),
+        Str('bootloader'),
+        List('devices'),
+        Bool('autostart'),
+        ))
     def do_create(self, data):
+        """Create a VM."""
         devices = data.pop('devices')
         pk = self.middleware.call('datastore.insert', 'vm.vm', data)
 
@@ -185,23 +239,49 @@ class VMService(CRUDService):
             self.middleware.call('datastore.insert', 'vm.device', device)
         return pk
 
+    @accepts(Int('id'), Dict(
+        'data',
+        Str('name'),
+        Str('description'),
+        Int('vcpus'),
+        Int('memory'),
+        Str('bootloader'),
+        Bool('autostart'),
+        ))
     def do_update(self, id, data):
+        """Update all information of a specific VM."""
         return self.middleware.call('datastore.update', 'vm.vm', id, data)
 
+    @accepts(Int('id'))
     def do_delete(self, id):
+        """Delete a VM."""
         return self.middleware.call('datastore.delete', 'vm.vm', id)
 
     @accepts(Int('id'))
     def start(self, id):
+        """Start a VM."""
         return self._manager.start(id)
 
     @accepts(Int('id'))
     def stop(self, id):
+        """Stop a VM."""
         return self._manager.stop(id)
 
     @accepts(Int('id'))
     def status(self, id):
+        """Get the status of a VM, if it is RUNNING or STOPPED."""
         return self._manager.status(id)
+
+    @accepts(Int('id'))
+    def restart(self, id):
+        """ Restart a VM."""
+        stop_vm = self.stop(id)
+
+        if stop_vm is True:
+            start_vm = self.start(id)
+            return start_vm
+        else:
+            return stop_vm
 
 
 def kmod_load():
@@ -212,5 +292,18 @@ def kmod_load():
         Popen(['/sbin/kldload', 'nmdm'])
 
 
+def _event_system_ready(middleware, event_type, args):
+    """
+    Method called when system is ready, supposed to start VMs
+    flagged that way.
+    """
+    if args['id'] != 'ready':
+        return
+
+    for vm in middleware.call('vm.query', [('autostart', '=', True)]):
+        middleware.call('vm.start', vm['id'])
+
+
 def setup(middleware):
     gevent.spawn(kmod_load)
+    middleware.event_subscribe('system', _event_system_ready)

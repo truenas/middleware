@@ -181,7 +181,7 @@ class FreeAdminSite(object):
         ]
 
         # Add in each model's views.
-        for model_admin in self._registry.itervalues():
+        for model_admin in self._registry.values():
             urlpatterns += [
                 url(r'^%s/%s/' % (
                     model_admin.app_label,
@@ -202,7 +202,7 @@ class FreeAdminSite(object):
         from freenasUI.middleware.client import client
 
         view = appPool.hook_app_index('freeadmin', request)
-        view = filter(None, view)
+        view = [_f for _f in view if _f]
         if view:
             return view[0]
 
@@ -241,7 +241,7 @@ class FreeAdminSite(object):
             'sw_name': get_sw_name(),
             'sw_version': sw_version,
             'sw_version_footer': sw_version_footer,
-            'cache_hash': hashlib.md5(sw_version).hexdigest(),
+            'cache_hash': hashlib.md5(sw_version.encode('utf8')).hexdigest(),
             'css_hook': appPool.get_base_css(request),
             'js_hook': appPool.get_base_js(request),
             'menu_hook': appPool.get_top_menu(request),
@@ -260,7 +260,7 @@ class FreeAdminSite(object):
             navtree.generate(request)
             final = navtree.dijitTree(request.user)
             data = json.dumps(final)
-        except Exception, e:
+        except Exception as e:
             log.debug(
                 "Fatal error while generating the tree json: %s",
                 e,
@@ -274,7 +274,7 @@ class FreeAdminSite(object):
     def alert_status(self, request):
         from freenasUI.system.models import Alert
         from freenasUI.system.alert import alert_node, alertPlugins
-        dismisseds = [a.message_id for a in Alert.objects.filter(node=alert_node(), dismiss=True)]
+        dismisseds = [a.message_id for a in Alert.objects.filter(node=alert_node())]
         alerts = alertPlugins.get_alerts()
         current = 'OK'
         for alert in alerts:
@@ -294,7 +294,7 @@ class FreeAdminSite(object):
     def alert_detail(self, request):
         from freenasUI.system.models import Alert
         from freenasUI.system.alert import alert_node, alertPlugins
-        dismisseds = [a.message_id for a in Alert.objects.filter(node=alert_node(), dismiss=True)]
+        dismisseds = [a.message_id for a in Alert.objects.filter(node=alert_node())]
         alerts = alertPlugins.get_alerts()
         return render(request, "freeadmin/alert_status.html", {
             'alerts': alerts,
@@ -312,18 +312,10 @@ class FreeAdminSite(object):
         try:
             alert = Alert.objects.get(node=alert_node(), message_id=msgid)
             if dismiss == "0":
-                alert.dismiss = False
-                alert.save()
-            elif dismiss == "1":
-                alert.dismiss = True
-                alert.save()
+                alert.delete()
         except Alert.DoesNotExist:
             if dismiss == "1":
-                alert = Alert.objects.create(
-                    node=alert_node(),
-                    message_id=msgid,
-                    dismiss=True,
-                )
+                alert = Alert.objects.create(node=alert_node(), message_id=msgid)
         return JsonResp(request, message="OK")
 
 site = FreeAdminSite()

@@ -1,16 +1,16 @@
-from __future__ import unicode_literals
+
 
 import logging
 import os
 import socket
 import threading
 import time
-import xmlrpclib
+import xmlrpc.client
 from sqlite3 import OperationalError
 
 from django.db.backends.sqlite3 import base as sqlite3base
 from lockfile import LockFile, LockTimeout
-import cPickle as pickle
+import pickle as pickle
 import sqlparse
 
 Database = sqlite3base.Database
@@ -192,7 +192,7 @@ class DatabaseWrapper(sqlite3base.DatabaseWrapper):
                 if sync:
                     j.queries = []
                 return sync
-            except (xmlrpclib.Fault, socket.error) as e:
+            except (xmlrpc.client.Fault, socket.error) as e:
                 log.error('Failed sync_to: %s', e)
                 return False
 
@@ -405,14 +405,19 @@ class HASQLiteCursorWrapper(Database.Cursor):
             try:
                 rv = method(self, *args, **kwargs)
             except OperationalError as e:
-                if 'locked' not in e.message:
+                if 'locked' not in str(e):
                     raise
                 if retries < 5:
                     time.sleep(0.3)
                     retries += 1
                     continue
                 else:
-                    raise
+                    try:
+                        from freenasUI.freeadmin.utils import log_db_locked
+                        log_db_locked()
+                    except Exception:
+                        pass
+                    raise e
             break
         return rv
 

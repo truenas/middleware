@@ -63,6 +63,7 @@ def index(request):
     context = {
         'sw_name': sw_name,
         'license': license,
+        'fc_enabled': utils.fc_enabled(),
         'allow_update': allow_update,
     }
     for c in appPool.hook_view_context('support.index', request):
@@ -109,8 +110,8 @@ def license_update(request):
     eula = None
     if not notifier().is_freenas():
         if os.path.exists('/usr/local/share/truenas/eula'):
-            with open('/usr/local/share/truenas/eula', 'r') as f:
-                eula = f.read().decode('utf8')
+            with open('/usr/local/share/truenas/eula', 'r', encoding='utf8') as f:
+                eula = f.read()
 
     return render(request, 'support/license_update.html', {
         'eula': eula,
@@ -186,7 +187,8 @@ def ticket(request):
 
         serial = subprocess.Popen(
             ['/usr/local/sbin/dmidecode', '-s', 'system-serial-number'],
-            stdout=subprocess.PIPE
+            stdout=subprocess.PIPE,
+            encoding='utf8',
         ).communicate()[0].split('\n')[0].upper()
 
         license, reason = utils.get_license()
@@ -245,7 +247,7 @@ def ticket_categories(request):
 
     if success:
         data['categories'] = OrderedDict(
-            sorted([('------', '')] + msg.items(), key=lambda y: y[0].lower())
+            sorted([('------', '')] + list(msg.items()), key=lambda y: y[0].lower())
         )
     else:
         data['message'] = msg

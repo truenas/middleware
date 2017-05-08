@@ -6,7 +6,7 @@ from middlewared.client.utils import Struct
 def get_interface(ipaddress):
     get_all_ifaces = netif.list_interfaces()
     ifaces = []
-    for iface in get_all_ifaces.iterkeys():
+    for iface in get_all_ifaces.keys():
         all_ip = [a.__getstate__()['address'] for a in netif.get_interface(iface).addresses if a.af == netif.AddressFamily.INET]
         is_ip_exist = list(set(ipaddress).intersection(all_ip))
         if is_ip_exist:
@@ -53,6 +53,9 @@ def main():
 
     if afp.afp_srv_map_acls:
         cf_contents.append("\tmap acls = %s\n" % afp.afp_srv_map_acls)
+
+    if afp.afp_srv_chmod_request:
+        cf_contents.append("\tchmod request = %s\n" % afp.afp_srv_chmod_request)
 
     if afp.afp_srv_map_acls == 'mode' and client.call('notifier.common', 'system', 'activedirectory_enabled'):
         map_acls_mode = True
@@ -129,7 +132,7 @@ def main():
             cf_contents.append("\tacls = yes\n")
         # Do not fail if aux params are not properly entered by the user
         try:
-            aux_params = ["\t{0}\n".format(p.encode('utf8')) for p in share.afp_auxparams.split("\n")]
+            aux_params = ["\t{0}\n".format(p) for p in share.afp_auxparams.split("\n")]
         except:
             pass
         else:

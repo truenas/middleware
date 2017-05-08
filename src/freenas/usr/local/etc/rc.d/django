@@ -2,7 +2,7 @@
 #
 #
 # PROVIDE: django
-# REQUIRE: DAEMON postrandom
+# REQUIRE: DAEMON
 # KEYWORD: shutdown
 #
 
@@ -75,7 +75,7 @@ start_command()
 		export https_proxy="${proxy}"
 	fi
 
-	/usr/local/bin/uwsgi --chdir=/usr/local/www --module=freenasUI.wsgi:application --master --pidfile=${pidfile} --fastcgi-socket=${host}:${port} -T --threads=15 --daemonize=/var/log/uwsgi.log
+	env LC_ALL=en_US.UTF-8 /usr/local/bin/uwsgi --chdir=/usr/local/www --module=freenasUI.wsgi:application --master --pidfile=${pidfile} --fastcgi-socket=${host}:${port} -T --threads=15 -L -b 20480 --daemonize=/var/log/uwsgi.log
 	touch ${logs}
 	/usr/local/bin/python ${path}/tools/alert.py > /dev/null 2>&1
 	sleep 1

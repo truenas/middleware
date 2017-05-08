@@ -1,0 +1,22 @@
+{% extends "freeadmin/generic_model_edit.html" %}
+{% block post_form %}
+{% if form.instance.is_available.0 %}
+{% if form.instance.enabled is None %}
+As a Silver / Gold Support Coverage Level Customer, you have the option to enable the proactive support service which automatically alerts iXsystems (via email) when certain conditions arise on this TrueNAS system. The service can aid in the quick identification and resolution of potential issues that may occur on your system. Please indicate whether you would like to enable this service by saving the form below.
+{% endif %}
+{% else %}
+Call iXsystems to upgrade to Silver/Gold support.
+{% endif %}
+{{ block.super }}
+{% endblock %}
+{% block buttons %}
+{% if form.instance.is_available.0 %}
+{{ block.super }}
+{% else %}
+    <tr>
+        <td colspan="2">
+		<button id="btn_{{ model_name }}_Ok" data-dojo-type="dijit.form.Button" disabled="disabled">Upgrade to Silver/Gold support for this feature</button>
+        </td>
+    </tr>
+{% endif %}
+{% endblock %}

@@ -351,54 +351,6 @@ require([
         });
     }
 
-    toggle_service = function(obj, onSuccess, force) {
-        var td = obj.parentNode;
-        var n = domConstruct.create("div", {  }, td);
-        domClass.add(n, "dijitIconLoading");
-        domStyle.set(n, "height", "25px");
-        domStyle.set(n, "float", "left");
-
-        xhr.post("/services/toggle/"+obj.name+"/", {
-            data: {"force": force},
-            handleAs: "json",
-            headers: {"X-CSRFToken": CSRFToken}
-            }).then(function(data) {
-                if(data.status == 'on') {
-                    obj.src = '/static/images/ui/buttons/on.png';
-                } else if(data.status == 'off') {
-                    obj.src = '/static/images/ui/buttons/off.png';
-                }
-                if(data.error) {
-                    setMessage(data.message, "error");
-                }
-                domConstruct.destroy(n);
-                for(svc in data.enabled_svcs) {
-                    var img = query("img[name=" + data.enabled_svcs[svc] + "_toggle]")[0];
-                    img.src = '/static/images/ui/buttons/on.png';
-                }
-                for(svc in data.disabled_svcs) {
-                    var img = query("img[name=" + data.disabled_svcs[svc] + "_toggle]")[0];
-                    img.src = '/static/images/ui/buttons/off.png';
-                }
-                if(onSuccess) onSuccess();
-
-                if(data.events) {
-                    for(i=0;i<data.events.length;i++){
-                        try {
-                            eval(data.events[i]);
-                        } catch(e) {
-                            console.log(e);
-                        }
-                    }
-                }
-
-            },
-            function(error) {
-                //alert
-            });
-
-    }
-
     addStorageJailChange = function(box) {
       var destination = registry.byId("id_destination");
       var jail = registry.byId("id_jail");
@@ -1155,13 +1107,6 @@ require([
         generic_certificate_autopopulate(
             '/system/CA/info/' + signedby_id + '/'
         );
-    }   
-
-    certificate_autopopulate = function() {
-        var signedby_id = registry.byId("id_cert_signedby").get("value");
-        generic_certificate_autopopulate(
-            '/system/certificate/info/' + signedby_id + '/'
-        );
     }
 
     get_directoryservice_set = function(enable) {
@@ -1397,12 +1342,14 @@ require([
         var disk_zvol = registry.byId("id_DISK_zvol").domNode.parentNode.parentNode;
         var nic_type = registry.byId("id_NIC_type").domNode.parentNode.parentNode;
         var vnc_wait = registry.byId("id_VNC_wait").domNode.parentNode.parentNode;
+        var vnc_port = registry.byId("id_VNC_port").domNode.parentNode.parentNode;
 
         domStyle.set(cdrom_path, "display", "none");
         domStyle.set(disk_mode, "display", "none");
         domStyle.set(disk_zvol, "display", "none");
         domStyle.set(nic_type, "display", "none");
         domStyle.set(vnc_wait, "display", "none");
+        domStyle.set(vnc_port, "display", "none");
 
         if(dtype.get('value') == 'DISK') {
           domStyle.set(disk_mode, "display", "");
@@ -1412,9 +1359,126 @@ require([
         } else if(dtype.get('value') == 'NIC') {
           domStyle.set(nic_type, "display", "");
         } else if(dtype.get('value') == 'VNC') {
+          domStyle.set(vnc_port, "display", "");
           domStyle.set(vnc_wait, "display", "");
         }
 
+    }
+
+    consulTypeToggle = function() {
+
+        var consulalert_type = registry.byId("id_consulalert_type");
+
+        // Common fields between all API
+        var cluster_name = registry.byId("id_cluster_name").domNode.parentNode.parentNode;
+        var username = registry.byId("id_username").domNode.parentNode.parentNode;
+        var password = registry.byId("id_password").domNode.parentNode.parentNode;
+        var enabled = registry.byId("id_enabled").domNode.parentNode.parentNode;
+        var _url = registry.byId("id_url").domNode.parentNode.parentNode;
+
+        // Influxdb
+        var host = registry.byId("id_host").domNode.parentNode.parentNode;
+        var database = registry.byId("id_database").domNode.parentNode.parentNode;
+        var series_name = registry.byId("id_series_name").domNode.parentNode.parentNode;
+
+        // Slack
+        var channel = registry.byId("id_channel").domNode.parentNode.parentNode;
+        var icon_url = registry.byId("id_icon_url").domNode.parentNode.parentNode;
+        var detailed = registry.byId("id_detailed").domNode.parentNode.parentNode;
+
+        // Mattermost
+        var team = registry.byId("id_team").domNode.parentNode.parentNode;
+
+        // PagerDuty
+        var service_key = registry.byId("id_service_key").domNode.parentNode.parentNode;
+        var client_name = registry.byId("id_client_name").domNode.parentNode.parentNode;
+
+        // HipChat
+        var hfrom = registry.byId("id_hfrom").domNode.parentNode.parentNode;
+        var base_url = registry.byId("id_base_url").domNode.parentNode.parentNode;
+        var room_id = registry.byId("id_room_id").domNode.parentNode.parentNode;
+        var auth_token = registry.byId("id_auth_token").domNode.parentNode.parentNode;
+
+        // OpsGenie
+        var api_key = registry.byId("id_api_key").domNode.parentNode.parentNode;
+
+        // AWS SNS
+        var region = registry.byId("id_region").domNode.parentNode.parentNode;
+        var topic_arn = registry.byId("id_topic_arn").domNode.parentNode.parentNode;
+
+        // VictorOps
+        var routing_key = registry.byId("id_routing_key").domNode.parentNode.parentNode;
+
+        domStyle.set(enabled, "display", "none");
+        domStyle.set(_url, "display", "none");
+        domStyle.set(cluster_name, "display", "none");
+        domStyle.set(username, "display", "none");
+        domStyle.set(password, "display", "none");
+        domStyle.set(host, "display", "none");
+        domStyle.set(database, "display", "none");
+        domStyle.set(series_name, "display", "none");
+        domStyle.set(channel, "display", "none");
+        domStyle.set(icon_url, "display", "none");
+        domStyle.set(detailed, "display", "none");
+        domStyle.set(team, "display", "none");
+        domStyle.set(service_key, "display", "none");
+        domStyle.set(client_name, "display", "none");
+        domStyle.set(hfrom, "display", "none");
+        domStyle.set(base_url, "display", "none");
+        domStyle.set(room_id, "display", "none");
+        domStyle.set(auth_token, "display", "none");
+        domStyle.set(api_key, "display", "none");
+        domStyle.set(region, "display", "none");
+        domStyle.set(topic_arn, "display", "none");
+        domStyle.set(routing_key, "display", "none");
+
+        if(consulalert_type.get('value') == 'InfluxDB') {
+            domStyle.set(host, "display", "table-row");
+            domStyle.set(username, "display", "table-row");
+            domStyle.set(password, "display", "table-row");
+            domStyle.set(database, "display", "table-row");
+            domStyle.set(series_name, "display", "table-row");
+            domStyle.set(enabled, "display", "table-row");
+        } else if(consulalert_type.get('value') == 'Slack') {
+            domStyle.set(cluster_name, "display", "table-row");
+            domStyle.set(_url, "display", "table-row");
+            domStyle.set(channel, "display", "table-row");
+            domStyle.set(username, "display", "table-row");
+            domStyle.set(icon_url, "display", "table-row");
+            domStyle.set(detailed, "display", "table-row");
+            domStyle.set(enabled, "display", "table-row");
+        } else if(consulalert_type.get('value') == 'Mattermost') {
+            domStyle.set(cluster_name, "display", "table-row");
+            domStyle.set(_url, "display", "table-row");
+            domStyle.set(username, "display", "table-row");
+            domStyle.set(password, "display", "table-row");
+            domStyle.set(team, "display", "table-row");
+            domStyle.set(channel, "display", "table-row");
+            domStyle.set(enabled, "display", "table-row");
+        } else if(consulalert_type.get('value') == 'PagerDuty') {
+            domStyle.set(service_key, "display", "table-row");
+            domStyle.set(client_name, "display", "table-row");
+            domStyle.set(enabled, "display", "table-row");
+        } else if(consulalert_type.get('value') == 'HipChat') {
+            domStyle.set(hfrom, "display", "table-row");
+            domStyle.set(cluster_name, "display", "table-row");
+            domStyle.set(base_url, "display", "table-row");
+            domStyle.set(room_id, "display", "table-row");
+            domStyle.set(auth_token, "display", "table-row");
+            domStyle.set(enabled, "display", "table-row");
+        } else if(consulalert_type.get('value') == 'OpsGenie') {
+            domStyle.set(cluster_name, "display", "table-row");
+            domStyle.set(api_key, "display", "table-row");
+            domStyle.set(enabled, "display", "table-row");
+        } else if(consulalert_type.get('value') == 'AWS-SNS') {
+            domStyle.set(region, "display", "table-row");
+            domStyle.set(topic_arn, "display", "table-row");
+            domStyle.set(enabled, "display", "table-row");
+        } else if(consulalert_type.get('value') == 'VictorOps') {
+            domStyle.set(api_key, "display", "table-row");
+            domStyle.set(routing_key, "display", "table-row");
+            domStyle.set(enabled, "display", "table-row");
+        }
     }
 
     systemDatasetMigration = function() {

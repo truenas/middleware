@@ -48,9 +48,6 @@ ADMINS = (
 MANAGERS = ADMINS
 
 DATABASE_PATH = '/data/freenas-v1.db'
-# Workaround bug in south database name
-if '--database=factory' in sys.argv:
-    DATABASE_PATH += '.factory'
 
 DATABASES = {
     'default': {
@@ -60,7 +57,7 @@ DATABASES = {
     },
     'factory': {
         'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': DATABASE_PATH,
+        'NAME': DATABASE_PATH + '.factory',
     }
 }
 
@@ -180,6 +177,7 @@ LOCALE_PATHS = (
 SESSION_ENGINE = 'django.contrib.sessions.backends.file'
 
 DIR_BLACKLIST = [
+    '__pycache__',
     'templates',
     'fnstatic',
     'middleware',
@@ -228,8 +226,12 @@ FORCE_SCRIPT_NAME = ''
 ALLOWED_HOSTS = ['*']
 
 AUTH_USER_MODEL = 'account.bsdUsers'
+AUTHENTICATION_BACKENDS = [
+    'django.contrib.auth.backends.ModelBackend',
+    'freenasUI.middleware.auth.AuthTokenBackend',
+]
 
-SOUTH_TESTS_MIGRATE = False
+TASTYPIE_DEFAULT_FORMATS = ['json']
 
 FILE_UPLOAD_MAX_MEMORY_SIZE = 33554432
 FILE_UPLOAD_TEMP_DIR = "/var/tmp/firmware/"
@@ -279,6 +281,6 @@ LOGGING = {
 SECRET_KEY = "."
 
 try:
-    from local_settings import *
+    from .local_settings import *
 except:
     pass

@@ -30,7 +30,7 @@ import json
 import logging
 import os
 import socket
-import urllib2
+import urllib.request
 
 from django.shortcuts import render
 from django.http import Http404, HttpResponse
@@ -142,7 +142,7 @@ def plugins(request):
             if os.path.exists("%s/%s" % (jc_path, t.plugin_jail)):
                 plugins.append(t)
 
-    args = map(lambda y: (y, host, request), plugins)
+    args = [(y, host, request) for y in plugins]
 
     pool = eventlet.GreenPool(20)
     for plugin, _json, jail_status in pool.imap(get_plugin_status, args):
@@ -270,7 +270,7 @@ def install_available(request, oid):
             if not addrs['high_ipv4']:
                 raise MiddlewareError(_("No available IP addresses"))
 
-    except MiddlewareError, e:
+    except MiddlewareError as e:
         return render(request, "plugins/install_error.html", {
             'error': e.value,
         })
@@ -299,12 +299,12 @@ def install_available(request, oid):
 
         try:
             jail = new_default_plugin_jail(plugin.unixname)
-        except IOError, e:
-            raise MiddlewareError(unicode(e))
-        except MiddlewareError, e:
+        except IOError as e:
+            raise MiddlewareError(str(e))
+        except MiddlewareError as e:
             raise e
         except Exception as e:
-            raise MiddlewareError(unicode(e))
+            raise MiddlewareError(str(e))
 
         newplugin = []
         if notifier().install_pbi(jail.jail_host, newplugin):
@@ -331,16 +331,22 @@ def install_available(request, oid):
 # XXX This needs a better implementation.. but will do for now ;-)
 #
 def install_progress(request):
-    jc = JailsConfiguration.objects.order_by("-id")[0]
-    logfile = '%s/warden.log' % jc.jc_path
+    try:
+        jc = JailsConfiguration.objects.order_by("-id")[0]
+        logfile = '%s/warden.log' % jc.jc_path
+    except IndexError:
+        logfile = '/tmp/warden.log'
     data = {}
     if os.path.exists(PROGRESS_FILE):
         data = {'step': 1}
         with open(PROGRESS_FILE, 'r') as f:
+            current = 0
             try:
-                current = int(f.readlines()[-1].strip())
+                read = f.readlines()
+                if read:
+                    current = int(read[-1].strip())
             except:
-                pass
+                log.debug('Failed to read progress file', exc_info=True)
         data['percent'] = current
         if current == 100:
             safe_unlink(PROGRESS_FILE)
@@ -372,7 +378,7 @@ def install_progress(request):
         data = {'step': 5}
         percent = 0
         with open(logfile, 'r') as f:
-            for line in f.xreadlines():
+            for line in f:
                 if line.startswith('====='):
                     parts = line.split()
                     if len(parts) > 1:
@@ -412,6 +418,7 @@ def update_progress(request):
 
 
 def upload(request, jail_id=-1):
+    jail_id = int(jail_id)
     try:
         jc = JailsConfiguration.objects.all()[0]
     except:
@@ -430,7 +437,7 @@ def upload(request, jail_id=-1):
             if not addrs['high_ipv4']:
                 raise MiddlewareError(_("No available IP addresses"))
 
-    except MiddlewareError, e:
+    except MiddlewareError as e:
         return render(request, "plugins/install_error.html", {
             'error': e.value,
         })
@@ -443,7 +450,7 @@ def upload(request, jail_id=-1):
         try:
             jail = Jails.objects.filter(pk=jail_id)[0]
 
-        except Exception, e:
+        except Exception as e:
             log.debug("Failed to get jail %d: %s", jail_id, repr(e))
             jail = None
 
@@ -498,7 +505,7 @@ def upload_progress(request):
         data['step'] = 2
         percent = 0
         with open(logfile, 'r') as f:
-            for line in f.xreadlines():
+            for line in f:
                 if line.startswith('====='):
                     parts = line.split()
                     if len(parts) > 1:
@@ -553,7 +560,7 @@ def plugin_installed_icon(request, plugin_name, oid):
             url = "%s/plugins/%s/%d/treemenu-icon" % \
                 (get_base_url(request), plugin_name, int(oid))
             try:
-                response = urllib2.urlopen(url, timeout=15)
+                response = urllib.request.urlopen(url, timeout=15)
                 icon = response.read()
             except:
                 pass
@@ -591,8 +598,8 @@ def get_ipv4_addr():
     if 'ipv4' in ii:
         ipv4_info = ii['ipv4']
         for i in ipv4_info:
-            ipv4addr =  unicode(i['inet'])
-            netmask = unicode(hex_to_cidr(int(i['netmask'], 0)))
+            ipv4addr =  str(i['inet'])
+            netmask = str(hex_to_cidr(int(i['netmask'], 0)))
             ipv4_obj = ipaddress.ip_interface('%s/%s' % (ipv4addr, netmask))
             ipv4_network = ipv4_obj.network
             if ipv4gateway_obj in ipv4_network:
@@ -615,7 +622,10 @@ def plugin_fcgi_client(request, name, oid, path):
         raise Http404
 
     plugin = qs[0]
-    jail = Jails.objects.filter(jail_host=plugin.plugin_jail)[0]
+    try:
+        jail = Jails.objects.filter(jail_host=plugin.plugin_jail)[0]
+    except IndexError:
+        raise Http404
     jail_ip = jail.jail_ipv4_addr
 
     fastcgi_env_path = "%s/%s/%s/fastcgi_env" % (
@@ -628,7 +638,7 @@ def plugin_fcgi_client(request, name, oid, path):
     try:
         if os.path.exists(fastcgi_env_path):
             plugin_fascgi_env = { }
-            execfile(fastcgi_env_path, {}, plugin_fascgi_env)
+            exec(compile(open(fastcgi_env_path).read(), fastcgi_env_path, 'exec'), {}, plugin_fascgi_env)
             env.update(plugin_fascgi_env)
 
     except Exception as e:
@@ -655,11 +665,14 @@ def plugin_fcgi_client(request, name, oid, path):
 
     args = request.POST if request.method == "POST" else request.GET
     try:
-        status, headers, body, raw = app(env, args=args)
+        status, headers, body, err = app(env, args=args)
     except socket.error as e:
         resp = HttpResponse(str(e))
         resp.status_code = 503
         return resp
+
+    if err:
+        log.debug('Error in FastCGI proxy call %r', err)
 
     resp = HttpResponse(body)
     for header, value in headers:

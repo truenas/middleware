@@ -1,1 +1,10 @@
-<b> Your machine can't run bhyve </b>
+<br />
+<b style="padding: 10px;">
+  Your machine can't run virtual machines.
+</b>
+<br />
+<span style="padding: 10px;">
+  At this time Intel CPU with Extended Page Tables (EPT) is supported.
+  To run guests with more than one vCPU on Intel CPU, it requires VMX unrestricted mode support (UG).
+  For AMD CPU it requires Rapid Virtualization Indexing (RVI) or Nested Page Tables (NPT) support.
+</span>

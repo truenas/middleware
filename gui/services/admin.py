@@ -61,10 +61,10 @@ class ISCSITargetFAdmin(BaseFreeAdmin):
 
     delete_form = "TargetExtentDelete"
     menu_child_of = "sharing.ISCSI"
-    icon_object = u"TargetIcon"
-    icon_model = u"TargetIcon"
-    icon_add = u"AddTargetIcon"
-    icon_view = u"ViewAllTargetsIcon"
+    icon_object = "TargetIcon"
+    icon_model = "TargetIcon"
+    icon_add = "AddTargetIcon"
+    icon_view = "ViewAllTargetsIcon"
     inlines = [
         {
             'form': 'iSCSITargetGroupsForm',
@@ -90,10 +90,10 @@ class ISCSITargetGroupsFAdmin(BaseFreeAdmin):
 class ISCSIPortalFAdmin(BaseFreeAdmin):
 
     menu_child_of = "sharing.ISCSI"
-    icon_object = u"PortalIcon"
-    icon_model = u"PortalIcon"
-    icon_add = u"AddPortalIcon"
-    icon_view = u"ViewAllPortalsIcon"
+    icon_object = "PortalIcon"
+    icon_model = "PortalIcon"
+    icon_add = "AddPortalIcon"
+    icon_view = "ViewAllPortalsIcon"
     inlines = [
         {
             'form': 'iSCSITargetPortalIPForm',
@@ -117,10 +117,10 @@ class ISCSIPortalFAdmin(BaseFreeAdmin):
 class ISCSIAuthCredentialFAdmin(BaseFreeAdmin):
 
     menu_child_of = "sharing.ISCSI"
-    icon_object = u"AuthorizedAccessIcon"
-    icon_model = u"AuthorizedAccessIcon"
-    icon_add = u"AddAuthorizedAccessIcon"
-    icon_view = u"ViewAllAuthorizedAccessIcon"
+    icon_object = "AuthorizedAccessIcon"
+    icon_model = "AuthorizedAccessIcon"
+    icon_add = "AddAuthorizedAccessIcon"
+    icon_view = "ViewAllAuthorizedAccessIcon"
 
     exclude_fields = (
         'id',
@@ -136,10 +136,10 @@ class ISCSITargetToExtentFAdmin(BaseFreeAdmin):
 
     delete_form = "TargetExtentDelete"
     menu_child_of = "sharing.ISCSI"
-    icon_object = u"TargetExtentIcon"
-    icon_model = u"TargetExtentIcon"
-    icon_add = u"AddTargetExtentIcon"
-    icon_view = u"ViewAllTargetExtentsIcon"
+    icon_object = "TargetExtentIcon"
+    icon_model = "TargetExtentIcon"
+    icon_add = "AddTargetExtentIcon"
+    icon_view = "ViewAllTargetExtentsIcon"
     nav_extra = {'order': 20}
 
     resource_mixin = ISCSITargetToExtentResourceMixin
@@ -149,10 +149,10 @@ class ISCSITargetExtentFAdmin(BaseFreeAdmin):
 
     delete_form = "ExtentDelete"
     menu_child_of = "sharing.ISCSI"
-    icon_object = u"ExtentIcon"
-    icon_model = u"ExtentIcon"
-    icon_add = u"AddExtentIcon"
-    icon_view = u"ViewAllExtentsIcon"
+    icon_object = "ExtentIcon"
+    icon_model = "ExtentIcon"
+    icon_add = "AddExtentIcon"
+    icon_view = "ViewAllExtentsIcon"
     nav_extra = {'order': 15}
 
     resource_mixin = ISCSITargetExtentResourceMixin

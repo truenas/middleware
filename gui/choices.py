@@ -26,7 +26,7 @@
 #####################################################################
 
 import csv
-import cStringIO
+import io
 import freenasUI.settings
 import logging
 import os
@@ -94,9 +94,8 @@ ADVPOWERMGMT_CHOICES = (
     ('Disabled', _('Disabled')),
     ('1',   _('Level 1 - Minimum power usage with Standby (spindown)')),
     ('64',  _('Level 64 - Intermediate power usage with Standby')),
-    ('127', _('Level 127 - Intermediate power usage with Standby')),
-    ('128',
-        _('Level 128 - Minimum power usage without Standby (no spindown)')),
+    ('127', _('Level 127 - Maximum power usage with Standby')),
+    ('128', _('Level 128 - Minimum power usage without Standby (no spindown)')),
     ('192', _('Level 192 - Intermediate power usage without Standby')),
     ('254', _('Level 254 - Maximum performance, maximum power usage')),
     )
@@ -107,34 +106,34 @@ ACOUSTICLVL_CHOICES = (
     ('Maximum', _('Maximum')),
 )
 
-temp = [str(x) for x in xrange(0, 12)]
+temp = [str(x) for x in range(0, 12)]
 MINUTES1_CHOICES = tuple(zip(temp, temp))
 
-temp = [str(x) for x in xrange(12, 24)]
+temp = [str(x) for x in range(12, 24)]
 MINUTES2_CHOICES = tuple(zip(temp, temp))
 
-temp = [str(x) for x in xrange(24, 36)]
+temp = [str(x) for x in range(24, 36)]
 MINUTES3_CHOICES = tuple(zip(temp, temp))
 
-temp = [str(x) for x in xrange(36, 48)]
+temp = [str(x) for x in range(36, 48)]
 MINUTES4_CHOICES = tuple(zip(temp, temp))
 
-temp = [str(x) for x in xrange(48, 60)]
+temp = [str(x) for x in range(48, 60)]
 MINUTES5_CHOICES = tuple(zip(temp, temp))
 
-temp = [str(x) for x in xrange(0, 12)]
+temp = [str(x) for x in range(0, 12)]
 HOURS1_CHOICES = tuple(zip(temp, temp))
 
-temp = [str(x) for x in xrange(12, 24)]
+temp = [str(x) for x in range(12, 24)]
 HOURS2_CHOICES = tuple(zip(temp, temp))
 
-temp = [str(x) for x in xrange(1, 13)]
+temp = [str(x) for x in range(1, 13)]
 DAYS1_CHOICES = tuple(zip(temp, temp))
 
-temp = [str(x) for x in xrange(13, 25)]
+temp = [str(x) for x in range(13, 25)]
 DAYS2_CHOICES = tuple(zip(temp, temp))
 
-temp = [str(x) for x in xrange(25, 32)]
+temp = [str(x) for x in range(25, 32)]
 DAYS3_CHOICES = tuple(zip(temp, temp))
 
 MONTHS_CHOICES = (
@@ -299,7 +298,6 @@ PWEncryptionChoices = (
 
 LAGGType = (
     ('failover',    'Failover'),
-    ('fec',         'FEC'),
     ('lacp',        'LACP'),
     ('loadbalance', 'Load Balance'),
     ('roundrobin',  'Round Robin'),
@@ -353,9 +351,7 @@ class NICChoices(object):
         pipe = popen("/sbin/ifconfig -l")
         self._NIClist = pipe.read().strip().split(' ')
         # Remove lo0 from choices
-        self._NIClist = filter(
-            lambda y: y not in ('lo0', 'pfsync0', 'pflog0', 'ipfw0'),
-            self._NIClist)
+        self._NIClist = [y for y in self._NIClist if y not in ('lo0', 'pfsync0', 'pflog0', 'ipfw0')]
 
         from freenasUI.middleware.notifier import notifier
         # Remove internal interfaces for failover
@@ -514,11 +510,7 @@ class IPChoices(NICChoices):
             for line in lines:
                 if carp:
                     reg = re.search(r' vhid (\d+)', line)
-                    if reg:
-                        vhid = reg.group(1)
-                        if vhid in ('10', '20'):
-                            continue
-                    else:
+                    if not reg:
                         continue
                 if line.startswith('\tinet6'):
                     if ipv6 is True:
@@ -666,8 +658,8 @@ class UPSDRIVER_CHOICES(object):
     def __iter__(self):
         if os.path.exists("/conf/base/etc/local/nut/driver.list"):
             with open('/conf/base/etc/local/nut/driver.list', 'rb') as f:
-                d = f.read()
-            r = cStringIO.StringIO()
+                d = f.read().decode('utf8', 'ignore')
+            r = io.StringIO()
             for line in re.sub(r'[ \t]+', ' ', d, flags=re.M).split('\n'):
                 r.write(line.strip() + '\n')
             r.seek(0)
@@ -682,9 +674,9 @@ class UPSDRIVER_CHOICES(object):
                 if row[last].find(' (experimental)') != -1:
                     row[last] = row[last].replace(' (experimental)', '').strip()
                 for i, field in enumerate(list(row)):
-                    row[i] = field.decode('utf8')
-                yield (u"$".join([row[last], row[3]]), u"%s (%s)" %
-                       (u" ".join(row[0:last]), row[last]))
+                    row[i] = field
+                yield ("$".join([row[last], row[3]]), "%s (%s)" %
+                       (" ".join(row[0:last]), row[last]))
 
 
 LDAP_SSL_CHOICES = (
@@ -711,8 +703,8 @@ class KBDMAP_CHOICES(object):
     def __iter__(self):
         if not os.path.exists(self.INDEX):
             return
-        with open(self.INDEX, 'r') as f:
-            d = f.read()
+        with open(self.INDEX, 'rb') as f:
+            d = f.read().decode('utf8', 'ignore')
         _all = re.findall(r'^(?P<name>[^#\s]+?)\.kbd:en:(?P<desc>.+)$', d, re.M)
         for name, desc in _all:
             yield name, desc
@@ -880,10 +872,7 @@ class SERIAL_CHOICES(object):
             pipe = popen("/usr/sbin/devinfo -u | "
                          "awk '/^I\/O ports:/, /^I\/O memory addresses:/' | "
                          "sed -En 's/ *([0-9a-fA-Fx]+).*\(uart[0-9]+\)/\\1/p'")
-            ports = filter(
-                lambda y: True if y else False,
-                pipe.read().strip().strip('\n').split('\n')
-            )
+            ports = [y for y in pipe.read().strip().strip('\n').split('\n') if y]
             if not ports:
                 ports = ['0x2f8']
             for p in ports:
@@ -896,10 +885,22 @@ TUNABLE_TYPES = (
     ('sysctl', _('Sysctl')),
 )
 
+CONSULALERTS_TYPES = (
+    ('AWS-SNS', _('AWS-SNS')),
+    ('HipChat', _('HipChat')),
+    ('InfluxDB', _('InfluxDB')),
+    ('Mattermost', _('Mattermost')),
+    ('OpsGenie', _('OpsGenie')),
+    ('PagerDuty', _('PagerDuty')),
+    ('Slack', _('Slack')),
+    ('VictorOps', _('VictorOps')),
+)
+
 IDMAP_CHOICES = (
     ('ad', _('ad')),
     ('adex', _('adex')),
     ('autorid', _('autorid')),
+    ('fruit', _('fruit')),
     ('hash', _('hash')),
     ('ldap', _('ldap')),
     ('nss', _('nss')),
@@ -945,7 +946,7 @@ class COUNTRY_CHOICES(object):
         self.__country_columns = None
         self.__country_list = []
 
-        with open(self.__country_file, 'r') as csvfile:
+        with open(self.__country_file, 'r', encoding='utf8') as csvfile:
             reader = csv.reader(csvfile)
 
             i = 0
@@ -1012,7 +1013,7 @@ class SHELL_CHOICES(object):
                 [x for x in f.readlines() if x.startswith('/')]
             ))
         self._dict = {}
-        for shell in shells + ['/sbin/nologin']:
+        for shell in shells + ['/usr/sbin/nologin']:
             self._dict[shell] = os.path.basename(shell)
 
     def __iter__(self):
@@ -1046,8 +1047,6 @@ class CIFS_VFS_OBJECTS(object):
         self.__vfs_exclude = [
             'shadow_copy2',
             'recycle',
-            'zfs_space',
-            'zfsacl',
         ]
 
         if os.path.exists(self.__vfs_module_path):
@@ -1055,6 +1054,8 @@ class CIFS_VFS_OBJECTS(object):
                 f = f.replace('.so', '')
                 if f not in self.__vfs_exclude:
                     self.__vfs_modules.append(f)
+        else:
+            self.__vfs_modules += ['streams_xattr', 'aio_pthread']
 
     def __iter__(self):
         return iter((m, m) for m in sorted(self.__vfs_modules))
@@ -1063,6 +1064,13 @@ AFP_MAP_ACLS_CHOICES = (
     ('none', _('None')),
     ('rights', _('Rights')),
     ('mode', _('Mode')),
+)
+
+
+AFP_CHMOD_REQUEST_CHOICES = (
+    ('ignore', _('Ignore')),
+    ('preserve', _('Preserve')),
+    ('simple', _('Simple')),
 )
 
 
@@ -1084,4 +1092,19 @@ VM_DEVTYPES = (
     ('DISK', _('Disk')),
     ('CDROM', _('CD-ROM')),
     ('VNC', _('VNC')),
+)
+
+VM_NICTYPES = (
+    ('E1000', _('Intel e82545 (e1000)')),
+    ('VIRTIO', _('VirtIO')),    
+)
+
+VM_DISKMODETYPES = (
+    ('AHCI', _('AHCI')),
+    ('VIRTIO', _('VirtIO')),
+)
+
+S3_MODES = (
+    ('local', _('local')),
+    ('distributed', _('distributed'))
 )

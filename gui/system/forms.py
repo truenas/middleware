@@ -27,7 +27,7 @@
 
 from collections import defaultdict, OrderedDict
 from datetime import datetime
-import cPickle as pickle
+import pickle as pickle
 import json
 import logging
 import math
@@ -42,6 +42,7 @@ from ldap import LDAPError
 
 from django.conf import settings
 from formtools.wizard.views import SessionWizardView
+from django.core.cache import cache
 from django.core.files.storage import FileSystemStorage
 from django.db import transaction
 from django.db.models import Q
@@ -88,6 +89,7 @@ from freenasUI.directoryservice.models import (
     NT4,
 )
 from freenasUI.freeadmin.views import JsonResp
+from freenasUI.freeadmin.utils import key_order
 from freenasUI.middleware.client import client
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier
@@ -107,7 +109,7 @@ from freenasUI.sharing.models import (
     NFS_Share,
     NFS_Share_Path,
 )
-from freenasUI.storage.forms import VolumeAutoImportForm
+from freenasUI.storage.forms import VolumeAutoImportForm, VolumeMixin
 from freenasUI.storage.models import Disk, Volume, Scrub
 from freenasUI.system import models
 from freenasUI.system.utils import manual_update
@@ -207,10 +209,14 @@ class BootEnvRenameForm(Form):
         super(BootEnvRenameForm, self).__init__(*args, **kwargs)
 
     def is_duplicated_name(self, name):
-        beadm_names = subprocess.Popen("beadm list | awk '{print $7}'",
-                                       shell=True, stdout=subprocess.PIPE,
-                                       stderr=subprocess.PIPE).communicate()[0].split('\n')
-        beadm_names = filter(None, beadm_names)
+        beadm_names = subprocess.Popen(
+            "beadm list | awk '{print $7}'",
+            shell=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            encoding='utf8',
+        ).communicate()[0].split('\n')
+        beadm_names = [_f for _f in beadm_names if _f]
         if name in beadm_names:
             return True
         else:
@@ -271,7 +277,7 @@ class BootEnvPoolAttachForm(Form):
             capacity = humanize_number_si(int(capacity))
             diskchoices[devname] = "%s (%s)" % (devname, capacity)
 
-        choices = diskchoices.items()
+        choices = list(diskchoices.items())
         choices.sort(key=lambda a: float(
             re.sub(r'^.*?([0-9]+)[^0-9]*([0-9]*).*$', r'\1.\2', a[0])
         ))
@@ -323,7 +329,7 @@ class BootEnvPoolReplaceForm(Form):
             capacity = humanize_number_si(int(capacity))
             diskchoices[devname] = "%s (%s)" % (devname, capacity)
 
-        choices = diskchoices.items()
+        choices = list(diskchoices.items())
         choices.sort(key=lambda a: float(
             re.sub(r'^.*?([0-9]+)[^0-9]*([0-9]*).*$', r'\1.\2', a[0])
         ))
@@ -403,7 +409,7 @@ class InitialWizard(CommonWizard):
     def get_context_data(self, form, **kwargs):
         context = super(InitialWizard, self).get_context_data(form, **kwargs)
         if self.steps.last:
-            context['form_list'] = self.get_form_list().keys()
+            context['form_list'] = list(self.get_form_list().keys())
         return context
 
     def done(self, form_list, **kwargs):
@@ -547,7 +553,7 @@ class InitialWizard(CommonWizard):
                     if not qs.exists():
                         if share_usercreate:
                             if share_userpw:
-                                password = share_userpw.encode('utf8')
+                                password = share_userpw
                                 password_disabled = False
                             else:
                                 password = '!'
@@ -635,10 +641,13 @@ class InitialWizard(CommonWizard):
                         nic = list(choices.NICChoices(
                             nolagg=True, novlan=True, exclude_configured=False)
                         )[0][0]
-                        mac = subprocess.Popen("ifconfig %s ether| grep ether | "
-                                               "awk '{print $2}'|tr -d :" % (nic, ),
-                                               shell=True,
-                                               stdout=subprocess.PIPE).communicate()[0]
+                        mac = subprocess.Popen(
+                            "ifconfig %s ether| grep ether | "
+                            "awk '{print $2}'|tr -d :" % (nic, ),
+                            shell=True,
+                            stdout=subprocess.PIPE,
+                            encoding='utf8',
+                        ).communicate()[0]
                         ltg = iSCSITargetExtent.objects.order_by('-id')
                         if ltg.count() > 0:
                             lid = ltg[0].id
@@ -826,7 +835,7 @@ class InitialWizard(CommonWizard):
                     nt4 = NT4.objects.create()
 
                 nt4data = nt4.__dict__
-                for name, value in cleaned_data.items():
+                for name, value in list(cleaned_data.items()):
                     if not name.startswith('ds_nt4'):
                         continue
                     nt4data[name.replace('ds_', '')] = value
@@ -1040,12 +1049,13 @@ class SettingsForm(ModelForm):
         return cdata
 
     def save(self):
-        super(SettingsForm, self).save()
+        obj = super(SettingsForm, self).save()
         if (self.instance._original_stg_sysloglevel != self.instance.stg_sysloglevel or
                 self.instance._original_stg_syslogserver != self.instance.stg_syslogserver):
             notifier().restart("syslogd")
-
+        cache.set('guiLanguage', obj.stg_language)
         notifier().reload("timeservices")
+        return obj
 
     def done(self, request, events):
         if (
@@ -1159,9 +1169,6 @@ class AdvancedForm(ModelForm):
         self.instance._original_adv_periodic_notifyuser = self.instance.adv_periodic_notifyuser
         self.instance._original_adv_graphite = self.instance.adv_graphite
         self.instance._original_adv_fqdn_syslog = self.instance.adv_fqdn_syslog
-        if notifier().is_freenas():
-            del self.fields['adv_ixalert']
-            del self.fields['adv_ixfailsafe_email']
 
     def save(self):
         super(AdvancedForm, self).save()
@@ -1173,14 +1180,12 @@ class AdvancedForm(ModelForm):
         if self.instance._original_adv_powerdaemon != self.instance.adv_powerdaemon:
             notifier().restart("powerd")
         if self.instance._original_adv_serialconsole != self.instance.adv_serialconsole:
-            notifier().start("ix-device_hints")
             notifier().start("ttys")
             if not loader_reloaded:
                 notifier().reload("loader")
                 loader_reloaded = True
         elif (self.instance._original_adv_serialspeed != self.instance.adv_serialspeed or
                 self.instance._original_adv_serialport != self.instance.adv_serialport):
-            notifier().start("ix-device_hints")
             if not loader_reloaded:
                 notifier().reload("loader")
                 loader_reloaded = True
@@ -1455,6 +1460,260 @@ class TunableForm(ModelForm):
             notifier().reload("sysctl")
 
 
+class ConsulAlertsForm(ModelForm):
+
+    # Common fields between all API
+    username = forms.CharField(
+        max_length=255,
+        label=_("Username"),
+        help_text=_("Username"),
+        required=False,
+    )
+    password = forms.CharField(
+        max_length=255,
+        label=_("Password"),
+        help_text=_("Password"),
+        required=False,
+    )
+    cluster_name = forms.CharField(
+        max_length=255,
+        label=_("Cluster name"),
+        help_text=_("The name of the cluster"),
+        required=False,
+    )
+    url = forms.CharField(
+        max_length=255,
+        label=_("URL"),
+        help_text=_("The incoming-webhook url"),
+        required=False,
+    )
+
+    # Influxdb
+    host = forms.CharField(
+        max_length=255,
+        label=_("Host"),
+        help_text=_("Influxdb Host"),
+        required=False,
+    )
+    database = forms.CharField(
+        max_length=255,
+        label=_("Database"),
+        help_text=_("Influxdb database name"),
+        required=False,
+    )
+    series_name = forms.CharField(
+        max_length=255,
+        label=_("Series"),
+        help_text=_("Influxdb series name for the points"),
+        required=False,
+    )
+
+    # Slack
+    channel = forms.CharField(
+        max_length=255,
+        label=_("Channel"),
+        help_text=_("The channel to post the notification"),
+        required=False,
+    )
+    icon_url = forms.CharField(
+        max_length=255,
+        label=_("URL icon"),
+        help_text=_("URL of a custom image for the notification"),
+        required=False,
+    )
+    detailed = forms.BooleanField(
+        label=_("Detailed"),
+        help_text=_("Enable pretty Slack notifications"),
+        initial=False,
+        required=False,
+    )
+
+    # Mattermost
+    team = forms.CharField(
+        max_length=255,
+        label=_("Team"),
+        help_text=_("The mattermost team"),
+        required=False,
+    )
+
+    # PagerDuty
+    service_key = forms.CharField(
+        max_length=255,
+        label=_("Service key"),
+        help_text=_("Service key to access PagerDuty"),
+        required=False,
+    )
+    client_name = forms.CharField(
+        max_length=255,
+        label=_("Client name"),
+        help_text=_("The monitoring client name"),
+        required=False,
+    )
+
+    # HipChat
+    hfrom = forms.CharField(
+        max_length=20,
+        label=_("From"),
+        help_text=_("The name to send notification"),
+        required=False,
+    )
+    base_url = forms.CharField(
+        max_length=255,
+        initial="https://api.hipchat.com/v2/",
+        label=_("URL"),
+        help_text=_("HipChat base url"),
+        required=False,
+    )
+    room_id = forms.CharField(
+        max_length=50,
+        label=_("Room"),
+        help_text=_("The room to post to"),
+        required=False,
+    )
+    auth_token = forms.CharField(
+        max_length=255,
+        label=_("Token"),
+        help_text=_("Authentication token"),
+        required=False,
+    )
+
+    # OpsGenie
+    api_key = forms.CharField(
+        max_length=255,
+        label=_("API Key"),
+        help_text=_("API Key"),
+        required=False,
+    )
+
+    # AWS SNS
+    region = forms.CharField(
+        max_length=255,
+        label=_("Region"),
+        help_text=_("AWS Region"),
+        required=False,
+    )
+    topic_arn = forms.CharField(
+        max_length=255,
+        label=_("ARN"),
+        help_text=_("Topic ARN to publish to"),
+        required=False,
+    )
+
+    # VictorOps
+    routing_key = forms.CharField(
+        max_length=255,
+        label=_("Routing Key"),
+        help_text=_("Routing Key"),
+        required=False,
+    )
+
+
+    class Meta:
+        fields = '__all__'
+        model = models.ConsulAlerts
+
+    def __init__(self, *args, **kwargs):
+        super(ConsulAlertsForm, self).__init__(*args, **kwargs)
+        self.fields['consulalert_type'].widget.attrs['onChange'] = (
+            "consulTypeToggle();"
+        )
+        key_order(self, len(self.fields) - 1, 'enabled', instance=True)
+
+        if self.instance.id:
+            if self.instance.consulalert_type == 'InfluxDB':
+                self.fields['host'].initial = self.instance.attributes.get('host')
+                self.fields['username'].initial = self.instance.attributes.get('username')
+                self.fields['password'].initial = self.instance.attributes.get('password')
+                self.fields['database'].initial = self.instance.attributes.get('database')
+                self.fields['series_name'].initial = self.instance.attributes.get('series_name')
+                self.fields['enabled'].initial = self.instance.attributes.get('enabled')
+            elif self.instance.consulalert_type == 'Slack':
+                self.fields['cluster_name'].initial = self.instance.attributes.get('cluster_name')
+                self.fields['url'].initial = self.instance.attributes.get('url')
+                self.fields['channel'].initial = self.instance.attributes.get('channel')
+                self.fields['username'].initial = self.instance.attributes.get('username')
+                self.fields['icon_url'].initial = self.instance.attributes.get('icon_url')
+                self.fields['detailed'].initial = self.instance.attributes.get('detailed')
+                self.fields['enabled'].initial = self.instance.attributes.get('enabled')
+            elif self.instance.consulalert_type == 'Mattermost':
+                self.fields['cluster_name'].initial = self.instance.attributes.get('cluster_name')
+                self.fields['url'].initial = self.instance.attributes.get('url')
+                self.fields['username'].initial = self.instance.attributes.get('username')
+                self.fields['password'].initial = self.instance.attributes.get('password')
+                self.fields['team'].initial = self.instance.attributes.get('team')
+                self.fields['channel'].initial = self.instance.attributes.get('channel')
+                self.fields['enabled'].initial = self.instance.attributes.get('enabled')
+            elif self.instance.consulalert_type == 'PagerDuty':
+                self.fields['service_key'].initial = self.instance.attributes.get('service_key')
+                self.fields['client_name'].initial = self.instance.attributes.get('client_name')
+                self.fields['enabled'].initial = self.instance.attributes.get('enabled')
+            elif self.instance.consulalert_type == 'HipChat':
+                self.fields['hfrom'].initial = self.instance.attributes.get('hfrom')
+                self.fields['cluster_name'].initial = self.instance.attributes.get('cluster_name')
+                self.fields['base_url'].initial = self.instance.attributes.get('base_url')
+                self.fields['room_id'].initial = self.instance.attributes.get('room_id')
+                self.fields['auth_token'].initial = self.instance.attributes.get('auth_token')
+                self.fields['enabled'].initial = self.instance.attributes.get('enabled')
+            elif self.instance.consulalert_type == 'OpsGenie':
+                self.fields['cluster_name'].initial = self.instance.attributes.get('cluster_name')
+                self.fields['api_key'].initial = self.instance.attributes.get('api_key')
+                self.fields['enabled'].initial = self.instance.attributes.get('enabled')
+            elif self.instance.consulalert_type == 'AWS-SNS':
+                self.fields['region'].initial = self.instance.attributes.get('region')
+                self.fields['topic_arn'].initial = self.instance.attributes.get('topic_arn')
+                self.fields['enabled'].initial = self.instance.attributes.get('enabled')
+            elif self.instance.consulalert_type == 'VictorOps':
+                self.fields['api_key'].initial = self.instance.attributes.get('api_key')
+                self.fields['routing_key'].initial = self.instance.attributes.get('routing_key')
+                self.fields['enabled'].initial = self.instance.attributes.get('enabled')
+
+    def save(self, *args, **kwargs):
+        kwargs['commit'] = False
+        objs = super(ConsulAlertsForm, self).save(*args, **kwargs)
+
+        if objs:
+            objs.attributes = {
+                "username": self.cleaned_data.get('username'),
+                "password": self.cleaned_data.get('password'),
+                "host": self.cleaned_data.get('host'),
+                "url": self.cleaned_data.get('url'),
+                "database": self.cleaned_data.get('database'),
+                "series_name": self.cleaned_data.get('series_name'),
+                "cluster_name": self.cleaned_data.get('cluster_name'),
+                "channel": self.cleaned_data.get('channel'),
+                "icon_url": self.cleaned_data.get('icon_url'),
+                "detailed": self.cleaned_data.get('detailed'),
+                "team": self.cleaned_data.get('team'),
+                "service_key": self.cleaned_data.get('service_key'),
+                "client_name": self.cleaned_data.get('client_name'),
+                "hfrom": self.cleaned_data.get('hfrom'),
+                "base_url": self.cleaned_data.get('base_url'),
+                "room_id": self.cleaned_data.get('room_id'),
+                "auth_token": self.cleaned_data.get('auth_token'),
+                "api_key": self.cleaned_data.get('api_key'),
+                "enabled": self.cleaned_data.get('enabled'),
+                "region": self.cleaned_data.get('region'),
+                "topic_arn": self.cleaned_data.get('topic_arn'),
+                "routing_key": self.cleaned_data.get('routing_key')
+            }
+            objs.save()
+
+        cdata = self.cleaned_data
+        with client as c:
+            c.call('consul.do_create', cdata)
+
+        notifier().restart("consul-alerts")
+
+        return objs
+
+    def delete(self, *args, **kwargs):
+        with client as c:
+            c.call('consul.do_delete', self.instance.consulalert_type, self.instance.attributes)
+
+        notifier().restart("consul-alerts")
+        self.instance.delete()
+
+
 class SystemDatasetForm(ModelForm):
     sys_pool = forms.ChoiceField(
         label=_("System dataset pool"),
@@ -1496,11 +1755,16 @@ class SystemDatasetForm(ModelForm):
             except:
                 raise MiddlewareError(_("Unable to migrate system dataset!"))
 
+        if self.instance._original_sys_rrd_usedataset != self.instance.sys_rrd_usedataset:
+            # Stop collectd to flush data
+            notifier().stop("collectd")
+
         notifier().restart("system_datasets")
 
         if self.instance._original_sys_syslog_usedataset != self.instance.sys_syslog_usedataset:
             notifier().restart("syslogd")
         if self.instance._original_sys_rrd_usedataset != self.instance.sys_rrd_usedataset:
+            notifier().system_dataset_rrd_toggle()
             notifier().restart("collectd")
 
 
@@ -1550,12 +1814,12 @@ class InitialWizardDSForm(Form):
     def __init__(self, *args, **kwargs):
         super(InitialWizardDSForm, self).__init__(*args, **kwargs)
 
-        for fname, field in NISForm().fields.items():
+        for fname, field in list(NISForm().fields.items()):
             if fname.find('enable') == -1:
                 self.fields['ds_%s' % fname] = field
                 field.required = False
 
-        for fname, field in NT4Form().fields.items():
+        for fname, field in list(NT4Form().fields.items()):
             if (
                 fname.find('enable') == -1 and
                 fname not in NT4Form.advanced_fields
@@ -1564,7 +1828,7 @@ class InitialWizardDSForm(Form):
                 field.required = False
 
         pertype = defaultdict(list)
-        for fname in self.fields.keys():
+        for fname in list(self.fields.keys()):
             if fname.startswith('ds_ad_'):
                 pertype['ad'].append('id_ds-%s' % fname)
             elif fname.startswith('ds_ldap_'):
@@ -1692,7 +1956,7 @@ class InitialWizardDSForm(Form):
         elif cdata.get('ds_type') == 'nis':
             values = []
             empty = True
-            for fname in self.fields.keys():
+            for fname in list(self.fields.keys()):
                 if fname.startswith('ds_nis_'):
                     value = cdata.get(fname)
                     values.append((fname, value))
@@ -1711,7 +1975,7 @@ class InitialWizardDSForm(Form):
         elif cdata.get('ds_type') == 'nt4':
             values = []
             empty = True
-            for fname in self.fields.keys():
+            for fname in list(self.fields.keys()):
                 if fname.startswith('ds_nt4_'):
                     value = cdata.get(fname)
                     values.append((fname, value))
@@ -1815,14 +2079,14 @@ class SharesBaseFormSet(BaseFormSet):
         Returns an array suitable to use in the dojo memory store.
         """
         keys = defaultdict(dict)
-        for key, val in self.data.items():
+        for key, val in list(self.data.items()):
             reg = self.RE_FIELDS.search(key)
             if not reg:
                 continue
             idx, name = reg.groups()
             keys[idx][name] = val
 
-        return json.dumps(keys.values())
+        return json.dumps(list(keys.values()))
 
     def errors_json(self):
         return json.dumps(self.errors)
@@ -1834,10 +2098,10 @@ InitialWizardShareFormSet = formset_factory(
 )
 
 
-class InitialWizardVolumeForm(Form):
+class InitialWizardVolumeForm(VolumeMixin, Form):
 
     volume_name = forms.CharField(
-        label=_('Pool Name'),
+        label=_('Volume Name'),
         max_length=200,
     )
     volume_type = forms.ChoiceField(
@@ -1852,23 +2116,23 @@ class InitialWizardVolumeForm(Form):
         self.fields['volume_type'].choices = (
             (
                 'auto',
-                _('Automatic - Pick reasonable defaults for available drives')
+                _('Automatic (Reasonable defaults using the available drives)')
             ),
             (
                 'raid10',
-                _('Virtualization (RAID 10: Good Reliability, Better Performance, Minimum Storage)')
+                _('Virtualization (RAID 10: Moderate Redundancy, Maximum Performance, Minimum Capacity)')
             ),
             (
                 'raidz2',
-                _('Backups (RAID Z2: Good Reliability, Medium Performance, Medium Storage)')
+                _('Backups (RAID Z2: Moderate Redundancy, Moderate Performance, Moderate Capacity)')
             ),
             (
                 'raidz1',
-                _('Media (RAID Z1: Medium Reliability, Good Performance, More Storage)')
+                _('Media (RAID Z1: Minimum Redundancy, Moderate Performance, Moderate Capacity)')
             ),
             (
                 'stripe',
-                _('Logs (RAID 0: No Reliability, Best Performance, Maximum Storage)')
+                _('Logs (RAID 0: No Redundancy, Maximum Performance, Maximum Capacity)')
             ),
         )
 
@@ -1898,7 +2162,7 @@ class InitialWizardVolumeForm(Form):
     def _get_unused_disks_by_size(cls):
         disks = cls._get_unused_disks()
         bysize = defaultdict(list)
-        for disk, attrs in disks.items():
+        for disk, attrs in list(disks.items()):
             size = int(attrs['capacity'])
             # Some disks might have a few sectors of difference.
             # We still want to group them together.
@@ -1910,7 +2174,7 @@ class InitialWizardVolumeForm(Form):
     @staticmethod
     def _higher_disks_group(bysize):
         higher = (None, 0)
-        for size, _disks in bysize.items():
+        for size, _disks in list(bysize.items()):
             if len(_disks) > higher[1]:
                 higher = (size, len(_disks))
         return higher
@@ -1945,7 +2209,7 @@ class InitialWizardVolumeForm(Form):
             ),
             ('stripe', lambda y: True),
         ))
-        for name, func in check.items():
+        for name, func in list(check.items()):
             if func(num):
                 return name
         return 'stripe'
@@ -1961,9 +2225,9 @@ class InitialWizardVolumeForm(Form):
             num = len(devs)
             if num in (4, 8):
                 mod = 0
-                perrow = num / 2
+                perrow = int(num / 2)
                 rows = 2
-                vdevtype = cls._grp_type(num / 2)
+                vdevtype = cls._grp_type(int(num / 2))
             elif num < 12:
                 mod = 0
                 perrow = num
@@ -1972,7 +2236,7 @@ class InitialWizardVolumeForm(Form):
             elif num < 18:
                 mod = num % 2
                 rows = 2
-                perrow = (num - mod) / 2
+                perrow = int((num - mod) / 2)
                 vdevtype = cls._grp_type(perrow)
             elif num >= 18:
                 div9 = int(num / 9)
@@ -2021,7 +2285,7 @@ class InitialWizardVolumeForm(Form):
         grpid = 0
 
         if grptype == 'raid10':
-            for i in range(len(maindisks) / 2):
+            for i in range(int(len(maindisks) / 2)):
                 groups[grpid] = {
                     'type': 'mirror',
                     'disks': maindisks[i * 2:2 * (i + 1)],
@@ -2034,11 +2298,11 @@ class InitialWizardVolumeForm(Form):
                 optimalrow = 10
             else:
                 optimalrow = 11
-            div = len(maindisks) / optimalrow
+            div = int(len(maindisks) / optimalrow)
             mod = len(maindisks) % optimalrow
             if mod >= 2:
                 div += 1
-            perrow = len(maindisks) / (div if div else 1)
+            perrow = int(len(maindisks) / (div if div else 1))
             for i in range(div):
                 groups[grpid] = {
                     'type': grptype,
@@ -2055,7 +2319,7 @@ class InitialWizardVolumeForm(Form):
 
     def _get_disk_size(self, disk, bysize):
         size = None
-        for _size, disks in bysize.items():
+        for _size, disks in list(bysize.items()):
             if disk in disks:
                 size = _size
                 break
@@ -2064,7 +2328,7 @@ class InitialWizardVolumeForm(Form):
     def _groups_to_disks_size(self, bysize, groups, swapsize):
         size = 0
         disks = []
-        for group in groups.values():
+        for group in list(groups.values()):
             lower = None
             for disk in group['disks']:
                 _size = self._get_disk_size(disk, bysize)
@@ -2096,17 +2360,6 @@ class InitialWizardVolumeForm(Form):
                 groups = self._grp_predefined(bysize, _type)
             types[_type] = self._groups_to_disks_size(bysize, groups, swapsize)
         return json.dumps(types)
-
-    def clean_volume_name(self):
-        volume_name = self.cleaned_data.get('volume_name')
-        if not volume_name:
-            return volume_name
-        qs = Volume.objects.filter(vol_name=volume_name)
-        if qs.exists():
-            raise forms.ValidationError(
-                _("A pool with this name already exists.")
-            )
-        return volume_name
 
     def clean(self):
         volume_type = self.cleaned_data.get('volume_type')
@@ -2179,7 +2432,7 @@ class InitialWizardSystemForm(Form):
     def __init__(self, *args, **kwargs):
         super(InitialWizardSystemForm, self).__init__(*args, **kwargs)
         self._instance = models.Email.objects.order_by('-id')[0]
-        for fname, field in EmailForm(instance=self._instance).fields.items():
+        for fname, field in list(EmailForm(instance=self._instance).fields.items()):
             self.fields[fname] = field
             field.initial = getattr(self._instance, fname, None)
             field.required = False
@@ -2196,7 +2449,7 @@ class InitialWizardSystemForm(Form):
     def clean(self):
         em = EmailForm(self.cleaned_data, instance=self._instance)
         if self.cleaned_data.get('em_fromemail') and not em.is_valid():
-            for fname, errors in em._errors.items():
+            for fname, errors in list(em._errors.items()):
                 self._errors[fname] = errors
         return self.cleaned_data
 
@@ -2489,7 +2742,7 @@ class CertificateAuthorityCreateInternalForm(ModelForm):
             crypto.dump_certificate(crypto.FILETYPE_PEM, cert)
         self.instance.cert_privatekey = \
             crypto.dump_privatekey(crypto.FILETYPE_PEM, key)
-        self.instance.cert_serial = 02
+        self.instance.cert_serial = 0o2
 
         super(CertificateAuthorityCreateInternalForm, self).save()
 
@@ -2624,13 +2877,13 @@ class CertificateAuthorityCreateIntermediateForm(ModelForm):
         cacert = crypto.load_certificate(crypto.FILETYPE_PEM, signing_cert.cert_certificate)
         cert.set_issuer(cacert.get_subject())
         cert.add_extensions([
-            crypto.X509Extension("basicConstraints", True, "CA:TRUE, pathlen:0"),
-            crypto.X509Extension("keyUsage", True, "keyCertSign, cRLSign"),
-            crypto.X509Extension("subjectKeyIdentifier", False, "hash", subject=cert),
+            crypto.X509Extension(b"basicConstraints", True, b"CA:TRUE, pathlen:0"),
+            crypto.X509Extension(b"keyUsage", True, b"keyCertSign, cRLSign"),
+            crypto.X509Extension(b"subjectKeyIdentifier", False, b"hash", subject=cert),
         ])
 
         cert.set_serial_number(signing_cert.cert_serial)
-        self.instance.cert_serial = 03
+        self.instance.cert_serial = 0o3
         sign_certificate(cert, signkey, self.instance.cert_digest_algorithm)
 
         self.instance.cert_certificate = \
@@ -2943,7 +3196,7 @@ class CertificateCreateInternalForm(ModelForm):
             )
         )
         self.fields['cert_signedby'].widget.attrs["onChange"] = (
-            "javascript:certificate_autopopulate();"
+            "javascript:CA_autopopulate();"
         )
 
     def clean_cert_name(self):
@@ -2990,8 +3243,7 @@ class CertificateCreateInternalForm(ModelForm):
         cacert = crypto.load_certificate(crypto.FILETYPE_PEM, signing_cert.cert_certificate)
         cert.set_issuer(cacert.get_subject())
         cert.add_extensions([
-            crypto.X509Extension("subjectKeyIdentifier", False, "hash",
-                                 subject=cert),
+            crypto.X509Extension(b"subjectKeyIdentifier", False, b"hash", subject=cert),
         ])
 
         cert_serial = signing_cert.cert_serial
@@ -3182,10 +3434,11 @@ class CloudCredentialsForm(ModelForm):
             }
             if self.instance.id:
                 c.call('backup.credential.update', self.instance.id, data)
-                pk = self.instance.id
             else:
-                pk = c.call('backup.credential.create', data)
-        return models.CloudCredentials.objects.get(pk=pk)
+                self.instance = models.CloudCredentials.objects.get(
+                    pk=c.call('backup.credential.create', data)
+                )
+        return self.instance
 
     def delete(self, *args, **kwargs):
         with client as c:
@@ -3240,3 +3493,45 @@ class BackupForm(Form):
                 _("The two password fields didn't match.")
             )
         return pwd2
+
+
+class SupportForm(ModelForm):
+
+    class Meta:
+        model = models.Support
+        fields = '__all__'
+        widgets = {
+            'enabled': forms.widgets.CheckboxInput(),
+        }
+
+    def __init__(self, *args, **kwargs):
+        super(SupportForm, self).__init__(*args, **kwargs)
+        self.fields['enabled'].widget.attrs['onChange'] = (
+            'javascript:toggleGeneric("id_enabled", ["id_name", "id_title", '
+            '"id_email", "id_phone", "id_secondary_name", "id_secondary_title", '
+            '"id_secondary_email", "id_secondary_phone"], true);'
+        )
+
+        # If proactive support is not available disable all fields
+        available = self.instance.is_available(support=self.instance)[0]
+        if not available:
+            self.fields['enabled'].label += ' (Silver/Gold support only)'
+        if (self.instance.id and not self.instance.enabled) or not available:
+            for name, field in self.fields.items():
+                if available and name == 'enabled':
+                    continue
+                field.widget.attrs['disabled'] = 'disabled'
+
+    def clean_enabled(self):
+        return self.cleaned_data.get('enabled') in ('True', '1')
+
+    def clean(self):
+        data = self.cleaned_data
+        for name in self.fields.keys():
+            if name == 'enabled':
+                continue
+            if data.get('enabled') and not data.get(name):
+                self._errors[name] = self.error_class([_(
+                    'This field is required.'
+                )])
+        return data

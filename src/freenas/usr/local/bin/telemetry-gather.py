@@ -114,7 +114,7 @@ def parseDMILine(line):
         return
     if inBlock:
         if p[0] != "Handle":
-            for field in fieldsToCap[whichBlock].keys():
+            for field in list(fieldsToCap[whichBlock].keys()):
                 if p[0] == field:
                     if whichBlock == "System" and whichBlock2 != 'Information':
                         continue;
@@ -274,18 +274,18 @@ def main():
 
     for cmdname in cmds_to_log:
         if args.debug:
-            print "[DEBUG]: cmdname = " + cmdname
+            print("[DEBUG]: cmdname = " + cmdname)
         try:
             if args.debug:
-                print "[DEBUG]: running " + cmdname
-            log['cmdout'][cmdname] = subprocess.check_output(cmds_to_log[cmdname], stderr=subprocess.STDOUT)
+                print("[DEBUG]: running " + cmdname)
+            log['cmdout'][cmdname] = subprocess.check_output(cmds_to_log[cmdname], stderr=subprocess.STDOUT, encoding='utf8')
             if cmdname == 'dmidecode':
                 if args.debug:
-                    print "[DEBUG]: running parseDMI " + cmdname
+                    print("[DEBUG]: running parseDMI " + cmdname)
                 log['dmi'] = parseDMI(log['cmdout'][cmdname])
                 log['dmi']['dmi-sha256'] = dmisha256_v1()
                 if args.debug:
-                    print "[DEBUG]: writing dmisha " + cmdname
+                    print("[DEBUG]: writing dmisha " + cmdname)
                 f = open("/tmp/dmisha.txt", "w")
                 f.write(log['dmi']['dmi-sha256'])
                 f.close()                
@@ -294,7 +294,7 @@ def main():
             log['cmdout'][cmdname] = 'Error Running Command'
             if args.debug:
                 var = traceback.format_exc().splitlines()
-                print var
+                print(var)
             continue
 
     for f in files_to_log:

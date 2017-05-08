@@ -1,4 +1,4 @@
-import cPickle
+import pickle
 import datetime
 import hashlib
 import imp
@@ -14,7 +14,7 @@ from freenasUI.common.locks import lock
 from freenasUI.common.system import send_mail, get_sw_version
 from freenasUI.freeadmin.hook import HookMetaclass
 from freenasUI.middleware.notifier import notifier
-from freenasUI.system.models import Advanced, Alert as mAlert
+from freenasUI.system.models import Alert as mAlert, Support
 from freenasUI.support.utils import get_license, new_ticket
 
 from lxml import etree
@@ -44,12 +44,11 @@ class BaseAlertMetaclass(type):
         return klass
 
 
-class BaseAlert(object):
-
-    __metaclass__ = BaseAlertMetaclass
+class BaseAlert(object, metaclass=BaseAlertMetaclass):
 
     alert = None
     interval = 0
+    fire_once = False
     name = None
 
     def __init__(self, alert):
@@ -137,9 +136,7 @@ class Alert(object):
         return datetime.datetime.fromtimestamp(self._timestamp)
 
 
-class AlertPlugins:
-
-    __metaclass__ = HookMetaclass
+class AlertPlugins(metaclass=HookMetaclass):
 
     ALERT_FILE = '/var/tmp/alert'
 
@@ -173,8 +170,7 @@ class AlertPlugins:
 
     def email(self, alerts):
         node = alert_node()
-        dismisseds = [a.message_id
-                      for a in mAlert.objects.filter(dismiss=True, node=node)]
+        dismisseds = [a.message_id for a in mAlert.objects.filter(node=node)]
         msgs = []
         for alert in alerts:
             if alert.getId() not in dismisseds:
@@ -183,7 +179,7 @@ class AlertPlugins:
                 We need to strip out all the tags so we can send a
                 plain text email.
                 """
-                msg = unicode(alert).encode('utf8')
+                msg = str(alert)
                 msgnode = etree.fromstring('<msg>{}</msg>'.format(msg))
                 for i in msgnode.xpath('//a'):
                     new = etree.Element('span')
@@ -204,20 +200,20 @@ class AlertPlugins:
             text='\n'.join(msgs)
         )
 
-    def ticket(self, alerts):
+    def ticket(self, support, alerts):
         node = alert_node()
-        dismisseds = [a.message_id
-                      for a in mAlert.objects.filter(dismiss=True, node=node)]
+        dismisseds = [a.message_id for a in mAlert.objects.filter(node=node)]
         msgs = []
         for alert in alerts:
             if alert.getId() not in dismisseds:
-                msgs.append(unicode(alert).encode('utf8'))
+                msgs.append(str(alert).encode('utf8'))
         if len(msgs) == 0:
             return
 
         serial = subprocess.Popen(
             ['/usr/local/sbin/dmidecode', '-s', 'system-serial-number'],
-            stdout=subprocess.PIPE
+            stdout=subprocess.PIPE,
+            encoding='utf8',
         ).communicate()[0].split('\n')[0].upper()
 
         license, reason = get_license()
@@ -226,9 +222,19 @@ class AlertPlugins:
         else:
             company = 'Unknown'
 
-        adv = Advanced.objects.order_by('-id')[0]
-        if adv.adv_ixfailsafe_email:
-            msgs += ['', 'Failsafe Support Contact: {}'.format(adv.adv_ixfailsafe_email)]
+        for name, verbose_name in (
+            ('name', 'Contact Name'),
+            ('title', 'Contact Title'),
+            ('email', 'Contact E-mail'),
+            ('phone', 'Contact Phone'),
+            ('secondary_name', 'Secondary Contact Name'),
+            ('secondary_title', 'Secondary Contact Title'),
+            ('secondary_email', 'Secondary Contact E-mail'),
+            ('secondary_phone', 'Secondary Contact Phone'),
+        ):
+            value = getattr(support, name)
+            if value:
+                msgs += ['', '{}: {}'.format(verbose_name, value)]
 
         success, msg, ticketnum = new_ticket({
             'title': 'Automatic alert (%s)' % serial,
@@ -265,7 +271,7 @@ class AlertPlugins:
         if os.path.exists(self.ALERT_FILE):
             with open(self.ALERT_FILE, 'r') as f:
                 try:
-                    obj = cPickle.load(f)
+                    obj = pickle.load(f)
                 except:
                     pass
 
@@ -275,12 +281,13 @@ class AlertPlugins:
             results = obj['results']
         rvs = []
         node = alert_node()
-        dismisseds = [a.message_id
-                      for a in mAlert.objects.filter(node=node, dismiss=True)]
+        dismisseds = [a.message_id for a in mAlert.objects.filter(node=node)]
         ids = []
         for instance in self.mods:
             try:
                 if instance.name in results:
+                    if instance.fire_once:
+                        continue
                     if results.get(instance.name).get(
                         'lastrun'
                     ) > time.time() - (instance.interval * 60):
@@ -291,10 +298,9 @@ class AlertPlugins:
                         continue
                 rv = instance.run()
                 if rv:
-                    alerts = filter(None, rv)
+                    alerts = [_f for _f in rv if _f]
                     for alert in alerts:
                         ids.append(alert.getId())
-                        update_or_create = False
                         if instance.name in results:
                             found = False
                             for i in (results[instance.name]['alerts'] or []):
@@ -303,19 +309,6 @@ class AlertPlugins:
                                     break
                             if found is not False:
                                 alert.setTimestamp(found.getTimestamp())
-                            else:
-                                update_or_create = True
-                        else:
-                            update_or_create = True
-
-                        if update_or_create:
-                            qs = mAlert.objects.filter(message_id=alert.getId(), node=node)
-                            if qs.exists():
-                                qs[0].timestamp = alert.getTimestamp()
-                                qs[0].save()
-                            else:
-                                mAlert.objects.create(node=node, message_id=alert.getId(),
-                                                      timestamp=alert.getTimestamp(), dismiss=False)
 
                         if alert.getId() in dismisseds:
                             alert.setDismiss(True)
@@ -325,7 +318,7 @@ class AlertPlugins:
                     'alerts': rv,
                 }
 
-            except Exception, e:
+            except Exception as e:
                 log.debug("Alert module '%s' failed: %s", instance, e, exc_info=True)
                 log.error("Alert module '%s' failed: %s", instance, e)
 
@@ -353,12 +346,15 @@ class AlertPlugins:
                 ])
                 if hardware == lasthardware:
                     hardware = []
-            adv = Advanced.objects.order_by('-id')[0]
-            if hardware and adv.adv_ixalert:
-                self.ticket(hardware)
+            try:
+                support = Support.objects.order_by('-id')[0]
+            except IndexError:
+                support = Support.objects.create()
+            if hardware and support.is_enabled():
+                self.ticket(support, hardware)
 
-        with open(self.ALERT_FILE, 'w') as f:
-            cPickle.dump({
+        with open(self.ALERT_FILE, 'wb') as f:
+            pickle.dump({
                 'last': time.time(),
                 'alerts': rvs,
                 'results': results,
@@ -368,8 +364,8 @@ class AlertPlugins:
     def get_alerts(self):
         if not os.path.exists(self.ALERT_FILE):
             return []
-        with open(self.ALERT_FILE, 'r') as f:
-            return cPickle.load(f)['alerts']
+        with open(self.ALERT_FILE, 'rb') as f:
+            return pickle.load(f)['alerts']
 
 
 alertPlugins = AlertPlugins()

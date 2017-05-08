@@ -1,5 +1,4 @@
 import sys
-import bsd
 import subprocess
 
 if '/usr/local/lib' not in sys.path:
@@ -7,7 +6,7 @@ if '/usr/local/lib' not in sys.path:
 from freenasOS import Configuration
 
 
-def django_modelobj_serialize(middleware, obj, extend=None, field_suffix=None):
+def django_modelobj_serialize(middleware, obj, extend=None, field_prefix=None):
     from django.db.models.fields.related import ForeignKey
     from freenasUI.contrib.IPAddressField import (
         IPAddressField, IP4AddressField, IP6AddressField
@@ -16,8 +15,8 @@ def django_modelobj_serialize(middleware, obj, extend=None, field_suffix=None):
     for field in obj._meta.fields:
         value = getattr(obj, field.name)
         name = field.name
-        if field_suffix and name.startswith(field_suffix):
-            name = name[len(field_suffix):]
+        if field_prefix and name.startswith(field_prefix):
+            name = name[len(field_prefix):]
         if isinstance(field, (
             IPAddressField, IP4AddressField, IP6AddressField
         )):
@@ -32,13 +31,7 @@ def django_modelobj_serialize(middleware, obj, extend=None, field_suffix=None):
 
 
 def Popen(*args, **kwargs):
-
-    def preexec_fn():
-        bsd.closefrom(3)
-
-    if kwargs.get('close_fds') is True and 'preexec_fn' not in kwargs:
-        kwargs['preexec_fn'] = preexec_fn
-        kwargs['close_fds'] = False
+    kwargs.setdefault('encoding', 'utf8')
     return subprocess.Popen(*args, **kwargs)
 
 

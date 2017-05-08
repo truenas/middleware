@@ -1,11 +1,12 @@
 from collections import defaultdict
 
+import errno
 import inspect
 import logging
 import re
 import sys
 
-from middlewared.schema import accepts, Dict, Int, Ref, Str
+from middlewared.schema import accepts, Dict, Int, List, Ref, Str
 from middlewared.utils import filter_list
 from middlewared.logger import Logger
 
@@ -18,12 +19,13 @@ def item_method(fn):
     return fn
 
 
-def job(lock=None, process=False):
+def job(lock=None, process=False, pipe=False):
     """Flag method as a long running job."""
     def check_job(fn):
         fn._job = {
             'lock': lock,
             'process': process,
+            'pipe': pipe,
         }
         return fn
     return check_job
@@ -52,6 +54,21 @@ def filterable(fn):
     return accepts(Ref('query-filters'), Ref('query-options'))(fn)
 
 
+class CallException(Exception):
+    pass
+
+
+class CallError(CallException):
+
+    def __init__(self, errmsg, errno=errno.EFAULT):
+        self.errmsg = errmsg
+        self.errno = errno
+
+    def __str__(self):
+        errcode = errno.errorcode.get(self.errno, 'EUNKNOWN')
+        return f'[{errcode}] {self.errmsg}'
+
+
 class ServiceBase(type):
 
     def __new__(cls, name, bases, attrs):
@@ -74,16 +91,14 @@ class ServiceBase(type):
         if config:
             config_attrs.update({
                 k: v
-                for k, v in config.__dict__.items() if not k.startswith('_')
+                for k, v in list(config.__dict__.items()) if not k.startswith('_')
             })
 
         klass._config = type('Config', (), config_attrs)
         return klass
 
 
-class Service(object):
-    __metaclass__ = ServiceBase
-
+class Service(object, metaclass=ServiceBase):
     def __init__(self, middleware):
         self.logger = Logger(type(self).__class__.__name__).getLogger()
         self.middleware = middleware
@@ -119,7 +134,7 @@ class CoreService(Service):
     def get_jobs(self, filters=None, options=None):
         """Get the long running jobs."""
         jobs = filter_list([
-            i.__encode__() for i in self.middleware.get_jobs().all().values()
+            i.__encode__() for i in list(self.middleware.get_jobs().all().values())
         ], filters, options)
         return jobs
 
@@ -141,7 +156,7 @@ class CoreService(Service):
     def get_services(self):
         """Returns a list of all registered services."""
         services = {}
-        for k, v in self.middleware.get_services().items():
+        for k, v in list(self.middleware.get_services().items()):
             if v._config.private is True:
                 continue
             if isinstance(v, CRUDService):
@@ -151,7 +166,7 @@ class CoreService(Service):
             else:
                 _typ = 'service'
             services[k] = {
-                'config': {k: v for k, v in v._config.__dict__.items() if not k.startswith('_')},
+                'config': {k: v for k, v in list(v._config.__dict__.items()) if not k.startswith('_')},
                 'type': _typ,
             }
         return services
@@ -209,7 +224,7 @@ class CoreService(Service):
                     """
                     sections = re.split(r'^.. (.+?)::$', doc, flags=re.M)
                     doc = sections[0]
-                    for i in range((len(sections) - 1) / 2):
+                    for i in range(int((len(sections) - 1) / 2)):
                         idx = (i + 1) * 2 - 1
                         reg = re.search(r'examples(?:\((.+)\))?', sections[idx])
                         if reg is None:
@@ -232,6 +247,10 @@ class CoreService(Service):
                 }
         return data
 
+    @private
+    def event_send(self, name, event_type, kwargs):
+        self.middleware.send_event(name, event_type, **kwargs)
+
     @accepts()
     def ping(self):
         """
@@ -240,6 +259,21 @@ class CoreService(Service):
         "ping" protocol message.
         """
         return 'pong'
+
+    @accepts(
+        Str('method'),
+        List('args'),
+        Str('filename'),
+    )
+    def download(self, method, args, filename):
+        """
+        Core helper to call a job marked for download.
+
+        Returns the job id and the URL for download.
+        """
+        job = self.middleware.call(method, *args)
+        token = self.middleware.call('auth.generate_token', 300, {'filename': filename, 'job': job.id})
+        return job.id, f'/_download/{job.id}?auth_token={token}'
 
     @private
     def reconfigure_logging(self):
@@ -259,3 +293,11 @@ class CoreService(Service):
                 stream.close()
             except:
                 pass
+
+    @private
+    @job()
+    def job(self, job):
+        """
+        Private no-op method to test a job, simply returning `true`.
+        """
+        return True

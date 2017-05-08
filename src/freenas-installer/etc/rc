@@ -57,4 +57,9 @@ fi
 	
 while :; do
     /etc/install.sh
+#    TERM=xterm \
+#       PYTHONPATH=/usr/local/lib \
+#       PATH=/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin:/rescue \
+#       /usr/local/bin/python3 -m ixsystems.installer.Menu --trampoline=no
+
 done

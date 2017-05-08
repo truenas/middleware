@@ -23,7 +23,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
-from cStringIO import StringIO
+from io import StringIO
 
 import json
 import logging
@@ -33,6 +33,7 @@ import cProfile
 
 from django.conf import settings
 from django.contrib.auth.decorators import login_required
+from django.core.cache import cache
 from django.db.utils import OperationalError
 from django.http import HttpResponse
 from django.utils import translation
@@ -86,6 +87,8 @@ def http_oauth(func):
             uurl = host + request.path
 
             oreq = oauth.Request(request.method, uurl, oauth_params, '', False)
+            # FIXME: oauth2 bytes vs str issue in signature check
+            oreq['oauth_signature'] = oreq['oauth_signature'].encode()
             server = oauth.Server()
 
             secret = None
@@ -102,8 +105,8 @@ def http_oauth(func):
                 server.verify_request(oreq, cons, None)
                 authorized = True
 
-            except Exception, e:
-                log.debug("auth error = %s" % e)
+            except Exception as e:
+                log.debug("auth error = %s" % e, exc_info=True)
                 authorized = False
 
             if request.method == "POST":
@@ -117,7 +120,7 @@ def http_oauth(func):
             if authorized:
                 return func(request, *args, **kwargs)
 
-        except Exception, e:
+        except Exception as e:
             log.debug('OAuth authentication failed', exc_info=True)
 
         return HttpResponse(json.dumps({
@@ -179,9 +182,11 @@ class LocaleMiddleware(object):
                     break
 
         if not language:
-            # FIXME: we could avoid this db hit using a cache,
-            # invalidated when settings are edited
-            language = Settings.objects.order_by('-id')[0].stg_language
+            # Avoid hitting database every request
+            language = cache.get('guiLanguage')
+            if language is None:
+                language = Settings.objects.order_by('-id')[0].stg_language
+                cache.set('guiLanguage', language)
 
         translation.activate(language)
 
@@ -204,9 +209,9 @@ class CatchError(object):
             kwargs = {
                 'error': True,
                 'message': _("Error: %s") % (
-                    unicode(excp.value)
+                    str(excp.value)
                     if exc_info[0] is not OperationalError
-                    else unicode(excp.message)
+                    else str(excp)
                 ),
             }
             return JsonResp(request, **kwargs)

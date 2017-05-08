@@ -27,6 +27,7 @@ import json
 import logging
 import sysctl
 
+from django.core.urlresolvers import reverse
 from django.shortcuts import render
 from django.utils.translation import ugettext as _
 
@@ -41,7 +42,8 @@ from freenasUI.freeadmin.views import JsonResp
 from freenasUI.middleware.notifier import notifier
 from freenasUI.services import models
 from freenasUI.services.forms import (
-    CIFSForm
+    CIFSForm,
+    S3Form
 )
 from freenasUI.system.models import Tunable
 from freenasUI.support.utils import fc_enabled
@@ -52,7 +54,7 @@ log = logging.getLogger("services.views")
 def index(request):
 
     view = appPool.hook_app_index('sharing', request)
-    view = filter(None, view)
+    view = [_f for _f in view if _f]
     if view:
         return view[0]
 
@@ -65,7 +67,7 @@ def core(request):
 
     disabled = {}
 
-    for key, val in get_directoryservice_status().iteritems():
+    for key, val in get_directoryservice_status().items():
         if val is True and key != 'dc_enable':
             disabled['domaincontroller'] = {
                 'reason': _('A directory service is already enabled.'),
@@ -118,6 +120,11 @@ def core(request):
         rsyncd = models.Rsyncd.objects.create()
 
     try:
+        s3 = models.S3.objects.order_by("-id")[0]
+    except IndexError:
+        s3 = models.S3.objects.create()
+
+    try:
         smart = models.SMART.objects.order_by("-id")[0]
     except IndexError:
         smart = models.SMART.objects.create()
@@ -144,12 +151,13 @@ def core(request):
 
     return render(request, 'services/core.html', {
         'urls': json.dumps({
-            'cifs': cifs.get_edit_url(),
+            'cifs': reverse('services_cifs'),
             'afp': afp.get_edit_url(),
             'lldp': lldp.get_edit_url(),
             'nfs': nfs.get_edit_url(),
             'rsync': rsyncd.get_edit_url(),
             'dynamicdns': dynamicdns.get_edit_url(),
+            's3': reverse('services_s3'),
             'snmp': snmp.get_edit_url(),
             'ups': ups.get_edit_url(),
             'ftp': ftp.get_edit_url(),
@@ -311,7 +319,7 @@ def fibrechanneltotarget(request):
     if i > 0:
         notifier().reload("iscsitarget")
 
-    for mibname, val in sysctl_set.items():
+    for mibname, val in list(sysctl_set.items()):
         role = sysctl.filter('dev.isp.%s.role' % mibname)
         if role:
             role = role[0]
@@ -324,3 +332,36 @@ def fibrechanneltotarget(request):
         request,
         message=_('Fibre Channel Ports have been successfully changed.'),
     )
+
+def services_s3(request):
+    try:
+        s3 = models.S3.objects.all()[0]
+    except:
+        s3 = models.S3()
+
+    if request.method == "POST":
+        form = S3Form(request.POST, instance=s3)
+        if form.is_valid():
+            form.save()
+            return JsonResp(
+                request,
+                message=_("S3 successfully edited.")
+            ) 
+        else:
+            return JsonResp(request, form=form)
+
+    else:
+        form = S3Form(instance=s3)
+
+    s3_ui_url = "http://%s:%s" % (s3.s3_bindip, s3.s3_bindport)
+    if s3.s3_bindip == "0.0.0.0":
+        s3_ui_url = "http://%s:%s" % (request.META['HTTP_HOST'].split(':')[0], s3.s3_bindport)
+
+    s3_started = notifier().started("s3") and s3.s3_browser
+
+    return render(request, 'services/s3.html', {
+        'form': form,
+        's3': s3,
+        's3_ui_url': s3_ui_url,
+        's3_started': s3_started
+    })

@@ -93,6 +93,7 @@ IDMAP_TYPE_RID = 7
 IDMAP_TYPE_TDB = 8
 IDMAP_TYPE_TDB2 = 9
 IDMAP_TYPE_ADEX = 10
+IDMAP_TYPE_FRUIT = 11
 
 
 def idmap_to_enum(idmap_type):
@@ -101,6 +102,7 @@ def idmap_to_enum(idmap_type):
         'ad': IDMAP_TYPE_AD,
         'adex': IDMAP_TYPE_ADEX,
         'autorid': IDMAP_TYPE_AUTORID,
+        'fruit': IDMAP_TYPE_FRUIT,
         'hash': IDMAP_TYPE_HASH,
         'ldap': IDMAP_TYPE_LDAP,
         'nss': IDMAP_TYPE_NSS,
@@ -124,6 +126,7 @@ def enum_to_idmap(enum):
         IDMAP_TYPE_AD: 'ad',
         IDMAP_TYPE_ADEX: 'adex',
         IDMAP_TYPE_AUTORID: 'autorid',
+        IDMAP_TYPE_FRUIT: 'fruit',
         IDMAP_TYPE_HASH: 'hash',
         IDMAP_TYPE_LDAP: 'ldap',
         IDMAP_TYPE_NSS: 'nss',
@@ -160,7 +163,7 @@ class idmap_base(Model):
         if 'idmap_ds_id' in kwargs:
             self.idmap_ds_id = kwargs['idmap_ds_id']
 
-    def __unicode__(self):
+    def __str__(self):
         return self.idmap_backend_name
 
     class Meta:
@@ -284,6 +287,30 @@ class idmap_autorid(idmap_base):
 
     class FreeAdmin:
         resource_name = 'directoryservice/idmap/autorid'
+
+
+class idmap_fruit(idmap_base):
+    idmap_fruit_range_low = models.IntegerField(
+        verbose_name=_("Range Low"),
+        default=90000001
+    )
+    idmap_fruit_range_high = models.IntegerField(
+        verbose_name=_("Range High"),
+        default=100000000
+    )
+
+    def __init__(self, *args, **kwargs):
+        super(idmap_fruit, self).__init__(*args, **kwargs)
+
+        self.idmap_backend_type = IDMAP_TYPE_FRUIT
+        self.idmap_backend_name = enum_to_idmap(self.idmap_backend_type)
+
+    class Meta:
+        verbose_name = _("Fruit Idmap")
+        verbose_name_plural = _("Fruit Idmap")
+
+    class FreeAdmin:
+        resource_name = 'directoryservice/idmap/fruit'
 
 
 class idmap_hash(idmap_base):
@@ -703,7 +730,7 @@ class KerberosRealm(Model):
         blank=True
     )
 
-    def __unicode__(self):
+    def __str__(self):
         return self.krb_realm
 
 
@@ -725,7 +752,7 @@ class KerberosKeytab(Model):
         ).delete()
         super(KerberosKeytab, self).delete()
 
-    def __unicode__(self):
+    def __str__(self):
         return self.keytab_name
 
 
@@ -753,7 +780,7 @@ class KerberosPrincipal(Model):
         verbose_name=_("Date")
     )
 
-    def __unicode__(self):
+    def __str__(self):
         return self.principal_name
 
 
@@ -878,7 +905,7 @@ class ActiveDirectory(DirectoryServiceBase):
     ad_recover_retry = models.IntegerField(
             verbose_name=_("How many recovery attempts"),
             default=10,
-            validators=[MaxValueValidator(500), MinValueValidator(1)],
+            validators=[MaxValueValidator(500), MinValueValidator(0)],
             help_text=_("How many times we will try to recover the connection with AD server, if the value is 0, it will try forever"),
             blank=False
     )
@@ -1021,7 +1048,7 @@ class ActiveDirectory(DirectoryServiceBase):
                     "enforcing the usage of signed LDAP connections (e.g. "
                     "Windows 2000 SP3 or higher). LDAP sign and seal can be "
                     "controlled with the registry key \"HKLM\System\\"
-                    "CurrentControlSet\Services\NTDS\Parameters\\"
+                    "CurrentControlSet\\Services\\NTDS\\Parameters\\"
                     "LDAPServerIntegrity\" on the Windows server side."
                     ),
         default='plain'

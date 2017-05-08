@@ -24,11 +24,16 @@
 #
 #####################################################################
 import logging
+import psutil
+import re
+import subprocess
 
 from collections import OrderedDict
 from django.db.models import CASCADE
+from django.db.models.fields.related import OneToOneRel
 from django.utils import translation
 
+from freenasUI.common.pipesubr import pipeopen
 from freenasUI.system.models import Settings
 
 log = logging.getLogger('freeadmin.utils')
@@ -48,22 +53,26 @@ def get_related_objects(obj):
         if (f.one_to_many or f.one_to_one) and f.auto_created and not f.concrete
     ]:
 
-        # Do not acount if it is not going to CASCADE
+        # Do not account if it is not going to CASCADE
         if related.field.rel.on_delete is not CASCADE:
             continue
         try:
             relset = getattr(obj, related.get_accessor_name())
         except:
             continue
-        qs = relset.all()
-        count = qs.count()
-        if count == 0:
-            continue
-        relnum += count
+        if isinstance(related, OneToOneRel):
+            qs = [relset]
+            relnum += 1
+        else:
+            qs = relset.all()
+            count = qs.count()
+            if count == 0:
+                continue
+            relnum += count
 
         for o in qs:
             _reld, _reln = get_related_objects(o)
-            for key, val in _reld.items():
+            for key, val in list(_reld.items()):
                 if key in reldict:
                     reldict[key] += list(val)
                 else:
@@ -93,7 +102,7 @@ def key_order(form, index, name, instance=False):
     value = d.pop(name)
     new_d = OrderedDict()
     added = False
-    for i, kv in enumerate(d.iteritems()):
+    for i, kv in enumerate(d.items()):
         k, v = kv
         if i == index:
             new_d[name] = value
@@ -106,3 +115,20 @@ def key_order(form, index, name, instance=False):
         form.fields = new_d
     else:
         form.base_fields = new_d
+
+
+def log_db_locked():
+    """
+    Log the processes with the database file open for write.
+    """
+    proc = pipeopen('fuser /data/freenas-v1.db', stderr=subprocess.STDOUT, quiet=True)
+    output = proc.communicate()[0]
+    log.debug('Processes with database file open:')
+    for pid, flags in re.findall(r'\b(\d+)([a-z]+)\b', output):
+        if 'w' not in flags:
+            continue
+        try:
+            proc = psutil.Process(int(pid))
+            log.debug(f'PID {pid}: {" ".join(proc.cmdline())}')
+        except Exception as e:
+            pass

@@ -117,7 +117,7 @@ class CIFS_Share(Model):
         verbose_name=_('VFS Objects'),
         max_length=255,
         blank=True,
-        default='streams_xattr,aio_pthread',
+        default='zfs_space,zfsacl,streams_xattr,aio_pthread',
         choices=list(choices.CIFS_VFS_OBJECTS())
     )
     cifs_storage_task = models.ForeignKey(
@@ -134,11 +134,12 @@ class CIFS_Share(Model):
         help_text=_("These parameters are added to [Share] section of smb.conf")
     )
 
-    def __unicode__(self):
+    def __str__(self):
         return self.cifs_name
 
     def delete(self, *args, **kwargs):
         super(CIFS_Share, self).delete(*args, **kwargs)
+        notifier().sharesec_delete(self.cifs_name)
         notifier().reload("cifs")
 
     class Meta:
@@ -277,8 +278,8 @@ class AFP_Share(Model):
         verbose_name=_("Auxiliary Parameters")
     )
 
-    def __unicode__(self):
-        return unicode(self.afp_name)
+    def __str__(self):
+        return str(self.afp_name)
 
     def delete(self, *args, **kwargs):
         super(AFP_Share, self).delete(*args, **kwargs)
@@ -390,10 +391,10 @@ class NFS_Share(Model):
         ),
     )
 
-    def __unicode__(self):
+    def __str__(self):
         if self.nfs_comment:
-            return unicode(self.nfs_comment)
-        return u"[%s]" % ', '.join([p.path for p in self.paths.all()])
+            return str(self.nfs_comment)
+        return "[%s]" % ', '.join([p.path for p in self.paths.all()])
 
     def delete(self, *args, **kwargs):
         super(NFS_Share, self).delete(*args, **kwargs)
@@ -412,7 +413,7 @@ class NFS_Share_Path(Model):
     share = models.ForeignKey(NFS_Share, related_name="paths")
     path = PathField(verbose_name=_("Path"))
 
-    def __unicode__(self):
+    def __str__(self):
         return self.path
 
     class Meta:
@@ -454,7 +455,7 @@ class WebDAV_Share(Model):
         default=True,
     )
 
-    def __unicode__(self):
+    def __str__(self):
         return self.webdav_name
 
     def delete(self, *args, **kwargs):

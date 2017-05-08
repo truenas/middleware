@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/local/bin/python
 # Copyright (c) 2011, 2015 iXsystems, Inc.
 # All rights reserved.
 #
@@ -23,8 +23,8 @@
 # OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF
 # SUCH DAMAGE.
 #
-
-import cPickle
+from collections import defaultdict
+import pickle
 import datetime
 import logging
 import os
@@ -130,7 +130,7 @@ def sendzfs(fromsnap, tosnap, dataset, localfs, remotefs, followdelete, throttle
     replcmd = '%s%s/bin/dd obs=1m 2> /dev/null | /bin/dd obs=1m 2> /dev/null | /usr/local/bin/pipewatcher $$ | %s "%s/sbin/zfs receive -F -d \'%s\' && echo Succeeded"' % (compress, throttle, sshcmd, decompress, remotefs)
     log.debug('Sending zfs snapshot: %s | %s', ' '.join(cmd), replcmd)
     with open(templog, 'w+') as f:
-        readobj = os.fdopen(readfd, 'r', 0)
+        readobj = os.fdopen(readfd, 'rb', 0)
         proc = subprocess.Popen(
             replcmd,
             shell=True,
@@ -148,19 +148,14 @@ def sendzfs(fromsnap, tosnap, dataset, localfs, remotefs, followdelete, throttle
     msg = msg.replace('WARNING: ENABLED NONE CIPHER', '')
     msg = msg.strip('\r').strip('\n')
     log.debug("Replication result: %s" % (msg))
-    results[replication.id] = msg
+    results[replication.id]['msg'] = msg
     # When replicating to a target "container" dataset that doesn't exist on the sending
     # side the target dataset will have to be readonly, however that will preclude
     # creating mountpoints for the datasets that are sent.
     # In that case you'll get back a failed to create mountpoint message, which
     # we'll go ahead and consider a success.
     if reached_last and ("Succeeded" in msg or "failed to create mountpoint" in msg):
-        replication.repl_lastsnapshot = tosnap
-        # Re-query replication to update field because replication settings
-        # might have been updated while this script was running
-        Replication.objects.filter(id=replication.id).update(
-            repl_lastsnapshot=tosnap
-        )
+        results[replication.id]['last_snapshot'] = tosnap
     return ("Succeeded" in msg or "failed to create mountpoint" in msg)
 
 log = logging.getLogger('tools.autorepl')
@@ -229,15 +224,15 @@ log.debug("temp log file: %s" % (templog, ))
 try:
     with open(REPL_RESULTFILE, 'rb') as f:
         data = f.read()
-    results = cPickle.loads(data)
+    results = pickle.loads(data)
 except:
-    results = {}
+    results = defaultdict(dict)
 
 
 def write_results():
     global results
-    with open(REPL_RESULTFILE, 'w') as f:
-        f.write(cPickle.dumps(results))
+    with open(REPL_RESULTFILE, 'wb') as f:
+        f.write(pickle.dumps(results))
 
 system_re = re.compile('^[^/]+/.system.*')
 
@@ -257,7 +252,6 @@ for replication in replication_tasks:
     cipher = replication.repl_remote.ssh_cipher
     remotefs = replication.repl_zfs.__str__()
     localfs = replication.repl_filesystem.__str__()
-    last_snapshot = replication.repl_lastsnapshot.__str__()
     compression = replication.repl_compression.__str__()
     followdelete = not not replication.repl_followdelete
     recursive = not not replication.repl_userepl
@@ -287,7 +281,7 @@ for replication in replication_tasks:
                   ' -o ConnectTimeout=7')
 
     if dedicateduser:
-        sshcmd = "%s -l %s" % (sshcmd, dedicateduser.encode('utf-8'))
+        sshcmd = "%s -l %s" % (sshcmd, dedicateduser)
 
     sshcmd = '%s -p %d %s' % (sshcmd, remote_port, remote)
 
@@ -314,6 +308,14 @@ for replication in replication_tasks:
         snaplist = [x for x in snaplist if not system_re.match(x)]
         map_source = mapfromdata(snaplist)
 
+    rzfscmd = '"zfs list -H -o name,readonly -t filesystem,volume -r %s"' % (remotefs_final.split('/')[0])
+    sshproc = pipeopen('%s %s' % (sshcmd, rzfscmd))
+    output, error = sshproc.communicate()
+    remote_zfslist = {}
+    for i in re.sub(r'[ \t]+', ' ', output, flags=re.M).splitlines():
+        data = i.split()
+        remote_zfslist[data[0]] = {'readonly': data[1] == 'on'}
+
     # Attempt to create the remote dataset.  If it fails, we don't care at this point.
     rzfscmd = "zfs create -o readonly=on "
     ds = ''
@@ -321,13 +323,18 @@ for replication in replication_tasks:
         localfs_tmp = "%s/%s" % (localfs, localfs)
     else:
         localfs_tmp = localfs
-    for dir in localfs_tmp.partition("/")[2].split("/"):
+    for direc in (remotefs.partition("/")[2] + "/" + localfs_tmp.partition("/")[2]).split("/"):
         # If this test fails there is no need to create datasets on the remote side
         # eg: tank -> tank replication
+        if not direc:
+            continue
         if '/' in remotefs or '/' in localfs:
-            ds = os.path.join(ds, dir)
+            ds = os.path.join(ds, direc)
+            ds_full = '%s/%s' % (remotefs.split('/')[0], ds)
+            if ds_full in remote_zfslist:
+                continue
             log.debug("ds = %s, remotefs = %s" % (ds, remotefs))
-            sshproc = pipeopen('%s %s %s/%s' % (sshcmd, rzfscmd, remotefs, ds), quiet=True)
+            sshproc = pipeopen('%s %s %s' % (sshcmd, rzfscmd, ds_full), quiet=True)
             output, error = sshproc.communicate()
             error = error.strip('\n').strip('\r').replace('WARNING: ENABLED NONE CIPHER', '')
             # Debugging code
@@ -360,7 +367,7 @@ for replication in replication_tasks:
                     may_proceed = True
         if not may_proceed:
             # Report the problem and continue
-            results[replication.id] = 'Remote destination must be set readonly'
+            results[replication.id]['msg'] = 'Remote destination must be set readonly'
             log.debug("dataset %s and it's children must be readonly." % remotefs_final)
             if ("on" in output or "off" in output) and len(output) > 0:
                 error, errmsg = send_mail(
@@ -380,14 +387,14 @@ Hello,
                             text="""
 Hello,
     Replication of local ZFS %s to remote ZFS %s failed.""" % (localfs, remotefs_final), interval=datetime.timedelta(hours=24), channel='autorepl')
-                    results[replication.id] = 'Remote system denied receiving of snapshot on %s' % (remotefs_final)
+                    results[replication.id]['msg'] = 'Remote system denied receiving of snapshot on %s' % (remotefs_final)
                 else:
                     error, errmsg = send_mail(
                             subject="Replication failed! (%s)" % remote,
                             text="""
 Hello,
     Replication of local ZFS %s to remote ZFS %s failed.  The remote system is not responding.""" % (localfs, remotefs_final), interval=datetime.timedelta(hours=24), channel='autorepl')
-                    results[replication.id] = 'Remote system not responding.'
+                    results[replication.id]['msg'] = 'Remote system not responding.'
             continue
 
     # Remote filesystem is the root dataset
@@ -398,7 +405,7 @@ Hello,
         sshproc = pipeopen('%s %s' % (sshcmd, rzfscmd), debug)
         output = sshproc.communicate()[0].strip()
         if output != '':
-            results[replication.id] = 'Please move system dataset of remote side to another pool'
+            results[replication.id]['msg'] = 'Please move system dataset of remote side to another pool'
             continue
 
     # Grab map from remote system
@@ -417,7 +424,7 @@ Hello,
         snaplist = [localfs + x[l:] for x in snaplist]
         map_target = mapfromdata(snaplist)
     elif error != '':
-        results[replication.id] = 'Failed: %s' % (error)
+        results[replication.id]['msg'] = 'Failed: %s' % (error)
         continue
     else:
         map_target = {}
@@ -482,21 +489,21 @@ Hello,
 
     previously_deleted = "/"
     l = len(localfs)
-    total_datasets = len(tasks.keys())
+    total_datasets = len(list(tasks.keys()))
     if total_datasets == 0:
-        results[replication.id] = 'Up to date'
+        results[replication.id]['msg'] = 'Up to date'
         write_results()
         continue
     current_dataset = 0
 
-    results[replication.id] = 'Running'
+    results[replication.id]['msg'] = 'Running'
     write_results()
 
     # Go through datasets in reverse order by level in hierarchy
     # This is because in case datasets being remounted we need to make sure
     # tank/foo is mounted after tank/foo/bar and the latter does not get hidden.
     # See #12455
-    for dataset in sorted(tasks.keys(), key=lambda y: len(y.split('/')), reverse=True):
+    for dataset in sorted(list(tasks.keys()), key=lambda y: len(y.split('/')), reverse=True):
         tasklist = tasks[dataset]
         current_dataset += 1
         reached_last = (current_dataset == total_datasets)
@@ -526,7 +533,7 @@ Hello,
     including:
 %s
                         """ % (localfs, failed_snapshots), interval=datetime.timedelta(hours=2), channel='autorepl')
-                    results[replication.id] = 'Unable to destroy remote snapshot: %s' % (failed_snapshots)
+                    results[replication.id]['msg'] = 'Unable to destroy remote snapshot: %s' % (failed_snapshots)
                     # ## rzfs destroy %s
             psnap = tasklist[1]
             success = sendzfs(None, psnap, dataset, localfs, remotefs, followdelete, throttle, compression, replication, reached_last)
@@ -542,7 +549,7 @@ Hello,
     The replication failed for the local ZFS %s while attempting to
     apply incremental send of snapshot %s -> %s to %s
                             """ % (dataset, psnap, nsnap, remote), interval=datetime.timedelta(hours=2), channel='autorepl')
-                        results[replication.id] = 'Failed: %s (%s->%s)' % (dataset, psnap, nsnap)
+                        results[replication.id]['msg'] = 'Failed: %s (%s->%s)' % (dataset, psnap, nsnap)
                         break
                     psnap = nsnap
             else:
@@ -554,7 +561,7 @@ Hello,
     The replication failed for the local ZFS %s while attempting to
     send snapshot %s to %s
                     """ % (dataset, psnap, remote), interval=datetime.timedelta(hours=2), channel='autorepl')
-                results[replication.id] = 'Failed: %s (%s)' % (dataset, psnap)
+                results[replication.id]['msg'] = 'Failed: %s (%s)' % (dataset, psnap)
                 continue
         elif tasklist[1] is not None:
             psnap = tasklist[0]
@@ -571,7 +578,7 @@ Hello,
     The replication failed for the local ZFS %s while attempting to
     apply incremental send of snapshot %s -> %s to %s
                         """ % (dataset, psnap, nsnap, remote), interval=datetime.timedelta(hours=2), channel='autorepl')
-                    results[replication.id] = 'Failed: %s (%s->%s)' % (dataset, psnap, nsnap)
+                    results[replication.id]['msg'] = 'Failed: %s (%s->%s)' % (dataset, psnap, nsnap)
                     break
                 psnap = nsnap
             if allsucceeded and dataset in delete_tasks:
@@ -582,7 +589,7 @@ Hello,
                     sshproc = pipeopen('%s %s' % (sshcmd, rzfscmd))
                     sshproc.communicate()
             if allsucceeded:
-                    results[replication.id] = 'Succeeded'
+                results[replication.id]['msg'] = 'Succeeded'
         else:
             # Remove the named dataset.
             zfsname = remotefs_final + dataset[l:]

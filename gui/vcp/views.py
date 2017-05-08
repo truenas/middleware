@@ -26,7 +26,7 @@
 #####################################################################
 
 import json
-import utils
+from . import utils
 
 from django.shortcuts import render
 from django.utils.translation import ugettext as _

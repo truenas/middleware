@@ -115,9 +115,12 @@ def get_ipv4_exclude_dict():
             ipv4_exclude_dict[str(sc)] = sc
 
         if j['bridge_ipv4']:
-            parts = j['ipv4'].split('/')
+            parts = j['bridge_ipv4'].split('/')
             if len(parts) == 2:
-                mask = int(parts[1])
+                try:
+                    mask = int(parts[1])
+                except ValueError:
+                    pass
             sc = sipcalc_type("%s/%d" % (
                 parts[0],
                 mask
@@ -618,7 +621,7 @@ def new_default_plugin_jail(basename):
                 raise MiddlewareError(_("Unable to determine IPv6 for plugin"))
 
     jailname = None
-    for i in xrange(1, 1000):
+    for i in range(1, 1000):
         tmpname = "%s_%d" % (basename, i)
         jails = Jails.objects.filter(jail_host=tmpname)
         if not jails:
@@ -673,7 +676,7 @@ def new_default_plugin_jail(basename):
         except Exception as e:
             if os.path.exists(createfile):
                 os.unlink(createfile)
-            raise MiddlewareError(e.message)
+            raise MiddlewareError(e)
 
         template_list_flags = {}
         template_list_flags['flags'] = warden.WARDEN_TEMPLATE_FLAGS_LIST
@@ -713,7 +716,7 @@ def new_default_plugin_jail(basename):
 
         w.create(**create_args)
 
-    except Exception, e:
+    except Exception as e:
         raise MiddlewareError(_("Failed to install plugin: %s") % e)
 
     jaildir = "%s/%s" % (jc.jc_path, jailname)
@@ -769,7 +772,7 @@ def jail_auto_configure():
     basename = "%s/jails" % volume.vol_name
 
     name = basename
-    for i in xrange(2, 100):
+    for i in range(2, 100):
         datasets = list_datasets(
             path="/mnt/%s" % name,
             recursive=False,
@@ -820,7 +823,6 @@ def add_media_user_and_group(jail_path):
         media_user.bsdusr_group.bsdgrp_group,
         media_user.bsdusr_group.bsdgrp_gid)
     chroot_groupadd_cmd = "/usr/sbin/chroot '%s' %s" % (jail_path, groupadd_cmd)
-    print chroot_groupadd_cmd
 
     userdel_cmd = "/usr/sbin/pw userdel '%s'" % media_user.bsdusr_username
     chroot_userdel_cmd = "/usr/sbin/chroot '%s' %s" % (jail_path, userdel_cmd)

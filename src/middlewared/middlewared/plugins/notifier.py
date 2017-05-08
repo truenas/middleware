@@ -1,5 +1,6 @@
-from middlewared.service import Service
+from middlewared.service import CallError, Service
 
+import errno
 import os
 import sys
 import logging
@@ -11,6 +12,7 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'freenasUI.settings')
 import django
 django.setup()
 
+from django.conf import settings
 from freenasUI import choices
 from freenasUI import common as fcommon
 from freenasUI.common.freenasldap import (
@@ -26,6 +28,7 @@ from freenasUI.directoryservice.models import (
     IDMAP_TYPE_AD,
     IDMAP_TYPE_ADEX,
     IDMAP_TYPE_AUTORID,
+    IDMAP_TYPE_FRUIT,
     IDMAP_TYPE_HASH,
     IDMAP_TYPE_LDAP,
     IDMAP_TYPE_NSS,
@@ -33,7 +36,6 @@ from freenasUI.directoryservice.models import (
     IDMAP_TYPE_RID,
     IDMAP_TYPE_TDB,
     IDMAP_TYPE_TDB2,
-    DS_TYPE_CIFS,
 )
 from freenasUI.directoryservice.utils import get_idmap_object
 
@@ -107,7 +109,7 @@ class NotifierService(Service):
         def serialize(i):
             data = {}
             if isinstance(i, zfs.ZFSList):
-                for k, v in i.items():
+                for k, v in list(i.items()):
                     data[k] = serialize(v)
             elif isinstance(i, (zfs.ZFSVol, zfs.ZFSDataset)):
                 data = i.__dict__
@@ -123,8 +125,9 @@ class NotifierService(Service):
             workgroups = []
             domains = ds.get_domains()
             for d in domains:
-                netbiosname = d['nETBIOSName']
-                workgroups.append(netbiosname)
+                if 'nETBIOSName' in d:
+                    netbiosname = d['nETBIOSName']
+                    workgroups.append(netbiosname)
             ds.workgroups = workgroups
         elif name == 'LDAP':
             ds = FreeNAS_LDAP(flags=FLAGS_DBINIT)
@@ -189,6 +192,7 @@ class NotifierService(Service):
             IDMAP_TYPE_AD: 'IDMAP_TYPE_AD',
             IDMAP_TYPE_ADEX: 'IDMAP_TYPE_ADEX',
             IDMAP_TYPE_AUTORID: 'IDMAP_TYPE_AUTORID',
+            IDMAP_TYPE_FRUIT: 'IDMAP_TYPE_FRUIT',
             IDMAP_TYPE_HASH: 'IDMAP_TYPE_HASH',
             IDMAP_TYPE_LDAP: 'IDMAP_TYPE_LDAP',
             IDMAP_TYPE_NSS: 'IDMAP_TYPE_NSS',
@@ -220,8 +224,23 @@ class NotifierService(Service):
         """Temporary wrapper to get to UI choices"""
         if args is None:
             args = []
-        attr = getattr(choices, name)
+        try:
+            attr = getattr(choices, name)
+        except AttributeError as e:
+            raise CallError(str(e), errno.ENOENT)
         if callable(attr):
-            return list(attr(*args))
+            rv = list(attr(*args))
         else:
-            return attr
+            rv = attr
+        # We need to make sure the label is str and not django
+        # translation proxy
+        _choices = []
+        for k, v in rv:
+            if not isinstance(v, str):
+                v = str(v)
+            _choices.append((k, v))
+        return _choices
+
+    def gui_languages(self):
+        """Temporary wrapper to return available languages in django"""
+        return settings.LANGUAGES

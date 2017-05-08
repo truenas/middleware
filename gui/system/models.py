@@ -28,7 +28,6 @@ import logging
 import os
 import re
 import signal
-import string
 import time
 import uuid
 
@@ -45,6 +44,8 @@ from freenasUI import choices
 from freenasUI.freeadmin.models import DictField, Model, UserField
 from freenasUI.middleware.notifier import notifier
 from freenasUI.storage.models import Volume
+from freenasUI.support.utils import get_license
+from licenselib.license import ContractType
 
 log = logging.getLogger('system.models')
 
@@ -54,12 +55,13 @@ def time_now():
 
 
 class Alert(Model):
+    """
+    Model to keep track of dismissed alerts.
+    """
     node = models.CharField(default='A', max_length=100)
     message_id = models.CharField(
         max_length=100,
     )
-    dismiss = models.BooleanField(default=True)
-    timestamp = models.IntegerField(default=time_now)
 
     class Meta:
         unique_together = (
@@ -218,7 +220,7 @@ class NTPServer(Model):
         ),
     )
 
-    def __unicode__(self):
+    def __str__(self):
         return self.ntp_address
 
     def delete(self):
@@ -232,10 +234,10 @@ class NTPServer(Model):
         ordering = ["ntp_address"]
 
     class FreeAdmin:
-        icon_model = u"NTPServerIcon"
-        icon_object = u"NTPServerIcon"
-        icon_view = u"ViewNTPServerIcon"
-        icon_add = u"AddNTPServerIcon"
+        icon_model = "NTPServerIcon"
+        icon_object = "NTPServerIcon"
+        icon_view = "ViewNTPServerIcon"
+        icon_add = "AddNTPServerIcon"
 
 
 class Advanced(Model):
@@ -353,19 +355,6 @@ class Advanced(Model):
         default=False,
     )
 
-    adv_ixalert = models.BooleanField(
-        verbose_name=_("Enable automatic support alerts to iXsystems"),
-        default=True,
-    )
-    adv_ixfailsafe_email = models.EmailField(
-        verbose_name=_('Failsafe Support Contact'),
-        help_text=_(
-            'Additional email address for iXsystems support to contact in case'
-            ' of failure.'
-        ),
-        blank=True,
-    )
-
     class Meta:
         verbose_name = _("Advanced")
 
@@ -476,8 +465,8 @@ class Tunable(Model):
         verbose_name=_("Enabled"),
     )
 
-    def __unicode__(self):
-        return unicode(self.tun_var)
+    def __str__(self):
+        return str(self.tun_var)
 
     def delete(self):
         super(Tunable, self).delete()
@@ -492,10 +481,47 @@ class Tunable(Model):
         ordering = ["tun_var"]
 
     class FreeAdmin:
-        icon_model = u"TunableIcon"
-        icon_object = u"TunableIcon"
-        icon_add = u"AddTunableIcon"
-        icon_view = u"ViewTunableIcon"
+        icon_model = "TunableIcon"
+        icon_object = "TunableIcon"
+        icon_add = "AddTunableIcon"
+        icon_view = "ViewTunableIcon"
+
+class ConsulAlerts(Model):
+
+    consulalert_type = models.CharField(
+        verbose_name=_('Service Name'),
+        max_length=20,
+        choices=choices.CONSULALERTS_TYPES,
+        default='AWS-SNS',
+    )
+    attributes = DictField(
+        editable=False,
+        verbose_name=_("Attributes"),
+    )
+    enabled = models.BooleanField(
+        verbose_name=_("Enabled"),
+        default=True,
+    )
+
+    class Meta:
+        verbose_name = _("Alert Service")
+        verbose_name_plural = _("Alert Services")
+        ordering = ["consulalert_type"]
+
+
+    class FreeAdmin:
+        icon_model = "ConsulAlertsIcon"
+        icon_object = "ConsulAlertsIcon"
+        icon_add = "AddConsulAlertsIcon"
+        icon_view = "ViewConsulAlertsIcon"
+
+        exclude_fields = (
+            'attributes',
+            'id',
+        )
+
+    def __str__(self):
+        return self.consulalert_type
 
 
 class SystemDataset(Model):
@@ -533,10 +559,10 @@ class SystemDataset(Model):
 
     class FreeAdmin:
         deletable = False
-        icon_model = u"SystemDatasetIcon"
-        icon_object = u"SystemDatasetIcon"
-        icon_view = u"SystemDatasetIcon"
-        icon_add = u"SystemDatasetIcon"
+        icon_model = "SystemDatasetIcon"
+        icon_object = "SystemDatasetIcon"
+        icon_view = "SystemDatasetIcon"
+        icon_add = "SystemDatasetIcon"
 
     def __init__(self, *args, **kwargs):
         super(SystemDataset, self).__init__(*args, **kwargs)
@@ -589,7 +615,7 @@ class Update(Model):
         conf.LoadTrainsConfig()
         trains = conf.AvailableTrains() or []
         if trains:
-            trains = trains.keys()
+            trains = list(trains.keys())
         if not self.upd_train or self.upd_train not in trains:
             return conf.CurrentTrain()
         return self.upd_train
@@ -728,7 +754,7 @@ class CertificateBase(Model):
 
     def get_fingerprint(self):
         cert = self.get_certificate()
-        return cert.digest("sha1").encode('utf8')
+        return cert.digest("sha1").decode()
 
     def get_certificate_chain(self):
         regex = re.compile(r"(-{5}BEGIN[\s\w]+-{5}[^-]+-{5}END[\s\w]+-{5})+", re.M | re.S)
@@ -800,9 +826,9 @@ class CertificateBase(Model):
         self.__load_thingy()
 
         if not os.path.exists(self.cert_root_path):
-            os.mkdir(self.cert_root_path, 0755)
+            os.mkdir(self.cert_root_path, 0o755)
 
-    def __unicode__(self):
+    def __str__(self):
         return self.cert_name
 
     @property
@@ -861,8 +887,8 @@ class CertificateBase(Model):
 
         parts = []
         for c in self.__get_thingy().get_subject().get_components():
-            parts.append("%s=%s" % (c[0], c[1]))
-        DN = "/%s" % string.join(parts, '/')
+            parts.append("%s=%s" % (c[0].decode(), c[1].decode('utf8')))
+        DN = "/%s" % '/'.join(parts)
         return DN
 
     #
@@ -954,7 +980,7 @@ class CertificateAuthority(CertificateBase):
 
         self.cert_root_path = "%s/CA" % self.cert_root_path
         if not os.path.exists(self.cert_root_path):
-            os.mkdir(self.cert_root_path, 0755)
+            os.mkdir(self.cert_root_path, 0o755)
 
     def delete(self):
         temp_cert_name = self.cert_name
@@ -1016,7 +1042,7 @@ class CloudCredentials(Model):
         editable=False,
     )
 
-    def __unicode__(self):
+    def __str__(self):
         return self.name
 
     class Meta:
@@ -1070,3 +1096,93 @@ class Backup(Model):
 
     class Meta:
         verbose_name = _("System Backup")
+
+
+class Support(Model):
+    enabled = models.NullBooleanField(
+        verbose_name=_("Enable automatic support alerts to iXsystems"),
+        default=False,
+        null=True,
+    )
+    name = models.CharField(
+        verbose_name=_('Name of Primary Contact'),
+        max_length=200,
+        blank=True,
+    )
+    title = models.CharField(
+        verbose_name=_('Title'),
+        max_length=200,
+        blank=True,
+    )
+    email = models.EmailField(
+        verbose_name=_('E-mail'),
+        max_length=200,
+        blank=True,
+    )
+    phone = models.CharField(
+        verbose_name=_('Phone'),
+        max_length=200,
+        blank=True,
+    )
+    secondary_name = models.CharField(
+        verbose_name=_('Name of Secondary Contact'),
+        max_length=200,
+        blank=True,
+    )
+    secondary_title = models.CharField(
+        verbose_name=_('Secondary Title'),
+        max_length=200,
+        blank=True,
+    )
+    secondary_email = models.EmailField(
+        verbose_name=_('Secondary E-mail'),
+        max_length=200,
+        blank=True,
+    )
+    secondary_phone = models.CharField(
+        verbose_name=_('Secondary Phone'),
+        max_length=200,
+        blank=True,
+    )
+
+    class Meta:
+        verbose_name = _("Proactive Support")
+
+    class FreeAdmin:
+        deletable = False
+
+    @classmethod
+    def is_available(cls, support=None):
+        """
+        Checks whether the Proactive Support tab should be shown.
+        It should only be for TrueNAS and Siver/Gold Customers.
+
+        Returns:
+            tuple(bool, Support instance)
+        """
+        if notifier().is_freenas():
+            return False, support
+        if support is None:
+            try:
+                support = cls.objects.order_by('-id')[0]
+            except IndexError:
+                support = cls.objects.create()
+
+        license, error = get_license()
+        if license is None:
+            return False, support
+        if license.contract_type in (
+            ContractType.silver.value,
+            ContractType.gold.value,
+        ):
+            return True, support
+        return False, support
+
+    def is_enabled(self):
+        """
+        Returns if the proactive support is enabled.
+        This means if certain failures should be reported to iXsystems.
+        Returns:
+            bool
+        """
+        return self.is_available(support=self)[0] and self.enabled

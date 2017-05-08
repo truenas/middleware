@@ -10,13 +10,13 @@ class ReplicationStatusAlert(BaseAlert):
         qs = Replication.objects.filter(repl_enabled=True)
         alerts = []
         for repl in qs:
-            if repl.repl_lastresult in ('Succeeded', 'Up to date', 'Waiting', 'Running', '', None):
+            if repl.repl_lastresult['msg'] in ('Succeeded', 'Up to date', 'Waiting', 'Running', '', None):
                 continue
             alerts.append(Alert(
                 Alert.CRIT,
                 _('Replication %(replication)s failed: %(message)s') % {
                     'replication': repl,
-                    'message': repl.repl_lastresult,
+                    'message': repl.repl_lastresult['msg'],
                 },
             ))
         return alerts

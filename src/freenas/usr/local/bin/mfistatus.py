@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/local/bin/python
 #+
 # Copyright 2010 iXsystems, Inc.
 # All rights reserved
@@ -52,7 +52,7 @@ for dev in devs:
         send_email = False
         for line in temp_list:
             key = line[0]
-            if key not in data.keys():
+            if key not in list(data.keys()):
                 data[line[0]] = " ".join(line[1:])
                 send_email = True
 
@@ -81,7 +81,7 @@ for dev in devs:
                     os.remove(PERSIST_DATA)
                     sys.exit()
                 message = ""
-                for key in data.keys():
+                for key in list(data.keys()):
                     message += key + " " + data[key] + "\n"
                 cmd = """echo '%s' | mailx -s 'RAID status' %s""" % (message, addy)
                 p = subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE)

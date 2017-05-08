@@ -157,6 +157,7 @@ PluginDir "/usr/local/lib/collectd"
 
 LoadPlugin aggregation
 LoadPlugin cpu
+LoadPlugin cputemp
 LoadPlugin ctl
 LoadPlugin df
 LoadPlugin disk
@@ -187,6 +188,8 @@ LoadPlugin zfs_arc_v2
         GroupBy "TypeInstance"
         CalculateSum true
     </Aggregation>
+</Plugin>
+<Plugin cputemp>
 </Plugin>
 
 <Plugin "disk">

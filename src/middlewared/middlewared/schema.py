@@ -68,6 +68,11 @@ class Attribute(object):
             middleware.add_schema(self)
         return self
 
+class Any(Attribute):
+
+    def to_json_schema(self):
+        return {'type': 'any'}
+
 
 class Str(EnumMixin, Attribute):
 
@@ -75,7 +80,7 @@ class Str(EnumMixin, Attribute):
         value = super(Str, self).clean(value)
         if value is None and not self.required:
             return self.default
-        if not isinstance(value, (str, unicode)):
+        if not isinstance(value, str):
             raise Error(self.name, 'Not a string')
         return value
 
@@ -115,7 +120,7 @@ class Int(Attribute):
 
     def clean(self, value):
         if not isinstance(value, int):
-            if isinstance(value, (str, unicode)) and value.isdigit():
+            if isinstance(value, str) and value.isdigit():
                 return int(value)
             raise Error(self.name, 'Not an integer')
         return value
@@ -131,6 +136,8 @@ class List(EnumMixin, Attribute):
 
     def __init__(self, *args, **kwargs):
         self.items = kwargs.pop('items', [])
+        if 'default' not in kwargs:
+            kwargs['default'] = []
         super(List, self).__init__(*args, **kwargs)
 
     def clean(self, value):
@@ -190,7 +197,7 @@ class Dict(Attribute):
         if not isinstance(data, dict):
             raise Error(self.name, 'A dict was expected')
 
-        for key, value in data.items():
+        for key, value in list(data.items()):
             if not self.additional_attrs:
                 if key not in self.attrs:
                     raise Error(key, 'Field was not expected')
@@ -203,7 +210,7 @@ class Dict(Attribute):
 
         # Do not make any field and required and not populate default values
         if not self.update:
-            for attr in self.attrs.values():
+            for attr in list(self.attrs.values()):
 
                 if attr.required and attr.name not in data:
                     raise Error(attr.name, 'This field is required')
@@ -220,12 +227,12 @@ class Dict(Attribute):
             'properties': {},
             'additionalProperties': self.additional_attrs,
         }
-        for name, attr in self.attrs.items():
+        for name, attr in list(self.attrs.items()):
             schema['properties'][name] = attr.to_json_schema()
         return schema
 
     def resolve(self, middleware):
-        for name, attr in self.attrs.items():
+        for name, attr in list(self.attrs.items()):
             self.attrs[name] = attr.resolve(middleware)
         if self.register:
             middleware.add_schema(self)
@@ -278,7 +285,7 @@ class Patch(object):
             elif operation == 'rm':
                 del schema.attrs[patch['name']]
             elif operation == 'attr':
-                for key, val in patch.items():
+                for key, val in list(patch.items()):
                     setattr(schema, key, val)
         if self.register:
             middleware.add_schema(schema)

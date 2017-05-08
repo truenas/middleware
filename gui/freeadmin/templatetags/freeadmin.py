@@ -30,7 +30,7 @@ import re
 from django import template
 from django.forms.forms import BoundField
 from django.utils.html import conditional_escape
-from django.utils.encoding import force_unicode
+from django.utils.encoding import force_str
 
 from freenasUI.system.models import Advanced
 
@@ -58,13 +58,13 @@ class FormRender(template.Node):
         else:
             model = None
 
-        new_fields = form.fields.keys()
+        new_fields = list(form.fields.keys())
         output, hidden_fields, composed = [], [], {}
 
         top_errors = form.non_field_errors()
         if top_errors:
             output.append("<tr><td colspan=\"2\">%s</td></tr>" % (
-                force_unicode(top_errors),
+                force_str(top_errors),
             ))
         else:
             if form.prefix:
@@ -89,7 +89,7 @@ class FormRender(template.Node):
             is_adv = ' class="advancedField"' if is_adv else ''
             if field in composed:
                 label, fields, help_text = composed.get(field)
-                html = u"""<tr><th><label%s>%s</label></th><td>""" % (
+                html = """<tr><th><label%s>%s</label></th><td>""" % (
                     _hide,
                     label)
                 for field in fields:
@@ -97,7 +97,7 @@ class FormRender(template.Node):
                     bf_errors = form.error_class(
                         [conditional_escape(error) for error in bf.errors]
                     )
-                    html += unicode(bf_errors) + unicode(bf)
+                    html += str(bf_errors) + str(bf)
 
                 if help_text:
                     html += """<div data-dojo-type="dijit.Tooltip" data-dojo-props="connectId: '%(id)shelp', showDelay: 200">%(text)s</div><img id="%(id)shelp" src="/static/images/ui/MoreInformation_16x16px.png" style="width:16px; height: 16px; cursor: help;" />""" % {
@@ -105,7 +105,7 @@ class FormRender(template.Node):
                         'text': help_text,
                     }
 
-                html += u"</td></tr>"
+                html += "</td></tr>"
                 output.append(html)
             else:
                 ffield = form.fields.get(field)
@@ -117,11 +117,11 @@ class FormRender(template.Node):
                     [conditional_escape(error) for error in bf.errors]
                 )
                 if bf.is_hidden:
-                    hidden_fields.append(unicode(bf))
+                    hidden_fields.append(str(bf))
                 else:
                     if help_text:
                         help_text = """<div data-dojo-type="dijit.Tooltip" data-dojo-props="connectId: '%shelp', showDelay: 200">%s</div><img id="%shelp" src="/static/images/ui/MoreInformation_16x16px.png" style="width:16px; height: 16px; cursor: help;" />""" % (bf.auto_id, help_text, bf.auto_id)
-                    html = u"""<tr%s%s><th>%s</th><td>%s%s %s</td></tr>""" % (
+                    html = """<tr%s%s><th>%s</th><td>%s%s %s</td></tr>""" % (
                         is_adv,
                         _hide,
                         bf.label_tag(),
@@ -132,7 +132,7 @@ class FormRender(template.Node):
                     output.append(html)
 
         if hidden_fields:
-            str_hidden = u''.join(hidden_fields)
+            str_hidden = ''.join(hidden_fields)
             output.append(str_hidden)
 
         return ''.join(output)
@@ -159,7 +159,7 @@ class DojoFormRender(template.Node):
     def render(self, context):
         form = self.arg.resolve(context)
 
-        rendered = unicode(form)
+        rendered = str(form)
         for find in re.finditer(
             r'(type=[\'"]hidden[\'"])', rendered, re.S | re.M
         ):

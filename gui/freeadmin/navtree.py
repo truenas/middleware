@@ -26,7 +26,7 @@
 import json
 import logging
 import re
-import urllib2
+import urllib.request
 
 from django.conf import settings
 from django.core.urlresolvers import NoReverseMatch, resolve, reverse
@@ -57,7 +57,8 @@ import ssl
 # Its horrible, but nothing much I can do about it
 ssl._create_default_https_context = ssl._create_unverified_context
 ssl.create_default_context = ssl._create_unverified_context
-from eventlet import green, GreenPool
+from eventlet import GreenPool
+from eventlet.green.urllib import request as green_request
 
 log = logging.getLogger('freeadmin.navtree')
 
@@ -90,7 +91,7 @@ class ModelFormsDict(dict):
         return isin
 
     def update(self, d):
-        for key, val in d.items():
+        for key, val in list(d.items()):
             self[key] = val
 
 
@@ -111,7 +112,7 @@ class NavTree(object):
                 globals(),
                 locals(),
                 [name],
-                -1)
+                0)
             return mod
         except ImportError as ie:
             log.debug("Unable to import '%s' '%s': %s", where, name, ie)
@@ -147,7 +148,7 @@ class NavTree(object):
 
     def replace_navs(self, root):
 
-        for gname, opt in self._navs.items():
+        for gname, opt in list(self._navs.items()):
 
             for nav in root:
                 find = nav.find_gname(gname)
@@ -248,7 +249,7 @@ class NavTree(object):
 
             try:
                 self._generate_app(app, request, tree_roots, childs_of, fstatus)
-            except Exception, e:
+            except Exception as e:
                 log.error(
                     "Failed to generate navtree for app %s: %s",
                     app,
@@ -418,26 +419,18 @@ class NavTree(object):
                             continue
                     else:
                         continue
-                except TypeError, e:
+                except TypeError as e:
                     continue
 
                 if c in BLACKLIST:
-                    log.debug(
-                        "Model %s from app %s blacklisted, skipping",
-                        c,
-                        app,
-                    )
                     continue
 
                 if not (
                     model.__module__ in (
                         modname,
                         'freenasUI.' + modname,
-                    )
-                    and
-                    model in self._modelforms
+                    ) and model in self._modelforms
                 ):
-                    log.debug("Model %s does not have a ModelForm", model)
                     continue
 
                 if (
@@ -472,7 +465,7 @@ class NavTree(object):
                     navopt.app_name = app
                     navopt.order_child = False
 
-                for key in model._admin.nav_extra.keys():
+                for key in list(model._admin.nav_extra.keys()):
                     navopt.__setattr__(
                         key,
                         model._admin.nav_extra.get(key))
@@ -512,14 +505,14 @@ class NavTree(object):
                                 )
                             subopt.gname = e.id
                             try:
-                                subopt.name = unicode(e)
+                                subopt.name = str(e)
                             except:
                                 subopt.name = 'Object'
                             navopt.append_child(subopt)
 
                     # Node to add an instance of model
                     subopt = TreeNode('Add')
-                    subopt.name = _(u'Add %s') % model._meta.verbose_name
+                    subopt.name = _('Add %s') % model._meta.verbose_name
                     subopt.view = 'freeadmin_%s_%s_add' % (
                         model._meta.app_label,
                         model._meta.model_name,
@@ -534,10 +527,10 @@ class NavTree(object):
 
                     # Node to view all instances of model
                     subopt = TreeNode('View')
-                    subopt.name = _(u'View %s') % (
+                    subopt.name = _('View %s') % (
                         model._meta.verbose_name_plural,
                     )
-                    subopt.view = u'freeadmin_%s_%s_datagrid' % (
+                    subopt.view = 'freeadmin_%s_%s_datagrid' % (
                         model._meta.app_label,
                         model._meta.model_name,
                     )
@@ -552,9 +545,9 @@ class NavTree(object):
     def _plugin_fetch(self, args):
         plugin, host, request, timeout = args
         if re.match('^.+\[.+\]', host, re.I):
-            url_lib_to_use = urllib2
+            url_lib_to_use = urllib.request
         else:
-            url_lib_to_use = green.urllib2
+            url_lib_to_use = green_request
 
         data = None
         url = "%s/plugins/%s/%d/_s/treemenu" % (host, plugin.plugin_name, plugin.id)
@@ -571,7 +564,7 @@ class NavTree(object):
             data = response.read()
             if not data:
                 log.warn(_("Empty data returned from %s") % (url,))
-        except Exception, e:
+        except Exception as e:
             log.warn(_("Couldn't retrieve %(url)s: %(error)s") % {
                 'url': url,
                 'error': e,
@@ -586,9 +579,7 @@ class NavTree(object):
             timeout = len(plugs) * 5
         else:
             timeout = 6
-        args = map(
-            lambda y: (y, host, request, timeout),
-            plugs)
+        args = [(y, host, request, timeout) for y in plugs]
 
         pool = GreenPool(20)
         for plugin, url, data in pool.imap(self._plugin_fetch, args):
@@ -625,7 +616,7 @@ class NavTree(object):
                     if not found:
                         tree_roots.register(node)
 
-            except Exception, e:
+            except Exception as e:
                 log.warn(_(
                     "An error occurred while unserializing from "
                     "%(url)s: %(error)s") % {'url': url, 'error': e})
@@ -664,7 +655,7 @@ class NavTree(object):
             if not option.perm:
                 try:
                     url = option.get_absolute_url()
-                except NoReverseMatch, e:
+                except NoReverseMatch as e:
                     log.warn(_(
                         "Could not reverse url, skipping node %(node)s: "
                         "%(error)s"
@@ -701,7 +692,7 @@ class NavTree(object):
         # info about current node
         my = {
             'id': str(uid.new()),
-            'name': unicode(getattr(o, "rename", o.name)),
+            'name': str(getattr(o, "rename", o.name)),
         }
         if gname:
             my['gname'] = "%s.%s" % (gname, o.gname)
@@ -744,5 +735,6 @@ class NavTree(object):
         for n in self._build_nav(user):
             items.append(self.dehydrate(n, uid=uid))
         return items
+
 
 navtree = NavTree()

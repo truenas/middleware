@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/local/bin/python
 
 import argparse
 import requests
@@ -47,7 +47,7 @@ for file in args.files:
     try:
         if args.debug:
             print " running sha256 "
-        sha256 = subprocess.check_output( [ "/sbin/sha256", "-q", file ]).strip()
+        sha256 = subprocess.check_output( [ "/sbin/sha256", "-q", file ], encoding='utf8').strip()
     except:
         sha256 = ''
         if args.debug:

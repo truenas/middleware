@@ -45,7 +45,7 @@ UPDATE_APPLIED_SENTINEL = '/tmp/.updateapplied'
 
 
 def is_update_applied(update_version, create_alert=True):
-    active_be_msg = 'Please Reboot the system to avail of this update'
+    active_be_msg = 'Please reboot the system to activate this update.'
     # TODO: The below boot env name should really be obtained from the update code
     # for now we just duplicate that code here
     if update_version.startswith(Update.Avatar() + "-"):
@@ -59,7 +59,7 @@ def is_update_applied(update_version, create_alert=True):
         if clone['realname'] == update_boot_env:
             if clone['active'] != 'R':
                 active_be_msg = 'Please activate {0} via'.format(update_boot_env) + \
-                                ' the Boot Environment Tab and Reboot to use this updated version'
+                                ' the Boot Environment Tab and Reboot to use this updated version.'
             msg = 'Update: {0} has already been applied. {1}'.format(update_version, active_be_msg)
             found = True
             if create_alert:
@@ -74,7 +74,7 @@ def create_update_alert(update_version):
     # rebooted. This is to catch the corner case when the update.py
     # daemon errors out AFTER an update was applied and its BootEnv
     # created (and sometimes even activated)
-    with open(UPDATE_APPLIED_SENTINEL, 'wb+') as f:
+    with open(UPDATE_APPLIED_SENTINEL, 'w+') as f:
         f.write(json.dumps({'update_version': update_version}))
     # Now send SIGUSR1 (signal 10) to the alertd daemon (to rescan
     # alertmods)
@@ -207,7 +207,7 @@ class UpdateHandler(object):
 
     def dump(self):
         with LockFile(self.DUMPFILE) as lock:
-            with open(self.DUMPFILE, 'wb') as f:
+            with open(self.DUMPFILE, 'w') as f:
                 data = {
                     'apply': self.apply,
                     'error': self.error,
@@ -273,7 +273,7 @@ class VerifyHandler(object):
 
     def dump(self):
         with LockFile(self.DUMPFILE) as lock:
-            with open(self.DUMPFILE, 'wb') as f:
+            with open(self.DUMPFILE, 'w') as f:
                 data = {
                     'error': self.error,
                     'finished': self.finished,
@@ -290,7 +290,7 @@ class VerifyHandler(object):
         if not os.path.exists(self.DUMPFILE):
             return None
         with LockFile(self.DUMPFILE) as lock:
-            with open(self.DUMPFILE, 'rb') as f:
+            with open(self.DUMPFILE, 'r') as f:
                 data = json.loads(f.read())
         self.details = data.get('details', '')
         self.error = data['error']
@@ -307,36 +307,6 @@ class VerifyHandler(object):
             os.unlink(self.DUMPFILE)
 
 
-def get_pending_updates(path):
-    data = []
-    changes = Update.PendingUpdatesChanges(path)
-    if changes:
-        if changes.get("Reboot", True) is False:
-            for svc in changes.get("Restart", []):
-                data.append({
-                    'operation': svc,
-                    'name': Update.GetServiceDescription(svc),
-                })
-        for new, op, old in changes['Packages']:
-            if op == 'upgrade':
-                name = '%s-%s -> %s-%s' % (
-                    old.Name(),
-                    old.Version(),
-                    new.Name(),
-                    new.Version(),
-                )
-            elif op == 'install':
-                name = '%s-%s' % (new.Name(), new.Version())
-            else:
-                name = '%s-%s' % (old.Name(), old.Version())
-
-            data.append({
-                'operation': op,
-                'name': name,
-            })
-    return data
-
-
 def run_updated(train, location, download=True, apply=False):
     # Why not use subprocess module?
     # Because for some reason it was leaving a zombie process behind
@@ -347,7 +317,7 @@ def run_updated(train, location, download=True, apply=False):
         os.close(readfd)
         os.dup2(writefd, 1)
         os.close(writefd)
-        for i in xrange(3, 1024):
+        for i in range(3, 1024):
             try:
                 os.close(i)
             except OSError:
@@ -366,7 +336,7 @@ def run_updated(train, location, download=True, apply=False):
         returncode >>= 8
         uuid = os.read(readfd, 1024)
         if uuid:
-            uuid = uuid.strip('\n')
+            uuid = uuid.decode().strip('\n')
         return returncode, uuid
 
 
@@ -388,7 +358,7 @@ def manual_update(path):
     notifier().apply_update(path)
     try:
         notifier().destroy_upload_location()
-    except Exception, e:
+    except Exception as e:
         log.warn("Failed to destroy upload location: %s", e.value)
 
 
@@ -426,8 +396,11 @@ def debug_generate():
 
     standby_debug = None
     if not _n.is_freenas() and _n.failover_licensed():
-        s = _n.failover_rpc()
-        standby_debug = s.debug()
+        try:
+            s = _n.failover_rpc()
+            standby_debug = s.debug()
+        except:
+            log.error('Failed to get debug from standby node', exc_info=True)
 
     with mntlock(mntpt=mntpt):
 

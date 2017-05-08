@@ -1,7 +1,0 @@
-sedutil - The Drive Trust Alliance Self Encrypting Drive Utility
-
-This program and it's accompanying Pre-Boot Authorization image allow you
-to enable the locking in SED's that comply with the TCG OPAL 2.00 standard
-on bios machines.
-
-WWW: https://github.com/Drive-Trust-Alliance/sedutil

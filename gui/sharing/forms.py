@@ -168,7 +168,7 @@ class CIFS_ShareForm(ModelForm):
         if path and not os.path.exists(path):
             try:
                 os.makedirs(path)
-            except OSError, e:
+            except OSError as e:
                 raise MiddlewareError(_(
                     'Failed to create %(path)s: %(error)s' % {
                         'path': path,
@@ -200,7 +200,12 @@ class CIFS_ShareForm(ModelForm):
         if self.instance._original_cifs_default_permissions != \
             self.instance.cifs_default_permissions and \
             self.instance.cifs_default_permissions == True:
-            notifier().winacl_reset(path=self.instance.cifs_path)
+            try:  
+                (owner, group) = notifier().mp_get_owner(self.instance.cifs_path)
+            except:
+                (owner, group) = ('root', 'wheel')
+            notifier().winacl_reset(path=self.instance.cifs_path,
+                owner=owner, group=group)
 
 
 class AFP_ShareForm(ModelForm):
@@ -244,13 +249,13 @@ class AFP_ShareForm(ModelForm):
             err_n = False
             err_a = False
             try:
-                IPNetwork(n.encode('utf-8'))
+                IPNetwork(n)
                 if n.find("/") == -1:
                     raise ValueError(n)
             except (AddressValueError, NetmaskValueError, ValueError):
                 err_n = True
             try:
-                IPAddress(n.encode('utf-8'))
+                IPAddress(n)
             except (AddressValueError, ValueError):
                 err_a = True
             if (err_n and err_a) or (not err_n and not err_a):
@@ -268,13 +273,13 @@ class AFP_ShareForm(ModelForm):
             err_n = False
             err_a = False
             try:
-                IPNetwork(n.encode('utf-8'))
+                IPNetwork(n)
                 if n.find("/") == -1:
                     raise ValueError(n)
             except (AddressValueError, NetmaskValueError, ValueError):
                 err_n = True
             try:
-                IPAddress(n.encode('utf-8'))
+                IPAddress(n)
             except (AddressValueError, ValueError):
                 err_a = True
             if (err_n and err_a) or (not err_n and not err_a):
@@ -307,7 +312,7 @@ class AFP_ShareForm(ModelForm):
             raise forms.ValidationError(
                 _("The umask must be between 000 and 777.")
             )
-        for i in xrange(len(umask)):
+        for i in range(len(umask)):
             if int(umask[i]) > 7 or int(umask[i]) < 0:
                 raise forms.ValidationError(
                     _("The umask must be between 000 and 777.")
@@ -320,7 +325,7 @@ class AFP_ShareForm(ModelForm):
         if path and not os.path.exists(path):
             try:
                 os.makedirs(path)
-            except OSError, e:
+            except OSError as e:
                 raise MiddlewareError(_(
                     'Failed to create %(path)s: %(error)s' % {
                         'path': path,
@@ -362,7 +367,7 @@ class NFS_ShareForm(ModelForm):
             return net
         for n in net.split(' '):
             try:
-                IPNetwork(n.encode('utf-8'))
+                IPNetwork(n)
                 if n.find("/") == -1:
                     raise ValueError(n)
             except (AddressValueError, NetmaskValueError, ValueError):
@@ -488,7 +493,7 @@ class NFS_ShareForm(ModelForm):
                 continue
             if share.nfs_network:
                 used_networks.extend(
-                    map(lambda y: (y, stdev), share.nfs_network.split(" "))
+                    [(y, stdev) for y in share.nfs_network.split(" ")]
                 )
             else:
                 used_networks.append(('0.0.0.0/0', stdev))
@@ -558,7 +563,7 @@ class NFS_SharePathForm(ModelForm):
         if path and not os.path.exists(path):
             try:
                 os.makedirs(path)
-            except OSError, e:
+            except OSError as e:
                 raise MiddlewareError(_(
                     'Failed to create %(path)s: %(error)s' % {
                         'path': path,
