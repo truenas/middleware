@@ -9,6 +9,7 @@ if '/usr/local/lib' not in sys.path:
     sys.path.append('/usr/local/lib')
 
 from freenasOS import Configuration, Manifest, Update, Train
+from freenasOS.Exceptions import UpdateIncompleteCacheException
 from freenasOS.Update import CheckForUpdates, GetServiceDescription
 
 
@@ -237,7 +238,10 @@ class UpdateService(Service):
         if path is None:
             path = self.middleware.call('notifier.get_update_location')
         data = []
-        changes = Update.PendingUpdatesChanges(path)
+        try:
+            changes = Update.PendingUpdatesChanges(path)
+        except UpdateIncompleteCacheException:
+            changes = []
         if changes:
             if changes.get("Reboot", True) is False:
                 for svc in changes.get("Restart", []):
