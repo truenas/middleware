@@ -720,17 +720,28 @@ def reboot_run(request):
 
 
 def shutdown_dialog(request):
+    _n = notifier()
     if request.method == "POST":
-        if notifier().zpool_scrubbing():
+        if _n.zpool_scrubbing():
             if 'scrub_asked' not in request.session:
                 request.session['scrub_asked'] = True
                 return render(request, 'system/shutdown_dialog2.html')
         request.session['allow_shutdown'] = True
+        if request.POST.get('standby') == 'on':
+            try:
+                s = _n.failover_rpc()
+                if s is not None:
+                    s.service([('stop', 'system', None)])
+            except Exception:
+                pass
         return JsonResp(
             request,
             message=_("Shutdown is being issued"),
             events=['window.location="%s"' % reverse('system_shutdown')])
-    return render(request, 'system/shutdown_dialog.html')
+    context = {}
+    if not _n.is_freenas() and _n.failover_licensed():
+        context['standby'] = True
+    return render(request, 'system/shutdown_dialog.html', context)
 
 
 def shutdown(request):
