@@ -54,7 +54,7 @@ from freenasUI.common.freenasnis import (
     FreeNAS_NIS_Users,
 )
 from freenasUI.common.freenasusers import FreeNAS_Users, FreeNAS_Groups
-from freenasUI.common.system import get_sw_login_version, get_sw_name
+from freenasUI.common.system import get_sw_login_version, get_sw_name, get_sw_version
 from freenasUI.freeadmin.apppool import appPool
 from freenasUI.freeadmin.views import JsonResp
 
