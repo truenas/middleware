@@ -49,6 +49,10 @@ MANAGERS = ADMINS
 
 DATABASE_PATH = '/data/freenas-v1.db'
 
+# Workaround bug in database name for migrate
+if '--database=factory' in sys.argv:
+    DATABASE_PATH += '.factory'
+
 DATABASES = {
     'default': {
         'ENGINE': 'freenasUI.freeadmin.sqlite3_ha',
