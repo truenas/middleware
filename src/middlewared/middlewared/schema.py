@@ -253,10 +253,11 @@ class Ref(object):
 
 class Patch(object):
 
-    def __init__(self, name, newname, *patches):
+    def __init__(self, name, newname, *patches, register=False):
         self.name = name
         self.newname = newname
         self.patches = patches
+        self.register = register
 
     def convert(self, spec):
         t = spec.pop('type')

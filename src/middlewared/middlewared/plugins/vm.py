@@ -1,5 +1,5 @@
-from middlewared.schema import accepts, Int, Str, Dict, List, Ref, Bool
-from middlewared.service import filterable, CRUDService
+from middlewared.schema import accepts, Int, Str, Dict, List, Bool, Patch
+from middlewared.service import filterable, CRUDService, private
 from middlewared.utils import Nid, Popen
 
 import errno
@@ -220,7 +220,7 @@ class VMService(CRUDService):
         return vm
 
     @accepts(Dict(
-        'data',
+        'vm_create',
         Str('name'),
         Str('description'),
         Int('vcpus'),
@@ -228,6 +228,7 @@ class VMService(CRUDService):
         Str('bootloader'),
         List('devices'),
         Bool('autostart'),
+        register=True,
         ))
     def do_create(self, data):
         """Create a VM."""
@@ -239,17 +240,34 @@ class VMService(CRUDService):
             self.middleware.call('datastore.insert', 'vm.device', device)
         return pk
 
-    @accepts(Int('id'), Dict(
-        'data',
-        Str('name'),
-        Str('description'),
-        Int('vcpus'),
-        Int('memory'),
-        Str('bootloader'),
-        Bool('autostart'),
-        ))
+    @private
+    def do_update_devices(self, id, devices):
+        if devices and isinstance(devices, list) is True:
+            device_query = self.middleware.call('datastore.query', 'vm.device', [('vm__id', '=', int(id))])
+
+            get_devices = []
+            for q in device_query:
+                q.pop('vm')
+                get_devices.append(q)
+
+            while len(devices) > 0:
+                update_item = devices.pop(0)
+                old_item = get_devices.pop(0)
+                if old_item['dtype'] == update_item['dtype']:
+                    old_item['attributes'] = update_item['attributes']
+                    device_id = old_item.pop('id')
+                    self.middleware.call('datastore.update', 'vm.device', device_id, old_item)
+
+    @accepts(Int('id'), Patch(
+        'vm_create',
+        'vm_update',
+        ('attr', {'update': True}),
+    ))
     def do_update(self, id, data):
         """Update all information of a specific VM."""
+        devices = data.pop('devices', None)
+        if devices:
+            update_devices = self.do_update_devices(id, devices)
         return self.middleware.call('datastore.update', 'vm.vm', id, data)
 
     @accepts(Int('id'))
