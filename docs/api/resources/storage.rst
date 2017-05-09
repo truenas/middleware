@@ -342,7 +342,12 @@ ZFS Volumes
 
       {
         "name": "myzvol",
-        "volsize": "10M"
+        "avail": 7286996992,
+        "compression": "lz4",
+        "dedup": "off",
+        "refer": 57344,
+        "used": 57344,
+        "volsize": 10485760
       }
 
    **Example response**:
@@ -355,6 +360,11 @@ ZFS Volumes
 
       {
         "name": "myzvol",
+        "avail": 7286996992,
+        "compression": "lz4",
+        "dedup": "off",
+        "refer": 57344,
+        "used": 57344,
         "volsize": 10485760
       }
 
@@ -382,6 +392,11 @@ ZFS Volumes
 
       [{
         "name": "myzvol",
+        "avail": 7286996992,
+        "compression": "lz4",
+        "dedup": "off",
+        "refer": 57344,
+        "used": 57344,
         "volsize": 10485760
       }]
 
@@ -396,7 +411,7 @@ ZFS Volumes
 
    .. sourcecode:: http
 
-      POST /api/v1.0/storage/volume/tank/zvols/ HTTP/1.1
+      PUT /api/v1.0/storage/volume/tank/zvols/ HTTP/1.1
       Content-Type: application/json
 
       {
