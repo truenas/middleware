@@ -245,6 +245,10 @@ class VMService(CRUDService):
         if devices and isinstance(devices, list) is True:
             device_query = self.middleware.call('datastore.query', 'vm.device', [('vm__id', '=', int(id))])
 
+            # Make sure both list has the same size.
+            if len(device_query) != len(devices):
+                return False
+
             get_devices = []
             for q in device_query:
                 q.pop('vm')
@@ -257,6 +261,7 @@ class VMService(CRUDService):
                     old_item['attributes'] = update_item['attributes']
                     device_id = old_item.pop('id')
                     self.middleware.call('datastore.update', 'vm.device', device_id, old_item)
+            return True
 
     @accepts(Int('id'), Patch(
         'vm_create',
@@ -268,7 +273,10 @@ class VMService(CRUDService):
         devices = data.pop('devices', None)
         if devices:
             update_devices = self.do_update_devices(id, devices)
-        return self.middleware.call('datastore.update', 'vm.vm', id, data)
+        if data:
+            return self.middleware.call('datastore.update', 'vm.vm', id, data)
+        else:
+            return update_devices
 
     @accepts(Int('id'))
     def do_delete(self, id):
