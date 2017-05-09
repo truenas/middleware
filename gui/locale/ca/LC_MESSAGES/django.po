@@ -3,7 +3,7 @@ msgstr ""
 "Project-Id-Version: Catalan (FreeNAS)\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2017-05-08 16:21+0000\n"
-"PO-Revision-Date: 2017-05-08 18:42+0200\n"
+"PO-Revision-Date: 2017-05-09 18:32+0200\n"
 "Last-Translator: \n"
 "Language-Team: Catalan "
 "<http://weblate.trueos.org/projects/freenas/django/ca/>\n"
@@ -2795,35 +2795,36 @@ msgstr "Envia informes d'estat per correu electrònic"
 
 #: services/models.py:945
 msgid "To email"
-msgstr "Pel correu"
+msgstr "Per correu"
 
 #: services/models.py:947
 msgid "Destination email address. Separate email addresses by semi-colon."
 msgstr ""
-"Adreça de correu electrònic de destí. Separa els correus amb punts i comes."
+"Adreça de correu electrònic de destinació. Separeu les adreces amb punts i "
+"comes."
 
 #: services/models.py:951
 msgid "Email Subject"
-msgstr "Assumpte del correu"
+msgstr "Assumpte del missatge"
 
 #: services/models.py:952
 msgid ""
 "The subject of the email. You can use the following parameters for "
 "substitution:<br /><ul><li>%d - Date</li><li>%h - Hostname</li></ul>"
 msgstr ""
-"El tema del correu electrònic. Pots utilitzar els següents paràmetres com a "
-"variables: <br /><ul><li>%d - Date</li><li>%h - Hostname</li></ul>"
+"El tema del missatge electrònic. Podeu utilitzar els paràmetres següents com "
+"a variables: <br /><ul><li>%d - Data</li><li>%h - Nom d'amfitrió</li></ul>"
 
 #: services/models.py:956 services/models.py:957
 #: templates/services/core.html:166
 #: services/models.py:956,
 #: services/models.py:957,
 msgid "UPS"
-msgstr "SAI (UPS)"
+msgstr "SAI"
 
 #: services/models.py:969
 msgid "Port to bind FTP server."
-msgstr "Port vinculat al servidor FTP"
+msgstr "Port per vincular-hi el servidor FTP."
 
 #: services/models.py:973
 msgid "Clients"
@@ -2831,39 +2832,39 @@ msgstr "Clients"
 
 #: services/models.py:975
 msgid "Maximum number of simultaneous clients."
-msgstr "Màxim nombre de clients simultanis."
+msgstr "Nombre màxim de clients simultanis."
 
 #: services/models.py:979
 msgid "Connections"
-msgstr "Connecions"
+msgstr "Connexions"
 
 #: services/models.py:981
 msgid "Maximum number of connections per IP address (0 = unlimited)."
-msgstr "Nombre màxim de connexions per adreça IP (0=ilimitades)."
+msgstr "Nombre màxim de connexions per adreça IP (0=il·limitades)."
 
 #: services/models.py:985
 msgid "Login Attempts"
-msgstr "Intents de Login"
+msgstr "Intents d'entrada"
 
 #: services/models.py:987
 msgid "Maximum number of allowed password attempts before disconnection."
-msgstr "Màxim nombre permés d'intents de contrasenya abans de desconectar."
+msgstr "Nombre màxim d'intents de contrasenya permesos abans de desconnectar."
 
 #: services/models.py:991
 msgid "Timeout"
-msgstr "Intèrval de temps fins que es finalitza el procés (Timeout) "
+msgstr "Temps d'espera"
 
 #: services/models.py:993
 msgid "Maximum idle time in seconds."
-msgstr "Temps màxim inactiu en segons"
+msgstr "Temps màxim d'inactivitat en segons."
 
 #: services/models.py:996
 msgid "Allow Root Login"
-msgstr "Permetre Login de Root"
+msgstr "Permet l'entrada d'arrel"
 
 #: services/models.py:998
 msgid "Allow Anonymous Login"
-msgstr "Pemetre Login anònim"
+msgstr "Pemet l'entrada anònima"
 
 #: services/models.py:1001 services/models.py:1398 sharing/models.py:47
 #: sharing/models.py:122 sharing/models.py:266 storage/forms.py:154
@@ -2884,11 +2885,11 @@ msgstr "Pemetre Login anònim"
 #: templates/sharing/windows.html:14,
 #: templates/storage/volumes.html:59,
 msgid "Path"
-msgstr "Ruta"
+msgstr "Camí"
 
 #: services/models.py:1003
 msgid "Allow Local User Login"
-msgstr "Permetre Login d'Usuari Local"
+msgstr "Permet l'entrada d'usuari local"
 
 #~ msgid "Banner"
 #~ msgstr "Capçalera"
@@ -2901,42 +2902,41 @@ msgstr "Permetre Login d'Usuari Local"
 #: services/models.py:1014,
 msgid "Use this option to override the file creation mask (077 by default)."
 msgstr ""
-"Utilitza aquesta opció per reescriure la màscara de creació de fitxers (077 "
+"Useu aquesta opció per sobreesciure la màscara de creació de fitxers (077 "
 "per defecte)."
 
 #: services/models.py:1023
 msgid "Enable FXP"
-msgstr "Activa FXP"
+msgstr "Habilita FXP"
 
 #: services/models.py:1025
 msgid "Allow Transfer Resumption"
-msgstr "Permet la represa de la Transferència"
+msgstr "Permet la represa de la transferència"
 
 #: services/models.py:1027
 msgid "Always Chroot"
-msgstr "Fer sempre Chroot"
+msgstr "Sempre Chroot"
 
 #: services/models.py:1029
 msgid "Require IDENT Authentication"
-msgstr "Autenticació IDENT requerida"
+msgstr "Requereix autenticació d'IDENT"
 
 #~ msgid "Require Reverse DNS for IP"
 #~ msgstr "Inversió de DNS per IP requerida"
 
 #: services/models.py:1033
 msgid "Masquerade address"
-msgstr "Enmascarament de direcció"
+msgstr "Emmascarament d'adreça"
 
 #: services/models.py:1036
-#, fuzzy
 msgid ""
 "Causes the server to display the network information for the specified "
 "address to the client, on the assumption that IP address or DNS host is "
 "acting as a NAT gateway or port forwarder for the server."
 msgstr ""
-"Causa que el servidor mostri al client la informació de xarxa per la IP "
-"especificada fent suposició que aquella adreça IP o el servidor DNS està "
-"actuant com a pasarel.la NAT o 'port forwarder' pel servidor."
+"Causa que el servidor mostri al client la informació de xarxa per a la IP "
+"especificada, amb la suposició que l'adreça IP o el servidor DNS està "
+"actuant com a pasarel·la NAT o port de reenviament per al servidor."
 
 #: services/models.py:1043
 msgid "Minimum passive port"
@@ -2947,7 +2947,7 @@ msgid ""
 "The minimum port to allocate for PASV style data connections (0 = use any "
 "port)."
 msgstr ""
-"El port mínim per assignar connexions de dades de tipus PASV  (0=utilitza "
+"El port mínim per assignar connexions de dades de tipus PASV  (0=usa "
 "qualsevol port)"
 
 #: services/models.py:1048
