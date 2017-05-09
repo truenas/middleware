@@ -2184,7 +2184,7 @@ class S3Form(ModelForm):
     def clean_s3_secret_key(self):
         s3_secret_key = self.cleaned_data.get("s3_secret_key")
         s3_secret_key_len = len(s3_secret_key)
-        if s3_secret_key_len < 5 or s3_secret_key_len > 20:
+        if s3_secret_key_len < 8 or s3_secret_key_len > 40:
             raise forms.ValidationError(
                 _("S3 secret key should be 8 to 40 characters in length.")
             )
