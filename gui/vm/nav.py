@@ -1,6 +1,6 @@
 from django.utils.translation import ugettext_lazy as _
 from freenasUI.freeadmin.tree import TreeNode
-from freenasUI.middleware.notifier import notifier
+from freenasUI.support.utils import vm_enabled
 
 NAME = _('VMs')
 BLACKLIST = ['VM', 'Device']
@@ -11,7 +11,7 @@ ORDER = 75
 
 def init(tree_roots, nav, request):
 
-    if not notifier().is_freenas():
+    if not vm_enabled():
         tree_roots.unregister(nav)
 
 
