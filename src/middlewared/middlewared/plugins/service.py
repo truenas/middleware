@@ -821,10 +821,10 @@ class ServiceService(Service):
         self._service("inadyn-mt", "restart", **kwargs)
 
     def _restart_system(self, **kwargs):
-        self._system("/bin/sleep 3 && /sbin/shutdown -r now &")
+        gevent.spawn(self._system, "/bin/sleep 3 && /sbin/shutdown -r now")
 
     def _stop_system(self, **kwargs):
-        self._system("/sbin/shutdown -p now")
+        gevent.spawn(self._system, "/bin/sleep 3 && /sbin/shutdown -p now")
 
     def _reload_cifs(self, **kwargs):
         self._service("ix-pre-samba", "start", quiet=True, **kwargs)
