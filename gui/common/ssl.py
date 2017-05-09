@@ -25,6 +25,7 @@
 #####################################################################
 import logging
 import re
+import ipaddress
 
 from OpenSSL import crypto
 
@@ -46,8 +47,17 @@ def create_certificate(cert_info):
     cert.get_subject().O = cert_info['organization']
     cert.get_subject().CN = cert_info['common']
     # Add subject alternate name in addition to CN
+    # first lets determine if an ip address was specified or
+    # a dns entry in the common name
+    default_san_type = 'DNS'
+    try:
+        ipaddress.ip_address(cert_info['common'])
+        default_san_type = 'IP'
+    except ValueError:
+        # This is raised if say we specified freenas.org in the Common name
+        pass
     cert.add_extensions([crypto.X509Extension(
-        "subjectAltName".encode('utf-8'), False, f"URI:https://{cert_info['common']}".encode('utf-8')
+        "subjectAltName".encode('utf-8'), False, f"{default_san_type}:{cert_info['common']}".encode('utf-8')
     )])
     cert.get_subject().emailAddress = cert_info['email']
 
@@ -94,8 +104,18 @@ def create_certificate_signing_request(cert_info):
     req.get_subject().O = cert_info['organization']
     req.get_subject().CN = cert_info['common']
     # Add subject alternate name in addition to CN
+    # Add subject alternate name in addition to CN
+    # first lets determine if an ip address was specified or
+    # a dns entry in the common name
+    default_san_type = 'DNS'
+    try:
+        ipaddress.ip_address(cert_info['common'])
+        default_san_type = 'IP'
+    except ValueError:
+        # This is raised if say we specified freenas.org in the Common name
+        pass
     req.add_extensions([crypto.X509Extension(
-        "subjectAltName".encode('utf-8'), False, f"URI:https://{cert_info['common']}".encode('utf-8')
+        "subjectAltName".encode('utf-8'), False, f"{default_san_type}:{cert_info['common']}".encode('utf-8')
     )])
     req.get_subject().emailAddress = cert_info['email']
 
