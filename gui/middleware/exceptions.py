@@ -36,4 +36,4 @@ class MiddlewareError(Exception):
         log.warn(str(self))
 
     def __str__(self):
-        return "[%s: %s]" % (type(self).__name__, self.value.encode('utf-8'))
+        return "[%s: %s]" % (type(self).__name__, self.value)
