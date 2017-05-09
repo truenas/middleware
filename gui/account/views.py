@@ -319,6 +319,7 @@ def login_wrapper(
         extra_context = {}
     extra_context.update({
         'sw_login_version': get_sw_login_version(),
+        'sw_version_footer': get_sw_version(strip_build_num=True).split('-', 1)[-1],
         'sw_name': get_sw_name(),
     })
     if not models.bsdUsers.has_root_password():
