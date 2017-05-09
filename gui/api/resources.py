@@ -384,6 +384,8 @@ class ZVolResource(DojoResource):
     refer = fields.IntegerField(attribute='refer')
     used = fields.IntegerField(attribute='used')
     avail = fields.IntegerField(attribute='avail')
+    compression = fields.CharField(attribute='compression')
+    dedup = fields.CharField(attribute='dedup')
 
     class Meta:
         allowed_methods = ['get', 'post', 'delete', 'put']

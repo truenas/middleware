@@ -489,12 +489,14 @@ class ZFSDataset(object):
     avail = None
     refer = None
     mountpoint = None
+    compression = None
+    dedup = None
     parent = None
     children = None
 
     def __init__(self, path=None, used=None, usedsnap=None, usedds=None,
                  usedrefreserv=None, usedchild=None, avail=None, refer=None,
-                 mountpoint=None):
+                 mountpoint=None, compression=None, dedup=None):
         self.path = path
         if path:
             if '/' in path:
@@ -510,6 +512,8 @@ class ZFSDataset(object):
         self.avail = avail
         self.refer = refer
         self.mountpoint = mountpoint
+        self.compression = compression
+        self.dedup = dedup
         self.parent = None
         self.children = []
 
@@ -552,12 +556,14 @@ class ZFSVol(object):
     avail = None
     refer = None
     volsize = None
+    compression = None
+    dedup = None
     parent = None
     children = None
 
     def __init__(self, path=None, used=None, usedsnap=None, usedds=None,
                  usedrefreserv=None, usedchild=None, avail=None, refer=None,
-                 volsize=None):
+                 volsize=None, compression=None, dedup=None):
         self.path = path
         if path:
             if '/' in path:
@@ -573,6 +579,8 @@ class ZFSVol(object):
         self.avail = avail
         self.refer = refer
         self.volsize = volsize
+        self.compression = compression
+        self.dedup = dedup
         self.parent = None
         self.children = []
 
@@ -887,7 +895,7 @@ def zfs_list(path="", recursive=False, hierarchical=False, include_root=False,
         "-p",
         "-H",
         "-s", "name",
-        "-o", "space,refer,mountpoint,type,volsize",
+        "-o", "space,refer,mountpoint,type,volsize,compression,dedup",
     ]
     if recursive:
         args.insert(3, "-r")
@@ -929,6 +937,8 @@ def zfs_list(path="", recursive=False, hierarchical=False, include_root=False,
                 usedchild=int(data[6]) if data[6].isdigit() else None,
                 refer=int(data[7]) if data[7].isdigit() else None,
                 mountpoint=data[8],
+                compression=data[11],
+                dedup=data[12],
             )
         elif _type == 'volume':
             item = ZFSVol(
@@ -941,6 +951,8 @@ def zfs_list(path="", recursive=False, hierarchical=False, include_root=False,
                 usedchild=int(data[6]) if data[6].isdigit() else None,
                 refer=int(data[7]) if data[7].isdigit() else None,
                 volsize=int(data[10]) if data[10].isdigit() else None,
+                compression=data[11],
+                dedup=data[12],
             )
         else:
             raise NotImplementedError
