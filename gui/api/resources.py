@@ -396,14 +396,15 @@ class ZVolResource(DojoResource):
 
     def post_list(self, request, **kwargs):
         self.is_authenticated(request)
-        _format = request.META.get('CONTENT_TYPE') or 'application/json'
-        data = self._meta.serializer.deserialize(
+        deserialized = self._meta.serializer.deserialize(
             request.body,
-            format=_format,
+            format=request.META.get('CONTENT_TYPE') or 'application/json'
         )
         # Add zvol_ prefix to match form field names
-        for k in list(data.keys()):
-            data[f'zvol_{k}'] = data.pop(k)
+        for k in list(deserialized.keys()):
+            deserialized[f'zvol_{k}'] = deserialized.pop(k)
+        data = self._get_form_initial(ZVol_CreateForm)
+        data.update(deserialized)
         form = ZVol_CreateForm(data=data, vol_name=kwargs['parent'].vol_name)
         if not form.is_valid() or not form.save():
             for k in list(form.errors.keys()):

@@ -422,5 +422,11 @@ class DojoResource(ResourceMixin, Resource, metaclass=DjangoDeclarativeMetaclass
                 break
         return fields
 
+    def _get_form_initial(self, form):
+        initial = {}
+        for k, v in form.base_fields.items():
+            initial[k] = v.initial
+        return initial
+
     def alter_list_data_to_serialize(self, request, data):
         return data['objects']

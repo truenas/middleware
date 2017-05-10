@@ -1570,6 +1570,7 @@ class ZVol_CreateForm(CommonZVol, Form):
     )
     zvol_compression = forms.ChoiceField(
         choices=choices.ZFS_CompressionChoices,
+        initial='inherit',
         widget=forms.Select(attrs=attrs_dict),
         label=_('Compression level'))
     zvol_sparse = forms.BooleanField(
