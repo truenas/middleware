@@ -29,7 +29,7 @@ import logging
 import os
 import re
 import subprocess
-import urllib.request, urllib.parse, urllib.error
+import urllib.parse
 import signal
 import sysctl
 
@@ -88,6 +88,8 @@ from freenasUI.storage.forms import (
     VolumeAutoImportForm,
     VolumeManagerForm,
     ZFSDiskReplacementForm,
+    ZVol_CreateForm,
+    ZVol_EditForm,
 )
 from freenasUI.storage.models import Disk, Replication, VMWarePlugin
 from freenasUI.system.alert import alertPlugins, Alert
@@ -392,51 +394,51 @@ class ZVolResource(DojoResource):
         object_class = zfs.ZFSVol
         resource_name = 'storage/zvol'
 
-    def obj_create(self, bundle, **kwargs):
-        bundle = self.full_hydrate(bundle)
-        err, msg = notifier().create_zfs_vol(
-            '%s/%s' % (kwargs.get('parent').vol_name, bundle.data.get('name')),
-            bundle.data.get('volsize'),
-            bundle.data.get('props', None),
-            bundle.data.get('sparse', True),
+    def post_list(self, request, **kwargs):
+        self.is_authenticated(request)
+        _format = request.META.get('CONTENT_TYPE') or 'application/json'
+        data = self._meta.serializer.deserialize(
+            request.body,
+            format=_format,
         )
-        if err:
-            bundle.errors['__all__'] = msg
+        # Add zvol_ prefix to match form field names
+        for k in list(data.keys()):
+            data[f'zvol_{k}'] = data.pop(k)
+        form = ZVol_CreateForm(data=data, vol_name=kwargs['parent'].vol_name)
+        if not form.is_valid() or not form.save():
+            for k in list(form.errors.keys()):
+                if k == '__all__':
+                    continue
+                if k.startswith('zvol_'):
+                    form.errors[k[5:]] = form.errors.pop(k)
             raise ImmediateHttpResponse(
-                response=self.error_response(bundle.request, bundle.errors)
+                response=self.error_response(request, form.errors)
             )
-        # FIXME: authorization
-        bundle.obj = self.obj_get(bundle, pk=bundle.data.get('name'), **kwargs)
-        return bundle
+        # Re-query for a proper response
+        response = self.get_detail(request, pk=form.cleaned_data.get('zvol_name'), **kwargs)
+        response.status_code = 202
+        return response
 
     def obj_update(self, bundle, **kwargs):
         bundle = self.full_hydrate(bundle)
         name = "%s/%s" % (kwargs.get('parent').vol_name, kwargs.get('pk'))
-        deserialized = self.deserialize(
+        data = self.deserialize(
             bundle.request,
             bundle.request.body,
             format=bundle.request.META.get('CONTENT_TYPE', 'application/json'),
         )
-        _n = notifier()
-        error, errors = False, {}
-        for attr in (
-            'compression',
-            'dedup',
-            'volsize',
-        ):
-            value = deserialized.get(attr)
-            if value is None:
-                continue
-            if value == "inherit":
-                success, err = _n.zfs_inherit_option(name, attr)
-            else:
-                success, err = _n.zfs_set_option(name, attr, value)
-            if not success:
-                error = True
-                errors[attr] = err
-        if error:
+        # Add zvol_ prefix to match form field names
+        for k in list(data.keys()):
+            data[f'zvol_{k}'] = data.pop(k)
+        form = ZVol_EditForm(name=name, data=data)
+        if not form.is_valid() or not form.save():
+            for k in list(form.errors.keys()):
+                if k == '__all__':
+                    continue
+                if k.startswith('zvol_'):
+                    form.errors[k[5:]] = form.errors.pop(k)
             raise ImmediateHttpResponse(
-                response=self.error_response(bundle.request, errors)
+                response=self.error_response(bundle.request, form.errors)
             )
         bundle.obj = self.obj_get(bundle, **kwargs)
         return bundle

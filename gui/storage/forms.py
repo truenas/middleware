@@ -1524,10 +1524,35 @@ class ZVol_EditForm(CommonZVol, Form):
         self._zvol_force()
         return cleaned_data
 
-    def set_error(self, msg):
-        msg = "%s" % msg
-        self._errors['__all__'] = self.error_class([msg])
-        del self.cleaned_data
+    def save(self):
+        _n = notifier()
+        error = False
+        for attr, formfield, can_inherit in (
+            ('org.freenas:description', 'zvol_comments', False),
+            ('compression', None, True),
+            ('dedup', None, True),
+            ('volsize', None, True),
+        ):
+            if not formfield:
+                formfield = f'zvol_{attr}'
+            if can_inherit and self.cleaned_data[formfield] == 'inherit':
+                success, err = _n.zfs_inherit_option(self.name, attr)
+            else:
+                success, err = _n.zfs_set_option(
+                    self.name, attr, self.cleaned_data[formfield]
+                )
+            if not success:
+                error = True
+                self._errors[formfield] = self.error_class([err])
+
+        if error:
+            return False
+        extents = iSCSITargetExtent.objects.filter(
+            iscsi_target_extent_type='ZVOL',
+            iscsi_target_extent_path=f'zvol/{self.name}')
+        if extents.exists():
+            _n.reload('iscsitarget')
+        return True
 
 
 class ZVol_CreateForm(CommonZVol, Form):
@@ -1624,10 +1649,26 @@ class ZVol_CreateForm(CommonZVol, Form):
         self._zvol_force()
         return cleaned_data
 
-    def set_error(self, msg):
-        msg = "%s" % msg
-        self._errors['__all__'] = self.error_class([msg])
-        del self.cleaned_data
+    def save(self):
+        props = {}
+        zvol_volsize = self.cleaned_data.get('zvol_volsize')
+        zvol_blocksize = self.cleaned_data.get("zvol_blocksize")
+        zvol_name = f"{self.vol_name}/{self.cleaned_data.get('zvol_name')}"
+        zvol_comments = self.cleaned_data.get('zvol_comments')
+        zvol_compression = self.cleaned_data.get('zvol_compression')
+        props['compression'] = str(zvol_compression)
+        if zvol_blocksize:
+            props['volblocksize'] = zvol_blocksize
+        errno, errmsg = notifier().create_zfs_vol(
+            name=str(zvol_name),
+            size=str(zvol_volsize),
+            sparse=self.cleaned_data.get("zvol_sparse", False),
+            props=props)
+        notifier().zfs_set_option(name=str(zvol_name), item="org.freenas:description", value=zvol_comments)
+        if errno != 0:
+            self._errors['__all__'] = self.error_class([errmsg])
+            return False
+        return True
 
 
 class MountPointAccessForm(Form):

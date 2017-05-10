@@ -561,35 +561,16 @@ def dataset_edit(request, dataset_name):
 
 
 def zvol_create(request, parent):
-    defaults = {'zvol_compression': 'inherit', }
     if request.method == 'POST':
         zvol_form = forms.ZVol_CreateForm(request.POST, vol_name=parent)
         if zvol_form.is_valid():
-            props = {}
-            cleaned_data = zvol_form.cleaned_data
-            zvol_volsize = cleaned_data.get('zvol_volsize')
-            zvol_blocksize = cleaned_data.get("zvol_blocksize")
-            zvol_name = "%s/%s" % (parent, cleaned_data.get('zvol_name'))
-            zvol_comments = cleaned_data.get('zvol_comments')
-            zvol_compression = cleaned_data.get('zvol_compression')
-            props['compression'] = str(zvol_compression)
-            if zvol_blocksize:
-                props['volblocksize'] = zvol_blocksize
-            errno, errmsg = notifier().create_zfs_vol(
-                name=str(zvol_name),
-                size=str(zvol_volsize),
-                sparse=cleaned_data.get("zvol_sparse", False),
-                props=props)
-            notifier().zfs_set_option(name=str(zvol_name), item="org.freenas:description", value=zvol_comments)
-            if errno == 0:
+            if zvol_form.save():
                 return JsonResp(
                     request,
                     message=_("ZFS Volume successfully added."))
-            else:
-                zvol_form.set_error(errmsg)
     else:
         zvol_form = forms.ZVol_CreateForm(
-            initial=defaults,
+            initial={'zvol_compression': 'inherit'},
             vol_name=parent)
     return render(request, 'storage/zvols.html', {
         'form': zvol_form,
@@ -628,48 +609,10 @@ def zvol_delete(request, name):
 
 
 def zvol_edit(request, name):
-
     if request.method == 'POST':
         form = forms.ZVol_EditForm(request.POST, name=name)
-        if form.is_valid():
-
-            _n = notifier()
-            error, errors = False, {}
-            for attr, formfield, can_inherit in (
-                ('org.freenas:description', 'zvol_comments', False),
-                ('compression', None, True),
-                ('dedup', None, True),
-                ('volsize', None, True),
-            ):
-                if not formfield:
-                    formfield = 'zvol_%s' % attr
-                if can_inherit and form.cleaned_data[formfield] == "inherit":
-                    success, err = _n.zfs_inherit_option(
-                        name,
-                        attr)
-                else:
-                    success, err = _n.zfs_set_option(
-                        name,
-                        attr,
-                        form.cleaned_data[formfield])
-                if not success:
-                    error = True
-                    errors[formfield] = err
-
-            if not error:
-                extents = iSCSITargetExtent.objects.filter(
-                    iscsi_target_extent_type='ZVOL',
-                    iscsi_target_extent_path='zvol/' + name)
-                if extents.exists():
-                    _n.reload("iscsitarget")
-                return JsonResp(
-                    request,
-                    message=_("Zvol successfully edited."))
-            else:
-                for field, err in list(errors.items()):
-                    form._errors[field] = form.error_class([
-                        err,
-                    ])
+        if form.is_valid() and form.save():
+            return JsonResp(request, message=_("Zvol successfully edited."))
         else:
             return JsonResp(request, form=form)
     else:
