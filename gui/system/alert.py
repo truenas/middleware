@@ -195,7 +195,7 @@ class AlertPlugins(metaclass=HookMetaclass):
         send_mail(
             subject='%s: %s' % (
                 hostname,
-                _("Critical Alerts").encode('utf8'),
+                _("Critical Alerts"),
             ),
             text='\n'.join(msgs)
         )
@@ -269,11 +269,11 @@ class AlertPlugins(metaclass=HookMetaclass):
 
         obj = None
         if os.path.exists(self.ALERT_FILE):
-            with open(self.ALERT_FILE, 'r') as f:
+            with open(self.ALERT_FILE, 'rb') as f:
                 try:
                     obj = pickle.load(f)
-                except:
-                    pass
+                except Exception:
+                    log.debug('Failed to load alert state file', exc_info=True)
 
         if not obj:
             results = {}
