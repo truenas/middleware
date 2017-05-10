@@ -5,6 +5,9 @@ from logging.config import dictConfig
 import rollbar
 from .utils import sw_version_is_stable
 
+# geventwebsocket.server debug log is mostly useless, lets focus on INFO
+logging.getLogger('geventwebsocket.server').setLevel(logging.INFO)
+
 
 class Rollbar(object):
     """Pseudo-Class for Rollbar - Error Tracking Software."""
