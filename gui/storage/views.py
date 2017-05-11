@@ -562,7 +562,7 @@ def dataset_edit(request, dataset_name):
 
 def zvol_create(request, parent):
     if request.method == 'POST':
-        zvol_form = forms.ZVol_CreateForm(request.POST, vol_name=parent)
+        zvol_form = forms.ZVol_CreateForm(request.POST, parentds=parent)
         if zvol_form.is_valid():
             if zvol_form.save():
                 return JsonResp(
@@ -571,7 +571,7 @@ def zvol_create(request, parent):
     else:
         zvol_form = forms.ZVol_CreateForm(
             initial={'zvol_compression': 'inherit'},
-            vol_name=parent)
+            parentds=parent)
     return render(request, 'storage/zvols.html', {
         'form': zvol_form,
         'volume_name': parent,
@@ -610,13 +610,13 @@ def zvol_delete(request, name):
 
 def zvol_edit(request, name):
     if request.method == 'POST':
-        form = forms.ZVol_EditForm(request.POST, name=name)
+        form = forms.ZVol_EditForm(request.POST, parentds=name)
         if form.is_valid() and form.save():
             return JsonResp(request, message=_("Zvol successfully edited."))
         else:
             return JsonResp(request, form=form)
     else:
-        form = forms.ZVol_EditForm(name=name)
+        form = forms.ZVol_EditForm(parentds=name)
     return render(request, 'storage/volume_edit.html', {
         'form': form,
     })

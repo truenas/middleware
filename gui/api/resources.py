@@ -400,12 +400,21 @@ class ZVolResource(DojoResource):
             request.body,
             format=request.META.get('CONTENT_TYPE') or 'application/json'
         )
+
+        # We need to get the parent dataset (if there is any)
+        # without the pool name
+        name = deserialized.get('name')
+        parent = kwargs['parent'].vol_name
+        if name and '/' in name:
+            parent_ds, deserialized['name'] = name.rsplit('/', 1)
+            parent = f"{parent}/{parent_ds}"
+
         # Add zvol_ prefix to match form field names
         for k in list(deserialized.keys()):
             deserialized[f'zvol_{k}'] = deserialized.pop(k)
         data = self._get_form_initial(ZVol_CreateForm)
         data.update(deserialized)
-        form = ZVol_CreateForm(data=data, vol_name=kwargs['parent'].vol_name)
+        form = ZVol_CreateForm(data=data, parentds=parent)
         if not form.is_valid() or not form.save():
             for k in list(form.errors.keys()):
                 if k == '__all__':
@@ -416,7 +425,7 @@ class ZVolResource(DojoResource):
                 response=self.error_response(request, form.errors)
             )
         # Re-query for a proper response
-        response = self.get_detail(request, pk=form.cleaned_data.get('zvol_name'), **kwargs)
+        response = self.get_detail(request, pk=f"{name}", **kwargs)
         response.status_code = 202
         return response
 
@@ -431,7 +440,7 @@ class ZVolResource(DojoResource):
         # Add zvol_ prefix to match form field names
         for k in list(data.keys()):
             data[f'zvol_{k}'] = data.pop(k)
-        form = ZVol_EditForm(name=name, data=data)
+        form = ZVol_EditForm(parentds=name, data=data)
         if not form.is_valid() or not form.save():
             for k in list(form.errors.keys()):
                 if k == '__all__':

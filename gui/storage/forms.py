@@ -1421,9 +1421,9 @@ class CommonZVol(object):
         if suffix.lower().endswith('ib'):
             size = '%s%s' % (number, suffix[0])
 
-        zlist = zfs.list_datasets(path=self.vol_name, include_root=True)
+        zlist = zfs.list_datasets(path=self.parentds, include_root=True)
         if zlist:
-            dataset = zlist.get(self.vol_name)
+            dataset = zlist.get(self.parentds)
             _map = {
                 'P': 1125899906842624,
                 'T': 1099511627776,
@@ -1470,12 +1470,12 @@ class ZVol_EditForm(CommonZVol, Form):
     )
 
     def __init__(self, *args, **kwargs):
-        self.name = kwargs.pop('name')
-        self.vol_name = self.name.rsplit('/', 1)[0]
+        self.parentds = kwargs.pop('parentds')
+        self.vol_name = self.parentds.rsplit('/', 1)[0]
         super(ZVol_EditForm, self).__init__(*args, **kwargs)
         _n = notifier()
-        if '/' in self.name:
-            parentds = self.name.rsplit('/', 1)[0]
+        if '/' in self.parentds:
+            parentds = self.parentds.rsplit('/', 1)[0]
             parentdata = _n.zfs_get_options(parentds)
 
             self.fields['zvol_compression'].choices = _inherit_choices(
@@ -1487,7 +1487,7 @@ class ZVol_EditForm(CommonZVol, Form):
                 parentdata['dedup'][0]
             )
 
-        self.zdata = _n.zfs_get_options(self.name)
+        self.zdata = _n.zfs_get_options(self.parentds)
         if 'org.freenas:description' in self.zdata and self.zdata['org.freenas:description'][2] == 'local':
             self.fields['zvol_comments'].initial = self.zdata['org.freenas:description'][0]
         self.fields['zvol_compression'].initial = self.zdata['compression'][2]
@@ -1536,10 +1536,10 @@ class ZVol_EditForm(CommonZVol, Form):
             if not formfield:
                 formfield = f'zvol_{attr}'
             if can_inherit and self.cleaned_data[formfield] == 'inherit':
-                success, err = _n.zfs_inherit_option(self.name, attr)
+                success, err = _n.zfs_inherit_option(self.parentds, attr)
             else:
                 success, err = _n.zfs_set_option(
-                    self.name, attr, self.cleaned_data[formfield]
+                    self.parentds, attr, self.cleaned_data[formfield]
                 )
             if not success:
                 error = True
@@ -1549,7 +1549,7 @@ class ZVol_EditForm(CommonZVol, Form):
             return False
         extents = iSCSITargetExtent.objects.filter(
             iscsi_target_extent_type='ZVOL',
-            iscsi_target_extent_path=f'zvol/{self.name}')
+            iscsi_target_extent_path=f'zvol/{self.parentds}')
         if extents.exists():
             _n.reload('iscsitarget')
         return True
@@ -1599,8 +1599,8 @@ class ZVol_CreateForm(CommonZVol, Form):
     )
 
     def __init__(self, *args, **kwargs):
-        self.vol_name = kwargs.pop('vol_name')
-        zpool = notifier().zpool_parse(self.vol_name.split('/')[0])
+        self.parentds = kwargs.pop('parentds')
+        zpool = notifier().zpool_parse(self.parentds.split('/')[0])
         numdisks = 4
         for vdev in zpool.data:
             if vdev.type in (
@@ -1640,7 +1640,7 @@ class ZVol_CreateForm(CommonZVol, Form):
     def clean(self):
         cleaned_data = self.cleaned_data
         full_zvol_name = "%s/%s" % (
-            self.vol_name,
+            self.parentds,
             cleaned_data.get("zvol_name"))
         if len(zfs.list_datasets(path=full_zvol_name)) > 0:
             msg = _("You already have a dataset with the same name")
@@ -1654,7 +1654,7 @@ class ZVol_CreateForm(CommonZVol, Form):
         props = {}
         zvol_volsize = self.cleaned_data.get('zvol_volsize')
         zvol_blocksize = self.cleaned_data.get("zvol_blocksize")
-        zvol_name = f"{self.vol_name}/{self.cleaned_data.get('zvol_name')}"
+        zvol_name = f"{self.parentds}/{self.cleaned_data.get('zvol_name')}"
         zvol_comments = self.cleaned_data.get('zvol_comments')
         zvol_compression = self.cleaned_data.get('zvol_compression')
         props['compression'] = str(zvol_compression)
