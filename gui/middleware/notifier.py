@@ -2268,7 +2268,6 @@ class notifier(metaclass=HookMetaclass):
         # For 9.x compatiblity we need to add prefix to ldconfig_paths
         # and run ldconfig in the jail before we install
         # See #23779
-        import pdb; pdb.set_trace()
         if prefix:
             pipeopen_kwargs = {'env': {
                 'PATH': '/sbin:/bin:/usr/sbin:/usr/bin:/usr/games:/usr/local/sbin:/usr/local/bin:/root/bin',
