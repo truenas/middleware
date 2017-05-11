@@ -622,6 +622,8 @@ if [ "$LINUXJAIL" = "YES" ] ; then
     fi
   fi
 else
+  # For 9.x compatibility lets make sure PBI lib is in ldconfig path
+  jexec ${JID} /bin/sh -c "/usr/sbin/sysrc -f /etc/rc.conf.d/ldconfig ldconfig_paths=\"/usr/lib/compat /usr/local/lib /usr/local/lib/compat/pkg \$(ls -d /usr/pbi/*-amd64/lib|tr '\n' ' ')\"" > /dev/null
   # If we have a custom start script
   if [ -e "${JMETADIR}/jail-start" ] ; then
     sCmd=`cat "${JMETADIR}/jail-start"`
