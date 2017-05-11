@@ -734,7 +734,9 @@ jail_post_start()
 	do
 		local control="${plugin_path}/control"
 
-		echo jexec ${jid} "${control}" start "${jip}" "${plugin_port}"
+		# Because /etc/rc is currently running in background
+		# lets make sure ldconfig is started before the plugin control
+		jexec ${jid} /usr/sbin/service ldconfig start > /dev/null
 		jexec ${jid} env LD_LIBRARY_PATH=/usr/local/lib/compat "${control}" start "${jip}" "${plugin_port}"
 	done
 }
