@@ -6,6 +6,13 @@ import os
 import re
 import sys
 
+sys.path.extend([
+    '/usr/local/www',
+    '/usr/local/www/freenasUI'
+])
+
+from freenasUI.common.freenassysctl import freenas_sysctl as fs
+
 
 def ldap_conf_ldap(client, ldap_conf):
     try:
@@ -32,7 +39,10 @@ def ldap_conf_ldap(client, ldap_conf):
 
 
 def ldap_conf_activedirectory(client, ldap_conf):
-    ad = Struct(client.call('notifier.directoryservice', 'AD'))
+
+    # We should probably have a timeout just for configs like this
+    ad = Struct(client.call('notifier.directoryservice', 'AD',
+        timeout=fs().directoryservice.activedirectory.timeout.start))
 
     config = {}
     config["URI"] = "%s://%s" % (
