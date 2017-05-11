@@ -23,13 +23,13 @@ class LAGGStatus(BaseAlert):
             if inactive and iface.protocol == netif.AggregationProtocol.LACP:
                 alerts.append(Alert(
                     Alert.CRIT,
-                    _('LAGG Interface %(name)s does not have the following port(s) ACTIVE: %(ports)s. Check cabling/switch.') % {'name': iface.name, 'ports': ', '.join(inactive)},
+                    _('These ports are not ACTIVE on LAGG interface %(name)s: %(ports)s. Please check cabling and switch.') % {'name': iface.name, 'ports': ', '.join(inactive)},
                 ))
             # For FAILOVER protocol we should have one ACTIVE port
             if len(active) != 1 and iface.protocol == netif.AggregationProtocol.FAILOVER:
                 alerts.append(Alert(
                     Alert.CRIT,
-                    _('LAGG Interface %(name)s does not have one ACTIVE port. Check cabling/switch.') % {'name': iface.name},
+                    _('There are no ACTIVE ports on LAGG interface %(name)s. Please check cabling and switch.') % {'name': iface.name},
                 ))
         return alerts
 
