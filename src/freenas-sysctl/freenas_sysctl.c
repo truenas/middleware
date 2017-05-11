@@ -208,6 +208,10 @@ freenas_sysctl_add_timeout_tree(struct sysctl_ctx_list *ctx,
 		return (-1);
 	}
 
+	st->start = 30;
+	st->stop = 30;
+	st->restart = 30;
+
 	SYSCTL_ADD_LONG(ctx, SYSCTL_CHILDREN(timeout), OID_AUTO,
 		"start", CTLFLAG_RW, &st->start, "start timeout");
 	SYSCTL_ADD_LONG(ctx, SYSCTL_CHILDREN(timeout), OID_AUTO,
@@ -320,6 +324,10 @@ freenas_sysctl_directoryservice_init(void)
 		FAILRET("Failed to add activedirectory error node.\n", -1);
 	}
 
+	g_directoryservice->activedirectory.ds_st.start = 90;
+	g_directoryservice->activedirectory.ds_st.stop = 90;
+	g_directoryservice->activedirectory.ds_st.restart = 180;
+
 
 	/* LDAP node */
 	if ((tmptree = SYSCTL_ADD_NODE(&g_freenas_sysctl_ctx,
@@ -335,6 +343,11 @@ freenas_sysctl_directoryservice_init(void)
 		tmptree, &g_directoryservice->ldap.ds_se)) != 0) {
 		FAILRET("Failed to add ldap error node.\n", -1);
 	}
+
+	g_directoryservice->ldap.ds_st.start = 90;
+	g_directoryservice->ldap.ds_st.stop = 90;
+	g_directoryservice->ldap.ds_st.restart = 180;
+
 
 	/* NT4 node */
 	if ((tmptree = SYSCTL_ADD_NODE(&g_freenas_sysctl_ctx,
