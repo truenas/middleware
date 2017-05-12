@@ -1516,9 +1516,9 @@ class notifier(metaclass=HookMetaclass):
             name,
         )
         proc = self._pipeopen(command)
-        proc.communicate()
+        errmsg = proc.communicate()[1]
         if proc.returncode != 0:
-            raise MiddlewareError(_('Failed to create group %s') % name)
+            raise MiddlewareError(_('Failed to create group %(name)s: %(msg)s') % {'name': name, 'msg': errmsg})
         grnam = self.___getgrnam(name)
         return grnam.gr_gid
 
