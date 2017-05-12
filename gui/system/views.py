@@ -1604,7 +1604,7 @@ def CA_export_certificate(request, id):
         raise MiddlewareError(e)
 
     response = StreamingHttpResponse(
-        buf_generator(cert), content_type='application/octet-stream'
+        buf_generator(cert.decode('utf-8')), content_type='application/x-pem-file'
     )
     response['Content-Length'] = len(cert)
     response['Content-Disposition'] = 'attachment; filename=%s.crt' % ca
@@ -1619,7 +1619,7 @@ def CA_export_privatekey(request, id):
 
     key = export_privatekey(ca.cert_privatekey)
     response = StreamingHttpResponse(
-        buf_generator(key), content_type='application/octet-stream'
+        buf_generator(key.decode('utf-8')), content_type='application/x-pem-file'
     )
     response['Content-Length'] = len(key)
     response['Content-Disposition'] = 'attachment; filename=%s.key' % ca
@@ -1731,7 +1731,7 @@ def certificate_export_certificate(request, id):
     cert = export_certificate(c.cert_certificate)
 
     response = StreamingHttpResponse(
-        buf_generator(cert), content_type='application/octet-stream'
+        buf_generator(cert.decode('utf-8')), content_type='application/x-pem-file'
     )
     response['Content-Length'] = len(cert)
     response['Content-Disposition'] = 'attachment; filename=%s.crt' % c
@@ -1746,7 +1746,7 @@ def certificate_export_privatekey(request, id):
     key = export_privatekey(c.cert_privatekey)
 
     response = StreamingHttpResponse(
-        buf_generator(key), content_type='application/octet-stream'
+        buf_generator(key.decode('utf-8')), content_type='application/x-pem-file'
     )
     response['Content-Length'] = len(key)
     response['Content-Disposition'] = 'attachment; filename=%s.key' % c
