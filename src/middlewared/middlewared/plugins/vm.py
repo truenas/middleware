@@ -105,7 +105,11 @@ class VMSupervisor(object):
                     nictype = 'virtio-net'
                 else:
                     nictype = 'e1000'
-                args += ['-s', '{},{},{}'.format(nid(), nictype, tapname)]
+                mac_address = device['attributes'].get('mac')
+                if mac_address == '00:a0:98:FF:FF:FF':
+                    args += ['-s', '{},{},{}'.format(nid(), nictype, tapname)]
+                else:
+                    args += ['-s', '{},{},{},mac={}'.format(nid(), nictype, tapname, mac_address)]
             elif device['dtype'] == 'VNC':
                 if device['attributes'].get('wait'):
                     wait = 'wait'

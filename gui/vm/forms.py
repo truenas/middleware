@@ -98,6 +98,13 @@ class DeviceForm(ModelForm):
         required=False,
         initial='E1000',
     )
+    NIC_mac = forms.CharField(
+        label=_('Mac Address'),
+        required=False,
+        help_text=_("You can specify the adapter MAC Address or let it be auto generated."),
+        validators=[RegexValidator("^([0-9a-fA-F]{2}([::]?|$)){6}$", "Invalid MAC format.")],
+        initial='00:a0:98:FF:FF:FF',
+    )
     VNC_port = forms.CharField(
         label=_('VNC port'),
         required=False,
@@ -140,6 +147,7 @@ class DeviceForm(ModelForm):
                 self.fields['DISK_mode'].initial = self.instance.attributes.get('type')
             elif self.instance.dtype == 'NIC':
                 self.fields['NIC_type'].initial = self.instance.attributes.get('type')
+                self.fields['NIC_mac'].initial = self.instance.attributes.get('mac')
             elif self.instance.dtype == 'VNC':
                 self.fields['VNC_wait'].initial = self.instance.attributes.get('wait')
                 self.fields['VNC_port'].initial = self.instance.attributes.get('vnc_port')
@@ -170,6 +178,7 @@ class DeviceForm(ModelForm):
         elif self.cleaned_data['dtype'] == 'NIC':
             obj.attributes = {
                 'type': self.cleaned_data['NIC_type'],
+                'mac': self.cleaned_data['NIC_mac'],
             }
         elif self.cleaned_data['dtype'] == 'VNC':
             if vm.bootloader == 'UEFI':
