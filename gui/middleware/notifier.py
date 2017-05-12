@@ -2825,7 +2825,7 @@ class notifier(metaclass=HookMetaclass):
 
             for e in iSCSITargetExtent.objects.filter(iscsi_target_extent_type='Disk'):
                 d = e.get_device()[5:]
-                if d in diskd:
+                if d in disksd:
                     del disksd[d]
 
         return disksd
