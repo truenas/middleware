@@ -13,11 +13,6 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.AddField(
-            model_name='vm',
-            name='autostart',
-            field=models.BooleanField(default=True, help_text='Guest VM will autostart on boot.', verbose_name='Autostart'),
-        ),
         migrations.AlterField(
             model_name='vm',
             name='bootloader',
