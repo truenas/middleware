@@ -105,6 +105,12 @@ class DeviceForm(ModelForm):
         validators=[RegexValidator("^([0-9a-fA-F]{2}([::]?|$)){6}$", "Invalid MAC format.")],
         initial='00:a0:98:FF:FF:FF',
     )
+    VNC_resolution = forms.ChoiceField(
+        label=_('Resolution'),
+        choices=choices.VNC_RESOLUTION,
+        required=False,
+        initial='1024x768',
+    )
     VNC_port = forms.CharField(
         label=_('VNC port'),
         required=False,
@@ -151,6 +157,7 @@ class DeviceForm(ModelForm):
             elif self.instance.dtype == 'VNC':
                 self.fields['VNC_wait'].initial = self.instance.attributes.get('wait')
                 self.fields['VNC_port'].initial = self.instance.attributes.get('vnc_port')
+                self.fields['VNC_resolution'].initial = self.instance.attributes.get('vnc_resolution')
 
     def clean(self):
         vm = self.cleaned_data.get('vm')
@@ -185,11 +192,13 @@ class DeviceForm(ModelForm):
                 obj.attributes = {
                     'wait': self.cleaned_data['VNC_wait'],
                     'vnc_port': self.cleaned_data['VNC_port'],
+                    'vnc_resolution': self.cleaned_data['VNC_resolution'],
                 }
             else:
                 self._errors['dtype'] = self.error_class([_('VNC is only allowed for UEFI')])
                 self.cleaned_data.pop('VNC_port', None)
                 self.cleaned_data.pop('VNC_wait', None)
+                self.cleaned_data.pop('VNC_resolution', None)
                 return obj
 
         obj.save()
