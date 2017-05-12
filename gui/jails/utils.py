@@ -605,6 +605,7 @@ def guess_addresses():
 
 
 def new_default_plugin_jail(basename):
+    from freenasUI.jails.forms import generate_randomMAC, is_jail_mac_duplicate
     jc = JailsConfiguration.objects.order_by("-id")[0]
     logfile = "%s/warden.log" % jc.jc_path
 
@@ -724,11 +725,21 @@ def new_default_plugin_jail(basename):
         f.close()
 
     w.auto(jail=jailname)
+
+    # Make sure we generate an unique mac address for the plugin jail
+    while True:
+        mac = generate_randomMAC()
+        if not is_jail_mac_duplicate(mac):
+            break
     w.set(
         jail=jailname,
-        flags=(
-            warden.WARDEN_SET_FLAGS_VNET_ENABLE
-        )
+        mac=mac,
+        flags=warden.WARDEN_SET_FLAGS_MAC,
+    )
+    # Setting vnet and mac at the same time seems to confuse Warden wrapper
+    w.set(
+        jail=jailname,
+        flags=warden.WARDEN_SET_FLAGS_VNET_ENABLE,
     )
     w.start(jail=jailname)
 
