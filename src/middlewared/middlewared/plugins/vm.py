@@ -105,8 +105,8 @@ class VMSupervisor(object):
                     nictype = 'virtio-net'
                 else:
                     nictype = 'e1000'
-                mac_address = device['attributes'].get('mac')
-                if mac_address == '00:a0:98:FF:FF:FF':
+                mac_address = device['attributes'].get('mac', None)
+                if mac_address == '00:a0:98:FF:FF:FF' or mac_address is None:
                     args += ['-s', '{},{},{}'.format(nid(), nictype, tapname)]
                 else:
                     args += ['-s', '{},{},{},mac={}'.format(nid(), nictype, tapname, mac_address)]
@@ -116,15 +116,22 @@ class VMSupervisor(object):
                 else:
                     wait = ''
 
-                vnc_resolution = device['attributes'].get('vnc_resolution').split('x')
-                width = vnc_resolution[0]
-                height = vnc_resolution[1]
+                vnc_resolution = device['attributes'].get('vnc_resolution', None)
                 vnc_port = int(device['attributes'].get('vnc_port', 5900 + self.vm['id']))
 
-                args += [
-                    '-s', '29,fbuf,tcp=0.0.0.0:{},w={},h={},{}'.format(vnc_port, width, height, wait),
-                    '-s', '30,xhci,tablet',
-                ]
+                if vnc_resolution is None:
+                    args += [
+                        '-s', '29,fbuf,tcp=0.0.0.0:{},w=1024,h=768,{}'.format(vnc_port, wait),
+                        '-s', '30,xhci,tablet',
+                    ]
+                else:
+                    vnc_resolution = vnc_resolution.split('x')
+                    width = vnc_resolution[0]
+                    height = vnc_resolution[1]
+                    args += [
+                        '-s', '29,fbuf,tcp=0.0.0.0:{},w={},h={},{}'.format(vnc_port, width, height, wait),
+                        '-s', '30,xhci,tablet',
+                    ]
 
         args.append(self.vm['name'])
 
