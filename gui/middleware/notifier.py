@@ -481,7 +481,7 @@ class notifier(metaclass=HookMetaclass):
     def __geli_setmetadata(self, dev, keyfile, passphrase=None):
         self.__create_keyfile(keyfile)
         _passphrase = "-J %s" % passphrase if passphrase else "-P"
-        command = "geli init -s 4096 -B none %s -K %s %s" % (_passphrase, keyfile, dev)
+        command = "geli init -s 4096 -l 256 -B none %s -K %s %s" % (_passphrase, keyfile, dev)
         err = self._pipeerr(command)
         if err:
             raise MiddlewareError("Unable to set geli metadata on %s: %s" % (dev, err))
