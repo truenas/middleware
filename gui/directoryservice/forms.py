@@ -45,6 +45,7 @@ from freenasUI.common.freenasldap import (
     FreeNAS_LDAP,
     FreeNAS_ActiveDirectory_Exception,
 )
+from freenasUI.common.freenassysctl import freenas_sysctl as _fs
 from freenasUI.common.pipesubr import run
 from freenasUI.common.ssl import get_certificateauthority_path
 from freenasUI.common.system import (
@@ -52,8 +53,9 @@ from freenasUI.common.system import (
     compare_netbios_names
 )
 from freenasUI.directoryservice import models, utils
-from freenasUI.middleware.notifier import notifier
 from freenasUI.middleware.client import client
+from freenasUI.middleware.exceptions import MiddlewareError
+from freenasUI.middleware.notifier import notifier
 from freenasUI.services.exceptions import ServiceFailed
 from freenasUI.services.models import CIFS
 
@@ -636,20 +638,6 @@ class ActiveDirectoryForm(ModelForm):
 
         return cdata
 
-    def get_timeout(self, what, default=0):
-        oid = 'freenas.directoryservice.activedirectory.timeout.%s' % what
-        value = default
-
-        try:
-            timeout = sysctl.filter(oid)[0]
-            if timeout.value > 0:
-                value = timeout.value
-
-        except Exception as e:
-            log.debug("sysctl: unable to get value for oid %s", oid)
-
-        return value
-
     def save(self):
         enable = self.cleaned_data.get("ad_enable")
         enable_monitoring = self.cleaned_data.get("ad_enable_monitor")
@@ -675,39 +663,35 @@ class ActiveDirectoryForm(ModelForm):
 
         if enable:
             if started is True:
-                timeout = self.get_timeout("restart",  90*2)
+                timeout = _fs().directoryservice.activedirectory.timeout.restart
                 try:
                     started = notifier().restart("activedirectory", timeout=timeout)
                 except Exception as e:
-                    raise ServiceFailed(
-                        "activedirectory",
+                    raise MiddlewareError(
                         _("Active Directory restart timed out after %d seconds." % timeout),
                     )
                 
             if started is False:
-                timeout = self.get_timeout("start",  90)
+                timeout = _fs().directoryservice.activedirectory.timeout.start
                 try:
                     started = notifier().start("activedirectory", timeout=timeout)
                 except Exception as e:
-                    raise ServiceFailed(
-                        "activedirectory",
+                    raise MiddlewareError(
                         _("Active Directory start timed out after %d seconds." % timeout),
                     )
             if started is False:
                 self.instance.ad_enable = False
                 super(ActiveDirectoryForm, self).save()
-                raise ServiceFailed(
-                    "activedirectory",
+                raise MiddlewareError(
                     _("Active Directory failed to reload."),
                 )
         else:
             if started is True:
-                timeout = self.get_timeout("stop",  60)
+                timeout = _fs().directoryservice.activedirectory.timeout.stop
                 try:
                     started = notifier().stop("activedirectory", timeout=timeout)
                 except Exception as e:
-                    raise ServiceFailed(
-                        "activedirectory",
+                    raise MiddlewareError(
                         _("Active Directory stop timed out after %d seconds." % timeout),
                     )
 
@@ -740,7 +724,7 @@ class NISForm(ModelForm):
         try:
             started = notifier().started("nis")
         except:
-            raise ServiceFailed("nis", _("Failed to check NIS status."))
+            raise MiddlewareError(_("Failed to check NIS status."))
         finally:
             super(NISForm, self).save()
 
@@ -750,17 +734,17 @@ class NISForm(ModelForm):
                     started = notifier().restart("nis")
                     log.debug("Try to restart: %s", started)
                 except:
-                    raise ServiceFailed("nis", _("NIS failed to restart."))
+                    raise MiddlewareError(_("NIS failed to restart."))
             if started is False:
                 try:
                     started = notifier().start("nis")
                     log.debug("Try to start: %s", started)
                 except:
-                    raise ServiceFailed("nis", _("NIS failed to start."))
+                    raise MiddlewareError(_("NIS failed to start."))
             if started is False:
                 self.instance.ad_enable = False
                 super(NISForm, self).save()
-                raise ServiceFailed("nis", _("NIS failed to reload."))
+                raise MiddlewareError(_("NIS failed to reload."))
         else:
             if started is True:
                 started = notifier().stop("nis")
@@ -976,16 +960,16 @@ class LDAPForm(ModelForm):
 
         if enable:
             if started is True:
-                started = notifier().restart("ldap", timeout=90)
+                started = notifier().restart("ldap", timeout=_fs().directoryservice.ldap.timeout.restart)
             if started is False:
-                started = notifier().start("ldap", timeout=90)
+                started = notifier().start("ldap", timeout=_fs().directoryservice.ldap.timeout.start)
             if started is False:
                 self.instance.ldap_enable = False
                 super(LDAPForm, self).save()
-                raise ServiceFailed("ldap", _("LDAP failed to reload."))
+                raise MiddlewareError(_("LDAP failed to reload."))
         else:
             if started is True:
-                started = notifier().stop("ldap", timeout=90)
+                started = notifier().stop("ldap", timeout=_fs().directoryservice.ldap.timeout.stop)
 
         return obj
 
