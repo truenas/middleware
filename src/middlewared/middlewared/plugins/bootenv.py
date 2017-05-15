@@ -1,4 +1,4 @@
-from middlewared.schema import Any, Str, accepts
+from middlewared.schema import Any, Bool, Dict, Str, accepts
 from middlewared.service import CRUDService, filterable, item_method
 from middlewared.utils import filter_list
 
@@ -19,3 +19,20 @@ class BootEnvService(CRUDService):
         Activates boot environment `id`.
         """
         return Update.ActivateClone(oid)
+
+    @item_method
+    @accepts(
+        Str('id'),
+        Dict(
+            'attributes',
+            Bool('keep'),
+        )
+    )
+    def set_attribute(self, oid, attrs):
+        """
+        Sets attributes boot environment `id`.
+
+        Currently only `keep` attribute is allowed.
+        """
+        clone = Update.FindClone(oid)
+        return Update.CloneSetAttr(clone, **attrs)
