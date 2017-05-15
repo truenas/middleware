@@ -83,7 +83,7 @@ def get_plugin_status(args):
             ))
         ]
         # TODO: Increase timeout based on number of plugins
-        response = opener.open(url, None).read()
+        response = opener.open(url, None, 6).read()
         data = json.loads(response)
     except Exception as e:
         log.warn(_("Couldn't retrieve %(url)s: %(error)s") % {
