@@ -56,7 +56,6 @@ from django.views.decorators.cache import never_cache
 from freenasOS import Configuration
 from freenasOS.Exceptions import UpdateManifestNotFound
 from freenasOS.Update import (
-    ActivateClone,
     CheckForUpdates,
     DeleteClone,
     FindClone,
@@ -75,6 +74,7 @@ from freenasUI.common.ssl import (
 )
 from freenasUI.freeadmin.apppool import appPool
 from freenasUI.freeadmin.views import JsonResp
+from freenasUI.middleware.client import client
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier
 from freenasUI.middleware.zfs import zpool_list
@@ -276,7 +276,8 @@ def bootenv_datagrid_structure(request):
 
 def bootenv_activate(request, name):
     if request.method == 'POST':
-        active = ActivateClone(name)
+        with client as c:
+            active = c.call('bootenv.activate', name)
         if active is not False:
             return JsonResp(
                 request,
