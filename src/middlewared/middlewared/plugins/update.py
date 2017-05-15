@@ -9,7 +9,7 @@ if '/usr/local/lib' not in sys.path:
     sys.path.append('/usr/local/lib')
 
 from freenasOS import Configuration, Manifest, Update, Train
-from freenasOS.Exceptions import UpdateIncompleteCacheException
+from freenasOS.Exceptions import UpdateIncompleteCacheException, UpdateInvalidCacheException
 from freenasOS.Update import CheckForUpdates, GetServiceDescription
 
 
@@ -240,7 +240,7 @@ class UpdateService(Service):
         data = []
         try:
             changes = Update.PendingUpdatesChanges(path)
-        except UpdateIncompleteCacheException:
+        except (UpdateIncompleteCacheException, UpdateInvalidCacheException):
             changes = []
         if changes:
             if changes.get("Reboot", True) is False:
