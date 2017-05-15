@@ -49,16 +49,13 @@ from django.http import (
     HttpResponseRedirect,
     StreamingHttpResponse,
 )
-from django.shortcuts import render, redirect
+from django.shortcuts import render
 from django.utils.translation import ugettext as _
 from django.views.decorators.cache import never_cache
 
 from freenasOS import Configuration
 from freenasOS.Exceptions import UpdateManifestNotFound
-from freenasOS.Update import (
-    CheckForUpdates,
-    DeleteClone,
-)
+from freenasOS.Update import CheckForUpdates
 from freenasUI.account.models import bsdUsers
 from freenasUI.common.system import (
     get_sw_name,
@@ -347,7 +344,8 @@ def bootenv_scrub_interval(request):
 
 def bootenv_delete(request, name):
     if request.method == 'POST':
-        delete = DeleteClone(name)
+        with client as c:
+            delete = c.call('bootenv.delete', name)
         if delete is not False:
             return JsonResp(
                 request,
@@ -376,7 +374,8 @@ def bootenv_deletebulk(request):
                     'index': i,
                     'total': len(names),
                 }))
-            delete = DeleteClone(name)
+            with client as c:
+                delete = c.call('bootenv.delete', name)
             if delete is False:
                 failed = True
         if os.path.exists(BOOTENV_DELETE_PROGRESS):
