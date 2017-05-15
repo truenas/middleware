@@ -3341,7 +3341,7 @@ class notifier(metaclass=HookMetaclass):
             conn = sqlite3.connect(config_file_name)
             try:
                 cur = conn.cursor()
-                cur.execute("SELECT COUNT(*) FROM south_migrationhistory")
+                cur.execute("SELECT COUNT(*) FROM south_migrationhistory WHERE app_name != 'freeadmin'")
                 new_num = cur.fetchone()[0]
                 cur.close()
             finally:
@@ -3349,7 +3349,7 @@ class notifier(metaclass=HookMetaclass):
             conn = sqlite3.connect(FREENAS_DATABASE)
             try:
                 cur = conn.cursor()
-                cur.execute("SELECT COUNT(*) FROM south_migrationhistory")
+                cur.execute("SELECT COUNT(*) FROM south_migrationhistory WHERE app_name != 'freeadmin'")
                 num = cur.fetchone()[0]
                 cur.close()
             finally:
