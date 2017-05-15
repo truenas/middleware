@@ -1,4 +1,4 @@
-from middlewared.schema import Any, Bool, Dict, Str, accepts
+from middlewared.schema import Bool, Dict, Str, accepts
 from middlewared.service import CRUDService, filterable, item_method
 from middlewared.utils import filter_list
 
@@ -19,6 +19,14 @@ class BootEnvService(CRUDService):
         Activates boot environment `id`.
         """
         return Update.ActivateClone(oid)
+
+    @item_method
+    @accepts(Str('id'), Str('new_name'))
+    def rename(self, oid, new_name):
+        """
+        Renames boot environment `id`.
+        """
+        return Update.RenameClone(oid, new_name)
 
     @item_method
     @accepts(
