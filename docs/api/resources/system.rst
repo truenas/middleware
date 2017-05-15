@@ -244,6 +244,40 @@ Create resource
    :statuscode 201: no error
 
 
+Rename resource
++++++++++++++++
+
+.. http:post:: /api/v1.0/system/bootenv/rename/
+
+   Renames a boot environment.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      POST /api/v1.0/system/bootenv/rename/11-MASTER-201705071931/ HTTP/1.1
+      Content-Type: application/json
+
+        {
+                "name": "pre-changes-rename"
+        }
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 202 Accepted
+      Vary: Accept
+      Content-Type: application/json
+
+        Boot Environment has been renamed.
+
+   :json string name: name of the renamed boot environment
+   :reqheader Content-Type: the request content type
+   :resheader Content-Type: the response content type
+   :statuscode 202: no error
+
+
 Delete resource
 +++++++++++++++
 
