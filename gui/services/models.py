@@ -1703,7 +1703,7 @@ class SSH(Model):
         ),
         max_length=350,
         blank=True,
-        choices=list(choices.NICChoices(exclude_configured=False)),
+        choices=choices.NICChoices(exclude_configured=False, exclude_unconfigured_vlan_parent=True),
         default='',
     )
     ssh_tcpport = models.PositiveIntegerField(
