@@ -58,8 +58,6 @@ from freenasOS.Exceptions import UpdateManifestNotFound
 from freenasOS.Update import (
     CheckForUpdates,
     DeleteClone,
-    FindClone,
-    CloneSetAttr,
 )
 from freenasUI.account.models import bsdUsers
 from freenasUI.common.system import (
@@ -448,8 +446,8 @@ def bootenv_rename(request, name):
 
 def bootenv_keep(request, name):
     if request.method == 'POST':
-        be = FindClone(name)
-        keep = CloneSetAttr(be, keep=True)
+        with client as c:
+            keep = c.call('bootenv.set_attribute', name, {'keep': True})
         if keep:
             return JsonResp(
                 request,
@@ -466,8 +464,8 @@ def bootenv_keep(request, name):
 
 def bootenv_unkeep(request, name):
     if request.method == 'POST':
-        be = FindClone(name)
-        keep = CloneSetAttr(be, keep=False)
+        with client as c:
+            keep = c.call('bootenv.set_attribute', name, {'keep': False})
         if keep:
             return JsonResp(
                 request,
