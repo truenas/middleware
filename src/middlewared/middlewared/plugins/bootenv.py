@@ -36,3 +36,6 @@ class BootEnvService(CRUDService):
         """
         clone = Update.FindClone(oid)
         return Update.CloneSetAttr(clone, **attrs)
+
+    def do_delete(self, oid):
+        return Update.DeleteClone(oid)
