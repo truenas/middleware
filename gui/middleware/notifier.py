@@ -3313,7 +3313,7 @@ class notifier(metaclass=HookMetaclass):
         if proc.returncode != 0:
             log.warn('Failed to create factory database: %s', error)
             raise MiddlewareError("Factory reset has failed, check /var/log/messages")
-        proc = self._pipeopen("/usr/local/bin/python manage.py migrate --database=factory --noinput --fake-initial")
+        proc = self._pipeopen("/usr/bin/env FREENAS_FACTORY=1 /usr/local/bin/python manage.py migrate --noinput --fake-initial")
         error = proc.communicate()[1]
         if proc.returncode != 0:
             log.warn('Failed to create factory database: %s', error)

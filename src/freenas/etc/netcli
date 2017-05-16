@@ -591,8 +591,11 @@ def reset_factory_defaults(*args):
     a = input(_('Are you sure you want to reset to factory defaults? ')
                   + '(yes/no): ')
     if a.lower().startswith('y'):
-        notifier().config_restore()
-        os.system("/sbin/shutdown -r now")
+        try:
+            notifier().config_restore()
+            os.system("/sbin/shutdown -r now")
+        except Exception as e:
+            print("Failed to reset to factory: {}".format(str(e))
 
 
 def configure_lagg_interface(*args):
