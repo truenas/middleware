@@ -50,7 +50,7 @@ MANAGERS = ADMINS
 DATABASE_PATH = '/data/freenas-v1.db'
 
 # Workaround bug in database name for migrate
-if '--database=factory' in sys.argv:
+if 'FREENAS_FACTORY' in os.environ:
     DATABASE_PATH += '.factory'
 
 DATABASES = {
@@ -59,10 +59,6 @@ DATABASES = {
         'NAME': DATABASE_PATH,
         'TEST_NAME': ':memory:',
     },
-    'factory': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': DATABASE_PATH + '.factory',
-    }
 }
 
 """
