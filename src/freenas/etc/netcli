@@ -595,7 +595,7 @@ def reset_factory_defaults(*args):
             notifier().config_restore()
             os.system("/sbin/shutdown -r now")
         except Exception as e:
-            print("Failed to reset to factory: {}".format(str(e))
+            print("Failed to reset to factory: {}".format(str(e)))
 
 
 def configure_lagg_interface(*args):
