@@ -289,4 +289,11 @@ class Resource(object):
             else:
                 method_args = []
 
+        """
+        If the method is marked `item_method` then the first argument
+        must be the item id (from url param)
+        """
+        if method.get('item_method') is True:
+            method_args.insert(0, kwargs['id'])
+
         req.context['result'] = self.middleware.call(methodname, *method_args)
