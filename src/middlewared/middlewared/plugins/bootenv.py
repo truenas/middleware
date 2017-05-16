@@ -9,7 +9,10 @@ class BootEnvService(CRUDService):
 
     @filterable
     def query(self, filters=None, options=None):
-        results = [clone for clone in Update.ListClones()]
+        results = []
+        for clone in Update.ListClones():
+            clone['id'] = clone['name']
+            results.append(clone)
         return filter_list(results, filters, options)
 
     @item_method
