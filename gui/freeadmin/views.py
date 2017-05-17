@@ -31,13 +31,19 @@ import sys
 from middlewared.client import ClientException
 import middlewared.logger as logger
 
+from django.core.exceptions import SuspiciousOperation
 from django.http import HttpResponse, HttpResponseRedirect
 from django.views import debug
 from django.template import Context, RequestContext
 from django.template.loader import get_template, render_to_string
+from django.utils.datastructures import MultiValueDict
 
 from freenasUI.common.system import get_sw_version
 from freenasUI.system.models import Advanced
+
+from raven.contrib.django.utils import get_host
+from raven.utils.compat import iterlists
+from raven.utils.wsgi import get_headers, get_environ
 
 log = logging.getLogger('freeadmin.views')
 
@@ -190,14 +196,13 @@ class ExceptionReporter(debug.ExceptionReporter):
 def server_error(request, *args, **kwargs):
     # Save exc info before next exception occurs
     exc_info = sys.exc_info()
-    trace_rollbar = logger.Rollbar()
+    crash_reporting = logger.CrashReporting()
     try:
         tb = Advanced.objects.all().latest('id').adv_traceback
     except:
         tb = True
 
-    # Report error to Rollbar.
-    sw_version = get_sw_version()
+    # Crash reporting
     extra_log_files = [
         ('/var/log/debug.log', 'debug_log'),
         ('/data/update.failed', 'update_failed'),
@@ -206,7 +211,50 @@ def server_error(request, *args, **kwargs):
     # since middlewared itself might be stuck
     if issubclass(exc_info[0], (ClientException, socket.timeout)):
         extra_log_files.insert(0, ('/var/log/middlewared.log', 'middlewared_log'))
-    trace_rollbar.rollbar_report(exc_info, request, sw_version, extra_log_files)
+
+    data = {}
+    # Pieces grabbed from raven.contrib.django.client
+    try:
+        uri = request.build_absolute_uri()
+    except SuspiciousOperation:
+        # attempt to build a URL for reporting as Django won't allow us to
+        # use get_host()
+        if request.is_secure():
+            scheme = 'https'
+        else:
+            scheme = 'http'
+        host = get_host(request)
+        uri = '%s://%s%s' % (scheme, host, request.path)
+
+    if request.method not in ('GET', 'HEAD'):
+        try:
+            rdata = request.body
+        except Exception:
+            try:
+                rdata = request.raw_post_data
+            except Exception:
+                # assume we had a partial read.
+                try:
+                    rdata = request.POST or '<unavailable>'
+                except Exception:
+                    rdata = '<unavailable>'
+                else:
+                    if isinstance(rdata, MultiValueDict):
+                        rdata = dict(
+                            (k, v[0] if len(v) == 1 else v)
+                            for k, v in iterlists(rdata))
+
+    data['request'] = {
+        'method': request.method,
+        'url': uri,
+        'query_string': request.META.get('QUERY_STRING'),
+        'data': rdata,
+        'cookies': dict(request.COOKIES),
+        'headers': dict(get_headers(request.META)),
+        'env': dict(get_environ(request.META)),
+    }
+
+    crash_reporting.report(exc_info, data, extra_log_files)
 
     try:
         if tb:
