@@ -1,7 +1,7 @@
 from datetime import datetime
 from middlewared.schema import accepts, Dict, Int
 from middlewared.service import job, Service
-from middlewared.utils import Popen
+from middlewared.utils import Popen, sw_version
 
 import os
 import socket
@@ -19,10 +19,6 @@ from freenasOS import Configuration
 
 class SystemService(Service):
 
-    def __init__(self, *args, **kwargs):
-        super(SystemService, self).__init__(*args, **kwargs)
-        self.__version = None
-
     @accepts()
     def is_freenas(self):
         """
@@ -34,12 +30,7 @@ class SystemService(Service):
 
     @accepts()
     def version(self):
-        if self.__version is None:
-            conf = Configuration.Configuration()
-            sys_mani = conf.SystemManifest()
-            if sys_mani:
-                self.__version = sys_mani.Version()
-        return self.__version
+        return sw_version()
 
     @accepts()
     def info(self):

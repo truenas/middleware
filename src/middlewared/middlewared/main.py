@@ -176,17 +176,11 @@ class Application(WebSocketApplication):
             self.send_error(message, str(e), sys.exc_info())
             self.logger.warn('Exception while calling {}(*{})'.format(message['method'], message.get('params')), exc_info=True)
 
-            try:
-                sw_version = self.middleware.call('system.version')
-            except:
-                self.logger.debug('Failed to get system version', exc_info=True)
-
-            if self.middleware.rollbar.is_rollbar_disabled():
-                self.logger.debug('[Rollbar] is disabled using sentinel file.')
+            if self.middleware.crash_reporting.is_disabled():
+                self.logger.debug('[Crash Reporting] is disabled using sentinel file.')
             else:
                 extra_log_files = (('/var/log/middlewared.log', 'middlewared_log'),)
-                gevent.spawn(self.middleware.rollbar.rollbar_report, sys.exc_info(), None, sw_version, extra_log_files)
-                self.logger.info('[Rollbar] report sent.')
+                gevent.spawn(self.middleware.crash_reporting.report, sys.exc_info(), None, extra_log_files)
 
     def subscribe(self, ident, name):
         self.__subscribed[ident] = name
@@ -408,7 +402,7 @@ class Middleware(object):
     def __init__(self):
         self.logger_name = logger.Logger('middlewared')
         self.logger = self.logger_name.getLogger()
-        self.rollbar = logger.Rollbar()
+        self.crash_reporting = logger.CrashReporting()
         self.__jobs = JobsQueue(self)
         self.__schemas = {}
         self.__services = {}
