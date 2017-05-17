@@ -89,7 +89,12 @@ generate_fstab_swap()
 				if [ ! -L /dev/dumpdev ]; then
 					/sbin/dumpon /dev/${devname} && ln -sf /dev/${devname} /dev/dumpdev
 				fi
-			fi 
+				# For FreeNAS we need to check for crash in every swap
+				if savecore -C /dev/${devname} > /dev/null; then
+					savecore ${savecore_flags} ${dumpdir} /dev/${devname}
+					/usr/sbin/crashinfo -d ${dumpdir}
+				fi
+			fi
 		done
 	else
 		if [ ! -c /dev/mirror/swap ]; then
@@ -101,6 +106,10 @@ generate_fstab_swap()
 		if [ ! -L /dev/dumpdev ]; then
 			devname=$(awk '{print $1}' /data/fstab.swap | sed -e 's/\.eli$//')
 			/sbin/dumpon ${devname} && ln -sf ${devname} /dev/dumpdev
+		fi
+		if savecore -C /dev/dumpdev > /dev/null; then
+			savecore ${savecore_flags} ${dumpdir} /dev/dumpdev
+			/usr/sbin/crashinfo -d ${dumpdir}
 		fi
 	fi
 }
@@ -118,15 +127,11 @@ generate_fstab()
 	fi
 	cp /conf/base/etc/fstab /etc/fstab
 	generate_fstab_real >> /etc/fstab
+	mount -uw /
 	if [ "${freenas}" = "True" ]; then
 		generate_fstab_swap
 	else
 		generate_fstab_swap >> /etc/fstab
-	fi
-	mount -uw /
-	if savecore -C /dev/dumpdev > /dev/null; then
-		savecore ${savecore_flags} ${dumpdir} /dev/dumpdev
-		/usr/sbin/crashinfo -d ${dumpdir}
 	fi
 }
 
