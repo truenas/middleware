@@ -56,6 +56,7 @@ class CrashReporting(object):
         if self.is_disabled():
             return
 
+        extra_data = {}
         if all(t_log_files):
             payload_size = 0
             for path, name in t_log_files:
