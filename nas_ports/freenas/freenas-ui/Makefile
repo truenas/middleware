@@ -39,7 +39,6 @@ RUN_DEPENDS=	${PYTHON_PKGNAMEPREFIX}django110>0:www/py-django110 \
 	${PYTHON_PKGNAMEPREFIX}licenselib>0:freenas/py-licenselib \
 	${PYTHON_PKGNAMEPREFIX}bsd>0:freenas/py-bsd \
 	${PYTHON_PKGNAMEPREFIX}middlewared>0:freenas/py-middlewared \
-	${PYTHON_PKGNAMEPREFIX}rollbar>0:www/py-rollbar \
 	${PYTHON_PKGNAMEPREFIX}ntplib>0:net/py-ntplib \
 	pyvmomi>0:net/py-pyvmomi \
 	dmidecode>0:sysutils/dmidecode \

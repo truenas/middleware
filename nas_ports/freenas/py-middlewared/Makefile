@@ -22,7 +22,6 @@ RUN_DEPENDS=	${PYTHON_PKGNAMEPREFIX}gevent>0:devel/py-gevent \
 		${PYTHON_PKGNAMEPREFIX}boto3>0:devel/py-boto3 \
 		${PYTHON_PKGNAMEPREFIX}netif>0:net/py-netif \
 		${PYTHON_PKGNAMEPREFIX}bsd>0:freenas/py-bsd \
-		${PYTHON_PKGNAMEPREFIX}rollbar>0:www/py-rollbar \
 		${PYTHON_PKGNAMEPREFIX}raven>0:devel/py-raven \
 		${PYTHON_PKGNAMEPREFIX}markdown>0:textproc/py-markdown \
 		${PYTHON_PKGNAMEPREFIX}mako>0:textproc/py-mako \
