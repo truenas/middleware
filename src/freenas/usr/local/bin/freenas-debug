@@ -260,6 +260,7 @@ main()
 	freenas_header 2>&1|tee -a "${FREENAS_DEBUG_DIRECTORY}/osinfo.txt"
 
 	if $all_debug; then
+		func_pids=""
 		for opt in ${opts_spaced} ; do
 
 			var=\$$(echo "module_func_${opt}")
@@ -277,10 +278,14 @@ main()
 			then
 				fp="${FREENAS_DEBUG_DIRECTORY}/${directory}"
 				mkdir -p "${fp}"
-
-				eval "${func}" 2>&1|tee -a "${fp}/dump.txt"
+				# dispatch the subfunctions in parallel, record the children
+				( eval "${func}" 2>&1|tee -a "${fp}/dump.txt" ) &
+				func_pids="$func_pids $!"
 			fi
 		done
+		logger "waiting on $func_pids"
+		wait $func_pids
+		logger "debug complete"
 	else
 		while getopts "${aopts}" opt
 		do
