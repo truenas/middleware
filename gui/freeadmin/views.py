@@ -241,7 +241,7 @@ def server_error(request, *args, **kwargs):
                     if isinstance(rdata, MultiValueDict):
                         rdata = dict(
                             (k, v[0] if len(v) == 1 else v)
-                            for k, v in iter(rdata.lists())
+                            for k, v in iter(rdata.lists()))
 
     data['request'] = {
         'method': request.method,
