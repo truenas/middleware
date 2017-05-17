@@ -22,7 +22,7 @@ class CrashReporting(object):
         else:
             self.sentinel_file_path = '/data/.crashreporting_disabled'
         self.client = Client(
-            dsn='http://6083a47c33294087922c6c2cea49ecfb:ab9f2a90deff488c8e46abd4254d5526@sentry.ixsystems.com/1',
+            dsn='https://6083a47c33294087922c6c2cea49ecfb:ab9f2a90deff488c8e46abd4254d5526@sentry.ixsystems.com/1',
             install_sys_hook=False,
             install_logging_hook=False,
             release=sw_version(),
@@ -55,12 +55,6 @@ class CrashReporting(object):
         """
         if self.is_disabled():
             return
-
-        extra_data = {}
-        try:
-            extra_data['sw_version'] = sw_version
-        except:
-            self.logger.debug('Failed to get system version', exc_info=True)
 
         if all(t_log_files):
             payload_size = 0
