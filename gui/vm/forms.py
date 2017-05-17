@@ -156,7 +156,7 @@ class DeviceForm(ModelForm):
                 self.fields['NIC_mac'].initial = self.instance.attributes.get('mac')
             elif self.instance.dtype == 'VNC':
                 vnc_port = self.instance.attributes.get('vnc_port')
-                vnc_port =  0 if vnc_port is None else vnc_port
+                vnc_port = 0 if vnc_port is None else vnc_port
 
                 self.fields['VNC_wait'].initial = self.instance.attributes.get('wait')
                 self.fields['VNC_port'].initial = vnc_port
