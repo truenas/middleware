@@ -42,7 +42,6 @@ from freenasUI.common.system import get_sw_version
 from freenasUI.system.models import Advanced
 
 from raven.contrib.django.utils import get_host
-from raven.utils.compat import iterlists
 from raven.utils.wsgi import get_headers, get_environ
 
 log = logging.getLogger('freeadmin.views')
@@ -242,7 +241,7 @@ def server_error(request, *args, **kwargs):
                     if isinstance(rdata, MultiValueDict):
                         rdata = dict(
                             (k, v[0] if len(v) == 1 else v)
-                            for k, v in iterlists(rdata))
+                            for k, v in iter(rdata.lists())
 
     data['request'] = {
         'method': request.method,
