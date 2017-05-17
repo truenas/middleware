@@ -86,6 +86,7 @@ class Jail_bait(object):
         self.path = path
         self.flags = flags
         self.args = ""
+        self.pipeopen_kwargs = kwargs.get('pipeopen_kwargs') or {}
 
         if objflags is None:
             objflags = []
@@ -117,7 +118,7 @@ class Jail_bait(object):
             cmd += " %s" % self.args
 
         log.debug("Jail_bait.cmd = %s", cmd)
-        pobj = jail_pipe(cmd, self.pipe_func)
+        pobj = jail_pipe(cmd, self.pipe_func, pipeopen_kwargs=self.pipeopen_kwargs)
         self.error = pobj.error
 
         log.debug("Jail_bait.run: leave")
