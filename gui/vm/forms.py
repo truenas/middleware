@@ -114,9 +114,9 @@ class DeviceForm(ModelForm):
     VNC_port = forms.CharField(
         label=_('VNC port'),
         required=False,
-        initial=0,
         help_text=_("You can specify the VNC port or 0 for auto."),
         validators=[RegexValidator("^[0-9]*$", "Only integer is accepted")],
+        initial=0,
     )
     VNC_wait = forms.BooleanField(
         label=_('Wait to boot'),
@@ -155,8 +155,11 @@ class DeviceForm(ModelForm):
                 self.fields['NIC_type'].initial = self.instance.attributes.get('type')
                 self.fields['NIC_mac'].initial = self.instance.attributes.get('mac')
             elif self.instance.dtype == 'VNC':
+                vnc_port = self.instance.attributes.get('vnc_port')
+                vnc_port =  0 if vnc_port is None else vnc_port
+
                 self.fields['VNC_wait'].initial = self.instance.attributes.get('wait')
-                self.fields['VNC_port'].initial = self.instance.attributes.get('vnc_port')
+                self.fields['VNC_port'].initial = vnc_port
                 self.fields['VNC_resolution'].initial = self.instance.attributes.get('vnc_resolution')
 
     def clean(self):
