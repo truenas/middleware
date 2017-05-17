@@ -24,6 +24,7 @@
 #
 from decimal import Decimal
 import bisect
+import libzfs
 import logging
 import re
 import subprocess
@@ -402,20 +403,9 @@ class Dev(Tnode):
                 while getattr(pool, 'parent', None):
                     pool = pool.parent
                 # Lets check whether it is a guid
-                p1 = subprocess.Popen(
-                    ["/usr/sbin/zdb", "-U", "/data/zfs/zpool.cache", "-C", pool.name],
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE,
-                    encoding='utf8')
-                zdb = p1.communicate()[0]
-                if p1.returncode == 0:
-                    reg = re.search(
-                        r'\bguid[:=]\s?%s.*?path[:=]\s?\'(?P<path>.*?)\'$' % (
-                            self.name,
-                        ),
-                        zdb, re.M | re.S)
-                    if reg:
-                        self.path = reg.group("path")
+                vdev = libzfs.ZFS().get(pool.name).vdev_by_guid(int(self.name))
+                if vdev:
+                    self.path = vdev.path
 
         if provider:
             search = self._doc.xpath(
@@ -998,6 +988,7 @@ def zpool_list(name=None):
         return rv[name]
     return rv
 
+
 def zdb():
     zfsproc = subprocess.Popen([
         '/usr/sbin/zdb',
@@ -1037,7 +1028,6 @@ def zdb_find(where, method):
 
 
 def zfs_ashift_from_label(pool, label):
-    import libzfs
     zfs = libzfs.ZFS()
     pool = zfs.get(pool)
     if not pool:
