@@ -492,7 +492,7 @@ class ConsulAlerts(Model):
         verbose_name=_('Service Name'),
         max_length=20,
         choices=choices.CONSULALERTS_TYPES,
-        default='PagerDuty',
+        default='AWS-SNS',
     )
     attributes = DictField(
         editable=False,
@@ -500,7 +500,7 @@ class ConsulAlerts(Model):
     )
     enabled = models.BooleanField(
         verbose_name=_("Enabled"),
-        default=False,
+        default=True,
     )
 
     class Meta:

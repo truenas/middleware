@@ -886,13 +886,13 @@ TUNABLE_TYPES = (
 )
 
 CONSULALERTS_TYPES = (
-    ('InfluxDB', _('InfluxDB')),
-    ('Slack', _('Slack')),
-    ('Mattermost', _('Mattermost')),
-    ('PagerDuty', _('PagerDuty')),
-    ('HipChat', _('HipChat')),
-    ('OpsGenie', _('OpsGenie')),
     ('AWS-SNS', _('AWS-SNS')),
+    ('HipChat', _('HipChat')),
+    ('InfluxDB', _('InfluxDB')),
+    ('Mattermost', _('Mattermost')),
+    ('OpsGenie', _('OpsGenie')),
+    ('PagerDuty', _('PagerDuty')),
+    ('Slack', _('Slack')),
     ('VictorOps', _('VictorOps')),
 )
 
