@@ -102,10 +102,9 @@ def sw_version():
 
 
 def sw_version_is_stable():
-
     conf = Configuration.Configuration()
-
-    if 'stable' in conf.CurrentTrain().lower():
+    train = conf.CurrentTrain()
+    if train and 'stable' in train.lower():
         return True
     else:
         return False
