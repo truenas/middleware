@@ -1001,44 +1001,6 @@ def zpool_list(name=None):
     return rv
 
 
-def zdb():
-    zfsproc = subprocess.Popen([
-        '/usr/sbin/zdb',
-        '-C',
-        '-U', '/data/zfs/zpool.cache',
-    ], stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf8')
-    data = zfsproc.communicate()[0]
-    rv = {}
-    lines_ptr = {0: rv}
-    for line in data.splitlines():
-        cur_ident = line.count('    ')
-        k, v = line.strip().split(':', 1)
-        if v == '':
-            lines_ptr[cur_ident][k] = lines_ptr[cur_ident + 1] = {'_parent': lines_ptr[cur_ident]}
-        else:
-            v = v.strip()
-            if v.startswith("'") and v.endswith("'"):
-                v = v[1:-1]
-            lines_ptr[cur_ident][k] = v
-
-    return rv
-
-
-def zdb_find(where, method):
-    found = False
-    for k, v in where.items():
-        if k == '_parent':
-            continue
-        if isinstance(v, dict):
-            found = zdb_find(v, method)
-            if found:
-                break
-        elif method(k, v):
-            found = where
-            break
-    return found
-
-
 def zfs_ashift_from_label(pool, label):
     zfs = libzfs.ZFS()
     pool = zfs.get(pool)
