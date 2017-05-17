@@ -2244,6 +2244,7 @@ class notifier(metaclass=HookMetaclass):
                 "format, it might as well be corrupt."
             )
 
+        prefix = None
         for pair in out:
             (var, val) = pair.split('=', 1)
 
@@ -2264,6 +2265,16 @@ class notifier(metaclass=HookMetaclass):
             elif var == 'arch':
                 arch = val
 
+        # For 9.x compatiblity we need to add prefix to ldconfig_paths
+        # and run ldconfig in the jail before we install
+        # See #23779
+        if prefix:
+            pipeopen_kwargs = {'env': {
+                'PATH': '/sbin:/bin:/usr/sbin:/usr/bin:/usr/games:/usr/local/sbin:/usr/local/bin:/root/bin',
+                'TMPDIR': '/tmp',
+            }}
+            Jexec(jid=jail.jid, command='/usr/sbin/sysrc -f /etc/rc.conf.d/ldconfig ldconfig_paths="/usr/lib/compat /usr/local/lib /usr/local/lib/compat/pkg %s/lib"' % prefix, pipeopen_kwargs=pipeopen_kwargs).run()
+
         info = pbi_info(flags=PBI_INFO_FLAGS_VERBOSE)
         res = info.run(jail=True, jid=jail.jid)
         if res[0] == 0 and res[1]:
@@ -2281,6 +2292,8 @@ class notifier(metaclass=HookMetaclass):
         )
         res = p.run(jail=True, jid=jail.jid)
         if res and res[0] == 0:
+            if prefix:
+                Jexec(jid=jail.jid, command='/usr/sbin/service ldconfig onestart', pipeopen_kwargs=pipeopen_kwargs).run()
             qs = Plugins.objects.filter(plugin_name=name)
             if qs.count() > 0:
                 if qs[0].plugin_jail == pjail:
