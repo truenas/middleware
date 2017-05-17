@@ -67,6 +67,11 @@ class VM(Model):
         choices=choices.VM_BOOTLOADER,
         default='UEFI',
     )
+    autostart = models.BooleanField(
+        verbose_name=_('Autostart'),
+        help_text=_('Guest VM will start on boot.'),
+        default=True,
+    )
 
     class Meta:
         verbose_name = _(u"VM")
