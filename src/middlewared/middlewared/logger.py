@@ -6,6 +6,8 @@ from logging.config import dictConfig
 from .utils import sw_version, sw_version_is_stable
 
 from raven import Client
+from raven.transport.gevent import GeventedHTTPTransport
+from raven.transport.threaded import ThreadedHTTPTransport
 
 # geventwebsocket.server debug log is mostly useless, lets focus on INFO
 logging.getLogger('geventwebsocket.server').setLevel(logging.INFO)
@@ -17,12 +19,19 @@ class CrashReporting(object):
     """
 
     def __init__(self, transport='gevent'):
+        if transport == 'gevent':
+            transport = GeventedHTTPTransport
+        elif transport == 'threaded':
+            transport = ThreadedHTTPTransport
+        else:
+            raise ValueError(f'Unknown transport: {transport}')
+
         if sw_version_is_stable():
             self.sentinel_file_path = '/tmp/.crashreporting_disabled'
         else:
             self.sentinel_file_path = '/data/.crashreporting_disabled'
         self.client = Client(
-            dsn=f'{transport}+https://6083a47c33294087922c6c2cea49ecfb:ab9f2a90deff488c8e46abd4254d5526@sentry.ixsystems.com/1',
+            dsn=f'https://6083a47c33294087922c6c2cea49ecfb:ab9f2a90deff488c8e46abd4254d5526@sentry.ixsystems.com/1',
             install_sys_hook=False,
             install_logging_hook=False,
             release=sw_version(),
