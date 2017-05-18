@@ -29,12 +29,16 @@ import re
 import subprocess
 
 from collections import OrderedDict
+from django.core.exceptions import SuspiciousOperation
 from django.db.models import CASCADE
 from django.db.models.fields.related import OneToOneRel
 from django.utils import translation
+from django.utils.datastructures import MultiValueDict
 
 from freenasUI.common.pipesubr import pipeopen
-from freenasUI.system.models import Settings
+
+from raven.contrib.django.utils import get_host
+from raven.utils.wsgi import get_headers, get_environ
 
 log = logging.getLogger('freeadmin.utils')
 
@@ -88,6 +92,7 @@ def get_related_objects(obj):
 
 
 def set_language():
+    from freenasUI.system.models import Settings
     language = Settings.objects.order_by('-id')[0].stg_language
     translation.activate(language)
 
@@ -132,3 +137,53 @@ def log_db_locked():
             log.debug(f'PID {pid}: {" ".join(proc.cmdline())}')
         except Exception as e:
             pass
+
+
+def request2crashreporting(request):
+    """
+    Transform django/wsgi request object to a dict the crash reporting
+    can understand.
+    """
+    data = {}
+    # Pieces grabbed from raven.contrib.django.client
+    try:
+        uri = request.build_absolute_uri()
+    except SuspiciousOperation:
+        # attempt to build a URL for reporting as Django won't allow us to
+        # use get_host()
+        if request.is_secure():
+            scheme = 'https'
+        else:
+            scheme = 'http'
+        host = get_host(request)
+        uri = '%s://%s%s' % (scheme, host, request.path)
+
+    rdata = None
+    if request.method not in ('GET', 'HEAD'):
+        try:
+            rdata = request.body
+        except Exception:
+            try:
+                rdata = request.raw_post_data
+            except Exception:
+                # assume we had a partial read.
+                try:
+                    rdata = request.POST or '<unavailable>'
+                except Exception:
+                    rdata = '<unavailable>'
+                else:
+                    if isinstance(rdata, MultiValueDict):
+                        rdata = dict(
+                            (k, v[0] if len(v) == 1 else v)
+                            for k, v in iter(rdata.lists()))
+
+
+    data['request'] = {
+        'method': request.method,
+        'url': uri,
+        'query_string': request.META.get('QUERY_STRING'),
+        'data': rdata,
+        'cookies': dict(request.COOKIES),
+        'headers': dict(get_headers(request.META)),
+        'env': dict(get_environ(request.META)),
+    }
