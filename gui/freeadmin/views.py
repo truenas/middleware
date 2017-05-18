@@ -195,7 +195,7 @@ class ExceptionReporter(debug.ExceptionReporter):
 def server_error(request, *args, **kwargs):
     # Save exc info before next exception occurs
     exc_info = sys.exc_info()
-    crash_reporting = logger.CrashReporting()
+    crash_reporting = logger.CrashReporting(transport='threaded')
     try:
         tb = Advanced.objects.all().latest('id').adv_traceback
     except:

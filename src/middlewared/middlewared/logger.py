@@ -16,13 +16,13 @@ class CrashReporting(object):
     Pseudo-Class for remote crash reporting
     """
 
-    def __init__(self):
+    def __init__(self, transport='gevent'):
         if sw_version_is_stable():
             self.sentinel_file_path = '/tmp/.crashreporting_disabled'
         else:
             self.sentinel_file_path = '/data/.crashreporting_disabled'
         self.client = Client(
-            dsn='https://6083a47c33294087922c6c2cea49ecfb:ab9f2a90deff488c8e46abd4254d5526@sentry.ixsystems.com/1',
+            dsn=f'{transport}+https://6083a47c33294087922c6c2cea49ecfb:ab9f2a90deff488c8e46abd4254d5526@sentry.ixsystems.com/1',
             install_sys_hook=False,
             install_logging_hook=False,
             release=sw_version(),

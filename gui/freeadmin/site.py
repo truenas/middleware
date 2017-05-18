@@ -31,7 +31,7 @@ class FreeAdminSite(object):
 
     def __init__(self):
         self._registry = {}
-        self.trace = logger.CrashReporting()
+        self.trace = logger.CrashReporting(transport='threaded')
 
     def register(
         self, model_or_iterable, admin_class=None, freeadmin=None, **options
