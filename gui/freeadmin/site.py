@@ -32,7 +32,6 @@ class FreeAdminSite(object):
 
     def __init__(self):
         self._registry = {}
-        self.trace = logger.CrashReporting(transport='threaded')
 
     def register(
         self, model_or_iterable, admin_class=None, freeadmin=None, **options
@@ -234,7 +233,8 @@ class FreeAdminSite(object):
         except Exception:
             middleware_token = None
             extra_log_files = (('/var/log/middlewared.log', 'middlewared_log'),)
-            self.trace.report(sys.exc_info(), request2crashreporting(request), extra_log_files)
+            crash_reporting = logger.CrashReporting(transport='threaded')
+            crash_reporting.report(sys.exc_info(), request2crashreporting(request), extra_log_files)
 
         return render(request, 'freeadmin/index.html', {
             'consolemsg': console,
