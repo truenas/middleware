@@ -388,6 +388,7 @@ class ZVolResource(DojoResource):
     avail = fields.IntegerField(attribute='avail')
     compression = fields.CharField(attribute='compression')
     dedup = fields.CharField(attribute='dedup')
+    comments = fields.CharField(attribute='description')
 
     class Meta:
         allowed_methods = ['get', 'post', 'delete', 'put']
