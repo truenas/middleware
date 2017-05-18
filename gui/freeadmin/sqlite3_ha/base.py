@@ -94,7 +94,7 @@ class Journal(object):
 
     def __exit__(self, typ, value, traceback):
 
-        with open(self.JOURNAL_FILE, 'w+') as f:
+        with open(self.JOURNAL_FILE, 'wb+') as f:
             if self.queries:
                 f.write(pickle.dumps(self.queries))
 
