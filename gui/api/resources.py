@@ -2233,8 +2233,6 @@ class JailsResourceMixin(NestedMixin):
 
     def hydrate(self, bundle):
         bundle = super(JailsResourceMixin, self).hydrate(bundle)
-        if 'id' not in bundle.data:
-            bundle.data['id'] = 1
         if bundle.request.method == 'POST':
             # The way default values is provided in JailsCreateForm
             # is not ideal since it relays in form data from UI.
