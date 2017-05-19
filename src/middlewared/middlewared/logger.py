@@ -31,9 +31,10 @@ class CrashReporting(object):
         else:
             self.sentinel_file_path = '/data/.crashreporting_disabled'
         self.client = Client(
-            dsn=f'https://6083a47c33294087922c6c2cea49ecfb:ab9f2a90deff488c8e46abd4254d5526@sentry.ixsystems.com/1',
+            dsn='http://11101daa5d5643fba21020af71900475:d60cd246ba684afbadd479653de2c216@sentry.ixsystems.com/2',
             install_sys_hook=False,
             install_logging_hook=False,
+            string_max_length=10240,
             release=sw_version(),
         )
 
