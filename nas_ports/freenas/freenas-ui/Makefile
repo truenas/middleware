@@ -33,7 +33,6 @@ RUN_DEPENDS=	${PYTHON_PKGNAMEPREFIX}django110>0:www/py-django110 \
 	${PYTHON_PKGNAMEPREFIX}simplejson>0:devel/py-simplejson \
 	${PYTHON_PKGNAMEPREFIX}ujson>0:devel/py-ujson \
 	${PYTHON_PKGNAMEPREFIX}oauth2>0:net/py-oauth2 \
-	${PYTHON_PKGNAMEPREFIX}eventlet>0:net/py-eventlet \
 	${PYTHON_PKGNAMEPREFIX}django-json-rpc>0:www/py-django-json-rpc \
 	${PYTHON_PKGNAMEPREFIX}sqlparse>0:databases/py-sqlparse \
 	${PYTHON_PKGNAMEPREFIX}licenselib>0:freenas/py-licenselib \
