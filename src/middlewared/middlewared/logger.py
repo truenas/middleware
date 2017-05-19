@@ -30,6 +30,7 @@ class CrashReporting(object):
             self.sentinel_file_path = '/tmp/.crashreporting_disabled'
         else:
             self.sentinel_file_path = '/data/.crashreporting_disabled'
+        self.logger = logging.getLogger('middlewared.logger.CrashReporting')
         self.client = Client(
             dsn='https://11101daa5d5643fba21020af71900475:d60cd246ba684afbadd479653de2c216@sentry.ixsystems.com/2?timeout=3',
             install_sys_hook=False,
@@ -80,6 +81,7 @@ class CrashReporting(object):
                         extra_data[name] = contents
                         payload_size += len(contents)
 
+        self.logger.debug('Sending a crash report...')
         try:
             self.client.captureException(exc_info=exc_info, data=None, extra=extra_data)
         except Exception:
