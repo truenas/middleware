@@ -2213,6 +2213,7 @@ class DomainController(Model):
             DomainController.objects.create()
         except:
             pass
+        notifier().start("ix-resolv")
 
     class Meta:
         verbose_name = _("Domain Controller")
