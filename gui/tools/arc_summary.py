@@ -183,7 +183,7 @@ def fPerc(lVal=0, rVal=0, Decimal=2):
 def get_system_memory(Kstat):
     def mem_rounded(mem_size):
         chip_size = 1
-        chip_guess = (int(mem_size) / 8) - 1
+        chip_guess = int((mem_size / 8) - 1)
         while chip_guess != 0:
             chip_guess >>= 1
             chip_size <<= 1
