@@ -37,9 +37,9 @@
                          form.reset();
 
                          if (!data.error) {
-                             setMessage("Directory service successfully deleted.");
+                             setMessage("Active Directory successfully deleted.");
                          } else {
-                             setMessage("Unable to delete directory service");
+                             setMessage("Unable to delete Active Directory");
                          }
 
                          dialog.hide();
@@ -53,7 +53,7 @@
                      title: gettext("Confirm"),
                      href: "{{ delete_url }}", 
                      style: "background-color: white;",
-                     content: gettext("Are you sure you want to delete NT4?"), 
+                     content: gettext("Are you sure you want to delete Active Directory?"), 
                  });
                  dialog.domNode.appendChild(ok.domNode);
                  dialog.domNode.appendChild(cancel.domNode);
