@@ -35,7 +35,7 @@ sys.path.append('/usr/local/lib')
 HERE = os.path.abspath(os.path.dirname(__file__))
 
 DEBUG = False
-#DEBUG = True
+DEBUG = True
 #TASTYPIE_FULL_DEBUG = True
 TEMPLATE_DEBUG = DEBUG
 LOGIN_REDIRECT_URL = '/'
