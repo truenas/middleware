@@ -2200,6 +2200,20 @@ class DomainController(Model):
                           "%s", e)
         return obj
 
+    def delete(self):
+        from freenasUI.common.freenassysctl import freenas_sysctl as _fs
+        from freenasUI.common.samba import Samba4
+
+        if notifier().started("domaincontroller"):
+            notifier().stop("domaincontroller",
+                timeout=_fs().services.domaincontroller.timeout.stop)
+        Samba4().domain_sentinel_file_remove()
+        super(DomainController, self).delete()
+        try:
+            DomainController.objects.create()
+        except:
+            pass
+
     class Meta:
         verbose_name = _("Domain Controller")
         verbose_name_plural = _("Domain Controller")
