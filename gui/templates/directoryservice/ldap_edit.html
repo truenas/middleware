@@ -24,4 +24,61 @@
         rebuildDirectoryServiceCache('{% url "directoryservice_clearcache" %}', this);
     </script>
 </button>
+<button id="btn_{% cls_name form %}_delete" data-dojo-type="dijit.form.Button" data-dojo-props="refreshOnShow: true" class="objrefresh">
+    {% trans "delete" %}
+    <script type="dojo/event" data-dojo-event="onClick" data-dojo-args="e">
+        var button = this;
+        require([
+            "dojo/dom-construct",
+            "dojo/query",
+            "dojo/request/xhr",
+            "dijit/form/Button",
+            "dijit/registry",
+            "dijit/Dialog",
+             ], function(domConstruct, query, xhr, Button, registry, Dialog) {
+                 form = registry.byId("dialogForm_{{ model_name }}");
+                 var ok = new Button({label: "OK"});
+                 ok.on('click', function(e) {
+                     xhr.post("{{ delete_url }}", {
+                         headers: { "X-CSRFToken": CSRFToken },
+                     }).then(function(data) {
+                         /*
+                          * XXX hackity hack XXX
+                          *
+                          * This is UGLY - but works. After we delete a directory service
+                          * entry, we GET this URL, which will automagically create an
+                          * empty one for us ;-)
+                          */
+                         xhr.get("/directoryservice/home/", {}); 
+                         form.reset();
+
+                         if (!data.error) {
+                             setMessage("Directory service successfully deleted.");
+                         } else {
+                             setMessage("Unable to delete directory service");
+                         }
+
+                         dialog.hide();
+                     });
+                 });
+                 var cancel = new Button({label: "Cancel"});
+                 cancel.on('click', function(e) {
+                     dialog.hide();
+                 });
+                 dialog = new Dialog({
+                     title: gettext("Confirm"),
+                     href: "{{ delete_url }}", 
+                     style: "background-color: white;",
+                     content: gettext("Are you sure you want to delete NT4?"), 
+                 });
+                 dialog.domNode.appendChild(ok.domNode);
+                 dialog.domNode.appendChild(cancel.domNode);
+                 dialog.startup();
+                 dialog.show();
+        });
+
+        //rebuildDirectoryServiceCache('{% url "directoryservice_clearcache" %}', this);
+
+    </script>
+</button>
 {% endblock %}
