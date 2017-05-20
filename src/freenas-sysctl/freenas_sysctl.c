@@ -453,6 +453,8 @@ freenas_sysctl_services_init(void)
 		FAILRET("Failed to add domain controller timeout node.\n", -1);
 	}
 
+	g_services->dc.s_st.restart = 180;
+
 	/* FTP node */
 	if ((tmptree = SYSCTL_ADD_NODE(&g_freenas_sysctl_ctx,
 		SYSCTL_CHILDREN(stree), OID_AUTO,
