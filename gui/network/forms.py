@@ -38,6 +38,7 @@ from django.utils.translation import ugettext_lazy as _
 from dojango import forms
 from freenasUI import choices
 from freenasUI.common.forms import Form, ModelForm
+from freenasUI.common.freenassysctl import freenas_sysctl as _fs
 from freenasUI.common.system import get_sw_name
 from freenasUI.contrib.IPAddressField import IP4AddressFormField
 from freenasUI.freeadmin.sqlite3_ha.base import DBSync
@@ -371,9 +372,11 @@ class InterfacesForm(ModelForm):
         with DBSync():
             super(InterfacesForm, self).delete(*args, **kwargs)
         with client as c:
-            c.call('interfaces.sync')
+            c.call('interfaces.sync',
+                timeout=_fs().network.interface.sync.timeout.start)
             try:
-                c.call('routes.sync')
+                c.call('routes.sync',
+                    timeout=_fs().network.route.sync.timeout.start)
             except Exception:
                 # Syncing routes may fail if the interface changes network
                 # and old default gateway is still in place
@@ -384,9 +387,11 @@ class InterfacesForm(ModelForm):
         super(InterfacesForm, self).done(*args, **kwargs)
         if notifier().is_freenas():
             with client as c:
-                c.call('interfaces.sync')
+                c.call('interfaces.sync',
+                    timeout=_fs().network.interface.sync.timeout.start)
                 try:
-                    c.call('routes.sync')
+                    c.call('routes.sync',
+                        timeout=_fs().network.route.sync.timeout.start)
                 except Exception:
                     # Syncing routes may fail if the interface changes network
                     # and old default gateway is still in place
@@ -628,7 +633,7 @@ class GlobalConfigurationForm(ModelForm):
             # this supersedes all since it has hostname and resolvconf reloads folded in it
             whattoreload = "networkgeneral"
             with client as c:
-                c.call('routes.sync')
+                c.call('routes.sync', timeout=_fs().network.route.sync.timeout.start)
 
         notifier().reload(whattoreload)
 
