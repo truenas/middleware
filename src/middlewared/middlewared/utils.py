@@ -5,6 +5,8 @@ if '/usr/local/lib' not in sys.path:
     sys.path.append('/usr/local/lib')
 from freenasOS import Configuration
 
+VERSION = None
+
 
 def django_modelobj_serialize(middleware, obj, extend=None, field_prefix=None):
     from django.db.models.fields.related import ForeignKey
@@ -87,6 +89,16 @@ def filter_list(_list, filters=None, options=None):
         return rv[0]
 
     return rv
+
+
+def sw_version():
+    global VERSION
+    if VERSION is None:
+        conf = Configuration.Configuration()
+        sys_mani = conf.SystemManifest()
+        if sys_mani:
+            VERSION = sys_mani.Version()
+    return VERSION
 
 
 def sw_version_is_stable():

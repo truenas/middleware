@@ -37,6 +37,7 @@ from django.template import Context, RequestContext
 from django.template.loader import get_template, render_to_string
 
 from freenasUI.common.system import get_sw_version
+from freenasUI.freeadmin.utils import request2crashreporting
 from freenasUI.system.models import Advanced
 
 log = logging.getLogger('freeadmin.views')
@@ -190,14 +191,13 @@ class ExceptionReporter(debug.ExceptionReporter):
 def server_error(request, *args, **kwargs):
     # Save exc info before next exception occurs
     exc_info = sys.exc_info()
-    trace_rollbar = logger.Rollbar()
+    crash_reporting = logger.CrashReporting(transport='threaded')
     try:
         tb = Advanced.objects.all().latest('id').adv_traceback
     except:
         tb = True
 
-    # Report error to Rollbar.
-    sw_version = get_sw_version()
+    # Crash reporting
     extra_log_files = [
         ('/var/log/debug.log', 'debug_log'),
         ('/data/update.failed', 'update_failed'),
@@ -206,7 +206,8 @@ def server_error(request, *args, **kwargs):
     # since middlewared itself might be stuck
     if issubclass(exc_info[0], (ClientException, socket.timeout)):
         extra_log_files.insert(0, ('/var/log/middlewared.log', 'middlewared_log'))
-    trace_rollbar.rollbar_report(exc_info, request, sw_version, extra_log_files)
+
+    crash_reporting.report(exc_info, request2crashreporting(request), extra_log_files)
 
     try:
         if tb:
