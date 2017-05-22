@@ -1,79 +1,91 @@
 import os
 import logging
 import logging.handlers
+
 from logging.config import dictConfig
-import rollbar
-from .utils import sw_version_is_stable
+from .utils import sw_version, sw_version_is_stable
+
+from raven import Client
+from raven.transport.gevent import GeventedHTTPTransport
+from raven.transport.threaded import ThreadedHTTPTransport
 
 # geventwebsocket.server debug log is mostly useless, lets focus on INFO
 logging.getLogger('geventwebsocket.server').setLevel(logging.INFO)
 
 
-class Rollbar(object):
-    """Pseudo-Class for Rollbar - Error Tracking Software."""
+class CrashReporting(object):
+    """
+    Pseudo-Class for remote crash reporting
+    """
 
-    def __init__(self):
-        self.sentinel_file_path = '/data/.rollbar_disabled'
-        rollbar.init(
-            'caf06383cba14d5893c4f4d0a40c33a9',
-            'production' if 'DEVELOPER_MODE' not in os.environ else 'development'
+    def __init__(self, transport='gevent'):
+        if transport == 'gevent':
+            transport = GeventedHTTPTransport
+        elif transport == 'threaded':
+            transport = ThreadedHTTPTransport
+        else:
+            raise ValueError(f'Unknown transport: {transport}')
+
+        if sw_version_is_stable():
+            self.sentinel_file_path = '/tmp/.crashreporting_disabled'
+        else:
+            self.sentinel_file_path = '/data/.crashreporting_disabled'
+        self.logger = logging.getLogger('middlewared.logger.CrashReporting')
+        self.client = Client(
+            dsn='https://11101daa5d5643fba21020af71900475:d60cd246ba684afbadd479653de2c216@sentry.ixsystems.com/2?timeout=3',
+            install_sys_hook=False,
+            install_logging_hook=False,
+            string_max_length=10240,
+            release=sw_version(),
         )
 
-    def is_rollbar_disabled(self):
-        """Check the existence of sentinel file and its absolute path
-           against STABLE and DEVELOPMENT branches.
-
-           Returns:
-                       bool: True if rollbar is disabled, False otherwise.
+    def is_disabled(self):
         """
-        # Allow rollbar to be disabled via sentinel file or environment var,
+        Check the existence of sentinel file and its absolute path
+        against STABLE and DEVELOPMENT branches.
+
+        Returns:
+            bool: True if crash reporting is disabled, False otherwise.
+        """
+        # Allow report to be disabled via sentinel file or environment var,
         # if FreeNAS current train is STABLE, the sentinel file path will be /tmp/,
         # otherwise it's path will be /data/ and can be persistent.
-        if sw_version_is_stable():
-            self.sentinel_file_path = '/tmp/.rollbar_disabled'
 
-        if os.path.exists(self.sentinel_file_path) or 'ROLLBAR_DISABLED' in os.environ:
+        if os.path.exists(self.sentinel_file_path) or 'CRASHREPORTING_DISABLED' in os.environ:
             return True
         else:
             return False
 
-    def rollbar_report(self, exc_info, request, sw_version, t_log_files):
-        """"Wrapper for rollbar.report_exc_info.
-
+    def report(self, exc_info, data, t_log_files):
+        """"
         Args:
-                    exc_info (tuple): Same as sys.exc_info().
-                    request (obj, optional): It is the HTTP Request.
-                    sw_version (str): The current middlewared version.
-                    t_log_files (tuple): A tuple with log file absolute path and name.
+            exc_info (tuple): Same as sys.exc_info().
+            request (obj, optional): It is the HTTP Request.
+            sw_version (str): The current middlewared version.
+            t_log_files (tuple): A tuple with log file absolute path and name.
         """
-        if self.is_rollbar_disabled():
+        if self.is_disabled():
             return
 
         extra_data = {}
-        try:
-            extra_data['sw_version'] = sw_version
-        except:
-            self.logger.debug('Failed to get system version', exc_info=True)
-
         if all(t_log_files):
             payload_size = 0
             for path, name in t_log_files:
                 if os.path.exists(path):
                     with open(path, 'r') as absolute_file_path:
                         contents = absolute_file_path.read()[-10240:]
-                        # Rollbar has a limit for the whole report payload
-                        # (128KiB, but thats including all metadata, not just
-                        # these files. Lets skip the file if its hits a
-                        # reasonable limit
+                        # There is a limit for the whole report payload.
+                        # Lets skip the file if its hits areasonable limit.
                         if len(contents) + payload_size > 61440:
                             continue
                         extra_data[name] = contents
                         payload_size += len(contents)
 
+        self.logger.debug('Sending a crash report...')
         try:
-            rollbar.report_exc_info(exc_info, request or '', extra_data=extra_data)
-        except:
-            pass  # We don't care about the exception of rollbar.
+            self.client.captureException(exc_info=exc_info, data=None, extra=extra_data)
+        except Exception:
+            pass  # We don't care about the exception
 
 
 class LoggerFormatter(logging.Formatter):

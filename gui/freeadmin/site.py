@@ -18,6 +18,7 @@ from django.views.decorators.csrf import csrf_protect
 from freenasUI.common.system import get_sw_name, get_sw_version
 from freenasUI.freeadmin.apppool import appPool
 from freenasUI.freeadmin.options import BaseFreeAdmin
+from freenasUI.freeadmin.utils import request2crashreporting
 
 RE_ALERT = re.compile(r'^(?P<status>\w+)\[(?P<msgid>.+?)\]: (?P<message>.+)')
 log = logging.getLogger('freeadmin.site')
@@ -31,7 +32,6 @@ class FreeAdminSite(object):
 
     def __init__(self):
         self._registry = {}
-        self.trace = logger.Rollbar()
 
     def register(
         self, model_or_iterable, admin_class=None, freeadmin=None, **options
@@ -233,7 +233,8 @@ class FreeAdminSite(object):
         except Exception:
             middleware_token = None
             extra_log_files = (('/var/log/middlewared.log', 'middlewared_log'),)
-            self.trace.rollbar_report(sys.exc_info(), request, sw_version, extra_log_files)
+            crash_reporting = logger.CrashReporting(transport='threaded')
+            crash_reporting.report(sys.exc_info(), request2crashreporting(request), extra_log_files)
 
         return render(request, 'freeadmin/index.html', {
             'consolemsg': console,
