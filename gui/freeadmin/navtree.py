@@ -49,16 +49,12 @@ from freenasUI.middleware.notifier import notifier
 from freenasUI.plugins.models import Plugins
 from freenasUI.plugins.utils import get_base_url
 
+from multiprocessing.pool import ThreadPool
 
 import ssl
 # Monkey patch ssl checking to get back to Python 2.7.8 behavior
-# Note: PLEASE DO THIS BEFORE importing eventlet as I went through its
-# code: https://github.com/eventlet/eventlet/blob/master/eventlet/green/ssl.py#LC376
-# Its horrible, but nothing much I can do about it
 ssl._create_default_https_context = ssl._create_unverified_context
 ssl.create_default_context = ssl._create_unverified_context
-from eventlet import GreenPool
-from eventlet.green.urllib import request as green_request
 
 log = logging.getLogger('freeadmin.navtree')
 
@@ -544,15 +540,11 @@ class NavTree(object):
 
     def _plugin_fetch(self, args):
         plugin, host, request, timeout = args
-        if re.match('^.+\[.+\]', host, re.I):
-            url_lib_to_use = urllib.request
-        else:
-            url_lib_to_use = green_request
 
         data = None
         url = "%s/plugins/%s/%d/_s/treemenu" % (host, plugin.plugin_name, plugin.id)
         try:
-            opener = url_lib_to_use.build_opener()
+            opener = urllib.request.build_opener()
             opener.addheaders = [(
                 'Cookie', 'sessionid=%s' % (
                     request.COOKIES.get("sessionid", ''),
@@ -581,7 +573,7 @@ class NavTree(object):
             timeout = 6
         args = [(y, host, request, timeout) for y in plugs]
 
-        pool = GreenPool(20)
+        pool = ThreadPool(20)
         for plugin, url, data in pool.imap(self._plugin_fetch, args):
 
             if not data:
