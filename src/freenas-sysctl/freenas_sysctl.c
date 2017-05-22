@@ -73,11 +73,23 @@ struct service_timeout {
 	unsigned long start;
 	unsigned long stop;
 	unsigned long restart;
+	unsigned long reload;
 };
 
 struct service_error {
 	struct fstring last_error;
 };
+
+static struct {
+	struct service_timeout a_st;
+	struct service_error a_se;
+
+	struct {
+		struct service_timeout a_st;
+		struct service_error a_se;
+	} user;
+
+} *g_account;
 
 static struct {
 #define DSSTRSIZE	1024
@@ -203,12 +215,19 @@ freenas_sysctl_add_timeout_tree(struct sysctl_ctx_list *ctx,
 		return (-1);
 	}
 
+	st->start = 30;
+	st->stop = 30;
+	st->restart = 30;
+	st->reload = 30;
+
 	SYSCTL_ADD_LONG(ctx, SYSCTL_CHILDREN(timeout), OID_AUTO,
 		"start", CTLFLAG_RW, &st->start, "start timeout");
 	SYSCTL_ADD_LONG(ctx, SYSCTL_CHILDREN(timeout), OID_AUTO,
 		"stop", CTLFLAG_RW, &st->stop, "stop timeout");
 	SYSCTL_ADD_LONG(ctx, SYSCTL_CHILDREN(timeout), OID_AUTO,
 		"restart", CTLFLAG_RW, &st->restart, "restart timeout");
+	SYSCTL_ADD_LONG(ctx, SYSCTL_CHILDREN(timeout), OID_AUTO,
+		"reload", CTLFLAG_RW, &st->reload, "reload timeout");
 
 	return (0);
 }
@@ -234,12 +253,40 @@ freenas_sysctl_add_error_tree(struct sysctl_ctx_list *ctx,
 static int
 freenas_sysctl_account_init(void)
 {
+	struct sysctl_oid *stree, *tmptree;
+
+	g_account = malloc(sizeof(*g_account),
+		M_FREENAS_SYSCTL, M_ZERO | M_WAITOK);
+
+	/* Account node */
+	if ((stree = SYSCTL_ADD_NODE(&g_freenas_sysctl_ctx,
+		SYSCTL_CHILDREN(g_freenas_sysctl_tree), OID_AUTO,
+		"account", CTLFLAG_RD, NULL, NULL)) == NULL) {
+		FAILRET("Failed to add account node.\n", -1);
+	}
+	if ((freenas_sysctl_add_timeout_tree(&g_freenas_sysctl_ctx,
+		stree, &g_account->a_st)) != 0) {
+		FAILRET("Failed to add account timeout node.\n", -1);
+	}
+
+	/* User node */
+	if ((tmptree = SYSCTL_ADD_NODE(&g_freenas_sysctl_ctx,
+		SYSCTL_CHILDREN(stree), OID_AUTO,
+		"user", CTLFLAG_RD, NULL, NULL)) == NULL) {
+		FAILRET("Failed to add user node.\n", -1);
+	}
+	if ((freenas_sysctl_add_timeout_tree(&g_freenas_sysctl_ctx,
+		tmptree, &g_account->user.a_st)) != 0) {
+		FAILRET("Failed to add user timeout node.\n", -1);
+	}
+
 	return (0);
 }
 
 static int
 freenas_sysctl_account_fini(void)
 {
+	free(g_account, M_FREENAS_SYSCTL);
 	return (0);
 }
 
@@ -310,6 +357,10 @@ freenas_sysctl_directoryservice_init(void)
 		FAILRET("Failed to add activedirectory error node.\n", -1);
 	}
 
+	g_directoryservice->activedirectory.ds_st.start = 90;
+	g_directoryservice->activedirectory.ds_st.stop = 90;
+	g_directoryservice->activedirectory.ds_st.restart = 180;
+	g_directoryservice->activedirectory.ds_st.reload = 180;
 
 	/* LDAP node */
 	if ((tmptree = SYSCTL_ADD_NODE(&g_freenas_sysctl_ctx,
@@ -325,6 +376,11 @@ freenas_sysctl_directoryservice_init(void)
 		tmptree, &g_directoryservice->ldap.ds_se)) != 0) {
 		FAILRET("Failed to add ldap error node.\n", -1);
 	}
+
+	g_directoryservice->ldap.ds_st.start = 90;
+	g_directoryservice->ldap.ds_st.stop = 90;
+	g_directoryservice->ldap.ds_st.restart = 180;
+	g_directoryservice->ldap.ds_st.reload = 180;
 
 	/* NT4 node */
 	if ((tmptree = SYSCTL_ADD_NODE(&g_freenas_sysctl_ctx,
