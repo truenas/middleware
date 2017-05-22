@@ -405,6 +405,7 @@ class Middleware(object):
         self.logger_name = logger.Logger('middlewared')
         self.logger = self.logger_name.getLogger()
         self.crash_reporting = logger.CrashReporting()
+        self.__threadpool = ThreadPool(5)  # Init before plugins are loaded
         self.__jobs = JobsQueue(self)
         self.__schemas = {}
         self.__services = {}
@@ -414,7 +415,6 @@ class Middleware(object):
         self.__server_threads = []
         self.__init_services()
         self.__plugins_load()
-        self.__threadpool = ThreadPool(5)
 
     def __init_services(self):
         from middlewared.service import CoreService
