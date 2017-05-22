@@ -1,6 +1,7 @@
 import gevent
 import shlex
 import socket
+import time
 
 from middlewared.schema import accepts, Str
 from middlewared.service import Service
@@ -42,6 +43,7 @@ def devd_loop(middleware):
             devd_listen(middleware)
         except OSError:
             middleware.logger.warn('devd pipe error, retrying...', exc_info=True)
+            time.sleep(1)
 
 
 def devd_listen(middleware):
