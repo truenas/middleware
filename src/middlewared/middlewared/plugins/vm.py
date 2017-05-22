@@ -57,7 +57,6 @@ class VMSupervisor(object):
     def run(self):
         args = [
             'bhyve',
-            '-A',
             '-P',
             '-H',
             '-c', str(self.vm['vcpus']),
