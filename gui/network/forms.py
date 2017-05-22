@@ -27,8 +27,8 @@ from struct import pack
 import logging
 import os
 import re
+import signal
 import socket
-import urllib.request, urllib.error, urllib.parse
 
 from django.core.validators import RegexValidator
 from django.db import transaction
@@ -45,6 +45,7 @@ from freenasUI.freeadmin.sqlite3_ha.base import DBSync
 from freenasUI.middleware.client import client
 from freenasUI.middleware.notifier import notifier
 from freenasUI.network import models
+from freenasUI.network.utils import configure_http_proxy
 from freenasUI.freeadmin.utils import key_order
 from ipaddr import IPAddress, AddressValueError, IPNetwork
 
@@ -638,17 +639,16 @@ class GlobalConfigurationForm(ModelForm):
         notifier().reload(whattoreload)
 
         http_proxy = self.cleaned_data.get('gc_httpproxy')
-        if http_proxy:
-            os.environ['http_proxy'] = http_proxy
-            os.environ['https_proxy'] = http_proxy
-        elif not http_proxy:
-            if 'http_proxy' in os.environ:
-                del os.environ['http_proxy']
-            if 'https_proxy' in os.environ:
-                del os.environ['https_proxy']
-
-        # Reset global opener so ProxyHandler can be recalculated
-        urllib.request.install_opener(None)
+        configure_http_proxy(http_proxy)
+        if self.instance._orig_gc_httpproxy != http_proxy:
+            try:
+                alertd_pidfile = '/var/run/alertd.pid'
+                if os.path.exists(alertd_pidfile):
+                    with open(alertd_pidfile, 'r') as f:
+                        pid = int(f.read())
+                    os.kill(pid, signal.SIGHUP)
+            except (FileNotFoundError, OSError, ValueError):
+                log.warn('Failed to kick alertd', exc_info=True)
 
         return retval
 

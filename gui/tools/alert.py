@@ -89,13 +89,32 @@ if __name__ == '__main__':
         django.setup()
 
         from freenasUI.freeadmin.utils import set_language
+        from freenasUI.network.models import GlobalConfiguration
+        from freenasUI.network.utils import configure_http_proxy
         from freenasUI.system import alert
         set_language()
+
+        """
+        We need a way to "reload" alertd when http proxy is changed in GUI.
+        This should be a temporary solution until we can implement the alerts
+        in middlewared.
+        """
+        def do_reload(signum=None, frame=None):
+            qs = GlobalConfiguration.objects.order_by('-id')
+            if not qs.exists():
+                gc = GlobalConfiguration.objects.create()
+            else:
+                gc = qs[0]
+            configure_http_proxy(gc.gc_httpproxy)
 
         def handler(signum, frame):
             alert.alertPlugins.run()
 
         signal.signal(10, handler)
+        signal.signal(1, do_reload)
+
+        # Make sure to configure proxy on startup as well
+        do_reload()
 
         while True:
             alert.alertPlugins.run()

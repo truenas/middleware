@@ -140,7 +140,8 @@ class GlobalConfiguration(Model):
             'gc_domain',
             'gc_nameserver1',
             'gc_nameserver2',
-            'gc_nameserver3'
+            'gc_nameserver3',
+            'gc_httpproxy',
         ):
             setattr(self, "_orig_%s" % name, self.__dict__.get(name))
 
