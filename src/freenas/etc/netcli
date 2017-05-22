@@ -312,17 +312,6 @@ def configure_interface():
                     return False
                 print(_("Ok"))
                 need_restart = "DHCP"
-                gc = GlobalConfiguration.objects.all()
-                gc = gc[0]
-                gc.gc_ipv4gateway = ''
-
-                print(_("Removing IPv4 default gateway:"), end=' ')
-                try:
-                    gc.save()
-                except:
-                    print(_("Failed"))
-                    return False
-                print(_("Ok"))
                 break
             elif _input.lower().startswith('n'):
                 break
