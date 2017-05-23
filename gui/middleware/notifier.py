@@ -416,7 +416,7 @@ class notifier(metaclass=HookMetaclass):
     def __gpt_unlabeldisk(self, devname):
         """Unlabel the disk"""
         with client as c:
-            c.call('disk.swaps_remove_disk', devname)
+            c.call('disk.swaps_remove_disks', [devname])
         self._system("gpart destroy -F /dev/%s" % devname)
 
         # Wipe out the partition table by doing an additional iterate of create/destroy
@@ -1034,9 +1034,8 @@ class notifier(metaclass=HookMetaclass):
         encrypt = (volume.vol_encrypt >= 1)
 
         with client as c:
-            c.call('disk.swaps_remove_disk', from_disk)
             # to_disk _might_ have swap on, offline it before gpt label
-            c.call('disk.swaps_remove_disk', to_disk)
+            c.call('disk.swaps_remove_disks', [from_disk, to_disk])
 
         # Replace in-place
         if from_disk == to_disk:
@@ -1114,7 +1113,7 @@ class notifier(metaclass=HookMetaclass):
         disk = self.label_to_disk(label)
 
         with client as c:
-            c.call('disk.swaps_remove_disk', disk)
+            c.call('disk.swaps_remove_disks', [disk])
 
         # Replace in-place
         p1 = self._pipeopen('/sbin/zpool offline %s %s' % (volume.vol_name, label))
@@ -1155,7 +1154,7 @@ class notifier(metaclass=HookMetaclass):
                 log.warn("Could not find disk for the ZFS label %s", label)
         else:
             with client as c:
-                c.call('disk.swaps_remove_disk', from_disk)
+                c.call('disk.swaps_remove_disks', [from_disk])
 
         ret = self._system_nolog('/sbin/zpool detach %s %s' % (vol_name, label))
 
@@ -1177,7 +1176,7 @@ class notifier(metaclass=HookMetaclass):
 
         from_disk = self.label_to_disk(label)
         with client as c:
-            c.call('disk.swaps_remove_disk', from_disk)
+            c.call('disk.swaps_remove_disks', [from_disk])
 
         p1 = self._pipeopen('/sbin/zpool remove %s %s' % (volume.vol_name, label))
         stderr = p1.communicate()[1]
@@ -1195,8 +1194,7 @@ class notifier(metaclass=HookMetaclass):
         """Detach all swaps associated with volume"""
         disks = volume.get_disks()
         with client as c:
-            for disk in disks:
-                c.call('disk.swaps_remove_disk', disk)
+            c.call('disk.swaps_remove_disks', [disks])
 
     def __get_mountpath(self, name, mountpoint_root='/mnt'):
         """Determine the mountpoint for a ZFS dataset

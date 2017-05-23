@@ -102,41 +102,46 @@ class DiskService(CRUDService):
         return swap_devices
 
     @private
-    def swaps_remove_disk(self, disk):
+    def swaps_remove_disks(self, disks):
         """
-        Remove a given disk (e.g. da0) from swap.
+        Remove a given disk (e.g. ["da0", "da1"]) from swap.
         it will offline if from swap, remove it from the gmirror (if exists)
         and detach the geli.
         """
         self.middleware.threaded(geom.scan)
-        partgeom = geom.geom_by_name('PART', disk)
-        if not partgeom:
-            return
-        provider = None
-        for p in partgeom.providers:
-            if p.config['rawtype'] == '516e7cb5-6ecf-11d6-8ff8-00022d09712b':
-                provider = p
-                break
-        if not provider:
+        providers = {}
+        for disk in disks:
+            partgeom = geom.geom_by_name('PART', disk)
+            if not partgeom:
+                continue
+            provider = None
+            for p in partgeom.providers:
+                if p.config['rawtype'] == '516e7cb5-6ecf-11d6-8ff8-00022d09712b':
+                    providers[p.id] = p
+                    break
+
+        if not providers:
             return
 
         klass = geom.class_by_name('MIRROR')
         if not klass:
             return
 
-        mirror = None
+        mirrors = set()
         for g in klass.geoms:
             for c in g.consumers:
-                if c.provider.id == provider.id:
-                    mirror = g
-                    break
-        if not mirror:
-            return
+                if c.provider.id in providers:
+                    mirrors.add(g.name)
+                    del providers[c.provider.id]
 
-        run('swapoff', f'/dev/mirror/{mirror.name}.eli')
-        if os.path.exists(f'/dev/mirror/{mirror.name}.eli'):
-            run('geli', 'detach', f'{mirror.name}.eli')
-        run('gmirror', 'destroy', mirror.name)
+        for name in mirrors:
+            run('swapoff', f'/dev/mirror/{name}.eli')
+            if os.path.exists(f'/dev/mirror/{name}.eli'):
+                run('geli', 'detach', f'mirror/{name}.eli')
+            run('gmirror', 'destroy', name)
+
+        for p in providers.values():
+            run('swapoff', f'/dev/{p.name}.eli', check=False)
 
 
 def new_swap_name():
