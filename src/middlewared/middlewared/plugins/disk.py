@@ -51,9 +51,9 @@ class DiskService(CRUDService):
         if klass:
             for g in klass.geoms:
                 # Skip gmirror that is not swap*
-                if not g.name.startswith('swap'):
+                if not g.name.startswith('swap') or g.name.endswith('.sync'):
                     continue
-                mirrors.append(g.name)
+                mirrors.append(f'mirror/{g.name}')
                 for c in g.consumers:
                     # Add all partitions used in swap, removing .eli
                     used_partitions.add(c.provider.name.strip('.eli'))
@@ -83,6 +83,12 @@ class DiskService(CRUDService):
                     self.logger.warn(f'Failed to create gmirror {name}', exc_info=True)
                     continue
                 mirrors.append(f'mirror/{name}')
+
+        for mirror in mirrors:
+            if not os.path.exists(f'/dev/{mirror}.eli'):
+                run('geli', 'onetime', mirror)
+            run('swapon', f'/dev/{mirror}.eli', check=False)
+
         return mirrors
 
     @private
