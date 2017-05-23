@@ -37,6 +37,12 @@ def Popen(*args, **kwargs):
     return subprocess.Popen(*args, **kwargs)
 
 
+def run(*args, **kwargs):
+    kwargs.setdefault('encoding', 'utf8')
+    kwargs.setdefault('check', True)
+    return subprocess.run(args, **kwargs)
+
+
 def filter_list(_list, filters=None, options=None):
 
     opmap = {
