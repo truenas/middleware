@@ -41,6 +41,7 @@ from dojango import forms
 from freenasUI import choices
 from freenasUI.common import humanize_size
 from freenasUI.common.forms import ModelForm, Form
+from freenasUI.common.freenassysctl import freenas_sysctl as _fs
 from freenasUI.common.samba import Samba4
 from freenasUI.common.system import (
     validate_netbios_name,
@@ -90,11 +91,14 @@ class servicesForm(ModelForm):
         elif obj.srv_service == 'domaincontroller':
             if obj.srv_enable is True:
                 if _notifier.started('domaincontroller'):
-                    started = _notifier.restart("domaincontroller")
+                    started = _notifier.restart("domaincontroller",
+                        timeout=_fs().services.domaincontroller.timeout.restart)
                 else:
-                    started = _notifier.start("domaincontroller")
+                    started = _notifier.start("domaincontroller",
+                        timeout=_fs().services.domaincontroller.timeout.start)
             else:
-                started = _notifier.stop("domaincontroller")
+                started = _notifier.stop("domaincontroller",
+                    timeout=_fs().services.domaincontroller.timeout.stop)
 
         else:
             """
@@ -2011,7 +2015,8 @@ class DomainControllerForm(ModelForm):
         if self.__original_changed():
             Samba4().domain_sentinel_file_remove()
 
-        notifier().restart("domaincontroller")
+        notifier().restart("domaincontroller",
+            timeout=_fs().services.domaincontroller.timeout.restart)
 
         if self.__dc_forest_level_changed():
             Samba4().change_forest_level(self.instance.dc_forest_level)
