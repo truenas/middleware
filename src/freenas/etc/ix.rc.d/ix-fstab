@@ -20,7 +20,7 @@ generate_fstab_real()
 generate_fstab_swap()
 {
 	local devname
-	LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/midclt call disk.swaps_configure | LD_LIBRARY_PATH=/usr/local/lib jq .[] | while read -r devname; do
+	LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/midclt call disk.swaps_configure | LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/jq .[] | while read -r devname; do
 		devname=$(eval echo $devname)
 		echo "/dev/${devname}.eli	none	swap	sw	0	0"
 	done;
