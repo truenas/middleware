@@ -1045,11 +1045,6 @@ class AliasForm(ModelForm):
                     _("You have to choose IPv6 netmask as well per alias"),
                 ])
 
-        if ipv6 and ipv4:
-            self._errors['__all__'] = self.error_class([
-                _("You have to choose between IPv4 or IPv6 per alias"),
-            ])
-
         configured_vip = False
         if ipv4vip and hasattr(self, 'parent'):
             iface = self.parent.instance
