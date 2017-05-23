@@ -37,7 +37,7 @@ class DiskService(CRUDService):
         return disk
 
     @private
-    def configure_swaps(self):
+    def swaps_configure(self):
         """
         Configures swap partitions in the system.
         We try to mirror all available swap partitions to avoid a system
@@ -84,6 +84,43 @@ class DiskService(CRUDService):
                     continue
                 mirrors.append(f'mirror/{name}')
         return mirrors
+
+    @private
+    def swaps_remove_disk(self, disk):
+        """
+        Remove a given disk (e.g. da0) from swap.
+        it will offline if from swap, remove it from the gmirror (if exists)
+        and detach the geli.
+        """
+        self.middleware.threaded(geom.scan)
+        partgeom = geom.geom_by_name('PART', disk)
+        if not partgeom:
+            return
+        provider = None
+        for p in partgeom.providers:
+            if p.config['rawtype'] == '516e7cb5-6ecf-11d6-8ff8-00022d09712b':
+                provider = p
+                break
+        if not provider:
+            return
+
+        klass = geom.class_by_name('MIRROR')
+        if not klass:
+            return
+
+        mirror = None
+        for g in klass.geoms:
+            for c in g.consumers:
+                if c.provider.id == provider.id:
+                    mirror = g
+                    break
+        if not mirror:
+            return
+
+        run('swapoff', f'/dev/mirror/{mirror.name}.eli')
+        if os.path.exists(f'/dev/mirror/{mirror.name}.eli'):
+            run('geli', 'detach', f'{mirror.name}.eli')
+        run('gmirror', 'destroy', mirror.name)
 
 
 def new_swap_name():
