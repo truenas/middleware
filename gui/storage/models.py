@@ -159,9 +159,7 @@ class Volume(Model):
         try:
             # Make sure do not compute it twice
             if not hasattr(self, '_status'):
-                status = notifier().get_volume_status(
-                    self.vol_name,
-                    self.vol_fstype)
+                status = notifier().get_volume_status(self.vol_name)
                 if status == 'UNKNOWN' and self.vol_encrypt > 0:
                     return _("LOCKED")
                 else:
@@ -189,7 +187,7 @@ class Volume(Model):
 
         self.__is_decrypted = True
         # If the status is not UNKNOWN means the pool is already imported
-        status = notifier().get_volume_status(self.vol_name, self.vol_fstype)
+        status = notifier().get_volume_status(self.vol_name)
         if status != 'UNKNOWN':
             return self.__is_decrypted
         if self.vol_encrypt > 0:
@@ -352,7 +350,7 @@ class Volume(Model):
         # Ghosts volumes, does not exists anymore but is in database
         ghost = False
         try:
-            status = n.get_volume_status(self.vol_name, self.vol_fstype)
+            status = n.get_volume_status(self.vol_name)
             ghost = status == 'UNKNOWN'
         except:
             ghost = True

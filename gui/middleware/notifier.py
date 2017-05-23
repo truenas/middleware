@@ -126,7 +126,7 @@ from freenasUI.common.warden import (Warden, WardenJail,
                                      WARDEN_STATUS_RUNNING)
 from freenasUI.freeadmin.hook import HookMetaclass
 from freenasUI.middleware import zfs
-from freenasUI.middleware.client import client
+from freenasUI.middleware.client import client, ClientException
 from freenasUI.middleware.encryption import random_wipe
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.multipath import Multipath
@@ -415,10 +415,8 @@ class notifier(metaclass=HookMetaclass):
 
     def __gpt_unlabeldisk(self, devname):
         """Unlabel the disk"""
-        swapdev = self.part_type_from_device('swap', devname)
-        if swapdev != '':
-            self._system("swapoff /dev/%s.eli" % swapdev)
-            self._system("geli detach /dev/%s" % swapdev)
+        with client as c:
+            c.call('disk.swaps_remove_disk', devname)
         self._system("gpart destroy -F /dev/%s" % devname)
 
         # Wipe out the partition table by doing an additional iterate of create/destroy
@@ -968,7 +966,7 @@ class notifier(metaclass=HookMetaclass):
     def destroy_zfs_dataset(self, path, recursive=False):
         retval = None
         if retval is None:
-            mp = self.__get_mountpath(path, 'ZFS')
+            mp = self.__get_mountpath(path)
             if self.contains_jail_root(mp):
                 try:
                     self.delete_plugins(force=True)
@@ -993,7 +991,7 @@ class notifier(metaclass=HookMetaclass):
         return retval
 
     def destroy_zfs_vol(self, name, recursive=False):
-        mp = self.__get_mountpath(name, 'ZFS')
+        mp = self.__get_mountpath(name)
         if self.contains_jail_root(mp):
             self.delete_plugins()
         zfsproc = self._pipeopen("zfs destroy %s'%s'" % (
@@ -1006,7 +1004,7 @@ class notifier(metaclass=HookMetaclass):
     def __destroy_zfs_volume(self, volume):
         """Internal procedure to destroy a ZFS volume identified by volume id"""
         vol_name = str(volume.vol_name)
-        mp = self.__get_mountpath(vol_name, 'ZFS')
+        mp = self.__get_mountpath(vol_name)
         if self.contains_jail_root(mp):
             self.delete_plugins()
         # First, destroy the zpool.
@@ -1016,38 +1014,6 @@ class notifier(metaclass=HookMetaclass):
         # Clear out disks associated with the volume
         for disk in disks:
             self.__gpt_unlabeldisk(devname=disk)
-
-    def __destroy_ufs_volume(self, volume):
-        """Internal procedure to destroy a UFS volume identified by volume id"""
-        u_name = str(volume.vol_name)
-        mp = self.__get_mountpath(u_name, 'UFS')
-        if self.contains_jail_root(mp):
-            self.delete_plugins()
-
-        disks = volume.get_disks()
-        provider = self.get_label_consumer('ufs', u_name)
-        if provider is None:
-            return None
-        geom_type = provider.xpath("../../name")[0].text.lower()
-
-        if geom_type not in ('mirror', 'stripe', 'raid3'):
-            # Grab disk from the group
-            disk = disks[0]
-            self._system("umount -f /dev/ufs/" + u_name)
-            self.__gpt_unlabeldisk(devname=disk)
-        else:
-            g_name = provider.xpath("../name")[0].text
-            self._system("swapoff -a")
-            self._system("umount -f /dev/ufs/" + u_name)
-            self._system("geom %s stop %s" % (geom_type, g_name))
-            # Grab all disks from the group
-            for disk in disks:
-                self._system("geom %s clear %s" % (geom_type, disk))
-                self._system("dd if=/dev/zero of=/dev/%s bs=1m count=32" % (disk,))
-                self._system(
-                    "dd if=/dev/zero of=/dev/%s bs=1m oseek=`diskinfo %s "
-                    "| awk '{print int($3 / (1024*1024)) - 32;}'`" % (disk, disk)
-                )
 
     def _init_volume(self, volume, *args, **kwargs):
         """Initialize a volume designated by volume_id"""
@@ -1065,18 +1031,12 @@ class notifier(metaclass=HookMetaclass):
 
         # TODO: Test on real hardware to see if ashift would persist across replace
         from_disk = self.label_to_disk(from_label)
-        from_swap = self.part_type_from_device('swap', from_disk)
         encrypt = (volume.vol_encrypt >= 1)
 
-        if from_swap != '':
-            self._system('/sbin/swapoff /dev/%s.eli' % (from_swap, ))
-            self._system('/sbin/geli detach /dev/%s' % (from_swap, ))
-
-        # to_disk _might_ have swap on, offline it before gpt label
-        to_swap = self.part_type_from_device('swap', to_disk)
-        if to_swap != '':
-            self._system('/sbin/swapoff /dev/%s.eli' % (to_swap, ))
-            self._system('/sbin/geli detach /dev/%s' % (to_swap, ))
+        with client as c:
+            c.call('disk.swaps_remove_disk', from_disk)
+            # to_disk _might_ have swap on, offline it before gpt label
+            c.call('disk.swaps_remove_disk', to_disk)
 
         # Replace in-place
         if from_disk == to_disk:
@@ -1084,8 +1044,6 @@ class notifier(metaclass=HookMetaclass):
 
         self.__gpt_labeldisk(type="freebsd-zfs", devname=to_disk, swapsize=swapsize)
 
-        # There might be a swap after __gpt_labeldisk
-        to_swap = self.part_type_from_device('swap', to_disk)
         # It has to be a freebsd-zfs partition there
         to_label = self.part_type_from_device('zfs', to_disk)
 
@@ -1129,20 +1087,21 @@ class notifier(metaclass=HookMetaclass):
                 self._system('/sbin/zpool detach %s %s' % (volume.vol_name, from_label))
             # TODO: geli detach -l
         else:
-            if from_swap != '':
-                self._system('/sbin/geli onetime /dev/%s' % (from_swap))
-                self._system('/sbin/swapon /dev/%s.eli' % (from_swap))
             error = ", ".join(stderr.split('\n'))
-            if to_swap != '':
-                self._system('/sbin/swapoff /dev/%s.eli' % (to_swap, ))
-                self._system('/sbin/geli detach /dev/%s' % (to_swap, ))
             if encrypt:
                 self._system('/sbin/geli detach %s' % (devname, ))
+            try:
+                with client as c:
+                    c.call('disk.swaps_configure')
+            except Exception as e:
+                log.warn('Failed to configure swaps', exc_info=True)
             raise MiddlewareError('Disk replacement failed: "%s"' % error)
 
-        if to_swap:
-            self._system('/sbin/geli onetime /dev/%s' % (to_swap))
-            self._system('/sbin/swapon /dev/%s.eli' % (to_swap))
+        try:
+            with client as c:
+                c.call('disk.swaps_configure')
+        except ClientException:
+            log.warn('Failed to reconfigure swaps', exc_info=True)
 
         return ret
 
@@ -1153,11 +1112,9 @@ class notifier(metaclass=HookMetaclass):
 
         # TODO: Test on real hardware to see if ashift would persist across replace
         disk = self.label_to_disk(label)
-        swap = self.part_type_from_device('swap', disk)
 
-        if swap != '':
-            self._system('/sbin/swapoff /dev/%s.eli' % (swap, ))
-            self._system('/sbin/geli detach /dev/%s' % (swap, ))
+        with client as c:
+            c.call('disk.swaps_remove_disk', disk)
 
         # Replace in-place
         p1 = self._pipeopen('/sbin/zpool offline %s %s' % (volume.vol_name, label))
@@ -1197,13 +1154,8 @@ class notifier(metaclass=HookMetaclass):
             if not re.search(r'^[0-9]+$', label):
                 log.warn("Could not find disk for the ZFS label %s", label)
         else:
-            from_swap = self.part_type_from_device('swap', from_disk)
-
-            # Remove the swap partition for another time to be sure.
-            # TODO: swap partition should be trashed instead.
-            if from_swap != '':
-                self._system('/sbin/swapoff /dev/%s.eli' % (from_swap,))
-                self._system('/sbin/geli detach /dev/%s' % (from_swap,))
+            with client as c:
+                c.call('disk.swaps_remove_disk', from_disk)
 
         ret = self._system_nolog('/sbin/zpool detach %s %s' % (vol_name, label))
 
@@ -1224,11 +1176,8 @@ class notifier(metaclass=HookMetaclass):
         assert volume.vol_fstype == 'ZFS'
 
         from_disk = self.label_to_disk(label)
-        from_swap = self.part_type_from_device('swap', from_disk)
-
-        if from_swap != '':
-            self._system('/sbin/swapoff /dev/%s.eli' % (from_swap,))
-            self._system('/sbin/geli detach /dev/%s' % (from_swap,))
+        with client as c:
+            c.call('disk.swaps_remove_disk', from_disk)
 
         p1 = self._pipeopen('/sbin/zpool remove %s %s' % (volume.vol_name, label))
         stderr = p1.communicate()[1]
@@ -1245,16 +1194,14 @@ class notifier(metaclass=HookMetaclass):
     def detach_volume_swaps(self, volume):
         """Detach all swaps associated with volume"""
         disks = volume.get_disks()
-        for disk in disks:
-            swapdev = self.part_type_from_device('swap', disk)
-            if swapdev != '':
-                self._system("swapoff /dev/%s.eli" % swapdev)
-                self._system("geli detach /dev/%s" % swapdev)
+        with client as c:
+            for disk in disks:
+                c.call('disk.swaps_remove_disk', disk)
 
-    def __get_mountpath(self, name, fstype, mountpoint_root='/mnt'):
-        """Determine the mountpoint for a volume or ZFS dataset
+    def __get_mountpath(self, name, mountpoint_root='/mnt'):
+        """Determine the mountpoint for a ZFS dataset
 
-        It tries to divine the location of the volume or dataset from the
+        It tries to divine the location of the dataset from the
         relevant command, and if all else fails, falls back to a less
         elegant method of representing the mountpoint path.
 
@@ -1266,8 +1213,6 @@ class notifier(metaclass=HookMetaclass):
         Required Parameters:
             name: textual name for the mountable vdev or volume, e.g. 'tank',
                   'stripe', 'tank/dataset', etc.
-            fstype: filesystem type for the vdev or volume, e.g. 'UFS', 'ZFS',
-                    etc.
 
         Optional Parameters:
             mountpoint_root: the root directory where all of the datasets and
@@ -1276,18 +1221,10 @@ class notifier(metaclass=HookMetaclass):
         Returns:
             the absolute path for the volume on the system.
         """
-        if fstype == 'ZFS':
-            p1 = self._pipeopen("zfs list -H -o mountpoint '%s'" % (name, ))
-            stdout = p1.communicate()[0]
-            if not p1.returncode:
-                return stdout.strip()
-        elif fstype == 'UFS':
-            p1 = self._pipeopen('mount -p')
-            stdout = p1.communicate()[0]
-            if not p1.returncode:
-                flines = [x for x in stdout.splitlines() if x and x.split()[0] == '/dev/ufs/' + name]
-                if flines:
-                    return flines[0].split()[1]
+        p1 = self._pipeopen("zfs list -H -o mountpoint '%s'" % (name, ))
+        stdout = p1.communicate()[0]
+        if not p1.returncode:
+            return stdout.strip()
 
         return os.path.join(mountpoint_root, name)
 
@@ -1327,15 +1264,9 @@ class notifier(metaclass=HookMetaclass):
         # volume_detach compatibility.
         vol_name, vol_fstype = volume.vol_name, volume.vol_fstype
 
-        vol_mountpath = self.__get_mountpath(vol_name, vol_fstype)
+        vol_mountpath = self.__get_mountpath(vol_name)
 
-        if vol_fstype == 'ZFS':
-            self.__destroy_zfs_volume(volume)
-        elif vol_fstype == 'UFS':
-            self.__destroy_ufs_volume(volume)
-        else:
-            raise ValueError("destroy isn't implemented for the %s filesystem"
-                             % (vol_fstype, ))
+        assert vol_fstype == 'ZFS'
 
         self.reload('disk')
         self._encvolume_detach(volume, destroy=True)
@@ -2742,34 +2673,12 @@ class notifier(metaclass=HookMetaclass):
         for p in Plugins.objects.all():
             p.delete(force=force)
 
-    def get_volume_status(self, name, fs):
+    def get_volume_status(self, name):
         status = 'UNKNOWN'
-        if fs == 'ZFS':
-            p1 = self._pipeopen('zpool list -H -o health %s' % str(name), logger=None)
-            if p1.wait() == 0:
-                status = p1.communicate()[0].strip('\n')
-        elif fs == 'UFS':
-
-            provider = self.get_label_consumer('ufs', name)
-            if provider is None:
-                return 'UNKNOWN'
-            gtype = provider.xpath("../../name")[0].text
-
-            if gtype in ('MIRROR', 'STRIPE', 'RAID3'):
-
-                search = provider.xpath("../config/State")
-                if len(search) > 0:
-                    status = search[0].text
-
-            else:
-                p1 = self._pipeopen('mount|grep "/dev/ufs/%s"' % (name, ))
-                p1.communicate()
-                if p1.returncode == 0:
-                    status = 'HEALTHY'
-                else:
-                    status = 'DEGRADED'
-
-        if status in ('UP', 'COMPLETE', 'ONLINE'):
+        p1 = self._pipeopen('zpool list -H -o health %s' % str(name), logger=None)
+        if p1.wait() == 0:
+            status = p1.communicate()[0].strip('\n')
+        if status == 'ONLINE':
             status = 'HEALTHY'
         return status
 
@@ -3030,18 +2939,13 @@ class notifier(metaclass=HookMetaclass):
 
         vol_name = volume.vol_name
         vol_fstype = volume.vol_fstype
+        assert vol_fstype == 'ZFS'
 
         succeeded = False
-        provider = None
 
-        vol_mountpath = self.__get_mountpath(vol_name, vol_fstype)
-        if vol_fstype == 'ZFS':
-            cmd = 'zpool export %s' % (vol_name)
-            cmdf = 'zpool export -f %s' % (vol_name)
-        else:
-            cmd = 'umount %s' % (vol_mountpath)
-            cmdf = 'umount -f %s' % (vol_mountpath)
-            provider = self.get_label_consumer('ufs', vol_name)
+        vol_mountpath = self.__get_mountpath(vol_name)
+        cmd = 'zpool export %s' % (vol_name)
+        cmdf = 'zpool export -f %s' % (vol_name)
 
         self.stop("syslogd")
 
@@ -3052,12 +2956,6 @@ class notifier(metaclass=HookMetaclass):
         else:
             p1 = self._pipeopen(cmdf)
             stdout, stderr = p1.communicate()
-
-        if vol_fstype != 'ZFS':
-            geom_type = provider.xpath("../../name")[0].text.lower()
-            if geom_type in ('mirror', 'stripe', 'raid3'):
-                g_name = provider.xpath("../name")[0].text
-                self._system("geom %s stop %s" % (geom_type, g_name))
 
         self.start("syslogd")
 
