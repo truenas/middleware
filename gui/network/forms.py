@@ -345,6 +345,11 @@ class InterfacesForm(ModelForm):
                     _("You have to choose IPv6 netmask as well"),
                 ])
 
+        if ipv6 and ipv4:
+            self._errors['__all__'] = self.error_class([
+                _("You have to choose between IPv4 or IPv6"),
+            ])
+
         vip = cdata.get("int_vip")
         dhcp = cdata.get("int_dhcp")
         if not dhcp:
