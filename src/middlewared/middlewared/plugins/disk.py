@@ -46,14 +46,14 @@ class DiskService(CRUDService):
         self.middleware.threaded(geom.scan)
 
         used_partitions = set()
-        mirrors = []
+        swap_devices = []
         klass = geom.class_by_name('MIRROR')
         if klass:
             for g in klass.geoms:
                 # Skip gmirror that is not swap*
                 if not g.name.startswith('swap') or g.name.endswith('.sync'):
                     continue
-                mirrors.append(f'mirror/{g.name}')
+                swap_devices.append(f'mirror/{g.name}')
                 for c in g.consumers:
                     # Add all partitions used in swap, removing .eli
                     used_partitions.add(c.provider.name.strip('.eli'))
@@ -72,24 +72,34 @@ class DiskService(CRUDService):
                 if p.config['rawtype'] == '516e7cb5-6ecf-11d6-8ff8-00022d09712b':
                     swap_partitions_by_size[p.mediasize].append(p.name)
 
+        unused_partitions = []
         for size, partitions in swap_partitions_by_size.items():
             for i in range(int(len(partitions) / 2)):
-                part_a = partitions[i * 2]
-                part_b = partitions[i * 2 + 1]
+                if len(swap_devices) > MIRROR_MAX:
+                    break
+                part_a, part_b = partitions[0:2]
+                partitions = partitions[2:]
                 try:
                     name = new_swap_name()
                     run('gmirror', 'create', '-b', 'prefer', name, part_a, part_b)
                 except Exception:
                     self.logger.warn(f'Failed to create gmirror {name}', exc_info=True)
                     continue
-                mirrors.append(f'mirror/{name}')
+                swap_devices.append(f'mirror/{name}')
+                # Add remaining partitions to unused list
+                unused_partitions += partitions
 
-        for mirror in mirrors:
-            if not os.path.exists(f'/dev/{mirror}.eli'):
-                run('geli', 'onetime', mirror)
-            run('swapon', f'/dev/{mirror}.eli', check=False)
+        # If we could not make even a single swap mirror, add the first unused
+        # partition as a swap device
+        if not swap_devices and unused_partitions:
+            swap_devices.append(unused_partitions[0])
 
-        return mirrors
+        for name in swap_devices:
+            if not os.path.exists(f'/dev/{name}.eli'):
+                run('geli', 'onetime', name)
+            run('swapon', f'/dev/{name}.eli', check=False)
+
+        return swap_devices
 
     @private
     def swaps_remove_disk(self, disk):
