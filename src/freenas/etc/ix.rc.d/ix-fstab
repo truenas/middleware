@@ -15,57 +15,6 @@
 generate_fstab_real()
 {
 	echo "fdescfs	/dev/fd	fdescfs rw	0 0"
-	local IFS="|"
-	local fstype volumename newmp mountpoint mpoptions device fs
-
-	${FREENAS_SQLITE_CMD} ${RO_FREENAS_CONFIG} "
-		SELECT
-			v.vol_fstype,
-			v.vol_name,
-			mp.mp_path,
-			mp.mp_options
-
-		FROM
-			storage_volume as v
-
-		LEFT OUTER JOIN
-			storage_mountpoint as mp
-		ON
-			v.id = mp.mp_volume_id
-
-		WHERE
-			v.vol_fstype in ('UFS', 'NTFS', 'MSDOSFS', 'EXT2FS')
-	" | \
-	while read fstype volumename newmp mpoptions; do
-		passno=2
-		case "${fstype}" in
-			UFS) device="/dev/ufs/${volumename}"; fs="ufs"; ;;
-			NTFS) device="/dev/ntfs/${volumename}"; fs="ntfs"; passno=0 ;;
-			EXT2FS) device="/dev/ext2fs/${volumename}"; fs="ext2fs"; passno=0 ;;
-			MSDOSFS) vname=$(echo ${volumename}|tr '[:lower:]' '[:upper:]')
-				device="/dev/msdosfs/${vname}"; fs="msdosfs" ;;
-		esac
-
-		if [ -c "${device}" ]; then
-			if [ -z "${newmp}" ]; then
-				mountpoint=/mnt/${volumename}
-			else
-				mountpoint=${newmp}
-			fi
-
-			mkdir -p ${mountpoint}
-
-			if [ "${mountpoint#/mnt}" = "${mountpoint}" ]; then
-				echo "${device}	${mountpoint}	${fs}	${mpoptions}	2	${passno}"
-			else
-				if [ "${mpoptions%%late*}" = "${mpoptions}" ]; then
-					echo "${device}	${mountpoint}	${fs}	${mpoptions},late	2	${passno}"
-				else
-					echo "${device}	${mountpoint}	${fs}	${mpoptions%%,late*}${mpoptions##*,late},late	2	${passno}"
-				fi
-			fi
-		fi
-	done
 }
 
 create_mirrored_swap()
