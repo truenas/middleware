@@ -5,6 +5,12 @@ from middlewared.client.utils import Struct
 import re
 import sys
 
+sys.path.extend([
+    '/usr/local/www',
+    '/usr/local/www/freenasUI'
+])
+
+from freenasUI.common.freenassysctl import freenas_sysctl as fs
 
 class KerberosConfigBinding(object):
     def __init__(self, name, value):
@@ -462,11 +468,13 @@ def main():
     ad = ldap = None
     ldap_objects = client.call('datastore.query', 'directoryservice.LDAP')
     if ldap_objects and ldap_objects[0]['ldap_enable']:
-        ldap = Struct(client.call('notifier.directoryservice', 'LDAP'))
+        ldap = Struct(client.call('notifier.directoryservice', 'LDAP',
+            timeout=fs().directoryservice.kerberos.timeout.start))
 
     ad_objects = client.call('datastore.query', 'directoryservice.ActiveDirectory')
     if ad_objects and ad_objects[0]['ad_enable']:
-        ad = Struct(client.call('notifier.directoryservice', 'AD'))
+        ad = Struct(client.call('notifier.directoryservice', 'AD',
+            timeout=fs().directoryservice.kerberos.timeout.start))
 
     for kr in realms:
         kr = Struct(kr)
