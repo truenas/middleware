@@ -17,18 +17,10 @@ generate_fstab_real()
 	echo "fdescfs	/dev/fd	fdescfs rw	0 0"
 }
 
-create_mirrored_swap()
-{
-	disks=$(LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/midclt call notifier.get_boot_pool_disks)
-	swapparts=$(for _disk in $disks; do echo ${_disk}p3; done)
-	gmirror label -b prefer swap ${swapparts}
-	echo "/dev/mirror/swap.eli              none                    swap            sw              0       0" > /data/fstab.swap
-}
-
 generate_fstab_swap()
 {
 	local devname
-	LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/midclt call disk.swaps_configure | jq .[] | while read -r devname; do
+	LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/midclt call disk.swaps_configure | LD_LIBRARY_PATH=/usr/local/lib jq .[] | while read -r devname; do
 		devname=$(eval echo $devname)
 		echo "/dev/${devname}.eli	none	swap	sw	0	0"
 	done;
