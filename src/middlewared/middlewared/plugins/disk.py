@@ -1,9 +1,12 @@
+from collections import defaultdict
 import os
 import re
 import sys
 import sysctl
 
+from bsd import geom
 from middlewared.service import filterable, private, CRUDService
+from middlewared.utils import run
 
 # FIXME: temporary import of SmartAlert until alert is implemented
 # in middlewared
@@ -11,6 +14,7 @@ if '/usr/local/www' not in sys.path:
     sys.path.insert(0, '/usr/local/www')
 from freenasUI.services.utils import SmartAlert
 
+MIRROR_MAX = 5
 RE_ISDISK = re.compile(r'^(da|ada|vtbd|mfid|nvd)[0-9]+$')
 
 
@@ -31,6 +35,68 @@ class DiskService(CRUDService):
     def disk_extend(self, disk):
         disk.pop('enabled', None)
         return disk
+
+    @private
+    def configure_swaps(self):
+        """
+        Configures swap partitions in the system.
+        We try to mirror all available swap partitions to avoid a system
+        crash in case one of them dies.
+        """
+        self.middleware.threaded(geom.scan)
+
+        used_partitions = set()
+        klass = geom.class_by_name('MIRROR')
+        if klass:
+            for g in klass.geoms:
+                # Skip gmirror that is not swap*
+                if not g.name.startswith('swap'):
+                    continue
+                for c in g.consumers:
+                    # Add all partitions used in swap, removing .eli
+                    used_partitions.add(c.provider.name.strip('.eli'))
+
+        klass = geom.class_by_name('PART')
+        if not klass:
+            return
+
+        # Get all partitions of swap type, indexed by size
+        swap_partitions_by_size = defaultdict(list)
+        for g in klass.geoms:
+            for p in g.providers:
+                if p.name in used_partitions:
+                    continue
+                # if swap partition
+                if p.config['rawtype'] == '516e7cb5-6ecf-11d6-8ff8-00022d09712b':
+                    swap_partitions_by_size[p.mediasize].append(p.name)
+
+        mirrors = []
+        for size, partitions in swap_partitions_by_size.items():
+            for i in range(int(len(partitions) / 2)):
+                part_a = partitions[i * 2]
+                part_b = partitions[i * 2 + 1]
+                try:
+                    name = new_swap_name()
+                    run('gmirror', 'create', '-b', 'prefer', name, part_a, part_b)
+                except Exception:
+                    self.logger.warn(f'Failed to create gmirror {name}', exc_info=True)
+                    continue
+                mirrors.append(f'mirror/{name}')
+        return mirrors
+
+
+def new_swap_name():
+    """
+    Get a new name for a swap mirror
+
+    Returns:
+        str: name of the swap mirror
+    """
+    for i in range(MIRROR_MAX):
+        name = f'swap{i}'
+        if not os.path.exists(f'/dev/mirror/{name}'):
+            return name
+    raise RuntimeError('All mirror names are taken')
 
 
 def _event_devfs(middleware, event_type, args):
