@@ -116,6 +116,11 @@ static struct {
 		struct service_timeout ds_st;
 		struct service_error ds_se;
 	} nis;
+
+	struct kerberos {
+		struct service_timeout ds_st;
+		struct service_error ds_se;
+	} kerberos;
 	
 } *g_directoryservice;
 
@@ -326,6 +331,11 @@ freenas_sysctl_directoryservice_init(void)
 		malloc(DSSTRSIZE, M_FREENAS_SYSCTL, M_ZERO | M_WAITOK);
 	g_directoryservice->ldap.ds_se.last_error.size = DSSTRSIZE;
 
+	/* Kerberos memory allocations */
+	g_directoryservice->kerberos.ds_se.last_error.value = \
+		malloc(DSSTRSIZE, M_FREENAS_SYSCTL, M_ZERO | M_WAITOK);
+	g_directoryservice->kerberos.ds_se.last_error.size = DSSTRSIZE;
+
 
 	/* Directory Service node */
 	if ((dstree = SYSCTL_ADD_NODE(&g_freenas_sysctl_ctx,
@@ -404,12 +414,29 @@ freenas_sysctl_directoryservice_init(void)
 		FAILRET("Failed to add nis timeout node.\n", -1);
 	}
 
+	/* Kerberos node */
+	if ((tmptree = SYSCTL_ADD_NODE(&g_freenas_sysctl_ctx,
+		SYSCTL_CHILDREN(dstree), OID_AUTO,
+		"kerberos", CTLFLAG_RD, NULL, NULL)) == NULL) {
+		FAILRET("Failed to add kerberos node.\n", -1);
+	}
+	if ((freenas_sysctl_add_timeout_tree(&g_freenas_sysctl_ctx,
+		tmptree, &g_directoryservice->kerberos.ds_st)) != 0) {
+		FAILRET("Failed to add kerberos timeout node.\n", -1);
+	}
+	if ((freenas_sysctl_add_error_tree(&g_freenas_sysctl_ctx,
+		tmptree, &g_directoryservice->kerberos.ds_se)) != 0) {
+		FAILRET("Failed to add kerberos error node.\n", -1);
+	}
+
 	return (0);
 }
 
 static int
 freenas_sysctl_directoryservice_fini(void)
 {
+	free(g_directoryservice->kerberos.ds_se.last_error.value,
+		M_FREENAS_SYSCTL);
 	free(g_directoryservice->ldap.ds_se.last_error.value,
 		M_FREENAS_SYSCTL);
 	free(g_directoryservice->activedirectory.ds_se.last_error.value,
