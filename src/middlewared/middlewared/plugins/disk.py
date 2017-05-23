@@ -46,12 +46,14 @@ class DiskService(CRUDService):
         self.middleware.threaded(geom.scan)
 
         used_partitions = set()
+        mirrors = []
         klass = geom.class_by_name('MIRROR')
         if klass:
             for g in klass.geoms:
                 # Skip gmirror that is not swap*
                 if not g.name.startswith('swap'):
                     continue
+                mirrors.append(g.name)
                 for c in g.consumers:
                     # Add all partitions used in swap, removing .eli
                     used_partitions.add(c.provider.name.strip('.eli'))
@@ -70,7 +72,6 @@ class DiskService(CRUDService):
                 if p.config['rawtype'] == '516e7cb5-6ecf-11d6-8ff8-00022d09712b':
                     swap_partitions_by_size[p.mediasize].append(p.name)
 
-        mirrors = []
         for size, partitions in swap_partitions_by_size.items():
             for i in range(int(len(partitions) / 2)):
                 part_a = partitions[i * 2]
