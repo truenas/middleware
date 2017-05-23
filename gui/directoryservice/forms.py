@@ -580,24 +580,23 @@ class ActiveDirectoryForm(ModelForm):
                     binddn=binddn,
                     bindpw=bindpw
                 )
-            except LDAPError as e:
-                # LDAPError is dumb, it returns a list with one element for goodness knows what reason
-                e = e[0]
-                error = []
-                desc = e.get('desc')
-                info = e.get('info')
-                if desc:
-                    error.append(desc)
-                if info:
-                    error.append(info)
 
-                if error:
+            except LDAPError as e:
+                log.debug("LDAPError: type = %s", type(e))
+
+                error = [] 
+                try:
+                    error.append(e.args[0]['info'])
+                    error.append(e.args[0]['desc'])
                     error = ', '.join(error)
-                else:
+
+                except:
                     error = str(e)
 
                 raise forms.ValidationError("{0}".format(error))
+
             except Exception as e:
+                log.debug("Exception: type = %s", type(e))
                 raise forms.ValidationError('{0}.'.format(str(e)))
 
             args['binddn'] = binddn
@@ -943,23 +942,21 @@ class LDAPForm(ModelForm):
                 ssl=ssl
             )
         except LDAPError as e:
-            # LDAPError is dumb, it returns a list with one element for goodness knows what reason
-            e = e[0]
-            error = []
-            desc = e.get('desc')
-            info = e.get('info')
-            if desc:
-                error.append(desc)
-            if info:
-                error.append(info)
+            log.debug("LDAPError: type = %s", type(e))
 
-            if error:
+            error = [] 
+            try:
+                error.append(e.args[0]['info'])
+                error.append(e.args[0]['desc'])
                 error = ', '.join(error)
-            else:
+
+            except:
                 error = str(e)
 
             raise forms.ValidationError("{0}".format(error))
+
         except Exception as e:
+            log.debug("LDAPError: type = %s", type(e))
             raise forms.ValidationError("{0}".format(str(e)))
 
         return cdata
