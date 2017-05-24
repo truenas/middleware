@@ -8,14 +8,14 @@ from gevent.socket import wait_read
 from middlewared.schema import accepts, Str
 from middlewared.service import Service
 
-from bsd import devinfo
+from bsd import devinfo, geom
 
 DEVD_SOCKETFILE = '/var/run/devd.seqpacket.pipe'
 
 
 class DeviceService(Service):
 
-    @accepts(Str('type', enum=['SERIAL']))
+    @accepts(Str('type', enum=['SERIAL', 'DISK']))
     def get_info(self, _type):
         """
         Get info for certain device types.
@@ -39,6 +39,23 @@ class DeviceService(Service):
                     'size': dev.size
                 })
         return ports
+
+    def _get_disk(self):
+        self.middleware.threaded(geom.scan)
+        disks = {}
+        klass = geom.class_by_name('DISK')
+        if not klass:
+            return disks
+        for g in klass.geoms:
+            disk = {
+                'name': g.name,
+                'mediasize': g.provider.mediasize,
+                'sectorsize': g.provider.sectorsize,
+                'stripesize': g.provider.stripesize,
+            }
+            disk.update(g.provider.config)
+            disks[g.name] = disk
+        return disks
 
 
 def devd_loop(middleware):
