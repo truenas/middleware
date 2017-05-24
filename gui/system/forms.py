@@ -286,7 +286,6 @@ class BootEnvPoolAttachForm(Form):
 
         rv = notifier().bootenv_attach_disk(self.label, devname)
         if rv:
-            notifier().sync_disks()
             return True
         else:
             return False
@@ -338,7 +337,6 @@ class BootEnvPoolReplaceForm(Form):
 
         rv = notifier().bootenv_replace_disk(self.label, devname)
         if rv == 0:
-            notifier().sync_disks()
             return True
         else:
             return False

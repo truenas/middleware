@@ -5,6 +5,7 @@ import sys
 import sysctl
 
 from bsd import geom
+from middlewared.schema import accepts
 from middlewared.service import filterable, private, CRUDService
 from middlewared.utils import run
 
@@ -67,7 +68,7 @@ class DiskService(CRUDService):
             qs = self.middleware.call('datastore.query', 'storage.disk', [('disk_name', '=', name)])
             for i in qs:
                 i['disk_enabled'] = False
-                self.middleware.call('datastore.update', 'storage.disk', i['id'], i)
+                self.middleware.call('datastore.update', 'storage.disk', i['disk_identifier'], i)
             disk = {'disk_identifier': ident}
         disk.update({'disk_name': name, 'disk_enabled': True})
 
@@ -84,13 +85,117 @@ class DiskService(CRUDService):
         if reg:
             disk['disk_subsystem'] = reg.group(1)
             disk['disk_number'] = int(reg.group(2))
-        if disk.get('id'):
-            self.middleware.call('datastore.update', 'storage.disk', disk['id'], disk)
+        if disk.get('disk_identifier'):
+            self.middleware.call('datastore.update', 'storage.disk', disk['disk_identifier'], disk)
         else:
-            disk['id'] = self.middleware.call('datastore.insert', 'storage.disk', disk)
+            disk['disk_identifier'] = self.middleware.call('datastore.insert', 'storage.disk', disk)
 
         # FIXME: use a truenas middleware plugin
-        self.middleware.call('notifier.sync_disk_extra', disk['id'], False)
+        self.middleware.call('notifier.sync_disk_extra', disk['disk_identifier'], False)
+
+    @private
+    @accepts()
+    def sync_all(self):
+        """
+        Synchronyze all disks with the cache in database.
+        """
+        # Skip sync disks on backup node
+        if (
+            not self.middleware.call('system.is_freenas') and
+            self.middleware.call('notifier.failover_licensed') and
+            self.middleware.call('notifier.failover_status') == 'BACKUP'
+        ):
+            return
+
+        disks = list(self.middleware.call('device.get_info', 'DISK').keys())
+
+        in_disks = {}
+        serials = []
+        self.middleware.threaded(geom.scan)
+        for disk in self.middleware.call('datastore.query', 'storage.disk', [], {'order_by': ['-disk_enabled']}):
+
+            disk_enabled_old = disk['disk_enabled']
+            name = self.middleware.call('notifier.identifier_to_device', disk['disk_identifier'])
+            if not name or name in in_disks:
+                # If we cant translate the indentifier to a device, give up
+                # If name has already been seen once then we are probably
+                # dealing with with multipath here
+                self.middleware.call('datastore.delete', 'storage.disk', disk['disk_identifier'])
+                continue
+            else:
+                disk['disk_enabled'] = True
+                disk['disk_name'] = name
+
+            reg = RE_DSKNAME.search(name)
+            if reg:
+                disk['disk_subsystem'] = reg.group(1)
+                disk['disk_number'] = int(reg.group(2))
+            serial = ''
+            g = geom.geom_by_name('DISK', name)
+            if g:
+                if g.provider.config['ident']:
+                    serial = disk['disk_serial'] = g.provider.config['ident']
+                serial += g.provider.config.get('lunid') or ''
+                if g.provider.mediasize:
+                    disk['disk_size'] = g.provider.mediasize
+            if not disk.get('disk_serial'):
+                disk['disk_serial'] = self.middleware.call('notifier.serial_from_device', name) or ''
+            if not disk['disk_serial']:
+                serial = disk['disk_serial'] = self.middleware.call('notifier.serial_from_device', name) or ''
+
+            if serial:
+                serials.append(serial)
+
+            if name not in disks:
+                disk['disk_enabled'] = False
+                if disk_enabled_old:
+                    self.middleware.call('datastore.update', 'storage.disk', disk['disk_identifier'], disk)
+                else:
+                    # Duplicated disk entries in database
+                    self.middleware.call('datastore.delete', 'storage.disk', disk['disk_identifier'])
+            else:
+                self.middleware.call('datastore.update', 'storage.disk', disk['disk_identifier'], disk)
+
+            # FIXME: use a truenas middleware plugin
+            self.middleware.call('notifier.sync_disk_extra', disk['disk_identifier'], False)
+            in_disks[name] = disk
+
+        for name in disks:
+            if name not in in_disks:
+                disk_identifier = self.middleware.call('notifier.device_to_identifier', name)
+                qs = self.middleware.call('datastore.query', 'storage.disk', [('disk_identifier', '=', disk_identifier)])
+                if qs:
+                    disk = qs[0]
+                else:
+                    disk = {'disk_identifier': disk_identifier}
+                disk['disk_name'] = name
+                serial = ''
+                g = geom.geom_by_name('DISK', name)
+                if g:
+                    if g.provider.config['ident']:
+                        serial = disk['disk_serial'] = g.provider.config['ident']
+                    serial += g.provider.config.get('lunid') or ''
+                    if g.provider.mediasize:
+                        disk['disk_size'] = g.provider.mediasize
+                if not disk.get('disk_serial'):
+                    serial = disk['disk_serial'] = self.middleware.call('notifier.serial_from_device', name) or ''
+                if serial:
+                    if serial in serials:
+                        # Probably dealing with multipath here, do not add another
+                        continue
+                    else:
+                        serials.append(serial)
+                reg = RE_DSKNAME.search(name)
+                if reg:
+                    disk['disk_subsystem'] = reg.group(1)
+                    disk['disk_number'] = int(reg.group(2))
+
+                if disk.get('disk_identifier'):
+                    self.middleware.call('datastore.update', 'storage.disk', disk['disk_identifier'], disk)
+                else:
+                    disk['disk_identifier'] = self.middleware.call('datastore.insert', 'storage.disk', disk)
+                # FIXME: use a truenas middleware plugin
+                self.middleware.call('notifier.sync_disk_extra', disk['disk_identifier'], True)
 
     @private
     def swaps_configure(self):
@@ -258,7 +363,7 @@ def _event_devfs(middleware, event_type, args):
         # TODO: hack so every disk is not synced independently during boot
         # This is a performance issue
         if os.path.exists('/tmp/.sync_disk_done'):
-            middleware.call('notifier.sync_disks')
+            middleware.call('disk.sync_all')
             middleware.call('notifier.multipath_sync')
             try:
                 with SmartAlert() as sa:
