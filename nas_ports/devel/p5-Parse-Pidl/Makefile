@@ -34,4 +34,3 @@ post-extract:
 
 # Ugly hack
 WRKSRC=			/usr/samba_src/pidl
-DISTNAME=		${SAMBA4_BASENAME}-4-5-stable
