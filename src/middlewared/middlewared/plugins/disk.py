@@ -245,7 +245,7 @@ def _event_devfs(middleware, event_type, args):
         # TODO: hack so every disk is not synced independently during boot
         # This is a performance issue
         if os.path.exists('/tmp/.sync_disk_done'):
-            middleware.call('notifier.sync_disk', data['cdev'])
+            middleware.call('disk.sync', data['cdev'])
             try:
                 with SmartAlert() as sa:
                     sa.device_delete(data['cdev'])
