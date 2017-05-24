@@ -30,10 +30,13 @@ class VMManager(object):
         supervisor = self._vm.get(id)
         if not supervisor:
             return False
-        return supervisor.stop()
+
+        err = supervisor.stop()
+        return err
 
     def status(self, id):
         supervisor = self._vm.get(id)
+
         if supervisor and supervisor.running():
             return {
                 'state': 'RUNNING',
@@ -136,6 +139,7 @@ class VMSupervisor(object):
 
         self.logger.debug('Starting bhyve: {}'.format(' '.join(args)))
         self.proc = Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+
         for line in self.proc.stdout:
             self.logger.debug('{}: {}'.format(self.vm['name'], line))
 
@@ -150,7 +154,10 @@ class VMSupervisor(object):
             self.logger.info("===> REBOOTING VM: {0} ID: {1} BHYVE_CODE: {2}".format(self.vm['name'], self.vm['id'], self.bhyve_error))
             self.manager.stop(self.vm['id'])
             self.manager.start(self.vm['id'])
-        elif self.bhyve_error in (1, 2, 3):
+        elif self.bhyve_error == 1:
+            # XXX: Need a better way to handle the vmm destroy.
+            self.logger.info("===> POWERED OFF VM: {0} ID: {1} BHYVE_CODE: {2}".format(self.vm['name'], self.vm['id'], self.bhyve_error))
+        elif self.bhyve_error in (2, 3):
             self.logger.info("===> STOPPING VM: {0} ID: {1} BHYVE_CODE: {2}".format(self.vm['name'], self.vm['id'], self.bhyve_error))
             self.manager.stop(self.vm['id'])
         elif self.bhyve_error not in (0, 1, 2, 3, None):
@@ -176,6 +183,8 @@ class VMSupervisor(object):
                 # Already stopped, process do not exist anymore
                 if e.errno != errno.ESRCH:
                     raise
+
+            self.destroy_vm()
             return True
 
     def stop(self):
@@ -185,10 +194,8 @@ class VMSupervisor(object):
         if bhyve_error:
             self.logger.error("===> Stopping VM error: {0}".format(bhyve_error))
 
-        self.kill_bhyve_pid()
-        self.destroy_vm()
+        return self.kill_bhyve_pid()
 
-        return True
 
     def running(self):
         if self.proc:
