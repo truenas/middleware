@@ -182,7 +182,7 @@ class DatastoreService(Service):
             if isinstance(field, ForeignKey):
                 data[field.name] = field.rel.to.objects.get(pk=data[field.name])
         obj = model(**data)
-        obj.save()
+        self.middleware.threaded(obj.save)
         return obj.pk
 
     @accepts(Str('name'), Int('id'), Dict('data', additional_attrs=True))
