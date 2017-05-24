@@ -47,6 +47,9 @@ class DeviceService(Service):
         if not klass:
             return disks
         for g in klass.geoms:
+            # Skip cd*
+            if g.name.startswith('cd'):
+                continue
             disk = {
                 'name': g.name,
                 'mediasize': g.provider.mediasize,
