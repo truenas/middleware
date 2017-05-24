@@ -59,6 +59,7 @@ class VMSupervisor(object):
             'bhyve',
             '-P',
             '-H',
+            '-w',
             '-c', str(self.vm['vcpus']),
             '-m', str(self.vm['memory']),
             '-s', '0:0,hostbridge',
