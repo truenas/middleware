@@ -1337,7 +1337,6 @@ share/ctdb/tests/tool/ctdb.unban.002.sh
 share/ctdb/tests/tool/ctdb.unban.003.sh
 share/ctdb/tests/tool/ctdb.uptime.001.sh
 share/ctdb/tests/tool/scripts/local.sh
-%%PORTDOCS%%%%DOCSDIR%%/README.FreeBSD
 %%DATADIR%%/setup/DB_CONFIG
 %%DATADIR%%/setup/ad-schema/MS-AD_Schema_2K8_Attributes.txt
 %%DATADIR%%/setup/ad-schema/MS-AD_Schema_2K8_Classes.txt
