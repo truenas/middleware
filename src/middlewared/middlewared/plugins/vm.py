@@ -36,6 +36,10 @@ class VMManager(object):
 
     def status(self, id):
         supervisor = self._vm.get(id)
+        if supervisor is None:
+            vm = self.service.query([('id', '=', id)], {'get': True})
+            self._vm[id] = VMSupervisor(self, vm)
+            supervisor = self._vm.get(id)
 
         if supervisor and supervisor.running():
             return {
@@ -157,6 +161,7 @@ class VMSupervisor(object):
         elif self.bhyve_error == 1:
             # XXX: Need a better way to handle the vmm destroy.
             self.logger.info("===> POWERED OFF VM: {0} ID: {1} BHYVE_CODE: {2}".format(self.vm['name'], self.vm['id'], self.bhyve_error))
+            self.destroy_vm()
         elif self.bhyve_error in (2, 3):
             self.logger.info("===> STOPPING VM: {0} ID: {1} BHYVE_CODE: {2}".format(self.vm['name'], self.vm['id'], self.bhyve_error))
             self.manager.stop(self.vm['id'])
@@ -198,13 +203,22 @@ class VMSupervisor(object):
 
 
     def running(self):
-        if self.proc:
-            try:
-                os.kill(self.proc.pid, 0)
-            except OSError:
-                return False
-            return True
-        return False
+        bhyve_error = Popen(['bhyvectl', '--vm={}'.format(self.vm['name'])], stdout=subprocess.PIPE, stderr=subprocess.PIPE).wait()
+        if bhyve_error == 0:
+            if self.proc:
+                try:
+                    os.kill(self.proc.pid, 0)
+                except OSError:
+                    self.logger.error("===> VMM {0} is running without bhyve process.".format(self.vm['name']))
+                    return False
+                return True
+            else:
+                self.logger.error("===> NO PROC STATE")
+                # XXX: We return true for now to keep the vm.status sane.
+                # It is necessary handle in a better way the bhyve process associated with the vmm.
+                return True
+        elif bhyve_error == 1:
+            return False
 
 
 class VMService(CRUDService):
