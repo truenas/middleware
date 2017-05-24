@@ -8,6 +8,8 @@ from middlewared.service import Service
 
 from bsd import devinfo
 
+DEVD_SOCKETFILE = '/var/run/devd.seqpacket.pipe'
+
 
 class DeviceService(Service):
 
@@ -40,6 +42,9 @@ class DeviceService(Service):
 def devd_loop(middleware):
     while True:
         try:
+            if not os.path.exists(DEVD_SOCKETFILE):
+                time.sleep(1)
+                continue
             devd_listen(middleware)
         except OSError:
             middleware.logger.warn('devd pipe error, retrying...', exc_info=True)
@@ -48,7 +53,7 @@ def devd_loop(middleware):
 
 def devd_listen(middleware):
     s = socket.socket(socket.AF_UNIX, socket.SOCK_SEQPACKET)
-    s.connect('/var/run/devd.seqpacket.pipe')
+    s.connect(DEVD_SOCKETFILE)
     while True:
         line = s.recv(8192)
         if line is None:
