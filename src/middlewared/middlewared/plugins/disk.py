@@ -15,6 +15,7 @@ if '/usr/local/www' not in sys.path:
 from freenasUI.services.utils import SmartAlert
 
 MIRROR_MAX = 5
+RE_DSKNAME = re.compile(r'^([a-z]+)([0-9]+)$')
 RE_ISDISK = re.compile(r'^(da|ada|vtbd|mfid|nvd)[0-9]+$')
 
 
@@ -35,6 +36,61 @@ class DiskService(CRUDService):
     def disk_extend(self, disk):
         disk.pop('enabled', None)
         return disk
+
+    @private
+    def sync(self, name):
+        """
+        Syncs a disk `name` with the database cache.
+        """
+        # Skip sync disks on backup node
+        if (
+            not self.middleware.call('system.is_freenas') and
+            self.middleware.call('notifier.failover_licensed') and
+            self.middleware.call('notifier.failover_status') == 'BACKUP'
+        ):
+            return
+
+        # Do not sync geom classes like multipath/hast/etc
+        if name.find("/") != -1:
+            return
+
+        disks = list(self.middleware.call('device.get_info', 'DISK').keys())
+
+        # Abort if the disk is not recognized as an available disk
+        if name not in disks:
+            return
+        ident = self.middleware.call('notifier.device_to_identifier', name)
+        qs = self.middleware.call('datastore.query', 'storage.disk', [('disk_identifier', '=', ident)], {'order_by': ['-disk_enabled']})
+        if ident and qs:
+            disk = qs[0]
+        else:
+            qs = self.middleware.call('datastore.query', 'storage.disk', [('disk_name', '=', name)])
+            for i in qs:
+                i['disk_enabled'] = False
+                self.middleware.call('datastore.update', 'storage.disk', i['id'], i)
+            disk = {'disk_identifier': ident}
+        disk.update({'disk_name': name, 'disk_enabled': True})
+
+        self.middleware.threaded(geom.scan)
+        g = geom.geom_by_name('DISK', name)
+        if g:
+            if g.provider.config['ident']:
+                disk['disk_serial'] = g.provider.config['ident']
+            if g.provider.mediasize:
+                disk['disk_size'] = g.provider.mediasize
+        if not disk.get('disk_serial'):
+            disk['disk_serial'] = self.middleware.call('notifier.serial_from_device', name) or ''
+        reg = RE_DSKNAME.search(name)
+        if reg:
+            disk['disk_subsystem'] = reg.group(1)
+            disk['disk_number'] = int(reg.group(2))
+        if disk.get('id'):
+            self.middleware.call('datastore.update', 'storage.disk', disk['id'], disk)
+        else:
+            disk['id'] = self.middleware.call('datastore.insert', 'storage.disk', disk)
+
+        # FIXME: use a truenas middleware plugin
+        self.middleware.call('notifier.sync_disk_extra', disk['id'], False)
 
     @private
     def swaps_configure(self):

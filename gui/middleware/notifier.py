@@ -409,9 +409,8 @@ class notifier(metaclass=HookMetaclass):
                 raise MiddlewareError(f'Unable to GPT format the disk "{devname}": {error}')
 
         # We might need to sync with reality (e.g. devname -> uuid)
-        # Invalidating confxml is required or changes wont be seen
-        self.__confxml = None
-        self.sync_disk(devname)
+        with client as c:
+            c.call('disk.sync', devname)
 
     def __gpt_unlabeldisk(self, devname):
         """Unlabel the disk"""
@@ -424,9 +423,8 @@ class notifier(metaclass=HookMetaclass):
         self._system("gpart destroy -F /dev/%s" % devname)
 
         # We might need to sync with reality (e.g. uuid -> devname)
-        # Invalidating confxml is required or changes wont be seen
-        self.__confxml = None
-        self.sync_disk(devname)
+        with client as c:
+            c.call('disk.sync', devname)
 
     def unlabel_disk(self, devname):
         # TODO: Check for existing GPT or MBR, swap, before blindly call __gpt_unlabeldisk
@@ -4049,61 +4047,6 @@ class notifier(metaclass=HookMetaclass):
                     'lun': int(lun)
                 }
         return self.__camcontrol
-
-    def sync_disk(self, devname):
-        from freenasUI.storage.models import Disk
-
-        if devname.startswith('/dev/'):
-            devname = devname.replace('/dev/', '')
-
-        # Skip sync disks on backup node
-        if (
-            not self.is_freenas() and self.failover_licensed() and
-            self.failover_status() == 'BACKUP'
-        ):
-            return
-
-        # Do not sync geom classes like multipath/hast/etc
-        if devname.find("/") != -1:
-            return
-
-        doc = self._geom_confxml()
-        disks = self.__get_disks()
-        self.__diskserial.clear()
-        self.__camcontrol = None
-
-        # Abort if the disk is not recognized as an available disk
-        if devname not in disks:
-            return
-
-        ident = self.device_to_identifier(devname)
-        qs = Disk.objects.filter(disk_identifier=ident).order_by('-disk_enabled')
-        if ident and qs.exists():
-            disk = qs[0]
-        else:
-            Disk.objects.filter(disk_name=devname).update(
-                disk_enabled=False
-            )
-            disk = Disk()
-            disk.disk_identifier = ident
-        disk.disk_name = devname
-        disk.disk_enabled = True
-        geom = doc.xpath("//class[name = 'DISK']//geom[name = '%s']" % devname)
-        if len(geom) > 0:
-            v = geom[0].xpath("./provider/config/ident")
-            if len(v) > 0:
-                disk.disk_serial = v[0].text
-            v = geom[0].xpath("./provider/mediasize")
-            if len(v) > 0:
-                disk.disk_size = v[0].text
-        if not disk.disk_serial:
-            disk.disk_serial = self.serial_from_device(devname) or ''
-        reg = RE_DSKNAME.search(devname)
-        if reg:
-            disk.disk_subsystem = reg.group(1)
-            disk.disk_number = int(reg.group(2))
-        self.sync_disk_extra(disk, add=False)
-        disk.save()
 
     def sync_disk_extra(self, disk, add=False):
         return

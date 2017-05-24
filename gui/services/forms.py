@@ -53,6 +53,7 @@ from freenasUI.freeadmin.forms import DirectoryBrowser
 from freenasUI.freeadmin.options import FreeBaseInlineFormSet
 from freenasUI.freeadmin.utils import key_order
 from freenasUI.jails.models import JailsConfiguration
+from freenasUI.middleware.client import client
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier
 from freenasUI.services import models
@@ -1563,7 +1564,8 @@ class iSCSITargetExtentForm(ModelForm):
                                 'error': msg,
                             })
                         )
-                    notifier().sync_disk(self.cleaned_data["iscsi_target_extent_disk"])
+                    with client as c:
+                        c.call('disk.sync', self.cleaned_data["iscsi_target_extent_disk"].replace('/dev/', ''))
                 oExtent.iscsi_target_extent_type = 'Disk'
                 oExtent.iscsi_target_extent_path = diskobj.pk
             oExtent.iscsi_target_extent_filesize = 0
