@@ -1,5 +1,5 @@
 from middlewared.service import Service, private
-from middlewared.schema import accepts, Bool, Dict, Int, List, Ref, Str
+from middlewared.schema import accepts, Any, Bool, Dict, Int, List, Ref, Str
 
 import os
 import sys
@@ -185,7 +185,7 @@ class DatastoreService(Service):
         self.middleware.threaded(obj.save)
         return obj.pk
 
-    @accepts(Str('name'), Int('id'), Dict('data', additional_attrs=True))
+    @accepts(Str('name'), Any('id'), Dict('data', additional_attrs=True))
     def update(self, name, id, data):
         """
         Update an entry `id` in `name`.
@@ -202,7 +202,7 @@ class DatastoreService(Service):
         self.middleware.threaded(obj.save)
         return obj.pk
 
-    @accepts(Str('name'), Int('id'))
+    @accepts(Str('name'), Any('id'))
     def delete(self, name, id):
         """
         Delete an entry `id` in `name`.
