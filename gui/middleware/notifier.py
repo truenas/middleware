@@ -2985,53 +2985,57 @@ class notifier(metaclass=HookMetaclass):
         else:
             encrypt = 0
 
+        model_objs = []
         try:
-            with transaction.atomic():
-                volume = Volume(
-                    vol_name=volume_name,
-                    vol_fstype='ZFS',
-                    vol_encrypt=encrypt)
-                volume.save()
-                if encrypt > 0:
-                    if not os.path.exists(GELI_KEYPATH):
-                        os.mkdir(GELI_KEYPATH)
-                    key.seek(0)
-                    keydata = key.read()
-                    with open(volume.get_geli_keyfile(), 'wb') as f:
-                        f.write(keydata)
-                self.volume = volume
+            volume = Volume(
+                vol_name=volume_name,
+                vol_fstype='ZFS',
+                vol_encrypt=encrypt)
+            volume.save()
+            model_objs.append(volume)
+            if encrypt > 0:
+                if not os.path.exists(GELI_KEYPATH):
+                    os.mkdir(GELI_KEYPATH)
+                key.seek(0)
+                keydata = key.read()
+                with open(volume.get_geli_keyfile(), 'wb') as f:
+                    f.write(keydata)
+            self.volume = volume
 
-                volume.vol_guid = volume_id
-                volume.save()
-                Scrub.objects.create(scrub_volume=volume)
+            volume.vol_guid = volume_id
+            volume.save()
+            model_objs.append(Scrub.objects.create(scrub_volume=volume))
 
-                if not self.zfs_import(volume_name, volume_id):
-                    raise MiddlewareError(_(
-                        'The volume "%s" failed to import, '
-                        'for futher details check pool status') % volume_name)
-                for disk in enc_disks:
-                    self.geli_setkey(
-                        "/dev/%s" % disk,
-                        volume.get_geli_keyfile(),
-                        passphrase=passfile
+            if not self.zfs_import(volume_name, volume_id):
+                raise MiddlewareError(_(
+                    'The volume "%s" failed to import, '
+                    'for futher details check pool status') % volume_name)
+            for disk in enc_disks:
+                self.geli_setkey(
+                    "/dev/%s" % disk,
+                    volume.get_geli_keyfile(),
+                    passphrase=passfile
+                )
+                if disk.startswith("gptid/"):
+                    diskname = self.identifier_to_device(
+                        "{uuid}%s" % disk.replace("gptid/", "")
                     )
-                    if disk.startswith("gptid/"):
-                        diskname = self.identifier_to_device(
-                            "{uuid}%s" % disk.replace("gptid/", "")
-                        )
-                    elif disk.startswith("gpt/"):
-                        diskname = self.label_to_disk(disk)
-                    else:
-                        diskname = disk
-                    ed = EncryptedDisk()
-                    ed.encrypted_volume = volume
-                    ed.encrypted_disk = Disk.objects.filter(
-                        disk_name=diskname,
-                        disk_enabled=True
-                    )[0]
-                    ed.encrypted_provider = disk
-                    ed.save()
-        except:
+                elif disk.startswith("gpt/"):
+                    diskname = self.label_to_disk(disk)
+                else:
+                    diskname = disk
+                ed = EncryptedDisk()
+                ed.encrypted_volume = volume
+                ed.encrypted_disk = Disk.objects.filter(
+                    disk_name=diskname,
+                    disk_enabled=True
+                )[0]
+                ed.encrypted_provider = disk
+                ed.save()
+                model_objs.append(ed)
+        except Exception:
+            for obj in reversed(model_objs):
+                obj.delete()
             if passfile:
                 os.unlink(passfile)
             raise

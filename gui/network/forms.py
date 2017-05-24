@@ -31,7 +31,6 @@ import signal
 import socket
 
 from django.core.validators import RegexValidator
-from django.db import transaction
 from django.db.models import Q
 from django.utils.translation import ugettext_lazy as _
 
@@ -779,7 +778,8 @@ class LAGGInterfaceForm(ModelForm):
         lagg_protocol = self.cleaned_data['lagg_protocol']
         lagg_member_list = self.cleaned_data['lagg_interfaces']
         with DBSync():
-            with transaction.atomic():
+            model_objs = []
+            try:
                 # Step 1: Create an entry in interface table that
                 # represents the lagg interface
                 lagg_interface = models.Interfaces(
@@ -789,12 +789,14 @@ class LAGGInterfaceForm(ModelForm):
                     int_ipv6auto=False
                 )
                 lagg_interface.save()
+                model_objs.append(lagg_interface)
                 # Step 2: Write associated lagg attributes
                 lagg_interfacegroup = models.LAGGInterface(
                     lagg_interface=lagg_interface,
                     lagg_protocol=lagg_protocol
                 )
                 lagg_interfacegroup.save()
+                model_objs.append(lagg_interfacegroup)
                 # Step 3: Write lagg's members in the right order
                 order = 0
                 for interface in lagg_member_list:
@@ -805,7 +807,12 @@ class LAGGInterfaceForm(ModelForm):
                         lagg_deviceoptions='up'
                     )
                     lagg_member_entry.save()
+                    model_objs.append(lagg_member_entry)
                     order = order + 1
+            except Exception:
+                for obj in reversed(model_objs):
+                    obj.delete()
+                raise
         self.instance = lagg_interfacegroup
         return lagg_interfacegroup
 
