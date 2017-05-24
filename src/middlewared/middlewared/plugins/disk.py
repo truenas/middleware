@@ -74,6 +74,7 @@ class DiskService(CRUDService):
                     run('savecore', '/data/crash/', p.name, check=False)
                     swap_partitions_by_size[p.mediasize].append(p.name)
 
+        dumpdev = False
         unused_partitions = []
         for size, partitions in swap_partitions_by_size.items():
             for i in range(int(len(partitions) / 2)):
@@ -81,6 +82,8 @@ class DiskService(CRUDService):
                     break
                 part_a, part_b = partitions[0:2]
                 partitions = partitions[2:]
+                if not dumpdev:
+                    dumpdev = dempdev_configure(part_a)
                 try:
                     name = new_swap_name()
                     run('gmirror', 'create', '-b', 'prefer', name, part_a, part_b)
@@ -94,18 +97,11 @@ class DiskService(CRUDService):
         # If we could not make even a single swap mirror, add the first unused
         # partition as a swap device
         if not swap_devices and unused_partitions:
+            if not dumpdev:
+                dumpdev = dempdev_configure(unused_partitions[0])
             swap_devices.append(unused_partitions[0])
 
         for name in swap_devices:
-            # Configure dumpdev on first swap device
-            if not os.path.exists('/dev/dumpdev'):
-                try:
-                    os.unlink('/dev/dumpdev')
-                except OSError:
-                    pass
-                os.symlink(f'/dev/{name}', '/dev/dumpdev')
-                run('dumpon', f'/dev/{name}')
-
             if not os.path.exists(f'/dev/{name}.eli'):
                 run('geli', 'onetime', name)
             run('swapon', f'/dev/{name}.eli', check=False)
@@ -145,10 +141,10 @@ class DiskService(CRUDService):
                     del providers[c.provider.id]
 
         for name in mirrors:
-            run('swapoff', f'/dev/mirror/{name}.eli')
+            run('swapoff', f'/dev/mirror/{name}.eli', check=False)
             if os.path.exists(f'/dev/mirror/{name}.eli'):
-                run('geli', 'detach', f'mirror/{name}.eli')
-            run('gmirror', 'destroy', name)
+                run('geli', 'detach', f'mirror/{name}.eli', check=False)
+            run('gmirror', 'destroy', name, check=False)
 
         for p in providers.values():
             run('swapoff', f'/dev/{p.name}.eli', check=False)
@@ -166,6 +162,18 @@ def new_swap_name():
         if not os.path.exists(f'/dev/mirror/{name}'):
             return name
     raise RuntimeError('All mirror names are taken')
+
+
+def dempdev_configure(name):
+    # Configure dumpdev on first swap device
+    if not os.path.exists('/dev/dumpdev'):
+        try:
+            os.unlink('/dev/dumpdev')
+        except OSError:
+            pass
+        os.symlink(f'/dev/{name}', '/dev/dumpdev')
+        run('dumpon', f'/dev/{name}')
+    return True
 
 
 def _event_devfs(middleware, event_type, args):
