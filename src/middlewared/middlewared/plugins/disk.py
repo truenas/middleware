@@ -196,7 +196,9 @@ class DiskService(CRUDService):
         qs = self.middleware.call('datastore.query', 'storage.disk', [('disk_identifier', '=', ident)], {'order_by': ['-disk_enabled']})
         if ident and qs:
             disk = qs[0]
+            new = False
         else:
+            new = True
             qs = self.middleware.call('datastore.query', 'storage.disk', [('disk_name', '=', name)])
             for i in qs:
                 i['disk_enabled'] = False
@@ -217,7 +219,7 @@ class DiskService(CRUDService):
         if reg:
             disk['disk_subsystem'] = reg.group(1)
             disk['disk_number'] = int(reg.group(2))
-        if disk.get('disk_identifier'):
+        if not new:
             self.middleware.call('datastore.update', 'storage.disk', disk['disk_identifier'], disk)
         else:
             disk['disk_identifier'] = self.middleware.call('datastore.insert', 'storage.disk', disk)
@@ -295,8 +297,10 @@ class DiskService(CRUDService):
                 disk_identifier = self.middleware.call('notifier.device_to_identifier', name)
                 qs = self.middleware.call('datastore.query', 'storage.disk', [('disk_identifier', '=', disk_identifier)])
                 if qs:
+                    new = False
                     disk = qs[0]
                 else:
+                    new = True
                     disk = {'disk_identifier': disk_identifier}
                 disk['disk_name'] = name
                 serial = ''
@@ -320,7 +324,7 @@ class DiskService(CRUDService):
                     disk['disk_subsystem'] = reg.group(1)
                     disk['disk_number'] = int(reg.group(2))
 
-                if disk.get('disk_identifier'):
+                if not new:
                     self.middleware.call('datastore.update', 'storage.disk', disk['disk_identifier'], disk)
                 else:
                     disk['disk_identifier'] = self.middleware.call('datastore.insert', 'storage.disk', disk)
