@@ -168,7 +168,7 @@ class VMSupervisor(object):
         while self.taps:
             netif.destroy_interface(self.taps.pop())
 
-    def stop(self):
+    def kill_bhyve_pid(self):
         if self.proc:
             try:
                 os.kill(self.proc.pid, 15)
@@ -176,9 +176,19 @@ class VMSupervisor(object):
                 # Already stopped, process do not exist anymore
                 if e.errno != errno.ESRCH:
                     raise
-            # XXX: For now we destroy the VM, but we need to be able to wake up it after stop.
-            self.destroy_vm()
             return True
+
+    def stop(self):
+        self.logger.debug("===> Stopping VM: {0} ID: {1} BHYVE_CODE: {2}".format(self.vm['name'], self.vm['id'], self.bhyve_error))
+        bhyve_error = Popen(['bhyvectl', '--force-poweroff', '--vm={}'.format(self.vm['name'])], stdout=subprocess.PIPE, stderr=subprocess.PIPE).wait()
+
+        if bhyve_error:
+            self.logger.error("===> Stopping VM error: {0}".format(bhyve_error))
+
+        self.kill_bhyve_pid()
+        self.destroy_vm()
+
+        return True
 
     def running(self):
         if self.proc:
