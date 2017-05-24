@@ -3655,9 +3655,6 @@ class notifier(metaclass=HookMetaclass):
 
     def __init__(self):
         self.__confxml = None
-        self.__camcontrol = None
-        self.__diskserial = {}
-        self.__twcli = {}
 
     def __del__(self):
         self.__confxml = None
@@ -3667,87 +3664,6 @@ class notifier(metaclass=HookMetaclass):
         if self.__confxml is None:
             self.__confxml = etree.fromstring(self.sysctl('kern.geom.confxml'))
         return self.__confxml
-
-    def __get_twcli(self, controller):
-        if controller in self.__twcli:
-            return self.__twcli[controller]
-
-        re_port = re.compile(r'^p(?P<port>\d+).*?\bu(?P<unit>\d+)\b', re.S | re.M)
-        proc = self._pipeopen("/usr/local/sbin/tw_cli /c%d show" % (controller, ))
-        output = proc.communicate()[0]
-
-        units = {}
-        for port, unit in re_port.findall(output):
-            units[int(unit)] = int(port)
-
-        self.__twcli[controller] = units
-        return self.__twcli[controller]
-
-    def get_smartctl_args(self, devname):
-        args = ["/dev/%s" % devname]
-        camcontrol = self._camcontrol_list()
-        info = camcontrol.get(devname)
-        if info is not None:
-            if info.get("drv") == "rr274x_3x":
-                channel = info["channel"] + 1
-                if channel > 16:
-                    channel -= 16
-                elif channel > 8:
-                    channel -= 8
-                args = [
-                    "/dev/%s" % info["drv"],
-                    "-d",
-                    "hpt,%d/%d" % (info["controller"] + 1, channel)
-                ]
-            elif info.get("drv").startswith("arcmsr"):
-                args = [
-                    "/dev/%s%d" % (info["drv"], info["controller"]),
-                    "-d",
-                    "areca,%d" % (info["lun"] + 1 + (info["channel"] * 8), )
-                ]
-            elif info.get("drv").startswith("hpt"):
-                args = [
-                    "/dev/%s" % info["drv"],
-                    "-d",
-                    "hpt,%d/%d" % (info["controller"] + 1, info["channel"] + 1)
-                ]
-            elif info.get("drv") == "ciss":
-                args = [
-                    "/dev/%s%d" % (info["drv"], info["controller"]),
-                    "-d",
-                    "cciss,%d" % (info["channel"], )
-                ]
-            elif info.get("drv") == "twa":
-                twcli = self.__get_twcli(info["controller"])
-                args = [
-                    "/dev/%s%d" % (info["drv"], info["controller"]),
-                    "-d",
-                    "3ware,%d" % (twcli.get(info["channel"], -1), )
-                ]
-        return args
-
-    def toggle_smart_off(self, devname):
-        args = self.get_smartctl_args(devname)
-        Popen(["/usr/local/sbin/smartctl", "--smart=off"] + args, stdout=PIPE)
-
-    def toggle_smart_on(self, devname):
-        args = self.get_smartctl_args(devname)
-        Popen(["/usr/local/sbin/smartctl", "--smart=on"] + args, stdout=PIPE)
-
-    def serial_from_device(self, devname):
-        if devname in self.__diskserial:
-            return self.__diskserial.get(devname)
-
-        args = self.get_smartctl_args(devname)
-
-        p1 = Popen(["/usr/local/sbin/smartctl", "-i"] + args, stdout=PIPE, encoding='utf8')
-        output = p1.communicate()[0]
-        search = re.search(r'Serial Number:\s+(?P<serial>.+)', output, re.I)
-        if search:
-            serial = search.group("serial")
-            self.__diskserial[devname] = serial
-            return serial
-        return None
 
     def label_to_disk(self, name):
         """
@@ -3784,7 +3700,8 @@ class notifier(metaclass=HookMetaclass):
                 return "{serial_lunid}%s_%s" % (search[0].text, search2[0].text)
             return "{serial}%s" % search[0].text
 
-        serial = self.serial_from_device(name)
+        with client as c:
+            serial = c.call('disk.serial_from_device', name)
         if serial:
             return "{serial}%s" % serial
 
@@ -3841,10 +3758,11 @@ class notifier(metaclass=HookMetaclass):
             search = doc.xpath("//class[name = 'DISK']/geom/provider/config[normalize-space(ident) = normalize-space('%s')]/../../name" % value)
             if len(search) > 0:
                 return search[0].text
-            for devname in self.__get_disks():
-                serial = self.serial_from_device(devname)
-                if serial == value:
-                    return devname
+            with client as c:
+                for devname in self.__get_disks():
+                    serial = c.call('disk.serial_from_device', devname)
+                    if serial == value:
+                        return devname
             return None
 
         elif tp == 'serial_lunid':
@@ -3987,66 +3905,6 @@ class notifier(metaclass=HookMetaclass):
         if p1.returncode == 0:
             return True
         return res
-
-    def _camcontrol_list(self):
-        """
-        Parse camcontrol devlist -v output to gather
-        controller id, channel no and driver from a device
-
-        Returns:
-            dict(devname) = dict(drv, controller, channel)
-        """
-        if self.__camcontrol is not None:
-            return self.__camcontrol
-
-        self.__camcontrol = {}
-
-        """
-        Hacky workaround
-
-        It is known that at least some HPT controller have a bug in the
-        camcontrol devlist output with multiple controllers, all controllers
-        will be presented with the same driver with index 0
-        e.g. two hpt27xx0 instead of hpt27xx0 and hpt27xx1
-
-        What we do here is increase the controller id by its order of
-        appearance in the camcontrol output
-        """
-        hptctlr = defaultdict(int)
-
-        re_drv_cid = re.compile(r'.* on (?P<drv>.*?)(?P<cid>[0-9]+) bus', re.S | re.M)
-        re_tgt = re.compile(r'target (?P<tgt>[0-9]+) .*?lun (?P<lun>[0-9]+) .*\((?P<dv1>[a-z]+[0-9]+),(?P<dv2>[a-z]+[0-9]+)\)', re.S | re.M)
-        drv, cid, tgt, lun, dev, devtmp = (None, ) * 6
-
-        proc = self._pipeopen("camcontrol devlist -v")
-        for line in proc.communicate()[0].splitlines():
-            if not line.startswith('<'):
-                reg = re_drv_cid.search(line)
-                if not reg:
-                    continue
-                drv = reg.group("drv")
-                if drv.startswith("hpt"):
-                    cid = hptctlr[drv]
-                    hptctlr[drv] += 1
-                else:
-                    cid = reg.group("cid")
-            else:
-                reg = re_tgt.search(line)
-                if not reg:
-                    continue
-                tgt = reg.group("tgt")
-                lun = reg.group("lun")
-                dev = reg.group("dv1")
-                devtmp = reg.group("dv2")
-                if dev.startswith("pass"):
-                    dev = devtmp
-                self.__camcontrol[dev] = {
-                    'drv': drv,
-                    'controller': int(cid),
-                    'channel': int(tgt),
-                    'lun': int(lun)
-                }
-        return self.__camcontrol
 
     def sync_disk_extra(self, disk, add=False):
         return

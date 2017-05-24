@@ -1108,10 +1108,11 @@ class DiskFormPartial(ModelForm):
             obj.disk_togglesmart != self._original_smart_en or
             obj.disk_smartoptions != self._original_smart_opts
         ):
-            if obj.disk_togglesmart == 0:
-                notifier().toggle_smart_off(obj.disk_name)
-            else:
-                notifier().toggle_smart_on(obj.disk_name)
+            with client as c:
+                if obj.disk_togglesmart == 0:
+                    c.call('disk.toggle_smart_off', obj.disk_name)
+                else:
+                    c.call('disk.toggle_smart_on', obj.disk_name)
             started = notifier().restart("smartd")
             if (
                 started is False and
