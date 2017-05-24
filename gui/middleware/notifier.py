@@ -3797,57 +3797,6 @@ class notifier(metaclass=HookMetaclass):
             return 'BIOS'
         return 'EFI'
 
-    def swap_from_diskid(self, diskid):
-        from freenasUI.storage.models import Disk
-        disk = Disk.objects.get(pk=diskid)
-        return self.part_type_from_device('swap', disk.devname)
-
-    def swap_from_identifier(self, ident):
-        return self.part_type_from_device('swap', self.identifier_to_device(ident))
-
-    def get_label_consumer(self, geom, name):
-        """
-        Get the label consumer of a given ``geom`` with name ``name``
-
-        Returns:
-            The provider xmlnode if found, None otherwise
-        """
-        doc = self._geom_confxml()
-        xpath = doc.xpath("//class[name = 'LABEL']//provider[name = '%s']/../consumer/provider/@ref" % "%s/%s" % (geom, name))
-        if not xpath:
-            return None
-        providerid = xpath[0]
-        provider = doc.xpath("//provider[@id = '%s']" % providerid)[0]
-
-        class_name = provider.xpath("../../name")[0].text
-
-        # We've got a GPT over the softraid, not raw UFS filesystem
-        # So we need to recurse one more time
-        if class_name == 'PART':
-            providerid = provider.xpath("../consumer/provider/@ref")[0]
-            newprovider = doc.xpath("//provider[@id = '%s']" % providerid)[0]
-            class_name = newprovider.xpath("../../name")[0].text
-            # if this PART is really backed up by softraid the hypothesis was correct
-            if class_name in ('STRIPE', 'MIRROR', 'RAID3'):
-                return newprovider
-
-        return provider
-
-    def get_disks_from_provider(self, provider):
-        disks = []
-        geomname = provider.xpath("../../name")[0].text
-        if geomname in ('DISK', 'PART'):
-            disks.append(provider.xpath("../name")[0].text)
-        elif geomname in ('STRIPE', 'MIRROR', 'RAID3'):
-            doc = self._geom_confxml()
-            for prov in provider.xpath("../consumer/provider/@ref"):
-                prov2 = doc.xpath("//provider[@id = '%s']" % prov)[0]
-                disks.append(prov2.xpath("../name")[0].text)
-        else:
-            # TODO log, could not get disks
-            pass
-        return disks
-
     def zpool_parse(self, name):
         doc = self._geom_confxml()
         p1 = self._pipeopen("zpool status %s" % name)
@@ -4140,35 +4089,6 @@ class notifier(metaclass=HookMetaclass):
         for disk in disks:
             open("/dev/%s" % disk, 'w').close()
 
-    def gmirror_status(self, name):
-        """
-        Get all available gmirror instances
-
-        Returns:
-            A dict describing the gmirror
-        """
-
-        doc = self._geom_confxml()
-        for geom in doc.xpath("//class[name = 'MIRROR']/geom[name = '%s']" % name):
-            consumers = []
-            gname = geom.xpath("./name")[0].text
-            status = geom.xpath("./config/State")[0].text
-            for consumer in geom.xpath("./consumer"):
-                ref = consumer.xpath("./provider/@ref")[0]
-                prov = doc.xpath("//provider[@id = '%s']" % ref)[0]
-                name = prov.xpath("./name")[0].text
-                status = consumer.xpath("./config/State")[0].text
-                consumers.append({
-                    'name': name,
-                    'status': status,
-                })
-            return {
-                'name': gname,
-                'status': status,
-                'consumers': consumers,
-            }
-        return None
-
     def kern_module_is_loaded(self, module):
         """Determine whether or not a kernel module (or modules) is loaded.
 
@@ -4206,32 +4126,6 @@ class notifier(metaclass=HookMetaclass):
         p1 = self._pipeopen("/sbin/route delete %s" % masked)
         if p1.wait() != 0:
             raise MiddlewareError("Failed to remove the route %s" % sr.sr_destination)
-
-    def mount_volume(self, volume):
-        """
-        Mount a volume.
-        The volume must be in /etc/fstab
-
-        Returns:
-            True if volume was sucessfully mounted, False otherwise
-        """
-        if volume.vol_fstype == 'ZFS':
-            raise NotImplementedError("No donuts for you!")
-
-        prov = self.get_label_consumer(
-            volume.vol_fstype.lower(),
-            str(volume.vol_name)
-        )
-        if prov is None:
-            return False
-
-        proc = self._pipeopen("mount /dev/%s/%s" % (
-            volume.vol_fstype.lower(),
-            volume.vol_name,
-        ))
-        if proc.wait() != 0:
-            return False
-        return True
 
     def __get_geoms_recursive(self, prvid):
         """
@@ -4949,16 +4843,6 @@ class notifier(metaclass=HookMetaclass):
             #    action = re.sub(r'\s+', ' ', msg)
         return (state, status)
 
-    def get_train(self):
-        from freenasUI.system.models import Update
-        try:
-            update = Update.objects.order_by('-id')[0]
-        except IndexError:
-            update = Update.objects.create()
-        if not update.upd_autocheck:
-            return ''
-        return update.get_train() or ''
-
     def pwenc_reset_model_passwd(self, model, field):
         for obj in model.objects.all():
             setattr(obj, field, '')
@@ -5148,48 +5032,6 @@ class notifier(metaclass=HookMetaclass):
         xml = etree.fromstring(xml)
         connections = xml.xpath('//connection')
         return len(connections)
-
-    def call_backupd(self, args):
-        ntries = 15
-        sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-
-        # Try for a while in case daemon is just starting
-        while ntries > 0:
-            try:
-                sock.connect(BACKUP_SOCK)
-                break
-            except socket.error:
-                ntries -= 1
-                time.sleep(1)
-
-        if ntries == 0:
-            # Mark backup as failed at this point
-            from freenasUI.system.models import Backup
-            backup = Backup.objects.all().order_by('-id').first()
-            backup.bak_failed = True
-            backup.bak_status = 'Backup process died'
-            backup.save()
-            return {'status': 'ERROR'}
-
-        sock.settimeout(5)
-        f = sock.makefile(bufsize=0)
-
-        try:
-            f.write(json.dumps(args) + '\n')
-            resp_json = f.readline()
-            response = json.loads(resp_json)
-        except (IOError, ValueError, socket.timeout):
-            # Mark backup as failed at this point
-            from freenasUI.system.models import Backup
-            backup = Backup.objects.all().order_by('-id').first()
-            backup.bak_failed = True
-            backup.bak_status = 'Backup process died'
-            backup.save()
-            response = {'status': 'ERROR'}
-
-        f.close()
-        sock.close()
-        return response
 
     def backup_db(self):
         from freenasUI.common.system import backup_database
