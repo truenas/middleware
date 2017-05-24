@@ -445,7 +445,8 @@ class notifier(metaclass=HookMetaclass):
                 disk_multipath_name=diskname.replace('multipath/', '')
             )
         else:
-            ident = self.device_to_identifier(diskname)
+            with client as c:
+                ident = c.call('disk.device_to_identifier', diskname)
             diskobj = Disk.objects.filter(disk_identifier=ident).order_by('disk_enabled')
             if diskobj.exists():
                 diskobj = diskobj[0]
@@ -3693,39 +3694,6 @@ class notifier(metaclass=HookMetaclass):
         if search[0].getparent().getparent().xpath("./name")[0].text in ('ELI', ):
             return self.label_to_disk(disk.replace(".eli", ""))
         return disk
-
-    def device_to_identifier(self, name):
-        name = str(name)
-        doc = self._geom_confxml()
-
-        search = doc.xpath("//class[name = 'DISK']/geom[name = '%s']/provider/config/ident" % name)
-        if len(search) > 0 and search[0].text:
-            search2 = doc.xpath("//class[name = 'DISK']/geom[name = '%s']/provider/config/lunid" % name)
-            if len(search2) > 0 and search2[0].text:
-                return "{serial_lunid}%s_%s" % (search[0].text, search2[0].text)
-            return "{serial}%s" % search[0].text
-
-        with client as c:
-            serial = c.call('disk.serial_from_device', name)
-        if serial:
-            return "{serial}%s" % serial
-
-        search = doc.xpath("//class[name = 'PART']/..//*[name = '%s']//config[type = 'freebsd-zfs']/rawuuid" % name)
-        if len(search) > 0:
-            return "{uuid}%s" % search[0].text
-        search = doc.xpath("//class[name = 'PART']/geom/..//*[name = '%s']//config[type = 'freebsd-ufs']/rawuuid" % name)
-        if len(search) > 0:
-            return "{uuid}%s" % search[0].text
-
-        search = doc.xpath("//class[name = 'LABEL']/geom[name = '%s']/provider/name" % name)
-        if len(search) > 0:
-            return "{label}%s" % search[0].text
-
-        search = doc.xpath("//class[name = 'DEV']/geom[name = '%s']" % name)
-        if len(search) > 0:
-            return "{devicename}%s" % name
-
-        return ''
 
     def identifier_to_device(self, ident):
 

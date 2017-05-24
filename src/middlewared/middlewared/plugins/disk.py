@@ -170,6 +170,41 @@ class DiskService(CRUDService):
             return search.group('serial')
         return None
 
+    def device_to_identifier(self, name):
+        self.middleware.threaded(geom.scan)
+
+        g = geom.geom_by_name('DISK', name)
+        if g and g.provider.config.get('ident'):
+            serial = g.provider.config['ident']
+            lunid = g.provider.config.get('lunid')
+            if lunid:
+                return f'{{serial_lunid}}{serial}_{lunid}'
+            return f'{{serial}}{serial}'
+
+        serial = self.serial_from_device(name)
+        if serial:
+            return f'{{serial}}{serial}'
+
+        klass = geom.class_by_name('PART')
+        if klass:
+            for g in klass.geoms:
+                for p in g.providers:
+                    if p.name == name:
+                        # freebsd-zfs partition
+                        if p.config['rawtype'] == '516e7cba-6ecf-11d6-8ff8-00022d09712b':
+                            return f'{{uuid}}{p.config["rawuuid"]}'
+
+
+        g = geom.geom_by_name('LABEL', name)
+        if g:
+            return f'{{label}}{g.provider.name}'
+
+        g = geom.geom_by_name('DEV', name)
+        if g:
+            return f'{{devicename}}{name}'
+
+        return ''
+
     @private
     def sync(self, name):
         """
@@ -192,7 +227,7 @@ class DiskService(CRUDService):
         # Abort if the disk is not recognized as an available disk
         if name not in disks:
             return
-        ident = self.middleware.call('notifier.device_to_identifier', name)
+        ident = self.device_to_identifier(name)
         qs = self.middleware.call('datastore.query', 'storage.disk', [('disk_identifier', '=', ident)], {'order_by': ['-disk_enabled']})
         if ident and qs:
             disk = qs[0]
@@ -294,7 +329,7 @@ class DiskService(CRUDService):
 
         for name in disks:
             if name not in in_disks:
-                disk_identifier = self.middleware.call('notifier.device_to_identifier', name)
+                disk_identifier = self.device_to_identifier(name)
                 qs = self.middleware.call('datastore.query', 'storage.disk', [('disk_identifier', '=', disk_identifier)])
                 if qs:
                     new = False
