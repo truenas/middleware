@@ -4,6 +4,7 @@ import shlex
 import socket
 import time
 
+from gevent.socket import wait_read
 from middlewared.schema import accepts, Str
 from middlewared.service import Service
 
@@ -56,6 +57,7 @@ def devd_listen(middleware):
     s = socket.socket(socket.AF_UNIX, socket.SOCK_SEQPACKET)
     s.connect(DEVD_SOCKETFILE)
     while True:
+        wait_read(s.fileno())
         line = s.recv(8192)
         if line is None:
             break
