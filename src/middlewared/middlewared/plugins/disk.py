@@ -70,6 +70,8 @@ class DiskService(CRUDService):
                     continue
                 # if swap partition
                 if p.config['rawtype'] == '516e7cb5-6ecf-11d6-8ff8-00022d09712b':
+                    # Try to save a core dump from that
+                    run('savecore', '/data/crash/', p.name, check=False)
                     swap_partitions_by_size[p.mediasize].append(p.name)
 
         unused_partitions = []
@@ -95,6 +97,15 @@ class DiskService(CRUDService):
             swap_devices.append(unused_partitions[0])
 
         for name in swap_devices:
+            # Configure dumpdev on first swap device
+            if not os.path.exists('/dev/dumpdev'):
+                try:
+                    os.unlink('/dev/dumpdev')
+                except OSError:
+                    pass
+                os.symlink(f'/dev/{name}', '/dev/dumpdev')
+                run('dumpon', f'/dev/{name}')
+
             if not os.path.exists(f'/dev/{name}.eli'):
                 run('geli', 'onetime', name)
             run('swapon', f'/dev/{name}.eli', check=False)
@@ -114,7 +125,6 @@ class DiskService(CRUDService):
             partgeom = geom.geom_by_name('PART', disk)
             if not partgeom:
                 continue
-            provider = None
             for p in partgeom.providers:
                 if p.config['rawtype'] == '516e7cb5-6ecf-11d6-8ff8-00022d09712b':
                     providers[p.id] = p
