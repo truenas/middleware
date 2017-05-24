@@ -44,7 +44,6 @@ from django.conf import settings
 from formtools.wizard.views import SessionWizardView
 from django.core.cache import cache
 from django.core.files.storage import FileSystemStorage
-from django.db import transaction
 from django.db.models import Q
 from django.forms import FileField
 from django.forms.formsets import BaseFormSet, formset_factory
@@ -432,7 +431,8 @@ class InitialWizard(CommonWizard):
         ds_form = form_list.get('ds')
         # sys_form = form_list.get('system')
 
-        with transaction.atomic():
+        model_objs = []
+        try:
             _n = notifier()
             if volume_form or volume_import:
 
@@ -457,8 +457,10 @@ class InitialWizard(CommonWizard):
                     vol_fstype='ZFS',
                 )
                 volume.save()
+                model_objs.append(volume)
 
-                Scrub.objects.create(scrub_volume=volume)
+                scrub = Scrub.objects.create(scrub_volume=volume)
+                model_objs.append(scrub)
 
                 if volume_form:
                     bysize = volume_form._get_unused_disks_by_size()
@@ -489,6 +491,7 @@ class InitialWizard(CommonWizard):
                         smarttest_dayweek='7',
                     )
                     smarttest.smarttest_disks.add(*list(qs))
+                    model_objs.append(smarttest)
 
             else:
                 volume = Volume.objects.filter(vol_fstype='ZFS')[0]
@@ -540,6 +543,7 @@ class InitialWizard(CommonWizard):
                                 bsdgrp_gid=gid,
                                 bsdgrp_group=share_group,
                             )
+                            model_objs.append(group)
                         else:
                             group = bsdGroups.objects.all()[0]
                     else:
@@ -562,7 +566,7 @@ class InitialWizard(CommonWizard):
                                 homedir='/nonexistent',
                                 password_disabled=password_disabled
                             )
-                            bsdUsers.objects.create(
+                            user = bsdUsers.objects.create(
                                 bsdusr_username=share_user,
                                 bsdusr_full_name=share_user,
                                 bsdusr_uid=uid,
@@ -570,6 +574,7 @@ class InitialWizard(CommonWizard):
                                 bsdusr_unixhash=unixhash,
                                 bsdusr_smbhash=smbhash,
                             )
+                            model_objs.append(user)
 
                 else:
                     errno, errmsg = _n.create_zfs_vol(
@@ -590,29 +595,29 @@ class InitialWizard(CommonWizard):
                 if 'cifs' == share_purpose:
                     if share_allowguest:
                         sharekwargs['cifs_guestok'] = True
-                    CIFS_Share.objects.create(
+                    model_objs.append(CIFS_Share.objects.create(
                         cifs_name=share_name,
                         cifs_path=path,
                         **sharekwargs
-                    )
+                    ))
 
                 if 'afp' == share_purpose:
                     if share_timemachine:
                         sharekwargs['afp_timemachine'] = True
-                    AFP_Share.objects.create(
+                    model_objs.append(AFP_Share.objects.create(
                         afp_name=share_name,
                         afp_path=path,
                         **sharekwargs
-                    )
+                    ))
 
                 if 'nfs' == share_purpose:
                     nfs_share = NFS_Share.objects.create(
                         nfs_comment=share_name,
                     )
-                    NFS_Share_Path.objects.create(
+                    model_objs.append(NFS_Share_Path.objects.create(
                         share=nfs_share,
                         path=path,
-                    )
+                    ))
 
                 if 'iscsitarget' == share_purpose:
 
@@ -621,10 +626,11 @@ class InitialWizard(CommonWizard):
                         portal = qs[0]
                     else:
                         portal = iSCSITargetPortal.objects.create()
-                        iSCSITargetPortalIP.objects.create(
+                        model_objs.append(portal)
+                        model_objs.append(iSCSITargetPortalIP.objects.create(
                             iscsi_target_portalip_portal=portal,
                             iscsi_target_portalip_ip='0.0.0.0',
-                        )
+                        ))
 
                     qs = iSCSITargetAuthorizedInitiator.objects.all()
                     if qs.exists():
@@ -633,6 +639,7 @@ class InitialWizard(CommonWizard):
                         authini = (
                             iSCSITargetAuthorizedInitiator.objects.create()
                         )
+                        model_objs.append(authini)
                     try:
                         nic = list(choices.NICChoices(
                             nolagg=True, novlan=True, exclude_configured=False)
@@ -662,12 +669,13 @@ class InitialWizard(CommonWizard):
                     target = iSCSITarget.objects.create(
                         iscsi_target_name=iscsi_target_name
                     )
+                    model_objs.append(target)
 
-                    iSCSITargetGroups.objects.create(
+                    model_objs.append(iSCSITargetGroups.objects.create(
                         iscsi_target=target,
                         iscsi_target_portalgroup=portal,
                         iscsi_target_initiatorgroup=authini,
-                    )
+                    ))
 
                     iscsi_target_extent_path = 'zvol/%s/%s' % (
                         volume_name,
@@ -680,10 +688,11 @@ class InitialWizard(CommonWizard):
                         iscsi_target_extent_path=iscsi_target_extent_path,
                         iscsi_target_extent_serial=serial,
                     )
-                    iSCSITargetToExtent.objects.create(
+                    model_objs.append(extent)
+                    model_objs.append(iSCSITargetToExtent.objects.create(
                         iscsi_target=target,
                         iscsi_extent=extent,
-                    )
+                    ))
 
                 if share_purpose not in services_restart:
                     services.objects.filter(srv_service=share_purpose).update(
@@ -743,6 +752,10 @@ class InitialWizard(CommonWizard):
                     'Active Directory data failed to validate: %r',
                     settingsform._errors,
                 )
+        except Exception:
+            for obj in reversed(model_objs):
+                obj.delete()
+            raise
 
         if ds_form:
 
@@ -1602,7 +1615,6 @@ class ConsulAlertsForm(ModelForm):
         help_text=_("Routing Key"),
         required=False,
     )
-
 
     class Meta:
         fields = '__all__'

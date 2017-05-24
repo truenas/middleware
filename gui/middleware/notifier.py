@@ -728,6 +728,8 @@ class notifier(metaclass=HookMetaclass):
 
     def __prepare_zfs_vdev(self, disks, swapsize, encrypt, volume):
         vdevs = []
+        with client as c:
+            c.call('disk.swaps_remove_disks', disks)
         for disk in disks:
             self.__gpt_labeldisk(type="freebsd-zfs",
                                  devname=disk,
@@ -766,7 +768,6 @@ class notifier(metaclass=HookMetaclass):
         z_vdev = ""
         encrypt = (volume.vol_encrypt >= 1)
         # Grab all disk groups' id matching the volume ID
-        self._system("swapoff -a")
         device_list = []
 
         """
