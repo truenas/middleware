@@ -191,7 +191,7 @@ class DatastoreService(Service):
         Update an entry `id` in `name`.
         """
         model = self.__get_model(name)
-        obj = model.objects.get(pk=id)
+        obj = self.middleware.threaded(lambda oid: model.objects.get(pk=oid), id)
         for field in model._meta.fields:
             if field.name not in data:
                 continue
@@ -199,7 +199,7 @@ class DatastoreService(Service):
                 data[field.name] = field.rel.to.objects.get(pk=data[field.name])
         for k, v in list(data.items()):
             setattr(obj, k, v)
-        obj.save()
+        self.middleware.threaded(obj.save)
         return obj.pk
 
     @accepts(Str('name'), Int('id'))
@@ -208,7 +208,7 @@ class DatastoreService(Service):
         Delete an entry `id` in `name`.
         """
         model = self.__get_model(name)
-        model.objects.get(pk=id).delete()
+        self.middleware.threaded(lambda oid: model.objects.get(pk=oid).delete(), id)
         return True
 
     @private
