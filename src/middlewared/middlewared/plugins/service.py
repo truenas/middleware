@@ -377,8 +377,9 @@ class ServiceService(Service):
         try:
             with open('/var/run/webshell.pid', 'r') as f:
                 pid = f.read()
-                os.kill(int(pid), signal.SIGHUP)
+                os.kill(int(pid), signal.SIGTERM)
                 time.sleep(0.2)
+                os.kill(int(pid), signal.SIGKILL)
         except:
             pass
         self._system("ulimit -n 1024 && /usr/local/bin/python /usr/local/www/freenasUI/tools/webshell.py")
