@@ -1049,6 +1049,7 @@ class notifier(metaclass=HookMetaclass):
         if to_label == '':
             raise MiddlewareError('freebsd-zfs partition could not be found')
 
+        self.__confxml = None  # Clear cache
         doc = self._geom_confxml()
         uuid = doc.xpath(
             "//class[name = 'PART']"
