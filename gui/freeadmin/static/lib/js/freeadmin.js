@@ -191,7 +191,7 @@ require([
     ) {
 
     Menu = new fMenu();
-    Middleware = new fMiddleware({token: MIDDLEWARE_TOKEN});
+    Middleware = new fMiddleware({tokenUrl: middlewareTokenUrl});
 
     humanizeSize = function(value, integer) {
       var map = [

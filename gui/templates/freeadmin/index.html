@@ -33,6 +33,7 @@ menuSetURLs = function() {
 {% if consolemsg %}msgEnabled = true;{% endif %}
 wizardShow = {% if wizard %}true{% else %}false{% endif %};
 wizardUrl = '{% url "system_initialwizard" %}';
+middlewareTokenUrl = '{% url "freeadmin_middleware_token" %}';
 
 </script>
 {% endblock %}

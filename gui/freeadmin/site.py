@@ -163,6 +163,9 @@ class FreeAdminSite(object):
             url(r'^$',
                 wrap(self.adminInterface),
                 name='index'),
+            url(r'^middleware_token/$',
+                wrap(self.middleware_token),
+                name='freeadmin_middleware_token'),
             url(r'^help/$',
                 wrap(self.help),
                 name="freeadmin_help"),
@@ -199,7 +202,6 @@ class FreeAdminSite(object):
     def adminInterface(self, request):
         from freenasUI.network.models import GlobalConfiguration
         from freenasUI.system.models import Advanced, Settings
-        from freenasUI.middleware.client import client
 
         view = appPool.hook_app_index('freeadmin', request)
         view = [_f for _f in view if _f]
@@ -227,14 +229,6 @@ class FreeAdminSite(object):
         sw_version = get_sw_version()
         sw_version_footer = get_sw_version(strip_build_num=True).split('-', 1)[-1]
 
-        try:
-            with client as c:
-                middleware_token = c.call('auth.generate_token', timeout=10)
-        except Exception:
-            middleware_token = None
-            extra_log_files = (('/var/log/middlewared.log', 'middlewared_log'),)
-            crash_reporting = logger.CrashReporting(transport='threaded')
-            crash_reporting.report(sys.exc_info(), request2crashreporting(request), extra_log_files)
 
         return render(request, 'freeadmin/index.html', {
             'consolemsg': console,
@@ -247,8 +241,17 @@ class FreeAdminSite(object):
             'js_hook': appPool.get_base_js(request),
             'menu_hook': appPool.get_top_menu(request),
             'wizard': wizard,
-            'middleware_token': middleware_token,
         })
+
+    @never_cache
+    def middleware_token(self, request):
+        from freenasUI.middleware.client import client
+        with client as c:
+            middleware_token = c.call('auth.generate_token', timeout=10)
+        return HttpResponse(json.dumps({
+            'token': middleware_token,
+        }), content_type="application/json")
+
 
     @never_cache
     def help(self, request):

@@ -1,17 +1,19 @@
 define([
     "dojo/_base/declare",
     "dojo/_base/lang",
+    "dojo/request/xhr",
     "dojox/timing",
     "ddpjs/ddp"
     ], function(
     declare,
     lang,
+    xhr,
     timing,
     ddp
     ) {
 
     var Middleware = declare("freeadmin.Middleware", [], {
-      token: "",
+      tokenUrl: "",
       _pending: {},
       constructor: function(kwArgs) {
         var me = this;
@@ -38,7 +40,10 @@ define([
         this.call("core.ping");
       },
       authToken: function() {
-        this.call("auth.token", [this.token]);
+        var me = this;
+        xhr.get(this.tokenUrl, {handleAs: "json"}).then(function(data) {
+          me.call("auth.token", [data.token]);
+        });
       },
       onResult: function(message) {
         var pending = this._pending[message.id];
