@@ -40,6 +40,8 @@ def Popen(*args, **kwargs):
 def run(*args, **kwargs):
     kwargs.setdefault('encoding', 'utf8')
     kwargs.setdefault('check', True)
+    kwargs.setdefault('stdout', subprocess.PIPE)
+    kwargs.setdefault('stderr', subprocess.PIPE)
     return subprocess.run(args, **kwargs)
 
 

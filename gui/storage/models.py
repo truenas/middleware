@@ -32,7 +32,7 @@ import re
 import uuid
 import subprocess
 
-from django.db import models, transaction
+from django.db import models
 from django.db.models import Q
 from django.utils.translation import ugettext as __, ugettext_lazy as _
 
@@ -109,23 +109,16 @@ class Volume(Model):
         try:
             if not hasattr(self, '_disks'):
                 n = notifier()
-                if self.vol_fstype == 'ZFS':
-                    if self.is_decrypted():
-                        pool = n.zpool_parse(self.vol_name)
-                        self._disks = pool.get_disks()
-                    else:
-                        self._disks = []
-                        for ed in self.encrypteddisk_set.all():
-                            if not ed.encrypted_disk:
-                                continue
-                            if os.path.exists('/dev/{}'.format(ed.encrypted_disk.devname)):
-                                self._disks.append(ed.encrypted_disk.devname)
+                if self.is_decrypted():
+                    pool = n.zpool_parse(self.vol_name)
+                    self._disks = pool.get_disks()
                 else:
-                    prov = n.get_label_consumer(
-                        self.vol_fstype.lower(),
-                        self.vol_name)
-                    self._disks = n.get_disks_from_provider(prov) \
-                        if prov is not None else []
+                    self._disks = []
+                    for ed in self.encrypteddisk_set.all():
+                        if not ed.encrypted_disk:
+                            continue
+                        if os.path.exists('/dev/{}'.format(ed.encrypted_disk.devname)):
+                            self._disks.append(ed.encrypted_disk.devname)
             return self._disks
         except Exception as e:
             log.debug(
@@ -374,37 +367,36 @@ class Volume(Model):
         except IndexError:
             systemdataset = None
 
-        with transaction.atomic():
-            try:
-                svcs, reloads = Volume._delete(
-                    self,
-                    destroy=destroy,
-                    cascade=cascade,
-                    systemdataset=systemdataset,
-                )
-            finally:
-                if not os.path.isdir(self.vol_path):
-                    do_reload = False
+        try:
+            svcs, reloads = Volume._delete(
+                self,
+                destroy=destroy,
+                cascade=cascade,
+                systemdataset=systemdataset,
+            )
+        finally:
+            if not os.path.isdir(self.vol_path):
+                do_reload = False
 
-                    if do_reload:
-                        reloads = self.delete_attachments()
+                if do_reload:
+                    reloads = self.delete_attachments()
 
-                    if self.vol_fstype == 'ZFS':
-                        Task.objects.filter(task_filesystem=self.vol_name).delete()
-                        Replication.objects.filter(
-                            repl_filesystem=self.vol_name).delete()
+                if self.vol_fstype == 'ZFS':
+                    Task.objects.filter(task_filesystem=self.vol_name).delete()
+                    Replication.objects.filter(
+                        repl_filesystem=self.vol_name).delete()
 
-                    if do_reload:
-                        svcs = ('cifs', 'afp', 'nfs', 'iscsitarget')
-                        for (svc, dirty) in zip(svcs, reloads):
-                            if dirty:
-                                notifier().restart(svc)
+                if do_reload:
+                    svcs = ('cifs', 'afp', 'nfs', 'iscsitarget')
+                    for (svc, dirty) in zip(svcs, reloads):
+                        if dirty:
+                            notifier().restart(svc)
 
-            n = notifier()
+        n = notifier()
 
-            # The framework would cascade delete all database items
-            # referencing this volume.
-            super(Volume, self).delete()
+        # The framework would cascade delete all database items
+        # referencing this volume.
+        super(Volume, self).delete()
 
         # If there's a system dataset on this pool, stop using it.
         if systemdataset:

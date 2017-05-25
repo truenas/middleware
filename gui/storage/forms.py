@@ -36,7 +36,6 @@ import uuid
 from formtools.wizard.views import SessionWizardView
 from django.core.files.storage import FileSystemStorage
 from django.core.urlresolvers import reverse
-from django.db import transaction
 from django.forms import FileField
 from django.forms.formsets import BaseFormSet, formset_factory
 from django.http import HttpResponse, QueryDict
@@ -249,7 +248,8 @@ class VolumeManagerForm(VolumeMixin, Form):
             volume_encrypt = 0
         dedup = self.cleaned_data.get("dedup", False)
 
-        with transaction.atomic():
+        volume = scrub = None
+        try:
             vols = models.Volume.objects.filter(
                 vol_name=volume_name,
                 vol_fstype='ZFS')
@@ -294,7 +294,13 @@ class VolumeManagerForm(VolumeMixin, Form):
                     notifier().zfs_set_option(volume.vol_name, "dedup", dedup)
 
                 if volume.vol_fstype == 'ZFS':
-                    models.Scrub.objects.create(scrub_volume=volume)
+                    scrub = models.Scrub.objects.create(scrub_volume=volume)
+        except Exception:
+            if volume:
+                volume.delete()
+            if scrub:
+                scrub.delete()
+            raise
 
         if volume.vol_encrypt >= 2 and add:
             # FIXME: ask current passphrase to the user
@@ -313,7 +319,7 @@ class VolumeManagerForm(VolumeMixin, Form):
         notifier().reload("disk")
         if not add:
             notifier().start("ix-syslogd")
-            notifier().restart("system_datasets", timeout=50)
+            notifier().restart("system_datasets")
         # For scrub cronjob
         if volume.vol_fstype == 'ZFS':
             notifier().restart("cron")
@@ -675,7 +681,8 @@ class ZFSVolumeWizardForm(forms.Form):
         else:
             group_type = self.cleaned_data['group_type']
 
-        with transaction.atomic():
+        volume = scrub = None
+        try:
             vols = models.Volume.objects.filter(
                 vol_name=volume_name,
                 vol_fstype='ZFS'
@@ -729,12 +736,18 @@ class ZFSVolumeWizardForm(forms.Form):
                 if dedup:
                     notifier().zfs_set_option(volume.vol_name, "dedup", dedup)
 
-                models.Scrub.objects.create(scrub_volume=volume)
+                scrub = models.Scrub.objects.create(scrub_volume=volume)
 
                 try:
                     notifier().zpool_enclosure_sync(volume.vol_name)
                 except Exception as e:
                     log.error("Error syncing enclosure: %s", e)
+        except Exception:
+            if volume:
+                volume.delete()
+            if scrub:
+                scrub.delete()
+            raise
 
         # This must be outside transaction block to make sure the changes
         # are committed before the call of ix-fstab
@@ -1108,10 +1121,11 @@ class DiskFormPartial(ModelForm):
             obj.disk_togglesmart != self._original_smart_en or
             obj.disk_smartoptions != self._original_smart_opts
         ):
-            if obj.disk_togglesmart == 0:
-                notifier().toggle_smart_off(obj.disk_name)
-            else:
-                notifier().toggle_smart_on(obj.disk_name)
+            with client as c:
+                if obj.disk_togglesmart == 0:
+                    c.call('disk.toggle_smart_off', obj.disk_name)
+                else:
+                    c.call('disk.toggle_smart_on', obj.disk_name)
             started = notifier().restart("smartd")
             if (
                 started is False and
@@ -1188,24 +1202,22 @@ class DiskEditBulkForm(Form):
             self.fields[key].initial = val
 
     def save(self):
+        for disk in self._disks:
 
-        with transaction.atomic():
-            for disk in self._disks:
+            for opt in (
+                'disk_hddstandby',
+                'disk_advpowermgmt',
+                'disk_acousticlevel',
+            ):
+                if self.cleaned_data.get(opt):
+                    setattr(disk, opt, self.cleaned_data.get(opt))
 
-                for opt in (
-                    'disk_hddstandby',
-                    'disk_advpowermgmt',
-                    'disk_acousticlevel',
-                ):
-                    if self.cleaned_data.get(opt):
-                        setattr(disk, opt, self.cleaned_data.get(opt))
-
-                disk.disk_togglesmart = self.cleaned_data.get(
-                    "disk_togglesmart")
-                # This is not a choice field, an empty value should reset all
-                disk.disk_smartoptions = self.cleaned_data.get(
-                    "disk_smartoptions")
-                disk.save()
+            disk.disk_togglesmart = self.cleaned_data.get(
+                "disk_togglesmart")
+            # This is not a choice field, an empty value should reset all
+            disk.disk_smartoptions = self.cleaned_data.get(
+                "disk_smartoptions")
+            disk.save()
         return self._disks
 
 
@@ -2066,14 +2078,13 @@ class ZFSDiskReplacementForm(Form):
         else:
             passfile = None
 
-        with transaction.atomic():
-            rv = notifier().zfs_replace_disk(
-                self.volume,
-                self.label,
-                devname,
-                force=self.cleaned_data.get('force'),
-                passphrase=passfile
-            )
+        rv = notifier().zfs_replace_disk(
+            self.volume,
+            self.label,
+            devname,
+            force=self.cleaned_data.get('force'),
+            passphrase=passfile
+        )
         if rv == 0:
             if (services.objects.get(srv_service='smartd').srv_enable):
                 notifier().restart("smartd")

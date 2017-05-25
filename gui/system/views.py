@@ -345,7 +345,7 @@ def bootenv_scrub_interval(request):
 def bootenv_delete(request, name):
     if request.method == 'POST':
         with client as c:
-            delete = c.call('bootenv.delete', name)
+            delete = c.call('bootenv.delete', name, timeout=120)
         if delete is not False:
             return JsonResp(
                 request,
@@ -375,7 +375,7 @@ def bootenv_deletebulk(request):
                     'total': len(names),
                 }))
             with client as c:
-                delete = c.call('bootenv.delete', name)
+                delete = c.call('bootenv.delete', name, timeout=120)
             if delete is False:
                 failed = True
         if os.path.exists(BOOTENV_DELETE_PROGRESS):

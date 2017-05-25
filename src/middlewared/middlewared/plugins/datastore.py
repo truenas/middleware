@@ -1,5 +1,5 @@
 from middlewared.service import Service, private
-from middlewared.schema import accepts, Bool, Dict, Int, List, Ref, Str
+from middlewared.schema import accepts, Any, Bool, Dict, Int, List, Ref, Str
 
 import os
 import sys
@@ -182,16 +182,16 @@ class DatastoreService(Service):
             if isinstance(field, ForeignKey):
                 data[field.name] = field.rel.to.objects.get(pk=data[field.name])
         obj = model(**data)
-        obj.save()
+        self.middleware.threaded(obj.save)
         return obj.pk
 
-    @accepts(Str('name'), Int('id'), Dict('data', additional_attrs=True))
+    @accepts(Str('name'), Any('id'), Dict('data', additional_attrs=True))
     def update(self, name, id, data):
         """
         Update an entry `id` in `name`.
         """
         model = self.__get_model(name)
-        obj = model.objects.get(pk=id)
+        obj = self.middleware.threaded(lambda oid: model.objects.get(pk=oid), id)
         for field in model._meta.fields:
             if field.name not in data:
                 continue
@@ -199,16 +199,16 @@ class DatastoreService(Service):
                 data[field.name] = field.rel.to.objects.get(pk=data[field.name])
         for k, v in list(data.items()):
             setattr(obj, k, v)
-        obj.save()
+        self.middleware.threaded(obj.save)
         return obj.pk
 
-    @accepts(Str('name'), Int('id'))
+    @accepts(Str('name'), Any('id'))
     def delete(self, name, id):
         """
         Delete an entry `id` in `name`.
         """
         model = self.__get_model(name)
-        model.objects.get(pk=id).delete()
+        self.middleware.threaded(lambda oid: model.objects.get(pk=oid).delete(), id)
         return True
 
     @private
