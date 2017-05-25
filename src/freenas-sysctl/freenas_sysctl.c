@@ -200,13 +200,6 @@ static struct {
 		} sync;
 	} interface;
 
-	struct {
-		struct service_timeout n_st;
-		struct {
-			struct service_timeout n_st;
-		} sync;
-	} route;
-
 } *g_network;
 
 /*
@@ -471,7 +464,7 @@ freenas_sysctl_directoryservice_fini(void)
 static int
 freenas_sysctl_network_init(void)
 {
-	struct sysctl_oid *ntree, *itree, *rtree, *tmptree;
+	struct sysctl_oid *ntree, *ifacetree, *tmptree;
 
 	/* Network memory allocations */
 	g_network = malloc(sizeof(*g_network),
@@ -489,47 +482,25 @@ freenas_sysctl_network_init(void)
 	}
 
 	/* Network interface node */
-	if ((itree = SYSCTL_ADD_NODE(&g_freenas_sysctl_ctx,
+	if ((ifacetree = SYSCTL_ADD_NODE(&g_freenas_sysctl_ctx,
 		SYSCTL_CHILDREN(ntree), OID_AUTO,
 		"interface", CTLFLAG_RD, NULL, NULL)) == NULL) {
 		FAILRET("Failed to add network interface node.\n", -1);
 	}
 	if ((freenas_sysctl_add_timeout_tree(&g_freenas_sysctl_ctx,
-		itree, &g_network->interface.n_st)) != 0) {
+		ifacetree, &g_network->interface.n_st)) != 0) {
 		FAILRET("Failed to add network interface timeout node.\n", -1);
 	}
 
 	/* Network interface sync node */
 	if ((tmptree = SYSCTL_ADD_NODE(&g_freenas_sysctl_ctx,
-		SYSCTL_CHILDREN(itree), OID_AUTO,
+		SYSCTL_CHILDREN(ifacetree), OID_AUTO,
 		"sync", CTLFLAG_RD, NULL, NULL)) == NULL) {
 		FAILRET("Failed to add network interface sync node.\n", -1);
 	}
 	if ((freenas_sysctl_add_timeout_tree(&g_freenas_sysctl_ctx,
 		tmptree, &g_network->interface.sync.n_st)) != 0) {
 		FAILRET("Failed to add network interface sync timeout node.\n", -1);
-	}
-
-	/* Network route node */
-	if ((rtree = SYSCTL_ADD_NODE(&g_freenas_sysctl_ctx,
-		SYSCTL_CHILDREN(ntree), OID_AUTO,
-		"route", CTLFLAG_RD, NULL, NULL)) == NULL) {
-		FAILRET("Failed to add network route node.\n", -1);
-	}
-	if ((freenas_sysctl_add_timeout_tree(&g_freenas_sysctl_ctx,
-		rtree, &g_network->route.n_st)) != 0) {
-		FAILRET("Failed to add network route timeout node.\n", -1);
-	}
-
-	/* Network route sync node */
-	if ((tmptree = SYSCTL_ADD_NODE(&g_freenas_sysctl_ctx,
-		SYSCTL_CHILDREN(rtree), OID_AUTO,
-		"sync", CTLFLAG_RD, NULL, NULL)) == NULL) {
-		FAILRET("Failed to add network route sync node.\n", -1);
-	}
-	if ((freenas_sysctl_add_timeout_tree(&g_freenas_sysctl_ctx,
-		tmptree, &g_network->route.sync.n_st)) != 0) {
-		FAILRET("Failed to add network route sync timeout node.\n", -1);
 	}
 
 	return (0);
