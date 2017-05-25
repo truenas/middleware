@@ -128,7 +128,6 @@ class CIFS_Share(Model):
         null=True
     )
     cifs_auxsmbconf = models.TextField(
-        max_length=120,
         verbose_name=_("Auxiliary Parameters"),
         blank=True,
         help_text=_("These parameters are added to [Share] section of smb.conf")
