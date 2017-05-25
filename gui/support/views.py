@@ -157,7 +157,7 @@ def ticket(request):
             gc = GlobalConfiguration.objects.all().order_by('-id')[0]
             debug_file = dump
             debug_name = 'debug-%s-%s.txz' % (
-                gc.gc_hostname.encode('utf-8'),
+                gc.gc_hostname,
                 time.strftime('%Y%m%d%H%M%S'),
             )
 
