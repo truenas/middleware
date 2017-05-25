@@ -70,7 +70,7 @@ class VM(Model):
     autostart = models.BooleanField(
         verbose_name=_('Autostart'),
         help_text=_('Guest VM will start on boot.'),
-        default=True,
+        default=False,
     )
 
     class Meta:
