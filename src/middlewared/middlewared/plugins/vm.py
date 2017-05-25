@@ -308,6 +308,26 @@ class VMService(CRUDService):
         else:
             return update_devices
 
+    @accepts(Int('id'),
+        Dict('devices', additional_attrs=True),
+    )
+    def create_device(self, id, data):
+        """Create a new device in an existing vm."""
+        devices_type = ('NIC', 'DISK', 'CDROM', 'VNC')
+        devices = data.get('devices', None)
+
+        if devices:
+            devices[0].update({"vm": id})
+            dtype = devices[0].get('dtype', None)
+            if dtype in devices_type and isinstance(devices, list) is True:
+                devices = devices[0]
+                self.middleware.call('datastore.insert', 'vm.device', devices)
+                return True
+            else:
+                return False
+        else:
+            return False
+
     @accepts(Int('id'))
     def do_delete(self, id):
         """Delete a VM."""
