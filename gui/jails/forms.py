@@ -308,7 +308,7 @@ class JailCreateForm(ModelForm):
         try:
             template = JailTemplate.objects.get(jt_name=jail_type)
         except Exception as e:
-            self.errors['__all__'] = self.error_class([_(e)])
+            self.errors['__all__'] = self.error_class([str(e)])
             return
 
         template_create_args['nick'] = template.jt_name
@@ -479,7 +479,7 @@ class JailCreateForm(ModelForm):
                     w.set(**jail_set_args)
             except Exception as e:
                 log.debug('Failed to set jail arguments', exc_info=True)
-                self.errors['__all__'] = self.error_class([_(e)])
+                self.errors['__all__'] = self.error_class([str(e)])
                 return
 
         jail_nat = self.cleaned_data.get('jail_nat', None)
@@ -500,7 +500,7 @@ class JailCreateForm(ModelForm):
             w.set(**jail_set_args)
         except Exception as e:
             log.debug('Failed to set jail arguments', exc_info=True)
-            self.errors['__all__'] = self.error_class([_(e)])
+            self.errors['__all__'] = self.error_class([str(e)])
             return
 
         jail_set_args = {}
@@ -519,21 +519,21 @@ class JailCreateForm(ModelForm):
                 w.set(**jail_set_args)
             except Exception as e:
                 log.debug('Failed to set jail arguments', exc_info=True)
-                self.errors['__all__'] = self.error_class([_(e)])
+                self.errors['__all__'] = self.error_class([str(e)])
                 return
 
         if self.cleaned_data['jail_autostart']:
             try:
                 w.auto(jail=jail_host)
             except Exception as e:
-                self.errors['__all__'] = self.error_class([_(e)])
+                self.errors['__all__'] = self.error_class([str(e)])
                 return
 
         try:
             w.start(jail=jail_host)
         except Exception as e:
             log.debug('Failed to start jail', exc_info=True)
-            self.errors['__all__'] = self.error_class([_(e)])
+            self.errors['__all__'] = self.error_class([str(e)])
             return
 
         # Requery instance so we have everything up-to-date after save
