@@ -9,7 +9,10 @@ if '/usr/local/lib' not in sys.path:
     sys.path.append('/usr/local/lib')
 
 from freenasOS import Configuration, Manifest, Update, Train
-from freenasOS.Exceptions import UpdateIncompleteCacheException, UpdateInvalidCacheException
+from freenasOS.Exceptions import (
+    UpdateIncompleteCacheException, UpdateInvalidCacheException,
+    UpdateBusyCacheException,
+)
 from freenasOS.Update import CheckForUpdates, GetServiceDescription
 
 
@@ -239,8 +242,11 @@ class UpdateService(Service):
             path = self.middleware.call('notifier.get_update_location')
         data = []
         try:
-            changes = Update.PendingUpdatesChanges(path)
-        except (UpdateIncompleteCacheException, UpdateInvalidCacheException):
+            changes = self.middleware.threaded(Update.PendingUpdatesChanges, path)
+        except (
+            UpdateIncompleteCacheException, UpdateInvalidCacheException,
+            UpdateBusyCacheException,
+        ):
             changes = []
         if changes:
             if changes.get("Reboot", True) is False:
