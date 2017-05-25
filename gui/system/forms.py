@@ -483,7 +483,7 @@ class InitialWizard(CommonWizard):
                     for disk in o.smarttest_disks.all():
                         if disk.pk not in disks:
                             disks.append(disk.pk)
-                qs = Disk.objects.filter(disk_enabled=True).exclude(pk__in=disks)
+                qs = Disk.objects.filter(disk_expiretime=None).exclude(pk__in=disks)
 
                 if qs.exists():
                     smarttest = SMARTTest.objects.create(

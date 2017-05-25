@@ -241,7 +241,7 @@ class DiskResourceMixin(object):
 
     class Meta:
         queryset = Disk.objects.filter(
-            disk_enabled=True,
+            disk_expiretime=None,
             disk_multipath_name=''
         ).exclude(
             Q(disk_name__startswith='multipath') | Q(disk_name='')
@@ -824,9 +824,9 @@ class VolumeResourceMixin(NestedMixin):
                     }
                     if self.is_webclient(bundle.request):
                         try:
-                            disk = Disk.objects.order_by(
-                                'disk_enabled'
-                            ).filter(disk_name=current.disk)[0]
+                            disk = Disk.objects.filter(
+                                disk_expiretime=None, disk_name=current.disk
+                            )[0]
                             data['_disk_url'] = "%s?deletable=false" % (
                                 disk.get_edit_url(),
                             )
@@ -3227,9 +3227,9 @@ class BootEnvResource(NestedMixin, DojoResource):
                     }
                     if self.is_webclient(bundle.request):
                         try:
-                            disk = Disk.objects.order_by(
-                                'disk_enabled'
-                            ).filter(disk_name=current.disk)[0]
+                            disk = Disk.objects.filter(
+                                disk_expiretime=None, disk_name=current.disk
+                            )[0]
                             data['_disk_url'] = "%s?deletable=false" % (
                                 disk.get_edit_url(),
                             )

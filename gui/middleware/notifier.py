@@ -447,11 +447,11 @@ class notifier(metaclass=HookMetaclass):
         else:
             with client as c:
                 ident = c.call('disk.device_to_identifier', diskname)
-            diskobj = Disk.objects.filter(disk_identifier=ident).order_by('disk_enabled')
+            diskobj = Disk.objects.filter(disk_identifier=ident).order_by('disk_expiretime')
             if diskobj.exists():
                 diskobj = diskobj[0]
             else:
-                diskobj = Disk.objects.filter(disk_name=diskname).order_by('disk_enabled')
+                diskobj = Disk.objects.filter(disk_name=diskname).order_by('disk_expiretime')
                 if diskobj.exists():
                     diskobj = diskobj[0]
                 else:
@@ -1065,7 +1065,7 @@ class notifier(metaclass=HookMetaclass):
                 log.warn("Could not determine GPT uuid for %s", to_label)
                 raise MiddlewareError('Unable to determine GPT UUID for %s' % devname)
             else:
-                from_diskobj = Disk.objects.filter(disk_name=from_disk, disk_enabled=True)
+                from_diskobj = Disk.objects.filter(disk_name=from_disk, disk_expiretime=None)
                 if from_diskobj.exists():
                     EncryptedDisk.objects.filter(encrypted_volume=volume, encrypted_disk=from_diskobj[0]).delete()
                 devname = self.__encrypt_device("gptid/%s" % uuid[0].text, to_disk, volume, passphrase=passphrase)
@@ -3029,7 +3029,7 @@ class notifier(metaclass=HookMetaclass):
                 ed.encrypted_volume = volume
                 ed.encrypted_disk = Disk.objects.filter(
                     disk_name=diskname,
-                    disk_enabled=True
+                    disk_expiretime=None,
                 )[0]
                 ed.encrypted_provider = disk
                 ed.save()
@@ -3865,7 +3865,7 @@ class notifier(metaclass=HookMetaclass):
                     ed = EncryptedDisk()
                     ed.encrypted_volume = vol
                     ed.encrypted_provider = prov
-                    disk = Disk.objects.filter(disk_name=dev.disk, disk_enabled=True)
+                    disk = Disk.objects.filter(disk_name=dev.disk, disk_expiretime=None)
                     if disk.exists():
                         disk = disk[0]
                     else:
@@ -3875,7 +3875,7 @@ class notifier(metaclass=HookMetaclass):
                     ed.save()
                 else:
                     ed = qs[0]
-                    disk = Disk.objects.filter(disk_name=dev.disk, disk_enabled=True)
+                    disk = Disk.objects.filter(disk_name=dev.disk, disk_expiretime=None)
                     if disk.exists():
                         disk = disk[0]
                         if not ed.encrypted_disk or (

@@ -1544,8 +1544,8 @@ class iSCSITargetExtentForm(ModelForm):
             else:
                 diskobj = models.Disk.objects.filter(
                     disk_name=self.cleaned_data["iscsi_target_extent_disk"],
-                    disk_enabled=True,
-                ).order_by('disk_enabled')[0]
+                    disk_expiretime=None,
+                )[0]
                 # label it only if it is a real disk
                 if (
                     diskobj.disk_identifier.startswith("{devicename}")

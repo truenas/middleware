@@ -30,7 +30,7 @@ class DiskResourceTest(APITestCase):
             'disk_acousticlevel': 'Disabled',
             'disk_advpowermgmt': 'Disabled',
             'disk_description': '',
-            'disk_enabled': True,
+            'disk_expiretime': None,
             'disk_hddstandby': 'Always On',
             'disk_identifier': '',
             'disk_multipath_member': '',

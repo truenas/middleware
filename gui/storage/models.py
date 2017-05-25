@@ -702,8 +702,8 @@ class Disk(Model):
         verbose_name=_("S.M.A.R.T. extra options"),
         blank=True
     )
-    disk_enabled = models.BooleanField(
-        default=True,
+    disk_expiretime = models.DateTimeField(
+        null=True,
         editable=False,
     )
 

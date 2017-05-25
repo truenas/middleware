@@ -1,4 +1,5 @@
 from collections import defaultdict
+from datetime import datetime, timedelta
 import os
 import re
 import subprocess
@@ -16,6 +17,7 @@ if '/usr/local/www' not in sys.path:
     sys.path.insert(0, '/usr/local/www')
 from freenasUI.services.utils import SmartAlert
 
+DISK_EXPIRECACHE_DAYS = 7
 MIRROR_MAX = 5
 RE_DSKNAME = re.compile(r'^([a-z]+)([0-9]+)$')
 RE_ISDISK = re.compile(r'^(da|ada|vtbd|mfid|nvd)[0-9]+$')
@@ -227,7 +229,7 @@ class DiskService(CRUDService):
         if name not in disks:
             return
         ident = self.device_to_identifier(name)
-        qs = self.middleware.call('datastore.query', 'storage.disk', [('disk_identifier', '=', ident)], {'order_by': ['-disk_enabled']})
+        qs = self.middleware.call('datastore.query', 'storage.disk', [('disk_identifier', '=', ident)], {'order_by': ['disk_expiretime']})
         if ident and qs:
             disk = qs[0]
             new = False
@@ -235,10 +237,10 @@ class DiskService(CRUDService):
             new = True
             qs = self.middleware.call('datastore.query', 'storage.disk', [('disk_name', '=', name)])
             for i in qs:
-                i['disk_enabled'] = False
+                i['disk_expiretime'] = datetime.utcnow() + timedelta(days=DISK_EXPIRECACHE_DAYS)
                 self.middleware.call('datastore.update', 'storage.disk', i['disk_identifier'], i)
             disk = {'disk_identifier': ident}
-        disk.update({'disk_name': name, 'disk_enabled': True})
+        disk.update({'disk_name': name, 'disk_expiretime': None})
 
         self.middleware.threaded(geom.scan)
         g = geom.geom_by_name('DISK', name)
@@ -275,23 +277,27 @@ class DiskService(CRUDService):
         ):
             return
 
-        disks = list(self.middleware.call('device.get_info', 'DISK').keys())
+        sys_disks = list(self.middleware.call('device.get_info', 'DISK').keys())
 
-        in_disks = {}
+        seen_disks = {}
         serials = []
         self.middleware.threaded(geom.scan)
-        for disk in self.middleware.call('datastore.query', 'storage.disk', [], {'order_by': ['-disk_enabled']}):
+        for disk in self.middleware.call('datastore.query', 'storage.disk', [], {'order_by': ['disk_expiretime']}):
 
-            disk_enabled_old = disk['disk_enabled']
             name = self.middleware.call('notifier.identifier_to_device', disk['disk_identifier'])
-            if not name or name in in_disks:
+            if not name or name in seen_disks:
                 # If we cant translate the indentifier to a device, give up
                 # If name has already been seen once then we are probably
                 # dealing with with multipath here
-                self.middleware.call('datastore.delete', 'storage.disk', disk['disk_identifier'])
+                if not disk['disk_expiretime']:
+                    disk['disk_expiretime'] = datetime.utcnow() + timedelta(days=DISK_EXPIRECACHE_DAYS)
+                    self.middleware.call('datastore.update', 'storage.disk', disk['disk_identifier'], disk)
+                elif disk['disk_expiretime'] < datetime.utcnow():
+                    # Disk expire time has surpassed, go ahead and remove it
+                    self.middleware.call('datastore.delete', 'storage.disk', disk['disk_identifier'])
                 continue
             else:
-                disk['disk_enabled'] = True
+                disk['disk_expiretime'] = None
                 disk['disk_name'] = name
 
             reg = RE_DSKNAME.search(name)
@@ -312,22 +318,18 @@ class DiskService(CRUDService):
             if serial:
                 serials.append(serial)
 
-            if name not in disks:
-                disk['disk_enabled'] = False
-                if disk_enabled_old:
-                    self.middleware.call('datastore.update', 'storage.disk', disk['disk_identifier'], disk)
-                else:
-                    # Duplicated disk entries in database
-                    self.middleware.call('datastore.delete', 'storage.disk', disk['disk_identifier'])
-            else:
-                self.middleware.call('datastore.update', 'storage.disk', disk['disk_identifier'], disk)
+            # If for some reason disk is not identified as a system disk
+            # mark it to expire.
+            if name not in sys_disks and not disk['disk_expiretime']:
+                    disk['disk_expiretime'] = datetime.utcnow() + timedelta(days=DISK_EXPIRECACHE_DAYS)
+            self.middleware.call('datastore.update', 'storage.disk', disk['disk_identifier'], disk)
 
             # FIXME: use a truenas middleware plugin
             self.middleware.call('notifier.sync_disk_extra', disk['disk_identifier'], False)
-            in_disks[name] = disk
+            seen_disks[name] = disk
 
-        for name in disks:
-            if name not in in_disks:
+        for name in sys_disks:
+            if name not in seen_disks:
                 disk_identifier = self.device_to_identifier(name)
                 qs = self.middleware.call('datastore.query', 'storage.disk', [('disk_identifier', '=', disk_identifier)])
                 if qs:

@@ -1648,7 +1648,7 @@ List resource
                 "disk_multipath_member": "",
                 "disk_description": "",
                 "disk_smartoptions": "",
-                "disk_enabled": true,
+                "disk_expiretime": null,
                 "disk_name": "ada7"
         }
       ]
@@ -1698,7 +1698,7 @@ Update resource
                 "disk_multipath_member": "",
                 "disk_description": "",
                 "disk_smartoptions": "",
-                "disk_enabled": true,
+                "disk_expiretime": null,
                 "disk_name": "ada7"
         }
 
