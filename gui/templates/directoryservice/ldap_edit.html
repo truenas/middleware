@@ -53,9 +53,9 @@
                          form.reset();
 
                          if (!data.error) {
-                             setMessage("LDAP successfully deleted.");
+                             setMessage("Directory service successfully deleted.");
                          } else {
-                             setMessage("Unable to delete LDAP");
+                             setMessage("Unable to delete directory service");
                          }
 
                          dialog.hide();
@@ -69,7 +69,7 @@
                      title: gettext("Confirm"),
                      href: "{{ delete_url }}", 
                      style: "background-color: white;",
-                     content: gettext("Are you sure you want to delete LDAP?"), 
+                     content: gettext("Are you sure you want to delete NT4?"), 
                  });
                  dialog.domNode.appendChild(ok.domNode);
                  dialog.domNode.appendChild(cancel.domNode);
