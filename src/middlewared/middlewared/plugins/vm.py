@@ -34,6 +34,14 @@ class VMManager(object):
         err = supervisor.stop()
         return err
 
+    def restart(self, id):
+        supervisor = self._vm.get(id)
+        if supervisor:
+            supervisor.restart()
+            return True
+        else:
+            return False
+
     def status(self, id):
         supervisor = self._vm.get(id)
         if supervisor is None:
@@ -156,7 +164,7 @@ class VMSupervisor(object):
         self.bhyve_error = self.proc.wait()
         if self.bhyve_error == 0:
             self.logger.info("===> REBOOTING VM: {0} ID: {1} BHYVE_CODE: {2}".format(self.vm['name'], self.vm['id'], self.bhyve_error))
-            self.manager.stop(self.vm['id'])
+            self.manager.restart(self.vm['id'])
             self.manager.start(self.vm['id'])
         elif self.bhyve_error == 1:
             # XXX: Need a better way to handle the vmm destroy.
@@ -192,15 +200,19 @@ class VMSupervisor(object):
             self.destroy_vm()
             return True
 
+    def restart(self):
+        bhyve_error = Popen(['bhyvectl', '--force-reset', '--vm={}'.format(self.vm['name'])], stdout=subprocess.PIPE, stderr=subprocess.PIPE).wait()
+        self.logger.debug("==> Reset VM: {0} ID: {1} BHYVE_CODE: {2}".format(self.vm['name'], self.vm['id'], bhyve_error))
+        self.destroy_tap()
+
     def stop(self):
-        self.logger.debug("===> Stopping VM: {0} ID: {1} BHYVE_CODE: {2}".format(self.vm['name'], self.vm['id'], self.bhyve_error))
         bhyve_error = Popen(['bhyvectl', '--force-poweroff', '--vm={}'.format(self.vm['name'])], stdout=subprocess.PIPE, stderr=subprocess.PIPE).wait()
+        self.logger.debug("===> Stopping VM: {0} ID: {1} BHYVE_CODE: {2}".format(self.vm['name'], self.vm['id'], self.bhyve_error))
 
         if bhyve_error:
             self.logger.error("===> Stopping VM error: {0}".format(bhyve_error))
 
         return self.kill_bhyve_pid()
-
 
     def running(self):
         bhyve_error = Popen(['bhyvectl', '--vm={}'.format(self.vm['name'])], stdout=subprocess.PIPE, stderr=subprocess.PIPE).wait()
@@ -358,20 +370,14 @@ class VMService(CRUDService):
         return self._manager.stop(id)
 
     @accepts(Int('id'))
+    def restart(self, id):
+        """Restart a VM."""
+        return self._manager.restart(id)
+
+    @accepts(Int('id'))
     def status(self, id):
         """Get the status of a VM, if it is RUNNING or STOPPED."""
         return self._manager.status(id)
-
-    @accepts(Int('id'))
-    def restart(self, id):
-        """ Restart a VM."""
-        stop_vm = self.stop(id)
-
-        if stop_vm is True:
-            start_vm = self.start(id)
-            return start_vm
-        else:
-            return stop_vm
 
 
 def kmod_load():
