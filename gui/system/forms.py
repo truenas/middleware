@@ -356,9 +356,9 @@ class CommonWizard(SessionWizardView):
         })
         if not self.request.is_ajax():
             response.content = (
-                "<html><body><textarea>"
+                b"<html><body><textarea>"
                 + response.content +
-                "</textarea></boby></html>"
+                b"</textarea></boby></html>"
             )
         return response
 
@@ -972,9 +972,9 @@ class ManualUpdateWizard(FileWizard):
 
         if not self.request.is_ajax():
             response.content = (
-                "<html><body><textarea>"
+                b"<html><body><textarea>"
                 + response.content +
-                "</textarea></boby></html>"
+                b"</textarea></boby></html>"
             )
         return response
 
