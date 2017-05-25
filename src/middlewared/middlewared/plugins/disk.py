@@ -194,7 +194,6 @@ class DiskService(CRUDService):
                         if p.config['rawtype'] == '516e7cba-6ecf-11d6-8ff8-00022d09712b':
                             return f'{{uuid}}{p.config["rawuuid"]}'
 
-
         g = geom.geom_by_name('LABEL', name)
         if g:
             return f'{{label}}{g.provider.name}'
@@ -383,10 +382,16 @@ class DiskService(CRUDService):
                 # Skip gmirror that is not swap*
                 if not g.name.startswith('swap') or g.name.endswith('.sync'):
                     continue
-                swap_devices.append(f'mirror/{g.name}')
-                for c in g.consumers:
-                    # Add all partitions used in swap, removing .eli
-                    used_partitions.add(c.provider.name.strip('.eli'))
+                consumers = list(g.consumers)
+                # If the mirror is degraded lets remove it and make a new pair
+                if len(consumers) == 1:
+                    c = consumers[0]
+                    self.swaps_remove_disks([c.provider.geom.name])
+                else:
+                    swap_devices.append(f'mirror/{g.name}')
+                    for c in consumers:
+                        # Add all partitions used in swap, removing .eli
+                        used_partitions.add(c.provider.name.strip('.eli'))
 
         klass = geom.class_by_name('PART')
         if not klass:

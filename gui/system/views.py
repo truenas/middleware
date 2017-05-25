@@ -1102,7 +1102,7 @@ class MyServer(xmlrpc.client.ServerProxy):
 
     def __getattr__(self, name):
         if name.startswith('_'):
-            return object.__getattr__(self, name)
+            return object.__getattribute__(self, name)
         # magic method dispatcher
         return xmlrpc.client._Method(self.__request, name)
 
