@@ -724,19 +724,6 @@ class Disk(Model):
         else:
             return self.disk_name
 
-    def get_disk_size(self):
-        # FIXME
-        p1 = subprocess.Popen(
-            ["/usr/sbin/diskinfo", self.devname],
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            enconding='utf8',
-        )
-        if p1.wait() == 0:
-            out = p1.communicate()[0]
-            return out.split('\t')[3]
-        return 0
-
     def save(self, *args, **kwargs):
         if self.pk and self._original_state.get("disk_togglesmart", None) != \
                 self.__dict__.get("disk_togglesmart"):
