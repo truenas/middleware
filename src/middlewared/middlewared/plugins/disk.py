@@ -403,13 +403,12 @@ class DiskService(CRUDService):
         swap_partitions_by_size = defaultdict(list)
         for g in klass.geoms:
             for p in g.providers:
-                if p.name in used_partitions:
-                    continue
                 # if swap partition
                 if p.config['rawtype'] == '516e7cb5-6ecf-11d6-8ff8-00022d09712b':
                     # Try to save a core dump from that
                     run('savecore', '/data/crash/', f'/dev/{p.name}', check=False)
-                    swap_partitions_by_size[p.mediasize].append(p.name)
+                    if p.name not in used_partitions:
+                        swap_partitions_by_size[p.mediasize].append(p.name)
 
         dumpdev = False
         unused_partitions = []
