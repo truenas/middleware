@@ -2205,6 +2205,7 @@ class DomainController(Model):
         verbose_name_plural = _("Domain Controller")
 
     class FreeAdmin:
+        deletable = False
         icon_model = "DomainControllerIcon"
 
 
