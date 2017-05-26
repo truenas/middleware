@@ -1,10 +1,13 @@
 from middlewared.schema import accepts, Any, Str
 from middlewared.service import Service
-import middlewared.logger
+from middlewared.utils import Popen
 
+import middlewared.logger
 import consul
+import subprocess
 
 logger = middlewared.logger.Logger('consul').getLogger()
+
 
 class ConsulService(Service):
 
@@ -58,6 +61,21 @@ class ConsulService(Service):
         """
         c = consul.Consul()
         return c.kv.delete(str(key))
+
+    @accepts()
+    def reload(self):
+        """
+        Reload consul agent.
+
+        Returns:
+                    bool: True if it could reload, otherwise False.
+        """
+        consul_error = Popen(['consul', 'reload'], stdout=subprocess.PIPE, stderr=subprocess.PIPE).wait()
+        if consul_error == 0:
+            logger.info("===> Reload Consul: {0}".format(consul_error))
+            return True
+        else:
+            return False
 
     def _convert_keys(self, data):
         """
