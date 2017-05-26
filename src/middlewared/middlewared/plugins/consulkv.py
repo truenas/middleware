@@ -1,10 +1,14 @@
 from middlewared.schema import accepts, Any, Str
 from middlewared.service import Service
 from middlewared.utils import Popen
+from middlewared.client import ejson as json
 
 import middlewared.logger
 import consul
 import subprocess
+import random
+import os
+import errno
 
 logger = middlewared.logger.Logger('consul').getLogger()
 
@@ -76,6 +80,33 @@ class ConsulService(Service):
             return True
         else:
             return False
+
+    @accepts()
+    def create_fake_alert(self):
+        seed = random.randrange(100000)
+        fake_fd = "/usr/local/etc/consul.d/fake.json"
+        fake_alert = {"service": {"name": "fake-" + str(seed), "tags": ["primary"],
+                                  "address": "", "port": 65535,
+                                  "enableTagOverride": False,
+                                  "checks": [{"tcp": "localhost:65535",
+                                              "interval": "10s", "timeout": "3s"}]
+                                  }
+                      }
+        with open(fake_fd, 'w') as fd:
+            fd.write(json.dumps(fake_alert))
+
+        return self.reload()
+
+    @accepts()
+    def remove_fake_alert(self):
+        fake_fd = "/usr/local/etc/consul.d/fake.json"
+        try:
+            os.remove(fake_fd)
+        except OSError as e:
+            if e.errno != errno.ENOENT:
+                raise
+
+        return self.reload()
 
     def _convert_keys(self, data):
         """
