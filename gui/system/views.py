@@ -1836,3 +1836,18 @@ def CA_info(request, id):
     return certificate_to_json(
         models.CertificateAuthority.objects.get(pk=int(id))
     )
+
+
+def consul_fake_alert(request):
+    with client as c:
+        fake_alert = c.call('consul.create_fake_alert')
+    if fake_alert is True:
+        return JsonResp(
+                request,
+                message=_('Fake alert sent.'),
+        )
+    else:
+        return JsonResp(
+                request,
+                message=_('Failed to send a fake alert.'),
+        )
