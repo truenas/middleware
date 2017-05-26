@@ -4,8 +4,6 @@ import hashlib
 import json
 import logging
 import re
-import sys
-import middlewared.logger as logger
 
 from django.conf.urls import url, include
 from django.core.urlresolvers import reverse
@@ -18,7 +16,6 @@ from django.views.decorators.csrf import csrf_protect
 from freenasUI.common.system import get_sw_name, get_sw_version
 from freenasUI.freeadmin.apppool import appPool
 from freenasUI.freeadmin.options import BaseFreeAdmin
-from freenasUI.freeadmin.utils import request2crashreporting
 
 RE_ALERT = re.compile(r'^(?P<status>\w+)\[(?P<msgid>.+?)\]: (?P<message>.+)')
 log = logging.getLogger('freeadmin.site')
@@ -229,7 +226,6 @@ class FreeAdminSite(object):
         sw_version = get_sw_version()
         sw_version_footer = get_sw_version(strip_build_num=True).split('-', 1)[-1]
 
-
         return render(request, 'freeadmin/index.html', {
             'consolemsg': console,
             'hostname': hostname,
@@ -251,7 +247,6 @@ class FreeAdminSite(object):
         return HttpResponse(json.dumps({
             'token': middleware_token,
         }), content_type="application/json")
-
 
     @never_cache
     def help(self, request):
@@ -321,5 +316,6 @@ class FreeAdminSite(object):
             if dismiss == "1":
                 alert = Alert.objects.create(node=alert_node(), message_id=msgid)
         return JsonResp(request, message="OK")
+
 
 site = FreeAdminSite()
