@@ -165,6 +165,8 @@ class Application(WebSocketApplication):
             result = self.middleware.call_method(self, message)
             if isinstance(result, Job):
                 result = result.id
+            elif isinstance(result, types.GeneratorType):
+                result = list(result)
             self._send({
                 'id': message['id'],
                 'msg': 'result',
