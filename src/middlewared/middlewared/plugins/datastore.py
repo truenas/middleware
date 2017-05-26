@@ -37,7 +37,8 @@ class DatastoreService(Service):
                 raise ValueError('Filter must be a list: {0}'.format(f))
             if len(f) == 3:
                 name, op, value = f
-                if field_prefix:
+                # id is special
+                if field_prefix and name != 'id':
                     name = field_prefix + name
                 if op not in opmap:
                     raise Exception("Invalid operation: {0}".format(op))
