@@ -7,7 +7,7 @@ import sys
 import sysctl
 
 from bsd import geom
-from middlewared.schema import accepts
+from middlewared.schema import accepts, Str
 from middlewared.service import filterable, private, CRUDService
 from middlewared.utils import Popen, run
 
