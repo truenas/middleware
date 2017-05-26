@@ -101,7 +101,7 @@ class DiskService(CRUDService):
     def __get_twcli(self, controller):
 
         re_port = re.compile(r'^p(?P<port>\d+).*?\bu(?P<unit>\d+)\b', re.S | re.M)
-        proc = Popen(f'/usr/local/sbin/tw_cli /c{controller} show', stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        proc = Popen(['/usr/local/sbin/tw_cli', f'/c{controller}', 'show'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         output = proc.communicate()[0]
 
         units = {}
