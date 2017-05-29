@@ -1,4 +1,5 @@
 import libzfs
+import os
 
 from bsd import geom
 
@@ -19,6 +20,24 @@ class PoolService(CRUDService):
     @private
     def pool_extend(self, pool):
         pool.pop('fstype', None)
+
+        """
+        If pool is encrypted we need to check if the pool is imported
+        or if all geli providers exist.
+        """
+        if pool['encrypt'] > 0:
+            try:
+                libzfs.ZFS().get(pool['name'])
+                pool['is_decrypted'] = True
+            except libzfs.ZFSException:
+                decrypted = True
+                for ed in self.middleware.call('datastore.query', 'storage.encrypteddisk', [('encrypted_volume', '=', pool['id'])]):
+                    if not os.path.exists(f'/dev/{ed["encrypted_provider"]}.eli'):
+                        decrypted = False
+                        break
+                pool['is_decrypted'] = decrypted
+        else:
+            pool['is_decrypted'] = True
         return pool
 
     @item_method
