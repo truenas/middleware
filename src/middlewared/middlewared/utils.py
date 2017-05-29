@@ -15,8 +15,15 @@ def django_modelobj_serialize(middleware, obj, extend=None, field_prefix=None):
     )
     data = {}
     for field in obj._meta.fields:
-        value = getattr(obj, field.name)
         name = field.name
+        try:
+            value = getattr(obj, name)
+        except Exception as e:
+            # If foreign key does not exist set it to None
+            if isinstance(field, ForeignKey) and isinstance(e, field.rel.model.DoesNotExist):
+                data[name] = None
+                continue
+            raise
         if field_prefix and name.startswith(field_prefix):
             name = name[len(field_prefix):]
         if isinstance(field, (
