@@ -35,7 +35,6 @@ List resource
         {
                 "status": "HEALTHY",
                 "vol_guid": "8443409799014097611",
-                "vol_fstype": "ZFS",
                 "used": "192.0 KiB (0%)",
                 "name": "tank",
                 "used_pct": "0%",
@@ -93,7 +92,6 @@ Create resource
         {
                 "status": "HEALTHY",
                 "vol_guid": "8443409799014097611",
-                "vol_fstype": "ZFS",
                 "used": "192.0 KiB (0%)",
                 "name": "tank",
                 "used_pct": "0%",
