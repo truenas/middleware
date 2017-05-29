@@ -47,6 +47,8 @@ class PoolService(CRUDService):
         Get all disks from a given pool `id`.
         """
         pool = self.query([('id', '=', oid)], {'get': True})
+        if not pool['is_decrypted']:
+            return []
         zfs = libzfs.ZFS()
         zpool = zfs.get(pool['name'])
 
