@@ -11,6 +11,8 @@ from raven.transport.threaded import ThreadedHTTPTransport
 
 # geventwebsocket.server debug log is mostly useless, lets focus on INFO
 logging.getLogger('geventwebsocket.server').setLevel(logging.INFO)
+# markdown debug is also considered useless
+logging.getLogger('MARKDOWN').setLevel(logging.INFO)
 
 
 class CrashReporting(object):
