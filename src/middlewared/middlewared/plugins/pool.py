@@ -3,7 +3,7 @@ import libzfs
 from bsd import geom
 
 from middlewared.schema import accepts, Int
-from middlewared.service import filterable, private, CRUDService
+from middlewared.service import filterable, item_method, private, CRUDService
 
 
 class PoolService(CRUDService):
@@ -21,6 +21,7 @@ class PoolService(CRUDService):
         pool.pop('fstype', None)
         return pool
 
+    @item_method
     @accepts(Int('id'))
     def get_disks(self, oid):
         """
