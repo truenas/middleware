@@ -1367,7 +1367,7 @@ class iSCSITargetExtentForm(ModelForm):
         _notifier = notifier()
         zsnapshots = _notifier.zfs_snapshot_list(sort='name')
         snaps = []
-        for volume in Volume.objects.filter(vol_fstype__exact='ZFS'):
+        for volume in Volume.objects.all():
             zvols = _notifier.list_zfs_vols(volume.vol_name, sort='name')
             for zvol, attrs in list(zvols.items()):
                 if "zvol/" + zvol not in used_zvol:

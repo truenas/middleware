@@ -51,11 +51,6 @@ class Volume(Model):
         max_length=120,
         verbose_name=_("Name")
     )
-    vol_fstype = models.CharField(
-        max_length=120,
-        choices=choices.VolumeType_Choices,
-        verbose_name=_("File System Type"),
-    )
     vol_guid = models.CharField(
         max_length=50,
         blank=True,
@@ -482,7 +477,6 @@ class Scrub(Model):
     scrub_volume = models.OneToOneField(
         Volume,
         verbose_name=_("Volume"),
-        limit_choices_to={'vol_fstype': 'ZFS'},
     )
     scrub_threshold = models.PositiveSmallIntegerField(
         verbose_name=_("Threshold days"),

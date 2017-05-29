@@ -775,7 +775,7 @@ def jail_auto_configure():
     append "_N" where N 2..100 until a dataset is not found.
     """
 
-    volume = Volume.objects.filter(vol_fstype='ZFS')
+    volume = Volume.objects.all()
     if not volume.exists():
         raise MiddlewareError(_("You need to create a ZFS volume to proceed!"))
 

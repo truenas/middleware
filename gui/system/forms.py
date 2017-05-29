@@ -452,10 +452,7 @@ class InitialWizard(CommonWizard):
                             'for futher details check pool status'
                         ) % volume_name)
 
-                volume = Volume(
-                    vol_name=volume_name,
-                    vol_fstype='ZFS',
-                )
+                volume = Volume(vol_name=volume_name)
                 volume.save()
                 model_objs.append(volume)
 
@@ -494,7 +491,7 @@ class InitialWizard(CommonWizard):
                     model_objs.append(smarttest)
 
             else:
-                volume = Volume.objects.filter(vol_fstype='ZFS')[0]
+                volume = Volume.objects.all()[0]
                 volume_name = volume.vol_name
 
             curstep += 1
@@ -1735,7 +1732,7 @@ class SystemDatasetForm(ModelForm):
     def __init__(self, *args, **kwargs):
         super(SystemDatasetForm, self).__init__(*args, **kwargs)
         pool_choices = [('', ''), ('freenas-boot', 'freenas-boot')]
-        for v in Volume.objects.filter(vol_fstype='ZFS'):
+        for v in Volume.objects.all():
             if v.is_decrypted():
                 pool_choices.append((v.vol_name, v.vol_name))
 
@@ -2067,7 +2064,7 @@ class InitialWizardShareForm(Form):
 
     def clean_share_name(self):
         share_name = self.cleaned_data.get('share_name')
-        qs = Volume.objects.filter(vol_fstype='ZFS')
+        qs = Volume.objects.all()
         if qs.exists():
             volume_name = qs[0].vol_name
             path = '/mnt/%s/%s' % (volume_name, share_name)

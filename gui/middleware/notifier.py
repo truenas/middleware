@@ -656,8 +656,6 @@ class notifier(metaclass=HookMetaclass):
         """
         Test key for geli providers of a given volume
         """
-        assert volume.vol_fstype == 'ZFS'
-
         geli_keyfile = volume.get_geli_keyfile()
 
         # Parse zpool status to get encrypted providers
@@ -853,7 +851,6 @@ class notifier(metaclass=HookMetaclass):
         else:
             swapsize = self.get_swapsize()
 
-        assert volume.vol_fstype == 'ZFS'
         z_name = volume.vol_name
         z_vdev = ""
         encrypt = (volume.vol_encrypt >= 1)
@@ -1019,15 +1016,12 @@ class notifier(metaclass=HookMetaclass):
         """Initialize a volume designated by volume_id"""
         swapsize = self.get_swapsize()
 
-        assert volume.vol_fstype == 'ZFS'
         self.__create_zfs_volume(volume, swapsize, kwargs.pop('groups', False), kwargs.pop('path', None), init_rand=kwargs.pop('init_rand', False))
 
     def zfs_replace_disk(self, volume, from_label, to_disk, force=False, passphrase=None):
         """Replace disk in zfs called `from_label` to `to_disk`"""
         from freenasUI.storage.models import Disk, EncryptedDisk
         swapsize = self.get_swapsize()
-
-        assert volume.vol_fstype == 'ZFS'
 
         # TODO: Test on real hardware to see if ashift would persist across replace
         from_disk = self.label_to_disk(from_label)
@@ -1108,8 +1102,6 @@ class notifier(metaclass=HookMetaclass):
     def zfs_offline_disk(self, volume, label):
         from freenasUI.storage.models import EncryptedDisk
 
-        assert volume.vol_fstype == 'ZFS'
-
         # TODO: Test on real hardware to see if ashift would persist across replace
         disk = self.label_to_disk(label)
 
@@ -1130,7 +1122,7 @@ class notifier(metaclass=HookMetaclass):
             ).delete()
 
     def zfs_online_disk(self, volume, label):
-        assert volume.vol_fstype == 'ZFS' and volume.vol_encrypt == 0
+        assert volume.vol_encrypt == 0
 
         p1 = self._pipeopen('/sbin/zpool online %s %s' % (volume.vol_name, label))
         stderr = p1.communicate()[1]
@@ -1146,7 +1138,6 @@ class notifier(metaclass=HookMetaclass):
         if isinstance(volume, str):
             vol_name = volume
         else:
-            assert volume.vol_fstype == 'ZFS'
             vol_name = volume.vol_name
 
         from_disk = self.label_to_disk(label)
@@ -1172,8 +1163,6 @@ class notifier(metaclass=HookMetaclass):
         Remove a disk from zpool
         Cache disks, inactive hot-spares (and log devices in zfs 28) can be removed
         """
-
-        assert volume.vol_fstype == 'ZFS'
 
         from_disk = self.label_to_disk(label)
         with client as c:
@@ -1261,11 +1250,9 @@ class notifier(metaclass=HookMetaclass):
         """
 
         # volume_detach compatibility.
-        vol_name, vol_fstype = volume.vol_name, volume.vol_fstype
+        vol_name = volume.vol_name
 
         vol_mountpath = self.__get_mountpath(vol_name)
-
-        assert vol_fstype == 'ZFS'
 
         self.reload('disk')
         self._encvolume_detach(volume, destroy=True)
@@ -2927,9 +2914,7 @@ class notifier(metaclass=HookMetaclass):
              available in UFS volumes.
 
         Parameters:
-            vol_name: a textual name for the volume, e.g. tank, stripe, etc.
-            vol_fstype: the filesystem type for the volume; valid values are:
-                        'EXT2FS', 'MSDOSFS', 'UFS', 'ZFS'.
+            volume: volume model object
 
         Raises:
             MiddlewareError: the volume could not be detached cleanly.
@@ -2937,8 +2922,6 @@ class notifier(metaclass=HookMetaclass):
         """
 
         vol_name = volume.vol_name
-        vol_fstype = volume.vol_fstype
-        assert vol_fstype == 'ZFS'
 
         succeeded = False
 
@@ -2989,10 +2972,7 @@ class notifier(metaclass=HookMetaclass):
 
         model_objs = []
         try:
-            volume = Volume(
-                vol_name=volume_name,
-                vol_fstype='ZFS',
-                vol_encrypt=encrypt)
+            volume = Volume(vol_name=volume_name, vol_encrypt=encrypt)
             volume.save()
             model_objs.append(volume)
             if encrypt > 0:
@@ -3127,7 +3107,7 @@ class notifier(metaclass=HookMetaclass):
 
         zfsproc = self._pipeopen("/sbin/zfs list -t volume -o name %s -H" % sort)
         zvols = set([y for y in zfsproc.communicate()[0].split('\n') if y != ''])
-        volnames = set([o.vol_name for o in Volume.objects.filter(vol_fstype='ZFS')])
+        volnames = set([o.vol_name for o in Volume.objects.all()])
 
         fieldsflag = '-o name,used,available,referenced,mountpoint,freenas:vmsynced'
         if path:
@@ -4479,10 +4459,7 @@ class notifier(metaclass=HookMetaclass):
         # If there is a pool configured make sure the volume exists
         # Otherwise reset it to blank
         if systemdataset.sys_pool and systemdataset.sys_pool != 'freenas-boot':
-            volume = Volume.objects.filter(
-                vol_name=systemdataset.sys_pool,
-                vol_fstype='ZFS',
-            )
+            volume = Volume.objects.filter(vol_name=systemdataset.sys_pool)
             if not volume.exists():
                 systemdataset.sys_pool = ''
                 systemdataset.save()
@@ -4495,7 +4472,7 @@ class notifier(metaclass=HookMetaclass):
         elif not systemdataset.sys_pool:
 
             volume = None
-            for o in Volume.objects.filter(vol_fstype='ZFS').order_by(
+            for o in Volume.objects.all().order_by(
                 'vol_encrypt'
             ):
                 if o.is_decrypted():

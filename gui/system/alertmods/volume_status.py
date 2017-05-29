@@ -28,7 +28,7 @@ class VolumeStatusAlert(BaseAlert):
         if not self.volumes_status_enabled():
             return
         alerts = []
-        for vol in Volume.objects.filter(vol_fstype='ZFS'):
+        for vol in Volume.objects.all():
             if not vol.is_decrypted():
                 continue
             state, status = notifier().zpool_status(vol.vol_name)

@@ -102,7 +102,6 @@ class VolumeResourceTest(APITestCase):
         self.assertEqual(data['children'], [])
         self.assertEqual(data['status'], "HEALTHY")
         self.assertEqual(data['vol_name'], "tankpool")
-        self.assertEqual(data['vol_fstype'], "ZFS")
         self.assertEqual(data['vol_encrypt'], 0)
         self.assertEqual(data['mountpoint'], '/mnt/tankpool')
 
@@ -167,7 +166,6 @@ class ScrubResourceTest(APITestCase):
         super(ScrubResourceTest, self).setUp()
         self._vol = models.Volume.objects.create(
             vol_name='tank',
-            vol_fstype='ZFS',
         )
         models.MountPoint.objects.create(
             mp_path='/mnt/tank',
@@ -267,7 +265,6 @@ class TaskResourceTest(APITestCase):
         super(TaskResourceTest, self).setUp()
         self._vol = models.Volume.objects.create(
             vol_name='tank',
-            vol_fstype='ZFS',
         )
         models.MountPoint.objects.create(
             mp_path='/mnt/tank',
@@ -366,7 +363,6 @@ class ReplicationResourceTest(APITestCase):
         super(ReplicationResourceTest, self).setUp()
         self._vol = models.Volume.objects.create(
             vol_name='tank',
-            vol_fstype='ZFS',
         )
         models.MountPoint.objects.create(
             mp_path='/mnt/tank',

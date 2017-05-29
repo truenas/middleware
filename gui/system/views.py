@@ -830,7 +830,7 @@ class DojoFileStore(object):
         if self.filterVolumes:
             self.mp = [
                 os.path.abspath('/mnt/%s' % v.vol_name)
-                for v in Volume.objects.filter(vol_fstype='ZFS')
+                for v in Volume.objects.all()
             ]
 
         self.path = os.path.join(self.root, path.replace("..", ""))

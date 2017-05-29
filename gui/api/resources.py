@@ -759,8 +759,6 @@ class VolumeResourceMixin(NestedMixin):
 
         bundle, obj = self._get_parent(request, kwargs)
 
-        assert bundle.obj.vol_fstype == 'ZFS'
-
         pool = notifier().zpool_parse(bundle.obj.vol_name)
 
         bundle.data['id'] = bundle.obj.id
@@ -1105,9 +1103,6 @@ class VolumeResourceMixin(NestedMixin):
         attr_fields = ('avail', 'used', 'used_pct')
         for attr in attr_fields + ('status', ):
             bundle.data[attr] = getattr(bundle.obj, attr)
-
-        if bundle.obj.vol_fstype != 'ZFS':
-            return bundle
 
         bundle.data['is_upgraded'] = bundle.obj.is_upgraded
 
