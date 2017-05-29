@@ -26,7 +26,7 @@ app.jinja_env.filters['markdown'] = markdown_filter
 @app.route('/')
 def main():
     services = []
-    for name in app.middleware.call('core.get_services'):
+    for name in sorted(app.middleware.call('core.get_services')):
         services.append({
            'name': name,
            'methods': app.middleware.call('core.get_methods', name)
