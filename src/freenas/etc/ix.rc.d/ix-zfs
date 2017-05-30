@@ -42,7 +42,7 @@ import_zpools()
 			cp /data/zfs/zpool.cache /data/zfs/zpool.cache.saved
 		fi
 	fi
-	${FREENAS_SQLITE_CMD} ${RO_FREENAS_CONFIG} "SELECT $sf FROM storage_volume vol_encrypt < 2" | \
+	${FREENAS_SQLITE_CMD} ${RO_FREENAS_CONFIG} "SELECT $sf FROM storage_volume WHERE vol_encrypt < 2" | \
 	while eval read -r $f; do
 		if [ -n "${vol_guid}" ]; then
 			echo "	Importing ${vol_guid}"
