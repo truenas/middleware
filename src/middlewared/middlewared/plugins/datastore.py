@@ -29,6 +29,8 @@ class DatastoreService(Service):
             '<': 'lt',
             '<=': 'lte',
             '~': 'regex',
+            'in': 'in',
+            'nin': 'in',
         }
 
         rv = []
@@ -43,7 +45,7 @@ class DatastoreService(Service):
                 if op not in opmap:
                     raise Exception("Invalid operation: {0}".format(op))
                 q = Q(**{'{0}__{1}'.format(name, opmap[op]): value})
-                if op == '!=':
+                if op in ('!=', 'nin'):
                     q.negate()
                 rv.append(q)
             elif len(f) == 2:
