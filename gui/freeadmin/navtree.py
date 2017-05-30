@@ -573,53 +573,53 @@ class NavTree(object):
             timeout = 6
         args = [(y, host, request, timeout) for y in plugs]
 
-        pool = ThreadPool(20)
-        for plugin, url, data in pool.imap(self._plugin_fetch, args):
+        with ThreadPool(10) as pool:
+            for plugin, url, data in pool.imap(self._plugin_fetch, args):
 
-            if not data:
-                continue
+                if not data:
+                    continue
 
-            try:
-                data = json.loads(data)
+                try:
+                    data = json.loads(data)
 
-                nodes = unserialize_tree(data)
-                for node in nodes:
-                    # We have our TreeNode's, find out where to place them
+                    nodes = unserialize_tree(data)
+                    for node in nodes:
+                        # We have our TreeNode's, find out where to place them
 
-                    found = False
-                    if node.append_to:
-                        log.debug(
-                            "Plugin %s requested to be appended to %s",
-                            plugin.plugin_name, node.append_to)
-                        places = node.append_to.split('.')
-                        places.reverse()
-                        for root in tree_roots:
-                            find = root.find_place(list(places))
-                            if find is not None:
-                                find.append_child(node)
-                                found = True
-                                break
-                    else:
-                        log.debug(
-                            "Plugin %s didn't request to be appended "
-                            "anywhere specific",
-                            plugin.plugin_name)
+                        found = False
+                        if node.append_to:
+                            log.debug(
+                                "Plugin %s requested to be appended to %s",
+                                plugin.plugin_name, node.append_to)
+                            places = node.append_to.split('.')
+                            places.reverse()
+                            for root in tree_roots:
+                                find = root.find_place(list(places))
+                                if find is not None:
+                                    find.append_child(node)
+                                    found = True
+                                    break
+                        else:
+                            log.debug(
+                                "Plugin %s didn't request to be appended "
+                                "anywhere specific",
+                                plugin.plugin_name)
 
-                    if not found:
-                        tree_roots.register(node)
+                        if not found:
+                            tree_roots.register(node)
 
-            except Exception as e:
-                log.warn(_(
-                    "An error occurred while unserializing from "
-                    "%(url)s: %(error)s") % {'url': url, 'error': e})
-                log.debug(_(
-                    "Error unserializing %(url)s (%(error)s), data "
-                    "retrieved:"
-                ) % {
-                    'url': url,
-                    'error': e,
-                })
-                continue
+                except Exception as e:
+                    log.warn(_(
+                        "An error occurred while unserializing from "
+                        "%(url)s: %(error)s") % {'url': url, 'error': e})
+                    log.debug(_(
+                        "Error unserializing %(url)s (%(error)s), data "
+                        "retrieved:"
+                    ) % {
+                        'url': url,
+                        'error': e,
+                    })
+                    continue
 
     def _build_nav(self, user):
         navs = []
