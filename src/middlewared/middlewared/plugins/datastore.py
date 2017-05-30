@@ -98,7 +98,7 @@ class DatastoreService(Service):
             simple_filter: '[' attribute_name, OPERATOR, value ']'
             conjunction: '[' CONJUNTION, '[' simple_filter (',' simple_filter)* ']]'
 
-            OPERATOR: ('=' | '!=' | '>' | '>=' | '<' | '<=' | '~' )
+            OPERATOR: ('=' | '!=' | '>' | '>=' | '<' | '<=' | '~' | 'in' | 'nin')
             CONJUNCTION: 'OR'
 
         e.g.
