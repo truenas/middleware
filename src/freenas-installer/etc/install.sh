@@ -599,9 +599,9 @@ disk_is_freenas()
 		    # If the active dataset doesn't have a datbase file,
 		    # then it's not FN as far as we're concerned (the upgrade code
 		    # will go badly).
-		    if [ ! -f /tmp/data_old/freenas-v1.db ]; then
-			umount /tmp/data_old || return 1
-			zpool export freenas-boot || return 1
+		    if [ ! -f /tmp/data_old/data/freenas-v1.db ]; then
+			umount /tmp/data_old || true
+			zpool export freenas-boot || true
 			return 1
 		    fi
 		    cp -pR /tmp/data_old/data/. /tmp/data_preserved
