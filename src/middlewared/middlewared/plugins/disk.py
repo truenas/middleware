@@ -1,5 +1,6 @@
 from collections import defaultdict
 from datetime import datetime, timedelta
+import errno
 import os
 import re
 import subprocess
@@ -8,7 +9,7 @@ import sysctl
 
 from bsd import geom
 from middlewared.schema import accepts, Str
-from middlewared.service import filterable, private, CRUDService
+from middlewared.service import filterable, private, CallError, CRUDService
 from middlewared.utils import Popen, run
 
 # FIXME: temporary import of SmartAlert until alert is implemented
@@ -462,7 +463,13 @@ class DiskService(CRUDService):
         reserved = list(self.middleware.call('boot.get_disks'))
         # disks already in use count as reserved as well
         for pool in self.middleware.call('pool.query'):
-            reserved += list(self.middleware.call('pool.get_disks', pool['id']))
+            try:
+                if pool['is_decrypted']:
+                    reserved += list(self.middleware.call('pool.get_disks', pool['id']))
+            except CallError as e:
+                # pool could not be available for some reason
+                if e.errno != errno.ENOENT:
+                    raise
 
         is_freenas = self.middleware.call('system.is_freenas')
 

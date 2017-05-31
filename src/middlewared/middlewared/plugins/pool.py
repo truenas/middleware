@@ -1,8 +1,6 @@
 import libzfs
 import os
 
-from bsd import geom
-
 from middlewared.schema import accepts, Int
 from middlewared.service import filterable, item_method, private, CRUDService
 

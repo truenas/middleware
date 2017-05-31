@@ -1,8 +1,9 @@
 from bsd import geom
 
 from middlewared.schema import Str, accepts
-from middlewared.service import Service
+from middlewared.service import CallError, Service
 
+import errno
 import libzfs
 
 
@@ -15,7 +16,10 @@ class ZFSPoolService(Service):
     @accepts(Str('pool'))
     def get_disks(self, name):
         zfs = libzfs.ZFS()
-        zpool = zfs.get(name)
+        try:
+            zpool = zfs.get(name)
+        except libzfs.ZFSException as e:
+            raise CallError(str(e), errno.ENOENT)
 
         self.middleware.threaded(geom.scan)
         labelclass = geom.class_by_name('LABEL')
