@@ -79,6 +79,7 @@ class VMSupervisor(object):
         self.proc = None
         self.taps = []
         self.bhyve_error = None
+        self.vmutils = VMUtils
 
     def run(self):
         args = [
