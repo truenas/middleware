@@ -3746,22 +3746,6 @@ class notifier(metaclass=HookMetaclass):
         else:
             return ''
 
-    def get_allswapdev(self):
-        from freenasUI.storage.models import Volume
-
-        disks = []
-        for v in Volume.objects.all():
-            disks = disks + v.get_disks()
-
-        result = []
-        for disk in disks:
-            result.append(self.part_type_from_device('swap', disk))
-        return "\n".join(result)
-
-    def get_boot_pool_disks(self):
-        status = self.zpool_parse('freenas-boot')
-        return "\n".join(status.get_disks())
-
     def get_boot_pool_boottype(self):
         status = self.zpool_parse('freenas-boot')
         doc = self._geom_confxml()
@@ -3927,21 +3911,6 @@ class notifier(metaclass=HookMetaclass):
         disks = self.__get_disks()
         for disk in disks:
             open("/dev/%s" % disk, 'w').close()
-
-    def kern_module_is_loaded(self, module):
-        """Determine whether or not a kernel module (or modules) is loaded.
-
-        Parameter:
-            module_name - a module to look for in kldstat -v output (.ko is
-                          added automatically for you).
-
-        Returns:
-            A boolean to denote whether or not the module was found.
-        """
-
-        pipe = self._pipeopen('/sbin/kldstat -v')
-
-        return 0 < pipe.communicate()[0].find(module + '.ko')
 
     def sysctl(self, name):
         """
@@ -4595,7 +4564,6 @@ class notifier(metaclass=HookMetaclass):
             proc.communicate()
             return proc.returncode == 0
         return False
-
 
     def system_dataset_migrate(self, _from, _to):
 
