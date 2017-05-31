@@ -120,6 +120,12 @@ class VMSupervisor(object):
                 else:
                     nictype = 'e1000'
                 mac_address = device['attributes'].get('mac', None)
+
+                # By default we add one NIC and the MAC address is an empty string.
+                # Issue: 24222
+                if mac_address == "":
+                    mac_address = None
+
                 if mac_address == '00:a0:98:FF:FF:FF' or mac_address is None:
                     args += ['-s', '{},{},{}'.format(nid(), nictype, tapname)]
                 else:
