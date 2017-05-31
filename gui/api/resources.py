@@ -1799,6 +1799,7 @@ class ISCSIPortalResourceMixin(object):
         bundle = super(ISCSIPortalResourceMixin, self).hydrate(bundle)
         newips = bundle.data.get('iscsi_target_portal_ips', [])
         i = -1
+        existing_ips = []
         for i, item in enumerate(bundle.obj.ips.all()):
             bundle.data[
                 'portalip_set-%d-iscsi_target_portalip_ip' % i
@@ -1807,15 +1808,20 @@ class ISCSIPortalResourceMixin(object):
                 'portalip_set-%d-iscsi_target_portalip_port' % i
             ] = item.iscsi_target_portalip_port
             bundle.data['portalip_set-%d-id' % i] = item.id
-        initial = i + 1
+            existing_ips.append(f'{item.iscsi_target_portalip_ip}:{item.iscsi_target_portalip_port}')
+        total = initial = i + 1
         for i, item in enumerate(newips, i + 1):
+            # Skip existing IP:port
+            if item in existing_ips:
+                continue
             ip, prt = item.rsplit(':', 1)
             bundle.data['portalip_set-%d-iscsi_target_portalip_ip' % i] = ip
             bundle.data['portalip_set-%d-iscsi_target_portalip_port' % i] = prt
             bundle.data['portalip_set-%d-id' % i] = ''
+            total += 1
         bundle.data['iscsi_target_portal_ips'] = newips
         bundle.data['portalip_set-INITIAL_FORMS'] = initial
-        bundle.data['portalip_set-TOTAL_FORMS'] = i + 1
+        bundle.data['portalip_set-TOTAL_FORMS'] = total
         if bundle.obj.id is None:
             bundle.data['iscsi_target_portal_tag'] = iSCSITargetPortal.objects.all().count() + 1
         return bundle
