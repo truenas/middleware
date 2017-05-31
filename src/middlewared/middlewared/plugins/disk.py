@@ -225,6 +225,7 @@ class DiskService(CRUDService):
         return ''
 
     @private
+    @accepts(Str('name'))
     def sync(self, name):
         """
         Syncs a disk `name` with the database cache.
@@ -385,8 +386,7 @@ class DiskService(CRUDService):
                 # FIXME: use a truenas middleware plugin
                 self.middleware.call('notifier.sync_disk_extra', disk['disk_identifier'], True)
 
-    @private
-    def multipath_create(self, name, consumers, mode=None):
+    def __multipath_create(self, name, consumers, mode=None):
         """
         Create an Active/Passive GEOM_MULTIPATH provider
         with name ``name`` using ``consumers`` as the consumers for it
@@ -407,7 +407,7 @@ class DiskService(CRUDService):
             return False
         return True
 
-    def multipath_next(self):
+    def __multipath_next(self):
         """
         Find out the next available name for a multipath named diskX
         where X is a crescenting value starting from 1
@@ -430,6 +430,7 @@ class DiskService(CRUDService):
         return f'disk{number}'
 
     @private
+    @accepts()
     def multipath_sync(self):
         """
         Synchronize multipath disks
@@ -499,8 +500,8 @@ class DiskService(CRUDService):
         for disks in disks_pairs:
             if not len(disks) > 1:
                 continue
-            name = self.multipath_next()
-            self.multipath_create(name, disks, 'A' if disks[0] in active_active else mode)
+            name = self.__multipath_next()
+            self.__multipath_create(name, disks, 'A' if disks[0] in active_active else mode)
 
         # Scan again to take new multipaths into account
         self.middleware.threaded(geom.scan)
