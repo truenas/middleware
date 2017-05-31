@@ -155,7 +155,7 @@ class SockHandler(asyncore.dispatcher_with_send):
                 }
             }
         res = None
-        a = self.recv(8192)
+        a = self.recv(8192).decode('utf8')
         if a.startswith("get_zilstat_1_second_interval"):
             res = tmp_data["zil_data"]["one"]
         if a.startswith("get_zilstat_5_second_interval"):
@@ -173,7 +173,7 @@ class SockHandler(asyncore.dispatcher_with_send):
         return (len(self.buffer) > 0)
 
     def handle_write(self):
-        self.socket.sendall(self.buffer)
+        self.socket.sendall(self.buffer.encode('utf8'))
         self.buffer = ''
         if self.end:
             self.close()
