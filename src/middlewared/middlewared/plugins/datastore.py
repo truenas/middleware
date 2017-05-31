@@ -29,6 +29,8 @@ class DatastoreService(Service):
             '<': 'lt',
             '<=': 'lte',
             '~': 'regex',
+            'in': 'in',
+            'nin': 'in',
         }
 
         rv = []
@@ -37,12 +39,13 @@ class DatastoreService(Service):
                 raise ValueError('Filter must be a list: {0}'.format(f))
             if len(f) == 3:
                 name, op, value = f
-                if field_prefix:
+                # id is special
+                if field_prefix and name != 'id':
                     name = field_prefix + name
                 if op not in opmap:
                     raise Exception("Invalid operation: {0}".format(op))
                 q = Q(**{'{0}__{1}'.format(name, opmap[op]): value})
-                if op == '!=':
+                if op in ('!=', 'nin'):
                     q.negate()
                 rv.append(q)
             elif len(f) == 2:
@@ -95,7 +98,7 @@ class DatastoreService(Service):
             simple_filter: '[' attribute_name, OPERATOR, value ']'
             conjunction: '[' CONJUNTION, '[' simple_filter (',' simple_filter)* ']]'
 
-            OPERATOR: ('=' | '!=' | '>' | '>=' | '<' | '<=' | '~' )
+            OPERATOR: ('=' | '!=' | '>' | '>=' | '<' | '<=' | '~' | 'in' | 'nin')
             CONJUNCTION: 'OR'
 
         e.g.

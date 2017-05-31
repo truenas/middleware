@@ -51,11 +51,6 @@ class Volume(Model):
         max_length=120,
         verbose_name=_("Name")
     )
-    vol_fstype = models.CharField(
-        max_length=120,
-        choices=choices.VolumeType_Choices,
-        verbose_name=_("File System Type"),
-    )
     vol_guid = models.CharField(
         max_length=50,
         blank=True,
@@ -128,25 +123,22 @@ class Volume(Model):
             return []
 
     def get_children(self, hierarchical=True, include_root=True):
-        if self.vol_fstype == 'ZFS':
-            return zfs.zfs_list(
-                path=self.vol_name,
-                recursive=True,
-                types=["filesystem", "volume"],
-                hierarchical=hierarchical,
-                include_root=include_root)
+        return zfs.zfs_list(
+            path=self.vol_name,
+            recursive=True,
+            types=["filesystem", "volume"],
+            hierarchical=hierarchical,
+            include_root=include_root)
 
     def get_datasets(self, hierarchical=False, include_root=False):
-        if self.vol_fstype == 'ZFS':
-            return zfs.list_datasets(
-                path=self.vol_name,
-                recursive=True,
-                hierarchical=hierarchical,
-                include_root=include_root)
+        return zfs.list_datasets(
+            path=self.vol_name,
+            recursive=True,
+            hierarchical=hierarchical,
+            include_root=include_root)
 
     def get_zvols(self):
-        if self.vol_fstype == 'ZFS':
-            return notifier().list_zfs_vols(self.vol_name)
+        return notifier().list_zfs_vols(self.vol_name)
 
     def _get_status(self):
         try:
@@ -381,10 +373,8 @@ class Volume(Model):
                 if do_reload:
                     reloads = self.delete_attachments()
 
-                if self.vol_fstype == 'ZFS':
-                    Task.objects.filter(task_filesystem=self.vol_name).delete()
-                    Replication.objects.filter(
-                        repl_filesystem=self.vol_name).delete()
+                Task.objects.filter(task_filesystem=self.vol_name).delete()
+                Replication.objects.filter(repl_filesystem=self.vol_name).delete()
 
                 if do_reload:
                     svcs = ('cifs', 'afp', 'nfs', 'iscsitarget')
@@ -447,20 +437,9 @@ class Volume(Model):
     def _set__zplist(self, value):
         self.__zplist = value
 
-    def _get__vfs(self):
-        if not hasattr(self, '__vfs'):
-            try:
-                self.__vfs = os.statvfs(self.vol_path)
-            except:
-                self.__vfs = None
-        return self.__vfs
-
     def _get_avail(self):
         try:
-            if self.vol_fstype == 'ZFS':
-                return self._zplist['free']
-            else:
-                return self._vfs.f_bavail * self._vfs.f_frsize
+            return self._zplist['free']
         except:
             if self.is_decrypted():
                 return __("Error getting available space")
@@ -469,11 +448,7 @@ class Volume(Model):
 
     def _get_used_bytes(self):
         try:
-            if self.vol_fstype == 'ZFS':
-                return self._zplist['alloc']
-            else:
-                return (self._vfs.f_blocks - self._vfs.f_bfree) * \
-                    self._vfs.f_frsize
+            return self._zplist['alloc']
         except:
             return 0
 
@@ -488,16 +463,10 @@ class Volume(Model):
 
     def _get_used_pct(self):
         try:
-            if self.vol_fstype == 'ZFS':
-                return "%d%%" % self._zplist['capacity']
-            else:
-                availpct = 100 * (self._vfs.f_blocks - self._vfs.f_bavail) / \
-                    self._vfs.f_blocks
-            return "%d%%" % availpct
+            return "%d%%" % self._zplist['capacity']
         except:
             return __("Error")
 
-    _vfs = property(_get__vfs)
     _zplist = property(_get__zplist, _set__zplist)
     avail = property(_get_avail)
     used_pct = property(_get_used_pct)
@@ -508,7 +477,6 @@ class Scrub(Model):
     scrub_volume = models.OneToOneField(
         Volume,
         verbose_name=_("Volume"),
-        limit_choices_to={'vol_fstype': 'ZFS'},
     )
     scrub_threshold = models.PositiveSmallIntegerField(
         verbose_name=_("Threshold days"),

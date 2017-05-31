@@ -656,8 +656,6 @@ class notifier(metaclass=HookMetaclass):
         """
         Test key for geli providers of a given volume
         """
-        assert volume.vol_fstype == 'ZFS'
-
         geli_keyfile = volume.get_geli_keyfile()
 
         # Parse zpool status to get encrypted providers
@@ -853,7 +851,6 @@ class notifier(metaclass=HookMetaclass):
         else:
             swapsize = self.get_swapsize()
 
-        assert volume.vol_fstype == 'ZFS'
         z_name = volume.vol_name
         z_vdev = ""
         encrypt = (volume.vol_encrypt >= 1)
@@ -1019,15 +1016,12 @@ class notifier(metaclass=HookMetaclass):
         """Initialize a volume designated by volume_id"""
         swapsize = self.get_swapsize()
 
-        assert volume.vol_fstype == 'ZFS'
         self.__create_zfs_volume(volume, swapsize, kwargs.pop('groups', False), kwargs.pop('path', None), init_rand=kwargs.pop('init_rand', False))
 
     def zfs_replace_disk(self, volume, from_label, to_disk, force=False, passphrase=None):
         """Replace disk in zfs called `from_label` to `to_disk`"""
         from freenasUI.storage.models import Disk, EncryptedDisk
         swapsize = self.get_swapsize()
-
-        assert volume.vol_fstype == 'ZFS'
 
         # TODO: Test on real hardware to see if ashift would persist across replace
         from_disk = self.label_to_disk(from_label)
@@ -1108,8 +1102,6 @@ class notifier(metaclass=HookMetaclass):
     def zfs_offline_disk(self, volume, label):
         from freenasUI.storage.models import EncryptedDisk
 
-        assert volume.vol_fstype == 'ZFS'
-
         # TODO: Test on real hardware to see if ashift would persist across replace
         disk = self.label_to_disk(label)
 
@@ -1130,7 +1122,7 @@ class notifier(metaclass=HookMetaclass):
             ).delete()
 
     def zfs_online_disk(self, volume, label):
-        assert volume.vol_fstype == 'ZFS' and volume.vol_encrypt == 0
+        assert volume.vol_encrypt == 0
 
         p1 = self._pipeopen('/sbin/zpool online %s %s' % (volume.vol_name, label))
         stderr = p1.communicate()[1]
@@ -1146,7 +1138,6 @@ class notifier(metaclass=HookMetaclass):
         if isinstance(volume, str):
             vol_name = volume
         else:
-            assert volume.vol_fstype == 'ZFS'
             vol_name = volume.vol_name
 
         from_disk = self.label_to_disk(label)
@@ -1172,8 +1163,6 @@ class notifier(metaclass=HookMetaclass):
         Remove a disk from zpool
         Cache disks, inactive hot-spares (and log devices in zfs 28) can be removed
         """
-
-        assert volume.vol_fstype == 'ZFS'
 
         from_disk = self.label_to_disk(label)
         with client as c:
@@ -1261,11 +1250,9 @@ class notifier(metaclass=HookMetaclass):
         """
 
         # volume_detach compatibility.
-        vol_name, vol_fstype = volume.vol_name, volume.vol_fstype
+        vol_name = volume.vol_name
 
         vol_mountpath = self.__get_mountpath(vol_name)
-
-        assert vol_fstype == 'ZFS'
 
         self.reload('disk')
         self._encvolume_detach(volume, destroy=True)
@@ -2927,9 +2914,7 @@ class notifier(metaclass=HookMetaclass):
              available in UFS volumes.
 
         Parameters:
-            vol_name: a textual name for the volume, e.g. tank, stripe, etc.
-            vol_fstype: the filesystem type for the volume; valid values are:
-                        'EXT2FS', 'MSDOSFS', 'UFS', 'ZFS'.
+            volume: volume model object
 
         Raises:
             MiddlewareError: the volume could not be detached cleanly.
@@ -2937,8 +2922,6 @@ class notifier(metaclass=HookMetaclass):
         """
 
         vol_name = volume.vol_name
-        vol_fstype = volume.vol_fstype
-        assert vol_fstype == 'ZFS'
 
         succeeded = False
 
@@ -2989,10 +2972,7 @@ class notifier(metaclass=HookMetaclass):
 
         model_objs = []
         try:
-            volume = Volume(
-                vol_name=volume_name,
-                vol_fstype='ZFS',
-                vol_encrypt=encrypt)
+            volume = Volume(vol_name=volume_name, vol_encrypt=encrypt)
             volume.save()
             model_objs.append(volume)
             if encrypt > 0:
@@ -3127,7 +3107,7 @@ class notifier(metaclass=HookMetaclass):
 
         zfsproc = self._pipeopen("/sbin/zfs list -t volume -o name %s -H" % sort)
         zvols = set([y for y in zfsproc.communicate()[0].split('\n') if y != ''])
-        volnames = set([o.vol_name for o in Volume.objects.filter(vol_fstype='ZFS')])
+        volnames = set([o.vol_name for o in Volume.objects.all()])
 
         fieldsflag = '-o name,used,available,referenced,mountpoint,freenas:vmsynced'
         if path:
@@ -3902,148 +3882,6 @@ class notifier(metaclass=HookMetaclass):
             for geom in doc.xpath("//class[name = 'MULTIPATH']/geom")
         ]
 
-    def multipath_create(self, name, consumers, actives=None, mode=None):
-        """
-        Create an Active/Passive GEOM_MULTIPATH provider
-        with name ``name`` using ``consumers`` as the consumers for it
-
-        Modes:
-            A - Active/Active
-            R - Active/Read
-            None - Active/Passive
-
-        Returns:
-            True in case the label succeeded and False otherwise
-        """
-        cmd = ["/sbin/gmultipath", "label", name] + consumers
-        if mode:
-            cmd.insert(2, "-%s" % (mode, ))
-        p1 = subprocess.Popen(cmd, stdout=subprocess.PIPE)
-        if p1.wait() != 0:
-            return False
-        # We need to invalidate confxml cache
-        self.__confxml = None
-        return True
-
-    def multipath_next(self):
-        """
-        Find out the next available name for a multipath named diskX
-        where X is a crescenting value starting from 1
-
-        Returns:
-            The string of the multipath name to be created
-        """
-        RE_NAME = re.compile(r'[a-z]+(\d+)')
-        numbers = sorted([
-            int(RE_NAME.search(mp.name).group(1))
-            for mp in self.multipath_all() if RE_NAME.match(mp.name)
-        ])
-        if not numbers:
-            numbers = [0]
-        for number in range(1, numbers[-1] + 2):
-            if number not in numbers:
-                break
-        else:
-            raise ValueError('Could not find multipaths')
-        return "disk%d" % number
-
-    def _multipath_is_active(self, name, geom):
-        return False
-
-    def multipath_sync(self):
-        """Synchronize multipath disks
-
-        Every distinct GEOM_DISK that shares an ident (aka disk serial)
-        is considered a multipath and will be handled by GEOM_MULTIPATH
-
-        If the disk is not currently in use by some Volume or iSCSI Disk Extent
-        then a gmultipath is automatically created and will be available for use
-        """
-        from freenasUI.storage.models import Volume, Disk
-
-        doc = self._geom_confxml()
-
-        mp_disks = []
-        for geom in doc.xpath("//class[name = 'MULTIPATH']/geom"):
-            for provref in geom.xpath("./consumer/provider/@ref"):
-                prov = doc.xpath("//provider[@id = '%s']" % provref)[0]
-                class_name = prov.xpath("../../name")[0].text
-                # For now just DISK is allowed
-                if class_name != 'DISK':
-                    log.warn(
-                        "A consumer that is not a disk (%s) is part of a "
-                        "MULTIPATH, currently unsupported by middleware",
-                        class_name
-                    )
-                    continue
-                disk = prov.xpath("../name")[0].text
-                mp_disks.append(disk)
-
-        reserved = self._find_root_devs()
-
-        # disks already in use count as reserved as well
-        for vol in Volume.objects.all():
-            reserved.extend(vol.get_disks())
-
-        serials = defaultdict(list)
-        active_active = []
-        RE_DA = re.compile('^da[0-9]+$')
-        for geom in doc.xpath("//class[name = 'DISK']/geom"):
-            name = geom.xpath("./name")[0].text
-            if (not RE_DA.match(name)) or name in reserved or name in mp_disks:
-                continue
-            if self._multipath_is_active(name, geom):
-                active_active.append(name)
-            serial = ''
-            v = geom.xpath("./provider/config/ident")
-            if len(v) > 0:
-                serial = v[0].text or ''
-            v = geom.xpath("./provider/config/lunid")
-            if len(v) > 0:
-                serial += v[0].text
-            if not serial:
-                continue
-            size = geom.xpath("./provider/mediasize")[0].text
-            serials[(serial, size)].append(name)
-            serials[(serial, size)].sort(key=lambda x: int(x[2:]))
-
-        disks_pairs = [disks for disks in list(serials.values())]
-        disks_pairs.sort(key=lambda x: int(x[0][2:]))
-
-        for disks in disks_pairs:
-            if not len(disks) > 1:
-                continue
-            name = self.multipath_next()
-            self.multipath_create(name, disks, active_active)
-
-        # Grab confxml again to take new multipaths into account
-        doc = self._geom_confxml()
-        mp_ids = []
-        for geom in doc.xpath("//class[name = 'MULTIPATH']/geom"):
-            _disks = []
-            for provref in geom.xpath("./consumer/provider/@ref"):
-                prov = doc.xpath("//provider[@id = '%s']" % provref)[0]
-                class_name = prov.xpath("../../name")[0].text
-                # For now just DISK is allowed
-                if class_name != 'DISK':
-                    continue
-                disk = prov.xpath("../name")[0].text
-                _disks.append(disk)
-            qs = Disk.objects.filter(
-                Q(disk_name__in=_disks) | Q(disk_multipath_member__in=_disks)
-            )
-            if qs.exists():
-                diskobj = qs[0]
-                mp_ids.append(diskobj.pk)
-                diskobj.disk_multipath_name = geom.xpath("./name")[0].text
-                if diskobj.disk_name in _disks:
-                    _disks.remove(diskobj.disk_name)
-                if _disks:
-                    diskobj.disk_multipath_member = _disks.pop()
-                diskobj.save()
-
-        Disk.objects.exclude(pk__in=mp_ids).update(disk_multipath_name='', disk_multipath_member='')
-
     def _find_root_devs(self):
         """Find the root device.
 
@@ -4479,10 +4317,7 @@ class notifier(metaclass=HookMetaclass):
         # If there is a pool configured make sure the volume exists
         # Otherwise reset it to blank
         if systemdataset.sys_pool and systemdataset.sys_pool != 'freenas-boot':
-            volume = Volume.objects.filter(
-                vol_name=systemdataset.sys_pool,
-                vol_fstype='ZFS',
-            )
+            volume = Volume.objects.filter(vol_name=systemdataset.sys_pool)
             if not volume.exists():
                 systemdataset.sys_pool = ''
                 systemdataset.save()
@@ -4495,7 +4330,7 @@ class notifier(metaclass=HookMetaclass):
         elif not systemdataset.sys_pool:
 
             volume = None
-            for o in Volume.objects.filter(vol_fstype='ZFS').order_by(
+            for o in Volume.objects.all().order_by(
                 'vol_encrypt'
             ):
                 if o.is_decrypted():

@@ -195,6 +195,8 @@ class CoreService(Service):
                     """
                     if attr in ('create', 'update', 'delete'):
                         method = getattr(svc, 'do_{}'.format(attr), None)
+                        if method is None:
+                            continue
                     elif attr in ('do_create', 'do_update', 'do_delete'):
                         continue
 

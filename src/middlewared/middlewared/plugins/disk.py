@@ -7,7 +7,7 @@ import sys
 import sysctl
 
 from bsd import geom
-from middlewared.schema import accepts
+from middlewared.schema import accepts, Str
 from middlewared.service import filterable, private, CRUDService
 from middlewared.utils import Popen, run
 
@@ -19,8 +19,10 @@ from freenasUI.services.utils import SmartAlert
 
 DISK_EXPIRECACHE_DAYS = 7
 MIRROR_MAX = 5
+RE_DA = re.compile('^da[0-9]+$')
 RE_DSKNAME = re.compile(r'^([a-z]+)([0-9]+)$')
 RE_ISDISK = re.compile(r'^(da|ada|vtbd|mfid|nvd)[0-9]+$')
+RE_MPATH_NAME = re.compile(r'[a-z]+(\d+)')
 
 
 class DiskService(CRUDService):
@@ -32,7 +34,7 @@ class DiskService(CRUDService):
         if options is None:
             options = {}
         options['prefix'] = 'disk_'
-        filters.append(('enabled', '=', True))
+        filters.append(('expiretime', '=', None))
         options['extend'] = 'disk.disk_extend'
         return self.middleware.call('datastore.query', 'storage.disk', filters, options)
 
@@ -101,7 +103,7 @@ class DiskService(CRUDService):
     def __get_twcli(self, controller):
 
         re_port = re.compile(r'^p(?P<port>\d+).*?\bu(?P<unit>\d+)\b', re.S | re.M)
-        proc = Popen(f'/usr/local/sbin/tw_cli /c{controller} show', stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        proc = Popen(['/usr/local/sbin/tw_cli', f'/c{controller}', 'show'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         output = proc.communicate()[0]
 
         units = {}
@@ -172,7 +174,23 @@ class DiskService(CRUDService):
             return search.group('serial')
         return None
 
+    @private
+    @accepts(Str('name'))
     def device_to_identifier(self, name):
+        """
+        Given a device `name` (e.g. da0) returns an unique identifier string
+        for this device.
+        This identifier is in the form of {type}string, "type" can be one of
+        the following:
+          - serial_lunid - for disk serial concatenated with the lunid
+          - serial - disk serial
+          - uuid - uuid of a ZFS GPT partition
+          - label - label name from geom label
+          - devicename - name of the device if any other could not be used/found
+
+        Returns:
+            str - identifier
+        """
         self.middleware.threaded(geom.scan)
 
         g = geom.geom_by_name('DISK', name)
@@ -368,6 +386,163 @@ class DiskService(CRUDService):
                 self.middleware.call('notifier.sync_disk_extra', disk['disk_identifier'], True)
 
     @private
+    def multipath_create(self, name, consumers, mode=None):
+        """
+        Create an Active/Passive GEOM_MULTIPATH provider
+        with name ``name`` using ``consumers`` as the consumers for it
+
+        Modes:
+            A - Active/Active
+            R - Active/Read
+            None - Active/Passive
+
+        Returns:
+            True in case the label succeeded and False otherwise
+        """
+        cmd = ["/sbin/gmultipath", "label", name] + consumers
+        if mode:
+            cmd.insert(2, f'-{mode}')
+        p1 = subprocess.Popen(cmd, stdout=subprocess.PIPE)
+        if p1.wait() != 0:
+            return False
+        return True
+
+    def multipath_next(self):
+        """
+        Find out the next available name for a multipath named diskX
+        where X is a crescenting value starting from 1
+
+        Returns:
+            The string of the multipath name to be created
+        """
+        self.middleware.threaded(geom.scan)
+        numbers = sorted([
+            int(RE_MPATH_NAME.search(g.name).group(1))
+            for g in geom.class_by_name('MULTIPATH').geoms if RE_MPATH_NAME.match(g.name)
+        ])
+        if not numbers:
+            numbers = [0]
+        for number in range(1, numbers[-1] + 2):
+            if number not in numbers:
+                break
+        else:
+            raise ValueError('Could not find multipaths')
+        return f'disk{number}'
+
+    @private
+    def multipath_sync(self):
+        """
+        Synchronize multipath disks
+
+        Every distinct GEOM_DISK that shares an ident (aka disk serial)
+        with conjunction of the lunid is considered a multipath and will be
+        handled by GEOM_MULTIPATH.
+
+        If the disk is not currently in use by some Volume or iSCSI Disk Extent
+        then a gmultipath is automatically created and will be available for use.
+        """
+
+        self.middleware.threaded(geom.scan)
+
+        mp_disks = []
+        for g in geom.class_by_name('MULTIPATH').geoms:
+            for c in g.consumers:
+                p_geom = c.provider.geom
+                # For now just DISK is allowed
+                if p_geom.clazz.name != 'DISK':
+                    self.logger.warn(
+                        "A consumer that is not a disk (%s) is part of a "
+                        "MULTIPATH, currently unsupported by middleware",
+                        p_geom.clazz.name
+                    )
+                    continue
+                mp_disks.append(p_geom.name)
+
+        reserved = list(self.middleware.call('boot.get_disks'))
+        # disks already in use count as reserved as well
+        for pool in self.middleware.call('pool.query'):
+            reserved += list(self.middleware.call('pool.get_disks', pool['id']))
+
+        is_freenas = self.middleware.call('system.is_freenas')
+
+        serials = defaultdict(list)
+        active_active = []
+        for g in geom.class_by_name('DISK').geoms:
+            if not RE_DA.match(g.name) or g.name in reserved or g.name in mp_disks:
+                continue
+            if not is_freenas:
+                descr = g.provider.config.get('descr') or ''
+                if (
+                    descr == 'STEC ZeusRAM' or
+                    descr.startswith('VIOLIN') or
+                    descr.startswith('3PAR')
+                ):
+                    active_active.append(g.name)
+            serial = ''
+            v = g.provider.config.get('ident')
+            if v:
+                serial = v
+            v = g.provider.config.get('lunid')
+            if v:
+                serial += v
+            if not serial:
+                continue
+            size = g.provider.mediasize
+            serials[(serial, size)].append(g.name)
+            serials[(serial, size)].sort(key=lambda x: int(x[2:]))
+
+        disks_pairs = [disks for disks in list(serials.values())]
+        disks_pairs.sort(key=lambda x: int(x[0][2:]))
+
+        # Mode is Active/Passive for FreeNAS
+        mode = None if is_freenas else 'R'
+        for disks in disks_pairs:
+            if not len(disks) > 1:
+                continue
+            name = self.multipath_next()
+            self.multipath_create(name, disks, 'A' if disks[0] in active_active else mode)
+
+        # Scan again to take new multipaths into account
+        self.middleware.threaded(geom.scan)
+        mp_ids = []
+        for g in geom.class_by_name('MULTIPATH').geoms:
+            _disks = []
+            for c in g.consumers:
+                p_geom = c.provider.geom
+                # For now just DISK is allowed
+                if p_geom.clazz.name != 'DISK':
+                    continue
+                _disks.append(p_geom.name)
+
+            qs = self.middleware.call('datastore.query', 'storage.disk', [
+                ['OR', [
+                    ['disk_name', 'in', _disks],
+                    ['disk_multipath_member', 'in', _disks],
+                ]],
+            ])
+            if qs:
+                diskobj = qs[0]
+                mp_ids.append(diskobj['disk_identifier'])
+                update = False  # Make sure to not update if nothing changed
+                if diskobj['disk_multipath_name'] != g.name:
+                    update = True
+                    diskobj['disk_multipath_name'] = g.name
+                if diskobj['disk_name'] in _disks:
+                    _disks.remove(diskobj['disk_name'])
+                if _disks and diskobj['disk_multipath_member'] != _disks[-1]:
+                    update = True
+                    diskobj['disk_multipath_member'] = _disks.pop()
+                if update:
+                    self.middleware.call('datastore.update', 'storage.disk', diskobj['disk_identifier'], diskobj)
+
+        # Update all disks which were not identified as MULTIPATH, resetting attributes
+        for disk in self.middleware.call('datastore.query', 'storage.disk', [('disk_identifier', 'nin', mp_ids)]):
+            if disk['disk_multipath_name'] or disk['disk_multipath_member']:
+                disk['disk_multipath_name'] = ''
+                disk['disk_multipath_member'] = ''
+                self.middleware.call('datastore.update', 'storage.disk', disk['disk_identifier'], disk)
+
+    @private
     def swaps_configure(self):
         """
         Configures swap partitions in the system.
@@ -539,7 +714,7 @@ def _event_devfs(middleware, event_type, args):
         # This is a performance issue
         if os.path.exists('/tmp/.sync_disk_done'):
             middleware.call('disk.sync_all')
-            middleware.call('notifier.multipath_sync')
+            middleware.call('disk.multipath_sync')
             try:
                 with SmartAlert() as sa:
                     sa.device_delete(data['cdev'])

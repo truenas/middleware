@@ -232,7 +232,7 @@ def volumemanager(request):
     )
 
     extend = [{'value': '', 'label': '-----'}]
-    qs = models.Volume.objects.filter(vol_fstype='ZFS')
+    qs = models.Volume.objects.all()
     for vol in qs:
         if not vol.is_decrypted():
             continue
@@ -962,9 +962,7 @@ def disk_wipe(request, devname):
                 dev = "/dev/%s" % (gname, )
                 if dev not in mounted and is_mounted(device=dev):
                     mounted.append(dev)
-            for vol in models.Volume.objects.filter(
-                vol_fstype='ZFS'
-            ):
+            for vol in models.Volume.objects.all():
                 if devname in vol.get_disks():
                     mounted.append(vol.vol_name)
             if mounted:

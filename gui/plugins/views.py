@@ -145,29 +145,29 @@ def plugins(request):
 
     args = [(y, host, request) for y in plugins]
 
-    pool = ThreadPool(20)
-    for plugin, _json, jail_status in pool.imap(get_plugin_status, args):
-        if not _json:
-            _json = {}
-            _json['status'] = None
+    with ThreadPool(10) as pool:
+        for plugin, _json, jail_status in pool.imap(get_plugin_status, args):
+            if not _json:
+                _json = {}
+                _json['status'] = None
 
-        plugin.service = Service(
-            name=plugin.plugin_name,
-            status=_json['status'],
-            pid=_json.get("pid", None),
-            start_url="/plugins/%s/%d/_s/start" % (
-                plugin.plugin_name, plugin.id
-            ),
-            stop_url="/plugins/%s/%d/_s/stop" % (
-                plugin.plugin_name, plugin.id
-            ),
-            status_url="/plugins/%s/%d/_s/status" % (
-                plugin.plugin_name, plugin.id
-            ),
-            jail_status=jail_status,
-        )
+            plugin.service = Service(
+                name=plugin.plugin_name,
+                status=_json['status'],
+                pid=_json.get("pid", None),
+                start_url="/plugins/%s/%d/_s/start" % (
+                    plugin.plugin_name, plugin.id
+                ),
+                stop_url="/plugins/%s/%d/_s/stop" % (
+                    plugin.plugin_name, plugin.id
+                ),
+                status_url="/plugins/%s/%d/_s/status" % (
+                    plugin.plugin_name, plugin.id
+                ),
+                jail_status=jail_status,
+            )
 
-        plugin.update_available = availablePlugins.get_update_status(plugin.id)
+            plugin.update_available = availablePlugins.get_update_status(plugin.id)
 
     return render(request, "plugins/plugins.html", {
         'plugins': plugins,

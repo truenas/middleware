@@ -5,12 +5,15 @@ import base64
 import binascii
 import falcon
 import json
+import types
 
 
 class JsonEncoder(json.JSONEncoder):
     def default(self, obj):
         if isinstance(obj, datetime):
             return str(obj)
+        elif isinstance(obj, types.GeneratorType):
+            return list(obj)
         return json.JSONEncoder.default(self, obj)
 
 

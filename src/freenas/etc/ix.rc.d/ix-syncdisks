@@ -12,7 +12,7 @@ syncdisks()
 {
 	touch /tmp/.sync_disk_done
 	/usr/local/bin/midclt call disk.sync_all > /dev/null
-	/usr/local/bin/midclt call notifier.multipath_sync > /dev/null
+	/usr/local/bin/midclt call disk.multipath_sync > /dev/null
 	if [ "$(/usr/local/bin/midclt call system.is_freenas)" = "False" ]; then
 		checkyesno failover_enable || /usr/local/bin/midclt call notifier.zpool_enclosure_sync 2> /dev/null
 	fi

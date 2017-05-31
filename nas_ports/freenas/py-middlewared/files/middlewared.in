@@ -15,6 +15,9 @@ command="/usr/sbin/daemon"
 
 middlewared_start() {
 	mount -uw /  # FIXME: why root is not rw by default?
+	if ! mount | grep -q 'on /dev/fd (' 2> /dev/null; then
+		mount -t fdescfs fdescfs /dev/fd
+	fi
 	/sbin/ifconfig lo0 127.0.0.1 up
 	if checkyesno middlewared_debug; then
 		/usr/local/bin/tmux new-session -s middlewared -d

@@ -187,3 +187,4 @@ def request2crashreporting(request):
         'headers': dict(get_headers(request.META)),
         'env': dict(get_environ(request.META)),
     }
+    return data

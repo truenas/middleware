@@ -250,18 +250,13 @@ class VolumeManagerForm(VolumeMixin, Form):
 
         volume = scrub = None
         try:
-            vols = models.Volume.objects.filter(
-                vol_name=volume_name,
-                vol_fstype='ZFS')
+            vols = models.Volume.objects.filter(vol_name=volume_name)
             if vols.count() > 0:
                 volume = vols[0]
                 add = True
             else:
                 add = False
-                volume = models.Volume(
-                    vol_name=volume_name,
-                    vol_fstype='ZFS',
-                    vol_encrypt=volume_encrypt)
+                volume = models.Volume(vol_name=volume_name, vol_encrypt=volume_encrypt)
                 volume.save()
 
             self.volume = volume
@@ -293,8 +288,7 @@ class VolumeManagerForm(VolumeMixin, Form):
                 if dedup:
                     notifier().zfs_set_option(volume.vol_name, "dedup", dedup)
 
-                if volume.vol_fstype == 'ZFS':
-                    scrub = models.Scrub.objects.create(scrub_volume=volume)
+                scrub = models.Scrub.objects.create(scrub_volume=volume)
         except Exception:
             if volume:
                 volume.delete()
@@ -321,8 +315,7 @@ class VolumeManagerForm(VolumeMixin, Form):
             notifier().start("ix-syslogd")
             notifier().restart("system_datasets")
         # For scrub cronjob
-        if volume.vol_fstype == 'ZFS':
-            notifier().restart("cron")
+        notifier().restart("cron")
 
         # restart smartd to enable monitoring for any new drives added
         if (services.objects.get(srv_service='smartd').srv_enable):
@@ -515,7 +508,7 @@ class ZFSVolumeWizardForm(forms.Form):
     def __init__(self, *args, **kwargs):
         super(ZFSVolumeWizardForm, self).__init__(*args, **kwargs)
         self.fields['volume_disks'].choices = self._populate_disk_choices()
-        qs = models.Volume.objects.filter(vol_fstype='ZFS')
+        qs = models.Volume.objects.filter()
         if qs.exists():
             self.fields['volume_add'] = forms.ChoiceField(
                 label=_('Volume add'),
@@ -638,11 +631,6 @@ class ZFSVolumeWizardForm(forms.Form):
             msg = _("This field is required")
             self._errors["volume_disks"] = self.error_class([msg])
             del cleaned_data["volume_disks"]
-        if models.Volume.objects.filter(vol_name=volume_name).exclude(
-                vol_fstype='ZFS').count() > 0:
-            msg = _("You already have a volume with same name")
-            self._errors["volume_name"] = self.error_class([msg])
-            del cleaned_data["volume_name"]
 
         if volume_name in ('log',):
             msg = _("\"log\" is a reserved word and thus cannot be used")
@@ -667,7 +655,6 @@ class ZFSVolumeWizardForm(forms.Form):
             self.cleaned_data.get("volume_name") or
             self.cleaned_data.get("volume_add")
         )
-        volume_fstype = 'ZFS'
         disk_list = self.cleaned_data['volume_disks']
         dedup = self.cleaned_data.get("dedup", False)
         init_rand = self.cleaned_data.get("encini", False)
@@ -683,20 +670,13 @@ class ZFSVolumeWizardForm(forms.Form):
 
         volume = scrub = None
         try:
-            vols = models.Volume.objects.filter(
-                vol_name=volume_name,
-                vol_fstype='ZFS'
-            )
+            vols = models.Volume.objects.filter(vol_name=volume_name)
             if vols.count() == 1:
                 volume = vols[0]
                 add = True
             else:
                 add = False
-                volume = models.Volume(
-                    vol_name=volume_name,
-                    vol_fstype=volume_fstype,
-                    vol_encrypt=volume_encrypt,
-                )
+                volume = models.Volume(vol_name=volume_name, vol_encrypt=volume_encrypt)
                 volume.save()
 
             self.volume = volume
@@ -1813,9 +1793,7 @@ class PeriodicSnapForm(ModelForm):
         self.fields['task_filesystem'] = forms.ChoiceField(
             label=self.fields['task_filesystem'].label,
         )
-        volnames = [
-            o.vol_name for o in models.Volume.objects.filter(vol_fstype='ZFS')
-        ]
+        volnames = [o.vol_name for o in models.Volume.objects.all()]
         self.fields['task_filesystem'].choices = [y for y in list(notifier().list_zfs_fsvols().items()) if y[0].split('/')[0] in volnames]
         self.fields['task_repeat_unit'].widget = forms.HiddenInput()
 
@@ -2747,9 +2725,7 @@ class VMWarePluginForm(ModelForm):
         self.fields['filesystem'] = forms.ChoiceField(
             label=self.fields['filesystem'].label,
         )
-        volnames = [
-            o.vol_name for o in models.Volume.objects.filter(vol_fstype='ZFS')
-        ]
+        volnames = [o.vol_name for o in models.Volume.objects.all()]
         self.fields['filesystem'].choices = [y for y in list(notifier().list_zfs_fsvols().items()) if y[0].split('/')[0] in volnames]
         if self.instance.id:
             self.fields['oid'].initial = self.instance.id

@@ -15,7 +15,6 @@ class CommonMixin(object):
         super(CommonMixin, self).setUp()
         v = Volume.objects.create(
             vol_name='tank',
-            vol_fstype='ZFS',
         )
         MountPoint.objects.create(
             mp_path='/mnt/tank',

@@ -17,7 +17,7 @@ class ZpoolCapAlert(BaseAlert):
         alerts = []
         pools = [
             vol.vol_name
-            for vol in Volume.objects.filter(vol_fstype='ZFS')
+            for vol in Volume.objects.all()
         ] + ['freenas-boot']
         for pool in pools:
             proc = subprocess.Popen([
