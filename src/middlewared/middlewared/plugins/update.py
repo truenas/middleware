@@ -9,6 +9,10 @@ if '/usr/local/lib' not in sys.path:
     sys.path.append('/usr/local/lib')
 
 from freenasOS import Configuration, Manifest, Update, Train
+from freenasOS.Exceptions import (
+    UpdateIncompleteCacheException, UpdateInvalidCacheException,
+    UpdateBusyCacheException,
+)
 from freenasOS.Update import CheckForUpdates, GetServiceDescription
 
 
@@ -138,6 +142,7 @@ def parse_changelog(changelog, start='', end=''):
 
 class UpdateService(Service):
 
+    @accepts()
     def get_trains(self):
         """
         Returns available trains dict and the currently configured train as well as the
@@ -237,7 +242,13 @@ class UpdateService(Service):
         if path is None:
             path = self.middleware.call('notifier.get_update_location')
         data = []
-        changes = Update.PendingUpdatesChanges(path)
+        try:
+            changes = self.middleware.threaded(Update.PendingUpdatesChanges, path)
+        except (
+            UpdateIncompleteCacheException, UpdateInvalidCacheException,
+            UpdateBusyCacheException,
+        ):
+            changes = []
         if changes:
             if changes.get("Reboot", True) is False:
                 for svc in changes.get("Restart", []):
@@ -308,7 +319,7 @@ class UpdateService(Service):
         return True
 
     @accepts()
-    @job(lock='updatedownload')
+    @job(lock='updatedownload', process=True)
     def download(self, job):
         train = self.get_trains()['selected']
         location = self.middleware.call('notifier.get_update_location')
@@ -322,10 +333,12 @@ class UpdateService(Service):
         if not update:
             return False
 
+        notified = False
         try:
-            notified = self.middleware.call('cache.get', 'update.notified')
+            if self.middleware.call('cache.has_key', 'update.notified'):
+                notified = self.middleware.call('cache.get', 'update.notified')
         except Exception:
-            notified = False
+            pass
 
         if not notified:
             self.middleware.call('cache.put', 'update.notified', True)

@@ -17,7 +17,6 @@ class AFPResourceTest(APITestCase):
         )
         v = Volume.objects.create(
             vol_name='tank',
-            vol_fstype='ZFS',
         )
         MountPoint.objects.create(
             mp_path='/mnt/tank',
@@ -86,7 +85,6 @@ class CIFSResourceTest(APITestCase):
         )
         v = Volume.objects.create(
             vol_name='tank',
-            vol_fstype='ZFS',
         )
         MountPoint.objects.create(
             mp_path='/mnt/tank',
@@ -514,7 +512,6 @@ class RsyncModResourceTest(APITestCase):
         )
         v = Volume.objects.create(
             vol_name='tank',
-            vol_fstype='ZFS',
         )
         MountPoint.objects.create(
             mp_path='/mnt/tank',
@@ -859,7 +856,6 @@ class TFTPResourceTest(APITestCase):
         )
         v = Volume.objects.create(
             vol_name='tank',
-            vol_fstype='ZFS',
         )
         MountPoint.objects.create(
             mp_path='/mnt/tank',
@@ -990,7 +986,6 @@ class iSCSITargetExtentResourceTest(APITestCase):
         )
         v = Volume.objects.create(
             vol_name='tank',
-            vol_fstype='ZFS',
         )
         MountPoint.objects.create(
             mp_path='/mnt/tank',
@@ -1096,7 +1091,6 @@ class iSCSITargetAuthorizedInitiatorResourceTest(APITestCase):
         )
         v = Volume.objects.create(
             vol_name='tank',
-            vol_fstype='ZFS',
         )
         MountPoint.objects.create(
             mp_path='/mnt/tank',

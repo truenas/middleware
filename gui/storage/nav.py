@@ -223,18 +223,17 @@ class Volumes(TreeNode):
             nav.kwargs = {'oid': i.id, 'model': 'Volume'}
             nav.icon = 'VolumesIcon'
 
-            if i.vol_fstype == 'ZFS':
-                ds = TreeNode('Dataset')
-                ds.name = _('Create Dataset')
-                ds.view = 'storage_dataset'
-                ds.icon = 'AddDatasetIcon'
-                ds.type = 'object'
-                ds.kwargs = {'fs': i.vol_name}
-                nav.append_child(ds)
+            ds = TreeNode('Dataset')
+            ds.name = _('Create Dataset')
+            ds.view = 'storage_dataset'
+            ds.icon = 'AddDatasetIcon'
+            ds.type = 'object'
+            ds.kwargs = {'fs': i.vol_name}
+            nav.append_child(ds)
 
-                zv = AddZVol()
-                zv.kwargs = {'parent': i.vol_name}
-                nav.append_child(zv)
+            zv = AddZVol()
+            zv.kwargs = {'parent': i.vol_name}
+            nav.append_child(zv)
 
             subnav = TreeNode('ChangePermissions')
             subnav.name = _('Change Permissions')

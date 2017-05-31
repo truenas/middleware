@@ -49,16 +49,16 @@ MANAGERS = ADMINS
 
 DATABASE_PATH = '/data/freenas-v1.db'
 
+# Workaround bug in database name for migrate
+if 'FREENAS_FACTORY' in os.environ:
+    DATABASE_PATH += '.factory'
+
 DATABASES = {
     'default': {
         'ENGINE': 'freenasUI.freeadmin.sqlite3_ha',
         'NAME': DATABASE_PATH,
         'TEST_NAME': ':memory:',
     },
-    'factory': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': DATABASE_PATH + '.factory',
-    }
 }
 
 """
@@ -161,12 +161,6 @@ DOJANGO_DOJO_PROFILE = 'local_release'
 DOJANGO_DOJO_VERSION = '1.11.1'
 #DOJANGO_DOJO_BUILD_VERSION = '1.6.0b1'
 DOJANGO_DOJO_DEBUG = True
-
-ROLLBAR = {
-    'access_token': 'caf06383cba14d5893c4f4d0a40c33a9',
-    'environment': 'production' if 'DEVELOPER_MODE' not in os.environ else 'development',
-    'root': '/usr/local/www/freenasUI',
-}
 
 ROOT_URLCONF = 'freenasUI.urls'
 

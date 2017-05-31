@@ -49,19 +49,13 @@ from django.http import (
     HttpResponseRedirect,
     StreamingHttpResponse,
 )
-from django.shortcuts import render, redirect
+from django.shortcuts import render
 from django.utils.translation import ugettext as _
 from django.views.decorators.cache import never_cache
 
 from freenasOS import Configuration
 from freenasOS.Exceptions import UpdateManifestNotFound
-from freenasOS.Update import (
-    ActivateClone,
-    CheckForUpdates,
-    DeleteClone,
-    FindClone,
-    CloneSetAttr,
-)
+from freenasOS.Update import CheckForUpdates
 from freenasUI.account.models import bsdUsers
 from freenasUI.common.system import (
     get_sw_name,
@@ -75,6 +69,7 @@ from freenasUI.common.ssl import (
 )
 from freenasUI.freeadmin.apppool import appPool
 from freenasUI.freeadmin.views import JsonResp
+from freenasUI.middleware.client import client
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier
 from freenasUI.middleware.zfs import zpool_list
@@ -276,7 +271,8 @@ def bootenv_datagrid_structure(request):
 
 def bootenv_activate(request, name):
     if request.method == 'POST':
-        active = ActivateClone(name)
+        with client as c:
+            active = c.call('bootenv.activate', name)
         if active is not False:
             return JsonResp(
                 request,
@@ -348,7 +344,8 @@ def bootenv_scrub_interval(request):
 
 def bootenv_delete(request, name):
     if request.method == 'POST':
-        delete = DeleteClone(name)
+        with client as c:
+            delete = c.call('bootenv.delete', name, timeout=120)
         if delete is not False:
             return JsonResp(
                 request,
@@ -377,7 +374,8 @@ def bootenv_deletebulk(request):
                     'index': i,
                     'total': len(names),
                 }))
-            delete = DeleteClone(name)
+            with client as c:
+                delete = c.call('bootenv.delete', name, timeout=120)
             if delete is False:
                 failed = True
         if os.path.exists(BOOTENV_DELETE_PROGRESS):
@@ -447,8 +445,8 @@ def bootenv_rename(request, name):
 
 def bootenv_keep(request, name):
     if request.method == 'POST':
-        be = FindClone(name)
-        keep = CloneSetAttr(be, keep=True)
+        with client as c:
+            keep = c.call('bootenv.set_attribute', name, {'keep': True})
         if keep:
             return JsonResp(
                 request,
@@ -465,8 +463,8 @@ def bootenv_keep(request, name):
 
 def bootenv_unkeep(request, name):
     if request.method == 'POST':
-        be = FindClone(name)
-        keep = CloneSetAttr(be, keep=False)
+        with client as c:
+            keep = c.call('bootenv.set_attribute', name, {'keep': False})
         if keep:
             return JsonResp(
                 request,
@@ -655,7 +653,10 @@ def home(request):
 def varlogmessages(request, lines):
     if lines is None:
         lines = 3
-    msg = os.popen('tail -n %s /var/log/messages' % int(lines)).read().strip()
+    msg = subprocess.Popen(
+        ['tail', '-n', str(lines), '/var/log/messages'],
+        stdout=subprocess.PIPE, stderr=subprocess.PIPE,
+    ).communicate()[0].decode('utf8', 'ignore').strip()
     # "\x07 is invalid XML CDATA, do below to escape it, as well as show some
     # indication of the "console bell" in the webconsole ui
     msg = msg.replace("\x07", "^G")
@@ -720,17 +721,28 @@ def reboot_run(request):
 
 
 def shutdown_dialog(request):
+    _n = notifier()
     if request.method == "POST":
-        if notifier().zpool_scrubbing():
+        if _n.zpool_scrubbing():
             if 'scrub_asked' not in request.session:
                 request.session['scrub_asked'] = True
                 return render(request, 'system/shutdown_dialog2.html')
         request.session['allow_shutdown'] = True
+        if request.POST.get('standby') == 'on':
+            try:
+                s = _n.failover_rpc()
+                if s is not None:
+                    s.service([('stop', 'system', None)])
+            except Exception:
+                pass
         return JsonResp(
             request,
             message=_("Shutdown is being issued"),
             events=['window.location="%s"' % reverse('system_shutdown')])
-    return render(request, 'system/shutdown_dialog.html')
+    context = {}
+    if not _n.is_freenas() and _n.failover_licensed():
+        context['standby'] = True
+    return render(request, 'system/shutdown_dialog.html', context)
 
 
 def shutdown(request):
@@ -818,7 +830,7 @@ class DojoFileStore(object):
         if self.filterVolumes:
             self.mp = [
                 os.path.abspath('/mnt/%s' % v.vol_name)
-                for v in Volume.objects.filter(vol_fstype='ZFS')
+                for v in Volume.objects.all()
             ]
 
         self.path = os.path.join(self.root, path.replace("..", ""))
@@ -1090,7 +1102,7 @@ class MyServer(xmlrpc.client.ServerProxy):
 
     def __getattr__(self, name):
         if name.startswith('_'):
-            return object.__getattr__(self, name)
+            return object.__getattribute__(self, name)
         # magic method dispatcher
         return xmlrpc.client._Method(self.__request, name)
 
@@ -1604,7 +1616,7 @@ def CA_export_certificate(request, id):
         raise MiddlewareError(e)
 
     response = StreamingHttpResponse(
-        buf_generator(cert), content_type='application/octet-stream'
+        buf_generator(cert.decode('utf-8')), content_type='application/x-pem-file'
     )
     response['Content-Length'] = len(cert)
     response['Content-Disposition'] = 'attachment; filename=%s.crt' % ca
@@ -1619,7 +1631,7 @@ def CA_export_privatekey(request, id):
 
     key = export_privatekey(ca.cert_privatekey)
     response = StreamingHttpResponse(
-        buf_generator(key), content_type='application/octet-stream'
+        buf_generator(key.decode('utf-8')), content_type='application/x-pem-file'
     )
     response['Content-Length'] = len(key)
     response['Content-Disposition'] = 'attachment; filename=%s.key' % ca
@@ -1731,7 +1743,7 @@ def certificate_export_certificate(request, id):
     cert = export_certificate(c.cert_certificate)
 
     response = StreamingHttpResponse(
-        buf_generator(cert), content_type='application/octet-stream'
+        buf_generator(cert.decode('utf-8')), content_type='application/x-pem-file'
     )
     response['Content-Length'] = len(cert)
     response['Content-Disposition'] = 'attachment; filename=%s.crt' % c
@@ -1746,7 +1758,7 @@ def certificate_export_privatekey(request, id):
     key = export_privatekey(c.cert_privatekey)
 
     response = StreamingHttpResponse(
-        buf_generator(key), content_type='application/octet-stream'
+        buf_generator(key.decode('utf-8')), content_type='application/x-pem-file'
     )
     response['Content-Length'] = len(key)
     response['Content-Disposition'] = 'attachment; filename=%s.key' % c
@@ -1824,3 +1836,18 @@ def CA_info(request, id):
     return certificate_to_json(
         models.CertificateAuthority.objects.get(pk=int(id))
     )
+
+
+def consul_fake_alert(request):
+    with client as c:
+        fake_alert = c.call('consul.create_fake_alert')
+    if fake_alert is True:
+        return JsonResp(
+                request,
+                message=_('Fake alert sent.'),
+        )
+    else:
+        return JsonResp(
+                request,
+                message=_('Failed to send a fake alert.'),
+        )

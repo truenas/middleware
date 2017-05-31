@@ -1,5 +1,5 @@
-from middlewared.schema import accepts, Int, Str, Dict, List, Ref
-from middlewared.service import CRUDService, job
+from middlewared.schema import accepts, Int, Str, Dict, List, Bool, Patch
+from middlewared.service import filterable, CRUDService, job, private
 from middlewared.utils import Nid, Popen
 from middlewared.client import Client, CallTimeout
 from urllib.request import urlretrieve
@@ -31,16 +31,35 @@ class VMManager(object):
     def start(self, id):
         vm = self.service.query([('id', '=', id)], {'get': True})
         self._vm[id] = VMSupervisor(self, vm)
-        gevent.spawn(self._vm[id].run)
+        try:
+            gevent.spawn(self._vm[id].run)
+            return True
+        except:
+            raise
 
     def stop(self, id):
         supervisor = self._vm.get(id)
         if not supervisor:
             return False
-        return supervisor.stop()
+
+        err = supervisor.stop()
+        return err
+
+    def restart(self, id):
+        supervisor = self._vm.get(id)
+        if supervisor:
+            supervisor.restart()
+            return True
+        else:
+            return False
 
     def status(self, id):
         supervisor = self._vm.get(id)
+        if supervisor is None:
+            vm = self.service.query([('id', '=', id)], {'get': True})
+            self._vm[id] = VMSupervisor(self, vm)
+            supervisor = self._vm.get(id)
+
         if supervisor and supervisor.running():
             return {
                 'state': 'RUNNING',
@@ -59,14 +78,13 @@ class VMSupervisor(object):
         self.vm = vm
         self.proc = None
         self.taps = []
-        self.vmutils = VMUtils
+        self.bhyve_error = None
 
     def run(self):
         args = [
             'bhyve',
-            '-A',
-            '-P',
             '-H',
+            '-w',
             '-c', str(self.vm['vcpus']),
             '-m', str(self.vm['memory']),
             '-s', '0:0,hostbridge',
@@ -115,39 +133,82 @@ class VMSupervisor(object):
                     nictype = 'virtio-net'
                 else:
                     nictype = 'e1000'
-                args += ['-s', '{},{},{}'.format(nid(), nictype, tapname)]
+                mac_address = device['attributes'].get('mac', None)
+
+                # By default we add one NIC and the MAC address is an empty string.
+                # Issue: 24222
+                if mac_address == "":
+                    mac_address = None
+
+                if mac_address == '00:a0:98:FF:FF:FF' or mac_address is None:
+                    args += ['-s', '{},{},{}'.format(nid(), nictype, tapname)]
+                else:
+                    args += ['-s', '{},{},{},mac={}'.format(nid(), nictype, tapname, mac_address)]
             elif device['dtype'] == 'VNC':
                 if device['attributes'].get('wait'):
                     wait = 'wait'
                 else:
                     wait = ''
 
+                vnc_resolution = device['attributes'].get('vnc_resolution', None)
                 vnc_port = int(device['attributes'].get('vnc_port', 5900 + self.vm['id']))
 
-                args += [
-                    '-s', '29,fbuf,tcp=0.0.0.0:{},w=1024,h=768,{}'.format(vnc_port, wait),
-                    '-s', '30,xhci,tablet',
-                ]
+                if vnc_resolution is None:
+                    args += [
+                        '-s', '29,fbuf,tcp=0.0.0.0:{},w=1024,h=768,{}'.format(vnc_port, wait),
+                        '-s', '30,xhci,tablet',
+                    ]
+                else:
+                    vnc_resolution = vnc_resolution.split('x')
+                    width = vnc_resolution[0]
+                    height = vnc_resolution[1]
+                    args += [
+                        '-s', '29,fbuf,tcp=0.0.0.0:{},w={},h={},{}'.format(vnc_port, width, height, wait),
+                        '-s', '30,xhci,tablet',
+                    ]
 
         args.append(self.vm['name'])
 
         self.logger.debug('Starting bhyve: {}'.format(' '.join(args)))
         self.proc = Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+
         for line in self.proc.stdout:
             self.logger.debug('{}: {}'.format(self.vm['name'], line))
 
-        self.proc.wait()
+        # bhyve returns the following status code:
+        # 0 - VM has been reset
+        # 1 - VM has been powered off
+        # 2 - VM has been halted
+        # 3 - VM generated a triple fault
+        # all other non-zero status codes are errors
+        self.bhyve_error = self.proc.wait()
+        if self.bhyve_error == 0:
+            self.logger.info("===> REBOOTING VM: {0} ID: {1} BHYVE_CODE: {2}".format(self.vm['name'], self.vm['id'], self.bhyve_error))
+            self.manager.restart(self.vm['id'])
+            self.manager.start(self.vm['id'])
+        elif self.bhyve_error == 1:
+            # XXX: Need a better way to handle the vmm destroy.
+            self.logger.info("===> POWERED OFF VM: {0} ID: {1} BHYVE_CODE: {2}".format(self.vm['name'], self.vm['id'], self.bhyve_error))
+            self.destroy_vm()
+        elif self.bhyve_error in (2, 3):
+            self.logger.info("===> STOPPING VM: {0} ID: {1} BHYVE_CODE: {2}".format(self.vm['name'], self.vm['id'], self.bhyve_error))
+            self.manager.stop(self.vm['id'])
+        elif self.bhyve_error not in (0, 1, 2, 3, None):
+            self.logger.info("===> ERROR VM: {0} ID: {1} BHYVE_CODE: {2}".format(self.vm['name'], self.vm['id'], self.bhyve_error))
+            self.destroy_vm()
 
-        self.logger.info('Destroying {}'.format(self.vm['name']))
+    def destroy_vm(self):
+        self.logger.warn("===> DESTROYING VM: {0} ID: {1} BHYVE_CODE: {2}".format(self.vm['name'], self.vm['id'], self.bhyve_error))
+        # XXX: We need to catch the bhyvectl return error.
+        bhyve_error = Popen(['bhyvectl', '--destroy', '--vm={}'.format(self.vm['name'])], stdout=subprocess.PIPE, stderr=subprocess.PIPE).wait()
+        self.manager._vm.pop(self.vm['id'], None)
+        self.destroy_tap()
 
-        Popen(['bhyvectl', '--destroy', '--vm={}'.format(self.vm['name'])], stdout=subprocess.PIPE, stderr=subprocess.PIPE).wait()
-
+    def destroy_tap(self):
         while self.taps:
             netif.destroy_interface(self.taps.pop())
 
-        self.manager._vm.pop(self.vm['id'], None)
-
-    def stop(self):
+    def kill_bhyve_pid(self):
         if self.proc:
             try:
                 os.kill(self.proc.pid, 15)
@@ -155,16 +216,41 @@ class VMSupervisor(object):
                 # Already stopped, process do not exist anymore
                 if e.errno != errno.ESRCH:
                     raise
+
+            self.destroy_vm()
             return True
 
+    def restart(self):
+        bhyve_error = Popen(['bhyvectl', '--force-reset', '--vm={}'.format(self.vm['name'])], stdout=subprocess.PIPE, stderr=subprocess.PIPE).wait()
+        self.logger.debug("==> Reset VM: {0} ID: {1} BHYVE_CODE: {2}".format(self.vm['name'], self.vm['id'], bhyve_error))
+        self.destroy_tap()
+
+    def stop(self):
+        bhyve_error = Popen(['bhyvectl', '--force-poweroff', '--vm={}'.format(self.vm['name'])], stdout=subprocess.PIPE, stderr=subprocess.PIPE).wait()
+        self.logger.debug("===> Stopping VM: {0} ID: {1} BHYVE_CODE: {2}".format(self.vm['name'], self.vm['id'], self.bhyve_error))
+
+        if bhyve_error:
+            self.logger.error("===> Stopping VM error: {0}".format(bhyve_error))
+
+        return self.kill_bhyve_pid()
+
     def running(self):
-        if self.proc:
-            try:
-                os.kill(self.proc.pid, 0)
-            except OSError:
-                return False
-            return True
-        return False
+        bhyve_error = Popen(['bhyvectl', '--vm={}'.format(self.vm['name'])], stdout=subprocess.PIPE, stderr=subprocess.PIPE).wait()
+        if bhyve_error == 0:
+            if self.proc:
+                try:
+                    os.kill(self.proc.pid, 0)
+                except OSError:
+                    self.logger.error("===> VMM {0} is running without bhyve process.".format(self.vm['name']))
+                    return False
+                return True
+            else:
+                self.logger.error("===> NO PROC STATE")
+                # XXX: We return true for now to keep the vm.status sane.
+                # It is necessary handle in a better way the bhyve process associated with the vmm.
+                return True
+        elif bhyve_error == 1:
+            return False
 
 
 class VMUtils(object):
@@ -194,6 +280,7 @@ class VMService(CRUDService):
         self._manager = VMManager(self)
         self.vmutils = VMUtils
 
+    @accepts()
     def flags(self):
         """Returns a dictionary with CPU flags for bhyve."""
         data = {}
@@ -212,7 +299,7 @@ class VMService(CRUDService):
 
         return data
 
-    @accepts(Ref('query-filters'), Ref('query-options'))
+    @filterable
     def query(self, filters=None, options=None):
         options = options or {}
         options['extend'] = 'vm._extend_vm'
@@ -227,7 +314,7 @@ class VMService(CRUDService):
         return vm
 
     @accepts(Dict(
-        'data',
+        'vm_create',
         Str('name'),
         Str('description'),
         Int('vcpus'),
@@ -236,6 +323,8 @@ class VMService(CRUDService):
         List("devices"),
         Str('vm_type'),
         Str('container_path'),
+        Bool('autostart'),
+        register=True,
     ))
     def do_create(self, data):
         """Create a VM."""
@@ -261,18 +350,63 @@ class VMService(CRUDService):
             self.middleware.call('datastore.insert', 'vm.device', device)
         return pk
 
-    @accepts(Int('id'), Dict(
-        'data',
-        Str('name'),
-        Str('description'),
-        Int('vcpus'),
-        Int('memory'),
-        Str('bootloader'),
-        Str('vm_type'),
+    @private
+    def do_update_devices(self, id, devices):
+        if devices and isinstance(devices, list) is True:
+            device_query = self.middleware.call('datastore.query', 'vm.device', [('vm__id', '=', int(id))])
+
+            # Make sure both list has the same size.
+            if len(device_query) != len(devices):
+                return False
+
+            get_devices = []
+            for q in device_query:
+                q.pop('vm')
+                get_devices.append(q)
+
+            while len(devices) > 0:
+                update_item = devices.pop(0)
+                old_item = get_devices.pop(0)
+                if old_item['dtype'] == update_item['dtype']:
+                    old_item['attributes'] = update_item['attributes']
+                    device_id = old_item.pop('id')
+                    self.middleware.call('datastore.update', 'vm.device', device_id, old_item)
+            return True
+
+    @accepts(Int('id'), Patch(
+        'vm_create',
+        'vm_update',
+        ('attr', {'update': True}),
     ))
     def do_update(self, id, data):
         """Update all information of a specific VM."""
-        return self.middleware.call('datastore.update', 'vm.vm', id, data)
+        devices = data.pop('devices', None)
+        if devices:
+            update_devices = self.do_update_devices(id, devices)
+        if data:
+            return self.middleware.call('datastore.update', 'vm.vm', id, data)
+        else:
+            return update_devices
+
+    @accepts(Int('id'),
+        Dict('devices', additional_attrs=True),
+    )
+    def create_device(self, id, data):
+        """Create a new device in an existing vm."""
+        devices_type = ('NIC', 'DISK', 'CDROM', 'VNC')
+        devices = data.get('devices', None)
+
+        if devices:
+            devices[0].update({"vm": id})
+            dtype = devices[0].get('dtype', None)
+            if dtype in devices_type and isinstance(devices, list) is True:
+                devices = devices[0]
+                self.middleware.call('datastore.insert', 'vm.device', devices)
+                return True
+            else:
+                return False
+        else:
+            return False
 
     @accepts(Int('id'))
     def do_delete(self, id):
@@ -288,6 +422,11 @@ class VMService(CRUDService):
     def stop(self, id):
         """Stop a VM."""
         return self._manager.stop(id)
+
+    @accepts(Int('id'))
+    def restart(self, id):
+        """Restart a VM."""
+        return self._manager.restart(id)
 
     @accepts(Int('id'))
     def status(self, id):
@@ -353,5 +492,18 @@ def kmod_load():
         Popen(['/sbin/kldload', 'nmdm'])
 
 
+def _event_system_ready(middleware, event_type, args):
+    """
+    Method called when system is ready, supposed to start VMs
+    flagged that way.
+    """
+    if args['id'] != 'ready':
+        return
+
+    for vm in middleware.call('vm.query', [('autostart', '=', True)]):
+        middleware.call('vm.start', vm['id'])
+
+
 def setup(middleware):
     gevent.spawn(kmod_load)
+    middleware.event_subscribe('system', _event_system_ready)

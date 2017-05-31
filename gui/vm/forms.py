@@ -107,12 +107,25 @@ class DeviceForm(ModelForm):
         required=False,
         initial='E1000',
     )
+    NIC_mac = forms.CharField(
+        label=_('Mac Address'),
+        required=False,
+        help_text=_("You can specify the adapter MAC Address or let it be auto generated."),
+        validators=[RegexValidator("^([0-9a-fA-F]{2}([::]?|$)){6}$", "Invalid MAC format.")],
+        initial='00:a0:98:FF:FF:FF',
+    )
+    VNC_resolution = forms.ChoiceField(
+        label=_('Resolution'),
+        choices=choices.VNC_RESOLUTION,
+        required=False,
+        initial='1024x768',
+    )
     VNC_port = forms.CharField(
         label=_('VNC port'),
         required=False,
-        initial=0,
         help_text=_("You can specify the VNC port or 0 for auto."),
         validators=[RegexValidator("^[0-9]*$", "Only integer is accepted")],
+        initial=0,
     )
     VNC_wait = forms.BooleanField(
         label=_('Wait to boot'),
@@ -149,9 +162,14 @@ class DeviceForm(ModelForm):
                 self.fields['DISK_mode'].initial = self.instance.attributes.get('type')
             elif self.instance.dtype == 'NIC':
                 self.fields['NIC_type'].initial = self.instance.attributes.get('type')
+                self.fields['NIC_mac'].initial = self.instance.attributes.get('mac')
             elif self.instance.dtype == 'VNC':
+                vnc_port = self.instance.attributes.get('vnc_port')
+                vnc_port = 0 if vnc_port is None else vnc_port
+
                 self.fields['VNC_wait'].initial = self.instance.attributes.get('wait')
-                self.fields['VNC_port'].initial = self.instance.attributes.get('vnc_port')
+                self.fields['VNC_port'].initial = vnc_port
+                self.fields['VNC_resolution'].initial = self.instance.attributes.get('vnc_resolution')
 
     def clean(self):
         vm = self.cleaned_data.get('vm')
@@ -188,17 +206,20 @@ class DeviceForm(ModelForm):
         elif self.cleaned_data['dtype'] == 'NIC':
             obj.attributes = {
                 'type': self.cleaned_data['NIC_type'],
+                'mac': self.cleaned_data['NIC_mac'],
             }
         elif self.cleaned_data['dtype'] == 'VNC':
             if vm.bootloader == 'UEFI' and self.is_container is False:
                 obj.attributes = {
                     'wait': self.cleaned_data['VNC_wait'],
                     'vnc_port': self.cleaned_data['VNC_port'],
+                    'vnc_resolution': self.cleaned_data['VNC_resolution'],
                 }
             else:
                 self._errors['dtype'] = self.error_class([_('VNC is only allowed for UEFI')])
                 self.cleaned_data.pop('VNC_port', None)
                 self.cleaned_data.pop('VNC_wait', None)
+                self.cleaned_data.pop('VNC_resolution', None)
                 return obj
 
         obj.save()

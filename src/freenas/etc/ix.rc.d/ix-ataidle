@@ -20,7 +20,7 @@ ataidle_start()
 	trap 'rm -f ${RO_FREENAS_CONFIG}' EXIT
 
 	${FREENAS_SQLITE_CMD} ${RO_FREENAS_CONFIG} \
-		"SELECT $sf FROM storage_disk WHERE disk_enabled = 1" | \
+		"SELECT $sf FROM storage_disk WHERE disk_expiretime IS NULL" | \
 	while eval read -r $f; do
 
 		# Run ataidle only in ${disks}

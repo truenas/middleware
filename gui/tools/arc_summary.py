@@ -183,7 +183,7 @@ def fPerc(lVal=0, rVal=0, Decimal=2):
 def get_system_memory(Kstat):
     def mem_rounded(mem_size):
         chip_size = 1
-        chip_guess = (int(mem_size) / 8) - 1
+        chip_guess = int((mem_size / 8) - 1)
         while chip_guess != 0:
             chip_guess >>= 1
             chip_size <<= 1
@@ -923,7 +923,7 @@ def _l2arc_summary(Kstat):
         ))
         sys.stdout.write("\n")
 
-        if arc["l2_arc_evicts"]['lock_retries'] + arc["l2_arc_evicts"]["reading"] > 0:
+        if int(arc["l2_arc_evicts"]['lock_retries']) + int(arc["l2_arc_evicts"]["reading"]) > 0:
             sys.stdout.write("L2 ARC Evicts:\n")
             sys.stdout.write("\tLock Retries:\t\t\t\t%s\n" % arc["l2_arc_evicts"]['lock_retries'])
             sys.stdout.write("\tUpon Reading:\t\t\t\t%s\n" % arc["l2_arc_evicts"]["reading"])

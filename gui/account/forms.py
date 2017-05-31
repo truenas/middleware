@@ -35,6 +35,7 @@ from django.http import QueryDict
 from dojango import forms
 from freenasUI.account import models
 from freenasUI.common.forms import ModelForm, Form
+from freenasUI.common.freenassysctl import freenas_sysctl as _fs
 from freenasUI.common.pipesubr import pipeopen
 from freenasUI.freeadmin.forms import SelectMultipleField
 from freenasUI.freeadmin.utils import key_order
@@ -82,7 +83,19 @@ class NewPasswordForm(Form):
                     username=user.bsdusr_username,
                     password=self.cleaned_data['password'],
                 )
-                notifier().reload("user")
+
+                #
+                # XXX hackity hackness XXX
+                # Catch call timeout exceptions. We should really return this to the user
+                # in the UI, but there is no easy way to currently do this. For now this
+                # prevents a stack trace in the UI, which is slightly better than nothing ;-)
+                # This same try/except structure is littered throughout this code.
+                #
+                try:
+                    notifier().reload("user", timeout=_fs().account.user.timeout.reload)
+                except Exception as e:
+                    log.debug("ERROR: failed to reload user: %s", e)
+
         return valid
 
 
@@ -551,7 +564,7 @@ class bsdUsersForm(ModelForm, bsdUserGroupMixin):
                     homedir_mode = int(homedir_mode, 8)
                     os.chmod(bsduser.bsdusr_home, homedir_mode)
                 except:
-                    log.warn('Failed to set homedir mode', exc_info=True)
+                    log.warn('ERROR: failed to set homedir mode', exc_info=True)
 
         #
         # Check if updating group membership
@@ -567,7 +580,10 @@ class bsdUsersForm(ModelForm, bsdUserGroupMixin):
                 bsdgrpmember_user=bsduser)
             m.save()
 
-        _notifier.reload("user")
+        try:
+            _notifier.reload("user", timeout=_fs().account.user.timeout.reload)
+        except Exception as e:
+            log.debug("ERROR: failed to reload user: %s", e)
         if self.bsdusr_home_copy:
             p = pipeopen("su - %s -c '/bin/cp -a %s/* %s/'" % (
                 self.cleaned_data['bsdusr_username'],
@@ -645,7 +661,10 @@ class bsdUserPasswordForm(ModelForm):
             self.instance.bsdusr_unixhash = unixhash
             self.instance.bsdusr_smbhash = smbhash
             self.instance.save()
-            _notifier.reload("user")
+            try:
+                _notifier.reload("user", timeout=_fs().account.user.timeout.reload)
+            except Exception as e:
+                log.debug("ERROR: failed to reload user: %s", e)
         return self.instance
 
 
@@ -657,7 +676,10 @@ class bsdUserEmailForm(ModelForm, bsdUserGroupMixin):
 
     def save(self):
         bsduser = super(bsdUserEmailForm, self).save(commit=True)
-        notifier().reload("user")
+        try:
+            notifier().reload("user", timeout=_fs().account.user.timeout.reload)
+        except Exception as e:
+            log.debug("ERROR: failed to reload user: %s", e)
         return bsduser
 
 
@@ -752,7 +774,10 @@ class bsdGroupsForm(ModelForm, bsdUserGroupMixin):
         notifier().groupmap_add(unixgroup=self.instance.bsdgrp_group,
             ntgroup=self.instance.bsdgrp_group)
 
-        notifier().reload("user")
+        try:
+            notifier().reload("user", timeout=_fs().account.user.timeout.reload)
+        except Exception as e:
+            log.debug("ERROR: failed to reload user: %s", e)
         return ins
 
 
@@ -789,7 +814,10 @@ class bsdGroupToUserForm(Form):
                 bsdgrpmember_group=group,
                 bsdgrpmember_user=user)
             m.save()
-        notifier().reload("user")
+        try:
+            notifier().reload("user", timeout=_fs().account.user.timeout.reload)
+        except Exception as e:
+            log.debug("ERROR: failed to reload user: %s", e)
 
 
 class bsdUserToGroupForm(Form):
@@ -834,7 +862,10 @@ class bsdUserToGroupForm(Form):
                 bsdgrpmember_group=group,
                 bsdgrpmember_user=user)
             m.save()
-        notifier().reload("user")
+        try:
+            notifier().reload("user", timeout=_fs().account.user.timeout.reload)
+        except Exception as e:
+            log.debug("ERROR: failed to reload user: %s", e)
 
 
 class DeleteGroupForm(forms.Form):

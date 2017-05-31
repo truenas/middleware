@@ -46,7 +46,7 @@ class VMWareService(Service):
             )
         except (vim.fault.InvalidLogin, vim.fault.NoPermission) as e:
             raise CallError(e.msg, errno.EPERM)
-        except socket.gaierror as e:
+        except (socket.gaierror, socket.error, OSError) as e:
             raise CallError(str(e), e.errno)
 
         content = server_instance.RetrieveContent()

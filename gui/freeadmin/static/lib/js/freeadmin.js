@@ -191,7 +191,7 @@ require([
     ) {
 
     Menu = new fMenu();
-    Middleware = new fMiddleware({token: MIDDLEWARE_TOKEN});
+    Middleware = new fMiddleware({tokenUrl: middlewareTokenUrl});
 
     humanizeSize = function(value, integer) {
       var map = [
@@ -1341,15 +1341,19 @@ require([
         var disk_mode = registry.byId("id_DISK_mode").domNode.parentNode.parentNode;
         var disk_zvol = registry.byId("id_DISK_zvol").domNode.parentNode.parentNode;
         var nic_type = registry.byId("id_NIC_type").domNode.parentNode.parentNode;
+        var nic_mac = registry.byId("id_NIC_mac").domNode.parentNode.parentNode;
         var vnc_wait = registry.byId("id_VNC_wait").domNode.parentNode.parentNode;
         var vnc_port = registry.byId("id_VNC_port").domNode.parentNode.parentNode;
+        var vnc_resolution = registry.byId("id_VNC_resolution").domNode.parentNode.parentNode;
 
         domStyle.set(cdrom_path, "display", "none");
         domStyle.set(disk_mode, "display", "none");
         domStyle.set(disk_zvol, "display", "none");
         domStyle.set(nic_type, "display", "none");
+        domStyle.set(nic_mac, "display", "none");
         domStyle.set(vnc_wait, "display", "none");
         domStyle.set(vnc_port, "display", "none");
+        domStyle.set(vnc_resolution, "display", "none");
 
         if(dtype.get('value') == 'DISK') {
           domStyle.set(disk_mode, "display", "");
@@ -1358,7 +1362,9 @@ require([
           domStyle.set(cdrom_path, "display", "");
         } else if(dtype.get('value') == 'NIC') {
           domStyle.set(nic_type, "display", "");
+          domStyle.set(nic_mac, "display", "");
         } else if(dtype.get('value') == 'VNC') {
+          domStyle.set(vnc_resolution, "display", "");
           domStyle.set(vnc_port, "display", "");
           domStyle.set(vnc_wait, "display", "");
         }

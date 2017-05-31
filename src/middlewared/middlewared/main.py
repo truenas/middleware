@@ -6,7 +6,8 @@ from .client import ejson as json
 from .client.protocol import DDPProtocol
 from .job import Job, JobsQueue
 from .restful import RESTfulAPI
-from .service import CallException
+from .schema import Error as SchemaError
+from .service import CallError, CallException
 from .utils import Popen
 from collections import OrderedDict, defaultdict
 from daemon import DaemonContext
@@ -18,6 +19,7 @@ from geventwebsocket import WebSocketServer, WebSocketApplication, Resource
 import argparse
 import binascii
 import cgi
+import errno
 import gevent
 import greenlet
 import imp
@@ -163,12 +165,14 @@ class Application(WebSocketApplication):
             result = self.middleware.call_method(self, message)
             if isinstance(result, Job):
                 result = result.id
+            elif isinstance(result, types.GeneratorType):
+                result = list(result)
             self._send({
                 'id': message['id'],
                 'msg': 'result',
                 'result': result,
             })
-        except CallException as e:
+        except (CallException, SchemaError) as e:
             # CallException and subclasses are the way to gracefully
             # send errors to the client
             self.send_error(message, str(e), sys.exc_info())
@@ -176,17 +180,11 @@ class Application(WebSocketApplication):
             self.send_error(message, str(e), sys.exc_info())
             self.logger.warn('Exception while calling {}(*{})'.format(message['method'], message.get('params')), exc_info=True)
 
-            try:
-                sw_version = self.middleware.call('system.version')
-            except:
-                self.logger.debug('Failed to get system version', exc_info=True)
-
-            if self.middleware.rollbar.is_rollbar_disabled():
-                self.logger.debug('[Rollbar] is disabled using sentinel file.')
+            if self.middleware.crash_reporting.is_disabled():
+                self.logger.debug('[Crash Reporting] is disabled using sentinel file.')
             else:
                 extra_log_files = (('/var/log/middlewared.log', 'middlewared_log'),)
-                gevent.spawn(self.middleware.rollbar.rollbar_report, sys.exc_info(), None, sw_version, extra_log_files)
-                self.logger.info('[Rollbar] report sent.')
+                gevent.spawn(self.middleware.crash_reporting.report, sys.exc_info(), None, extra_log_files)
 
     def subscribe(self, ident, name):
         self.__subscribed[ident] = name
@@ -408,16 +406,17 @@ class Middleware(object):
     def __init__(self):
         self.logger_name = logger.Logger('middlewared')
         self.logger = self.logger_name.getLogger()
-        self.rollbar = logger.Rollbar()
+        self.crash_reporting = logger.CrashReporting()
+        self.__threadpool = ThreadPool(5)  # Init before plugins are loaded
         self.__jobs = JobsQueue(self)
         self.__schemas = {}
         self.__services = {}
         self.__wsclients = {}
+        self.__event_subs = defaultdict(list)
         self.__hooks = defaultdict(list)
         self.__server_threads = []
         self.__init_services()
         self.__plugins_load()
-        self.__threadpool = ThreadPool(5)
 
     def __init_services(self):
         from middlewared.service import CoreService
@@ -568,11 +567,20 @@ class Middleware(object):
         else:
             return methodobj(*args)
 
+    def _method_lookup(self, name):
+        if '.' not in name:
+            raise CallError('Invalid method name', errno.EBADMSG)
+        try:
+            service, method_name = name.rsplit('.', 1)
+            methodobj = getattr(self.get_service(service), method_name)
+        except AttributeError:
+            raise CallError(f'Method "{method_name}" not found in "{service}"', errno.ENOENT)
+        return methodobj
+
     def call_method(self, app, message):
         """Call method from websocket"""
         params = message.get('params') or []
-        service, method_name = message['method'].rsplit('.', 1)
-        methodobj = getattr(self.get_service(service), method_name)
+        methodobj = self._method_lookup(message['method'])
 
         if not app.authenticated and not hasattr(methodobj, '_no_auth_required'):
             app.send_error(message, 'Not authenticated')
@@ -581,9 +589,14 @@ class Middleware(object):
         return self._call(message['method'], methodobj, params, app=app)
 
     def call(self, name, *params):
-        service, method = name.rsplit('.', 1)
-        methodobj = getattr(self.get_service(service), method)
+        methodobj = self._method_lookup(name)
         return self._call(name, methodobj, params)
+
+    def event_subscribe(self, name, handler):
+        """
+        Internal way for middleware/plugins to subscribe to events.
+        """
+        self.__event_subs[name].append(handler)
 
     def send_event(self, name, event_type, **kwargs):
         assert event_type in ('ADDED', 'CHANGED', 'REMOVED')
@@ -592,6 +605,10 @@ class Middleware(object):
                 wsclient.send_event(name, event_type, **kwargs)
             except:
                 self.logger.warn('Failed to send event {} to {}'.format(name, sessionid), exc_info=True)
+
+        # Send event also for internally subscribed plugins
+        for handler in self.__event_subs.get(name, []):
+            gevent.spawn(handler, self, event_type, kwargs)
 
     def pdb(self):
         import pdb

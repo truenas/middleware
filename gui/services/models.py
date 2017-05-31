@@ -687,17 +687,6 @@ class iSCSITargetExtent(Model):
                 return self.iscsi_target_extent_path
 
     def delete(self):
-        if self.iscsi_target_extent_type in ("Disk", "ZVOL"):
-            try:
-                if self.iscsi_target_extent_type == "Disk":
-                    disk = Disk.objects.get(pk=self.iscsi_target_extent_path)
-                    devname = disk.identifier_to_device()
-                    if not devname:
-                        disk.disk_enabled = False
-                        disk.save()
-            except Exception as e:
-                log.error("Unable to sync iSCSI extent delete: %s", e)
-
         for te in iSCSITargetToExtent.objects.filter(iscsi_extent=self):
             te.delete()
         super(iSCSITargetExtent, self).delete()
@@ -1703,7 +1692,7 @@ class SSH(Model):
         ),
         max_length=350,
         blank=True,
-        choices=list(choices.NICChoices(exclude_configured=False)),
+        choices=choices.NICChoices(exclude_configured=False, exclude_unconfigured_vlan_parent=True),
         default='',
     )
     ssh_tcpport = models.PositiveIntegerField(

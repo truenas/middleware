@@ -269,7 +269,7 @@ class ServiceService(Service):
         stdout = PIPE
         if options and 'stdout' in options:
             stdout = options['stdout']
-        stderr = PIPE 
+        stderr = PIPE
         if options and 'stderr' in options:
             stderr = options['stderr']
 
@@ -377,8 +377,9 @@ class ServiceService(Service):
         try:
             with open('/var/run/webshell.pid', 'r') as f:
                 pid = f.read()
-                os.kill(int(pid), signal.SIGHUP)
+                os.kill(int(pid), signal.SIGTERM)
                 time.sleep(0.2)
+                os.kill(int(pid), signal.SIGKILL)
         except:
             pass
         self._system("ulimit -n 1024 && /usr/local/bin/python /usr/local/www/freenasUI/tools/webshell.py")
@@ -820,10 +821,10 @@ class ServiceService(Service):
         self._service("inadyn-mt", "restart", **kwargs)
 
     def _restart_system(self, **kwargs):
-        self._system("/bin/sleep 3 && /sbin/shutdown -r now &")
+        gevent.spawn(self._system, "/bin/sleep 3 && /sbin/shutdown -r now")
 
     def _stop_system(self, **kwargs):
-        self._system("/sbin/shutdown -p now")
+        gevent.spawn(self._system, "/bin/sleep 3 && /sbin/shutdown -p now")
 
     def _reload_cifs(self, **kwargs):
         self._service("ix-pre-samba", "start", quiet=True, **kwargs)

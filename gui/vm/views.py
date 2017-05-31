@@ -73,3 +73,13 @@ def stop(request, id):
     return render(request, "vm/stop.html", {
         'name': vm.name,
     })
+
+def restart(request, id):
+    vm = models.VM.objects.get(id=id)
+    if request.method == 'POST':
+        with client as c:
+            c.call('vm.restart', id)
+        return JsonResp(request, message='VM Restarted')
+    return render(request, "vm/restart.html", {
+        'name': vm.name,
+    })

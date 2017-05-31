@@ -1,8 +1,0 @@
-{
-  "name": "electron-app",
-  "version": "0.0.1",
-  "main": "main.js",
-  "dependencies": {
-    "angular2-uuid": "^1.1.1"
-  }
-}

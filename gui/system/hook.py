@@ -57,7 +57,9 @@ class SystemHook(AppHook):
             models.Certificate,
         ]
 
+        idx_skip = 0
         if not notifier().is_freenas():
+            idx_skip += 1
             tabmodels.insert(5, models.CloudCredentials)
 
         tabs = []
@@ -117,7 +119,7 @@ class SystemHook(AppHook):
             'url': reverse('system_update_index'),
         })
 
-        tabs.insert(11, {
+        tabs.insert(11 + idx_skip, {
             'name': 'Support',
             'focus': 'system.Support',
             'verbose_name': _('Support'),
@@ -127,7 +129,7 @@ class SystemHook(AppHook):
         license = get_license()[0]
         if license is not None and not notifier().is_freenas():
             support = models.Support.objects.order_by('-id')[0]
-            tabs.insert(12, {
+            tabs.insert(12 + idx_skip, {
                 'name': 'Proactive Support',
                 'focus': 'system.ProactiveSupport',
                 'verbose_name': _('Proactive Support'),

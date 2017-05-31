@@ -727,15 +727,14 @@ class FreeNAS_LDAP_Base(FreeNAS_LDAP_Directory):
             if krb_principal and krb_principal.upper() == principal.upper():
                 return True
 
-            (fd, tmpfile) = tempfile.mkstemp(dir="/tmp")
-            os.fchmod(fd, 0o600)
-            os.write(fd, self.bindpw)
-            os.close(fd)
+            f = tempfile.NamedTemporaryFile(mode='w+', dir="/tmp")
+            os.chmod(f.name, 0o600)
+            f.write(self.bindpw)
 
             args = [
                 "/usr/bin/kinit",
                 "--renewable",
-                "--password-file=%s" % tmpfile,
+                "--password-file=%s" % f.name,
                 "%s" % principal
             ]
 
@@ -744,7 +743,7 @@ class FreeNAS_LDAP_Base(FreeNAS_LDAP_Directory):
                 kinit = True
                 res = True
 
-            os.unlink(tmpfile)
+            f.close()
 
         if kinit:
             i = 0

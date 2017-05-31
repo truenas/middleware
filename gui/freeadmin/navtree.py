@@ -49,16 +49,12 @@ from freenasUI.middleware.notifier import notifier
 from freenasUI.plugins.models import Plugins
 from freenasUI.plugins.utils import get_base_url
 
+from multiprocessing.pool import ThreadPool
 
 import ssl
 # Monkey patch ssl checking to get back to Python 2.7.8 behavior
-# Note: PLEASE DO THIS BEFORE importing eventlet as I went through its
-# code: https://github.com/eventlet/eventlet/blob/master/eventlet/green/ssl.py#LC376
-# Its horrible, but nothing much I can do about it
 ssl._create_default_https_context = ssl._create_unverified_context
 ssl.create_default_context = ssl._create_unverified_context
-from eventlet import GreenPool
-from eventlet.green.urllib import request as green_request
 
 log = logging.getLogger('freeadmin.navtree')
 
@@ -544,15 +540,11 @@ class NavTree(object):
 
     def _plugin_fetch(self, args):
         plugin, host, request, timeout = args
-        if re.match('^.+\[.+\]', host, re.I):
-            url_lib_to_use = urllib.request
-        else:
-            url_lib_to_use = green_request
 
         data = None
         url = "%s/plugins/%s/%d/_s/treemenu" % (host, plugin.plugin_name, plugin.id)
         try:
-            opener = url_lib_to_use.build_opener()
+            opener = urllib.request.build_opener()
             opener.addheaders = [(
                 'Cookie', 'sessionid=%s' % (
                     request.COOKIES.get("sessionid", ''),
@@ -581,53 +573,53 @@ class NavTree(object):
             timeout = 6
         args = [(y, host, request, timeout) for y in plugs]
 
-        pool = GreenPool(20)
-        for plugin, url, data in pool.imap(self._plugin_fetch, args):
+        with ThreadPool(10) as pool:
+            for plugin, url, data in pool.imap(self._plugin_fetch, args):
 
-            if not data:
-                continue
+                if not data:
+                    continue
 
-            try:
-                data = json.loads(data)
+                try:
+                    data = json.loads(data)
 
-                nodes = unserialize_tree(data)
-                for node in nodes:
-                    # We have our TreeNode's, find out where to place them
+                    nodes = unserialize_tree(data)
+                    for node in nodes:
+                        # We have our TreeNode's, find out where to place them
 
-                    found = False
-                    if node.append_to:
-                        log.debug(
-                            "Plugin %s requested to be appended to %s",
-                            plugin.plugin_name, node.append_to)
-                        places = node.append_to.split('.')
-                        places.reverse()
-                        for root in tree_roots:
-                            find = root.find_place(list(places))
-                            if find is not None:
-                                find.append_child(node)
-                                found = True
-                                break
-                    else:
-                        log.debug(
-                            "Plugin %s didn't request to be appended "
-                            "anywhere specific",
-                            plugin.plugin_name)
+                        found = False
+                        if node.append_to:
+                            log.debug(
+                                "Plugin %s requested to be appended to %s",
+                                plugin.plugin_name, node.append_to)
+                            places = node.append_to.split('.')
+                            places.reverse()
+                            for root in tree_roots:
+                                find = root.find_place(list(places))
+                                if find is not None:
+                                    find.append_child(node)
+                                    found = True
+                                    break
+                        else:
+                            log.debug(
+                                "Plugin %s didn't request to be appended "
+                                "anywhere specific",
+                                plugin.plugin_name)
 
-                    if not found:
-                        tree_roots.register(node)
+                        if not found:
+                            tree_roots.register(node)
 
-            except Exception as e:
-                log.warn(_(
-                    "An error occurred while unserializing from "
-                    "%(url)s: %(error)s") % {'url': url, 'error': e})
-                log.debug(_(
-                    "Error unserializing %(url)s (%(error)s), data "
-                    "retrieved:"
-                ) % {
-                    'url': url,
-                    'error': e,
-                })
-                continue
+                except Exception as e:
+                    log.warn(_(
+                        "An error occurred while unserializing from "
+                        "%(url)s: %(error)s") % {'url': url, 'error': e})
+                    log.debug(_(
+                        "Error unserializing %(url)s (%(error)s), data "
+                        "retrieved:"
+                    ) % {
+                        'url': url,
+                        'error': e,
+                    })
+                    continue
 
     def _build_nav(self, user):
         navs = []

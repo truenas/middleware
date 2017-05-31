@@ -195,6 +195,8 @@ class CoreService(Service):
                     """
                     if attr in ('create', 'update', 'delete'):
                         method = getattr(svc, 'do_{}'.format(attr), None)
+                        if method is None:
+                            continue
                     elif attr in ('do_create', 'do_update', 'do_delete'):
                         continue
 
@@ -246,6 +248,10 @@ class CoreService(Service):
                     'filterable': hasattr(method, '_filterable'),
                 }
         return data
+
+    @private
+    def event_send(self, name, event_type, kwargs):
+        self.middleware.send_event(name, event_type, **kwargs)
 
     @accepts()
     def ping(self):

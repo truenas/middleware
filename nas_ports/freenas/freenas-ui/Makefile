@@ -33,18 +33,17 @@ RUN_DEPENDS=	${PYTHON_PKGNAMEPREFIX}django110>0:www/py-django110 \
 	${PYTHON_PKGNAMEPREFIX}simplejson>0:devel/py-simplejson \
 	${PYTHON_PKGNAMEPREFIX}ujson>0:devel/py-ujson \
 	${PYTHON_PKGNAMEPREFIX}oauth2>0:net/py-oauth2 \
-	${PYTHON_PKGNAMEPREFIX}eventlet>0:net/py-eventlet \
 	${PYTHON_PKGNAMEPREFIX}django-json-rpc>0:www/py-django-json-rpc \
 	${PYTHON_PKGNAMEPREFIX}sqlparse>0:databases/py-sqlparse \
 	${PYTHON_PKGNAMEPREFIX}licenselib>0:freenas/py-licenselib \
 	${PYTHON_PKGNAMEPREFIX}bsd>0:freenas/py-bsd \
 	${PYTHON_PKGNAMEPREFIX}middlewared>0:freenas/py-middlewared \
-	${PYTHON_PKGNAMEPREFIX}rollbar>0:www/py-rollbar \
 	${PYTHON_PKGNAMEPREFIX}ntplib>0:net/py-ntplib \
 	pyvmomi>0:net/py-pyvmomi \
 	dmidecode>0:sysutils/dmidecode \
 	freenas-pkgtools>0:freenas/freenas-pkgtools \
-	freenas-migrate93>0:freenas/freenas-migrate93
+	freenas-migrate93>0:freenas/freenas-migrate93 \
+	${PYTHON_PKGNAMEPREFIX}libzfs>0:freenas/py-libzfs
 
 EXTRACT_ONLY=
 WRKSRC=/usr/freenasUI

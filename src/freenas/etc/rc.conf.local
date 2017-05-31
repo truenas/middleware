@@ -587,9 +587,10 @@ _gen_conf()
 		fi
 	fi
 
-	_count_config zfs_enable storage_volume vol_fstype =\'ZFS\'
-	_count_config fusefs_enable storage_volume vol_fstype =\'NTFS\'
-	_count_config fusefs_safe storage_volume vol_fstype =\'NTFS\'
+	if [ "$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT COUNT() FROM storage_volume")" != 0 ]; then
+		echo "zfs_enable=\"YES\""
+	fi
+
 	_count_config powerd_enable system_advanced adv_powerdaemon =1
 	_count_config ix_diagnose_enable system_advanced adv_uploadcrash =1
 	if ! is_freenas; then

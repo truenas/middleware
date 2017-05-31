@@ -188,6 +188,9 @@ http {
     #keepalive_timeout  0;
     keepalive_timeout  65;
 
+    # Disable tokens for security (#23684)
+    server_tokens off;
+
     #gzip  on;
     #upload_store /var/tmp/firmware;
     client_body_temp_path /var/tmp/firmware;

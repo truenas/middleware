@@ -49,7 +49,7 @@ def main():
     else:
         cf_contents.append("\tvol dbnest = yes\n")
     if afp.afp_srv_global_aux:
-        cf_contents.append("\t%s\n" % afp.afp_srv_global_aux.encode('utf8'))
+        cf_contents.append("\t%s\n" % afp.afp_srv_global_aux)
 
     if afp.afp_srv_map_acls:
         cf_contents.append("\tmap acls = %s\n" % afp.afp_srv_map_acls)
@@ -75,7 +75,7 @@ def main():
         cf_contents.append("\tldap userscope = %s\n" % "sub")
 
         # This should be configured when using this option
-        if ad.groupdn: 
+        if ad.groupdn:
             cf_contents.append("\tldap groupbase = %s\n" % ad.groupdn)
 
         cf_contents.append("\tldap groupscope = %s\n" % "sub")

@@ -1,4 +1,4 @@
-from middlewared.client import Client
+from middlewared.client import Client, ClientException
 
 
 class Connection(object):

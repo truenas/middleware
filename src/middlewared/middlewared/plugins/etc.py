@@ -47,7 +47,7 @@ class EtcService(Service):
         ],
     }
 
-    class Meta:
+    class Config:
         private = True
 
     def __init__(self, *args, **kwargs):

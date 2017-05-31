@@ -23,7 +23,7 @@ class DiskFAdmin(BaseFreeAdmin):
         'disk_number',
         'disk_multipath_name',
         'disk_multipath_member',
-        'disk_enabled',
+        'disk_expiretime',
     )
     resource_mixin = DiskResourceMixin
 
@@ -78,7 +78,6 @@ class VolumeFAdmin(BaseFreeAdmin):
     exclude_fields = (
         'id',
         'vol_name',
-        'vol_fstype',
         'vol_guid',
         'vol_encrypt',
         'vol_encryptkey',
@@ -148,7 +147,7 @@ class VolumeFAdmin(BaseFreeAdmin):
 
     def _action_builder(
         self, name, label=None, url=None, func="editObject", icon=None,
-        show=None, fstype="ZFS", decrypted=True, has_enc=False, enc_level=None,
+        show=None, decrypted=True, has_enc=False, enc_level=None,
         hide_unknown=True,
     ):
 
@@ -171,20 +170,11 @@ class VolumeFAdmin(BaseFreeAdmin):
         else:
             hide_cond = "row.data.type !== undefined"
 
-        if fstype == "ZFS":
-            hide_fs = (
-                "row.data.vol_fstype !== undefined && "
-                "row.data.vol_fstype != 'ZFS'"
-            )
-        else:
-            hide_fs = "false"
-
         if name == "upgrade":
             hide_cond = "row.data.is_upgraded !== false"
 
         if decrypted is True:
             hide_enc = (
-                "row.data.vol_fstype !== undefined && "
                 "row.data.is_decrypted == false"
             )
         elif decrypted is False:
@@ -208,7 +198,7 @@ class VolumeFAdmin(BaseFreeAdmin):
         on_select_after = """function(evt, actionName, action) {
   for(var i=0;i < evt.rows.length;i++) {
     var row = evt.rows[i];
-    if((%(hide_unknown)s) || (%(hide)s) || (%(hide_fs)s) || (%(hide_enc)s) || (%(hide_hasenc)s) || !%(hide_url)s) {
+    if((%(hide_unknown)s) || (%(hide)s) || (%(hide_enc)s) || (%(hide_hasenc)s) || !%(hide_url)s) {
       query(".grid" + actionName).forEach(function(item, idx) {
         domStyle.set(item, "display", "none");
       });
@@ -217,7 +207,6 @@ class VolumeFAdmin(BaseFreeAdmin):
   }
 }""" % {
             'hide': hide_cond,
-            'hide_fs': hide_fs,
             'hide_enc': hide_enc,
             'hide_hasenc': hide_hasenc,
             'hide_unknown': hide_unknown,
@@ -259,7 +248,6 @@ class VolumeFAdmin(BaseFreeAdmin):
             label=_('Detach Volume'),
             func="editScaryObject",
             icon="remove_volume",
-            fstype="ALL",
             decrypted=None,
             hide_unknown=False,
         )
@@ -283,7 +271,6 @@ class VolumeFAdmin(BaseFreeAdmin):
             'permissions',
             label=_('Change Permissions'),
             show="+DATASET",
-            fstype="ALL",
         )
         actions['ManualSnapshot'] = self._action_builder(
             "manual_snapshot",
@@ -419,12 +406,8 @@ class VolumeStatusFAdmin(BaseFreeAdmin):
 
     def get_datagrid_context(self, request):
         volume = models.Volume.objects.get(id=request.GET.get('id'))
-        if volume.vol_fstype == 'ZFS':
-            pool = notifier().zpool_parse(volume.vol_name)
-            return {
-                'pool': pool,
-            }
-        return {}
+        pool = notifier().zpool_parse(volume.vol_name)
+        return {'pool': pool}
 
     def get_datagrid_columns(self):
 

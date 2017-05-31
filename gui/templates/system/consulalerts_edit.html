@@ -7,3 +7,17 @@ addToStack(function() {
 });
 </script>
 {% endblock %}
+
+{% block buttons_extra %}
+<button id="btn_Fake" data-dojo-type="dijit.form.Button"type="button">
+<script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
+    form = getForm(this);
+    doSubmit({
+        form: form,
+        event: evt,
+        url: '{% url 'consulalerts_fake' %}{{ request.path }}'
+        });
+</script>
+{% trans "Send fake alert" %}
+</button>
+{% endblock %}

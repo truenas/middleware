@@ -27,11 +27,10 @@ from struct import pack
 import logging
 import os
 import re
+import signal
 import socket
-import urllib.request, urllib.error, urllib.parse
 
 from django.core.validators import RegexValidator
-from django.db import transaction
 from django.db.models import Q
 from django.utils.translation import ugettext_lazy as _
 
@@ -44,6 +43,7 @@ from freenasUI.freeadmin.sqlite3_ha.base import DBSync
 from freenasUI.middleware.client import client
 from freenasUI.middleware.notifier import notifier
 from freenasUI.network import models
+from freenasUI.network.utils import configure_http_proxy
 from freenasUI.freeadmin.utils import key_order
 from ipaddr import IPAddress, AddressValueError, IPNetwork
 
@@ -344,11 +344,6 @@ class InterfacesForm(ModelForm):
                     _("You have to choose IPv6 netmask as well"),
                 ])
 
-        if ipv6 and ipv4:
-            self._errors['__all__'] = self.error_class([
-                _("You have to choose between IPv4 or IPv6"),
-            ])
-
         vip = cdata.get("int_vip")
         dhcp = cdata.get("int_dhcp")
         if not dhcp:
@@ -633,17 +628,16 @@ class GlobalConfigurationForm(ModelForm):
         notifier().reload(whattoreload)
 
         http_proxy = self.cleaned_data.get('gc_httpproxy')
-        if http_proxy:
-            os.environ['http_proxy'] = http_proxy
-            os.environ['https_proxy'] = http_proxy
-        elif not http_proxy:
-            if 'http_proxy' in os.environ:
-                del os.environ['http_proxy']
-            if 'https_proxy' in os.environ:
-                del os.environ['https_proxy']
-
-        # Reset global opener so ProxyHandler can be recalculated
-        urllib.request.install_opener(None)
+        configure_http_proxy(http_proxy)
+        if self.instance._orig_gc_httpproxy != http_proxy:
+            try:
+                alertd_pidfile = '/var/run/alertd.pid'
+                if os.path.exists(alertd_pidfile):
+                    with open(alertd_pidfile, 'r') as f:
+                        pid = int(f.read())
+                    os.kill(pid, signal.SIGHUP)
+            except (FileNotFoundError, OSError, ValueError):
+                log.warn('Failed to kick alertd', exc_info=True)
 
         return retval
 
@@ -779,7 +773,8 @@ class LAGGInterfaceForm(ModelForm):
         lagg_protocol = self.cleaned_data['lagg_protocol']
         lagg_member_list = self.cleaned_data['lagg_interfaces']
         with DBSync():
-            with transaction.atomic():
+            model_objs = []
+            try:
                 # Step 1: Create an entry in interface table that
                 # represents the lagg interface
                 lagg_interface = models.Interfaces(
@@ -789,12 +784,14 @@ class LAGGInterfaceForm(ModelForm):
                     int_ipv6auto=False
                 )
                 lagg_interface.save()
+                model_objs.append(lagg_interface)
                 # Step 2: Write associated lagg attributes
                 lagg_interfacegroup = models.LAGGInterface(
                     lagg_interface=lagg_interface,
                     lagg_protocol=lagg_protocol
                 )
                 lagg_interfacegroup.save()
+                model_objs.append(lagg_interfacegroup)
                 # Step 3: Write lagg's members in the right order
                 order = 0
                 for interface in lagg_member_list:
@@ -805,7 +802,12 @@ class LAGGInterfaceForm(ModelForm):
                         lagg_deviceoptions='up'
                     )
                     lagg_member_entry.save()
+                    model_objs.append(lagg_member_entry)
                     order = order + 1
+            except Exception:
+                for obj in reversed(model_objs):
+                    obj.delete()
+                raise
         self.instance = lagg_interfacegroup
         return lagg_interfacegroup
 
@@ -1044,11 +1046,6 @@ class AliasForm(ModelForm):
                 self._errors['alias_v6netmaskbit'] = self.error_class([
                     _("You have to choose IPv6 netmask as well per alias"),
                 ])
-
-        if ipv6 and ipv4:
-            self._errors['__all__'] = self.error_class([
-                _("You have to choose between IPv4 or IPv6 per alias"),
-            ])
 
         configured_vip = False
         if ipv4vip and hasattr(self, 'parent'):

@@ -33,7 +33,7 @@ import traceback
 import urllib.request, urllib.parse, urllib.error
 
 from django.contrib.auth import authenticate
-from django.core.exceptions import ObjectDoesNotExist
+from django.core.exceptions import ObjectDoesNotExist, MultipleObjectsReturned
 from django.db.models import FieldDoesNotExist
 from django.db.models.fields.related import ForeignKey
 from django.http import Http404, QueryDict
@@ -41,7 +41,7 @@ from django.http import Http404, QueryDict
 from freenasUI.account.models import bsdUsers
 from freenasUI.common.log import log_traceback
 from freenasUI.freeadmin.apppool import appPool
-from freenasUI.freeadmin.models.fields import MultiSelectField
+from freenasUI.freeadmin.models.fields import DictField, MultiSelectField
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.services.exceptions import ServiceFailed
 
@@ -51,9 +51,10 @@ from tastypie.authentication import (
 from tastypie import fields, http
 from tastypie.authorization import Authorization
 from tastypie.exceptions import ImmediateHttpResponse, NotFound, UnsupportedFormat
-from tastypie.http import HttpUnauthorized
+from tastypie.http import HttpUnauthorized, HttpNotFound
 from tastypie.paginator import Paginator
 from tastypie.resources import DeclarativeMetaclass, ModelResource, Resource, sanitize
+from tastypie.utils import dict_strip_unicode_keys
 
 RE_SORT = re.compile(r'^sort\((.*)\)$')
 log = logging.getLogger('api.utils')
@@ -269,6 +270,8 @@ class DojoModelResource(ResourceMixin, ModelResource):
     def api_field_from_django_field(cls, f, default=fields.CharField):
         if isinstance(f, MultiSelectField):
             return fields.ListField
+        if isinstance(f, DictField):
+            return fields.DictField
         else:
             return super(DojoModelResource, cls).api_field_from_django_field(f, default=default)
 
@@ -309,6 +312,30 @@ class DojoModelResource(ResourceMixin, ModelResource):
         if self._meta.queryset.model._admin.deletable is False:
             return self.put_detail(request, **kwargs)
         return super(DojoModelResource, self).put_list(request, **kwargs)
+
+    def put_detail(self, request, **kwargs):
+        """
+        Copied from tastypie ModelResource so we dont try to create one
+        if it doesn't exist.
+        """
+        deserialized = self.deserialize(request, request.body, format=request.META.get('CONTENT_TYPE', 'application/json'))
+        deserialized = self.alter_deserialized_detail_data(request, deserialized)
+        bundle = self.build_bundle(data=dict_strip_unicode_keys(deserialized), request=request)
+
+        try:
+            updated_bundle = self.obj_update(bundle=bundle, **self.remove_api_resource_names(kwargs))
+
+            if not self._meta.always_return_data:
+                return http.HttpNoContent()
+            else:
+                # Invalidate prefetched_objects_cache for bundled object
+                # because we might have changed a prefetched field
+                updated_bundle.obj._prefetched_objects_cache = {}
+                updated_bundle = self.full_dehydrate(updated_bundle)
+                updated_bundle = self.alter_detail_data_to_serialize(request, updated_bundle)
+                return self.create_response(request, updated_bundle)
+        except (NotFound, MultipleObjectsReturned):
+            return self.create_response(request, 'Object not found', response_class=HttpNotFound)
 
     def save(self, bundle, skip_errors=False):
 
@@ -419,6 +446,12 @@ class DojoResource(ResourceMixin, Resource, metaclass=DjangoDeclarativeMetaclass
                 fields = [f.strip() for f in fields.split(',')]
                 break
         return fields
+
+    def _get_form_initial(self, form):
+        initial = {}
+        for k, v in form.base_fields.items():
+            initial[k] = v.initial
+        return initial
 
     def alter_list_data_to_serialize(self, request, data):
         return data['objects']

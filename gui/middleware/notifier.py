@@ -126,7 +126,7 @@ from freenasUI.common.warden import (Warden, WardenJail,
                                      WARDEN_STATUS_RUNNING)
 from freenasUI.freeadmin.hook import HookMetaclass
 from freenasUI.middleware import zfs
-from freenasUI.middleware.client import client
+from freenasUI.middleware.client import client, ClientException
 from freenasUI.middleware.encryption import random_wipe
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.multipath import Multipath
@@ -409,16 +409,13 @@ class notifier(metaclass=HookMetaclass):
                 raise MiddlewareError(f'Unable to GPT format the disk "{devname}": {error}')
 
         # We might need to sync with reality (e.g. devname -> uuid)
-        # Invalidating confxml is required or changes wont be seen
-        self.__confxml = None
-        self.sync_disk(devname)
+        with client as c:
+            c.call('disk.sync', devname)
 
     def __gpt_unlabeldisk(self, devname):
         """Unlabel the disk"""
-        swapdev = self.part_type_from_device('swap', devname)
-        if swapdev != '':
-            self._system("swapoff /dev/%s.eli" % swapdev)
-            self._system("geli detach /dev/%s" % swapdev)
+        with client as c:
+            c.call('disk.swaps_remove_disks', [devname])
         self._system("gpart destroy -F /dev/%s" % devname)
 
         # Wipe out the partition table by doing an additional iterate of create/destroy
@@ -426,9 +423,8 @@ class notifier(metaclass=HookMetaclass):
         self._system("gpart destroy -F /dev/%s" % devname)
 
         # We might need to sync with reality (e.g. uuid -> devname)
-        # Invalidating confxml is required or changes wont be seen
-        self.__confxml = None
-        self.sync_disk(devname)
+        with client as c:
+            c.call('disk.sync', devname)
 
     def unlabel_disk(self, devname):
         # TODO: Check for existing GPT or MBR, swap, before blindly call __gpt_unlabeldisk
@@ -449,12 +445,13 @@ class notifier(metaclass=HookMetaclass):
                 disk_multipath_name=diskname.replace('multipath/', '')
             )
         else:
-            ident = self.device_to_identifier(diskname)
-            diskobj = Disk.objects.filter(disk_identifier=ident).order_by('disk_enabled')
+            with client as c:
+                ident = c.call('disk.device_to_identifier', diskname)
+            diskobj = Disk.objects.filter(disk_identifier=ident).order_by('disk_expiretime')
             if diskobj.exists():
                 diskobj = diskobj[0]
             else:
-                diskobj = Disk.objects.filter(disk_name=diskname).order_by('disk_enabled')
+                diskobj = Disk.objects.filter(disk_name=diskname).order_by('disk_expiretime')
                 if diskobj.exists():
                     diskobj = diskobj[0]
                 else:
@@ -481,7 +478,7 @@ class notifier(metaclass=HookMetaclass):
     def __geli_setmetadata(self, dev, keyfile, passphrase=None):
         self.__create_keyfile(keyfile)
         _passphrase = "-J %s" % passphrase if passphrase else "-P"
-        command = "geli init -s 4096 -B none %s -K %s %s" % (_passphrase, keyfile, dev)
+        command = "geli init -s 4096 -l 256 -B none %s -K %s %s" % (_passphrase, keyfile, dev)
         err = self._pipeerr(command)
         if err:
             raise MiddlewareError("Unable to set geli metadata on %s: %s" % (dev, err))
@@ -659,8 +656,6 @@ class notifier(metaclass=HookMetaclass):
         """
         Test key for geli providers of a given volume
         """
-        assert volume.vol_fstype == 'ZFS'
-
         geli_keyfile = volume.get_geli_keyfile()
 
         # Parse zpool status to get encrypted providers
@@ -732,6 +727,8 @@ class notifier(metaclass=HookMetaclass):
 
     def __prepare_zfs_vdev(self, disks, swapsize, encrypt, volume):
         vdevs = []
+        with client as c:
+            c.call('disk.swaps_remove_disks', disks)
         for disk in disks:
             self.__gpt_labeldisk(type="freebsd-zfs",
                                  devname=disk,
@@ -770,7 +767,6 @@ class notifier(metaclass=HookMetaclass):
         z_vdev = ""
         encrypt = (volume.vol_encrypt >= 1)
         # Grab all disk groups' id matching the volume ID
-        self._system("swapoff -a")
         device_list = []
 
         """
@@ -855,7 +851,6 @@ class notifier(metaclass=HookMetaclass):
         else:
             swapsize = self.get_swapsize()
 
-        assert volume.vol_fstype == 'ZFS'
         z_name = volume.vol_name
         z_vdev = ""
         encrypt = (volume.vol_encrypt >= 1)
@@ -968,7 +963,7 @@ class notifier(metaclass=HookMetaclass):
     def destroy_zfs_dataset(self, path, recursive=False):
         retval = None
         if retval is None:
-            mp = self.__get_mountpath(path, 'ZFS')
+            mp = self.__get_mountpath(path)
             if self.contains_jail_root(mp):
                 try:
                     self.delete_plugins(force=True)
@@ -993,7 +988,7 @@ class notifier(metaclass=HookMetaclass):
         return retval
 
     def destroy_zfs_vol(self, name, recursive=False):
-        mp = self.__get_mountpath(name, 'ZFS')
+        mp = self.__get_mountpath(name)
         if self.contains_jail_root(mp):
             self.delete_plugins()
         zfsproc = self._pipeopen("zfs destroy %s'%s'" % (
@@ -1006,7 +1001,7 @@ class notifier(metaclass=HookMetaclass):
     def __destroy_zfs_volume(self, volume):
         """Internal procedure to destroy a ZFS volume identified by volume id"""
         vol_name = str(volume.vol_name)
-        mp = self.__get_mountpath(vol_name, 'ZFS')
+        mp = self.__get_mountpath(vol_name)
         if self.contains_jail_root(mp):
             self.delete_plugins()
         # First, destroy the zpool.
@@ -1017,43 +1012,10 @@ class notifier(metaclass=HookMetaclass):
         for disk in disks:
             self.__gpt_unlabeldisk(devname=disk)
 
-    def __destroy_ufs_volume(self, volume):
-        """Internal procedure to destroy a UFS volume identified by volume id"""
-        u_name = str(volume.vol_name)
-        mp = self.__get_mountpath(u_name, 'UFS')
-        if self.contains_jail_root(mp):
-            self.delete_plugins()
-
-        disks = volume.get_disks()
-        provider = self.get_label_consumer('ufs', u_name)
-        if provider is None:
-            return None
-        geom_type = provider.xpath("../../name")[0].text.lower()
-
-        if geom_type not in ('mirror', 'stripe', 'raid3'):
-            # Grab disk from the group
-            disk = disks[0]
-            self._system("umount -f /dev/ufs/" + u_name)
-            self.__gpt_unlabeldisk(devname=disk)
-        else:
-            g_name = provider.xpath("../name")[0].text
-            self._system("swapoff -a")
-            self._system("umount -f /dev/ufs/" + u_name)
-            self._system("geom %s stop %s" % (geom_type, g_name))
-            # Grab all disks from the group
-            for disk in disks:
-                self._system("geom %s clear %s" % (geom_type, disk))
-                self._system("dd if=/dev/zero of=/dev/%s bs=1m count=32" % (disk,))
-                self._system(
-                    "dd if=/dev/zero of=/dev/%s bs=1m oseek=`diskinfo %s "
-                    "| awk '{print int($3 / (1024*1024)) - 32;}'`" % (disk, disk)
-                )
-
     def _init_volume(self, volume, *args, **kwargs):
         """Initialize a volume designated by volume_id"""
         swapsize = self.get_swapsize()
 
-        assert volume.vol_fstype == 'ZFS'
         self.__create_zfs_volume(volume, swapsize, kwargs.pop('groups', False), kwargs.pop('path', None), init_rand=kwargs.pop('init_rand', False))
 
     def zfs_replace_disk(self, volume, from_label, to_disk, force=False, passphrase=None):
@@ -1061,22 +1023,13 @@ class notifier(metaclass=HookMetaclass):
         from freenasUI.storage.models import Disk, EncryptedDisk
         swapsize = self.get_swapsize()
 
-        assert volume.vol_fstype == 'ZFS'
-
         # TODO: Test on real hardware to see if ashift would persist across replace
         from_disk = self.label_to_disk(from_label)
-        from_swap = self.part_type_from_device('swap', from_disk)
         encrypt = (volume.vol_encrypt >= 1)
 
-        if from_swap != '':
-            self._system('/sbin/swapoff /dev/%s.eli' % (from_swap, ))
-            self._system('/sbin/geli detach /dev/%s' % (from_swap, ))
-
-        # to_disk _might_ have swap on, offline it before gpt label
-        to_swap = self.part_type_from_device('swap', to_disk)
-        if to_swap != '':
-            self._system('/sbin/swapoff /dev/%s.eli' % (to_swap, ))
-            self._system('/sbin/geli detach /dev/%s' % (to_swap, ))
+        with client as c:
+            # to_disk _might_ have swap on, offline it before gpt label
+            c.call('disk.swaps_remove_disks', [from_disk, to_disk])
 
         # Replace in-place
         if from_disk == to_disk:
@@ -1084,14 +1037,13 @@ class notifier(metaclass=HookMetaclass):
 
         self.__gpt_labeldisk(type="freebsd-zfs", devname=to_disk, swapsize=swapsize)
 
-        # There might be a swap after __gpt_labeldisk
-        to_swap = self.part_type_from_device('swap', to_disk)
         # It has to be a freebsd-zfs partition there
         to_label = self.part_type_from_device('zfs', to_disk)
 
         if to_label == '':
             raise MiddlewareError('freebsd-zfs partition could not be found')
 
+        self.__confxml = None  # Clear cache
         doc = self._geom_confxml()
         uuid = doc.xpath(
             "//class[name = 'PART']"
@@ -1108,7 +1060,7 @@ class notifier(metaclass=HookMetaclass):
                 log.warn("Could not determine GPT uuid for %s", to_label)
                 raise MiddlewareError('Unable to determine GPT UUID for %s' % devname)
             else:
-                from_diskobj = Disk.objects.filter(disk_name=from_disk, disk_enabled=True)
+                from_diskobj = Disk.objects.filter(disk_name=from_disk, disk_expiretime=None)
                 if from_diskobj.exists():
                     EncryptedDisk.objects.filter(encrypted_volume=volume, encrypted_disk=from_diskobj[0]).delete()
                 devname = self.__encrypt_device("gptid/%s" % uuid[0].text, to_disk, volume, passphrase=passphrase)
@@ -1129,35 +1081,32 @@ class notifier(metaclass=HookMetaclass):
                 self._system('/sbin/zpool detach %s %s' % (volume.vol_name, from_label))
             # TODO: geli detach -l
         else:
-            if from_swap != '':
-                self._system('/sbin/geli onetime /dev/%s' % (from_swap))
-                self._system('/sbin/swapon /dev/%s.eli' % (from_swap))
             error = ", ".join(stderr.split('\n'))
-            if to_swap != '':
-                self._system('/sbin/swapoff /dev/%s.eli' % (to_swap, ))
-                self._system('/sbin/geli detach /dev/%s' % (to_swap, ))
             if encrypt:
                 self._system('/sbin/geli detach %s' % (devname, ))
+            try:
+                with client as c:
+                    c.call('disk.swaps_configure')
+            except Exception as e:
+                log.warn('Failed to configure swaps', exc_info=True)
             raise MiddlewareError('Disk replacement failed: "%s"' % error)
 
-        if to_swap:
-            self._system('/sbin/geli onetime /dev/%s' % (to_swap))
-            self._system('/sbin/swapon /dev/%s.eli' % (to_swap))
+        try:
+            with client as c:
+                c.call('disk.swaps_configure')
+        except ClientException:
+            log.warn('Failed to reconfigure swaps', exc_info=True)
 
         return ret
 
     def zfs_offline_disk(self, volume, label):
         from freenasUI.storage.models import EncryptedDisk
 
-        assert volume.vol_fstype == 'ZFS'
-
         # TODO: Test on real hardware to see if ashift would persist across replace
         disk = self.label_to_disk(label)
-        swap = self.part_type_from_device('swap', disk)
 
-        if swap != '':
-            self._system('/sbin/swapoff /dev/%s.eli' % (swap, ))
-            self._system('/sbin/geli detach /dev/%s' % (swap, ))
+        with client as c:
+            c.call('disk.swaps_remove_disks', [disk])
 
         # Replace in-place
         p1 = self._pipeopen('/sbin/zpool offline %s %s' % (volume.vol_name, label))
@@ -1173,7 +1122,7 @@ class notifier(metaclass=HookMetaclass):
             ).delete()
 
     def zfs_online_disk(self, volume, label):
-        assert volume.vol_fstype == 'ZFS' and volume.vol_encrypt == 0
+        assert volume.vol_encrypt == 0
 
         p1 = self._pipeopen('/sbin/zpool online %s %s' % (volume.vol_name, label))
         stderr = p1.communicate()[1]
@@ -1189,7 +1138,6 @@ class notifier(metaclass=HookMetaclass):
         if isinstance(volume, str):
             vol_name = volume
         else:
-            assert volume.vol_fstype == 'ZFS'
             vol_name = volume.vol_name
 
         from_disk = self.label_to_disk(label)
@@ -1197,13 +1145,8 @@ class notifier(metaclass=HookMetaclass):
             if not re.search(r'^[0-9]+$', label):
                 log.warn("Could not find disk for the ZFS label %s", label)
         else:
-            from_swap = self.part_type_from_device('swap', from_disk)
-
-            # Remove the swap partition for another time to be sure.
-            # TODO: swap partition should be trashed instead.
-            if from_swap != '':
-                self._system('/sbin/swapoff /dev/%s.eli' % (from_swap,))
-                self._system('/sbin/geli detach /dev/%s' % (from_swap,))
+            with client as c:
+                c.call('disk.swaps_remove_disks', [from_disk])
 
         ret = self._system_nolog('/sbin/zpool detach %s %s' % (vol_name, label))
 
@@ -1221,14 +1164,9 @@ class notifier(metaclass=HookMetaclass):
         Cache disks, inactive hot-spares (and log devices in zfs 28) can be removed
         """
 
-        assert volume.vol_fstype == 'ZFS'
-
         from_disk = self.label_to_disk(label)
-        from_swap = self.part_type_from_device('swap', from_disk)
-
-        if from_swap != '':
-            self._system('/sbin/swapoff /dev/%s.eli' % (from_swap,))
-            self._system('/sbin/geli detach /dev/%s' % (from_swap,))
+        with client as c:
+            c.call('disk.swaps_remove_disks', [from_disk])
 
         p1 = self._pipeopen('/sbin/zpool remove %s %s' % (volume.vol_name, label))
         stderr = p1.communicate()[1]
@@ -1245,16 +1183,13 @@ class notifier(metaclass=HookMetaclass):
     def detach_volume_swaps(self, volume):
         """Detach all swaps associated with volume"""
         disks = volume.get_disks()
-        for disk in disks:
-            swapdev = self.part_type_from_device('swap', disk)
-            if swapdev != '':
-                self._system("swapoff /dev/%s.eli" % swapdev)
-                self._system("geli detach /dev/%s" % swapdev)
+        with client as c:
+            c.call('disk.swaps_remove_disks', [disks])
 
-    def __get_mountpath(self, name, fstype, mountpoint_root='/mnt'):
-        """Determine the mountpoint for a volume or ZFS dataset
+    def __get_mountpath(self, name, mountpoint_root='/mnt'):
+        """Determine the mountpoint for a ZFS dataset
 
-        It tries to divine the location of the volume or dataset from the
+        It tries to divine the location of the dataset from the
         relevant command, and if all else fails, falls back to a less
         elegant method of representing the mountpoint path.
 
@@ -1266,8 +1201,6 @@ class notifier(metaclass=HookMetaclass):
         Required Parameters:
             name: textual name for the mountable vdev or volume, e.g. 'tank',
                   'stripe', 'tank/dataset', etc.
-            fstype: filesystem type for the vdev or volume, e.g. 'UFS', 'ZFS',
-                    etc.
 
         Optional Parameters:
             mountpoint_root: the root directory where all of the datasets and
@@ -1276,18 +1209,10 @@ class notifier(metaclass=HookMetaclass):
         Returns:
             the absolute path for the volume on the system.
         """
-        if fstype == 'ZFS':
-            p1 = self._pipeopen("zfs list -H -o mountpoint '%s'" % (name, ))
-            stdout = p1.communicate()[0]
-            if not p1.returncode:
-                return stdout.strip()
-        elif fstype == 'UFS':
-            p1 = self._pipeopen('mount -p')
-            stdout = p1.communicate()[0]
-            if not p1.returncode:
-                flines = [x for x in stdout.splitlines() if x and x.split()[0] == '/dev/ufs/' + name]
-                if flines:
-                    return flines[0].split()[1]
+        p1 = self._pipeopen("zfs list -H -o mountpoint '%s'" % (name, ))
+        stdout = p1.communicate()[0]
+        if not p1.returncode:
+            return stdout.strip()
 
         return os.path.join(mountpoint_root, name)
 
@@ -1325,17 +1250,9 @@ class notifier(metaclass=HookMetaclass):
         """
 
         # volume_detach compatibility.
-        vol_name, vol_fstype = volume.vol_name, volume.vol_fstype
+        vol_name = volume.vol_name
 
-        vol_mountpath = self.__get_mountpath(vol_name, vol_fstype)
-
-        if vol_fstype == 'ZFS':
-            self.__destroy_zfs_volume(volume)
-        elif vol_fstype == 'UFS':
-            self.__destroy_ufs_volume(volume)
-        else:
-            raise ValueError("destroy isn't implemented for the %s filesystem"
-                             % (vol_fstype, ))
+        vol_mountpath = self.__get_mountpath(vol_name)
 
         self.reload('disk')
         self._encvolume_detach(volume, destroy=True)
@@ -1516,9 +1433,9 @@ class notifier(metaclass=HookMetaclass):
             name,
         )
         proc = self._pipeopen(command)
-        proc.communicate()
+        errmsg = proc.communicate()[1]
         if proc.returncode != 0:
-            raise MiddlewareError(_('Failed to create group %s') % name)
+            raise MiddlewareError(_('Failed to create group %(name)s: %(msg)s') % {'name': name, 'msg': errmsg})
         grnam = self.___getgrnam(name)
         return grnam.gr_gid
 
@@ -2244,6 +2161,7 @@ class notifier(metaclass=HookMetaclass):
                 "format, it might as well be corrupt."
             )
 
+        prefix = None
         for pair in out:
             (var, val) = pair.split('=', 1)
 
@@ -2264,6 +2182,16 @@ class notifier(metaclass=HookMetaclass):
             elif var == 'arch':
                 arch = val
 
+        # For 9.x compatiblity we need to add prefix to ldconfig_paths
+        # and run ldconfig in the jail before we install
+        # See #23779
+        if prefix:
+            pipeopen_kwargs = {'env': {
+                'PATH': '/sbin:/bin:/usr/sbin:/usr/bin:/usr/games:/usr/local/sbin:/usr/local/bin:/root/bin',
+                'TMPDIR': '/tmp',
+            }}
+            Jexec(jid=jail.jid, command='/usr/sbin/sysrc -f /etc/rc.conf.d/ldconfig ldconfig_paths="/usr/lib/compat /usr/local/lib /usr/local/lib/compat/pkg %s/lib"' % prefix, pipeopen_kwargs=pipeopen_kwargs).run()
+
         info = pbi_info(flags=PBI_INFO_FLAGS_VERBOSE)
         res = info.run(jail=True, jid=jail.jid)
         if res[0] == 0 and res[1]:
@@ -2281,6 +2209,8 @@ class notifier(metaclass=HookMetaclass):
         )
         res = p.run(jail=True, jid=jail.jid)
         if res and res[0] == 0:
+            if prefix:
+                Jexec(jid=jail.jid, command='/usr/sbin/service ldconfig onestart', pipeopen_kwargs=pipeopen_kwargs).run()
             qs = Plugins.objects.filter(plugin_name=name)
             if qs.count() > 0:
                 if qs[0].plugin_jail == pjail:
@@ -2729,34 +2659,12 @@ class notifier(metaclass=HookMetaclass):
         for p in Plugins.objects.all():
             p.delete(force=force)
 
-    def get_volume_status(self, name, fs):
+    def get_volume_status(self, name):
         status = 'UNKNOWN'
-        if fs == 'ZFS':
-            p1 = self._pipeopen('zpool list -H -o health %s' % str(name), logger=None)
-            if p1.wait() == 0:
-                status = p1.communicate()[0].strip('\n')
-        elif fs == 'UFS':
-
-            provider = self.get_label_consumer('ufs', name)
-            if provider is None:
-                return 'UNKNOWN'
-            gtype = provider.xpath("../../name")[0].text
-
-            if gtype in ('MIRROR', 'STRIPE', 'RAID3'):
-
-                search = provider.xpath("../config/State")
-                if len(search) > 0:
-                    status = search[0].text
-
-            else:
-                p1 = self._pipeopen('mount|grep "/dev/ufs/%s"' % (name, ))
-                p1.communicate()
-                if p1.returncode == 0:
-                    status = 'HEALTHY'
-                else:
-                    status = 'DEGRADED'
-
-        if status in ('UP', 'COMPLETE', 'ONLINE'):
+        p1 = self._pipeopen('zpool list -H -o health %s' % str(name), logger=None)
+        if p1.wait() == 0:
+            status = p1.communicate()[0].strip('\n')
+        if status == 'ONLINE':
             status = 'HEALTHY'
         return status
 
@@ -2824,8 +2732,8 @@ class notifier(metaclass=HookMetaclass):
                         del disksd[d]
 
             for e in iSCSITargetExtent.objects.filter(iscsi_target_extent_type='Disk'):
-                d = i.get_device()[5:]
-                if d in diskd:
+                d = e.get_device()[5:]
+                if d in disksd:
                     del disksd[d]
 
         return disksd
@@ -3006,9 +2914,7 @@ class notifier(metaclass=HookMetaclass):
              available in UFS volumes.
 
         Parameters:
-            vol_name: a textual name for the volume, e.g. tank, stripe, etc.
-            vol_fstype: the filesystem type for the volume; valid values are:
-                        'EXT2FS', 'MSDOSFS', 'UFS', 'ZFS'.
+            volume: volume model object
 
         Raises:
             MiddlewareError: the volume could not be detached cleanly.
@@ -3016,19 +2922,12 @@ class notifier(metaclass=HookMetaclass):
         """
 
         vol_name = volume.vol_name
-        vol_fstype = volume.vol_fstype
 
         succeeded = False
-        provider = None
 
-        vol_mountpath = self.__get_mountpath(vol_name, vol_fstype)
-        if vol_fstype == 'ZFS':
-            cmd = 'zpool export %s' % (vol_name)
-            cmdf = 'zpool export -f %s' % (vol_name)
-        else:
-            cmd = 'umount %s' % (vol_mountpath)
-            cmdf = 'umount -f %s' % (vol_mountpath)
-            provider = self.get_label_consumer('ufs', vol_name)
+        vol_mountpath = self.__get_mountpath(vol_name)
+        cmd = 'zpool export %s' % (vol_name)
+        cmdf = 'zpool export -f %s' % (vol_name)
 
         self.stop("syslogd")
 
@@ -3039,12 +2938,6 @@ class notifier(metaclass=HookMetaclass):
         else:
             p1 = self._pipeopen(cmdf)
             stdout, stderr = p1.communicate()
-
-        if vol_fstype != 'ZFS':
-            geom_type = provider.xpath("../../name")[0].text.lower()
-            if geom_type in ('mirror', 'stripe', 'raid3'):
-                g_name = provider.xpath("../name")[0].text
-                self._system("geom %s stop %s" % (geom_type, g_name))
 
         self.start("syslogd")
 
@@ -3077,53 +2970,54 @@ class notifier(metaclass=HookMetaclass):
         else:
             encrypt = 0
 
+        model_objs = []
         try:
-            with transaction.atomic():
-                volume = Volume(
-                    vol_name=volume_name,
-                    vol_fstype='ZFS',
-                    vol_encrypt=encrypt)
-                volume.save()
-                if encrypt > 0:
-                    if not os.path.exists(GELI_KEYPATH):
-                        os.mkdir(GELI_KEYPATH)
-                    key.seek(0)
-                    keydata = key.read()
-                    with open(volume.get_geli_keyfile(), 'wb') as f:
-                        f.write(keydata)
-                self.volume = volume
+            volume = Volume(vol_name=volume_name, vol_encrypt=encrypt)
+            volume.save()
+            model_objs.append(volume)
+            if encrypt > 0:
+                if not os.path.exists(GELI_KEYPATH):
+                    os.mkdir(GELI_KEYPATH)
+                key.seek(0)
+                keydata = key.read()
+                with open(volume.get_geli_keyfile(), 'wb') as f:
+                    f.write(keydata)
+            self.volume = volume
 
-                volume.vol_guid = volume_id
-                volume.save()
-                Scrub.objects.create(scrub_volume=volume)
+            volume.vol_guid = volume_id
+            volume.save()
+            model_objs.append(Scrub.objects.create(scrub_volume=volume))
 
-                if not self.zfs_import(volume_name, volume_id):
-                    raise MiddlewareError(_(
-                        'The volume "%s" failed to import, '
-                        'for futher details check pool status') % volume_name)
-                for disk in enc_disks:
-                    self.geli_setkey(
-                        "/dev/%s" % disk,
-                        volume.get_geli_keyfile(),
-                        passphrase=passfile
+            if not self.zfs_import(volume_name, volume_id):
+                raise MiddlewareError(_(
+                    'The volume "%s" failed to import, '
+                    'for futher details check pool status') % volume_name)
+            for disk in enc_disks:
+                self.geli_setkey(
+                    "/dev/%s" % disk,
+                    volume.get_geli_keyfile(),
+                    passphrase=passfile
+                )
+                if disk.startswith("gptid/"):
+                    diskname = self.identifier_to_device(
+                        "{uuid}%s" % disk.replace("gptid/", "")
                     )
-                    if disk.startswith("gptid/"):
-                        diskname = self.identifier_to_device(
-                            "{uuid}%s" % disk.replace("gptid/", "")
-                        )
-                    elif disk.startswith("gpt/"):
-                        diskname = self.label_to_disk(disk)
-                    else:
-                        diskname = disk
-                    ed = EncryptedDisk()
-                    ed.encrypted_volume = volume
-                    ed.encrypted_disk = Disk.objects.filter(
-                        disk_name=diskname,
-                        disk_enabled=True
-                    )[0]
-                    ed.encrypted_provider = disk
-                    ed.save()
-        except:
+                elif disk.startswith("gpt/"):
+                    diskname = self.label_to_disk(disk)
+                else:
+                    diskname = disk
+                ed = EncryptedDisk()
+                ed.encrypted_volume = volume
+                ed.encrypted_disk = Disk.objects.filter(
+                    disk_name=diskname,
+                    disk_expiretime=None,
+                )[0]
+                ed.encrypted_provider = disk
+                ed.save()
+                model_objs.append(ed)
+        except Exception:
+            for obj in reversed(model_objs):
+                obj.delete()
             if passfile:
                 os.unlink(passfile)
             raise
@@ -3213,7 +3107,7 @@ class notifier(metaclass=HookMetaclass):
 
         zfsproc = self._pipeopen("/sbin/zfs list -t volume -o name %s -H" % sort)
         zvols = set([y for y in zfsproc.communicate()[0].split('\n') if y != ''])
-        volnames = set([o.vol_name for o in Volume.objects.filter(vol_fstype='ZFS')])
+        volnames = set([o.vol_name for o in Volume.objects.all()])
 
         fieldsflag = '-o name,used,available,referenced,mountpoint,freenas:vmsynced'
         if path:
@@ -3313,7 +3207,7 @@ class notifier(metaclass=HookMetaclass):
         if proc.returncode != 0:
             log.warn('Failed to create factory database: %s', error)
             raise MiddlewareError("Factory reset has failed, check /var/log/messages")
-        proc = self._pipeopen("/usr/local/bin/python manage.py migrate --noinput --fake-initial --database factory")
+        proc = self._pipeopen("/usr/bin/env FREENAS_FACTORY=1 /usr/local/bin/python manage.py migrate --noinput --fake-initial")
         error = proc.communicate()[1]
         if proc.returncode != 0:
             log.warn('Failed to create factory database: %s', error)
@@ -3341,7 +3235,7 @@ class notifier(metaclass=HookMetaclass):
             conn = sqlite3.connect(config_file_name)
             try:
                 cur = conn.cursor()
-                cur.execute("SELECT COUNT(*) FROM south_migrationhistory")
+                cur.execute("SELECT COUNT(*) FROM south_migrationhistory WHERE app_name != 'freeadmin'")
                 new_num = cur.fetchone()[0]
                 cur.close()
             finally:
@@ -3349,7 +3243,7 @@ class notifier(metaclass=HookMetaclass):
             conn = sqlite3.connect(FREENAS_DATABASE)
             try:
                 cur = conn.cursor()
-                cur.execute("SELECT COUNT(*) FROM south_migrationhistory")
+                cur.execute("SELECT COUNT(*) FROM south_migrationhistory WHERE app_name != 'freeadmin'")
                 num = cur.fetchone()[0]
                 cur.close()
             finally:
@@ -3748,9 +3642,6 @@ class notifier(metaclass=HookMetaclass):
 
     def __init__(self):
         self.__confxml = None
-        self.__camcontrol = None
-        self.__diskserial = {}
-        self.__twcli = {}
 
     def __del__(self):
         self.__confxml = None
@@ -3760,87 +3651,6 @@ class notifier(metaclass=HookMetaclass):
         if self.__confxml is None:
             self.__confxml = etree.fromstring(self.sysctl('kern.geom.confxml'))
         return self.__confxml
-
-    def __get_twcli(self, controller):
-        if controller in self.__twcli:
-            return self.__twcli[controller]
-
-        re_port = re.compile(r'^p(?P<port>\d+).*?\bu(?P<unit>\d+)\b', re.S | re.M)
-        proc = self._pipeopen("/usr/local/sbin/tw_cli /c%d show" % (controller, ))
-        output = proc.communicate()[0]
-
-        units = {}
-        for port, unit in re_port.findall(output):
-            units[int(unit)] = int(port)
-
-        self.__twcli[controller] = units
-        return self.__twcli[controller]
-
-    def get_smartctl_args(self, devname):
-        args = ["/dev/%s" % devname]
-        camcontrol = self._camcontrol_list()
-        info = camcontrol.get(devname)
-        if info is not None:
-            if info.get("drv") == "rr274x_3x":
-                channel = info["channel"] + 1
-                if channel > 16:
-                    channel -= 16
-                elif channel > 8:
-                    channel -= 8
-                args = [
-                    "/dev/%s" % info["drv"],
-                    "-d",
-                    "hpt,%d/%d" % (info["controller"] + 1, channel)
-                ]
-            elif info.get("drv").startswith("arcmsr"):
-                args = [
-                    "/dev/%s%d" % (info["drv"], info["controller"]),
-                    "-d",
-                    "areca,%d" % (info["lun"] + 1 + (info["channel"] * 8), )
-                ]
-            elif info.get("drv").startswith("hpt"):
-                args = [
-                    "/dev/%s" % info["drv"],
-                    "-d",
-                    "hpt,%d/%d" % (info["controller"] + 1, info["channel"] + 1)
-                ]
-            elif info.get("drv") == "ciss":
-                args = [
-                    "/dev/%s%d" % (info["drv"], info["controller"]),
-                    "-d",
-                    "cciss,%d" % (info["channel"], )
-                ]
-            elif info.get("drv") == "twa":
-                twcli = self.__get_twcli(info["controller"])
-                args = [
-                    "/dev/%s%d" % (info["drv"], info["controller"]),
-                    "-d",
-                    "3ware,%d" % (twcli.get(info["channel"], -1), )
-                ]
-        return args
-
-    def toggle_smart_off(self, devname):
-        args = self.get_smartctl_args(devname)
-        Popen(["/usr/local/sbin/smartctl", "--smart=off"] + args, stdout=PIPE)
-
-    def toggle_smart_on(self, devname):
-        args = self.get_smartctl_args(devname)
-        Popen(["/usr/local/sbin/smartctl", "--smart=on"] + args, stdout=PIPE)
-
-    def serial_from_device(self, devname):
-        if devname in self.__diskserial:
-            return self.__diskserial.get(devname)
-
-        args = self.get_smartctl_args(devname)
-
-        p1 = Popen(["/usr/local/sbin/smartctl", "-i"] + args, stdout=PIPE, encoding='utf8')
-        output = p1.communicate()[0]
-        search = re.search(r'Serial Number:\s+(?P<serial>.+)', output, re.I)
-        if search:
-            serial = search.group("serial")
-            self.__diskserial[devname] = serial
-            return serial
-        return None
 
     def label_to_disk(self, name):
         """
@@ -3865,38 +3675,6 @@ class notifier(metaclass=HookMetaclass):
         if search[0].getparent().getparent().xpath("./name")[0].text in ('ELI', ):
             return self.label_to_disk(disk.replace(".eli", ""))
         return disk
-
-    def device_to_identifier(self, name):
-        name = str(name)
-        doc = self._geom_confxml()
-
-        search = doc.xpath("//class[name = 'DISK']/geom[name = '%s']/provider/config/ident" % name)
-        if len(search) > 0 and search[0].text:
-            search2 = doc.xpath("//class[name = 'DISK']/geom[name = '%s']/provider/config/lunid" % name)
-            if len(search2) > 0 and search2[0].text:
-                return "{serial_lunid}%s_%s" % (search[0].text, search2[0].text)
-            return "{serial}%s" % search[0].text
-
-        serial = self.serial_from_device(name)
-        if serial:
-            return "{serial}%s" % serial
-
-        search = doc.xpath("//class[name = 'PART']/..//*[name = '%s']//config[type = 'freebsd-zfs']/rawuuid" % name)
-        if len(search) > 0:
-            return "{uuid}%s" % search[0].text
-        search = doc.xpath("//class[name = 'PART']/geom/..//*[name = '%s']//config[type = 'freebsd-ufs']/rawuuid" % name)
-        if len(search) > 0:
-            return "{uuid}%s" % search[0].text
-
-        search = doc.xpath("//class[name = 'LABEL']/geom[name = '%s']/provider/name" % name)
-        if len(search) > 0:
-            return "{label}%s" % search[0].text
-
-        search = doc.xpath("//class[name = 'DEV']/geom[name = '%s']" % name)
-        if len(search) > 0:
-            return "{devicename}%s" % name
-
-        return ''
 
     def identifier_to_device(self, ident):
 
@@ -3934,10 +3712,11 @@ class notifier(metaclass=HookMetaclass):
             search = doc.xpath("//class[name = 'DISK']/geom/provider/config[normalize-space(ident) = normalize-space('%s')]/../../name" % value)
             if len(search) > 0:
                 return search[0].text
-            for devname in self.__get_disks():
-                serial = self.serial_from_device(devname)
-                if serial == value:
-                    return devname
+            with client as c:
+                for devname in self.__get_disks():
+                    serial = c.call('disk.serial_from_device', devname)
+                    if serial == value:
+                        return devname
             return None
 
         elif tp == 'serial_lunid':
@@ -3999,57 +3778,6 @@ class notifier(metaclass=HookMetaclass):
             return 'BIOS'
         return 'EFI'
 
-    def swap_from_diskid(self, diskid):
-        from freenasUI.storage.models import Disk
-        disk = Disk.objects.get(pk=diskid)
-        return self.part_type_from_device('swap', disk.devname)
-
-    def swap_from_identifier(self, ident):
-        return self.part_type_from_device('swap', self.identifier_to_device(ident))
-
-    def get_label_consumer(self, geom, name):
-        """
-        Get the label consumer of a given ``geom`` with name ``name``
-
-        Returns:
-            The provider xmlnode if found, None otherwise
-        """
-        doc = self._geom_confxml()
-        xpath = doc.xpath("//class[name = 'LABEL']//provider[name = '%s']/../consumer/provider/@ref" % "%s/%s" % (geom, name))
-        if not xpath:
-            return None
-        providerid = xpath[0]
-        provider = doc.xpath("//provider[@id = '%s']" % providerid)[0]
-
-        class_name = provider.xpath("../../name")[0].text
-
-        # We've got a GPT over the softraid, not raw UFS filesystem
-        # So we need to recurse one more time
-        if class_name == 'PART':
-            providerid = provider.xpath("../consumer/provider/@ref")[0]
-            newprovider = doc.xpath("//provider[@id = '%s']" % providerid)[0]
-            class_name = newprovider.xpath("../../name")[0].text
-            # if this PART is really backed up by softraid the hypothesis was correct
-            if class_name in ('STRIPE', 'MIRROR', 'RAID3'):
-                return newprovider
-
-        return provider
-
-    def get_disks_from_provider(self, provider):
-        disks = []
-        geomname = provider.xpath("../../name")[0].text
-        if geomname in ('DISK', 'PART'):
-            disks.append(provider.xpath("../name")[0].text)
-        elif geomname in ('STRIPE', 'MIRROR', 'RAID3'):
-            doc = self._geom_confxml()
-            for prov in provider.xpath("../consumer/provider/@ref"):
-                prov2 = doc.xpath("//provider[@id = '%s']" % prov)[0]
-                disks.append(prov2.xpath("../name")[0].text)
-        else:
-            # TODO log, could not get disks
-            pass
-        return disks
-
     def zpool_parse(self, name):
         doc = self._geom_confxml()
         p1 = self._pipeopen("zpool status %s" % name)
@@ -4081,229 +3809,8 @@ class notifier(metaclass=HookMetaclass):
             return True
         return res
 
-    def _camcontrol_list(self):
-        """
-        Parse camcontrol devlist -v output to gather
-        controller id, channel no and driver from a device
-
-        Returns:
-            dict(devname) = dict(drv, controller, channel)
-        """
-        if self.__camcontrol is not None:
-            return self.__camcontrol
-
-        self.__camcontrol = {}
-
-        """
-        Hacky workaround
-
-        It is known that at least some HPT controller have a bug in the
-        camcontrol devlist output with multiple controllers, all controllers
-        will be presented with the same driver with index 0
-        e.g. two hpt27xx0 instead of hpt27xx0 and hpt27xx1
-
-        What we do here is increase the controller id by its order of
-        appearance in the camcontrol output
-        """
-        hptctlr = defaultdict(int)
-
-        re_drv_cid = re.compile(r'.* on (?P<drv>.*?)(?P<cid>[0-9]+) bus', re.S | re.M)
-        re_tgt = re.compile(r'target (?P<tgt>[0-9]+) .*?lun (?P<lun>[0-9]+) .*\((?P<dv1>[a-z]+[0-9]+),(?P<dv2>[a-z]+[0-9]+)\)', re.S | re.M)
-        drv, cid, tgt, lun, dev, devtmp = (None, ) * 6
-
-        proc = self._pipeopen("camcontrol devlist -v")
-        for line in proc.communicate()[0].splitlines():
-            if not line.startswith('<'):
-                reg = re_drv_cid.search(line)
-                if not reg:
-                    continue
-                drv = reg.group("drv")
-                if drv.startswith("hpt"):
-                    cid = hptctlr[drv]
-                    hptctlr[drv] += 1
-                else:
-                    cid = reg.group("cid")
-            else:
-                reg = re_tgt.search(line)
-                if not reg:
-                    continue
-                tgt = reg.group("tgt")
-                lun = reg.group("lun")
-                dev = reg.group("dv1")
-                devtmp = reg.group("dv2")
-                if dev.startswith("pass"):
-                    dev = devtmp
-                self.__camcontrol[dev] = {
-                    'drv': drv,
-                    'controller': int(cid),
-                    'channel': int(tgt),
-                    'lun': int(lun)
-                }
-        return self.__camcontrol
-
-    def sync_disk(self, devname):
-        from freenasUI.storage.models import Disk
-
-        if devname.startswith('/dev/'):
-            devname = devname.replace('/dev/', '')
-
-        # Skip sync disks on backup node
-        if (
-            not self.is_freenas() and self.failover_licensed() and
-            self.failover_status() == 'BACKUP'
-        ):
-            return
-
-        # Do not sync geom classes like multipath/hast/etc
-        if devname.find("/") != -1:
-            return
-
-        doc = self._geom_confxml()
-        disks = self.__get_disks()
-        self.__diskserial.clear()
-        self.__camcontrol = None
-
-        # Abort if the disk is not recognized as an available disk
-        if devname not in disks:
-            return
-
-        ident = self.device_to_identifier(devname)
-        qs = Disk.objects.filter(disk_identifier=ident).order_by('-disk_enabled')
-        if ident and qs.exists():
-            disk = qs[0]
-        else:
-            Disk.objects.filter(disk_name=devname).update(
-                disk_enabled=False
-            )
-            disk = Disk()
-            disk.disk_identifier = ident
-        disk.disk_name = devname
-        disk.disk_enabled = True
-        geom = doc.xpath("//class[name = 'DISK']//geom[name = '%s']" % devname)
-        if len(geom) > 0:
-            v = geom[0].xpath("./provider/config/ident")
-            if len(v) > 0:
-                disk.disk_serial = v[0].text
-            v = geom[0].xpath("./provider/mediasize")
-            if len(v) > 0:
-                disk.disk_size = v[0].text
-        if not disk.disk_serial:
-            disk.disk_serial = self.serial_from_device(devname) or ''
-        reg = RE_DSKNAME.search(devname)
-        if reg:
-            disk.disk_subsystem = reg.group(1)
-            disk.disk_number = int(reg.group(2))
-        self.sync_disk_extra(disk, add=False)
-        disk.save()
-
     def sync_disk_extra(self, disk, add=False):
         return
-
-    def sync_disks(self):
-        from freenasUI.storage.models import Disk
-
-        # Skip sync disks on backup node
-        if (
-            not self.is_freenas() and self.failover_licensed() and
-            self.failover_status() == 'BACKUP'
-        ):
-            return
-
-        doc = self._geom_confxml()
-        disks = self.__get_disks()
-        self.__diskserial.clear()
-        self.__camcontrol = None
-
-        in_disks = {}
-        serials = []
-        for disk in Disk.objects.order_by('-disk_enabled'):
-
-            devname = self.identifier_to_device(disk.disk_identifier)
-            if not devname or devname in in_disks:
-                # If we cant translate the indentifier to a device, give up
-                # If devname has already been seen once then we are probably
-                # dealing with with multipath here
-                disk.delete()
-                continue
-            else:
-                disk.disk_enabled = True
-                if devname != disk.disk_name:
-                    disk.disk_name = devname
-
-            reg = RE_DSKNAME.search(devname)
-            if reg:
-                disk.disk_subsystem = reg.group(1)
-                disk.disk_number = int(reg.group(2))
-
-            serial = ''
-            geom = doc.xpath("//class[name = 'DISK']//geom[name = '%s']" % devname)
-            if len(geom) > 0:
-                v = geom[0].xpath("./provider/config/ident")
-                if len(v) > 0:
-                    disk.disk_serial = v[0].text
-                    serial = v[0].text or ''
-                v = geom[0].xpath("./provider/config/lunid")
-                if len(v) > 0:
-                    serial += v[0].text
-                v = geom[0].xpath("./provider/mediasize")
-                if len(v) > 0:
-                    disk.disk_size = v[0].text
-            if not disk.disk_serial:
-                serial = disk.disk_serial = self.serial_from_device(devname) or ''
-
-            if serial:
-                serials.append(serial)
-
-            self.sync_disk_extra(disk, add=False)
-
-            if devname not in disks:
-                disk.disk_enabled = False
-                if disk._original_state.get("disk_enabled"):
-                    disk.save()
-                else:
-                    # Duplicated disk entries in database
-                    disk.delete()
-            else:
-                disk.save()
-            in_disks[devname] = disk
-
-        for devname in disks:
-            if devname not in in_disks:
-                disk_identifier = self.device_to_identifier(devname)
-                disk = Disk.objects.filter(disk_identifier=disk_identifier)
-                if disk.exists():
-                    disk = disk[0]
-                else:
-                    disk = Disk()
-                    disk.disk_identifier = disk_identifier
-                disk.disk_name = devname
-                serial = ''
-                geom = doc.xpath("//class[name = 'DISK']//geom[name = '%s']" % devname)
-                if len(geom) > 0:
-                    v = geom[0].xpath("./provider/config/ident")
-                    if len(v) > 0:
-                        disk.disk_serial = v[0].text
-                        serial = v[0].text or ''
-                    v = geom[0].xpath("./provider/config/lunid")
-                    if len(v) > 0:
-                        serial += v[0].text
-                    v = geom[0].xpath("./provider/mediasize")
-                    if len(v) > 0:
-                        disk.disk_size = v[0].text
-                if not disk.disk_serial:
-                    serial = disk.disk_serial = self.serial_from_device(devname) or ''
-                if serial:
-                    if serial in serials:
-                        # Probably dealing with multipath here, do not add another
-                        continue
-                    else:
-                        serials.append(serial)
-                reg = RE_DSKNAME.search(devname)
-                if reg:
-                    disk.disk_subsystem = reg.group(1)
-                    disk.disk_number = int(reg.group(2))
-                self.sync_disk_extra(disk, add=True)
-                disk.save()
 
     def sync_encrypted(self, volume=None):
         """
@@ -4339,7 +3846,7 @@ class notifier(metaclass=HookMetaclass):
                     ed = EncryptedDisk()
                     ed.encrypted_volume = vol
                     ed.encrypted_provider = prov
-                    disk = Disk.objects.filter(disk_name=dev.disk, disk_enabled=True)
+                    disk = Disk.objects.filter(disk_name=dev.disk, disk_expiretime=None)
                     if disk.exists():
                         disk = disk[0]
                     else:
@@ -4349,7 +3856,7 @@ class notifier(metaclass=HookMetaclass):
                     ed.save()
                 else:
                     ed = qs[0]
-                    disk = Disk.objects.filter(disk_name=dev.disk, disk_enabled=True)
+                    disk = Disk.objects.filter(disk_name=dev.disk, disk_expiretime=None)
                     if disk.exists():
                         disk = disk[0]
                         if not ed.encrypted_disk or (
@@ -4374,148 +3881,6 @@ class notifier(metaclass=HookMetaclass):
             Multipath(doc=doc, xmlnode=geom)
             for geom in doc.xpath("//class[name = 'MULTIPATH']/geom")
         ]
-
-    def multipath_create(self, name, consumers, actives=None, mode=None):
-        """
-        Create an Active/Passive GEOM_MULTIPATH provider
-        with name ``name`` using ``consumers`` as the consumers for it
-
-        Modes:
-            A - Active/Active
-            R - Active/Read
-            None - Active/Passive
-
-        Returns:
-            True in case the label succeeded and False otherwise
-        """
-        cmd = ["/sbin/gmultipath", "label", name] + consumers
-        if mode:
-            cmd.insert(2, "-%s" % (mode, ))
-        p1 = subprocess.Popen(cmd, stdout=subprocess.PIPE)
-        if p1.wait() != 0:
-            return False
-        # We need to invalidate confxml cache
-        self.__confxml = None
-        return True
-
-    def multipath_next(self):
-        """
-        Find out the next available name for a multipath named diskX
-        where X is a crescenting value starting from 1
-
-        Returns:
-            The string of the multipath name to be created
-        """
-        RE_NAME = re.compile(r'[a-z]+(\d+)')
-        numbers = sorted([
-            int(RE_NAME.search(mp.name).group(1))
-            for mp in self.multipath_all() if RE_NAME.match(mp.name)
-        ])
-        if not numbers:
-            numbers = [0]
-        for number in range(1, numbers[-1] + 2):
-            if number not in numbers:
-                break
-        else:
-            raise ValueError('Could not find multipaths')
-        return "disk%d" % number
-
-    def _multipath_is_active(self, name, geom):
-        return False
-
-    def multipath_sync(self):
-        """Synchronize multipath disks
-
-        Every distinct GEOM_DISK that shares an ident (aka disk serial)
-        is considered a multipath and will be handled by GEOM_MULTIPATH
-
-        If the disk is not currently in use by some Volume or iSCSI Disk Extent
-        then a gmultipath is automatically created and will be available for use
-        """
-        from freenasUI.storage.models import Volume, Disk
-
-        doc = self._geom_confxml()
-
-        mp_disks = []
-        for geom in doc.xpath("//class[name = 'MULTIPATH']/geom"):
-            for provref in geom.xpath("./consumer/provider/@ref"):
-                prov = doc.xpath("//provider[@id = '%s']" % provref)[0]
-                class_name = prov.xpath("../../name")[0].text
-                # For now just DISK is allowed
-                if class_name != 'DISK':
-                    log.warn(
-                        "A consumer that is not a disk (%s) is part of a "
-                        "MULTIPATH, currently unsupported by middleware",
-                        class_name
-                    )
-                    continue
-                disk = prov.xpath("../name")[0].text
-                mp_disks.append(disk)
-
-        reserved = self._find_root_devs()
-
-        # disks already in use count as reserved as well
-        for vol in Volume.objects.all():
-            reserved.extend(vol.get_disks())
-
-        serials = defaultdict(list)
-        active_active = []
-        RE_DA = re.compile('^da[0-9]+$')
-        for geom in doc.xpath("//class[name = 'DISK']/geom"):
-            name = geom.xpath("./name")[0].text
-            if (not RE_DA.match(name)) or name in reserved or name in mp_disks:
-                continue
-            if self._multipath_is_active(name, geom):
-                active_active.append(name)
-            serial = ''
-            v = geom.xpath("./provider/config/ident")
-            if len(v) > 0:
-                serial = v[0].text or ''
-            v = geom.xpath("./provider/config/lunid")
-            if len(v) > 0:
-                serial += v[0].text
-            if not serial:
-                continue
-            size = geom.xpath("./provider/mediasize")[0].text
-            serials[(serial, size)].append(name)
-            serials[(serial, size)].sort(key=lambda x: int(x[2:]))
-
-        disks_pairs = [disks for disks in list(serials.values())]
-        disks_pairs.sort(key=lambda x: int(x[0][2:]))
-
-        for disks in disks_pairs:
-            if not len(disks) > 1:
-                continue
-            name = self.multipath_next()
-            self.multipath_create(name, disks, active_active)
-
-        # Grab confxml again to take new multipaths into account
-        doc = self._geom_confxml()
-        mp_ids = []
-        for geom in doc.xpath("//class[name = 'MULTIPATH']/geom"):
-            _disks = []
-            for provref in geom.xpath("./consumer/provider/@ref"):
-                prov = doc.xpath("//provider[@id = '%s']" % provref)[0]
-                class_name = prov.xpath("../../name")[0].text
-                # For now just DISK is allowed
-                if class_name != 'DISK':
-                    continue
-                disk = prov.xpath("../name")[0].text
-                _disks.append(disk)
-            qs = Disk.objects.filter(
-                Q(disk_name__in=_disks) | Q(disk_multipath_member__in=_disks)
-            )
-            if qs.exists():
-                diskobj = qs[0]
-                mp_ids.append(diskobj.pk)
-                diskobj.disk_multipath_name = geom.xpath("./name")[0].text
-                if diskobj.disk_name in _disks:
-                    _disks.remove(diskobj.disk_name)
-                if _disks:
-                    diskobj.disk_multipath_member = _disks.pop()
-                diskobj.save()
-
-        Disk.objects.exclude(pk__in=mp_ids).update(disk_multipath_name='', disk_multipath_member='')
 
     def _find_root_devs(self):
         """Find the root device.
@@ -4563,35 +3928,6 @@ class notifier(metaclass=HookMetaclass):
         for disk in disks:
             open("/dev/%s" % disk, 'w').close()
 
-    def gmirror_status(self, name):
-        """
-        Get all available gmirror instances
-
-        Returns:
-            A dict describing the gmirror
-        """
-
-        doc = self._geom_confxml()
-        for geom in doc.xpath("//class[name = 'MIRROR']/geom[name = '%s']" % name):
-            consumers = []
-            gname = geom.xpath("./name")[0].text
-            status = geom.xpath("./config/State")[0].text
-            for consumer in geom.xpath("./consumer"):
-                ref = consumer.xpath("./provider/@ref")[0]
-                prov = doc.xpath("//provider[@id = '%s']" % ref)[0]
-                name = prov.xpath("./name")[0].text
-                status = consumer.xpath("./config/State")[0].text
-                consumers.append({
-                    'name': name,
-                    'status': status,
-                })
-            return {
-                'name': gname,
-                'status': status,
-                'consumers': consumers,
-            }
-        return None
-
     def kern_module_is_loaded(self, module):
         """Determine whether or not a kernel module (or modules) is loaded.
 
@@ -4629,32 +3965,6 @@ class notifier(metaclass=HookMetaclass):
         p1 = self._pipeopen("/sbin/route delete %s" % masked)
         if p1.wait() != 0:
             raise MiddlewareError("Failed to remove the route %s" % sr.sr_destination)
-
-    def mount_volume(self, volume):
-        """
-        Mount a volume.
-        The volume must be in /etc/fstab
-
-        Returns:
-            True if volume was sucessfully mounted, False otherwise
-        """
-        if volume.vol_fstype == 'ZFS':
-            raise NotImplementedError("No donuts for you!")
-
-        prov = self.get_label_consumer(
-            volume.vol_fstype.lower(),
-            str(volume.vol_name)
-        )
-        if prov is None:
-            return False
-
-        proc = self._pipeopen("mount /dev/%s/%s" % (
-            volume.vol_fstype.lower(),
-            volume.vol_name,
-        ))
-        if proc.wait() != 0:
-            return False
-        return True
 
     def __get_geoms_recursive(self, prvid):
         """
@@ -5007,10 +4317,7 @@ class notifier(metaclass=HookMetaclass):
         # If there is a pool configured make sure the volume exists
         # Otherwise reset it to blank
         if systemdataset.sys_pool and systemdataset.sys_pool != 'freenas-boot':
-            volume = Volume.objects.filter(
-                vol_name=systemdataset.sys_pool,
-                vol_fstype='ZFS',
-            )
+            volume = Volume.objects.filter(vol_name=systemdataset.sys_pool)
             if not volume.exists():
                 systemdataset.sys_pool = ''
                 systemdataset.save()
@@ -5023,7 +4330,7 @@ class notifier(metaclass=HookMetaclass):
         elif not systemdataset.sys_pool:
 
             volume = None
-            for o in Volume.objects.filter(vol_fstype='ZFS').order_by(
+            for o in Volume.objects.all().order_by(
                 'vol_encrypt'
             ):
                 if o.is_decrypted():
@@ -5372,16 +4679,6 @@ class notifier(metaclass=HookMetaclass):
             #    action = re.sub(r'\s+', ' ', msg)
         return (state, status)
 
-    def get_train(self):
-        from freenasUI.system.models import Update
-        try:
-            update = Update.objects.order_by('-id')[0]
-        except IndexError:
-            update = Update.objects.create()
-        if not update.upd_autocheck:
-            return ''
-        return update.get_train() or ''
-
     def pwenc_reset_model_passwd(self, model, field):
         for obj in model.objects.all():
             setattr(obj, field, '')
@@ -5571,48 +4868,6 @@ class notifier(metaclass=HookMetaclass):
         xml = etree.fromstring(xml)
         connections = xml.xpath('//connection')
         return len(connections)
-
-    def call_backupd(self, args):
-        ntries = 15
-        sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-
-        # Try for a while in case daemon is just starting
-        while ntries > 0:
-            try:
-                sock.connect(BACKUP_SOCK)
-                break
-            except socket.error:
-                ntries -= 1
-                time.sleep(1)
-
-        if ntries == 0:
-            # Mark backup as failed at this point
-            from freenasUI.system.models import Backup
-            backup = Backup.objects.all().order_by('-id').first()
-            backup.bak_failed = True
-            backup.bak_status = 'Backup process died'
-            backup.save()
-            return {'status': 'ERROR'}
-
-        sock.settimeout(5)
-        f = sock.makefile(bufsize=0)
-
-        try:
-            f.write(json.dumps(args) + '\n')
-            resp_json = f.readline()
-            response = json.loads(resp_json)
-        except (IOError, ValueError, socket.timeout):
-            # Mark backup as failed at this point
-            from freenasUI.system.models import Backup
-            backup = Backup.objects.all().order_by('-id').first()
-            backup.bak_failed = True
-            backup.bak_status = 'Backup process died'
-            backup.save()
-            response = {'status': 'ERROR'}
-
-        f.close()
-        sock.close()
-        return response
 
     def backup_db(self):
         from freenasUI.common.system import backup_database

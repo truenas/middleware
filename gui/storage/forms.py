@@ -36,7 +36,6 @@ import uuid
 from formtools.wizard.views import SessionWizardView
 from django.core.files.storage import FileSystemStorage
 from django.core.urlresolvers import reverse
-from django.db import transaction
 from django.forms import FileField
 from django.forms.formsets import BaseFormSet, formset_factory
 from django.http import HttpResponse, QueryDict
@@ -249,19 +248,15 @@ class VolumeManagerForm(VolumeMixin, Form):
             volume_encrypt = 0
         dedup = self.cleaned_data.get("dedup", False)
 
-        with transaction.atomic():
-            vols = models.Volume.objects.filter(
-                vol_name=volume_name,
-                vol_fstype='ZFS')
+        volume = scrub = None
+        try:
+            vols = models.Volume.objects.filter(vol_name=volume_name)
             if vols.count() > 0:
                 volume = vols[0]
                 add = True
             else:
                 add = False
-                volume = models.Volume(
-                    vol_name=volume_name,
-                    vol_fstype='ZFS',
-                    vol_encrypt=volume_encrypt)
+                volume = models.Volume(vol_name=volume_name, vol_encrypt=volume_encrypt)
                 volume.save()
 
             self.volume = volume
@@ -293,8 +288,13 @@ class VolumeManagerForm(VolumeMixin, Form):
                 if dedup:
                     notifier().zfs_set_option(volume.vol_name, "dedup", dedup)
 
-                if volume.vol_fstype == 'ZFS':
-                    models.Scrub.objects.create(scrub_volume=volume)
+                scrub = models.Scrub.objects.create(scrub_volume=volume)
+        except Exception:
+            if volume:
+                volume.delete()
+            if scrub:
+                scrub.delete()
+            raise
 
         if volume.vol_encrypt >= 2 and add:
             # FIXME: ask current passphrase to the user
@@ -313,10 +313,9 @@ class VolumeManagerForm(VolumeMixin, Form):
         notifier().reload("disk")
         if not add:
             notifier().start("ix-syslogd")
-            notifier().restart("system_datasets", timeout=50)
+            notifier().restart("system_datasets")
         # For scrub cronjob
-        if volume.vol_fstype == 'ZFS':
-            notifier().restart("cron")
+        notifier().restart("cron")
 
         # restart smartd to enable monitoring for any new drives added
         if (services.objects.get(srv_service='smartd').srv_enable):
@@ -509,7 +508,7 @@ class ZFSVolumeWizardForm(forms.Form):
     def __init__(self, *args, **kwargs):
         super(ZFSVolumeWizardForm, self).__init__(*args, **kwargs)
         self.fields['volume_disks'].choices = self._populate_disk_choices()
-        qs = models.Volume.objects.filter(vol_fstype='ZFS')
+        qs = models.Volume.objects.filter()
         if qs.exists():
             self.fields['volume_add'] = forms.ChoiceField(
                 label=_('Volume add'),
@@ -632,11 +631,6 @@ class ZFSVolumeWizardForm(forms.Form):
             msg = _("This field is required")
             self._errors["volume_disks"] = self.error_class([msg])
             del cleaned_data["volume_disks"]
-        if models.Volume.objects.filter(vol_name=volume_name).exclude(
-                vol_fstype='ZFS').count() > 0:
-            msg = _("You already have a volume with same name")
-            self._errors["volume_name"] = self.error_class([msg])
-            del cleaned_data["volume_name"]
 
         if volume_name in ('log',):
             msg = _("\"log\" is a reserved word and thus cannot be used")
@@ -661,7 +655,6 @@ class ZFSVolumeWizardForm(forms.Form):
             self.cleaned_data.get("volume_name") or
             self.cleaned_data.get("volume_add")
         )
-        volume_fstype = 'ZFS'
         disk_list = self.cleaned_data['volume_disks']
         dedup = self.cleaned_data.get("dedup", False)
         init_rand = self.cleaned_data.get("encini", False)
@@ -675,21 +668,15 @@ class ZFSVolumeWizardForm(forms.Form):
         else:
             group_type = self.cleaned_data['group_type']
 
-        with transaction.atomic():
-            vols = models.Volume.objects.filter(
-                vol_name=volume_name,
-                vol_fstype='ZFS'
-            )
+        volume = scrub = None
+        try:
+            vols = models.Volume.objects.filter(vol_name=volume_name)
             if vols.count() == 1:
                 volume = vols[0]
                 add = True
             else:
                 add = False
-                volume = models.Volume(
-                    vol_name=volume_name,
-                    vol_fstype=volume_fstype,
-                    vol_encrypt=volume_encrypt,
-                )
+                volume = models.Volume(vol_name=volume_name, vol_encrypt=volume_encrypt)
                 volume.save()
 
             self.volume = volume
@@ -729,12 +716,18 @@ class ZFSVolumeWizardForm(forms.Form):
                 if dedup:
                     notifier().zfs_set_option(volume.vol_name, "dedup", dedup)
 
-                models.Scrub.objects.create(scrub_volume=volume)
+                scrub = models.Scrub.objects.create(scrub_volume=volume)
 
                 try:
                     notifier().zpool_enclosure_sync(volume.vol_name)
                 except Exception as e:
                     log.error("Error syncing enclosure: %s", e)
+        except Exception:
+            if volume:
+                volume.delete()
+            if scrub:
+                scrub.delete()
+            raise
 
         # This must be outside transaction block to make sure the changes
         # are committed before the call of ix-fstab
@@ -1108,10 +1101,11 @@ class DiskFormPartial(ModelForm):
             obj.disk_togglesmart != self._original_smart_en or
             obj.disk_smartoptions != self._original_smart_opts
         ):
-            if obj.disk_togglesmart == 0:
-                notifier().toggle_smart_off(obj.disk_name)
-            else:
-                notifier().toggle_smart_on(obj.disk_name)
+            with client as c:
+                if obj.disk_togglesmart == 0:
+                    c.call('disk.toggle_smart_off', obj.disk_name)
+                else:
+                    c.call('disk.toggle_smart_on', obj.disk_name)
             started = notifier().restart("smartd")
             if (
                 started is False and
@@ -1188,24 +1182,22 @@ class DiskEditBulkForm(Form):
             self.fields[key].initial = val
 
     def save(self):
+        for disk in self._disks:
 
-        with transaction.atomic():
-            for disk in self._disks:
+            for opt in (
+                'disk_hddstandby',
+                'disk_advpowermgmt',
+                'disk_acousticlevel',
+            ):
+                if self.cleaned_data.get(opt):
+                    setattr(disk, opt, self.cleaned_data.get(opt))
 
-                for opt in (
-                    'disk_hddstandby',
-                    'disk_advpowermgmt',
-                    'disk_acousticlevel',
-                ):
-                    if self.cleaned_data.get(opt):
-                        setattr(disk, opt, self.cleaned_data.get(opt))
-
-                disk.disk_togglesmart = self.cleaned_data.get(
-                    "disk_togglesmart")
-                # This is not a choice field, an empty value should reset all
-                disk.disk_smartoptions = self.cleaned_data.get(
-                    "disk_smartoptions")
-                disk.save()
+            disk.disk_togglesmart = self.cleaned_data.get(
+                "disk_togglesmart")
+            # This is not a choice field, an empty value should reset all
+            disk.disk_smartoptions = self.cleaned_data.get(
+                "disk_smartoptions")
+            disk.save()
         return self._disks
 
 
@@ -1421,9 +1413,9 @@ class CommonZVol(object):
         if suffix.lower().endswith('ib'):
             size = '%s%s' % (number, suffix[0])
 
-        zlist = zfs.list_datasets(path=self.vol_name, include_root=True)
+        zlist = zfs.list_datasets(path=self.parentds, include_root=True)
         if zlist:
-            dataset = zlist.get(self.vol_name)
+            dataset = zlist.get(self.parentds)
             _map = {
                 'P': 1125899906842624,
                 'T': 1099511627776,
@@ -1470,12 +1462,12 @@ class ZVol_EditForm(CommonZVol, Form):
     )
 
     def __init__(self, *args, **kwargs):
-        self.name = kwargs.pop('name')
-        self.vol_name = self.name.rsplit('/', 1)[0]
+        self.parentds = kwargs.pop('parentds')
+        self.vol_name = self.parentds.rsplit('/', 1)[0]
         super(ZVol_EditForm, self).__init__(*args, **kwargs)
         _n = notifier()
-        if '/' in self.name:
-            parentds = self.name.rsplit('/', 1)[0]
+        if '/' in self.parentds:
+            parentds = self.parentds.rsplit('/', 1)[0]
             parentdata = _n.zfs_get_options(parentds)
 
             self.fields['zvol_compression'].choices = _inherit_choices(
@@ -1487,7 +1479,7 @@ class ZVol_EditForm(CommonZVol, Form):
                 parentdata['dedup'][0]
             )
 
-        self.zdata = _n.zfs_get_options(self.name)
+        self.zdata = _n.zfs_get_options(self.parentds)
         if 'org.freenas:description' in self.zdata and self.zdata['org.freenas:description'][2] == 'local':
             self.fields['zvol_comments'].initial = self.zdata['org.freenas:description'][0]
         self.fields['zvol_compression'].initial = self.zdata['compression'][2]
@@ -1524,10 +1516,35 @@ class ZVol_EditForm(CommonZVol, Form):
         self._zvol_force()
         return cleaned_data
 
-    def set_error(self, msg):
-        msg = "%s" % msg
-        self._errors['__all__'] = self.error_class([msg])
-        del self.cleaned_data
+    def save(self):
+        _n = notifier()
+        error = False
+        for attr, formfield, can_inherit in (
+            ('org.freenas:description', 'zvol_comments', False),
+            ('compression', None, True),
+            ('dedup', None, True),
+            ('volsize', None, True),
+        ):
+            if not formfield:
+                formfield = f'zvol_{attr}'
+            if can_inherit and self.cleaned_data[formfield] == 'inherit':
+                success, err = _n.zfs_inherit_option(self.parentds, attr)
+            else:
+                success, err = _n.zfs_set_option(
+                    self.parentds, attr, self.cleaned_data[formfield]
+                )
+            if not success:
+                error = True
+                self._errors[formfield] = self.error_class([err])
+
+        if error:
+            return False
+        extents = iSCSITargetExtent.objects.filter(
+            iscsi_target_extent_type='ZVOL',
+            iscsi_target_extent_path=f'zvol/{self.parentds}')
+        if extents.exists():
+            _n.reload('iscsitarget')
+        return True
 
 
 class ZVol_CreateForm(CommonZVol, Form):
@@ -1545,6 +1562,7 @@ class ZVol_CreateForm(CommonZVol, Form):
     )
     zvol_compression = forms.ChoiceField(
         choices=choices.ZFS_CompressionChoices,
+        initial='inherit',
         widget=forms.Select(attrs=attrs_dict),
         label=_('Compression level'))
     zvol_sparse = forms.BooleanField(
@@ -1573,8 +1591,8 @@ class ZVol_CreateForm(CommonZVol, Form):
     )
 
     def __init__(self, *args, **kwargs):
-        self.vol_name = kwargs.pop('vol_name')
-        zpool = notifier().zpool_parse(self.vol_name.split('/')[0])
+        self.parentds = kwargs.pop('parentds')
+        zpool = notifier().zpool_parse(self.parentds.split('/')[0])
         numdisks = 4
         for vdev in zpool.data:
             if vdev.type in (
@@ -1614,7 +1632,7 @@ class ZVol_CreateForm(CommonZVol, Form):
     def clean(self):
         cleaned_data = self.cleaned_data
         full_zvol_name = "%s/%s" % (
-            self.vol_name,
+            self.parentds,
             cleaned_data.get("zvol_name"))
         if len(zfs.list_datasets(path=full_zvol_name)) > 0:
             msg = _("You already have a dataset with the same name")
@@ -1624,10 +1642,26 @@ class ZVol_CreateForm(CommonZVol, Form):
         self._zvol_force()
         return cleaned_data
 
-    def set_error(self, msg):
-        msg = "%s" % msg
-        self._errors['__all__'] = self.error_class([msg])
-        del self.cleaned_data
+    def save(self):
+        props = {}
+        zvol_volsize = self.cleaned_data.get('zvol_volsize')
+        zvol_blocksize = self.cleaned_data.get("zvol_blocksize")
+        zvol_name = f"{self.parentds}/{self.cleaned_data.get('zvol_name')}"
+        zvol_comments = self.cleaned_data.get('zvol_comments')
+        zvol_compression = self.cleaned_data.get('zvol_compression')
+        props['compression'] = str(zvol_compression)
+        if zvol_blocksize:
+            props['volblocksize'] = zvol_blocksize
+        errno, errmsg = notifier().create_zfs_vol(
+            name=str(zvol_name),
+            size=str(zvol_volsize),
+            sparse=self.cleaned_data.get("zvol_sparse", False),
+            props=props)
+        notifier().zfs_set_option(name=str(zvol_name), item="org.freenas:description", value=zvol_comments)
+        if errno != 0:
+            self._errors['__all__'] = self.error_class([errmsg])
+            return False
+        return True
 
 
 class MountPointAccessForm(Form):
@@ -1759,9 +1793,7 @@ class PeriodicSnapForm(ModelForm):
         self.fields['task_filesystem'] = forms.ChoiceField(
             label=self.fields['task_filesystem'].label,
         )
-        volnames = [
-            o.vol_name for o in models.Volume.objects.filter(vol_fstype='ZFS')
-        ]
+        volnames = [o.vol_name for o in models.Volume.objects.all()]
         self.fields['task_filesystem'].choices = [y for y in list(notifier().list_zfs_fsvols().items()) if y[0].split('/')[0] in volnames]
         self.fields['task_repeat_unit'].widget = forms.HiddenInput()
 
@@ -2024,14 +2056,13 @@ class ZFSDiskReplacementForm(Form):
         else:
             passfile = None
 
-        with transaction.atomic():
-            rv = notifier().zfs_replace_disk(
-                self.volume,
-                self.label,
-                devname,
-                force=self.cleaned_data.get('force'),
-                passphrase=passfile
-            )
+        rv = notifier().zfs_replace_disk(
+            self.volume,
+            self.label,
+            devname,
+            force=self.cleaned_data.get('force'),
+            passphrase=passfile
+        )
         if rv == 0:
             if (services.objects.get(srv_service='smartd').srv_enable):
                 notifier().restart("smartd")
@@ -2694,9 +2725,7 @@ class VMWarePluginForm(ModelForm):
         self.fields['filesystem'] = forms.ChoiceField(
             label=self.fields['filesystem'].label,
         )
-        volnames = [
-            o.vol_name for o in models.Volume.objects.filter(vol_fstype='ZFS')
-        ]
+        volnames = [o.vol_name for o in models.Volume.objects.all()]
         self.fields['filesystem'].choices = [y for y in list(notifier().list_zfs_fsvols().items()) if y[0].split('/')[0] in volnames]
         if self.instance.id:
             self.fields['oid'].initial = self.instance.id
