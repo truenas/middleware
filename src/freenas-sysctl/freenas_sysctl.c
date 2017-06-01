@@ -553,7 +553,7 @@ freenas_sysctl_middlewared_init(void)
 		"socket_timeout", CTLFLAG_RW,&g_middlewared->plugins.service_monitor.socket_timeout,
 		"Socket timeout");
 
-	g_middlwared->plugins.service_monitor.socket_timeout = 10;
+	g_middlewared->plugins.service_monitor.socket_timeout = 10;
 
 	return (0);
 }
