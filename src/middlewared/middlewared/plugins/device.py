@@ -96,7 +96,7 @@ def devd_listen(middleware):
             continue
 
         # Lets ignore CAM messages for now
-        if parsed['system'] == 'CAM':
+        if parsed['system'] in ('CAM', 'ACPI'):
             continue
 
         middleware.send_event(
