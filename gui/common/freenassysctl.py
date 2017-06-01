@@ -74,3 +74,18 @@ class freenas_sysctl(object):
                     setattr(klass, parts[i], tmp)
                     base = klass
                     klass = tmp
+
+    # hacky replacement for getattr()
+    def get_by_oid(self, oid):
+        if not oid:
+            return None
+
+        c = self
+        parts = oid.split('.')
+        for p in parts:
+            a = getattr(c, p)
+            if not a:
+                raise AttributeError
+            c = a
+
+        return c

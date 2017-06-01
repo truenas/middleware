@@ -34,7 +34,7 @@ command line utility, this helper class can also be used to do these
 actions.
 """
 
-from collections import defaultdict, OrderedDict
+from collections import OrderedDict
 from decimal import Decimal
 import base64
 from Crypto.Cipher import AES
@@ -43,7 +43,6 @@ import errno
 from functools import cmp_to_key
 import glob
 import grp
-import json
 import logging
 import os
 import pipes
@@ -62,7 +61,6 @@ import syslog
 import tarfile
 import tempfile
 import time
-import types
 import crypt
 import string
 import random
@@ -1618,7 +1616,7 @@ class notifier(metaclass=HookMetaclass):
 
         return share
 
-    def smb_share_to_path(self, share): 
+    def smb_share_to_path(self, share):
         from freenasUI.sharing.models import CIFS_Share
 
         try:
@@ -1679,17 +1677,17 @@ class notifier(metaclass=HookMetaclass):
         group_SID = self.group_to_SID(group)
 
         if owner and owner_SID:
-            add_args += ",%s:ALLOWED/0/FULL" %  owner_SID
-        if group and group_SID: 
+            add_args += ",%s:ALLOWED/0/FULL" % owner_SID
+        if group and group_SID:
             add_args += ",%s:ALLOWED/0/FULL" % group_SID
         add_args = add_args.lstrip(',')
 
         ret = True
-        if add_args: 
+        if add_args:
             add_cmd = "%s %s -a '%s'" % (sharesec, share, add_args)
             try:
-                proc = self._pipeopen(add_cmd).communicate()
-            except: 
+                self._pipeopen(add_cmd).communicate()
+            except:
                 log.debug("sharesec_add: %s failed", add_cmd)
                 ret = False
 
@@ -1706,8 +1704,8 @@ class notifier(metaclass=HookMetaclass):
 
         ret = True
         try:
-            proc = self._pipeopen(delete_cmd).communicate()
-        except: 
+            self._pipeopen(delete_cmd).communicate()
+        except:
             log.debug("sharesec_delete: %s failed", delete_cmd)
             ret = False
 
@@ -1721,7 +1719,7 @@ class notifier(metaclass=HookMetaclass):
 
         self.sharesec_delete(share)
         return self.sharesec_add(share, owner, group)
-   
+
     def winacl_reset(self, path, owner=None, group=None, exclude=None):
         if exclude is None:
             exclude = []
@@ -2950,7 +2948,6 @@ class notifier(metaclass=HookMetaclass):
         self.__rmdir_mountpoint(vol_mountpath)
 
     def volume_import(self, volume_name, volume_id, key=None, passphrase=None, enc_disks=None):
-        from django.db import transaction
         from freenasUI.storage.models import Disk, EncryptedDisk, Scrub, Volume
         from freenasUI.sharing.models import AFP_Share, CIFS_Share, NFS_Share_Path, WebDAV_Share
         from freenasUI.system.alert import alertPlugins
@@ -3746,22 +3743,6 @@ class notifier(metaclass=HookMetaclass):
         else:
             return ''
 
-    def get_allswapdev(self):
-        from freenasUI.storage.models import Volume
-
-        disks = []
-        for v in Volume.objects.all():
-            disks = disks + v.get_disks()
-
-        result = []
-        for disk in disks:
-            result.append(self.part_type_from_device('swap', disk))
-        return "\n".join(result)
-
-    def get_boot_pool_disks(self):
-        status = self.zpool_parse('freenas-boot')
-        return "\n".join(status.get_disks())
-
     def get_boot_pool_boottype(self):
         status = self.zpool_parse('freenas-boot')
         doc = self._geom_confxml()
@@ -3927,21 +3908,6 @@ class notifier(metaclass=HookMetaclass):
         disks = self.__get_disks()
         for disk in disks:
             open("/dev/%s" % disk, 'w').close()
-
-    def kern_module_is_loaded(self, module):
-        """Determine whether or not a kernel module (or modules) is loaded.
-
-        Parameter:
-            module_name - a module to look for in kldstat -v output (.ko is
-                          added automatically for you).
-
-        Returns:
-            A boolean to denote whether or not the module was found.
-        """
-
-        pipe = self._pipeopen('/sbin/kldstat -v')
-
-        return 0 < pipe.communicate()[0].find(module + '.ko')
 
     def sysctl(self, name):
         """
@@ -4596,7 +4562,6 @@ class notifier(metaclass=HookMetaclass):
             return proc.returncode == 0
         return False
 
-
     def system_dataset_migrate(self, _from, _to):
 
         rsyncs = (
@@ -4736,7 +4701,9 @@ class notifier(metaclass=HookMetaclass):
             text = text.decode('utf8')
         from Crypto.Random import get_random_bytes
         from Crypto.Util import Counter
-        pad = lambda x: x + (PWENC_BLOCK_SIZE - len(x) % PWENC_BLOCK_SIZE) * PWENC_PADDING
+
+        def pad(x):
+            return x + (PWENC_BLOCK_SIZE - len(x) % PWENC_BLOCK_SIZE) * PWENC_PADDING
 
         nonce = get_random_bytes(8)
         cipher = AES.new(
@@ -4876,7 +4843,6 @@ class notifier(metaclass=HookMetaclass):
     def alua_enabled(self):
         if self.is_freenas() or not self.failover_licensed():
             return False
-        ret = None
         from freenasUI.support.utils import fc_enabled
         if fc_enabled():
             return True
@@ -4901,6 +4867,7 @@ def usage():
         change: notify change for a command (try self.reload; if unsuccessful do start)""" \
         % (os.path.basename(sys.argv[0]), )
     sys.exit(usage_str)
+
 
 # When running as standard-alone script
 if __name__ == '__main__':

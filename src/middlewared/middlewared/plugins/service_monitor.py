@@ -1,91 +1,134 @@
+import os
 import socket
 import random
+import sys
 import threading
 import middlewared.logger
-from middlewared.client import Client, CallTimeout
 
-CURRENT_MONITOR_THREAD = {}
+from middlewared.client import CallTimeout
+from middlewared.service import Service, job, private
+
+if '/usr/local/www' not in sys.path:
+    sys.path.append('/usr/local/www')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'freenasUI.settings')
+
+import django
+django.setup()
+
+from freenasUI.common.freenassysctl import freenas_sysctl as _fs
 
 
-class ServiceMonitor(object):
-    """Main-Class for service monitoring."""
+#
+# Using a timer thread is pretty dumb. We should use a backoff algorithm that eventually converges to a frequency
+#
+class ServiceMonitorThread(threading.Timer):
+    def __init__(self, **kwargs):
+        super(ServiceMonitorThread, self).__init__(interval=kwargs.get('frequency'), function=self.timerCallback)
+        self.setDaemon(False)
 
-    def __init__(self, frequency, retry, fqdn, service_port, service_name):
-        self.frequency = frequency
-        self.retry = retry
-        self.counter = retry
+        self.id = kwargs.get('id')
+        self.frequency = kwargs.get('frequency')
+        self.retry = kwargs.get('retry')
+        self.counter = kwargs.get('retry')
         self.forever = True if self.retry is 0 else False
-        self.connected = True
-        self.func_call = self.test_connection
-        self.fqdn = fqdn
-        self.service_port = service_port
-        self.service_name = service_name
-        self.logger = middlewared.logger.Logger('servicemonitor').getLogger()
+        self.func = self.testConnection
+        self.host = kwargs.get('host')
+        self.port = kwargs.get('port')
+        self.name = kwargs.get('name')
+        self.logger = kwargs.get('logger')
+        self.middleware = kwargs.get('middleware')
+        self.createFunc = kwargs.get('createFunc')
+        self.destroyFunc = kwargs.get('destroyFunc')
+        self.existsFunc = kwargs.get('existsFunc')
+        self.connected = kwargs.get('connected', True)
 
-    def test_connection(self, fqdn, service_port, service_name):
-        """Try to open a socket for a given fqdn and service port.
+        self.logger.debug("[ServiceMonitorThread] name=%s frequency=%d retry=%d", self.name, self.frequency, self.retry)
+
+    @private
+    def get_timeout(self, service, op):
+        timeout = 60
+
+        if not service:
+            return timeout
+        if op not in ('start', 'stop', 'restart', 'reload'):
+            return timeout
+
+        #
+        # XXX ugly hack - temporary
+        #
+        parent = 'services'
+        if service in ('activedirectory', 'ldap', 'nis', 'nt4'):
+            parent = 'directoryservice'
+
+        try:
+            oid = "%s.%s.timeout.%s" %  (parent, service, op)
+            timeout = _fs().get_by_oid(oid)
+
+        except Exception as e:
+            self.logger.debug("[ServiceMonitorThread] FAILED oid=%s", oid)
+            return timeout
+
+        return timeout
+
+    #
+    # XXX: Need mechanism for more intelligent protocol checking
+    #
+    @private
+    def testConnection(self, host, port, name):
+        """Try to open a socket for a given host and service port.
 
         Args:
-                fqdn (str): The hostname and domainname where we will try to connect.
-                service_port (int): The service port number.
-                service_name (str): Same name used to start/stop/restart method.
+                host (str): The hostname and domainname where we will try to connect.
+                port (int): The service port number.
+                name (str): Same name used to start/stop/restart method.
         """
+
+        connected = self.connected
+
+        # XXX What about UDP?
         bind = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         try:
-            bind.connect((fqdn, service_port))
+            bind.connect((host, port))
             self.connected = True
+
         except Exception as error:
             self.connected = False
-            self.logger.debug("[ServiceMonitoring] Cannot connect: %s:%d with error: %s" % (fqdn, service_port, error))
-            with Client() as c:
-                try:
-                    c.call('service.restart', service_name, {'onetime': True}, timeout=60)
-                except CallTimeout:
-                    # We might have a websocket timeout and it is not a problem.
-                    pass
+            self.logger.debug("[ServiceMonitorThread] Cannot connect: %s:%d with error: %s" % (host, port, error))
+
         finally:
             bind.close()
 
-    def createServiceThread(self):
-        """Create a thread for the service monitoring and add it into the
-        dictonary of running threads.
-        """
-        global CURRENT_MONITOR_THREAD
-        if self.isThreadExist(self.service_name):
-            self.destroyServiceThread(self.service_name)
+        #
+        # This should be smarter about stopping|starting a service. We need to know
+        # the current state of the service and if the service was enabled or not to
+        # make a fully informed decision. For now, look for state change and if
+        # the service is up and listening or not. Since the default assumption for
+        # a new timer thread is that connected is true, the first transition from
+        # connected being true to false will cause a service.stop to occur. Since
+        # this is the way we currently implement things, it is best to make service
+        # stop scripts a no-op if the service is already stopped. service.started
+        # doesn't quite work as one would expect since it will just tell us the
+        # current state of the process, not if it was stopped or started already.
+        # What this means is when a process becomes available again, and started
+        # was previously false, it now becomes true (without actually restarting
+        # the process), so it's not reliable.
+        #
+        if (self.connected != connected) and (self.connected == False):
+            self.logger.debug("[ServiceMonitorThread] disabling service %s", name)
+            try:
+                self.middleware.call('service.stop', name, {'onetime': True}, timeout=self.get_timeout(name, 'stop'))
+            except CallTimeout:
+                pass
 
-        self.thread = threading.Timer(self.frequency, self.func_handler)
-        self.thread.name = self.service_name
-        self.thread.setDaemon(False)
-        CURRENT_MONITOR_THREAD[self.thread.name] = self.thread
+        elif (self.connected != connected) and (self.connected == True):
+            self.logger.debug("[ServiceMonitorThread] enabling service %s", name)
+            try:
+                self.middleware.call('service.start', name, {'onetime': True}, timeout=self.get_timeout(name, 'start'))
+            except CallTimeout:
+                pass
 
-    def isThreadExist(self, service_name):
-        """Verify if a service monitoring is already running for a given service.
-
-        Args:
-                    service_name (str): Same name used to start/stop/restart method.
-
-        Returns:
-                    bool: True if it is already running or False otherwise.
-        """
-        current_thread = CURRENT_MONITOR_THREAD.get(service_name)
-        if current_thread:
-            return True
-        return False
-
-    def destroyServiceThread(self, service_name):
-        """Cancel the thread related with the service and remove it from the
-        dictionary of running threads.
-
-        Args:
-                    service_name (str): Same name used to start/stop/restart method.
-        """
-        current_thread = CURRENT_MONITOR_THREAD.get(service_name)
-        if current_thread:
-                current_thread.cancel()
-                del CURRENT_MONITOR_THREAD[service_name]
-
-    def func_handler(self):
+    @private
+    def timerCallback(self):
         """This is a recursive method where will launch a thread with timer
         calling another method.
         """
@@ -96,29 +139,100 @@ class ServiceMonitor(object):
 
         if self.connected is False:
             self.counter -= 1
+
             _random = str(random.randint(1, 1000))
-            file_error = '/tmp/.' + _random + self.service_name + '.service_monitor'
+            file_error = '/tmp/.' + _random + self.name + '.service_monitor'
             with open(file_error, 'w') as _file:
-                _file.write("We tried %d attempts to recover service %s\n" % (self.retry - self.counter, self.service_name))
+                _file.write("We tried %d attempts to recover service %s\n" % (self.retry - self.counter, self.name))
         else:
             self.counter = self.retry
 
-        if self.isThreadExist(self.service_name) and self.counter > 0:
-            self.destroyServiceThread(self.service_name)
-            self.func_call(self.fqdn, self.service_port, self.service_name)
-            self.createServiceThread()
-            self.thread.start()
+        if self.existsFunc(self.name) and self.counter > 0:
+            self.destroyFunc(self.name)
+            self.func(self.host, self.port, self.name)
+
+            self.thread_args['retry'] = self.counter
+            self.thread_args['connected'] = self.connected
+
+            thread = self.createFunc(**self.thread_args)
+
         elif self.counter <= 0:
-            self.logger.debug("[ServiceMonitoring] We reached the maximum number of attempts to recover service %s, we won't try again" % (self.service_name))
-            self.destroyServiceThread(self.service_name)
-            file_error = '/tmp/.' + self.service_name + '.service_monitor'
+            self.logger.debug("[ServiceMonitorThread] We reached the maximum number of attempts to recover service %s, we won't try again" % (self.name))
+            self.destroyFunc(self.name)
+
+            file_error = '/tmp/.' + self.name + '.service_monitor'
             with open(file_error, 'w') as _file:
-                _file.write("We reached the maximum number of %d attempts to recover service %s, we won't try again\n" % (self.retry, self.service_name))
+                _file.write("We reached the maximum number of %d attempts to recover service %s, we won't try again\n" % (self.retry, self.name))
+
+
+class ServiceMonitorService(Service):
+    """Main-Class for service monitoring."""
+
+    def __init__(self, *args):
+        super(ServiceMonitorService, self).__init__(*args)
+        #self.middleware.event_subscribe('core', self.start)
+        self.threads = {}
+
+    @private
+    def threadExists(self, name):
+        """Verify if a service monitoring is already running for a given service.
+
+        Args:
+                    name (str): Same name used to start/stop/restart method.
+
+        Returns:
+                    bool: True if it is already running or False otherwise.
+        """
+        thread = self.threads.get(name)
+        if thread:
+            return True
+        return False
+
+    @private
+    def createThread(self, **kwargs):
+        thread = ServiceMonitorThread(**kwargs)
+        thread.thread_args = kwargs
+        thread.start()
+
+        self.threads[thread.name] = thread
+        return thread
+
+    @private
+    def destroyThread(self, name):
+        thread = self.threads.get(name)
+        if thread:
+            thread.cancel()
+            del self.threads[thread.name]
 
     def start(self):
-        """Start a thread."""
-        self.thread.start()
+        services = self.middleware.call('datastore.query', 'services.servicemonitor')
+        for s in services:
+            thread_name = s['sm_name']
 
-    def cancel(self):
-        """Cancel a thread."""
-        self.thread.cancel()
+            if not s['sm_enable']:
+                self.logger.debug("[ServiceMonitorService] skipping %s", thread_name)
+                continue
+
+            self.logger.debug("[ServiceMonitorService] monitoring %s", thread_name)
+
+            if self.threadExists(thread_name):
+                self.destroyThread(thread_name)
+
+            self.createThread(id=s['id'], frequency=s['sm_frequency'],retry=s['sm_retry'],
+                host=s['sm_host'], port=s['sm_port'], name=thread_name, logger=self.logger,
+                middleware=self.middleware, createFunc=self.createThread,
+                destroyFunc=self.destroyThread, existsFunc=self.threadExists)
+
+    def stop(self):
+        for thread in self.threads.copy():
+            self.destroyThread(thread)
+        self.threads = {}
+
+
+    def restart(self):
+        self.stop()
+        self.start()
+
+
+def setup(middleware):
+    middleware.call('servicemonitor.start')

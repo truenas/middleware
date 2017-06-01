@@ -239,6 +239,15 @@ class UpdateService(Service):
 
     @accepts(Str('path'))
     def get_pending(self, path=None):
+        """
+        Gets a list of packages already downloaded and ready to be applied.
+        Each entry of the lists consists of type of operation and name of it, e.g.
+
+          {
+            "operation": "upgrade",
+            "name": "baseos-11.0 -> baseos-11.1"
+          }
+        """
         if path is None:
             path = self.middleware.call('notifier.get_update_location')
         data = []

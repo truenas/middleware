@@ -1,5 +1,6 @@
 from collections import defaultdict
 from datetime import datetime, timedelta
+import errno
 import os
 import re
 import subprocess
@@ -8,7 +9,7 @@ import sysctl
 
 from bsd import geom
 from middlewared.schema import accepts, Str
-from middlewared.service import filterable, private, CRUDService
+from middlewared.service import filterable, private, CallError, CRUDService
 from middlewared.utils import Popen, run
 
 # FIXME: temporary import of SmartAlert until alert is implemented
@@ -225,6 +226,7 @@ class DiskService(CRUDService):
         return ''
 
     @private
+    @accepts(Str('name'))
     def sync(self, name):
         """
         Syncs a disk `name` with the database cache.
@@ -385,8 +387,7 @@ class DiskService(CRUDService):
                 # FIXME: use a truenas middleware plugin
                 self.middleware.call('notifier.sync_disk_extra', disk['disk_identifier'], True)
 
-    @private
-    def multipath_create(self, name, consumers, mode=None):
+    def __multipath_create(self, name, consumers, mode=None):
         """
         Create an Active/Passive GEOM_MULTIPATH provider
         with name ``name`` using ``consumers`` as the consumers for it
@@ -407,7 +408,7 @@ class DiskService(CRUDService):
             return False
         return True
 
-    def multipath_next(self):
+    def __multipath_next(self):
         """
         Find out the next available name for a multipath named diskX
         where X is a crescenting value starting from 1
@@ -430,6 +431,7 @@ class DiskService(CRUDService):
         return f'disk{number}'
 
     @private
+    @accepts()
     def multipath_sync(self):
         """
         Synchronize multipath disks
@@ -461,7 +463,13 @@ class DiskService(CRUDService):
         reserved = list(self.middleware.call('boot.get_disks'))
         # disks already in use count as reserved as well
         for pool in self.middleware.call('pool.query'):
-            reserved += list(self.middleware.call('pool.get_disks', pool['id']))
+            try:
+                if pool['is_decrypted']:
+                    reserved += list(self.middleware.call('pool.get_disks', pool['id']))
+            except CallError as e:
+                # pool could not be available for some reason
+                if e.errno != errno.ENOENT:
+                    raise
 
         is_freenas = self.middleware.call('system.is_freenas')
 
@@ -499,8 +507,8 @@ class DiskService(CRUDService):
         for disks in disks_pairs:
             if not len(disks) > 1:
                 continue
-            name = self.multipath_next()
-            self.multipath_create(name, disks, 'A' if disks[0] in active_active else mode)
+            name = self.__multipath_next()
+            self.__multipath_create(name, disks, 'A' if disks[0] in active_active else mode)
 
         # Scan again to take new multipaths into account
         self.middleware.threaded(geom.scan)
