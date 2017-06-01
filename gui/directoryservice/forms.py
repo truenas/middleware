@@ -57,7 +57,7 @@ from freenasUI.middleware.client import client
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier
 from freenasUI.services.exceptions import ServiceFailed
-from freenasUI.services.models import CIFS
+from freenasUI.services.models import CIFS, ServiceMonitor
 
 log = logging.getLogger('directoryservice.form')
 
@@ -440,7 +440,7 @@ class ActiveDirectoryForm(ModelForm):
         else:
                 del self.fields['ad_netbiosname_b']
 
-    def clean_ad_dcname(self):
+    def get_dcport(self):
         ad_dcname = self.cleaned_data.get('ad_dcname')
         ad_dcport = 389
 
@@ -449,12 +449,23 @@ class ActiveDirectoryForm(ModelForm):
             ad_dcport = 636
 
         if not ad_dcname:
+            return ad_dcport
+
+        parts = ad_dcname.split(':')
+        if len(parts) > 1 and parts[1].isdigit():
+            ad_dcport = int(parts[1])
+
+        return ad_dcport
+
+    def clean_ad_dcname(self):
+        ad_dcname = self.cleaned_data.get('ad_dcname')
+        ad_dcport = self.get_dcport()
+
+        if not ad_dcname:
             return None
 
         parts = ad_dcname.split(':')
         ad_dcname = parts[0]
-        if len(parts) > 1 and parts[1].isdigit():
-            ad_dcport = int(parts[1])
 
         errors = []
         try:
@@ -472,7 +483,7 @@ class ActiveDirectoryForm(ModelForm):
 
         return self.cleaned_data.get('ad_dcname')
 
-    def clean_ad_gcname(self):
+    def get_gcport(self):
         ad_gcname = self.cleaned_data.get('ad_gcname')
         ad_gcport = 3268
 
@@ -481,12 +492,23 @@ class ActiveDirectoryForm(ModelForm):
             ad_gcport = 3269
 
         if not ad_gcname:
+            return ad_gcport
+
+        parts = ad_gcname.split(':')
+        if len(parts) > 1 and parts[1].isdigit():
+            ad_gcport = int(parts[1])
+
+        return ad_gcport
+
+    def clean_ad_gcname(self):
+        ad_gcname = self.cleaned_data.get('ad_gcname')
+        ad_gcport = self.get_gcport()
+
+        if not ad_gcname:
             return None
 
         parts = ad_gcname.split(':')
         ad_gcname = parts[0]
-        if len(parts) > 1 and parts[1].isdigit():
-            ad_gcport = int(parts[1])
 
         errors = []
         try:
@@ -643,6 +665,8 @@ class ActiveDirectoryForm(ModelForm):
         monit_frequency = self.cleaned_data.get("ad_monitor_frequency")
         monit_retry = self.cleaned_data.get("ad_recover_retry")
         fqdn = self.cleaned_data.get("ad_domainname")
+        sm = None
+
         if self.__original_changed():
             notifier().clear_activedirectory_config()
 
@@ -694,13 +718,67 @@ class ActiveDirectoryForm(ModelForm):
                         _("Active Directory stop timed out after %d seconds." % timeout),
                     )
 
+        sm_name = 'activedirectory'
+        try:
+            sm = ServiceMonitor.objects.get(sm_name=sm_name)
+        except Exception as e:
+            log.debug("XXX: Unable to find ServiceMonitor: %s", e)
+            pass
+
+        #
+        # Ports can be specified in the UI but there doesn't appear to be a way to
+        # override them via SRV records. This should be fixed.
+        #
+        dcport = self.get_dcport()
+        gcport = self.get_gcport()
+
+        if not sm:
+            try:
+                log.debug("XXX: fqdn=%s dcport=%s frequency=%s retry=%s enable=%s",
+                    fqdn, dcport, monit_frequency, monit_retry, enable_monitoring)
+
+                sm = ServiceMonitor.objects.create(
+                    sm_name=sm_name,
+                    sm_host=fqdn,
+                    sm_port=dcport,
+                    sm_frequency=monit_frequency,
+                    sm_retry=monit_retry,
+                    sm_enable=enable_monitoring
+                )
+            except Exception as e:
+                log.debug("XXX: Unable to create ServiceMonitor: %s", e)
+                raise MiddlewareError(
+                    _("Unable to create ServiceMonitor: %s" % e),
+                )
+
+        else:
+            sm.sm_name = sm_name
+            if fqdn != sm.sm_host:
+                sm.sm_host = fqdn
+            if dcport != sm.sm_port:
+                sm.sm_port = dcport
+            if monit_frequency != sm.sm_frequency:
+                sm.sm_frequency = monit_frequency
+            if monit_retry != sm.sm_retry:
+                sm.sm_retry = monit_retry
+            if enable_monitoring != sm.sm_enable:
+                sm.sm_enable = enable_monitoring
+
+            try:
+                sm.save(force_update=True)
+            except Exception as e:
+                log.debug("XXX: Unable to create ServiceMonitor: %s", e)
+                raise MiddlewareError(
+                    _("Unable to save ServiceMonitor: %s" % e),
+                )
+
         with client as c:
             if enable_monitoring and enable:
                 log.debug("[ServiceMonitoring] Add %s service, frequency: %d, retry: %d" % ('activedirectory', monit_frequency, monit_retry))
-                c.call('service.enable_test_service_connection', monit_frequency, monit_retry, fqdn, 3268, 'activedirectory')
+                c.call('servicemonitor.restart')
             else:
                 log.debug("[ServiceMonitoring] Remove %s service, frequency: %d, retry: %d" % ('activedirectory', monit_frequency, monit_retry))
-                c.call('service.disable_test_service_connection', monit_frequency, monit_retry, fqdn, 3268, 'activedirectory')
+                c.call('servicemonitor.restart')
 
         return obj
 
