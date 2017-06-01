@@ -674,6 +674,12 @@ class Disk(Model):
         null=True,
         editable=False,
     )
+    disk_enclosure_slot = models.IntegerField(
+        verbose_name=_("Enclosure Slot"),
+        blank=True,
+        null=True,
+        editable=False,
+    )
 
     def __init__(self, *args, **kwargs):
         super(Disk, self).__init__(*args, **kwargs)
