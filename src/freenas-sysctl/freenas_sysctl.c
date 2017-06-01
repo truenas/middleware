@@ -100,6 +100,10 @@ static struct {
 	struct {
 		struct service_timeout ds_st;
 		struct service_error ds_se;
+		struct {
+			unsigned long lifetime;
+			unsigned long timeout;
+		} dns;
 	} activedirectory;
 
 	struct {
@@ -310,7 +314,7 @@ freenas_sysctl_debug_fini(void)
 static int
 freenas_sysctl_directoryservice_init(void)
 {
-	struct sysctl_oid *dstree, *tmptree;
+	struct sysctl_oid *dstree, *tmptree, *tmptree2;
 
 	/* TODO: break into functions for each tree */
 
@@ -371,6 +375,20 @@ freenas_sysctl_directoryservice_init(void)
 	g_directoryservice->activedirectory.ds_st.stop = 90;
 	g_directoryservice->activedirectory.ds_st.restart = 180;
 	g_directoryservice->activedirectory.ds_st.reload = 180;
+
+	if ((tmptree2 = SYSCTL_ADD_NODE(&g_freenas_sysctl_ctx,
+		SYSCTL_CHILDREN(tmptree), OID_AUTO,
+		"dns", CTLFLAG_RD, NULL, NULL)) == NULL) {
+		FAILRET("Failed to add directoryservice DNS node.\n", -1);
+	}
+	SYSCTL_ADD_LONG(&g_freenas_sysctl_ctx, SYSCTL_CHILDREN(tmptree2), OID_AUTO,
+		"lifetime", CTLFLAG_RW,&g_directoryservice->activedirectory.dns.lifetime, "DNS lifetime");
+	SYSCTL_ADD_LONG(&g_freenas_sysctl_ctx, SYSCTL_CHILDREN(tmptree2), OID_AUTO,
+		"timeout", CTLFLAG_RW, &g_directoryservice->activedirectory.dns.timeout, "DNS timeout");
+
+	g_directoryservice->activedirectory.dns.timeout = 5;
+	g_directoryservice->activedirectory.dns.lifetime = 5;
+
 
 	/* LDAP node */
 	if ((tmptree = SYSCTL_ADD_NODE(&g_freenas_sysctl_ctx,
