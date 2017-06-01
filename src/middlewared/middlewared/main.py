@@ -432,6 +432,7 @@ class Middleware(object):
         if not os.path.exists(plugins_dir):
             raise ValueError('plugins dir not found')
 
+        setup_funcs = []
         for f in os.listdir(plugins_dir):
             if not f.endswith('.py'):
                 continue
@@ -453,7 +454,10 @@ class Middleware(object):
                     self.add_service(attr(self))
 
             if hasattr(mod, 'setup'):
-                mod.setup(self)
+                setup_funcs.append(mod.setup)
+
+        for f in setup_funcs:
+            f(self)
 
         # Now that all plugins have been loaded we can resolve all method params
         # to make sure every schema is patched and references match
@@ -683,6 +687,7 @@ class Middleware(object):
             gevent.spawn(self.__jobs.run),
         ]
         self.logger.debug('Accepting connections')
+
         gevent.joinall(self.__server_threads)
 
     def kill(self):
