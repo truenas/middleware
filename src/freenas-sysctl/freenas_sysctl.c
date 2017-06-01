@@ -130,6 +130,35 @@ static struct {
 } *g_directoryservice;
 
 static struct {
+	struct service_timeout m_st;
+
+} *g_middleware;
+
+static struct {
+	struct service_timeout m_st;
+
+	struct {
+		struct {
+			unsigned long socket_timeout;
+		} service_monitor;
+
+	} plugins;
+
+} *g_middlewared;
+
+static struct {
+	struct service_timeout n_st;
+
+	struct {
+		struct service_timeout n_st;
+		struct {
+			struct service_timeout n_st;
+		} sync;
+	} interface;
+
+} *g_network;
+
+static struct {
 	struct service_timeout s_st;
 
 	struct {
@@ -194,17 +223,6 @@ static struct {
 
 } *g_services;
 
-static struct {
-	struct service_timeout n_st;
-
-	struct {
-		struct service_timeout n_st;
-		struct {
-			struct service_timeout n_st;
-		} sync;
-	} interface;
-
-} *g_network;
 
 /*
  *	Top level nodes:
@@ -212,8 +230,9 @@ static struct {
  *	freenas.account
  *	freenas.debug
  *	freenas.directoryservice
- *	freenas.network
  *	freenas.jails
+ *	freenas.midddleware
+ *	freenas.network
  *	freenas.plugins
  *	freenas.reporting
  *	freenas.services
@@ -394,9 +413,9 @@ freenas_sysctl_directoryservice_init(void)
 		FAILRET("Failed to add directoryservice DNS node.\n", -1);
 	}
 	SYSCTL_ADD_LONG(&g_freenas_sysctl_ctx, SYSCTL_CHILDREN(tmptree2), OID_AUTO,
-		"lifetime", CTLFLAG_RW,&g_directoryservice->activedirectory.dns.lifetime, "DNS lifetime");
+		"lifetime", CTLFLAG_RW, &g_directoryservice->activedirectory.dns.lifetime, "DNS lifetime");
 	SYSCTL_ADD_LONG(&g_freenas_sysctl_ctx, SYSCTL_CHILDREN(tmptree2), OID_AUTO,
-		"timeout", CTLFLAG_RW, &g_directoryservice->activedirectory.dns.timeout, "DNS timeout");
+		"timeout", CTLFLAG_RW,  &g_directoryservice->activedirectory.dns.timeout, "DNS timeout");
 
 	g_directoryservice->activedirectory.dns.timeout = 5;
 	g_directoryservice->activedirectory.dns.lifetime = 5;
@@ -479,6 +498,75 @@ freenas_sysctl_directoryservice_fini(void)
 }
 
 static int
+freenas_sysctl_jails_init(void)
+{
+	return (0);
+}
+
+static int
+freenas_sysctl_jails_fini(void)
+{
+	return (0);
+}
+
+static int
+freenas_sysctl_middleware_init(void)
+{
+	g_middleware = NULL;
+	return (0);
+}
+
+static int
+freenas_sysctl_middleware_fini(void)
+{
+	return (0);
+}
+
+static int
+freenas_sysctl_middlewared_init(void)
+{
+	struct sysctl_oid *mtree, *tmptree;
+
+	/* Middlwared memory allocations */
+	g_middlewared = malloc(sizeof(*g_middlewared),
+		M_FREENAS_SYSCTL, M_ZERO | M_WAITOK);
+
+	/* Middlwared node */
+	if ((mtree = SYSCTL_ADD_NODE(&g_freenas_sysctl_ctx,
+		SYSCTL_CHILDREN(g_freenas_sysctl_tree), OID_AUTO,
+		"middlewared", CTLFLAG_RW, NULL, NULL)) == NULL) {
+		FAILRET("Failed to add network node.\n", -1);
+	}
+	if ((freenas_sysctl_add_timeout_tree(&g_freenas_sysctl_ctx,
+		mtree, &g_middlewared->m_st)) != 0) {
+		FAILRET("Failed to add network timeout node.\n", -1);
+	}
+
+
+	/* Middlewared plugins node */
+	if ((tmptree = SYSCTL_ADD_NODE(&g_freenas_sysctl_ctx,
+		SYSCTL_CHILDREN(mtree), OID_AUTO,
+		"plugins", CTLFLAG_RD, NULL, NULL)) == NULL) {
+		FAILRET("Failed to add network interface node.\n", -1);
+	}
+	SYSCTL_ADD_LONG(&g_freenas_sysctl_ctx, SYSCTL_CHILDREN(tmptree), OID_AUTO,
+		"socket_timeout", CTLFLAG_RW,&g_middlewared->plugins.service_monitor.socket_timeout,
+		"Socket timeout");
+
+	g_middlwared->plugins.service_monitor.socket_timeout = 10;
+
+	return (0);
+}
+
+static int
+freenas_sysctl_middlewared_fini(void)
+{
+	free(g_middlewared, M_FREENAS_SYSCTL);
+
+	return (0);
+}
+
+static int
 freenas_sysctl_network_init(void)
 {
 	struct sysctl_oid *ntree, *ifacetree, *tmptree;
@@ -527,18 +615,6 @@ static int
 freenas_sysctl_network_fini(void)
 {
 	free(g_network, M_FREENAS_SYSCTL);
-	return (0);
-}
-
-static int
-freenas_sysctl_jails_init(void)
-{
-	return (0);
-}
-
-static int
-freenas_sysctl_jails_fini(void)
-{
 	return (0);
 }
 
@@ -832,10 +908,14 @@ static struct {
 		freenas_sysctl_debug_fini },
 	{ freenas_sysctl_directoryservice_init,
 		freenas_sysctl_directoryservice_fini },
-	{ freenas_sysctl_network_init,
-		freenas_sysctl_network_fini },
 	{ freenas_sysctl_jails_init,
 		freenas_sysctl_jails_fini },
+	{ freenas_sysctl_middleware_init,
+		freenas_sysctl_middleware_fini },
+	{ freenas_sysctl_middlewared_init,
+		freenas_sysctl_middlewared_fini },
+	{ freenas_sysctl_network_init,
+		freenas_sysctl_network_fini },
 	{ freenas_sysctl_plugins_init,
 		freenas_sysctl_plugins_fini },
 	{ freenas_sysctl_reporting_init,
