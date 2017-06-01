@@ -45,6 +45,7 @@ from freenasUI.common.pipesubr import (
     run
 )
 
+from freenasUI.common.freenassysctl import freenas_sysctl as _fs
 from freenasUI.common.ssl import get_certificateauthority_path
 from freenasUI.common.system import (
     get_freenas_var,
@@ -1144,23 +1145,29 @@ class FreeNAS_ActiveDirectory_Base(object):
         if not host:
             return srv_records
 
+        log.debug(
+            "FreeNAS_ActiveDirectory_Base.get_SRV_records: "
+            "looking up SRV records for %s",
+            host
+        )
+
+        r = resolver.Resolver()
+        r.timeout = _fs().directoryservice.activedirectory.dns.timeout
+        r.lifetime = _fs().directoryservice.activedirectory.dns.lifetime
+
         try:
-            log.debug(
-                "FreeNAS_ActiveDirectory_Base.get_SRV_records: "
-                "looking up SRV records for %s",
-                host
-            )
-            answers = resolver.query(host, 'SRV')
+
+            answers = r.query(host, 'SRV')
             srv_records = sorted(
                 answers,
                 key=lambda a: (int(a.priority), int(a.weight))
             )
 
-        except:
+        except Exception as e:
             log.debug(
                 "FreeNAS_ActiveDirectory_Base.get_SRV_records: "
-                "no SRV records for %s found, fail!",
-                host
+                "no SRV records for %s found: %s",
+                host, e
             )
             log_traceback(log=log)
             srv_records = []
