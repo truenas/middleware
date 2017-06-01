@@ -36,6 +36,7 @@ class Migration(migrations.Migration):
                 ('disk_togglesmart', models.BooleanField(default=True, verbose_name='Enable S.M.A.R.T.')),
                 ('disk_smartoptions', models.CharField(blank=True, max_length=120, verbose_name='S.M.A.R.T. extra options')),
                 ('disk_enabled', models.BooleanField(default=True, editable=False)),
+                ('disk_enclosure_slot', models.IntegerField(blank=True, editable=False, null=True, verbose_name='Enclosure Slot')),
             ],
             options={
                 'ordering': ['disk_subsystem', 'disk_number'],
