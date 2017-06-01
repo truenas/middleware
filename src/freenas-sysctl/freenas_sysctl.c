@@ -523,7 +523,7 @@ freenas_sysctl_middleware_fini(void)
 static int
 freenas_sysctl_middlewared_init(void)
 {
-	struct sysctl_oid *mtree, *tmptree;
+	struct sysctl_oid *mtree, *tmptree, *tmptree2;
 
 	/* Middlwared memory allocations */
 	g_middlewared = malloc(sizeof(*g_middlewared),
@@ -545,9 +545,16 @@ freenas_sysctl_middlewared_init(void)
 	if ((tmptree = SYSCTL_ADD_NODE(&g_freenas_sysctl_ctx,
 		SYSCTL_CHILDREN(mtree), OID_AUTO,
 		"plugins", CTLFLAG_RD, NULL, NULL)) == NULL) {
-		FAILRET("Failed to add network interface node.\n", -1);
+		FAILRET("Failed to add middlewared node.\n", -1);
 	}
-	SYSCTL_ADD_LONG(&g_freenas_sysctl_ctx, SYSCTL_CHILDREN(tmptree), OID_AUTO,
+
+	/* Middlewared plugins/service_monitor node */
+	if ((tmptree2 = SYSCTL_ADD_NODE(&g_freenas_sysctl_ctx,
+		SYSCTL_CHILDREN(tmptree), OID_AUTO,
+		"service_monitor", CTLFLAG_RD, NULL, NULL)) == NULL) {
+		FAILRET("Failed to add middlewared service_monitor node.\n", -1);
+	}
+	SYSCTL_ADD_LONG(&g_freenas_sysctl_ctx, SYSCTL_CHILDREN(tmptree2), OID_AUTO,
 		"socket_timeout", CTLFLAG_RW,&g_middlewared->plugins.service_monitor.socket_timeout,
 		"Socket timeout");
 
