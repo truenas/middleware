@@ -25,7 +25,7 @@ middlewared_start() {
 	else
 		env PATH=$PATH:/usr/local/sbin:/usr/local/bin LC_ALL=en_US.UTF-8 ${command} -f -P ${pidfile} -r /usr/local/bin/middlewared -f --log-handler=file
 	fi
-	LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/midclt -t 30 waitready
+	LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/midclt -t 60 waitready
 }
 
 name="middlewared"
