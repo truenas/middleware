@@ -47,14 +47,10 @@ def main():
         'timeout': fobj.timeout,
         'groups': defaultdict(list),
         'volumes': [
-            vol.vol_name for vol in Volume.objects.filter(
-                vol_fstype='ZFS', vol_encrypt__lt=2
-            )
+            vol.vol_name for vol in Volume.objects.filter(vol_encrypt__lt=2)
         ],
         'phrasedvolumes': [
-            vol.vol_name for vol in Volume.objects.filter(
-                vol_fstype='ZFS', vol_encrypt__exact=2
-            )
+            vol.vol_name for vol in Volume.objects.filter(vol_encrypt__exact=2)
         ],
         'non_crit_interfaces': [
             (i.int_interface) for i in Interfaces.objects.exclude(int_vip=None).exclude(int_vip='').exclude(int_critical=True)
