@@ -95,7 +95,7 @@ class ServiceMonitorThread(threading.Timer):
 
         # XXX What about UDP?
         bind = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        bind.settimeout(10)
+        bind.settimeout(_fs().middlewared.plugins.service_monitor.socket_timeout)
  
         #
         # We should probably have a threshold rather than failing on first time we can't
@@ -134,6 +134,9 @@ class ServiceMonitorThread(threading.Timer):
 
         self.logger.debug("[ServiceMonitorThread] started=%s enabled=%s connected=%s", started, enabled, self.connected)
 
+        #
+        # XXX black magic, needs better architecture
+        #
         if (self.connected == False) and (started == False):
             self.logger.debug("[ServiceMonitorThread] doing nothing for service %s", name)
 
