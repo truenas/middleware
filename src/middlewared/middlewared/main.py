@@ -403,7 +403,7 @@ class FileApplication(object):
 
 class Middleware(object):
 
-    def __init__(self):
+    def __init__(self, plugins_dirs=None):
         self.logger_name = logger.Logger('middlewared')
         self.logger = self.logger_name.getLogger()
         self.crash_reporting = logger.CrashReporting()
@@ -416,45 +416,51 @@ class Middleware(object):
         self.__hooks = defaultdict(list)
         self.__server_threads = []
         self.__init_services()
-        self.__plugins_load()
+        self.__plugins_load(plugins_dirs or [])
 
     def __init_services(self):
         from middlewared.service import CoreService
         self.add_service(CoreService(self))
 
-    def __plugins_load(self):
+    def __plugins_load(self, plugins_dirs):
         from middlewared.service import Service, CRUDService, ConfigService
-        plugins_dir = os.path.join(
+
+        main_plugins_dir = os.path.join(
             os.path.dirname(os.path.realpath(__file__)),
             'plugins',
         )
-        self.logger.debug('Loading plugins from {0}'.format(plugins_dir))
-        if not os.path.exists(plugins_dir):
-            raise ValueError('plugins dir not found')
+        plugins_dirs.insert(0, main_plugins_dir)
+
+        self.logger.debug('Loading plugins from {0}'.format(','.join(plugins_dirs)))
 
         setup_funcs = []
-        for f in os.listdir(plugins_dir):
-            if not f.endswith('.py'):
-                continue
-            f = f[:-3]
-            fp, pathname, description = imp.find_module(f, [plugins_dir])
-            try:
-                mod = imp.load_module(f, fp, pathname, description)
-            finally:
-                if fp:
-                    fp.close()
+        for plugins_dir in plugins_dirs:
 
-            for attr in dir(mod):
-                attr = getattr(mod, attr)
-                if not inspect.isclass(attr):
-                    continue
-                if attr in (Service, CRUDService, ConfigService):
-                    continue
-                if issubclass(attr, Service):
-                    self.add_service(attr(self))
+            if not os.path.exists(plugins_dir):
+                raise ValueError(f'plugins dir not found: {plugins_dir}')
 
-            if hasattr(mod, 'setup'):
-                setup_funcs.append(mod.setup)
+            for f in os.listdir(plugins_dir):
+                if not f.endswith('.py'):
+                    continue
+                f = f[:-3]
+                fp, pathname, description = imp.find_module(f, [plugins_dir])
+                try:
+                    mod = imp.load_module(f, fp, pathname, description)
+                finally:
+                    if fp:
+                        fp.close()
+
+                for attr in dir(mod):
+                    attr = getattr(mod, attr)
+                    if not inspect.isclass(attr):
+                        continue
+                    if attr in (Service, CRUDService, ConfigService):
+                        continue
+                    if issubclass(attr, Service):
+                        self.add_service(attr(self))
+
+                if hasattr(mod, 'setup'):
+                    setup_funcs.append(mod.setup)
 
         for f in setup_funcs:
             f(self)
@@ -712,6 +718,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('restart', nargs='?')
     parser.add_argument('--foreground', '-f', action='store_true')
+    parser.add_argument('--plugins-dirs', '-p', action='append')
     parser.add_argument('--debug-level', default='DEBUG', choices=[
         'DEBUG',
         'INFO',
@@ -759,7 +766,7 @@ def main():
     # Workaround to tell django to not set up logging on its own
     os.environ['MIDDLEWARED'] = str(os.getpid())
 
-    Middleware().run()
+    Middleware(plugins_dirs=args.plugins_dirs).run()
     if not args.foreground:
         daemonc.close()
 
