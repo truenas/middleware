@@ -1197,8 +1197,8 @@ def show_ip():
             print(url)
     else:
         print()
-        print(_("No configured network interfaces found."))
-        print(_("Please configure network interfaces manually."))
+        print(_("The web interface could not be accessed."))
+        print(_("Please check network configuration."))
     print()
 
 def system_update():
