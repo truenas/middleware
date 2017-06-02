@@ -145,6 +145,7 @@ static struct {
 
 } *g_middlewared;
 
+/*
 static struct {
 	struct service_timeout n_st;
 
@@ -156,6 +157,7 @@ static struct {
 	} interface;
 
 } *g_network;
+*/
 
 static struct {
 	struct service_timeout s_st;
