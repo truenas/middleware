@@ -104,15 +104,17 @@ class ServiceMonitorThread(threading.Thread):
 
     @private
     def getStarted(self, service):
+        max_tries = 3
+
         started = self.middleware.call('service.started', self.name)
         if started == True:
             return started
 
         i = 0
-        max_tries = 3
         while i < max_tries:
             time.sleep(1)
             started = self.middleware.call('service.started', self.name)
+            i += 1
 
         return started
 
@@ -122,6 +124,10 @@ class ServiceMonitorThread(threading.Thread):
         while True:
             time.sleep(self.frequency)
 
+            #
+            # We should probably have a configurable threshold for number of
+            # failures before starting or stopping the service
+            #
             connected = self.tryConnect(self.host, self.port)
             started = self.getStarted(self.name)
             enabled = self.isEnabled(self.name)
