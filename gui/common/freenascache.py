@@ -27,7 +27,6 @@
 import os
 import pickle as pickle
 import logging
-import asyncio
 
 from bsddb3 import db
 from freenasUI.common.system import (
@@ -99,12 +98,10 @@ class FreeNAS_BaseCache(object):
 
         self.cachedir = cachedir
         self.__cachefile = os.path.join(self.cachedir, ".cache.db")
-        self.lock = asyncio.Lock()
 
         if not self.__dir_exists(self.cachedir):
             os.makedirs(self.cachedir)
- 
-        self.lock.acquire()
+
         self.__dbenv = db.DBEnv()
         self.__dbenv.open(
             self.cachedir,
@@ -114,7 +111,6 @@ class FreeNAS_BaseCache(object):
 
         self.__cache = db.DB(self.__dbenv)
         self.__cache.open(self.__cachefile, None, db.DB_HASH, db.DB_CREATE)
-        self.lock.release()
 
         log.debug("FreeNAS_BaseCache._init__: cachedir = %s", self.cachedir)
         log.debug(
