@@ -36,7 +36,7 @@ import re
 import stat
 import subprocess
 
-from OpenSSL import crypto
+from OpenSSL import crypto, SSL
 
 from ldap import LDAPError
 
@@ -2616,6 +2616,16 @@ class CertificateAuthorityImportForm(ModelForm):
             ))
         return passphrase
 
+    def clean_cert_privatekey(self):
+        cdata = self.cleaned_data
+        certificate = cdata.get('cert_certificate')
+        privatekey = cdata.get('cert_privatekey')
+        if is_valid_privatekey(certificate, privatekey) is False:
+            raise forms.ValidationError(_(
+                "The private key does not match with the certificate."
+            ))
+        return privatekey
+
     def save(self):
         self.instance.cert_type = models.CA_TYPE_EXISTING
 
@@ -3096,6 +3106,16 @@ class CertificateImportForm(ModelForm):
             raise forms.ValidationError(_('Use alphanumeric characters, "_" and "-".'))
         return name
 
+    def clean_cert_privatekey(self):
+        cdata = self.cleaned_data
+        certificate = cdata.get('cert_certificate')
+        privatekey = cdata.get('cert_privatekey')
+        if is_valid_privatekey(certificate, privatekey) is False:
+            raise forms.ValidationError(_(
+                "The private key does not match with the certificate."
+            ))
+        return privatekey
+
     def save(self):
         self.instance.cert_type = models.CERT_TYPE_EXISTING
 
@@ -3130,6 +3150,19 @@ class CertificateImportForm(ModelForm):
             'cert_passphrase'
         ]
         model = models.Certificate
+
+
+def is_valid_privatekey(certificate, privatekey):
+    pkey_obj = crypto.load_privatekey(crypto.FILETYPE_PEM, privatekey)
+    cert_obj = crypto.load_certificate(crypto.FILETYPE_PEM, certificate)
+    ctx = SSL.Context(SSL.TLSv1_METHOD)
+    ctx.use_privatekey(pkey_obj)
+    ctx.use_certificate(cert_obj)
+    try:
+        ctx.check_privatekey()
+        return True
+    except SSL.Error:
+        return False
 
 
 class CertificateCreateInternalForm(ModelForm):
