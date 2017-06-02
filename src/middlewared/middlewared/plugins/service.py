@@ -609,7 +609,11 @@ class ServiceService(Service):
         for srv in ('kinit', 'activedirectory', ):
             if self._system('/usr/sbin/service ix-%s status' % (srv, )) != 0:
                 return False, []
-        return self.middleware.call('notifier.ad_status'), []
+        if self._system('/usr/local/bin/wbinfo -p') != 0:
+                return False, []
+        if self._system('/usr/local/bin/wbinfo -t') != 0:
+                return False, []
+        return True, []
 
     def _start_activedirectory(self, **kwargs):
         res = False
