@@ -302,7 +302,8 @@ class InterfacesService(Service):
                     advskew = 20
                 else:
                     advskew = 80
-            iface.carp_config = [netif.CarpConfig(carp_vhid, advskew=advskew, key=carp_pass)]
+            # FIXME: change py-netif to accept str() key
+            iface.carp_config = [netif.CarpConfig(carp_vhid, advskew=advskew, key=carp_pass.encode())]
 
         # Add addresses in database and not configured
         for addr in (addrs_database - addrs_configured):
