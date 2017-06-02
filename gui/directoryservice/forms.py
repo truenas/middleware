@@ -316,6 +316,10 @@ class NT4Form(ModelForm):
 
 class ActiveDirectoryForm(ModelForm):
 
+    ad_dc_backup = forms.BooleanField(
+        label=models.ActiveDirectory._meta.get_field('ad_dc_backup').verbose_name,
+        initial=True,
+    )
     ad_netbiosname_a = forms.CharField(
         max_length=120,
         label=_("NetBIOS name"),
@@ -354,7 +358,9 @@ class ActiveDirectoryForm(ModelForm):
         'ad_timeout',
         'ad_dns_timeout',
         'ad_idmap_backend',
-        'ad_ldap_sasl_wrapping'
+        'ad_ldap_sasl_wrapping',
+        'ad_dc_backup',
+        'ad_dc_backup_path'
     ]
 
     class Meta:
@@ -439,6 +445,9 @@ class ActiveDirectoryForm(ModelForm):
                 del self.fields['ad_netbiosname_b']
         else:
                 del self.fields['ad_netbiosname_b']
+        self.fields['ad_dc_backup'].widget.attrs['onChange'] = (
+            'activeDirectoryBackupToggle("id_ad_dc_backup");'
+        )
 
     def get_dcport(self):
         ad_dcname = self.cleaned_data.get('ad_dcname')
@@ -660,6 +669,11 @@ class ActiveDirectoryForm(ModelForm):
         return cdata
 
     def save(self):
+        if self.instance.ad_dc_backup:
+            if self.instance.ad_dc_backup_path:
+                notifier().dc_backup(self.instance.ad_dc_backup_path)
+            else:
+                notifier().dc_backup()
         enable = self.cleaned_data.get("ad_enable")
         enable_monitoring = self.cleaned_data.get("ad_enable_monitor")
         monit_frequency = self.cleaned_data.get("ad_monitor_frequency")

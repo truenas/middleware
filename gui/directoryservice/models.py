@@ -1057,6 +1057,18 @@ class ActiveDirectory(DirectoryServiceBase):
         verbose_name=_("Enable"),
         default=False
     )
+    ad_dc_backup = models.BooleanField(
+        verbose_name=_("Backup Domain Controller"),
+        default=True,
+    )
+    ad_dc_backup_path = PathField(
+        verbose_name=_("Backup Domain Controller Path"),
+        help_text=_("Select path where Domain Controller backup should be"
+                    " created, by default backup will be created at"
+                    " /var/db/system "
+                    ),
+        blank=True,
+    )
 
     def __init__(self, *args, **kwargs):
         super(ActiveDirectory, self).__init__(*args, **kwargs)

@@ -4852,6 +4852,12 @@ class notifier(metaclass=HookMetaclass):
             return qs[0].iscsi_alua
         return False
 
+    def dc_backup(self, *args):
+        if args:
+            self._system("samba_backup /var/db/samba4 %s " % args)
+        else:
+            self._system("samba_backup start")
+
 
 def crypt_makeSalt():
     return '$6$' + ''.join(random.choice(string.ascii_uppercase + string.ascii_lowercase + string.digits + '.' + '/') for _ in range(16))
