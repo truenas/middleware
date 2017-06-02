@@ -241,3 +241,7 @@ class NotifierService(Service):
     def gui_languages(self):
         """Temporary wrapper to return available languages in django"""
         return settings.LANGUAGES
+
+    def failover_rpc_run_sql(self, sql, params):
+        s = self.failover_rpc()
+        s.run_sql(sql, params)
