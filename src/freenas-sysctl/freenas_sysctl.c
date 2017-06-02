@@ -146,18 +146,6 @@ static struct {
 } *g_middlewared;
 
 static struct {
-	struct service_timeout n_st;
-
-	struct {
-		struct service_timeout n_st;
-		struct {
-			struct service_timeout n_st;
-		} sync;
-	} interface;
-
-} *g_network;
-
-static struct {
 	struct service_timeout s_st;
 
 	struct {
