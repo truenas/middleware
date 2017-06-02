@@ -2034,6 +2034,12 @@ class WebDAVForm(ModelForm):
         widget=forms.widgets.PasswordInput(),
         required=False,
     )
+    webdav_bindip = forms.MultipleChoiceField(
+        label=models.WebDAV._meta.get_field('webdav_bindip').verbose_name,
+        help_text=models.WebDAV._meta.get_field('webdav_bindip').help_text,
+        required=False,
+        widget=forms.widgets.CheckedMultiSelect(),
+    )
 
     class Meta:
         fields = (
@@ -2054,7 +2060,8 @@ class WebDAVForm(ModelForm):
             'webdav_tcpportssl',
             'webdav_protocol',
             'webdav_htauth',
-            'webdav_certssl'
+            'webdav_certssl',
+            'webdav_bindip'
         ):
             setattr(self.instance, "_original_%s" % name, getattr(self.instance, name))
 
@@ -2070,7 +2077,8 @@ class WebDAVForm(ModelForm):
             'webdav_protocol',
             'webdav_tcpportssl',
             'webdav_htauth',
-            'webdav_certssl'
+            'webdav_certssl',
+            'webdav_bindip'
         ):
             original_value = getattr(self.instance, "_original_%s" % name)
             instance_value = getattr(self.instance, name)
@@ -2080,6 +2088,23 @@ class WebDAVForm(ModelForm):
 
     def __init__(self, *args, **kwargs):
         super(WebDAVForm, self).__init__(*args, **kwargs)
+        if self.data and self.data.get('webdav_bindip'):
+            if ',' in self.data['webdav_bindip']:
+                self.data = self.data.copy()
+                self.data.setlist(
+                    'webdav_bindip',
+                    self.data['webdav_bindip'].split(',')
+                )
+        self.fields['webdav_bindip'].choices = list(choices.IPChoices())
+        if self.instance.id and self.instance.webdav_bindip:
+            bindips = []
+            for ip in self.instance.webdav_bindip:
+                bindips.append(ip.encode('utf-8'))
+
+            self.fields['webdav_bindip'].initial = (bindips)
+        else:
+            self.fields['webdav_bindip'].initial = ('')
+
         if self.instance.webdav_password:
             self.fields['webdav_password'].required = False
             self.fields['webdav_password2'].required = False
@@ -2089,6 +2114,21 @@ class WebDAVForm(ModelForm):
             "webdavprotocolToggle();"
         )
         self.__original_save()
+
+    def clean_webdav_bindip(self):
+        ips = self.cleaned_data.get("webdav_bindip")
+        if not ips:
+            return ''
+        bind = []
+        for ip in ips:
+            try:
+                IPAddress(ip.encode('utf-8'))
+            except:
+                raise forms.ValidationError(
+                    "This is not a valid IP: %s" % (ip, )
+                )
+            bind.append(ip)
+        return ','.join(bind)
 
     def clean(self):
         cdata = self.cleaned_data
@@ -2114,6 +2154,8 @@ class WebDAVForm(ModelForm):
 
     def save(self):
         obj = super(WebDAVForm, self).save()
+        obj.webdav_bindip = self.cleaned_data.get('webdav_bindip')
+        obj.save()
         if self.__original_changed():
             started = notifier().reload("webdav")
             if (

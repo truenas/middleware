@@ -2252,6 +2252,15 @@ class WebDAV(Model):
         null=True,
     )
 
+    webdav_bindip = MultiSelectField(
+        verbose_name=_("Bind IP Addresses"),
+        help_text=_("IP address(es) to bind to. If none specified, all "
+                    "available interfaces that are up will be listened on."),
+        max_length=250,
+        blank=True,
+        null=True,
+    )
+
     def __init__(self, *args, **kwargs):
         super(WebDAV, self).__init__(*args, **kwargs)
         if self.webdav_password:
