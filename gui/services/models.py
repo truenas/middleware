@@ -2343,3 +2343,29 @@ class S3(Model):
     class FreeAdmin:
         deletable = False
         icon_model = u"S3Icon"
+
+
+class ServiceMonitor(Model):
+    sm_name = models.CharField(
+        verbose_name=_("Service Name"),
+        max_length=120,
+        unique=True
+    )
+    sm_host = models.CharField(
+        verbose_name=_("Host Name"),
+        max_length=120
+    )
+    sm_port = models.PositiveIntegerField(
+        verbose_name=_("Port"),
+        validators=[MinValueValidator(1), MaxValueValidator(65535)]
+    )
+    sm_frequency = models.PositiveIntegerField(
+        verbose_name=_("Frequency")
+    )
+    sm_retry = models.PositiveIntegerField(
+        verbose_name=_("Retry")
+    )
+    sm_enable = models.BooleanField(
+        verbose_name=_("Enable"),
+        default=False
+    )
