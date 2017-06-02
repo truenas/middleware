@@ -25,7 +25,6 @@ class ServiceMonitorThread(threading.Thread):
         self.id = kwargs.get('id')
         self.frequency = kwargs.get('frequency')
         self.retry = kwargs.get('retry')
-        self.counter = kwargs.get('retry')
         self.host = kwargs.get('host')
         self.port = kwargs.get('port')
         self.name = kwargs.get('name')
@@ -41,6 +40,7 @@ class ServiceMonitorThread(threading.Thread):
         with open(file_error, 'w') as _file:
             _file.write(message)
 
+    @private
     def isEnabled(self, service):
         enabled = False
 
@@ -102,6 +102,20 @@ class ServiceMonitorThread(threading.Thread):
 
         return connected
 
+    @private
+    def getStarted(self, service):
+        started = self.middleware.call('service.started', self.name)
+        if started == True:
+            return started
+
+        i = 0
+        max_tries = 3
+        while i < max_tries:
+            time.sleep(1)
+            started = self.middleware.call('service.started', self.name)
+
+        return started
+
     def run(self):
         ntries = 0
 
@@ -109,7 +123,7 @@ class ServiceMonitorThread(threading.Thread):
             time.sleep(self.frequency)
 
             connected = self.tryConnect(self.host, self.port)
-            started = self.middleware.call('service.started', self.name)
+            started = self.getStarted(self.name)
             enabled = self.isEnabled(self.name)
 
             self.logger.debug("[ServiceMonitorThread] connected=%s started=%s enabled=%s", connected, started, enabled)
