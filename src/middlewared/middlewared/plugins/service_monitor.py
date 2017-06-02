@@ -45,30 +45,38 @@ class ServiceMonitorThread(threading.Timer):
         self.logger.debug("[ServiceMonitorThread] name=%s frequency=%d retry=%d", self.name, self.frequency, self.retry)
 
     @private
-    def get_timeout(self, service, op):
-        timeout = 60
-
-        if not service:
-            return timeout
-        if op not in ('start', 'stop', 'restart', 'reload'):
-            return timeout
+    def isEnabled(self, service):
+        enabled = False
 
         #
-        # XXX ugly hack - temporary
+        # XXX yet another hack. We need a generic mechanism/interface that we can use that tells
+        # use if a service is enabled or not. When the service monitor starts up, it assumes 
+        # self.connected is True. If the service is down, but enabled, and we restart the middleware,
+        # and the service becomes available, we do not see a transition occur and therefore do not
+        # start the service.
         #
-        parent = 'services'
+
         if service in ('activedirectory', 'ldap', 'nis', 'nt4'):
-            parent = 'directoryservice'
+            try:
+                ds = self.middleware.call('datastore.query', 'directoryservice.%s' % service)[0]
+                if service == 'activedirectory':
+                    service = 'ad'
+                enabled = ds["%s_enable" % service]
 
-        try:
-            oid = "%s.%s.timeout.%s" %  (parent, service, op)
-            timeout = _fs().get_by_oid(oid)
+            except Exception as e:
+                self.logger.debug("[ServiceMonitorThread] ERROR: isEnabled: %s", e)
 
-        except Exception as e:
-            self.logger.debug("[ServiceMonitorThread] FAILED oid=%s", oid)
-            return timeout
+        else:
+            try:
+                services = self.middleware.call('datastore.query', 'services.services')
+                for s in services:
+                    if s['srv_service'] == 'cifs':
+                        enabled = s['srv_enable']
 
-        return timeout
+            except Exception as e:
+                self.logger.debug("[ServiceMonitorThread] ERROR: isEnabled: %s", e)
+
+        return enabled
 
     #
     # XXX: Need mechanism for more intelligent protocol checking
@@ -87,6 +95,12 @@ class ServiceMonitorThread(threading.Timer):
 
         # XXX What about UDP?
         bind = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        bind.settimeout(_fs().middlewared.plugins.service_monitor.socket_timeout)
+ 
+        #
+        # We should probably have a threshold rather than failing on first time we can't
+        # connect, eg: Try to connect 3 times, then fail.
+        #
         try:
             bind.connect((host, port))
             self.connected = True
@@ -96,6 +110,7 @@ class ServiceMonitorThread(threading.Timer):
             self.logger.debug("[ServiceMonitorThread] Cannot connect: %s:%d with error: %s" % (host, port, error))
 
         finally:
+            bind.settimeout(None)
             bind.close()
 
         #
@@ -113,19 +128,39 @@ class ServiceMonitorThread(threading.Timer):
         # was previously false, it now becomes true (without actually restarting
         # the process), so it's not reliable.
         #
-        if (self.connected != connected) and (self.connected == False):
+
+        started = self.middleware.call('service.started', name)
+        enabled = self.isEnabled(name)
+
+        self.logger.debug("[ServiceMonitorThread] started=%s enabled=%s connected=%s", started, enabled, self.connected)
+
+        #
+        # XXX black magic, needs better architecture
+        #
+        if (self.connected == False) and (started == False):
+            self.logger.debug("[ServiceMonitorThread] doing nothing for service %s", name)
+
+        elif (self.connected != connected) and (self.connected == False):
             self.logger.debug("[ServiceMonitorThread] disabling service %s", name)
             try:
-                self.middleware.call('service.stop', name, {'onetime': True}, timeout=self.get_timeout(name, 'stop'))
+                self.middleware.call('service.stop', name)
             except CallTimeout:
                 pass
 
         elif (self.connected != connected) and (self.connected == True):
-            self.logger.debug("[ServiceMonitorThread] enabling service %s", name)
+            self.logger.debug("[ServiceMonitorThread] [0] enabling service %s", name)
             try:
-                self.middleware.call('service.start', name, {'onetime': True}, timeout=self.get_timeout(name, 'start'))
+                self.middleware.call('service.start', name)
             except CallTimeout:
                 pass
+
+        elif (self.connected == True) and (started == False):
+            self.logger.debug("[ServiceMonitorThread] [1] enabling service %s", name)
+            try:
+                self.middleware.call('service.start', name)
+            except CallTimeout:
+                pass
+
 
     @private
     def timerCallback(self):
