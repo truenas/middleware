@@ -95,7 +95,7 @@ FLAGS_CACHE_WRITE_QUERY = 0x00000020
 class FreeNAS_BaseCache(object):
     def __init__(self, cachedir=FREENAS_CACHEDIR):
         log.debug("FreeNAS_BaseCache._init__: enter")
-
+         
         self.cachedir = cachedir
         self.__cachefile = os.path.join(self.cachedir, ".cache.db")
 
