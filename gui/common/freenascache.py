@@ -25,8 +25,8 @@
 #####################################################################
 
 import os
-import pickle as pickle
 import logging
+import pickle as pickle
 
 from bsddb3 import db
 from freenasUI.common.system import (
@@ -95,17 +95,20 @@ FLAGS_CACHE_WRITE_QUERY = 0x00000020
 class FreeNAS_BaseCache(object):
     def __init__(self, cachedir=FREENAS_CACHEDIR):
         log.debug("FreeNAS_BaseCache._init__: enter")
-         
+
         self.cachedir = cachedir
         self.__cachefile = os.path.join(self.cachedir, ".cache.db")
 
         if not self.__dir_exists(self.cachedir):
             os.makedirs(self.cachedir)
 
+        flags = db.DB_CREATE | db.DB_THREAD | db.DB_INIT_LOCK | db.DB_INIT_LOG | \
+            db.DB_INIT_MPOOL | db.DB_THREAD | db.DB_INIT_TXN
+
         self.__dbenv = db.DBEnv()
         self.__dbenv.open(
             self.cachedir,
-            db.DB_INIT_CDB | db.DB_INIT_MPOOL | db.DB_CREATE,
+            flags,
             0o700
         )
 

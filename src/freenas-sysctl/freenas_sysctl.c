@@ -80,7 +80,6 @@ struct service_error {
 	struct fstring last_error;
 };
 
-
 static struct {
 	struct service_timeout a_st;
 	struct service_error a_se;
@@ -146,6 +145,7 @@ static struct {
 
 } *g_middlewared;
 
+/*
 static struct {
 	struct service_timeout n_st;
 
@@ -157,6 +157,7 @@ static struct {
 	} interface;
 
 } *g_network;
+*/
 
 static struct {
 	struct service_timeout s_st;
@@ -576,52 +577,12 @@ freenas_sysctl_middlewared_fini(void)
 static int
 freenas_sysctl_network_init(void)
 {
-	struct sysctl_oid *ntree, *ifacetree, *tmptree;
-
-	/* Network memory allocations */
-	g_network = malloc(sizeof(*g_network),
-		M_FREENAS_SYSCTL, M_ZERO | M_WAITOK);
-
-	/* Network node */
-	if ((ntree = SYSCTL_ADD_NODE(&g_freenas_sysctl_ctx,
-		SYSCTL_CHILDREN(g_freenas_sysctl_tree), OID_AUTO,
-		"network", CTLFLAG_RW, NULL, NULL)) == NULL) {
-		FAILRET("Failed to add network node.\n", -1);
-	}
-	if ((freenas_sysctl_add_timeout_tree(&g_freenas_sysctl_ctx,
-		ntree, &g_network->n_st)) != 0) {
-		FAILRET("Failed to add network timeout node.\n", -1);
-	}
-
-	/* Network interface node */
-	if ((ifacetree = SYSCTL_ADD_NODE(&g_freenas_sysctl_ctx,
-		SYSCTL_CHILDREN(ntree), OID_AUTO,
-		"interface", CTLFLAG_RD, NULL, NULL)) == NULL) {
-		FAILRET("Failed to add network interface node.\n", -1);
-	}
-	if ((freenas_sysctl_add_timeout_tree(&g_freenas_sysctl_ctx,
-		ifacetree, &g_network->interface.n_st)) != 0) {
-		FAILRET("Failed to add network interface timeout node.\n", -1);
-	}
-
-	/* Network interface sync node */
-	if ((tmptree = SYSCTL_ADD_NODE(&g_freenas_sysctl_ctx,
-		SYSCTL_CHILDREN(ifacetree), OID_AUTO,
-		"sync", CTLFLAG_RD, NULL, NULL)) == NULL) {
-		FAILRET("Failed to add network interface sync node.\n", -1);
-	}
-	if ((freenas_sysctl_add_timeout_tree(&g_freenas_sysctl_ctx,
-		tmptree, &g_network->interface.sync.n_st)) != 0) {
-		FAILRET("Failed to add network interface sync timeout node.\n", -1);
-	}
-
 	return (0);
 }
 
 static int
 freenas_sysctl_network_fini(void)
 {
-	free(g_network, M_FREENAS_SYSCTL);
 	return (0);
 }
 
