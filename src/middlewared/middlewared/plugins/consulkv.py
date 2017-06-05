@@ -70,7 +70,6 @@ class ConsulService(Service):
             logger.error('===> Consul delete_kv error: %s' % (err))
             return False
 
-
     @accepts()
     def reload(self):
         """
