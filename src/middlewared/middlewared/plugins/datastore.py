@@ -15,6 +15,12 @@ from django.db import connection
 from django.db.models import Q
 from django.db.models.fields.related import ForeignKey
 
+# FIXME: django sqlite3_ha backend uses a thread to sync queries to the
+# standby node. That does not play very well with gevent+middleware
+# if that "thread" is still running and the originating connection closes.
+from freenasUI.freeadmin.sqlite3_ha import base as sqlite3_ha_base
+sqlite3_ha_base.execute_sync = True
+
 from middlewared.utils import django_modelobj_serialize
 
 
