@@ -1,7 +1,10 @@
 from middlewared.schema import accepts, Any, Str
 from middlewared.service import Service
+import middlewared.logger
 
 import consul
+
+logger = middlewared.logger.Logger('consul').getLogger()
 
 
 class ConsulService(Service):
@@ -24,7 +27,11 @@ class ConsulService(Service):
                     bool: True if it added successful the value or otherwise False.
         """
         c = consul.Consul()
-        return c.kv.put(str(key), str(value))
+        try:
+            return c.kv.put(str(key), str(value))
+        except Exception as err:
+            logger.error('===> Consul set_kv error: %s' % (err))
+            return False
 
     @accepts(Str('key'))
     def get_kv(self, key):
@@ -51,7 +58,11 @@ class ConsulService(Service):
                     bool: True if it could delete the data or otherwise False.
         """
         c = consul.Consul()
-        return c.kv.delete(str(key))
+        try:
+            return c.kv.delete(str(key))
+        except Exception as err:
+            logger.error('===> Consul delete_kv error: %s' % (err))
+            return False
 
     def _convert_keys(self, data):
         """
