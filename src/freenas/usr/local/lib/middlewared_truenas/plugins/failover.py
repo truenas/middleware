@@ -30,7 +30,7 @@ class FailoverService(Service):
         return True
 
     @accepts()
-    def hardaware(self):
+    def hardware(self):
         """
         Gets the hardware type of HA.
 
