@@ -36,7 +36,7 @@ class ConsulService(Service):
         try:
             return c.kv.put(str(key), str(value))
         except Exception as err:
-            logger.error('===> Consul module error: %s %s' % (err.message, err.args))
+            logger.error('===> Consul set_kv error: %s' % (err))
             return False
 
     @accepts(Str('key'))
@@ -64,7 +64,11 @@ class ConsulService(Service):
                     bool: True if it could delete the data or otherwise False.
         """
         c = consul.Consul()
-        return c.kv.delete(str(key))
+        try:
+            return c.kv.delete(str(key))
+        except Exception as err:
+            logger.error('===> Consul delete_kv error: %s' % (err))
+            return False
 
     @accepts()
     def reload(self):

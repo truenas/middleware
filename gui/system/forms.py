@@ -1704,10 +1704,9 @@ class ConsulAlertsForm(ModelForm):
             objs.save()
 
         cdata = self.cleaned_data
+
         with client as c:
             c.call('consul.do_create', cdata)
-
-        notifier().restart("consul-alerts")
 
         return objs
 
@@ -1715,7 +1714,6 @@ class ConsulAlertsForm(ModelForm):
         with client as c:
             c.call('consul.do_delete', self.instance.consulalert_type, self.instance.attributes)
 
-        notifier().restart("consul-alerts")
         self.instance.delete()
 
 
