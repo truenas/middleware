@@ -43,7 +43,7 @@ class Application(WebSocketApplication):
 
     def __init__(self, *args, **kwargs):
         super(Application, self).__init__(*args, **kwargs)
-        self.authenticated = self._check_permission()
+        self.authenticated = False
         self.handshake = False
         self.logger = logger.Logger('application').getLogger()
         self.sessionid = str(uuid.uuid4())
@@ -141,24 +141,6 @@ class Application(WebSocketApplication):
             },
         })
 
-    def _check_permission(self):
-        remote_addr = self.ws.environ['REMOTE_ADDR']
-        remote_port = self.ws.environ['REMOTE_PORT']
-
-        if remote_addr not in ('127.0.0.1', '::1'):
-            return False
-
-        remote = '{0}:{1}'.format(remote_addr, remote_port)
-
-        proc = Popen([
-            '/usr/bin/sockstat', '-46c', '-p', remote_port
-        ], stdout=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=True)
-        for line in proc.communicate()[0].strip().splitlines()[1:]:
-            cols = line.split()
-            if cols[-2] == remote and cols[0] == 'root':
-                return True
-        return False
-
     def call_method(self, message):
 
         try:
@@ -246,6 +228,7 @@ class Application(WebSocketApplication):
                     'version': '1',
                 })
             else:
+                self.middleware.call_hook('core.on_connect', app=self)
                 self._send({
                     'msg': 'connected',
                     'session': self.sessionid,
