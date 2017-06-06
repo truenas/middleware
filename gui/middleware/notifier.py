@@ -732,6 +732,7 @@ class notifier(metaclass=HookMetaclass):
                                  devname=disk,
                                  swapsize=swapsize)
 
+        self.__confxml = None  # Make sure to invalidate cache
         doc = self._geom_confxml()
         for disk in disks:
             devname = self.part_type_from_device('zfs', disk)
