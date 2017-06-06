@@ -180,7 +180,7 @@ class CallTimeout(ClientException):
 
 class Client(object):
 
-    def __init__(self, uri=None, reserved_ports=True, reserved_ports_blacklist=None):
+    def __init__(self, uri=None, reserved_ports=False, reserved_ports_blacklist=None):
         """
         Arguments:
            :reserved_ports(bool): whether the connection should origin using a reserved port (<= 1024)
