@@ -99,7 +99,10 @@ class FailoverService(Service):
             raise CallError(f'Node {node} invalid for call_remote', errno.EBADRPC)
         # 860 is the iSCSI port and blocked by the failover script
         with Client(f'ws://{remote}:6000/websocket', reserved_ports=True, reserved_ports_blacklist=[860]) as c:
-            return c.call(method, *args, timeout=timeout)
+            kwargs = {}
+            if timeout:
+                kwargs['timeout'] = timeout
+            return c.call(method, *args, **kwargs)
 
 
 def ha_permission(app):
