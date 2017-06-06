@@ -2,7 +2,8 @@ import os
 import sys
 
 from middlewared.schema import accepts
-from middlewared.service import Service
+from middlewared.service import private, Service
+from middlewared.utils import run
 
 # FIXME: temporary imports while license methods are still in django
 if '/usr/local/www' not in sys.path:
@@ -12,6 +13,8 @@ import django
 django.setup()
 from freenasUI.failover.detect import ha_hardware, ha_node
 from freenasUI.support.utils import get_license
+
+INTERNAL_IFACE_NF = '/tmp/.failover_internal_iface_not_found'
 
 
 class FailoverService(Service):
@@ -55,6 +58,29 @@ class FailoverService(Service):
         if node is None:
             return 'MANUAL'
         return node
+
+    @private
+    @accepts()
+    def internal_interfaces(self):
+        """
+        Interfaces used internally for HA.
+        It is a direct link between the nodes.
+        """
+        hardware = self.hardware()
+        if hardware == 'ECHOSTREAM':
+            proc = run('/usr/sbin/pciconf -lv | grep "card=0xa01f8086 chip=0x10d38086"')
+            if not proc.stdout:
+                if not os.path.exists(INTERNAL_IFACE_NF):
+                    open(INTERNAL_IFACE_NF, 'w').close()
+                return []
+            return [proc.stdout.split('@')[0]]
+        elif hardware == 'SBB':
+            return ['ix0']
+        elif hardware in ('AIC', 'PUMA'):
+            return ['ntb0']
+        elif hardware == 'ULTIMATE':
+            return ['igb1']
+        return []
 
 
 def ha_permission(app):
