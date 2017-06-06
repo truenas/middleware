@@ -1,8 +1,10 @@
+import errno
 import os
 import sys
 
-from middlewared.schema import accepts
-from middlewared.service import private, Service
+from middlewared.client import Client
+from middlewared.schema import accepts, Int, List, Str
+from middlewared.service import private, CallError, Service
 from middlewared.utils import run
 
 # FIXME: temporary imports while license methods are still in django
@@ -81,6 +83,23 @@ class FailoverService(Service):
         elif hardware == 'ULTIMATE':
             return ['igb1']
         return []
+
+    @accepts(
+        Str('method'),
+        List('args'),
+        Int('timeout'),
+    )
+    def call_remote(self, method, args, timeout=None):
+        node = self.node()
+        if node == 'A':
+            remote = '169.254.10.2'
+        elif node == 'B':
+            remote = '169.254.10.1'
+        else:
+            raise CallError(f'Node {node} invalid for call_remote', errno.EBADRPC)
+        # 860 is the iSCSI port and blocked by the failover script
+        with Client(f'ws://{remote}:6000/websocket', reserved_ports=True, reserved_ports_blacklist=[860]) as c:
+            return c.call(method, *args, timeout=timeout)
 
 
 def ha_permission(app):
