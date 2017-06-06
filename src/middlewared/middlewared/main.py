@@ -654,7 +654,7 @@ class Middleware(object):
         gevent.signal(signal.SIGUSR1, self.pdb)
 
         Application.middleware = self
-        wsserver = WebSocketServer(('127.0.0.1', 6000), Resource(OrderedDict([
+        wsserver = WebSocketServer(('0.0.0.0', 6000), Resource(OrderedDict([
             ('/websocket', Application),
         ])))
 
