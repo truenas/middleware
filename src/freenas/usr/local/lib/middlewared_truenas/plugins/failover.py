@@ -55,3 +55,20 @@ class FailoverService(Service):
         if node is None:
             return 'MANUAL'
         return node
+
+
+def ha_permission(app):
+    remote_addr = app.ws.environ['REMOTE_ADDR']
+    remote_port = app.ws.environ['REMOTE_PORT']
+
+    if remote_port <= 1024 and remote_addr in (
+        '169.254.10.1',
+        '169.254.10.2',
+        '169.254.10.20',
+        '169.254.10.80',
+    ):
+        app.authenticated = True
+
+
+def setup(middleware):
+    middleware.register_hook('core.on_connect', ha_permission, sync=True)
