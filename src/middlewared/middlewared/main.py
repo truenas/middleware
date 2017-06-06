@@ -385,8 +385,7 @@ class FileApplication(object):
 class Middleware(object):
 
     def __init__(self, plugins_dirs=None):
-        self.logger_name = logger.Logger('middlewared')
-        self.logger = self.logger_name.getLogger()
+        self.logger = logger.Logger('middlewared').getLogger()
         self.crash_reporting = logger.CrashReporting()
         self.__threadpool = ThreadPool(5)  # Init before plugins are loaded
         self.__jobs = JobsQueue(self)
