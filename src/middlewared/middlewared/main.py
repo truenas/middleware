@@ -8,7 +8,6 @@ from .job import Job, JobsQueue
 from .restful import RESTfulAPI
 from .schema import Error as SchemaError
 from .service import CallError, CallException
-from .utils import Popen
 from collections import OrderedDict, defaultdict
 from daemon import DaemonContext
 from daemon.pidfile import TimeoutPIDLockFile
@@ -28,7 +27,6 @@ import linecache
 import os
 import setproctitle
 import signal
-import subprocess
 import sys
 import traceback
 import types
