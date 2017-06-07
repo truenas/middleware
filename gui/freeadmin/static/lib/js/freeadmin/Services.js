@@ -237,7 +237,7 @@ define([
         var me = this;
         me.startLoading();
         if(me.state == 'RUNNING') {
-          Middleware.call('notifier.stop', [me.name], function(result) {
+          Middleware.call('notifier.stop', [me.name, null, true], function(result) {
             if(!result) {
               me.state = 'STOPPED';
               me.sync();
@@ -245,7 +245,7 @@ define([
             me.stopLoading();
           });
         } else {
-          Middleware.call('notifier.start', [me.name], function(result) {
+          Middleware.call('notifier.start', [me.name, null, true], function(result) {
             if(result) {
               me.state = 'RUNNING';
               me.sync();
