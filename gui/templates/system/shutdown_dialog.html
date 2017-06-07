@@ -2,6 +2,9 @@
 {% block form %}
 <h3>{% trans "Warning!" %}</h3>
 <p>{% trans "You are about to <strong>SHUTDOWN</strong> the system, what would you like to do?" %}</p>
+{% if standby %}
+<p><input data-dojo-type="dijit/form/CheckBox" id="id_shutdown_standby" name="standby" /><span style="color: red;">{% trans "Shutdown standby node as well" %}</span></p>
+{% endif %}
 {% endblock %}
 {% block buttons %}
 <button id="btn_Shutdown_Ok" data-dojo-type="dijit.form.Button" type="button">
