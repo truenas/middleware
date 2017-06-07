@@ -132,7 +132,7 @@ class FailoverService(Service):
         if options is None:
             options = {}
 
-        failover = self.middleware.call('datastore.config', 'system.failover')
+        failover = self.middleware.call('datastore.config', 'failover.failover')
         if action == 'ENABLE':
             if failover['disabled'] is False:
                 # Already enabled
@@ -141,14 +141,14 @@ class FailoverService(Service):
                 'disabled': False,
                 'master': False,
             })
-            self.middleware.call('datastore.update', 'system.failover', failover['id'], failover)
+            self.middleware.call('datastore.update', 'failover.failover', failover['id'], failover)
             self.middleware.call('service.start', 'ix-devd')
         elif action == 'DISABLE':
             if failover['disabled'] is True:
                 # Already disabled
                 return False
             failover['master'] = True if options.get('active') else False
-            self.middleware.call('datastore.update', 'system.failover', failover['id'], failover)
+            self.middleware.call('datastore.update', 'failover.failover', failover['id'], failover)
             self.middleware.call('service.start', 'ix-devd')
 
     @accepts()
