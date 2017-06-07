@@ -3,7 +3,7 @@ import os
 import sys
 
 from middlewared.client import Client
-from middlewared.schema import accepts, Int, List, Str
+from middlewared.schema import accepts, Bool, Dict, Int, List, Str
 from middlewared.service import private, CallError, Service
 from middlewared.utils import run
 
@@ -119,6 +119,36 @@ class FailoverService(Service):
         # FIXME: we could get rid of escrow, middlewared can do that job
         escrowctl = LocalEscrowCtl()
         return escrowctl.setkey(passphrase)
+
+    @accepts(
+        Str('action', enum=['ENABLE', 'DISABLE']),
+        Dict(
+            'options',
+            Bool('active'),
+        ),
+    )
+    def control(self, action, options=None):
+        if options is None:
+            options = {}
+
+        failover = self.middleware.call('datastore.config', 'system.failover')
+        if action == 'ENABLE':
+            if failover['disabled'] is False:
+                # Already enabled
+                return False
+            failover.update({
+                'disabled': False,
+                'master': False,
+            })
+            self.middleware.call('datastore.update', 'system.failover', failover['id'], failover)
+            self.middleware.call('service.start', 'ix-devd')
+        elif action == 'DISABLE':
+            if failover['disabled'] is True:
+                # Already disabled
+                return False
+            failover['master'] = True if options.get('active') else False
+            self.middleware.call('datastore.update', 'system.failover', failover['id'], failover)
+            self.middleware.call('service.start', 'ix-devd')
 
 
 def ha_permission(app):
