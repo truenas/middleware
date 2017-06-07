@@ -89,7 +89,10 @@ class FailoverService(Service):
         List('args'),
         Int('timeout'),
     )
-    def call_remote(self, method, args, timeout=None):
+    def call_remote(self, method, args=None, timeout=None):
+        if args is None:
+            args = []
+
         node = self.node()
         if node == 'A':
             remote = '169.254.10.2'
