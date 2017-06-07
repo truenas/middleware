@@ -732,7 +732,7 @@ def shutdown_dialog(request):
             try:
                 s = _n.failover_rpc()
                 if s is not None:
-                    s.service([('stop', 'system', None)])
+                    s.service([('stop', 'system', None, False)])
             except Exception:
                 pass
         return JsonResp(

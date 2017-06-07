@@ -242,12 +242,12 @@ class notifier(metaclass=HookMetaclass):
             f = getattr(self, '_destroy_' + what)
             f(objectid)
 
-    def start(self, what, timeout=None):
+    def start(self, what, timeout=None, onetime=False):
         kwargs = {}
         if timeout:
             kwargs['timeout'] = timeout
         with client as c:
-            return c.call('service.start', what, {'onetime': False}, **kwargs)
+            return c.call('service.start', what, {'onetime': onetime}, **kwargs)
 
     def started(self, what, timeout=None):
         kwargs = {}
@@ -256,26 +256,26 @@ class notifier(metaclass=HookMetaclass):
         with client as c:
             return c.call('service.started', what, **kwargs)
 
-    def stop(self, what, timeout=None):
+    def stop(self, what, timeout=None, onetime=False):
         kwargs = {}
         if timeout:
             kwargs['timeout'] = timeout
         with client as c:
-            return c.call('service.stop', what, {'onetime': False}, **kwargs)
+            return c.call('service.stop', what, {'onetime': onetime}, **kwargs)
 
-    def restart(self, what, timeout=None):
+    def restart(self, what, timeout=None, onetime=False):
         kwargs = {}
         if timeout:
             kwargs['timeout'] = timeout
         with client as c:
-            return c.call('service.restart', what, {'onetime': False}, **kwargs)
+            return c.call('service.restart', what, {'onetime': onetime}, **kwargs)
 
-    def reload(self, what, timeout=None):
+    def reload(self, what, timeout=None, onetime=False):
         kwargs = {}
         if timeout:
             kwargs['timeout'] = timeout
         with client as c:
-            return c.call('service.reload', what, {'onetime': False}, **kwargs)
+            return c.call('service.reload', what, {'onetime': onetime}, **kwargs)
 
     def clear_activedirectory_config(self):
         with client as c:
