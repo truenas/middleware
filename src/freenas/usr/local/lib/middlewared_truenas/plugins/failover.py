@@ -13,6 +13,7 @@ if '/usr/local/www' not in sys.path:
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'freenasUI.settings')
 import django
 django.setup()
+from freenasUI.freeadmin.sqlite3_ha.base import Journal
 from freenasUI.failover.detect import ha_hardware, ha_node
 from freenasUI.failover.enc_helper import LocalEscrowCtl
 from freenasUI.support.utils import get_license
@@ -149,6 +150,15 @@ class FailoverService(Service):
             failover['master'] = True if options.get('active') else False
             self.middleware.call('datastore.update', 'system.failover', failover['id'], failover)
             self.middleware.call('service.start', 'ix-devd')
+
+    @accepts()
+    def database_sync(self):
+        dump = self.middleware.call('datastore.dump')
+        with Journal() as j:
+            restore = self.call_remote('datastore.restore', [dump])
+            if restore:
+                j.queries = []
+        return restore
 
 
 def ha_permission(app):
