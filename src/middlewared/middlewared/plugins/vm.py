@@ -91,6 +91,11 @@ class VMSupervisor(object):
                             break
                     if not bridge:
                         bridge = netif.get_interface(netif.create_interface('bridge'))
+
+                    if bridge.mtu > tap.mtu:
+                        self.logger.debug("===> Set tap(4) mtu to {0} like in bridge(4) mtu {1}".format(tap.mtu, bridge.mtu))
+                        tap.mtu = bridge.mtu
+
                     bridge.add_member(tapname)
 
                     defiface = Popen("route -nv show default|grep -w interface|awk '{ print $2 }'", stdout=subprocess.PIPE, shell=True).communicate()[0].strip()
