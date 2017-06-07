@@ -27,7 +27,6 @@ from collections import OrderedDict
 import json
 import logging
 import os
-import socket
 import subprocess
 import time
 
@@ -41,6 +40,7 @@ from wsgiref.util import FileWrapper
 from freenasUI.common.system import get_sw_name, get_sw_version
 from freenasUI.freeadmin.apppool import appPool
 from freenasUI.freeadmin.views import JsonResp
+from freenasUI.middleware.client import client, ClientException
 from freenasUI.middleware.notifier import notifier
 from freenasUI.network.models import GlobalConfiguration
 from freenasUI.support import forms, utils
@@ -101,9 +101,9 @@ def license_update(request):
         _n = notifier()
         try:
             if not _n.is_freenas() and _n.failover_licensed():
-                s = _n.failover_rpc()
-                s.ping()
-        except socket.error:
+                with client as c:
+                    c.call('failover.call_remote', 'core.ping')
+        except ClientException:
             return render(request, 'failover/failover_down.html')
         form = forms.LicenseUpdateForm()
 

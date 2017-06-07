@@ -36,7 +36,7 @@ import sysctl
 import tarfile
 import tempfile
 import time
-import urllib.request, urllib.parse, urllib.error
+import urllib.parse
 import xmlrpc.client
 import traceback
 import sys
@@ -69,7 +69,7 @@ from freenasUI.common.ssl import (
 )
 from freenasUI.freeadmin.apppool import appPool
 from freenasUI.freeadmin.views import JsonResp
-from freenasUI.middleware.client import client
+from freenasUI.middleware.client import client, ClientException
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier
 from freenasUI.middleware.zfs import zpool_list
@@ -730,10 +730,9 @@ def shutdown_dialog(request):
         request.session['allow_shutdown'] = True
         if request.POST.get('standby') == 'on':
             try:
-                s = _n.failover_rpc()
-                if s is not None:
-                    s.service([('stop', 'system', None, False)])
-            except Exception:
+                with client as c:
+                    c.call('failover.call_remote', 'system.shutdown', [{'delay': 2}])
+            except ClientException:
                 pass
         return JsonResp(
             request,
@@ -996,9 +995,9 @@ def debug(request):
     if request.method == 'GET':
         if not _n.is_freenas() and _n.failover_licensed():
             try:
-                s = _n.failover_rpc()
-                s.ping()
-            except:
+                with client as c:
+                    c.call('failover.call_remote', 'core.ping')
+            except ClientException:
                 return render(request, 'failover/failover_down.html')
         return render(request, 'system/debug.html')
     debug_generate()

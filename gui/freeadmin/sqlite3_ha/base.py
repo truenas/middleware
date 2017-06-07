@@ -114,30 +114,18 @@ class RunSQLRemote(threading.Thread):
     def __init__(self, *args, **kwargs):
         self._sql = kwargs.pop('sql')
         self._params = kwargs.pop('params')
-        self._middlewared = kwargs.pop('middlewared', False)
         super(RunSQLRemote, self).__init__(*args, **kwargs)
 
     def run(self):
-        from freenasUI.middleware.notifier import notifier
         from freenasUI.common.log import log_traceback
         try:
             with Journal() as f:
                 if f.queries:
                     f.queries.append((self._sql, self._params))
                 else:
-                    if self._middlewared:
-                        # middlewared notifier plugin can also reach this code for now.
-                        # And this is usually using a thread (because it can block for
-                        # numerous reasons). That means it can reach to gevent code
-                        # out of the main loop which will lead to terrible things.
-                        # To workaround this issue lets call notifier using a new client
-                        # instance.
-                        from freenasUI.middleware.client import client
-                        with client as c:
-                            c.call('notifier.failover_rpc_run_sql', self._sql, self._params)
-                    else:
-                        s = notifier().failover_rpc()
-                        s.run_sql(self._sql, self._params)
+                    from freenasUI.middleware.client import client
+                    with client as c:
+                        c.call('failover.call_remote', 'datastore.sql', [self._sql, self._params])
         except socket.error as err:
             with Journal() as f:
                 f.queries.append((self._sql, self._params))
@@ -294,13 +282,11 @@ class HASQLiteCursorWrapper(Database.Cursor):
             # To workaround this issue lets call notifier using a new client
             # instance.
             # FIXME: This is extremely time-consuming (failover.status)
-            middlewared = False
             if (
                 gevent.monkey.is_module_patched('subprocess') and
                 threading.main_thread() != threading.current_thread()
             ):
                 from freenasUI.middleware.client import client
-                middlewared = True
                 with client as c:
                     if c.call('system.is_freenas') or c.call('notifier.failover_status') != 'MASTER':
                         return
@@ -415,7 +401,7 @@ class HASQLiteCursorWrapper(Database.Cursor):
             else:
                 sql = str(p)
             # Actually try to run the query on the remote side within a thread
-            rsr = RunSQLRemote(sql=sql, params=cparams, middlewared=middlewared)
+            rsr = RunSQLRemote(sql=sql, params=cparams)
             rsr.start()
             if execute_sync:
                 rsr.join()

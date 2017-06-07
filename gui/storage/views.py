@@ -30,7 +30,6 @@ import logging
 import os
 import re
 import signal
-import ssl
 import subprocess
 import traceback
 import sys
@@ -1186,9 +1185,9 @@ def volume_rekey(request, object_id):
     _n = notifier()
     standby_offline = False
     if not _n.is_freenas() and _n.failover_licensed():
-        s = _n.failover_rpc()
         try:
-            s.ping()
+            with client as c:
+                c.call('failover.call_remote', 'core.ping')
         except:
             standby_offline = True
 
