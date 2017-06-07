@@ -58,7 +58,7 @@ def main(command, quiet):
             sys.exit(7)
         if failover['disabled'] is True:
             try:
-                client.call('notifier.failover_remote_hactl', 'enable')
+                client.call('failover.call_remote', 'failover.control', ['ENABLE'])
                 client.call('datastore.update', 'failover.failover', failover['id'], {'disabled': False})
                 os.system("/usr/sbin/service ix-devd start")
                 print("Failover enabled.")
@@ -80,13 +80,13 @@ def main(command, quiet):
             if failover_status in ("MASTER", "IMPORTING"):
                 status = "master"
                 try:
-                    ret = client.call('notifier.failover_remote_hactl', 'disable', ['passive'])
+                    ret = client.call('failover.call_remote', 'failover.control', ['DISABLE', {'active': False}])
                 except:
                     ret = False
             else:
                 status = "passive"
                 try:
-                    ret = client.call('notifier.failover_remote_hactl', 'disable', ['active'])
+                    ret = client.call('failover.call_remote', 'failover.control', ['DISABLE', {'active': True}])
                 except:
                     ret = False
             if ret is not False:
