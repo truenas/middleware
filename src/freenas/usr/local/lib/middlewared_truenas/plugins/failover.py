@@ -107,7 +107,7 @@ class FailoverService(Service):
 
 def ha_permission(app):
     remote_addr = app.ws.environ['REMOTE_ADDR']
-    remote_port = app.ws.environ['REMOTE_PORT']
+    remote_port = int(app.ws.environ['REMOTE_PORT'])
 
     if remote_port <= 1024 and remote_addr in (
         '169.254.10.1',
