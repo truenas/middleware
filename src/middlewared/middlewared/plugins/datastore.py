@@ -233,3 +233,22 @@ class DatastoreService(Service):
         finally:
             cursor.close()
         return rv
+
+    @private
+    @accepts(List('queries'))
+    def restore(self, queries):
+        """
+        Receives a list of SQL queries (usually a database dump)
+        and executes it within a transaction.
+        """
+        return connection.dump_recv(queries)
+
+    @private
+    @accepts()
+    def dump(self):
+        """
+        Dumps the database, returning a list of SQL commands.
+        """
+        # FIXME: This could return a few hundred KB of data,
+        # we need to investigate a way of doing that in chunks.
+        return connection.dump()

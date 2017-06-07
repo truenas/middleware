@@ -150,7 +150,7 @@ class DatabaseWrapper(sqlite3base.DatabaseWrapper):
     def create_cursor(self):
         return self.connection.cursor(factory=HASQLiteCursorWrapper)
 
-    def dump_send(self):
+    def dump(self):
         """
         Method responsible for dumping the database into SQL,
         excluding the tables that should not be synced between nodes.
@@ -182,6 +182,13 @@ class DatabaseWrapper(sqlite3base.DatabaseWrapper):
             for row in cur.fetchall():
                 script.append(row[0])
 
+        return script
+
+    def dump_send(self):
+        """
+        Get a dump and send to the other node.
+        """
+        script = self.dump()
         s = notifier().failover_rpc()
         # If we are syncing then we need to clear the Journal in case
         # everything goes as planned.
