@@ -14,6 +14,7 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'freenasUI.settings')
 import django
 django.setup()
 from freenasUI.failover.detect import ha_hardware, ha_node
+from freenasUI.failover.enc_helper import LocalEscrowCtl
 from freenasUI.support.utils import get_license
 
 INTERNAL_IFACE_NF = '/tmp/.failover_internal_iface_not_found'
@@ -106,6 +107,18 @@ class FailoverService(Service):
             if timeout:
                 kwargs['timeout'] = timeout
             return c.call(method, *args, **kwargs)
+
+    @accepts()
+    def encryption_getkey(self):
+        # FIXME: we could get rid of escrow, middlewared can do that job
+        escrowctl = LocalEscrowCtl()
+        return escrowctl.getkey()
+
+    @accepts(Str('passphrase'))
+    def encryption_setkey(self, passphrase):
+        # FIXME: we could get rid of escrow, middlewared can do that job
+        escrowctl = LocalEscrowCtl()
+        return escrowctl.setkey(passphrase)
 
 
 def ha_permission(app):
