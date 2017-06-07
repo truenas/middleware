@@ -23,11 +23,17 @@ class PoolService(CRUDService):
         If pool is encrypted we need to check if the pool is imported
         or if all geli providers exist.
         """
+        try:
+            zpool = libzfs.ZFS().get(pool['name'])
+        except libzfs.ZFSException:
+            zpool = None
+
+        pool['status'] = zpool.status if zpool else 'OFFLINE'
+
         if pool['encrypt'] > 0:
-            try:
-                libzfs.ZFS().get(pool['name'])
+            if zpool:
                 pool['is_decrypted'] = True
-            except libzfs.ZFSException:
+            else:
                 decrypted = True
                 for ed in self.middleware.call('datastore.query', 'storage.encrypteddisk', [('encrypted_volume', '=', pool['id'])]):
                     if not os.path.exists(f'/dev/{ed["encrypted_provider"]}.eli'):
