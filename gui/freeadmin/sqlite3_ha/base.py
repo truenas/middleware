@@ -155,7 +155,6 @@ class DatabaseWrapper(sqlite3base.DatabaseWrapper):
         Method responsible for dumping the database into SQL,
         excluding the tables that should not be synced between nodes.
         """
-        from freenasUI.middleware.notifier import notifier
         cur = self.cursor()
         cur.executelocal("select name from sqlite_master where type = 'table'")
 
@@ -185,6 +184,7 @@ class DatabaseWrapper(sqlite3base.DatabaseWrapper):
         return script
 
     def dump_send(self):
+        from freenasUI.middleware.notifier import notifier
         """
         Get a dump and send to the other node.
         """
