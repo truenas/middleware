@@ -24,10 +24,10 @@ class FilesystemService(Service):
           gid(int): group id of entry onwer
         """
         if not os.path.exists(path):
-            return CallError(f'Directory {path} does not exist', errno.ENOENT)
+            raise CallError(f'Directory {path} does not exist', errno.ENOENT)
 
         if not os.path.isdir(path):
-            return CallError(f'Path {path} is not a directory', errno.ENOTDIR)
+            raise CallError(f'Path {path} is not a directory', errno.ENOTDIR)
 
         for entry in os.scandir(path):
             if entry.is_dir():
