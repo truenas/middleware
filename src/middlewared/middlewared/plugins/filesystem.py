@@ -57,6 +57,28 @@ class FilesystemService(Service):
                 data.update({'size': None, 'mode': None, 'uid': None, 'gid': None})
             yield data
 
+    @accepts(Str('path'))
+    def stat(self, path):
+        """
+        Return the filesystem stat(2) for a given `path`.
+        """
+        try:
+            stat = os.stat(path, follow_symlinks=False)
+        except FileNotFoundError:
+            raise CallError(f'Path {path} not found', errno.ENOENT)
+        return {
+            'size': stat.st_size,
+            'mode': stat.st_mode,
+            'uid': stat.st_uid,
+            'gid': stat.st_gid,
+            'atime': stat.st_atime,
+            'mtime': stat.st_mtime,
+            'ctime': stat.st_ctime,
+            'dev': stat.st_dev,
+            'inode': stat.st_ino,
+            'nlink': stat.st_nlink,
+        }
+
     @private
     @accepts(
         Str('path'),
@@ -89,3 +111,28 @@ class FilesystemService(Service):
         if mode:
             os.chmod(path, mode)
         return True
+
+    @private
+    @accepts(
+        Str('path'),
+        Dict(
+            'options',
+            Int('offset'),
+            Int('maxlen'),
+        ),
+    )
+    def file_get_contents(self, path, options=None):
+        """
+        Get contents of a file `path` in base64 encode.
+
+        DISCLAIMER: DO NOT USE THIS FOR BIG FILES (> 500KB).
+        """
+        options = options or {}
+        print(options)
+        if not os.path.exists(path):
+            return None
+        with open(path, 'rb') as f:
+            if options.get('offset'):
+                f.seek(options['offset'])
+            data = binascii.b2a_base64(f.read(options.get('maxlen'))).decode().strip()
+        return data
