@@ -155,22 +155,10 @@ def main(subsystem, event):
                 log.warn("Failover disabled.  Assuming backup.")
                 sys.exit()
             else:
-
-                # We need to load django for notifier
-                sys.path.append('/usr/local/www')
-                sys.path.append('/usr/local/www/freenasUI')
-                sys.path.append('/usr/local/lib')
-
-                os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'freenasUI.settings')
-
-                import django
-                django.setup()
-
-                from freenasUI.middleware.notifier import notifier
-
+                from middlewared.client import Client
                 try:
-                    s = notifier().failover_rpc()
-                    status = s.notifier("failover_status", None, None)
+                    with Client() as c:
+                        status = c.call('failover.call_remote', 'notifier.failover_status')
                     if status == 'MASTER':
                         log.warn("Other node is already active, assuming backup.")
                         sys.exit()

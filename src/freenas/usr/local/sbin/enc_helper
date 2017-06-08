@@ -22,6 +22,7 @@ django.setup()
 
 from freenasUI.common.pipesubr import pipeopen
 from freenasUI.failover.enc_helper import LocalEscrowCtl
+from freenasUI.middleware.client import client
 from freenasUI.middleware.notifier import notifier
 from freenasUI.storage.models import Volume
 
@@ -97,9 +98,9 @@ if __name__ == "__main__":
                 if rv:
                     os.unlink('/tmp/.failover_needop')
                     passphrase = escrowctl.getkey()
-                    s = notifier().failover_rpc()
                     try:
-                        s.enc_setkey(passphrase)
+                        with client as c:
+                            c.call('failover.call_remote', 'failover.encryption_setkey', [passphrase])
                     except:
                         pass
                 else:
@@ -111,8 +112,8 @@ if __name__ == "__main__":
         if passphrase:
             rv = escrowctl.setkey(passphrase)
             try:
-                s = notifier().failover_rpc()
-                s.enc_setkey(passphrase)
+                with client as c:
+                    c.call('failover.call_remote', 'failover.encryption_setkey', [passphrase])
             except:
                 print("Failed to set key on standby node, is it down?")
             if not args.key_only:
@@ -121,13 +122,13 @@ if __name__ == "__main__":
         if cmd == 'synctopeer':
             passphrase = escrowctl.getkey()
             if passphrase:
-                s = notifier().failover_rpc()
-                rv = s.enc_setkey(passphrase)
+                with client as c:
+                    c.call('failover.call_remote', 'failover.encryption_setkey', [passphrase])
             else:
                 print("ERROR: passphrase unavailable.")
         elif cmd == 'syncfrompeer':
-            s = notifier().failover_rpc()
-            passphrase = s.enc_getkey()
+            with client as c:
+                passphrase = c.call('failover.call_remote', 'failover.encryption_getkey')
             rv = escrowctl.setkey(passphrase)
         if not rv:
             print("Error")
