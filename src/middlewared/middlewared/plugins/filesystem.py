@@ -128,7 +128,6 @@ class FilesystemService(Service):
         DISCLAIMER: DO NOT USE THIS FOR BIG FILES (> 500KB).
         """
         options = options or {}
-        print(options)
         if not os.path.exists(path):
             return None
         with open(path, 'rb') as f:
