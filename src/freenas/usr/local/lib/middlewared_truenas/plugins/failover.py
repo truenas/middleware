@@ -1,8 +1,10 @@
 import errno
+import gevent
 import os
 import sys
+import time
 
-from middlewared.client import Client
+from middlewared.client import Client, ClientException
 from middlewared.schema import accepts, Bool, Dict, Int, List, Str
 from middlewared.service import private, CallError, Service
 from middlewared.utils import run
@@ -19,6 +21,7 @@ from freenasUI.failover.enc_helper import LocalEscrowCtl
 from freenasUI.support.utils import get_license
 
 INTERNAL_IFACE_NF = '/tmp/.failover_internal_iface_not_found'
+SYNC_FILE = '/var/tmp/sync_failed'
 
 
 class FailoverService(Service):
@@ -175,5 +178,47 @@ def ha_permission(app):
         app.authenticated = True
 
 
+def journal_sync(middleware):
+    with Journal() as j:
+        for q in list(j.queries):
+            query, params = q
+            try:
+                middleware.call('failover.call_remote', 'database.sql', [query, params])
+                j.queries.remove(q)
+            except ClientException as e:
+                middleware.logger.exception('Failed to run sql: %s', e)
+                try:
+                    if not os.path.exists(SYNC_FILE):
+                        open(SYNC_FILE, 'w').close()
+                except:
+                    pass
+                break
+            except Exception as e:
+                middleware.logger.exception('Query %s has failed for unknown reasons', query)
+
+        if len(list(j.queries)) == 0 and os.path.exists(SYNC_FILE):
+            try:
+                os.unlink(SYNC_FILE)
+            except:
+                pass
+
+
+def journal_ha(middleware):
+    """
+    This is a green thread reponsible for trying to sync the journal
+    file to the other node.
+    Every SQL query that could not be synced is stored in the journal.
+    """
+    while True:
+        time.sleep(5)
+        if Journal.is_empty():
+            continue
+        try:
+            journal_sync(middleware)
+        except Exception:
+            middleware.logger.warn('Failed to sync journal', exc_info=True)
+
+
 def setup(middleware):
     middleware.register_hook('core.on_connect', ha_permission, sync=True)
+    gevent.spawn(journal_ha, middleware)
