@@ -11,10 +11,10 @@ import sys
 import sysctl
 import time
 
-if '/usr/local/lib' not in sys.path:
-    sys.path.append('/usr/local/lib')
-
-from freenasOS import Configuration
+# FIXME: Temporary imports until debug lives in middlewared
+if '/usr/local/www' not in sys.path:
+    sys.path.append('/usr/local/www')
+from freenasUI.system.utils import debug_get_settings, debug_run
 
 
 class SystemService(Service):
@@ -95,3 +95,11 @@ class SystemService(Service):
             time.sleep(delay)
 
         Popen(["/sbin/poweroff"])
+
+    @accepts()
+    @job(lock='systemdebug')
+    def debug(self, job):
+        # FIXME: move the implementation from freenasUI
+        mntpt, direc, dump = debug_get_settings()
+        debug_run(direc)
+        return dump
