@@ -214,7 +214,7 @@ def journal_ha(middleware):
         if Journal.is_empty():
             continue
         try:
-            journal_sync(middleware)
+            middleware.threaded(journal_sync, middleware)
         except Exception:
             middleware.logger.warn('Failed to sync journal', exc_info=True)
 
