@@ -1,5 +1,5 @@
 from middlewared.schema import Str, accepts
-from middlewared.service import Service
+from middlewared.service import CallError, Service
 
 import errno
 import os
@@ -15,6 +15,8 @@ class FilesystemService(Service):
         Each entry of the list consists of:
           name(str): name of the file
           path(str): absolute path of the entry
+          realpath(str): absolute real path of the entry (if SYMLINK)
+          type(str): DIRECTORY | FILESYSTEM | SYMLINK | OTHER
           size(int): size of the entry
           mode(int): file mode/permission
           uid(int): user id of entry owner
