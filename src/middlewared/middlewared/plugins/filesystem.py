@@ -1,6 +1,7 @@
-from middlewared.schema import Str, accepts
-from middlewared.service import CallError, Service
+from middlewared.schema import Bool, Dict, Int, Str, accepts
+from middlewared.service import private, CallError, Service
 
+import binascii
 import errno
 import os
 
@@ -55,3 +56,36 @@ class FilesystemService(Service):
             except FileNotFoundError:
                 data.update({'size': None, 'mode': None, 'uid': None, 'gid': None})
             yield data
+
+    @private
+    @accepts(
+        Str('path'),
+        Str('content'),
+        Dict(
+            'options',
+            Bool('append', default=False),
+            Int('mode'),
+        ),
+    )
+    def file_receive(self, path, content, options=None):
+        """
+        Simplified file receiving method for small files.
+
+        `content` must be a base 64 encoded file content.
+
+        DISCLAIMER: DO NOT USE THIS FOR BIG FILES (> 500KB).
+        """
+        options = options or {}
+        dirname = os.path.dirname(path)
+        if not os.path.exists(dirname):
+            os.makedirs(dirname)
+        if options.get('append'):
+            openmode = 'ab'
+        else:
+            openmode = 'wb+'
+        with open(path, openmode) as f:
+            f.write(binascii.a2b_base64(content))
+        mode = options.get('mode')
+        if mode:
+            os.chmod(path, mode)
+        return True
