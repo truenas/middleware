@@ -89,11 +89,15 @@ class FailoverService(Service):
     @accepts(
         Str('method'),
         List('args'),
-        Int('timeout'),
+        Dict(
+            'options',
+            Int('timeout'),
+            Bool('job', default=False),
+        ),
     )
-    def call_remote(self, method, args=None, timeout=None):
-        if args is None:
-            args = []
+    def call_remote(self, method, args=None, options=None):
+        args = args or []
+        options = options or {}
 
         node = self.node()
         if node == 'A':
@@ -104,10 +108,7 @@ class FailoverService(Service):
             raise CallError(f'Node {node} invalid for call_remote', errno.EBADRPC)
         # 860 is the iSCSI port and blocked by the failover script
         with Client(f'ws://{remote}:6000/websocket', reserved_ports=True, reserved_ports_blacklist=[860]) as c:
-            kwargs = {}
-            if timeout:
-                kwargs['timeout'] = timeout
-            return c.call(method, *args, **kwargs)
+            return c.call(method, *args, **options)
 
     @accepts()
     def encryption_getkey(self):
