@@ -305,8 +305,8 @@ class VolumeManagerForm(VolumeMixin, Form):
         # Send geli keyfile to the other node
         _n = notifier()
         if volume_encrypt > 0 and not _n.is_freenas() and _n.failover_licensed():
-            s = _n.failover_rpc()
-            _n.sync_file_send(s, volume.get_geli_keyfile())
+            with client as c:
+                _n.sync_file_send(c, volume.get_geli_keyfile())
 
         # This must be outside transaction block to make sure the changes
         # are committed before the call of ix-fstab

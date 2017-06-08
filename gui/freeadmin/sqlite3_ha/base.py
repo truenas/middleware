@@ -183,25 +183,6 @@ class DatabaseWrapper(sqlite3base.DatabaseWrapper):
 
         return script
 
-    def dump_send(self):
-        from freenasUI.middleware.notifier import notifier
-        """
-        Get a dump and send to the other node.
-        """
-        script = self.dump()
-        s = notifier().failover_rpc()
-        # If we are syncing then we need to clear the Journal in case
-        # everything goes as planned.
-        with Journal() as j:
-            try:
-                sync = s.sync_to(script)
-                if sync:
-                    j.queries = []
-                return sync
-            except (xmlrpc.client.Fault, socket.error) as e:
-                log.error('Failed sync_to: %s', e)
-                return False
-
     def dump_recv(self, script):
         """
         Receives the dump from the other side, executing via script within

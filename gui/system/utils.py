@@ -38,6 +38,7 @@ from lockfile import LockFile
 from freenasOS import Update
 from freenasUI.common import humanize_size
 from freenasUI.common.pipesubr import pipeopen
+from freenasUI.middleware.client import client
 
 log = logging.getLogger('system.utils')
 
@@ -397,8 +398,9 @@ def debug_generate():
     standby_debug = None
     if not _n.is_freenas() and _n.failover_licensed():
         try:
-            s = _n.failover_rpc()
-            standby_debug = s.debug()
+            with client as c:
+                job = c.call('failover.call_remote', 'system.debug', [], {'job': True})
+            standby_debug = job['result']
         except:
             log.error('Failed to get debug from standby node', exc_info=True)
 
@@ -408,7 +410,8 @@ def debug_generate():
 
         if standby_debug:
             debug_file = '%s/debug.tar' % direc
-            _n.sync_file_recv(s, standby_debug, '%s/standby.txz' % direc)
+            with client as c:
+                _n.sync_file_recv(c, standby_debug, '%s/standby.txz' % direc)
             # provide correct hostnames
             if _n.failover_node() == 'A':
                 my_hostname = gc.gc_hostname

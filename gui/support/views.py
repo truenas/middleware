@@ -84,9 +84,8 @@ def license_update(request):
             try:
                 _n = notifier()
                 if not _n.is_freenas():
-                    s = _n.failover_rpc()
-                    if s is not None:
-                        _n.sync_file_send(s, utils.LICENSE_FILE)
+                    with client as c:
+                        _n.sync_file_send(c, utils.LICENSE_FILE)
                 form.done(request, events)
             except Exception as e:
                 log.debug("Failed to sync license file: %s", e, exc_info=True)
