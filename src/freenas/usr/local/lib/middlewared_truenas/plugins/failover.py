@@ -183,7 +183,7 @@ def journal_sync(middleware):
         for q in list(j.queries):
             query, params = q
             try:
-                middleware.call('failover.call_remote', 'database.sql', [query, params])
+                middleware.call('failover.call_remote', 'datastore.sql', [query, params])
                 j.queries.remove(q)
             except ClientException as e:
                 middleware.logger.exception('Failed to run sql: %s', e)
