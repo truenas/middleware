@@ -1272,7 +1272,7 @@ def update_apply(request):
         if not notifier().is_freenas() and notifier().failover_licensed():
             with client as c:
                 try:
-                    update_check = c.call('failover.call_remote', 'update.check_available', [[('id', '=', uuid)]])
+                    update_check = c.call('failover.call_remote', 'update.check_available')
                 except ClientException as e:
                     if e.trace['class'] in ('ConnectionRefusedError', 'socket.error'):
                         return render(request, 'failover/failover_down.html')
@@ -1436,7 +1436,7 @@ def update_check(request):
                 network = False
                 error_trace = None
                 try:
-                    update_check = c.call('failover.call_remote', 'update.check_available', [[('id', '=', uuid)]])
+                    update_check = c.call('failover.call_remote', 'update.check_available')
                 except Exception as e:
                     if isinstance(e, ClientException):
                         if e.trace['class'] in ('ConnectionRefusedError', 'socket.error'):
@@ -1461,7 +1461,8 @@ def update_check(request):
                 handler = None
 
             update_applied_msg = 'Update already applied, reboot standby node.'
-            update_applied = True if update_check['status'] == 'REBOOT_REQUIRED' else False
+            update_applied = True if not error and update_check['status'] == 'REBOOT_REQUIRED' else False
+
             return render(request, 'system/update.html', {
                 'update': update,
                 'update_applied': update_applied,
