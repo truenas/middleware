@@ -220,6 +220,8 @@ class UpdateService(Service):
         data = {
             'status': 'AVAILABLE',
             'changes': handler.changes,
+            'notice': manifest.Notice(),
+            'notes': manifest.Notes(),
         }
 
         conf = Configuration.Configuration()
