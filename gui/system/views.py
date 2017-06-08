@@ -1276,6 +1276,7 @@ def update_apply(request):
                 except ClientException as e:
                     if e.trace['class'] in ('ConnectionRefusedError', 'socket.error'):
                         return render(request, 'failover/failover_down.html')
+                    raise
 
             # We need to transform returned data to something the template understands
             if update_check['status'] == 'AVAILABLE':
@@ -1445,7 +1446,7 @@ def update_check(request):
                         error_trace = traceback.format_exc()
 
             # We need to transform returned data to something the template understands
-            if update_check['status'] == 'AVAILABLE':
+            if not error and update_check['status'] == 'AVAILABLE':
                 update = namedtuple('Update', ['Notice', 'Notes'])(
                     Notice=update_check['notice'],
                     Notes=update_check['notes'],
