@@ -1229,7 +1229,7 @@ def update_apply(request):
             if not notifier().is_freenas() and notifier().failover_licensed():
                 failover = True
                 with client as c:
-                    job = c.call('failover.call_remote', 'core.get_jobs', [[('id', '=', uuid)]])[0]
+                    job = c.call('failover.call_remote', 'core.get_jobs', [[('id', '=', int(uuid))]])[0]
 
                 def exit():
                     pass
@@ -1385,7 +1385,7 @@ def update_check(request):
             if not notifier().is_freenas() and notifier().failover_licensed():
                 failover = True
                 with client as c:
-                    job = c.call('failover.call_remote', 'core.get_jobs', [[('id', '=', uuid)]])[0]
+                    job = c.call('failover.call_remote', 'core.get_jobs', [[('id', '=', int(uuid))]])[0]
 
                 def exit():
                     pass
@@ -1463,7 +1463,7 @@ def update_check(request):
             update_applied_msg = 'Update already applied, reboot standby node.'
             update_applied = True if not error and update_check['status'] == 'REBOOT_REQUIRED' else False
 
-            return render(request, 'system/update.html', {
+            return render(request, 'system/update_check.html', {
                 'update': update,
                 'update_applied': update_applied,
                 'update_applied_msg': update_applied_msg,
@@ -1540,6 +1540,9 @@ def update_progress(request):
             'reboot': True,
             'uuid': jobid,
         }
+        desc = job['progress'].get('description')
+        if desc:
+            load['details'] = desc
     else:
         load = UpdateHandler().load()
     return HttpResponse(
