@@ -161,12 +161,14 @@ class Call(object):
         self.params = params
         self.returned = Event()
         self.result = None
+        self.errno = None
         self.error = None
         self.trace = None
 
 
 class ClientException(Exception):
-    def __init__(self, error, trace=None):
+    def __init__(self, error, errno=None, trace=None):
+        self.errno = errno
         self.error = error
         self.trace = trace
 
@@ -234,7 +236,8 @@ class Client(object):
             if call:
                 call.result = message.get('result')
                 if 'error' in message:
-                    call.error = message['error'].get('error')
+                    call.errno = message['error'].get('error')
+                    call.error = message['error'].get('reason')
                     call.trace = message['error'].get('trace')
                 call.returned.set()
                 self._unregister_call(call)
@@ -323,8 +326,8 @@ class Client(object):
             self._unregister_call(c)
             raise CallTimeout("Call timeout")
 
-        if c.error:
-            raise ClientException(c.error, c.trace)
+        if c.errno:
+            raise ClientException(c.error, c.errno, c.trace)
 
         if job:
             job_id = c.result
@@ -347,7 +350,7 @@ class Client(object):
             if job is None:
                 raise ClientException('No job event was received.')
             if job['state'] != 'SUCCESS':
-                raise ClientException(job['error'], job['exception'])
+                raise ClientException(job['error'], trace=job['exception'])
             return job['result']
 
         return c.result

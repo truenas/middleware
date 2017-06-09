@@ -129,12 +129,13 @@ class Application(WebSocketApplication):
             'formatted': ''.join(traceback.format_exception(*exc_info)),
         }
 
-    def send_error(self, message, error, exc_info=None):
+    def send_error(self, message, errno, reason=None, exc_info=None):
         self._send({
             'msg': 'result',
             'id': message['id'],
             'error': {
-                'error': error,
+                'error': errno,
+                'reason': reason,
                 'trace': self._tb_error(exc_info) if exc_info else None,
             },
         })
@@ -155,9 +156,9 @@ class Application(WebSocketApplication):
         except (CallException, SchemaError) as e:
             # CallException and subclasses are the way to gracefully
             # send errors to the client
-            self.send_error(message, str(e), sys.exc_info())
+            self.send_error(message, e.errno, str(e), sys.exc_info())
         except Exception as e:
-            self.send_error(message, str(e), sys.exc_info())
+            self.send_error(message, errno.EINVAL, str(e), sys.exc_info())
             self.logger.warn('Exception while calling {}(*{})'.format(message['method'], message.get('params')), exc_info=True)
 
             if self.middleware.crash_reporting.is_disabled():
@@ -252,7 +253,7 @@ class Application(WebSocketApplication):
             return
 
         if not self.authenticated:
-            self.send_error(message, 'Not authenticated')
+            self.send_error(message, errno.EACCES, 'Not authenticated')
             return
 
         if message['msg'] == 'sub':
@@ -573,7 +574,7 @@ class Middleware(object):
         methodobj = self._method_lookup(message['method'])
 
         if not app.authenticated and not hasattr(methodobj, '_no_auth_required'):
-            app.send_error(message, 'Not authenticated')
+            app.send_error(message, errno.EACCES, 'Not authenticated')
             return
 
         return self._call(message['method'], methodobj, params, app=app)
