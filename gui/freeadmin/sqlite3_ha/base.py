@@ -2,10 +2,8 @@
 import gevent.monkey
 import logging
 import os
-import socket
 import threading
 import time
-import xmlrpc.client
 from sqlite3 import OperationalError
 
 from django.db.backends.sqlite3 import base as sqlite3base
@@ -117,22 +115,20 @@ class RunSQLRemote(threading.Thread):
         super(RunSQLRemote, self).__init__(*args, **kwargs)
 
     def run(self):
-        from freenasUI.common.log import log_traceback
+        from freenasUI.middleware.client import client, ClientException
         try:
             with Journal() as f:
                 if f.queries:
                     f.queries.append((self._sql, self._params))
                 else:
-                    from freenasUI.middleware.client import client
                     with client as c:
                         c.call('failover.call_remote', 'datastore.sql', [self._sql, self._params])
-        except socket.error as err:
+        except ClientException:
             with Journal() as f:
                 f.queries.append((self._sql, self._params))
             return False
         except Exception as err:
-            log_traceback(log=log)
-            log.error('Failed to run SQL remotely %s: %s', self._sql, err)
+            log.error('Failed to run SQL remotely %s: %s', self._sql, err, exc_info=True)
             return False
         return True
 
