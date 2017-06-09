@@ -303,7 +303,8 @@ class UpdateService(Service):
         """
         Downloads (if not already in cache) and apply an update.
         """
-        train = (attrs or {}).get('train') or self.get_trains()['selected']
+        attrs = attrs or {}
+        train = attrs.get('train') or self.get_trains()['selected']
         location = self.middleware.call('notifier.get_update_location')
 
         handler = UpdateHandler(self, job)
