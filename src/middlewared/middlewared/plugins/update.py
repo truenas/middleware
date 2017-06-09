@@ -1,6 +1,7 @@
 from middlewared.schema import accepts, Bool, Dict, Str
-from middlewared.service import job, Service
+from middlewared.service import job, CallError, Service
 
+import errno
 import re
 import socket
 import sys
@@ -220,6 +221,8 @@ class UpdateService(Service):
         data = {
             'status': 'AVAILABLE',
             'changes': handler.changes,
+            'notice': manifest.Notice(),
+            'notes': manifest.Notes(),
         }
 
         conf = Configuration.Configuration()
@@ -378,3 +381,18 @@ Changelog:
             except Exception:
                 self.logger.warn('Failed to send email about new update', exc_info=True)
         return True
+
+    @accepts(Str('path'))
+    @job(lock='updatemanual', process=True)
+    def manual(self, job, path):
+        """
+        Apply manual update of file `path`.
+        """
+        rv = self.middleware.call('notifier.validate_update', path)
+        if not rv:
+            raise CallError('Invalid update file', errno.EINVAL)
+        self.middleware.call('notifier.apply_update', path)
+        try:
+            self.middleware.call('notifier.destroy_upload_location')
+        except Exception:
+            self.logger.warn('Failed to destroy upload location', exc_info=True)

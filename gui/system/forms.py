@@ -954,12 +954,12 @@ class ManualUpdateWizard(FileWizard):
 
         try:
             if not _n.is_freenas() and _n.failover_licensed():
-                s = _n.failover_rpc(timeout=10)
-                s.notifier('create_upload_location', None, None)
-                _n.sync_file_send(s, path, '/var/tmp/firmware/update.tar.xz')
-                s.update_manual('/var/tmp/firmware/update.tar.xz')
+                with client as c:
+                    c.call('failover.call_remote', 'notifier.create_upload_location')
+                    _n.sync_file_send(c, path, '/var/tmp/firmware/update.tar.xz')
+                    c.call('failover.call_remote', 'update.manual', ['/var/tmp/firmware/update.tar.xz'], {'job': True})
                 try:
-                    s.reboot()
+                    c.call('failover.call_remote', 'system.reboot', [{'delay': 2}])
                 except:
                     pass
                 response = render_to_response('failover/update_standby.html')

@@ -8,6 +8,7 @@ from freenasUI.api.resources import (
 from freenasUI.common.system import get_sw_name
 from freenasUI.freeadmin.options import BaseFreeAdmin
 from freenasUI.freeadmin.site import site
+from freenasUI.middleware.client import client, ClientException
 from freenasUI.middleware.notifier import notifier
 from freenasUI.network import models
 
@@ -23,15 +24,12 @@ class NetworkInterruptMixin(object):
             notifier().failover_status() == 'MASTER'
         ):
             from freenasUI.failover.models import Failover
-            s = notifier().failover_rpc(timeout=1)
-            if (
-                not Failover.objects.all()[0].disabled and
-                s is not None
-            ):
+            if not Failover.objects.all()[0].disabled:
                 try:
-                    s.ping()
-                    failover_event = True
-                except Exception:
+                    with client as c:
+                        c.call('failover.call_remote', 'core.ping', timeout=1)
+                        failover_event = True
+                except ClientException:
                     pass
 
         if failover_event:
