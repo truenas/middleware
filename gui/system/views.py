@@ -1399,11 +1399,12 @@ def update_check(request):
                 rv = {
                     'exit': exit,
                     'uuid': uuid,
+                    'apply': True if job['method'] == 'update.update' else False,
                     'reboot': True,
                     'finished': True if job['state'] in ('SUCCESS', 'FAILED') else False,
                     'error': job['error'] or False,
                 }
-                handler = namedtuple('Handler', ['uuid', 'error', 'finished', 'exit', 'reboot'])(**rv)
+                handler = namedtuple('Handler', ['uuid', 'error', 'finished', 'exit', 'reboot', 'apply'])(**rv)
             else:
                 handler = UpdateHandler(uuid=uuid)
             if handler.error is not False:
