@@ -69,7 +69,7 @@ from freenasUI.common.ssl import (
 )
 from freenasUI.freeadmin.apppool import appPool
 from freenasUI.freeadmin.views import JsonResp
-from freenasUI.middleware.client import client, ClientException
+from freenasUI.middleware.client import client, CallTimeout, ClientException
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier
 from freenasUI.middleware.zfs import zpool_list
@@ -1228,8 +1228,11 @@ def update_apply(request):
             # Get update handler from standby node
             if not notifier().is_freenas() and notifier().failover_licensed():
                 failover = True
-                with client as c:
-                    job = c.call('failover.call_remote', 'core.get_jobs', [[('id', '=', int(uuid))]])[0]
+                try:
+                    with client as c:
+                        job = c.call('failover.call_remote', 'core.get_jobs', [[('id', '=', int(uuid))], {'timeout': 10}])[0]
+                except CallTimeout:
+                    return HttpResponse(uuid, status=202)
 
                 def exit():
                     pass
@@ -1384,8 +1387,11 @@ def update_check(request):
             # Get update handler from standby node
             if not notifier().is_freenas() and notifier().failover_licensed():
                 failover = True
-                with client as c:
-                    job = c.call('failover.call_remote', 'core.get_jobs', [[('id', '=', int(uuid))]])[0]
+                try:
+                    with client as c:
+                        job = c.call('failover.call_remote', 'core.get_jobs', [[('id', '=', int(uuid))], {'timeout': 10}])[0]
+                except CallTimeout:
+                    return HttpResponse(uuid, status=202)
 
                 def exit():
                     pass
