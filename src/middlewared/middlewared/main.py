@@ -385,9 +385,10 @@ class FileApplication(object):
 
 class Middleware(object):
 
-    def __init__(self, plugins_dirs=None):
+    def __init__(self, loop_monitor=True, plugins_dirs=None):
         self.logger = logger.Logger('middlewared').getLogger()
         self.crash_reporting = logger.CrashReporting()
+        self.loop_monitor = loop_monitor
         self.__threadpool = ThreadPool(5)  # Init before plugins are loaded
         self.__jobs = JobsQueue(self)
         self.__schemas = {}
@@ -649,7 +650,8 @@ class Middleware(object):
             self._green_counter = 0
 
     def run(self):
-        self.green_monitor()
+        if self.loop_monitor:
+            self.green_monitor()
 
         gevent.signal(signal.SIGTERM, self.kill)
         gevent.signal(signal.SIGUSR1, self.pdb)
@@ -699,6 +701,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('restart', nargs='?')
     parser.add_argument('--foreground', '-f', action='store_true')
+    parser.add_argument('--disable-loop-monitor', '-L', action='store_true')
     parser.add_argument('--plugins-dirs', '-p', action='append')
     parser.add_argument('--debug-level', default='DEBUG', choices=[
         'DEBUG',
@@ -747,7 +750,10 @@ def main():
     # Workaround to tell django to not set up logging on its own
     os.environ['MIDDLEWARED'] = str(os.getpid())
 
-    Middleware(plugins_dirs=args.plugins_dirs).run()
+    Middleware(
+        loop_monitor=not args.disable_loop_monitor,
+        plugins_dirs=args.plugins_dirs,
+    ).run()
     if not args.foreground:
         daemonc.close()
 
