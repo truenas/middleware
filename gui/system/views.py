@@ -1230,7 +1230,7 @@ def update_apply(request):
                 failover = True
                 try:
                     with client as c:
-                        job = c.call('failover.call_remote', 'core.get_jobs', [[('id', '=', int(uuid))], {'timeout': 10}])[0]
+                        job = c.call('failover.call_remote', 'core.get_jobs', [[('id', '=', int(uuid))]], {'timeout': 10})[0]
                 except CallTimeout:
                     return HttpResponse(uuid, status=202)
 
@@ -1389,7 +1389,7 @@ def update_check(request):
                 failover = True
                 try:
                     with client as c:
-                        job = c.call('failover.call_remote', 'core.get_jobs', [[('id', '=', int(uuid))], {'timeout': 10}])[0]
+                        job = c.call('failover.call_remote', 'core.get_jobs', [[('id', '=', int(uuid))]], {'timeout': 10})[0]
                 except CallTimeout:
                     return HttpResponse(uuid, status=202)
 
@@ -1535,7 +1535,7 @@ def update_progress(request):
     if not notifier().is_freenas() and notifier().failover_licensed():
         jobid = request.session['failover_update_jobid']
         with client as c:
-            job = c.call('failover.call_remote', 'core.get_jobs', [[('id', '=', jobid)]])[0]
+            job = c.call('failover.call_remote', 'core.get_jobs', [[('id', '=', jobid)]], {'timeout': 10})[0]
         load = {
             'apply': True if job['method'] == 'update.update' else False,
             'error': job['error'],
