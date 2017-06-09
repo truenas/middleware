@@ -109,9 +109,14 @@ class FailoverService(Service):
             remote = '169.254.10.1'
         else:
             raise CallError(f'Node {node} invalid for call_remote', errno.EBADRPC)
-        # 860 is the iSCSI port and blocked by the failover script
-        with Client(f'ws://{remote}:6000/websocket', reserved_ports=True, reserved_ports_blacklist=[860]) as c:
-            return c.call(method, *args, **options)
+        try:
+            # 860 is the iSCSI port and blocked by the failover script
+            with Client(f'ws://{remote}:6000/websocket', reserved_ports=True, reserved_ports_blacklist=[860]) as c:
+                return c.call(method, *args, **options)
+        except ConnectionRefusedError:
+            raise CallError('Connection refused', errno.ECONNREFUSED)
+        except ClientException as e:
+            raise CallError(str(e), e.errno)
 
     @accepts()
     def encryption_getkey(self):
