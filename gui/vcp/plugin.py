@@ -28,7 +28,7 @@
 import requests
 import ssl
 import datetime
-from . import utils
+import freenasUI.vcp.utils as utils
 import configparser
 import os
 from django.conf import settings

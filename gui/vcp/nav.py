@@ -24,8 +24,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
-
-from . import utils
+import freenasUI.vcp.utils as utils
 
 from django.utils.translation import ugettext_lazy as _
 from freenasUI.freeadmin.tree import TreeNode
