@@ -143,6 +143,8 @@ class Application(object):
                 result = result.id
             elif isinstance(result, types.GeneratorType):
                 result = list(result)
+            elif isinstance(result, types.AsyncGeneratorType):
+                result = [i async for i in result]
             self._send({
                 'id': message['id'],
                 'msg': 'result',
