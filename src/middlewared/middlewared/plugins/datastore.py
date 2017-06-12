@@ -77,9 +77,10 @@ class DatastoreService(Service):
         app, model = name.split('.', 1)
         return apps.get_model(app, model)
 
-    def __queryset_serialize(self, qs, extend=None, field_prefix=None):
-        for i in self.middleware.threaded(lambda: list(qs)):
-            yield django_modelobj_serialize(self.middleware, i, extend=extend, field_prefix=field_prefix)
+    async def __queryset_serialize(self, qs, extend=None, field_prefix=None):
+        result = await self.middleware.threaded(lambda: list(qs))
+        for i in result:
+            yield await django_modelobj_serialize(self.middleware, i, extend=extend, field_prefix=field_prefix)
 
     @accepts(
         Str('name'),
@@ -95,7 +96,7 @@ class DatastoreService(Service):
             register=True,
         ),
     )
-    def query(self, name, filters=None, options=None):
+    async def query(self, name, filters=None, options=None):
         """Query for items in a given collection `name`.
 
         `filters` is a list which each entry can be in one of the following formats:
@@ -159,12 +160,15 @@ class DatastoreService(Service):
         if options.get('count') is True:
             return qs.count()
 
-        result = list(self.__queryset_serialize(
+        result = []
+        async for i in self.__queryset_serialize(
             qs, extend=options.get('extend'), field_prefix=options.get('prefix')
-        ))
+        ):
+            result.append(i)
 
         if options.get('get') is True:
             return result[0]
+
         return result
 
     @accepts(Str('name'), Ref('query-options'))

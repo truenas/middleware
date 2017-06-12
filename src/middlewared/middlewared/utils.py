@@ -9,7 +9,7 @@ from freenasOS import Configuration
 VERSION = None
 
 
-def django_modelobj_serialize(middleware, obj, extend=None, field_prefix=None):
+async def django_modelobj_serialize(middleware, obj, extend=None, field_prefix=None):
     from django.db.models.fields.related import ForeignKey
     from freenasUI.contrib.IPAddressField import (
         IPAddressField, IP4AddressField, IP6AddressField
@@ -36,7 +36,7 @@ def django_modelobj_serialize(middleware, obj, extend=None, field_prefix=None):
         else:
             data[name] = value
     if extend:
-        data = middleware.call(extend, data)
+        data = await middleware.call(extend, data)
     return data
 
 
