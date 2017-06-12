@@ -13,7 +13,7 @@ class ConfigService(Service):
         Bool('secretseed', default=False),
     ))
     @job(pipe=True)
-    def save(self, job, options=None):
+    async def save(self, job, options=None):
         """
         Provide configuration file.
 
@@ -33,15 +33,16 @@ class ConfigService(Service):
                 tar.add('/data/freenas-v1.db', arcname='freenas-v1.db')
                 tar.add('/data/pwenc_secret', arcname='pwenc_secret')
 
-        with open(filename, 'rb') as f:
-            f2 = os.fdopen(job.write_fd)
-            while True:
-                read = f.read(1024)
-                if read == b'':
-                    break
-                f2.write(read)
-            f2.close()
-            os.close(job.write_fd)
+        def read_write():
+            with open(filename, 'rb') as f:
+                f2 = os.fdopen(job.write_fd, 'wb')
+                while True:
+                    read = f.read(1024)
+                    if read == b'':
+                        break
+                    f2.write(read)
+                f2.close()
+        await self.middleware.threaded(read_write)
 
         if bundle:
             os.remove(filename)
@@ -52,19 +53,21 @@ class ConfigService(Service):
         """
         Accepts a configuration file via job pipe.
         """
-        f = gevent.fileobject.FileObject(job.read_fd, 'rb', close=False)
-        nreads = 0
-        filename = tempfile.mktemp(dir='/var/tmp/firmware')
-        with open(filename, 'wb') as f_tmp:
-            while True:
-                read = f.read(1024)
-                if read == b'':
-                    break
-                f_tmp.write(read)
-                nreads += 1
-                if nreads > 10240:
-                    # FIXME: transfer to a file on disk
-                    raise ValueError('File is bigger than 10MiB')
+        def read_write():
+            f = os.fdopen(job.read_fd, 'rb')
+            nreads = 0
+            filename = tempfile.mktemp(dir='/var/tmp/firmware')
+            with open(filename, 'wb') as f_tmp:
+                while True:
+                    read = f.read(1024)
+                    if read == b'':
+                        break
+                    f_tmp.write(read)
+                    nreads += 1
+                    if nreads > 10240:
+                        # FIXME: transfer to a file on disk
+                        raise ValueError('File is bigger than 10MiB')
+        await self.middleware.threaded(read_write)
         rv = await self.middleware.call('notifier.config_upload', filename)
         if not rv[0]:
             raise ValueError(rv[1])
