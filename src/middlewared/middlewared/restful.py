@@ -145,7 +145,7 @@ class Resource(object):
 
             async def on_method(req, *args, **kwargs):
                 resp = web.Response()
-                authenticate(self.middleware, req)
+                await authenticate(self.middleware, req)
                 return await do(method, req, resp, *args, **kwargs)
 
             return on_method
