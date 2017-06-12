@@ -3,6 +3,7 @@ from collections import defaultdict
 
 import base64
 import binascii
+import types
 
 from .client import ejson as json
 
@@ -146,6 +147,7 @@ class Resource(object):
             async def on_method(req, *args, **kwargs):
                 resp = web.Response()
                 await authenticate(self.middleware, req)
+                kwargs.update(dict(req.match_info))
                 return await do(method, req, resp, *args, **kwargs)
 
             return on_method
@@ -244,5 +246,10 @@ class Resource(object):
         if method.get('item_method') is True:
             method_args.insert(0, kwargs['id'])
 
-        resp.text = json.dumps(await self.middleware.call(methodname, *method_args), indent=True)
+        result = await self.middleware.call(methodname, *method_args)
+        if isinstance(result, types.GeneratorType):
+            result = list(result)
+        elif isinstance(result, types.AsyncGeneratorType):
+            result = [i async for i in result]
+        resp.text = json.dumps(result, indent=True)
         return resp
