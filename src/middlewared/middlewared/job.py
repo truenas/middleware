@@ -1,11 +1,10 @@
 from collections import OrderedDict
 from datetime import datetime
-from gevent.event import Event
-from gevent.lock import Semaphore
 from middlewared.utils import Popen
 
+import asyncio
 import enum
-import gevent
+import functools
 import json
 import os
 import subprocess
@@ -32,7 +31,7 @@ class JobSharedLock(object):
         self.queue = queue
         self.name = name
         self.jobs = []
-        self.semaphore = Semaphore()
+        self.semaphore = asyncio.Semaphore()
 
     def add_job(self, job):
         self.jobs.append(job)
@@ -46,8 +45,8 @@ class JobSharedLock(object):
     def locked(self):
         return self.semaphore.locked()
 
-    def acquire(self):
-        return self.semaphore.acquire()
+    async def acquire(self):
+        return await self.semaphore.acquire()
 
     def release(self):
         return self.semaphore.release()
@@ -62,7 +61,7 @@ class JobsQueue(object):
 
         # Event responsible for the job queue schedule loop.
         # This event is set and a new job is potentially ready to run
-        self.queue_event = Event()
+        self.queue_event = asyncio.Event()
 
         # Shared lock (JobSharedLock) dict
         self.job_locks = {}
@@ -109,14 +108,14 @@ class JobsQueue(object):
         # waiting for the same lock
         self.queue_event.set()
 
-    def __next__(self):
+    async def __next__(self):
         """
         This is a blocking method.
         Returns when there is a new job ready to run.
         """
         while True:
             # Awaits a new event to look for a job
-            self.queue_event.wait()
+            await self.queue_event.wait()
             found = None
             for job in self.queue:
                 lock = self.get_lock(job)
@@ -124,7 +123,7 @@ class JobsQueue(object):
                 if lock is None or not lock.locked():
                     found = job
                     if lock:
-                        job.set_lock(lock)
+                        await job.set_lock(lock)
                     break
             if found:
                 # Unlocked job found to run
@@ -137,10 +136,10 @@ class JobsQueue(object):
                 # No jobs available to run, clear the event
                 self.queue_event.clear()
 
-    def run(self):
+    async def run(self):
         while True:
-            job = next(self)
-            gevent.spawn(job.run, self)
+            job = await self.__next__()
+            asyncio.ensure_future(job.run(self))
 
 
 class JobsDeque(object):
@@ -171,7 +170,7 @@ class Job(object):
     """
 
     def __init__(self, middleware, method_name, method, args, options):
-        self._finished = Event()
+        self._finished = asyncio.Event()
         self.middleware = middleware
         self.method_name = method_name
         self.method = method
@@ -212,9 +211,9 @@ class Job(object):
     def get_lock(self):
         return self.lock
 
-    def set_lock(self, lock):
+    async def set_lock(self, lock):
         self.lock = lock
-        self.lock.acquire()
+        await self.lock.acquire()
 
     def set_result(self, result):
         self.result = result
@@ -247,7 +246,7 @@ class Job(object):
         self._finished.wait()
         return self.result
 
-    def run(self, queue):
+    async def run(self, queue):
         """
         Run a Job and set state/result accordingly.
         This method is supposed to run in a greenlet.
@@ -261,7 +260,7 @@ class Job(object):
             and return the result as a json
             """
             if self.options.get('process'):
-                proc = Popen([
+                proc = await Popen([
                     '/usr/bin/env',
                     'python3',
                     os.path.join(
@@ -278,9 +277,9 @@ class Job(object):
                     'PATH': '/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin',
                     'TERM': 'xterm',
                 })
-                output = proc.communicate()
+                output = await proc.communicate()
                 try:
-                    data = json.loads(output[0])
+                    data = json.loads(output[0].decode())
                 except ValueError:
                     self.set_state('FAILED')
                     self.error = 'Running job has failed.\nSTDOUT: {}\nSTDERR: {}'.format(output[0], output[1])

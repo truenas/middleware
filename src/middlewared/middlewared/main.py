@@ -606,7 +606,7 @@ class Middleware(object):
 
         # Send event also for internally subscribed plugins
         for handler in self.__event_subs.get(name, []):
-            gevent.spawn(handler, self, event_type, kwargs)
+            asyncio.ensure_future(functools.partial(handler, self, event_type, kwargs))
 
     def pdb(self):
         import pdb
@@ -649,6 +649,7 @@ class Middleware(object):
         loop.run_until_complete(
             asyncio.ensure_future(restful_api.register_resources())
         )
+        asyncio.ensure_future(self.__jobs.run())
 
         self.logger.debug('Accepting connections')
         web.run_app(app, host='0.0.0.0', port=6000, access_log=None)
