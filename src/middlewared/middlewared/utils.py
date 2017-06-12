@@ -32,7 +32,7 @@ async def django_modelobj_serialize(middleware, obj, extend=None, field_prefix=N
         )):
             data[name] = str(value)
         elif isinstance(field, ForeignKey):
-            data[name] = django_modelobj_serialize(middleware, value) if value is not None else value
+            data[name] = await django_modelobj_serialize(middleware, value) if value is not None else value
         else:
             data[name] = value
     if extend:
