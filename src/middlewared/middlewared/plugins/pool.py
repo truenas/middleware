@@ -8,12 +8,12 @@ from middlewared.service import filterable, item_method, private, CRUDService
 class PoolService(CRUDService):
 
     @filterable
-    def query(self, filters=None, options=None):
+    async def query(self, filters=None, options=None):
         filters = filters or []
         options = options or {}
         options['extend'] = 'pool.pool_extend'
         options['prefix'] = 'vol_'
-        return self.middleware.call('datastore.query', 'storage.volume', filters, options)
+        return await self.middleware.call('datastore.query', 'storage.volume', filters, options)
 
     @private
     def pool_extend(self, pool):
