@@ -16,15 +16,15 @@ DEVD_SOCKETFILE = '/var/run/devd.seqpacket.pipe'
 class DeviceService(Service):
 
     @accepts(Str('type', enum=['SERIAL', 'DISK']))
-    def get_info(self, _type):
+    async def get_info(self, _type):
         """
         Get info for certain device types.
 
         Currently only SERIAL is supported.
         """
-        return getattr(self, f'_get_{_type.lower()}')()
+        return await getattr(self, f'_get_{_type.lower()}')()
 
-    def _get_serial(self):
+    async def _get_serial(self):
         ports = []
         for devices in devinfo.DevInfo().resource_managers['I/O ports'].values():
             for dev in devices:
@@ -40,8 +40,8 @@ class DeviceService(Service):
                 })
         return ports
 
-    def _get_disk(self):
-        self.middleware.threaded(geom.scan)
+    async def _get_disk(self):
+        await self.middleware.threaded(geom.scan)
         disks = {}
         klass = geom.class_by_name('DISK')
         if not klass:
