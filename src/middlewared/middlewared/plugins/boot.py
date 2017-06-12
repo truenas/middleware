@@ -5,8 +5,8 @@ from middlewared.service import Service
 class BootService(Service):
 
     @accepts()
-    def get_disks(self):
+    async def get_disks(self):
         """
         Returns disks of the boot pool.
         """
-        return self.middleware.call('zfs.pool.get_disks', 'freenas-boot')
+        return await self.middleware.call('zfs.pool.get_disks', 'freenas-boot')
