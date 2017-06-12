@@ -44,7 +44,7 @@ def Popen(args, **kwargs):
     kwargs.setdefault('encoding', 'utf8')
     shell = kwargs.pop('shell', None)
     if shell:
-        return asyncio.create_subprocess_shell(*args, **kwargs)
+        return asyncio.create_subprocess_shell(args, **kwargs)
     else:
         return asyncio.create_subprocess_exec(*args, **kwargs)
 
