@@ -1,3 +1,4 @@
+import asyncio
 import copy
 import errno
 
@@ -333,7 +334,7 @@ def accepts(*schema):
             args_index += 1
         assert len(schema) == f.__code__.co_argcount - args_index  # -1 for self
 
-        async def nf(*args, **kwargs):
+        def clean_args(args, kwargs):
             args = list(args)
 
             # Iterate over positional args first, excluding self
@@ -348,7 +349,17 @@ def accepts(*schema):
                 if kwarg in kwargs:
                     kwargs[kwarg] = nf.accepts[i].clean(kwargs[kwarg])
                 i += 1
-            return await f(*args, **kwargs)
+            return args, kwargs
+
+        if asyncio.iscoroutinefunction(f):
+            async def nf(*args, **kwargs):
+                args, kwargs = clean_args(args, kwargs)
+                return await f(*args, **kwargs)
+        else:
+            def nf(*args, **kwargs):
+                args, kwargs = clean_args(args, kwargs)
+                return f(*args, **kwargs)
+
         nf.__name__ = f.__name__
         nf.__doc__ = f.__doc__
         # Copy private attrs to new function so decorators can work on top of it
