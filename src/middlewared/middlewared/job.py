@@ -292,7 +292,7 @@ class Job(object):
                         self.set_result(data)
                         self.set_state('SUCCESS')
             else:
-                self.set_result(self.method(*([self] + self.args)))
+                self.set_result(await self.method(*([self] + self.args)))
                 self.set_state('SUCCESS')
         except:
             self.set_state('FAILED')
