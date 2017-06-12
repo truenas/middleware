@@ -69,14 +69,14 @@ class AuthService(Service):
         self.authtokens = AuthTokens()
 
     @accepts(Str('username'), Str('password'))
-    def check_user(self, username, password):
+    async def check_user(self, username, password):
         """
         Verify username and password
         """
         if username != 'root':
             return False
         try:
-            user = self.middleware.call('datastore.query', 'account.bsdusers', [('bsdusr_username', '=', username)], {'get': True})
+            user = await self.middleware.call('datastore.query', 'account.bsdusers', [('bsdusr_username', '=', username)], {'get': True})
         except IndexError:
             return False
         if user['bsdusr_unixhash'] in ('x', '*'):
@@ -97,11 +97,11 @@ class AuthService(Service):
     @no_auth_required
     @accepts(Str('username'), Str('password'))
     @pass_app
-    def login(self, app, username, password):
+    async def login(self, app, username, password):
         """Authenticate session using username and password.
         Currently only root user is allowed.
         """
-        valid = self.check_user(username, password)
+        valid = await self.check_user(username, password)
         if valid:
             app.authenticated = True
         return valid
@@ -172,7 +172,7 @@ async def check_permission(app):
     ], stdout=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=True)
     data = await proc.communicate()
     for line in data[0].strip().splitlines()[1:]:
-        cols = line.split()
+        cols = line.decode().split()
         if cols[-2] == remote and cols[0] == 'root':
             app.authenticated = True
             break
