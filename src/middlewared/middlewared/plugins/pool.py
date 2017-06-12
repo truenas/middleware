@@ -46,11 +46,12 @@ class PoolService(CRUDService):
 
     @item_method
     @accepts(Int('id'))
-    def get_disks(self, oid):
+    async def get_disks(self, oid):
         """
         Get all disks from a given pool `id`.
         """
-        pool = self.query([('id', '=', oid)], {'get': True})
+        pool = await self.query([('id', '=', oid)], {'get': True})
         if not pool['is_decrypted']:
-            return []
-        return self.middleware.call('zfs.pool.get_disks', pool['name'])
+            yield
+        async for i in await self.middleware.call('zfs.pool.get_disks', pool['name']):
+            yield i

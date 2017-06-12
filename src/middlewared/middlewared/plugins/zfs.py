@@ -14,14 +14,14 @@ class ZFSPoolService(Service):
         private = True
 
     @accepts(Str('pool'))
-    def get_disks(self, name):
+    async def get_disks(self, name):
         zfs = libzfs.ZFS()
         try:
             zpool = zfs.get(name)
         except libzfs.ZFSException as e:
             raise CallError(str(e), errno.ENOENT)
 
-        self.middleware.threaded(geom.scan)
+        await self.middleware.threaded(geom.scan)
         labelclass = geom.class_by_name('LABEL')
         for absdev in zpool.disks:
             dev = absdev.replace('/dev/', '').replace('.eli', '')
