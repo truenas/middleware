@@ -115,7 +115,7 @@ class SystemService(Service):
         return dump
 
 
-def _event_system_ready(middleware, event_type, args):
+async def _event_system_ready(middleware, event_type, args):
     """
     Method called when system is ready, supposed to enable the flag
     telling the system has completed boot.

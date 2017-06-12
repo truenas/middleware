@@ -616,7 +616,7 @@ class Middleware(object):
 
         # Send event also for internally subscribed plugins
         for handler in self.__event_subs.get(name, []):
-            asyncio.ensure_future(functools.partial(handler, self, event_type, kwargs))
+            asyncio.ensure_future(handler(self, event_type, kwargs))
 
     def pdb(self):
         import pdb

@@ -435,7 +435,7 @@ def kmod_load():
         Popen(['/sbin/kldload', 'nmdm'])
 
 
-def _event_system_ready(middleware, event_type, args):
+async def _event_system_ready(middleware, event_type, args):
     """
     Method called when system is ready, supposed to start VMs
     flagged that way.
@@ -443,8 +443,8 @@ def _event_system_ready(middleware, event_type, args):
     if args['id'] != 'ready':
         return
 
-    for vm in middleware.call('vm.query', [('autostart', '=', True)]):
-        middleware.call('vm.start', vm['id'])
+    for vm in await middleware.call('vm.query', [('autostart', '=', True)]):
+        await middleware.call('vm.start', vm['id'])
 
 
 def setup(middleware):
