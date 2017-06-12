@@ -278,27 +278,29 @@ class FileApplication(object):
             start_response('404 Not found', [])
             return ['']
 
-    def download(self, path, environ, start_response):
-
-        if not path[-1].isdigit():
-            start_response('404 Not found', [])
-            return ['']
+    async def download(self, request):
+        path = request.path.split('/')
+        if not request.path[-1].isdigit():
+            resp = web.Response()
+            resp.set_status(404)
+            return resp
 
         job_id = int(path[-1])
         jobs = self.middleware.get_jobs().all()
         job = jobs.get(job_id)
         if not job:
-            start_response('404 Not found', [])
-            return ['']
+            resp = web.Response()
+            resp.set_status(404)
+            return resp
 
-        qs = urllib.parse.parse_qs(environ['QUERY_STRING'])
+        qs = urllib.parse.parse_qs(request.query_string)
         denied = False
         filename = None
         if 'auth_token' not in qs:
             denied = True
         else:
             auth_token = qs.get('auth_token')[0]
-            token = self.middleware.call('auth.get_token', auth_token)
+            token = await self.middleware.call('auth.get_token', auth_token)
             if not token:
                 denied = True
             else:
@@ -307,28 +309,34 @@ class FileApplication(object):
                 else:
                     filename = token['attributes'].get('filename')
         if denied:
-            start_response('401 Access Denied', [])
-            return ['']
+            resp = web.Response()
+            resp.set_status(401)
+            return resp
 
-        start_response('200 OK', [
-            ('Content-Type', 'application/octet-stream'),
-            ('Content-Disposition', f'attachment; filename="{filename}"'),
-            ('Transfer-Encoding', 'chunked'),
-        ])
+        resp = web.StreamResponse(status=200, reason='OK', headers={
+            'Content-Type': 'application/octet-stream',
+            'Content-Disposition': f'attachment; filename="{filename}"',
+            'Transfer-Encoding': 'chunked',
+        })
+        await resp.prepare(request)
 
         f = None
         try:
-            f = gevent.fileobject.FileObject(job.read_fd, 'rb', close=False)
-            while True:
-                read = f.read(1024)
-                if read == b'':
-                    break
-                yield read
+            def read_write():
+                f = os.fdopen(job.read_fd, 'rb')
+                while True:
+                    read = f.read(1024)
+                    if read == b'':
+                        break
+                    resp.write(read)
+                    #await web.drain()
+            await self.middleware.threaded(read_write)
+            await resp.drain()
 
         finally:
             if f:
                 f.close()
-                os.close(job.read_fd)
+        return resp
 
     def upload(self, path, environ, start_response):
 
@@ -643,7 +651,9 @@ class Middleware(object):
         app.router.add_route('GET', '/websocket', self.ws_handler)
 
         app.router.add_route("*", "/api/docs{path_info:.*}", WSGIHandler(apidocs_app))
-        #fileserver = WSGIServer(('127.0.0.1', 8003), FileApplication(self))
+
+        fileapp = FileApplication(self)
+        app.router.add_route('*', '/_download{path_info:.*}', fileapp.download)
 
         restful_api = RESTfulAPI(self, app)
         loop.run_until_complete(
