@@ -1,7 +1,6 @@
 from middlewared.schema import Bool, Dict, accepts
 from middlewared.service import Service, job
 
-import gevent
 import os
 import tarfile
 import tempfile
@@ -35,7 +34,7 @@ class ConfigService(Service):
                 tar.add('/data/pwenc_secret', arcname='pwenc_secret')
 
         with open(filename, 'rb') as f:
-            f2 = gevent.fileobject.FileObject(job.write_fd, 'wb', close=False)
+            f2 = os.fdopen(job.write_fd)
             while True:
                 read = f.read(1024)
                 if read == b'':
@@ -49,7 +48,7 @@ class ConfigService(Service):
 
     @accepts()
     @job(pipe=True)
-    def upload(self, job):
+    async def upload(self, job):
         """
         Accepts a configuration file via job pipe.
         """
@@ -66,7 +65,7 @@ class ConfigService(Service):
                 if nreads > 10240:
                     # FIXME: transfer to a file on disk
                     raise ValueError('File is bigger than 10MiB')
-        rv = self.middleware.call('notifier.config_upload', filename)
+        rv = await self.middleware.call('notifier.config_upload', filename)
         if not rv[0]:
             raise ValueError(rv[1])
-        self.middleware.call('system.reboot', {'delay': 10})
+        await self.middleware.call('system.reboot', {'delay': 10})

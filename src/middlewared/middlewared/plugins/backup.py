@@ -2,9 +2,9 @@ from middlewared.schema import accepts, Bool, Dict, Int, Patch, Ref, Str
 from middlewared.service import CRUDService, Service, item_method, job, private
 from middlewared.utils import Popen
 
+import asyncio
 import boto3
-import gevent
-import gevent.fileobject
+import functools
 import os
 import subprocess
 import re
@@ -212,14 +212,13 @@ class BackupS3Service(Service):
         return response['LocationConstraint']
 
     @private
-    def sync(self, job, backup, credential):
+    async def sync(self, job, backup, credential):
         # Use a temporary file to store s3cmd config file
         with tempfile.NamedTemporaryFile(mode='w+') as f:
             # Make sure only root can read it ad there is sensitive data
             os.chmod(f.name, 0o600)
 
-            fg = gevent.fileobject.FileObject(f.file, 'w', close=False)
-            fg.write("""[remote]
+            f.write("""[remote]
 type = s3
 env_auth = false
 access_key_id = {access_key}
@@ -229,8 +228,8 @@ region = {region}
                 access_key=credential['attributes']['access_key'],
                 secret_key=credential['attributes']['secret_key'],
                 region=backup['attributes']['region'] or '',
-            ).encode())
-            fg.flush()
+            ))
+            f.flush()
 
             args = [
                 '/usr/local/bin/rclone',
@@ -249,7 +248,7 @@ region = {region}
             else:
                 args.extend([remote_path, backup['path']])
 
-            def check_progress(job, proc):
+            async def check_progress(job, proc):
                 RE_TRANSF = re.compile(r'Transferred:\s*?(.+)$', re.S)
                 read_buffer = ''
                 while True:
@@ -266,16 +265,16 @@ region = {region}
                             job.set_progress(None, transferred)
                 return read_buffer
 
-            proc = Popen(
+            proc = await Popen(
                 args,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
             )
-            check_greenlet = gevent.spawn(check_progress, job, proc)
-            proc.communicate()
+            check_task = asyncio.ensure_future(functools.partial(check_progress, job, proc))
+            await proc.communicate()
             if proc.returncode != 0:
-                gevent.joinall([check_greenlet])
-                raise ValueError('rclone failed: {}'.format(check_greenlet.value))
+                asyncio.get_event_loop().run_until_complete(check_task)
+                raise ValueError('rclone failed: {}'.format(check_task.result()))
             return True
 
     @private
@@ -288,14 +287,13 @@ region = {region}
 
         try:
             with os.fdopen(read_fd, 'rb') as f:
-                fg = gevent.fileobject.FileObject(f, 'rb', close=False)
                 mp = client.create_multipart_upload(
                     Bucket=backup['attributes']['bucket'],
                     Key=key
                 )
 
                 while True:
-                    chunk = fg.read(CHUNK_SIZE)
+                    chunk = f.read(CHUNK_SIZE)
                     if chunk == b'':
                         break
 
@@ -337,12 +335,11 @@ region = {region}
         )
 
         with os.fdopen(write_fd, 'wb') as f:
-            fg = gevent.fileobject.FileObject(f, 'wb', close=False)
             while True:
                 chunk = obj['Body'].read(CHUNK_SIZE)
                 if chunk == b'':
                     break
-                fg.write(chunk)
+                f.write(chunk)
 
     @private
     def ls(self, cred_id, bucket, path):

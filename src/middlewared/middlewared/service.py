@@ -271,14 +271,14 @@ class CoreService(Service):
         List('args'),
         Str('filename'),
     )
-    def download(self, method, args, filename):
+    async def download(self, method, args, filename):
         """
         Core helper to call a job marked for download.
 
         Returns the job id and the URL for download.
         """
-        job = self.middleware.call(method, *args)
-        token = self.middleware.call('auth.generate_token', 300, {'filename': filename, 'job': job.id})
+        job = await self.middleware.call(method, *args)
+        token = await self.middleware.call('auth.generate_token', 300, {'filename': filename, 'job': job.id})
         return job.id, f'/_download/{job.id}?auth_token={token}'
 
     @private
