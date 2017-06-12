@@ -172,7 +172,7 @@ class DatastoreService(Service):
         return result
 
     @accepts(Str('name'), Ref('query-options'))
-    def config(self, name, options=None):
+    async def config(self, name, options=None):
         """
         Get configuration settings object for a given `name`.
 
@@ -181,10 +181,10 @@ class DatastoreService(Service):
         if options is None:
             options = {}
         options['get'] = True
-        return self.query(name, None, options)
+        return await self.query(name, None, options)
 
     @accepts(Str('name'), Dict('data', additional_attrs=True))
-    def insert(self, name, data):
+    async def insert(self, name, data):
         """
         Insert a new entry to `name`.
         """
@@ -195,16 +195,16 @@ class DatastoreService(Service):
             if isinstance(field, ForeignKey):
                 data[field.name] = field.rel.to.objects.get(pk=data[field.name])
         obj = model(**data)
-        self.middleware.threaded(obj.save)
+        await self.middleware.threaded(obj.save)
         return obj.pk
 
     @accepts(Str('name'), Any('id'), Dict('data', additional_attrs=True))
-    def update(self, name, id, data):
+    async def update(self, name, id, data):
         """
         Update an entry `id` in `name`.
         """
         model = self.__get_model(name)
-        obj = self.middleware.threaded(lambda oid: model.objects.get(pk=oid), id)
+        obj = await self.middleware.threaded(lambda oid: model.objects.get(pk=oid), id)
         for field in model._meta.fields:
             if field.name not in data:
                 continue
@@ -212,16 +212,16 @@ class DatastoreService(Service):
                 data[field.name] = field.rel.to.objects.get(pk=data[field.name])
         for k, v in list(data.items()):
             setattr(obj, k, v)
-        self.middleware.threaded(obj.save)
+        await self.middleware.threaded(obj.save)
         return obj.pk
 
     @accepts(Str('name'), Any('id'))
-    def delete(self, name, id):
+    async def delete(self, name, id):
         """
         Delete an entry `id` in `name`.
         """
         model = self.__get_model(name)
-        self.middleware.threaded(lambda oid: model.objects.get(pk=oid).delete(), id)
+        await self.middleware.threaded(lambda oid: model.objects.get(pk=oid).delete(), id)
         return True
 
     @private
