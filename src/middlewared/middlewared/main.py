@@ -640,8 +640,7 @@ class Middleware(object):
         app = web.Application(loop=loop)
         app.router.add_route('GET', '/websocket', self.ws_handler)
 
-        apidocs_app.middleware = self
-        app.router.add_route("*", "/api/docs/{path_info:.*}", WSGIHandler(apidocs_app))
+        app.router.add_route("*", "/api/docs{path_info:.*}", WSGIHandler(apidocs_app))
         #fileserver = WSGIServer(('127.0.0.1', 8003), FileApplication(self))
 
         restful_api = RESTfulAPI(self, app)
