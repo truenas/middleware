@@ -71,14 +71,14 @@ class ConsulService(Service):
             return False
 
     @accepts()
-    def reload(self):
+    async def reload(self):
         """
         Reload consul agent.
 
         Returns:
                     bool: True if it could reload, otherwise False.
         """
-        consul_error = Popen(['consul', 'reload'], stdout=subprocess.PIPE, stderr=subprocess.PIPE).wait()
+        consul_error = await (await Popen(['consul', 'reload'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)).wait()
         if consul_error == 0:
             logger.info("===> Reload Consul: {0}".format(consul_error))
             return True

@@ -23,13 +23,13 @@ SYSTEM_READY = False
 class SystemService(Service):
 
     @accepts()
-    def is_freenas(self):
+    async def is_freenas(self):
         """
         Returns `true` if running system is a FreeNAS or `false` is Something Else.
         """
         # This is a stub calling notifier until we have all infrastructure
         # to implement in middlewared
-        return self.middleware.call('notifier.is_freenas')
+        return await self.middleware.call('notifier.is_freenas')
 
     @accepts()
     def version(self):
@@ -43,15 +43,15 @@ class SystemService(Service):
         return SYSTEM_READY
 
     @accepts()
-    def info(self):
+    async def info(self):
         """
         Returns basic system information.
         """
-        uptime = Popen(
+        uptime = (await (await Popen(
             "env -u TZ uptime | awk -F', load averages:' '{ print $1 }'",
             stdout=subprocess.PIPE,
             shell=True,
-        ).communicate()[0].strip()
+        )).communicate())[0].decode().strip()
         return {
             'version': self.version(),
             'hostname': socket.gethostname(),
@@ -66,7 +66,7 @@ class SystemService(Service):
 
     @accepts(Dict('system-reboot', Int('delay', required=False), required=False))
     @job()
-    def reboot(self, job, options=None):
+    async def reboot(self, job, options=None):
         """
         Reboots the operating system.
 
@@ -83,11 +83,11 @@ class SystemService(Service):
         if delay:
             time.sleep(delay)
 
-        Popen(["/sbin/reboot"])
+        await Popen(["/sbin/reboot"])
 
     @accepts(Dict('system-shutdown', Int('delay', required=False), required=False))
     @job()
-    def shutdown(self, job, options=None):
+    async def shutdown(self, job, options=None):
         """
         Shuts down the operating system.
 
@@ -104,7 +104,7 @@ class SystemService(Service):
         if delay:
             time.sleep(delay)
 
-        Popen(["/sbin/poweroff"])
+        await Popen(["/sbin/poweroff"])
 
     @accepts()
     @job(lock='systemdebug')
