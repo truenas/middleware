@@ -645,7 +645,9 @@ class Middleware(object):
         #fileserver = WSGIServer(('127.0.0.1', 8003), FileApplication(self))
 
         restful_api = RESTfulAPI(self, app)
-        #loop.ensure_future(restful_api.register_resources())
+        loop.run_until_complete(
+            asyncio.ensure_future(restful_api.register_resources())
+        )
 
         self.logger.debug('Accepting connections')
         web.run_app(app, host='0.0.0.0', port=6000, access_log=None)

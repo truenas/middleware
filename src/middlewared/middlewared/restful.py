@@ -40,10 +40,10 @@ class RESTfulAPI(object):
         return self.app
 
     async def register_resources(self):
-        for methodname, method in list(await self.middleware.call('core.get_methods').items()):
+        for methodname, method in list((await self.middleware.call('core.get_methods')).items()):
             self._methods[methodname] = method
             self._methods_by_service[methodname.rsplit('.', 1)[0]][methodname] = method
-        for name, service in list(await self.middleware.call('core.get_services').items()):
+        for name, service in list((await self.middleware.call('core.get_services')).items()):
 
             kwargs = {}
             blacklist_methods = []
