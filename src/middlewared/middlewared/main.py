@@ -16,7 +16,7 @@ import binascii
 import cgi
 import concurrent.futures
 import errno
-import gevent
+import functools
 import imp
 import inspect
 import linecache
@@ -265,19 +265,6 @@ class FileApplication(object):
     def __init__(self, middleware):
         self.middleware = middleware
 
-    def __call__(self, environ, start_response):
-        # Path is in the form of:
-        # /_download/{jobid}?auth_token=XXX
-        path = environ['PATH_INFO'][1:].split('/')
-
-        if path[0] == '_download':
-            return self.download(path, environ, start_response)
-        elif path[0] == '_upload':
-            return self.upload(path, environ, start_response)
-        else:
-            start_response('404 Not found', [])
-            return ['']
-
     async def download(self, request):
         path = request.path.split('/')
         if not request.path[-1].isdigit():
@@ -338,55 +325,70 @@ class FileApplication(object):
                 f.close()
         return resp
 
-    def upload(self, path, environ, start_response):
+    async def upload(self, request):
 
         denied = True
-        auth = environ.get('HTTP_AUTHORIZATION')
+        auth = request.headers.get('Authorization')
         if auth:
             if auth.startswith('Basic '):
                 try:
                     auth = binascii.a2b_base64(auth[6:]).decode()
                     if ':' in auth:
                         user, password = auth.split(':', 1)
-                        if self.middleware.call('auth.check_user', user, password):
+                        if await self.middleware.call('auth.check_user', user, password):
                             denied = False
                 except binascii.Error:
                     pass
         if denied:
-            start_response('401 Access Denied', [])
-            return ['']
+            resp = web.Response()
+            resp.set_status(401)
+            return resp
 
-        form = cgi.FieldStorage(environ=environ, fp=environ['wsgi.input'])
+        form = {}
+        reader = await request.multipart()
+        while True:
+            part = await reader.next()
+            if part is None:
+                break
+            form[part.name] = await part.read()  # FIXME: handle big files
+
         if 'data' not in form or 'file' not in form:
-            start_response('405 Method Not Allowed', [])
-            return ['']
+            resp = web.Response(status=405, reason='Expected data not on payload')
+            resp.set_status(405)
+            return resp
 
         try:
-            data = json.loads(form['data'].file.read())
-            job = self.middleware.call(data['method'], *(data.get('params') or []))
+            data = json.loads(form['data'])
+            job = await self.middleware.call(data['method'], *(data.get('params') or []))
         except Exception:
-            start_response('405 Method Not Allowed', [])
-            return [b'Invalid data']
+            resp = web.Response()
+            resp.set_status(405)
+            return resp
 
         f = None
         try:
-            f = gevent.fileobject.FileObject(job.write_fd, 'wb', close=False)
-            while True:
-                read = form['file'].file.read(1024)
-                if read == b'':
-                    break
-                f.write(read)
+            def read_write():
+                f = os.fdopen(job.write_fd, 'wb')
+                i = 0
+                while True:
+                    read = form['file'][i* 1024:(i + 1) * 1024]
+                    if read == b'':
+                        break
+                    f.write(read)
+                    i += 1
+            await self.middleware.threaded(read_write)
         finally:
             if f:
                 f.close()
-                os.close(job.write_fd)
 
-        start_response('200 OK', [
-            ('Content-Type', 'application/json'),
-        ])
-        yield json.dumps({
-            'job_id': job.id,
-        }).encode('utf8')
+        resp = web.Response(
+            status=200,
+            headers={
+                'Content-Type': 'application/json',
+            },
+            body=json.dumps({'job_id': job.id}).encode(),
+        )
+        return resp
 
 
 class Middleware(object):
@@ -537,7 +539,7 @@ class Middleware(object):
 
     async def threaded(self, method, *args, **kwargs):
         """
-        Runs method in a native thread using gevent.ThreadPool.
+        Runs method in a native thread using concurrent.futures.ThreadPool.
         This prevents a CPU intensive or non-greenlet friendly method
         to block the event loop indefinitely.
         """
@@ -654,6 +656,7 @@ class Middleware(object):
 
         fileapp = FileApplication(self)
         app.router.add_route('*', '/_download{path_info:.*}', fileapp.download)
+        app.router.add_route('*', '/_upload{path_info:.*}', fileapp.upload)
 
         restful_api = RESTfulAPI(self, app)
         loop.run_until_complete(
