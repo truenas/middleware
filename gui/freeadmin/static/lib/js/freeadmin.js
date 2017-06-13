@@ -1340,6 +1340,7 @@ require([
         var cdrom_path = registry.byId("id_CDROM_path").domNode.parentNode.parentNode;
         var disk_mode = registry.byId("id_DISK_mode").domNode.parentNode.parentNode;
         var disk_zvol = registry.byId("id_DISK_zvol").domNode.parentNode.parentNode;
+        var disk_raw = registry.byId("id_DISK_raw").domNode.parentNode.parentNode;
         var nic_type = registry.byId("id_NIC_type").domNode.parentNode.parentNode;
         var nic_mac = registry.byId("id_NIC_mac").domNode.parentNode.parentNode;
         var vnc_wait = registry.byId("id_VNC_wait").domNode.parentNode.parentNode;
@@ -1349,6 +1350,7 @@ require([
         domStyle.set(cdrom_path, "display", "none");
         domStyle.set(disk_mode, "display", "none");
         domStyle.set(disk_zvol, "display", "none");
+        domStyle.set(disk_raw, "display", "none");
         domStyle.set(nic_type, "display", "none");
         domStyle.set(nic_mac, "display", "none");
         domStyle.set(vnc_wait, "display", "none");
@@ -1358,6 +1360,9 @@ require([
         if(dtype.get('value') == 'DISK') {
           domStyle.set(disk_mode, "display", "");
           domStyle.set(disk_zvol, "display", "");
+        } else if(dtype.get('value') == 'RAW') {
+          domStyle.set(disk_raw, "display", "");
+          domStyle.set(disk_mode, "display", "");
         } else if(dtype.get('value') == 'CDROM') {
           domStyle.set(cdrom_path, "display", "");
         } else if(dtype.get('value') == 'NIC') {
