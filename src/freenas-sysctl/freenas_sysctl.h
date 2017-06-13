@@ -49,6 +49,7 @@ struct fstring {
 struct service_timeout {
 	unsigned long start;
 	unsigned long stop;
+	unsigned long started;
 	unsigned long restart;
 	unsigned long reload;
 };
