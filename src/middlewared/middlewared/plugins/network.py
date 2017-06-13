@@ -454,4 +454,6 @@ class DNSService(Service):
         proc = await Popen([
             '/sbin/resolvconf', '-a', 'lo0'
         ], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        await proc.communicate(input=resolvconf)
+        data = await proc.communicate(input=resolvconf.encode())
+        if proc.returncode != 0:
+            self.logger.warn(f'Failed to run resolvconf: {data[1].decode()}')
