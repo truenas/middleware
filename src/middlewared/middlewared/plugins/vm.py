@@ -6,7 +6,6 @@ import errno
 import gevent
 import netif
 import os
-import os.path
 import stat
 import subprocess
 import sysctl
