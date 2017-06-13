@@ -6,6 +6,8 @@ import errno
 import gevent
 import netif
 import os
+import os.path
+import stat
 import subprocess
 import sysctl
 
@@ -292,7 +294,7 @@ class VMService(CRUDService):
         Get the vnc devices from a given guest.
 
         Returns:
-            list(dict): with all attributes of the vnc device.
+            list(dict): with all attributes of the vnc device or an empty list.
         """
         vnc_devices = []
         for device in self.middleware.call('datastore.query', 'vm.device', [('vm__id', '=', id)]):
@@ -300,6 +302,26 @@ class VMService(CRUDService):
                 vnc = device['attributes']
                 vnc_devices.append(vnc)
         return vnc_devices
+
+    @accepts(Int('id'))
+    def get_console(self, id):
+        """
+        Get the console device from a given guest.
+
+        Returns:
+            str: with the device path or False.
+        """
+        try:
+            guest_status = self.status(id)
+        except:
+            guest_status = None
+
+        if guest_status and guest_status['state'] == 'RUNNING':
+            device = "/dev/nmdm{0}B".format(id)
+            if stat.S_ISCHR(os.stat(device).st_mode) is True:
+                    return device
+
+        return False
 
     @accepts(Dict(
         'vm_create',
