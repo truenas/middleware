@@ -286,6 +286,21 @@ class VMService(CRUDService):
             vm['devices'].append(device)
         return vm
 
+    @accepts(Int('id'))
+    def get_vnc(self, id):
+        """
+        Get the vnc devices from a given guest.
+
+        Returns:
+            list(dict): with all attributes of the vnc device.
+        """
+        vnc_devices = []
+        for device in self.middleware.call('datastore.query', 'vm.device', [('vm__id', '=', id)]):
+            if device['dtype'] == 'VNC':
+                vnc = device['attributes']
+                vnc_devices.append(vnc)
+        return vnc_devices
+
     @accepts(Dict(
         'vm_create',
         Str('name'),
