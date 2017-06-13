@@ -428,7 +428,7 @@ class VMService(CRUDService):
 
 
 async def kmod_load():
-    kldstat = (await (await Popen(['/sbin/kldstat'], stdout=subprocess.PIPE)).communicate())[0]
+    kldstat = (await (await Popen(['/sbin/kldstat'], stdout=subprocess.PIPE)).communicate())[0].decode()
     if 'vmm.ko' not in kldstat:
         await Popen(['/sbin/kldload', 'vmm'])
     if 'nmdm.ko' not in kldstat:
