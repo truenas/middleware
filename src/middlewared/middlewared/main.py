@@ -573,7 +573,7 @@ class Middleware(object):
             if asyncio.iscoroutinefunction(methodobj):
                 return await methodobj(*args)
             else:
-                return methodobj(*args)
+                return await self.threaded(methodobj, *args)
 
     def _method_lookup(self, name):
         if '.' not in name:
