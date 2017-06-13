@@ -9,7 +9,8 @@
 
 . /etc/rc.subr
 
-middlewared_debug=${middlewared_debug:-"NO"}
+: ${middlewared_debug="NO"}
+: ${middlewared_plugins_dirs=""}
 pidfile=/var/run/middlewared.pid
 command="/usr/sbin/daemon"
 
@@ -18,12 +19,16 @@ middlewared_start() {
 	if ! mount | grep -q 'on /dev/fd (' 2> /dev/null; then
 		mount -t fdescfs fdescfs /dev/fd
 	fi
+	plugins_dirs_arg=""
+	for p in ${middlewared_plugins_dirs}; do
+		plugins_dirs_arg="${plugins_dirs_arg} -p ${p}"
+	done
 	/sbin/ifconfig lo0 127.0.0.1 up
 	if checkyesno middlewared_debug; then
 		/usr/local/bin/tmux new-session -s middlewared -d
-		/usr/local/bin/tmux send -t middlewared "env LC_ALL=en_US.UTF-8 ${command} -f" ENTER
+		/usr/local/bin/tmux send -t middlewared "env LC_ALL=en_US.UTF-8 ${command} -f ${plugins_dirs_arg}" ENTER
 	else
-		env PATH=$PATH:/usr/local/sbin:/usr/local/bin LC_ALL=en_US.UTF-8 ${command} -f -P ${pidfile} -r /usr/local/bin/middlewared -f --log-handler=file
+		env PATH=$PATH:/usr/local/sbin:/usr/local/bin LC_ALL=en_US.UTF-8 ${command} -f -P ${pidfile} -r /usr/local/bin/middlewared -f ${plugins_dirs_arg} --log-handler=file
 	fi
 	LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/midclt -t 60 waitready
 }

@@ -268,9 +268,9 @@ def update_plugin_zipfile(
         return str(ex).replace("'", "").replace("<", "").replace(">", "")
 
 
-def encrypt_string(str, key):
+def encrypt_string(password, key):
     cipher = DES.new(key, DES.MODE_CFB, key)
-    resolved = cipher.encrypt(base64.b64encode(str))
+    resolved = cipher.encrypt(base64.b64encode(str.encode(password)))
     return resolved
 
 
@@ -297,17 +297,17 @@ def create_propertyFile(
         Config.set('installation_parameter', 'ip', host_ip)
         Config.set('installation_parameter', 'username', username)
         Config.set('installation_parameter', 'port', port)
-        Config.set('installation_parameter', 'password', encrypt_string(
-            password, enc_key))
-        Config.set('installation_parameter', 'install_mode', install_mode)
+        Config.set('installation_parameter', 'password', str(encrypt_string(
+            password, enc_key)))
+        Config.set('installation_parameter', 'install_mode', str(install_mode))
         Config.set(
             'installation_parameter',
             'plugin_version_old',
-            plugin_vesion_old)
+            str(plugin_vesion_old))
         Config.set(
             'installation_parameter',
             'plugin_version_new',
-            plugin_vesion_new)
+            str(plugin_vesion_new))
         Config.write(cfgfile)
         cfgfile.close()
         return True

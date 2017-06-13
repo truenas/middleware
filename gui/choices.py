@@ -1086,6 +1086,7 @@ VM_BOOTLOADER = (
 VM_DEVTYPES = (
     ('NIC', _('Network Interface')),
     ('DISK', _('Disk')),
+    ('RAW', _('Raw File')),
     ('CDROM', _('CD-ROM')),
     ('VNC', _('VNC')),
 )

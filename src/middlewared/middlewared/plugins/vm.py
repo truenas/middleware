@@ -9,6 +9,7 @@ import errno
 import gevent
 import netif
 import os
+import stat
 import subprocess
 import sysctl
 import bz2
@@ -103,7 +104,7 @@ class VMSupervisor(object):
 
         nid = Nid(3)
         for device in self.vm['devices']:
-            if device['dtype'] == 'DISK':
+            if device['dtype'] == 'DISK' or device['dtype'] == 'RAW':
                 if device['attributes'].get('type') == 'AHCI':
                     args += ['-s', '{},ahci-hd,{}'.format(nid(), device['attributes']['path'])]
                 else:
@@ -124,6 +125,11 @@ class VMSupervisor(object):
                             break
                     if not bridge:
                         bridge = netif.get_interface(netif.create_interface('bridge'))
+
+                    if bridge.mtu > tap.mtu:
+                        self.logger.debug("===> Set tap(4) mtu to {0} like in bridge(4) mtu {1}".format(tap.mtu, bridge.mtu))
+                        tap.mtu = bridge.mtu
+
                     bridge.add_member(tapname)
 
                     defiface = Popen("route -nv show default|grep -w interface|awk '{ print $2 }'", stdout=subprocess.PIPE, shell=True).communicate()[0].strip()
@@ -184,22 +190,22 @@ class VMSupervisor(object):
         # all other non-zero status codes are errors
         self.bhyve_error = self.proc.wait()
         if self.bhyve_error == 0:
-            self.logger.info("===> REBOOTING VM: {0} ID: {1} BHYVE_CODE: {2}".format(self.vm['name'], self.vm['id'], self.bhyve_error))
+            self.logger.info("===> Rebooting VM: {0} ID: {1} BHYVE_CODE: {2}".format(self.vm['name'], self.vm['id'], self.bhyve_error))
             self.manager.restart(self.vm['id'])
             self.manager.start(self.vm['id'])
         elif self.bhyve_error == 1:
             # XXX: Need a better way to handle the vmm destroy.
-            self.logger.info("===> POWERED OFF VM: {0} ID: {1} BHYVE_CODE: {2}".format(self.vm['name'], self.vm['id'], self.bhyve_error))
+            self.logger.info("===> Powered off VM: {0} ID: {1} BHYVE_CODE: {2}".format(self.vm['name'], self.vm['id'], self.bhyve_error))
             self.destroy_vm()
         elif self.bhyve_error in (2, 3):
-            self.logger.info("===> STOPPING VM: {0} ID: {1} BHYVE_CODE: {2}".format(self.vm['name'], self.vm['id'], self.bhyve_error))
+            self.logger.info("===> Stopping VM: {0} ID: {1} BHYVE_CODE: {2}".format(self.vm['name'], self.vm['id'], self.bhyve_error))
             self.manager.stop(self.vm['id'])
         elif self.bhyve_error not in (0, 1, 2, 3, None):
-            self.logger.info("===> ERROR VM: {0} ID: {1} BHYVE_CODE: {2}".format(self.vm['name'], self.vm['id'], self.bhyve_error))
+            self.logger.info("===> Error VM: {0} ID: {1} BHYVE_CODE: {2}".format(self.vm['name'], self.vm['id'], self.bhyve_error))
             self.destroy_vm()
 
     def destroy_vm(self):
-        self.logger.warn("===> DESTROYING VM: {0} ID: {1} BHYVE_CODE: {2}".format(self.vm['name'], self.vm['id'], self.bhyve_error))
+        self.logger.warn("===> Destroying VM: {0} ID: {1} BHYVE_CODE: {2}".format(self.vm['name'], self.vm['id'], self.bhyve_error))
         # XXX: We need to catch the bhyvectl return error.
         bhyve_error = Popen(['bhyvectl', '--destroy', '--vm={}'.format(self.vm['name'])], stdout=subprocess.PIPE, stderr=subprocess.PIPE).wait()
         self.manager._vm.pop(self.vm['id'], None)
@@ -313,6 +319,41 @@ class VMService(CRUDService):
             device.pop('vm', None)
             vm['devices'].append(device)
         return vm
+
+    @accepts(Int('id'))
+    def get_vnc(self, id):
+        """
+        Get the vnc devices from a given guest.
+
+        Returns:
+            list(dict): with all attributes of the vnc device or an empty list.
+        """
+        vnc_devices = []
+        for device in self.middleware.call('datastore.query', 'vm.device', [('vm__id', '=', id)]):
+            if device['dtype'] == 'VNC':
+                vnc = device['attributes']
+                vnc_devices.append(vnc)
+        return vnc_devices
+
+    @accepts(Int('id'))
+    def get_console(self, id):
+        """
+        Get the console device from a given guest.
+
+        Returns:
+            str: with the device path or False.
+        """
+        try:
+            guest_status = self.status(id)
+        except:
+            guest_status = None
+
+        if guest_status and guest_status['state'] == 'RUNNING':
+            device = "/dev/nmdm{0}B".format(id)
+            if stat.S_ISCHR(os.stat(device).st_mode) is True:
+                    return device
+
+        return False
 
     @accepts(Dict(
         'vm_create',

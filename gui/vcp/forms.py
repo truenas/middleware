@@ -34,7 +34,8 @@ from freenasUI.vcp import models
 from django.forms import widgets
 from freenasUI.system.models import Settings
 
-from . import plugin, utils
+import freenasUI.vcp.utils as utils
+import freenasUI.vcp.plugin as plugin
 
 log = logging.getLogger('vcp.forms')
 

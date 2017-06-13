@@ -108,14 +108,8 @@ system_func()
 	ret1=$(python /usr/local/www/freenasUI/middleware/notifier.py is_freenas)
 	if [ "x${ret1}" = "xFalse" ]; then
 		ret2=$(python /usr/local/www/freenasUI/middleware/notifier.py failover_status)
-		section_header "hasyncd status"
+		section_header "HA db journal status"
 		if [ "x${ret2}" != "xSINGLE" ]; then
-			ret3=$(pgrep -f hasyncd)
-			if [ -n ${ret3} ]; then
-				echo "hasyncd: Running"
-			else
-				echo "hasyncd: Not Running"
-			fi
 			if [ -s /data/ha-journal ]; then
 				echo "Warning: database sync journal has entries"
 			else

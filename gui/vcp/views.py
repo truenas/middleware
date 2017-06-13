@@ -26,7 +26,7 @@
 #####################################################################
 
 import json
-from . import utils
+import freenasUI.vcp.utils as utils
 
 from django.shortcuts import render
 from django.utils.translation import ugettext as _

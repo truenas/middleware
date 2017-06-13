@@ -604,6 +604,8 @@ _gen_conf()
 		if [ "${failover}" != "BACKUP" ]; then
 			echo "collectd_enable=\"YES\""
 		fi
+
+		echo "middlewared_plugins_dirs=\"/usr/local/lib/middlewared_truenas/plugins\""
 	else
 		echo "collectd_enable=\"YES\""
 		echo "failover_enable=\"NO\""

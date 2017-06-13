@@ -3538,15 +3538,14 @@ class UpdateResourceMixin(NestedMixin):
         self.method_check(request, allowed=['get'])
         self.is_authenticated(request)
 
-        # If it is HA licensed get pending updates from stanbdy node
-        if (
-            hasattr(notifier, 'failover_status') and
-            notifier().failover_licensed()
-        ):
-            s = notifier().failover_rpc()
-            data = s.update_pending()
-        else:
-            with client as c:
+        with client as c:
+            # If it is HA licensed get pending updates from stanbdy node
+            if (
+                hasattr(notifier, 'failover_status') and
+                notifier().failover_licensed()
+            ):
+                data = c.call('failover.call_remote', 'update.get_pending')
+            else:
                 data = c.call('update.get_pending')
         return self.create_response(
             request,

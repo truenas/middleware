@@ -30,6 +30,7 @@ class ServiceMonitorThread(threading.Thread):
         self.name = kwargs.get('name')
         self.logger = kwargs.get('logger')
         self.middleware = kwargs.get('middleware')
+        self.finished = threading.Event()
 
         self.logger.debug("[ServiceMonitorThread] name=%s frequency=%d retry=%d", self.name, self.frequency, self.retry)
 
@@ -122,7 +123,7 @@ class ServiceMonitorThread(threading.Thread):
         ntries = 0
 
         while True:
-            time.sleep(self.frequency)
+            self.finished.wait(self.frequency)
 
             #
             # We should probably have a configurable threshold for number of
@@ -151,6 +152,9 @@ class ServiceMonitorThread(threading.Thread):
                 except CallTimeout:
                     pass
 
+            if self.finished.is_set():
+                break
+
             ntries += 1
             if self.retry == 0:
                 continue
@@ -158,6 +162,9 @@ class ServiceMonitorThread(threading.Thread):
                 break
 
         self.alert("tried %d attempts to recover service %s" % (self.retry, self.name))
+
+    def cancel(self):
+        self.finished.set()
 
 
 class ServiceMonitorService(Service):

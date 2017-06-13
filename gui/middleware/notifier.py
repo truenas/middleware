@@ -242,12 +242,12 @@ class notifier(metaclass=HookMetaclass):
             f = getattr(self, '_destroy_' + what)
             f(objectid)
 
-    def start(self, what, timeout=None):
+    def start(self, what, timeout=None, onetime=False):
         kwargs = {}
         if timeout:
             kwargs['timeout'] = timeout
         with client as c:
-            return c.call('service.start', what, {'onetime': False}, **kwargs)
+            return c.call('service.start', what, {'onetime': onetime}, **kwargs)
 
     def started(self, what, timeout=None):
         kwargs = {}
@@ -256,26 +256,26 @@ class notifier(metaclass=HookMetaclass):
         with client as c:
             return c.call('service.started', what, **kwargs)
 
-    def stop(self, what, timeout=None):
+    def stop(self, what, timeout=None, onetime=False):
         kwargs = {}
         if timeout:
             kwargs['timeout'] = timeout
         with client as c:
-            return c.call('service.stop', what, {'onetime': False}, **kwargs)
+            return c.call('service.stop', what, {'onetime': onetime}, **kwargs)
 
-    def restart(self, what, timeout=None):
+    def restart(self, what, timeout=None, onetime=False):
         kwargs = {}
         if timeout:
             kwargs['timeout'] = timeout
         with client as c:
-            return c.call('service.restart', what, {'onetime': False}, **kwargs)
+            return c.call('service.restart', what, {'onetime': onetime}, **kwargs)
 
-    def reload(self, what, timeout=None):
+    def reload(self, what, timeout=None, onetime=False):
         kwargs = {}
         if timeout:
             kwargs['timeout'] = timeout
         with client as c:
-            return c.call('service.reload', what, {'onetime': False}, **kwargs)
+            return c.call('service.reload', what, {'onetime': onetime}, **kwargs)
 
     def clear_activedirectory_config(self):
         with client as c:
@@ -585,8 +585,8 @@ class notifier(metaclass=HookMetaclass):
 
             # Sync new file to standby node
             if not self.is_freenas() and self.failover_licensed():
-                s = self.failover_rpc()
-                self.sync_file_send(s, geli_keyfile)
+                with client as c:
+                    self.sync_file_send(c, geli_keyfile)
 
     def geli_recoverykey_add(self, volume, passphrase=None):
         reckey_file = tempfile.mktemp(dir='/tmp/')
@@ -732,6 +732,7 @@ class notifier(metaclass=HookMetaclass):
                                  devname=disk,
                                  swapsize=swapsize)
 
+        self.__confxml = None  # Make sure to invalidate cache
         doc = self._geom_confxml()
         for disk in disks:
             devname = self.part_type_from_device('zfs', disk)

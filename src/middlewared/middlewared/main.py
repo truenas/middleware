@@ -8,7 +8,6 @@ from .job import Job, JobsQueue
 from .restful import RESTfulAPI
 from .schema import Error as SchemaError
 from .service import CallError, CallException
-from .utils import Popen
 from collections import OrderedDict, defaultdict
 from daemon import DaemonContext
 from daemon.pidfile import TimeoutPIDLockFile
@@ -28,7 +27,6 @@ import linecache
 import os
 import setproctitle
 import signal
-import subprocess
 import sys
 import traceback
 import types
@@ -43,7 +41,7 @@ class Application(WebSocketApplication):
 
     def __init__(self, *args, **kwargs):
         super(Application, self).__init__(*args, **kwargs)
-        self.authenticated = self._check_permission()
+        self.authenticated = False
         self.handshake = False
         self.logger = logger.Logger('application').getLogger()
         self.sessionid = str(uuid.uuid4())
@@ -131,33 +129,16 @@ class Application(WebSocketApplication):
             'formatted': ''.join(traceback.format_exception(*exc_info)),
         }
 
-    def send_error(self, message, error, exc_info=None):
+    def send_error(self, message, errno, reason=None, exc_info=None):
         self._send({
             'msg': 'result',
             'id': message['id'],
             'error': {
-                'error': error,
+                'error': errno,
+                'reason': reason,
                 'trace': self._tb_error(exc_info) if exc_info else None,
             },
         })
-
-    def _check_permission(self):
-        remote_addr = self.ws.environ['REMOTE_ADDR']
-        remote_port = self.ws.environ['REMOTE_PORT']
-
-        if remote_addr not in ('127.0.0.1', '::1'):
-            return False
-
-        remote = '{0}:{1}'.format(remote_addr, remote_port)
-
-        proc = Popen([
-            '/usr/bin/sockstat', '-46c', '-p', remote_port
-        ], stdout=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=True)
-        for line in proc.communicate()[0].strip().splitlines()[1:]:
-            cols = line.split()
-            if cols[-2] == remote and cols[0] == 'root':
-                return True
-        return False
 
     def call_method(self, message):
 
@@ -175,9 +156,9 @@ class Application(WebSocketApplication):
         except (CallException, SchemaError) as e:
             # CallException and subclasses are the way to gracefully
             # send errors to the client
-            self.send_error(message, str(e), sys.exc_info())
+            self.send_error(message, e.errno, str(e), sys.exc_info())
         except Exception as e:
-            self.send_error(message, str(e), sys.exc_info())
+            self.send_error(message, errno.EINVAL, str(e), sys.exc_info())
             self.logger.warn('Exception while calling {}(*{})'.format(message['method'], message.get('params')), exc_info=True)
 
             if self.middleware.crash_reporting.is_disabled():
@@ -246,6 +227,7 @@ class Application(WebSocketApplication):
                     'version': '1',
                 })
             else:
+                self.middleware.call_hook('core.on_connect', app=self)
                 self._send({
                     'msg': 'connected',
                     'session': self.sessionid,
@@ -271,7 +253,7 @@ class Application(WebSocketApplication):
             return
 
         if not self.authenticated:
-            self.send_error(message, 'Not authenticated')
+            self.send_error(message, errno.EACCES, 'Not authenticated')
             return
 
         if message['msg'] == 'sub':
@@ -403,10 +385,10 @@ class FileApplication(object):
 
 class Middleware(object):
 
-    def __init__(self, plugins_dirs=None):
-        self.logger_name = logger.Logger('middlewared')
-        self.logger = self.logger_name.getLogger()
+    def __init__(self, loop_monitor=True, plugins_dirs=None):
+        self.logger = logger.Logger('middlewared').getLogger()
         self.crash_reporting = logger.CrashReporting()
+        self.loop_monitor = loop_monitor
         self.__threadpool = ThreadPool(5)  # Init before plugins are loaded
         self.__jobs = JobsQueue(self)
         self.__schemas = {}
@@ -593,7 +575,7 @@ class Middleware(object):
         methodobj = self._method_lookup(message['method'])
 
         if not app.authenticated and not hasattr(methodobj, '_no_auth_required'):
-            app.send_error(message, 'Not authenticated')
+            app.send_error(message, errno.EACCES, 'Not authenticated')
             return
 
         return self._call(message['method'], methodobj, params, app=app)
@@ -668,13 +650,14 @@ class Middleware(object):
             self._green_counter = 0
 
     def run(self):
-        self.green_monitor()
+        if self.loop_monitor:
+            self.green_monitor()
 
         gevent.signal(signal.SIGTERM, self.kill)
         gevent.signal(signal.SIGUSR1, self.pdb)
 
         Application.middleware = self
-        wsserver = WebSocketServer(('127.0.0.1', 6000), Resource(OrderedDict([
+        wsserver = WebSocketServer(('0.0.0.0', 6000), Resource(OrderedDict([
             ('/websocket', Application),
         ])))
 
@@ -718,6 +701,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('restart', nargs='?')
     parser.add_argument('--foreground', '-f', action='store_true')
+    parser.add_argument('--disable-loop-monitor', '-L', action='store_true')
     parser.add_argument('--plugins-dirs', '-p', action='append')
     parser.add_argument('--debug-level', default='DEBUG', choices=[
         'DEBUG',
@@ -766,7 +750,10 @@ def main():
     # Workaround to tell django to not set up logging on its own
     os.environ['MIDDLEWARED'] = str(os.getpid())
 
-    Middleware(plugins_dirs=args.plugins_dirs).run()
+    Middleware(
+        loop_monitor=not args.disable_loop_monitor,
+        plugins_dirs=args.plugins_dirs,
+    ).run()
     if not args.foreground:
         daemonc.close()
 

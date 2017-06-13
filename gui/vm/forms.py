@@ -101,6 +101,11 @@ class DeviceForm(ModelForm):
         required=False,
         initial='AHCI',
     )
+    DISK_raw = PathField(
+        label=_('Raw File'),
+        required=False,
+        dirsonly=False,
+    )
     NIC_type = forms.ChoiceField(
         label=_('Adapter Type'),
         choices=choices.VM_NICTYPES,
@@ -160,6 +165,9 @@ class DeviceForm(ModelForm):
             elif self.instance.dtype == 'DISK':
                 self.fields['DISK_zvol'].initial = self.instance.attributes.get('path', '').replace('/dev/', '')
                 self.fields['DISK_mode'].initial = self.instance.attributes.get('type')
+            elif self.instance.dtype == "RAW":
+                self.fields['DISK_raw'].initial = self.instance.attributes.get('path', '')
+                self.fields['DISK_mode'].initial = self.instance.attributes.get('type')
             elif self.instance.dtype == 'NIC':
                 self.fields['NIC_type'].initial = self.instance.attributes.get('type')
                 self.fields['NIC_mac'].initial = self.instance.attributes.get('mac')
@@ -195,6 +203,11 @@ class DeviceForm(ModelForm):
         if self.cleaned_data['dtype'] == 'DISK':
             obj.attributes = {
                 'path': '/dev/' + self.cleaned_data['DISK_zvol'],
+                'type': self.cleaned_data['DISK_mode'],
+            }
+        elif self.cleaned_data['dtype'] == 'RAW':
+            obj.attributes = {
+                'path': self.cleaned_data['DISK_raw'],
                 'type': self.cleaned_data['DISK_mode'],
             }
         elif self.cleaned_data['dtype'] == 'CDROM':

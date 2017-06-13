@@ -15,6 +15,12 @@ from django.db import connection
 from django.db.models import Q
 from django.db.models.fields.related import ForeignKey
 
+# FIXME: django sqlite3_ha backend uses a thread to sync queries to the
+# standby node. That does not play very well with gevent+middleware
+# if that "thread" is still running and the originating connection closes.
+from freenasUI.freeadmin.sqlite3_ha import base as sqlite3_ha_base
+sqlite3_ha_base.execute_sync = True
+
 from middlewared.utils import django_modelobj_serialize
 
 
@@ -227,3 +233,22 @@ class DatastoreService(Service):
         finally:
             cursor.close()
         return rv
+
+    @private
+    @accepts(List('queries'))
+    def restore(self, queries):
+        """
+        Receives a list of SQL queries (usually a database dump)
+        and executes it within a transaction.
+        """
+        return connection.dump_recv(queries)
+
+    @private
+    @accepts()
+    def dump(self):
+        """
+        Dumps the database, returning a list of SQL commands.
+        """
+        # FIXME: This could return a few hundred KB of data,
+        # we need to investigate a way of doing that in chunks.
+        return connection.dump()
