@@ -254,7 +254,7 @@ class CoreService(Service):
         return data
 
     @private
-    def event_send(self, name, event_type, kwargs):
+    async def event_send(self, name, event_type, kwargs):
         self.middleware.send_event(name, event_type, **kwargs)
 
     @accepts()
