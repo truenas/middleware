@@ -49,12 +49,16 @@ def Popen(args, **kwargs):
         return asyncio.create_subprocess_exec(*args, **kwargs)
 
 
-def run(*args, **kwargs):
-    kwargs.setdefault('encoding', 'utf8')
-    kwargs.setdefault('check', True)
+async def run(*args, **kwargs):
     kwargs.setdefault('stdout', subprocess.PIPE)
     kwargs.setdefault('stderr', subprocess.PIPE)
-    return subprocess.run(args, **kwargs)
+    check = kwargs.pop('check', True)
+    proc = await asyncio.create_subprocess_exec(*args, **kwargs)
+    stdout, stderr = await proc.communicate()
+    cp = subprocess.CompletedProcess(args, proc.returncode, stdout=stdout, stderr=stderr)
+    if check:
+        cp.check_returncode()
+    return cp
 
 
 def filter_list(_list, filters=None, options=None):
