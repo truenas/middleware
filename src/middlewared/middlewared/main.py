@@ -13,10 +13,8 @@ from daemon.pidfile import TimeoutPIDLockFile
 import argparse
 import asyncio
 import binascii
-import cgi
 import concurrent.futures
 import errno
-import functools
 import imp
 import inspect
 import linecache
@@ -24,6 +22,8 @@ import os
 import setproctitle
 import signal
 import sys
+import threading
+import time
 import traceback
 import types
 import urllib.parse
@@ -639,12 +639,36 @@ class Middleware(object):
         connection.on_close()
         return ws
 
-    def run(self):
-        if self.loop_monitor:
-            #self.green_monitor()
-            pass
+    def _loop_monitor_thread(self, loop, main_thread_ident):
+        """
+        Thread responsible for checking current tasks that are taking too long
+        to finish and printing the stack.
 
+        DISCLAIMER/TODO: This is not free of race condition so it may show
+        false positives.
+        """
+        last = None
+        while True:
+            time.sleep(2)
+            current = asyncio.Task.current_task(loop=loop)
+            if current is None:
+                last = None
+                continue
+            if last == current:
+                frame = sys._current_frames()[main_thread_ident]
+                stack = traceback.format_stack(frame, limit=10)
+                self.logger.warn(''.join(['Task seems blocked:'] + stack))
+            last = current
+
+    def run(self):
         loop = asyncio.get_event_loop()
+
+        if self.loop_monitor:
+            loop.set_debug(True)
+            #loop.slow_callback_duration(0.2)
+            t = threading.Thread(target=self._loop_monitor_thread, args=[loop, threading.current_thread().ident])
+            t.setDaemon(True)
+            t.start()
 
         loop.add_signal_handler(signal.SIGTERM, self.kill)
         loop.add_signal_handler(signal.SIGUSR1, self.pdb)
