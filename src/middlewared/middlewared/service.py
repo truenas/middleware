@@ -100,7 +100,7 @@ class ServiceBase(type):
 
 class Service(object, metaclass=ServiceBase):
     def __init__(self, middleware):
-        self.logger = Logger(type(self).__class__.__name__).getLogger()
+        self.logger = Logger(type(self).__name__).getLogger()
         self.middleware = middleware
 
 
