@@ -1,6 +1,7 @@
 from mako import exceptions
 from mako.template import Template
 from middlewared.service import Service
+from middlewared.client import Client
 
 import hashlib
 import imp
@@ -12,10 +13,16 @@ class MakoRenderer(object):
     def __init__(self, service):
         self.service = service
 
-    def render(self, path):
+    async def render(self, path):
         try:
             tmpl = Template(filename=path)
-            return tmpl.render(middleware=self.service.middleware)
+            # Mako is not asyncio friendly so run it within a thread
+            # using the client
+
+            def do():
+                with Client() as c:
+                    return tmpl.render(client=c, middleware=self.service.middleware)
+            return await self.service.middleware.threaded(do)
         except Exception:
             self.service.logger.debug('Failed to render mako template: {0}'.format(
                 exceptions.text_error_template().render()
@@ -28,11 +35,11 @@ class PyRenderer(object):
     def __init__(self, service):
         self.service = service
 
-    def render(self, path):
+    async def render(self, path):
         name = os.path.basename(path)
         find = imp.find_module(name, [os.path.dirname(path)])
         mod = imp.load_module(name, *find)
-        return mod.render(self.service, self.service.middleware)
+        return await mod.render(self.service, self.service.middleware)
 
 
 class EtcService(Service):
@@ -86,7 +93,7 @@ class EtcService(Service):
             'py': PyRenderer(self),
         }
 
-    def generate(self, name):
+    async def generate(self, name):
         group = self.GROUPS.get(name)
         if group is None:
             raise ValueError('{0} group not found'.format(name))
@@ -98,7 +105,7 @@ class EtcService(Service):
                 raise ValueError(f'Unknown type: {entry["type"]}')
 
             path = os.path.join(self.files_dir, entry['path'])
-            rendered = renderer.render(path)
+            rendered = await renderer.render(path)
             if rendered is None:
                 continue
 
@@ -117,12 +124,12 @@ class EtcService(Service):
             with open(outfile, 'w') as f:
                 f.write(rendered)
 
-    def generate_all(self):
+    async def generate_all(self):
         """
         Generate all configuration file groups
         """
         for name in self.GROUPS.keys():
             try:
-                self.generate(name)
+                await self.generate(name)
             except Exception:
                 self.logger.error(f'Failed to generate {name} group', exc_info=True)

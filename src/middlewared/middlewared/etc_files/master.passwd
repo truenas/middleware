@@ -1,4 +1,4 @@
-% for user in middleware.call('datastore.query', 'account.bsdusers', [], {'prefix': 'bsdusr_', 'order_by': ['-builtin', 'uid']}):
+% for user in client.call('datastore.query', 'account.bsdusers', [], {'prefix': 'bsdusr_', 'order_by': ['-builtin', 'uid']}):
 <%
 if user['password_disabled']:
     passwd = "*"
@@ -9,7 +9,7 @@ else:
 %>
 ${user['username']}:${passwd}:${user['uid']}:${user['group']['id']}::0:0:${user['full_name']}:${user['home']}:${user['shell']}\
 % endfor
-% if middleware.call('notifier.common', 'system', 'nis_enabled'):
+% if client.call('notifier.common', 'system', 'nis_enabled'):
 +:::::::::\
 % endif
 
