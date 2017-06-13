@@ -135,6 +135,7 @@ directoryservice_init(void)
 
 	g_directoryservice->activedirectory.ds_st.start = 90;
 	g_directoryservice->activedirectory.ds_st.stop = 90;
+	g_directoryservice->activedirectory.ds_st.started = 90;
 	g_directoryservice->activedirectory.ds_st.restart = 180;
 	g_directoryservice->activedirectory.ds_st.reload = 180;
 
