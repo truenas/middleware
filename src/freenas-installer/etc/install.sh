@@ -596,12 +596,14 @@ disk_is_freenas()
 	    if [ -n "${DS}" ]; then
 		# Okay, mount this pool
 		if mount -t zfs freenas-boot/ROOT/"${DS}" /tmp/data_old; then
-		    # If the active dataset doesn't have a datbase file,
+		    # If the active dataset doesn't have a database file,
 		    # then it's not FN as far as we're concerned (the upgrade code
 		    # will go badly).
-		    if [ ! -f /tmp/data_old/freenas-v1.db ]; then
-			umount /tmp/data_old || return 1
-			zpool export freenas-boot || return 1
+		    # We also check for the Corral database directory.
+		    if [ ! -f /tmp/data_old/data/freenas-v1.db -o \
+			   -d /tmp/data_old/data/freenas.db ]; then
+			umount /tmp/data_old || true
+			zpool export freenas-boot || true
 			return 1
 		    fi
 		    cp -pR /tmp/data_old/data/. /tmp/data_preserved
