@@ -109,8 +109,8 @@ class ConfigService(Service):
     def config(self):
         raise NotImplementedError
 
-    def update(self, data):
-        return self.do_update(data)
+    async def update(self, data):
+        return await self.do_update(data)
 
 
 class CRUDService(Service):
@@ -118,14 +118,14 @@ class CRUDService(Service):
     def query(self, filters, options):
         raise NotImplementedError('{}.query must be implemented'.format(self._config.namespace))
 
-    def create(self, data):
-        return self.do_create(data)
+    async def create(self, data):
+        return await self.do_create(data)
 
-    def update(self, id, data):
-        return self.do_update(id, data)
+    async def update(self, id, data):
+        return await self.do_update(id, data)
 
-    def delete(self, id):
-        return self.do_delete(id)
+    async def delete(self, id):
+        return await self.do_delete(id)
 
 
 class CoreService(Service):
