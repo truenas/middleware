@@ -13,6 +13,8 @@ from raven.transport.threaded import ThreadedHTTPTransport
 logging.getLogger('geventwebsocket.server').setLevel(logging.INFO)
 # markdown debug is also considered useless
 logging.getLogger('MARKDOWN').setLevel(logging.INFO)
+# asyncio runs in debug mode but we do not need INFO/DEBUG
+logging.getLogger('asyncio').setLevel(logging.WARN)
 
 
 class CrashReporting(object):
