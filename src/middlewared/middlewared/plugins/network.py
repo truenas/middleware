@@ -1,7 +1,7 @@
 from middlewared.service import Service, private
 from middlewared.utils import Popen
 
-import gevent
+import asyncio
 import ipaddress
 import netif
 import os
@@ -329,7 +329,7 @@ class InterfacesService(Service):
         # If dhclient is not running and dhcp is configured, lets start it
         if not dhclient_running and data['int_dhcp']:
             self.logger.debug('Starting dhclient for {}'.format(name))
-            gevent.spawn(self.dhclient_start, data['int_interface'])
+            asyncio.ensure_future(self.dhclient_start(data['int_interface']))
         elif dhclient_running and not data['int_dhcp']:
             self.logger.debug('Killing dhclient for {}'.format(name))
             os.kill(dhclient_pid, signal.SIGTERM)
