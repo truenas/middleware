@@ -1,6 +1,7 @@
 from aiohttp import web
 from collections import defaultdict
 
+import asyncio
 import base64
 import binascii
 import types
@@ -100,6 +101,7 @@ class RESTfulAPI(object):
                 else:
                     res_kwargs['get'] = methodname
                 Resource(self, self.middleware, short_methodname, parent=parent, **res_kwargs)
+            await asyncio.sleep(0)  # Force context switch
 
 
 class Resource(object):
