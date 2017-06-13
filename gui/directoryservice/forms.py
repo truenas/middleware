@@ -670,7 +670,8 @@ class ActiveDirectoryForm(ModelForm):
         if self.__original_changed():
             notifier().clear_activedirectory_config()
 
-        started = notifier().started("activedirectory")
+        started = notifier().started("activedirectory",
+            timeout=_fs().directoryservice.activedirectory.timeout.started)
         obj = super(ActiveDirectoryForm, self).save()
 
         try:
