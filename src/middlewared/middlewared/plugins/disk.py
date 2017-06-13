@@ -159,12 +159,12 @@ class DiskService(CRUDService):
     @private
     async def toggle_smart_off(self, devname):
         args = await self.__get_smartctl_args(devname)
-        run('/usr/local/sbin/smartctl', '--smart=off', *args, check=False)
+        await run('/usr/local/sbin/smartctl', '--smart=off', *args, check=False)
 
     @private
     async def toggle_smart_on(self, devname):
         args = await self.__get_smartctl_args(devname)
-        run('/usr/local/sbin/smartctl', '--smart=on', *args, check=False)
+        await run('/usr/local/sbin/smartctl', '--smart=on', *args, check=False)
 
     @private
     async def serial_from_device(self, name):
@@ -593,7 +593,7 @@ class DiskService(CRUDService):
                 # if swap partition
                 if p.config['rawtype'] == '516e7cb5-6ecf-11d6-8ff8-00022d09712b':
                     # Try to save a core dump from that
-                    run('savecore', '/data/crash/', f'/dev/{p.name}', check=False)
+                    await run('savecore', '/data/crash/', f'/dev/{p.name}', check=False)
                     if p.name not in used_partitions:
                         swap_partitions_by_size[p.mediasize].append(p.name)
 
@@ -606,10 +606,10 @@ class DiskService(CRUDService):
                 part_a, part_b = partitions[0:2]
                 partitions = partitions[2:]
                 if not dumpdev:
-                    dumpdev = dempdev_configure(part_a)
+                    dumpdev = await dempdev_configure(part_a)
                 try:
                     name = new_swap_name()
-                    run('gmirror', 'create', '-b', 'prefer', name, part_a, part_b)
+                    await run('gmirror', 'create', '-b', 'prefer', name, part_a, part_b)
                 except Exception:
                     self.logger.warn(f'Failed to create gmirror {name}', exc_info=True)
                     continue
@@ -621,13 +621,13 @@ class DiskService(CRUDService):
         # partition as a swap device
         if not swap_devices and unused_partitions:
             if not dumpdev:
-                dumpdev = dempdev_configure(unused_partitions[0])
+                dumpdev = await dempdev_configure(unused_partitions[0])
             swap_devices.append(unused_partitions[0])
 
         for name in swap_devices:
             if not os.path.exists(f'/dev/{name}.eli'):
-                run('geli', 'onetime', name)
-            run('swapon', f'/dev/{name}.eli', check=False)
+                await run('geli', 'onetime', name)
+            await run('swapon', f'/dev/{name}.eli', check=False)
 
         return swap_devices
 
@@ -664,13 +664,13 @@ class DiskService(CRUDService):
                     del providers[c.provider.id]
 
         for name in mirrors:
-            run('swapoff', f'/dev/mirror/{name}.eli', check=False)
+            await run('swapoff', f'/dev/mirror/{name}.eli', check=False)
             if os.path.exists(f'/dev/mirror/{name}.eli'):
-                run('geli', 'detach', f'mirror/{name}.eli', check=False)
-            run('gmirror', 'destroy', name, check=False)
+                await run('geli', 'detach', f'mirror/{name}.eli', check=False)
+            await run('gmirror', 'destroy', name, check=False)
 
         for p in providers.values():
-            run('swapoff', f'/dev/{p.name}.eli', check=False)
+            await run('swapoff', f'/dev/{p.name}.eli', check=False)
 
 
 def new_swap_name():
@@ -687,7 +687,7 @@ def new_swap_name():
     raise RuntimeError('All mirror names are taken')
 
 
-def dempdev_configure(name):
+async def dempdev_configure(name):
     # Configure dumpdev on first swap device
     if not os.path.exists('/dev/dumpdev'):
         try:
@@ -695,7 +695,7 @@ def dempdev_configure(name):
         except OSError:
             pass
         os.symlink(f'/dev/{name}', '/dev/dumpdev')
-        run('dumpon', f'/dev/{name}')
+        await run('dumpon', f'/dev/{name}')
     return True
 
 
