@@ -3,22 +3,36 @@
 #
 # PAM configuration for the "sudo" service
 #
+<%
+        ldap_enabled = False
+
+        try:
+	    ldap_enabled  = middleware.call('datastore.query', 'directoryservice.LDAP')[0]['ldap_enable']
+        except:
+            pass 
+%>
 
 # auth
 auth		sufficient	pam_opie.so		no_warn no_fake_prompts
 auth		requisite	pam_opieaccess.so	no_warn allow_local
-#@@LDAP@@	auth		sufficient	/usr/local/lib/pam_sss.so
+% if ldap_enabled:
+auth		sufficient	/usr/local/lib/pam_sss.so
+% endif
 auth		required	pam_unix.so		no_warn try_first_pass
 
 # account
 account		required	pam_nologin.so
 account		required	pam_login_access.so
-#@@LDAP@@	account		sufficient	/usr/local/lib/pam_sss.so
+% if ldap_enabled:
+account		sufficient	/usr/local/lib/pam_sss.so
+% endif
 account		required	pam_unix.so
 
 # session
 session		required	pam_permit.so
 
 # password
-#@@LDAP@@	password	sufficient	/usr/local/lib/pam_sss.so use_authtok
+% if ldap_enabled:
+password	sufficient	/usr/local/lib/pam_sss.so use_authtok
+% endif
 password	required	pam_unix.so		no_warn try_first_pass
