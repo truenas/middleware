@@ -45,6 +45,9 @@ class EtcService(Service):
         'network': [
             {'type': 'mako', 'path': 'dhclient.conf'},
         ],
+        'nss': [
+            {'type': 'mako', 'path': 'nsswitch.conf'},
+        ],
         'pam': [
             { 'type': 'mako', 'path': os.path.join('pam.d', f) }
             for f in os.listdir(
