@@ -15,7 +15,8 @@ EXTRACT_ONLY=
 
 BUILD_DEPENDS= ${PYTHON_PKGNAMEPREFIX}fastentrypoints>0:devel/py-fastentrypoints
 RUN_DEPENDS=	${PYTHON_PKGNAMEPREFIX}ws4py>0:www/py-ws4py \
-		${PYTHON_PKGNAMEPREFIX}falcon>0:www/py-falcon \
+		${PYTHON_PKGNAMEPREFIX}aiohttp>0:www/py-aiohttp \
+		${PYTHON_PKGNAMEPREFIX}aiohttp-wsgi>0:www/py-aiohttp-wsgi \
 		${PYTHON_PKGNAMEPREFIX}Flask>0:www/py-flask \
 		${PYTHON_PKGNAMEPREFIX}boto3>0:devel/py-boto3 \
 		${PYTHON_PKGNAMEPREFIX}netif>0:net/py-netif \
