@@ -14,7 +14,7 @@ LDAP_STATUS_ALERT="/tmp/.ldap_status_alert"
 
 generate_ldapconf()
 {
-	/usr/local/libexec/nas/generate_ldap_conf.py
+	LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/midclt call etc.generate ldap > /dev/null
 }
 
 generate_nss_ldapconf()

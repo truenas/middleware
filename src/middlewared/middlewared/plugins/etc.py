@@ -42,6 +42,9 @@ class EtcService(Service):
         #    {'type': 'mako', 'path': 'master.passwd'},
         #    {'type': 'py', 'path': 'pwd_db'},
         #],
+        'ldap': [
+            {'type': 'mako', 'path': 'local/ldap.conf'},
+        ],
         'network': [
             {'type': 'mako', 'path': 'dhclient.conf'},
         ],
