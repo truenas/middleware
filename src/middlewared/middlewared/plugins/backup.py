@@ -1,4 +1,4 @@
-from middlewared.schema import accepts, Bool, Dict, Int, Patch Ref, Str
+from middlewared.schema import accepts, Bool, Dict, Int, Patch, Ref, Str
 from middlewared.service import CRUDService, Service, item_method, filterable, job, private
 from middlewared.utils import Popen
 
@@ -18,8 +18,8 @@ class BackupCredentialService(CRUDService):
         namespace = 'backup.credential'
 
     @filterable
-    def query(self, filters=None, options=None):
-        return self.middleware.call('datastore.query', 'system.cloudcredentials', filters, options)
+    async def query(self, filters=None, options=None):
+        return await self.middleware.call('datastore.query', 'system.cloudcredentials', filters, options)
 
     @accepts(Dict(
         'backup-credential',
@@ -30,16 +30,16 @@ class BackupCredentialService(CRUDService):
         Dict('attributes', additional_attrs=True),
         register=True,
     ))
-    def do_create(self, data):
-        return self.middleware.call(
+    async def do_create(self, data):
+        return await self.middleware.call(
             'datastore.insert',
             'system.cloudcredentials',
             data,
         )
 
     @accepts(Int('id'), Ref('backup-credential'))
-    def do_update(self, id, data):
-        return self.middleware.call(
+    async def do_update(self, id, data):
+        return await self.middleware.call(
             'datastore.update',
             'system.cloudcredentials',
             id,
@@ -47,8 +47,8 @@ class BackupCredentialService(CRUDService):
         )
 
     @accepts(Int('id'))
-    def do_delete(self, id):
-        return self.middleware.call(
+    async def do_delete(self, id):
+        return await self.middleware.call(
             'datastore.delete',
             'system.cloudcredentials',
             id,
@@ -57,16 +57,16 @@ class BackupCredentialService(CRUDService):
 
 class BackupService(CRUDService):
 
-    @accepts(Ref('query-filters'), Ref('query-options'))
-    def query(self, filters=None, options=None):
-        return self.middleware.call('datastore.query', 'tasks.cloudsync', filters, options)
+    @filterable
+    async def query(self, filters=None, options=None):
+        return await self.middleware.call('datastore.query', 'tasks.cloudsync', filters, options)
 
-    def _clean_credential(self, data):
-        credential = self.middleware.call('datastore.query', 'system.cloudcredentials', [('id', '=', data['credential'])], {'get': True})
+    async def _clean_credential(self, data):
+        credential = await self.middleware.call('datastore.query', 'system.cloudcredentials', [('id', '=', data['credential'])], {'get': True})
         assert credential is not None
 
         if credential['provider'] == 'AMAZON':
-            data['attributes']['region'] = self.middleware.call('backup.s3.get_bucket_location', credential['id'], data['attributes']['bucket'])
+            data['attributes']['region'] = await self.middleware.call('backup.s3.get_bucket_location', credential['id'], data['attributes']['bucket'])
         else:
             raise NotImplementedError('Invalid provider: {}'.format(credential['provider']))
 
@@ -114,7 +114,7 @@ class BackupService(CRUDService):
               }]
             }
         """
-        self._clean_credential(data)
+        await self._clean_credential(data)
         pk = await self.middleware.call('datastore.insert', 'tasks.cloudsync', data)
         await self.middleware.call('notifier.restart', 'cron')
         return pk
@@ -136,7 +136,7 @@ class BackupService(CRUDService):
             backup['credential'] = backup['credential']['id']
 
         backup.update(data)
-        self._clean_credential(backup)
+        await self._clean_credential(backup)
         await self.middleware.call('datastore.update', 'tasks.cloudsync', id, backup)
         await self.middleware.call('notifier.restart', 'cron')
 
@@ -251,7 +251,7 @@ region = {region}
                 RE_TRANSF = re.compile(r'Transferred:\s*?(.+)$', re.S)
                 read_buffer = ''
                 while True:
-                    read = proc.stderr.readline().decode()
+                    read = (await proc.stderr.readline()).decode()
                     if read == '':
                         break
                     read_buffer += read
@@ -270,9 +270,9 @@ region = {region}
                 stderr=subprocess.PIPE,
             )
             check_task = asyncio.ensure_future(check_progress(job, proc))
-            await proc.communicate()
+            await proc.wait()
             if proc.returncode != 0:
-                await asyncio.wait_for(check_task)
+                await asyncio.wait_for(check_task, None)
                 raise ValueError('rclone failed: {}'.format(check_task.result()))
             return True
 
