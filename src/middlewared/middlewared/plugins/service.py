@@ -110,7 +110,7 @@ class ServiceService(CRUDService):
             Bool('enable'),
         ),
     )
-    async def do_update(self, id, data):
+    def do_update(self, id, data):
         """
         Update service entry of `id`.
 
