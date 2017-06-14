@@ -42,6 +42,15 @@ class EtcService(Service):
         #    {'type': 'mako', 'path': 'master.passwd'},
         #    {'type': 'py', 'path': 'pwd_db'},
         #],
+
+        #
+        # Coming soon
+        #
+        #'kerberos': [
+        #    {'type': 'mako', 'path': 'krb5.conf'},
+        #    {'type': 'mako', 'path': 'krb5.keytab'},
+        #],
+
         'ldap': [
             {'type': 'mako', 'path': 'local/ldap.conf'},
         ],
