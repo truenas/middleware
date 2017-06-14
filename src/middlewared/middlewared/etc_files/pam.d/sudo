@@ -4,12 +4,14 @@
 # PAM configuration for the "sudo" service
 #
 <%
-        ldap_enabled = False
+        def safe_call(*args):
+            try:
+                val = middleware.call(*args)
+            except:
+                val = False
+            return val
 
-        try:
-	    ldap_enabled  = middleware.call('datastore.query', 'directoryservice.LDAP')[0]['ldap_enable']
-        except:
-            pass 
+        ldap_enabled = safe_call('notifier.common', 'system', 'ldap_enabled')
 %>
 
 # auth
