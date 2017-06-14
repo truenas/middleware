@@ -4,7 +4,6 @@ from middlewared.utils import Popen
 
 import asyncio
 import enum
-import functools
 import json
 import os
 import subprocess
