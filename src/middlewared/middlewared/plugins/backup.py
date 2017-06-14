@@ -1,10 +1,9 @@
-from middlewared.schema import accepts, Bool, Dict, Int, Patch, Ref, Str
-from middlewared.service import CRUDService, Service, item_method, job, private
+from middlewared.schema import accepts, Bool, Dict, Int, Patch Ref, Str
+from middlewared.service import CRUDService, Service, item_method, filterable, job, private
 from middlewared.utils import Popen
 
 import asyncio
 import boto3
-import functools
 import os
 import subprocess
 import re
@@ -18,7 +17,7 @@ class BackupCredentialService(CRUDService):
     class Config:
         namespace = 'backup.credential'
 
-    @accepts(Ref('query-filters'), Ref('query-options'))
+    @filterable
     def query(self, filters=None, options=None):
         return self.middleware.call('datastore.query', 'system.cloudcredentials', filters, options)
 
@@ -86,7 +85,7 @@ class BackupService(CRUDService):
         Bool('enabled'),
         register=True,
     ))
-    def do_create(self, data):
+    async def do_create(self, data):
         """
         Creates a new backup entry.
 
@@ -116,16 +115,16 @@ class BackupService(CRUDService):
             }
         """
         self._clean_credential(data)
-        pk = self.middleware.call('datastore.insert', 'tasks.cloudsync', data)
-        self.middleware.call('notifier.restart', 'cron')
+        pk = await self.middleware.call('datastore.insert', 'tasks.cloudsync', data)
+        await self.middleware.call('notifier.restart', 'cron')
         return pk
 
     @accepts(Int('id'), Patch('backup', 'backup_update', ('attr', {'update': True})))
-    def do_update(self, id, data):
+    async def do_update(self, id, data):
         """
         Updates the backup entry `id` with `data`.
         """
-        backup = self.middleware.call(
+        backup = await self.middleware.call(
             'datastore.query',
             'tasks.cloudsync',
             [('id', '=', id)],
@@ -138,35 +137,35 @@ class BackupService(CRUDService):
 
         backup.update(data)
         self._clean_credential(backup)
-        self.middleware.call('datastore.update', 'tasks.cloudsync', id, backup)
-        self.middleware.call('notifier.restart', 'cron')
+        await self.middleware.call('datastore.update', 'tasks.cloudsync', id, backup)
+        await self.middleware.call('notifier.restart', 'cron')
 
     @accepts(Int('id'))
-    def do_delete(self, id):
+    async def do_delete(self, id):
         """
         Deletes backup entry `id`.
         """
-        self.middleware.call('datastore.delete', 'tasks.cloudsync', id)
-        self.middleware.call('notifier.restart', 'cron')
+        await self.middleware.call('datastore.delete', 'tasks.cloudsync', id)
+        await self.middleware.call('notifier.restart', 'cron')
 
     @item_method
     @accepts(Int('id'))
     @job(lock=lambda args: 'backup:{}'.format(args[-1]))
-    def sync(self, job, id):
+    async def sync(self, job, id):
         """
         Run the backup job `id`, syncing the local data to remote.
         """
 
-        backup = self.middleware.call('datastore.query', 'tasks.cloudsync', [('id', '=', id)], {'get': True})
+        backup = await self.middleware.call('datastore.query', 'tasks.cloudsync', [('id', '=', id)], {'get': True})
         if not backup:
             raise ValueError("Unknown id")
 
-        credential = self.middleware.call('datastore.query', 'system.cloudcredentials', [('id', '=', backup['credential']['id'])], {'get': True})
+        credential = await self.middleware.call('datastore.query', 'system.cloudcredentials', [('id', '=', backup['credential']['id'])], {'get': True})
         if not credential:
             raise ValueError("Backup credential not found.")
 
         if credential['provider'] == 'AMAZON':
-            return self.middleware.call('backup.s3.sync', job, backup, credential)
+            return await self.middleware.call('backup.s3.sync', job, backup, credential)
         else:
             raise NotImplementedError('Unsupported provider: {}'.format(
                 credential['provider']
@@ -179,8 +178,8 @@ class BackupS3Service(Service):
         namespace = 'backup.s3'
 
     @private
-    def get_client(self, id):
-        credential = self.middleware.call('datastore.query', 'system.cloudcredentials', [('id', '=', id)], {'get': True})
+    async def get_client(self, id):
+        credential = await self.middleware.call('datastore.query', 'system.cloudcredentials', [('id', '=', id)], {'get': True})
 
         client = boto3.client(
             's3',
@@ -190,9 +189,9 @@ class BackupS3Service(Service):
         return client
 
     @accepts(Int('id'))
-    def get_buckets(self, id):
+    async def get_buckets(self, id):
         """Returns buckets from a given S3 credential."""
-        client = self.get_client(id)
+        client = await self.get_client(id)
         buckets = []
         for bucket in client.list_buckets()['Buckets']:
             buckets.append({
@@ -203,11 +202,11 @@ class BackupS3Service(Service):
         return buckets
 
     @accepts(Int('id'), Str('name'))
-    def get_bucket_location(self, id, name):
+    async def get_bucket_location(self, id, name):
         """
         Returns bucket `name` location (region) from credential `id`.
         """
-        client = self.get_client(id)
+        client = await self.get_client(id)
         response = client.get_bucket_location(Bucket=name)
         return response['LocationConstraint']
 
@@ -252,7 +251,7 @@ region = {region}
                 RE_TRANSF = re.compile(r'Transferred:\s*?(.+)$', re.S)
                 read_buffer = ''
                 while True:
-                    read = proc.stderr.readline()
+                    read = proc.stderr.readline().decode()
                     if read == '':
                         break
                     read_buffer += read
@@ -270,16 +269,16 @@ region = {region}
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
             )
-            check_task = asyncio.ensure_future(functools.partial(check_progress, job, proc))
+            check_task = asyncio.ensure_future(check_progress(job, proc))
             await proc.communicate()
             if proc.returncode != 0:
-                asyncio.get_event_loop().run_until_complete(check_task)
+                await asyncio.wait_for(check_task)
                 raise ValueError('rclone failed: {}'.format(check_task.result()))
             return True
 
     @private
-    def put(self, backup, filename, read_fd):
-        client = self.get_client(backup['id'])
+    async def put(self, backup, filename, read_fd):
+        client = await self.get_client(backup['id'])
         folder = backup['attributes']['folder'] or ''
         key = os.path.join(folder, filename)
         parts = []
@@ -325,8 +324,8 @@ region = {region}
             pass
 
     @private
-    def get(self, backup, filename, write_fd):
-        client = self.get_client(backup['id'])
+    async def get(self, backup, filename, write_fd):
+        client = await self.get_client(backup['id'])
         folder = backup['attributes']['folder'] or ''
         key = os.path.join(folder, filename)
         obj = client.get_object(
@@ -342,8 +341,8 @@ region = {region}
                 f.write(chunk)
 
     @private
-    def ls(self, cred_id, bucket, path):
-        client = self.get_client(cred_id)
+    async def ls(self, cred_id, bucket, path):
+        client = await self.get_client(cred_id)
         obj = client.list_objects_v2(
             Bucket=bucket,
             Prefix=path,
