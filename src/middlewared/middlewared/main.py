@@ -161,9 +161,10 @@ class Application(object):
             if self.middleware.crash_reporting.is_disabled():
                 self.logger.debug('[Crash Reporting] is disabled using sentinel file.')
             else:
-                pass
-                #extra_log_files = (('/var/log/middlewared.log', 'middlewared_log'),)
-                #gevent.spawn(self.middleware.crash_reporting.report, sys.exc_info(), None, extra_log_files)
+                extra_log_files = (('/var/log/middlewared.log', 'middlewared_log'),)
+                asyncio.ensure_future(self.middleware.threaded(
+                    self.middleware.crash_reporting.report, sys.exc_info(), None, extra_log_files
+                ))
 
     def subscribe(self, ident, name):
         self.__subscribed[ident] = name
