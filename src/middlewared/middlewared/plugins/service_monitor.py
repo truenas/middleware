@@ -1,3 +1,4 @@
+import asyncio
 import os
 import socket
 import random
@@ -5,7 +6,7 @@ import sys
 import threading
 import time
 
-from middlewared.client import CallTimeout
+from middlewared.client import Client, CallTimeout
 from middlewared.service import Service, private
 
 if '/usr/local/www' not in sys.path:
@@ -54,7 +55,8 @@ class ServiceMonitorThread(threading.Thread):
         #
         if service in ('activedirectory', 'ldap', 'nis', 'nt4'):
             try:
-                ds = self.middleware.call('datastore.query', 'directoryservice.%s' % service)[0]
+                with Client() as c:
+                    ds = c.call('datastore.query', 'directoryservice.%s' % service)[0]
                 if service == 'activedirectory':
                     service = 'ad'
                 enabled = ds["%s_enable" % service]
@@ -64,7 +66,8 @@ class ServiceMonitorThread(threading.Thread):
 
         else:
             try:
-                services = self.middleware.call('datastore.query', 'services.services')
+                with Client() as c:
+                    services = c.call('datastore.query', 'services.services')
                 for s in services:
                     if s['srv_service'] == 'cifs':
                         enabled = s['srv_enable']
@@ -107,15 +110,16 @@ class ServiceMonitorThread(threading.Thread):
     def getStarted(self, service):
         max_tries = 3
 
-        started = self.middleware.call('service.started', self.name)
-        if started == True:
-            return started
+        with Client() as c:
+            started = c.call('service.started', self.name)
+            if started == True:
+                return started
 
-        i = 0
-        while i < max_tries:
-            time.sleep(1)
-            started = self.middleware.call('service.started', self.name)
-            i += 1
+            i = 0
+            while i < max_tries:
+                time.sleep(1)
+                started = c.call('service.started', self.name)
+                i += 1
 
         return started
 
@@ -174,8 +178,8 @@ class ServiceMonitorService(Service):
         super(ServiceMonitorService, self).__init__(*args)
         self.threads = {}
 
-    def start(self):
-        services = self.middleware.call('datastore.query', 'services.servicemonitor')
+    async def start(self):
+        services = await self.middleware.call('datastore.query', 'services.servicemonitor')
         for s in services:
             thread_name = s['sm_name']
 
@@ -190,17 +194,17 @@ class ServiceMonitorService(Service):
             self.threads[thread_name] = thread
             thread.start()
 
-    def stop(self):
+    async def stop(self):
         for thread in self.threads.copy():
             thread = self.threads.get(thread)
             thread.cancel()
             del self.threads[thread.name]
         self.threads = {}
 
-    def restart(self):
-        self.stop()
-        self.start()
+    async def restart(self):
+        await self.stop()
+        await self.start()
 
 
 def setup(middleware):
-    middleware.call('servicemonitor.start')
+    asyncio.ensure_future(middleware.call('servicemonitor.start'))
