@@ -6,7 +6,7 @@ import time
 from subprocess import PIPE
 
 from middlewared.schema import accepts, Bool, Dict, Int, Str
-from middlewared.service import filterable, Service
+from middlewared.service import filterable, CRUDService
 from middlewared.utils import Popen, filter_list
 
 
@@ -46,7 +46,7 @@ class StartNotify(threading.Thread):
             tries += 1
 
 
-class ServiceService(Service):
+class ServiceService(CRUDService):
 
     SERVICE_DEFS = {
         's3': ('minio', '/var/run/minio.pid'),
@@ -110,7 +110,7 @@ class ServiceService(Service):
             Bool('enable'),
         ),
     )
-    def update(self, id, data):
+    async def do_update(self, id, data):
         """
         Update service entry of `id`.
 
