@@ -45,6 +45,16 @@ class EtcService(Service):
         'network': [
             {'type': 'mako', 'path': 'dhclient.conf'},
         ],
+        'pam': [
+            { 'type': 'mako', 'path': os.path.join('pam.d', f) }
+            for f in os.listdir(
+                os.path.realpath(
+                    os.path.join(
+                        os.path.dirname(__file__), '..', 'etc_files', 'pam.d'
+                    )
+                )
+            )
+        ],
     }
 
     class Meta:
@@ -77,6 +87,7 @@ class EtcService(Service):
                 continue
 
             outfile = '/etc/{0}'.format(entry['path'])
+
             # Check hash of generated and existing file
             # Do not rewrite if they are the same
             if os.path.exists(outfile):
