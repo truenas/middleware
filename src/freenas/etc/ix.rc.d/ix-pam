@@ -11,12 +11,12 @@
 
 pam_start()
 {
-	/usr/local/bin/midclt call etc.generate_all > /dev/null
+	LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/midclt call etc.generate pam > /dev/null
 }
 
 pam_stop()
 {
-	/usr/local/bin/midclt call etc.generate_all > /dev/null
+	LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/midclt call etc.generate pam > /dev/null
 }
 
 name="ix-pam"
