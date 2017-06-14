@@ -19,7 +19,7 @@ generate_ldapconf()
 
 generate_nss_ldapconf()
 {
-	/usr/local/libexec/nas/generate_nss_ldap_conf.py
+	LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/midclt call etc.generate nss > /dev/null
 }
 
 get_cifs_homedir()
