@@ -14,9 +14,7 @@ USE_PYTHON=	autoplist distutils
 EXTRACT_ONLY=
 
 BUILD_DEPENDS= ${PYTHON_PKGNAMEPREFIX}fastentrypoints>0:devel/py-fastentrypoints
-RUN_DEPENDS=	${PYTHON_PKGNAMEPREFIX}gevent>0:devel/py-gevent \
-		${PYTHON_PKGNAMEPREFIX}karellen-geventws>0:www/py-karellen-geventws \
-		${PYTHON_PKGNAMEPREFIX}ws4py>0:www/py-ws4py \
+RUN_DEPENDS=	${PYTHON_PKGNAMEPREFIX}ws4py>0:www/py-ws4py \
 		${PYTHON_PKGNAMEPREFIX}falcon>0:www/py-falcon \
 		${PYTHON_PKGNAMEPREFIX}Flask>0:www/py-flask \
 		${PYTHON_PKGNAMEPREFIX}boto3>0:devel/py-boto3 \
