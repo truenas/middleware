@@ -16,7 +16,7 @@ class PoolService(CRUDService):
         return await self.middleware.call('datastore.query', 'storage.volume', filters, options)
 
     @private
-    def pool_extend(self, pool):
+    async def pool_extend(self, pool):
         pool.pop('fstype', None)
 
         """
@@ -35,7 +35,7 @@ class PoolService(CRUDService):
                 pool['is_decrypted'] = True
             else:
                 decrypted = True
-                for ed in self.middleware.call('datastore.query', 'storage.encrypteddisk', [('encrypted_volume', '=', pool['id'])]):
+                for ed in await self.middleware.call('datastore.query', 'storage.encrypteddisk', [('encrypted_volume', '=', pool['id'])]):
                     if not os.path.exists(f'/dev/{ed["encrypted_provider"]}.eli'):
                         decrypted = False
                         break

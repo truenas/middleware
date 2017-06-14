@@ -3,7 +3,7 @@ import socket
 import ssl
 
 from middlewared.schema import Dict, Int, Ref, Str, accepts
-from middlewared.service import CallError, Service
+from middlewared.service import CallError, Service, filterable
 
 from pyVim import connect
 from pyVmomi import vim
@@ -11,16 +11,16 @@ from pyVmomi import vim
 
 class VMWareService(Service):
 
-    @accepts(Ref('query-filters'), Ref('query-options'))
-    def query(self, filters=None, options=None):
+    @filterable
+    async def query(self, filters=None, options=None):
         if options is None:
             options = {}
         options['extend'] = 'vmware.item_extend'
-        return self.middleware.call('datastore.query', 'storage.vmwareplugin', filters, options)
+        return await self.middleware.call('datastore.query', 'storage.vmwareplugin', filters, options)
 
-    def item_extend(self, item):
+    async def item_extend(self, item):
         try:
-            item['password'] = self.middleware.call('notifier.pwenc_decrypt', item['password'])
+            item['password'] = await self.middleware.call('notifier.pwenc_decrypt', item['password'])
         except:
             self.logger.warn('Failed to decrypt password', exc_info=True)
         return item
@@ -82,9 +82,9 @@ class VMWareService(Service):
         return datastores
 
     @accepts(Int('pk'))
-    def get_virtual_machines(self, pk):
+    async def get_virtual_machines(self, pk):
 
-        item = self.query([('id', '=', pk)], {'get': True})
+        item = await self.query([('id', '=', pk)], {'get': True})
 
         ssl_context = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
         ssl_context.verify_mode = ssl.CERT_NONE
