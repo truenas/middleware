@@ -32,39 +32,15 @@ ssl_help() { echo "Dump SSL Configuration"; }
 ssl_directory() { echo "SSL"; }
 ssl_func()
 {
-	ssldir="/etc/ssl"
-	fndir="${ssldir}/freenas"
-	cadir="${fndir}/CA"
-	privdir="${cadir}/private"
-	certsdir="${cadir}/certs"
-	sslconf="${fndir}/openssl.conf"
-	httpdpem="${fndir}/httpd.pem"
-
-	section_header "${ssldir}"
-	ls -l ${ssldir}
+	section_header "/etc/ssl"
+	find /etc/ssl -print0 | xargs -0 ls -l
 	section_footer
 
-	section_header "${fndir}"
-	ls -l ${fndir}
+	section_header "/etc/certificates"
+	find /etc/certificates -print0 | xargs -0 ls -l
 	section_footer
 
-	section_header "${cadir}"
-	ls -l ${cadir}
-	section_footer
-
-	section_header "${privdir}"
-	ls -l ${privdir}
-	section_footer
-
-	section_header "${certsdir}"
-	ls -l ${certsdir}
-	section_footer
-
-	section_header "${sslconf}"
-	sc ${sslconf}
-	section_footer
-
-	section_header "${httpdpem}"
-	sc ${httpdpem}
+	section_header "/etc/ssl/openssl.cnf"
+	sc /etc/ssl/openssl.cnf
 	section_footer
 }
