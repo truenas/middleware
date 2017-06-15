@@ -1,4 +1,4 @@
-from middlewared.schema import accepts, Bool, Dict, Int, Ref, Str
+from middlewared.schema import accepts, Bool, Dict, Int, Patch, Ref, Str
 from middlewared.service import CRUDService, Service, item_method, job, private
 from middlewared.utils import Popen
 
@@ -120,7 +120,7 @@ class BackupService(CRUDService):
         self.middleware.call('notifier.restart', 'cron')
         return pk
 
-    @accepts(Int('id'), Ref('backup'))
+    @accepts(Int('id'), Patch('backup', 'backup_update', ('attr', {'update': True})))
     def do_update(self, id, data):
         """
         Updates the backup entry `id` with `data`.
@@ -132,9 +132,12 @@ class BackupService(CRUDService):
             {'get': True},
         )
         assert backup is not None
+        # credential is a foreign key for now
+        if backup['credential']:
+            backup['credential'] = backup['credential']['id']
 
         backup.update(data)
-        self._clean_credential(data)
+        self._clean_credential(backup)
         self.middleware.call('datastore.update', 'tasks.cloudsync', id, backup)
         self.middleware.call('notifier.restart', 'cron')
 
