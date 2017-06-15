@@ -117,6 +117,7 @@ from common.ssl import CERT_CHAIN_REGEX
 
 log = logging.getLogger('system.forms')
 WIZARD_PROGRESSFILE = '/tmp/.initialwizard_progress'
+BAD_BE_CHARS = "/ *'\"?@"
 
 
 def clean_path_execbit(path):
@@ -165,6 +166,22 @@ def check_certificate(certificate):
     return nmatches
 
 
+def validate_be_name(name):
+    if any(elem in name for elem in BAD_BE_CHARS):
+        raise forms.ValidationError(_('Name does not allow spaces and the following characters: /*\'"?@'))
+    else:
+        beadm_names = subprocess.Popen(
+            "beadm list | awk '{print $7}'",
+            shell=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            encoding='utf8',
+        ).communicate()[0].split('\n')
+        if name in filter(None, beadm_names):
+            raise forms.ValidationError(_('The name %s already exist.') % (name))
+    return name
+
+
 class BootEnvAddForm(Form):
 
     name = forms.CharField(
@@ -177,12 +194,7 @@ class BootEnvAddForm(Form):
         super(BootEnvAddForm, self).__init__(*args, **kwargs)
 
     def clean_name(self):
-        name = self.cleaned_data.get('name')
-        if not re.search(r'^[a-z0-9_-]+$', name, re.I):
-            raise forms.ValidationError(
-                _('Only alphanumeric, underscores and dashes are allowed.')
-            )
-        return name
+        return validate_be_name(self.cleaned_data.get('name'))
 
     def save(self, *args, **kwargs):
         kwargs = {}
@@ -207,29 +219,8 @@ class BootEnvRenameForm(Form):
         self._name = kwargs.pop('name')
         super(BootEnvRenameForm, self).__init__(*args, **kwargs)
 
-    def is_duplicated_name(self, name):
-        beadm_names = subprocess.Popen(
-            "beadm list | awk '{print $7}'",
-            shell=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            encoding='utf8',
-        ).communicate()[0].split('\n')
-        beadm_names = [_f for _f in beadm_names if _f]
-        if name in beadm_names:
-            return True
-        else:
-            return False
-
     def clean_name(self):
-        name = self.cleaned_data.get('name')
-        bad_chars = "/ *'\"?@"
-        if any(elem in name for elem in bad_chars):
-            raise forms.ValidationError(_('Name does not allow spaces and the following characters: /*\'"?@'))
-        else:
-            if self.is_duplicated_name(name):
-                raise forms.ValidationError(_('The name %s already exist.') % (name))
-            return name
+        return validate_be_name(self.cleaned_data.get('name'))
 
     def save(self, *args, **kwargs):
         new_name = self.cleaned_data.get('name')
