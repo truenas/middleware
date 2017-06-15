@@ -117,7 +117,7 @@ from common.ssl import CERT_CHAIN_REGEX
 
 log = logging.getLogger('system.forms')
 WIZARD_PROGRESSFILE = '/tmp/.initialwizard_progress'
-BAD_BE_CHARS = "/ *'\"?@"
+BAD_BE_CHARS = "/ *'\"?@!#$%^&()+=~<>;\\"
 
 
 def clean_path_execbit(path):
