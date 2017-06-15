@@ -9,7 +9,7 @@
 
 nis_start()
 {
-        LD_LIBRARY_PATH=/usr/local/lib /usr/local/www/freenasUI/tools/cachetool.py start
+        LD_LIBRARY_PATH=/usr/local/lib /usr/local/www/freenasUI/tools/cachetool.py fill
 }
 
 nis_stop()
