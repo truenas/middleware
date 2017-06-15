@@ -206,7 +206,7 @@ Update resource
                 "ldap_bindpw": "",
                 "ldap_binddn": "",
                 "ldap_enable": false,
-                "ldap_certfile": "",
+                "ldap_certificate": "",
                 "id": 1
         }
 
@@ -220,7 +220,7 @@ Update resource
    :json string ldap_passwordsuffix: suffix that is used for password
    :json string ldap_machinesuffix: suffix that is used for machines
    :json string ldap_ssl: off, on, start_tls
-   :json string ldap_certfile: contents of your self signed certificate
+   :json string ldap_certificate: id of your self signed certificate
    :json boolean ldap_enable: enable ldap directory service
    :reqheader Content-Type: the request content type
    :resheader Content-Type: the response content type

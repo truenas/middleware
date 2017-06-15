@@ -24,7 +24,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
-from . import utils
+import freenasUI.vcp.utils as utils
 
 from django.db import models
 from freenasUI.freeadmin.models import Model

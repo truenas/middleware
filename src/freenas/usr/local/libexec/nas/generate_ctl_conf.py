@@ -242,7 +242,7 @@ def main():
         poolname = None
         lunthreshold = None
         if extent.iscsi_target_extent_type == 'Disk':
-            disk = client.call('datastore.query', 'storage.Disk', [('disk_identifier', '=', path)], {'order_by': ['disk_enabled']})
+            disk = client.call('datastore.query', 'storage.Disk', [('disk_identifier', '=', path)], {'order_by': ['disk_expiretime']})
             if not disk:
                 continue
             disk = Struct(disk[0])

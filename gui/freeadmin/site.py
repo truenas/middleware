@@ -4,8 +4,6 @@ import hashlib
 import json
 import logging
 import re
-import sys
-import middlewared.logger as logger
 
 from django.conf.urls import url, include
 from django.core.urlresolvers import reverse
@@ -31,7 +29,6 @@ class FreeAdminSite(object):
 
     def __init__(self):
         self._registry = {}
-        self.trace = logger.Rollbar()
 
     def register(
         self, model_or_iterable, admin_class=None, freeadmin=None, **options
@@ -163,6 +160,9 @@ class FreeAdminSite(object):
             url(r'^$',
                 wrap(self.adminInterface),
                 name='index'),
+            url(r'^middleware_token/$',
+                wrap(self.middleware_token),
+                name='freeadmin_middleware_token'),
             url(r'^help/$',
                 wrap(self.help),
                 name="freeadmin_help"),
@@ -199,7 +199,6 @@ class FreeAdminSite(object):
     def adminInterface(self, request):
         from freenasUI.network.models import GlobalConfiguration
         from freenasUI.system.models import Advanced, Settings
-        from freenasUI.middleware.client import client
 
         view = appPool.hook_app_index('freeadmin', request)
         view = [_f for _f in view if _f]
@@ -227,14 +226,6 @@ class FreeAdminSite(object):
         sw_version = get_sw_version()
         sw_version_footer = get_sw_version(strip_build_num=True).split('-', 1)[-1]
 
-        try:
-            with client as c:
-                middleware_token = c.call('auth.generate_token', timeout=10)
-        except Exception:
-            middleware_token = None
-            extra_log_files = (('/var/log/middlewared.log', 'middlewared_log'),)
-            self.trace.rollbar_report(sys.exc_info(), request, sw_version, extra_log_files)
-
         return render(request, 'freeadmin/index.html', {
             'consolemsg': console,
             'hostname': hostname,
@@ -246,8 +237,16 @@ class FreeAdminSite(object):
             'js_hook': appPool.get_base_js(request),
             'menu_hook': appPool.get_top_menu(request),
             'wizard': wizard,
-            'middleware_token': middleware_token,
         })
+
+    @never_cache
+    def middleware_token(self, request):
+        from freenasUI.middleware.client import client
+        with client as c:
+            middleware_token = c.call('auth.generate_token', timeout=10)
+        return HttpResponse(json.dumps({
+            'token': middleware_token,
+        }), content_type="application/json")
 
     @never_cache
     def help(self, request):
@@ -317,5 +316,6 @@ class FreeAdminSite(object):
             if dismiss == "1":
                 alert = Alert.objects.create(node=alert_node(), message_id=msgid)
         return JsonResp(request, message="OK")
+
 
 site = FreeAdminSite()

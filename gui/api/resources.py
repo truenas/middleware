@@ -29,7 +29,7 @@ import logging
 import os
 import re
 import subprocess
-import urllib.request, urllib.parse, urllib.error
+import urllib.parse
 import signal
 import sysctl
 
@@ -88,6 +88,8 @@ from freenasUI.storage.forms import (
     VolumeAutoImportForm,
     VolumeManagerForm,
     ZFSDiskReplacementForm,
+    ZVol_CreateForm,
+    ZVol_EditForm,
 )
 from freenasUI.storage.models import Disk, Replication, VMWarePlugin
 from freenasUI.system.alert import alertPlugins, Alert
@@ -239,7 +241,7 @@ class DiskResourceMixin(object):
 
     class Meta:
         queryset = Disk.objects.filter(
-            disk_enabled=True,
+            disk_expiretime=None,
             disk_multipath_name=''
         ).exclude(
             Q(disk_name__startswith='multipath') | Q(disk_name='')
@@ -384,57 +386,70 @@ class ZVolResource(DojoResource):
     refer = fields.IntegerField(attribute='refer')
     used = fields.IntegerField(attribute='used')
     avail = fields.IntegerField(attribute='avail')
+    compression = fields.CharField(attribute='compression')
+    dedup = fields.CharField(attribute='dedup')
+    comments = fields.CharField(attribute='description')
 
     class Meta:
         allowed_methods = ['get', 'post', 'delete', 'put']
         object_class = zfs.ZFSVol
         resource_name = 'storage/zvol'
 
-    def obj_create(self, bundle, **kwargs):
-        bundle = self.full_hydrate(bundle)
-        err, msg = notifier().create_zfs_vol(
-            '%s/%s' % (kwargs.get('parent').vol_name, bundle.data.get('name')),
-            bundle.data.get('volsize'),
-            bundle.data.get('props', None),
-            bundle.data.get('sparse', True),
+    def post_list(self, request, **kwargs):
+        self.is_authenticated(request)
+        deserialized = self._meta.serializer.deserialize(
+            request.body,
+            format=request.META.get('CONTENT_TYPE') or 'application/json'
         )
-        if err:
-            bundle.errors['__all__'] = msg
+
+        # We need to get the parent dataset (if there is any)
+        # without the pool name
+        name = deserialized.get('name')
+        parent = kwargs['parent'].vol_name
+        if name and '/' in name:
+            parent_ds, deserialized['name'] = name.rsplit('/', 1)
+            parent = f"{parent}/{parent_ds}"
+
+        # Add zvol_ prefix to match form field names
+        for k in list(deserialized.keys()):
+            deserialized[f'zvol_{k}'] = deserialized.pop(k)
+        data = self._get_form_initial(ZVol_CreateForm)
+        data.update(deserialized)
+        form = ZVol_CreateForm(data=data, parentds=parent)
+        if not form.is_valid() or not form.save():
+            for k in list(form.errors.keys()):
+                if k == '__all__':
+                    continue
+                if k.startswith('zvol_'):
+                    form.errors[k[5:]] = form.errors.pop(k)
             raise ImmediateHttpResponse(
-                response=self.error_response(bundle.request, bundle.errors)
+                response=self.error_response(request, form.errors)
             )
-        # FIXME: authorization
-        bundle.obj = self.obj_get(bundle, pk=bundle.data.get('name'), **kwargs)
-        return bundle
+        # Re-query for a proper response
+        response = self.get_detail(request, pk=f"{name}", **kwargs)
+        response.status_code = 202
+        return response
 
     def obj_update(self, bundle, **kwargs):
         bundle = self.full_hydrate(bundle)
         name = "%s/%s" % (kwargs.get('parent').vol_name, kwargs.get('pk'))
-        deserialized = self.deserialize(
+        data = self.deserialize(
             bundle.request,
             bundle.request.body,
             format=bundle.request.META.get('CONTENT_TYPE', 'application/json'),
         )
-        _n = notifier()
-        error, errors = False, {}
-        for attr in (
-            'compression',
-            'dedup',
-            'volsize',
-        ):
-            value = deserialized.get(attr)
-            if value is None:
-                continue
-            if value == "inherit":
-                success, err = _n.zfs_inherit_option(name, attr)
-            else:
-                success, err = _n.zfs_set_option(name, attr, value)
-            if not success:
-                error = True
-                errors[attr] = err
-        if error:
+        # Add zvol_ prefix to match form field names
+        for k in list(data.keys()):
+            data[f'zvol_{k}'] = data.pop(k)
+        form = ZVol_EditForm(parentds=name, data=data)
+        if not form.is_valid() or not form.save():
+            for k in list(form.errors.keys()):
+                if k == '__all__':
+                    continue
+                if k.startswith('zvol_'):
+                    form.errors[k[5:]] = form.errors.pop(k)
             raise ImmediateHttpResponse(
-                response=self.error_response(bundle.request, errors)
+                response=self.error_response(bundle.request, form.errors)
             )
         bundle.obj = self.obj_get(bundle, **kwargs)
         return bundle
@@ -744,8 +759,6 @@ class VolumeResourceMixin(NestedMixin):
 
         bundle, obj = self._get_parent(request, kwargs)
 
-        assert bundle.obj.vol_fstype == 'ZFS'
-
         pool = notifier().zpool_parse(bundle.obj.vol_name)
 
         bundle.data['id'] = bundle.obj.id
@@ -809,9 +822,9 @@ class VolumeResourceMixin(NestedMixin):
                     }
                     if self.is_webclient(bundle.request):
                         try:
-                            disk = Disk.objects.order_by(
-                                'disk_enabled'
-                            ).filter(disk_name=current.disk)[0]
+                            disk = Disk.objects.filter(
+                                disk_expiretime=None, disk_name=current.disk
+                            )[0]
                             data['_disk_url'] = "%s?deletable=false" % (
                                 disk.get_edit_url(),
                             )
@@ -1090,9 +1103,6 @@ class VolumeResourceMixin(NestedMixin):
         attr_fields = ('avail', 'used', 'used_pct')
         for attr in attr_fields + ('status', ):
             bundle.data[attr] = getattr(bundle.obj, attr)
-
-        if bundle.obj.vol_fstype != 'ZFS':
-            return bundle
 
         bundle.data['is_upgraded'] = bundle.obj.is_upgraded
 
@@ -1789,6 +1799,7 @@ class ISCSIPortalResourceMixin(object):
         bundle = super(ISCSIPortalResourceMixin, self).hydrate(bundle)
         newips = bundle.data.get('iscsi_target_portal_ips', [])
         i = -1
+        existing_ips = []
         for i, item in enumerate(bundle.obj.ips.all()):
             bundle.data[
                 'portalip_set-%d-iscsi_target_portalip_ip' % i
@@ -1797,15 +1808,20 @@ class ISCSIPortalResourceMixin(object):
                 'portalip_set-%d-iscsi_target_portalip_port' % i
             ] = item.iscsi_target_portalip_port
             bundle.data['portalip_set-%d-id' % i] = item.id
-        initial = i + 1
+            existing_ips.append(f'{item.iscsi_target_portalip_ip}:{item.iscsi_target_portalip_port}')
+        total = initial = i + 1
         for i, item in enumerate(newips, i + 1):
+            # Skip existing IP:port
+            if item in existing_ips:
+                continue
             ip, prt = item.rsplit(':', 1)
             bundle.data['portalip_set-%d-iscsi_target_portalip_ip' % i] = ip
             bundle.data['portalip_set-%d-iscsi_target_portalip_port' % i] = prt
             bundle.data['portalip_set-%d-id' % i] = ''
+            total += 1
         bundle.data['iscsi_target_portal_ips'] = newips
         bundle.data['portalip_set-INITIAL_FORMS'] = initial
-        bundle.data['portalip_set-TOTAL_FORMS'] = i + 1
+        bundle.data['portalip_set-TOTAL_FORMS'] = total
         if bundle.obj.id is None:
             bundle.data['iscsi_target_portal_tag'] = iSCSITargetPortal.objects.all().count() + 1
         return bundle
@@ -2218,8 +2234,6 @@ class JailsResourceMixin(NestedMixin):
 
     def hydrate(self, bundle):
         bundle = super(JailsResourceMixin, self).hydrate(bundle)
-        if 'id' not in bundle.data:
-            bundle.data['id'] = 1
         if bundle.request.method == 'POST':
             # The way default values is provided in JailsCreateForm
             # is not ideal since it relays in form data from UI.
@@ -3214,9 +3228,9 @@ class BootEnvResource(NestedMixin, DojoResource):
                     }
                     if self.is_webclient(bundle.request):
                         try:
-                            disk = Disk.objects.order_by(
-                                'disk_enabled'
-                            ).filter(disk_name=current.disk)[0]
+                            disk = Disk.objects.filter(
+                                disk_expiretime=None, disk_name=current.disk
+                            )[0]
                             data['_disk_url'] = "%s?deletable=false" % (
                                 disk.get_edit_url(),
                             )
@@ -3524,15 +3538,14 @@ class UpdateResourceMixin(NestedMixin):
         self.method_check(request, allowed=['get'])
         self.is_authenticated(request)
 
-        # If it is HA licensed get pending updates from stanbdy node
-        if (
-            hasattr(notifier, 'failover_status') and
-            notifier().failover_licensed()
-        ):
-            s = notifier().failover_rpc()
-            data = s.update_pending()
-        else:
-            with client as c:
+        with client as c:
+            # If it is HA licensed get pending updates from stanbdy node
+            if (
+                hasattr(notifier, 'failover_status') and
+                notifier().failover_licensed()
+            ):
+                data = c.call('failover.call_remote', 'update.get_pending')
+            else:
                 data = c.call('update.get_pending')
         return self.create_response(
             request,

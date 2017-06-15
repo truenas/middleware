@@ -5,12 +5,15 @@ import base64
 import binascii
 import falcon
 import json
+import types
 
 
 class JsonEncoder(json.JSONEncoder):
     def default(self, obj):
         if isinstance(obj, datetime):
             return str(obj)
+        elif isinstance(obj, types.GeneratorType):
+            return list(obj)
         return json.JSONEncoder.default(self, obj)
 
 
@@ -288,5 +291,12 @@ class Resource(object):
                 method_args = self._filterable_args(req)
             else:
                 method_args = []
+
+        """
+        If the method is marked `item_method` then the first argument
+        must be the item id (from url param)
+        """
+        if method.get('item_method') is True:
+            method_args.insert(0, kwargs['id'])
 
         req.context['result'] = self.middleware.call(methodname, *method_args)

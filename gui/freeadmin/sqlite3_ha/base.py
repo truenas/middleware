@@ -1,11 +1,9 @@
 
-
+import gevent.monkey
 import logging
 import os
-import socket
 import threading
 import time
-import xmlrpc.client
 from sqlite3 import OperationalError
 
 from django.db.backends.sqlite3 import base as sqlite3base
@@ -94,7 +92,7 @@ class Journal(object):
 
     def __exit__(self, typ, value, traceback):
 
-        with open(self.JOURNAL_FILE, 'w+') as f:
+        with open(self.JOURNAL_FILE, 'wb+') as f:
             if self.queries:
                 f.write(pickle.dumps(self.queries))
 
@@ -117,23 +115,20 @@ class RunSQLRemote(threading.Thread):
         super(RunSQLRemote, self).__init__(*args, **kwargs)
 
     def run(self):
-        from freenasUI.middleware.notifier import notifier
-        from freenasUI.common.log import log_traceback
-        # FIXME: cache IP value
-        s = notifier().failover_rpc()
+        from freenasUI.middleware.client import client, ClientException
         try:
             with Journal() as f:
                 if f.queries:
                     f.queries.append((self._sql, self._params))
                 else:
-                    s.run_sql(self._sql, self._params)
-        except socket.error as err:
+                    with client as c:
+                        c.call('failover.call_remote', 'datastore.sql', [self._sql, self._params])
+        except ClientException:
             with Journal() as f:
                 f.queries.append((self._sql, self._params))
             return False
         except Exception as err:
-            log_traceback(log=log)
-            log.error('Failed to run SQL remotely %s: %s', self._sql, err)
+            log.error('Failed to run SQL remotely %s: %s', self._sql, err, exc_info=True)
             return False
         return True
 
@@ -151,12 +146,11 @@ class DatabaseWrapper(sqlite3base.DatabaseWrapper):
     def create_cursor(self):
         return self.connection.cursor(factory=HASQLiteCursorWrapper)
 
-    def dump_send(self):
+    def dump(self):
         """
         Method responsible for dumping the database into SQL,
         excluding the tables that should not be synced between nodes.
         """
-        from freenasUI.middleware.notifier import notifier
         cur = self.cursor()
         cur.executelocal("select name from sqlite_master where type = 'table'")
 
@@ -183,18 +177,7 @@ class DatabaseWrapper(sqlite3base.DatabaseWrapper):
             for row in cur.fetchall():
                 script.append(row[0])
 
-        s = notifier().failover_rpc()
-        # If we are syncing then we need to clear the Journal in case
-        # everything goes as planned.
-        with Journal() as j:
-            try:
-                sync = s.sync_to(script)
-                if sync:
-                    j.queries = []
-                return sync
-            except (xmlrpc.client.Fault, socket.error) as e:
-                log.error('Failed sync_to: %s', e)
-                return False
+        return script
 
     def dump_recv(self, script):
         """
@@ -276,13 +259,28 @@ class HASQLiteCursorWrapper(Database.Cursor):
             return
 
         try:
-            # FIXME: This is extremely time-consuming
-            from freenasUI.middleware.notifier import notifier
-            if not (
-                hasattr(notifier, 'failover_status') and
-                notifier().failover_status() == 'MASTER'
+            # middlewared notifier plugin can also reach this code for now.
+            # And this is usually using a thread (because it can block for
+            # numerous reasons). That means it can reach to gevent code
+            # out of the main loop which will lead to terrible things.
+            # To workaround this issue lets call notifier using a new client
+            # instance.
+            # FIXME: This is extremely time-consuming (failover.status)
+            if (
+                gevent.monkey.is_module_patched('subprocess') and
+                threading.main_thread() != threading.current_thread()
             ):
-                return
+                from freenasUI.middleware.client import client
+                with client as c:
+                    if c.call('system.is_freenas') or c.call('notifier.failover_status') != 'MASTER':
+                        return
+            else:
+                from freenasUI.middleware.notifier import notifier
+                if not (
+                    hasattr(notifier, 'failover_status') and
+                    notifier().failover_status() == 'MASTER'
+                ):
+                    return
         except:
             return
 

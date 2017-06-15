@@ -8,7 +8,6 @@ from .job import Job, JobsQueue
 from .restful import RESTfulAPI
 from .schema import Error as SchemaError
 from .service import CallError, CallException
-from .utils import Popen
 from collections import OrderedDict, defaultdict
 from daemon import DaemonContext
 from daemon.pidfile import TimeoutPIDLockFile
@@ -28,7 +27,6 @@ import linecache
 import os
 import setproctitle
 import signal
-import subprocess
 import sys
 import traceback
 import types
@@ -43,7 +41,7 @@ class Application(WebSocketApplication):
 
     def __init__(self, *args, **kwargs):
         super(Application, self).__init__(*args, **kwargs)
-        self.authenticated = self._check_permission()
+        self.authenticated = False
         self.handshake = False
         self.logger = logger.Logger('application').getLogger()
         self.sessionid = str(uuid.uuid4())
@@ -131,33 +129,16 @@ class Application(WebSocketApplication):
             'formatted': ''.join(traceback.format_exception(*exc_info)),
         }
 
-    def send_error(self, message, error, exc_info=None):
+    def send_error(self, message, errno, reason=None, exc_info=None):
         self._send({
             'msg': 'result',
             'id': message['id'],
             'error': {
-                'error': error,
+                'error': errno,
+                'reason': reason,
                 'trace': self._tb_error(exc_info) if exc_info else None,
             },
         })
-
-    def _check_permission(self):
-        remote_addr = self.ws.environ['REMOTE_ADDR']
-        remote_port = self.ws.environ['REMOTE_PORT']
-
-        if remote_addr not in ('127.0.0.1', '::1'):
-            return False
-
-        remote = '{0}:{1}'.format(remote_addr, remote_port)
-
-        proc = Popen([
-            '/usr/bin/sockstat', '-46c', '-p', remote_port
-        ], stdout=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=True)
-        for line in proc.communicate()[0].strip().splitlines()[1:]:
-            cols = line.split()
-            if cols[-2] == remote and cols[0] == 'root':
-                return True
-        return False
 
     def call_method(self, message):
 
@@ -165,6 +146,8 @@ class Application(WebSocketApplication):
             result = self.middleware.call_method(self, message)
             if isinstance(result, Job):
                 result = result.id
+            elif isinstance(result, types.GeneratorType):
+                result = list(result)
             self._send({
                 'id': message['id'],
                 'msg': 'result',
@@ -173,22 +156,16 @@ class Application(WebSocketApplication):
         except (CallException, SchemaError) as e:
             # CallException and subclasses are the way to gracefully
             # send errors to the client
-            self.send_error(message, str(e), sys.exc_info())
+            self.send_error(message, e.errno, str(e), sys.exc_info())
         except Exception as e:
-            self.send_error(message, str(e), sys.exc_info())
+            self.send_error(message, errno.EINVAL, str(e), sys.exc_info())
             self.logger.warn('Exception while calling {}(*{})'.format(message['method'], message.get('params')), exc_info=True)
 
-            try:
-                sw_version = self.middleware.call('system.version')
-            except:
-                self.logger.debug('Failed to get system version', exc_info=True)
-
-            if self.middleware.rollbar.is_rollbar_disabled():
-                self.logger.debug('[Rollbar] is disabled using sentinel file.')
+            if self.middleware.crash_reporting.is_disabled():
+                self.logger.debug('[Crash Reporting] is disabled using sentinel file.')
             else:
                 extra_log_files = (('/var/log/middlewared.log', 'middlewared_log'),)
-                gevent.spawn(self.middleware.rollbar.rollbar_report, sys.exc_info(), None, sw_version, extra_log_files)
-                self.logger.info('[Rollbar] report sent.')
+                gevent.spawn(self.middleware.crash_reporting.report, sys.exc_info(), None, extra_log_files)
 
     def subscribe(self, ident, name):
         self.__subscribed[ident] = name
@@ -250,6 +227,7 @@ class Application(WebSocketApplication):
                     'version': '1',
                 })
             else:
+                self.middleware.call_hook('core.on_connect', app=self)
                 self._send({
                     'msg': 'connected',
                     'session': self.sessionid,
@@ -275,7 +253,7 @@ class Application(WebSocketApplication):
             return
 
         if not self.authenticated:
-            self.send_error(message, 'Not authenticated')
+            self.send_error(message, errno.EACCES, 'Not authenticated')
             return
 
         if message['msg'] == 'sub':
@@ -407,10 +385,11 @@ class FileApplication(object):
 
 class Middleware(object):
 
-    def __init__(self):
-        self.logger_name = logger.Logger('middlewared')
-        self.logger = self.logger_name.getLogger()
-        self.rollbar = logger.Rollbar()
+    def __init__(self, loop_monitor=True, plugins_dirs=None):
+        self.logger = logger.Logger('middlewared').getLogger()
+        self.crash_reporting = logger.CrashReporting()
+        self.loop_monitor = loop_monitor
+        self.__threadpool = ThreadPool(5)  # Init before plugins are loaded
         self.__jobs = JobsQueue(self)
         self.__schemas = {}
         self.__services = {}
@@ -419,45 +398,54 @@ class Middleware(object):
         self.__hooks = defaultdict(list)
         self.__server_threads = []
         self.__init_services()
-        self.__plugins_load()
-        self.__threadpool = ThreadPool(5)
+        self.__plugins_load(plugins_dirs or [])
 
     def __init_services(self):
         from middlewared.service import CoreService
         self.add_service(CoreService(self))
 
-    def __plugins_load(self):
+    def __plugins_load(self, plugins_dirs):
         from middlewared.service import Service, CRUDService, ConfigService
-        plugins_dir = os.path.join(
+
+        main_plugins_dir = os.path.join(
             os.path.dirname(os.path.realpath(__file__)),
             'plugins',
         )
-        self.logger.debug('Loading plugins from {0}'.format(plugins_dir))
-        if not os.path.exists(plugins_dir):
-            raise ValueError('plugins dir not found')
+        plugins_dirs.insert(0, main_plugins_dir)
 
-        for f in os.listdir(plugins_dir):
-            if not f.endswith('.py'):
-                continue
-            f = f[:-3]
-            fp, pathname, description = imp.find_module(f, [plugins_dir])
-            try:
-                mod = imp.load_module(f, fp, pathname, description)
-            finally:
-                if fp:
-                    fp.close()
+        self.logger.debug('Loading plugins from {0}'.format(','.join(plugins_dirs)))
 
-            for attr in dir(mod):
-                attr = getattr(mod, attr)
-                if not inspect.isclass(attr):
+        setup_funcs = []
+        for plugins_dir in plugins_dirs:
+
+            if not os.path.exists(plugins_dir):
+                raise ValueError(f'plugins dir not found: {plugins_dir}')
+
+            for f in os.listdir(plugins_dir):
+                if not f.endswith('.py'):
                     continue
-                if attr in (Service, CRUDService, ConfigService):
-                    continue
-                if issubclass(attr, Service):
-                    self.add_service(attr(self))
+                f = f[:-3]
+                fp, pathname, description = imp.find_module(f, [plugins_dir])
+                try:
+                    mod = imp.load_module(f, fp, pathname, description)
+                finally:
+                    if fp:
+                        fp.close()
 
-            if hasattr(mod, 'setup'):
-                mod.setup(self)
+                for attr in dir(mod):
+                    attr = getattr(mod, attr)
+                    if not inspect.isclass(attr):
+                        continue
+                    if attr in (Service, CRUDService, ConfigService):
+                        continue
+                    if issubclass(attr, Service):
+                        self.add_service(attr(self))
+
+                if hasattr(mod, 'setup'):
+                    setup_funcs.append(mod.setup)
+
+        for f in setup_funcs:
+            f(self)
 
         # Now that all plugins have been loaded we can resolve all method params
         # to make sure every schema is patched and references match
@@ -587,7 +575,7 @@ class Middleware(object):
         methodobj = self._method_lookup(message['method'])
 
         if not app.authenticated and not hasattr(methodobj, '_no_auth_required'):
-            app.send_error(message, 'Not authenticated')
+            app.send_error(message, errno.EACCES, 'Not authenticated')
             return
 
         return self._call(message['method'], methodobj, params, app=app)
@@ -662,13 +650,14 @@ class Middleware(object):
             self._green_counter = 0
 
     def run(self):
-        self.green_monitor()
+        if self.loop_monitor:
+            self.green_monitor()
 
         gevent.signal(signal.SIGTERM, self.kill)
         gevent.signal(signal.SIGUSR1, self.pdb)
 
         Application.middleware = self
-        wsserver = WebSocketServer(('127.0.0.1', 6000), Resource(OrderedDict([
+        wsserver = WebSocketServer(('0.0.0.0', 6000), Resource(OrderedDict([
             ('/websocket', Application),
         ])))
 
@@ -687,6 +676,7 @@ class Middleware(object):
             gevent.spawn(self.__jobs.run),
         ]
         self.logger.debug('Accepting connections')
+
         gevent.joinall(self.__server_threads)
 
     def kill(self):
@@ -711,6 +701,8 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('restart', nargs='?')
     parser.add_argument('--foreground', '-f', action='store_true')
+    parser.add_argument('--disable-loop-monitor', '-L', action='store_true')
+    parser.add_argument('--plugins-dirs', '-p', action='append')
     parser.add_argument('--debug-level', default='DEBUG', choices=[
         'DEBUG',
         'INFO',
@@ -758,7 +750,10 @@ def main():
     # Workaround to tell django to not set up logging on its own
     os.environ['MIDDLEWARED'] = str(os.getpid())
 
-    Middleware().run()
+    Middleware(
+        loop_monitor=not args.disable_loop_monitor,
+        plugins_dirs=args.plugins_dirs,
+    ).run()
     if not args.foreground:
         daemonc.close()
 

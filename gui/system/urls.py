@@ -56,7 +56,7 @@ from .views import (
     CA_export_certificate, CA_export_privatekey, CA_info,
     certificate_import, certificate_create_internal, certificate_edit, CSR_edit,
     certificate_create_CSR, certificate_export_certificate, certificate_export_privatekey,
-    certificate_export_certificate_and_privatekey
+    certificate_export_certificate_and_privatekey, consul_fake_alert
 )
 
 
@@ -117,6 +117,7 @@ urlpatterns = [
     url(r'^varlogmessages/(?P<lines>\d+)?/?$', varlogmessages, name="system_messages"),
     url(r'^top/', top, name="system_top"),
     url(r'^test-mail/$', testmail, name="system_testmail"),
+    url(r'^consulalerts_fake/', consul_fake_alert, name="consulalerts_fake"),
     url(r'^lsdir/(?P<path>.*)$', directory_browser, name="system_dirbrowser"),
     url(r'^lsfiles/(?P<path>.*)$', file_browser, name="system_filebrowser"),
     url(r'^restart-httpd/$', restart_httpd, name="system_restart_httpd"),

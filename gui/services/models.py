@@ -687,17 +687,6 @@ class iSCSITargetExtent(Model):
                 return self.iscsi_target_extent_path
 
     def delete(self):
-        if self.iscsi_target_extent_type in ("Disk", "ZVOL"):
-            try:
-                if self.iscsi_target_extent_type == "Disk":
-                    disk = Disk.objects.get(pk=self.iscsi_target_extent_path)
-                    devname = disk.identifier_to_device()
-                    if not devname:
-                        disk.disk_enabled = False
-                        disk.save()
-            except Exception as e:
-                log.error("Unable to sync iSCSI extent delete: %s", e)
-
         for te in iSCSITargetToExtent.objects.filter(iscsi_extent=self):
             te.delete()
         super(iSCSITargetExtent, self).delete()
@@ -1703,7 +1692,7 @@ class SSH(Model):
         ),
         max_length=350,
         blank=True,
-        choices=list(choices.NICChoices(exclude_configured=False)),
+        choices=choices.NICChoices(exclude_configured=False, exclude_unconfigured_vlan_parent=True),
         default='',
     )
     ssh_tcpport = models.PositiveIntegerField(
@@ -2343,3 +2332,29 @@ class S3(Model):
     class FreeAdmin:
         deletable = False
         icon_model = u"S3Icon"
+
+
+class ServiceMonitor(Model):
+    sm_name = models.CharField(
+        verbose_name=_("Service Name"),
+        max_length=120,
+        unique=True
+    )
+    sm_host = models.CharField(
+        verbose_name=_("Host Name"),
+        max_length=120
+    )
+    sm_port = models.PositiveIntegerField(
+        verbose_name=_("Port"),
+        validators=[MinValueValidator(1), MaxValueValidator(65535)]
+    )
+    sm_frequency = models.PositiveIntegerField(
+        verbose_name=_("Frequency")
+    )
+    sm_retry = models.PositiveIntegerField(
+        verbose_name=_("Retry")
+    )
+    sm_enable = models.BooleanField(
+        verbose_name=_("Enable"),
+        default=False
+    )

@@ -3,11 +3,16 @@ from .protocol import DDPProtocol
 from collections import defaultdict
 from threading import Event, Lock, Thread
 from ws4py.client.threadedclient import WebSocketClient
+from ws4py.websocket import WebSocket
 
 import argparse
+from base64 import b64encode
+import ctypes
 import os
 import socket
+import ssl
 import sys
+import threading
 import time
 import uuid
 
@@ -16,10 +21,111 @@ CALL_TIMEOUT = int(os.environ.get('CALL_TIMEOUT', 60))
 
 
 class WSClient(WebSocketClient):
-    def __init__(self, *args, **kwargs):
+    def __init__(self, url, *args, **kwargs):
         self.client = kwargs.pop('client')
+        reserved_ports = kwargs.pop('reserved_ports')
+        reserved_ports_blacklist = kwargs.pop('reserved_ports_blacklist')
         self.protocol = DDPProtocol(self)
-        super(WSClient, self).__init__(*args, **kwargs)
+        if not reserved_ports:
+            super(WSClient, self).__init__(url, *args, **kwargs)
+        else:
+            """
+            All this code has been copied from WebSocketClient.__init__
+            because it is not prepared to handle a custom socket via method
+            overriding. We need to use socket.fromfd in case reserved_ports
+            is specified.
+            """
+            self.url = url
+            self.host = None
+            self.scheme = None
+            self.port = None
+            self.unix_socket_path = None
+            self.resource = None
+            self.ssl_options = kwargs.get('ssl_options') or {}
+            self.extra_headers = kwargs.get('headers') or []
+            self.exclude_headers = kwargs.get('exclude_headers') or []
+            self.exclude_headers = [x.lower() for x in self.exclude_headers]
+
+            if self.scheme == "wss":
+                # Prevent check_hostname requires server_hostname (ref #187)
+                if "cert_reqs" not in self.ssl_options:
+                    self.ssl_options["cert_reqs"] = ssl.CERT_NONE
+
+            self._parse_url()
+
+            if self.unix_socket_path:
+                sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM, 0)
+            else:
+                # Let's handle IPv4 and IPv6 addresses
+                # Simplified from CherryPy's code
+                try:
+                    family, socktype, proto, canonname, sa = socket.getaddrinfo(self.host, self.port, socket.AF_UNSPEC, socket.SOCK_STREAM, 0, socket.AI_PASSIVE)[0]
+                except socket.gaierror:
+                    family = socket.AF_INET
+                    if self.host.startswith('::'):
+                        family = socket.AF_INET6
+
+                    socktype = socket.SOCK_STREAM
+                    proto = 0
+
+                """
+                This is the line replaced to use socket.fromfd
+                """
+                sock = socket.fromfd(
+                    self.get_reserved_portfd(blacklist=reserved_ports_blacklist),
+                    family,
+                    socktype,
+                    proto
+                )
+                sock.setsockopt(socket.IPPROTO_TCP, socket.TCP_NODELAY, 1)
+                sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+                if hasattr(socket, 'AF_INET6') and family == socket.AF_INET6 and self.host.startswith('::'):
+                    try:
+                        sock.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_V6ONLY, 0)
+                    except (AttributeError, socket.error):
+                        pass
+
+            WebSocket.__init__(self, sock, protocols=kwargs.get('protocols'),
+                               extensions=kwargs.get('extensions'),
+                               heartbeat_freq=kwargs.get('heartbeat_freq'))
+
+            self.stream.always_mask = True
+            self.stream.expect_masking = False
+            self.key = b64encode(os.urandom(16))
+            self._th = threading.Thread(target=self.run, name='WebSocketClient')
+            self._th.daemon = True
+
+    def get_reserved_portfd(self, blacklist=None):
+        """
+        Get a file descriptor with a reserved port (<=1024).
+        The port is arbitrary using the libc "rresvport" call and its tried
+        again if its within `blacklist` list.
+        """
+        if blacklist is None:
+            blacklist = []
+
+        libc = ctypes.cdll.LoadLibrary('libc.so.7')
+        port = ctypes.c_int(0)
+        pport = ctypes.pointer(port)
+        fd = libc.rresvport(pport)
+        retries = 5
+        while True:
+            if retries == 0:
+                break
+            if fd < 0:
+                time.sleep(0.1)
+                fd = libc.rresvport(pport)
+                retries -= 1
+                continue
+            if pport.contents.value in blacklist:
+                oldfd = fd
+                fd = libc.rresvport(pport)
+                os.close(oldfd)
+                retries -= 1
+                continue
+            else:
+                break
+        return fd
 
     def connect(self):
         self.sock.settimeout(10)
@@ -55,12 +161,14 @@ class Call(object):
         self.params = params
         self.returned = Event()
         self.result = None
+        self.errno = None
         self.error = None
         self.trace = None
 
 
 class ClientException(Exception):
-    def __init__(self, error, trace=None):
+    def __init__(self, error, errno=None, trace=None):
+        self.errno = errno
         self.error = error
         self.trace = trace
 
@@ -74,7 +182,12 @@ class CallTimeout(ClientException):
 
 class Client(object):
 
-    def __init__(self, uri=None):
+    def __init__(self, uri=None, reserved_ports=False, reserved_ports_blacklist=None):
+        """
+        Arguments:
+           :reserved_ports(bool): whether the connection should origin using a reserved port (<= 1024)
+           :reserved_ports_blacklist(list): list of ports that should not be used as origin
+        """
         self._calls = {}
         self._jobs = defaultdict(dict)
         self._jobs_lock = Lock()
@@ -85,7 +198,12 @@ class Client(object):
             uri = 'ws://127.0.0.1:6000/websocket'
         self._closed = Event()
         self._connected = Event()
-        self._ws = WSClient(uri, client=self)
+        self._ws = WSClient(
+            uri,
+            client=self,
+            reserved_ports=reserved_ports,
+            reserved_ports_blacklist=reserved_ports_blacklist,
+        )
         self._ws.connect()
         self._connected.wait(10)
         if not self._connected.is_set():
@@ -118,7 +236,8 @@ class Client(object):
             if call:
                 call.result = message.get('result')
                 if 'error' in message:
-                    call.error = message['error'].get('error')
+                    call.errno = message['error'].get('error')
+                    call.error = message['error'].get('reason')
                     call.trace = message['error'].get('trace')
                 call.returned.set()
                 self._unregister_call(call)
@@ -207,8 +326,8 @@ class Client(object):
             self._unregister_call(c)
             raise CallTimeout("Call timeout")
 
-        if c.error:
-            raise ClientException(c.error, c.trace)
+        if c.errno:
+            raise ClientException(c.error, c.errno, c.trace)
 
         if job:
             job_id = c.result
@@ -231,7 +350,7 @@ class Client(object):
             if job is None:
                 raise ClientException('No job event was received.')
             if job['state'] != 'SUCCESS':
-                raise ClientException(job['error'], job['exception'])
+                raise ClientException(job['error'], trace=job['exception'])
             return job['result']
 
         return c.result

@@ -1,4 +1,4 @@
-from middlewared.client import Client
+from middlewared.client import CallTimeout, Client, ClientException
 
 
 class Connection(object):

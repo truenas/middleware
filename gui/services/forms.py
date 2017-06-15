@@ -41,6 +41,7 @@ from dojango import forms
 from freenasUI import choices
 from freenasUI.common import humanize_size
 from freenasUI.common.forms import ModelForm, Form
+from freenasUI.common.freenassysctl import freenas_sysctl as _fs
 from freenasUI.common.samba import Samba4
 from freenasUI.common.system import (
     validate_netbios_name,
@@ -52,6 +53,7 @@ from freenasUI.freeadmin.forms import DirectoryBrowser
 from freenasUI.freeadmin.options import FreeBaseInlineFormSet
 from freenasUI.freeadmin.utils import key_order
 from freenasUI.jails.models import JailsConfiguration
+from freenasUI.middleware.client import client
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier
 from freenasUI.services import models
@@ -90,11 +92,14 @@ class servicesForm(ModelForm):
         elif obj.srv_service == 'domaincontroller':
             if obj.srv_enable is True:
                 if _notifier.started('domaincontroller'):
-                    started = _notifier.restart("domaincontroller")
+                    started = _notifier.restart("domaincontroller",
+                        timeout=_fs().services.domaincontroller.timeout.restart)
                 else:
-                    started = _notifier.start("domaincontroller")
+                    started = _notifier.start("domaincontroller",
+                        timeout=_fs().services.domaincontroller.timeout.start)
             else:
-                started = _notifier.stop("domaincontroller")
+                started = _notifier.stop("domaincontroller",
+                    timeout=_fs().services.domaincontroller.timeout.stop)
 
         else:
             """
@@ -1362,7 +1367,7 @@ class iSCSITargetExtentForm(ModelForm):
         _notifier = notifier()
         zsnapshots = _notifier.zfs_snapshot_list(sort='name')
         snaps = []
-        for volume in Volume.objects.filter(vol_fstype__exact='ZFS'):
+        for volume in Volume.objects.all():
             zvols = _notifier.list_zfs_vols(volume.vol_name, sort='name')
             for zvol, attrs in list(zvols.items()):
                 if "zvol/" + zvol not in used_zvol:
@@ -1539,8 +1544,8 @@ class iSCSITargetExtentForm(ModelForm):
             else:
                 diskobj = models.Disk.objects.filter(
                     disk_name=self.cleaned_data["iscsi_target_extent_disk"],
-                    disk_enabled=True,
-                ).order_by('disk_enabled')[0]
+                    disk_expiretime=None,
+                )[0]
                 # label it only if it is a real disk
                 if (
                     diskobj.disk_identifier.startswith("{devicename}")
@@ -1559,7 +1564,8 @@ class iSCSITargetExtentForm(ModelForm):
                                 'error': msg,
                             })
                         )
-                    notifier().sync_disk(self.cleaned_data["iscsi_target_extent_disk"])
+                    with client as c:
+                        c.call('disk.sync', self.cleaned_data["iscsi_target_extent_disk"].replace('/dev/', ''))
                 oExtent.iscsi_target_extent_type = 'Disk'
                 oExtent.iscsi_target_extent_path = diskobj.pk
             oExtent.iscsi_target_extent_filesize = 0
@@ -2011,7 +2017,8 @@ class DomainControllerForm(ModelForm):
         if self.__original_changed():
             Samba4().domain_sentinel_file_remove()
 
-        notifier().restart("domaincontroller")
+        notifier().restart("domaincontroller",
+            timeout=_fs().services.domaincontroller.timeout.restart)
 
         if self.__dc_forest_level_changed():
             Samba4().change_forest_level(self.instance.dc_forest_level)
@@ -2184,7 +2191,7 @@ class S3Form(ModelForm):
     def clean_s3_secret_key(self):
         s3_secret_key = self.cleaned_data.get("s3_secret_key")
         s3_secret_key_len = len(s3_secret_key)
-        if s3_secret_key_len < 5 or s3_secret_key_len > 20:
+        if s3_secret_key_len < 8 or s3_secret_key_len > 40:
             raise forms.ValidationError(
                 _("S3 secret key should be 8 to 40 characters in length.")
             )

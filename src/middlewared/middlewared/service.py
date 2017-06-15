@@ -100,7 +100,7 @@ class ServiceBase(type):
 
 class Service(object, metaclass=ServiceBase):
     def __init__(self, middleware):
-        self.logger = Logger(type(self).__class__.__name__).getLogger()
+        self.logger = Logger(type(self).__name__).getLogger()
         self.middleware = middleware
 
 
@@ -187,6 +187,8 @@ class CoreService(Service):
                     continue
 
                 method = None
+                item_method = None  # For CRUD.do_{update,delete} they need to be accounted
+                                    # as "item_method", since they are just wrapped.
                 if isinstance(svc, CRUDService):
                     """
                     For CRUD the create/update/delete are special.
@@ -195,6 +197,10 @@ class CoreService(Service):
                     """
                     if attr in ('create', 'update', 'delete'):
                         method = getattr(svc, 'do_{}'.format(attr), None)
+                        if method is None:
+                            continue
+                        if attr in ('update', 'delete'):
+                            item_method = True
                     elif attr in ('do_create', 'do_update', 'do_delete'):
                         continue
 
@@ -242,7 +248,7 @@ class CoreService(Service):
                     'description': doc,
                     'examples': examples,
                     'accepts': accepts,
-                    'item_method': hasattr(method, '_item_method'),
+                    'item_method': True if item_method else hasattr(method, '_item_method'),
                     'filterable': hasattr(method, '_filterable'),
                 }
         return data

@@ -28,7 +28,7 @@ import random
 import string
 
 from django.core.validators import RegexValidator
-from django.db import models, transaction
+from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
 from freenasUI import choices
@@ -140,7 +140,8 @@ class GlobalConfiguration(Model):
             'gc_domain',
             'gc_nameserver1',
             'gc_nameserver2',
-            'gc_nameserver3'
+            'gc_nameserver3',
+            'gc_httpproxy',
         ):
             setattr(self, "_orig_%s" % name, self.__dict__.get(name))
 
@@ -274,12 +275,11 @@ class Interfaces(Model):
         self._original_int_options = self.int_options
 
     def delete(self):
-        with transaction.atomic():
-            LAGGInterface.objects.filter(lagg_interface__id=self.id).delete()
-            # Delete VLAN entries for this interface
-            VLAN.objects.filter(vlan_vint=self.int_interface).delete()
-            if self.id:
-                super(Interfaces, self).delete()
+        LAGGInterface.objects.filter(lagg_interface__id=self.id).delete()
+        # Delete VLAN entries for this interface
+        VLAN.objects.filter(vlan_vint=self.int_interface).delete()
+        if self.id:
+            super(Interfaces, self).delete()
         os.system("sleep 2")
         notifier().start("network")
 

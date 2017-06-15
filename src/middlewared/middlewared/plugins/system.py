@@ -1,7 +1,7 @@
 from datetime import datetime
 from middlewared.schema import accepts, Dict, Int
 from middlewared.service import job, Service
-from middlewared.utils import Popen
+from middlewared.utils import Popen, sw_version
 
 import os
 import socket
@@ -11,17 +11,16 @@ import sys
 import sysctl
 import time
 
-if '/usr/local/lib' not in sys.path:
-    sys.path.append('/usr/local/lib')
+# FIXME: Temporary imports until debug lives in middlewared
+if '/usr/local/www' not in sys.path:
+    sys.path.append('/usr/local/www')
+from freenasUI.system.utils import debug_get_settings, debug_run
 
-from freenasOS import Configuration
+# Flag telling whether the system completed boot and is ready to use
+SYSTEM_READY = False
 
 
 class SystemService(Service):
-
-    def __init__(self, *args, **kwargs):
-        super(SystemService, self).__init__(*args, **kwargs)
-        self.__version = None
 
     @accepts()
     def is_freenas(self):
@@ -34,12 +33,14 @@ class SystemService(Service):
 
     @accepts()
     def version(self):
-        if self.__version is None:
-            conf = Configuration.Configuration()
-            sys_mani = conf.SystemManifest()
-            if sys_mani:
-                self.__version = sys_mani.Version()
-        return self.__version
+        return sw_version()
+
+    @accepts()
+    def ready(self):
+        """
+        Returns whether the system completed boot and is ready to use
+        """
+        return SYSTEM_READY
 
     @accepts()
     def info(self):
@@ -104,3 +105,25 @@ class SystemService(Service):
             time.sleep(delay)
 
         Popen(["/sbin/poweroff"])
+
+    @accepts()
+    @job(lock='systemdebug')
+    def debug(self, job):
+        # FIXME: move the implementation from freenasUI
+        mntpt, direc, dump = debug_get_settings()
+        debug_run(direc)
+        return dump
+
+
+def _event_system_ready(middleware, event_type, args):
+    """
+    Method called when system is ready, supposed to enable the flag
+    telling the system has completed boot.
+    """
+    global SYSTEM_READY
+    if args['id'] == 'ready':
+        SYSTEM_READY = True
+
+
+def setup(middleware):
+    middleware.event_subscribe('system', _event_system_ready)

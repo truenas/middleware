@@ -3338,7 +3338,7 @@ check_postinstall_script() {
         fi
 
         export_script_vars
-        sh "${PBI_HEADER_TMPDIR}/${MOD_POSTINS}"
+        env LD_LIBRARY_PATH=${PBI_ORIGPROGDIRPATH}/lib sh "${PBI_HEADER_TMPDIR}/${MOD_POSTINS}"
         delete_header_tmp
 }
 

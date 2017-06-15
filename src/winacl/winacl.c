@@ -599,9 +599,6 @@ usage_check(struct windows_acl_info *w)
 		w->dacl == NULL && w->facl == NULL && !(w->flags & WA_RESET)) {
 		errx(EX_USAGE, "no entries specified and not resetting");
 	}
-
-	if (w->flags & WA_DOSATTRIB && !(w->flags & WA_RESET))
-		errx(EX_USAGE, "DOSATTRIB EA can only be cleared with reset");
 }
 
 

@@ -1,9 +1,11 @@
 import crypt
+import subprocess
 import time
 import uuid
 
 from middlewared.schema import Dict, Int, Str, accepts
 from middlewared.service import Service, no_auth_required, pass_app, private
+from middlewared.utils import Popen
 
 
 class AuthTokens(object):
@@ -151,3 +153,30 @@ class AuthService(Service):
         else:
             self.authtokens.pop_token(token['id'])
             return False
+
+
+def check_permission(app):
+    """
+    Authenticates connections comming from loopback and from
+    root user.
+    """
+    remote_addr = app.ws.environ['REMOTE_ADDR']
+    remote_port = app.ws.environ['REMOTE_PORT']
+
+    if remote_addr not in ('127.0.0.1', '::1'):
+        return
+
+    remote = '{0}:{1}'.format(remote_addr, remote_port)
+
+    proc = Popen([
+        '/usr/bin/sockstat', '-46c', '-p', remote_port
+    ], stdout=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=True)
+    for line in proc.communicate()[0].strip().splitlines()[1:]:
+        cols = line.split()
+        if cols[-2] == remote and cols[0] == 'root':
+            app.authenticated = True
+            break
+
+
+def setup(middleware):
+    middleware.register_hook('core.on_connect', check_permission, sync=True)

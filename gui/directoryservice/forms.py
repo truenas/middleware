@@ -45,6 +45,7 @@ from freenasUI.common.freenasldap import (
     FreeNAS_LDAP,
     FreeNAS_ActiveDirectory_Exception,
 )
+from freenasUI.common.freenassysctl import freenas_sysctl as _fs
 from freenasUI.common.pipesubr import run
 from freenasUI.common.ssl import get_certificateauthority_path
 from freenasUI.common.system import (
@@ -52,10 +53,11 @@ from freenasUI.common.system import (
     compare_netbios_names
 )
 from freenasUI.directoryservice import models, utils
-from freenasUI.middleware.notifier import notifier
 from freenasUI.middleware.client import client
+from freenasUI.middleware.exceptions import MiddlewareError
+from freenasUI.middleware.notifier import notifier
 from freenasUI.services.exceptions import ServiceFailed
-from freenasUI.services.models import CIFS
+from freenasUI.services.models import CIFS, ServiceMonitor
 
 log = logging.getLogger('directoryservice.form')
 
@@ -438,7 +440,7 @@ class ActiveDirectoryForm(ModelForm):
         else:
                 del self.fields['ad_netbiosname_b']
 
-    def clean_ad_dcname(self):
+    def get_dcport(self):
         ad_dcname = self.cleaned_data.get('ad_dcname')
         ad_dcport = 389
 
@@ -447,12 +449,23 @@ class ActiveDirectoryForm(ModelForm):
             ad_dcport = 636
 
         if not ad_dcname:
+            return ad_dcport
+
+        parts = ad_dcname.split(':')
+        if len(parts) > 1 and parts[1].isdigit():
+            ad_dcport = int(parts[1])
+
+        return ad_dcport
+
+    def clean_ad_dcname(self):
+        ad_dcname = self.cleaned_data.get('ad_dcname')
+        ad_dcport = self.get_dcport()
+
+        if not ad_dcname:
             return None
 
         parts = ad_dcname.split(':')
         ad_dcname = parts[0]
-        if len(parts) > 1 and parts[1].isdigit():
-            ad_dcport = int(parts[1])
 
         errors = []
         try:
@@ -470,7 +483,7 @@ class ActiveDirectoryForm(ModelForm):
 
         return self.cleaned_data.get('ad_dcname')
 
-    def clean_ad_gcname(self):
+    def get_gcport(self):
         ad_gcname = self.cleaned_data.get('ad_gcname')
         ad_gcport = 3268
 
@@ -479,12 +492,23 @@ class ActiveDirectoryForm(ModelForm):
             ad_gcport = 3269
 
         if not ad_gcname:
+            return ad_gcport
+
+        parts = ad_gcname.split(':')
+        if len(parts) > 1 and parts[1].isdigit():
+            ad_gcport = int(parts[1])
+
+        return ad_gcport
+
+    def clean_ad_gcname(self):
+        ad_gcname = self.cleaned_data.get('ad_gcname')
+        ad_gcport = self.get_gcport()
+
+        if not ad_gcname:
             return None
 
         parts = ad_gcname.split(':')
         ad_gcname = parts[0]
-        if len(parts) > 1 and parts[1].isdigit():
-            ad_gcport = int(parts[1])
 
         errors = []
         try:
@@ -580,24 +604,23 @@ class ActiveDirectoryForm(ModelForm):
                     binddn=binddn,
                     bindpw=bindpw
                 )
-            except LDAPError as e:
-                # LDAPError is dumb, it returns a list with one element for goodness knows what reason
-                e = e[0]
-                error = []
-                desc = e.get('desc')
-                info = e.get('info')
-                if desc:
-                    error.append(desc)
-                if info:
-                    error.append(info)
 
-                if error:
+            except LDAPError as e:
+                log.debug("LDAPError: type = %s", type(e))
+
+                error = [] 
+                try:
+                    error.append(e.args[0]['info'])
+                    error.append(e.args[0]['desc'])
                     error = ', '.join(error)
-                else:
+
+                except:
                     error = str(e)
 
                 raise forms.ValidationError("{0}".format(error))
+
             except Exception as e:
+                log.debug("Exception: type = %s", type(e))
                 raise forms.ValidationError('{0}.'.format(str(e)))
 
             args['binddn'] = binddn
@@ -636,30 +659,19 @@ class ActiveDirectoryForm(ModelForm):
 
         return cdata
 
-    def get_timeout(self, what, default=0):
-        oid = 'freenas.directoryservice.activedirectory.timeout.%s' % what
-        value = default
-
-        try:
-            timeout = sysctl.filter(oid)[0]
-            if timeout.value > 0:
-                value = timeout.value
-
-        except Exception as e:
-            log.debug("sysctl: unable to get value for oid %s", oid)
-
-        return value
-
     def save(self):
         enable = self.cleaned_data.get("ad_enable")
         enable_monitoring = self.cleaned_data.get("ad_enable_monitor")
         monit_frequency = self.cleaned_data.get("ad_monitor_frequency")
         monit_retry = self.cleaned_data.get("ad_recover_retry")
         fqdn = self.cleaned_data.get("ad_domainname")
+        sm = None
+
         if self.__original_changed():
             notifier().clear_activedirectory_config()
 
-        started = notifier().started("activedirectory")
+        started = notifier().started("activedirectory",
+            timeout=_fs().directoryservice.activedirectory.timeout.started)
         obj = super(ActiveDirectoryForm, self).save()
 
         try:
@@ -675,49 +687,99 @@ class ActiveDirectoryForm(ModelForm):
 
         if enable:
             if started is True:
-                timeout = self.get_timeout("restart",  90*2)
+                timeout = _fs().directoryservice.activedirectory.timeout.restart
                 try:
                     started = notifier().restart("activedirectory", timeout=timeout)
                 except Exception as e:
-                    raise ServiceFailed(
-                        "activedirectory",
+                    raise MiddlewareError(
                         _("Active Directory restart timed out after %d seconds." % timeout),
                     )
                 
             if started is False:
-                timeout = self.get_timeout("start",  90)
+                timeout = _fs().directoryservice.activedirectory.timeout.start
                 try:
                     started = notifier().start("activedirectory", timeout=timeout)
                 except Exception as e:
-                    raise ServiceFailed(
-                        "activedirectory",
+                    raise MiddlewareError(
                         _("Active Directory start timed out after %d seconds." % timeout),
                     )
             if started is False:
                 self.instance.ad_enable = False
                 super(ActiveDirectoryForm, self).save()
-                raise ServiceFailed(
-                    "activedirectory",
+                raise MiddlewareError(
                     _("Active Directory failed to reload."),
                 )
         else:
             if started is True:
-                timeout = self.get_timeout("stop",  60)
+                timeout = _fs().directoryservice.activedirectory.timeout.stop
                 try:
                     started = notifier().stop("activedirectory", timeout=timeout)
                 except Exception as e:
-                    raise ServiceFailed(
-                        "activedirectory",
+                    raise MiddlewareError(
                         _("Active Directory stop timed out after %d seconds." % timeout),
                     )
+
+        sm_name = 'activedirectory'
+        try:
+            sm = ServiceMonitor.objects.get(sm_name=sm_name)
+        except Exception as e:
+            log.debug("XXX: Unable to find ServiceMonitor: %s", e)
+            pass
+
+        #
+        # Ports can be specified in the UI but there doesn't appear to be a way to
+        # override them via SRV records. This should be fixed.
+        #
+        dcport = self.get_dcport()
+        gcport = self.get_gcport()
+
+        if not sm:
+            try:
+                log.debug("XXX: fqdn=%s dcport=%s frequency=%s retry=%s enable=%s",
+                    fqdn, dcport, monit_frequency, monit_retry, enable_monitoring)
+
+                sm = ServiceMonitor.objects.create(
+                    sm_name=sm_name,
+                    sm_host=fqdn,
+                    sm_port=dcport,
+                    sm_frequency=monit_frequency,
+                    sm_retry=monit_retry,
+                    sm_enable=enable_monitoring
+                )
+            except Exception as e:
+                log.debug("XXX: Unable to create ServiceMonitor: %s", e)
+                raise MiddlewareError(
+                    _("Unable to create ServiceMonitor: %s" % e),
+                )
+
+        else:
+            sm.sm_name = sm_name
+            if fqdn != sm.sm_host:
+                sm.sm_host = fqdn
+            if dcport != sm.sm_port:
+                sm.sm_port = dcport
+            if monit_frequency != sm.sm_frequency:
+                sm.sm_frequency = monit_frequency
+            if monit_retry != sm.sm_retry:
+                sm.sm_retry = monit_retry
+            if enable_monitoring != sm.sm_enable:
+                sm.sm_enable = enable_monitoring
+
+            try:
+                sm.save(force_update=True)
+            except Exception as e:
+                log.debug("XXX: Unable to create ServiceMonitor: %s", e)
+                raise MiddlewareError(
+                    _("Unable to save ServiceMonitor: %s" % e),
+                )
 
         with client as c:
             if enable_monitoring and enable:
                 log.debug("[ServiceMonitoring] Add %s service, frequency: %d, retry: %d" % ('activedirectory', monit_frequency, monit_retry))
-                c.call('service.enable_test_service_connection', monit_frequency, monit_retry, fqdn, 3268, 'activedirectory')
+                c.call('servicemonitor.restart')
             else:
                 log.debug("[ServiceMonitoring] Remove %s service, frequency: %d, retry: %d" % ('activedirectory', monit_frequency, monit_retry))
-                c.call('service.disable_test_service_connection', monit_frequency, monit_retry, fqdn, 3268, 'activedirectory')
+                c.call('servicemonitor.restart')
 
         return obj
 
@@ -740,7 +802,7 @@ class NISForm(ModelForm):
         try:
             started = notifier().started("nis")
         except:
-            raise ServiceFailed("nis", _("Failed to check NIS status."))
+            raise MiddlewareError(_("Failed to check NIS status."))
         finally:
             super(NISForm, self).save()
 
@@ -750,17 +812,17 @@ class NISForm(ModelForm):
                     started = notifier().restart("nis")
                     log.debug("Try to restart: %s", started)
                 except:
-                    raise ServiceFailed("nis", _("NIS failed to restart."))
+                    raise MiddlewareError(_("NIS failed to restart."))
             if started is False:
                 try:
                     started = notifier().start("nis")
                     log.debug("Try to start: %s", started)
                 except:
-                    raise ServiceFailed("nis", _("NIS failed to start."))
+                    raise MiddlewareError(_("NIS failed to start."))
             if started is False:
                 self.instance.ad_enable = False
                 super(NISForm, self).save()
-                raise ServiceFailed("nis", _("NIS failed to reload."))
+                raise MiddlewareError(_("NIS failed to reload."))
         else:
             if started is True:
                 started = notifier().stop("nis")
@@ -943,23 +1005,21 @@ class LDAPForm(ModelForm):
                 ssl=ssl
             )
         except LDAPError as e:
-            # LDAPError is dumb, it returns a list with one element for goodness knows what reason
-            e = e[0]
-            error = []
-            desc = e.get('desc')
-            info = e.get('info')
-            if desc:
-                error.append(desc)
-            if info:
-                error.append(info)
+            log.debug("LDAPError: type = %s", type(e))
 
-            if error:
+            error = [] 
+            try:
+                error.append(e.args[0]['info'])
+                error.append(e.args[0]['desc'])
                 error = ', '.join(error)
-            else:
+
+            except:
                 error = str(e)
 
             raise forms.ValidationError("{0}".format(error))
+
         except Exception as e:
+            log.debug("LDAPError: type = %s", type(e))
             raise forms.ValidationError("{0}".format(str(e)))
 
         return cdata
@@ -976,16 +1036,16 @@ class LDAPForm(ModelForm):
 
         if enable:
             if started is True:
-                started = notifier().restart("ldap", timeout=90)
+                started = notifier().restart("ldap", timeout=_fs().directoryservice.ldap.timeout.restart)
             if started is False:
-                started = notifier().start("ldap", timeout=90)
+                started = notifier().start("ldap", timeout=_fs().directoryservice.ldap.timeout.start)
             if started is False:
                 self.instance.ldap_enable = False
                 super(LDAPForm, self).save()
-                raise ServiceFailed("ldap", _("LDAP failed to reload."))
+                raise MiddlewareError(_("LDAP failed to reload."))
         else:
             if started is True:
-                started = notifier().stop("ldap", timeout=90)
+                started = notifier().stop("ldap", timeout=_fs().directoryservice.ldap.timeout.stop)
 
         return obj
 

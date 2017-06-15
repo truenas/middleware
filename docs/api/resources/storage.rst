@@ -35,7 +35,6 @@ List resource
         {
                 "status": "HEALTHY",
                 "vol_guid": "8443409799014097611",
-                "vol_fstype": "ZFS",
                 "used": "192.0 KiB (0%)",
                 "name": "tank",
                 "used_pct": "0%",
@@ -93,7 +92,6 @@ Create resource
         {
                 "status": "HEALTHY",
                 "vol_guid": "8443409799014097611",
-                "vol_fstype": "ZFS",
                 "used": "192.0 KiB (0%)",
                 "name": "tank",
                 "used_pct": "0%",
@@ -342,7 +340,12 @@ ZFS Volumes
 
       {
         "name": "myzvol",
-        "volsize": "10M"
+        "avail": 7286996992,
+        "compression": "lz4",
+        "dedup": "off",
+        "refer": 57344,
+        "used": 57344,
+        "volsize": 10485760
       }
 
    **Example response**:
@@ -355,6 +358,11 @@ ZFS Volumes
 
       {
         "name": "myzvol",
+        "avail": 7286996992,
+        "compression": "lz4",
+        "dedup": "off",
+        "refer": 57344,
+        "used": 57344,
         "volsize": 10485760
       }
 
@@ -382,6 +390,11 @@ ZFS Volumes
 
       [{
         "name": "myzvol",
+        "avail": 7286996992,
+        "compression": "lz4",
+        "dedup": "off",
+        "refer": 57344,
+        "used": 57344,
         "volsize": 10485760
       }]
 
@@ -396,7 +409,7 @@ ZFS Volumes
 
    .. sourcecode:: http
 
-      POST /api/v1.0/storage/volume/tank/zvols/ HTTP/1.1
+      PUT /api/v1.0/storage/volume/tank/zvols/ HTTP/1.1
       Content-Type: application/json
 
       {
@@ -1633,7 +1646,7 @@ List resource
                 "disk_multipath_member": "",
                 "disk_description": "",
                 "disk_smartoptions": "",
-                "disk_enabled": true,
+                "disk_expiretime": null,
                 "disk_name": "ada7"
         }
       ]
@@ -1683,7 +1696,7 @@ Update resource
                 "disk_multipath_member": "",
                 "disk_description": "",
                 "disk_smartoptions": "",
-                "disk_enabled": true,
+                "disk_expiretime": null,
                 "disk_name": "ada7"
         }
 

@@ -1,10 +1,17 @@
 from middlewared.schema import accepts, Any, Str
 from middlewared.service import Service
-import middlewared.logger
+from middlewared.utils import Popen
+from middlewared.client import ejson as json
 
+import middlewared.logger
 import consul
+import subprocess
+import random
+import os
+import errno
 
 logger = middlewared.logger.Logger('consul').getLogger()
+
 
 class ConsulService(Service):
 
@@ -29,7 +36,7 @@ class ConsulService(Service):
         try:
             return c.kv.put(str(key), str(value))
         except Exception as err:
-            logger.error('===> Consul module error: %s %s' % (err.message, err.args))
+            logger.error('===> Consul set_kv error: %s' % (err))
             return False
 
     @accepts(Str('key'))
@@ -57,7 +64,53 @@ class ConsulService(Service):
                     bool: True if it could delete the data or otherwise False.
         """
         c = consul.Consul()
-        return c.kv.delete(str(key))
+        try:
+            return c.kv.delete(str(key))
+        except Exception as err:
+            logger.error('===> Consul delete_kv error: %s' % (err))
+            return False
+
+    @accepts()
+    def reload(self):
+        """
+        Reload consul agent.
+
+        Returns:
+                    bool: True if it could reload, otherwise False.
+        """
+        consul_error = Popen(['consul', 'reload'], stdout=subprocess.PIPE, stderr=subprocess.PIPE).wait()
+        if consul_error == 0:
+            logger.info("===> Reload Consul: {0}".format(consul_error))
+            return True
+        else:
+            return False
+
+    @accepts()
+    def create_fake_alert(self):
+        seed = random.randrange(100000)
+        fake_fd = "/usr/local/etc/consul.d/fake.json"
+        fake_alert = {"service": {"name": "fake-" + str(seed), "tags": ["primary"],
+                                  "address": "", "port": 65535,
+                                  "enableTagOverride": False,
+                                  "checks": [{"tcp": "localhost:65535",
+                                              "interval": "10s", "timeout": "3s"}]
+                                  }
+                      }
+        with open(fake_fd, 'w') as fd:
+            fd.write(json.dumps(fake_alert))
+
+        return self.reload()
+
+    @accepts()
+    def remove_fake_alert(self):
+        fake_fd = "/usr/local/etc/consul.d/fake.json"
+        try:
+            os.remove(fake_fd)
+        except OSError as e:
+            if e.errno != errno.ENOENT:
+                raise
+
+        return self.reload()
 
     def _convert_keys(self, data):
         """

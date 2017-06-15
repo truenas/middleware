@@ -25,7 +25,7 @@
 # Initial code taken from: https://github.com/jm66/solaris-extra-snmp
 
 import sys
-import commands
+import subprocess
 import re
 import snmpresponse
 import json
@@ -72,7 +72,7 @@ def get_from_freenas_snmpd_sock(val_to_obtain):
     return data
 
 
-FSNMPDATA = get_from_freenas_snmpd_sock("get_all")
+FSNMPDATA = get_from_freenas_snmpd_sock(b"get_all")
 
 
 class ArgumentValidationError(ValueError):
@@ -100,11 +100,11 @@ def unprettyprint(ster):
             num = float(ster[:-1]) * size_dict[ster[-1]]
         except:
             pass
-    return long(num)
+    return int(num)
 
 
 def kstat(name):
-    output = commands.getoutput("sysctl kstat." + name)
+    output = subprocess.getoutput("sysctl kstat." + name)
     try:
         return int(re.split("\s+", output)[1])
     except:
@@ -169,7 +169,7 @@ def zfs_arc_cache_miss_ratio(oid):
 
 
 def zilstatd_ops(interval):
-    res = long(0)
+    res = int(0)
     try:
         res = FSNMPDATA["zil_data"][str(interval)]['ops']
     except KeyError:

@@ -24,6 +24,7 @@
 #
 from decimal import Decimal
 import bisect
+import libzfs
 import logging
 import re
 import subprocess
@@ -402,20 +403,9 @@ class Dev(Tnode):
                 while getattr(pool, 'parent', None):
                     pool = pool.parent
                 # Lets check whether it is a guid
-                p1 = subprocess.Popen(
-                    ["/usr/sbin/zdb", "-U", "/data/zfs/zpool.cache", "-C", pool.name],
-                    stdout=subprocess.PIPE,
-                    stderr=subprocess.PIPE,
-                    encoding='utf8')
-                zdb = p1.communicate()[0]
-                if p1.returncode == 0:
-                    reg = re.search(
-                        r'\bguid[:=]\s?%s.*?path[:=]\s?\'(?P<path>.*?)\'$' % (
-                            self.name,
-                        ),
-                        zdb, re.M | re.S)
-                    if reg:
-                        self.path = reg.group("path")
+                vdev = libzfs.ZFS().get(pool.name).vdev_by_guid(int(self.name))
+                if vdev:
+                    self.path = vdev.path
 
         if provider:
             search = self._doc.xpath(
@@ -489,12 +479,15 @@ class ZFSDataset(object):
     avail = None
     refer = None
     mountpoint = None
+    compression = None
+    dedup = None
+    description = None
     parent = None
     children = None
 
     def __init__(self, path=None, used=None, usedsnap=None, usedds=None,
                  usedrefreserv=None, usedchild=None, avail=None, refer=None,
-                 mountpoint=None):
+                 mountpoint=None, compression=None, dedup=None, description=None):
         self.path = path
         if path:
             if '/' in path:
@@ -510,6 +503,9 @@ class ZFSDataset(object):
         self.avail = avail
         self.refer = refer
         self.mountpoint = mountpoint
+        self.compression = compression
+        self.dedup = dedup
+        self.description = description
         self.parent = None
         self.children = []
 
@@ -552,12 +548,15 @@ class ZFSVol(object):
     avail = None
     refer = None
     volsize = None
+    compression = None
+    dedup = None
+    description = None
     parent = None
     children = None
 
     def __init__(self, path=None, used=None, usedsnap=None, usedds=None,
                  usedrefreserv=None, usedchild=None, avail=None, refer=None,
-                 volsize=None):
+                 volsize=None, compression=None, dedup=None, description=None):
         self.path = path
         if path:
             if '/' in path:
@@ -573,6 +572,9 @@ class ZFSVol(object):
         self.avail = avail
         self.refer = refer
         self.volsize = volsize
+        self.compression = compression
+        self.dedup = dedup
+        self.description = description
         self.parent = None
         self.children = []
 
@@ -887,7 +889,7 @@ def zfs_list(path="", recursive=False, hierarchical=False, include_root=False,
         "-p",
         "-H",
         "-s", "name",
-        "-o", "space,refer,mountpoint,type,volsize",
+        "-o", "space,refer,mountpoint,type,volsize,compression,dedup,org.freenas:description",
     ]
     if recursive:
         args.insert(3, "-r")
@@ -929,6 +931,9 @@ def zfs_list(path="", recursive=False, hierarchical=False, include_root=False,
                 usedchild=int(data[6]) if data[6].isdigit() else None,
                 refer=int(data[7]) if data[7].isdigit() else None,
                 mountpoint=data[8],
+                compression=data[11],
+                dedup=data[12],
+                description=data[13] if data[13] != '-' else None,
             )
         elif _type == 'volume':
             item = ZFSVol(
@@ -941,6 +946,9 @@ def zfs_list(path="", recursive=False, hierarchical=False, include_root=False,
                 usedchild=int(data[6]) if data[6].isdigit() else None,
                 refer=int(data[7]) if data[7].isdigit() else None,
                 volsize=int(data[10]) if data[10].isdigit() else None,
+                compression=data[11],
+                dedup=data[12],
+                description=data[13] if data[13] != '-' else None,
             )
         else:
             raise NotImplementedError
@@ -998,46 +1006,8 @@ def zpool_list(name=None):
         return rv[name]
     return rv
 
-def zdb():
-    zfsproc = subprocess.Popen([
-        '/usr/sbin/zdb',
-        '-C',
-        '-U', '/data/zfs/zpool.cache',
-    ], stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf8')
-    data = zfsproc.communicate()[0]
-    rv = {}
-    lines_ptr = {0: rv}
-    for line in data.splitlines():
-        cur_ident = line.count('    ')
-        k, v = line.strip().split(':', 1)
-        if v == '':
-            lines_ptr[cur_ident][k] = lines_ptr[cur_ident + 1] = {'_parent': lines_ptr[cur_ident]}
-        else:
-            v = v.strip()
-            if v.startswith("'") and v.endswith("'"):
-                v = v[1:-1]
-            lines_ptr[cur_ident][k] = v
-
-    return rv
-
-
-def zdb_find(where, method):
-    found = False
-    for k, v in where.items():
-        if k == '_parent':
-            continue
-        if isinstance(v, dict):
-            found = zdb_find(v, method)
-            if found:
-                break
-        elif method(k, v):
-            found = where
-            break
-    return found
-
 
 def zfs_ashift_from_label(pool, label):
-    import libzfs
     zfs = libzfs.ZFS()
     pool = zfs.get(pool)
     if not pool:

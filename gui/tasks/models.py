@@ -693,7 +693,7 @@ class Rsync(Model):
 class SMARTTest(Model):
     smarttest_disks = models.ManyToManyField(
         Disk,
-        limit_choices_to={'disk_enabled': True},
+        limit_choices_to={'disk_expiretime': None},
         verbose_name=_("Disks"),
     )
     smarttest_type = models.CharField(

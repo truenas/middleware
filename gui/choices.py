@@ -161,10 +161,6 @@ WEEKDAYS_CHOICES = (
     ('7', _('Sunday')),
 )
 
-VolumeType_Choices = (
-    ('ZFS', 'ZFS'),
-)
-
 VolumeEncrypt_Choices = (
     (0, _('Unencrypted')),
     (1, _('Encrypted, no passphrase')),
@@ -1090,13 +1086,23 @@ VM_BOOTLOADER = (
 VM_DEVTYPES = (
     ('NIC', _('Network Interface')),
     ('DISK', _('Disk')),
+    ('RAW', _('Raw File')),
     ('CDROM', _('CD-ROM')),
     ('VNC', _('VNC')),
 )
 
 VM_NICTYPES = (
     ('E1000', _('Intel e82545 (e1000)')),
-    ('VIRTIO', _('VirtIO')),    
+    ('VIRTIO', _('VirtIO')),
+)
+VNC_RESOLUTION = (
+    ('1920x1080', _('1920x1080')),
+    ('1400x1050', _('1400x1050')),
+    ('1280x1024', _('1280x1024')),
+    ('1280x960', _('1280x960')),
+    ('1024x768', _('1024x768')),
+    ('800x600', _('800x600')),
+    ('640x480', _('640x480')),
 )
 
 VM_DISKMODETYPES = (

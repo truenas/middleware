@@ -6,9 +6,8 @@ import time
 from subprocess import PIPE
 
 from middlewared.schema import accepts, Bool, Dict, Int, Str
-from middlewared.service import filterable, Service
+from middlewared.service import filterable, CRUDService
 from middlewared.utils import Popen, filter_list
-from middlewared.plugins.service_monitor import ServiceMonitor
 
 
 class StartNotify(threading.Thread):
@@ -47,7 +46,7 @@ class StartNotify(threading.Thread):
             tries += 1
 
 
-class ServiceService(Service):
+class ServiceService(CRUDService):
 
     SERVICE_DEFS = {
         's3': ('minio', '/var/run/minio.pid'),
@@ -111,7 +110,7 @@ class ServiceService(Service):
             Bool('enable'),
         ),
     )
-    def update(self, id, data):
+    def do_update(self, id, data):
         """
         Update service entry of `id`.
 
@@ -377,8 +376,9 @@ class ServiceService(Service):
         try:
             with open('/var/run/webshell.pid', 'r') as f:
                 pid = f.read()
-                os.kill(int(pid), signal.SIGHUP)
+                os.kill(int(pid), signal.SIGTERM)
                 time.sleep(0.2)
+                os.kill(int(pid), signal.SIGKILL)
         except:
             pass
         self._system("ulimit -n 1024 && /usr/local/bin/python /usr/local/www/freenasUI/tools/webshell.py")
@@ -609,7 +609,11 @@ class ServiceService(Service):
         for srv in ('kinit', 'activedirectory', ):
             if self._system('/usr/sbin/service ix-%s status' % (srv, )) != 0:
                 return False, []
-        return self.middleware.call('notifier.ad_status'), []
+        if self._system('/usr/local/bin/wbinfo -p') != 0:
+                return False, []
+        if self._system('/usr/local/bin/wbinfo -t') != 0:
+                return False, []
+        return True, []
 
     def _start_activedirectory(self, **kwargs):
         res = False
@@ -820,10 +824,10 @@ class ServiceService(Service):
         self._service("inadyn-mt", "restart", **kwargs)
 
     def _restart_system(self, **kwargs):
-        self._system("/bin/sleep 3 && /sbin/shutdown -r now &")
+        gevent.spawn(self._system, "/bin/sleep 3 && /sbin/shutdown -r now")
 
     def _stop_system(self, **kwargs):
-        self._system("/sbin/shutdown -p now")
+        gevent.spawn(self._system, "/bin/sleep 3 && /sbin/shutdown -p now")
 
     def _reload_cifs(self, **kwargs):
         self._service("ix-pre-samba", "start", quiet=True, **kwargs)
@@ -931,36 +935,3 @@ class ServiceService(Service):
             # benefit in waiting for it since even if it fails it wont
             # tell the user anything useful.
             gevent.spawn(self.restart, "collectd", kwargs)
-
-    def enable_test_service_connection(self, frequency, retry, fqdn, service_port, service_name):
-        """Enable service monitoring.
-
-        Args:
-                frequency (int): How often we will check the connection.
-                retry (int): How many times we will try to restart the service.
-                fqdn (str): The hostname and domainname where we will try to connect.
-                service_port (int): The service port number.
-                service_name (str): Same name used to start/stop/restart method.
-
-        """
-        self.logger.debug("[ServiceMonitoring] Add %s service, frequency: %d, retry: %d" % (service_name, frequency, retry))
-        t = ServiceMonitor(frequency, retry, fqdn, service_port, service_name)
-        t.createServiceThread()
-        t.start()
-
-    def disable_test_service_connection(self, frequency, retry, fqdn, service_port, service_name):
-        """Disable service monitoring.
-
-        XXX: This method will be simplified.
-
-        Args:
-                frequency (int): How often we will check the connection.
-                retry (int): How many times we will try to restart the service.
-                fqdn (str): The hostname and domainname where we will try to connect.
-                service_port (int): The service port number.
-                service_name (str): Same name used to start/stop/restart method.
-
-        """
-        self.logger.debug("[ServiceMonitoring] Remove %s service, frequency: %d, retry: %d" % (service_name, frequency, retry))
-        t = ServiceMonitor(frequency, retry, fqdn, service_port, service_name)
-        t.destroyServiceThread(service_name)

@@ -1,5 +1,5 @@
 from middlewared.service import Service, private
-from middlewared.schema import accepts, Bool, Dict, Int, List, Ref, Str
+from middlewared.schema import accepts, Any, Bool, Dict, Int, List, Ref, Str
 
 import os
 import sys
@@ -15,6 +15,12 @@ from django.db import connection
 from django.db.models import Q
 from django.db.models.fields.related import ForeignKey
 
+# FIXME: django sqlite3_ha backend uses a thread to sync queries to the
+# standby node. That does not play very well with gevent+middleware
+# if that "thread" is still running and the originating connection closes.
+from freenasUI.freeadmin.sqlite3_ha import base as sqlite3_ha_base
+sqlite3_ha_base.execute_sync = True
+
 from middlewared.utils import django_modelobj_serialize
 
 
@@ -29,6 +35,8 @@ class DatastoreService(Service):
             '<': 'lt',
             '<=': 'lte',
             '~': 'regex',
+            'in': 'in',
+            'nin': 'in',
         }
 
         rv = []
@@ -37,12 +45,13 @@ class DatastoreService(Service):
                 raise ValueError('Filter must be a list: {0}'.format(f))
             if len(f) == 3:
                 name, op, value = f
-                if field_prefix:
+                # id is special
+                if field_prefix and name != 'id':
                     name = field_prefix + name
                 if op not in opmap:
                     raise Exception("Invalid operation: {0}".format(op))
                 q = Q(**{'{0}__{1}'.format(name, opmap[op]): value})
-                if op == '!=':
+                if op in ('!=', 'nin'):
                     q.negate()
                 rv.append(q)
             elif len(f) == 2:
@@ -95,7 +104,7 @@ class DatastoreService(Service):
             simple_filter: '[' attribute_name, OPERATOR, value ']'
             conjunction: '[' CONJUNTION, '[' simple_filter (',' simple_filter)* ']]'
 
-            OPERATOR: ('=' | '!=' | '>' | '>=' | '<' | '<=' | '~' )
+            OPERATOR: ('=' | '!=' | '>' | '>=' | '<' | '<=' | '~' | 'in' | 'nin')
             CONJUNCTION: 'OR'
 
         e.g.
@@ -182,16 +191,16 @@ class DatastoreService(Service):
             if isinstance(field, ForeignKey):
                 data[field.name] = field.rel.to.objects.get(pk=data[field.name])
         obj = model(**data)
-        obj.save()
+        self.middleware.threaded(obj.save)
         return obj.pk
 
-    @accepts(Str('name'), Int('id'), Dict('data', additional_attrs=True))
+    @accepts(Str('name'), Any('id'), Dict('data', additional_attrs=True))
     def update(self, name, id, data):
         """
         Update an entry `id` in `name`.
         """
         model = self.__get_model(name)
-        obj = model.objects.get(pk=id)
+        obj = self.middleware.threaded(lambda oid: model.objects.get(pk=oid), id)
         for field in model._meta.fields:
             if field.name not in data:
                 continue
@@ -199,16 +208,16 @@ class DatastoreService(Service):
                 data[field.name] = field.rel.to.objects.get(pk=data[field.name])
         for k, v in list(data.items()):
             setattr(obj, k, v)
-        obj.save()
+        self.middleware.threaded(obj.save)
         return obj.pk
 
-    @accepts(Str('name'), Int('id'))
+    @accepts(Str('name'), Any('id'))
     def delete(self, name, id):
         """
         Delete an entry `id` in `name`.
         """
         model = self.__get_model(name)
-        model.objects.get(pk=id).delete()
+        self.middleware.threaded(lambda oid: model.objects.get(pk=oid).delete(), id)
         return True
 
     @private
@@ -224,3 +233,22 @@ class DatastoreService(Service):
         finally:
             cursor.close()
         return rv
+
+    @private
+    @accepts(List('queries'))
+    def restore(self, queries):
+        """
+        Receives a list of SQL queries (usually a database dump)
+        and executes it within a transaction.
+        """
+        return connection.dump_recv(queries)
+
+    @private
+    @accepts()
+    def dump(self):
+        """
+        Dumps the database, returning a list of SQL commands.
+        """
+        # FIXME: This could return a few hundred KB of data,
+        # we need to investigate a way of doing that in chunks.
+        return connection.dump()

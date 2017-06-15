@@ -297,12 +297,13 @@ class InterfacesService(Service):
         # carp must be configured after removing addresses
         # in case removing the address removes the carp
         if carp_vhid:
-            if not self.middleware.call('notifier.is_freenas') and not advskew:
+            if not self.middleware.call('system.is_freenas') and not advskew:
                 if self.middleware.call('notifier.failover_node') == 'A':
                     advskew = 20
                 else:
                     advskew = 80
-            iface.carp_config = [netif.CarpConfig(carp_vhid, advskew=advskew, key=carp_pass)]
+            # FIXME: change py-netif to accept str() key
+            iface.carp_config = [netif.CarpConfig(carp_vhid, advskew=advskew, key=carp_pass.encode())]
 
         # Add addresses in database and not configured
         for addr in (addrs_database - addrs_configured):

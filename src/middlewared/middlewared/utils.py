@@ -5,6 +5,8 @@ if '/usr/local/lib' not in sys.path:
     sys.path.append('/usr/local/lib')
 from freenasOS import Configuration
 
+VERSION = None
+
 
 def django_modelobj_serialize(middleware, obj, extend=None, field_prefix=None):
     from django.db.models.fields.related import ForeignKey
@@ -13,8 +15,15 @@ def django_modelobj_serialize(middleware, obj, extend=None, field_prefix=None):
     )
     data = {}
     for field in obj._meta.fields:
-        value = getattr(obj, field.name)
         name = field.name
+        try:
+            value = getattr(obj, name)
+        except Exception as e:
+            # If foreign key does not exist set it to None
+            if isinstance(field, ForeignKey) and isinstance(e, field.rel.model.DoesNotExist):
+                data[name] = None
+                continue
+            raise
         if field_prefix and name.startswith(field_prefix):
             name = name[len(field_prefix):]
         if isinstance(field, (
@@ -33,6 +42,14 @@ def django_modelobj_serialize(middleware, obj, extend=None, field_prefix=None):
 def Popen(*args, **kwargs):
     kwargs.setdefault('encoding', 'utf8')
     return subprocess.Popen(*args, **kwargs)
+
+
+def run(*args, **kwargs):
+    kwargs.setdefault('encoding', 'utf8')
+    kwargs.setdefault('check', True)
+    kwargs.setdefault('stdout', subprocess.PIPE)
+    kwargs.setdefault('stderr', subprocess.PIPE)
+    return subprocess.run(args, **kwargs)
 
 
 def filter_list(_list, filters=None, options=None):
@@ -89,11 +106,20 @@ def filter_list(_list, filters=None, options=None):
     return rv
 
 
+def sw_version():
+    global VERSION
+    if VERSION is None:
+        conf = Configuration.Configuration()
+        sys_mani = conf.SystemManifest()
+        if sys_mani:
+            VERSION = sys_mani.Version()
+    return VERSION
+
+
 def sw_version_is_stable():
-
     conf = Configuration.Configuration()
-
-    if 'stable' in conf.CurrentTrain().lower():
+    train = conf.CurrentTrain()
+    if train and 'stable' in train.lower():
         return True
     else:
         return False

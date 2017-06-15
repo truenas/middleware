@@ -312,17 +312,6 @@ def configure_interface():
                     return False
                 print(_("Ok"))
                 need_restart = "DHCP"
-                gc = GlobalConfiguration.objects.all()
-                gc = gc[0]
-                gc.gc_ipv4gateway = ''
-
-                print(_("Removing IPv4 default gateway:"), end=' ')
-                try:
-                    gc.save()
-                except:
-                    print(_("Failed"))
-                    return False
-                print(_("Ok"))
                 break
             elif _input.lower().startswith('n'):
                 break
@@ -591,8 +580,11 @@ def reset_factory_defaults(*args):
     a = input(_('Are you sure you want to reset to factory defaults? ')
                   + '(yes/no): ')
     if a.lower().startswith('y'):
-        notifier().config_restore()
-        os.system("/sbin/shutdown -r now")
+        try:
+            notifier().config_restore()
+            os.system("/sbin/shutdown -r now")
+        except Exception as e:
+            print("Failed to reset to factory: {}".format(str(e)))
 
 
 def configure_lagg_interface(*args):
@@ -1205,8 +1197,8 @@ def show_ip():
             print(url)
     else:
         print()
-        print(_("No configured network interfaces found."))
-        print(_("Please configure network interfaces manually."))
+        print(_("The web interface could not be accessed."))
+        print(_("Please check network configuration."))
     print()
 
 def system_update():

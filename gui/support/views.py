@@ -27,7 +27,6 @@ from collections import OrderedDict
 import json
 import logging
 import os
-import socket
 import subprocess
 import time
 
@@ -41,6 +40,7 @@ from wsgiref.util import FileWrapper
 from freenasUI.common.system import get_sw_name, get_sw_version
 from freenasUI.freeadmin.apppool import appPool
 from freenasUI.freeadmin.views import JsonResp
+from freenasUI.middleware.client import client, ClientException
 from freenasUI.middleware.notifier import notifier
 from freenasUI.network.models import GlobalConfiguration
 from freenasUI.support import forms, utils
@@ -84,9 +84,8 @@ def license_update(request):
             try:
                 _n = notifier()
                 if not _n.is_freenas():
-                    s = _n.failover_rpc()
-                    if s is not None:
-                        _n.sync_file_send(s, utils.LICENSE_FILE)
+                    with client as c:
+                        _n.sync_file_send(c, utils.LICENSE_FILE)
                 form.done(request, events)
             except Exception as e:
                 log.debug("Failed to sync license file: %s", e, exc_info=True)
@@ -101,9 +100,9 @@ def license_update(request):
         _n = notifier()
         try:
             if not _n.is_freenas() and _n.failover_licensed():
-                s = _n.failover_rpc()
-                s.ping()
-        except socket.error:
+                with client as c:
+                    c.call('failover.call_remote', 'core.ping')
+        except ClientException:
             return render(request, 'failover/failover_down.html')
         form = forms.LicenseUpdateForm()
 
@@ -157,7 +156,7 @@ def ticket(request):
             gc = GlobalConfiguration.objects.all().order_by('-id')[0]
             debug_file = dump
             debug_name = 'debug-%s-%s.txz' % (
-                gc.gc_hostname.encode('utf-8'),
+                gc.gc_hostname,
                 time.strftime('%Y%m%d%H%M%S'),
             )
 
