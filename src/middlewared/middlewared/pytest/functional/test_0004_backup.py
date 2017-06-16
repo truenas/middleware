@@ -1,6 +1,6 @@
-import binascii
 import os
 import pytest
+import secrets
 
 
 def _check():
@@ -68,7 +68,7 @@ def test_backup_010_create(conn, creds):
 
     pool = _get_pool(conn)
 
-    conn.ws.call('filesystem.file_receive', f'/mnt/{pool["name"]}/s3_test/foo', binascii.b2a_base64(b'bar').decode().strip())
+    conn.ws.call('filesystem.file_receive', f'/mnt/{pool["name"]}/s3_test/foo', secrets.token_hex(3))
 
     req = conn.rest.post('backup', data=[{
         "description": "desc",
