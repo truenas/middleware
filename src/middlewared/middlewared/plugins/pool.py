@@ -8,15 +8,15 @@ from middlewared.service import filterable, item_method, private, CRUDService
 class PoolService(CRUDService):
 
     @filterable
-    def query(self, filters=None, options=None):
+    async def query(self, filters=None, options=None):
         filters = filters or []
         options = options or {}
         options['extend'] = 'pool.pool_extend'
         options['prefix'] = 'vol_'
-        return self.middleware.call('datastore.query', 'storage.volume', filters, options)
+        return await self.middleware.call('datastore.query', 'storage.volume', filters, options)
 
     @private
-    def pool_extend(self, pool):
+    async def pool_extend(self, pool):
         pool.pop('fstype', None)
 
         """
@@ -35,7 +35,7 @@ class PoolService(CRUDService):
                 pool['is_decrypted'] = True
             else:
                 decrypted = True
-                for ed in self.middleware.call('datastore.query', 'storage.encrypteddisk', [('encrypted_volume', '=', pool['id'])]):
+                for ed in await self.middleware.call('datastore.query', 'storage.encrypteddisk', [('encrypted_volume', '=', pool['id'])]):
                     if not os.path.exists(f'/dev/{ed["encrypted_provider"]}.eli'):
                         decrypted = False
                         break
@@ -46,11 +46,12 @@ class PoolService(CRUDService):
 
     @item_method
     @accepts(Int('id'))
-    def get_disks(self, oid):
+    async def get_disks(self, oid):
         """
         Get all disks from a given pool `id`.
         """
-        pool = self.query([('id', '=', oid)], {'get': True})
+        pool = await self.query([('id', '=', oid)], {'get': True})
         if not pool['is_decrypted']:
-            return []
-        return self.middleware.call('zfs.pool.get_disks', pool['name'])
+            yield
+        async for i in await self.middleware.call('zfs.pool.get_disks', pool['name']):
+            yield i

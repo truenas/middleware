@@ -17,8 +17,8 @@ from freenasUI.common.system import send_mail
 class MailService(ConfigService):
 
     @accepts()
-    def config(self):
-        return self.middleware.call('datastore.config', 'system.email')
+    async def config(self):
+        return await self.middleware.call('datastore.config', 'system.email')
 
     @accepts(Dict(
         'mail-message',

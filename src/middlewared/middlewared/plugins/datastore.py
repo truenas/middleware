@@ -77,9 +77,10 @@ class DatastoreService(Service):
         app, model = name.split('.', 1)
         return apps.get_model(app, model)
 
-    def __queryset_serialize(self, qs, extend=None, field_prefix=None):
-        for i in self.middleware.threaded(lambda: list(qs)):
-            yield django_modelobj_serialize(self.middleware, i, extend=extend, field_prefix=field_prefix)
+    async def __queryset_serialize(self, qs, extend=None, field_prefix=None):
+        result = await self.middleware.threaded(lambda: list(qs))
+        for i in result:
+            yield await django_modelobj_serialize(self.middleware, i, extend=extend, field_prefix=field_prefix)
 
     @accepts(
         Str('name'),
@@ -95,7 +96,7 @@ class DatastoreService(Service):
             register=True,
         ),
     )
-    def query(self, name, filters=None, options=None):
+    async def query(self, name, filters=None, options=None):
         """Query for items in a given collection `name`.
 
         `filters` is a list which each entry can be in one of the following formats:
@@ -159,16 +160,19 @@ class DatastoreService(Service):
         if options.get('count') is True:
             return qs.count()
 
-        result = list(self.__queryset_serialize(
+        result = []
+        async for i in self.__queryset_serialize(
             qs, extend=options.get('extend'), field_prefix=options.get('prefix')
-        ))
+        ):
+            result.append(i)
 
         if options.get('get') is True:
             return result[0]
+
         return result
 
     @accepts(Str('name'), Ref('query-options'))
-    def config(self, name, options=None):
+    async def config(self, name, options=None):
         """
         Get configuration settings object for a given `name`.
 
@@ -177,10 +181,10 @@ class DatastoreService(Service):
         if options is None:
             options = {}
         options['get'] = True
-        return self.query(name, None, options)
+        return await self.query(name, None, options)
 
     @accepts(Str('name'), Dict('data', additional_attrs=True))
-    def insert(self, name, data):
+    async def insert(self, name, data):
         """
         Insert a new entry to `name`.
         """
@@ -191,16 +195,16 @@ class DatastoreService(Service):
             if isinstance(field, ForeignKey):
                 data[field.name] = field.rel.to.objects.get(pk=data[field.name])
         obj = model(**data)
-        self.middleware.threaded(obj.save)
+        await self.middleware.threaded(obj.save)
         return obj.pk
 
     @accepts(Str('name'), Any('id'), Dict('data', additional_attrs=True))
-    def update(self, name, id, data):
+    async def update(self, name, id, data):
         """
         Update an entry `id` in `name`.
         """
         model = self.__get_model(name)
-        obj = self.middleware.threaded(lambda oid: model.objects.get(pk=oid), id)
+        obj = await self.middleware.threaded(lambda oid: model.objects.get(pk=oid), id)
         for field in model._meta.fields:
             if field.name not in data:
                 continue
@@ -208,16 +212,16 @@ class DatastoreService(Service):
                 data[field.name] = field.rel.to.objects.get(pk=data[field.name])
         for k, v in list(data.items()):
             setattr(obj, k, v)
-        self.middleware.threaded(obj.save)
+        await self.middleware.threaded(obj.save)
         return obj.pk
 
     @accepts(Str('name'), Any('id'))
-    def delete(self, name, id):
+    async def delete(self, name, id):
         """
         Delete an entry `id` in `name`.
         """
         model = self.__get_model(name)
-        self.middleware.threaded(lambda oid: model.objects.get(pk=oid).delete(), id)
+        await self.middleware.threaded(lambda oid: model.objects.get(pk=oid).delete(), id)
         return True
 
     @private

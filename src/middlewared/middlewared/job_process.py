@@ -3,6 +3,7 @@ from middlewared.client import Client
 from middlewared.service import Service, CRUDService, ConfigService
 
 import argparse
+import asyncio
 import imp
 import inspect
 import json
@@ -56,7 +57,7 @@ class FakeMiddleware(object):
     def add_service(self, service):
         self.__services[service._config.namespace] = service
 
-    def _call_job(self, job_id):
+    async def _call_job(self, job_id):
         job = self.client.call('core.get_jobs', [('id', '=', job_id)], {'get': True})
         service, method = job['method'].rsplit('.', 1)
         methodobj = getattr(self.__services[service], method)
@@ -64,11 +65,11 @@ class FakeMiddleware(object):
         if job_options:
             params = list(job['arguments'])
             params.insert(0, FakeJob(job['id'], self.client))
-            return methodobj(*params)
+            return await methodobj(*params)
         else:
             raise NotImplementedError("Only jobs are allowed")
 
-    def call(self, method, *params):
+    async def call(self, method, *params):
         """
         Calls a method using middleware client
         """
@@ -95,17 +96,20 @@ class FakeJob(object):
         self.client.call('core.job_update', self.id, {'progress': self.progress})
 
 
-def main():
+async def main():
     parser = argparse.ArgumentParser()
     parser.add_argument('job', type=int)
     args = parser.parse_args()
     with Client() as c:
         middleware = FakeMiddleware(c)
-        return middleware._call_job(args.job)
+        return await middleware._call_job(args.job)
 
 if __name__ == '__main__':
     try:
-        print(json.dumps(main()))
+        loop = asyncio.get_event_loop()
+        coro = main()
+        loop.run_until_complete(coro)
+        print(json.dumps(coro.result()))
     except Exception as e:
         print(json.dumps({
             'exception': ''.join(traceback.format_exception(*sys.exc_info())),

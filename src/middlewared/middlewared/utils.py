@@ -1,3 +1,4 @@
+import asyncio
 import sys
 import subprocess
 
@@ -8,7 +9,7 @@ from freenasOS import Configuration
 VERSION = None
 
 
-def django_modelobj_serialize(middleware, obj, extend=None, field_prefix=None):
+async def django_modelobj_serialize(middleware, obj, extend=None, field_prefix=None):
     from django.db.models.fields.related import ForeignKey
     from freenasUI.contrib.IPAddressField import (
         IPAddressField, IP4AddressField, IP6AddressField
@@ -31,25 +32,33 @@ def django_modelobj_serialize(middleware, obj, extend=None, field_prefix=None):
         )):
             data[name] = str(value)
         elif isinstance(field, ForeignKey):
-            data[name] = django_modelobj_serialize(middleware, value) if value is not None else value
+            data[name] = await django_modelobj_serialize(middleware, value) if value is not None else value
         else:
             data[name] = value
     if extend:
-        data = middleware.call(extend, data)
+        data = await middleware.call(extend, data)
     return data
 
 
-def Popen(*args, **kwargs):
+def Popen(args, **kwargs):
     kwargs.setdefault('encoding', 'utf8')
-    return subprocess.Popen(*args, **kwargs)
+    shell = kwargs.pop('shell', None)
+    if shell:
+        return asyncio.create_subprocess_shell(args, **kwargs)
+    else:
+        return asyncio.create_subprocess_exec(*args, **kwargs)
 
 
-def run(*args, **kwargs):
-    kwargs.setdefault('encoding', 'utf8')
-    kwargs.setdefault('check', True)
+async def run(*args, **kwargs):
     kwargs.setdefault('stdout', subprocess.PIPE)
     kwargs.setdefault('stderr', subprocess.PIPE)
-    return subprocess.run(args, **kwargs)
+    check = kwargs.pop('check', True)
+    proc = await asyncio.create_subprocess_exec(*args, **kwargs)
+    stdout, stderr = await proc.communicate()
+    cp = subprocess.CompletedProcess(args, proc.returncode, stdout=stdout, stderr=stderr)
+    if check:
+        cp.check_returncode()
+    return cp
 
 
 def filter_list(_list, filters=None, options=None):

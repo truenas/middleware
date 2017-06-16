@@ -11,19 +11,21 @@ import subprocess
 class ReplicationService(Service):
 
     @private
-    def ssh_keyscan(self, host, port):
-        proc = Popen([
+    async def ssh_keyscan(self, host, port):
+        proc = await Popen([
             "/usr/bin/ssh-keyscan",
             "-p", str(port),
             "-T", "2",
             str(host),
-        ], stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf8')
-        key, errmsg = proc.communicate()
+        ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        key, errmsg = await proc.communicate()
         if proc.returncode != 0 or not key:
             if not errmsg:
                 errmsg = 'ssh key scan failed for unknown reason'
+            else:
+                errmsg = errmsg.decode()
             raise ValueError(errmsg)
-        return key
+        return key.decode()
 
     @private
     @accepts(Dict(
@@ -32,15 +34,15 @@ class ReplicationService(Service):
         Str('public-key', required=True),
         Str('user'),
     ))
-    def pair(self, data):
+    async def pair(self, data):
         """
         Receives public key, storing it to accept SSH connection and return
         pertinent SSH data of this machine.
         """
-        service = self.middleware.call('datastore.query', 'services.services', [('srv_service', '=', 'ssh')], {'get': True})
-        ssh = self.middleware.call('datastore.query', 'services.ssh', None, {'get': True})
+        service = await self.middleware.call('datastore.query', 'services.services', [('srv_service', '=', 'ssh')], {'get': True})
+        ssh = await self.middleware.call('datastore.query', 'services.ssh', None, {'get': True})
         try:
-            user = self.middleware.call('datastore.query', 'account.bsdusers', [('bsdusr_username', '=', data.get('user') or 'root')], {'get': True})
+            user = await self.middleware.call('datastore.query', 'account.bsdusers', [('bsdusr_username', '=', data.get('user') or 'root')], {'get': True})
         except IndexError:
             raise ValueError('User "{}" does not exist'.format(data.get('user')))
 
@@ -49,12 +51,12 @@ class ReplicationService(Service):
 
         # Make sure SSH is enabled
         if not service['srv_enable']:
-            self.middleware.call('datastore.update', 'services.services', service['id'], {'srv_enable': True})
-            self.middleware.call('notifier.start', 'ssh')
+            await self.middleware.call('datastore.update', 'services.services', service['id'], {'srv_enable': True})
+            await self.middleware.call('notifier.start', 'ssh')
 
             # This might be the first time of the service being enabled
             # which will then result in new host keys we need to grab
-            ssh = self.middleware.call('datastore.query', 'services.ssh', None, {'get': True})
+            ssh = await self.middleware.call('datastore.query', 'services.ssh', None, {'get': True})
 
         if not os.path.exists(user['bsdusr_home']):
             raise ValueError('Homedir {} does not exist'.format(user['bsdusr_home']))

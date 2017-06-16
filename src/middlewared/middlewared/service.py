@@ -109,8 +109,8 @@ class ConfigService(Service):
     def config(self):
         raise NotImplementedError
 
-    def update(self, data):
-        return self.do_update(data)
+    async def update(self, data):
+        return await self.do_update(data)
 
 
 class CRUDService(Service):
@@ -118,14 +118,14 @@ class CRUDService(Service):
     def query(self, filters, options):
         raise NotImplementedError('{}.query must be implemented'.format(self._config.namespace))
 
-    def create(self, data):
-        return self.do_create(data)
+    async def create(self, data):
+        return await self.do_create(data)
 
-    def update(self, id, data):
-        return self.do_update(id, data)
+    async def update(self, id, data):
+        return await self.do_update(id, data)
 
-    def delete(self, id):
-        return self.do_delete(id)
+    async def delete(self, id):
+        return await self.do_delete(id)
 
 
 class CoreService(Service):
@@ -254,7 +254,7 @@ class CoreService(Service):
         return data
 
     @private
-    def event_send(self, name, event_type, kwargs):
+    async def event_send(self, name, event_type, kwargs):
         self.middleware.send_event(name, event_type, **kwargs)
 
     @accepts()
@@ -271,14 +271,14 @@ class CoreService(Service):
         List('args'),
         Str('filename'),
     )
-    def download(self, method, args, filename):
+    async def download(self, method, args, filename):
         """
         Core helper to call a job marked for download.
 
         Returns the job id and the URL for download.
         """
-        job = self.middleware.call(method, *args)
-        token = self.middleware.call('auth.generate_token', 300, {'filename': filename, 'job': job.id})
+        job = await self.middleware.call(method, *args)
+        token = await self.middleware.call('auth.generate_token', 300, {'filename': filename, 'job': job.id})
         return job.id, f'/_download/{job.id}?auth_token={token}'
 
     @private

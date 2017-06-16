@@ -1,5 +1,4 @@
 
-import gevent.monkey
 import logging
 import os
 import threading
@@ -259,28 +258,13 @@ class HASQLiteCursorWrapper(Database.Cursor):
             return
 
         try:
-            # middlewared notifier plugin can also reach this code for now.
-            # And this is usually using a thread (because it can block for
-            # numerous reasons). That means it can reach to gevent code
-            # out of the main loop which will lead to terrible things.
-            # To workaround this issue lets call notifier using a new client
-            # instance.
             # FIXME: This is extremely time-consuming (failover.status)
-            if (
-                gevent.monkey.is_module_patched('subprocess') and
-                threading.main_thread() != threading.current_thread()
+            from freenasUI.middleware.notifier import notifier
+            if not (
+                hasattr(notifier, 'failover_status') and
+                notifier().failover_status() == 'MASTER'
             ):
-                from freenasUI.middleware.client import client
-                with client as c:
-                    if c.call('system.is_freenas') or c.call('notifier.failover_status') != 'MASTER':
-                        return
-            else:
-                from freenasUI.middleware.notifier import notifier
-                if not (
-                    hasattr(notifier, 'failover_status') and
-                    notifier().failover_status() == 'MASTER'
-                ):
-                    return
+                return
         except:
             return
 

@@ -6,13 +6,12 @@ from logging.config import dictConfig
 from .utils import sw_version, sw_version_is_stable
 
 from raven import Client
-from raven.transport.gevent import GeventedHTTPTransport
 from raven.transport.threaded import ThreadedHTTPTransport
 
-# geventwebsocket.server debug log is mostly useless, lets focus on INFO
-logging.getLogger('geventwebsocket.server').setLevel(logging.INFO)
 # markdown debug is also considered useless
 logging.getLogger('MARKDOWN').setLevel(logging.INFO)
+# asyncio runs in debug mode but we do not need INFO/DEBUG
+logging.getLogger('asyncio').setLevel(logging.WARN)
 
 
 class CrashReporting(object):
@@ -20,10 +19,8 @@ class CrashReporting(object):
     Pseudo-Class for remote crash reporting
     """
 
-    def __init__(self, transport='gevent'):
-        if transport == 'gevent':
-            transport = GeventedHTTPTransport
-        elif transport == 'threaded':
+    def __init__(self, transport='threaded'):
+        if transport == 'threaded':
             transport = ThreadedHTTPTransport
         else:
             raise ValueError(f'Unknown transport: {transport}')

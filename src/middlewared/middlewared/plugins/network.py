@@ -1,7 +1,7 @@
 from middlewared.service import Service, private
 from middlewared.utils import Popen
 
-import gevent
+import asyncio
 import ipaddress
 import netif
 import os
@@ -59,18 +59,18 @@ def dhclient_leases(interface):
 class InterfacesService(Service):
 
     @private
-    def sync(self):
+    async def sync(self):
         """
         Sync interfaces configured in database to the OS.
         """
 
-        interfaces = [i['int_interface'] for i in self.middleware.call('datastore.query', 'network.interfaces')]
+        interfaces = [i['int_interface'] for i in (await self.middleware.call('datastore.query', 'network.interfaces'))]
         cloned_interfaces = []
         parent_interfaces = []
 
         # First of all we need to create the virtual interfaces
         # LAGG comes first and then VLAN
-        laggs = self.middleware.call('datastore.query', 'network.lagginterface')
+        laggs = await self.middleware.call('datastore.query', 'network.lagginterface')
         for lagg in laggs:
             name = lagg['lagg_interface']['int_interface']
             cloned_interfaces.append(name)
@@ -88,7 +88,7 @@ class InterfacesService(Service):
 
             members_configured = set(p[0] for p in iface.ports)
             members_database = set()
-            for member in self.middleware.call('datastore.query', 'network.lagginterfacemembers', [('lagg_interfacegroup_id', '=', lagg['id'])]):
+            for member in (await self.middleware.call('datastore.query', 'network.lagginterfacemembers', [('lagg_interfacegroup_id', '=', lagg['id'])])):
                 members_database.add(member['lagg_physnic'])
 
             # Remeve member configured but not in database
@@ -108,7 +108,7 @@ class InterfacesService(Service):
                 parent_interfaces.append(port[0])
                 port_iface.up()
 
-        vlans = self.middleware.call('datastore.query', 'network.vlan')
+        vlans = await self.middleware.call('datastore.query', 'network.vlan')
         for vlan in vlans:
             cloned_interfaces.append(vlan['vlan_vint'])
             self.logger.info('Setting up {}'.format(vlan['vlan_vint']))
@@ -133,13 +133,13 @@ class InterfacesService(Service):
         self.logger.info('Interfaces in database: {}'.format(', '.join(interfaces) or 'NONE'))
         for interface in interfaces:
             try:
-                self.sync_interface(interface)
+                await self.sync_interface(interface)
             except:
                 self.logger.error('Failed to configure {}'.format(interface), exc_info=True)
 
         internal_interfaces = ['lo', 'pflog', 'pfsync', 'tun', 'tap', 'bridge', 'epair']
-        if not self.middleware.call('system.is_freenas'):
-            internal_interfaces.extend(self.middleware.call('notifier.failover_internal_interfaces') or [])
+        if not await self.middleware.call('system.is_freenas'):
+            internal_interfaces.extend(await self.middleware.call('notifier.failover_internal_interfaces') or [])
         internal_interfaces = tuple(internal_interfaces)
 
         # Destroy interfaces which are not in database
@@ -180,14 +180,14 @@ class InterfacesService(Service):
         return addr
 
     @private
-    def sync_interface(self, name):
+    async def sync_interface(self, name):
         try:
-            data = self.middleware.call('datastore.query', 'network.interfaces', [('int_interface', '=', name)], {'get': True})
+            data = await self.middleware.call('datastore.query', 'network.interfaces', [('int_interface', '=', name)], {'get': True})
         except IndexError:
             self.logger.info('{} is not in interfaces database'.format(name))
             return
 
-        aliases = self.middleware.call('datastore.query', 'network.alias', [('alias_interface_id', '=', data['id'])])
+        aliases = await self.middleware.call('datastore.query', 'network.alias', [('alias_interface_id', '=', data['id'])])
 
         iface = netif.get_interface(name)
 
@@ -200,8 +200,8 @@ class InterfacesService(Service):
         has_ipv6 = data['int_ipv6auto'] or False
 
         if (
-            not self.middleware.call('system.is_freenas') and
-            self.middleware.call('notifier.failover_node') == 'B'
+            not await self.middleware.call('system.is_freenas') and
+            await self.middleware.call('notifier.failover_node') == 'B'
         ):
             ipv4_field = 'int_ipv4address_b'
             ipv6_field = 'int_ipv6address'
@@ -297,8 +297,8 @@ class InterfacesService(Service):
         # carp must be configured after removing addresses
         # in case removing the address removes the carp
         if carp_vhid:
-            if not self.middleware.call('system.is_freenas') and not advskew:
-                if self.middleware.call('notifier.failover_node') == 'A':
+            if not await self.middleware.call('system.is_freenas') and not advskew:
+                if await self.middleware.call('notifier.failover_node') == 'A':
                     advskew = 20
                 else:
                     advskew = 80
@@ -313,8 +313,8 @@ class InterfacesService(Service):
         # Apply interface options specified in GUI
         if data['int_options']:
             self.logger.info('{}: applying {}'.format(name, data['int_options']))
-            proc = Popen('/sbin/ifconfig {} {}'.format(name, data['int_options']), shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=True)
-            err = proc.communicate()[1]
+            proc = await Popen('/sbin/ifconfig {} {}'.format(name, data['int_options']), shell=True, stdout=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=True)
+            err = (await proc.communicate())[1].decode()
             if err:
                 self.logger.info('{}: error applying: {}'.format(name, err))
 
@@ -329,28 +329,28 @@ class InterfacesService(Service):
         # If dhclient is not running and dhcp is configured, lets start it
         if not dhclient_running and data['int_dhcp']:
             self.logger.debug('Starting dhclient for {}'.format(name))
-            gevent.spawn(self.dhclient_start, data['int_interface'])
+            asyncio.ensure_future(self.dhclient_start(data['int_interface']))
         elif dhclient_running and not data['int_dhcp']:
             self.logger.debug('Killing dhclient for {}'.format(name))
             os.kill(dhclient_pid, signal.SIGTERM)
 
         if data['int_ipv6auto']:
             iface.nd6_flags = iface.nd6_flags | {netif.NeighborDiscoveryFlags.ACCEPT_RTADV}
-            Popen(
+            await (await Popen(
                 ['/etc/rc.d/rtsold', 'onestart'],
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 close_fds=True,
-            ).wait()
+            )).wait()
         else:
             iface.nd6_flags = iface.nd6_flags - {netif.NeighborDiscoveryFlags.ACCEPT_RTADV}
 
     @private
-    def dhclient_start(self, interface):
-        proc = Popen([
+    async def dhclient_start(self, interface):
+        proc = await Popen([
             '/sbin/dhclient', '-b', interface,
         ], stdout=subprocess.PIPE, stderr=subprocess.STDOUT, close_fds=True)
-        output = proc.communicate()[0]
+        output = (await proc.communicate())[0].decode()
         if proc.returncode != 0:
             self.logger.error('Failed to run dhclient on {}: {}'.format(
                 interface, output,
@@ -360,16 +360,16 @@ class InterfacesService(Service):
 class RoutesService(Service):
 
     @private
-    def sync(self):
-        config = self.middleware.call('datastore.query', 'network.globalconfiguration', [], {'get': True})
+    async def sync(self):
+        config = await self.middleware.call('datastore.query', 'network.globalconfiguration', [], {'get': True})
 
         # Generate dhclient.conf so we can ignore routes (def gw) option
         # in case there is one explictly set in network config
-        self.middleware.call('etc.generate', 'network')
+        await self.middleware.call('etc.generate', 'network')
 
         ipv4_gateway = config['gc_ipv4gateway'] or None
         if not ipv4_gateway:
-            interface = self.middleware.call('datastore.query', 'network.interfaces', [('int_dhcp', '=', True)])
+            interface = await self.middleware.call('datastore.query', 'network.interfaces', [('int_dhcp', '=', True)])
             if interface:
                 interface = interface[0]
                 dhclient_running, dhclient_pid = dhclient_status(interface['int_interface'])
@@ -421,13 +421,13 @@ class RoutesService(Service):
 class DNSService(Service):
 
     @private
-    def sync(self):
+    async def sync(self):
         domain = None
         nameservers = []
 
-        if self.middleware.call('notifier.common', 'system', 'domaincontroller_enabled'):
-            cifs = self.middleware.call('datastore.query', 'services.cifs', None, {'get': True})
-            dc = self.middleware.call('datastore.query', 'services.DomainController', None, {'get': True})
+        if await self.middleware.call('notifier.common', 'system', 'domaincontroller_enabled'):
+            cifs = await self.middleware.call('datastore.query', 'services.cifs', None, {'get': True})
+            dc = await self.middleware.call('datastore.query', 'services.DomainController', None, {'get': True})
             domain = dc['dc_realm']
             if cifs['cifs_srv_bindip']:
                 for ip in cifs['cifs_srv_bindip']:
@@ -435,7 +435,7 @@ class DNSService(Service):
             else:
                 nameservers.append('127.0.0.1')
         else:
-            gc = self.middleware.call('datastore.query', 'network.globalconfiguration', None, {'get': True})
+            gc = await self.middleware.call('datastore.query', 'network.globalconfiguration', None, {'get': True})
             if gc['gc_domain']:
                 domain = gc['gc_domain']
             if gc['gc_nameserver1']:
@@ -451,7 +451,9 @@ class DNSService(Service):
         for ns in nameservers:
             resolvconf += 'nameserver {}\n'.format(ns)
 
-        proc = Popen([
+        proc = await Popen([
             '/sbin/resolvconf', '-a', 'lo0'
         ], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        proc.communicate(input=resolvconf)
+        data = await proc.communicate(input=resolvconf.encode())
+        if proc.returncode != 0:
+            self.logger.warn(f'Failed to run resolvconf: {data[1].decode()}')

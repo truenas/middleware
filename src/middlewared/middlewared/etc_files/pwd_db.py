@@ -1,9 +1,5 @@
-import subprocess
+from middlewared.utils import run
 
 
-def render(service, middleware):
-    proc = subprocess.Popen([
-        '/usr/sbin/pwd_mkdb',
-        '/etc/master.passwd',
-    ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    proc.communicate()
+async def render(service, middleware):
+    await run('/usr/sbin/pwd_mkdb', '/etc/master.passwd', check=False)
