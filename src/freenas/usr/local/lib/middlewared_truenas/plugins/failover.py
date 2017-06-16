@@ -1,8 +1,7 @@
+import asyncio
 import errno
-import gevent
 import os
 import sys
-import time
 
 from middlewared.client import Client, ClientException
 from middlewared.schema import accepts, Bool, Dict, Int, List, Str
@@ -170,9 +169,8 @@ class FailoverService(Service):
         return restore
 
 
-def ha_permission(app):
-    remote_addr = app.ws.environ['REMOTE_ADDR']
-    remote_port = int(app.ws.environ['REMOTE_PORT'])
+async def ha_permission(app):
+    remote_addr, remote_port = app.request.transport.get_extra_info('peername')
 
     if remote_port <= 1024 and remote_addr in (
         '169.254.10.1',
@@ -188,7 +186,8 @@ def journal_sync(middleware):
         for q in list(j.queries):
             query, params = q
             try:
-                middleware.call('failover.call_remote', 'datastore.sql', [query, params])
+                with Client() as c:
+                    c.call('failover.call_remote', 'datastore.sql', [query, params])
                 j.queries.remove(q)
             except ClientException as e:
                 middleware.logger.exception('Failed to run sql: %s', e)
@@ -208,22 +207,22 @@ def journal_sync(middleware):
                 pass
 
 
-def journal_ha(middleware):
+async def journal_ha(middleware):
     """
     This is a green thread reponsible for trying to sync the journal
     file to the other node.
     Every SQL query that could not be synced is stored in the journal.
     """
     while True:
-        time.sleep(5)
+        await asyncio.sleep(5)
         if Journal.is_empty():
             continue
         try:
-            middleware.threaded(journal_sync, middleware)
+            await middleware.threaded(journal_sync, middleware)
         except Exception:
             middleware.logger.warn('Failed to sync journal', exc_info=True)
 
 
 def setup(middleware):
     middleware.register_hook('core.on_connect', ha_permission, sync=True)
-    gevent.spawn(journal_ha, middleware)
+    asyncio.ensure_future(journal_ha(middleware))

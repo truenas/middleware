@@ -8,6 +8,6 @@ class TrueNASService(Service):
         private = True
 
     @accepts()
-    def get_chassis_hardware(self):
+    async def get_chassis_hardware(self):
         # FIXME: bring code from notifier
-        return self.middleware.call('notifier.get_chassis_hardware')
+        return await self.middleware.call('notifier.get_chassis_hardware')
