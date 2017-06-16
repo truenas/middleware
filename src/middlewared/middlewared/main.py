@@ -398,6 +398,8 @@ class Middleware(object):
         self.logger = logger.Logger('middlewared').getLogger()
         self.crash_reporting = logger.CrashReporting()
         self.loop_monitor = loop_monitor
+        self.__loop = None
+        self.__thread_id = threading.get_ident()
         self.__threadpool = concurrent.futures.ThreadPoolExecutor(
             max_workers=5,
         )
@@ -601,6 +603,24 @@ class Middleware(object):
         methodobj = self._method_lookup(name)
         return await self._call(name, methodobj, params)
 
+    def call_sync(self, name, *params):
+        """
+        Synchronous method call to be used from another thread.
+        """
+        if threading.get_ident() == self.__thread_id:
+            raise RuntimeError('You cannot call_sync from main thread')
+
+        methodobj = self._method_lookup(name)
+        fut = asyncio.run_coroutine_threadsafe(self._call(name, methodobj, params), self.__loop)
+        event = threading.Event()
+
+        def done(_):
+            event.set()
+
+        fut.add_done_callback(done)
+        event.wait()
+        return fut.result()
+
     def event_subscribe(self, name, handler):
         """
         Internal way for middleware/plugins to subscribe to events.
@@ -640,7 +660,7 @@ class Middleware(object):
         connection.on_close()
         return ws
 
-    def _loop_monitor_thread(self, loop, main_thread_ident):
+    def _loop_monitor_thread(self):
         """
         Thread responsible for checking current tasks that are taking too long
         to finish and printing the stack.
@@ -651,30 +671,30 @@ class Middleware(object):
         last = None
         while True:
             time.sleep(2)
-            current = asyncio.Task.current_task(loop=loop)
+            current = asyncio.Task.current_task(loop=self.__loop)
             if current is None:
                 last = None
                 continue
             if last == current:
-                frame = sys._current_frames()[main_thread_ident]
+                frame = sys._current_frames()[self.__thread_id]
                 stack = traceback.format_stack(frame, limit=10)
                 self.logger.warn(''.join(['Task seems blocked:'] + stack))
             last = current
 
     def run(self):
-        loop = asyncio.get_event_loop()
+        self.loop = self.__loop = asyncio.get_event_loop()
 
         if self.loop_monitor:
-            loop.set_debug(True)
+            self.__loop.set_debug(True)
             #loop.slow_callback_duration(0.2)
-            t = threading.Thread(target=self._loop_monitor_thread, args=[loop, threading.current_thread().ident])
+            t = threading.Thread(target=self._loop_monitor_thread)
             t.setDaemon(True)
             t.start()
 
-        loop.add_signal_handler(signal.SIGTERM, self.kill)
-        loop.add_signal_handler(signal.SIGUSR1, self.pdb)
+        self.__loop.add_signal_handler(signal.SIGTERM, self.kill)
+        self.__loop.add_signal_handler(signal.SIGUSR1, self.pdb)
 
-        app = web.Application(loop=loop)
+        app = web.Application(loop=self.__loop)
         app.router.add_route('GET', '/websocket', self.ws_handler)
 
         app.router.add_route("*", "/api/docs{path_info:.*}", WSGIHandler(apidocs_app))
@@ -684,14 +704,14 @@ class Middleware(object):
         app.router.add_route('*', '/_upload{path_info:.*}', fileapp.upload)
 
         restful_api = RESTfulAPI(self, app)
-        loop.run_until_complete(
+        self.__loop.run_until_complete(
             asyncio.ensure_future(restful_api.register_resources())
         )
         asyncio.ensure_future(self.__jobs.run())
 
         self.logger.debug('Accepting connections')
         web.run_app(app, host='0.0.0.0', port=6000, access_log=None)
-        loop.run_forever()
+        self.__loop.run_forever()
 
     def kill(self):
         self.logger.info('Killall server threads')
