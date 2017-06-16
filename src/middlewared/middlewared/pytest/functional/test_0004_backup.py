@@ -1,8 +1,9 @@
+import binascii
 import os
 import pytest
 
 
-def _check(self):
+def _check():
     if (
         'BACKUP_AWS_ACCESS_KEY' not in os.environ or
         'BACKUP_AWS_SECRET_KEY' not in os.environ or
@@ -11,16 +12,30 @@ def _check(self):
     ):
         pytest.skip("No credentials")
 
+
+def _get_pool(conn):
+    req = conn.rest.get('pool')
+    assert req.status_code == 200
+
+    pools = req.json()
+    if len(pools) == 0:
+        pytest.skip("No pool found")
+    else:
+        return pools[0]
+
+
 @pytest.fixture(scope='module')
-def creds(self):
+def creds():
     return {}
 
-def test_backup_001_credential_query(self, conn):
+
+def test_backup_001_credential_query(conn):
     req = conn.rest.get('backup/credential')
     assert req.status_code == 200
     assert isinstance(req.json(), list) is True
 
-def test_backup_002_credential_create(self, conn, creds):
+
+def test_backup_002_credential_create(conn, creds):
     _check()
     req = conn.rest.post('backup/credential', data=[{
         'name': 'backtestcreds',
@@ -34,7 +49,8 @@ def test_backup_002_credential_create(self, conn, creds):
     creds['credid'] = req.json()
     assert isinstance(creds['credid'], int) is True
 
-def test_backup_003_credential_update(self, conn, creds):
+
+def test_backup_003_credential_update(conn, creds):
     _check()
     req = conn.rest.post('backup/credential', data=[{
         'name': 'back_test_creds',
@@ -44,13 +60,20 @@ def test_backup_003_credential_update(self, conn, creds):
             'secret_key': os.environ['BACKUP_AWS_SECRET_KEY'],
         },
     }])
+    assert req.status_code == 200
 
-def test_backup_010_create(self, conn, creds):
+
+def test_backup_010_create(conn, creds):
     _check()
+
+    pool = _get_pool(conn)
+
+    conn.ws.call('filesystem.file_receive', f'/mnt/{pool["name"]}/s3_test/foo', binascii.b2a_base64(b'bar').decode().strip())
+
     req = conn.rest.post('backup', data=[{
         "description": "desc",
         "direction": "PUSH",
-        "path": "/mnt/tank/s3",
+        "path": f"/mnt/{pool['name']}/s3_test",
         "credential": creds['credid'],
         "minute": "00",
         "hour": "03",
@@ -67,24 +90,28 @@ def test_backup_010_create(self, conn, creds):
     creds['backupid'] = req.json()
     assert isinstance(creds['backupid'], int) is True
 
-def test_backup_020_update(self, conn, creds):
+
+def test_backup_020_update(conn, creds):
     _check()
     req = conn.rest.put(f'backup/id/{creds["backupid"]}', data=[{
         "description": "backup_test"
     }])
     assert req.status_code == 200, req.text
 
-def test_backup_050_sync(self, conn, creds):
+
+def test_backup_050_sync(conn, creds):
     _check()
     rv = conn.ws.call('backup.sync', creds['backupid'], job=True)
     assert rv is True
 
-def test_backup_800_delete(self, conn, creds):
+
+def test_backup_800_delete(conn, creds):
     _check()
     req = conn.rest.delete(f'backup/id/{creds["backupid"]}')
     assert req.status_code == 200
 
-def test_backup_900_credential_delete(self, conn, creds):
+
+def test_backup_900_credential_delete(conn, creds):
     _check()
     req = conn.rest.delete(f'backup/credential/id/{creds["credid"]}')
     assert req.status_code == 200
