@@ -152,7 +152,7 @@ class ServiceService(CRUDService):
         Test if service specified by `service` has been started.
         """
         if sn:
-            sn.join()
+            await self.middleware.threaded(sn.join)
 
         try:
             svc = await self.query([('service', '=', service)], {'get': True})
@@ -342,7 +342,7 @@ class ServiceService(CRUDService):
         if what in self.SERVICE_DEFS:
             procname, pidfile = self.SERVICE_DEFS[what]
             if notify:
-                notify.join()
+                await self.middleware.threaded(notify.join)
 
             if pidfile:
                 pgrep = "/bin/pgrep -F {}{}".format(
