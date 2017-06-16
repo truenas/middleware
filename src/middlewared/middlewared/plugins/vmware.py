@@ -2,14 +2,14 @@ import errno
 import socket
 import ssl
 
-from middlewared.schema import Dict, Int, Ref, Str, accepts
-from middlewared.service import CallError, Service, filterable
+from middlewared.schema import Dict, Int, Str, accepts
+from middlewared.service import CallError, CRUDService, filterable
 
 from pyVim import connect
 from pyVmomi import vim
 
 
-class VMWareService(Service):
+class VMWareService(CRUDService):
 
     @filterable
     async def query(self, filters=None, options=None):
