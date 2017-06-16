@@ -64,7 +64,7 @@ async def devd_loop(middleware):
     while True:
         try:
             if not os.path.exists(DEVD_SOCKETFILE):
-                time.sleep(1)
+                await asyncio.sleep(1)
                 continue
             await devd_listen(middleware)
         except OSError:
