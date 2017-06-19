@@ -4,9 +4,8 @@ from __future__ import unicode_literals
 
 import django.core.validators
 from django.db import migrations, models
-import freenasUI.freeadmin.models.fields
-
 import sys
+
 
 def add_s3_to_services(apps, schema_editor):
     services = apps.get_model("services", "services")
@@ -14,17 +13,19 @@ def add_s3_to_services(apps, schema_editor):
     s3.srv_service = "s3"
     s3.srv_enable = False
     try:
-        s3.save() 
-    except Exception as e:
-        print >> sys.stderr, "ERROR: unable to add S3 service: %s" % e
+        s3.save()
+    except Exception as error:
+        print(f"ERROR: unable to add S3 service: {error}", file=sys.stderr)
+
 
 def remove_s3_from_services(apps, schema_editor):
     services = apps.get_model("services", "services")
     s3 = services.objects.get(srv_service="s3")
     try:
         s3.delete()
-    except Exception as e:
-        print >> sys.stderr, "ERROR: unable to remove S3 service: %s" % e
+    except Exception as error:
+        print(f"ERROR: unable to remove S3 service: {error}", file=sys.stderr)
+
 
 class Migration(migrations.Migration):
 
