@@ -1047,7 +1047,7 @@ class FreeNAS_ActiveDirectory_Base(object):
 
         if len(srv_hosts) == 1:
             for s in srv_hosts:
-                host = s.target.to_text(True).decode('utf8')
+                host = s.target.to_text(True)
                 port = int(s.port)
                 return (host, port)
 
@@ -1059,7 +1059,7 @@ class FreeNAS_ActiveDirectory_Base(object):
             latencies[host] += duration
 
         for srv_host in srv_hosts:
-            host = srv_host.target.to_text(True).decode('utf8')
+            host = srv_host.target.to_text(True)
             port = int(srv_host.port)
 
             try:
@@ -1080,7 +1080,7 @@ class FreeNAS_ActiveDirectory_Base(object):
         latency_list = sorted(iter(latencies.items()), key=lambda a_b: (a_b[1], a_b[0]))
         if latency_list:
             for s in srv_hosts:
-                host = s.target.to_text(True).decode('utf8')
+                host = s.target.to_text(True)
                 port = int(s.port)
                 if host.lower() == latency_list[0][0].lower():
                     best_host = (host, port)
