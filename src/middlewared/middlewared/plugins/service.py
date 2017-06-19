@@ -67,7 +67,8 @@ class ServiceService(CRUDService):
         'smartd': ('smartd', '/var/run/smartd.pid'),
         'webshell': (None, '/var/run/webshell.pid'),
         'webdav': ('httpd', '/var/run/httpd.pid'),
-        'backup': (None, '/var/run/backup.pid')
+        'backup': (None, '/var/run/backup.pid'),
+        'netdata': ('netdata', '/var/db/netdata/netdata.pid')
     }
 
     @filterable
