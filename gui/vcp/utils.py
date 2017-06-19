@@ -29,7 +29,6 @@
 
 import shutil
 import os
-import base64
 import configparser
 import subprocess
 import time
@@ -268,16 +267,18 @@ def update_plugin_zipfile(
         return str(ex).replace("'", "").replace("<", "").replace(">", "")
 
 
-def encrypt_string(str, key):
+def encrypt_string(password, key):
     cipher = DES.new(key, DES.MODE_CFB, key)
-    resolved = cipher.encrypt(base64.b64encode(str))
-    return resolved
+    resolved = cipher.encrypt(password.encode('ISO-8859-1'))
+    return resolved.decode('ISO-8859-1')
 
 
 def decrypt_string(str_ciph, key):
+    # XXX: VCP Java plugin does not use this method.
+    str_ciph = str_ciph.encode('ISO-8859-1')
     cipher = DES.new(key, DES.MODE_CFB, key)
     resolved = cipher.decrypt(str_ciph)
-    return base64.b64decode(resolved)
+    return resolved.decode('ISO-8859-1')
 
 
 def create_propertyFile(
@@ -299,7 +300,7 @@ def create_propertyFile(
         Config.set('installation_parameter', 'port', port)
         Config.set('installation_parameter', 'password', encrypt_string(
             password, enc_key))
-        Config.set('installation_parameter', 'install_mode', install_mode)
+        Config.set('installation_parameter', 'install_mode', str(install_mode))
         Config.set(
             'installation_parameter',
             'plugin_version_old',
