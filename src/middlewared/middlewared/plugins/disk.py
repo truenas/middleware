@@ -593,7 +593,7 @@ class DiskService(CRUDService):
                 # if swap partition
                 if p.config['rawtype'] == '516e7cb5-6ecf-11d6-8ff8-00022d09712b':
                     # Try to save a core dump from that
-                    await run('savecore', '/data/crash/', f'/dev/{p.name}', check=False)
+                    await run('savecore', '-z', '-m', '5', '/data/crash/', f'/dev/{p.name}', check=False)
                     if p.name not in used_partitions:
                         swap_partitions_by_size[p.mediasize].append(p.name)
 
