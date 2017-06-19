@@ -105,7 +105,12 @@ class EtcService(Service):
                 raise ValueError(f'Unknown type: {entry["type"]}')
 
             path = os.path.join(self.files_dir, entry['path'])
-            rendered = await renderer.render(path)
+            try:
+                rendered = await renderer.render(path)
+            except Exception:
+                self.logger.error(f'Failed to render {entry["type"]}:{entry["path"]}', exc_info=True)
+                continue
+
             if rendered is None:
                 continue
 
