@@ -133,7 +133,7 @@ class VMSupervisor(object):
                     mac_address = None
 
                 if mac_address == '00:a0:98:FF:FF:FF' or mac_address is None:
-                    args += ['-s', '{},{},{}'.format(nid(), nictype, tapname)]
+                    args += ['-s', '{},{},{},mac={}'.format(nid(), nictype, tapname, self.random_mac())]
                 else:
                     args += ['-s', '{},{},{},mac={}'.format(nid(), nictype, tapname, mac_address)]
             elif device['dtype'] == 'VNC':
@@ -202,6 +202,10 @@ class VMSupervisor(object):
     def destroy_tap(self):
         while self.taps:
             netif.destroy_interface(self.taps.pop())
+
+    def random_mac(self):
+        mac_address = [0x00, 0xa0, 0x98, random.randint(0x00, 0x7f), random.randint(0x00, 0xff), random.randint(0x00, 0xff)]
+        return ':'.join(map(lambda x: "%02x" % x, mac_address))
 
     async def kill_bhyve_pid(self):
         if self.proc:
