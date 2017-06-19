@@ -270,14 +270,16 @@ def update_plugin_zipfile(
 
 def encrypt_string(password, key):
     cipher = DES.new(key, DES.MODE_CFB, key)
-    resolved = cipher.encrypt(base64.b64encode(str.encode(password)))
-    return resolved
+    resolved = cipher.encrypt(base64.b64encode(password.encode('ISO-8859-1')))
+    return resolved.decode('ISO-8859-1')
 
 
 def decrypt_string(str_ciph, key):
+    # XXX: VCP Java plugin does not use this method.
+    str_ciph = str_ciph.encode('ISO-8859-1')
     cipher = DES.new(key, DES.MODE_CFB, key)
     resolved = cipher.decrypt(str_ciph)
-    return base64.b64decode(resolved)
+    return base64.b64decode(resolved).decode('ISO-8859-1')
 
 
 def create_propertyFile(
@@ -297,8 +299,8 @@ def create_propertyFile(
         Config.set('installation_parameter', 'ip', host_ip)
         Config.set('installation_parameter', 'username', username)
         Config.set('installation_parameter', 'port', port)
-        Config.set('installation_parameter', 'password', str(encrypt_string(
-            password, enc_key)))
+        Config.set('installation_parameter', 'password', encrypt_string(
+            password, enc_key))
         Config.set('installation_parameter', 'install_mode', str(install_mode))
         Config.set(
             'installation_parameter',
