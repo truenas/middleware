@@ -271,7 +271,7 @@ class ServiceService(CRUDService):
             if action in ("start", "stop", "restart", "reload"):
                 if action == 'restart':
                     await self._system("/usr/sbin/service " + what + " forcestop ")
-                await self._system("/usr/sbin/service " + what + " " + action)
+                await self._service(what, action, **options)
             else:
                 raise ValueError("Internal error: Unknown command")
         else:
