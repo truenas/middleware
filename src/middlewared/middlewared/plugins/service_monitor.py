@@ -6,7 +6,6 @@ import sys
 import threading
 import time
 
-from middlewared.client import Client, CallTimeout
 from middlewared.service import Service, private
 
 if '/usr/local/www' not in sys.path:
@@ -55,8 +54,7 @@ class ServiceMonitorThread(threading.Thread):
         #
         if service in ('activedirectory', 'ldap', 'nis', 'nt4'):
             try:
-                with Client() as c:
-                    ds = c.call('datastore.query', 'directoryservice.%s' % service)[0]
+                ds = self.middleware.call_sync('datastore.query', 'directoryservice.%s' % service)[0]
                 if service == 'activedirectory':
                     service = 'ad'
                 enabled = ds["%s_enable" % service]
@@ -66,8 +64,7 @@ class ServiceMonitorThread(threading.Thread):
 
         else:
             try:
-                with Client() as c:
-                    services = c.call('datastore.query', 'services.services')
+                services = self.middleware.call_sync('datastore.query', 'services.services')
                 for s in services:
                     if s['srv_service'] == 'cifs':
                         enabled = s['srv_enable']
@@ -110,16 +107,15 @@ class ServiceMonitorThread(threading.Thread):
     def getStarted(self, service):
         max_tries = 3
 
-        with Client() as c:
-            started = c.call('service.started', self.name)
-            if started == True:
-                return started
+        started = self.middleware.call_sync('service.started', self.name)
+        if started == True:
+            return started
 
-            i = 0
-            while i < max_tries:
-                time.sleep(1)
-                started = c.call('service.started', self.name)
-                i += 1
+        i = 0
+        while i < max_tries:
+            time.sleep(1)
+            started = self.middleware.call_sync('service.started', self.name)
+            i += 1
 
         return started
 
@@ -145,15 +141,15 @@ class ServiceMonitorThread(threading.Thread):
             if (connected == True) and (started == False):
                 self.logger.debug("[ServiceMonitorThread] enabling service %s", self.name)
                 try:
-                    self.middleware.call('service.start', self.name)
-                except CallTimeout:
+                    self.middleware.call_sync('service.start', self.name)
+                except Exception:
                     pass
 
             elif (connected == False) and (enabled == True):
                 self.logger.debug("[ServiceMonitorThread] disabling service %s", self.name)
                 try:
-                    self.middleware.call('service.stop', self.name)
-                except CallTimeout:
+                    self.middleware.call_sync('service.stop', self.name)
+                except Exception:
                     pass
 
             if self.finished.is_set():
@@ -197,7 +193,7 @@ class ServiceMonitorService(Service):
     async def stop(self):
         for thread in self.threads.copy():
             thread = self.threads.get(thread)
-            thread.cancel()
+            await self.middleware.threaded(thread.cancel)
             del self.threads[thread.name]
         self.threads = {}
 
