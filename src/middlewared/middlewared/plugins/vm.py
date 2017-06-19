@@ -19,7 +19,7 @@ class VMManager(object):
         self._vm = {}
 
     async def start(self, id):
-        vm = self.service.query([('id', '=', id)], {'get': True})
+        vm = await self.service.query([('id', '=', id)], {'get': True})
         self._vm[id] = VMSupervisor(self, vm)
         try:
             asyncio.ensure_future(self._vm[id].run())
@@ -117,7 +117,7 @@ class VMSupervisor(object):
 
                     bridge.add_member(tapname)
 
-                    defiface = (await (await Popen("route -nv show default|grep -w interface|awk '{ print $2 }'", stdout=subprocess.PIPE, shell=True)).communicate())[0].strip()
+                    defiface = (await (await Popen("route -nv show default|grep -w interface|awk '{ print $2 }'", stdout=subprocess.PIPE, shell=True)).communicate())[0].strip().decode()
                     if defiface and defiface not in bridge.members:
                         bridge.add_member(defiface)
                     bridge.up()
@@ -164,8 +164,11 @@ class VMSupervisor(object):
         self.logger.debug('Starting bhyve: {}'.format(' '.join(args)))
         self.proc = await Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
-        for line in await self.proc.stdout:
-            self.logger.debug('{}: {}'.format(self.vm['name'], line))
+        while True:
+            line = await self.proc.stdout.readline()
+            if line == b'':
+                break
+            self.logger.debug('{}: {}'.format(self.vm['name'], line.decode()))
 
         # bhyve returns the following status code:
         # 0 - VM has been reset
