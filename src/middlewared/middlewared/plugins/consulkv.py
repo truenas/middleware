@@ -102,7 +102,7 @@ class ConsulService(Service):
         return await self.reload()
 
     @accepts()
-    def remove_fake_alert(self):
+    async def remove_fake_alert(self):
         fake_fd = "/usr/local/etc/consul.d/fake.json"
         try:
             os.remove(fake_fd)
@@ -110,7 +110,7 @@ class ConsulService(Service):
             if e.errno != errno.ENOENT:
                 raise
 
-        return self.reload()
+        return await self.reload()
 
     def _convert_keys(self, data):
         """
