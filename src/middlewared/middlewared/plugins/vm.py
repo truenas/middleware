@@ -1,5 +1,5 @@
 from middlewared.schema import accepts, Int, Str, Dict, List, Bool, Patch
-from middlewared.service import filterable, CRUDService, private
+from middlewared.service import filterable, CRUDService, item_method, private
 from middlewared.utils import Nid, Popen
 
 import asyncio
@@ -414,21 +414,25 @@ class VMService(CRUDService):
         """Delete a VM."""
         return await self.middleware.call('datastore.delete', 'vm.vm', id)
 
+    @item_method
     @accepts(Int('id'))
     async def start(self, id):
         """Start a VM."""
         return await self._manager.start(id)
 
+    @item_method
     @accepts(Int('id'))
     async def stop(self, id):
         """Stop a VM."""
         return await self._manager.stop(id)
 
+    @item_method
     @accepts(Int('id'))
     async def restart(self, id):
         """Restart a VM."""
         return await self._manager.restart(id)
 
+    @item_method
     @accepts(Int('id'))
     async def status(self, id):
         """Get the status of a VM, if it is RUNNING or STOPPED."""
