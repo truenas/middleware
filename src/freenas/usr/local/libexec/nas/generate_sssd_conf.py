@@ -843,8 +843,8 @@ def get_activedirectory_cookie(client):
     cookie = ''
 
     if client.call('notifier.common', 'system', 'activedirectory_enabled'):
-        cifs = Struct(client.call('cifs.config'))
-        cookie = cifs.netbiosname.upper()
+        smb = Struct(client.call('smb.config'))
+        cookie = smb.netbiosname.upper()
         parts = cookie.split('.')
         cookie = parts[0]
 
