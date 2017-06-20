@@ -166,6 +166,7 @@ def core(request):
             'smartd': smart.get_edit_url(),
             'webdav': webdav.get_edit_url(),
             'domaincontroller': domaincontroller.get_edit_url(),
+            'netdata': reverse('services_netdata'),
         }),
         'disabled': json.dumps(disabled),
     })
@@ -333,6 +334,7 @@ def fibrechanneltotarget(request):
         message=_('Fibre Channel Ports have been successfully changed.'),
     )
 
+
 def services_s3(request):
     try:
         s3 = models.S3.objects.all()[0]
@@ -346,7 +348,7 @@ def services_s3(request):
             return JsonResp(
                 request,
                 message=_("S3 successfully edited.")
-            ) 
+            )
         else:
             return JsonResp(request, form=form)
 
@@ -365,3 +367,7 @@ def services_s3(request):
         's3_ui_url': s3_ui_url,
         's3_started': s3_started
     })
+
+
+def services_netdata(request):
+    return render(request, 'services/netdata.html')
