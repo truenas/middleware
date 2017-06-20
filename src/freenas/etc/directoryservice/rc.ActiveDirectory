@@ -859,6 +859,35 @@ AD_show_config()
 	printf "+------------------------------------------------+\n"
 }
 
+AD_testjoin_domain()
+{
+	local bindname="${1}"
+	local domainname="${2}"
+	local res
+
+	: ${bindname:="$(AD_get ad_bindname)"}
+	: ${domainname:="$(AD_get ad_domainname)"}
+	: ${dchost:="$(AD_get ad_dchost)"}
+	: ${dcport:="$(AD_get ad_dcport)"}
+
+	LOGNAME="${bindname}"
+	export LOGNAME
+
+	AD_log "AD_testjoin_domain: net -k ads testjoin ${domainname} -S ${dchost} -p ${dcport}"
+
+	__AD_tc "$(AD_get ad_timeout)" /usr/local/bin/net -k ads testjoin "${domainname} -S ${dchost} -p ${dcport}"
+	res=$?
+
+	local ok="Failed"
+	if [ "${res}" = "0" ]
+	then
+		ok="Successful"
+	fi
+
+	AD_log "AD_testjoin_domain: ${ok}"
+	return ${res}
+}
+
 AD_join_domain()
 {
 	local bindname="${1}"

@@ -794,7 +794,7 @@ def add_activedirectory_conf(client, smb4_conf):
     except:
         return
 
-    cachedir = "/var/tmp/.cache/.samba"
+#    cachedir = "/var/tmp/.cache/.samba"
 
     try:
         os.makedirs(cachedir)
@@ -813,7 +813,7 @@ def add_activedirectory_conf(client, smb4_conf):
     confset2(smb4_conf, "realm = %s", ad.ad_domainname.upper())
     confset1(smb4_conf, "security = ADS")
     confset1(smb4_conf, "client use spnego = yes")
-    confset2(smb4_conf, "cache directory = %s", cachedir)
+#    confset2(smb4_conf, "cache directory = %s", cachedir)
 
     confset1(smb4_conf, "local master = no")
     confset1(smb4_conf, "domain master = no")
