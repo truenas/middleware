@@ -42,8 +42,34 @@ class EtcService(Service):
         #    {'type': 'mako', 'path': 'master.passwd'},
         #    {'type': 'py', 'path': 'pwd_db'},
         #],
+
+        #
+        # Coming soon
+        #
+        #'kerberos': [
+        #    {'type': 'mako', 'path': 'krb5.conf'},
+        #    {'type': 'mako', 'path': 'krb5.keytab'},
+        #],
+
+        'ldap': [
+            {'type': 'mako', 'path': 'local/ldap.conf'},
+        ],
         'network': [
             {'type': 'mako', 'path': 'dhclient.conf'},
+        ],
+        'nss': [
+            {'type': 'mako', 'path': 'nsswitch.conf'},
+            {'type': 'mako', 'path': 'local/nss_ldap.conf'},
+        ],
+        'pam': [
+            { 'type': 'mako', 'path': os.path.join('pam.d', f) }
+            for f in os.listdir(
+                os.path.realpath(
+                    os.path.join(
+                        os.path.dirname(__file__), '..', 'etc_files', 'pam.d'
+                    )
+                )
+            )
         ],
     }
 
@@ -77,6 +103,7 @@ class EtcService(Service):
                 continue
 
             outfile = '/etc/{0}'.format(entry['path'])
+
             # Check hash of generated and existing file
             # Do not rewrite if they are the same
             if os.path.exists(outfile):

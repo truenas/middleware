@@ -12,12 +12,12 @@
 
 generate_nsswitch_start()
 {
-	LD_LIBRARY_PATH=/usr/local/lib /usr/local/libexec/nas/generate_nsswitch_conf.py start
+	LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/midclt call etc.generate nss > /dev/null
 }
 
 generate_nsswitch_stop()
 {
-	LD_LIBRARY_PATH=/usr/local/lib /usr/local/libexec/nas/generate_nsswitch_conf.py stop
+	LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/midclt call etc.generate nss > /dev/null
 }
 
 name="ix-nsswitch"

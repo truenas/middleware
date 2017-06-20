@@ -1,0 +1,41 @@
+#
+# $FreeBSD: head/etc/pam.d/su 219663 2011-03-15 10:13:35Z des $
+#
+# PAM configuration for the "su" service
+#
+<%
+        def safe_call(*args):
+            try:
+                val = middleware.call(*args)
+            except:
+                val = False
+            return val
+
+        ad_enabled = safe_call('notifier.common', 'system', 'activedirectory_enabled')
+        dc_enabled = safe_call('notifier.common', 'system', 'domaincontroller_enabled')
+        ldap_enabled = safe_call('notifier.common', 'system', 'ldap_enabled')
+        nis_enabled = safe_call('notifier.common', 'system', 'nis_enabled')
+        nt4_enabled = safe_call('notifier.common', 'system', 'nt4_enabled')
+%>
+
+# auth
+auth		sufficient	pam_rootok.so		no_warn
+auth		sufficient	pam_self.so		no_warn
+% if ad_enabled or nt4_enabled or dc_enabled:
+auth		sufficient	/usr/local/lib/pam_winbind.so silent try_first_pass krb5_auth krb5_ccache_type=FILE
+% endif
+% if ldap_enabled:
+auth		sufficient	/usr/local/lib/pam_sss.so
+% endif
+#auth		sufficient	pam_krb5.so		no_warn try_first_pass
+auth		requisite	pam_group.so		no_warn group=wheel root_only ruser
+auth		include		system
+
+# account
+account		include		system
+
+# session
+session		required	pam_permit.so
+% if ad_enabled or ldap_enabled or nis_enabled or nt4_enabled or dc_enabled:
+session		required	/usr/local/lib/pam_mkhomedir.so
+% endif
