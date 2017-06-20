@@ -1279,7 +1279,10 @@ class ZFSDataset(Form):
         self._create = kwargs.pop('create', True)
         super(ZFSDataset, self).__init__(*args, **kwargs)
         _n = notifier()
-        parentdata = _n.zfs_get_options(self._fs)
+        if self._create:
+            parentdata = _n.zfs_get_options(self._fs)
+        else:
+            parentdata = _n.zfs_get_options(self._fs.rsplit('/', 1)[0])
 
         self.fields['dataset_atime'].choices = _inherit_choices(
             choices.ZFS_AtimeChoices,
