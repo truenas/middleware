@@ -66,16 +66,30 @@ class VMWareService(CRUDService):
                 continue
 
             for host_mount_info in storage_system.fileSystemVolumeInfo.mountInfo:
-                if host_mount_info.volume.type != 'VMFS':
+                if host_mount_info.volume.type == 'VMFS':
+                    datastores_host[host_mount_info.volume.name] = {
+                        'type': host_mount_info.volume.type,
+                        'uuid': host_mount_info.volume.uuid,
+                        'capacity': host_mount_info.volume.capacity,
+                        'vmfs_version': host_mount_info.volume.version,
+                        'local': host_mount_info.volume.local,
+                        'ssd': host_mount_info.volume.ssd
+                    }
+                elif host_mount_info.volume.type == 'NFS':
+                    datastores_host[host_mount_info.volume.name] = {
+                        'type': host_mount_info.volume.type,
+                        'capacity': host_mount_info.volume.capacity,
+                        'remote_host': host_mount_info.volume.remoteHost,
+                        'remote_path': host_mount_info.volume.remotePath,
+                        'remote_hostnames': host_mount_info.volume.remoteHostNames,
+                        'username': host_mount_info.volume.userName,
+                    }
+                elif host_mount_info.volume.type == 'OTHER':
+                    # Ignore OTHER type, it does not seem to be meaningful
+                    pass
+                else:
+                    self.logger.debug(f'Unknown volume type "{host_mount_info.volume.type}": {host_mount_info.volume}')
                     continue
-
-                datastores_host[host_mount_info.volume.name] = {
-                    'uuid': host_mount_info.volume.uuid,
-                    'capacity': host_mount_info.volume.capacity,
-                    'vmfs_version': host_mount_info.volume.version,
-                    'local': host_mount_info.volume.local,
-                    'ssd': host_mount_info.volume.ssd
-                }
             datastores[esxi_host.name] = datastores_host
 
         connect.Disconnect(server_instance)
