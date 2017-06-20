@@ -1,5 +1,6 @@
 from collections import defaultdict
 
+import asyncio
 import errno
 import inspect
 import logging
@@ -119,13 +120,25 @@ class CRUDService(Service):
         raise NotImplementedError('{}.query must be implemented'.format(self._config.namespace))
 
     async def create(self, data):
-        return await self.do_create(data)
+        if asyncio.iscoroutinefunction(self.do_create):
+            rv = await self.do_create(data)
+        else:
+            rv = await self.middleware.threaded(self.do_create, data)
+        return rv
 
     async def update(self, id, data):
-        return await self.do_update(id, data)
+        if asyncio.iscoroutinefunction(self.do_update):
+            rv = await self.do_create(id, data)
+        else:
+            rv = await self.middleware.threaded(self.do_update, id, data)
+        return rv
 
     async def delete(self, id):
-        return await self.do_delete(id)
+        if asyncio.iscoroutinefunction(self.do_delete):
+            rv = await self.do_delete(id)
+        else:
+            rv = await self.middleware.threaded(self.do_delete, id)
+        return rv
 
 
 class CoreService(Service):
@@ -187,8 +200,9 @@ class CoreService(Service):
                     continue
 
                 method = None
-                item_method = None  # For CRUD.do_{update,delete} they need to be accounted
-                                    # as "item_method", since they are just wrapped.
+                # For CRUD.do_{update,delete} they need to be accounted
+                # as "item_method", since they are just wrapped.
+                item_method = None
                 if isinstance(svc, CRUDService):
                     """
                     For CRUD the create/update/delete are special.
