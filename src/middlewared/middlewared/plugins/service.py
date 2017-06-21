@@ -4,7 +4,7 @@ import os
 import signal
 import threading
 import time
-from subprocess import PIPE
+from subprocess import DEVNULL, PIPE
 
 from middlewared.schema import accepts, Bool, Dict, Int, Str
 from middlewared.service import filterable, CRUDService
@@ -280,10 +280,10 @@ class ServiceService(CRUDService):
                 await call
 
     async def _system(self, cmd, options=None):
-        stdout = PIPE
+        stdout = DEVNULL
         if options and 'stdout' in options:
             stdout = options['stdout']
-        stderr = PIPE
+        stderr = DEVNULL
         if options and 'stderr' in options:
             stderr = options['stderr']
 
