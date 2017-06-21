@@ -780,10 +780,6 @@ def get_disks():
         return c.call('disk.query')
 
 
-# Lets make the first call right here so that a cache is setup
-get_disks()
-
-
 class DiskBase():
     def get_disk_description(self, name):
         disk_desc = ''
