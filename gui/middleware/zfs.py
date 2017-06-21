@@ -488,10 +488,12 @@ class ZFSDataset(object):
     description = None
     parent = None
     children = None
+    quota = None
 
     def __init__(self, path=None, used=None, usedsnap=None, usedds=None,
                  usedrefreserv=None, usedchild=None, avail=None, refer=None,
-                 mountpoint=None, compression=None, dedup=None, description=None):
+                 mountpoint=None, compression=None, dedup=None, description=None,
+                 quota=None):
         self.path = path
         if path:
             if '/' in path:
@@ -512,6 +514,7 @@ class ZFSDataset(object):
         self.description = description
         self.parent = None
         self.children = []
+        self.quota = quota
 
     def __repr__(self):
         return "<Dataset: %s>" % self.path
@@ -893,7 +896,7 @@ def zfs_list(path="", recursive=False, hierarchical=False, include_root=False,
         "-p",
         "-H",
         "-s", "name",
-        "-o", "space,refer,mountpoint,type,volsize,compression,dedup,org.freenas:description",
+        "-o", "space,refer,mountpoint,type,volsize,compression,dedup,org.freenas:description,quota",
     ]
     if recursive:
         args.insert(3, "-r")
@@ -938,6 +941,7 @@ def zfs_list(path="", recursive=False, hierarchical=False, include_root=False,
                 compression=data[11],
                 dedup=data[12],
                 description=data[13] if data[13] != '-' else None,
+                quota=int(data[14]) if data[14].isdigit() else None,
             )
         elif _type == 'volume':
             item = ZFSVol(

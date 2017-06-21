@@ -90,6 +90,8 @@ from freenasUI.storage.forms import (
     ZFSDiskReplacementForm,
     ZVol_CreateForm,
     ZVol_EditForm,
+    ZFSDatasetCreateForm,
+    ZFSDatasetEditForm
 )
 from freenasUI.storage.models import Disk, Replication, VMWarePlugin
 from freenasUI.system.alert import alertPlugins, Alert
@@ -323,25 +325,66 @@ class DatasetResource(DojoResource):
     avail = fields.IntegerField(attribute='avail')
     refer = fields.IntegerField(attribute='refer')
     mountpoint = fields.CharField(attribute='mountpoint')
+    quota = fields.CharField(attribute='quota')
 
     class Meta:
-        allowed_methods = ['get', 'post', 'delete']
+        allowed_methods = ['get', 'post', 'put', 'delete']
         object_class = zfs.ZFSDataset
         resource_name = 'storage/dataset'
 
-    def obj_create(self, bundle, **kwargs):
-        bundle = self.full_hydrate(bundle)
-        err, msg = notifier().create_zfs_dataset(path='%s/%s' % (
-            kwargs.get('parent').vol_name,
-            bundle.data.get('name'),
-        ))
-        if err:
-            bundle.errors['__all__'] = msg
+    def post_list(self, request, **kwargs):
+        self.is_authenticated(request)
+        deserialized = self._meta.serializer.deserialize(
+            request.body,
+            format=request.META.get('CONTENT_TYPE') or 'application/json'
+        )
+
+        name = deserialized.get('name')
+        parent = kwargs.get('parent').vol_name
+
+        for k in list(deserialized.keys()):
+            deserialized['dataset_%s' % k] = deserialized.pop(k)
+
+        data = self._get_form_initial(ZFSDatasetCreateForm)
+        data.update(deserialized)
+        form = ZFSDatasetCreateForm(data=data, fs=parent)
+        if not form.is_valid() or not form.save():
+            for k in list(form.errors.keys()):
+                if k == '__all__':
+                    continue
+                if k.startswith('dataset_'):
+                    form.errors[k[5:]] = form.errors.pop(k)
             raise ImmediateHttpResponse(
-                response=self.error_response(bundle.request, bundle.errors)
+                response=self.error_response(request, form.errors)
             )
-        # FIXME: authorization
-        bundle.obj = self.obj_get(bundle, pk=bundle.data.get('name'), **kwargs)
+
+        response = self.get_detail(request, pk=name, **kwargs)
+        response.status_code = 201
+        return response
+
+    def obj_update(self, bundle, **kwargs):
+        bundle = self.full_hydrate(bundle)
+        name = '%s/%s' % (kwargs.get('parent').vol_name, kwargs.get('pk'))
+        data = self.deserialize(
+            bundle.request,
+            bundle.request.body,
+            format=bundle.request.META.get('CONTENT_TYPE', 'application/json'),
+        )
+
+        for k in list(data.keys()):
+            data['dataset_%s' % k] = data.pop(k)
+
+        form = ZFSDatasetEditForm(fs=name, data=data)
+        if not form.is_valid() or not form.save():
+            for k in list(form.errors.keys()):
+                if k == '__all__':
+                    continue
+                if k.startswith('dataset_'):
+                    form.errors[k[5:]] = form.errors.pop(k)
+            raise ImmediateHttpResponse(
+                response=self.error_response(bundle.request, form.errors)
+            )
+        bundle.obj = self.obj_get(bundle, **kwargs)
         return bundle
 
     def obj_get_list(self, request=None, **kwargs):
