@@ -3315,6 +3315,7 @@ class notifier(metaclass=HookMetaclass):
         """
         name = str(name)
         item = str(item)
+        log.error('name: %s item: %s value: %s' % (name, item, value))
         if isinstance(value, bytes):
             value = value.decode('utf8')
         else:
