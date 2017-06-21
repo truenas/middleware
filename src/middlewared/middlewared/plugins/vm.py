@@ -245,7 +245,6 @@ class VMSupervisor(object):
                     return False
                 return True
             else:
-                self.logger.error("===> NO PROC STATE")
                 # XXX: We return true for now to keep the vm.status sane.
                 # It is necessary handle in a better way the bhyve process associated with the vmm.
                 return True
