@@ -31,6 +31,9 @@ import tempfile
 import subprocess
 
 from freenasUI.common.pipesubr import pipeopen
+from freenasUI.middleware.client import client
+from middlewared.utils import cache_with_autorefresh, filter_list
+
 
 log = logging.getLogger('reporting.rrd')
 
@@ -771,13 +774,35 @@ class CTLPlugin(RRDBase):
         return args
 
 
-class DiskPlugin(RRDBase):
+@cache_with_autorefresh(0, 5)
+def get_disks():
+    with client as c:
+        return c.call('disk.query')
+
+
+# Lets make the first call right here so that a cache is setup
+get_disks()
+
+
+class DiskBase():
+    def get_disk_description(self, name):
+        disk_desc = ''
+        try:
+            disk_desc = filter_list(get_disks(), [('name', '=', name)], {'get': True})['description']
+        except BaseException as error:
+            # it would be lame to fail just coz we could not get disk description
+            # but lets log it
+            log.debug(f'Failed to get disk description of disk: {name}', exc_info=True)
+        return f'Disk description: {disk_desc}' if disk_desc else ''
+
+
+class DiskPlugin(RRDBase, DiskBase):
 
     vertical_label = "Bytes/s"
 
     def get_title(self):
         title = self.identifier.replace("disk-", "")
-        return 'Disk I/O (%s)' % title
+        return f'Disk I/O ({title}) Description: {self.get_disk_description(title)}'
 
     def get_identifiers(self):
         ids = []
@@ -825,13 +850,13 @@ class DiskPlugin(RRDBase):
         return args
 
 
-class DiskGeomBusyPlugin(RRDBase):
+class DiskGeomBusyPlugin(RRDBase, DiskBase):
 
     vertical_label = "Percent"
 
     def get_title(self):
         title = self.identifier.replace("geom_stat/geom_busy_percent-", "")
-        return 'Disk Busy (%s)' % title
+        return f'Disk Busy ({title}) {self.get_disk_description(title)}'
 
     def get_identifiers(self):
         ids = []
@@ -870,13 +895,13 @@ class DiskGeomBusyPlugin(RRDBase):
         return args
 
 
-class DiskGeomLatencyPlugin(RRDBase):
+class DiskGeomLatencyPlugin(RRDBase, DiskBase):
 
     vertical_label = "Time,msec"
 
     def get_title(self):
         title = self.identifier.replace("geom_stat/geom_latency-", "")
-        return 'Disk Latency (%s)' % title
+        return f'Disk Latency ({title}) {self.get_disk_description(title)}'
 
     def get_identifiers(self):
         ids = []
@@ -937,13 +962,13 @@ class DiskGeomLatencyPlugin(RRDBase):
         return args
 
 
-class DiskGeomOpsRWDPlugin(RRDBase):
+class DiskGeomOpsRWDPlugin(RRDBase, DiskBase):
 
     vertical_label = "Operations/s"
 
     def get_title(self):
         title = self.identifier.replace("geom_stat/geom_ops_rwd-", "")
-        return 'Disk Operations detailed (%s)' % title
+        return f'Disk Operations detailed ({title}) {self.get_disk_description(title)}'
 
     def get_identifiers(self):
         ids = []
@@ -1004,13 +1029,13 @@ class DiskGeomOpsRWDPlugin(RRDBase):
         return args
 
 
-class DiskGeomQueuePlugin(RRDBase):
+class DiskGeomQueuePlugin(RRDBase, DiskBase):
 
     vertical_label = "Requests"
 
     def get_title(self):
         title = self.identifier.replace("geom_stat/geom_queue-", "")
-        return 'Pending I/O requests on (%s)' % title
+        return f'Pending I/O requests on ({title}) {self.get_disk_description(title)}'
 
     def get_identifiers(self):
         ids = []
