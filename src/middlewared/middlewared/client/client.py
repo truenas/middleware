@@ -1,7 +1,7 @@
 from . import ejson as json
 from .protocol import DDPProtocol
 from collections import defaultdict
-from threading import Event, Lock, Thread
+from threading import Event as TEvent, Lock, Thread
 from ws4py.client.threadedclient import WebSocketClient
 
 import argparse
@@ -10,6 +10,31 @@ import socket
 import sys
 import time
 import uuid
+
+
+class Event(TEvent):
+
+    def wait(self, timeout=None):
+        """
+        Python currently uses sem_timedwait(3) to wait for pthread Lock
+        and that function uses CLOCK_REALTIME clock, which means a system
+        clock change would make it return before the time has actually passed.
+        The real fix would be to patch python to use pthread_cond_timedwait
+        with a CLOCK_MONOTINOC clock however this should do for now.
+        """
+        if timeout:
+            endtime = time.monotonic() + timeout
+            while True:
+                if not super(Event, self).wait(timeout):
+                    if endtime - time.monotonic() > 0:
+                        timeout = endtime - time.monotonic()
+                        if timeout > 0:
+                            continue
+                    return False
+                else:
+                    return True
+        else:
+            return super(Event, self).wait()
 
 
 CALL_TIMEOUT = int(os.environ.get('CALL_TIMEOUT', 60))
