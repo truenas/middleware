@@ -3,6 +3,7 @@ import sys
 import subprocess
 from datetime import datetime, timedelta
 from functools import wraps
+from threading import Lock
 
 
 if '/usr/local/lib' not in sys.path:
@@ -162,6 +163,7 @@ class cache_with_autorefresh(object):
         self.cached_return = None
         self.first = True
         self.time_of_last_call = datetime.min
+        self.lock = Lock()
 
     def __call__(self, fn):
         @wraps(fn)
@@ -169,10 +171,11 @@ class cache_with_autorefresh(object):
             now = datetime.now()
             time_since_last_call = now - self.time_of_last_call
 
-            if time_since_last_call > self.refresh_period or self.first:
-                self.first = False
-                self.time_of_last_call = now
-                self.cached_return = fn(*args, **kwargs)
+            with self.lock:
+                if time_since_last_call > self.refresh_period or self.first:
+                    self.first = False
+                    self.time_of_last_call = now
+                    self.cached_return = fn(*args, **kwargs)
 
             return self.cached_return
 
