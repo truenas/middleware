@@ -1,7 +1,14 @@
-
-<h1>{% trans "Netdata Information" %}</h1>
-
-{% block %}
-    {% trans "Configurable settings for Netdata are not yet exposed" %}
-    {% trans "Netdata UI: " + window.location.href + "netdata" %}
-{% endblock %}
+<div data-dojo-type="dijit.layout.ContentPane">
+    <h1>{% trans "Netdata Information" %}</h1>
+    <p>
+        {% blocktrans %}
+            Configurable settings for Netdata are not yet exposed.
+        {% endblocktrans %}
+    </p>
+    <button id="btn_A_Close" data-dojo-type="dijit.form.Button"type="button">
+        {% trans "Take me to Netdata UI" %}
+        <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
+            window.open(window.location.href+'/netdata', '_blank')
+        </script>
+    </button>
+</div>
