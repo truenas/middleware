@@ -323,9 +323,9 @@ __EOF__
 
         location /netdata {
             return 301 /netdata/;
-       }
+        }
 
-       location ~ /netdata/(?<ndpath>.*) {
+       location ~ ^/netdata/(?<ndpath>.*) {
             proxy_redirect off;
             proxy_set_header Host \$host;
 
