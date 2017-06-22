@@ -128,7 +128,7 @@ class CRUDService(Service):
 
     async def update(self, id, data):
         if asyncio.iscoroutinefunction(self.do_update):
-            rv = await self.do_create(id, data)
+            rv = await self.do_update(id, data)
         else:
             rv = await self.middleware.threaded(self.do_update, id, data)
         return rv
