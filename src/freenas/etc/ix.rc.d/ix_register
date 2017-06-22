@@ -19,12 +19,12 @@ stop_cmd=":"
 
 ix_register_start()
 {
-	daemon -c -f -p ${pid} -r /usr/local/libexec/nas/register_mdns.py
+	LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/midclt call mdns.start > /dev/null
 }
 
 ix_register_reload()
 {
-	kill -TERM `cat ${pid}`
+	LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/midclt call mdns.restart > /dev/null
 }
 
 run_rc_command "$1"
