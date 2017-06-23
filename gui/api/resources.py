@@ -323,23 +323,31 @@ class DatasetResource(DojoResource):
     avail = fields.IntegerField(attribute='avail')
     refer = fields.IntegerField(attribute='refer')
     mountpoint = fields.CharField(attribute='mountpoint')
+    quota = fields.IntegerField(attribute='quota')
 
     class Meta:
-        allowed_methods = ['get', 'post', 'delete']
+        allowed_methods = ['get', 'post', 'put', 'delete']
         object_class = zfs.ZFSDataset
         resource_name = 'storage/dataset'
 
     def obj_create(self, bundle, **kwargs):
         bundle = self.full_hydrate(bundle)
-        err, msg = notifier().create_zfs_dataset(path='%s/%s' % (
-            kwargs.get('parent').vol_name,
-            bundle.data.get('name'),
-        ))
+        props = None
+        dataset_quota = bundle.data.get('quota')
+
+        if dataset_quota:
+            props = {'quota': dataset_quota.__str__()}
+
+        err, msg = notifier().create_zfs_dataset(
+            path='%s/%s' % (kwargs.get('parent').vol_name, bundle.data.get('name')),
+            props=props)
         if err:
             bundle.errors['__all__'] = msg
             raise ImmediateHttpResponse(
                 response=self.error_response(bundle.request, bundle.errors)
             )
+        else:
+            notifier().dataset_init_unix('%s/%s' % (kwargs.get('parent').vol_name,bundle.data.get('name')))
         # FIXME: authorization
         bundle.obj = self.obj_get(bundle, pk=bundle.data.get('name'), **kwargs)
         return bundle
@@ -363,6 +371,34 @@ class DatasetResource(DojoResource):
             )]
         except KeyError:
             raise NotFound("Dataset not found.")
+
+    def obj_update(self, bundle, **kwargs):
+        bundle = self.full_hydrate(bundle)
+        name = "%s/%s" % (kwargs.get('parent').vol_name, kwargs.get('pk'))
+        deserialized = self.deserialize(
+            bundle.request,
+            bundle.request.body,
+            format=bundle.request.META.get('CONTENT_TYPE', 'application/json'),
+        )
+        _n = notifier()
+        error, errors = False, {}
+        for attr in ['quota']:
+            value = deserialized.get(attr)
+            if value is None:
+                continue
+            if value == "inherit":
+                success, err = _n.zfs_inherit_option(name, attr)
+            else:
+                success, err = _n.zfs_set_option(name, attr, value)
+            if not success:
+                error = True
+                errors[attr] = err
+        if error:
+            raise ImmediateHttpResponse(
+                response=self.error_response(bundle.request, errors)
+            )
+        bundle.obj = self.obj_get(bundle, **kwargs)
+        return bundle
 
     def obj_delete(self, bundle, **kwargs):
         retval = notifier().destroy_zfs_dataset(path="%s/%s" % (

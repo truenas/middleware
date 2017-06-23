@@ -162,7 +162,8 @@ Datasets
       Content-Type: application/json
 
       {
-        "name": "foo"
+        "name": "foo",
+        "quota": 0
       }
 
    **Example response**:
@@ -179,7 +180,8 @@ Datasets
         "name": "foo",
         "pool": "tank",
         "refer": 73728,
-        "used": 73728
+        "used": 73728,
+        "quota": 0
       }
 
    :resheader Content-Type: content type of the response
@@ -210,7 +212,8 @@ Datasets
         "name": "foo",
         "pool": "tank",
         "refer": 73728,
-        "used": 73728
+        "used": 73728,
+        "quota": 0
       }]
 
    :resheader Content-Type: content type of the response
