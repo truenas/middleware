@@ -103,6 +103,11 @@ class DeviceForm(ModelForm):
         required=False,
         initial='E1000',
     )
+    NIC_attach = forms.ChoiceField(
+        label=_('Nic to attach'),
+        choices=choices.NICChoices(exclude_configured=False),
+        required=False,
+    )
     NIC_mac = forms.CharField(
         label=_('Mac Address'),
         required=False,
@@ -162,6 +167,7 @@ class DeviceForm(ModelForm):
             elif self.instance.dtype == 'NIC':
                 self.fields['NIC_type'].initial = self.instance.attributes.get('type')
                 self.fields['NIC_mac'].initial = self.instance.attributes.get('mac')
+                self.fields['NIC_attach'].initial = self.instance.attributes.get('nic_attach')
             elif self.instance.dtype == 'VNC':
                 vnc_port = self.instance.attributes.get('vnc_port')
                 vnc_port = 0 if vnc_port is None else vnc_port
@@ -202,6 +208,7 @@ class DeviceForm(ModelForm):
             obj.attributes = {
                 'type': self.cleaned_data['NIC_type'],
                 'mac': self.cleaned_data['NIC_mac'],
+                'nic_attach': self.cleaned_data['NIC_attach'],
             }
         elif self.cleaned_data['dtype'] == 'VNC':
             if vm.bootloader == 'UEFI':

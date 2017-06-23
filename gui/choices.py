@@ -340,7 +340,7 @@ class whoChoices:
 # Network|Interface Management
 class NICChoices(object):
     """Populate a list of NIC choices"""
-    def __init__(self, nolagg=False, novlan=False,
+    def __init__(self, nolagg=False, novlan=False, notap=True,
                  exclude_configured=True, include_vlan_parent=False,
                  exclude_unconfigured_vlan_parent=False,
                  with_alias=False, nobridge=True, noepair=True):
@@ -460,6 +460,12 @@ class NICChoices(object):
             niclist = copy.deepcopy(self._NIClist)
             for nic in niclist:
                 if nic.startswith('epair'):
+                    self._NIClist.remove(nic)
+
+        if notap:
+            taplist = copy.deepcopy(self._NIClist)
+            for nic in taplist:
+                if nic.startswith('tap'):
                     self._NIClist.remove(nic)
 
         self.max_choices = len(self._NIClist)
