@@ -98,30 +98,16 @@ class VMSupervisor(object):
             elif device['dtype'] == 'CDROM':
                 args += ['-s', '{},ahci-cd,{}'.format(nid(), device['attributes']['path'])]
             elif device['dtype'] == 'NIC':
+                attach_iface = device['attributes'].get('nic_attach')
+
+                self.logger.debug('====> NIC_ATTACH: {0}'.format(attach_iface))
+
                 tapname = netif.create_interface('tap')
                 tap = netif.get_interface(tapname)
                 tap.up()
                 self.taps.append(tapname)
-                # If Bridge
-                if True:
-                    bridge = None
-                    for name, iface in list(netif.list_interfaces().items()):
-                        if name.startswith('bridge'):
-                            bridge = iface
-                            break
-                    if not bridge:
-                        bridge = netif.get_interface(netif.create_interface('bridge'))
+                await self.bridge_setup(tapname, tap, attach_iface)
 
-                    if bridge.mtu > tap.mtu:
-                        self.logger.debug("===> Set tap(4) mtu to {0} like in bridge(4) mtu {1}".format(tap.mtu, bridge.mtu))
-                        tap.mtu = bridge.mtu
-
-                    bridge.add_member(tapname)
-
-                    defiface = (await (await Popen("route -nv show default|grep -w interface|awk '{ print $2 }'", stdout=subprocess.PIPE, shell=True)).communicate())[0].strip().decode()
-                    if defiface and defiface not in bridge.members:
-                        bridge.add_member(defiface)
-                    bridge.up()
                 if device['attributes'].get('type') == 'VIRTIO':
                     nictype = 'virtio-net'
                 else:
@@ -203,6 +189,41 @@ class VMSupervisor(object):
     def destroy_tap(self):
         while self.taps:
             netif.destroy_interface(self.taps.pop())
+
+    def set_tap_mtu(self, iface, tap):
+        if iface.mtu > tap.mtu:
+            tap.mtu = iface.mtu
+        return tap
+
+    async def bridge_setup(self, tapname, tap, attach_iface):
+        if attach_iface is None:
+            # XXX: backward compatibility prior to 11.1-RELEASE.
+            try:
+                attach_iface = netif.RoutingTable().default_route_ipv4.interface
+            except:
+                return
+
+        if_bridge = []
+        bridge_enabled = False
+
+        for brgname, iface in list(netif.list_interfaces().items()):
+            if brgname.startswith('bridge'):
+                if_bridge.append(iface)
+
+        if if_bridge:
+            for bridge in if_bridge:
+                if attach_iface in bridge.members:
+                    bridge_enabled = True
+                    self.set_tap_mtu(bridge, tap)
+                    bridge.add_member(tapname)
+                    break
+
+        if bridge_enabled is False:
+            bridge = netif.get_interface(netif.create_interface('bridge'))
+            self.set_tap_mtu(bridge, tap)
+            bridge.add_member(tapname)
+            bridge.add_member(attach_iface)
+            bridge.up()
 
     def random_mac(self):
         mac_address = [0x00, 0xa0, 0x98, random.randint(0x00, 0x7f), random.randint(0x00, 0xff), random.randint(0x00, 0xff)]
@@ -308,6 +329,26 @@ class VMService(CRUDService):
                 vnc = device['attributes']
                 vnc_devices.append(vnc)
         return vnc_devices
+
+    @accepts(Int('id'))
+    async def get_attached_iface(self, id):
+        """
+        Get the attached physical interfaces from a given guest.
+
+        Returns:
+            list: will return a list with all attached phisycal interfaces or otherwise False.
+        """
+        ifaces = []
+        for device in await self.middleware.call('datastore.query', 'vm.device', [('vm__id', '=', id)]):
+            if device['dtype'] == 'NIC':
+                if_attached = device['attributes'].get('nic_attach')
+                if if_attached:
+                    ifaces.append(if_attached)
+
+        if ifaces:
+            return ifaces
+        else:
+            return False
 
     @accepts(Int('id'))
     async def get_console(self, id):
