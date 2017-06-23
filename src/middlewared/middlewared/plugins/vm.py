@@ -455,7 +455,7 @@ class VMService(CRUDService):
         try:
             return await self.middleware.call('datastore.delete', 'vm.vm', id)
         except Exception as err:
-            self.logger.error("===> Error: {0}".format(err))
+            self.logger.error("===> {0}".format(err))
             return False
 
     @item_method
@@ -465,7 +465,7 @@ class VMService(CRUDService):
         try:
             return await self._manager.start(id)
         except Exception as err:
-            self.logger.error("===> Error: {0}".format(err))
+            self.logger.error("===> {0}".format(err))
             return False
 
     @item_method
@@ -475,7 +475,7 @@ class VMService(CRUDService):
         try:
             return await self._manager.stop(id)
         except Exception as err:
-            self.logger.error("===> Error: {0}".format(err))
+            self.logger.error("===> {0}".format(err))
             return False
 
 
@@ -486,7 +486,7 @@ class VMService(CRUDService):
         try:
             return await self._manager.restart(id)
         except Exception as err:
-            self.logger.error("===> Error: {0}".format(err))
+            self.logger.error("===> {0}".format(err))
             return False
 
     @item_method
@@ -496,7 +496,7 @@ class VMService(CRUDService):
         try:
             return await self._manager.status(id)
         except Exception as err:
-            self.logger.error("===> Error: {0}".format(err))
+            self.logger.error("===> {0}".format(err))
             return False
 
 
