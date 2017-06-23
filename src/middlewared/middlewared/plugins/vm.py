@@ -452,31 +452,52 @@ class VMService(CRUDService):
     @accepts(Int('id'))
     async def do_delete(self, id):
         """Delete a VM."""
-        return await self.middleware.call('datastore.delete', 'vm.vm', id)
+        try:
+            return await self.middleware.call('datastore.delete', 'vm.vm', id)
+        except Exception as err:
+            self.logger.error("===> Error: {0}".format(err))
+            return False
 
     @item_method
     @accepts(Int('id'))
     async def start(self, id):
         """Start a VM."""
-        return await self._manager.start(id)
+        try:
+            return await self._manager.start(id)
+        except Exception as err:
+            self.logger.error("===> Error: {0}".format(err))
+            return False
 
     @item_method
     @accepts(Int('id'))
     async def stop(self, id):
         """Stop a VM."""
-        return await self._manager.stop(id)
+        try:
+            return await self._manager.stop(id)
+        except Exception as err:
+            self.logger.error("===> Error: {0}".format(err))
+            return False
+
 
     @item_method
     @accepts(Int('id'))
     async def restart(self, id):
         """Restart a VM."""
-        return await self._manager.restart(id)
+        try:
+            return await self._manager.restart(id)
+        except Exception as err:
+            self.logger.error("===> Error: {0}".format(err))
+            return False
 
     @item_method
     @accepts(Int('id'))
     async def status(self, id):
         """Get the status of a VM, if it is RUNNING or STOPPED."""
-        return await self._manager.status(id)
+        try:
+            return await self._manager.status(id)
+        except Exception as err:
+            self.logger.error("===> Error: {0}".format(err))
+            return False
 
 
 async def kmod_load():
