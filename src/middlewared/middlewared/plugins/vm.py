@@ -478,7 +478,6 @@ class VMService(CRUDService):
             self.logger.error("===> {0}".format(err))
             return False
 
-
     @item_method
     @accepts(Int('id'))
     async def restart(self, id):
