@@ -595,32 +595,6 @@ class ServiceService(CRUDService):
     async def _clear_activedirectory_config(self):
         await self._system("/bin/rm -f /etc/directoryservice/ActiveDirectory/config")
 
-    async def _started_nt4(self):
-        res = False
-        ret = await self._system("service ix-nt4 status")
-        if not ret:
-            res = True
-        return res, []
-
-    async def _start_nt4(self, **kwargs):
-        res = False
-        ret = await self._system("/etc/directoryservice/NT4/ctl start")
-        if not ret:
-            res = True
-        return res
-
-    async def _restart_nt4(self, **kwargs):
-        res = False
-        ret = await self._system("/etc/directoryservice/NT4/ctl restart")
-        if not ret:
-            res = True
-        return res
-
-    async def _stop_nt4(self, **kwargs):
-        res = False
-        await self._system("/etc/directoryservice/NT4/ctl stop")
-        return res
-
     async def _started_activedirectory(self, **kwargs):
         for srv in ('kinit', 'activedirectory', ):
             if await self._system('/usr/sbin/service ix-%s status' % (srv, )) != 0:

@@ -70,16 +70,6 @@ class NISFAdmin(BaseFreeAdmin):
     icon_view = "NISIcon"
 
 
-class NT4FAdmin(BaseFreeAdmin):
-    create_modelform = "NT4Form"
-    deletable = False
-    edit_modelform = "NT4Form"
-    icon_object = "NT4Icon"
-    icon_model = "NT4Icon"
-    icon_add = "NT4Icon"
-    icon_view = "NT4Icon"
-
-
 class KerberosRealmFAdmin(BaseFreeAdmin):
     create_modelform = "KerberosRealmForm"
     edit_modelform = "KerberosRealmForm"
@@ -131,7 +121,6 @@ class KerberosSettingsFAdmin(BaseFreeAdmin):
 site.register(models.ActiveDirectory, ActiveDirectoryFAdmin)
 site.register(models.LDAP, LDAPFAdmin)
 site.register(models.NIS, NISFAdmin)
-site.register(models.NT4, NT4FAdmin)
 site.register(models.KerberosRealm, KerberosRealmFAdmin)
 site.register(models.KerberosKeytab, KerberosKeytabFAdmin)
 site.register(models.KerberosSettings, KerberosSettingsFAdmin)

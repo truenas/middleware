@@ -42,7 +42,6 @@ DS_TYPE_NONE = 0
 DS_TYPE_ACTIVEDIRECTORY = 1
 DS_TYPE_LDAP = 2
 DS_TYPE_NIS = 3
-DS_TYPE_NT4 = 4
 DS_TYPE_CIFS = 5
 
 
@@ -52,7 +51,6 @@ def directoryservice_to_enum(ds_type):
         'ActiveDirectory': DS_TYPE_ACTIVEDIRECTORY,
         'LDAP': DS_TYPE_LDAP,
         'NIS': DS_TYPE_NIS,
-        'NT4': DS_TYPE_NT4,
         'CIFS': DS_TYPE_CIFS,
     }
 
@@ -70,7 +68,6 @@ def enum_to_directoryservice(enum):
         DS_TYPE_ACTIVEDIRECTORY: 'ActiveDirectory',
         DS_TYPE_LDAP: 'LDAP',
         DS_TYPE_NIS: 'NIS',
-        DS_TYPE_NT4: 'NT4',
         DS_TYPE_CIFS: 'CIFS'
     }
 
@@ -808,73 +805,6 @@ class DirectoryServiceBase(Model):
 
         self.ds_type = DS_TYPE_NONE
         self.ds_name = enum_to_directoryservice(self.ds_type)
-
-
-class NT4(DirectoryServiceBase):
-    nt4_dcname = models.CharField(
-        verbose_name=_("Domain Controller"),
-        max_length=120,
-        help_text=_("FQDN of the domain controller to use."),
-    )
-    nt4_workgroup = models.CharField(
-        verbose_name=_("Workgroup Name"),
-        max_length=120,
-        help_text=_("Workgroup or domain name in old format, eg WORKGROUP")
-    )
-    nt4_adminname = models.CharField(
-        verbose_name=_("Administrator Name"),
-        max_length=120,
-        help_text=_("Domain administrator account name")
-    )
-    nt4_adminpw = models.CharField(
-        verbose_name=_("Administrator Password"),
-        max_length=120,
-        help_text=_("Domain administrator account password.")
-    )
-    nt4_use_default_domain = models.BooleanField(
-        verbose_name=_("Use Default Domain"),
-        help_text=_(
-            "Set this if you want to use the default "
-            "domain for users and groups."),
-        default=False
-    )
-    nt4_idmap_backend = models.CharField(
-        verbose_name=_("Idmap backend"),
-        choices=choices.IDMAP_CHOICES,
-        max_length=120,
-        help_text=_("Idmap backend for winbind."),
-        default=enum_to_idmap(IDMAP_TYPE_RID)
-    )
-    nt4_enable = models.BooleanField(
-        verbose_name=_("Enable"),
-        default=False,
-    )
-
-    def __init__(self, *args, **kwargs):
-        super(NT4, self).__init__(*args, **kwargs)
-
-        if self.nt4_adminpw:
-            try:
-                self.nt4_adminpw = notifier().pwenc_decrypt(self.nt4_adminpw)
-            except:
-                log.debug('Failed to decrypt NT4 admin password', exc_info=True)
-                self.nt4_adminpw = ''
-        self._nt4_adminpw_encrypted = False
-
-        self.ds_type = DS_TYPE_NT4
-        self.ds_name = enum_to_directoryservice(self.ds_type)
-
-    def save(self, *args, **kwargs):
-        if self.nt4_adminpw and not self._nt4_adminpw_encrypted:
-            self.nt4_adminpw = notifier().pwenc_encrypt(
-                self.nt4_adminpw
-            )
-            self._nt4_adminpw_encrypted = True
-        super(NT4, self).save(*args, **kwargs)
-
-    class Meta:
-        verbose_name = _("NT4 Domain")
-        verbose_name_plural = _("NT4 Domain")
 
 
 class ActiveDirectory(DirectoryServiceBase):
