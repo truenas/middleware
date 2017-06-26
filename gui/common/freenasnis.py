@@ -149,14 +149,17 @@ class FreeNAS_NIS_Base(object):
         log.debug("FreeNAS_NIS_Base.get_user: enter")
         log.debug("FreeNAS_NIS_Base.get_user: who = %s", who)
 
+        if not who:
+            return None
+
         user = None
         users = self.get_users()
         for u in users:
-            if who and u['uid'].strip().lower() == str(who).strip().lower():
+            if u['uid'].strip().lower() == who.strip().lower():
                 user = u
                 break
 
-        log.debug("FreeNAS_NIS_Base.get_user: enter")
+        log.debug("FreeNAS_NIS_Base.get_user: leave")
         return user
 
     def get_users(self, domain=None):
@@ -171,13 +174,13 @@ class FreeNAS_NIS_Base(object):
                     continue
 
                 user = {
-                    "name": parts[0],
-                    "uid": parts[0],
+                    "name": parts[0].encode('utf-8'),
+                    "uid": parts[0].encode('utf-8'),
                     "uidNumber": parts[2],
                     "gidNumber": parts[3],
-                    "gecos": parts[4],
-                    "homeDirectory": parts[5],
-                    "loginShell": parts[6]
+                    "gecos": parts[4].encode('utf-8'),
+                    "homeDirectory": parts[5].encode('utf-8'),
+                    "loginShell": parts[6].encode('utf-8')
                 }
                 users.append(user)
 
@@ -188,10 +191,13 @@ class FreeNAS_NIS_Base(object):
         log.debug("FreeNAS_NIS_Base.get_group: enter")
         log.debug("FreeNAS_NIS_Base.get_group: who = %s", who)
 
+        if not who:
+            return None
+
         group = None
         groups = self.get_groups()
         for g in groups:
-            if who and g['group'].strip().lower() == str(who).strip().lower():
+            if g['group'].strip().lower() == str(who).strip().lower():
                 group = g
                 break
 
@@ -210,10 +216,10 @@ class FreeNAS_NIS_Base(object):
                     continue
 
                 group = {
-                    "name": parts[0],
-                    "group": parts[0],
+                    "name": parts[0].encode('utf-8'),
+                    "group": parts[0].encode('utf-8'),
                     "gidNumber": parts[2],
-                    "members": parts[3]
+                    "members": parts[3].encode('utf-8')
                 }
                 groups.append(group)
 
@@ -340,7 +346,7 @@ class FreeNAS_NIS_Users(FreeNAS_NIS):
                     self.__ducache[d][uid] = u
 
                 try:
-                    pw = pwd.getpwnam(uid)
+                    pw = pwd.getpwnam(uid.decode('utf-8'))
 
                 except Exception as e:
                     log.debug("Error on getpwname: %s", e)
@@ -482,7 +488,7 @@ class FreeNAS_NIS_Groups(FreeNAS_NIS):
                 self.__groupnames.append(group)
 
                 try:
-                    gr = grp.getgrnam(group)
+                    gr = grp.getgrnam(group.decode('utf-8'))
 
                 except:
                     continue
@@ -562,7 +568,7 @@ class FreeNAS_NIS_User(FreeNAS_NIS):
             u = nis_user['uid']
 
         try:
-            pw = pwd.getpwnam(u)
+            pw = pwd.getpwnam(u.decode('utf-8'))
 
             if (self.flags & FLAGS_CACHE_WRITE_USER) and pw:
                 self.__ucache[self.__ukey] = pw
@@ -625,7 +631,7 @@ class FreeNAS_NIS_Group(FreeNAS_NIS):
             g = nis_group['group']
 
         try:
-            gr = grp.getgrnam(g)
+            gr = grp.getgrnam(g.decode('utf-8'))
 
             if (self.flags & FLAGS_CACHE_WRITE_GROUP) and gr:
                 self.__gcache[self.__gkey] = gr
