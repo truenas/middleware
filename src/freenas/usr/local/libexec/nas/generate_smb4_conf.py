@@ -990,7 +990,7 @@ def generate_smb4_conf(client, smb4_conf, role):
         confset2(smb4_conf, "domain logons = %s",
                  "yes" if cifs.domain_logons else "no")
 
-    if not client.call('notifier.common', 'system', 'activedirectory_enabled')):
+    if not client.call('notifier.common', 'system', 'activedirectory_enabled'):
         confset2(smb4_conf, "local master = %s",
                  "yes" if cifs.localmaster else "no")
 
@@ -1014,7 +1014,7 @@ def generate_smb4_conf(client, smb4_conf, role):
     elif role == 'member':
         confset1(smb4_conf, "server role = member server")
 
-        elif smb4_ldap_enabled(client):
+        if smb4_ldap_enabled(client):
             add_ldap_conf(client, smb4_conf)
 
         elif client.call('notifier.common', 'system', 'activedirectory_enabled'):
