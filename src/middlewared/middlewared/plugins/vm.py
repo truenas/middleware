@@ -1,5 +1,5 @@
 from middlewared.schema import accepts, Int, Str, Dict, List, Bool, Patch
-from middlewared.service import filterable, CRUDService, item_method, private
+from middlewared.service import filterable, CRUDService, item_method, private, job
 from middlewared.utils import Nid, Popen
 from middlewared.client import Client, CallTimeout
 from urllib.request import urlretrieve
