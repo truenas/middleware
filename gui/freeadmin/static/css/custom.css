@@ -552,10 +552,10 @@ table.grid tr {
     width:16px;
     height:16px;
 }
-.NT4Icon {
-    background-image:url('/static/images/ui/tree/nt4.png');
-    width:16px;
-    height:16px;
+.NetdataIcon {
+    background-image: url('/static/images/ui/tree/analytic_pie_chart.png');
+    width: 16px;
+    height: 16px;
 }
 .NISIcon {
     background-image:url('/static/images/ui/tree/nis.png');
