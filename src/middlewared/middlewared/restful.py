@@ -1,112 +1,51 @@
+from aiohttp import web
 from collections import defaultdict
-from datetime import datetime
 
+import asyncio
 import base64
 import binascii
-import falcon
-import json
 import types
 
-
-class JsonEncoder(json.JSONEncoder):
-    def default(self, obj):
-        if isinstance(obj, datetime):
-            return str(obj)
-        elif isinstance(obj, types.GeneratorType):
-            return list(obj)
-        return json.JSONEncoder.default(self, obj)
+from .client import ejson as json
 
 
-class JSONTranslator(object):
+async def authenticate(middleware, req):
 
-    def process_request(self, req, resp):
-        if req.content_length in (None, 0):
-            return
+    auth = req.headers.get('Authorization')
+    if auth is None or not auth.startswith('Basic '):
+        raise web.HTTPUnauthorized()
+    try:
+        username, password = base64.b64decode(auth[6:]).decode('utf8').split(':', 1)
+    except binascii.Error:
+        raise web.HTTPUnauthorized()
 
-        body = req.stream.read()
-        if not body:
-            return
-
-        if 'application/json' not in req.content_type:
-            return
-
-        try:
-            req.context['doc'] = json.loads(body.decode('utf-8'))
-        except (ValueError, UnicodeDecodeError):
-            raise falcon.HTTPError(
-                falcon.HTTP_753,
-                'Malformed JSON',
-                'Could not decode the request body. The JSON was incorrect or '
-                'not encoded as UTF-8.'
-            )
-
-    def process_response(self, req, resp, resource):
-        if 'result' in req.context:
-            resp.body = JsonEncoder(indent=True).encode(req.context['result'])
-
-
-class AuthMiddleware(object):
-
-    def __init__(self, middleware):
-        self.middleware = middleware
-
-    def process_request(self, req, resp):
-        # Do not require auth to access index
-        if req.relative_uri == '/':
-            return
-
-        auth = req.get_header("Authorization")
-        if auth is None or not auth.startswith('Basic '):
-            raise falcon.HTTPUnauthorized(
-                'Authorization token required',
-                'Provide a Basic Authentication header',
-                ['Basic realm="FreeNAS"'],
-            )
-        try:
-            username, password = base64.b64decode(auth[6:]).decode('utf8').split(':', 1)
-        except binascii.Error:
-            raise falcon.HTTPUnauthorized(
-                'Invalid Authorization token',
-                'Provide a valid Basic Authentication header',
-                ['Basic realm="FreeNAS"'],
-            )
-
-        try:
-            if not self.middleware.call('auth.check_user', username, password):
-                raise falcon.HTTPUnauthorized(
-                    'Invalid credentials',
-                    'Verify your credentials and try again.',
-                    ['Basic realm="FreeNAS"'],
-                )
-        except falcon.HTTPUnauthorized:
-            raise
-        except Exception as e:
-            raise falcon.HTTPUnauthorized('Unknown authentication error', str(e), ['Basic realm="FreeNAS"'])
+    try:
+        if not await middleware.call('auth.check_user', username, password):
+            raise web.HTTPUnauthorized()
+    except web.HTTPUnauthorized:
+        raise
+    except Exception as e:
+        raise web.HTTPUnauthorized()
 
 
 class RESTfulAPI(object):
 
-    def __init__(self, middleware):
+    def __init__(self, middleware, app):
         self.middleware = middleware
-        self.app = falcon.API(middleware=[
-            JSONTranslator(),
-            AuthMiddleware(middleware),
-        ])
+        self.app = app
 
         # Keep methods cached for future lookups
         self._methods = {}
         self._methods_by_service = defaultdict(dict)
-        for methodname, method in list(self.middleware.call('core.get_methods').items()):
-            self._methods[methodname] = method
-            self._methods_by_service[methodname.rsplit('.', 1)[0]][methodname] = method
-
-        self.register_resources()
 
     def get_app(self):
         return self.app
 
-    def register_resources(self):
-        for name, service in list(self.middleware.call('core.get_services').items()):
+    async def register_resources(self):
+        for methodname, method in list((await self.middleware.call('core.get_methods')).items()):
+            self._methods[methodname] = method
+            self._methods_by_service[methodname.rsplit('.', 1)[0]][methodname] = method
+        for name, service in list((await self.middleware.call('core.get_services')).items()):
 
             kwargs = {}
             blacklist_methods = []
@@ -162,6 +101,7 @@ class RESTfulAPI(object):
                 else:
                     res_kwargs['get'] = methodname
                 Resource(self, self.middleware, short_methodname, parent=parent, **res_kwargs)
+            await asyncio.sleep(0)  # Force context switch
 
 
 class Resource(object):
@@ -185,14 +125,17 @@ class Resource(object):
 
         if delete:
             self.delete = delete
+            self.rest.app.router.add_route('DELETE', '/api/v2.0/' + self.get_path(), self.on_delete)
         if get:
             self.get = get
+            self.rest.app.router.add_route('GET', '/api/v2.0/' + self.get_path(), self.on_get)
         if post:
             self.post = post
+            self.rest.app.router.add_route('POST', '/api/v2.0/' + self.get_path(), self.on_post)
         if put:
             self.put = put
+            self.rest.app.router.add_route('PUT', '/api/v2.0/' + self.get_path(), self.on_put)
 
-        self.rest.app.add_route('/api/v2.0/' + self.get_path(), self)
         self.middleware.logger.debug("add route {}".format(self.get_path()))
 
     def __getattr__(self, attr):
@@ -203,8 +146,11 @@ class Resource(object):
             if object.__getattribute__(self, method) is None:
                 return None
 
-            def on_method(req, resp, **kwargs):
-                return do(method, req, resp, **kwargs)
+            async def on_method(req, *args, **kwargs):
+                resp = web.Response()
+                await authenticate(self.middleware, req)
+                kwargs.update(dict(req.match_info))
+                return await do(method, req, resp, *args, **kwargs)
 
             return on_method
         return object.__getattribute__(self, attr)
@@ -222,7 +168,7 @@ class Resource(object):
     def _filterable_args(self, req):
         filters = []
         options = {}
-        for key, val in list(req.params.items()):
+        for key, val in list(req.query.items()):
             if '__' in key:
                 field, op = key.split('__', 1)
             else:
@@ -269,7 +215,7 @@ class Resource(object):
 
         return [filters, options]
 
-    def do(self, http_method, req, resp, **kwargs):
+    async def do(self, http_method, req, resp, **kwargs):
         assert http_method in ('delete', 'get', 'post', 'put')
 
         methodname = getattr(self, http_method)
@@ -279,14 +225,17 @@ class Resource(object):
         the form of "get_{get,post,put,delete}_args", e.g.:
 
           def get_post_args(self, req, resp, **kwargs):
-              return [req.context['doc'], True, False]
+              return [await req.json(), True, False]
         """
         get_method_args = getattr(self, 'get_{}_args'.format(http_method), None)
         if get_method_args is not None:
             method_args = get_method_args(req, resp, **kwargs)
         else:
             if http_method in ('post', 'put'):
-                method_args = req.context.get('doc', [])
+                try:
+                    method_args = await req.json()
+                except Exception:
+                    method_args = []
             elif http_method == 'get' and method['filterable']:
                 method_args = self._filterable_args(req)
             else:
@@ -299,4 +248,10 @@ class Resource(object):
         if method.get('item_method') is True:
             method_args.insert(0, kwargs['id'])
 
-        req.context['result'] = self.middleware.call(methodname, *method_args)
+        result = await self.middleware.call(methodname, *method_args)
+        if isinstance(result, types.GeneratorType):
+            result = list(result)
+        elif isinstance(result, types.AsyncGeneratorType):
+            result = [i async for i in result]
+        resp.text = json.dumps(result, indent=True)
+        return resp

@@ -4,6 +4,7 @@ from markdown.extensions.codehilite import CodeHiliteExtension
 
 from .proxy import ReverseProxied
 from flask import Flask, render_template
+from middlewared.client import Client
 
 app = Flask(__name__)
 app.wsgi_app = ReverseProxied(app.wsgi_app)
@@ -26,11 +27,13 @@ app.jinja_env.filters['markdown'] = markdown_filter
 @app.route('/')
 def main():
     services = []
-    for name in sorted(app.middleware.call('core.get_services')):
-        services.append({
-           'name': name,
-           'methods': app.middleware.call('core.get_methods', name)
-        })
+    # FIXME: better way to call middleware using asyncio insteaad of using client
+    with Client() as c:
+        for name in sorted(c.call('core.get_services')):
+            services.append({
+               'name': name,
+               'methods': c.call('core.get_methods', name)
+            })
 
     protocol = render_template('websocket/protocol.md')
     return render_template('websocket.html', **{

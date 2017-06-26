@@ -1279,7 +1279,10 @@ class ZFSDataset(Form):
         self._create = kwargs.pop('create', True)
         super(ZFSDataset, self).__init__(*args, **kwargs)
         _n = notifier()
-        parentdata = _n.zfs_get_options(self._fs)
+        if self._create:
+            parentdata = _n.zfs_get_options(self._fs)
+        else:
+            parentdata = _n.zfs_get_options(self._fs.rsplit('/', 1)[0])
 
         self.fields['dataset_atime'].choices = _inherit_choices(
             choices.ZFS_AtimeChoices,
@@ -2648,7 +2651,7 @@ class UnlockPassphraseForm(Form):
         for svc in self.cleaned_data.get("services"):
             _notifier.restart(svc)
         _notifier.start("ix-warden")
-        _notifier.restart("system_datasets", timeout=50)
+        _notifier.restart("system_datasets")
         _notifier.reload("disk")
         if not _notifier.is_freenas() and _notifier.failover_licensed():
             from freenasUI.failover.enc_helper import LocalEscrowCtl

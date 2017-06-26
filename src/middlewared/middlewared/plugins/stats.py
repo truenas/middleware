@@ -35,19 +35,20 @@ class StatsService(Service):
         return sources
 
     @accepts(Str('source'), Str('type'))
-    def get_dataset_info(self, source, _type):
+    async def get_dataset_info(self, source, _type):
         """
         Returns info about a given dataset from some source.
         """
         rrdfile = '{}/{}/{}.rrd'.format(RRD_PATH, source, _type)
-        proc = Popen(
+        proc = await Popen(
             ['/usr/local/bin/rrdtool', 'info', rrdfile],
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
         )
-        data, err = proc.communicate()
+        data, err = await proc.communicate()
         if proc.returncode != 0:
-            raise ValueError('rrdtool failed: {}'.format(err))
+            raise ValueError('rrdtool failed: {}'.format(err.decode()))
+        data = data.decode()
 
         info = {
             'source': source,
@@ -83,7 +84,7 @@ class StatsService(Service):
             Str('end', default='now'),
         ),
     )
-    def get_data(self, data_list, stats):
+    async def get_data(self, data_list, stats):
         """
         Get data points from rrd files.
         """
@@ -97,7 +98,7 @@ class StatsService(Service):
                 'DEF:xxx{}={}:{}:{}'.format(i, rrdfile, data['dataset'], data['cf']),
                 'XPORT:xxx{}:{}/{}'.format(i, data['source'], data['type']),
             ])
-        proc = Popen(
+        proc = await Popen(
             [
                 '/usr/local/bin/rrdtool', 'xport', '--json',
                 '--start', stats['start'], '--end', stats['end'],
@@ -105,10 +106,10 @@ class StatsService(Service):
             stdout=subprocess.PIPE,
             stderr=subprocess.PIPE,
         )
-        data, err = proc.communicate()
+        data, err = await proc.communicate()
         if proc.returncode != 0:
-            raise ValueError('rrdtool failed: {}'.format(err))
-        data = json.loads(data)
+            raise ValueError('rrdtool failed: {}'.format(err.decode()))
+        data = json.loads(data.decode())
 
         # Custom about property
         data['about'] = 'Data for ' + ','.join(['/'.join(i) for i in names_pair])

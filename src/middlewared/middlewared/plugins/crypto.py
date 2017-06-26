@@ -1,5 +1,4 @@
-from middlewared.schema import Ref, accepts
-from middlewared.service import CRUDService, private
+from middlewared.service import CRUDService, filterable, private
 from OpenSSL import crypto
 
 import dateutil
@@ -23,15 +22,15 @@ logger = logging.getLogger('plugins.crypto')
 
 class CertificateService(CRUDService):
 
-    @accepts(Ref('query-filters'), Ref('query-options'))
-    def query(self, filters=None, options=None):
+    @filterable
+    async def query(self, filters=None, options=None):
         if options is None:
             options = {}
         options['extend'] = 'certificate.cert_extend'
-        return self.middleware.call('datastore.query', 'system.certificate', filters, options)
+        return await self.middleware.call('datastore.query', 'system.certificate', filters, options)
 
     @private
-    def cert_extend(self, cert):
+    async def cert_extend(self, cert):
         """Extend certificate with some useful attributes."""
         if cert['cert_type'] in (
             CA_TYPE_EXISTING, CA_TYPE_INTERNAL, CA_TYPE_INTERMEDIATE
@@ -133,9 +132,9 @@ class CertificateService(CRUDService):
 
 class CertificateauthorityService(CRUDService):
 
-    @accepts(Ref('query-filters'), Ref('query-options'))
-    def query(self, filters=None, options=None):
+    @filterable
+    async def query(self, filters=None, options=None):
         if options is None:
             options = {}
         options['extend'] = 'certificate.cert_extend'
-        return self.middleware.call('datastore.query', 'system.certificateauthority', filters, options)
+        return await self.middleware.call('datastore.query', 'system.certificateauthority', filters, options)

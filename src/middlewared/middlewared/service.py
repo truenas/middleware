@@ -1,5 +1,6 @@
 from collections import defaultdict
 
+import asyncio
 import errno
 import inspect
 import logging
@@ -100,7 +101,7 @@ class ServiceBase(type):
 
 class Service(object, metaclass=ServiceBase):
     def __init__(self, middleware):
-        self.logger = Logger(type(self).__class__.__name__).getLogger()
+        self.logger = Logger(type(self).__name__).getLogger()
         self.middleware = middleware
 
 
@@ -109,8 +110,8 @@ class ConfigService(Service):
     def config(self):
         raise NotImplementedError
 
-    def update(self, data):
-        return self.do_update(data)
+    async def update(self, data):
+        return await self.do_update(data)
 
 
 class CRUDService(Service):
@@ -118,14 +119,26 @@ class CRUDService(Service):
     def query(self, filters, options):
         raise NotImplementedError('{}.query must be implemented'.format(self._config.namespace))
 
-    def create(self, data):
-        return self.do_create(data)
+    async def create(self, data):
+        if asyncio.iscoroutinefunction(self.do_create):
+            rv = await self.do_create(data)
+        else:
+            rv = await self.middleware.threaded(self.do_create, data)
+        return rv
 
-    def update(self, id, data):
-        return self.do_update(id, data)
+    async def update(self, id, data):
+        if asyncio.iscoroutinefunction(self.do_update):
+            rv = await self.do_update(id, data)
+        else:
+            rv = await self.middleware.threaded(self.do_update, id, data)
+        return rv
 
-    def delete(self, id):
-        return self.do_delete(id)
+    async def delete(self, id):
+        if asyncio.iscoroutinefunction(self.do_delete):
+            rv = await self.do_delete(id)
+        else:
+            rv = await self.middleware.threaded(self.do_delete, id)
+        return rv
 
 
 class CoreService(Service):
@@ -187,6 +200,9 @@ class CoreService(Service):
                     continue
 
                 method = None
+                # For CRUD.do_{update,delete} they need to be accounted
+                # as "item_method", since they are just wrapped.
+                item_method = None
                 if isinstance(svc, CRUDService):
                     """
                     For CRUD the create/update/delete are special.
@@ -197,6 +213,8 @@ class CoreService(Service):
                         method = getattr(svc, 'do_{}'.format(attr), None)
                         if method is None:
                             continue
+                        if attr in ('update', 'delete'):
+                            item_method = True
                     elif attr in ('do_create', 'do_update', 'do_delete'):
                         continue
 
@@ -244,13 +262,13 @@ class CoreService(Service):
                     'description': doc,
                     'examples': examples,
                     'accepts': accepts,
-                    'item_method': hasattr(method, '_item_method'),
+                    'item_method': True if item_method else hasattr(method, '_item_method'),
                     'filterable': hasattr(method, '_filterable'),
                 }
         return data
 
     @private
-    def event_send(self, name, event_type, kwargs):
+    async def event_send(self, name, event_type, kwargs):
         self.middleware.send_event(name, event_type, **kwargs)
 
     @accepts()
@@ -267,14 +285,14 @@ class CoreService(Service):
         List('args'),
         Str('filename'),
     )
-    def download(self, method, args, filename):
+    async def download(self, method, args, filename):
         """
         Core helper to call a job marked for download.
 
         Returns the job id and the URL for download.
         """
-        job = self.middleware.call(method, *args)
-        token = self.middleware.call('auth.generate_token', 300, {'filename': filename, 'job': job.id})
+        job = await self.middleware.call(method, *args)
+        token = await self.middleware.call('auth.generate_token', 300, {'filename': filename, 'job': job.id})
         return job.id, f'/_download/{job.id}?auth_token={token}'
 
     @private

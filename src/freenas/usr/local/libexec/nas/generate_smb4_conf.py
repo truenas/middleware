@@ -749,7 +749,7 @@ def add_ldap_conf(client, smb4_conf):
     try:
         ldap = Struct(client.call('datastore.query', 'directoryservice.LDAP', None, {'get': True}))
         ldap.ds_type = 2  # FIXME: DS_TYPE_LDAP = 2
-        cifs = Struct(client.call('cifs.config'))
+        cifs = Struct(client.call('smb.config'))
     except:
         return
 
@@ -794,7 +794,7 @@ def add_activedirectory_conf(client, smb4_conf):
     except:
         return
 
-    cachedir = "/var/tmp/.cache/.samba"
+#    cachedir = "/var/tmp/.cache/.samba"
 
     try:
         os.makedirs(cachedir)
@@ -813,7 +813,7 @@ def add_activedirectory_conf(client, smb4_conf):
     confset2(smb4_conf, "realm = %s", ad.ad_domainname.upper())
     confset1(smb4_conf, "security = ADS")
     confset1(smb4_conf, "client use spnego = yes")
-    confset2(smb4_conf, "cache directory = %s", cachedir)
+#    confset2(smb4_conf, "cache directory = %s", cachedir)
 
     confset1(smb4_conf, "local master = no")
     confset1(smb4_conf, "domain master = no")
@@ -851,7 +851,7 @@ def add_activedirectory_conf(client, smb4_conf):
 def add_domaincontroller_conf(client, smb4_conf):
     try:
         dc = Struct(client.call('datastore.query', 'services.DomainController', None, {'get': True}))
-        cifs = Struct(client.call('cifs.config'))
+        cifs = Struct(client.call('smb.config'))
     except:
         return
 
@@ -935,7 +935,7 @@ def generate_smb4_tdb(client, smb4_tdb):
 
 
 def generate_smb4_conf(client, smb4_conf, role):
-    cifs = Struct(client.call('cifs.config'))
+    cifs = Struct(client.call('smb.config'))
 
     if not cifs.guest:
         cifs.guest = 'ftp'

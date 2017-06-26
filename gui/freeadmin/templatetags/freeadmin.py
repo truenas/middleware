@@ -109,9 +109,7 @@ class FormRender(template.Node):
                 output.append(html)
             else:
                 ffield = form.fields.get(field)
-                help_text = ffield.widget.attrs.get(
-                    'extra_field_attrs', {}
-                ).get('help_text', '')
+                help_text = ffield.help_text
                 bf = BoundField(form, ffield, field)
                 bf_errors = form.error_class(
                     [conditional_escape(error) for error in bf.errors]

@@ -819,7 +819,7 @@ def volume_detach(request, vid):
 
     volume = models.Volume.objects.get(pk=vid)
     usedbytes = volume._get_used_bytes()
-    usedsize = humanize_size(usedbytes)
+    usedsize = humanize_size(usedbytes) if usedbytes else None
     services = {
         key: val
         for key, val in list(volume.has_attachments().items()) if len(val) > 0

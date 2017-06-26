@@ -32,7 +32,4 @@ class ServiceFailed(Exception):
         self.value = value
 
     def __str__(self):
-        return repr(self.value)
-
-    def __unicode__(self):
         return str(self.value)

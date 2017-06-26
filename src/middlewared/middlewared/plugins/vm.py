@@ -1,14 +1,15 @@
 from middlewared.schema import accepts, Int, Str, Dict, List, Bool, Patch
-from middlewared.service import filterable, CRUDService, job, private
+from middlewared.service import filterable, CRUDService, item_method, private
 from middlewared.utils import Nid, Popen
 from middlewared.client import Client, CallTimeout
 from urllib.request import urlretrieve
 
 import middlewared.logger
+import asyncio
 import errno
-import gevent
 import netif
 import os
+import random
 import stat
 import subprocess
 import sysctl
@@ -29,39 +30,39 @@ class VMManager(object):
         self.logger = self.service.logger
         self._vm = {}
 
-    def start(self, id):
-        vm = self.service.query([('id', '=', id)], {'get': True})
+    async def start(self, id):
+        vm = await self.service.query([('id', '=', id)], {'get': True})
         self._vm[id] = VMSupervisor(self, vm)
         try:
-            gevent.spawn(self._vm[id].run)
+            asyncio.ensure_future(self._vm[id].run())
             return True
         except:
             raise
 
-    def stop(self, id):
+    async def stop(self, id):
         supervisor = self._vm.get(id)
         if not supervisor:
             return False
 
-        err = supervisor.stop()
+        err = await supervisor.stop()
         return err
 
-    def restart(self, id):
+    async def restart(self, id):
         supervisor = self._vm.get(id)
         if supervisor:
-            supervisor.restart()
+            await supervisor.restart()
             return True
         else:
             return False
 
-    def status(self, id):
+    async def status(self, id):
         supervisor = self._vm.get(id)
         if supervisor is None:
-            vm = self.service.query([('id', '=', id)], {'get': True})
+            vm = await self.service.query([('id', '=', id)], {'get': True})
             self._vm[id] = VMSupervisor(self, vm)
             supervisor = self._vm.get(id)
 
-        if supervisor and supervisor.running():
+        if supervisor and await supervisor.running():
             return {
                 'state': 'RUNNING',
             }
@@ -82,7 +83,7 @@ class VMSupervisor(object):
         self.bhyve_error = None
         self.vmutils = VMUtils
 
-    def run(self):
+    async def run(self):
         args = [
             'bhyve',
             '-H',
@@ -112,30 +113,16 @@ class VMSupervisor(object):
             elif device['dtype'] == 'CDROM':
                 args += ['-s', '{},ahci-cd,{}'.format(nid(), device['attributes']['path'])]
             elif device['dtype'] == 'NIC':
+                attach_iface = device['attributes'].get('nic_attach')
+
+                self.logger.debug('====> NIC_ATTACH: {0}'.format(attach_iface))
+
                 tapname = netif.create_interface('tap')
                 tap = netif.get_interface(tapname)
                 tap.up()
                 self.taps.append(tapname)
-                # If Bridge
-                if True:
-                    bridge = None
-                    for name, iface in list(netif.list_interfaces().items()):
-                        if name.startswith('bridge'):
-                            bridge = iface
-                            break
-                    if not bridge:
-                        bridge = netif.get_interface(netif.create_interface('bridge'))
+                await self.bridge_setup(tapname, tap, attach_iface)
 
-                    if bridge.mtu > tap.mtu:
-                        self.logger.debug("===> Set tap(4) mtu to {0} like in bridge(4) mtu {1}".format(tap.mtu, bridge.mtu))
-                        tap.mtu = bridge.mtu
-
-                    bridge.add_member(tapname)
-
-                    defiface = Popen("route -nv show default|grep -w interface|awk '{ print $2 }'", stdout=subprocess.PIPE, shell=True).communicate()[0].strip()
-                    if defiface and defiface not in bridge.members:
-                        bridge.add_member(defiface)
-                    bridge.up()
                 if device['attributes'].get('type') == 'VIRTIO':
                     nictype = 'virtio-net'
                 else:
@@ -148,7 +135,7 @@ class VMSupervisor(object):
                     mac_address = None
 
                 if mac_address == '00:a0:98:FF:FF:FF' or mac_address is None:
-                    args += ['-s', '{},{},{}'.format(nid(), nictype, tapname)]
+                    args += ['-s', '{},{},{},mac={}'.format(nid(), nictype, tapname, self.random_mac())]
                 else:
                     args += ['-s', '{},{},{},mac={}'.format(nid(), nictype, tapname, mac_address)]
             elif device['dtype'] == 'VNC':
@@ -177,10 +164,13 @@ class VMSupervisor(object):
         args.append(self.vm['name'])
 
         self.logger.debug('Starting bhyve: {}'.format(' '.join(args)))
-        self.proc = Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+        self.proc = await Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
 
-        for line in self.proc.stdout:
-            self.logger.debug('{}: {}'.format(self.vm['name'], line))
+        while True:
+            line = await self.proc.stdout.readline()
+            if line == b'':
+                break
+            self.logger.debug('{}: {}'.format(self.vm['name'], line.decode()))
 
         # bhyve returns the following status code:
         # 0 - VM has been reset
@@ -188,26 +178,26 @@ class VMSupervisor(object):
         # 2 - VM has been halted
         # 3 - VM generated a triple fault
         # all other non-zero status codes are errors
-        self.bhyve_error = self.proc.wait()
+        self.bhyve_error = await self.proc.wait()
         if self.bhyve_error == 0:
             self.logger.info("===> Rebooting VM: {0} ID: {1} BHYVE_CODE: {2}".format(self.vm['name'], self.vm['id'], self.bhyve_error))
-            self.manager.restart(self.vm['id'])
-            self.manager.start(self.vm['id'])
+            await self.manager.restart(self.vm['id'])
+            await self.manager.start(self.vm['id'])
         elif self.bhyve_error == 1:
             # XXX: Need a better way to handle the vmm destroy.
             self.logger.info("===> Powered off VM: {0} ID: {1} BHYVE_CODE: {2}".format(self.vm['name'], self.vm['id'], self.bhyve_error))
-            self.destroy_vm()
+            await self.destroy_vm()
         elif self.bhyve_error in (2, 3):
             self.logger.info("===> Stopping VM: {0} ID: {1} BHYVE_CODE: {2}".format(self.vm['name'], self.vm['id'], self.bhyve_error))
-            self.manager.stop(self.vm['id'])
+            await self.manager.stop(self.vm['id'])
         elif self.bhyve_error not in (0, 1, 2, 3, None):
             self.logger.info("===> Error VM: {0} ID: {1} BHYVE_CODE: {2}".format(self.vm['name'], self.vm['id'], self.bhyve_error))
-            self.destroy_vm()
+            await self.destroy_vm()
 
-    def destroy_vm(self):
+    async def destroy_vm(self):
         self.logger.warn("===> Destroying VM: {0} ID: {1} BHYVE_CODE: {2}".format(self.vm['name'], self.vm['id'], self.bhyve_error))
         # XXX: We need to catch the bhyvectl return error.
-        bhyve_error = Popen(['bhyvectl', '--destroy', '--vm={}'.format(self.vm['name'])], stdout=subprocess.PIPE, stderr=subprocess.PIPE).wait()
+        bhyve_error = await (await Popen(['bhyvectl', '--destroy', '--vm={}'.format(self.vm['name'])], stdout=subprocess.PIPE, stderr=subprocess.PIPE)).wait()
         self.manager._vm.pop(self.vm['id'], None)
         self.destroy_tap()
 
@@ -215,7 +205,46 @@ class VMSupervisor(object):
         while self.taps:
             netif.destroy_interface(self.taps.pop())
 
-    def kill_bhyve_pid(self):
+    def set_tap_mtu(self, iface, tap):
+        if iface.mtu > tap.mtu:
+            tap.mtu = iface.mtu
+        return tap
+
+    async def bridge_setup(self, tapname, tap, attach_iface):
+        if attach_iface is None:
+            # XXX: backward compatibility prior to 11.1-RELEASE.
+            try:
+                attach_iface = netif.RoutingTable().default_route_ipv4.interface
+            except:
+                return
+
+        if_bridge = []
+        bridge_enabled = False
+
+        for brgname, iface in list(netif.list_interfaces().items()):
+            if brgname.startswith('bridge'):
+                if_bridge.append(iface)
+
+        if if_bridge:
+            for bridge in if_bridge:
+                if attach_iface in bridge.members:
+                    bridge_enabled = True
+                    self.set_tap_mtu(bridge, tap)
+                    bridge.add_member(tapname)
+                    break
+
+        if bridge_enabled is False:
+            bridge = netif.get_interface(netif.create_interface('bridge'))
+            self.set_tap_mtu(bridge, tap)
+            bridge.add_member(tapname)
+            bridge.add_member(attach_iface)
+            bridge.up()
+
+    def random_mac(self):
+        mac_address = [0x00, 0xa0, 0x98, random.randint(0x00, 0x7f), random.randint(0x00, 0xff), random.randint(0x00, 0xff)]
+        return ':'.join(map(lambda x: "%02x" % x, mac_address))
+
+    async def kill_bhyve_pid(self):
         if self.proc:
             try:
                 os.kill(self.proc.pid, 15)
@@ -224,25 +253,25 @@ class VMSupervisor(object):
                 if e.errno != errno.ESRCH:
                     raise
 
-            self.destroy_vm()
+            await self.destroy_vm()
             return True
 
-    def restart(self):
-        bhyve_error = Popen(['bhyvectl', '--force-reset', '--vm={}'.format(self.vm['name'])], stdout=subprocess.PIPE, stderr=subprocess.PIPE).wait()
+    async def restart(self):
+        bhyve_error = await (await Popen(['bhyvectl', '--force-reset', '--vm={}'.format(self.vm['name'])], stdout=subprocess.PIPE, stderr=subprocess.PIPE)).wait()
         self.logger.debug("==> Reset VM: {0} ID: {1} BHYVE_CODE: {2}".format(self.vm['name'], self.vm['id'], bhyve_error))
         self.destroy_tap()
 
-    def stop(self):
-        bhyve_error = Popen(['bhyvectl', '--force-poweroff', '--vm={}'.format(self.vm['name'])], stdout=subprocess.PIPE, stderr=subprocess.PIPE).wait()
+    async def stop(self):
+        bhyve_error = await (await Popen(['bhyvectl', '--force-poweroff', '--vm={}'.format(self.vm['name'])], stdout=subprocess.PIPE, stderr=subprocess.PIPE)).wait()
         self.logger.debug("===> Stopping VM: {0} ID: {1} BHYVE_CODE: {2}".format(self.vm['name'], self.vm['id'], self.bhyve_error))
 
         if bhyve_error:
             self.logger.error("===> Stopping VM error: {0}".format(bhyve_error))
 
-        return self.kill_bhyve_pid()
+        return await self.kill_bhyve_pid()
 
-    def running(self):
-        bhyve_error = Popen(['bhyvectl', '--vm={}'.format(self.vm['name'])], stdout=subprocess.PIPE, stderr=subprocess.PIPE).wait()
+    async def running(self):
+        bhyve_error = await (await Popen(['bhyvectl', '--vm={}'.format(self.vm['name'])], stdout=subprocess.PIPE, stderr=subprocess.PIPE)).wait()
         if bhyve_error == 0:
             if self.proc:
                 try:
@@ -252,7 +281,6 @@ class VMSupervisor(object):
                     return False
                 return True
             else:
-                self.logger.error("===> NO PROC STATE")
                 # XXX: We return true for now to keep the vm.status sane.
                 # It is necessary handle in a better way the bhyve process associated with the vmm.
                 return True
@@ -307,21 +335,21 @@ class VMService(CRUDService):
         return data
 
     @filterable
-    def query(self, filters=None, options=None):
+    async def query(self, filters=None, options=None):
         options = options or {}
         options['extend'] = 'vm._extend_vm'
-        return self.middleware.call('datastore.query', 'vm.vm', filters, options)
+        return await self.middleware.call('datastore.query', 'vm.vm', filters, options)
 
-    def _extend_vm(self, vm):
+    async def _extend_vm(self, vm):
         vm['devices'] = []
-        for device in self.middleware.call('datastore.query', 'vm.device', [('vm__id', '=', vm['id'])]):
+        for device in await self.middleware.call('datastore.query', 'vm.device', [('vm__id', '=', vm['id'])]):
             device.pop('id', None)
             device.pop('vm', None)
             vm['devices'].append(device)
         return vm
 
     @accepts(Int('id'))
-    def get_vnc(self, id):
+    async def get_vnc(self, id):
         """
         Get the vnc devices from a given guest.
 
@@ -329,14 +357,34 @@ class VMService(CRUDService):
             list(dict): with all attributes of the vnc device or an empty list.
         """
         vnc_devices = []
-        for device in self.middleware.call('datastore.query', 'vm.device', [('vm__id', '=', id)]):
+        for device in await self.middleware.call('datastore.query', 'vm.device', [('vm__id', '=', id)]):
             if device['dtype'] == 'VNC':
                 vnc = device['attributes']
                 vnc_devices.append(vnc)
         return vnc_devices
 
     @accepts(Int('id'))
-    def get_console(self, id):
+    async def get_attached_iface(self, id):
+        """
+        Get the attached physical interfaces from a given guest.
+
+        Returns:
+            list: will return a list with all attached phisycal interfaces or otherwise False.
+        """
+        ifaces = []
+        for device in await self.middleware.call('datastore.query', 'vm.device', [('vm__id', '=', id)]):
+            if device['dtype'] == 'NIC':
+                if_attached = device['attributes'].get('nic_attach')
+                if if_attached:
+                    ifaces.append(if_attached)
+
+        if ifaces:
+            return ifaces
+        else:
+            return False
+
+    @accepts(Int('id'))
+    async def get_console(self, id):
         """
         Get the console device from a given guest.
 
@@ -344,7 +392,7 @@ class VMService(CRUDService):
             str: with the device path or False.
         """
         try:
-            guest_status = self.status(id)
+            guest_status = await self.status(id)
         except:
             guest_status = None
 
@@ -368,11 +416,10 @@ class VMService(CRUDService):
         Bool('autostart'),
         register=True,
     ))
-    def do_create(self, data):
+    async def do_create(self, data):
         """Create a VM."""
         devices = data.pop('devices')
-
-        pk = self.middleware.call('datastore.insert', 'vm.vm', data)
+        pk = await self.middleware.call('datastore.insert', 'vm.vm', data)
 
         if self.vmutils.is_container(data) is True:
             image_url = CONTAINER_IMAGES.get('CoreOS')
@@ -389,13 +436,13 @@ class VMService(CRUDService):
 
         for device in devices:
             device['vm'] = pk
-            self.middleware.call('datastore.insert', 'vm.device', device)
+            await self.middleware.call('datastore.insert', 'vm.device', device)
         return pk
 
     @private
-    def do_update_devices(self, id, devices):
+    async def do_update_devices(self, id, devices):
         if devices and isinstance(devices, list) is True:
-            device_query = self.middleware.call('datastore.query', 'vm.device', [('vm__id', '=', int(id))])
+            device_query = await self.middleware.call('datastore.query', 'vm.device', [('vm__id', '=', int(id))])
 
             # Make sure both list has the same size.
             if len(device_query) != len(devices):
@@ -412,7 +459,7 @@ class VMService(CRUDService):
                 if old_item['dtype'] == update_item['dtype']:
                     old_item['attributes'] = update_item['attributes']
                     device_id = old_item.pop('id')
-                    self.middleware.call('datastore.update', 'vm.device', device_id, old_item)
+                    await self.middleware.call('datastore.update', 'vm.device', device_id, old_item)
             return True
 
     @accepts(Int('id'), Patch(
@@ -420,20 +467,20 @@ class VMService(CRUDService):
         'vm_update',
         ('attr', {'update': True}),
     ))
-    def do_update(self, id, data):
+    async def do_update(self, id, data):
         """Update all information of a specific VM."""
         devices = data.pop('devices', None)
         if devices:
-            update_devices = self.do_update_devices(id, devices)
+            update_devices = await self.do_update_devices(id, devices)
         if data:
-            return self.middleware.call('datastore.update', 'vm.vm', id, data)
+            return await self.middleware.call('datastore.update', 'vm.vm', id, data)
         else:
             return update_devices
 
     @accepts(Int('id'),
         Dict('devices', additional_attrs=True),
     )
-    def create_device(self, id, data):
+    async def create_device(self, id, data):
         """Create a new device in an existing vm."""
         devices_type = ('NIC', 'DISK', 'CDROM', 'VNC')
         devices = data.get('devices', None)
@@ -443,7 +490,7 @@ class VMService(CRUDService):
             dtype = devices[0].get('dtype', None)
             if dtype in devices_type and isinstance(devices, list) is True:
                 devices = devices[0]
-                self.middleware.call('datastore.insert', 'vm.device', devices)
+                await self.middleware.call('datastore.insert', 'vm.device', devices)
                 return True
             else:
                 return False
@@ -451,29 +498,53 @@ class VMService(CRUDService):
             return False
 
     @accepts(Int('id'))
-    def do_delete(self, id):
+    async def do_delete(self, id):
         """Delete a VM."""
-        return self.middleware.call('datastore.delete', 'vm.vm', id)
+        try:
+            return await self.middleware.call('datastore.delete', 'vm.vm', id)
+        except Exception as err:
+            self.logger.error("===> {0}".format(err))
+            return False
 
+    @item_method
     @accepts(Int('id'))
-    def start(self, id):
+    async def start(self, id):
         """Start a VM."""
-        return self._manager.start(id)
+        try:
+            return await self._manager.start(id)
+        except Exception as err:
+            self.logger.error("===> {0}".format(err))
+            return False
 
+    @item_method
     @accepts(Int('id'))
-    def stop(self, id):
+    async def stop(self, id):
         """Stop a VM."""
-        return self._manager.stop(id)
+        try:
+            return await self._manager.stop(id)
+        except Exception as err:
+            self.logger.error("===> {0}".format(err))
+            return False
 
+    @item_method
     @accepts(Int('id'))
-    def restart(self, id):
+    async def restart(self, id):
         """Restart a VM."""
-        return self._manager.restart(id)
+        try:
+            return await self._manager.restart(id)
+        except Exception as err:
+            self.logger.error("===> {0}".format(err))
+            return False
 
+    @item_method
     @accepts(Int('id'))
-    def status(self, id):
+    async def status(self, id):
         """Get the status of a VM, if it is RUNNING or STOPPED."""
-        return self._manager.status(id)
+        try:
+            return await self._manager.status(id)
+        except Exception as err:
+            self.logger.error("===> {0}".format(err))
+            return False
 
     def fetch_hookreport(self, blocknum, blocksize, totalsize, job, file_name):
         """Hook to report the download progress."""
@@ -526,15 +597,15 @@ class VMService(CRUDService):
                 dst_file.write(data)
 
 
-def kmod_load():
-    kldstat = Popen(['/sbin/kldstat'], stdout=subprocess.PIPE).communicate()[0]
+async def kmod_load():
+    kldstat = (await (await Popen(['/sbin/kldstat'], stdout=subprocess.PIPE)).communicate())[0].decode()
     if 'vmm.ko' not in kldstat:
-        Popen(['/sbin/kldload', 'vmm'])
+        await Popen(['/sbin/kldload', 'vmm'])
     if 'nmdm.ko' not in kldstat:
-        Popen(['/sbin/kldload', 'nmdm'])
+        await Popen(['/sbin/kldload', 'nmdm'])
 
 
-def _event_system_ready(middleware, event_type, args):
+async def _event_system_ready(middleware, event_type, args):
     """
     Method called when system is ready, supposed to start VMs
     flagged that way.
@@ -542,10 +613,10 @@ def _event_system_ready(middleware, event_type, args):
     if args['id'] != 'ready':
         return
 
-    for vm in middleware.call('vm.query', [('autostart', '=', True)]):
-        middleware.call('vm.start', vm['id'])
+    for vm in await middleware.call('vm.query', [('autostart', '=', True)]):
+        await middleware.call('vm.start', vm['id'])
 
 
 def setup(middleware):
-    gevent.spawn(kmod_load)
+    asyncio.ensure_future(kmod_load())
     middleware.event_subscribe('system', _event_system_ready)

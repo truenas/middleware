@@ -8,8 +8,8 @@ msgstr ""
 "Project-Id-Version: PACKAGE VERSION\n"
 "Report-Msgid-Bugs-To: \n"
 "POT-Creation-Date: 2012-06-04 02:01-0700\n"
-"PO-Revision-Date: 2017-03-20 13:07+0000\n"
-"Last-Translator: Michael Arlt <michaelarlt78@googlemail.com>\n"
+"PO-Revision-Date: 2017-06-18 00:57+0000\n"
+"Last-Translator: Ettore Atalan <atalanttore@googlemail.com>\n"
 "Language-Team: German <http://weblate.trueos.org/projects/freenas/django/de/>"
 "\n"
 "Language: de\n"
@@ -7191,7 +7191,7 @@ msgstr "plzip (beste Komprimierung)"
 #: services/models.py:2103
 #: services/models.py:2104
 msgid "Domain Controller"
-msgstr "Name des Domänencontrollers"
+msgstr "Domänencontroller"
 
 #: choices.py:709
 msgid "data"
@@ -7419,16 +7419,15 @@ msgstr ""
 
 #: plugins/forms.py:210
 msgid "Unable to set repository: %s"
-msgstr ""
+msgstr "Repositorium kann nicht festgelegt werden: %s"
 
 #: plugins/models.py:112
 msgid "Plugin"
 msgstr "Plugin"
 
 #: plugins/models.py:217
-#, fuzzy
 msgid "URL for the plugins repository"
-msgstr "Pfad zum Verzeichnis der Plugins"
+msgstr "URL für das Plugins-Repositorium"
 
 #: plugins/views.py:196
 msgid "Jail does not exist"
@@ -7452,9 +7451,8 @@ msgid "Confirm Domain Account Password"
 msgstr "Domänenkontopasswort bestätigen"
 
 #: services/forms.py:927
-#, fuzzy
 msgid "Peer Secret (Confirm)"
-msgstr "Geheimnis (Bestätigen)"
+msgstr "Peer-Geheimnis (Bestätigen)"
 
 #: services/forms.py:1456
 msgid "Serial not found and glabel failed for %(disk)s: %(error)s"
@@ -7467,15 +7465,15 @@ msgstr "Es existiert bereits eine Gruppe mit diesem Namen."
 
 #: services/models.py:233
 msgid "Server minimum protocol"
-msgstr ""
+msgstr "Server-Mindestprotokoll"
 
 #: services/models.py:235
 msgid "The minimum protocol version that will be supported by the server"
-msgstr ""
+msgstr "Die minimale Protokollversion, die vom Server unterstützt wird"
 
 #: services/models.py:243
 msgid "The highest protocol version that will be supported by the server"
-msgstr ""
+msgstr "Die höchste Protokollversion, die vom Server unterstützt wird"
 
 #: services/models.py:248
 msgid ""
@@ -7491,9 +7489,8 @@ msgid ""
 msgstr ""
 
 #: services/models.py:339
-#, fuzzy
 msgid "Allow non-root mount"
-msgstr "Erlaube Root Anmeldung"
+msgstr "Nicht-root-Einhängung erlauben"
 
 #: services/models.py:350
 #, fuzzy
@@ -7505,15 +7502,12 @@ msgid "Enable multithreaded mode"
 msgstr ""
 
 #: services/models.py:914
-#, fuzzy
 msgid "IP Server"
-msgstr "NTP Server"
+msgstr "IP-Server"
 
 #: services/models.py:997
-#, fuzzy
 msgid "These parameters will be added to /etc/snmpd.config."
-msgstr ""
-"Diese Parameter werden der Konfigurationsdatei proftpd.conf hinzugefügt."
+msgstr "Diese Parameter werden zu /etc/snmpd.config hinzugefügt."
 
 #: services/models.py:1036
 #, fuzzy
@@ -7531,13 +7525,12 @@ msgid ""
 msgstr ""
 
 #: services/models.py:1278
-#, fuzzy
 msgid "Enable TLS"
-msgstr "SSL/TLS einschalten"
+msgstr "TLS aktivieren"
 
 #: services/models.py:1285
 msgid "TLS policy"
-msgstr ""
+msgstr "TLS-Richtlinie"
 
 #: services/models.py:1288
 msgid "TLS allow client renegotiations"
@@ -7556,13 +7549,12 @@ msgid "TLS no session reuse required"
 msgstr ""
 
 #: services/models.py:1332
-#, fuzzy
 msgid "TLS DNS name required"
-msgstr "Die Anzahl wird benötigt"
+msgstr "TLS-DNS-Name erforderlich"
 
 #: services/models.py:1340
 msgid "Certificate and private key"
-msgstr ""
+msgstr "Zertifikat und privater Schlüssel"
 
 #: services/models.py:1449
 msgid "SFTP Log Facility"
@@ -7594,22 +7586,20 @@ msgstr ""
 
 # Gibt es eine sinnvolle Übersetzung für "Keytab" bei Kerberos?
 #: services/models.py:1651
-#, fuzzy
 msgid "Kerberos Server"
-msgstr "Kerberos Keytab Datei"
+msgstr "Kerberos-Server"
 
 #: services/models.py:1652
 msgid "Hostname of the kerberos server to use."
-msgstr ""
+msgstr "Hostname des zu verwendenden Kerberos-Servers."
 
 #: services/models.py:1657
 msgid "Kerberos Password Server"
-msgstr ""
+msgstr "Kerberos-Passwortserver"
 
 #: services/models.py:1710
-#, fuzzy
 msgid "NIS domain"
-msgstr "Domäne"
+msgstr "NIS-Domäne"
 
 #: services/models.py:1722
 msgid "Cause ypbind to run in secure mode"
@@ -7617,19 +7607,16 @@ msgstr ""
 
 #: services/models.py:1735
 #: services/models.py:1736
-#, fuzzy
 msgid "NIS Domain"
-msgstr "Domäne"
+msgstr "NIS-Domäne"
 
 #: services/models.py:1850
-#, fuzzy
 msgid "Interface Description"
-msgstr "Beschreibung"
+msgstr "Schnittstellenbeschreibung"
 
 #: services/models.py:1855
-#, fuzzy
 msgid "Country Code"
-msgstr "Land"
+msgstr "Ländercode"
 
 #: services/models.py:1858
 msgid ""
@@ -7637,9 +7624,8 @@ msgid ""
 msgstr ""
 
 #: services/models.py:2009
-#, fuzzy
 msgid "Informational"
-msgstr "Informell"
+msgstr "Informationell"
 
 #: services/models.py:2010
 #, fuzzy
@@ -7682,15 +7668,13 @@ msgstr ""
 
 #: services/nav.py:118
 #: templates/services/core.html:27
-#, fuzzy
 msgid "Directory Services"
-msgstr "Verzeichnisberechtigung"
+msgstr "Verzeichnisdienste"
 
 #: sharing/admin.py:81
 #: sharing/models.py:330
-#, fuzzy
 msgid "Paths"
-msgstr "Pfad"
+msgstr "Pfade"
 
 #: sharing/forms.py:136
 #: sharing/forms.py:141

@@ -1103,7 +1103,7 @@ class ActiveDirectory(DirectoryServiceBase):
                 super(ActiveDirectory, self).save()
 
             except Exception as e:
-                log.debug("ActiveDirectory: Unable to create kerberos realm: %s", e)
+                log.debug("ActiveDirectory: Unable to create kerberos realm: %s", e, exc_info=True)
 
     class Meta:
         verbose_name = _("Active Directory")

@@ -2092,7 +2092,7 @@ class WebDAVForm(ModelForm):
 
     def clean(self):
         cdata = self.cleaned_data
-        if cdata.get("webdav_password") != cdata.get("webdav_password2"):
+        if self._api is not True and cdata.get("webdav_password") != cdata.get("webdav_password2"):
             self._errors["webdav_password"] = self.error_class(
                 [_("The two password fields didn't match.")]
             )
