@@ -590,43 +590,6 @@ def domaincontroller_objects():
     return objects
 
 
-def nt4_enabled():
-    db = get_freenas_var("FREENAS_CONFIG", "/data/freenas-v1.db")
-    h = sqlite3.connect(db)
-    c = h.cursor()
-
-    enabled = False
-    sql = "select nt4_enable from directoryservice_nt4"
-    c.execute(sql)
-    row = c.fetchone()
-    if row and row[0] != 0:
-        enabled = True
-
-    c.close()
-    h.close()
-
-    return enabled
-
-
-def nt4_objects():
-    h = sqlite3.connect(FREENAS_DATABASE)
-    h.row_factory = sqlite3.Row
-    c = h.cursor()
-
-    results = c.execute("SELECT * FROM directoryservice_nt4 ORDER BY -id")
-
-    objects = []
-    for row in results:
-        obj = {}
-        for key in list(row.keys()):
-            obj[key] = row[key]
-        objects.append(obj)
-
-    c.close()
-    h.close()
-    return objects
-
-
 def nis_enabled():
     from freenasUI.directoryservice.models import NIS
 

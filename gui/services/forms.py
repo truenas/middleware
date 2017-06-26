@@ -46,7 +46,6 @@ from freenasUI.common.samba import Samba4
 from freenasUI.common.system import (
     validate_netbios_name,
     activedirectory_enabled,
-    nt4_enabled,
     ldap_enabled
 )
 from freenasUI.freeadmin.forms import DirectoryBrowser
@@ -157,7 +156,7 @@ class CIFSForm(ModelForm):
         else:
             self.fields['cifs_srv_bindip'].initial = ('')
 
-        if activedirectory_enabled() or nt4_enabled():
+        if activedirectory_enabled():
             self.initial['cifs_srv_localmaster'] = False
             self.fields['cifs_srv_localmaster'].widget.attrs['disabled'] = 'disabled'
             self.initial['cifs_srv_timeserver'] = False

@@ -1114,8 +1114,7 @@ require([
             "ad_enable",
             "dc_enable",
             "ldap_enable",
-            "nis_enable",
-            "nt4_enable"
+            "nis_enable"
         ];
 
         set = []
@@ -1218,11 +1217,6 @@ require([
     nis_mutex_toggle = function() {
         nis = registry.byId("id_nis_enable");
         directoryservice_mutex_toggle('nis_enable', nis);
-    }
-
-    nt4_mutex_toggle = function() {
-        nt4 = registry.byId("id_nt4_enable");
-        directoryservice_mutex_toggle('nt4_enable', nt4);
     }
 
     directoryservice_idmap_get_edit_url = function(eid, ds_type, ds_id) {
