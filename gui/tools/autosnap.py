@@ -256,6 +256,7 @@ for task in TaskObjects:
     proc.communicate()
     if proc.returncode != 0:
         log.warn(f'Volume {vol_name} not imported, skipping snapshot task #{task.id}')
+        continue
     if isMatchingTime(task, snaptime):
         if task.task_recursive:
             taskpath['recursive'].append(task.task_filesystem)
