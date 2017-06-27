@@ -528,6 +528,7 @@ make_swap()
     local _swapparts
 
     _swapparts=$(for _disk in $*; do echo ${_disk}p3; done)
+    gmirror destroy -f swap || true
     gmirror label -b prefer swap ${_swapparts}
     echo "/dev/mirror/swap.eli		none			swap		sw		0	0" > /tmp/data/data/fstab.swap
 }
