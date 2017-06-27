@@ -79,14 +79,12 @@ from freenasUI.common.ssl import (
 from freenasUI.directoryservice.forms import (
     ActiveDirectoryForm,
     LDAPForm,
-    NISForm,
-    NT4Form,
+    NISForm
 )
 from freenasUI.directoryservice.models import (
     ActiveDirectory,
     LDAP,
-    NIS,
-    NT4,
+    NIS
 )
 from freenasUI.freeadmin.views import JsonResp
 from freenasUI.freeadmin.utils import key_order
@@ -818,30 +816,6 @@ class InitialWizard(CommonWizard):
                     log.warn(
                         'NIS data failed to validate: %r',
                         nisform._errors,
-                    )
-            elif cleaned_data.get('ds_type') == 'nt4':
-                try:
-                    nt4 = NT4.objects.all().order_by('-id')[0]
-                except:
-                    nt4 = NT4.objects.create()
-
-                nt4data = nt4.__dict__
-                for name, value in list(cleaned_data.items()):
-                    if not name.startswith('ds_nt4'):
-                        continue
-                    nt4data[name.replace('ds_', '')] = value
-                nt4data['nt4_enable'] = True
-
-                nt4form = NT4Form(
-                    data=nt4data,
-                    instance=nt4,
-                )
-                if nt4form.is_valid():
-                    nt4form.save()
-                else:
-                    log.warn(
-                        'NT4 data failed to validate: %r',
-                        nt4form._errors,
                     )
 
         # Change permission after joining directory service
@@ -1764,7 +1738,6 @@ class InitialWizardDSForm(Form):
             ('ad', _('Active Directory')),
             ('ldap', _('LDAP')),
             ('nis', _('NIS')),
-            ('nt4', _('NT4')),
         ),
         initial='ad',
     )
@@ -1807,14 +1780,6 @@ class InitialWizardDSForm(Form):
                 self.fields['ds_%s' % fname] = field
                 field.required = False
 
-        for fname, field in list(NT4Form().fields.items()):
-            if (
-                fname.find('enable') == -1 and
-                fname not in NT4Form.advanced_fields
-            ):
-                self.fields['ds_%s' % fname] = field
-                field.required = False
-
         pertype = defaultdict(list)
         for fname in list(self.fields.keys()):
             if fname.startswith('ds_ad_'):
@@ -1823,8 +1788,6 @@ class InitialWizardDSForm(Form):
                 pertype['ldap'].append('id_ds-%s' % fname)
             elif fname.startswith('ds_nis_'):
                 pertype['nis'].append('id_ds-%s' % fname)
-            elif fname.startswith('ds_nt4_'):
-                pertype['nt4'].append('id_ds-%s' % fname)
 
         self.jsChange = 'genericSelectFields(\'%s\', \'%s\');' % (
             'id_ds-ds_type',
@@ -1838,9 +1801,8 @@ class InitialWizardDSForm(Form):
     def show_condition(cls, wizard):
         ad = ActiveDirectory.objects.all().filter(ad_enable=True).exists()
         ldap = LDAP.objects.all().filter(ldap_enable=True).exists()
-        nt4 = NT4.objects.all().filter(nt4_enable=True).exists()
         nis = NIS.objects.all().filter(nis_enable=True).exists()
-        return not(ad or ldap or nt4 or nis)
+        return not(ad or ldap or nis)
 
     def clean(self):
         cdata = self.cleaned_data
@@ -1959,31 +1921,6 @@ class InitialWizardDSForm(Form):
                         self._errors[fname] = self.error_class([
                             _('This field is required.'),
                         ])
-
-        elif cdata.get('ds_type') == 'nt4':
-            values = []
-            empty = True
-            for fname in list(self.fields.keys()):
-                if fname.startswith('ds_nt4_'):
-                    value = cdata.get(fname)
-                    values.append((fname, value))
-                    if empty and value:
-                        empty = False
-
-            if not empty:
-                for fname, value in values:
-                    if not value and NT4Form.base_fields[
-                        fname.replace('ds_', '')
-                    ].required:
-                        self._errors[fname] = self.error_class([
-                            _('This field is required.'),
-                        ])
-                password1 = cdata.get('ds_nt4_adminpw')
-                password2 = cdata.get('ds_nt4_adminpw2')
-                if password1 != password2:
-                    self._errors['ds_nt4_adminpw2'] = self.error_class([
-                        _('The two password fields didn\'t match.')
-                    ])
 
         return cdata
 

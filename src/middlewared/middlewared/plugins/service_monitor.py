@@ -52,7 +52,7 @@ class ServiceMonitorThread(threading.Thread):
         # and the service becomes available, we do not see a transition occur and therefore do not
         # start the service.
         #
-        if service in ('activedirectory', 'ldap', 'nis', 'nt4'):
+        if service in ('activedirectory', 'ldap', 'nis'):
             try:
                 ds = self.middleware.call('datastore.query', 'directoryservice.%s' % service)[0]
                 if service == 'activedirectory':

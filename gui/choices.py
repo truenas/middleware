@@ -740,7 +740,6 @@ DIRECTORY_SERVICE_CHOICES = (
     ('activedirectory', _('Active Directory')),
     ('domaincontroller', _('Domain Controller')),
     ('ldap', _('LDAP')),
-    ('nt4', _('NT4')),
     ('nis', _('NIS')),
     )
 

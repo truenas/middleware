@@ -579,32 +579,6 @@ class ServiceService(Service):
     def _clear_activedirectory_config(self):
         self._system("/bin/rm -f /etc/directoryservice/ActiveDirectory/config")
 
-    def _started_nt4(self):
-        res = False
-        ret = self._system("service ix-nt4 status")
-        if not ret:
-            res = True
-        return res, []
-
-    def _start_nt4(self, **kwargs):
-        res = False
-        ret = self._system("/etc/directoryservice/NT4/ctl start")
-        if not ret:
-            res = True
-        return res
-
-    def _restart_nt4(self, **kwargs):
-        res = False
-        ret = self._system("/etc/directoryservice/NT4/ctl restart")
-        if not ret:
-            res = True
-        return res
-
-    def _stop_nt4(self, **kwargs):
-        res = False
-        self._system("/etc/directoryservice/NT4/ctl stop")
-        return res
-
     def _started_activedirectory(self, **kwargs):
         for srv in ('kinit', 'activedirectory', ):
             if self._system('/usr/sbin/service ix-%s status' % (srv, )) != 0:

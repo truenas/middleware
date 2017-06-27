@@ -14,12 +14,11 @@
         ad_enabled = safe_call('notifier.common', 'system', 'activedirectory_enabled')
         dc_enabled = safe_call('notifier.common', 'system', 'domaincontroller_enabled')
         ldap_enabled = safe_call('notifier.common', 'system', 'ldap_enabled')
-        nt4_enabled = safe_call('notifier.common', 'system', 'nt4_enabled')
 %>
 
 # auth
 auth		sufficient	pam_self.so		no_warn
-% if ad_enabled or nt4_enabled or dc_enabled:
+% if ad_enabled or dc_enabled:
 auth		sufficient	/usr/local/lib/pam_winbind.so silent try_first_pass krb5_auth krb5_ccache_type=FILE
 % endif
 % if ldap_enabled:
@@ -30,7 +29,7 @@ auth		include		system
 # account
 account		requisite	pam_securetty.so
 account		required	pam_nologin.so
-% if ad_enabled or nt4_enabled or dc_enabled:
+% if ad_enabled or dc_enabled:
 account		sufficient	/usr/local/lib/pam_winbind.so krb5_auth krb5_ccache_type=FILE
 % endif
 % if ldap_enabled:
