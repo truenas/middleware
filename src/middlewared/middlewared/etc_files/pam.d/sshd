@@ -15,13 +15,12 @@
         dc_enabled = safe_call('notifier.common', 'system', 'domaincontroller_enabled')
         ldap_enabled = safe_call('notifier.common', 'system', 'ldap_enabled')
         nis_enabled = safe_call('notifier.common', 'system', 'nis_enabled')
-        nt4_enabled = safe_call('notifier.common', 'system', 'nt4_enabled')
 %>
 
 # auth
 auth		sufficient	pam_opie.so		no_warn no_fake_prompts
 auth		requisite	pam_opieaccess.so	no_warn allow_local
-% if ad_enabled or nt4_enabled or dc_enabled:
+% if ad_enabled or dc_enabled:
 auth		sufficient	/usr/local/lib/pam_winbind.so	silent try_first_pass krb5_auth krb5_ccache_type=FILE
 % endif
 % if ldap_enabled:
@@ -35,7 +34,7 @@ auth		required	pam_unix.so		no_warn try_first_pass
 account		required	pam_nologin.so
 #account	required	pam_krb5.so
 account		required	pam_login_access.so
-% if ad_enabled or nt4_enabled or dc_enabled:
+% if ad_enabled or dc_enabled:
 account		sufficient	/usr/local/lib/pam_winbind.so krb5_auth krb5_ccache_type=FILE
 % endif
 % if ldap_enabled:
@@ -46,13 +45,13 @@ account		required	pam_unix.so
 # session
 #session	optional	pam_ssh.so		want_agent
 session		required	pam_permit.so
-% if ad_enabled or ldap_enabled or nis_enabled or nt4_enabled or dc_enabled:
+% if ad_enabled or ldap_enabled or nis_enabled or dc_enabled:
 session		required	/usr/local/lib/pam_mkhomedir.so
 % endif
 
 # password
 #password	sufficient	pam_krb5.so		no_warn try_first_pass
-% if ad_enabled or nt4_enabled or dc_enabled:
+% if ad_enabled or dc_enabled:
 password	sufficient	/usr/local/lib/pam_winbind.so	try_first_pass krb5_auth krb5_ccache_type=FILE
 % endif
 % if ldap_enabled:

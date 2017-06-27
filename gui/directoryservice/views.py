@@ -64,11 +64,6 @@ def directoryservice_home(request):
         nis = models.NIS.objects.create()
 
     try:
-        nt4 = models.NT4.objects.order_by("-id")[0]
-    except:
-        nt4 = models.NT4.objects.create()
-
-    try:
         ks = models.KerberosSettings.objects.order_by("-id")[0]
     except:
         ks = models.KerberosSettings.objects.create()
@@ -78,7 +73,6 @@ def directoryservice_home(request):
         'activedirectory': activedirectory,
         'ldap': ldap,
         'nis': nis,
-        'nt4': nt4,
         'kerberossettings': ks,
     })
 
@@ -170,7 +164,6 @@ def get_directoryservice_status():
     dc_enable = False
     ldap_enable = False
     nis_enable = False
-    nt4_enable = False
 
     ad = models.ActiveDirectory.objects.all()
     if ad and ad[0]:
@@ -184,10 +177,6 @@ def get_directoryservice_status():
     if nis and nis[0]:
         nis_enable = nis[0].nis_enable
 
-    nt4 = models.NT4.objects.all()
-    if nt4 and nt4[0]:
-        nt4_enable = nt4[0].nt4_enable
-
     svc = services.objects.get(srv_service='domaincontroller')
     if svc:
         dc_enable = svc.srv_enable
@@ -196,7 +185,6 @@ def get_directoryservice_status():
     data['dc_enable'] = dc_enable
     data['ldap_enable'] = ldap_enable
     data['nis_enable'] = nis_enable
-    data['nt4_enable'] = nt4_enable 
 
     return data
 

@@ -34,7 +34,6 @@ from freenasUI.common.system import (
     ldap_enabled,
     activedirectory_enabled,
     domaincontroller_enabled,
-    nt4_enabled,
     nis_enabled
 )
 
@@ -62,13 +61,6 @@ FREENAS_AD_GROUPCACHE = os.path.join(FREENAS_AD_CACHEDIR, ".groups")
 FREENAS_AD_LOCALDIR = os.path.join(FREENAS_AD_CACHEDIR, ".local")
 FREENAS_AD_LOCAL_USERCACHE = os.path.join(FREENAS_AD_LOCALDIR, ".users")
 FREENAS_AD_LOCAL_GROUPCACHE = os.path.join(FREENAS_AD_LOCALDIR, ".groups")
-
-FREENAS_NT4_CACHEDIR = os.path.join(FREENAS_CACHEDIR, ".nt4")
-FREENAS_NT4_USERCACHE = os.path.join(FREENAS_NT4_CACHEDIR, ".users")
-FREENAS_NT4_GROUPCACHE = os.path.join(FREENAS_NT4_CACHEDIR, ".groups")
-FREENAS_NT4_LOCALDIR = os.path.join(FREENAS_NT4_CACHEDIR, ".local")
-FREENAS_NT4_LOCAL_USERCACHE = os.path.join(FREENAS_NT4_LOCALDIR, ".users")
-FREENAS_NT4_LOCAL_GROUPCACHE = os.path.join(FREENAS_NT4_LOCALDIR, ".groups")
 
 FREENAS_NIS_CACHEDIR = os.path.join(FREENAS_CACHEDIR, ".nis")
 FREENAS_NIS_USERCACHE = os.path.join(FREENAS_NIS_CACHEDIR, ".users")
@@ -323,58 +315,6 @@ class FreeNAS_LDAP_QueryCache(FreeNAS_BaseCache):
         log.debug("FreeNAS_LDAP_QueryCache.__init__: leave")
 
 
-class FreeNAS_NT4_UserCache(FreeNAS_BaseCache):
-    def __init__(self, **kwargs):
-        log.debug("FreeNAS_NT4_UserCache.__init__: enter")
-
-        cachedir = kwargs.get('cachedir', FREENAS_NT4_USERCACHE)
-        dir = kwargs.get('dir', None)
-
-        cachedir = cachedir if not dir else os.path.join(cachedir, dir)
-        super(FreeNAS_NT4_UserCache, self).__init__(cachedir)
-
-        log.debug("FreeNAS_NT4_UserCache.__init__: leave")
-
-
-class FreeNAS_NT4_GroupCache(FreeNAS_BaseCache):
-    def __init__(self, **kwargs):
-        log.debug("FreeNAS_NT4_GroupCache.__init__: enter")
-
-        cachedir = kwargs.get('cachedir', FREENAS_NT4_GROUPCACHE)
-        dir = kwargs.get('dir', None)
-
-        cachedir = cachedir if not dir else os.path.join(cachedir, dir)
-        super(FreeNAS_NT4_GroupCache, self).__init__(cachedir)
-
-        log.debug("FreeNAS_NT4_GroupCache.__init__: leave")
-
-
-class FreeNAS_NT4_LocalUserCache(FreeNAS_BaseCache):
-    def __init__(self, **kwargs):
-        log.debug("FreeNAS_NT4_LocalUserCache.__init__: enter")
-
-        cachedir = kwargs.get('cachedir', FREENAS_NT4_LOCAL_USERCACHE)
-        dir = kwargs.get('dir', None)
-
-        cachedir = cachedir if not dir else os.path.join(cachedir, dir)
-        super(FreeNAS_NT4_LocalUserCache, self).__init__(cachedir)
-
-        log.debug("FreeNAS_NT4_LocalUserCache.__init__: leave")
-
-
-class FreeNAS_NT4_LocalGroupCache(FreeNAS_BaseCache):
-    def __init__(self, **kwargs):
-        log.debug("FreeNAS_NT4_LocalGroupCache.__init__: enter")
-
-        cachedir = kwargs.get('cachedir', FREENAS_NT4_LOCAL_GROUPCACHE)
-        dir = kwargs.get('dir', None)
-
-        cachedir = cachedir if not dir else os.path.join(cachedir, dir)
-        super(FreeNAS_NT4_LocalGroupCache, self).__init__(cachedir)
-
-        log.debug("FreeNAS_NT4_LocalGroupCache.__init__: leave")
-
-
 class FreeNAS_NIS_UserCache(FreeNAS_BaseCache):
     def __init__(self, **kwargs):
         log.debug("FreeNAS_NIS_UserCache.__init__: enter")
@@ -490,9 +430,6 @@ class FreeNAS_Directory_UserCache(FreeNAS_BaseCache):
         elif activedirectory_enabled():
             obj = FreeNAS_ActiveDirectory_UserCache(**kwargs)
 
-        elif nt4_enabled():
-            obj = FreeNAS_NT4_UserCache(**kwargs)
-
         elif nis_enabled():
             obj = FreeNAS_NIS_UserCache(**kwargs)
 
@@ -513,9 +450,6 @@ class FreeNAS_Directory_GroupCache(FreeNAS_BaseCache):
 
         elif activedirectory_enabled():
             obj = FreeNAS_ActiveDirectory_GroupCache(**kwargs)
-
-        elif nt4_enabled():
-            obj = FreeNAS_NT4_GroupCache(**kwargs)
 
         elif nis_enabled():
             obj = FreeNAS_NIS_GroupCache(**kwargs)
@@ -538,9 +472,6 @@ class FreeNAS_Directory_LocalUserCache(FreeNAS_BaseCache):
         elif activedirectory_enabled():
             obj = FreeNAS_ActiveDirectory_LocalUserCache(**kwargs)
 
-        elif nt4_enabled():
-            obj = FreeNAS_NT4_LocalUserCache(**kwargs)
-
         elif nis_enabled():
             obj = FreeNAS_NIS_LocalUserCache(**kwargs)
 
@@ -562,9 +493,6 @@ class FreeNAS_Directory_LocalGroupCache(FreeNAS_BaseCache):
         elif activedirectory_enabled():
             obj = FreeNAS_ActiveDirectory_LocalGroupCache(**kwargs)
 
-        elif nt4_enabled():
-            obj = FreeNAS_NT4_LocalGroupCache(**kwargs)
-
         elif nis_enabled():
             obj = FreeNAS_NIS_LocalGroupCache(**kwargs)
 
@@ -581,9 +509,7 @@ class FreeNAS_UserCache(FreeNAS_BaseCache):
 
         obj = None
         if (
-            ldap_enabled() or activedirectory_enabled() or
-            nt4_enabled() or nis_enabled() or
-            domaincontroller_enabled() or nis_enabled()
+            ldap_enabled() or activedirectory_enabled() or nis_enabled() or domaincontroller_enabled()
         ):
             obj = FreeNAS_Directory_LocalUserCache(**kwargs)
 
@@ -600,9 +526,7 @@ class FreeNAS_GroupCache(FreeNAS_BaseCache):
 
         obj = None
         if (
-            ldap_enabled() or activedirectory_enabled() or
-            nt4_enabled() or nis_enabled() or
-            domaincontroller_enabled() or nis_enabled()
+            ldap_enabled() or activedirectory_enabled() or nis_enabled() or domaincontroller_enabled()
         ):
             obj = FreeNAS_Directory_LocalGroupCache(**kwargs)
 

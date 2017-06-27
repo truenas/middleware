@@ -343,7 +343,7 @@ def get_dcerpc_endpoint_servers():
 
 def get_server_role(client):
     role = "standalone"
-    if client.call('notifier.common', 'system', 'nt4_enabled') or client.call('notifier.common', 'system', 'activedirectory_enabled') or smb4_ldap_enabled(client):
+    if client.call('notifier.common', 'system', 'activedirectory_enabled') or smb4_ldap_enabled(client):
         role = "member"
 
     if client.call('notifier.common', 'system', 'domaincontroller_enabled'):
@@ -675,58 +675,6 @@ def configure_idmap_backend(client, smb4_conf, idmap, domain):
         pass
 
 
-def add_nt4_conf(client, smb4_conf):
-    # TODO: These are unused, will they be at some point?
-    # rid_range_start = 20000
-    # rid_range_end = 20000000
-
-    try:
-        nt4 = Struct(client.call('datastore.query', 'directoryservice.nt4', None, {'get': True}))
-        nt4.ds_type = 4  # FIXME: DS_TYPE_NT4 = 4
-    except:
-        return
-
-    dc_ip = None
-    try:
-        answers = resolver.query(nt4.nt4_dcname, 'A')
-        dc_ip = answers[0]
-
-    except Exception as e:
-        log.debug(
-            "resolver query for {0}'s A record failed with {1}".format(nt4.nt4_dcname, e)
-        )
-        log_traceback(log=log)
-        dc_ip = nt4.nt4_dcname
-
-    nt4_workgroup = nt4.nt4_workgroup.upper()
-
-    with open("/usr/local/etc/lmhosts", "w") as f:
-        f.write("%s\t%s\n" % (dc_ip, nt4.nt4_dcname.upper()))
-
-    confset2(smb4_conf, "workgroup = %s", nt4_workgroup)
-
-    confset1(smb4_conf, "security = domain")
-    confset1(smb4_conf, "password server = *")
-
-    idmap = Struct(client.call('notifier.ds_get_idmap_object', nt4.ds_type, nt4.id, nt4.nt4_idmap_backend))
-    configure_idmap_backend(client, smb4_conf, idmap, nt4_workgroup)
-
-    confset1(smb4_conf, "winbind cache time = 7200")
-    confset1(smb4_conf, "winbind offline logon = yes")
-    confset1(smb4_conf, "winbind enum users = yes")
-    confset1(smb4_conf, "winbind enum groups = yes")
-    confset1(smb4_conf, "winbind nested groups = yes")
-    confset2(
-        smb4_conf, "winbind use default domain = %s", "yes" if nt4.nt4_use_default_domain else "no"
-    )
-
-    confset1(smb4_conf, "template shell = /bin/sh")
-
-    confset1(smb4_conf, "local master = no")
-    confset1(smb4_conf, "domain master = no")
-    confset1(smb4_conf, "preferred master = no")
-
-
 def set_ldap_password(client):
     try:
         ldap = Struct(client.call('datastore.query', 'directoryservice.LDAP', None, {'get': True}))
@@ -1042,7 +990,7 @@ def generate_smb4_conf(client, smb4_conf, role):
         confset2(smb4_conf, "domain logons = %s",
                  "yes" if cifs.domain_logons else "no")
 
-    if (not client.call('notifier.common', 'system', 'nt4_enabled') and not client.call('notifier.common', 'system', 'activedirectory_enabled')):
+    if not client.call('notifier.common', 'system', 'activedirectory_enabled'):
         confset2(smb4_conf, "local master = %s",
                  "yes" if cifs.localmaster else "no")
 
@@ -1066,10 +1014,7 @@ def generate_smb4_conf(client, smb4_conf, role):
     elif role == 'member':
         confset1(smb4_conf, "server role = member server")
 
-        if client.call('notifier.common', 'system', 'nt4_enabled'):
-            add_nt4_conf(client, smb4_conf)
-
-        elif smb4_ldap_enabled(client):
+        if smb4_ldap_enabled(client):
             add_ldap_conf(client, smb4_conf)
 
         elif client.call('notifier.common', 'system', 'activedirectory_enabled'):

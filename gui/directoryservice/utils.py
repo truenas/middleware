@@ -35,9 +35,6 @@ def get_ds_object(obj_type, obj_id):
     elif obj_type == models.DS_TYPE_LDAP:
         ds_obj = models.LDAP.objects.filter(pk=obj_id)[0]
 
-    elif obj_type == models.DS_TYPE_NT4:
-        ds_obj = models.NT4.objects.filter(pk=obj_id)[0]
-
     return ds_obj
 
 
@@ -51,10 +48,6 @@ def get_ds_object_backend_type(obj_type):
     elif obj_type == models.DS_TYPE_LDAP:
         ldap = models.LDAP.objects.all()[0]
         ds_obj_backend_type = ldap.ldap_idmap_backend_type
-
-    elif obj_type == models.DS_TYPE_NT4:
-        nt4 = models.NT4.objects.all()[0]
-        ds_obj_backend_type = nt4.nt4_idmap_backend_type
 
     return ds_obj_backend_type
 
