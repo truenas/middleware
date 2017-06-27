@@ -1751,7 +1751,6 @@ class SSH(Model):
                     "logging messages from sftp-server."),
     )
     ssh_options = models.TextField(
-        max_length=120,
         verbose_name=_("Extra options"),
         blank=True,
         help_text=_("Extra options to /usr/local/etc/ssh/sshd_config (usually "
