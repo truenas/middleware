@@ -83,18 +83,17 @@ def main(args):
         ctypes.c_void_p
     )
     lc = libutil.login_getpwclass(pwnam)
+    os.setgid(passwd.pw_gid)
     if lc and lc[0]:
         libutil.setusercontext(
-            lc, pwnam, passwd.pw_uid, ctypes.c_uint(0x07ff)
+            lc, pwnam, passwd.pw_uid, ctypes.c_uint(0x07ff)  # 0x07ff LOGIN_SETALL
         )
-
-    os.setgid(passwd.pw_gid)
-    libc.setlogin(user)
-    libc.initgroups(user, passwd.pw_gid)
-    os.setuid(passwd.pw_uid)
-
-    if lc and lc[0]:
         libutil.login_close(lc)
+    else:
+        os.setgid(passwd.pw_gid)
+        libc.setlogin(user)
+        libc.initgroups(user, passwd.pw_gid)
+        os.setuid(passwd.pw_uid)
 
     try:
         os.chdir(passwd.pw_dir)
