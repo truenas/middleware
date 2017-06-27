@@ -403,9 +403,13 @@ class Dev(Tnode):
                 while getattr(pool, 'parent', None):
                     pool = pool.parent
                 # Lets check whether it is a guid
-                vdev = libzfs.ZFS().get(pool.name).vdev_by_guid(int(self.name))
-                if vdev:
-                    self.path = vdev.path
+                try:
+                    vdev = libzfs.ZFS().get(pool.name).vdev_by_guid(int(self.name))
+                    if vdev:
+                        self.path = vdev.path
+                except libzfs.ZFSException as e:
+                    if e.code.name != 'NOENT':
+                        raise
 
         if provider:
             search = self._doc.xpath(
