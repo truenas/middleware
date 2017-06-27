@@ -3319,6 +3319,8 @@ class notifier(metaclass=HookMetaclass):
             value = value.decode('utf8')
         else:
             value = str(value)
+        # Escape single quotes because of shell call
+        value = value.replace("'", "'\"'\"'")
         if recursive:
             zfsproc = self._pipeopen("/sbin/zfs set -r '%s'='%s' '%s'" % (item, value, name))
         else:
