@@ -474,17 +474,49 @@ class ShellApplication(object):
 
         # Each connection will have its own input queue
         input_queue = queue.Queue()
-        t_worker = ShellWorkerThread(ws=ws, input_queue=input_queue)
-        t_worker.start()
+        t_worker = None
+        authenticated = False
 
         async for msg in ws:
-            # Add content of every message received in input queue
-            try:
-                input_queue.put(msg.data.encode())
-            except UnicodeEncodeError:
-                # Should we handle Encode error?
-                # xterm.js seems to operate with the websocket in text mode,
-                pass
+            if authenticated:
+                # Add content of every message received in input queue
+                try:
+                    input_queue.put(msg.data.encode())
+                except UnicodeEncodeError:
+                    # Should we handle Encode error?
+                    # xterm.js seems to operate with the websocket in text mode,
+                    pass
+            else:
+                try:
+                    data = json.loads(msg.data)
+                except json.decoder.JSONDecodeError:
+                    continue
+
+                token = data.get('token')
+                if not token:
+                    continue
+
+                token = await self.middleware.call('auth.get_token', token)
+                if not token:
+                    ws.send_json({
+                        'msg': 'failed',
+                        'error': {
+                            'error': errno.EACCES,
+                            'reason': 'Invalid token',
+                        }
+                    })
+                    continue
+
+                authenticated = True
+                ws.send_json({
+                    'msg': 'connected',
+                })
+                t_worker = ShellWorkerThread(ws=ws, input_queue=input_queue)
+                t_worker.start()
+
+        # If connection was not authenticated, return earlier
+        if not authenticated:
+            return ws
 
         # If connection has been closed lets make sure shell is killed
         if t_worker.shell_pid:
