@@ -352,6 +352,15 @@ __EOF__
             proxy_set_header Connection "upgrade";
         }
 
+        location /websocket/shell {
+            proxy_pass http://127.0.0.1:6000/_shell;
+            proxy_http_version 1.1;
+            proxy_set_header X-Real-Remote-Addr \$remote_addr;
+            proxy_set_header X-Real-Remote-Port \$remote_port;
+            proxy_set_header Upgrade \$http_upgrade;
+            proxy_set_header Connection "upgrade";
+        }
+
         location /api/v2.0 {
             proxy_pass http://127.0.0.1:6000/api/v2.0;
             proxy_http_version 1.1;
