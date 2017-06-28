@@ -19,6 +19,7 @@ import imp
 import inspect
 import linecache
 import os
+import queue
 import setproctitle
 import signal
 import sys
@@ -392,6 +393,105 @@ class FileApplication(object):
         return resp
 
 
+class ShellApplication(object):
+
+    def __init__(self, middleware):
+        self.middleware = middleware
+        self.shell_pid = None
+
+    def worker(self, input_queue):
+        """
+        Worker thread responsible for forking and running the shell
+        and spawning the reader and writer threads.
+        """
+
+        self.shell_pid, master_fd = os.forkpty()
+        if self.shell_pid == 0:
+            for i in range(3, 1024):
+                if i == master_fd:
+                    continue
+                try:
+                    os.close(i)
+                except:
+                    pass
+            os.execve('/usr/local/bin/bash', ['bash'], {
+                'TERM': 'xterm',
+                'LANG': 'en_US.UTF-8',
+                'PATH': '/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin:/root/bin',
+            })
+
+        def reader():
+            """
+            Reader thread for reading from pty file descriptor
+            and forwarding it to the websocket.
+            """
+            while True:
+                read = os.read(master_fd, 1024)
+                if read == b'':
+                    break
+                self.ws.send_str(read.decode('utf8'))
+
+        def writer():
+            """
+            Writer thread for reading from input_queue and write to
+            the shell pty file descriptor.
+            """
+            while True:
+                try:
+                    get = input_queue.get(timeout=1)
+                    os.write(master_fd, get)
+                except queue.Empty:
+                    # If we timeout waiting in input query lets make sure
+                    # the shell process is still alive
+                    try:
+                        os.kill(self.shell_pid, 0)
+                    except ProcessLookupError:
+                        break
+
+        t_reader = threading.Thread(target=reader, daemon=True)
+        t_reader.start()
+
+        t_writer = threading.Thread(target=writer, daemon=True)
+        t_writer.start()
+
+        # Wait for shell to exit
+        os.waitpid(self.shell_pid, 0)
+
+        t_reader.join()
+        t_writer.join()
+
+    async def ws_handler(self, request):
+        self.ws = web.WebSocketResponse()
+        await self.ws.prepare(request)
+
+        # Each connection will have its own input queue
+        input_queue = queue.Queue()
+        t_worker = threading.Thread(target=self.worker, args=[input_queue], daemon=True)
+        t_worker.start()
+
+        async for msg in self.ws:
+            # Add content of every message received in input queue
+            try:
+                input_queue.put(msg.data.encode())
+            except UnicodeEncodeError:
+                # Should we handle Encode error?
+                # xterm.js seems to operate with the websocket in text mode,
+                pass
+
+        # If connection has been closed lets make sure shell is killed
+        if self.shell_pid:
+            try:
+                os.kill(self.shell_pid, signal.SIGTERM)
+            except ProcessLookupError:
+                pass
+
+        # Wait thread join in yet another thread to avoid event loop blockage
+        # There may be a simpler/better way to do this?
+        await self.middleware.threaded(t_worker.join)
+
+        return self.ws
+
+
 class Middleware(object):
 
     def __init__(self, loop_monitor=True, plugins_dirs=None):
@@ -702,6 +802,9 @@ class Middleware(object):
         fileapp = FileApplication(self)
         app.router.add_route('*', '/_download{path_info:.*}', fileapp.download)
         app.router.add_route('*', '/_upload{path_info:.*}', fileapp.upload)
+
+        shellapp = ShellApplication(self)
+        app.router.add_route('*', '/_shell{path_info:.*}', shellapp.ws_handler)
 
         restful_api = RESTfulAPI(self, app)
         self.__loop.run_until_complete(
