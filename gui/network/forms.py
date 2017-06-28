@@ -238,6 +238,15 @@ class InterfacesForm(ModelForm):
                         "IP address (%s)") % ip)
         return ip
 
+    def clean_int_options(self):
+        iface = self.cleaned_data.get('int_interface')
+        options = self.cleaned_data.get('int_options')
+        if iface and options and iface.startswith('lagg') and re.search(r'\bmtu\b', options):
+            raise forms.ValidationError(
+                _('MTU option is not allowed for LAGG interfaces')
+            )
+        return options
+
     def clean_int_vhid(self):
         from freenasUI.tools.vhid import scan_for_vrrp
         vip = self.cleaned_data.get('int_vip')
