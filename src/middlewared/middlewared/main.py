@@ -393,17 +393,19 @@ class FileApplication(object):
         return resp
 
 
-class ShellApplication(object):
+class ShellWorkerThread(threading.Thread):
+    """
+    Worker thread responsible for forking and running the shell
+    and spawning the reader and writer threads.
+    """
 
-    def __init__(self, middleware):
-        self.middleware = middleware
+    def __init__(self, ws, input_queue):
+        self.ws = ws
+        self.input_queue = input_queue
         self.shell_pid = None
+        super(ShellWorkerThread, self).__init__(daemon=True)
 
-    def worker(self, input_queue):
-        """
-        Worker thread responsible for forking and running the shell
-        and spawning the reader and writer threads.
-        """
+    def run(self):
 
         self.shell_pid, master_fd = os.forkpty()
         if self.shell_pid == 0:
@@ -438,7 +440,7 @@ class ShellApplication(object):
             """
             while True:
                 try:
-                    get = input_queue.get(timeout=1)
+                    get = self.input_queue.get(timeout=1)
                     os.write(master_fd, get)
                 except queue.Empty:
                     # If we timeout waiting in input query lets make sure
@@ -460,16 +462,22 @@ class ShellApplication(object):
         t_reader.join()
         t_writer.join()
 
+
+class ShellApplication(object):
+
+    def __init__(self, middleware):
+        self.middleware = middleware
+
     async def ws_handler(self, request):
-        self.ws = web.WebSocketResponse()
-        await self.ws.prepare(request)
+        ws = web.WebSocketResponse()
+        await ws.prepare(request)
 
         # Each connection will have its own input queue
         input_queue = queue.Queue()
-        t_worker = threading.Thread(target=self.worker, args=[input_queue], daemon=True)
+        t_worker = ShellWorkerThread(ws=ws, input_queue=input_queue)
         t_worker.start()
 
-        async for msg in self.ws:
+        async for msg in ws:
             # Add content of every message received in input queue
             try:
                 input_queue.put(msg.data.encode())
@@ -479,9 +487,9 @@ class ShellApplication(object):
                 pass
 
         # If connection has been closed lets make sure shell is killed
-        if self.shell_pid:
+        if t_worker.shell_pid:
             try:
-                os.kill(self.shell_pid, signal.SIGTERM)
+                os.kill(t_worker.shell_pid, signal.SIGTERM)
             except ProcessLookupError:
                 pass
 
@@ -489,7 +497,7 @@ class ShellApplication(object):
         # There may be a simpler/better way to do this?
         await self.middleware.threaded(t_worker.join)
 
-        return self.ws
+        return ws
 
 
 class Middleware(object):
