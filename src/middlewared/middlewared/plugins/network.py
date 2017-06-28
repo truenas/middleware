@@ -1,7 +1,9 @@
 from middlewared.service import Service, private
 from middlewared.utils import Popen
+from middlewared.schema import accepts, Str
 
 import asyncio
+import ipaddr
 import ipaddress
 import netif
 import os
@@ -416,6 +418,27 @@ class RoutesService(Service):
             # remove it
             self.logger.info('Removing IPv6 default route')
             routing_table.delete(routing_table.default_route_ipv6)
+
+    @accepts(Str('ipv4_gateway'))
+    def ipv4gw_reachable(self, ipv4_gateway):
+        """
+            Get the IPv4 gateway and verify if it is reachable by any interface.
+
+            Returns:
+                bool: True if the gateway is reachable or otherwise False.
+        """
+        ignore_nics = ('lo', 'bridge')
+        for if_name, iface in list(netif.list_interfaces().items()):
+            if not if_name.startswith(ignore_nics):
+                nic = netif.get_interface(if_name)
+                if len(nic.addresses) > 1:
+                    ipv4_nic = ipaddress.IPv4Interface(nic.addresses[1])
+                    nic_network = ipaddr.IPv4Network(ipv4_nic)
+                    nic_prefixlen = nic_network.prefixlen
+                    nic_result = str(nic_network.network) + '/' + str(nic_prefixlen)
+                    if ipaddress.ip_address(str(ipv4_gateway)) in ipaddress.ip_network(str(nic_result)):
+                        return True
+        return False
 
 
 class DNSService(Service):
