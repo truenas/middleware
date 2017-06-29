@@ -475,11 +475,11 @@ class ServiceService(CRUDService):
         await self._service("collectd", "start", **kwargs)
 
     async def _reload_resolvconf(self, **kwargs):
-        self._reload_hostname()
+        await self._reload_hostname()
         await self._service("ix-resolv", "start", quiet=True, **kwargs)
 
     async def _reload_networkgeneral(self, **kwargs):
-        self._reload_resolvconf()
+        await self._reload_resolvconf()
         await self._service("routing", "restart", **kwargs)
 
     async def _reload_timeservices(self, **kwargs):
