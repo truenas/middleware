@@ -570,6 +570,7 @@ class Middleware(object):
         self.logger = logger.Logger('middlewared').getLogger()
         self.crash_reporting = logger.CrashReporting()
         self.loop_monitor = loop_monitor
+        self.plugins_dirs = plugins_dirs or []
         self.__loop = None
         self.__thread_id = threading.get_ident()
         self.__threadpool = concurrent.futures.ThreadPoolExecutor(
@@ -583,19 +584,19 @@ class Middleware(object):
         self.__hooks = defaultdict(list)
         self.__server_threads = []
         self.__init_services()
-        self.__plugins_load(plugins_dirs or [])
 
     def __init_services(self):
         from middlewared.service import CoreService
         self.add_service(CoreService(self))
 
-    def __plugins_load(self, plugins_dirs):
+    async def __plugins_load(self):
         from middlewared.service import Service, CRUDService, ConfigService
 
         main_plugins_dir = os.path.join(
             os.path.dirname(os.path.realpath(__file__)),
             'plugins',
         )
+        plugins_dirs = list(self.plugins_dirs)
         plugins_dirs.insert(0, main_plugins_dir)
 
         self.logger.debug('Loading plugins from {0}'.format(','.join(plugins_dirs)))
@@ -630,7 +631,10 @@ class Middleware(object):
                     setup_funcs.append(mod.setup)
 
         for f in setup_funcs:
-            f(self)
+            call = f(self)
+            # Allow setup to be a coroutine
+            if asyncio.iscoroutinefunction(f):
+                await call
 
         # Now that all plugins have been loaded we can resolve all method params
         # to make sure every schema is patched and references match
@@ -862,6 +866,10 @@ class Middleware(object):
             t = threading.Thread(target=self._loop_monitor_thread)
             t.setDaemon(True)
             t.start()
+
+        # Needs to happen after setting debug or may cause race condition
+        # http://bugs.python.org/issue30805
+        self.__loop.run_until_complete(self.__plugins_load())
 
         self.__loop.add_signal_handler(signal.SIGTERM, self.kill)
         self.__loop.add_signal_handler(signal.SIGUSR1, self.pdb)
