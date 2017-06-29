@@ -1341,6 +1341,7 @@ require([
         var vnc_wait = registry.byId("id_VNC_wait").domNode.parentNode.parentNode;
         var vnc_port = registry.byId("id_VNC_port").domNode.parentNode.parentNode;
         var vnc_resolution = registry.byId("id_VNC_resolution").domNode.parentNode.parentNode;
+        var vnc_bind = registry.byId("id_VNC_bind").domNode.parentNode.parentNode;
 
         domStyle.set(cdrom_path, "display", "none");
         domStyle.set(disk_mode, "display", "none");
@@ -1352,6 +1353,7 @@ require([
         domStyle.set(vnc_wait, "display", "none");
         domStyle.set(vnc_port, "display", "none");
         domStyle.set(vnc_resolution, "display", "none");
+        domStyle.set(vnc_bind, "display", "none");
 
         if(dtype.get('value') == 'DISK') {
           domStyle.set(disk_mode, "display", "");
@@ -1369,6 +1371,7 @@ require([
           domStyle.set(vnc_resolution, "display", "");
           domStyle.set(vnc_port, "display", "");
           domStyle.set(vnc_wait, "display", "");
+          domStyle.set(vnc_bind, "display", "");
         }
 
     }
