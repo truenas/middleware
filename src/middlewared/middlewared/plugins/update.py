@@ -144,12 +144,12 @@ def parse_changelog(changelog, start='', end=''):
 class UpdateService(Service):
 
     @accepts()
-    async def get_trains(self):
+    def get_trains(self):
         """
         Returns available trains dict and the currently configured train as well as the
         train of currently booted environment.
         """
-        data = await self.middleware.call('datastore.config', 'system.update')
+        data = self.middleware.call_sync('datastore.config', 'system.update')
         conf = Configuration.Configuration()
         conf.LoadTrainsConfig()
 
@@ -178,7 +178,7 @@ class UpdateService(Service):
         Str('train', required=False),
         required=False,
     ))
-    async def check_available(self, attrs=None):
+    def check_available(self, attrs=None):
         """
         Checks if there is an update available from update server.
 
@@ -200,13 +200,13 @@ class UpdateService(Service):
         """
 
         try:
-            applied = await self.middleware.call('cache.get', 'update.applied')
+            applied = self.middleware.call_sync('cache.get', 'update.applied')
         except Exception:
             applied = False
         if applied is True:
             return {'status': 'REBOOT_REQUIRED'}
 
-        train = (attrs or {}).get('train') or (await self.get_trains())['selected']
+        train = (attrs or {}).get('train') or self.middleware.call_sync('update.get_trains')['selected']
 
         handler = CheckUpdateHandler()
         manifest = CheckForUpdates(
