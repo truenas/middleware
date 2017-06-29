@@ -10,6 +10,7 @@ import os
 import re
 import signal
 import subprocess
+import urllib.request
 
 
 def dhclient_status(interface):
@@ -478,3 +479,29 @@ class DNSService(Service):
             '/sbin/resolvconf', '-a', 'lo0'
         ], stdin=subprocess.PIPE, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
         proc.communicate(input=resolvconf)
+
+
+def configure_http_proxy(middleware, *args, **kwargs):
+    """
+    Configure the `http_proxy` and `https_proxy` environment vars
+    from the database.
+    """
+    gc = middleware.call('datastore.config', 'network.globalconfiguration')
+    http_proxy = gc['gc_httpproxy']
+    if http_proxy:
+        os.environ['http_proxy'] = http_proxy
+        os.environ['https_proxy'] = http_proxy
+    elif not http_proxy:
+        if 'http_proxy' in os.environ:
+            del os.environ['http_proxy']
+        if 'https_proxy' in os.environ:
+            del os.environ['https_proxy']
+
+    # Reset global opener so ProxyHandler can be recalculated
+    urllib.request.install_opener(None)
+
+
+def setup(middleware):
+    # Configure http proxy on startup and on network.config events
+    gevent.spawn(configure_http_proxy, middleware)
+    middleware.event_subscribe('network.config', configure_http_proxy)
