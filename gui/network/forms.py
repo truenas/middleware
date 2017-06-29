@@ -649,6 +649,9 @@ class GlobalConfigurationForm(ModelForm):
         http_proxy = self.cleaned_data.get('gc_httpproxy')
         configure_http_proxy(http_proxy)
         if self.instance._orig_gc_httpproxy != http_proxy:
+            # Notify the middleware http_proxy has changed
+            with client as c:
+                c.call('core.event_send', 'network.config', 'CHANGED', {'data': {'httpproxy': http_proxy}})
             try:
                 alertd_pidfile = '/var/run/alertd.pid'
                 if os.path.exists(alertd_pidfile):
