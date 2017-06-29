@@ -20,6 +20,7 @@ import inspect
 import linecache
 import os
 import queue
+import select
 import setproctitle
 import signal
 import sys
@@ -399,10 +400,12 @@ class ShellWorkerThread(threading.Thread):
     and spawning the reader and writer threads.
     """
 
-    def __init__(self, ws, input_queue):
+    def __init__(self, ws, input_queue, loop):
         self.ws = ws
         self.input_queue = input_queue
+        self.loop = loop
         self.shell_pid = None
+        self._die = False
         super(ShellWorkerThread, self).__init__(daemon=True)
 
     def run(self):
@@ -457,10 +460,22 @@ class ShellWorkerThread(threading.Thread):
         t_writer.start()
 
         # Wait for shell to exit
-        os.waitpid(self.shell_pid, 0)
+        while True:
+            try:
+                pid, rv = os.waitpid(self.shell_pid, os.WNOHANG)
+            except ChildProcessError:
+                break
+            if self._die:
+                return
+            if pid <= 0:
+                time.sleep(1)
 
         t_reader.join()
         t_writer.join()
+        asyncio.ensure_future(self.ws.close(), loop=self.loop)
+
+    def die(self):
+        self._die = True
 
 
 class ShellApplication(object):
@@ -511,7 +526,7 @@ class ShellApplication(object):
                 ws.send_json({
                     'msg': 'connected',
                 })
-                t_worker = ShellWorkerThread(ws=ws, input_queue=input_queue)
+                t_worker = ShellWorkerThread(ws=ws, input_queue=input_queue, loop=asyncio.get_event_loop())
                 t_worker.start()
 
         # If connection was not authenticated, return earlier
@@ -520,8 +535,25 @@ class ShellApplication(object):
 
         # If connection has been closed lets make sure shell is killed
         if t_worker.shell_pid:
+
             try:
+                kqueue = select.kqueue()
+                kevent = select.kevent(t_worker.shell_pid, select.KQ_FILTER_PROC, select.KQ_EV_ADD | select.KQ_EV_ENABLE, select.KQ_NOTE_EXIT)
+                kqueue.control([kevent], 0)
+
                 os.kill(t_worker.shell_pid, signal.SIGTERM)
+
+                # If process has not died in 2 seconds, try the big gun
+                events = await self.middleware.threaded(kqueue.control, None, 1, 2)
+                if not events:
+                    os.kill(t_worker.shell_pid, signal.SIGKILL)
+
+                    # If process has not died even with the big gun
+                    # There is nothing else we can do, leave it be and
+                    # release the worker thread
+                    events = await self.middleware.threaded(kqueue.control, None, 1, 2)
+                    if not events:
+                        t_worker.die()
             except ProcessLookupError:
                 pass
 
