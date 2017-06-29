@@ -131,10 +131,11 @@ class VMSupervisor(object):
 
                 vnc_resolution = device['attributes'].get('vnc_resolution', None)
                 vnc_port = int(device['attributes'].get('vnc_port', 5900 + self.vm['id']))
+                vnc_bind = device['attributes'].get('vnc_bind', '0.0.0.0')
 
                 if vnc_resolution is None:
                     args += [
-                        '-s', '29,fbuf,tcp=0.0.0.0:{},w=1024,h=768,{}'.format(vnc_port, wait),
+                        '-s', '29,fbuf,tcp={}:{},w=1024,h=768,{}'.format(vnc_bind, vnc_port, wait),
                         '-s', '30,xhci,tablet',
                     ]
                 else:
@@ -142,7 +143,7 @@ class VMSupervisor(object):
                     width = vnc_resolution[0]
                     height = vnc_resolution[1]
                     args += [
-                        '-s', '29,fbuf,tcp=0.0.0.0:{},w={},h={},{}'.format(vnc_port, width, height, wait),
+                        '-s', '29,fbuf,tcp={}:{},w={},h={},{}'.format(vnc_bind, vnc_port, width, height, wait),
                         '-s', '30,xhci,tablet',
                     ]
 

@@ -128,6 +128,12 @@ class DeviceForm(ModelForm):
         validators=[RegexValidator("^[0-9]*$", "Only integer is accepted")],
         initial=0,
     )
+    VNC_bind = forms.ChoiceField(
+        label=_('Bind to'),
+        choices=(),
+        required=False,
+        initial='0.0.0.0'
+    )
     VNC_wait = forms.BooleanField(
         label=_('Wait to boot'),
         required=False,
@@ -142,6 +148,7 @@ class DeviceForm(ModelForm):
         self.fields['dtype'].widget.attrs['onChange'] = (
             "deviceTypeToggle();"
         )
+        self.fields['VNC_bind'].choices = self.ipv4_list()
 
         diskchoices = {}
         _n = notifier()
@@ -175,6 +182,15 @@ class DeviceForm(ModelForm):
                 self.fields['VNC_wait'].initial = self.instance.attributes.get('wait')
                 self.fields['VNC_port'].initial = vnc_port
                 self.fields['VNC_resolution'].initial = self.instance.attributes.get('vnc_resolution')
+                self.fields['VNC_bind'].initial = self.instance.attributes.get('vnc_bind')
+
+    def ipv4_list(self):
+        choices = (('0.0.0.0', '0.0.0.0'),)
+        with client as c:
+            ipv4_addresses = c.call('interfaces.ipv4_in_use')
+        for ipv4_addr in ipv4_addresses:
+            choices = choices + ((ipv4_addr, ipv4_addr),)
+        return choices
 
     def clean(self):
         vm = self.cleaned_data.get('vm')
@@ -216,12 +232,14 @@ class DeviceForm(ModelForm):
                     'wait': self.cleaned_data['VNC_wait'],
                     'vnc_port': self.cleaned_data['VNC_port'],
                     'vnc_resolution': self.cleaned_data['VNC_resolution'],
+                    'vnc_bind': self.cleaned_data['VNC_bind'],
                 }
             else:
                 self._errors['dtype'] = self.error_class([_('VNC is only allowed for UEFI')])
                 self.cleaned_data.pop('VNC_port', None)
                 self.cleaned_data.pop('VNC_wait', None)
                 self.cleaned_data.pop('VNC_resolution', None)
+                self.cleaned_data.pop('VNC_bind', None)
                 return obj
 
         obj.save()
