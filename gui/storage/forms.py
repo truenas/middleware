@@ -124,24 +124,19 @@ def _clean_zfssize_fields(form, attrs, prefix):
         if field not in cdata:
             cdata[field] = ''
 
-    r = re.compile(r'^(\d+(?:\.\d+)?)([BKMGTP](?:iB)?)$', re.I)
+    r = re.compile(r'^(\d+(?:\.\d+)?)([BKMGTP](?:iB)?)?$', re.I)
     msg = _("Specify the size with IEC suffixes or 0, e.g. 10 GiB")
 
     for attr in attrs:
         formfield = '%s%s' % (prefix, attr)
         match = r.match(cdata[formfield].replace(' ', ''))
-        try:
-            int(cdata[formfield])
-            continue
-        except ValueError:
-            pass
 
         if not match and cdata[formfield] != "0":
             form._errors[formfield] = form.error_class([msg])
             del cdata[formfield]
         elif match:
             number, suffix = match.groups()
-            if suffix.lower().endswith('ib'):
+            if suffix and suffix.lower().endswith('ib'):
                 cdata[formfield] = '%s%s' % (number, suffix[0])
             try:
                 Decimal(number)
@@ -1221,11 +1216,6 @@ class ZFSDatasetCommonForm(Form):
         widget=forms.Select(attrs=attrs_dict),
         label=_('Share type'),
         initial=choices.SHARE_TYPE_CHOICES[0][0])
-    dataset_case_sensitivity = forms.ChoiceField(
-        choices=choices.CASE_SENSITIVITY_CHOICES,
-        initial=choices.CASE_SENSITIVITY_CHOICES[0][0],
-        widget=forms.Select(attrs=attrs_dict),
-        label=_('Case Sensitivity'))
     dataset_atime = forms.ChoiceField(
         choices=choices.ZFS_AtimeChoices,
         widget=forms.RadioSelect(attrs=attrs_dict),
@@ -1301,9 +1291,9 @@ class ZFSDatasetCommonForm(Form):
             props[prop] = value
 
         for prop in ['org.freenas:description', 'compression', 'atime', 'dedup',
-                     'share_type', 'recordsize', 'casesensitivity']:
+                     'aclmode', 'recordsize', 'casesensitivity']:
             if prop == 'org.freenas:description':
-                value = self.cleaned_data.get('dataset_org.freenas:description')
+                value = self.cleaned_data.get('dataset_comments')
             elif prop == 'recordsize':
                 value = self.clean_dataset_recordsize()
             elif prop == 'casesensitivity':
@@ -1318,19 +1308,30 @@ class ZFSDatasetCommonForm(Form):
 
     def clean_dataset_recordsize(self):
         rs = self.cleaned_data.get("dataset_recordsize")
-        if not rs:
-            return rs
-        if rs[-1].lower() == 'k':
-            rs = int(rs[:-1]) * 1024
-        else:
-            rs = int(rs)
-        return rs
+        if not rs or rs == 'inherit':
+            return 'inherit'
+
+        try:
+            return int(rs)
+        except ValueError:
+            if rs[-1].lower() == 'k':
+                rs = int(rs[:-1]) * 1024
+                return rs
+
+        raise forms.ValidationError(_('invalid recordsize provided'))
 
 
 class ZFSDatasetCreateForm(ZFSDatasetCommonForm):
     dataset_name = forms.CharField(
         max_length=128,
         label=_('Dataset Name'))
+    dataset_case_sensitivity = forms.ChoiceField(
+        choices=choices.CASE_SENSITIVITY_CHOICES,
+        initial=choices.CASE_SENSITIVITY_CHOICES[0][0],
+        widget=forms.Select(attrs=attrs_dict),
+        label=_('Case Sensitivity'))
+
+    field_order = ['dataset_name']
 
     def __init__(self, *args, **kwargs):
         self._fs = kwargs.pop('fs')
@@ -1359,10 +1360,24 @@ class ZFSDatasetCreateForm(ZFSDatasetCommonForm):
     def save(self):
         props = self.clean_data_to_props()
         path = '%s/%s' % (self._fs, self.cleaned_data.get('dataset_name'))
+
+        if not dedup_enabled():
+            self.fields['dataset_dedup'].widget.attrs['readonly'] = True
+            self.fields['dataset_dedup'].widget.attrs['class'] = (
+                'dijitSelectDisabled dijitDisabled')
+            self.fields['dataset_dedup'].widget.text = mark_safe(
+                '<span style="color: red;">Dedup feature not activated. '
+                'Contact <a href="mailto:truenas-support@ixsystems.com?subject'
+                '=ZFS Deduplication Activation">TrueNAS Support</a> for '
+                'assistance.</span><br />'
+            )
+
         err, msg = notifier().create_zfs_dataset(path=path, props=props)
         if err:
             self._errors['__all__'] = self.error_class([msg])
             return False
+
+        notifier().change_dataset_share_type(path, self.cleaned_data.get('dataset_share_type'))
 
         return True
 
@@ -1393,7 +1408,6 @@ class ZFSDatasetEditForm(ZFSDatasetCommonForm):
 
         for prop in self.zfs_size_fields:
             field_name = 'dataset_%s' % prop
-
             if self.zdata[prop][0] == '0' or self.zdata[prop][0] == 'none':
                 self.fields[field_name].initial = 0
             else:
@@ -1416,6 +1430,25 @@ class ZFSDatasetEditForm(ZFSDatasetCommonForm):
         else:
             self.fields['dataset_atime'].initial = 'off'
 
+
+        if self.zdata['recordsize'][2] == 'inherit':
+            self.fields['dataset_recordsize'].initial = 'inherit'
+        else:
+            self.fields['dataset_recordsize'].initial = self.zdata['recordsize'][0]
+
+        self.fields['dataset_share_type'].initial = notifier().get_dataset_share_type(self._fs)
+
+        if not dedup_enabled():
+            self.fields['dataset_dedup'].widget.attrs['readonly'] = True
+            self.fields['dataset_dedup'].widget.attrs['class'] = (
+                'dijitSelectDisabled dijitDisabled')
+            self.fields['dataset_dedup'].widget.text = mark_safe(
+                '<span style="color: red;">Dedup feature not activated. '
+                'Contact <a href="mailto:truenas-support@ixsystems.com?subject'
+                '=ZFS Deduplication Activation">TrueNAS Support</a> for '
+                'assistance.</span><br />'
+            )
+
     def clean(self):
         cleaned_data = _clean_zfssize_fields(
             self,
@@ -1432,21 +1465,23 @@ class ZFSDatasetEditForm(ZFSDatasetCommonForm):
         errors = dict()
 
         for item, value in props.items():
-            log.error('fs: %s item: %s value: %s' % (name, item, value))
             if value == 'inherit':
                 success, msg = notifier().zfs_inherit_option(name, item)
-            elif item == 'share_type':
-                notifier().change_dataset_share_type(name, item)
             else:
                 success, msg = notifier().zfs_set_option(name, item, value)
 
             error |= not success
             if not success:
+                error = True
                 errors[item] = msg
-                return False
+
+        notifier().change_dataset_share_type(name, self.cleaned_data.get('dataset_share_type'))
 
         for field, err in list(errors.items()):
-            self._errors[field] = self.error_class(err)
+            self._errors[field] = self.error_class([err])
+
+        if error:
+            return False
 
         return True
 
