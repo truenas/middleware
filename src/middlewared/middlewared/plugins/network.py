@@ -446,7 +446,7 @@ class RoutesService(Service):
             Returns:
                 bool: True if the gateway is reachable or otherwise False.
         """
-        ignore_nics = ('lo', 'bridge')
+        ignore_nics = ('lo', 'bridge', 'tap', 'epair')
         for if_name, iface in list(netif.list_interfaces().items()):
             if not if_name.startswith(ignore_nics):
                 for nic_address in iface.addresses:
