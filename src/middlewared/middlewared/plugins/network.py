@@ -430,14 +430,14 @@ class RoutesService(Service):
         ignore_nics = ('lo', 'bridge')
         for if_name, iface in list(netif.list_interfaces().items()):
             if not if_name.startswith(ignore_nics):
-                nic = netif.get_interface(if_name)
-                if len(nic.addresses) > 1:
-                    ipv4_nic = ipaddress.IPv4Interface(nic.addresses[1])
-                    nic_network = ipaddr.IPv4Network(ipv4_nic)
-                    nic_prefixlen = nic_network.prefixlen
-                    nic_result = str(nic_network.network) + '/' + str(nic_prefixlen)
-                    if ipaddress.ip_address(str(ipv4_gateway)) in ipaddress.ip_network(str(nic_result)):
-                        return True
+                for nic_address in iface.addresses:
+                    if nic_address.af == netif.AddressFamily.INET:
+                        ipv4_nic = ipaddress.IPv4Interface(nic_address)
+                        nic_network = ipaddr.IPv4Network(ipv4_nic)
+                        nic_prefixlen = nic_network.prefixlen
+                        nic_result = str(nic_network.network) + '/' + str(nic_prefixlen)
+                        if ipaddress.ip_address(ipv4_gateway) in ipaddress.ip_network(nic_result):
+                            return True
         return False
 
 
