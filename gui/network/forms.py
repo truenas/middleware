@@ -556,6 +556,16 @@ class GlobalConfigurationForm(ModelForm):
                     raise forms.ValidationError(
                         _("169.254/16 subnet is not valid for nameserver"))
 
+    def clean_gc_ipv4gateway(self):
+        val = self.cleaned_data.get("gc_ipv4gateway")
+
+        with client as c:
+            if c.call('routes.ipv4gw_reachable', val.exploded):
+                return val
+
+        raise forms.ValidationError(
+                _("Gateway {} is unreachable".format(val)))
+
     def clean_gc_nameserver1(self):
         val = self.cleaned_data.get("gc_nameserver1")
         self._clean_nameserver(val)
