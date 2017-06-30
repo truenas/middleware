@@ -3,6 +3,7 @@ import netif
 from middlewared.client import Client
 from middlewared.client.utils import Struct
 
+
 def get_interface(ipaddress):
     get_all_ifaces = netif.list_interfaces()
     ifaces = []
