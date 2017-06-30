@@ -1201,6 +1201,7 @@ class DiskEditBulkForm(Form):
             disk.save()
         return self._disks
 
+
 class ZFSDatasetCommonForm(Form):
     dataset_comments = forms.CharField(
         max_length=1024,
@@ -1271,6 +1272,35 @@ class ZFSDatasetCommonForm(Form):
 
     zfs_size_fields = ['quota', 'refquota', 'reservation', 'refreservation']
 
+    def __init__(self, *args, fs=None, **kwargs):
+        self._fs = fs
+        super(ZFSDatasetCommonForm, self).__init__(*args, **kwargs)
+
+        if hasattr(self, 'parentdata'):
+            self.fields['dataset_atime'].choices = _inherit_choices(
+                choices.ZFS_AtimeChoices,
+                self.parentdata['atime'][0]
+            )
+            self.fields['dataset_compression'].choices = _inherit_choices(
+                choices.ZFS_CompressionChoices,
+                self.parentdata['compression'][0]
+            )
+            self.fields['dataset_dedup'].choices = _inherit_choices(
+                choices.ZFS_DEDUP_INHERIT,
+                self.parentdata['dedup'][0]
+            )
+
+        if not dedup_enabled():
+            self.fields['dataset_dedup'].widget.attrs['readonly'] = True
+            self.fields['dataset_dedup'].widget.attrs['class'] = (
+                'dijitSelectDisabled dijitDisabled')
+            self.fields['dataset_dedup'].widget.text = mark_safe(
+                '<span style="color: red;">Dedup feature not activated. '
+                'Contact <a href="mailto:truenas-support@ixsystems.com?subject'
+                '=ZFS Deduplication Activation">TrueNAS Support</a> for '
+                'assistance.</span><br />'
+            )
+
     def clean_dataset_name(self):
         name = self.cleaned_data["dataset_name"]
         if not re.search(r'^[a-zA-Z0-9][a-zA-Z0-9_\-:. ]*$', name):
@@ -1333,9 +1363,11 @@ class ZFSDatasetCreateForm(ZFSDatasetCommonForm):
 
     field_order = ['dataset_name']
 
-    def __init__(self, *args, **kwargs):
-        self._fs = kwargs.pop('fs')
-        super(ZFSDatasetCommonForm, self).__init__(*args, **kwargs)
+    def __init__(self, *args, fs=None, **kwargs):
+        # Common form expects a parentdata
+        # We use `fs` as parent data because thats where we inherit props from
+        self.parentdata = notifier().zfs_get_options(fs)[0]
+        super(ZFSDatasetCreateForm, self).__init__(*args, fs=fs, **kwargs)
 
     def clean(self):
         cleaned_data = _clean_zfssize_fields(
@@ -1343,10 +1375,9 @@ class ZFSDatasetCreateForm(ZFSDatasetCommonForm):
             self.zfs_size_fields,
             'dataset_')
 
-        full_dataset_name = "%s/%s" % (self._fs,
-                                       cleaned_data.get("dataset_name"))
+        full_dataset_name = "%s/%s" % (self._fs, cleaned_data.get("dataset_name"))
 
-        path = '/mnt/%s' % full_dataset_name
+        path = f'/mnt/{full_dataset_name}'
         if os.path.exists(path):
             raise forms.ValidationError(_('The path %s already exists.') % path)
 
@@ -1383,71 +1414,49 @@ class ZFSDatasetCreateForm(ZFSDatasetCommonForm):
 
 
 class ZFSDatasetEditForm(ZFSDatasetCommonForm):
-    def __init__(self, *args, **kwargs):
-        self._fs = kwargs.pop('fs')
-        super(ZFSDatasetCommonForm, self).__init__(*args, **kwargs)
 
-        if '/' in self._fs:
-            parentds = self._fs.rsplit('/', 1)[0]
-            parentdata = notifier().zfs_get_options(parentds)
+    def __init__(self, *args, fs=None, **kwargs):
+        # Common form expects a parentdata
+        # We use parent `fs` as parent data because thats where we inherit props from
+        self.parentdata = notifier().zfs_get_options(fs.rsplit('/', 1)[0])
+        super(ZFSDatasetEditForm, self).__init__(*args, fs=fs, **kwargs)
 
-            self.fields['dataset_compression'].choices = _inherit_choices(
-                choices.ZFS_CompressionChoices,
-                parentdata['compression'][0]
-            )
-            self.fields['dataset_dedup'].choices = _inherit_choices(
-                choices.ZFS_DEDUP_INHERIT,
-                parentdata['dedup'][0]
-            )
+        zdata = notifier().zfs_get_options(self._fs)
 
-        self.zdata = notifier().zfs_get_options(self._fs)
-
-        if 'org.freenas:description' in self.zdata and self.zdata['org.freenas:description'][2] == 'local':
-            self.fields['dataset_comments'].initial = self.zdata['org.freenas:description'][0]
-        self.fields['dataset_compression'].initial = self.zdata['compression'][2]
+        if 'org.freenas:description' in zdata and zdata['org.freenas:description'][2] == 'local':
+            self.fields['dataset_comments'].initial = zdata['org.freenas:description'][0]
+        self.fields['dataset_compression'].initial = zdata['compression'][2]
 
         for prop in self.zfs_size_fields:
             field_name = 'dataset_%s' % prop
-            if self.zdata[prop][0] == '0' or self.zdata[prop][0] == 'none':
+            if zdata[prop][0] == '0' or zdata[prop][0] == 'none':
                 self.fields[field_name].initial = 0
             else:
-                if self.zdata[prop][2] == 'local':
-                    self.fields[field_name].initial = self.zdata[prop][0]
+                if zdata[prop][2] == 'local':
+                    self.fields[field_name].initial = zdata[prop][0]
 
-        if self.zdata['dedup'][2] == 'inherit':
+        if zdata['dedup'][2] == 'inherit':
             self.fields['dataset_dedup'].initial = 'inherit'
-        elif self.zdata['dedup'][0] in ('on', 'off', 'verify'):
-            self.fields['dataset_dedup'].initial = self.zdata['dedup'][0]
-        elif self.zdata['dedup'][0] == 'sha256,verify':
+        elif zdata['dedup'][0] in ('on', 'off', 'verify'):
+            self.fields['dataset_dedup'].initial = zdata['dedup'][0]
+        elif zdata['dedup'][0] == 'sha256,verify':
             self.fields['dataset_dedup'].initial = 'verify'
         else:
             self.fields['dataset_dedup'].initial = 'off'
 
-        if self.zdata['atime'][2] == 'inherit':
+        if zdata['atime'][2] == 'inherit':
             self.fields['dataset_atime'].initial = 'inherit'
-        elif self.zdata['atime'][0] in ('on', 'off'):
-            self.fields['dataset_atime'].initial = self.zdata['atime'][0]
+        elif zdata['atime'][0] in ('on', 'off'):
+            self.fields['dataset_atime'].initial = zdata['atime'][0]
         else:
             self.fields['dataset_atime'].initial = 'off'
 
-
-        if self.zdata['recordsize'][2] == 'inherit':
+        if zdata['recordsize'][2] == 'inherit':
             self.fields['dataset_recordsize'].initial = 'inherit'
         else:
-            self.fields['dataset_recordsize'].initial = self.zdata['recordsize'][0]
+            self.fields['dataset_recordsize'].initial = zdata['recordsize'][0]
 
         self.fields['dataset_share_type'].initial = notifier().get_dataset_share_type(self._fs)
-
-        if not dedup_enabled():
-            self.fields['dataset_dedup'].widget.attrs['readonly'] = True
-            self.fields['dataset_dedup'].widget.attrs['class'] = (
-                'dijitSelectDisabled dijitDisabled')
-            self.fields['dataset_dedup'].widget.text = mark_safe(
-                '<span style="color: red;">Dedup feature not activated. '
-                'Contact <a href="mailto:truenas-support@ixsystems.com?subject'
-                '=ZFS Deduplication Activation">TrueNAS Support</a> for '
-                'assistance.</span><br />'
-            )
 
     def clean(self):
         cleaned_data = _clean_zfssize_fields(
@@ -1484,6 +1493,7 @@ class ZFSDatasetEditForm(ZFSDatasetCommonForm):
             return False
 
         return True
+
 
 class CommonZVol(object):
 
