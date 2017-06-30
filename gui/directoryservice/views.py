@@ -103,7 +103,7 @@ def directoryservice_kerberoskeytab(request, id=None):
     kt = None
     mf = forms.KerberosKeytabCreateForm
 
-    if id != None:
+    if id is not None:
         kt = models.KerberosKeytab.objects.get(pk=id)
         mf = forms.KerberosKeytabEditForm
 
@@ -141,7 +141,7 @@ def directoryservice_kerberoskeytab_delete(request, id):
 
     if request.method == "POST":
         try:
-            kt.delete() 
+            kt.delete()
             notifier().start("ix-kerberos")
             return JsonResp(
                 request,
@@ -200,7 +200,7 @@ def directoryservice_idmap_ad(request, id):
 
     if request.method == "POST":
         form = forms.idmap_ad_Form(request.POST, instance=idmap_ad)
-        if form.is_valid(): 
+        if form.is_valid():
             form.save()
             return JsonResp(
                 request,
@@ -242,7 +242,7 @@ def directoryservice_idmap_autorid(request, id):
 
     if request.method == "POST":
         form = forms.idmap_autorid_Form(request.POST, instance=idmap_autorid)
-        if form.is_valid(): 
+        if form.is_valid():
             form.save()
             return JsonResp(
                 request,
@@ -263,7 +263,7 @@ def directoryservice_idmap_fruit(request, id):
 
     if request.method == "POST":
         form = forms.idmap_fruit_Form(request.POST, instance=idmap_fruit)
-        if form.is_valid(): 
+        if form.is_valid():
             form.save()
             return JsonResp(
                 request,
@@ -284,7 +284,7 @@ def directoryservice_idmap_hash(request, id):
 
     if request.method == "POST":
         form = forms.idmap_hash_Form(request.POST, instance=idmap_hash)
-        if form.is_valid(): 
+        if form.is_valid():
             form.save()
             return JsonResp(
                 request,
@@ -305,7 +305,7 @@ def directoryservice_idmap_ldap(request, id):
 
     if request.method == "POST":
         form = forms.idmap_ldap_Form(request.POST, instance=idmap_ldap)
-        if form.is_valid(): 
+        if form.is_valid():
             form.save()
             return JsonResp(
                 request,
@@ -326,7 +326,7 @@ def directoryservice_idmap_nss(request, id):
 
     if request.method == "POST":
         form = forms.idmap_nss_Form(request.POST, instance=idmap_nss)
-        if form.is_valid(): 
+        if form.is_valid():
             form.save()
             return JsonResp(
                 request,
@@ -347,7 +347,7 @@ def directoryservice_idmap_rfc2307(request, id):
 
     if request.method == "POST":
         form = forms.idmap_rfc2307_Form(request.POST, instance=idmap_rfc2307)
-        if form.is_valid(): 
+        if form.is_valid():
             form.save()
             return JsonResp(
                 request,
@@ -368,7 +368,7 @@ def directoryservice_idmap_rid(request, id):
 
     if request.method == "POST":
         form = forms.idmap_rid_Form(request.POST, instance=idmap_rid)
-        if form.is_valid(): 
+        if form.is_valid():
             form.save()
             return JsonResp(
                 request,
@@ -389,7 +389,7 @@ def directoryservice_idmap_tdb(request, id):
 
     if request.method == "POST":
         form = forms.idmap_tdb_Form(request.POST, instance=idmap_tdb)
-        if form.is_valid(): 
+        if form.is_valid():
             form.save()
             return JsonResp(
                 request,
@@ -410,7 +410,7 @@ def directoryservice_idmap_tdb2(request, id):
 
     if request.method == "POST":
         form = forms.idmap_tdb2_Form(request.POST, instance=idmap_tdb2)
-        if form.is_valid(): 
+        if form.is_valid():
             form.save()
             return JsonResp(
                 request,

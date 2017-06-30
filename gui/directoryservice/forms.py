@@ -28,7 +28,6 @@ import base64
 import logging
 import os
 import re
-import sysctl
 import tempfile
 
 from ldap import LDAPError
@@ -220,7 +219,6 @@ class idmap_tdb2_Form(ModelForm):
             'idmap_ds_type',
             'idmap_ds_id'
         ]
-
 
 
 class ActiveDirectoryForm(ModelForm):
@@ -517,7 +515,7 @@ class ActiveDirectoryForm(ModelForm):
             except LDAPError as e:
                 log.debug("LDAPError: type = %s", type(e))
 
-                error = [] 
+                error = []
                 try:
                     error.append(e.args[0]['info'])
                     error.append(e.args[0]['desc'])
@@ -603,7 +601,7 @@ class ActiveDirectoryForm(ModelForm):
                     raise MiddlewareError(
                         _("Active Directory restart timed out after %d seconds." % timeout),
                     )
-                
+
             if started is False:
                 timeout = _fs().directoryservice.activedirectory.timeout.start
                 try:
@@ -916,7 +914,7 @@ class LDAPForm(ModelForm):
         except LDAPError as e:
             log.debug("LDAPError: type = %s", type(e))
 
-            error = [] 
+            error = []
             try:
                 error.append(e.args[0]['info'])
                 error.append(e.args[0]['desc'])
