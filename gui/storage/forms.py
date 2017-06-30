@@ -1426,41 +1426,57 @@ class ZFSDatasetEditForm(ZFSDatasetCommonForm):
         if 'org.freenas:description' in zdata and zdata['org.freenas:description'][2] == 'local':
             self.fields['dataset_comments'].initial = zdata['org.freenas:description'][0]
 
-        for prop in self.zfs_size_fields:
-            field_name = 'dataset_%s' % prop
+        for k, v in self.get_initial_data(self._fs).items():
+            self.fields[k].initial = v
+
+    @classmethod
+    def get_initial_data(cls, fs):
+        """
+        Method to get initial data for the form.
+        This is a separate method to share with API code.
+        """
+        zdata = notifier().zfs_get_options(fs)
+        data = {}
+
+        if 'org.freenas:description' in zdata and zdata['org.freenas:description'][2] == 'local':
+            data['dataset_comments'] = zdata['org.freenas:description'][0]
+        for prop in cls.zfs_size_fields:
+            field_name = f'dataset_{prop}'
             if zdata[prop][0] == '0' or zdata[prop][0] == 'none':
-                self.fields[field_name].initial = 0
+                data[field_name] = 0
             else:
                 if zdata[prop][2] == 'local':
-                    self.fields[field_name].initial = zdata[prop][0]
+                    data[field_name] = zdata[prop][0]
 
         if zdata['dedup'][2] == 'inherit':
-            self.fields['dataset_dedup'].initial = 'inherit'
+            data['dataset_dedup'] = 'inherit'
         elif zdata['dedup'][0] in ('on', 'off', 'verify'):
-            self.fields['dataset_dedup'].initial = zdata['dedup'][0]
+            data['dataset_dedup'] = zdata['dedup'][0]
         elif zdata['dedup'][0] == 'sha256,verify':
-            self.fields['dataset_dedup'].initial = 'verify'
+            data['dataset_dedup'] = 'verify'
         else:
-            self.fields['dataset_dedup'].initial = 'off'
+            data['dataset_dedup'] = 'off'
 
         if zdata['compression'][2] == 'inherit':
-            self.fields['dataset_compression'].initial = 'inherit'
+            data['dataset_compression'] = 'inherit'
         else:
-            self.fields['dataset_compression'].initial = zdata['compression'][0]
+            data['dataset_compression'] = zdata['compression'][0]
 
         if zdata['atime'][2] == 'inherit':
-            self.fields['dataset_atime'].initial = 'inherit'
+            data['dataset_atime'] = 'inherit'
         elif zdata['atime'][0] in ('on', 'off'):
-            self.fields['dataset_atime'].initial = zdata['atime'][0]
+            data['dataset_atime'] = zdata['atime'][0]
         else:
-            self.fields['dataset_atime'].initial = 'off'
+            data['dataset_atime'] = 'off'
 
         if zdata['recordsize'][2] == 'inherit':
-            self.fields['dataset_recordsize'].initial = 'inherit'
+            data['dataset_recordsize'] = 'inherit'
         else:
-            self.fields['dataset_recordsize'].initial = zdata['recordsize'][0]
+            data['dataset_recordsize'] = zdata['recordsize'][0]
 
-        self.fields['dataset_share_type'].initial = notifier().get_dataset_share_type(self._fs)
+        data['dataset_share_type'] = notifier().get_dataset_share_type(fs)
+
+        return data
 
     def clean(self):
         cleaned_data = _clean_zfssize_fields(
