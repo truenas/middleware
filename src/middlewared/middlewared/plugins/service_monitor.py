@@ -33,7 +33,7 @@ class ServiceMonitorThread(threading.Thread):
         self.middleware = kwargs.get('middleware')
         self.finished = threading.Event()
 
-        self.logger.debug("[ServiceMonitorThread] name={0} frequency={1} retry={2}".format(self.name, self.frequency, self.retry))
+        self.logger.debug("[ServiceMonitorThread] name=%s frequency=%d retry=%d", self.name, self.frequency, self.retry)
 
     @private
     def alert(self, message):
@@ -46,11 +46,13 @@ class ServiceMonitorThread(threading.Thread):
     def isEnabled(self, service):
         enabled = False
 
+        #
         # XXX yet another hack. We need a generic mechanism/interface that we can use that tells
         # use if a service is enabled or not. When the service monitor starts up, it assumes 
         # self.connected is True. If the service is down, but enabled, and we restart the middleware,
         # and the service becomes available, we do not see a transition occur and therefore do not
         # start the service.
+        #
         if service in ('activedirectory', 'ldap', 'nis'):
             try:
                 ds = self.middleware.call_sync('datastore.query', 'directoryservice.%s' % service)[0]
@@ -59,7 +61,7 @@ class ServiceMonitorThread(threading.Thread):
                 enabled = ds["%s_enable" % service]
 
             except Exception as e:
-                self.logger.debug("[ServiceMonitorThread] ERROR: isEnabled: {}".format(e))
+                self.logger.debug("[ServiceMonitorThread] ERROR: isEnabled: %s", e)
 
         else:
             try:
@@ -69,7 +71,7 @@ class ServiceMonitorThread(threading.Thread):
                         enabled = s['srv_enable']
 
             except Exception as e:
-                self.logger.debug("[ServiceMonitorThread] ERROR: isEnabled: {}".format(e))
+                self.logger.debug("[ServiceMonitorThread] ERROR: isEnabled: %s", e)
 
         return enabled
 
@@ -91,7 +93,7 @@ class ServiceMonitorThread(threading.Thread):
                 connected = True
 
             except Exception as e:
-                self.logger.debug("[ServiceMonitorThread] Cannot connect: {0}:{1} with error: {2}".format(host, port, e))
+                self.logger.debug("[ServiceMonitorThread] Cannot connect: %s:%d with error: %s" % (host, port, e))
                 connected = False
 
             finally:
@@ -132,20 +134,20 @@ class ServiceMonitorThread(threading.Thread):
             started = self.getStarted(self.name)
             enabled = self.isEnabled(self.name)
 
-            self.logger.debug("[ServiceMonitorThread] connected={0} started={1} enabled={2}".format(connected, started, enabled))
+            self.logger.debug("[ServiceMonitorThread] connected=%s started=%s enabled=%s", connected, started, enabled)
 
             if (connected is False):
                 self.alert("attempt %d to recover service %s\n" % (ntries + 1, self.name))
 
             if (connected is True) and (started is False):
-                self.logger.debug("[ServiceMonitorThread] enabling service {}".format(self.name))
+                self.logger.debug("[ServiceMonitorThread] enabling service %s", self.name)
                 try:
                     self.middleware.call_sync('service.start', self.name)
                 except Exception:
                     pass
 
             elif (connected is False) and (enabled is True):
-                self.logger.debug("[ServiceMonitorThread] disabling service {}".format(self.name))
+                self.logger.debug("[ServiceMonitorThread] disabling service %s", self.name)
                 try:
                     self.middleware.call_sync('service.stop', self.name)
                 except Exception:
@@ -179,10 +181,10 @@ class ServiceMonitorService(Service):
             thread_name = s['sm_name']
 
             if not s['sm_enable']:
-                self.logger.debug("[ServiceMonitorService] skipping {}".format(thread_name))
+                self.logger.debug("[ServiceMonitorService] skipping %s", thread_name)
                 continue
 
-            self.logger.debug("[ServiceMonitorService] monitoring {}".format(thread_name))
+            self.logger.debug("[ServiceMonitorService] monitoring %s", thread_name)
 
             thread = ServiceMonitorThread(id=s['id'], frequency=s['sm_frequency'], retry=s['sm_retry'],
                 host=s['sm_host'], port=s['sm_port'], name=thread_name, logger=self.logger, middleware=self.middleware)
