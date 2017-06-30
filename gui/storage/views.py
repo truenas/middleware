@@ -452,7 +452,7 @@ def dataset_edit(request, dataset_name):
         if form.is_valid() and form.save():
             return JsonResp(request, message=_("Dataset successfully edited."))
         else:
-                return JsonResp(request, form=form)
+            return JsonResp(request, form=form)
     else:
         form = forms.ZFSDatasetEditForm(fs=dataset_name)
     return render(request, 'storage/dataset_edit.html', {
