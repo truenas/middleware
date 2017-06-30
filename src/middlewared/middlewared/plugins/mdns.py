@@ -66,25 +66,26 @@ class mDNSThread(threading.Thread):
     def __init__(self, **kwargs):
         super(mDNSThread, self).__init__()
         self.setDaemon(False)
+        self.logger = kwargs.get('logger')
+        self.timeout = kwargs.get('timeout', 30)
 
     def active(self, sdRef):
         return (bool(sdRef) and sdRef.fileno() != -1)
 
-    def debug(self, format, *values):
-        if self.debug_enable:
-            print(format % values)
+    def debug(self, msg, *args, **kwargs):
+        self.logger.debug(msg, *args, **kwargs)
 
 
 class DiscoverThread(mDNSThread):
     def __init__(self, **kwargs):
-        super(DiscoverThread, self).__init__()
+        super(DiscoverThread, self).__init__(**kwargs)
         self.regtype = "_services._dns-sd._udp"
         self.queue = kwargs.get('queue')
-        self.debug_enable = kwargs.get('debug')
         self.finished = threading.Event()
+        self.pipe = os.pipe()
 
     def on_discover(self,sdRef, flags, interface, error, name, regtype, domain):
-        self.debug("DiscoverThread: name=%s flags=0x%08x error=%d" % (name, flags, error))
+        self.debug("DiscoverThread: name=%s flags=0x%08x error=%d", name, flags, error)
 
         if error != kDNSServiceErr_NoError:
             return
@@ -100,16 +101,16 @@ class DiscoverThread(mDNSThread):
             )
         )
 
-    def active(self, sdRef):
-        return (bool(sdRef) and sdRef.fileno() != -1)
-
     def run(self):
         sdRef = pybonjour.DNSServiceBrowse(
             regtype=self.regtype,
             callBack=self.on_discover
         )
         while True:
-            r, w, x = select.select([sdRef], [], [])
+            r, w, x = select.select([sdRef, self.pipe[0]], [], [])
+            if self.pipe[0] in r:
+                break
+
             for ref in r:
                 pybonjour.DNSServiceProcessResult(ref)
 
@@ -121,14 +122,15 @@ class DiscoverThread(mDNSThread):
 
     def cancel(self):
         self.finished.set()
+        os.write(self.pipe[1], b'42')
 
 class ServicesThread(mDNSThread):
     def __init__(self, **kwargs):
-        super(ServicesThread, self).__init__()
+        super(ServicesThread, self).__init__(**kwargs)
         self.queue = kwargs.get('queue')
         self.service_queue = kwargs.get('service_queue')
-        self.debug_enable = kwargs.get('debug')
         self.finished = threading.Event()
+        self.pipe = os.pipe()
         self.references = []
         self.cache = {}
 
@@ -143,7 +145,7 @@ class ServicesThread(mDNSThread):
         return regtype
 
     def on_discover(self, sdRef, flags, interface, error, name, regtype, domain):
-        self.debug("ServicesThread: name=%s flags=0x%08x error=%d" % (name, flags, error))
+        self.debug("ServicesThread: name=%s flags=0x%08x error=%d", name, flags, error)
 
         if error != kDNSServiceErr_NoError:
             return
@@ -158,7 +160,7 @@ class ServicesThread(mDNSThread):
         )
 
         if not (obj.flags & kDNSServiceFlagsAdd):
-            self.debug("ServicesThread: remove %s" % name)
+            self.debug("ServicesThread: remove %s", name)
             cobj = self.cache.get(obj.fullname)
             if cobj:
                 if cobj.sdRef in self.references:
@@ -170,13 +172,13 @@ class ServicesThread(mDNSThread):
             self.cache[obj.fullname] = obj
             self.service_queue.put(obj)
 
-    def active(self, sdRef):
-        return (bool(sdRef) and sdRef.fileno() != -1)
-
     def run(self):
         while True:
-            obj = self.queue.get(block=True)
-            if not obj:
+            try:
+                obj = self.queue.get(block=True, timeout=self.timeout)
+            except queue.Empty:
+                if self.finished.is_set():
+                    break
                 continue
 
             regtype = self.to_regtype(obj)
@@ -191,7 +193,9 @@ class ServicesThread(mDNSThread):
             self.references.append(sdRef)
             _references = list(filter(self.active, self.references))
 
-            r, w, x = select.select(_references, [], [])
+            r, w, x = select.select(_references + [self.pipe[0]], [], [])
+            if self.pipe[0] in r:
+                break 
             for ref in r:
                 pybonjour.DNSServiceProcessResult(ref)
             if not (obj.flags & kDNSServiceFlagsAdd):
@@ -209,19 +213,19 @@ class ServicesThread(mDNSThread):
 
     def cancel(self):
         self.finished.set()
+        os.write(self.pipe[1], b'42')
         
 
 class ResolveThread(mDNSThread):
     def __init__(self, **kwargs):
-        super(ResolveThread, self).__init__()
+        super(ResolveThread, self).__init__(**kwargs)
         self.queue = kwargs.get('queue')
-        self.debug_enable = kwargs.get('debug')
         self.finished = threading.Event()
         self.references = []
         self.services = []
 
     def on_resolve(self, sdRef, flags, interface, error, name, target, port, text):
-        self.debug("ResolveThread: name=%s flags=0x%08x error=%d" % (name, flags, error))
+        self.debug("ResolveThread: name=%s flags=0x%08x error=%d", name, flags, error)
 
         if error != kDNSServiceErr_NoError:
             return
@@ -241,13 +245,13 @@ class ResolveThread(mDNSThread):
         self.references.remove(sdRef)
         sdRef.close()
 
-    def active(self, sdRef):
-        return (bool(sdRef) and sdRef.fileno() != -1)
-
     def run(self):
         while True:
-            obj = self.queue.get(block=True)
-            if not obj:
+            try:
+                obj = self.queue.get(block=True, timeout=self.timeout)
+            except queue.Empty:
+                if self.finished.is_set():
+                    break
                 continue
 
             sdRef = pybonjour.DNSServiceResolve(
@@ -343,25 +347,52 @@ class mDNSBrowserService(Service):
     def __init__(self, *args):
         super(mDNSBrowserService, self).__init__(*args)
         self.threads = {}
-        self.dq = queue.Queue()
-        self.sq = queue.Queue()
-        self.dthread = DiscoverThread(queue=self.dq)
-        self.sthread = ServicesThread(queue=self.dq, service_queue=self.sq)
-        self.rthread = ResolveThread(queue=self.sq)
+        self.dq = None
+        self.sq = None
+        self.dthread = None
+        self.sthread = None
+        self.rthread = None
         self.initialized = False
         self.lock = threading.Lock()
 
     async def start(self):
+        self.logger.debug("mDNSBrowserService: start()")
+
+        self.lock.acquire()
+        if self.initialized:
+            self.lock.release()
+            return
+        self.lock.release()
+
+        self.dq = queue.Queue()
+        self.sq = queue.Queue()
+
+        self.dthread = DiscoverThread(queue=self.dq, logger=self.middleware.logger, timeout=5)
+        self.sthread = ServicesThread(queue=self.dq, service_queue=self.sq, logger=self.middleware.logger, timeout=5)
+        self.rthread = ResolveThread(queue=self.sq, logger=self.middleware.logger, timeout=5)
+
         self.dthread.start()
         self.sthread.start()
         self.rthread.start()
 
+        self.lock.acquire()
+        self.initialized = True
+        self.lock.release()
+
     async def stop(self):
-        self.rthread.stop()
-        self.sthread.stop()
-        self.dthread.stop()
+        self.logger.debug("mDNSBrowserService: stop()")
+
+        self.rthread.cancel()
+        self.sthread.cancel()
+        self.dthread.cancel()
+
+        self.lock.acquire()
+        self.initialized = False
+        self.lock.release()
 
     async def restart(self):
+        self.logger.debug("mDNSBrowserService: restart()")
+
         await self.stop()
         await self.start()
 
@@ -377,12 +408,10 @@ class mDNSServiceThread(threading.Thread):
         self.service = kwargs.get('service')
         self.regtype = kwargs.get('regtype')
         self.port = kwargs.get('port')
-        self.debug_enable = kwargs.get('debug')
         self.finished = threading.Event()
 
-    def debug(self, format, *values):
-        if self.debug_enable:
-            self.logger.debug(format % values)
+    def debug(self, msg, *args, **kwargs):
+        self.logger.debug(msg, *args, **kwargs)
 
     def _register(self, name, regtype, port):
         if not (name and regtype and port):
