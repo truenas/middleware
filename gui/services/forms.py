@@ -2161,7 +2161,7 @@ class S3Form(ModelForm):
         key_order(self, 7, 's3_mode', instance=True)
         key_order(self, 8, 's3_browser', instance=True)
 
-        self.fields['s3_bindip'].choices = [('0.0.0.0','0.0.0.0')] + list(choices.IPChoices())
+        self.fields['s3_bindip'].choices = [('0.0.0.0', '0.0.0.0')] + list(choices.IPChoices())
         if self.instance.id and self.instance.s3_bindip:
             bindips = []
             for ip in self.instance.s3_bindip:
@@ -2203,7 +2203,7 @@ class S3Form(ModelForm):
             raise forms.ValidationError(
                 _("The two password fields didn't match.")
             )
-        return s3_secret_key2 
+        return s3_secret_key2
 
     def clean(self):
         cdata = self.cleaned_data
