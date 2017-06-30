@@ -1425,7 +1425,7 @@ class ZFSDatasetEditForm(ZFSDatasetCommonForm):
 
         if 'org.freenas:description' in zdata and zdata['org.freenas:description'][2] == 'local':
             self.fields['dataset_comments'].initial = zdata['org.freenas:description'][0]
-        self.fields['dataset_compression'].initial = zdata['compression'][2]
+
 
         for prop in self.zfs_size_fields:
             field_name = 'dataset_%s' % prop
@@ -1443,6 +1443,11 @@ class ZFSDatasetEditForm(ZFSDatasetCommonForm):
             self.fields['dataset_dedup'].initial = 'verify'
         else:
             self.fields['dataset_dedup'].initial = 'off'
+
+        if zdata['compression'][2] == 'inherit':
+            self.fields['dataset_compression'].initial = 'inherit'
+        else:
+            self.fields['dataset_compression'].initial = zdata['compression'][0]
 
         if zdata['atime'][2] == 'inherit':
             self.fields['dataset_atime'].initial = 'inherit'
