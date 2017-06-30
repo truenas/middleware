@@ -1249,7 +1249,7 @@ class ZFSDatasetCommonForm(Form):
         initial="inherit",
     )
     dataset_recordsize = forms.ChoiceField(
-        choices=(('', _('Inherit')), ) + choices.ZFS_RECORDSIZE,
+        choices=(('inherit', _('Inherit')), ) + choices.ZFS_RECORDSIZE,
         label=_('Record Size'),
         initial="",
         required=False,
