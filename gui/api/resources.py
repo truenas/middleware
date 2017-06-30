@@ -372,15 +372,18 @@ class DatasetResource(DojoResource):
         )
 
         for k in list(data.keys()):
-            data['dataset_%s' % k] = data.pop(k)
+            data[f'dataset_{k}'] = data.pop(k)
 
-        form = ZFSDatasetEditForm(fs=name, data=data)
+        initial = ZFSDatasetEditForm.get_initial_data(name)
+        initial.update(data)
+
+        form = ZFSDatasetEditForm(fs=name, data=initial)
         if not form.is_valid() or not form.save():
             for k in list(form.errors.keys()):
                 if k == '__all__':
                     continue
                 if k.startswith('dataset_'):
-                    form.errors[k[5:]] = form.errors.pop(k)
+                    form.errors[k[len('dataset_'):]] = form.errors.pop(k)
             raise ImmediateHttpResponse(
                 response=self.error_response(bundle.request, form.errors)
             )
