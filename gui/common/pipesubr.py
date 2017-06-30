@@ -29,7 +29,6 @@ from subprocess import Popen, PIPE
 from os import system as __system
 import ctypes
 import logging
-import os
 import signal
 import threading
 

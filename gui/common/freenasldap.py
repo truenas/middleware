@@ -1747,7 +1747,7 @@ class FreeNAS_ActiveDirectory_Base(object):
             network = site_dn = None
             if 'cn' in s[1]:
                 network = s[1]['cn'][0]
-                if isinstance(network, bytes):  
+                if isinstance(network, bytes):
                     network = network.decode('utf-8')
 
             else:
