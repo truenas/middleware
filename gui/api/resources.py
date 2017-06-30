@@ -353,7 +353,7 @@ class DatasetResource(DojoResource):
                 if k == '__all__':
                     continue
                 if k.startswith('dataset_'):
-                    form.errors[k[5:]] = form.errors.pop(k)
+                    form.errors[k[len('dataset_'):]] = form.errors.pop(k)
             raise ImmediateHttpResponse(
                 response=self.error_response(request, form.errors)
             )
