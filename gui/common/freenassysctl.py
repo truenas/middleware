@@ -39,12 +39,14 @@ import sysctl
 # 0
 # 42
 #
+
+
 class freenas_sysctl(object):
     def __init__(self, *args, **kwargs):
         for oid in sysctl.filter('freenas'):
             oid_save = oid
 
-            parts = oid.name.split('.') 
+            parts = oid.name.split('.')
             fixed_parts = parts[1:len(parts)]
             oid = '.'.join(fixed_parts)
 
