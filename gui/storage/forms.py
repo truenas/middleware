@@ -1392,17 +1392,6 @@ class ZFSDatasetCreateForm(ZFSDatasetCommonForm):
         props = self.clean_data_to_props()
         path = '%s/%s' % (self._fs, self.cleaned_data.get('dataset_name'))
 
-        if not dedup_enabled():
-            self.fields['dataset_dedup'].widget.attrs['readonly'] = True
-            self.fields['dataset_dedup'].widget.attrs['class'] = (
-                'dijitSelectDisabled dijitDisabled')
-            self.fields['dataset_dedup'].widget.text = mark_safe(
-                '<span style="color: red;">Dedup feature not activated. '
-                'Contact <a href="mailto:truenas-support@ixsystems.com?subject'
-                '=ZFS Deduplication Activation">TrueNAS Support</a> for '
-                'assistance.</span><br />'
-            )
-
         err, msg = notifier().create_zfs_dataset(path=path, props=props)
         if err:
             self._errors['__all__'] = self.error_class([msg])
