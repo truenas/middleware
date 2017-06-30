@@ -26,7 +26,6 @@
 #####################################################################
 
 
-
 import shutil
 import os
 import configparser
@@ -37,7 +36,6 @@ from subprocess import Popen, PIPE
 from django.conf import settings
 from Crypto.Cipher import DES
 from zipfile import ZipFile
-from configparser import SafeConfigParser
 
 
 def vcp_enabled():
@@ -53,7 +51,7 @@ def vcp_enabled():
 def get_management_ips():
     from django.db.models import Q
     from freenasUI.network.models import Interfaces
-    qs = Interfaces.objects.all().exclude(Q(int_vip=None)|Q(int_vip=''))
+    qs = Interfaces.objects.all().exclude(Q(int_vip=None) | Q(int_vip=''))
     vips = [str(i.int_vip) for i in qs]
     p1 = Popen(["ifconfig", "-lu"], stdin=PIPE, stdout=PIPE, encoding='utf8')
     p1.wait()
@@ -169,7 +167,7 @@ def get_plugin_file_name():
                 settings.STATIC_ROOT
                 )]
         file = sorted(
-                [ p for p in paths if '.zip'in p and 'plugin' in p ],
+                [p for p in paths if '.zip'in p and 'plugin' in p],
                   key = os.path.getctime)[-1].split('/')[-1]
         if '.zip' in file and 'plugin' in file:
             return file
@@ -185,7 +183,7 @@ def get_plugin_version():
                 settings.STATIC_ROOT
                 )]
         file = sorted(
-                [ p for p in paths if '.zip'in p and 'plugin' in p ],
+                [p for p in paths if '.zip'in p and 'plugin' in p],
                   key = os.path.getctime)[-1].split('/')[-1]
         if file.count('_') < 2 or file.count('.') < 3:
             return err_message

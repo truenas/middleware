@@ -265,7 +265,7 @@ class PluginManager:
             return 'Provided vCenter Hostname/IP and port are not valid. '
         except vim.fault.InvalidLogin:
             return 'Provided vCenter credentials are not valid.'
-        except vim.fault.NoPermission as ex:
+        except vim.fault.NoPermission:
             return 'vCenter user does not have permission to perform this operation.'
         except Exception:
             return 'Internal Error. Please contact support.'
