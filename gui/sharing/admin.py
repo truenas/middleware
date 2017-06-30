@@ -122,8 +122,9 @@ class NFSShareFAdmin(BaseFreeAdmin):
         })
         return columns
 
+
 class WebDAVShareFAdmin(BaseFreeAdmin):
-  
+
     icon_model = "WebDAVShareIcon"
     icon_add = "AddWebDAVShareIcon"
     icon_view = "ViewAllWebDAVSharesIcon"
