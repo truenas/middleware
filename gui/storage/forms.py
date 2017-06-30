@@ -1366,7 +1366,7 @@ class ZFSDatasetCreateForm(ZFSDatasetCommonForm):
     def __init__(self, *args, fs=None, **kwargs):
         # Common form expects a parentdata
         # We use `fs` as parent data because thats where we inherit props from
-        self.parentdata = notifier().zfs_get_options(fs)[0]
+        self.parentdata = notifier().zfs_get_options(fs)
         super(ZFSDatasetCreateForm, self).__init__(*args, fs=fs, **kwargs)
 
     def clean(self):
@@ -1425,7 +1425,6 @@ class ZFSDatasetEditForm(ZFSDatasetCommonForm):
 
         if 'org.freenas:description' in zdata and zdata['org.freenas:description'][2] == 'local':
             self.fields['dataset_comments'].initial = zdata['org.freenas:description'][0]
-
 
         for prop in self.zfs_size_fields:
             field_name = 'dataset_%s' % prop
