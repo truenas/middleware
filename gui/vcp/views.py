@@ -25,7 +25,6 @@
 #
 #####################################################################
 
-import json
 import freenasUI.vcp.utils as utils
 
 from django.shortcuts import render
@@ -33,7 +32,7 @@ from django.utils.translation import ugettext as _
 from freenasUI.freeadmin.views import JsonResp
 from freenasUI.vcp.forms import VcenterConfigurationForm, VcenterAuxSettingsForm
 from freenasUI.vcp import models
-from django.http import HttpResponse, HttpResponseRedirect
+from django.http import HttpResponseRedirect
 
 from freenasUI.system.models import (
     Settings,
