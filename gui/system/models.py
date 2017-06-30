@@ -486,6 +486,7 @@ class Tunable(Model):
         icon_add = "AddTunableIcon"
         icon_view = "ViewTunableIcon"
 
+
 class ConsulAlerts(Model):
 
     consulalert_type = models.CharField(
@@ -507,7 +508,6 @@ class ConsulAlerts(Model):
         verbose_name = _("Alert Service")
         verbose_name_plural = _("Alert Services")
         ordering = ["consulalert_type"]
-
 
     class FreeAdmin:
         icon_model = "ConsulAlertsIcon"
