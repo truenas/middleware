@@ -12,6 +12,7 @@ sys.path.extend([
 
 from freenasUI.common.freenassysctl import freenas_sysctl as fs
 
+
 class KerberosConfigBinding(object):
     def __init__(self, name, value):
         self.name = name
@@ -202,7 +203,7 @@ class KerberosConfig(object):
        appdefaults_bindings.append(
            pam_appdefaults_bindings
        )
-     
+
        sections.append(
            KerberosConfigSection(
                section_name='appdefaults',
@@ -216,34 +217,34 @@ class KerberosConfig(object):
        libdefaults_bindings.append(
            KerberosConfigBinding(
                name='dns_lookup_realm', value='true'
-           ) 
+           )
        )
        libdefaults_bindings.append(
            KerberosConfigBinding(
                name='dns_lookup_kdc', value='true'
-           ) 
+           )
        )
        libdefaults_bindings.append(
            KerberosConfigBinding(
                name='ticket_lifetime', value='24h'
-           ) 
+           )
        )
        libdefaults_bindings.append(
            KerberosConfigBinding(
                name='clockskew', value='300'
-           ) 
+           )
        )
        libdefaults_bindings.append(
            KerberosConfigBinding(
                name='forwardable', value='yes'
-           ) 
+           )
        )
 
        if self.default_realm:
            libdefaults_bindings.append(
                KerberosConfigBinding(
                    name='default_realm', value=self.default_realm
-               ) 
+               )
            )
 
        self.parse(libdefaults_bindings, self.libdefaults_aux)
@@ -268,7 +269,7 @@ class KerberosConfig(object):
        logging_bindings = KerberosConfigBindingCollection()
        logging_bindings.append(
            KerberosConfigBinding(
-               name='default', value='SYSLOG:INFO:LOCAL7' 
+               name='default', value='SYSLOG:INFO:LOCAL7'
            )
        )
 
@@ -305,7 +306,7 @@ class KerberosConfig(object):
         if 'settings' in kwargs:
             settings = kwargs['settings']
             if settings and settings.ks_appdefaults_aux:
-                self.appdefaults_aux = settings.ks_appdefaults_aux 
+                self.appdefaults_aux = settings.ks_appdefaults_aux
             if settings and settings.ks_libdefaults_aux:
                 self.libdefaults_aux = settings.ks_libdefaults_aux
 
@@ -326,22 +327,22 @@ class KerberosConfig(object):
 
     def __get_binding(self, item, bindings):
         if not item or bindings is None:
-            return None 
+            return None
 
-        if bindings.name != None and \
+        if bindings.name is not None and \
             bindings.name.lower() == item.lower():
             return bindings
 
         if len(bindings) > 0:
             for binding in bindings:
-                if binding.name != None and \
+                if binding.name is not None and \
                     binding.name.lower() == item.lower():
                     return binding
 
         return None
 
     def get_binding(self, where, section=None):
-        if section == None:
+        if section is None:
             section = self.get_section(where[0])
 
         if section == None:
@@ -365,33 +366,33 @@ class KerberosConfig(object):
             return
 
         section = None
-        section_name = where[0] 
+        section_name = where[0]
         for s in self.sections:
             if s.section_name.lower() == section_name.lower():
                 section = s
                 break
 
-        if section == None:
-            return 
+        if section is None:
+            return
 
         if len(where) > 1:
             i = 1
             while i < len(where):
                 binding = where[i]
-                i += 1 
+                i += 1
 
         else:
             section.bindings.append(bindings)
-    
+
     def generate_bindings(self, bindings, tab=4, stdout=sys.stdout):
         if len(bindings) != 0:
-            if bindings.name != None:
+            if bindings.name is not None:
                 print("%s%s = {" % (
                     "".rjust(tab), bindings.name
                 ), file=stdout)
             for binding in bindings:
                 self.generate_bindings(binding, tab + 4, stdout)
-            if bindings.name != None:
+            if bindings.name is not None:
                 print("%s}" % "".rjust(tab), file=stdout)
 
         else:
@@ -408,8 +409,9 @@ class KerberosConfig(object):
 
     def generate_krb5_conf(self, stdout=sys.stdout):
         for section in self.sections:
-            if len(section) > 0: 
+            if len(section) > 0:
                 self.generate_section(section, 0, stdout)
+
 
 def get_kerberos_servers(kr, ad=None, ldap=None):
     realm = krb_kdc = krb_admin_server = krb_kpasswd_server = None
@@ -436,7 +438,7 @@ def get_kerberos_servers(kr, ad=None, ldap=None):
 
     if kr.krb_kdc:
         krb_kdc = kr.krb_kdc
-                
+
     if kr.krb_admin_server:
         krb_admin_server = kr.krb_admin_server
 
@@ -444,6 +446,7 @@ def get_kerberos_servers(kr, ad=None, ldap=None):
         krb_kpasswd_server = kr.krb_kpasswd_server
 
     return krb_kdc, krb_admin_server, krb_kpasswd_server
+
 
 def main():
     client = Client()
@@ -494,7 +497,7 @@ def main():
                 )
             )
 
-        if krb_admin_server: 
+        if krb_admin_server:
             bc.append(
                 KerberosConfigBinding(
                     name="admin_server", value=krb_admin_server

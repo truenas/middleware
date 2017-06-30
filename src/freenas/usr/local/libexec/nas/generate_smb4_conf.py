@@ -49,6 +49,7 @@ from freenasUI.common.log import log_traceback
 
 log = logging.getLogger('generate_smb4_conf')
 
+
 def qw(w):
     return '"%s"' % w.replace('"', '\\"')
 
@@ -265,7 +266,7 @@ def config_share_for_vfs_objects(share, vfs_objects):
 
 
 def extend_vfs_objects_for_zfs(path, vfs_objects):
-    return 
+    return
 
     if is_within_zfs(path):
         vfs_objects.extend([
@@ -792,7 +793,7 @@ def add_activedirectory_conf(client, smb4_conf):
              ad.ad_ldap_sasl_wrapping)
 
     confset1(smb4_conf, "template shell = /bin/sh")
-    cifs_homedir = "%s/%%D/%%U" % get_cifs_homedir(client) 
+    cifs_homedir = "%s/%%D/%%U" % get_cifs_homedir(client)
     confset2(smb4_conf, "template homedir = %s", cifs_homedir)
 
 
