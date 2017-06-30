@@ -358,6 +358,25 @@ class InterfacesService(Service):
                 interface, output,
             ))
 
+    @accepts()
+    def ipv4_in_use(self):
+        """
+        Get all IPv4 from all valid interfaces, excluding lo0, bridge* and tap*.
+
+        Returns:
+            list: A list with all IPv4 in use, or an empty list.
+        """
+        list_of_ipv4 = []
+        ignore_nics = ('lo', 'bridge', 'tap', 'epair')
+        for if_name, iface in list(netif.list_interfaces().items()):
+            if not if_name.startswith(ignore_nics):
+                for nic_address in iface.addresses:
+                    if nic_address.af == netif.AddressFamily.INET:
+                        ipv4_address = nic_address.address.exploded
+                        list_of_ipv4.append(str(ipv4_address))
+
+        return list_of_ipv4
+
 
 class RoutesService(Service):
 
