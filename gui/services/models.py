@@ -1241,6 +1241,11 @@ class SNMP(Model):
         null=True,
         verbose_name=_('Privacy Passphrase'),
     )
+    snmp_loglevel = models.IntegerField(
+        default=3,
+        choices=choices.SNMP_LOGLEVEL,
+        verbose_name=_('Log Level'),
+    )
     snmp_options = models.TextField(
         verbose_name=_("Auxiliary parameters"),
         blank=True,
