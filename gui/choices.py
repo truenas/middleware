@@ -271,6 +271,17 @@ SNMP_CHOICES = (
     ('UCD-SNMP-MIB ', 'UCD-SNMP-MIB'),
 )
 
+SNMP_LOGLEVEL = (
+    (0, _('Emergency')),
+    (1, _('Alert')),
+    (2, _('Critical')),
+    (3, _('Error')),
+    (4, _('Warning')),
+    (5, _('Notice')),
+    (6, _('Info')),
+    (7, _('Debug')),
+)
+
 UPS_CHOICES = (
     ('lowbatt', _('UPS reaches low battery')),
     ('batt', _('UPS goes on battery')),

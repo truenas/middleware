@@ -527,7 +527,8 @@ _gen_conf()
 
 	if srv_enabled snmp; then
 		echo "snmpd_conffile=\"/etc/local/snmpd.conf\""
-		echo "snmpd_flags=\"-Ls5d\""
+		snmpd_loglevel=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT snmp_loglevel FROM services_snmp ORDER BY -id LIMIT 1")
+		echo "snmpd_flags=\"-Ls${snmpd_loglevel}d\""
 	fi
 
 	_sssd_config
