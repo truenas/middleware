@@ -1814,8 +1814,10 @@ require([
         });
         footer.appendChild(suc);
         domClass.add(suc, css);
-        html.set(suc, "<p>"+msg+"</p>");
-        setTimeout(function() { if(suc) dFx.fadeOut({node: suc}).play();}, 7000);
+        html.set(suc, "<p>"+msg+"</p><a style='position: absolute; bottom: 0; right:0; color: white;' href='#'>Dismiss</a>");
+        if(css != "error") {
+          setTimeout(function() { if(suc) dFx.fadeOut({node: suc}).play();}, 7000);
+        }
 
     };
 
