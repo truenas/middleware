@@ -542,7 +542,8 @@ class LAGGInterfaceMembers(Model):
     )
     lagg_deviceoptions = models.CharField(
         max_length=120,
-        verbose_name=_("Options")
+        verbose_name=_("Options"),
+        default='up',
     )
 
     def __str__(self):
