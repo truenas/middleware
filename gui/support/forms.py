@@ -62,5 +62,6 @@ class LicenseUpdateForm(Form):
 
     def done(self, *args, **kwargs):
         super(LicenseUpdateForm, self).done(*args, **kwargs)
-        if utils.fc_enabled():
-            notifier().start('ix-loader')
+        _n = notifier()
+        if not _n.is_freenas() and _n.failover_licensed() and utils.fc_enabled():
+            _n.start('ix-loader')
