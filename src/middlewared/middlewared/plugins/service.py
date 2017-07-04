@@ -67,7 +67,6 @@ class ServiceService(CRUDService):
         'smartd': ('smartd', '/var/run/smartd.pid'),
         'webshell': (None, '/var/run/webshell.pid'),
         'webdav': ('httpd', '/var/run/httpd.pid'),
-        'backup': (None, '/var/run/backup.pid'),
         'netdata': ('netdata', '/var/db/netdata/netdata.pid')
     }
 
@@ -383,9 +382,6 @@ class ServiceService(CRUDService):
 
     async def _start_webshell(self, **kwargs):
         await self._system("/usr/local/bin/python /usr/local/www/freenasUI/tools/webshell.py")
-
-    async def _start_backup(self, **kwargs):
-        await self._system("/usr/local/bin/python /usr/local/www/freenasUI/tools/backup.py")
 
     async def _restart_webshell(self, **kwargs):
         try:
