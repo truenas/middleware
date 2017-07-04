@@ -291,7 +291,11 @@ class Job(object):
                         self.set_result(data)
                         self.set_state('SUCCESS')
             else:
-                self.set_result(await self.method(*([self] + self.args)))
+                if asyncio.iscoroutinefunction(self.method):
+                    rv = await self.method(*([self] + self.args))
+                else:
+                    rv = await self.middleware.threaded(self.method, *([self] + self.args))
+                self.set_result(rv)
                 self.set_state('SUCCESS')
         except:
             self.set_state('FAILED')
