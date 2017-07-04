@@ -40,31 +40,6 @@ def get_license():
     return license, None
 
 
-def fetch_categories(data):
-
-    sw_name = get_sw_name().lower()
-    try:
-        r = requests.post(
-            'https://%s/%s/api/v1.0/categories' % (ADDRESS, sw_name),
-            data=json.dumps(data),
-            headers={'Content-Type': 'application/json'},
-            timeout=10,
-        )
-        data = r.json()
-    except simplejson.JSONDecodeError as e:
-        log.debug("Failed to decode ticket attachment response: %s", r.text)
-        return False, r.text
-    except requests.ConnectionError as e:
-        return False, _('Connection failed: %s') % e
-    except requests.Timeout as e:
-        return False, _('Connection timed out: %s') % e
-
-    if 'error' in data:
-        return False, data['message']
-
-    return True, data
-
-
 def jails_enabled():
     license, reason = get_license()
     sw_name = get_sw_name().lower()

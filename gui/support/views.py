@@ -236,10 +236,14 @@ def ticket(request):
 
 @require_POST
 def ticket_categories(request):
-    success, msg = utils.fetch_categories({
-        'user': request.POST.get('user'),
-        'password': request.POST.get('password'),
-    })
+    with client as c:
+        try:
+            msg = c.call('support.fetch_categories', request.POST.get('user'), request.POST.get('password'))
+            success = True
+        except ClientException as e:
+            success = False
+            msg = e.error
+
     data = {
         'error': not success,
     }
