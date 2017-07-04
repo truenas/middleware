@@ -574,7 +574,7 @@ class Middleware(object):
         self.__loop = None
         self.__thread_id = threading.get_ident()
         self.__threadpool = concurrent.futures.ThreadPoolExecutor(
-            max_workers=5,
+            max_workers=10,
         )
         self.__jobs = JobsQueue(self)
         self.__schemas = {}
