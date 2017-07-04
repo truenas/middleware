@@ -16,6 +16,6 @@ def test_support_fetch_categories(conn):
     else:
         try:
             req = conn.ws.call('support.fetch_categories', 'foo', 'bar')
+            assert False, 'Should have raised an exception with EINVAL'
         except ClientException as e:
             assert e.errno == errno.EINVAL
-        assert True, 'Should have raised an exception with EINVAL'
