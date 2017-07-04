@@ -26,9 +26,9 @@ middlewared_start() {
 	/sbin/ifconfig lo0 127.0.0.1 up
 	if checkyesno middlewared_debug; then
 		/usr/local/bin/tmux new-session -s middlewared -d
-		/usr/local/bin/tmux send -t middlewared "env LC_ALL=en_US.UTF-8 ${command} -f ${plugins_dirs_arg}" ENTER
+		/usr/local/bin/tmux send -t middlewared "env LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8 ${command} -f ${plugins_dirs_arg}" ENTER
 	else
-		env PATH=$PATH:/usr/local/sbin:/usr/local/bin LC_ALL=en_US.UTF-8 ${command} -f -P ${pidfile} -r /usr/local/bin/middlewared -f ${plugins_dirs_arg} --log-handler=file
+		env PATH=$PATH:/usr/local/sbin:/usr/local/bin LANG=en_US.UTF-8 LC_ALL=en_US.UTF-8 ${command} -f -P ${pidfile} -r /usr/local/bin/middlewared -f ${plugins_dirs_arg} --log-handler=file
 	fi
 	LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/midclt -t 60 waitready
 }
