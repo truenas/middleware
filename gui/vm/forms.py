@@ -217,9 +217,13 @@ class DeviceForm(ModelForm):
                 'type': self.cleaned_data['DISK_mode'],
             }
         elif self.cleaned_data['dtype'] == 'CDROM':
-            obj.attributes = {
-                'path': self.cleaned_data['CDROM_path'],
-            }
+            cdrom_path = self.cleaned_data['CDROM_path']
+            if cdrom_path:
+                obj.attributes = {
+                    'path': cdrom_path,
+                }
+            else:
+                self._errors['CDROM_path'] = self.error_class([_('Please choose an ISO file.')])
         elif self.cleaned_data['dtype'] == 'NIC':
             obj.attributes = {
                 'type': self.cleaned_data['NIC_type'],
