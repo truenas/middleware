@@ -780,6 +780,10 @@ if [ ! "${_NEWSUM}" = "${_OLDSUM}" -a ! -f "${NEED_UPDATE_SENTINEL}" ]; then
 	echo ${_NEWSUM} > ${FREENAS_CONFIG_MD5}
 fi
 
+# Force LANG in the rc subsystem.
+# This will allow python scripts (mostly) to get correct encoding
+# while generating config files. See #24973
+export LANG=en_US.UTF-8
 if [ -f ${FREENAS_RC} ]; then
 	. ${FREENAS_RC}
 fi
