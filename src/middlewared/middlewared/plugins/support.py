@@ -1,12 +1,16 @@
-from middlewared.schema import Bool, Dict, Str, accepts
+from middlewared.schema import Bool, Dict, Int, Str, accepts
 from middlewared.service import CallError, Service, job
 from middlewared.utils import Popen
 
 import errno
 import json
+import os
 import requests
 import simplejson
+import socket
 import subprocess
+import sys
+import time
 
 # FIXME: Remove when we can generate debug from middleware
 if '/usr/local/www' not in sys.path:
@@ -15,6 +19,8 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'freenasUI.settings')
 
 import django
 django.setup()
+
+from freenasUI.system.utils import debug_get_settings, debug_generate
 
 ADDRESS = 'support-proxy.ixsystems.com'
 
@@ -73,6 +79,14 @@ class SupportService(Service):
     ))
     @job()
     async def new_ticket(self, job, data):
+        """
+        Creates a new ticket for support.
+        This is done using the support proxy API.
+        For FreeNAS it will be created on Redmine and for TrueNAS on SupportSuite.
+
+        For FreeNAS `criticality`, `environment`, `phone`, `name` and `email` attributes are not required.
+        For TrueNAS `username`, `password` and `type` attributes are not required.
+        """
 
         job.set_progress(1, 'Gathering data')
 
@@ -106,7 +120,7 @@ class SupportService(Service):
                 headers={'Content-Type': 'application/json'},
                 timeout=10,
             ))
-            data = r.json()
+            result = r.json()
         except simplejson.JSONDecodeError as e:
             self.logger.debug(f'Failed to decode ticket attachment response: {r.text}')
             raise CallError('Invalid proxy server response', errno.EBADMSG)
@@ -119,19 +133,19 @@ class SupportService(Service):
             self.logger.debug(f'Support Ticket failed ({r.status_code}): {r.text}', r.status_code, r.text)
             raise CallError('Ticket creation failed, try again later.', errno.EINVAL)
 
-        if data['error']:
-            raise CallError(data['message'], errno.EINVAL)
+        if result['error']:
+            raise CallError(result['message'], errno.EINVAL)
 
-        ticket = data.get('ticketnum')
+        ticket = result.get('ticketnum')
         if not ticket:
             raise CallError('New ticket number was not informed', errno.EINVAL)
-        job.set_progress(100, f'Ticket created: {ticket}', extra={'ticket': ticket})
+        job.set_progress(50, f'Ticket created: {ticket}', extra={'ticket': ticket})
 
         if debug:
-			# FIXME: generate debug from middleware
+            # FIXME: generate debug from middleware
             mntpt, direc, dump = await self.middleware.threaded(debug_get_settings)
 
-            job.set_progress(100, 'Generating debug file')
+            job.set_progress(60, 'Generating debug file')
             await self.middleware.threaded(debug_generate)
 
             not_freenas = not (await self.middleware.call('system.is_freenas'))
@@ -143,10 +157,70 @@ class SupportService(Service):
             else:
                 debug_file = dump
                 debug_name = 'debug-{}-{}.txz'.format(
-                    gc.gc_hostname,
+                    socket.gethostname().split('.')[0],
                     time.strftime('%Y%m%d%H%M%S'),
                 )
 
-            # Send it
+            job.set_progress(80, 'Attaching debug file')
+
+            tjob = await self.middleware.call('support.attach_ticket', {
+                'ticket': ticket,
+                'filename': debug_name,
+                'username': data.get('user'),
+                'password': data.get('password'),
+            })
+
+            def writer():
+                with open(debug_file, 'rb') as f:
+                    while True:
+                        read = f.read(10240)
+                        if read == b'':
+                            break
+                        os.write(tjob.write_fd, read)
+                    os.close(tjob.write_fd)
+            await self.middleware.threaded(writer)
+            await self.middleware.threaded(tjob.wait)
+        else:
+            job.set_progress(100)
 
         return ticket
+
+    @accepts(Dict(
+        'attach_ticket',
+        Int('ticket', required=True),
+        Str('filename', required=True),
+        Str('username', required=True),
+        Str('password', required=True),
+    ))
+    @job(pipe=True)
+    async def attach_ticket(self, job, data):
+        """
+        Method to attach a file to a existing ticket.
+        """
+
+        sw_name = 'freenas' if await self.middleware.call('system.is_freenas') else 'truenas'
+
+        data['user'] = data.pop('username')
+        data['ticketnum'] = data.pop('ticket')
+        filename = data.pop('filename')
+
+        fileobj = os.fdopen(job.read_fd, 'rb')
+
+        try:
+            r = await self.middleware.threaded(lambda: requests.post(
+                'https://%s/%s/api/v1.0/ticket/attachment' % (ADDRESS, sw_name),
+                data=data,
+                timeout=10,
+                files={'file': (filename, fileobj)},
+            ))
+            data = r.json()
+        except simplejson.JSONDecodeError as e:
+            self.logger.debug(f'Failed to decode ticket attachment response: {r.text}')
+            raise CallError('Invalid proxy server response', errno.EBADMSG)
+        except requests.ConnectionError as e:
+            raise CallError(f'Connection error {e}', errno.EBADF)
+        except requests.Timeout as e:
+            raise CallError('Connection time out', errno.ETIMEDOUT)
+
+        if data['error']:
+            raise CallError(data['message'], errno.EINVAL)
