@@ -13,9 +13,10 @@ from django.utils.translation import ugettext_lazy as _
 from freenasUI.common.locks import lock
 from freenasUI.common.system import send_mail, get_sw_version
 from freenasUI.freeadmin.hook import HookMetaclass
+from freenasUI.middleware.client import client, ClientException
 from freenasUI.middleware.notifier import notifier
 from freenasUI.system.models import Alert as mAlert, Support
-from freenasUI.support.utils import get_license, new_ticket
+from freenasUI.support.utils import get_license
 
 from lxml import etree
 
@@ -236,25 +237,26 @@ class AlertPlugins(metaclass=HookMetaclass):
             if value:
                 msgs += ['', '{}: {}'.format(verbose_name, value)]
 
-        success, msg, ticketnum = new_ticket({
-            'title': 'Automatic alert (%s)' % serial,
-            'body': '\n'.join(msgs),
-            'version': get_sw_version().split('-', 1)[-1],
-            'debug': False,
-            'company': company,
-            'serial': serial,
-            'department': 20,
-            'category': 'Hardware',
-            'criticality': 'Loss of Functionality',
-            'environment': 'Production',
-            'name': 'Automatic Alert',
-            'email': 'auto-support@ixsystems.com',
-            'phone': '-',
-        })
-        if not success:
-            log.error("Failed to create a support ticket: %s", msg)
-        else:
-            log.debug("Automatic alert ticket successfully created: %s", msg)
+        with client as c:
+            try:
+                rv = c.call('support.new_ticket', {
+                    'title': 'Automatic alert (%s)' % serial,
+                    'body': '\n'.join(msgs),
+                    'version': get_sw_version().split('-', 1)[-1],
+                    'debug': False,
+                    'company': company,
+                    'serial': serial,
+                    'department': 20,
+                    'category': 'Hardware',
+                    'criticality': 'Loss of Functionality',
+                    'environment': 'Production',
+                    'name': 'Automatic Alert',
+                    'email': 'auto-support@ixsystems.com',
+                    'phone': '-',
+                }, job=True)
+                log.debug(f'Automatic alert ticket successfully created: {rv["url"]}')
+            except ClientException as e:
+                log.error(f'Failed to create a support ticket: {e.error}')
 
     @lock('/tmp/.alertrun')
     def run(self):
