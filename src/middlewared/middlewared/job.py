@@ -3,6 +3,7 @@ from datetime import datetime
 from middlewared.utils import Popen
 
 import asyncio
+import copy
 import enum
 import json
 import os
@@ -291,10 +292,12 @@ class Job(object):
                         self.set_result(data)
                         self.set_state('SUCCESS')
             else:
+                # Make sure args are not altered during job run
+                args = copy.deepcopy(self.args)
                 if asyncio.iscoroutinefunction(self.method):
-                    rv = await self.method(*([self] + self.args))
+                    rv = await self.method(*([self] + args))
                 else:
-                    rv = await self.middleware.threaded(self.method, *([self] + self.args))
+                    rv = await self.middleware.threaded(self.method, *([self] + args))
                 self.set_result(rv)
                 self.set_state('SUCCESS')
         except:
