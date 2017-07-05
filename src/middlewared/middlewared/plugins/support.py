@@ -139,6 +139,7 @@ class SupportService(Service):
             raise CallError(result['message'], errno.EINVAL)
 
         ticket = result.get('ticketnum')
+        url = result.get('message')
         if not ticket:
             raise CallError('New ticket number was not informed', errno.EINVAL)
         job.set_progress(50, f'Ticket created: {ticket}', extra={'ticket': ticket})
@@ -185,7 +186,10 @@ class SupportService(Service):
         else:
             job.set_progress(100)
 
-        return ticket
+        return {
+            'ticket': ticket,
+            'url': url,
+        }
 
     @accepts(Dict(
         'attach_ticket',
