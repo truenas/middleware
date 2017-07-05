@@ -8,7 +8,9 @@ sys.path.append('/usr/local/www')
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'freenasUI.settings')
 
 import django
-django.setup()
+from django.apps import apps
+if not apps.ready:
+    django.setup()
 
 from django.apps import apps
 from django.db import connection
