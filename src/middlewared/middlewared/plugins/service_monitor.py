@@ -13,7 +13,9 @@ if '/usr/local/www' not in sys.path:
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'freenasUI.settings')
 
 import django
-django.setup()
+from django.apps import apps
+if not apps.ready:
+    django.setup()
 
 from freenasUI.common.freenassysctl import freenas_sysctl as _fs
 
