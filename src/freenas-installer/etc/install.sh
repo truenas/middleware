@@ -296,11 +296,6 @@ EOD
 
 ask_boot_method()
 {
-    # TrueNAS is BIOS only for now
-    if [ "${AVATAR_PROJECT}" = "TrueNAS" -a "$(sysctl -n kern.vm_guest)" != "bhyve" ]; then
-      return 1
-    fi
-
     # If we are not on efi, set BIOS as the default selected option
     dlgflags=""
     if [ "$BOOTMODE" != "efi" ] ; then
