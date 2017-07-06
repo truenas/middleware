@@ -30,7 +30,8 @@ from django.utils.translation import ugettext as _
 from dojango import forms
 from licenselib.license import License
 from freenasUI.common.forms import Form, ModelForm
-from freenasUI.support import models
+from freenasUI.middleware.notifier import notifier
+from freenasUI.support import models, utils
 
 log = logging.getLogger("support.forms")
 
@@ -58,3 +59,9 @@ class LicenseUpdateForm(Form):
         except:
             raise forms.ValidationError(_('This is not a valid license.'))
         return license
+
+    def done(self, *args, **kwargs):
+        super(LicenseUpdateForm, self).done(*args, **kwargs)
+        _n = notifier()
+        if not _n.is_freenas() and _n.failover_licensed() and utils.fc_enabled():
+            _n.start('ix-loader')
