@@ -1222,6 +1222,7 @@ class iSCSITargetGlobalConfigurationForm(ModelForm):
 
     def __init__(self, *args, **kwargs):
         super(iSCSITargetGlobalConfigurationForm, self).__init__(*args, **kwargs)
+        self.instance._original_iscsi_alua = self.instance.iscsi_alua
         _n = notifier()
         if not (not _n.is_freenas() and _n.failover_licensed()):
             del self.fields['iscsi_alua']
@@ -1276,6 +1277,8 @@ class iSCSITargetGlobalConfigurationForm(ModelForm):
 
     def save(self):
         obj = super(iSCSITargetGlobalConfigurationForm, self).save()
+        if self.instance._original_iscsi_alua != self.instance.iscsi_alua:
+            notifier().start('ix-loader')
         started = notifier().reload("iscsitarget")
         if started is False and models.services.objects.get(srv_service='iscsitarget').srv_enable:
             raise ServiceFailed("iscsitarget", _("The iSCSI service failed to reload."))
