@@ -42,7 +42,7 @@ class SupportService(Service):
         sw_name = 'freenas' if self.middleware.call_sync('system.is_freenas') else 'truenas'
         try:
             r = requests.post(
-                'https://%s/%s/api/v1.0/categories' % (ADDRESS, sw_name),
+                f'https://{ADDRESS}/{sw_name}/api/v1.0/categories',
                 data=json.dumps({
                     'user': username,
                     'password': password,
@@ -51,12 +51,12 @@ class SupportService(Service):
                 timeout=10,
             )
             data = r.json()
-        except simplejson.JSONDecodeError as e:
-            self.logger.debug("Failed to decode ticket attachment response: %s", r.text)
+        except simplejson.JSONDecodeError:
+            self.logger.debug(f'Failed to decode ticket attachment response: {r.text}')
             raise CallError('Invalid proxy server response', errno.EBADMSG)
         except requests.ConnectionError as e:
             raise CallError(f'Connection error {e}', errno.EBADF)
-        except requests.Timeout as e:
+        except requests.Timeout:
             raise CallError('Connection time out', errno.ETIMEDOUT)
 
         if 'error' in data:
@@ -117,18 +117,18 @@ class SupportService(Service):
 
         try:
             r = await self.middleware.threaded(lambda: requests.post(
-                'https://%s/%s/api/v1.0/ticket' % (ADDRESS, sw_name),
+                f'https://{ADDRESS}/{sw_name}/api/v1.0/ticket',
                 data=json.dumps(data),
                 headers={'Content-Type': 'application/json'},
                 timeout=10,
             ))
             result = r.json()
-        except simplejson.JSONDecodeError as e:
+        except simplejson.JSONDecodeError:
             self.logger.debug(f'Failed to decode ticket attachment response: {r.text}')
             raise CallError('Invalid proxy server response', errno.EBADMSG)
         except requests.ConnectionError as e:
             raise CallError(f'Connection error {e}', errno.EBADF)
-        except requests.Timeout as e:
+        except requests.Timeout:
             raise CallError('Connection time out', errno.ETIMEDOUT)
 
         if r.status_code != 200:
@@ -214,18 +214,18 @@ class SupportService(Service):
 
         try:
             r = await self.middleware.threaded(lambda: requests.post(
-                'https://%s/%s/api/v1.0/ticket/attachment' % (ADDRESS, sw_name),
+                f'https://{ADDRESS}/{sw_name}/api/v1.0/ticket/attachment',
                 data=data,
                 timeout=10,
                 files={'file': (filename, fileobj)},
             ))
             data = r.json()
-        except simplejson.JSONDecodeError as e:
+        except simplejson.JSONDecodeError:
             self.logger.debug(f'Failed to decode ticket attachment response: {r.text}')
             raise CallError('Invalid proxy server response', errno.EBADMSG)
         except requests.ConnectionError as e:
             raise CallError(f'Connection error {e}', errno.EBADF)
-        except requests.Timeout as e:
+        except requests.Timeout:
             raise CallError('Connection time out', errno.ETIMEDOUT)
 
         if data['error']:
