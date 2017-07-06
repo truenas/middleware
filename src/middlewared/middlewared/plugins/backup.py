@@ -211,7 +211,7 @@ class BackupS3Service(Service):
     @private
     def sync(self, job, backup, credential):
         # Use a temporary file to store s3cmd config file
-        with tempfile.NamedTemporaryFile() as f:
+        with tempfile.NamedTemporaryFile(mode='w+') as f:
             # Make sure only root can read it ad there is sensitive data
             os.chmod(f.name, 0o600)
 
@@ -226,7 +226,7 @@ region = {region}
                 access_key=credential['attributes']['access_key'],
                 secret_key=credential['attributes']['secret_key'],
                 region=backup['attributes']['region'] or '',
-            ))
+            ).encode())
             fg.flush()
 
             args = [
