@@ -9,7 +9,9 @@ if '/usr/local/www' not in sys.path:
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'freenasUI.settings')
 
 import django
-django.setup()
+from django.apps import apps
+if not apps.ready:
+    django.setup()
 
 from freenasUI.common.system import send_mail
 

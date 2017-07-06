@@ -35,9 +35,10 @@ class EnumMixin(object):
 
 class Attribute(object):
 
-    def __init__(self, name, verbose=None, required=False, validators=None, default=None, register=False):
+    def __init__(self, name, verbose=None, required=False, validators=None, register=False, **kwargs):
         self.name = name
-        self.default = default
+        self.has_default = 'default' in kwargs
+        self.default = kwargs.pop('default', None)
         self.required = required
         self.verbose = verbose or name
         self.validators = validators or []
@@ -227,7 +228,7 @@ class Dict(Attribute):
                 if attr.required and attr.name not in data:
                     raise Error(attr.name, 'This field is required')
 
-                if attr.name not in data:
+                if attr.name not in data and attr.has_default:
                     data[attr.name] = attr.default
 
         return data
