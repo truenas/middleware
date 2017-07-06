@@ -5,18 +5,11 @@ import queue
 import select
 import socket
 import sys
-import time
 import threading
 
 from pybonjour import (
     kDNSServiceFlagsMoreComing,
     kDNSServiceFlagsAdd,
-    kDNSServiceFlagsDefault,
-    kDNSServiceFlagsNoAutoRename,
-    kDNSServiceFlagsShared,
-    kDNSServiceFlagsUnique,
-    kDNSServiceFlagsBrowseDomains,
-    kDNSServiceFlagsRegistrationDomains,
     kDNSServiceErr_NoError
 )
 
@@ -28,8 +21,6 @@ os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'freenasUI.settings')
 
 import django
 django.setup()
-
-from freenasUI.common.freenassysctl import freenas_sysctl as _fs
 
 class mDNSObject(object):
     def __init__(self, **kwargs):
@@ -106,6 +97,7 @@ class DiscoverThread(mDNSThread):
             regtype=self.regtype,
             callBack=self.on_discover
         )
+
         while True:
             r, w, x = select.select([sdRef, self.pipe[0]], [], [])
             if self.pipe[0] in r:
@@ -137,7 +129,8 @@ class ServicesThread(mDNSThread):
     def to_regtype(self, obj):
         regtype = None
 
-        if (obj.flags & 3) or not (obj.flags & kDNSServiceFlagsAdd):
+        if (obj.flags & (kDNSServiceFlagsAdd|kDNSServiceFlagsMoreComing)) \
+            or not (obj.flags & kDNSServiceFlagsAdd):
             service = obj.name
             proto = obj.regtype.split('.')[0]
             regtype = "%s.%s." % (service, proto)
@@ -408,6 +401,7 @@ class mDNSServiceThread(threading.Thread):
         self.service = kwargs.get('service')
         self.regtype = kwargs.get('regtype')
         self.port = kwargs.get('port')
+        self.pipe = os.pipe()
         self.finished = threading.Event()
 
     def debug(self, msg, *args, **kwargs):
@@ -421,9 +415,13 @@ class mDNSServiceThread(threading.Thread):
             regtype=regtype, port=port, callBack=None)
 
         while True:
-            r, w, x = select.select([sdRef], [], [], 30)
-            if sdRef == r:
-                pybonjour.DNSServiceProcessResult(r)
+            r, w, x = select.select([sdRef, self.pipe[0]], [], [])
+            if self.pipe[0] in r:
+                break
+
+            for ref in r:
+                pybonjour.DNSServiceProcessResult(ref)
+
             if self.finished.is_set():
                 break
 
@@ -442,6 +440,7 @@ class mDNSServiceThread(threading.Thread):
 
     def cancel(self):
         self.finished.set()
+        os.write(self.pipe[1], b'42')
 
 
 class mDNSServiceSSHThread(mDNSServiceThread):
