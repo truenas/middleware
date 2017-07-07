@@ -1437,7 +1437,7 @@ class ConsulAlertsForm(ModelForm):
     username = forms.CharField(
         max_length=255,
         label=_("Username"),
-        help_text=_("Username"),
+        help_text=_("The username to use with this service"),
         required=False,
     )
     password = forms.CharField(
@@ -1454,8 +1454,8 @@ class ConsulAlertsForm(ModelForm):
     )
     url = forms.CharField(
         max_length=255,
-        label=_("URL"),
-        help_text=_("The incoming-webhook url"),
+        label=_("Webhook URL"),
+        help_text=_("The incoming webhook URL asssociated with this service"),
         required=False,
     )
 
@@ -1483,13 +1483,13 @@ class ConsulAlertsForm(ModelForm):
     channel = forms.CharField(
         max_length=255,
         label=_("Channel"),
-        help_text=_("The channel to post the notification"),
+        help_text=_("The channel to post notifications to. This overides the default channel in the Incoming Webhook settings."),
         required=False,
     )
     icon_url = forms.CharField(
         max_length=255,
-        label=_("URL icon"),
-        help_text=_("URL of a custom image for the notification"),
+        label=_("Icon URL"),
+        help_text=_("URL of a custom image for notification icons. This overrides the default if set in the Incoming Webhook settings."),
         required=False,
     )
     detailed = forms.BooleanField(
