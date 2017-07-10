@@ -103,7 +103,7 @@ def ha_mode():
         # detect ourselves as an echostream.
         if board == 'LIBRA':
             hardware = 'AIC'
-        elif board.startswith('PUMA'):
+        elif board == "iXsystems TrueNAS X10":
             hardware = 'PUMA'
         elif board == 'X8DTS':
             hardware = 'SBB'
