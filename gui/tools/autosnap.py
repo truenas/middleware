@@ -282,8 +282,12 @@ if len(mp_to_task_map) > 0:
     snapshots = {}
     snapshots_pending_delete = set()
     previous_prefix = '/'
-    zfsproc = pipeopen("/sbin/zfs list -t snapshot -H -o name", debug, logger=log)
+    # Use -s name because its faster. See #18428
+    zfsproc = pipeopen("/sbin/zfs list -t snapshot -H -o name -s name", debug, logger=log)
     lines = zfsproc.communicate()[0].split('\n')
+    # Sort it in python to behave the same way as without "-s name"
+    lines = sorted(lines, key=lambda x: x.split('@'))
+
     reg_autosnap = re.compile('^auto-(?P<year>\d{4})(?P<month>\d{2})(?P<day>\d{2}).'
                               '(?P<hour>\d{2})(?P<minute>\d{2})-(?P<retcount>\d+)'
                               '(?P<retunit>[hdwmy])$')
