@@ -559,6 +559,9 @@ class GlobalConfigurationForm(ModelForm):
     def clean_gc_ipv4gateway(self):
         val = self.cleaned_data.get("gc_ipv4gateway")
 
+        if not val:
+            return val
+
         with client as c:
             if c.call('routes.ipv4gw_reachable', val.exploded):
                 return val
