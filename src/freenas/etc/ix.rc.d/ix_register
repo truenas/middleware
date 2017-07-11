@@ -19,12 +19,12 @@ stop_cmd=":"
 
 ix_register_start()
 {
-	LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/midclt call mdns.start > /dev/null
+	LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/midclt call mdnsadvertise.start > /dev/null
 }
 
 ix_register_reload()
 {
-	LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/midclt call mdns.restart > /dev/null
+	LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/midclt call mdnsadvertise.restart > /dev/null
 }
 
 run_rc_command "$1"
