@@ -53,7 +53,7 @@ network_func()
 	section_header "Interfaces"
 	for i in $(ifconfig -l)
 	do
-		ifconfig ${i}
+		ifconfig -v ${i}
 		echo
 
 		if $(ifconfig ${i}|grep -q '\bUP\b')
