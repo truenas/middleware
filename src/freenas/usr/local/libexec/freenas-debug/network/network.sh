@@ -92,8 +92,8 @@ network_func()
 	route -n show default|grep gateway|awk '{ print $2 }'
 	section_footer
 
-	section_header "Routing tables (netstat -nr)"
-	netstat -nr
+	section_header "Routing tables (netstat -nrW)"
+	netstat -nrW
 	section_footer
 
 	section_header "ARP entries (arp -a)"
