@@ -364,6 +364,18 @@ class NICChoices(object):
                  exclude_configured=True, include_vlan_parent=False,
                  exclude_unconfigured_vlan_parent=False,
                  with_alias=False, nobridge=True, noepair=True):
+
+        self.nolagg = nolagg
+        self.novlan = novlan
+        self.notap = notap
+        self.exclude_configured = exclude_configured
+        self.include_vlan_parent = include_vlan_parent
+        self.exclude_unconfigured_vlan_parent = exclude_unconfigured_vlan_parent
+        self.with_alias = with_alias
+        self.nobridge = noepair
+        self.noepair = noepair
+
+    def __iter__(self):
         pipe = popen("/sbin/ifconfig -l")
         self._NIClist = pipe.read().strip().split(' ')
         # Remove lo0 from choices
@@ -394,11 +406,11 @@ class NICChoices(object):
                 if interface[0] in self._NIClist:
                     self._NIClist.remove(interface[0])
 
-        if nolagg:
+        if self.nolagg:
             # vlan devices are not valid parents of laggs
             self._NIClist = [nic for nic in self._NIClist if not nic.startswith("lagg")]
             self._NIClist = [nic for nic in self._NIClist if not nic.startswith("vlan")]
-        if novlan:
+        if self.novlan:
             self._NIClist = [nic for nic in self._NIClist if not nic.startswith("vlan")]
         else:
             # This removes devices that are parents of vlans.  We don't
@@ -407,7 +419,7 @@ class NICChoices(object):
             # The exception to this case is when we are getting the NIC
             # list for the GUI, in which case we want the vlan parents
             # as they may have a valid config on them.
-            if not include_vlan_parent or exclude_unconfigured_vlan_parent:
+            if not self.include_vlan_parent or self.exclude_unconfigured_vlan_parent:
                 try:
                     c.execute("SELECT vlan_pint FROM network_vlan")
                 except sqlite3.OperationalError:
@@ -417,7 +429,7 @@ class NICChoices(object):
                         if interface[0] in self._NIClist:
                             self._NIClist.remove(interface[0])
 
-            if exclude_unconfigured_vlan_parent:
+            if self.exclude_unconfigured_vlan_parent:
                 # Add the configured VLAN parents back in
                 try:
                     c.execute("SELECT vlan_pint FROM network_vlan "
@@ -434,7 +446,7 @@ class NICChoices(object):
                         if interface[0] not in self._NIClist:
                             self._NIClist.append(interface[0])
 
-        if with_alias:
+        if self.with_alias:
             try:
                 sql = """
                     SELECT
@@ -460,7 +472,7 @@ class NICChoices(object):
                     if interface not in aliased_nics:
                         self._NIClist.remove(interface)
 
-        if exclude_configured:
+        if self.exclude_configured:
             try:
                 # Exclude any configured interfaces
                 c.execute("SELECT int_interface FROM network_interfaces "
@@ -473,16 +485,16 @@ class NICChoices(object):
                     if interface[0] in self._NIClist:
                         self._NIClist.remove(interface[0])
 
-        if nobridge:
+        if self.nobridge:
             self._NIClist = [nic for nic in self._NIClist if not nic.startswith("bridge")]
 
-        if noepair:
+        if self.noepair:
             niclist = copy.deepcopy(self._NIClist)
             for nic in niclist:
                 if nic.startswith('epair'):
                     self._NIClist.remove(nic)
 
-        if notap:
+        if self.notap:
             taplist = copy.deepcopy(self._NIClist)
             for nic in taplist:
                 if nic.startswith('tap'):
@@ -490,11 +502,10 @@ class NICChoices(object):
 
         self.max_choices = len(self._NIClist)
 
+        return iter((i, i) for i in self._NIClist)
+
     def remove(self, nic):
         return self._NIClist.remove(nic)
-
-    def __iter__(self):
-        return iter((i, i) for i in self._NIClist)
 
 
 class IPChoices(NICChoices):
@@ -514,6 +525,11 @@ class IPChoices(NICChoices):
             exclude_configured=exclude_configured,
             include_vlan_parent=include_vlan_parent
         )
+        self.ipv4 = ipv4
+        self.ipv6 = ipv6
+
+    def __iter__(self):
+        self._NIClist = list(super(IPChoices, self).__iter__())
 
         from freenasUI.middleware.notifier import notifier
         _n = notifier()
@@ -527,7 +543,7 @@ class IPChoices(NICChoices):
 
         self._IPlist = []
         for iface in self._NIClist:
-            pipe = popen("/sbin/ifconfig %s" % iface)
+            pipe = popen("/sbin/ifconfig %s" % iface[0])
             lines = pipe.read().strip().split('\n')
             for line in lines:
                 if carp:
@@ -535,21 +551,20 @@ class IPChoices(NICChoices):
                     if not reg:
                         continue
                 if line.startswith('\tinet6'):
-                    if ipv6 is True:
+                    if self.ipv6 is True:
                         self._IPlist.append(line.split(' ')[1].split('%')[0])
                 elif line.startswith('\tinet'):
-                    if ipv4 is True:
+                    if self.ipv4 is True:
                         self._IPlist.append(line.split(' ')[1])
             pipe.close()
             self._IPlist.sort()
 
-    def remove(self, addr):
-        return self._IPlist.remove(addr)
-
-    def __iter__(self):
         if not self._IPlist:
             return iter([('0.0.0.0', '0.0.0.0')])
         return iter((i, i) for i in self._IPlist)
+
+    def remove(self, addr):
+        return self._IPlist.remove(addr)
 
 
 class TimeZoneChoices:
