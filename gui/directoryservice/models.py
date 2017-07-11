@@ -840,8 +840,8 @@ class ActiveDirectory(DirectoryServiceBase):
             blank=False
     )
     ad_enable_monitor = models.BooleanField(
-        verbose_name=_("Enable Monitoring (Experimental)"),
-        help_text=_("Restarts AD automatically if the service is disconnected. Still experimental, use with caution!"),
+        verbose_name=_("Enable Monitoring"),
+        help_text=_("Restarts AD automatically if the service is disconnected."),
         default=False
     )
     ad_ssl = models.CharField(
