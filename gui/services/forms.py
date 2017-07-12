@@ -359,20 +359,14 @@ class AFPForm(ModelForm):
 
 class NFSForm(ModelForm):
 
-    nfs_srv_bindip = forms.MultipleChoiceField(
-        label=models.NFS._meta.get_field('nfs_srv_bindip').verbose_name,
-        help_text=models.NFS._meta.get_field('nfs_srv_bindip').help_text,
-        required=False,
-        widget=forms.widgets.CheckedMultiSelect(),
-    )
-
     class Meta:
         model = models.NFS
-        exclude = ('nfs_srv_bindip', )
+        fields = '__all__'
         widgets = {
             'nfs_srv_mountd_port': forms.widgets.TextInput(),
             'nfs_srv_rpcstatd_port': forms.widgets.TextInput(),
             'nfs_srv_rpclockd_port': forms.widgets.TextInput(),
+            'nfs_srv_bindip': forms.widgets.CheckedMultiSelect(),
         }
 
     def __init__(self, *args, **kwargs):
@@ -385,11 +379,14 @@ class NFSForm(ModelForm):
                     self.data['nfs_srv_bindip'].split(',')
                 )
         self.fields['nfs_srv_bindip'].choices = list(choices.IPChoices())
-        self.fields['nfs_srv_bindip'].initial = (
-            self.instance.nfs_srv_bindip.split(',')
-            if self.instance.id and self.instance.nfs_srv_bindip
-            else ''
-        )
+        if self.instance.id and self.instance.nfs_srv_bindip:
+            bindips = []
+            for ip in self.instance.nfs_srv_bindip:
+                bindips.append(ip)
+
+            self.fields['nfs_srv_bindip'].initial = bindips
+        else:
+            self.fields['nfs_srv_bindip'].initial = ''
         key_order(self, 2, 'nfs_srv_bindip', instance=True)
 
         self.fields['nfs_srv_mountd_port'].label = (
@@ -431,12 +428,10 @@ class NFSForm(ModelForm):
                     "This is not a valid IP: %s" % (ip, )
                 )
             bind.append(ip)
-        return ','.join(bind)
+        return bind
 
     def save(self):
-        obj = super(NFSForm, self).save(commit=False)
-        obj.nfs_srv_bindip = self.cleaned_data.get('nfs_srv_bindip')
-        obj.save()
+        obj = super(NFSForm, self).save()
         started = notifier().restart("nfs")
         if (
             started is False
