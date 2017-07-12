@@ -2466,8 +2466,12 @@ class SnapshotResource(DojoResource):
                 field = sfield
                 reverse = False
             field = FIELD_MAP.get(field, field)
+            apifield = self.fields.get(field)
+            default = ''
+            if apifield and isinstance(apifield, fields.IntegerField):
+                default = 0
             results.sort(
-                key=lambda item: getattr(item, field) or '',
+                key=lambda item: getattr(item, field) or default,
                 reverse=reverse)
 
         limit = self._meta.limit
