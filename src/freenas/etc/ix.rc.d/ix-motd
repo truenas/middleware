@@ -11,10 +11,14 @@
 
 generate_motd()
 {
+	local motd
 	cp /conf/base/etc/motd /etc/motd
 	RO_FREENAS_CONFIG=$(ro_sqlite ${name} 2> /tmp/${name}.fail && rm /tmp/${name}.fail)
 	trap 'rm -f ${RO_FREENAS_CONFIG}' EXIT
-	${FREENAS_SQLITE_CMD} ${RO_FREENAS_CONFIG} "SELECT adv_motd FROM system_advanced ORDER BY id DESC LIMIT 1" >> /etc/motd
+	motd=$(${FREENAS_SQLITE_CMD} ${RO_FREENAS_CONFIG} "SELECT adv_motd FROM system_advanced ORDER BY id DESC LIMIT 1")
+	if [ -n "${motd}" ]; then
+		echo ${motd} >> /etc/motd
+	fi
 }
 
 name="ix-motd"
