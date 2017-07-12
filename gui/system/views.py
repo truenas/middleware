@@ -1001,7 +1001,8 @@ def debug(request):
                 s = _n.failover_rpc()
                 s.ping()
             except:
-                return render(request, 'failover/failover_down.html')
+                return render(request, 'system/debug.html', {"failover_down" : True})
+
         return render(request, 'system/debug.html')
     debug_generate()
     return render(request, 'system/debug_download.html')
