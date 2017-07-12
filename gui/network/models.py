@@ -26,7 +26,7 @@
 import os
 import random
 import string
-
+import logging
 from django.core.validators import RegexValidator
 from django.db import models, transaction
 from django.utils.translation import ugettext_lazy as _
@@ -39,6 +39,9 @@ from freenasUI.freeadmin.models import Model
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier
 from freenasUI.services.models import CIFS
+
+
+log = logging.getLogger('network.models')
 
 
 class GlobalConfiguration(Model):
@@ -133,8 +136,10 @@ class GlobalConfiguration(Model):
 
     def __init__(self, *args, **kwargs):
         super(GlobalConfiguration, self).__init__(*args, **kwargs)
+        self._n = notifier()
         for name in (
             'gc_hostname',
+            'gc_hostname_b',
             'gc_ipv4gateway',
             'gc_ipv6gateway',
             'gc_domain',
@@ -149,24 +154,24 @@ class GlobalConfiguration(Model):
         return str(self.id)
 
     def get_hostname(self):
-        _n = notifier()
-        if not _n.is_freenas():
-            if _n.failover_node() == 'B':
-                return self.gc_hostname_b
-            else:
-                return self.gc_hostname
+        if not self._n.is_freenas() and self._n.failover_node() == 'B':
+            return self.gc_hostname_b
         else:
             return self.gc_hostname
 
     def save(self, *args, **kwargs):
         # See #3437
-        if self._orig_gc_hostname != self.gc_hostname:
+        if (
+            self._orig_gc_hostname != self.gc_hostname or
+            self._orig_gc_hostname_b != self.gc_hostname_b
+        ):
             try:
                 cifs = CIFS.objects.order_by('-id')[0]
                 cifs.cifs_srv_netbiosname = self.gc_hostname
+                cifs.cifs_srv_netbiosname_b = self.gc_hostname_b
                 cifs.save()
-            except:
-                pass
+            except Exception:
+                log.debug("Setting netbios names failed", exc_info=True)
         return super(GlobalConfiguration, self).save(*args, **kwargs)
 
     class Meta:

@@ -694,7 +694,11 @@ class HostnameForm(Form):
 
     def save(self):
         host, domain = self.cleaned_data.get('hostname')
-        self.instance.gc_hostname = host
+        _n = notifier()
+        if not _n.is_freenas() and _n.failover_node() == 'B':
+            self.instance.gc_hostname_b = host
+        else:
+            self.instance.gc_hostname = host
         orig_gc_domain = self.instance.gc_domain
         self.instance.gc_domain = domain
         self.instance.save()
