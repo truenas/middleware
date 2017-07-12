@@ -242,7 +242,7 @@ class NTPServer(Model):
 
 class Advanced(Model):
     adv_consolemenu = models.BooleanField(
-        verbose_name=_("Enable Console Menu"),
+        verbose_name=_("Show Text Console without Password Prompt"),
         default=False,
     )
     adv_serialconsole = models.BooleanField(
