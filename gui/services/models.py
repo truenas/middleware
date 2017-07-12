@@ -432,10 +432,11 @@ class NFS(Model):
         default=False,
         verbose_name=_("Require Kerberos for NFSv4"),
     )
-    nfs_srv_bindip = models.CharField(
+    nfs_srv_bindip = MultiSelectField(
         blank=True,
         max_length=250,
         verbose_name=_("Bind IP Addresses"),
+        choices=choices.IPChoices(),
         help_text=_("Select the IP addresses to listen to for NFS requests. "
                     "If left unchecked, NFS will listen on all available "
                     "addresses."),
