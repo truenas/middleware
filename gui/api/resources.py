@@ -1910,6 +1910,10 @@ class ISCSITargetExtentResourceMixin(object):
 
 class BsdUserResourceMixin(NestedMixin):
 
+    SORTING_MAP = {
+        'bsdusr_group': lambda x: x.bsdusr_group.bsdgrp_gid,
+    }
+
     class Meta:
         queryset = bsdUsers.objects.all().order_by(
             'bsdusr_builtin',

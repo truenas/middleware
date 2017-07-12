@@ -291,7 +291,9 @@ class DojoModelResource(ResourceMixin, ModelResource):
                 if f.startswith('-'):
                     reverse = True
                     f = f[1:]
-                obj_list = sorted(obj_list, key=lambda x: getattr(x, f), reverse=reverse)
+                sorting_map = getattr(self, 'SORTING_MAP', {})
+                key = sorting_map.get(f, lambda x: getattr(x, f))
+                obj_list = sorted(obj_list, key=key, reverse=reverse)
 
         return obj_list
 
