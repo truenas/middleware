@@ -838,7 +838,7 @@ List resource
       Content-Type: application/json
 
         {
-                "nfs_srv_bindip": "",
+                "nfs_srv_bindip": [],
                 "nfs_srv_mountd_port": null,
                 "nfs_srv_allow_nonroot": false,
                 "nfs_srv_servers": 4,
@@ -882,7 +882,7 @@ Update resource
       Content-Type: application/json
 
         {
-                "nfs_srv_bindip": "",
+                "nfs_srv_bindip": [],
                 "nfs_srv_mountd_port": null,
                 "nfs_srv_allow_nonroot": false,
                 "nfs_srv_servers": 10,
@@ -901,7 +901,7 @@ Update resource
    :json boolean nfs_srv_v4: enable NFS v4
    :json boolean nfs_srv_v4_krb: require Kerberos for NFSv4
    :json boolean nfs_srv_16: support >16 groups
-   :json string nfs_srv_bindip: IP addresses (separated by commas) to bind to for TCP and UDP requests
+   :json string nfs_srv_bindip: IP addresses (as a list) to bind to for TCP and UDP requests
    :json integer nfs_srv_mountd_port: force mountd to bind to the specified port
    :json integer nfs_srv_rpcstatd_port: forces the rpc.statd daemon to bind to the specified port
    :json integer nfs_srv_rpclockd_port: forces rpc.lockd the daemon to bind to the specified port
