@@ -6,6 +6,8 @@ import inspect
 import logging
 import re
 import sys
+import threading
+import time
 
 from middlewared.schema import accepts, Dict, Int, List, Ref, Str
 from middlewared.utils import filter_list
@@ -315,9 +317,29 @@ class CoreService(Service):
                 pass
 
     @private
+    @accepts(Dict(
+        'core-job',
+        Int('sleep'),
+    ))
     @job()
-    def job(self, job):
+    def job(self, job, data=None):
         """
         Private no-op method to test a job, simply returning `true`.
         """
+        if data is None:
+            data = {}
+
+        sleep = data.get('sleep')
+        if sleep is not None:
+            def sleep_fn():
+                i = 0
+                while i < sleep:
+                    job.set_progress((i / sleep) * 100)
+                    time.sleep(1)
+                    i += 1
+                job.set_progress(100)
+
+            t = threading.Thread(target=sleep_fn, daemon=True)
+            t.start()
+            t.join()
         return True
