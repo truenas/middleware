@@ -998,7 +998,7 @@ def debug(request):
                 with client as c:
                     c.call('failover.call_remote', 'core.ping')
             except ClientException:
-                return render(request, 'system/debug.html', {"failover_availability" : False})
+                return render(request, 'system/debug.html', {"failover_down" : True})
 
         return render(request, 'system/debug.html')
     debug_generate()
