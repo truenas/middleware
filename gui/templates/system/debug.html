@@ -10,7 +10,11 @@ doSubmit({
     </script>
 <table class="form">
     {% csrf_token %}
+    {% if failover_down %}
+        <tr><td style="color: red">Standby node is not available. The debug is going to contain data from the standby node only. </td></tr>
+    {%endif%}
    <tr><td>Are you sure you want to save debug? This operation might take a while.</td></tr>
+
 </table>
     {% block buttons %}
     <button id="btn_SaveDebug_Ok" data-dojo-type="dijit.form.Button" type="submit" data-dojo-props="type:'submit'" class="submitform">
