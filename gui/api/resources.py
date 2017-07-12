@@ -2513,7 +2513,7 @@ class SnapshotResource(DojoResource):
                 reverse = False
             field = FIELD_MAP.get(field, field)
             results.sort(
-                key=lambda item: getattr(item, field),
+                key=lambda item: getattr(item, field) or '',
                 reverse=reverse)
 
         limit = self._meta.limit
