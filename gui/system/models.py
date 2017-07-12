@@ -330,6 +330,7 @@ class Advanced(Model):
         max_length=1024,
         verbose_name=_("MOTD banner"),
         default='Welcome',
+        blank=True,
     )
     adv_boot_scrub = models.IntegerField(
         default=35,
