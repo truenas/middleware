@@ -464,10 +464,10 @@ class VLAN(Model):
         verbose_name=_("VLAN Tag")
     )
     vlan_pcp = models.PositiveIntegerField(
-        verbose_name=_("Priority Code Point"),
+        verbose_name=_("Priority Code Point (CoS)"),
         help_text=_(
-            "3-bit field which refers to IEEE 802.1p class of service and"
-            "maps to the frame priority level."
+            "3-bit field which refers to IEEE 802.1p class of service (CoS) "
+            "and maps to the frame priority level."
         ),
         choices=choices.VLAN_PCP_CHOICES,
         null=True,

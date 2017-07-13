@@ -17,6 +17,6 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='vlan',
             name='vlan_pcp',
-            field=models.PositiveIntegerField(blank=True, choices=choices.VLAN_PCP_CHOICES, help_text='3-bit field which refers to IEEE 802.1p class of service andmaps to the frame priority level.', null=True, verbose_name='Priority Code Point'),
+            field=models.PositiveIntegerField(blank=True, choices=choices.VLAN_PCP_CHOICES, help_text='3-bit field which refers to IEEE 802.1p class of service (CoS) and maps to the frame priority level.', null=True, verbose_name='Priority Code Point (CoS)'),
         ),
     ]
