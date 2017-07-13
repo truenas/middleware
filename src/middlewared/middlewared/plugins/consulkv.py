@@ -102,7 +102,12 @@ class ConsulService(Service):
         consul_error = await (await Popen(['consul', 'reload'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)).wait()
         if consul_error == 0:
             logger.info("===> Reload Consul: {0}".format(consul_error))
-            return True
+            consul_alert_error = await (await Popen(['/usr/local/etc/rc.d/consul-alerts', 'restart'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)).wait()
+            if consul_alert_error == 0:
+                logger.info("===> Reload Consul-Alerts: {0}".format(consul_alert_error))
+                return True
+            else:
+                return False
         else:
             return False
 
