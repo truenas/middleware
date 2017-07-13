@@ -476,18 +476,21 @@ class ZVolResource(DojoResource):
         response.status_code = 202
         return response
 
-    def obj_update(self, bundle, **kwargs):
-        bundle = self.full_hydrate(bundle)
-        name = "%s/%s" % (kwargs.get('parent').vol_name, kwargs.get('pk'))
-        data = self.deserialize(
-            bundle.request,
-            bundle.request.body,
-            format=bundle.request.META.get('CONTENT_TYPE', 'application/json'),
+    def put_detail(self, request, **kwargs):
+        self.is_authenticated(request)
+        name = "{}/{}".format(kwargs.get('parent').vol_name, kwargs.get('pk'))
+        deserialized = self._meta.serializer.deserialize(
+            request.body,
+            format=request.META.get('CONTENT_TYPE') or 'application/json'
         )
         # Add zvol_ prefix to match form field names
-        for k in list(data.keys()):
-            data[f'zvol_{k}'] = data.pop(k)
-        form = ZVol_EditForm(parentds=name, data=data)
+        for k in list(deserialized.keys()):
+            deserialized[f'zvol_{k}'] = deserialized.pop(k)
+
+        data = self._get_form_initial(ZVol_EditForm(name=name), instance=True)
+        data.update(deserialized)
+
+        form = ZVol_EditForm(name=name, data=data)
         if not form.is_valid() or not form.save():
             for k in list(form.errors.keys()):
                 if k == '__all__':
@@ -495,10 +498,11 @@ class ZVolResource(DojoResource):
                 if k.startswith('zvol_'):
                     form.errors[k[5:]] = form.errors.pop(k)
             raise ImmediateHttpResponse(
-                response=self.error_response(bundle.request, form.errors)
+                response=self.error_response(request, form.errors)
             )
-        bundle.obj = self.obj_get(bundle, **kwargs)
-        return bundle
+        response = self.get_detail(request, **kwargs)
+        response.status_code = 201
+        return response
 
     def obj_get_list(self, request=None, **kwargs):
         dsargs = {

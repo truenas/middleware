@@ -449,9 +449,13 @@ class DojoResource(ResourceMixin, Resource, metaclass=DjangoDeclarativeMetaclass
                 break
         return fields
 
-    def _get_form_initial(self, form):
+    def _get_form_initial(self, form, instance=False):
         initial = {}
-        for k, v in form.base_fields.items():
+        if instance:
+            fields = form.fields
+        else:
+            fields = form.base_fields
+        for k, v in fields.items():
             initial[k] = v.initial
         return initial
 

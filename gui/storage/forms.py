@@ -53,6 +53,7 @@ from freenasUI.freeadmin.forms import (
     CronMultiple, UserField, GroupField, WarningSelect,
     PathField,
 )
+from freenasUI.freeadmin.utils import key_order
 from freenasUI.freeadmin.views import JsonResp
 from freenasUI.middleware import zfs
 from freenasUI.middleware.client import client
@@ -1504,11 +1505,44 @@ class ZFSDatasetEditForm(ZFSDatasetCommonForm):
         return True
 
 
-class CommonZVol(object):
+class CommonZVol(Form):
+    zvol_comments = forms.CharField(max_length=120, label=_('Comments'), required=False)
+    zvol_volsize = forms.CharField(
+        max_length=128,
+        label=_('Size for this zvol'),
+        help_text=_('Example: 1 GiB'),
+    )
+    zvol_force = forms.BooleanField(
+        label=_('Force size'),
+        required=False,
+        help_text=_('Allow the zvol to consume more than 80% of available space'),
+    )
+    zvol_compression = forms.ChoiceField(
+        choices=choices.ZFS_CompressionChoices,
+        initial='inherit',
+        widget=forms.Select(attrs=attrs_dict),
+        label=_('Compression level'))
+    zvol_dedup = forms.ChoiceField(
+        label=_('ZFS Deduplication'),
+        choices=choices.ZFS_DEDUP_INHERIT,
+        initial='inherit',
+        widget=WarningSelect(text=DEDUP_WARNING),
+    )
 
     def __init__(self, *args, **kwargs):
         self._force = False
         super(CommonZVol, self).__init__(*args, **kwargs)
+
+        if hasattr(self, 'parentdata'):
+            self.fields['zvol_compression'].choices = _inherit_choices(
+                choices.ZFS_CompressionChoices,
+                self.parentdata['compression'][0]
+            )
+            self.fields['zvol_dedup'].choices = _inherit_choices(
+                choices.ZFS_DEDUP_INHERIT,
+                self.parentdata['dedup'][0]
+            )
+
 
     def _zvol_force(self):
         if self._force:
@@ -1556,52 +1590,22 @@ class CommonZVol(object):
         return size
 
 
-class ZVol_EditForm(CommonZVol, Form):
-    zvol_comments = forms.CharField(
-        max_length=128,
-        label=_('Comments'),
-        required=False)
-    zvol_compression = forms.ChoiceField(
-        choices=choices.ZFS_CompressionChoices,
-        widget=forms.Select(attrs=attrs_dict),
-        label=_('Compression level'))
-    zvol_dedup = forms.ChoiceField(
-        label=_('ZFS Deduplication'),
-        choices=choices.ZFS_DEDUP_INHERIT,
-        widget=WarningSelect(text=DEDUP_WARNING),
-    )
-    zvol_volsize = forms.CharField(
-        max_length=128,
-        label=_('Size'),
-        help_text=_('Example: 1 GiB'))
-    zvol_force = forms.BooleanField(
-        label=_('Force size'),
-        required=False,
-        help_text=_('Allow the zvol to consume more than 80% of available space'),
-    )
+class ZVol_EditForm(CommonZVol):
 
     def __init__(self, *args, **kwargs):
-        self.parentds = kwargs.pop('parentds')
-        self.vol_name = self.parentds.rsplit('/', 1)[0]
-        super(ZVol_EditForm, self).__init__(*args, **kwargs)
+        # parentds is required for CommonZVol
+        self.parentds = self.vol_name = kwargs.pop('name')
         _n = notifier()
-        if '/' in self.parentds:
-            parentds = self.parentds.rsplit('/', 1)[0]
-            parentdata = _n.zfs_get_options(parentds)
+        self.parentdata = _n.zfs_get_options(self.vol_name.rsplit('/', 1)[0])
+        super(ZVol_EditForm, self).__init__(*args, **kwargs)
 
-            self.fields['zvol_compression'].choices = _inherit_choices(
-                choices.ZFS_CompressionChoices,
-                parentdata['compression'][0]
-            )
-            self.fields['zvol_dedup'].choices = _inherit_choices(
-                choices.ZFS_DEDUP_INHERIT,
-                parentdata['dedup'][0]
-            )
-
-        self.zdata = _n.zfs_get_options(self.parentds)
+        self.zdata = _n.zfs_get_options(self.vol_name)
         if 'org.freenas:description' in self.zdata and self.zdata['org.freenas:description'][2] == 'local':
             self.fields['zvol_comments'].initial = self.zdata['org.freenas:description'][0]
-        self.fields['zvol_compression'].initial = self.zdata['compression'][2]
+        if self.zdata['compression'][2] == 'inherit':
+            self.fields['zvol_compression'].initial = 'inherit'
+        else:
+            self.fields['zvol_compression'].initial = self.zdata['compression'][0]
         self.fields['zvol_volsize'].initial = self.zdata['volsize'][0]
 
         if self.zdata['dedup'][2] == 'inherit':
@@ -1666,24 +1670,8 @@ class ZVol_EditForm(CommonZVol, Form):
         return True
 
 
-class ZVol_CreateForm(CommonZVol, Form):
+class ZVol_CreateForm(CommonZVol):
     zvol_name = forms.CharField(max_length=128, label=_('zvol name'))
-    zvol_comments = forms.CharField(max_length=120, label=_('Comments'), required=False)
-    zvol_volsize = forms.CharField(
-        max_length=128,
-        label=_('Size for this zvol'),
-        help_text=_('Example: 1 GiB'),
-    )
-    zvol_force = forms.BooleanField(
-        label=_('Force size'),
-        required=False,
-        help_text=_('Allow the zvol to consume more than 80% of available space'),
-    )
-    zvol_compression = forms.ChoiceField(
-        choices=choices.ZFS_CompressionChoices,
-        initial='inherit',
-        widget=forms.Select(attrs=attrs_dict),
-        label=_('Compression level'))
     zvol_sparse = forms.BooleanField(
         label=_('Sparse volume'),
         help_text=_(
@@ -1711,6 +1699,7 @@ class ZVol_CreateForm(CommonZVol, Form):
 
     def __init__(self, *args, **kwargs):
         self.parentds = kwargs.pop('parentds')
+        self.parentdata = notifier().zfs_get_options(self.parentds)
         zpool = notifier().zpool_parse(self.parentds.split('/')[0])
         numdisks = 4
         for vdev in zpool.data:
@@ -1734,6 +1723,7 @@ class ZVol_CreateForm(CommonZVol, Form):
             if num > numdisks:
                 numdisks = num
         super(ZVol_CreateForm, self).__init__(*args, **kwargs)
+        key_order(self, 0, 'zvol_name', instance=True)
         size = '%dK' % 2 ** ((numdisks * 4) - 1).bit_length()
 
         if size in [y[0] for y in choices.ZFS_VOLBLOCKSIZE]:
