@@ -78,7 +78,7 @@ _interface_config()
 	local IFS=\|
 	local interface_id interface dodhcp ipv4addr ipv4netmask doipv6auto ipv6addr ipv6netmask options
 	local lagg_id laggproto lagg_physnic lagg_deviceoptions
-	local vlan_vint vlan_pint vlan_tag
+	local vlan_vint vlan_pint vlan_tag vlan_pcp
 
 	if [ `${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT COUNT(id) FROM network_interfaces"` = 0 ]; then
 		IFS="${saved_ifs}"
@@ -257,9 +257,13 @@ _interface_config()
 		echo \"
 	done
 
-	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT vlan_vint, vlan_tag from network_vlan" | \
-	while read vlan_vint vlan_tag; do
-		echo create_args_${vlan_vint}=\"vlan\ ${vlan_tag}\"
+	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT vlan_vint, vlan_tag, vlan_pcp from network_vlan" | \
+	while read vlan_vint vlan_tag vlan_pcp; do
+		echo -n create_args_${vlan_vint}=\"vlan\ ${vlan_tag}
+		if [ -n "${vlan_pcp}" ]; then
+			echo -n " vlanpcp ${vlan_pcp}"
+		fi
+		echo \"
 	done
 }
 
