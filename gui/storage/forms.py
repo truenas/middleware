@@ -1561,7 +1561,6 @@ class CommonZVol(Form):
                 self.parentdata['dedup'][0]
             )
 
-
     def _zvol_force(self):
         if self._force:
             if not self.cleaned_data.get('zvol_force'):
