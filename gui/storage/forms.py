@@ -1529,7 +1529,6 @@ class ZFSDatasetEditForm(ZFSDatasetCommonForm):
 
         return True
 
-
 class CommonZVol(Form):
     zvol_comments = forms.CharField(max_length=120, label=_('Comments'), required=False)
     zvol_volsize = forms.CharField(
