@@ -1416,6 +1416,8 @@ require([
         // AWS SNS
         var region = registry.byId("id_region").domNode.parentNode.parentNode;
         var topic_arn = registry.byId("id_topic_arn").domNode.parentNode.parentNode;
+        var aws_access_key_id = registry.byId("id_aws_access_key_id").domNode.parentNode.parentNode;
+        var aws_secret_access_key = registry.byId("id_aws_secret_access_key").domNode.parentNode.parentNode;
 
         // VictorOps
         var routing_key = registry.byId("id_routing_key").domNode.parentNode.parentNode;
@@ -1441,6 +1443,8 @@ require([
         domStyle.set(api_key, "display", "none");
         domStyle.set(region, "display", "none");
         domStyle.set(topic_arn, "display", "none");
+        domStyle.set(aws_access_key_id, "display", "none");
+        domStyle.set(aws_secret_access_key, "display", "none");
         domStyle.set(routing_key, "display", "none");
 
         if(consulalert_type.get('value') == 'InfluxDB') {
@@ -1481,9 +1485,11 @@ require([
             domStyle.set(cluster_name, "display", "table-row");
             domStyle.set(api_key, "display", "table-row");
             domStyle.set(enabled, "display", "table-row");
-        } else if(consulalert_type.get('value') == 'AWS-SNS') {
+        } else if(consulalert_type.get('value') == 'AWSSNS') {
             domStyle.set(region, "display", "table-row");
             domStyle.set(topic_arn, "display", "table-row");
+            domStyle.set(aws_access_key_id, "display", "table-row");
+            domStyle.set(aws_secret_access_key, "display", "table-row");
             domStyle.set(enabled, "display", "table-row");
         } else if(consulalert_type.get('value') == 'VictorOps') {
             domStyle.set(api_key, "display", "table-row");

@@ -1569,6 +1569,18 @@ class ConsulAlertsForm(ModelForm):
         help_text=_("Topic ARN to publish to"),
         required=False,
     )
+    aws_access_key_id = forms.CharField(
+        max_length=255,
+        label=_("Key Id"),
+        help_text=_("AWS Access Key Id"),
+        required=False,
+    )
+    aws_secret_access_key = forms.CharField(
+        max_length=255,
+        label=_("Secret Key"),
+        help_text=_("AWS Secret Access Key"),
+        required=False,
+    )
 
     # VictorOps
     routing_key = forms.CharField(
@@ -1628,9 +1640,11 @@ class ConsulAlertsForm(ModelForm):
                 self.fields['cluster_name'].initial = self.instance.attributes.get('cluster_name')
                 self.fields['api_key'].initial = self.instance.attributes.get('api_key')
                 self.fields['enabled'].initial = self.instance.attributes.get('enabled')
-            elif self.instance.consulalert_type == 'AWS-SNS':
+            elif self.instance.consulalert_type == 'AWSSNS':
                 self.fields['region'].initial = self.instance.attributes.get('region')
                 self.fields['topic_arn'].initial = self.instance.attributes.get('topic_arn')
+                self.fields['aws_access_key_id'].initial = self.instance.attributes.get('aws_access_key_id')
+                self.fields['aws_secret_access_key'].initial = self.instance.attributes.get('aws_secret_access_key')
                 self.fields['enabled'].initial = self.instance.attributes.get('enabled')
             elif self.instance.consulalert_type == 'VictorOps':
                 self.fields['api_key'].initial = self.instance.attributes.get('api_key')
@@ -1664,6 +1678,8 @@ class ConsulAlertsForm(ModelForm):
                 "enabled": self.cleaned_data.get('enabled'),
                 "region": self.cleaned_data.get('region'),
                 "topic_arn": self.cleaned_data.get('topic_arn'),
+                "aws_access_key_id": self.cleaned_data.get('aws_access_key_id'),
+                "aws_secret_access_key": self.cleaned_data.get('aws_secret_access_key'),
                 "routing_key": self.cleaned_data.get('routing_key')
             }
             objs.save()
