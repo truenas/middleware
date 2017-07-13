@@ -609,13 +609,13 @@ def zvol_delete(request, name):
 
 def zvol_edit(request, name):
     if request.method == 'POST':
-        form = forms.ZVol_EditForm(request.POST, parentds=name)
+        form = forms.ZVol_EditForm(request.POST, name=name)
         if form.is_valid() and form.save():
             return JsonResp(request, message=_("Zvol successfully edited."))
         else:
             return JsonResp(request, form=form)
     else:
-        form = forms.ZVol_EditForm(parentds=name)
+        form = forms.ZVol_EditForm(name=name)
     return render(request, 'storage/volume_edit.html', {
         'form': form,
     })
