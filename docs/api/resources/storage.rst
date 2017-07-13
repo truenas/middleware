@@ -339,13 +339,13 @@ ZFS Volumes
       Content-Type: application/json
 
       {
-        "name": "myzvol",
-        "avail": 7286996992,
-        "compression": "lz4",
-        "dedup": "off",
-        "refer": 57344,
-        "used": 57344,
-        "volsize": 10485760
+        "comments": "FreeNAS ZVOL",
+        "name": "fnzvol",
+        "volsize": "10M",
+        "compression": "gzip-9",
+        "sparse": true,
+        "force": true,
+        "blocksize": "4K"
       }
 
    **Example response**:
@@ -357,10 +357,11 @@ ZFS Volumes
       Content-Type: application/json
 
       {
-        "name": "myzvol",
-        "avail": 7286996992,
-        "compression": "lz4",
+        "avail": 4059471872,
+        "comments": "FreeNAS ZVOL",
+        "compression": "gzip-9",
         "dedup": "off",
+        "name": "fnzvol",
         "refer": 57344,
         "used": 57344,
         "volsize": 10485760
@@ -389,9 +390,10 @@ ZFS Volumes
       Content-Type: application/json
 
       [{
-        "name": "myzvol",
+        "name": "fnzvol",
+        "comments": "FreeNAS ZVOL",
         "avail": 7286996992,
-        "compression": "lz4",
+        "compression": "gzip-9",
         "dedup": "off",
         "refer": 57344,
         "used": 57344,
@@ -409,7 +411,7 @@ ZFS Volumes
 
    .. sourcecode:: http
 
-      PUT /api/v1.0/storage/volume/tank/zvols/ HTTP/1.1
+      PUT /api/v1.0/storage/volume/tank/zvols/fnzvol/ HTTP/1.1
       Content-Type: application/json
 
       {
@@ -425,7 +427,13 @@ ZFS Volumes
       Content-Type: application/json
 
       {
-        "name": "myzvol",
+        "name": "fnzvol",
+        "comments": "FreeNAS ZVOL",
+        "avail": 7286996992,
+        "compression": "gzip-9",
+        "dedup": "off",
+        "refer": 57344,
+        "used": 57344,
         "volsize": 20971520
       }
 
