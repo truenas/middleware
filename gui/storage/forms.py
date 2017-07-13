@@ -1616,6 +1616,7 @@ class ZVol_EditForm(CommonZVol):
 
     def __init__(self, *args, **kwargs):
         # parentds is required for CommonZVol
+<<<<<<< HEAD
         self.name = kwargs.pop('name')
         self.parentds = self.name.rsplit('/', 1)[0]
         _n = notifier()
@@ -1623,6 +1624,14 @@ class ZVol_EditForm(CommonZVol):
         super(ZVol_EditForm, self).__init__(*args, **kwargs)
 
         self.zdata = _n.zfs_get_options(self.name)
+=======
+        self.parentds = self.vol_name = kwargs.pop('name')
+        _n = notifier()
+        self.parentdata = _n.zfs_get_options(self.vol_name.rsplit('/', 1)[0])
+        super(ZVol_EditForm, self).__init__(*args, **kwargs)
+
+        self.zdata = _n.zfs_get_options(self.vol_name)
+>>>>>>> fix(gui): unify some of ZVol create/update code
         if 'org.freenas:description' in self.zdata and self.zdata['org.freenas:description'][2] == 'local':
             self.fields['zvol_comments'].initial = self.zdata['org.freenas:description'][0]
         if self.zdata['compression'][2] == 'inherit':
