@@ -922,7 +922,7 @@ TUNABLE_TYPES = (
 )
 
 CONSULALERTS_TYPES = (
-    ('AWS-SNS', _('AWS-SNS')),
+    ('AWSSNS', _('AWS-SNS')),
     ('HipChat', _('HipChat')),
     ('InfluxDB', _('InfluxDB')),
     ('Mattermost', _('Mattermost')),
