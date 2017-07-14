@@ -1,10 +1,33 @@
 from bsd import geom
 
-from middlewared.schema import Str, accepts
-from middlewared.service import CallError, Service
+from middlewared.schema import Dict, List, Str, accepts
+from middlewared.service import CallError, Service, job
 
 import errno
 import libzfs
+
+
+def find_vdev(pool, vname):
+    """
+    Find a vdev in the given `pool` using `vname` looking for
+    guid or path
+
+    Returns:
+        libzfs.ZFSVdev object
+    """
+    children = list(pool.root_vdev.children)
+    while children:
+        child = children.pop()
+
+        if child.guid == vname:
+            return child
+
+        if child.type == 'disk':
+            path = child.path.replace('/dev/', '')
+            if path == vname:
+                return child
+
+        children += list(child.children)
 
 
 class ZFSPoolService(Service):
@@ -38,3 +61,46 @@ class ZFSPoolService(Service):
                 yield name
             else:
                 self.logger.debug(f'Could not find disk for {dev}')
+
+    @accepts(
+        Str('name'),
+        List('new'),
+        List('existing', items=[
+            Dict(
+                'attachvdev',
+                Str('target'),
+                Str('type', enum=['DISK']),
+                Str('path'),
+            ),
+        ]),
+    )
+    @job()
+    def extend(self, job, name, new=None, existing=None):
+        """
+        Extend a zfs pool `name` with `new` vdevs or attach to `existing` vdevs.
+        """
+
+        if new is None and existing is None:
+            raise CallError('New or existing vdevs must be provided', errno.EINVAL)
+
+        if new:
+            raise CallError('Adding new vdev is not implemented yet')
+
+        try:
+            zfs = libzfs.ZFS()
+            pool = zfs.get(name)
+
+            # Make sure we can find all target vdev
+            for i in (existing or []):
+                target = find_vdev(pool, i['target'])
+                if target is None:
+                    raise CallError(f'Failed to find vdev for {target}', errno.EINVAL)
+                i['target'] = target
+
+            for i in (existing or []):
+                newvdev = libzfs.ZFSVdev(zfs, i['type'].lower())
+                newvdev.path = i['path']
+                i['target'].attach(newvdev)
+
+        except libzfs.ZFSException as e:
+            raise CallError(str(e), e.code)
