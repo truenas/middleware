@@ -34,7 +34,7 @@ class ConsulService(Service):
         """
         c = consul.aio.Consul()
         try:
-            logger.info('CONSUL ===> Add Key: {} Value: {}'.format(str(key), str(value)))
+            logger.info('===> Add Key: {} Value: {}'.format(str(key), str(value)))
             return await c.kv.put(str(key), str(value))
         except Exception as err:
             logger.error('===> Consul set_kv error: %s' % (err))
@@ -154,14 +154,12 @@ class ConsulService(Service):
             with open(config_path, 'w') as config:
                 config.write('[default]\n')
                 config.write('region = {}\n'.format(region))
-                config.close()
 
         if key_id and access_key:
             with open(credentials_path, 'w') as credentials:
                 credentials.write('[default]\n')
                 credentials.write('aws_access_key_id = {}\n'.format(key_id))
                 credentials.write('aws_secret_access_key = {}\n'.format(access_key))
-                credentials.close()
 
     def _convert_keys(self, data):
         """
