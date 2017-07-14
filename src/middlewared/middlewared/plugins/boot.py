@@ -1,5 +1,5 @@
-from middlewared.schema import Bool, Dict, Str, accepts
-from middlewared.service import Service, private
+from middlewared.schema import Str, accepts
+from middlewared.service import CallError, Service, private
 from middlewared.utils import run
 
 from bsd import geom
@@ -36,7 +36,6 @@ class BootService(Service):
         if bios > 0:
             return 'BIOS'
         return 'EFI'
-
 
     @accepts(Str('dev'))
     @private
