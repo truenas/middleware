@@ -320,6 +320,17 @@ LAGGType = (
     ('none',        'None'),
 )
 
+VLAN_PCP_CHOICES = (
+    (0, _('Best effort (default)')),
+    (1, _('Background (lowest)')),
+    (2, _('Excellent effort')),
+    (3, _('Critical applications')),
+    (4, _('Video, < 100ms latency')),
+    (5, _('Video, < 10ms latency')),
+    (6, _('Internetwork control')),
+    (7, _('Network control (highest)')),
+)
+
 ZFS_AtimeChoices = (
     ('inherit', _('Inherit')),
     ('on',      _('On')),

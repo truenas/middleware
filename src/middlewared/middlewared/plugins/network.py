@@ -121,9 +121,9 @@ class InterfacesService(Service):
                 netif.create_interface(vlan['vlan_vint'])
                 iface = netif.get_interface(vlan['vlan_vint'])
 
-            if iface.parent != vlan['vlan_pint'] or iface.tag != vlan['vlan_tag']:
+            if iface.parent != vlan['vlan_pint'] or iface.tag != vlan['vlan_tag'] or iface.pcp != vlan['vlan_pcp']:
                 iface.unconfigure()
-                iface.configure(vlan['vlan_pint'], vlan['vlan_tag'])
+                iface.configure(vlan['vlan_pint'], vlan['vlan_tag'], vlan['vlan_pcp'])
 
             try:
                 parent_iface = netif.get_interface(iface.parent)
