@@ -127,7 +127,7 @@ def sendzfs(fromsnap, tosnap, dataset, localfs, remotefs, followdelete, throttle
         os.close(writefd)
 
     compress, decompress = compress_pipecmds(compression)
-    replcmd = '%s%s/usr/local/bin/pipewatcher $$ | %s "%s/sbin/zfs receive -F -d -u \'%s\' && echo Succeeded"' % (compress, throttle, sshcmd, decompress, remotefs)
+    replcmd = '%s%s/usr/local/bin/pipewatcher $$ | %s "%s/sbin/zfs receive -F -d \'%s\' && echo Succeeded"' % (compress, throttle, sshcmd, decompress, remotefs)
     log.debug('Sending zfs snapshot: %s | %s', ' '.join(cmd), replcmd)
     with open(templog, 'w+') as f:
         readobj = os.fdopen(readfd, 'rb', 0)
