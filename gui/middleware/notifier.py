@@ -892,7 +892,7 @@ class notifier(metaclass=HookMetaclass):
             assert isinstance(props, dict)
             for k in list(props.keys()):
                 if props[k] != 'inherit':
-                    options += "-o %s=%s " % (k, props[k])
+                    options += "-o %s='%s' " % (k, props[k].replace("'", "'\"'\"'"))
         zfsproc = self._pipeopen("/sbin/zfs create %s '%s'" % (options, path))
         zfs_output, zfs_err = zfsproc.communicate()
         zfs_error = zfsproc.wait()
@@ -3315,6 +3315,7 @@ class notifier(metaclass=HookMetaclass):
         """
         name = str(name)
         item = str(item)
+
         if isinstance(value, bytes):
             value = value.decode('utf8')
         else:
