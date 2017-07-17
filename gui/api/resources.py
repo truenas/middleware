@@ -3302,12 +3302,11 @@ class BootEnvResource(NestedMixin, DojoResource):
                                     'label': current.name,
                                 })
 
-                        if current.replacing:
-                            data['_detach_url'] = reverse(
-                                'system_bootenv_pool_detach',
-                                kwargs={
-                                    'label': current.name,
-                                })
+                        data['_detach_url'] = reverse(
+                            'system_bootenv_pool_detach',
+                            kwargs={
+                                'label': current.name,
+                            })
 
                         """
                         Replacing might go south leaving multiple UNAVAIL
