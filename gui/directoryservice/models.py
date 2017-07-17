@@ -829,19 +829,19 @@ class ActiveDirectory(DirectoryServiceBase):
             verbose_name=_("AD check connectivity frequency (seconds)"),
             default=60,
             validators=[MaxValueValidator(3600), MinValueValidator(30)],
-            help_text=_("How often to verify that AD servers are active"),
+            help_text=_("How often to verify that AD servers are active."),
             blank=False
     )
     ad_recover_retry = models.IntegerField(
             verbose_name=_("How many recovery attempts"),
             default=10,
             validators=[MaxValueValidator(500), MinValueValidator(0)],
-            help_text=_("How many times we will try to recover the connection with AD server, if the value is 0, it will try forever"),
+            help_text=_("Number of times to attempt to recover the connection with AD server. If the value is 0, try forever."),
             blank=False
     )
     ad_enable_monitor = models.BooleanField(
         verbose_name=_("Enable Monitoring"),
-        help_text=_("Restarts AD automatically if the service is disconnected."),
+        help_text=_("Restart AD automatically if the service is disconnected."),
         default=False
     )
     ad_ssl = models.CharField(
