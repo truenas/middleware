@@ -119,3 +119,21 @@ class ZFSPoolService(Service):
             target.detach()
         except libzfs.ZFSException as e:
             raise CallError(str(e), e.code)
+
+    @accepts(Str('pool'), Str('label'), Str('dev'))
+    def replace(self, name, label, dev):
+        """
+        Replace device `label` with `dev` in pool `name`.
+        """
+        try:
+            zfs = libzfs.ZFS()
+            pool = zfs.get(name)
+            target = find_vdev(pool, label)
+            if target is None:
+                raise CallError(f'Failed to find vdev for {label}', errno.EINVAL)
+
+            newvdev = libzfs.ZFSVdev(zfs, 'disk')
+            newvdev.path = f'/dev/{dev}'
+            target.replace(newvdev)
+        except libzfs.ZFSException as e:
+            raise CallError(str(e), e.code)
