@@ -4731,63 +4731,6 @@ class notifier(metaclass=HookMetaclass):
         )
         return cipher.decrypt(encrypted).decode('utf8').rstrip(PWENC_PADDING)
 
-    def _bootenv_partition(self, devname):
-        commands = []
-        commands.append("gpart create -s gpt -f active /dev/%s" % (devname, ))
-        boottype = self.get_boot_pool_boottype()
-        if boottype != 'EFI':
-            commands.append("gpart add -t bios-boot -i 1 -s 512k %s" % devname)
-            commands.append("gpart set -a active %s" % devname)
-        else:
-            commands.append("gpart add -t efi -i 1 -s 100m %s" % devname)
-            commands.append("newfs_msdos -F 16 /dev/%sp1" % devname)
-            commands.append("gpart set -a lenovofix %s" % devname)
-        commands.append("gpart add -t freebsd-zfs -i 2 -a 4k %s" % devname)
-        for command in commands:
-            proc = self._pipeopen(command)
-            proc.wait()
-            if proc.returncode != 0:
-                raise MiddlewareError('Unable to GPT format the disk "%s"' % devname)
-        return boottype
-
-    def _bootenv_install_grub(self, boottype, devname):
-        if boottype == 'EFI':
-            self._system("mount -t msdosfs /dev/%sp1 /boot/efi" % devname)
-        self._system("/usr/local/sbin/grub-install --modules='zfs part_gpt' %s /dev/%s" % (
-            "--efi-directory=/boot/efi --removable --target=x86_64-efi" if boottype == 'EFI' else '',
-            devname,
-        ))
-        if boottype == 'EFI':
-            self._pipeopen("umount /boot/efi").communicate()
-
-    def bootenv_replace_disk(self, label, devname):
-        """Attach a new disk to the pool"""
-
-        self._system("dd if=/dev/zero of=/dev/%s bs=1m count=32" % (devname, ))
-        try:
-            p1 = self._pipeopen("diskinfo %s" % (devname, ))
-            size = int(int(re.sub(r'\s+', ' ', p1.communicate()[0]).split()[2]) / (1024))
-        except:
-            log.error("Unable to determine size of %s", devname)
-        else:
-            # HACK: force the wipe at the end of the disk to always succeed. This # is a lame workaround.
-            self._system("dd if=/dev/zero of=/dev/%s bs=1m oseek=%s" % (
-                devname,
-                int(size / 1024) - 32,
-            ))
-
-        boottype = self._bootenv_partition(devname)
-
-        proc = self._pipeopen('/sbin/zpool replace freenas-boot %s %sp2' % (label, devname))
-        err = proc.communicate()[1]
-        if proc.returncode != 0:
-            raise MiddlewareError('Failed to attach disk: %s' % err)
-
-        time.sleep(10)
-        self._bootenv_install_grub(boottype, devname)
-
-        return True
-
     def iscsi_connected_targets(self):
         '''
         Returns the list of connected iscsi targets
