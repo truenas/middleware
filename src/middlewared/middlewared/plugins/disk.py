@@ -1,15 +1,17 @@
 from collections import defaultdict
 from datetime import datetime, timedelta
+import asyncio
 import errno
 import os
 import re
+import signal
 import subprocess
 import sys
 import sysctl
 
 from bsd import geom
 from middlewared.schema import accepts, Str
-from middlewared.service import filterable, private, CallError, CRUDService
+from middlewared.service import filterable, job, private, CallError, CRUDService
 from middlewared.utils import Popen, run
 
 # FIXME: temporary import of SmartAlert until alert is implemented
@@ -21,6 +23,7 @@ from freenasUI.services.utils import SmartAlert
 DISK_EXPIRECACHE_DAYS = 7
 MIRROR_MAX = 5
 RE_DA = re.compile('^da[0-9]+$')
+RE_DD = re.compile(r'^(\d+) bytes transferred .*\((\d+) bytes')
 RE_DSKNAME = re.compile(r'^([a-z]+)([0-9]+)$')
 RE_ISDISK = re.compile(r'^(da|ada|vtbd|mfid|nvd)[0-9]+$')
 RE_MPATH_NAME = re.compile(r'[a-z]+(\d+)')
@@ -671,6 +674,80 @@ class DiskService(CRUDService):
 
         for p in providers.values():
             await run('swapoff', f'/dev/{p.name}.eli', check=False)
+
+    @private
+    async def wipe_quick(self, dev):
+        """
+        Perform a quick wipe of a disk `dev` by the first few and last few megabytes
+        """
+        await run('dd', 'if=/dev/zero', f'of=/dev/{dev}', 'bs=1m', 'count=32')
+        try:
+            cp = await run('diskinfo', dev)
+            size = int(int(re.sub(r'\s+', ' ', cp.stdout.decode()).split()[2]) / (1024))
+        except subprocess.CalledProcessError:
+            self.logger.error(f'Unable to determine size of {dev}')
+        else:
+            # This will fail when EOL is reached
+            await run('dd', 'if=/dev/zero', f'of=/dev/{dev}', 'bs=1m', f'oseek={int(size / 1024) - 32}', check=False)
+
+    @accepts(Str('dev'), Str('mode', enum=['QUICK', 'FULL', 'FULL_RANDOM']))
+    @job(lock=lambda args: args[0])
+    async def wipe(self, job, dev, mode):
+        """
+        Performs a wipe of a disk `dev`.
+        It can be of the following modes:
+          - QUICK: clean the first few and last megabytes of every partition and disk
+          - FULL: write whole disk with zero's
+          - FULL_RANDOM: write whole disk with random bytes
+        """
+        await self.swaps_remove_disks([dev])
+
+        # First do a quick wipe of every partition to clean things like zfs labels
+        if mode == 'QUICK':
+            await self.middleware.threaded(geom.scan)
+            klass = geom.class_by_name('PART')
+            for g in klass.xml.findall(f'./geom[name=\'{dev}\']'):
+                for n in g.findall('./provider/name'):
+                    await self.wipe_quick(n.text)
+
+        await run('gpart', 'destroy', '-F', f'/dev/{dev}', check=False)
+
+        # Wipe out the partition table by doing an additional iterate of create/destroy
+        await run('gpart', 'create', '-s', 'gpt', f'/dev/{dev}')
+        await run('gpart', 'destroy', '-F', f'/dev/{dev}')
+
+        if mode == 'QUICK':
+            await self.wipe_quick(dev)
+        else:
+            cp = await run('diskinfo', dev)
+            size = int(re.sub(r'\s+', ' ', cp.stdout.decode()).split()[2])
+
+            proc = await Popen([
+                'dd',
+                'if=/dev/{}'.format('zero' if mode == 'FULL' else 'random'),
+                f'of=/dev/{dev}',
+                'bs=1m',
+            ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+
+            async def dd_wait():
+                while True:
+                    if proc.returncode is not None:
+                        break
+                    os.kill(proc.pid, signal.SIGINFO)
+                    await asyncio.sleep(1)
+
+            asyncio.ensure_future(dd_wait())
+
+            while True:
+                line = await proc.stderr.readline()
+                if line == b'':
+                    break
+                line = line.decode()
+                reg = RE_DD.search(line)
+                if reg:
+                    job.set_progress(int(reg.group(1)) / size, extra={'speed': int(reg.group(2))})
+
+        await self.sync(dev)
 
 
 def new_swap_name():
