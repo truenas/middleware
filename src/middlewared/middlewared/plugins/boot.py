@@ -104,3 +104,18 @@ class BootService(Service):
         Detach given `dev` from boot pool.
         """
         await self.middleware.call('zfs.pool.detach', 'freenas-boot', dev)
+
+    @accepts(Str('label'), Str('dev'))
+    async def replace(self, label, dev):
+        """
+        Replace device `label` on boot pool with `dev`.
+        """
+
+        boottype = await self.format(dev)
+
+        await self.middleware.call('zfs.pool.replace', 'freenas-boot', label, f'{dev}p2')
+
+        # We need to wait a little bit to install grub onto the new disk
+        # FIXME: use event for when its ready instead of sleep
+        await asyncio.sleep(10)
+        await self.install_grub(boottype, dev)
