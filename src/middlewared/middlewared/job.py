@@ -242,8 +242,8 @@ class Job(object):
             self.progress['extra'] = extra
         self.middleware.send_event('core.get_jobs', 'CHANGED', id=self.id, fields=self.__encode__())
 
-    def wait(self):
-        self._finished.wait()
+    async def wait(self):
+        await self._finished.wait()
         return self.result
 
     async def run(self, queue):
