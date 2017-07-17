@@ -182,7 +182,7 @@ class SupportService(Service):
                         os.write(tjob.write_fd, read)
                     os.close(tjob.write_fd)
             await self.middleware.threaded(writer)
-            await self.middleware.threaded(tjob.wait)
+            await tjob.wait()
         else:
             job.set_progress(100)
 
