@@ -1001,7 +1001,8 @@ def debug(request):
                 s = _n.failover_rpc()
                 s.ping()
             except:
-                return render(request, 'failover/failover_down.html')
+                return render(request, 'system/debug.html', {"failover_down" : True})
+
         return render(request, 'system/debug.html')
     debug_generate()
     return render(request, 'system/debug_download.html')
@@ -1012,8 +1013,10 @@ def debug_download(request):
     gc = GlobalConfiguration.objects.all().order_by('-id')[0]
 
     _n = notifier()
-    if not _n.is_freenas() and _n.failover_licensed():
-        debug_file = '%s/debug.tar' % direc
+    dual_node_debug_file = debug_file = '{}/debug.tar'.format(direc)
+
+    if not _n.is_freenas() and _n.failover_licensed() and os.path.exists(dual_node_debug_file):
+        debug_file = dual_node_debug_file
         extension = 'tar'
         hostname = ''
     else:
