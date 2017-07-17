@@ -334,7 +334,9 @@ for replication in replication_tasks:
             if ds_full in remote_zfslist:
                 continue
             log.debug("ds = %s, remotefs = %s" % (ds, remotefs))
-            sshproc = pipeopen('%s %s %s' % (sshcmd, rzfscmd, ds_full), quiet=True)
+            # Have to do extra quoting because datasets can have spaces in the name.
+            remote_cmd = '%s %s \"\'%s\'\"' % (sshcmd, rzfscmd, ds_full)
+            sshproc = pipeopen(remote_cmd, quiet=True)
             output, error = sshproc.communicate()
             error = error.strip('\n').strip('\r').replace('WARNING: ENABLED NONE CIPHER', '')
             # Debugging code
@@ -351,8 +353,9 @@ for replication in replication_tasks:
         #
         # We expect to see "on" in the output, or cannot open '%s': dataset does not exist
         # in the error.  To be safe, also check for children's readonly state.
+        # We do extra quoting because datasets can have spaces in their names.
         may_proceed = False
-        rzfscmd = '"zfs list -H -o readonly -t filesystem,volume -r %s"' % (remotefs_final)
+        rzfscmd = '"zfs list -H -o readonly -t filesystem,volume -r \'%s\'"' % (remotefs_final)
         sshproc = pipeopen('%s %s' % (sshcmd, rzfscmd))
         output, error = sshproc.communicate()
         error = error.strip('\n').strip('\r').replace('WARNING: ENABLED NONE CIPHER', '')
@@ -413,7 +416,8 @@ Hello,
         rzfscmd = '"zfs list -H -t snapshot -p -o name,creation -r \'%s\'"' % (remotefs_final)
     else:
         rzfscmd = '"zfs list -H -t snapshot -p -o name,creation -d 1 -r \'%s\'"' % (remotefs_final)
-    sshproc = pipeopen('%s %s' % (sshcmd, rzfscmd), debug)
+    remote_cmd = '%s %s' % (sshcmd, rzfscmd)
+    sshproc = pipeopen(remote_cmd, debug)
     output, error = sshproc.communicate()
     error = error.strip('\n').strip('\r').replace('WARNING: ENABLED NONE CIPHER', '')
     if output != '':
