@@ -87,7 +87,7 @@ from freenasUI.directoryservice.models import (
 )
 from freenasUI.freeadmin.views import JsonResp
 from freenasUI.freeadmin.utils import key_order
-from freenasUI.middleware.client import client
+from freenasUI.middleware.client import client, ClientException
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier
 from freenasUI.services.models import (
@@ -272,11 +272,12 @@ class BootEnvPoolAttachForm(Form):
     def done(self):
         devname = self.cleaned_data['attach_disk']
 
-        rv = notifier().bootenv_attach_disk(self.label, devname)
-        if rv:
-            return True
-        else:
-            return False
+        with client as c:
+            try:
+                c.call('boot.attach', devname)
+            except ClientException:
+                return False
+        return True
 
 
 class BootEnvPoolReplaceForm(Form):
