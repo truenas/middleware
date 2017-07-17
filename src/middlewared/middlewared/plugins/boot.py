@@ -4,6 +4,8 @@ from middlewared.utils import run
 
 from bsd import geom
 
+import asyncio
+
 
 class BootService(Service):
 
@@ -45,7 +47,7 @@ class BootService(Service):
         """
 
         job = await self.middleware.call('disk.wipe', dev, 'QUICK')
-        await self.middleware.threaded(job.wait)
+        await job.wait()
 
         commands = []
         commands.append(['gpart', 'create', '-s', 'gpt', '-f', 'active', f'/dev/{dev}'])
@@ -62,6 +64,24 @@ class BootService(Service):
             await run(*command)
         return boottype
 
+    @private
+    async def install_grub(self, boottype, dev):
+        args = [
+            '/usr/local/sbin/grub-install',
+            '--modules=\'zfs part_gpt\'',
+        ]
+
+        if boottype == 'EFI':
+            await run('mount', '-t', 'msdosfs', f'/dev/{dev}p1', '/boot/efi', check=False)
+            args += ['--efi-directory=/boot/efi', '--removable', '--target=x86_64-efi']
+
+        args.append(dev)
+
+        await run(*args, check=False)
+
+        if boottype == 'EFI':
+            await run('umount', '/boot/efi', check=False)
+
     @accepts(Str('dev'))
     async def attach(self, dev):
 
@@ -69,9 +89,14 @@ class BootService(Service):
         if len(disks) > 1:
             raise CallError('3-way mirror not supported yet')
 
-        await self.format(dev)
+        boottype = await self.format(dev)
 
         await self.middleware.call('zfs.pool.extend', 'freenas-boot', None, [{'target': f'{disks[0]}p2', 'type': 'DISK', 'path': f'/dev/{dev}p2'}])
+
+        # We need to wait a little bit to install grub onto the new disk
+        # FIXME: use event for when its ready instead of sleep
+        await asyncio.sleep(10)
+        await self.install_grub(boottype, dev)
 
     @accepts(Str('dev'))
     async def detach(self, dev):
