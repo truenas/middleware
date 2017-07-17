@@ -500,7 +500,8 @@ def bootenv_pool_attach(request):
 
 def bootenv_pool_detach(request, label):
     if request.method == 'POST':
-        notifier().zfs_detach_disk('freenas-boot', label)
+        with client as c:
+            c.call('boot.detach', label)
         return JsonResp(
             request,
             message=_("Disk has been successfully detached."))
