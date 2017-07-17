@@ -4760,33 +4760,6 @@ class notifier(metaclass=HookMetaclass):
         if boottype == 'EFI':
             self._pipeopen("umount /boot/efi").communicate()
 
-    def bootenv_attach_disk(self, label, devname):
-        """Attach a new disk to the pool"""
-        self._system("dd if=/dev/zero of=/dev/%s bs=1m count=32" % (devname, ))
-        try:
-            p1 = self._pipeopen("diskinfo %s" % (devname, ))
-            size = int(int(re.sub(r'\s+', ' ', p1.communicate()[0]).split()[2]) / (1024))
-        except:
-            log.error("Unable to determine size of %s", devname)
-        else:
-            # HACK: force the wipe at the end of the disk to always succeed. This # is a lame workaround.
-            self._system("dd if=/dev/zero of=/dev/%s bs=1m oseek=%s" % (
-                devname,
-                int(size / 1024) - 32,
-            ))
-
-        boottype = self._bootenv_partition(devname)
-
-        proc = self._pipeopen('/sbin/zpool attach freenas-boot %s %sp2' % (label, devname))
-        err = proc.communicate()[1]
-        if proc.returncode != 0:
-            raise MiddlewareError('Failed to attach disk: %s' % err)
-
-        time.sleep(10)
-        self._bootenv_install_grub(boottype, devname)
-
-        return True
-
     def bootenv_replace_disk(self, label, devname):
         """Attach a new disk to the pool"""
 
