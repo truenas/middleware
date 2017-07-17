@@ -676,10 +676,14 @@ class DiskService(CRUDService):
             await run('swapoff', f'/dev/{p.name}.eli', check=False)
 
     @private
-    async def wipe_quick(self, dev):
+    async def wipe_quick(self, dev, size=None):
         """
         Perform a quick wipe of a disk `dev` by the first few and last few megabytes
         """
+        # If the size is too small, lets just skip it for now.
+        # In the future we can adjust dd size
+        if size and size < 33554432:
+            return
         await run('dd', 'if=/dev/zero', f'of=/dev/{dev}', 'bs=1m', 'count=32')
         try:
             cp = await run('diskinfo', dev)
@@ -707,8 +711,15 @@ class DiskService(CRUDService):
             await self.middleware.threaded(geom.scan)
             klass = geom.class_by_name('PART')
             for g in klass.xml.findall(f'./geom[name=\'{dev}\']'):
-                for n in g.findall('./provider/name'):
-                    await self.wipe_quick(n.text)
+                for p in g.findall('./provider'):
+                    size = p.find('./mediasize')
+                    if size is not None:
+                        try:
+                            size = int(size.text)
+                        except ValueError:
+                            size = None
+                    name = p.find('./name')
+                    await self.wipe_quick(name.text, size=size)
 
         await run('gpart', 'destroy', '-F', f'/dev/{dev}', check=False)
 
