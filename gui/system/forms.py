@@ -324,11 +324,12 @@ class BootEnvPoolReplaceForm(Form):
     def done(self):
         devname = self.cleaned_data['replace_disk']
 
-        rv = notifier().bootenv_replace_disk(self.label, devname)
-        if rv == 0:
-            return True
-        else:
-            return False
+        with client as c:
+            try:
+                c.call('boot.replace', self.label, devname)
+            except ClientException:
+                return False
+        return True
 
 
 class CommonWizard(SessionWizardView):
