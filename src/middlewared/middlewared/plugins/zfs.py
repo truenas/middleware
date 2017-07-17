@@ -104,3 +104,18 @@ class ZFSPoolService(Service):
 
         except libzfs.ZFSException as e:
             raise CallError(str(e), e.code)
+
+    @accepts(Str('pool'), Str('label'))
+    def detach(self, name, label):
+        """
+        Detach device `label` from the pool `pool`.
+        """
+        try:
+            zfs = libzfs.ZFS()
+            pool = zfs.get(name)
+            target = find_vdev(pool, label)
+            if target is None:
+                raise CallError(f'Failed to find vdev for {label}', errno.EINVAL)
+            target.detach()
+        except libzfs.ZFSException as e:
+            raise CallError(str(e), e.code)
