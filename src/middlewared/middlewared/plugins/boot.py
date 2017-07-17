@@ -43,6 +43,9 @@ class BootService(Service):
         """
         Format a given disk `dev` using the appropiate partition layout
         """
+
+        await self.middleware.call('disk.wipe', dev, 'QUICK')
+
         commands = []
         commands.append(['gpart', 'create', '-s', 'gpt', '-f', 'active', f'/dev/{dev}'])
         boottype = await self.get_boot_type()
