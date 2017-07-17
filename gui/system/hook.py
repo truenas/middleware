@@ -32,12 +32,13 @@ class SystemHook(AppHook):
 
     def system_info(self, request):
         arr = []
+        tn_serial_numbers = ('A1-', 'R1-', 'R2-', 'R3-', 'R4-')
         serial = subprocess.Popen(
             ['/usr/local/sbin/dmidecode', '-s', 'system-serial-number'],
             stdout=subprocess.PIPE,
             encoding='utf8',
         ).communicate()[0].split('\n')[0].upper()
-        if serial.startswith('A1-') or serial.startswith('R1-'):
+        if serial.startswith(tn_serial_numbers):
             arr.append({'name': _('Serial Number'), 'value': serial})
         return arr
 
