@@ -801,6 +801,7 @@ async def _event_devfs(middleware, event_type, args):
         # This is a performance issue
         if os.path.exists('/tmp/.sync_disk_done'):
             await middleware.call('disk.sync', data['cdev'])
+            await middleware.call('disk.multipath_sync')
             try:
                 with SmartAlert() as sa:
                     sa.device_delete(data['cdev'])
