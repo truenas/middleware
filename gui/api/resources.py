@@ -880,7 +880,7 @@ class VolumeResourceMixin(NestedMixin):
                             )
                         except IndexError:
                             disk = None
-                        if current.status == 'ONLINE':
+                        if current.status in ('ONLINE', 'FAULTED'):
                             data['_offline_url'] = reverse(
                                 'storage_disk_offline',
                                 kwargs={
@@ -3294,7 +3294,7 @@ class BootEnvResource(NestedMixin, DojoResource):
                             )
                         except IndexError:
                             disk = None
-                        if current.status == 'ONLINE':
+                        if current.status in ('ONLINE', 'FAULTED'):
                             data['_offline_url'] = reverse(
                                 'storage_disk_offline',
                                 kwargs={
