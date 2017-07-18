@@ -244,7 +244,6 @@ class DiskResourceMixin(object):
     class Meta:
         queryset = Disk.objects.filter(
             disk_expiretime=None,
-            disk_multipath_name=''
         ).exclude(
             Q(disk_name__startswith='multipath') | Q(disk_name='')
         )
