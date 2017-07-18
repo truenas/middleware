@@ -475,6 +475,7 @@ class InitialWizard(CommonWizard):
 
                 if qs.exists():
                     smarttest = SMARTTest.objects.create(
+                        smarttest_hour='23',
                         smarttest_type='S',
                         smarttest_dayweek='7',
                     )
