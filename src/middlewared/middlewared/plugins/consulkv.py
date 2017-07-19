@@ -104,10 +104,18 @@ class ConsulService(Service):
             logger.info("===> Reload Consul: {0}".format(consul_error))
             consul_alert_error = await (await Popen(['/usr/local/etc/rc.d/consul-alerts', 'restart'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)).wait()
             if consul_alert_error == 0:
-                logger.info("===> Reload Consul-Alerts: {0}".format(consul_alert_error))
+                logger.info("===> Restart Consul-Alerts: {0}".format(consul_alert_error))
                 return True
             else:
                 return False
+        else:
+            return False
+
+    async def __reload_consul(self):
+        consul_error = await (await Popen(['consul', 'reload'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)).wait()
+        if consul_error == 0:
+            logger.info("===> Reload Consul: {0}".format(consul_error))
+            return True
         else:
             return False
 
@@ -125,7 +133,7 @@ class ConsulService(Service):
         with open(fake_fd, 'w') as fd:
             fd.write(json.dumps(fake_alert))
 
-        return await self.reload()
+        return await self.__reload_consul()
 
     @accepts()
     async def remove_fake_alert(self):
@@ -136,7 +144,7 @@ class ConsulService(Service):
             if e.errno != errno.ENOENT:
                 raise
 
-        return await self.reload()
+        return await self.__reload_consul()
 
     def _aws_config_file(self, region=None, key_id=None, access_key=None):
         config_path = '/root/.aws/config'
