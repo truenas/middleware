@@ -13,6 +13,8 @@ def ha_mode():
             data = f.read().strip()
         return data
 
+    hardware = None
+    node = None
     # Temporary workaround for VirtualBOX
     #proc = subprocess.Popen([
     #    '/usr/local/sbin/dmidecode',
@@ -21,6 +23,7 @@ def ha_mode():
     #bios = proc.communicate()[0].strip()
     #if bios == 'VirtualBox':
     if False:
+        hardware = 'ECHOSTREAM'
         proc = subprocess.Popen([
             '/usr/local/sbin/dmidecode',
             '-s', 'system-uuid',
@@ -32,22 +35,21 @@ def ha_mode():
             node = 'B'
     else:
         enclosures = ["/dev/" + enc for enc in os.listdir("/dev") if enc.startswith("ses")]
-        # The echostream E16 JBOD and the echostream Z-series chassis are the same piece of hardware
-        # One of the only ways to differentiate them is to look at the enclosure elements in detail
-        # The Z-series chassis identifies element 0x26 as SD_9GV12P1J_12R6K4.  The E16 does not.
-        # The E16 identifies element 0x25 as NM_3115RL4WB66_8R5K5
-        # We use this fact to ensure we are looking at the internal enclosure, not a shelf.
-        # If we used a shelf to determine which node was A or B you could cause the nodes to switch
-        # identities by switching the cables for the shelf.
-        ECHOSTREAM_MAGIC = "SD_9GV12P1J_12R6K4"
         for enclosure in enclosures:
             proc = subprocess.Popen([
                 '/usr/sbin/getencstat',
-                '-v', enclosure,
+                '-V', enclosure,
             ], stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf8')
             encstat = proc.communicate()[0].strip()
-            echostream = re.search(ECHOSTREAM_MAGIC, encstat, re.M)
-            if echostream:
+            # The echostream E16 JBOD and the echostream Z-series chassis are the same piece of hardware
+            # One of the only ways to differentiate them is to look at the enclosure elements in detail
+            # The Z-series chassis identifies element 0x26 as SD_9GV12P1J_12R6K4.  The E16 does not.
+            # The E16 identifies element 0x25 as NM_3115RL4WB66_8R5K5
+            # We use this fact to ensure we are looking at the internal enclosure, not a shelf.
+            # If we used a shelf to determine which node was A or B you could cause the nodes to switch
+            # identities by switching the cables for the shelf.
+            if re.search("SD_9GV12P1J_12R6K4", encstat, re.M):
+                hardware = 'ECHOSTREAM'
                 reg = re.search(r"3U20D-Encl-([AB])'", encstat, re.M)
                 # In theory this should only be reached if we are dealing with
                 # an echostream, which renders the "if reg else None" irrelevent
@@ -58,15 +60,30 @@ def ha_mode():
                 # we find.
                 if node:
                     break
-            else:
-                # No echostream enclosures were detected
-                node = None
-        else:
-            # No enclosures were detected at all
-            node = None
+            # Identify PUMA platform by one of enclosure names.
+            elif re.search("Enclosure Name: CELESTIC (P3215-O|P3217-B)", encstat, re.M):
+                hardware = 'PUMA'
+                # Identify node by comparing addresses from SES and SMP.
+                # There is no exact match, but allocation seems sequential.
+                proc = subprocess.Popen([
+                    '/sbin/camcontrol', 'smpphylist', enclosure, '-q'
+                ], stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf8')
+                phylist = proc.communicate()[0].strip()
+                reg = re.search(r"ESCE A_(5[0-9A-F]{15})", encstat, re.M)
+                if reg:
+                    addr = "0x%016x" % (int(reg.group(1), 16) - 1)
+                    if addr in phylist:
+                        node = "A"
+                        break
+                reg = re.search(r"ESCE B_(5[0-9A-F]{15})", encstat, re.M)
+                if reg:
+                    addr = "0x%016x" % (int(reg.group(1), 16) - 1)
+                    if addr in phylist:
+                        node = "B"
+                        break
 
     if node:
-        mode = 'ECHOSTREAM:%s' % node
+        mode = '%s:%s' % (hardware, node)
         with open(HA_MODE_FILE, 'w') as f:
             f.write(mode)
         return mode
