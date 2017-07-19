@@ -527,9 +527,12 @@ make_swap()
 {
     local _swapparts
 
-    _swapparts=$(for _disk in $*; do echo ${_disk}p3; done)
-    gmirror destroy -f swap || true
-    gmirror label -b prefer swap ${_swapparts}
+    # Skip the swap creation if installing into a BE (Swap already exists in that case)
+    if [ "${_upgrade_type}" != "inplace" ]
+      _swapparts=$(for _disk in $*; do echo ${_disk}p3; done)
+      gmirror destroy -f swap || true
+      gmirror label -b prefer swap ${_swapparts}
+    fi
     echo "/dev/mirror/swap.eli		none			swap		sw		0	0" > /tmp/data/data/fstab.swap
 }
 
@@ -1114,10 +1117,7 @@ menu_install()
     rm -f /tmp/data/conf/default/etc/fstab /tmp/data/conf/base/etc/fstab
     echo "freenas-boot/grub	/boot/grub	zfs	rw,noatime	1	0" > /tmp/data/etc/fstab
     if is_truenas; then
-       # Skip the swap creation if installing into a BE (Swap already exists in that case)
-       if [ ${_do_upgrade} -eq 0 -o "${_upgrade_type}" != "inplace" ]
-          make_swap ${_realdisks}
-       fi
+       make_swap ${_realdisks}
     fi
     ln /tmp/data/etc/fstab /tmp/data/conf/base/etc/fstab || echo "Cannot link fstab"
     if [ "${_do_upgrade}" -ne 0 ]; then
