@@ -1114,7 +1114,10 @@ menu_install()
     rm -f /tmp/data/conf/default/etc/fstab /tmp/data/conf/base/etc/fstab
     echo "freenas-boot/grub	/boot/grub	zfs	rw,noatime	1	0" > /tmp/data/etc/fstab
     if is_truenas; then
-       make_swap ${_realdisks}
+       # Skip the swap creation if installing into a BE (Swap already exists in that case)
+       if [ ${_do_upgrade} -eq 0 -a "${_upgrade_type}" != "inplace" ]
+          make_swap ${_realdisks}
+       fi
     fi
     ln /tmp/data/etc/fstab /tmp/data/conf/base/etc/fstab || echo "Cannot link fstab"
     if [ "${_do_upgrade}" -ne 0 ]; then
