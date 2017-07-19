@@ -35,3 +35,24 @@ def test_disk_sync_all(conn):
 
 def test_disk_multipath_sync(conn):
     conn.ws.call('disk.multipath_sync')
+
+
+def test_disk_wipe(conn):
+
+    disks = set()
+    for d in conn.ws.call('disk.query'):
+        disks.add(d['name'])
+
+    for d in conn.ws.call('boot.get_disks'):
+        if d in disks:
+            disks.remove(d)
+
+    for v in conn.ws.call('pool.query'):
+        for d in conn.ws.call('pool.get_disks', v['id']):
+            if d in disks:
+                disks.remove(d)
+
+    if len(disks) == 0:
+        pytest.skip('No spare disks to test disk wipe')
+
+    conn.ws.call('disk.wipe', disks.pop(), 'QUICK', job=True)
