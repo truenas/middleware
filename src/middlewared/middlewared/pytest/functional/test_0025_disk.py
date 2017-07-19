@@ -1,3 +1,6 @@
+import pytest
+
+
 def test_disk_query(conn):
     req = conn.rest.get('disk')
 
