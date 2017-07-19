@@ -32,7 +32,6 @@ import logging
 import logging.config
 import os
 import pwd
-import subprocess
 import sys
 
 from setproctitle import setproctitle
