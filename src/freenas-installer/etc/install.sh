@@ -528,7 +528,7 @@ make_swap()
     local _swapparts
 
     # Skip the swap creation if installing into a BE (Swap already exists in that case)
-    if [ "${_upgrade_type}" != "inplace" ]
+    if [ "${_upgrade_type}" != "inplace" ] ; then
       _swapparts=$(for _disk in $*; do echo ${_disk}p3; done)
       gmirror destroy -f swap || true
       gmirror label -b prefer swap ${_swapparts}
