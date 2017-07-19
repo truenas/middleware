@@ -1115,7 +1115,7 @@ menu_install()
     echo "freenas-boot/grub	/boot/grub	zfs	rw,noatime	1	0" > /tmp/data/etc/fstab
     if is_truenas; then
        # Skip the swap creation if installing into a BE (Swap already exists in that case)
-       if [ ${_do_upgrade} -eq 0 -a "${_upgrade_type}" != "inplace" ]
+       if [ ${_do_upgrade} -eq 0 -o "${_upgrade_type}" != "inplace" ]
           make_swap ${_realdisks}
        fi
     fi
