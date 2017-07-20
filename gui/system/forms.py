@@ -968,18 +968,13 @@ class SettingsForm(ModelForm):
 
     def __init__(self, *args, **kwargs):
         super(SettingsForm, self).__init__(*args, **kwargs)
-        self.instance._original_stg_guiprotocol = self.instance.stg_guiprotocol
-        self.instance._original_stg_guiaddress = self.instance.stg_guiaddress
-        self.instance._original_stg_guiport = self.instance.stg_guiport
-        self.instance._original_stg_guihttpsport = self.instance.stg_guihttpsport
-        self.instance._original_stg_guihttpsredirect = self.instance.stg_guihttpsredirect
-        self.instance._original_stg_sysloglevel = (
-            self.instance.stg_sysloglevel
-        )
-        self.instance._original_stg_syslogserver = (
-            self.instance.stg_syslogserver
-        )
-        self.instance._original_stg_guicertificate = self.instance.stg_guicertificate
+        for i in (
+            'stg_guiprotocol', 'stg_guiaddress', 'stg_guiport',
+            'stg_guihttpsport', 'stg_guihttpsredirect', 'stg_sysloglevel',
+            'stg_syslogserver', 'stg_guicertificate', 'stg_timezone',
+        ):
+            setattr(self.instance, f'_original_{i}', getattr(self.instance, i))
+
         self.fields['stg_language'].choices = settings.LANGUAGES
         self.fields['stg_language'].label = _("Language (Require UI reload)")
         self.fields['stg_guiaddress'] = forms.ChoiceField(
@@ -1061,6 +1056,8 @@ class SettingsForm(ModelForm):
                 events.append("evilrestartHttpd('%s')" % newurl)
             else:
                 events.append("restartHttpd('%s')" % newurl)
+        if self.instance._original_stg_timezone != self.instance.stg_timezone:
+            os.environ['TZ'] = self.instance.stg_timezone
 
 
 class NTPForm(ModelForm):
