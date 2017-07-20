@@ -4580,7 +4580,7 @@ class notifier(metaclass=HookMetaclass):
             restart.append('syslogd')
             self.stop('syslogd')
 
-        if os.path.exists('/var/run/samba/smbd.pid'):
+        if os.path.exists('/var/run/samba4/smbd.pid'):
             restart.append('cifs')
             self.stop('cifs')
 
