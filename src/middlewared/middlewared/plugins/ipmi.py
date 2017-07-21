@@ -5,12 +5,17 @@ from middlewared.service import CallError, Service
 from middlewared.utils import run
 
 import errno
+import os
 import subprocess
 
 channels = []
 
 
 class IPMIService(Service):
+
+    @accepts()
+    async def is_loaded(self):
+        return os.path.exists('/dev/ipmi0')
 
     @accepts()
     async def channels(self):
