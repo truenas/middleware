@@ -336,16 +336,13 @@ require([
         var msgid = input.value;
         var dismiss;
         if(input.checked) {
-            dismiss = 0;
+            dismiss = 'false';
         } else {
-            dismiss = 1;
+            dismiss = 'true';
         }
-        xhr.post("/admin/alert/dismiss/", {
-            headers: {"X-CSRFToken": CSRFToken},
-            data: {
-                msgid: msgid,
-                dismiss: dismiss
-            }
+        xhr.put("/api/v1.0/system/alert/" + msgid + "/dismiss/", {
+          headers: {"X-CSRFToken": CSRFToken, "Content-Type": "application/json"},
+            data: dismiss
         }).then(function(data) {
             loadalert();
         });
