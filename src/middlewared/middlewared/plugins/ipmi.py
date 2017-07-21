@@ -1,6 +1,6 @@
 from bsd import kld
 
-from middlewared.schema import Dict, List, Str, accepts
+from middlewared.schema import Bool, Dict, Int, accepts
 from middlewared.service import CallError, Service
 from middlewared.utils import run
 
@@ -18,6 +18,27 @@ class IPMIService(Service):
         Return a list with the IPMI channels available.
         """
         return channels
+
+    @accepts(Dict(
+        'options',
+        Int('seconds'),
+        Bool('force'),
+    ))
+    async def identify(self, options=None):
+        """
+        Turn on IPMI chassis identify light.
+
+        To turn off specify 0 as `seconds`.
+        """
+        options = options or {}
+        if options.get('force') and options.get('seconds'):
+            raise CallError('You have to use either "seconds" or "force" option, not both')
+
+        if options.get('force'):
+            cmd = 'force'
+        else:
+            cmd = str(options.get('seconds'))
+        await run('ipmitool', 'chassis', 'identify', cmd)
 
 
 async def setup(middleware):
