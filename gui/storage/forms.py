@@ -1562,7 +1562,6 @@ class CommonZVol(Form):
                 self.parentdata['dedup'][0]
             )
 
-
     def _zvol_force(self):
         if self._force:
             if not self.cleaned_data.get('zvol_force'):
@@ -1570,8 +1569,6 @@ class CommonZVol(Form):
                     'It is not recommended to use more than 80% of your '
                     'available space for your zvol!'
                 ])
-        #else:
-        #    self.fields['zvol_force'].widget = forms.widgets.HiddenInput()
 
     def clean_zvol_volsize(self):
         size = self.cleaned_data.get('zvol_volsize').replace(' ', '')
