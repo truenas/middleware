@@ -1249,6 +1249,11 @@ class ZFSDatasetCommonForm(Form):
         widget=WarningSelect(text=DEDUP_WARNING),
         initial="inherit",
     )
+    dataset_readonly = forms.ChoiceField(
+        label=_('Read-Only'),
+        choices=choices.ZFS_ReadonlyChoices,
+        initial=choices.ZFS_ReadonlyChoices[0][0],
+    )
     dataset_recordsize = forms.ChoiceField(
         choices=(('inherit', _('Inherit')), ) + choices.ZFS_RECORDSIZE,
         label=_('Record Size'),
@@ -1264,6 +1269,7 @@ class ZFSDatasetCommonForm(Form):
     )
 
     advanced_fields = (
+        'dataset_readonly',
         'dataset_refquota',
         'dataset_quota',
         'dataset_refreservation',
@@ -1289,6 +1295,10 @@ class ZFSDatasetCommonForm(Form):
             self.fields['dataset_dedup'].choices = _inherit_choices(
                 choices.ZFS_DEDUP_INHERIT,
                 self.parentdata['dedup'][0]
+            )
+            self.fields['dataset_readonly'].choices = _inherit_choices(
+                choices.ZFS_ReadonlyChoices,
+                self.parentdata['readonly'][0]
             )
 
         if not dedup_enabled():
@@ -1321,8 +1331,10 @@ class ZFSDatasetCommonForm(Form):
 
             props[prop] = value
 
-        for prop in ['org.freenas:description', 'compression', 'atime', 'dedup',
-                     'aclmode', 'recordsize', 'casesensitivity']:
+        for prop in (
+            'org.freenas:description', 'compression', 'atime', 'dedup',
+            'aclmode', 'recordsize', 'casesensitivity', 'readonly',
+        ):
             if prop == 'org.freenas:description':
                 value = self.cleaned_data.get('dataset_comments')
             elif prop == 'recordsize':
@@ -1458,6 +1470,13 @@ class ZFSDatasetEditForm(ZFSDatasetCommonForm):
             data['dataset_atime'] = zdata['atime'][0]
         else:
             data['dataset_atime'] = 'off'
+
+        if zdata['readonly'][2] == 'inherit':
+            data['dataset_readonly'] = 'inherit'
+        elif zdata['atime'][0] in ('on', 'off'):
+            data['dataset_readonly'] = zdata['readonly'][0]
+        else:
+            data['dataset_readonly'] = 'off'
 
         if zdata['recordsize'][2] == 'inherit':
             data['dataset_recordsize'] = 'inherit'
