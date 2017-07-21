@@ -94,7 +94,7 @@ from freenasUI.storage.forms import (
     ZFSDatasetEditForm
 )
 from freenasUI.storage.models import Disk, Replication, VMWarePlugin
-from freenasUI.system.alert import alertPlugins, Alert
+from freenasUI.system.alert import alert_node, alertPlugins, Alert
 from freenasUI.system.forms import (
     BootEnvAddForm,
     BootEnvRenameForm,
@@ -108,7 +108,7 @@ from freenasUI.system.forms import (
     ManualUpdateUploadForm,
     ManualUpdateWizard,
 )
-from freenasUI.system.models import Update as mUpdate
+from freenasUI.system.models import Update as mUpdate, Alert as mAlert
 from freenasUI.system.utils import BootEnv, debug_generate, factory_restore
 from middlewared.client import ClientException
 from tastypie import fields, http
@@ -170,6 +170,17 @@ class AlertResource(DojoResource):
         object_class = Alert
         resource_name = 'system/alert'
 
+    def prepend_urls(self):
+        return [
+            url(
+                r"^(?P<resource_name>%s)/(?P<pk>\w[\w/-]*)/dismiss%s$" % (
+                    self._meta.resource_name, trailing_slash()
+                ),
+                self.wrap_view('dismiss'),
+                name="api_alert_dismiss"
+            ),
+        ]
+
     def get_list(self, request, **kwargs):
         results = alertPlugins.run()
 
@@ -223,6 +234,38 @@ class AlertResource(DojoResource):
             len(results)
         )
         return response
+
+    def dismiss(self, request, **kwargs):
+        if request.method != 'PUT':
+            response = HttpMethodNotAllowed('PUT')
+            response['Allow'] = 'PUT'
+            raise ImmediateHttpResponse(response=response)
+
+        self.is_authenticated(request)
+
+        dismiss = self.deserialize(
+            request,
+            request.body,
+            format=request.META.get('CONTENT_TYPE', 'application/json'),
+        )
+
+        alert = None
+        for i in alertPlugins.run():
+            if i.getId() == kwargs['pk']:
+                alert = i
+                break
+        if alert is None:
+            raise ImmediateHttpResponse(response=HttpNotFound())
+
+        try:
+            alertobj = mAlert.objects.get(node=alert_node(), message_id=kwargs['pk'])
+            if dismiss is False:
+                alertobj.delete()
+        except mAlert.DoesNotExist:
+            if dismiss is True:
+                mAlert.objects.create(node=alert_node(), message_id=kwargs['pk'])
+
+        return HttpResponse(status=202)
 
     def dehydrate(self, bundle):
         return bundle
