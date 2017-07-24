@@ -1,11 +1,12 @@
 from bsd import kld
 
-from middlewared.schema import Bool, Dict, Int, accepts
+from middlewared.schema import Bool, Dict, Int, Str, accepts
 from middlewared.service import CallError, Service, filterable
 from middlewared.utils import filter_list, run
 
 import errno
 import os
+import pipes
 import subprocess
 
 channels = []
@@ -61,6 +62,56 @@ class IPMIService(Service):
                     data['dhcp'] = False if value == 'Static Address' else True
             result.append(data)
         return filter_list(result, filters, options)
+
+    @accepts(Dict(
+        'ipmi',
+        Int('channel', required=True),
+        Str('ipaddress'),
+        Str('netmask'),
+        Str('gateway'),
+        Str('password'),
+        Bool('dhcp'),
+        Int('vlan'),
+    ))
+    async def update(self, data):
+
+        if not await self.is_loaded():
+            raise CallError('The ipmi device could not be found')
+
+        args = ['ipmitool', 'lan', 'set', str(data['channel'])]
+        rv = 0
+        if data.get('dhcp'):
+            rv |= (await run(*args, 'ipsrc', 'dhcp', check=False)).returncode
+        else:
+            rv |= (await run(*args, 'ipsrc', 'static', check=False)).returncode
+            rv |= (await run(*args, 'ipaddr', data['ipaddress'], check=False)).returncode
+            rv |= (await run(*args, 'netmask', data['netmask'], check=False)).returncode
+            rv |= (await run(*args, 'defgw', 'ipaddr', data['gateway'], check=False)).returncode
+        rv |= (await run(
+            *args, 'vlan', 'id', data['vlan'] if data.get('vlan') else 'off'
+        )).returncode
+
+        rv |= (await run(*args, 'access', 'on', check=False)).returncode
+        rv |= (await run(*args, 'auth', 'USER', 'MD2,MD5', check=False)).returncode
+        rv |= (await run(*args, 'auth', 'OPERATOR', 'MD2,MD5', check=False)).returncode
+        rv |= (await run(*args, 'auth', 'ADMIN', 'MD2,MD5', check=False)).returncode
+        rv |= (await run(*args, 'auth', 'CALLBACK', 'MD2,MD5', check=False)).returncode
+        # Setting arp have some issues in some hardwares
+        # Do not fail if setting these couple settings do not work
+        # See #15578
+        await run(*args, 'arp', 'respond', 'on', check=False)
+        await run(*args, 'arp', 'generate', 'on', check=False)
+        if data.get('password'):
+            rv |= (await run(
+                'ipmitool', 'user', 'set', 'password', '2',
+                pipes.quote(data.get('password')),
+            )).returncode
+        rv |= (await run('ipmitool', 'user', 'enable', '2')).returncode
+        # XXX: according to dwhite, this needs to be executed off the box via
+        # the lanplus interface.
+        # rv |= (await run('ipmitool', 'sol', 'set', 'enabled', 'true', '1')).returncode
+        # )
+        return rv
 
     @accepts(Dict(
         'options',
