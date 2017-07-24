@@ -23,9 +23,6 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
-import socket
-import struct
-
 from subprocess import Popen, PIPE
 
 from django.shortcuts import render
@@ -33,7 +30,6 @@ from django.utils.translation import ugettext as _
 
 from freenasUI.freeadmin.apppool import appPool
 from freenasUI.freeadmin.views import JsonResp
-from freenasUI.middleware.notifier import notifier
 from freenasUI.network import models
 from freenasUI.network.forms import HostnameForm, IPMIForm
 
