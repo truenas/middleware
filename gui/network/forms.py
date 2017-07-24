@@ -463,18 +463,8 @@ class IPMIForm(Form):
             '"id_dhcp", ["id_ipv4address", "id_ipv4netmaskbit"]);'
         )
 
-        channels = []
-        _n = notifier()
-        for i in range(1, 17):
-            try:
-                data = _n.ipmi_get_lan(channel=i)
-            except:
-                continue
-
-            if not data:
-                continue
-
-            channels.append((i, i))
+        with client as c:
+            channels = list(map(lambda i: (i, i), c.call('ipmi.channels')))
 
         self.fields['channel'] = forms.ChoiceField(
             choices=channels,
