@@ -2,6 +2,7 @@ from django.core.urlresolvers import reverse
 from django.utils.translation import ugettext as _
 
 from freenasUI.freeadmin.hook import AppHook
+from freenasUI.middleware.client import client
 
 
 class NetworkHook(AppHook):
@@ -56,7 +57,9 @@ class NetworkHook(AppHook):
             })
 
         index = 2
-        if _n.ipmi_loaded():
+        with client as c:
+            ipmi_loaded = c.call('ipmi.is_loaded')
+        if ipmi_loaded:
             tabs.insert(index, {
                 'name': 'IPMI',
                 'focus': 'network.IPMI',
