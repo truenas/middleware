@@ -45,7 +45,6 @@ import glob
 import grp
 import logging
 import os
-import pipes
 import platform
 import pwd
 import re
