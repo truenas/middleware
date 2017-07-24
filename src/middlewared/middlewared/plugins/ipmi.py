@@ -35,7 +35,7 @@ class IPMIService(Service):
                 raise CallError(f'Failed to get details from channel {channel}: {e}')
 
             output = cp.stdout.decode()
-            data = {}
+            data = {'channel': channel}
             for line in output.split('\n'):
                 if ':' not in line:
                     continue
