@@ -1,8 +1,8 @@
 from bsd import kld
 
 from middlewared.schema import Bool, Dict, Int, accepts
-from middlewared.service import CallError, Service
-from middlewared.utils import run
+from middlewared.service import CallError, Service, filterable
+from middlewared.utils import filter_list, run
 
 import errno
 import os
@@ -23,6 +23,44 @@ class IPMIService(Service):
         Return a list with the IPMI channels available.
         """
         return channels
+
+    @filterable
+    async def query(self, filters=None, options=None):
+        result = []
+        for channel in await self.channels():
+            try:
+                cp = await run('ipmitool', 'lan', 'print', str(channel))
+            except subprocess.CalledProcessError as e:
+                raise CallError(f'Failed to get details from channel {channel}: {e}')
+
+            output = cp.stdout.decode()
+            data = {}
+            for line in output.split('\n'):
+                if ':' not in line:
+                    continue
+
+                name, value = line.split(':', 1)
+                if not name:
+                    continue
+
+                name = name.strip()
+                value = value.strip()
+
+                if name == 'IP Address':
+                    data['ipaddress'] = value
+                elif name == 'Subnet Mask':
+                    data['netmask'] = value
+                elif name == 'Default Gateway IP':
+                    data['gateway'] = value
+                elif name == '802.1q VLAN ID':
+                    if value == 'Disabled':
+                        data['vlan'] = None
+                    else:
+                        data['vlan'] = value
+                elif name == 'IP Address Source':
+                    data['dhcp'] = False if value == 'Static Address' else True
+            result.append(data)
+        return filter_list(result, filters, options)
 
     @accepts(Dict(
         'options',
