@@ -493,14 +493,18 @@ class ZFSDataset(object):
     def __init__(self, path=None, used=None, usedsnap=None, usedds=None,
                  usedrefreserv=None, usedchild=None, avail=None, refer=None,
                  mountpoint=None, compression=None, dedup=None, description=None,
-                 quota=None):
+                 quota=None, include_root=False):
         self.path = path
         if path:
-            if '/' in path:
-                self.pool, self.name = path.split('/', 1)
-            else:
-                self.pool = ''
+            if include_root:
+                self.pool = path.split('/', 1)[0]
                 self.name = path
+            else:
+                if '/' in path:
+                    self.pool, self.name = path.split('/', 1)
+                else:
+                    self.pool = ''
+                    self.name = path
         self.used = used
         self.usedsnap = usedsnap
         self.usedds = usedds
@@ -942,6 +946,7 @@ def zfs_list(path="", recursive=False, hierarchical=False, include_root=False,
                 dedup=data[12],
                 description=data[13] if data[13] != '-' else None,
                 quota=int(data[14]) if data[14].isdigit() else None,
+                include_root=include_root,
             )
         elif _type == 'volume':
             item = ZFSVol(

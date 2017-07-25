@@ -436,19 +436,21 @@ class DatasetResource(DojoResource):
         dsargs = {'recursive': True}
         if 'parent' in kwargs:
             dsargs['path'] = kwargs.get('parent').vol_name
+        else:
+            dsargs['include_root'] = True
         zfslist = zfs.list_datasets(**dsargs)
         return zfslist
 
     def obj_get(self, bundle, **kwargs):
-        zfslist = zfs.list_datasets(path="%s/%s" % (
-            kwargs.get('parent').vol_name,
-            kwargs.get('pk'),
-        ))
+        dsargs = {}
+        if 'parent' in kwargs:
+            dsargs['path'] = f'{kwargs["parent"].vol_name}/{kwargs["pk"]}'
+        else:
+            dsargs['path'] = kwargs['pk']
+            dsargs['include_root'] = True
+        zfslist = zfs.list_datasets(**dsargs)
         try:
-            return zfslist['%s/%s' % (
-                kwargs.get('parent').vol_name,
-                kwargs.get('pk')
-            )]
+            return zfslist[dsargs['path']]
         except KeyError:
             raise NotFound("Dataset not found.")
 
