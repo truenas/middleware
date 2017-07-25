@@ -367,7 +367,10 @@ class DatasetResource(DojoResource):
     avail = fields.IntegerField(attribute='avail')
     refer = fields.IntegerField(attribute='refer')
     mountpoint = fields.CharField(attribute='mountpoint')
-    quota = fields.CharField(attribute='quota')
+    quota = fields.IntegerField(attribute='quota')
+    comments = fields.CharField(attribute='description', null=True)
+    compression = fields.CharField(attribute='compression')
+    dedup = fields.CharField(attribute='dedup')
 
     class Meta:
         allowed_methods = ['get', 'post', 'put', 'delete']
@@ -406,7 +409,12 @@ class DatasetResource(DojoResource):
 
     def obj_update(self, bundle, **kwargs):
         bundle = self.full_hydrate(bundle)
-        name = '%s/%s' % (kwargs.get('parent').vol_name, kwargs.get('pk'))
+
+        if 'parent' in kwargs:
+            name = f'{kwargs["parent"].vol_name}/{kwargs["pk"]}'
+        else:
+            name = kwargs['pk']
+
         data = self.deserialize(
             bundle.request,
             bundle.request.body,
@@ -455,10 +463,11 @@ class DatasetResource(DojoResource):
             raise NotFound("Dataset not found.")
 
     def obj_delete(self, bundle, **kwargs):
-        retval = notifier().destroy_zfs_dataset(path="%s/%s" % (
-            kwargs.get('parent').vol_name,
-            kwargs.get('pk'),
-        ))
+        if 'parent' in kwargs:
+            path = f'{kwargs["parent"].vol_name}/{kwargs["pk"]}'
+        else:
+            path = kwargs['pk']
+        retval = notifier().destroy_zfs_dataset(path=path)
         if retval:
             raise ImmediateHttpResponse(
                 response=self.error_response(bundle.request, retval)
