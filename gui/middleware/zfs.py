@@ -497,7 +497,7 @@ class ZFSDataset(object):
                 else:
                     self.pool = ''
                     self.name = path
-        self.__props = props
+        self.__props = props or {}
         self.parent = None
         self.local = local or []
         self.default = default or []
@@ -512,7 +512,7 @@ class ZFSDataset(object):
 
     def __getattribute__(self, attr):
         if attr in object.__getattribute__(self, 'properties'):
-            return self.__props[attr]
+            return self.__props.get(attr)
         else:
             return object.__getattribute__(self, attr)
 
@@ -570,7 +570,7 @@ class ZFSVol(object):
 
     def __getattribute__(self, attr):
         if attr in object.__getattribute__(self, 'properties'):
-            return self.__props[attr]
+            return self.__props.get(attr)
         else:
             return object.__getattribute__(self, attr)
 
