@@ -385,6 +385,18 @@ class DatasetResource(DojoResource):
         resource_name = 'storage/dataset'
 
     def post_list(self, request, **kwargs):
+
+        if 'parent' not in kwargs:
+            raise ImmediateHttpResponse(
+                response=self.error_response(request, 'Creating a top level dataset is not supported.')
+            )
+        return self.__create_dataset(kwargs.get('parent').vol_name, request, **kwargs)
+
+    def post_detail(self, request, **kwargs):
+        return self.__create_dataset(kwargs['pk'], request, **kwargs)
+
+    def __create_dataset(self, fs, request, **kwargs):
+
         self.is_authenticated(request)
         deserialized = self._meta.serializer.deserialize(
             request.body,
@@ -392,14 +404,13 @@ class DatasetResource(DojoResource):
         )
 
         name = deserialized.get('name')
-        parent = kwargs.get('parent').vol_name
 
         for k in list(deserialized.keys()):
             deserialized['dataset_%s' % k] = deserialized.pop(k)
 
         data = self._get_form_initial(ZFSDatasetCreateForm)
         data.update(deserialized)
-        form = ZFSDatasetCreateForm(data=data, fs=parent)
+        form = ZFSDatasetCreateForm(data=data, fs=fs)
         if not form.is_valid() or not form.save():
             for k in list(form.errors.keys()):
                 if k == '__all__':
@@ -410,7 +421,11 @@ class DatasetResource(DojoResource):
                 response=self.error_response(request, form.errors)
             )
 
-        response = self.get_detail(request, pk=name, **kwargs)
+        if 'parent' in kwargs:
+            kwargs['pk'] = name
+        else:
+            kwargs['pk'] = f'{fs}/{name}'
+        response = self.get_detail(request, **kwargs)
         response.status_code = 201
         return response
 
