@@ -137,7 +137,7 @@ __EOF__
 	#
 	#	List kerberos tickets
 	#
-	section_header "Kerberos Tickets"
+	section_header "Kerberos Tickets - 'klist'"
 	klist
 	section_footer
 
@@ -165,46 +165,46 @@ __EOF__
 	#
 	#	Dump Active Directory domain info
 	#
-	section_header "Active Directory Domain Info"
+	section_header "Active Directory Domain Info - 'net ads info'"
 	net ads info
 	section_footer
 
 	#
 	#	Dump Active Directory domain status
 	#
-	section_header "Active Directory Domain Status"
+	section_header "Active Directory Domain Status - 'net ads status'"
 	net ads status
 	section_footer
 
 	#
 	#	Dump wbinfo information
 	#
-	section_header "Active Directory Trust Secret"
+	section_header "Active Directory Trust Secret - 'wbinfo -t'"
 	wbinfo -t
 	section_footer
-	section_header "Active Directory NETLOGON connection"
+	section_header "Active Directory NETLOGON connection - 'wbinfo -P'"
 	wbinfo -P
 	section_footer
-	section_header "Active Directory trusted domains"
+	section_header "Active Directory trusted domains - 'wbinfo -m'"
 	wbinfo -m
 	section_footer
-	section_header "Active Directory all domains"
+	section_header "Active Directory all domains - 'wbinfo --all-domains'"
 	wbinfo --all-domains
 	section_footer
-	section_header "Active Directory own domain"
+	section_header "Active Directory own domain - 'wbinfo --own-domain'"
 	wbinfo --own-domain
 	section_footer
 	section_footer
-	section_header "Active Directory online status"
+	section_header "Active Directory online status - 'wbinfo --online-status'"
 	wbinfo --online-status
 	section_footer
-	section_header "Active Directory domain info"
+	section_header "Active Directory domain info - 'wbinfo --domain-info=$(wbinfo --own-domain)'"
 	wbinfo --domain-info="$(wbinfo --own-domain)"
 	section_footer
-	section_header "Active Directory DC name"
+	section_header "Active Directory DC name - 'wbinfo --dsgetdcname=$(wbinfo --own-domain)'"
 	wbinfo --dsgetdcname="$(wbinfo --own-domain)"
 	section_footer
-	section_header "Active Directory DC info"
+	section_header "Active Directory DC info - 'wbinfo --dc-info=$(wbinfo --own-domain)'"
 	wbinfo --dc-info="$(wbinfo --own-domain)"
 	section_footer
 
