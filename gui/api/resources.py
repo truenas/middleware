@@ -371,6 +371,7 @@ class DatasetResource(DojoResource):
     comments = fields.CharField(attribute='description', null=True)
     compression = fields.CharField(attribute='compression')
     dedup = fields.CharField(attribute='dedup')
+    inherit_props = fields.ListField(attribute='inherit')
 
     class Meta:
         allowed_methods = ['get', 'post', 'put', 'delete']

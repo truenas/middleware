@@ -475,25 +475,16 @@ class ZFSDataset(object):
     name = None
     path = None
     pool = None
-    used = None
-    usedsnap = None
-    usedds = None
-    usedrefreserv = None
-    usedchild = None
-    avail = None
-    refer = None
-    mountpoint = None
-    compression = None
-    dedup = None
-    description = None
     parent = None
     children = None
-    quota = None
 
-    def __init__(self, path=None, used=None, usedsnap=None, usedds=None,
-                 usedrefreserv=None, usedchild=None, avail=None, refer=None,
-                 mountpoint=None, compression=None, dedup=None, description=None,
-                 quota=None, include_root=False):
+    properties = [
+        'used', 'usedsnap', 'usedds', 'usedrefreserv', 'usedchild',
+        'avail', 'refer', 'mountpoint', 'compression', 'dedup',
+        'description', 'quota',
+    ]
+
+    def __init__(self, path=None, props=None, local=None, default=None, inherit=None, include_root=False):
         self.path = path
         if path:
             if include_root:
@@ -505,26 +496,24 @@ class ZFSDataset(object):
                 else:
                     self.pool = ''
                     self.name = path
-        self.used = used
-        self.usedsnap = usedsnap
-        self.usedds = usedds
-        self.usedrefreserv = usedrefreserv
-        self.usedchild = usedchild
-        self.avail = avail
-        self.refer = refer
-        self.mountpoint = mountpoint
-        self.compression = compression
-        self.dedup = dedup
-        self.description = description
+        self.__props = props
         self.parent = None
+        self.local = local or []
+        self.default = default or []
+        self.inherit = inherit or []
         self.children = []
-        self.quota = quota
 
     def __repr__(self):
         return "<Dataset: %s>" % self.path
 
     def __lt__(self, other):
         return self.path < other.path
+
+    def __getattribute__(self, attr):
+        if attr in object.__getattribute__(self, 'properties'):
+            return self.__props[attr]
+        else:
+            return object.__getattribute__(self, attr)
 
     @property
     def full_name(self):
@@ -551,23 +540,16 @@ class ZFSVol(object):
     name = None
     path = None
     pool = None
-    used = None
-    usedsnap = None
-    usedds = None
-    usedrefreserv = None
-    usedchild = None
-    avail = None
-    refer = None
-    volsize = None
-    compression = None
-    dedup = None
-    description = None
     parent = None
     children = None
 
-    def __init__(self, path=None, used=None, usedsnap=None, usedds=None,
-                 usedrefreserv=None, usedchild=None, avail=None, refer=None,
-                 volsize=None, compression=None, dedup=None, description=None):
+    properties = [
+        'used', 'usedsnap', 'usedds', 'usedrefreserv', 'usedchild',
+        'avail', 'refer', 'volsize', 'compression', 'dedup',
+        'description',
+    ]
+
+    def __init__(self, path=None, props=None):
         self.path = path
         if path:
             if '/' in path:
@@ -575,17 +557,7 @@ class ZFSVol(object):
             else:
                 self.pool = ''
                 self.name = path
-        self.used = used
-        self.usedsnap = usedsnap
-        self.usedds = usedds
-        self.usedrefreserv = usedrefreserv
-        self.usedchild = usedchild
-        self.avail = avail
-        self.refer = refer
-        self.volsize = volsize
-        self.compression = compression
-        self.dedup = dedup
-        self.description = description
+        self.__props = props
         self.parent = None
         self.children = []
 
@@ -594,6 +566,12 @@ class ZFSVol(object):
 
     def __lt__(self, other):
         return self.path < other.path
+
+    def __getattribute__(self, attr):
+        if attr in object.__getattribute__(self, 'properties'):
+            return self.__props[attr]
+        else:
+            return object.__getattribute__(self, attr)
 
     @property
     def full_name(self):
@@ -935,7 +913,7 @@ def zfs_list(path="", recursive=False, hierarchical=False, include_root=False,
         if depth == 1 and not include_root:
             continue
 
-        dsargs = {}
+        zprops = {}
         for pname, dname, ptype in (
             ('available', 'avail', int),
             ('used', 'used', int),
@@ -949,30 +927,44 @@ def zfs_list(path="", recursive=False, hierarchical=False, include_root=False,
             ('org.freenas:description', 'description', str),
         ):
             if pname not in props:
-                dsargs[dname] = None
+                zprops[dname] = None
                 continue
             if ptype is int:
                 if props[pname][0].isdigit():
-                    dsargs[dname] = int(props[pname][0])
+                    zprops[dname] = int(props[pname][0])
                 else:
-                    dsargs[dname] = None
+                    zprops[dname] = None
             else:
-                dsargs[dname] = props[pname][0]
+                zprops[dname] = props[pname][0]
+
+        local_props = []
+        default_props = []
+        inherit_props = []
+        for k, v in props.items():
+            if v[1] == 'local':
+                local_props.append(k)
+            elif v[1] == 'default':
+                default_props.append(k)
+            elif v[1].startswith('inherited'):
+                inherit_props.append(k)
 
         _type = props['type'][0]
         if _type == 'filesystem':
+            zprops['mountpoint'] = props['mountpoint'][0]
+            zprops['quota'] = int(props['quota'][0]) if props['quota'][0].isdigit() else None
             item = ZFSDataset(
                 path=path,
-                mountpoint=props['mountpoint'][0],
-                quota=int(props['quota'][0]) if props['quota'][0].isdigit() else None,
                 include_root=include_root,
-                **dsargs,
+                props=zprops,
+                local=local_props,
+                default=default_props,
+                inherit=inherit_props,
             )
         elif _type == 'volume':
+            zprops['volsize'] = int(props['volsize'][0]) if props['volsize'][0].isdigit() else None
             item = ZFSVol(
                 path=path,
-                volsize=int(props['volsize'][0]) if props['volsize'][0].isdigit() else None,
-                **dsargs,
+                props=zprops,
             )
         else:
             raise NotImplementedError
