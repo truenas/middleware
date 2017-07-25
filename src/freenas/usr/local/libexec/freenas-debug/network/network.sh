@@ -108,7 +108,7 @@ network_func()
 	netstat -i
 	section_footer
 
-	section_header "protocols"
+	section_header "protocols - 'netstat -p protocol -s'"
     for proto in ip arp udp tcp icmp ; do
 	netstat -p $proto -s
     done
