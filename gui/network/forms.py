@@ -458,10 +458,10 @@ class IPMIForm(Form):
     )
 
     def __init__(self, *args, **kwargs):
-        remote = kwargs.pop('remote', None)
+        self.remote = kwargs.pop('remote', None)
         self.initial_fail = False
         with client as c:
-            if remote:
+            if self.remote:
                 try:
                     data = c.call('failover.call_remote', 'ipmi.query', [[('channel', '=', 1)]])
                 except Exception:
@@ -540,7 +540,10 @@ class IPMIForm(Form):
         if vlan:
             data['vlan'] = vlan
         with client as c:
-            return c.call('ipmi.update', data)
+            if self.remote:
+                return c.call('failover.call_remote', 'ipmi.update', [data])
+            else:
+                return c.call('ipmi.update', data)
 
 
 class GlobalConfigurationForm(ModelForm):
