@@ -832,6 +832,228 @@ Status
    :statuscode 200: no error
 
 
+Dataset
+-------
+
+The Dataset resource represents ZFS datasets.
+
+List resource
++++++++++++++
+
+.. http:get:: /api/v1.0/storage/dataset/
+
+   Returns a list of all datasets.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      GET /api/v1.0/storage/dataset/ HTTP/1.1
+      Content-Type: application/json
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 200 OK
+      Vary: Accept
+      Content-Type: application/json
+
+      [
+        {
+          "atime": "on",
+          "avail": 3850715136,
+          "comments": null,
+          "compression": "lz4",
+          "dedup": "off",
+          "inherit_props": [
+            "compression",
+            "aclinherit"
+          ],
+          "mountpoint": "/mnt/tank/myds",
+          "name": "tank/myds",
+          "pool": "tank",
+          "quota": 0,
+          "readonly": "off",
+          "recordsize": 131072,
+          "refer": 90112,
+          "refquota": 0,
+          "refreservation": 0,
+          "reservation": 0,
+          "used": 90112
+        }
+      ]
+
+
+   :query offset: offset number. default is 0
+   :query limit: limit number. default is 20
+   :resheader Content-Type: content type of the response
+   :statuscode 200: no error
+
+
+Create resource
++++++++++++++++
+
+.. http:post:: /api/v1.0/storage/dataset/(string:parent)/
+
+   Creates a dataset and returns the new object.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      POST /api/v1.0/storage/dataset/tank/ HTTP/1.1
+      Content-Type: application/json
+
+      {
+        "name": "myds",
+        "comment": "Test",
+      }
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 201 Created
+      Vary: Accept
+      Content-Type: application/json
+
+      {
+        "atime": "on",
+        "avail": 3848491008,
+        "comments": "Test",
+        "compression": "lz4",
+        "dedup": "off",
+        "inherit_props": [
+          "compression",
+          "aclinherit"
+        ],
+        "mountpoint": "/mnt/tank/myds",
+        "name": "tank/myds",
+        "pool": "tank",
+        "quota": 0,
+        "readonly": "off",
+        "recordsize": 131072,
+        "refer": 90112,
+        "refquota": 0,
+        "refreservation": 0,
+        "reservation": 0,
+        "used": 90112
+      }
+
+
+   :json string name: name of the dataset
+   :json string comments: user comments for the dataset
+   :json string compression: compression level (lz4, gzip-[1-9], zle, lzjb)
+   :json string dedup: dedup (on, off, inherit)
+   :json string atime: access time (on, off, inherit)
+   :json string readonly: read only (on, off, inherit)
+   :json string recordsize: recodsize (512, 1K, 2K, 4K, 8k, 16K, 32K, 64K, 128K, 256K, 512K, 1024K)
+   :json string case_sensitivity: files case sensitivity (on, off, inherit)
+   :json string quote: quota for this dataset and all children
+   :json string refquote: quota for this dataset
+   :json string reservation: reserved space for this dataset and all children
+   :json string refreservation: reserved space for this dataset
+   :json string readonly: read only (on, off, inherit)
+   :reqheader Content-Type: the request content type
+   :resheader Content-Type: the response content type
+   :statuscode 201: no error
+
+
+Update resource
++++++++++++++++
+
+.. http:post:: /api/v1.0/storage/dataset/(string:parent)/
+
+   Updates a dataset and returns the object.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      POST /api/v1.0/storage/dataset/tank/myds/ HTTP/1.1
+      Content-Type: application/json
+
+      {
+        "comment": "Test DS",
+      }
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 202 Accepted
+      Vary: Accept
+      Content-Type: application/json
+
+      {
+        "atime": "on",
+        "avail": 3848491008,
+        "comments": "Test DS",
+        "compression": "lz4",
+        "dedup": "off",
+        "inherit_props": [
+          "compression",
+          "aclinherit"
+        ],
+        "mountpoint": "/mnt/tank/myds",
+        "name": "tank/myds",
+        "pool": "tank",
+        "quota": 0,
+        "readonly": "off",
+        "recordsize": 131072,
+        "refer": 90112,
+        "refquota": 0,
+        "refreservation": 0,
+        "reservation": 0,
+        "used": 90112
+      }
+
+
+   :json string name: name of the dataset
+   :json string comments: user comments for the dataset
+   :json string compression: compression level (lz4, gzip-[1-9], zle, lzjb)
+   :json string dedup: dedup (on, off, inherit)
+   :json string atime: access time (on, off, inherit)
+   :json string readonly: read only (on, off, inherit)
+   :json string recordsize: recodsize (512, 1K, 2K, 4K, 8k, 16K, 32K, 64K, 128K, 256K, 512K, 1024K)
+   :json string case_sensitivity: files case sensitivity (on, off, inherit)
+   :json string quote: quota for this dataset and all children
+   :json string refquote: quota for this dataset
+   :json string reservation: reserved space for this dataset and all children
+   :json string refreservation: reserved space for this dataset
+   :json string readonly: read only (on, off, inherit)
+   :reqheader Content-Type: the request content type
+   :resheader Content-Type: the response content type
+   :statuscode 202: no error
+
+
+Delete resource
++++++++++++++++
+
+.. http:delete:: /api/v1.0/storage/dataset/(string:name)/
+
+   Delete dataset `name`.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      DELETE /api/v1.0/storage/dataset/tank/myds/ HTTP/1.1
+      Content-Type: application/json
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 204 No Response
+      Vary: Accept
+      Content-Type: application/json
+
+   :resheader Content-Type: content type of the response
+   :statuscode 204: no error
+
+
 Snapshot
 ----------
 
