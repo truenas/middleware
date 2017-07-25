@@ -29,7 +29,7 @@ import logging
 import re
 import subprocess
 
-from collections import OrderedDict
+from collections import defaultdict, OrderedDict
 from django.utils.translation import ugettext_lazy as _
 
 log = logging.getLogger('middleware.zfs')
@@ -896,11 +896,11 @@ def zfs_list(path="", recursive=False, hierarchical=False, include_root=False,
     """
     args = [
         "/sbin/zfs",
-        "list",
+        "get",
         "-p",
         "-H",
-        "-s", "name",
-        "-o", "space,refer,mountpoint,type,volsize,compression,dedup,org.freenas:description,quota",
+        "-o", "name,property,value,source",
+        "all",
     ]
     if recursive:
         args.insert(3, "-r")
@@ -920,48 +920,59 @@ def zfs_list(path="", recursive=False, hierarchical=False, include_root=False,
 
     zfs_output, zfs_err = zfsproc.communicate()
     zfs_output = zfs_output.split('\n')
-    zfslist = ZFSList()
+    zfsget = defaultdict(OrderedDict)
     for line in zfs_output:
         if not line:
             continue
         data = line.split('\t')
-        names = data[0].split('/')
+        zfsget[data[0]][data[1]] = (data[2], data[3])
+
+    zfslist = ZFSList()
+    for path, props in zfsget.items():
+        names = path.split('/')
         depth = len(names)
         # root filesystem is not treated as dataset by us
         if depth == 1 and not include_root:
             continue
-        _type = data[9]
+
+        dsargs = {}
+        for pname, dname, ptype in (
+            ('available', 'avail', int),
+            ('used', 'used', int),
+            ('usedbysnapshots', 'usedsnap', int),
+            ('usedbydataset', 'usedds', int),
+            ('usedbyrefreservation', 'usedrefreserv', int),
+            ('usedbychildren', 'usedchild', int),
+            ('referenced', 'refer', int),
+            ('compression', 'compression', str),
+            ('dedup', 'dedup', str),
+            ('org.freenas:description', 'description', str),
+        ):
+            if pname not in props:
+                dsargs[dname] = None
+                continue
+            if ptype is int:
+                if props[pname][0].isdigit():
+                    dsargs[dname] = int(props[pname][0])
+                else:
+                    dsargs[dname] = None
+            else:
+                dsargs[dname] = props[pname][0]
+
+        _type = props['type'][0]
         if _type == 'filesystem':
             item = ZFSDataset(
-                path=data[0],
-                avail=int(data[1]) if data[1].isdigit() else None,
-                used=int(data[2]) if data[2].isdigit() else None,
-                usedsnap=int(data[3]) if data[3].isdigit() else None,
-                usedds=int(data[4]) if data[4].isdigit() else None,
-                usedrefreserv=int(data[5]) if data[5].isdigit() else None,
-                usedchild=int(data[6]) if data[6].isdigit() else None,
-                refer=int(data[7]) if data[7].isdigit() else None,
-                mountpoint=data[8],
-                compression=data[11],
-                dedup=data[12],
-                description=data[13] if data[13] != '-' else None,
-                quota=int(data[14]) if data[14].isdigit() else None,
+                path=path,
+                mountpoint=props['mountpoint'][0],
+                quota=int(props['quota'][0]) if props['quota'][0].isdigit() else None,
                 include_root=include_root,
+                **dsargs,
             )
         elif _type == 'volume':
             item = ZFSVol(
-                path=data[0],
-                avail=int(data[1]) if data[1].isdigit() else None,
-                used=int(data[2]) if data[2].isdigit() else None,
-                usedsnap=int(data[3]) if data[3].isdigit() else None,
-                usedds=int(data[4]) if data[4].isdigit() else None,
-                usedrefreserv=int(data[5]) if data[5].isdigit() else None,
-                usedchild=int(data[6]) if data[6].isdigit() else None,
-                refer=int(data[7]) if data[7].isdigit() else None,
-                volsize=int(data[10]) if data[10].isdigit() else None,
-                compression=data[11],
-                dedup=data[12],
-                description=data[13] if data[13] != '-' else None,
+                path=path,
+                volsize=int(props['volsize'][0]) if props['volsize'][0].isdigit() else None,
+                **dsargs,
             )
         else:
             raise NotImplementedError
