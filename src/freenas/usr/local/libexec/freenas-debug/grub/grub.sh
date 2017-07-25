@@ -36,7 +36,7 @@ grub_func()
 	sc "/boot/grub/grub.cfg"
 	section_footer
 
-	section_header "Console"
+	section_header "Console - 'sysctl kern.vty'"
 	sysctl kern.vty
 	section_footer
 }
