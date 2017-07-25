@@ -472,7 +472,7 @@ class IPMIForm(Form):
                     'ipv4address': data.get('ipaddress'),
                     'ipv4gw': data.get('gateway'),
                     'ipv4netmaskbit': str(cidr),
-                    'vlanid': data.get['vlan'],
+                    'vlanid': data.get('vlan'),
                 }
 
         super(IPMIForm, self).__init__(*args, **kwargs)
