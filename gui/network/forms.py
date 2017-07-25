@@ -458,9 +458,17 @@ class IPMIForm(Form):
     )
 
     def __init__(self, *args, **kwargs):
-
+        remote = kwargs.pop('remote', None)
+        self.initial_fail = False
         with client as c:
-            data = c.call('ipmi.query', [('channel', '=', 1)])
+            if remote:
+                try:
+                    data = c.call('failover.call_remote', 'ipmi.query', [[('channel', '=', 1)]])
+                except Exception:
+                    self.initial_fail = True
+                    data = None
+            else:
+                data = c.call('ipmi.query', [('channel', '=', 1)])
             if data:
                 data = data[0]
                 num, cidr = struct.unpack('>I', socket.inet_aton(data['netmask']))[0], 0
