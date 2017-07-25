@@ -194,7 +194,6 @@ __EOF__
 	section_header "Active Directory own domain - 'wbinfo --own-domain'"
 	wbinfo --own-domain
 	section_footer
-	section_footer
 	section_header "Active Directory online status - 'wbinfo --online-status'"
 	wbinfo --online-status
 	section_footer
