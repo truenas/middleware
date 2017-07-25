@@ -1562,10 +1562,6 @@ class CommonZVol(Form):
                 self.parentdata['dedup'][0]
             )
 
-<<<<<<< HEAD
-=======
-
->>>>>>> fix(gui): unify some of ZVol create/update code
     def _zvol_force(self):
         if self._force:
             if not self.cleaned_data.get('zvol_force'):
