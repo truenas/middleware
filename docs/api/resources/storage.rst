@@ -162,7 +162,7 @@ Datasets
       Content-Type: application/json
 
       {
-        "name": "foo"
+        "name": "myds"
       }
 
    **Example response**:
@@ -174,14 +174,105 @@ Datasets
       Content-Type: application/json
 
       {
-        "avail": 3514769408,
-        "mountpoint": "/mnt/tank/foo",
-        "name": "foo",
+        "atime": "on",
+        "avail": 3848491008,
+        "comments": "Test",
+        "compression": "lz4",
+        "dedup": "off",
+        "inherit_props": [
+          "compression",
+          "aclinherit"
+        ],
+        "mountpoint": "/mnt/tank/myds",
+        "name": "tank/myds",
         "pool": "tank",
-        "refer": 73728,
-        "used": 73728
+        "quota": 0,
+        "readonly": "off",
+        "recordsize": 131072,
+        "refer": 90112,
+        "refquota": 0,
+        "refreservation": 0,
+        "reservation": 0,
+        "used": 90112
       }
 
+
+   :json string name: name of the dataset
+   :json string comments: user comments for the dataset
+   :json string compression: compression level (lz4, gzip-[1-9], zle, lzjb)
+   :json string dedup: dedup (on, off, inherit)
+   :json string atime: access time (on, off, inherit)
+   :json string readonly: read only (on, off, inherit)
+   :json string recordsize: recodsize (512, 1K, 2K, 4K, 8k, 16K, 32K, 64K, 128K, 256K, 512K, 1024K)
+   :json string case_sensitivity: files case sensitivity (on, off, inherit)
+   :json string quote: quota for this dataset and all children
+   :json string refquote: quota for this dataset
+   :json string reservation: reserved space for this dataset and all children
+   :json string refreservation: reserved space for this dataset
+   :json string readonly: read only (on, off, inherit)
+   :resheader Content-Type: content type of the response
+   :statuscode 201: no error
+
+.. http:put:: /api/v1.0/storage/volume/(int:id|string:name)/datasets/myds/
+
+   Create dataset for volume `id`.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      POST /api/v1.0/storage/volume/tank/datasets/myds/ HTTP/1.1
+      Content-Type: application/json
+
+      {
+        "comments": "Test DS"
+      }
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 202 Accepted
+      Vary: Accept
+      Content-Type: application/json
+
+      {
+        "atime": "on",
+        "avail": 3848491008,
+        "comments": "Test DS",
+        "compression": "lz4",
+        "dedup": "off",
+        "inherit_props": [
+          "compression",
+          "aclinherit"
+        ],
+        "mountpoint": "/mnt/tank/myds",
+        "name": "tank/myds",
+        "pool": "tank",
+        "quota": 0,
+        "readonly": "off",
+        "recordsize": 131072,
+        "refer": 90112,
+        "refquota": 0,
+        "refreservation": 0,
+        "reservation": 0,
+        "used": 90112
+      }
+
+
+   :json string name: name of the dataset
+   :json string comments: user comments for the dataset
+   :json string compression: compression level (lz4, gzip-[1-9], zle, lzjb)
+   :json string dedup: dedup (on, off, inherit)
+   :json string atime: access time (on, off, inherit)
+   :json string readonly: read only (on, off, inherit)
+   :json string recordsize: recodsize (512, 1K, 2K, 4K, 8k, 16K, 32K, 64K, 128K, 256K, 512K, 1024K)
+   :json string case_sensitivity: files case sensitivity (on, off, inherit)
+   :json string quote: quota for this dataset and all children
+   :json string refquote: quota for this dataset
+   :json string reservation: reserved space for this dataset and all children
+   :json string refreservation: reserved space for this dataset
+   :json string readonly: read only (on, off, inherit)
    :resheader Content-Type: content type of the response
    :statuscode 201: no error
 
@@ -200,18 +291,34 @@ Datasets
 
    .. sourcecode:: http
 
-      HTTP/1.1 202 Accepted
+      HTTP/1.1 200 OK
       Vary: Accept
       Content-Type: application/json
 
-      [{
-        "avail": 3514769408,
-        "mountpoint": "/mnt/tank/foo",
-        "name": "foo",
-        "pool": "tank",
-        "refer": 73728,
-        "used": 73728
-      }]
+      [
+        {
+          "atime": "on",
+          "avail": 3850371072,
+          "comments": "Test DS",
+          "compression": "lz4",
+          "dedup": "off",
+          "inherit_props": [
+            "compression",
+            "aclinherit"
+          ],
+          "mountpoint": "/mnt/tank/myds",
+          "name": "tank/myds",
+          "pool": "tank",
+          "quota": 0,
+          "readonly": "off",
+          "recordsize": 131072,
+          "refer": 90112,
+          "refquota": 0,
+          "refreservation": 0,
+          "reservation": 0,
+          "used": 90112
+        }
+      ]
 
    :resheader Content-Type: content type of the response
    :statuscode 200: no error
@@ -860,6 +967,25 @@ List resource
       Content-Type: application/json
 
       [
+        {
+          "atime": "on",
+          "avail": 3850321920,
+          "comments": "Test",
+          "compression": "lz4",
+          "dedup": "off",
+          "inherit_props": [],
+          "mountpoint": "/mnt/tank",
+          "name": "tank",
+          "pool": "tank",
+          "quota": 0,
+          "readonly": "off",
+          "recordsize": 131072,
+          "refer": 90112,
+          "refquota": 0,
+          "refreservation": 0,
+          "reservation": 0,
+          "used": 2358296576
+        },
         {
           "atime": "on",
           "avail": 3850715136,
