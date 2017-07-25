@@ -32,19 +32,19 @@ zfs_help() { echo "Dump ZFS Configuration"; }
 zfs_directory() { echo "ZFS"; }
 zfs_func()
 {
-	section_header "ZFS Pools"
+	section_header "ZFS Pools - 'zpool list'"
 	zpool list
 	section_footer
 
-	section_header "ZFS Pools Status"
+	section_header "ZFS Pools Status - 'zpool status'"
 	zpool status
 	section_footer
 
-	section_header "ZFS Pools History"
+	section_header "ZFS Pools History - 'zpool history'"
 	zpool history
 	section_footer
 
-	section_header "ZFS Pools Properties"
+	section_header "ZFS Pools Properties - 'zpool get all'"
 	pools=$(zpool list -H|awk '{ print $1 }'|xargs)
 	for p in ${pools}
 	do
@@ -54,15 +54,15 @@ zfs_func()
 	done
 	section_footer
 
-	section_header "ZFS Datasets and ZVols"
+	section_header "ZFS Datasets and ZVols - 'zfs list'"
 	zfs list
 	section_footer
 
-	section_header "ZFS Snapshots"
+	section_header "ZFS Snapshots - 'zfs list -t snapshot -o name,used,available,referenced,mountpoint,freenas:state'"
 	zfs list -t snapshot -o name,used,available,referenced,mountpoint,freenas:state
 	section_footer
 
-	section_header "ZFS Datasets Properties"
+	section_header "ZFS Datasets Properties - 'zfs get all'"
 	zfs list -o name -H | while read -r s
 	do
 		section_header "${s}"
