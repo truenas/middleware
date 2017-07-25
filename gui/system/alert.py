@@ -206,7 +206,7 @@ class AlertPlugins(metaclass=HookMetaclass):
         msgs = []
         for alert in alerts:
             if alert.getId() not in dismisseds:
-                msgs.append(str(alert).encode('utf8'))
+                msgs.append(str(alert))
         if len(msgs) == 0:
             return
 
@@ -218,7 +218,7 @@ class AlertPlugins(metaclass=HookMetaclass):
 
         license, reason = get_license()
         if license:
-            company = license.customer_name
+            company = license.customer_name.decode()
         else:
             company = 'Unknown'
 
