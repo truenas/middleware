@@ -526,9 +526,11 @@ class IPMIForm(Form):
             'ipaddress': self.cleaned_data.get('ipv4address'),
             'netmask': self.cleaned_data.get('ipv4netmaskbit'),
             'gateway': self.cleaned_data.get('ipv4gw'),
-            'vlan': self.cleaned_data.get('vlanid') or None,
             'password': self.cleaned_data.get('ipmi_password2'),
         }
+        vlan = self.cleaned_data.get('vlanid')
+        if vlan:
+            data['vlan'] = vlan
         with client as c:
             return c.call('ipmi.update', data)
 
