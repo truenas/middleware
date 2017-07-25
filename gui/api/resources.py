@@ -368,9 +368,12 @@ class DatasetResource(DojoResource):
     refer = fields.IntegerField(attribute='refer')
     mountpoint = fields.CharField(attribute='mountpoint')
     quota = fields.IntegerField(attribute='quota')
+    recordsize = fields.IntegerField(attribute='recordsize')
     comments = fields.CharField(attribute='description', null=True)
     compression = fields.CharField(attribute='compression')
     dedup = fields.CharField(attribute='dedup')
+    atime = fields.CharField(attribute='atime')
+    readonly = fields.CharField(attribute='readonly')
     inherit_props = fields.ListField(attribute='inherit')
 
     class Meta:

@@ -479,9 +479,9 @@ class ZFSDataset(object):
     children = None
 
     properties = [
-        'used', 'usedsnap', 'usedds', 'usedrefreserv', 'usedchild',
+        'atime', 'used', 'usedsnap', 'usedds', 'usedrefreserv', 'usedchild',
         'avail', 'refer', 'mountpoint', 'compression', 'dedup',
-        'description', 'quota',
+        'description', 'quota', 'readonly', 'recordsize',
     ]
 
     def __init__(self, path=None, props=None, local=None, default=None, inherit=None, include_root=False):
@@ -546,7 +546,7 @@ class ZFSVol(object):
     properties = [
         'used', 'usedsnap', 'usedds', 'usedrefreserv', 'usedchild',
         'avail', 'refer', 'volsize', 'compression', 'dedup',
-        'description',
+        'description', 'readonly',
     ]
 
     def __init__(self, path=None, props=None):
@@ -877,15 +877,12 @@ def zfs_list(path="", recursive=False, hierarchical=False, include_root=False,
         "get",
         "-p",
         "-H",
+        "-t", ",".join(types or ['filesystem', 'volume']),
         "-o", "name,property,value,source",
         "all",
     ]
     if recursive:
         args.insert(3, "-r")
-
-    if types:
-        args.insert(4, "-t")
-        args.insert(5, ",".join(types))
 
     if path:
         args.append(path)
@@ -924,6 +921,7 @@ def zfs_list(path="", recursive=False, hierarchical=False, include_root=False,
             ('referenced', 'refer', int),
             ('compression', 'compression', str),
             ('dedup', 'dedup', str),
+            ('readonly', 'readonly', str),
             ('org.freenas:description', 'description', str),
         ):
             if pname not in props:
@@ -950,8 +948,10 @@ def zfs_list(path="", recursive=False, hierarchical=False, include_root=False,
 
         _type = props['type'][0]
         if _type == 'filesystem':
+            zprops['atime'] = props['atime'][0]
             zprops['mountpoint'] = props['mountpoint'][0]
             zprops['quota'] = int(props['quota'][0]) if props['quota'][0].isdigit() else None
+            zprops['recordsize'] = int(props['recordsize'][0]) if props['recordsize'][0].isdigit() else None
             item = ZFSDataset(
                 path=path,
                 include_root=include_root,
