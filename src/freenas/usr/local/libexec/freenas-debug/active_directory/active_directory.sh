@@ -211,15 +211,14 @@ __EOF__
 	#	Dump Active Directory users and groups
 	#
 	section_header "Active Directory Users and Groups"
-	section_header "Using wbinfo"
-	section_header "Users"
+	section_header "Users - 'wbinfo -u'"
 	wbinfo -u
-	section_header "Groups"
+	section_header "Groups - 'wbinfo -g'"
 	wbinfo -g
 	section_header "Using getent"
-	section_header "Users"
+	section_header "Users - 'getent passwd'"
 	getent passwd
-	section_header "Groups"
+	section_header "Groups - 'getent group'"
 	getent group
 	section_footer
 
