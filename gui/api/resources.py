@@ -489,7 +489,7 @@ class DatasetResource(DojoResource):
             path = f'{kwargs["parent"].vol_name}/{kwargs["pk"]}'
         else:
             path = kwargs['pk']
-        retval = notifier().destroy_zfs_dataset(path=path)
+        retval = notifier().destroy_zfs_dataset(path=path, recursive=True)
         if retval:
             raise ImmediateHttpResponse(
                 response=self.error_response(bundle.request, retval)
