@@ -32,7 +32,7 @@ verify_help() { echo "Dump Boot System File Verification Status and Inconsistenc
 verify_directory() { echo "Verify"; }
 verify_func()
 {
-	section_header "Verifier Results"
+	section_header "Verifier Results - 'freenas-verify'"
 	echo "Running Verifier...."
 	freenas-verify
 	section_footer
