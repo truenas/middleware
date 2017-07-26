@@ -67,7 +67,6 @@ class PoolService(CRUDService):
         """
         resilver = self.middleware.call_sync('datastore.config', 'storage.resilver')
 
-        print("yes")
         if not resilver['enabled']:
             return
 
