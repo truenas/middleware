@@ -1912,6 +1912,11 @@ class ResilverForm(ModelForm):
             args = (new,) + args[1:]
         super(ResilverForm, self).__init__(*args, **kwargs)
 
+    def done(self, *args, **kwargs):
+        notifier().restart('cron')
+        with client as c:
+            c.call('pool.configure_resilver_priority')
+
 
 class PeriodicSnapForm(ModelForm):
 
