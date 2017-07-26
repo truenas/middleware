@@ -601,8 +601,7 @@ class Resilver(Model):
     )
     end = models.TimeField(
         default=time(hour=9),
-        verbose_name=_('End'),
-        help_text=_('End higher priority resilvering at this time'),
+        verbose_name=_('End higher priority resilvering at this time'),
     )
     weekday = models.CharField(
         max_length=120,

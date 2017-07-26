@@ -21,6 +21,13 @@
   refreshOnShow: true" class="objrefresh data_storage_Replication" tab="storage.Replication.View" id="tab_Replication">
   </div>
 
+  <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="title: '{% trans "Resilver Priority"|escapejs %}'
+  {% if focused_tab == "storage.Resilver.View" %}, selected: true{% endif %},
+  doLayout: false,
+  href: '{{ resilver_edit_url }}',
+  refreshOnShow: true" class="objrefresh data_storage_Resilver" tab="storage.Resilver.View" id="tab_Resilver">
+  </div>
+
   <div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="title: '{% trans "Scrubs"|escapejs %}'
   {% if focused_tab == "storage.Scrub.View" %}, selected: true{% endif %},
   doLayout: false,
