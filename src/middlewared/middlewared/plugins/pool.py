@@ -96,7 +96,7 @@ class PoolService(CRUDService):
 
         sysctl.filter('vfs.zfs.resilver_delay')[0].value = resilver_delay
         sysctl.filter('vfs.zfs.resilver_min_time_ms')[0].value = resilver_min_time_ms
-        sysctl.filter('vfs.zfs.scan_idle')[0].value = resilver_min_time_ms
+        sysctl.filter('vfs.zfs.scan_idle')[0].value = scan_idle
 
 
 def setup(middleware):
