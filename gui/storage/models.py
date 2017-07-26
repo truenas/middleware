@@ -597,7 +597,6 @@ class Resilver(Model):
     begin = models.TimeField(
         default=time(hour=18),
         verbose_name=_('Begin higher priority resilvering at this time'),
-        help_text=_(""),
     )
     end = models.TimeField(
         default=time(hour=9),
