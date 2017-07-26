@@ -529,7 +529,6 @@ class IPMIForm(Form):
 
     def save(self):
         data = {
-            'channel': self.cleaned_data.get('channel'),
             'dhcp': self.cleaned_data.get('dhcp'),
             'ipaddress': self.cleaned_data.get('ipv4address'),
             'netmask': self.cleaned_data.get('ipv4netmaskbit'),
@@ -539,11 +538,12 @@ class IPMIForm(Form):
         vlan = self.cleaned_data.get('vlanid')
         if vlan:
             data['vlan'] = vlan
+        channel = self.cleaned_data.get('channel')
         with client as c:
             if self.remote:
-                return c.call('failover.call_remote', 'ipmi.update', [data])
+                return c.call('failover.call_remote', 'ipmi.update', [channel, data])
             else:
-                return c.call('ipmi.update', data)
+                return c.call('ipmi.update', channel, data)
 
 
 class GlobalConfigurationForm(ModelForm):
