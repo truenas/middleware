@@ -1,7 +1,7 @@
 from bsd import kld
 
 from middlewared.schema import Bool, Dict, Int, Str, accepts
-from middlewared.service import CallError, Service, filterable
+from middlewared.service import CallError, CRUDService, filterable
 from middlewared.utils import filter_list, run
 
 import errno
@@ -12,7 +12,7 @@ import subprocess
 channels = []
 
 
-class IPMIService(Service):
+class IPMIService(CRUDService):
 
     @accepts()
     async def is_loaded(self):
@@ -35,7 +35,7 @@ class IPMIService(Service):
                 raise CallError(f'Failed to get details from channel {channel}: {e}')
 
             output = cp.stdout.decode()
-            data = {'channel': channel}
+            data = {'channel': channel, 'id': channel}
             for line in output.split('\n'):
                 if ':' not in line:
                     continue
@@ -63,9 +63,8 @@ class IPMIService(Service):
             result.append(data)
         return filter_list(result, filters, options)
 
-    @accepts(Dict(
+    @accepts(Int('channel'), Dict(
         'ipmi',
-        Int('channel', required=True),
         Str('ipaddress'),
         Str('netmask'),
         Str('gateway'),
@@ -73,12 +72,12 @@ class IPMIService(Service):
         Bool('dhcp'),
         Int('vlan'),
     ))
-    async def update(self, data):
+    async def do_update(self, id, data):
 
         if not await self.is_loaded():
             raise CallError('The ipmi device could not be found')
 
-        args = ['ipmitool', 'lan', 'set', str(data['channel'])]
+        args = ['ipmitool', 'lan', 'set', str(id)]
         rv = 0
         if data.get('dhcp'):
             rv |= (await run(*args, 'ipsrc', 'dhcp', check=False)).returncode

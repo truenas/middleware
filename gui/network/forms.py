@@ -29,6 +29,7 @@ import os
 import re
 import signal
 import socket
+import struct
 
 from django.core.validators import RegexValidator
 from django.db.models import Q
@@ -457,6 +458,31 @@ class IPMIForm(Form):
     )
 
     def __init__(self, *args, **kwargs):
+        self.remote = kwargs.pop('remote', None)
+        self.initial_fail = False
+        with client as c:
+            if self.remote:
+                try:
+                    data = c.call('failover.call_remote', 'ipmi.query', [[('channel', '=', 1)]])
+                except Exception:
+                    self.initial_fail = True
+                    data = None
+            else:
+                data = c.call('ipmi.query', [('channel', '=', 1)])
+            if data:
+                data = data[0]
+                num, cidr = struct.unpack('>I', socket.inet_aton(data['netmask']))[0], 0
+                while num > 0:
+                    num = num << 1 & 0xffffffff
+                    cidr += 1
+                kwargs['initial'] = {
+                    'dhcp': data['dhcp'],
+                    'ipv4address': data.get('ipaddress'),
+                    'ipv4gw': data.get('gateway'),
+                    'ipv4netmaskbit': str(cidr),
+                    'vlanid': data.get('vlan'),
+                }
+
         super(IPMIForm, self).__init__(*args, **kwargs)
         self.fields['dhcp'].widget.attrs['onChange'] = (
             'javascript:toggleGeneric('
@@ -500,6 +526,24 @@ class IPMIForm(Form):
         if ipv4:
             ipv4 = str(ipv4)
         return ipv4
+
+    def save(self):
+        data = {
+            'dhcp': self.cleaned_data.get('dhcp'),
+            'ipaddress': self.cleaned_data.get('ipv4address'),
+            'netmask': self.cleaned_data.get('ipv4netmaskbit'),
+            'gateway': self.cleaned_data.get('ipv4gw'),
+            'password': self.cleaned_data.get('ipmi_password2'),
+        }
+        vlan = self.cleaned_data.get('vlanid')
+        if vlan:
+            data['vlan'] = vlan
+        channel = self.cleaned_data.get('channel')
+        with client as c:
+            if self.remote:
+                return c.call('failover.call_remote', 'ipmi.update', [channel, data])
+            else:
+                return c.call('ipmi.update', channel, data)
 
 
 class GlobalConfigurationForm(ModelForm):

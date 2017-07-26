@@ -1,6 +1,6 @@
 {% extends "freeadmin/generic_form.html" %}
 {% block form %}
-{% if initial_fail %}
+{% if form.initial_fail %}
   <tr>
     <td colspan="2"><span style="color: red;">{% trans "WARNING! Failed to query IPMI data, standby node is down." %}</span></td>
   </tr>
