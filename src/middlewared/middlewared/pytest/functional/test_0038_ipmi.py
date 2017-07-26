@@ -12,3 +12,12 @@ def test_ipmi_channels(conn):
 
     assert req.status_code == 200
     assert isinstance(req.json(), list) is True
+
+
+def test_ipmi_query(conn):
+    check_ipmi(conn)
+
+    req = conn.rest.get('ipmi')
+
+    assert req.status_code == 200
+    assert isinstance(req.json(), list) is True
