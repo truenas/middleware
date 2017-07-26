@@ -589,6 +589,38 @@ class Scrub(Model):
             pass
 
 
+class Resilver(Model):
+    enabled = models.BooleanField(
+        verbose_name=_('Enabled'),
+        default=False,
+    )
+    begin = models.TimeField(
+        default=time(hour=18),
+        verbose_name=_('Begin higher priority resilvering at this time'),
+        help_text=_(""),
+    )
+    end = models.TimeField(
+        default=time(hour=9),
+        verbose_name=_('End'),
+        help_text=_('End higher priority resilvering at this time'),
+    )
+    weekday = models.CharField(
+        max_length=120,
+        default='1,2,3,4,5,6,7',
+        verbose_name=_('Weekday'),
+        blank=True,
+    )
+
+    class Meta:
+        verbose_name = _('Resilver Priority')
+
+    class FreeAdmin:
+        deletable = False
+
+    def __str__(self):
+        return '<Resilver Priority>'
+
+
 class Disk(Model):
     disk_identifier = models.CharField(
         max_length=42,
