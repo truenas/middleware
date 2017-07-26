@@ -1912,6 +1912,10 @@ class ResilverForm(ModelForm):
             args = (new,) + args[1:]
         super(ResilverForm, self).__init__(*args, **kwargs)
 
+    def clean_weekday(self):
+        bwd = self.data.getlist('weekday')
+        return ','.join(bwd)
+
     def done(self, *args, **kwargs):
         notifier().restart('cron')
         with client as c:
