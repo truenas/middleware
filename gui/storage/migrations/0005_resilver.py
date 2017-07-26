@@ -26,8 +26,8 @@ class Migration(migrations.Migration):
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('enabled', models.BooleanField(default=False, verbose_name='Enabled')),
-                ('begin', models.TimeField(default=datetime.time(18, 0), help_text='', verbose_name='Begin higher priority resilvering at this time')),
-                ('end', models.TimeField(default=datetime.time(9, 0), help_text='End higher priority resilvering at this time', verbose_name='End')),
+                ('begin', models.TimeField(default=datetime.time(18, 0), verbose_name='Begin higher priority resilvering at this time')),
+                ('end', models.TimeField(default=datetime.time(9, 0), verbose_name='End higher priority resilvering at this time')),
                 ('weekday', models.CharField(blank=True, default='1,2,3,4,5,6,7', max_length=120, verbose_name='Weekday')),
             ],
             options={
