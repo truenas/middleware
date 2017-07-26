@@ -1,5 +1,9 @@
+import asyncio
 import libzfs
 import os
+import sysctl
+
+from datetime import datetime
 
 from middlewared.schema import accepts, Int
 from middlewared.service import filterable, item_method, private, CRUDService
@@ -56,3 +60,39 @@ class PoolService(CRUDService):
             yield
         async for i in await self.middleware.call('zfs.pool.get_disks', pool['name']):
             yield i
+
+    @private
+    def configure_resilver_priority(self):
+        """
+        Configure resilver priority based on user selected off-peak hours.
+        """
+        resilver = self.middleware.call_sync('datastore.config', 'storage.resilver')
+
+        print("yes")
+        if not resilver['enabled']:
+            return
+
+        higher_prio = False
+        now = datetime.now().time()
+        # end overlaps the day
+        if resilver['begin'] > resilver['end']:
+            if now > resilver['begin'] or now < resilver['end']:
+                higher_prio = True
+        # end does not overlap the day
+        else:
+            if now > resilver['begin'] and now < resilver['end']:
+                higher_prio = True
+
+        if higher_prio:
+            resilver_delay = 0
+            resilver_min_time_ms = 6000
+        else:
+            resilver_delay = 2
+            resilver_min_time_ms = 3000
+
+        sysctl.filter('vfs.zfs.resilver_delay')[0].value = resilver_delay
+        sysctl.filter('vfs.zfs.resilver_min_time_ms')[0].value = resilver_min_time_ms
+
+
+def setup(middleware):
+    asyncio.ensure_future(middleware.call('pool.configure_resilver_priority'))
