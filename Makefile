@@ -31,8 +31,6 @@ PLIST_DIRS=	${LOCALBASE}/include/libhyverem
 
 USE_GITHUB=	yes
 GH_ACCOUNT=	araujobsd
-GH_PROJECT=	${PORTNAME}
-GH_TAGNAME=	${PORTVERSION}
 
 USE_LDCONFIG=	yes
 
