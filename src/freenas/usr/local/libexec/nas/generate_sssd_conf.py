@@ -728,7 +728,7 @@ def add_ldap_section(client, sc):
     if ldap.ldap_auxiliary_parameters:
         path = tempfile.mktemp(dir='/tmp')
         with open(path, 'wb+') as f:
-            f.write(ldap.ldap_auxiliary_parameters)
+            f.write(ldap.ldap_auxiliary_parameters.encode('utf-8'))
 
         aux_sc = SSSDConf(path=path, cookie=sc.cookie)
         os.unlink(path)
