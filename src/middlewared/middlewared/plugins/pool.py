@@ -29,6 +29,7 @@ class PoolService(CRUDService):
             zpool = None
 
         pool['status'] = zpool.status if zpool else 'OFFLINE'
+        pool['scan'] = zpool.scrub.__getstate__()
 
         if pool['encrypt'] > 0:
             if zpool:
