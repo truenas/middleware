@@ -3,6 +3,8 @@ import errno
 import os
 import sys
 
+from collections import defaultdict
+
 from middlewared.client import Client, ClientException
 from middlewared.schema import accepts, Bool, Dict, Int, List, Str
 from middlewared.service import private, CallError, Service
@@ -181,7 +183,7 @@ async def ha_permission(app):
         app.authenticated = True
 
 
-def journal_sync(middleware):
+def journal_sync(middleware, retries):
     with Journal() as j:
         for q in list(j.queries):
             query, params = q
@@ -190,6 +192,10 @@ def journal_sync(middleware):
                     c.call('failover.call_remote', 'datastore.sql', [query, params])
                 j.queries.remove(q)
             except ClientException as e:
+                retries[q] += 1
+                if retries[q] >= 2:
+                    # No need to warn/log multiple times the same thing
+                    continue
                 middleware.logger.exception('Failed to run sql: %s', e)
                 try:
                     if not os.path.exists(SYNC_FILE):
@@ -213,12 +219,13 @@ async def journal_ha(middleware):
     file to the other node.
     Every SQL query that could not be synced is stored in the journal.
     """
+    retries = defaultdict(int)
     while True:
         await asyncio.sleep(5)
         if Journal.is_empty():
             continue
         try:
-            await middleware.threaded(journal_sync, middleware)
+            await middleware.threaded(journal_sync, middleware, retries)
         except Exception:
             middleware.logger.warn('Failed to sync journal', exc_info=True)
 
