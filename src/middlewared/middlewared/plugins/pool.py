@@ -67,7 +67,7 @@ class PoolService(CRUDService):
         """
         resilver = self.middleware.call_sync('datastore.config', 'storage.resilver')
 
-        if not resilver['enabled']:
+        if not resilver['enabled'] or not resilver['weekday']:
             return
 
         higher_prio = False
