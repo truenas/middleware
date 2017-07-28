@@ -846,7 +846,7 @@ class notifier(metaclass=HookMetaclass):
         zfs_error = zfsproc.wait()
         return zfs_error, zfs_err
 
-    def create_zfs_dataset(self, path, props=None, _restart_collectd=True):
+    def create_zfs_dataset(self, path, props=None):
         """Internal procedure to create ZFS volume"""
         options = " "
         if props:
@@ -4174,7 +4174,7 @@ class notifier(metaclass=HookMetaclass):
 
                 continue
 
-            self.create_zfs_dataset(dataset, {"mountpoint": "legacy"}, _restart_collectd=False)
+            self.create_zfs_dataset(dataset, {"mountpoint": "legacy"})
             createdds = True
 
         if createdds:
