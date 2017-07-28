@@ -3676,22 +3676,6 @@ class notifier(metaclass=HookMetaclass):
         else:
             return ''
 
-    def get_boot_pool_boottype(self):
-        status = self.zpool_parse('freenas-boot')
-        doc = self._geom_confxml()
-        efi = bios = 0
-        for disk in status.get_disks():
-            for _type in doc.xpath("//class[name = 'PART']/geom[name = '%s']/provider/config/type" % disk):
-                if _type.text == 'efi':
-                    efi += 1
-                elif _type.text == 'bios-boot':
-                    bios += 1
-        if efi == 0 and bios == 0:
-            return None
-        if bios > 0:
-            return 'BIOS'
-        return 'EFI'
-
     def zpool_parse(self, name):
         doc = self._geom_confxml()
         p1 = self._pipeopen("zpool status %s" % name)
