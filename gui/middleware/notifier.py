@@ -1201,9 +1201,8 @@ class notifier(metaclass=HookMetaclass):
 
         # volume_detach compatibility.
         vol_name = volume.vol_name
-
         vol_mountpath = self.__get_mountpath(vol_name)
-
+        self.__destroy_zfs_volume(volume)
         self.reload('disk')
         self._encvolume_detach(volume, destroy=True)
         self.__rmdir_mountpoint(vol_mountpath)
