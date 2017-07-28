@@ -343,7 +343,7 @@ class Volume(Model):
         if ghost:
             pass
         elif destroy:
-            n.destroy("volume", self)
+            n.volume_destroy(self)
         else:
             n.volume_detach(self)
 
