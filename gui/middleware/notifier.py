@@ -758,8 +758,9 @@ class notifier(metaclass=HookMetaclass):
 
         return vdevs
 
-    def __create_zfs_volume(self, volume, swapsize, groups, path=None, init_rand=False):
-        """Internal procedure to create a ZFS volume identified by volume id"""
+    def create_volume(self, volume, groups=False, path=None, init_rand=False):
+        """Create a ZFS volume identified by volume id"""
+        swapsize = self.get_swapsize()
         z_name = str(volume.vol_name)
         z_vdev = ""
         encrypt = (volume.vol_encrypt >= 1)
@@ -1008,12 +1009,6 @@ class notifier(metaclass=HookMetaclass):
         # Clear out disks associated with the volume
         for disk in disks:
             self.__gpt_unlabeldisk(devname=disk)
-
-    def _init_volume(self, volume, *args, **kwargs):
-        """Initialize a volume designated by volume_id"""
-        swapsize = self.get_swapsize()
-
-        self.__create_zfs_volume(volume, swapsize, kwargs.pop('groups', False), kwargs.pop('path', None), init_rand=kwargs.pop('init_rand', False))
 
     def zfs_replace_disk(self, volume, from_label, to_disk, force=False, passphrase=None):
         """Replace disk in zfs called `from_label` to `to_disk`"""
