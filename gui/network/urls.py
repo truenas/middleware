@@ -26,11 +26,12 @@
 
 from django.conf.urls import url
 
-from .views import network, ipmi, summary, hostname
+from .views import network, ipmi, ipmi_identify, summary, hostname
 
 urlpatterns = [
     url(r'^home/$', network, name='network_home'),
     url(r'^ipmi/$', ipmi, name='network_ipmi'),
+    url(r'^ipmi/identify/$', ipmi_identify, name='network_ipmi_identify'),
     url(r'^summary/$', summary, name='network_summary'),
     url(r'^hostname/$', hostname, name='network_hostname'),
 ]
