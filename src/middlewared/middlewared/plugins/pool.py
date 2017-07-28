@@ -74,16 +74,21 @@ class PoolService(CRUDService):
         higher_prio = False
         weekdays = map(lambda x: int(x), resilver['weekday'].split(','))
         now = datetime.now()
-        if now.isoweekday() in weekdays:
-            now = now.time()
-            # end overlaps the day
-            if resilver['begin'] > resilver['end']:
-                if now > resilver['begin'] or now < resilver['end']:
-                    higher_prio = True
-            # end does not overlap the day
+        now_t = now.time()
+        # end overlaps the day
+        if resilver['begin'] > resilver['end']:
+            if now.isoweekday() in weekdays and now_t >= resilver['begin']:
+                higher_prio = True
             else:
-                if now > resilver['begin'] and now < resilver['end']:
+                lastweekday = now.isoweekday() - 1
+                if lastweekday == 0:
+                    lastweekday = 7
+                if lastweekday in weekdays and now_t < resilver['end']:
                     higher_prio = True
+        # end does not overlap the day
+        else:
+            if now.isoweekday() in weekdays and now_t >= resilver['begin'] and now_t < resilver['end']:
+                higher_prio = True
 
         if higher_prio:
             resilver_delay = 0
