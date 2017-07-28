@@ -2617,14 +2617,6 @@ class notifier(metaclass=HookMetaclass):
             status = 'HEALTHY'
         return status
 
-    def checksum(self, path, algorithm='sha256'):
-        algorithm2map = {
-            'sha256': '/sbin/sha256 -q',
-        }
-        hasher = self._pipeopen('%s %s' % (algorithm2map[algorithm], path))
-        sum = hasher.communicate()[0].split('\n')[0]
-        return sum
-
     def get_disks(self, unused=False):
         """
         Grab usable disks and pertinent info about them
