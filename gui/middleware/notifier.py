@@ -202,13 +202,6 @@ class notifier(metaclass=HookMetaclass):
         log.debug("%s -> %s", command, proc.returncode)
         return None
 
-    def destroy(self, what, objectid=None):
-        if objectid is None:
-            raise ValueError("Calling destroy without id")
-        else:
-            f = getattr(self, '_destroy_' + what)
-            f(objectid)
-
     def start(self, what, timeout=None, onetime=False):
         kwargs = {}
         if timeout:
@@ -1177,11 +1170,8 @@ class notifier(metaclass=HookMetaclass):
 
         return os.path.join(mountpoint_root, name)
 
-    def _destroy_volume(self, volume):
-        """Destroy a volume on the system
-
-        This either destroys a zpool or umounts a generic volume (e.g. NTFS,
-        UFS, etc) and nukes it.
+    def volume_destroy(self, volume):
+        """Destroy a ZFS pool on the system
 
         In the event that the volume is still in use in the OS, the end-result
         is implementation defined depending on the filesystem, and the set of
@@ -1199,7 +1189,6 @@ class notifier(metaclass=HookMetaclass):
              meaningful data.
         XXX: divorce this from storage.models; depending on storage.models
              introduces a circular dependency and creates design ugliness.
-        XXX: implement destruction algorithm for non-UFS/-ZFS.
 
         Parameters:
             volume: a storage.models.Volume object.
