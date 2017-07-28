@@ -3506,17 +3506,6 @@ class notifier(metaclass=HookMetaclass):
 
         return None
 
-    def is_carp_interface(self, iface):
-        res = False
-
-        if not iface:
-            return res
-
-        if re.match('^carp[0-9]+$', iface):
-            res = True
-
-        return res
-
     def get_parent_interface(self, iface):
         from freenasUI import choices
         from freenasUI.common.sipcalc import sipcalc_type
@@ -3536,8 +3525,6 @@ class notifier(metaclass=HookMetaclass):
         interfaces = choices.NICChoices(exclude_configured=False, include_vlan_parent=True)
         for iface in interfaces:
             iface = iface[0]
-            if self.is_carp_interface(iface):
-                continue
 
             iinfo = self.get_interface_info(iface)
             if not iinfo:
