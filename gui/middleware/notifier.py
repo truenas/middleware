@@ -202,37 +202,6 @@ class notifier(metaclass=HookMetaclass):
         log.debug("%s -> %s", command, proc.returncode)
         return None
 
-    def _do_nada(self):
-        pass
-
-    def _simplecmd(self, action, what):
-        log.debug("Calling: %s(%s) ", action, what)
-        f = getattr(self, '_' + action + '_' + what, None)
-        if f is None:
-            # Provide generic start/stop/restart verbs for rc.d scripts
-            if what in self.__service2daemon:
-                procname, pidfile = self.__service2daemon[what]
-                if procname:
-                    what = procname
-            if action in ("start", "stop", "restart", "reload"):
-                if action == 'restart':
-                    self._system("/usr/sbin/service " + what + " forcestop ")
-                self._system("/usr/sbin/service " + what + " " + action)
-                f = self._do_nada
-            else:
-                raise ValueError("Internal error: Unknown command")
-        f()
-
-    def init(self, what, objectid=None, *args, **kwargs):
-        """ Dedicated command to create "what" designated by an optional objectid.
-
-        The helper will use method self._init_[what]() to create the object"""
-        if objectid is None:
-            self._simplecmd("init", what)
-        else:
-            f = getattr(self, '_init_' + what)
-            f(objectid, *args, **kwargs)
-
     def destroy(self, what, objectid=None):
         if objectid is None:
             raise ValueError("Calling destroy without id")
