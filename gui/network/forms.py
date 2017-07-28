@@ -546,6 +546,13 @@ class IPMIForm(Form):
                 return c.call('ipmi.update', channel, data)
 
 
+class IPMIIdentifyForm(Form):
+    period = forms.CharField(
+        label=_("Identify Period"),
+        choices=choices.IPMI_IDENTIFY_PERIOD,
+    )
+
+
 class GlobalConfigurationForm(ModelForm):
 
     class Meta:

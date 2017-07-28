@@ -64,6 +64,22 @@ def ipmi(request):
     })
 
 
+def ipmi_identify(request):
+
+    if request.method == "POST":
+        form = IPMIIdentifyForm(request.POST)
+        if form.is_valid():
+            if form.save() == 0:
+                return JsonResp(request, message=_("IPMI identify command issued"))
+            else:
+                return JsonResp(request, error=True, message=_("IPMI identify failed"))
+    else:
+        form = IPMIIdentifyForm()
+    return render(request, 'network/ipmi_identify.html', {
+        'form': form,
+    })
+
+
 def network(request):
 
     tabs = appPool.hook_app_tabs('network', request)
