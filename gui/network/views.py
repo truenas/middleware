@@ -23,6 +23,8 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
+import logging
+
 from subprocess import Popen, PIPE
 
 from django.shortcuts import render
@@ -31,7 +33,9 @@ from django.utils.translation import ugettext as _
 from freenasUI.freeadmin.apppool import appPool
 from freenasUI.freeadmin.views import JsonResp
 from freenasUI.network import models
-from freenasUI.network.forms import HostnameForm, IPMIForm
+from freenasUI.network.forms import HostnameForm, IPMIForm, IPMIIdentifyForm
+
+log = logging.getLogger('ipmi.views')
 
 
 def hostname(request):
@@ -69,9 +73,10 @@ def ipmi_identify(request):
     if request.method == "POST":
         form = IPMIIdentifyForm(request.POST)
         if form.is_valid():
-            if form.save() == 0:
-                return JsonResp(request, message=_("IPMI identify command issued"))
-            else:
+            try:
+                form.save()
+            except Exception:
+                log.warn('Failed to identify IPMI', exc_info=True)
                 return JsonResp(request, error=True, message=_("IPMI identify failed"))
     else:
         form = IPMIIdentifyForm()
