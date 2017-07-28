@@ -135,7 +135,6 @@ log = logging.getLogger('middleware.notifier')
 
 class notifier(metaclass=HookMetaclass):
 
-    from os import system as __system
     from pwd import getpwnam as ___getpwnam
     from grp import getgrnam as ___getgrnam
     IDENTIFIER = 'notifier'
