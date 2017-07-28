@@ -161,7 +161,8 @@ class ServiceMonitorThread(threading.Thread):
             if ntries >= self.retry:
                 break
 
-        self.alert("tried %d attempts to recover service %s" % (self.retry, self.name))
+        if not ((connected is True) and (enabled is True) and (started is True)):
+            self.alert("tried %d attempts to recover service %s" % (self.retry, self.name))
 
     def cancel(self):
         self.finished.set()
