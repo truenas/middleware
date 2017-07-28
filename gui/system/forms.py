@@ -458,12 +458,7 @@ class InitialWizard(CommonWizard):
                     else:
                         groups = volume_form._grp_predefined(bysize, volume_type)
 
-                    _n.init(
-                        "volume",
-                        volume,
-                        groups=groups,
-                        init_rand=False,
-                    )
+                    _n.create_volume(volume, groups=groups, init_rand=False)
 
                 # Create SMART tests for every disk available
                 disks = []

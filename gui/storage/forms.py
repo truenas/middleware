@@ -293,12 +293,7 @@ class VolumeManagerForm(VolumeMixin, Form):
                         group)
 
             else:
-                notifier().init(
-                    "volume",
-                    volume,
-                    groups=grouped,
-                    init_rand=init_rand,
-                )
+                notifier().create_volume(volume, groups=grouped, init_rand=init_rand)
 
                 if dedup:
                     notifier().zfs_set_option(volume.vol_name, "dedup", dedup)
@@ -724,9 +719,7 @@ class ZFSVolumeWizardForm(forms.Form):
                         )
 
             else:
-                notifier().init(
-                    "volume", volume, groups=grouped, init_rand=init_rand
-                )
+                notifier().crate_volume(volume, groups=grouped, init_rand=init_rand)
 
                 if dedup:
                     notifier().zfs_set_option(volume.vol_name, "dedup", dedup)
