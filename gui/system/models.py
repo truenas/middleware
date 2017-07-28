@@ -441,7 +441,7 @@ class Email(Model):
 
 class Tunable(Model):
     tun_var = models.CharField(
-        max_length=50,
+        max_length=128,
         unique=True,
         verbose_name=_("Variable"),
     )
