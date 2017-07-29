@@ -32,8 +32,14 @@ class PoolService(CRUDService):
         except libzfs.ZFSException:
             zpool = None
 
-        pool['status'] = zpool.status if zpool else 'OFFLINE'
-        pool['scan'] = zpool.scrub.__getstate__()
+        if zpool:
+            pool['status'] = zpool.status
+            pool['scan'] = zpool.scrub.__getstate__()
+        else:
+            pool.update({
+                'status': 'OFFLINE',
+                'scan': None,
+            })
 
         if pool['encrypt'] > 0:
             if zpool:
