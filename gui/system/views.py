@@ -98,39 +98,20 @@ log = logging.getLogger('system.views')
 
 
 def _system_info(request=None):
-    # OS, hostname, release
-    __, hostname, __ = os.uname()[0:3]
-    platform = sysctl.filter('hw.model')[0].value
-    physmem = '%dMB' % (
-        sysctl.filter('hw.physmem')[0].value / 1048576,
-    )
+
+    with client as c:
+        info = c.call('system.info')
+
+    info['physmem'] = f'{int(info["physmem"] / 1048576)}MB'
     # All this for a timezone, because time.asctime() doesn't add it in.
-    date = time.strftime('%a %b %d %H:%M:%S %Z %Y') + '\n'
-    uptime = subprocess.check_output(
-        "env -u TZ uptime | awk -F', load averages:' '{ print $1 }'",
-        shell=True
-    )
-    loadavg = "%.2f, %.2f, %.2f" % os.getloadavg()
+    info['date'] = time.strftime('%a %b %d %H:%M:%S %Z %Y') + '\n'
+    info['loadavg'] = ', '.join(list(map(lambda x: f'{x:.2f}', info['loadavg'])))
 
-    try:
-        freenas_build = get_sw_version()
-    except:
-        freenas_build = "Unrecognized build"
-
-    return {
-        'hostname': hostname,
-        'platform': platform,
-        'physmem': physmem,
-        'date': date,
-        'uptime': uptime,
-        'loadavg': loadavg,
-        'freenas_build': freenas_build,
-    }
+    return info
 
 
 def system_info(request):
     sysinfo = _system_info(request)
-    sysinfo['info_hook'] = appPool.get_system_info(request)
     return render(request, 'system/system_info.html', sysinfo)
 
 
