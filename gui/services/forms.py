@@ -906,6 +906,7 @@ class UPSForm(ModelForm):
         widgets = {
             'ups_remoteport': forms.widgets.TextInput(),
             'ups_driver': forms.widgets.FilteringSelect(),
+            'ups_nocommwarntime': forms.widgets.TextInput(),
         }
 
     def __init__(self, *args, **kwargs):
