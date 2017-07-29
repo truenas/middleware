@@ -1343,6 +1343,16 @@ class UPS(Model):
             "a custom command here to perform other tasks before shutdown."
             "default: /sbin/shutdown -p now"),
     )
+    ups_nocommwarntime = models.IntegerField(
+        verbose_name=_('No Communcation Warning Time'),
+        help_text=_(
+            'Notify after this many seconds if it can’t reach any of the '
+            'UPS. It keeps warning you until the situation is fixed. '
+            'Default is 300 seconds.'
+        ),
+        null=True,
+        blank=True,
+    )
     ups_monuser = models.CharField(
         max_length=50,
         default='upsmon',
