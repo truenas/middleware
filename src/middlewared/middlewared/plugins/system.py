@@ -69,6 +69,7 @@ class SystemService(Service):
             'boottime': datetime.fromtimestamp(
                 struct.unpack('l', sysctl.filter('kern.boottime')[0].value[:8])[0]
             ),
+            'datetime': datetime.now(),
         }
 
     @accepts(Dict('system-reboot', Int('delay', required=False), required=False))
