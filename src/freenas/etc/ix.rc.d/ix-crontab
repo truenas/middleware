@@ -75,6 +75,22 @@ generate_crontab()
 		echo "${scrub_minute}	${scrub_hour}	${scrub_daymonth}	${scrub_month}	${scrub_dayweek}	root	PATH=\"$cron_PATH\" /usr/local/libexec/nas/scrub -t ${scrub_threshold} ${vol_name}" >> /etc/crontab
 	done
 
+	local f="begin end"
+	eval local $f
+	local sf=$(var_to_sf $f)
+	local begin_hour begin_minute end_hour end_minute
+	# Generate resilver priority
+	${FREENAS_SQLITE_CMD} -separator "" ${RO_FREENAS_CONFIG} \
+	"SELECT $sf FROM storage_resilver WHERE enabled = 1 ORDER BY -id" | \
+	while eval read -r $f; do
+		begin_hour=$(echo ${begin}|cut -d: -f 1)
+		begin_minute=$(echo ${begin}|cut -d: -f 2)
+		end_hour=$(echo ${end}|cut -d: -f 1)
+		end_minute=$(echo ${end}|cut -d: -f 2)
+		echo "${begin_minute}	${begin_hour}	*	*	*	root	/usr/local/bin/midclt call pool.configure_resilver_priority > /dev/null 2>&1" >> /etc/crontab
+		echo "${end_minute}	${end_hour}	*	*	*	root	/usr/local/bin/midclt call pool.configure_resilver_priority > /dev/null 2>&1" >> /etc/crontab
+	done
+
 	# For periodic snapshot.
 	snaptasks=`${FREENAS_SQLITE_CMD} ${RO_FREENAS_CONFIG} "SELECT COUNT(id) FROM storage_task WHERE task_enabled = 1;"`
 	if [ ${snaptasks} -gt 0 ]; then

@@ -77,6 +77,19 @@ DEDUP_WARNING = _(
     "Enabling dedup may have drastic performance implications,"
     "<br /> as well as impact your ability to access your data.<br /> "
     "Consider using compression instead.")
+RE_HOUR = re.compile(r'(?P<hour>\d{2}):(?P<min>\d{2}):(?P<sec>\d{2})')
+
+
+def fix_time_fields(data, names):
+    for name in names:
+        if name not in data:
+            continue
+        search = RE_HOUR.search(data[name])
+        data[name] = time(
+            hour=int(search.group("hour")),
+            minute=int(search.group("min")),
+            second=int(search.group("sec")),
+        )
 
 
 class Disk(object):
@@ -1874,6 +1887,34 @@ class MountPointAccessForm(Form):
         )
 
 
+class ResilverForm(ModelForm):
+
+    class Meta:
+        fields = '__all__'
+        model = models.Resilver
+        widgets = {
+            'weekday': CheckboxSelectMultiple(
+                choices=choices.WEEKDAYS_CHOICES
+            ),
+        }
+
+    def __init__(self, *args, **kwargs):
+        if len(args) > 0 and isinstance(args[0], QueryDict):
+            new = args[0].copy()
+            fix_time_fields(new, ['begin', 'end'])
+            args = (new,) + args[1:]
+        super(ResilverForm, self).__init__(*args, **kwargs)
+
+    def clean_weekday(self):
+        bwd = self.data.getlist('weekday')
+        return ','.join(bwd)
+
+    def done(self, *args, **kwargs):
+        notifier().restart('cron')
+        with client as c:
+            c.call('pool.configure_resilver_priority')
+
+
 class PeriodicSnapForm(ModelForm):
 
     class Meta:
@@ -1893,19 +1934,7 @@ class PeriodicSnapForm(ModelForm):
     def __init__(self, *args, **kwargs):
         if len(args) > 0 and isinstance(args[0], QueryDict):
             new = args[0].copy()
-            HOUR = re.compile(r'(?P<hour>\d{2}):(?P<min>\d{2}):(?P<sec>\d{2})')
-            if "task_begin" in new:
-                search = HOUR.search(new['task_begin'])
-                new['task_begin'] = time(
-                    hour=int(search.group("hour")),
-                    minute=int(search.group("min")),
-                    second=int(search.group("sec")))
-            if "task_end" in new:
-                search = HOUR.search(new['task_end'])
-                new['task_end'] = time(
-                    hour=int(search.group("hour")),
-                    minute=int(search.group("min")),
-                    second=int(search.group("sec")))
+            fix_time_fields(new, ['task_begin', 'task_end'])
             args = (new,) + args[1:]
         super(PeriodicSnapForm, self).__init__(*args, **kwargs)
         self.fields['task_filesystem'] = forms.ChoiceField(
@@ -2265,19 +2294,7 @@ class ReplicationForm(ModelForm):
     def __init__(self, *args, **kwargs):
         if len(args) > 0 and isinstance(args[0], QueryDict):
             new = args[0].copy()
-            HOUR = re.compile(r'(?P<hour>\d{2}):(?P<min>\d{2}):(?P<sec>\d{2})')
-            if "repl_begin" in new:
-                search = HOUR.search(new['repl_begin'])
-                new['repl_begin'] = time(
-                    hour=int(search.group("hour")),
-                    minute=int(search.group("min")),
-                    second=int(search.group("sec")))
-            if "repl_end" in new:
-                search = HOUR.search(new['repl_end'])
-                new['repl_end'] = time(
-                    hour=int(search.group("hour")),
-                    minute=int(search.group("min")),
-                    second=int(search.group("sec")))
+            fix_time_fields(new, ['repl_begin', 'repl_end'])
             args = (new,) + args[1:]
         repl = kwargs.get('instance', None)
         super(ReplicationForm, self).__init__(*args, **kwargs)
