@@ -52,6 +52,12 @@ class SystemService(Service):
             stdout=subprocess.PIPE,
             shell=True,
         )).communicate())[0].decode().strip()
+
+        serial = (await(await Popen(
+            ['dmidecode', '-s', 'system-serial-number'],
+            stdout=subprocess.PIPE,
+        )).communicate())[0].decode().strip() or None
+
         return {
             'version': self.version(),
             'hostname': socket.gethostname(),
@@ -59,6 +65,7 @@ class SystemService(Service):
             'model': sysctl.filter('hw.model')[0].value,
             'loadavg': os.getloadavg(),
             'uptime': uptime,
+            'system_serial': serial,
             'boottime': datetime.fromtimestamp(
                 struct.unpack('l', sysctl.filter('kern.boottime')[0].value[:8])[0]
             ),
