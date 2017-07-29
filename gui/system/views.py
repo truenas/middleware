@@ -98,8 +98,6 @@ log = logging.getLogger('system.views')
 
 def _info_humanize(info):
     info['physmem'] = f'{int(info["physmem"] / 1048576)}MB'
-    # All this for a timezone, because time.asctime() doesn't add it in.
-    info['date'] = time.strftime('%a %b %d %H:%M:%S %Z %Y') + '\n'
     info['loadavg'] = ', '.join(list(map(lambda x: f'{x:.2f}', info['loadavg'])))
     return info
 

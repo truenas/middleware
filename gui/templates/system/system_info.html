@@ -83,7 +83,7 @@
     </tr>
     <tr>
         <th>{% trans "System Time" %}</th>
-        <td>{{ local.date }}</td>
+        <td>{{ local.datetime|date:"r" }}</td>
     </tr>
     <tr>
         <th>{% trans "Uptime" %}</th>
@@ -117,7 +117,7 @@
     </tr>
     <tr>
         <th>{% trans "System Time" %}</th>
-        <td>{{ standby.date }}</td>
+        <td>{{ standby.datetime|date:"r" }}</td>
     </tr>
     <tr>
         <th>{% trans "Uptime" %}</th>
