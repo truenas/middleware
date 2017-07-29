@@ -46,9 +46,6 @@ class AppPool(object):
         arr = sorted(arr, key=lambda x: x.get('weight'))
         return arr
 
-    def get_system_info(self, request):
-        return self._get_array("system_info", None, request)
-
     def hook_app_index(self, name, request):
         return self._get_array(
             'hook_app_index', name, request,

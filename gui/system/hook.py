@@ -30,18 +30,6 @@ class SystemHook(AppHook):
             },
         ]
 
-    def system_info(self, request):
-        arr = []
-        tn_serial_numbers = ('A1-', 'R1-', 'R2-', 'R3-', 'R4-')
-        serial = subprocess.Popen(
-            ['/usr/local/sbin/dmidecode', '-s', 'system-serial-number'],
-            stdout=subprocess.PIPE,
-            encoding='utf8',
-        ).communicate()[0].split('\n')[0].upper()
-        if serial.startswith(tn_serial_numbers):
-            arr.append({'name': _('Serial Number'), 'value': serial})
-        return arr
-
     def hook_app_tabs_system(self, request):
         from freenasUI.freeadmin.sqlite3_ha.base import NO_SYNC_MAP
         from freenasUI.middleware.notifier import notifier

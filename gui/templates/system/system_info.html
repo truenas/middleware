@@ -71,11 +71,11 @@
     </tr>
     <tr>
         <th>{% trans "Build" %}</th>
-        <td>{{ freenas_build }}</td>
+        <td>{{ version }}</td>
     </tr>
     <tr>
         <th>{% trans "Platform" %}</th>
-        <td>{{ platform }}</td>
+        <td>{{ model }}</td>
     </tr>
     <tr>
         <th>{% trans "Memory" %}</th>
@@ -93,10 +93,4 @@
         <th>{% trans "Load Average" %}</th>
         <td class="descr">{{ loadavg }}</td>
     </tr>
-    {% for info in info_hook %}
-    <tr>
-        <th>{{ info.name|safe }}</th>
-        <td class="descr">{{ info.value|safe }}</td>
-    </tr>
-    {% endfor %}
 </table>
