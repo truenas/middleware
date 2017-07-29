@@ -32,7 +32,6 @@ import re
 import shutil
 import socket
 import subprocess
-import sysctl
 import tarfile
 import tempfile
 import time
@@ -97,22 +96,30 @@ PERFTEST_SIZE = 40 * 1024 * 1024 * 1024  # 40 GiB
 log = logging.getLogger('system.views')
 
 
-def _system_info(request=None):
-
-    with client as c:
-        info = c.call('system.info')
-
+def _info_humanize(info):
     info['physmem'] = f'{int(info["physmem"] / 1048576)}MB'
     # All this for a timezone, because time.asctime() doesn't add it in.
     info['date'] = time.strftime('%a %b %d %H:%M:%S %Z %Y') + '\n'
     info['loadavg'] = ', '.join(list(map(lambda x: f'{x:.2f}', info['loadavg'])))
-
     return info
 
 
 def system_info(request):
-    sysinfo = _system_info(request)
-    return render(request, 'system/system_info.html', sysinfo)
+
+    with client as c:
+        local = _info_humanize(c.call('system.info'))
+
+        standby = None
+        if not notifier().is_freenas() and notifier().failover_licensed():
+            try:
+                standby = _info_humanize(c.call('failover.call_remote', 'system.info', timeout=2))
+            except ClientException:
+                pass
+
+    return render(request, 'system/system_info.html', {
+        'local': local,
+        'standby': standby,
+    })
 
 
 def bootenv_datagrid(request):
