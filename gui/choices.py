@@ -1174,11 +1174,11 @@ S3_MODES = (
 
 IPMI_IDENTIFY_PERIOD = (
     ('force', _('Indefinitely')),
-    ('15', _('15 seconds'),
-    ('30', _('30 seconds'),
-    ('60', _('1 minute'),
-    ('120', _('2 minutes'),
-    ('180', _('3 minutes'),
-    ('240', _('4 minutes'),
+    ('15', _('15 seconds')),
+    ('30', _('30 seconds')),
+    ('60', _('1 minute')),
+    ('120', _('2 minutes')),
+    ('180', _('3 minutes')),
+    ('240', _('4 minutes')),
     ('0', _('Turn off')),
 )
