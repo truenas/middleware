@@ -453,6 +453,10 @@ class VMService(CRUDService):
     @accepts(Int('id'))
     async def do_delete(self, id):
         """Delete a VM."""
+        status = await self.status(id)
+        if isinstance(status, dict):
+            if status.get('state') == "RUNNING":
+                stop_vm = await self.stop(id)
         try:
             return await self.middleware.call('datastore.delete', 'vm.vm', id)
         except Exception as err:
