@@ -1,5 +1,3 @@
-import subprocess
-
 from django.core.urlresolvers import reverse
 from django.utils.html import escapejs
 from django.utils.translation import ugettext as _
