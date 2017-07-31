@@ -75,6 +75,7 @@ def ipmi_identify(request):
         if form.is_valid():
             try:
                 form.save()
+                return JsonResp(request, message=_("IPMI identify command issued"))
             except Exception:
                 log.warn('Failed to identify IPMI', exc_info=True)
                 return JsonResp(request, error=True, message=_("IPMI identify failed"))
