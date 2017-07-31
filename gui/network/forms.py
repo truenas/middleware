@@ -550,6 +550,7 @@ class IPMIIdentifyForm(Form):
     period = forms.ChoiceField(
         label=_("Identify Period"),
         choices=choices.IPMI_IDENTIFY_PERIOD,
+        initial='15',
     )
 
     def save(self):
