@@ -8,10 +8,10 @@
 {{ block.super }}
 {% endblock %}
 {% block extra_buttons %}
-  <button id="btn_{% cls_name form %}_Identify" data-dojo-type="dijit.form.Button" type="button">
+  <button id="btn_IPMI_Identify" data-dojo-type="dijit.form.Button" type="button">
     {% trans "IPMI Identify" %}
     <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
-      editDialog('{% trans "IPMI Identify"|escapejs %}', '{% url "network_ipmi_identify"}');
+      editObject('{% trans "IPMI Identify"|escapejs %}', '{% url "network_ipmi_identify" %}');
     </script>
   </button>
 {% endblock %}
