@@ -547,7 +547,7 @@ class IPMIForm(Form):
 
 
 class IPMIIdentifyForm(Form):
-    period = forms.CharField(
+    period = forms.ChoiceField(
         label=_("Identify Period"),
         choices=choices.IPMI_IDENTIFY_PERIOD,
     )
