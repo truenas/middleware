@@ -278,39 +278,39 @@ class HASQLiteCursorWrapper(Database.Cursor):
             cparams = list(params)
             if p.tokens[0].normalized == 'INSERT':
 
-                into = p.token_next_match(0, sqlparse.tokens.Keyword, 'INTO')
+                into = p.token_next_by(m=(sqlparse.tokens.Keyword, 'INTO'))
                 if not into:
                     continue
 
-                next_ = p.token_next(into)
+                next_ = p.token_next(into[0])
 
-                if next_.get_name() in NO_SYNC_MAP:
+                if next_[1].value in NO_SYNC_MAP:
                     continue
 
             elif p.tokens[0].normalized == 'DELETE':
 
-                from_ = p.token_next_match(0, sqlparse.tokens.Keyword, 'FROM')
+                from_ = p.token_next_by(m=(sqlparse.tokens.Keyword, 'FROM'))
                 if not from_:
                     continue
 
-                next_ = p.token_next(from_)
+                next_ = p.token_next(from_[0])
 
-                if next_.get_name() in NO_SYNC_MAP:
+                if next_[1].value in NO_SYNC_MAP:
                     continue
 
             elif p.tokens[0].normalized == 'UPDATE':
 
-                name = p.token_next(p.tokens[0]).get_name()
+                name = p.token_next(0)[1].value
                 no_sync = NO_SYNC_MAP.get(name)
                 # Skip if table is in set to not to sync and has no attrs
                 if no_sync is None and name in NO_SYNC_MAP:
                     continue
 
-                set_ = p.token_next_match(0, sqlparse.tokens.Keyword, 'SET')
+                set_ = p.token_next_by(m=(sqlparse.tokens.Keyword, 'SET'))
                 if not set_:
                     continue
 
-                next_ = p.token_next(set_)
+                next_ = p.token_next(set_[0])
                 if not next_:
                     continue
 
@@ -322,11 +322,11 @@ class HASQLiteCursorWrapper(Database.Cursor):
                         continue
 
                     if issubclass(
-                        next_.__class__, sqlparse.sql.IdentifierList
+                        next_[1].__class__, sqlparse.sql.IdentifierList
                     ):
-                        lookup = list(next_.get_sublists())
-                    elif issubclass(next_.__class__, sqlparse.sql.Comparison):
-                        lookup = [next_]
+                        lookup = list(next_[1].get_sublists())
+                    elif issubclass(next_[1].__class__, sqlparse.sql.Comparison):
+                        lookup = [next_[1]]
 
                     # Get all placeholders from the query (%s or ?)
                     placeholders = [a for a in p.flatten() if a.value in ('%s', '?')]
@@ -336,7 +336,7 @@ class HASQLiteCursorWrapper(Database.Cursor):
 
                 for l in lookup:
 
-                    if l.get_name() not in no_sync['fields']:
+                    if l.value not in no_sync['fields']:
                         continue
 
                     # Remove placeholder from the params
@@ -348,16 +348,17 @@ class HASQLiteCursorWrapper(Database.Cursor):
                         pass
 
                     # If it is a list we must also remove the comma around it
-                    prev_ = l.parent.token_prev(l)
-                    next_ = l.parent.token_next(l)
+                    t_index = l.parent.token_index(l)
+                    prev_ = l.parent.token_prev(t_index)
+                    next_ = l.parent.token_next(t_index)
                     if next_ and issubclass(
-                        next_.__class__, sqlparse.sql.Token
-                    ) and next_.value == ',':
-                        del l.parent.tokens[l.parent.token_index(next_)]
+                        next_[1].__class__, sqlparse.sql.Token
+                    ) and next_[1].value == ',':
+                        del l.parent.tokens[next_[0]]
                     elif prev_ and issubclass(
-                        prev_.__class__, sqlparse.sql.Token
-                    ) and prev_.value == ',':
-                        del l.parent.tokens[l.parent.token_index(prev_)]
+                        prev_[1].__class__, sqlparse.sql.Token
+                    ) and prev_[1].value == ',':
+                        del l.parent.tokens[prev_[0]]
                     del l.parent.tokens[l.parent.token_index(l)]
 
                 delete_idx.sort(reverse=True)
