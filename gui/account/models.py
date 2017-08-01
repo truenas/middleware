@@ -36,7 +36,7 @@ from django.utils.translation import ugettext_lazy as _
 from freenasUI import choices
 from freenasUI.common.samba import Samba4
 from freenasUI.common.system import domaincontroller_enabled
-from freenasUI.freeadmin.models import Model, PathField
+from freenasUI.freeadmin.models import DictField, Model, PathField
 from freenasUI.middleware.notifier import notifier
 
 log = logging.getLogger('account.models')
@@ -167,6 +167,10 @@ class bsdUsers(Model):
     bsdusr_microsoft_account = models.BooleanField(
         verbose_name=_("Microsoft Account"),
         default=False
+    )
+    bsdusr_attributes = DictField(
+        default=None,
+        editable=False,
     )
 
     is_active = True
