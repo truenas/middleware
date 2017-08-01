@@ -546,6 +546,23 @@ class IPMIForm(Form):
                 return c.call('ipmi.update', channel, data)
 
 
+class IPMIIdentifyForm(Form):
+    period = forms.ChoiceField(
+        label=_("Identify Period"),
+        choices=choices.IPMI_IDENTIFY_PERIOD,
+        initial='15',
+    )
+
+    def save(self):
+        with client as c:
+            period = self.cleaned_data.get('period')
+            if period == 'force':
+                data = {'force': True}
+            else:
+                data = {'seconds': period}
+            return c.call('ipmi.identify', data)
+
+
 class GlobalConfigurationForm(ModelForm):
 
     class Meta:
