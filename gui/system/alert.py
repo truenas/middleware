@@ -265,7 +265,7 @@ class AlertPlugins(metaclass=HookMetaclass):
         # Skip for standby node
         if (
             not _n.is_freenas() and _n.failover_licensed() and
-            _n.failover_status() != 'MASTER'
+            _n.failover_status() == 'BACKUP'
         ):
             return []
 
