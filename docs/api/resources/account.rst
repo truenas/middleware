@@ -33,6 +33,7 @@ List resource
 
       [
         {
+                "bsdusr_attributes": {},
                 "bsdusr_builtin": true,
                 "bsdusr_email": "",
                 "bsdusr_full_name": "root",
@@ -88,6 +89,7 @@ Create resource
       Content-Type: application/json
 
         {
+                "bsdusr_attributes": {},
                 "bsdusr_builtin": false,
                 "bsdusr_email": "",
                 "bsdusr_full_name": "My User",
@@ -117,6 +119,7 @@ Create resource
    :json boolean bsdusr_locked: lock user login
    :json boolean bsdusr_sudo: enable sudo for the user
    :json string bsdusr_sshpubkey: SSH authorized keys file content
+   :json object bsdusr_attributes: general purpose JSON object attributes
    :reqheader Content-Type: the request content type
    :resheader Content-Type: the response content type
    :statuscode 201: no error
@@ -150,6 +153,7 @@ Update resource
       Content-Type: application/json
 
         {
+                "bsdusr_attributes": {},
                 "bsdusr_builtin": false,
                 "bsdusr_email": "",
                 "bsdusr_full_name": "My Name",
@@ -177,6 +181,7 @@ Update resource
    :json boolean bsdusr_locked: lock user login
    :json boolean bsdusr_sudo: enable sudo for the user
    :json string bsdusr_sshpubkey: SSH authorized keys file content
+   :json object bsdusr_attributes: general purpose JSON object attributes
    :reqheader Content-Type: the request content type
    :resheader Content-Type: the response content type
    :statuscode 200: no error
