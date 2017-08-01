@@ -133,7 +133,7 @@ __EOF__
 	#
 	#	List kerberos tickets
 	#
-	section_header "Kerberos Tickets"
+	section_header "Kerberos Tickets - 'klist'"
 	klist
 	section_footer
 
@@ -169,9 +169,9 @@ __EOF__
 	#	Dump LDAP users and groups
 	#
 	section_header "LDAP Users and Groups"
-	section_header "Users"
+	section_header "Users - 'getent passwd'"
 	getent passwd
-	section_header "Groups"
+	section_header "Groups - 'getent group'"
 	getent group
 	section_footer
 

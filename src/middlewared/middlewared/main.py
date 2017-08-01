@@ -276,7 +276,7 @@ class FileApplication(object):
             return resp
 
         job_id = int(path[-1])
-        jobs = self.middleware.get_jobs().all()
+        jobs = self.middleware.jobs.all()
         job = jobs.get(job_id)
         if not job:
             resp = web.Response()
@@ -584,7 +584,7 @@ class Middleware(object):
         self.__threadpool = concurrent.futures.ThreadPoolExecutor(
             max_workers=10,
         )
-        self.__jobs = JobsQueue(self)
+        self.jobs = JobsQueue(self)
         self.__schemas = {}
         self.__services = {}
         self.__wsclients = {}
@@ -721,9 +721,6 @@ class Middleware(object):
     def get_schema(self, name):
         return self.__schemas.get(name)
 
-    def get_jobs(self):
-        return self.__jobs
-
     async def threaded(self, method, *args, **kwargs):
         """
         Runs method in a native thread using concurrent.futures.ThreadPool.
@@ -749,7 +746,7 @@ class Middleware(object):
             job = Job(self, name, methodobj, args, job_options)
             # Add the job to the queue.
             # At this point an `id` is assinged to the job.
-            self.__jobs.add(job)
+            self.jobs.add(job)
         else:
             job = None
 
@@ -898,7 +895,7 @@ class Middleware(object):
         self.__loop.run_until_complete(
             asyncio.ensure_future(restful_api.register_resources())
         )
-        asyncio.ensure_future(self.__jobs.run())
+        asyncio.ensure_future(self.jobs.run())
 
         self.logger.debug('Accepting connections')
         web.run_app(app, host='0.0.0.0', port=6000, access_log=None)

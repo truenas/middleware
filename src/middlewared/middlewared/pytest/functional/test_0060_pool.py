@@ -12,3 +12,7 @@ def test_pool_get_disks(conn):
         req = conn.rest.post(f'pool/id/{pool["id"]}/get_disks')
         assert req.status_code == 200
         assert isinstance(req.json(), list) is True
+
+
+def test_pool_configure_resilver_priority(conn):
+    conn.ws.call('pool.configure_resilver_priority')

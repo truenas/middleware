@@ -149,7 +149,7 @@ class CoreService(Service):
     def get_jobs(self, filters=None, options=None):
         """Get the long running jobs."""
         jobs = filter_list([
-            i.__encode__() for i in list(self.middleware.get_jobs().all().values())
+            i.__encode__() for i in list(self.middleware.jobs.all().values())
         ], filters, options)
         return jobs
 
@@ -158,7 +158,7 @@ class CoreService(Service):
         Dict('progress', additional_attrs=True),
     ))
     def job_update(self, id, data):
-        job = self.middleware.get_jobs().all()[id]
+        job = self.middleware.jobs.all()[id]
         progress = data.get('progress')
         if progress:
             job.set_progress(

@@ -94,7 +94,7 @@ from freenasUI.storage.forms import (
     ZFSDatasetEditForm
 )
 from freenasUI.storage.models import Disk, Replication, VMWarePlugin
-from freenasUI.system.alert import alertPlugins, Alert
+from freenasUI.system.alert import alert_node, alertPlugins, Alert
 from freenasUI.system.forms import (
     BootEnvAddForm,
     BootEnvRenameForm,
@@ -108,7 +108,7 @@ from freenasUI.system.forms import (
     ManualUpdateUploadForm,
     ManualUpdateWizard,
 )
-from freenasUI.system.models import Update as mUpdate
+from freenasUI.system.models import Update as mUpdate, Alert as mAlert
 from freenasUI.system.utils import BootEnv, debug_generate, factory_restore
 from middlewared.client import ClientException
 from tastypie import fields, http
@@ -170,6 +170,17 @@ class AlertResource(DojoResource):
         object_class = Alert
         resource_name = 'system/alert'
 
+    def prepend_urls(self):
+        return [
+            url(
+                r"^(?P<resource_name>%s)/(?P<pk>\w[\w/-]*)/dismiss%s$" % (
+                    self._meta.resource_name, trailing_slash()
+                ),
+                self.wrap_view('dismiss'),
+                name="api_alert_dismiss"
+            ),
+        ]
+
     def get_list(self, request, **kwargs):
         results = alertPlugins.run()
 
@@ -223,6 +234,38 @@ class AlertResource(DojoResource):
             len(results)
         )
         return response
+
+    def dismiss(self, request, **kwargs):
+        if request.method != 'PUT':
+            response = HttpMethodNotAllowed('PUT')
+            response['Allow'] = 'PUT'
+            raise ImmediateHttpResponse(response=response)
+
+        self.is_authenticated(request)
+
+        dismiss = self.deserialize(
+            request,
+            request.body,
+            format=request.META.get('CONTENT_TYPE', 'application/json'),
+        )
+
+        alert = None
+        for i in alertPlugins.run():
+            if i.getId() == kwargs['pk']:
+                alert = i
+                break
+        if alert is None:
+            raise ImmediateHttpResponse(response=HttpNotFound())
+
+        try:
+            alertobj = mAlert.objects.get(node=alert_node(), message_id=kwargs['pk'])
+            if dismiss is False:
+                alertobj.delete()
+        except mAlert.DoesNotExist:
+            if dismiss is True:
+                mAlert.objects.create(node=alert_node(), message_id=kwargs['pk'])
+
+        return HttpResponse(status=202)
 
     def dehydrate(self, bundle):
         return bundle
@@ -324,7 +367,17 @@ class DatasetResource(DojoResource):
     avail = fields.IntegerField(attribute='avail')
     refer = fields.IntegerField(attribute='refer')
     mountpoint = fields.CharField(attribute='mountpoint')
-    quota = fields.CharField(attribute='quota')
+    quota = fields.IntegerField(attribute='quota')
+    refquota = fields.IntegerField(attribute='refquota')
+    reservation = fields.IntegerField(attribute='reservation')
+    refreservation = fields.IntegerField(attribute='refreservation')
+    recordsize = fields.IntegerField(attribute='recordsize')
+    comments = fields.CharField(attribute='description', null=True)
+    compression = fields.CharField(attribute='compression')
+    dedup = fields.CharField(attribute='dedup')
+    atime = fields.CharField(attribute='atime')
+    readonly = fields.CharField(attribute='readonly')
+    inherit_props = fields.ListField(attribute='inherit')
 
     class Meta:
         allowed_methods = ['get', 'post', 'put', 'delete']
@@ -332,6 +385,18 @@ class DatasetResource(DojoResource):
         resource_name = 'storage/dataset'
 
     def post_list(self, request, **kwargs):
+
+        if 'parent' not in kwargs:
+            raise ImmediateHttpResponse(
+                response=self.error_response(request, 'Creating a top level dataset is not supported.')
+            )
+        return self.__create_dataset(kwargs.get('parent').vol_name, request, **kwargs)
+
+    def post_detail(self, request, **kwargs):
+        return self.__create_dataset(kwargs['pk'], request, **kwargs)
+
+    def __create_dataset(self, fs, request, **kwargs):
+
         self.is_authenticated(request)
         deserialized = self._meta.serializer.deserialize(
             request.body,
@@ -339,14 +404,13 @@ class DatasetResource(DojoResource):
         )
 
         name = deserialized.get('name')
-        parent = kwargs.get('parent').vol_name
 
         for k in list(deserialized.keys()):
             deserialized['dataset_%s' % k] = deserialized.pop(k)
 
         data = self._get_form_initial(ZFSDatasetCreateForm)
         data.update(deserialized)
-        form = ZFSDatasetCreateForm(data=data, fs=parent)
+        form = ZFSDatasetCreateForm(data=data, fs=fs)
         if not form.is_valid() or not form.save():
             for k in list(form.errors.keys()):
                 if k == '__all__':
@@ -357,13 +421,22 @@ class DatasetResource(DojoResource):
                 response=self.error_response(request, form.errors)
             )
 
-        response = self.get_detail(request, pk=name, **kwargs)
+        if 'parent' in kwargs:
+            kwargs['pk'] = name
+        else:
+            kwargs['pk'] = f'{fs}/{name}'
+        response = self.get_detail(request, **kwargs)
         response.status_code = 201
         return response
 
     def obj_update(self, bundle, **kwargs):
         bundle = self.full_hydrate(bundle)
-        name = '%s/%s' % (kwargs.get('parent').vol_name, kwargs.get('pk'))
+
+        if 'parent' in kwargs:
+            name = f'{kwargs["parent"].vol_name}/{kwargs["pk"]}'
+        else:
+            name = kwargs['pk']
+
         data = self.deserialize(
             bundle.request,
             bundle.request.body,
@@ -393,27 +466,30 @@ class DatasetResource(DojoResource):
         dsargs = {'recursive': True}
         if 'parent' in kwargs:
             dsargs['path'] = kwargs.get('parent').vol_name
+        else:
+            dsargs['include_root'] = True
         zfslist = zfs.list_datasets(**dsargs)
         return zfslist
 
     def obj_get(self, bundle, **kwargs):
-        zfslist = zfs.list_datasets(path="%s/%s" % (
-            kwargs.get('parent').vol_name,
-            kwargs.get('pk'),
-        ))
+        dsargs = {}
+        if 'parent' in kwargs:
+            dsargs['path'] = f'{kwargs["parent"].vol_name}/{kwargs["pk"]}'
+        else:
+            dsargs['path'] = kwargs['pk']
+            dsargs['include_root'] = True
+        zfslist = zfs.list_datasets(**dsargs)
         try:
-            return zfslist['%s/%s' % (
-                kwargs.get('parent').vol_name,
-                kwargs.get('pk')
-            )]
+            return zfslist[dsargs['path']]
         except KeyError:
             raise NotFound("Dataset not found.")
 
     def obj_delete(self, bundle, **kwargs):
-        retval = notifier().destroy_zfs_dataset(path="%s/%s" % (
-            kwargs.get('parent').vol_name,
-            kwargs.get('pk'),
-        ))
+        if 'parent' in kwargs:
+            path = f'{kwargs["parent"].vol_name}/{kwargs["pk"]}'
+        else:
+            path = kwargs['pk']
+        retval = notifier().destroy_zfs_dataset(path=path, recursive=True)
         if retval:
             raise ImmediateHttpResponse(
                 response=self.error_response(bundle.request, retval)

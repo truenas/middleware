@@ -79,10 +79,16 @@ def home(request):
     if view:
         return view[0]
 
+    try:
+        resilver = models.Resilver.objects.order_by('-id')[0]
+    except Exception:
+        resilver = models.Resilver.objects.create()
+
     tabs = appPool.hook_app_tabs('storage', request)
     return render(request, 'storage/index.html', {
         'focused_tab': request.GET.get("tab", 'storage.Volumes.View'),
         'hook_tabs': tabs,
+        'resilver_edit_url': f'{resilver.get_edit_url()}?inline=true'
     })
 
 

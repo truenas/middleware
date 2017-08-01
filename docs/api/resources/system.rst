@@ -159,6 +159,34 @@ List resource
    :statuscode 200: no error
 
 
+Dismiss alert
++++++++++++++
+
+.. http:get:: /api/v1.0/system/alert/(string:id)/dismiss/
+
+   Dismiss an alert.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      GET /api/v1.0/system/alert/256ad2f48e5e541e28388701e34409cc/dismiss/ HTTP/1.1
+      Content-Type: application/json
+
+        true
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 202 Accepted
+      Vary: Accept
+      Content-Type: application/json
+
+   :resheader Content-Type: content type of the response
+   :statuscode 202: no error
+
+
 BootEnv
 -------
 

@@ -32,7 +32,7 @@ smart_help() { echo "Dump SMART Information"; }
 smart_directory() { echo "SMART"; }
 smart_func()
 {
-	section_header "SMART"
+	section_header "SMART - 'smartctl -x'"
 	for i in `sysctl -n kern.disks`
 	do
 	    echo /dev/$i

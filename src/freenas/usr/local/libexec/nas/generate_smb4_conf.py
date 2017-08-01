@@ -1033,9 +1033,6 @@ def generate_smb4_conf(client, smb4_conf, role):
         confset2(smb4_conf, "workgroup = %s", cifs.workgroup.upper())
         confset1(smb4_conf, "security = user")
 
-    if role != 'dc':
-        confset1(smb4_conf, "pid directory = /var/run/samba")
-
     confset2(smb4_conf, "create mask = %s", cifs.filemask)
     confset2(smb4_conf, "directory mask = %s", cifs.dirmask)
     confset2(smb4_conf, "client ntlmv2 auth = %s",

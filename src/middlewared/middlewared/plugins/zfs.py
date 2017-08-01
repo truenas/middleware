@@ -5,6 +5,8 @@ from middlewared.service import CallError, Service, job
 
 import errno
 import libzfs
+import threading
+import time
 
 
 def find_vdev(pool, vname):
@@ -137,3 +139,37 @@ class ZFSPoolService(Service):
             target.replace(newvdev)
         except libzfs.ZFSException as e:
             raise CallError(str(e), e.code)
+
+    @accepts(Str('name'))
+    @job(lock=lambda i: i[0])
+    def scrub(self, job, name):
+        """
+        Start a scrub on pool `name`.
+        """
+        try:
+            zfs = libzfs.ZFS()
+            pool = zfs.get(name)
+            pool.start_scrub()
+        except libzfs.ZFSException as e:
+            raise CallError(str(e), e.code)
+
+        def watch():
+            while True:
+                scrub = pool.scrub
+                if scrub.function != libzfs.ScanFunction.SCRUB:
+                    break
+
+                if scrub.state == libzfs.ScanState.FINISHED:
+                    job.set_progress(100, 'Scrub finished')
+                    break
+
+                if scrub.state == libzfs.ScanState.CANCELED:
+                    break
+
+                if scrub.state == libzfs.ScanState.SCANNING:
+                    job.set_progress(scrub.percentage, 'Scrubbing')
+                time.sleep(1)
+
+        t = threading.Thread(target=watch, daemon=True)
+        t.start()
+        t.join()

@@ -55,7 +55,7 @@ class ServiceService(CRUDService):
         'rsync': ('rsync', '/var/run/rsyncd.pid'),
         'nfs': ('nfsd', None),
         'afp': ('netatalk', None),
-        'cifs': ('smbd', '/var/run/samba/smbd.pid'),
+        'cifs': ('smbd', '/var/run/samba4/smbd.pid'),
         'dynamicdns': ('inadyn-mt', None),
         'snmp': ('snmpd', '/var/run/net_snmpd.pid'),
         'ftp': ('proftpd', '/var/run/proftpd.pid'),

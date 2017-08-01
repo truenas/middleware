@@ -2,9 +2,9 @@
 
 GDB="/usr/local/bin/gdb7111 --batch --command /usr/local/etc/samba.gdb"
 
-nmbd_pid="$(cat /var/run/samba/nmbd.pid 2>/dev/null)"
-smbd_pid="$(cat /var/run/samba/smbd.pid 2>/dev/null)"
-winbindd_pid="$(cat /var/run/samba/winbindd.pid 2>/dev/null)"
+nmbd_pid="$(cat /var/run/samba4/nmbd.pid 2>/dev/null)"
+smbd_pid="$(cat /var/run/samba4/smbd.pid 2>/dev/null)"
+winbindd_pid="$(cat /var/run/samba4/winbindd.pid 2>/dev/null)"
 tracefile="/var/log/samba4/samba.backtraces"
 
 if [ -f "${tracefile}" ]

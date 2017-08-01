@@ -77,6 +77,19 @@ DEDUP_WARNING = _(
     "Enabling dedup may have drastic performance implications,"
     "<br /> as well as impact your ability to access your data.<br /> "
     "Consider using compression instead.")
+RE_HOUR = re.compile(r'(?P<hour>\d{2}):(?P<min>\d{2}):(?P<sec>\d{2})')
+
+
+def fix_time_fields(data, names):
+    for name in names:
+        if name not in data:
+            continue
+        search = RE_HOUR.search(data[name])
+        data[name] = time(
+            hour=int(search.group("hour")),
+            minute=int(search.group("min")),
+            second=int(search.group("sec")),
+        )
 
 
 class Disk(object):
@@ -280,12 +293,7 @@ class VolumeManagerForm(VolumeMixin, Form):
                         group)
 
             else:
-                notifier().init(
-                    "volume",
-                    volume,
-                    groups=grouped,
-                    init_rand=init_rand,
-                )
+                notifier().create_volume(volume, groups=grouped, init_rand=init_rand)
 
                 if dedup:
                     notifier().zfs_set_option(volume.vol_name, "dedup", dedup)
@@ -711,9 +719,7 @@ class ZFSVolumeWizardForm(forms.Form):
                         )
 
             else:
-                notifier().init(
-                    "volume", volume, groups=grouped, init_rand=init_rand
-                )
+                notifier().crate_volume(volume, groups=grouped, init_rand=init_rand)
 
                 if dedup:
                     notifier().zfs_set_option(volume.vol_name, "dedup", dedup)
@@ -1249,6 +1255,11 @@ class ZFSDatasetCommonForm(Form):
         widget=WarningSelect(text=DEDUP_WARNING),
         initial="inherit",
     )
+    dataset_readonly = forms.ChoiceField(
+        label=_('Read-Only'),
+        choices=choices.ZFS_ReadonlyChoices,
+        initial=choices.ZFS_ReadonlyChoices[0][0],
+    )
     dataset_recordsize = forms.ChoiceField(
         choices=(('inherit', _('Inherit')), ) + choices.ZFS_RECORDSIZE,
         label=_('Record Size'),
@@ -1264,6 +1275,7 @@ class ZFSDatasetCommonForm(Form):
     )
 
     advanced_fields = (
+        'dataset_readonly',
         'dataset_refquota',
         'dataset_quota',
         'dataset_refreservation',
@@ -1289,6 +1301,10 @@ class ZFSDatasetCommonForm(Form):
             self.fields['dataset_dedup'].choices = _inherit_choices(
                 choices.ZFS_DEDUP_INHERIT,
                 self.parentdata['dedup'][0]
+            )
+            self.fields['dataset_readonly'].choices = _inherit_choices(
+                choices.ZFS_ReadonlyChoices,
+                self.parentdata['readonly'][0]
             )
 
         if not dedup_enabled():
@@ -1321,8 +1337,10 @@ class ZFSDatasetCommonForm(Form):
 
             props[prop] = value
 
-        for prop in ['org.freenas:description', 'compression', 'atime', 'dedup',
-                     'aclmode', 'recordsize', 'casesensitivity']:
+        for prop in (
+            'org.freenas:description', 'compression', 'atime', 'dedup',
+            'aclmode', 'recordsize', 'casesensitivity', 'readonly',
+        ):
             if prop == 'org.freenas:description':
                 value = self.cleaned_data.get('dataset_comments')
             elif prop == 'recordsize':
@@ -1459,6 +1477,13 @@ class ZFSDatasetEditForm(ZFSDatasetCommonForm):
         else:
             data['dataset_atime'] = 'off'
 
+        if zdata['readonly'][2] == 'inherit':
+            data['dataset_readonly'] = 'inherit'
+        elif zdata['atime'][0] in ('on', 'off'):
+            data['dataset_readonly'] = zdata['readonly'][0]
+        else:
+            data['dataset_readonly'] = 'off'
+
         if zdata['recordsize'][2] == 'inherit':
             data['dataset_recordsize'] = 'inherit'
         else:
@@ -1543,7 +1568,6 @@ class CommonZVol(Form):
                 self.parentdata['dedup'][0]
             )
 
-
     def _zvol_force(self):
         if self._force:
             if not self.cleaned_data.get('zvol_force'):
@@ -1551,8 +1575,6 @@ class CommonZVol(Form):
                     'It is not recommended to use more than 80% of your '
                     'available space for your zvol!'
                 ])
-        #else:
-        #    self.fields['zvol_force'].widget = forms.widgets.HiddenInput()
 
     def clean_zvol_volsize(self):
         size = self.cleaned_data.get('zvol_volsize').replace(' ', '')
@@ -1865,6 +1887,34 @@ class MountPointAccessForm(Form):
         )
 
 
+class ResilverForm(ModelForm):
+
+    class Meta:
+        fields = '__all__'
+        model = models.Resilver
+        widgets = {
+            'weekday': CheckboxSelectMultiple(
+                choices=choices.WEEKDAYS_CHOICES
+            ),
+        }
+
+    def __init__(self, *args, **kwargs):
+        if len(args) > 0 and isinstance(args[0], QueryDict):
+            new = args[0].copy()
+            fix_time_fields(new, ['begin', 'end'])
+            args = (new,) + args[1:]
+        super(ResilverForm, self).__init__(*args, **kwargs)
+
+    def clean_weekday(self):
+        bwd = self.data.getlist('weekday')
+        return ','.join(bwd)
+
+    def done(self, *args, **kwargs):
+        notifier().restart('cron')
+        with client as c:
+            c.call('pool.configure_resilver_priority')
+
+
 class PeriodicSnapForm(ModelForm):
 
     class Meta:
@@ -1884,19 +1934,7 @@ class PeriodicSnapForm(ModelForm):
     def __init__(self, *args, **kwargs):
         if len(args) > 0 and isinstance(args[0], QueryDict):
             new = args[0].copy()
-            HOUR = re.compile(r'(?P<hour>\d{2}):(?P<min>\d{2}):(?P<sec>\d{2})')
-            if "task_begin" in new:
-                search = HOUR.search(new['task_begin'])
-                new['task_begin'] = time(
-                    hour=int(search.group("hour")),
-                    minute=int(search.group("min")),
-                    second=int(search.group("sec")))
-            if "task_end" in new:
-                search = HOUR.search(new['task_end'])
-                new['task_end'] = time(
-                    hour=int(search.group("hour")),
-                    minute=int(search.group("min")),
-                    second=int(search.group("sec")))
+            fix_time_fields(new, ['task_begin', 'task_end'])
             args = (new,) + args[1:]
         super(PeriodicSnapForm, self).__init__(*args, **kwargs)
         self.fields['task_filesystem'] = forms.ChoiceField(
@@ -2256,19 +2294,7 @@ class ReplicationForm(ModelForm):
     def __init__(self, *args, **kwargs):
         if len(args) > 0 and isinstance(args[0], QueryDict):
             new = args[0].copy()
-            HOUR = re.compile(r'(?P<hour>\d{2}):(?P<min>\d{2}):(?P<sec>\d{2})')
-            if "repl_begin" in new:
-                search = HOUR.search(new['repl_begin'])
-                new['repl_begin'] = time(
-                    hour=int(search.group("hour")),
-                    minute=int(search.group("min")),
-                    second=int(search.group("sec")))
-            if "repl_end" in new:
-                search = HOUR.search(new['repl_end'])
-                new['repl_end'] = time(
-                    hour=int(search.group("hour")),
-                    minute=int(search.group("min")),
-                    second=int(search.group("sec")))
+            fix_time_fields(new, ['repl_begin', 'repl_end'])
             args = (new,) + args[1:]
         repl = kwargs.get('instance', None)
         super(ReplicationForm, self).__init__(*args, **kwargs)

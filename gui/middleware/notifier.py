@@ -45,7 +45,6 @@ import glob
 import grp
 import logging
 import os
-import pipes
 import platform
 import pwd
 import re
@@ -136,7 +135,6 @@ log = logging.getLogger('middleware.notifier')
 
 class notifier(metaclass=HookMetaclass):
 
-    from os import system as __system
     from pwd import getpwnam as ___getpwnam
     from grp import getgrnam as ___getgrnam
     IDENTIFIER = 'notifier'
@@ -203,44 +201,6 @@ class notifier(metaclass=HookMetaclass):
             return err
         log.debug("%s -> %s", command, proc.returncode)
         return None
-
-    def _do_nada(self):
-        pass
-
-    def _simplecmd(self, action, what):
-        log.debug("Calling: %s(%s) ", action, what)
-        f = getattr(self, '_' + action + '_' + what, None)
-        if f is None:
-            # Provide generic start/stop/restart verbs for rc.d scripts
-            if what in self.__service2daemon:
-                procname, pidfile = self.__service2daemon[what]
-                if procname:
-                    what = procname
-            if action in ("start", "stop", "restart", "reload"):
-                if action == 'restart':
-                    self._system("/usr/sbin/service " + what + " forcestop ")
-                self._system("/usr/sbin/service " + what + " " + action)
-                f = self._do_nada
-            else:
-                raise ValueError("Internal error: Unknown command")
-        f()
-
-    def init(self, what, objectid=None, *args, **kwargs):
-        """ Dedicated command to create "what" designated by an optional objectid.
-
-        The helper will use method self._init_[what]() to create the object"""
-        if objectid is None:
-            self._simplecmd("init", what)
-        else:
-            f = getattr(self, '_init_' + what)
-            f(objectid, *args, **kwargs)
-
-    def destroy(self, what, objectid=None):
-        if objectid is None:
-            raise ValueError("Calling destroy without id")
-        else:
-            f = getattr(self, '_destroy_' + what)
-            f(objectid)
 
     def start(self, what, timeout=None, onetime=False):
         kwargs = {}
@@ -760,8 +720,9 @@ class notifier(metaclass=HookMetaclass):
 
         return vdevs
 
-    def __create_zfs_volume(self, volume, swapsize, groups, path=None, init_rand=False):
-        """Internal procedure to create a ZFS volume identified by volume id"""
+    def create_volume(self, volume, groups=False, path=None, init_rand=False):
+        """Create a ZFS volume identified by volume id"""
+        swapsize = self.get_swapsize()
         z_name = str(volume.vol_name)
         z_vdev = ""
         encrypt = (volume.vol_encrypt >= 1)
@@ -885,14 +846,14 @@ class notifier(metaclass=HookMetaclass):
         zfs_error = zfsproc.wait()
         return zfs_error, zfs_err
 
-    def create_zfs_dataset(self, path, props=None, _restart_collectd=True):
+    def create_zfs_dataset(self, path, props=None):
         """Internal procedure to create ZFS volume"""
         options = " "
         if props:
             assert isinstance(props, dict)
             for k in list(props.keys()):
                 if props[k] != 'inherit':
-                    options += "-o %s='%s' " % (k, props[k].replace("'", "'\"'\"'"))
+                    options += "-o %s='%s' " % (k, str(props[k]).replace("'", "'\"'\"'"))
         zfsproc = self._pipeopen("/sbin/zfs create %s '%s'" % (options, path))
         zfs_output, zfs_err = zfsproc.communicate()
         zfs_error = zfsproc.wait()
@@ -1010,12 +971,6 @@ class notifier(metaclass=HookMetaclass):
         # Clear out disks associated with the volume
         for disk in disks:
             self.__gpt_unlabeldisk(devname=disk)
-
-    def _init_volume(self, volume, *args, **kwargs):
-        """Initialize a volume designated by volume_id"""
-        swapsize = self.get_swapsize()
-
-        self.__create_zfs_volume(volume, swapsize, kwargs.pop('groups', False), kwargs.pop('path', None), init_rand=kwargs.pop('init_rand', False))
 
     def zfs_replace_disk(self, volume, from_label, to_disk, force=False, passphrase=None):
         """Replace disk in zfs called `from_label` to `to_disk`"""
@@ -1215,11 +1170,8 @@ class notifier(metaclass=HookMetaclass):
 
         return os.path.join(mountpoint_root, name)
 
-    def _destroy_volume(self, volume):
-        """Destroy a volume on the system
-
-        This either destroys a zpool or umounts a generic volume (e.g. NTFS,
-        UFS, etc) and nukes it.
+    def volume_destroy(self, volume):
+        """Destroy a ZFS pool on the system
 
         In the event that the volume is still in use in the OS, the end-result
         is implementation defined depending on the filesystem, and the set of
@@ -1237,7 +1189,6 @@ class notifier(metaclass=HookMetaclass):
              meaningful data.
         XXX: divorce this from storage.models; depending on storage.models
              introduces a circular dependency and creates design ugliness.
-        XXX: implement destruction algorithm for non-UFS/-ZFS.
 
         Parameters:
             volume: a storage.models.Volume object.
@@ -1250,9 +1201,8 @@ class notifier(metaclass=HookMetaclass):
 
         # volume_detach compatibility.
         vol_name = volume.vol_name
-
         vol_mountpath = self.__get_mountpath(vol_name)
-
+        self.__destroy_zfs_volume(volume)
         self.reload('disk')
         self._encvolume_detach(volume, destroy=True)
         self.__rmdir_mountpoint(vol_mountpath)
@@ -2667,14 +2617,6 @@ class notifier(metaclass=HookMetaclass):
             status = 'HEALTHY'
         return status
 
-    def checksum(self, path, algorithm='sha256'):
-        algorithm2map = {
-            'sha256': '/sbin/sha256 -q',
-        }
-        hasher = self._pipeopen('%s %s' % (algorithm2map[algorithm], path))
-        sum = hasher.communicate()[0].split('\n')[0]
-        return sum
-
     def get_disks(self, unused=False):
         """
         Grab usable disks and pertinent info about them
@@ -3564,17 +3506,6 @@ class notifier(metaclass=HookMetaclass):
 
         return None
 
-    def is_carp_interface(self, iface):
-        res = False
-
-        if not iface:
-            return res
-
-        if re.match('^carp[0-9]+$', iface):
-            res = True
-
-        return res
-
     def get_parent_interface(self, iface):
         from freenasUI import choices
         from freenasUI.common.sipcalc import sipcalc_type
@@ -3594,8 +3525,6 @@ class notifier(metaclass=HookMetaclass):
         interfaces = choices.NICChoices(exclude_configured=False, include_vlan_parent=True)
         for iface in interfaces:
             iface = iface[0]
-            if self.is_carp_interface(iface):
-                continue
 
             iinfo = self.get_interface_info(iface)
             if not iinfo:
@@ -3746,22 +3675,6 @@ class notifier(metaclass=HookMetaclass):
             return search[0].text
         else:
             return ''
-
-    def get_boot_pool_boottype(self):
-        status = self.zpool_parse('freenas-boot')
-        doc = self._geom_confxml()
-        efi = bios = 0
-        for disk in status.get_disks():
-            for _type in doc.xpath("//class[name = 'PART']/geom[name = '%s']/provider/config/type" % disk):
-                if _type.text == 'efi':
-                    efi += 1
-                elif _type.text == 'bios-boot':
-                    bios += 1
-        if efi == 0 and bios == 0:
-            return None
-        if bios > 0:
-            return 'BIOS'
-        return 'EFI'
 
     def zpool_parse(self, name):
         doc = self._geom_confxml()
@@ -4025,143 +3938,6 @@ class notifier(metaclass=HookMetaclass):
         else:
             raise ValueError("Unknown mode %s" % (mode, ))
 
-    def __toCamelCase(self, name):
-        pass1 = re.sub(r'[^a-zA-Z0-9]', ' ', name.strip())
-        pass2 = re.sub(r'\s{2,}', ' ', pass1)
-        camel = ''.join([word.capitalize() for word in pass2.split()])
-        return camel
-
-    def ipmi_loaded(self):
-        """
-        Check whether we have a valid /dev/ipmi
-
-        Returns:
-            bool: IPMI device found?
-        """
-        return os.path.exists('/dev/ipmi0')
-
-    def ipmi_get_lan(self, channel=1):
-        """Get lan info from ipmitool
-
-        Returns:
-            A dict object with key, val
-
-        Raises:
-            AssertionError: ipmitool lan print failed
-            MiddlewareError: the ipmi device could not be found
-        """
-
-        if not self.ipmi_loaded():
-            raise MiddlewareError('The ipmi device could not be found')
-
-        RE_ATTRS = re.compile(r'^(?P<key>^.+?)\s+?:\s+?(?P<val>.+?)\r?$', re.M)
-
-        p1 = self._pipeopen('/usr/local/bin/ipmitool lan print %d' % channel)
-        ipmi = p1.communicate()[0]
-        if p1.returncode != 0:
-            raise AssertionError(
-                "Could not retrieve data, ipmi device possibly in use?"
-            )
-
-        data = {}
-        items = RE_ATTRS.findall(ipmi)
-        for key, val in items:
-            dkey = self.__toCamelCase(key)
-            if dkey:
-                data[dkey] = val.strip()
-        return data
-
-    def ipmi_set_lan(self, data, channel=1):
-        """Set lan info from ipmitool
-
-        Returns:
-            0 if the operation was successful, > 0 otherwise
-
-        Raises:
-            MiddlewareError: the ipmi device could not be found
-        """
-
-        if not self.ipmi_loaded():
-            raise MiddlewareError('The ipmi device could not be found')
-
-        if data['dhcp']:
-            rv = self._system_nolog(
-                '/usr/local/bin/ipmitool lan set %d ipsrc dhcp' % channel
-            )
-        else:
-            rv = self._system_nolog(
-                '/usr/local/bin/ipmitool lan set %d ipsrc static' % channel
-            )
-            rv |= self._system_nolog(
-                '/usr/local/bin/ipmitool lan set %d ipaddr %s' % (
-                    channel,
-                    data['ipv4address'],
-                )
-            )
-            rv |= self._system_nolog(
-                '/usr/local/bin/ipmitool lan set %d netmask %s' % (
-                    channel,
-                    data['ipv4netmaskbit'],
-                )
-            )
-            rv |= self._system_nolog(
-                '/usr/local/bin/ipmitool lan set %d defgw ipaddr %s' % (
-                    channel,
-                    data['ipv4gw'],
-                )
-            )
-
-        rv |= self._system_nolog(
-            '/usr/local/bin/ipmitool lan set %d vlan id %s' % (
-                channel,
-                data['vlanid'] if data.get('vlanid') else 'off',
-            )
-        )
-
-        rv |= self._system_nolog(
-            '/usr/local/bin/ipmitool lan set %d access on' % channel
-        )
-        rv |= self._system_nolog(
-            '/usr/local/bin/ipmitool lan set %d auth USER "MD2,MD5"' % channel
-        )
-        rv |= self._system_nolog(
-            '/usr/local/bin/ipmitool lan set %d auth OPERATOR "MD2,MD5"' % (
-                channel,
-            )
-        )
-        rv |= self._system_nolog(
-            '/usr/local/bin/ipmitool lan set %d auth ADMIN "MD2,MD5"' % (
-                channel,
-            )
-        )
-        rv |= self._system_nolog(
-            '/usr/local/bin/ipmitool lan set %d auth CALLBACK "MD2,MD5"' % (
-                channel,
-            )
-        )
-        # Setting arp have some issues in some hardwares
-        # Do not fail if setting these couple settings do not work
-        # See #15578
-        self._system_nolog(
-            '/usr/local/bin/ipmitool lan set %d arp respond on' % channel
-        )
-        self._system_nolog(
-            '/usr/local/bin/ipmitool lan set %d arp generate on' % channel
-        )
-        if data.get("ipmi_password1"):
-            rv |= self._system_nolog(
-                '/usr/local/bin/ipmitool user set password 2 "%s"' % (
-                    pipes.quote(data.get('ipmi_password1')),
-                )
-            )
-        rv |= self._system_nolog('/usr/local/bin/ipmitool user enable 2')
-        # XXX: according to dwhite, this needs to be executed off the box via
-        # the lanplus interface.
-        # rv |= self._system_nolog(
-        #    '/usr/local/bin/ipmitool sol set enabled true 1'
-        # )
-        return rv
-
     def dataset_init_unix(self, dataset):
         """path = "/mnt/%s" % dataset"""
         pass
@@ -4360,7 +4136,7 @@ class notifier(metaclass=HookMetaclass):
 
                 continue
 
-            self.create_zfs_dataset(dataset, {"mountpoint": "legacy"}, _restart_collectd=False)
+            self.create_zfs_dataset(dataset, {"mountpoint": "legacy"})
             createdds = True
 
         if createdds:
@@ -4580,7 +4356,7 @@ class notifier(metaclass=HookMetaclass):
             restart.append('syslogd')
             self.stop('syslogd')
 
-        if os.path.exists('/var/run/samba/smbd.pid'):
+        if os.path.exists('/var/run/samba4/smbd.pid'):
             restart.append('cifs')
             self.stop('cifs')
 

@@ -29,7 +29,7 @@ import logging
 import re
 import subprocess
 
-from collections import OrderedDict
+from collections import defaultdict, OrderedDict
 from django.utils.translation import ugettext_lazy as _
 
 log = logging.getLogger('middleware.zfs')
@@ -475,52 +475,46 @@ class ZFSDataset(object):
     name = None
     path = None
     pool = None
-    used = None
-    usedsnap = None
-    usedds = None
-    usedrefreserv = None
-    usedchild = None
-    avail = None
-    refer = None
-    mountpoint = None
-    compression = None
-    dedup = None
-    description = None
     parent = None
     children = None
-    quota = None
 
-    def __init__(self, path=None, used=None, usedsnap=None, usedds=None,
-                 usedrefreserv=None, usedchild=None, avail=None, refer=None,
-                 mountpoint=None, compression=None, dedup=None, description=None,
-                 quota=None):
+    properties = [
+        'atime', 'used', 'usedsnap', 'usedds', 'usedrefreserv', 'usedchild',
+        'avail', 'refer', 'mountpoint', 'compression', 'dedup',
+        'description', 'quota', 'refquota', 'readonly', 'recordsize',
+        'reservation', 'refreservation',
+    ]
+
+    def __init__(self, path=None, props=None, local=None, default=None, inherit=None, include_root=False):
         self.path = path
         if path:
-            if '/' in path:
-                self.pool, self.name = path.split('/', 1)
-            else:
-                self.pool = ''
+            if include_root:
+                self.pool = path.split('/', 1)[0]
                 self.name = path
-        self.used = used
-        self.usedsnap = usedsnap
-        self.usedds = usedds
-        self.usedrefreserv = usedrefreserv
-        self.usedchild = usedchild
-        self.avail = avail
-        self.refer = refer
-        self.mountpoint = mountpoint
-        self.compression = compression
-        self.dedup = dedup
-        self.description = description
+            else:
+                if '/' in path:
+                    self.pool, self.name = path.split('/', 1)
+                else:
+                    self.pool = ''
+                    self.name = path
+        self.__props = props or {}
         self.parent = None
+        self.local = local or []
+        self.default = default or []
+        self.inherit = inherit or []
         self.children = []
-        self.quota = quota
 
     def __repr__(self):
         return "<Dataset: %s>" % self.path
 
     def __lt__(self, other):
         return self.path < other.path
+
+    def __getattribute__(self, attr):
+        if attr in object.__getattribute__(self, 'properties'):
+            return self.__props.get(attr)
+        else:
+            return object.__getattribute__(self, attr)
 
     @property
     def full_name(self):
@@ -547,23 +541,16 @@ class ZFSVol(object):
     name = None
     path = None
     pool = None
-    used = None
-    usedsnap = None
-    usedds = None
-    usedrefreserv = None
-    usedchild = None
-    avail = None
-    refer = None
-    volsize = None
-    compression = None
-    dedup = None
-    description = None
     parent = None
     children = None
 
-    def __init__(self, path=None, used=None, usedsnap=None, usedds=None,
-                 usedrefreserv=None, usedchild=None, avail=None, refer=None,
-                 volsize=None, compression=None, dedup=None, description=None):
+    properties = [
+        'used', 'usedsnap', 'usedds', 'usedrefreserv', 'usedchild',
+        'avail', 'refer', 'volsize', 'compression', 'dedup',
+        'description', 'readonly',
+    ]
+
+    def __init__(self, path=None, props=None):
         self.path = path
         if path:
             if '/' in path:
@@ -571,17 +558,7 @@ class ZFSVol(object):
             else:
                 self.pool = ''
                 self.name = path
-        self.used = used
-        self.usedsnap = usedsnap
-        self.usedds = usedds
-        self.usedrefreserv = usedrefreserv
-        self.usedchild = usedchild
-        self.avail = avail
-        self.refer = refer
-        self.volsize = volsize
-        self.compression = compression
-        self.dedup = dedup
-        self.description = description
+        self.__props = props
         self.parent = None
         self.children = []
 
@@ -590,6 +567,12 @@ class ZFSVol(object):
 
     def __lt__(self, other):
         return self.path < other.path
+
+    def __getattribute__(self, attr):
+        if attr in object.__getattribute__(self, 'properties'):
+            return self.__props.get(attr)
+        else:
+            return object.__getattribute__(self, attr)
 
     @property
     def full_name(self):
@@ -892,18 +875,15 @@ def zfs_list(path="", recursive=False, hierarchical=False, include_root=False,
     """
     args = [
         "/sbin/zfs",
-        "list",
+        "get",
         "-p",
         "-H",
-        "-s", "name",
-        "-o", "space,refer,mountpoint,type,volsize,compression,dedup,org.freenas:description,quota",
+        "-t", ",".join(types or ['filesystem', 'volume']),
+        "-o", "name,property,value,source",
+        "all",
     ]
     if recursive:
         args.insert(3, "-r")
-
-    if types:
-        args.insert(4, "-t")
-        args.insert(5, ",".join(types))
 
     if path:
         args.append(path)
@@ -916,47 +896,79 @@ def zfs_list(path="", recursive=False, hierarchical=False, include_root=False,
 
     zfs_output, zfs_err = zfsproc.communicate()
     zfs_output = zfs_output.split('\n')
-    zfslist = ZFSList()
+    zfsget = defaultdict(OrderedDict)
     for line in zfs_output:
         if not line:
             continue
         data = line.split('\t')
-        names = data[0].split('/')
+        zfsget[data[0]][data[1]] = (data[2], data[3])
+
+    zfslist = ZFSList()
+    for path, props in zfsget.items():
+        names = path.split('/')
         depth = len(names)
         # root filesystem is not treated as dataset by us
         if depth == 1 and not include_root:
             continue
-        _type = data[9]
+
+        zprops = {}
+        for pname, dname, ptype in (
+            ('available', 'avail', int),
+            ('used', 'used', int),
+            ('usedbysnapshots', 'usedsnap', int),
+            ('usedbydataset', 'usedds', int),
+            ('usedbyrefreservation', 'usedrefreserv', int),
+            ('usedbychildren', 'usedchild', int),
+            ('referenced', 'refer', int),
+            ('compression', 'compression', str),
+            ('dedup', 'dedup', str),
+            ('readonly', 'readonly', str),
+            ('org.freenas:description', 'description', str),
+        ):
+            if pname not in props:
+                zprops[dname] = None
+                continue
+            if ptype is int:
+                if props[pname][0].isdigit():
+                    zprops[dname] = int(props[pname][0])
+                else:
+                    zprops[dname] = None
+            else:
+                zprops[dname] = props[pname][0]
+
+        local_props = []
+        default_props = []
+        inherit_props = []
+        for k, v in props.items():
+            if v[1] == 'local':
+                local_props.append(k)
+            elif v[1] == 'default':
+                default_props.append(k)
+            elif v[1].startswith('inherited'):
+                inherit_props.append(k)
+
+        _type = props['type'][0]
         if _type == 'filesystem':
+            zprops['atime'] = props['atime'][0]
+            zprops['mountpoint'] = props['mountpoint'][0]
+            zprops['quota'] = int(props['quota'][0]) if props['quota'][0].isdigit() else None
+            zprops['refquota'] = int(props['refquota'][0]) if props['refquota'][0].isdigit() else None
+            zprops['reservation'] = int(props['reservation'][0]) if props['reservation'][0].isdigit() else None
+            zprops['refreservation'] = int(props['refreservation'][0]) if props['refreservation'][0].isdigit() else None
+            zprops['recordsize'] = int(props['recordsize'][0]) if props['recordsize'][0].isdigit() else None
             item = ZFSDataset(
-                path=data[0],
-                avail=int(data[1]) if data[1].isdigit() else None,
-                used=int(data[2]) if data[2].isdigit() else None,
-                usedsnap=int(data[3]) if data[3].isdigit() else None,
-                usedds=int(data[4]) if data[4].isdigit() else None,
-                usedrefreserv=int(data[5]) if data[5].isdigit() else None,
-                usedchild=int(data[6]) if data[6].isdigit() else None,
-                refer=int(data[7]) if data[7].isdigit() else None,
-                mountpoint=data[8],
-                compression=data[11],
-                dedup=data[12],
-                description=data[13] if data[13] != '-' else None,
-                quota=int(data[14]) if data[14].isdigit() else None,
+                path=path,
+                include_root=include_root,
+                props=zprops,
+                local=local_props,
+                default=default_props,
+                inherit=inherit_props,
             )
         elif _type == 'volume':
+            zprops['volsize'] = int(props['volsize'][0]) if props['volsize'][0].isdigit() else None
             item = ZFSVol(
-                path=data[0],
-                avail=int(data[1]) if data[1].isdigit() else None,
-                used=int(data[2]) if data[2].isdigit() else None,
-                usedsnap=int(data[3]) if data[3].isdigit() else None,
-                usedds=int(data[4]) if data[4].isdigit() else None,
-                usedrefreserv=int(data[5]) if data[5].isdigit() else None,
-                usedchild=int(data[6]) if data[6].isdigit() else None,
-                refer=int(data[7]) if data[7].isdigit() else None,
-                volsize=int(data[10]) if data[10].isdigit() else None,
-                compression=data[11],
-                dedup=data[12],
-                description=data[13] if data[13] != '-' else None,
+                path=path,
+                props=zprops,
             )
         else:
             raise NotImplementedError

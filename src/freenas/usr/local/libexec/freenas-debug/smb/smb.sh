@@ -129,7 +129,7 @@ smb_func()
 	net status shares
 	section_footer
 
-	section_header "ACLs"
+	section_header "ACLs - 'sharesec --view-all'"
 	sharesec --view-all
 	section_footer
 
@@ -137,9 +137,9 @@ smb_func()
 	#	Dump SMB users and groups
 	#
 	section_header "Users and Groups"
-	section_header "Users"
+	section_header "Users - 'wbinfo -u'"
 	wbinfo -u
-	section_header "Groups"
+	section_header "Groups - 'wbinfo -g'"
 	wbinfo -g
 	section_footer
 }

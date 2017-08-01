@@ -50,6 +50,14 @@ from licenselib.license import ContractType
 log = logging.getLogger('system.models')
 
 
+CA_TYPE_EXISTING = 0x00000001
+CA_TYPE_INTERNAL = 0x00000002
+CA_TYPE_INTERMEDIATE = 0x00000004
+CERT_TYPE_EXISTING = 0x00000008
+CERT_TYPE_INTERNAL = 0x00000010
+CERT_TYPE_CSR = 0x00000020
+
+
 def time_now():
     return int(time.time())
 
@@ -79,7 +87,7 @@ class Settings(Model):
     stg_guicertificate = models.ForeignKey(
         "Certificate",
         verbose_name=_("Certificate"),
-        limit_choices_to={'cert_CSR__isnull': True},
+        limit_choices_to={'cert_type__in': [CERT_TYPE_EXISTING, CERT_TYPE_INTERNAL]},
         on_delete=models.SET_NULL,
         blank=True,
         null=True
@@ -442,7 +450,7 @@ class Email(Model):
 
 class Tunable(Model):
     tun_var = models.CharField(
-        max_length=50,
+        max_length=128,
         unique=True,
         verbose_name=_("Variable"),
     )
@@ -626,14 +634,6 @@ class Update(Model):
         conf = Configuration.Configuration()
         conf.LoadTrainsConfig()
         return conf.CurrentTrain()
-
-
-CA_TYPE_EXISTING = 0x00000001
-CA_TYPE_INTERNAL = 0x00000002
-CA_TYPE_INTERMEDIATE = 0x00000004
-CERT_TYPE_EXISTING = 0x00000008
-CERT_TYPE_INTERNAL = 0x00000010
-CERT_TYPE_CSR = 0x00000020
 
 
 class CertificateBase(Model):
