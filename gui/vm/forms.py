@@ -101,8 +101,8 @@ class DeviceForm(ModelForm):
         label=_('Disk sectorsize'),
         required=False,
         initial=0,
-        help_text=_("Specify the logical sector size of the emulated disk." \
-                    "The physical sector size is equal to the logical sector size." \
+        help_text=_("Specify the logical sector size of the emulated disk."
+                    "The physical sector size is equal to the logical sector size."
                     "By default the value is set to 0, the sector size won't be set."),
     )
     NIC_type = forms.ChoiceField(
