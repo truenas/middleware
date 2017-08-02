@@ -93,6 +93,12 @@
         <th>{% trans "Load Average" %}</th>
         <td class="descr">{{ local.loadavg }}</td>
     </tr>
+    {% if not is_freenas %}
+    <tr>
+        <th>{% trans "System Serial" %}</th>
+        <td class="descr">{{ local.system_serial }}</td>
+    </tr>
+    {% endif %}
 </table>
 
 {% if standby %}
@@ -127,5 +133,11 @@
         <th>{% trans "Load Average" %}</th>
         <td class="descr">{{ standby.loadavg }}</td>
     </tr>
+    {% if not is_freenas %}
+    <tr>
+        <th>{% trans "System Serial" %}</th>
+        <td class="descr">{{ standby.system_serial }}</td>
+    </tr>
+    {% endif %}
 </table>
 {% endif %}

@@ -117,6 +117,7 @@ def system_info(request):
     return render(request, 'system/system_info.html', {
         'local': local,
         'standby': standby,
+        'is_freenas': notifier().is_freenas(),
     })
 
 
