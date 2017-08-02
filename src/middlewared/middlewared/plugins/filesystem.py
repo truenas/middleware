@@ -1,5 +1,6 @@
-from middlewared.schema import Bool, Dict, Int, Str, accepts
+from middlewared.schema import Bool, Dict, Int, Ref, Str, accepts
 from middlewared.service import private, CallError, Service
+from middlewared.utils import filter_list
 
 import binascii
 import errno
@@ -8,8 +9,8 @@ import os
 
 class FilesystemService(Service):
 
-    @accepts(Str('path'))
-    def listdir(self, path):
+    @accepts(Str('path'), Ref('query-filters'), Ref('query-options'))
+    def listdir(self, path, filters=None, options=None):
         """
         Get the contents of a directory.
 
@@ -29,6 +30,7 @@ class FilesystemService(Service):
         if not os.path.isdir(path):
             raise CallError(f'Path {path} is not a directory', errno.ENOTDIR)
 
+        rv = []
         for entry in os.scandir(path):
             if entry.is_dir():
                 etype = 'DIRECTORY'
@@ -55,7 +57,8 @@ class FilesystemService(Service):
                 })
             except FileNotFoundError:
                 data.update({'size': None, 'mode': None, 'uid': None, 'gid': None})
-            yield data
+            rv.append(data)
+        return filter_list(rv, filters=filters or [], options=options or {})
 
     @accepts(Str('path'))
     def stat(self, path):
