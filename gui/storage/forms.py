@@ -1588,7 +1588,7 @@ class CommonZVol(Form):
         if suffix.lower().endswith('ib'):
             size = '%s%s' % (number, suffix[0])
 
-        zlist = zfs.list_datasets(path=self.parentds, include_root=True)
+        zlist = zfs.zfs_list(path=self.parentds, include_root=True, recursive=True, hierarchical=False)
         if zlist:
             dataset = zlist.get(self.parentds)
             _map = {
@@ -1616,12 +1616,13 @@ class ZVol_EditForm(CommonZVol):
 
     def __init__(self, *args, **kwargs):
         # parentds is required for CommonZVol
-        self.parentds = self.vol_name = kwargs.pop('name')
+        self.name = kwargs.pop('name')
+        self.parentds = self.name.rsplit('/', 1)[0]
         _n = notifier()
-        self.parentdata = _n.zfs_get_options(self.vol_name.rsplit('/', 1)[0])
+        self.parentdata = _n.zfs_get_options(self.parentds)
         super(ZVol_EditForm, self).__init__(*args, **kwargs)
 
-        self.zdata = _n.zfs_get_options(self.vol_name)
+        self.zdata = _n.zfs_get_options(self.name)
         if 'org.freenas:description' in self.zdata and self.zdata['org.freenas:description'][2] == 'local':
             self.fields['zvol_comments'].initial = self.zdata['org.freenas:description'][0]
         if self.zdata['compression'][2] == 'inherit':
@@ -1673,10 +1674,10 @@ class ZVol_EditForm(CommonZVol):
             if not formfield:
                 formfield = f'zvol_{attr}'
             if can_inherit and self.cleaned_data[formfield] == 'inherit':
-                success, err = _n.zfs_inherit_option(self.parentds, attr)
+                success, err = _n.zfs_inherit_option(self.name, attr)
             else:
                 success, err = _n.zfs_set_option(
-                    self.parentds, attr, self.cleaned_data[formfield]
+                    self.name, attr, self.cleaned_data[formfield]
                 )
             if not success:
                 error = True
