@@ -2,7 +2,7 @@
 <table class="form">
     <tr>
         <th>{% trans "Hostname" %}</th>
-        <td><span id="sysInfo_hostname" data-value="{{ hostname|force_escape }}">{{ hostname }}</span>
+        <td><span id="sysInfo_hostname" data-value="{{ local.hostname|force_escape }}">{{ local.hostname }}</span>
           <button data-dojo-type="dijit/form/Button">
             {% trans "Edit" %}
             <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
@@ -71,32 +71,73 @@
     </tr>
     <tr>
         <th>{% trans "Build" %}</th>
-        <td>{{ freenas_build }}</td>
+        <td>{{ local.version }}</td>
     </tr>
     <tr>
         <th>{% trans "Platform" %}</th>
-        <td>{{ platform }}</td>
+        <td>{{ local.model }}</td>
     </tr>
     <tr>
         <th>{% trans "Memory" %}</th>
-        <td>{{ physmem }}</td>
+        <td>{{ local.physmem }}</td>
     </tr>
     <tr>
         <th>{% trans "System Time" %}</th>
-        <td>{{ date }}</td>
+        <td>{{ local.datetime|date:"r" }}</td>
     </tr>
     <tr>
         <th>{% trans "Uptime" %}</th>
-        <td class="descr">{{ uptime }}</td>
+        <td class="descr">{{ local.uptime }}</td>
     </tr>
     <tr>
         <th>{% trans "Load Average" %}</th>
-        <td class="descr">{{ loadavg }}</td>
+        <td class="descr">{{ local.loadavg }}</td>
     </tr>
-    {% for info in info_hook %}
+    {% if not is_freenas %}
     <tr>
-        <th>{{ info.name|safe }}</th>
-        <td class="descr">{{ info.value|safe }}</td>
+        <th>{% trans "System Serial" %}</th>
+        <td class="descr">{{ local.system_serial }}</td>
     </tr>
-    {% endfor %}
+    {% endif %}
 </table>
+
+{% if standby %}
+<h1>{% trans "System Information (Standby Node)" %}</h1>
+<table class="form">
+    <tr>
+        <th>{% trans "Hostname" %}</th>
+        <td>{{ standby.hostname }}</span>
+        </td>
+    </tr>
+    <tr>
+        <th>{% trans "Build" %}</th>
+        <td>{{ standby.version }}</td>
+    </tr>
+    <tr>
+        <th>{% trans "Platform" %}</th>
+        <td>{{ standby.model }}</td>
+    </tr>
+    <tr>
+        <th>{% trans "Memory" %}</th>
+        <td>{{ standby.physmem }}</td>
+    </tr>
+    <tr>
+        <th>{% trans "System Time" %}</th>
+        <td>{{ standby.datetime|date:"r" }}</td>
+    </tr>
+    <tr>
+        <th>{% trans "Uptime" %}</th>
+        <td class="descr">{{ standby.uptime }}</td>
+    </tr>
+    <tr>
+        <th>{% trans "Load Average" %}</th>
+        <td class="descr">{{ standby.loadavg }}</td>
+    </tr>
+    {% if not is_freenas %}
+    <tr>
+        <th>{% trans "System Serial" %}</th>
+        <td class="descr">{{ standby.system_serial }}</td>
+    </tr>
+    {% endif %}
+</table>
+{% endif %}
