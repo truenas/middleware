@@ -97,6 +97,14 @@ class DeviceForm(ModelForm):
         required=False,
         dirsonly=False,
     )
+    DISK_sectorsize = forms.IntegerField(
+        label=_('Disk sectorsize'),
+        required=False,
+        initial=0,
+        help_text=_("Specify the logical sector size of the emulated disk." \
+                    "The physical sector size is equal to the logical sector size." \
+                    "By default the value is set to 0, the sector size won't be set."),
+    )
     NIC_type = forms.ChoiceField(
         label=_('Adapter Type'),
         choices=choices.VM_NICTYPES,
@@ -168,9 +176,11 @@ class DeviceForm(ModelForm):
             elif self.instance.dtype == 'DISK':
                 self.fields['DISK_zvol'].initial = self.instance.attributes.get('path', '').replace('/dev/', '')
                 self.fields['DISK_mode'].initial = self.instance.attributes.get('type')
+                self.fields['DISK_sectorsize'].initial = self.instance.attributes.get('sectorsize', 0)
             elif self.instance.dtype == "RAW":
                 self.fields['DISK_raw'].initial = self.instance.attributes.get('path', '')
                 self.fields['DISK_mode'].initial = self.instance.attributes.get('type')
+                self.fields['DISK_sectorsize'].initial = self.instance.attributes.get('sectorsize', 0)
             elif self.instance.dtype == 'NIC':
                 self.fields['NIC_type'].initial = self.instance.attributes.get('type')
                 self.fields['NIC_mac'].initial = self.instance.attributes.get('mac')
@@ -210,11 +220,13 @@ class DeviceForm(ModelForm):
             obj.attributes = {
                 'path': '/dev/' + self.cleaned_data['DISK_zvol'],
                 'type': self.cleaned_data['DISK_mode'],
+                'sectorsize': self.cleaned_data['DISK_sectorsize'],
             }
         elif self.cleaned_data['dtype'] == 'RAW':
             obj.attributes = {
                 'path': self.cleaned_data['DISK_raw'],
                 'type': self.cleaned_data['DISK_mode'],
+                'sectorsize': self.cleaned_data['DISK_sectorsize'],
             }
         elif self.cleaned_data['dtype'] == 'CDROM':
             cdrom_path = self.cleaned_data['CDROM_path']
