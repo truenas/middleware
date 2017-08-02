@@ -16,6 +16,6 @@ class Migration(migrations.Migration):
         migrations.AddField(
             model_name='ups',
             name='ups_nocommwarntime',
-            field=models.IntegerField(blank=True, help_text='Notify after this many seconds if it can’t reach any of the UPS. It keeps warning you until the situation is fixed. Default is 300 seconds.', null=True, verbose_name='No Communcation Warning Time'),
+            field=models.IntegerField(blank=True, help_text='Notify after this many seconds if it can’t reach any of the UPS. It keeps warning you until the situation is fixed. Default is 300 seconds.', null=True, verbose_name='No Communication Warning Time'),
         ),
     ]
