@@ -1344,7 +1344,7 @@ class UPS(Model):
             "default: /sbin/shutdown -p now"),
     )
     ups_nocommwarntime = models.IntegerField(
-        verbose_name=_('No Communcation Warning Time'),
+        verbose_name=_('No Communication Warning Time'),
         help_text=_(
             'Notify after this many seconds if it can’t reach any of the '
             'UPS. It keeps warning you until the situation is fixed. '
