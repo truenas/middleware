@@ -24,3 +24,12 @@ class UserService(CRUDService):
             except Exception:
                 pass
         return user
+
+
+class GroupService(CRUDService):
+
+    @filterable
+    async def query(self, filters=None, options=None):
+        options = options or {}
+        options['prefix'] = 'bsdgrp_'
+        return await self.middleware.call('datastore.query', 'account.bsdgroups', filters, options)
