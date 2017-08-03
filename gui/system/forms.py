@@ -507,10 +507,7 @@ class InitialWizard(CommonWizard):
 
                 if share_purpose != 'iscsitarget':
                     dataset_name = '%s/%s' % (volume_name, share_name)
-                    errno, errmsg = _n.create_zfs_dataset(
-                        dataset_name,
-                        _restart_collectd=False,
-                    )
+                    errno, errmsg = _n.create_zfs_dataset(dataset_name)
 
                     if share_purpose == 'afp':
                         _n.change_dataset_share_type(dataset_name, 'mac')
