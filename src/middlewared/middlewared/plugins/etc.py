@@ -52,7 +52,7 @@ class EtcService(Service):
         #],
 
         'ldap': [
-            {'type': 'mako', 'path': 'local/ldap.conf'},
+            {'type': 'mako', 'path': 'local/openldap/ldap.conf'},
         ],
         'network': [
             {'type': 'mako', 'path': 'dhclient.conf'},
