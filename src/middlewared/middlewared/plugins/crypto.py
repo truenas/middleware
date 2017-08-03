@@ -17,7 +17,6 @@ CERT_TYPE_CSR = 0x20
 CERT_ROOT_PATH = '/etc/certificates'
 CERT_CA_ROOT_PATH = '/etc/certificates/CA'
 RE_CERTIFICATE = re.compile(r"(-{5}BEGIN[\s\w]+-{5}[^-]+-{5}END[\s\w]+-{5})+", re.M | re.S)
-logger = logging.getLogger('plugins.crypto')
 
 
 class CertificateService(CRUDService):
@@ -85,21 +84,21 @@ class CertificateService(CRUDService):
                     crypto.dump_certificate(crypto.FILETYPE_PEM, cert_obj).decode()
                 )
         except:
-            logger.debug('Failed to load certificate {0}'.format(cert['cert_name']), exc_info=True)
+            self.logger.debug('Failed to load certificate {0}'.format(cert['cert_name']), exc_info=True)
 
         try:
             if cert['cert_privatekey']:
                 key_obj = crypto.load_privatekey(crypto.FILETYPE_PEM, cert['cert_privatekey'])
                 cert['cert_privatekey'] = crypto.dump_privatekey(crypto.FILETYPE_PEM, key_obj).decode()
         except:
-            logger.debug('Failed to load privatekey {0}'.format(cert['cert_name']), exc_info=True)
+            self.logger.debug('Failed to load privatekey {0}'.format(cert['cert_name']), exc_info=True)
 
         try:
             if cert['cert_CSR']:
                 csr_obj = crypto.load_certificate_request(crypto.FILETYPE_PEM, cert['cert_CSR'])
                 cert['cert_CSR'] = crypto.dump_certificate_request(crypto.FILETYPE_PEM, csr_obj).decode()
         except:
-            logger.debug('Failed to load csr {0}'.format(cert['cert_name']), exc_info=True)
+            self.logger.debug('Failed to load csr {0}'.format(cert['cert_name']), exc_info=True)
 
         cert['cert_internal'] = 'NO' if cert['cert_type'] in (CA_TYPE_EXISTING, CERT_TYPE_EXISTING) else 'YES'
 
