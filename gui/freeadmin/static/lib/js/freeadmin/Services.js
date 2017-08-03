@@ -141,8 +141,10 @@ define([
         var me = this;
         if(me.state == 'RUNNING') {
           me.dapLight.src = '/static/images/ui/misc/green_light.png';
+          me.dapStatus.innerHTML = 'Running';
         } else {
           me.dapLight.src = '/static/images/ui/misc/red_light.png';
+          me.dapStatus.innerHTML = 'Stopped';
         }
         me.startstop.set('label', (me.state == 'RUNNING') ? gettext('Stop Now') : gettext('Start Now'));
       },
