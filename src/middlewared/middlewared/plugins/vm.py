@@ -91,10 +91,17 @@ class VMSupervisor(object):
         nid = Nid(3)
         for device in self.vm['devices']:
             if device['dtype'] == 'DISK' or device['dtype'] == 'RAW':
-                if device['attributes'].get('type') == 'AHCI':
-                    args += ['-s', '{},ahci-hd,{}'.format(nid(), device['attributes']['path'])]
+
+                disk_sector_size = device['attributes'].get('sectorsize', 0)
+                if disk_sector_size > 0:
+                    sectorsize_args = ",sectorsize=" + str(disk_sector_size)
                 else:
-                    args += ['-s', '{},virtio-blk,{}'.format(nid(), device['attributes']['path'])]
+                    sectorsize_args = ""
+
+                if device['attributes'].get('type') == 'AHCI':
+                    args += ['-s', '{},ahci-hd,{}{}'.format(nid(), device['attributes']['path'], sectorsize_args)]
+                else:
+                    args += ['-s', '{},virtio-blk,{}{}'.format(nid(), device['attributes']['path'], sectorsize_args)]
             elif device['dtype'] == 'CDROM':
                 args += ['-s', '{},ahci-cd,{}'.format(nid(), device['attributes']['path'])]
             elif device['dtype'] == 'NIC':
