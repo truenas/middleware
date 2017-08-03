@@ -43,7 +43,7 @@ RUN_DEPENDS=	${PYTHON_PKGNAMEPREFIX}django110>0:www/py-django110 \
 	dmidecode>0:sysutils/dmidecode \
 	freenas-pkgtools>0:freenas/freenas-pkgtools \
 	freenas-migrate93>0:freenas/freenas-migrate93 \
-	${PYTHON_PKGNAMEPREFIX}libzfs>0:freenas/py-libzfs
+	${PYTHON_PKGNAMEPREFIX}libzfs>0:devel/py-libzfs
 
 EXTRACT_ONLY=
 WRKSRC=/usr/freenasUI
