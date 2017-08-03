@@ -252,11 +252,12 @@ TaskObjects = Task.objects.filter(task_enabled=True)
 taskpath = {'recursive': [], 'nonrecursive': []}
 for task in TaskObjects:
     vol_name = task.task_filesystem.split('/')[0]
-    proc = pipeopen(f'/sbin/zpool list {vol_name}')
-    proc.communicate()
-    if proc.returncode != 0:
-        log.warn(f'Volume {vol_name} not imported, skipping snapshot task #{task.id}')
     if isMatchingTime(task, snaptime):
+        proc = pipeopen(f'/sbin/zpool list {vol_name}')
+        proc.communicate()
+        if proc.returncode != 0:
+            log.warn(f'Volume {vol_name} not imported, skipping snapshot task #{task.id}')
+            continue
         if task.task_recursive:
             taskpath['recursive'].append(task.task_filesystem)
         else:
