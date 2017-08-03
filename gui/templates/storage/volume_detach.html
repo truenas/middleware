@@ -8,11 +8,13 @@
       });
 {%endblock %}
 {% block form %}
+    {% if used %}
     <tr>
         <td colspan="2">
             {% blocktrans with used=used %}You have {{ used }} of used space within this volume{% endblocktrans %}
         </td>
     </tr>
+    {% endif %}
 {% if services %}
     <tr>
         <td colspan="2">
