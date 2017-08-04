@@ -408,7 +408,7 @@ create_partitions() {
 	  # EFI Mode
 	  sysctl kern.geom.debugflags=16
 	  sysctl kern.geom.label.disk_ident.enable=0
-	  if gpart add -s 100m -t efi ${_disk}; then
+	  if gpart add -s 260m -t efi ${_disk}; then
 	    if ! newfs_msdos -F 16 /dev/${_disk}p1 ; then
 	      return 1
 	    fi
