@@ -1,4 +1,5 @@
 #!/usr/local/bin/python
+
 from middlewared.client import Client
 from middlewared.client.utils import Struct
 
@@ -222,6 +223,29 @@ def smb4_ldap_enabled(client):
     return ret
 
 
+def smb4_activedirectory_enabled(client):
+    ret = False
+
+    if client.call('notifier.common', 'system', 'activedirectory_enabled'):
+        ret = True
+
+    return ret
+
+
+def smb4_autorid_enabled(client):
+    ret = False
+
+    try:
+        ad = Struct(client.call('datastore.query', 'directoryservice.ActiveDirectory', None, {'get': True}))
+    except:
+        return ret
+
+    if ad.ad_idmap_backend.lower() == "autorid":
+        ret = True
+
+    return ret
+
+
 def config_share_for_nfs4(share):
     confset1(share, "nfs4:mode = special")
     confset1(share, "nfs4:acedup = merge")
@@ -415,24 +439,24 @@ def configure_idmap_adex(smb4_conf, idmap, domain):
 
 def configure_idmap_autorid(smb4_conf, idmap, domain):
     confset1(smb4_conf, "idmap config %s: backend = %s" % (
-        domain,
+        "*",
         idmap.idmap_backend_name
     ))
     confset1(smb4_conf, "idmap config %s: range = %d-%d" % (
-        domain,
+        "*",
         idmap.idmap_autorid_range_low,
         idmap.idmap_autorid_range_high
     ))
     confset1(smb4_conf, "idmap config %s: rangesize = %d" % (
-        domain,
+        "*",
         idmap.idmap_autorid_rangesize
     ))
     confset1(smb4_conf, "idmap config %s: read only = %s" % (
-        domain,
+        "*",
         "yes" if idmap.idmap_autorid_readonly else "no"
     ))
     confset1(smb4_conf, "idmap config %s: ignore builtin = %s" % (
-        domain,
+        "*",
         "yes" if idmap.idmap_autorid_ignore_builtin else "no"
     ))
 
@@ -743,8 +767,6 @@ def add_activedirectory_conf(client, smb4_conf):
     except:
         return
 
-#    cachedir = "/var/tmp/.cache/.samba"
-
     try:
         os.makedirs(cachedir)
         os.chmod(cachedir, 0o755)
@@ -762,7 +784,6 @@ def add_activedirectory_conf(client, smb4_conf):
     confset2(smb4_conf, "realm = %s", ad.ad_domainname.upper())
     confset1(smb4_conf, "security = ADS")
     confset1(smb4_conf, "client use spnego = yes")
-#    confset2(smb4_conf, "cache directory = %s", cachedir)
 
     confset1(smb4_conf, "local master = no")
     confset1(smb4_conf, "domain master = no")
@@ -995,9 +1016,10 @@ def generate_smb4_conf(client, smb4_conf, role):
         confset2(smb4_conf, "local master = %s",
                  "yes" if cifs.localmaster else "no")
 
-    # 5 = DS_TYPE_CIFS
-    idmap = Struct(client.call('notifier.ds_get_idmap_object', 5, cifs.id, 'tdb'))
-    configure_idmap_backend(client, smb4_conf, idmap, None)
+    if not smb4_autorid_enabled(client):
+        # 5 = DS_TYPE_CIFS
+        idmap = Struct(client.call('notifier.ds_get_idmap_object', 5, cifs.id, 'tdb'))
+        configure_idmap_backend(client, smb4_conf, idmap, None)
 
     if role == 'auto':
         confset1(smb4_conf, "server role = auto")
