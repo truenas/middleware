@@ -56,7 +56,7 @@ class BootService(Service):
             commands.append(['gpart', 'add', '-t', 'bios-boot', '-i', '1', '-s', '512k', dev])
             commands.append(['gpart', 'set', '-a', 'active', dev])
         else:
-            commands.append(['gpart', 'add', '-t', 'efi', '-i', '1', '-s', '100m', dev])
+            commands.append(['gpart', 'add', '-t', 'efi', '-i', '1', '-s', '260m', dev])
             commands.append(['newfs_msdos', '-F', '16', f'/dev/{dev}p1'])
             commands.append(['gpart', 'set', '-a', 'lenovofix', dev])
         commands.append(['gpart', 'add', '-t', 'freebsd-zfs', '-i', '2', '-a', '4k', dev])
