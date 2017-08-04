@@ -935,7 +935,15 @@ def generate_smb4_conf(client, smb4_conf, role):
                 continue
             bindip = bindip.strip()
             iface = client.call('notifier.get_interface', bindip)
-            if iface and client.call('notifier.is_carp_interface', iface):
+
+            is_carp_interface = False
+            if iface:
+                try:
+                    is_carp_interface = client.call('notifier.is_carp_interface', iface)
+                except:
+                    pass
+
+            if iface and is_carp_interface:
                 parent_iface = client.call('notifier.get_parent_interface', iface)
                 if not parent_iface:
                     continue
