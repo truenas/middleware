@@ -1,6 +1,7 @@
 from middlewared.schema import accepts, Dict, Int, Ref, Str
 from middlewared.service import CRUDService, filterable
 
+
 class SSHPeerService(CRUDService):
 
     class Config:
@@ -20,7 +21,6 @@ class SSHPeerService(CRUDService):
         Str('ssh_remote_hostkey'),
         register=True,
     ))
-
     async def do_create(self, data):
         return await self.middleware.call(
             'datastore.insert',
