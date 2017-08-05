@@ -40,6 +40,9 @@ class Peer(Model):
         verbose_name=_('Peer description')
     )
 
+    class Meta:
+        abstract = True
+
 class SSH_Peer(Peer):
     ssh_port = models.IntegerField(
         verbose_name=_('SSH remote peer port number'),
