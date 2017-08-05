@@ -30,6 +30,7 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 
 from freenasUI.freeadmin.models import Model
 
+
 class Peer(Model):
     name = models.CharField(
         max_length=150,
@@ -42,6 +43,7 @@ class Peer(Model):
 
     class Meta:
         abstract = True
+
 
 class SSH_Peer(Peer):
     ssh_port = models.IntegerField(
