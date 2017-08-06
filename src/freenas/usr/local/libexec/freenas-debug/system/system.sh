@@ -88,6 +88,10 @@ system_func()
 	vmstat -z
 	section_footer
 
+	section_header "beadm list"
+	beadm list
+	section_footer
+
 	section_header "Alert System - 'alertcli.py'"
 	/usr/local/bin/alertcli.py
 	section_footer
