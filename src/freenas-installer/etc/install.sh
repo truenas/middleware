@@ -449,7 +449,7 @@ get_minimum_size() {
     do
 	_size=""
 	if create_partitions ${_disk} 1>&2; then
-	    _size=$(gpart show ${_disk} | awk '/freebsd-zfs/ { print $2 * 512; }')
+	    _size=$(diskinfo /dev/${_disk}p2 | awk '{print $3;}')
 	    gpart destroy -F ${_disk} 1>&2
 	fi
 	if [ -z "${_size}" ]; then
