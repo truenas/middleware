@@ -2035,9 +2035,13 @@ class FreeNAS_ActiveDirectory_Base(object):
             if results and results[0][0]:
                 r = {}
                 for k in list(results[0][1].keys()):
+                    systemFlags = int(results[0][1]['systemFlags'][0].decode('utf8', 'ignore'))
+                    if not (systemFlags & 0x2):
+                        continue
                     # FIXME: objectGUID is a binary
                     r[k] = results[0][1][k][0].decode('utf8', 'ignore')
-                result.append(r)
+                if r:
+                    result.append(r)
 
             if haskey:
                 break
