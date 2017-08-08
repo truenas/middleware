@@ -145,6 +145,14 @@ class DeviceForm(ModelForm):
         label=_('Wait to boot'),
         required=False,
     )
+    VNC_password = forms.CharField(
+        label=_('Password'),
+        max_length=8,
+        widget=forms.PasswordInput(render_value=True,),
+        required=False,
+        help_text=_("The VNC password authentication."
+                    "The maximum length of password is 8 characters.")
+    )
 
     class Meta:
         fields = '__all__'
@@ -192,6 +200,7 @@ class DeviceForm(ModelForm):
                 self.fields['VNC_port'].initial = vnc_port
                 self.fields['VNC_resolution'].initial = self.instance.attributes.get('vnc_resolution')
                 self.fields['VNC_bind'].initial = self.instance.attributes.get('vnc_bind')
+                self.fields['VNC_password'].initial = self.instance.attributes.get('vnc_password')
 
     def ipv4_list(self):
         choices = (('0.0.0.0', '0.0.0.0'),)
@@ -248,6 +257,7 @@ class DeviceForm(ModelForm):
                     'vnc_port': self.cleaned_data['VNC_port'],
                     'vnc_resolution': self.cleaned_data['VNC_resolution'],
                     'vnc_bind': self.cleaned_data['VNC_bind'],
+                    'vnc_password': self.cleaned_data['VNC_password'],
                 }
             else:
                 self._errors['dtype'] = self.error_class([_('VNC is only allowed for UEFI')])
@@ -255,6 +265,7 @@ class DeviceForm(ModelForm):
                 self.cleaned_data.pop('VNC_wait', None)
                 self.cleaned_data.pop('VNC_resolution', None)
                 self.cleaned_data.pop('VNC_bind', None)
+                self.cleaned_data.pop('VNC_password', None)
                 return obj
 
         obj.save()
