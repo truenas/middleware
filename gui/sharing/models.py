@@ -54,7 +54,7 @@ class CIFS_Share(Model):
     )
     cifs_default_permissions = models.BooleanField(
         verbose_name=_('Apply Default Permissions'),
-        help_text=_('Recursively set sane default windows permissions on share'),
+        help_text=_('Recursively set appropriate default Windows permissions on share'),
         default=True
     )
     cifs_ro = models.BooleanField(
