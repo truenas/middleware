@@ -1078,7 +1078,7 @@ class VolumeResourceMixin(NestedMixin):
         rv = []
         attr_fields = ('avail', 'used', 'used_pct')
         for path, child in list(children.items()):
-            if child.name.startswith('.'):
+            if child.name.rsplit('/', 1)[-1].startswith('.'):
                 continue
 
             data = {
