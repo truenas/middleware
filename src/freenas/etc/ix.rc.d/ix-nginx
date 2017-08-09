@@ -359,6 +359,8 @@ __EOF__
             proxy_set_header X-Real-Remote-Port \$remote_port;
             proxy_set_header Upgrade \$http_upgrade;
             proxy_set_header Connection "upgrade";
+            proxy_send_timeout 7d;
+            proxy_read_timeout 7d;
         }
 
         location /api/v2.0 {
