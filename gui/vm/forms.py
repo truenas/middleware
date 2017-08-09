@@ -151,7 +151,7 @@ class DeviceForm(ModelForm):
         widget=forms.PasswordInput(render_value=True,),
         required=False,
         help_text=_("The VNC password authentication."
-                    "The maximum length of password is 8 characters.")
+                    "Maximum password length is 8 characters.")
     )
 
     class Meta:
@@ -260,7 +260,7 @@ class DeviceForm(ModelForm):
                     'vnc_password': self.cleaned_data['VNC_password'],
                 }
             else:
-                self._errors['dtype'] = self.error_class([_('VNC is only allowed for UEFI')])
+                self._errors['dtype'] = self.error_class([_('VNC only works with UEFI VMs')])
                 self.cleaned_data.pop('VNC_port', None)
                 self.cleaned_data.pop('VNC_wait', None)
                 self.cleaned_data.pop('VNC_resolution', None)
