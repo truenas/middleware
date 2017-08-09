@@ -778,9 +778,10 @@ if [ ! "${_NEWSUM}" = "${_OLDSUM}" -a ! -f "${NEED_UPDATE_SENTINEL}" ]; then
 	# this script possible, e.g. devd carp script
 	# To make it atomic generate to a tmp file first then move it.
 	# See #23047
-	tmpfile=$(/usr/bin/mktemp /var/tmp/rc.conf.XXXXXXXXX)
+	tmpfile=$(/usr/bin/mktemp /var/tmp/rc.conf.tmp.XXXXXXXXX)
 	_gen_conf > ${tmpfile}
 	mv ${tmpfile} ${FREENAS_RC}
+	rm -f /var/tmp/rc.conf.tmp.*
 	echo ${_NEWSUM} > ${FREENAS_CONFIG_MD5}
 fi
 
