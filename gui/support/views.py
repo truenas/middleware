@@ -193,7 +193,7 @@ def ticket(request):
 
         license, reason = utils.get_license()
         if license:
-            company = license.customer_name
+            company = license.customer_name.decode()
         else:
             company = 'Unknown'
 
