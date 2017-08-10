@@ -43,6 +43,7 @@ import errno
 from functools import cmp_to_key
 import glob
 import grp
+import libzfs
 import logging
 import os
 import platform
@@ -2798,7 +2799,18 @@ class notifier(metaclass=HookMetaclass):
         else:
             imp = self._pipeopen('zpool import -f -R /mnt %s' % name)
         stdout, stderr = imp.communicate()
-        if imp.returncode == 0:
+
+        # zpool import may fail due to readonly mountpoint but pool
+        # will be imported so we make sure of that using libzfs.
+        # See #24936
+        imported = imp.returncode == 0
+        if not imported:
+            try:
+                imported = libzfs.ZFS().get(name) is not None
+            except libzfs.ZFSException:
+                pass
+
+        if imported:
             # Reset all mountpoints in the zpool
             self.zfs_inherit_option(name, 'mountpoint', True)
             # Remember the pool cache
