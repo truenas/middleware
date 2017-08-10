@@ -1,0 +1,10 @@
+Netdata is scalable distributed realtime performance & health monitoring system
+netdata collects and visualizes metrics.
+If it is a number and it can be collected somehow, netdata can visualize it.
+Out of the box, it comes with plugins that collect hundreds of
+system metrics and metrics of popular applications.
+Netdata is very resource efficient and you can control its resource consumption.
+It will use some spare CPU cycles, usually just 1-3% of a single core,
+the RAM you want it have, and no disk I/O at all, apart its logging. 
+
+WWW: https://github.com/firehol/netdata

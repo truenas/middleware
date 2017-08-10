@@ -1,0 +1,36 @@
+#!/bin/sh
+#
+# $FreeBSD$
+#
+
+# PROVIDE: netdata
+# REQUIRE: LOGIN
+# KEYWORD: shutdown
+
+#
+# Add the following line to /etc/rc.conf to enable netdata:
+# netdata_enable (bool):	Set to "NO" by default.
+#				Set it to "YES" to enable netdata.
+# netdata_args (str):		Custom additional arguments to be passed
+#				to netdata (default empty).
+#
+
+. /etc/rc.subr
+
+name="netdata"
+rcvar=netdata_enable
+
+load_rc_config $name
+
+: ${netdata_enable="NO"}
+
+netdata_user="netdata"
+pidfile="%%NETDATA_PERST%%/${name}.pid"
+procname="%%PREFIX%%/sbin/${name}"
+command="/usr/sbin/daemon"
+command_args="-c -f ${procname} -u ${netdata_user} -P ${pidfile} ${netdata_args}"
+
+required_files="%%ETCDIR%%/${name}.conf"
+
+run_rc_command "$1"
+
