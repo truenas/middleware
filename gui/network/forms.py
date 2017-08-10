@@ -776,12 +776,23 @@ class VLANForm(ModelForm):
             raise forms.ValidationError(
                 _("The name must be vlanX where X is a number. Example: vlan0")
             )
-        return "vlan%d" % (int(reg.group("num")), )
+        name = f'vlan{int(reg.group("num"))}'
+        qs = models.VLAN.objects.filter(vlan_vint=name)
+        if self.instance.id:
+            qs = qs.exclude(id=self.instance.id)
+        if qs.exists():
+            raise forms.ValidationError(_('A VLAN with this Virtual Interface already exists'))
+        return name
 
     def clean_vlan_tag(self):
         tag = self.cleaned_data['vlan_tag']
         if tag > 4095 or tag < 1:
             raise forms.ValidationError(_("VLAN Tags are 1 - 4095 inclusive"))
+        qs = models.VLAN.objects.filter(vlan_tag=tag)
+        if self.instance.id:
+            qs = qs.exclude(id=self.instance.id)
+        if qs.exists():
+            raise forms.ValidationError(_('A VLAN with this Tag already exists'))
         return tag
 
     def save(self):
