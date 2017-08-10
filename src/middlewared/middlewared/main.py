@@ -427,8 +427,10 @@ class ShellWorkerThread(threading.Thread):
                     os.close(i)
                 except:
                     pass
+            os.chdir('/root')
             os.execve('/usr/local/bin/bash', ['bash'], {
                 'TERM': 'xterm',
+                'HOME': '/root',
                 'LANG': 'en_US.UTF-8',
                 'PATH': '/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin:/root/bin',
             })
