@@ -40,6 +40,7 @@ from freenasUI.common.pipesubr import pipeopen
 from freenasUI.freeadmin.forms import SelectMultipleField
 from freenasUI.freeadmin.utils import key_order
 from freenasUI.storage.widgets import UnixPermissionField
+from freenasUI.middleware.client import client
 from freenasUI.middleware.notifier import notifier
 
 log = logging.getLogger('account.forms')
@@ -592,15 +593,8 @@ class bsdUsersForm(ModelForm, bsdUserGroupMixin):
             ))
             p.communicate()
 
-        bsdusr_sshpubkey = self.cleaned_data.get('bsdusr_sshpubkey')
-        if bsdusr_sshpubkey:
-            _notifier.save_pubkey(
-                bsduser.bsdusr_home,
-                bsdusr_sshpubkey,
-                bsduser.bsdusr_username,
-                bsduser.bsdusr_group.bsdgrp_group)
-        else:
-            _notifier.delete_pubkey(bsduser.bsdusr_home)
+        with client as c:
+            c.call('user.update', bsduser.id, {'sshpubkey': self.cleaned_data.get('bsdusr_sshpubkey')})
         return bsduser
 
     def delete(self, **kwargs):
