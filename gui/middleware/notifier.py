@@ -1521,43 +1521,6 @@ class notifier(metaclass=HookMetaclass):
             raise ValueError("Could not retrieve groupnext")
         return gid
 
-    def save_pubkey(self, homedir, pubkey, username, groupname):
-        homedir = str(homedir)
-        pubkey = str(pubkey).strip()
-        if pubkey:
-            pubkey = '%s\n' % pubkey
-        sshpath = '%s/.ssh' % (homedir)
-        keypath = '%s/.ssh/authorized_keys' % (homedir)
-        try:
-            oldpubkey = open(keypath).read()
-            if oldpubkey == pubkey:
-                return
-        except:
-            pass
-
-        saved_umask = os.umask(0o77)
-        if not os.path.isdir(sshpath):
-            os.makedirs(sshpath)
-        if not os.path.isdir(sshpath):
-            return  # FIXME: need better error reporting here
-        if pubkey == '' and os.path.exists(keypath):
-            os.unlink(keypath)
-        else:
-            fd = open(keypath, 'w')
-            fd.write(pubkey)
-            fd.close()
-            self._system("""/usr/sbin/chown -R %s:%s "%s" """ % (username, groupname, sshpath))
-        os.umask(saved_umask)
-
-    def delete_pubkey(self, homedir):
-        homedir = str(homedir)
-        keypath = '%s/.ssh/authorized_keys' % (homedir, )
-        if os.path.exists(keypath):
-            try:
-                os.unlink(keypath)
-            finally:
-                pass
-
     def path_to_smb_share(self, path):
         from freenasUI.sharing.models import CIFS_Share
 
