@@ -68,7 +68,7 @@ samba_pre_init()
 
 	local sambaSID="$(get_sambaSID)"
 
-	if [ -z "${sambaSID}" ]
+	if [ -z "${sambaSID}" ] && [ -s "/usr/local/etc/smb4.conf" ]
 	then
 		save_sambaSID
 	fi
