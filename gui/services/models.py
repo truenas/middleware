@@ -345,6 +345,11 @@ class AFP(Model):
         help_text=_("When set, overrides the default Home Share Name."),
         max_length=50,
     )
+    afp_srv_hometimemachine = models.BooleanField(
+        verbose_name=_("Home Share Time Machine"),
+        default=False,
+        help_text=_("Enable Time Machine for home share."),
+    )
     afp_srv_dbpath = PathField(
         verbose_name=_('Database Path'),
         blank=True,
