@@ -1,9 +1,20 @@
 from middlewared.schema import accepts, Bool, Dict, Int, Str
 from middlewared.service import CallError, CRUDService, filterable, private
-from middlewared.utils import run
+from middlewared.utils import run, Popen
 
+import crypt
 import errno
 import os
+import random
+import shutil
+import string
+import subprocess
+
+
+def crypted_password(cleartext):
+    return crypt.crypt(cleartext, '$6$' + ''.join([
+        random.choice(string.ascii_letters + string.digits) for _ in range(16)]
+    ))
 
 
 class UserService(CRUDService):
@@ -35,10 +46,11 @@ class UserService(CRUDService):
         Int('group'),
         Bool('group_create', default=False),
         Str('home', default='/nonexistent'),
+        Str('home_mode'),
         Str('shell', default='/bin/csh'),
         Str('full_name'),
         Str('email'),
-        Str('mode'),
+        Str('password'),
         Bool('password_disabled', default=False),
         Bool('locked', default=False),
         Bool('microsoft_account', default=False),
@@ -57,14 +69,60 @@ class UserService(CRUDService):
         ):
             raise CallError(f'You need to either provide a group or group_create', errno.EINVAL)
 
-        if 'group_create' in data:
-            create = data.pop('group_create')
-            if create:
-                raise CallError('Creating a group not yet supported')
+        create = data.pop('group_create')
+        if create:
+            raise CallError('Creating a group not yet supported')
+        else:
+            group = await self.middleware.call('group.query', [('id', '=', data['group'])])
 
-        pk = await self.middleware.call('datastore.insert', 'account.bsdusers', data, {'prefix': 'bsdusr_'})
+        # Is this a new directory or not? Let's not nuke existing directories,
+        # e.g. /, /root, /mnt/tank/my-dataset, etc ;).
+        new_homedir = False
+        if data['home'] != '/nonexistent':
+            try:
+                os.makedirs(data['home'], mode=data['home_mode'])
+                if os.stat(data['home']).st_dev == os.stat('/mnt').st_dev:
+                    raise CallError(
+                        f'Path for the home directory (data["home"]) '
+                        'must be under a volume or dataset'
+                    )
+            except OSError as oe:
+                if oe.errno == errno.EEXIST:
+                    if not os.path.isdir(data['home']):
+                        raise CallError(
+                            'Path for home directory already '
+                            'exists and is not a directory'
+                        )
+                else:
+                    raise CallError(
+                        'Failed to create the home directory '
+                        f'({data["home"]}) for user: {oe}'
+                    )
+            else:
+                new_homedir = True
+        try:
+            password = data.pop('password', None)
+            if password:
+                data['unixhash'] = crypted_password(password)
+            else:
+                data['unixhash'] = '*'
+
+            pk = await self.middleware.call('datastore.insert', 'account.bsdusers', data, {'prefix': 'bsdusr_'})
+        except Exception:
+            if new_homedir:
+                # Be as atomic as possible when creating the user if
+                # commands failed to execute cleanly.
+                shutil.rmtree(data['home'])
+            raise
 
         await self.middleware.call('service.reload', 'user')
+
+        if password:
+            proc = await Popen(['smbpasswd', '-D', '0', '-s', '-a', data['username']], stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
+            await proc.communicate(input=f'{password}\n{password}\n'.encode())
+            proc = await Popen(['pdbedit', '-d', '0', '-w', data['username']], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+            smbhash = (await proc.communicate())[0].decode().strip()
+            await self.middleware.call('datastore.update', 'account.bsdusers', pk, {'bsdusr_smbhash': smbhash})
         return pk
 
     async def do_update(self, id, data):
