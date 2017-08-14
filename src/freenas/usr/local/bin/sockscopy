@@ -226,7 +226,7 @@ if __name__ == '__main__':
                         str(e) + " ")
                 )
 
-        proc_stdout_orig = NamedTemporaryFile(mode="wb", bufsize=0, delete=False)
+        proc_stdout_orig = NamedTemporaryFile(mode="wb", buffering=0, delete=False)
         # Note: Duplicating this in read only mode to properly read from it even
         # whilst it is being written to
         # If you happen to come across this and know of a better solution then fix
