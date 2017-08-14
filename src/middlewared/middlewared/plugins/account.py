@@ -1,3 +1,4 @@
+from middlewared.schema import accepts, Bool, Dict, Int, Str
 from middlewared.service import CallError, CRUDService, filterable, private
 from middlewared.utils import run
 
@@ -26,6 +27,45 @@ class UserService(CRUDService):
             except Exception:
                 pass
         return user
+
+    @accepts(Dict(
+        'user_create',
+        Int('uid', required=True),
+        Str('username', required=True),
+        Int('group'),
+        Bool('group_create', default=False),
+        Str('home', default='/nonexistent'),
+        Str('shell', default='/bin/csh'),
+        Str('full_name'),
+        Str('email'),
+        Str('mode'),
+        Bool('password_disabled', default=False),
+        Bool('locked', default=False),
+        Bool('microsoft_account', default=False),
+        Dict('attributes', additional_attrs=True),
+        register=True,
+    ))
+    async def do_create(self, data):
+        users = await self.middleware.call('datastore.query', 'account.bsdusers', [('username', '=', data['username'])], {'prefix': 'bsdusr_'})
+        if users:
+            raise CallError(f'A user with the username "{data["username"]}" already exists', errno.EEXIST)
+
+        if (
+            not data.get('group') and not data.get('group_create')
+        ) or (
+            data.get('group') is not None and data.get('group_create')
+        ):
+            raise CallError(f'You need to either provide a group or group_create', errno.EINVAL)
+
+        if 'group_create' in data:
+            create = data.pop('group_create')
+            if create:
+                raise CallError('Creating a group not yet supported')
+
+        pk = await self.middleware.call('datastore.insert', 'account.bsdusers', data, {'prefix': 'bsdusr_'})
+
+        await self.middleware.call('service.reload', 'user')
+        return pk
 
     async def do_update(self, id, data):
 
@@ -65,6 +105,8 @@ class UserService(CRUDService):
                             f.write(pubkey)
                         await run('chown', '-R', f'{user["username"]}:{user["group"]["bsdgrp_group"]}', sshpath, check=False)
                     os.umask(saved_umask)
+
+        await self.middleware.call('service.reload', 'user')
 
 
 class GroupService(CRUDService):
