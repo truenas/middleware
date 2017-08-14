@@ -190,6 +190,7 @@ class DatastoreService(Service):
         """
         Insert a new entry to `name`.
         """
+        data = data.copy()
         options = options or {}
         prefix = options.get('prefix')
         model = self.__get_model(name)
@@ -215,6 +216,7 @@ class DatastoreService(Service):
         """
         Update an entry `id` in `name`.
         """
+        data = data.copy()
         options = options or {}
         prefix = options.get('prefix')
         model = self.__get_model(name)
