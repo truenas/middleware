@@ -41,7 +41,7 @@ class LocalEscrowCtl:
             print("FATAL: Can't connect to escrowd")
             sys.exit(1)
 
-        data = sock.recv(BUFSIZE)
+        data = sock.recv(BUFSIZE).decode()
         if data != "220 Ready, go ahead\n":
             print("FATAL: server didn't send welcome message, exiting")
             sys.exit(2)
@@ -50,16 +50,16 @@ class LocalEscrowCtl:
     # Set key on local escrow daemon.
     def setkey(self, passphrase):
         command = "SETKEY %s\n" % (passphrase)
-        self.sock.sendall(command)
-        data = self.sock.recv(BUFSIZE)
+        self.sock.sendall(command.encode())
+        data = self.sock.recv(BUFSIZE).decode()
         return (data == "250 setkey accepted.\n")
         # Push the key to remote.
 
     # Clear key on local escrow daemon.
     def clear(self):
         command = "CLEAR"
-        self.sock.sendall(command)
-        data = self.sock.recv(BUFSIZE)
+        self.sock.sendall(command.encode())
+        data = self.sock.recv(BUFSIZE).decode()
         succeeded = (data == "200 clear succeeded.\n")
         file = open('/tmp/.failover_needop', 'w')
         return (succeeded)
@@ -67,15 +67,15 @@ class LocalEscrowCtl:
     # Shutdown local escrow daemon.
     def shutdown(self):
         command = "SHUTDOWN"
-        self.sock.sendall(command)
-        data = self.sock.recv(BUFSIZE)
+        self.sock.sendall(command.encode())
+        data = self.sock.recv(BUFSIZE).decode()
         return (data == "250 Shutting down.\n")
 
     # Get key from local escrow daemon.  Returns None if not available.
     def getkey(self):
         command = "REVEAL"
-        self.sock.sendall(command)
-        data = self.sock.recv(BUFSIZE)
+        self.sock.sendall(command.encode())
+        data = self.sock.recv(BUFSIZE).decode()
         lines = data.split('\n')
         if lines[0] == "404 No passphrase present":
             return None
@@ -83,7 +83,7 @@ class LocalEscrowCtl:
             if len(lines) > 2:
                 data = lines[1]
             else:
-                data = self.sock.recv(BUFSIZE)
+                data = self.sock.recv(BUFSIZE).decode()
                 data = data.split('\n')[0]
             return data
         else:
@@ -93,6 +93,6 @@ class LocalEscrowCtl:
     # Get status of local escrow daemon.  True -- Have key; False -- No key.
     def status(self):
         command = "STATUS"
-        self.sock.sendall(command)
-        data = self.sock.recv(BUFSIZE)
+        self.sock.sendall(command.encode())
+        data = self.sock.recv(BUFSIZE).decode()
         return (data == "200 keyd\n")
