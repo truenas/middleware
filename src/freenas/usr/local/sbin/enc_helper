@@ -57,7 +57,7 @@ if __name__ == "__main__":
         else:
             print("Escrow running without passphrase")
     elif cmd == 'attachall':
-        with tempfile.NamedTemporaryFile() as tmp:
+        with tempfile.NamedTemporaryFile(mode='w+') as tmp:
             tmp.file.write(escrowctl.getkey() or "")
             tmp.file.flush()
             procs = []
