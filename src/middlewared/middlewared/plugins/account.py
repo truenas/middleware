@@ -48,7 +48,7 @@ class UserService(CRUDService):
         Str('home', default='/nonexistent'),
         Str('home_mode'),
         Str('shell', default='/bin/csh'),
-        Str('full_name'),
+        Str('full_name', required=True),
         Str('email'),
         Str('password'),
         Bool('password_disabled', default=False),
