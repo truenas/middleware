@@ -71,11 +71,17 @@ class UserService(CRUDService):
 
         password = data.get('password')
         if password and '?' in password:
+            # See bug #4098
             raise CallError(
                 'Passwords containing a question mark (?) are currently not '
                 'allowed due to problems with SMB.',
                 errno.EINVAL
             )
+
+        if not password and not data.get('password_disabled'):
+            raise CallError('Password is required')
+        elif data.get('password_disabled') and password:
+            raise CallError('Password disabled, leave password blank')
 
         create = data.pop('group_create')
         if create:
