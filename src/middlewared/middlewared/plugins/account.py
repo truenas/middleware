@@ -2,13 +2,16 @@ from middlewared.schema import accepts, Bool, Dict, Int, Str
 from middlewared.service import CallError, CRUDService, filterable, private
 from middlewared.utils import run, Popen
 
+import binascii
 import crypt
 import errno
+import hashlib
 import os
 import random
 import shutil
 import string
 import subprocess
+import time
 
 
 def pw_checkname(name):
@@ -42,6 +45,11 @@ def crypted_password(cleartext):
     return crypt.crypt(cleartext, '$6$' + ''.join([
         random.choice(string.ascii_letters + string.digits) for _ in range(16)]
     ))
+
+
+def nt_password(cleartext):
+    nthash = hashlib.new('md4', cleartext.encode('utf-16le')).digest()
+    return binascii.hexlify(nthash).decode().upper()
 
 
 class UserService(CRUDService):
@@ -151,8 +159,10 @@ class UserService(CRUDService):
             password = data.pop('password', None)
             if password:
                 data['unixhash'] = crypted_password(password)
+                data['smbhash'] = f'{data["username"]}:{data["uid"]}:{"X" * 32}:{nt_password(password)}:[U          ]:LCT-{int(time.time()):X}:'
             else:
                 data['unixhash'] = '*'
+                data['smbhash'] = '*'
 
             pk = await self.middleware.call('datastore.insert', 'account.bsdusers', data, {'prefix': 'bsdusr_'})
         except Exception:
@@ -167,9 +177,6 @@ class UserService(CRUDService):
         if password:
             proc = await Popen(['smbpasswd', '-D', '0', '-s', '-a', data['username']], stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
             await proc.communicate(input=f'{password}\n{password}\n'.encode())
-            proc = await Popen(['pdbedit', '-d', '0', '-w', data['username']], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            smbhash = (await proc.communicate())[0].decode().strip()
-            await self.middleware.call('datastore.update', 'account.bsdusers', pk, {'bsdusr_smbhash': smbhash})
         return pk
 
     async def do_update(self, id, data):
