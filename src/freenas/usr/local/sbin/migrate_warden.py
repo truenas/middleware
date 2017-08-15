@@ -191,14 +191,14 @@ class Migrate(object):
         for ioc_prop, warden_prop in files.items():
             prop = self.jail_props(warden_prop)
 
-            if prop == "DHCP":
-                print("  DHCP isn't supported by iocage currently, not"
-                      " migrating property")
-                continue
-
             # If prop is empty, the 'prop' didn't exist in Warden
             if prop:
-                props[ioc_prop] = prop
+                if prop == "DHCP":
+                    props["dhcp"] = "yes"
+                    props["bpf"] = "yes"
+                    props["vnet"] = "on"
+                else:
+                    props[ioc_prop] = prop
 
         self.activate_pool()
         running = self.is_jail_running()
@@ -208,11 +208,6 @@ class Migrate(object):
             return
 
         self.create_jail(props)
-        # async_tasks = [
-        #     [self.ZFS.send_dataset, self.s_pipe, self.warden_dataset,
-        #      self.date],
-        #     [self.ZFS.recv_dataset, self.r_pipe, self.iocage_root]
-        # ]
 
         await asyncio.gather(
             asyncio.ensure_future(self.loop.run_in_executor(
@@ -233,13 +228,6 @@ class Migrate(object):
                 )
             ))
         )
-
-        # await asyncio.gather(
-        #     asyncio.ensure_future(self.loop.run_in_executor(
-        #         self.thread_pool_executor, functools.partial(*task)
-        #     ))
-        #     for task in async_tasks
-        # )
 
         self.warden_dataset.destroy_snapshot(f"WardenMigration_{self.date}")
         self.copy_fstab()
