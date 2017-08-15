@@ -54,6 +54,7 @@ class UserService(CRUDService):
         Bool('password_disabled', default=False),
         Bool('locked', default=False),
         Bool('microsoft_account', default=False),
+        Str('sshpubkey'),
         Dict('attributes', additional_attrs=True),
         register=True,
     ))
@@ -82,6 +83,9 @@ class UserService(CRUDService):
             raise CallError('Password is required')
         elif data.get('password_disabled') and password:
             raise CallError('Password disabled, leave password blank')
+
+        if data.get('sshpubkey') and not data['home'].startswith('/mnt'):
+            raise CallError('Home directory is not writable, leave this blank"')
 
         create = data.pop('group_create')
         if create:
