@@ -69,6 +69,14 @@ class UserService(CRUDService):
         ):
             raise CallError(f'You need to either provide a group or group_create', errno.EINVAL)
 
+        password = data.get('password')
+        if password and '?' in password:
+            raise CallError(
+                'Passwords containing a question mark (?) are currently not '
+                'allowed due to problems with SMB.',
+                errno.EINVAL
+            )
+
         create = data.pop('group_create')
         if create:
             raise CallError('Creating a group not yet supported')
