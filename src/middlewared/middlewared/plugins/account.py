@@ -11,7 +11,34 @@ import string
 import subprocess
 
 
+def pw_checkname(name):
+    """
+    Makes sure the provided `name` is a valid unix name.
+    """
+    if name.startswith('-'):
+        raise CallError('Your name cannot start with "-"')
+    if name.find('$') not in (-1, len(name) - 1):
+        raise CallError(
+            'The character $ is only allowed as the final character'
+        )
+    invalid_chars = ' ,\t:+&#%\^()!@~\*?<>=|\\/"'
+    invalids = []
+    for char in name:
+        # invalid_chars nor 8-bit characters are allowed
+        if (
+            char in invalid_chars and char not in invalids
+        ) or ord(char) & 0x80:
+            invalids.append(char)
+    if invalids:
+        raise CallError(
+            f'Your name contains invalid characters ({", ".join(invalids)})'
+        )
+
+
 def crypted_password(cleartext):
+    """
+    Generates an unix hash from `cleartext`.
+    """
     return crypt.crypt(cleartext, '$6$' + ''.join([
         random.choice(string.ascii_letters + string.digits) for _ in range(16)]
     ))
@@ -69,6 +96,8 @@ class UserService(CRUDService):
             data.get('group') is not None and data.get('group_create')
         ):
             raise CallError(f'You need to either provide a group or group_create', errno.EINVAL)
+
+        pw_checkname(data['username'])
 
         password = data.get('password')
         if password and '?' in password:
