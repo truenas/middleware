@@ -72,6 +72,18 @@ class CallError(CallException):
         return f'[{errcode}] {self.errmsg}'
 
 
+class ValidationError(CallException):
+
+    def __init__(self, attribute, errmsg, errno=errno.EFAULT):
+        self.attribute = attribute
+        self.errmsg = errmsg
+        self.errno = errno
+
+    def __str__(self):
+        errcode = errno.errorcode.get(self.errno, 'EUNKNOWN')
+        return f'[{errcode}] {self.attribute}: {self.errmsg}'
+
+
 class ServiceBase(type):
 
     def __new__(cls, name, bases, attrs):
