@@ -114,6 +114,9 @@ class UserService(CRUDService):
 
         pw_checkname(data['username'])
 
+        if self.middleware.call('datastore.query', 'account.bsdusers', [('username', '=', data['username'])], {'prefix': 'bsdusr_'}):
+            raise CallError('A user with that username already exists', errno.EEXIST)
+
         password = data.get('password')
         if password and '?' in password:
             # See bug #4098
