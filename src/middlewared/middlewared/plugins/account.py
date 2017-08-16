@@ -137,13 +137,15 @@ class UserService(CRUDService):
             group = await self.middleware.call('group.query', [('id', '=', data['group'])])
             if not group:
                 raise CallError(f'Group {data["group"]} not found')
+            group = group[0]
 
         # Is this a new directory or not? Let's not nuke existing directories,
         # e.g. /, /root, /mnt/tank/my-dataset, etc ;).
         new_homedir = False
+        home_mode = data.pop('home_mode')
         if data['home'] != '/nonexistent':
             try:
-                os.makedirs(data['home'], mode=int(data['home_mode'], 8))
+                os.makedirs(data['home'], mode=int(home_mode, 8))
                 if os.stat(data['home']).st_dev == os.stat('/mnt').st_dev:
                     raise CallError(
                         f'Path for the home directory (data["home"]) '
@@ -163,6 +165,8 @@ class UserService(CRUDService):
                     )
             else:
                 new_homedir = True
+
+        pk = None  # Make sure pk exists to rollback in case of an error
         try:
             password = data.pop('password', None)
             if password:
@@ -172,17 +176,27 @@ class UserService(CRUDService):
                 data['unixhash'] = '*'
                 data['smbhash'] = '*'
 
+            await self.__update_sshpubkey(data, group['group'])
+
+            groups = data.pop('groups') or []
+
             pk = await self.middleware.call('datastore.insert', 'account.bsdusers', data, {'prefix': 'bsdusr_'})
 
-            groups = data.get('groups') or []
             for _id in groups:
-                group = await self.middleware.call('datastore.query', 'account.bsdgroup', [('group', '=', _id)], {'prefix': 'bsdgrp_'})
+                group = await self.middleware.call('datastore.query', 'account.bsdgroups', [('id', '=', _id)], {'prefix': 'bsdgrp_'})
                 if not group:
                     raise CallError(f'Group {_id} not found', errno.ENOENT)
-                await self.middleware.call('datastore.insert', 'account.bsdgroupmembership', {'group': _id, 'user': pk}, {'prefix': 'bsdgrpmember_'})
+                await self.middleware.call(
+                    'datastore.insert',
+                    'account.bsdgroupmembership',
+                    {'group': _id, 'user': pk},
+                    {'prefix': 'bsdgrpmember_'}
+                )
 
 
         except Exception:
+            if pk is not None:
+                await self.middleware.call('datastore.delete', 'account.bsdusers', pk)
             if new_homedir:
                 # Be as atomic as possible when creating the user if
                 # commands failed to execute cleanly.
@@ -204,6 +218,20 @@ class UserService(CRUDService):
         user = user[0]
         user.update(data)
 
+        await self.__update_sshpubkey(user, user['group']['bsdgrp_group'])
+
+        home_mode = user.pop('home_mode', None)
+        if home_mode is not None:
+            if not user['builtin'] and os.path.exists(updated['home']):
+                try:
+                    os.chmod(updated['home'], int(home_mode, 8))
+                except OSError:
+                    self.logger.warn('Failed to set homedir mode', exc_info=True)
+
+        await self.middleware.call('service.reload', 'user')
+        return id
+
+    async def __update_sshpubkey(self, user, group):
         if 'sshpubkey' in user:
             keysfile = f'{user["home"]}/.ssh/authorized_keys'
             pubkey = user.pop('sshpubkey')
@@ -233,19 +261,8 @@ class UserService(CRUDService):
                     else:
                         with open(keysfile, 'w') as f:
                             f.write(pubkey)
-                        await run('chown', '-R', f'{user["username"]}:{user["group"]["bsdgrp_group"]}', sshpath, check=False)
+                        await run('chown', '-R', f'{user["username"]}:{group}', sshpath, check=False)
                     os.umask(saved_umask)
-
-        home_mode = user.pop('home_mode', None)
-        if home_mode is not None:
-            if not user['builtin'] and os.path.exists(updated['home']):
-                try:
-                    os.chmod(updated['home'], int(home_mode, 8))
-                except OSError:
-                    self.logger.warn('Failed to set homedir mode', exc_info=True)
-
-        await self.middleware.call('service.reload', 'user')
-        return id
 
 
 class GroupService(CRUDService):
