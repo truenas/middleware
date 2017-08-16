@@ -79,8 +79,8 @@ static struct {
 	struct {
 		struct service_timeout s_st;
 		struct {
-			int client_min_protocol;
-			int client_max_protocol;
+			int server_min_protocol;
+			int server_max_protocol;
 		} config;
 	} smb;
 
@@ -171,7 +171,7 @@ smbproto2name(int proto)
 }
 
 static int
-sysctl_smb_client_proto(SYSCTL_HANDLER_ARGS)
+sysctl_smb_server_proto(SYSCTL_HANDLER_ARGS)
 {
 	char proto[FNBUFSIZ_32];
 	int error, new_proto, old_proto;
@@ -322,8 +322,8 @@ services_init(void)
 		FAILRET("Failed to add smb timeout node.\n", -1);
 	}
 
-	g_services->smb.config.client_min_protocol = -1;
-	g_services->smb.config.client_max_protocol = -1;
+	g_services->smb.config.server_min_protocol = -1;
+	g_services->smb.config.server_max_protocol = -1;
 
 	if ((tmptree2 = SYSCTL_ADD_NODE(&g_freenas_sysctl_ctx,
 		SYSCTL_CHILDREN(tmptree), OID_AUTO,
@@ -333,15 +333,15 @@ services_init(void)
 	
 	SYSCTL_ADD_PROC(&g_freenas_sysctl_ctx,
 		SYSCTL_CHILDREN(tmptree2), OID_AUTO,
-		"client_min_protocol", CTLTYPE_STRING|CTLFLAG_RW,
-		&g_services->smb.config.client_min_protocol, 0,
-		sysctl_smb_client_proto, "A", "client min protocol");
+		"server_min_protocol", CTLTYPE_STRING|CTLFLAG_RW,
+		&g_services->smb.config.server_min_protocol, 0,
+		sysctl_smb_server_proto, "A", "server min protocol");
 
 	SYSCTL_ADD_PROC(&g_freenas_sysctl_ctx,
 		SYSCTL_CHILDREN(tmptree2), OID_AUTO,
-		"client_max_protocol", CTLTYPE_STRING|CTLFLAG_RW,
-		&g_services->smb.config.client_max_protocol, 0,
-		sysctl_smb_client_proto, "A", "client max protocol");
+		"server_max_protocol", CTLTYPE_STRING|CTLFLAG_RW,
+		&g_services->smb.config.server_max_protocol, 0,
+		sysctl_smb_server_proto, "A", "server max protocol");
 
 	/* SNMP node */
 	if ((tmptree = SYSCTL_ADD_NODE(&g_freenas_sysctl_ctx,
