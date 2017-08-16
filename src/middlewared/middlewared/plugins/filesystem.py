@@ -5,7 +5,6 @@ from middlewared.utils import filter_list
 import binascii
 import errno
 import os
-import subprocess
 
 import libzfs
 
