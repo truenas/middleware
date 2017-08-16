@@ -317,16 +317,6 @@ class bsdUsersForm(ModelForm, bsdUserGroupMixin):
                 self.instance.bsdusr_sshpubkey
             )
 
-    def clean_bsdusr_group(self):
-        if self.instance.id and self.instance.bsdusr_builtin:
-            return self.instance.bsdusr_group
-        else:
-            create = self.cleaned_data.get("bsdusr_creategroup")
-            group = self.cleaned_data.get("bsdusr_group")
-            if not group and not create:
-                raise forms.ValidationError(_("This field is required"))
-            return group
-
     def clean_bsdusr_password2(self):
         bsdusr_password = self.cleaned_data.get("bsdusr_password", "")
         bsdusr_password2 = self.cleaned_data["bsdusr_password2"]
