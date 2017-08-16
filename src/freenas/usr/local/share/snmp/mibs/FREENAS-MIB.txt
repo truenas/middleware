@@ -31,7 +31,7 @@ IMPORTS
 	OBJECT-TYPE FROM RFC-1212
 	DisplayString FROM RFC-1213;
 
-freenas	OBJECT IDENTIFIER ::= {enterprises 25359}
+freenas	OBJECT IDENTIFIER ::= {enterprises 50536}
 
 zfs     OBJECT IDENTIFIER ::= {freenas 1}
 
