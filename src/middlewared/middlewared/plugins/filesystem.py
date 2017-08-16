@@ -5,6 +5,9 @@ from middlewared.utils import filter_list
 import binascii
 import errno
 import os
+import subprocess
+
+import libzfs
 
 
 class FilesystemService(Service):
@@ -138,3 +141,39 @@ class FilesystemService(Service):
                 f.seek(options['offset'])
             data = binascii.b2a_base64(f.read(options.get('maxlen'))).decode().strip()
         return data
+
+    @accepts(
+        Str('dataset'),
+        Str('name'),
+        Bool('recursive'),
+        Int('vmsnaps_count')
+        )
+    def zfs_mksnap(self, dataset, name, recursive=False, vmsnaps_count=0):
+        """
+        Take a snapshot from a given dataset.
+
+        Returns:
+            bool: True if succeed otherwise False.
+        """
+        zfs = libzfs.ZFS()
+
+        try:
+            ds = zfs.get_dataset(dataset)
+        except libzfs.ZFSException as err:
+            self.logger.error("{0}".format(err))
+            return False
+
+        try:
+            if recursive:
+                ds.snapshots_recursive('{0}@{1}'.format(dataset, name))
+            else:
+                ds.snapshot('{0}@{1}'.format(dataset, name))
+
+            if vmsnaps_count > 0:
+                ds.properties['freenas:vmsynced'] = libzfs.ZFSUserProperty('Y')
+
+            self.logger.info("Snapshot taken: {0}@{1}".format(dataset, name))
+            return True
+        except libzfs.ZFSException as err:
+                self.logger.error("{0}".format(err))
+                return False
