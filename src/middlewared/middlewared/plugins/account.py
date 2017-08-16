@@ -1,5 +1,5 @@
 from middlewared.schema import accepts, Bool, Dict, Int, List, Str
-from middlewared.service import CallError, CRUDService, ValidationError, filterable, private
+from middlewared.service import CallError, CRUDService, ValidationErrors, filterable, private
 from middlewared.utils import run, Popen
 
 import asyncio
@@ -15,14 +15,15 @@ import subprocess
 import time
 
 
-def pw_checkname(name):
+def pw_checkname(verrors, attribute, name):
     """
     Makes sure the provided `name` is a valid unix name.
     """
     if name.startswith('-'):
-        raise CallError('Your name cannot start with "-"')
+        verrors.add(attribute, 'Your name cannot start with "-"')
     if name.find('$') not in (-1, len(name) - 1):
-        raise CallError(
+        verrors.add(
+            attribute,
             'The character $ is only allowed as the final character'
         )
     invalid_chars = ' ,\t:+&#%\^()!@~\*?<>=|\\/"'
@@ -34,7 +35,8 @@ def pw_checkname(name):
         ) or ord(char) & 0x80:
             invalids.append(char)
     if invalids:
-        raise CallError(
+        verrors.add(
+            attribute,
             f'Your name contains invalid characters ({", ".join(invalids)})'
         )
 
@@ -101,50 +103,52 @@ class UserService(CRUDService):
         register=True,
     ))
     async def do_create(self, data):
-        users = await self.middleware.call('datastore.query', 'account.bsdusers', [('username', '=', data['username'])], {'prefix': 'bsdusr_'})
-        if users:
-            raise ValidationError('username', f'A user with the username "{data["username"]}" already exists', errno.EEXIST)
+
+        verrors = ValidationErrors()
 
         if (
             not data.get('group') and not data.get('group_create')
         ) or (
             data.get('group') is not None and data.get('group_create')
         ):
-            raise CallError(f'You need to either provide a group or group_create', errno.EINVAL)
+            verrors.add('group', f'You need to either provide a group or group_create', errno.EINVAL)
 
-        pw_checkname(data['username'])
+        pw_checkname(verrors, 'username', data['username'])
 
-        if self.middleware.call('datastore.query', 'account.bsdusers', [('username', '=', data['username'])], {'prefix': 'bsdusr_'}):
-            raise CallError('A user with that username already exists', errno.EEXIST)
+        if await self.middleware.call('datastore.query', 'account.bsdusers', [('username', '=', data['username'])], {'prefix': 'bsdusr_'}):
+            verrors.add('username', f'A user with the username "{data["username"]}" already exists', errno.EEXIST)
 
         password = data.get('password')
         if password and '?' in password:
             # See bug #4098
-            raise CallError(
+            verrors.add(
+                'password',
                 'Passwords containing a question mark (?) are currently not '
                 'allowed due to problems with SMB.',
                 errno.EINVAL
             )
-
-        if not password and not data.get('password_disabled'):
-            raise CallError('Password is required')
+        elif not password and not data.get('password_disabled'):
+            verrors.add('password', 'Password is required')
         elif data.get('password_disabled') and password:
-            raise CallError('Password disabled, leave password blank')
+            verrors.add('password_disabled', 'Password disabled, leave password blank')
 
         if data.get('sshpubkey') and not data['home'].startswith('/mnt'):
-            raise CallError('Home directory is not writable, leave this blank"')
+            verrors.add('sshpubkey', 'Home directory is not writable, leave this blank"')
 
         if ':' in data['home']:
-            raise CallError('Home directory cannot contain colons')
+            verrors.add('home', 'Home directory cannot contain colons')
 
         groups = data.pop('groups') or []
         create = data.pop('group_create')
 
         if groups and len(groups) > 64:
-            raise CallError('A user cannot belong to more than 64 auxiliary groups')
+            verrors.add('groups', 'A user cannot belong to more than 64 auxiliary groups')
 
         if ':' in data['full_name']:
-            raise CallError('":" character is now allowed in Full name')
+            verrors.add('full_name', '":" character is not allowed in Full Name')
+
+        if verrors:
+            raise verrors
 
         if create:
             group = await self.middleware.call('group.query', [('group', '=', data['username'])])
