@@ -1,5 +1,5 @@
 from middlewared.schema import accepts, Bool, Dict, Int, List, Str
-from middlewared.service import CallError, CRUDService, filterable, private
+from middlewared.service import CallError, CRUDService, ValidationError, filterable, private
 from middlewared.utils import run, Popen
 
 import asyncio
@@ -103,7 +103,7 @@ class UserService(CRUDService):
     async def do_create(self, data):
         users = await self.middleware.call('datastore.query', 'account.bsdusers', [('username', '=', data['username'])], {'prefix': 'bsdusr_'})
         if users:
-            raise CallError(f'A user with the username "{data["username"]}" already exists', errno.EEXIST)
+            raise ValidationError('username', f'A user with the username "{data["username"]}" already exists', errno.EEXIST)
 
         if (
             not data.get('group') and not data.get('group_create')
