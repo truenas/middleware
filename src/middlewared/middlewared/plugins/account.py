@@ -266,12 +266,17 @@ class UserService(CRUDService):
             groups = user.pop('groups', [])
             await self.__set_groups(id, groups)
 
-        print(user)
         await self.middleware.call('datastore.update', 'account.bsdusers', id, user, {'prefix': 'bsdusr_'})
 
         await self.middleware.call('service.reload', 'user')
 
         return id
+
+    async def do_delete(self, pk):
+        await self.middleware.call('datastore.delete', 'account.bsdusers', pk)
+        await self.middleware.call('service.reload', 'user')
+
+        return pk
 
     async def __set_groups(self, pk, groups):
 
