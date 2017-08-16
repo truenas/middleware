@@ -539,22 +539,17 @@ class InitialWizard(CommonWizard):
                             else:
                                 password = '!'
                                 password_disabled = True
-                            uid, gid, unixhash, smbhash = _n.user_create(
-                                username=share_user,
-                                fullname=share_user,
-                                password=password,
-                                shell='/bin/csh',
-                                homedir='/nonexistent',
-                                password_disabled=password_disabled
+                            with client as c:
+                                user = c.call('user.create', {
+                                    'username': share_user,
+                                    'full_name': share_user,
+                                    'password': password,
+                                    'shell': '/bin/csh',
+                                    'home': '/nonexistent',
+                                    'password_disabled': password_disabled,
+                                    'group': group.id,
                             )
-                            user = bsdUsers.objects.create(
-                                bsdusr_username=share_user,
-                                bsdusr_full_name=share_user,
-                                bsdusr_uid=uid,
-                                bsdusr_group=group,
-                                bsdusr_unixhash=unixhash,
-                                bsdusr_smbhash=smbhash,
-                            )
+                            user = bsdUsers.objects.get(pk=user)
                             model_objs.append(user)
 
                 else:
