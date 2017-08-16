@@ -122,7 +122,8 @@ enum {
 	SMB3_02 = 12,
 	SMB3_10 = 13,
 	SMB3_11 = 14,
-	SMB_PROTO_COUNT = 15
+	SMB_PROTO_NONE = 15,
+	SMB_PROTO_COUNT = 16
 };
 
 static const char *SMB_PROTOS[] = {
@@ -140,7 +141,8 @@ static const char *SMB_PROTOS[] = {
 	"SMB3_00",
 	"SMB3_02",
 	"SMB3_10",
-	"SMB3_11"
+	"SMB3_11",
+	"NONE"
 };
 
 static int
@@ -402,8 +404,6 @@ services_init(void)
 static int
 services_fini(void)
 {
-	//free(g_services->smb.config.client_max_protocol, M_FREENAS_SYSCTL);
-	//free(g_services->smb.config.client_min_protocol, M_FREENAS_SYSCTL);
 	free(g_services, M_FREENAS_SYSCTL);
 	return (0);
 }
