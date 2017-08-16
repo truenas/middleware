@@ -134,11 +134,19 @@ class UserService(CRUDService):
         if ':' in data['home']:
             raise CallError('Home directory cannot contain colons')
 
+        groups = data.pop('groups') or []
         create = data.pop('group_create')
+
+        if groups and len(groups) > 64:
+            raise CallError('A user cannot belong to more than 64 auxiliary groups')
+
+        if ':' in data['full_name']:
+            raise CallError('":" character is now allowed in Full name')
+
         if create:
-            groups = await self.middleware.call('group.query', [('group', '=', data['username'])])
-            if groups:
-                group = groups[0]
+            group = await self.middleware.call('group.query', [('group', '=', data['username'])])
+            if group:
+                group = group[0]
             else:
                 raise CallError('Creating a group not yet supported')
         else:
@@ -186,8 +194,6 @@ class UserService(CRUDService):
                 data['smbhash'] = '*'
 
             await self.__update_sshpubkey(data, group['group'])
-
-            groups = data.pop('groups') or []
 
             pk = await self.middleware.call('datastore.insert', 'account.bsdusers', data, {'prefix': 'bsdusr_'})
 
