@@ -37,7 +37,7 @@ sysLocation ${snmp_location:-unknown}
 sysContact ${snmp_contact:-unknown@localhost}
 sysDescr Hardware: ${hw_machine} ${hw_model} running at ${hw_clockrate} Software: ${kern_ostype} ${kern_osrelease} (revision ${kern_osrevision})
 
-pass .1.3.6.1.4.1.25359.1 /usr/local/bin/freenas-snmp/zfs-snmp
+pass .1.3.6.1.4.1.50536.1 /usr/local/bin/freenas-snmp/zfs-snmp
 EOF
 
 		if [ ${snmp_v3} -eq 1 ]; then
