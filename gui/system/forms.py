@@ -548,7 +548,7 @@ class InitialWizard(CommonWizard):
                                     'home': '/nonexistent',
                                     'password_disabled': password_disabled,
                                     'group': group.id,
-                            )
+                                })
                             user = bsdUsers.objects.get(pk=user)
                             model_objs.append(user)
 
