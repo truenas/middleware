@@ -191,10 +191,11 @@ class UserService(CRUDService):
         if not user:
             raise CallError(f'User {id} does not exist', errno.ENOENT)
         user = user[0]
+        user.update(data)
 
-        if 'sshpubkey' in data:
+        if 'sshpubkey' in user:
             keysfile = f'{user["home"]}/.ssh/authorized_keys'
-            pubkey = data.pop('sshpubkey')
+            pubkey = user.pop('sshpubkey')
             if pubkey is None:
                 if os.path.exists(keysfile):
                     try:
@@ -223,6 +224,14 @@ class UserService(CRUDService):
                             f.write(pubkey)
                         await run('chown', '-R', f'{user["username"]}:{user["group"]["bsdgrp_group"]}', sshpath, check=False)
                     os.umask(saved_umask)
+
+        home_mode = user.pop('home_mode', None)
+        if home_mode is not None:
+            if not user['builtin'] and os.path.exists(updated['home']):
+                try:
+                    os.chmod(updated['home'], int(home_mode, 8))
+                except OSError:
+                    self.logger.warn('Failed to set homedir mode', exc_info=True)
 
         await self.middleware.call('service.reload', 'user')
 
