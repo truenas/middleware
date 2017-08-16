@@ -36,7 +36,6 @@ from dojango import forms
 from freenasUI.account import models
 from freenasUI.common.forms import ModelForm, Form
 from freenasUI.common.freenassysctl import freenas_sysctl as _fs
-from freenasUI.common.pipesubr import pipeopen
 from freenasUI.freeadmin.forms import SelectMultipleField
 from freenasUI.freeadmin.utils import key_order
 from freenasUI.storage.widgets import UnixPermissionField
@@ -339,13 +338,12 @@ class bsdUsersForm(ModelForm, bsdUserGroupMixin):
 
     def clean_bsdusr_home(self):
         home = self.cleaned_data['bsdusr_home']
-        elif home is not None:
+        if home is not None:
             if home == '/nonexistent':
                 return home
 
             if home.startswith('/mnt/'):
                 bsdusr_username = self.cleaned_data.get('bsdusr_username', '')
-                saved_home = self.bsdusr_home_saved
 
                 if home.endswith(bsdusr_username):
                     return home
@@ -384,7 +382,6 @@ class bsdUsersForm(ModelForm, bsdUserGroupMixin):
         return ssh
 
     def save(self, *args, **kwargs):
-        _notifier = notifier()
         if self.instance.id is None:
             args = ['user.create']
         else:
