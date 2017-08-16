@@ -211,9 +211,10 @@ class FilesystemService(Service):
 
     @accepts(
         Str('snapshot'),
-        Str('dataset_dst')
+        Str('dataset_dst'),
+        Bool('destroy_after_clone')
     )
-    def zfs_clone(self, snapshot, dataset_dst):
+    def zfs_clone(self, snapshot, dataset_dst, destroy_after_clone=False):
         """
         Clone a given snapshot to a new dataset.
 
@@ -231,6 +232,11 @@ class FilesystemService(Service):
         try:
             snp.clone(dataset_dst)
             self.logger.info("Cloned snapshot {0} to dataset {1}".format(snapshot, dataset_dst))
+            if destroy_after_clone:
+                __snapshot = snapshot.split('@')
+                dataset_name = __snapshot[0]
+                snapshot_name = __snapshot[1]
+                self.zfs_rmsnap(dataset_name, snapshot_name)
             return True
         except libzfs.ZFSException as err:
             self.logger.error("{0}".format(err))
