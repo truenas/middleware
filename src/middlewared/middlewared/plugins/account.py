@@ -1,4 +1,4 @@
-from middlewared.schema import accepts, Bool, Dict, Int, Str
+from middlewared.schema import accepts, Bool, Dict, Int, List, Str
 from middlewared.service import CallError, CRUDService, filterable, private
 from middlewared.utils import run, Popen
 
@@ -89,7 +89,9 @@ class UserService(CRUDService):
         Bool('password_disabled', default=False),
         Bool('locked', default=False),
         Bool('microsoft_account', default=False),
+        Bool('sudo', default=False),
         Str('sshpubkey'),
+        List('groups'),
         Dict('attributes', additional_attrs=True),
         register=True,
     ))
@@ -171,6 +173,15 @@ class UserService(CRUDService):
                 data['smbhash'] = '*'
 
             pk = await self.middleware.call('datastore.insert', 'account.bsdusers', data, {'prefix': 'bsdusr_'})
+
+            groups = data.get('groups') or []
+            for _id in groups:
+                group = await self.middleware.call('datastore.query', 'account.bsdgroup', [('group', '=', _id)], {'prefix': 'bsdgrp_'})
+                if not group:
+                    raise CallError(f'Group {_id} not found', errno.ENOENT)
+                await self.middleware.call('datastore.insert', 'account.bsdgroupmembership', {'group': _id, 'user': pk}, {'prefix': 'bsdgrpmember_'})
+
+
         except Exception:
             if new_homedir:
                 # Be as atomic as possible when creating the user if
@@ -234,6 +245,7 @@ class UserService(CRUDService):
                     self.logger.warn('Failed to set homedir mode', exc_info=True)
 
         await self.middleware.call('service.reload', 'user')
+        return id
 
 
 class GroupService(CRUDService):
