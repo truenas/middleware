@@ -81,7 +81,7 @@ class UserService(CRUDService):
         Int('group'),
         Bool('group_create', default=False),
         Str('home', default='/nonexistent'),
-        Str('home_mode'),
+        Str('home_mode', default='755'),
         Str('shell', default='/bin/csh'),
         Str('full_name', required=True),
         Str('email'),
@@ -126,16 +126,22 @@ class UserService(CRUDService):
 
         create = data.pop('group_create')
         if create:
-            raise CallError('Creating a group not yet supported')
+            groups = await self.middleware.call('group.query', [('group', '=', data['username'])])
+            if groups:
+                group = groups[0]
+            else:
+                raise CallError('Creating a group not yet supported')
         else:
             group = await self.middleware.call('group.query', [('id', '=', data['group'])])
+            if not group:
+                raise CallError(f'Group {data["group"]} not found')
 
         # Is this a new directory or not? Let's not nuke existing directories,
         # e.g. /, /root, /mnt/tank/my-dataset, etc ;).
         new_homedir = False
         if data['home'] != '/nonexistent':
             try:
-                os.makedirs(data['home'], mode=data['home_mode'])
+                os.makedirs(data['home'], mode=int(data['home_mode'], 8))
                 if os.stat(data['home']).st_dev == os.stat('/mnt').st_dev:
                     raise CallError(
                         f'Path for the home directory (data["home"]) '
