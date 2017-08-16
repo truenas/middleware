@@ -379,7 +379,10 @@ class BaseFreeAdmin(object):
                         if err.attribute in mf.fields:
                             mf._errors[err.attribute] = mf.error_class([err.errmsg])
                         else:
-                            mf._errors['__all__'] = mf.error_class([err.errmsg])
+                            if '__all__' not in mf._errors:
+                                mf._errors['__all__'] = mf.error_class([err.errmsg])
+                            else:
+                                mf._errors['__all__'] += [err.errmsg]
                     return JsonResp(request, form=mf, formsets=formsets)
                 except MiddlewareError as e:
                     return JsonResp(
@@ -599,7 +602,10 @@ class BaseFreeAdmin(object):
                         if err.attribute in mf.fields:
                             mf._errors[err.attribute] = mf.error_class([err.errmsg])
                         else:
-                            mf._errors['__all__'] = mf.error_class([err.errmsg])
+                            if '__all__' not in mf._errors:
+                                mf._errors['__all__'] = mf.error_class([err.errmsg])
+                            else:
+                                mf._errors['__all__'] += [err.errmsg]
                     return JsonResp(request, form=mf, formsets=formsets)
                 except ServiceFailed as e:
                     return JsonResp(
