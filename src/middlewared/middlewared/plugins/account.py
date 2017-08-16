@@ -2,6 +2,7 @@ from middlewared.schema import accepts, Bool, Dict, Int, List, Str
 from middlewared.service import CallError, CRUDService, filterable, private
 from middlewared.utils import run, Popen
 
+import asyncio
 import binascii
 import crypt
 import errno
@@ -126,6 +127,9 @@ class UserService(CRUDService):
         if data.get('sshpubkey') and not data['home'].startswith('/mnt'):
             raise CallError('Home directory is not writable, leave this blank"')
 
+        if ':' in data['home']:
+            raise CallError('Home directory cannot contain colons')
+
         create = data.pop('group_create')
         if create:
             groups = await self.middleware.call('group.query', [('group', '=', data['username'])])
@@ -216,9 +220,26 @@ class UserService(CRUDService):
         if not user:
             raise CallError(f'User {id} does not exist', errno.ENOENT)
         user = user[0]
+
+        if 'group' in data:
+            group = await self.middleware.call('datastore.query', 'account.bsdgroups', [('id', '=', data['group'])], {'prefix': 'bsdgrp_'})
+            if not group:
+                raise CallError(f'Group {data["group"]} not found', errno.ENOENT)
+            group = group[0]
+        else:
+            group = user['group']
+            user['group'] = group['id']
+
+        # Copy the home directory if it changed
+        if 'home' in data and data['home'] not in (user['home'], '/nonexistent'):
+            home_copy = True
+            home_old = user['home']
+        else:
+            home_copy = False
+
         user.update(data)
 
-        await self.__update_sshpubkey(user, user['group']['bsdgrp_group'])
+        await self.__update_sshpubkey(user, group['group'])
 
         home_mode = user.pop('home_mode', None)
         if home_mode is not None:
@@ -228,7 +249,15 @@ class UserService(CRUDService):
                 except OSError:
                     self.logger.warn('Failed to set homedir mode', exc_info=True)
 
+        if home_copy:
+            def do_home_copy():
+                subprocess.run(f"su - {user['username']} -c '/bin/cp -a {home_old}/* {user['home']}/'")
+            asyncio.ensure_future(self.middleware.threaded(do_home_copy))
+
         await self.middleware.call('service.reload', 'user')
+
+
+
         return id
 
     async def __update_sshpubkey(self, user, group):
