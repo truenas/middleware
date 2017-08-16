@@ -45,6 +45,7 @@ from freenasUI.api import v1_api
 from freenasUI.freeadmin.apppool import appPool
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.services.exceptions import ServiceFailed
+from middlewared.client import ValidationErrors
 from tastypie.validation import FormValidation
 
 log = logging.getLogger('freeadmin.options')
@@ -373,6 +374,13 @@ class BaseFreeAdmin(object):
                             m._meta.verbose_name,
                         ),
                         events=events)
+                except ValidationErrors as e:
+                    for err in e.errors:
+                        if err.attribute in mf.fields:
+                            mf._errors[err.attribute] = mf.error_class([err.errmsg])
+                        else:
+                            mf._errors['__all__'] = mf.error_class([err.errmsg])
+                    return JsonResp(request, form=mf, formsets=formsets)
                 except MiddlewareError as e:
                     return JsonResp(
                         request,
@@ -586,6 +594,13 @@ class BaseFreeAdmin(object):
                                 m._meta.verbose_name,
                             ),
                             events=events)
+                except ValidationErrors as e:
+                    for err in e.errors:
+                        if err.attribute in mf.fields:
+                            mf._errors[err.attribute] = mf.error_class([err.errmsg])
+                        else:
+                            mf._errors['__all__'] = mf.error_class([err.errmsg])
+                    return JsonResp(request, form=mf, formsets=formsets)
                 except ServiceFailed as e:
                     return JsonResp(
                         request,

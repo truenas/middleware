@@ -205,17 +205,21 @@ class ClientException(Exception):
         return self.error
 
 
+Error = namedtuple('Error', ['attribute', 'errmsg', 'errcode'])
+
+
 class ValidationErrors(ClientException):
     def __init__(self, errors):
-        self.errors = errors
+        self.errors = []
+        for e in errors:
+            self.errors.append(Error(e[0], e[1], e[2]))
 
     def __str__(self):
         msgs = []
         for e in self.errors:
-            attribute = e[0] or 'ALL'
-            errmsg = e[1]
-            errcode = errno.errorcode.get(e[2], 'EUNKNOWN')
-            msgs.append(f'[{errcode}] {attribute}: {errmsg}')
+            attribute = e.attribute or 'ALL'
+            errcode = errno.errorcode.get(e.errcode, 'EUNKNOWN')
+            msgs.append(f'[{errcode}] {e.attribute or "ALL"}: {e.errmsg}')
         return '\n'.join(msgs)
 
 
