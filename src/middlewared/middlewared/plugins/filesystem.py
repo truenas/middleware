@@ -146,7 +146,7 @@ class FilesystemService(Service):
         Str('name'),
         Bool('recursive'),
         Int('vmsnaps_count')
-        )
+    )
     def zfs_mksnap(self, dataset, name, recursive=False, vmsnaps_count=0):
         """
         Take a snapshot from a given dataset.
@@ -177,12 +177,16 @@ class FilesystemService(Service):
                 self.logger.error("{0}".format(err))
                 return False
 
+    @accepts(
+        Str('dataset'),
+        Str('snap_name')
+    )
     def zfs_rmsnap(self, dataset, snap_name):
         """
         Remove a snapshot from a given dataset.
 
         Returns:
-            bool: True if succeed ortherwise False.
+            bool: True if succeed otherwise False.
         """
         zfs = libzfs.ZFS()
 
@@ -201,6 +205,33 @@ class FilesystemService(Service):
                     return True
             self.logger.error("There is no snapshot {0} on dataset {1}".format(snap_name, dataset))
             return False
+        except libzfs.ZFSException as err:
+            self.logger.error("{0}".format(err))
+            return False
+
+    @accepts(
+        Str('snapshot'),
+        Str('dataset_dst')
+    )
+    def zfs_clone(self, snapshot, dataset_dst):
+        """
+        Clone a given snapshot to a new dataset.
+
+        Returns:
+            bool: True if succeed otherwise False.
+        """
+        zfs = libzfs.ZFS()
+
+        try:
+            snp = zfs.get_snapshot(snapshot)
+        except libzfs.ZFSException as err:
+            self.logger.error("{0}".format(err))
+            return False
+
+        try:
+            snp.clone(dataset_dst)
+            self.logger.info("Cloned snapshot {0} to dataset {1}".format(snapshot, dataset_dst))
+            return True
         except libzfs.ZFSException as err:
             self.logger.error("{0}".format(err))
             return False
