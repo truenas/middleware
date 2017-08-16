@@ -64,6 +64,10 @@ class UserService(CRUDService):
 
     @private
     async def user_extend(self, user):
+
+        # Get group membership
+        user['groups'] = [gm['group']['id'] for gm in await self.middleware.call('datastore.query', 'account.bsdgroupmembership', [('user', '=', user['id'])], {'prefix': 'bsdgrpmember_'})]
+
         # Get authorized keys
         keysfile = f'{user["home"]}/.ssh/authorized_keys'
         user['sshpubkey'] = None
