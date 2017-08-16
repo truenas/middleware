@@ -3,7 +3,7 @@ from .client import ejson as json
 from .job import Job, JobsQueue
 from .restful import RESTfulAPI
 from .schema import Error as SchemaError
-from .service import CallError, CallException, ValidationError
+from .service import CallError, CallException, ValidationError, ValidationErrors
 from aiohttp import web
 from aiohttp_wsgi import WSGIHandler
 from collections import defaultdict
@@ -126,12 +126,13 @@ class Application(object):
             'formatted': ''.join(traceback.format_exception(*exc_info)),
         }
 
-    def send_error(self, message, errno, reason=None, exc_info=None, extra=None):
+    def send_error(self, message, errno, reason=None, exc_info=None, etype=None, extra=None):
         self._send({
             'msg': 'result',
             'id': message['id'],
             'error': {
                 'error': errno,
+                'type': etype,
                 'reason': reason,
                 'trace': self._tb_error(exc_info) if exc_info else None,
                 'extra': extra,
@@ -154,9 +155,11 @@ class Application(object):
                 'result': result,
             })
         except ValidationError as e:
-            self.send_error(message, e.errno, str(e), sys.exc_info(), extra=[
+            self.send_error(message, e.errno, str(e), sys.exc_info(), etype='VALIDATION', extra=[
                 (e.attribute, e.errmsg, e.errno),
             ])
+        except ValidationErrors as e:
+            self.send_error(message, errno.EAGAIN, str(e), sys.exc_info(), etype='VALIDATION', extra=list(e))
         except (CallException, SchemaError) as e:
             # CallException and subclasses are the way to gracefully
             # send errors to the client

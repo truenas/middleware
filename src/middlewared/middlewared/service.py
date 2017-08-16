@@ -84,6 +84,22 @@ class ValidationError(CallException):
         return f'[{errcode}] {self.attribute}: {self.errmsg}'
 
 
+class ValidationErrors(CallException):
+
+    def __init__(self, errors=None):
+        self.errors = errors or []
+
+    def add(self, attribute, errmsg, errno=errno.EINVAL):
+        self.errors.append(ValidationError(attribute, errmsg, errno))
+
+    def __iter__(self):
+        for e in self.errors:
+            yield e.attribute, e.errmsg, e.errno
+
+    def __bool__(self):
+        return bool(self.errors)
+
+
 class ServiceBase(type):
 
     def __new__(cls, name, bases, attrs):
