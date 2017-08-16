@@ -171,6 +171,7 @@ class UserService(CRUDService):
             password = data.pop('password', None)
             if password:
                 data['unixhash'] = crypted_password(password)
+                # See http://samba.org.ru/samba/docs/man/manpages/smbpasswd.5.html
                 data['smbhash'] = f'{data["username"]}:{data["uid"]}:{"X" * 32}:{nt_password(password)}:[U          ]:LCT-{int(time.time()):X}:'
             else:
                 data['unixhash'] = '*'
