@@ -191,16 +191,7 @@ class UserService(CRUDService):
 
             pk = await self.middleware.call('datastore.insert', 'account.bsdusers', data, {'prefix': 'bsdusr_'})
 
-            for _id in groups:
-                group = await self.middleware.call('datastore.query', 'account.bsdgroups', [('id', '=', _id)], {'prefix': 'bsdgrp_'})
-                if not group:
-                    raise CallError(f'Group {_id} not found', errno.ENOENT)
-                await self.middleware.call(
-                    'datastore.insert',
-                    'account.bsdgroupmembership',
-                    {'group': _id, 'user': pk},
-                    {'prefix': 'bsdgrpmember_'}
-                )
+            await self.__set_groups(pk, groups)
 
         except Exception:
             if pk is not None:
@@ -258,11 +249,37 @@ class UserService(CRUDService):
                 subprocess.run(f"su - {user['username']} -c '/bin/cp -a {home_old}/* {user['home']}/'")
             asyncio.ensure_future(self.middleware.threaded(do_home_copy))
 
+        if 'groups' in user:
+            groups = user.pop('groups', [])
+            await self.__set_groups(id, groups)
+
+        print(user)
+        await self.middleware.call('datastore.update', 'account.bsdusers', id, user, {'prefix': 'bsdusr_'})
+
         await self.middleware.call('service.reload', 'user')
 
-
-
         return id
+
+    async def __set_groups(self, pk, groups):
+
+        groups = set(groups)
+        existing_ids = set()
+        for gm in await self.middleware.call('datastore.query', 'account.bsdgroupmembership', [('user', '=', pk)], {'prefix': 'bsdgrpmember_'}):
+            if gm['id'] not in groups:
+                await self.middleware.call('datastore.delete', 'account.bsdgroupmembership', gm['id'])
+            else:
+                existing_ids.add(gm['id'])
+
+        for _id in groups - existing_ids:
+            group = await self.middleware.call('datastore.query', 'account.bsdgroups', [('id', '=', _id)], {'prefix': 'bsdgrp_'})
+            if not group:
+                raise CallError(f'Group {_id} not found', errno.ENOENT)
+            await self.middleware.call(
+                'datastore.insert',
+                'account.bsdgroupmembership',
+                {'group': _id, 'user': pk},
+                {'prefix': 'bsdgrpmember_'}
+            )
 
     async def __update_sshpubkey(self, user, group):
         if 'sshpubkey' in user:
