@@ -30,10 +30,21 @@
 #include <sys/param.h>
 #include <sys/malloc.h>
 #include <sys/kernel.h>
+#include <sys/sbuf.h>
 #include <sys/systm.h>
 #include <sys/sysctl.h>
 
 MALLOC_DECLARE(M_FREENAS_SYSCTL);
+
+#define	FNBUFSIZ		1024
+#define	FNBUFSIZ_1024	1024
+#define	FNBUFSIZ_512	512	
+#define	FNBUFSIZ_256	256	
+#define	FNBUFSIZ_128	128	
+#define	FNBUFSIZ_64		64	
+#define	FNBUFSIZ_32		32	
+#define	FNBUFSIZ_16		16	
+#define	FNBUFSIZ_8		8
 
 struct freenas_sysctl_module {
 	char *name;
