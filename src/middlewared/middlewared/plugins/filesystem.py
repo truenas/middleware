@@ -176,3 +176,31 @@ class FilesystemService(Service):
         except libzfs.ZFSException as err:
                 self.logger.error("{0}".format(err))
                 return False
+
+    def zfs_rmsnap(self, dataset, snap_name):
+        """
+        Remove a snapshot from a given dataset.
+
+        Returns:
+            bool: True if succeed ortherwise False.
+        """
+        zfs = libzfs.ZFS()
+
+        try:
+            ds = zfs.get_dataset(dataset)
+        except libzfs.ZFSException as err:
+            self.logger.error("{0}".format(err))
+            return False
+
+        __snap_name = dataset + '@' + snap_name
+        try:
+            for snap in list(ds.snapshots):
+                if snap.name == __snap_name:
+                    ds.destroy_snapshot(snap_name)
+                    self.logger.info("Destroyed snapshot: {0}".format(__snap_name))
+                    return True
+            self.logger.error("There is no snapshot {0} on dataset {1}".format(snap_name, dataset))
+            return False
+        except libzfs.ZFSException as err:
+            self.logger.error("{0}".format(err))
+            return False
