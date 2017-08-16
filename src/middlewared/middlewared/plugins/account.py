@@ -194,7 +194,6 @@ class UserService(CRUDService):
                     {'prefix': 'bsdgrpmember_'}
                 )
 
-
         except Exception:
             if pk is not None:
                 await self.middleware.call('datastore.delete', 'account.bsdusers', pk)
@@ -223,9 +222,9 @@ class UserService(CRUDService):
 
         home_mode = user.pop('home_mode', None)
         if home_mode is not None:
-            if not user['builtin'] and os.path.exists(updated['home']):
+            if not user['builtin'] and os.path.exists(user['home']):
                 try:
-                    os.chmod(updated['home'], int(home_mode, 8))
+                    os.chmod(user['home'], int(home_mode, 8))
                 except OSError:
                     self.logger.warn('Failed to set homedir mode', exc_info=True)
 
