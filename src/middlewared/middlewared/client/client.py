@@ -190,6 +190,7 @@ class Call(object):
         self.errno = None
         self.error = None
         self.trace = None
+        self.type = None
         self.extra = None
 
 
@@ -285,6 +286,7 @@ class Client(object):
                     call.errno = message['error'].get('error')
                     call.error = message['error'].get('reason')
                     call.trace = message['error'].get('trace')
+                    call.type = message['error'].get('type')
                     call.extra = message['error'].get('extra')
                 call.returned.set()
                 self._unregister_call(call)
@@ -374,7 +376,7 @@ class Client(object):
             raise CallTimeout("Call timeout")
 
         if c.errno:
-            if c.trace and c.trace.get('class') == 'ValidationError':
+            if c.trace and c.type == 'VALIDATION':
                 raise ValidationErrors(c.extra)
             raise ClientException(c.error, c.errno, c.trace, c.extra)
 
