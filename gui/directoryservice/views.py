@@ -426,8 +426,31 @@ def directoryservice_idmap_tdb2(request, id):
     })
 
 
+def directoryservice_idmap_script(request, id):
+    idmap_script = models.idmap_script.objects.get(id=id)
+
+    if request.method == "POST":
+        form = forms.idmap_script_Form(request.POST, instance=idmap_script)
+        if form.is_valid(): 
+            form.save()
+            return JsonResp(
+                request,
+                message="Idmap script successfully edited."
+            )
+        else:
+            return JsonResp(request, form=form)
+    else:
+        form = forms.idmap_script_Form(instance=idmap_script)
+
+    return render(request, 'directoryservice/idmap_script.html', {
+        'form': form
+    })
+
+
 def directoryservice_idmap_backend(request, obj_type, obj_id, idmap_type):
     data = utils.get_idmap(obj_type, obj_id, idmap_type)
+    if not data:
+        return
     content = json.dumps(data)
     return HttpResponse(content, content_type="application/json")
 
