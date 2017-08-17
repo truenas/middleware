@@ -514,7 +514,7 @@ class ServiceService(CRUDService):
         await self._service("ix_sshd_save_keys", "start", quiet=True, **kwargs)
 
     async def _start_s3(self, **kwargs):
-        await self.middleware.call('minio.write_certificates')
+        await self.middleware.call('etc.generate', 's3')
         await self._service("minio", "start", quiet=True, stdout=None, stderr=None, **kwargs)
 
     async def _reload_rsync(self, **kwargs):
