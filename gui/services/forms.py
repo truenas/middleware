@@ -2158,8 +2158,9 @@ class S3Form(ModelForm):
         key_order(self, 4, 's3_secret_key', instance=True)
         key_order(self, 5, 's3_secret_key2', instance=True)
         key_order(self, 6, 's3_disks', instance=True)
-        key_order(self, 7, 's3_mode', instance=True)
-        key_order(self, 8, 's3_browser', instance=True)
+        key_order(self, 7, 's3_certificate', instance=True)
+        key_order(self, 8, 's3_mode', instance=True)
+        key_order(self, 9, 's3_browser', instance=True)
 
         self.fields['s3_bindip'].choices = [('0.0.0.0', '0.0.0.0')] + list(choices.IPChoices())
         if self.instance.id and self.instance.s3_bindip:
