@@ -186,7 +186,7 @@ class ZFSSnapshot(Service):
         Bool('recursive'),
         Int('vmsnaps_count')
     )
-    def zfs_mksnap(self, dataset, name, recursive=False, vmsnaps_count=0):
+    def create(self, dataset, name, recursive=False, vmsnaps_count=0):
         """
         Take a snapshot from a given dataset.
 
@@ -220,7 +220,7 @@ class ZFSSnapshot(Service):
         Str('dataset'),
         Str('snap_name')
     )
-    def zfs_rmsnap(self, dataset, snap_name):
+    def remove(self, dataset, snap_name):
         """
         Remove a snapshot from a given dataset.
 
@@ -253,7 +253,7 @@ class ZFSSnapshot(Service):
         Str('dataset_dst'),
         Bool('destroy_after_clone')
     )
-    def zfs_clone(self, snapshot, dataset_dst, destroy_after_clone=False):
+    def clone(self, snapshot, dataset_dst, destroy_after_clone=False):
         """
         Clone a given snapshot to a new dataset.
 
