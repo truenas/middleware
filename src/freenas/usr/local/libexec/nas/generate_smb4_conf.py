@@ -46,7 +46,7 @@ logging.config.dictConfig({
 
 from freenasUI.common.pipesubr import pipeopen
 from freenasUI.common.log import log_traceback
-
+from freenasUI.common.freenassysctl import freenas_sysctl as fs
 
 log = logging.getLogger('generate_smb4_conf')
 
@@ -920,8 +920,14 @@ def generate_smb4_conf(client, smb4_conf, role):
     if os.path.exists("/usr/local/etc/smbusers"):
         confset1(smb4_conf, "username map = /usr/local/etc/smbusers")
 
-    confset2(smb4_conf, "server min protocol = %s", cifs.min_protocol)
-    confset2(smb4_conf, "server max protocol = %s", cifs.max_protocol)
+    server_min_protocol = fs().services.smb.config.server_min_protocol
+    if server_min_protocol != 'NONE': 
+        confset2(smb4_conf, "server min protocol = %s", server_min_protocol)
+
+    server_max_protocol = fs().services.smb.config.server_max_protocol
+    if server_max_protocol != 'NONE': 
+        confset2(smb4_conf, "server max protocol = %s", server_max_protocol)
+
     if cifs.bindip:
         interfaces = []
 
