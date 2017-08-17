@@ -78,6 +78,9 @@ class EtcService(Service):
                 )
             )
         ],
+        's3': [
+            {'type': 'py', 'path': 'local/minio/certificates'},
+        ]
     }
 
     class Config:
