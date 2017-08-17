@@ -229,7 +229,7 @@ class UserService(CRUDService):
         verrors = ValidationErrors()
 
         if 'group' in data:
-            group = await self.middleware.call('datastore.query', 'account.bsdgroups', [('id', '=', data['group'])], {'prefix': 'bsdgrp_'})
+            group = await self.middleware.call('datastore.query', 'account.bsdgroups', [('id', '=', data['group'])])
             if not group:
                 verrors.add('group', f'Group {data["group"]} not found', errno.ENOENT)
             group = group[0]
@@ -251,7 +251,7 @@ class UserService(CRUDService):
 
         password = await self.__set_password(data)
 
-        await self.__update_sshpubkey(user, group['group'])
+        await self.__update_sshpubkey(user, group['bsdgrp_group'])
 
         home_mode = user.pop('home_mode', None)
         if home_mode is not None:
@@ -270,7 +270,7 @@ class UserService(CRUDService):
             groups = user.pop('groups', [])
             await self.__set_groups(pk, groups)
 
-        await self.middleware.call('datastore.update', 'account.bsdusers', id, user, {'prefix': 'bsdusr_'})
+        await self.middleware.call('datastore.update', 'account.bsdusers', pk, user, {'prefix': 'bsdusr_'})
 
         await self.middleware.call('service.reload', 'user')
 
