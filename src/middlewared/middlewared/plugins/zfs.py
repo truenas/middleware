@@ -1,6 +1,6 @@
 from bsd import geom
 
-from middlewared.schema import Dict, List, Str, accepts
+from middlewared.schema import Dict, List, Str, Bool, Int, accepts
 from middlewared.service import CallError, Service, job
 
 import errno
@@ -173,3 +173,110 @@ class ZFSPoolService(Service):
         t = threading.Thread(target=watch, daemon=True)
         t.start()
         t.join()
+
+
+class ZFSSnapshot(Service):
+
+    class Config:
+        namespace = 'zfs.snapshot'
+
+    @accepts(
+        Str('dataset'),
+        Str('name'),
+        Bool('recursive'),
+        Int('vmsnaps_count')
+    )
+    def zfs_mksnap(self, dataset, name, recursive=False, vmsnaps_count=0):
+        """
+        Take a snapshot from a given dataset.
+
+        Returns:
+            bool: True if succeed otherwise False.
+        """
+        zfs = libzfs.ZFS()
+
+        try:
+            ds = zfs.get_dataset(dataset)
+        except libzfs.ZFSException as err:
+            self.logger.error("{0}".format(err))
+            return False
+
+        try:
+            if recursive:
+                ds.snapshots_recursive('{0}@{1}'.format(dataset, name))
+            else:
+                ds.snapshot('{0}@{1}'.format(dataset, name))
+
+            if vmsnaps_count > 0:
+                ds.properties['freenas:vmsynced'] = libzfs.ZFSUserProperty('Y')
+
+            self.logger.info("Snapshot taken: {0}@{1}".format(dataset, name))
+            return True
+        except libzfs.ZFSException as err:
+                self.logger.error("{0}".format(err))
+                return False
+
+    @accepts(
+        Str('dataset'),
+        Str('snap_name')
+    )
+    def zfs_rmsnap(self, dataset, snap_name):
+        """
+        Remove a snapshot from a given dataset.
+
+        Returns:
+            bool: True if succeed otherwise False.
+        """
+        zfs = libzfs.ZFS()
+
+        try:
+            ds = zfs.get_dataset(dataset)
+        except libzfs.ZFSException as err:
+            self.logger.error("{0}".format(err))
+            return False
+
+        __snap_name = dataset + '@' + snap_name
+        try:
+            for snap in list(ds.snapshots):
+                if snap.name == __snap_name:
+                    ds.destroy_snapshot(snap_name)
+                    self.logger.info("Destroyed snapshot: {0}".format(__snap_name))
+                    return True
+            self.logger.error("There is no snapshot {0} on dataset {1}".format(snap_name, dataset))
+            return False
+        except libzfs.ZFSException as err:
+            self.logger.error("{0}".format(err))
+            return False
+
+    @accepts(
+        Str('snapshot'),
+        Str('dataset_dst'),
+        Bool('destroy_after_clone')
+    )
+    def zfs_clone(self, snapshot, dataset_dst, destroy_after_clone=False):
+        """
+        Clone a given snapshot to a new dataset.
+
+        Returns:
+            bool: True if succeed otherwise False.
+        """
+        zfs = libzfs.ZFS()
+
+        try:
+            snp = zfs.get_snapshot(snapshot)
+        except libzfs.ZFSException as err:
+            self.logger.error("{0}".format(err))
+            return False
+
+        try:
+            snp.clone(dataset_dst)
+            self.logger.info("Cloned snapshot {0} to dataset {1}".format(snapshot, dataset_dst))
+            if destroy_after_clone:
+                __snapshot = snapshot.split('@')
+                dataset_name = __snapshot[0]
+                snapshot_name = __snapshot[1]
+                self.zfs_rmsnap(dataset_name, snapshot_name)
+            return True
+        except libzfs.ZFSException as err:
+            self.logger.error("{0}".format(err))
+            return False
