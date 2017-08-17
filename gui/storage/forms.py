@@ -1985,11 +1985,17 @@ class ManualSnapshotForm(Form):
 
     def clean_ms_name(self):
         regex = re.compile('^[-a-zA-Z0-9_. ]+$')
-        if regex.match(self.cleaned_data['ms_name'].__str__()) is None:
+        name = self.cleaned_data.get('ms_name')
+        if regex.match(name) is None:
             raise forms.ValidationError(
                 _("Only [-a-zA-Z0-9_. ] permitted as snapshot name")
             )
-        return self.cleaned_data['ms_name']
+        snaps = notifier().zfs_snapshot_list(path=f'{self._fs}@{name}')
+        if snaps:
+            raise forms.ValidationError(
+                _('Snapshot with this name already exists')
+            )
+        return name
 
     def commit(self, fs):
         vmsnapname = str(uuid.uuid4())

@@ -28,6 +28,7 @@
 #include <sys/malloc.h>
 #include <sys/module.h>
 #include <sys/kernel.h>
+#include <sys/sbuf.h>
 #include <sys/systm.h>
 #include <sys/sysctl.h>
 
@@ -77,6 +78,10 @@ static struct {
 
 	struct {
 		struct service_timeout s_st;
+		struct {
+			int server_min_protocol;
+			int server_max_protocol;
+		} config;
 	} smb;
 
 	struct {
@@ -101,11 +106,95 @@ static struct {
 
 } *g_services;
 
+enum {
+	CORE = 0,
+	COREPLUS = 1,
+	LANMAN1 = 2,
+	LANMAN2 = 3,
+	NT1 = 4,
+	SMB2 = 5,
+	SMB2_02 = 6,
+	SMB2_10 = 7,
+	SMB2_22 = 8,
+	SMB2_24 = 9,
+	SMB3 = 10,
+	SMB3_00 = 11,
+	SMB3_02 = 12,
+	SMB3_10 = 13,
+	SMB3_11 = 14,
+	SMB_PROTO_NONE = 15,
+	SMB_PROTO_COUNT = 16
+};
+
+static const char *SMB_PROTOS[] = {
+	"CORE",
+	"COREPLUS",
+	"LANMAN1",
+	"LANMAN2",
+	"NT1",
+	"SMB2",
+	"SMB2_02",
+	"SMB2_10",
+	"SMB2_22",
+	"SMB2_24",
+	"SMB3",
+	"SMB3_00",
+	"SMB3_02",
+	"SMB3_10",
+	"SMB3_11",
+	"NONE"
+};
+
+static int
+smbname2proto(const char *name)
+{
+	int i;
+	
+	if (name == NULL)
+		return (-1);
+
+	for (i = CORE;i < SMB_PROTO_COUNT;i++) {
+		if (strcasecmp(name, SMB_PROTOS[i]) == 0)
+			return (i);
+	}
+
+	return (-1);
+}
+
+static const char *
+smbproto2name(int proto)
+{
+	if (proto >= CORE && proto <= SMB3_11)
+		return (SMB_PROTOS[proto]);
+
+	return ("NONE");
+}
+
+static int
+sysctl_smb_server_proto(SYSCTL_HANDLER_ARGS)
+{
+	char proto[FNBUFSIZ_32];
+	int error, new_proto, old_proto;
+
+	old_proto = *(int *)oidp->oid_arg1;
+	strlcpy(proto, smbproto2name(old_proto), sizeof(proto));
+
+	error = sysctl_handle_string(oidp, proto, sizeof(proto), req);
+	if (error == 0 && req->newptr != NULL) {
+		new_proto = smbname2proto(proto);
+		if (new_proto < CORE)
+			return (EINVAL);
+		if (new_proto != old_proto)
+			*(int *)oidp->oid_arg1 = new_proto;
+	}
+
+	return (error);
+}
 
 static int
 services_init(void)
 {
-	struct sysctl_oid *stree, *tmptree;
+	struct sysctl_oid *stree, *tmptree, *tmptree2;
 
 	g_services = malloc(sizeof(*g_services),
 		M_FREENAS_SYSCTL, M_ZERO | M_WAITOK);
@@ -232,6 +321,27 @@ services_init(void)
 		tmptree, &g_services->smb.s_st)) != 0) {
 		FAILRET("Failed to add smb timeout node.\n", -1);
 	}
+
+	g_services->smb.config.server_min_protocol = -1;
+	g_services->smb.config.server_max_protocol = -1;
+
+	if ((tmptree2 = SYSCTL_ADD_NODE(&g_freenas_sysctl_ctx,
+		SYSCTL_CHILDREN(tmptree), OID_AUTO,
+		"config", CTLFLAG_RD, NULL, NULL)) == NULL) {
+		FAILRET("Failed to add SMB config node.\n", -1);
+	}
+	
+	SYSCTL_ADD_PROC(&g_freenas_sysctl_ctx,
+		SYSCTL_CHILDREN(tmptree2), OID_AUTO,
+		"server_min_protocol", CTLTYPE_STRING|CTLFLAG_RW,
+		&g_services->smb.config.server_min_protocol, 0,
+		sysctl_smb_server_proto, "A", "server min protocol");
+
+	SYSCTL_ADD_PROC(&g_freenas_sysctl_ctx,
+		SYSCTL_CHILDREN(tmptree2), OID_AUTO,
+		"server_max_protocol", CTLTYPE_STRING|CTLFLAG_RW,
+		&g_services->smb.config.server_max_protocol, 0,
+		sysctl_smb_server_proto, "A", "server max protocol");
 
 	/* SNMP node */
 	if ((tmptree = SYSCTL_ADD_NODE(&g_freenas_sysctl_ctx,

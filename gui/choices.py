@@ -182,6 +182,25 @@ CIFS_SMB_PROTO_CHOICES = (
     ('SMB3_11', _('SMB3_11')),
 )
 
+class CHARSET(object):
+    def __init__(self):
+        from freenasUI.common.pipesubr import pipeopen
+
+        self.__charsets = []
+
+        p = pipeopen("/usr/bin/iconv -l")
+        out, _ = p.communicate()
+        if out:
+            lines = out.split('\n')
+            for line in lines:
+                if not line:
+                    continue
+                parts = line.split() 
+                self.__charsets.append(parts[0])
+
+    def __iter__(self):
+        return iter((c, c) for c in sorted(self.__charsets))
+
 DOSCHARSET_CHOICES = (
     ('CP437', 'CP437'),
     ('CP850', 'CP850'),

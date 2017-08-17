@@ -922,6 +922,7 @@ class UPSForm(ModelForm):
                 'dijitValidationTextBoxDisabled')
         ports = [x for x in glob.glob('/dev/cua*') if x.find('.') == -1]
         ports.extend(glob.glob('/dev/ugen*'))
+        ports.extend(glob.glob('/dev/uhid*'))
         self.fields['ups_port'] = forms.ChoiceField(
             label=_("Port"),
             required=False,

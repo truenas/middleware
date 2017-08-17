@@ -29,9 +29,10 @@ class UserService(CRUDService):
 
     async def do_update(self, id, data):
 
-        user = await self.middleware.call('datastore.query', 'account.bsdusers', [('id', '=', id)])
+        user = await self.middleware.call('datastore.query', 'account.bsdusers', [('id', '=', id)], {'prefix': 'bsdusr_'})
         if not user:
             raise CallError(f'User {id} does not exist', errno.ENOENT)
+        user = user[0]
 
         if 'sshpubkey' in data:
             keysfile = f'{user["home"]}/.ssh/authorized_keys'

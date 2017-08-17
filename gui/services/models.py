@@ -222,10 +222,10 @@ class CIFS(Model):
     cifs_srv_min_protocol = models.CharField(
         max_length=120,
         verbose_name=_("Server minimum protocol"),
+        default='CORE',
         choices=choices.CIFS_SMB_PROTO_CHOICES,
         help_text=_("The minimum protocol version that will be supported by "
                     "the server"),
-        blank=True,
     )
     cifs_srv_max_protocol = models.CharField(
         max_length=120,
@@ -344,6 +344,11 @@ class AFP(Model):
         blank=True,
         help_text=_("When set, overrides the default Home Share Name."),
         max_length=50,
+    )
+    afp_srv_hometimemachine = models.BooleanField(
+        verbose_name=_("Home Share Time Machine"),
+        default=False,
+        help_text=_("Enable Time Machine for home share."),
     )
     afp_srv_dbpath = PathField(
         verbose_name=_('Database Path'),

@@ -78,7 +78,7 @@ freenas_sysctl_add_error_tree(struct sysctl_ctx_list *ctx,
 
 	SYSCTL_ADD_STRING(ctx, SYSCTL_CHILDREN(errortree), OID_AUTO,
 		"last_error", CTLFLAG_RW, se->last_error.value,
-		se->last_error.size, "last error message");
+		0, "last error message");
 
 	return (0);
 }
