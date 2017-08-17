@@ -960,20 +960,6 @@ CONSULALERTS_TYPES = (
     ('VictorOps', _('VictorOps')),
 )
 
-IDMAP_CHOICES = (
-    ('ad', _('ad')),
-    ('adex', _('adex')),
-    ('autorid', _('autorid')),
-    ('fruit', _('fruit')),
-    ('hash', _('hash')),
-    ('ldap', _('ldap')),
-    ('nss', _('nss')),
-    ('rfc2307', _('rfc2307')),
-    ('rid', _('rid')),
-    ('tdb', _('tdb')),
-    ('tdb2', _('tdb2'))
-)
-
 CERT_TYPE_CA_CHOICES = (
     ('ca', _('Import an existing Certificate Authority')),
     ('internal_ca', _('Create an internal Certificate Authority')),
@@ -992,7 +978,6 @@ CERT_KEY_LENGTH_CHOICES = (
     (4096, '4096')
 )
 
-
 CERT_DIGEST_ALGORITHM_CHOICES = (
     ('SHA1', _('SHA1')),
     ('SHA224', _('SHA224')),
@@ -1000,7 +985,6 @@ CERT_DIGEST_ALGORITHM_CHOICES = (
     ('SHA384', _('SHA384')),
     ('SHA512', _('SHA512'))
 )
-
 
 class COUNTRY_CHOICES(object):
 
@@ -1103,6 +1087,24 @@ LDAP_SCHEMA_CHOICES = (
     # ('AD', 'AD')
 )
 
+class IDMAP_CHOICES(object):
+
+    def __init__(self):
+        self.__idmap_modules_path = '/usr/local/lib/shared-modules/idmap'
+        self.__idmap_modules = []
+        self.__idmap_exclude = {'passdb'}
+
+        if os.path.exists(self.__idmap_modules_path):
+            self.__idmap_modules.extend(
+                filter(lambda m: m not in self.__idmap_exclude,
+                    map(lambda f: f.rpartition('.')[0],
+                        os.listdir(self.__idmap_modules_path)
+                    )
+                )
+            )
+
+    def __iter__(self):
+        return iter((m, m) for m in sorted(self.__idmap_modules))
 
 class CIFS_VFS_OBJECTS(object):
     def __init__(self):

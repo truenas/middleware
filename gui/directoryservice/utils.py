@@ -23,8 +23,11 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
+import logging
+
 from freenasUI.directoryservice import models
 
+log = logging.getLogger('directoryservice.utils')
 
 def get_ds_object(obj_type, obj_id):
     ds_obj = None
@@ -63,6 +66,7 @@ def get_directoryservice_idmap_object(obj_type):
 
 def get_idmap_object(obj_type, obj_id, idmap_type):
     obj_type = int(obj_type)
+    idmap = None
 
     if idmap_type == "ad":
         idmap = models.idmap_ad.objects.get(
@@ -130,11 +134,18 @@ def get_idmap_object(obj_type, obj_id, idmap_type):
             idmap_ds_id=obj_id
         )
 
+    elif idmap_type == "script":
+        idmap = models.idmap_script.objects.get(
+            idmap_ds_type=obj_type,
+            idmap_ds_id=obj_id
+        )
+
     return idmap
 
 
 def get_idmap(obj_type, obj_id, idmap_type):
     obj_type = int(obj_type)
+    idmap = None
 
     ds = get_ds_object(obj_type, obj_id)
 
@@ -187,13 +198,22 @@ def get_idmap(obj_type, obj_id, idmap_type):
         if not idmap:
             idmap = models.idmap_tdb2()
 
-    idmap.idmap_ds_type = ds.ds_type
-    idmap.idmap_ds_id = ds.id
-    idmap.save()
+    elif idmap_type == "script":
+        if not idmap:
+            idmap = models.idmap_script()
 
-    data = {
-        'idmap_type': idmap_type,
-        'idmap_id': idmap.id
-    }
+    log.debug("Idmap = %s", idmap)
+
+    if idmap:
+        idmap.idmap_ds_type = ds.ds_type
+        idmap.idmap_ds_id = ds.id
+        idmap.save()
+
+        data = {
+            'idmap_type': idmap_type,
+            'idmap_id': idmap.id
+        }
+    else:
+        data = None
 
     return data
