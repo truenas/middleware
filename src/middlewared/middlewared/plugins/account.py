@@ -1,4 +1,4 @@
-from middlewared.schema import accepts, Bool, Dict, Int, List, Str
+from middlewared.schema import accepts, Bool, Dict, Int, List, Patch, Str
 from middlewared.service import (
     CallError, CRUDService, ValidationError, ValidationErrors, filterable, private
 )
@@ -219,6 +219,15 @@ class UserService(CRUDService):
         await self.__set_smbpasswd(data['username'], password)
         return pk
 
+    @accepts(
+        Int('id'),
+        Patch(
+            'user_create',
+            'user_update',
+            ('attr', {'update': True}),
+            ('rm', {'name': 'group_create'}),
+        ),
+    )
     async def do_update(self, pk, data):
 
         user = await self.middleware.call('datastore.query', 'account.bsdusers', [('id', '=', pk)], {'prefix': 'bsdusr_'})
