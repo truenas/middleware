@@ -1,5 +1,7 @@
 from middlewared.schema import accepts, Bool, Dict, Int, List, Str
-from middlewared.service import CallError, CRUDService, ValidationErrors, filterable, private
+from middlewared.service import (
+    CallError, CRUDService, ValidationError, ValidationErrors, filterable, private
+)
 from middlewared.utils import run, Popen
 
 import asyncio
@@ -83,7 +85,7 @@ class UserService(CRUDService):
 
     @accepts(Dict(
         'user_create',
-        Int('uid', required=True),
+        Int('uid'),
         Str('username', required=True),
         Int('group'),
         Bool('group_create', default=False),
@@ -189,6 +191,9 @@ class UserService(CRUDService):
             else:
                 new_homedir = True
 
+        if not data.get('uid'):
+            data['uid'] = await self.get_next_uid()
+
         pk = None  # Make sure pk exists to rollback in case of an error
         try:
 
@@ -214,21 +219,26 @@ class UserService(CRUDService):
         await self.__set_smbpasswd(data['username'], password)
         return pk
 
-    async def do_update(self, id, data):
+    async def do_update(self, pk, data):
 
-        user = await self.middleware.call('datastore.query', 'account.bsdusers', [('id', '=', id)], {'prefix': 'bsdusr_'})
+        user = await self.middleware.call('datastore.query', 'account.bsdusers', [('id', '=', pk)], {'prefix': 'bsdusr_'})
         if not user:
-            raise CallError(f'User {id} does not exist', errno.ENOENT)
+            raise ValidationError(None, f'User {pk} does not exist', errno.ENOENT)
         user = user[0]
+
+        verrors = ValidationErrors()
 
         if 'group' in data:
             group = await self.middleware.call('datastore.query', 'account.bsdgroups', [('id', '=', data['group'])], {'prefix': 'bsdgrp_'})
             if not group:
-                raise CallError(f'Group {data["group"]} not found', errno.ENOENT)
+                verrors.add('group', f'Group {data["group"]} not found', errno.ENOENT)
             group = group[0]
         else:
             group = user['group']
             user['group'] = group['id']
+
+        if verrors:
+            raise verrors
 
         # Copy the home directory if it changed
         if 'home' in data and data['home'] not in (user['home'], '/nonexistent'):
@@ -258,7 +268,7 @@ class UserService(CRUDService):
 
         if 'groups' in user:
             groups = user.pop('groups', [])
-            await self.__set_groups(id, groups)
+            await self.__set_groups(pk, groups)
 
         await self.middleware.call('datastore.update', 'account.bsdusers', id, user, {'prefix': 'bsdusr_'})
 
@@ -266,7 +276,7 @@ class UserService(CRUDService):
 
         await self.__set_smbpasswd(user['username'], password)
 
-        return id
+        return pk
 
     async def do_delete(self, pk):
         await self.middleware.call('datastore.delete', 'account.bsdusers', pk)
@@ -284,6 +294,20 @@ class UserService(CRUDService):
             data['unixhash'] = '*'
             data['smbhash'] = '*'
         return password
+
+    @private
+    async def get_next_uid(self):
+        """
+        Get the next available/free uid.
+        """
+        last_uid = 999
+        for i in await self.middleware.call('datastore.query', 'account.bsdusers', [('builtin', '=', False)], {'order_by': ['uid'], 'prefix': 'bsdusr_'}):
+            # If the difference between the last uid and the current one is
+            # bigger than 1, it means we have a gap and can use it.
+            if i['uid'] - last_uid > 1:
+                return last_uid + 1
+            last_uid = i['uid']
+        return last_uid + 1
 
     async def __set_smbpasswd(self, username, password):
         """
