@@ -118,6 +118,7 @@ class KerberosSettingsFAdmin(BaseFreeAdmin):
 
     resource_mixin = KerberosSettingsResourceMixin
 
+
 site.register(models.ActiveDirectory, ActiveDirectoryFAdmin)
 site.register(models.LDAP, LDAPFAdmin)
 site.register(models.NIS, NISFAdmin)
