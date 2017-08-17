@@ -191,14 +191,8 @@ class UserService(CRUDService):
 
         pk = None  # Make sure pk exists to rollback in case of an error
         try:
-            password = data.pop('password', None)
-            if password:
-                data['unixhash'] = crypted_password(password)
-                # See http://samba.org.ru/samba/docs/man/manpages/smbpasswd.5.html
-                data['smbhash'] = f'{data["username"]}:{data["uid"]}:{"X" * 32}:{nt_password(password)}:[U          ]:LCT-{int(time.time()):X}:'
-            else:
-                data['unixhash'] = '*'
-                data['smbhash'] = '*'
+
+            password = await self.__set_password(data)
 
             await self.__update_sshpubkey(data, group['group'])
 
@@ -217,9 +211,7 @@ class UserService(CRUDService):
 
         await self.middleware.call('service.reload', 'user')
 
-        if password:
-            proc = await Popen(['smbpasswd', '-D', '0', '-s', '-a', data['username']], stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
-            await proc.communicate(input=f'{password}\n{password}\n'.encode())
+        await self.__set_smbpasswd(data['username'], password)
         return pk
 
     async def do_update(self, id, data):
@@ -247,6 +239,8 @@ class UserService(CRUDService):
 
         user.update(data)
 
+        password = await self.__set_password(data)
+
         await self.__update_sshpubkey(user, group['group'])
 
         home_mode = user.pop('home_mode', None)
@@ -270,6 +264,8 @@ class UserService(CRUDService):
 
         await self.middleware.call('service.reload', 'user')
 
+        await self.__set_smbpasswd(user['username'], password)
+
         return id
 
     async def do_delete(self, pk):
@@ -277,6 +273,28 @@ class UserService(CRUDService):
         await self.middleware.call('service.reload', 'user')
 
         return pk
+
+    async def __set_password(self, data):
+        password = data.pop('password', None)
+        if password:
+            data['unixhash'] = crypted_password(password)
+            # See http://samba.org.ru/samba/docs/man/manpages/smbpasswd.5.html
+            data['smbhash'] = f'{data["username"]}:{data["uid"]}:{"X" * 32}:{nt_password(password)}:[U          ]:LCT-{int(time.time()):X}:'
+        else:
+            data['unixhash'] = '*'
+            data['smbhash'] = '*'
+        return password
+
+    async def __set_smbpasswd(self, username, password):
+        """
+        Currently the way we set samba passwords is using smbpasswd
+        and that can only happen after the user exists in master.passwd.
+        That is the reason we have two methods/steps to set password.
+        """
+        if not password:
+            return
+        proc = await Popen(['smbpasswd', '-D', '0', '-s', '-a', username], stdout=subprocess.PIPE, stderr=subprocess.PIPE, stdin=subprocess.PIPE)
+        await proc.communicate(input=f'{password}\n{password}\n'.encode())
 
     async def __set_groups(self, pk, groups):
 
