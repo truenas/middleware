@@ -9,7 +9,6 @@ import django.db.models.deletion
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('system', '0009_add_s3_certificate'),
         ('services', '0013_cifs_srv_min_protocol_core'),
     ]
 
