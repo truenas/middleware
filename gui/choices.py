@@ -927,9 +927,9 @@ SHARE_TYPE_CHOICES = (
 )
 
 CASE_SENSITIVITY_CHOICES = (
-    ('sensitive',  _('Sensitive')),
-    ('insensitive',  _('Insensitive')),
-    ('mixed',  _('Mixed'))
+    ('sensitive', _('Sensitive')),
+    ('insensitive', _('Insensitive')),
+    ('mixed', _('Mixed'))
 )
 
 
@@ -1114,6 +1114,7 @@ class IDMAP_CHOICES(object):
     def __iter__(self):
         return iter((m, m) for m in sorted(self.__idmap_modules))
 
+
 class CIFS_VFS_OBJECTS(object):
     def __init__(self):
         self.__vfs_module_path = '/usr/local/lib/shared-modules/vfs'
@@ -1133,6 +1134,7 @@ class CIFS_VFS_OBJECTS(object):
 
     def __iter__(self):
         return iter((m, m) for m in sorted(self.__vfs_modules))
+
 
 AFP_MAP_ACLS_CHOICES = (
     ('none', _('None')),
@@ -1154,10 +1156,10 @@ CLOUD_PROVIDERS = (
 
 
 VM_BOOTLOADER = (
-    #('BHYVELOAD', _('Bhyve Load')),
+    # ('BHYVELOAD', _('Bhyve Load')),
     ('UEFI', _('UEFI')),
     ('UEFI_CSM', _('UEFI-CSM')),
-    #('GRUB', _('Grub')),
+    # ('GRUB', _('Grub')),
 )
 
 

@@ -29,6 +29,7 @@ from freenasUI.directoryservice import models
 
 log = logging.getLogger('directoryservice.utils')
 
+
 def get_ds_object(obj_type, obj_id):
     ds_obj = None
 
