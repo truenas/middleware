@@ -99,6 +99,12 @@ class ValidationErrors(CallException):
     def __bool__(self):
         return bool(self.errors)
 
+    def __str__(self):
+        output = ''
+        for e in self.errors:
+            output += str(e) + '\n'
+        return output
+
 
 class ServiceBase(type):
 
