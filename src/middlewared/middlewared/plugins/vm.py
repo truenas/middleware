@@ -558,9 +558,11 @@ class VMService(CRUDService):
 
         for item in vm['devices']:
             if item['dtype'] == 'NIC':
-                del item['attributes']['mac']
+                if 'mac' in item['attributes']:
+                    del item['attributes']['mac']
             if item['dtype'] == 'VNC':
-                del item['attributes']['vnc_port']
+                if 'vnc_port' in item['attributes']:
+                    del item['attributes']['vnc_port']
             if item['dtype'] == 'DISK':
                 disk_path = '/'.join(item['attributes']['path'].split('/')[-2:])
                 disk_name = disk_path.split('/')[-1]
