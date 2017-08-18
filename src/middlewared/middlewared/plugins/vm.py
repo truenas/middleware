@@ -447,7 +447,7 @@ class VMService(CRUDService):
     )
     async def create_device(self, id, data):
         """Create a new device in an existing vm."""
-        devices_type = ('NIC', 'DISK', 'CDROM', 'VNC')
+        devices_type = ('NIC', 'DISK', 'CDROM', 'VNC', 'RAW')
         devices = data.get('devices', None)
 
         if devices:
