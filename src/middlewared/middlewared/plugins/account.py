@@ -230,6 +230,7 @@ class UserService(CRUDService):
     )
     async def do_update(self, pk, data):
 
+        # TODO: common CRUD method
         user = await self.middleware.call('datastore.query', 'account.bsdusers', [('id', '=', pk)], {'prefix': 'bsdusr_'})
         if not user:
             raise ValidationError(None, f'User {pk} does not exist', errno.ENOENT)
@@ -288,6 +289,16 @@ class UserService(CRUDService):
         return pk
 
     async def do_delete(self, pk):
+
+        # TODO: common CRUD method
+        user = await self.middleware.call('datastore.query', 'account.bsdusers', [('id', '=', pk)], {'prefix': 'bsdusr_'})
+        if not user:
+            raise ValidationError(None, f'User {pk} does not exist', errno.ENOENT)
+        user = user[0]
+
+        if user['builtin']:
+            raise CallError('Cannot delete a built-in user', errno.EINVAL)
+
         await self.middleware.call('datastore.delete', 'account.bsdusers', pk)
         await self.middleware.call('service.reload', 'user')
 
