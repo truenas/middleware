@@ -648,12 +648,6 @@ class Middleware(object):
                 if hasattr(mod, 'setup'):
                     setup_funcs.append(mod.setup)
 
-        for f in setup_funcs:
-            call = f(self)
-            # Allow setup to be a coroutine
-            if asyncio.iscoroutinefunction(f):
-                await call
-
         # Now that all plugins have been loaded we can resolve all method params
         # to make sure every schema is patched and references match
         from middlewared.schema import resolver  # Lazy import so namespace match
@@ -673,6 +667,15 @@ class Middleware(object):
                     resolved += 1
             if resolved == 0:
                 raise ValueError("Not all could be resolved")
+
+        # Only call setup after all schemas have been resolved because
+        # they can call methods with schemas defined.
+        for f in setup_funcs:
+            call = f(self)
+            # Allow setup to be a coroutine
+            if asyncio.iscoroutinefunction(f):
+                await call
+
 
         self.logger.debug('All plugins loaded')
 

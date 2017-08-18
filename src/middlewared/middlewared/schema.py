@@ -154,7 +154,7 @@ class List(EnumMixin, Attribute):
     def clean(self, value):
         value = super(List, self).clean(value)
         if value is None and not self.required:
-            return self.default
+            return copy.copy(self.default)
         if not isinstance(value, list):
             raise Error(self.name, 'Not a list')
         if self.items:
@@ -204,7 +204,7 @@ class Dict(Attribute):
 
     def clean(self, data):
         if data is None and not self.required:
-            return {}
+            data = {}
 
         self.errors = []
         if not isinstance(data, dict):
@@ -337,6 +337,8 @@ def accepts(*schema):
 
         def clean_args(args, kwargs):
             args = list(args)
+            args = args[:args_index] + copy.deepcopy(args[args_index:])
+            kwargs = copy.deepcopy(kwargs)
 
             # Iterate over positional args first, excluding self
             i = 0
@@ -349,6 +351,8 @@ def accepts(*schema):
                 kwarg = f.__code__.co_varnames[x]
                 if kwarg in kwargs:
                     kwargs[kwarg] = nf.accepts[i].clean(kwargs[kwarg])
+                elif len(nf.accepts) >= i + args_index + 1:
+                    kwargs[kwarg] = nf.accepts[i].clean(None)
                 i += 1
             return args, kwargs
 
