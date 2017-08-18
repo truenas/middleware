@@ -288,7 +288,8 @@ class UserService(CRUDService):
 
         return pk
 
-    async def do_delete(self, pk):
+    @accepts(Int('id'), Dict('options', Bool('delete_group', default=True)))
+    async def do_delete(self, pk, options=None):
 
         # TODO: common CRUD method
         user = await self.middleware.call('datastore.query', 'account.bsdusers', [('id', '=', pk)], {'prefix': 'bsdusr_'})
@@ -298,6 +299,9 @@ class UserService(CRUDService):
 
         if user['builtin']:
             raise CallError('Cannot delete a built-in user', errno.EINVAL)
+
+        if options['delete_group']:
+            raise CallError('Delete group not yet implemented')
 
         await self.middleware.call('datastore.delete', 'account.bsdusers', pk)
         await self.middleware.call('service.reload', 'user')
