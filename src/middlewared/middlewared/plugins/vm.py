@@ -566,7 +566,6 @@ class VMService(CRUDService):
                 await self.middleware.call('zfs.snapshot.clone', disk_snapshot, disk_clone)
                 item['attributes']['path'] = '/dev/zvol/' + disk_clone
 
-
         await self.do_create(vm)
         self.logger.info("VM cloned from {0} to {1}".format(origin_name, vm['name']))
 
