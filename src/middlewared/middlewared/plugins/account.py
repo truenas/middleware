@@ -259,7 +259,7 @@ class UserService(CRUDService):
 
         user.update(data)
 
-        password = await self.__set_password(data)
+        password = await self.__set_password(user)
 
         await self.__update_sshpubkey(user, group['bsdgrp_group'])
 
