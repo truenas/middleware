@@ -203,7 +203,7 @@ class ZFSSnapshot(Service):
 
         try:
             if recursive:
-                ds.snapshots_recursive('{0}@{1}'.format(dataset, name))
+                ds.snapshots('{0}@{1}'.format(dataset, name), recursive=True)
             else:
                 ds.snapshot('{0}@{1}'.format(dataset, name))
 
