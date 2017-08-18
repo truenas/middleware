@@ -37,6 +37,7 @@ from freenasUI import choices
 from freenasUI.common.samba import Samba4
 from freenasUI.common.system import domaincontroller_enabled
 from freenasUI.freeadmin.models import DictField, Model, PathField
+from freenasUI.middleware.client import client
 from freenasUI.middleware.notifier import notifier
 
 log = logging.getLogger('account.models')
@@ -230,12 +231,11 @@ class bsdUsers(Model):
         if not self.bsdusr_username or not self.id:
             time.sleep(0.1)
             return
-        unixhash, smbhash = notifier().user_changepassword(
-            username=self.bsdusr_username,
-            password=password,
-        )
-        self.bsdusr_unixhash = unixhash
-        self.bsdusr_smbhash = smbhash
+        with client as c:
+            pk = c.call('user.update', self.id, {'password': password})
+        user = bsdUsers.objects.get(pk=pk)
+        self.bsdusr_unixhash = user.bsdusr_unixhash
+        self.bsdusr_smbhash = user.bsdusr_smbhash
 
     def check_password(self, raw_password):
         # Only allow uid 0 for now
