@@ -372,19 +372,20 @@ class bsdUsersForm(ModelForm, bsdUserGroupMixin):
         return ssh
 
     def save(self, *args, **kwargs):
+        data = self.cleaned_data.copy()
+
         if self.instance.id is None:
             args = ['user.create']
+            data['group_create'] = data.pop('creategroup', False)
         else:
             args = ['user.update', self.instance.id]
 
         # Convert attributes to new middleware API
-        data = self.cleaned_data.copy()
         for k in list(data.keys()):
             if k.startswith('bsdusr_'):
                 data[k[len('bsdusr_'):]] = data.pop(k)
 
         data.pop('password2', None)
-        data['group_create'] = data.pop('creategroup', False)
         data['home_mode'] = data.pop('mode')
         if data['group']:
             data['group'] = data['group'].id
