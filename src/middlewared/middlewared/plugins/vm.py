@@ -1,6 +1,7 @@
 from middlewared.schema import accepts, Int, Str, Dict, List, Bool, Patch
 from middlewared.service import filterable, CRUDService, item_method, private
 from middlewared.utils import Nid, Popen
+from middlewared.client import Client
 
 import asyncio
 import errno
@@ -59,6 +60,13 @@ class VMManager(object):
             return {
                 'state': 'STOPPED',
             }
+
+    async def clone(self, id):
+        vm = await self.service.query([('id', '=', id)], {'get': True})
+        if vm:
+            return vm
+        else:
+            return None
 
 
 class VMSupervisor(object):
@@ -514,6 +522,53 @@ class VMService(CRUDService):
         except Exception as err:
             self.logger.error("===> {0}".format(err))
             return False
+
+    @private
+    async def find_clone(self, name):
+        data = await self.middleware.call('vm.query', [], {'order_by': ['name']})
+        clone_index = 0
+        next_name = ""
+        for vm_name in data:
+            if name in vm_name['name'] and '_clone' in vm_name['name']:
+                name_index = int(vm_name['name'][-1])
+                next_name = vm_name['name'][:-1]
+                if name_index >= clone_index:
+                    clone_index = int(name_index) + 1
+
+        if next_name:
+            next_name = next_name + str(clone_index)
+        else:
+            next_name = name + '_clone' + str(clone_index)
+
+        return next_name
+
+    @accepts(Int('id'))
+    async def clone(self, id):
+        vm = await self._manager.clone(id)
+        origin_name = vm['name']
+        del vm['id']
+
+        vm['name'] = await self.find_clone(vm['name'])
+
+        for item in vm['devices']:
+            if item['dtype'] == 'NIC':
+                del item['attributes']['mac']
+            if item['dtype'] == 'VNC':
+                del item['attributes']['vnc_port']
+            if item['dtype'] == 'DISK':
+                disk_path = '/'.join(item['attributes']['path'].split('/')[-2:])
+                disk_name = disk_path.split('/')[-1]
+                clone_name = disk_name + vm['name']
+                disk_snapshot = vm['name']
+                await self.middleware.call('zfs.snapshot.create', disk_path, disk_snapshot)
+                disk_clone = 'tank/' + clone_name
+                disk_snapshot = disk_path + '@' + vm['name']
+                await self.middleware.call('zfs.snapshot.clone', disk_snapshot, disk_clone)
+                item['attributes']['path'] = '/dev/zvol/' + disk_clone
+
+
+        await self.do_create(vm)
+        self.logger.info("VM cloned from {0} to {1}".format(origin_name, vm['name']))
 
 
 async def kmod_load():
