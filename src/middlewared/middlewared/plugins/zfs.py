@@ -275,7 +275,7 @@ class ZFSSnapshot(Service):
                 __snapshot = snapshot.split('@')
                 dataset_name = __snapshot[0]
                 snapshot_name = __snapshot[1]
-                self.zfs_rmsnap(dataset_name, snapshot_name)
+                self.remove(dataset_name, snapshot_name)
             return True
         except libzfs.ZFSException as err:
             self.logger.error("{0}".format(err))
