@@ -446,21 +446,12 @@ class bsdUserPasswordForm(ModelForm):
             )
         return bsdusr_password2
 
-    def save(self, commit=True):
-        if commit:
-            _notifier = notifier()
-            unixhash, smbhash = _notifier.user_changepassword(
-                username=str(self.instance.bsdusr_username),
-                password=str(self.cleaned_data['bsdusr_password']),
-            )
-            self.instance.bsdusr_unixhash = unixhash
-            self.instance.bsdusr_smbhash = smbhash
-            self.instance.save()
-            try:
-                _notifier.reload("user", timeout=_fs().account.user.timeout.reload)
-            except Exception as e:
-                log.debug("ERROR: failed to reload user: %s", e)
-        return self.instance
+    def save(self, *args, **kwargs):
+        with client as c:
+            pk = c.call('user.update', self.instance.id, {
+                'password': self.cleaned_data['bsdusr_password'],
+            })
+        return models.bsdUsers.objects.get(pk=pk)
 
 
 class bsdUserEmailForm(ModelForm, bsdUserGroupMixin):
