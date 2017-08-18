@@ -222,7 +222,7 @@ class CIFS(Model):
     cifs_srv_min_protocol = models.CharField(
         max_length=120,
         verbose_name=_("Server minimum protocol"),
-        default='CORE',
+        default='LANMAN1',
         choices=choices.CIFS_SMB_PROTO_CHOICES,
         help_text=_("The minimum protocol version that will be supported by "
                     "the server"),
@@ -2343,6 +2343,14 @@ class S3(Model):
         blank=True,
         null=True,
         help_text=_("S3 filesystem directory")
+    )
+    s3_certificate = models.ForeignKey(
+        Certificate,
+        verbose_name=_("Certificate"),
+        limit_choices_to={'cert_CSR__isnull': True},
+        on_delete=models.SET_NULL,
+        blank=True,
+        null=True
     )
 
     class Meta:

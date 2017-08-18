@@ -15,6 +15,6 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='cifs',
             name='cifs_srv_min_protocol',
-            field=models.CharField(choices=[('CORE', 'CORE'), ('COREPLUS', 'COREPLUS'), ('LANMAN1', 'LANMAN1'), ('LANMAN2', 'LANMAN2'), ('NT1', 'NT1'), ('SMB2', 'SMB2'), ('SMB2_02', 'SMB2_02'), ('SMB2_10', 'SMB2_10'), ('SMB3', 'SMB3'), ('SMB3_00', 'SMB3_00'), ('SMB3_02', 'SMB3_02'), ('SMB3_11', 'SMB3_11')], default='CORE', help_text='The minimum protocol version that will be supported by the server', max_length=120, verbose_name='Server minimum protocol'),
+            field=models.CharField(choices=[('CORE', 'CORE'), ('COREPLUS', 'COREPLUS'), ('LANMAN1', 'LANMAN1'), ('LANMAN2', 'LANMAN2'), ('NT1', 'NT1'), ('SMB2', 'SMB2'), ('SMB2_02', 'SMB2_02'), ('SMB2_10', 'SMB2_10'), ('SMB3', 'SMB3'), ('SMB3_00', 'SMB3_00'), ('SMB3_02', 'SMB3_02'), ('SMB3_11', 'SMB3_11')], default='LANMAN1', help_text='The minimum protocol version that will be supported by the server', max_length=120, verbose_name='Server minimum protocol'),
         ),
     ]
