@@ -1313,13 +1313,6 @@ class notifier(metaclass=HookMetaclass):
         self._system('/usr/sbin/pw unlock "%s"' % (username))
         return self.user_gethashedpassword(username)
 
-    def user_changepassword(self, username, password):
-        """Changes user password"""
-        command = '/usr/sbin/pw usermod "%s" -h 0' % (username)
-        unix_hash = self.__issue_pwdchange(username, command, password)
-        smb_hash = self.user_gethashedpassword(username)
-        return (unix_hash, smb_hash)
-
     def user_gethashedpassword(self, username):
         """
         Get the samba hashed password for ``username''
