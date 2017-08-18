@@ -62,10 +62,11 @@ class VMManager(object):
             }
 
     async def clone(self, id):
-        vm = await self.service.query([('id', '=', id)], {'get': True})
-        if vm:
+        try:
+            vm = await self.service.query([('id', '=', id)], {'get': True})
             return vm
-        else:
+        except IndexError:
+            self.logger.error("VM does not exist.")
             return None
 
 
@@ -545,6 +546,11 @@ class VMService(CRUDService):
     @accepts(Int('id'))
     async def clone(self, id):
         vm = await self._manager.clone(id)
+
+        if vm is None:
+            self.logger.error("Cannot clone a VM that does not exist.")
+            return False
+
         origin_name = vm['name']
         del vm['id']
 
@@ -568,6 +574,8 @@ class VMService(CRUDService):
 
         await self.do_create(vm)
         self.logger.info("VM cloned from {0} to {1}".format(origin_name, vm['name']))
+
+        return True
 
 
 async def kmod_load():
