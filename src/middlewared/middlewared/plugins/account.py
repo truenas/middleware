@@ -406,3 +406,38 @@ class GroupService(CRUDService):
         options = options or {}
         options['prefix'] = 'bsdgrp_'
         return await self.middleware.call('datastore.query', 'account.bsdgroups', filters, options)
+
+    @accepts(Dict(
+        'group_create',
+        Int('gid'),
+        Str('name'),
+        Bool('sudo', default=False),
+        Bool('allow_duplicate_gid', default=False),
+        register=True,
+    ))
+    async def do_create(self, data):
+
+        verrors = ValidationErrors()
+
+        group = await self.middleware.call('datastore.query', 'account.bsdgroups', [('group', '=', data['name'])], {'prefix': 'bsdgrp_'})
+        if group:
+            verrors.add('name', f'Group with name "{data["name"]}" already exists', errno.EEXIST)
+
+        allow_duplicate_gid = data.pop('allow_duplicate_gid')
+        if data['gid'] and not allow_duplicate_gid:
+            group = await self.middleware.call('datastore.query', 'account.bsdgroups', [('gid', '=', data['gid'])], {'prefix': 'bsdgrp_'})
+            if group:
+                verrors.add('gid', f'Group ID "{data["gid"]}" already exists', errno.EEXIST)
+
+        if verrors:
+            raise verrors
+
+        group = data.copy()
+        group['group'] = group.pop('name')
+        pk = await self.middleware.call('datastore.insert', 'account.bsdgroups', group, {'prefix': 'bsdgrp_'})
+
+        await self.middleware.call('notifier.groupmap_add', data['name'], data['name'])
+
+        await self.middleware.call('service.reload', 'user')
+
+        return pk
