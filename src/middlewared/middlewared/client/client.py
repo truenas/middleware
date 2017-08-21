@@ -1,6 +1,7 @@
 from . import ejson as json
 from .protocol import DDPProtocol
-from collections import defaultdict
+from .utils import ProgressBar
+from collections import defaultdict, Callable
 from threading import Event as TEvent, Lock, Thread
 from ws4py.client.threadedclient import WebSocketClient
 from ws4py.websocket import WebSocket
@@ -308,12 +309,11 @@ class Client(object):
         job_id = fields['id']
         with self._jobs_lock:
             if fields:
-                if mtype == 'ADDED':
-                    self._jobs[job_id].update(fields)
-                elif mtype == 'CHANGED':
-                    job = self._jobs[job_id]
-                    job.update(fields)
-                    if fields['state'] in ('SUCCESS', 'FAILED'):
+                job = self._jobs[job_id]
+                job.update(fields)
+                if isinstance(job.get('__callback'), Callable):
+                    job['__callback'](job)
+                if mtype == 'CHANGED' and job['state'] in ('SUCCESS', 'FAILED'):
                         # If an Event already exist we just set it to mark it finished.
                         # Otherwise we create a new Event.
                         # This is to prevent a race-condition of job finishing before
@@ -362,12 +362,12 @@ class Client(object):
             # the job event arrives to use existing event.
             with self._jobs_lock:
                 job = self._jobs.get(job_id)
+                event = None
                 if job:
                     event = job.get('__ready')
-                    if event is None:
-                        event = job['__ready'] = Event()
-                else:
-                    event = self._jobs[job_id] = {'__ready': Event()}
+                if event is None:
+                    event = job['__ready'] = Event()
+                job['__callback'] = kwargs.pop('callback')
 
             # Wait indefinitely for the job event with state SUCCESS/FAILED
             event.wait()
@@ -423,6 +423,9 @@ def main():
 
     subparsers = parser.add_subparsers(help='sub-command help', dest='name')
     iparser = subparsers.add_parser('call', help='Call method')
+    iparser.add_argument(
+        '-j', '--job', help='Call a long running job with progress bars', type=bool, default=False
+    )
     iparser.add_argument('method', nargs='+')
 
     iparser = subparsers.add_parser('ping', help='Ping')
@@ -453,7 +456,19 @@ def main():
                 kwargs = {}
                 if args.timeout:
                     kwargs['timeout'] = args.timeout
-                rv = c.call(args.method[0], *list(from_json(args.method[1:])), **kwargs)
+                if args.job:
+                    # display the job progress and status message while we wait
+                    with ProgressBar() as progress_bar:
+                        kwargs.update({
+                            'job': True,
+                            'callback': lambda job: progress_bar.update(
+                                job['progress']['percent'], job['progress']['description']
+                            )
+                        })
+                        rv = c.call(args.method[0], *list(from_json(args.method[1:])), **kwargs)
+                        progress_bar.finish()
+                else:
+                    rv = c.call(args.method[0], *list(from_json(args.method[1:])), **kwargs)
                 if isinstance(rv, (int, str)):
                     print(rv)
                 else:
@@ -463,7 +478,7 @@ def main():
                     if e.error:
                         print(e.error, file=sys.stderr)
                     if e.trace:
-                        print(e.trace['formatted'], file=sys.stderr)
+                        print(e.trace, file=sys.stderr)
                 sys.exit(1)
     elif args.name == 'ping':
         with Client(uri=args.uri) as c:
