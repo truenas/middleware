@@ -161,7 +161,7 @@ class FilteredSelectJSON(forms.widgets.ComboBox):
         return ret
 
 
-class bsdUsersForm(ModelForm, bsdUserGroupMixin):
+class bsdUsersForm(ModelForm):
 
     bsdusr_username = forms.CharField(
         label=_("Username"),
@@ -454,7 +454,7 @@ class bsdUserPasswordForm(ModelForm):
         return models.bsdUsers.objects.get(pk=pk)
 
 
-class bsdUserEmailForm(ModelForm, bsdUserGroupMixin):
+class bsdUserEmailForm(ModelForm):
 
     class Meta:
         model = models.bsdUsers
