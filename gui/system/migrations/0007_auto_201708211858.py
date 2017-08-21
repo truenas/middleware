@@ -6,8 +6,8 @@ from django.db import migrations, models
 
 
 def change_boot_scrubs(apps, schema_editor):
-    boot_scrub = apps.get_model('system', 'Advanced')
-    queryset = boot_scrub.objects.filter(adv_boot_scrub=35)
+    Advanced = apps.get_model('system', 'Advanced')
+    queryset = Advanced.objects.filter(adv_boot_scrub=35)
     for query in queryset:
         query.adv_boot_scrub = 7
         query.save()
