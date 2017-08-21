@@ -480,7 +480,7 @@ class Scrub(Model):
     )
     scrub_threshold = models.PositiveSmallIntegerField(
         verbose_name=_("Threshold days"),
-        default=35,
+        default=7,
         help_text=_("Determine how many days shall be between scrubs"),
     )
     scrub_description = models.CharField(
