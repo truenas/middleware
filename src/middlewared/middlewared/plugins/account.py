@@ -441,3 +441,46 @@ class GroupService(CRUDService):
         await self.middleware.call('service.reload', 'user')
 
         return pk
+
+    @accepts(
+        Int('id'),
+        Patch(
+            'group_create',
+            'group_update',
+            ('attr', {'update': True}),
+        ),
+    )
+    async def do_update(self, pk, data):
+
+        # TODO: common CRUD method
+        group = await self.middleware.call('datastore.query', 'account.bsdgroups', [('id', '=', pk)], {'prefix': 'bsdgrp_'})
+        if not group:
+            raise ValidationError(None, f'Group {pk} does not exist', errno.ENOENT)
+        group = group[0]
+
+        verrors = ValidationErrors()
+
+        existing = await self.middleware.call('datastore.query', 'account.bsdgroups', [('group', '=', data['name']), ('id', '!=', pk)], {'prefix': 'bsdgrp_'})
+        if existing:
+            verrors.add('name', f'Group with name "{data["name"]}" already exists', errno.EEXIST)
+
+        allow_duplicate_gid = data.pop('allow_duplicate_gid', False)
+        if data['gid'] and not allow_duplicate_gid:
+            existing = await self.middleware.call('datastore.query', 'account.bsdgroups', [('gid', '=', data['gid']), ('id', '!=', pk)], {'prefix': 'bsdgrp_'})
+            if existing:
+                verrors.add('gid', f'Group ID "{data["gid"]}" already exists', errno.EEXIST)
+
+        if verrors:
+            raise verrors
+
+        group.update(data)
+        if 'name' in data:
+            group['group'] = group.pop('name')
+
+        await self.middleware.call('datastore.update', 'account.bsdgroups', pk, group, {'prefix': 'bsdgrp_'})
+
+        await self.middleware.call('notifier.groupmap_add', data['name'], data['name'])
+
+        await self.middleware.call('service.reload', 'user')
+
+        return pk
