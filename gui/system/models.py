@@ -340,7 +340,7 @@ class Advanced(Model):
         default='Welcome',
     )
     adv_boot_scrub = models.IntegerField(
-        default=35,
+        default=7,
         editable=False,
     )
     adv_periodic_notifyuser = UserField(
