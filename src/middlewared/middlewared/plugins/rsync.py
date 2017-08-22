@@ -94,7 +94,7 @@ class RsyncService(Service):
                         message = proc_op.strip()
                         try:
                             progress = int([x for x in message.split(' ') if '%' in x][0][:-1])
-                        except ValueError:
+                        except (IndexError, ValueError):
                             pass
                 except BaseException as err:
                     # Catch IOERROR Errno 9 which usually arises because
@@ -159,7 +159,7 @@ class RsyncService(Service):
         remote_address = remote_host if '@' in remote_host else f'"{remote_user}"@{remote_host}'
         remote_password = rcopy.get('remote_password', None)
         password_file = None
-        properties = rcopy.get('properties', defaultdict(bool))
+        properties = rcopy.get('rsync-properties', defaultdict(bool))
 
         # Let's do a brief check of all the user provided parameters
         if is_empty(path):
@@ -237,11 +237,6 @@ class RsyncService(Service):
 
         logger.debug(f'Executing rsync job id: {job.id} with the following command {line}')
         try:
-            # # with ThreadPoolExecutor(max_workers=1) as executor:
-            #     yield from event_loop.run_in_executor(
-            #         executor,
-            #         functools.partial(self.rsync_worker, line, user, job)
-            #     )
             t = threading.Thread(target=self.rsync_worker, args=(line, user, job), daemon=True)
             t.start()
             t.join()
