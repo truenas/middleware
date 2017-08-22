@@ -1,4 +1,5 @@
-import  sys
+import sys
+
 
 class Struct:
     """
@@ -6,6 +7,7 @@ class Struct:
     This is meant for compatibility when switch scripts to use middleware
     client instead of django directly.
     """
+
     def __init__(self, mapping):
         for k, v in mapping.items():
             if isinstance(v, dict):
