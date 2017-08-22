@@ -573,6 +573,9 @@ class VMService(CRUDService):
                 disk_snapshot = disk_path + '@' + vm['name']
                 await self.middleware.call('zfs.snapshot.clone', disk_snapshot, disk_clone)
                 item['attributes']['path'] = '/dev/zvol/' + disk_clone
+            if item['dtype'] == 'RAW':
+                item['attributes']['path'] = ''
+                self.logger.warn("For RAW disk you need copy it manually inside your NAS.")
 
         await self.do_create(vm)
         self.logger.info("VM cloned from {0} to {1}".format(origin_name, vm['name']))
