@@ -6,8 +6,6 @@ import binascii
 import errno
 import os
 
-import libzfs
-
 
 class FilesystemService(Service):
 
