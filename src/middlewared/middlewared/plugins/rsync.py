@@ -29,9 +29,6 @@ import errno
 import pwd
 import tempfile
 import subprocess
-import functools
-# import asyncio
-# from concurrent.futures import ThreadPoolExecutor
 import threading
 from collections import defaultdict
 from middlewared.schema import accepts, Bool, Dict, Str, Int
