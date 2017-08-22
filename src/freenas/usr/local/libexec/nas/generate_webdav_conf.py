@@ -48,19 +48,27 @@ def _chownrecur(path, uid, gid):
 
 
 def dav_passwd_change(passwd, auth_type):
-    if auth_type == 'basic':
-        with open("/etc/local/apache24/webdavhtbasic", "w+") as f:
+    if auth_type == 'none':
+        path = None
+    elif auth_type == 'basic':
+        path = "/etc/local/apache24/webdavhtbasic"
+        with open(path, "w+") as f:
             f.write("webdav:{0}".format(crypt.crypt(passwd, salt())))
-    else:
-        with open("/etc/local/apache24/webdavhtdigest", "w+") as f:
+    elif auth_type == 'digest':
+        path = "/etc/local/apache24/webdavhtdigest"
+        with open(path, "w+") as f:
             f.write(
                 "webdav:webdav:{0}".format(hashlib.md5(f"webdav:webdav:{passwd}".encode()).hexdigest())
             )
-    os.chown(
-        "/etc/local/apache24/webdavht{0}".format(auth_type),
-        pwd.getpwnam("webdav").pw_uid,
-        grp.getgrnam("webdav").gr_gid
-    )
+    else:
+        raise ValueError("Invalid auth_type (must be one of 'none', 'basic', 'digest')")
+
+    if path is not None:
+        os.chown(
+            path,
+            pwd.getpwnam("webdav").pw_uid,
+            grp.getgrnam("webdav").gr_gid
+        )
 
 
 def main():
@@ -82,18 +90,23 @@ def main():
     dav_config_file = '/etc/local/apache24/Includes/webdav.conf'
     davssl_config_file = '/etc/local/apache24/Includes/webdav-ssl.conf'
     dav_auth_text = ""
-    if dav_auth_type == 'digest':
-        dav_auth_text = "AuthDigestProvider file"
+    if dav_auth_type != 'none':
+        if dav_auth_type == 'digest':
+            dav_auth_text = "AuthDigestProvider file"
+
+        dav_auth_text = """
+            AuthType %s
+            AuthName webdav
+            AuthUserFile "/etc/local/apache24/webdavht%s"
+            %s
+            Require valid-user
+        """ % (dav_auth_type, dav_auth_type, dav_auth_text)
     dav_config_pretext = """
         DavLockDB "/etc/local/apache24/var/DavLock"
         AssignUserId webdav webdav
 
         <Directory />
-          AuthType %s
-          AuthName webdav
-          AuthUserFile "/etc/local/apache24/webdavht%s"
           %s
-          Require valid-user
 
           Dav On
           IndexOptions Charset=utf-8
@@ -102,7 +115,7 @@ def main():
           Order allow,deny
           Allow from all
           Options Indexes FollowSymLinks
-        </Directory>\n""" % (dav_auth_type, dav_auth_type, dav_auth_text)
+        </Directory>\n""" % dav_auth_text
     dav_config_posttext = """
           # The following directives disable redirects on non-GET requests for
           # a directory that does not include the trailing slash.  This fixes a
