@@ -138,11 +138,11 @@ class FailoverService(Service):
             Bool('active'),
         ),
     )
-    def control(self, action, options=None):
+    async def control(self, action, options=None):
         if options is None:
             options = {}
 
-        failover = self.middleware.call('datastore.config', 'failover.failover')
+        failover = await self.middleware.call('datastore.config', 'failover.failover')
         if action == 'ENABLE':
             if failover['disabled'] is False:
                 # Already enabled
@@ -151,19 +151,19 @@ class FailoverService(Service):
                 'disabled': False,
                 'master': False,
             })
-            self.middleware.call('datastore.update', 'failover.failover', failover['id'], failover)
-            self.middleware.call('service.start', 'ix-devd')
+            await self.middleware.call('datastore.update', 'failover.failover', failover['id'], failover)
+            await self.middleware.call('service.start', 'ix-devd')
         elif action == 'DISABLE':
             if failover['disabled'] is True:
                 # Already disabled
                 return False
             failover['master'] = True if options.get('active') else False
-            self.middleware.call('datastore.update', 'failover.failover', failover['id'], failover)
-            self.middleware.call('service.start', 'ix-devd')
+            await self.middleware.call('datastore.update', 'failover.failover', failover['id'], failover)
+            await self.middleware.call('service.start', 'ix-devd')
 
     @accepts()
     def database_sync(self):
-        dump = self.middleware.call('datastore.dump')
+        dump = self.middleware.call_sync('datastore.dump')
         with Journal() as j:
             restore = self.call_remote('datastore.restore', [dump])
             if restore:
