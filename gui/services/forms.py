@@ -2104,7 +2104,10 @@ class WebDAVForm(ModelForm):
             cdata['webdav_tcpport'] = self.instance.webdav_tcpport
         if not cdata.get("webdav_tcpportssl"):
             cdata['webdav_tcpportssl'] = self.instance.webdav_tcpportssl
-        if self.cleaned_data.get("webdav_tcpport") == self.cleaned_data.get("webdav_tcpportssl"):
+        if (
+            cdata.get("webdav_protocol") == 'httphttps' and
+            self.cleaned_data.get("webdav_tcpport") == self.cleaned_data.get("webdav_tcpportssl")
+        ):
             self._errors["webdav_tcpport"] = self.error_class(
                 [_("The HTTP and HTTPS ports cannot be the same!")]
             )
