@@ -599,9 +599,13 @@ class GlobalConfigurationForm(ModelForm):
 
     def clean(self):
         cleaned_data = self.cleaned_data
+        domains = cleaned_data.get("gc_domains")
         nameserver1 = cleaned_data.get("gc_nameserver1")
         nameserver2 = cleaned_data.get("gc_nameserver2")
         nameserver3 = cleaned_data.get("gc_nameserver3")
+        if len(domains.split()) > 6:
+            msg = _("More than 6 domain names.")
+            self._errors["gc_domains"] = self.error_class([msg])
         if nameserver3:
             if nameserver2 == "":
                 msg = _("Must fill out nameserver 2 before "
