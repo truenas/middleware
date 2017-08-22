@@ -40,6 +40,7 @@ from django.utils.translation import ugettext_lazy as _
 log = logging.getLogger('choices')
 
 HTAUTH_CHOICES = (
+    ('none', _('No Authentication')),
     ('basic', _('Basic Authentication')),
     ('digest', _('Digest Authentication')),
 )

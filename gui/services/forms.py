@@ -2087,6 +2087,9 @@ class WebDAVForm(ModelForm):
         self.fields['webdav_protocol'].widget.attrs['onChange'] = (
             "webdavprotocolToggle();"
         )
+        self.fields['webdav_htauth'].widget.attrs['onChange'] = (
+            "webdavhtauthToggle();"
+        )
         self.__original_save()
 
     def clean(self):
