@@ -159,6 +159,7 @@ class UserService(CRUDService):
             else:
                 group = await self.middleware.call('group.create', {'name': data['username']})
                 group = (await self.middleware.call('group.query', [('id', '=', group)]))[0]
+            data['group'] = group['id']
         else:
             group = await self.middleware.call('group.query', [('id', '=', data['group'])])
             if not group:
@@ -425,13 +426,16 @@ class GroupService(CRUDService):
             verrors.add('name', f'Group with name "{data["name"]}" already exists', errno.EEXIST)
 
         allow_duplicate_gid = data.pop('allow_duplicate_gid')
-        if data['gid'] and not allow_duplicate_gid:
+        if data.get('gid') and not allow_duplicate_gid:
             group = await self.middleware.call('datastore.query', 'account.bsdgroups', [('gid', '=', data['gid'])], {'prefix': 'bsdgrp_'})
             if group:
                 verrors.add('gid', f'Group ID "{data["gid"]}" already exists', errno.EEXIST)
 
         if verrors:
             raise verrors
+
+        if not data.get('gid'):
+            data['gid'] = await self.get_next_gid()
 
         group = data.copy()
         group['group'] = group.pop('name')
@@ -505,3 +509,17 @@ class GroupService(CRUDService):
         await self.middleware.call('service.reload', 'user')
 
         return pk
+
+    @private
+    async def get_next_gid(self):
+        """
+        Get the next available/free gid.
+        """
+        last_gid = 999
+        for i in await self.middleware.call('datastore.query', 'account.bsdgroups', [('builtin', '=', False)], {'order_by': ['gid'], 'prefix': 'bsdgrp_'}):
+            # If the difference between the last gid and the current one is
+            # bigger than 1, it means we have a gap and can use it.
+            if i['gid'] - last_gid > 1:
+                return last_gid + 1
+            last_gid = i['gid']
+        return last_gid + 1
