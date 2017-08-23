@@ -22,7 +22,7 @@
 # IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE
 # POSSIBILITY OF SUCH DAMAGE.
 #
-#####################################################################
+######################################################################
 import dateutil
 import logging
 import os
@@ -340,7 +340,7 @@ class Advanced(Model):
         default='Welcome',
     )
     adv_boot_scrub = models.IntegerField(
-        default=35,
+        default=7,
         editable=False,
     )
     adv_periodic_notifyuser = UserField(
