@@ -47,35 +47,6 @@ class JailService(CRUDService):
         else:
             raise RuntimeError("{} not found!".format(jail))
 
-    @accepts(Str("lst_type", enum=["ALL", "RELEASE", "BASE", "TEMPLATE"]),
-             Dict("options",
-                  Bool("full"),
-                  Bool("header"),
-                  ))
-    def list(self, lst_type, options=None):
-        """Lists either 'all', 'base', 'template'"""
-        self.check_dataset_existence()
-
-        lst_type = lst_type.lower()
-
-        if options is None:
-            options = {}
-
-        if lst_type == "release":
-            lst_type = "base"
-
-        full = options.get("full", True)
-        hdr = options.get("header", False)
-
-        if lst_type == "plugins":
-            from iocage.lib.ioc_fetch import IOCFetch
-
-            _list = IOCFetch("").fetch_plugin_index("", _list=True)
-        else:
-            _list = IOCList(lst_type, hdr, full).list_datasets()
-
-        return _list
-
     @accepts(Str("jail"), Dict("options",
                                Str("prop"),
                                Bool("plugin"),
