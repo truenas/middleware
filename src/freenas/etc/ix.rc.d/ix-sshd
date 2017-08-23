@@ -22,7 +22,7 @@ generate_sshd()
     cfg=/usr/local/etc/ssh/sshd_config
 
     if [ ! -d /root/.ssh ]; then
-	mkdir -p /root/.ssh
+        mkdir -p /root/.ssh
     fi
 
     RO_FREENAS_CONFIG=$(ro_sqlite ${name} 2> /tmp/${name}.fail && rm /tmp/${name}.fail)
@@ -30,15 +30,15 @@ generate_sshd()
     
     local options=$(${FREENAS_SQLITE_CMD} ${RO_FREENAS_CONFIG} "SELECT ssh_options FROM services_ssh ORDER BY -id LIMIT 1")
     ${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
-	"SELECT $sf FROM services_ssh ORDER BY -id LIMIT 1" | \
-	while eval read -r $f; do
-	    ssh_sftp_log_level=${ssh_sftp_log_level:-"ERROR"}
-	    ssh_sftp_log_facility=${ssh_sftp_log_facility:-"AUTH"}
-	    cat > $cfg << __EOF__
+        "SELECT $sf FROM services_ssh ORDER BY -id LIMIT 1" | \
+        while eval read -r $f; do
+            ssh_sftp_log_level=${ssh_sftp_log_level:-"ERROR"}
+            ssh_sftp_log_facility=${ssh_sftp_log_facility:-"AUTH"}
+            cat > $cfg << __EOF__
 Subsystem       sftp    /usr/libexec/sftp-server -l ${ssh_sftp_log_level} -f ${ssh_sftp_log_facility}
 __EOF__
-	    if [ -z "$options" ]; then
-		cat >> $cfg << __EOF__
+            if [ -z "$options" ]; then
+                cat >> $cfg << __EOF__
 Protocol 2
 UseDNS no
 ChallengeResponseAuthentication no
@@ -47,85 +47,85 @@ ClientAliveInterval 15
 NoneEnabled yes
 VersionAddendum none
 __EOF__
-	    else
-		if ! echo $options | grep -q "Protocol"; then
-		    echo "Protocol 2" >> $cfg
-		fi
-		
-		if ! echo $options | grep -q "UseDNS"; then
-		    echo "UseDNS no" >> $cfg
-		fi
-		
-		if ! echo $options | grep -q "ChallengeResponseAuthentication"; then
-		    echo "ChallengeResponseAuthentication no" >> $cfg
-		fi
-		
-		if ! echo $options | grep -q "ClientAliveCountMax"; then
-		    echo "ClientAliveCountMax 3" >> $cfg
-		fi
-		
-		if ! echo $options | grep -q "ClientAliveInterval"; then
-		    echo "ClientAliveInterval 15" >> $cfg
-		fi
-		
-		if ! echo "$options"| grep -q "NoneEnabled"; then
-		    echo "NoneEnabled yes" >> $cfg
-		fi
-		# Add aes128-cbc by default. See #20044
-		if ! echo "$options"| grep -qi "Ciphers "; then
-		    echo "Ciphers +aes128-cbc" >> $cfg
-		fi
-	    fi
-	    if [ "$ssh_tcpport" -gt 0 ]; then
-		echo "Port $ssh_tcpport" >> $cfg
-	    fi
-	    if [ -n "$ssh_bindiface" ]; then
-	        echo "ListenAddress 127.0.0.1" >> $cfg
-	        echo $ssh_bindiface|awk -F ',' '{for(i=1; i<=NF; ++i) print $i}' | while read -r iface; do
+            else
+                if ! echo $options | grep -q "Protocol"; then
+                    echo "Protocol 2" >> $cfg
+                fi
+                
+                if ! echo $options | grep -q "UseDNS"; then
+                    echo "UseDNS no" >> $cfg
+                fi
+                
+                if ! echo $options | grep -q "ChallengeResponseAuthentication"; then
+                    echo "ChallengeResponseAuthentication no" >> $cfg
+                fi
+                
+                if ! echo $options | grep -q "ClientAliveCountMax"; then
+                    echo "ClientAliveCountMax 3" >> $cfg
+                fi
+                
+                if ! echo $options | grep -q "ClientAliveInterval"; then
+                    echo "ClientAliveInterval 15" >> $cfg
+                fi
+                
+                if ! echo "$options"| grep -q "NoneEnabled"; then
+                    echo "NoneEnabled yes" >> $cfg
+                fi
+                # Add aes128-cbc by default. See #20044
+                if ! echo "$options"| grep -qi "Ciphers "; then
+                    echo "Ciphers +aes128-cbc" >> $cfg
+                fi
+            fi
+            if [ "$ssh_tcpport" -gt 0 ]; then
+                echo "Port $ssh_tcpport" >> $cfg
+            fi
+            if [ -n "$ssh_bindiface" ]; then
+                echo "ListenAddress 127.0.0.1" >> $cfg
+                echo $ssh_bindiface|awk -F ',' '{for(i=1; i<=NF; ++i) print $i}' | while read -r iface; do
                     ifconfig ${iface} inet |  awk '/inet /{print $2}' 2> /dev/null | while read -r bindip; do
-		        echo "ListenAddress ${bindip}" >> $cfg
-	            done
+                        echo "ListenAddress ${bindip}" >> $cfg
+                    done
                     ifconfig ${iface} inet6 |  awk '/inet6 /{print $2}' 2> /dev/null | while read -r bindip; do
-		        echo "ListenAddress ${bindip}" >> $cfg
-	            done
-		done
-	    fi
+                        echo "ListenAddress ${bindip}" >> $cfg
+                    done
+                done
+            fi
 
-	    if [ "$ssh_rootlogin" = 1 ]; then
-		echo "PermitRootLogin yes" >> $cfg
-	    else
-		echo "PermitRootLogin without-password" >> $cfg
-	    fi
-	    if [ "$ssh_tcpfwd" = 1 ]; then
-		echo "AllowTcpForwarding yes" >> $cfg
-	    else
-		echo "AllowTcpForwarding no" >> $cfg
-	    fi
-	    if [ "$ssh_compression" = 1 ]; then
-		echo "Compression delayed" >> $cfg
-	    else
-		echo "Compression no" >> $cfg
-	    fi
-	    if [ "$ssh_passwordauth" = 1 ]; then
-		echo "PasswordAuthentication yes" >> $cfg
-	    fi
-	    if [ "$ssh_kerberosauth" = 1 ]; then
-		echo "GSSAPIAuthentication yes" >> $cfg
-	    fi
-	    ssh_pubkeyauth=1		# Missing in schema
-	    if [ "$ssh_pubkeyauth" = 1 ]; then
-		echo "PubkeyAuthentication yes" >> $cfg
-	    fi
-	    
-	    echo $options >> $cfg
+            if [ "$ssh_rootlogin" = 1 ]; then
+                echo "PermitRootLogin yes" >> $cfg
+            else
+                echo "PermitRootLogin without-password" >> $cfg
+            fi
+            if [ "$ssh_tcpfwd" = 1 ]; then
+                echo "AllowTcpForwarding yes" >> $cfg
+            else
+                echo "AllowTcpForwarding no" >> $cfg
+            fi
+            if [ "$ssh_compression" = 1 ]; then
+                echo "Compression delayed" >> $cfg
+            else
+                echo "Compression no" >> $cfg
+            fi
+            if [ "$ssh_passwordauth" = 1 ]; then
+                echo "PasswordAuthentication yes" >> $cfg
+            fi
+            if [ "$ssh_kerberosauth" = 1 ]; then
+                echo "GSSAPIAuthentication yes" >> $cfg
+            fi
+            ssh_pubkeyauth=1                # Missing in schema
+            if [ "$ssh_pubkeyauth" = 1 ]; then
+                echo "PubkeyAuthentication yes" >> $cfg
+            fi
+            
+            echo $options >> $cfg
     done
     
     # Generate a passwordless key-pair for automatic replication
     if [ ! -d /data/ssh ]; then
-	mkdir -m 755 /data/ssh
+        mkdir -m 755 /data/ssh
     fi
     if [ ! -e /data/ssh/replication ]; then
-	/usr/local/bin/ssh-keygen -qt rsa -N "" -C "Key for replication" -b 2048 -f /data/ssh/replication
+        /usr/local/bin/ssh-keygen -qt rsa -N "" -C "Key for replication" -b 2048 -f /data/ssh/replication
     fi
     ${FREENAS_SQLITE_CMD} ${RO_FREENAS_CONFIG} "SELECT ssh_remote_hostkey FROM storage_replremote" > /usr/local/etc/ssh/ssh_known_hosts
 
