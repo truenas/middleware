@@ -157,7 +157,8 @@ class UserService(CRUDService):
             if group:
                 group = group[0]
             else:
-                raise CallError('Creating a group not yet supported')
+                group = await self.middleware.call('group.create', {'name': data['username']})
+                group = (await self.middleware.call('group.query', [('id', '=', group)]))[0]
         else:
             group = await self.middleware.call('group.query', [('id', '=', data['group'])])
             if not group:
