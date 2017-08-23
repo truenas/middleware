@@ -25,6 +25,32 @@ class JailService(CRUDService):
             pass
         return filter_list(jails, filters, options)
 
+    @accepts(Str("jail"), Dict("options",
+                               Str("prop"),
+                               Bool("plugin"),
+                               ))
+    def do_update(self, jail, options):
+        """Sets a jail property."""
+        prop = options["prop"]
+        plugin = options["plugin"]
+
+        tag, uuid, path = self.check_jail_existence(jail)
+
+        if "template" in prop.split("=")[0]:
+            if "template" in path and prop != "template=no":
+                raise RuntimeError(f"{uuid} ({tag}) is already a template!")
+            elif "template" not in path and prop != "template=yes":
+                raise RuntimeError(f"{uuid} ({tag}) is already a jail!")
+
+        if plugin:
+            _prop = prop.split(".")
+
+            return IOCJson(path, cli=True).json_plugin_set_value(_prop)
+
+        IOCJson(path, cli=True).json_set_value(prop)
+
+        return True
+
     @private
     def check_dataset_existence(self):
         IOCCheck()
@@ -46,32 +72,6 @@ class JailService(CRUDService):
             raise RuntimeError("Multiple jails found for {}:".format(jail))
         else:
             raise RuntimeError("{} not found!".format(jail))
-
-    @accepts(Str("jail"), Dict("options",
-                               Str("prop"),
-                               Bool("plugin"),
-                               ))
-    def set(self, jail, options):
-        """Sets a jail property."""
-        prop = options["prop"]
-        plugin = options["plugin"]
-
-        tag, uuid, path = self.check_jail_existence(jail)
-
-        if "template" in prop.split("=")[0]:
-            if "template" in path and prop != "template=no":
-                raise RuntimeError(f"{uuid} ({tag}) is already a template!")
-            elif "template" not in path and prop != "template=yes":
-                raise RuntimeError(f"{uuid} ({tag}) is already a jail!")
-
-        if plugin:
-            _prop = prop.split(".")
-
-            return IOCJson(path, cli=True).json_plugin_set_value(_prop)
-
-        IOCJson(path, cli=True).json_set_value(prop)
-
-        return True
 
     @accepts(Dict("options",
                   Str("release"),
@@ -171,7 +171,7 @@ class JailService(CRUDService):
                   List("props"),
                   ))
     @job()
-    async def create(self, job, options):
+    async def do_create(self, job, options):
         """Creates a jail."""
         from iocage.lib.ioc_create import IOCCreate
         self.check_dataset_existence()
@@ -291,7 +291,7 @@ class JailService(CRUDService):
 
     @accepts(Str("jail"))
     @job(lock=lambda args: f"jail_update:{args[-1]}")
-    def update(self, job, jail):
+    def update_jail_to_latest_patch(self, job, jail):
         """Updates specified jail to latest patch level."""
         from iocage.lib.ioc_fetch import IOCFetch
 
