@@ -37,45 +37,39 @@ generate_sshd()
             cat > $cfg << __EOF__
 Subsystem       sftp    /usr/libexec/sftp-server -l ${ssh_sftp_log_level} -f ${ssh_sftp_log_facility}
 __EOF__
-            if [ -z "$options" ]; then
-                cat >> $cfg << __EOF__
-Protocol 2
-UseDNS no
-ChallengeResponseAuthentication no
-ClientAliveCountMax 3
-ClientAliveInterval 15
-NoneEnabled yes
-VersionAddendum none
-__EOF__
-            else
-                if ! echo $options | grep -q "Protocol"; then
-                    echo "Protocol 2" >> $cfg
-                fi
-                
-                if ! echo $options | grep -q "UseDNS"; then
-                    echo "UseDNS no" >> $cfg
-                fi
-                
-                if ! echo $options | grep -q "ChallengeResponseAuthentication"; then
-                    echo "ChallengeResponseAuthentication no" >> $cfg
-                fi
-                
-                if ! echo $options | grep -q "ClientAliveCountMax"; then
-                    echo "ClientAliveCountMax 3" >> $cfg
-                fi
-                
-                if ! echo $options | grep -q "ClientAliveInterval"; then
-                    echo "ClientAliveInterval 15" >> $cfg
-                fi
-                
-                if ! echo "$options"| grep -q "NoneEnabled"; then
-                    echo "NoneEnabled yes" >> $cfg
-                fi
-                # Add aes128-cbc by default. See #20044
-                if ! echo "$options"| grep -qi "Ciphers "; then
-                    echo "Ciphers +aes128-cbc" >> $cfg
-                fi
+            if ! echo $options | grep -q "Protocol"; then
+                echo "Protocol 2" >> $cfg
             fi
+
+            if ! echo $options | grep -q "UseDNS"; then
+                echo "UseDNS no" >> $cfg
+            fi
+
+            if ! echo $options | grep -q "ChallengeResponseAuthentication"; then
+                echo "ChallengeResponseAuthentication no" >> $cfg
+            fi
+
+            if ! echo $options | grep -q "ClientAliveCountMax"; then
+                echo "ClientAliveCountMax 3" >> $cfg
+            fi
+
+            if ! echo $options | grep -q "ClientAliveInterval"; then
+                echo "ClientAliveInterval 15" >> $cfg
+            fi
+
+            if ! echo "$options"| grep -q "NoneEnabled"; then
+                echo "NoneEnabled yes" >> $cfg
+            fi
+
+            if ! echo "$options"| grep -q "VersionAddendum"; then
+                echo "VersionAddendum none" >> $cfg
+            fi
+
+            # Add aes128-cbc by default. See #20044
+            if ! echo "$options"| grep -qi "Ciphers "; then
+                echo "Ciphers +aes128-cbc" >> $cfg
+            fi
+
             if [ "$ssh_tcpport" -gt 0 ]; then
                 echo "Port $ssh_tcpport" >> $cfg
             fi
