@@ -1,21 +1,29 @@
 import os
-
+import iocage.lib.iocage as ioc
+from iocage.lib.ioc_check import IOCCheck
 from iocage.lib.ioc_json import IOCJson
 # iocage's imports are per command, these are just general facilities
 from iocage.lib.ioc_list import IOCList
 from middlewared.schema import Bool, Dict, List, Str, accepts
-from middlewared.service import Service, job, private
+from middlewared.service import CRUDService, job, private, filterable
 
 
-class JailService(Service):
+class JailService(CRUDService):
 
-    def __init__(self, *args):
-        super(JailService, self).__init__(*args)
+    @filterable
+    async def query(self, filters=None, options=None):
+        options = options or {}
+        jails = []
+        try:
+            jails = ioc.IOCage().get("all", recursive=True).values()
+        except BaseException:
+            # Brandon is working on fixing this generic except, till then I
+            # am not going to make the perfect the enemy of the good enough!
+            pass
+        return jails
 
     @private
     def check_dataset_existence(self):
-        from iocage.lib.ioc_check import IOCCheck
-
         IOCCheck()
 
     @private
