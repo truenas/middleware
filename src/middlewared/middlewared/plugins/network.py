@@ -482,7 +482,8 @@ class DNSService(Service):
             if gc['gc_domain']:
                 domains.append('{}\n'.format(gc['gc_domain']))
             if gc['gc_domains']:
-                domains.append(gc['gc_domains'])
+                for domain in gc['gc_domains'].split():
+                    domains.append(domain)
             if gc['gc_nameserver1']:
                 nameservers.append(gc['gc_nameserver1'])
             if gc['gc_nameserver2']:
@@ -493,8 +494,10 @@ class DNSService(Service):
         resolvconf = ''
 
         if domains:
+            resolvconf += "search"
             for domain in domains:
-                resolvconf += 'search {}'.format(domain)
+                resolvconf += ' {}'.format(domain)
+            resolvconf += '\n'
 
         for ns in nameservers:
             resolvconf += 'nameserver {}\n'.format(ns)
