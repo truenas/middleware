@@ -75,7 +75,7 @@ class GlobalConfiguration(Model):
         verbose_name=_("Additional domains"),
         default='',
         blank=True,
-        help_text="Delimit domains by spaces."
+        help_text=_("Delimit domains by spaces.")
     )
     gc_ipv4gateway = IP4AddressField(
         blank=True,

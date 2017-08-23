@@ -465,13 +465,13 @@ class DNSService(Service):
 
     @private
     async def sync(self):
-        domain = None
+        domains = []
         nameservers = []
 
         if await self.middleware.call('notifier.common', 'system', 'domaincontroller_enabled'):
             cifs = await self.middleware.call('datastore.query', 'services.cifs', None, {'get': True})
             dc = await self.middleware.call('datastore.query', 'services.DomainController', None, {'get': True})
-            domain = dc['dc_realm']
+            domains = dc['dc_realm']
             if cifs['cifs_srv_bindip']:
                 for ip in cifs['cifs_srv_bindip']:
                     nameservers.append(ip)
@@ -480,7 +480,9 @@ class DNSService(Service):
         else:
             gc = await self.middleware.call('datastore.query', 'network.globalconfiguration', None, {'get': True})
             if gc['gc_domain']:
-                domain = gc['gc_domain']
+                domains.append('{}\n'.format(gc['gc_domain']))
+            if gc['gc_domains']:
+                domains.append(gc['gc_domains'])
             if gc['gc_nameserver1']:
                 nameservers.append(gc['gc_nameserver1'])
             if gc['gc_nameserver2']:
@@ -489,8 +491,11 @@ class DNSService(Service):
                 nameservers.append(gc['gc_nameserver3'])
 
         resolvconf = ''
-        if domain:
-            resolvconf += 'search {}\n'.format(domain)
+
+        if domains:
+            for domain in domains:
+                resolvconf += 'search {}'.format(domain)
+
         for ns in nameservers:
             resolvconf += 'nameserver {}\n'.format(ns)
 

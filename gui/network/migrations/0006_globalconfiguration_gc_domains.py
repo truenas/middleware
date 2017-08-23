@@ -7,7 +7,7 @@ from django.db import migrations, models
 
 class Migration(migrations.Migration):
     dependencies = [
-        ('network', '0005_vlan_pcp.py')
+        ('network', '0005_vlan_pcp')
     ]
 
     operations = [
