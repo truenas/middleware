@@ -374,16 +374,16 @@ class bsdUsersForm(ModelForm):
     def save(self, *args, **kwargs):
         data = self.cleaned_data.copy()
 
+        # Convert attributes to new middleware API
+        for k in list(data.keys()):
+            if k.startswith('bsdusr_'):
+                data[k[len('bsdusr_'):]] = data.pop(k)
+
         if self.instance.id is None:
             args = ['user.create']
             data['group_create'] = data.pop('creategroup', False)
         else:
             args = ['user.update', self.instance.id]
-
-        # Convert attributes to new middleware API
-        for k in list(data.keys()):
-            if k.startswith('bsdusr_'):
-                data[k[len('bsdusr_'):]] = data.pop(k)
 
         data.pop('password2', None)
         data['home_mode'] = data.pop('mode')
@@ -452,6 +452,10 @@ class bsdUserPasswordForm(ModelForm):
                 'password': self.cleaned_data['bsdusr_password'],
             })
         return models.bsdUsers.objects.get(pk=pk)
+
+    def delete(self, **kwargs):
+        with client as c:
+            c.call('group.delete', self.id)
 
 
 class bsdUserEmailForm(ModelForm):

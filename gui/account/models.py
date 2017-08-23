@@ -71,10 +71,6 @@ class bsdGroups(Model):
     def __str__(self):
         return self.bsdgrp_group
 
-    def delete(self, using=None, reload=True, pwdelete=True):
-        with client as c:
-            c.call('group.delete', self.id)
-
 
 def get_sentinel_group():
     return bsdGroups.objects.get(bsdgrp_group='nobody')
