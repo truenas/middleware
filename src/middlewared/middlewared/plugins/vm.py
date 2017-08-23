@@ -564,15 +564,15 @@ class VMService(CRUDService):
                 if 'vnc_port' in item['attributes']:
                     del item['attributes']['vnc_port']
             if item['dtype'] == 'DISK':
-                disk_path = '/'.join(item['attributes']['path'].split('/')[-2:])
-                disk_name = disk_path.split('/')[-1]
-                clone_name = disk_name + vm['name']
-                disk_snapshot = vm['name']
-                await self.middleware.call('zfs.snapshot.create', disk_path, disk_snapshot)
-                disk_clone = 'tank/' + clone_name
-                disk_snapshot = disk_path + '@' + vm['name']
-                await self.middleware.call('zfs.snapshot.clone', disk_snapshot, disk_clone)
-                item['attributes']['path'] = '/dev/zvol/' + disk_clone
+                disk_src_path = '/'.join(item['attributes']['path'].split('/dev/zvol/')[-1:])
+                disk_snapshot_name = vm['name']
+                disk_snapshot_path = disk_src_path + '@' + disk_snapshot_name
+                clone_dst_path = disk_src_path + '_' + vm['name']
+
+                await self.middleware.call('zfs.snapshot.create', disk_src_path, disk_snapshot_name)
+                await self.middleware.call('zfs.snapshot.clone', disk_snapshot_path, clone_dst_path)
+
+                item['attributes']['path'] = '/dev/zvol/' + clone_dst_path
             if item['dtype'] == 'RAW':
                 item['attributes']['path'] = ''
                 self.logger.warn("For RAW disk you need copy it manually inside your NAS.")
