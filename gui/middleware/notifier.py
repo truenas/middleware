@@ -2102,6 +2102,10 @@ class notifier(metaclass=HookMetaclass):
         from freenasUI.system.views import INSTALLFILE
         import freenasOS.Configuration as Configuration
         dirpath = os.path.dirname(path)
+        try:
+            os.chmod(dirpath, 0o755)
+        except OSError as e:
+            raise MiddlwareError("Unable to set permissions on update cache directory %s: %s" % (dirpath, str(e)))
         open(INSTALLFILE, 'w').close()
         try:
             subprocess.check_output(
