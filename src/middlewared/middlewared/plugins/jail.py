@@ -7,6 +7,7 @@ from iocage.lib.ioc_json import IOCJson
 from iocage.lib.ioc_list import IOCList
 from middlewared.schema import Bool, Dict, List, Str, accepts
 from middlewared.service import CRUDService, job, private, filterable
+from middlewared.utils import filter_list
 
 
 class JailService(CRUDService):
@@ -20,8 +21,9 @@ class JailService(CRUDService):
         except BaseException:
             # Brandon is working on fixing this generic except, till then I
             # am not going to make the perfect the enemy of the good enough!
+            self.logger.debug("iocage failed to fetch jails", exc_info=True)
             pass
-        return jails
+        return filter_list(jails, filters, options)
 
     @private
     def check_dataset_existence(self):
