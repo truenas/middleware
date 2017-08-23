@@ -72,17 +72,8 @@ class bsdGroups(Model):
         return self.bsdgrp_group
 
     def delete(self, using=None, reload=True, pwdelete=True):
-        if self.bsdgrp_builtin is True:
-            raise ValueError(_(
-                "Group %s is built-in and can not be deleted!"
-            ) % (self.bsdgrp_group))
-        if pwdelete:
-            notifier().user_deletegroup(self.bsdgrp_group)
-        if domaincontroller_enabled():
-            Samba4().group_delete(self.bsdgrp_group)
-        super(bsdGroups, self).delete(using)
-        if reload:
-            notifier().reload("user")
+        with client as c:
+            c.call('group.delete', self.id)
 
 
 def get_sentinel_group():
