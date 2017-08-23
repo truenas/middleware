@@ -128,6 +128,8 @@ class Bool(Attribute):
 class Int(Attribute):
 
     def clean(self, value):
+        if value is None and not self.required:
+            return self.default
         if not isinstance(value, int):
             if isinstance(value, str) and value.isdigit():
                 return int(value)
