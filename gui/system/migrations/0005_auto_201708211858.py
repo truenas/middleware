@@ -16,7 +16,7 @@ def change_boot_scrubs(apps, schema_editor):
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('system', '0006_update_tun_var_size'),
+        ('system', '0004_auto_20170503_0608'),
     ]
 
     operations = [
