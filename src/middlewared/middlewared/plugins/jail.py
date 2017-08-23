@@ -102,39 +102,6 @@ class JailService(CRUDService):
 
         return True
 
-    @accepts(Str("jail"), Dict("options",
-                               Str("prop"),
-                               Bool("plugin"),
-                               ))
-    def get(self, jail, options):
-        """Gets a jail property."""
-        prop = options["prop"]
-        plugin = options["plugin"]
-
-        tag, uuid, path = self.check_jail_existence(jail)
-
-        if "template" in prop.split("=")[0]:
-            if "template" in path and prop != "template=no":
-                raise RuntimeError(f"{uuid} ({tag}) is already a template!")
-            elif "template" not in path and prop != "template=yes":
-                raise RuntimeError(f"{uuid} ({tag}) is already a jail!")
-
-        if plugin:
-            _prop = prop.split(".")
-            return IOCJson(path).json_plugin_set_value(_prop)
-
-        if prop == "all":
-            return IOCJson(path).json_get_value(prop)
-        elif prop == "state":
-            status, _ = IOCList.list_get_jid(path.split("/")[3])
-
-            if status:
-                return "UP"
-            else:
-                return "DOWN"
-
-        return IOCJson(path).json_get_value(prop)
-
     @accepts(Dict("options",
                   Str("release"),
                   Str("server", default="ftp.freebsd.org"),
