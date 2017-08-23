@@ -222,10 +222,10 @@ class CIFS(Model):
     cifs_srv_min_protocol = models.CharField(
         max_length=120,
         verbose_name=_("Server minimum protocol"),
-        default='LANMAN1',
         choices=choices.CIFS_SMB_PROTO_CHOICES,
         help_text=_("The minimum protocol version that will be supported by "
                     "the server"),
+        blank=True,
     )
     cifs_srv_max_protocol = models.CharField(
         max_length=120,
