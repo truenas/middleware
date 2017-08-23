@@ -484,3 +484,23 @@ class GroupService(CRUDService):
         await self.middleware.call('service.reload', 'user')
 
         return pk
+
+    async def do_delete(self, pk):
+
+        # TODO: common CRUD method
+        group = await self.middleware.call('datastore.query', 'account.bsdgroups', [('id', '=', pk)], {'prefix': 'bsdgrp_'})
+        if not group:
+            raise ValidationError(None, f'Group {pk} does not exist', errno.ENOENT)
+        group = group[0]
+
+        if group['builtin']:
+            raise CallError('Builtin group cannot be deleted', errno.EACCES)
+
+        if await self.middleware.call('notifier.common', 'system', 'domaincontroller_enabled'):
+            await self.middleware.call('notifier.samba4', 'group_delete', group['group'])
+
+        await self.middleware.call('datastore.delete', 'account.bsdgroups', pk)
+
+        await self.middleware.call('service.reload', 'user')
+
+        return pk
