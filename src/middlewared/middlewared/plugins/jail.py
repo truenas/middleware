@@ -1,4 +1,5 @@
 import os
+import libzfs
 import iocage.lib.iocage as ioc
 from iocage.lib.ioc_check import IOCCheck
 from iocage.lib.ioc_json import IOCJson
@@ -15,7 +16,7 @@ class JailService(CRUDService):
         options = options or {}
         jails = []
         try:
-            jails = ioc.IOCage().get("all", recursive=True).values()
+            jails = [list(jail.values())[0] for jail in ioc.IOCage().get("all", recursive=True)]
         except BaseException:
             # Brandon is working on fixing this generic except, till then I
             # am not going to make the perfect the enemy of the good enough!
@@ -296,8 +297,6 @@ class JailService(CRUDService):
     @accepts(Str("pool"))
     def activate(self, pool):
         """Activates a pool for iocage usage, and deactivates the rest."""
-        import libzfs
-
         zfs = libzfs.ZFS(history=True, history_prefix="<iocage>")
         pools = zfs.pools
         prop = "org.freebsd.ioc:active"
