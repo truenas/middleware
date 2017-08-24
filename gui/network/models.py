@@ -75,7 +75,7 @@ class GlobalConfiguration(Model):
         verbose_name=_("Additional domains"),
         default='',
         blank=True,
-        help_text=_("Delimit domains by spaces.")
+        help_text=_("Additional domains to be searched can be entered here, separated by spaces. Be aware that adding search domains can cause slow DNS lookups.")
     )
     gc_ipv4gateway = IP4AddressField(
         blank=True,
