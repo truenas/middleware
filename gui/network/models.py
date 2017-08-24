@@ -70,6 +70,13 @@ class GlobalConfiguration(Model):
             regex=r'^[a-zA-Z\.\-\_0-9]+$',
         )],
     )
+    gc_domains = models.TextField(
+        max_length=256,
+        verbose_name=_("Additional domains"),
+        default='',
+        blank=True,
+        help_text=_("Delimit domains by spaces.")
+    )
     gc_ipv4gateway = IP4AddressField(
         blank=True,
         default='',
