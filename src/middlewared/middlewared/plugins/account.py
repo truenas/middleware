@@ -311,6 +311,18 @@ class UserService(CRUDService):
                 except Exception:
                     self.logger.warn(f'Failed to delete primary group of {user["username"]}', exc_info=True)
 
+        await run('smbpasswd', '-x', user['username'], check=False)
+
+        if await self.middleware.call('notifier.common', 'system', 'domaincontroller_enabled'):
+            await self.middleware.call('notifier.samba4', 'user_delete', user['username'])
+
+        # TODO: add a hook in CIFS service
+        cifs = await self.middleware.call('datastore.query', 'services.cifs', [], {'prefix': 'cifs_srv_'})
+        if cifs:
+            cifs = cifs[0]
+            if cifs['guest'] == user['username']:
+                await self.middleware.call('datastore.update', 'services.cifs', cifs['id'], {'guest': 'nobody'}, {'prefix': 'cifs_srv_'})
+
         await self.middleware.call('datastore.delete', 'account.bsdusers', pk)
         await self.middleware.call('service.reload', 'user')
 
