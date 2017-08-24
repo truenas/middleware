@@ -238,32 +238,11 @@ class bsdUsers(Model):
             ) == str(self.bsdusr_unixhash)
 
     def delete(self, using=None, reload=True, delete_group=True):
-        from freenasUI.services.models import CIFS
         if self.bsdusr_builtin is True:
             raise ValueError(_(
                 "User %s is built-in and can not be deleted!"
             ) % (self.bsdusr_username))
-        notifier().user_deleteuser(self.bsdusr_username)
-        if domaincontroller_enabled():
-            Samba4().user_delete(self.bsdusr_username)
-        try:
-            gobj = self.bsdusr_group
-            count = bsdGroupMembership.objects.filter(
-                bsdgrpmember_group=gobj).count()
-            count2 = bsdUsers.objects.filter(bsdusr_group=gobj).exclude(
-                id=self.id).count()
-            if delete_group and not gobj.bsdgrp_builtin and count == 0 and count2 == 0:
-                gobj.delete(reload=False, pwdelete=False)
-        except:
-            log.warn('Failed to delete primary group of %s', self, exc_info=True)
-        cifs = CIFS.objects.latest('id')
-        if cifs:
-            if cifs.cifs_srv_guest == self.bsdusr_username:
-                cifs.cifs_srv_guest = 'nobody'
-                cifs.save()
         super(bsdUsers, self).delete(using)
-        if reload:
-            notifier().reload("user")
 
     def save(self, *args, **kwargs):
         # TODO: Add last_login field

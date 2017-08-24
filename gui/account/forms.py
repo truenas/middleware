@@ -99,30 +99,6 @@ class NewPasswordForm(Form):
         return valid
 
 
-class bsdUserGroupMixin:
-
-    def pw_checkname(self, bsdusr_username):
-        if bsdusr_username.startswith('-'):
-            raise forms.ValidationError(_("Your name cannot start with \"-\""))
-        if bsdusr_username.find('$') not in (-1, len(bsdusr_username) - 1):
-            raise forms.ValidationError(
-                _("The character $ is only allowed as the final character")
-            )
-        INVALID_CHARS = ' ,\t:+&#%\^()!@~\*?<>=|\\/"'
-        invalids = []
-        for char in bsdusr_username:
-            # INVALID_CHARS nor 8-bit characters are allowed
-            if (
-                char in INVALID_CHARS and char not in invalids
-            ) or ord(char) & 0x80:
-                invalids.append(char)
-        if invalids:
-            raise forms.ValidationError(
-                _("Your name contains invalid characters (%s).") % (
-                    ", ".join(invalids),
-                ))
-
-
 class FilteredSelectJSON(forms.widgets.ComboBox):
 #class FilteredSelectJSON(forms.widgets.FilteringSelect):
 
@@ -487,7 +463,7 @@ class DeleteUserForm(forms.Form):
             )
 
 
-class bsdGroupsForm(ModelForm, bsdUserGroupMixin):
+class bsdGroupsForm(ModelForm):
 
     class Meta:
         fields = '__all__'
@@ -519,7 +495,6 @@ class bsdGroupsForm(ModelForm, bsdUserGroupMixin):
 
     def clean_bsdgrp_group(self):
         bsdgrp_group = self.cleaned_data.get("bsdgrp_group")
-        self.pw_checkname(bsdgrp_group)
         if self.instance.id is None:
             try:
                 models.bsdGroups.objects.get(bsdgrp_group=bsdgrp_group)
@@ -555,20 +530,26 @@ class bsdGroupsForm(ModelForm, bsdUserGroupMixin):
         return cdata
 
     def save(self):
-        ins = super(bsdGroupsForm, self).save()
+        data = self.cleaned_data.copy()
 
-        if self.instance and hasattr(self.instance, "_original_bsdgrp_group") and \
-            self.instance._original_bsdgrp_group != self.instance.bsdgrp_group:
-            notifier().groupmap_delete(ntgroup=self.instance._original_bsdgrp_group)
+        # Convert attributes to new middleware API
+        for k in list(data.keys()):
+            if k.startswith('bsdgrp_'):
+                data[k[len('bsdgrp_'):]] = data.pop(k)
 
-        notifier().groupmap_add(unixgroup=self.instance.bsdgrp_group,
-            ntgroup=self.instance.bsdgrp_group)
+        data['name'] = data.pop('group')
 
-        try:
-            notifier().reload("user", timeout=_fs().account.user.timeout.reload)
-        except Exception as e:
-            log.debug("ERROR: failed to reload user: %s", e)
-        return ins
+        if self.instance.id is None:
+            args = ['group.create']
+            data['allow_duplicate_gid'] = data.pop('allow', False)
+        else:
+            data.pop('allow', None)
+            args = ['group.update', self.instance.id]
+
+        with client as c:
+            pk = c.call(*args, data)
+
+        return models.bsdGroups.objects.get(pk=pk)
 
 
 class bsdGroupToUserForm(Form):
