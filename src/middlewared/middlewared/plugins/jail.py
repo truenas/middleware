@@ -109,24 +109,11 @@ class JailService(CRUDService):
     )
     def do_update(self, jail, options):
         """Sets a jail property."""
+        iocage = ioc.IOCage(skip_jails=True, jail=jail)
         prop = options["prop"]
         plugin = options["plugin"]
 
-        tag, uuid, path = self.check_jail_existence(jail)
-
-        if "template" in prop.split("=")[0]:
-            if "template" in path and prop != "template=no":
-                raise RuntimeError(f"{uuid} ({tag}) is already a template!")
-            elif "template" not in path and prop != "template=yes":
-                raise RuntimeError(f"{uuid} ({tag}) is already a jail!")
-
-        if plugin:
-            _prop = prop.split(".")
-
-            return IOCJson(path, cli=True).json_plugin_set_value(_prop)
-
-        IOCJson(path, cli=True).json_set_value(prop)
-
+        iocage.set(prop, plugin)
         return True
 
     @accepts(Str("jail"))
