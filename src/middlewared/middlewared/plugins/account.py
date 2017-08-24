@@ -316,17 +316,6 @@ class UserService(CRUDService):
 
         return pk
 
-    async def __set_password(self, data):
-        password = data.pop('password', None)
-        if password:
-            data['unixhash'] = crypted_password(password)
-            # See http://samba.org.ru/samba/docs/man/manpages/smbpasswd.5.html
-            data['smbhash'] = f'{data["username"]}:{data["uid"]}:{"X" * 32}:{nt_password(password)}:[U          ]:LCT-{int(time.time()):X}:'
-        else:
-            data['unixhash'] = '*'
-            data['smbhash'] = '*'
-        return password
-
     @private
     async def get_next_uid(self):
         """
@@ -340,6 +329,18 @@ class UserService(CRUDService):
                 return last_uid + 1
             last_uid = i['uid']
         return last_uid + 1
+
+
+    async def __set_password(self, data):
+        password = data.pop('password', None)
+        if password:
+            data['unixhash'] = crypted_password(password)
+            # See http://samba.org.ru/samba/docs/man/manpages/smbpasswd.5.html
+            data['smbhash'] = f'{data["username"]}:{data["uid"]}:{"X" * 32}:{nt_password(password)}:[U          ]:LCT-{int(time.time()):X}:'
+        else:
+            data['unixhash'] = '*'
+            data['smbhash'] = '*'
+        return password
 
     async def __set_smbpasswd(self, username, password):
         """
