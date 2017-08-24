@@ -120,6 +120,23 @@ class JailService(CRUDService):
 
         return True
 
+    @accepts(Str("jail"))
+    def do_delete(self, jail):
+        """Takes a jail and destroys it."""
+        from iocage.lib.ioc_destroy import IOCDestroy
+
+        tag, uuid, path = self.check_jail_existence(jail)
+        conf = IOCJson(path).json_load()
+        status, _ = IOCList().list_get_jid(uuid)
+
+        if status:
+            from iocage.lib.ioc_stop import IOCStop
+            IOCStop(uuid, tag, path, conf, silent=True)
+
+        IOCDestroy().destroy_jail(path)
+
+        return True
+
     @private
     def check_dataset_existence(self):
         IOCCheck()
@@ -169,23 +186,6 @@ class JailService(CRUDService):
             return True
 
         IOCFetch(release, server, user, password).fetch_release()
-
-        return True
-
-    @accepts(Str("jail"))
-    def destroy(self, jail):
-        """Takes a jail and destroys it."""
-        from iocage.lib.ioc_destroy import IOCDestroy
-
-        tag, uuid, path = self.check_jail_existence(jail)
-        conf = IOCJson(path).json_load()
-        status, _ = IOCList().list_get_jid(uuid)
-
-        if status:
-            from iocage.lib.ioc_stop import IOCStop
-            IOCStop(uuid, tag, path, conf, silent=True)
-
-        IOCDestroy().destroy_jail(path)
 
         return True
 
