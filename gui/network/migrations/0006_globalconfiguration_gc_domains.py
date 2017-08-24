@@ -19,7 +19,7 @@ class Migration(migrations.Migration):
                 verbose_name="Additional domains",
                 default='',
                 blank=True,
-                help_text="Delimit domains by spaces."
+                help_text="Additional domains to be searched can be entered here, separated by spaces. Be aware that adding search domains can cause slow DNS lookups."
             )
         ),
 ]
