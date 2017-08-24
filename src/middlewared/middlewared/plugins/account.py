@@ -430,7 +430,7 @@ class GroupService(CRUDService):
     @accepts(Dict(
         'group_create',
         Int('gid'),
-        Str('name'),
+        Str('name', required=True),
         Bool('sudo', default=False),
         Bool('allow_duplicate_gid', default=False),
         register=True,
@@ -442,6 +442,8 @@ class GroupService(CRUDService):
         group = await self.middleware.call('datastore.query', 'account.bsdgroups', [('group', '=', data['name'])], {'prefix': 'bsdgrp_'})
         if group:
             verrors.add('name', f'Group with name "{data["name"]}" already exists', errno.EEXIST)
+
+        pw_checkname(verrors, 'name', data['name'])
 
         allow_duplicate_gid = data.pop('allow_duplicate_gid')
         if data.get('gid') and not allow_duplicate_gid:
@@ -487,6 +489,8 @@ class GroupService(CRUDService):
             existing = await self.middleware.call('datastore.query', 'account.bsdgroups', [('group', '=', data['name']), ('id', '!=', pk)], {'prefix': 'bsdgrp_'})
             if existing:
                 verrors.add('name', f'Group with name "{data["name"]}" already exists', errno.EEXIST)
+
+            pw_checkname(verrors, 'name', data['name'])
 
         allow_duplicate_gid = data.pop('allow_duplicate_gid', False)
         if data.get('gid') and not allow_duplicate_gid:
