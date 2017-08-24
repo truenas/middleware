@@ -3,7 +3,6 @@ import libzfs
 import iocage.lib.iocage as ioc
 from iocage.lib.ioc_check import IOCCheck
 from iocage.lib.ioc_json import IOCJson
-from iocage.lib.ioc_destroy import IOCDestroy
 from iocage.lib.ioc_fstab import IOCFstab
 from iocage.lib.ioc_fetch import IOCFetch
 from iocage.lib.ioc_start import IOCStart
@@ -133,15 +132,9 @@ class JailService(CRUDService):
     @accepts(Str("jail"))
     def do_delete(self, jail):
         """Takes a jail and destroys it."""
-
-        tag, uuid, path = self.check_jail_existence(jail)
-        conf = IOCJson(path).json_load()
-        status, _ = IOCList().list_get_jid(uuid)
-
-        if status:
-            IOCStop(uuid, tag, path, conf, silent=True)
-
-        IOCDestroy().destroy_jail(path)
+        iocage = ioc.IOCage(skip_jails=True, jail=jail)
+        # TODO: Port children checking, release destroying.
+        iocage.destroy_jail()
 
         return True
 
