@@ -302,8 +302,14 @@ class UserService(CRUDService):
         if user['builtin']:
             raise CallError('Cannot delete a built-in user', errno.EINVAL)
 
-        if options['delete_group']:
-            raise CallError('Delete group not yet implemented')
+        if options['delete_group'] and not user['group']['bsdgrp_builtin']:
+            count = await self.middleware.call('datastore.query', 'account.bsdgroupmembership', [('group', '=', user['group']['id'])], {'prefix': 'bsdgrpmember_', 'count': True})
+            count2 = await self.middleware.call('datastore.query', 'account.bsdusers', [('group', '=', user['group']['id']), ('id', '!=', pk)], {'prefix': 'bsdusr_', 'count': True})
+            if count == 0 and count2 == 0:
+                try:
+                    await self.middleware.call('group.delete', user['group']['id'])
+                except Exception:
+                    self.logger.warn(f'Failed to delete primary group of {user["username"]}', exc_info=True)
 
         await self.middleware.call('datastore.delete', 'account.bsdusers', pk)
         await self.middleware.call('service.reload', 'user')

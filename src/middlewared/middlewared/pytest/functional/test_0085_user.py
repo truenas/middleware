@@ -41,6 +41,7 @@ def test_user_0500_update(conn, data):
 
 def test_user_0900_delete(conn, data):
 
+    data['id'] = 70
     if 'id' not in data:
         pytest.skip('No user id found')
 
