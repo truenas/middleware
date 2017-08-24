@@ -502,10 +502,15 @@ class GroupService(CRUDService):
             raise verrors
 
         group.update(data)
-        if 'name' in data:
+        delete_groupmap = False
+        if 'name' in data and data['name'] != group['group']:
+            delete_groupmap = group['group']
             group['group'] = group.pop('name')
 
         await self.middleware.call('datastore.update', 'account.bsdgroups', pk, group, {'prefix': 'bsdgrp_'})
+
+        if delete_groupmap:
+            await self.middleware.call('notifier.groupmap_delete', delete_groupmap)
 
         await self.middleware.call('notifier.groupmap_add', group['group'], group['group'])
 
