@@ -4,6 +4,15 @@ import iocage.lib.iocage as ioc
 from iocage.lib.ioc_check import IOCCheck
 from iocage.lib.ioc_create import IOCCreate
 from iocage.lib.ioc_json import IOCJson
+from iocage.lib.ioc_destroy import IOCDestroy
+from iocage.lib.ioc_fstab import IOCFstab
+from iocage.lib.ioc_fetch import IOCFetch
+from iocage.lib.ioc_start import IOCStart
+from iocage.lib.ioc_stop import IOCStop
+from iocage.lib.ioc_clean import IOCClean
+from iocage.lib.ioc_exec import IOCExec
+from iocage.lib.ioc_upgrade import IOCUpgrade
+from iocage.lib.ioc_image import IOCImage
 # iocage's imports are per command, these are just general facilities
 from iocage.lib.ioc_list import IOCList
 from middlewared.schema import Bool, Dict, List, Str, accepts
@@ -123,14 +132,12 @@ class JailService(CRUDService):
     @accepts(Str("jail"))
     def do_delete(self, jail):
         """Takes a jail and destroys it."""
-        from iocage.lib.ioc_destroy import IOCDestroy
 
         tag, uuid, path = self.check_jail_existence(jail)
         conf = IOCJson(path).json_load()
         status, _ = IOCList().list_get_jid(uuid)
 
         if status:
-            from iocage.lib.ioc_stop import IOCStop
             IOCStop(uuid, tag, path, conf, silent=True)
 
         IOCDestroy().destroy_jail(path)
@@ -170,7 +177,6 @@ class JailService(CRUDService):
     @job(lock=lambda args: f"jail_fetch:{args[-1]}")
     def fetch(self, job, options):
         """Fetches a release or plugin."""
-        from iocage.lib.ioc_fetch import IOCFetch
         self.check_dataset_existence()
 
         release = options["release"]
@@ -192,7 +198,6 @@ class JailService(CRUDService):
     @accepts(Str("jail"))
     def start(self, jail):
         """Takes a jail and starts it."""
-        from iocage.lib.ioc_start import IOCStart
 
         tag, uuid, path = self.check_jail_existence(jail)
         conf = IOCJson(path).json_load()
@@ -212,7 +217,6 @@ class JailService(CRUDService):
     @accepts(Str("jail"))
     def stop(self, jail):
         """Takes a jail and stops it."""
-        from iocage.lib.ioc_stop import IOCStop
 
         tag, uuid, path = self.check_jail_existence(jail)
         conf = IOCJson(path).json_load()
@@ -246,7 +250,6 @@ class JailService(CRUDService):
         """
         Adds an fstab mount to the jail, mounts if the jail is running.
         """
-        from iocage.lib.ioc_fstab import IOCFstab
         self.check_dataset_existence()
 
         tag, uuid, path = self.check_jail_existence(jail)
@@ -283,7 +286,6 @@ class JailService(CRUDService):
     @accepts(Str("ds_type", enum=["ALL", "JAIL", "TEMPLATE", "RELEASE"]))
     def clean(self, ds_type):
         """Cleans all iocage datasets of ds_type"""
-        from iocage.lib.ioc_clean import IOCClean
 
         if ds_type == "JAIL":
             IOCClean().clean_jails()
@@ -302,7 +304,6 @@ class JailService(CRUDService):
                                                 Str("jail_user")))
     def exec(self, jail, command, options):
         """Issues a command inside a jail."""
-        from iocage.lib.ioc_exec import IOCExec
 
         tag, uuid, path = self.check_jail_existence(jail)
         host_user = options["host_user"]
@@ -322,7 +323,6 @@ class JailService(CRUDService):
     @job(lock=lambda args: f"jail_update:{args[-1]}")
     def update_jail_to_latest_patch(self, job, jail):
         """Updates specified jail to latest patch level."""
-        from iocage.lib.ioc_fetch import IOCFetch
 
         tag, uuid, path = self.check_jail_existence(jail)
         status, jid = IOCList.list_get_jid(uuid)
@@ -347,7 +347,6 @@ class JailService(CRUDService):
     @job(lock=lambda args: f"jail_upgrade:{args[-1]}")
     def upgrade(self, job, jail, release):
         """Upgrades specified jail to specified RELEASE."""
-        from iocage.lib.ioc_upgrade import IOCUpgrade
 
         tag, uuid, path = self.check_jail_existence(jail)
         status, jid = IOCList.list_get_jid(uuid)
@@ -373,7 +372,6 @@ class JailService(CRUDService):
     @job(lock=lambda args: f"jail_export:{args[-1]}")
     def export(self, job, jail):
         """Exports jail to zip file"""
-        from iocage.lib.ioc_image import IOCImage
         tag, uuid, path = self.check_jail_existence(jail)
         status, jid = IOCList.list_get_jid(uuid)
         started = False
@@ -393,7 +391,6 @@ class JailService(CRUDService):
     @job(lock=lambda args: f"jail_import:{args[-1]}")
     def _import(self, job, jail):
         """Imports jail from zip file"""
-        from iocage.lib.ioc_image import IOCImage
 
         IOCImage().import_jail(jail)
 
