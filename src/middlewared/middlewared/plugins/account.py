@@ -330,7 +330,6 @@ class UserService(CRUDService):
             last_uid = i['uid']
         return last_uid + 1
 
-
     async def __set_password(self, data):
         password = data.pop('password', None)
         if password:
@@ -472,12 +471,13 @@ class GroupService(CRUDService):
 
         verrors = ValidationErrors()
 
-        existing = await self.middleware.call('datastore.query', 'account.bsdgroups', [('group', '=', data['name']), ('id', '!=', pk)], {'prefix': 'bsdgrp_'})
-        if existing:
-            verrors.add('name', f'Group with name "{data["name"]}" already exists', errno.EEXIST)
+        if 'name' in data:
+            existing = await self.middleware.call('datastore.query', 'account.bsdgroups', [('group', '=', data['name']), ('id', '!=', pk)], {'prefix': 'bsdgrp_'})
+            if existing:
+                verrors.add('name', f'Group with name "{data["name"]}" already exists', errno.EEXIST)
 
         allow_duplicate_gid = data.pop('allow_duplicate_gid', False)
-        if data['gid'] and not allow_duplicate_gid:
+        if data.get('gid') and not allow_duplicate_gid:
             existing = await self.middleware.call('datastore.query', 'account.bsdgroups', [('gid', '=', data['gid']), ('id', '!=', pk)], {'prefix': 'bsdgrp_'})
             if existing:
                 verrors.add('gid', f'Group ID "{data["gid"]}" already exists', errno.EEXIST)
@@ -491,7 +491,7 @@ class GroupService(CRUDService):
 
         await self.middleware.call('datastore.update', 'account.bsdgroups', pk, group, {'prefix': 'bsdgrp_'})
 
-        await self.middleware.call('notifier.groupmap_add', data['name'], data['name'])
+        await self.middleware.call('notifier.groupmap_add', group['group'], group['group'])
 
         await self.middleware.call('service.reload', 'user')
 
