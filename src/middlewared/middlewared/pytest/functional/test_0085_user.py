@@ -18,7 +18,7 @@ def test_user_0100_create(conn, data):
         'username': 'test555',
         'full_name': 'Test User',
         'password': '12345',
-        'group': 1,
+        'group_create': True,
     }])
 
     assert req.status_code == 200
@@ -41,7 +41,6 @@ def test_user_0500_update(conn, data):
 
 def test_user_0900_delete(conn, data):
 
-    data['id'] = 70
     if 'id' not in data:
         pytest.skip('No user id found')
 
