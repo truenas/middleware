@@ -7,3 +7,7 @@ reinstall: clean
 
 dev: reinstall
 	middlewared -f restart
+
+reinstall-remote:
+	sh -c 'if [ -z "${HOST}" ]; then echo "You need to set HOST"; exit 1; fi;'
+	tar cf - . | ssh root@${HOST} 'cat > /tmp/middleware.tar; set tmpdir=`mktemp -d`; tar xf /tmp/middleware.tar -C $$tmpdir; cd $$tmpdir; make reinstall; service middlewared restart'
