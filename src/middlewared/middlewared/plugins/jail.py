@@ -2,7 +2,6 @@ import os
 import libzfs
 import iocage.lib.iocage as ioc
 from iocage.lib.ioc_check import IOCCheck
-from iocage.lib.ioc_create import IOCCreate
 from iocage.lib.ioc_json import IOCJson
 from iocage.lib.ioc_destroy import IOCDestroy
 from iocage.lib.ioc_fstab import IOCFstab
@@ -70,7 +69,7 @@ class JailService(CRUDService):
                   ))
     @job()
     async def create_job(self, job, options):
-        self.check_dataset_existence()
+        iocage = ioc.IOCage(skip_jails=True)
 
         release = options["release"]
         template = options["template"]
@@ -88,10 +87,11 @@ class JailService(CRUDService):
 
         if not os.path.isdir(f"{iocroot}/releases/{release}") and not \
                 template and not empty:
-            await self.middleware.call('jail.fetch', {"release": release}).wait()
+            await self.middleware.call('jail.fetch',
+                                       {"release": release}).wait()
 
         await self.middleware.threaded(
-            IOCCreate(
+            iocage.create(
                 release, props, 0, pkglist, template=template,
                 short=short, uuid=uuid, basejail=basejail,
                 empty=empty
