@@ -2,6 +2,7 @@ import os
 import libzfs
 import iocage.lib.iocage as ioc
 from iocage.lib.ioc_check import IOCCheck
+from iocage.lib.ioc_create import IOCCreate
 from iocage.lib.ioc_json import IOCJson
 # iocage's imports are per command, these are just general facilities
 from iocage.lib.ioc_list import IOCList
@@ -25,10 +26,78 @@ class JailService(CRUDService):
             pass
         return filter_list(jails, filters, options)
 
-    @accepts(Str("jail"), Dict("options",
-                               Str("prop"),
-                               Bool("plugin"),
-                               ))
+    @accepts(Dict("options",
+                  Str("release"),
+                  Str("template"),
+                  Str("pkglist"),
+                  Str("uuid"),
+                  Bool("basejail"),
+                  Bool("empty"),
+                  Bool("short"),
+                  List("props")
+                  ))
+    async def do_create(self, options):
+        """Creates a jail."""
+        # Typically one would return the created jail's id in this
+        # create call BUT since jail creationg may or may not involve
+        # fetching a release, which in turn could be a time consuming
+        # and could then block for a long time. This dictates that we
+        # make it a job, but that violates the principle that CRUD methods
+        # are not jobs as yet, so I settle on making this a wrapper around
+        # the main job that calls this and return said job's id instead of
+        # the created jail's id
+        return self.middleware.call('jail.create_job', options)
+
+    @private()
+    @accepts(Dict("options",
+                  Str("release"),
+                  Str("template"),
+                  Str("pkglist"),
+                  Str("uuid"),
+                  Bool("basejail"),
+                  Bool("empty"),
+                  Bool("short"),
+                  List("props"),
+                  ))
+    async def create_job(self, job, options):
+        self.check_dataset_existence()
+
+        release = options["release"]
+        template = options["template"]
+        pkglist = options["pkglist"]
+        uuid = options["uuid"]
+        basejail = options["basejail"]
+        empty = options["empty"]
+        short = options["short"]
+        props = options["props"]
+        pool = IOCJson().json_get_value("pool")
+        iocroot = IOCJson(pool).json_get_value("iocroot")
+
+        if template:
+            release = template
+
+        if not os.path.isdir(f"{iocroot}/releases/{release}") and not \
+                template and not empty:
+            await self.middleware.call('jail.fetch', {"release": release}).wait()
+
+        await self.middleware.threaded(
+            IOCCreate(
+                release, props, 0, pkglist, template=template,
+                short=short, uuid=uuid, basejail=basejail,
+                empty=empty
+            ).create_jail
+        )
+
+        return True
+
+    @accepts(
+        Str("jail"),
+        Dict(
+            "options",
+            Str("prop"),
+            Bool("plugin"),
+        )
+    )
     def do_update(self, jail, options):
         """Sets a jail property."""
         prop = options["prop"]
@@ -160,59 +229,19 @@ class JailService(CRUDService):
         else:
             raise RuntimeError(f"{jail} already stopped")
 
-    @accepts(Dict("options",
-                  Str("release"),
-                  Str("template"),
-                  Str("pkglist"),
-                  Str("uuid"),
-                  Bool("basejail"),
-                  Bool("empty"),
-                  Bool("short"),
-                  List("props"),
-                  ))
-    @job()
-    async def do_create(self, job, options):
-        """Creates a jail."""
-        from iocage.lib.ioc_create import IOCCreate
-        self.check_dataset_existence()
-
-        release = options["release"]
-        template = options["template"]
-        pkglist = options["pkglist"]
-        uuid = options["uuid"]
-        basejail = options["basejail"]
-        empty = options["empty"]
-        short = options["short"]
-        props = options["props"]
-        pool = IOCJson().json_get_value("pool")
-        iocroot = IOCJson(pool).json_get_value("iocroot")
-
-        if template:
-            release = template
-
-        if not os.path.isdir(f"{iocroot}/releases/{release}") and not \
-                template and not empty:
-            await self.middleware.call('jail.fetch', {"release": release}).wait()
-
-        await self.middleware.threaded(
-            IOCCreate(
-                release, props, 0, pkglist, template=template,
-                short=short, uuid=uuid, basejail=basejail,
-                empty=empty
-            ).create_jail
+    @accepts(
+        Str("jail"),
+        Dict(
+            "options",
+            Str("action"),
+            Str("source"),
+            Str("destination"),
+            Str("fstype"),
+            Str("fsoptions"),
+            Str("dump"),
+            Str("_pass"),
         )
-
-        return True
-
-    @accepts(Str("jail"), Dict("options",
-                  Str("action"),
-                  Str("source"),
-                  Str("destination"),
-                  Str("fstype"),
-                  Str("fsoptions"),
-                  Str("dump"),
-                  Str("_pass"),
-                  ))
+    )
     def fstab(self, jail, options):
         """
         Adds an fstab mount to the jail, mounts if the jail is running.
