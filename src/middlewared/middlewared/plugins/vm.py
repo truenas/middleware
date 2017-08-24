@@ -1,5 +1,5 @@
 from middlewared.schema import accepts, Int, Str, Dict, List, Bool, Patch
-from middlewared.service import filterable, CRUDService, item_method, private
+from middlewared.service import filterable, CRUDService, item_method, private, CallError
 from middlewared.utils import Nid, Popen
 from middlewared.client import Client
 
@@ -403,7 +403,7 @@ class VMService(CRUDService):
         Bool('autostart'),
         register=True,
         ))
-    async def do_create(self, data):
+    async def create(self, data):
         """Create a VM."""
         devices = data.pop('devices')
         pk = await self.middleware.call('datastore.insert', 'vm.vm', data)
@@ -414,7 +414,7 @@ class VMService(CRUDService):
         return pk
 
     @private
-    async def do_update_devices(self, id, devices):
+    async def _do_update_devices(self, id, devices):
         if devices and isinstance(devices, list) is True:
             device_query = await self.middleware.call('datastore.query', 'vm.device', [('vm__id', '=', int(id))])
 
@@ -441,11 +441,11 @@ class VMService(CRUDService):
         'vm_update',
         ('attr', {'update': True}),
     ))
-    async def do_update(self, id, data):
+    async def update(self, id, data):
         """Update all information of a specific VM."""
         devices = data.pop('devices', None)
         if devices:
-            update_devices = await self.do_update_devices(id, devices)
+            update_devices = await self._do_update_devices(id, devices)
         if data:
             return await self.middleware.call('datastore.update', 'vm.vm', id, data)
         else:
@@ -472,7 +472,7 @@ class VMService(CRUDService):
             return False
 
     @accepts(Int('id'))
-    async def do_delete(self, id):
+    async def delete(self, id):
         """Delete a VM."""
         status = await self.status(id)
         if isinstance(status, dict):
@@ -548,8 +548,7 @@ class VMService(CRUDService):
         vm = await self._manager.clone(id)
 
         if vm is None:
-            self.logger.error("Cannot clone a VM that does not exist.")
-            return False
+            raise CallError('Cannot clone a VM that does not exist.', errno.EINVAL)
 
         origin_name = vm['name']
         del vm['id']
@@ -577,7 +576,7 @@ class VMService(CRUDService):
                 item['attributes']['path'] = ''
                 self.logger.warn("For RAW disk you need copy it manually inside your NAS.")
 
-        await self.do_create(vm)
+        await self.create(vm)
         self.logger.info("VM cloned from {0} to {1}".format(origin_name, vm['name']))
 
         return True
