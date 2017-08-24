@@ -525,7 +525,7 @@ class VMService(CRUDService):
             return False
 
     @private
-    async def find_clone(self, name):
+    async def _find_clone(self, name):
         data = await self.middleware.call('vm.query', [], {'order_by': ['name']})
         clone_index = 0
         next_name = ""
@@ -553,7 +553,7 @@ class VMService(CRUDService):
         origin_name = vm['name']
         del vm['id']
 
-        vm['name'] = await self.find_clone(vm['name'])
+        vm['name'] = await self._find_clone(vm['name'])
 
         for item in vm['devices']:
             if item['dtype'] == 'NIC':
