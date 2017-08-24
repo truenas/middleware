@@ -64,3 +64,15 @@ class SSH_Peer(Peer):
         verbose_name=_("Remote hostkey"),
     )
 
+
+class S3_Peer(Peer):
+    s3_access_key = models.CharField(
+        verbose_name=_("Access key of 5 to 20 characters in length"),
+        max_length=128,
+        help_text=_("S3 username")
+    )
+    s3_secret_key = models.CharField(
+        verbose_name=_("Secret key of 8 to 40 characters in length"),
+        max_length=128,
+        help_text=_("S3 password")
+    )
