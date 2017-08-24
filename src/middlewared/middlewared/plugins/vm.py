@@ -1,5 +1,5 @@
 from middlewared.schema import accepts, Int, Str, Dict, List, Bool, Patch
-from middlewared.service import filterable, CRUDService, item_method, private, CallError
+from middlewared.service import filterable, CRUDService, item_method, CallError
 from middlewared.utils import Nid, Popen
 from middlewared.client import Client
 
@@ -413,7 +413,6 @@ class VMService(CRUDService):
             await self.middleware.call('datastore.insert', 'vm.device', device)
         return pk
 
-    @private
     async def _do_update_devices(self, id, devices):
         if devices and isinstance(devices, list) is True:
             device_query = await self.middleware.call('datastore.query', 'vm.device', [('vm__id', '=', int(id))])
@@ -524,7 +523,6 @@ class VMService(CRUDService):
             self.logger.error("===> {0}".format(err))
             return False
 
-    @private
     async def _find_clone(self, name):
         data = await self.middleware.call('vm.query', [], {'order_by': ['name']})
         clone_index = 0
