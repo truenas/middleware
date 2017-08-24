@@ -480,7 +480,7 @@ class DNSService(Service):
         else:
             gc = await self.middleware.call('datastore.query', 'network.globalconfiguration', None, {'get': True})
             if gc['gc_domain']:
-                domains.append(gc['gc_domain'])
+                domains.append(gc['gc_sdomain'])
             if gc['gc_domains']:
                 domains += gc['gc_domains'].split()
             if gc['gc_nameserver1']:
