@@ -353,7 +353,7 @@ def accepts(*schema):
                 kwarg = f.__code__.co_varnames[x]
                 if kwarg in kwargs:
                     kwargs[kwarg] = nf.accepts[i].clean(kwargs[kwarg])
-                elif len(nf.accepts) >= i + args_index + 1:
+                elif len(nf.accepts) >= i + args_index:
                     kwargs[kwarg] = nf.accepts[i].clean(None)
                 i += 1
             return args, kwargs
