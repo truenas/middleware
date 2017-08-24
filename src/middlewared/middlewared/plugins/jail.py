@@ -57,7 +57,7 @@ class JailService(CRUDService):
         # the created jail's id
         return self.middleware.call('jail.create_job', options)
 
-    @private()
+    @private
     @accepts(Dict("options",
                   Str("release"),
                   Str("template"),
@@ -66,8 +66,9 @@ class JailService(CRUDService):
                   Bool("basejail"),
                   Bool("empty"),
                   Bool("short"),
-                  List("props"),
+                  List("props")
                   ))
+    @job()
     async def create_job(self, job, options):
         self.check_dataset_existence()
 
