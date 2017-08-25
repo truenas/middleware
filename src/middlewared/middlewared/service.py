@@ -73,6 +73,10 @@ class CallError(CallException):
 
 
 class ValidationError(CallException):
+    """
+    ValidationError is an exception used to point when a provided
+    attribute of a middleware method is invalid/not allowed.
+    """
 
     def __init__(self, attribute, errmsg, errno=errno.EFAULT):
         self.attribute = attribute
@@ -85,6 +89,9 @@ class ValidationError(CallException):
 
 
 class ValidationErrors(CallException):
+    """
+    CallException with a collection of ValidationError
+    """
 
     def __init__(self, errors=None):
         self.errors = errors or []
@@ -107,6 +114,23 @@ class ValidationErrors(CallException):
 
 
 class ServiceBase(type):
+    """
+    Metaclass of all services
+
+    This metaclass instantiates a `_config` attribute in the service instance
+    from options provided in a Config class, e.g.
+
+    class MyService(Service):
+
+        class Meta:
+            namespace = 'foo'
+            private = False
+
+    Currently the following options are allowed:
+      - namespace: namespace identifier of the service
+      - private: whether or not the service is deemed private
+
+    """
 
     def __new__(cls, name, bases, attrs):
         super_new = super(ServiceBase, cls).__new__
@@ -136,12 +160,23 @@ class ServiceBase(type):
 
 
 class Service(object, metaclass=ServiceBase):
+    """
+    Generic service abstract class
+
+    This is meant for services that do not follow any standard.
+    """
     def __init__(self, middleware):
         self.logger = Logger(type(self).__name__).getLogger()
         self.middleware = middleware
 
 
 class ConfigService(Service):
+    """
+    Config service abstract class
+
+    Meant for services that provide a single set of attributes which can be
+    updated or not.
+    """
 
     def config(self):
         raise NotImplementedError
@@ -151,6 +186,14 @@ class ConfigService(Service):
 
 
 class CRUDService(Service):
+    """
+    CRUD service abstract class
+
+    Meant for services in that a set of entries can be queried, new entry
+    create, updated and/or deleted.
+
+    CRUD stands for Create Retrieve Update Delete.
+    """
 
     def query(self, filters, options):
         raise NotImplementedError('{}.query must be implemented'.format(self._config.namespace))
