@@ -1330,14 +1330,6 @@ class notifier(metaclass=HookMetaclass):
         smb_hash = smb_cmd.communicate()[0].split('\n')[0]
         return smb_hash
 
-    def user_getnextgid(self):
-        command = "/usr/sbin/pw groupnext"
-        pw = self._pipeopen(command)
-        gid = pw.communicate()[0]
-        if pw.returncode != 0:
-            raise ValueError("Could not retrieve groupnext")
-        return gid
-
     def path_to_smb_share(self, path):
         from freenasUI.sharing.models import CIFS_Share
 
