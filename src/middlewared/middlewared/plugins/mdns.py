@@ -1,4 +1,6 @@
 import asyncio
+import ctypes
+import json
 import os
 import pybonjour
 import queue
@@ -29,6 +31,15 @@ class mDNSObject(object):
         self.interface = kwargs.get('interface')
         self.name = kwargs.get('name')
 
+    def to_dict(self):
+        return {
+            'type': 'mDNSObject',
+            'sdRef': memoryview(self.sdRef).tobytes().decode('utf-8'),
+            'flags': self.flags,
+            'interface': self.interface,
+            'name': self.name
+        }
+
 
 class mDNSDiscoverObject(mDNSObject):
     def __init__(self, **kwargs):
@@ -44,6 +55,15 @@ class mDNSDiscoverObject(mDNSObject):
             self.domain.strip('.')
         ) 
 
+    def to_dict(self):
+        bdict = super(mDNSDiscoveryObject, self).to_dict()
+        bdict.update({
+            'type': 'mDNSDiscoverObject',
+            'regtype': self.regtype,
+            'domain': self.domain
+        })
+        return bdict
+
 
 class mDNSServiceObject(mDNSObject):
     def __init__(self, **kwargs):
@@ -51,6 +71,16 @@ class mDNSServiceObject(mDNSObject):
         self.target = kwargs.get('target')
         self.port = kwargs.get('port')
         self.text = kwargs.get('text')
+
+    def to_dict(self):
+        bdict = super(mDNSServiceObject, self).to_dict()
+        bdict.update({
+            'type': 'mDNSServiceObject',
+            'target': self.target,
+            'port': self.port,
+            'text': self.text
+        })
+        return bdict
 
 
 class mDNSThread(threading.Thread):
@@ -75,7 +105,7 @@ class DiscoverThread(mDNSThread):
         self.finished = threading.Event()
         self.pipe = os.pipe()
 
-    def on_discover(self,sdRef, flags, interface, error, name, regtype, domain):
+    def on_discover(self ,sdRef, flags, interface, error, name, regtype, domain):
         self.debug("DiscoverThread: name=%s flags=0x%08x error=%d", name, flags, error)
 
         if error != kDNSServiceErr_NoError:
@@ -274,7 +304,7 @@ class ResolveThread(mDNSThread):
     def cancel(self):
         self.finished.set()
 
-    def remove_by_host(self, host, service=None):
+    async def remove_by_host(self, host, service=None):
         ret = False
 
         if not host:
@@ -296,7 +326,7 @@ class ResolveThread(mDNSThread):
                     ret = True
         return ret
 
-    def get_by_host(self, host, service=None):
+    async def get_by_host(self, host, service=None):
         if not host:
             return None
 
@@ -317,7 +347,7 @@ class ResolveThread(mDNSThread):
 
         return services
 
-    def get_by_service(self, service, host=None):
+    async def get_by_service(self, service, host=None):
         if not service:
             return None
 
@@ -336,6 +366,13 @@ class ResolveThread(mDNSThread):
 
         return services
 
+    async def get_services(self):
+        json_serialized = []
+        for s in self.services:
+            json_serialized.append(s.to_dict())
+        return json_serialized
+
+
 class mDNSBrowserService(Service):
     def __init__(self, *args):
         super(mDNSBrowserService, self).__init__(*args)
@@ -347,6 +384,18 @@ class mDNSBrowserService(Service):
         self.rthread = None
         self.initialized = False
         self.lock = threading.Lock()
+
+    async def remove_by_host(self, host, service=None):
+        return await self.rthread.remove_by_host(host, service)
+
+    async def get_by_host(self, host, service=None):
+        return await self.rthread.get_by_host(host, service)
+
+    async def get_by_service(self, service, host=None):
+        return await self.rthread.get_by_service(service, host)
+
+    async def get_services(self):
+        return await self.rthread.get_services()
 
     async def start(self):
         self.logger.debug("mDNSBrowserService: start()")
@@ -498,6 +547,7 @@ class mDNSServiceMiddlewareSSLThread(mDNSServiceThread):
             webui[0]['stg_guiprotocol'] == 'httphttps'):
             self.port = int(webui[0]['stg_guihttpsport'] or 443)
             self.regtype = "_middleware-ssl._tcp."
+
 
 class mDNSAdvertiseService(Service):
     def __init__(self, *args):
