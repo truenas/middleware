@@ -230,7 +230,7 @@ class ZFSSnapshot(CRUDService):
         Str('dataset'),
         Str('name')
     ))
-    async def do_delete(self, data):
+    async def delete(self, data):
         """
         Remove a snapshot from a given dataset.
 
