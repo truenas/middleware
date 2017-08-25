@@ -26,11 +26,12 @@
 #####################################################################
 from django.conf.urls import url
 
-from .views import start, stop, restart, home
+from .views import start, stop, restart, home, clone
 
 urlpatterns = [
     url(r'^$', home, name="vm_home"),
     url(r'^start/(?P<id>\d+)/$', start, name="vm_start"),
     url(r'^stop/(?P<id>\d+)/$', stop, name="vm_stop"),
     url(r'^restart/(?P<id>\d+)/$', restart, name="vm_restart"),
+    url(r'^clone/(?P<id>\d+)/$', clone, name="vm_clone"),
 ]
