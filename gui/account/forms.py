@@ -551,6 +551,13 @@ class bsdGroupsForm(ModelForm):
 
         return models.bsdGroups.objects.get(pk=pk)
 
+    def delete(self, **kwargs):
+        data = {
+            'delete_users': True if self.data.get('cascade') else False,
+        }
+        with client as c:
+            c.call('group.delete', self.instance.id, data)
+
 
 class bsdGroupToUserForm(Form):
     bsdgroup_to_user = SelectMultipleField(
