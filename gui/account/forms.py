@@ -361,6 +361,9 @@ class bsdUsersForm(ModelForm):
             data['group_create'] = data.pop('creategroup', False)
         else:
             args = ['user.update', self.instance.id]
+            # If password is blank, do not send it to middleware
+            if not data.get('password'):
+                data.pop('password', None)
 
         data.pop('password2', None)
         data['home_mode'] = data.pop('mode')
