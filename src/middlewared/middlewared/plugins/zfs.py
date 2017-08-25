@@ -279,8 +279,6 @@ class ZFSSnapshot(CRUDService):
         """
         zfs = libzfs.ZFS()
 
-        self.logger.debug("===> DATA: {0}".format(data))
-
         snapshot = data.get('snapshot', '')
         dataset_dst = data.get('dataset_dst', '')
 
