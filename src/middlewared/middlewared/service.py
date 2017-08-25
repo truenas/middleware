@@ -169,11 +169,11 @@ class CRUDService(Service):
             rv = await self.middleware.threaded(self.do_update, id, data)
         return rv
 
-    async def delete(self, id):
+    async def delete(self, id, *args):
         if asyncio.iscoroutinefunction(self.do_delete):
-            rv = await self.do_delete(id)
+            rv = await self.do_delete(id, *args)
         else:
-            rv = await self.middleware.threaded(self.do_delete, id)
+            rv = await self.middleware.threaded(self.do_delete, id, *args)
         return rv
 
 
