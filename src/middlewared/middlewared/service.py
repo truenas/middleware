@@ -127,8 +127,11 @@ class ServiceBase(type):
             private = False
 
     Currently the following options are allowed:
+      - datastore: name of the datastore mainly used in the service
+      - datastore_prefix: datastore `prefix` option used in helper methods
       - namespace: namespace identifier of the service
       - private: whether or not the service is deemed private
+      - verbose_name: human-friendly singular name for the service
 
     """
 
@@ -146,9 +149,13 @@ class ServiceBase(type):
         namespace = namespace.lower()
 
         config_attrs = {
+            'datastore': None,
+            'datastore_prefix': None,
             'namespace': namespace,
             'private': False,
+            'verbose_name': klass.__name__.replace('Service', ''),
         }
+
         if config:
             config_attrs.update({
                 k: v
@@ -218,6 +225,15 @@ class CRUDService(Service):
         else:
             rv = await self.middleware.threaded(self.do_delete, id, *args)
         return rv
+
+    async def _get_instance(self, id):
+        """
+        Helpher method to get an instance from a collection given the `id`.
+        """
+        instance = await self.middleware.call('datastore.query', self._config.datastore, [('id', '=', id)], {'prefix': self._config.datastore_prefix})
+        if not instance:
+            raise ValidationError(None, f'{self._config.verbose_name} {id} does not exist', errno.ENOENT)
+        return instance[0]
 
 
 class CoreService(Service):
