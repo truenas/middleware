@@ -485,8 +485,9 @@ class bsdGroupsForm(ModelForm):
 
         else:
             try:
-                self.initial['bsdgrp_gid'] = notifier().user_getnextgid()
-            except:
+                with client as c:
+                    self.initial['bsdgrp_gid'] = c.call('group.get_next_gid')
+            except Exception:
                 pass
             self.fields['allow'] = forms.BooleanField(
                 label=_("Allow repeated GIDs"),
