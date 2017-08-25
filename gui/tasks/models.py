@@ -362,6 +362,10 @@ class InitShutdown(Model):
         max_length=15,
         verbose_name=_("When"),
     )
+    ini_enabled = models.BooleanField(
+        default=True,
+        verbose_name=_("Enabled"),
+    )
 
     def __str__(self):
         if self.ini_type == 'command':
