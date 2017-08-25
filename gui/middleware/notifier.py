@@ -1934,7 +1934,7 @@ class notifier(metaclass=HookMetaclass):
         try:
             os.chmod(dirpath, 0o755)
         except OSError as e:
-            raise MiddlwareError("Unable to set permissions on update cache directory %s: %s" % (dirpath, str(e)))
+            raise MiddlewareError("Unable to set permissions on update cache directory %s: %s" % (dirpath, str(e)))
         open(INSTALLFILE, 'w').close()
         try:
             subprocess.check_output(
