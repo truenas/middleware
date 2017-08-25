@@ -113,42 +113,16 @@ class UserService(CRUDService):
         ):
             verrors.add('group', f'You need to either provide a group or group_create', errno.EINVAL)
 
-        pw_checkname(verrors, 'username', data['username'])
-
-        if await self.middleware.call('datastore.query', 'account.bsdusers', [('username', '=', data['username'])], {'prefix': 'bsdusr_'}):
-            verrors.add('username', f'A user with the username "{data["username"]}" already exists', errno.EEXIST)
-
-        password = data.get('password')
-        if password and '?' in password:
-            # See bug #4098
-            verrors.add(
-                'password',
-                'Passwords containing a question mark (?) are currently not '
-                'allowed due to problems with SMB.',
-                errno.EINVAL
-            )
-        elif not password and not data.get('password_disabled'):
-            verrors.add('password', 'Password is required')
-        elif data.get('password_disabled') and password:
-            verrors.add('password_disabled', 'Password disabled, leave password blank')
+        await self.__common_validation(verrors, data)
 
         if data.get('sshpubkey') and not data['home'].startswith('/mnt'):
             verrors.add('sshpubkey', 'Home directory is not writable, leave this blank"')
 
-        if ':' in data['home']:
-            verrors.add('home', 'Home directory cannot contain colons')
+        if verrors:
+            raise verrors
 
         groups = data.pop('groups') or []
         create = data.pop('group_create')
-
-        if groups and len(groups) > 64:
-            verrors.add('groups', 'A user cannot belong to more than 64 auxiliary groups')
-
-        if ':' in data['full_name']:
-            verrors.add('full_name', '":" character is not allowed in Full Name')
-
-        if verrors:
-            raise verrors
 
         if create:
             group = await self.middleware.call('group.query', [('group', '=', data['username'])])
@@ -243,6 +217,12 @@ class UserService(CRUDService):
             group = user['group']
             user['group'] = group['id']
 
+        await self.__common_validation(verrors, data, pk=pk)
+
+        home = data.get('home') or user['home']
+        if data.get('sshpubkey') and not home.startswith('/mnt'):
+            verrors.add('sshpubkey', 'Home directory is not writable, leave this blank"')
+
         if verrors:
             raise verrors
 
@@ -331,6 +311,41 @@ class UserService(CRUDService):
                 return last_uid + 1
             last_uid = i['uid']
         return last_uid + 1
+
+    async def __common_validation(self, verrors, data, pk=None):
+
+        exclude_filter = [('id', '!=', pk)] if pk else []
+
+        if 'username' in data:
+            pw_checkname(verrors, 'username', data['username'])
+
+            if await self.middleware.call('datastore.query', 'account.bsdusers', [('username', '=', data['username'])] + exclude_filter, {'prefix': 'bsdusr_'}):
+                verrors.add('username', f'A user with the username "{data["username"]}" already exists', errno.EEXIST)
+
+        password = data.get('password')
+        if password and '?' in password:
+            # See bug #4098
+            verrors.add(
+                'password',
+                'Passwords containing a question mark (?) are currently not '
+                'allowed due to problems with SMB.',
+                errno.EINVAL
+            )
+        elif not pk and not password and not data.get('password_disabled'):
+            verrors.add('password', 'Password is required')
+        elif data.get('password_disabled') and password:
+            verrors.add('password_disabled', 'Password disabled, leave password blank')
+
+        if 'home' in data and ':' in data['home']:
+            verrors.add('home', 'Home directory cannot contain colons')
+
+        if 'groups' in data:
+            groups = data.get('groups') or []
+            if groups and len(groups) > 64:
+                verrors.add('groups', 'A user cannot belong to more than 64 auxiliary groups')
+
+        if 'full_name' in data and ':' in data['full_name']:
+            verrors.add('full_name', '":" character is not allowed in Full Name')
 
     async def __set_password(self, data):
         if 'password' not in data:
