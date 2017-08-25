@@ -263,7 +263,9 @@ class Ref(object):
     def resolve(self, middleware):
         schema = middleware.get_schema(self.name)
         if not schema:
-            raise ValueError('Schema {0} does not exist'.format(self.name))
+            raise ResolverError('Schema {0} does not exist'.format(self.name))
+        schema = copy.deepcopy(schema)
+        schema.register = False
         return schema
 
 
@@ -309,6 +311,10 @@ class Patch(object):
         return schema
 
 
+class ResolverError(Exception):
+    pass
+
+
 def resolver(middleware, f):
     if not callable(f):
         return
@@ -319,7 +325,7 @@ def resolver(middleware, f):
         if isinstance(p, (Patch, Ref, Attribute)):
             new_params.append(p.resolve(middleware))
         else:
-            raise ValueError('Invalid parameter definition {0}'.format(p))
+            raise ResolverError('Invalid parameter definition {0}'.format(p))
 
     # FIXME: for some reason assigning params (f.accepts = new_params) does not work
     while f.accepts:

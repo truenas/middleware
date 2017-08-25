@@ -2,7 +2,7 @@ from .apidocs import app as apidocs_app
 from .client import ejson as json
 from .job import Job, JobsQueue
 from .restful import RESTfulAPI
-from .schema import Error as SchemaError
+from .schema import ResolverError, Error as SchemaError
 from .service import CallError, CallException, ValidationError, ValidationErrors
 from aiohttp import web
 from aiohttp_wsgi import WSGIHandler
@@ -655,18 +655,18 @@ class Middleware(object):
         for service in list(self.__services.values()):
             for attr in dir(service):
                 to_resolve.append(getattr(service, attr))
-        resolved = 0
         while len(to_resolve) > 0:
+            resolved = 0
             for method in list(to_resolve):
                 try:
                     resolver(self, method)
-                except ValueError:
+                except ResolverError:
                     pass
                 else:
                     to_resolve.remove(method)
                     resolved += 1
             if resolved == 0:
-                raise ValueError("Not all could be resolved")
+                raise ValueError(f'Not all schemas could be resolved: {to_resolve}')
 
         # Only call setup after all schemas have been resolved because
         # they can call methods with schemas defined.
