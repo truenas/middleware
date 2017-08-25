@@ -3,6 +3,7 @@ from bsd import geom
 from middlewared.schema import Dict, List, Str, Bool, Int, accepts
 from middlewared.service import CallError, CRUDService, Service, job
 
+import asyncio
 import errno
 import libzfs
 import threading
@@ -187,7 +188,7 @@ class ZFSSnapshot(CRUDService):
         Bool('recursive'),
         Int('vmsnaps_count')
     ))
-    def do_create(self, data):
+    async def do_create(self, data):
         """
         Take a snapshot from a given dataset.
 
@@ -230,7 +231,7 @@ class ZFSSnapshot(CRUDService):
         Str('dataset'),
         Str('name')
     ))
-    def do_delete(self, data):
+    async def do_delete(self, data):
         """
         Remove a snapshot from a given dataset.
 
@@ -268,9 +269,8 @@ class ZFSSnapshot(CRUDService):
         'snapshot_clone',
         Str('snapshot'),
         Str('dataset_dst'),
-        Bool('destroy_after_clone')
     ))
-    def clone(self, data):
+    async def clone(self, data):
         """
         Clone a given snapshot to a new dataset.
 
@@ -279,9 +279,10 @@ class ZFSSnapshot(CRUDService):
         """
         zfs = libzfs.ZFS()
 
+        self.logger.debug("===> DATA: {0}".format(data))
+
         snapshot = data.get('snapshot', '')
         dataset_dst = data.get('dataset_dst', '')
-        destroy_after_clone = data.get('destroy_after_clone', False)
 
         if not snapshot or not dataset_dst:
             return False
@@ -295,11 +296,6 @@ class ZFSSnapshot(CRUDService):
         try:
             snp.clone(dataset_dst)
             self.logger.info("Cloned snapshot {0} to dataset {1}".format(snapshot, dataset_dst))
-            if destroy_after_clone:
-                __snapshot = snapshot.split('@')
-                dataset_name = __snapshot[0]
-                snapshot_name = __snapshot[1]
-                self.remove(dataset_name, snapshot_name)
             return True
         except libzfs.ZFSException as err:
             self.logger.error("{0}".format(err))
