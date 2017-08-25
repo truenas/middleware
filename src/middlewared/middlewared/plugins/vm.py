@@ -403,8 +403,9 @@ class VMService(CRUDService):
         Bool('autostart'),
         register=True,
         ))
-    async def create(self, data):
+    async def do_create(self, data):
         """Create a VM."""
+
         devices = data.pop('devices')
         pk = await self.middleware.call('datastore.insert', 'vm.vm', data)
 
@@ -440,7 +441,7 @@ class VMService(CRUDService):
         'vm_update',
         ('attr', {'update': True}),
     ))
-    async def update(self, id, data):
+    async def do_update(self, id, data):
         """Update all information of a specific VM."""
         devices = data.pop('devices', None)
         if devices:
@@ -471,7 +472,7 @@ class VMService(CRUDService):
             return False
 
     @accepts(Int('id'))
-    async def delete(self, id):
+    async def do_delete(self, id):
         """Delete a VM."""
         status = await self.status(id)
         if isinstance(status, dict):
@@ -566,8 +567,11 @@ class VMService(CRUDService):
                 disk_snapshot_path = disk_src_path + '@' + disk_snapshot_name
                 clone_dst_path = disk_src_path + '_' + vm['name']
 
-                await self.middleware.call('zfs.snapshot.create', disk_src_path, disk_snapshot_name)
-                await self.middleware.call('zfs.snapshot.clone', disk_snapshot_path, clone_dst_path)
+                data = {'dataset': disk_src_path, 'name': disk_snapshot_name}
+                await self.middleware.call('zfs.snapshot.create', data)
+
+                data = {'snapshot': disk_snapshot_path, 'dataset_dst': clone_dst_path}
+                await self.middleware.call('zfs.snapshot.clone', data)
 
                 item['attributes']['path'] = '/dev/zvol/' + clone_dst_path
             if item['dtype'] == 'RAW':
