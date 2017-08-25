@@ -495,39 +495,16 @@ class bsdGroupsForm(ModelForm):
 
     def clean_bsdgrp_group(self):
         bsdgrp_group = self.cleaned_data.get("bsdgrp_group")
-        if self.instance.id is None:
-            try:
-                models.bsdGroups.objects.get(bsdgrp_group=bsdgrp_group)
-            except models.bsdGroups.DoesNotExist:
-                return bsdgrp_group
-            raise forms.ValidationError(
-                _("A group with that name already exists.")
-            )
+        if self.instance.bsdgrp_builtin:
+            return self.instance.bsdgrp_group
         else:
-            if self.instance.bsdgrp_builtin:
-                return self.instance.bsdgrp_group
-            else:
-                return bsdgrp_group
+            return bsdgrp_group
 
     def clean_bsdgrp_gid(self):
         if self.instance.id:
             return self.instance.bsdgrp_gid
         else:
             return self.cleaned_data['bsdgrp_gid']
-
-    def clean(self):
-        cdata = self.cleaned_data
-        grp = cdata.get("bsdgrp_gid")
-        if not cdata.get("allow", False):
-            grps = models.bsdGroups.objects.filter(bsdgrp_gid=grp)
-            if self.instance and self.instance.id:
-                grps = grps.exclude(bsdgrp_gid=self.instance.bsdgrp_gid)
-            if grps.exists():
-                self._errors['bsdgrp_gid'] = self.error_class([
-                    _("A group with this gid already exists"),
-                ])
-                cdata.pop('bsdgrp_gid', None)
-        return cdata
 
     def save(self):
         data = self.cleaned_data.copy()
