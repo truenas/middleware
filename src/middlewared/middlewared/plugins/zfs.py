@@ -1,7 +1,7 @@
 from bsd import geom
 
 from middlewared.schema import Dict, List, Str, Bool, Int, accepts
-from middlewared.service import CallError, Service, job
+from middlewared.service import CallError, CRUDService, Service, job
 
 import errno
 import libzfs
@@ -175,18 +175,19 @@ class ZFSPoolService(Service):
         t.join()
 
 
-class ZFSSnapshot(Service):
+class ZFSSnapshot(CRUDService):
 
     class Config:
         namespace = 'zfs.snapshot'
 
-    @accepts(
+    @accepts(Dict(
+        'snapshot_create',
         Str('dataset'),
         Str('name'),
         Bool('recursive'),
         Int('vmsnaps_count')
-    )
-    def create(self, dataset, name, recursive=False, vmsnaps_count=0):
+    ))
+    def do_create(self, data):
         """
         Take a snapshot from a given dataset.
 
@@ -194,6 +195,14 @@ class ZFSSnapshot(Service):
             bool: True if succeed otherwise False.
         """
         zfs = libzfs.ZFS()
+
+        dataset = data.get('dataset', '')
+        name = data.get('name', '')
+        recursive = data.get('recursive', False)
+        vmsnaps_count = data.get('vmsnaps_count', 0)
+
+        if not dataset or not name:
+            return False
 
         try:
             ds = zfs.get_dataset(dataset)
@@ -203,7 +212,7 @@ class ZFSSnapshot(Service):
 
         try:
             if recursive:
-                ds.snapshots('{0}@{1}'.format(dataset, name), recursive=True)
+                ds.snapshots('{0}@{1}'.format(dataset, name, recursive=True))
             else:
                 ds.snapshot('{0}@{1}'.format(dataset, name))
 
@@ -216,11 +225,12 @@ class ZFSSnapshot(Service):
                 self.logger.error("{0}".format(err))
                 return False
 
-    @accepts(
+    @accepts(Dict(
+        'snapshot_delete',
         Str('dataset'),
-        Str('snap_name')
-    )
-    def remove(self, dataset, snap_name):
+        Str('name')
+    ))
+    def do_delete(self, data):
         """
         Remove a snapshot from a given dataset.
 
@@ -229,31 +239,38 @@ class ZFSSnapshot(Service):
         """
         zfs = libzfs.ZFS()
 
+        dataset = data.get('dataset', '')
+        snapshot_name = data.get('name', '')
+
+        if not dataset or not snapshot_name:
+            return False
+
         try:
             ds = zfs.get_dataset(dataset)
         except libzfs.ZFSException as err:
             self.logger.error("{0}".format(err))
             return False
 
-        __snap_name = dataset + '@' + snap_name
+        __snap_name = dataset + '@' + snapshot_name
         try:
             for snap in list(ds.snapshots):
                 if snap.name == __snap_name:
-                    ds.destroy_snapshot(snap_name)
+                    ds.destroy_snapshot(snapshot_name)
                     self.logger.info("Destroyed snapshot: {0}".format(__snap_name))
                     return True
-            self.logger.error("There is no snapshot {0} on dataset {1}".format(snap_name, dataset))
+            self.logger.error("There is no snapshot {0} on dataset {1}".format(snapshot_name, dataset))
             return False
         except libzfs.ZFSException as err:
             self.logger.error("{0}".format(err))
             return False
 
-    @accepts(
+    @accepts(Dict(
+        'snapshot_clone',
         Str('snapshot'),
         Str('dataset_dst'),
         Bool('destroy_after_clone')
-    )
-    def clone(self, snapshot, dataset_dst, destroy_after_clone=False):
+    ))
+    def clone(self, data):
         """
         Clone a given snapshot to a new dataset.
 
@@ -261,6 +278,13 @@ class ZFSSnapshot(Service):
             bool: True if succeed otherwise False.
         """
         zfs = libzfs.ZFS()
+
+        snapshot = data.get('snapshot', '')
+        dataset_dst = data.get('dataset_dst', '')
+        destroy_after_clone = data.get('destroy_after_clone', False)
+
+        if not snapshot or not dataset_dst:
+            return False
 
         try:
             snp = zfs.get_snapshot(snapshot)
