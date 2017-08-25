@@ -202,8 +202,17 @@ class CRUDService(Service):
     CRUD stands for Create Retrieve Update Delete.
     """
 
-    def query(self, filters, options):
-        raise NotImplementedError('{}.query must be implemented'.format(self._config.namespace))
+    @filterable
+    async def query(self, filters=None, options=None):
+        if not self._config.datastore:
+            raise NotImplementedError(
+                f'{self._config.namespace}.query must be implemented or a '
+                '`datastore` Config attribute provided.'
+            )
+        options = options or {}
+        if self._config.datastore_prefix:
+             options['prefix'] = self._config.datastore_prefix
+        return await self.middleware.call('datastore.query', self._config.datastore, filters, options)
 
     async def create(self, data):
         if asyncio.iscoroutinefunction(self.do_create):
