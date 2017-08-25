@@ -1,6 +1,6 @@
 from middlewared.schema import accepts, Bool, Dict, Int, List, Patch, Str
 from middlewared.service import (
-    CallError, CRUDService, ValidationError, ValidationErrors, filterable, private
+    CallError, CRUDService, ValidationErrors, private
 )
 from middlewared.utils import run, Popen
 
