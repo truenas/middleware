@@ -59,12 +59,10 @@ def nt_password(cleartext):
 
 class UserService(CRUDService):
 
-    @filterable
-    async def query(self, filters=None, options=None):
-        options = options or {}
-        options['extend'] = 'user.user_extend'
-        options['prefix'] = 'bsdusr_'
-        return await self.middleware.call('datastore.query', 'account.bsdusers', filters, options)
+    class Config:
+        datastore = 'account.bsdusers'
+        datastore_extend = 'user.user_extend'
+        datastore_prefix = 'bsdusr_'
 
     @private
     async def user_extend(self, user):
@@ -232,11 +230,7 @@ class UserService(CRUDService):
     )
     async def do_update(self, pk, data):
 
-        # TODO: common CRUD method
-        user = await self.middleware.call('datastore.query', 'account.bsdusers', [('id', '=', pk)], {'prefix': 'bsdusr_'})
-        if not user:
-            raise ValidationError(None, f'User {pk} does not exist', errno.ENOENT)
-        user = user[0]
+        user = await self._get_instance(pk)
 
         verrors = ValidationErrors()
 
@@ -293,11 +287,7 @@ class UserService(CRUDService):
     @accepts(Int('id'), Dict('options', Bool('delete_group', default=True)))
     async def do_delete(self, pk, options=None):
 
-        # TODO: common CRUD method
-        user = await self.middleware.call('datastore.query', 'account.bsdusers', [('id', '=', pk)], {'prefix': 'bsdusr_'})
-        if not user:
-            raise ValidationError(None, f'User {pk} does not exist', errno.ENOENT)
-        user = user[0]
+        user = await self._get_instance(pk)
 
         if user['builtin']:
             raise CallError('Cannot delete a built-in user', errno.EINVAL)
@@ -421,11 +411,9 @@ class UserService(CRUDService):
 
 class GroupService(CRUDService):
 
-    @filterable
-    async def query(self, filters=None, options=None):
-        options = options or {}
-        options['prefix'] = 'bsdgrp_'
-        return await self.middleware.call('datastore.query', 'account.bsdgroups', filters, options)
+    class Config:
+        datastore = 'account.bsdgroups'
+        datastore_prefix = 'bsdgrp_'
 
     @accepts(Dict(
         'group_create',
@@ -477,11 +465,7 @@ class GroupService(CRUDService):
     )
     async def do_update(self, pk, data):
 
-        # TODO: common CRUD method
-        group = await self.middleware.call('datastore.query', 'account.bsdgroups', [('id', '=', pk)], {'prefix': 'bsdgrp_'})
-        if not group:
-            raise ValidationError(None, f'Group {pk} does not exist', errno.ENOENT)
-        group = group[0]
+        group = await self._get_instance(pk)
 
         verrors = ValidationErrors()
 
@@ -521,11 +505,7 @@ class GroupService(CRUDService):
     @accepts(Int('id'), Dict('options', Bool('delete_users', default=False)))
     async def do_delete(self, pk, options=None):
 
-        # TODO: common CRUD method
-        group = await self.middleware.call('datastore.query', 'account.bsdgroups', [('id', '=', pk)], {'prefix': 'bsdgrp_'})
-        if not group:
-            raise ValidationError(None, f'Group {pk} does not exist', errno.ENOENT)
-        group = group[0]
+        group = await self._get_instance(pk)
 
         if group['builtin']:
             raise CallError('Builtin group cannot be deleted', errno.EACCES)
