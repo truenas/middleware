@@ -375,11 +375,11 @@ class bsdUsersForm(ModelForm):
         return models.bsdUsers.objects.get(pk=pk)
 
     def delete(self, **kwargs):
-        if self.data.get('nodelgroup'):
-            kwargs['delete_group'] = False
-        else:
-            kwargs['delete_group'] = True
-        super(bsdUsersForm, self).delete(**kwargs)
+        data = {
+            'delete_group': False if self.data.get('nodelgroup') else True,
+        }
+        with client as c:
+            c.call('user.delete', self.instance.id, data)
 
 
 class bsdUserPasswordForm(ModelForm):
