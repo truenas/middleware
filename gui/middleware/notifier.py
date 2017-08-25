@@ -1330,15 +1330,6 @@ class notifier(metaclass=HookMetaclass):
         smb_hash = smb_cmd.communicate()[0].split('\n')[0]
         return smb_hash
 
-    def user_getnextuid(self):
-        command = "/usr/sbin/pw usernext"
-        pw = self._pipeopen(command)
-        uid = pw.communicate()[0]
-        if pw.returncode != 0:
-            raise ValueError("Could not retrieve usernext")
-        uid = uid.split(':')[0]
-        return uid
-
     def user_getnextgid(self):
         command = "/usr/sbin/pw groupnext"
         pw = self._pipeopen(command)

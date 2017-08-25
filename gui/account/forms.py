@@ -229,8 +229,9 @@ class bsdUsersForm(ModelForm):
 
         if not self.instance.id:
             try:
-                self.fields['bsdusr_uid'].initial = notifier().user_getnextuid()
-            except:
+                with client as c:
+                    self.fields['bsdusr_uid'].initial = c.call('user.get_next_uid')
+            except Exception:
                 pass
             self.fields['bsdusr_home'].label = _('Create Home Directory In')
             self.fields['bsdusr_creategroup'].widget.attrs['onChange'] = (
