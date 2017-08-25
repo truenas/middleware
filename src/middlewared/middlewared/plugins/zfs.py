@@ -3,7 +3,6 @@ from bsd import geom
 from middlewared.schema import Dict, List, Str, Bool, Int, accepts
 from middlewared.service import CallError, CRUDService, Service, job
 
-import asyncio
 import errno
 import libzfs
 import threading
