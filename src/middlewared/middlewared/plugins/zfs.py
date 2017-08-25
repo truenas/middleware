@@ -1,7 +1,7 @@
 from bsd import geom
 
 from middlewared.schema import Dict, List, Str, Bool, Int, accepts
-from middlewared.service import CallError, CRUDService, Service, job
+from middlewared.service import CallError, CRUDService, Service, job, private
 
 import errno
 import libzfs
@@ -226,11 +226,11 @@ class ZFSSnapshot(CRUDService):
                 return False
 
     @accepts(Dict(
-        'snapshot_delete',
+        'snapshot_remove',
         Str('dataset'),
         Str('name')
     ))
-    async def delete(self, data):
+    async def remove(self, data):
         """
         Remove a snapshot from a given dataset.
 
@@ -297,3 +297,11 @@ class ZFSSnapshot(CRUDService):
         except libzfs.ZFSException as err:
             self.logger.error("{0}".format(err))
             return False
+
+    @private
+    def query(self):
+        """
+            XXX: Just set it as private and avoid show a query method
+                 on the API documentation that was not implemented yet.
+        """
+        pass
