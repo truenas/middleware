@@ -128,6 +128,7 @@ class ServiceBase(type):
 
     Currently the following options are allowed:
       - datastore: name of the datastore mainly used in the service
+      - datastore_extend: datastore `extend` option used in common `query` method
       - datastore_prefix: datastore `prefix` option used in helper methods
       - namespace: namespace identifier of the service
       - private: whether or not the service is deemed private
@@ -151,6 +152,7 @@ class ServiceBase(type):
         config_attrs = {
             'datastore': None,
             'datastore_prefix': None,
+            'datastore_extend': None,
             'namespace': namespace,
             'private': False,
             'verbose_name': klass.__name__.replace('Service', ''),
@@ -211,7 +213,9 @@ class CRUDService(Service):
             )
         options = options or {}
         if self._config.datastore_prefix:
-             options['prefix'] = self._config.datastore_prefix
+            options['prefix'] = self._config.datastore_prefix
+        if self._config.datastore_extend:
+            options['extend'] = self._config.datastore_extend
         return await self.middleware.call('datastore.query', self._config.datastore, filters, options)
 
     async def create(self, data):
