@@ -24,7 +24,7 @@ do_postinit()
 	/usr/local/bin/midclt call core.event_send system ADDED '{"id": "ready"}' > /dev/null
 
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} \
-	"SELECT $sf FROM tasks_initshutdown WHERE ini_when = 'postinit' ORDER BY id" | \
+	"SELECT $sf FROM tasks_initshutdown WHERE ini_when = 'postinit' AND ini_enabled = 1 ORDER BY id" | \
 	while eval read -r $f; do
 		if [ "${ini_type}" = "command" ]; then
 			eval ${ini_command}
