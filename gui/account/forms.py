@@ -433,10 +433,6 @@ class bsdUserPasswordForm(ModelForm):
             })
         return models.bsdUsers.objects.get(pk=pk)
 
-    def delete(self, **kwargs):
-        with client as c:
-            c.call('group.delete', self.id)
-
 
 class bsdUserEmailForm(ModelForm):
 
