@@ -1303,33 +1303,6 @@ class notifier(metaclass=HookMetaclass):
 
         return ret
 
-    def user_lock(self, username):
-        self._system('/usr/local/bin/smbpasswd -d "%s"' % (username))
-        self._system('/usr/sbin/pw lock "%s"' % (username))
-        return self.user_gethashedpassword(username)
-
-    def user_unlock(self, username):
-        self._system('/usr/local/bin/smbpasswd -e "%s"' % (username))
-        self._system('/usr/sbin/pw unlock "%s"' % (username))
-        return self.user_gethashedpassword(username)
-
-    def user_gethashedpassword(self, username):
-        """
-        Get the samba hashed password for ``username''
-
-        Returns:
-            tuple -> (user password, samba hash)
-        """
-
-        """
-        Make sure to use -d 0 for pdbedit, otherwise it will bomb
-        if CIFS debug level is anything different than 'Minimum'
-        """
-        smb_command = "/usr/local/bin/pdbedit -d 0 -w %s" % username
-        smb_cmd = self._pipeopen(smb_command)
-        smb_hash = smb_cmd.communicate()[0].split('\n')[0]
-        return smb_hash
-
     def path_to_smb_share(self, path):
         from freenasUI.sharing.models import CIFS_Share
 
