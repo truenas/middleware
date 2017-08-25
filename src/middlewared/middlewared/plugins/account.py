@@ -333,7 +333,9 @@ class UserService(CRUDService):
         return last_uid + 1
 
     async def __set_password(self, data):
-        password = data.pop('password', None)
+        if 'password' not in data:
+            return
+        password = data.pop('password')
         if password:
             data['unixhash'] = crypted_password(password)
             # See http://samba.org.ru/samba/docs/man/manpages/smbpasswd.5.html
