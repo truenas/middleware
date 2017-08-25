@@ -205,7 +205,7 @@ def doesVMSnapshotByNameExists(vm, snapshotName):
                 break
             tree = tree[0].childSnapshotList
     except:
-        log.debug('Exception in doesVMSnapshotByNameExists')
+        log.debug('Exception in doesVMSnapshotByNameExists', exc_info=True)
     return False
 
 
@@ -280,7 +280,7 @@ if len(mp_to_task_map) > 0:
 
     # Grab all existing snapshot and filter out the expiring ones
     snapshots = {}
-    snapshots_pending_delete = set()
+    snapshots_pending_delete = []
     previous_prefix = '/'
     # Use -s name because its faster. See #18428
     zfsproc = pipeopen("/sbin/zfs list -t snapshot -H -o name -s name", debug, logger=log)
@@ -309,7 +309,7 @@ if len(mp_to_task_map) > 0:
                                     continue
                             else:
                                 previous_prefix = '%s/' % (fs)
-                            snapshots_pending_delete.add(snapshot_name)
+                            snapshots_pending_delete.append(snapshot_name)
                 else:
                     if (fs, snap_ret_policy, True) in mp_to_task_map:
                         if (fs, snap_ret_policy, True) in snapshots:
