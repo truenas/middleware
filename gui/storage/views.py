@@ -31,8 +31,6 @@ import os
 import re
 import signal
 import subprocess
-import traceback
-import sys
 import urllib.request, urllib.parse, urllib.error
 from time import sleep
 
@@ -56,7 +54,6 @@ from freenasUI.system.models import Advanced
 from freenasUI.services.exceptions import ServiceFailed
 from freenasUI.services.models import iSCSITargetExtent
 from freenasUI.storage import forms, models
-import socket
 
 log = logging.getLogger('storage.views')
 
