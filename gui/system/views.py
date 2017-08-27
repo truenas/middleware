@@ -1232,7 +1232,7 @@ def update_apply(request):
                     'exit': exit,
                     'uuid': uuid,
                     'reboot': True,
-                    'finished': True if job['state'] in ('SUCCESS', 'FAILED') else False,
+                    'finished': True if job['state'] in ('SUCCESS', 'FAILED', 'ABORTED') else False,
                     'error': job['error'] or False,
                 }
                 handler = namedtuple('Handler', ['uuid', 'error', 'finished', 'exit', 'reboot'])(**rv)
@@ -1392,7 +1392,7 @@ def update_check(request):
                     'uuid': uuid,
                     'apply': True if job['method'] == 'update.update' else False,
                     'reboot': True,
-                    'finished': True if job['state'] in ('SUCCESS', 'FAILED') else False,
+                    'finished': True if job['state'] in ('SUCCESS', 'FAILED', 'ABORTED') else False,
                     'error': job['error'] or False,
                 }
                 handler = namedtuple('Handler', ['uuid', 'error', 'finished', 'exit', 'reboot', 'apply'])(**rv)
@@ -1531,7 +1531,7 @@ def update_progress(request):
         load = {
             'apply': True if job['method'] == 'update.update' else False,
             'error': job['error'],
-            'finished': job['state'] in ('SUCCESS', 'FAILED'),
+            'finished': job['state'] in ('SUCCESS', 'FAILED', 'ABORTED'),
             'indeterminate': True if job['progress']['percent'] is None else False,
             'percent': job['progress'].get('percent'),
             'step': 1,

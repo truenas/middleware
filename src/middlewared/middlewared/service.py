@@ -273,6 +273,11 @@ class CoreService(Service):
                 extra=progress.get('extra'),
             )
 
+    @accepts(Int('id'))
+    def job_abort(self, id):
+        job = self.middleware.jobs.all()[id]
+        return job.abort()
+
     @accepts()
     def get_services(self):
         """Returns a list of all registered services."""

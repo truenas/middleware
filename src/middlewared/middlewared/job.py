@@ -17,6 +17,7 @@ class State(enum.Enum):
     RUNNING = 2
     SUCCESS = 3
     FAILED = 4
+    ABORTED = 5
 
 
 class JobSharedLock(object):
@@ -190,6 +191,8 @@ class Job(object):
         }
         self.time_started = datetime.now()
         self.time_finished = None
+        self.loop = None
+        self.future = None
 
         # If Job is marked as pipe we open a pipe()
         # so the job can read/write and the other end can read/write it
@@ -227,9 +230,9 @@ class Job(object):
             assert state not in ('WAITING', 'SUCCESS')
         if self.state == State.RUNNING:
             assert state not in ('WAITING', 'RUNNING')
-        assert self.state not in (State.SUCCESS, State.FAILED)
+        assert self.state not in (State.SUCCESS, State.FAILED, State.ABORTED)
         self.state = State.__members__[state]
-        if self.state in (State.SUCCESS, State.FAILED):
+        if self.state in (State.SUCCESS, State.FAILED, State.ABORTED):
             self.time_finished = datetime.now()
 
     def set_progress(self, percent, description=None, extra=None):
@@ -246,60 +249,23 @@ class Job(object):
         await self._finished.wait()
         return self.result
 
+    def abort(self):
+        if self.loop is not None and self.future is not None:
+            self.loop.call_soon_threadsafe(self.future.cancel)
+
     async def run(self, queue):
         """
         Run a Job and set state/result accordingly.
         This method is supposed to run in a greenlet.
         """
 
+        self.set_state('RUNNING')
         try:
-            self.set_state('RUNNING')
-            """
-            If job is flagged as process a new process is spawned
-            with the job id which will in turn run the method
-            and return the result as a json
-            """
-            if self.options.get('process'):
-                proc = await Popen([
-                    '/usr/bin/env',
-                    'python3',
-                    os.path.join(
-                        os.path.dirname(os.path.realpath(__file__)),
-                        'job_process.py',
-                    ),
-                    str(self.id),
-                ], stdout=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=True,
-                    env={
-                    'LOGNAME': 'root',
-                    'USER': 'root',
-                    'GROUP': 'wheel',
-                    'HOME': '/root',
-                    'PATH': '/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin',
-                    'TERM': 'xterm',
-                })
-                output = await proc.communicate()
-                try:
-                    data = json.loads(output[0].decode())
-                except ValueError:
-                    self.set_state('FAILED')
-                    self.error = 'Running job has failed.\nSTDOUT: {}\nSTDERR: {}'.format(output[0], output[1])
-                else:
-                    if proc.returncode != 0:
-                        self.set_state('FAILED')
-                        self.error = data['error']
-                        self.exception = data['exception']
-                    else:
-                        self.set_result(data)
-                        self.set_state('SUCCESS')
-            else:
-                # Make sure args are not altered during job run
-                args = copy.deepcopy(self.args)
-                if asyncio.iscoroutinefunction(self.method):
-                    rv = await self.method(*([self] + args))
-                else:
-                    rv = await self.middleware.threaded(self.method, *([self] + args))
-                self.set_result(rv)
-                self.set_state('SUCCESS')
+            self.loop = asyncio.get_event_loop()
+            self.future = asyncio.ensure_future(self.__run_body())
+            await self.future
+        except asyncio.CancelledError:
+            self.set_state('ABORTED')
         except:
             self.set_state('FAILED')
             self.set_exception(sys.exc_info())
@@ -308,6 +274,54 @@ class Job(object):
             queue.release_lock(self)
             self._finished.set()
             self.middleware.send_event('core.get_jobs', 'CHANGED', id=self.id, fields=self.__encode__())
+
+    async def __run_body(self):
+        """
+        If job is flagged as process a new process is spawned
+        with the job id which will in turn run the method
+        and return the result as a json
+        """
+        if self.options.get('process'):
+            proc = await Popen([
+                '/usr/bin/env',
+                'python3',
+                os.path.join(
+                    os.path.dirname(os.path.realpath(__file__)),
+                    'job_process.py',
+                ),
+                str(self.id),
+            ], stdout=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=True,
+                env={
+                    'LOGNAME': 'root',
+                    'USER': 'root',
+                    'GROUP': 'wheel',
+                    'HOME': '/root',
+                    'PATH': '/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin',
+                    'TERM': 'xterm',
+                })
+            output = await proc.communicate()
+            try:
+                data = json.loads(output[0].decode())
+            except ValueError:
+                self.set_state('FAILED')
+                self.error = 'Running job has failed.\nSTDOUT: {}\nSTDERR: {}'.format(output[0], output[1])
+            else:
+                if proc.returncode != 0:
+                    self.set_state('FAILED')
+                    self.error = data['error']
+                    self.exception = data['exception']
+                else:
+                    self.set_result(data)
+                    self.set_state('SUCCESS')
+        else:
+            # Make sure args are not altered during job run
+            args = copy.deepcopy(self.args)
+            if asyncio.iscoroutinefunction(self.method):
+                rv = await self.method(*([self] + args))
+            else:
+                rv = await self.middleware.threaded(self.method, *([self] + args))
+            self.set_result(rv)
+            self.set_state('SUCCESS')
 
     def __encode__(self):
         return {

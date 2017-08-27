@@ -400,7 +400,7 @@ class Client(object):
                     event = job['__ready'] = Event()
                 job['__callback'] = kwargs.pop('callback')
 
-            # Wait indefinitely for the job event with state SUCCESS/FAILED
+            # Wait indefinitely for the job event with state SUCCESS/FAILED/ABORTED
             event.wait()
             job = self._jobs.pop(job_id, None)
             if job is None:
