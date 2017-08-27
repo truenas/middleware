@@ -179,8 +179,8 @@ define([
             handleAs: "json"
           }).then(function(data) {
             if (this.importProgress) {
-              if(data.status && data.volume && data.ftrans) {
-                me._message = data.status + " " + data.volume + " : " + data.ftrans.substring(data.ftrans.indexOf("/") + 1);
+              if(data.status && data.volume && data.extra) {
+                me._message = data.status + " " + data.volume + ": " + data.extra;
               }
             }
             if (this.backupProgress) {
