@@ -444,19 +444,7 @@ class GroupService(CRUDService):
     async def do_create(self, data):
 
         verrors = ValidationErrors()
-
-        group = await self.middleware.call('datastore.query', 'account.bsdgroups', [('group', '=', data['name'])], {'prefix': 'bsdgrp_'})
-        if group:
-            verrors.add('name', f'Group with name "{data["name"]}" already exists', errno.EEXIST)
-
-        pw_checkname(verrors, 'name', data['name'])
-
-        allow_duplicate_gid = data.pop('allow_duplicate_gid')
-        if data.get('gid') and not allow_duplicate_gid:
-            group = await self.middleware.call('datastore.query', 'account.bsdgroups', [('gid', '=', data['gid'])], {'prefix': 'bsdgrp_'})
-            if group:
-                verrors.add('gid', f'Group ID "{data["gid"]}" already exists', errno.EEXIST)
-
+        await self.__common_validation(verrors, data)
         if verrors:
             raise verrors
 
@@ -486,20 +474,7 @@ class GroupService(CRUDService):
         group = await self._get_instance(pk)
 
         verrors = ValidationErrors()
-
-        if 'name' in data:
-            existing = await self.middleware.call('datastore.query', 'account.bsdgroups', [('group', '=', data['name']), ('id', '!=', pk)], {'prefix': 'bsdgrp_'})
-            if existing:
-                verrors.add('name', f'Group with name "{data["name"]}" already exists', errno.EEXIST)
-
-            pw_checkname(verrors, 'name', data['name'])
-
-        allow_duplicate_gid = data.pop('allow_duplicate_gid', False)
-        if data.get('gid') and not allow_duplicate_gid:
-            existing = await self.middleware.call('datastore.query', 'account.bsdgroups', [('gid', '=', data['gid']), ('id', '!=', pk)], {'prefix': 'bsdgrp_'})
-            if existing:
-                verrors.add('gid', f'Group ID "{data["gid"]}" already exists', errno.EEXIST)
-
+        await self.__common_validation(verrors, data, pk=pk)
         if verrors:
             raise verrors
 
@@ -554,3 +529,20 @@ class GroupService(CRUDService):
                 return last_gid + 1
             last_gid = i['gid']
         return last_gid + 1
+
+    async def __common_validation(self, verrors, data, pk=None):
+
+        exclude_filter = [('id', '!=', pk)] if pk else []
+
+        if 'name' in data:
+            existing = await self.middleware.call('datastore.query', 'account.bsdgroups', [('group', '=', data['name'])] + exclude_filter, {'prefix': 'bsdgrp_'})
+            if existing:
+                verrors.add('name', f'Group with name "{data["name"]}" already exists', errno.EEXIST)
+
+            pw_checkname(verrors, 'name', data['name'])
+
+        allow_duplicate_gid = data.pop('allow_duplicate_gid', False)
+        if data.get('gid') and not allow_duplicate_gid:
+            existing = await self.middleware.call('datastore.query', 'account.bsdgroups', [('gid', '=', data['gid'])] + exclude_filter, {'prefix': 'bsdgrp_'})
+            if existing:
+                verrors.add('gid', f'Group ID "{data["gid"]}" already exists', errno.EEXIST)
