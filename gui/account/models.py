@@ -34,11 +34,8 @@ from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
 from freenasUI import choices
-from freenasUI.common.samba import Samba4
-from freenasUI.common.system import domaincontroller_enabled
 from freenasUI.freeadmin.models import DictField, Model, PathField
 from freenasUI.middleware.client import client
-from freenasUI.middleware.notifier import notifier
 
 log = logging.getLogger('account.models')
 
