@@ -375,14 +375,7 @@ class BaseFreeAdmin(object):
                         ),
                         events=events)
                 except ValidationErrors as e:
-                    for err in e.errors:
-                        if err.attribute in mf.fields:
-                            mf._errors[err.attribute] = mf.error_class([err.errmsg])
-                        else:
-                            if '__all__' not in mf._errors:
-                                mf._errors['__all__'] = mf.error_class([err.errmsg])
-                            else:
-                                mf._errors['__all__'] += [err.errmsg]
+                    self.handle_middleware_validation(mf, e)
                     return JsonResp(request, form=mf, formsets=formsets)
                 except MiddlewareError as e:
                     return JsonResp(
@@ -598,14 +591,7 @@ class BaseFreeAdmin(object):
                             ),
                             events=events)
                 except ValidationErrors as e:
-                    for err in e.errors:
-                        if err.attribute in mf.fields:
-                            mf._errors[err.attribute] = mf.error_class([err.errmsg])
-                        else:
-                            if '__all__' not in mf._errors:
-                                mf._errors['__all__'] = mf.error_class([err.errmsg])
-                            else:
-                                mf._errors['__all__'] += [err.errmsg]
+                    self.handle_middleware_validation(mf, e)
                     return JsonResp(request, form=mf, formsets=formsets)
                 except ServiceFailed as e:
                     return JsonResp(
@@ -733,6 +719,19 @@ class BaseFreeAdmin(object):
                 template,
                 context,
                 content_type='text/html')
+
+    def handle_middleware_validation(self, mf, excep):
+        for err in excep.errors:
+            field_name = mf.middleware_attr_map.get(err.attribute)
+            if not field_name and mf.middleware_attr_prefix:
+                field_name = f'{mf.middleware_attr_prefix}{err.attribute}'
+            if field_name in mf.fields:
+                mf._errors[field_name] = mf.error_class([err.errmsg])
+            else:
+                if '__all__' not in mf._errors:
+                    mf._errors['__all__'] = mf.error_class([err.errmsg])
+                else:
+                    mf._errors['__all__'] += [err.errmsg]
 
     def get_confirm_message(self, action, **kwargs):
         return None
