@@ -222,7 +222,6 @@ class ValidationErrors(ClientException):
     def __str__(self):
         msgs = []
         for e in self.errors:
-            attribute = e.attribute or 'ALL'
             errcode = errno.errorcode.get(e.errcode, 'EUNKNOWN')
             msgs.append(f'[{errcode}] {e.attribute or "ALL"}: {e.errmsg}')
         return '\n'.join(msgs)
