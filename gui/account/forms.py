@@ -171,7 +171,13 @@ class bsdUsersForm(ModelForm):
         label=_('Auxiliary groups'),
         choices=(),
         required=False)
+
     advanced_fields = ['bsdusr_mode']
+    middleware_attr_map = {
+        'groups': 'bsdusr_to_group',
+        'group_create': 'bsdusr_creategroup',
+    }
+    middleware_attr_prefix = 'bsdusr_'
 
     class Meta:
         model = models.bsdUsers
@@ -464,6 +470,11 @@ class DeleteUserForm(forms.Form):
 
 
 class bsdGroupsForm(ModelForm):
+
+    middleware_attr_map = {
+        'name': 'bsdgrp_group',
+        'gid': 'bsdgrp_gid',
+    }
 
     class Meta:
         fields = '__all__'

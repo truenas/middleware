@@ -69,6 +69,14 @@ class ModelForm(AdvMixin, MF):
     so we use a custom formfield with a _reroll method which is called
     on every form instantiation
     """
+
+    """
+    Map middleware attribute names to django form fields.
+    This is so we can report errors in the correct field.
+    """
+    middleware_attr_map = {}
+    middleware_attr_prefix = None
+
     def __init__(self, *args, **kwargs):
         self._fserrors = {}
         self._api = kwargs.pop('api_validation', False)
