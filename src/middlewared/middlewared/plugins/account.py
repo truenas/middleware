@@ -253,7 +253,7 @@ class UserService(CRUDService):
             asyncio.ensure_future(self.middleware.threaded(do_home_copy))
 
         if 'groups' in user:
-            groups = user.pop('groups', [])
+            groups = user.pop('groups')
             await self.__set_groups(pk, groups)
 
         await self.middleware.call('datastore.update', 'account.bsdusers', pk, user, {'prefix': 'bsdusr_'})
