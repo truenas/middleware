@@ -128,7 +128,7 @@ class RsyncService(Service):
         Str('mode', enum=['MODULE', 'SSH'], required=True),
         Str('remote_password'),
         Dict(
-            'rsync-properties',
+            'properties',
             Bool('recursive'),
             Bool('compress'),
             Bool('times'),
@@ -159,20 +159,20 @@ class RsyncService(Service):
         remote_address = remote_host if '@' in remote_host else f'"{remote_user}"@{remote_host}'
         remote_password = rcopy.get('remote_password', None)
         password_file = None
-        properties = rcopy.get('rsync-properties', defaultdict(bool))
+        properties = rcopy.get('properties', defaultdict(bool))
 
         # Let's do a brief check of all the user provided parameters
-        if path:
+        if not path:
             raise ValueError('The path is required')
         elif not os.path.exists(path):
             raise CallError(f'The specified path: {path} does not exist', errno.ENOENT)
 
-        if remote_host:
+        if not remote_host:
             raise ValueError('The remote host is required')
 
-        if mode == 'SSH' and remote_path:
+        if mode == 'SSH' and not remote_path:
             raise ValueError('The remote path is required')
-        elif mode == 'MODULE' and remote_module:
+        elif mode == 'MODULE' and not remote_module:
             raise ValueError('The remote module is required')
 
         try:
