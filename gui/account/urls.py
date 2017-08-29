@@ -29,7 +29,7 @@ from django.contrib.auth.views import logout
 
 from freenasUI.common.system import get_sw_name
 from .views import (
-    home, json_users, user2group_update, json_groups, group2user_update,
+    home, json_users, json_groups, group2user_update,
     login_wrapper
 )
 
@@ -38,7 +38,6 @@ urlpatterns = [
     url(r'^home/$', home, name="account_home"),
     url(r'^bsduser/json/$', json_users, name="account_bsduser_json"),
     url(r'^bsduser/json/(?P<exclude>.+)/$', json_users, name="account_bsduser_json"),
-    url(r'^bsduser/(?P<object_id>\d+)/groups/$', user2group_update, name="account_bsduser_groups"),
     url(r'^bsdgroup/json/$', json_groups, name="account_bsdgroup_json"),
     url(r'^bsdgroup/(?P<object_id>\d+)/members/$', group2user_update, name="account_bsdgroup_members"),
     url(r'^login/$', login_wrapper, {'template_name': 'registration/login.html'}, name="account_login"),
