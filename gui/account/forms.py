@@ -446,21 +446,6 @@ class bsdUserPasswordForm(ModelForm):
         return models.bsdUsers.objects.get(pk=pk)
 
 
-class bsdUserEmailForm(ModelForm):
-
-    class Meta:
-        model = models.bsdUsers
-        fields = ('bsdusr_email',)
-
-    def save(self):
-        bsduser = super(bsdUserEmailForm, self).save(commit=True)
-        try:
-            notifier().reload("user", timeout=_fs().account.user.timeout.reload)
-        except Exception as e:
-            log.debug("ERROR: failed to reload user: %s", e)
-        return bsduser
-
-
 class DeleteUserForm(forms.Form):
 
     def __init__(self, *args, **kwargs):

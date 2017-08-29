@@ -101,11 +101,6 @@ class BsdUserFAdmin(BaseFreeAdmin):
         #    "auxiliary",
         #    label=_('Auxiliary Groups'),
         #)
-        actions['E-mail'] = self._action_builder(
-            "email",
-            label=_('Change E-mail'),
-            builtin=True,
-        )
         return actions
 
 

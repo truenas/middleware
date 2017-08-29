@@ -2164,11 +2164,6 @@ class BsdUserResourceMixin(NestedMixin):
                     bundle.obj.get_edit_url(),
                 )
             )
-            bundle.data['_email_url'] = (
-                "%sbsdUserEmailForm?deletable=false" % (
-                    bundle.obj.get_edit_url(),
-                )
-            )
             bundle.data['_auxiliary_url'] = reverse(
                 'account_bsduser_groups',
                 kwargs={'object_id': bundle.obj.id})
