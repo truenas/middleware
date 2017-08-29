@@ -15,6 +15,7 @@ import asyncio
 import binascii
 import concurrent.futures
 import errno
+import functools
 import imp
 import inspect
 import linecache
@@ -668,6 +669,40 @@ class Middleware(object):
 
         self.logger.debug('All plugins loaded')
 
+    def __setup_periodic_tasks(self):
+        for service_name, service in self.__services.items():
+            for task_name in dir(service):
+                method = getattr(service, task_name)
+                if callable(method) and hasattr(method, "_periodic"):
+                    if method._periodic.run_on_start:
+                        delay = 0
+                    else:
+                        delay = method._periodic.interval
+
+                    self.__loop.call_later(
+                        delay,
+                        functools.partial(
+                            self.__loop.create_task,
+                            self.__periodic_task_wrapper(method, service_name, task_name, method._periodic.interval)
+                        )
+                    )
+
+    async def __periodic_task_wrapper(self, method, service_name, task_name, interval):
+        self.logger.debug("Calling periodic task %s::%s", service_name, task_name)
+
+        try:
+            await method()
+        except Exception:
+            self.logger.warning("Exception while calling periodic task", exc_info=True)
+
+        self.__loop.call_later(
+            interval,
+            functools.partial(
+                self.__loop.create_task,
+                self.__periodic_task_wrapper(method, service_name, task_name, interval)
+            )
+        )
+
     def register_wsclient(self, client):
         self.__wsclients[client.sessionid] = client
 
@@ -898,6 +933,8 @@ class Middleware(object):
             asyncio.ensure_future(restful_api.register_resources())
         )
         asyncio.ensure_future(self.jobs.run())
+
+        self.__setup_periodic_tasks()
 
         self.logger.debug('Accepting connections')
         web.run_app(app, host='0.0.0.0', port=6000, access_log=None)
