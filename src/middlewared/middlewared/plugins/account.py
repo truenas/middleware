@@ -223,6 +223,12 @@ class UserService(CRUDService):
         if data.get('sshpubkey') and not home.startswith('/mnt'):
             verrors.add('sshpubkey', 'Home directory is not writable, leave this blank"')
 
+        # Do not allow attributes to be changed for builtin user
+        if user['builtin']:
+            for i in ('group', 'home', 'home_mode', 'uid', 'username'):
+                if i in data:
+                    verrors.add(i, 'This attribute cannot be changed')
+
         if verrors:
             raise verrors
 
@@ -336,8 +342,11 @@ class UserService(CRUDService):
         elif data.get('password_disabled') and password:
             verrors.add('password_disabled', 'Password disabled, leave password blank')
 
-        if 'home' in data and ':' in data['home']:
-            verrors.add('home', 'Home directory cannot contain colons')
+        if 'home' in data:
+            if ':' in data['home']:
+                verrors.add('home', 'Home directory cannot contain colons')
+            if not data['home'].startswith('/mnt/') or data['home'] != '/nonexistent':
+                verrors.add('home', 'Home directory has to start with /mnt/ or be /nonexistent')
 
         if 'groups' in data:
             groups = data.get('groups') or []
