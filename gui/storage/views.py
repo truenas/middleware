@@ -309,7 +309,7 @@ def volumemanager_zfs(request):
 
 def volimport(request):
     with client as c:
-        job = c.call('volume.get_current_import_job')
+        job = c.call('pool.get_current_import_disk_job')
     if job is not None:
         if job["state"] in ["SUCCESS", "FAILED", "ABORTED"]:
             return render(
@@ -323,7 +323,7 @@ def volimport(request):
             form.done(request)
             with client as c:
                 c.call(
-                    'volume.import_',
+                    'pool.import_disk',
                     "/dev/{0}".format(form.cleaned_data.get('volume_disks')),
                     form.cleaned_data.get('volume_fstype').lower(),
                     form.cleaned_data.get('volume_dest_path'),
@@ -346,7 +346,7 @@ def volimport(request):
 
 def volimport_progress(request):
     with client as c:
-        job = c.call('volume.get_current_import_job')
+        job = c.call('pool.get_current_import_disk_job')
 
     return HttpResponse(json.dumps({
         "status": "finished" if job["state"] in ["SUCCESS", "FAILED", "ABORTED"] else job["progress"]["description"],
@@ -359,17 +359,17 @@ def volimport_progress(request):
 def volimport_abort(request):
     if request.method == 'POST':
         with client as c:
-            job = c.call('volume.get_current_import_job')
+            job = c.call('pool.get_current_import_disk_job')
 
         if job["state"] == "SUCCESS":
             with client as c:
-                c.call('volume.dismiss_current_import_job')
+                c.call('pool.dismiss_current_import_disk_job')
 
             return JsonResp(request, message=_("Volume successfully Imported."))
 
         if job["state"] == "FAILED":
             with client as c:
-                c.call('volume.dismiss_current_import_job')
+                c.call('pool.dismiss_current_import_disk_job')
 
             return JsonResp(request, message=_("Error Importing Volume"))
 
@@ -378,7 +378,7 @@ def volimport_abort(request):
 
         for i in range(10):
             with client as c:
-                job = c.call('volume.get_current_import_job')
+                job = c.call('pool.get_current_import_disk_job')
                 if job["state"] != "RUNNING":
                     break
 
@@ -387,7 +387,7 @@ def volimport_abort(request):
             return JsonResp(request, message=_("Error aborting Volume Import"))
 
         with client as c:
-            c.call('volume.dismiss_current_import_job')
+            c.call('pool.dismiss_current_import_disk_job')
 
         return render(
             request,
