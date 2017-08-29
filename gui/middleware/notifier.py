@@ -1206,51 +1206,6 @@ class notifier(metaclass=HookMetaclass):
         self._encvolume_detach(volume, destroy=True)
         self.__rmdir_mountpoint(vol_mountpath)
 
-    # Create a user in system then samba
-    def __pw_with_password(self, command, password):
-        pw = self._pipeopen(command)
-        msg = pw.communicate("%s\n" % password)[1]
-        if pw.returncode != 0:
-            raise MiddlewareError("Operation could not be performed. %s" % msg)
-
-        if msg != "":
-            log.debug("Command reports %s", msg)
-        return crypt.crypt(password, crypt_makeSalt())
-
-    def __smbpasswd(self, username, password):
-        """
-        Add the user ``username'' to samba using ``password'' as
-        the current password
-
-        Returns:
-            True whether the user has been successfully added and False otherwise
-        """
-
-        # For domaincontroller mode, rely on RSAT for user modification
-        if domaincontroller_enabled():
-            return 0
-
-        command = '/usr/local/bin/smbpasswd -D 0 -s -a "%s"' % (username)
-        smbpasswd = self._pipeopen(command)
-        smbpasswd.communicate("%s\n%s\n" % (password, password))
-        return smbpasswd.returncode == 0
-
-    def __issue_pwdchange(self, username, command, password):
-        unix_hash = self.__pw_with_password(command, password)
-        self.__smbpasswd(username, password)
-        return unix_hash
-
-    def group_create(self, name):
-        command = '/usr/sbin/pw group add "%s"' % (
-            name,
-        )
-        proc = self._pipeopen(command)
-        errmsg = proc.communicate()[1]
-        if proc.returncode != 0:
-            raise MiddlewareError(_('Failed to create group %(name)s: %(msg)s') % {'name': name, 'msg': errmsg})
-        grnam = self.___getgrnam(name)
-        return grnam.gr_gid
-
     def groupmap_list(self):
         command = "/usr/local/bin/net groupmap list"
         groupmap = []
