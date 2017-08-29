@@ -33,7 +33,6 @@ import threading
 from collections import defaultdict
 from middlewared.schema import accepts, Bool, Dict, Str, Int
 from middlewared.service import Service, job, CallError
-from middlewared.utils import is_empty
 from middlewared.logger import Logger
 
 
@@ -162,17 +161,17 @@ class RsyncService(Service):
         properties = rcopy.get('rsync-properties', defaultdict(bool))
 
         # Let's do a brief check of all the user provided parameters
-        if is_empty(path):
+        if path:
             raise ValueError('The path is required')
         elif not os.path.exists(path):
             raise CallError(f'The specified path: {path} does not exist', errno.ENOENT)
 
-        if is_empty(remote_host):
+        if remote_host:
             raise ValueError('The remote host is required')
 
-        if mode == 'SSH' and is_empty(remote_path):
+        if mode == 'SSH' and remote_path:
             raise ValueError('The remote path is required')
-        elif mode == 'MODULE' and is_empty(remote_module):
+        elif mode == 'MODULE' and remote_module:
             raise ValueError('The remote module is required')
 
         try:
