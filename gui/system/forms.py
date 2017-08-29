@@ -519,11 +519,11 @@ class InitialWizard(CommonWizard):
                     qs = bsdGroups.objects.filter(bsdgrp_group=share_group)
                     if not qs.exists():
                         if share_groupcreate:
-                            gid = _n.group_create(share_group)
-                            group = bsdGroups.objects.create(
-                                bsdgrp_gid=gid,
-                                bsdgrp_group=share_group,
-                            )
+                            with client as c:
+                                group = c.call('group.create', {
+                                    'name': share_group,
+                                })
+                            group = bsdGroups.objects.get(pk=group)
                             model_objs.append(group)
                         else:
                             group = bsdGroups.objects.all()[0]
