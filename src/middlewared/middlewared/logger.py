@@ -13,6 +13,8 @@ logging.getLogger('MARKDOWN').setLevel(logging.INFO)
 # asyncio runs in debug mode but we do not need INFO/DEBUG
 logging.getLogger('asyncio').setLevel(logging.WARN)
 
+LOGFILE = '/var/log/middlewared.log'
+
 
 class CrashReporting(object):
     """
@@ -157,7 +159,7 @@ class Logger(object):
             'file': {
                 'level': 'DEBUG',
                 'class': 'logging.handlers.RotatingFileHandler',
-                'filename': '/var/log/middlewared.log',
+                'filename': LOGFILE,
                 'mode': 'a',
                 'maxBytes': 10485760,
                 'backupCount': 5,
@@ -182,6 +184,13 @@ class Logger(object):
     def _set_output_file(self):
         """Set the output format for file log."""
         dictConfig(self.DEFAULT_LOGGING)
+        # Make sure log file is not readable by everybody.
+        # umask could be another approach but chmod was chosen so
+        # it affects existing installs.
+        try:
+            os.chmod(LOGFILE, 0o640)
+        except OSError:
+            pass
 
     def _set_output_console(self):
         """Set the output format for console."""
