@@ -37,14 +37,6 @@ class SSHPeerService(CRUDService):
             data,
         )
 
-    @accepts(Int('id'))
-    async def do_delete(self, id):
-        return await self.middleware.call(
-            'datastore.delete',
-            'peers.ssh_peer',
-            id,
-        )
-
 
 class S3PeerService(CRUDService):
 
@@ -77,12 +69,4 @@ class S3PeerService(CRUDService):
             'peers.s3_peer',
             id,
             data,
-        )
-
-    @accepts(Int('id'))
-    async def do_delete(self, id):
-        return await self.middleware.call(
-            'datastore.delete',
-            'peers.s3_peer',
-            id,
         )
