@@ -1,12 +1,16 @@
-from bsd import geom
-
-from middlewared.schema import Dict, List, Str, Bool, Int, accepts
-from middlewared.service import CallError, CRUDService, Service, job, private
-
+import os
 import errno
-import libzfs
+import socket
+import textwrap
 import threading
 import time
+
+from bsd import geom
+import humanfriendly
+import libzfs
+
+from middlewared.schema import Dict, List, Str, Bool, Int, accepts
+from middlewared.service import CallError, CRUDService, Service, job, periodic, private
 
 
 def find_vdev(pool, vname):
@@ -305,3 +309,108 @@ class ZFSSnapshot(CRUDService):
                  on the API documentation that was not implemented yet.
         """
         pass
+
+
+class ZFSQuoteService(Service):
+
+    class Config:
+        namespace = 'zfs.quota'
+        private = True
+
+    @periodic(60)
+    async def notify_quota_excess(self):
+        existing_excesses = {
+            excess["dataset_name"]: excess
+            for excess in await self.middleware.call('datastore.query', 'storage.quotaexcess')
+        }
+
+        await self.middleware.call('datastore.sql', 'UPDATE storage_quotaexcess SET level = -1')
+
+        for excess in await self.__get_quota_excess():
+            notify = False
+
+            existing_excess = existing_excesses.get(excess["dataset_name"])
+
+            if existing_excess is None:
+                await self.middleware.call(
+                    'datastore.insert',
+                    'storage.quotaexcess',
+                    excess,
+                )
+                notify = True
+
+            else:
+                await self.middleware.call(
+                    'datastore.update',
+                    'storage.quotaexcess',
+                    existing_excess['id'],
+                    excess,
+                )
+
+                if existing_excess["level"] < excess["level"]:
+                    notify = True
+
+            if notify:
+                try:
+                    bsduser = await self.middleware.call(
+                        'datastore.query',
+                        'account.bsdusers',
+                        [('bsdusr_uid', '=', excess['uid'])],
+                        {'get': True},
+                    )
+                except IndexError:
+                    self.logger.warning('Unable to query bsduser with uid %r', excess['uid'])
+                    continue
+
+                hostname = socket.gethostname()
+
+                try:
+                    # FIXME: Translation
+                    await self.middleware.call('mail.send', {
+                        'to': [bsduser['bsdusr_email']],
+                        'subject': '{}: Quota exceed on dataset {}'.format(hostname, excess["dataset_name"]),
+                        'text': textwrap.dedent('''\
+                            Quota exceed on dataset %(dataset_name)s.
+                            Used %(percent_used).2f%% (%(used)s of %(available)s)
+                        ''') % {
+                            "dataset_name": excess["dataset_name"],
+                            "percent_used": excess["percent_used"],
+                            "used": humanfriendly.format_size(excess["used"]),
+                            "available": humanfriendly.format_size(excess["available"]),
+                        },
+                    })
+                except Exception:
+                    self.logger.warning('Failed to send email about quota excess', exc_info=True)
+
+    async def __get_quota_excess(self):
+        excess = []
+        zfs = libzfs.ZFS()
+        for dataset in zfs.datasets:
+            if dataset.properties["quota"].value != "none":
+                used = int(dataset.properties["used"].rawvalue)
+                available = used + int(dataset.properties["available"].rawvalue)
+                try:
+                    percent_used = 100 * used / available
+                except ZeroDivisionError:
+                    percent_used = 100
+
+                if percent_used >= 95:
+                    level = 2
+                elif percent_used >= 80:
+                    level = 1
+                else:
+                    continue
+
+                stat_info = await self.middleware.threaded(os.stat, dataset.properties["mountpoint"].value)
+                uid = stat_info.st_uid
+
+                excess.append({
+                    "dataset_name": dataset.properties["name"].value,
+                    "level": level,
+                    "used": used,
+                    "available": available,
+                    "percent_used": percent_used,
+                    "uid": uid,
+                })
+
+        return excess
