@@ -30,6 +30,7 @@ import pwd
 import tempfile
 import subprocess
 import threading
+import shutil
 from collections import defaultdict
 from middlewared.schema import accepts, Bool, Dict, Str, Int
 from middlewared.service import Service, job, CallError
@@ -213,8 +214,11 @@ class RsyncService(Service):
                 line += f' {remote_address}::"{remote_module}" "{path}"'
             if remote_password:
                 password_file = tempfile.NamedTemporaryFile(mode='w')
+
                 password_file.write(remote_password)
                 password_file.flush()
+                shutil.chown(password_file.name, user=user)
+                os.chmod(password_file.name, 0o600)
                 line += f' --password-file={password_file.name}'
         else:
             # there seems to be some code duplication here but hey its simple
