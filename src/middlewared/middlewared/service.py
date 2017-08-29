@@ -1,4 +1,4 @@
-from collections import defaultdict
+from collections import defaultdict, namedtuple
 
 import asyncio
 import errno
@@ -12,6 +12,8 @@ import time
 from middlewared.schema import accepts, Dict, Int, List, Ref, Str
 from middlewared.utils import filter_list
 from middlewared.logger import Logger
+
+PeriodicTaskDescriptor = namedtuple("PeriodicTaskDescriptor", ["interval", "run_on_start"])
 
 
 def item_method(fn):
@@ -44,6 +46,14 @@ def pass_app(fn):
     """Pass the application instance as parameter to the method."""
     fn._pass_app = True
     return fn
+
+
+def periodic(interval, run_on_start=True):
+    def wrapper(fn):
+        fn._periodic = PeriodicTaskDescriptor(interval, run_on_start)
+        return fn
+
+    return wrapper
 
 
 def private(fn):
