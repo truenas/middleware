@@ -60,7 +60,6 @@ import syslog
 import tarfile
 import tempfile
 import time
-import crypt
 import string
 import random
 
@@ -116,7 +115,6 @@ from freenasUI.common.system import (
     get_mounted_filesystems,
     umount,
     get_sw_name,
-    domaincontroller_enabled
 )
 from freenasUI.common.warden import (Warden, WardenJail,
                                      WARDEN_TYPE_PLUGINJAIL,
