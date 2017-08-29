@@ -176,6 +176,7 @@ class bsdUsersForm(ModelForm):
     middleware_attr_map = {
         'groups': 'bsdusr_to_group',
         'group_create': 'bsdusr_creategroup',
+        'home_mode': 'bsdusr_home',
     }
     middleware_attr_prefix = 'bsdusr_'
 
@@ -311,6 +312,8 @@ class bsdUsersForm(ModelForm):
 
     def clean_bsdusr_home(self):
         home = self.cleaned_data['bsdusr_home']
+        if self.instance.bsdusr_builtin:
+            return self.instance.bsdusr_home
         if home is not None:
             if home == '/nonexistent':
                 return home
@@ -330,10 +333,6 @@ class bsdUsersForm(ModelForm):
                     )
 
                 return home
-
-        raise forms.ValidationError(
-            _('Home directory has to start with /mnt/ or be /nonexistent')
-        )
 
     def clean_bsdusr_mode(self):
         mode = self.cleaned_data.get('bsdusr_mode')
@@ -378,6 +377,13 @@ class bsdUsersForm(ModelForm):
         else:
             data.pop('group')
         data['groups'] = [int(group) for group in data.pop('to_group', [])]
+
+        if self.instance.bsdusr_builtin:
+            data.pop('home', None)
+            data.pop('home_mode', None)
+            data.pop('uid', None)
+            data.pop('username', None)
+            data.pop('group', None)
 
         with client as c:
             pk = c.call(*args, data)
