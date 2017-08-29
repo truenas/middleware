@@ -2159,14 +2159,6 @@ class BsdUserResourceMixin(NestedMixin):
             bundle.data['_edit_url'] += 'bsdUsersForm'
             if bundle.obj.bsdusr_builtin:
                 bundle.data['_edit_url'] += '?deletable=false'
-            bundle.data['_passwd_url'] = (
-                "%sbsdUserPasswordForm?deletable=false" % (
-                    bundle.obj.get_edit_url(),
-                )
-            )
-            bundle.data['_auxiliary_url'] = reverse(
-                'account_bsduser_groups',
-                kwargs={'object_id': bundle.obj.id})
         return bundle
 
     def hydrate(self, bundle):
