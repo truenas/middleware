@@ -1,15 +1,16 @@
-from collections import OrderedDict
-from datetime import datetime
-from middlewared.utils import Popen
-
 import asyncio
+from collections import OrderedDict
 import copy
+from datetime import datetime
 import enum
 import json
 import os
 import subprocess
 import sys
+import time
 import traceback
+
+from middlewared.utils import Popen
 
 
 class State(enum.Enum):
@@ -336,3 +337,59 @@ class Job(object):
             'time_started': self.time_started,
             'time_finished': self.time_finished,
         }
+
+
+class JobProgressBuffer:
+    """
+    This wrapper for `job.set_progress` strips too frequent progress updated
+    (more frequent than `interval` seconds) so they don't spam websocket
+    connections.
+    """
+
+    def __init__(self, job, interval=1):
+        self.job = job
+
+        self.interval = interval
+
+        self.last_update_at = 0
+
+        self.pending_update_body = None
+        self.pending_update = None
+
+    def set_progress(self, *args, **kwargs):
+        t = time.monotonic()
+
+        if t - self.last_update_at >= self.interval:
+            if self.pending_update is not None:
+                self.pending_update.cancel()
+
+                self.pending_update_body = None
+                self.pending_update = None
+
+            self.last_update_at = t
+            self.job.set_progress(*args, **kwargs)
+        else:
+            self.pending_update_body = args, kwargs
+
+            if self.pending_update is None:
+                self.pending_update = asyncio.get_event_loop().call_later(self.interval, self._do_pending_update)
+
+    def cancel(self):
+        if self.pending_update is not None:
+            self.pending_update.cancel()
+
+            self.pending_update_body = None
+            self.pending_update = None
+
+    def flush(self):
+        if self.pending_update is not None:
+            self.pending_update.cancel()
+
+            self._do_pending_update()
+
+    def _do_pending_update(self):
+        self.last_update_at = time.monotonic()
+        self.job.set_progress(*self.pending_update_body[0], **self.pending_update_body[1])
+
+        self.pending_update_body = None
+        self.pending_update = None
