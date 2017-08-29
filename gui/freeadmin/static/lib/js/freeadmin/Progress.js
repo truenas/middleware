@@ -38,7 +38,6 @@ define([
     _iter: 0,
     _message: "",
     name : "",
-    backupProgress: false,
     fileUpload: false,
     importProgress: false,
     mode: "advanced",
@@ -62,10 +61,6 @@ define([
         style: {width: "280px"}
       }, this.dapSubProgress);
 
-      if(this.mode == "backup") {
-        domStyle.set(this.dapSub, "display", "none");
-      }
-
       if(this.mode == "simple") {
         domStyle.set(this.dapMain, "display", "none");
         domStyle.set(this.dapSubLabel, "display", "none");
@@ -85,7 +80,7 @@ define([
         domStyle.set(this.dapMainLabel, "word-break", "break-word");
       }
 
-      if(this.backupProgress || this.importProgress ) {
+      if(this.importProgress ) {
         this.update("");
       }
 
@@ -133,7 +128,7 @@ define([
       var me = this;
       if(uuid) this.uuid = uuid;
       if(!this.dapMainLabel) return;
-      if(!this.importProgress && !this.backupProgress) {
+      if(!this.importProgress) {
         this.message = this.steps[this._curStep - 1];
         this.dapMainLabel.innerHTML = sprintf("(%d/%d) %s", this._curStep, this._numSteps, this.message.label);
       } else
@@ -174,18 +169,13 @@ define([
           }
         });
         me._iter += 1;
-      } else if (this.importProgress || this.backupProgress) {
+      } else if (this.importProgress) {
           xhr.get(me.poolUrl, {
             handleAs: "json"
           }).then(function(data) {
             if (this.importProgress) {
               if(data.status && data.volume && data.ftrans) {
                 me._message = data.status + " " + data.volume + " : " + data.ftrans.substring(data.ftrans.indexOf("/") + 1);
-              }
-            }
-            if (this.backupProgress) {
-              if(data.message) {
-                me._message = data.message;
               }
             }
             if(data.status == 'error' || data.status == 'finished') {
