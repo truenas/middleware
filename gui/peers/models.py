@@ -40,6 +40,10 @@ class Peer(Model):
         max_length=250,
         verbose_name=_('Peer description')
     )
+    peer_type = models.CharField(
+        max_length=250,
+        verbose_name=_('Peer type')
+    )
 
 
 class SSH_Peer(Peer):
