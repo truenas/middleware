@@ -916,7 +916,8 @@ class Middleware(object):
         # http://bugs.python.org/issue30805
         self.__loop.run_until_complete(self.__plugins_load())
 
-        self.__loop.add_signal_handler(signal.SIGTERM, self.kill)
+        self.__loop.add_signal_handler(signal.SIGINT, self.terminate)
+        self.__loop.add_signal_handler(signal.SIGTERM, self.terminate)
         self.__loop.add_signal_handler(signal.SIGUSR1, self.pdb)
 
         app = web.Application(loop=self.__loop)
@@ -941,12 +942,28 @@ class Middleware(object):
 
         self.logger.debug('Accepting connections')
         web.run_app(app, host='0.0.0.0', port=6000, access_log=None)
-        self.__loop.run_forever()
+        try:
+            self.__loop.run_forever()
+        except RuntimeError as e:
+            if e.args[0] != "Event loop is closed":
+                raise
 
-    def kill(self):
-        self.logger.info('Killall server threads')
-        asyncio.get_event_loop().stop()
-        sys.exit(0)
+    def terminate(self):
+        self.logger.info('Terminating')
+
+        for task in asyncio.Task.all_tasks():
+            task.cancel()
+
+        self.__loop.create_task(self.__terminate())
+
+    async def __terminate(self):
+        for service_name, service in self.__services.items():
+            # We're using this instead of having no-op `terminate`
+            # in base class to reduce number of awaits
+            if hasattr(service, "terminate"):
+                await service.terminate()
+
+        self.__loop.stop()
 
 
 def main():
