@@ -2,8 +2,8 @@ from .apidocs import app as apidocs_app
 from .client import ejson as json
 from .job import Job, JobsQueue
 from .restful import RESTfulAPI
-from .schema import Error as SchemaError
-from .service import CallError, CallException
+from .schema import ResolverError, Error as SchemaError
+from .service import CallError, CallException, ValidationError, ValidationErrors
 from aiohttp import web
 from aiohttp_wsgi import WSGIHandler
 from collections import defaultdict
@@ -127,14 +127,16 @@ class Application(object):
             'formatted': ''.join(traceback.format_exception(*exc_info)),
         }
 
-    def send_error(self, message, errno, reason=None, exc_info=None):
+    def send_error(self, message, errno, reason=None, exc_info=None, etype=None, extra=None):
         self._send({
             'msg': 'result',
             'id': message['id'],
             'error': {
                 'error': errno,
+                'type': etype,
                 'reason': reason,
                 'trace': self._tb_error(exc_info) if exc_info else None,
+                'extra': extra,
             },
         })
 
@@ -153,6 +155,12 @@ class Application(object):
                 'msg': 'result',
                 'result': result,
             })
+        except ValidationError as e:
+            self.send_error(message, e.errno, str(e), sys.exc_info(), etype='VALIDATION', extra=[
+                (e.attribute, e.errmsg, e.errno),
+            ])
+        except ValidationErrors as e:
+            self.send_error(message, errno.EAGAIN, str(e), sys.exc_info(), etype='VALIDATION', extra=list(e))
         except (CallException, SchemaError) as e:
             # CallException and subclasses are the way to gracefully
             # send errors to the client
@@ -641,12 +649,6 @@ class Middleware(object):
                 if hasattr(mod, 'setup'):
                     setup_funcs.append(mod.setup)
 
-        for f in setup_funcs:
-            call = f(self)
-            # Allow setup to be a coroutine
-            if asyncio.iscoroutinefunction(f):
-                await call
-
         # Now that all plugins have been loaded we can resolve all method params
         # to make sure every schema is patched and references match
         from middlewared.schema import resolver  # Lazy import so namespace match
@@ -654,18 +656,27 @@ class Middleware(object):
         for service in list(self.__services.values()):
             for attr in dir(service):
                 to_resolve.append(getattr(service, attr))
-        resolved = 0
         while len(to_resolve) > 0:
+            resolved = 0
             for method in list(to_resolve):
                 try:
                     resolver(self, method)
-                except ValueError:
+                except ResolverError:
                     pass
                 else:
                     to_resolve.remove(method)
                     resolved += 1
             if resolved == 0:
-                raise ValueError("Not all could be resolved")
+                raise ValueError(f'Not all schemas could be resolved: {to_resolve}')
+
+        # Only call setup after all schemas have been resolved because
+        # they can call methods with schemas defined.
+        for f in setup_funcs:
+            call = f(self)
+            # Allow setup to be a coroutine
+            if asyncio.iscoroutinefunction(f):
+                await call
+
 
         self.logger.debug('All plugins loaded')
 

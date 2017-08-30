@@ -1,6 +1,6 @@
 from . import ejson as json
 from .protocol import DDPProtocol
-from collections import defaultdict
+from collections import defaultdict, namedtuple
 from threading import Event as TEvent, Lock, Thread
 from ws4py.client.threadedclient import WebSocketClient
 from ws4py.websocket import WebSocket
@@ -8,6 +8,7 @@ from ws4py.websocket import WebSocket
 import argparse
 from base64 import b64encode
 import ctypes
+import errno
 import os
 import socket
 import ssl
@@ -189,16 +190,41 @@ class Call(object):
         self.errno = None
         self.error = None
         self.trace = None
+        self.type = None
+        self.extra = None
 
 
 class ClientException(Exception):
-    def __init__(self, error, errno=None, trace=None):
+    def __init__(self, error, errno=None, trace=None, extra=None):
         self.errno = errno
         self.error = error
         self.trace = trace
+        self.extra = extra
 
     def __str__(self):
         return self.error
+
+
+Error = namedtuple('Error', ['attribute', 'errmsg', 'errcode'])
+
+
+class ValidationErrors(ClientException):
+    def __init__(self, errors):
+        self.errors = []
+        for e in errors:
+            self.errors.append(Error(e[0], e[1], e[2]))
+        self.trace = None
+
+    @property
+    def error(self):
+        return str(self)
+
+    def __str__(self):
+        msgs = []
+        for e in self.errors:
+            errcode = errno.errorcode.get(e.errcode, 'EUNKNOWN')
+            msgs.append(f'[{errcode}] {e.attribute or "ALL"}: {e.errmsg}')
+        return '\n'.join(msgs)
 
 
 class CallTimeout(ClientException):
@@ -264,6 +290,8 @@ class Client(object):
                     call.errno = message['error'].get('error')
                     call.error = message['error'].get('reason')
                     call.trace = message['error'].get('trace')
+                    call.type = message['error'].get('type')
+                    call.extra = message['error'].get('extra')
                 call.returned.set()
                 self._unregister_call(call)
         elif msg in ('added', 'changed', 'removed'):
@@ -352,7 +380,9 @@ class Client(object):
             raise CallTimeout("Call timeout")
 
         if c.errno:
-            raise ClientException(c.error, c.errno, c.trace)
+            if c.trace and c.type == 'VALIDATION':
+                raise ValidationErrors(c.extra)
+            raise ClientException(c.error, c.errno, c.trace, c.extra)
 
         if job:
             job_id = c.result

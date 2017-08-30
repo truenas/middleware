@@ -91,23 +91,6 @@ def group2user_update(request, object_id):
     })
 
 
-def user2group_update(request, object_id):
-    if request.method == 'POST':
-        f = forms.bsdUserToGroupForm(object_id, request.POST)
-        if f.is_valid():
-            f.save()
-            return JsonResp(request, message=_("Groups successfully updated."))
-    else:
-        f = forms.bsdUserToGroupForm(userid=object_id)
-    return render(request, 'account/bsdgroup2user_form.html', {
-        'url': reverse(
-            'account_bsduser_groups',
-            kwargs={'object_id': object_id}
-        ),
-        'form': f,
-    })
-
-
 def json_users(request, exclude=None):
 
     query = request.GET.get("q", None)
