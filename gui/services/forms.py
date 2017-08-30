@@ -1158,6 +1158,7 @@ class iSCSITargetToExtentForm(ModelForm):
     def __init__(self, *args, **kwargs):
         super(iSCSITargetToExtentForm, self).__init__(*args, **kwargs)
         self.fields['iscsi_lunid'].initial = 0
+        self.fields['iscsi_lunid'].required = False
 
     def clean_iscsi_lunid(self):
         lunid = self.cleaned_data.get('iscsi_lunid')
