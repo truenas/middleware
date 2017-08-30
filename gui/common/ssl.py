@@ -176,7 +176,7 @@ def load_privatekey(buf, passphrase=None):
     return crypto.load_privatekey(
         crypto.FILETYPE_PEM,
         buf,
-        passphrase=lambda x: str(passphrase) if passphrase else ''
+        passphrase=lambda x: passphrase.encode() if passphrase else b''
     )
 
 
