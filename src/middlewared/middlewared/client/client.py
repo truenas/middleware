@@ -313,7 +313,7 @@ class Client(object):
                 elif mtype == 'CHANGED':
                     job = self._jobs[job_id]
                     job.update(fields)
-                    if fields['state'] in ('SUCCESS', 'FAILED'):
+                    if fields['state'] in ('SUCCESS', 'FAILED', 'ABORTED'):
                         # If an Event already exist we just set it to mark it finished.
                         # Otherwise we create a new Event.
                         # This is to prevent a race-condition of job finishing before
@@ -369,7 +369,7 @@ class Client(object):
                 else:
                     event = self._jobs[job_id] = {'__ready': Event()}
 
-            # Wait indefinitely for the job event with state SUCCESS/FAILED
+            # Wait indefinitely for the job event with state SUCCESS/FAILED/ABORTED
             event.wait()
             job = self._jobs.pop(job_id, None)
             if job is None:

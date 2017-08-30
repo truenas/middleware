@@ -31,8 +31,6 @@ import os
 import re
 import signal
 import subprocess
-import traceback
-import sys
 import urllib.request, urllib.parse, urllib.error
 from time import sleep
 
@@ -56,7 +54,6 @@ from freenasUI.system.models import Advanced
 from freenasUI.services.exceptions import ServiceFailed
 from freenasUI.services.models import iSCSITargetExtent
 from freenasUI.storage import forms, models
-import socket
 
 log = logging.getLogger('storage.views')
 
@@ -310,78 +307,27 @@ def volumemanager_zfs(request):
     })
 
 
-SOCKIMP = '/var/run/importcopy/importsock'
-
-
-def get_import_progress_from_socket(s=None, n=4096):
-    data = ''
-    close_sock = False
-    try:
-        if s is None:
-            s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-            s.connect(SOCKIMP)
-            s.setblocking(0)
-            close_sock = True
-        s.send(b"get_progress")
-        packet = s.recv(n)
-        while packet:
-            data += packet
-            packet = s.recv(n)
-    except socket.error:
-        pass
-    finally:
-        if close_sock:
-            s.close()
-    return data
-
-
-def final_importdisk_return_response(data, abort=False):
-    stdout_data = False
-    if data['stdout_file']:
-            with open(data['stdout_file'], 'rUb') as f:
-                stdout_data = f.read().decode('utf8')
-    return {
-        'vol': data["volume"],
-        'error': data.get("error", False),
-        'abort': abort,
-        'traceback': data.get("traceback", False),
-        'stdout': stdout_data
-    }
-
-
 def volimport(request):
-    if os.path.exists(SOCKIMP):
-        try:
-            data = json.loads(get_import_progress_from_socket())
-            if data["status"] in ["finished", "error"]:
-                return render(
-                    request, 'storage/import_stats.html', final_importdisk_return_response(data)
-                )
-            return render(request, 'storage/import_progress.html')
-        except Exception as e:
-            data = {
-                'vol': '',
-                'status': 'error',
-                'error': str(e),
-                'traceback': traceback.format_exc() if sys.exc_info()[0] else False
-            }
-            return render(request, 'storage/import_stats.html', data)
+    with client as c:
+        job = c.call('pool.get_current_import_disk_job')
+    if job is not None:
+        if job["state"] in ["SUCCESS", "FAILED", "ABORTED"]:
+            return render(
+                request, 'storage/import_stats.html', job
+            )
+        return render(request, 'storage/import_progress.html')
 
     if request.method == "POST":
         form = forms.VolumeImportForm(request.POST)
         if form.is_valid():
             form.done(request)
-            # usage for command below
-            # Usage: sockscopy vol_to_import fs_type dest_path socket_path
-            subprocess.Popen([
-                "/usr/local/bin/sockscopy",
-                "/dev/{0}".format(form.cleaned_data.get('volume_disks')),
-                form.cleaned_data.get('volume_fstype').lower(),
-                form.cleaned_data.get('volume_dest_path'),
-                SOCKIMP
-            ])
-            # give the background disk import code time to create a socket
-            sleep(2)
+            with client as c:
+                c.call(
+                    'pool.import_disk',
+                    "/dev/{0}".format(form.cleaned_data.get('volume_disks')),
+                    form.cleaned_data.get('volume_fstype').lower(),
+                    form.cleaned_data.get('volume_dest_path'),
+                )
             return render(request, 'storage/import_progress.html')
         else:
 
@@ -399,37 +345,54 @@ def volimport(request):
 
 
 def volimport_progress(request):
-    return HttpResponse(get_import_progress_from_socket(), content_type='application/json')
+    with client as c:
+        job = c.call('pool.get_current_import_disk_job')
+
+    return HttpResponse(json.dumps({
+        "status": "finished" if job["state"] in ["SUCCESS", "FAILED", "ABORTED"] else job["progress"]["description"],
+        "volume": job["arguments"][0],
+        "extra": job["progress"]["extra"],
+        "percent": job["progress"]["percent"],
+    }), content_type='application/json')
 
 
 def volimport_abort(request):
     if request.method == 'POST':
-        s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        s.connect(SOCKIMP)
-        s.setblocking(0)
-        try:
-            data = json.loads(get_import_progress_from_socket(s))
-        except Exception as e:
-            data = {
-                'vol': '',
-                'status': 'error',
-                'error': str(e),
-                'traceback': traceback.format_exc() if sys.exc_info()[0] else False
-            }
-        if data["status"] == "finished":
-            s.send(b"done")
-            s.close()
+        with client as c:
+            job = c.call('pool.get_current_import_disk_job')
+
+        if job["state"] == "SUCCESS":
+            with client as c:
+                c.call('pool.dismiss_current_import_disk_job')
+
             return JsonResp(request, message=_("Volume successfully Imported."))
-        if data["status"] == "error":
-            s.send(b"stop")
-            s.close()
+
+        if job["state"] == "FAILED":
+            with client as c:
+                c.call('pool.dismiss_current_import_disk_job')
+
             return JsonResp(request, message=_("Error Importing Volume"))
-        s.send(b"stop")
-        s.close()
+
+        with client as c:
+            c.call("core.job_abort", job["id"])
+
+        for i in range(10):
+            with client as c:
+                job = c.call('pool.get_current_import_disk_job')
+                if job["state"] != "RUNNING":
+                    break
+
+            sleep(1)
+        else:
+            return JsonResp(request, message=_("Error aborting Volume Import"))
+
+        with client as c:
+            c.call('pool.dismiss_current_import_disk_job')
+
         return render(
             request,
             'storage/import_stats.html',
-            final_importdisk_return_response(data, abort=True)
+            job,
         )
 
 
