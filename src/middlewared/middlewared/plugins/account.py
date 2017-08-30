@@ -345,7 +345,7 @@ class UserService(CRUDService):
         if 'home' in data:
             if ':' in data['home']:
                 verrors.add('home', 'Home directory cannot contain colons')
-            if not data['home'].startswith('/mnt/') or data['home'] != '/nonexistent':
+            if not data['home'].startswith('/mnt/') and data['home'] != '/nonexistent':
                 verrors.add('home', 'Home directory has to start with /mnt/ or be /nonexistent')
 
         if 'groups' in data:
