@@ -2491,6 +2491,11 @@ class CertificateAuthorityImportForm(ModelForm):
 
         if nmatches > 1:
             self.instance.cert_chain = True
+
+        try:
+            load_certificate(self.instance.cert_certificate)
+        except crypto.Error:
+            raise forms.ValidationError(_("CA not in PEM format."))
         #
         # Should we validate the chain??? Probably
         # For now, just assume the user knows WTF he is doing
@@ -2525,12 +2530,12 @@ class CertificateAuthorityImportForm(ModelForm):
             return passphrase
 
         try:
-            privatekey = load_privatekey(
+            load_privatekey(
                 privatekey,
                 passphrase
             )
         except Exception:
-            raise forms.ValidationError(_("Incorrect passphrase"))
+            raise forms.ValidationError(_("Incorrect passphrase."))
 
         return passphrase
 
