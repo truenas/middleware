@@ -317,38 +317,40 @@ class ZFSQuoteService(Service):
         namespace = 'zfs.quota'
         private = True
 
+    def __init__(self, middleware):
+        super().__init__(middleware)
+
+        self.excesses = None
+
     @periodic(60)
     async def notify_quota_excess(self):
-        existing_excesses = {
-            excess["dataset_name"]: excess
-            for excess in await self.middleware.call('datastore.query', 'storage.quotaexcess')
-        }
+        if self.excesses is None:
+            self.excesses = {
+                excess["dataset_name"]: excess
+                for excess in await self.middleware.call('datastore.query', 'storage.quotaexcess')
+            }
 
-        await self.middleware.call('datastore.sql', 'UPDATE storage_quotaexcess SET level = -1')
+        excesses = await self.__get_quota_excess()
 
-        for excess in await self.__get_quota_excess():
+        # Remove gone excesses
+        self.excesses = dict(
+            filter(
+                lambda item: any(excess["dataset_name"] == item[0] for excess in excesses),
+                self.excesses.items()
+            )
+        )
+
+        # Insert/update present excesses
+        for excess in excesses:
             notify = False
-
-            existing_excess = existing_excesses.get(excess["dataset_name"])
-
+            existing_excess = self.excesses.get(excess["dataset_name"])
             if existing_excess is None:
-                await self.middleware.call(
-                    'datastore.insert',
-                    'storage.quotaexcess',
-                    excess,
-                )
                 notify = True
-
             else:
-                await self.middleware.call(
-                    'datastore.update',
-                    'storage.quotaexcess',
-                    existing_excess['id'],
-                    excess,
-                )
-
                 if existing_excess["level"] < excess["level"]:
                     notify = True
+
+            self.excesses[excess["dataset_name"]] = excess
 
             if notify:
                 try:
@@ -414,3 +416,10 @@ class ZFSQuoteService(Service):
                 })
 
         return excess
+
+    async def terminate(self):
+        await self.middleware.call('datastore.sql', 'DELETE FROM storage_quotaexcess')
+
+        if self.excesses is not None:
+            for excess in self.excesses.values():
+                await self.middleware.call('datastore.insert', 'storage.quotaexcess', excess)
