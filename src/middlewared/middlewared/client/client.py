@@ -508,7 +508,7 @@ def main():
                     if e.error:
                         print(e.error, file=sys.stderr)
                     if e.trace:
-                        print(e.trace, file=sys.stderr)
+                        print(e.trace['formatted'], file=sys.stderr)
                 sys.exit(1)
     elif args.name == 'ping':
         with Client(uri=args.uri) as c:
