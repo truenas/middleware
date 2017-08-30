@@ -9,7 +9,7 @@ def data():
 def test_user_query(conn):
     req = conn.rest.get('user')
 
-    assert req.status_code == 200
+    assert req.status_code == 200, req.text
     assert isinstance(req.json(), list) is True
 
 
@@ -21,7 +21,7 @@ def test_user_0100_create(conn, data):
         'group_create': True,
     }])
 
-    assert req.status_code == 200
+    assert req.status_code == 200, req.text
     assert isinstance(req.json(), int) is True
     data['id'] = req.json()
 
@@ -35,7 +35,7 @@ def test_user_0500_update(conn, data):
         'full_name': 'Test User Update',
     }])
 
-    assert req.status_code == 200
+    assert req.status_code == 200, req.text
     assert isinstance(req.json(), int) is True
 
 
@@ -46,4 +46,4 @@ def test_user_0900_delete(conn, data):
 
     req = conn.rest.delete(f'user/id/{data["id"]}')
 
-    assert req.status_code == 200
+    assert req.status_code == 200, req.text

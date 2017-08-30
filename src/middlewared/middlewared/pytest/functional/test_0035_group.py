@@ -9,7 +9,7 @@ def data():
 def test_group_query(conn):
     req = conn.rest.get('group')
 
-    assert req.status_code == 200
+    assert req.status_code == 200, req.text
     assert isinstance(req.json(), list) is True
 
 
@@ -18,7 +18,7 @@ def test_group_0100_create(conn, data):
         'name': 'gtest555',
     }])
 
-    assert req.status_code == 200
+    assert req.status_code == 200, req.text
     assert isinstance(req.json(), int) is True
     data['id'] = req.json()
 
@@ -32,7 +32,7 @@ def test_group_0500_update(conn, data):
         'sudo': True,
     }])
 
-    assert req.status_code == 200
+    assert req.status_code == 200, req.text
     assert isinstance(req.json(), int) is True
 
 
@@ -43,4 +43,4 @@ def test_group_0900_delete(conn, data):
 
     req = conn.rest.delete(f'group/id/{data["id"]}')
 
-    assert req.status_code == 200
+    assert req.status_code == 200, req.text
