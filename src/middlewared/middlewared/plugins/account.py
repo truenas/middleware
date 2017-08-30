@@ -220,7 +220,8 @@ class UserService(CRUDService):
         await self.__common_validation(verrors, data, pk=pk)
 
         home = data.get('home') or user['home']
-        if data.get('sshpubkey') and not home.startswith('/mnt'):
+        # root user (uid 0) is an exception to the rule
+        if data.get('sshpubkey') and not home.startswith('/mnt') and user['uid'] != 0:
             verrors.add('sshpubkey', 'Home directory is not writable, leave this blank"')
 
         # Do not allow attributes to be changed for builtin user
