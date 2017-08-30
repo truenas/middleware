@@ -388,32 +388,35 @@ class ZFSQuoteService(Service):
         excess = []
         zfs = libzfs.ZFS()
         for dataset in zfs.datasets:
-            if dataset.properties["quota"].value != "none":
-                used = int(dataset.properties["used"].rawvalue)
-                available = used + int(dataset.properties["available"].rawvalue)
-                try:
-                    percent_used = 100 * used / available
-                except ZeroDivisionError:
-                    percent_used = 100
+            quota = dataset.properties.get("quota")
+            # zvols do not have a quota property in libzfs
+            if quota is None or quota.value == "none":
+                continue
+            used = int(dataset.properties["used"].rawvalue)
+            available = used + int(dataset.properties["available"].rawvalue)
+            try:
+                percent_used = 100 * used / available
+            except ZeroDivisionError:
+                percent_used = 100
 
-                if percent_used >= 95:
-                    level = 2
-                elif percent_used >= 80:
-                    level = 1
-                else:
-                    continue
+            if percent_used >= 95:
+                level = 2
+            elif percent_used >= 80:
+                level = 1
+            else:
+                continue
 
-                stat_info = await self.middleware.threaded(os.stat, dataset.properties["mountpoint"].value)
-                uid = stat_info.st_uid
+            stat_info = await self.middleware.threaded(os.stat, dataset.properties["mountpoint"].value)
+            uid = stat_info.st_uid
 
-                excess.append({
-                    "dataset_name": dataset.properties["name"].value,
-                    "level": level,
-                    "used": used,
-                    "available": available,
-                    "percent_used": percent_used,
-                    "uid": uid,
-                })
+            excess.append({
+                "dataset_name": dataset.properties["name"].value,
+                "level": level,
+                "used": used,
+                "available": available,
+                "percent_used": percent_used,
+                "uid": uid,
+            })
 
         return excess
 
