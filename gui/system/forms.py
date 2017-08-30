@@ -2493,8 +2493,8 @@ class CertificateAuthorityImportForm(ModelForm):
             self.instance.cert_chain = True
 
         try:
-            cert_info = load_certificate(self.instance.cert_certificate)
-        except:
+            load_certificate(self.instance.cert_certificate)
+        except crypto.Error:
             raise forms.ValidationError(_("CA not in PEM format."))
         #
         # Should we validate the chain??? Probably
@@ -2530,7 +2530,7 @@ class CertificateAuthorityImportForm(ModelForm):
             return passphrase
 
         try:
-            privatekey = load_privatekey(
+            load_privatekey(
                 privatekey,
                 passphrase
             )
