@@ -387,13 +387,13 @@ class ZFSQuoteService(Service):
     async def __get_quota_excess(self):
         excess = []
         zfs = libzfs.ZFS()
-        for dataset in zfs.datasets:
-            quota = dataset.properties.get("quota")
+        for properties in await self.middleware.threaded(lambda: [i.properties for i in zfs.datasets]):
+            quota = properties.get("quota")
             # zvols do not have a quota property in libzfs
             if quota is None or quota.value == "none":
                 continue
-            used = int(dataset.properties["used"].rawvalue)
-            available = used + int(dataset.properties["available"].rawvalue)
+            used = int(properties["used"].rawvalue)
+            available = used + int(properties["available"].rawvalue)
             try:
                 percent_used = 100 * used / available
             except ZeroDivisionError:
@@ -406,11 +406,11 @@ class ZFSQuoteService(Service):
             else:
                 continue
 
-            stat_info = await self.middleware.threaded(os.stat, dataset.properties["mountpoint"].value)
+            stat_info = await self.middleware.threaded(os.stat, properties["mountpoint"].value)
             uid = stat_info.st_uid
 
             excess.append({
-                "dataset_name": dataset.properties["name"].value,
+                "dataset_name": properties["name"].value,
                 "level": level,
                 "used": used,
                 "available": available,
