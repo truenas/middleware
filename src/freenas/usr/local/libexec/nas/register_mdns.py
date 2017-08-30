@@ -9,6 +9,7 @@ import threading
 
 def register(name, regtype, port):
     sdRef = pybonjour.DNSServiceRegister(name=name,
+                                         interfaceIndex=0,
                                          regtype=regtype,
                                          port=port,
                                          callBack=None)
