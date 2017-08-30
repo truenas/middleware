@@ -693,10 +693,13 @@ class Middleware(object):
                     self.__loop.call_later(
                         delay,
                         functools.partial(
-                            self.__loop.create_task,
-                            self.__periodic_task_wrapper(method, service_name, task_name, method._periodic.interval)
+                            self.__call_periodic_task,
+                            method, service_name, task_name, method._periodic.interval
                         )
                     )
+
+    def __call_periodic_task(self, method, service_name, task_name, interval):
+        self.__loop.create_task(self.__periodic_task_wrapper(method, service_name, task_name, interval))
 
     async def __periodic_task_wrapper(self, method, service_name, task_name, interval):
         self.logger.debug("Calling periodic task %s::%s", service_name, task_name)
@@ -709,8 +712,8 @@ class Middleware(object):
         self.__loop.call_later(
             interval,
             functools.partial(
-                self.__loop.create_task,
-                self.__periodic_task_wrapper(method, service_name, task_name, interval)
+                self.__call_periodic_task,
+                method, service_name, task_name, interval
             )
         )
 
