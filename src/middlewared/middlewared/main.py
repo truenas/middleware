@@ -585,8 +585,8 @@ class ShellApplication(object):
 
 class Middleware(object):
 
-    def __init__(self, loop_monitor=True, plugins_dirs=None):
-        self.logger = logger.Logger('middlewared').getLogger()
+    def __init__(self, loop_monitor=True, plugins_dirs=None, debug_level=None):
+        self.logger = logger.Logger('middlewared', debug_level).getLogger()
         self.crash_reporting = logger.CrashReporting()
         self.loop_monitor = loop_monitor
         self.plugins_dirs = plugins_dirs or []
@@ -690,6 +690,8 @@ class Middleware(object):
                     else:
                         delay = method._periodic.interval
 
+                    self.logger.debug(f"Setting up periodic task {service_name}::{task_name} to run every {method._periodic.interval} seconds")
+
                     self.__loop.call_later(
                         delay,
                         functools.partial(
@@ -702,7 +704,7 @@ class Middleware(object):
         self.__loop.create_task(self.__periodic_task_wrapper(method, service_name, task_name, interval))
 
     async def __periodic_task_wrapper(self, method, service_name, task_name, interval):
-        self.logger.debug("Calling periodic task %s::%s", service_name, task_name)
+        self.logger.trace("Calling periodic task %s::%s", service_name, task_name)
 
         try:
             await method()
@@ -978,10 +980,6 @@ class Middleware(object):
 
 
 def main():
-    #  Logger
-    _logger = logger.Logger('middleware')
-    get_logger = _logger.getLogger()
-
     # Workaround for development
     modpath = os.path.realpath(os.path.join(
         os.path.dirname(os.path.realpath(__file__)),
@@ -995,7 +993,8 @@ def main():
     parser.add_argument('--foreground', '-f', action='store_true')
     parser.add_argument('--disable-loop-monitor', '-L', action='store_true')
     parser.add_argument('--plugins-dirs', '-p', action='append')
-    parser.add_argument('--debug-level', default='DEBUG', choices=[
+    parser.add_argument('--debug-level', choices=[
+        'TRACE',
         'DEBUG',
         'INFO',
         'WARN',
@@ -1007,10 +1006,19 @@ def main():
     ])
     args = parser.parse_args()
 
+    #  Logger
     if args.log_handler:
         log_handlers = [args.log_handler]
     else:
         log_handlers = ['console' if args.foreground else 'file']
+
+    if args.debug_level is None and args.foreground:
+        debug_level = 'TRACE'
+    else:
+        debug_level = args.debug_level or 'DEBUG'
+
+    _logger = logger.Logger('middleware', debug_level)
+    get_logger = _logger.getLogger()
 
     pidpath = '/var/run/middlewared.pid'
 
@@ -1045,6 +1053,7 @@ def main():
     Middleware(
         loop_monitor=not args.disable_loop_monitor,
         plugins_dirs=args.plugins_dirs,
+        debug_level=debug_level,
     ).run()
     if not args.foreground:
         daemonc.close()

@@ -14,6 +14,14 @@ logging.getLogger('MARKDOWN').setLevel(logging.INFO)
 logging.getLogger('asyncio').setLevel(logging.WARN)
 
 LOGFILE = '/var/log/middlewared.log'
+logging.TRACE = 6
+
+
+def trace(self, message, *args, **kws):
+    if self.isEnabledFor(logging.TRACE):
+        self._log(logging.TRACE, message, args, **kws)
+logging.addLevelName(logging.TRACE, "TRACE")
+logging.Logger.trace = trace
 
 
 class CrashReporting(object):
@@ -175,8 +183,9 @@ class Logger(object):
         },
     }
 
-    def __init__(self, application_name):
+    def __init__(self, application_name, debug_level=None):
         self.application_name = application_name
+        self.debug_level = debug_level or 'DEBUG'
 
     def getLogger(self):
         return logging.getLogger(self.application_name)
@@ -196,7 +205,7 @@ class Logger(object):
         """Set the output format for console."""
 
         console_handler = logging.StreamHandler()
-        console_handler.setLevel(logging.DEBUG)
+        logging.root.setLevel(getattr(logging, self.debug_level))
 
         log_format = "[%(asctime)s] (%(levelname)s) %(name)s.%(funcName)s():%(lineno)d - %(message)s"
         time_format = "%Y/%m/%d %H:%M:%S"
@@ -216,4 +225,4 @@ class Logger(object):
         else:
             self._set_output_file()
 
-        logging.root.setLevel(logging.DEBUG)
+        logging.root.setLevel(getattr(logging, self.debug_level))
