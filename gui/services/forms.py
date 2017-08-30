@@ -24,13 +24,14 @@
 #
 #####################################################################
 from collections import OrderedDict
+import base64
 import glob
+import hashlib
 import logging
 import os
 import re
 import subprocess
-import hashlib
-import base64
+import sysctl
 from django.core.validators import validate_email
 from django.utils.safestring import mark_safe
 from django.utils.translation import (
@@ -64,7 +65,6 @@ from ipaddr import (
     IPAddress, IPNetwork, AddressValueError, NetmaskValueError,
     IPv4Address, IPv6Address,
 )
-from freenasUI.freeadmin.utils import key_order
 
 log = logging.getLogger('services.form')
 
@@ -1150,21 +1150,14 @@ class iSCSITargetToExtentForm(ModelForm):
         fields = '__all__'
         model = models.iSCSITargetToExtent
         widgets = {
-            'iscsi_target': forms.widgets.FilteringSelect(),
             'iscsi_extent': forms.widgets.FilteringSelect(),
+            'iscsi_lunid': forms.widgets.TextInput(),
+            'iscsi_target': forms.widgets.FilteringSelect(),
         }
 
     def __init__(self, *args, **kwargs):
         super(iSCSITargetToExtentForm, self).__init__(*args, **kwargs)
-        choices = tuple(
-            [(x, x) for x in range(25)]
-        )
-        self.fields['iscsi_lunid'] = forms.CharField(
-            label=self.fields['iscsi_lunid'].label,
-            initial=self.fields['iscsi_lunid'].initial,
-            required=False,
-            widget=forms.widgets.ComboBox(choices=choices),
-        )
+        self.fields['iscsi_lunid'].initial = 0
 
     def clean_iscsi_lunid(self):
         lunid = self.cleaned_data.get('iscsi_lunid')
@@ -1172,6 +1165,10 @@ class iSCSITargetToExtentForm(ModelForm):
             return None
         if isinstance(lunid, str) and not lunid.isdigit():
             raise forms.ValidationError(_("LUN ID must be a positive integer"))
+        lunid_int = int(lunid)
+        lun_map_size = sysctl.filter('kern.cam.ctl.lun_map_size')[0].value
+        if lunid_int < 0 or lunid_int > lun_map_size - 1:
+            raise forms.ValidationError(_('LUN ID must be a positive integer and lower than %d') % (lun_map_size - 1))
         return lunid
 
     def clean(self):
