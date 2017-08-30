@@ -63,6 +63,7 @@ class SystemService(Service):
             'hostname': socket.gethostname(),
             'physmem': sysctl.filter('hw.physmem')[0].value,
             'model': sysctl.filter('hw.model')[0].value,
+            'cores': sysctl.filter('hw.ncpu')[0].value,
             'loadavg': os.getloadavg(),
             'uptime': uptime,
             'system_serial': serial,
