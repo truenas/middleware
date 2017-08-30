@@ -20,6 +20,8 @@ logging.TRACE = 6
 def trace(self, message, *args, **kws):
     if self.isEnabledFor(logging.TRACE):
         self._log(logging.TRACE, message, args, **kws)
+
+
 logging.addLevelName(logging.TRACE, "TRACE")
 logging.Logger.trace = trace
 
