@@ -1081,3 +1081,15 @@ class VMWarePlugin(Model):
 
     def get_password(self):
         return notifier().pwenc_decrypt(self.password)
+
+
+class QuotaExcess(Model):
+    dataset_name = models.CharField(
+        unique=True,
+        max_length=256,
+    )
+    level = models.IntegerField()
+    used = models.IntegerField()
+    available = models.IntegerField()
+    percent_used = models.FloatField()
+    uid = models.IntegerField()

@@ -128,6 +128,8 @@ class Bool(Attribute):
 class Int(Attribute):
 
     def clean(self, value):
+        if value is None and not self.required:
+            return self.default
         if not isinstance(value, int):
             if isinstance(value, str) and value.isdigit():
                 return int(value)
@@ -154,7 +156,7 @@ class List(EnumMixin, Attribute):
     def clean(self, value):
         value = super(List, self).clean(value)
         if value is None and not self.required:
-            return self.default
+            return copy.copy(self.default)
         if not isinstance(value, list):
             raise Error(self.name, 'Not a list')
         if self.items:
@@ -204,7 +206,7 @@ class Dict(Attribute):
 
     def clean(self, data):
         if data is None and not self.required:
-            return {}
+            data = {}
 
         self.errors = []
         if not isinstance(data, dict):
@@ -261,7 +263,9 @@ class Ref(object):
     def resolve(self, middleware):
         schema = middleware.get_schema(self.name)
         if not schema:
-            raise ValueError('Schema {0} does not exist'.format(self.name))
+            raise ResolverError('Schema {0} does not exist'.format(self.name))
+        schema = copy.deepcopy(schema)
+        schema.register = False
         return schema
 
 
@@ -307,6 +311,10 @@ class Patch(object):
         return schema
 
 
+class ResolverError(Exception):
+    pass
+
+
 def resolver(middleware, f):
     if not callable(f):
         return
@@ -317,7 +325,7 @@ def resolver(middleware, f):
         if isinstance(p, (Patch, Ref, Attribute)):
             new_params.append(p.resolve(middleware))
         else:
-            raise ValueError('Invalid parameter definition {0}'.format(p))
+            raise ResolverError('Invalid parameter definition {0}'.format(p))
 
     # FIXME: for some reason assigning params (f.accepts = new_params) does not work
     while f.accepts:
@@ -337,6 +345,8 @@ def accepts(*schema):
 
         def clean_args(args, kwargs):
             args = list(args)
+            args = args[:args_index] + copy.deepcopy(args[args_index:])
+            kwargs = copy.deepcopy(kwargs)
 
             # Iterate over positional args first, excluding self
             i = 0
@@ -349,6 +359,8 @@ def accepts(*schema):
                 kwarg = f.__code__.co_varnames[x]
                 if kwarg in kwargs:
                     kwargs[kwarg] = nf.accepts[i].clean(kwargs[kwarg])
+                elif len(nf.accepts) >= i + args_index:
+                    kwargs[kwarg] = nf.accepts[i].clean(None)
                 i += 1
             return args, kwargs
 

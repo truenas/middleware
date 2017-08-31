@@ -1,12 +1,16 @@
-from bsd import geom
-
-from middlewared.schema import Dict, List, Str, accepts
-from middlewared.service import CallError, Service, job
-
+import os
 import errno
-import libzfs
+import socket
+import textwrap
 import threading
 import time
+
+from bsd import geom
+import humanfriendly
+import libzfs
+
+from middlewared.schema import Dict, List, Str, Bool, Int, accepts
+from middlewared.service import CallError, CRUDService, Service, job, periodic, private
 
 
 def find_vdev(pool, vname):
@@ -173,3 +177,252 @@ class ZFSPoolService(Service):
         t = threading.Thread(target=watch, daemon=True)
         t.start()
         t.join()
+
+
+class ZFSSnapshot(CRUDService):
+
+    class Config:
+        namespace = 'zfs.snapshot'
+
+    @accepts(Dict(
+        'snapshot_create',
+        Str('dataset'),
+        Str('name'),
+        Bool('recursive'),
+        Int('vmsnaps_count')
+    ))
+    async def do_create(self, data):
+        """
+        Take a snapshot from a given dataset.
+
+        Returns:
+            bool: True if succeed otherwise False.
+        """
+        zfs = libzfs.ZFS()
+
+        dataset = data.get('dataset', '')
+        name = data.get('name', '')
+        recursive = data.get('recursive', False)
+        vmsnaps_count = data.get('vmsnaps_count', 0)
+
+        if not dataset or not name:
+            return False
+
+        try:
+            ds = zfs.get_dataset(dataset)
+        except libzfs.ZFSException as err:
+            self.logger.error("{0}".format(err))
+            return False
+
+        try:
+            if recursive:
+                ds.snapshots('{0}@{1}'.format(dataset, name, recursive=True))
+            else:
+                ds.snapshot('{0}@{1}'.format(dataset, name))
+
+            if vmsnaps_count > 0:
+                ds.properties['freenas:vmsynced'] = libzfs.ZFSUserProperty('Y')
+
+            self.logger.info("Snapshot taken: {0}@{1}".format(dataset, name))
+            return True
+        except libzfs.ZFSException as err:
+                self.logger.error("{0}".format(err))
+                return False
+
+    @accepts(Dict(
+        'snapshot_remove',
+        Str('dataset'),
+        Str('name')
+    ))
+    async def remove(self, data):
+        """
+        Remove a snapshot from a given dataset.
+
+        Returns:
+            bool: True if succeed otherwise False.
+        """
+        zfs = libzfs.ZFS()
+
+        dataset = data.get('dataset', '')
+        snapshot_name = data.get('name', '')
+
+        if not dataset or not snapshot_name:
+            return False
+
+        try:
+            ds = zfs.get_dataset(dataset)
+        except libzfs.ZFSException as err:
+            self.logger.error("{0}".format(err))
+            return False
+
+        __snap_name = dataset + '@' + snapshot_name
+        try:
+            for snap in list(ds.snapshots):
+                if snap.name == __snap_name:
+                    ds.destroy_snapshot(snapshot_name)
+                    self.logger.info("Destroyed snapshot: {0}".format(__snap_name))
+                    return True
+            self.logger.error("There is no snapshot {0} on dataset {1}".format(snapshot_name, dataset))
+            return False
+        except libzfs.ZFSException as err:
+            self.logger.error("{0}".format(err))
+            return False
+
+    @accepts(Dict(
+        'snapshot_clone',
+        Str('snapshot'),
+        Str('dataset_dst'),
+    ))
+    async def clone(self, data):
+        """
+        Clone a given snapshot to a new dataset.
+
+        Returns:
+            bool: True if succeed otherwise False.
+        """
+        zfs = libzfs.ZFS()
+
+        snapshot = data.get('snapshot', '')
+        dataset_dst = data.get('dataset_dst', '')
+
+        if not snapshot or not dataset_dst:
+            return False
+
+        try:
+            snp = zfs.get_snapshot(snapshot)
+        except libzfs.ZFSException as err:
+            self.logger.error("{0}".format(err))
+            return False
+
+        try:
+            snp.clone(dataset_dst)
+            self.logger.info("Cloned snapshot {0} to dataset {1}".format(snapshot, dataset_dst))
+            return True
+        except libzfs.ZFSException as err:
+            self.logger.error("{0}".format(err))
+            return False
+
+    @private
+    def query(self):
+        """
+            XXX: Just set it as private and avoid show a query method
+                 on the API documentation that was not implemented yet.
+        """
+        pass
+
+
+class ZFSQuoteService(Service):
+
+    class Config:
+        namespace = 'zfs.quota'
+        private = True
+
+    def __init__(self, middleware):
+        super().__init__(middleware)
+
+        self.excesses = None
+
+    @periodic(60)
+    async def notify_quota_excess(self):
+        if self.excesses is None:
+            self.excesses = {
+                excess["dataset_name"]: excess
+                for excess in await self.middleware.call('datastore.query', 'storage.quotaexcess')
+            }
+
+        excesses = await self.__get_quota_excess()
+
+        # Remove gone excesses
+        self.excesses = dict(
+            filter(
+                lambda item: any(excess["dataset_name"] == item[0] for excess in excesses),
+                self.excesses.items()
+            )
+        )
+
+        # Insert/update present excesses
+        for excess in excesses:
+            notify = False
+            existing_excess = self.excesses.get(excess["dataset_name"])
+            if existing_excess is None:
+                notify = True
+            else:
+                if existing_excess["level"] < excess["level"]:
+                    notify = True
+
+            self.excesses[excess["dataset_name"]] = excess
+
+            if notify:
+                try:
+                    bsduser = await self.middleware.call(
+                        'datastore.query',
+                        'account.bsdusers',
+                        [('bsdusr_uid', '=', excess['uid'])],
+                        {'get': True},
+                    )
+                except IndexError:
+                    self.logger.warning('Unable to query bsduser with uid %r', excess['uid'])
+                    continue
+
+                hostname = socket.gethostname()
+
+                try:
+                    # FIXME: Translation
+                    await self.middleware.call('mail.send', {
+                        'to': [bsduser['bsdusr_email']],
+                        'subject': '{}: Quota exceed on dataset {}'.format(hostname, excess["dataset_name"]),
+                        'text': textwrap.dedent('''\
+                            Quota exceed on dataset %(dataset_name)s.
+                            Used %(percent_used).2f%% (%(used)s of %(available)s)
+                        ''') % {
+                            "dataset_name": excess["dataset_name"],
+                            "percent_used": excess["percent_used"],
+                            "used": humanfriendly.format_size(excess["used"]),
+                            "available": humanfriendly.format_size(excess["available"]),
+                        },
+                    })
+                except Exception:
+                    self.logger.warning('Failed to send email about quota excess', exc_info=True)
+
+    async def __get_quota_excess(self):
+        excess = []
+        zfs = libzfs.ZFS()
+        for properties in await self.middleware.threaded(lambda: [i.properties for i in zfs.datasets]):
+            quota = properties.get("quota")
+            # zvols do not have a quota property in libzfs
+            if quota is None or quota.value == "none":
+                continue
+            used = int(properties["used"].rawvalue)
+            available = used + int(properties["available"].rawvalue)
+            try:
+                percent_used = 100 * used / available
+            except ZeroDivisionError:
+                percent_used = 100
+
+            if percent_used >= 95:
+                level = 2
+            elif percent_used >= 80:
+                level = 1
+            else:
+                continue
+
+            stat_info = await self.middleware.threaded(os.stat, properties["mountpoint"].value)
+            uid = stat_info.st_uid
+
+            excess.append({
+                "dataset_name": properties["name"].value,
+                "level": level,
+                "used": used,
+                "available": available,
+                "percent_used": percent_used,
+                "uid": uid,
+            })
+
+        return excess
+
+    async def terminate(self):
+        await self.middleware.call('datastore.sql', 'DELETE FROM storage_quotaexcess')
+
+        if self.excesses is not None:
+            for excess in self.excesses.values():
+                await self.middleware.call('datastore.insert', 'storage.quotaexcess', excess)

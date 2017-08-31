@@ -1,4 +1,4 @@
-from collections import defaultdict
+from collections import defaultdict, namedtuple
 
 import asyncio
 import errno
@@ -12,6 +12,8 @@ import time
 from middlewared.schema import accepts, Dict, Int, List, Ref, Str
 from middlewared.utils import filter_list
 from middlewared.logger import Logger
+
+PeriodicTaskDescriptor = namedtuple("PeriodicTaskDescriptor", ["interval", "run_on_start"])
 
 
 def item_method(fn):
@@ -46,6 +48,14 @@ def pass_app(fn):
     return fn
 
 
+def periodic(interval, run_on_start=True):
+    def wrapper(fn):
+        fn._periodic = PeriodicTaskDescriptor(interval, run_on_start)
+        return fn
+
+    return wrapper
+
+
 def private(fn):
     """Do not expose method in public API"""
     fn._private = True
@@ -72,7 +82,69 @@ class CallError(CallException):
         return f'[{errcode}] {self.errmsg}'
 
 
+class ValidationError(CallException):
+    """
+    ValidationError is an exception used to point when a provided
+    attribute of a middleware method is invalid/not allowed.
+    """
+
+    def __init__(self, attribute, errmsg, errno=errno.EFAULT):
+        self.attribute = attribute
+        self.errmsg = errmsg
+        self.errno = errno
+
+    def __str__(self):
+        errcode = errno.errorcode.get(self.errno, 'EUNKNOWN')
+        return f'[{errcode}] {self.attribute}: {self.errmsg}'
+
+
+class ValidationErrors(CallException):
+    """
+    CallException with a collection of ValidationError
+    """
+
+    def __init__(self, errors=None):
+        self.errors = errors or []
+
+    def add(self, attribute, errmsg, errno=errno.EINVAL):
+        self.errors.append(ValidationError(attribute, errmsg, errno))
+
+    def __iter__(self):
+        for e in self.errors:
+            yield e.attribute, e.errmsg, e.errno
+
+    def __bool__(self):
+        return bool(self.errors)
+
+    def __str__(self):
+        output = ''
+        for e in self.errors:
+            output += str(e) + '\n'
+        return output
+
+
 class ServiceBase(type):
+    """
+    Metaclass of all services
+
+    This metaclass instantiates a `_config` attribute in the service instance
+    from options provided in a Config class, e.g.
+
+    class MyService(Service):
+
+        class Meta:
+            namespace = 'foo'
+            private = False
+
+    Currently the following options are allowed:
+      - datastore: name of the datastore mainly used in the service
+      - datastore_extend: datastore `extend` option used in common `query` method
+      - datastore_prefix: datastore `prefix` option used in helper methods
+      - namespace: namespace identifier of the service
+      - private: whether or not the service is deemed private
+      - verbose_name: human-friendly singular name for the service
+
+    """
 
     def __new__(cls, name, bases, attrs):
         super_new = super(ServiceBase, cls).__new__
@@ -88,9 +160,14 @@ class ServiceBase(type):
         namespace = namespace.lower()
 
         config_attrs = {
+            'datastore': None,
+            'datastore_prefix': None,
+            'datastore_extend': None,
             'namespace': namespace,
             'private': False,
+            'verbose_name': klass.__name__.replace('Service', ''),
         }
+
         if config:
             config_attrs.update({
                 k: v
@@ -102,12 +179,23 @@ class ServiceBase(type):
 
 
 class Service(object, metaclass=ServiceBase):
+    """
+    Generic service abstract class
+
+    This is meant for services that do not follow any standard.
+    """
     def __init__(self, middleware):
         self.logger = Logger(type(self).__name__).getLogger()
         self.middleware = middleware
 
 
 class ConfigService(Service):
+    """
+    Config service abstract class
+
+    Meant for services that provide a single set of attributes which can be
+    updated or not.
+    """
 
     def config(self):
         raise NotImplementedError
@@ -117,9 +205,28 @@ class ConfigService(Service):
 
 
 class CRUDService(Service):
+    """
+    CRUD service abstract class
 
-    def query(self, filters, options):
-        raise NotImplementedError('{}.query must be implemented'.format(self._config.namespace))
+    Meant for services in that a set of entries can be queried, new entry
+    create, updated and/or deleted.
+
+    CRUD stands for Create Retrieve Update Delete.
+    """
+
+    @filterable
+    async def query(self, filters=None, options=None):
+        if not self._config.datastore:
+            raise NotImplementedError(
+                f'{self._config.namespace}.query must be implemented or a '
+                '`datastore` Config attribute provided.'
+            )
+        options = options or {}
+        if self._config.datastore_prefix:
+            options['prefix'] = self._config.datastore_prefix
+        if self._config.datastore_extend:
+            options['extend'] = self._config.datastore_extend
+        return await self.middleware.call('datastore.query', self._config.datastore, filters, options)
 
     async def create(self, data):
         if asyncio.iscoroutinefunction(self.do_create):
@@ -135,12 +242,21 @@ class CRUDService(Service):
             rv = await self.middleware.threaded(self.do_update, id, data)
         return rv
 
-    async def delete(self, id):
+    async def delete(self, id, *args):
         if asyncio.iscoroutinefunction(self.do_delete):
-            rv = await self.do_delete(id)
+            rv = await self.do_delete(id, *args)
         else:
-            rv = await self.middleware.threaded(self.do_delete, id)
+            rv = await self.middleware.threaded(self.do_delete, id, *args)
         return rv
+
+    async def _get_instance(self, id):
+        """
+        Helpher method to get an instance from a collection given the `id`.
+        """
+        instance = await self.middleware.call('datastore.query', self._config.datastore, [('id', '=', id)], {'prefix': self._config.datastore_prefix})
+        if not instance:
+            raise ValidationError(None, f'{self._config.verbose_name} {id} does not exist', errno.ENOENT)
+        return instance[0]
 
 
 class CoreService(Service):
@@ -166,6 +282,11 @@ class CoreService(Service):
                 description=progress.get('description'),
                 extra=progress.get('extra'),
             )
+
+    @accepts(Int('id'))
+    def job_abort(self, id):
+        job = self.middleware.jobs.all()[id]
+        return job.abort()
 
     @accepts()
     def get_services(self):

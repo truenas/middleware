@@ -2159,19 +2159,6 @@ class BsdUserResourceMixin(NestedMixin):
             bundle.data['_edit_url'] += 'bsdUsersForm'
             if bundle.obj.bsdusr_builtin:
                 bundle.data['_edit_url'] += '?deletable=false'
-            bundle.data['_passwd_url'] = (
-                "%sbsdUserPasswordForm?deletable=false" % (
-                    bundle.obj.get_edit_url(),
-                )
-            )
-            bundle.data['_email_url'] = (
-                "%sbsdUserEmailForm?deletable=false" % (
-                    bundle.obj.get_edit_url(),
-                )
-            )
-            bundle.data['_auxiliary_url'] = reverse(
-                'account_bsduser_groups',
-                kwargs={'object_id': bundle.obj.id})
         return bundle
 
     def hydrate(self, bundle):
@@ -3960,7 +3947,7 @@ class VMResourceMixin(object):
     def dehydrate(self, bundle):
         bundle = super(VMResourceMixin, self).dehydrate(bundle)
         state = 'UNKNOWN'
-        device_start_url = device_stop_url = device_restart_url = info = ''
+        device_start_url = device_stop_url = device_restart_url = device_clone_url = info = ''
         try:
             with client as c:
                 status = c.call('vm.status', bundle.obj.id)
@@ -3982,11 +3969,15 @@ class VMResourceMixin(object):
                     device_start_url = reverse(
                         'vm_start', kwargs={'id': bundle.obj.id},
                     )
+                    device_clone_url = reverse(
+                        'vm_clone', kwargs={'id': bundle.obj.id},
+                    )
                 bundle.data.update({
                     '_device_url': reverse('freeadmin_vm_device_datagrid') + '?id=%d' % bundle.obj.id,
                     '_stop_url': device_stop_url,
                     '_start_url': device_start_url,
-                    '_restart_url': device_restart_url
+                    '_restart_url': device_restart_url,
+                    '_clone_url': device_clone_url,
                 })
             if bundle.obj.device_set.filter(dtype='VNC').exists():
                 vnc_port = bundle.obj.device_set.filter(dtype='VNC').values_list('attributes', flat=True)[0].get('vnc_port', 5900 + bundle.obj.id)

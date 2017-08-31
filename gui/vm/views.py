@@ -70,6 +70,7 @@ def stop(request, id):
         'name': vm.name,
     })
 
+
 def restart(request, id):
     vm = models.VM.objects.get(id=id)
     if request.method == 'POST':
@@ -77,5 +78,16 @@ def restart(request, id):
             c.call('vm.restart', id)
         return JsonResp(request, message='VM Restarted')
     return render(request, "vm/restart.html", {
+        'name': vm.name,
+    })
+
+
+def clone(request, id):
+    vm = models.VM.objects.get(id=id)
+    if request.method == 'POST':
+        with client as c:
+            c.call('vm.clone', id)
+        return JsonResp(request, message='VM Cloned')
+    return render(request, "vm/clone.html", {
         'name': vm.name,
     })

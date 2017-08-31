@@ -1636,6 +1636,23 @@ require([
       
     }
 
+    webdavhtauthToggle = function() {
+
+        var select = registry.byId("id_webdav_htauth");
+        var password = registry.byId("id_webdav_password");
+        var trpassword = password.domNode.parentNode.parentNode;
+        var password2 = registry.byId("id_webdav_password2");
+        var trpassword2 = password2.domNode.parentNode.parentNode;
+        if (select.get('value') == 'none') {
+            domStyle.set(trpassword,"display","none");
+            domStyle.set(trpassword2,"display","none");
+        } else {
+            domStyle.set(trpassword,"display","");
+            domStyle.set(trpassword2,"display","");
+        }
+
+    }
+
     upsModeToggle = function() {
 
         var select = registry.byId("id_ups_mode");

@@ -519,11 +519,11 @@ class InitialWizard(CommonWizard):
                     qs = bsdGroups.objects.filter(bsdgrp_group=share_group)
                     if not qs.exists():
                         if share_groupcreate:
-                            gid = _n.group_create(share_group)
-                            group = bsdGroups.objects.create(
-                                bsdgrp_gid=gid,
-                                bsdgrp_group=share_group,
-                            )
+                            with client as c:
+                                group = c.call('group.create', {
+                                    'name': share_group,
+                                })
+                            group = bsdGroups.objects.get(pk=group)
                             model_objs.append(group)
                         else:
                             group = bsdGroups.objects.all()[0]
@@ -539,22 +539,17 @@ class InitialWizard(CommonWizard):
                             else:
                                 password = '!'
                                 password_disabled = True
-                            uid, gid, unixhash, smbhash = _n.user_create(
-                                username=share_user,
-                                fullname=share_user,
-                                password=password,
-                                shell='/bin/csh',
-                                homedir='/nonexistent',
-                                password_disabled=password_disabled
-                            )
-                            user = bsdUsers.objects.create(
-                                bsdusr_username=share_user,
-                                bsdusr_full_name=share_user,
-                                bsdusr_uid=uid,
-                                bsdusr_group=group,
-                                bsdusr_unixhash=unixhash,
-                                bsdusr_smbhash=smbhash,
-                            )
+                            with client as c:
+                                user = c.call('user.create', {
+                                    'username': share_user,
+                                    'full_name': share_user,
+                                    'password': password,
+                                    'shell': '/bin/csh',
+                                    'home': '/nonexistent',
+                                    'password_disabled': password_disabled,
+                                    'group': group.id,
+                                })
+                            user = bsdUsers.objects.get(pk=user)
                             model_objs.append(user)
 
                 else:
@@ -2496,6 +2491,11 @@ class CertificateAuthorityImportForm(ModelForm):
 
         if nmatches > 1:
             self.instance.cert_chain = True
+
+        try:
+            load_certificate(self.instance.cert_certificate)
+        except crypto.Error:
+            raise forms.ValidationError(_("CA not in PEM format."))
         #
         # Should we validate the chain??? Probably
         # For now, just assume the user knows WTF he is doing
@@ -2530,12 +2530,12 @@ class CertificateAuthorityImportForm(ModelForm):
             return passphrase
 
         try:
-            privatekey = load_privatekey(
+            load_privatekey(
                 privatekey,
                 passphrase
             )
         except Exception:
-            raise forms.ValidationError(_("Incorrect passphrase"))
+            raise forms.ValidationError(_("Incorrect passphrase."))
 
         return passphrase
 

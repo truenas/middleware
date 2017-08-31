@@ -1,6 +1,7 @@
 from middlewared.schema import accepts, Int, Str, Dict, List, Bool, Patch
-from middlewared.service import filterable, CRUDService, item_method, private
+from middlewared.service import filterable, CRUDService, item_method, CallError
 from middlewared.utils import Nid, Popen
+from middlewared.client import Client
 
 import asyncio
 import errno
@@ -59,6 +60,14 @@ class VMManager(object):
             return {
                 'state': 'STOPPED',
             }
+
+    async def clone(self, id):
+        try:
+            vm = await self.service.query([('id', '=', id)], {'get': True})
+            return vm
+        except IndexError:
+            self.logger.error("VM does not exist.")
+            return None
 
 
 class VMSupervisor(object):
@@ -396,6 +405,7 @@ class VMService(CRUDService):
         ))
     async def do_create(self, data):
         """Create a VM."""
+
         devices = data.pop('devices')
         pk = await self.middleware.call('datastore.insert', 'vm.vm', data)
 
@@ -404,8 +414,7 @@ class VMService(CRUDService):
             await self.middleware.call('datastore.insert', 'vm.device', device)
         return pk
 
-    @private
-    async def do_update_devices(self, id, devices):
+    async def _do_update_devices(self, id, devices):
         if devices and isinstance(devices, list) is True:
             device_query = await self.middleware.call('datastore.query', 'vm.device', [('vm__id', '=', int(id))])
 
@@ -436,7 +445,7 @@ class VMService(CRUDService):
         """Update all information of a specific VM."""
         devices = data.pop('devices', None)
         if devices:
-            update_devices = await self.do_update_devices(id, devices)
+            update_devices = await self._do_update_devices(id, devices)
         if data:
             return await self.middleware.call('datastore.update', 'vm.vm', id, data)
         else:
@@ -514,6 +523,65 @@ class VMService(CRUDService):
         except Exception as err:
             self.logger.error("===> {0}".format(err))
             return False
+
+    async def _find_clone(self, name):
+        data = await self.middleware.call('vm.query', [], {'order_by': ['name']})
+        clone_index = 0
+        next_name = ""
+        for vm_name in data:
+            if name in vm_name['name'] and '_clone' in vm_name['name']:
+                name_index = int(vm_name['name'][-1])
+                next_name = vm_name['name'][:-1]
+                if name_index >= clone_index:
+                    clone_index = int(name_index) + 1
+
+        if next_name:
+            next_name = next_name + str(clone_index)
+        else:
+            next_name = name + '_clone' + str(clone_index)
+
+        return next_name
+
+    @accepts(Int('id'))
+    async def clone(self, id):
+        vm = await self._manager.clone(id)
+
+        if vm is None:
+            raise CallError('Cannot clone a VM that does not exist.', errno.EINVAL)
+
+        origin_name = vm['name']
+        del vm['id']
+
+        vm['name'] = await self._find_clone(vm['name'])
+
+        for item in vm['devices']:
+            if item['dtype'] == 'NIC':
+                if 'mac' in item['attributes']:
+                    del item['attributes']['mac']
+            if item['dtype'] == 'VNC':
+                if 'vnc_port' in item['attributes']:
+                    del item['attributes']['vnc_port']
+            if item['dtype'] == 'DISK':
+                disk_src_path = '/'.join(item['attributes']['path'].split('/dev/zvol/')[-1:])
+                disk_snapshot_name = vm['name']
+                disk_snapshot_path = disk_src_path + '@' + disk_snapshot_name
+                clone_dst_path = disk_src_path + '_' + vm['name']
+
+                data = {'dataset': disk_src_path, 'name': disk_snapshot_name}
+                await self.middleware.call('zfs.snapshot.create', data)
+
+                data = {'snapshot': disk_snapshot_path, 'dataset_dst': clone_dst_path}
+                await self.middleware.call('zfs.snapshot.clone', data)
+
+                item['attributes']['path'] = '/dev/zvol/' + clone_dst_path
+            if item['dtype'] == 'RAW':
+                item['attributes']['path'] = ''
+                self.logger.warn("For RAW disk you need copy it manually inside your NAS.")
+
+        await self.create(vm)
+        self.logger.info("VM cloned from {0} to {1}".format(origin_name, vm['name']))
+
+        return True
 
 
 async def kmod_load():

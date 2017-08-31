@@ -2,8 +2,8 @@ from .apidocs import app as apidocs_app
 from .client import ejson as json
 from .job import Job, JobsQueue
 from .restful import RESTfulAPI
-from .schema import Error as SchemaError
-from .service import CallError, CallException
+from .schema import ResolverError, Error as SchemaError
+from .service import CallError, CallException, ValidationError, ValidationErrors
 from aiohttp import web
 from aiohttp_wsgi import WSGIHandler
 from collections import defaultdict
@@ -15,6 +15,7 @@ import asyncio
 import binascii
 import concurrent.futures
 import errno
+import functools
 import imp
 import inspect
 import linecache
@@ -126,14 +127,16 @@ class Application(object):
             'formatted': ''.join(traceback.format_exception(*exc_info)),
         }
 
-    def send_error(self, message, errno, reason=None, exc_info=None):
+    def send_error(self, message, errno, reason=None, exc_info=None, etype=None, extra=None):
         self._send({
             'msg': 'result',
             'id': message['id'],
             'error': {
                 'error': errno,
+                'type': etype,
                 'reason': reason,
                 'trace': self._tb_error(exc_info) if exc_info else None,
+                'extra': extra,
             },
         })
 
@@ -152,6 +155,12 @@ class Application(object):
                 'msg': 'result',
                 'result': result,
             })
+        except ValidationError as e:
+            self.send_error(message, e.errno, str(e), sys.exc_info(), etype='VALIDATION', extra=[
+                (e.attribute, e.errmsg, e.errno),
+            ])
+        except ValidationErrors as e:
+            self.send_error(message, errno.EAGAIN, str(e), sys.exc_info(), etype='VALIDATION', extra=list(e))
         except (CallException, SchemaError) as e:
             # CallException and subclasses are the way to gracefully
             # send errors to the client
@@ -576,8 +585,8 @@ class ShellApplication(object):
 
 class Middleware(object):
 
-    def __init__(self, loop_monitor=True, plugins_dirs=None):
-        self.logger = logger.Logger('middlewared').getLogger()
+    def __init__(self, loop_monitor=True, plugins_dirs=None, debug_level=None):
+        self.logger = logger.Logger('middlewared', debug_level).getLogger()
         self.crash_reporting = logger.CrashReporting()
         self.loop_monitor = loop_monitor
         self.plugins_dirs = plugins_dirs or []
@@ -640,12 +649,6 @@ class Middleware(object):
                 if hasattr(mod, 'setup'):
                     setup_funcs.append(mod.setup)
 
-        for f in setup_funcs:
-            call = f(self)
-            # Allow setup to be a coroutine
-            if asyncio.iscoroutinefunction(f):
-                await call
-
         # Now that all plugins have been loaded we can resolve all method params
         # to make sure every schema is patched and references match
         from middlewared.schema import resolver  # Lazy import so namespace match
@@ -653,20 +656,68 @@ class Middleware(object):
         for service in list(self.__services.values()):
             for attr in dir(service):
                 to_resolve.append(getattr(service, attr))
-        resolved = 0
         while len(to_resolve) > 0:
+            resolved = 0
             for method in list(to_resolve):
                 try:
                     resolver(self, method)
-                except ValueError:
+                except ResolverError:
                     pass
                 else:
                     to_resolve.remove(method)
                     resolved += 1
             if resolved == 0:
-                raise ValueError("Not all could be resolved")
+                raise ValueError(f'Not all schemas could be resolved: {to_resolve}')
+
+        # Only call setup after all schemas have been resolved because
+        # they can call methods with schemas defined.
+        for f in setup_funcs:
+            call = f(self)
+            # Allow setup to be a coroutine
+            if asyncio.iscoroutinefunction(f):
+                await call
+
 
         self.logger.debug('All plugins loaded')
+
+    def __setup_periodic_tasks(self):
+        for service_name, service in self.__services.items():
+            for task_name in dir(service):
+                method = getattr(service, task_name)
+                if callable(method) and hasattr(method, "_periodic"):
+                    if method._periodic.run_on_start:
+                        delay = 0
+                    else:
+                        delay = method._periodic.interval
+
+                    self.logger.debug(f"Setting up periodic task {service_name}::{task_name} to run every {method._periodic.interval} seconds")
+
+                    self.__loop.call_later(
+                        delay,
+                        functools.partial(
+                            self.__call_periodic_task,
+                            method, service_name, task_name, method._periodic.interval
+                        )
+                    )
+
+    def __call_periodic_task(self, method, service_name, task_name, interval):
+        self.__loop.create_task(self.__periodic_task_wrapper(method, service_name, task_name, interval))
+
+    async def __periodic_task_wrapper(self, method, service_name, task_name, interval):
+        self.logger.trace("Calling periodic task %s::%s", service_name, task_name)
+
+        try:
+            await method()
+        except Exception:
+            self.logger.warning("Exception while calling periodic task", exc_info=True)
+
+        self.__loop.call_later(
+            interval,
+            functools.partial(
+                self.__call_periodic_task,
+                method, service_name, task_name, interval
+            )
+        )
 
     def register_wsclient(self, client):
         self.__wsclients[client.sessionid] = client
@@ -878,7 +929,8 @@ class Middleware(object):
         # http://bugs.python.org/issue30805
         self.__loop.run_until_complete(self.__plugins_load())
 
-        self.__loop.add_signal_handler(signal.SIGTERM, self.kill)
+        self.__loop.add_signal_handler(signal.SIGINT, self.terminate)
+        self.__loop.add_signal_handler(signal.SIGTERM, self.terminate)
         self.__loop.add_signal_handler(signal.SIGUSR1, self.pdb)
 
         app = web.Application(loop=self.__loop)
@@ -899,21 +951,35 @@ class Middleware(object):
         )
         asyncio.ensure_future(self.jobs.run())
 
+        self.__setup_periodic_tasks()
+
         self.logger.debug('Accepting connections')
         web.run_app(app, host='0.0.0.0', port=6000, access_log=None)
-        self.__loop.run_forever()
+        try:
+            self.__loop.run_forever()
+        except RuntimeError as e:
+            if e.args[0] != "Event loop is closed":
+                raise
 
-    def kill(self):
-        self.logger.info('Killall server threads')
-        asyncio.get_event_loop().stop()
-        sys.exit(0)
+    def terminate(self):
+        self.logger.info('Terminating')
+
+        for task in asyncio.Task.all_tasks():
+            task.cancel()
+
+        self.__loop.create_task(self.__terminate())
+
+    async def __terminate(self):
+        for service_name, service in self.__services.items():
+            # We're using this instead of having no-op `terminate`
+            # in base class to reduce number of awaits
+            if hasattr(service, "terminate"):
+                await service.terminate()
+
+        self.__loop.stop()
 
 
 def main():
-    #  Logger
-    _logger = logger.Logger('middleware')
-    get_logger = _logger.getLogger()
-
     # Workaround for development
     modpath = os.path.realpath(os.path.join(
         os.path.dirname(os.path.realpath(__file__)),
@@ -927,7 +993,8 @@ def main():
     parser.add_argument('--foreground', '-f', action='store_true')
     parser.add_argument('--disable-loop-monitor', '-L', action='store_true')
     parser.add_argument('--plugins-dirs', '-p', action='append')
-    parser.add_argument('--debug-level', default='DEBUG', choices=[
+    parser.add_argument('--debug-level', choices=[
+        'TRACE',
         'DEBUG',
         'INFO',
         'WARN',
@@ -939,10 +1006,19 @@ def main():
     ])
     args = parser.parse_args()
 
+    #  Logger
     if args.log_handler:
         log_handlers = [args.log_handler]
     else:
         log_handlers = ['console' if args.foreground else 'file']
+
+    if args.debug_level is None and args.foreground:
+        debug_level = 'TRACE'
+    else:
+        debug_level = args.debug_level or 'DEBUG'
+
+    _logger = logger.Logger('middleware', debug_level)
+    get_logger = _logger.getLogger()
 
     pidpath = '/var/run/middlewared.pid'
 
@@ -977,6 +1053,7 @@ def main():
     Middleware(
         loop_monitor=not args.disable_loop_monitor,
         plugins_dirs=args.plugins_dirs,
+        debug_level=debug_level,
     ).run()
     if not args.foreground:
         daemonc.close()

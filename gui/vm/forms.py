@@ -61,7 +61,7 @@ class VMForm(ModelForm):
                 if self.instance.bootloader == 'UEFI':
                     cdata['devices'] = [
                         {'dtype': 'NIC', 'attributes': {'type': 'E1000'}},
-                        {'dtype': 'VNC', 'attributes': {'wait': True}},
+                        {'dtype': 'VNC', 'attributes': {'wait': False}},
                     ]
                 else:
                     cdata['devices'] = [
