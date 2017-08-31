@@ -126,7 +126,10 @@ def create_certificate_signing_request(cert_info):
 
 
 def load_certificate(buf):
-    cert = crypto.load_certificate(crypto.FILETYPE_PEM, buf)
+    cert = crypto.load_certificate(
+        crypto.FILETYPE_PEM,
+        buf
+    )
 
     cert_info = {}
     cert_info['country'] = cert.get_subject().C
@@ -199,13 +202,13 @@ def export_privatekey(buf, passphrase=None):
     key = crypto.load_privatekey(
         crypto.FILETYPE_PEM,
         buf,
-        passphrase=str(passphrase) if passphrase else None
+        passphrase=passphrase.encode() if passphrase else None
     )
 
     return crypto.dump_privatekey(
         crypto.FILETYPE_PEM,
         key,
-        passphrase=str(passphrase) if passphrase else None
+        passphrase=passphrase.encode() if passphrase else None
     )
 
 
