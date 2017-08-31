@@ -16,6 +16,8 @@ import string
 import subprocess
 import time
 
+SKEL_PATH = '/usr/share/skel/'
+
 
 def pw_checkname(verrors, attribute, name):
     """
@@ -191,6 +193,17 @@ class UserService(CRUDService):
         await self.middleware.call('service.reload', 'user')
 
         await self.__set_smbpasswd(data['username'], password)
+
+        if new_homedir:
+            for f in os.listdir(SKEL_PATH):
+                if f.startswith('dot'):
+                    dest_file = os.path.join(data['home'], f[3:])
+                else:
+                    dest_file = os.path.join(data['home'], f)
+                if not os.path.exists(dest_file):
+                    shutil.copyfile(os.path.join(SKEL_PATH, f), dest_file)
+                    os.chown(dest_file, data['uid'], group['gid'])
+
         return pk
 
     @accepts(
