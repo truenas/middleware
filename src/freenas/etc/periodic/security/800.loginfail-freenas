@@ -48,32 +48,32 @@ def catmsgs():
 def get_login_failures(now, messages):
     """
     >>> get_login_failures(datetime(year=2017, month=8, day=31), [
-    ...    b"Aug 30 invalid login",  # 2017
-    ...    b"Aug 31 invalid login",  # 2017
+    ...    b'Aug 30 invalid login\\n',  # 2017
+    ...    b'Aug 31 invalid login\\n',  # 2017
     ... ])
-    [b'Aug 30 invalid login']
+    [b'Aug 30 invalid login\\n']
 
     >>> get_login_failures(datetime(year=2017, month=8, day=31), [
-    ...    b"Aug 30 invalid login",  # 2016
-    ...    b"Oct 18 invalid login",  # 2016
-    ...    b"Aug 31 invalid login",  # 2017
+    ...    b'Aug 30 invalid login\\n',  # 2016
+    ...    b'Oct 18 invalid login\\n',  # 2016
+    ...    b'Aug 31 invalid login\\n',  # 2017
     ... ])
     []
 
     >>> get_login_failures(datetime(year=2017, month=8, day=31), [
-    ...    b"Aug 30 invalid login",  # 2015
-    ...    b"Oct 18 invalid login",  # 2015
-    ...    b"Aug 31 invalid login",  # 2016
-    ...    b"Aug 30 bad login",      # 2017
+    ...    b'Aug 30 invalid login\\n',  # 2015
+    ...    b'Oct 18 invalid login\\n',  # 2015
+    ...    b'Aug 31 invalid login\\n',  # 2016
+    ...    b'Aug 30 bad login\\n',      # 2017
     ... ])
-    [b'Aug 30 bad login']
+    [b'Aug 30 bad login\\n']
 
     >>> get_login_failures(datetime(year=2017, month=8, day=31), [
-    ...    b"Aug 30 invalid login",  # 2017
-    ...    b"Aug 31 invalid login",  # 2017
-    ...    b"",                      # Random empty line at the end of file
+    ...    b'Aug 30 invalid login\\n',  # 2017
+    ...    b'Aug 31 invalid login\\n',  # 2017
+    ...    b'\\n',                      # Random empty line at the end of file
     ... ])
-    [b'Aug 30 invalid login']
+    [b'Aug 30 invalid login\\n']
     """
 
     yesterday = (now - timedelta(days=1)).strftime("%b %e ").encode("ascii")
