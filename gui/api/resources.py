@@ -554,6 +554,10 @@ class ZVolResource(DojoResource):
     def put_detail(self, request, **kwargs):
         self.is_authenticated(request)
         name = "{}/{}".format(kwargs.get('parent').vol_name, kwargs.get('pk'))
+
+        if not zfs.zfs_list(path=name):
+            return HttpNotFound()
+
         deserialized = self._meta.serializer.deserialize(
             request.body,
             format=request.META.get('CONTENT_TYPE') or 'application/json'
