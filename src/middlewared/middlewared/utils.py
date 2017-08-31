@@ -138,6 +138,14 @@ def sw_version_is_stable():
         return False
 
 
+def is_empty(val):
+    """
+    A small utility function that check if the provided string is either None, '',
+    or just a string containing only spaces
+    """
+    return val in [None, ''] or val.isspace()
+
+
 class Nid(object):
 
     def __init__(self, _id):
