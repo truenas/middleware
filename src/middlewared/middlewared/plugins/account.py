@@ -145,11 +145,6 @@ class UserService(CRUDService):
         if data['home'] != '/nonexistent':
             try:
                 os.makedirs(data['home'], mode=int(home_mode, 8))
-                if os.stat(data['home']).st_dev == os.stat('/mnt').st_dev:
-                    raise CallError(
-                        f'Path for the home directory (data["home"]) '
-                        'must be under a volume or dataset'
-                    )
             except OSError as oe:
                 if oe.errno == errno.EEXIST:
                     if not os.path.isdir(data['home']):
@@ -164,6 +159,11 @@ class UserService(CRUDService):
                     )
             else:
                 new_homedir = True
+            if os.stat(data['home']).st_dev == os.stat('/mnt').st_dev:
+                raise CallError(
+                    f'Path for the home directory (data["home"]) '
+                    'must be under a volume or dataset'
+                )
 
         if not data.get('uid'):
             data['uid'] = await self.get_next_uid()
