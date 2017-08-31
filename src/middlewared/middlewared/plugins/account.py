@@ -234,7 +234,11 @@ class UserService(CRUDService):
             raise verrors
 
         # Copy the home directory if it changed
-        if 'home' in data and data['home'] not in (user['home'], '/nonexistent'):
+        if (
+            'home' in data and
+            data['home'] not in (user['home'], '/nonexistent') and
+            not data["home"].startswith(f'{user["home"]}/')
+        ):
             home_copy = True
             home_old = user['home']
         else:
