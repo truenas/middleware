@@ -145,18 +145,18 @@ class UserService(CRUDService):
         if data['home'] != '/nonexistent':
             try:
                 os.makedirs(data['home'], mode=int(home_mode, 8))
-            except OSError as oe:
-                if oe.errno == errno.EEXIST:
-                    if not os.path.isdir(data['home']):
-                        raise CallError(
-                            'Path for home directory already '
-                            'exists and is not a directory'
-                        )
-                else:
+            except FileExistsError:
+                if not os.path.isdir(data['home']):
                     raise CallError(
-                        'Failed to create the home directory '
-                        f'({data["home"]}) for user: {oe}'
+                        'Path for home directory already '
+                        'exists and is not a directory',
+                        errno.EEXIST
                     )
+            except OSError as oe:
+                raise CallError(
+                    'Failed to create the home directory '
+                    f'({data["home"]}) for user: {oe}'
+                )
             else:
                 new_homedir = True
             if os.stat(data['home']).st_dev == os.stat('/mnt').st_dev:
