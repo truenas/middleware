@@ -388,7 +388,8 @@ class bsdUsersForm(ModelForm):
         with client as c:
             pk = c.call(*args, data)
 
-        return models.bsdUsers.objects.get(pk=pk)
+        self.instance = models.bsdUsers.objects.get(pk=pk)
+        return self.instance
 
     def delete(self, **kwargs):
         data = {
@@ -443,7 +444,8 @@ class bsdUserPasswordForm(ModelForm):
             pk = c.call('user.update', self.instance.id, {
                 'password': self.cleaned_data['bsdusr_password'],
             })
-        return models.bsdUsers.objects.get(pk=pk)
+        self.instance = models.bsdUsers.objects.get(pk=pk)
+        return self.instance
 
 
 class DeleteUserForm(forms.Form):
