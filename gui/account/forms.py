@@ -531,7 +531,8 @@ class bsdGroupsForm(ModelForm):
         with client as c:
             pk = c.call(*args, data)
 
-        return models.bsdGroups.objects.get(pk=pk)
+        self.instance = models.bsdGroups.objects.get(pk=pk)
+        return self.instance
 
     def delete(self, **kwargs):
         data = {
