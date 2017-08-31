@@ -427,9 +427,9 @@ class UserService(CRUDService):
             pubkey = pubkey.strip() + '\n'
             if pubkey != oldpubkey:
                 sshpath = f'{user["home"]}/.ssh'
-                saved_umask = os.umask(0o77)
                 if not os.path.isdir(sshpath):
                     os.makedirs(sshpath)
+                    os.chmod(sshpath, 0o700)
                 if not os.path.isdir(sshpath):
                     raise CallError(f'{sshpath} is not a directory')
                 if pubkey == '' and os.path.exists(keysfile):
@@ -437,8 +437,8 @@ class UserService(CRUDService):
                 else:
                     with open(keysfile, 'w') as f:
                         f.write(pubkey)
+                    os.chmod(keysfile, 0o700)
                     await run('chown', '-R', f'{user["username"]}:{group}', sshpath, check=False)
-                os.umask(saved_umask)
 
 
 class GroupService(CRUDService):
