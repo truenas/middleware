@@ -3,13 +3,15 @@ from collections import defaultdict, namedtuple
 import asyncio
 import errno
 import inspect
+import json
 import logging
+import os
 import re
 import sys
 import threading
 import time
 
-from middlewared.schema import accepts, Dict, Int, List, Ref, Str
+from middlewared.schema import accepts, Bool, Dict, Int, List, Ref, Str
 from middlewared.utils import filter_list
 from middlewared.logger import Logger
 
@@ -464,3 +466,49 @@ class CoreService(Service):
             t.start()
             t.join()
         return True
+
+    @accepts(
+        Str('engine', enum=['PTVS', 'PYDEV']),
+        Dict(
+            'options',
+            Str('secret'),
+            Str('bind_address', default='0.0.0.0'),
+            Int('bind_port', default=3000),
+            Str('host'),
+            Bool('wait_attach', default=False),
+            Str('local_path'),
+        ),
+    )
+    async def debug(self, engine, options):
+        """
+        Setup middlewared for remote debugging.
+
+        engines:
+          - PTVS: Python Visual Studio
+          - PYDEV: Python Dev (Eclipse/PyCharm)
+
+        options:
+          - secret: password for PTVS
+          - host: required for PYDEV, hostname of local computer (developer workstation)
+          - local_path: required for PYDEV, path for middlewared source in local computer (e.g. /home/user/freenas/src/middlewared/middlewared
+        """
+        if engine == 'PTVS':
+            import ptvsd
+            if 'secret' not in options:
+                raise ValidationError('secret', 'secret is required for PTVS')
+            ptvsd.enable_attach(
+                options['secret'],
+                address=(options['bind_address'], options['bind_port']),
+            )
+            if options['wait_attach']:
+                ptvsd.wait_for_attach()
+        elif engine == 'PYDEV':
+            for i in ('host', 'local_path'):
+                if i not in options:
+                    raise ValidationError(i, f'{i} is required for PYDEV')
+            os.environ['PATHS_FROM_ECLIPSE_TO_PYTHON'] = json.dumps([
+                [options['local_path'], '/usr/local/lib/python3.6/site-packages/middlewared'],
+            ])
+            import pydevd
+            pydevd.stoptrace()
+            pydevd.settrace(host=options['host'])
