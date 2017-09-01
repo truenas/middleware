@@ -249,7 +249,7 @@ class VMSupervisor(object):
 
     def random_mac(self):
         mac_address = [0x00, 0xa0, 0x98, random.randint(0x00, 0x7f), random.randint(0x00, 0xff), random.randint(0x00, 0xff)]
-        return ':'.join(map(lambda x: "%02x" % x, mac_address))
+        return ':'.join(["%02x" % x for x in mac_address])
 
     async def kill_bhyve_pid(self):
         if self.proc:
