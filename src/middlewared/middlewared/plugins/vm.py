@@ -323,6 +323,21 @@ class VMService(CRUDService):
 
         return data
 
+    @accepts()
+    def identify_hypervisor(self):
+        """
+        Identify Hypervisors that might work nested with bhyve.
+
+        Returns:
+                bool: True if compatible otherwise False.
+        """
+        compatible_hp = ('VMwareVMware', 'Microsoft Hv', 'KVMKVMKVM', 'bhyve bhyve')
+        identify_hp = sysctl.filter('hw.hv_vendor')[0].value.strip()
+
+        if identify_hp in compatible_hp:
+            return True
+        return False
+
     @filterable
     async def query(self, filters=None, options=None):
         options = options or {}
