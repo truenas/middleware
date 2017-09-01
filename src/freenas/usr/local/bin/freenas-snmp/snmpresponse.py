@@ -32,7 +32,7 @@ def decompose_oid(oid):
 def oid_compare(a, b):
     ad = decompose_oid(a)
     bd = decompose_oid(b)
-    return cmp(ad, bd)
+    return ad > bd
 
 
 def printValue(value, oid):
@@ -54,7 +54,7 @@ def respond_to(operation, req_oid, result):
                 printValue(value, oid)
     elif operation == '-n':
         for oid, value in result:
-            if oid_compare(oid, req_oid) == 1:
+            if oid_compare(oid, req_oid):
                 print(oid)
                 printValue(value, oid)
                 break
