@@ -95,13 +95,14 @@ HDDSTANDBY_CHOICES = (
 
 ADVPOWERMGMT_CHOICES = (
     ('Disabled', _('Disabled')),
-    ('1',   _('Level 1 - Minimum power usage with Standby (spindown)')),
+    ('1',  _('Level 1 - Minimum power usage with Standby (spindown)')),
     ('64',  _('Level 64 - Intermediate power usage with Standby')),
     ('127', _('Level 127 - Maximum power usage with Standby')),
     ('128', _('Level 128 - Minimum power usage without Standby (no spindown)')),
     ('192', _('Level 192 - Intermediate power usage without Standby')),
     ('254', _('Level 254 - Maximum performance, maximum power usage')),
-    )
+)
+
 ACOUSTICLVL_CHOICES = (
     ('Disabled', _('Disabled')),
     ('Minimum', _('Minimum')),
@@ -261,17 +262,17 @@ class CHARSET(object):
 
 
 LOGLEVEL_CHOICES = (
-    ('0',  _('None')),
-    ('1',  _('Minimum')),
-    ('2',  _('Normal')),
-    ('3',  _('Full')),
+    ('0', _('None')),
+    ('1', _('Minimum')),
+    ('2', _('Normal')),
+    ('3', _('Full')),
     ('10', _('Debug')),
 )
 
 CASEFOLDING_CHOICES = (
-    ('none',            _('No case folding')),
-    ('lowercaseboth',   _('Lowercase names in both directions')),
-    ('uppercaseboth',   _('Lowercase names in both directions')),
+    ('none', _('No case folding')),
+    ('lowercaseboth', _('Lowercase names in both directions')),
+    ('uppercaseboth', _('Lowercase names in both directions')),
     ('lowercaseclient', _('Client sees lowercase, server sees uppercase')),
     ('uppercaseclient', _('Client sees uppercase, server sees lowercase')),
 )
@@ -293,15 +294,14 @@ EXTENT_RPM_CHOICES = (
 )
 
 AUTHMETHOD_CHOICES = (
-    ('None',  _('None')),
-    ('CHAP',  _('CHAP')),
+    ('None', _('None')),
+    ('CHAP', _('CHAP')),
     ('CHAP Mutual', _('Mutual CHAP')),
 )
 
 AUTHGROUP_CHOICES = (
     ('None', _('None')),
 )
-
 
 DYNDNSPROVIDER_CHOICES = (
     ('dyndns@3322.org', '3322.org'),
@@ -389,32 +389,32 @@ VLAN_PCP_CHOICES = (
 
 ZFS_AtimeChoices = (
     ('inherit', _('Inherit')),
-    ('on',      _('On')),
-    ('off',     _('Off')),
+    ('on', _('On')),
+    ('off', _('Off')),
 )
 
 ZFS_ReadonlyChoices = (
     ('inherit', _('Inherit')),
-    ('on',      _('On')),
-    ('off',     _('Off')),
+    ('on', _('On')),
+    ('off', _('Off')),
 )
 
 ZFS_CompressionChoices = (
     ('inherit', _('Inherit')),
-    ('off',     _('Off')),
-    ('lz4',     _('lz4 (recommended)')),
-    ('gzip',    _('gzip (default level, 6)')),
-    ('gzip-1',  _('gzip (fastest)')),
-    ('gzip-9',  _('gzip (maximum, slow)')),
-    ('zle',     _('zle (runs of zeros)')),
-    ('lzjb',    _('lzjb (legacy, not recommended)')),
+    ('off', _('Off')),
+    ('lz4', _('lz4 (recommended)')),
+    ('gzip', _('gzip (default level, 6)')),
+    ('gzip-1', _('gzip (fastest)')),
+    ('gzip-9', _('gzip (maximum, slow)')),
+    ('zle', _('zle (runs of zeros)')),
+    ('lzjb', _('lzjb (legacy, not recommended)')),
 )
 
 Repl_CompressionChoices = (
-    ('off',     _('Off')),
-    ('lz4',     _('lz4 (fastest)')),
-    ('pigz',    _('pigz (all rounder)')),
-    ('plzip',   _('plzip (best compression)')),
+    ('off', _('Off')),
+    ('lz4', _('lz4 (fastest)')),
+    ('pigz', _('pigz (all rounder)')),
+    ('plzip', _('plzip (best compression)')),
 )
 
 
@@ -1189,10 +1189,10 @@ CLOUD_PROVIDERS = (
 
 
 VM_BOOTLOADER = (
-    #('BHYVELOAD', _('Bhyve Load')),
+    # ('BHYVELOAD', _('Bhyve Load')),
     ('UEFI', _('UEFI')),
     ('UEFI_CSM', _('UEFI-CSM')),
-    #('GRUB', _('Grub')),
+    # ('GRUB', _('Grub')),
 )
 
 
