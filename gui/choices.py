@@ -107,35 +107,26 @@ ACOUSTICLVL_CHOICES = (
     ('Maximum', _('Maximum')),
 )
 
-temp = [str(x) for x in range(0, 12)]
-MINUTES1_CHOICES = tuple(zip(temp, temp))
+MINUTES1_CHOICES = tuple([(str(x), str(x)) for x in range(0, 12)])
 
-temp = [str(x) for x in range(12, 24)]
-MINUTES2_CHOICES = tuple(zip(temp, temp))
+MINUTES2_CHOICES = tuple([(str(x), str(x)) for x in range(12, 24)])
 
-temp = [str(x) for x in range(24, 36)]
-MINUTES3_CHOICES = tuple(zip(temp, temp))
+MINUTES3_CHOICES = tuple([(str(x), str(x)) for x in range(24, 36)])
 
-temp = [str(x) for x in range(36, 48)]
-MINUTES4_CHOICES = tuple(zip(temp, temp))
+MINUTES4_CHOICES = tuple([(str(x), str(x)) for x in range(36, 48)])
 
-temp = [str(x) for x in range(48, 60)]
-MINUTES5_CHOICES = tuple(zip(temp, temp))
+MINUTES5_CHOICES = tuple([(str(x), str(x)) for x in range(48, 60)])
 
-temp = [str(x) for x in range(0, 12)]
-HOURS1_CHOICES = tuple(zip(temp, temp))
+HOURS1_CHOICES = tuple([(str(x), str(x)) for x in range(0, 12)])
 
-temp = [str(x) for x in range(12, 24)]
-HOURS2_CHOICES = tuple(zip(temp, temp))
+HOURS2_CHOICES = tuple([(str(x), str(x)) for x in range(12, 24)])
 
-temp = [str(x) for x in range(1, 13)]
-DAYS1_CHOICES = tuple(zip(temp, temp))
+DAYS1_CHOICES = tuple([(str(x), str(x)) for x in range(1, 13)])
 
-temp = [str(x) for x in range(13, 25)]
-DAYS2_CHOICES = tuple(zip(temp, temp))
+DAYS2_CHOICES = tuple([(str(x), str(x)) for x in range(13, 25)])
 
-temp = [str(x) for x in range(25, 32)]
-DAYS3_CHOICES = tuple(zip(temp, temp))
+DAYS3_CHOICES = tuple([(str(x), str(x)) for x in range(25, 32)])
+
 
 MONTHS_CHOICES = (
     ('1', _('January')),
