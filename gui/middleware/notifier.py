@@ -4262,10 +4262,6 @@ class notifier(metaclass=HookMetaclass):
         return False
 
 
-def crypt_makeSalt():
-    return '$6$' + ''.join(random.choice(string.ascii_uppercase + string.ascii_lowercase + string.digits + '.' + '/') for _ in range(16))
-
-
 def usage():
     usage_str = """usage: %s action command
     Action is one of:
