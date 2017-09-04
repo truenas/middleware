@@ -60,13 +60,10 @@ import syslog
 import tarfile
 import tempfile
 import time
-import string
-import random
 
 WWW_PATH = "/usr/local/www"
 FREENAS_PATH = os.path.join(WWW_PATH, "freenasUI")
 NEED_UPDATE_SENTINEL = '/data/need-update'
-VERSION_FILE = '/etc/version'
 GELI_KEYPATH = '/data/geli'
 GELI_KEY_SLOT = 0
 GELI_RECOVERY_SLOT = 1
