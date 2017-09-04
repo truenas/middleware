@@ -322,7 +322,6 @@ class UserService(CRUDService):
 
         return pk
 
-    @private
     async def get_next_uid(self):
         """
         Get the next available/free uid.
@@ -543,7 +542,6 @@ class GroupService(CRUDService):
 
         return pk
 
-    @private
     async def get_next_gid(self):
         """
         Get the next available/free gid.
