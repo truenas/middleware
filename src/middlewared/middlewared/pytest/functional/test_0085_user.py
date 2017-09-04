@@ -13,6 +13,13 @@ def test_user_query(conn):
     assert isinstance(req.json(), list) is True
 
 
+def test_user_get_next_uid(conn):
+    req = conn.rest.get('user/get_next_uid')
+
+    assert req.status_code == 200, req.text
+    assert isinstance(req.json(), int) is True
+
+
 def test_user_0100_create(conn, data):
     req = conn.rest.post('user', data=[{
         'username': 'test555',

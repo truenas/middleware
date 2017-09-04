@@ -13,6 +13,13 @@ def test_group_query(conn):
     assert isinstance(req.json(), list) is True
 
 
+def test_group_get_next_gid(conn):
+    req = conn.rest.get('group/get_next_gid')
+
+    assert req.status_code == 200, req.text
+    assert isinstance(req.json(), int) is True
+
+
 def test_group_0100_create(conn, data):
     req = conn.rest.post('group', data=[{
         'name': 'gtest555',
