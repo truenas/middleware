@@ -25,14 +25,16 @@
 #
 #####################################################################
 
+import freenasUI.settings
 import csv
 import io
-import freenasUI.settings
 import logging
 import os
 import re
 import sqlite3
 import copy
+import subprocess
+import codecs
 
 from os import popen
 from django.utils.translation import ugettext_lazy as _
@@ -183,46 +185,80 @@ CIFS_SMB_PROTO_CHOICES = (
     ('SMB3_11', _('SMB3_11')),
 )
 
-class CHARSET(object):
-    def __init__(self):
-        from freenasUI.common.pipesubr import pipeopen
-
-        self.__charsets = []
-
-        p = pipeopen("/usr/bin/iconv -l")
-        out, _ = p.communicate()
-        if out:
-            lines = out.split('\n')
-            for line in lines:
-                if not line:
-                    continue
-                parts = line.split() 
-                self.__charsets.append(parts[0])
-
-    def __iter__(self):
-        return iter((c, c) for c in sorted(self.__charsets))
-
 DOSCHARSET_CHOICES = (
-    ('CP437', 'CP437'),
-    ('CP850', 'CP850'),
-    ('CP852', 'CP852'),
-    ('CP866', 'CP866'),
-    ('CP932', 'CP932'),
-    ('CP949', 'CP949'),
-    ('CP950', 'CP950'),
-    ('CP1026', 'CP1026'),
-    ('CP1251', 'CP1251'),
-    ('ASCII', 'ASCII'),
+    'CP437',
+    'CP850',
+    'CP852',
+    'CP866',
+    'CP932',
+    'CP949',
+    'CP950',
+    'CP1026',
+    'CP1251',
+    'ASCII',
 )
 
 UNIXCHARSET_CHOICES = (
-    ('UTF-8', 'UTF-8'),
-    ('iso-8859-1', 'iso-8859-1'),
-    ('iso-8859-15', 'iso-8859-15'),
-    ('gb2312', 'gb2312'),
-    ('EUC-JP', 'EUC-JP'),
-    ('ASCII', 'ASCII'),
+    'UTF-8',
+    'ISO-8859-1',
+    'ISO-8859-15',
+    'GB2312',
+    'EUC-JP',
+    'ASCII',
 )
+
+
+class CHARSET(object):
+
+    __CODEPAGE = re.compile("(?P<name>CP|GB|ISO-8859-|UTF-)(?P<num>\d+)").match
+
+    __canonical = { 'UTF-8', 'ASCII', 'GB2312', 'HZ-GB-2312', 'CP1361' }
+
+    def __check_codec(self, encoding):
+        try:
+            if codecs.lookup(encoding):
+                return encoding.upper()
+        except LookupError:
+            pass
+        return
+
+
+    def __key_cp(self, encoding):
+        cp = CHARSET.__CODEPAGE(encoding)
+        if cp:
+            return tuple((cp.group('name'), int(cp.group('num'), 10)))
+        return tuple((encoding, float('inf')))
+
+
+    def __init__(self, popular):
+
+        self.__popular = popular
+
+        out = subprocess.Popen(['/usr/bin/iconv', '-l'],
+                stdout=subprocess.PIPE,
+                encoding='utf8'
+            ).communicate()[0]
+
+        encodings = set()
+        for line in out.splitlines():
+            enc = [ e for e in line.split() if self.__check_codec(e) ]
+            if enc:
+                cp = enc[0]
+                for e in enc:
+                    if e in CHARSET.__canonical:
+                        cp = e
+                        break
+                encodings.add(cp)
+
+        self.__charsets = [ c for c in sorted(encodings, key=self.__key_cp) if c not in self.__popular ]
+
+    def __iter__(self):
+        for c in self.__popular:
+            yield(c, c)
+        yield('', '-----')
+        for c in self.__charsets:
+            yield(c, c)
+
 
 LOGLEVEL_CHOICES = (
     ('0',  _('None')),
