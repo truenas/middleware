@@ -59,7 +59,7 @@ def demote(user):
 
 class RsyncService(Service):
 
-    def rsync_worker(self, line, user, job):
+    def __rsync_worker(self, line, user, job):
         proc_stdout = tempfile.TemporaryFile(mode='w+b', buffering=0)
         try:
             rsync_proc = subprocess.Popen(
@@ -240,7 +240,7 @@ class RsyncService(Service):
 
         logger.debug(f'Executing rsync job id: {job.id} with the following command {line}')
         try:
-            t = threading.Thread(target=self.rsync_worker, args=(line, user, job), daemon=True)
+            t = threading.Thread(target=self.__rsync_worker, args=(line, user, job), daemon=True)
             t.start()
             t.join()
         finally:
@@ -248,8 +248,3 @@ class RsyncService(Service):
                 password_file.close()
 
         job.set_progress(100, 'Rsync copy job successfully completed')
-
-
-def setup(middleware):
-    # might use this in the future, currently it's skeletonish placeholder
-    pass
