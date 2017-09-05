@@ -75,7 +75,10 @@ class SystemDatasetService(ConfigService):
                     await run('zfs', 'set', 'mountpoint=legacy', dataset, check=False)
                 continue
 
-            #self.create_zfs_dataset(dataset, {"mountpoint": "legacy"})
+            await self.middleware.call('zfs.dataset.create', {
+                'name': dataset,
+                'properties': {'mountpoint': 'legacy'},
+            })
             createdds = True
 
         if createdds:
