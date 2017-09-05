@@ -240,6 +240,15 @@ class ZFSDatasetService(CRUDService):
             self.logger.error('Failed to create dataset', exc_info=True)
             raise CallError(f'Failed to create dataset: {e}')
 
+    def do_delete(self, id):
+        try:
+            zfs = libzfs.ZFS()
+            ds = zfs.get_dataset(id)
+            ds.delete()
+        except libzfs.ZFSException as e:
+            self.logger.error('Failed to delete dataset', exc_info=True)
+            raise CallError(f'Failed to delete dataset: {e}')
+
 
 class ZFSSnapshot(CRUDService):
 
