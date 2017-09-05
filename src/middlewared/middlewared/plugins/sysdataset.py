@@ -10,7 +10,28 @@ class SystemDatasetService(ConfigService):
 
     @accepts()
     async def config(self):
-        return await self.middleware.call('datastore.config', 'system.systemdataset', {'prefix': 'sys_'})
+        return await self.middleware.call('datastore.config', 'system.systemdataset', {'prefix': 'sys_', 'extend': 'systemdataset.config_extend'})
+
+    @private
+    async def config_extend(self, config):
+
+        # Add `is_decrypted` dynamic attribute
+        if config['pool'] == 'freenas-boot':
+            config['is_decrypted'] = True
+        else:
+            pool = await self.middleware.call('pool.query', [('name', '=', config['pool'])])
+            if pool:
+                config['is_decrypted'] = pool[0]['is_decrypted']
+            else:
+                config['is_decrypted'] = False
+
+        # Make `uuid` point to the uuid of current node
+        config['uuid_a'] = config['uuid']
+        if not await self.middleware.call('system.is_freenas'):
+            if await self.middleware.call('notifier.failover_node') == 'B':
+                config['uuid'] = config['uuid_b']
+
+        return config
 
     @accepts(Bool('mount'))
     @private
