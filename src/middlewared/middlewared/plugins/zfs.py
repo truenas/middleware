@@ -10,7 +10,10 @@ import humanfriendly
 import libzfs
 
 from middlewared.schema import Dict, List, Str, Bool, Int, accepts
-from middlewared.service import CallError, CRUDService, Service, filterable, job, periodic, private
+from middlewared.service import (
+    CallError, CRUDService, Service, ValidationErrors, filterable, job,
+    periodic, private,
+)
 from middlewared.utils import filter_list
 
 
@@ -198,6 +201,44 @@ class ZFSDatasetService(CRUDService):
         else:
             datasets = [i.__getstate__() for i in zfs.datasets]
         return filter_list(datasets, filters, options)
+
+    @accepts(Dict(
+        'dataset_create',
+        Str('name', required=True),
+        Str('type', enum=['FILESYSTEM', 'VOLUME'], default='FILESYSTEM'),
+        Dict(
+            'properties',
+            Bool('sparse'),
+            additional_attrs=True,
+        ),
+    ))
+    def do_create(self, data):
+        """
+        Creates a ZFS dataset.
+        """
+
+        verrors = ValidationErrors()
+
+        if '/' not in data['name']:
+            verrors.add('name', 'You need a full name, e.g. pool/newdataset')
+
+        if verrors:
+            raise verrors
+
+        properties = data.get('properties') or {}
+        sparse = properties.pop('sparse', False)
+        params = {}
+
+        for k, v in data['properties'].items():
+            params[k] = v
+
+        try:
+            zfs = libzfs.ZFS()
+            pool = zfs.get(data['name'].split('/')[0])
+            pool.create(data['name'], params, fstype=getattr(libzfs.DatasetType, data['type']), sparse_vol=sparse)
+        except libzfs.ZFSException as e:
+            self.logger.error('Failed to create dataset', exc_info=True)
+            raise CallError(f'Failed to create dataset: {e}')
 
 
 class ZFSSnapshot(CRUDService):
