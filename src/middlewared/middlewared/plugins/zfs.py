@@ -189,7 +189,14 @@ class ZFSDatasetService(CRUDService):
     @filterable
     def query(self, filters, options):
         zfs = libzfs.ZFS()
-        datasets = [i.__getstate__() for i in zfs.datasets]
+        # Handle `id` filter specially to avoiding getting all datasets
+        if filters and len(filters) == 1 and list(filters[0][:2]) == ['id', '=']:
+            try:
+                datasets = [zfs.get_dataset(filters[0][2]).__getstate__()]
+            except libzfs.ZFSException:
+                datasets = []
+        else:
+            datasets = [i.__getstate__() for i in zfs.datasets]
         return filter_list(datasets, filters, options)
 
 
