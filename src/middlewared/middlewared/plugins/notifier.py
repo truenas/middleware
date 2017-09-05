@@ -38,6 +38,7 @@ from freenasUI.directoryservice.models import (
     IDMAP_TYPE_RID,
     IDMAP_TYPE_TDB,
     IDMAP_TYPE_TDB2,
+    IDMAP_TYPE_SCRIPT,
 )
 from freenasUI.directoryservice.utils import get_idmap_object
 
@@ -202,6 +203,7 @@ class NotifierService(Service):
             IDMAP_TYPE_RID: 'IDMAP_TYPE_RID',
             IDMAP_TYPE_TDB: 'IDMAP_TYPE_TDB',
             IDMAP_TYPE_TDB2: 'IDMAP_TYPE_TDB2',
+            IDMAP_TYPE_SCRIPT: 'IDMAP_TYPE_SCRIPT',
         }
         if code not in mapping:
             raise ValueError('Unknown idmap code: {0}'.format(code))
