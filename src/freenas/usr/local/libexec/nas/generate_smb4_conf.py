@@ -667,9 +667,25 @@ def configure_idmap_tdb2(smb4_conf, idmap, domain):
         idmap.idmap_tdb2_range_low,
         idmap.idmap_tdb2_range_high
     ))
-    confset2(smb4_conf, "idmap config %s: script = %s" % (
+    confset1(smb4_conf, "idmap config %s: script = %s" % (
         domain,
         idmap.idmap_tdb2_script
+    ))
+
+
+def configure_idmap_script(smb4_conf, idmap, domain):
+    confset1(smb4_conf, "idmap config %s: backend = %s" % (
+        domain,
+        idmap.idmap_backend_name
+    ))
+    confset1(smb4_conf, "idmap config %s: range = %d-%d" % (
+        domain,
+        idmap.idmap_script_range_low,
+        idmap.idmap_script_range_high
+    ))
+    confset1(smb4_conf, "idmap config %s: script = %s" % (
+        domain,
+        idmap.idmap_script_script
     ))
 
 
@@ -684,7 +700,8 @@ IDMAP_FUNCTIONS = {
     'IDMAP_TYPE_RFC2307': configure_idmap_rfc2307,
     'IDMAP_TYPE_RID': configure_idmap_rid,
     'IDMAP_TYPE_TDB': configure_idmap_tdb,
-    'IDMAP_TYPE_TDB2': configure_idmap_tdb2
+    'IDMAP_TYPE_TDB2': configure_idmap_tdb2,
+    'IDMAP_TYPE_SCRIPT': configure_idmap_script
 }
 
 
