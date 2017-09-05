@@ -10,7 +10,8 @@ import humanfriendly
 import libzfs
 
 from middlewared.schema import Dict, List, Str, Bool, Int, accepts
-from middlewared.service import CallError, CRUDService, Service, job, periodic, private
+from middlewared.service import CallError, CRUDService, Service, filterable, job, periodic, private
+from middlewared.utils import filter_list
 
 
 def find_vdev(pool, vname):
@@ -177,6 +178,19 @@ class ZFSPoolService(Service):
         t = threading.Thread(target=watch, daemon=True)
         t.start()
         t.join()
+
+
+class ZFSDatasetService(CRUDService):
+
+    class Config:
+        namespace = 'zfs.dataset'
+        private = True
+
+    @filterable
+    def query(self, filters, options):
+        zfs = libzfs.ZFS()
+        datasets = [i.__getstate__() for i in zfs.datasets]
+        return filter_list(datasets, filters, options)
 
 
 class ZFSSnapshot(CRUDService):
