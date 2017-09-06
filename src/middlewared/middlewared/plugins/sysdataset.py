@@ -140,6 +140,35 @@ class SystemDatasetService(ConfigService):
 
         return SYSDATASET_PATH
 
+    @private
+    async def rrd_toggle(self):
+        config = await self.config()
+
+        # Path where collectd stores files
+        rrd_path = '/var/db/collectd/rrd'
+        # Path where rrd fies are stored in system dataset
+        rrd_syspath = f'/var/db/system/rrd-{config["uuid"]}'
+
+        if config['rrd_usedataset']:
+            # Move from tmpfs to system dataset
+            if os.path.exists(rrd_path):
+                if os.path.islink(rrd_path):
+                    # rrd path is already a link
+                    # so there is nothing we can do about it
+                    return False
+                cp = await run('rsync', '-a', f'{rrd_path}/', f'{rrd_syspath}/', check=False)
+                return cp.returncode == 0
+        else:
+            # Move from system dataset to tmpfs
+            if os.path.exists(rrd_path):
+                if os.path.islink(rrd_path):
+                    os.unlink(rrd_path)
+            else:
+                os.makedirs(rrd_path)
+            cp = await run('rsync', '-a', f'{rrd_syspath}/', f'{rrd_path}/')
+            return cp.returncode == 0
+        return False
+
     async def __nfsv4link(self):
         syspath = self.path()
         if not syspath:
