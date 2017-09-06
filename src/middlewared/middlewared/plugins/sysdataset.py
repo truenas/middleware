@@ -1,6 +1,6 @@
 from middlewared.schema import accepts, Bool
 from middlewared.service import ConfigService, private
-from middlewared.utils import run
+from middlewared.utils import Popen, run
 
 import asyncio
 import os
@@ -64,12 +64,7 @@ class SystemDatasetService(ConfigService):
         if not config['is_decrypted']:
             return
 
-        datasets = [config['basename']]
-        for sub in (
-            'cores', 'samba4', f'syslog-{config["uuid"]}',
-            f'rrd-{config["uuid"]}', f'configs-{config["uuid"]}',
-        ):
-            datasets.append(f'{config["basename"]}/{sub}')
+        datasets = [i[0] for i in self.__get_datasets(config['pool'], config['uuid'])]
 
         createdds = False
         datasets_prop = {i['id']: i['properties'].get('mountpoint') for i in await self.middleware.call('zfs.dataset.query', [('id', 'in', datasets)])}
@@ -107,18 +102,7 @@ class SystemDatasetService(ConfigService):
 
         if mount:
 
-            datasets_mountpoints = [
-                (datasets[0], SYSDATASET_PATH)
-            ] + [
-                (d, f'{SYSDATASET_PATH}/{d.rsplit("/", 1)[-1]}')
-                for d in datasets[1:]
-            ]
-            for dataset, mountpoint in datasets_mountpoints:
-                if os.path.ismount(mountpoint):
-                    continue
-                if not os.path.isdir(mountpoint):
-                    os.mkdir(mountpoint)
-                await run('mount', '-t', 'zfs', dataset, mountpoint, check=False)
+            await self.__mount(config['pool'], config['uuid'])
 
             corepath = f'{SYSDATASET_PATH}/cores'
             if os.path.exists(corepath):
@@ -129,6 +113,30 @@ class SystemDatasetService(ConfigService):
             await self.__nfsv4link()
 
         return config
+
+    async def __mount(self, pool, uuid, path=SYSDATASET_PATH):
+        for dataset, name in self.__get_datasets(pool, uuid):
+            if name:
+                mountpoint = f'{path}/{name}'
+            else:
+                mountpoint = path
+            if os.path.ismount(mountpoint):
+                continue
+            if not os.path.isdir(mountpoint):
+                os.mkdir(mountpoint)
+            await run('mount', '-t', 'zfs', dataset, mountpoint, check=False)
+
+    async def __umount(self, pool, uuid):
+        for dataset, name in reversed(self.__get_datasets(pool, uuid)):
+            await run('umount', '-f', dataset, check=False)
+
+    def __get_datasets(self, pool, uuid):
+        return [(f'{pool}/.system', '')] + [
+            (f'{pool}/.system/{i}', i) for i in [
+                'cores', 'samba4', f'syslog-{uuid}',
+                f'rrd-{uuid}', f'configs-{uuid}',
+            ]
+        ]
 
     @private
     def path(self):
@@ -218,3 +226,40 @@ class SystemDatasetService(ConfigService):
                 shutil.rmtree(path)
             open(path, 'w').close()
         os.symlink(path, item)
+
+    async def migrate(self, _from, _to):
+
+        config = await self.config()
+
+        rsyncs = (
+            (SYSDATASET_PATH, '/tmp/system.new'),
+        )
+
+        if not os.path.exists('/tmp/system.new'):
+            os.mkdir('/tmp/system.new')
+        await self.__mount(_to, config['uuid'], path='/tmp/system.new')
+
+        restart = ['syslogd', 'collectd']
+
+        if await self.middleware.call('service.started', 'cifs'):
+            restart.append('cifs')
+
+        for i in restart:
+            await self.middleware.call('service.stop', i)
+
+        for src, dest in rsyncs:
+            cp = await run('rsync', '-az', f'{src}/', dest)
+
+        if _from and cp.returncode == 0:
+            await self.__umount(_from, config['uuid'])
+            await self.__umount(_to, config['uuid'])
+            await self.__mount(_to, config['uuid'], SYSDATASET_PATH)
+            proc = await Popen(f'zfs list -H -o name {_from}/.system|xargs zfs destroy -r')
+            await proc.communicate()
+
+        os.rmdir('/tmp/system.new')
+
+        for i in restart:
+            await self.middleware.call('service.start', i)
+
+        await self.__nfsv4link()
