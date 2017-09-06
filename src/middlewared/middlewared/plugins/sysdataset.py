@@ -3,6 +3,7 @@ from middlewared.service import ConfigService, private
 from middlewared.utils import run
 
 import os
+import shutil
 
 SYSDATASET_PATH = '/var/db/system'
 
@@ -123,6 +124,66 @@ class SystemDatasetService(ConfigService):
                 await run('sysctl', f"kern.corefile='{corepath}/%N.core'")
                 os.chmod(corepath, 0o775)
 
-            #self.nfsv4link()
+            await self.__nfsv4link()
 
         return config
+
+    @private
+    def path(self):
+        if not os.path.exists(SYSDATASET_PATH):
+            return None
+
+        if not os.path.ismount(SYSDATASET_PATH):
+            return None
+
+        return SYSDATASET_PATH
+
+    async def __nfsv4link(self):
+        syspath = self.path()
+        if not syspath:
+            return None
+
+        restartfiles = ["/var/db/nfs-stablerestart", "/var/db/nfs-stablerestart.bak"]
+        if not await self.middleware.call('system.is_freenas') and await self.middleware.call('notifier.failover_status') == 'BACKUP':
+            return None
+
+        for item in restartfiles:
+            if os.path.exists(item):
+                if os.path.isfile(item) and not os.path.islink(item):
+                    # It's an honest to goodness file, this shouldn't ever happen...but
+                    path = os.path.join(syspath, os.path.basename(item))
+                    if not os.path.isfile(path):
+                        # there's no file in the system dataset, so copy over what we have
+                        # being careful to nuke anything that is there that happens to
+                        # have the same name.
+                        if os.path.exists(path):
+                            shutil.rmtree(path)
+                        shutil.copy(item, path)
+                    # Nuke the original file and create a symlink to it
+                    # We don't need to worry about creating the file on the system dataset
+                    # because it's either been copied over, or was already there.
+                    os.unlink(item)
+                    os.symlink(path, item)
+                elif os.path.isdir(item):
+                    # Pathological case that should never happen
+                    shutil.rmtree(item)
+                    self.__createlink(syspath, item)
+                else:
+                    if not os.path.exists(os.readlink(item)):
+                        # Dead symlink or some other nastiness.
+                        shutil.rmtree(item)
+                        self.__createlink(syspath, item)
+            else:
+                # We can get here if item is a dead symlink
+                if os.path.islink(item):
+                    os.unlink(item)
+                self.__createlink(syspath, item)
+
+    def __createlink(self, syspath, item):
+        path = os.path.join(syspath, os.path.basename(item))
+        if not os.path.isfile(path):
+            if os.path.exists(path):
+                # There's something here but it's not a file.
+                shutil.rmtree(path)
+            open(path, 'w').close()
+        os.symlink(path, item)
