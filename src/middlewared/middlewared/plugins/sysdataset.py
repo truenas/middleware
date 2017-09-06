@@ -71,22 +71,18 @@ class SystemDatasetService(ConfigService):
             datasets.append(f'{config["basename"]}/{sub}')
 
         createdds = False
+        datasets_prop = {i['id']: i['properties'].get('mountpoint') for i in await self.middleware.call('zfs.dataset.query', [('id', 'in', datasets)])}
         for dataset in datasets:
-            # TODO: use zfs plugin
-            proc = await Popen([
-                'zfs', 'get', '-H', '-o', 'value', 'mountpoint', dataset,
-            ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-            stdout, stderr = await proc.communicate()
-            if proc.returncode == 0:
-                if stdout.decode().strip() != 'legacy':
-                    await run('zfs', 'set', 'mountpoint=legacy', dataset, check=False)
-                continue
-
-            await self.middleware.call('zfs.dataset.create', {
-                'name': dataset,
-                'properties': {'mountpoint': 'legacy'},
-            })
-            createdds = True
+            mountpoint = datasets_prop.get(dataset)
+            if mountpoint and mountpoint['value'] != 'legacy':
+                # FIXME: use zfs plugin
+                await run('zfs', 'set', 'mountpoint=legacy', dataset, check=False)
+            elif not mountpoint:
+                await self.middleware.call('zfs.dataset.create', {
+                    'name': dataset,
+                    'properties': {'mountpoint': 'legacy'},
+                })
+                createdds = True
 
         if createdds:
             self.middleware.call('service.restart', 'collectd')
@@ -96,13 +92,9 @@ class SystemDatasetService(ConfigService):
                 os.unlink(SYSDATASET_PATH)
             os.mkdir(SYSDATASET_PATH)
 
-        # TODO: use zfs plugin
-        proc = await Popen([
-            'zfs', 'get', '-H', '-o', 'value', 'aclmode', dataset,
-        ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        stdout, stderr = await proc.communicate()
-        aclmode = stdout.decode().strip()
-        if aclmode and aclmode.lower() == 'restricted':
+        aclmode = await self.middleware.call('zfs.dataset.query', [('id', '=', config['basename'])])
+        if aclmode and aclmode[0]['properties']['aclmode']['value'] == 'restricted':
+            # FIXME: use zfs plugin
             await run('zfs', 'set', 'aclmode=passthrough', config['basename'], check=False)
 
         if mount:
