@@ -77,6 +77,7 @@ class VMSupervisor(object):
         self.logger = self.manager.logger
         self.vm = vm
         self.proc = None
+        self.web_proc = None
         self.taps = []
         self.bhyve_error = None
 
@@ -149,6 +150,7 @@ class VMSupervisor(object):
                 vnc_port = int(device['attributes'].get('vnc_port', 5900 + self.vm['id']))
                 vnc_bind = device['attributes'].get('vnc_bind', '0.0.0.0')
                 vnc_password = device['attributes'].get('vnc_password', None)
+                vnc_web = device['attributes'].get('vnc_web', None)
 
                 vnc_password_args = ""
                 if vnc_password:
@@ -172,6 +174,16 @@ class VMSupervisor(object):
 
         self.logger.debug('Starting bhyve: {}'.format(' '.join(args)))
         self.proc = await Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+
+        if vnc_web:
+            split_port = int(str(vnc_port)[:2]) - 1
+            vnc_web_port = str(split_port) + str(vnc_port)[2:]
+
+            self.web_proc = await Popen(['/usr/local/libexec/novnc/utils/websockify/run', '--web',
+                    '/usr/local/libexec/novnc/', '--wrap-mode=exit',
+                    ':{}'.format(vnc_web_port), 'localhost:{}'.format(vnc_port)], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+            self.logger.debug("==> Start WEBVNC at port {} with pid number {}".format(vnc_web_port, self.web_proc.pid))
+
 
         while True:
             line = await self.proc.stdout.readline()
@@ -206,6 +218,7 @@ class VMSupervisor(object):
         # XXX: We need to catch the bhyvectl return error.
         bhyve_error = await (await Popen(['bhyvectl', '--destroy', '--vm={}'.format(self.vm['name'])], stdout=subprocess.PIPE, stderr=subprocess.PIPE)).wait()
         self.manager._vm.pop(self.vm['id'], None)
+        await self.kill_bhyve_web()
         self.destroy_tap()
 
     def destroy_tap(self):
@@ -263,10 +276,21 @@ class VMSupervisor(object):
             await self.destroy_vm()
             return True
 
+    async def kill_bhyve_web(self):
+        if self.web_proc:
+            try:
+                self.logger.debug("==> Killing WEBVNC: {}".format(self.web_proc.pid))
+                os.kill(self.web_proc.pid, 15)
+            except ProcessLookupError as e:
+                if e.errno != errno.ESRCH:
+                    raise
+            return True
+
     async def restart(self):
         bhyve_error = await (await Popen(['bhyvectl', '--force-reset', '--vm={}'.format(self.vm['name'])], stdout=subprocess.PIPE, stderr=subprocess.PIPE)).wait()
         self.logger.debug("==> Reset VM: {0} ID: {1} BHYVE_CODE: {2}".format(self.vm['name'], self.vm['id'], bhyve_error))
         self.destroy_tap()
+        await self.kill_bhyve_web()
 
     async def stop(self):
         bhyve_error = await (await Popen(['bhyvectl', '--force-poweroff', '--vm={}'.format(self.vm['name'])], stdout=subprocess.PIPE, stderr=subprocess.PIPE)).wait()
