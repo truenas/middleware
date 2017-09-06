@@ -2,6 +2,7 @@ from middlewared.schema import accepts, Bool
 from middlewared.service import ConfigService, private
 from middlewared.utils import run
 
+import asyncio
 import os
 import shutil
 
@@ -88,7 +89,8 @@ class SystemDatasetService(ConfigService):
                 createdds = True
 
         if createdds:
-            self.middleware.call('service.restart', 'collectd')
+            # There is no need to wait this to finish
+            asyncio.ensure_future(self.middleware.call('service.restart', 'collectd'))
 
         if not os.path.isdir(SYSDATASET_PATH):
             if os.path.exists(SYSDATASET_PATH):
