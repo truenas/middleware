@@ -74,8 +74,11 @@ class SystemDatasetService(ConfigService):
         for dataset in datasets:
             mountpoint = datasets_prop.get(dataset)
             if mountpoint and mountpoint['value'] != 'legacy':
-                # FIXME: use zfs plugin
-                await run('zfs', 'set', 'mountpoint=legacy', dataset, check=False)
+                await self.middleware.call(
+                    'zfs.dataset.update',
+                    dataset,
+                    {'properties': {'mountpoint': {'value': 'legacy'}}},
+                )
             elif not mountpoint:
                 await self.middleware.call('zfs.dataset.create', {
                     'name': dataset,
@@ -93,8 +96,11 @@ class SystemDatasetService(ConfigService):
 
         aclmode = await self.middleware.call('zfs.dataset.query', [('id', '=', config['basename'])])
         if aclmode and aclmode[0]['properties']['aclmode']['value'] == 'restricted':
-            # FIXME: use zfs plugin
-            await run('zfs', 'set', 'aclmode=passthrough', config['basename'], check=False)
+            await self.middleware.call(
+                'zfs.dataset.update',
+                config['basename'],
+                {'properties': {'aclmode': {'value': 'passthrough'}}},
+            )
 
         if mount:
 
