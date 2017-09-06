@@ -1,9 +1,8 @@
 from middlewared.schema import accepts, Bool
 from middlewared.service import ConfigService, private
-from middlewared.utils import Popen, run
+from middlewared.utils import run
 
 import os
-import subprocess
 
 SYSDATASET_PATH = '/var/db/system'
 

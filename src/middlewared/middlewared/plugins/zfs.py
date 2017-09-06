@@ -11,8 +11,8 @@ import libzfs
 
 from middlewared.schema import Dict, List, Str, Bool, Int, accepts
 from middlewared.service import (
-    CallError, CRUDService, Service, ValidationErrors, filterable, job,
-    periodic, private,
+    CallError, CRUDService, Service, ValidationError, ValidationErrors,
+    filterable, job, periodic, private,
 )
 from middlewared.utils import filter_list
 
@@ -239,6 +239,46 @@ class ZFSDatasetService(CRUDService):
         except libzfs.ZFSException as e:
             self.logger.error('Failed to create dataset', exc_info=True)
             raise CallError(f'Failed to create dataset: {e}')
+
+    @accepts(
+        Str('id'),
+        Dict(
+            'dataset_update',
+            Dict(
+                'properties',
+                additional_attrs=True,
+            ),
+        ),
+    )
+    def do_update(self, id, data):
+        try:
+            zfs = libzfs.ZFS()
+            dataset = zfs.get_dataset(id)
+
+            if 'properties' in data:
+                for k, v in data['properties'].items():
+
+                    # If prop already exists we just update it,
+                    # otherwise create a user property
+                    prop = dataset.properties.get(k)
+                    if prop:
+                        if v.get('source') == 'INHERIT':
+                            prop.inherit()
+                        elif 'value' in v and prop.value != v['value']:
+                            prop.value = v['value']
+                        elif 'parsed' in v and prop.parsed != v['parsed']:
+                            prop.parsed = v['parsed']
+                    else:
+                        if 'value' not in v:
+                            raise ValidationError('properties', f'properties.{k} needs a "value" attribute')
+                        if ':' not in v['value']:
+                            raise ValidationError('properties', f'User property needs a colon (:) in its name`')
+                        prop = libzfs.ZFSUserProperty(v['value'])
+                        dataset.properties[k] = prop
+
+        except libzfs.ZFSException as e:
+            self.logger.error('Failed to update dataset', exc_info=True)
+            raise CallError(f'Failed to update dataset: {e}')
 
     def do_delete(self, id):
         try:
