@@ -1,7 +1,9 @@
 from middlewared.schema import accepts, Bool
 from middlewared.service import ConfigService, private
+from middlewared.utils import Popen, run
 
 import os
+import subprocess
 
 SYSDATASET_PATH = '/var/db/system'
 
@@ -25,6 +27,11 @@ class SystemDatasetService(ConfigService):
             else:
                 config['is_decrypted'] = False
 
+        if config['is_decrypted']:
+            config['basename'] = f'{config["pool"]}/.system'
+        else:
+            config['basename'] = None
+
         # Make `uuid` point to the uuid of current node
         config['uuid_a'] = config['uuid']
         if not await self.middleware.call('system.is_freenas'):
@@ -33,9 +40,9 @@ class SystemDatasetService(ConfigService):
 
         return config
 
-    @accepts(Bool('mount'))
+    @accepts(Bool('mount', default=True))
     @private
-    async def setup(self, mount=True):
+    async def setup(self, mount):
         if not await self.middleware.call('system.is_freenas'):
             if await self.middleware.call('notifier.failover_status') == 'BACKUP':
                 try:
@@ -96,17 +103,29 @@ class SystemDatasetService(ConfigService):
         stdout, stderr = await proc.communicate()
         aclmode = stdout.decode().strip()
         if aclmode and aclmode.lower() == 'restricted':
-            await run('zfs', 'set', 'aclmode=passthrough', basename, check=False)
+            await run('zfs', 'set', 'aclmode=passthrough', config['basename'], check=False)
 
         if mount:
-            #self.system_dataset_mount(systemdataset.sys_pool, SYSDATASET_PATH)
+
+            datasets_mountpoints = [
+                (datasets[0], SYSDATASET_PATH)
+            ] + [
+                (d, f'{SYSDATASET_PATH}/{d.rsplit("/", 1)[-1]}')
+                for d in datasets[1:]
+            ]
+            for dataset, mountpoint in datasets_mountpoints:
+                if os.path.ismount(mountpoint):
+                    continue
+                if not os.path.isdir(mountpoint):
+                    os.mkdir(mountpoint)
+                await run('mount', '-t', 'zfs', dataset, mountpoint, check=False)
 
             corepath = f'{SYSDATASET_PATH}/cores'
             if os.path.exists(corepath):
                 # FIXME: sysctl module not working
-                run('sysctl', f"kern.corefile='{corepath}/%N.core'")
+                await run('sysctl', f"kern.corefile='{corepath}/%N.core'")
                 os.chmod(corepath, 0o775)
 
             #self.nfsv4link()
 
-        return systemdataset
+        return config
