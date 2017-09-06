@@ -6,7 +6,7 @@ import threading
 import time
 from subprocess import DEVNULL, PIPE
 
-from middlewared.schema import accepts, Bool, Dict, Int, Str
+from middlewared.schema import accepts, Bool, Dict, Int, Ref, Str
 from middlewared.service import filterable, CRUDService
 from middlewared.utils import Popen, filter_list
 
@@ -130,7 +130,8 @@ class ServiceService(CRUDService):
         Str('service'),
         Dict(
             'service-control',
-            Bool('onetime'),
+            Bool('onetime', default=True),
+            register=True,
         ),
     )
     async def start(self, service, options=None):
@@ -138,10 +139,6 @@ class ServiceService(CRUDService):
 
         The helper will use method self._start_[service]() to start the service.
         If the method does not exist, it would fallback using service(8)."""
-        if options is None:
-            options = {
-                'onetime': True,
-            }
         await self.middleware.call_hook('service.pre_start', service)
         sn = self._started_notify("start", service)
         await self._simplecmd("start", service, options)
@@ -170,20 +167,13 @@ class ServiceService(CRUDService):
 
     @accepts(
         Str('service'),
-        Dict(
-            'service-control',
-            Bool('onetime'),
-        ),
+        Ref('service-control'),
     )
     async def stop(self, service, options=None):
         """ Stop the service specified by `service`.
 
         The helper will use method self._stop_[service]() to stop the service.
         If the method does not exist, it would fallback using service(8)."""
-        if options is None:
-            options = {
-                'onetime': True,
-            }
         await self.middleware.call_hook('service.pre_stop', service)
         sn = self._started_notify("stop", service)
         await self._simplecmd("stop", service, options)
@@ -191,10 +181,7 @@ class ServiceService(CRUDService):
 
     @accepts(
         Str('service'),
-        Dict(
-            'service-control',
-            Bool('onetime'),
-        ),
+        Ref('service-control'),
     )
     async def restart(self, service, options=None):
         """
@@ -202,10 +189,6 @@ class ServiceService(CRUDService):
 
         The helper will use method self._restart_[service]() to restart the service.
         If the method does not exist, it would fallback using service(8)."""
-        if options is None:
-            options = {
-                'onetime': True,
-            }
         await self.middleware.call_hook('service.pre_restart', service)
         sn = self._started_notify("restart", service)
         await self._simplecmd("restart", service, options)
@@ -213,10 +196,7 @@ class ServiceService(CRUDService):
 
     @accepts(
         Str('service'),
-        Dict(
-            'service-control',
-            Bool('onetime'),
-        ),
+        Ref('service-control'),
     )
     async def reload(self, service, options=None):
         """
@@ -225,10 +205,6 @@ class ServiceService(CRUDService):
         The helper will use method self._reload_[service]() to reload the service.
         If the method does not exist, the helper will try self.restart of the
         service instead."""
-        if options is None:
-            options = {
-                'onetime': True,
-            }
         await self.middleware.call_hook('service.pre_reload', service)
         try:
             await self._simplecmd("reload", service, options)

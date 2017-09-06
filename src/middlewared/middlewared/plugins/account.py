@@ -16,6 +16,8 @@ import string
 import subprocess
 import time
 
+SKEL_PATH = '/usr/share/skel/'
+
 
 def pw_checkname(verrors, attribute, name):
     """
@@ -145,25 +147,25 @@ class UserService(CRUDService):
         if data['home'] != '/nonexistent':
             try:
                 os.makedirs(data['home'], mode=int(home_mode, 8))
-                if os.stat(data['home']).st_dev == os.stat('/mnt').st_dev:
+            except FileExistsError:
+                if not os.path.isdir(data['home']):
                     raise CallError(
-                        f'Path for the home directory (data["home"]) '
-                        'must be under a volume or dataset'
+                        'Path for home directory already '
+                        'exists and is not a directory',
+                        errno.EEXIST
                     )
             except OSError as oe:
-                if oe.errno == errno.EEXIST:
-                    if not os.path.isdir(data['home']):
-                        raise CallError(
-                            'Path for home directory already '
-                            'exists and is not a directory'
-                        )
-                else:
-                    raise CallError(
-                        'Failed to create the home directory '
-                        f'({data["home"]}) for user: {oe}'
-                    )
+                raise CallError(
+                    'Failed to create the home directory '
+                    f'({data["home"]}) for user: {oe}'
+                )
             else:
                 new_homedir = True
+            if os.stat(data['home']).st_dev == os.stat('/mnt').st_dev:
+                raise CallError(
+                    f'Path for the home directory (data["home"]) '
+                    'must be under a volume or dataset'
+                )
 
         if not data.get('uid'):
             data['uid'] = await self.get_next_uid()
@@ -191,6 +193,17 @@ class UserService(CRUDService):
         await self.middleware.call('service.reload', 'user')
 
         await self.__set_smbpasswd(data['username'], password)
+
+        if os.path.exists(data['home']):
+            for f in os.listdir(SKEL_PATH):
+                if f.startswith('dot'):
+                    dest_file = os.path.join(data['home'], f[3:])
+                else:
+                    dest_file = os.path.join(data['home'], f)
+                if not os.path.exists(dest_file):
+                    shutil.copyfile(os.path.join(SKEL_PATH, f), dest_file)
+                    os.chown(dest_file, data['uid'], group['gid'])
+
         return pk
 
     @accepts(
@@ -234,7 +247,11 @@ class UserService(CRUDService):
             raise verrors
 
         # Copy the home directory if it changed
-        if 'home' in data and data['home'] not in (user['home'], '/nonexistent'):
+        if (
+            'home' in data and
+            data['home'] not in (user['home'], '/nonexistent') and
+            not data["home"].startswith(f'{user["home"]}/')
+        ):
             home_copy = True
             home_old = user['home']
         else:
@@ -305,7 +322,6 @@ class UserService(CRUDService):
 
         return pk
 
-    @private
     async def get_next_uid(self):
         """
         Get the next available/free uid.
@@ -423,9 +439,9 @@ class UserService(CRUDService):
             pubkey = pubkey.strip() + '\n'
             if pubkey != oldpubkey:
                 sshpath = f'{user["home"]}/.ssh'
-                saved_umask = os.umask(0o77)
                 if not os.path.isdir(sshpath):
                     os.makedirs(sshpath)
+                    os.chmod(sshpath, 0o700)
                 if not os.path.isdir(sshpath):
                     raise CallError(f'{sshpath} is not a directory')
                 if pubkey == '' and os.path.exists(keysfile):
@@ -433,8 +449,8 @@ class UserService(CRUDService):
                 else:
                     with open(keysfile, 'w') as f:
                         f.write(pubkey)
+                    os.chmod(keysfile, 0o700)
                     await run('chown', '-R', f'{user["username"]}:{group}', sshpath, check=False)
-                os.umask(saved_umask)
 
 
 class GroupService(CRUDService):
@@ -526,7 +542,6 @@ class GroupService(CRUDService):
 
         return pk
 
-    @private
     async def get_next_gid(self):
         """
         Get the next available/free gid.

@@ -249,7 +249,7 @@ class VMSupervisor(object):
 
     def random_mac(self):
         mac_address = [0x00, 0xa0, 0x98, random.randint(0x00, 0x7f), random.randint(0x00, 0xff), random.randint(0x00, 0xff)]
-        return ':'.join(map(lambda x: "%02x" % x, mac_address))
+        return ':'.join(["%02x" % x for x in mac_address])
 
     async def kill_bhyve_pid(self):
         if self.proc:
@@ -322,6 +322,21 @@ class VMService(CRUDService):
         data['amd_asids'] = True if asids and asids[0].value != 0 else False
 
         return data
+
+    @accepts()
+    def identify_hypervisor(self):
+        """
+        Identify Hypervisors that might work nested with bhyve.
+
+        Returns:
+                bool: True if compatible otherwise False.
+        """
+        compatible_hp = ('VMwareVMware', 'Microsoft Hv', 'KVMKVMKVM', 'bhyve bhyve')
+        identify_hp = sysctl.filter('hw.hv_vendor')[0].value.strip()
+
+        if identify_hp in compatible_hp:
+            return True
+        return False
 
     @filterable
     async def query(self, filters=None, options=None):
@@ -414,7 +429,7 @@ class VMService(CRUDService):
             await self.middleware.call('datastore.insert', 'vm.device', device)
         return pk
 
-    async def _do_update_devices(self, id, devices):
+    async def __do_update_devices(self, id, devices):
         if devices and isinstance(devices, list) is True:
             device_query = await self.middleware.call('datastore.query', 'vm.device', [('vm__id', '=', int(id))])
 
@@ -445,7 +460,7 @@ class VMService(CRUDService):
         """Update all information of a specific VM."""
         devices = data.pop('devices', None)
         if devices:
-            update_devices = await self._do_update_devices(id, devices)
+            update_devices = await self.__do_update_devices(id, devices)
         if data:
             return await self.middleware.call('datastore.update', 'vm.vm', id, data)
         else:
@@ -524,7 +539,7 @@ class VMService(CRUDService):
             self.logger.error("===> {0}".format(err))
             return False
 
-    async def _find_clone(self, name):
+    async def __find_clone(self, name):
         data = await self.middleware.call('vm.query', [], {'order_by': ['name']})
         clone_index = 0
         next_name = ""
@@ -552,7 +567,7 @@ class VMService(CRUDService):
         origin_name = vm['name']
         del vm['id']
 
-        vm['name'] = await self._find_clone(vm['name'])
+        vm['name'] = await self.__find_clone(vm['name'])
 
         for item in vm['devices']:
             if item['dtype'] == 'NIC':
@@ -592,7 +607,7 @@ async def kmod_load():
         await Popen(['/sbin/kldload', 'nmdm'])
 
 
-async def _event_system_ready(middleware, event_type, args):
+async def __event_system_ready(middleware, event_type, args):
     """
     Method called when system is ready, supposed to start VMs
     flagged that way.
@@ -606,4 +621,4 @@ async def _event_system_ready(middleware, event_type, args):
 
 def setup(middleware):
     asyncio.ensure_future(kmod_load())
-    middleware.event_subscribe('system', _event_system_ready)
+    middleware.event_subscribe('system', __event_system_ready)
