@@ -1,7 +1,7 @@
 FREENAS-MIB DEFINITIONS ::= BEGIN
 
 IMPORTS
-    MODULE-IDENTITY, OBJECT-TYPE, enterprises,
+    MODULE-IDENTITY, OBJECT-TYPE, NOTIFICATION-TYPE, enterprises,
     Integer32, Counter32, Counter64, Gauge32  FROM SNMPv2-SMI
 
     DisplayString                             FROM SNMPv2-TC;
@@ -22,6 +22,10 @@ freeNas MODULE-IDENTITY
     ::= { enterprises 50536 }
 
 zfs     OBJECT IDENTIFIER ::= { freeNas 1 }
+
+notifications       OBJECT IDENTIFIER ::= { freeNas 2 }
+notificationPrefix  OBJECT IDENTIFIER ::= { notifications 1 }
+notificationObjects OBJECT IDENTIFIER ::= { notifications 2 }
 
 zpool   OBJECT IDENTIFIER ::= { zfs 1 }
 dataset OBJECT IDENTIFIER ::= { zfs 2 }
@@ -491,5 +495,28 @@ zfsZilstatOps10sec OBJECT-TYPE
     DESCRIPTION
         "The ops column parsed from the command zilstat 10 1"
     ::= { zil 3 }
+
+alert NOTIFICATION-TYPE
+    OBJECTS    { alertLevel, alertMessage }
+    STATUS     current
+    DESCRIPTION
+        "An alert raised"
+    ::= { notificationPrefix 1 }
+
+alertLevel OBJECT-TYPE
+    SYNTAX     DisplayString
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        ""
+    ::= { notificationObjects 1 }
+
+alertMessage OBJECT-TYPE
+    SYNTAX     DisplayString
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        ""
+    ::= { notificationObjects 2 }
 
 END

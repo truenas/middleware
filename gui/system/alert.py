@@ -9,9 +9,11 @@ import subprocess
 import time
 
 from django.utils.translation import ugettext_lazy as _
+import pysnmp.hlapi
+import pysnmp.smi
 
 from freenasUI.common.locks import lock
-from freenasUI.common.system import send_mail, get_sw_version
+from freenasUI.common.system import send_mail, get_sw_version, service_enabled
 from freenasUI.freeadmin.hook import HookMetaclass
 from freenasUI.middleware.client import client, ClientException
 from freenasUI.middleware.notifier import notifier
@@ -137,6 +139,47 @@ class Alert(object):
         return datetime.datetime.fromtimestamp(self._timestamp)
 
 
+class SnmpTrapSender:
+    def __init__(self):
+        self.snmp_engine = pysnmp.hlapi.SnmpEngine()
+        self.auth_data = pysnmp.hlapi.CommunityData("public")
+        self.transport_target = pysnmp.hlapi.UdpTransportTarget(("localhost", 162))
+        self.context_data = pysnmp.hlapi.ContextData()
+
+        mib_builder = pysnmp.smi.builder.MibBuilder()
+        mib_sources = mib_builder.getMibSources() + (pysnmp.smi.builder.DirMibSource("/usr/local/share/pysnmp/mibs"),)
+        mib_builder.setMibSources(*mib_sources)
+        mib_builder.loadModules("FREENAS-MIB")
+        mib_view_controller = pysnmp.smi.view.MibViewController(mib_builder)
+        self.snmp_alert = pysnmp.hlapi.ObjectIdentity("FREENAS-MIB", "alert"). \
+            resolveWithMib(mib_view_controller)
+        self.snmp_alert_level = pysnmp.hlapi.ObjectIdentity("FREENAS-MIB", "alertLevel"). \
+            resolveWithMib(mib_view_controller)
+        self.snmp_alert_message = pysnmp.hlapi.ObjectIdentity("FREENAS-MIB", "alertMessage"). \
+            resolveWithMib(mib_view_controller)
+
+    def send_trap(self, level, message):
+        error_indication, error_status, error_index, var_binds = next(
+            pysnmp.hlapi.sendNotification(
+                self.snmp_engine,
+                self.auth_data,
+                self.transport_target,
+                self.context_data,
+                "trap",
+                pysnmp.hlapi.NotificationType(self.snmp_alert).addVarBinds(
+                    (pysnmp.hlapi.ObjectIdentifier(self.snmp_alert_level), pysnmp.hlapi.OctetString(level)),
+                    (pysnmp.hlapi.ObjectIdentifier(self.snmp_alert_message), pysnmp.hlapi.OctetString(message))
+                )
+            )
+        )
+
+        if error_indication:
+            log.error(f'Failed to send SNMP trap: {error_indication}')
+            return False
+
+        return True
+
+
 class AlertPlugins(metaclass=HookMetaclass):
 
     ALERT_FILE = '/var/tmp/alert'
@@ -147,6 +190,8 @@ class AlertPlugins(metaclass=HookMetaclass):
         )
         self.modspath = os.path.join(self.basepath, 'alertmods/')
         self.mods = []
+
+        self.snmp_trap_sender = SnmpTrapSender()
 
     def rescan(self):
         self.mods = []
@@ -337,6 +382,16 @@ class AlertPlugins(metaclass=HookMetaclass):
 
         if crits:
             self.email(crits)
+
+        new_alerts = sorted([
+            a
+            for a in rvs
+            if a and (not obj or a not in obj['alerts'])
+        ])
+
+        if service_enabled("snmp"):
+            for a in new_alerts:
+                self.snmp_trap_sender.send_trap(a.getLevel(), str(a))
 
         if not notifier().is_freenas():
             # Automatically create ticket for new alerts tagged as possible
