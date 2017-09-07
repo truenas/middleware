@@ -37,6 +37,7 @@ def get_zfs_arc_miss_percent(kstat):
         return miss_percent
     return 0
 
+
 agent = netsnmpagent.netsnmpAgent(
     AgentName="FreeNASAgent",
     MIBFiles=["/usr/local/share/snmp/mibs/FREENAS-MIB.mib"],
@@ -143,8 +144,10 @@ class ZpoolIoThread(threading.Thread):
 
                     if pool.name in previous_values:
                         for k in ["read_ops", "write_ops", "read_bytes", "write_bytes"]:
-                            self.values_1s[pool.name][k] = self.values_overall[pool.name][k] -\
-                                                           previous_values[pool.name][k]
+                            self.values_1s[pool.name][k] = (
+                                self.values_overall[pool.name][k] -
+                                previous_values[pool.name][k]
+                            )
 
     def get_values(self):
         with self.lock:
@@ -193,6 +196,7 @@ class ZilstatThread(threading.Thread):
                 "4to32kb": output[8],
                 "gteq4kb": output[9],
             }
+
 
 if __name__ == "__main__":
     zfs = libzfs.ZFS()
@@ -258,17 +262,15 @@ if __name__ == "__main__":
             for i, dataset in enumerate(datasets):
                 row = dataset_table.addRow([agent.Integer32(i)])
                 row.setRowCell(2, agent.DisplayString(dataset.properties["name"].value))
-                allocation_units, \
-                    (
-                        size,
-                        used,
-                        available
-                    ) = calculate_allocation_units(
-                        int(dataset.properties["used"].rawvalue) +
-                            int(dataset.properties["available"].rawvalue),
-                        int(dataset.properties["used"].rawvalue),
-                        int(dataset.properties["available"].rawvalue),
-                    )
+                allocation_units, (
+                    size,
+                    used,
+                    available
+                ) = calculate_allocation_units(
+                    int(dataset.properties["used"].rawvalue) + int(dataset.properties["available"].rawvalue),
+                    int(dataset.properties["used"].rawvalue),
+                    int(dataset.properties["available"].rawvalue),
+                )
                 row.setRowCell(3, agent.Integer32(allocation_units))
                 row.setRowCell(4, agent.Integer32(size))
                 row.setRowCell(5, agent.Integer32(used))
@@ -278,16 +280,15 @@ if __name__ == "__main__":
             for i, zvol in enumerate(zvols):
                 row = zvol_table.addRow([agent.Integer32(i)])
                 row.setRowCell(2, agent.DisplayString(zvol.properties["name"].value))
-                allocation_units, \
-                    (
-                        volsize,
-                        used,
-                        available
-                    ) = calculate_allocation_units(
-                        int(zvol.properties["volsize"].rawvalue),
-                        int(zvol.properties["used"].rawvalue),
-                        int(zvol.properties["available"].rawvalue),
-                    )
+                allocation_units, (
+                    volsize,
+                    used,
+                    available
+                ) = calculate_allocation_units(
+                    int(zvol.properties["volsize"].rawvalue),
+                    int(zvol.properties["used"].rawvalue),
+                    int(zvol.properties["available"].rawvalue),
+                )
                 row.setRowCell(3, agent.Integer32(allocation_units))
                 row.setRowCell(4, agent.Integer32(volsize))
                 row.setRowCell(5, agent.Integer32(used))
