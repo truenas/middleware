@@ -179,9 +179,11 @@ class VMSupervisor(object):
             split_port = int(str(vnc_port)[:2]) - 1
             vnc_web_port = str(split_port) + str(vnc_port)[2:]
 
+            web_bind = ':{}'.format(vnc_web_port) if vnc_bind is '0.0.0.0' else '{}:{}'.format(vnc_bind, vnc_web_port)
+
             self.web_proc = await Popen(['/usr/local/libexec/novnc/utils/websockify/run', '--web',
                     '/usr/local/libexec/novnc/', '--wrap-mode=exit',
-                    ':{}'.format(vnc_web_port), 'localhost:{}'.format(vnc_port)], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+                    web_bind, '{}:{}'.format(vnc_bind, vnc_port)], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
             self.logger.debug("==> Start WEBVNC at port {} with pid number {}".format(vnc_web_port, self.web_proc.pid))
 
 
@@ -621,6 +623,29 @@ class VMService(CRUDService):
         self.logger.info("VM cloned from {0} to {1}".format(origin_name, vm['name']))
 
         return True
+
+    @accepts(Int('id'))
+    async def get_vnc_web(self, id):
+        """
+            Get the VNC URL from a given VM.
+
+            Returns:
+                list: With all URL available.
+        """
+        vnc_web = []
+        vnc_devices = await self.get_vnc(id)
+
+        for vnc_device in await self.get_vnc(id):
+            self.logger.debug("Devices VNC: {}".format(vnc_device))
+            if vnc_device.get('vnc_web', None) is True:
+                vnc_port = vnc_device.get('vnc_port', None)
+                #  XXX: Create a method for web port.
+                split_port = int(str(vnc_port)[:2]) - 1
+                vnc_web_port = str(split_port) + str(vnc_port)[2:]
+                bind_ip = vnc_device.get('vnc_bind', None)
+                vnc_web.append('http://{}:{}/vnc_auto.html'.format(bind_ip, vnc_web_port))
+
+        return vnc_web
 
 
 async def kmod_load():
