@@ -40,7 +40,7 @@ def get_zfs_arc_miss_percent(kstat):
 
 agent = netsnmpagent.netsnmpAgent(
     AgentName="FreeNASAgent",
-    MIBFiles=["/usr/local/share/snmp/mibs/FREENAS-MIB.mib"],
+    MIBFiles=["/usr/local/share/snmp/mibs/FREENAS-MIB.txt"],
 )
 
 zpool_table = agent.Table(
