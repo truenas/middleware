@@ -59,7 +59,8 @@ EOF
 	done
 	${FREENAS_SQLITE_CMD} ${RO_FREENAS_CONFIG} "SELECT snmp_options FROM services_snmp ORDER BY -id LIMIT 1" >> ${snmp_config}
 	if checkyesno snmpd_enable; then
-		/usr/local/bin/python /usr/local/bin/snmp-agent.py >/dev/null 2>&1
+		/usr/local/bin/python /usr/local/bin/snmp-agent.py >/dev/null 2>&1 &
+		echo $! > /var/run/freenas-snmpd.pid
     fi
 
 }
