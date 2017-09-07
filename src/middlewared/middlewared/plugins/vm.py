@@ -636,7 +636,6 @@ class VMService(CRUDService):
         vnc_devices = await self.get_vnc(id)
 
         for vnc_device in await self.get_vnc(id):
-            self.logger.debug("Devices VNC: {}".format(vnc_device))
             if vnc_device.get('vnc_web', None) is True:
                 vnc_port = vnc_device.get('vnc_port', None)
                 #  XXX: Create a method for web port.
