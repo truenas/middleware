@@ -91,3 +91,14 @@ def clone(request, id):
     return render(request, "vm/clone.html", {
         'name': vm.name,
     })
+
+
+def vnc_web(request, id):
+    vm = models.VM.objects.get(id=id)
+    url_vnc = None
+    with client as c:
+        url_vnc = c.call('vm.get_vnc_web', id)
+    return render(request, "vm/vncweb.html", {
+        'name': vm.name,
+        'url_vnc': url_vnc[0] if url_vnc else url_vnc,
+    })
