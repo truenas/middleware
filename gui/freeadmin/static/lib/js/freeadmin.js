@@ -1197,7 +1197,7 @@ require([
             s = JSON.parse(data);
             set = get_directoryservice_set('dc_enable');
             for (index in set) {
-                key = set[index]; 
+                key = set[index];
                 if (s[key] == true) {
                     node.onclick = null;
                     break;
@@ -1216,12 +1216,12 @@ require([
         directoryservice_mutex_toggle('nis_enable', nis);
     }
 
-    directoryservice_idmap_get_edit_url = function(eid, ds_type, ds_id) {
+    directoryservice_idmap_onclick = function(eid, ds_type, ds_id) {
         var widget = registry.byId(eid);
-        var idmap_backend = widget.get("value");
+        var idmap_type = widget.get("value");
         var idmap_url = "/directoryservice/idmap_backend/" +
-            ds_type + "/" + ds_id + "/" + idmap_backend + "/";
-        var edit_url = null;
+            ds_type + "/" + ds_id + "/" + idmap_type + "/";
+        var idmap_name = null;
         var id = -1;
 
         //console.log("Idmap URL:", idmap_url);
@@ -1231,64 +1231,31 @@ require([
             handleAs: 'json'
         }).then(function(data) {
                 id = data.idmap_id;
-            },
-            function(error) {
-                id = 0;
+                idmap_type = data.idmap_type;
+                idmap_name = data.idmap_name;
             }
         );
 
         if (id > 0) {
-            edit_url = "/directoryservice/" + "idmap_" + idmap_backend + "/" + id + "/";
-        }
+            var edit_url = "/directoryservice/idmap_" + idmap_name + "/" + id + "/";
+            // "none" is a specail backend which handles all non-defined yet ones
+            // so we need to pass their names in URL for reporting
+            if(idmap_name == "none") {
+                edit_url += idmap_type + "/";
+            }
 
-        //console.log("Edit URL:", edit_url, "ID:", id);
+            //console.log("Edit URL:", edit_url, "ID:", id);
 
-        return (edit_url);
-    }
-
-    directoryservice_idmap_onclick = function(eid, ds_type, ds_id) {
-        var edit_url = directoryservice_idmap_get_edit_url(eid, ds_type, ds_id);
-
-        if(edit_url) {
-            editObject("Edit Idmap", edit_url, [this]);
-        }
-        else {
-            var idmap_backend = registry.byId(eid).get("value");
-
-            var dialog = new Dialog({
-                 title: gettext('Warning!'),
-                 parseOnLoad: true,
-                 closable: true,
-                 style: "max-width: 75%;max-height:70%;background-color:white;overflow:auto;",
-                 onHide: function() {
-                      setTimeout(lang.hitch(this, 'destroyRecursive'), manager.defaultDuration);
-                }
-              });
-
-              var content = domConstruct.toDom('<p>Idmap backend ' + idmap_backend + ' is not defined</p><br/>');
-
-              var okbtn = new Button({
-                label: gettext('Ok'),
-                onClick: function() {
-                  cancelDialog(this);
-                }
-              });
-              okbtn.placeAt(content);
-
-              dialog.set('content', content);
-              dialog.show();
+            editObject("Edit Idmap", edit_url, [this,]);
         }
     }
 
     directoryservice_idmap_onload = function(eid, ds_type, ds_id) {
-        var edit_url = directoryservice_idmap_get_edit_url(eid, ds_type, ds_id);
-
         var table = query("#" + eid)[0];
         var td = table.parentNode;
 
         var editbtn = new Button({
             label: gettext("Edit"),
-            id: "idmap_backend_edit",
             style: "float: right; margin-left: 20px",
             onClick: function() {
                 directoryservice_idmap_onclick(eid, ds_type, ds_id);

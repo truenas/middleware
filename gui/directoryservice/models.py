@@ -1,4 +1,3 @@
-#
 # Copyright 2014 iXsystems, Inc.
 # All rights reserved
 #
@@ -96,6 +95,7 @@ IDMAP_TYPE_SCRIPT = 12
 def idmap_to_enum(idmap_type):
     enum = IDMAP_TYPE_NONE
     idmap_dict = {
+        'none': IDMAP_TYPE_NONE,
         'ad': IDMAP_TYPE_AD,
         'adex': IDMAP_TYPE_ADEX,
         'autorid': IDMAP_TYPE_AUTORID,
@@ -121,6 +121,7 @@ def idmap_to_enum(idmap_type):
 def enum_to_idmap(enum):
     idmap = None
     idmap_dict = {
+        IDMAP_TYPE_NONE: 'none',
         IDMAP_TYPE_AD: 'ad',
         IDMAP_TYPE_ADEX: 'adex',
         IDMAP_TYPE_AUTORID: 'autorid',
@@ -167,6 +168,19 @@ class idmap_base(Model):
 
     class Meta:
         abstract = True
+
+
+class idmap_none(idmap_base):
+
+#    def __init__(self, *args, **kwargs):
+#        super(idmap_none, self).__init__(*args, **kwargs)
+
+    class Meta:
+        verbose_name = _("NONE Idmap")
+        verbose_name_plural = _("NONE Idmap")
+
+    class FreeAdmin:
+        resource_name = 'directoryservice/idmap/none'
 
 
 class idmap_ad(idmap_base):

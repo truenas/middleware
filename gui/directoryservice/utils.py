@@ -140,13 +140,17 @@ def get_idmap_object(obj_type, obj_id, idmap_type):
             idmap_ds_type=obj_type,
             idmap_ds_id=obj_id
         )
+    else:
+        idmap = models.idmap_none.objects.get(
+            idmap_ds_type=obj_type,
+            idmap_ds_id=obj_id
+        )
 
     return idmap
 
 
 def get_idmap(obj_type, obj_id, idmap_type):
     obj_type = int(obj_type)
-    idmap = None
 
     ds = get_ds_object(obj_type, obj_id)
 
@@ -211,8 +215,9 @@ def get_idmap(obj_type, obj_id, idmap_type):
         idmap.save()
 
         data = {
+            'idmap_id': idmap.id,
             'idmap_type': idmap_type,
-            'idmap_id': idmap.id
+            'idmap_name': idmap.idmap_backend_name,
         }
     else:
         data = None
