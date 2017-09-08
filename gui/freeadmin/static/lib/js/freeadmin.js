@@ -1656,6 +1656,19 @@ require([
 
     }
 
+    afpTimemachineToggle = function() {
+
+        var checkbox = registry.byId("id_afp_timemachine");
+        var quota = registry.byId("id_afp_timemachine_quota");
+        var trquota = quota.domNode.parentNode.parentNode;
+        if (checkbox.checked) {
+            domStyle.set(trquota, "display", "");
+        } else {
+            domStyle.set(trquota, "display", "none");
+        }
+
+    }
+
     upsModeToggle = function() {
 
         var select = registry.byId("id_ups_mode");
