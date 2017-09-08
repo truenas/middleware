@@ -934,8 +934,8 @@ class ManualUpdateWizard(FileWizard):
 
         if not self.request.is_ajax():
             response.content = (
-                b"<html><body><textarea>"
-                + response.content +
+                b"<html><body><textarea>" +
+                response.content +
                 b"</textarea></boby></html>"
             )
         return response
@@ -1157,8 +1157,8 @@ class AdvancedForm(ModelForm):
                 notifier().reload("loader")
                 loader_reloaded = True
         if (
-            self.instance._original_adv_autotune != self.instance.adv_autotune
-            and not loader_reloaded
+            self.instance._original_adv_autotune != self.instance.adv_autotune and
+            not loader_reloaded
         ):
             notifier().reload("loader")
         if self.instance._original_adv_debugkernel != self.instance.adv_debugkernel:
@@ -1180,8 +1180,8 @@ class AdvancedForm(ModelForm):
             # Invalidate cache
             request.session.pop("adv_mode", None)
         if (
-            self.instance._original_adv_autotune != self.instance.adv_autotune
-            and self.instance.adv_autotune is True
+            self.instance._original_adv_autotune != self.instance.adv_autotune and
+            self.instance.adv_autotune is True
         ):
             events.append("refreshTree()")
 
