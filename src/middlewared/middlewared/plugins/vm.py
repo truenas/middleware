@@ -77,6 +77,7 @@ class VMSupervisor(object):
         self.logger = self.manager.logger
         self.vm = vm
         self.proc = None
+        self.web_proc = None
         self.taps = []
         self.bhyve_error = None
 
@@ -149,6 +150,7 @@ class VMSupervisor(object):
                 vnc_port = int(device['attributes'].get('vnc_port', 5900 + self.vm['id']))
                 vnc_bind = device['attributes'].get('vnc_bind', '0.0.0.0')
                 vnc_password = device['attributes'].get('vnc_password', None)
+                vnc_web = device['attributes'].get('vnc_web', None)
 
                 vnc_password_args = ""
                 if vnc_password:
@@ -172,6 +174,18 @@ class VMSupervisor(object):
 
         self.logger.debug('Starting bhyve: {}'.format(' '.join(args)))
         self.proc = await Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+
+        if vnc_web:
+            split_port = int(str(vnc_port)[:2]) - 1
+            vnc_web_port = str(split_port) + str(vnc_port)[2:]
+
+            web_bind = ':{}'.format(vnc_web_port) if vnc_bind is '0.0.0.0' else '{}:{}'.format(vnc_bind, vnc_web_port)
+
+            self.web_proc = await Popen(['/usr/local/libexec/novnc/utils/websockify/run', '--web',
+                    '/usr/local/libexec/novnc/', '--wrap-mode=exit',
+                    web_bind, '{}:{}'.format(vnc_bind, vnc_port)], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+            self.logger.debug("==> Start WEBVNC at port {} with pid number {}".format(vnc_web_port, self.web_proc.pid))
+
 
         while True:
             line = await self.proc.stdout.readline()
@@ -206,6 +220,7 @@ class VMSupervisor(object):
         # XXX: We need to catch the bhyvectl return error.
         bhyve_error = await (await Popen(['bhyvectl', '--destroy', '--vm={}'.format(self.vm['name'])], stdout=subprocess.PIPE, stderr=subprocess.PIPE)).wait()
         self.manager._vm.pop(self.vm['id'], None)
+        await self.kill_bhyve_web()
         self.destroy_tap()
 
     def destroy_tap(self):
@@ -263,10 +278,21 @@ class VMSupervisor(object):
             await self.destroy_vm()
             return True
 
+    async def kill_bhyve_web(self):
+        if self.web_proc:
+            try:
+                self.logger.debug("==> Killing WEBVNC: {}".format(self.web_proc.pid))
+                os.kill(self.web_proc.pid, 15)
+            except ProcessLookupError as e:
+                if e.errno != errno.ESRCH:
+                    raise
+            return True
+
     async def restart(self):
         bhyve_error = await (await Popen(['bhyvectl', '--force-reset', '--vm={}'.format(self.vm['name'])], stdout=subprocess.PIPE, stderr=subprocess.PIPE)).wait()
         self.logger.debug("==> Reset VM: {0} ID: {1} BHYVE_CODE: {2}".format(self.vm['name'], self.vm['id'], bhyve_error))
         self.destroy_tap()
+        await self.kill_bhyve_web()
 
     async def stop(self):
         bhyve_error = await (await Popen(['bhyvectl', '--force-poweroff', '--vm={}'.format(self.vm['name'])], stdout=subprocess.PIPE, stderr=subprocess.PIPE)).wait()
@@ -597,6 +623,28 @@ class VMService(CRUDService):
         self.logger.info("VM cloned from {0} to {1}".format(origin_name, vm['name']))
 
         return True
+
+    @accepts(Int('id'))
+    async def get_vnc_web(self, id):
+        """
+            Get the VNC URL from a given VM.
+
+            Returns:
+                list: With all URL available.
+        """
+        vnc_web = []
+        vnc_devices = await self.get_vnc(id)
+
+        for vnc_device in await self.get_vnc(id):
+            if vnc_device.get('vnc_web', None) is True:
+                vnc_port = vnc_device.get('vnc_port', None)
+                #  XXX: Create a method for web port.
+                split_port = int(str(vnc_port)[:2]) - 1
+                vnc_web_port = str(split_port) + str(vnc_port)[2:]
+                bind_ip = vnc_device.get('vnc_bind', None)
+                vnc_web.append('http://{}:{}/vnc_auto.html'.format(bind_ip, vnc_web_port))
+
+        return vnc_web
 
 
 async def kmod_load():

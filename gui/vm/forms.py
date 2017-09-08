@@ -61,7 +61,7 @@ class VMForm(ModelForm):
                 if self.instance.bootloader == 'UEFI':
                     cdata['devices'] = [
                         {'dtype': 'NIC', 'attributes': {'type': 'E1000'}},
-                        {'dtype': 'VNC', 'attributes': {'wait': False}},
+                        {'dtype': 'VNC', 'attributes': {'wait': False, 'vnc_web': False}},
                     ]
                 else:
                     cdata['devices'] = [
@@ -153,6 +153,10 @@ class DeviceForm(ModelForm):
         help_text=_("The VNC password authentication."
                     "Maximum password length is 8 characters.")
     )
+    VNC_web = forms.BooleanField(
+        label=_('VNC Web'),
+        required=False,
+    )
 
     class Meta:
         fields = '__all__'
@@ -201,6 +205,7 @@ class DeviceForm(ModelForm):
                 self.fields['VNC_resolution'].initial = self.instance.attributes.get('vnc_resolution')
                 self.fields['VNC_bind'].initial = self.instance.attributes.get('vnc_bind')
                 self.fields['VNC_password'].initial = self.instance.attributes.get('vnc_password')
+                self.fields['VNC_web'].initial = self.instance.attributes.get('vnc_web')
 
     def ipv4_list(self):
         choices = (('0.0.0.0', '0.0.0.0'),)
@@ -258,6 +263,7 @@ class DeviceForm(ModelForm):
                     'vnc_resolution': self.cleaned_data['VNC_resolution'],
                     'vnc_bind': self.cleaned_data['VNC_bind'],
                     'vnc_password': self.cleaned_data['VNC_password'],
+                    'vnc_web': self.cleaned_data['VNC_web'],
                 }
             else:
                 self._errors['dtype'] = self.error_class([_('VNC only works with UEFI VMs')])
@@ -266,6 +272,7 @@ class DeviceForm(ModelForm):
                 self.cleaned_data.pop('VNC_resolution', None)
                 self.cleaned_data.pop('VNC_bind', None)
                 self.cleaned_data.pop('VNC_password', None)
+                self.cleaned_data.pop('VNC_web', None)
                 return obj
 
         obj.save()
