@@ -134,32 +134,24 @@ class JailService(CRUDService):
 
         return jail, path
 
-    @accepts(Dict("options",
-                  Str("release"),
-                  Str("server", default="ftp.freebsd.org"),
-                  Str("user", default="anonymous"),
-                  Str("password", default="anonymous@"),
-                  Str("plugin_file"),
-                  Str("props"),
-                  ))
+    @accepts(
+        Dict("options",
+             Str("release"),
+             Str("server", default="ftp.freebsd.org"),
+             Str("user", default="anonymous"),
+             Str("password", default="anonymous@"),
+             Str("plugin_file"),
+             Str("props"),
+             List(
+                 "files",
+                 default=["MANIFEST", "base.txz", "lib32.txz", "doc.txz"])))
     @job(lock=lambda args: f"jail_fetch:{args[-1]}")
     def fetch(self, job, options):
         """Fetches a release or plugin."""
-        self.check_dataset_existence()
+        self.check_dataset_existence()  # Make sure our datasets exist.
+        iocage = ioc.IOCage()
 
-        release = options["release"]
-        server = options["server"]
-        user = options["user"]
-        password = options["password"]
-        plugin_file = options["plugin_file"]
-        props = options["props"]
-
-        if plugin_file:
-            IOCFetch("", server, user, password).fetch_plugin(plugin_file,
-                                                              props, 0)
-            return True
-
-        IOCFetch(release, server, user, password).fetch_release()
+        iocage.fetch(**options)
 
         return True
 
