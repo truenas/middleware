@@ -580,6 +580,7 @@ class InitialWizard(CommonWizard):
                 if 'afp' == share_purpose:
                     if share_timemachine:
                         sharekwargs['afp_timemachine'] = True
+                        sharekwargs['afp_timemachine_quota'] = 0
                     model_objs.append(AFP_Share.objects.create(
                         afp_name=share_name,
                         afp_path=path,
