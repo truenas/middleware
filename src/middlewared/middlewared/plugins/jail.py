@@ -3,7 +3,6 @@ import libzfs
 import iocage.lib.iocage as ioc
 from iocage.lib.ioc_check import IOCCheck
 from iocage.lib.ioc_json import IOCJson
-from iocage.lib.ioc_fstab import IOCFstab
 from iocage.lib.ioc_fetch import IOCFetch
 from iocage.lib.ioc_start import IOCStart
 from iocage.lib.ioc_stop import IOCStop
@@ -224,16 +223,13 @@ class JailService(CRUDService):
             Str("fstype"),
             Str("fsoptions"),
             Str("dump"),
-            Str("_pass"),
-        )
-    )
+            Str("_pass"), ))
     def fstab(self, jail, options):
         """
         Adds an fstab mount to the jail, mounts if the jail is running.
         """
-        self.check_dataset_existence()
+        iocage = ioc.IOCage(jail=jail)
 
-        tag, uuid, path = self.check_jail_existence(jail)
         action = options["action"]
         source = options["source"]
         destination = options["destination"]
@@ -242,8 +238,8 @@ class JailService(CRUDService):
         dump = options["dump"]
         _pass = options["_pass"]
 
-        IOCFstab(uuid, tag, action, source, destination, fstype, fsoptions,
-                 dump, _pass)
+        iocage.fstab(action, source, destination, fstype, fsoptions, dump,
+                     _pass)
 
         return True
 
