@@ -262,7 +262,7 @@ class JailService(CRUDService):
     def update_jail_to_latest_patch(self, job, jail):
         """Updates specified jail to latest patch level."""
 
-        tag, uuid, path = self.check_jail_existence(jail)
+        uuid, path = self.check_jail_existence(jail)
         status, jid = IOCList.list_get_jid(uuid)
         conf = IOCJson(path).json_load()
         started = False
@@ -274,7 +274,7 @@ class JailService(CRUDService):
         else:
             return False
 
-        IOCFetch(conf["cloned_release"]).fetch_update(True, uuid, tag)
+        IOCFetch(conf["cloned_release"]).fetch_update(True, uuid)
 
         if started:
             self.stop(jail)
