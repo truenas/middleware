@@ -103,7 +103,9 @@ class KerberosKeytabFAdmin(BaseFreeAdmin):
 
     def get_datagrid_context(self, request):
         context = super(KerberosKeytabFAdmin, self).get_datagrid_context(request)
-        context.update({'add_url': reverse('directoryservice_kerberoskeytab_add')})
+        context.update({
+            'add_url': reverse('directoryservice_kerberoskeytab_add')
+        })
         return context
 
 
@@ -115,8 +117,8 @@ class KerberosSettingsFAdmin(BaseFreeAdmin):
     icon_add = "SettingsIcon"
     icon_view = "SettingsIcon"
     deletable = False
-
     resource_mixin = KerberosSettingsResourceMixin
+
 
 site.register(models.ActiveDirectory, ActiveDirectoryFAdmin)
 site.register(models.LDAP, LDAPFAdmin)

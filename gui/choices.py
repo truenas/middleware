@@ -608,6 +608,7 @@ class TimeZoneChoices:
     def __iter__(self):
         return iter((i, i) for i in self._TimeZoneList)
 
+
 v4NetmaskBitList = (
     ('32', '/32 (255.255.255.255)'),
     ('31', '/31 (255.255.255.254)'),
@@ -882,6 +883,7 @@ class JAIL_TEMPLATE_CHOICES(object):
         for jt in JailTemplate.objects.exclude(jt_system=True):
             yield (jt.jt_name, jt.jt_name)
 
+
 REPL_CIPHER = (
     ('standard', _('Standard')),
     ('fast', _('Fast')),
@@ -986,6 +988,7 @@ CERT_DIGEST_ALGORITHM_CHOICES = (
     ('SHA512', _('SHA512'))
 )
 
+
 class COUNTRY_CHOICES(object):
 
     def __init__(self):
@@ -1087,6 +1090,7 @@ LDAP_SCHEMA_CHOICES = (
     # ('AD', 'AD')
 )
 
+
 class IDMAP_CHOICES(object):
 
     def __init__(self):
@@ -1096,8 +1100,10 @@ class IDMAP_CHOICES(object):
 
         if os.path.exists(self.__idmap_modules_path):
             self.__idmap_modules.extend(
-                filter(lambda m: m not in self.__idmap_exclude,
-                    map(lambda f: f.rpartition('.')[0],
+                filter(
+                    lambda m: m not in self.__idmap_exclude,
+                    map(
+                        lambda f: f.rpartition('.')[0],
                         os.listdir(self.__idmap_modules_path)
                     )
                 )
@@ -1105,6 +1111,7 @@ class IDMAP_CHOICES(object):
 
     def __iter__(self):
         return iter((m, m) for m in sorted(self.__idmap_modules))
+
 
 class CIFS_VFS_OBJECTS(object):
     def __init__(self):
@@ -1126,6 +1133,7 @@ class CIFS_VFS_OBJECTS(object):
     def __iter__(self):
         return iter((m, m) for m in sorted(self.__vfs_modules))
 
+
 AFP_MAP_ACLS_CHOICES = (
     ('none', _('None')),
     ('rights', _('Rights')),
@@ -1146,10 +1154,10 @@ CLOUD_PROVIDERS = (
 
 
 VM_BOOTLOADER = (
-    #('BHYVELOAD', _('Bhyve Load')),
+    # ('BHYVELOAD', _('Bhyve Load')),
     ('UEFI', _('UEFI')),
     ('UEFI_CSM', _('UEFI-CSM')),
-    #('GRUB', _('Grub')),
+    # ('GRUB', _('Grub')),
 )
 
 

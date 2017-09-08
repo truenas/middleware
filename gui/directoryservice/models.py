@@ -172,9 +172,6 @@ class idmap_base(Model):
 
 class idmap_none(idmap_base):
 
-#    def __init__(self, *args, **kwargs):
-#        super(idmap_none, self).__init__(*args, **kwargs)
-
     class Meta:
         verbose_name = _("NONE Idmap")
         verbose_name_plural = _("NONE Idmap")
@@ -709,6 +706,7 @@ class idmap_tdb2(idmap_base):
     class FreeAdmin:
         resource_name = 'directoryservice/idmap/tdb2'
 
+
 class idmap_script(idmap_base):
     idmap_script_range_low = models.IntegerField(
         verbose_name=_("Range Low"),
@@ -883,7 +881,9 @@ class ActiveDirectory(DirectoryServiceBase):
             verbose_name=_("How many recovery attempts"),
             default=10,
             validators=[MaxValueValidator(500), MinValueValidator(0)],
-            help_text=_("Number of times to attempt to recover the connection with AD server. If the value is 0, try forever."),
+            help_text=_(
+                "Number of times to attempt to recover the connection with AD "
+                "server. If the value is 0, try forever."),
             blank=False
     )
     ad_enable_monitor = models.BooleanField(
@@ -936,7 +936,11 @@ class ActiveDirectory(DirectoryServiceBase):
     )
     ad_disable_freenas_cache = models.BooleanField(
         verbose_name=_("Disable Active Directory user/group cache"),
-        help_text=_("Set this if you want to disable caching Active Directory users and groups.  Use this option if you are experiencing slowness or having difficulty binding to the domain with a large number of users and groups."),
+        help_text=_(
+            "Set this if you want to disable caching Active Directory users "
+            "and groups. Use this option if you are experiencing slowness or "
+            "having difficulty binding to the domain with a large number of "
+            "users and groups."),
         default=False
     )
     ad_userdn = models.CharField(
@@ -1080,7 +1084,10 @@ class ActiveDirectory(DirectoryServiceBase):
                 super(ActiveDirectory, self).save()
 
             except Exception as e:
-                log.debug("ActiveDirectory: Unable to create kerberos realm: %s", e, exc_info=True)
+                log.debug(
+                    "ActiveDirectory: Unable to create kerberos realm: %s",
+                    e, exc_info=True
+                )
 
     class Meta:
         verbose_name = _("Active Directory")
@@ -1279,7 +1286,10 @@ class LDAP(DirectoryServiceBase):
             try:
                 self.ldap_bindpw = notifier().pwenc_decrypt(self.ldap_bindpw)
             except:
-                log.debug('Failed to decrypt LDAP bind password', exc_info=True)
+                log.debug(
+                    'Failed to decrypt LDAP bind password',
+                    exc_info=True
+                )
                 self.ldap_bindpw = ''
         self._ldap_bindpw_encrypted = False
 
