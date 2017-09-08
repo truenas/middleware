@@ -34,6 +34,7 @@ BLACKLIST = [
     'ActiveDirectory',
     'LDAP',
     'NIS',
+    'idmap_none',
     'idmap_ad',
     'idmap_adex',
     'idmap_autorid',

@@ -195,6 +195,28 @@ def directoryservice_status(request):
     return HttpResponse(content, content_type="application/json")
 
 
+def directoryservice_idmap_none(request, id, idmap_type):
+    idmap_none = models.idmap_none.objects.get(id=id)
+
+    if request.method == "POST":
+        form = forms.idmap_none_Form(request.POST, instance=idmap_none)
+        if form.is_valid():
+            form.save()
+            return JsonResp(
+                request,
+                message="Idmap none successfully edited."
+            )
+        else:
+            return JsonResp(request, form=form)
+    else:
+        form = forms.idmap_none_Form(instance=idmap_none)
+
+    return render(request, 'directoryservice/idmap_none.html', {
+        'form': form,
+        'idmap_type': idmap_type
+    })
+
+
 def directoryservice_idmap_ad(request, id):
     idmap_ad = models.idmap_ad.objects.get(id=id)
 
@@ -449,8 +471,6 @@ def directoryservice_idmap_script(request, id):
 
 def directoryservice_idmap_backend(request, obj_type, obj_id, idmap_type):
     data = utils.get_idmap(obj_type, obj_id, idmap_type)
-    if not data:
-        return
     content = json.dumps(data)
     return HttpResponse(content, content_type="application/json")
 
