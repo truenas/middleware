@@ -5,7 +5,6 @@ from iocage.lib.ioc_check import IOCCheck
 from iocage.lib.ioc_json import IOCJson
 from iocage.lib.ioc_fetch import IOCFetch
 from iocage.lib.ioc_clean import IOCClean
-from iocage.lib.ioc_exec import IOCExec
 from iocage.lib.ioc_upgrade import IOCUpgrade
 from iocage.lib.ioc_image import IOCImage
 # iocage's imports are per command, these are just general facilities
@@ -244,24 +243,25 @@ class JailService(CRUDService):
 
         return True
 
-    @accepts(Str("jail"), List("command"), Dict("options",
-                                                Str("host_user",
-                                                    default="root"),
-                                                Str("jail_user")))
+    @accepts(
+        Str("jail"),
+        List("command"),
+        Dict("options", Str("host_user", default="root"), Str("jail_user")))
     def exec(self, jail, command, options):
         """Issues a command inside a jail."""
 
-        tag, uuid, path = self.check_jail_existence(jail)
+        iocage = ioc.IOCage(jail=jail)
         host_user = options["host_user"]
-        jail_user = options["jail_user"]
+        jail_user = options.get("jail_user", None)
 
         # We may be getting ';', '&&' and so forth. Adding the shell for
         # safety.
+
         if len(command) == 1:
             command = ["/bin/sh", "-c"] + command
 
-        msg, _ = IOCExec(command, uuid, tag, path, host_user,
-                         jail_user).exec_jail()
+        host_user = "" if jail_user and host_user == "root" else host_user
+        msg = iocage.exec(command, host_user, jail_user, return_msg=True)
 
         return msg.decode("utf-8")
 
