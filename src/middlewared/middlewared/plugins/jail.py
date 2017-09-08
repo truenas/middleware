@@ -4,7 +4,6 @@ import iocage.lib.iocage as ioc
 from iocage.lib.ioc_check import IOCCheck
 from iocage.lib.ioc_json import IOCJson
 from iocage.lib.ioc_fetch import IOCFetch
-from iocage.lib.ioc_stop import IOCStop
 from iocage.lib.ioc_clean import IOCClean
 from iocage.lib.ioc_exec import IOCExec
 from iocage.lib.ioc_upgrade import IOCUpgrade
@@ -177,21 +176,11 @@ class JailService(CRUDService):
     @accepts(Str("jail"))
     def stop(self, jail):
         """Takes a jail and stops it."""
+        iocage = ioc.IOCage(skip_jails=True, jail=jail)
 
-        tag, uuid, path = self.check_jail_existence(jail)
-        conf = IOCJson(path).json_load()
-        status, _ = IOCList().list_get_jid(uuid)
+        iocage.stop()
 
-        if status:
-            if conf["type"] in ("jail", "plugin"):
-                IOCStop(uuid, tag, path, conf)
-
-                return True
-            else:
-                raise RuntimeError(f"{jail} must be type jail or plugin to"
-                                   " be stopped")
-        else:
-            raise RuntimeError(f"{jail} already stopped")
+        return True
 
     @accepts(
         Str("jail"),
