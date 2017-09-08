@@ -310,7 +310,7 @@ class JailService(CRUDService):
     @job(lock=lambda args: f"jail_export:{args[-1]}")
     def export(self, job, jail):
         """Exports jail to zip file"""
-        tag, uuid, path = self.check_jail_existence(jail)
+        uuid, path = self.check_jail_existence(jail)
         status, jid = IOCList.list_get_jid(uuid)
         started = False
 
@@ -318,7 +318,7 @@ class JailService(CRUDService):
             self.stop(jail)
             started = True
 
-        IOCImage().export_jail(uuid, tag, path)
+        IOCImage().export_jail(uuid, path)
 
         if started:
             self.start(jail)
