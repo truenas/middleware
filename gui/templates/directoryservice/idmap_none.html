@@ -1,0 +1,12 @@
+{% extends "freeadmin/generic_form.html" %}
+{% block form %}
+<p>{% blocktrans with name=idmap_type %}Idmap backend <span style="color:red;font-weight:bold;">{{ name }}</span> has no configuration yet!{% endblocktrans %}</p>
+{% endblock %}
+{% block buttons %}
+<button id="btn_Idmap_Backend_Cancel" data-dojo-type="dijit.form.Button" type="button">
+    <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
+    cancelDialog(this);
+    </script>
+    {% trans "Cancel" %}
+</button>
+{% endblock %}

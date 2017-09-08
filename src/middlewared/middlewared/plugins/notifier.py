@@ -27,6 +27,7 @@ from freenasUI.common.warden import Warden
 from freenasUI.middleware import zfs
 from freenasUI.middleware.notifier import notifier
 from freenasUI.directoryservice.models import (
+    IDMAP_TYPE_NONE,
     IDMAP_TYPE_AD,
     IDMAP_TYPE_ADEX,
     IDMAP_TYPE_AUTORID,
@@ -38,6 +39,7 @@ from freenasUI.directoryservice.models import (
     IDMAP_TYPE_RID,
     IDMAP_TYPE_TDB,
     IDMAP_TYPE_TDB2,
+    IDMAP_TYPE_SCRIPT,
 )
 from freenasUI.directoryservice.utils import get_idmap_object
 
@@ -121,7 +123,7 @@ class NotifierService(Service):
         return serialize(rv)
 
     def directoryservice(self, name):
-        """Temporary rapper to serialize DS connectors"""
+        """Temporary wrapper to serialize DS connectors"""
         if name == 'AD':
             ds = FreeNAS_ActiveDirectory(flags=FLAGS_DBINIT)
             workgroups = []
@@ -191,6 +193,7 @@ class NotifierService(Service):
     def ds_idmap_type_code_to_string(self, code):
         """Temporary wrapper to convert idmap code to string"""
         mapping = {
+            IDMAP_TYPE_NONE: 'IDMAP_TYPE_NONE',
             IDMAP_TYPE_AD: 'IDMAP_TYPE_AD',
             IDMAP_TYPE_ADEX: 'IDMAP_TYPE_ADEX',
             IDMAP_TYPE_AUTORID: 'IDMAP_TYPE_AUTORID',
@@ -202,6 +205,7 @@ class NotifierService(Service):
             IDMAP_TYPE_RID: 'IDMAP_TYPE_RID',
             IDMAP_TYPE_TDB: 'IDMAP_TYPE_TDB',
             IDMAP_TYPE_TDB2: 'IDMAP_TYPE_TDB2',
+            IDMAP_TYPE_SCRIPT: 'IDMAP_TYPE_SCRIPT',
         }
         if code not in mapping:
             raise ValueError('Unknown idmap code: {0}'.format(code))

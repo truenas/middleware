@@ -1,4 +1,3 @@
-#
 # Copyright 2014 iXsystems, Inc.
 # All rights reserved
 #
@@ -90,11 +89,13 @@ IDMAP_TYPE_TDB = 8
 IDMAP_TYPE_TDB2 = 9
 IDMAP_TYPE_ADEX = 10
 IDMAP_TYPE_FRUIT = 11
+IDMAP_TYPE_SCRIPT = 12
 
 
 def idmap_to_enum(idmap_type):
     enum = IDMAP_TYPE_NONE
     idmap_dict = {
+        'none': IDMAP_TYPE_NONE,
         'ad': IDMAP_TYPE_AD,
         'adex': IDMAP_TYPE_ADEX,
         'autorid': IDMAP_TYPE_AUTORID,
@@ -105,7 +106,8 @@ def idmap_to_enum(idmap_type):
         'rfc2307': IDMAP_TYPE_RFC2307,
         'rid': IDMAP_TYPE_RID,
         'tdb': IDMAP_TYPE_TDB,
-        'tdb2': IDMAP_TYPE_TDB2
+        'tdb2': IDMAP_TYPE_TDB2,
+        'script': IDMAP_TYPE_SCRIPT
     }
 
     try:
@@ -119,6 +121,7 @@ def idmap_to_enum(idmap_type):
 def enum_to_idmap(enum):
     idmap = None
     idmap_dict = {
+        IDMAP_TYPE_NONE: 'none',
         IDMAP_TYPE_AD: 'ad',
         IDMAP_TYPE_ADEX: 'adex',
         IDMAP_TYPE_AUTORID: 'autorid',
@@ -129,7 +132,8 @@ def enum_to_idmap(enum):
         IDMAP_TYPE_RFC2307: 'rfc2307',
         IDMAP_TYPE_RID: 'rid',
         IDMAP_TYPE_TDB: 'tdb',
-        IDMAP_TYPE_TDB2: 'tdb2'
+        IDMAP_TYPE_TDB2: 'tdb2',
+        IDMAP_TYPE_SCRIPT: 'script'
     }
 
     try:
@@ -164,6 +168,19 @@ class idmap_base(Model):
 
     class Meta:
         abstract = True
+
+
+class idmap_none(idmap_base):
+
+#    def __init__(self, *args, **kwargs):
+#        super(idmap_none, self).__init__(*args, **kwargs)
+
+    class Meta:
+        verbose_name = _("NONE Idmap")
+        verbose_name_plural = _("NONE Idmap")
+
+    class FreeAdmin:
+        resource_name = 'directoryservice/idmap/none'
 
 
 class idmap_ad(idmap_base):
@@ -675,7 +692,7 @@ class idmap_tdb2(idmap_base):
         help_text=_(
             "This option can be used to configure an external program for "
             "performing id mappings instead of using the tdb counter. The "
-            "mappings are then stored int tdb2 idmap database."
+            "mappings are then stored in the tdb2 idmap database."
         )
     )
 
@@ -691,6 +708,38 @@ class idmap_tdb2(idmap_base):
 
     class FreeAdmin:
         resource_name = 'directoryservice/idmap/tdb2'
+
+
+class idmap_script(idmap_base):
+    idmap_script_range_low = models.IntegerField(
+        verbose_name=_("Range Low"),
+        default=90000001
+    )
+    idmap_script_range_high = models.IntegerField(
+        verbose_name=_("Range High"),
+        default=100000000
+    )
+    idmap_script_script = PathField(
+        verbose_name=_("Script"),
+        help_text=_(
+            "This option is used to configure an external program for "
+            "performing id mappings. This is read-only backend and relies on "
+            "winbind_cache tdb to store obtained values"
+        )
+    )
+
+    def __init__(self, *args, **kwargs):
+        super(idmap_script, self).__init__(*args, **kwargs)
+
+        self.idmap_backend_type = IDMAP_TYPE_SCRIPT
+        self.idmap_backend_name = enum_to_idmap(self.idmap_backend_type)
+
+    class Meta:
+        verbose_name = _("Script Idmap")
+        verbose_name_plural = _("Script Idmap")
+
+    class FreeAdmin:
+        resource_name = 'directoryservice/idmap/script'
 
 
 class KerberosRealm(Model):
@@ -952,7 +1001,7 @@ class ActiveDirectory(DirectoryServiceBase):
     )
     ad_idmap_backend = models.CharField(
         verbose_name=_("Idmap backend"),
-        choices=choices.IDMAP_CHOICES,
+        choices=choices.IDMAP_CHOICES(),
         max_length=120,
         help_text=_("Idmap backend for winbind."),
         default=enum_to_idmap(IDMAP_TYPE_RID)
@@ -1198,7 +1247,7 @@ class LDAP(DirectoryServiceBase):
     )
     ldap_idmap_backend = models.CharField(
         verbose_name=_("Idmap Backend"),
-        choices=choices.IDMAP_CHOICES,
+        choices=choices.IDMAP_CHOICES(),
         max_length=120,
         help_text=_("Idmap backend for winbind."),
         default=enum_to_idmap(IDMAP_TYPE_LDAP)
