@@ -18,53 +18,51 @@ from middlewared.utils import filter_list
 
 
 class JailService(CRUDService):
-
     @filterable
     async def query(self, filters=None, options=None):
         options = options or {}
         jails = []
         try:
-            jails = [list(jail.values())[0] for jail in ioc.IOCage().get("all", recursive=True)]
+            jails = [
+                list(jail.values())[0]
+                for jail in ioc.IOCage().get("all", recursive=True)
+            ]
         except BaseException:
             # Brandon is working on fixing this generic except, till then I
             # am not going to make the perfect the enemy of the good enough!
             self.logger.debug("iocage failed to fetch jails", exc_info=True)
             pass
+
         return filter_list(jails, filters, options)
 
-    @accepts(Dict("options",
-                  Str("release"),
-                  Str("template"),
-                  Str("pkglist"),
-                  Str("uuid"),
-                  Bool("basejail"),
-                  Bool("empty"),
-                  Bool("short"),
-                  List("props")
-                  ))
+    @accepts(
+        Dict("options",
+             Str("release"),
+             Str("template"),
+             Str("pkglist"),
+             Str("uuid"),
+             Bool("basejail"), Bool("empty"), Bool("short"), List("props")))
     async def do_create(self, options):
         """Creates a jail."""
         # Typically one would return the created jail's id in this
-        # create call BUT since jail creationg may or may not involve
-        # fetching a release, which in turn could be a time consuming
+        # create call BUT since jail creation may or may not involve
+        # fetching a release, which in turn could be time consuming
         # and could then block for a long time. This dictates that we
         # make it a job, but that violates the principle that CRUD methods
         # are not jobs as yet, so I settle on making this a wrapper around
         # the main job that calls this and return said job's id instead of
         # the created jail's id
+
         return self.middleware.call('jail.create_job', options)
 
     @private
-    @accepts(Dict("options",
-                  Str("release"),
-                  Str("template"),
-                  Str("pkglist"),
-                  Str("uuid"),
-                  Bool("basejail"),
-                  Bool("empty"),
-                  Bool("short"),
-                  List("props")
-                  ))
+    @accepts(
+        Dict("options",
+             Str("release"),
+             Str("template"),
+             Str("pkglist"),
+             Str("uuid"),
+             Bool("basejail"), Bool("empty"), Bool("short"), List("props")))
     @job()
     async def create_job(self, job, options):
         iocage = ioc.IOCage(skip_jails=True)
@@ -85,40 +83,43 @@ class JailService(CRUDService):
 
         if not os.path.isdir(f"{iocroot}/releases/{release}") and not \
                 template and not empty:
-            await self.middleware.call('jail.fetch',
-                                       {"release": release}).wait()
+            await self.middleware.call('jail.fetch', {"release":
+                                                      release}).wait()
 
         await self.middleware.threaded(
             iocage.create(
-                release, props, 0, pkglist, template=template,
-                short=short, uuid=uuid, basejail=basejail,
-                empty=empty
-            ).create_jail
-        )
+                release,
+                props,
+                0,
+                pkglist,
+                template=template,
+                short=short,
+                uuid=uuid,
+                basejail=basejail,
+                empty=empty).create_jail)
 
         return True
 
-    @accepts(
-        Str("jail"),
-        Dict(
-            "options",
-            Str("prop"),
-            Bool("plugin"),
-        )
-    )
+    @accepts(Str("jail"), Dict(
+        "options",
+        Str("prop"),
+        Bool("plugin"), ))
     def do_update(self, jail, options):
         """Sets a jail property."""
         iocage = ioc.IOCage(skip_jails=True, jail=jail)
+
         prop = options["prop"]
         plugin = options["plugin"]
 
         iocage.set(prop, plugin)
+
         return True
 
     @accepts(Str("jail"))
     def do_delete(self, jail):
         """Takes a jail and destroys it."""
         iocage = ioc.IOCage(skip_jails=True, jail=jail)
+
         # TODO: Port children checking, release destroying.
         iocage.destroy_jail()
 
@@ -130,21 +131,11 @@ class JailService(CRUDService):
 
     @private
     def check_jail_existence(self, jail):
-        self.check_dataset_existence()
+        """Wrapper for iocage's API, as a few commands aren't ported to it"""
+        iocage = ioc.IOCage(skip_jails=True, jail=jail)
+        jail, path = iocage.__check_jail_existence__()
 
-        jails, paths = IOCList("uuid").list_datasets()
-        _jail = {tag: uuid for (tag, uuid) in jails.items() if
-                 uuid.startswith(jail) or tag == jail}
-
-        if len(_jail) == 1:
-            tag, uuid = next(iter(_jail.items()))
-            path = paths[tag]
-
-            return tag, uuid, path
-        elif len(_jail) > 1:
-            raise RuntimeError("Multiple jails found for {}:".format(jail))
-        else:
-            raise RuntimeError("{} not found!".format(jail))
+        return jail, path
 
     @accepts(Dict("options",
                   Str("release"),
