@@ -286,7 +286,7 @@ class JailService(CRUDService):
     def upgrade(self, job, jail, release):
         """Upgrades specified jail to specified RELEASE."""
 
-        tag, uuid, path = self.check_jail_existence(jail)
+        uuid, path = self.check_jail_existence(jail)
         status, jid = IOCList.list_get_jid(uuid)
         conf = IOCJson(path).json_load()
         root_path = f"{path}/root"
