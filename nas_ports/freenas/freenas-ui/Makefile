@@ -29,7 +29,7 @@ RUN_DEPENDS=	${PYTHON_PKGNAMEPREFIX}django110>0:www/py-django110 \
 	${PYTHON_PKGNAMEPREFIX}dnspython>0:dns/py-dnspython \
 	${PYTHON_PKGNAMEPREFIX}requests>0:www/py-requests \
 	${PYTHON_PKGNAMEPREFIX}openssl>0:security/py-openssl \
-	${PYTHON_PKGNAMEPREFIX}pycrypto>0:security/py-pycrypto \
+	${PYTHON_PKGNAMEPREFIX}pycryptodome>0:security/py-pycryptodome \
 	${PYTHON_PKGNAMEPREFIX}simplejson>0:devel/py-simplejson \
 	${PYTHON_PKGNAMEPREFIX}ujson>0:devel/py-ujson \
 	${PYTHON_PKGNAMEPREFIX}oauth2>0:net/py-oauth2 \
