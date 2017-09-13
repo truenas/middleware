@@ -1337,7 +1337,6 @@ def smb4_setup(client):
         os.chmod("/var/db/samba4/private", 0o700)
 
     os.chmod(statedir, 0o755)
-#    smb4_set_SID()
 
 
 def get_old_samba4_datasets(client):
