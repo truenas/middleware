@@ -1,7 +1,7 @@
 # $FreeBSD$
 
 PORTNAME=	libhyve-remote
-PORTVERSION=	0.1.1
+PORTVERSION=	0.1.2
 CATEGORIES=	devel
 
 MAINTAINER=	araujo@FreeBSD.org
@@ -11,6 +11,9 @@ LICENSE=	BSD2CLAUSE GPLv2
 LICENSE_COMB=	dual
 
 LIB_DEPENDS=	libvncserver.so:net/libvncserver
+
+OPTIONS_DEFINE=	BHYVE
+BHYVE_DESC=	FreeBSD bhyve libhyve-remote integration
 
 CFLAGS+=	-I${LOCALBASE}/include
 LDFLAGS+=	-L${LOCALBASE}/lib
@@ -34,6 +37,8 @@ GH_ACCOUNT=	araujobsd
 
 USE_LDCONFIG=	yes
 
+.include <bsd.port.options.mk>
+
 do-install:
 	${MKDIR} ${STAGEDIR}${PREFIX}/include/libhyverem
 .for headers in ${HEADER_FILES}
@@ -44,5 +49,14 @@ do-install:
 .endfor
 	${STRIP_CMD} ${STAGEDIR}${PREFIX}/lib/*.so.1
 	${LN} -fs libhyverem.so.1 ${STAGEDIR}${PREFIX}/lib/libhyverem.so
+
+post-install:
+.if ${PORT_OPTIONS:MBHYVE}
+.if !exists(${SRC_BASE}/usr.sbin/bhyve/pci_fbuf.c)
+IGNORE=	requires kernel source files in ${SRC_BASE}
+.else
+	(cd ${WRKSRC} && ${MAKE_CMD} bhyve-patch)
+.endif
+.endif
 
 .include <bsd.port.mk>
