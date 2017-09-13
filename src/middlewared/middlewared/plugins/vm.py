@@ -158,7 +158,7 @@ class VMSupervisor(object):
 
                 if vnc_resolution is None:
                     args += [
-                        '-s', '29,fbuf,tcp={}:{},w=1024,h=768{},{}'.format(vnc_bind, vnc_port, vnc_password_args, wait),
+                        '-s', '29,fbuf,vncserver,tcp={}:{},w=1024,h=768{},{}'.format(vnc_bind, vnc_port, vnc_password_args, wait),
                         '-s', '30,xhci,tablet',
                     ]
                 else:
@@ -166,7 +166,7 @@ class VMSupervisor(object):
                     width = vnc_resolution[0]
                     height = vnc_resolution[1]
                     args += [
-                        '-s', '29,fbuf,tcp={}:{},w={},h={}{},{}'.format(vnc_bind, vnc_port, width, height, vnc_password_args, wait),
+                        '-s', '29,fbuf,vncserver,tcp={}:{},w={},h={}{},{}'.format(vnc_bind, vnc_port, width, height, vnc_password_args, wait),
                         '-s', '30,xhci,tablet',
                     ]
 
