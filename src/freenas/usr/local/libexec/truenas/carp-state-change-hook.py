@@ -469,6 +469,7 @@ def carp_master(fobj, state_file, ifname, vhid, event, user_override, forcetakeo
             c.execute('SELECT srv_enable FROM services_services WHERE srv_service = "cifs"')
             ret = c.fetchone()
             if ret and ret[0] == 1:
+                run('/usr/local/libexec/nas/generate_smb4_conf.py')
                 run('/usr/sbin/service samba_server forcestop')
                 run('/usr/sbin/service samba_server quietstart')
 
