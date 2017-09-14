@@ -231,7 +231,7 @@ class CHARSET(object):
         return tuple((encoding, float('inf')))
 
 
-    def __init__(self, popular):
+    def __init__(self, popular=[]):
 
         self.__popular = popular
 
@@ -254,9 +254,11 @@ class CHARSET(object):
         self.__charsets = [ c for c in sorted(encodings, key=self.__key_cp) if c not in self.__popular ]
 
     def __iter__(self):
-        for c in self.__popular:
-            yield(c, c)
-        yield('', '-----')
+        if self.__popular:
+            for c in self.__popular:
+                yield(c, c)
+            yield('', '-----')
+
         for c in self.__charsets:
             yield(c, c)
 
