@@ -25,14 +25,16 @@
 #
 #####################################################################
 
+import freenasUI.settings
 import csv
 import io
-import freenasUI.settings
 import logging
 import os
 import re
 import sqlite3
 import copy
+import subprocess
+import codecs
 
 from os import popen
 from django.utils.translation import ugettext_lazy as _
@@ -93,13 +95,14 @@ HDDSTANDBY_CHOICES = (
 
 ADVPOWERMGMT_CHOICES = (
     ('Disabled', _('Disabled')),
-    ('1',   _('Level 1 - Minimum power usage with Standby (spindown)')),
+    ('1',  _('Level 1 - Minimum power usage with Standby (spindown)')),
     ('64',  _('Level 64 - Intermediate power usage with Standby')),
     ('127', _('Level 127 - Maximum power usage with Standby')),
     ('128', _('Level 128 - Minimum power usage without Standby (no spindown)')),
     ('192', _('Level 192 - Intermediate power usage without Standby')),
     ('254', _('Level 254 - Maximum performance, maximum power usage')),
-    )
+)
+
 ACOUSTICLVL_CHOICES = (
     ('Disabled', _('Disabled')),
     ('Minimum', _('Minimum')),
@@ -174,59 +177,95 @@ CIFS_SMB_PROTO_CHOICES = (
     ('SMB3_11', _('SMB3_11')),
 )
 
-class CHARSET(object):
-    def __init__(self):
-        from freenasUI.common.pipesubr import pipeopen
-
-        self.__charsets = []
-
-        p = pipeopen("/usr/bin/iconv -l")
-        out, _ = p.communicate()
-        if out:
-            lines = out.split('\n')
-            for line in lines:
-                if not line:
-                    continue
-                parts = line.split() 
-                self.__charsets.append(parts[0])
-
-    def __iter__(self):
-        return iter((c, c) for c in sorted(self.__charsets))
-
 DOSCHARSET_CHOICES = (
-    ('CP437', 'CP437'),
-    ('CP850', 'CP850'),
-    ('CP852', 'CP852'),
-    ('CP866', 'CP866'),
-    ('CP932', 'CP932'),
-    ('CP949', 'CP949'),
-    ('CP950', 'CP950'),
-    ('CP1026', 'CP1026'),
-    ('CP1251', 'CP1251'),
-    ('ASCII', 'ASCII'),
+    'CP437',
+    'CP850',
+    'CP852',
+    'CP866',
+    'CP932',
+    'CP949',
+    'CP950',
+    'CP1026',
+    'CP1251',
+    'ASCII',
 )
 
 UNIXCHARSET_CHOICES = (
-    ('UTF-8', 'UTF-8'),
-    ('iso-8859-1', 'iso-8859-1'),
-    ('iso-8859-15', 'iso-8859-15'),
-    ('gb2312', 'gb2312'),
-    ('EUC-JP', 'EUC-JP'),
-    ('ASCII', 'ASCII'),
+    'UTF-8',
+    'ISO-8859-1',
+    'ISO-8859-15',
+    'GB2312',
+    'EUC-JP',
+    'ASCII',
 )
 
+
+class CHARSET(object):
+
+    __CODEPAGE = re.compile("(?P<name>CP|GB|ISO-8859-|UTF-)(?P<num>\d+)").match
+
+    __canonical = { 'UTF-8', 'ASCII', 'GB2312', 'HZ-GB-2312', 'CP1361' }
+
+    def __check_codec(self, encoding):
+        try:
+            if codecs.lookup(encoding):
+                return encoding.upper()
+        except LookupError:
+            pass
+        return
+
+
+    def __key_cp(self, encoding):
+        cp = CHARSET.__CODEPAGE(encoding)
+        if cp:
+            return tuple((cp.group('name'), int(cp.group('num'), 10)))
+        return tuple((encoding, float('inf')))
+
+
+    def __init__(self, popular=[]):
+
+        self.__popular = popular
+
+        out = subprocess.Popen(['/usr/bin/iconv', '-l'],
+                stdout=subprocess.PIPE,
+                encoding='utf8'
+            ).communicate()[0]
+
+        encodings = set()
+        for line in out.splitlines():
+            enc = [ e for e in line.split() if self.__check_codec(e) ]
+            if enc:
+                cp = enc[0]
+                for e in enc:
+                    if e in CHARSET.__canonical:
+                        cp = e
+                        break
+                encodings.add(cp)
+
+        self.__charsets = [ c for c in sorted(encodings, key=self.__key_cp) if c not in self.__popular ]
+
+    def __iter__(self):
+        if self.__popular:
+            for c in self.__popular:
+                yield(c, c)
+            yield('', '-----')
+
+        for c in self.__charsets:
+            yield(c, c)
+
+
 LOGLEVEL_CHOICES = (
-    ('0',  _('None')),
-    ('1',  _('Minimum')),
-    ('2',  _('Normal')),
-    ('3',  _('Full')),
+    ('0', _('None')),
+    ('1', _('Minimum')),
+    ('2', _('Normal')),
+    ('3', _('Full')),
     ('10', _('Debug')),
 )
 
 CASEFOLDING_CHOICES = (
-    ('none',            _('No case folding')),
-    ('lowercaseboth',   _('Lowercase names in both directions')),
-    ('uppercaseboth',   _('Lowercase names in both directions')),
+    ('none', _('No case folding')),
+    ('lowercaseboth', _('Lowercase names in both directions')),
+    ('uppercaseboth', _('Lowercase names in both directions')),
     ('lowercaseclient', _('Client sees lowercase, server sees uppercase')),
     ('uppercaseclient', _('Client sees uppercase, server sees lowercase')),
 )
@@ -248,15 +287,14 @@ EXTENT_RPM_CHOICES = (
 )
 
 AUTHMETHOD_CHOICES = (
-    ('None',  _('None')),
-    ('CHAP',  _('CHAP')),
+    ('None', _('None')),
+    ('CHAP', _('CHAP')),
     ('CHAP Mutual', _('Mutual CHAP')),
 )
 
 AUTHGROUP_CHOICES = (
     ('None', _('None')),
 )
-
 
 DYNDNSPROVIDER_CHOICES = (
     ('dyndns@3322.org', '3322.org'),
@@ -344,32 +382,32 @@ VLAN_PCP_CHOICES = (
 
 ZFS_AtimeChoices = (
     ('inherit', _('Inherit')),
-    ('on',      _('On')),
-    ('off',     _('Off')),
+    ('on', _('On')),
+    ('off', _('Off')),
 )
 
 ZFS_ReadonlyChoices = (
     ('inherit', _('Inherit')),
-    ('on',      _('On')),
-    ('off',     _('Off')),
+    ('on', _('On')),
+    ('off', _('Off')),
 )
 
 ZFS_CompressionChoices = (
     ('inherit', _('Inherit')),
-    ('off',     _('Off')),
-    ('lz4',     _('lz4 (recommended)')),
-    ('gzip',    _('gzip (default level, 6)')),
-    ('gzip-1',  _('gzip (fastest)')),
-    ('gzip-9',  _('gzip (maximum, slow)')),
-    ('zle',     _('zle (runs of zeros)')),
-    ('lzjb',    _('lzjb (legacy, not recommended)')),
+    ('off', _('Off')),
+    ('lz4', _('lz4 (recommended)')),
+    ('gzip', _('gzip (default level, 6)')),
+    ('gzip-1', _('gzip (fastest)')),
+    ('gzip-9', _('gzip (maximum, slow)')),
+    ('zle', _('zle (runs of zeros)')),
+    ('lzjb', _('lzjb (legacy, not recommended)')),
 )
 
 Repl_CompressionChoices = (
-    ('off',     _('Off')),
-    ('lz4',     _('lz4 (fastest)')),
-    ('pigz',    _('pigz (all rounder)')),
-    ('plzip',   _('plzip (best compression)')),
+    ('off', _('Off')),
+    ('lz4', _('lz4 (fastest)')),
+    ('pigz', _('pigz (all rounder)')),
+    ('plzip', _('plzip (best compression)')),
 )
 
 
@@ -1144,10 +1182,10 @@ CLOUD_PROVIDERS = (
 
 
 VM_BOOTLOADER = (
-    #('BHYVELOAD', _('Bhyve Load')),
+    # ('BHYVELOAD', _('Bhyve Load')),
     ('UEFI', _('UEFI')),
     ('UEFI_CSM', _('UEFI-CSM')),
-    #('GRUB', _('Grub')),
+    # ('GRUB', _('Grub')),
 )
 
 
