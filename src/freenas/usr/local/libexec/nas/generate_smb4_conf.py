@@ -1320,8 +1320,9 @@ def smb4_setup(client):
         smb4_unlink(statedir)
         smb4_mkdir(statedir)
 
-    smb4_mkdir("/var/db/samba4/private")
-    os.chmod("/var/db/samba4/private", 0o700)
+    if not os.access("/var/db/samba4/private", os.F_OK):
+        smb4_mkdir("/var/db/samba4/private")
+        os.chmod("/var/db/samba4/private", 0o700)
 
     os.chmod(statedir, 0o755)
 #    smb4_set_SID()
@@ -1594,7 +1595,6 @@ def main():
     smb4_conf = []
     smb4_shares = []
 
-    backup_secrets_database()
     smb4_setup(client)
 
     old_samba4_datasets = get_old_samba4_datasets(client)
@@ -1622,7 +1622,6 @@ def main():
 
     if role == 'member' and smb4_ldap_enabled(client):
         set_ldap_password(client)
-        backup_secrets_database()
 
     if role != 'dc':
         if not client.call('notifier.samba4', 'users_imported'):
@@ -1639,8 +1638,6 @@ def main():
 
     if role == 'member' and client.call('notifier.common', 'system', 'activedirectory_enabled') and idmap_backend_rfc2307(client):
         set_idmap_rfc2307_secret(client)
-
-    restore_secrets_database()
 
 if __name__ == '__main__':
     main()
