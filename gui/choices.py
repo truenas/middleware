@@ -1,4 +1,3 @@
-# +
 # Copyright 2010 iXsystems, Inc.
 # All rights reserved
 #
@@ -1094,14 +1093,16 @@ LDAP_SCHEMA_CHOICES = (
 class IDMAP_CHOICES(object):
 
     def __init__(self):
+        from freenasUI.directoryservice.models import idmap_to_enum
+
         self.__idmap_modules_path = '/usr/local/lib/shared-modules/idmap'
         self.__idmap_modules = []
-        self.__idmap_exclude = {'passdb'}
+        self.__idmap_exclude = {'passdb', 'hash'}
 
         if os.path.exists(self.__idmap_modules_path):
             self.__idmap_modules.extend(
                 filter(
-                    lambda m: m not in self.__idmap_exclude,
+                    lambda m: idmap_to_enum(m) and m not in self.__idmap_exclude,
                     map(
                         lambda f: f.rpartition('.')[0],
                         os.listdir(self.__idmap_modules_path)

@@ -27,7 +27,6 @@ from freenasUI.common.warden import Warden
 from freenasUI.middleware import zfs
 from freenasUI.middleware.notifier import notifier
 from freenasUI.directoryservice.models import (
-    IDMAP_TYPE_NONE,
     IDMAP_TYPE_AD,
     IDMAP_TYPE_ADEX,
     IDMAP_TYPE_AUTORID,
@@ -193,7 +192,6 @@ class NotifierService(Service):
     def ds_idmap_type_code_to_string(self, code):
         """Temporary wrapper to convert idmap code to string"""
         mapping = {
-            IDMAP_TYPE_NONE: 'IDMAP_TYPE_NONE',
             IDMAP_TYPE_AD: 'IDMAP_TYPE_AD',
             IDMAP_TYPE_ADEX: 'IDMAP_TYPE_ADEX',
             IDMAP_TYPE_AUTORID: 'IDMAP_TYPE_AUTORID',

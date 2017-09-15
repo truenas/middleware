@@ -1238,11 +1238,6 @@ require([
 
         if (id > 0) {
             var edit_url = "/directoryservice/idmap_" + idmap_name + "/" + id + "/";
-            // "none" is a specail backend which handles all non-defined yet ones
-            // so we need to pass their names in URL for reporting
-            if(idmap_name == "none") {
-                edit_url += idmap_type + "/";
-            }
 
             //console.log("Edit URL:", edit_url, "ID:", id);
 

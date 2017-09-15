@@ -15,18 +15,6 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.CreateModel(
-            name='idmap_none',
-            fields=[
-                ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('idmap_ds_type', models.IntegerField(null=True)),
-                ('idmap_ds_id', models.PositiveIntegerField(null=True)),
-            ],
-            options={
-                'verbose_name': 'NONE Idmap',
-                'verbose_name_plural': 'NONE Idmap',
-            },
-        ),
-        migrations.CreateModel(
             name='idmap_script',
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),

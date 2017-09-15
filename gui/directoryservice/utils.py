@@ -140,11 +140,6 @@ def get_idmap_object(obj_type, obj_id, idmap_type):
             idmap_ds_type=obj_type,
             idmap_ds_id=obj_id
         )
-    else:
-        idmap = models.idmap_none.objects.get(
-            idmap_ds_type=obj_type,
-            idmap_ds_id=obj_id
-        )
 
     return idmap
 
@@ -207,7 +202,7 @@ def get_idmap(obj_type, obj_id, idmap_type):
         if not idmap:
             idmap = models.idmap_script()
 
-    log.debug("Idmap = %s", idmap)
+    log.debug("Idmap backend = %s", idmap)
 
     if idmap:
         idmap.idmap_ds_type = ds.ds_type

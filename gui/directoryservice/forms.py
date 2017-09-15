@@ -58,16 +58,6 @@ from freenasUI.services.models import CIFS, ServiceMonitor
 log = logging.getLogger('directoryservice.form')
 
 
-class idmap_none_Form(ModelForm):
-    class Meta:
-        fields = '__all__'
-        model = models.idmap_none
-        exclude = [
-            'idmap_ds_type',
-            'idmap_ds_id'
-        ]
-
-
 class idmap_ad_Form(ModelForm):
     class Meta:
         fields = '__all__'
