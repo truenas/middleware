@@ -115,6 +115,8 @@ class NotifierService(Service):
                     data[k] = serialize(v)
             elif isinstance(i, (zfs.ZFSVol, zfs.ZFSDataset)):
                 data = i.__dict__
+                data.update(data.pop('_ZFSVol__props', {}))
+                data.update(data.pop('_ZFSDataset__props', {}))
                 data['children'] = [serialize(j) for j in data.get('children') or []]
             return data
 
