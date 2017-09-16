@@ -3951,7 +3951,7 @@ class VMResourceMixin(object):
     def dehydrate(self, bundle):
         bundle = super(VMResourceMixin, self).dehydrate(bundle)
         state = 'UNKNOWN'
-        device_start_url = device_stop_url = device_restart_url = device_clone_url = info = ''
+        device_start_url = device_stop_url = device_restart_url = device_clone_url = device_vncweb_url = info = ''
         try:
             with client as c:
                 status = c.call('vm.status', bundle.obj.id)
@@ -3968,6 +3968,9 @@ class VMResourceMixin(object):
                     device_restart_url = reverse(
                         'vm_restart', kwargs={'id': bundle.obj.id},
                     )
+                    device_vncweb_url = reverse(
+                        'vm_vncweb', kwargs={'id': bundle.obj.id},
+                    )
                     info += 'Com Port: /dev/nmdm{}B<br />'.format(bundle.obj.id)
                 elif state == 'STOPPED':
                     device_start_url = reverse(
@@ -3982,6 +3985,7 @@ class VMResourceMixin(object):
                     '_start_url': device_start_url,
                     '_restart_url': device_restart_url,
                     '_clone_url': device_clone_url,
+                    '_vncweb_url': device_vncweb_url
                 })
             if bundle.obj.device_set.filter(dtype='VNC').exists():
                 vnc_port = bundle.obj.device_set.filter(dtype='VNC').values_list('attributes', flat=True)[0].get('vnc_port', 5900 + bundle.obj.id)
