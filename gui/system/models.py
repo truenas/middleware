@@ -725,6 +725,12 @@ class CertificateBase(Model):
         verbose_name=_("Common Name"),
         help_text=_("Common Name (eg, FQDN of FreeNAS server or service)"),
     )
+    cert_san = models.TextField(
+        blank=True,
+        null=True,
+        verbose_name=_("Subject Alternate Names"),
+        help_text=_("Multi-domain support. Enter additional space separated domains")
+    )
     cert_serial = models.IntegerField(
         blank=True,
         null=True,
