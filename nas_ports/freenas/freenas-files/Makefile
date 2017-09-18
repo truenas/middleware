@@ -46,7 +46,6 @@ do-build:
 
 do-install:
 	mkdir -p ${STAGEDIR}${PREFIX}/usr/local/bin
-	mkdir -p ${STAGEDIR}${PREFIX}/usr/local/bin/freenas-snmp
 	mkdir -p ${STAGEDIR}${PREFIX}/boot/modules
 
 	${MAKE} -C ${WRKSRC}/extract-tarball  BINDIR=${STAGEDIR}${PREFIX}/usr/local/bin install
