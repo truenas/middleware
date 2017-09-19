@@ -2894,9 +2894,9 @@ class CertificateEditForm(ModelForm):
     def __init__(self, *args, **kwargs):
         super(CertificateEditForm, self).__init__(*args, **kwargs)
 
-        self.fields['cert_name'].widget.attrs['readonly'] = True
-        self.fields['cert_certificate'].widget.attrs['readonly'] = True
-        self.fields['cert_privatekey'].widget.attrs['readonly'] = True
+        self.fields['cert_name'].widget.attrs['readonly'] = False
+        self.fields['cert_certificate'].widget.attrs['readonly'] = False
+        self.fields['cert_privatekey'].widget.attrs['readonly'] = False
 
     def save(self):
         super(CertificateEditForm, self).save()
