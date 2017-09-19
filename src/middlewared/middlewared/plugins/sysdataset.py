@@ -1,4 +1,4 @@
-from middlewared.schema import accepts, Bool
+from middlewared.schema import accepts, Bool, Dict, Str
 from middlewared.service import ConfigService, private
 from middlewared.utils import Popen, run
 
@@ -39,7 +39,43 @@ class SystemDatasetService(ConfigService):
             if await self.middleware.call('notifier.failover_node') == 'B':
                 config['uuid'] = config['uuid_b']
 
+        config['syslog'] = config.pop('syslog_usedataset')
+        config['rrd'] = config.pop('rrd_usedataset')
+
         return config
+
+    @accepts(Dict(
+        'sysdataset_update',
+        Str('pool'),
+        Bool('syslog'),
+        Bool('rrd'),
+    ))
+    async def do_update(self, data):
+        config = await self.config()
+
+        new = config.copy()
+        new.update(data)
+
+        new['syslog_usedataset'] = new['syslog']
+        new['rrd_usedataset'] = new['rrd']
+        await self.middleware.call('datastore.update', 'system.systemdataset', config['id'], new, {'prefix': 'sys_'})
+
+        if 'pool' in data and data['pool'] != config['pool']:
+            await self.migrate(config['pool'], data['pool'])
+
+        if config['rrd'] != new['rrd']:
+            # Stop collectd to flush data
+            await self.middleware.call('service.stop', 'collectd')
+
+        await self.setup()
+
+        if config['syslog'] != new['syslog']:
+            await self.middleware.call('service.restart', 'syslogd')
+
+        if config['rrd'] != new['rrd']:
+            await self.rrd_toggle()
+            await self.middleware.call('service.restart', 'collectd')
+
 
     @accepts(Bool('mount', default=True))
     @private
@@ -157,7 +193,7 @@ class SystemDatasetService(ConfigService):
         # Path where rrd fies are stored in system dataset
         rrd_syspath = f'/var/db/system/rrd-{config["uuid"]}'
 
-        if config['rrd_usedataset']:
+        if config['rrd']:
             # Move from tmpfs to system dataset
             if os.path.exists(rrd_path):
                 if os.path.islink(rrd_path):
