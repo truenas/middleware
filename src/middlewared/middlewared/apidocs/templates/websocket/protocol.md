@@ -41,7 +41,7 @@ Request:
       "params": ["username", "password"]
     }
 
-Responde:
+Response:
 
     :::javascript
     {
