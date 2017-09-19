@@ -2891,13 +2891,6 @@ class CertificateEditForm(ModelForm):
         help_text=models.Certificate._meta.get_field('cert_certificate').help_text
     )
 
-    def __init__(self, *args, **kwargs):
-        super(CertificateEditForm, self).__init__(*args, **kwargs)
-
-        self.fields['cert_name'].widget.attrs['readonly'] = False
-        self.fields['cert_certificate'].widget.attrs['readonly'] = False
-        self.fields['cert_privatekey'].widget.attrs['readonly'] = False
-
     def save(self):
         super(CertificateEditForm, self).save()
         notifier().start("ix-ssl")
