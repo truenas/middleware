@@ -7,6 +7,7 @@ import asyncio
 import errno
 import netif
 import os
+import os.path
 import random
 import stat
 import subprocess
@@ -82,8 +83,13 @@ class VMSupervisor(object):
         self.bhyve_error = None
 
     async def run(self):
+        bhyve_cmd = None
+        if os.path.isfile('/usr/local/sbin/ixbhyve'):
+            bhyve_cmd = 'ixbhyve'
+        else:
+            bhyve_cmd = 'bhyve'
         args = [
-            'bhyve',
+            bhyve_cmd,
             '-H',
             '-w',
             '-c', str(self.vm['vcpus']),
@@ -154,19 +160,24 @@ class VMSupervisor(object):
 
                 vnc_password_args = ""
                 if vnc_password:
-                    vnc_password_args = ",password=" + vnc_password
+                    vnc_password_args = "password=" + vnc_password
 
                 if vnc_resolution is None:
-                    args += [
-                        '-s', '29,fbuf,vncserver,tcp={}:{},w=1024,h=768{},{}'.format(vnc_bind, vnc_port, vnc_password_args, wait),
-                        '-s', '30,xhci,tablet',
-                    ]
+                    width = 1024
+                    height = 768
                 else:
                     vnc_resolution = vnc_resolution.split('x')
                     width = vnc_resolution[0]
                     height = vnc_resolution[1]
+
+                if bhyve_cmd == 'ixbhyve':
                     args += [
-                        '-s', '29,fbuf,vncserver,tcp={}:{},w={},h={}{},{}'.format(vnc_bind, vnc_port, width, height, vnc_password_args, wait),
+                        '-s', '29,fbuf,vncserver,tcp={}:{},w={},h={},{},{}'.format(vnc_bind, vnc_port, width, height, vnc_password_args, wait),
+                        '-s', '30,xhci,tablet',
+                    ]
+                else:
+                    args += [
+                        '-s', '29,fbuf,tcp={}:{},w={},h={},{},{}'.format(vnc_bind, vnc_port, width, height, vnc_password_args, wait),
                         '-s', '30,xhci,tablet',
                     ]
 
