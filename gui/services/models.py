@@ -1145,7 +1145,7 @@ class DynamicDNS(Model):
     )
     ddns_period = models.IntegerField(
         verbose_name=_("Update Period"),
-        help_text=_("Time in seconds. Default is about 1 min."),
+        help_text=_("Time in seconds."),
     )
 
     def __init__(self, *args, **kwargs):

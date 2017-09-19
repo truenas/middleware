@@ -464,15 +464,18 @@ List resource
       Content-Type: application/json
 
         {
-                "ddns_ipserver": "",
-                "ddns_options": "",
-                "ddns_password": "freenas",
-                "id": 1,
-                "ddns_username": "admin",
                 "ddns_provider": "dyndns@dyndns.org",
-                "ddns_fupdateperiod": "",
+                "ddns_checkip_ssl": false,
+                "ddns_checkip_server": "",
+                "ddns_checkip_path": "",
+                "ddns_ssl": false,
+                "ddns_custom_ddns_server": "",
+                "ddns_custom_ddns_path": "",
                 "ddns_domain": "",
-                "ddns_updateperiod": ""
+                "ddns_username": "admin",
+                "ddns_password": "freenas",
+                "ddns_period": 300,
+                "id": 1
         }
 
    :resheader Content-Type: content type of the response
@@ -506,25 +509,31 @@ Update resource
       Content-Type: application/json
 
         {
-                "ddns_ipserver": "",
-                "ddns_options": "",
-                "ddns_password": "freenas",
-                "id": 1,
-                "ddns_username": "admin",
                 "ddns_provider": "default@no-ip.com",
-                "ddns_fupdateperiod": "",
+                "ddns_checkip_ssl": false,
+                "ddns_checkip_server": "",
+                "ddns_checkip_path": "",
+                "ddns_ssl": false,
+                "ddns_custom_ddns_server": "",
+                "ddns_custom_ddns_path": "",
                 "ddns_domain": "",
-                "ddns_updateperiod": ""
+                "ddns_username": "admin",
+                "ddns_password": "freenas",
+                "ddns_period": 300,
+                "id": 1
         }
 
-   :json string ddns_ipserver: client IP is detected by this calling url
-   :json string ddns_provider: dyndns@dyndns.org, default@freedns.afraid.org, default@zoneedit.com, default@no-ip.com, default@easydns.com, dyndns@3322.org, default@sitelutions.com, default@dnsomatic.com, ipv6tb@he.net, default@tzo.com, default@dynsip.org, default@dhis.org, default@majimoto.net, default@zerigo.com
-   :json string ddns_domain: host name alias
-   :json string ddns_username: username
-   :json string ddns_password: password
-   :json string ddns_updateperiod: time in seconds
-   :json string ddns_fupdateperiod: forced update period
-   :json string ddns_options: auxiliary parameters to global settings in inadyn-mt.conf
+   :json string ddns_provider: dyndns@3322.org, default@changeip.com, default@cloudxns.net, default@ddnss.de, default@dhis.org, default@dnsexit.com, default@dnsomatic.com, default@dnspod.cn, default@domains.google.com, default@dtdns.com, default@duckdns.org, default@duiadns.net, default@dyndns.org, default@dynsip.org, default@dynv6.com, default@easydns.com, default@freedns.afraid.org, default@freemyip.com, default@gira.de, ipv6tb@he.net, default@ipv4.dynv6.com, default@loopia.com, default@no-ip.com, ipv4@nsupdate.info, default@ovh.com, default@sitelutions.com, default@spdyn.de, default@strato.com, default@tunnelbroker.net, default@tzo.com, default@zerigo.com, default@zoneedit.com, custom
+   :json boolean ddns_checkip_ssl: If SSL is used for CheckIP Server
+   :json string ddns_checkip_server: The client IP is detected by calling this URL (host[:port])
+   :json string ddns_checkip_path: The client IP is detected by calling this URL (/path)
+   :json boolean ddns_ssl: If SSL is used for DynDNS server
+   :json string ddns_custom_ddns_server: Hostname for your custom DDNS provider
+   :json string ddns_custom_ddns_path: '%h' will be replaced with your hostname and '%i' will be replaced with your IP address
+   :json string ddns_domain: A host name alias
+   :json string ddns_username: Username
+   :json string ddns_password: Password
+   :json string ddns_period: Time in seconds
    :reqheader Content-Type: the request content type
    :resheader Content-Type: the response content type
    :statuscode 200: no error
