@@ -56,7 +56,7 @@ class ServiceService(CRUDService):
         'nfs': ('nfsd', None),
         'afp': ('netatalk', None),
         'cifs': ('smbd', '/var/run/samba4/smbd.pid'),
-        'dynamicdns': ('inadyn-mt', None),
+        'dynamicdns': ('inadyn', None),
         'snmp': ('snmpd', '/var/run/net_snmpd.pid'),
         'ftp': ('proftpd', '/var/run/proftpd.pid'),
         'tftp': ('inetd', '/var/run/inetd.pid'),
@@ -783,8 +783,8 @@ class ServiceService(CRUDService):
 
     async def _restart_dynamicdns(self, **kwargs):
         await self._service("ix-inadyn", "start", quiet=True, **kwargs)
-        await self._service("inadyn-mt", "stop", force=True, **kwargs)
-        await self._service("inadyn-mt", "restart", **kwargs)
+        await self._service("inadyn", "stop", force=True, **kwargs)
+        await self._service("inadyn", "restart", **kwargs)
 
     async def _restart_system(self, **kwargs):
         asyncio.ensure_future(self._system("/bin/sleep 3 && /sbin/shutdown -r now"))
