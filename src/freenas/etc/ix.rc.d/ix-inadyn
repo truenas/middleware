@@ -4,7 +4,7 @@
 #
 
 # PROVIDE: ix-inadyn
-# BEFORE: inadynmt
+# BEFORE: inadyn
 
 . /etc/rc.subr
 
@@ -12,34 +12,55 @@ generate_inadyn_real()
 {
 	local IFS="|"
 
-	local f="id ddns_provider ddns_ipserver ddns_domain ddns_username ddns_password ddns_updateperiod ddns_fupdateperiod"
+	local f="id ddns_provider ddns_checkip_ssl ddns_checkip_server ddns_checkip_path ddns_ssl ddns_custom_ddns_server ddns_custom_ddns_path ddns_domain ddns_username ddns_password ddns_period"
 	eval local $f
 	local sf=$(var_to_sf $f)
 	${FREENAS_SQLITE_CMD} ${RO_FREENAS_CONFIG} \
 		"SELECT $sf FROM services_dynamicdns ORDER BY -id LIMIT 1" | \
 	while eval read -r $f; do
-		if [ -n "${ddns_provider}" ]; then
-			echo -n "--dyndns_system ${ddns_provider} "
-		fi
-		if [ -n "${ddns_ipserver}" ]; then
-			echo -n "--ip_server_name ${ddns_ipserver} "
-		fi
-		if [ -n "${ddns_updateperiod}" ]; then
-			echo -n "--update_period_sec ${ddns_updateperiod} "
-		fi
-		if [ -n "${ddns_fupdateperiod}" ]; then
-			echo -n "--forced_update_period ${ddns_fupdateperiod} "
-		fi
-		ddns_options=`${FREENAS_SQLITE_CMD} ${RO_FREENAS_CONFIG} "SELECT ddns_options FROM services_dynamicdns WHERE id=${id}"`
-		if [ -n "${ddns_options}" ]; then
-			echo -n "${ddns_options} "
-		fi
-		# hash and backslash must be escaped
-		ddns_password=$(/usr/local/bin/midclt call notifier.pwenc_decrypt "${ddns_password}"|sed -e 's/\\/\\\\/g' -e 's/#/\\#/g')
-		ddns_username=$(echo ${ddns_username}|sed -e 's/\\/\\\\/g' -e 's/#/\\#/g')
-		ddns_domain=`echo $ddns_domain | awk 'BEGIN { FS=",?[ \t]*"; OFS=" --alias "; } { $1=$1; print $0; }'`
-                ddns_domain=`echo $ddns_domain | awk 'BEGIN { FS="#"; OFS=","; } { $1=$1; print $0; }'`
-		echo "--background --syslog --username ${ddns_username} --password ${ddns_password} --alias ${ddns_domain}"
+        if [ -n "${ddns_period}" ]; then
+            echo "period = ${ddns_period}"
+        fi
+
+        if [ -n "${ddns_provider}" ]; then
+            if [ "${ddns_provider}" = "custom" ]; then
+                echo "custom customProvider {"
+
+                if [ "${ddns_ssl}" -eq "1" ]; then
+                    echo "    ssl = true"
+                else
+                    echo "    ssl = false"
+                fi
+                echo "    ddns-server = \"${ddns_custom_ddns_server}\""
+                echo "    ddns-path = \"${ddns_custom_ddns_path}\""
+            else
+                echo "provider ${ddns_provider} {"
+            fi
+
+            if [ -n "${ddns_checkip_server}" ] && [ -n "${ddns_checkip_path}" ]; then
+                if [ "${ddns_checkip_ssl}" -eq "1" ]; then
+                    echo "    checkip-ssl = true"
+                else
+                    echo "    checkip-ssl = false"
+                fi
+                echo "    checkip-server = \"${ddns_checkip_server}\""
+                echo "    checkip-path = \"${ddns_checkip_path}\""
+            fi
+
+            if [ -n "${ddns_username}" ]; then
+                echo "    username = ${ddns_username}"
+            fi
+
+            ddns_password=$(/usr/local/bin/midclt call notifier.pwenc_decrypt "${ddns_password}")
+            if [ -n "${ddns_password}" ]; then
+                echo "    password = ${ddns_password}"
+            fi
+
+            ddns_domain=$(echo "$ddns_domain" | awk 'BEGIN { FS="[ \t,;]*"; OFS="\", \""; } { $1=$1; print $0; }')
+            echo "    hostname = { \"${ddns_domain}\" }"
+
+            echo "}"
+        fi
 	done
 }
 
@@ -47,7 +68,7 @@ generate_inadyn()
 {
 	RO_FREENAS_CONFIG=$(ro_sqlite ${name} 2> /tmp/${name}.fail && rm /tmp/${name}.fail)
 	trap 'rm -f ${RO_FREENAS_CONFIG}' EXIT
-	generate_inadyn_real > /usr/local/etc/inadyn-mt.conf
+	generate_inadyn_real > /usr/local/etc/inadyn.conf
 }
 
 name="ix-inadyn"
