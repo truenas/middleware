@@ -65,6 +65,7 @@ _ = lambda s: s
 
 from freenasUI.choices import NICChoices, LAGGType
 from freenasUI.common import i18n
+from freenasUI.common.system import get_sw_version
 from freenasUI.network.models import GlobalConfiguration, Interfaces, \
 	LAGGInterface, LAGGInterfaceMembers, StaticRoute, VLAN
 from freenasUI.system.models import Settings, Support
@@ -1224,6 +1225,15 @@ def system_update():
         print("No update available", file=sys.stderr)
     return True
 
+
+def netcli_title():
+    proc = subprocess.Popen(['dmidecode', '-s', 'system-product-name'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf8')
+    product = proc.communicate()[0].strip()
+    proc = subprocess.Popen(['dmidecode', '-s', 'system-serial-number'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf8')
+    serial = proc.communicate()[0].strip()
+    return f'{product} | {get_sw_version(True)} | {serial}'
+
+
 def main_menu():
     menu = [
         [ _("Configure Network Interfaces"), configure_interface_stub ],
@@ -1263,6 +1273,9 @@ def main_menu():
                  os.system("/usr/local/sbin/enc_helper interactive")
                  time.sleep(5)
                  continue
+
+        if is_truenas:
+            print(netcli_title())
 
         print()
         print(_("Console setup"))
