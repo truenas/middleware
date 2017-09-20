@@ -852,10 +852,18 @@ class LAGGInterfaceForm(ModelForm):
         self.fields['lagg_interfaces'].choices = list(
             choices.NICChoices(nolagg=True)
         )
+
+        # For HA we dont want people using failover type
+        # See #25351
+        if not notifier().is_freenas() and notifier().failover_licensed():
+            filter_failover_type = True
+        else:
+            filter_failover_type = False
         # Remove empty option (e.g. -------)
-        self.fields['lagg_protocol'].choices = (
-            self.fields['lagg_protocol'].choices[1:]
-        )
+        lagg_protocol = list(self.fields['lagg_protocol'].choices[1:])
+        if filter_failover_type:
+            lagg_protocol = filter(lambda x: x[0] != 'failover', lagg_protocol)
+        self.fields['lagg_protocol'].choices = tuple(lagg_protocol)
 
     def save(self, *args, **kwargs):
 
