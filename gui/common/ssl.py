@@ -102,9 +102,9 @@ def create_certificate_signing_request(cert_info):
     req.get_subject().ST = cert_info['state']
     req.get_subject().L = cert_info['city']
     req.get_subject().O = cert_info['organization']
-    req.get_subject().CN = cert_info['common']
-    # Add subject alternate name in addition to CN
-    # Add subject alternate name in addition to CN
+    cn_san_list = cert_info['san'].split() + cert_info['common'].split()
+    cn_san = ', '.join(cn_san_list)
+    req.get_subject().CN = cn_san
     # first lets determine if an ip address was specified or
     # a dns entry in the common name
     default_san_type = 'DNS'
@@ -114,8 +114,9 @@ def create_certificate_signing_request(cert_info):
     except ValueError:
         # This is raised if say we specified freenas.org in the Common name
         pass
+
     req.add_extensions([crypto.X509Extension(
-        "subjectAltName".encode('utf-8'), False, f"{default_san_type}:{cert_info['common']}".encode('utf-8')
+        "subjectAltName".encode('utf-8'), False, f"{default_san_type}:{cert_info['san']}".encode('utf-8')
     )])
     req.get_subject().emailAddress = cert_info['email']
 

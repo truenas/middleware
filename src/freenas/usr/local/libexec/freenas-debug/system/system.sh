@@ -96,6 +96,10 @@ system_func()
 	/usr/local/bin/alertcli.py
 	section_footer
 
+	section_header "Middleware jobs - 'midclt call core.get_jobs'"
+	midclt call core.get_jobs
+	section_footer
+
 	if [ -f /data/license ]; then
 		section_header "License"
 		cat /data/license

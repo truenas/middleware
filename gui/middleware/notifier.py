@@ -71,7 +71,7 @@ GELI_REKEY_FAILED = '/tmp/.rekey_failed'
 SYSTEMPATH = '/var/db/system'
 PWENC_BLOCK_SIZE = 32
 PWENC_FILE_SECRET = '/data/pwenc_secret'
-PWENC_PADDING = '{'
+PWENC_PADDING = b'{'
 PWENC_CHECK = 'Donuts!'
 BACKUP_SOCK = '/var/run/backupd.sock'
 
@@ -4187,8 +4187,8 @@ class notifier(metaclass=HookMetaclass):
         return secret
 
     def pwenc_encrypt(self, text):
-        if isinstance(text, bytes):
-            text = text.decode('utf8')
+        if not isinstance(text, bytes):
+            text = text.encode('utf8')
         from Crypto.Random import get_random_bytes
         from Crypto.Util import Counter
 
@@ -4216,7 +4216,7 @@ class notifier(metaclass=HookMetaclass):
             AES.MODE_CTR,
             counter=Counter.new(64, prefix=nonce),
         )
-        return cipher.decrypt(encrypted).decode('utf8').rstrip(PWENC_PADDING)
+        return cipher.decrypt(encrypted).rstrip(PWENC_PADDING).decode('utf8')
 
     def iscsi_connected_targets(self):
         '''

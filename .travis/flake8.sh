@@ -7,14 +7,14 @@ set -x
 # because of use case sys.path.append('..'); import <module>
 
 tmpafter=$(mktemp)
-find gui src -name \*.py -exec flake8 --ignore=E402,E501 {} + | grep -v "migrations/" > $tmpafter
+find gui src -name \*.py -exec flake8 --ignore=E402,E501 {} + | egrep -v "migrations/|usr/local/share/pysnmp/mibs/" > $tmpafter
 num_errors_after=`cat $tmpafter | wc -l`
 echo $num_errors_after
 
 git checkout HEAD~
 
 tmpbefore=$(mktemp)
-find gui src -name \*.py -exec flake8 --ignore=E402,E501 {} + | grep -v "migrations/" > $tmpbefore
+find gui src -name \*.py -exec flake8 --ignore=E402,E501 {} + | egrep -v "migrations/|usr/local/share/pysnmp/mibs/" > $tmpbefore
 num_errors_before=`cat $tmpbefore | wc -l`
 echo $num_errors_before
 

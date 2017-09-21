@@ -649,6 +649,8 @@ class VMService(CRUDService):
         for vnc_device in await self.get_vnc(id):
             if vnc_device.get('vnc_web', None) is True:
                 vnc_port = vnc_device.get('vnc_port', None)
+                if vnc_port is None:
+                    vnc_port = 5900 + id
                 #  XXX: Create a method for web port.
                 split_port = int(str(vnc_port)[:2]) - 1
                 vnc_web_port = str(split_port) + str(vnc_port)[2:]

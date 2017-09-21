@@ -58,6 +58,11 @@ class SystemService(Service):
             stdout=subprocess.PIPE,
         )).communicate())[0].decode().strip() or None
 
+        product = (await(await Popen(
+            ['dmidecode', '-s', 'system-product-name'],
+            stdout=subprocess.PIPE,
+        )).communicate())[0].decode().strip() or None
+
         return {
             'version': self.version(),
             'hostname': socket.gethostname(),
@@ -67,6 +72,7 @@ class SystemService(Service):
             'loadavg': os.getloadavg(),
             'uptime': uptime,
             'system_serial': serial,
+            'system_product': serial,
             'boottime': datetime.fromtimestamp(
                 struct.unpack('l', sysctl.filter('kern.boottime')[0].value[:8])[0]
             ),

@@ -215,6 +215,13 @@ class AFP_Share(Model):
         ),
         default=False,
     )
+    afp_timemachine_quota = models.IntegerField(
+        verbose_name=_('Time Machine Quota'),
+        help_text=_(
+            'Quota for each Time Machine backup on this share.'
+        ),
+        default=0,
+    )
     afp_nodev = models.BooleanField(
         verbose_name=_('Zero Device Numbers'),
         help_text=_(

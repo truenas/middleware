@@ -580,6 +580,7 @@ class InitialWizard(CommonWizard):
                 if 'afp' == share_purpose:
                     if share_timemachine:
                         sharekwargs['afp_timemachine'] = True
+                        sharekwargs['afp_timemachine_quota'] = 0
                     model_objs.append(AFP_Share.objects.create(
                         afp_name=share_name,
                         afp_path=path,
@@ -933,8 +934,8 @@ class ManualUpdateWizard(FileWizard):
 
         if not self.request.is_ajax():
             response.content = (
-                b"<html><body><textarea>"
-                + response.content +
+                b"<html><body><textarea>" +
+                response.content +
                 b"</textarea></boby></html>"
             )
         return response
@@ -1156,8 +1157,8 @@ class AdvancedForm(ModelForm):
                 notifier().reload("loader")
                 loader_reloaded = True
         if (
-            self.instance._original_adv_autotune != self.instance.adv_autotune
-            and not loader_reloaded
+            self.instance._original_adv_autotune != self.instance.adv_autotune and
+            not loader_reloaded
         ):
             notifier().reload("loader")
         if self.instance._original_adv_debugkernel != self.instance.adv_debugkernel:
@@ -1179,8 +1180,8 @@ class AdvancedForm(ModelForm):
             # Invalidate cache
             request.session.pop("adv_mode", None)
         if (
-            self.instance._original_adv_autotune != self.instance.adv_autotune
-            and self.instance.adv_autotune is True
+            self.instance._original_adv_autotune != self.instance.adv_autotune and
+            self.instance.adv_autotune is True
         ):
             events.append("refreshTree()")
 
@@ -2559,6 +2560,7 @@ class CertificateAuthorityImportForm(ModelForm):
         self.instance.cert_city = cert_info['city']
         self.instance.cert_organization = cert_info['organization']
         self.instance.cert_common = cert_info['common']
+        self.instance.cert_san = cert_info['san']
         self.instance.cert_email = cert_info['email']
         self.instance.cert_digest_algorithm = cert_info['digest_algorithm']
 
@@ -2643,6 +2645,12 @@ class CertificateAuthorityCreateInternalForm(ModelForm):
         required=True,
         help_text=models.CertificateAuthority._meta.get_field('cert_common').help_text
     )
+    cert_san = forms.CharField(
+        widget=forms.Textarea,
+        label=models.CertificateAuthority._meta.get_field('cert_san').verbose_name,
+        required=False,
+        help_text=models.CertificateAuthority._meta.get_field('cert_san').help_text
+    )
 
     def clean_cert_name(self):
         cdata = self.cleaned_data
@@ -2670,6 +2678,7 @@ class CertificateAuthorityCreateInternalForm(ModelForm):
             'city': self.instance.cert_city,
             'organization': self.instance.cert_organization,
             'common': self.instance.cert_common,
+            'san': self.instance.cert_san,
             'email': self.instance.cert_email,
             'serial': self.instance.cert_serial,
             'lifetime': self.instance.cert_lifetime,
@@ -2698,7 +2707,8 @@ class CertificateAuthorityCreateInternalForm(ModelForm):
             'cert_city',
             'cert_organization',
             'cert_email',
-            'cert_common'
+            'cert_common',
+            'cert_san',
         ]
         model = models.CertificateAuthority
 
@@ -2758,6 +2768,12 @@ class CertificateAuthorityCreateIntermediateForm(ModelForm):
         required=True,
         help_text=models.CertificateAuthority._meta.get_field('cert_common').help_text
     )
+    cert_san = forms.CharField(
+        widget=forms.Textarea,
+        label=models.CertificateAuthority._meta.get_field('cert_san').verbose_name,
+        required=False,
+        help_text=models.CertificateAuthority._meta.get_field('cert_san').help_text
+    )
 
     def __init__(self, *args, **kwargs):
         super(CertificateAuthorityCreateIntermediateForm, self).__init__(*args, **kwargs)
@@ -2800,7 +2816,6 @@ class CertificateAuthorityCreateIntermediateForm(ModelForm):
             'state': self.instance.cert_state,
             'city': self.instance.cert_city,
             'organization': self.instance.cert_organization,
-            'common': self.instance.cert_common,
             'email': self.instance.cert_email,
             'lifetime': self.instance.cert_lifetime,
             'digest_algorithm': self.instance.cert_digest_algorithm
@@ -2848,7 +2863,8 @@ class CertificateAuthorityCreateIntermediateForm(ModelForm):
             'cert_city',
             'cert_organization',
             'cert_email',
-            'cert_common'
+            'cert_common',
+            'cert_san',
         ]
         model = models.CertificateAuthority
 
@@ -2875,13 +2891,6 @@ class CertificateEditForm(ModelForm):
         required=True,
         help_text=models.Certificate._meta.get_field('cert_certificate').help_text
     )
-
-    def __init__(self, *args, **kwargs):
-        super(CertificateEditForm, self).__init__(*args, **kwargs)
-
-        self.fields['cert_name'].widget.attrs['readonly'] = True
-        self.fields['cert_certificate'].widget.attrs['readonly'] = True
-        self.fields['cert_privatekey'].widget.attrs['readonly'] = True
 
     def save(self):
         super(CertificateEditForm, self).save()
@@ -3039,6 +3048,7 @@ class CertificateImportForm(ModelForm):
         self.instance.cert_city = cert_info['city']
         self.instance.cert_organization = cert_info['organization']
         self.instance.cert_common = cert_info['common']
+        self.instance.cert_san = cert_info['san']
         self.instance.cert_email = cert_info['email']
         self.instance.cert_digest_algorithm = cert_info['digest_algorithm']
 
@@ -3121,6 +3131,12 @@ class CertificateCreateInternalForm(ModelForm):
         required=True,
         help_text=models.Certificate._meta.get_field('cert_common').help_text
     )
+    cert_san = forms.CharField(
+        widget=forms.Textarea,
+        label=models.Certificate._meta.get_field('cert_san').verbose_name,
+        required=False,
+        help_text=models.Certificate._meta.get_field('cert_san').help_text
+    )
 
     def __init__(self, *args, **kwargs):
         super(CertificateCreateInternalForm, self).__init__(*args, **kwargs)
@@ -3164,6 +3180,7 @@ class CertificateCreateInternalForm(ModelForm):
             'city': self.instance.cert_city,
             'organization': self.instance.cert_organization,
             'common': self.instance.cert_common,
+            'san': self.instance.cert_san,
             'email': self.instance.cert_email,
             'lifetime': self.instance.cert_lifetime,
             'digest_algorithm': self.instance.cert_digest_algorithm
@@ -3222,7 +3239,8 @@ class CertificateCreateInternalForm(ModelForm):
             'cert_city',
             'cert_organization',
             'cert_email',
-            'cert_common'
+            'cert_common',
+            'cert_san',
         ]
         model = models.Certificate
 
@@ -3277,6 +3295,12 @@ class CertificateCreateCSRForm(ModelForm):
         required=True,
         help_text=models.Certificate._meta.get_field('cert_common').help_text
     )
+    cert_san = forms.CharField(
+        widget=forms.Textarea,
+        label=models.Certificate._meta.get_field('cert_san').verbose_name,
+        required=False,
+        help_text=models.Certificate._meta.get_field('cert_san').help_text
+    )
 
     def clean_cert_name(self):
         cdata = self.cleaned_data
@@ -3304,6 +3328,7 @@ class CertificateCreateCSRForm(ModelForm):
             'city': self.instance.cert_city,
             'organization': self.instance.cert_organization,
             'common': self.instance.cert_common,
+            'san': self.instance.cert_san,
             'email': self.instance.cert_email,
             'digest_algorithm': self.instance.cert_digest_algorithm
         }
@@ -3329,7 +3354,8 @@ class CertificateCreateCSRForm(ModelForm):
             'cert_city',
             'cert_organization',
             'cert_email',
-            'cert_common'
+            'cert_common',
+            'cert_san',
         ]
         model = models.Certificate
 

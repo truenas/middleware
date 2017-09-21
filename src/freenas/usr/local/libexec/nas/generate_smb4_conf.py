@@ -1332,11 +1332,11 @@ def smb4_setup(client):
         smb4_unlink(statedir)
         smb4_mkdir(statedir)
 
-    smb4_mkdir("/var/db/samba4/private")
-    os.chmod("/var/db/samba4/private", 0o700)
+    if not os.access("/var/db/samba4/private", os.F_OK):
+        smb4_mkdir("/var/db/samba4/private")
+        os.chmod("/var/db/samba4/private", 0o700)
 
     os.chmod(statedir, 0o755)
-#    smb4_set_SID()
 
 
 def get_old_samba4_datasets(client):
