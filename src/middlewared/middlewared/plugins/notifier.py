@@ -213,15 +213,6 @@ class NotifierService(Service):
             args = []
         return getattr(Samba4(), name)(*args)
 
-    def systemdataset_is_decrypted(self):
-        """Temporary workaround to get system dataset crypt state"""
-        systemdataset, basename = notifier().system_dataset_settings()
-        if not systemdataset:
-            return None
-        if not basename:
-            return None
-        return systemdataset.is_decrypted(), basename
-
     def choices(self, name, args=None):
         """Temporary wrapper to get to UI choices"""
         if args is None:
