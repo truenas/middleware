@@ -1310,7 +1310,7 @@ def smb4_setup(client):
     if not client.call('notifier.is_freenas') and client.call('notifier.failover_status') == 'BACKUP':
         return
 
-    systemdataset_is_decrypted = client.call('notifier.systemdataset_is_decrypted')
+    systemdataset_is_decrypted = client.call('systemdataset.config')['is_decrypted']
 
     if not systemdataset_is_decrypted:
         if os.path.islink(statedir):

@@ -884,7 +884,8 @@ class notifier(metaclass=HookMetaclass):
         out = out.split('\n')
         retval = OrderedDict()
         if system is False:
-            systemdataset, basename = self.system_dataset_settings()
+            with client as c:
+                basename = c.call('systemdataset.config')['basename']
         if proc.returncode == 0:
             for line in out:
                 if not line:
@@ -2750,7 +2751,8 @@ class notifier(metaclass=HookMetaclass):
             sort = '-s %s' % sort
 
         if system is False:
-            systemdataset, basename = self.system_dataset_settings()
+            with client as c:
+                basename = c.call('systemdataset.config')['basename']
 
         if replications is None:
             replications = {}
@@ -3756,50 +3758,6 @@ class notifier(metaclass=HookMetaclass):
             return False
 
         return True
-
-    def system_dataset_settings(self):
-        from freenasUI.storage.models import Volume
-        from freenasUI.system.models import SystemDataset
-
-        try:
-            systemdataset = SystemDataset.objects.all()[0]
-        except:
-            systemdataset = SystemDataset.objects.create()
-
-        if not systemdataset.get_sys_uuid():
-            systemdataset.new_uuid()
-            systemdataset.save()
-
-        # If there is a pool configured make sure the volume exists
-        # Otherwise reset it to blank
-        if systemdataset.sys_pool and systemdataset.sys_pool != 'freenas-boot':
-            volume = Volume.objects.filter(vol_name=systemdataset.sys_pool)
-            if not volume.exists():
-                systemdataset.sys_pool = ''
-                systemdataset.save()
-
-        if not systemdataset.sys_pool and not self.is_freenas():
-            # For TrueNAS default system dataset lives in boot pool
-            # See #17049
-            systemdataset.sys_pool = 'freenas-boot'
-            systemdataset.save()
-        elif not systemdataset.sys_pool:
-
-            volume = None
-            for o in Volume.objects.all().order_by(
-                'vol_encrypt'
-            ):
-                if o.is_decrypted():
-                    volume = o
-                    break
-            if not volume:
-                return systemdataset, None
-            else:
-                systemdataset.sys_pool = volume.vol_name
-                systemdataset.save()
-
-        basename = '%s/.system' % systemdataset.sys_pool
-        return systemdataset, basename
 
     def system_dataset_path(self):
         if not os.path.exists(SYSTEMPATH):
