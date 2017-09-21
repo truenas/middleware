@@ -75,7 +75,7 @@ class SystemDatasetService(ConfigService):
         if config['rrd'] != new['rrd']:
             await self.rrd_toggle()
             await self.middleware.call('service.restart', 'collectd')
-
+        return config['id']
 
     @accepts(Bool('mount', default=True))
     @private
