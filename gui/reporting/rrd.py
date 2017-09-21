@@ -278,7 +278,7 @@ class CPUTempPlugin(RRDBase):
                 'CDEF:max{0}=s_max{0},100,/'.format(n),
                 'AREA:max{0}#bfffbf'.format(n),
                 'AREA:min{0}#FFFFFF'.format(n),
-                'LINE1:avg{0}{1}: Core {2}'.format(n, colors[n], n+1),
+                'LINE1:avg{0}{1}: Core {2}'.format(n, colors[n], n + 1),
                 'GPRINT:min{0}:MIN:%.1lf° Min,'.format(n),
                 'GPRINT:avg{0}:AVERAGE:%.1lf° Avg,'.format(n),
                 'GPRINT:max{0}:MAX:%.1lf° Max,'.format(n),
@@ -612,7 +612,7 @@ class DFPlugin(RRDBase):
         ids = []
         proc = pipeopen("/bin/df -t zfs", important=False, logger=log)
         for line in proc.communicate()[0].strip().split('\n'):
-            entry = re.split(r'\s{2,}', line)[-1];
+            entry = re.split(r'\s{2,}', line)[-1]
             if entry != "/" and not entry.startswith("/mnt"):
                 continue
             path = os.path.join(self._base_path, "df-" + self.encode(entry), 'df_complex-free.rrd')
