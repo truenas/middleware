@@ -250,6 +250,44 @@ class CPUPlugin(RRDBase):
         return args
 
 
+class CPUTempPlugin(RRDBase):
+
+    title = "CPU Temperature"
+    vertical_label = "°C"
+
+    def graph(self):
+        args = []
+        colors = [
+            '#00ff00', '#0000ff', '#ff0000', '#ff00ff',
+            '#ffff00', '#00ffff', '#800000', '#008000',
+            '#000080', '#008080', '#808000', '#800080',
+            '#808080', '#C0C0C0', '#654321', '#123456'
+        ]
+        proc = pipeopen("/sbin/sysctl -n kern.smp.cpus", important=False, logger=log)
+        cpu_count = proc.communicate()[0]
+        for n in range(0, int(cpu_count)):
+            cpu_temp = os.path.join(
+                "%s/cputemp-%s" % (self._base_path, n),
+                "temperature.rrd")
+            a = [
+                'DEF:s_min{0}={1}:value:MIN'.format(n, cpu_temp),
+                'DEF:s_avg{0}={1}:value:AVERAGE'.format(n, cpu_temp),
+                'DEF:s_max{0}={1}:value:MAX'.format(n, cpu_temp),
+                'CDEF:min{0}=s_min{0},100,/'.format(n),
+                'CDEF:avg{0}=s_avg{0},100,/'.format(n),
+                'CDEF:max{0}=s_max{0},100,/'.format(n),
+                'AREA:max{0}#bfffbf'.format(n),
+                'AREA:min{0}#FFFFFF'.format(n),
+                'LINE1:avg{0}{1}: Core {2}'.format(n, colors[n], n + 1),
+                'GPRINT:min{0}:MIN:%.1lf° Min,'.format(n),
+                'GPRINT:avg{0}:AVERAGE:%.1lf° Avg,'.format(n),
+                'GPRINT:max{0}:MAX:%.1lf° Max,'.format(n),
+                'GPRINT:avg{0}:LAST:%.1lf° Last\l'.format(n)
+            ]
+            args.extend(a)
+        return args
+
+
 class InterfacePlugin(RRDBase):
 
     vertical_label = "Bits/s"
@@ -574,7 +612,7 @@ class DFPlugin(RRDBase):
         ids = []
         proc = pipeopen("/bin/df -t zfs", important=False, logger=log)
         for line in proc.communicate()[0].strip().split('\n'):
-            entry = re.split(r'\s{2,}', line)[-1];
+            entry = re.split(r'\s{2,}', line)[-1]
             if entry != "/" and not entry.startswith("/mnt"):
                 continue
             path = os.path.join(self._base_path, "df-" + self.encode(entry), 'df_complex-free.rrd')
