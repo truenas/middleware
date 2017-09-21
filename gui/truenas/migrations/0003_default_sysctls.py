@@ -19,7 +19,7 @@ def set_default_sysctls(apps, schema_editor):
 
 class Migration(migrations.Migration):
     dependencies = [
-        ('truenas', '0001_initial'),
+        ('truenas', '0002_zseries_serial_port'),
     ]
 
     operations = [
