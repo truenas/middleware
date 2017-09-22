@@ -1,4 +1,3 @@
-#
 # Copyright 2014 iXsystems, Inc.
 # All rights reserved
 #
@@ -90,6 +89,7 @@ IDMAP_TYPE_TDB = 8
 IDMAP_TYPE_TDB2 = 9
 IDMAP_TYPE_ADEX = 10
 IDMAP_TYPE_FRUIT = 11
+IDMAP_TYPE_SCRIPT = 12
 
 
 def idmap_to_enum(idmap_type):
@@ -105,7 +105,8 @@ def idmap_to_enum(idmap_type):
         'rfc2307': IDMAP_TYPE_RFC2307,
         'rid': IDMAP_TYPE_RID,
         'tdb': IDMAP_TYPE_TDB,
-        'tdb2': IDMAP_TYPE_TDB2
+        'tdb2': IDMAP_TYPE_TDB2,
+        'script': IDMAP_TYPE_SCRIPT
     }
 
     try:
@@ -129,7 +130,8 @@ def enum_to_idmap(enum):
         IDMAP_TYPE_RFC2307: 'rfc2307',
         IDMAP_TYPE_RID: 'rid',
         IDMAP_TYPE_TDB: 'tdb',
-        IDMAP_TYPE_TDB2: 'tdb2'
+        IDMAP_TYPE_TDB2: 'tdb2',
+        IDMAP_TYPE_SCRIPT: 'script'
     }
 
     try:
@@ -675,7 +677,7 @@ class idmap_tdb2(idmap_base):
         help_text=_(
             "This option can be used to configure an external program for "
             "performing id mappings instead of using the tdb counter. The "
-            "mappings are then stored int tdb2 idmap database."
+            "mappings are then stored in the tdb2 idmap database."
         )
     )
 
@@ -691,6 +693,38 @@ class idmap_tdb2(idmap_base):
 
     class FreeAdmin:
         resource_name = 'directoryservice/idmap/tdb2'
+
+
+class idmap_script(idmap_base):
+    idmap_script_range_low = models.IntegerField(
+        verbose_name=_("Range Low"),
+        default=90000001
+    )
+    idmap_script_range_high = models.IntegerField(
+        verbose_name=_("Range High"),
+        default=100000000
+    )
+    idmap_script_script = PathField(
+        verbose_name=_("Script"),
+        help_text=_(
+            "This option is used to configure an external program for "
+            "performing id mappings. This is read-only backend and relies on "
+            "winbind_cache tdb to store obtained values"
+        )
+    )
+
+    def __init__(self, *args, **kwargs):
+        super(idmap_script, self).__init__(*args, **kwargs)
+
+        self.idmap_backend_type = IDMAP_TYPE_SCRIPT
+        self.idmap_backend_name = enum_to_idmap(self.idmap_backend_type)
+
+    class Meta:
+        verbose_name = _("Script Idmap")
+        verbose_name_plural = _("Script Idmap")
+
+    class FreeAdmin:
+        resource_name = 'directoryservice/idmap/script'
 
 
 class KerberosRealm(Model):
@@ -835,7 +869,9 @@ class ActiveDirectory(DirectoryServiceBase):
             verbose_name=_("How many recovery attempts"),
             default=10,
             validators=[MaxValueValidator(500), MinValueValidator(0)],
-            help_text=_("Number of times to attempt to recover the connection with AD server. If the value is 0, try forever."),
+            help_text=_(
+                "Number of times to attempt to recover the connection with AD "
+                "server. If the value is 0, try forever."),
             blank=False
     )
     ad_enable_monitor = models.BooleanField(
@@ -888,7 +924,11 @@ class ActiveDirectory(DirectoryServiceBase):
     )
     ad_disable_freenas_cache = models.BooleanField(
         verbose_name=_("Disable Active Directory user/group cache"),
-        help_text=_("Set this if you want to disable caching Active Directory users and groups.  Use this option if you are experiencing slowness or having difficulty binding to the domain with a large number of users and groups."),
+        help_text=_(
+            "Set this if you want to disable caching Active Directory users "
+            "and groups. Use this option if you are experiencing slowness or "
+            "having difficulty binding to the domain with a large number of "
+            "users and groups."),
         default=False
     )
     ad_userdn = models.CharField(
@@ -952,7 +992,7 @@ class ActiveDirectory(DirectoryServiceBase):
     )
     ad_idmap_backend = models.CharField(
         verbose_name=_("Idmap backend"),
-        choices=choices.IDMAP_CHOICES,
+        choices=choices.IDMAP_CHOICES(),
         max_length=120,
         help_text=_("Idmap backend for winbind."),
         default=enum_to_idmap(IDMAP_TYPE_RID)
@@ -1032,7 +1072,10 @@ class ActiveDirectory(DirectoryServiceBase):
                 super(ActiveDirectory, self).save()
 
             except Exception as e:
-                log.debug("ActiveDirectory: Unable to create kerberos realm: %s", e, exc_info=True)
+                log.debug(
+                    "ActiveDirectory: Unable to create kerberos realm: %s",
+                    e, exc_info=True
+                )
 
     class Meta:
         verbose_name = _("Active Directory")
@@ -1198,7 +1241,7 @@ class LDAP(DirectoryServiceBase):
     )
     ldap_idmap_backend = models.CharField(
         verbose_name=_("Idmap Backend"),
-        choices=choices.IDMAP_CHOICES,
+        choices=choices.IDMAP_CHOICES(),
         max_length=120,
         help_text=_("Idmap backend for winbind."),
         default=enum_to_idmap(IDMAP_TYPE_LDAP)
@@ -1231,7 +1274,10 @@ class LDAP(DirectoryServiceBase):
             try:
                 self.ldap_bindpw = notifier().pwenc_decrypt(self.ldap_bindpw)
             except:
-                log.debug('Failed to decrypt LDAP bind password', exc_info=True)
+                log.debug(
+                    'Failed to decrypt LDAP bind password',
+                    exc_info=True
+                )
                 self.ldap_bindpw = ''
         self._ldap_bindpw_encrypted = False
 

@@ -1,4 +1,3 @@
-#
 # Copyright 2014 iXsystems, Inc.
 # All rights reserved
 #
@@ -42,7 +41,6 @@ from freenasUI.common.forms import ModelForm
 from freenasUI.common.freenasldap import (
     FreeNAS_ActiveDirectory,
     FreeNAS_LDAP,
-    FreeNAS_ActiveDirectory_Exception,
 )
 from freenasUI.common.freenassysctl import freenas_sysctl as _fs
 from freenasUI.common.pipesubr import run
@@ -55,7 +53,6 @@ from freenasUI.directoryservice import models, utils
 from freenasUI.middleware.client import client
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier
-from freenasUI.services.exceptions import ServiceFailed
 from freenasUI.services.models import CIFS, ServiceMonitor
 
 log = logging.getLogger('directoryservice.form')
@@ -215,6 +212,16 @@ class idmap_tdb2_Form(ModelForm):
     class Meta:
         fields = '__all__'
         model = models.idmap_tdb2
+        exclude = [
+            'idmap_ds_type',
+            'idmap_ds_id'
+        ]
+
+
+class idmap_script_Form(ModelForm):
+    class Meta:
+        fields = '__all__'
+        model = models.idmap_script
         exclude = [
             'idmap_ds_type',
             'idmap_ds_id'
@@ -577,14 +584,18 @@ class ActiveDirectoryForm(ModelForm):
         if self.__original_changed():
             notifier().clear_activedirectory_config()
 
-        started = notifier().started("activedirectory",
-            timeout=_fs().directoryservice.activedirectory.timeout.started)
+        started = notifier().started(
+            "activedirectory",
+            timeout=_fs().directoryservice.activedirectory.timeout.started
+        )
         obj = super(ActiveDirectoryForm, self).save()
 
         try:
             utils.get_idmap_object(obj.ds_type, obj.id, obj.ad_idmap_backend)
         except ObjectDoesNotExist:
-            log.debug('IDMAP backend {} entry does not exist, creating one.'.format(obj.ad_idmap_backend))
+            log.debug(
+                'IDMAP backend {} entry does not exist, creating one.'.format(obj.ad_idmap_backend)
+            )
             utils.get_idmap(obj.ds_type, obj.id, obj.ad_idmap_backend)
 
         self.cifs.cifs_srv_netbiosname = self.cleaned_data.get("ad_netbiosname_a")
@@ -638,12 +649,15 @@ class ActiveDirectoryForm(ModelForm):
         # override them via SRV records. This should be fixed.
         #
         dcport = self.get_dcport()
-        gcport = self.get_gcport()
+        # gcport = self.get_gcport()
 
         if not sm:
             try:
-                log.debug("XXX: fqdn=%s dcport=%s frequency=%s retry=%s enable=%s",
-                    fqdn, dcport, monit_frequency, monit_retry, enable_monitoring)
+                log.debug(
+                    "XXX: fqdn=%s dcport=%s frequency=%s retry=%s enable=%s",
+                    fqdn, dcport, monit_frequency,
+                    monit_retry, enable_monitoring
+                )
 
                 sm = ServiceMonitor.objects.create(
                     sm_name=sm_name,

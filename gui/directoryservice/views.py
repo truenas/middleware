@@ -1,4 +1,3 @@
-#+
 # Copyright 2014 iXsystems, Inc.
 # All rights reserved
 #
@@ -96,7 +95,7 @@ def directoryservice_kerberosrealm(request, id):
     return render(request, 'directoryservice/kerberos_realm.html', {
         'form': form,
         'inline': True
-    });
+    })
 
 
 def directoryservice_kerberoskeytab(request, id=None):
@@ -124,7 +123,7 @@ def directoryservice_kerberoskeytab(request, id=None):
     return render(request, 'directoryservice/kerberos_keytab.html', {
         'form': form,
         'inline': True
-    });
+    })
 
 
 def directoryservice_kerberoskeytab_edit(request, id):
@@ -155,7 +154,7 @@ def directoryservice_kerberoskeytab_delete(request, id):
     return render(request, 'directoryservice/kerberos_keytab.html', {
         'form': form,
         'inline': True
-    });
+    })
 
 
 def get_directoryservice_status():
@@ -422,6 +421,27 @@ def directoryservice_idmap_tdb2(request, id):
         form = forms.idmap_tdb2_Form(instance=idmap_tdb2)
 
     return render(request, 'directoryservice/idmap_tdb2.html', {
+        'form': form
+    })
+
+
+def directoryservice_idmap_script(request, id):
+    idmap_script = models.idmap_script.objects.get(id=id)
+
+    if request.method == "POST":
+        form = forms.idmap_script_Form(request.POST, instance=idmap_script)
+        if form.is_valid():
+            form.save()
+            return JsonResp(
+                request,
+                message="Idmap script successfully edited."
+            )
+        else:
+            return JsonResp(request, form=form)
+    else:
+        form = forms.idmap_script_Form(instance=idmap_script)
+
+    return render(request, 'directoryservice/idmap_script.html', {
         'form': form
     })
 
