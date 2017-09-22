@@ -83,13 +83,8 @@ class VMSupervisor(object):
         self.bhyve_error = None
 
     async def run(self):
-        bhyve_cmd = None
-        if os.path.isfile('/usr/local/sbin/ixbhyve'):
-            bhyve_cmd = 'ixbhyve'
-        else:
-            bhyve_cmd = 'bhyve'
         args = [
-            bhyve_cmd,
+            'bhyve',
             '-H',
             '-w',
             '-c', str(self.vm['vcpus']),
@@ -170,16 +165,10 @@ class VMSupervisor(object):
                     width = vnc_resolution[0]
                     height = vnc_resolution[1]
 
-                if bhyve_cmd == 'ixbhyve':
-                    args += [
-                        '-s', '29,fbuf,vncserver,tcp={}:{},w={},h={},{},{}'.format(vnc_bind, vnc_port, width, height, vnc_password_args, wait),
-                        '-s', '30,xhci,tablet',
-                    ]
-                else:
-                    args += [
-                        '-s', '29,fbuf,tcp={}:{},w={},h={},{},{}'.format(vnc_bind, vnc_port, width, height, vnc_password_args, wait),
-                        '-s', '30,xhci,tablet',
-                    ]
+                args += [
+                   '-s', '29,fbuf,vncserver,tcp={}:{},w={},h={},{},{}'.format(vnc_bind, vnc_port, width, height, vnc_password_args, wait),
+                   '-s', '30,xhci,tablet',
+                ]
 
         args.append(self.vm['name'])
 
