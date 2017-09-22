@@ -35,8 +35,8 @@ from .views import (
     directoryservice_idmap_hash, directoryservice_idmap_ldap,
     directoryservice_idmap_nss, directoryservice_idmap_rfc2307,
     directoryservice_idmap_rid, directoryservice_idmap_tdb,
-    directoryservice_idmap_tdb2, directoryservice_idmap_backend,
-    directoryservice_clearcache,
+    directoryservice_idmap_tdb2, directoryservice_idmap_script,
+    directoryservice_idmap_backend, directoryservice_clearcache,
 )
 
 
@@ -76,6 +76,8 @@ urlpatterns = [
         name="directoryservice_idmap_tdb"),
     url(r"^idmap_tdb2/(?P<id>\d+)/$", directoryservice_idmap_tdb2,
         name="directoryservice_idmap_tdb2"),
+    url(r"^idmap_script/(?P<id>\d+)/$", directoryservice_idmap_script,
+        name="directoryservice_idmap_script"),
     url(r"^idmap_backend/(?P<obj_type>\d+)/(?P<obj_id>\d+)/(?P<idmap_type>.+)/$",
         directoryservice_idmap_backend,
         name="directoryservice_idmap_backend"),

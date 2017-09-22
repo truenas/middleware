@@ -1148,7 +1148,7 @@ require([
     activedirectory_idmap_check = function() {
         idmap = registry.byId("id_ad_idmap_backend");
 
-        ad_idmap = idmap.get("value"); 
+        ad_idmap = idmap.get("value");
         if (ad_idmap != "rid") {
             var dialog = new Dialog({
                 title: gettext("Active Directory IDMAP change!"),
@@ -1183,7 +1183,7 @@ require([
             dialog.cancelButton.on('click', function(e){
                 idmap.set('value', 'rid', false);
                 dialog.destroy();
-            });   
+            });
             dialog.startup();
             dialog.show();
         }
@@ -1192,12 +1192,12 @@ require([
     domaincontroller_mutex_toggle = function() {
         var node = query("#domaincontroller_table");
         xhr.get('/directoryservice/status/', {
-            sync: true 
-        }). then(function(data) {
+            sync: true
+        }).then(function(data) {
             s = JSON.parse(data);
             set = get_directoryservice_set('dc_enable');
             for (index in set) {
-                key = set[index]; 
+                key = set[index];
                 if (s[key] == true) {
                     node.onclick = null;
                     break;
@@ -1216,51 +1216,47 @@ require([
         directoryservice_mutex_toggle('nis_enable', nis);
     }
 
-    directoryservice_idmap_get_edit_url = function(eid, ds_type, ds_id) {
+    directoryservice_idmap_onclick = function(eid, ds_type, ds_id) {
         var widget = registry.byId(eid);
-        var idmap_backend = widget.get("value");
+        var idmap_type = widget.get("value");
         var idmap_url = "/directoryservice/idmap_backend/" +
-            ds_type + "/" + ds_id + "/" + idmap_backend + "/";
-        var edit_url = null;
+            ds_type + "/" + ds_id + "/" + idmap_type + "/";
+        var idmap_name = null;
         var id = -1;
 
-        //console.log(idmap_url);
+        //console.log("Idmap URL:", idmap_url);
 
         xhr.get(idmap_url, {
-            sync: true
+            sync: true,
+            handleAs: 'json'
         }).then(function(data) {
-            obj = JSON.parse(data);
-            id = obj.idmap_id;
-        });
+                id = data.idmap_id;
+                idmap_type = data.idmap_type;
+                idmap_name = data.idmap_name;
+            }
+        );
 
         if (id > 0) {
-            edit_url = "/directoryservice/" + "idmap_" + idmap_backend + "/" + id + "/";
+            var edit_url = "/directoryservice/idmap_" + idmap_name + "/" + id + "/";
+
+            //console.log("Edit URL:", edit_url, "ID:", id);
+
+            editObject("Edit Idmap", edit_url, [this,]);
         }
-
-        //console.log(edit_url);
-
-        return (edit_url);
-    }
-
-    directoryservice_idmap_onclick = function(eid, ds_type, ds_id) {
-        var edit_url = directoryservice_idmap_get_edit_url(eid, ds_type, ds_id);
-
-        editObject("Edit Idmap", edit_url, [this,]);
     }
 
     directoryservice_idmap_onload = function(eid, ds_type, ds_id) {
-        var edit_url = directoryservice_idmap_get_edit_url(eid, ds_type, ds_id);
-
         var table = query("#" + eid)[0];
         var td = table.parentNode;
-        var node = domConstruct.create("a", {
-            "href": "#",
-            "title": gettext("Edit"),
-            "innerHTML": gettext("Edit"),
-            "onClick": "directoryservice_idmap_onclick('" + eid + "'," + ds_type + "," + ds_id + ");"
-        });
 
-        td.appendChild(node);
+        var editbtn = new Button({
+            label: gettext("Edit"),
+            style: "float: right; margin-left: 20px",
+            onClick: function() {
+                directoryservice_idmap_onclick(eid, ds_type, ds_id);
+            }
+        });
+        editbtn.placeAt(td);
     }
 
     mpAclChange = function(acl) {

@@ -45,6 +45,7 @@ BLACKLIST = [
     'idmap_rid',
     'idmap_tdb',
     'idmap_tdb2',
+    'idmap_script',
     'directoryservice_idmap',
     'KerberosKeytab',
     'KerberosRealm'
