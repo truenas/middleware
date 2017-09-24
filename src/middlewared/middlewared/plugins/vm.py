@@ -7,7 +7,6 @@ import asyncio
 import errno
 import netif
 import os
-import os.path
 import random
 import stat
 import subprocess
