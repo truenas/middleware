@@ -42,6 +42,11 @@ class SystemDatasetService(ConfigService):
         config['syslog'] = config.pop('syslog_usedataset')
         config['rrd'] = config.pop('rrd_usedataset')
 
+        if not os.path.exists(SYSDATASET_PATH) or not os.path.ismount(SYSDATASET_PATH):
+            config['path'] = None
+        else:
+            config['path'] = SYSDATASET_PATH
+
         return config
 
     @accepts(Dict(
