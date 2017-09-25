@@ -181,7 +181,7 @@ class VMSupervisor(object):
             web_bind = ':{}'.format(vnc_web_port) if vnc_bind is '0.0.0.0' else '{}:{}'.format(vnc_bind, vnc_web_port)
 
             self.web_proc = await Popen(['/usr/local/libexec/novnc/utils/websockify/run', '--web',
-                    '/usr/local/libexec/novnc/', '--wrap-mode=exit',
+                    '/usr/local/libexec/novnc/', '--wrap-mode=ignore',
                     web_bind, '{}:{}'.format(vnc_bind, vnc_port)], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
             self.logger.debug("==> Start WEBVNC at port {} with pid number {}".format(vnc_web_port, self.web_proc.pid))
 
