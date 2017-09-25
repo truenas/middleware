@@ -68,7 +68,6 @@ GELI_KEYPATH = '/data/geli'
 GELI_KEY_SLOT = 0
 GELI_RECOVERY_SLOT = 1
 GELI_REKEY_FAILED = '/tmp/.rekey_failed'
-SYSTEMPATH = '/var/db/system'
 PWENC_BLOCK_SIZE = 32
 PWENC_FILE_SECRET = '/data/pwenc_secret'
 PWENC_PADDING = b'{'
@@ -1606,7 +1605,8 @@ class notifier(metaclass=HookMetaclass):
         return True
 
     def get_update_location(self):
-        syspath = self.system_dataset_path()
+        with client as c:
+            syspath = c.call('systemdataset.config')['path']
         if syspath:
             return '%s/update' % syspath
         return '/var/tmp/update'
@@ -3758,15 +3758,6 @@ class notifier(metaclass=HookMetaclass):
             return False
 
         return True
-
-    def system_dataset_path(self):
-        if not os.path.exists(SYSTEMPATH):
-            return None
-
-        if not os.path.ismount(SYSTEMPATH):
-            return None
-
-        return SYSTEMPATH
 
     def zpool_status(self, pool_name):
         """

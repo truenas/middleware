@@ -364,12 +364,14 @@ def manual_update(path):
 
 
 def debug_get_settings():
-    from freenasUI.middleware.notifier import notifier
+    from freenasUI.middleware.client import client
     direc = "/var/tmp/ixdiagnose"
     mntpt = '/var/tmp'
-    if notifier().system_dataset_path() is not None:
-        direc = os.path.join(notifier().system_dataset_path(), 'ixdiagnose')
-        mntpt = notifier().system_dataset_path()
+    with client as c:
+        system_dataset_path = c.call('systemdataset.config')['path']
+    if system_dataset_path is not None:
+        direc = os.path.join(system_dataset_path, 'ixdiagnose')
+        mntpt = system_dataset_path
     dump = os.path.join(direc, 'ixdiagnose.tgz')
 
     return (mntpt, direc, dump)
