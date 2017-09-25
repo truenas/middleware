@@ -46,8 +46,8 @@ def migrate_unsupported_providers(apps, schema_editor):
             row.save()
 
         if row.ddns_provider == "default@majimoto.net":
-            row.delete()
-            continue
+            row.ddns_provider = "custom"
+            row.save()
 
         if row.ddns_provider == "default@two-dns.de":
             row.ddns_provider = "custom"
@@ -67,6 +67,7 @@ def migrate_unsupported_providers(apps, schema_editor):
             row.ddns_custom_ddns_path = "/nic/update?hostname="
             if args.dyndns_server_url:
                 row.ddns_custom_ddns_path = args.dyndns_server_url
+            row.save()
 
 
 def set_period_to_updateperiod(apps, schema_editor):
