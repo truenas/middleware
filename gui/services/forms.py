@@ -678,13 +678,18 @@ class DynamicDNSForm(ModelForm):
         model = models.DynamicDNS
         widgets = {
             'ddns_password': forms.widgets.PasswordInput(render_value=False),
+            'ddns_period': forms.widgets.TextInput(attrs={"placeholder": 300}),
         }
         fields = '__all__'
 
     def __init__(self, *args, **kwargs):
         super(DynamicDNSForm, self).__init__(*args, **kwargs)
+        self.fields['ddns_provider'].widget.attrs['onChange'] = (
+            "ddnsCustomProviderToggle();"
+        )
         if self.instance.ddns_password:
             self.fields['ddns_password'].required = False
+        self.fields['ddns_period'].required = False
         if self._api is True:
             del self.fields['ddns_password2']
 
@@ -696,42 +701,6 @@ class DynamicDNSForm(ModelForm):
                 _("The two password fields didn't match.")
             )
         return password2
-
-    def clean_ddns_domain(self):
-        domains = self.cleaned_data.get("ddns_domain")
-        if domains:
-            array = domains.split(',')
-            for i in range(0, len(array)):
-                element = array[i].strip()
-                if "#" in element:
-                    subarray = element.split('#')
-                    if len(subarray) != 2:
-                        raise forms.ValidationError(
-                            _("Incorrect usage of the # delimiter.")
-                        )
-                    else:
-                        if re.match(r'[a-zA-Z\d-]{,63}(\.[a-zA-Z\d-]{,63})+', subarray[0].strip()):
-                            if subarray[1].strip().isalnum():
-                                continue
-                            else:
-                                raise forms.ValidationError(
-                                    _("Incorrect usage of the # delimiter.")
-                                )
-                        else:
-                            raise forms.ValidationError(
-                                _("Invalid domain name.")
-                            )
-                elif re.match(r'[a-zA-Z\d-]{,63}(\.[a-zA-Z\d-]{,63})+', element):
-                    continue
-                elif i > 0 and element.strip().isalnum():
-                    raise forms.ValidationError(
-                        _("Invalid domain name or incorrect hash delimiter.")
-                    )
-                else:
-                    raise forms.ValidationError(
-                        _("Invalid domain name.")
-                    )
-        return domains
 
     def clean(self):
         cdata = self.cleaned_data
@@ -750,7 +719,7 @@ class DynamicDNSForm(ModelForm):
                 "dynamicdns", _("The DynamicDNS service failed to reload.")
             )
         return obj
-key_order(DynamicDNSForm, 5, 'ddns_password2')
+key_order(DynamicDNSForm, 10, 'ddns_password2')
 
 
 class SNMPForm(ModelForm):

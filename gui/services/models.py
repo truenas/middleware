@@ -1085,56 +1085,67 @@ class DynamicDNS(Model):
         blank=True,
         verbose_name=_("Provider"),
     )
-    ddns_ipserver = models.CharField(
+    ddns_checkip_ssl = models.BooleanField(
+        verbose_name=_("CheckIP Server SSL"),
+    )
+    ddns_checkip_server = models.CharField(
         max_length=150,
-        verbose_name=_('IP Server'),
-        # todo: fix default not showing up in the form
-        default='checkip.dyndns.org:80 /.',
+        blank=True,
+        verbose_name=_('CheckIP Server'),
         help_text=_(
             'The client IP is detected by calling \'url\' from this '
             '\'ip_server_name:port /.\'. Leaving this field blank causes '
             'the service to use its built in default: '
             'checkip.dyndns.org:80 /.'),
+    )
+    ddns_checkip_path = models.CharField(
+        max_length=150,
         blank=True,
+        verbose_name=_('CheckIP Path'),
+        help_text=_(
+            'The client IP is detected by calling \'url\' from this '
+            '\'ip_server_name:port /.\'. Leaving this field blank causes '
+            'the service to use its built in default: '
+            'checkip.dyndns.org:80 /.'),
+    )
+    ddns_ssl = models.BooleanField(
+        verbose_name=_("Use SSL"),
+    )
+    ddns_custom_ddns_server = models.CharField(
+        max_length=150,
+        blank=True,
+        verbose_name=_("Custom Server"),
+        help_text=_(
+            "Hostname for your custom DDNS provider."),
+    )
+    ddns_custom_ddns_path = models.CharField(
+        max_length=150,
+        blank=True,
+        verbose_name=_("Custom Path"),
+        help_text=_(
+            "\'%h\' will be replaced with your hostname and \'%i\' will be "
+            "replaced with your IP address"),
     )
     ddns_domain = models.CharField(
         max_length=120,
-        verbose_name=_("Domain name"),
         blank=True,
+        verbose_name=_("Domain name"),
         help_text=_("A host name alias. This option can appear multiple "
                     "times, for each domain that has the same IP. Use a comma "
-                    "to separate multiple alias names.  Some Dynamic DNS "
-                    "providers " "require a hash after the host name, for "
-                    "these providers use a # sign in the between the hostname "
-                    "and hash in the format hostname#hash.  You may also use "
-                    "multiple hostname and hash " "combinations in the format "
-                    "host1#hash1,host2#hash2."),
+                    "to separate multiple alias names."),
     )
     ddns_username = models.CharField(
         max_length=120,
+        blank=True,
         verbose_name=_("Username"),
     )
     ddns_password = models.CharField(
         max_length=120,
         verbose_name=_("Password"),
     )
-    ddns_updateperiod = models.CharField(
-        max_length=120,
-        verbose_name=_("Update period"),
-        blank=True,
-        help_text=_("Time in seconds. Default is about 1 min."),
-    )
-    ddns_fupdateperiod = models.CharField(
-        max_length=120,
-        verbose_name=_("Forced update period"),
-        blank=True,
-    )
-    ddns_options = models.TextField(
-        verbose_name=_("Auxiliary parameters"),
-        blank=True,
-        help_text=_(
-            "These parameters will be added to global settings in "
-            "inadyn-mt.conf."),
+    ddns_period = models.IntegerField(
+        verbose_name=_("Update Period"),
+        help_text=_("Time in seconds."),
     )
 
     def __init__(self, *args, **kwargs):

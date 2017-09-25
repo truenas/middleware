@@ -1593,6 +1593,21 @@ require([
         }
     }
 
+    ddnsCustomProviderToggle = function() {
+        var dropdown = document.querySelector("input[name=ddns_provider]");
+        var custom_ddns_server = registry.byId("id_ddns_custom_ddns_server");
+        var tr_custom_ddns_server = custom_ddns_server.domNode.parentNode.parentNode;
+        var custom_ddns_path = registry.byId("id_ddns_custom_ddns_path");
+        var tr_custom_ddns_path = custom_ddns_path.domNode.parentNode.parentNode;
+        if (dropdown.value == "custom") {
+            domStyle.set(tr_custom_ddns_server, "display", "");
+            domStyle.set(tr_custom_ddns_path, "display", "");
+        } else {
+            domStyle.set(tr_custom_ddns_server, "display", "none");
+            domStyle.set(tr_custom_ddns_path, "display", "none");
+        }
+    }
+
     extentZvolToggle = function() {
 
         var select = registry.byId("id_iscsi_target_extent_disk");
