@@ -659,16 +659,14 @@ def exclude_path(path, exclude):
 
 def backup_database():
     from freenasUI.middleware.client import client
-    from freenasUI.middleware.notifier import notifier
 
     with client as c:
         systemdataset = c.call('systemdataset.config')
-    systempath = notifier().system_dataset_path()
-    if not systempath or not systemdataset:
+    if not systemdataset or not systemdataset['path']:
         return
 
     # Legacy format
-    files = glob.glob('%s/*.db' % systempath)
+    files = glob.glob(f'{systemdataset["path"]}/*.db')
     reg = re.compile(r'.*(\d{4}-\d{2}-\d{2})-(\d+)\.db$')
     files = [y for y in files if reg.match(y)]
     for f in files:
@@ -680,10 +678,10 @@ def backup_database():
     today = datetime.now().strftime("%Y%m%d")
 
     newfile = os.path.join(
-        systempath,
-        'configs-%s' % systemdataset['uuid'],
+        systemdataset["path"],
+        f'configs-{systemdataset["uuid"]}',
         get_sw_version(),
-        '%s.db' % today,
+        f'{today}%s.db',
     )
 
     dirname = os.path.dirname(newfile)
