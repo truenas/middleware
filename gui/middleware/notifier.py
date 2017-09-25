@@ -73,7 +73,6 @@ PWENC_BLOCK_SIZE = 32
 PWENC_FILE_SECRET = '/data/pwenc_secret'
 PWENC_PADDING = b'{'
 PWENC_CHECK = 'Donuts!'
-BACKUP_SOCK = '/var/run/backupd.sock'
 
 if WWW_PATH not in sys.path:
     sys.path.append(WWW_PATH)
