@@ -33,7 +33,7 @@ List resource
       Content-Type: application/json
 
         {
-                "adv_syslogserver": "",
+                "adv_sysloglevel": "",
                 "adv_serialconsole": false,
                 "adv_traceback": true,
                 "adv_uploadcrash": true,
