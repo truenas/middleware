@@ -1,3 +1,4 @@
+# -*- coding: utf-8 -*-
 # Copyright 2012 iXsystems, Inc.
 # All rights reserved
 #
