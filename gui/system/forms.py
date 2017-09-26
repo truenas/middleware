@@ -958,7 +958,7 @@ class SettingsForm(ModelForm):
         super(SettingsForm, self).__init__(*args, **kwargs)
         for i in (
             'stg_guiprotocol', 'stg_guiaddress', 'stg_guiport',
-            'stg_guihttpsport', 'stg_guihttpsredirect', 'stg_sysloglevel',
+            'stg_guihttpsport', 'stg_guihttpsredirect',
             'stg_syslogserver', 'stg_guicertificate', 'stg_timezone',
         ):
             setattr(self.instance, f'_original_{i}', getattr(self.instance, i))
@@ -1007,8 +1007,8 @@ class SettingsForm(ModelForm):
 
     def save(self):
         obj = super(SettingsForm, self).save()
-        if (self.instance._original_stg_sysloglevel != self.instance.stg_sysloglevel or
-                self.instance._original_stg_syslogserver != self.instance.stg_syslogserver):
+        if (self.instance._original_adv_sysloglevel != self.instance.adv_sysloglevel or
+                self.instance._original_adv_syslogserver != self.instance.adv_sysloglevel):
             notifier().restart("syslogd")
         cache.set('guiLanguage', obj.stg_language)
         notifier().reload("timeservices")
