@@ -138,17 +138,6 @@ class Settings(Model):
         default="America/Los_Angeles",
         verbose_name=_("Timezone")
     )
-    stg_sysloglevel = models.CharField(
-        max_length=120,
-        choices=choices.SYS_LOG_LEVEL,
-        default="f_info",
-        verbose_name=_("Syslog level"),
-        help_text=_("Specifies which messages will be logged by "
-                    "server. INFO and VERBOSE log transactions that "
-                    "server performs on behalf of the client. "
-                    "f_is_debug specify higher levels of debugging output. "
-                    "The default is f_info."),
-    )
     stg_syslogserver = models.CharField(
         default='',
         blank=True,
