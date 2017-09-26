@@ -33,6 +33,7 @@ List resource
       Content-Type: application/json
 
         {
+                "adv_syslogserver": "",
                 "adv_serialconsole": false,
                 "adv_traceback": true,
                 "adv_uploadcrash": true,
@@ -677,7 +678,6 @@ List resource
                 "stg_guihttpsredirect": true,
                 "stg_guiprotocol": "http",
                 "stg_guiv6address": "::",
-                "stg_syslogserver": "",
                 "stg_language": "en",
                 "stg_directoryservice": "",
                 "stg_guiaddress": "0.0.0.0",
