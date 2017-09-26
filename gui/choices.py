@@ -1199,6 +1199,7 @@ AFP_CHMOD_REQUEST_CHOICES = (
 
 CLOUD_PROVIDERS = (
     ('AMAZON', _('Amazon S3')),
+    ('BACKBLAZE', _('Backblaze B2')),
 )
 
 

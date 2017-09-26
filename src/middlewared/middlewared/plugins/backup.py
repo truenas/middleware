@@ -26,6 +26,7 @@ class BackupCredentialService(CRUDService):
         Str('name'),
         Str('provider', enum=[
             'AMAZON',
+            'BACKBLAZE',
         ]),
         Dict('attributes', additional_attrs=True),
         register=True,
