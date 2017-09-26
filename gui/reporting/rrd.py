@@ -69,6 +69,7 @@ class RRDBase(object, metaclass=RRDMeta):
     imgformat = 'PNG'
     unit = 'hourly'
     step = 0
+    is_available = True
 
     def __init__(self, base_path, identifier=None, unit=None, step=None):
         if identifier is not None:
@@ -255,6 +256,18 @@ class CPUTempPlugin(RRDBase):
     title = "CPU Temperature"
     vertical_label = "°C"
 
+    cpu_count = 0
+
+    def __init__(self, base_path, identifier=None, unit=None, step=None):
+        super(CPUTempPlugin, self).__init__(base_path, identifier, unit, step)
+                
+        proc = pipeopen('/sbin/sysctl -n kern.smp.cpus', important=False, logger=log)
+        proc_out = proc.communicate()[0]
+        try:
+            self.cpu_count = int(proc_out)
+        except:
+            self.is_available = False
+        
     def graph(self):
         args = []
         colors = [
@@ -263,9 +276,7 @@ class CPUTempPlugin(RRDBase):
             '#000080', '#008080', '#808000', '#800080',
             '#808080', '#C0C0C0', '#654321', '#123456'
         ]
-        proc = pipeopen("/sbin/sysctl -n kern.smp.cpus", important=False, logger=log)
-        cpu_count = proc.communicate()[0]
-        for n in range(0, int(cpu_count)):
+        for n in range(0, self.cpu_count):
             cpu_temp = os.path.join(
                 "%s/cputemp-%s" % (self._base_path, n),
                 "temperature.rrd")
