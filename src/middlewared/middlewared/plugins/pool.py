@@ -21,31 +21,34 @@ async def is_mounted(middleware, path):
     return any(fs.dest == path for fs in mounted)
 
 
-async def mount(dev, path, mntopts=None, fstype=None):
-    mount_cmd = ['/sbin/mount']
+async def mount(device, path, fs_type, options=None):
+    options = options or []
 
-    if isinstance(dev, str):
-        dev = dev.encode('utf-8')
+    if isinstance(device, str):
+        device = device.encode("utf-8")
 
     if isinstance(path, str):
-        path = path.encode('utf-8')
+        path = path.encode("utf-8")
 
-    if mntopts:
-        opts = ['-o', mntopts]
-    else:
-        opts = []
+    if fs_type == "msdosfs":
+        options.append("large")
 
-    if fstype == 'ntfs':
-        mount_cmd = ['/usr/local/bin/ntfs-3g']
-        fstype = []
+    executable = "/sbin/mount"
+    arguments = []
+
+    if fs_type == "ntfs":
+        executable = "/usr/local/bin/ntfs-3g"
     else:
-        fstype = ['-t', fstype] if fstype else []
+        arguments.extend(["-t", fs_type])
+
+    if options:
+        arguments.extend(["-o", ",".join(options)])
 
     proc = await Popen(
-        mount_cmd + opts + fstype + [dev, path],
+        [executable] + arguments + [device, path],
         stdout=subprocess.PIPE,
         stderr=subprocess.PIPE,
-        encoding='utf8',
+        encoding="utf8",
     )
     output = await proc.communicate()
 
@@ -83,14 +86,15 @@ class KernelModuleContextManager:
 
 
 class MountFsContextManager:
-    def __init__(self, middleware, dev, path, *args):
+    def __init__(self, middleware, device, path, *args, **kwargs):
         self.middleware = middleware
-        self.dev = dev
+        self.device = device
         self.path = path
         self.args = args
+        self.kwargs = kwargs
 
     async def __aenter__(self):
-        await mount(self.dev, self.path, *self.args)
+        await mount(self.device, self.path, *self.args, **self.kwargs)
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         if await is_mounted(self.middleware, self.path):
@@ -211,7 +215,7 @@ class PoolService(CRUDService):
             os.makedirs(src)
 
             async with KernelModuleContextManager({"ntfs": "fuse"}.get(fs_type)):
-                async with MountFsContextManager(self.middleware, volume, src, 'ro', fs_type):
+                async with MountFsContextManager(self.middleware, volume, src, fs_type, ["ro"]):
                     job.set_progress(None, description="Importing")
 
                     line = [
