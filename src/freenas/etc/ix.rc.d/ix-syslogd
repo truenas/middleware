@@ -12,7 +12,7 @@
 generate_syslog_conf()
 {
 	local IFS="|"
-	local f="stg_syslogserver stg_sysloglevel"
+	local f="stg_syslogserver adv_sysloglevel"
 	eval local $f
 	local sf=$(var_to_sf $f)
 	local serverhost=""
@@ -49,7 +49,7 @@ generate_syslog_conf()
 {
 cat << __EOF__
 destination loghost { udp("${serverhost}" port(${serverport}) localport(514)); };
-log { source(src);  filter(${stg_sysloglevel}); destination(loghost); };
+log { source(src);  filter(${adv_sysloglevel}); destination(loghost); };
 __EOF__
 } >> /etc/local/syslog-ng.conf
 		fi
