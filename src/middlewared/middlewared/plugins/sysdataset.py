@@ -151,7 +151,7 @@ class SystemDatasetService(ConfigService):
                 await run('sysctl', f"kern.corefile='{corepath}/%N.core'")
                 os.chmod(corepath, 0o775)
 
-            await self.__nfsv4link()
+            await self.__nfsv4link(config)
 
         return config
 
@@ -178,16 +178,6 @@ class SystemDatasetService(ConfigService):
                 f'rrd-{uuid}', f'configs-{uuid}',
             ]
         ]
-
-    @private
-    def path(self):
-        if not os.path.exists(SYSDATASET_PATH):
-            return None
-
-        if not os.path.ismount(SYSDATASET_PATH):
-            return None
-
-        return SYSDATASET_PATH
 
     @private
     async def rrd_toggle(self):
@@ -218,8 +208,8 @@ class SystemDatasetService(ConfigService):
             return cp.returncode == 0
         return False
 
-    async def __nfsv4link(self):
-        syspath = self.path()
+    async def __nfsv4link(self, config):
+        syspath = config['path']
         if not syspath:
             return None
 
@@ -303,4 +293,4 @@ class SystemDatasetService(ConfigService):
         for i in restart:
             await self.middleware.call('service.start', i)
 
-        await self.__nfsv4link()
+        await self.__nfsv4link(config)
