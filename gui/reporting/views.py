@@ -49,18 +49,17 @@ def plugin2graphs(name):
     if name in rrd.name2plugin:
         ins = rrd.name2plugin[name](rrdpath)
         ids = ins.get_identifiers()
-        if ins.is_available:
-            if ids is not None:
-                if len(ids) > 0:
-                    for ident in ids:
-                        graphs.append({
-                            'plugin': ins.name,
-                            'identifier': ident,
-                        })
-            else:
-                graphs.append({
-                    'plugin': ins.name,
-                })
+        if ids is not None:
+            if len(ids) > 0:
+                for ident in ids:
+                    graphs.append({
+                        'plugin': ins.name,
+                        'identifier': ident,
+                    })
+        else:
+            graphs.append({
+                'plugin': ins.name,
+            })
 
     return graphs
 
