@@ -255,19 +255,37 @@ class CPUTempPlugin(RRDBase):
     title = "CPU Temperature"
     vertical_label = "°C"
 
+    def __get_cputemp_file__(self, n):
+        cputemp_file = os.path.join(
+            "%s/cputemp-%s" % (self._base_path, n),
+            "temperature.rrd")
+        if os.path.isfile(cputemp_file):
+            return cputemp_file
+        else:
+            return None
+
     def __get_number_of_cores__(self):
         proc = pipeopen('/sbin/sysctl -n kern.smp.cpus', important=False, logger=log)
         proc_out = proc.communicate()[0]
         try:
             return int(proc_out)
         except:
-            return -1
+            return 0
+
+    def __check_cputemp_avail__(self):
+        n_cores = self.__get_number_of_cores__()
+        if n_cores > 0:
+            for n in range(0, n_cores):
+                if self.__get_cputemp_file__(n) is None:
+                    return False
+        else:
+            return False
+        return True
 
     def get_identifiers(self):
-        if self.__get_number_of_cores__() > 0:
-            return None
-        else:
+        if not self.__check_cputemp_avail__():
             return []
+        return None
 
     def graph(self):
         args = []
@@ -277,15 +295,12 @@ class CPUTempPlugin(RRDBase):
             '#000080', '#008080', '#808000', '#800080',
             '#808080', '#C0C0C0', '#654321', '#123456'
         ]
-        n_of_cores = self.__get_number_of_cores__();
-        for n in range(0, n_of_cores):
-            cpu_temp = os.path.join(
-                "%s/cputemp-%s" % (self._base_path, n),
-                "temperature.rrd")
+        for n in range(0, self.__get_number_of_cores__()):
+            cputemp_file = self.__get_cputemp_file__(n)
             a = [
-                'DEF:s_min{0}={1}:value:MIN'.format(n, cpu_temp),
-                'DEF:s_avg{0}={1}:value:AVERAGE'.format(n, cpu_temp),
-                'DEF:s_max{0}={1}:value:MAX'.format(n, cpu_temp),
+                'DEF:s_min{0}={1}:value:MIN'.format(n, cputemp_file),
+                'DEF:s_avg{0}={1}:value:AVERAGE'.format(n, cputemp_file),
+                'DEF:s_max{0}={1}:value:MAX'.format(n, cputemp_file),
                 'CDEF:min{0}=s_min{0},100,/'.format(n),
                 'CDEF:avg{0}=s_avg{0},100,/'.format(n),
                 'CDEF:max{0}=s_max{0},100,/'.format(n),
