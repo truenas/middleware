@@ -9,7 +9,6 @@ class TasksHook(AppHook):
     name = 'tasks'
 
     def hook_app_tabs_tasks(self, request):
-        from freenasUI.middleware.notifier import notifier
 
         tabs = [{
             'name': 'CloudSync',
@@ -37,6 +36,5 @@ class TasksHook(AppHook):
             'verbose_name': _('S.M.A.R.T. Tests'),
             'url': reverse('freeadmin_tasks_smarttest_datagrid'),
         }]
-
 
         return tabs
