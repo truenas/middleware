@@ -1312,7 +1312,7 @@ def smb4_setup(client):
 
     systemdataset = client.call('systemdataset.config')
 
-    if not systemdataset['is_decrypted']
+    if not systemdataset['is_decrypted']:
         if os.path.islink(statedir):
             smb4_unlink(statedir)
             smb4_mkdir(statedir)
