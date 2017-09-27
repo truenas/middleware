@@ -351,3 +351,74 @@ region = {region}
         if obj['KeyCount'] == 0:
             return []
         return obj['Contents']
+
+
+class BackupB2Service(Service):
+
+    class Config:
+        namespace = 'backup.b2'
+
+    @private
+    async def sync(self, job, backup, credential):
+        # Use a temporary file to store rclone file
+        with tempfile.NamedTemporaryFile(mode='w+') as f:
+            # Make sure only root can read it as there is sensitive data
+            os.chmod(f.name, 0o600)
+
+            f.write("""[remote]
+type = b2
+env_auth = false
+account = {account}
+key = {key}
+endpoint =
+""".format(
+                account=credential['attributes']['account_id'],
+                key=credential['attributes']['app_key'],
+            ))
+            f.flush()
+
+            args = [
+                '/usr/local/bin/rclone',
+                '--config', f.name,
+                '--stats', '1s',
+                'sync',
+            ]
+
+            remote_path = 'remote:{}{}'.format(
+                backup['attributes']['bucket'],
+                '/{}'.format(backup['attributes']['folder']) if backup['attributes'].get('folder') else '',
+            )
+
+            if backup['direction'] == 'PUSH':
+                args.extend([backup['path'], remote_path])
+            else:
+                args.extend([remote_path, backup['path']])
+
+            async def check_progress(job, proc):
+                RE_TRANSF = re.compile(r'Transferred:\s*?(.+)$', re.S)
+                read_buffer = ''
+                while True:
+                    read = (await proc.stderr.readline()).decode()
+                    if read == '':
+                        break
+                    read_buffer += read
+                    if len(read_buffer) > 10240:
+                        read_buffer = read_buffer[-10240:]
+                    reg = RE_TRANSF.search(read)
+                    if reg:
+                        transferred = reg.group(1).strip()
+                        if not transferred.isdigit():
+                            job.set_progress(None, transferred)
+                return read_buffer
+
+            proc = await Popen(
+                args,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            )
+            check_task = asyncio.ensure_future(check_progress(job, proc))
+            await proc.wait()
+            if proc.returncode != 0:
+                await asyncio.wait_for(check_task, None)
+                raise ValueError('rclone failed: {}'.format(check_task.result()))
+            return True
