@@ -886,14 +886,13 @@ class ServiceService(CRUDService):
         await self.reload("cifs", kwargs)
 
     async def _restart_system_datasets(self, **kwargs):
-        systemdataset = await self.middleware.call('notifier.system_dataset_create')
+        systemdataset = await self.middleware.call('systemdataset.setup')
         if not systemdataset:
             return None
-        systemdataset = await self.middleware.call('datastore.query', 'system.systemdataset', [], {'get': True})
-        if systemdataset['sys_syslog_usedataset']:
+        if systemdataset['syslog']:
             await self.restart("syslogd", kwargs)
         await self.restart("cifs", kwargs)
-        if systemdataset['sys_rrd_usedataset']:
+        if systemdataset['rrd']:
             # Restarting collectd may take a long time and there is no
             # benefit in waiting for it since even if it fails it wont
             # tell the user anything useful.

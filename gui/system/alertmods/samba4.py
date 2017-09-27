@@ -1,5 +1,6 @@
 import os
 
+from freenasUI.middleware.client import client
 from freenasUI.middleware.notifier import notifier
 from freenasUI.storage.models import Volume
 from freenasUI.system.alert import alertPlugins, Alert, BaseAlert
@@ -15,8 +16,9 @@ class Samba4Alert(BaseAlert):
             notifier().failover_status() == 'BACKUP'
         ):
             return None
-        systemdataset, basename = notifier().system_dataset_settings()
-        if not systemdataset.sys_pool:
+        with client as c:
+            systemdataset = c.call('systemdataset.config')
+        if not systemdataset['pool']:
             return [
                 Alert(
                     Alert.WARN,
@@ -33,7 +35,7 @@ class Samba4Alert(BaseAlert):
                     "to /mnt/%s/.system/samba4 cannot be done. Please perform "
                     "this step manually and then delete the now-obsolete "
                     "samba4 datasets and /var/db/samba4/.alert_cant_migrate"
-                    % systemdataset.sys_pool
+                    % systemdataset['pool']
                 ),
             ]
 

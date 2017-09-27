@@ -1310,15 +1310,15 @@ def smb4_setup(client):
     if not client.call('notifier.is_freenas') and client.call('notifier.failover_status') == 'BACKUP':
         return
 
-    systemdataset_is_decrypted = client.call('notifier.systemdataset_is_decrypted')
+    systemdataset = client.call('systemdataset.config')
 
-    if not systemdataset_is_decrypted:
+    if not systemdataset['is_decrypted']
         if os.path.islink(statedir):
             smb4_unlink(statedir)
             smb4_mkdir(statedir)
         return
 
-    systemdataset_path = client.call('notifier.system_dataset_path') or statedir
+    systemdataset_path = systemdataset['path'] or statedir
 
     basename_realpath = os.path.join(systemdataset_path, 'samba4')
     statedir_realpath = os.path.realpath(statedir)

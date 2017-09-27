@@ -10,7 +10,11 @@ import humanfriendly
 import libzfs
 
 from middlewared.schema import Dict, List, Str, Bool, Int, accepts
-from middlewared.service import CallError, CRUDService, Service, job, periodic, private
+from middlewared.service import (
+    CallError, CRUDService, Service, ValidationError, ValidationErrors,
+    filterable, job, periodic, private,
+)
+from middlewared.utils import filter_list
 
 
 def find_vdev(pool, vname):
@@ -177,6 +181,113 @@ class ZFSPoolService(Service):
         t = threading.Thread(target=watch, daemon=True)
         t.start()
         t.join()
+
+
+class ZFSDatasetService(CRUDService):
+
+    class Config:
+        namespace = 'zfs.dataset'
+        private = True
+
+    @filterable
+    def query(self, filters, options):
+        zfs = libzfs.ZFS()
+        # Handle `id` filter specially to avoiding getting all datasets
+        if filters and len(filters) == 1 and list(filters[0][:2]) == ['id', '=']:
+            try:
+                datasets = [zfs.get_dataset(filters[0][2]).__getstate__()]
+            except libzfs.ZFSException:
+                datasets = []
+        else:
+            datasets = [i.__getstate__() for i in zfs.datasets]
+        return filter_list(datasets, filters, options)
+
+    @accepts(Dict(
+        'dataset_create',
+        Str('name', required=True),
+        Str('type', enum=['FILESYSTEM', 'VOLUME'], default='FILESYSTEM'),
+        Dict(
+            'properties',
+            Bool('sparse'),
+            additional_attrs=True,
+        ),
+    ))
+    def do_create(self, data):
+        """
+        Creates a ZFS dataset.
+        """
+
+        verrors = ValidationErrors()
+
+        if '/' not in data['name']:
+            verrors.add('name', 'You need a full name, e.g. pool/newdataset')
+
+        if verrors:
+            raise verrors
+
+        properties = data.get('properties') or {}
+        sparse = properties.pop('sparse', False)
+        params = {}
+
+        for k, v in data['properties'].items():
+            params[k] = v
+
+        try:
+            zfs = libzfs.ZFS()
+            pool = zfs.get(data['name'].split('/')[0])
+            pool.create(data['name'], params, fstype=getattr(libzfs.DatasetType, data['type']), sparse_vol=sparse)
+        except libzfs.ZFSException as e:
+            self.logger.error('Failed to create dataset', exc_info=True)
+            raise CallError(f'Failed to create dataset: {e}')
+
+    @accepts(
+        Str('id'),
+        Dict(
+            'dataset_update',
+            Dict(
+                'properties',
+                additional_attrs=True,
+            ),
+        ),
+    )
+    def do_update(self, id, data):
+        try:
+            zfs = libzfs.ZFS()
+            dataset = zfs.get_dataset(id)
+
+            if 'properties' in data:
+                for k, v in data['properties'].items():
+
+                    # If prop already exists we just update it,
+                    # otherwise create a user property
+                    prop = dataset.properties.get(k)
+                    if prop:
+                        if v.get('source') == 'INHERIT':
+                            prop.inherit()
+                        elif 'value' in v and prop.value != v['value']:
+                            prop.value = v['value']
+                        elif 'parsed' in v and prop.parsed != v['parsed']:
+                            prop.parsed = v['parsed']
+                    else:
+                        if 'value' not in v:
+                            raise ValidationError('properties', f'properties.{k} needs a "value" attribute')
+                        if ':' not in v['value']:
+                            raise ValidationError('properties', f'User property needs a colon (:) in its name`')
+                        prop = libzfs.ZFSUserProperty(v['value'])
+                        dataset.properties[k] = prop
+
+        except libzfs.ZFSException as e:
+            self.logger.error('Failed to update dataset', exc_info=True)
+            raise CallError(f'Failed to update dataset: {e}')
+
+    def do_delete(self, id):
+        try:
+            zfs = libzfs.ZFS()
+            ds = zfs.get_dataset(id)
+            ds.delete()
+        except libzfs.ZFSException as e:
+            self.logger.error('Failed to delete dataset', exc_info=True)
+            raise CallError(f'Failed to delete dataset: {e}')
 
 
 class ZFSSnapshot(CRUDService):

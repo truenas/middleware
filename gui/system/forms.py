@@ -1712,32 +1712,16 @@ class SystemDatasetForm(ModelForm):
         )
 
     def save(self):
-        super(SystemDatasetForm, self).save()
-        if self.instance.sys_pool:
-            try:
-                notifier().system_dataset_create(mount=False)
-            except:
-                raise MiddlewareError(_("Unable to create system dataset!"))
+        data = {
+            'pool': self.cleaned_data.get('sys_pool'),
+            'syslog': self.cleaned_data.get('sys_syslog_usedataset'),
+            'rrd': self.cleaned_data.get('sys_rrd_usedataset'),
+        }
+        with client as c:
+            pk = c.call('systemdataset.update', data)
 
-        if self.instance._original_sys_pool != self.instance.sys_pool:
-            try:
-                notifier().system_dataset_migrate(
-                    self.instance._original_sys_pool, self.instance.sys_pool
-                )
-            except:
-                raise MiddlewareError(_("Unable to migrate system dataset!"))
-
-        if self.instance._original_sys_rrd_usedataset != self.instance.sys_rrd_usedataset:
-            # Stop collectd to flush data
-            notifier().stop("collectd")
-
-        notifier().restart("system_datasets")
-
-        if self.instance._original_sys_syslog_usedataset != self.instance.sys_syslog_usedataset:
-            notifier().restart("syslogd")
-        if self.instance._original_sys_rrd_usedataset != self.instance.sys_rrd_usedataset:
-            notifier().system_dataset_rrd_toggle()
-            notifier().restart("collectd")
+        self.instance = models.SystemDataset.objects.get(pk=pk)
+        return self.instance
 
 
 class InitialWizardDSForm(Form):

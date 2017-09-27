@@ -67,10 +67,6 @@ class NotifierService(Service):
         except AttributeError:
             return getattr(_n, attr)
 
-    def system_dataset_create(self, mount=True):
-        """Make sure return value is serializable"""
-        return notifier().system_dataset_create(mount=mount) is not None
-
     def common(self, name, method, params=None):
         """Simple wrapper to access methods under freenasUI.common.*"""
         if params is None:
@@ -216,15 +212,6 @@ class NotifierService(Service):
         if args is None:
             args = []
         return getattr(Samba4(), name)(*args)
-
-    def systemdataset_is_decrypted(self):
-        """Temporary workaround to get system dataset crypt state"""
-        systemdataset, basename = notifier().system_dataset_settings()
-        if not systemdataset:
-            return None
-        if not basename:
-            return None
-        return systemdataset.is_decrypted(), basename
 
     def choices(self, name, args=None):
         """Temporary wrapper to get to UI choices"""
