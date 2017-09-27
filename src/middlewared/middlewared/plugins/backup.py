@@ -169,6 +169,8 @@ class BackupService(CRUDService):
 
         if credential['provider'] == 'AMAZON':
             return await self.middleware.call('backup.s3.sync', job, backup, credential)
+        elif credential['provider'] == 'BACKBLAZE':
+            return await self.middleware.call('backup.b2.sync', job, backup, credential)
         else:
             raise NotImplementedError('Unsupported provider: {}'.format(
                 credential['provider']
