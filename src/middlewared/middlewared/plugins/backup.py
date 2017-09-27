@@ -92,8 +92,8 @@ class BackupService(CRUDService):
 
         if credential['provider'] == 'AMAZON':
             data['attributes']['region'] = await self.middleware.call('backup.s3.get_bucket_location', credential['id'], data['attributes']['bucket'])
-        elif credential['provider'] == 'BACKBLAZE':
-            #  BACKBLAZE does not need validation nor new data at this stage
+        elif credential['provider'] in ('BACKBLAZE', 'GCLOUD'):
+            #  BACKBLAZE|GCLOUD does not need validation nor new data at this stage
             pass
         else:
             raise NotImplementedError('Invalid provider: {}'.format(credential['provider']))
@@ -196,6 +196,8 @@ class BackupService(CRUDService):
             return await self.middleware.call('backup.s3.sync', job, backup, credential)
         elif credential['provider'] == 'BACKBLAZE':
             return await self.middleware.call('backup.b2.sync', job, backup, credential)
+        elif credential['provider'] == 'GCLOUD':
+            return await self.middleware.call('backup.gcs.sync', job, backup, credential)
         else:
             raise NotImplementedError('Unsupported provider: {}'.format(
                 credential['provider']
@@ -473,3 +475,55 @@ class BackupGCSService(Service):
         for i in client.list_buckets():
             buckets.append(i._properties)
         return buckets
+
+    @private
+    async def sync(self, job, backup, credential):
+        # Use a temporary file to store rclone file
+        with tempfile.NamedTemporaryFile(mode='w+') as f, tempfile.NamedTemporaryFile(mode='w+') as keyf:
+            # Make sure only root can read it as there is sensitive data
+            os.chmod(f.name, 0o600)
+            os.chmod(keyf.name, 0o600)
+
+            keyf.write(json.dumps(credential['attributes']['keyfile']))
+            keyf.flush()
+
+            f.write("""[remote]
+type = google cloud storage
+client_id =
+client_secret =
+project_number =
+service_account_file = {keyfile}
+""".format(
+                keyfile=keyf.name,
+            ))
+            f.flush()
+
+            args = [
+                '/usr/local/bin/rclone',
+                '--config', f.name,
+                '-v',
+                '--stats', '1s',
+                'sync',
+            ]
+
+            remote_path = 'remote:{}{}'.format(
+                backup['attributes']['bucket'],
+                '/{}'.format(backup['attributes']['folder']) if backup['attributes'].get('folder') else '',
+            )
+
+            if backup['direction'] == 'PUSH':
+                args.extend([backup['path'], remote_path])
+            else:
+                args.extend([remote_path, backup['path']])
+
+            proc = await Popen(
+                args,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            )
+            check_task = asyncio.ensure_future(rclone_check_progress(job, proc))
+            await proc.wait()
+            if proc.returncode != 0:
+                await asyncio.wait_for(check_task, None)
+                raise ValueError('rclone failed: {}'.format(check_task.result()))
+            return True
