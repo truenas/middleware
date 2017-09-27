@@ -14,6 +14,24 @@ import tempfile
 CHUNK_SIZE = 5 * 1024 * 1024
 
 
+async def rclone_check_progress(job, proc):
+    RE_TRANSF = re.compile(r'Transferred:\s*?(.+)$', re.S)
+    read_buffer = ''
+    while True:
+        read = (await proc.stderr.readline()).decode()
+        if read == '':
+            break
+        read_buffer += read
+        if len(read_buffer) > 10240:
+            read_buffer = read_buffer[-10240:]
+        reg = RE_TRANSF.search(read)
+        if reg:
+            transferred = reg.group(1).strip()
+            if not transferred.isdigit():
+                job.set_progress(None, transferred)
+    return read_buffer
+
+
 class BackupCredentialService(CRUDService):
 
     class Config:
@@ -241,6 +259,7 @@ region = {region}
             args = [
                 '/usr/local/bin/rclone',
                 '--config', f.name,
+                '-v',
                 '--stats', '1s',
                 'sync',
             ]
@@ -255,29 +274,12 @@ region = {region}
             else:
                 args.extend([remote_path, backup['path']])
 
-            async def check_progress(job, proc):
-                RE_TRANSF = re.compile(r'Transferred:\s*?(.+)$', re.S)
-                read_buffer = ''
-                while True:
-                    read = (await proc.stderr.readline()).decode()
-                    if read == '':
-                        break
-                    read_buffer += read
-                    if len(read_buffer) > 10240:
-                        read_buffer = read_buffer[-10240:]
-                    reg = RE_TRANSF.search(read)
-                    if reg:
-                        transferred = reg.group(1).strip()
-                        if not transferred.isdigit():
-                            job.set_progress(None, transferred)
-                return read_buffer
-
             proc = await Popen(
                 args,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
             )
-            check_task = asyncio.ensure_future(check_progress(job, proc))
+            check_task = asyncio.ensure_future(rclone_check_progress(job, proc))
             await proc.wait()
             if proc.returncode != 0:
                 await asyncio.wait_for(check_task, None)
@@ -429,29 +431,12 @@ endpoint =
             else:
                 args.extend([remote_path, backup['path']])
 
-            async def check_progress(job, proc):
-                RE_TRANSF = re.compile(r'Transferred:\s*?(.+)$', re.S)
-                read_buffer = ''
-                while True:
-                    read = (await proc.stderr.readline()).decode()
-                    if read == '':
-                        break
-                    read_buffer += read
-                    if len(read_buffer) > 10240:
-                        read_buffer = read_buffer[-10240:]
-                    reg = RE_TRANSF.search(read)
-                    if reg:
-                        transferred = reg.group(1).strip()
-                        if not transferred.isdigit():
-                            job.set_progress(None, transferred)
-                return read_buffer
-
             proc = await Popen(
                 args,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
             )
-            check_task = asyncio.ensure_future(check_progress(job, proc))
+            check_task = asyncio.ensure_future(rclone_check_progress(job, proc))
             await proc.wait()
             if proc.returncode != 0:
                 await asyncio.wait_for(check_task, None)
