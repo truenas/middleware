@@ -101,6 +101,7 @@ define([
               'datastore.query', ['system.cloudcredentials', [['id', '=', value]], {get: true} ],
               function(result) {
                 if(result.provider == 'AMAZON') me.showAmazon(result);
+                if(result.provider == 'BACKBLAZE') me.showBackblaze(result);
               }
             );
           }
@@ -129,6 +130,7 @@ define([
       hideAll: function() {
         domStyle.set(this.dapProviderError, "display", "none");
         domStyle.set(this.dapAmazon, "display", "none");
+        domStyle.set(this.dapBackblaze, "display", "none");
       },
       showAmazon: function(credential) {
         var me = this;
@@ -150,6 +152,37 @@ define([
             me._folder = new TextBox({
               name: "folder"
             }, me.dapAmazonFolder);
+            if(me.initial.folder) me._folder.set('value', me.initial.folder);
+
+            me._hideLoading();
+          },
+          function(err) {
+            me.dapProviderError.innerHTML = err.error;
+            domStyle.set(me.dapProviderError, "display", "");
+            me._hideLoading();
+          }
+        );
+      },
+      showBackblaze: function(credential) {
+        var me = this;
+        Middleware.call(
+          'backup.b2.get_buckets', [credential.id],
+          function(result) {
+            var options = [{label: "-----", value: ""}];
+            for(var i=0;i<result.length;i++) {
+              options.push({label: result[i].bucketName, value: result[i].bucketName});
+            }
+            domStyle.set(me.dapBackblaze, "display", "table-row");
+            me._buckets = new Select({
+              name: "bucket",
+              options: options,
+              value: ''
+            }, me.dapBackblazeBuckets);
+            if(me.initial.bucket) me._buckets.set('value', me.initial.bucket);
+
+            me._folder = new TextBox({
+              name: "folder"
+            }, me.dapBackblazeFolder);
             if(me.initial.folder) me._folder.set('value', me.initial.folder);
 
             me._hideLoading();

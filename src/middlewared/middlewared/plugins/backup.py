@@ -70,6 +70,9 @@ class BackupService(CRUDService):
 
         if credential['provider'] == 'AMAZON':
             data['attributes']['region'] = await self.middleware.call('backup.s3.get_bucket_location', credential['id'], data['attributes']['bucket'])
+        elif credential['provider'] == 'BACKBLAZE':
+            #  BACKBLAZE does not need validation nor new data at this stage
+            pass
         else:
             raise NotImplementedError('Invalid provider: {}'.format(credential['provider']))
 
@@ -411,6 +414,7 @@ endpoint =
             args = [
                 '/usr/local/bin/rclone',
                 '--config', f.name,
+                '-v',
                 '--stats', '1s',
                 'sync',
             ]
