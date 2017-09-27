@@ -3382,10 +3382,15 @@ class CloudCredentialsForm(ModelForm):
         max_length=200,
         required=False,
     )
+    GCLOUD_keyfile = FileField(
+        label=_('JSON Service Account Key'),
+        required=False,
+    )
 
     PROVIDER_MAP = {
         'AMAZON': ['access_key', 'secret_key'],
         'BACKBLAZE': ['account_id', 'app_key'],
+        'GCLOUD': ['keyfile'],
     }
 
     class Meta:
@@ -3402,6 +3407,14 @@ class CloudCredentialsForm(ModelForm):
         if self.instance.id:
             for field in self.PROVIDER_MAP.get(self.instance.provider, []):
                 self.fields[f'{self.instance.provider}_{field}'].initial = self.instance.attributes.get(field)
+
+    def clean_GCLOUD_keyfile(self):
+        keyfile = self.cleaned_data.get('GCLOUD_keyfile')
+        keyfile = keyfile.read()
+        try:
+            return json.loads(keyfile)
+        except Exception as e:
+            raise forms.ValodationError(_('Failed to load key file: %s') % e)
 
     def clean(self):
         provider = self.cleaned_data.get('provider')
@@ -3420,6 +3433,7 @@ class CloudCredentialsForm(ModelForm):
                 raise MiddlewareError(f'Unknown provider {provider}')
 
             attributes = {}
+
             for field in fields:
                 attributes[field] = self.cleaned_data.get(f'{provider}_{field}')
 

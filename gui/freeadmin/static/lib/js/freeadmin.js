@@ -1546,12 +1546,13 @@ require([
 
         var PROVIDER_MAP = {
           'AMAZON': ['access_key', 'secret_key'],
-          'BACKBLAZE': ['account_id', 'app_key']
+          'BACKBLAZE': ['account_id', 'app_key'],
+          'GCLOUD': ['keyfile']
         };
 
         for(var k in PROVIDER_MAP) {
           for(var i=0;i<PROVIDER_MAP[k].length;i++) {
-            var tr = registry.byId("id_" + k + "_" + PROVIDER_MAP[k][i]).domNode.parentNode.parentNode;
+            var tr = query(dom.byId("id_" + k + "_" + PROVIDER_MAP[k][i])).closest("tr")[0];
             if(provider == k) {
               domStyle.set(tr, "display", "table-row");
             } else {
