@@ -1,6 +1,9 @@
+from google.cloud import storage
+
 from middlewared.schema import accepts, Bool, Dict, Int, Patch, Ref, Str
 from middlewared.service import CallError, CRUDService, Service, item_method, filterable, job, private
 from middlewared.utils import Popen
+
 
 import asyncio
 import boto3
@@ -47,6 +50,7 @@ class BackupCredentialService(CRUDService):
         Str('provider', enum=[
             'AMAZON',
             'BACKBLAZE',
+            'GCLOUD',
         ]),
         Dict('attributes', additional_attrs=True),
         register=True,
@@ -442,3 +446,30 @@ endpoint =
                 await asyncio.wait_for(check_task, None)
                 raise ValueError('rclone failed: {}'.format(check_task.result()))
             return True
+
+
+class BackupGCSService(Service):
+
+    class Config:
+        namespace = 'backup.gcs'
+
+    def __get_client(self, id):
+        credential = self.middleware.call_sync('datastore.query', 'system.cloudcredentials', [('id', '=', id)], {'get': True})
+
+        with tempfile.NamedTemporaryFile(mode='w+') as f:
+            # Make sure only root can read it as there is sensitive data
+            os.chmod(f.name, 0o600)
+            f.write(json.dumps(credential['attributes']['keyfile']))
+            f.flush()
+            client = storage.Client.from_service_account_json(f.name)
+
+        return client
+
+    @accepts(Int('id'))
+    def get_buckets(self, id):
+        """Returns buckets from a given B2 credential."""
+        client = self.__get_client(id)
+        buckets = []
+        for i in client.list_buckets():
+            buckets.append(i._properties)
+        return buckets
