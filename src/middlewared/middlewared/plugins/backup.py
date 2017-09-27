@@ -1,12 +1,14 @@
 from middlewared.schema import accepts, Bool, Dict, Int, Patch, Ref, Str
-from middlewared.service import CRUDService, Service, item_method, filterable, job, private
+from middlewared.service import CallError, CRUDService, Service, item_method, filterable, job, private
 from middlewared.utils import Popen
 
 import asyncio
 import boto3
+import json
 import os
 import subprocess
 import re
+import requests
 import tempfile
 
 CHUNK_SIZE = 5 * 1024 * 1024
@@ -357,6 +359,33 @@ class BackupB2Service(Service):
 
     class Config:
         namespace = 'backup.b2'
+
+    def __get_auth(self, id):
+        credential = self.middleware.call_sync('datastore.query', 'system.cloudcredentials', [('id', '=', id)], {'get': True})
+
+        r = requests.get(
+            'https://api.backblazeb2.com/b2api/v1/b2_authorize_account',
+            auth=(credential['attributes'].get('account_id'), credential['attributes'].get('app_key')),
+        )
+        if r.status_code != 200:
+            raise ValueError(f'Invalid request: {r.text}')
+        return r.json()
+
+    @accepts(Int('id'))
+    def get_buckets(self, id):
+        """Returns buckets from a given B2 credential."""
+        auth = self.__get_auth(id)
+        r = requests.post(
+            f'{auth["apiUrl"]}/b2api/v1/b2_list_buckets',
+            headers={
+                'Authorization': auth['authorizationToken'],
+                'Content-Type': 'application/json',
+            },
+            data=json.dumps({'accountId': auth['accountId']}),
+        )
+        if r.status_code != 200:
+            raise CallError(f'Invalid B2 request: [{r.status_code}] {r.text}')
+        return r.json()['buckets']
 
     @private
     async def sync(self, job, backup, credential):
