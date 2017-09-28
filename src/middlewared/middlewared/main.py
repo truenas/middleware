@@ -328,7 +328,7 @@ class FileApplication(object):
                     if read == b'':
                         break
                     resp.write(read)
-                    #await web.drain()
+                    # await web.drain()
             await self.middleware.threaded(read_write)
             await resp.drain()
 
@@ -391,7 +391,7 @@ class FileApplication(object):
                 f = os.fdopen(job.write_fd, 'wb')
                 i = 0
                 while True:
-                    read = form['file'][i* 1024:(i + 1) * 1024]
+                    read = form['file'][i * 1024:(i + 1) * 1024]
                     if read == b'':
                         break
                     f.write(read)
@@ -677,7 +677,6 @@ class Middleware(object):
             if asyncio.iscoroutinefunction(f):
                 await call
 
-
         self.logger.debug('All plugins loaded')
 
     def __setup_periodic_tasks(self):
@@ -920,7 +919,7 @@ class Middleware(object):
 
         if self.loop_monitor:
             self.__loop.set_debug(True)
-            #loop.slow_callback_duration(0.2)
+            # loop.slow_callback_duration(0.2)
             t = threading.Thread(target=self._loop_monitor_thread)
             t.setDaemon(True)
             t.start()

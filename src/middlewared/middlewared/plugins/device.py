@@ -2,7 +2,6 @@ import asyncio
 import os
 import shlex
 import socket
-import time
 
 from middlewared.schema import accepts, Str
 from middlewared.service import Service

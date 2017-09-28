@@ -49,7 +49,7 @@ class ServiceMonitorThread(threading.Thread):
         enabled = False
 
         # XXX yet another hack. We need a generic mechanism/interface that we can use that tells
-        # use if a service is enabled or not. When the service monitor starts up, it assumes 
+        # use if a service is enabled or not. When the service monitor starts up, it assumes
         # self.connected is True. If the service is down, but enabled, and we restart the middleware,
         # and the service becomes available, we do not see a transition occur and therefore do not
         # start the service.
@@ -187,8 +187,10 @@ class ServiceMonitorService(Service):
 
             self.logger.debug("[ServiceMonitorService] monitoring {}".format(thread_name))
 
-            thread = ServiceMonitorThread(id=s['id'], frequency=s['sm_frequency'], retry=s['sm_retry'],
-                host=s['sm_host'], port=s['sm_port'], name=thread_name, logger=self.logger, middleware=self.middleware)
+            thread = ServiceMonitorThread(
+                id=s['id'], frequency=s['sm_frequency'], retry=s['sm_retry'], host=s['sm_host'],
+                port=s['sm_port'], name=thread_name, logger=self.logger, middleware=self.middleware
+            )
             self.threads[thread_name] = thread
             thread.start()
 
