@@ -1179,17 +1179,13 @@ class AdvancedForm(ModelForm):
             events.append("refreshTree()")
 
     def clean(self):
-        cdata = self.cleaned_data
-
-        # todo: make this and ix-syslogd support udp6
-        if cdata["adv_syslogserver"]:
-            syslogserver = cdata.get("adv_syslogserver")
-            match = re.match("^[\w\.\-]+(\:\d+)?$", syslogserver)
-            if match is None:
-                self._errors['adv_syslogserver'] = self.error_class([_(
-                    "Invalid syslog server format")
-                ])
-        return cdata
+        syslogserver = self.adv_syslogserver
+        match = re.match("^[\w\.\-]+(\:\d+)?$", syslogserver)
+        if match is None:
+            self._errors['adv_syslogserver'] = self.error_class([_(
+                "Invalid syslog server format")
+            ])
+        return adv_syslogserver
 
 class EmailForm(ModelForm):
     em_pass1 = forms.CharField(
