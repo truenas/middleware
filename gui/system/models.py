@@ -138,16 +138,6 @@ class Settings(Model):
         default="America/Los_Angeles",
         verbose_name=_("Timezone")
     )
-    stg_syslogserver = models.CharField(
-        default='',
-        blank=True,
-        max_length=120,
-        verbose_name=_("Syslog server"),
-        help_text=_("Specifies the server and port syslog messages "
-                    "will be sent to.  The accepted format is hostname:port "
-                    "or ip:port, if :port is not specified it will default to "
-                    "port 514 (this field currently only takes IPv4 addresses)"),
-    )
     stg_wizardshown = models.BooleanField(
         editable=False,
         default=False,
@@ -236,6 +226,16 @@ class NTPServer(Model):
 
 
 class Advanced(Model):
+    adv_syslogserver = models.CharField(
+        default='',
+        blank=True,
+        max_length=120,
+        verbose_name=_("Syslog server"),
+        help_text=_("Specifies the server and port syslog messages "
+                    "will be sent to.  The accepted format is hostname:port "
+                    "or ip:port, if :port is not specified it will default to "
+                    "port 514 (this field currently only takes IPv4 addresses)"),
+    )
     adv_sysloglevel = models.CharField(
         max_length=120,
         choices=choices.SYS_LOG_LEVEL,
