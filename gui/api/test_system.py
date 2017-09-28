@@ -195,7 +195,6 @@ class SettingsResourceTest(APITestCase):
             'stg_guiv6address': '::',
             'stg_kbdmap': '',
             'stg_language': 'en',
-            'stg_syslogserver': '',
             'stg_timezone': 'America/Los_Angeles',
             'stg_wizardshown': False
         })
@@ -245,6 +244,7 @@ class AdvancedResourceTest(APITestCase):
         self.assertEqual(data, {
             'id': self._advanced.id,
             'adv_advancedmode': False,
+            'adv_syslogserver': '',
             'adv_anonstats': True,
             'adv_anonstats_token': '',
             'adv_autotune': False,
