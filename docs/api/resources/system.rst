@@ -33,6 +33,7 @@ List resource
       Content-Type: application/json
 
         {
+                "adv_syslogserver": "",
                 "adv_sysloglevel": "",
                 "adv_serialconsole": false,
                 "adv_traceback": true,
@@ -103,6 +104,7 @@ Update resource
                 "adv_serialspeed": "9600"
         }
 
+   :json string adv_syslogserver: Syslog server
    :json boolean adv_consolemenu: Enable Console Menu
    :json boolean adv_serialconsole: Use Serial Console
    :json string adv_serialport: 0x2f8, 0x3f8
@@ -722,7 +724,6 @@ Update resource
                 "stg_guihttpsredirect": true,
                 "stg_guiprotocol": "http",
                 "stg_guiv6address": "::",
-                "stg_syslogserver": "",
                 "stg_language": "en",
                 "stg_directoryservice": "",
                 "stg_guiaddress": "0.0.0.0",
@@ -739,7 +740,6 @@ Update resource
    :json string stg_language: webguil language
    :json string stg_kbdmap: see /usr/share/syscons/keymaps/INDEX.keymaps
    :json string stg_timezone: see /usr/share/zoneinfo
-   :json string stg_syslogserver: Syslog server
    :json string stg_directoryservice: activedirectory, ldap, nt4, nis
    :reqheader Content-Type: the request content type
    :resheader Content-Type: the response content type
