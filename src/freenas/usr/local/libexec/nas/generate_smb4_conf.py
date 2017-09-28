@@ -1275,12 +1275,6 @@ def smb4_setup(client):
     smb4_mkdir("/var/log/samba4")
     os.chmod("/var/log/samba4", 0o755)
 
-    smb4_unlink("/usr/local/etc/smb.conf")
-    smb4_unlink("/usr/local/etc/smb4.conf")
-
-    if not client.call('notifier.is_freenas') and client.call('notifier.failover_status') == 'BACKUP':
-        return
-
     systemdataset_is_decrypted = client.call('notifier.systemdataset_is_decrypted')
 
     if not systemdataset_is_decrypted:

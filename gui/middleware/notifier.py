@@ -5068,10 +5068,12 @@ class notifier(metaclass=HookMetaclass):
         return systemdataset, basename
 
     def system_dataset_create(self, mount=True):
+        systemdataset, basename = self.system_dataset_settings()
 
         if (
             hasattr(self, 'failover_status') and
-            self.failover_status() == 'BACKUP'
+            self.failover_status() == 'BACKUP' and
+            (basename and basename != "freenas-boot/.system")
         ):
             if os.path.exists(SYSTEMPATH):
                 try:
@@ -5080,7 +5082,6 @@ class notifier(metaclass=HookMetaclass):
                     pass
             return None
 
-        systemdataset, basename = self.system_dataset_settings()
         if not basename:
             if os.path.exists(SYSTEMPATH):
                 try:
