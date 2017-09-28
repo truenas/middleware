@@ -72,7 +72,7 @@ class SystemService(Service):
             'loadavg': os.getloadavg(),
             'uptime': uptime,
             'system_serial': serial,
-            'system_product': serial,
+            'system_product': product,
             'boottime': datetime.fromtimestamp(
                 struct.unpack('l', sysctl.filter('kern.boottime')[0].value[:8])[0]
             ),
