@@ -13,6 +13,7 @@ import subprocess
 import re
 import requests
 import tempfile
+import textwrap
 
 CHUNK_SIZE = 5 * 1024 * 1024
 
@@ -249,13 +250,14 @@ class BackupS3Service(Service):
             # Make sure only root can read it ad there is sensitive data
             os.chmod(f.name, 0o600)
 
-            f.write("""[remote]
-type = s3
-env_auth = false
-access_key_id = {access_key}
-secret_access_key = {secret_key}
-region = {region}
-""".format(
+            f.write(textwrap.dedent("""
+                [remote]
+                type = s3
+                env_auth = false
+                access_key_id = {access_key}
+                secret_access_key = {secret_key}
+                region = {region}
+                """).format(
                 access_key=credential['attributes']['access_key'],
                 secret_key=credential['attributes']['secret_key'],
                 region=backup['attributes']['region'] or '',
@@ -407,13 +409,14 @@ class BackupB2Service(Service):
             # Make sure only root can read it as there is sensitive data
             os.chmod(f.name, 0o600)
 
-            f.write("""[remote]
-type = b2
-env_auth = false
-account = {account}
-key = {key}
-endpoint =
-""".format(
+            f.write(textwrap.dedent("""
+                [remote]
+                type = b2
+                env_auth = false
+                account = {account}
+                key = {key}
+                endpoint =
+                """).format(
                 account=credential['attributes']['account_id'],
                 key=credential['attributes']['app_key'],
             ))
