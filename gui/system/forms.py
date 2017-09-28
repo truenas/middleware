@@ -1185,7 +1185,7 @@ class AdvancedForm(ModelForm):
             self._errors['adv_syslogserver'] = self.error_class([_(
                 "Invalid syslog server format")
             ])
-        return adv_syslogserver
+        return syslogserver
 
 class EmailForm(ModelForm):
     em_pass1 = forms.CharField(
