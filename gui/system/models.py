@@ -573,36 +573,6 @@ class SystemDataset(Model):
         icon_view = "SystemDatasetIcon"
         icon_add = "SystemDatasetIcon"
 
-    def __init__(self, *args, **kwargs):
-        super(SystemDataset, self).__init__(*args, **kwargs)
-        self.__sys_uuid_field = None
-
-    @property
-    def usedataset(self):
-        return self.sys_syslog_usedataset
-
-    def is_decrypted(self):
-        if self.sys_pool == 'freenas-boot':
-            return True
-        volume = Volume.objects.filter(vol_name=self.sys_pool)
-        if not volume.exists():
-            return False
-        return volume[0].is_decrypted()
-
-    def get_sys_uuid(self):
-        if not self.__sys_uuid_field:
-            if (
-                not notifier().is_freenas() and
-                notifier().failover_node() == 'B'
-            ):
-                self.__sys_uuid_field = 'sys_uuid_b'
-            else:
-                self.__sys_uuid_field = 'sys_uuid'
-        return getattr(self, self.__sys_uuid_field)
-
-    def new_uuid(self):
-        setattr(self, self.__sys_uuid_field, uuid.uuid4().hex)
-
 
 class Update(Model):
     upd_autocheck = models.BooleanField(
