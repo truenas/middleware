@@ -65,7 +65,7 @@ class SystemDatasetService(ConfigService):
         new['rrd_usedataset'] = new['rrd']
         await self.middleware.call('datastore.update', 'system.systemdataset', config['id'], new, {'prefix': 'sys_'})
 
-        if 'pool' in data and data['pool'] != config['pool']:
+        if 'pool' in data and config['pool'] and data['pool'] != config['pool']:
             await self.migrate(config['pool'], data['pool'])
 
         if config['rrd'] != new['rrd']:
@@ -94,6 +94,25 @@ class SystemDatasetService(ConfigService):
                 return
 
         config = await self.config()
+
+        if config['pool'] and config['pool'] != 'freenas-boot':
+            if not await self.middleware.call('pool.query', [('name', '=', config['pool'])]):
+                await self.middleware.call('systemdataset.update', {'pool': ''})
+                config = await self.config()
+
+        if not config['pool'] and not await self.middleware.call('system.is_freenas'):
+            await self.middleware.call('systemdataset.update', {'pool': 'freenas-boot'})
+            config = await self.config()
+        elif not config['pool']:
+            pool = None
+            for p in await self.middleware.call('pool.query', [], {'order_by': ['encrypt']}):
+                if p['is_decrypted']:
+                    pool = p
+                    break
+            if pool:
+                await self.middleware.call('systemdataset.update', {'pool': pool['name']})
+                config = await self.config()
+
         if not config['basename']:
             if os.path.exists(SYSDATASET_PATH):
                 try:
