@@ -139,6 +139,7 @@ urlpatterns = [
     url(r'^CA/export/certificate/(?P<id>\d+)/$', CA_export_certificate, name="CA_export_certificate"),
     url(r'^CA/export/privatekey/(?P<id>\d+)/$', CA_export_privatekey, name="CA_export_privatekey"),
     url(r'^CA/info/(?P<id>\d+)/$', CA_info, name="CA_info"),
+    url(r'^CA/sign_csr/(?P<id>\d+)/$', CA_sign_csr, name="CA_sign_csr"),
     url(r'^certificate/import/$', certificate_import, name="certificate_import"),
     url(r'^certificate/create/internal/$', certificate_create_internal, name="certificate_create_internal"),
     url(r'^certificate/edit/(?P<id>\d+)/$', certificate_edit, name="certificate_edit"),
