@@ -1542,19 +1542,23 @@ require([
 
     cloudCredentialsProvider = function() {
 
-        var provider = registry.byId("id_provider");
-        var trp = provider.domNode.parentNode.parentNode;
+        var provider = registry.byId("id_provider").get('value');
 
-        var access_key = registry.byId("id_access_key");
-        var secret_key = registry.byId("id_secret_key");
-        var tra = access_key.domNode.parentNode.parentNode;
-        var trs = secret_key.domNode.parentNode.parentNode;
-        if(provider.get('value') == 'AMAZON') {
-            domStyle.set(tra, "display", "table-row");
-            domStyle.set(trs, "display", "table-row");
-        } else {
-            domStyle.set(tra, "display", "none");
-            domStyle.set(trs, "display", "none");
+        var PROVIDER_MAP = {
+          'AMAZON': ['access_key', 'secret_key'],
+          'BACKBLAZE': ['account_id', 'app_key'],
+          'GCLOUD': ['keyfile']
+        };
+
+        for(var k in PROVIDER_MAP) {
+          for(var i=0;i<PROVIDER_MAP[k].length;i++) {
+            var tr = query(dom.byId("id_" + k + "_" + PROVIDER_MAP[k][i])).closest("tr")[0];
+            if(provider == k) {
+              domStyle.set(tr, "display", "table-row");
+            } else {
+              domStyle.set(tr, "display", "none");
+            }
+          }
         }
 
     }

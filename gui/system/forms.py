@@ -3346,14 +3346,36 @@ class CertificateCreateCSRForm(ModelForm):
 
 class CloudCredentialsForm(ModelForm):
 
-    access_key = forms.CharField(
+    AMAZON_access_key = forms.CharField(
         label=_('Access Key'),
         max_length=200,
+        required=False,
     )
-    secret_key = forms.CharField(
+    AMAZON_secret_key = forms.CharField(
         label=_('Secret Key'),
         max_length=200,
+        required=False,
     )
+    BACKBLAZE_account_id = forms.CharField(
+        label=_('Account ID'),
+        max_length=200,
+        required=False,
+    )
+    BACKBLAZE_app_key = forms.CharField(
+        label=_('Application Key'),
+        max_length=200,
+        required=False,
+    )
+    GCLOUD_keyfile = FileField(
+        label=_('JSON Service Account Key'),
+        required=False,
+    )
+
+    PROVIDER_MAP = {
+        'AMAZON': ['access_key', 'secret_key'],
+        'BACKBLAZE': ['account_id', 'app_key'],
+        'GCLOUD': ['keyfile'],
+    }
 
     class Meta:
         model = models.CloudCredentials
@@ -3367,19 +3389,42 @@ class CloudCredentialsForm(ModelForm):
             'cloudCredentialsProvider();'
         )
         if self.instance.id:
-            if self.instance.provider == 'AMAZON':
-                self.fields['access_key'].initial = self.instance.attributes.get('access_key')
-                self.fields['secret_key'].initial = self.instance.attributes.get('secret_key')
+            for field in self.PROVIDER_MAP.get(self.instance.provider, []):
+                self.fields[f'{self.instance.provider}_{field}'].initial = self.instance.attributes.get(field)
+
+    def clean_GCLOUD_keyfile(self):
+        keyfile = self.cleaned_data.get('GCLOUD_keyfile')
+        keyfile = keyfile.read()
+        try:
+            return json.loads(keyfile)
+        except Exception as e:
+            raise forms.ValodationError(_('Failed to load key file: %s') % e)
+
+    def clean(self):
+        provider = self.cleaned_data.get('provider')
+        if not provider:
+            return self.cleaned_data
+        for field in self.PROVIDER_MAP.get(provider, []):
+            if not self.cleaned_data.get(f'{provider}_{field}'):
+                self._errors[f'{provider}_{field}'] = self.error_class([_('This field is required.')])
+        return self.cleaned_data
 
     def save(self, *args, **kwargs):
         with client as c:
+            provider = self.cleaned_data.get('provider')
+            fields = self.PROVIDER_MAP.get(provider)
+            if not fields:
+                raise MiddlewareError(f'Unknown provider {provider}')
+
+            attributes = {}
+
+            for field in fields:
+                attributes[field] = self.cleaned_data.get(f'{provider}_{field}')
+
             data = {
                 'name': self.cleaned_data.get('name'),
-                'provider': self.cleaned_data.get('provider'),
-                'attributes': {
-                    'access_key': self.cleaned_data.get('access_key'),
-                    'secret_key': self.cleaned_data.get('secret_key'),
-                }
+                'provider': provider,
+                'attributes': attributes,
             }
             if self.instance.id:
                 c.call('backup.credential.update', self.instance.id, data)

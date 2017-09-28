@@ -1,15 +1,38 @@
+from google.cloud import storage
+
 from middlewared.schema import accepts, Bool, Dict, Int, Patch, Ref, Str
-from middlewared.service import CRUDService, Service, item_method, filterable, job, private
+from middlewared.service import CallError, CRUDService, Service, item_method, filterable, job, private
 from middlewared.utils import Popen
+
 
 import asyncio
 import boto3
+import json
 import os
 import subprocess
 import re
+import requests
 import tempfile
 
 CHUNK_SIZE = 5 * 1024 * 1024
+
+
+async def rclone_check_progress(job, proc):
+    RE_TRANSF = re.compile(r'Transferred:\s*?(.+)$', re.S)
+    read_buffer = ''
+    while True:
+        read = (await proc.stderr.readline()).decode()
+        if read == '':
+            break
+        read_buffer += read
+        if len(read_buffer) > 10240:
+            read_buffer = read_buffer[-10240:]
+        reg = RE_TRANSF.search(read)
+        if reg:
+            transferred = reg.group(1).strip()
+            if not transferred.isdigit():
+                job.set_progress(None, transferred)
+    return read_buffer
 
 
 class BackupCredentialService(CRUDService):
@@ -26,6 +49,8 @@ class BackupCredentialService(CRUDService):
         Str('name'),
         Str('provider', enum=[
             'AMAZON',
+            'BACKBLAZE',
+            'GCLOUD',
         ]),
         Dict('attributes', additional_attrs=True),
         register=True,
@@ -67,6 +92,9 @@ class BackupService(CRUDService):
 
         if credential['provider'] == 'AMAZON':
             data['attributes']['region'] = await self.middleware.call('backup.s3.get_bucket_location', credential['id'], data['attributes']['bucket'])
+        elif credential['provider'] in ('BACKBLAZE', 'GCLOUD'):
+            #  BACKBLAZE|GCLOUD does not need validation nor new data at this stage
+            pass
         else:
             raise NotImplementedError('Invalid provider: {}'.format(credential['provider']))
 
@@ -166,6 +194,10 @@ class BackupService(CRUDService):
 
         if credential['provider'] == 'AMAZON':
             return await self.middleware.call('backup.s3.sync', job, backup, credential)
+        elif credential['provider'] == 'BACKBLAZE':
+            return await self.middleware.call('backup.b2.sync', job, backup, credential)
+        elif credential['provider'] == 'GCLOUD':
+            return await self.middleware.call('backup.gcs.sync', job, backup, credential)
         else:
             raise NotImplementedError('Unsupported provider: {}'.format(
                 credential['provider']
@@ -233,6 +265,7 @@ region = {region}
             args = [
                 '/usr/local/bin/rclone',
                 '--config', f.name,
+                '-v',
                 '--stats', '1s',
                 'sync',
             ]
@@ -247,29 +280,12 @@ region = {region}
             else:
                 args.extend([remote_path, backup['path']])
 
-            async def check_progress(job, proc):
-                RE_TRANSF = re.compile(r'Transferred:\s*?(.+)$', re.S)
-                read_buffer = ''
-                while True:
-                    read = (await proc.stderr.readline()).decode()
-                    if read == '':
-                        break
-                    read_buffer += read
-                    if len(read_buffer) > 10240:
-                        read_buffer = read_buffer[-10240:]
-                    reg = RE_TRANSF.search(read)
-                    if reg:
-                        transferred = reg.group(1).strip()
-                        if not transferred.isdigit():
-                            job.set_progress(None, transferred)
-                return read_buffer
-
             proc = await Popen(
                 args,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
             )
-            check_task = asyncio.ensure_future(check_progress(job, proc))
+            check_task = asyncio.ensure_future(rclone_check_progress(job, proc))
             await proc.wait()
             if proc.returncode != 0:
                 await asyncio.wait_for(check_task, None)
@@ -350,3 +366,164 @@ region = {region}
         if obj['KeyCount'] == 0:
             return []
         return obj['Contents']
+
+
+class BackupB2Service(Service):
+
+    class Config:
+        namespace = 'backup.b2'
+
+    def __get_auth(self, id):
+        credential = self.middleware.call_sync('datastore.query', 'system.cloudcredentials', [('id', '=', id)], {'get': True})
+
+        r = requests.get(
+            'https://api.backblazeb2.com/b2api/v1/b2_authorize_account',
+            auth=(credential['attributes'].get('account_id'), credential['attributes'].get('app_key')),
+        )
+        if r.status_code != 200:
+            raise ValueError(f'Invalid request: {r.text}')
+        return r.json()
+
+    @accepts(Int('id'))
+    def get_buckets(self, id):
+        """Returns buckets from a given B2 credential."""
+        auth = self.__get_auth(id)
+        r = requests.post(
+            f'{auth["apiUrl"]}/b2api/v1/b2_list_buckets',
+            headers={
+                'Authorization': auth['authorizationToken'],
+                'Content-Type': 'application/json',
+            },
+            data=json.dumps({'accountId': auth['accountId']}),
+        )
+        if r.status_code != 200:
+            raise CallError(f'Invalid B2 request: [{r.status_code}] {r.text}')
+        return r.json()['buckets']
+
+    @private
+    async def sync(self, job, backup, credential):
+        # Use a temporary file to store rclone file
+        with tempfile.NamedTemporaryFile(mode='w+') as f:
+            # Make sure only root can read it as there is sensitive data
+            os.chmod(f.name, 0o600)
+
+            f.write("""[remote]
+type = b2
+env_auth = false
+account = {account}
+key = {key}
+endpoint =
+""".format(
+                account=credential['attributes']['account_id'],
+                key=credential['attributes']['app_key'],
+            ))
+            f.flush()
+
+            args = [
+                '/usr/local/bin/rclone',
+                '--config', f.name,
+                '-v',
+                '--stats', '1s',
+                'sync',
+            ]
+
+            remote_path = 'remote:{}{}'.format(
+                backup['attributes']['bucket'],
+                '/{}'.format(backup['attributes']['folder']) if backup['attributes'].get('folder') else '',
+            )
+
+            if backup['direction'] == 'PUSH':
+                args.extend([backup['path'], remote_path])
+            else:
+                args.extend([remote_path, backup['path']])
+
+            proc = await Popen(
+                args,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            )
+            check_task = asyncio.ensure_future(rclone_check_progress(job, proc))
+            await proc.wait()
+            if proc.returncode != 0:
+                await asyncio.wait_for(check_task, None)
+                raise ValueError('rclone failed: {}'.format(check_task.result()))
+            return True
+
+
+class BackupGCSService(Service):
+
+    class Config:
+        namespace = 'backup.gcs'
+
+    def __get_client(self, id):
+        credential = self.middleware.call_sync('datastore.query', 'system.cloudcredentials', [('id', '=', id)], {'get': True})
+
+        with tempfile.NamedTemporaryFile(mode='w+') as f:
+            # Make sure only root can read it as there is sensitive data
+            os.chmod(f.name, 0o600)
+            f.write(json.dumps(credential['attributes']['keyfile']))
+            f.flush()
+            client = storage.Client.from_service_account_json(f.name)
+
+        return client
+
+    @accepts(Int('id'))
+    def get_buckets(self, id):
+        """Returns buckets from a given B2 credential."""
+        client = self.__get_client(id)
+        buckets = []
+        for i in client.list_buckets():
+            buckets.append(i._properties)
+        return buckets
+
+    @private
+    async def sync(self, job, backup, credential):
+        # Use a temporary file to store rclone file
+        with tempfile.NamedTemporaryFile(mode='w+') as f, tempfile.NamedTemporaryFile(mode='w+') as keyf:
+            # Make sure only root can read it as there is sensitive data
+            os.chmod(f.name, 0o600)
+            os.chmod(keyf.name, 0o600)
+
+            keyf.write(json.dumps(credential['attributes']['keyfile']))
+            keyf.flush()
+
+            f.write("""[remote]
+type = google cloud storage
+client_id =
+client_secret =
+project_number =
+service_account_file = {keyfile}
+""".format(
+                keyfile=keyf.name,
+            ))
+            f.flush()
+
+            args = [
+                '/usr/local/bin/rclone',
+                '--config', f.name,
+                '-v',
+                '--stats', '1s',
+                'sync',
+            ]
+
+            remote_path = 'remote:{}{}'.format(
+                backup['attributes']['bucket'],
+                '/{}'.format(backup['attributes']['folder']) if backup['attributes'].get('folder') else '',
+            )
+
+            if backup['direction'] == 'PUSH':
+                args.extend([backup['path'], remote_path])
+            else:
+                args.extend([remote_path, backup['path']])
+
+            proc = await Popen(
+                args,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            )
+            check_task = asyncio.ensure_future(rclone_check_progress(job, proc))
+            await proc.wait()
+            if proc.returncode != 0:
+                await asyncio.wait_for(check_task, None)
+                raise ValueError('rclone failed: {}'.format(check_task.result()))
+            return True
