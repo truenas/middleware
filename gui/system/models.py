@@ -29,7 +29,6 @@ import os
 import re
 import signal
 import time
-import uuid
 
 from dateutil import parser as dtparser
 
@@ -43,7 +42,6 @@ from OpenSSL import crypto
 from freenasUI import choices
 from freenasUI.freeadmin.models import DictField, Model, UserField
 from freenasUI.middleware.notifier import notifier
-from freenasUI.storage.models import Volume
 from freenasUI.support.utils import get_license
 from licenselib.license import ContractType
 
