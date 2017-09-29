@@ -3059,6 +3059,12 @@ class CertificateAuthorityResourceMixin(object):
             bundle.data['CA_type_intermediate'] = bundle.obj.CA_type_intermediate
 
             if self.is_webclient(bundle.request):
+                bundle.data['_sign_csr_url'] = reverse(
+                    'CA_sign_csr',
+                    kwargs={
+                        'id': bundle.obj.id
+                    }
+                )
                 bundle.data['_edit_url'] = reverse(
                     'CA_edit',
                     kwargs={

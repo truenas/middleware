@@ -1678,6 +1678,25 @@ def CA_edit(request, id):
         'form': form
     })
 
+def CA_sign_csr(request, id):
+
+    ca = models.CertificateAuthority.objects.get(pk=id)
+
+    if request.method == 'POST':
+        form = forms.CertificateAuthoritySignCSRForm(request.POST, instance=ca)
+        if form.is_valid():
+            form.save()
+            return JsonResp(
+                request,
+                message=_("CSR signed successfully.")
+            )
+
+    else:
+        form = forms.CertificateAuthoritySignCSRForm(instance=ca)
+
+    return render(request, "system/certificate/CA_edit.html", {
+        'form': form
+    })
 
 def buf_generator(buf):
     for line in buf:

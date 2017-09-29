@@ -2853,6 +2853,50 @@ class CertificateAuthorityCreateIntermediateForm(ModelForm):
         model = models.CertificateAuthority
 
 
+class CertificateAuthoritySignCSRForm(ModelForm):
+    cert_CSRs = forms.ModelChoiceField(
+        queryset=models.Certificate.objects.filter(cert_CSR__isnull=False),
+        label=(_("CSRs"))
+    )
+
+    def save(self):
+        cdata = self.cleaned_data
+        choice = cdata.get('cert_CSRs').id
+        ca = models.Certificate.objects.get(pk=choice)
+        cert_info = crypto.load_certificate(crypto.FILETYPE_PEM, self.instance.cert_certificate)
+        PKey = crypto.load_privatekey(crypto.FILETYPE_PEM, self.instance.cert_privatekey)
+        csr = crypto.load_certificate_request(crypto.FILETYPE_PEM, ca.cert_CSR)
+
+        cert = crypto.X509()
+        cert.set_serial_number(12345)
+        cert.gmtime_adj_notBefore(0)
+        cert.gmtime_adj_notAfter(3650)
+        cert.set_issuer(cert_info.get_subject())
+        cert.set_subject(csr.get_subject())
+        cert.set_pubkey(csr.get_pubkey())
+        cert.sign(PKey, self.instance.cert_digest_algorithm)
+
+        new_cert = crypto.dump_certificate(crypto.FILETYPE_PEM, cert)
+        new_PKey = crypto.dump_privatekey(crypto.FILETYPE_PEM, PKey)
+        new_csr = models.Certificate(
+            cert_type=models.CERT_TYPE_INTERNAL,
+            cert_name=cdata.get('cert_name'),
+            cert_certificate=new_cert,
+            cert_privatekey=new_PKey,
+        )
+
+        new_csr.save()
+
+        notifier().start("ix-ssl")
+
+    class Meta:
+        fields = [
+            'cert_CSRs',
+            'cert_name',
+        ]
+        model = models.Certificate
+
+
 class CertificateForm(ModelForm):
     class Meta:
         fields = '__all__'
