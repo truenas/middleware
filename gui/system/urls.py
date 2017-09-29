@@ -52,7 +52,7 @@ from .views import (
     top, testmail, directory_browser, file_browser, restart_httpd, reload_httpd,
     restart_httpd_all, terminal, terminal_paste, update_index, update_apply,
     update_check, update_save, update_progress, update_verify, verify_progress,
-    CA_import, CA_create_internal, CA_create_intermediate, CA_edit,
+    CA_import, CA_create_internal, CA_create_intermediate, CA_edit, CA_sign_csr,
     CA_export_certificate, CA_export_privatekey, CA_info,
     certificate_import, certificate_create_internal, certificate_edit, CSR_edit,
     certificate_create_CSR, certificate_export_certificate, certificate_export_privatekey,
