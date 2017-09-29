@@ -1,5 +1,5 @@
 from middlewared.schema import Bool, Dict, Int, List, Str, accepts
-from middlewared.service import CallError, ConfigService, ValidationErrors, private
+from middlewared.service import CallError, ConfigService, ValidationErrors, periodic, private
 
 from datetime import datetime, timedelta
 from email.mime.multipart import MIMEMultipart
@@ -249,6 +249,7 @@ class MailService(ConfigService):
             server.login(em['user'], em['pass'])
         return server
 
+    @periodic(600, run_on_start=False)
     @private
     def send_mail_queue(self):
 
