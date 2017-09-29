@@ -706,7 +706,10 @@ class Middleware(object):
         self.logger.trace("Calling periodic task %s::%s", service_name, task_name)
 
         try:
-            await method()
+            if asyncio.iscoroutinefunction(method):
+                return await method()
+            else:
+                return await self.threaded(method)
         except Exception:
             self.logger.warning("Exception while calling periodic task", exc_info=True)
 
