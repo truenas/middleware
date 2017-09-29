@@ -2854,23 +2854,14 @@ class CertificateAuthorityCreateIntermediateForm(ModelForm):
 
 
 class CertificateAuthoritySignCSRForm(ModelForm):
-    cert_CSRs = forms.ChoiceField(
-        choices=[]
+    cert_CSRs = forms.ModelChoiceField(
+        queryset=models.Certificate.objects.filter(cert_CSR__isnull=False),
+        label=(_("CSRs"))
     )
-
-    cert_name = forms.CharField(
-        label=models.Certificate._meta.get_field('cert_name').verbose_name,
-        required=True,
-        help_text=models.Certificate._meta.get_field('cert_name').help_text
-    )
-
-    def __init__(self, *args, **kwargs):
-        super(CertificateAuthoritySignCSRForm, self).__init__(*args, **kwargs)
-        self.fields['cert_CSRs'].choices = [(choice.pk, choice.cert_name) for choice in models.Certificate.objects.filter(cert_CSR__isnull=False)]
 
     def save(self):
         cdata = self.cleaned_data
-        choice = cdata.get('cert_CSRs')
+        choice = cdata.get('cert_CSRs').id
         ca = models.Certificate.objects.get(pk=choice)
         cert_info = crypto.load_certificate(crypto.FILETYPE_PEM, self.instance.cert_certificate)
         PKey = crypto.load_privatekey(crypto.FILETYPE_PEM, self.instance.cert_privatekey)
@@ -2888,7 +2879,7 @@ class CertificateAuthoritySignCSRForm(ModelForm):
         new_cert = crypto.dump_certificate(crypto.FILETYPE_PEM, cert)
         new_PKey = crypto.dump_privatekey(crypto.FILETYPE_PEM, PKey)
         new_csr = models.Certificate(
-            cert_type=models.CERT_TYPE_EXISTING,
+            cert_type=models.CERT_TYPE_INTERNAL,
             cert_name=cdata.get('cert_name'),
             cert_certificate=new_cert,
             cert_privatekey=new_PKey,
