@@ -707,9 +707,9 @@ class Middleware(object):
 
         try:
             if asyncio.iscoroutinefunction(method):
-                return await method()
+                await method()
             else:
-                return await self.threaded(method)
+                await self.threaded(method)
         except Exception:
             self.logger.warning("Exception while calling periodic task", exc_info=True)
 
