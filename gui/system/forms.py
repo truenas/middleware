@@ -2885,7 +2885,6 @@ class CertificateAuthoritySignCSRForm(ModelForm):
         cert.sign(PKey, self.instance.cert_digest_algorithm)
 
         new_cert = crypto.dump_certificate(crypto.FILETYPE_PEM, cert)
-        new_cert_info = load_certificate(new_cert)
         new_PKey = crypto.dump_privatekey(crypto.FILETYPE_PEM, PKey)
         new_csr = models.Certificate(
             cert_type=models.CERT_TYPE_EXISTING,
