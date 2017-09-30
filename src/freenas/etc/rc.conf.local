@@ -509,6 +509,7 @@ _gen_conf()
 	_bool_svcconfig rpcbind_enable nfs
 	_bool_svcconfig rsyncd_enable rsync
 	_bool_svcconfig snmpd_enable snmp
+	_bool_svcconfig snmp_agent_enable snmp
 	_bool_svcconfig openssh_enable ssh
 	_bool_svcconfig inetd_enable tftp
 	_bool_svcconfig inadyn_enable dynamicdns
