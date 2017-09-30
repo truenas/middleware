@@ -1,14 +1,12 @@
 from middlewared.schema import accepts, Bool, Dict, Int, Str
 from middlewared.validators import Exact, IpAddress, Match, Or, Range
-from middlewared.service import ConfigService, ValidationErrors, CallError
+from middlewared.service import SystemServiceService, ValidationErrors, CallError
 
 
-class FTPService(ConfigService):
+class FTPService(SystemServiceService):
 
-    @accepts()
-    async def config(self):
-        """Returns SMB configuration object."""
-        return await self.middleware.call('datastore.config', 'services.ftp', {'prefix': 'ftp_'})
+    service_name = "ftp"
+    key_prefix = "ftp_"
 
     @accepts(Dict(
         'ftp_update',
@@ -37,8 +35,8 @@ class FTPService(ConfigService):
         Int('anonuserbw', validators=[Range(min=0)]),
         Int('anonuserdlbw', validators=[Range(min=0)]),
         Bool('tls'),
-        Str('tls_policy', validators=[Or(*[Exact(s) for s in ["on", "off", "data", "!data", "auth", "ctrl",
-                                                              "ctrl+data", "ctrl+!data", "auth+data", "auth+!data"]])]),
+        Str('tls_policy', enum=["on", "off", "data", "!data", "auth", "ctrl",
+                                "ctrl+data", "ctrl+!data", "auth+data", "auth+!data"]),
         Bool('tls_opt_allow_client_renegotiations'),
         Bool('tls_opt_allow_dot_login'),
         Bool('tls_opt_allow_per_user'),
@@ -78,15 +76,7 @@ class FTPService(ConfigService):
             raise verrors
 
         if not dry_run:
-            await self.middleware.call('datastore.update', 'services.ftp', old['id'], new, {'prefix': 'ftp_'})
-
-            enabled = (await self.middleware.call('datastore.query', 'services.services', [('srv_service', '=', 'ftp')],
-                                                  {'get': True}))['srv_enable']
-
-            started = await self.middleware.call('service.reload', 'ftp', {'onetime': False})
-
-            if enabled and not started:
-                raise CallError('The ftp service failed to start')
+            await self._update_service(old, new)
 
             if not old['tls'] and new['tls']:
                 await self.middleware.call('service._start_ssl', 'proftpd')

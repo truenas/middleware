@@ -151,6 +151,35 @@ class ConfigService(Service):
         return await self.do_update(data)
 
 
+class SystemServiceService(ConfigService):
+    """
+    Service service abstract class
+
+    Meant for services that manage system services configuration.
+    """
+
+    service_name = NotImplemented
+    key_prefix = NotImplemented
+
+    @accepts()
+    async def config(self):
+        return await self.middleware.call('datastore.config', f'services.{self.service_name}',
+                                          {'prefix': self.key_prefix})
+
+    @private
+    async def _update_service(self, old, new):
+        await self.middleware.call('datastore.update', f'services.{self.service_name}', old['id'], new,
+                                   {'prefix': self.key_prefix})
+
+        enabled = (await self.middleware.call('datastore.query', 'services.services',
+                                              [('srv_service', '=', self.service_name)], {'get': True}))['srv_enable']
+
+        started = await self.middleware.call('service.reload', self.service_name, {'onetime': False})
+
+        if enabled and not started:
+            raise CallError(f'The {self.service_name} service failed to start')
+
+
 class CRUDService(Service):
     """
     CRUD service abstract class
