@@ -20,9 +20,9 @@ class MiddlewareModelForm:
                 attribute_prefix = "%s_update." % self.middleware_plugin
                 if not attribute.startswith(attribute_prefix):
                     raise ValueError("Attribute name %r does not start with %r" % (attribute, attribute_prefix))
-                attribute = attribute[len(attribute_prefix):]
+                attribute = attribute.split(".")[1]
 
-                django_errors.setdefault("ftp_%s" % attribute, []).append(error.errmsg)
+                django_errors.setdefault(self.key_prefix + attribute, []).append(error.errmsg)
             raise DjangoValidationError(django_errors)
 
     def save(self):
