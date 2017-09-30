@@ -1,6 +1,7 @@
 import asyncio
 import copy
 import errno
+import os
 
 from middlewared.service_exception import ValidationErrors
 from middlewared.validators import ShouldBe
@@ -117,6 +118,23 @@ class Str(EnumMixin, Attribute):
         return schema
 
 
+class Dir(Str):
+
+    def validate(self, value):
+        verrors = ValidationErrors()
+
+        if value:
+            if not os.path.exists(value):
+                verrors.add(self.name, "This path does not exist.", errno.ENOENT)
+            elif not os.path.isdir(value):
+                verrors.add(self.name, "This path is not a directory.", errno.ENOTDIR)
+
+        if verrors:
+            raise verrors
+
+        return super().validate(value)
+
+
 class Bool(Attribute):
 
     def __init__(self, *args, **kwargs):
@@ -186,6 +204,19 @@ class List(EnumMixin, Attribute):
                 if self.items and found is not True:
                     raise Error(self.name, 'Item#{0} is not valid per list types: {1}'.format(index, found))
         return value
+
+    def validate(self, value):
+        verrors = ValidationErrors()
+
+        for i, v in enumerate(value):
+            for attr in self.items:
+                try:
+                    attr.validate(v)
+                except ValidationErrors as e:
+                    verrors.add_child(f"{self.name}.{i}", e)
+
+        if verrors:
+            raise verrors
 
     def to_json_schema(self, parent=None):
         schema = {'type': 'array'}
