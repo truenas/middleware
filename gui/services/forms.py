@@ -267,7 +267,11 @@ class CIFSForm(ModelForm):
             )
 
 
-class AFPForm(ModelForm):
+class AFPForm(MiddlewareModelForm, ModelForm):
+
+    key_prefix = "afp_srv_"
+    is_singletone = True
+    middleware_plugin = "afp"
 
     afp_srv_bindip = forms.MultipleChoiceField(
         label=models.AFP._meta.get_field('afp_srv_bindip').verbose_name,
@@ -299,61 +303,6 @@ class AFPForm(ModelForm):
             self.fields['afp_srv_bindip'].initial = (bindips)
         else:
             self.fields['afp_srv_bindip'].initial = ('')
-
-    def clean_afp_srv_bindip(self):
-        ips = self.cleaned_data.get("afp_srv_bindip")
-        if not ips:
-            return ''
-        bind = []
-        for ip in ips:
-            try:
-                IPAddress(ip)
-            except:
-                raise forms.ValidationError(
-                    "This is not a valid IP: %s" % (ip, )
-                )
-            bind.append(ip)
-        return ','.join(bind)
-
-    def save(self):
-        obj = super(AFPForm, self).save(commit=False)
-        obj.afp_srv_bindip = self.cleaned_data.get('afp_srv_bindip')
-        obj.save()
-
-        started = notifier().restart("afp")
-        if (
-            started is False and
-            models.services.objects.get(srv_service='afp').srv_enable
-        ):
-            raise ServiceFailed("afp", _("The AFP service failed to reload."))
-
-    def clean_afp_srv_dbpath(self):
-        path = self.cleaned_data.get('afp_srv_dbpath')
-        if not path:
-            return path
-        if not os.path.exists(path):
-            raise forms.ValidationError(_('This path does not exist.'))
-        if not os.path.isdir(path):
-            raise forms.ValidationError(_('This path is not a directory.'))
-        return path
-
-    def clean(self):
-        cleaned_data = self.cleaned_data
-        home = cleaned_data['afp_srv_homedir_enable']
-        hdir = cleaned_data.get('afp_srv_homedir')
-        if hdir and not home:
-            self._errors['afp_srv_homedir_enable'] = self.error_class()
-            self._errors['afp_srv_homedir_enable'] += self.error_class([
-                _("This field is required for \"Home directories\"."),
-            ])
-            cleaned_data.pop('afp_srv_homedir_enable', None)
-        if home and not hdir:
-            self._errors['afp_srv_homedir'] = self.error_class()
-            self._errors['afp_srv_homedir'] += self.error_class([
-                _("This field is required for \"Home directories\"."),
-            ])
-            cleaned_data.pop('afp_srv_homedir', None)
-        return cleaned_data
 
 
 class NFSForm(ModelForm):
