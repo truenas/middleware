@@ -2,6 +2,9 @@ import asyncio
 import copy
 import errno
 
+from middlewared.service_exception import ValidationErrors
+from middlewared.validators import ShouldBe
+
 
 class Error(Exception):
 
@@ -46,6 +49,18 @@ class Attribute(object):
 
     def clean(self, value):
         return value
+
+    def validate(self, value):
+        verrors = ValidationErrors()
+
+        for validator in self.validators:
+            try:
+                validator(value)
+            except ShouldBe as e:
+                verrors.add(self.name, f"Should be {e.what}")
+
+        if verrors:
+            raise verrors
 
     def to_json_schema(self, parent=None):
         """This method should return the json-schema v4 equivalent for the
@@ -235,6 +250,19 @@ class Dict(Attribute):
 
         return data
 
+    def validate(self, value):
+        verrors = ValidationErrors()
+
+        for attr in self.attrs.values():
+            if attr.name in value:
+                try:
+                    attr.validate(value[attr.name])
+                except ValidationErrors as e:
+                    verrors.add_child(self.name, e)
+
+        if verrors:
+            raise verrors
+
     def to_json_schema(self, parent=None):
         schema = {
             'type': 'object',
@@ -328,8 +356,7 @@ def resolver(middleware, f):
             raise ResolverError('Invalid parameter definition {0}'.format(p))
 
     # FIXME: for some reason assigning params (f.accepts = new_params) does not work
-    while f.accepts:
-        f.accepts.pop()
+    f.accepts.clear()
     f.accepts.extend(new_params)
 
 
@@ -343,34 +370,66 @@ def accepts(*schema):
             args_index += 1
         assert len(schema) == f.__code__.co_argcount - args_index  # -1 for self
 
-        def clean_args(args, kwargs):
+        def clean_and_validate_args(args, kwargs):
             args = list(args)
             args = args[:args_index] + copy.deepcopy(args[args_index:])
             kwargs = copy.deepcopy(kwargs)
 
+            verrors = ValidationErrors()
+
             # Iterate over positional args first, excluding self
             i = 0
-            for arg in args[args_index:]:
-                args[i + args_index] = nf.accepts[i].clean(args[i + args_index])
+            for _ in args[args_index:]:
+                attr = nf.accepts[i]
+
+                value = attr.clean(args[args_index + i])
+                args[args_index + i] = value
+
+                try:
+                    attr.validate(value)
+                except ValidationErrors as e:
+                    verrors.extend(e)
+
                 i += 1
 
             # Use i counter to map keyword argument to rpc positional
             for x in list(range(i + 1, f.__code__.co_argcount)):
                 kwarg = f.__code__.co_varnames[x]
+
                 if kwarg in kwargs:
-                    kwargs[kwarg] = nf.accepts[i].clean(kwargs[kwarg])
+                    attr = nf.accepts[i]
+                    i += 1
+
+                    value = kwargs[kwarg]
                 elif len(nf.accepts) >= i + args_index:
-                    kwargs[kwarg] = nf.accepts[i].clean(None)
-                i += 1
+                    attr = nf.accepts[i]
+                    i += 1
+
+                    value = None
+                else:
+                    i += 1
+                    continue
+
+                value = attr.clean(value)
+                kwargs[kwarg] = value
+
+                try:
+                    attr.validate(value)
+                except ValidationErrors as e:
+                    verrors.extend(e)
+
+            if verrors:
+                raise verrors
+
             return args, kwargs
 
         if asyncio.iscoroutinefunction(f):
             async def nf(*args, **kwargs):
-                args, kwargs = clean_args(args, kwargs)
+                args, kwargs = clean_and_validate_args(args, kwargs)
                 return await f(*args, **kwargs)
         else:
             def nf(*args, **kwargs):
-                args, kwargs = clean_args(args, kwargs)
+                args, kwargs = clean_and_validate_args(args, kwargs)
                 return f(*args, **kwargs)
 
         nf.__name__ = f.__name__
