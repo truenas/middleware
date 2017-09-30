@@ -1639,7 +1639,6 @@ class FTP(Model):
         null=True,
     )
     ftp_options = models.TextField(
-        max_length=120,
         verbose_name=_("Auxiliary parameters"),
         blank=True,
         help_text=_("These parameters are added to proftpd.conf."),
