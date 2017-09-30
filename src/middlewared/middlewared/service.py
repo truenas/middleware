@@ -12,7 +12,7 @@ import threading
 import time
 
 from middlewared.schema import accepts, Bool, Dict, Int, List, Ref, Str
-from middlewared.service_exception import CallException, CallError, ValidationError, ValidationErrors
+from middlewared.service_exception import CallException, CallError, ValidationError, ValidationErrors  # noqa
 from middlewared.utils import filter_list
 from middlewared.logger import Logger
 

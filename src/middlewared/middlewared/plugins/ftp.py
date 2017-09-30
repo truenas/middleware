@@ -1,4 +1,4 @@
-from middlewared.schema import accepts, Bool, Dict, Int, Str, Ref
+from middlewared.schema import accepts, Bool, Dict, Int, Str
 from middlewared.validators import Exact, IpAddress, Match, Or, Range
 from middlewared.service import ConfigService, ValidationErrors, CallError
 
@@ -65,7 +65,7 @@ class FTPService(ConfigService):
         if not ((new["passiveportsmin"] == 0) == (new["passiveportsmax"] == 0)):
             verrors.add("passiveportsmin", "passiveportsmin and passiveportsmax should be both zero or non-zero")
         if not ((new["passiveportsmin"] == 0 and new["passiveportsmax"] == 0) or
-                    (new["passiveportsmax"] > new["passiveportsmin"])):
+                (new["passiveportsmax"] > new["passiveportsmin"])):
             verrors.add("ftp_update.passiveportsmax", "When specified, should be greater than passiveportsmin")
 
         if new["onlyanonymous"] and not new["anonpath"]:

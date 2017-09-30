@@ -93,13 +93,13 @@ class servicesForm(ModelForm):
             if obj.srv_enable is True:
                 if _notifier.started('domaincontroller'):
                     started = _notifier.restart("domaincontroller",
-                        timeout=_fs().services.domaincontroller.timeout.restart)
+                                                timeout=_fs().services.domaincontroller.timeout.restart)
                 else:
                     started = _notifier.start("domaincontroller",
-                        timeout=_fs().services.domaincontroller.timeout.start)
+                                              timeout=_fs().services.domaincontroller.timeout.start)
             else:
                 started = _notifier.stop("domaincontroller",
-                    timeout=_fs().services.domaincontroller.timeout.stop)
+                                         timeout=_fs().services.domaincontroller.timeout.stop)
 
         else:
             """
@@ -259,8 +259,7 @@ class CIFSForm(ModelForm):
 
         started = notifier().restart("cifs")
         if (
-            started is False
-            and
+            started is False and
             models.services.objects.get(srv_service='cifs').srv_enable
         ):
             raise ServiceFailed(
@@ -323,8 +322,7 @@ class AFPForm(ModelForm):
 
         started = notifier().restart("afp")
         if (
-            started is False
-            and
+            started is False and
             models.services.objects.get(srv_service='afp').srv_enable
         ):
             raise ServiceFailed("afp", _("The AFP service failed to reload."))
@@ -435,11 +433,11 @@ class NFSForm(ModelForm):
         obj = super(NFSForm, self).save()
         started = notifier().restart("nfs")
         if (
-            started is False
-            and
+            started is False and
             models.services.objects.get(srv_service='nfs').srv_enable
         ):
             raise ServiceFailed("nfs", _("The NFS service failed to reload."))
+        return obj
 
 
 class FTPForm(MiddlewareModelForm, ModelForm):
@@ -504,8 +502,7 @@ class TFTPForm(ModelForm):
         super(TFTPForm, self).save()
         started = notifier().reload("tftp")
         if (
-            started is False
-            and
+            started is False and
             models.services.objects.get(srv_service='tftp').srv_enable
         ):
             raise ServiceFailed(
@@ -531,8 +528,7 @@ class SSHForm(ModelForm):
         obj = super(SSHForm, self).save()
         started = notifier().reload("ssh")
         if (
-            started is False
-            and
+            started is False and
             models.services.objects.get(srv_service='ssh').srv_enable
         ):
             raise ServiceFailed("ssh", _("The SSH service failed to reload."))
@@ -560,8 +556,7 @@ class RsyncdForm(ModelForm):
         super(RsyncdForm, self).save()
         started = notifier().reload("rsync")
         if (
-            started is False
-            and
+            started is False and
             models.services.objects.get(srv_service='rsync').srv_enable
         ):
             raise ServiceFailed(
@@ -598,8 +593,7 @@ class RsyncModForm(ModelForm):
         super(RsyncModForm, self).save()
         started = notifier().reload("rsync")
         if (
-            started is False
-            and
+            started is False and
             models.services.objects.get(srv_service='rsync').srv_enable
         ):
             raise ServiceFailed(
@@ -660,6 +654,8 @@ class DynamicDNSForm(ModelForm):
                 "dynamicdns", _("The DynamicDNS service failed to reload.")
             )
         return obj
+
+
 key_order(DynamicDNSForm, 10, 'ddns_password2')
 
 
@@ -797,13 +793,14 @@ class SNMPForm(ModelForm):
         super(SNMPForm, self).save()
         started = notifier().restart("snmp")
         if (
-            started is False
-            and
+            started is False and
             models.services.objects.get(srv_service='snmp').srv_enable
         ):
             raise ServiceFailed(
                 "snmp", _("The SNMP service failed to reload.")
             )
+
+
 key_order(SNMPForm, 7, 'snmp_v3_password2')
 key_order(SNMPForm, 10, 'snmp_v3_privpassphrase2')
 
@@ -913,8 +910,7 @@ class UPSForm(ModelForm):
         super(UPSForm, self).save()
         started = notifier().restart("ups")
         if (
-            started is False
-            and
+            started is False and
             models.services.objects.get(srv_service='ups').srv_enable
         ):
             raise ServiceFailed("ups", _("The UPS service failed to reload."))
@@ -1405,8 +1401,7 @@ class iSCSITargetExtentForm(ModelForm):
         blocksize = cdata.get("iscsi_target_extent_blocksize")
         if (
             size == "0" and path and (not os.path.exists(path) or (
-                os.path.exists(path)
-                and
+                os.path.exists(path) and
                 not os.path.isfile(path)
             ))
         ):
@@ -1455,8 +1450,7 @@ class iSCSITargetExtentForm(ModelForm):
                 )[0]
                 # label it only if it is a real disk
                 if (
-                    diskobj.disk_identifier.startswith("{devicename}")
-                    or
+                    diskobj.disk_identifier.startswith("{devicename}") or
                     diskobj.disk_identifier.startswith("{uuid}")
                 ):
                     success, msg = notifier().label_disk(
@@ -1799,10 +1793,8 @@ class ExtentDelete(Form):
 
     def done(self, *args, **kwargs):
         if (
-            self.instance.iscsi_target_extent_type == 'File'
-            and
-            self.cleaned_data['delete']
-            and
+            self.instance.iscsi_target_extent_type == 'File' and
+            self.cleaned_data['delete'] and
             os.path.exists(self.instance.iscsi_target_extent_path)
         ):
             os.unlink(self.instance.iscsi_target_extent_path)
@@ -1925,7 +1917,7 @@ class DomainControllerForm(ModelForm):
             Samba4().domain_sentinel_file_remove()
 
         notifier().restart("domaincontroller",
-            timeout=_fs().services.domaincontroller.timeout.restart)
+                           timeout=_fs().services.domaincontroller.timeout.restart)
 
         if self.__dc_forest_level_changed():
             Samba4().change_forest_level(self.instance.dc_forest_level)
