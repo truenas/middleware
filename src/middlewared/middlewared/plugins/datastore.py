@@ -229,7 +229,7 @@ class DatastoreService(Service):
             if name not in data:
                 continue
             if isinstance(field, ForeignKey):
-                data[name] = field.rel.to.objects.get(pk=data[name])
+                data[name] = field.rel.to.objects.get(pk=data[name]) if data[name] is not None else None
         for k, v in list(data.items()):
             if prefix:
                 k = f'{prefix}{k}'
