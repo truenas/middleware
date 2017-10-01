@@ -450,6 +450,14 @@ __MINIO__
 	done
 }
 
+_snmp_config()
+{
+	echo "snmpd_conffile=\"/etc/local/snmpd.conf\""
+
+	local snmpd_loglevel=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT snmp_loglevel FROM services_snmp ORDER BY -id LIMIT 1")
+	echo "snmpd_flags=\"-Ls${snmpd_loglevel}d\""
+}
+
 _ssl_config()
 {
 	local ssl_list
@@ -531,11 +539,7 @@ _gen_conf()
 		_nis_config
 	fi
 
-	if srv_enabled snmp; then
-		echo "snmpd_conffile=\"/etc/local/snmpd.conf\""
-		snmpd_loglevel=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT snmp_loglevel FROM services_snmp ORDER BY -id LIMIT 1")
-		echo "snmpd_flags=\"-Ls${snmpd_loglevel}d\""
-	fi
+	_snmp_config
 
 	_sssd_config
 	_nut_config
