@@ -96,6 +96,7 @@ def AFPUsers():
 
         p.wait()
 
+
 if __name__ == "__main__":
     print ("PID      UID      Username         Name                 Logintime Mac")
     for (pid, uid, user, fname, time, mac) in AFPUsers():
