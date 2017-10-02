@@ -1639,7 +1639,6 @@ class FTP(Model):
         null=True,
     )
     ftp_options = models.TextField(
-        max_length=120,
         verbose_name=_("Auxiliary parameters"),
         blank=True,
         help_text=_("These parameters are added to proftpd.conf."),
@@ -2298,7 +2297,7 @@ class S3(Model):
         max_length=128,
         blank=True,
         help_text=_("Select the IP address to listen to for S3 requests. "
-            "If left unchecked, S3 will listen on all available addresses"),
+                    "If left unchecked, S3 will listen on all available addresses"),
     )
     s3_bindport = models.SmallIntegerField(
         verbose_name=_("Port"),

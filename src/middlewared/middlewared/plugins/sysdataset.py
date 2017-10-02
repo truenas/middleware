@@ -11,9 +11,10 @@ SYSDATASET_PATH = '/var/db/system'
 
 class SystemDatasetService(ConfigService):
 
-    @accepts()
-    async def config(self):
-        return await self.middleware.call('datastore.config', 'system.systemdataset', {'prefix': 'sys_', 'extend': 'systemdataset.config_extend'})
+    class Config:
+        datastore = 'system.systemdataset'
+        datastore_extend = 'systemdataset.config_extend'
+        datastore_prefix = 'sys_'
 
     @private
     async def config_extend(self, config):

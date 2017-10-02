@@ -208,7 +208,7 @@ class ServiceService(CRUDService):
         await self.middleware.call_hook('service.pre_reload', service)
         try:
             await self._simplecmd("reload", service, options)
-        except:
+        except Exception as e:
             await self.restart(service, options)
         return await self.started(service)
 
@@ -267,9 +267,10 @@ class ServiceService(CRUDService):
         return proc.returncode
 
     async def _service(self, service, verb, **options):
-        onetime = options.get('onetime')
-        force = options.get('force')
-        quiet = options.get('quiet')
+        onetime = options.pop('onetime', None)
+        force = options.pop('force', None)
+        quiet = options.pop('quiet', None)
+        extra = options.pop('extra', '')
 
         # force comes before one which comes before quiet
         # they are mutually exclusive
@@ -281,10 +282,11 @@ class ServiceService(CRUDService):
         elif quiet:
             preverb = 'quiet'
 
-        return await self._system('/usr/sbin/service {} {}{}'.format(
+        return await self._system('/usr/sbin/service {} {}{} {}'.format(
             service,
             preverb,
             verb,
+            extra,
         ), options)
 
     def _started_notify(self, verb, what):
@@ -488,6 +490,12 @@ class ServiceService(CRUDService):
         await self._service("ix_register", "reload", **kwargs)
         await self._service("openssh", "restart", **kwargs)
         await self._service("ix_sshd_save_keys", "start", quiet=True, **kwargs)
+
+    async def _start_ssl(self, what=None):
+        if what is not None:
+            await self._service("ix-ssl", "start", quiet=True, extra=what)
+        else:
+            await self._service("ix-ssl", "start", quiet=True)
 
     async def _start_s3(self, **kwargs):
         await self.middleware.call('etc.generate', 's3')

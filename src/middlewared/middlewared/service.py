@@ -12,6 +12,7 @@ import threading
 import time
 
 from middlewared.schema import accepts, Bool, Dict, Int, List, Ref, Str
+from middlewared.service_exception import CallException, CallError, ValidationError, ValidationErrors  # noqa
 from middlewared.utils import filter_list
 from middlewared.logger import Logger
 
@@ -69,62 +70,6 @@ def filterable(fn):
     return accepts(Ref('query-filters'), Ref('query-options'))(fn)
 
 
-class CallException(Exception):
-    pass
-
-
-class CallError(CallException):
-
-    def __init__(self, errmsg, errno=errno.EFAULT):
-        self.errmsg = errmsg
-        self.errno = errno
-
-    def __str__(self):
-        errcode = errno.errorcode.get(self.errno, 'EUNKNOWN')
-        return f'[{errcode}] {self.errmsg}'
-
-
-class ValidationError(CallException):
-    """
-    ValidationError is an exception used to point when a provided
-    attribute of a middleware method is invalid/not allowed.
-    """
-
-    def __init__(self, attribute, errmsg, errno=errno.EFAULT):
-        self.attribute = attribute
-        self.errmsg = errmsg
-        self.errno = errno
-
-    def __str__(self):
-        errcode = errno.errorcode.get(self.errno, 'EUNKNOWN')
-        return f'[{errcode}] {self.attribute}: {self.errmsg}'
-
-
-class ValidationErrors(CallException):
-    """
-    CallException with a collection of ValidationError
-    """
-
-    def __init__(self, errors=None):
-        self.errors = errors or []
-
-    def add(self, attribute, errmsg, errno=errno.EINVAL):
-        self.errors.append(ValidationError(attribute, errmsg, errno))
-
-    def __iter__(self):
-        for e in self.errors:
-            yield e.attribute, e.errmsg, e.errno
-
-    def __bool__(self):
-        return bool(self.errors)
-
-    def __str__(self):
-        output = ''
-        for e in self.errors:
-            output += str(e) + '\n'
-        return output
-
-
 class ServiceBase(type):
     """
     Metaclass of all services
@@ -142,6 +87,7 @@ class ServiceBase(type):
       - datastore: name of the datastore mainly used in the service
       - datastore_extend: datastore `extend` option used in common `query` method
       - datastore_prefix: datastore `prefix` option used in helper methods
+      - service: system service `name` option used by `SystemServiceService`
       - namespace: namespace identifier of the service
       - private: whether or not the service is deemed private
       - verbose_name: human-friendly singular name for the service
@@ -165,6 +111,7 @@ class ServiceBase(type):
             'datastore': None,
             'datastore_prefix': None,
             'datastore_extend': None,
+            'service': None,
             'namespace': namespace,
             'private': False,
             'verbose_name': klass.__name__.replace('Service', ''),
@@ -199,11 +146,44 @@ class ConfigService(Service):
     updated or not.
     """
 
-    def config(self):
-        raise NotImplementedError
+    @accepts()
+    async def config(self):
+        options = {}
+        if self._config.datastore_prefix:
+            options['prefix'] = self._config.datastore_prefix
+        if self._config.datastore_extend:
+            options['extend'] = self._config.datastore_extend
+        return await self.middleware.call('datastore.config', self._config.datastore, options)
 
     async def update(self, data):
         return await self.do_update(data)
+
+
+class SystemServiceService(ConfigService):
+    """
+    Service service abstract class
+
+    Meant for services that manage system services configuration.
+    """
+
+    @accepts()
+    async def config(self):
+        return await self.middleware.call('datastore.config', f'services.{self._config.service}',
+                                          {'prefix': self._config.datastore_prefix})
+
+    @private
+    async def _update_service(self, old, new):
+        await self.middleware.call('datastore.update', f'services.{self._config.service}', old['id'], new,
+                                   {'prefix': self._config.datastore_prefix})
+
+        enabled = (await self.middleware.call(
+            'datastore.query', 'services.services', [('srv_service', '=', self._config.service)], {'get': True}
+        ))['srv_enable']
+
+        started = await self.middleware.call('service.reload', self._config.service, {'onetime': False})
+
+        if enabled and not started:
+            raise CallError(f'The {self._config.service} service failed to start')
 
 
 class CRUDService(Service):
