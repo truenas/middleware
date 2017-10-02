@@ -39,6 +39,8 @@ from freenasUI.common.freenassysctl import freenas_sysctl as _fs
 from freenasUI.freeadmin.forms import SelectMultipleField
 from freenasUI.freeadmin.utils import key_order
 from freenasUI.storage.widgets import UnixPermissionField
+from freenasUI.storage.models import Volume
+from freenasUI.middleware import zfs
 from freenasUI.middleware.client import client
 from freenasUI.middleware.notifier import notifier
 
@@ -312,6 +314,8 @@ class bsdUsersForm(ModelForm):
 
     def clean_bsdusr_home(self):
         home = self.cleaned_data['bsdusr_home']
+        user_home = self.instance.bsdusr_home
+
         if self.instance.bsdusr_builtin:
             return self.instance.bsdusr_home
         if home is not None:
@@ -320,6 +324,16 @@ class bsdUsersForm(ModelForm):
 
             if home.startswith('/mnt/'):
                 bsdusr_username = self.cleaned_data.get('bsdusr_username', '')
+                volumes = ['/mnt/{}'.format(volume.vol_name) for volume in Volume.objects.all()]
+
+                if self.instance.id and home != user_home:
+                    if len(zfs.list_datasets(path=user_home)) > 0 and \
+                            (len(zfs.list_datasets(path=home)) > 0 and home.startswith(user_home + '/')):
+                        raise forms.ValidationError(_("A dataset inside the home dataset "
+                                                      "cannot be used as a home directory."))
+
+                if home in volumes:
+                    raise forms.ValidationError(_("Volume root directories cannot be used as user home directories."))
 
                 if home.endswith(bsdusr_username):
                     return home
