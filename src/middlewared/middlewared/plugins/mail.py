@@ -125,6 +125,7 @@ class MailService(ConfigService):
         Str('channel'),
         Int('timeout', default=300),
         Bool('queue', default=True),
+        Dict('extra_headers', additional_attrs=True),
     ))
     def send(self, message):
         """
