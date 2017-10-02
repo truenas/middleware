@@ -327,10 +327,14 @@ class bsdUsersForm(ModelForm):
                 volumes = ['/mnt/{}'.format(volume.vol_name) for volume in Volume.objects.all()]
 
                 if self.instance.id:
-                    if len(zfs.list_datasets(path=user_home)) > 0 and \
-                            (len(zfs.list_datasets(path=home)) > 0 and home.startswith(user_home + '/')):
-                        raise forms.ValidationError(_("A dataset inside the home dataset "
-                                                      "cannot be used as a home directory."))
+                    if home != user_home:
+                        if len(zfs.list_datasets(path=user_home)) > 0 and \
+                                (len(zfs.list_datasets(path=home)) > 0 and home.startswith(user_home + '/')):
+                            raise forms.ValidationError(_("A dataset inside the home dataset "
+                                                          "cannot be used as a home directory."))
+
+                    else:
+                        raise forms.ValidationError(_("This is Your current home directory."))
 
                 if home in volumes:
                     raise forms.ValidationError(_("Volume root directories cannot be used as user home directories."))
