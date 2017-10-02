@@ -136,6 +136,8 @@ class MailService(ConfigService):
         interval = message.get('interval')
         if interval is None:
             interval = timedelta()
+        else:
+            interval = timedelta(seconds=interval)
 
         sw_name = self.middleware.call_sync('system.info')['version'].split('-', 1)[0]
 

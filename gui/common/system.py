@@ -32,7 +32,7 @@ import shutil
 import sqlite3
 import subprocess
 import ntplib
-from datetime import datetime
+from datetime import datetime, timedelta
 from django.utils.translation import ugettext_lazy as _
 from .log import log_traceback
 
@@ -109,6 +109,9 @@ def send_mail(
     to=None, extra_headers=None, attachments=None, timeout=300,
     queue=True,
 ):
+
+    if isinstance(interval, timedelta):
+        interval = int(interval.total_seconds())
     try:
         with client as c:
             c.call('mail.send', {
