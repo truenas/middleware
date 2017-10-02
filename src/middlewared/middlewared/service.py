@@ -144,8 +144,14 @@ class ConfigService(Service):
     updated or not.
     """
 
-    def config(self):
-        raise NotImplementedError
+    @accepts()
+    async def config(self):
+        options = {}
+        if self._config.datastore_prefix:
+            options['prefix'] = self._config.datastore_prefix
+        if self._config.datastore_extend:
+            options['extend'] = self._config.datastore_extend
+        return await self.middleware.call('datastore.config', self._config.datastore, options)
 
     async def update(self, data):
         return await self.do_update(data)
