@@ -609,7 +609,7 @@ class Middleware(object):
         self.add_service(CoreService(self))
 
     async def __plugins_load(self):
-        from middlewared.service import Service, CRUDService, ConfigService
+        from middlewared.service import Service, CRUDService, ConfigService, SystemServiceService
 
         main_plugins_dir = os.path.join(
             os.path.dirname(os.path.realpath(__file__)),
@@ -641,7 +641,7 @@ class Middleware(object):
                     attr = getattr(mod, attr)
                     if not inspect.isclass(attr):
                         continue
-                    if attr in (Service, CRUDService, ConfigService):
+                    if attr in (Service, CRUDService, ConfigService, SystemServiceService):
                         continue
                     if issubclass(attr, Service):
                         self.add_service(attr(self))
