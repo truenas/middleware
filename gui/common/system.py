@@ -27,22 +27,16 @@
 import glob
 import logging
 import os
-import base64
-import pickle
 import re
 import shutil
-import smtplib
 import sqlite3
 import subprocess
-import syslog
 import ntplib
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
-from email.utils import formatdate
-from datetime import datetime, timedelta
+from datetime import datetime
 from django.utils.translation import ugettext_lazy as _
-from lockfile import LockFile, LockTimeout
 from .log import log_traceback
+
+from freenasUI.middleware.client import client
 
 RE_MOUNT = re.compile(
     r'^(?P<fs_spec>.+?) on (?P<fs_file>.+?) \((?P<fs_vfstype>\w+)', re.S
@@ -106,106 +100,8 @@ def get_freenas_var(var, default=None):
         val = default
     return val
 
+
 FREENAS_DATABASE = get_freenas_var("FREENAS_CONFIG", "/data/freenas-v1.db")
-
-
-class QueueItem(object):
-
-    def __init__(self, message):
-        self.attempts = 0
-        self.message = message
-
-
-class MailQueue(object):
-
-    QUEUE_FILE = '/tmp/mail.queue'
-    MAX_ATTEMPTS = 3
-
-    def __init__(self):
-        self.queue = None
-
-    def append(self, message):
-        self.queue.append(QueueItem(message))
-
-    @classmethod
-    def is_empty(cls):
-        if not os.path.exists(cls.QUEUE_FILE):
-            return True
-        try:
-            return os.stat(cls.QUEUE_FILE).st_size == 0
-        except OSError:
-            return True
-
-    def _get_queue(self):
-        try:
-            with open(self.QUEUE_FILE, 'rb') as f:
-                self.queue = pickle.loads(f.read())
-        except (pickle.PickleError, EOFError):
-            self.queue = []
-
-    def __enter__(self):
-        self._lock = LockFile(self.QUEUE_FILE)
-        while not self._lock.i_am_locking():
-            try:
-                self._lock.acquire(timeout=330)
-            except LockTimeout:
-                self._lock.break_lock()
-
-        if not os.path.exists(self.QUEUE_FILE):
-            open(self.QUEUE_FILE, 'a').close()
-
-        self._get_queue()
-        return self
-
-    def __exit__(self, typ, value, traceback):
-
-        with open(self.QUEUE_FILE, 'wb+') as f:
-            if self.queue:
-                f.write(pickle.dumps(self.queue))
-
-        self._lock.release()
-        if typ is not None:
-            raise
-
-
-def _get_local_hostname():
-    from freenasUI.network.models import GlobalConfiguration
-    try:
-        gc = GlobalConfiguration.objects.order_by('-id')[0]
-        local_hostname = "%s.%s" % (gc.get_hostname(), gc.gc_domain)
-    except:
-        local_hostname = "%s.local" % get_sw_name()
-    return local_hostname
-
-
-def _get_smtp_server(timeout=300, local_hostname=None):
-    from freenasUI.system.models import Email
-
-    if local_hostname is None:
-        local_hostname = _get_local_hostname()
-
-    em = Email.objects.all().order_by('-id')[0]
-    if not em.em_outgoingserver or not em.em_port:
-        # See NOTE below.
-        raise ValueError('you must provide an outgoing mailserver and mail'
-                         ' server port when sending mail')
-    if em.em_security == 'ssl':
-        server = smtplib.SMTP_SSL(
-            em.em_outgoingserver,
-            em.em_port,
-            timeout=timeout,
-            local_hostname=local_hostname)
-    else:
-        server = smtplib.SMTP(
-            em.em_outgoingserver,
-            em.em_port,
-            timeout=timeout,
-            local_hostname=local_hostname)
-        if em.em_security == 'tls':
-            server.starttls()
-    if em.em_smtp:
-        server.login(em.em_user, em.em_pass)
-    return server
 
 
 def send_mail(
@@ -213,112 +109,21 @@ def send_mail(
     to=None, extra_headers=None, attachments=None, timeout=300,
     queue=True,
 ):
-    from freenasUI.account.models import bsdUsers
-    from freenasUI.system.models import Email
-
-    syslog.openlog(logoption=syslog.LOG_PID, facility=syslog.LOG_MAIL)
-    if interval is None:
-        interval = timedelta()
-
-    if not channel:
-        channel = get_sw_name().lower()
-    if interval > timedelta():
-        channelfile = '/tmp/.msg.%s' % (channel)
-        last_update = datetime.now() - interval
-        try:
-            last_update = datetime.fromtimestamp(os.stat(channelfile).st_mtime)
-        except OSError:
-            pass
-        timediff = datetime.now() - last_update
-        if (timediff >= interval) or (timediff < timedelta()):
-            # Make sure mtime is modified
-            # We could use os.utime but this is simpler!
-            with open(channelfile, 'w') as f:
-                f.write('!')
-        else:
-            return True, 'This message was already sent in the given interval'
-
-    error = False
-    errmsg = ''
-    em = Email.objects.all().order_by('-id')[0]
-    if not to:
-        to = [bsdUsers.objects.get(bsdusr_username='root').bsdusr_email]
-        if not to[0]:
-            return True, 'Email address for root is not configured'
-    if attachments:
-        msg = MIMEMultipart()
-        msg.preamble = text
-        list(map(lambda attachment: msg.attach(attachment), attachments))
-    else:
-        msg = MIMEText(text, _charset='utf-8')
-    if subject:
-        msg['Subject'] = subject
-
-    msg['From'] = em.em_fromemail
-    msg['To'] = ', '.join(to)
-    msg['Date'] = formatdate()
-
-    local_hostname = _get_local_hostname()
-
-    msg['Message-ID'] = "<%s-%s.%s@%s>" % (get_sw_name().lower(), datetime.utcnow().strftime("%Y%m%d.%H%M%S.%f"), base64.urlsafe_b64encode(os.urandom(3)), local_hostname)
-
-    if not extra_headers:
-        extra_headers = {}
-    for key, val in list(extra_headers.items()):
-        if key in msg:
-            msg.replace_header(key, val)
-        else:
-            msg[key] = val
-
     try:
-        server = _get_smtp_server(timeout, local_hostname=local_hostname)
-        # NOTE: Don't do this.
-        #
-        # If smtplib.SMTP* tells you to run connect() first, it's because the
-        # mailserver it tried connecting to via the outgoing server argument
-        # was unreachable and it tried to connect to 'localhost' and barfed.
-        # This is because FreeNAS doesn't run a full MTA.
-        # else:
-        #    server.connect()
-        syslog.syslog("sending mail to " + ','.join(to) + msg.as_string()[0:140])
-        server.sendmail(em.em_fromemail, to, msg.as_string())
-        server.quit()
-    except ValueError as ve:
-        # Don't spam syslog with these messages. They should only end up in the
-        # test-email pane.
-        errmsg = str(ve)
-        error = True
+        with client as c:
+            c.call('mail.send', {
+                'subject': subject,
+                'text': text,
+                'interval': interval,
+                'channel': channel,
+                'to': to,
+                'timeout': timeout,
+                'queue': queue,
+                'extra_headers': extra_headers,
+            })
     except Exception as e:
-        errmsg = str(e)
-        log.warn('Failed to send email: %s', errmsg, exc_info=True)
-        error = True
-        if queue:
-            with MailQueue() as mq:
-                mq.append(msg)
-    except smtplib.SMTPAuthenticationError as e:
-        errmsg = "%d %s" % (e.smtp_code, e.smtp_error)
-        error = True
-    except:
-        errmsg = "Unexpected error."
-        error = True
-    return error, errmsg
-
-
-def send_mail_queue():
-
-    with MailQueue() as mq:
-        for queue in list(mq.queue):
-            try:
-                server = _get_smtp_server()
-                server.sendmail(queue.message['From'], queue.message['To'].split(', '), queue.message.as_string())
-                server.quit()
-            except:
-                log.debug('Sending message from queue failed', exc_info=True)
-                queue.attempts += 1
-                if queue.attempts >= mq.MAX_ATTEMPTS:
-                    mq.queue.remove(queue)
-            else:
-                mq.queue.remove(queue)
+        return True, str(e)
+    return False, ''
 
 
 def get_fstype(path):
