@@ -823,17 +823,18 @@ class ServiceService(CRUDService):
     async def _start_snmp(self, **kwargs):
         await self._service("ix-snmpd", "start", quiet=True, **kwargs)
         await self._service("snmpd", "start", quiet=True, **kwargs)
+        await self._service("snmp-agent", "start", quiet=True, **kwargs)
 
     async def _stop_snmp(self, **kwargs):
+        await self._service("snmp-agent", "stop", quiet=True, **kwargs)
         await self._service("snmpd", "stop", quiet=True, **kwargs)
-        # The following is required in addition to just `snmpd`
-        # to kill the `freenas-snmpd.py` daemon
-        await self._service("ix-snmpd", "stop", quiet=True, **kwargs)
 
     async def _restart_snmp(self, **kwargs):
-        await self._service("ix-snmpd", "start", quiet=True, **kwargs)
+        await self._service("snmp-agent", "stop", quiet=True, **kwargs)
         await self._service("snmpd", "stop", force=True, **kwargs)
+        await self._service("ix-snmpd", "start", quiet=True, **kwargs)
         await self._service("snmpd", "start", quiet=True, **kwargs)
+        await self._service("snmp-agent", "start", quiet=True, **kwargs)
 
     async def _restart_http(self, **kwargs):
         await self._service("ix-nginx", "start", quiet=True, **kwargs)
