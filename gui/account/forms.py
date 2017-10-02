@@ -314,8 +314,7 @@ class bsdUsersForm(ModelForm):
 
     def clean_bsdusr_home(self):
         home = self.cleaned_data['bsdusr_home']
-        user = models.bsdUsers.objects.get(bsdusr_username=self.cleaned_data['bsdusr_username'])
-        user_home = user.bsdusr_home
+        user_home = self.instance.bsdusr_home
 
         if self.instance.bsdusr_builtin:
             return self.instance.bsdusr_home
@@ -327,13 +326,14 @@ class bsdUsersForm(ModelForm):
                 bsdusr_username = self.cleaned_data.get('bsdusr_username', '')
                 volumes = ['/mnt/{}'.format(volume.vol_name) for volume in Volume.objects.all()]
 
-                if len(zfs.list_datasets(path=user_home)) > 0 and \
-                        (len(zfs.list_datasets(path=home)) > 0 and home.startswith(user_home)):
-                    raise forms.ValidationError(_("You cannot change current home directory to "
-                                                  "the dataset inside Your home dataset."))
+                if self.instance.id:
+                    if len(zfs.list_datasets(path=user_home)) > 0 and \
+                            (len(zfs.list_datasets(path=home)) > 0 and home.startswith(user_home + '/')):
+                        raise forms.ValidationError(_("A dataset inside the home dataset "
+                                                      "cannot be used as a home directory."))
 
                 if home in volumes:
-                    raise forms.ValidationError(_("You cannot make volume's root directory user's home directory."))
+                    raise forms.ValidationError(_("Volume root directories cannot be used as user home directories."))
 
                 if home.endswith(bsdusr_username):
                     return home
