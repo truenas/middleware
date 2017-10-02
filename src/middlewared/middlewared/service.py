@@ -87,6 +87,7 @@ class ServiceBase(type):
       - datastore: name of the datastore mainly used in the service
       - datastore_extend: datastore `extend` option used in common `query` method
       - datastore_prefix: datastore `prefix` option used in helper methods
+      - service: system service `name` option used by `SystemServiceService`
       - namespace: namespace identifier of the service
       - private: whether or not the service is deemed private
       - verbose_name: human-friendly singular name for the service
@@ -110,6 +111,7 @@ class ServiceBase(type):
             'datastore': None,
             'datastore_prefix': None,
             'datastore_extend': None,
+            'service': None,
             'namespace': namespace,
             'private': False,
             'verbose_name': klass.__name__.replace('Service', ''),
@@ -164,26 +166,24 @@ class SystemServiceService(ConfigService):
     Meant for services that manage system services configuration.
     """
 
-    service_name = NotImplemented
-    key_prefix = NotImplemented
-
     @accepts()
     async def config(self):
-        return await self.middleware.call('datastore.config', f'services.{self.service_name}',
-                                          {'prefix': self.key_prefix})
+        return await self.middleware.call('datastore.config', f'services.{self._config.service}',
+                                          {'prefix': self._config.datastore_prefix})
 
     @private
     async def _update_service(self, old, new):
-        await self.middleware.call('datastore.update', f'services.{self.service_name}', old['id'], new,
-                                   {'prefix': self.key_prefix})
+        await self.middleware.call('datastore.update', f'services.{self._config.service}', old['id'], new,
+                                   {'prefix': self._config.datastore_prefix})
 
-        enabled = (await self.middleware.call('datastore.query', 'services.services',
-                                              [('srv_service', '=', self.service_name)], {'get': True}))['srv_enable']
+        enabled = (await self.middleware.call(
+            'datastore.query', 'services.services', [('srv_service', '=', self._config.service)], {'get': True}
+        ))['srv_enable']
 
-        started = await self.middleware.call('service.reload', self.service_name, {'onetime': False})
+        started = await self.middleware.call('service.reload', self._config.service, {'onetime': False})
 
         if enabled and not started:
-            raise CallError(f'The {self.service_name} service failed to start')
+            raise CallError(f'The {self._config.service} service failed to start')
 
 
 class CRUDService(Service):

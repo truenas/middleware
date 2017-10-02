@@ -5,8 +5,9 @@ from middlewared.service import SystemServiceService, ValidationErrors
 
 class AFPService(SystemServiceService):
 
-    service_name = "afp"
-    key_prefix = "afp_srv_"
+    class Config:
+        service = "afp"
+        datastore_prefix = "afp_srv_"
 
     @accepts(Dict(
         'afp_update',

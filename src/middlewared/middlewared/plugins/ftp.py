@@ -5,8 +5,9 @@ from middlewared.service import SystemServiceService, ValidationErrors, CallErro
 
 class FTPService(SystemServiceService):
 
-    service_name = "ftp"
-    key_prefix = "ftp_"
+    class Config:
+        service = "ftp"
+        datastore_prefix = "ftp_"
 
     @accepts(Dict(
         'ftp_update',
