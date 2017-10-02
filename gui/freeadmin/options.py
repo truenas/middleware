@@ -723,8 +723,13 @@ class BaseFreeAdmin(object):
     def handle_middleware_validation(self, mf, excep):
         for err in excep.errors:
             field_name = mf.middleware_attr_map.get(err.attribute)
-            if not field_name and mf.middleware_attr_prefix:
-                field_name = f'{mf.middleware_attr_prefix}{err.attribute}'
+            if not field_name:
+                field_name = err.attribute
+                if mf.middleware_attr_schema:
+                    if field_name.startswith(f'{mf.middleware_attr_schema}.'):
+                        field_name = field_name[len(mf.middleware_attr_schema) + 1:]
+                if mf.middleware_attr_prefix:
+                    field_name = f'{mf.middleware_attr_prefix}{field_name}'
             if field_name in mf.fields:
                 mf._errors[field_name] = mf.error_class([err.errmsg])
             else:

@@ -269,9 +269,10 @@ class CIFSForm(ModelForm):
 
 class AFPForm(MiddlewareModelForm, ModelForm):
 
-    key_prefix = "afp_srv_"
-    is_singletone = True
+    middleware_attr_prefix = "afp_srv_"
+    middleware_attr_schema = "afp_update"
     middleware_plugin = "afp"
+    is_singletone = True
 
     afp_srv_bindip = forms.MultipleChoiceField(
         label=models.AFP._meta.get_field('afp_srv_bindip').verbose_name,
@@ -391,9 +392,10 @@ class NFSForm(ModelForm):
 
 class FTPForm(MiddlewareModelForm, ModelForm):
 
-    key_prefix = "ftp_"
-    is_singletone = True
+    middleware_attr_prefix = "ftp_"
+    middleware_attr_schema = "ftp_update"
     middleware_plugin = "ftp"
+    is_singletone = True
 
     ftp_filemask = UnixPermissionField(label=_('File Permission'))
     ftp_dirmask = UnixPermissionField(label=_('Directory Permission'))
