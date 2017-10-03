@@ -1191,6 +1191,7 @@ class AdvancedForm(ModelForm):
                 ])
         return cdata
 
+
 class EmailForm(ModelForm):
     em_pass1 = forms.CharField(
         label=_("Password"),
