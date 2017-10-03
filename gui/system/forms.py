@@ -2544,6 +2544,7 @@ class CertificateAuthorityImportForm(ModelForm):
         self.instance.cert_city = cert_info['city']
         self.instance.cert_organization = cert_info['organization']
         self.instance.cert_common = cert_info['common']
+        self.instance.cert_san = cert_info['san']
         self.instance.cert_email = cert_info['email']
         self.instance.cert_digest_algorithm = cert_info['digest_algorithm']
 
@@ -2799,6 +2800,8 @@ class CertificateAuthorityCreateIntermediateForm(ModelForm):
             'state': self.instance.cert_state,
             'city': self.instance.cert_city,
             'organization': self.instance.cert_organization,
+            'common': self.instance.cert_common,
+            'san': self.instance.cert_san,
             'email': self.instance.cert_email,
             'lifetime': self.instance.cert_lifetime,
             'digest_algorithm': self.instance.cert_digest_algorithm
@@ -3075,6 +3078,7 @@ class CertificateImportForm(ModelForm):
         self.instance.cert_city = cert_info['city']
         self.instance.cert_organization = cert_info['organization']
         self.instance.cert_common = cert_info['common']
+        self.instance.cert_san = cert_info['san']
         self.instance.cert_email = cert_info['email']
         self.instance.cert_digest_algorithm = cert_info['digest_algorithm']
 
