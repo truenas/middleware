@@ -2800,6 +2800,8 @@ class CertificateAuthorityCreateIntermediateForm(ModelForm):
             'state': self.instance.cert_state,
             'city': self.instance.cert_city,
             'organization': self.instance.cert_organization,
+            'common': self.instance.cert_common,
+            'san': self.instance.cert_san,
             'email': self.instance.cert_email,
             'lifetime': self.instance.cert_lifetime,
             'digest_algorithm': self.instance.cert_digest_algorithm
