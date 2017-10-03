@@ -479,7 +479,7 @@ class ZFSQuoteService(Service):
 
                 try:
                     # FIXME: Translation
-                    await self.middleware.call('mail.send', {
+                    await (await self.middleware.call('mail.send', {
                         'to': [bsduser['bsdusr_email']],
                         'subject': '{}: Quota exceed on dataset {}'.format(hostname, excess["dataset_name"]),
                         'text': textwrap.dedent('''\
@@ -491,7 +491,7 @@ class ZFSQuoteService(Service):
                             "used": humanfriendly.format_size(excess["used"]),
                             "available": humanfriendly.format_size(excess["available"]),
                         },
-                    })
+                    })).wait()
                 except Exception:
                     self.logger.warning('Failed to send email about quota excess', exc_info=True)
 

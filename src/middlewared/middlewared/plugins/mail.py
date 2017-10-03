@@ -1,7 +1,8 @@
 from middlewared.schema import Bool, Dict, Int, List, Str, accepts
-from middlewared.service import CallError, ConfigService, ValidationErrors, periodic, private
+from middlewared.service import CallError, ConfigService, ValidationErrors, job, periodic, private
 
 from datetime import datetime, timedelta
+from email.message import Message
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from email.utils import formatdate
@@ -9,6 +10,7 @@ from lockfile import LockFile, LockTimeout
 
 import base64
 import errno
+import json
 import os
 import pickle
 import smtplib
@@ -124,12 +126,41 @@ class MailService(ConfigService):
         Int('interval'),
         Str('channel'),
         Int('timeout', default=300),
+        Bool('attachments', default=False),
         Bool('queue', default=True),
         Dict('extra_headers', additional_attrs=True),
     ))
-    def send(self, message):
+    @job(pipe=True)
+    def send(self, job, message):
         """
         Sends mail using configured mail settings.
+
+        If `attachments` is true, a list compromised of the following dict is required
+        via HTTP upload:
+          - headers(list)
+            - name(str)
+            - value(str)
+            - params(dict)
+          - content (str)
+
+        [
+         {
+          "headers": [
+           {
+            "name": "Content-Transfer-Encoding",
+            "value": "base64"
+           },
+           {
+            "name": "Content-Type",
+            "value": "application/octet-stream",
+            "params": {
+             "name": "test.txt"
+            }
+           }
+          ],
+          "content": "dGVzdAo="
+         }
+        ]
         """
 
         syslog.openlog(logoption=syslog.LOG_PID, facility=syslog.LOG_MAIL)
@@ -171,11 +202,32 @@ class MailService(ConfigService):
             if not to[0]:
                 raise CallError('Email address for root is not configured')
 
-        attachments = []  # FIXME: implement attachments
+        def read_json():
+            f = os.fdopen(job.read_fd, 'rb')
+            data = b''
+            i = 0
+            while True:
+                read = f.read(1048576)  # 1MiB
+                if read == b'':
+                    break
+                data += read
+                i += 1
+                if i > 50:
+                    raise ValueError('Attachments bigger than 50MB not allowed yet')
+            if data == b'':
+                return None
+            return json.loads(data)
+
+        attachments = read_json() if message.get('attachments') else None
         if attachments:
             msg = MIMEMultipart()
             msg.preamble = message['text']
-            list(map(lambda attachment: msg.attach(attachment), attachments))
+            for attachment in attachments:
+                m = Message()
+                m.set_payload(attachment['content'])
+                for header in attachment.get('headers'):
+                    m.add_header(header['name'], header['value'], **(header.get('params') or {}))
+                msg.attach(m)
         else:
             msg = MIMEText(message['text'], _charset='utf-8')
 

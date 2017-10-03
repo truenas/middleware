@@ -123,7 +123,7 @@ def send_mail(
                 'timeout': timeout,
                 'queue': queue,
                 'extra_headers': extra_headers,
-            })
+            }, job=True)
     except Exception as e:
         return True, str(e)
     return False, ''
