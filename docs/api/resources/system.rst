@@ -34,7 +34,7 @@ List resource
 
         {
                 "adv_syslogserver": "",
-                "adv_sysloglevel": "",
+                "adv_sysloglevel": "info",
                 "adv_serialconsole": false,
                 "adv_traceback": true,
                 "adv_uploadcrash": true,
