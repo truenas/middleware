@@ -25,12 +25,15 @@
 #
 #####################################################################
 import glob
+import json
 import logging
 import os
 import re
+import requests
 import shutil
 import sqlite3
 import subprocess
+import time
 import ntplib
 from datetime import datetime, timedelta
 from django.utils.translation import ugettext_lazy as _
@@ -113,17 +116,50 @@ def send_mail(
     if isinstance(interval, timedelta):
         interval = int(interval.total_seconds())
     try:
-        with client as c:
-            c.call('mail.send', {
-                'subject': subject,
-                'text': text,
-                'interval': interval,
-                'channel': channel,
-                'to': to,
-                'timeout': timeout,
-                'queue': queue,
-                'extra_headers': extra_headers,
-            }, job=True)
+        data =  {
+            'subject': subject,
+            'text': text,
+            'interval': interval,
+            'channel': channel,
+            'to': to,
+            'timeout': timeout,
+            'queue': queue,
+            'extra_headers': extra_headers,
+            'attachments': bool(attachments),
+        }
+        if not attachments:
+            with client as c:
+                c.call('mail.send', data, job=True)
+        else:
+            # FIXME: implement upload via websocket
+            with client as c:
+                token = c.call('auth.generate_token')
+                files = []
+                for attachment in attachments:
+                    entry = {'headers': []}
+                    for k, v in attachment.items():
+                        entry['headers'].append({'name': k, 'value': v})
+                    entry['content'] = attachment.get_payload()
+                    files.append(entry)
+
+                r = requests.post(
+                    f'http://localhost:6000/_upload?auth_token={token}',
+                    files={
+                        'data': json.dumps({'method': 'mail.send', 'params': [data]}),
+                        'file': json.dumps(files),
+                    },
+                )
+                if r.status_code != 200:
+                    return True, r.text
+                res = r.json()
+                while True:
+                    job = c.call('core.get_jobs', [('id', '=', res['job_id'])])[0]
+                    if job['state'] in ('SUCCESS', 'FAILED', 'ABORTED'):
+                        break
+                    time.sleep(1)
+                if job['state'] != 'SUCCESS':
+                    return True, job['error']
+
     except Exception as e:
         return True, str(e)
     return False, ''

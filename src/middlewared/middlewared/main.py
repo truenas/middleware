@@ -380,9 +380,9 @@ class FileApplication(object):
         try:
             data = json.loads(form['data'])
             job = await self.middleware.call(data['method'], *(data.get('params') or []))
-        except Exception:
+        except Exception as e:
             resp = web.Response()
-            resp.set_status(405)
+            resp.set_status(405, reason=str(e))
             return resp
 
         f = None
