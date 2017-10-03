@@ -116,7 +116,7 @@ def send_mail(
     if isinstance(interval, timedelta):
         interval = int(interval.total_seconds())
     try:
-        data =  {
+        data = {
             'subject': subject,
             'text': text,
             'interval': interval,
