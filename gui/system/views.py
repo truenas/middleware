@@ -785,22 +785,26 @@ def testmail(request):
             form=form,
         )
 
-    sid = transaction.savepoint()
-    form.save()
-
     error = False
     if request.is_ajax():
         sw_name = get_sw_name()
-        error, errmsg = send_mail(
-            subject=_(f'Test message from your {sw_name} system hostname {socket.gethostname()}'),
-            text=_(f'This is a message test from {sw_name}'),
-            to=[email],
-            timeout=10)
+        with client as c:
+            mailconfig = form.middleware_clean()
+            try:
+                c.call('mail.send', {
+                    'subject': f'Test message from your {sw_name} system hostname {socket.gethostname()}',
+                    'text': f'This is a message test from {sw_name}',
+                    'to': [email],
+                    'timeout': 10,
+                }, mailconfig, job=True)
+                error = False
+            except Exception as e:
+                error = True
+                errmsg = str(e)
     if error:
         errmsg = _("Your test email could not be sent: %s") % errmsg
     else:
         errmsg = _('Your test email has been sent!')
-    transaction.savepoint_rollback(sid)
 
     form.errors[allfield] = form.error_class([errmsg])
     return JsonResp(
