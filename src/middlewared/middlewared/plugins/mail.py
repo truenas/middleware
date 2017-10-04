@@ -129,9 +129,9 @@ class MailService(ConfigService):
         Bool('attachments', default=False),
         Bool('queue', default=True),
         Dict('extra_headers', additional_attrs=True),
-    ))
+    ), Dict('mailconfig', additional_attrs=True))
     @job(pipe=True)
-    def send(self, job, message):
+    def send(self, job, message, config=None):
         """
         Sends mail using configured mail settings.
 
@@ -191,7 +191,8 @@ class MailService(ConfigService):
             else:
                 raise CallError('This message was already sent in the given interval')
 
-        em = self.middleware.call_sync('mail.config')
+        if not config:
+            config = self.middleware.call_sync('mail.config')
         to = message.get('to')
         if not to:
             to = [
@@ -235,7 +236,7 @@ class MailService(ConfigService):
         if subject:
             msg['Subject'] = subject
 
-        msg['From'] = em['fromemail']
+        msg['From'] = config['fromemail']
         msg['To'] = ', '.join(to)
         msg['Date'] = formatdate()
 
@@ -251,7 +252,7 @@ class MailService(ConfigService):
                 msg[key] = val
 
         try:
-            server = self._get_smtp_server(message['timeout'], local_hostname=local_hostname)
+            server = self._get_smtp_server(config, message['timeout'], local_hostname=local_hostname)
             # NOTE: Don't do this.
             #
             # If smtplib.SMTP* tells you to run connect() first, it's because the
@@ -261,7 +262,7 @@ class MailService(ConfigService):
             # else:
             #    server.connect()
             syslog.syslog("sending mail to " + ','.join(to) + msg.as_string()[0:140])
-            server.sendmail(em['fromemail'], to, msg.as_string())
+            server.sendmail(config['fromemail'], to, msg.as_string())
             server.quit()
         except ValueError as ve:
             # Don't spam syslog with these messages. They should only end up in the
@@ -277,31 +278,30 @@ class MailService(ConfigService):
             raise CallError(f'Authentication error ({e.smtp_code}): {e.smtp_error}', errno.EAUTH)
         return True
 
-    def _get_smtp_server(self, timeout=300, local_hostname=None):
+    def _get_smtp_server(self, config, timeout=300, local_hostname=None):
         if local_hostname is None:
             local_hostname = socket.gethostname()
 
-        em = self.middleware.call_sync('mail.config')
-        if not em['outgoingserver'] or not em['port']:
+        if not config['outgoingserver'] or not config['port']:
             # See NOTE below.
             raise ValueError('you must provide an outgoing mailserver and mail'
                              ' server port when sending mail')
-        if em['security'] == 'SSL':
+        if config['security'] == 'SSL':
             server = smtplib.SMTP_SSL(
-                em['outgoingserver'],
-                em['port'],
+                config['outgoingserver'],
+                config['port'],
                 timeout=timeout,
                 local_hostname=local_hostname)
         else:
             server = smtplib.SMTP(
-                em['outgoingserver'],
-                em['port'],
+                config['outgoingserver'],
+                config['port'],
                 timeout=timeout,
                 local_hostname=local_hostname)
-            if em['security'] == 'TLS':
+            if config['security'] == 'TLS':
                 server.starttls()
-        if em['smtp']:
-            server.login(em['user'], em['pass'])
+        if config['smtp']:
+            server.login(config['user'], config['pass'])
         return server
 
     @periodic(600, run_on_start=False)
@@ -311,7 +311,8 @@ class MailService(ConfigService):
         with MailQueue() as mq:
             for queue in list(mq.queue):
                 try:
-                    server = self._get_smtp_server()
+                    config = self.middleware.call_sync('mail.config')
+                    server = self._get_smtp_server(config)
                     server.sendmail(queue.message['From'], queue.message['To'].split(', '), queue.message.as_string())
                     server.quit()
                 except:
