@@ -42,7 +42,6 @@ import sys
 
 from wsgiref.util import FileWrapper
 from django.core.urlresolvers import reverse
-from django.db import transaction
 from django.http import (
     HttpResponse,
     HttpResponseRedirect,
@@ -56,11 +55,7 @@ from freenasOS import Configuration
 from freenasOS.Exceptions import UpdateManifestNotFound
 from freenasOS.Update import CheckForUpdates
 from freenasUI.account.models import bsdUsers
-from freenasUI.common.system import (
-    get_sw_name,
-    get_sw_version,
-    send_mail
-)
+from freenasUI.common.system import get_sw_name, get_sw_version
 from freenasUI.common.ssl import (
     export_certificate,
     export_certificate_chain,
@@ -990,7 +985,7 @@ def debug(request):
                 with client as c:
                     c.call('failover.call_remote', 'core.ping')
             except ClientException:
-                return render(request, 'system/debug.html', {"failover_down" : True})
+                return render(request, 'system/debug.html', {"failover_down": True})
 
         return render(request, 'system/debug.html')
     debug_generate()
@@ -1682,6 +1677,7 @@ def CA_edit(request, id):
         'form': form
     })
 
+
 def CA_sign_csr(request, id):
 
     ca = models.CertificateAuthority.objects.get(pk=id)
@@ -1701,6 +1697,7 @@ def CA_sign_csr(request, id):
     return render(request, "system/certificate/CA_edit.html", {
         'form': form
     })
+
 
 def buf_generator(buf):
     for line in buf:
@@ -1944,12 +1941,6 @@ def consul_fake_alert(request):
     with client as c:
         fake_alert = c.call('consul.create_fake_alert')
     if fake_alert is True:
-        return JsonResp(
-                request,
-                message=_('Fake alert sent.'),
-        )
+        return JsonResp(request, message=_('Fake alert sent.'))
     else:
-        return JsonResp(
-                request,
-                message=_('Failed to send a fake alert.'),
-        )
+        return JsonResp(request, message=_('Failed to send a fake alert.'))
