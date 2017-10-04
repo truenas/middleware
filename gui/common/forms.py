@@ -76,6 +76,7 @@ class ModelForm(AdvMixin, MF):
     """
     middleware_attr_map = {}
     middleware_attr_prefix = None
+    middleware_attr_schema = None
 
     def __init__(self, *args, **kwargs):
         self._fserrors = {}
