@@ -318,6 +318,7 @@ __EOF__
         }
 
         location /ui {
+            try_files $uri $uri/ /index.html =404;
             alias /usr/local/www/webui;
         }
 
