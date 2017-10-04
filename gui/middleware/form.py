@@ -9,12 +9,17 @@ class MiddlewareModelForm:
         self.instance = self._meta.model.objects.get(pk=result["id"])
         return self.instance
 
+    def middleware_clean(update):
+        return update
+
     def __update(self, *args, **kwargs):
         update = {
             k[len(self.middleware_attr_prefix):]: v
             for k, v in self.cleaned_data.items()
             if k.startswith(self.middleware_attr_prefix)
         }
+
+        update = self.middleware_clean(update)
 
         if self.is_singletone:
             args = (update,) + args

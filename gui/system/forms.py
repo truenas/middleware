@@ -89,6 +89,7 @@ from freenasUI.freeadmin.views import JsonResp
 from freenasUI.freeadmin.utils import key_order
 from freenasUI.middleware.client import client, ClientException
 from freenasUI.middleware.exceptions import MiddlewareError
+from freenasUI.middleware.form import MiddlewareModelForm
 from freenasUI.middleware.notifier import notifier
 from freenasUI.services.models import (
     services,
@@ -1186,7 +1187,13 @@ class AdvancedForm(ModelForm):
             events.append("refreshTree()")
 
 
-class EmailForm(ModelForm):
+class EmailForm(MiddlewareModelForm, ModelForm):
+
+    middleware_attr_prefix = "em_"
+    middleware_attr_schema = "mail"
+    middleware_plugin = "mail"
+    is_singletone = True
+
     em_pass1 = forms.CharField(
         label=_("Password"),
         widget=forms.PasswordInput,
@@ -1225,14 +1232,6 @@ class EmailForm(ModelForm):
             self.fields['em_pass1'].widget.attrs['disabled'] = 'disabled'
             self.fields['em_pass2'].widget.attrs['disabled'] = 'disabled'
 
-    def clean_em_user(self):
-        if (
-            self.cleaned_data['em_smtp'] is True and
-            self.cleaned_data['em_user'] == ""
-        ):
-            raise forms.ValidationError(_("This field is required"))
-        return self.cleaned_data['em_user']
-
     def clean_em_pass1(self):
         if (
             self.cleaned_data['em_smtp'] is True and
@@ -1259,12 +1258,17 @@ class EmailForm(ModelForm):
             )
         return pass2
 
-    def save(self, commit=True):
-        email = super(EmailForm, self).save(commit=False)
-        if commit:
-            email.em_pass = self.cleaned_data['em_pass2']
-            email.save()
-        return email
+    def clean(self):
+        if 'em_pass1' in self.cleaned_data:
+            self.cleaned_data['em_pass'] = self.cleaned_data.pop('em_pass1')
+            if 'em_pass2' in self.cleaned_data:
+                del self.cleaned_data['em_pass2']
+        return self.cleaned_data
+
+    def middleware_clean(self, update):
+        if 'security' in update:
+            update['security'] = update['security'].upper()
+        return update
 
 
 class ManualUpdateTemporaryLocationForm(Form):
