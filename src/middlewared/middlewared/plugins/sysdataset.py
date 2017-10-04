@@ -86,15 +86,16 @@ class SystemDatasetService(ConfigService):
     @accepts(Bool('mount', default=True))
     @private
     async def setup(self, mount):
+        config = await self.config()
+
         if not await self.middleware.call('system.is_freenas'):
-            if await self.middleware.call('notifier.failover_status') == 'BACKUP':
+            if await self.middleware.call('notifier.failover_status') == 'BACKUP' and \
+                ('basename' in config and config['basename'] and config['basename'] != 'freenas-boot/.system'):
                 try:
                     os.unlink(SYSDATASET_PATH)
                 except OSError:
                     pass
                 return
-
-        config = await self.config()
 
         if config['pool'] and config['pool'] != 'freenas-boot':
             if not await self.middleware.call('pool.query', [('name', '=', config['pool'])]):
