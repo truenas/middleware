@@ -11,6 +11,6 @@ class SMBService(ConfigService):
     @private
     async def smb_extend(self, cifs):
         """Extend cifs for netbios."""
-        if not await self.middleware.call('notifier.is_freenas') and self.middleware.call('notifier.failover_node') == 'B':
+        if not await self.middleware.call('notifier.is_freenas') and await self.middleware.call('notifier.failover_node') == 'B':
             cifs['netbiosname'] = cifs['netbiosname_b']
         return cifs
