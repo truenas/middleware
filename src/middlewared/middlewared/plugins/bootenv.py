@@ -48,5 +48,20 @@ class BootEnvService(CRUDService):
         clone = Update.FindClone(oid)
         return Update.CloneSetAttr(clone, **attrs)
 
+    @accepts(Dict(
+        'bootenv_create',
+        Str('name', required=True),
+        Str('source'),
+    ))
+    def do_create(self, data):
+        kwargs = {}
+        source = data.get('source')
+        if source:
+            kwargs['bename'] = source
+        clone = Update.CreateClone(data['name'], **kwargs)
+        if clone is False:
+            raise CallError('Failed to create boot environment')
+        return data['name']
+
     def do_delete(self, oid):
         return Update.DeleteClone(oid)
