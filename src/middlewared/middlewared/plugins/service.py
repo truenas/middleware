@@ -64,7 +64,7 @@ class ServiceService(CRUDService):
         'lldp': ('ladvd', '/var/run/ladvd.pid'),
         'ups': ('upsd', '/var/db/nut/upsd.pid'),
         'upsmon': ('upsmon', '/var/db/nut/upsmon.pid'),
-        'smartd': ('smartd', '/var/run/smartd.pid'),
+        'smartd': ('smartd-daemon', '/var/run/smartd-daemon.pid'),
         'webshell': (None, '/var/run/webshell.pid'),
         'webdav': ('httpd', '/var/run/httpd.pid'),
         'netdata': ('netdata', '/var/db/netdata/netdata.pid')

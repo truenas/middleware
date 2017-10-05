@@ -521,7 +521,7 @@ _gen_conf()
 	_bool_svcconfig openssh_enable ssh
 	_bool_svcconfig inetd_enable tftp
 	_bool_svcconfig inadyn_enable dynamicdns
-	_bool_svcconfig smartd_enable smartd
+	_bool_svcconfig smartd_daemon_enable smartd
 	_bool_svcconfig ladvd_enable lldp
 	_bool_svcconfig ctld_enable iscsitarget
 	_bool_svcconfig apache24_enable webdav
@@ -705,7 +705,7 @@ _gen_conf()
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT smart_interval FROM services_smart ORDER BY id DESC LIMIT 1" | \
 	while read smartdint; do
 		inter=$(echo "${smartdint}*60"|/usr/bin/bc)
-		echo "smartd_flags=\"-i ${inter}\""
+		echo "smartd_daemon_flags=\"-i ${inter}\""
 	done
 
 	_s3_config
