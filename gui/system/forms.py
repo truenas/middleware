@@ -223,9 +223,10 @@ class BootEnvRenameForm(Form):
     def save(self, *args, **kwargs):
         new_name = self.cleaned_data.get('name')
         with client as c:
-            rename = c.call('bootenv.rename', self._name, new_name)
-        if rename is False:
-            raise MiddlewareError(_('Failed to rename Boot Environment.'))
+            try:
+                c.call('bootenv.update', self._name, {'name': new_name})
+            except ClientException:
+                raise MiddlewareError(_('Failed to rename Boot Environment.'))
 
 
 class BootEnvPoolAttachForm(Form):

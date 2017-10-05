@@ -1,5 +1,5 @@
 from middlewared.schema import Bool, Dict, Str, accepts
-from middlewared.service import CRUDService, filterable, item_method
+from middlewared.service import CallError, CRUDService, filterable, item_method
 from middlewared.utils import filter_list
 
 from freenasOS import Update
@@ -22,14 +22,6 @@ class BootEnvService(CRUDService):
         Activates boot environment `id`.
         """
         return Update.ActivateClone(oid)
-
-    @item_method
-    @accepts(Str('id'), Str('new_name'))
-    def rename(self, oid, new_name):
-        """
-        Renames boot environment `id`.
-        """
-        return Update.RenameClone(oid, new_name)
 
     @item_method
     @accepts(
@@ -61,6 +53,15 @@ class BootEnvService(CRUDService):
         clone = Update.CreateClone(data['name'], **kwargs)
         if clone is False:
             raise CallError('Failed to create boot environment')
+        return data['name']
+
+    @accepts(Str('id'), Dict(
+        'bootenv_update',
+        Str('name', required=True),
+    ))
+    def do_update(self, oid, data):
+        if not Update.RenameClone(oid, data['name']):
+            raise CallError('Failed to update boot environment')
         return data['name']
 
     def do_delete(self, oid):
