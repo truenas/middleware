@@ -1,8 +1,11 @@
 from middlewared.schema import Bool, Dict, Str, accepts
-from middlewared.service import CallError, CRUDService, filterable, item_method
+from middlewared.service import CallError, CRUDService, ValidationErrors, filterable, item_method
 from middlewared.utils import filter_list
 
 from freenasOS import Update
+
+import errno
+import subprocess
 
 
 class BootEnvService(CRUDService):
@@ -46,6 +49,12 @@ class BootEnvService(CRUDService):
         Str('source'),
     ))
     def do_create(self, data):
+
+        verrors = ValidationErrors()
+        self._clean_be_name(verrors, 'bootenv_create', data['name'])
+        if verrors:
+            raise verrors
+
         kwargs = {}
         source = data.get('source')
         if source:
@@ -60,9 +69,29 @@ class BootEnvService(CRUDService):
         Str('name', required=True),
     ))
     def do_update(self, oid, data):
+
+        verrors = ValidationErrors()
+        self._clean_be_name(verrors, 'bootenv_update', data['name'])
+        if verrors:
+            raise verrors
+
         if not Update.RenameClone(oid, data['name']):
             raise CallError('Failed to update boot environment')
         return data['name']
+
+    def _clean_be_name(self, verrors, schema, name):
+        if any(elem in name for elem in "/ *'\"?@!#$%^&()+=~<>;\\"):
+            verrors.add(f'{schema}.name', 'Name does not allow spaces and the following characters: /*\'"?@')
+        else:
+            beadm_names = subprocess.Popen(
+                "beadm list | awk '{print $7}'",
+                shell=True,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                encoding='utf8',
+            ).communicate()[0].split('\n')
+            if name in filter(None, beadm_names):
+                verrors.add(f'{schema}.name', f'The name {name} already exists', errno.EEXIST)
 
     def do_delete(self, oid):
         return Update.DeleteClone(oid)
