@@ -268,14 +268,14 @@ class MailService(ConfigService):
             # Don't spam syslog with these messages. They should only end up in the
             # test-email pane.
             raise CallError(str(ve))
+        except smtplib.SMTPAuthenticationError as e:
+            raise CallError(f'Authentication error ({e.smtp_code}): {e.smtp_error}', errno.EAUTH)
         except Exception as e:
             self.logger.warn('Failed to send email: %s', str(e), exc_info=True)
             if message['queue']:
                 with MailQueue() as mq:
                     mq.append(msg)
             raise CallError(f'Failed to send email: {e}')
-        except smtplib.SMTPAuthenticationError as e:
-            raise CallError(f'Authentication error ({e.smtp_code}): {e.smtp_error}', errno.EAUTH)
         return True
 
     def _get_smtp_server(self, config, timeout=300, local_hostname=None):
