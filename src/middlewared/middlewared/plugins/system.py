@@ -1,6 +1,6 @@
 from datetime import datetime
 from middlewared.schema import accepts, Dict, Int
-from middlewared.service import job, Service
+from middlewared.service import no_auth_required, job, Service
 from middlewared.utils import Popen, sw_version
 
 import os
@@ -22,6 +22,7 @@ SYSTEM_READY = False
 
 class SystemService(Service):
 
+    @no_auth_required
     @accepts()
     async def is_freenas(self):
         """
