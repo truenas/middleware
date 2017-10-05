@@ -110,7 +110,7 @@ class MailService(ConfigService):
         verrors = ValidationErrors()
 
         if new['smtp'] and new['user'] == '':
-            verrors.add('user', 'This field is required when SMTP authentication is enabled')
+            verrors.add('mail.user', 'This field is required when SMTP authentication is enabled')
 
         if verrors:
             raise verrors
