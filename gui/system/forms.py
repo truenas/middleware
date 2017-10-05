@@ -3439,7 +3439,10 @@ class CloudCredentialsForm(ModelForm):
                 self.fields[f'{self.instance.provider}_{field}'].initial = self.instance.attributes.get(field)
 
     def clean_GCLOUD_keyfile(self):
+        provider = self.cleaned_data.get('provider')
         keyfile = self.cleaned_data.get('GCLOUD_keyfile')
+        if not keyfile and provider != 'GCLOUD':
+            return None
         keyfile = keyfile.read()
         try:
             return json.loads(keyfile)
