@@ -30,7 +30,7 @@ generate_syslog_conf()
 		$sf
 
 	FROM
-		system_settings
+		system_advanced
 
 	ORDER BY
 		-id
