@@ -420,11 +420,14 @@ def bootenv_rename(request, name):
     if request.method == 'POST':
         form = forms.BootEnvRenameForm(request.POST, name=name)
         if form.is_valid():
-            form.save()
-            return JsonResp(
-                request,
-                message=_('Boot Environment successfully renamed.'),
-            )
+            try:
+                form.save()
+                return JsonResp(
+                    request,
+                    message=_('Boot Environment successfully renamed.'),
+                )
+            except ValidationErrors as e:
+                handle_middleware_validation(form, e)
         return JsonResp(request, form=form)
     else:
         form = forms.BootEnvRenameForm(name=name)

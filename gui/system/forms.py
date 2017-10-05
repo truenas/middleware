@@ -191,6 +191,8 @@ class BootEnvAddForm(Form):
 
 class BootEnvRenameForm(Form):
 
+    middleware_attr_schema = 'bootenv_update'
+
     name = forms.CharField(
         label=_('Name'),
         max_length=50,
