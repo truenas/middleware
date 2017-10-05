@@ -42,7 +42,7 @@ insert text into the pull-request description field as shown above.
 | **ports**  | [freenas/master](https://github.com/freenas/ports/tree/freenas/master/) | FreeBSD Ports Tree - [Upstream](https://github.com/freebsd/freebsd-ports/tree/master) |
 | **webui**  | [master](https://github.com/freenas/webui/tree/master/) | New Angular UI |
 | **freenas-docs**  | [master](https://github.com/freenas/freenas-docs/tree/master/) | Handbook |
-| **samba**  | [freenas/v4-7-stable](https://github.com/freenas/samba/tree/freenas/v4-7-stable) | Samba Sources |
+| **samba**  | [freenas/master](https://github.com/freenas/samba/tree/freenas/master) | Samba Sources |
 | **py-libzfs**  | [master](https://github.com/freenas/py-libzfs/tree/master/) | Python interface to libzfs |
 
 
@@ -57,7 +57,7 @@ insert text into the pull-request description field as shown above.
 | **ports**  | [freenas/master](https://github.com/freenas/ports/tree/freenas/master/) | FreeBSD Ports Tree - [Upstream](https://github.com/freebsd/freebsd-ports/tree/master) |
 | **webui**  | [master](https://github.com/freenas/webui/tree/master/) | New Angular UI |
 | **freenas-docs**  | [master](https://github.com/freenas/freenas-docs/tree/master/) | Handbook |
-| **samba**  | [freenas/v4-7-stable](https://github.com/freenas/samba/tree/freenas/v4-7-stable) | Samba Sources |
+| **samba**  | [freenas/master](https://github.com/freenas/samba/tree/freenas/master) | Samba Sources |
 | **py-libzfs**  | [master](https://github.com/freenas/py-libzfs/tree/master/) | Python interface to libzfs |
 
 
