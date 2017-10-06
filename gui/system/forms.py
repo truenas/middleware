@@ -87,7 +87,7 @@ from freenasUI.directoryservice.models import (
 )
 from freenasUI.freeadmin.views import JsonResp
 from freenasUI.freeadmin.utils import key_order
-from freenasUI.middleware.client import client, ClientException
+from freenasUI.middleware.client import client, ClientException, ValidationErrors
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.form import MiddlewareModelForm
 from freenasUI.middleware.notifier import notifier
@@ -116,7 +116,6 @@ from common.ssl import CERT_CHAIN_REGEX
 
 log = logging.getLogger('system.forms')
 WIZARD_PROGRESSFILE = '/tmp/.initialwizard_progress'
-BAD_BE_CHARS = "/ *'\"?@!#$%^&()+=~<>;\\"
 
 
 def clean_path_execbit(path):
@@ -165,23 +164,9 @@ def check_certificate(certificate):
     return nmatches
 
 
-def validate_be_name(name):
-    if any(elem in name for elem in BAD_BE_CHARS):
-        raise forms.ValidationError(_('Name does not allow spaces and the following characters: /*\'"?@'))
-    else:
-        beadm_names = subprocess.Popen(
-            "beadm list | awk '{print $7}'",
-            shell=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            encoding='utf8',
-        ).communicate()[0].split('\n')
-        if name in filter(None, beadm_names):
-            raise forms.ValidationError(_('The name %s already exist.') % (name))
-    return name
-
-
 class BootEnvAddForm(Form):
+
+    middleware_attr_schema = 'bootenv_create'
 
     name = forms.CharField(
         label=_('Name'),
@@ -192,22 +177,22 @@ class BootEnvAddForm(Form):
         self._source = kwargs.pop('source', None)
         super(BootEnvAddForm, self).__init__(*args, **kwargs)
 
-    def clean_name(self):
-        return validate_be_name(self.cleaned_data.get('name'))
-
     def save(self, *args, **kwargs):
-        kwargs = {}
+        data = {'name': self.cleaned_data.get('name')}
         if self._source:
-            kwargs['bename'] = self._source
-        clone = Update.CreateClone(
-            self.cleaned_data.get('name'),
-            **kwargs
-        )
-        if clone is False:
-            raise MiddlewareError(_('Failed to create a new Boot.'))
+            data['source'] = self._source
+        with client as c:
+            try:
+                c.call('bootenv.create', data)
+            except ValidationErrors:
+                raise
+            except ClientException:
+                raise MiddlewareError(_('Failed to create a new Boot.'))
 
 
 class BootEnvRenameForm(Form):
+
+    middleware_attr_schema = 'bootenv_update'
 
     name = forms.CharField(
         label=_('Name'),
@@ -218,15 +203,15 @@ class BootEnvRenameForm(Form):
         self._name = kwargs.pop('name')
         super(BootEnvRenameForm, self).__init__(*args, **kwargs)
 
-    def clean_name(self):
-        return validate_be_name(self.cleaned_data.get('name'))
-
     def save(self, *args, **kwargs):
         new_name = self.cleaned_data.get('name')
         with client as c:
-            rename = c.call('bootenv.rename', self._name, new_name)
-        if rename is False:
-            raise MiddlewareError(_('Failed to rename Boot Environment.'))
+            try:
+                c.call('bootenv.update', self._name, {'name': new_name})
+            except ValidationErrors:
+                raise
+            except ClientException:
+                raise MiddlewareError(_('Failed to rename Boot Environment.'))
 
 
 class BootEnvPoolAttachForm(Form):

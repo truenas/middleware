@@ -63,8 +63,9 @@ from freenasUI.common.ssl import (
 )
 from freenasUI.freeadmin.apppool import appPool
 from freenasUI.freeadmin.views import JsonResp
-from freenasUI.middleware.client import client, CallTimeout, ClientException
+from freenasUI.middleware.client import client, CallTimeout, ClientException, ValidationErrors
 from freenasUI.middleware.exceptions import MiddlewareError
+from freenasUI.middleware.form import handle_middleware_validation
 from freenasUI.middleware.notifier import notifier
 from freenasUI.middleware.zfs import zpool_list
 from freenasUI.network.models import GlobalConfiguration
@@ -273,11 +274,14 @@ def bootenv_add(request, source=None):
     if request.method == 'POST':
         form = forms.BootEnvAddForm(request.POST, source=source)
         if form.is_valid():
-            form.save()
-            return JsonResp(
-                request,
-                message=_('Boot Environment successfully added.'),
-            )
+            try:
+                form.save()
+                return JsonResp(
+                    request,
+                    message=_('Boot Environment successfully added.'),
+                )
+            except ValidationErrors as e:
+                handle_middleware_validation(form, e)
         return JsonResp(request, form=form)
     else:
         form = forms.BootEnvAddForm(source=source)
@@ -411,11 +415,14 @@ def bootenv_rename(request, name):
     if request.method == 'POST':
         form = forms.BootEnvRenameForm(request.POST, name=name)
         if form.is_valid():
-            form.save()
-            return JsonResp(
-                request,
-                message=_('Boot Environment successfully renamed.'),
-            )
+            try:
+                form.save()
+                return JsonResp(
+                    request,
+                    message=_('Boot Environment successfully renamed.'),
+                )
+            except ValidationErrors as e:
+                handle_middleware_validation(form, e)
         return JsonResp(request, form=form)
     else:
         form = forms.BootEnvRenameForm(name=name)

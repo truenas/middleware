@@ -63,13 +63,7 @@ class AdvMixin(object):
         return len(self.advanced_fields) > 0
 
 
-class ModelForm(AdvMixin, MF):
-    """
-    We need to handle dynamic choices, mainly because of the FreeNAS_User,
-    so we use a custom formfield with a _reroll method which is called
-    on every form instantiation
-    """
-
+class MiddlewareMixin:
     """
     Map middleware attribute names to django form fields.
     This is so we can report errors in the correct field.
@@ -77,6 +71,14 @@ class ModelForm(AdvMixin, MF):
     middleware_attr_map = {}
     middleware_attr_prefix = None
     middleware_attr_schema = None
+
+
+class ModelForm(AdvMixin, MiddlewareMixin, MF):
+    """
+    We need to handle dynamic choices, mainly because of the FreeNAS_User,
+    so we use a custom formfield with a _reroll method which is called
+    on every form instantiation
+    """
 
     def __init__(self, *args, **kwargs):
         self._fserrors = {}
@@ -163,7 +165,7 @@ class ModelForm(AdvMixin, MF):
         appPool.hook_form_done(fname, self, request, events)
 
 
-class Form(AdvMixin, F):
+class Form(AdvMixin, MiddlewareMixin, F):
     """
     We need to handle dynamic choices, mainly because of the FreeNAS_User,
     so we use a custom formfield with a _reroll method which is called

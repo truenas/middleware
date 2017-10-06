@@ -44,6 +44,7 @@ from dojango.forms.models import BaseInlineFormSet, inlineformset_factory
 from freenasUI.api import v1_api
 from freenasUI.freeadmin.apppool import appPool
 from freenasUI.middleware.exceptions import MiddlewareError
+from freenasUI.middleware.form import handle_middleware_validation
 from freenasUI.services.exceptions import ServiceFailed
 from middlewared.client import ValidationErrors
 from tastypie.validation import FormValidation
@@ -375,7 +376,7 @@ class BaseFreeAdmin(object):
                         ),
                         events=events)
                 except ValidationErrors as e:
-                    self.handle_middleware_validation(mf, e)
+                    handle_middleware_validation(mf, e)
                     return JsonResp(request, form=mf, formsets=formsets)
                 except MiddlewareError as e:
                     return JsonResp(
@@ -591,7 +592,7 @@ class BaseFreeAdmin(object):
                             ),
                             events=events)
                 except ValidationErrors as e:
-                    self.handle_middleware_validation(mf, e)
+                    handle_middleware_validation(mf, e)
                     return JsonResp(request, form=mf, formsets=formsets)
                 except ServiceFailed as e:
                     return JsonResp(
@@ -719,24 +720,6 @@ class BaseFreeAdmin(object):
                 template,
                 context,
                 content_type='text/html')
-
-    def handle_middleware_validation(self, mf, excep):
-        for err in excep.errors:
-            field_name = mf.middleware_attr_map.get(err.attribute)
-            if not field_name:
-                field_name = err.attribute
-                if mf.middleware_attr_schema:
-                    if field_name.startswith(f'{mf.middleware_attr_schema}.'):
-                        field_name = field_name[len(mf.middleware_attr_schema) + 1:]
-                if mf.middleware_attr_prefix:
-                    field_name = f'{mf.middleware_attr_prefix}{field_name}'
-            if field_name in mf.fields:
-                mf._errors[field_name] = mf.error_class([err.errmsg])
-            else:
-                if '__all__' not in mf._errors:
-                    mf._errors['__all__'] = mf.error_class([err.errmsg])
-                else:
-                    mf._errors['__all__'] += [err.errmsg]
 
     def get_confirm_message(self, action, **kwargs):
         return None

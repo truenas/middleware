@@ -1,6 +1,25 @@
 from freenasUI.middleware.client import client
 
 
+def handle_middleware_validation(form, excep):
+    for err in excep.errors:
+        field_name = form.middleware_attr_map.get(err.attribute)
+        if not field_name:
+            field_name = err.attribute
+            if form.middleware_attr_schema:
+                if field_name.startswith(f'{form.middleware_attr_schema}.'):
+                    field_name = field_name[len(form.middleware_attr_schema) + 1:]
+            if form.middleware_attr_prefix:
+                field_name = f'{form.middleware_attr_prefix}{field_name}'
+        if field_name in form.fields:
+            form._errors[field_name] = form.error_class([err.errmsg])
+        else:
+            if '__all__' not in form._errors:
+                form._errors['__all__'] = form.error_class([err.errmsg])
+            else:
+                form._errors['__all__'] += [err.errmsg]
+
+
 class MiddlewareModelForm:
 
     def save(self):
