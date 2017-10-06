@@ -86,7 +86,7 @@ class mDNSServiceObject(mDNSObject):
 class mDNSThread(threading.Thread):
     def __init__(self, **kwargs):
         super(mDNSThread, self).__init__()
-        self.setDaemon(False)
+        self.setDaemon(True)
         self.logger = kwargs.get('logger')
         self.timeout = kwargs.get('timeout', 30)
 
@@ -442,7 +442,7 @@ class mDNSBrowserService(Service):
 class mDNSServiceThread(threading.Thread):
     def __init__(self, **kwargs):
         super(mDNSServiceThread, self).__init__()
-        self.setDaemon(False)
+        self.setDaemon(True)
         self.service = kwargs.get('service')
         self.middleware = kwargs.get('middleware')
         self.logger = kwargs.get('logger')
