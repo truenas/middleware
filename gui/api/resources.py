@@ -1098,6 +1098,11 @@ class VolumeResourceMixin(NestedMixin):
                 data[attr] = getattr(child, attr)
 
             if self.is_webclient(bundle.request):
+                data['_promote_dataset_url'] = reverse(
+                    'storage_promote_zfs',
+                    kwargs={
+                        'name': child.path,
+                    })
                 data['compression'] = self.__zfsopts.get(
                     child.path,
                     {},
@@ -1125,6 +1130,11 @@ class VolumeResourceMixin(NestedMixin):
                 data['comments'] = description[1] if description[2] == 'local' else ''
 
             if self.is_webclient(bundle.request):
+                data['_promote_zvol_url'] = reverse(
+                    'storage_promote_zfs',
+                    kwargs={
+                        'name': child.path,
+                    })
                 data['_add_zfs_volume_url'] = reverse(
                     'storage_zvol',
                     kwargs={

@@ -344,6 +344,12 @@ class VolumeFAdmin(BaseFreeAdmin):
         )
 
         # Dataset actions
+        actions['PromoteZFS_dataset'] = self._action_builder(
+            'promote_dataset',
+            label=_('Promote Dataset'),
+            icon="promote_zfs",
+            show='DATASET',
+        )
         actions['DatasetDelete'] = self._action_builder(
             "dataset_delete",
             label=_('Destroy Dataset'),
@@ -370,6 +376,12 @@ class VolumeFAdmin(BaseFreeAdmin):
         )
 
         # ZVol actions
+        actions['PromoteZFS_zvol'] = self._action_builder(
+            'promote_zvol',
+            label=_('Promote Zvol'),
+            icon="promote_zfs",
+            show='ZVOL',
+        )
         actions['ZVolEdit'] = self._action_builder(
             "zvol_edit",
             label=_('Edit zvol'),

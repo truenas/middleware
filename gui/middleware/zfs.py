@@ -59,6 +59,13 @@ def _vdev_type(name):
     return False
 
 
+def promote_zfs(name):
+    datasets = list(libzfs.ZFS().datasets)
+    for dataset in datasets:
+        if dataset.name == name:
+            dataset.promote()
+
+
 class Pool(object):
     """
     Class representing a Zpool

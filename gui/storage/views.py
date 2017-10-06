@@ -25,6 +25,7 @@
 #####################################################################
 from collections import OrderedDict
 from functools import cmp_to_key
+import libzfs
 import json
 import logging
 import os
@@ -428,6 +429,14 @@ def dataset_edit(request, dataset_name):
         'dataset_name': dataset_name,
         'form': form
     })
+
+
+def promote_zfs(request, name):
+    try:
+        zfs.promote_zfs(name)
+        return HttpResponse("Filesystem successfully promoted.")
+    except libzfs.ZFSException:
+        return HttpResponse("Filesystem is not a clone or has already been promoted.")
 
 
 def zvol_create(request, parent):
