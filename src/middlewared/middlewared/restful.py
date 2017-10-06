@@ -38,6 +38,8 @@ class RESTfulAPI(object):
         self._methods = {}
         self._methods_by_service = defaultdict(dict)
 
+        self._openapi = OpenAPIResource(self)
+
     def get_app(self):
         return self.app
 
@@ -102,6 +104,28 @@ class RESTfulAPI(object):
                     res_kwargs['get'] = methodname
                 Resource(self, self.middleware, short_methodname, parent=parent, **res_kwargs)
             await asyncio.sleep(0)  # Force context switch
+
+
+class OpenAPIResource(object):
+
+    def __init__(self, rest):
+        self.rest = rest
+        self.rest.app.router.add_route('GET', '/api/v2.0/openapi.json', self.get)
+
+    def get(self, req, **kwargs):
+
+        result = {
+            'openapi': '3.0.0',
+            'info': {
+                'title': 'FreeNAS RESTful API',
+                'version': 'v2.0',
+            },
+            'paths': {},
+        }
+
+        resp = web.Response()
+        resp.text = json.dumps(result, indent=True)
+        return resp
 
 
 class Resource(object):
