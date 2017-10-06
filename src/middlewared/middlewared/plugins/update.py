@@ -367,7 +367,7 @@ class UpdateService(Service):
 
             try:
                 # FIXME: Translation
-                await self.middleware.call('mail.send', {
+                await (await self.middleware.call('mail.send', {
                     'subject': '{}: {}'.format(hostname, 'Update Available'),
                     'text': '''A new update is available for the %(train)s train.
 Version: %(version)s
@@ -378,7 +378,7 @@ Changelog:
                         'version': update.Version(),
                         'changelog': changelog,
                     },
-                })
+                })).wait()
             except Exception:
                 self.logger.warn('Failed to send email about new update', exc_info=True)
         return True

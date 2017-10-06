@@ -1,6 +1,22 @@
 import errno
 
 
+_errcode = {}
+
+
+def _add_error(code, name):
+    global _errcode
+    globals()[name] = code
+    _errcode[code] = name
+
+
+def get_errname(code):
+    return errno.errorcode.get(code) or _errcode.get(code) or 'EUNKNOWN'
+
+
+_add_error(201, 'ENOMETHOD')
+
+
 class CallException(Exception):
     pass
 
@@ -12,8 +28,8 @@ class CallError(CallException):
         self.errno = errno
 
     def __str__(self):
-        errcode = errno.errorcode.get(self.errno, 'EUNKNOWN')
-        return f'[{errcode}] {self.errmsg}'
+        errname = get_errname(self.errno)
+        return f'[{errname}] {self.errmsg}'
 
 
 class ValidationError(CallException):
@@ -28,8 +44,8 @@ class ValidationError(CallException):
         self.errno = errno
 
     def __str__(self):
-        errcode = errno.errorcode.get(self.errno, 'EUNKNOWN')
-        return f'[{errcode}] {self.attribute}: {self.errmsg}'
+        errname = get_errname(self.errno)
+        return f'[{errname}] {self.attribute}: {self.errmsg}'
 
 
 class ValidationErrors(CallException):
