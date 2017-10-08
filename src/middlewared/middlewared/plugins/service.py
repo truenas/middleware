@@ -11,6 +11,23 @@ from middlewared.service import filterable, CRUDService
 from middlewared.utils import Popen, filter_list
 
 
+class ServiceDefinition:
+    def __init__(self, *args):
+        if len(args) == 2:
+            self.procname = args[0]
+            self.rc_script = args[0]
+            self.pidfile = args[1]
+
+        elif len(args) == 3:
+            self.procname = args[0]
+            self.rc_script = args[1]
+            self.pidfile = args[2]
+
+        else:
+            raise ValueError("Invalid number of arguments passed (must be 2 or 3)")
+
+
+
 class StartNotify(threading.Thread):
 
     def __init__(self, pidfile, verb, *args, **kwargs):
@@ -50,24 +67,24 @@ class StartNotify(threading.Thread):
 class ServiceService(CRUDService):
 
     SERVICE_DEFS = {
-        's3': ('minio', '/var/run/minio.pid'),
-        'ssh': ('sshd', '/var/run/sshd.pid'),
-        'rsync': ('rsync', '/var/run/rsyncd.pid'),
-        'nfs': ('nfsd', None),
-        'afp': ('netatalk', None),
-        'cifs': ('smbd', '/var/run/samba4/smbd.pid'),
-        'dynamicdns': ('inadyn', None),
-        'snmp': ('snmpd', '/var/run/net_snmpd.pid'),
-        'ftp': ('proftpd', '/var/run/proftpd.pid'),
-        'tftp': ('inetd', '/var/run/inetd.pid'),
-        'iscsitarget': ('ctld', '/var/run/ctld.pid'),
-        'lldp': ('ladvd', '/var/run/ladvd.pid'),
-        'ups': ('upsd', '/var/db/nut/upsd.pid'),
-        'upsmon': ('upsmon', '/var/db/nut/upsmon.pid'),
-        'smartd': ('smartd-daemon', '/var/run/smartd-daemon.pid'),
-        'webshell': (None, '/var/run/webshell.pid'),
-        'webdav': ('httpd', '/var/run/httpd.pid'),
-        'netdata': ('netdata', '/var/db/netdata/netdata.pid')
+        's3': ServiceDefinition('minio', '/var/run/minio.pid'),
+        'ssh': ServiceDefinition('sshd', '/var/run/sshd.pid'),
+        'rsync': ServiceDefinition('rsync', '/var/run/rsyncd.pid'),
+        'nfs': ServiceDefinition('nfsd', None),
+        'afp': ServiceDefinition('netatalk', None),
+        'cifs': ServiceDefinition('smbd', '/var/run/samba4/smbd.pid'),
+        'dynamicdns': ServiceDefinition('inadyn', None),
+        'snmp': ServiceDefinition('snmpd', '/var/run/net_snmpd.pid'),
+        'ftp': ServiceDefinition('proftpd', '/var/run/proftpd.pid'),
+        'tftp': ServiceDefinition('inetd', '/var/run/inetd.pid'),
+        'iscsitarget': ServiceDefinition('ctld', '/var/run/ctld.pid'),
+        'lldp': ServiceDefinition('ladvd', '/var/run/ladvd.pid'),
+        'ups': ServiceDefinition('upsd', '/var/db/nut/upsd.pid'),
+        'upsmon': ServiceDefinition('upsmon', '/var/db/nut/upsmon.pid'),
+        'smartd': ServiceDefinition('smartd', 'smartd-daemon', '/var/run/smartd-daemon.pid'),
+        'webshell': ServiceDefinition(None, '/var/run/webshell.pid'),
+        'webdav': ServiceDefinition('httpd', '/var/run/httpd.pid'),
+        'netdata': ServiceDefinition('netdata', '/var/db/netdata/netdata.pid')
     }
 
     @filterable
@@ -240,9 +257,8 @@ class ServiceService(CRUDService):
         if f is None:
             # Provide generic start/stop/restart verbs for rc.d scripts
             if what in self.SERVICE_DEFS:
-                procname, pidfile = self.SERVICE_DEFS[what]
-                if procname:
-                    what = procname
+                if self.SERVICE_DEFS[what].rc_script:
+                    what = self.SERVICE_DEFS[what].rc_script
             if action in ("start", "stop", "restart", "reload"):
                 if action == 'restart':
                     await self._system("/usr/sbin/service " + what + " forcestop ")
@@ -300,8 +316,7 @@ class ServiceService(CRUDService):
         """
 
         if what in self.SERVICE_DEFS:
-            procname, pidfile = self.SERVICE_DEFS[what]
-            sn = StartNotify(verb=verb, pidfile=pidfile)
+            sn = StartNotify(verb=verb, pidfile=self.SERVICE_DEFS[what].pidfile)
             sn.start()
             return sn
         else:
@@ -318,17 +333,16 @@ class ServiceService(CRUDService):
         """
 
         if what in self.SERVICE_DEFS:
-            procname, pidfile = self.SERVICE_DEFS[what]
             if notify:
                 await self.middleware.threaded(notify.join)
 
-            if pidfile:
+            if self.SERVICE_DEFS[what].pidfile:
                 pgrep = "/bin/pgrep -F {}{}".format(
-                    pidfile,
-                    ' ' + procname if procname else '',
+                    self.SERVICE_DEFS[what].pidfile,
+                    ' ' + self.SERVICE_DEFS[what].procname if self.SERVICE_DEFS[what].procname else '',
                 )
             else:
-                pgrep = "/bin/pgrep {}".format(procname)
+                pgrep = "/bin/pgrep {}".format(self.SERVICE_DEFS[what].procname)
             proc = await Popen(pgrep, shell=True, stdout=PIPE, stderr=PIPE, close_fds=True)
             data = (await proc.communicate())[0].decode()
 
@@ -465,8 +479,8 @@ class ServiceService(CRUDService):
 
     async def _restart_smartd(self, **kwargs):
         await self._service("ix-smartd", "start", quiet=True, **kwargs)
-        await self._service("smartd", "stop", force=True, **kwargs)
-        await self._service("smartd", "restart", **kwargs)
+        await self._service("smartd-daemon", "stop", force=True, **kwargs)
+        await self._service("smartd-daemon", "restart", **kwargs)
 
     async def _reload_ssh(self, **kwargs):
         await self._service("ix-sshd", "start", quiet=True, **kwargs)
