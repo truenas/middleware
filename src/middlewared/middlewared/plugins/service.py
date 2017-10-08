@@ -27,7 +27,6 @@ class ServiceDefinition:
             raise ValueError("Invalid number of arguments passed (must be 2 or 3)")
 
 
-
 class StartNotify(threading.Thread):
 
     def __init__(self, pidfile, verb, *args, **kwargs):
