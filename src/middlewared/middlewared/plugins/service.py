@@ -479,8 +479,8 @@ class ServiceService(CRUDService):
 
     async def _restart_smartd(self, **kwargs):
         await self._service("ix-smartd", "start", quiet=True, **kwargs)
-        await self._service("smartd", "stop", force=True, **kwargs)
-        await self._service("smartd", "restart", **kwargs)
+        await self._service("smartd-daemon", "stop", force=True, **kwargs)
+        await self._service("smartd-daemon", "restart", **kwargs)
 
     async def _reload_ssh(self, **kwargs):
         await self._service("ix-sshd", "start", quiet=True, **kwargs)
