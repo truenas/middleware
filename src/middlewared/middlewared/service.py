@@ -322,6 +322,19 @@ class CoreService(Service):
                             item_method = True
                     elif attr in ('do_create', 'do_update', 'do_delete'):
                         continue
+                elif isinstance(svc, ConfigService):
+                    """
+                    For Config the update is special.
+                    The real implementation happens in do_update
+                    so thats where we actually extract pertinent information.
+                    """
+                    if attr == 'update':
+                        method = getattr(svc, 'do_{}'.format(attr), None)
+                        if method is None:
+                            continue
+                    elif attr in ('do_update'):
+                        continue
+
 
                 if method is None:
                     method = getattr(svc, attr, None)
