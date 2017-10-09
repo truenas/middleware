@@ -11,10 +11,10 @@ async def render(service, middleware):
     if not s3:
         return
 
-    if 's3_certificate' not in s3:
+    cert = s3.get('s3_certificate')
+    if not cert:
         return
 
-    cert = s3['s3_certificate']
     if (
         'cert_certificate' in cert and len(cert['cert_certificate']) > 0 and
         'cert_privatekey' in cert and len(cert['cert_privatekey']) > 0
