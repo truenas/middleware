@@ -111,6 +111,17 @@ class OpenAPIResource(object):
     def __init__(self, rest):
         self.rest = rest
         self.rest.app.router.add_route('GET', '/api/v2.0/openapi.json', self.get)
+        self._paths = defaultdict(dict)
+
+    def add_path(self, path, operation, methodname, params=None):
+        assert operation in ('get', 'post', 'put', 'delete')
+        self._paths[path][operation] = {
+            'responses': {
+                '200': {
+                    'description': 'operation succeeded',
+                },
+            },
+        }
 
     def get(self, req, **kwargs):
 
@@ -120,7 +131,7 @@ class OpenAPIResource(object):
                 'title': 'FreeNAS RESTful API',
                 'version': 'v2.0',
             },
-            'paths': {},
+            'paths': self._paths,
         }
 
         resp = web.Response()
@@ -147,18 +158,23 @@ class Resource(object):
         self.name = name
         self.parent = parent
 
+        path = self.get_path()
         if delete:
             self.delete = delete
-            self.rest.app.router.add_route('DELETE', '/api/v2.0/' + self.get_path(), self.on_delete)
+            self.rest.app.router.add_route('DELETE', '/api/v2.0/' + path, self.on_delete)
+            self.rest._openapi.add_path(path, 'delete', delete)
         if get:
             self.get = get
-            self.rest.app.router.add_route('GET', '/api/v2.0/' + self.get_path(), self.on_get)
+            self.rest.app.router.add_route('GET', '/api/v2.0/' + path, self.on_get)
+            self.rest._openapi.add_path(path, 'get', get)
         if post:
             self.post = post
-            self.rest.app.router.add_route('POST', '/api/v2.0/' + self.get_path(), self.on_post)
+            self.rest.app.router.add_route('POST', '/api/v2.0/' + path, self.on_post)
+            self.rest._openapi.add_path(path, 'post', post)
         if put:
             self.put = put
-            self.rest.app.router.add_route('PUT', '/api/v2.0/' + self.get_path(), self.on_put)
+            self.rest.app.router.add_route('PUT', '/api/v2.0/' + path, self.on_put)
+            self.rest._openapi.add_path(path, 'put', put)
 
         self.middleware.logger.trace(f"add route {self.get_path()}")
 
