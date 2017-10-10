@@ -125,6 +125,13 @@ class OpenAPIResource(object):
 
     def get(self, req, **kwargs):
 
+        servers = []
+        host = req.headers.get('Host')
+        if host:
+            servers.append({
+                'url': f'{req.scheme}://{host}/api/v2.0',
+            })
+
         result = {
             'openapi': '3.0.0',
             'info': {
@@ -132,6 +139,7 @@ class OpenAPIResource(object):
                 'version': 'v2.0',
             },
             'paths': self._paths,
+            'servers': servers,
         }
 
         resp = web.Response()
