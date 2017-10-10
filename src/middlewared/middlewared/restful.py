@@ -112,14 +112,25 @@ class OpenAPIResource(object):
         self.rest = rest
         self.rest.app.router.add_route('GET', '/api/v2.0/openapi.json', self.get)
         self._paths = defaultdict(dict)
+        self._components = defaultdict(dict)
+        self._components['responses'] = {
+            'NotFound': {
+                'description': 'Endpoint not found',
+            },
+            'Unauthorized': {
+                'description': 'No authorization for this endpoint',
+            },
+            'Success': {
+                'description': 'Operation succeeded',
+            }
+        }
 
     def add_path(self, path, operation, methodname, params=None):
         assert operation in ('get', 'post', 'put', 'delete')
-        self._paths[path][operation] = {
+        self._paths[f'/{path}'][operation] = {
             'responses': {
-                '200': {
-                    'description': 'operation succeeded',
-                },
+                '200': {'$ref': '#/components/responses/Success'},
+                '401': {'$ref': '#/components/responses/Unauthorized'},
             },
         }
 
@@ -140,6 +151,7 @@ class OpenAPIResource(object):
             },
             'paths': self._paths,
             'servers': servers,
+            'components': self._components,
         }
 
         resp = web.Response()
