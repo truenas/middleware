@@ -119,7 +119,9 @@ class OpenAPIResource(object):
         self.rest = rest
         self.rest.app.router.add_route('GET', '/api/v2.0/openapi.json', self.get)
         self._paths = defaultdict(dict)
+        self._schemas = dict()
         self._components = defaultdict(dict)
+        self._components['schemas'] = self._schemas
         self._components['responses'] = {
             'NotFound': {
                 'description': 'Endpoint not found',
@@ -145,13 +147,70 @@ class OpenAPIResource(object):
                 '200': {'$ref': '#/components/responses/Success'},
                 '401': {'$ref': '#/components/responses/Unauthorized'},
             },
+            'parameters': [],
         }
         method = self.rest._methods.get(methodname)
         if method:
             desc = method.get('description')
             if desc:
                 opobject['description'] = desc
+
+            accepts = method.get('accepts')
+            if accepts:
+                opobject['requestBody'] = self._accepts_to_request(methodname, accepts)
         self._paths[f'/{path}'][operation] = opobject
+
+    def _accepts_to_request(self, methodname, schemas):
+
+        def convert(schema):
+            """
+            Convert JSON Schema to OpenAPI Schema
+            """
+            _type = schema.get('type')
+            if isinstance(_type, list):
+                if 'null' in _type:
+                    _type.remove('null')
+                    schema['nullable'] = True
+                schema['type'] = _type = _type[0]
+            if _type == 'object':
+                for key, val in schema['properties'].items():
+                    schema['properties'][key] = convert(val)
+            return schema
+
+        # Create an unique ID for every argument and register the schema
+        ids = []
+        for i, schema in enumerate(schemas):
+            unique_id = f'{methodname.replace(".", "_")}_{i}'
+            self._schemas[unique_id] = convert(schema)
+            ids.append(unique_id)
+
+        if len(ids) == 1:
+            schema = f'#/components/schemas/{ids[0]}'
+        else:
+            # If the method accepts multiple arguments lets emulate/create
+            # a new schema, which is a object containing every argument as an
+            # attribute.
+            props = {}
+            for i in ids:
+                schema = self._schemas[i]
+                if 'title' in schema:
+                    props[schema['title']] = {'$ref': f'#/components/schemas/{i}'}
+                else:
+                    props[i] = {'$ref': f'#/components/schemas/{i}'}
+            new_schema = {
+                'type': 'object',
+                'properties': props
+            }
+            new_id = f'{methodname.replace(".", "_")}'
+            self._schemas[new_id] = new_schema
+            schema = f'#/components/schemas/{new_id}'
+        return {
+            'content': {
+                'application/json': {
+                    'schema': {'$ref': schema},
+                },
+            }
+        }
 
     def get(self, req, **kwargs):
 
