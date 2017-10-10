@@ -124,28 +124,31 @@ generate_collectd()
     if use_rrd_dataset; then
         cd "${rrdmnt}"
     else
-        mkdir -p ${datadir}/localhost
         cd ${datadir}
     fi
-    # Find and remove any stale symlinks to the localhost directory
-    # This can happen when the hostname is changed.
-    # Note: This cannot be done while collectd is running or collectd will
-    # notice it's working directory is missing and create it.
-    # At boot time this script runs before collectd is started.
-    # At run time when this script is run collectd is stopped first.
-    find . -maxdepth 1 -type d \! -name localhost -a \! -name . -a \! -name "$(hostname)" -exec rm -rf '{}' \;
-    for i in $(find . -maxdepth 1 -type l | sed 's|^\./||')
-    do
-        if [ "${i}" != "$(hostname)" ]; then
-            rm "${i}"
-        fi
-    done
-    # If there isn't a symlink localhost -> hostname make it.
-    if ! [ -L "${hostname}" ] && [ "localhost" != "${hostname}" ]; then
+    # Migrate from old version, where "${hostname}" was a real directory
+    # and "localhost" was a symlink.
+    # Skip the case where "${hostname}" is "localhost", so symlink was not
+    # (and is not) needed.
+    if [ "${hostname}" != "localhost" ] && [ -d "${hostname}" ] && [ ! -L "${hostname}" ]; then
         if [ -e "localhost" ]; then
-            rm -rf localhost
+            if [ -L "localhost" ]; then
+                rm -rf "localhost"
+            else
+                # This should not happen, but just in case
+                mv "localhost" "localhost.bak.$(date +'%Y%m%d%H%M%S')"
+            fi
         fi
-        ln -s "${hostname}" localhost
+        mv "${hostname}" "localhost"
+    fi
+    # Remove all directories except "localhost" and it's backups (that
+    # may be erroneously created by running collectd before this script)
+    find . -maxdepth 1 -type d \! -name . -a \! -name localhost -a \! -name 'localhost.bak.*' -exec rm -rf '{}' \;
+    # Remove all symlinks (that are be stale if hostname was changed).
+    find . -maxdepth 1 -type l -exec rm -rf '{}' \;
+    # Create "${hostname}" -> "localhost" symlink if necessary
+    if [ "${hostname}" != "localhost" ]; then
+        ln -s "localhost" "${hostname}"
     fi
     cfg="/usr/local/etc/collectd.conf"
     cat << EOF > $cfg
