@@ -122,17 +122,29 @@ class OpenAPIResource(object):
             },
             'Success': {
                 'description': 'Operation succeeded',
-            }
+            },
+        }
+        self._components['securitySchemes'] = {
+            'basic': {
+                'type': 'http',
+                'scheme': 'basic'
+            },
         }
 
     def add_path(self, path, operation, methodname, params=None):
         assert operation in ('get', 'post', 'put', 'delete')
-        self._paths[f'/{path}'][operation] = {
+        opobject = {
             'responses': {
                 '200': {'$ref': '#/components/responses/Success'},
                 '401': {'$ref': '#/components/responses/Unauthorized'},
             },
         }
+        method = self.rest._methods.get(methodname)
+        if method:
+            desc = method.get('description')
+            if desc:
+                opobject['description'] = desc
+        self._paths[f'/{path}'][operation] = opobject
 
     def get(self, req, **kwargs):
 
@@ -152,6 +164,7 @@ class OpenAPIResource(object):
             'paths': self._paths,
             'servers': servers,
             'components': self._components,
+            'security': [{'basic': []}],
         }
 
         resp = web.Response()
