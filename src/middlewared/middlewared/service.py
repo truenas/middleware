@@ -299,6 +299,10 @@ class CoreService(Service):
             if service is not None and name != service:
                 continue
 
+            # Skip private services
+            if svc._config.private:
+                continue
+
             for attr in dir(svc):
 
                 if attr.startswith('_'):

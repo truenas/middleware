@@ -28,6 +28,9 @@ from middlewared.utils import django_modelobj_serialize
 
 class DatastoreService(Service):
 
+    class Config:
+        private = True
+
     def _filters_to_queryset(self, filters, field_prefix=None):
         opmap = {
             '=': 'exact',
@@ -246,7 +249,6 @@ class DatastoreService(Service):
         await self.middleware.threaded(lambda oid: model.objects.get(pk=oid).delete(), id)
         return True
 
-    @private
     def sql(self, query, params=None):
         cursor = connection.cursor()
         rv = None
@@ -260,7 +262,6 @@ class DatastoreService(Service):
             cursor.close()
         return rv
 
-    @private
     @accepts(List('queries'))
     def restore(self, queries):
         """
@@ -269,7 +270,6 @@ class DatastoreService(Service):
         """
         return connection.dump_recv(queries)
 
-    @private
     @accepts()
     def dump(self):
         """
