@@ -62,7 +62,9 @@ class RESTfulAPI(object):
             """
             if service['type'] == 'crud':
                 kwargs['get'] = '{}.query'.format(name)
-                kwargs['post'] = '{}.create'.format(name)
+                post = f'{name}.create'
+                if post in self._methods:
+                    kwargs['post'] = '{}.create'.format(name)
                 blacklist_methods.extend(list(kwargs.values()))
             elif service['type'] == 'config':
                 kwargs['get'] = '{}.config'.format(name)
@@ -77,10 +79,13 @@ class RESTfulAPI(object):
             """
             subresource = None
             if service['type'] == 'crud':
-                kwargs = {
-                    'delete': '{}.delete'.format(name),
-                    'put': '{}.update'.format(name),
-                }
+                kwargs = {}
+                delete = f'{name}.delete'
+                if delete in self._methods:
+                    kwargs['delete'] = delete
+                put = f'{name}.update'
+                if put in self._methods:
+                    kwargs['put'] = put
                 blacklist_methods.extend(list(kwargs.values()))
                 subresource = Resource(self, self.middleware, 'id/{id}', parent=service_resource, **kwargs)
 
