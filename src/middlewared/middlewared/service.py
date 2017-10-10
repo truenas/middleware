@@ -386,6 +386,7 @@ class CoreService(Service):
                     'accepts': accepts,
                     'item_method': True if item_method else hasattr(method, '_item_method'),
                     'filterable': hasattr(method, '_filterable'),
+                    'require_websocket': hasattr(method, '_pass_app'),
                 }
         return data
 

@@ -92,6 +92,8 @@ class RESTfulAPI(object):
             for methodname, method in list(self._methods_by_service[name].items()):
                 if methodname in blacklist_methods:
                     continue
+                if method['require_websocket']:
+                    continue
                 short_methodname = methodname.rsplit('.', 1)[-1]
                 if method.get('item_method') is True:
                     parent = subresource
