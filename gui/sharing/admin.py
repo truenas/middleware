@@ -51,6 +51,7 @@ class CIFSShareFAdmin(BaseFreeAdmin):
         'cifs_browsable',
         'cifs_comment',
         'cifs_guestonly',
+        'cifs_abe',
         'cifs_hostsallow',
         'cifs_hostsdeny',
         'cifs_recyclebin',

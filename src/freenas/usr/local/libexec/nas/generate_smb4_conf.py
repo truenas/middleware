@@ -1156,6 +1156,8 @@ def generate_smb4_shares(client, smb4_shares):
                  "no" if share.cifs_ro else "yes")
         confset2(smb4_shares, "browseable = %s",
                  "yes" if share.cifs_browsable else "no")
+        confset2(smb4_shares, "access based share enum = %s",
+                 "yes" if share.cifs_abe else "no")
 
         task = None
         if share.cifs_storage_task:

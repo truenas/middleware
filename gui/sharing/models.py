@@ -90,6 +90,10 @@ class CIFS_Share(Model):
         ),
         default=False,
     )
+    cifs_abe = models.BooleanField(
+        verbose_name=_('Access Based Share Enumeration'),
+        default=False
+    )
     cifs_hostsallow = models.TextField(
         blank=True,
         verbose_name=_("Hosts Allow"),
