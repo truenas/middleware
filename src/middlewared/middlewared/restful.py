@@ -4,6 +4,7 @@ from collections import defaultdict
 import asyncio
 import base64
 import binascii
+import copy
 import types
 
 from .client import ejson as json
@@ -68,7 +69,9 @@ class RESTfulAPI(object):
                 blacklist_methods.extend(list(kwargs.values()))
             elif service['type'] == 'config':
                 kwargs['get'] = '{}.config'.format(name)
-                kwargs['put'] = '{}.update'.format(name)
+                put = '{}.update'.format(name)
+                if put in self._methods:
+                    kwargs['put'] = put
                 blacklist_methods.extend(list(kwargs.values()))
 
             service_resource = Resource(self, self.middleware, name.replace('.', '/'), **kwargs)
@@ -167,7 +170,9 @@ class OpenAPIResource(object):
             """
             Convert JSON Schema to OpenAPI Schema
             """
+            schema = copy.deepcopy(schema)
             _type = schema.get('type')
+            schema.pop('_required_', None)
             if isinstance(_type, list):
                 if 'null' in _type:
                     _type.remove('null')
@@ -194,10 +199,7 @@ class OpenAPIResource(object):
             props = {}
             for i in ids:
                 schema = self._schemas[i]
-                if 'title' in schema:
-                    props[schema['title']] = {'$ref': f'#/components/schemas/{i}'}
-                else:
-                    props[i] = {'$ref': f'#/components/schemas/{i}'}
+                props[schema['title']] = {'$ref': f'#/components/schemas/{i}'}
             new_schema = {
                 'type': 'object',
                 'properties': props
@@ -257,26 +259,46 @@ class Resource(object):
         self.middleware = middleware
         self.name = name
         self.parent = parent
+        self.__method_params = {}
 
         path = self.get_path()
         if delete:
             self.delete = delete
-            self.rest.app.router.add_route('DELETE', '/api/v2.0/' + path, self.on_delete)
-            self.rest._openapi.add_path(path, 'delete', delete)
         if get:
             self.get = get
-            self.rest.app.router.add_route('GET', '/api/v2.0/' + path, self.on_get)
-            self.rest._openapi.add_path(path, 'get', get)
         if post:
             self.post = post
-            self.rest.app.router.add_route('POST', '/api/v2.0/' + path, self.on_post)
-            self.rest._openapi.add_path(path, 'post', post)
         if put:
             self.put = put
-            self.rest.app.router.add_route('PUT', '/api/v2.0/' + path, self.on_put)
-            self.rest._openapi.add_path(path, 'put', put)
+
+        for i in ('delete', 'get', 'post', 'put'):
+            operation = getattr(self, i)
+            if operation is None:
+                continue
+            self.rest.app.router.add_route(i.upper(), '/api/v2.0/' + path, getattr(self, f'on_{i}'))
+            self.rest._openapi.add_path(path, i, operation)
+            self.__map_method_params(operation)
 
         self.middleware.logger.trace(f"add route {self.get_path()}")
+
+    def __map_method_params(self, method_name):
+        """
+        Middleware methods which accepts more than one argument are mapped to a single
+        schema of object type.
+        For that reason we need to keep track of each parameter and its order
+        """
+        method = self.rest._methods.get(method_name)
+        if not method:
+            return
+        accepts = method.get('accepts')
+        self.__method_params[method_name] = {}
+        if accepts is None:
+            return
+        for i, accept in enumerate(accepts):
+            self.__method_params[method_name][accept['title']] = {
+                'order': i,
+                'required': accept['_required_'],
+            }
 
     def __getattr__(self, attr):
         if attr in ('on_get', 'on_post', 'on_delete', 'on_put'):
@@ -373,9 +395,33 @@ class Resource(object):
         else:
             if http_method in ('post', 'put'):
                 try:
-                    method_args = await req.json()
-                except Exception:
-                    method_args = []
+                    data = await req.json()
+                    params = self.__method_params.get(methodname)
+                    if not params or len(params) == 1:
+                        method_args = [data]
+                    else:
+                        if not isinstance(data, dict):
+                            resp.set_status(400)
+                            resp.body = json.dumps({
+                                'message': 'Endpoint accepts multiple params, object/dict expected.',
+                            })
+                            return resp
+                        method_args = []
+                        for p, options in sorted(params.items(), key=lambda x: x[1]['order']):
+                            if p not in data and options['required']:
+                                resp.body = json.dumps({
+                                    'message': f'{p} attribute expected.',
+                                })
+                                return resp
+                            elif p in data:
+                                method_args.append(data[p])
+                except Exception as e:
+                    raise
+                    resp.set_status(400)
+                    resp.body = json.dumps({
+                        'message': str(e),
+                    })
+                    return resp
             elif http_method == 'get' and method['filterable']:
                 method_args = self._filterable_args(req)
             else:
