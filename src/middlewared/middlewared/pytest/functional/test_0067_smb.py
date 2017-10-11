@@ -1,5 +1,5 @@
 def test_smb_config(conn):
-    service = conn.rest.get('smb')
+    req = conn.rest.get('smb')
 
-    assert service.status_code == 200
-    assert isinstance(service.json(), dict) is True
+    assert req.status_code == 200, req.text
+    assert isinstance(req.json(), dict) is True

@@ -21,12 +21,12 @@ def test_user_get_next_uid(conn):
 
 
 def test_user_0100_create(conn, data):
-    req = conn.rest.post('user', data=[{
+    req = conn.rest.post('user', data={
         'username': 'test555',
         'full_name': 'Test User',
         'password': '12345',
         'group_create': True,
-    }])
+    })
 
     assert req.status_code == 200, req.text
     assert isinstance(req.json(), int) is True
@@ -38,9 +38,9 @@ def test_user_0500_update(conn, data):
     if 'id' not in data:
         pytest.skip('No user id found')
 
-    req = conn.rest.put(f'user/id/{data["id"]}', data=[{
+    req = conn.rest.put(f'user/id/{data["id"]}', data={
         'full_name': 'Test User Update',
-    }])
+    })
 
     assert req.status_code == 200, req.text
     assert isinstance(req.json(), int) is True
