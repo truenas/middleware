@@ -295,6 +295,10 @@ class Resource(object):
         if accepts is None:
             return
         for i, accept in enumerate(accepts):
+            # First param of an `item_method` is the item `id` and must be skipped
+            # since thats gotten from the URL.
+            if i == 0 and method['item_method']:
+                continue
             self.__method_params[method_name][accept['title']] = {
                 'order': i,
                 'required': accept['_required_'],
