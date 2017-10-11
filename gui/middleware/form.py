@@ -1,4 +1,7 @@
-from freenasUI.middleware.client import client
+import re
+
+from freenasUI.middleware.client import client, ClientException
+from freenasUI.services.exceptions import ServiceFailed
 
 
 def handle_middleware_validation(form, excep):
@@ -56,4 +59,11 @@ class MiddlewareModelForm:
             args = (self.instance.id, update) + args
 
         with client as c:
-            return c.call(f"{self.middleware_plugin}.update", *args, **kwargs)
+            try:
+                return c.call(f"{self.middleware_plugin}.update", *args, **kwargs)
+            except ClientException as e:
+                m = re.search(r'The (.+?) service failed to start', e.error)
+                if m:
+                    raise ServiceFailed(m.group(1), m.group(0))
+                else:
+                    raise
