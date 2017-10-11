@@ -92,19 +92,24 @@ generate_collectd()
     datadir="/var/db/collectd/rrd"
     rrdmnt="$(get_rrd_dataset)"
 
-    if use_rrd_dataset && [ -d "${rrdmnt}" ]; then
-        if [ -d "${datadir}" -a ! -L "${datadir}" ]; then
+    if use_rrd_dataset; then
+        if [ -d "${rrdmnt}" ]; then
+            if [ -d "${datadir}" -a ! -L "${datadir}" ]; then
                 mv "${datadir}" "${datadir}.$(date +'%Y%m%d%H%M%S')"
-        fi
-        if [ "$(realpath -q ${datadir})" != "${rrdmnt}" ]; then
+            fi
+            if [ "$(realpath -q ${datadir})" != "${rrdmnt}" ]; then
                 rm -f "${datadir}"
                 ln -s "${rrdmnt}" "${datadir}"
+            fi
+        else
+            echo "${rrdmnt} does not exist or is not a directory"
+            exit 1
         fi
     else
         if [ -L "${datadir}" ]; then
             rm -f "${datadir}"
-            mkdir -p "${datadir}"
         fi
+        mkdir -p "${datadir}"
     fi
 
     if [ -f "${rrdfile}" ]; then
@@ -122,9 +127,9 @@ generate_collectd()
     fi
 
     if use_rrd_dataset; then
-        cd "${rrdmnt}"
+        cd "${rrdmnt}" || exit 1
     else
-        cd ${datadir}
+        cd "${datadir}" || exit 1
     fi
     # Migrate from old version, where "${hostname}" was a real directory
     # and "localhost" was a symlink.
