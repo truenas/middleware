@@ -395,28 +395,31 @@ class Resource(object):
         else:
             if http_method in ('post', 'put'):
                 try:
-                    data = await req.json()
-                    params = self.__method_params.get(methodname)
-                    if not params or len(params) == 1:
-                        method_args = [data]
-                    else:
-                        if not isinstance(data, dict):
-                            resp.set_status(400)
-                            resp.body = json.dumps({
-                                'message': 'Endpoint accepts multiple params, object/dict expected.',
-                            })
-                            return resp
+                    text = await req.text()
+                    if not text:
                         method_args = []
-                        for p, options in sorted(params.items(), key=lambda x: x[1]['order']):
-                            if p not in data and options['required']:
+                    else:
+                        data = await req.json()
+                        params = self.__method_params.get(methodname)
+                        if not params or len(params) == 1:
+                            method_args = [data]
+                        else:
+                            if not isinstance(data, dict):
+                                resp.set_status(400)
                                 resp.body = json.dumps({
-                                    'message': f'{p} attribute expected.',
+                                    'message': 'Endpoint accepts multiple params, object/dict expected.',
                                 })
                                 return resp
-                            elif p in data:
-                                method_args.append(data[p])
+                            method_args = []
+                            for p, options in sorted(params.items(), key=lambda x: x[1]['order']):
+                                if p not in data and options['required']:
+                                    resp.body = json.dumps({
+                                        'message': f'{p} attribute expected.',
+                                    })
+                                    return resp
+                                elif p in data:
+                                    method_args.append(data[p])
                 except Exception as e:
-                    raise
                     resp.set_status(400)
                     resp.body = json.dumps({
                         'message': str(e),
