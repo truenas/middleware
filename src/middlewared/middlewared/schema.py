@@ -92,7 +92,13 @@ class Attribute(object):
 class Any(Attribute):
 
     def to_json_schema(self, parent=None):
-        return {'type': 'any'}
+        return {'anyOf': [
+            {'type': 'string'},
+            {'type': 'integer'},
+            {'type': 'boolean'},
+            {'type': 'object'},
+            {'type': 'array'},
+        ]}
 
 
 class Str(EnumMixin, Attribute):
