@@ -151,6 +151,8 @@ generate_collectd()
     find . -maxdepth 1 -type d \! -name . -a \! -name localhost -a \! -name 'localhost.bak.*' -exec rm -rf '{}' \;
     # Remove all symlinks (that are be stale if hostname was changed).
     find . -maxdepth 1 -type l -exec rm -rf '{}' \;
+    # Create "localhost" directory if it does not exist
+    mkdir -p "localhost"
     # Create "${hostname}" -> "localhost" symlink if necessary
     if [ "${hostname}" != "localhost" ]; then
         ln -s "localhost" "${hostname}"
