@@ -143,6 +143,7 @@ class OpenAPIResource(object):
     def add_path(self, path, operation, methodname, params=None):
         assert operation in ('get', 'post', 'put', 'delete')
         opobject = {
+            'tags': [methodname.rsplit('.', 1)[0]],
             'responses': {
                 '200': {'$ref': '#/components/responses/Success'},
                 '401': {'$ref': '#/components/responses/Unauthorized'},
