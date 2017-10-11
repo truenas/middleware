@@ -21,6 +21,7 @@ def handle_middleware_validation(form, excep):
 
 
 class MiddlewareModelForm:
+    middleware_exclude_fields = []
 
     def save(self):
         result = self.__update()
@@ -32,7 +33,8 @@ class MiddlewareModelForm:
         update = {
             k[len(self.middleware_attr_prefix):]: v
             for k, v in self.cleaned_data.items()
-            if k.startswith(self.middleware_attr_prefix)
+            if (k.startswith(self.middleware_attr_prefix) and
+                k[len(self.middleware_attr_prefix):] not in self.middleware_exclude_fields)
         }
         return update
 

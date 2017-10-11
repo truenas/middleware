@@ -610,7 +610,13 @@ class DynamicDNSForm(ModelForm):
 key_order(DynamicDNSForm, 10, 'ddns_password2')
 
 
-class SNMPForm(ModelForm):
+class SNMPForm(MiddlewareModelForm, ModelForm):
+
+    middleware_attr_prefix = "snmp_"
+    middleware_attr_schema = "snmp_update"
+    middleware_exclude_fields = ["v3_password2", "v3_privpassphrase2"]
+    middleware_plugin = "snmp"
+    is_singletone = True
 
     snmp_v3_password2 = forms.CharField(
         max_length=40,
@@ -670,43 +676,6 @@ class SNMPForm(ModelForm):
             self.fields['snmp_v3_password2'].initial = self.instance.snmp_v3_password
             self.fields['snmp_v3_privpassphrase2'].initial = self.instance.snmp_v3_privpassphrase
 
-    def clean_snmp_contact(self):
-        contact = self.cleaned_data['snmp_contact']
-        if '@' in contact:
-            validate_email(contact)
-        elif not re.match(r'^[-_a-zA-Z0-9\s]+$', contact):
-            raise forms.ValidationError(
-                _("The contact must contain only alphanumeric characters, _, "
-                    "- or a valid e-mail address")
-            )
-        return contact
-
-    def clean_snmp_community(self):
-        community = self.cleaned_data.get('snmp_community')
-        v3 = self.cleaned_data.get('snmp_v3')
-        if not community:
-            if not v3:
-                raise forms.ValidationError(_('This field is required.'))
-            else:
-                return community
-        if not re.match(r'^[-_.a-zA-Z0-9\s]+$', community):
-            raise forms.ValidationError(
-                _("The community must contain only alphanumeric characters "
-                    "_ . spaces or -")
-            )
-        return community
-
-    def clean_snmp_v3_password(self):
-        authtype = self.cleaned_data.get("snmp_v3_authtype")
-        password = self.cleaned_data.get("snmp_v3_password")
-        if authtype and not password:
-            raise forms.ValidationError(_('This field is required.'))
-        if password and len(password) < 8:
-            raise forms.ValidationError(_(
-                'Password must contain at least 8 characters'
-            ))
-        return password
-
     def clean_snmp_v3_password2(self):
         password1 = self.cleaned_data.get("snmp_v3_password")
         password2 = self.cleaned_data.get("snmp_v3_password2")
@@ -718,17 +687,6 @@ class SNMPForm(ModelForm):
             )
         return password2
 
-    def clean_snmp_v3_privpassphrase(self):
-        authtype = self.cleaned_data.get("snmp_v3_privproto")
-        passphrase = self.cleaned_data.get("snmp_v3_privpassphrase")
-        if authtype and not passphrase:
-            raise forms.ValidationError(_('This field is required.'))
-        if passphrase and len(passphrase) < 8:
-            raise forms.ValidationError(_(
-                'Passphrase must contain at least 8 characters'
-            ))
-        return passphrase
-
     def clean_snmp_v3_privpassphrase2(self):
         passphrase1 = self.cleaned_data.get("snmp_v3_privpassphrase")
         passphrase2 = self.cleaned_data.get("snmp_v3_privpassphrase2")
@@ -739,17 +697,6 @@ class SNMPForm(ModelForm):
                 _("The two password fields didn't match.")
             )
         return passphrase2
-
-    def save(self):
-        super(SNMPForm, self).save()
-        started = notifier().restart("snmp")
-        if (
-            started is False and
-            models.services.objects.get(srv_service='snmp').srv_enable
-        ):
-            raise ServiceFailed(
-                "snmp", _("The SNMP service failed to reload.")
-            )
 
 
 key_order(SNMPForm, 7, 'snmp_v3_password2')
