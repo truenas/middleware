@@ -50,7 +50,7 @@ class JailService(CRUDService):
         # the main job that calls this and return said job's id instead of
         # the created jail's id
 
-        return self.middleware.call('jail.create_job', options)
+        return await self.middleware.call('jail.create_job', options)
 
     @private
     @accepts(
@@ -65,8 +65,8 @@ class JailService(CRUDService):
         iocage = ioc.IOCage(skip_jails=True)
 
         release = options["release"]
-        template = options["template"]
-        pkglist = options["pkglist"]
+        template = options.get("template", False)
+        pkglist = options.get("pkglist", None)
         uuid = options["uuid"]
         basejail = options["basejail"]
         empty = options["empty"]
