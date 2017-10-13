@@ -1381,12 +1381,11 @@ require([
 
     vmTypeToggle = function() {
         var vm_type = registry.byId("id_vm_type");
-        var container_path = registry.byId("id_container_path").domNode.parentNode.parentNode;
-
-        domStyle.set(container_path, "display", "none");
-
+        var bootloader = registry.byId("id_bootloader").domNode.parentNode.parentNode;
         if (vm_type.get('value') == 'Container Provider') {
-            domStyle.set(container_path, "display", "");
+            domStyle.set(bootloader, "display", "none");
+        } else if (vm_type.get('value') == 'Bhyve') {
+            domStyle.set(bootloader, "display", "");
         }
     }
 

@@ -18,7 +18,7 @@ import bz2
 logger = middlewared.logger.Logger('vm').getLogger()
 
 CONTAINER_IMAGES = {
-    "CoreOS": "https://stable.release.core-os.net/amd64-usr/current/coreos_production_image.bin.bz2",
+    "RancherOS": "https://github.com/rancher/os/releases/download/v1.1.0/rancheros.iso",
 }
 BUFSIZE = 65536
 
@@ -473,7 +473,6 @@ class VMService(CRUDService):
         Str('bootloader'),
         List("devices"),
         Str('vm_type'),
-        Str('container_path'),
         Bool('autostart'),
         register=True,
     ))
@@ -484,7 +483,7 @@ class VMService(CRUDService):
         pk = await self.middleware.call('datastore.insert', 'vm.vm', data)
 
         if self.vmutils.is_container(data) is True:
-            image_url = CONTAINER_IMAGES.get('CoreOS')
+            image_url = CONTAINER_IMAGES.get('RancherOS')
             image_path = self.vmutils.create_images_path(data) + '/' + image_url.split('/')[-1]
 
             with Client() as c:

@@ -77,11 +77,6 @@ class VM(Model):
         ),
         default='Bhyve',
     )
-    container_path = PathField(
-        verbose_name=_("Path"),
-        help_text=_('Path where a small pre built image will be downloaded.'),
-        blank=True
-    )
     autostart = models.BooleanField(
         verbose_name=_('Autostart'),
         help_text=_('Guest VM will start on boot.'),

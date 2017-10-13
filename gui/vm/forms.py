@@ -29,7 +29,6 @@ class VMForm(ModelForm):
         super(VMForm, self).__init__(*args, **kwargs)
         self.fields['vm_type'].widget.attrs['onChange'] = ("vmTypeToggle();")
         key_order(self, 0, 'vm_type', instance=True)
-        key_order(self, 5, 'container_path', instance=True)
 
     def get_cpu_flags(self):
         cpu_flags = {}
