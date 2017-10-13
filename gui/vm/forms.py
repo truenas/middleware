@@ -70,7 +70,7 @@ class VMForm(ModelForm):
                 if self.instance.bootloader == 'UEFI' and self.instance.vm_type != 'Container Provider':
                     cdata['devices'] = [
                         {'dtype': 'NIC', 'attributes': {'type': 'E1000'}},
-                        {'dtype': 'VNC', 'attributes': {'wait': True}},
+                        {'dtype': 'VNC', 'attributes': {'wait': False, 'vnc_web': False}},
                     ]
                 else:
                     cdata['devices'] = [
@@ -106,6 +106,13 @@ class DeviceForm(ModelForm):
         required=False,
         dirsonly=False,
     )
+    DISK_sectorsize = forms.IntegerField(
+        label=_('Disk sectorsize'),
+        required=False,
+        initial=0,
+        help_text=_("Logical and physical sector size in bytes of the emulated disk."
+                    "If 0, a sector size is not set."),
+    )
     NIC_type = forms.ChoiceField(
         label=_('Adapter Type'),
         choices=choices.VM_NICTYPES,
@@ -137,8 +144,26 @@ class DeviceForm(ModelForm):
         validators=[RegexValidator("^[0-9]*$", "Only integer is accepted")],
         initial=0,
     )
+    VNC_bind = forms.ChoiceField(
+        label=_('Bind to'),
+        choices=(),
+        required=False,
+        initial='0.0.0.0'
+    )
     VNC_wait = forms.BooleanField(
         label=_('Wait to boot'),
+        required=False,
+    )
+    VNC_password = forms.CharField(
+        label=_('Password'),
+        max_length=8,
+        widget=forms.PasswordInput(render_value=True,),
+        required=False,
+        help_text=_("The VNC password authentication."
+                    "Maximum password length is 8 characters.")
+    )
+    VNC_web = forms.BooleanField(
+        label=_('VNC Web'),
         required=False,
     )
 
@@ -151,6 +176,7 @@ class DeviceForm(ModelForm):
         self.fields['dtype'].widget.attrs['onChange'] = (
             "deviceTypeToggle();"
         )
+        self.fields['VNC_bind'].choices = self.ipv4_list()
 
         diskchoices = {}
         _n = notifier()
@@ -170,9 +196,11 @@ class DeviceForm(ModelForm):
             elif self.instance.dtype == 'DISK':
                 self.fields['DISK_zvol'].initial = self.instance.attributes.get('path', '').replace('/dev/', '')
                 self.fields['DISK_mode'].initial = self.instance.attributes.get('type')
+                self.fields['DISK_sectorsize'].initial = self.instance.attributes.get('sectorsize', 0)
             elif self.instance.dtype == "RAW":
                 self.fields['DISK_raw'].initial = self.instance.attributes.get('path', '')
                 self.fields['DISK_mode'].initial = self.instance.attributes.get('type')
+                self.fields['DISK_sectorsize'].initial = self.instance.attributes.get('sectorsize', 0)
             elif self.instance.dtype == 'NIC':
                 self.fields['NIC_type'].initial = self.instance.attributes.get('type')
                 self.fields['NIC_mac'].initial = self.instance.attributes.get('mac')
@@ -184,6 +212,17 @@ class DeviceForm(ModelForm):
                 self.fields['VNC_wait'].initial = self.instance.attributes.get('wait')
                 self.fields['VNC_port'].initial = vnc_port
                 self.fields['VNC_resolution'].initial = self.instance.attributes.get('vnc_resolution')
+                self.fields['VNC_bind'].initial = self.instance.attributes.get('vnc_bind')
+                self.fields['VNC_password'].initial = self.instance.attributes.get('vnc_password')
+                self.fields['VNC_web'].initial = self.instance.attributes.get('vnc_web')
+
+    def ipv4_list(self):
+        choices = (('0.0.0.0', '0.0.0.0'),)
+        with client as c:
+            ipv4_addresses = c.call('interfaces.ipv4_in_use')
+        for ipv4_addr in ipv4_addresses:
+            choices = choices + ((ipv4_addr, ipv4_addr),)
+        return choices
 
     def clean(self):
         vm = self.cleaned_data.get('vm')
@@ -210,18 +249,22 @@ class DeviceForm(ModelForm):
             obj.attributes = {
                 'path': '/dev/' + self.cleaned_data['DISK_zvol'],
                 'type': self.cleaned_data['DISK_mode'],
+                'sectorsize': self.cleaned_data['DISK_sectorsize'],
             }
         elif self.cleaned_data['dtype'] == 'RAW':
             obj.attributes = {
                 'path': self.cleaned_data['DISK_raw'],
                 'type': self.cleaned_data['DISK_mode'],
+                'sectorsize': self.cleaned_data['DISK_sectorsize'],
             }
         elif self.cleaned_data['dtype'] == 'CDROM':
-            if self.is_container(vm.vm_type):
-                self._errors['dtype'] = self.error_class([_('Not allowed to add a CDROM on VM Container')])
-            obj.attributes = {
-                'path': self.cleaned_data['CDROM_path'],
-            }
+            cdrom_path = self.cleaned_data['CDROM_path']
+            if cdrom_path:
+                obj.attributes = {
+                    'path': cdrom_path,
+                }
+            else:
+                self._errors['CDROM_path'] = self.error_class([_('Please choose an ISO file.')])
         elif self.cleaned_data['dtype'] == 'NIC':
             obj.attributes = {
                 'type': self.cleaned_data['NIC_type'],
@@ -234,12 +277,18 @@ class DeviceForm(ModelForm):
                     'wait': self.cleaned_data['VNC_wait'],
                     'vnc_port': self.cleaned_data['VNC_port'],
                     'vnc_resolution': self.cleaned_data['VNC_resolution'],
+                    'vnc_bind': self.cleaned_data['VNC_bind'],
+                    'vnc_password': self.cleaned_data['VNC_password'],
+                    'vnc_web': self.cleaned_data['VNC_web'],
                 }
             else:
-                self._errors['dtype'] = self.error_class([_('VNC is only allowed for UEFI')])
+                self._errors['dtype'] = self.error_class([_('VNC only works with UEFI VMs')])
                 self.cleaned_data.pop('VNC_port', None)
                 self.cleaned_data.pop('VNC_wait', None)
                 self.cleaned_data.pop('VNC_resolution', None)
+                self.cleaned_data.pop('VNC_bind', None)
+                self.cleaned_data.pop('VNC_password', None)
+                self.cleaned_data.pop('VNC_web', None)
                 return obj
 
         obj.save()

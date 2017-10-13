@@ -203,6 +203,10 @@ activedirectory_start()
 			fi
 		else
 			AD_log "activedirectory_start: skipping join, already joined"
+			if [ -f /tmp/.adalert ]
+			then
+				rm /tmp/.adalert
+			fi
 		fi
 
 		setup_homedirs
@@ -236,7 +240,6 @@ activedirectory_stop()
         /usr/local/www/freenasUI/tools/cachetool.py expire
 
 	AD_log "activedirectory_stop: leaving domain"
-	AD_disable_machine_account	
 }
 
 

@@ -27,24 +27,20 @@ from collections import OrderedDict
 import json
 import logging
 import os
-import subprocess
-import time
+import requests
 
-from django.core.files.base import File
 from django.http import HttpResponse
 from django.shortcuts import render
 from django.utils.translation import ugettext as _
 from django.views.decorators.http import require_POST
 from wsgiref.util import FileWrapper
 
-from freenasUI.common.system import get_sw_name, get_sw_version
+from freenasUI.common.system import get_sw_name
 from freenasUI.freeadmin.apppool import appPool
 from freenasUI.freeadmin.views import JsonResp
 from freenasUI.middleware.client import client, ClientException
 from freenasUI.middleware.notifier import notifier
-from freenasUI.network.models import GlobalConfiguration
 from freenasUI.support import forms, utils
-from freenasUI.system.utils import debug_get_settings, debug_generate
 
 log = logging.getLogger("support.views")
 TICKET_PROGRESS = '/tmp/.ticketprogress'
@@ -136,110 +132,76 @@ def license_status(request):
 @require_POST
 def ticket(request):
 
-    step = 2 if request.FILES.getlist('attachment') else 1
-
-    files = []
-    if request.POST.get('debug') == 'on':
-        debug = True
-        with open(TICKET_PROGRESS, 'w') as f:
-            f.write(json.dumps({'indeterminate': True, 'step': step}))
-        step += 1
-
-        mntpt, direc, dump = debug_get_settings()
-        debug_generate()
-
-        _n = notifier()
-        if not _n.is_freenas() and _n.failover_licensed():
-            debug_file = '%s/debug.tar' % direc
-            debug_name = 'debug-%s.tar' % time.strftime('%Y%m%d%H%M%S')
-        else:
-            gc = GlobalConfiguration.objects.all().order_by('-id')[0]
-            debug_file = dump
-            debug_name = 'debug-%s-%s.txz' % (
-                gc.gc_hostname,
-                time.strftime('%Y%m%d%H%M%S'),
-            )
-
-        files.append(File(open(debug_file, 'rb'), name=debug_name))
-    else:
-        debug = False
-
-    with open(TICKET_PROGRESS, 'w') as f:
-        f.write(json.dumps({'indeterminate': True, 'step': step}))
-    step += 1
+    debug = True if request.POST.get('debug') == 'on' else False
 
     data = {
         'title': request.POST.get('subject'),
         'body': request.POST.get('desc'),
-        'version': get_sw_version().split('-', 1)[-1],
         'category': request.POST.get('category'),
-        'debug': debug,
+        'attach_debug': debug,
     }
 
     if get_sw_name().lower() == 'freenas':
         data.update({
-            'user': request.POST.get('username'),
+            'username': request.POST.get('username'),
             'password': request.POST.get('password'),
-            'type': request.POST.get('type'),
+            'type': request.POST.get('type', '').upper(),
         })
     else:
-
-        serial = subprocess.Popen(
-            ['/usr/local/sbin/dmidecode', '-s', 'system-serial-number'],
-            stdout=subprocess.PIPE,
-            encoding='utf8',
-        ).communicate()[0].split('\n')[0].upper()
-
-        license, reason = utils.get_license()
-        if license:
-            company = license.customer_name
-        else:
-            company = 'Unknown'
-
         data.update({
             'phone': request.POST.get('phone'),
             'name': request.POST.get('name'),
-            'company': company,
             'email': request.POST.get('email'),
             'criticality': request.POST.get('criticality'),
             'environment': request.POST.get('environment'),
-            'serial': serial,
         })
 
-    success, msg, tid = utils.new_ticket(data)
+    error = False
+    files = request.FILES.getlist('attachment')
+    token = None
+    with client as c:
+        try:
+            rv = c.call('support.new_ticket', data, job=True)
+            data = {'error': False, 'message': rv['url']}
+            if files:
+                token = c.call('auth.generate_token')
+        except ClientException as e:
+            data = {'error': True, 'message': e.error}
 
-    with open(TICKET_PROGRESS, 'w') as f:
-        f.write(json.dumps({'indeterminate': True, 'step': step}))
-    step += 1
-
-    data = {'message': msg, 'error': not success}
-
-    if not success:
-        pass
-    else:
-
-        files.extend(request.FILES.getlist('attachment'))
+    if not error:
         for f in files:
-            success, attachmsg = utils.ticket_attach({
-                'user': request.POST.get('username'),
-                'password': request.POST.get('password'),
-                'ticketnum': tid,
-            }, f)
+            requests.post(
+                f'http://127.0.0.1:6000/_upload/?auth_token={token}',
+                files={
+                    'file': ('file', f.file),
+                    'data': ('data', json.dumps({
+                        'method': 'support.attach_ticket',
+                        'params': [{
+                            'ticket': rv['ticket'],
+                            'filename': f.name,
+                            'username': request.POST.get('username'),
+                            'password': request.POST.get('password'),
+                        }],
+                    }).encode()),
+                },
+            )
 
-    data = (
-        '<html><body><textarea>%s</textarea></boby></html>' % (
-            json.dumps(data),
-        )
+    data = '<html><body><textarea>{}</textarea></boby></html>'.format(
+        json.dumps(data),
     )
     return HttpResponse(data)
 
 
 @require_POST
 def ticket_categories(request):
-    success, msg = utils.fetch_categories({
-        'user': request.POST.get('user'),
-        'password': request.POST.get('password'),
-    })
+    with client as c:
+        try:
+            msg = c.call('support.fetch_categories', request.POST.get('user'), request.POST.get('password'))
+            success = True
+        except ClientException as e:
+            success = False
+            msg = e.error
+
     data = {
         'error': not success,
     }
@@ -255,11 +217,17 @@ def ticket_categories(request):
 
 
 def ticket_progress(request):
-    with open(TICKET_PROGRESS, 'r') as f:
-        try:
-            data = json.loads(f.read())
-        except:
-            data = {'indeterminate': True}
+    try:
+        with client as c:
+            jobs = c.call('core.get_jobs', [('method', '=', 'support.new_ticket')], {'order_by': ['-id']})
+            job = jobs[0]
+            assert job['state'] == 'RUNNING'
+            data = {
+                'percent': job['progress']['percent'],
+                'details': job['progress']['description'],
+            }
+    except Exception:
+        data = {'indeterminate': True}
     return HttpResponse(json.dumps(data), content_type='application/json')
 
 

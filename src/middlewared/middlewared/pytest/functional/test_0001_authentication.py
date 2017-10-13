@@ -19,7 +19,7 @@ def test_auth_check_invalid_user(conn, data_user):
     assert invalid_user.json() is False
 
 
-@pytest.mark.parametrize('data_random', [[1000], [2000], [3000], [4000], [5000]])
+@pytest.mark.parametrize('data_random', [[], [1000], [2000], [3000], [4000], [5000]])
 def test_generate_token(conn, data_random):
     generate_token = conn.rest.post('auth/generate_token', data=data_random)
 

@@ -296,11 +296,6 @@ EOD
 
 ask_boot_method()
 {
-    # TrueNAS is BIOS only for now
-    if [ "${AVATAR_PROJECT}" = "TrueNAS" -a "$(sysctl -n kern.vm_guest)" != "bhyve" ]; then
-      return 1
-    fi
-
     # If we are not on efi, set BIOS as the default selected option
     dlgflags=""
     if [ "$BOOTMODE" != "efi" ] ; then
@@ -413,7 +408,7 @@ create_partitions() {
 	  # EFI Mode
 	  sysctl kern.geom.debugflags=16
 	  sysctl kern.geom.label.disk_ident.enable=0
-	  if gpart add -s 100m -t efi ${_disk}; then
+	  if gpart add -s 260m -t efi ${_disk}; then
 	    if ! newfs_msdos -F 16 /dev/${_disk}p1 ; then
 	      return 1
 	    fi
@@ -454,7 +449,7 @@ get_minimum_size() {
     do
 	_size=""
 	if create_partitions ${_disk} 1>&2; then
-	    _size=$(gpart show ${_disk} | awk '/freebsd-zfs/ { print $2 * 512; }')
+	    _size=$(diskinfo /dev/${_disk}p2 | awk '{print $3;}')
 	    gpart destroy -F ${_disk} 1>&2
 	fi
 	if [ -z "${_size}" ]; then
@@ -527,8 +522,12 @@ make_swap()
 {
     local _swapparts
 
-    _swapparts=$(for _disk in $*; do echo ${_disk}p3; done)
-    gmirror label -b prefer swap ${_swapparts}
+    # Skip the swap creation if installing into a BE (Swap already exists in that case)
+    if [ "${_upgrade_type}" != "inplace" ] ; then
+      _swapparts=$(for _disk in $*; do echo ${_disk}p3; done)
+      gmirror destroy -f swap || true
+      gmirror label -b prefer swap ${_swapparts}
+    fi
     echo "/dev/mirror/swap.eli		none			swap		sw		0	0" > /tmp/data/data/fstab.swap
 }
 

@@ -1,4 +1,5 @@
 #!/usr/local/bin/python
+
 from middlewared.client import Client
 from middlewared.client.utils import Struct
 
@@ -45,9 +46,10 @@ logging.config.dictConfig({
 
 from freenasUI.common.pipesubr import pipeopen
 from freenasUI.common.log import log_traceback
-
+from freenasUI.common.freenassysctl import freenas_sysctl as fs
 
 log = logging.getLogger('generate_smb4_conf')
+
 
 def qw(w):
     return '"%s"' % w.replace('"', '\\"')
@@ -221,6 +223,29 @@ def smb4_ldap_enabled(client):
     return ret
 
 
+def smb4_activedirectory_enabled(client):
+    ret = False
+
+    if client.call('notifier.common', 'system', 'activedirectory_enabled'):
+        ret = True
+
+    return ret
+
+
+def smb4_autorid_enabled(client):
+    ret = False
+
+    try:
+        ad = Struct(client.call('datastore.query', 'directoryservice.ActiveDirectory', None, {'get': True}))
+    except:
+        return ret
+
+    if ad.ad_idmap_backend.lower() == "autorid":
+        ret = True
+
+    return ret
+
+
 def config_share_for_nfs4(share):
     confset1(share, "nfs4:mode = special")
     confset1(share, "nfs4:acedup = merge")
@@ -238,22 +263,20 @@ def config_share_for_zfs(share):
 # for fruit, and if catia and fruit are used, catia comes before fruit
 #
 def order_vfs_objects(vfs_objects):
+    vfs_objects_special = ('catia', 'fruit', 'streams_xattr', 'recycle', 'aio_pthread')
     vfs_objects_ordered = []
-    for obj in vfs_objects:
-        if obj not in ('aio_pthread', 'catia', 'fruit', 'recycle', 'streams_xattr'):
-            vfs_objects_ordered.append(obj)
 
     if 'fruit' in vfs_objects:
-        if 'catia' in vfs_objects:
-            vfs_objects_ordered.append('catia')
-        vfs_objects_ordered.append('fruit')
-        vfs_objects_ordered.append('streams_xattr')
-    if not 'fruit' in vfs_objects and 'streams_xattr' in vfs_objects:
-        vfs_objects_ordered.append('streams_xattr')
-    if 'recycle' in vfs_objects:
-        vfs_objects_ordered.append('recycle')
-    if 'aio_pthread' in vfs_objects:
-        vfs_objects_ordered.append('aio_pthread')
+        if 'streams_xattr' not in vfs_objects:
+            vfs_objects.append('streams_xattr')
+
+    for obj in vfs_objects:
+        if obj not in vfs_objects_special:
+            vfs_objects_ordered.append(obj)
+
+    for obj in vfs_objects_special:
+        if obj in vfs_objects:
+            vfs_objects_ordered.append(obj)
 
     return vfs_objects_ordered
 
@@ -265,7 +288,7 @@ def config_share_for_vfs_objects(share, vfs_objects):
 
 
 def extend_vfs_objects_for_zfs(path, vfs_objects):
-    return 
+    return
 
     if is_within_zfs(path):
         vfs_objects.extend([
@@ -343,7 +366,7 @@ def get_dcerpc_endpoint_servers():
 
 def get_server_role(client):
     role = "standalone"
-    if client.call('notifier.common', 'system', 'nt4_enabled') or client.call('notifier.common', 'system', 'activedirectory_enabled') or smb4_ldap_enabled(client):
+    if client.call('notifier.common', 'system', 'activedirectory_enabled') or smb4_ldap_enabled(client):
         role = "member"
 
     if client.call('notifier.common', 'system', 'domaincontroller_enabled'):
@@ -414,24 +437,24 @@ def configure_idmap_adex(smb4_conf, idmap, domain):
 
 def configure_idmap_autorid(smb4_conf, idmap, domain):
     confset1(smb4_conf, "idmap config %s: backend = %s" % (
-        domain,
+        "*",
         idmap.idmap_backend_name
     ))
     confset1(smb4_conf, "idmap config %s: range = %d-%d" % (
-        domain,
+        "*",
         idmap.idmap_autorid_range_low,
         idmap.idmap_autorid_range_high
     ))
     confset1(smb4_conf, "idmap config %s: rangesize = %d" % (
-        domain,
+        "*",
         idmap.idmap_autorid_rangesize
     ))
     confset1(smb4_conf, "idmap config %s: read only = %s" % (
-        domain,
+        "*",
         "yes" if idmap.idmap_autorid_readonly else "no"
     ))
     confset1(smb4_conf, "idmap config %s: ignore builtin = %s" % (
-        domain,
+        "*",
         "yes" if idmap.idmap_autorid_ignore_builtin else "no"
     ))
 
@@ -642,9 +665,25 @@ def configure_idmap_tdb2(smb4_conf, idmap, domain):
         idmap.idmap_tdb2_range_low,
         idmap.idmap_tdb2_range_high
     ))
-    confset2(smb4_conf, "idmap config %s: script = %s" % (
+    confset1(smb4_conf, "idmap config %s: script = %s" % (
         domain,
         idmap.idmap_tdb2_script
+    ))
+
+
+def configure_idmap_script(smb4_conf, idmap, domain):
+    confset1(smb4_conf, "idmap config %s: backend = %s" % (
+        domain,
+        idmap.idmap_backend_name
+    ))
+    confset1(smb4_conf, "idmap config %s: range = %d-%d" % (
+        domain,
+        idmap.idmap_script_range_low,
+        idmap.idmap_script_range_high
+    ))
+    confset1(smb4_conf, "idmap config %s: script = %s" % (
+        domain,
+        idmap.idmap_script_script
     ))
 
 
@@ -659,7 +698,8 @@ IDMAP_FUNCTIONS = {
     'IDMAP_TYPE_RFC2307': configure_idmap_rfc2307,
     'IDMAP_TYPE_RID': configure_idmap_rid,
     'IDMAP_TYPE_TDB': configure_idmap_tdb,
-    'IDMAP_TYPE_TDB2': configure_idmap_tdb2
+    'IDMAP_TYPE_TDB2': configure_idmap_tdb2,
+    'IDMAP_TYPE_SCRIPT': configure_idmap_script
 }
 
 
@@ -673,58 +713,6 @@ def configure_idmap_backend(client, smb4_conf, idmap, domain):
     except:
         log.warn('Failed to configure idmap', exc_info=True)
         pass
-
-
-def add_nt4_conf(client, smb4_conf):
-    # TODO: These are unused, will they be at some point?
-    # rid_range_start = 20000
-    # rid_range_end = 20000000
-
-    try:
-        nt4 = Struct(client.call('datastore.query', 'directoryservice.nt4', None, {'get': True}))
-        nt4.ds_type = 4  # FIXME: DS_TYPE_NT4 = 4
-    except:
-        return
-
-    dc_ip = None
-    try:
-        answers = resolver.query(nt4.nt4_dcname, 'A')
-        dc_ip = answers[0]
-
-    except Exception as e:
-        log.debug(
-            "resolver query for {0}'s A record failed with {1}".format(nt4.nt4_dcname, e)
-        )
-        log_traceback(log=log)
-        dc_ip = nt4.nt4_dcname
-
-    nt4_workgroup = nt4.nt4_workgroup.upper()
-
-    with open("/usr/local/etc/lmhosts", "w") as f:
-        f.write("%s\t%s\n" % (dc_ip, nt4.nt4_dcname.upper()))
-
-    confset2(smb4_conf, "workgroup = %s", nt4_workgroup)
-
-    confset1(smb4_conf, "security = domain")
-    confset1(smb4_conf, "password server = *")
-
-    idmap = Struct(client.call('notifier.ds_get_idmap_object', nt4.ds_type, nt4.id, nt4.nt4_idmap_backend))
-    configure_idmap_backend(client, smb4_conf, idmap, nt4_workgroup)
-
-    confset1(smb4_conf, "winbind cache time = 7200")
-    confset1(smb4_conf, "winbind offline logon = yes")
-    confset1(smb4_conf, "winbind enum users = yes")
-    confset1(smb4_conf, "winbind enum groups = yes")
-    confset1(smb4_conf, "winbind nested groups = yes")
-    confset2(
-        smb4_conf, "winbind use default domain = %s", "yes" if nt4.nt4_use_default_domain else "no"
-    )
-
-    confset1(smb4_conf, "template shell = /bin/sh")
-
-    confset1(smb4_conf, "local master = no")
-    confset1(smb4_conf, "domain master = no")
-    confset1(smb4_conf, "preferred master = no")
 
 
 def set_ldap_password(client):
@@ -794,8 +782,6 @@ def add_activedirectory_conf(client, smb4_conf):
     except:
         return
 
-#    cachedir = "/var/tmp/.cache/.samba"
-
     try:
         os.makedirs(cachedir)
         os.chmod(cachedir, 0o755)
@@ -813,7 +799,6 @@ def add_activedirectory_conf(client, smb4_conf):
     confset2(smb4_conf, "realm = %s", ad.ad_domainname.upper())
     confset1(smb4_conf, "security = ADS")
     confset1(smb4_conf, "client use spnego = yes")
-#    confset2(smb4_conf, "cache directory = %s", cachedir)
 
     confset1(smb4_conf, "local master = no")
     confset1(smb4_conf, "domain master = no")
@@ -844,7 +829,7 @@ def add_activedirectory_conf(client, smb4_conf):
              ad.ad_ldap_sasl_wrapping)
 
     confset1(smb4_conf, "template shell = /bin/sh")
-    cifs_homedir = "%s/%%D/%%U" % get_cifs_homedir(client) 
+    cifs_homedir = "%s/%%D/%%U" % get_cifs_homedir(client)
     confset2(smb4_conf, "template homedir = %s", cifs_homedir)
 
 
@@ -950,8 +935,14 @@ def generate_smb4_conf(client, smb4_conf, role):
     if os.path.exists("/usr/local/etc/smbusers"):
         confset1(smb4_conf, "username map = /usr/local/etc/smbusers")
 
-    confset2(smb4_conf, "server min protocol = %s", cifs.min_protocol)
-    confset2(smb4_conf, "server max protocol = %s", cifs.max_protocol)
+    server_min_protocol = fs().services.smb.config.server_min_protocol
+    if server_min_protocol != 'NONE': 
+        confset2(smb4_conf, "server min protocol = %s", server_min_protocol)
+
+    server_max_protocol = fs().services.smb.config.server_max_protocol
+    if server_max_protocol != 'NONE': 
+        confset2(smb4_conf, "server max protocol = %s", server_max_protocol)
+
     if cifs.bindip:
         interfaces = []
 
@@ -965,7 +956,15 @@ def generate_smb4_conf(client, smb4_conf, role):
                 continue
             bindip = bindip.strip()
             iface = client.call('notifier.get_interface', bindip)
-            if iface and client.call('notifier.is_carp_interface', iface):
+
+            is_carp_interface = False
+            if iface:
+                try:
+                    is_carp_interface = client.call('notifier.is_carp_interface', iface)
+                except:
+                    pass
+
+            if iface and is_carp_interface:
                 parent_iface = client.call('notifier.get_parent_interface', iface)
                 if not parent_iface:
                     continue
@@ -1042,13 +1041,14 @@ def generate_smb4_conf(client, smb4_conf, role):
         confset2(smb4_conf, "domain logons = %s",
                  "yes" if cifs.domain_logons else "no")
 
-    if (not client.call('notifier.common', 'system', 'nt4_enabled') and not client.call('notifier.common', 'system', 'activedirectory_enabled')):
+    if not client.call('notifier.common', 'system', 'activedirectory_enabled'):
         confset2(smb4_conf, "local master = %s",
                  "yes" if cifs.localmaster else "no")
 
-    # 5 = DS_TYPE_CIFS
-    idmap = Struct(client.call('notifier.ds_get_idmap_object', 5, cifs.id, 'tdb'))
-    configure_idmap_backend(client, smb4_conf, idmap, None)
+    if not smb4_autorid_enabled(client):
+        # 5 = DS_TYPE_CIFS
+        idmap = Struct(client.call('notifier.ds_get_idmap_object', 5, cifs.id, 'tdb'))
+        configure_idmap_backend(client, smb4_conf, idmap, None)
 
     if role == 'auto':
         confset1(smb4_conf, "server role = auto")
@@ -1066,10 +1066,7 @@ def generate_smb4_conf(client, smb4_conf, role):
     elif role == 'member':
         confset1(smb4_conf, "server role = member server")
 
-        if client.call('notifier.common', 'system', 'nt4_enabled'):
-            add_nt4_conf(client, smb4_conf)
-
-        elif smb4_ldap_enabled(client):
+        if smb4_ldap_enabled(client):
             add_ldap_conf(client, smb4_conf)
 
         elif client.call('notifier.common', 'system', 'activedirectory_enabled'):
@@ -1086,9 +1083,6 @@ def generate_smb4_conf(client, smb4_conf, role):
             confset2(smb4_conf, "netbios aliases = %s", cifs.netbiosalias.upper())
         confset2(smb4_conf, "workgroup = %s", cifs.workgroup.upper())
         confset1(smb4_conf, "security = user")
-
-    if role != 'dc':
-        confset1(smb4_conf, "pid directory = /var/run/samba")
 
     confset2(smb4_conf, "create mask = %s", cifs.filemask)
     confset2(smb4_conf, "directory mask = %s", cifs.dirmask)
@@ -1162,6 +1156,8 @@ def generate_smb4_shares(client, smb4_shares):
                  "no" if share.cifs_ro else "yes")
         confset2(smb4_shares, "browseable = %s",
                  "yes" if share.cifs_browsable else "no")
+        confset2(smb4_shares, "access based share enum = %s",
+                 "yes" if share.cifs_abe else "no")
 
         task = None
         if share.cifs_storage_task:
@@ -1314,15 +1310,15 @@ def smb4_setup(client):
     if not client.call('notifier.is_freenas') and client.call('notifier.failover_status') == 'BACKUP':
         return
 
-    systemdataset_is_decrypted = client.call('notifier.systemdataset_is_decrypted')
+    systemdataset = client.call('systemdataset.config')
 
-    if not systemdataset_is_decrypted:
+    if not systemdataset['is_decrypted']:
         if os.path.islink(statedir):
             smb4_unlink(statedir)
             smb4_mkdir(statedir)
         return
 
-    systemdataset_path = client.call('notifier.system_dataset_path') or statedir
+    systemdataset_path = systemdataset['path'] or statedir
 
     basename_realpath = os.path.join(systemdataset_path, 'samba4')
     statedir_realpath = os.path.realpath(statedir)
@@ -1353,11 +1349,11 @@ def smb4_setup(client):
         smb4_unlink(statedir)
         smb4_mkdir(statedir)
 
-    smb4_mkdir("/var/db/samba4/private")
-    os.chmod("/var/db/samba4/private", 0o700)
+    if not os.access("/var/db/samba4/private", os.F_OK):
+        smb4_mkdir("/var/db/samba4/private")
+        os.chmod("/var/db/samba4/private", 0o700)
 
     os.chmod(statedir, 0o755)
-#    smb4_set_SID()
 
 
 def get_old_samba4_datasets(client):
@@ -1627,7 +1623,6 @@ def main():
     smb4_conf = []
     smb4_shares = []
 
-    backup_secrets_database()
     smb4_setup(client)
 
     old_samba4_datasets = get_old_samba4_datasets(client)
@@ -1655,7 +1650,6 @@ def main():
 
     if role == 'member' and smb4_ldap_enabled(client):
         set_ldap_password(client)
-        backup_secrets_database()
 
     if role != 'dc':
         if not client.call('notifier.samba4', 'users_imported'):
@@ -1672,8 +1666,6 @@ def main():
 
     if role == 'member' and client.call('notifier.common', 'system', 'activedirectory_enabled') and idmap_backend_rfc2307(client):
         set_idmap_rfc2307_secret(client)
-
-    restore_secrets_database()
 
 if __name__ == '__main__':
     main()

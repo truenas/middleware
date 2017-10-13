@@ -102,6 +102,7 @@ a:hover {
     text-align:center;
     opacity:0.6;
     filter:alpha(opacity=18);
+    position: relative;
 }
 #msgfull_output {
     min-width:900px;
@@ -556,11 +557,6 @@ table.grid tr {
     background-image: url('/static/images/ui/tree/analytic_pie_chart.png');
     width: 16px;
     height: 16px;
-}
-.NT4Icon {
-    background-image:url('/static/images/ui/tree/nt4.png');
-    width:16px;
-    height:16px;
 }
 .NISIcon {
     background-image:url('/static/images/ui/tree/nis.png');

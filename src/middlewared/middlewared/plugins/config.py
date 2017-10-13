@@ -54,6 +54,7 @@ class ConfigService(Service):
         Accepts a configuration file via job pipe.
         """
         filename = tempfile.mktemp(dir='/var/tmp/firmware')
+
         def read_write():
             f = os.fdopen(job.read_fd, 'rb')
             nreads = 0

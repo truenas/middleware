@@ -343,7 +343,7 @@ class Volume(Model):
         if ghost:
             pass
         elif destroy:
-            n.destroy("volume", self)
+            n.volume_destroy(self)
         else:
             n.volume_detach(self)
 
@@ -587,6 +587,36 @@ class Scrub(Model):
             notifier().restart("cron")
         except:
             pass
+
+
+class Resilver(Model):
+    enabled = models.BooleanField(
+        verbose_name=_('Enabled'),
+        default=False,
+    )
+    begin = models.TimeField(
+        default=time(hour=18),
+        verbose_name=_('Begin higher priority resilvering at this time'),
+    )
+    end = models.TimeField(
+        default=time(hour=9),
+        verbose_name=_('End higher priority resilvering at this time'),
+    )
+    weekday = models.CharField(
+        max_length=120,
+        default='1,2,3,4,5,6,7',
+        verbose_name=_('Weekday'),
+        blank=True,
+    )
+
+    class Meta:
+        verbose_name = _('Resilver Priority')
+
+    class FreeAdmin:
+        deletable = False
+
+    def __str__(self):
+        return '<Resilver Priority>'
 
 
 class Disk(Model):
@@ -1051,3 +1081,15 @@ class VMWarePlugin(Model):
 
     def get_password(self):
         return notifier().pwenc_decrypt(self.password)
+
+
+class QuotaExcess(Model):
+    dataset_name = models.CharField(
+        unique=True,
+        max_length=256,
+    )
+    level = models.IntegerField()
+    used = models.IntegerField()
+    available = models.IntegerField()
+    percent_used = models.FloatField()
+    uid = models.IntegerField()

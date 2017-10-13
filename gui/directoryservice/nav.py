@@ -34,7 +34,6 @@ BLACKLIST = [
     'ActiveDirectory',
     'LDAP',
     'NIS',
-    'NT4',
     'idmap_ad',
     'idmap_adex',
     'idmap_autorid',
@@ -46,6 +45,7 @@ BLACKLIST = [
     'idmap_rid',
     'idmap_tdb',
     'idmap_tdb2',
+    'idmap_script',
     'directoryservice_idmap',
     'KerberosKeytab',
     'KerberosRealm'
@@ -62,17 +62,6 @@ class ActiveDirectoryView(TreeNode):
     icon = 'ActiveDirectoryIcon'
     append_to = 'directoryservice'
     order = 0
-
-
-class NT4View(TreeNode):
-
-    gname = 'NT4'
-    name = _('NT4')
-    app_name = 'nt4'
-    type = 'opendirectoryservice'
-    icon = 'NT4Icon'
-    append_to = 'directoryservice'
-    order = 15
 
 
 class NISView(TreeNode):

@@ -60,12 +60,12 @@ class CIFS_ShareForm(ModelForm):
         if cifs_path:
             for line in zfsout:
                 try:
-                    tasks = [] 
+                    tasks = []
                     zfs_mp, zfs_ds = line.split()
                     if cifs_path == zfs_mp or cifs_path.startswith("%s/" % zfs_mp):
                         if cifs_path == zfs_mp:
                             tasks = Task.objects.filter(task_filesystem=zfs_ds)
-                        else: 
+                        else:
                             tasks = Task.objects.filter(Q(task_filesystem=zfs_ds) & Q(task_recursive=True))
                     for t in tasks:
                         task_list.append(t)
@@ -199,8 +199,8 @@ class CIFS_ShareForm(ModelForm):
         super(CIFS_ShareForm, self).done(request, events)
         if self.instance._original_cifs_default_permissions != \
             self.instance.cifs_default_permissions and \
-            self.instance.cifs_default_permissions == True:
-            try:  
+            self.instance.cifs_default_permissions is True:
+            try:
                 (owner, group) = notifier().mp_get_owner(self.instance.cifs_path)
             except:
                 (owner, group) = ('root', 'wheel')

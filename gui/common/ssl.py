@@ -56,9 +56,8 @@ def create_certificate(cert_info):
     except ValueError:
         # This is raised if say we specified freenas.org in the Common name
         pass
-    cert.add_extensions([crypto.X509Extension(
-        "subjectAltName".encode('utf-8'), False, f"{default_san_type}:{cert_info['common']}".encode('utf-8')
-    )])
+    cert.add_extensions([crypto.X509Extension(b"subjectAltName", False, f"{default_san_type}:{cert_info['san']}".encode())])
+    cert.get_subject().subjectAltName = cert_info['san'].replace(" ", ", ")
     cert.get_subject().emailAddress = cert_info['email']
 
     serial = cert_info.get('serial')
@@ -103,8 +102,6 @@ def create_certificate_signing_request(cert_info):
     req.get_subject().L = cert_info['city']
     req.get_subject().O = cert_info['organization']
     req.get_subject().CN = cert_info['common']
-    # Add subject alternate name in addition to CN
-    # Add subject alternate name in addition to CN
     # first lets determine if an ip address was specified or
     # a dns entry in the common name
     default_san_type = 'DNS'
@@ -114,9 +111,9 @@ def create_certificate_signing_request(cert_info):
     except ValueError:
         # This is raised if say we specified freenas.org in the Common name
         pass
-    req.add_extensions([crypto.X509Extension(
-        "subjectAltName".encode('utf-8'), False, f"{default_san_type}:{cert_info['common']}".encode('utf-8')
-    )])
+
+    req.add_extensions([crypto.X509Extension(b"subjectAltName", False, f"{default_san_type}:{cert_info['san']}".encode())])
+    req.get_subject().subjectAltName = cert_info['san'].replace(" ", ", ")
     req.get_subject().emailAddress = cert_info['email']
 
     req.set_pubkey(key)
@@ -126,7 +123,10 @@ def create_certificate_signing_request(cert_info):
 
 
 def load_certificate(buf):
-    cert = crypto.load_certificate(crypto.FILETYPE_PEM, buf)
+    cert = crypto.load_certificate(
+        crypto.FILETYPE_PEM,
+        buf
+    )
 
     cert_info = {}
     cert_info['country'] = cert.get_subject().C
@@ -134,6 +134,7 @@ def load_certificate(buf):
     cert_info['city'] = cert.get_subject().L
     cert_info['organization'] = cert.get_subject().O
     cert_info['common'] = cert.get_subject().CN
+    cert_info['san'] = cert.get_subject().subjectAltName
     cert_info['email'] = cert.get_subject().emailAddress
 
     signature_algorithm = cert.get_signature_algorithm().decode()
@@ -153,6 +154,7 @@ def load_certificate_signing_request(buf):
     cert_info['city'] = cert.get_subject().L
     cert_info['organization'] = cert.get_subject().O
     cert_info['common'] = cert.get_subject().CN
+    cert_info['san'] = cert.get_subject().subjectAltName
     cert_info['email'] = cert.get_subject().emailAddress
 
     signature_algorithm = cert.get_signature_algorithm().decode()
@@ -176,7 +178,7 @@ def load_privatekey(buf, passphrase=None):
     return crypto.load_privatekey(
         crypto.FILETYPE_PEM,
         buf,
-        passphrase=lambda x: str(passphrase) if passphrase else ''
+        passphrase=lambda x: passphrase.encode() if passphrase else b''
     )
 
 
@@ -199,13 +201,13 @@ def export_privatekey(buf, passphrase=None):
     key = crypto.load_privatekey(
         crypto.FILETYPE_PEM,
         buf,
-        passphrase=str(passphrase) if passphrase else None
+        passphrase=passphrase.encode() if passphrase else None
     )
 
     return crypto.dump_privatekey(
         crypto.FILETYPE_PEM,
         key,
-        passphrase=str(passphrase) if passphrase else None
+        passphrase=passphrase.encode() if passphrase else None
     )
 
 

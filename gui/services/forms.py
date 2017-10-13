@@ -24,13 +24,14 @@
 #
 #####################################################################
 from collections import OrderedDict
+import base64
 import glob
+import hashlib
 import logging
 import os
 import re
 import subprocess
-import hashlib
-import base64
+import sysctl
 from django.core.validators import validate_email
 from django.utils.safestring import mark_safe
 from django.utils.translation import (
@@ -46,7 +47,6 @@ from freenasUI.common.samba import Samba4
 from freenasUI.common.system import (
     validate_netbios_name,
     activedirectory_enabled,
-    nt4_enabled,
     ldap_enabled
 )
 from freenasUI.freeadmin.forms import DirectoryBrowser
@@ -55,6 +55,7 @@ from freenasUI.freeadmin.utils import key_order
 from freenasUI.jails.models import JailsConfiguration
 from freenasUI.middleware.client import client
 from freenasUI.middleware.exceptions import MiddlewareError
+from freenasUI.middleware.form import MiddlewareModelForm
 from freenasUI.middleware.notifier import notifier
 from freenasUI.services import models
 from freenasUI.services.exceptions import ServiceFailed
@@ -65,7 +66,6 @@ from ipaddr import (
     IPAddress, IPNetwork, AddressValueError, NetmaskValueError,
     IPv4Address, IPv6Address,
 )
-from freenasUI.freeadmin.utils import key_order
 
 log = logging.getLogger('services.form')
 
@@ -93,13 +93,13 @@ class servicesForm(ModelForm):
             if obj.srv_enable is True:
                 if _notifier.started('domaincontroller'):
                     started = _notifier.restart("domaincontroller",
-                        timeout=_fs().services.domaincontroller.timeout.restart)
+                                                timeout=_fs().services.domaincontroller.timeout.restart)
                 else:
                     started = _notifier.start("domaincontroller",
-                        timeout=_fs().services.domaincontroller.timeout.start)
+                                              timeout=_fs().services.domaincontroller.timeout.start)
             else:
                 started = _notifier.stop("domaincontroller",
-                    timeout=_fs().services.domaincontroller.timeout.stop)
+                                         timeout=_fs().services.domaincontroller.timeout.stop)
 
         else:
             """
@@ -157,7 +157,7 @@ class CIFSForm(ModelForm):
         else:
             self.fields['cifs_srv_bindip'].initial = ('')
 
-        if activedirectory_enabled() or nt4_enabled():
+        if activedirectory_enabled():
             self.initial['cifs_srv_localmaster'] = False
             self.fields['cifs_srv_localmaster'].widget.attrs['disabled'] = 'disabled'
             self.initial['cifs_srv_timeserver'] = False
@@ -259,8 +259,7 @@ class CIFSForm(ModelForm):
 
         started = notifier().restart("cifs")
         if (
-            started is False
-            and
+            started is False and
             models.services.objects.get(srv_service='cifs').srv_enable
         ):
             raise ServiceFailed(
@@ -268,7 +267,12 @@ class CIFSForm(ModelForm):
             )
 
 
-class AFPForm(ModelForm):
+class AFPForm(MiddlewareModelForm, ModelForm):
+
+    middleware_attr_prefix = "afp_srv_"
+    middleware_attr_schema = "afp_update"
+    middleware_plugin = "afp"
+    is_singletone = True
 
     afp_srv_bindip = forms.MultipleChoiceField(
         label=models.AFP._meta.get_field('afp_srv_bindip').verbose_name,
@@ -301,79 +305,17 @@ class AFPForm(ModelForm):
         else:
             self.fields['afp_srv_bindip'].initial = ('')
 
-    def clean_afp_srv_bindip(self):
-        ips = self.cleaned_data.get("afp_srv_bindip")
-        if not ips:
-            return ''
-        bind = []
-        for ip in ips:
-            try:
-                IPAddress(ip)
-            except:
-                raise forms.ValidationError(
-                    "This is not a valid IP: %s" % (ip, )
-                )
-            bind.append(ip)
-        return ','.join(bind)
-
-    def save(self):
-        obj = super(AFPForm, self).save(commit=False)
-        obj.afp_srv_bindip = self.cleaned_data.get('afp_srv_bindip')
-        obj.save()
-
-        started = notifier().restart("afp")
-        if (
-            started is False
-            and
-            models.services.objects.get(srv_service='afp').srv_enable
-        ):
-            raise ServiceFailed("afp", _("The AFP service failed to reload."))
-
-    def clean_afp_srv_dbpath(self):
-        path = self.cleaned_data.get('afp_srv_dbpath')
-        if not path:
-            return path
-        if not os.path.exists(path):
-            raise forms.ValidationError(_('This path does not exist.'))
-        if not os.path.isdir(path):
-            raise forms.ValidationError(_('This path is not a directory.'))
-        return path
-
-    def clean(self):
-        cleaned_data = self.cleaned_data
-        home = cleaned_data['afp_srv_homedir_enable']
-        hdir = cleaned_data.get('afp_srv_homedir')
-        if hdir and not home:
-            self._errors['afp_srv_homedir_enable'] = self.error_class()
-            self._errors['afp_srv_homedir_enable'] += self.error_class([
-                _("This field is required for \"Home directories\"."),
-            ])
-            cleaned_data.pop('afp_srv_homedir_enable', None)
-        if home and not hdir:
-            self._errors['afp_srv_homedir'] = self.error_class()
-            self._errors['afp_srv_homedir'] += self.error_class([
-                _("This field is required for \"Home directories\"."),
-            ])
-            cleaned_data.pop('afp_srv_homedir', None)
-        return cleaned_data
-
 
 class NFSForm(ModelForm):
 
-    nfs_srv_bindip = forms.MultipleChoiceField(
-        label=models.NFS._meta.get_field('nfs_srv_bindip').verbose_name,
-        help_text=models.NFS._meta.get_field('nfs_srv_bindip').help_text,
-        required=False,
-        widget=forms.widgets.CheckedMultiSelect(),
-    )
-
     class Meta:
         model = models.NFS
-        exclude = ('nfs_srv_bindip', )
+        fields = '__all__'
         widgets = {
             'nfs_srv_mountd_port': forms.widgets.TextInput(),
             'nfs_srv_rpcstatd_port': forms.widgets.TextInput(),
             'nfs_srv_rpclockd_port': forms.widgets.TextInput(),
+            'nfs_srv_bindip': forms.widgets.CheckedMultiSelect(),
         }
 
     def __init__(self, *args, **kwargs):
@@ -386,11 +328,14 @@ class NFSForm(ModelForm):
                     self.data['nfs_srv_bindip'].split(',')
                 )
         self.fields['nfs_srv_bindip'].choices = list(choices.IPChoices())
-        self.fields['nfs_srv_bindip'].initial = (
-            self.instance.nfs_srv_bindip.split(',')
-            if self.instance.id and self.instance.nfs_srv_bindip
-            else ''
-        )
+        if self.instance.id and self.instance.nfs_srv_bindip:
+            bindips = []
+            for ip in self.instance.nfs_srv_bindip:
+                bindips.append(ip)
+
+            self.fields['nfs_srv_bindip'].initial = bindips
+        else:
+            self.fields['nfs_srv_bindip'].initial = ''
         key_order(self, 2, 'nfs_srv_bindip', instance=True)
 
         self.fields['nfs_srv_mountd_port'].label = (
@@ -432,22 +377,25 @@ class NFSForm(ModelForm):
                     "This is not a valid IP: %s" % (ip, )
                 )
             bind.append(ip)
-        return ','.join(bind)
+        return bind
 
     def save(self):
-        obj = super(NFSForm, self).save(commit=False)
-        obj.nfs_srv_bindip = self.cleaned_data.get('nfs_srv_bindip')
-        obj.save()
+        obj = super(NFSForm, self).save()
         started = notifier().restart("nfs")
         if (
-            started is False
-            and
+            started is False and
             models.services.objects.get(srv_service='nfs').srv_enable
         ):
             raise ServiceFailed("nfs", _("The NFS service failed to reload."))
+        return obj
 
 
-class FTPForm(ModelForm):
+class FTPForm(MiddlewareModelForm, ModelForm):
+
+    middleware_attr_prefix = "ftp_"
+    middleware_attr_schema = "ftp_update"
+    middleware_plugin = "ftp"
+    is_singletone = True
 
     ftp_filemask = UnixPermissionField(label=_('File Permission'))
     ftp_dirmask = UnixPermissionField(label=_('Directory Permission'))
@@ -478,30 +426,6 @@ class FTPForm(ModelForm):
                 pass
 
         super(FTPForm, self).__init__(*args, **kwargs)
-        self.instance._original_ftp_tls = self.instance.ftp_tls
-
-    def clean_ftp_passiveportsmin(self):
-        ports = self.cleaned_data['ftp_passiveportsmin']
-        if (ports < 1024 or ports > 65535) and ports != 0:
-            raise forms.ValidationError(
-                _("This value must be between 1024 and 65535, inclusive. 0 "
-                    "for default")
-            )
-        return ports
-
-    def clean_ftp_passiveportsmax(self):
-        _min = self.cleaned_data['ftp_passiveportsmin']
-        ports = self.cleaned_data['ftp_passiveportsmax']
-        if (ports < 1024 or ports > 65535) and ports != 0:
-            raise forms.ValidationError(
-                _("This value must be between 1024 and 65535, inclusive. 0 "
-                    "for default.")
-            )
-        if _min >= ports and ports != 0:
-            raise forms.ValidationError(
-                _("This must be higher than minimum passive port")
-            )
-        return ports
 
     def clean_ftp_filemask(self):
         perm = self.cleaned_data['ftp_filemask']
@@ -514,46 +438,6 @@ class FTPForm(ModelForm):
         perm = int(perm, 8)
         mask = (~perm & 0o777)
         return "%.3o" % mask
-
-    def clean_ftp_anonpath(self):
-        anon = self.cleaned_data['ftp_onlyanonymous']
-        path = self.cleaned_data['ftp_anonpath']
-        if anon and not path:
-            raise forms.ValidationError(
-                _("This field is required for anonymous login")
-            )
-        return path
-
-    def clean(self):
-        cdata = self.cleaned_data
-        ftp_tls = cdata.get("ftp_tls")
-        if not ftp_tls:
-            return cdata
-
-        certificate = cdata["ftp_ssltls_certificate"]
-        if not certificate:
-            raise forms.ValidationError(
-                "TLS specified without certificate")
-
-        return cdata
-
-    def save(self):
-        super(FTPForm, self).save()
-        started = notifier().reload("ftp")
-        if (
-            started is False
-            and
-            models.services.objects.get(srv_service='ftp').srv_enable
-        ):
-            raise ServiceFailed("ftp", _("The ftp service failed to start."))
-
-    def done(self, *args, **kwargs):
-        if (
-            self.instance._original_ftp_tls != self.instance.ftp_tls
-            and
-            not self.instance._original_ftp_tls
-        ) or (self.instance.ftp_tls and not self.instance.ftp_ssltls_certificate):
-            notifier().start_ssl("proftpd")
 
 
 class TFTPForm(ModelForm):
@@ -569,8 +453,7 @@ class TFTPForm(ModelForm):
         super(TFTPForm, self).save()
         started = notifier().reload("tftp")
         if (
-            started is False
-            and
+            started is False and
             models.services.objects.get(srv_service='tftp').srv_enable
         ):
             raise ServiceFailed(
@@ -596,8 +479,7 @@ class SSHForm(ModelForm):
         obj = super(SSHForm, self).save()
         started = notifier().reload("ssh")
         if (
-            started is False
-            and
+            started is False and
             models.services.objects.get(srv_service='ssh').srv_enable
         ):
             raise ServiceFailed("ssh", _("The SSH service failed to reload."))
@@ -625,8 +507,7 @@ class RsyncdForm(ModelForm):
         super(RsyncdForm, self).save()
         started = notifier().reload("rsync")
         if (
-            started is False
-            and
+            started is False and
             models.services.objects.get(srv_service='rsync').srv_enable
         ):
             raise ServiceFailed(
@@ -663,8 +544,7 @@ class RsyncModForm(ModelForm):
         super(RsyncModForm, self).save()
         started = notifier().reload("rsync")
         if (
-            started is False
-            and
+            started is False and
             models.services.objects.get(srv_service='rsync').srv_enable
         ):
             raise ServiceFailed(
@@ -684,13 +564,18 @@ class DynamicDNSForm(ModelForm):
         model = models.DynamicDNS
         widgets = {
             'ddns_password': forms.widgets.PasswordInput(render_value=False),
+            'ddns_period': forms.widgets.TextInput(attrs={"placeholder": 300}),
         }
         fields = '__all__'
 
     def __init__(self, *args, **kwargs):
         super(DynamicDNSForm, self).__init__(*args, **kwargs)
+        self.fields['ddns_provider'].widget.attrs['onChange'] = (
+            "ddnsCustomProviderToggle();"
+        )
         if self.instance.ddns_password:
             self.fields['ddns_password'].required = False
+        self.fields['ddns_period'].required = False
         if self._api is True:
             del self.fields['ddns_password2']
 
@@ -702,42 +587,6 @@ class DynamicDNSForm(ModelForm):
                 _("The two password fields didn't match.")
             )
         return password2
-
-    def clean_ddns_domain(self):
-        domains = self.cleaned_data.get("ddns_domain")
-        if domains:
-            array = domains.split(',')
-            for i in range(0, len(array)):
-                element = array[i].strip()
-                if "#" in element:
-                    subarray = element.split('#')
-                    if len(subarray) != 2:
-                        raise forms.ValidationError(
-                            _("Incorrect usage of the # delimiter.")
-                        )
-                    else:
-                        if re.match(r'[a-zA-Z\d-]{,63}(\.[a-zA-Z\d-]{,63})+', subarray[0].strip()):
-                            if subarray[1].strip().isalnum():
-                                continue
-                            else:
-                                raise forms.ValidationError(
-                                    _("Incorrect usage of the # delimiter.")
-                                )
-                        else:
-                            raise forms.ValidationError(
-                                _("Invalid domain name.")
-                            )
-                elif re.match(r'[a-zA-Z\d-]{,63}(\.[a-zA-Z\d-]{,63})+', element):
-                    continue
-                elif i > 0 and element.strip().isalnum():
-                    raise forms.ValidationError(
-                        _("Invalid domain name or incorrect hash delimiter.")
-                    )
-                else:
-                    raise forms.ValidationError(
-                        _("Invalid domain name.")
-                    )
-        return domains
 
     def clean(self):
         cdata = self.cleaned_data
@@ -756,10 +605,18 @@ class DynamicDNSForm(ModelForm):
                 "dynamicdns", _("The DynamicDNS service failed to reload.")
             )
         return obj
-key_order(DynamicDNSForm, 5, 'ddns_password2')
 
 
-class SNMPForm(ModelForm):
+key_order(DynamicDNSForm, 10, 'ddns_password2')
+
+
+class SNMPForm(MiddlewareModelForm, ModelForm):
+
+    middleware_attr_prefix = "snmp_"
+    middleware_attr_schema = "snmp_update"
+    middleware_exclude_fields = ["v3_password2", "v3_privpassphrase2"]
+    middleware_plugin = "snmp"
+    is_singletone = True
 
     snmp_v3_password2 = forms.CharField(
         max_length=40,
@@ -819,43 +676,6 @@ class SNMPForm(ModelForm):
             self.fields['snmp_v3_password2'].initial = self.instance.snmp_v3_password
             self.fields['snmp_v3_privpassphrase2'].initial = self.instance.snmp_v3_privpassphrase
 
-    def clean_snmp_contact(self):
-        contact = self.cleaned_data['snmp_contact']
-        if '@' in contact:
-            validate_email(contact)
-        elif not re.match(r'^[-_a-zA-Z0-9\s]+$', contact):
-            raise forms.ValidationError(
-                _("The contact must contain only alphanumeric characters, _, "
-                    "- or a valid e-mail address")
-            )
-        return contact
-
-    def clean_snmp_community(self):
-        community = self.cleaned_data.get('snmp_community')
-        v3 = self.cleaned_data.get('snmp_v3')
-        if not community:
-            if not v3:
-                raise forms.ValidationError(_('This field is required.'))
-            else:
-                return community
-        if not re.match(r'^[-_.a-zA-Z0-9\s]+$', community):
-            raise forms.ValidationError(
-                _("The community must contain only alphanumeric characters "
-                    "_ . spaces or -")
-            )
-        return community
-
-    def clean_snmp_v3_password(self):
-        authtype = self.cleaned_data.get("snmp_v3_authtype")
-        password = self.cleaned_data.get("snmp_v3_password")
-        if authtype and not password:
-            raise forms.ValidationError(_('This field is required.'))
-        if password and len(password) < 8:
-            raise forms.ValidationError(_(
-                'Password must contain at least 8 characters'
-            ))
-        return password
-
     def clean_snmp_v3_password2(self):
         password1 = self.cleaned_data.get("snmp_v3_password")
         password2 = self.cleaned_data.get("snmp_v3_password2")
@@ -866,17 +686,6 @@ class SNMPForm(ModelForm):
                 _("The two password fields didn't match.")
             )
         return password2
-
-    def clean_snmp_v3_privpassphrase(self):
-        authtype = self.cleaned_data.get("snmp_v3_privproto")
-        passphrase = self.cleaned_data.get("snmp_v3_privpassphrase")
-        if authtype and not passphrase:
-            raise forms.ValidationError(_('This field is required.'))
-        if passphrase and len(passphrase) < 8:
-            raise forms.ValidationError(_(
-                'Passphrase must contain at least 8 characters'
-            ))
-        return passphrase
 
     def clean_snmp_v3_privpassphrase2(self):
         passphrase1 = self.cleaned_data.get("snmp_v3_privpassphrase")
@@ -889,17 +698,7 @@ class SNMPForm(ModelForm):
             )
         return passphrase2
 
-    def save(self):
-        super(SNMPForm, self).save()
-        started = notifier().restart("snmp")
-        if (
-            started is False
-            and
-            models.services.objects.get(srv_service='snmp').srv_enable
-        ):
-            raise ServiceFailed(
-                "snmp", _("The SNMP service failed to reload.")
-            )
+
 key_order(SNMPForm, 7, 'snmp_v3_password2')
 key_order(SNMPForm, 10, 'snmp_v3_privpassphrase2')
 
@@ -912,6 +711,7 @@ class UPSForm(ModelForm):
         widgets = {
             'ups_remoteport': forms.widgets.TextInput(),
             'ups_driver': forms.widgets.FilteringSelect(),
+            'ups_nocommwarntime': forms.widgets.TextInput(),
         }
 
     def __init__(self, *args, **kwargs):
@@ -927,6 +727,7 @@ class UPSForm(ModelForm):
                 'dijitValidationTextBoxDisabled')
         ports = [x for x in glob.glob('/dev/cua*') if x.find('.') == -1]
         ports.extend(glob.glob('/dev/ugen*'))
+        ports.extend(glob.glob('/dev/uhid*'))
         self.fields['ups_port'] = forms.ChoiceField(
             label=_("Port"),
             required=False,
@@ -1007,8 +808,7 @@ class UPSForm(ModelForm):
         super(UPSForm, self).save()
         started = notifier().restart("ups")
         if (
-            started is False
-            and
+            started is False and
             models.services.objects.get(srv_service='ups').srv_enable
         ):
             raise ServiceFailed("ups", _("The UPS service failed to reload."))
@@ -1154,21 +954,15 @@ class iSCSITargetToExtentForm(ModelForm):
         fields = '__all__'
         model = models.iSCSITargetToExtent
         widgets = {
-            'iscsi_target': forms.widgets.FilteringSelect(),
             'iscsi_extent': forms.widgets.FilteringSelect(),
+            'iscsi_lunid': forms.widgets.TextInput(),
+            'iscsi_target': forms.widgets.FilteringSelect(),
         }
 
     def __init__(self, *args, **kwargs):
         super(iSCSITargetToExtentForm, self).__init__(*args, **kwargs)
-        choices = tuple(
-            [(x, x) for x in range(25)]
-        )
-        self.fields['iscsi_lunid'] = forms.CharField(
-            label=self.fields['iscsi_lunid'].label,
-            initial=self.fields['iscsi_lunid'].initial,
-            required=False,
-            widget=forms.widgets.ComboBox(choices=choices),
-        )
+        self.fields['iscsi_lunid'].initial = 0
+        self.fields['iscsi_lunid'].required = False
 
     def clean_iscsi_lunid(self):
         lunid = self.cleaned_data.get('iscsi_lunid')
@@ -1176,6 +970,10 @@ class iSCSITargetToExtentForm(ModelForm):
             return None
         if isinstance(lunid, str) and not lunid.isdigit():
             raise forms.ValidationError(_("LUN ID must be a positive integer"))
+        lunid_int = int(lunid)
+        lun_map_size = sysctl.filter('kern.cam.ctl.lun_map_size')[0].value
+        if lunid_int < 0 or lunid_int > lun_map_size - 1:
+            raise forms.ValidationError(_('LUN ID must be a positive integer and lower than %d') % (lun_map_size - 1))
         return lunid
 
     def clean(self):
@@ -1224,6 +1022,7 @@ class iSCSITargetGlobalConfigurationForm(ModelForm):
 
     def __init__(self, *args, **kwargs):
         super(iSCSITargetGlobalConfigurationForm, self).__init__(*args, **kwargs)
+        self.instance._original_iscsi_alua = self.instance.iscsi_alua
         _n = notifier()
         if not (not _n.is_freenas() and _n.failover_licensed()):
             del self.fields['iscsi_alua']
@@ -1278,6 +1077,8 @@ class iSCSITargetGlobalConfigurationForm(ModelForm):
 
     def save(self):
         obj = super(iSCSITargetGlobalConfigurationForm, self).save()
+        if self.instance._original_iscsi_alua != self.instance.iscsi_alua:
+            notifier().start('ix-loader')
         started = notifier().reload("iscsitarget")
         if started is False and models.services.objects.get(srv_service='iscsitarget').srv_enable:
             raise ServiceFailed("iscsitarget", _("The iSCSI service failed to reload."))
@@ -1498,8 +1299,7 @@ class iSCSITargetExtentForm(ModelForm):
         blocksize = cdata.get("iscsi_target_extent_blocksize")
         if (
             size == "0" and path and (not os.path.exists(path) or (
-                os.path.exists(path)
-                and
+                os.path.exists(path) and
                 not os.path.isfile(path)
             ))
         ):
@@ -1548,8 +1348,7 @@ class iSCSITargetExtentForm(ModelForm):
                 )[0]
                 # label it only if it is a real disk
                 if (
-                    diskobj.disk_identifier.startswith("{devicename}")
-                    or
+                    diskobj.disk_identifier.startswith("{devicename}") or
                     diskobj.disk_identifier.startswith("{uuid}")
                 ):
                     success, msg = notifier().label_disk(
@@ -1892,10 +1691,8 @@ class ExtentDelete(Form):
 
     def done(self, *args, **kwargs):
         if (
-            self.instance.iscsi_target_extent_type == 'File'
-            and
-            self.cleaned_data['delete']
-            and
+            self.instance.iscsi_target_extent_type == 'File' and
+            self.cleaned_data['delete'] and
             os.path.exists(self.instance.iscsi_target_extent_path)
         ):
             os.unlink(self.instance.iscsi_target_extent_path)
@@ -2018,7 +1815,7 @@ class DomainControllerForm(ModelForm):
             Samba4().domain_sentinel_file_remove()
 
         notifier().restart("domaincontroller",
-            timeout=_fs().services.domaincontroller.timeout.restart)
+                           timeout=_fs().services.domaincontroller.timeout.restart)
 
         if self.__dc_forest_level_changed():
             Samba4().change_forest_level(self.instance.dc_forest_level)
@@ -2088,6 +1885,9 @@ class WebDAVForm(ModelForm):
         self.fields['webdav_protocol'].widget.attrs['onChange'] = (
             "webdavprotocolToggle();"
         )
+        self.fields['webdav_htauth'].widget.attrs['onChange'] = (
+            "webdavhtauthToggle();"
+        )
         self.__original_save()
 
     def clean(self):
@@ -2102,7 +1902,10 @@ class WebDAVForm(ModelForm):
             cdata['webdav_tcpport'] = self.instance.webdav_tcpport
         if not cdata.get("webdav_tcpportssl"):
             cdata['webdav_tcpportssl'] = self.instance.webdav_tcpportssl
-        if self.cleaned_data.get("webdav_tcpport") == self.cleaned_data.get("webdav_tcpportssl"):
+        if (
+            cdata.get("webdav_protocol") == 'httphttps' and
+            self.cleaned_data.get("webdav_tcpport") == self.cleaned_data.get("webdav_tcpportssl")
+        ):
             self._errors["webdav_tcpport"] = self.error_class(
                 [_("The HTTP and HTTPS ports cannot be the same!")]
             )
@@ -2159,10 +1962,11 @@ class S3Form(ModelForm):
         key_order(self, 4, 's3_secret_key', instance=True)
         key_order(self, 5, 's3_secret_key2', instance=True)
         key_order(self, 6, 's3_disks', instance=True)
-        key_order(self, 7, 's3_mode', instance=True)
-        key_order(self, 8, 's3_browser', instance=True)
+        key_order(self, 7, 's3_certificate', instance=True)
+        key_order(self, 8, 's3_mode', instance=True)
+        key_order(self, 9, 's3_browser', instance=True)
 
-        self.fields['s3_bindip'].choices = [('0.0.0.0','0.0.0.0')] + list(choices.IPChoices())
+        self.fields['s3_bindip'].choices = [('0.0.0.0', '0.0.0.0')] + list(choices.IPChoices())
         if self.instance.id and self.instance.s3_bindip:
             bindips = []
             for ip in self.instance.s3_bindip:
@@ -2204,7 +2008,7 @@ class S3Form(ModelForm):
             raise forms.ValidationError(
                 _("The two password fields didn't match.")
             )
-        return s3_secret_key2 
+        return s3_secret_key2
 
     def clean(self):
         cdata = self.cleaned_data

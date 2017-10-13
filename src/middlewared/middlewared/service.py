@@ -1,15 +1,22 @@
-from collections import defaultdict
+from collections import defaultdict, namedtuple
 
 import asyncio
 import errno
 import inspect
+import json
 import logging
+import os
 import re
 import sys
+import threading
+import time
 
-from middlewared.schema import accepts, Dict, Int, List, Ref, Str
+from middlewared.schema import accepts, Bool, Dict, Int, List, Ref, Str
+from middlewared.service_exception import CallException, CallError, ValidationError, ValidationErrors  # noqa
 from middlewared.utils import filter_list
 from middlewared.logger import Logger
+
+PeriodicTaskDescriptor = namedtuple("PeriodicTaskDescriptor", ["interval", "run_on_start"])
 
 
 def item_method(fn):
@@ -44,6 +51,14 @@ def pass_app(fn):
     return fn
 
 
+def periodic(interval, run_on_start=True):
+    def wrapper(fn):
+        fn._periodic = PeriodicTaskDescriptor(interval, run_on_start)
+        return fn
+
+    return wrapper
+
+
 def private(fn):
     """Do not expose method in public API"""
     fn._private = True
@@ -55,22 +70,29 @@ def filterable(fn):
     return accepts(Ref('query-filters'), Ref('query-options'))(fn)
 
 
-class CallException(Exception):
-    pass
-
-
-class CallError(CallException):
-
-    def __init__(self, errmsg, errno=errno.EFAULT):
-        self.errmsg = errmsg
-        self.errno = errno
-
-    def __str__(self):
-        errcode = errno.errorcode.get(self.errno, 'EUNKNOWN')
-        return f'[{errcode}] {self.errmsg}'
-
-
 class ServiceBase(type):
+    """
+    Metaclass of all services
+
+    This metaclass instantiates a `_config` attribute in the service instance
+    from options provided in a Config class, e.g.
+
+    class MyService(Service):
+
+        class Meta:
+            namespace = 'foo'
+            private = False
+
+    Currently the following options are allowed:
+      - datastore: name of the datastore mainly used in the service
+      - datastore_extend: datastore `extend` option used in common `query` method
+      - datastore_prefix: datastore `prefix` option used in helper methods
+      - service: system service `name` option used by `SystemServiceService`
+      - namespace: namespace identifier of the service
+      - private: whether or not the service is deemed private
+      - verbose_name: human-friendly singular name for the service
+
+    """
 
     def __new__(cls, name, bases, attrs):
         super_new = super(ServiceBase, cls).__new__
@@ -86,9 +108,15 @@ class ServiceBase(type):
         namespace = namespace.lower()
 
         config_attrs = {
+            'datastore': None,
+            'datastore_prefix': None,
+            'datastore_extend': None,
+            'service': None,
             'namespace': namespace,
             'private': False,
+            'verbose_name': klass.__name__.replace('Service', ''),
         }
+
         if config:
             config_attrs.update({
                 k: v
@@ -100,24 +128,87 @@ class ServiceBase(type):
 
 
 class Service(object, metaclass=ServiceBase):
+    """
+    Generic service abstract class
+
+    This is meant for services that do not follow any standard.
+    """
     def __init__(self, middleware):
         self.logger = Logger(type(self).__name__).getLogger()
         self.middleware = middleware
 
 
 class ConfigService(Service):
+    """
+    Config service abstract class
 
-    def config(self):
-        raise NotImplementedError
+    Meant for services that provide a single set of attributes which can be
+    updated or not.
+    """
+
+    @accepts()
+    async def config(self):
+        options = {}
+        if self._config.datastore_prefix:
+            options['prefix'] = self._config.datastore_prefix
+        if self._config.datastore_extend:
+            options['extend'] = self._config.datastore_extend
+        return await self.middleware.call('datastore.config', self._config.datastore, options)
 
     async def update(self, data):
         return await self.do_update(data)
 
 
-class CRUDService(Service):
+class SystemServiceService(ConfigService):
+    """
+    Service service abstract class
 
-    def query(self, filters, options):
-        raise NotImplementedError('{}.query must be implemented'.format(self._config.namespace))
+    Meant for services that manage system services configuration.
+    """
+
+    @accepts()
+    async def config(self):
+        return await self.middleware.call('datastore.config', f'services.{self._config.service}',
+                                          {'prefix': self._config.datastore_prefix})
+
+    @private
+    async def _update_service(self, old, new):
+        await self.middleware.call('datastore.update', f'services.{self._config.service}', old['id'], new,
+                                   {'prefix': self._config.datastore_prefix})
+
+        enabled = (await self.middleware.call(
+            'datastore.query', 'services.services', [('srv_service', '=', self._config.service)], {'get': True}
+        ))['srv_enable']
+
+        started = await self.middleware.call('service.reload', self._config.service, {'onetime': False})
+
+        if enabled and not started:
+            raise CallError(f'The {self._config.service} service failed to start')
+
+
+class CRUDService(Service):
+    """
+    CRUD service abstract class
+
+    Meant for services in that a set of entries can be queried, new entry
+    create, updated and/or deleted.
+
+    CRUD stands for Create Retrieve Update Delete.
+    """
+
+    @filterable
+    async def query(self, filters=None, options=None):
+        if not self._config.datastore:
+            raise NotImplementedError(
+                f'{self._config.namespace}.query must be implemented or a '
+                '`datastore` Config attribute provided.'
+            )
+        options = options or {}
+        if self._config.datastore_prefix:
+            options['prefix'] = self._config.datastore_prefix
+        if self._config.datastore_extend:
+            options['extend'] = self._config.datastore_extend
+        return await self.middleware.call('datastore.query', self._config.datastore, filters, options)
 
     async def create(self, data):
         if asyncio.iscoroutinefunction(self.do_create):
@@ -133,12 +224,21 @@ class CRUDService(Service):
             rv = await self.middleware.threaded(self.do_update, id, data)
         return rv
 
-    async def delete(self, id):
+    async def delete(self, id, *args):
         if asyncio.iscoroutinefunction(self.do_delete):
-            rv = await self.do_delete(id)
+            rv = await self.do_delete(id, *args)
         else:
-            rv = await self.middleware.threaded(self.do_delete, id)
+            rv = await self.middleware.threaded(self.do_delete, id, *args)
         return rv
+
+    async def _get_instance(self, id):
+        """
+        Helpher method to get an instance from a collection given the `id`.
+        """
+        instance = await self.middleware.call('datastore.query', self._config.datastore, [('id', '=', id)], {'prefix': self._config.datastore_prefix})
+        if not instance:
+            raise ValidationError(None, f'{self._config.verbose_name} {id} does not exist', errno.ENOENT)
+        return instance[0]
 
 
 class CoreService(Service):
@@ -147,7 +247,7 @@ class CoreService(Service):
     def get_jobs(self, filters=None, options=None):
         """Get the long running jobs."""
         jobs = filter_list([
-            i.__encode__() for i in list(self.middleware.get_jobs().all().values())
+            i.__encode__() for i in list(self.middleware.jobs.all().values())
         ], filters, options)
         return jobs
 
@@ -156,7 +256,7 @@ class CoreService(Service):
         Dict('progress', additional_attrs=True),
     ))
     def job_update(self, id, data):
-        job = self.middleware.get_jobs().all()[id]
+        job = self.middleware.jobs.all()[id]
         progress = data.get('progress')
         if progress:
             job.set_progress(
@@ -164,6 +264,11 @@ class CoreService(Service):
                 description=progress.get('description'),
                 extra=progress.get('extra'),
             )
+
+    @accepts(Int('id'))
+    def job_abort(self, id):
+        job = self.middleware.jobs.all()[id]
+        return job.abort()
 
     @accepts()
     def get_services(self):
@@ -315,9 +420,75 @@ class CoreService(Service):
                 pass
 
     @private
+    @accepts(Dict(
+        'core-job',
+        Int('sleep'),
+    ))
     @job()
-    def job(self, job):
+    def job(self, job, data=None):
         """
         Private no-op method to test a job, simply returning `true`.
         """
+        if data is None:
+            data = {}
+
+        sleep = data.get('sleep')
+        if sleep is not None:
+            def sleep_fn():
+                i = 0
+                while i < sleep:
+                    job.set_progress((i / sleep) * 100)
+                    time.sleep(1)
+                    i += 1
+                job.set_progress(100)
+
+            t = threading.Thread(target=sleep_fn, daemon=True)
+            t.start()
+            t.join()
         return True
+
+    @accepts(
+        Str('engine', enum=['PTVS', 'PYDEV']),
+        Dict(
+            'options',
+            Str('secret'),
+            Str('bind_address', default='0.0.0.0'),
+            Int('bind_port', default=3000),
+            Str('host'),
+            Bool('wait_attach', default=False),
+            Str('local_path'),
+        ),
+    )
+    async def debug(self, engine, options):
+        """
+        Setup middlewared for remote debugging.
+
+        engines:
+          - PTVS: Python Visual Studio
+          - PYDEV: Python Dev (Eclipse/PyCharm)
+
+        options:
+          - secret: password for PTVS
+          - host: required for PYDEV, hostname of local computer (developer workstation)
+          - local_path: required for PYDEV, path for middlewared source in local computer (e.g. /home/user/freenas/src/middlewared/middlewared
+        """
+        if engine == 'PTVS':
+            import ptvsd
+            if 'secret' not in options:
+                raise ValidationError('secret', 'secret is required for PTVS')
+            ptvsd.enable_attach(
+                options['secret'],
+                address=(options['bind_address'], options['bind_port']),
+            )
+            if options['wait_attach']:
+                ptvsd.wait_for_attach()
+        elif engine == 'PYDEV':
+            for i in ('host', 'local_path'):
+                if i not in options:
+                    raise ValidationError(i, f'{i} is required for PYDEV')
+            os.environ['PATHS_FROM_ECLIPSE_TO_PYTHON'] = json.dumps([
+                [options['local_path'], '/usr/local/lib/python3.6/site-packages/middlewared'],
+            ])
+            import pydevd
+            pydevd.stoptrace()
+            pydevd.settrace(host=options['host'])

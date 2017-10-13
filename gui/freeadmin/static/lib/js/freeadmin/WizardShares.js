@@ -443,6 +443,7 @@ define([
       me._store.removeSync(id);
       me._sharesList.refresh();
       if(Object.keys(me._sharesList.selection).length == 0) {
+        me._shareAdd.set("disabled", false);
         me._shareDelete.set("disabled", true);
         me._shareUpdate.set("disabled", true);
       }

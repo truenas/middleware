@@ -32,7 +32,6 @@ import re
 import shutil
 import socket
 import subprocess
-import sysctl
 import tarfile
 import tempfile
 import time
@@ -43,7 +42,6 @@ import sys
 
 from wsgiref.util import FileWrapper
 from django.core.urlresolvers import reverse
-from django.db import transaction
 from django.http import (
     HttpResponse,
     HttpResponseRedirect,
@@ -57,11 +55,7 @@ from freenasOS import Configuration
 from freenasOS.Exceptions import UpdateManifestNotFound
 from freenasOS.Update import CheckForUpdates
 from freenasUI.account.models import bsdUsers
-from freenasUI.common.system import (
-    get_sw_name,
-    get_sw_version,
-    send_mail
-)
+from freenasUI.common.system import get_sw_name, get_sw_version
 from freenasUI.common.ssl import (
     export_certificate,
     export_certificate_chain,
@@ -69,8 +63,9 @@ from freenasUI.common.ssl import (
 )
 from freenasUI.freeadmin.apppool import appPool
 from freenasUI.freeadmin.views import JsonResp
-from freenasUI.middleware.client import client, CallTimeout, ClientException
+from freenasUI.middleware.client import client, CallTimeout, ClientException, ValidationErrors
 from freenasUI.middleware.exceptions import MiddlewareError
+from freenasUI.middleware.form import handle_middleware_validation
 from freenasUI.middleware.notifier import notifier
 from freenasUI.middleware.zfs import zpool_list
 from freenasUI.network.models import GlobalConfiguration
@@ -97,41 +92,29 @@ PERFTEST_SIZE = 40 * 1024 * 1024 * 1024  # 40 GiB
 log = logging.getLogger('system.views')
 
 
-def _system_info(request=None):
-    # OS, hostname, release
-    __, hostname, __ = os.uname()[0:3]
-    platform = sysctl.filter('hw.model')[0].value
-    physmem = '%dMB' % (
-        sysctl.filter('hw.physmem')[0].value / 1048576,
-    )
-    # All this for a timezone, because time.asctime() doesn't add it in.
-    date = time.strftime('%a %b %d %H:%M:%S %Z %Y') + '\n'
-    uptime = subprocess.check_output(
-        "env -u TZ uptime | awk -F', load averages:' '{ print $1 }'",
-        shell=True
-    )
-    loadavg = "%.2f, %.2f, %.2f" % os.getloadavg()
-
-    try:
-        freenas_build = get_sw_version()
-    except:
-        freenas_build = "Unrecognized build"
-
-    return {
-        'hostname': hostname,
-        'platform': platform,
-        'physmem': physmem,
-        'date': date,
-        'uptime': uptime,
-        'loadavg': loadavg,
-        'freenas_build': freenas_build,
-    }
+def _info_humanize(info):
+    info['physmem'] = f'{int(info["physmem"] / 1048576)}MB'
+    info['loadavg'] = ', '.join(list(map(lambda x: f'{x:.2f}', info['loadavg'])))
+    return info
 
 
 def system_info(request):
-    sysinfo = _system_info(request)
-    sysinfo['info_hook'] = appPool.get_system_info(request)
-    return render(request, 'system/system_info.html', sysinfo)
+
+    with client as c:
+        local = _info_humanize(c.call('system.info'))
+
+        standby = None
+        if not notifier().is_freenas() and notifier().failover_licensed():
+            try:
+                standby = _info_humanize(c.call('failover.call_remote', 'system.info', timeout=2))
+            except ClientException:
+                pass
+
+    return render(request, 'system/system_info.html', {
+        'local': local,
+        'standby': standby,
+        'is_freenas': notifier().is_freenas(),
+    })
 
 
 def bootenv_datagrid(request):
@@ -291,11 +274,14 @@ def bootenv_add(request, source=None):
     if request.method == 'POST':
         form = forms.BootEnvAddForm(request.POST, source=source)
         if form.is_valid():
-            form.save()
-            return JsonResp(
-                request,
-                message=_('Boot Environment successfully added.'),
-            )
+            try:
+                form.save()
+                return JsonResp(
+                    request,
+                    message=_('Boot Environment successfully added.'),
+                )
+            except ValidationErrors as e:
+                handle_middleware_validation(form, e)
         return JsonResp(request, form=form)
     else:
         form = forms.BootEnvAddForm(source=source)
@@ -429,11 +415,14 @@ def bootenv_rename(request, name):
     if request.method == 'POST':
         form = forms.BootEnvRenameForm(request.POST, name=name)
         if form.is_valid():
-            form.save()
-            return JsonResp(
-                request,
-                message=_('Boot Environment successfully renamed.'),
-            )
+            try:
+                form.save()
+                return JsonResp(
+                    request,
+                    message=_('Boot Environment successfully renamed.'),
+                )
+            except ValidationErrors as e:
+                handle_middleware_validation(form, e)
         return JsonResp(request, form=form)
     else:
         form = forms.BootEnvRenameForm(name=name)
@@ -500,7 +489,8 @@ def bootenv_pool_attach(request):
 
 def bootenv_pool_detach(request, label):
     if request.method == 'POST':
-        notifier().zfs_detach_disk('freenas-boot', label)
+        with client as c:
+            c.call('boot.detach', label)
         return JsonResp(
             request,
             message=_("Disk has been successfully detached."))
@@ -797,22 +787,26 @@ def testmail(request):
             form=form,
         )
 
-    sid = transaction.savepoint()
-    form.save()
-
     error = False
     if request.is_ajax():
         sw_name = get_sw_name()
-        error, errmsg = send_mail(
-            subject=_(f'Test message from your {sw_name} system hostname {socket.gethostname()}'),
-            text=_(f'This is a message test from {sw_name}'),
-            to=[email],
-            timeout=10)
+        with client as c:
+            mailconfig = form.middleware_clean()
+            try:
+                c.call('mail.send', {
+                    'subject': f'Test message from your {sw_name} system hostname {socket.gethostname()}',
+                    'text': f'This is a message test from {sw_name}',
+                    'to': [email],
+                    'timeout': 10,
+                }, mailconfig, job=True)
+                error = False
+            except Exception as e:
+                error = True
+                errmsg = str(e)
     if error:
         errmsg = _("Your test email could not be sent: %s") % errmsg
     else:
         errmsg = _('Your test email has been sent!')
-    transaction.savepoint_rollback(sid)
 
     form.errors[allfield] = form.error_class([errmsg])
     return JsonResp(
@@ -998,7 +992,8 @@ def debug(request):
                 with client as c:
                     c.call('failover.call_remote', 'core.ping')
             except ClientException:
-                return render(request, 'failover/failover_down.html')
+                return render(request, 'system/debug.html', {"failover_down": True})
+
         return render(request, 'system/debug.html')
     debug_generate()
     return render(request, 'system/debug_download.html')
@@ -1009,8 +1004,10 @@ def debug_download(request):
     gc = GlobalConfiguration.objects.all().order_by('-id')[0]
 
     _n = notifier()
-    if not _n.is_freenas() and _n.failover_licensed():
-        debug_file = '%s/debug.tar' % direc
+    dual_node_debug_file = debug_file = '{}/debug.tar'.format(direc)
+
+    if not _n.is_freenas() and _n.failover_licensed() and os.path.exists(dual_node_debug_file):
+        debug_file = dual_node_debug_file
         extension = 'tar'
         hostname = ''
     else:
@@ -1241,7 +1238,7 @@ def update_apply(request):
                     'exit': exit,
                     'uuid': uuid,
                     'reboot': True,
-                    'finished': True if job['state'] in ('SUCCESS', 'FAILED') else False,
+                    'finished': True if job['state'] in ('SUCCESS', 'FAILED', 'ABORTED') else False,
                     'error': job['error'] or False,
                 }
                 handler = namedtuple('Handler', ['uuid', 'error', 'finished', 'exit', 'reboot'])(**rv)
@@ -1401,7 +1398,7 @@ def update_check(request):
                     'uuid': uuid,
                     'apply': True if job['method'] == 'update.update' else False,
                     'reboot': True,
-                    'finished': True if job['state'] in ('SUCCESS', 'FAILED') else False,
+                    'finished': True if job['state'] in ('SUCCESS', 'FAILED', 'ABORTED') else False,
                     'error': job['error'] or False,
                 }
                 handler = namedtuple('Handler', ['uuid', 'error', 'finished', 'exit', 'reboot', 'apply'])(**rv)
@@ -1540,7 +1537,7 @@ def update_progress(request):
         load = {
             'apply': True if job['method'] == 'update.update' else False,
             'error': job['error'],
-            'finished': job['state'] in ('SUCCESS', 'FAILED'),
+            'finished': job['state'] in ('SUCCESS', 'FAILED', 'ABORTED'),
             'indeterminate': True if job['progress']['percent'] is None else False,
             'percent': job['progress'].get('percent'),
             'step': 1,
@@ -1682,6 +1679,27 @@ def CA_edit(request, id):
 
     else:
         form = forms.CertificateAuthorityEditForm(instance=ca)
+
+    return render(request, "system/certificate/CA_edit.html", {
+        'form': form
+    })
+
+
+def CA_sign_csr(request, id):
+
+    ca = models.CertificateAuthority.objects.get(pk=id)
+
+    if request.method == 'POST':
+        form = forms.CertificateAuthoritySignCSRForm(request.POST, instance=ca)
+        if form.is_valid():
+            form.save()
+            return JsonResp(
+                request,
+                message=_("CSR signed successfully.")
+            )
+
+    else:
+        form = forms.CertificateAuthoritySignCSRForm(instance=ca)
 
     return render(request, "system/certificate/CA_edit.html", {
         'form': form
@@ -1930,12 +1948,6 @@ def consul_fake_alert(request):
     with client as c:
         fake_alert = c.call('consul.create_fake_alert')
     if fake_alert is True:
-        return JsonResp(
-                request,
-                message=_('Fake alert sent.'),
-        )
+        return JsonResp(request, message=_('Fake alert sent.'))
     else:
-        return JsonResp(
-                request,
-                message=_('Failed to send a fake alert.'),
-        )
+        return JsonResp(request, message=_('Failed to send a fake alert.'))

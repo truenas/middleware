@@ -1,5 +1,5 @@
 {% load freeadmin %}
-<form data-dojo-type="dijit.form.Form" id="dialogForm_{{ model_name }}">
+<form data-dojo-type="dijit.form.Form" id="dialogForm_{{ model_name }}"{% if form and form.is_multipart %} enctype="multipart/form-data"{% endif %}>
 <script type="dojo/method" data-dojo-event="submitForm" data-dojo-args="form,e,conf">
      doSubmit({
         form: form,

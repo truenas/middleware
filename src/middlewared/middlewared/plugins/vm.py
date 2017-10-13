@@ -1,5 +1,5 @@
 from middlewared.schema import accepts, Int, Str, Dict, List, Bool, Patch
-from middlewared.service import filterable, CRUDService, item_method, private, job
+from middlewared.service import filterable, CRUDService, item_method, private, job, CallError
 from middlewared.utils import Nid, Popen
 from middlewared.client import Client, CallTimeout
 from urllib.request import urlretrieve
@@ -71,6 +71,14 @@ class VMManager(object):
                 'state': 'STOPPED',
             }
 
+    async def clone(self, id):
+        try:
+            vm = await self.service.query([('id', '=', id)], {'get': True})
+            return vm
+        except IndexError:
+            self.logger.error("VM does not exist.")
+            return None
+
 
 class VMSupervisor(object):
 
@@ -79,6 +87,7 @@ class VMSupervisor(object):
         self.logger = self.manager.logger
         self.vm = vm
         self.proc = None
+        self.web_proc = None
         self.taps = []
         self.bhyve_error = None
         self.vmutils = VMUtils
@@ -106,10 +115,17 @@ class VMSupervisor(object):
         nid = Nid(3)
         for device in self.vm['devices']:
             if device['dtype'] == 'DISK' or device['dtype'] == 'RAW':
-                if device['attributes'].get('type') == 'AHCI':
-                    args += ['-s', '{},ahci-hd,{}'.format(nid(), device['attributes']['path'])]
+
+                disk_sector_size = device['attributes'].get('sectorsize', 0)
+                if disk_sector_size > 0:
+                    sectorsize_args = ",sectorsize=" + str(disk_sector_size)
                 else:
-                    args += ['-s', '{},virtio-blk,{}'.format(nid(), device['attributes']['path'])]
+                    sectorsize_args = ""
+
+                if device['attributes'].get('type') == 'AHCI':
+                    args += ['-s', '{},ahci-hd,{}{}'.format(nid(), device['attributes']['path'], sectorsize_args)]
+                else:
+                    args += ['-s', '{},virtio-blk,{}{}'.format(nid(), device['attributes']['path'], sectorsize_args)]
             elif device['dtype'] == 'CDROM':
                 args += ['-s', '{},ahci-cd,{}'.format(nid(), device['attributes']['path'])]
             elif device['dtype'] == 'NIC':
@@ -146,25 +162,43 @@ class VMSupervisor(object):
 
                 vnc_resolution = device['attributes'].get('vnc_resolution', None)
                 vnc_port = int(device['attributes'].get('vnc_port', 5900 + self.vm['id']))
+                vnc_bind = device['attributes'].get('vnc_bind', '0.0.0.0')
+                vnc_password = device['attributes'].get('vnc_password', None)
+                vnc_web = device['attributes'].get('vnc_web', None)
+
+                vnc_password_args = ""
+                if vnc_password:
+                    vnc_password_args = "password=" + vnc_password
 
                 if vnc_resolution is None:
-                    args += [
-                        '-s', '29,fbuf,tcp=0.0.0.0:{},w=1024,h=768,{}'.format(vnc_port, wait),
-                        '-s', '30,xhci,tablet',
-                    ]
+                    width = 1024
+                    height = 768
                 else:
                     vnc_resolution = vnc_resolution.split('x')
                     width = vnc_resolution[0]
                     height = vnc_resolution[1]
-                    args += [
-                        '-s', '29,fbuf,tcp=0.0.0.0:{},w={},h={},{}'.format(vnc_port, width, height, wait),
-                        '-s', '30,xhci,tablet',
-                    ]
+
+                args += [
+                   '-s', '29,fbuf,vncserver,tcp={}:{},w={},h={},{},{}'.format(vnc_bind, vnc_port, width, height, vnc_password_args, wait),
+                   '-s', '30,xhci,tablet',
+                ]
 
         args.append(self.vm['name'])
 
         self.logger.debug('Starting bhyve: {}'.format(' '.join(args)))
         self.proc = await Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+
+        if vnc_web:
+            split_port = int(str(vnc_port)[:2]) - 1
+            vnc_web_port = str(split_port) + str(vnc_port)[2:]
+
+            web_bind = ':{}'.format(vnc_web_port) if vnc_bind is '0.0.0.0' else '{}:{}'.format(vnc_bind, vnc_web_port)
+
+            self.web_proc = await Popen(['/usr/local/libexec/novnc/utils/websockify/run', '--web',
+                    '/usr/local/libexec/novnc/', '--wrap-mode=ignore',
+                    web_bind, '{}:{}'.format(vnc_bind, vnc_port)], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+            self.logger.debug("==> Start WEBVNC at port {} with pid number {}".format(vnc_web_port, self.web_proc.pid))
+
 
         while True:
             line = await self.proc.stdout.readline()
@@ -199,6 +233,7 @@ class VMSupervisor(object):
         # XXX: We need to catch the bhyvectl return error.
         bhyve_error = await (await Popen(['bhyvectl', '--destroy', '--vm={}'.format(self.vm['name'])], stdout=subprocess.PIPE, stderr=subprocess.PIPE)).wait()
         self.manager._vm.pop(self.vm['id'], None)
+        await self.kill_bhyve_web()
         self.destroy_tap()
 
     def destroy_tap(self):
@@ -242,7 +277,7 @@ class VMSupervisor(object):
 
     def random_mac(self):
         mac_address = [0x00, 0xa0, 0x98, random.randint(0x00, 0x7f), random.randint(0x00, 0xff), random.randint(0x00, 0xff)]
-        return ':'.join(map(lambda x: "%02x" % x, mac_address))
+        return ':'.join(["%02x" % x for x in mac_address])
 
     async def kill_bhyve_pid(self):
         if self.proc:
@@ -256,10 +291,21 @@ class VMSupervisor(object):
             await self.destroy_vm()
             return True
 
+    async def kill_bhyve_web(self):
+        if self.web_proc:
+            try:
+                self.logger.debug("==> Killing WEBVNC: {}".format(self.web_proc.pid))
+                os.kill(self.web_proc.pid, 15)
+            except ProcessLookupError as e:
+                if e.errno != errno.ESRCH:
+                    raise
+            return True
+
     async def restart(self):
         bhyve_error = await (await Popen(['bhyvectl', '--force-reset', '--vm={}'.format(self.vm['name'])], stdout=subprocess.PIPE, stderr=subprocess.PIPE)).wait()
         self.logger.debug("==> Reset VM: {0} ID: {1} BHYVE_CODE: {2}".format(self.vm['name'], self.vm['id'], bhyve_error))
         self.destroy_tap()
+        await self.kill_bhyve_web()
 
     async def stop(self):
         bhyve_error = await (await Popen(['bhyvectl', '--force-poweroff', '--vm={}'.format(self.vm['name'])], stdout=subprocess.PIPE, stderr=subprocess.PIPE)).wait()
@@ -333,6 +379,21 @@ class VMService(CRUDService):
         data['amd_asids'] = True if asids and asids[0].value != 0 else False
 
         return data
+
+    @accepts()
+    def identify_hypervisor(self):
+        """
+        Identify Hypervisors that might work nested with bhyve.
+
+        Returns:
+                bool: True if compatible otherwise False.
+        """
+        compatible_hp = ('VMwareVMware', 'Microsoft Hv', 'KVMKVMKVM', 'bhyve bhyve')
+        identify_hp = sysctl.filter('hw.hv_vendor')[0].value.strip()
+
+        if identify_hp in compatible_hp:
+            return True
+        return False
 
     @filterable
     async def query(self, filters=None, options=None):
@@ -418,6 +479,7 @@ class VMService(CRUDService):
     ))
     async def do_create(self, data):
         """Create a VM."""
+
         devices = data.pop('devices')
         pk = await self.middleware.call('datastore.insert', 'vm.vm', data)
 
@@ -439,8 +501,7 @@ class VMService(CRUDService):
             await self.middleware.call('datastore.insert', 'vm.device', device)
         return pk
 
-    @private
-    async def do_update_devices(self, id, devices):
+    async def __do_update_devices(self, id, devices):
         if devices and isinstance(devices, list) is True:
             device_query = await self.middleware.call('datastore.query', 'vm.device', [('vm__id', '=', int(id))])
 
@@ -471,7 +532,7 @@ class VMService(CRUDService):
         """Update all information of a specific VM."""
         devices = data.pop('devices', None)
         if devices:
-            update_devices = await self.do_update_devices(id, devices)
+            update_devices = await self.__do_update_devices(id, devices)
         if data:
             return await self.middleware.call('datastore.update', 'vm.vm', id, data)
         else:
@@ -482,7 +543,7 @@ class VMService(CRUDService):
     )
     async def create_device(self, id, data):
         """Create a new device in an existing vm."""
-        devices_type = ('NIC', 'DISK', 'CDROM', 'VNC')
+        devices_type = ('NIC', 'DISK', 'CDROM', 'VNC', 'RAW')
         devices = data.get('devices', None)
 
         if devices:
@@ -500,6 +561,10 @@ class VMService(CRUDService):
     @accepts(Int('id'))
     async def do_delete(self, id):
         """Delete a VM."""
+        status = await self.status(id)
+        if isinstance(status, dict):
+            if status.get('state') == "RUNNING":
+                stop_vm = await self.stop(id)
         try:
             return await self.middleware.call('datastore.delete', 'vm.vm', id)
         except Exception as err:
@@ -596,6 +661,89 @@ class VMService(CRUDService):
                 self.decompress_hookreport(dst, job)
                 dst_file.write(data)
 
+    async def __find_clone(self, name):
+        data = await self.middleware.call('vm.query', [], {'order_by': ['name']})
+        clone_index = 0
+        next_name = ""
+        for vm_name in data:
+            if name in vm_name['name'] and '_clone' in vm_name['name']:
+                name_index = int(vm_name['name'][-1])
+                next_name = vm_name['name'][:-1]
+                if name_index >= clone_index:
+                    clone_index = int(name_index) + 1
+
+        if next_name:
+            next_name = next_name + str(clone_index)
+        else:
+            next_name = name + '_clone' + str(clone_index)
+
+        return next_name
+
+    @accepts(Int('id'))
+    async def clone(self, id):
+        vm = await self._manager.clone(id)
+
+        if vm is None:
+            raise CallError('Cannot clone a VM that does not exist.', errno.EINVAL)
+
+        origin_name = vm['name']
+        del vm['id']
+
+        vm['name'] = await self.__find_clone(vm['name'])
+
+        for item in vm['devices']:
+            if item['dtype'] == 'NIC':
+                if 'mac' in item['attributes']:
+                    del item['attributes']['mac']
+            if item['dtype'] == 'VNC':
+                if 'vnc_port' in item['attributes']:
+                    del item['attributes']['vnc_port']
+            if item['dtype'] == 'DISK':
+                disk_src_path = '/'.join(item['attributes']['path'].split('/dev/zvol/')[-1:])
+                disk_snapshot_name = vm['name']
+                disk_snapshot_path = disk_src_path + '@' + disk_snapshot_name
+                clone_dst_path = disk_src_path + '_' + vm['name']
+
+                data = {'dataset': disk_src_path, 'name': disk_snapshot_name}
+                await self.middleware.call('zfs.snapshot.create', data)
+
+                data = {'snapshot': disk_snapshot_path, 'dataset_dst': clone_dst_path}
+                await self.middleware.call('zfs.snapshot.clone', data)
+
+                item['attributes']['path'] = '/dev/zvol/' + clone_dst_path
+            if item['dtype'] == 'RAW':
+                item['attributes']['path'] = ''
+                self.logger.warn("For RAW disk you need copy it manually inside your NAS.")
+
+        await self.create(vm)
+        self.logger.info("VM cloned from {0} to {1}".format(origin_name, vm['name']))
+
+        return True
+
+    @accepts(Int('id'))
+    async def get_vnc_web(self, id):
+        """
+            Get the VNC URL from a given VM.
+
+            Returns:
+                list: With all URL available.
+        """
+        vnc_web = []
+        vnc_devices = await self.get_vnc(id)
+
+        for vnc_device in await self.get_vnc(id):
+            if vnc_device.get('vnc_web', None) is True:
+                vnc_port = vnc_device.get('vnc_port', None)
+                if vnc_port is None:
+                    vnc_port = 5900 + id
+                #  XXX: Create a method for web port.
+                split_port = int(str(vnc_port)[:2]) - 1
+                vnc_web_port = str(split_port) + str(vnc_port)[2:]
+                bind_ip = vnc_device.get('vnc_bind', None)
+                vnc_web.append('http://{}:{}/vnc_auto.html'.format(bind_ip, vnc_web_port))
+
+        return vnc_web
+
 
 async def kmod_load():
     kldstat = (await (await Popen(['/sbin/kldstat'], stdout=subprocess.PIPE)).communicate())[0].decode()
@@ -605,7 +753,7 @@ async def kmod_load():
         await Popen(['/sbin/kldload', 'nmdm'])
 
 
-async def _event_system_ready(middleware, event_type, args):
+async def __event_system_ready(middleware, event_type, args):
     """
     Method called when system is ready, supposed to start VMs
     flagged that way.
@@ -619,4 +767,4 @@ async def _event_system_ready(middleware, event_type, args):
 
 def setup(middleware):
     asyncio.ensure_future(kmod_load())
-    middleware.event_subscribe('system', _event_system_ready)
+    middleware.event_subscribe('system', __event_system_ready)

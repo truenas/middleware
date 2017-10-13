@@ -59,7 +59,7 @@ class EtcService(Service):
         #],
 
         'ldap': [
-            {'type': 'mako', 'path': 'local/ldap.conf'},
+            {'type': 'mako', 'path': 'local/openldap/ldap.conf'},
         ],
         'network': [
             {'type': 'mako', 'path': 'dhclient.conf'},
@@ -69,7 +69,7 @@ class EtcService(Service):
             {'type': 'mako', 'path': 'local/nss_ldap.conf'},
         ],
         'pam': [
-            { 'type': 'mako', 'path': os.path.join('pam.d', f) }
+            {'type': 'mako', 'path': os.path.join('pam.d', f)}
             for f in os.listdir(
                 os.path.realpath(
                     os.path.join(
@@ -78,6 +78,9 @@ class EtcService(Service):
                 )
             )
         ],
+        's3': [
+            {'type': 'py', 'path': 'local/minio/certificates'},
+        ]
     }
 
     class Config:

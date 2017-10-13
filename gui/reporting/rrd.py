@@ -250,6 +250,72 @@ class CPUPlugin(RRDBase):
         return args
 
 
+class CPUTempPlugin(RRDBase):
+
+    title = "CPU Temperature"
+    vertical_label = "\u00b0C"
+
+    def __get_cputemp_file__(self, n):
+        cputemp_file = os.path.join(
+            "%s/cputemp-%s" % (self._base_path, n),
+            "temperature.rrd")
+        if os.path.isfile(cputemp_file):
+            return cputemp_file
+        else:
+            return None
+
+    def __get_number_of_cores__(self):
+        proc = pipeopen('/sbin/sysctl -n kern.smp.cpus', important=False, logger=log)
+        proc_out = proc.communicate()[0]
+        try:
+            return int(proc_out)
+        except:
+            return 0
+
+    def __check_cputemp_avail__(self):
+        n_cores = self.__get_number_of_cores__()
+        if n_cores > 0:
+            for n in range(0, n_cores):
+                if self.__get_cputemp_file__(n) is None:
+                    return False
+        else:
+            return False
+        return True
+
+    def get_identifiers(self):
+        if not self.__check_cputemp_avail__():
+            return []
+        return None
+
+    def graph(self):
+        args = []
+        colors = [
+            '#00ff00', '#0000ff', '#ff0000', '#ff00ff',
+            '#ffff00', '#00ffff', '#800000', '#008000',
+            '#000080', '#008080', '#808000', '#800080',
+            '#808080', '#C0C0C0', '#654321', '#123456'
+        ]
+        for n in range(0, self.__get_number_of_cores__()):
+            cputemp_file = self.__get_cputemp_file__(n)
+            a = [
+                'DEF:s_min{0}={1}:value:MIN'.format(n, cputemp_file),
+                'DEF:s_avg{0}={1}:value:AVERAGE'.format(n, cputemp_file),
+                'DEF:s_max{0}={1}:value:MAX'.format(n, cputemp_file),
+                'CDEF:min{0}=s_min{0},100,/'.format(n),
+                'CDEF:avg{0}=s_avg{0},100,/'.format(n),
+                'CDEF:max{0}=s_max{0},100,/'.format(n),
+                'AREA:max{0}#bfffbf'.format(n),
+                'AREA:min{0}#FFFFFF'.format(n),
+                'LINE1:avg{0}{1}: Core {2}'.format(n, colors[n], n + 1),
+                'GPRINT:min{0}:MIN:%.1lf\u00b0 Min,'.format(n),
+                'GPRINT:avg{0}:AVERAGE:%.1lf\u00b0 Avg,'.format(n),
+                'GPRINT:max{0}:MAX:%.1lf\u00b0 Max,'.format(n),
+                'GPRINT:avg{0}:LAST:%.1lf\u00b0 Last\l'.format(n)
+            ]
+            args.extend(a)
+        return args
+
+
 class InterfacePlugin(RRDBase):
 
     vertical_label = "Bits/s"
@@ -574,7 +640,7 @@ class DFPlugin(RRDBase):
         ids = []
         proc = pipeopen("/bin/df -t zfs", important=False, logger=log)
         for line in proc.communicate()[0].strip().split('\n'):
-            entry = re.split(r'\s{2,}', line)[-1];
+            entry = re.split(r'\s{2,}', line)[-1]
             if entry != "/" and not entry.startswith("/mnt"):
                 continue
             path = os.path.join(self._base_path, "df-" + self.encode(entry), 'df_complex-free.rrd')

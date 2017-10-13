@@ -1,4 +1,4 @@
-from middlewared.client import CallTimeout, Client, ClientException
+from middlewared.client import CallTimeout, Client, ClientException, ValidationErrors  # noqa
 
 
 class Connection(object):

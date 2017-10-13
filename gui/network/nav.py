@@ -1,6 +1,7 @@
 from django.utils.translation import ugettext_lazy as _
 from freenasUI.choices import LAGGType
 from freenasUI.freeadmin.tree import TreeNode
+from freenasUI.middleware.client import client
 from freenasUI.middleware.notifier import notifier
 
 from . import models
@@ -9,6 +10,16 @@ NAME = _('Network')
 ICON = 'NetworkIcon'
 BLACKLIST = ['LAGGInterfaceMembers', 'Alias', 'LAGGInterface']
 ORDER = 10
+
+IPMI_LOADED = None
+
+
+def is_ipmi_loaded():
+    global IPMI_LOADED
+    if IPMI_LOADED is None:
+        with client as c:
+            IPMI_LOADED = c.call('ipmi.is_loaded')
+    return IPMI_LOADED
 
 
 class IPMI(TreeNode):
@@ -20,7 +31,7 @@ class IPMI(TreeNode):
     append_to = 'network'
 
     def pre_build_options(self):
-        if not notifier().ipmi_loaded():
+        if not is_ipmi_loaded():
             raise ValueError
 
 
@@ -33,9 +44,10 @@ class IPMI_B(TreeNode):
     append_to = 'network'
 
     def pre_build_options(self):
-        _n = notifier()
-        if not _n.ipmi_loaded():
+        if not is_ipmi_loaded():
             raise ValueError
+
+        _n = notifier()
         if _n.is_freenas():
             raise ValueError
 

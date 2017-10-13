@@ -119,7 +119,7 @@ class Migration(migrations.Migration):
             name='DynamicDNS',
             fields=[
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('ddns_provider', models.CharField(blank=True, choices=choices.DYNDNSPROVIDER_CHOICES, default='dyndns@dyndns.org', max_length=120, verbose_name='Provider')),
+                ('ddns_provider', models.CharField(blank=True, choices=choices.DYNDNSPROVIDER_CHOICES, default=choices.DYNDNSPROVIDER_CHOICES[0][0], max_length=120, verbose_name='Provider')),
                 ('ddns_ipserver', models.CharField(blank=True, default='checkip.dyndns.org:80 /.', help_text="The client IP is detected by calling 'url' from this 'ip_server_name:port /.'. Leaving this field blank causes the service to use its built in default: checkip.dyndns.org:80 /.", max_length=150, verbose_name='IP Server')),
                 ('ddns_domain', models.CharField(blank=True, help_text='A host name alias. This option can appear multiple times, for each domain that has the same IP. Use a comma to separate multiple alias names.  Some Dynamic DNS providers require a hash after the host name, for these providers use a # sign in the between the hostname and hash in the format hostname#hash.  You may also use multiple hostname and hash combinations in the format host1#hash1,host2#hash2.', max_length=120, verbose_name='Domain name')),
                 ('ddns_username', models.CharField(max_length=120, verbose_name='Username')),

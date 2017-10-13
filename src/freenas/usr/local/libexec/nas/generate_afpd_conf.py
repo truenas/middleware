@@ -1,7 +1,12 @@
 #!/usr/local/bin/python
+import os
+import textwrap
+
 import netif
+
 from middlewared.client import Client
 from middlewared.client.utils import Struct
+
 
 def get_interface(ipaddress):
     get_all_ifaces = netif.list_interfaces()
@@ -94,6 +99,8 @@ def main():
         cf_contents.append("\tbasedir regex = %s\n" % afp.afp_srv_homedir)
         if afp.afp_srv_homename:
             cf_contents.append("\thome name = %s\n" % afp.afp_srv_homename)
+        if afp.afp_srv_hometimemachine:
+            cf_contents.append(f"\ttime machine = yes\n")
         cf_contents.append("\n")
 
     for share in client.call('datastore.query', 'sharing.afp_share'):
@@ -137,10 +144,63 @@ def main():
             pass
         else:
             cf_contents += aux_params
+        # Update TimeMachine special files
+        timemachine_supported_path = os.path.join(share.afp_path, ".com.apple.timemachine.supported")
+        timemachine_quota_plist_path = os.path.join(share.afp_path, ".com.apple.TimeMachine.quota.plist")
+        timemachine_quota_plist_managed_flag = os.path.join(share.afp_path, ".com.apple.TimeMachine.quota.plist.FreeNAS-managed")
+        if share.afp_timemachine and share.afp_timemachine_quota:
+            try:
+                with open(timemachine_supported_path, "w"):
+                    pass
+            except IOError:
+                pass
+
+            try:
+                with open(timemachine_quota_plist_path, "w") as f:
+                    f.write(textwrap.dedent("""\
+                        <!DOCTYPE plist PUBLIC "-//Apple//DTD PLIST 1.0//EN" "http://www.apple.com/DTDs/PropertyList-1.0.dtd">
+                        <plist version="1.0">
+                            <dict>
+                                <key>GlobalQuota</key>
+                                <integer>%d</integer>
+                            </dict>
+                        </plist>
+                    """ % share.afp_timemachine_quota))
+            except IOError:
+                pass
+
+            try:
+                with open(timemachine_quota_plist_managed_flag, "w") as f:
+                    pass
+            except IOError:
+                pass
+
+            try:
+                stat = os.stat(share.afp_path)
+                os.chmod(timemachine_supported_path, 0o644)
+                os.chown(timemachine_supported_path, stat.st_uid, stat.st_gid)
+                os.chmod(timemachine_quota_plist_path, 0o644)
+                os.chown(timemachine_quota_plist_path, stat.st_uid, stat.st_gid)
+                os.chmod(timemachine_quota_plist_managed_flag, 0o644)
+                os.chown(timemachine_quota_plist_managed_flag, stat.st_uid, stat.st_gid)
+            except IOError:
+                pass
+        else:
+            if os.path.exists(timemachine_quota_plist_managed_flag):
+                try:
+                    os.unlink(timemachine_supported_path)
+                except IOError:
+                    pass
+
+                try:
+                    os.unlink(timemachine_quota_plist_path)
+                except IOError:
+                    pass
 
     with open(afp_config, "w") as fh:
         for line in cf_contents:
             fh.write(line)
+
 
 if __name__ == "__main__":
     main()

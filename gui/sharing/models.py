@@ -54,7 +54,7 @@ class CIFS_Share(Model):
     )
     cifs_default_permissions = models.BooleanField(
         verbose_name=_('Apply Default Permissions'),
-        help_text=_('Recursively set sane default windows permissions on share'),
+        help_text=_('Recursively set appropriate default Windows permissions on share'),
         default=True
     )
     cifs_ro = models.BooleanField(
@@ -89,6 +89,10 @@ class CIFS_Share(Model):
             'set for the share.'
         ),
         default=False,
+    )
+    cifs_abe = models.BooleanField(
+        verbose_name=_('Access Based Share Enumeration'),
+        default=False
     )
     cifs_hostsallow = models.TextField(
         blank=True,
@@ -214,6 +218,13 @@ class AFP_Share(Model):
             'Check this to enable Time Machine backups on this share.'
         ),
         default=False,
+    )
+    afp_timemachine_quota = models.IntegerField(
+        verbose_name=_('Time Machine Quota'),
+        help_text=_(
+            'Quota for each Time Machine backup on this share.'
+        ),
+        default=0,
     )
     afp_nodev = models.BooleanField(
         verbose_name=_('Zero Device Numbers'),

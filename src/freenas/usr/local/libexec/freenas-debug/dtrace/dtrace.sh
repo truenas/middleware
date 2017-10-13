@@ -41,7 +41,7 @@ dtrace_func()
 		kldload dtraceall
 	fi
 
-	section_header "Dtrace Disk Latency"
+	section_header "Dtrace Disk Latency - 'dtrace -s ${dtscript}'"
 	dtrace -s ${dtscript}
 	section_footer
 

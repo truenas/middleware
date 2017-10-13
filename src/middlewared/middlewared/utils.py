@@ -70,6 +70,7 @@ def filter_list(_list, filters=None, options=None):
     opmap = {
         '=': lambda x, y: x == y,
         '!=': lambda x, y: x != y,
+        'in': lambda x, y: x in y,
     }
 
     if filters is None:
@@ -136,6 +137,14 @@ def sw_version_is_stable():
         return True
     else:
         return False
+
+
+def is_empty(val):
+    """
+    A small utility function that check if the provided string is either None, '',
+    or just a string containing only spaces
+    """
+    return val in [None, ''] or val.isspace()
 
 
 class Nid(object):

@@ -10,7 +10,9 @@ if '/usr/local/www' not in sys.path:
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'freenasUI.settings')
 
 import django
-django.setup()
+from django.apps import apps
+if not apps.ready:
+    django.setup()
 
 from django.conf import settings
 from freenasUI import choices
@@ -36,6 +38,7 @@ from freenasUI.directoryservice.models import (
     IDMAP_TYPE_RID,
     IDMAP_TYPE_TDB,
     IDMAP_TYPE_TDB2,
+    IDMAP_TYPE_SCRIPT,
 )
 from freenasUI.directoryservice.utils import get_idmap_object
 
@@ -63,10 +66,6 @@ class NotifierService(Service):
             return object.__getattribute__(self, attr)
         except AttributeError:
             return getattr(_n, attr)
-
-    def system_dataset_create(self, mount=True):
-        """Make sure return value is serializable"""
-        return notifier().system_dataset_create(mount=mount) is not None
 
     def common(self, name, method, params=None):
         """Simple wrapper to access methods under freenasUI.common.*"""
@@ -113,13 +112,15 @@ class NotifierService(Service):
                     data[k] = serialize(v)
             elif isinstance(i, (zfs.ZFSVol, zfs.ZFSDataset)):
                 data = i.__dict__
+                data.update(data.pop('_ZFSVol__props', {}))
+                data.update(data.pop('_ZFSDataset__props', {}))
                 data['children'] = [serialize(j) for j in data.get('children') or []]
             return data
 
         return serialize(rv)
 
     def directoryservice(self, name):
-        """Temporary rapper to serialize DS connectors"""
+        """Temporary wrapper to serialize DS connectors"""
         if name == 'AD':
             ds = FreeNAS_ActiveDirectory(flags=FLAGS_DBINIT)
             workgroups = []
@@ -200,6 +201,7 @@ class NotifierService(Service):
             IDMAP_TYPE_RID: 'IDMAP_TYPE_RID',
             IDMAP_TYPE_TDB: 'IDMAP_TYPE_TDB',
             IDMAP_TYPE_TDB2: 'IDMAP_TYPE_TDB2',
+            IDMAP_TYPE_SCRIPT: 'IDMAP_TYPE_SCRIPT',
         }
         if code not in mapping:
             raise ValueError('Unknown idmap code: {0}'.format(code))
@@ -210,15 +212,6 @@ class NotifierService(Service):
         if args is None:
             args = []
         return getattr(Samba4(), name)(*args)
-
-    def systemdataset_is_decrypted(self):
-        """Temporary workaround to get system dataset crypt state"""
-        systemdataset, basename = notifier().system_dataset_settings()
-        if not systemdataset:
-            return None
-        if not basename:
-            return None
-        return systemdataset.is_decrypted(), basename
 
     def choices(self, name, args=None):
         """Temporary wrapper to get to UI choices"""

@@ -1,432 +1,522 @@
 FREENAS-MIB DEFINITIONS ::= BEGIN
 
--- Currently defines structures for monitoring the zfs-stats in freenas (more to come)
--- via snmp. Taken from https://github.com/jm66/solaris-extra-snmp. License below:
--- Copyright (c) 2012, Jakob Borg
--- All rights reserved.
--- 
--- Redistribution and use in source and binary forms, with or without
--- modification, are permitted provided that the following conditions are met:
---    * Redistributions of source code must retain the above copyright
---      notice, this list of conditions and the following disclaimer.
---    * Redistributions in binary form must reproduce the above copyright
---      notice, this list of conditions and the following disclaimer in the
---      documentation and/or other materials provided with the distribution.
---    * The name of the author may not be used to endorse or promote products
---      derived from this software without specific prior written permission.
---
--- THIS SOFTWARE IS PROVIDED BY JAKOB BORG ''AS IS'' AND ANY EXPRESS OR IMPLIED
--- WARRANTIES, INCLUDING, BUT NOT LIMITED TO, THE IMPLIED WARRANTIES OF
--- MERCHANTABILITY AND FITNESS FOR A PARTICULAR PURPOSE ARE DISCLAIMED. IN NO
--- EVENT SHALL JAKOB BORG BE LIABLE FOR ANY DIRECT, INDIRECT, INCIDENTAL, SPECIAL,
--- EXEMPLARY, OR CONSEQUENTIAL DAMAGES (INCLUDING, BUT NOT LIMITED TO, PROCUREMENT
--- OF SUBSTITUTE GOODS OR SERVICES; LOSS OF USE, DATA, OR PROFITS; OR BUSINESS
--- INTERRUPTION) HOWEVER CAUSED AND ON ANY THEORY OF LIABILITY, WHETHER IN
--- CONTRACT, STRICT LIABILITY, OR TORT (INCLUDING NEGLIGENCE OR OTHERWISE) ARISING
--- IN ANY WAY OUT OF THE USE OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY
--- OF SUCH DAMAGE.
-
 IMPORTS
-	enterprises FROM RFC1155-SMI
-	OBJECT-TYPE FROM RFC-1212
-	DisplayString FROM RFC-1213;
+    MODULE-IDENTITY, OBJECT-TYPE, NOTIFICATION-TYPE, enterprises,
+    Integer32, Counter32, Counter64, Gauge32  FROM SNMPv2-SMI
 
-freenas	OBJECT IDENTIFIER ::= {enterprises 25359}
+    DisplayString                             FROM SNMPv2-TC;
 
-zfs     OBJECT IDENTIFIER ::= {freenas 1}
+freeNas MODULE-IDENTITY
+    LAST-UPDATED "201709010000Z"
+    ORGANIZATION "www.ixsystems.com"
+    CONTACT-INFO
+        "postal:   2490 Kruse Dr
+                   San Jose, CA 95131
 
-zpool   OBJECT IDENTIFIER ::= {zfs 1}
+         email:    support@iXsystems.com"
+    DESCRIPTION
+        ""
+    REVISION     "201709010000Z"
+    DESCRIPTION
+        ""
+    ::= { enterprises 50536 }
 
-arc     OBJECT IDENTIFIER ::= {zfs 2}
+zfs     OBJECT IDENTIFIER ::= { freeNas 1 }
 
-l2arc   OBJECT IDENTIFIER ::= {zfs 3}
+notifications       OBJECT IDENTIFIER ::= { freeNas 2 }
+notificationPrefix  OBJECT IDENTIFIER ::= { notifications 1 }
+notificationObjects OBJECT IDENTIFIER ::= { notifications 2 }
 
-vols    OBJECT IDENTIFIER ::= {zfs 5}
+zpool   OBJECT IDENTIFIER ::= { zfs 1 }
+dataset OBJECT IDENTIFIER ::= { zfs 2 }
+zvol    OBJECT IDENTIFIER ::= { zfs 3 }
+arc     OBJECT IDENTIFIER ::= { zfs 4 }
+l2arc   OBJECT IDENTIFIER ::= { zfs 5 }
+zil     OBJECT IDENTIFIER ::= { zfs 6 }
 
-zil     OBJECT IDENTIFIER ::= {zfs 6}
+zpoolTable OBJECT-TYPE
+    SYNTAX     SEQUENCE OF ZpoolEntry
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+        ""
+    ::= { zpool 1 }
 
-ds      OBJECT IDENTIFIER ::= {zfs 7}
+zpoolEntry OBJECT-TYPE
+    SYNTAX     ZpoolEntry
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+        ""
+    INDEX { zpoolIndex }
+    ::= { zpoolTable 1 }
 
-zfsPoolName OBJECT-TYPE
+ZpoolEntry ::= SEQUENCE {
+        zpoolIndex                    Integer32,
+        zpoolDescr                    DisplayString,
+        zpoolAllocationUnits          Integer32,
+        zpoolSize                     Integer32,
+        zpoolUsed                     Integer32,
+        zpoolAvailable                Integer32,
+        zpoolHealth                   DisplayString,
+        zpoolReadOps                  Counter64,
+        zpoolWriteOps                 Counter64,
+        zpoolReadBytes                Counter64,
+        zpoolWriteBytes               Counter64,
+        zpoolReadOps1sec              Counter64,
+        zpoolWriteOps1sec             Counter64,
+        zpoolReadBytes1sec            Counter64,
+        zpoolWriteBytes1sec           Counter64
+    }
+
+zpoolIndex OBJECT-TYPE
+    SYNTAX     Integer32 (1..2147483647)
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+        ""
+    ::= { zpoolEntry 1 }
+
+zpoolDescr OBJECT-TYPE
+    SYNTAX     DisplayString
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        ""
+    ::= { zpoolEntry 2 }
+
+zpoolAllocationUnits OBJECT-TYPE
+    SYNTAX     Integer32 (1..2147483647)
+    UNITS      "Bytes"
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        ""
+    ::= { zpoolEntry 3 }
+
+zpoolSize OBJECT-TYPE
+    SYNTAX     Integer32 (0..2147483647)
+    MAX-ACCESS read-write
+    STATUS     current
+    DESCRIPTION
+        ""
+    ::= { zpoolEntry 4 }
+
+zpoolUsed OBJECT-TYPE
+    SYNTAX     Integer32 (0..2147483647)
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        ""
+    ::= { zpoolEntry 5 }
+
+zpoolAvailable OBJECT-TYPE
+    SYNTAX     Integer32 (0..2147483647)
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        ""
+    ::= { zpoolEntry 6 }
+
+zpoolHealth OBJECT-TYPE
     SYNTAX  DisplayString
-    ACCESS  read-only
-    STATUS  mandatory
-    DESCRIPTION
-        "The name of the filesystem."
-    ::= {zpool 1}
-
-zfsPoolAvailableKB OBJECT-TYPE
-    SYNTAX  GAUGE
-    ACCESS  read-only
-    STATUS  mandatory
-    DESCRIPTION
-        "The number of 1 KB blocks that are available for use."
-    ::= {zpool 2}
-
-zfsPoolUsedKB OBJECT-TYPE
-    SYNTAX  GAUGE
-    ACCESS  read-only
-    STATUS  mandatory
-    DESCRIPTION
-        "The number of 1 KB blocks that are in use."
-    ::= {zpool 3}
-
-zfsPoolHealth OBJECT-TYPE
-    SYNTAX  DisplayString
-    ACCESS  read-only
-    STATUS  mandatory
+    MAX-ACCESS  read-only
+    STATUS  current
     DESCRIPTION
         "The current health of the containing pool, as reported
         by zpool status."
-    ::= {zpool 4}
+    ::= { zpoolEntry 7 }
 
-zfsPoolSizeKB OBJECT-TYPE
-        SYNTAX  INTEGER32
-        ACCESS  read-only
-        STATUS  mandatory
-        DESCRIPTION
-            "The zfs 'size' property of this zfs pool in KB"
-    ::= {zpool 5}
-
-zfsPoolAvailableMB OBJECT-TYPE
-    SYNTAX  GAUGE
-    ACCESS  read-only
-    STATUS  mandatory
+zpoolReadOps OBJECT-TYPE
+    SYNTAX Counter64
+    MAX-ACCESS read-only
+    STATUS current
     DESCRIPTION
-        "The number of 1 MB blocks that are available for use.
-        Useful if zfsPoolAvailableKB exceeds a 32 bit integer."
-    ::= {zpool 12}
+        "The number of read I/O operations sent to the pool or device,
+        including metadata requests (averaged since system booted)."
+    ::= { zpoolEntry 8 }
 
-zfsPoolUsedMB OBJECT-TYPE
-    SYNTAX  GAUGE
-    ACCESS  read-only
-    STATUS  mandatory
+zpoolWriteOps OBJECT-TYPE
+    SYNTAX Counter64
+    MAX-ACCESS read-only
+    STATUS current
     DESCRIPTION
-        "The number of 1 MB blocks that are in use Useful if
-        zfsPoolUsedKB exceeds a 32 bit integer."
-    ::= {zpool 13}
+        "The number of write I/O operations sent to the pool or device
+        (averaged since system booted)."
+    ::= { zpoolEntry 9 }
 
-zfsPoolSizeMB OBJECT-TYPE
-        SYNTAX  GAUGE
-        ACCESS  read-only
-        STATUS  mandatory
-        DESCRIPTION
-            "The zfs 'size' property of this zfs pool in MB. Useful if
-            zfsPoolSizeKB exceeds a 32 bit integer."
-        ::= {zpool 14}
+zpoolReadBytes OBJECT-TYPE
+    SYNTAX Counter64
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The bandwidth of all read operations (including metadata),
+        expressed as units per second (averaged since system booted)"
+    ::= { zpoolEntry 10 }
 
-zfsPoolOpRead OBJECT-TYPE
-        SYNTAX COUNTER64
-        ACCESS read-only
-        STATUS mandatory
-        DESCRIPTION
-            "The number of read I/O operations sent to the pool or device,
-            including metadata requests (averaged since system booted)."
-        ::= {zpool 15}
+zpoolWriteBytes OBJECT-TYPE
+    SYNTAX Counter64
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The bandwidth of all write operations, expressed as units per
+        second (averaged since system booted)."
+    ::= { zpoolEntry 11 }
 
-zfsPoolOpWrite OBJECT-TYPE
-        SYNTAX COUNTER64
-        ACCESS read-only
-        STATUS mandatory
-        DESCRIPTION
-            "The number of write I/O operations sent to the pool or device 
-            (averaged since system booted)."
-        ::= {zpool 16}
+zpoolReadOps1sec OBJECT-TYPE
+    SYNTAX Counter64
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The number of read I/O operations sent to the pool or device,
+        including metadata requests (over 1 second interval)."
+    ::= { zpoolEntry 12 }
 
-zfsPoolBwRead OBJECT-TYPE
-        SYNTAX COUNTER64
-        ACCESS read-only
-        STATUS mandatory
-        DESCRIPTION
-            "The bandwidth of all read operations (including metadata),
-            expressed as units per second (averaged since system booted)"
-        ::= {zpool 17}
+zpoolWriteOps1sec OBJECT-TYPE
+    SYNTAX Counter64
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The number of write I/O operations sent to the pool or device
+        (over 1 second interval)."
+    ::= { zpoolEntry 13 }
 
-zfsPoolBwWrite OBJECT-TYPE
-        SYNTAX COUNTER64
-        ACCESS read-only
-        STATUS mandatory
-        DESCRIPTION
-            "The bandwidth of all write operations, expressed as units per 
-            second (averaged since system booted)."
-        ::= {zpool 18}
+zpoolReadBytes1sec OBJECT-TYPE
+    SYNTAX Counter64
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The bandwidth of all read operations (including metadata),
+        expressed as units per second (over 1 second interval)"
+    ::= { zpoolEntry 14 }
 
-zfsPoolOpRead1sec OBJECT-TYPE
-        SYNTAX COUNTER64
-        ACCESS read-only
-        STATUS mandatory
-        DESCRIPTION
-            "The number of read I/O operations sent to the pool or device,
-            including metadata requests (over 1 second interval)."
-        ::= {zpool 19}
+zpoolWriteBytes1sec OBJECT-TYPE
+    SYNTAX Counter64
+    MAX-ACCESS read-only
+    STATUS current
+    DESCRIPTION
+        "The bandwidth of all write operations, expressed as units per
+        second (over 1 second interval)."
+    ::= { zpoolEntry 15 }
 
-zfsPoolOpWrite1sec OBJECT-TYPE
-        SYNTAX COUNTER64
-        ACCESS read-only
-        STATUS mandatory
-        DESCRIPTION
-            "The number of write I/O operations sent to the pool or device 
-            (over 1 second interval)."
-        ::= {zpool 20}
+datasetTable OBJECT-TYPE
+    SYNTAX     SEQUENCE OF DatasetEntry
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+        ""
+    ::= { dataset 1 }
 
-zfsPoolBwRead1sec OBJECT-TYPE
-        SYNTAX COUNTER64
-        ACCESS read-only
-        STATUS mandatory
-        DESCRIPTION
-            "The bandwidth of all read operations (including metadata),
-            expressed as units per second (over 1 second interval)"
-        ::= {zpool 21}
+datasetEntry OBJECT-TYPE
+    SYNTAX     DatasetEntry
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+        ""
+    INDEX { datasetIndex }
+    ::= { datasetTable 1 }
 
-zfsPoolBwWrite1sec OBJECT-TYPE
-        SYNTAX COUNTER64
-        ACCESS read-only
-        STATUS mandatory
-        DESCRIPTION
-            "The bandwidth of all write operations, expressed as units per 
-            second (over 1 second interval)."
-        ::= {zpool 22}
+DatasetEntry ::= SEQUENCE {
+        datasetIndex                    Integer32,
+        datasetDescr                    DisplayString,
+        datasetAllocationUnits          Integer32,
+        datasetSize                     Integer32,
+        datasetUsed                     Integer32,
+        datasetAvailable                Integer32
+    }
+
+datasetIndex OBJECT-TYPE
+    SYNTAX     Integer32 (1..2147483647)
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+        ""
+    ::= { datasetEntry 1 }
+
+datasetDescr OBJECT-TYPE
+    SYNTAX     DisplayString
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        ""
+    ::= { datasetEntry 2 }
+
+datasetAllocationUnits OBJECT-TYPE
+    SYNTAX     Integer32 (1..2147483647)
+    UNITS      "Bytes"
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        ""
+    ::= { datasetEntry 3 }
+
+datasetSize OBJECT-TYPE
+    SYNTAX     Integer32 (0..2147483647)
+    MAX-ACCESS read-write
+    STATUS     current
+    DESCRIPTION
+        ""
+    ::= { datasetEntry 4 }
+
+datasetUsed OBJECT-TYPE
+    SYNTAX     Integer32 (0..2147483647)
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        ""
+    ::= { datasetEntry 5 }
+
+datasetAvailable OBJECT-TYPE
+    SYNTAX     Integer32 (0..2147483647)
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        ""
+    ::= { datasetEntry 6 }
+
+zvolTable OBJECT-TYPE
+    SYNTAX     SEQUENCE OF ZvolEntry
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+        ""
+    ::= { zvol 1 }
+
+zvolEntry OBJECT-TYPE
+    SYNTAX     ZvolEntry
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+        ""
+    INDEX { zvolIndex }
+    ::= { zvolTable 1 }
+
+ZvolEntry ::= SEQUENCE {
+        zvolIndex                    Integer32,
+        zvolDescr                    DisplayString,
+        zvolAllocationUnits          Integer32,
+        zvolSize                     Integer32,
+        zvolUsed                     Integer32,
+        zvolAvailable                Integer32
+    }
+
+zvolIndex OBJECT-TYPE
+    SYNTAX     Integer32 (1..2147483647)
+    MAX-ACCESS not-accessible
+    STATUS     current
+    DESCRIPTION
+        ""
+    ::= { zvolEntry 1 }
+
+zvolDescr OBJECT-TYPE
+    SYNTAX     DisplayString
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        ""
+    ::= { zvolEntry 2 }
+
+zvolAllocationUnits OBJECT-TYPE
+    SYNTAX     Integer32 (1..2147483647)
+    UNITS      "Bytes"
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        ""
+    ::= { zvolEntry 3 }
+
+zvolSize OBJECT-TYPE
+    SYNTAX     Integer32 (0..2147483647)
+    MAX-ACCESS read-write
+    STATUS     current
+    DESCRIPTION
+        ""
+    ::= { zvolEntry 4 }
+
+zvolUsed OBJECT-TYPE
+    SYNTAX     Integer32 (0..2147483647)
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        ""
+    ::= { zvolEntry 5 }
+
+zvolAvailable OBJECT-TYPE
+    SYNTAX     Integer32 (0..2147483647)
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        ""
+    ::= { zvolEntry 6 }
 
 zfsArcSize OBJECT-TYPE
-        SYNTAX GAUGE
-        ACCESS read-only
-        STATUS mandatory
-        ::= {arc 1}
+    SYNTAX Gauge32
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        ""
+    ::= { arc 1 }
 
 zfsArcMeta OBJECT-TYPE
-        SYNTAX GAUGE
-        ACCESS read-only
-        STATUS mandatory
-        ::= {arc 2}
+    SYNTAX     Gauge32
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        ""
+    ::= { arc 2 }
 
 zfsArcData OBJECT-TYPE
-        SYNTAX GAUGE
-        ACCESS read-only
-        STATUS mandatory
-        ::= {arc 3}
+    SYNTAX     Gauge32
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        ""
+    ::= { arc 3 }
 
 zfsArcHits OBJECT-TYPE
-        SYNTAX Counter32
-        ACCESS read-only
-        STATUS mandatory
-        ::= {arc 4}
+    SYNTAX     Gauge32
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        ""
+    ::= { arc 4 }
 
 zfsArcMisses OBJECT-TYPE
-        SYNTAX Counter32
-        ACCESS read-only
-        STATUS mandatory
-        ::= {arc 5}
+    SYNTAX     Gauge32
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        ""
+    ::= { arc 5 }
 
 zfsArcC OBJECT-TYPE
-        SYNTAX GAUGE
-        ACCESS read-only
-        STATUS mandatory
-        ::= {arc 6}
+    SYNTAX     Gauge32
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        ""
+    ::= { arc 6 }
 
 zfsArcP OBJECT-TYPE
-        SYNTAX GAUGE
-        ACCESS read-only
-        STATUS mandatory
-        ::= {arc 7}
+    SYNTAX     Gauge32
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        ""
+    ::= { arc 7 }
 
 zfsArcMissPercent OBJECT-TYPE
-        SYNTAX DisplayString
-        ACCESS read-only
-        STATUS mandatory
-        DESCRIPTION
-            "Arc Miss Percentage.
-            (Note: Floating precision sent across SNMP as a String"
-        ::= {arc 8}
+    SYNTAX     DisplayString
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "Arc Miss Percentage.
+        (Note: Floating precision sent across SNMP as a String"
+    ::= { arc 8 }
 
 zfsArcCacheHitRatio OBJECT-TYPE
-        SYNTAX DisplayString
-        ACCESS read-only
-        STATUS mandatory
-        DESCRIPTION
-            "Arc Cache Hit Ration Percentage.
-            (Note: Floating precision sent across SNMP as a String"
-        ::= {arc 9}
+    SYNTAX     DisplayString
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "Arc Cache Hit Ration Percentage.
+        (Note: Floating precision sent across SNMP as a String"
+    ::= { arc 9 }
 
 zfsArcCacheMissRatio OBJECT-TYPE
-        SYNTAX DisplayString
-        ACCESS read-only
-        STATUS mandatory
-        DESCRIPTION
-            "Arc Cache Miss Ration Percentage.
-            (Note: Floating precision sent across SNMP as a String"
-        ::= {arc 10} 
+    SYNTAX     DisplayString
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "Arc Cache Miss Ration Percentage.
+        (Note: Floating precision sent across SNMP as a String"
+    ::= { arc 10 }
 
 zfsL2ArcHits OBJECT-TYPE
-        SYNTAX Counter32
-        ACCESS read-only
-        STATUS mandatory
-        ::= {l2arc  1}
+    SYNTAX     Counter32
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        ""
+    ::= { l2arc 1 }
 
 zfsL2ArcMisses OBJECT-TYPE
-        SYNTAX Counter32
-        ACCESS read-only
-        STATUS mandatory
-        ::= {l2arc  2}
+    SYNTAX     Counter32
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        ""
+    ::= { l2arc 2 }
 
 zfsL2ArcRead OBJECT-TYPE
-        SYNTAX Counter32
-        ACCESS read-only
-        STATUS mandatory
-        ::= {l2arc  3}
+    SYNTAX     Counter32
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        ""
+    ::= { l2arc 3 }
 
 zfsL2ArcWrite OBJECT-TYPE
-        SYNTAX Counter32
-        ACCESS read-only
-        STATUS mandatory
-        ::= {l2arc  4}
+    SYNTAX     Counter32
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        ""
+    ::= { l2arc 4 }
 
 zfsL2ArcSize OBJECT-TYPE
-        SYNTAX GAUGE
-        ACCESS read-only
-        STATUS mandatory
-        ::= {l2arc  5}
-
-zfsVolumeName OBJECT-TYPE
-        SYNTAX  DisplayString
-        ACCESS  read-only
-        STATUS  mandatory
-        DESCRIPTION
-            "The name of the filesystem type Volume."
-        ::= {vols 1}
-
-zfsVolumeAvailableKB OBJECT-TYPE
-        SYNTAX  GAUGE
-        ACCESS  read-only
-        STATUS  mandatory
-        DESCRIPTION
-            "The number of 1 KB blocks that are available for use."
-        ::= {vols 2}
-
-zfsVolumeUsedKB OBJECT-TYPE
-        SYNTAX  GAUGE
-        ACCESS  read-only
-        STATUS  mandatory
-        DESCRIPTION
-            "The number of 1 KB blocks that are in use."
-        ::= {vols 3}
-
-zfsVolumeSizeKB OBJECT-TYPE
-        SYNTAX  GAUGE
-        ACCESS  read-only
-        STATUS  mandatory
-        DESCRIPTION
-            "The zfs 'volsize' property of this zvol in KB."
-        ::= {vols 4}
-
-zfsVolumeAvailableMB OBJECT-TYPE
-        SYNTAX  GAUGE
-        ACCESS  read-only
-        STATUS  mandatory
-        DESCRIPTION
-            "The number of 1 MB blocks that are available for use.
-            Useful if zfsVolumeAvailableKB exceeds a 32 bit
-                 integer."
-        ::= {vols 12}
-
-zfsVolumeUsedMB OBJECT-TYPE
-        SYNTAX  GAUGE
-        ACCESS  read-only
-        STATUS  mandatory
-        DESCRIPTION
-            "The number of 1 MB blocks that are in use Useful if
-            zfsVolumeUsedKB exceeds a 32 bit integer."
-        ::= {vols 13}
-
-zfsVolumeSizeMB OBJECT-TYPE
-        SYNTAX  GAUGE
-        ACCESS  read-only
-        STATUS  mandatory
-        DESCRIPTION
-            "The zfs 'volsize' property of this zvol in KB. Useful if
-            zfsVolumeSizeKB exceeds a 32 bit integer."
-        ::= {vols 14}
+    SYNTAX     Gauge32
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        ""
+    ::= { l2arc 5 }
 
 zfsZilstatOps1sec OBJECT-TYPE
-        SYNTAX  COUNTER64
-        ACCESS  read-only
-        STATUS  mandatory
-        DESCRIPTION
-            "The ops column parsed from the command zilstat 1 1"
-        ::= {zil 1}
+    SYNTAX     Counter64
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "The ops column parsed from the command zilstat 1 1"
+    ::= { zil 1 }
 
 zfsZilstatOps5sec OBJECT-TYPE
-        SYNTAX  COUNTER64
-        ACCESS  read-only
-        STATUS  mandatory
-        DESCRIPTION
-            "The ops column parsed from the command zilstat 5 1"
-        ::= {zil 2}
+    SYNTAX     Counter64
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "The ops column parsed from the command zilstat 5 1"
+    ::= { zil 2 }
 
 zfsZilstatOps10sec OBJECT-TYPE
-        SYNTAX  COUNTER64
-        ACCESS  read-only
-        STATUS  mandatory
-        DESCRIPTION
-            "The ops column parsed from the command zilstat 10 1"
-        ::= {zil 3}
+    SYNTAX     Counter64
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        "The ops column parsed from the command zilstat 10 1"
+    ::= { zil 3 }
 
-zfsDatasetName OBJECT-TYPE
-        SYNTAX  DisplayString
-        ACCESS  read-only
-        STATUS  mandatory
-        DESCRIPTION
-            "The name of the dataset."
-        ::= {ds 1}
+alert NOTIFICATION-TYPE
+    OBJECTS    { alertLevel, alertMessage }
+    STATUS     current
+    DESCRIPTION
+        "An alert raised"
+    ::= { notificationPrefix 1 }
 
-zfsDatasetAvailableKB OBJECT-TYPE
-        SYNTAX  GAUGE
-        ACCESS  read-only
-        STATUS  mandatory
-        DESCRIPTION
-            "The number of 1 KB blocks that are available for use."
-        ::= {ds 2}
+alertLevel OBJECT-TYPE
+    SYNTAX     DisplayString
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        ""
+    ::= { notificationObjects 1 }
 
-zfsDatasetUsedKB OBJECT-TYPE
-        SYNTAX  GAUGE
-        ACCESS  read-only
-        STATUS  mandatory
-        DESCRIPTION
-            "The number of 1 KB blocks that are in use."
-        ::= {ds 3}
+alertMessage OBJECT-TYPE
+    SYNTAX     DisplayString
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        ""
+    ::= { notificationObjects 2 }
 
-zfsDatasetSizeKB OBJECT-TYPE
-        SYNTAX  GAUGE
-        ACCESS  read-only
-        STATUS  mandatory
-        DESCRIPTION
-            "The number of 1 KB blocks of the dataset."
-        ::= {ds 4}
-
-zfsDatasetAvailableMB OBJECT-TYPE
-        SYNTAX  GAUGE
-        ACCESS  read-only
-        STATUS  mandatory
-        DESCRIPTION
-            "The number of 1 MB blocks that are available for use.
-            Useful if zfsDatasetAvailableKB exceeds a 32 bit
-            integer."
-        ::= {ds 12}
-
-zfsDatasetUsedMB OBJECT-TYPE
-        SYNTAX  GAUGE
-        ACCESS  read-only
-        STATUS  mandatory
-        DESCRIPTION
-            "The number of 1 MB blocks that are in use. Useful if
-            zfsDatasetUsedKB exceeds a 32 bit integer."
-        ::= {ds 13}
-
-zfsDatasetSizeMB OBJECT-TYPE
-        SYNTAX  GAUGE
-        ACCESS  read-only
-        STATUS  mandatory
-        DESCRIPTION
-            "The number of 1 MB blocks of the dataset. Useful if
-            zfsDatasetSizeKB exceeds a 32 bit integer."
-        ::= {ds 14}
 END

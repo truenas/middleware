@@ -21,7 +21,7 @@ class ConsulService(Service):
     PAGERDUTY_API = ['service-key', 'client-name', 'enabled']
     HIPCHAT_API = ['from', 'cluster-name', 'base-url', 'room-id', 'auth-token', 'enabled']
     OPSGENIE_API = ['cluster-name', 'api-key', 'enabled']
-    AWSSNS_API = ['reigion', 'topic-arn', 'enabled']
+    AWSSNS_API = ['region', 'topic-arn', 'enabled']
     VICTOROPS_API = ['api-key', 'routing-key', 'enabled']
 
     @accepts(Str('key'), Any('value'))
@@ -34,6 +34,7 @@ class ConsulService(Service):
         """
         c = consul.aio.Consul()
         try:
+            logger.info('===> Add Key: {} Value: {}'.format(str(key), str(value)))
             return await c.kv.put(str(key), str(value))
         except Exception as err:
             logger.error('===> Consul set_kv error: %s' % (err))
@@ -70,6 +71,26 @@ class ConsulService(Service):
             logger.error('===> Consul delete_kv error: %s' % (err))
             return False
 
+    @accepts(Str('region'))
+    async def aws_region(self, region):
+        """
+        Create an aws config file with region.
+
+        Returns:
+                    None
+        """
+        return self._aws_config_file(region, None, None)
+
+    @accepts(Str('key_id'), Str('access_key'))
+    async def aws_credentials(self, key_id, access_key):
+        """
+        Create an aws config file with key_id and access_key.
+
+        Returns:
+                    None
+        """
+        return self._aws_config_file(None, key_id, access_key)
+
     @accepts()
     async def reload(self):
         """
@@ -78,6 +99,19 @@ class ConsulService(Service):
         Returns:
                     bool: True if it could reload, otherwise False.
         """
+        consul_error = await (await Popen(['consul', 'reload'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)).wait()
+        if consul_error == 0:
+            logger.info("===> Reload Consul: {0}".format(consul_error))
+            consul_alert_error = await (await Popen(['/usr/local/etc/rc.d/consul-alerts', 'restart'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)).wait()
+            if consul_alert_error == 0:
+                logger.info("===> Restart Consul-Alerts: {0}".format(consul_alert_error))
+                return True
+            else:
+                return False
+        else:
+            return False
+
+    async def __reload_consul(self):
         consul_error = await (await Popen(['consul', 'reload'], stdout=subprocess.PIPE, stderr=subprocess.PIPE)).wait()
         if consul_error == 0:
             logger.info("===> Reload Consul: {0}".format(consul_error))
@@ -99,7 +133,7 @@ class ConsulService(Service):
         with open(fake_fd, 'w') as fd:
             fd.write(json.dumps(fake_alert))
 
-        return await self.reload()
+        return await self.__reload_consul()
 
     @accepts()
     async def remove_fake_alert(self):
@@ -110,7 +144,30 @@ class ConsulService(Service):
             if e.errno != errno.ENOENT:
                 raise
 
-        return await self.reload()
+        return await self.__reload_consul()
+
+    def _aws_config_file(self, region=None, key_id=None, access_key=None):
+        config_path = '/root/.aws/config'
+        credentials_path = '/root/.aws/credentials'
+        aws_vault = '/root/.aws/'
+
+        if not os.path.exists(aws_vault):
+            try:
+                os.makedirs(aws_vault)
+            except OSError as e:
+                if e.errno != errno.EEXIST:
+                    raise
+
+        if region:
+            with open(config_path, 'w') as config:
+                config.write('[default]\n')
+                config.write('region = {}\n'.format(region))
+
+        if key_id and access_key:
+            with open(credentials_path, 'w') as credentials:
+                credentials.write('[default]\n')
+                credentials.write('aws_access_key_id = {}\n'.format(key_id))
+                credentials.write('aws_secret_access_key = {}\n'.format(access_key))
 
     def _convert_keys(self, data):
         """
@@ -187,8 +244,12 @@ class ConsulService(Service):
             await self._insert_keys(consul_prefix, cdata, self.HIPCHAT_API)
         elif alert_service == 'OpsGenie':
             await self._insert_keys(consul_prefix, cdata, self.OPSGENIE_API)
-        elif alert_service == 'AWS-SNS':
+        elif alert_service == 'AWSSNS':
             await self._insert_keys(consul_prefix, cdata, self.AWSSNS_API)
+            aws_region = cdata.get('region', None)
+            aws_access_key_id = cdata.get('aws-access-key-id', None)
+            aws_secret_access_key = cdata.get('aws-secret-access-key', None)
+            self._aws_config_file(aws_region, aws_access_key_id, aws_secret_access_key)
         elif alert_service == 'VictorOps':
             await self._insert_keys(consul_prefix, cdata, self.VICTOROPS_API)
 
@@ -211,7 +272,7 @@ class ConsulService(Service):
             await self._delete_keys(consul_prefix, cdata, self.HIPCHAT_API)
         elif alert_service == 'OpsGenie':
             await self._delete_keys(consul_prefix, cdata, self.OPSGENIE_API)
-        elif alert_service == 'AWS-SNS':
+        elif alert_service == 'AWSSNS':
             await self._delete_keys(consul_prefix, cdata, self.AWSSNS_API)
         elif alert_service == 'VictorOps':
             await self._delete_keys(consul_prefix, cdata, self.VICTOROPS_API)

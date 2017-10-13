@@ -23,8 +23,7 @@
 # POSSIBILITY OF SUCH DAMAGE.
 #
 #####################################################################
-import socket
-import struct
+import logging
 
 from subprocess import Popen, PIPE
 
@@ -33,9 +32,10 @@ from django.utils.translation import ugettext as _
 
 from freenasUI.freeadmin.apppool import appPool
 from freenasUI.freeadmin.views import JsonResp
-from freenasUI.middleware.notifier import notifier
 from freenasUI.network import models
-from freenasUI.network.forms import HostnameForm, IPMIForm
+from freenasUI.network.forms import HostnameForm, IPMIForm, IPMIIdentifyForm
+
+log = logging.getLogger('ipmi.views')
 
 
 def hostname(request):
@@ -57,39 +57,31 @@ def ipmi(request):
     if request.method == "POST":
         form = IPMIForm(request.POST)
         if form.is_valid():
-            rv = notifier().ipmi_set_lan(
-                form.cleaned_data,
-                channel=int(form.cleaned_data.get('channel')),
-            )
-            if rv == 0:
+            if form.save() == 0:
                 return JsonResp(request, message=_("IPMI successfully edited"))
             else:
                 return JsonResp(request, error=True, message=_("IPMI failed"))
     else:
-        try:
-            ipmi = notifier().ipmi_get_lan()
-
-            # TODO: There might be a better way to convert netmask to CIDR
-            mask = ipmi.get("SubnetMask")
-            num, cidr = struct.unpack('>I', socket.inet_aton(mask))[0], 0
-            while num > 0:
-                num = num << 1 & 0xffffffff
-                cidr += 1
-            initial = {
-                'dhcp': False
-                if ipmi.get("IpAddressSource") == "Static Address"
-                else True,
-                'ipv4address': ipmi.get("IpAddress"),
-                'ipv4gw': ipmi.get("DefaultGatewayIp"),
-                'ipv4netmaskbit': str(cidr),
-                'vlanid': ipmi.get("8021qVlanId")
-                if ipmi.get("8021qVlanId") != 'Disabled'
-                else '',
-            }
-        except Exception:
-            initial = {}
-        form = IPMIForm(initial=initial)
+        form = IPMIForm()
     return render(request, 'network/ipmi.html', {
+        'form': form,
+    })
+
+
+def ipmi_identify(request):
+
+    if request.method == "POST":
+        form = IPMIIdentifyForm(request.POST)
+        if form.is_valid():
+            try:
+                form.save()
+                return JsonResp(request, message=_("IPMI identify command issued"))
+            except Exception:
+                log.warn('Failed to identify IPMI', exc_info=True)
+                return JsonResp(request, error=True, message=_("IPMI identify failed"))
+    else:
+        form = IPMIIdentifyForm()
+    return render(request, 'network/ipmi_identify.html', {
         'form': form,
     })
 

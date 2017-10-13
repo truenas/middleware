@@ -65,6 +65,7 @@ _ = lambda s: s
 
 from freenasUI.choices import NICChoices, LAGGType
 from freenasUI.common import i18n
+from freenasUI.common.system import get_sw_version
 from freenasUI.network.models import GlobalConfiguration, Interfaces, \
 	LAGGInterface, LAGGInterfaceMembers, StaticRoute, VLAN
 from freenasUI.system.models import Settings, Support
@@ -536,6 +537,7 @@ Acceptable formats are 255.255.255.0,
 
 def reset_root_pw(*args):
     from freenasUI.account.models import bsdUsers
+    from middlewared.plugins.account import crypted_password
     qs = bsdUsers.objects.filter(bsdusr_uid=0)
     if not qs.exists():
         return None
@@ -560,7 +562,7 @@ def reset_root_pw(*args):
         waituser = False
 
     if p1:
-        user.set_password(p1)
+        user.bsdusr_unixhash = crypted_password(p1)
         user.save()
         print()
         print(_('Password successfully changed.'))
@@ -1223,6 +1225,15 @@ def system_update():
         print("No update available", file=sys.stderr)
     return True
 
+
+def netcli_title():
+    proc = subprocess.Popen(['dmidecode', '-s', 'system-product-name'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf8')
+    product = proc.communicate()[0].strip()
+    proc = subprocess.Popen(['dmidecode', '-s', 'system-serial-number'], stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf8')
+    serial = proc.communicate()[0].strip()
+    return f'{product} | {get_sw_version(True)} | {serial}'
+
+
 def main_menu():
     menu = [
         [ _("Configure Network Interfaces"), configure_interface_stub ],
@@ -1262,6 +1273,9 @@ def main_menu():
                  os.system("/usr/local/sbin/enc_helper interactive")
                  time.sleep(5)
                  continue
+
+        if is_truenas:
+            print(netcli_title())
 
         print()
         print(_("Console setup"))

@@ -90,9 +90,11 @@ from freenasUI.storage.forms import (
     ZFSDiskReplacementForm,
     ZVol_CreateForm,
     ZVol_EditForm,
+    ZFSDatasetCreateForm,
+    ZFSDatasetEditForm
 )
 from freenasUI.storage.models import Disk, Replication, VMWarePlugin
-from freenasUI.system.alert import alertPlugins, Alert
+from freenasUI.system.alert import alert_node, alertPlugins, Alert
 from freenasUI.system.forms import (
     BootEnvAddForm,
     BootEnvRenameForm,
@@ -106,7 +108,7 @@ from freenasUI.system.forms import (
     ManualUpdateUploadForm,
     ManualUpdateWizard,
 )
-from freenasUI.system.models import Update as mUpdate
+from freenasUI.system.models import Update as mUpdate, Alert as mAlert
 from freenasUI.system.utils import BootEnv, debug_generate, factory_restore
 from middlewared.client import ClientException
 from tastypie import fields, http
@@ -168,6 +170,17 @@ class AlertResource(DojoResource):
         object_class = Alert
         resource_name = 'system/alert'
 
+    def prepend_urls(self):
+        return [
+            url(
+                r"^(?P<resource_name>%s)/(?P<pk>\w[\w/-]*)/dismiss%s$" % (
+                    self._meta.resource_name, trailing_slash()
+                ),
+                self.wrap_view('dismiss'),
+                name="api_alert_dismiss"
+            ),
+        ]
+
     def get_list(self, request, **kwargs):
         results = alertPlugins.run()
 
@@ -222,6 +235,38 @@ class AlertResource(DojoResource):
         )
         return response
 
+    def dismiss(self, request, **kwargs):
+        if request.method != 'PUT':
+            response = HttpMethodNotAllowed('PUT')
+            response['Allow'] = 'PUT'
+            raise ImmediateHttpResponse(response=response)
+
+        self.is_authenticated(request)
+
+        dismiss = self.deserialize(
+            request,
+            request.body,
+            format=request.META.get('CONTENT_TYPE', 'application/json'),
+        )
+
+        alert = None
+        for i in alertPlugins.run():
+            if i.getId() == kwargs['pk']:
+                alert = i
+                break
+        if alert is None:
+            raise ImmediateHttpResponse(response=HttpNotFound())
+
+        try:
+            alertobj = mAlert.objects.get(node=alert_node(), message_id=kwargs['pk'])
+            if dismiss is False:
+                alertobj.delete()
+        except mAlert.DoesNotExist:
+            if dismiss is True:
+                mAlert.objects.create(node=alert_node(), message_id=kwargs['pk'])
+
+        return HttpResponse(status=202)
+
     def dehydrate(self, bundle):
         return bundle
 
@@ -242,7 +287,6 @@ class DiskResourceMixin(object):
     class Meta:
         queryset = Disk.objects.filter(
             disk_expiretime=None,
-            disk_multipath_name=''
         ).exclude(
             Q(disk_name__startswith='multipath') | Q(disk_name='')
         )
@@ -323,52 +367,129 @@ class DatasetResource(DojoResource):
     avail = fields.IntegerField(attribute='avail')
     refer = fields.IntegerField(attribute='refer')
     mountpoint = fields.CharField(attribute='mountpoint')
+    quota = fields.IntegerField(attribute='quota')
+    refquota = fields.IntegerField(attribute='refquota')
+    reservation = fields.IntegerField(attribute='reservation')
+    refreservation = fields.IntegerField(attribute='refreservation')
+    recordsize = fields.IntegerField(attribute='recordsize')
+    comments = fields.CharField(attribute='description', null=True)
+    compression = fields.CharField(attribute='compression')
+    dedup = fields.CharField(attribute='dedup')
+    atime = fields.CharField(attribute='atime')
+    readonly = fields.CharField(attribute='readonly')
+    inherit_props = fields.ListField(attribute='inherit')
 
     class Meta:
-        allowed_methods = ['get', 'post', 'delete']
+        allowed_methods = ['get', 'post', 'put', 'delete']
         object_class = zfs.ZFSDataset
         resource_name = 'storage/dataset'
 
-    def obj_create(self, bundle, **kwargs):
-        bundle = self.full_hydrate(bundle)
-        err, msg = notifier().create_zfs_dataset(path='%s/%s' % (
-            kwargs.get('parent').vol_name,
-            bundle.data.get('name'),
-        ))
-        if err:
-            bundle.errors['__all__'] = msg
+    def post_list(self, request, **kwargs):
+
+        if 'parent' not in kwargs:
             raise ImmediateHttpResponse(
-                response=self.error_response(bundle.request, bundle.errors)
+                response=self.error_response(request, 'Creating a top level dataset is not supported.')
             )
-        # FIXME: authorization
-        bundle.obj = self.obj_get(bundle, pk=bundle.data.get('name'), **kwargs)
+        return self.__create_dataset(kwargs.get('parent').vol_name, request, **kwargs)
+
+    def post_detail(self, request, **kwargs):
+        return self.__create_dataset(kwargs['pk'], request, **kwargs)
+
+    def __create_dataset(self, fs, request, **kwargs):
+
+        self.is_authenticated(request)
+        deserialized = self._meta.serializer.deserialize(
+            request.body,
+            format=request.META.get('CONTENT_TYPE') or 'application/json'
+        )
+
+        name = deserialized.get('name')
+
+        for k in list(deserialized.keys()):
+            deserialized['dataset_%s' % k] = deserialized.pop(k)
+
+        data = self._get_form_initial(ZFSDatasetCreateForm)
+        data.update(deserialized)
+        form = ZFSDatasetCreateForm(data=data, fs=fs)
+        if not form.is_valid() or not form.save():
+            for k in list(form.errors.keys()):
+                if k == '__all__':
+                    continue
+                if k.startswith('dataset_'):
+                    form.errors[k[len('dataset_'):]] = form.errors.pop(k)
+            raise ImmediateHttpResponse(
+                response=self.error_response(request, form.errors)
+            )
+
+        if 'parent' in kwargs:
+            kwargs['pk'] = name
+        else:
+            kwargs['pk'] = f'{fs}/{name}'
+        response = self.get_detail(request, **kwargs)
+        response.status_code = 201
+        return response
+
+    def obj_update(self, bundle, **kwargs):
+        bundle = self.full_hydrate(bundle)
+
+        if 'parent' in kwargs:
+            name = f'{kwargs["parent"].vol_name}/{kwargs["pk"]}'
+        else:
+            name = kwargs['pk']
+
+        data = self.deserialize(
+            bundle.request,
+            bundle.request.body,
+            format=bundle.request.META.get('CONTENT_TYPE', 'application/json'),
+        )
+
+        for k in list(data.keys()):
+            data[f'dataset_{k}'] = data.pop(k)
+
+        initial = ZFSDatasetEditForm.get_initial_data(name)
+        initial.update(data)
+
+        form = ZFSDatasetEditForm(fs=name, data=initial)
+        if not form.is_valid() or not form.save():
+            for k in list(form.errors.keys()):
+                if k == '__all__':
+                    continue
+                if k.startswith('dataset_'):
+                    form.errors[k[len('dataset_'):]] = form.errors.pop(k)
+            raise ImmediateHttpResponse(
+                response=self.error_response(bundle.request, form.errors)
+            )
+        bundle.obj = self.obj_get(bundle, **kwargs)
         return bundle
 
     def obj_get_list(self, request=None, **kwargs):
         dsargs = {'recursive': True}
         if 'parent' in kwargs:
             dsargs['path'] = kwargs.get('parent').vol_name
+        else:
+            dsargs['include_root'] = True
         zfslist = zfs.list_datasets(**dsargs)
         return zfslist
 
     def obj_get(self, bundle, **kwargs):
-        zfslist = zfs.list_datasets(path="%s/%s" % (
-            kwargs.get('parent').vol_name,
-            kwargs.get('pk'),
-        ))
+        dsargs = {}
+        if 'parent' in kwargs:
+            dsargs['path'] = f'{kwargs["parent"].vol_name}/{kwargs["pk"]}'
+        else:
+            dsargs['path'] = kwargs['pk']
+            dsargs['include_root'] = True
+        zfslist = zfs.list_datasets(**dsargs)
         try:
-            return zfslist['%s/%s' % (
-                kwargs.get('parent').vol_name,
-                kwargs.get('pk')
-            )]
+            return zfslist[dsargs['path']]
         except KeyError:
             raise NotFound("Dataset not found.")
 
     def obj_delete(self, bundle, **kwargs):
-        retval = notifier().destroy_zfs_dataset(path="%s/%s" % (
-            kwargs.get('parent').vol_name,
-            kwargs.get('pk'),
-        ))
+        if 'parent' in kwargs:
+            path = f'{kwargs["parent"].vol_name}/{kwargs["pk"]}'
+        else:
+            path = kwargs['pk']
+        retval = notifier().destroy_zfs_dataset(path=path, recursive=True)
         if retval:
             raise ImmediateHttpResponse(
                 response=self.error_response(bundle.request, retval)
@@ -430,18 +551,25 @@ class ZVolResource(DojoResource):
         response.status_code = 202
         return response
 
-    def obj_update(self, bundle, **kwargs):
-        bundle = self.full_hydrate(bundle)
-        name = "%s/%s" % (kwargs.get('parent').vol_name, kwargs.get('pk'))
-        data = self.deserialize(
-            bundle.request,
-            bundle.request.body,
-            format=bundle.request.META.get('CONTENT_TYPE', 'application/json'),
+    def put_detail(self, request, **kwargs):
+        self.is_authenticated(request)
+        name = "{}/{}".format(kwargs.get('parent').vol_name, kwargs.get('pk'))
+
+        if not zfs.zfs_list(path=name):
+            return HttpNotFound()
+
+        deserialized = self._meta.serializer.deserialize(
+            request.body,
+            format=request.META.get('CONTENT_TYPE') or 'application/json'
         )
         # Add zvol_ prefix to match form field names
-        for k in list(data.keys()):
-            data[f'zvol_{k}'] = data.pop(k)
-        form = ZVol_EditForm(parentds=name, data=data)
+        for k in list(deserialized.keys()):
+            deserialized[f'zvol_{k}'] = deserialized.pop(k)
+
+        data = self._get_form_initial(ZVol_EditForm(name=name), instance=True)
+        data.update(deserialized)
+
+        form = ZVol_EditForm(name=name, data=data)
         if not form.is_valid() or not form.save():
             for k in list(form.errors.keys()):
                 if k == '__all__':
@@ -449,10 +577,11 @@ class ZVolResource(DojoResource):
                 if k.startswith('zvol_'):
                     form.errors[k[5:]] = form.errors.pop(k)
             raise ImmediateHttpResponse(
-                response=self.error_response(bundle.request, form.errors)
+                response=self.error_response(request, form.errors)
             )
-        bundle.obj = self.obj_get(bundle, **kwargs)
-        return bundle
+        response = self.get_detail(request, **kwargs)
+        response.status_code = 201
+        return response
 
     def obj_get_list(self, request=None, **kwargs):
         dsargs = {
@@ -830,7 +959,7 @@ class VolumeResourceMixin(NestedMixin):
                             )
                         except IndexError:
                             disk = None
-                        if current.status == 'ONLINE':
+                        if current.status in ('ONLINE', 'FAULTED'):
                             data['_offline_url'] = reverse(
                                 'storage_disk_offline',
                                 kwargs={
@@ -953,7 +1082,7 @@ class VolumeResourceMixin(NestedMixin):
         rv = []
         attr_fields = ('avail', 'used', 'used_pct')
         for path, child in list(children.items()):
-            if child.name.startswith('.'):
+            if child.name.rsplit('/', 1)[-1].startswith('.'):
                 continue
 
             data = {
@@ -1910,6 +2039,10 @@ class ISCSITargetExtentResourceMixin(object):
 
 class BsdUserResourceMixin(NestedMixin):
 
+    SORTING_MAP = {
+        'bsdusr_group': lambda x: x.bsdusr_group.bsdgrp_gid,
+    }
+
     class Meta:
         queryset = bsdUsers.objects.all().order_by(
             'bsdusr_builtin',
@@ -2025,24 +2158,13 @@ class BsdUserResourceMixin(NestedMixin):
     def dehydrate(self, bundle):
         bundle = super(BsdUserResourceMixin, self).dehydrate(bundle)
         bundle.data['bsdusr_sshpubkey'] = bundle.obj.bsdusr_sshpubkey
-        bundle.data['bsdusr_group'] = bundle.obj.bsdusr_group.bsdgrp_gid
         if self.is_webclient(bundle.request):
+            bundle.data['bsdusr_group'] = bundle.obj.bsdusr_group.bsdgrp_gid
             bundle.data['_edit_url'] += 'bsdUsersForm'
             if bundle.obj.bsdusr_builtin:
                 bundle.data['_edit_url'] += '?deletable=false'
-            bundle.data['_passwd_url'] = (
-                "%sbsdUserPasswordForm?deletable=false" % (
-                    bundle.obj.get_edit_url(),
-                )
-            )
-            bundle.data['_email_url'] = (
-                "%sbsdUserEmailForm?deletable=false" % (
-                    bundle.obj.get_edit_url(),
-                )
-            )
-            bundle.data['_auxiliary_url'] = reverse(
-                'account_bsduser_groups',
-                kwargs={'object_id': bundle.obj.id})
+        else:
+            bundle.data['bsdusr_group'] = bundle.obj.bsdusr_group.id
         return bundle
 
     def hydrate(self, bundle):
@@ -2466,8 +2588,12 @@ class SnapshotResource(DojoResource):
                 field = sfield
                 reverse = False
             field = FIELD_MAP.get(field, field)
+            apifield = self.fields.get(field)
+            default = ''
+            if apifield and isinstance(apifield, fields.IntegerField):
+                default = 0
             results.sort(
-                key=lambda item: getattr(item, field),
+                key=lambda item: getattr(item, field) or default,
                 reverse=reverse)
 
         limit = self._meta.limit
@@ -2935,6 +3061,12 @@ class CertificateAuthorityResourceMixin(object):
             bundle.data['CA_type_intermediate'] = bundle.obj.CA_type_intermediate
 
             if self.is_webclient(bundle.request):
+                bundle.data['_sign_csr_url'] = reverse(
+                    'CA_sign_csr',
+                    kwargs={
+                        'id': bundle.obj.id
+                    }
+                )
                 bundle.data['_edit_url'] = reverse(
                     'CA_edit',
                     kwargs={
@@ -3236,7 +3368,7 @@ class BootEnvResource(NestedMixin, DojoResource):
                             )
                         except IndexError:
                             disk = None
-                        if current.status == 'ONLINE':
+                        if current.status in ('ONLINE', 'FAULTED'):
                             data['_offline_url'] = reverse(
                                 'storage_disk_offline',
                                 kwargs={
@@ -3244,12 +3376,11 @@ class BootEnvResource(NestedMixin, DojoResource):
                                     'label': current.name,
                                 })
 
-                        if current.replacing:
-                            data['_detach_url'] = reverse(
-                                'system_bootenv_pool_detach',
-                                kwargs={
-                                    'label': current.name,
-                                })
+                        data['_detach_url'] = reverse(
+                            'system_bootenv_pool_detach',
+                            kwargs={
+                                'label': current.name,
+                            })
 
                         """
                         Replacing might go south leaving multiple UNAVAIL
@@ -3828,7 +3959,7 @@ class VMResourceMixin(object):
     def dehydrate(self, bundle):
         bundle = super(VMResourceMixin, self).dehydrate(bundle)
         state = 'UNKNOWN'
-        device_start_url = device_stop_url = device_restart_url = info = ''
+        device_start_url = device_stop_url = device_restart_url = device_clone_url = device_vncweb_url = info = ''
         try:
             with client as c:
                 status = c.call('vm.status', bundle.obj.id)
@@ -3845,16 +3976,24 @@ class VMResourceMixin(object):
                     device_restart_url = reverse(
                         'vm_restart', kwargs={'id': bundle.obj.id},
                     )
+                    device_vncweb_url = reverse(
+                        'vm_vncweb', kwargs={'id': bundle.obj.id},
+                    )
                     info += 'Com Port: /dev/nmdm{}B<br />'.format(bundle.obj.id)
                 elif state == 'STOPPED':
                     device_start_url = reverse(
                         'vm_start', kwargs={'id': bundle.obj.id},
                     )
+                    device_clone_url = reverse(
+                        'vm_clone', kwargs={'id': bundle.obj.id},
+                    )
                 bundle.data.update({
                     '_device_url': reverse('freeadmin_vm_device_datagrid') + '?id=%d' % bundle.obj.id,
                     '_stop_url': device_stop_url,
                     '_start_url': device_start_url,
-                    '_restart_url': device_restart_url
+                    '_restart_url': device_restart_url,
+                    '_clone_url': device_clone_url,
+                    '_vncweb_url': device_vncweb_url
                 })
             if bundle.obj.device_set.filter(dtype='VNC').exists():
                 vnc_port = bundle.obj.device_set.filter(dtype='VNC').values_list('attributes', flat=True)[0].get('vnc_port', 5900 + bundle.obj.id)

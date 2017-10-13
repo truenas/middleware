@@ -29,6 +29,7 @@ import os
 import re
 import signal
 import socket
+import struct
 
 from django.core.validators import RegexValidator
 from django.db.models import Q
@@ -237,6 +238,15 @@ class InterfacesForm(ModelForm):
                     _("You cannot configure multiple interfaces with the same "
                         "IP address (%s)") % ip)
         return ip
+
+    def clean_int_options(self):
+        iface = self.cleaned_data.get('int_interface')
+        options = self.cleaned_data.get('int_options')
+        if iface and options and iface.startswith('lagg') and re.search(r'\bmtu\b', options):
+            raise forms.ValidationError(
+                _('MTU option is not allowed for LAGG interfaces')
+            )
+        return options
 
     def clean_int_vhid(self):
         from freenasUI.tools.vhid import scan_for_vrrp
@@ -448,24 +458,39 @@ class IPMIForm(Form):
     )
 
     def __init__(self, *args, **kwargs):
+        self.remote = kwargs.pop('remote', None)
+        self.initial_fail = False
+        with client as c:
+            if self.remote:
+                try:
+                    data = c.call('failover.call_remote', 'ipmi.query', [[('channel', '=', 1)]])
+                except Exception:
+                    self.initial_fail = True
+                    data = None
+            else:
+                data = c.call('ipmi.query', [('channel', '=', 1)])
+            if data:
+                data = data[0]
+                num, cidr = struct.unpack('>I', socket.inet_aton(data['netmask']))[0], 0
+                while num > 0:
+                    num = num << 1 & 0xffffffff
+                    cidr += 1
+                kwargs['initial'] = {
+                    'dhcp': data['dhcp'],
+                    'ipv4address': data.get('ipaddress'),
+                    'ipv4gw': data.get('gateway'),
+                    'ipv4netmaskbit': str(cidr),
+                    'vlanid': data.get('vlan'),
+                }
+
         super(IPMIForm, self).__init__(*args, **kwargs)
         self.fields['dhcp'].widget.attrs['onChange'] = (
             'javascript:toggleGeneric('
             '"id_dhcp", ["id_ipv4address", "id_ipv4netmaskbit"]);'
         )
 
-        channels = []
-        _n = notifier()
-        for i in range(1, 17):
-            try:
-                data = _n.ipmi_get_lan(channel=i)
-            except:
-                continue
-
-            if not data:
-                continue
-
-            channels.append((i, i))
+        with client as c:
+            channels = list(map(lambda i: (i, i), c.call('ipmi.channels')))
 
         self.fields['channel'] = forms.ChoiceField(
             choices=channels,
@@ -501,6 +526,41 @@ class IPMIForm(Form):
         if ipv4:
             ipv4 = str(ipv4)
         return ipv4
+
+    def save(self):
+        data = {
+            'dhcp': self.cleaned_data.get('dhcp'),
+            'ipaddress': self.cleaned_data.get('ipv4address'),
+            'netmask': self.cleaned_data.get('ipv4netmaskbit'),
+            'gateway': self.cleaned_data.get('ipv4gw'),
+            'password': self.cleaned_data.get('ipmi_password2'),
+        }
+        vlan = self.cleaned_data.get('vlanid')
+        if vlan:
+            data['vlan'] = vlan
+        channel = self.cleaned_data.get('channel')
+        with client as c:
+            if self.remote:
+                return c.call('failover.call_remote', 'ipmi.update', [channel, data])
+            else:
+                return c.call('ipmi.update', channel, data)
+
+
+class IPMIIdentifyForm(Form):
+    period = forms.ChoiceField(
+        label=_("Identify Period"),
+        choices=choices.IPMI_IDENTIFY_PERIOD,
+        initial='15',
+    )
+
+    def save(self):
+        with client as c:
+            period = self.cleaned_data.get('period')
+            if period == 'force':
+                data = {'force': True}
+            else:
+                data = {'seconds': period}
+            return c.call('ipmi.identify', data)
 
 
 class GlobalConfigurationForm(ModelForm):
@@ -541,6 +601,19 @@ class GlobalConfigurationForm(ModelForm):
                     raise forms.ValidationError(
                         _("169.254/16 subnet is not valid for nameserver"))
 
+    def clean_gc_ipv4gateway(self):
+        val = self.cleaned_data.get("gc_ipv4gateway")
+
+        if not val:
+            return val
+
+        with client as c:
+            if c.call('routes.ipv4gw_reachable', val.exploded):
+                return val
+
+        raise forms.ValidationError(
+                _("Gateway {} is unreachable".format(val)))
+
     def clean_gc_nameserver1(self):
         val = self.cleaned_data.get("gc_nameserver1")
         self._clean_nameserver(val)
@@ -571,9 +644,17 @@ class GlobalConfigurationForm(ModelForm):
 
     def clean(self):
         cleaned_data = self.cleaned_data
+        domains     = cleaned_data.get("gc_domains")
         nameserver1 = cleaned_data.get("gc_nameserver1")
         nameserver2 = cleaned_data.get("gc_nameserver2")
         nameserver3 = cleaned_data.get("gc_nameserver3")
+        if domains:
+            if len(domains) > 5:
+                msg = _("No more than 5 additional domains are allowed.")
+                self._errors["gc_domains"] = self.error_class([msg])
+            else:
+                domains = domains.split()
+                cleaned_data['gc_domains'] = '\n'.join(domains)
         if nameserver3:
             if nameserver2 == "":
                 msg = _("Must fill out nameserver 2 before "
@@ -630,6 +711,9 @@ class GlobalConfigurationForm(ModelForm):
         http_proxy = self.cleaned_data.get('gc_httpproxy')
         configure_http_proxy(http_proxy)
         if self.instance._orig_gc_httpproxy != http_proxy:
+            # Notify the middleware http_proxy has changed
+            with client as c:
+                c.call('core.event_send', 'network.config', 'CHANGED', {'data': {'httpproxy': http_proxy}})
             try:
                 alertd_pidfile = '/var/run/alertd.pid'
                 if os.path.exists(alertd_pidfile):
@@ -666,7 +750,11 @@ class HostnameForm(Form):
 
     def save(self):
         host, domain = self.cleaned_data.get('hostname')
-        self.instance.gc_hostname = host
+        _n = notifier()
+        if not _n.is_freenas() and _n.failover_node() == 'B':
+            self.instance.gc_hostname_b = host
+        else:
+            self.instance.gc_hostname = host
         orig_gc_domain = self.instance.gc_domain
         self.instance.gc_domain = domain
         self.instance.save()
@@ -696,12 +784,23 @@ class VLANForm(ModelForm):
             raise forms.ValidationError(
                 _("The name must be vlanX where X is a number. Example: vlan0")
             )
-        return "vlan%d" % (int(reg.group("num")), )
+        name = f'vlan{int(reg.group("num"))}'
+        qs = models.VLAN.objects.filter(vlan_vint=name)
+        if self.instance.id:
+            qs = qs.exclude(id=self.instance.id)
+        if qs.exists():
+            raise forms.ValidationError(_('A VLAN with this Virtual Interface already exists'))
+        return name
 
     def clean_vlan_tag(self):
         tag = self.cleaned_data['vlan_tag']
         if tag > 4095 or tag < 1:
             raise forms.ValidationError(_("VLAN Tags are 1 - 4095 inclusive"))
+        qs = models.VLAN.objects.filter(vlan_tag=tag)
+        if self.instance.id:
+            qs = qs.exclude(id=self.instance.id)
+        if qs.exists():
+            raise forms.ValidationError(_('A VLAN with this Tag already exists'))
         return tag
 
     def save(self):
@@ -753,10 +852,18 @@ class LAGGInterfaceForm(ModelForm):
         self.fields['lagg_interfaces'].choices = list(
             choices.NICChoices(nolagg=True)
         )
+
+        # For HA we dont want people using failover type
+        # See #25351
+        if not notifier().is_freenas() and notifier().failover_licensed():
+            filter_failover_type = True
+        else:
+            filter_failover_type = False
         # Remove empty option (e.g. -------)
-        self.fields['lagg_protocol'].choices = (
-            self.fields['lagg_protocol'].choices[1:]
-        )
+        lagg_protocol = list(self.fields['lagg_protocol'].choices[1:])
+        if filter_failover_type:
+            lagg_protocol = filter(lambda x: x[0] != 'failover', lagg_protocol)
+        self.fields['lagg_protocol'].choices = tuple(lagg_protocol)
 
     def save(self, *args, **kwargs):
 

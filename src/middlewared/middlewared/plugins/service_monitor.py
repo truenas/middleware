@@ -13,9 +13,12 @@ if '/usr/local/www' not in sys.path:
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'freenasUI.settings')
 
 import django
-django.setup()
+from django.apps import apps
+if not apps.ready:
+    django.setup()
 
 from freenasUI.common.freenassysctl import freenas_sysctl as _fs
+
 
 class ServiceMonitorThread(threading.Thread):
     def __init__(self, **kwargs):
@@ -47,12 +50,12 @@ class ServiceMonitorThread(threading.Thread):
 
         #
         # XXX yet another hack. We need a generic mechanism/interface that we can use that tells
-        # use if a service is enabled or not. When the service monitor starts up, it assumes 
+        # use if a service is enabled or not. When the service monitor starts up, it assumes
         # self.connected is True. If the service is down, but enabled, and we restart the middleware,
         # and the service becomes available, we do not see a transition occur and therefore do not
         # start the service.
         #
-        if service in ('activedirectory', 'ldap', 'nis', 'nt4'):
+        if service in ('activedirectory', 'ldap', 'nis'):
             try:
                 ds = self.middleware.call_sync('datastore.query', 'directoryservice.%s' % service)[0]
                 if service == 'activedirectory':
@@ -108,7 +111,7 @@ class ServiceMonitorThread(threading.Thread):
         max_tries = 3
 
         started = self.middleware.call_sync('service.started', self.name)
-        if started == True:
+        if started is True:
             return started
 
         i = 0
@@ -135,17 +138,17 @@ class ServiceMonitorThread(threading.Thread):
 
             self.logger.debug("[ServiceMonitorThread] connected=%s started=%s enabled=%s", connected, started, enabled)
 
-            if (connected == False):
+            if (connected is False):
                 self.alert("attempt %d to recover service %s\n" % (ntries + 1, self.name))
 
-            if (connected == True) and (started == False):
+            if (connected is True) and (started is False):
                 self.logger.debug("[ServiceMonitorThread] enabling service %s", self.name)
                 try:
                     self.middleware.call_sync('service.start', self.name)
                 except Exception:
                     pass
 
-            elif (connected == False) and (enabled == True):
+            elif (connected is False) and (enabled is True):
                 self.logger.debug("[ServiceMonitorThread] disabling service %s", self.name)
                 try:
                     self.middleware.call_sync('service.stop', self.name)
@@ -161,7 +164,8 @@ class ServiceMonitorThread(threading.Thread):
             if ntries >= self.retry:
                 break
 
-        self.alert("tried %d attempts to recover service %s" % (self.retry, self.name))
+        if not ((connected is True) and (enabled is True) and (started is True)):
+            self.alert("tried %d attempts to recover service %s" % (self.retry, self.name))
 
     def cancel(self):
         self.finished.set()
@@ -185,7 +189,7 @@ class ServiceMonitorService(Service):
 
             self.logger.debug("[ServiceMonitorService] monitoring %s", thread_name)
 
-            thread = ServiceMonitorThread(id=s['id'], frequency=s['sm_frequency'],retry=s['sm_retry'],
+            thread = ServiceMonitorThread(id=s['id'], frequency=s['sm_frequency'], retry=s['sm_retry'],
                 host=s['sm_host'], port=s['sm_port'], name=thread_name, logger=self.logger, middleware=self.middleware)
             self.threads[thread_name] = thread
             thread.start()

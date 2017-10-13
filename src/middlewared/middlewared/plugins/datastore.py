@@ -1,5 +1,5 @@
 from middlewared.service import Service, private
-from middlewared.schema import accepts, Any, Bool, Dict, Int, List, Ref, Str
+from middlewared.schema import accepts, Any, Bool, Dict, List, Ref, Str
 
 import os
 import sys
@@ -8,7 +8,9 @@ sys.path.append('/usr/local/www')
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'freenasUI.settings')
 
 import django
-django.setup()
+from django.apps import apps
+if not apps.ready:
+    django.setup()
 
 from django.apps import apps
 from django.db import connection
@@ -183,34 +185,54 @@ class DatastoreService(Service):
         options['get'] = True
         return await self.query(name, None, options)
 
-    @accepts(Str('name'), Dict('data', additional_attrs=True))
-    async def insert(self, name, data):
+    @accepts(Str('name'), Dict('data', additional_attrs=True), Dict('options', Str('prefix')))
+    async def insert(self, name, data, options=None):
         """
         Insert a new entry to `name`.
         """
+        data = data.copy()
+        options = options or {}
+        prefix = options.get('prefix')
         model = self.__get_model(name)
         for field in model._meta.fields:
-            if field.name not in data:
+            if prefix:
+                name = field.name.replace(prefix, '')
+            else:
+                name = field.name
+            if name not in data:
                 continue
             if isinstance(field, ForeignKey):
-                data[field.name] = field.rel.to.objects.get(pk=data[field.name])
+                data[name] = field.rel.to.objects.get(pk=data[name])
+        if prefix:
+            for k, v in list(data.items()):
+                k_new = f'{prefix}{k}'
+                data[k_new] = data.pop(k)
         obj = model(**data)
         await self.middleware.threaded(obj.save)
         return obj.pk
 
-    @accepts(Str('name'), Any('id'), Dict('data', additional_attrs=True))
-    async def update(self, name, id, data):
+    @accepts(Str('name'), Any('id'), Dict('data', additional_attrs=True), Dict('options', Str('prefix')))
+    async def update(self, name, id, data, options=None):
         """
         Update an entry `id` in `name`.
         """
+        data = data.copy()
+        options = options or {}
+        prefix = options.get('prefix')
         model = self.__get_model(name)
         obj = await self.middleware.threaded(lambda oid: model.objects.get(pk=oid), id)
         for field in model._meta.fields:
-            if field.name not in data:
+            if prefix:
+                name = field.name.replace(prefix, '')
+            else:
+                name = field.name
+            if name not in data:
                 continue
             if isinstance(field, ForeignKey):
-                data[field.name] = field.rel.to.objects.get(pk=data[field.name])
+                data[name] = field.rel.to.objects.get(pk=data[name]) if data[name] is not None else None
         for k, v in list(data.items()):
+            if prefix:
+                k = f'{prefix}{k}'
             setattr(obj, k, v)
         await self.middleware.threaded(obj.save)
         return obj.pk

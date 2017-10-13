@@ -34,10 +34,8 @@ from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
 from freenasUI import choices
-from freenasUI.common.samba import Samba4
-from freenasUI.common.system import domaincontroller_enabled
-from freenasUI.freeadmin.models import Model, PathField
-from freenasUI.middleware.notifier import notifier
+from freenasUI.freeadmin.models import DictField, Model, PathField
+from freenasUI.middleware.client import client
 
 log = logging.getLogger('account.models')
 
@@ -69,19 +67,6 @@ class bsdGroups(Model):
 
     def __str__(self):
         return self.bsdgrp_group
-
-    def delete(self, using=None, reload=True, pwdelete=True):
-        if self.bsdgrp_builtin is True:
-            raise ValueError(_(
-                "Group %s is built-in and can not be deleted!"
-            ) % (self.bsdgrp_group))
-        if pwdelete:
-            notifier().user_deletegroup(self.bsdgrp_group)
-        if domaincontroller_enabled():
-            Samba4().group_delete(self.bsdgrp_group)
-        super(bsdGroups, self).delete(using)
-        if reload:
-            notifier().reload("user")
 
 
 def get_sentinel_group():
@@ -168,6 +153,10 @@ class bsdUsers(Model):
         verbose_name=_("Microsoft Account"),
         default=False
     )
+    bsdusr_attributes = DictField(
+        default=None,
+        editable=False,
+    )
 
     is_active = True
     is_staff = True
@@ -226,12 +215,11 @@ class bsdUsers(Model):
         if not self.bsdusr_username or not self.id:
             time.sleep(0.1)
             return
-        unixhash, smbhash = notifier().user_changepassword(
-            username=self.bsdusr_username,
-            password=password,
-        )
-        self.bsdusr_unixhash = unixhash
-        self.bsdusr_smbhash = smbhash
+        with client as c:
+            pk = c.call('user.update', self.id, {'password': password})
+        user = bsdUsers.objects.get(pk=pk)
+        self.bsdusr_unixhash = user.bsdusr_unixhash
+        self.bsdusr_smbhash = user.bsdusr_smbhash
 
     def check_password(self, raw_password):
         # Only allow uid 0 for now
@@ -247,32 +235,11 @@ class bsdUsers(Model):
             ) == str(self.bsdusr_unixhash)
 
     def delete(self, using=None, reload=True, delete_group=True):
-        from freenasUI.services.models import CIFS
         if self.bsdusr_builtin is True:
             raise ValueError(_(
                 "User %s is built-in and can not be deleted!"
             ) % (self.bsdusr_username))
-        notifier().user_deleteuser(self.bsdusr_username)
-        if domaincontroller_enabled():
-            Samba4().user_delete(self.bsdusr_username)
-        try:
-            gobj = self.bsdusr_group
-            count = bsdGroupMembership.objects.filter(
-                bsdgrpmember_group=gobj).count()
-            count2 = bsdUsers.objects.filter(bsdusr_group=gobj).exclude(
-                id=self.id).count()
-            if delete_group and not gobj.bsdgrp_builtin and count == 0 and count2 == 0:
-                gobj.delete(reload=False, pwdelete=False)
-        except:
-            log.warn('Failed to delete primary group of %s', self, exc_info=True)
-        cifs = CIFS.objects.latest('id')
-        if cifs:
-            if cifs.cifs_srv_guest == self.bsdusr_username:
-                cifs.cifs_srv_guest = 'nobody'
-                cifs.save()
         super(bsdUsers, self).delete(using)
-        if reload:
-            notifier().reload("user")
 
     def save(self, *args, **kwargs):
         # TODO: Add last_login field

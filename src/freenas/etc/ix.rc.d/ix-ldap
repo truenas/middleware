@@ -19,7 +19,9 @@ generate_ldapconf()
 
 generate_nss_ldapconf()
 {
+	rm -f /usr/local/etc/ldap.conf
 	LD_LIBRARY_PATH=/usr/local/lib /usr/local/bin/midclt call etc.generate nss > /dev/null
+	ln -sf /usr/local/etc/nss_ldap.conf /usr/local/etc/ldap.conf
 }
 
 get_cifs_homedir()
@@ -93,6 +95,9 @@ ldap_status()
 	local ret=0
 	local fail="/tmp/.ldap_fail"
 
+	RO_FREENAS_CONFIG=$(ro_sqlite ${name} 2> /tmp/${name}.fail && rm /tmp/${name}.fail)
+	trap 'rm -f ${RO_FREENAS_CONFIG}' EXIT
+
 	${FREENAS_SQLITE_CMD} ${RO_FREENAS_CONFIG} "
 	SELECT
 		ldap.ldap_anonbind, 	 
@@ -154,7 +159,7 @@ ldap_status()
 			chmod 400 "${temp}"
 			echo -n "$(/usr/local/bin/midclt call notifier.pwenc_decrypt ${ldap_bindpw})" > "${temp}"
 
-			echo "${ldapsearch} ${options} -D "'${ldap_binddn}'" -b '' -s base -y "${temp}"" > "${cmdfile}"
+			echo "${ldapsearch} ${options} -D '"${ldap_binddn}"' -b '' -s base -y "${temp}"" > "${cmdfile}"
 			cmd=$(cat ${cmdfile})
 			eval "${cmd}" >/dev/null 2>&1
 			res=$?

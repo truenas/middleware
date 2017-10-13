@@ -56,7 +56,7 @@ ipmi_func()
 	ipmitool sel time get
 	section_footer
 
-	section_header "System Time"
+	section_header "System Time - 'date'"
 	date
 	section_footer
 }

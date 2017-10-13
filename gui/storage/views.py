@@ -31,8 +31,6 @@ import os
 import re
 import signal
 import subprocess
-import traceback
-import sys
 import urllib.request, urllib.parse, urllib.error
 from time import sleep
 
@@ -56,7 +54,6 @@ from freenasUI.system.models import Advanced
 from freenasUI.services.exceptions import ServiceFailed
 from freenasUI.services.models import iSCSITargetExtent
 from freenasUI.storage import forms, models
-import socket
 
 log = logging.getLogger('storage.views')
 
@@ -79,10 +76,16 @@ def home(request):
     if view:
         return view[0]
 
+    try:
+        resilver = models.Resilver.objects.order_by('-id')[0]
+    except Exception:
+        resilver = models.Resilver.objects.create()
+
     tabs = appPool.hook_app_tabs('storage', request)
     return render(request, 'storage/index.html', {
         'focused_tab': request.GET.get("tab", 'storage.Volumes.View'),
         'hook_tabs': tabs,
+        'resilver_edit_url': f'{resilver.get_edit_url()}?inline=true'
     })
 
 
@@ -304,78 +307,27 @@ def volumemanager_zfs(request):
     })
 
 
-SOCKIMP = '/var/run/importcopy/importsock'
-
-
-def get_import_progress_from_socket(s=None, n=4096):
-    data = ''
-    close_sock = False
-    try:
-        if s is None:
-            s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-            s.connect(SOCKIMP)
-            s.setblocking(0)
-            close_sock = True
-        s.send(b"get_progress")
-        packet = s.recv(n)
-        while packet:
-            data += packet
-            packet = s.recv(n)
-    except socket.error:
-        pass
-    finally:
-        if close_sock:
-            s.close()
-    return data
-
-
-def final_importdisk_return_response(data, abort=False):
-    stdout_data = False
-    if data['stdout_file']:
-            with open(data['stdout_file'], 'rUb') as f:
-                stdout_data = f.read().decode('utf8')
-    return {
-        'vol': data["volume"],
-        'error': data.get("error", False),
-        'abort': abort,
-        'traceback': data.get("traceback", False),
-        'stdout': stdout_data
-    }
-
-
 def volimport(request):
-    if os.path.exists(SOCKIMP):
-        try:
-            data = json.loads(get_import_progress_from_socket())
-            if data["status"] in ["finished", "error"]:
-                return render(
-                    request, 'storage/import_stats.html', final_importdisk_return_response(data)
-                )
-            return render(request, 'storage/import_progress.html')
-        except Exception as e:
-            data = {
-                'vol': '',
-                'status': 'error',
-                'error': str(e),
-                'traceback': traceback.format_exc() if sys.exc_info()[0] else False
-            }
-            return render(request, 'storage/import_stats.html', data)
+    with client as c:
+        job = c.call('pool.get_current_import_disk_job')
+    if job is not None:
+        if job["state"] in ["SUCCESS", "FAILED", "ABORTED"]:
+            return render(
+                request, 'storage/import_stats.html', job
+            )
+        return render(request, 'storage/import_progress.html')
 
     if request.method == "POST":
         form = forms.VolumeImportForm(request.POST)
         if form.is_valid():
             form.done(request)
-            # usage for command below
-            # Usage: sockscopy vol_to_import fs_type dest_path socket_path
-            subprocess.Popen([
-                "/usr/local/bin/sockscopy",
-                "/dev/{0}".format(form.cleaned_data.get('volume_disks')),
-                form.cleaned_data.get('volume_fstype').lower(),
-                form.cleaned_data.get('volume_dest_path'),
-                SOCKIMP
-            ])
-            # give the background disk import code time to create a socket
-            sleep(2)
+            with client as c:
+                c.call(
+                    'pool.import_disk',
+                    "/dev/{0}".format(form.cleaned_data.get('volume_disks')),
+                    form.cleaned_data.get('volume_fstype').lower(),
+                    form.cleaned_data.get('volume_dest_path'),
+                )
             return render(request, 'storage/import_progress.html')
         else:
 
@@ -393,169 +345,88 @@ def volimport(request):
 
 
 def volimport_progress(request):
-    return HttpResponse(get_import_progress_from_socket(), content_type='application/json')
+    with client as c:
+        job = c.call('pool.get_current_import_disk_job')
+
+    return HttpResponse(json.dumps({
+        "status": "finished" if job["state"] in ["SUCCESS", "FAILED", "ABORTED"] else job["progress"]["description"],
+        "volume": job["arguments"][0],
+        "extra": job["progress"]["extra"],
+        "percent": job["progress"]["percent"],
+    }), content_type='application/json')
 
 
 def volimport_abort(request):
     if request.method == 'POST':
-        s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
-        s.connect(SOCKIMP)
-        s.setblocking(0)
-        try:
-            data = json.loads(get_import_progress_from_socket(s))
-        except Exception as e:
-            data = {
-                'vol': '',
-                'status': 'error',
-                'error': str(e),
-                'traceback': traceback.format_exc() if sys.exc_info()[0] else False
-            }
-        if data["status"] == "finished":
-            s.send(b"done")
-            s.close()
+        with client as c:
+            job = c.call('pool.get_current_import_disk_job')
+
+        if job["state"] == "SUCCESS":
+            with client as c:
+                c.call('pool.dismiss_current_import_disk_job')
+
             return JsonResp(request, message=_("Volume successfully Imported."))
-        if data["status"] == "error":
-            s.send(b"stop")
-            s.close()
+
+        if job["state"] == "FAILED":
+            with client as c:
+                c.call('pool.dismiss_current_import_disk_job')
+
             return JsonResp(request, message=_("Error Importing Volume"))
-        s.send(b"stop")
-        s.close()
+
+        with client as c:
+            c.call("core.job_abort", job["id"])
+
+        for i in range(10):
+            with client as c:
+                job = c.call('pool.get_current_import_disk_job')
+                if job["state"] != "RUNNING":
+                    break
+
+            sleep(1)
+        else:
+            return JsonResp(request, message=_("Error aborting Volume Import"))
+
+        with client as c:
+            c.call('pool.dismiss_current_import_disk_job')
+
         return render(
             request,
             'storage/import_stats.html',
-            final_importdisk_return_response(data, abort=True)
+            job,
         )
 
 
 def dataset_create(request, fs):
-    defaults = {'dataset_compression': 'inherit', 'dataset_atime': 'inherit'}
     if request.method == 'POST':
-        dataset_form = forms.ZFSDataset(request.POST, fs=fs)
-        if dataset_form.is_valid():
-            props = {}
-            cleaned_data = dataset_form.cleaned_data
-            dataset_name = "%s/%s" % (fs, cleaned_data.get('dataset_name'))
-            dataset_compression = cleaned_data.get('dataset_compression')
-            dataset_share_type = cleaned_data.get('dataset_share_type')
-            if dataset_share_type == "windows":
-                props['aclmode'] = 'restricted'
-            props['casesensitivity'] = cleaned_data.get(
-                'dataset_case_sensitivity'
-            )
-            props['compression'] = dataset_compression.__str__()
-            dataset_atime = cleaned_data.get('dataset_atime')
-            props['atime'] = dataset_atime.__str__()
-            refquota = cleaned_data.get('dataset_refquota')
-            if refquota != '0':
-                props['refquota'] = refquota.__str__()
-            quota = cleaned_data.get('dataset_quota')
-            if quota != '0':
-                props['quota'] = quota.__str__()
-            refreservation = cleaned_data.get('dataset_refreservation')
-            if refreservation != '0':
-                props['refreservation'] = refreservation.__str__()
-            refreservation = cleaned_data.get('dataset_reservation')
-            if refreservation != '0':
-                props['refreservation'] = refreservation.__str__()
-            dedup = cleaned_data.get('dataset_dedup')
-            if dedup != 'inherit':
-                props['dedup'] = dedup.__str__()
-            recordsize = cleaned_data.get('dataset_recordsize')
-            if recordsize:
-                props['recordsize'] = recordsize
-            dataset_comments = cleaned_data.get('dataset_comments')
-            errno, errmsg = notifier().create_zfs_dataset(
-                path=str(dataset_name),
-                props=props)
-            notifier().zfs_set_option(name=str(dataset_name), item="org.freenas:description", value=dataset_comments)
-            if errno == 0:
-                if dataset_share_type == "unix":
-                    notifier().dataset_init_unix(dataset_name)
-                elif dataset_share_type == "windows":
-                    notifier().dataset_init_windows(dataset_name)
-                elif dataset_share_type == "mac":
-                    notifier().dataset_init_apple(dataset_name)
-                return JsonResp(
-                    request,
-                    message=_("Dataset successfully added."))
-            else:
-                dataset_form.set_error(errmsg)
-                return JsonResp(request, form=dataset_form)
+        form = forms.ZFSDatasetCreateForm(request.POST, fs=fs)
+        if form.is_valid():
+            if form.save():
+                return JsonResp(request,
+                                message=_("ZFS Volume successfully added."))
         else:
-            return JsonResp(request, form=dataset_form)
+            return JsonResp(request, form=form)
     else:
-        dataset_form = forms.ZFSDataset(initial=defaults, fs=fs)
+        defaults = {'dataset_compression': 'inherit',
+                    'dataset_atime': 'inherit'}
+        form = forms.ZFSDatasetCreateForm(initial=defaults, fs=fs)
     return render(request, 'storage/datasets.html', {
-        'form': dataset_form,
+        'form': form,
         'fs': fs,
     })
 
 
 def dataset_edit(request, dataset_name):
     if request.method == 'POST':
-        dataset_form = forms.ZFSDataset(
-            request.POST, fs=dataset_name, create=False
-        )
-        if dataset_form.is_valid():
-            if dataset_form.cleaned_data["dataset_quota"] == "0":
-                dataset_form.cleaned_data["dataset_quota"] = "none"
-            if dataset_form.cleaned_data["dataset_refquota"] == "0":
-                dataset_form.cleaned_data["dataset_refquota"] = "none"
-
-            error = False
-            errors = {}
-
-            for attr in (
-                'org.freenas:description',
-                'compression',
-                'atime',
-                'dedup',
-                'reservation',
-                'refreservation',
-                'quota',
-                'refquota',
-                'share_type'
-            ):
-                if attr == 'org.freenas:description':
-                    formfield = 'dataset_comments'
-                else:
-                    formfield = 'dataset_%s' % attr
-                val = dataset_form.cleaned_data[formfield]
-
-                if val == "inherit":
-                    success, err = notifier().zfs_inherit_option(
-                        dataset_name,
-                        attr)
-                else:
-                    if attr == "share_type":
-                        notifier().change_dataset_share_type(
-                            dataset_name, val)
-                    else:
-                        success, err = notifier().zfs_set_option(
-                            dataset_name,
-                            attr,
-                            val)
-                error |= not success
-                if not success:
-                    errors[formfield] = err
-
-            if not error:
-                return JsonResp(
-                    request,
-                    message=_("Dataset successfully edited."))
-            else:
-                for field, err in list(errors.items()):
-                    dataset_form._errors[field] = dataset_form.error_class([
-                        err,
-                    ])
-                return JsonResp(request, form=dataset_form)
+        form = forms.ZFSDatasetEditForm(request.POST, fs=dataset_name)
+        if form.is_valid() and form.save():
+            return JsonResp(request, message=_("Dataset successfully edited."))
         else:
-            return JsonResp(request, form=dataset_form)
+            return JsonResp(request, form=form)
     else:
-        dataset_form = forms.ZFSDataset(fs=dataset_name, create=False)
+        form = forms.ZFSDatasetEditForm(fs=dataset_name)
     return render(request, 'storage/dataset_edit.html', {
         'dataset_name': dataset_name,
-        'form': dataset_form
+        'form': form
     })
 
 
@@ -609,13 +480,13 @@ def zvol_delete(request, name):
 
 def zvol_edit(request, name):
     if request.method == 'POST':
-        form = forms.ZVol_EditForm(request.POST, parentds=name)
+        form = forms.ZVol_EditForm(request.POST, name=name)
         if form.is_valid() and form.save():
             return JsonResp(request, message=_("Zvol successfully edited."))
         else:
             return JsonResp(request, form=form)
     else:
-        form = forms.ZVol_EditForm(parentds=name)
+        form = forms.ZVol_EditForm(name=name)
     return render(request, 'storage/volume_edit.html', {
         'form': form,
     })

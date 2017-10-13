@@ -78,19 +78,18 @@ from freenasUI.common.ssl import (
 from freenasUI.directoryservice.forms import (
     ActiveDirectoryForm,
     LDAPForm,
-    NISForm,
-    NT4Form,
+    NISForm
 )
 from freenasUI.directoryservice.models import (
     ActiveDirectory,
     LDAP,
-    NIS,
-    NT4,
+    NIS
 )
 from freenasUI.freeadmin.views import JsonResp
 from freenasUI.freeadmin.utils import key_order
-from freenasUI.middleware.client import client
+from freenasUI.middleware.client import client, ClientException, ValidationErrors
 from freenasUI.middleware.exceptions import MiddlewareError
+from freenasUI.middleware.form import MiddlewareModelForm
 from freenasUI.middleware.notifier import notifier
 from freenasUI.services.models import (
     services,
@@ -117,7 +116,6 @@ from common.ssl import CERT_CHAIN_REGEX
 
 log = logging.getLogger('system.forms')
 WIZARD_PROGRESSFILE = '/tmp/.initialwizard_progress'
-BAD_BE_CHARS = "/ *'\"?@!#$%^&()+=~<>;\\"
 
 
 def clean_path_execbit(path):
@@ -166,23 +164,9 @@ def check_certificate(certificate):
     return nmatches
 
 
-def validate_be_name(name):
-    if any(elem in name for elem in BAD_BE_CHARS):
-        raise forms.ValidationError(_('Name does not allow spaces and the following characters: /*\'"?@'))
-    else:
-        beadm_names = subprocess.Popen(
-            "beadm list | awk '{print $7}'",
-            shell=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            encoding='utf8',
-        ).communicate()[0].split('\n')
-        if name in filter(None, beadm_names):
-            raise forms.ValidationError(_('The name %s already exist.') % (name))
-    return name
-
-
 class BootEnvAddForm(Form):
+
+    middleware_attr_schema = 'bootenv_create'
 
     name = forms.CharField(
         label=_('Name'),
@@ -193,22 +177,22 @@ class BootEnvAddForm(Form):
         self._source = kwargs.pop('source', None)
         super(BootEnvAddForm, self).__init__(*args, **kwargs)
 
-    def clean_name(self):
-        return validate_be_name(self.cleaned_data.get('name'))
-
     def save(self, *args, **kwargs):
-        kwargs = {}
+        data = {'name': self.cleaned_data.get('name')}
         if self._source:
-            kwargs['bename'] = self._source
-        clone = Update.CreateClone(
-            self.cleaned_data.get('name'),
-            **kwargs
-        )
-        if clone is False:
-            raise MiddlewareError(_('Failed to create a new Boot.'))
+            data['source'] = self._source
+        with client as c:
+            try:
+                c.call('bootenv.create', data)
+            except ValidationErrors:
+                raise
+            except ClientException:
+                raise MiddlewareError(_('Failed to create a new Boot.'))
 
 
 class BootEnvRenameForm(Form):
+
+    middleware_attr_schema = 'bootenv_update'
 
     name = forms.CharField(
         label=_('Name'),
@@ -219,15 +203,15 @@ class BootEnvRenameForm(Form):
         self._name = kwargs.pop('name')
         super(BootEnvRenameForm, self).__init__(*args, **kwargs)
 
-    def clean_name(self):
-        return validate_be_name(self.cleaned_data.get('name'))
-
     def save(self, *args, **kwargs):
         new_name = self.cleaned_data.get('name')
         with client as c:
-            rename = c.call('bootenv.rename', self._name, new_name)
-        if rename is False:
-            raise MiddlewareError(_('Failed to rename Boot Environment.'))
+            try:
+                c.call('bootenv.update', self._name, {'name': new_name})
+            except ValidationErrors:
+                raise
+            except ClientException:
+                raise MiddlewareError(_('Failed to rename Boot Environment.'))
 
 
 class BootEnvPoolAttachForm(Form):
@@ -274,11 +258,12 @@ class BootEnvPoolAttachForm(Form):
     def done(self):
         devname = self.cleaned_data['attach_disk']
 
-        rv = notifier().bootenv_attach_disk(self.label, devname)
-        if rv:
-            return True
-        else:
-            return False
+        with client as c:
+            try:
+                c.call('boot.attach', devname)
+            except ClientException:
+                return False
+        return True
 
 
 class BootEnvPoolReplaceForm(Form):
@@ -325,11 +310,12 @@ class BootEnvPoolReplaceForm(Form):
     def done(self):
         devname = self.cleaned_data['replace_disk']
 
-        rv = notifier().bootenv_replace_disk(self.label, devname)
-        if rv == 0:
-            return True
-        else:
-            return False
+        with client as c:
+            try:
+                c.call('boot.replace', self.label, devname)
+            except ClientException:
+                return False
+        return True
 
 
 class CommonWizard(SessionWizardView):
@@ -458,12 +444,7 @@ class InitialWizard(CommonWizard):
                     else:
                         groups = volume_form._grp_predefined(bysize, volume_type)
 
-                    _n.init(
-                        "volume",
-                        volume,
-                        groups=groups,
-                        init_rand=False,
-                    )
+                    _n.create_volume(volume, groups=groups, init_rand=False)
 
                 # Create SMART tests for every disk available
                 disks = []
@@ -475,6 +456,7 @@ class InitialWizard(CommonWizard):
 
                 if qs.exists():
                     smarttest = SMARTTest.objects.create(
+                        smarttest_hour='23',
                         smarttest_type='S',
                         smarttest_dayweek='7',
                     )
@@ -511,10 +493,7 @@ class InitialWizard(CommonWizard):
 
                 if share_purpose != 'iscsitarget':
                     dataset_name = '%s/%s' % (volume_name, share_name)
-                    errno, errmsg = _n.create_zfs_dataset(
-                        dataset_name,
-                        _restart_collectd=False,
-                    )
+                    errno, errmsg = _n.create_zfs_dataset(dataset_name)
 
                     if share_purpose == 'afp':
                         _n.change_dataset_share_type(dataset_name, 'mac')
@@ -526,11 +505,11 @@ class InitialWizard(CommonWizard):
                     qs = bsdGroups.objects.filter(bsdgrp_group=share_group)
                     if not qs.exists():
                         if share_groupcreate:
-                            gid = _n.group_create(share_group)
-                            group = bsdGroups.objects.create(
-                                bsdgrp_gid=gid,
-                                bsdgrp_group=share_group,
-                            )
+                            with client as c:
+                                group = c.call('group.create', {
+                                    'name': share_group,
+                                })
+                            group = bsdGroups.objects.get(pk=group)
                             model_objs.append(group)
                         else:
                             group = bsdGroups.objects.all()[0]
@@ -546,22 +525,17 @@ class InitialWizard(CommonWizard):
                             else:
                                 password = '!'
                                 password_disabled = True
-                            uid, gid, unixhash, smbhash = _n.user_create(
-                                username=share_user,
-                                fullname=share_user,
-                                password=password,
-                                shell='/bin/csh',
-                                homedir='/nonexistent',
-                                password_disabled=password_disabled
-                            )
-                            user = bsdUsers.objects.create(
-                                bsdusr_username=share_user,
-                                bsdusr_full_name=share_user,
-                                bsdusr_uid=uid,
-                                bsdusr_group=group,
-                                bsdusr_unixhash=unixhash,
-                                bsdusr_smbhash=smbhash,
-                            )
+                            with client as c:
+                                user = c.call('user.create', {
+                                    'username': share_user,
+                                    'full_name': share_user,
+                                    'password': password,
+                                    'shell': '/bin/csh',
+                                    'home': '/nonexistent',
+                                    'password_disabled': password_disabled,
+                                    'group': group.id,
+                                })
+                            user = bsdUsers.objects.get(pk=user)
                             model_objs.append(user)
 
                 else:
@@ -592,6 +566,7 @@ class InitialWizard(CommonWizard):
                 if 'afp' == share_purpose:
                     if share_timemachine:
                         sharekwargs['afp_timemachine'] = True
+                        sharekwargs['afp_timemachine_quota'] = 0
                     model_objs.append(AFP_Share.objects.create(
                         afp_name=share_name,
                         afp_path=path,
@@ -825,30 +800,6 @@ class InitialWizard(CommonWizard):
                         'NIS data failed to validate: %r',
                         nisform._errors,
                     )
-            elif cleaned_data.get('ds_type') == 'nt4':
-                try:
-                    nt4 = NT4.objects.all().order_by('-id')[0]
-                except:
-                    nt4 = NT4.objects.create()
-
-                nt4data = nt4.__dict__
-                for name, value in list(cleaned_data.items()):
-                    if not name.startswith('ds_nt4'):
-                        continue
-                    nt4data[name.replace('ds_', '')] = value
-                nt4data['nt4_enable'] = True
-
-                nt4form = NT4Form(
-                    data=nt4data,
-                    instance=nt4,
-                )
-                if nt4form.is_valid():
-                    nt4form.save()
-                else:
-                    log.warn(
-                        'NT4 data failed to validate: %r',
-                        nt4form._errors,
-                    )
 
         # Change permission after joining directory service
         # since users/groups may not be local
@@ -969,8 +920,8 @@ class ManualUpdateWizard(FileWizard):
 
         if not self.request.is_ajax():
             response.content = (
-                b"<html><body><textarea>"
-                + response.content +
+                b"<html><body><textarea>" +
+                response.content +
                 b"</textarea></boby></html>"
             )
         return response
@@ -991,18 +942,13 @@ class SettingsForm(ModelForm):
 
     def __init__(self, *args, **kwargs):
         super(SettingsForm, self).__init__(*args, **kwargs)
-        self.instance._original_stg_guiprotocol = self.instance.stg_guiprotocol
-        self.instance._original_stg_guiaddress = self.instance.stg_guiaddress
-        self.instance._original_stg_guiport = self.instance.stg_guiport
-        self.instance._original_stg_guihttpsport = self.instance.stg_guihttpsport
-        self.instance._original_stg_guihttpsredirect = self.instance.stg_guihttpsredirect
-        self.instance._original_stg_sysloglevel = (
-            self.instance.stg_sysloglevel
-        )
-        self.instance._original_stg_syslogserver = (
-            self.instance.stg_syslogserver
-        )
-        self.instance._original_stg_guicertificate = self.instance.stg_guicertificate
+        for i in (
+            'stg_guiprotocol', 'stg_guiaddress', 'stg_guiport',
+            'stg_guihttpsport', 'stg_guihttpsredirect', 'stg_sysloglevel',
+            'stg_syslogserver', 'stg_guicertificate', 'stg_timezone',
+        ):
+            setattr(self.instance, f'_original_{i}', getattr(self.instance, i))
+
         self.fields['stg_language'].choices = settings.LANGUAGES
         self.fields['stg_language'].label = _("Language (Require UI reload)")
         self.fields['stg_guiaddress'] = forms.ChoiceField(
@@ -1084,6 +1030,8 @@ class SettingsForm(ModelForm):
                 events.append("evilrestartHttpd('%s')" % newurl)
             else:
                 events.append("restartHttpd('%s')" % newurl)
+        if self.instance._original_stg_timezone != self.instance.stg_timezone:
+            os.environ['TZ'] = self.instance.stg_timezone
 
 
 class NTPForm(ModelForm):
@@ -1195,8 +1143,8 @@ class AdvancedForm(ModelForm):
                 notifier().reload("loader")
                 loader_reloaded = True
         if (
-            self.instance._original_adv_autotune != self.instance.adv_autotune
-            and not loader_reloaded
+            self.instance._original_adv_autotune != self.instance.adv_autotune and
+            not loader_reloaded
         ):
             notifier().reload("loader")
         if self.instance._original_adv_debugkernel != self.instance.adv_debugkernel:
@@ -1218,13 +1166,19 @@ class AdvancedForm(ModelForm):
             # Invalidate cache
             request.session.pop("adv_mode", None)
         if (
-            self.instance._original_adv_autotune != self.instance.adv_autotune
-            and self.instance.adv_autotune is True
+            self.instance._original_adv_autotune != self.instance.adv_autotune and
+            self.instance.adv_autotune is True
         ):
             events.append("refreshTree()")
 
 
-class EmailForm(ModelForm):
+class EmailForm(MiddlewareModelForm, ModelForm):
+
+    middleware_attr_prefix = "em_"
+    middleware_attr_schema = "mail"
+    middleware_plugin = "mail"
+    is_singletone = True
+
     em_pass1 = forms.CharField(
         label=_("Password"),
         widget=forms.PasswordInput,
@@ -1263,14 +1217,6 @@ class EmailForm(ModelForm):
             self.fields['em_pass1'].widget.attrs['disabled'] = 'disabled'
             self.fields['em_pass2'].widget.attrs['disabled'] = 'disabled'
 
-    def clean_em_user(self):
-        if (
-            self.cleaned_data['em_smtp'] is True and
-            self.cleaned_data['em_user'] == ""
-        ):
-            raise forms.ValidationError(_("This field is required"))
-        return self.cleaned_data['em_user']
-
     def clean_em_pass1(self):
         if (
             self.cleaned_data['em_smtp'] is True and
@@ -1297,12 +1243,18 @@ class EmailForm(ModelForm):
             )
         return pass2
 
-    def save(self, commit=True):
-        email = super(EmailForm, self).save(commit=False)
-        if commit:
-            email.em_pass = self.cleaned_data['em_pass2']
-            email.save()
-        return email
+    def clean(self):
+        if 'em_pass1' in self.cleaned_data:
+            self.cleaned_data['em_pass'] = self.cleaned_data.pop('em_pass1')
+            if 'em_pass2' in self.cleaned_data:
+                del self.cleaned_data['em_pass2']
+        return self.cleaned_data
+
+    def middleware_clean(self):
+        update = super().middleware_clean()
+        if 'security' in update:
+            update['security'] = update['security'].upper()
+        return update
 
 
 class ManualUpdateTemporaryLocationForm(Form):
@@ -1463,7 +1415,7 @@ class ConsulAlertsForm(ModelForm):
     username = forms.CharField(
         max_length=255,
         label=_("Username"),
-        help_text=_("Username"),
+        help_text=_("The username to use with this service"),
         required=False,
     )
     password = forms.CharField(
@@ -1480,8 +1432,8 @@ class ConsulAlertsForm(ModelForm):
     )
     url = forms.CharField(
         max_length=255,
-        label=_("URL"),
-        help_text=_("The incoming-webhook url"),
+        label=_("Webhook URL"),
+        help_text=_("The incoming webhook URL asssociated with this service"),
         required=False,
     )
 
@@ -1509,13 +1461,13 @@ class ConsulAlertsForm(ModelForm):
     channel = forms.CharField(
         max_length=255,
         label=_("Channel"),
-        help_text=_("The channel to post the notification"),
+        help_text=_("The channel to post notifications to. This overides the default channel in the Incoming Webhook settings."),
         required=False,
     )
     icon_url = forms.CharField(
         max_length=255,
-        label=_("URL icon"),
-        help_text=_("URL of a custom image for the notification"),
+        label=_("Icon URL"),
+        help_text=_("URL of a custom image for notification icons. This overrides the default if set in the Incoming Webhook settings."),
         required=False,
     )
     detailed = forms.BooleanField(
@@ -1595,6 +1547,18 @@ class ConsulAlertsForm(ModelForm):
         help_text=_("Topic ARN to publish to"),
         required=False,
     )
+    aws_access_key_id = forms.CharField(
+        max_length=255,
+        label=_("Key Id"),
+        help_text=_("AWS Access Key Id"),
+        required=False,
+    )
+    aws_secret_access_key = forms.CharField(
+        max_length=255,
+        label=_("Secret Key"),
+        help_text=_("AWS Secret Access Key"),
+        required=False,
+    )
 
     # VictorOps
     routing_key = forms.CharField(
@@ -1654,9 +1618,11 @@ class ConsulAlertsForm(ModelForm):
                 self.fields['cluster_name'].initial = self.instance.attributes.get('cluster_name')
                 self.fields['api_key'].initial = self.instance.attributes.get('api_key')
                 self.fields['enabled'].initial = self.instance.attributes.get('enabled')
-            elif self.instance.consulalert_type == 'AWS-SNS':
+            elif self.instance.consulalert_type == 'AWSSNS':
                 self.fields['region'].initial = self.instance.attributes.get('region')
                 self.fields['topic_arn'].initial = self.instance.attributes.get('topic_arn')
+                self.fields['aws_access_key_id'].initial = self.instance.attributes.get('aws_access_key_id')
+                self.fields['aws_secret_access_key'].initial = self.instance.attributes.get('aws_secret_access_key')
                 self.fields['enabled'].initial = self.instance.attributes.get('enabled')
             elif self.instance.consulalert_type == 'VictorOps':
                 self.fields['api_key'].initial = self.instance.attributes.get('api_key')
@@ -1690,6 +1656,8 @@ class ConsulAlertsForm(ModelForm):
                 "enabled": self.cleaned_data.get('enabled'),
                 "region": self.cleaned_data.get('region'),
                 "topic_arn": self.cleaned_data.get('topic_arn'),
+                "aws_access_key_id": self.cleaned_data.get('aws_access_key_id'),
+                "aws_secret_access_key": self.cleaned_data.get('aws_secret_access_key'),
                 "routing_key": self.cleaned_data.get('routing_key')
             }
             objs.save()
@@ -1734,32 +1702,16 @@ class SystemDatasetForm(ModelForm):
         )
 
     def save(self):
-        super(SystemDatasetForm, self).save()
-        if self.instance.sys_pool:
-            try:
-                notifier().system_dataset_create(mount=False)
-            except:
-                raise MiddlewareError(_("Unable to create system dataset!"))
+        data = {
+            'pool': self.cleaned_data.get('sys_pool'),
+            'syslog': self.cleaned_data.get('sys_syslog_usedataset'),
+            'rrd': self.cleaned_data.get('sys_rrd_usedataset'),
+        }
+        with client as c:
+            pk = c.call('systemdataset.update', data)
 
-        if self.instance._original_sys_pool != self.instance.sys_pool:
-            try:
-                notifier().system_dataset_migrate(
-                    self.instance._original_sys_pool, self.instance.sys_pool
-                )
-            except:
-                raise MiddlewareError(_("Unable to migrate system dataset!"))
-
-        if self.instance._original_sys_rrd_usedataset != self.instance.sys_rrd_usedataset:
-            # Stop collectd to flush data
-            notifier().stop("collectd")
-
-        notifier().restart("system_datasets")
-
-        if self.instance._original_sys_syslog_usedataset != self.instance.sys_syslog_usedataset:
-            notifier().restart("syslogd")
-        if self.instance._original_sys_rrd_usedataset != self.instance.sys_rrd_usedataset:
-            notifier().system_dataset_rrd_toggle()
-            notifier().restart("collectd")
+        self.instance = models.SystemDataset.objects.get(pk=pk)
+        return self.instance
 
 
 class InitialWizardDSForm(Form):
@@ -1770,7 +1722,6 @@ class InitialWizardDSForm(Form):
             ('ad', _('Active Directory')),
             ('ldap', _('LDAP')),
             ('nis', _('NIS')),
-            ('nt4', _('NT4')),
         ),
         initial='ad',
     )
@@ -1813,14 +1764,6 @@ class InitialWizardDSForm(Form):
                 self.fields['ds_%s' % fname] = field
                 field.required = False
 
-        for fname, field in list(NT4Form().fields.items()):
-            if (
-                fname.find('enable') == -1 and
-                fname not in NT4Form.advanced_fields
-            ):
-                self.fields['ds_%s' % fname] = field
-                field.required = False
-
         pertype = defaultdict(list)
         for fname in list(self.fields.keys()):
             if fname.startswith('ds_ad_'):
@@ -1829,8 +1772,6 @@ class InitialWizardDSForm(Form):
                 pertype['ldap'].append('id_ds-%s' % fname)
             elif fname.startswith('ds_nis_'):
                 pertype['nis'].append('id_ds-%s' % fname)
-            elif fname.startswith('ds_nt4_'):
-                pertype['nt4'].append('id_ds-%s' % fname)
 
         self.jsChange = 'genericSelectFields(\'%s\', \'%s\');' % (
             'id_ds-ds_type',
@@ -1844,9 +1785,8 @@ class InitialWizardDSForm(Form):
     def show_condition(cls, wizard):
         ad = ActiveDirectory.objects.all().filter(ad_enable=True).exists()
         ldap = LDAP.objects.all().filter(ldap_enable=True).exists()
-        nt4 = NT4.objects.all().filter(nt4_enable=True).exists()
         nis = NIS.objects.all().filter(nis_enable=True).exists()
-        return not(ad or ldap or nt4 or nis)
+        return not(ad or ldap or nis)
 
     def clean(self):
         cdata = self.cleaned_data
@@ -1965,31 +1905,6 @@ class InitialWizardDSForm(Form):
                         self._errors[fname] = self.error_class([
                             _('This field is required.'),
                         ])
-
-        elif cdata.get('ds_type') == 'nt4':
-            values = []
-            empty = True
-            for fname in list(self.fields.keys()):
-                if fname.startswith('ds_nt4_'):
-                    value = cdata.get(fname)
-                    values.append((fname, value))
-                    if empty and value:
-                        empty = False
-
-            if not empty:
-                for fname, value in values:
-                    if not value and NT4Form.base_fields[
-                        fname.replace('ds_', '')
-                    ].required:
-                        self._errors[fname] = self.error_class([
-                            _('This field is required.'),
-                        ])
-                password1 = cdata.get('ds_nt4_adminpw')
-                password2 = cdata.get('ds_nt4_adminpw2')
-                if password1 != password2:
-                    self._errors['ds_nt4_adminpw2'] = self.error_class([
-                        _('The two password fields didn\'t match.')
-                    ])
 
         return cdata
 
@@ -2551,6 +2466,11 @@ class CertificateAuthorityImportForm(ModelForm):
 
         if nmatches > 1:
             self.instance.cert_chain = True
+
+        try:
+            load_certificate(certificate)
+        except crypto.Error:
+            raise forms.ValidationError(_("CA not in PEM format."))
         #
         # Should we validate the chain??? Probably
         # For now, just assume the user knows WTF he is doing
@@ -2585,12 +2505,12 @@ class CertificateAuthorityImportForm(ModelForm):
             return passphrase
 
         try:
-            privatekey = load_privatekey(
+            load_privatekey(
                 privatekey,
                 passphrase
             )
         except Exception:
-            raise forms.ValidationError(_("Incorrect passphrase"))
+            raise forms.ValidationError(_("Incorrect passphrase."))
 
         return passphrase
 
@@ -2614,6 +2534,7 @@ class CertificateAuthorityImportForm(ModelForm):
         self.instance.cert_city = cert_info['city']
         self.instance.cert_organization = cert_info['organization']
         self.instance.cert_common = cert_info['common']
+        self.instance.cert_san = cert_info['san']
         self.instance.cert_email = cert_info['email']
         self.instance.cert_digest_algorithm = cert_info['digest_algorithm']
 
@@ -2698,6 +2619,12 @@ class CertificateAuthorityCreateInternalForm(ModelForm):
         required=True,
         help_text=models.CertificateAuthority._meta.get_field('cert_common').help_text
     )
+    cert_san = forms.CharField(
+        widget=forms.Textarea,
+        label=models.CertificateAuthority._meta.get_field('cert_san').verbose_name,
+        required=False,
+        help_text=models.CertificateAuthority._meta.get_field('cert_san').help_text
+    )
 
     def clean_cert_name(self):
         cdata = self.cleaned_data
@@ -2725,6 +2652,7 @@ class CertificateAuthorityCreateInternalForm(ModelForm):
             'city': self.instance.cert_city,
             'organization': self.instance.cert_organization,
             'common': self.instance.cert_common,
+            'san': self.instance.cert_san,
             'email': self.instance.cert_email,
             'serial': self.instance.cert_serial,
             'lifetime': self.instance.cert_lifetime,
@@ -2753,7 +2681,8 @@ class CertificateAuthorityCreateInternalForm(ModelForm):
             'cert_city',
             'cert_organization',
             'cert_email',
-            'cert_common'
+            'cert_common',
+            'cert_san',
         ]
         model = models.CertificateAuthority
 
@@ -2813,6 +2742,12 @@ class CertificateAuthorityCreateIntermediateForm(ModelForm):
         required=True,
         help_text=models.CertificateAuthority._meta.get_field('cert_common').help_text
     )
+    cert_san = forms.CharField(
+        widget=forms.Textarea,
+        label=models.CertificateAuthority._meta.get_field('cert_san').verbose_name,
+        required=False,
+        help_text=models.CertificateAuthority._meta.get_field('cert_san').help_text
+    )
 
     def __init__(self, *args, **kwargs):
         super(CertificateAuthorityCreateIntermediateForm, self).__init__(*args, **kwargs)
@@ -2856,6 +2791,7 @@ class CertificateAuthorityCreateIntermediateForm(ModelForm):
             'city': self.instance.cert_city,
             'organization': self.instance.cert_organization,
             'common': self.instance.cert_common,
+            'san': self.instance.cert_san,
             'email': self.instance.cert_email,
             'lifetime': self.instance.cert_lifetime,
             'digest_algorithm': self.instance.cert_digest_algorithm
@@ -2903,9 +2839,54 @@ class CertificateAuthorityCreateIntermediateForm(ModelForm):
             'cert_city',
             'cert_organization',
             'cert_email',
-            'cert_common'
+            'cert_common',
+            'cert_san',
         ]
         model = models.CertificateAuthority
+
+
+class CertificateAuthoritySignCSRForm(ModelForm):
+    cert_CSRs = forms.ModelChoiceField(
+        queryset=models.Certificate.objects.filter(cert_CSR__isnull=False),
+        label=(_("CSRs"))
+    )
+
+    def save(self):
+        cdata = self.cleaned_data
+        choice = cdata.get('cert_CSRs').id
+        ca = models.Certificate.objects.get(pk=choice)
+        cert_info = crypto.load_certificate(crypto.FILETYPE_PEM, self.instance.cert_certificate)
+        PKey = crypto.load_privatekey(crypto.FILETYPE_PEM, self.instance.cert_privatekey)
+        csr = crypto.load_certificate_request(crypto.FILETYPE_PEM, ca.cert_CSR)
+
+        cert = crypto.X509()
+        cert.set_serial_number(12345)
+        cert.gmtime_adj_notBefore(0)
+        cert.gmtime_adj_notAfter(3650)
+        cert.set_issuer(cert_info.get_subject())
+        cert.set_subject(csr.get_subject())
+        cert.set_pubkey(csr.get_pubkey())
+        cert.sign(PKey, self.instance.cert_digest_algorithm)
+
+        new_cert = crypto.dump_certificate(crypto.FILETYPE_PEM, cert)
+        new_PKey = crypto.dump_privatekey(crypto.FILETYPE_PEM, PKey)
+        new_csr = models.Certificate(
+            cert_type=models.CERT_TYPE_INTERNAL,
+            cert_name=cdata.get('cert_name'),
+            cert_certificate=new_cert,
+            cert_privatekey=new_PKey,
+        )
+
+        new_csr.save()
+
+        notifier().start("ix-ssl")
+
+    class Meta:
+        fields = [
+            'cert_CSRs',
+            'cert_name',
+        ]
+        model = models.Certificate
 
 
 class CertificateForm(ModelForm):
@@ -2930,13 +2911,6 @@ class CertificateEditForm(ModelForm):
         required=True,
         help_text=models.Certificate._meta.get_field('cert_certificate').help_text
     )
-
-    def __init__(self, *args, **kwargs):
-        super(CertificateEditForm, self).__init__(*args, **kwargs)
-
-        self.fields['cert_name'].widget.attrs['readonly'] = True
-        self.fields['cert_certificate'].widget.attrs['readonly'] = True
-        self.fields['cert_privatekey'].widget.attrs['readonly'] = True
 
     def save(self):
         super(CertificateEditForm, self).save()
@@ -3094,6 +3068,7 @@ class CertificateImportForm(ModelForm):
         self.instance.cert_city = cert_info['city']
         self.instance.cert_organization = cert_info['organization']
         self.instance.cert_common = cert_info['common']
+        self.instance.cert_san = cert_info['san']
         self.instance.cert_email = cert_info['email']
         self.instance.cert_digest_algorithm = cert_info['digest_algorithm']
 
@@ -3176,6 +3151,12 @@ class CertificateCreateInternalForm(ModelForm):
         required=True,
         help_text=models.Certificate._meta.get_field('cert_common').help_text
     )
+    cert_san = forms.CharField(
+        widget=forms.Textarea,
+        label=models.Certificate._meta.get_field('cert_san').verbose_name,
+        required=False,
+        help_text=models.Certificate._meta.get_field('cert_san').help_text
+    )
 
     def __init__(self, *args, **kwargs):
         super(CertificateCreateInternalForm, self).__init__(*args, **kwargs)
@@ -3219,6 +3200,7 @@ class CertificateCreateInternalForm(ModelForm):
             'city': self.instance.cert_city,
             'organization': self.instance.cert_organization,
             'common': self.instance.cert_common,
+            'san': self.instance.cert_san,
             'email': self.instance.cert_email,
             'lifetime': self.instance.cert_lifetime,
             'digest_algorithm': self.instance.cert_digest_algorithm
@@ -3277,7 +3259,8 @@ class CertificateCreateInternalForm(ModelForm):
             'cert_city',
             'cert_organization',
             'cert_email',
-            'cert_common'
+            'cert_common',
+            'cert_san',
         ]
         model = models.Certificate
 
@@ -3332,6 +3315,12 @@ class CertificateCreateCSRForm(ModelForm):
         required=True,
         help_text=models.Certificate._meta.get_field('cert_common').help_text
     )
+    cert_san = forms.CharField(
+        widget=forms.Textarea,
+        label=models.Certificate._meta.get_field('cert_san').verbose_name,
+        required=False,
+        help_text=models.Certificate._meta.get_field('cert_san').help_text
+    )
 
     def clean_cert_name(self):
         cdata = self.cleaned_data
@@ -3359,6 +3348,7 @@ class CertificateCreateCSRForm(ModelForm):
             'city': self.instance.cert_city,
             'organization': self.instance.cert_organization,
             'common': self.instance.cert_common,
+            'san': self.instance.cert_san,
             'email': self.instance.cert_email,
             'digest_algorithm': self.instance.cert_digest_algorithm
         }
@@ -3384,21 +3374,44 @@ class CertificateCreateCSRForm(ModelForm):
             'cert_city',
             'cert_organization',
             'cert_email',
-            'cert_common'
+            'cert_common',
+            'cert_san',
         ]
         model = models.Certificate
 
 
 class CloudCredentialsForm(ModelForm):
 
-    access_key = forms.CharField(
+    AMAZON_access_key = forms.CharField(
         label=_('Access Key'),
         max_length=200,
+        required=False,
     )
-    secret_key = forms.CharField(
+    AMAZON_secret_key = forms.CharField(
         label=_('Secret Key'),
         max_length=200,
+        required=False,
     )
+    BACKBLAZE_account_id = forms.CharField(
+        label=_('Account ID'),
+        max_length=200,
+        required=False,
+    )
+    BACKBLAZE_app_key = forms.CharField(
+        label=_('Application Key'),
+        max_length=200,
+        required=False,
+    )
+    GCLOUD_keyfile = FileField(
+        label=_('JSON Service Account Key'),
+        required=False,
+    )
+
+    PROVIDER_MAP = {
+        'AMAZON': ['access_key', 'secret_key'],
+        'BACKBLAZE': ['account_id', 'app_key'],
+        'GCLOUD': ['keyfile'],
+    }
 
     class Meta:
         model = models.CloudCredentials
@@ -3412,19 +3425,45 @@ class CloudCredentialsForm(ModelForm):
             'cloudCredentialsProvider();'
         )
         if self.instance.id:
-            if self.instance.provider == 'AMAZON':
-                self.fields['access_key'].initial = self.instance.attributes.get('access_key')
-                self.fields['secret_key'].initial = self.instance.attributes.get('secret_key')
+            for field in self.PROVIDER_MAP.get(self.instance.provider, []):
+                self.fields[f'{self.instance.provider}_{field}'].initial = self.instance.attributes.get(field)
+
+    def clean_GCLOUD_keyfile(self):
+        provider = self.cleaned_data.get('provider')
+        keyfile = self.cleaned_data.get('GCLOUD_keyfile')
+        if not keyfile and provider != 'GCLOUD':
+            return None
+        keyfile = keyfile.read()
+        try:
+            return json.loads(keyfile)
+        except Exception as e:
+            raise forms.ValodationError(_('Failed to load key file: %s') % e)
+
+    def clean(self):
+        provider = self.cleaned_data.get('provider')
+        if not provider:
+            return self.cleaned_data
+        for field in self.PROVIDER_MAP.get(provider, []):
+            if not self.cleaned_data.get(f'{provider}_{field}'):
+                self._errors[f'{provider}_{field}'] = self.error_class([_('This field is required.')])
+        return self.cleaned_data
 
     def save(self, *args, **kwargs):
         with client as c:
+            provider = self.cleaned_data.get('provider')
+            fields = self.PROVIDER_MAP.get(provider)
+            if not fields:
+                raise MiddlewareError(f'Unknown provider {provider}')
+
+            attributes = {}
+
+            for field in fields:
+                attributes[field] = self.cleaned_data.get(f'{provider}_{field}')
+
             data = {
                 'name': self.cleaned_data.get('name'),
-                'provider': self.cleaned_data.get('provider'),
-                'attributes': {
-                    'access_key': self.cleaned_data.get('access_key'),
-                    'secret_key': self.cleaned_data.get('secret_key'),
-                }
+                'provider': provider,
+                'attributes': attributes,
             }
             if self.instance.id:
                 c.call('backup.credential.update', self.instance.id, data)

@@ -39,13 +39,12 @@ from decimal import Decimal
 import base64
 from Crypto.Cipher import AES
 import ctypes
-import errno
 from functools import cmp_to_key
 import glob
 import grp
+import libzfs
 import logging
 import os
-import pipes
 import platform
 import pwd
 import re
@@ -61,24 +60,18 @@ import syslog
 import tarfile
 import tempfile
 import time
-import crypt
-import string
-import random
 
 WWW_PATH = "/usr/local/www"
 FREENAS_PATH = os.path.join(WWW_PATH, "freenasUI")
 NEED_UPDATE_SENTINEL = '/data/need-update'
-VERSION_FILE = '/etc/version'
 GELI_KEYPATH = '/data/geli'
 GELI_KEY_SLOT = 0
 GELI_RECOVERY_SLOT = 1
 GELI_REKEY_FAILED = '/tmp/.rekey_failed'
-SYSTEMPATH = '/var/db/system'
 PWENC_BLOCK_SIZE = 32
 PWENC_FILE_SECRET = '/data/pwenc_secret'
-PWENC_PADDING = '{'
+PWENC_PADDING = b'{'
 PWENC_CHECK = 'Donuts!'
-BACKUP_SOCK = '/var/run/backupd.sock'
 
 if WWW_PATH not in sys.path:
     sys.path.append(WWW_PATH)
@@ -117,7 +110,6 @@ from freenasUI.common.system import (
     get_mounted_filesystems,
     umount,
     get_sw_name,
-    domaincontroller_enabled
 )
 from freenasUI.common.warden import (Warden, WardenJail,
                                      WARDEN_TYPE_PLUGINJAIL,
@@ -136,8 +128,6 @@ log = logging.getLogger('middleware.notifier')
 
 class notifier(metaclass=HookMetaclass):
 
-    from os import system as __system
-    from pwd import getpwnam as ___getpwnam
     from grp import getgrnam as ___getgrnam
     IDENTIFIER = 'notifier'
 
@@ -203,44 +193,6 @@ class notifier(metaclass=HookMetaclass):
             return err
         log.debug("%s -> %s", command, proc.returncode)
         return None
-
-    def _do_nada(self):
-        pass
-
-    def _simplecmd(self, action, what):
-        log.debug("Calling: %s(%s) ", action, what)
-        f = getattr(self, '_' + action + '_' + what, None)
-        if f is None:
-            # Provide generic start/stop/restart verbs for rc.d scripts
-            if what in self.__service2daemon:
-                procname, pidfile = self.__service2daemon[what]
-                if procname:
-                    what = procname
-            if action in ("start", "stop", "restart", "reload"):
-                if action == 'restart':
-                    self._system("/usr/sbin/service " + what + " forcestop ")
-                self._system("/usr/sbin/service " + what + " " + action)
-                f = self._do_nada
-            else:
-                raise ValueError("Internal error: Unknown command")
-        f()
-
-    def init(self, what, objectid=None, *args, **kwargs):
-        """ Dedicated command to create "what" designated by an optional objectid.
-
-        The helper will use method self._init_[what]() to create the object"""
-        if objectid is None:
-            self._simplecmd("init", what)
-        else:
-            f = getattr(self, '_init_' + what)
-            f(objectid, *args, **kwargs)
-
-    def destroy(self, what, objectid=None):
-        if objectid is None:
-            raise ValueError("Calling destroy without id")
-        else:
-            f = getattr(self, '_destroy_' + what)
-            f(objectid)
 
     def start(self, what, timeout=None, onetime=False):
         kwargs = {}
@@ -760,8 +712,9 @@ class notifier(metaclass=HookMetaclass):
 
         return vdevs
 
-    def __create_zfs_volume(self, volume, swapsize, groups, path=None, init_rand=False):
-        """Internal procedure to create a ZFS volume identified by volume id"""
+    def create_volume(self, volume, groups=False, path=None, init_rand=False):
+        """Create a ZFS volume identified by volume id"""
+        swapsize = self.get_swapsize()
         z_name = str(volume.vol_name)
         z_vdev = ""
         encrypt = (volume.vol_encrypt >= 1)
@@ -885,14 +838,14 @@ class notifier(metaclass=HookMetaclass):
         zfs_error = zfsproc.wait()
         return zfs_error, zfs_err
 
-    def create_zfs_dataset(self, path, props=None, _restart_collectd=True):
+    def create_zfs_dataset(self, path, props=None):
         """Internal procedure to create ZFS volume"""
         options = " "
         if props:
             assert isinstance(props, dict)
             for k in list(props.keys()):
                 if props[k] != 'inherit':
-                    options += "-o %s=%s " % (k, props[k])
+                    options += "-o %s='%s' " % (k, str(props[k]).replace("'", "'\"'\"'"))
         zfsproc = self._pipeopen("/sbin/zfs create %s '%s'" % (options, path))
         zfs_output, zfs_err = zfsproc.communicate()
         zfs_error = zfsproc.wait()
@@ -930,7 +883,8 @@ class notifier(metaclass=HookMetaclass):
         out = out.split('\n')
         retval = OrderedDict()
         if system is False:
-            systemdataset, basename = self.system_dataset_settings()
+            with client as c:
+                basename = c.call('systemdataset.config')['basename']
         if proc.returncode == 0:
             for line in out:
                 if not line:
@@ -1010,12 +964,6 @@ class notifier(metaclass=HookMetaclass):
         # Clear out disks associated with the volume
         for disk in disks:
             self.__gpt_unlabeldisk(devname=disk)
-
-    def _init_volume(self, volume, *args, **kwargs):
-        """Initialize a volume designated by volume_id"""
-        swapsize = self.get_swapsize()
-
-        self.__create_zfs_volume(volume, swapsize, kwargs.pop('groups', False), kwargs.pop('path', None), init_rand=kwargs.pop('init_rand', False))
 
     def zfs_replace_disk(self, volume, from_label, to_disk, force=False, passphrase=None):
         """Replace disk in zfs called `from_label` to `to_disk`"""
@@ -1215,11 +1163,8 @@ class notifier(metaclass=HookMetaclass):
 
         return os.path.join(mountpoint_root, name)
 
-    def _destroy_volume(self, volume):
-        """Destroy a volume on the system
-
-        This either destroys a zpool or umounts a generic volume (e.g. NTFS,
-        UFS, etc) and nukes it.
+    def volume_destroy(self, volume):
+        """Destroy a ZFS pool on the system
 
         In the event that the volume is still in use in the OS, the end-result
         is implementation defined depending on the filesystem, and the set of
@@ -1237,7 +1182,6 @@ class notifier(metaclass=HookMetaclass):
              meaningful data.
         XXX: divorce this from storage.models; depending on storage.models
              introduces a circular dependency and creates design ugliness.
-        XXX: implement destruction algorithm for non-UFS/-ZFS.
 
         Parameters:
             volume: a storage.models.Volume object.
@@ -1250,193 +1194,11 @@ class notifier(metaclass=HookMetaclass):
 
         # volume_detach compatibility.
         vol_name = volume.vol_name
-
         vol_mountpath = self.__get_mountpath(vol_name)
-
+        self.__destroy_zfs_volume(volume)
         self.reload('disk')
         self._encvolume_detach(volume, destroy=True)
         self.__rmdir_mountpoint(vol_mountpath)
-
-    # Create a user in system then samba
-    def __pw_with_password(self, command, password):
-        pw = self._pipeopen(command)
-        msg = pw.communicate("%s\n" % password)[1]
-        if pw.returncode != 0:
-            raise MiddlewareError("Operation could not be performed. %s" % msg)
-
-        if msg != "":
-            log.debug("Command reports %s", msg)
-        return crypt.crypt(password, crypt_makeSalt())
-
-    def __smbpasswd(self, username, password):
-        """
-        Add the user ``username'' to samba using ``password'' as
-        the current password
-
-        Returns:
-            True whether the user has been successfully added and False otherwise
-        """
-
-        # For domaincontroller mode, rely on RSAT for user modification
-        if domaincontroller_enabled():
-            return 0
-
-        command = '/usr/local/bin/smbpasswd -D 0 -s -a "%s"' % (username)
-        smbpasswd = self._pipeopen(command)
-        smbpasswd.communicate("%s\n%s\n" % (password, password))
-        return smbpasswd.returncode == 0
-
-    def __issue_pwdchange(self, username, command, password):
-        unix_hash = self.__pw_with_password(command, password)
-        self.__smbpasswd(username, password)
-        return unix_hash
-
-    def user_create(self, username, fullname, password, uid=-1, gid=-1,
-                    shell="/sbin/nologin",
-                    homedir='/mnt', homedir_mode=0o755,
-                    password_disabled=False):
-        """Create a user.
-
-        This goes and compiles the invocation needed to execute via pw(8),
-        then goes and creates a home directory. Then it goes and adds the
-        user via pw(8), and finally adds the user's to the samba user
-        database. If adding the user fails for some reason, it will remove
-        the directory.
-
-        Required parameters:
-
-        username - a textual identifier for the user (should conform to
-                   all constraints with Windows, Unix and OSX usernames).
-                   Example: 'root'.
-        fullname - a textual 'humanized' identifier for the user. Example:
-                   'Charlie Root'.
-        password - passphrase used to login to the system; this is
-                   ignored if password_disabled is True.
-
-        Optional parameters:
-
-        uid - uid for the user. Defaults to -1 (defaults to the next UID
-              via pw(8)).
-        gid - gid for the user. Defaults to -1 (defaults to the next GID
-              via pw(8)).
-        shell - login shell for a user when logging in interactively.
-                Defaults to /sbin/nologin.
-        homedir - where the user will be put, or /nonexistent if
-                  the user doesn't need a directory; defaults to /mnt.
-        homedir_mode - mode to use when creating the home directory;
-                       defaults to 0755.
-        password_disabled - should password based logins be allowed for
-                            the user? Defaults to False.
-
-        XXX: the default for the home directory seems like a bad idea.
-             Should this be a required parameter instead, or default
-             to /var/empty?
-        XXX: seems like the password_disabled and password fields could
-             be rolled into one property.
-        XXX: the homedir mode isn't set today by the GUI; the default
-             is set to the FreeBSD default when calling pw(8).
-        XXX: smbpasswd errors aren't being caught today.
-        XXX: invoking smbpasswd for each user add seems like an
-             expensive operation.
-        XXX: why are we returning the password hashes?
-
-        Returns:
-            A tuple of the user's UID, GID, the Unix encrypted password
-            hash, and the encrypted SMB password hash.
-
-        Raises:
-            MiddlewareError - tried to create a home directory under a
-                              subdirectory on the /mnt memory disk.
-            MiddlewareError - failed to create the home directory for
-                              the user.
-            MiddlewareError - failed to run pw useradd successfully.
-        """
-        command = '/usr/sbin/pw useradd -n "%s" -o -c "%s" -d "%s" -s "%s"' % \
-            (username, fullname, homedir, shell, )
-        if password_disabled:
-            command += ' -h -'
-        else:
-            command += ' -h 0'
-        if uid >= 0:
-            command += " -u %d" % (uid)
-        if gid >= 0:
-            command += " -g %d" % (gid)
-        if homedir != '/nonexistent':
-            # Populate the home directory with files from /usr/share/skel .
-            command += ' -m'
-
-        # Is this a new directory or not? Let's not nuke existing directories,
-        # e.g. /, /root, /mnt/tank/my-dataset, etc ;).
-        new_homedir = False
-
-        if homedir != '/nonexistent':
-            # Kept separate for cleanliness between formulating what to do
-            # and executing the formulated plan.
-
-            # You're probably wondering why pw -m doesn't suffice. Here's why:
-            # 1. pw(8) doesn't create home directories if the base directory
-            #    doesn't exist; example: if /mnt/tank/homes doesn't exist and
-            #    the user specified /mnt/tank/homes/user, then the home
-            #    directory won't be created.
-            # 2. pw(8) allows me to specify /mnt/md_size (a regular file) for
-            #    the home directory.
-            # 3. If some other random path creation error occurs, it's already
-            #    too late to roll back the user create.
-            try:
-                os.makedirs(homedir, mode=homedir_mode)
-                if os.stat(homedir).st_dev == os.stat('/mnt').st_dev:
-                    # HACK: ensure the user doesn't put their homedir under
-                    # /mnt
-                    # XXX: fix the GUI code and elsewhere to enforce this, then
-                    # remove the hack.
-                    raise MiddlewareError('Path for the home directory (%s) '
-                                          'must be under a volume or dataset'
-                                          % (homedir, ))
-            except OSError as oe:
-                if oe.errno == errno.EEXIST:
-                    if not os.path.isdir(homedir):
-                        raise MiddlewareError('Path for home directory already '
-                                              'exists and is not a directory')
-                else:
-                    raise MiddlewareError('Failed to create the home directory '
-                                          '(%s) for user: %s'
-                                          % (homedir, str(oe)))
-            else:
-                new_homedir = True
-
-        try:
-            unix_hash = self.__issue_pwdchange(username, command, password)
-            """
-            Make sure to use -d 0 for pdbedit, otherwise it will bomb
-            if CIFS debug level is anything different than 'Minimum'.
-            If in domain controller mode, skip all together since it
-            is expected that RSAT is used for user modifications.
-            """
-            smb_hash = '*'
-            if not domaincontroller_enabled():
-                smb_command = "/usr/local/bin/pdbedit -d 0 -w %s" % username
-                smb_cmd = self._pipeopen(smb_command)
-                smb_hash = smb_cmd.communicate()[0].split('\n')[0]
-        except:
-            if new_homedir:
-                # Be as atomic as possible when creating the user if
-                # commands failed to execute cleanly.
-                shutil.rmtree(homedir)
-            raise
-
-        user = self.___getpwnam(username)
-        return (user.pw_uid, user.pw_gid, unix_hash, smb_hash)
-
-    def group_create(self, name):
-        command = '/usr/sbin/pw group add "%s"' % (
-            name,
-        )
-        proc = self._pipeopen(command)
-        errmsg = proc.communicate()[1]
-        if proc.returncode != 0:
-            raise MiddlewareError(_('Failed to create group %(name)s: %(msg)s') % {'name': name, 'msg': errmsg})
-        grnam = self.___getgrnam(name)
-        return grnam.gr_gid
 
     def groupmap_list(self):
         command = "/usr/local/bin/net groupmap list"
@@ -1489,123 +1251,6 @@ class notifier(metaclass=HookMetaclass):
             ret = True
 
         return ret
-
-    def user_lock(self, username):
-        self._system('/usr/local/bin/smbpasswd -d "%s"' % (username))
-        self._system('/usr/sbin/pw lock "%s"' % (username))
-        return self.user_gethashedpassword(username)
-
-    def user_unlock(self, username):
-        self._system('/usr/local/bin/smbpasswd -e "%s"' % (username))
-        self._system('/usr/sbin/pw unlock "%s"' % (username))
-        return self.user_gethashedpassword(username)
-
-    def user_changepassword(self, username, password):
-        """Changes user password"""
-        command = '/usr/sbin/pw usermod "%s" -h 0' % (username)
-        unix_hash = self.__issue_pwdchange(username, command, password)
-        smb_hash = self.user_gethashedpassword(username)
-        return (unix_hash, smb_hash)
-
-    def user_gethashedpassword(self, username):
-        """
-        Get the samba hashed password for ``username''
-
-        Returns:
-            tuple -> (user password, samba hash)
-        """
-
-        """
-        Make sure to use -d 0 for pdbedit, otherwise it will bomb
-        if CIFS debug level is anything different than 'Minimum'
-        """
-        smb_command = "/usr/local/bin/pdbedit -d 0 -w %s" % username
-        smb_cmd = self._pipeopen(smb_command)
-        smb_hash = smb_cmd.communicate()[0].split('\n')[0]
-        return smb_hash
-
-    def user_deleteuser(self, username):
-        """
-        Delete a user using pw(8) utility
-
-        Returns:
-            bool
-        """
-        self._system('/usr/local/bin/smbpasswd -x "%s"' % (username))
-        pipe = self._pipeopen('/usr/sbin/pw userdel "%s"' % (username, ))
-        err = pipe.communicate()[1]
-        if pipe.returncode != 0:
-            log.warn("Failed to delete user %s: %s", username, err)
-            return False
-        return True
-
-    def user_deletegroup(self, groupname):
-        """
-        Delete a group using pw(8) utility
-
-        Returns:
-            bool
-        """
-        pipe = self._pipeopen('/usr/sbin/pw groupdel "%s"' % (groupname, ))
-        err = pipe.communicate()[1]
-        if pipe.returncode != 0:
-            log.warn("Failed to delete group %s: %s", groupname, err)
-            return False
-        return True
-
-    def user_getnextuid(self):
-        command = "/usr/sbin/pw usernext"
-        pw = self._pipeopen(command)
-        uid = pw.communicate()[0]
-        if pw.returncode != 0:
-            raise ValueError("Could not retrieve usernext")
-        uid = uid.split(':')[0]
-        return uid
-
-    def user_getnextgid(self):
-        command = "/usr/sbin/pw groupnext"
-        pw = self._pipeopen(command)
-        gid = pw.communicate()[0]
-        if pw.returncode != 0:
-            raise ValueError("Could not retrieve groupnext")
-        return gid
-
-    def save_pubkey(self, homedir, pubkey, username, groupname):
-        homedir = str(homedir)
-        pubkey = str(pubkey).strip()
-        if pubkey:
-            pubkey = '%s\n' % pubkey
-        sshpath = '%s/.ssh' % (homedir)
-        keypath = '%s/.ssh/authorized_keys' % (homedir)
-        try:
-            oldpubkey = open(keypath).read()
-            if oldpubkey == pubkey:
-                return
-        except:
-            pass
-
-        saved_umask = os.umask(0o77)
-        if not os.path.isdir(sshpath):
-            os.makedirs(sshpath)
-        if not os.path.isdir(sshpath):
-            return  # FIXME: need better error reporting here
-        if pubkey == '' and os.path.exists(keypath):
-            os.unlink(keypath)
-        else:
-            fd = open(keypath, 'w')
-            fd.write(pubkey)
-            fd.close()
-            self._system("""/usr/sbin/chown -R %s:%s "%s" """ % (username, groupname, sshpath))
-        os.umask(saved_umask)
-
-    def delete_pubkey(self, homedir):
-        homedir = str(homedir)
-        keypath = '%s/.ssh/authorized_keys' % (homedir, )
-        if os.path.exists(keypath):
-            try:
-                os.unlink(keypath)
-            finally:
-                pass
 
     def path_to_smb_share(self, path):
         from freenasUI.sharing.models import CIFS_Share
@@ -1960,7 +1605,8 @@ class notifier(metaclass=HookMetaclass):
         return True
 
     def get_update_location(self):
-        syspath = self.system_dataset_path()
+        with client as c:
+            syspath = c.call('systemdataset.config')['path']
         if syspath:
             return '%s/update' % syspath
         return '/var/tmp/update'
@@ -2017,6 +1663,10 @@ class notifier(metaclass=HookMetaclass):
         from freenasUI.system.views import INSTALLFILE
         import freenasOS.Configuration as Configuration
         dirpath = os.path.dirname(path)
+        try:
+            os.chmod(dirpath, 0o755)
+        except OSError as e:
+            raise MiddlewareError("Unable to set permissions on update cache directory %s: %s" % (dirpath, str(e)))
         open(INSTALLFILE, 'w').close()
         try:
             subprocess.check_output(
@@ -2667,14 +2317,6 @@ class notifier(metaclass=HookMetaclass):
             status = 'HEALTHY'
         return status
 
-    def checksum(self, path, algorithm='sha256'):
-        algorithm2map = {
-            'sha256': '/sbin/sha256 -q',
-        }
-        hasher = self._pipeopen('%s %s' % (algorithm2map[algorithm], path))
-        sum = hasher.communicate()[0].split('\n')[0]
-        return sum
-
     def get_disks(self, unused=False):
         """
         Grab usable disks and pertinent info about them
@@ -2856,7 +2498,18 @@ class notifier(metaclass=HookMetaclass):
         else:
             imp = self._pipeopen('zpool import -f -R /mnt %s' % name)
         stdout, stderr = imp.communicate()
-        if imp.returncode == 0:
+
+        # zpool import may fail due to readonly mountpoint but pool
+        # will be imported so we make sure of that using libzfs.
+        # See #24936
+        imported = imp.returncode == 0
+        if not imported:
+            try:
+                imported = libzfs.ZFS().get(name) is not None
+            except libzfs.ZFSException:
+                pass
+
+        if imported:
             # Reset all mountpoints in the zpool
             self.zfs_inherit_option(name, 'mountpoint', True)
             # Remember the pool cache
@@ -3098,7 +2751,8 @@ class notifier(metaclass=HookMetaclass):
             sort = '-s %s' % sort
 
         if system is False:
-            systemdataset, basename = self.system_dataset_settings()
+            with client as c:
+                basename = c.call('systemdataset.config')['basename']
 
         if replications is None:
             replications = {}
@@ -3315,6 +2969,7 @@ class notifier(metaclass=HookMetaclass):
         """
         name = str(name)
         item = str(item)
+
         if isinstance(value, bytes):
             value = value.decode('utf8')
         else:
@@ -3563,17 +3218,6 @@ class notifier(metaclass=HookMetaclass):
 
         return None
 
-    def is_carp_interface(self, iface):
-        res = False
-
-        if not iface:
-            return res
-
-        if re.match('^carp[0-9]+$', iface):
-            res = True
-
-        return res
-
     def get_parent_interface(self, iface):
         from freenasUI import choices
         from freenasUI.common.sipcalc import sipcalc_type
@@ -3593,8 +3237,6 @@ class notifier(metaclass=HookMetaclass):
         interfaces = choices.NICChoices(exclude_configured=False, include_vlan_parent=True)
         for iface in interfaces:
             iface = iface[0]
-            if self.is_carp_interface(iface):
-                continue
 
             iinfo = self.get_interface_info(iface)
             if not iinfo:
@@ -3745,22 +3387,6 @@ class notifier(metaclass=HookMetaclass):
             return search[0].text
         else:
             return ''
-
-    def get_boot_pool_boottype(self):
-        status = self.zpool_parse('freenas-boot')
-        doc = self._geom_confxml()
-        efi = bios = 0
-        for disk in status.get_disks():
-            for _type in doc.xpath("//class[name = 'PART']/geom[name = '%s']/provider/config/type" % disk):
-                if _type.text == 'efi':
-                    efi += 1
-                elif _type.text == 'bios-boot':
-                    bios += 1
-        if efi == 0 and bios == 0:
-            return None
-        if bios > 0:
-            return 'BIOS'
-        return 'EFI'
 
     def zpool_parse(self, name):
         doc = self._geom_confxml()
@@ -4024,143 +3650,6 @@ class notifier(metaclass=HookMetaclass):
         else:
             raise ValueError("Unknown mode %s" % (mode, ))
 
-    def __toCamelCase(self, name):
-        pass1 = re.sub(r'[^a-zA-Z0-9]', ' ', name.strip())
-        pass2 = re.sub(r'\s{2,}', ' ', pass1)
-        camel = ''.join([word.capitalize() for word in pass2.split()])
-        return camel
-
-    def ipmi_loaded(self):
-        """
-        Check whether we have a valid /dev/ipmi
-
-        Returns:
-            bool: IPMI device found?
-        """
-        return os.path.exists('/dev/ipmi0')
-
-    def ipmi_get_lan(self, channel=1):
-        """Get lan info from ipmitool
-
-        Returns:
-            A dict object with key, val
-
-        Raises:
-            AssertionError: ipmitool lan print failed
-            MiddlewareError: the ipmi device could not be found
-        """
-
-        if not self.ipmi_loaded():
-            raise MiddlewareError('The ipmi device could not be found')
-
-        RE_ATTRS = re.compile(r'^(?P<key>^.+?)\s+?:\s+?(?P<val>.+?)\r?$', re.M)
-
-        p1 = self._pipeopen('/usr/local/bin/ipmitool lan print %d' % channel)
-        ipmi = p1.communicate()[0]
-        if p1.returncode != 0:
-            raise AssertionError(
-                "Could not retrieve data, ipmi device possibly in use?"
-            )
-
-        data = {}
-        items = RE_ATTRS.findall(ipmi)
-        for key, val in items:
-            dkey = self.__toCamelCase(key)
-            if dkey:
-                data[dkey] = val.strip()
-        return data
-
-    def ipmi_set_lan(self, data, channel=1):
-        """Set lan info from ipmitool
-
-        Returns:
-            0 if the operation was successful, > 0 otherwise
-
-        Raises:
-            MiddlewareError: the ipmi device could not be found
-        """
-
-        if not self.ipmi_loaded():
-            raise MiddlewareError('The ipmi device could not be found')
-
-        if data['dhcp']:
-            rv = self._system_nolog(
-                '/usr/local/bin/ipmitool lan set %d ipsrc dhcp' % channel
-            )
-        else:
-            rv = self._system_nolog(
-                '/usr/local/bin/ipmitool lan set %d ipsrc static' % channel
-            )
-            rv |= self._system_nolog(
-                '/usr/local/bin/ipmitool lan set %d ipaddr %s' % (
-                    channel,
-                    data['ipv4address'],
-                )
-            )
-            rv |= self._system_nolog(
-                '/usr/local/bin/ipmitool lan set %d netmask %s' % (
-                    channel,
-                    data['ipv4netmaskbit'],
-                )
-            )
-            rv |= self._system_nolog(
-                '/usr/local/bin/ipmitool lan set %d defgw ipaddr %s' % (
-                    channel,
-                    data['ipv4gw'],
-                )
-            )
-
-        rv |= self._system_nolog(
-            '/usr/local/bin/ipmitool lan set %d vlan id %s' % (
-                channel,
-                data['vlanid'] if data.get('vlanid') else 'off',
-            )
-        )
-
-        rv |= self._system_nolog(
-            '/usr/local/bin/ipmitool lan set %d access on' % channel
-        )
-        rv |= self._system_nolog(
-            '/usr/local/bin/ipmitool lan set %d auth USER "MD2,MD5"' % channel
-        )
-        rv |= self._system_nolog(
-            '/usr/local/bin/ipmitool lan set %d auth OPERATOR "MD2,MD5"' % (
-                channel,
-            )
-        )
-        rv |= self._system_nolog(
-            '/usr/local/bin/ipmitool lan set %d auth ADMIN "MD2,MD5"' % (
-                channel,
-            )
-        )
-        rv |= self._system_nolog(
-            '/usr/local/bin/ipmitool lan set %d auth CALLBACK "MD2,MD5"' % (
-                channel,
-            )
-        )
-        # Setting arp have some issues in some hardwares
-        # Do not fail if setting these couple settings do not work
-        # See #15578
-        self._system_nolog(
-            '/usr/local/bin/ipmitool lan set %d arp respond on' % channel
-        )
-        self._system_nolog(
-            '/usr/local/bin/ipmitool lan set %d arp generate on' % channel
-        )
-        if data.get("ipmi_password1"):
-            rv |= self._system_nolog(
-                '/usr/local/bin/ipmitool user set password 2 "%s"' % (
-                    pipes.quote(data.get('ipmi_password1')),
-                )
-            )
-        rv |= self._system_nolog('/usr/local/bin/ipmitool user enable 2')
-        # XXX: according to dwhite, this needs to be executed off the box via
-        # the lanplus interface.
-        # rv |= self._system_nolog(
-        #    '/usr/local/bin/ipmitool sol set enabled true 1'
-        # )
-        return rv
-
     def dataset_init_unix(self, dataset):
         """path = "/mnt/%s" % dataset"""
         pass
@@ -4270,347 +3759,6 @@ class notifier(metaclass=HookMetaclass):
 
         return True
 
-    def system_dataset_settings(self):
-        from freenasUI.storage.models import Volume
-        from freenasUI.system.models import SystemDataset
-
-        try:
-            systemdataset = SystemDataset.objects.all()[0]
-        except:
-            systemdataset = SystemDataset.objects.create()
-
-        if not systemdataset.get_sys_uuid():
-            systemdataset.new_uuid()
-            systemdataset.save()
-
-        # If there is a pool configured make sure the volume exists
-        # Otherwise reset it to blank
-        if systemdataset.sys_pool and systemdataset.sys_pool != 'freenas-boot':
-            volume = Volume.objects.filter(vol_name=systemdataset.sys_pool)
-            if not volume.exists():
-                systemdataset.sys_pool = ''
-                systemdataset.save()
-
-        if not systemdataset.sys_pool and not self.is_freenas():
-            # For TrueNAS default system dataset lives in boot pool
-            # See #17049
-            systemdataset.sys_pool = 'freenas-boot'
-            systemdataset.save()
-        elif not systemdataset.sys_pool:
-
-            volume = None
-            for o in Volume.objects.all().order_by(
-                'vol_encrypt'
-            ):
-                if o.is_decrypted():
-                    volume = o
-                    break
-            if not volume:
-                return systemdataset, None
-            else:
-                systemdataset.sys_pool = volume.vol_name
-                systemdataset.save()
-
-        basename = '%s/.system' % systemdataset.sys_pool
-        return systemdataset, basename
-
-    def system_dataset_create(self, mount=True):
-
-        if (
-            hasattr(self, 'failover_status') and
-            self.failover_status() == 'BACKUP'
-        ):
-            if os.path.exists(SYSTEMPATH):
-                try:
-                    os.unlink(SYSTEMPATH)
-                except:
-                    pass
-            return None
-
-        systemdataset, basename = self.system_dataset_settings()
-        if not basename:
-            if os.path.exists(SYSTEMPATH):
-                try:
-                    os.rmdir(SYSTEMPATH)
-                except Exception as e:
-                    log.debug("Failed to delete %s: %s", SYSTEMPATH, e)
-            return systemdataset
-
-        if not systemdataset.is_decrypted():
-            return None
-
-        self.system_dataset_rename(basename, systemdataset)
-
-        datasets = [basename]
-        for sub in (
-            'cores', 'samba4', 'syslog-%s' % systemdataset.get_sys_uuid(),
-            'rrd-%s' % systemdataset.get_sys_uuid(),
-            'configs-%s' % systemdataset.get_sys_uuid(),
-        ):
-            datasets.append('%s/%s' % (basename, sub))
-
-        createdds = False
-        for dataset in datasets:
-            proc = self._pipeopen('/sbin/zfs get -H -o value mountpoint "%s"' % dataset)
-            stdout, stderr = proc.communicate()
-            if proc.returncode == 0:
-                if stdout.strip() != 'legacy':
-                    self._system('/sbin/zfs set mountpoint=legacy "%s"' % dataset)
-
-                continue
-
-            self.create_zfs_dataset(dataset, {"mountpoint": "legacy"}, _restart_collectd=False)
-            createdds = True
-
-        if createdds:
-            self.restart('collectd')
-
-        if not os.path.isdir(SYSTEMPATH):
-            if os.path.exists(SYSTEMPATH):
-                os.unlink(SYSTEMPATH)
-            os.mkdir(SYSTEMPATH)
-
-        aclmode = self.get_dataset_aclmode(basename)
-        if aclmode and aclmode.lower() == 'restricted':
-            self.set_dataset_aclmode(basename, 'passthrough')
-
-        if mount:
-            self.system_dataset_mount(systemdataset.sys_pool, SYSTEMPATH)
-
-            corepath = '%s/cores' % SYSTEMPATH
-            if os.path.exists(corepath):
-                self._system('/sbin/sysctl kern.corefile=\'%s/%%N.core\'' % (
-                    corepath,
-                ))
-                os.chmod(corepath, 0o775)
-
-            self.nfsv4link()
-
-        return systemdataset
-
-    def system_dataset_rename(self, basename=None, sysdataset=None):
-        if basename is None:
-            basename = self.system_dataset_settings()[1]
-        if sysdataset is None:
-            sysdataset = self.system_dataset_settings()[0]
-
-        legacydatasets = {
-            'syslog': '%s/syslog' % basename,
-            'rrd': '%s/rrd' % basename,
-        }
-        newdatasets = {
-            'syslog': '%s/syslog-%s' % (basename, sysdataset.get_sys_uuid()),
-            'rrd': '%s/rrd-%s' % (basename, sysdataset.get_sys_uuid()),
-        }
-        proc = self._pipeopen(
-            'zfs list -H -o name %s' % ' '.join(
-                [
-                    "%s" % name
-                    for name in list(legacydatasets.values()) + list(newdatasets.values())
-                ]
-            )
-        )
-        output = proc.communicate()[0].strip('\n').split('\n')
-        for ident, name in list(legacydatasets.items()):
-            if name in output:
-                newname = newdatasets.get(ident)
-                if newname not in output:
-
-                    if ident == 'syslog':
-                        self.stop('syslogd')
-                    elif ident == 'rrd':
-                        self.stop('collectd')
-
-                    proc = self._pipeopen(
-                        'zfs rename -f "%s" "%s"' % (name, newname)
-                    )
-                    errmsg = proc.communicate()[1]
-                    if proc.returncode != 0:
-                        log.error(
-                            "Failed renaming system dataset from %s to %s: %s",
-                            name,
-                            newname,
-                            errmsg,
-                        )
-
-                    if ident == 'syslog':
-                        self.start('syslogd')
-                    elif ident == 'rrd':
-                        self.start('collectd')
-
-                else:
-                    # There is already a dataset using the new name
-                    pass
-
-    def system_dataset_path(self):
-        if not os.path.exists(SYSTEMPATH):
-            return None
-
-        if not os.path.ismount(SYSTEMPATH):
-            return None
-
-        return SYSTEMPATH
-
-    def system_dataset_mount(self, pool, path=SYSTEMPATH):
-        systemdataset, basename = self.system_dataset_settings()
-        sub = [
-            'cores', 'samba4', 'syslog-%s' % systemdataset.get_sys_uuid(),
-            'rrd-%s' % systemdataset.get_sys_uuid(),
-            'configs-%s' % systemdataset.get_sys_uuid(),
-        ]
-
-        # Check if .system datasets are already mounted
-        if os.path.ismount(path):
-            return
-
-        self._system('/sbin/mount -t zfs "%s/.system" "%s"' % (pool, path))
-
-        for i in sub:
-            if not os.path.isdir('%s/%s' % (path, i)):
-                os.mkdir('%s/%s' % (path, i))
-
-            self._system('/sbin/mount -t zfs "%s/.system/%s" "%s/%s"' % (pool, i, path, i))
-
-    def system_dataset_umount(self, pool):
-        systemdataset, basename = self.system_dataset_settings()
-        sub = [
-            'cores', 'samba4', 'syslog-%s' % systemdataset.get_sys_uuid(),
-            'rrd-%s' % systemdataset.get_sys_uuid(),
-            'configs-%s' % systemdataset.get_sys_uuid(),
-        ]
-
-        for i in sub:
-            self._system('/sbin/umount -f "%s/.system/%s"' % (pool, i))
-
-        self._system('/sbin/umount -f "%s/.system"' % pool)
-
-    def _createlink(self, syspath, item):
-        if not os.path.isfile(os.path.join(syspath, os.path.basename(item))):
-            if os.path.exists(os.path.join(syspath, os.path.basename(item))):
-                # There's something here but it's not a file.
-                shutil.rmtree(os.path.join(syspath, os.path.basename(item)))
-            open(os.path.join(syspath, os.path.basename(item)), "w").close()
-        os.symlink(os.path.join(syspath, os.path.basename(item)), item)
-
-    def nfsv4link(self):
-        syspath = self.system_dataset_path()
-        if not syspath:
-            return None
-
-        restartfiles = ["/var/db/nfs-stablerestart", "/var/db/nfs-stablerestart.bak"]
-        if (
-            hasattr(self, 'failover_status') and
-            self.failover_status() == 'BACKUP'
-        ):
-            return None
-
-        for item in restartfiles:
-            if os.path.exists(item):
-                if os.path.isfile(item) and not os.path.islink(item):
-                    # It's an honest to goodness file, this shouldn't ever happen...but
-                    if not os.path.isfile(os.path.join(syspath, os.path.basename(item))):
-                        # there's no file in the system dataset, so copy over what we have
-                        # being careful to nuke anything that is there that happens to
-                        # have the same name.
-                        if os.path.exists(os.path.join(syspath, os.path.basename(item))):
-                            shutil.rmtree(os.path.join(syspath, os.path.basename(item)))
-                        shutil.copy(item, os.path.join(syspath, os.path.basename(item)))
-                    # Nuke the original file and create a symlink to it
-                    # We don't need to worry about creating the file on the system dataset
-                    # because it's either been copied over, or was already there.
-                    os.unlink(item)
-                    os.symlink(os.path.join(syspath, os.path.basename(item)), item)
-                elif os.path.isdir(item):
-                    # Pathological case that should never happen
-                    shutil.rmtree(item)
-                    self._createlink(syspath, item)
-                else:
-                    if not os.path.exists(os.readlink(item)):
-                        # Dead symlink or some other nastiness.
-                        shutil.rmtree(item)
-                        self._createlink(syspath, item)
-            else:
-                # We can get here if item is a dead symlink
-                if os.path.islink(item):
-                    os.unlink(item)
-                self._createlink(syspath, item)
-
-    def system_dataset_rrd_toggle(self):
-        sysdataset, basename = self.system_dataset_settings()
-
-        # Path where collectd stores files
-        rrd_path = '/var/db/collectd/rrd'
-        # Path where rrd fies are stored in system dataset
-        rrd_syspath = f'/var/db/system/rrd-{sysdataset.get_sys_uuid()}'
-
-        if sysdataset.sys_rrd_usedataset:
-            # Move from tmpfs to system dataset
-            if os.path.exists(rrd_path):
-                if os.path.islink(rrd_path):
-                    # rrd path is already a link
-                    # so there is nothing we can do about it
-                    return False
-                proc = self._pipeopen(f'rsync -a {rrd_path}/ {rrd_syspath}/')
-                proc.communicate()
-                return proc.returncode == 0
-        else:
-            # Move from system dataset to tmpfs
-            if os.path.exists(rrd_path):
-                if os.path.islink(rrd_path):
-                    os.unlink(rrd_path)
-            else:
-                os.makedirs(rrd_path)
-            proc = self._pipeopen(f'rsync -a {rrd_syspath}/ {rrd_path}/')
-            proc.communicate()
-            return proc.returncode == 0
-        return False
-
-    def system_dataset_migrate(self, _from, _to):
-
-        rsyncs = (
-            (SYSTEMPATH, '/tmp/system.new'),
-        )
-
-        os.mkdir('/tmp/system.new')
-        self.system_dataset_mount(_to, '/tmp/system.new')
-
-        restart = []
-        if os.path.exists('/var/run/syslog.pid'):
-            restart.append('syslogd')
-            self.stop('syslogd')
-
-        if os.path.exists('/var/run/samba/smbd.pid'):
-            restart.append('cifs')
-            self.stop('cifs')
-
-        if os.path.exists('/var/run/collectd.pid'):
-            restart.append('collectd')
-            self.stop('collectd')
-
-        for src, dest in rsyncs:
-            rv = self._system_nolog('/usr/local/bin/rsync -az "%s/" "%s"' % (
-                src,
-                dest,
-            ))
-
-        if _from and rv == 0:
-            self.system_dataset_umount(_from)
-            self.system_dataset_umount(_to)
-            self.system_dataset_mount(_to, SYSTEMPATH)
-            proc = self._pipeopen(
-                '/sbin/zfs list -H -o name %s/.system|xargs zfs destroy -r' % (
-                    _from,
-                )
-            )
-            proc.communicate()
-
-        os.rmdir('/tmp/system.new')
-
-        for service in restart:
-            self.start(service)
-
-        self.nfsv4link()
-
     def zpool_status(self, pool_name):
         """
         Function to find out the status of the zpool
@@ -4672,12 +3820,11 @@ class notifier(metaclass=HookMetaclass):
         settings.save()
 
         if reset_passwords:
-            from freenasUI.directoryservice.models import ActiveDirectory, LDAP, NT4
+            from freenasUI.directoryservice.models import ActiveDirectory, LDAP
             from freenasUI.services.models import DynamicDNS, WebDAV, UPS
             from freenasUI.system.models import Email
             self.pwenc_reset_model_passwd(ActiveDirectory, 'ad_bindpw')
             self.pwenc_reset_model_passwd(LDAP, 'ldap_bindpw')
-            self.pwenc_reset_model_passwd(NT4, 'nt4_adminpw')
             self.pwenc_reset_model_passwd(DynamicDNS, 'ddns_password')
             self.pwenc_reset_model_passwd(WebDAV, 'webdav_password')
             self.pwenc_reset_model_passwd(UPS, 'ups_monpwd')
@@ -4700,8 +3847,8 @@ class notifier(metaclass=HookMetaclass):
         return secret
 
     def pwenc_encrypt(self, text):
-        if isinstance(text, bytes):
-            text = text.decode('utf8')
+        if not isinstance(text, bytes):
+            text = text.encode('utf8')
         from Crypto.Random import get_random_bytes
         from Crypto.Util import Counter
 
@@ -4729,91 +3876,7 @@ class notifier(metaclass=HookMetaclass):
             AES.MODE_CTR,
             counter=Counter.new(64, prefix=nonce),
         )
-        return cipher.decrypt(encrypted).decode('utf8').rstrip(PWENC_PADDING)
-
-    def _bootenv_partition(self, devname):
-        commands = []
-        commands.append("gpart create -s gpt -f active /dev/%s" % (devname, ))
-        boottype = self.get_boot_pool_boottype()
-        if boottype != 'EFI':
-            commands.append("gpart add -t bios-boot -i 1 -s 512k %s" % devname)
-            commands.append("gpart set -a active %s" % devname)
-        else:
-            commands.append("gpart add -t efi -i 1 -s 100m %s" % devname)
-            commands.append("newfs_msdos -F 16 /dev/%sp1" % devname)
-            commands.append("gpart set -a lenovofix %s" % devname)
-        commands.append("gpart add -t freebsd-zfs -i 2 -a 4k %s" % devname)
-        for command in commands:
-            proc = self._pipeopen(command)
-            proc.wait()
-            if proc.returncode != 0:
-                raise MiddlewareError('Unable to GPT format the disk "%s"' % devname)
-        return boottype
-
-    def _bootenv_install_grub(self, boottype, devname):
-        if boottype == 'EFI':
-            self._system("mount -t msdosfs /dev/%sp1 /boot/efi" % devname)
-        self._system("/usr/local/sbin/grub-install --modules='zfs part_gpt' %s /dev/%s" % (
-            "--efi-directory=/boot/efi --removable --target=x86_64-efi" if boottype == 'EFI' else '',
-            devname,
-        ))
-        if boottype == 'EFI':
-            self._pipeopen("umount /boot/efi").communicate()
-
-    def bootenv_attach_disk(self, label, devname):
-        """Attach a new disk to the pool"""
-        self._system("dd if=/dev/zero of=/dev/%s bs=1m count=32" % (devname, ))
-        try:
-            p1 = self._pipeopen("diskinfo %s" % (devname, ))
-            size = int(int(re.sub(r'\s+', ' ', p1.communicate()[0]).split()[2]) / (1024))
-        except:
-            log.error("Unable to determine size of %s", devname)
-        else:
-            # HACK: force the wipe at the end of the disk to always succeed. This # is a lame workaround.
-            self._system("dd if=/dev/zero of=/dev/%s bs=1m oseek=%s" % (
-                devname,
-                int(size / 1024) - 32,
-            ))
-
-        boottype = self._bootenv_partition(devname)
-
-        proc = self._pipeopen('/sbin/zpool attach freenas-boot %s %sp2' % (label, devname))
-        err = proc.communicate()[1]
-        if proc.returncode != 0:
-            raise MiddlewareError('Failed to attach disk: %s' % err)
-
-        time.sleep(10)
-        self._bootenv_install_grub(boottype, devname)
-
-        return True
-
-    def bootenv_replace_disk(self, label, devname):
-        """Attach a new disk to the pool"""
-
-        self._system("dd if=/dev/zero of=/dev/%s bs=1m count=32" % (devname, ))
-        try:
-            p1 = self._pipeopen("diskinfo %s" % (devname, ))
-            size = int(int(re.sub(r'\s+', ' ', p1.communicate()[0]).split()[2]) / (1024))
-        except:
-            log.error("Unable to determine size of %s", devname)
-        else:
-            # HACK: force the wipe at the end of the disk to always succeed. This # is a lame workaround.
-            self._system("dd if=/dev/zero of=/dev/%s bs=1m oseek=%s" % (
-                devname,
-                int(size / 1024) - 32,
-            ))
-
-        boottype = self._bootenv_partition(devname)
-
-        proc = self._pipeopen('/sbin/zpool replace freenas-boot %s %sp2' % (label, devname))
-        err = proc.communicate()[1]
-        if proc.returncode != 0:
-            raise MiddlewareError('Failed to attach disk: %s' % err)
-
-        time.sleep(10)
-        self._bootenv_install_grub(boottype, devname)
-
-        return True
+        return cipher.decrypt(encrypted).rstrip(PWENC_PADDING).decode('utf8')
 
     def iscsi_connected_targets(self):
         '''
@@ -4854,10 +3917,6 @@ class notifier(metaclass=HookMetaclass):
         if qs:
             return qs[0].iscsi_alua
         return False
-
-
-def crypt_makeSalt():
-    return '$6$' + ''.join(random.choice(string.ascii_uppercase + string.ascii_lowercase + string.digits + '.' + '/') for _ in range(16))
 
 
 def usage():

@@ -373,21 +373,9 @@ define([
           });
         }
 
-        if(this._debug.get('value') == 'on') {
-          steps.push({
-            label: gettext("Generating debug info")
-          });
-        }
-
         steps.push({
           label: gettext("Submitting ticket")
         });
-
-        if(fileUpload || this._debug.get('value') == 'on') {
-          steps.push({
-            label: gettext("Uploading attachments from host to the ticket")
-          });
-        }
 
         var uuid = generateRandomUuid();
 

@@ -207,6 +207,7 @@ def server_error(request, *args, **kwargs):
     if issubclass(exc_info[0], (ClientException, socket.timeout)):
         extra_log_files.insert(0, ('/var/log/middlewared.log', 'middlewared_log'))
 
+    log.debug('UI crash exception', exc_info=exc_info)
     crash_reporting.report(exc_info, request2crashreporting(request), extra_log_files)
 
     try:

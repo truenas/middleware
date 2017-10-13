@@ -1,13 +1,16 @@
 from middlewared.service import Service, private
 from middlewared.utils import Popen
+from middlewared.schema import accepts, Str
 
 import asyncio
+import ipaddr
 import ipaddress
 import netif
 import os
 import re
 import signal
 import subprocess
+import urllib.request
 
 
 def dhclient_status(interface):
@@ -118,9 +121,9 @@ class InterfacesService(Service):
                 netif.create_interface(vlan['vlan_vint'])
                 iface = netif.get_interface(vlan['vlan_vint'])
 
-            if iface.parent != vlan['vlan_pint'] or iface.tag != vlan['vlan_tag']:
+            if iface.parent != vlan['vlan_pint'] or iface.tag != vlan['vlan_tag'] or iface.pcp != vlan['vlan_pcp']:
                 iface.unconfigure()
-                iface.configure(vlan['vlan_pint'], vlan['vlan_tag'])
+                iface.configure(vlan['vlan_pint'], vlan['vlan_tag'], vlan['vlan_pcp'])
 
             try:
                 parent_iface = netif.get_interface(iface.parent)
@@ -356,6 +359,25 @@ class InterfacesService(Service):
                 interface, output,
             ))
 
+    @accepts()
+    def ipv4_in_use(self):
+        """
+        Get all IPv4 from all valid interfaces, excluding lo0, bridge* and tap*.
+
+        Returns:
+            list: A list with all IPv4 in use, or an empty list.
+        """
+        list_of_ipv4 = []
+        ignore_nics = ('lo', 'bridge', 'tap', 'epair')
+        for if_name, iface in list(netif.list_interfaces().items()):
+            if not if_name.startswith(ignore_nics):
+                for nic_address in iface.addresses:
+                    if nic_address.af == netif.AddressFamily.INET:
+                        ipv4_address = nic_address.address.exploded
+                        list_of_ipv4.append(str(ipv4_address))
+
+        return list_of_ipv4
+
 
 class RoutesService(Service):
 
@@ -417,18 +439,39 @@ class RoutesService(Service):
             self.logger.info('Removing IPv6 default route')
             routing_table.delete(routing_table.default_route_ipv6)
 
+    @accepts(Str('ipv4_gateway'))
+    def ipv4gw_reachable(self, ipv4_gateway):
+        """
+            Get the IPv4 gateway and verify if it is reachable by any interface.
+
+            Returns:
+                bool: True if the gateway is reachable or otherwise False.
+        """
+        ignore_nics = ('lo', 'bridge', 'tap', 'epair')
+        for if_name, iface in list(netif.list_interfaces().items()):
+            if not if_name.startswith(ignore_nics):
+                for nic_address in iface.addresses:
+                    if nic_address.af == netif.AddressFamily.INET:
+                        ipv4_nic = ipaddress.IPv4Interface(nic_address)
+                        nic_network = ipaddr.IPv4Network(ipv4_nic)
+                        nic_prefixlen = nic_network.prefixlen
+                        nic_result = str(nic_network.network) + '/' + str(nic_prefixlen)
+                        if ipaddress.ip_address(ipv4_gateway) in ipaddress.ip_network(nic_result):
+                            return True
+        return False
+
 
 class DNSService(Service):
 
     @private
     async def sync(self):
-        domain = None
+        domains = []
         nameservers = []
 
         if await self.middleware.call('notifier.common', 'system', 'domaincontroller_enabled'):
             cifs = await self.middleware.call('datastore.query', 'services.cifs', None, {'get': True})
             dc = await self.middleware.call('datastore.query', 'services.DomainController', None, {'get': True})
-            domain = dc['dc_realm']
+            domains.append(dc['dc_realm'])
             if cifs['cifs_srv_bindip']:
                 for ip in cifs['cifs_srv_bindip']:
                     nameservers.append(ip)
@@ -437,7 +480,9 @@ class DNSService(Service):
         else:
             gc = await self.middleware.call('datastore.query', 'network.globalconfiguration', None, {'get': True})
             if gc['gc_domain']:
-                domain = gc['gc_domain']
+                domains.append(gc['gc_domain'])
+            if gc['gc_domains']:
+                domains += gc['gc_domains'].split()
             if gc['gc_nameserver1']:
                 nameservers.append(gc['gc_nameserver1'])
             if gc['gc_nameserver2']:
@@ -446,8 +491,8 @@ class DNSService(Service):
                 nameservers.append(gc['gc_nameserver3'])
 
         resolvconf = ''
-        if domain:
-            resolvconf += 'search {}\n'.format(domain)
+        if domains:
+            resolvconf += 'search {}\n'.format(' '.join(domains))
         for ns in nameservers:
             resolvconf += 'nameserver {}\n'.format(ns)
 
@@ -457,3 +502,29 @@ class DNSService(Service):
         data = await proc.communicate(input=resolvconf.encode())
         if proc.returncode != 0:
             self.logger.warn(f'Failed to run resolvconf: {data[1].decode()}')
+
+
+async def configure_http_proxy(middleware, *args, **kwargs):
+    """
+    Configure the `http_proxy` and `https_proxy` environment vars
+    from the database.
+    """
+    gc = await middleware.call('datastore.config', 'network.globalconfiguration')
+    http_proxy = gc['gc_httpproxy']
+    if http_proxy:
+        os.environ['http_proxy'] = http_proxy
+        os.environ['https_proxy'] = http_proxy
+    elif not http_proxy:
+        if 'http_proxy' in os.environ:
+            del os.environ['http_proxy']
+        if 'https_proxy' in os.environ:
+            del os.environ['https_proxy']
+
+    # Reset global opener so ProxyHandler can be recalculated
+    urllib.request.install_opener(None)
+
+
+async def setup(middleware):
+    # Configure http proxy on startup and on network.config events
+    asyncio.ensure_future(configure_http_proxy(middleware))
+    middleware.event_subscribe('network.config', configure_http_proxy)

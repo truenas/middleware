@@ -1,6 +1,6 @@
 from datetime import datetime
 from middlewared.schema import accepts, Dict, Int
-from middlewared.service import job, Service
+from middlewared.service import no_auth_required, job, Service
 from middlewared.utils import Popen, sw_version
 
 import os
@@ -22,6 +22,7 @@ SYSTEM_READY = False
 
 class SystemService(Service):
 
+    @no_auth_required
     @accepts()
     async def is_freenas(self):
         """
@@ -52,16 +53,31 @@ class SystemService(Service):
             stdout=subprocess.PIPE,
             shell=True,
         )).communicate())[0].decode().strip()
+
+        serial = (await(await Popen(
+            ['dmidecode', '-s', 'system-serial-number'],
+            stdout=subprocess.PIPE,
+        )).communicate())[0].decode().strip() or None
+
+        product = (await(await Popen(
+            ['dmidecode', '-s', 'system-product-name'],
+            stdout=subprocess.PIPE,
+        )).communicate())[0].decode().strip() or None
+
         return {
             'version': self.version(),
             'hostname': socket.gethostname(),
             'physmem': sysctl.filter('hw.physmem')[0].value,
             'model': sysctl.filter('hw.model')[0].value,
+            'cores': sysctl.filter('hw.ncpu')[0].value,
             'loadavg': os.getloadavg(),
             'uptime': uptime,
+            'system_serial': serial,
+            'system_product': product,
             'boottime': datetime.fromtimestamp(
                 struct.unpack('l', sysctl.filter('kern.boottime')[0].value[:8])[0]
             ),
+            'datetime': datetime.now(),
         }
 
     @accepts(Dict('system-reboot', Int('delay', required=False), required=False))
