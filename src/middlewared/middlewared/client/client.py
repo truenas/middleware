@@ -1,6 +1,7 @@
 from . import ejson as json
 from .protocol import DDPProtocol
 from .utils import ProgressBar
+from ..service_exception import ErrnoMixin
 from collections import defaultdict, namedtuple, Callable
 from threading import Event as TEvent, Lock, Thread
 from ws4py.client.threadedclient import WebSocketClient
@@ -195,7 +196,8 @@ class Call(object):
         self.extra = None
 
 
-class ClientException(Exception):
+class ClientException(ErrnoMixin, Exception):
+
     def __init__(self, error, errno=None, trace=None, extra=None):
         self.errno = errno
         self.error = error

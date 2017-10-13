@@ -4,7 +4,6 @@ from .job import Job, JobsQueue
 from .restful import RESTfulAPI
 from .schema import ResolverError, Error as SchemaError
 from .service import CallError, CallException, ValidationError, ValidationErrors
-from .service_exception import ENOMETHOD
 from aiohttp import web
 from aiohttp_wsgi import WSGIHandler
 from collections import defaultdict
@@ -384,7 +383,7 @@ class FileApplication(object):
                 return web.Response(status=422)
             job = await self.middleware.call(data['method'], *(data.get('params') or []))
         except CallError as e:
-            if e.errno == ENOMETHOD:
+            if e.errno == CallError.ENOMETHOD:
                 status_code = 422
             else:
                 status_code = 412
@@ -830,7 +829,7 @@ class Middleware(object):
             service, method_name = name.rsplit('.', 1)
             methodobj = getattr(self.get_service(service), method_name)
         except AttributeError:
-            raise CallError(f'Method "{method_name}" not found in "{service}"', ENOMETHOD)
+            raise CallError(f'Method "{method_name}" not found in "{service}"', CallError.ENOMETHOD)
         return methodobj
 
     async def call_method(self, app, message):
