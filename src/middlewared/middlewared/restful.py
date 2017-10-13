@@ -162,6 +162,14 @@ class OpenAPIResource(object):
             accepts = method.get('accepts')
             if accepts:
                 opobject['requestBody'] = self._accepts_to_request(methodname, method, accepts)
+
+            if '{id}' in path:
+                opobject['parameters'].append({
+                    'name': 'id',
+                    'in': 'path',
+                    'required': True,
+                })
+
         self._paths[f'/{path}'][operation] = opobject
 
     def _accepts_to_request(self, methodname, method, schemas):
