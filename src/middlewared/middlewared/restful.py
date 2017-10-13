@@ -163,12 +163,13 @@ class OpenAPIResource(object):
             if accepts:
                 opobject['requestBody'] = self._accepts_to_request(methodname, method, accepts)
 
+            # For now we only accept `id` as an url parameters
             if '{id}' in path:
                 opobject['parameters'].append({
                     'name': 'id',
                     'in': 'path',
                     'required': True,
-                    'schema': self._convert_schema(accepts[0]) if accepts else None,
+                    'schema': self._convert_schema(accepts[0]) if accepts else {'type': 'integer'},
                 })
 
         self._paths[f'/{path}'][operation] = opobject
