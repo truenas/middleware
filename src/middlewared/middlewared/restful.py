@@ -168,28 +168,30 @@ class OpenAPIResource(object):
                     'name': 'id',
                     'in': 'path',
                     'required': True,
+                    'schema': self._convert_schema(accepts[0]) if accepts else None,
                 })
 
         self._paths[f'/{path}'][operation] = opobject
 
+    def _convert_schema(self, schema):
+        """
+        Convert JSON Schema to OpenAPI Schema
+        """
+        schema = copy.deepcopy(schema)
+        _type = schema.get('type')
+        schema.pop('_required_', None)
+        if isinstance(_type, list):
+            if 'null' in _type:
+                _type.remove('null')
+                schema['nullable'] = True
+            schema['type'] = _type = _type[0]
+        if _type == 'object':
+            for key, val in schema['properties'].items():
+                schema['properties'][key] = self._convert_schema(val)
+        return schema
+
     def _accepts_to_request(self, methodname, method, schemas):
 
-        def convert(schema):
-            """
-            Convert JSON Schema to OpenAPI Schema
-            """
-            schema = copy.deepcopy(schema)
-            _type = schema.get('type')
-            schema.pop('_required_', None)
-            if isinstance(_type, list):
-                if 'null' in _type:
-                    _type.remove('null')
-                    schema['nullable'] = True
-                schema['type'] = _type = _type[0]
-            if _type == 'object':
-                for key, val in schema['properties'].items():
-                    schema['properties'][key] = convert(val)
-            return schema
 
         # Create an unique ID for every argument and register the schema
         ids = []
@@ -197,7 +199,7 @@ class OpenAPIResource(object):
             if i == 0 and method['item_method']:
                 continue
             unique_id = f'{methodname.replace(".", "_")}_{i}'
-            self._schemas[unique_id] = convert(schema)
+            self._schemas[unique_id] = self._convert_schema(schema)
             ids.append(unique_id)
 
         if len(ids) == 1:
