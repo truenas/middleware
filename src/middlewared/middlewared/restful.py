@@ -161,7 +161,34 @@ class OpenAPIResource(object):
                 opobject['description'] = desc
 
             accepts = method.get('accepts')
-            if accepts:
+            if method['filterable']:
+                opobject['parameters'] += [
+                    {
+                        'name': 'limit',
+                        'in': 'query',
+                        'required': False,
+                        'schema': {'type': 'integer'},
+                    },
+                    {
+                        'name': 'offset',
+                        'in': 'query',
+                        'required': False,
+                        'schema': {'type': 'integer'},
+                    },
+                    {
+                        'name': 'count',
+                        'in': 'query',
+                        'required': False,
+                        'schema': {'type': 'boolean'},
+                    },
+                    {
+                        'name': 'sort',
+                        'in': 'query',
+                        'required': False,
+                        'schema': {'type': 'string'},
+                    },
+                ]
+            elif accepts:
                 opobject['requestBody'] = self._accepts_to_request(methodname, method, accepts)
 
             # For now we only accept `id` as an url parameters
