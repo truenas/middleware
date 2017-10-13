@@ -15,13 +15,14 @@ class SmartService(SystemServiceService):
 
     @private
     async def smart_extend(self, smart):
+        smart["powermode"] = smart["powermode"].upper()
         smart["email"] = list(filter(None, re.split(r"\s+", smart["email"])))
         return smart
 
     @accepts(Dict(
         'smart_update',
         Int('interval'),
-        Str('powermode', enum=['never', 'sleep', 'standby', 'idle']),
+        Str('powermode', enum=['NEVER', 'SLEEP', 'STANDBY', 'IDLE']),
         Int('difference'),
         Int('informational'),
         Int('critical'),
@@ -33,6 +34,7 @@ class SmartService(SystemServiceService):
         new = old.copy()
         new.update(data)
 
+        new["powermode"] = new["powermode"].lower()
         new["email"] = " ".join(new["email"])
 
         await self._update_service(old, new)

@@ -1710,6 +1710,7 @@ class SMARTForm(MiddlewareModelForm, ModelForm):
         model = models.SMART
 
     def middleware_clean(self, update):
+        update["powermode"] = update["powermode"].upper()
         update["email"] = list(filter(None, re.split(r"\s+", update["email"])))
         return update
 
