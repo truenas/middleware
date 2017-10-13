@@ -1,6 +1,8 @@
+import re
+
 from middlewared.schema import accepts, Dict, Int, List, Str
 from middlewared.validators import Email
-from middlewared.service import SystemServiceService
+from middlewared.service import SystemServiceService, private
 
 
 class SmartService(SystemServiceService):
@@ -8,7 +10,13 @@ class SmartService(SystemServiceService):
     class Config:
         service = "smartd"
         service_model = "smart"
+        datastore_extend = "smart.smart_extend"
         datastore_prefix = "smart_"
+
+    @private
+    async def smart_extend(self, smart):
+        smart["email"] = list(filter(None, re.split(r"\s+", smart["email"])))
+        return smart
 
     @accepts(Dict(
         'smart_update',
@@ -25,8 +33,7 @@ class SmartService(SystemServiceService):
         new = old.copy()
         new.update(data)
 
-        if isinstance(new["email"], list):
-            new["email"] = " ".join(new["email"])
+        new["email"] = " ".join(new["email"])
 
         await self._update_service(old, new)
 
