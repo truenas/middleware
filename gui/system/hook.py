@@ -102,7 +102,7 @@ class SystemHook(AppHook):
             'url': reverse('system_update_index'),
         })
 
-        tabs.insert(11, {
+        tabs.insert(12, {
             'name': 'Support',
             'focus': 'system.Support',
             'verbose_name': _('Support'),
