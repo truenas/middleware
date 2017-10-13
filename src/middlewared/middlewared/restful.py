@@ -120,6 +120,7 @@ class OpenAPIResource(object):
 
     def __init__(self, rest):
         self.rest = rest
+        self.rest.app.router.add_route('GET', '/api/v2.0', self.get)
         self.rest.app.router.add_route('GET', '/api/v2.0/openapi.json', self.get)
         self._paths = defaultdict(dict)
         self._schemas = dict()
