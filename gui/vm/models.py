@@ -75,7 +75,7 @@ class VM(Model):
             ('Bhyve', _('Virtual Machine')),
             ('Container Provider', _('Docker VM')),
         ),
-        default='Container Provider',
+        default='Bhyve',
     )
     container_path = PathField(
         verbose_name=_("Path"),
