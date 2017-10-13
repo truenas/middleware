@@ -40,18 +40,23 @@ class MiddlewareModelForm:
         self.instance = self._meta.model.objects.get(pk=result["id"])
         return self.instance
 
-    def middleware_clean(self):
+    def middleware_clean(self, update):
+        return update
+
+    def middleware_prepare(self):
         update = {
             k[len(self.middleware_attr_prefix):]: v
             for k, v in self.cleaned_data.items()
             if (k.startswith(self.middleware_attr_prefix) and
                 k[len(self.middleware_attr_prefix):] not in self.middleware_exclude_fields)
         }
+
+        update = self.middleware_clean(update)
+
         return update
 
     def __update(self, *args, **kwargs):
-
-        update = self.middleware_clean()
+        update = self.middleware_prepare()
 
         if self.is_singletone:
             args = (update,) + args

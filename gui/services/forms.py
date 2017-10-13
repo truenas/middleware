@@ -1709,10 +1709,9 @@ class SMARTForm(MiddlewareModelForm, ModelForm):
         fields = '__all__'
         model = models.SMART
 
-    def clean(self):
-        cdata = self.cleaned_data
-        cdata["smart_email"] = list(filter(None, re.split(r"\s+", cdata["smart_email"])))
-        return cdata
+    def middleware_clean(self, update):
+        update["email"] = list(filter(None, re.split(r"\s+", update["email"])))
+        return update
 
 
 class DomainControllerForm(ModelForm):
