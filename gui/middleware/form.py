@@ -1,5 +1,3 @@
-import re
-
 from freenasUI.middleware.client import client, ClientException
 from freenasUI.services.exceptions import ServiceFailed
 
@@ -67,8 +65,7 @@ class MiddlewareModelForm:
             try:
                 return c.call(f"{self.middleware_plugin}.update", *args, **kwargs)
             except ClientException as e:
-                m = re.search(r'The (.+?) service failed to start', e.error)
-                if m:
-                    raise ServiceFailed(m.group(1), m.group(0))
+                if e.errno == ClientException.ESERVICESTARTFAILURE:
+                    raise ServiceFailed(e.error, e.errno)
                 else:
                     raise

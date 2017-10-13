@@ -7,6 +7,7 @@ def get_errname(code):
 
 class ErrnoMixin:
     ENOMETHOD = 201
+    ESERVICESTARTFAILURE = 202
 
     @classmethod
     def _get_errname(cls, code):

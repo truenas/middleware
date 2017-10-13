@@ -186,7 +186,7 @@ class SystemServiceService(ConfigService):
         started = await self.middleware.call('service.reload', self._config.service, {'onetime': False})
 
         if enabled and not started:
-            raise CallError(f'The {self._config.service} service failed to start')
+            raise CallError(f'The {self._config.service} service failed to start', CallError.ESERVICESTARTFAILURE)
 
 
 class CRUDService(Service):
