@@ -161,10 +161,10 @@ class OpenAPIResource(object):
 
             accepts = method.get('accepts')
             if accepts:
-                opobject['requestBody'] = self._accepts_to_request(methodname, accepts)
+                opobject['requestBody'] = self._accepts_to_request(methodname, method, accepts)
         self._paths[f'/{path}'][operation] = opobject
 
-    def _accepts_to_request(self, methodname, schemas):
+    def _accepts_to_request(self, methodname, method, schemas):
 
         def convert(schema):
             """
@@ -186,6 +186,8 @@ class OpenAPIResource(object):
         # Create an unique ID for every argument and register the schema
         ids = []
         for i, schema in enumerate(schemas):
+            if i == 0 and method['item_method']:
+                continue
             unique_id = f'{methodname.replace(".", "_")}_{i}'
             self._schemas[unique_id] = convert(schema)
             ids.append(unique_id)
