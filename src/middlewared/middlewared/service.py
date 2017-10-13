@@ -112,6 +112,7 @@ class ServiceBase(type):
             'datastore_prefix': None,
             'datastore_extend': None,
             'service': None,
+            'service_model': None,
             'namespace': namespace,
             'private': False,
             'verbose_name': klass.__name__.replace('Service', ''),
@@ -168,12 +169,14 @@ class SystemServiceService(ConfigService):
 
     @accepts()
     async def config(self):
-        return await self.middleware.call('datastore.config', f'services.{self._config.service}',
+        return await self.middleware.call('datastore.config',
+                                          f'services.{self._config.service_model or self._config.service}',
                                           {'prefix': self._config.datastore_prefix})
 
     @private
     async def _update_service(self, old, new):
-        await self.middleware.call('datastore.update', f'services.{self._config.service}', old['id'], new,
+        await self.middleware.call('datastore.update',
+                                   f'services.{self._config.service_model or self._config.service}', old['id'], new,
                                    {'prefix': self._config.datastore_prefix})
 
         enabled = (await self.middleware.call(
@@ -183,7 +186,7 @@ class SystemServiceService(ConfigService):
         started = await self.middleware.call('service.reload', self._config.service, {'onetime': False})
 
         if enabled and not started:
-            raise CallError(f'The {self._config.service} service failed to start')
+            raise CallError(f'The {self._config.service} service failed to start', CallError.ESERVICESTARTFAILURE)
 
 
 class CRUDService(Service):

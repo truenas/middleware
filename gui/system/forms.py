@@ -1250,10 +1250,8 @@ class EmailForm(MiddlewareModelForm, ModelForm):
                 del self.cleaned_data['em_pass2']
         return self.cleaned_data
 
-    def middleware_clean(self):
-        update = super().middleware_clean()
-        if 'security' in update:
-            update['security'] = update['security'].upper()
+    def middleware_clean(self, update):
+        update['security'] = update['security'].upper()
         return update
 
 

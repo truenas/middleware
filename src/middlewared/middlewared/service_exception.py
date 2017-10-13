@@ -1,28 +1,26 @@
 import errno
 
 
-_errcode = {}
-
-
-def _add_error(code, name):
-    global _errcode
-    globals()[name] = code
-    _errcode[code] = name
-
-
 def get_errname(code):
-    return errno.errorcode.get(code) or _errcode.get(code) or 'EUNKNOWN'
+    return errno.errorcode.get(code) or ErrnoMixin._get_errname(code) or 'EUNKNOWN'
 
 
-_add_error(201, 'ENOMETHOD')
+class ErrnoMixin:
+    ENOMETHOD = 201
+    ESERVICESTARTFAILURE = 202
+
+    @classmethod
+    def _get_errname(cls, code):
+        for k, v in cls.__dict__.items():
+            if k.startswith("E") and v == code:
+                return k
 
 
-class CallException(Exception):
+class CallException(ErrnoMixin, Exception):
     pass
 
 
 class CallError(CallException):
-
     def __init__(self, errmsg, errno=errno.EFAULT):
         self.errmsg = errmsg
         self.errno = errno

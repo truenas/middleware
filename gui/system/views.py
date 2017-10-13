@@ -791,7 +791,7 @@ def testmail(request):
     if request.is_ajax():
         sw_name = get_sw_name()
         with client as c:
-            mailconfig = form.middleware_clean()
+            mailconfig = form.middleware_prepare()
             try:
                 c.call('mail.send', {
                     'subject': f'Test message from your {sw_name} system hostname {socket.gethostname()}',
