@@ -110,6 +110,13 @@ generate_collectd()
             rm -f "${datadir}"
         fi
         mkdir -p "${datadir}"
+
+        # Create RAMdisk (if not already exists) for RRD files so they don't fill up root partition
+        mount | awk '$3 == "'"${datadir}"'" {print $1}' | grep -qE "/dev/md[[:digit:]]+"
+        if [ $? -ne 0 ];
+        then
+            mdmfs -i 4096 -b 4096 -f 512 -s "2g" md "${datadir}"
+        fi
     fi
 
     if [ -f "${rrdfile}" ]; then
