@@ -221,7 +221,6 @@ class OpenAPIResource(object):
 
     def _accepts_to_request(self, methodname, method, schemas):
 
-
         # Create an unique ID for every argument and register the schema
         ids = []
         for i, schema in enumerate(schemas):
