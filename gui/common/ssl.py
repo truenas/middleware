@@ -56,7 +56,7 @@ def create_certificate(cert_info):
     except ValueError:
         # This is raised if say we specified freenas.org in the Common name
         pass
-    if cert_info('san'):
+    if cert_info['san']:
         cert.add_extensions([crypto.X509Extension(b"subjectAltName", False, f"{default_san_type}:{cert_info['san']}".encode())])
         cert.get_subject().subjectAltName = cert_info['san'].replace(" ", ", ")
     cert.get_subject().emailAddress = cert_info['email']
