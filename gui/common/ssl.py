@@ -112,9 +112,9 @@ def create_certificate_signing_request(cert_info):
     except ValueError:
         # This is raised if say we specified freenas.org in the Common name
         pass
-
-    req.add_extensions([crypto.X509Extension(b"subjectAltName", False, f"{default_san_type}:{cert_info['san']}".encode())])
-    req.get_subject().subjectAltName = cert_info['san'].replace(" ", ", ")
+    if cert_info['san']:
+        req.add_extensions([crypto.X509Extension(b"subjectAltName", False, f"{default_san_type}:{cert_info['san']}".encode())])
+        req.get_subject().subjectAltName = cert_info['san'].replace(" ", ", ")
     req.get_subject().emailAddress = cert_info['email']
 
     req.set_pubkey(key)
