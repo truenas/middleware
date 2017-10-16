@@ -12,6 +12,7 @@ from iocage.lib.ioc_list import IOCList
 from iocage.lib.ioc_upgrade import IOCUpgrade
 from middlewared.schema import Bool, Dict, List, Str, accepts
 from middlewared.service import CRUDService, filterable, job, private
+from middlewared.service_exception import CallError
 from middlewared.utils import filter_list
 
 
@@ -86,7 +87,7 @@ class JailService(CRUDService):
             self.middleware.call_sync('jail.fetch', {"release":
                                                      release}).wait()
 
-        iocage.create(
+        err, msg = iocage.create(
             release,
             props,
             0,
@@ -96,6 +97,9 @@ class JailService(CRUDService):
             _uuid=uuid,
             basejail=basejail,
             empty=empty)
+
+        if err:
+            raise CallError(msg)
 
         return True
 
