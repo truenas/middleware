@@ -27,7 +27,7 @@ extract:
 
 do-install:
 	mkdir -p ${STAGEDIR}${PREFIX}/www/swagger-ui/
-	(cd ${WRKDIR} && cp -r * ${STAGEDIR}${PREFIX}/www/webui/)
+	(cd ${WRKDIR} && cp -r * ${STAGEDIR}${PREFIX}/www/swagger-ui/)
 	(cd ${STAGEDIR}${PREFIX}/www/swagger-ui; ${FIND} . -type f \
 		| ${SED} -e 's,^\./,,g' \
 		| ${AWK} '{print length, $$0}' | ${SORT} -rn \
