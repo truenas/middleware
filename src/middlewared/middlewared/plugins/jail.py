@@ -85,7 +85,7 @@ class JailService(CRUDService):
         if not os.path.isdir(f"{iocroot}/releases/{release}") and not \
                 template and not empty:
             self.middleware.call_sync('jail.fetch', {"release":
-                                                     release}).wait()
+                                                     release}).wait_sync()
 
         err, msg = iocage.create(
             release,
