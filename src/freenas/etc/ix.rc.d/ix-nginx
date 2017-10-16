@@ -312,6 +312,9 @@ __EOF__
             proxy_set_header X-Script-Name /api/docs;
         }
 
+        location /api/docs/restful/static {
+            alias /usr/local/www/swagger-ui/node_modules/swagger-ui-dist;
+        }
 
         location /docs {
             alias /usr/local/www/data/docs;
