@@ -1,20 +1,23 @@
 import os
-import libzfs
+
 import iocage.lib.iocage as ioc
+import libzfs
 from iocage.lib.ioc_check import IOCCheck
-from iocage.lib.ioc_json import IOCJson
-from iocage.lib.ioc_fetch import IOCFetch
 from iocage.lib.ioc_clean import IOCClean
-from iocage.lib.ioc_upgrade import IOCUpgrade
+from iocage.lib.ioc_fetch import IOCFetch
 from iocage.lib.ioc_image import IOCImage
+from iocage.lib.ioc_json import IOCJson
 # iocage's imports are per command, these are just general facilities
 from iocage.lib.ioc_list import IOCList
+from iocage.lib.ioc_upgrade import IOCUpgrade
 from middlewared.schema import Bool, Dict, List, Str, accepts
-from middlewared.service import CRUDService, job, private, filterable
+from middlewared.service import CRUDService, filterable, job, private
+from middlewared.service_exception import CallError
 from middlewared.utils import filter_list
 
 
 class JailService(CRUDService):
+
     @filterable
     async def query(self, filters=None, options=None):
         options = options or {}
@@ -22,6 +25,7 @@ class JailService(CRUDService):
         try:
             jails = [
                 list(jail.values())[0]
+
                 for jail in ioc.IOCage().get("all", recursive=True)
             ]
         except BaseException:
@@ -61,13 +65,13 @@ class JailService(CRUDService):
              Str("uuid"),
              Bool("basejail"), Bool("empty"), Bool("short"), List("props")))
     @job()
-    async def create_job(self, job, options):
+    def create_job(self, job, options):
         iocage = ioc.IOCage(skip_jails=True)
 
         release = options["release"]
         template = options.get("template", False)
         pkglist = options.get("pkglist", None)
-        uuid = options["uuid"]
+        uuid = options.get("uuid", None)
         basejail = options["basejail"]
         empty = options["empty"]
         short = options["short"]
@@ -80,20 +84,22 @@ class JailService(CRUDService):
 
         if not os.path.isdir(f"{iocroot}/releases/{release}") and not \
                 template and not empty:
-            await self.middleware.call('jail.fetch', {"release":
-                                                      release}).wait()
+            self.middleware.call_sync('jail.fetch', {"release":
+                                                     release}).wait_sync()
 
-        await self.middleware.threaded(
-            iocage.create(
-                release,
-                props,
-                0,
-                pkglist,
-                template=template,
-                short=short,
-                uuid=uuid,
-                basejail=basejail,
-                empty=empty).create_jail)
+        err, msg = iocage.create(
+            release,
+            props,
+            0,
+            pkglist,
+            template=template,
+            short=short,
+            _uuid=uuid,
+            basejail=basejail,
+            empty=empty)
+
+        if err:
+            raise CallError(msg)
 
         return True
 

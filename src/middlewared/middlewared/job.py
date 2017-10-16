@@ -9,6 +9,7 @@ import subprocess
 import sys
 import time
 import traceback
+import threading
 
 from middlewared.utils import Popen
 
@@ -248,6 +249,20 @@ class Job(object):
 
     async def wait(self):
         await self._finished.wait()
+        return self.result
+
+    def wait_sync(self):
+        """
+        Synchronous method to wait for a job in another thread.
+        """
+        fut = asyncio.run_coroutine_threadsafe(self._finished.wait(), self.loop)
+        event = threading.Event()
+
+        def done(_):
+            event.set()
+
+        fut.add_done_callback(done)
+        event.wait()
         return self.result
 
     def abort(self):
