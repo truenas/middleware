@@ -440,7 +440,12 @@ class FTPForm(MiddlewareModelForm, ModelForm):
         return "%.3o" % mask
 
 
-class TFTPForm(ModelForm):
+class TFTPForm(MiddlewareModelForm, ModelForm):
+
+    middleware_attr_prefix = "tftp_"
+    middleware_attr_schema = "tftp_update"
+    middleware_plugin = "tftp"
+    is_singletone = True
 
     class Meta:
         fields = '__all__'
@@ -448,17 +453,6 @@ class TFTPForm(ModelForm):
         widgets = {
             'tftp_port': forms.widgets.TextInput(),
         }
-
-    def save(self):
-        super(TFTPForm, self).save()
-        started = notifier().reload("tftp")
-        if (
-            started is False and
-            models.services.objects.get(srv_service='tftp').srv_enable
-        ):
-            raise ServiceFailed(
-                "tftp", _("The tftp service failed to reload.")
-            )
 
 
 class SSHForm(ModelForm):
