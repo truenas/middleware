@@ -1,6 +1,6 @@
-from middlewared.schema import accepts, Bool, Dict, Int, Str
+from middlewared.schema import accepts, Bool, Dict, Dir, Int, Str
 from middlewared.validators import Exact, IpAddress, Match, Or, Range
-from middlewared.service import SystemServiceService, ValidationErrors, CallError
+from middlewared.service import SystemServiceService, ValidationErrors
 
 
 class FTPService(SystemServiceService):
@@ -18,7 +18,7 @@ class FTPService(SystemServiceService):
         Int('timeout', validators=[Range(min=0, max=10000)]),
         Bool('rootlogin'),
         Bool('onlyanonymous'),
-        Str('anonpath'),
+        Dir('anonpath'),
         Bool('onlylocal'),
         Str('banner'),
         Str('filemask', validators=[Match(r"^[0-7]{3}$")]),
