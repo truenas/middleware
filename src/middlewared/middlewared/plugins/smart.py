@@ -39,4 +39,6 @@ class SmartService(SystemServiceService):
 
         await self._update_service(old, new)
 
+        await self.smart_extend(new)
+
         return new
