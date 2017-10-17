@@ -1150,19 +1150,21 @@ class DynamicDNS(Model):
 
     def __init__(self, *args, **kwargs):
         super(DynamicDNS, self).__init__(*args, **kwargs)
+        self._decrypt_password()
+
+    @classmethod
+    def from_db(cls, db, field_names, values):
+        instance = super().from_db(db, field_names, values)
+        instance._decrypt_password()
+        return instance
+
+    def _decrypt_password(self):
         if self.ddns_password:
             try:
                 self.ddns_password = notifier().pwenc_decrypt(self.ddns_password)
             except:
                 log.debug('Failed to decrypt DDNS password', exc_info=True)
                 self.ddns_password = ''
-        self._ddns_password_encrypted = False
-
-    def save(self, *args, **kwargs):
-        if self.ddns_password and not self._ddns_password_encrypted:
-            self.ddns_password = notifier().pwenc_encrypt(self.ddns_password)
-            self._ddns_password_encrypted = True
-        return super(DynamicDNS, self).save(*args, **kwargs)
 
     class Meta:
         verbose_name = _("Dynamic DNS")

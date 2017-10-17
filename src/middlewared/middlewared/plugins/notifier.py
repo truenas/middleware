@@ -89,6 +89,20 @@ class NotifierService(Service):
             )
             return ''
 
+    def pwenc_encrypt(self, decrypted=None):
+        """
+        Wrapper method to avoid traceback.
+        This is simply to keep old behavior in notifier.
+        """
+        try:
+            return notifier().pwenc_encrypt(decrypted)
+        except:
+            logger.debug(
+                'notifier.pwenc_encrypt: Failed to encrypt the pass for {0}'.format(decrypted),
+                exc_info=True
+            )
+            return ''
+
     def warden(self, method, params=None, kwargs=None):
         if params is None:
             params = []
