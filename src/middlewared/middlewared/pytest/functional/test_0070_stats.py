@@ -34,6 +34,6 @@ def test_stats_get_data(conn):
                     'type': _type,
                     'dataset': list(info['datasets'].keys())[0],
                 }],
-                })
+            })
             assert req.status_code == 200, req.text
             assert isinstance(req.json(), dict) is True

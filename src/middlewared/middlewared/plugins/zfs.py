@@ -12,7 +12,7 @@ import libzfs
 from middlewared.schema import Dict, List, Str, Bool, Int, accepts
 from middlewared.service import (
     CallError, CRUDService, Service, ValidationError, ValidationErrors,
-    filterable, job, periodic, private,
+    filterable, job, periodic
 )
 from middlewared.utils import filter_list
 

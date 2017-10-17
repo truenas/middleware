@@ -3,7 +3,7 @@ import socket
 import ssl
 
 from middlewared.schema import Dict, Int, Str, accepts
-from middlewared.service import CallError, CRUDService, filterable, private
+from middlewared.service import CallError, CRUDService, private
 
 from pyVim import connect
 from pyVmomi import vim

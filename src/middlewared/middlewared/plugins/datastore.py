@@ -1,4 +1,4 @@
-from middlewared.service import Service, private
+from middlewared.service import Service
 from middlewared.schema import accepts, Any, Bool, Dict, List, Ref, Str
 
 import os

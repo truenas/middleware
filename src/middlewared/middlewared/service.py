@@ -339,7 +339,6 @@ class CoreService(Service):
                     elif attr in ('do_update'):
                         continue
 
-
                 if method is None:
                     method = getattr(svc, attr, None)
 
