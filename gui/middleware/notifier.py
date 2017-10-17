@@ -2741,7 +2741,7 @@ class notifier(metaclass=HookMetaclass):
             raise MiddlewareError('Unable to scrub %s: %s' % (name, stderr))
         return True
 
-    def zfs_snapshot_list(self, path=None, replications=None, sort=None, system=False):
+    def zfs_snapshot_list(self, path=None, sort=None, system=False):
         from freenasUI.storage.models import Volume
         fsinfo = dict()
 
@@ -2753,9 +2753,6 @@ class notifier(metaclass=HookMetaclass):
         if system is False:
             with client as c:
                 basename = c.call('systemdataset.config')['basename']
-
-        if replications is None:
-            replications = {}
 
         zfsproc = self._pipeopen("/sbin/zfs list -t volume -o name %s -H" % sort)
         zvols = set([y for y in zfsproc.communicate()[0].split('\n') if y != ''])
@@ -2789,25 +2786,6 @@ class notifier(metaclass=HookMetaclass):
                 except:
                     snaplist = []
                     mostrecent = True
-                replication = None
-                for repl in replications:
-                    if not (
-                        fs == repl.repl_filesystem or (
-                            repl.repl_userepl and fs.startswith(repl.repl_filesystem + '/')
-                        )
-                    ):
-                        continue
-                    snaps = replications[repl]
-                    # Make sure remote snapshot is checked correctly
-                    # when destination is root dataset
-                    if '/' not in repl.repl_zfs:
-                        replace = '{}/{}'.format(repl.repl_zfs, repl.repl_filesystem.rsplit('/')[-1])
-                    else:
-                        replace = repl.repl_zfs
-                    remotename = '%s@%s' % (fs.replace(repl.repl_filesystem, replace), name)
-                    if remotename in snaps:
-                        replication = 'OK'
-                        # TODO: Multiple replication tasks
 
                 snaplist.insert(0, zfs.Snapshot(
                     name=name,
@@ -2816,7 +2794,6 @@ class notifier(metaclass=HookMetaclass):
                     refer=refer,
                     mostrecent=mostrecent,
                     parent_type='filesystem' if fs not in zvols else 'volume',
-                    replication=replication,
                     vmsynced=(vmsynced == 'Y')
                 ))
                 fsinfo[fs] = snaplist
