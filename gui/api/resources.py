@@ -93,7 +93,7 @@ from freenasUI.storage.forms import (
     ZFSDatasetCreateForm,
     ZFSDatasetEditForm
 )
-from freenasUI.storage.models import Disk, Replication, VMWarePlugin
+from freenasUI.storage.models import Disk, VMWarePlugin
 from freenasUI.system.alert import alert_node, alertPlugins, Alert
 from freenasUI.system.forms import (
     BootEnvAddForm,
