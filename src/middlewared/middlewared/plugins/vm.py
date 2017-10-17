@@ -1,7 +1,6 @@
 from middlewared.schema import accepts, Int, Str, Dict, List, Bool, Patch
 from middlewared.service import filterable, CRUDService, item_method, private, job, CallError
 from middlewared.utils import Nid, Popen
-from middlewared.client import Client, CallTimeout
 from urllib.request import urlretrieve
 
 import middlewared.logger
@@ -100,7 +99,7 @@ class VMSupervisor(object):
         self.vmutils = VMUtils
 
     async def run(self):
-        vnc_web = None #  We need to initialize before line 200
+        vnc_web = None  # We need to initialize before line 200
         args = [
             'bhyve',
             '-H',
@@ -203,7 +202,6 @@ class VMSupervisor(object):
                     '/usr/local/libexec/novnc/', '--wrap-mode=ignore',
                     web_bind, '{}:{}'.format(vnc_bind, vnc_port)], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
             self.logger.debug("==> Start WEBVNC at port {} with pid number {}".format(vnc_web_port, self.web_proc.pid))
-
 
         while True:
             line = await self.proc.stdout.readline()
@@ -514,7 +512,6 @@ class VMService(CRUDService):
                     break
             return self.__activate_sharefs(pool_name)
 
-
     @accepts()
     async def get_sharefs(self):
         """
@@ -683,7 +680,6 @@ class VMService(CRUDService):
             percent = readchunk * 1e2 / totalsize
             job.set_progress(int(percent), 'Downloading', {'downloaded': readchunk, 'total': totalsize})
 
-
     @accepts(Str('VmOS'))
     @job(lock='container')
     async def fetch_image(self, job, VmOS):
@@ -702,21 +698,12 @@ class VMService(CRUDService):
             await self.middleware.threaded(lambda: urlretrieve(url, file_path,
                 lambda nb, bs, fs, job=job: self.fetch_hookreport(nb, bs, fs, job, file_path)))
 
-        '''
-        else:
-            with Client() as c:
-                try:
-                    c.call('vm.decompress_bzip', file_name, '/mnt/ssd/coreos.img')
-                except CallTimeout:
-                    logger.debug("===> Problem to connect with the middlewared.")
-        '''
-
     @accepts()
     async def list_images(self):
         return CONTAINER_IMAGES
 
     def decompress_hookreport(self, dst_file, job):
-        totalsize = 4756340736 # XXX: It will be parsed from a sha256 file.
+        totalsize = 4756340736  # XXX: It will be parsed from a sha256 file.
         fd = os.open(dst_file, os.O_RDONLY)
         try:
             size = os.lseek(fd, 0, os.SEEK_END)
@@ -814,7 +801,6 @@ class VMService(CRUDService):
                 list: With all URL available.
         """
         vnc_web = []
-        vnc_devices = await self.get_vnc(id)
 
         for vnc_device in await self.get_vnc(id):
             if vnc_device.get('vnc_web', None) is True:
