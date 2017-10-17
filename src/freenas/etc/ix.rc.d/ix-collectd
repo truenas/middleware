@@ -125,7 +125,7 @@ generate_collectd()
         # Create RAMdisk (if not already exists) for RRD files so they don't fill up root partition
         if [ $datadir_is_ramdisk -eq 0 ];
         then
-            mount -t tmpfs tmpfs "${datadir}"
+            mount -t tmpfs -o size=600m tmpfs "${datadir}"
         fi
     fi
 
