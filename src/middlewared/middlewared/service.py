@@ -169,9 +169,12 @@ class SystemServiceService(ConfigService):
 
     @accepts()
     async def config(self):
-        return await self.middleware.call('datastore.config',
-                                          f'services.{self._config.service_model or self._config.service}',
-                                          {'prefix': self._config.datastore_prefix})
+        return await self.middleware.call(
+            'datastore.config', f'services.{self._config.service_model or self._config.service}', {
+                'extend': self._config.datastore_extend,
+                'prefix': self._config.datastore_prefix
+            }
+        )
 
     @private
     async def _update_service(self, old, new):
