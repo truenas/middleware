@@ -24,11 +24,11 @@ def test_vmware_query(conn):
 
 def test_vmware_get_datastores(conn, creds):
     _check()
-    req = conn.rest.post('vmware/get_datastores', data=[{
+    req = conn.rest.post('vmware/get_datastores', data={
         'hostname': os.environ['VMWARE_HOST'],
         'username': os.environ['VMWARE_USERNAME'],
         'password': os.environ['VMWARE_PASSWORD'],
-    }])
+    })
     assert req.status_code == 200
     datastores = req.json()
     assert isinstance(datastores, dict) is True

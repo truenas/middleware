@@ -21,14 +21,14 @@ def test_service_update(conn):
     assert isinstance(services, list) is True
 
     for svc in services[:5]:
-        req = conn.rest.put(f'service/id/{svc["id"]}', data=[{'enable': svc['enable']}])
+        req = conn.rest.put(f'service/id/{svc["id"]}', data={'enable': svc['enable']})
         assert req.status_code == 200, req.text
 
 
 @pytest.mark.parametrize('svc', services)
 def test_service_start(conn, svc):
 
-    req = conn.rest.post('service/start', data=[svc])
+    req = conn.rest.post('service/start', data={'service': svc})
 
     assert req.status_code == 200, req.text
     assert req.json() is True
@@ -37,7 +37,7 @@ def test_service_start(conn, svc):
 @pytest.mark.parametrize('svc', services)
 def test_service_stop(conn, svc):
 
-    req = conn.rest.post('service/stop', data=[svc])
+    req = conn.rest.post('service/stop', data={'service': svc})
 
     assert req.status_code == 200, req.text
     assert req.json() is False

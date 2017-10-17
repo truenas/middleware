@@ -92,7 +92,16 @@ class Attribute(object):
 class Any(Attribute):
 
     def to_json_schema(self, parent=None):
-        return {'type': 'any'}
+        schema = {'anyOf': [
+            {'type': 'string'},
+            {'type': 'integer'},
+            {'type': 'boolean'},
+            {'type': 'object'},
+            {'type': 'array'},
+        ], 'title': self.verbose}
+        if not parent:
+            schema['_required_'] = self.required
+        return schema
 
 
 class Str(EnumMixin, Attribute):
@@ -109,6 +118,7 @@ class Str(EnumMixin, Attribute):
         schema = {}
         if not parent:
             schema['title'] = self.verbose
+            schema['_required_'] = self.required
         if not self.required:
             schema['type'] = ['string', 'null']
         else:
@@ -155,6 +165,7 @@ class Bool(Attribute):
         }
         if not parent:
             schema['title'] = self.verbose
+            schema['_required_'] = self.required
         return schema
 
 
@@ -175,6 +186,7 @@ class Int(Attribute):
         }
         if not parent:
             schema['title'] = self.verbose
+            schema['_required_'] = self.required
         return schema
 
 
@@ -222,6 +234,7 @@ class List(EnumMixin, Attribute):
         schema = {'type': 'array'}
         if not parent:
             schema['title'] = self.verbose
+            schema['_required_'] = self.required
         if self.required:
             schema['type'] = ['array', 'null']
         else:
@@ -302,6 +315,7 @@ class Dict(Attribute):
         }
         if not parent:
             schema['title'] = self.verbose
+            schema['_required_'] = self.required
         for name, attr in list(self.attrs.items()):
             schema['properties'][name] = attr.to_json_schema(parent=self)
         return schema

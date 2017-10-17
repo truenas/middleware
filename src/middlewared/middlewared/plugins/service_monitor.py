@@ -174,6 +174,9 @@ class ServiceMonitorThread(threading.Thread):
 class ServiceMonitorService(Service):
     """Main-Class for service monitoring."""
 
+    class Config:
+        private = True
+
     def __init__(self, *args):
         super(ServiceMonitorService, self).__init__(*args)
         self.threads = {}
