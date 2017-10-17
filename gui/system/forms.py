@@ -2849,6 +2849,19 @@ class CertificateAuthoritySignCSRForm(ModelForm):
         label=(_("CSRs"))
     )
 
+    def clean_cert_name(self):
+        cdata = self.cleaned_data
+        name = cdata.get('cert_name')
+        certs = models.Certificate.objects.get(cert_name=name)
+        if certs:
+            raise forms.ValidationError(
+                "A certificate with this name already exists."
+            )
+        reg = re.search(r'^[a-z0-9_\-]+$', name or '', re.I)
+        if not reg:
+            raise forms.ValidationError(_('Use alphanumeric characters, "_" and "-".'))
+        return name
+
     def save(self):
         cdata = self.cleaned_data
         choice = cdata.get('cert_CSRs').id
