@@ -546,7 +546,13 @@ class RsyncModForm(ModelForm):
             )
 
 
-class DynamicDNSForm(ModelForm):
+class DynamicDNSForm(MiddlewareModelForm, ModelForm):
+    middleware_attr_prefix = "ddns_"
+    middleware_attr_schema = "dyndns_update"
+    middleware_exclude_fields = ["password2"]
+    middleware_plugin = "dyndns"
+    is_singletone = True
+
     ddns_password2 = forms.CharField(
         max_length=50,
         label=_("Confirm Password"),
@@ -588,17 +594,9 @@ class DynamicDNSForm(ModelForm):
             cdata['ddns_password'] = self.instance.ddns_password
         return cdata
 
-    def save(self):
-        obj = super(DynamicDNSForm, self).save()
-        started = notifier().restart("dynamicdns")
-        if (
-            started is False and
-            models.services.objects.get(srv_service='dynamicdns').srv_enable
-        ):
-            raise ServiceFailed(
-                "dynamicdns", _("The DynamicDNS service failed to reload.")
-            )
-        return obj
+    def middleware_clean(self, update):
+        update["domain"] = list(filter(None, re.split(r"\s+", update["domain"])))
+        return update
 
 
 key_order(DynamicDNSForm, 10, 'ddns_password2')
