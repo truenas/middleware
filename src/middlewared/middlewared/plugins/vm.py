@@ -9,16 +9,23 @@ import asyncio
 import errno
 import netif
 import os
+import os.path
 import random
 import stat
 import subprocess
 import sysctl
 import bz2
+import gzip
+import libzfs
 
 logger = middlewared.logger.Logger('vm').getLogger()
 
 CONTAINER_IMAGES = {
-    "RancherOS": "https://github.com/rancher/os/releases/download/v1.1.0/rancheros.iso",
+    "RancherOS": {
+        "URL": "http://download.freenas.org/bhyve-templates/rancheros-bhyve-v1.1.0/rancheros-bhyve-v1.1.0.img.gz",
+        "GZIPFILE": "rancheros-bhyve-v1.1.0.img.gz",
+        "SHA256": "721966b303bdb5dff3a169be60f6dce679ab05aad567fff5c5188531f7e0cd9d",
+    }
 }
 BUFSIZE = 65536
 
@@ -93,6 +100,7 @@ class VMSupervisor(object):
         self.vmutils = VMUtils
 
     async def run(self):
+        vnc_web = None #  We need to initialize before line 200
         args = [
             'bhyve',
             '-H',
@@ -108,9 +116,6 @@ class VMSupervisor(object):
             args += [
                 '-l', 'bootrom,/usr/local/share/uefi-firmware/BHYVE_UEFI{}.fd'.format('_CSM' if self.vm['bootloader'] == 'UEFI_CSM' else ''),
             ]
-
-        if self.vmutils.is_container(self.vm) is True:
-            logger.debug("====> RUNNING CONTAINER")
 
         nid = Nid(3)
         for device in self.vm['devices']:
@@ -337,18 +342,11 @@ class VMSupervisor(object):
 class VMUtils(object):
 
     def is_container(data):
-        if data.get('vm_type') == 'Container Provider':
-            return True
+        if data:
+            if data.get('vm_type', None) == 'Container Provider':
+                return True
         else:
             return False
-
-    def create_images_path(data):
-        images_path = data.get('container_path') + '/.container_images/'
-        dir_path = os.path.dirname(images_path)
-        if not os.path.exists(dir_path):
-            os.makedirs(dir_path)
-
-        return dir_path
 
 
 class VMService(CRUDService):
@@ -464,6 +462,70 @@ class VMService(CRUDService):
 
         return False
 
+    @private
+    def __activate_sharefs(self, dataset):
+        zfs = libzfs.ZFS()
+        pool_exist = False
+        params = {}
+        fstype = getattr(libzfs.DatasetType, 'FILESYSTEM')
+        images_fs = '/.container_images'
+        new_fs = dataset + images_fs
+
+        try:
+            new_dataset = zfs.get_dataset(new_fs)
+            pool_exist = True
+        except libzfs.ZFSException:
+            # dataset does not exist yet, we need to create it.
+            pass
+
+        if pool_exist is False:
+            try:
+                self.logger.debug("===> Trying to create: {0}".format(new_fs))
+                pool = zfs.get(dataset)
+                pool.create(new_fs, params, fstype, sparse_vol=False)
+            except libzfs.ZFSException as e:
+                self.logger.error("Failed to create dataset", exc_info=True)
+                raise e
+            new_volume = zfs.get_dataset(new_fs)
+            new_volume.mount()
+            return True
+        else:
+            return False
+
+    @accepts(Str('pool_name'))
+    def activate_sharefs(self, pool_name=None):
+        """
+        Create a pool for pre built containers images.
+        """
+
+        zfs = libzfs.ZFS()
+
+        if pool_name:
+            return self.__activate_sharefs(pool_name)
+        else:
+            # Only to keep compatibility with the OLD GUI
+            blocked_pools = ['freenas-boot']
+            pool_name = None
+
+            # We get the first available pool.
+            for pool in zfs.pools:
+                if pool.name not in blocked_pools:
+                    pool_name = pool.name
+                    break
+            return self.__activate_sharefs(pool_name)
+
+
+    @accepts()
+    async def get_sharefs(self):
+        """
+        Return the shared pool for containers images.
+        """
+        zfs = libzfs.ZFS()
+        for dataset in zfs.datasets:
+            if '.container_images' in dataset.name:
+                return dataset.mountpoint
+        return False
+
     @accepts(Dict(
         'vm_create',
         Str('name'),
@@ -481,19 +543,6 @@ class VMService(CRUDService):
 
         devices = data.pop('devices')
         pk = await self.middleware.call('datastore.insert', 'vm.vm', data)
-
-        if self.vmutils.is_container(data) is True:
-            image_url = CONTAINER_IMAGES.get('RancherOS')
-            image_path = self.vmutils.create_images_path(data) + '/' + image_url.split('/')[-1]
-
-            with Client() as c:
-                try:
-                    c.call('vm.fetch_image', image_url, image_path)
-                except CallTimeout:
-                    logger.debug("===> Problem to connect with the middlewared.")
-                    raise
-
-            logger.debug("===> Fetching image: %s" % (image_path))
 
         for device in devices:
             device['vm'] = pk
@@ -574,6 +623,23 @@ class VMService(CRUDService):
     @accepts(Int('id'))
     async def start(self, id):
         """Start a VM."""
+        # CONTAINER
+        raw_file = None
+        devices = await self.middleware.call('datastore.query', 'vm.device', [('vm__id', '=', id)])
+        if devices:
+            vm_data = devices[0].get('vm', None)
+
+        if self.vmutils.is_container(vm_data) is True:
+            sharefs = await self.middleware.call('vm.get_sharefs')
+            for device in devices:
+                if device['dtype'] == 'RAW':
+                    raw_file = device['attributes'].get('path', None)
+            vm_os = CONTAINER_IMAGES.get('RancherOS', None)
+            vm_os_file = vm_os['GZIPFILE']
+            src_path = sharefs + '/' + vm_os_file
+            await self.middleware.threaded(self.decompress_gzip, src_path, raw_file)
+        # CONTAINER
+
         try:
             return await self._manager.start(id)
         except Exception as err:
@@ -617,28 +683,37 @@ class VMService(CRUDService):
             percent = readchunk * 1e2 / totalsize
             job.set_progress(int(percent), 'Downloading', {'downloaded': readchunk, 'total': totalsize})
 
-        if int(percent) == 100:
-            with Client() as c:
-                try:
-                    c.call('vm.decompress_bzip', file_name, '/mnt/ssd/coreos.img')
-                except CallTimeout:
-                    logger.debug("===> Problem to connect with the middlewared.")
 
-
-    @accepts(Str('url'), Str('file_name'))
+    @accepts(Str('VmOS'))
     @job(lock='container')
-    def fetch_image(self, job, url, file_name):
-        """Fetch an image from a given URL and save to a file."""
-        if os.path.exists(file_name) is False:
+    async def fetch_image(self, job, VmOS):
+        """Download a pre-built image for bhyve"""
+        vm_os = CONTAINER_IMAGES.get(VmOS)
+        url = vm_os['URL']
+
+        self.logger.debug("==> IMAGE: {0}".format(vm_os))
+
+        sharefs = await self.middleware.call('vm.get_sharefs')
+        vm_os_file = vm_os['GZIPFILE']
+        file_path = sharefs + '/' + vm_os_file
+
+        if os.path.exists(file_path) is False:
             logger.debug("===> Downloading: %s" % (url))
-            urlretrieve(url, file_name,
-                        lambda nb, bs, fs, job=job: self.fetch_hookreport(nb, bs, fs, job, file_name))
+            await self.middleware.threaded(lambda: urlretrieve(url, file_path,
+                lambda nb, bs, fs, job=job: self.fetch_hookreport(nb, bs, fs, job, file_path)))
+
+        '''
         else:
             with Client() as c:
                 try:
                     c.call('vm.decompress_bzip', file_name, '/mnt/ssd/coreos.img')
                 except CallTimeout:
                     logger.debug("===> Problem to connect with the middlewared.")
+        '''
+
+    @accepts()
+    async def list_images(self):
+        return CONTAINER_IMAGES
 
     def decompress_hookreport(self, dst_file, job):
         totalsize = 4756340736 # XXX: It will be parsed from a sha256 file.
@@ -650,6 +725,17 @@ class VMService(CRUDService):
 
         percent = (size / totalsize) * 100
         job.set_progress(int(percent), 'Decompress', {'decompressed': size, 'total': totalsize})
+
+    @accepts(Str('src'), Str('dst'))
+    def decompress_gzip(self, src, dst):
+        self.logger.debug("===> SRC: {0} DST: {1}".format(src, dst))
+        src_file = gzip.open(src, 'rb')
+        dst_file = open(dst, 'wb')
+        dst_file.write(src_file.read())
+        src_file.close()
+        dst_file.close()
+
+        return True
 
     @accepts(Str('src'), Str('dst'))
     @job(lock='decompress', process=True)
