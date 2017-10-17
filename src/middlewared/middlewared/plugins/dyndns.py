@@ -1,7 +1,7 @@
 import re
 
 from middlewared.schema import accepts, Bool, Dict, Int, List, Str
-from middlewared.service import SystemServiceService, ValidationErrors, private
+from middlewared.service import SystemServiceService, private
 
 
 class DynDNSService(SystemServiceService):
@@ -36,11 +36,6 @@ class DynDNSService(SystemServiceService):
 
         new = old.copy()
         new.update(data)
-
-        verrors = ValidationErrors()
-
-        if verrors:
-            raise verrors
 
         new["domain"] = " ".join(new["domain"])
         new["password"] = await self.middleware.call("notifier.pwenc_encrypt", new["password"])
