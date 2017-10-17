@@ -370,4 +370,9 @@ def services_s3(request):
 
 
 def services_netdata(request):
-    return render(request, 'services/netdata.html')
+    started = notifier().started('netdata')
+    return render(request,
+                  'services/netdata.html',
+                  {
+                      'started': started
+                  })
