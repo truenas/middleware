@@ -92,10 +92,21 @@ generate_collectd()
     datadir="/var/db/collectd/rrd"
     rrdmnt="$(get_rrd_dataset)"
 
+    mount | awk '$3 == "'"${datadir}"'" {print $1}' | grep -qE "/dev/md[[:digit:]]+"
+    [ $? -ne 0 ]
+    datadir_is_ramdisk=$?
+
     if use_rrd_dataset; then
         if [ -d "${rrdmnt}" ]; then
             if [ -d "${datadir}" -a ! -L "${datadir}" ]; then
-                mv "${datadir}" "${datadir}.$(date +'%Y%m%d%H%M%S')"
+                if [ $datadir_is_ramdisk -eq 1 ];
+                then
+                    cp -a "${datadir}" "${datadir}.$(date +'%Y%m%d%H%M%S')"
+                    umount "${datadir}"
+                    rm -rf "${datadir}"
+                else
+                    mv "${datadir}" "${datadir}.$(date +'%Y%m%d%H%M%S')"
+                fi
             fi
             if [ "$(realpath -q ${datadir})" != "${rrdmnt}" ]; then
                 rm -f "${datadir}"
@@ -112,8 +123,7 @@ generate_collectd()
         mkdir -p "${datadir}"
 
         # Create RAMdisk (if not already exists) for RRD files so they don't fill up root partition
-        mount | awk '$3 == "'"${datadir}"'" {print $1}' | grep -qE "/dev/md[[:digit:]]+"
-        if [ $? -ne 0 ];
+        if [ $datadir_is_ramdisk -eq 0 ];
         then
             mdmfs -i 4096 -b 4096 -f 512 -s "2g" md "${datadir}"
         fi
