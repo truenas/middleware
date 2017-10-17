@@ -389,6 +389,7 @@ class CoreService(Service):
                     'item_method': True if item_method else hasattr(method, '_item_method'),
                     'filterable': hasattr(method, '_filterable'),
                     'require_websocket': hasattr(method, '_pass_app'),
+                    'job': hasattr(method, '_job'),
                 }
         return data
 
