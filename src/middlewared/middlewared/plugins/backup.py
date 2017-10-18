@@ -1,12 +1,15 @@
 from google.cloud import storage
 
 from middlewared.schema import accepts, Bool, Dict, Int, Patch, Ref, Str
-from middlewared.service import CallError, CRUDService, Service, item_method, filterable, job, private
+from middlewared.service import (
+    CallError, CRUDService, Service, ValidationErrors, item_method, filterable, job, private
+)
 from middlewared.utils import Popen
 
 
 import asyncio
 import boto3
+import errno
 import json
 import os
 import subprocess
@@ -87,9 +90,12 @@ class BackupService(CRUDService):
     async def query(self, filters=None, options=None):
         return await self.middleware.call('datastore.query', 'tasks.cloudsync', filters, options)
 
-    async def _clean_credential(self, data):
+    async def _clean_credential(self, verrors, name, data):
+
         credential = await self.middleware.call('datastore.query', 'system.cloudcredentials', [('id', '=', data['credential'])], {'get': True})
-        assert credential is not None
+        if credential is None:
+            verrors.add(f'{name}.credential', f'Credential {data["credential"]} not found', errno.EEXIST)
+            return
 
         if credential['provider'] == 'AMAZON':
             data['attributes']['region'] = await self.middleware.call('backup.s3.get_bucket_location', credential['id'], data['attributes']['bucket'])
@@ -97,7 +103,11 @@ class BackupService(CRUDService):
             #  BACKBLAZE|GCLOUD does not need validation nor new data at this stage
             pass
         else:
-            raise NotImplementedError('Invalid provider: {}'.format(credential['provider']))
+            verrors.add(f'{name}.provider', f'Invalid provider: {credential["provider"]}')
+
+        if credential['provider'] == 'AMAZON':
+            if data['attributes'].get('encryption') not in (None, 'SHA256'):
+                verrors.add(f'{name}.attributes.encryption', 'Encryption should be null or "SHA256"')
 
     @accepts(Dict(
         'backup',
@@ -143,7 +153,14 @@ class BackupService(CRUDService):
               }]
             }
         """
-        await self._clean_credential(data)
+
+        verrors = ValidationErrors()
+
+        await self._clean_credential(verrors, 'backup', data)
+
+        if verrors:
+            raise verrors
+
         pk = await self.middleware.call('datastore.insert', 'tasks.cloudsync', data)
         await self.middleware.call('notifier.restart', 'cron')
         return pk
@@ -165,9 +182,17 @@ class BackupService(CRUDService):
             backup['credential'] = backup['credential']['id']
 
         backup.update(data)
-        await self._clean_credential(backup)
+
+        verrors = ValidationErrors()
+
+        await self._clean_credential(verrors, 'backup_update', backup)
+
+        if verrors:
+            raise verrors
+
         await self.middleware.call('datastore.update', 'tasks.cloudsync', id, backup)
         await self.middleware.call('notifier.restart', 'cron')
+        return id
 
     @accepts(Int('id'))
     async def do_delete(self, id):
@@ -257,10 +282,12 @@ class BackupS3Service(Service):
                 access_key_id = {access_key}
                 secret_access_key = {secret_key}
                 region = {region}
+                server_side_encryption = {encryption}
                 """).format(
                 access_key=credential['attributes']['access_key'],
                 secret_key=credential['attributes']['secret_key'],
                 region=backup['attributes']['region'] or '',
+                encryption=backup['attributes'].get('encryption') or '',
             ))
             f.flush()
 
