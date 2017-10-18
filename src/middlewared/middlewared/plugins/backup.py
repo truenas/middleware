@@ -106,8 +106,8 @@ class BackupService(CRUDService):
             verrors.add(f'{name}.provider', f'Invalid provider: {credential["provider"]}')
 
         if credential['provider'] == 'AMAZON':
-            if data['attributes'].get('encryption') not in (None, 'SHA256'):
-                verrors.add(f'{name}.attributes.encryption', 'Encryption should be null or "SHA256"')
+            if data['attributes'].get('encryption') not in (None, 'AES256'):
+                verrors.add(f'{name}.attributes.encryption', 'Encryption should be null or "AES256"')
 
     @accepts(Dict(
         'backup',
