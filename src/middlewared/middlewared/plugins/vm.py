@@ -620,23 +620,6 @@ class VMService(CRUDService):
     @accepts(Int('id'))
     async def start(self, id):
         """Start a VM."""
-        # CONTAINER
-        raw_file = None
-        devices = await self.middleware.call('datastore.query', 'vm.device', [('vm__id', '=', id)])
-        if devices:
-            vm_data = devices[0].get('vm', None)
-
-        if self.vmutils.is_container(vm_data) is True:
-            sharefs = await self.middleware.call('vm.get_sharefs')
-            for device in devices:
-                if device['dtype'] == 'RAW':
-                    raw_file = device['attributes'].get('path', None)
-            vm_os = CONTAINER_IMAGES.get('RancherOS', None)
-            vm_os_file = vm_os['GZIPFILE']
-            src_path = sharefs + '/' + vm_os_file
-            await self.middleware.threaded(self.decompress_gzip, src_path, raw_file)
-        # CONTAINER
-
         try:
             return await self._manager.start(id)
         except Exception as err:
