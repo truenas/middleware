@@ -63,10 +63,20 @@ class VMForm(ModelForm):
         with client as c:
             cdata = self.cleaned_data
 
+            # Container boot load is GRUB
+            if self.instance.vm_type == 'Container Provider':
+                cdata['bootloader'] = 'GRUB'
+
             if self.instance.id:
                 c.call('vm.update', self.instance.id, cdata)
             else:
-                if self.instance.bootloader == 'UEFI' and self.instance.vm_type != 'Container Provider':
+                if self.instance.vm_type == 'Container Provider':
+                    cdata['devices'] = [
+                        {'dtype': 'NIC', 'attributes': {'type': 'E1000'}},
+                        {'dtype': 'RAW', 'attributes': {'path': '', 'type': 'AHCI', 'sectorsize': 0}},
+                    ]
+                    c.call('vm.activate_sharefs')
+                elif self.instance.bootloader == 'UEFI' and self.instance.vm_type == 'Bhyve':
                     cdata['devices'] = [
                         {'dtype': 'NIC', 'attributes': {'type': 'E1000'}},
                         {'dtype': 'VNC', 'attributes': {'wait': False, 'vnc_web': False}},
@@ -104,6 +114,10 @@ class DeviceForm(ModelForm):
         label=_('Raw File'),
         required=False,
         dirsonly=False,
+    )
+    DISK_raw_boot = forms.BooleanField(
+        label=_('Disk boot'),
+        required=False,
     )
     DISK_sectorsize = forms.IntegerField(
         label=_('Disk sectorsize'),
@@ -196,10 +210,11 @@ class DeviceForm(ModelForm):
                 self.fields['DISK_zvol'].initial = self.instance.attributes.get('path', '').replace('/dev/', '')
                 self.fields['DISK_mode'].initial = self.instance.attributes.get('type')
                 self.fields['DISK_sectorsize'].initial = self.instance.attributes.get('sectorsize', 0)
-            elif self.instance.dtype == "RAW":
+            elif self.instance.dtype == 'RAW':
                 self.fields['DISK_raw'].initial = self.instance.attributes.get('path', '')
                 self.fields['DISK_mode'].initial = self.instance.attributes.get('type')
                 self.fields['DISK_sectorsize'].initial = self.instance.attributes.get('sectorsize', 0)
+                self.fields['DISK_raw_boot'].initial = self.instance.attributes.get('boot', '')
             elif self.instance.dtype == 'NIC':
                 self.fields['NIC_type'].initial = self.instance.attributes.get('type')
                 self.fields['NIC_mac'].initial = self.instance.attributes.get('mac')
@@ -255,6 +270,7 @@ class DeviceForm(ModelForm):
                 'path': self.cleaned_data['DISK_raw'],
                 'type': self.cleaned_data['DISK_mode'],
                 'sectorsize': self.cleaned_data['DISK_sectorsize'],
+                'boot': self.cleaned_data['DISK_raw_boot'],
             }
         elif self.cleaned_data['dtype'] == 'CDROM':
             cdrom_path = self.cleaned_data['CDROM_path']
@@ -271,7 +287,7 @@ class DeviceForm(ModelForm):
                 'nic_attach': self.cleaned_data['NIC_attach'],
             }
         elif self.cleaned_data['dtype'] == 'VNC':
-            if vm.bootloader == 'UEFI' and self.is_container is False:
+            if vm.bootloader == 'UEFI' and self.is_container(vm.vm_type) is False:
                 obj.attributes = {
                     'wait': self.cleaned_data['VNC_wait'],
                     'vnc_port': self.cleaned_data['VNC_port'],

@@ -1328,6 +1328,7 @@ require([
         var disk_mode = registry.byId("id_DISK_mode").domNode.parentNode.parentNode;
         var disk_zvol = registry.byId("id_DISK_zvol").domNode.parentNode.parentNode;
         var disk_raw = registry.byId("id_DISK_raw").domNode.parentNode.parentNode;
+        var disk_raw_boot = registry.byId("id_DISK_raw_boot").domNode.parentNode.parentNode;
         var disk_sectorsize = registry.byId("id_DISK_sectorsize").domNode.parentNode.parentNode;
         var nic_type = registry.byId("id_NIC_type").domNode.parentNode.parentNode;
         var nic_mac = registry.byId("id_NIC_mac").domNode.parentNode.parentNode;
@@ -1343,6 +1344,7 @@ require([
         domStyle.set(disk_mode, "display", "none");
         domStyle.set(disk_zvol, "display", "none");
         domStyle.set(disk_raw, "display", "none");
+        domStyle.set(disk_raw_boot, "display", "none");
         domStyle.set(disk_sectorsize, "display", "none");
         domStyle.set(nic_type, "display", "none");
         domStyle.set(nic_mac, "display", "none");
@@ -1362,6 +1364,7 @@ require([
           domStyle.set(disk_raw, "display", "");
           domStyle.set(disk_mode, "display", "");
           domStyle.set(disk_sectorsize, "display", "");
+          domStyle.set(disk_raw_boot, "display", "");
         } else if(dtype.get('value') == 'CDROM') {
           domStyle.set(cdrom_path, "display", "");
         } else if(dtype.get('value') == 'NIC') {
@@ -1382,6 +1385,7 @@ require([
     vmTypeToggle = function() {
         var vm_type = registry.byId("id_vm_type");
         var bootloader = registry.byId("id_bootloader").domNode.parentNode.parentNode;
+
         if (vm_type.get('value') == 'Container Provider') {
             domStyle.set(bootloader, "display", "none");
         } else if (vm_type.get('value') == 'Bhyve') {
