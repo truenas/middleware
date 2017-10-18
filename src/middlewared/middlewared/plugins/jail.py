@@ -161,6 +161,25 @@ class JailService(CRUDService):
 
         return True
 
+    @accepts(Str("resource", enum=["RELEASE", "TEMPLATE", "PLUGIN"]),
+             Bool("remote"))
+    def list_resource(self, resource, remote):
+        """Returns a JSON list of the supplied resource on the host"""
+        self.check_dataset_existence()  # Make sure our datasets exist.
+        iocage = ioc.IOCage(skip_jails=True)
+        remote = True if resource == "PLUGIN" else remote
+        resource = "base" if resource == "RELEASE" else resource
+
+        if remote:
+            if resource != "PLUGIN":
+                resource_list = IOCFetch("").fetch_release(_list=True)
+            else:
+                resource_list = IOCFetch("").fetch_plugin_index("", _list=True)
+        else:
+            resource_list = iocage.list(resource.lower())
+
+        return resource_list
+
     @accepts(Str("jail"))
     def start(self, jail):
         """Takes a jail and starts it."""
