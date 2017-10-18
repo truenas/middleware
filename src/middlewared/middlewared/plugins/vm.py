@@ -346,6 +346,16 @@ class VMUtils(object):
         else:
             return False
 
+    def is_gzip(file_path):
+        """Check if it is a gzip file and not empty"""
+        with gzip.open(file_path, 'rb') as gfile:
+            try:
+                gf_content = gfile.read(1)
+                if len(gf_content) > 0:
+                    return True
+            except:
+                return False
+
 
 class VMService(CRUDService):
 
@@ -698,14 +708,17 @@ class VMService(CRUDService):
 
     @accepts(Str('src'), Str('dst'))
     def decompress_gzip(self, src, dst):
-        self.logger.debug("===> SRC: {0} DST: {1}".format(src, dst))
-        src_file = gzip.open(src, 'rb')
-        dst_file = open(dst, 'wb')
-        dst_file.write(src_file.read())
-        src_file.close()
-        dst_file.close()
+        if self.vmutils.is_gzip(src) is True:
+            self.logger.debug("===> SRC: {0} DST: {1}".format(src, dst))
+            src_file = gzip.open(src, 'rb')
+            dst_file = open(dst, 'wb')
+            dst_file.write(src_file.read())
+            src_file.close()
+            dst_file.close()
 
-        return True
+            return True
+        else:
+            return False
 
     @accepts(Str('src'), Str('dst'))
     @job(lock='decompress', process=True)
