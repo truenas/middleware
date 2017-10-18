@@ -1,7 +1,6 @@
 from . import ejson as json
 from .protocol import DDPProtocol
 from .utils import ProgressBar
-from ..service_exception import ErrnoMixin
 from collections import defaultdict, namedtuple, Callable
 from threading import Event as TEvent, Lock, Thread
 from ws4py.client.threadedclient import WebSocketClient
@@ -194,6 +193,17 @@ class Call(object):
         self.trace = None
         self.type = None
         self.extra = None
+
+
+class ErrnoMixin:
+    ENOMETHOD = 201
+    ESERVICESTARTFAILURE = 202
+
+    @classmethod
+    def _get_errname(cls, code):
+        for k, v in cls.__dict__.items():
+            if k.startswith("E") and v == code:
+                return k
 
 
 class ClientException(ErrnoMixin, Exception):
