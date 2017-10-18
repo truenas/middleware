@@ -22,17 +22,36 @@ def ha_mode():
     #], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     #bios = proc.communicate()[0].strip()
     #if bios == 'VirtualBox':
-    if False:
-        hardware = 'ECHOSTREAM'
-        proc = subprocess.Popen([
-            '/usr/local/sbin/dmidecode',
-            '-s', 'system-uuid',
-        ], stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf8')
-        systemuuid = proc.communicate()[0].strip()
-        if systemuuid == 'B9E1B270-1B0C-48C7-99C8-BFB965D71584':
-            node = 'A'
-        else:
-            node = 'B'
+    #if False:
+    #    hardware = 'ECHOSTREAM'
+    #    proc = subprocess.Popen([
+    #        '/usr/local/sbin/dmidecode',
+    #        '-s', 'system-uuid',
+    #    ], stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf8')
+    #    systemuuid = proc.communicate()[0].strip()
+    #    if systemuuid == 'B9E1B270-1B0C-48C7-99C8-BFB965D71584':
+    #        node = 'A'
+    #    else:
+    #        node = 'B'
+
+    
+    #
+    # XXX hacky hack XXX
+    #
+    # For now, require /data/node for hardcoded A & B node on VMware
+    #
+    proc = subprocess.Popen([
+        '/usr/local/sbin/dmidecode',
+        '-s', 'system-manufacturer',
+    ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    manufacturer = proc.communicate()[0].strip()
+
+    if manufacturer == b"VMware, Inc.":
+        hardware = "VMWARE"
+        if os.path.exists("/data/node"):
+            with open("/data/node", 'r') as f:
+                node = f.read().strip()
+
     else:
         enclosures = ["/dev/" + enc for enc in os.listdir("/dev") if enc.startswith("ses")]
         for enclosure in enclosures:
