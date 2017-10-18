@@ -94,7 +94,7 @@ class BackupService(CRUDService):
 
         credential = await self.middleware.call('datastore.query', 'system.cloudcredentials', [('id', '=', data['credential'])], {'get': True})
         if credential is None:
-            verrors.add(f'{name}.credential', f'Credential {data["credential"]} not found', errno.EEXIST)
+            verrors.add(f'{name}.credential', f'Credential {data["credential"]} not found', errno.ENOENT)
             return
 
         if credential['provider'] == 'AMAZON':
