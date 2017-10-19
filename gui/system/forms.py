@@ -35,6 +35,7 @@ import os
 import re
 import stat
 import subprocess
+import time
 
 from OpenSSL import crypto
 
@@ -50,8 +51,8 @@ from django.forms.formsets import BaseFormSet, formset_factory
 from django.http import HttpResponse
 from django.shortcuts import render_to_response
 from django.utils.html import escapejs
-from django.utils.translation import ugettext_lazy as _
-from django.utils.translation import ugettext as __
+from django.utils import timezone
+from django.utils.translation import ugettext_lazy as _, ugettext as __
 
 from dojango import forms
 from freenasOS import Configuration, Update
@@ -1032,6 +1033,8 @@ class SettingsForm(ModelForm):
                 events.append("restartHttpd('%s')" % newurl)
         if self.instance._original_stg_timezone != self.instance.stg_timezone:
             os.environ['TZ'] = self.instance.stg_timezone
+            time.tzset()
+            timezone.activate(self.instance.stg_timezone)
 
 
 class NTPForm(ModelForm):

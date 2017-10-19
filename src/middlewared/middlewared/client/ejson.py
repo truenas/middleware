@@ -1,4 +1,3 @@
-from datetime import datetime, time, timedelta
 
 import json
 
@@ -19,7 +18,7 @@ class JSONEncoder(json.JSONEncoder):
 def object_hook(obj):
     if len(obj) == 1:
         if '$date' in obj:
-            return datetime.utcfromtimestamp(obj['$date'] / 1000) + timedelta(milliseconds=obj['$date'] % 1000)
+            return datetime.fromtimestamp(obj['$date'] / 1000, tz=timezone.utc) + timedelta(milliseconds=obj['$date'] % 1000)
         if '$time' in obj:
             return time(*[int(i) for i in obj['$time'].split(':')])
     return obj

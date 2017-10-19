@@ -77,7 +77,8 @@ class SystemService(Service):
             'boottime': datetime.fromtimestamp(
                 struct.unpack('l', sysctl.filter('kern.boottime')[0].value[:8])[0]
             ),
-            'datetime': datetime.now(),
+            'datetime': datetime.utcnow(),
+            'timezone': (await self.middleware.call('datastore.config', 'system.settings'))['stg_timezone'],
         }
 
     @accepts(Dict('system-reboot', Int('delay', required=False), required=False))

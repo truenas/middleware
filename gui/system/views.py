@@ -28,6 +28,7 @@ import pickle as pickle
 import json
 import logging
 import os
+import pytz
 import re
 import shutil
 import socket
@@ -95,6 +96,9 @@ log = logging.getLogger('system.views')
 def _info_humanize(info):
     info['physmem'] = f'{int(info["physmem"] / 1048576)}MB'
     info['loadavg'] = ', '.join(list(map(lambda x: f'{x:.2f}', info['loadavg'])))
+    localtz = pytz.timezone(info['timezone'])
+    info['datetime'] = info['datetime'].replace(tzinfo=None)
+    info['datetime'] = localtz.fromutc(info['datetime'])
     return info
 
 
