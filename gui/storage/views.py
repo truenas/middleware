@@ -25,7 +25,6 @@
 #####################################################################
 from collections import OrderedDict
 from functools import cmp_to_key
-import libzfs
 import json
 import logging
 import os

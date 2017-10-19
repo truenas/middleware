@@ -346,10 +346,10 @@ class VolumeFAdmin(BaseFreeAdmin):
         )
         actions['PromoteZFS_dataset'] = self._action_builder(
             'promote_dataset',
-            label = _('Promote Dataset'),
-            icon = "promote_zfs",
-            show = 'BOTH',
-            )
+            label=_('Promote Dataset'),
+            icon="promote_zfs",
+            show="BOTH",
+        )
 
         # Dataset actions
         actions['DatasetDelete'] = self._action_builder(
