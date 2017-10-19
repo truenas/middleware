@@ -135,7 +135,7 @@ class VMSupervisor(object):
                 else:
                     args += ['-s', '{},virtio-blk,{}{}'.format(nid(), device['attributes']['path'], sectorsize_args)]
 
-                if device['attributes'].get('boot', False) is True:
+                if self.vmutils.is_container(self.vm) and device['attributes'].get('boot', False) is True:
                     shared_fs = await self.middleware.call('vm.get_sharefs')
                     device_map_file = self.vmutils.ctn_device_map(shared_fs, self.vm['id'], self.vm['name'], device)
                     grub_dir = self.vmutils.ctn_grub(shared_fs, self.vm['id'], self.vm['name'], device, None)
@@ -198,7 +198,7 @@ class VMSupervisor(object):
                 ]
 
         # grub-bhyve support for containers
-        if self.vm['vm_type'] == 'Container Provider':
+        if self.vmutils.is_container(self.vm):
             grub_bhyve_args = [
                 'grub-bhyve', '-m', device_map_file,
                 '-r', 'host',
