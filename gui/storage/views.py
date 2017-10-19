@@ -48,7 +48,7 @@ from freenasUI.common.system import is_mounted
 from freenasUI.freeadmin.apppool import appPool
 from freenasUI.freeadmin.views import JsonResp
 from freenasUI.middleware import zfs
-from freenasUI.middleware.client import client
+from freenasUI.middleware.client import client, ClientException
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier
 from freenasUI.system.models import Advanced
@@ -433,10 +433,11 @@ def dataset_edit(request, dataset_name):
 
 def promote_zfs(request, name):
     try:
-        zfs.promote_zfs(name)
-        return HttpResponse("Filesystem successfully promoted.")
-    except libzfs.ZFSException:
-        return HttpResponse("Filesystem is not a clone or has already been promoted.")
+        with client as c:
+            c.call("zfs.dataset.promote", name)
+            return HttpResponse(_("Filesystem successfully promoted."))
+    except ClientException:
+        return HttpResponse(_("Filesystem is not a clone or has already been promoted."))
 
 
 def zvol_create(request, parent):
