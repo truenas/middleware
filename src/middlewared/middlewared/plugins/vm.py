@@ -356,6 +356,28 @@ class VMUtils(object):
             except:
                 return False
 
+    @staticmethod
+    def __mkdirs(path):
+        print("===> CREATING path: {}".format(path))
+        if not os.path.exists(os.path.dirname(path)):
+            try:
+                os.makedirs(path)
+                return True
+            except OSError as err:
+                if err.errno != errno.EEXIST:
+                    raise
+
+    def do_dirtree_container(sharefs_path):
+        print("===> GOT INSIDE")
+        iso_path = sharefs_path + '/iso_files/'
+        cnt_config_path = sharefs_path + '/configs/'
+
+        VMUtils.__mkdirs(iso_path)
+        VMUtils.__mkdirs(cnt_config_path)
+
+    def ctn_device_map(sharefs):
+        pass
+
 
 class VMService(CRUDService):
 
@@ -476,7 +498,7 @@ class VMService(CRUDService):
         pool_exist = False
         params = {}
         fstype = getattr(libzfs.DatasetType, 'FILESYSTEM')
-        images_fs = '/.container_images'
+        images_fs = '/.bhyve_containers'
         new_fs = dataset + images_fs
 
         try:
@@ -496,6 +518,7 @@ class VMService(CRUDService):
                 raise e
             new_volume = zfs.get_dataset(new_fs)
             new_volume.mount()
+            self.vmutils.do_dirtree_container(new_volume.mountpoint)
             return True
         else:
             return False
@@ -529,7 +552,7 @@ class VMService(CRUDService):
         """
         zfs = libzfs.ZFS()
         for dataset in zfs.datasets:
-            if '.container_images' in dataset.name:
+            if '.bhyve_containers' in dataset.name:
                 return dataset.mountpoint
         return False
 
@@ -684,7 +707,8 @@ class VMService(CRUDService):
 
         sharefs = await self.middleware.call('vm.get_sharefs')
         vm_os_file = vm_os['GZIPFILE']
-        file_path = sharefs + '/' + vm_os_file
+        iso_path = sharefs + '/iso_files/'
+        file_path = iso_path + vm_os_file
 
         if os.path.exists(file_path) is False:
             logger.debug("===> Downloading: %s" % (url))
@@ -708,6 +732,10 @@ class VMService(CRUDService):
 
     @accepts(Str('src'), Str('dst'))
     def decompress_gzip(self, src, dst):
+        if os.path.exists(dst):
+            self.logger.error("===> DST: {0} exist, we stop here.".format(dst))
+            return False
+
         if self.vmutils.is_gzip(src) is True:
             self.logger.debug("===> SRC: {0} DST: {1}".format(src, dst))
             src_file = gzip.open(src, 'rb')
@@ -715,9 +743,9 @@ class VMService(CRUDService):
             dst_file.write(src_file.read())
             src_file.close()
             dst_file.close()
-
             return True
         else:
+            self.logger.error("===> SRC: {0} does not exists or is broken.".format(src))
             return False
 
     @accepts(Str('src'), Str('dst'))
