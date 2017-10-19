@@ -91,8 +91,10 @@ class VMSupervisor(object):
     def __init__(self, manager, vm):
         self.manager = manager
         self.logger = self.manager.logger
+        self.middleware = self.manager.service.middleware
         self.vm = vm
         self.proc = None
+        self.grub_proc = None
         self.web_proc = None
         self.taps = []
         self.bhyve_error = None
@@ -117,6 +119,8 @@ class VMSupervisor(object):
             ]
 
         nid = Nid(3)
+        device_map_file = None
+        grub_dir = None
         for device in self.vm['devices']:
             if device['dtype'] == 'DISK' or device['dtype'] == 'RAW':
 
@@ -130,6 +134,12 @@ class VMSupervisor(object):
                     args += ['-s', '{},ahci-hd,{}{}'.format(nid(), device['attributes']['path'], sectorsize_args)]
                 else:
                     args += ['-s', '{},virtio-blk,{}{}'.format(nid(), device['attributes']['path'], sectorsize_args)]
+
+                if device['attributes'].get('boot', False) is True:
+                    shared_fs = await self.middleware.call('vm.get_sharefs')
+                    device_map_file = self.vmutils.ctn_device_map(shared_fs, self.vm['id'], self.vm['name'], device)
+                    grub_dir = self.vmutils.ctn_grub(shared_fs, self.vm['id'], self.vm['name'], device, None)
+
             elif device['dtype'] == 'CDROM':
                 args += ['-s', '{},ahci-cd,{}'.format(nid(), device['attributes']['path'])]
             elif device['dtype'] == 'NIC':
@@ -186,6 +196,24 @@ class VMSupervisor(object):
                    '-s', '29,fbuf,vncserver,tcp={}:{},w={},h={},{},{}'.format(vnc_bind, vnc_port, width, height, vnc_password_args, wait),
                    '-s', '30,xhci,tablet',
                 ]
+
+        # grub-bhyve support for containers
+        if self.vm['vm_type'] == 'Container Provider':
+            grub_bhyve_args = [
+                'grub-bhyve', '-m', device_map_file,
+                '-r', 'host',
+                '-M', str(self.vm['memory']),
+                '-d', grub_dir,
+                self.vm['name'],
+            ]
+
+            self.logger.debug('Starting grub-bhyve: {}'.format(' '.join(grub_bhyve_args)))
+            self.grub_proc = await Popen(grub_bhyve_args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+
+            while True:
+                line = await self.grub_proc.stdout.readline()
+                if line == b'':
+                    break
 
         args.append(self.vm['name'])
 
@@ -382,6 +410,39 @@ class VMUtils(object):
         with open(config_file, 'w') as dmap:
             if disk['attributes']['boot'] is True:
                 dmap.write('(hd0) {0}'.format(disk['attributes']['path']))
+
+        return config_file
+
+    def ctn_grub(sharefs_path, vm_id, vm_name, disk, vmOS=None):
+        if vmOS is None:
+            vmOS = 'RancherOS'
+
+        grub_default_args = [
+                'set timeout=0',
+                'set default={}'.format(vmOS),
+                'menuentry "bhyve-image" --id %s {' % (vmOS),
+                'set root=(hd0,msdos1)',
+        ]
+
+        grub_additional_args = {
+            "RancherOS": ['linux /boot/vmlinuz-4.9.45-rancher rancher.password=rancher printk.devkmsg=on rancher.state.dev=LABEL=RANCHER_STATE rancher.state.wait rancher.state.autoformat=[/dev/sda,/dev/vda]', 'initrd /boot/initrd-v1.1.0']
+        }
+
+        vm_private_dir = sharefs_path + '/configs/' + str(vm_id) + '_' + vm_name + '/' + 'grub/'
+        grub_file = vm_private_dir + 'grub.cfg'
+
+        VMUtils.__mkdirs(vm_private_dir)
+
+        with open(grub_file, 'w') as grubcfg:
+            for line in grub_default_args:
+                grubcfg.write(line)
+                grubcfg.write('\n')
+            for line in grub_additional_args[vmOS]:
+                grubcfg.write(line)
+                grubcfg.write('\n')
+            grubcfg.write('}')
+
+        return vm_private_dir
 
 
 class VMService(CRUDService):
