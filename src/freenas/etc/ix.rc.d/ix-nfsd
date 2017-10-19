@@ -59,6 +59,7 @@ generate_nfsd_files()
 	RO_FREENAS_CONFIG=$(ro_sqlite ${name} 2> /tmp/${name}.fail && rm /tmp/${name}.fail)
 	trap 'rm -f ${RO_FREENAS_CONFIG}' EXIT
 	rm /etc/exports
+	rm -f /etc/nfsd.virtualhost
 	local v4=0
 	local use_krb=0
 	local IFS="|"
