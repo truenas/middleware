@@ -167,6 +167,8 @@ class VolumeFAdmin(BaseFreeAdmin):
             hide_cond = "row.data.type != 'dataset'"
         elif show == "ZVOL":
             hide_cond = "row.data.type != 'zvol'"
+        elif show == "BOTH":
+            hide_cond = "row.data.type != 'dataset' && row.data.type != 'zvol'"
         else:
             hide_cond = "row.data.type !== undefined"
 
@@ -342,14 +344,14 @@ class VolumeFAdmin(BaseFreeAdmin):
             func="editScaryObject",
             icon="upgrade",
         )
-
-        # Dataset actions
         actions['PromoteZFS_dataset'] = self._action_builder(
             'promote_dataset',
-            label=_('Promote Dataset'),
-            icon="promote_zfs",
-            show='DATASET',
-        )
+            label = _('Promote Dataset'),
+            icon = "promote_zfs",
+            show = 'BOTH',
+            )
+
+        # Dataset actions
         actions['DatasetDelete'] = self._action_builder(
             "dataset_delete",
             label=_('Destroy Dataset'),
@@ -376,12 +378,6 @@ class VolumeFAdmin(BaseFreeAdmin):
         )
 
         # ZVol actions
-        actions['PromoteZFS_zvol'] = self._action_builder(
-            'promote_zvol',
-            label=_('Promote Zvol'),
-            icon="promote_zfs",
-            show='ZVOL',
-        )
         actions['ZVolEdit'] = self._action_builder(
             "zvol_edit",
             label=_('Edit zvol'),
