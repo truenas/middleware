@@ -142,6 +142,8 @@ generate_nfsd_files()
 		virtual_fqdn="$(get_virtual_fqdn)"
 		if [ -n "${virtual_fqdn}" ]; then
 			echo -n "${virtual_fqdn}" > /etc/nfsd.virtualhost
+			service nfsd restart
+			service gssd restart
 		fi
 	fi
 
