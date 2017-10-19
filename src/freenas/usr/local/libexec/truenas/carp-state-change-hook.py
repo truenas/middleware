@@ -458,6 +458,7 @@ def carp_master(fobj, state_file, ifname, vhid, event, user_override, forcetakeo
                     'nfsv4link')
                 run('/usr/sbin/service ix-nfsd quietstart')
                 run('/usr/sbin/service mountd reload')
+                run('/usr/sbin/service nfsd restart')
 
             # 0 for Active node
             run('/sbin/sysctl kern.cam.ctl.ha_role=0')
