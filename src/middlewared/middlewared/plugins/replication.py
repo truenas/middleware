@@ -1,4 +1,4 @@
-from middlewared.schema import accepts, Dict, Str
+from middlewared.schema import accepts, Dict, Int, Str
 from middlewared.service import private, CallError, Service
 from middlewared.utils import Popen
 
@@ -10,8 +10,14 @@ import subprocess
 
 class ReplicationService(Service):
 
-    @private
+    @accepts(
+        Str('host', required=True),
+        Int('port', required=True),
+    )
     async def ssh_keyscan(self, host, port):
+        """
+        Scan the SSH key on `host`:`port`.
+        """
         proc = await Popen([
             "/usr/bin/ssh-keyscan",
             "-p", str(port),
