@@ -16,6 +16,7 @@ import sysctl
 import bz2
 import gzip
 import libzfs
+import hashlib
 
 logger = middlewared.logger.Logger('vm').getLogger()
 
@@ -444,6 +445,24 @@ class VMUtils(object):
 
         return vm_private_dir
 
+    def check_sha256(file_path, vmOS):
+        bsize = 65536
+        vm_os = CONTAINER_IMAGES.get(VmOS)
+        digest_sha256 = vm_os['SHA256']
+
+        sha256 = hashlib.sha256()
+        with open(file_path, 'rb') as f:
+            while True:
+                data = f.read(bsize)
+                if not data:
+                    break
+                sha256.update(data)
+
+        if sha256.hexdigest() == digest_sha256:
+            return True
+        else:
+            return False
+
 
 class VMService(CRUDService):
 
@@ -762,9 +781,9 @@ class VMService(CRUDService):
             percent = readchunk * 1e2 / totalsize
             job.set_progress(int(percent), 'Downloading', {'downloaded': readchunk, 'total': totalsize})
 
-    @accepts(Str('VmOS'))
+    @accepts(Str('VmOS'), Bool('force'))
     @job(lock='container')
-    async def fetch_image(self, job, VmOS):
+    async def fetch_image(self, job, VmOS, force=False):
         """Download a pre-built image for bhyve"""
         vm_os = CONTAINER_IMAGES.get(VmOS)
         url = vm_os['URL']
@@ -776,7 +795,7 @@ class VMService(CRUDService):
         iso_path = sharefs + '/iso_files/'
         file_path = iso_path + vm_os_file
 
-        if os.path.exists(file_path) is False:
+        if os.path.exists(file_path) is False and force is False:
             logger.debug("===> Downloading: %s" % (url))
             await self.middleware.threaded(lambda: urlretrieve(url, file_path,
                 lambda nb, bs, fs, job=job: self.fetch_hookreport(nb, bs, fs, job, file_path)))
