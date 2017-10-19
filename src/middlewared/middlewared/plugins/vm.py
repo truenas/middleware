@@ -374,11 +374,12 @@ class VMUtils(object):
         VMUtils.__mkdirs(cnt_config_path)
 
     def ctn_device_map(sharefs_path, vm_id, vm_name, disk):
-        print("===> vm_id: {0} vm_name: {1} disk: {2}".format(vm_id, vm_name, disk))
-        sharefs_path = '/mnt/ssd/.bhyve_containers/'
-        vm_private_dir = sharefs_path + 'configs/' + str(vm_id) + '_' + vm_name + '/'
+        vm_private_dir = sharefs_path + '/configs/' + str(vm_id) + '_' + vm_name + '/'
+        config_file = vm_private_dir + 'device.map'
+
         VMUtils.__mkdirs(vm_private_dir)
-        with open(vm_private_dir + 'device.map', 'w') as dmap:
+
+        with open(config_file, 'w') as dmap:
             if disk['attributes']['boot'] is True:
                 dmap.write('(hd0) {0}'.format(disk['attributes']['path']))
 
