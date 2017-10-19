@@ -59,6 +59,14 @@ class VMForm(ModelForm):
             else:
                 return vcpus
 
+    def clean_memory(self):
+        memory = self.cleaned_data.get('memory')
+        vm_type = self.cleaned_data.get('vm_type')
+        if vm_type == 'Container Provider' and memory < 1024:
+            raise forms.ValidationError(_('Minimum memory for container must be 1024.'))
+        else:
+            return memory
+
     def save(self, **kwargs):
         with client as c:
             cdata = self.cleaned_data
@@ -266,6 +274,8 @@ class DeviceForm(ModelForm):
                 'sectorsize': self.cleaned_data['DISK_sectorsize'],
             }
         elif self.cleaned_data['dtype'] == 'RAW':
+            if self.is_container(vm.vm_type) and self.cleaned_data['DISK_mode'] == 'VIRTIO':
+                self._errors['dtype'] = self.error_class([_('Container only works with AHCI mode.')])
             obj.attributes = {
                 'path': self.cleaned_data['DISK_raw'],
                 'type': self.cleaned_data['DISK_mode'],
