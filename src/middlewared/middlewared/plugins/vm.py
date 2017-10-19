@@ -358,7 +358,6 @@ class VMUtils(object):
 
     @staticmethod
     def __mkdirs(path):
-        print("===> CREATING path: {}".format(path))
         if not os.path.exists(os.path.dirname(path)):
             try:
                 os.makedirs(path)
@@ -368,7 +367,6 @@ class VMUtils(object):
                     raise
 
     def do_dirtree_container(sharefs_path):
-        print("===> GOT INSIDE")
         iso_path = sharefs_path + '/iso_files/'
         cnt_config_path = sharefs_path + '/configs/'
 
