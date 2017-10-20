@@ -32,19 +32,19 @@ zfs_help() { echo "Dump ZFS Configuration"; }
 zfs_directory() { echo "ZFS"; }
 zfs_func()
 {
-	section_header "ZFS Pools - 'zpool list'"
+	section_header "ZFS Pools"
 	zpool list
 	section_footer
 
-	section_header "ZFS Pools Status - 'zpool status'"
+	section_header "ZFS Pools Status"
 	zpool status
 	section_footer
 
-	section_header "ZFS Pools History - 'zpool history'"
+	section_header "ZFS Pools History"
 	zpool history
 	section_footer
 
-	section_header "ZFS Pools Properties - 'zpool get all'"
+	section_header "ZFS Pools Properties"
 	pools=$(zpool list -H|awk '{ print $1 }'|xargs)
 	for p in ${pools}
 	do
@@ -54,20 +54,34 @@ zfs_func()
 	done
 	section_footer
 
-	section_header "ZFS Datasets and ZVols - 'zfs list'"
+	section_header "ZFS Datasets and ZVols"
 	zfs list
 	section_footer
 
-	section_header "ZFS Snapshots - 'zfs list -t snapshot -o name,used,available,referenced,mountpoint,freenas:state'"
+	section_header "ZFS Snapshots"
 	zfs list -t snapshot -o name,used,available,referenced,mountpoint,freenas:state
 	section_footer
 
-	section_header "ZFS Datasets Properties - 'zfs get all'"
+	section_header "ZFS Datasets Properties"
 	zfs list -o name -H | while read -r s
 	do
 		section_header "${s}"
 		zfs get all "${s}"
 		section_footer
 	done
+	section_footer
+
+	glabel status > /tmp/glabel.out 
+	section_header  "zpool disk membership normal form"
+		zpool status | ./normalize_pool.nawk  | tee /tmp/pool.normal
+	section_footer
+	section_header  "enclosure use normal form"
+		sesutil map  | ./normalize_ses.nawk  | tee /tmp/ses.normal
+	section_footer
+	section_header  "pool joined to storage"
+		cat  /tmp/pool.normal  |  ./join_pool.nawk
+	section_footer
+	section_header  "enclusure data joined to pool"
+		cat  /tmp/ses.normal  |  ./join_ses.nawk
 	section_footer
 }
