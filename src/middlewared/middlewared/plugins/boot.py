@@ -1,4 +1,4 @@
-from middlewared.schema import Dict, Int, Str, accepts
+from middlewared.schema import Bool, Dict, Int, Str, accepts
 from middlewared.service import CallError, Service, private
 from middlewared.utils import run
 
@@ -92,22 +92,35 @@ class BootService(Service):
         if boottype == 'EFI':
             await run('umount', '/boot/efi', check=False)
 
-    @accepts(Str('dev'))
-    async def attach(self, dev):
+    @accepts(
+        Str('dev'),
+        Dict(
+            'options',
+            Bool('expand', default=False),
+        ),
+    )
+    async def attach(self, dev, options=None):
+        """
+        Attach a disk to the boot pool, turning a stripe into a mirror.
+
+        `expand` option will determine whether the new disk partition will be
+                 the maximum available or the same size as the current disk.
+        """
 
         disks = [d async for d in await self.get_disks()]
         if len(disks) > 1:
             raise CallError('3-way mirror not supported yet')
 
-        # Lets try to find out the size of the current freebsd-zfs partition so
-        # the new partition is not bigger, preventing size mismatch if one of
-        # them fail later on. See #21336
-        await self.middleware.threaded(geom.scan)
-        labelclass = geom.class_by_name('PART')
         format_opts = {}
-        for e in labelclass.xml.findall(f"./geom[name='{disks[0]}']/provider/config[type='freebsd-zfs']"):
-            format_opts['size'] = int(e.find('./length').text)
-            break
+        if not options['expand']:
+            # Lets try to find out the size of the current freebsd-zfs partition so
+            # the new partition is not bigger, preventing size mismatch if one of
+            # them fail later on. See #21336
+            await self.middleware.threaded(geom.scan)
+            labelclass = geom.class_by_name('PART')
+            for e in labelclass.xml.findall(f"./geom[name='{disks[0]}']/provider/config[type='freebsd-zfs']"):
+                format_opts['size'] = int(e.find('./length').text)
+                break
 
         boottype = await self.format(dev, format_opts)
 
