@@ -435,6 +435,14 @@ class DojoModelResource(ResourceMixin, ModelResource):
         return bundle
 
 
+class DojoModelFormResourceMixin:
+    def dehydrate(self, bundle):
+        form = self._meta.validation.form_class(instance=bundle.obj)
+        bundle.data.update(**{field_name: form[field_name].initial
+                              for field_name, field in form.fields.items()})
+        return bundle
+
+
 class DojoResource(ResourceMixin, Resource, metaclass=DjangoDeclarativeMetaclass):
 
     def _apply_sorting(self, options=None):
