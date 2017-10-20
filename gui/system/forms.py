@@ -224,7 +224,7 @@ class BootEnvPoolAttachForm(Form):
     expand = forms.BooleanField(
         label=_('Use all disk space'),
         help_text=_(
-            'If disable will format the new disk using the size of current '
+            'If disabled will format the new disk using the size of current '
             'disk.'
         ),
         required=False,
