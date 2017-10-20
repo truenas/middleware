@@ -130,9 +130,13 @@ section_footer()
 		#subtract to find elapsed time
 		fnd_section_elapsed_time=$(($fnd_section_end_time - $fnd_section_start_time))  
 		echo "debug finished in $fnd_section_elapsed_time seconds for $name"
-		echo "command used:"
-		#$m is the module named used passed in to us by the debug toture suite
-		echo `pwd`/$m.sh
+		#$dirfunc is the module named used passed in to us by the debug toture suite
+		if [ $dirfunc ] then; 
+			echo "command used:"
+			modname=`echo -n "$dirfunc" | sed -e 's/_directory//'`
+			echo `pwd`/$modname.sh
+		fi
+
 
 	fi
 	echo
