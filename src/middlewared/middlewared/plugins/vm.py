@@ -797,11 +797,11 @@ class VMService(CRUDService):
             percent = readchunk * 1e2 / totalsize
             job.set_progress(int(percent), 'Downloading', {'downloaded': readchunk, 'total': totalsize})
 
-    @accepts(Str('VmOS'), Bool('force'))
+    @accepts(Str('vmOS'), Bool('force'))
     @job(lock='container')
-    async def fetch_image(self, job, VmOS, force=False):
+    async def fetch_image(self, job, vmOS, force=False):
         """Download a pre-built image for bhyve"""
-        vm_os = CONTAINER_IMAGES.get(VmOS)
+        vm_os = CONTAINER_IMAGES.get(vmOS)
         url = vm_os['URL']
 
         self.logger.debug("==> IMAGE: {0}".format(vm_os))
@@ -829,10 +829,10 @@ class VMService(CRUDService):
                 return job['state']
         return False
 
-    @accepts(Str('VmOS'))
-    async def image_path(self, VmOS):
+    @accepts(Str('vmOS'))
+    async def image_path(self, vmOS):
         """Return the prebuilt image path or false in case it is not supported."""
-        vm_os = CONTAINER_IMAGES.get(VmOS, None)
+        vm_os = CONTAINER_IMAGES.get(vmOS, None)
         if vm_os:
             image_file = vm_os['GZIPFILE']
             sharefs = await self.middleware.call('vm.get_sharefs')
