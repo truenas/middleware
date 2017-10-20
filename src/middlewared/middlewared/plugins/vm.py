@@ -447,7 +447,7 @@ class VMUtils(object):
         return vm_private_dir
 
     def check_sha256(file_path, vmOS):
-        vm_os = CONTAINER_IMAGES.get(VmOS)
+        vm_os = CONTAINER_IMAGES.get(vmOS)
         digest_sha256 = vm_os['SHA256']
 
         sha256 = hashlib.sha256()
