@@ -726,6 +726,7 @@ Update resource
                 "stg_language": "en",
                 "stg_directoryservice": "",
                 "stg_guiaddress": "0.0.0.0",
+                "stg_guicertificate": 1,
                 "stg_kbdmap": "",
                 "id": 1
         }
