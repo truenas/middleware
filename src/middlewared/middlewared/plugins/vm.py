@@ -742,6 +742,9 @@ class VMService(CRUDService):
             if status.get('state') == "RUNNING":
                 stop_vm = await self.stop(id)
         try:
+            vm_data = await self.middleware.call('datastore.query', 'vm.vm', [('id', '=', id)])
+            if self.vmutils.is_container(vm_data[0]):
+                remove_confs = await self.middleware.call('vm.rm_container_conf', id)
             return await self.middleware.call('datastore.delete', 'vm.vm', id)
         except Exception as err:
             self.logger.error("===> {0}".format(err))
