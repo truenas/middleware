@@ -804,6 +804,18 @@ class VMService(CRUDService):
     async def list_images(self):
         return CONTAINER_IMAGES
 
+    @accepts(Str('VmOS'))
+    async def image_path(self, VmOS):
+        """Return the prebuilt image path or false in case it is not supported."""
+        vm_os = CONTAINER_IMAGES.get(VmOS, None)
+        if vm_os:
+            image_file = vm_os['GZIPFILE']
+            sharefs = await self.middleware.call('vm.get_sharefs')
+            file_path = sharefs + '/iso_files/' + image_file
+            return file_path
+        else:
+            return False
+
     def decompress_hookreport(self, dst_file, job):
         totalsize = 4756340736  # XXX: It will be parsed from a sha256 file.
         fd = os.open(dst_file, os.O_RDONLY)
