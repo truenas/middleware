@@ -804,6 +804,15 @@ class VMService(CRUDService):
     async def list_images(self):
         return CONTAINER_IMAGES
 
+    @accepts(Int('job_id'))
+    async def get_download_status(self, job_id):
+        """ Returns the status of the job, if job does not exists it returns False."""
+        job_pool = await self.middleware.call('core.get_jobs', [('method', '=', 'vm.fetch_image')])
+        for job in job_pool:
+            if job['id'] == job_id:
+                return job['state']
+        return False
+
     @accepts(Str('VmOS'))
     async def image_path(self, VmOS):
         """Return the prebuilt image path or false in case it is not supported."""
