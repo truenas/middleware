@@ -2007,9 +2007,9 @@ class RsyncMod(Model):
     rsyncmod_hostsallow = models.TextField(
         verbose_name=_("Hosts allow"),
         help_text=_("This option is a comma, space, or tab delimited set "
-                    "of hosts which are permitted to access this module. You "
-                    "can " "specify the hosts by name or IP number. Leave "
-                    "this field empty to use default settings."),
+                    "of hosts which are permitted to access this module. Hosts "
+                    "can " "be specified by name or IP address. Leave "
+                    "this field empty to use default of all allowed."),
         blank=True,
     )
     rsyncmod_hostsdeny = models.TextField(
@@ -2018,10 +2018,11 @@ class RsyncMod(Model):
                     "of hosts which are NOT permitted to access this module. "
                     "Where " "the lists conflict, the allow list takes "
                     "precedence. In the event that it is necessary to deny "
-                    "all by default, use the " "keyword ALL (or the netmask "
-                    "0.0.0.0/0) and then explicitly specify in the hosts "
+                    "all by default, set hosts deny to "
+                    "0.0.0.0/0 and explicitly specify in the hosts "
                     "allow parameter those hosts that should be permitted "
-                    "access. Leave this field empty to use default settings."),
+                    "access. Leave this field empty to use the default "
+                    "of none denied."),
         blank=True,
     )
     rsyncmod_auxiliary = models.TextField(
