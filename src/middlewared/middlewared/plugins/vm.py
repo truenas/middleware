@@ -446,14 +446,13 @@ class VMUtils(object):
         return vm_private_dir
 
     def check_sha256(file_path, vmOS):
-        bsize = 65536
         vm_os = CONTAINER_IMAGES.get(VmOS)
         digest_sha256 = vm_os['SHA256']
 
         sha256 = hashlib.sha256()
         with open(file_path, 'rb') as f:
             while True:
-                data = f.read(bsize)
+                data = f.read(BUFSIZE)
                 if not data:
                     break
                 sha256.update(data)
