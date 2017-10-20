@@ -221,6 +221,15 @@ class BootEnvPoolAttachForm(Form):
         choices=(),
         widget=forms.Select(),
         label=_('Member disk'))
+    expand = forms.BooleanField(
+        label=_('Use all disk space'),
+        help_text=_(
+            'If disable will format the new disk using the size of current '
+            'disk.'
+        ),
+        required=False,
+        initial=False,
+    )
 
     def __init__(self, *args, **kwargs):
         self.label = kwargs.pop('label')
@@ -261,7 +270,7 @@ class BootEnvPoolAttachForm(Form):
 
         with client as c:
             try:
-                c.call('boot.attach', devname)
+                c.call('boot.attach', devname, {'expand': self.cleaned_data['expand']})
             except ClientException:
                 return False
         return True
