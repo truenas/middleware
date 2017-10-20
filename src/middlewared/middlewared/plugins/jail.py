@@ -1,20 +1,23 @@
 import os
-import libzfs
+
 import iocage.lib.iocage as ioc
+import libzfs
 from iocage.lib.ioc_check import IOCCheck
-from iocage.lib.ioc_json import IOCJson
-from iocage.lib.ioc_fetch import IOCFetch
 from iocage.lib.ioc_clean import IOCClean
-from iocage.lib.ioc_upgrade import IOCUpgrade
+from iocage.lib.ioc_fetch import IOCFetch
 from iocage.lib.ioc_image import IOCImage
+from iocage.lib.ioc_json import IOCJson
 # iocage's imports are per command, these are just general facilities
 from iocage.lib.ioc_list import IOCList
+from iocage.lib.ioc_upgrade import IOCUpgrade
 from middlewared.schema import Bool, Dict, List, Str, accepts
-from middlewared.service import CRUDService, job, private, filterable
+from middlewared.service import CRUDService, filterable, job, private
+from middlewared.service_exception import CallError
 from middlewared.utils import filter_list
 
 
 class JailService(CRUDService):
+
     @filterable
     async def query(self, filters=None, options=None):
         options = options or {}
@@ -22,6 +25,7 @@ class JailService(CRUDService):
         try:
             jails = [
                 list(jail.values())[0]
+
                 for jail in ioc.IOCage().get("all", recursive=True)
             ]
         except BaseException:
@@ -50,7 +54,7 @@ class JailService(CRUDService):
         # the main job that calls this and return said job's id instead of
         # the created jail's id
 
-        return self.middleware.call('jail.create_job', options)
+        return await self.middleware.call('jail.create_job', options)
 
     @private
     @accepts(
@@ -61,13 +65,13 @@ class JailService(CRUDService):
              Str("uuid"),
              Bool("basejail"), Bool("empty"), Bool("short"), List("props")))
     @job()
-    async def create_job(self, job, options):
+    def create_job(self, job, options):
         iocage = ioc.IOCage(skip_jails=True)
 
         release = options["release"]
-        template = options["template"]
-        pkglist = options["pkglist"]
-        uuid = options["uuid"]
+        template = options.get("template", False)
+        pkglist = options.get("pkglist", None)
+        uuid = options.get("uuid", None)
         basejail = options["basejail"]
         empty = options["empty"]
         short = options["short"]
@@ -80,20 +84,22 @@ class JailService(CRUDService):
 
         if not os.path.isdir(f"{iocroot}/releases/{release}") and not \
                 template and not empty:
-            await self.middleware.call('jail.fetch', {"release":
-                                                      release}).wait()
+            self.middleware.call_sync('jail.fetch', {"release":
+                                                     release}).wait_sync()
 
-        await self.middleware.threaded(
-            iocage.create(
-                release,
-                props,
-                0,
-                pkglist,
-                template=template,
-                short=short,
-                uuid=uuid,
-                basejail=basejail,
-                empty=empty).create_jail)
+        err, msg = iocage.create(
+            release,
+            props,
+            0,
+            pkglist,
+            template=template,
+            short=short,
+            _uuid=uuid,
+            basejail=basejail,
+            empty=empty)
+
+        if err:
+            raise CallError(msg)
 
         return True
 
@@ -154,6 +160,25 @@ class JailService(CRUDService):
         iocage.fetch(**options)
 
         return True
+
+    @accepts(Str("resource", enum=["RELEASE", "TEMPLATE", "PLUGIN"]),
+             Bool("remote"))
+    def list_resource(self, resource, remote):
+        """Returns a JSON list of the supplied resource on the host"""
+        self.check_dataset_existence()  # Make sure our datasets exist.
+        iocage = ioc.IOCage(skip_jails=True)
+        remote = True if resource == "PLUGIN" else remote
+        resource = "base" if resource == "RELEASE" else resource
+
+        if remote:
+            if resource != "PLUGIN":
+                resource_list = IOCFetch("").fetch_release(_list=True)
+            else:
+                resource_list = IOCFetch("").fetch_plugin_index("", _list=True)
+        else:
+            resource_list = iocage.list(resource.lower())
+
+        return resource_list
 
     @accepts(Str("jail"))
     def start(self, jail):
@@ -259,12 +284,18 @@ class JailService(CRUDService):
 
     @accepts(Str("jail"))
     @job(lock=lambda args: f"jail_update:{args[-1]}")
-    def update_jail_to_latest_patch(self, job, jail):
+    def update_to_latest_patch(self, job, jail):
         """Updates specified jail to latest patch level."""
 
         uuid, path = self.check_jail_existence(jail)
         status, jid = IOCList.list_get_jid(uuid)
         conf = IOCJson(path).json_load()
+
+        # Sometimes if they don't have an existing patch level, this
+        # becomes 11.1 instead of 11.1-RELEASE
+        _release = conf["release"].rsplit("-", 1)[0]
+        release = _release if "-RELEASE" in _release else conf["release"]
+
         started = False
 
         if conf["type"] == "jail":
@@ -274,7 +305,11 @@ class JailService(CRUDService):
         else:
             return False
 
-        IOCFetch(conf["cloned_release"]).fetch_update(True, uuid)
+        if conf["basejail"] != "yes":
+            IOCFetch(release).fetch_update(True, uuid)
+        else:
+            # Basejails only need their base RELEASE updated
+            IOCFetch(release).fetch_update()
 
         if started:
             self.stop(jail)

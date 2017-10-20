@@ -206,6 +206,19 @@ class CertificateAuthorityFAdmin(BaseFreeAdmin):
         #     }""",
         # }
 
+        actions['sign_csr'] = {
+            'button_name': 'Sign CSR',
+            'on_click': """
+                function() {
+                    var mybtn = this;
+                    for (var i in grid.selection) {
+                        var data = grid.row(i).data;
+                        editObject('Sign CSR', data._sign_csr_url, [mybtn,]);
+                        }
+                    }
+            """,
+        }
+
         actions['export_certificate'] = {
             'button_name': 'Export Certificate',
             'on_click': """function() {

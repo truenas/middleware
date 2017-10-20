@@ -342,6 +342,12 @@ class VolumeFAdmin(BaseFreeAdmin):
             func="editScaryObject",
             icon="upgrade",
         )
+        actions['PromoteZFS_dataset'] = self._action_builder(
+            'promote_dataset',
+            label=_('Promote Dataset'),
+            icon="promote_zfs",
+            show="ALL",
+        )
 
         # Dataset actions
         actions['DatasetDelete'] = self._action_builder(

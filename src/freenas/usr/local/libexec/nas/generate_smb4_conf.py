@@ -263,22 +263,20 @@ def config_share_for_zfs(share):
 # for fruit, and if catia and fruit are used, catia comes before fruit
 #
 def order_vfs_objects(vfs_objects):
+    vfs_objects_special = ('catia', 'fruit', 'streams_xattr', 'recycle', 'aio_pthread')
     vfs_objects_ordered = []
-    for obj in vfs_objects:
-        if obj not in ('aio_pthread', 'catia', 'fruit', 'recycle', 'streams_xattr'):
-            vfs_objects_ordered.append(obj)
 
     if 'fruit' in vfs_objects:
-        if 'catia' in vfs_objects:
-            vfs_objects_ordered.append('catia')
-        vfs_objects_ordered.append('fruit')
-        vfs_objects_ordered.append('streams_xattr')
-    if not 'fruit' in vfs_objects and 'streams_xattr' in vfs_objects:
-        vfs_objects_ordered.append('streams_xattr')
-    if 'recycle' in vfs_objects:
-        vfs_objects_ordered.append('recycle')
-    if 'aio_pthread' in vfs_objects:
-        vfs_objects_ordered.append('aio_pthread')
+        if 'streams_xattr' not in vfs_objects:
+            vfs_objects.append('streams_xattr')
+
+    for obj in vfs_objects:
+        if obj not in vfs_objects_special:
+            vfs_objects_ordered.append(obj)
+
+    for obj in vfs_objects_special:
+        if obj in vfs_objects:
+            vfs_objects_ordered.append(obj)
 
     return vfs_objects_ordered
 
@@ -1158,6 +1156,8 @@ def generate_smb4_shares(client, smb4_shares):
                  "no" if share.cifs_ro else "yes")
         confset2(smb4_shares, "browseable = %s",
                  "yes" if share.cifs_browsable else "no")
+        confset2(smb4_shares, "access based share enum = %s",
+                 "yes" if share.cifs_abe else "no")
 
         task = None
         if share.cifs_storage_task:
@@ -1310,15 +1310,15 @@ def smb4_setup(client):
     if not client.call('notifier.is_freenas') and client.call('notifier.failover_status') == 'BACKUP':
         return
 
-    systemdataset_is_decrypted = client.call('notifier.systemdataset_is_decrypted')
+    systemdataset = client.call('systemdataset.config')
 
-    if not systemdataset_is_decrypted:
+    if not systemdataset['is_decrypted']:
         if os.path.islink(statedir):
             smb4_unlink(statedir)
             smb4_mkdir(statedir)
         return
 
-    systemdataset_path = client.call('notifier.system_dataset_path') or statedir
+    systemdataset_path = systemdataset['path'] or statedir
 
     basename_realpath = os.path.join(systemdataset_path, 'samba4')
     statedir_realpath = os.path.realpath(statedir)

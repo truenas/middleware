@@ -1,8 +1,15 @@
 from middlewared.schema import Bool, Dict, Str, accepts
-from middlewared.service import CRUDService, filterable, item_method
+from middlewared.service import CallError, CRUDService, ValidationErrors, filterable, item_method
 from middlewared.utils import filter_list
+from middlewared.validators import Match
 
 from freenasOS import Update
+
+import errno
+import subprocess
+
+
+RE_BE_NAME = r'^[^/ *\'"?@!#$%^&()+=~<>;\\]+$'
 
 
 class BootEnvService(CRUDService):
@@ -24,14 +31,6 @@ class BootEnvService(CRUDService):
         return Update.ActivateClone(oid)
 
     @item_method
-    @accepts(Str('id'), Str('new_name'))
-    def rename(self, oid, new_name):
-        """
-        Renames boot environment `id`.
-        """
-        return Update.RenameClone(oid, new_name)
-
-    @item_method
     @accepts(
         Str('id'),
         Dict(
@@ -48,5 +47,53 @@ class BootEnvService(CRUDService):
         clone = Update.FindClone(oid)
         return Update.CloneSetAttr(clone, **attrs)
 
+    @accepts(Dict(
+        'bootenv_create',
+        Str('name', required=True, validators=[Match(RE_BE_NAME)]),
+        Str('source'),
+    ))
+    def do_create(self, data):
+
+        verrors = ValidationErrors()
+        self._clean_be_name(verrors, 'bootenv_create', data['name'])
+        if verrors:
+            raise verrors
+
+        kwargs = {}
+        source = data.get('source')
+        if source:
+            kwargs['bename'] = source
+        clone = Update.CreateClone(data['name'], **kwargs)
+        if clone is False:
+            raise CallError('Failed to create boot environment')
+        return data['name']
+
+    @accepts(Str('id'), Dict(
+        'bootenv_update',
+        Str('name', required=True, validators=[Match(RE_BE_NAME)]),
+    ))
+    def do_update(self, oid, data):
+
+        verrors = ValidationErrors()
+        self._clean_be_name(verrors, 'bootenv_update', data['name'])
+        if verrors:
+            raise verrors
+
+        if not Update.RenameClone(oid, data['name']):
+            raise CallError('Failed to update boot environment')
+        return data['name']
+
+    def _clean_be_name(self, verrors, schema, name):
+        beadm_names = subprocess.Popen(
+            "beadm list | awk '{print $7}'",
+            shell=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+            encoding='utf8',
+        ).communicate()[0].split('\n')
+        if name in filter(None, beadm_names):
+            verrors.add(f'{schema}.name', f'The name "{name}" already exists', errno.EEXIST)
+
+    @accepts(Str('id'))
     def do_delete(self, oid):
         return Update.DeleteClone(oid)

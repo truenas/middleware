@@ -101,6 +101,8 @@ define([
               'datastore.query', ['system.cloudcredentials', [['id', '=', value]], {get: true} ],
               function(result) {
                 if(result.provider == 'AMAZON') me.showAmazon(result);
+                if(result.provider == 'BACKBLAZE') me.showBackblaze(result);
+                if(result.provider == 'GCLOUD') me.showGcloud(result);
               }
             );
           }
@@ -129,6 +131,8 @@ define([
       hideAll: function() {
         domStyle.set(this.dapProviderError, "display", "none");
         domStyle.set(this.dapAmazon, "display", "none");
+        domStyle.set(this.dapBackblaze, "display", "none");
+        domStyle.set(this.dapGcloud, "display", "none");
       },
       showAmazon: function(credential) {
         var me = this;
@@ -152,6 +156,78 @@ define([
             }, me.dapAmazonFolder);
             if(me.initial.folder) me._folder.set('value', me.initial.folder);
 
+            me._encryption = new Select({
+              name: "encryption",
+              options: [
+                {label: "None", value: ""},
+                {label: "AES-256", value: "AES256"},
+              ],
+              value: "",
+            }, me.dapAmazonEncryption);
+            if(me.initial.encryption) me._encryption.set('value', me.initial.encryption);
+
+            me._hideLoading();
+          },
+          function(err) {
+            me.dapProviderError.innerHTML = err.error;
+            domStyle.set(me.dapProviderError, "display", "");
+            me._hideLoading();
+          }
+        );
+      },
+      showBackblaze: function(credential) {
+        var me = this;
+        Middleware.call(
+          'backup.b2.get_buckets', [credential.id],
+          function(result) {
+            var options = [{label: "-----", value: ""}];
+            for(var i=0;i<result.length;i++) {
+              options.push({label: result[i].bucketName, value: result[i].bucketName});
+            }
+            domStyle.set(me.dapBackblaze, "display", "table-row");
+            me._buckets = new Select({
+              name: "bucket",
+              options: options,
+              value: ''
+            }, me.dapBackblazeBuckets);
+            if(me.initial.bucket) me._buckets.set('value', me.initial.bucket);
+
+            me._folder = new TextBox({
+              name: "folder"
+            }, me.dapBackblazeFolder);
+            if(me.initial.folder) me._folder.set('value', me.initial.folder);
+
+            me._hideLoading();
+          },
+          function(err) {
+            me.dapProviderError.innerHTML = err.error;
+            domStyle.set(me.dapProviderError, "display", "");
+            me._hideLoading();
+          }
+        );
+      },
+      showGcloud: function(credential) {
+        var me = this;
+        Middleware.call(
+          'backup.gcs.get_buckets', [credential.id],
+          function(result) {
+            var options = [{label: "-----", value: ""}];
+            for(var i=0;i<result.length;i++) {
+              options.push({label: result[i].name, value: result[i].name});
+            }
+            domStyle.set(me.dapGcloud, "display", "table-row");
+            me._buckets = new Select({
+              name: "bucket",
+              options: options,
+              value: ''
+            }, me.dapGcloudBuckets);
+            if(me.initial.bucket) me._buckets.set('value', me.initial.bucket);
+
+            me._folder = new TextBox({
+              name: "folder"
+            }, me.dapGcloudFolder);
+            if(me.initial.folder) me._folder.set('value', me.initial.folder);
+
             me._hideLoading();
           },
           function(err) {
@@ -166,6 +242,13 @@ define([
         if(this._credential) value['credential'] = this._credential.get('value');
         if(this._buckets) value['bucket'] = this._buckets.get('value');
         if(this._folder) value['folder'] = this._folder.get('value');
+        if(domStyle.get(this.dapAmazon, 'display') == 'table-row' && this._encryption) {
+          if(this._encryption.get('value') == '') {
+            value['encryption'] = null;
+          } else {
+            value['encryption'] = this._encryption.get('value');
+          }
+         }
         return json.stringify(value);
       }
     });

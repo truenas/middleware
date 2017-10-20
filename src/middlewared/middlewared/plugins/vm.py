@@ -154,21 +154,20 @@ class VMSupervisor(object):
 
                 vnc_password_args = ""
                 if vnc_password:
-                    vnc_password_args = ",password=" + vnc_password
+                    vnc_password_args = "password=" + vnc_password
 
                 if vnc_resolution is None:
-                    args += [
-                        '-s', '29,fbuf,tcp={}:{},w=1024,h=768{},{}'.format(vnc_bind, vnc_port, vnc_password_args, wait),
-                        '-s', '30,xhci,tablet',
-                    ]
+                    width = 1024
+                    height = 768
                 else:
                     vnc_resolution = vnc_resolution.split('x')
                     width = vnc_resolution[0]
                     height = vnc_resolution[1]
-                    args += [
-                        '-s', '29,fbuf,tcp={}:{},w={},h={}{},{}'.format(vnc_bind, vnc_port, width, height, vnc_password_args, wait),
-                        '-s', '30,xhci,tablet',
-                    ]
+
+                args += [
+                   '-s', '29,fbuf,vncserver,tcp={}:{},w={},h={},{},{}'.format(vnc_bind, vnc_port, width, height, vnc_password_args, wait),
+                   '-s', '30,xhci,tablet',
+                ]
 
         args.append(self.vm['name'])
 
@@ -182,7 +181,7 @@ class VMSupervisor(object):
             web_bind = ':{}'.format(vnc_web_port) if vnc_bind is '0.0.0.0' else '{}:{}'.format(vnc_bind, vnc_web_port)
 
             self.web_proc = await Popen(['/usr/local/libexec/novnc/utils/websockify/run', '--web',
-                    '/usr/local/libexec/novnc/', '--wrap-mode=exit',
+                    '/usr/local/libexec/novnc/', '--wrap-mode=ignore',
                     web_bind, '{}:{}'.format(vnc_bind, vnc_port)], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
             self.logger.debug("==> Start WEBVNC at port {} with pid number {}".format(vnc_web_port, self.web_proc.pid))
 

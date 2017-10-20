@@ -3,7 +3,7 @@ import socket
 import ssl
 
 from middlewared.schema import Dict, Int, Str, accepts
-from middlewared.service import CallError, CRUDService, filterable
+from middlewared.service import CallError, CRUDService, private
 
 from pyVim import connect
 from pyVmomi import vim
@@ -11,13 +11,11 @@ from pyVmomi import vim
 
 class VMWareService(CRUDService):
 
-    @filterable
-    async def query(self, filters=None, options=None):
-        if options is None:
-            options = {}
-        options['extend'] = 'vmware.item_extend'
-        return await self.middleware.call('datastore.query', 'storage.vmwareplugin', filters, options)
+    class Config:
+        datastore = 'storage.vmwareplugin'
+        datastore_extend = 'vmware.item_extend'
 
+    @private
     async def item_extend(self, item):
         try:
             item['password'] = await self.middleware.call('notifier.pwenc_decrypt', item['password'])
@@ -44,7 +42,7 @@ class VMWareService(CRUDService):
                 pwd=data['password'],
                 sslContext=ssl_context,
             )
-        except (vim.fault.InvalidLogin, vim.fault.NoPermission) as e:
+        except (vim.fault.InvalidLogin, vim.fault.NoPermission, vim.fault.RestrictedVersion) as e:
             raise CallError(e.msg, errno.EPERM)
         except (socket.gaierror, socket.error, OSError) as e:
             raise CallError(str(e), e.errno)

@@ -13,18 +13,16 @@ def test_vm_flags(conn):
 
 
 def test_vm_001_create(conn, data):
-    req = conn.rest.post('vm', data=[
-        {
-            'name': 'vmtest',
-            'description': 'desc',
-            'vcpus': 1,
-            'memory': 1000,
-            'bootloader': 'UEFI',
-            'devices': [
-            ],
-            'autostart': False,
-        }
-    ])
+    req = conn.rest.post('vm', data={
+        'name': 'vmtest',
+        'description': 'desc',
+        'vcpus': 1,
+        'memory': 1000,
+        'bootloader': 'UEFI',
+        'devices': [
+        ],
+        'autostart': False,
+    })
     assert req.status_code == 200, req.text
     data['vmid'] = req.json()
 
@@ -59,7 +57,7 @@ def test_vm_400_update(conn, data):
     vm['memory'] = 1100
     vm.pop('id')
 
-    req = conn.rest.put(f'vm/id/{data["vmid"]}', data=[vm])
+    req = conn.rest.put(f'vm/id/{data["vmid"]}', data=vm)
     assert req.status_code == 200, req.text
 
     assert conn.rest.get(f'vm?id={data["vmid"]}').json()[0]['memory'] == 1100

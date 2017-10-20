@@ -56,9 +56,9 @@ def create_certificate(cert_info):
     except ValueError:
         # This is raised if say we specified freenas.org in the Common name
         pass
-    cert.add_extensions([crypto.X509Extension(
-        "subjectAltName".encode('utf-8'), False, f"{default_san_type}:{cert_info['common']}".encode('utf-8')
-    )])
+    if cert_info['san']:
+        cert.add_extensions([crypto.X509Extension(b"subjectAltName", False, f"{default_san_type}:{cert_info['san']}".encode())])
+        cert.get_subject().subjectAltName = cert_info['san'].replace(" ", ", ")
     cert.get_subject().emailAddress = cert_info['email']
 
     serial = cert_info.get('serial')
@@ -102,9 +102,7 @@ def create_certificate_signing_request(cert_info):
     req.get_subject().ST = cert_info['state']
     req.get_subject().L = cert_info['city']
     req.get_subject().O = cert_info['organization']
-    cn_san_list = cert_info['san'].split() + cert_info['common'].split()
-    cn_san = ', '.join(cn_san_list)
-    req.get_subject().CN = cn_san
+    req.get_subject().CN = cert_info['common']
     # first lets determine if an ip address was specified or
     # a dns entry in the common name
     default_san_type = 'DNS'
@@ -114,10 +112,9 @@ def create_certificate_signing_request(cert_info):
     except ValueError:
         # This is raised if say we specified freenas.org in the Common name
         pass
-
-    req.add_extensions([crypto.X509Extension(
-        "subjectAltName".encode('utf-8'), False, f"{default_san_type}:{cert_info['san']}".encode('utf-8')
-    )])
+    if cert_info['san']:
+        req.add_extensions([crypto.X509Extension(b"subjectAltName", False, f"{default_san_type}:{cert_info['san']}".encode())])
+        req.get_subject().subjectAltName = cert_info['san'].replace(" ", ", ")
     req.get_subject().emailAddress = cert_info['email']
 
     req.set_pubkey(key)
@@ -138,6 +135,7 @@ def load_certificate(buf):
     cert_info['city'] = cert.get_subject().L
     cert_info['organization'] = cert.get_subject().O
     cert_info['common'] = cert.get_subject().CN
+    cert_info['san'] = cert.get_subject().subjectAltName
     cert_info['email'] = cert.get_subject().emailAddress
 
     signature_algorithm = cert.get_signature_algorithm().decode()
@@ -157,6 +155,7 @@ def load_certificate_signing_request(buf):
     cert_info['city'] = cert.get_subject().L
     cert_info['organization'] = cert.get_subject().O
     cert_info['common'] = cert.get_subject().CN
+    cert_info['san'] = cert.get_subject().subjectAltName
     cert_info['email'] = cert.get_subject().emailAddress
 
     signature_algorithm = cert.get_signature_algorithm().decode()

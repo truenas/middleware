@@ -1,6 +1,6 @@
 from datetime import datetime
 from middlewared.schema import accepts, Dict, Int
-from middlewared.service import job, Service
+from middlewared.service import no_auth_required, job, Service
 from middlewared.utils import Popen, sw_version
 
 import os
@@ -22,6 +22,7 @@ SYSTEM_READY = False
 
 class SystemService(Service):
 
+    @no_auth_required
     @accepts()
     async def is_freenas(self):
         """
@@ -72,11 +73,12 @@ class SystemService(Service):
             'loadavg': os.getloadavg(),
             'uptime': uptime,
             'system_serial': serial,
-            'system_product': serial,
+            'system_product': product,
             'boottime': datetime.fromtimestamp(
                 struct.unpack('l', sysctl.filter('kern.boottime')[0].value[:8])[0]
             ),
-            'datetime': datetime.now(),
+            'datetime': datetime.utcnow(),
+            'timezone': (await self.middleware.call('datastore.config', 'system.settings'))['stg_timezone'],
         }
 
     @accepts(Dict('system-reboot', Int('delay', required=False), required=False))

@@ -10,7 +10,7 @@ def test_support_fetch_categories(conn):
     password = os.environ.get('SUPPORT_PASSWORD')
 
     if username and password:
-        req = conn.rest.post('support/fetch_categories', data=[username, password])
+        req = conn.rest.post('support/fetch_categories', data={'username': username, 'password': password})
         assert req.status_code == 200, req.text
         assert isinstance(req.json(), dict)
     else:

@@ -12,58 +12,58 @@
 
 use_rrd_dataset()
 {
-	local use
+    local use
 
-	if [ -z "$(get_rrd_dataset)" ]
-	then
-		return 1
-	fi
+    if [ -z "$(get_rrd_dataset)" ]
+    then
+        return 1
+    fi
 
-	use="$(${FREENAS_SQLITE_CMD} ${RO_FREENAS_CONFIG} "
-	SELECT
-		sys_rrd_usedataset
-	FROM
-		system_systemdataset
-	ORDER BY
-		-id
-	LIMIT 1
-	" | \
-	while read -r rrd_usedataset
-	do
-		if [ "${rrd_usedataset}" = "0" ]
-		then
-			echo "1"
-		else
-			if [ "$(/usr/local/bin/midclt call system.is_freenas)" = "False" ]; then
-				local failover="$(/usr/local/bin/midclt -q call notifier.failover_status 2> /dev/null)"
-				if [ "x${failover}" = "xBACKUP" ]; then
-					echo "1"
-				else
-					echo "0"
-				fi
-			else
-				echo "0"
-			fi
-		fi
-	done
-	)"
+    use="$(${FREENAS_SQLITE_CMD} ${RO_FREENAS_CONFIG} "
+    SELECT
+        sys_rrd_usedataset
+    FROM
+        system_systemdataset
+    ORDER BY
+        -id
+    LIMIT 1
+    " | \
+    while read -r rrd_usedataset
+    do
+        if [ "${rrd_usedataset}" = "0" ]
+        then
+            echo "1"
+        else
+            if [ "$(/usr/local/bin/midclt call system.is_freenas)" = "False" ]; then
+                local failover="$(/usr/local/bin/midclt -q call notifier.failover_status 2> /dev/null)"
+                if [ "x${failover}" = "xBACKUP" ]; then
+                    echo "1"
+                else
+                    echo "0"
+                fi
+            else
+                echo "0"
+            fi
+        fi
+    done
+    )"
 
-	return ${use}
+    return ${use}
 }
 
 
 get_rrd_dataset()
 {
-	local sys_uuid_field
-	if [ "$(ha_node)" = "B" ]; then
-		sys_uuid_field="sys_uuid_b"
-	else
-		sys_uuid_field="sys_uuid"
-	fi
-	if system_dataset_enabled
-	then
-		echo "$(realpath ${FREENAS_SYSTEMDATASET}/rrd-$(${FREENAS_SQLITE_CMD} ${RO_FREENAS_CONFIG} "select ${sys_uuid_field} from system_systemdataset"))"
-	fi
+    local sys_uuid_field
+    if [ "$(ha_node)" = "B" ]; then
+        sys_uuid_field="sys_uuid_b"
+    else
+        sys_uuid_field="sys_uuid"
+    fi
+    if system_dataset_enabled
+    then
+        echo "$(realpath ${FREENAS_SYSTEMDATASET}/rrd-$(${FREENAS_SQLITE_CMD} ${RO_FREENAS_CONFIG} "select ${sys_uuid_field} from system_systemdataset"))"
+    fi
 }
 
 generate_collectd()
@@ -81,7 +81,7 @@ generate_collectd()
     # See #5019
     local failover="$(${FREENAS_SQLITE_CMD} ${RO_FREENAS_CONFIG} "select count(*) from failover_failover" 2> /dev/null)"
     if [ -n "${failover}" ] && [ ${failover} -gt 0 ]; then
-	rm ${FREENAS_CONFIG_MD5}
+        rm ${FREENAS_CONFIG_MD5}
     fi
 
     local hostname=$(hostname)
@@ -92,19 +92,41 @@ generate_collectd()
     datadir="/var/db/collectd/rrd"
     rrdmnt="$(get_rrd_dataset)"
 
-    if use_rrd_dataset && [ -d "${rrdmnt}" ]; then
-	if [ -d "${datadir}" -a ! -L "${datadir}" ]; then
-		mv "${datadir}" "${datadir}.$(date +'%Y%m%d%H%M%S')"
-	fi
-	if [ "$(realpath -q ${datadir})" != "${rrdmnt}" ]; then
-		rm -f "${datadir}"
-		ln -s "${rrdmnt}" "${datadir}"
-	fi
+    mount | awk '$3 == "'"${datadir}"'" {print $1}' | grep -qE "tmpfs"
+    [ $? -ne 0 ]
+    datadir_is_ramdisk=$?
+
+    if use_rrd_dataset; then
+        if [ -d "${rrdmnt}" ]; then
+            if [ -d "${datadir}" -a ! -L "${datadir}" ]; then
+                if [ $datadir_is_ramdisk -eq 1 ];
+                then
+                    cp -a "${datadir}" "${datadir}.$(date +'%Y%m%d%H%M%S')"
+                    umount "${datadir}"
+                    rm -rf "${datadir}"
+                else
+                    mv "${datadir}" "${datadir}.$(date +'%Y%m%d%H%M%S')"
+                fi
+            fi
+            if [ "$(realpath -q ${datadir})" != "${rrdmnt}" ]; then
+                rm -f "${datadir}"
+                ln -s "${rrdmnt}" "${datadir}"
+            fi
+        else
+            echo "${rrdmnt} does not exist or is not a directory"
+            exit 1
+        fi
     else
         if [ -L "${datadir}" ]; then
-	    rm -f "${datadir}"
-	    mkdir -p "${datadir}"
-	fi
+            rm -f "${datadir}"
+        fi
+        mkdir -p "${datadir}"
+
+        # Create RAMdisk (if not already exists) for RRD files so they don't fill up root partition
+        if [ $datadir_is_ramdisk -eq 0 ];
+        then
+            mount -t tmpfs -o size=600m tmpfs "${datadir}"
+        fi
     fi
 
     if [ -f "${rrdfile}" ]; then
@@ -122,30 +144,35 @@ generate_collectd()
     fi
 
     if use_rrd_dataset; then
-        cd "${rrdmnt}"
+        cd "${rrdmnt}" || exit 1
     else
-        mkdir -p ${datadir}/localhost
-        cd ${datadir}
+        cd "${datadir}" || exit 1
     fi
-    # Find and remove any stale symlinks to the localhost directory
-    # This can happen when the hostname is changed.
-    # Note: This cannot be done while collectd is running or collectd will
-    # notice it's working directory is missing and create it.
-    # At boot time this script runs before collectd is started.
-    # At run time when this script is run collectd is stopped first.
-    find . -maxdepth 1 -type d \! -name localhost -a \! -name . -a \! -name "$(hostname)" -exec rm -rf '{}' \;
-    for i in $(find . -maxdepth 1 -type l | sed 's|^\./||')
-    do
-	    if [ "${i}" != "$(hostname)" ]; then
-		    rm "${i}"
-	    fi
-    done
-    # If there isn't a symlink localhost -> hostname make it.
-    if ! [ -L "${hostname}" ] && [ "localhost" != "${hostname}" ]; then
-            if [ -e "localhost" ]; then
-                    rm -rf localhost
+    # Migrate from old version, where "${hostname}" was a real directory
+    # and "localhost" was a symlink.
+    # Skip the case where "${hostname}" is "localhost", so symlink was not
+    # (and is not) needed.
+    if [ "${hostname}" != "localhost" ] && [ -d "${hostname}" ] && [ ! -L "${hostname}" ]; then
+        if [ -e "localhost" ]; then
+            if [ -L "localhost" ]; then
+                rm -rf "localhost"
+            else
+                # This should not happen, but just in case
+                mv "localhost" "localhost.bak.$(date +'%Y%m%d%H%M%S')"
             fi
-	    ln -s "${hostname}" localhost
+        fi
+        mv "${hostname}" "localhost"
+    fi
+    # Remove all directories except "localhost" and it's backups (that
+    # may be erroneously created by running collectd before this script)
+    find . -maxdepth 1 -type d \! -name . -a \! -name localhost -a \! -name 'localhost.bak.*' -exec rm -rf '{}' \;
+    # Remove all symlinks (that are be stale if hostname was changed).
+    find . -maxdepth 1 -type l -exec rm -rf '{}' \;
+    # Create "localhost" directory if it does not exist
+    mkdir -p "localhost"
+    # Create "${hostname}" -> "localhost" symlink if necessary
+    if [ "${hostname}" != "localhost" ]; then
+        ln -s "localhost" "${hostname}"
     fi
     cfg="/usr/local/etc/collectd.conf"
     cat << EOF > $cfg
@@ -234,7 +261,7 @@ LoadPlugin zfs_arc_v2
 </Plugin>
 
 <Plugin "geom_stat">
-	Filter "^([a]?da|ciss|md|mfi|md|nvd|xbd|vtbd)[0123456789]+(p[0123456789]+)?(\.eli)?$"
+    Filter "^([a]?da|ciss|md|mfi|md|nvd|nvdimm|xbd|vtbd)[0123456789]+(p[0123456789]+)?(\.eli)?$"
 </Plugin>
 
 <Plugin "df">

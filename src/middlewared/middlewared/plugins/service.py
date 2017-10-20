@@ -2,6 +2,7 @@ import asyncio
 import inspect
 import os
 import signal
+import sysctl
 import threading
 import time
 from subprocess import DEVNULL, PIPE
@@ -9,6 +10,22 @@ from subprocess import DEVNULL, PIPE
 from middlewared.schema import accepts, Bool, Dict, Int, Ref, Str
 from middlewared.service import filterable, CRUDService
 from middlewared.utils import Popen, filter_list
+
+
+class ServiceDefinition:
+    def __init__(self, *args):
+        if len(args) == 2:
+            self.procname = args[0]
+            self.rc_script = args[0]
+            self.pidfile = args[1]
+
+        elif len(args) == 3:
+            self.procname = args[0]
+            self.rc_script = args[1]
+            self.pidfile = args[2]
+
+        else:
+            raise ValueError("Invalid number of arguments passed (must be 2 or 3)")
 
 
 class StartNotify(threading.Thread):
@@ -50,24 +67,24 @@ class StartNotify(threading.Thread):
 class ServiceService(CRUDService):
 
     SERVICE_DEFS = {
-        's3': ('minio', '/var/run/minio.pid'),
-        'ssh': ('sshd', '/var/run/sshd.pid'),
-        'rsync': ('rsync', '/var/run/rsyncd.pid'),
-        'nfs': ('nfsd', None),
-        'afp': ('netatalk', None),
-        'cifs': ('smbd', '/var/run/samba4/smbd.pid'),
-        'dynamicdns': ('inadyn', None),
-        'snmp': ('snmpd', '/var/run/net_snmpd.pid'),
-        'ftp': ('proftpd', '/var/run/proftpd.pid'),
-        'tftp': ('inetd', '/var/run/inetd.pid'),
-        'iscsitarget': ('ctld', '/var/run/ctld.pid'),
-        'lldp': ('ladvd', '/var/run/ladvd.pid'),
-        'ups': ('upsd', '/var/db/nut/upsd.pid'),
-        'upsmon': ('upsmon', '/var/db/nut/upsmon.pid'),
-        'smartd': ('smartd', '/var/run/smartd.pid'),
-        'webshell': (None, '/var/run/webshell.pid'),
-        'webdav': ('httpd', '/var/run/httpd.pid'),
-        'netdata': ('netdata', '/var/db/netdata/netdata.pid')
+        's3': ServiceDefinition('minio', '/var/run/minio.pid'),
+        'ssh': ServiceDefinition('sshd', '/var/run/sshd.pid'),
+        'rsync': ServiceDefinition('rsync', '/var/run/rsyncd.pid'),
+        'nfs': ServiceDefinition('nfsd', None),
+        'afp': ServiceDefinition('netatalk', None),
+        'cifs': ServiceDefinition('smbd', '/var/run/samba4/smbd.pid'),
+        'dynamicdns': ServiceDefinition('inadyn', None),
+        'snmp': ServiceDefinition('snmpd', '/var/run/net_snmpd.pid'),
+        'ftp': ServiceDefinition('proftpd', '/var/run/proftpd.pid'),
+        'tftp': ServiceDefinition('inetd', '/var/run/inetd.pid'),
+        'iscsitarget': ServiceDefinition('ctld', '/var/run/ctld.pid'),
+        'lldp': ServiceDefinition('ladvd', '/var/run/ladvd.pid'),
+        'ups': ServiceDefinition('upsd', '/var/db/nut/upsd.pid'),
+        'upsmon': ServiceDefinition('upsmon', '/var/db/nut/upsmon.pid'),
+        'smartd': ServiceDefinition('smartd', 'smartd-daemon', '/var/run/smartd-daemon.pid'),
+        'webshell': ServiceDefinition(None, '/var/run/webshell.pid'),
+        'webdav': ServiceDefinition('httpd', '/var/run/httpd.pid'),
+        'netdata': ServiceDefinition('netdata', '/var/db/netdata/netdata.pid')
     }
 
     @filterable
@@ -208,7 +225,7 @@ class ServiceService(CRUDService):
         await self.middleware.call_hook('service.pre_reload', service)
         try:
             await self._simplecmd("reload", service, options)
-        except:
+        except Exception as e:
             await self.restart(service, options)
         return await self.started(service)
 
@@ -240,9 +257,8 @@ class ServiceService(CRUDService):
         if f is None:
             # Provide generic start/stop/restart verbs for rc.d scripts
             if what in self.SERVICE_DEFS:
-                procname, pidfile = self.SERVICE_DEFS[what]
-                if procname:
-                    what = procname
+                if self.SERVICE_DEFS[what].rc_script:
+                    what = self.SERVICE_DEFS[what].rc_script
             if action in ("start", "stop", "restart", "reload"):
                 if action == 'restart':
                     await self._system("/usr/sbin/service " + what + " forcestop ")
@@ -267,9 +283,10 @@ class ServiceService(CRUDService):
         return proc.returncode
 
     async def _service(self, service, verb, **options):
-        onetime = options.get('onetime')
-        force = options.get('force')
-        quiet = options.get('quiet')
+        onetime = options.pop('onetime', None)
+        force = options.pop('force', None)
+        quiet = options.pop('quiet', None)
+        extra = options.pop('extra', '')
 
         # force comes before one which comes before quiet
         # they are mutually exclusive
@@ -281,10 +298,11 @@ class ServiceService(CRUDService):
         elif quiet:
             preverb = 'quiet'
 
-        return await self._system('/usr/sbin/service {} {}{}'.format(
+        return await self._system('/usr/sbin/service {} {}{} {}'.format(
             service,
             preverb,
             verb,
+            extra,
         ), options)
 
     def _started_notify(self, verb, what):
@@ -298,8 +316,7 @@ class ServiceService(CRUDService):
         """
 
         if what in self.SERVICE_DEFS:
-            procname, pidfile = self.SERVICE_DEFS[what]
-            sn = StartNotify(verb=verb, pidfile=pidfile)
+            sn = StartNotify(verb=verb, pidfile=self.SERVICE_DEFS[what].pidfile)
             sn.start()
             return sn
         else:
@@ -316,17 +333,16 @@ class ServiceService(CRUDService):
         """
 
         if what in self.SERVICE_DEFS:
-            procname, pidfile = self.SERVICE_DEFS[what]
             if notify:
                 await self.middleware.threaded(notify.join)
 
-            if pidfile:
+            if self.SERVICE_DEFS[what].pidfile:
                 pgrep = "/bin/pgrep -F {}{}".format(
-                    pidfile,
-                    ' ' + procname if procname else '',
+                    self.SERVICE_DEFS[what].pidfile,
+                    ' ' + self.SERVICE_DEFS[what].procname if self.SERVICE_DEFS[what].procname else '',
                 )
             else:
-                pgrep = "/bin/pgrep {}".format(procname)
+                pgrep = "/bin/pgrep {}".format(self.SERVICE_DEFS[what].procname)
             proc = await Popen(pgrep, shell=True, stdout=PIPE, stderr=PIPE, close_fds=True)
             data = (await proc.communicate())[0].decode()
 
@@ -463,8 +479,8 @@ class ServiceService(CRUDService):
 
     async def _restart_smartd(self, **kwargs):
         await self._service("ix-smartd", "start", quiet=True, **kwargs)
-        await self._service("smartd", "stop", force=True, **kwargs)
-        await self._service("smartd", "restart", **kwargs)
+        await self._service("smartd-daemon", "stop", force=True, **kwargs)
+        await self._service("smartd-daemon", "restart", **kwargs)
 
     async def _reload_ssh(self, **kwargs):
         await self._service("ix-sshd", "start", quiet=True, **kwargs)
@@ -488,6 +504,12 @@ class ServiceService(CRUDService):
         await self._service("ix_register", "reload", **kwargs)
         await self._service("openssh", "restart", **kwargs)
         await self._service("ix_sshd_save_keys", "start", quiet=True, **kwargs)
+
+    async def _start_ssl(self, what=None):
+        if what is not None:
+            await self._service("ix-ssl", "start", quiet=True, extra=what)
+        else:
+            await self._service("ix-ssl", "start", quiet=True)
 
     async def _start_s3(self, **kwargs):
         await self.middleware.call('etc.generate', 's3')
@@ -741,10 +763,22 @@ class ServiceService(CRUDService):
             await self._service("vaaiserver", "stop", force=True, **kwargs)
 
     async def _start_nfs(self, **kwargs):
+        nfs = await self.middleware.call('datastore.config', 'services.nfs')
         await self._service("ix-nfsd", "start", quiet=True, **kwargs)
         await self._service("rpcbind", "start", quiet=True, **kwargs)
         await self._service("gssd", "start", quiet=True, **kwargs)
-        await self._service("nfsuserd", "start", quiet=True, **kwargs)
+        # Workaround to work with "onetime", since the rc scripts depend on rc flags.
+        if nfs['nfs_srv_v4']:
+            sysctl.filter('vfs.nfsd.server_max_nfsvers')[0].value = 4
+            if nfs['nfs_srv_v4_v3owner']:
+                sysctl.filter('vfs.nfsd.enable_stringtouid')[0].value = 1
+            else:
+                sysctl.filter('vfs.nfsd.enable_stringtouid')[0].value = 0
+                await self._service("nfsuserd", "start", quiet=True, **kwargs)
+        else:
+            sysctl.filter('vfs.nfsd.server_max_nfsvers')[0].value = 3
+            if nfs['nfs_srv_16']:
+                await self._service("nfsuserd", "start", quiet=True, **kwargs)
         await self._service("mountd", "start", quiet=True, **kwargs)
         await self._service("nfsd", "start", quiet=True, **kwargs)
         await self._service("statd", "start", quiet=True, **kwargs)
@@ -823,17 +857,18 @@ class ServiceService(CRUDService):
     async def _start_snmp(self, **kwargs):
         await self._service("ix-snmpd", "start", quiet=True, **kwargs)
         await self._service("snmpd", "start", quiet=True, **kwargs)
+        await self._service("snmp-agent", "start", quiet=True, **kwargs)
 
     async def _stop_snmp(self, **kwargs):
+        await self._service("snmp-agent", "stop", quiet=True, **kwargs)
         await self._service("snmpd", "stop", quiet=True, **kwargs)
-        # The following is required in addition to just `snmpd`
-        # to kill the `freenas-snmpd.py` daemon
-        await self._service("ix-snmpd", "stop", quiet=True, **kwargs)
 
     async def _restart_snmp(self, **kwargs):
-        await self._service("ix-snmpd", "start", quiet=True, **kwargs)
+        await self._service("snmp-agent", "stop", quiet=True, **kwargs)
         await self._service("snmpd", "stop", force=True, **kwargs)
+        await self._service("ix-snmpd", "start", quiet=True, **kwargs)
         await self._service("snmpd", "start", quiet=True, **kwargs)
+        await self._service("snmp-agent", "start", quiet=True, **kwargs)
 
     async def _restart_http(self, **kwargs):
         await self._service("ix-nginx", "start", quiet=True, **kwargs)
@@ -886,14 +921,13 @@ class ServiceService(CRUDService):
         await self.reload("cifs", kwargs)
 
     async def _restart_system_datasets(self, **kwargs):
-        systemdataset = await self.middleware.call('notifier.system_dataset_create')
+        systemdataset = await self.middleware.call('systemdataset.setup')
         if not systemdataset:
             return None
-        systemdataset = await self.middleware.call('datastore.query', 'system.systemdataset', [], {'get': True})
-        if systemdataset['sys_syslog_usedataset']:
+        if systemdataset['syslog']:
             await self.restart("syslogd", kwargs)
         await self.restart("cifs", kwargs)
-        if systemdataset['sys_rrd_usedataset']:
+        if systemdataset['rrd']:
             # Restarting collectd may take a long time and there is no
             # benefit in waiting for it since even if it fails it wont
             # tell the user anything useful.

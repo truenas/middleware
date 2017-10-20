@@ -133,6 +133,8 @@ _interface_config()
 				fi
 			elif [ "$(ha_hardware)" = "ULTIMATE" ]; then
 				internal_iface="igb1"
+			elif [ "$(ha_hardware)" = "VMWARE" ]; then
+				internal_iface="em1"
 			fi
 			local a=0
 			if [ -n "${ether}" ]; then
@@ -450,6 +452,14 @@ __MINIO__
 	done
 }
 
+_snmp_config()
+{
+	echo "snmpd_conffile=\"/etc/local/snmpd.conf\""
+
+	local snmpd_loglevel=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT snmp_loglevel FROM services_snmp ORDER BY -id LIMIT 1")
+	echo "snmpd_flags=\"-Ls${snmpd_loglevel}d\""
+}
+
 _ssl_config()
 {
 	local ssl_list
@@ -509,10 +519,11 @@ _gen_conf()
 	_bool_svcconfig rpcbind_enable nfs
 	_bool_svcconfig rsyncd_enable rsync
 	_bool_svcconfig snmpd_enable snmp
+	_bool_svcconfig snmp_agent_enable snmp
 	_bool_svcconfig openssh_enable ssh
 	_bool_svcconfig inetd_enable tftp
 	_bool_svcconfig inadyn_enable dynamicdns
-	_bool_svcconfig smartd_enable smartd
+	_bool_svcconfig smartd_daemon_enable smartd
 	_bool_svcconfig ladvd_enable lldp
 	_bool_svcconfig ctld_enable iscsitarget
 	_bool_svcconfig apache24_enable webdav
@@ -530,11 +541,7 @@ _gen_conf()
 		_nis_config
 	fi
 
-	if srv_enabled snmp; then
-		echo "snmpd_conffile=\"/etc/local/snmpd.conf\""
-		snmpd_loglevel=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT snmp_loglevel FROM services_snmp ORDER BY -id LIMIT 1")
-		echo "snmpd_flags=\"-Ls${snmpd_loglevel}d\""
-	fi
+	_snmp_config
 
 	_sssd_config
 	_nut_config
@@ -700,7 +707,7 @@ _gen_conf()
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT smart_interval FROM services_smart ORDER BY id DESC LIMIT 1" | \
 	while read smartdint; do
 		inter=$(echo "${smartdint}*60"|/usr/bin/bc)
-		echo "smartd_flags=\"-i ${inter}\""
+		echo "smartd_daemon_flags=\"-i ${inter}\""
 	done
 
 	_s3_config
@@ -743,7 +750,7 @@ _gen_conf()
 			product=`/usr/local/sbin/dmidecode -s baseboard-product-name | /usr/bin/head -n 1`
 			if [ "${product}" = "X9DR3-F" -o "${product}" = "X9DR3-LN4F+" ] ; then
 				echo "watchdogd_enable=\"NO\""
-			elif [ "${product}" = "C2750D4I" -o "${product}" = "C2550D4I" ] ; then
+			elif [ "${product}" = "C2750D4I" -o "${product}" = "C2550D4I" ] && [ "$(/usr/local/bin/ipmitool mc info 2> /dev/null | grep ^Firmware | cut -d . -f 2)" -lt 30 ] ; then
 				echo "watchdogd_flags=\"-t 30 --softtimeout --softtimeout-action log,printf --pretimeout 15 --pretimeout-action log,printf -e 'sleep 1' -w -T 3\""
 				echo "watchdogd_enable=\"YES\""
 			else

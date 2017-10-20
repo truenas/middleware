@@ -36,4 +36,3 @@ PATH=/etc:/bin:/sbin:/usr/bin:/usr/sbin
 45	3	*	*	*	root	/usr/local/bin/python /usr/local/www/freenasUI/middleware/notifier.py backup_db >/dev/null 2>&1
 0	3	*	*	*	root	find /tmp/ -iname "sessionid*" -ctime +1d -delete > /dev/null 2>&1
 30	*/5	*	*	*	root	/etc/ix.rc.d/ix-kinit renew > /dev/null 2>&1
-*/10	*	*	*	*	root	[ -s /tmp/mail.queue ] && /usr/local/bin/python /usr/local/www/freenasUI/tools/mailqueue.py

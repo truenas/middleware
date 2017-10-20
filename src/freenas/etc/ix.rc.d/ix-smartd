@@ -5,7 +5,7 @@
 
 # PROVIDE: ix-smartd
 # REQUIRE: FILESYSTEMS ix-syncdisks
-# BEFORE: smartd
+# BEFORE: smartd-daemon
 
 . /etc/rc.subr
 

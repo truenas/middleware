@@ -69,7 +69,7 @@ class EtcService(Service):
             {'type': 'mako', 'path': 'local/nss_ldap.conf'},
         ],
         'pam': [
-            { 'type': 'mako', 'path': os.path.join('pam.d', f) }
+            {'type': 'mako', 'path': os.path.join('pam.d', f)}
             for f in os.listdir(
                 os.path.realpath(
                     os.path.join(

@@ -9,6 +9,7 @@ import subprocess
 import sys
 import time
 import traceback
+import threading
 
 from middlewared.utils import Popen
 
@@ -250,6 +251,20 @@ class Job(object):
         await self._finished.wait()
         return self.result
 
+    def wait_sync(self):
+        """
+        Synchronous method to wait for a job in another thread.
+        """
+        fut = asyncio.run_coroutine_threadsafe(self._finished.wait(), self.loop)
+        event = threading.Event()
+
+        def done(_):
+            event.set()
+
+        fut.add_done_callback(done)
+        event.wait()
+        return self.result
+
     def abort(self):
         if self.loop is not None and self.future is not None:
             self.loop.call_soon_threadsafe(self.future.cancel)
@@ -291,15 +306,14 @@ class Job(object):
                     'job_process.py',
                 ),
                 str(self.id),
-            ], stdout=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=True,
-                env={
-                    'LOGNAME': 'root',
-                    'USER': 'root',
-                    'GROUP': 'wheel',
-                    'HOME': '/root',
-                    'PATH': '/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin',
-                    'TERM': 'xterm',
-                })
+            ], stdout=subprocess.PIPE, stderr=subprocess.PIPE, close_fds=True, env={
+                'LOGNAME': 'root',
+                'USER': 'root',
+                'GROUP': 'wheel',
+                'HOME': '/root',
+                'PATH': '/sbin:/bin:/usr/sbin:/usr/bin:/usr/local/sbin:/usr/local/bin',
+                'TERM': 'xterm',
+            })
             output = await proc.communicate()
             try:
                 data = json.loads(output[0].decode())

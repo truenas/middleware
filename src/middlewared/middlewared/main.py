@@ -328,7 +328,7 @@ class FileApplication(object):
                     if read == b'':
                         break
                     resp.write(read)
-                    #await web.drain()
+                    # await web.drain()
             await self.middleware.threaded(read_write)
             await resp.drain()
 
@@ -379,11 +379,19 @@ class FileApplication(object):
 
         try:
             data = json.loads(form['data'])
+            if 'method' not in data:
+                return web.Response(status=422)
             job = await self.middleware.call(data['method'], *(data.get('params') or []))
-        except Exception:
-            resp = web.Response()
-            resp.set_status(405)
-            return resp
+        except CallError as e:
+            if e.errno == CallError.ENOMETHOD:
+                status_code = 422
+            else:
+                status_code = 412
+            return web.Response(status=status_code, reason=str(e))
+        except json.decoder.JSONDecodeError as e:
+            return web.Response(status=400, reason=str(e))
+        except Exception as e:
+            return web.Response(status=500, reason=str(e))
 
         f = None
         try:
@@ -391,7 +399,7 @@ class FileApplication(object):
                 f = os.fdopen(job.write_fd, 'wb')
                 i = 0
                 while True:
-                    read = form['file'][i* 1024:(i + 1) * 1024]
+                    read = form['file'][i * 1024:(i + 1) * 1024]
                     if read == b'':
                         break
                     f.write(read)
@@ -609,7 +617,7 @@ class Middleware(object):
         self.add_service(CoreService(self))
 
     async def __plugins_load(self):
-        from middlewared.service import Service, CRUDService, ConfigService
+        from middlewared.service import Service, CRUDService, ConfigService, SystemServiceService
 
         main_plugins_dir = os.path.join(
             os.path.dirname(os.path.realpath(__file__)),
@@ -641,7 +649,7 @@ class Middleware(object):
                     attr = getattr(mod, attr)
                     if not inspect.isclass(attr):
                         continue
-                    if attr in (Service, CRUDService, ConfigService):
+                    if attr in (Service, CRUDService, ConfigService, SystemServiceService):
                         continue
                     if issubclass(attr, Service):
                         self.add_service(attr(self))
@@ -677,7 +685,6 @@ class Middleware(object):
             if asyncio.iscoroutinefunction(f):
                 await call
 
-
         self.logger.debug('All plugins loaded')
 
     def __setup_periodic_tasks(self):
@@ -707,7 +714,10 @@ class Middleware(object):
         self.logger.trace("Calling periodic task %s::%s", service_name, task_name)
 
         try:
-            await method()
+            if asyncio.iscoroutinefunction(method):
+                await method()
+            else:
+                await self.threaded(method)
         except Exception:
             self.logger.warning("Exception while calling periodic task", exc_info=True)
 
@@ -819,7 +829,7 @@ class Middleware(object):
             service, method_name = name.rsplit('.', 1)
             methodobj = getattr(self.get_service(service), method_name)
         except AttributeError:
-            raise CallError(f'Method "{method_name}" not found in "{service}"', errno.ENOENT)
+            raise CallError(f'Method "{method_name}" not found in "{service}"', CallError.ENOMETHOD)
         return methodobj
 
     async def call_method(self, app, message):
@@ -920,7 +930,7 @@ class Middleware(object):
 
         if self.loop_monitor:
             self.__loop.set_debug(True)
-            #loop.slow_callback_duration(0.2)
+            # loop.slow_callback_duration(0.2)
             t = threading.Thread(target=self._loop_monitor_thread)
             t.setDaemon(True)
             t.start()

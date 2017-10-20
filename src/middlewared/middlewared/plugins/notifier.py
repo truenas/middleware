@@ -67,10 +67,6 @@ class NotifierService(Service):
         except AttributeError:
             return getattr(_n, attr)
 
-    def system_dataset_create(self, mount=True):
-        """Make sure return value is serializable"""
-        return notifier().system_dataset_create(mount=mount) is not None
-
     def common(self, name, method, params=None):
         """Simple wrapper to access methods under freenasUI.common.*"""
         if params is None:
@@ -89,6 +85,20 @@ class NotifierService(Service):
         except:
             logger.debug(
                 'notifier.pwenc_decrypt: Failed to decrypt the pass for {0}'.format(encrypted),
+                exc_info=True
+            )
+            return ''
+
+    def pwenc_encrypt(self, decrypted=None):
+        """
+        Wrapper method to avoid traceback.
+        This is simply to keep old behavior in notifier.
+        """
+        try:
+            return notifier().pwenc_encrypt(decrypted)
+        except:
+            logger.debug(
+                'notifier.pwenc_encrypt: Failed to encrypt the pass for {0}'.format(decrypted),
                 exc_info=True
             )
             return ''
@@ -216,15 +226,6 @@ class NotifierService(Service):
         if args is None:
             args = []
         return getattr(Samba4(), name)(*args)
-
-    def systemdataset_is_decrypted(self):
-        """Temporary workaround to get system dataset crypt state"""
-        systemdataset, basename = notifier().system_dataset_settings()
-        if not systemdataset:
-            return None
-        if not basename:
-            return None
-        return systemdataset.is_decrypted(), basename
 
     def choices(self, name, args=None):
         """Temporary wrapper to get to UI choices"""

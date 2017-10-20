@@ -15,7 +15,8 @@ notifier()
 
 system_start()
 {
-	notifier system_dataset_create > /dev/null
+	#FIXME: do it within middleware once pools are imported there
+	/usr/local/bin/midclt call systemdataset.setup > /dev/null
 	if [ "$(notifier pwenc_check)" = "False" ]; then
 		notifier pwenc_generate_secret
 	fi

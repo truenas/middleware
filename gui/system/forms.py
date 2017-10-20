@@ -35,6 +35,7 @@ import os
 import re
 import stat
 import subprocess
+import time
 
 from OpenSSL import crypto
 
@@ -50,8 +51,8 @@ from django.forms.formsets import BaseFormSet, formset_factory
 from django.http import HttpResponse
 from django.shortcuts import render_to_response
 from django.utils.html import escapejs
-from django.utils.translation import ugettext_lazy as _
-from django.utils.translation import ugettext as __
+from django.utils import timezone
+from django.utils.translation import ugettext_lazy as _, ugettext as __
 
 from dojango import forms
 from freenasOS import Configuration, Update
@@ -87,8 +88,9 @@ from freenasUI.directoryservice.models import (
 )
 from freenasUI.freeadmin.views import JsonResp
 from freenasUI.freeadmin.utils import key_order
-from freenasUI.middleware.client import client, ClientException
+from freenasUI.middleware.client import client, ClientException, ValidationErrors
 from freenasUI.middleware.exceptions import MiddlewareError
+from freenasUI.middleware.form import MiddlewareModelForm
 from freenasUI.middleware.notifier import notifier
 from freenasUI.services.models import (
     services,
@@ -115,7 +117,6 @@ from common.ssl import CERT_CHAIN_REGEX
 
 log = logging.getLogger('system.forms')
 WIZARD_PROGRESSFILE = '/tmp/.initialwizard_progress'
-BAD_BE_CHARS = "/ *'\"?@!#$%^&()+=~<>;\\"
 
 
 def clean_path_execbit(path):
@@ -164,23 +165,9 @@ def check_certificate(certificate):
     return nmatches
 
 
-def validate_be_name(name):
-    if any(elem in name for elem in BAD_BE_CHARS):
-        raise forms.ValidationError(_('Name does not allow spaces and the following characters: /*\'"?@'))
-    else:
-        beadm_names = subprocess.Popen(
-            "beadm list | awk '{print $7}'",
-            shell=True,
-            stdout=subprocess.PIPE,
-            stderr=subprocess.PIPE,
-            encoding='utf8',
-        ).communicate()[0].split('\n')
-        if name in filter(None, beadm_names):
-            raise forms.ValidationError(_('The name %s already exist.') % (name))
-    return name
-
-
 class BootEnvAddForm(Form):
+
+    middleware_attr_schema = 'bootenv_create'
 
     name = forms.CharField(
         label=_('Name'),
@@ -191,22 +178,22 @@ class BootEnvAddForm(Form):
         self._source = kwargs.pop('source', None)
         super(BootEnvAddForm, self).__init__(*args, **kwargs)
 
-    def clean_name(self):
-        return validate_be_name(self.cleaned_data.get('name'))
-
     def save(self, *args, **kwargs):
-        kwargs = {}
+        data = {'name': self.cleaned_data.get('name')}
         if self._source:
-            kwargs['bename'] = self._source
-        clone = Update.CreateClone(
-            self.cleaned_data.get('name'),
-            **kwargs
-        )
-        if clone is False:
-            raise MiddlewareError(_('Failed to create a new Boot.'))
+            data['source'] = self._source
+        with client as c:
+            try:
+                c.call('bootenv.create', data)
+            except ValidationErrors:
+                raise
+            except ClientException:
+                raise MiddlewareError(_('Failed to create a new Boot.'))
 
 
 class BootEnvRenameForm(Form):
+
+    middleware_attr_schema = 'bootenv_update'
 
     name = forms.CharField(
         label=_('Name'),
@@ -217,15 +204,15 @@ class BootEnvRenameForm(Form):
         self._name = kwargs.pop('name')
         super(BootEnvRenameForm, self).__init__(*args, **kwargs)
 
-    def clean_name(self):
-        return validate_be_name(self.cleaned_data.get('name'))
-
     def save(self, *args, **kwargs):
         new_name = self.cleaned_data.get('name')
         with client as c:
-            rename = c.call('bootenv.rename', self._name, new_name)
-        if rename is False:
-            raise MiddlewareError(_('Failed to rename Boot Environment.'))
+            try:
+                c.call('bootenv.update', self._name, {'name': new_name})
+            except ValidationErrors:
+                raise
+            except ClientException:
+                raise MiddlewareError(_('Failed to rename Boot Environment.'))
 
 
 class BootEnvPoolAttachForm(Form):
@@ -234,6 +221,15 @@ class BootEnvPoolAttachForm(Form):
         choices=(),
         widget=forms.Select(),
         label=_('Member disk'))
+    expand = forms.BooleanField(
+        label=_('Use all disk space'),
+        help_text=_(
+            'If disabled will format the new disk using the size of current '
+            'disk.'
+        ),
+        required=False,
+        initial=False,
+    )
 
     def __init__(self, *args, **kwargs):
         self.label = kwargs.pop('label')
@@ -274,7 +270,7 @@ class BootEnvPoolAttachForm(Form):
 
         with client as c:
             try:
-                c.call('boot.attach', devname)
+                c.call('boot.attach', devname, {'expand': self.cleaned_data['expand']})
             except ClientException:
                 return False
         return True
@@ -1012,6 +1008,8 @@ class SettingsForm(ModelForm):
             notifier().restart("syslogd")
         cache.set('guiLanguage', obj.stg_language)
         notifier().reload("timeservices")
+        if self.instance._original_stg_timezone != self.instance.stg_timezone:
+            notifier().restart("cron")
         return obj
 
     def done(self, request, events):
@@ -1046,6 +1044,8 @@ class SettingsForm(ModelForm):
                 events.append("restartHttpd('%s')" % newurl)
         if self.instance._original_stg_timezone != self.instance.stg_timezone:
             os.environ['TZ'] = self.instance.stg_timezone
+            time.tzset()
+            timezone.activate(self.instance.stg_timezone)
 
 
 class NTPForm(ModelForm):
@@ -1186,7 +1186,13 @@ class AdvancedForm(ModelForm):
             events.append("refreshTree()")
 
 
-class EmailForm(ModelForm):
+class EmailForm(MiddlewareModelForm, ModelForm):
+
+    middleware_attr_prefix = "em_"
+    middleware_attr_schema = "mail"
+    middleware_plugin = "mail"
+    is_singletone = True
+
     em_pass1 = forms.CharField(
         label=_("Password"),
         widget=forms.PasswordInput,
@@ -1225,14 +1231,6 @@ class EmailForm(ModelForm):
             self.fields['em_pass1'].widget.attrs['disabled'] = 'disabled'
             self.fields['em_pass2'].widget.attrs['disabled'] = 'disabled'
 
-    def clean_em_user(self):
-        if (
-            self.cleaned_data['em_smtp'] is True and
-            self.cleaned_data['em_user'] == ""
-        ):
-            raise forms.ValidationError(_("This field is required"))
-        return self.cleaned_data['em_user']
-
     def clean_em_pass1(self):
         if (
             self.cleaned_data['em_smtp'] is True and
@@ -1259,12 +1257,16 @@ class EmailForm(ModelForm):
             )
         return pass2
 
-    def save(self, commit=True):
-        email = super(EmailForm, self).save(commit=False)
-        if commit:
-            email.em_pass = self.cleaned_data['em_pass2']
-            email.save()
-        return email
+    def clean(self):
+        if 'em_pass1' in self.cleaned_data:
+            self.cleaned_data['em_pass'] = self.cleaned_data.pop('em_pass1')
+            if 'em_pass2' in self.cleaned_data:
+                del self.cleaned_data['em_pass2']
+        return self.cleaned_data
+
+    def middleware_clean(self, update):
+        update['security'] = update['security'].upper()
+        return update
 
 
 class ManualUpdateTemporaryLocationForm(Form):
@@ -1712,32 +1714,16 @@ class SystemDatasetForm(ModelForm):
         )
 
     def save(self):
-        super(SystemDatasetForm, self).save()
-        if self.instance.sys_pool:
-            try:
-                notifier().system_dataset_create(mount=False)
-            except:
-                raise MiddlewareError(_("Unable to create system dataset!"))
+        data = {
+            'pool': self.cleaned_data.get('sys_pool'),
+            'syslog': self.cleaned_data.get('sys_syslog_usedataset'),
+            'rrd': self.cleaned_data.get('sys_rrd_usedataset'),
+        }
+        with client as c:
+            pk = c.call('systemdataset.update', data)
 
-        if self.instance._original_sys_pool != self.instance.sys_pool:
-            try:
-                notifier().system_dataset_migrate(
-                    self.instance._original_sys_pool, self.instance.sys_pool
-                )
-            except:
-                raise MiddlewareError(_("Unable to migrate system dataset!"))
-
-        if self.instance._original_sys_rrd_usedataset != self.instance.sys_rrd_usedataset:
-            # Stop collectd to flush data
-            notifier().stop("collectd")
-
-        notifier().restart("system_datasets")
-
-        if self.instance._original_sys_syslog_usedataset != self.instance.sys_syslog_usedataset:
-            notifier().restart("syslogd")
-        if self.instance._original_sys_rrd_usedataset != self.instance.sys_rrd_usedataset:
-            notifier().system_dataset_rrd_toggle()
-            notifier().restart("collectd")
+        self.instance = models.SystemDataset.objects.get(pk=pk)
+        return self.instance
 
 
 class InitialWizardDSForm(Form):
@@ -2816,6 +2802,8 @@ class CertificateAuthorityCreateIntermediateForm(ModelForm):
             'state': self.instance.cert_state,
             'city': self.instance.cert_city,
             'organization': self.instance.cert_organization,
+            'common': self.instance.cert_common,
+            'san': self.instance.cert_san,
             'email': self.instance.cert_email,
             'lifetime': self.instance.cert_lifetime,
             'digest_algorithm': self.instance.cert_digest_algorithm
@@ -2867,6 +2855,63 @@ class CertificateAuthorityCreateIntermediateForm(ModelForm):
             'cert_san',
         ]
         model = models.CertificateAuthority
+
+
+class CertificateAuthoritySignCSRForm(ModelForm):
+    cert_CSRs = forms.ModelChoiceField(
+        queryset=models.Certificate.objects.filter(cert_CSR__isnull=False),
+        label=(_("CSRs"))
+    )
+
+    def clean_cert_name(self):
+        cdata = self.cleaned_data
+        name = cdata.get('cert_name')
+        certs = models.Certificate.objects.filter(cert_name=name)
+        if certs:
+            raise forms.ValidationError(_(
+                "A certificate with this name already exists."
+            ))
+        reg = re.search(r'^[a-z0-9_\-]+$', name or '', re.I)
+        if not reg:
+            raise forms.ValidationError(_('Use alphanumeric characters, "_" and "-".'))
+        return name
+
+    def save(self):
+        cdata = self.cleaned_data
+        choice = cdata.get('cert_CSRs').id
+        ca = models.Certificate.objects.get(pk=choice)
+        cert_info = crypto.load_certificate(crypto.FILETYPE_PEM, self.instance.cert_certificate)
+        PKey = crypto.load_privatekey(crypto.FILETYPE_PEM, self.instance.cert_privatekey)
+        csr = crypto.load_certificate_request(crypto.FILETYPE_PEM, ca.cert_CSR)
+
+        cert = crypto.X509()
+        cert.set_serial_number(12345)
+        cert.gmtime_adj_notBefore(0)
+        cert.gmtime_adj_notAfter(3650)
+        cert.set_issuer(cert_info.get_subject())
+        cert.set_subject(csr.get_subject())
+        cert.set_pubkey(csr.get_pubkey())
+        cert.sign(PKey, self.instance.cert_digest_algorithm)
+
+        new_cert = crypto.dump_certificate(crypto.FILETYPE_PEM, cert)
+        new_PKey = crypto.dump_privatekey(crypto.FILETYPE_PEM, PKey)
+        new_csr = models.Certificate(
+            cert_type=models.CERT_TYPE_INTERNAL,
+            cert_name=cdata.get('cert_name'),
+            cert_certificate=new_cert,
+            cert_privatekey=new_PKey,
+        )
+
+        new_csr.save()
+
+        notifier().start("ix-ssl")
+
+    class Meta:
+        fields = [
+            'cert_CSRs',
+            'cert_name',
+        ]
+        model = models.Certificate
 
 
 class CertificateForm(ModelForm):
@@ -3362,14 +3407,36 @@ class CertificateCreateCSRForm(ModelForm):
 
 class CloudCredentialsForm(ModelForm):
 
-    access_key = forms.CharField(
+    AMAZON_access_key = forms.CharField(
         label=_('Access Key'),
         max_length=200,
+        required=False,
     )
-    secret_key = forms.CharField(
+    AMAZON_secret_key = forms.CharField(
         label=_('Secret Key'),
         max_length=200,
+        required=False,
     )
+    BACKBLAZE_account_id = forms.CharField(
+        label=_('Account ID'),
+        max_length=200,
+        required=False,
+    )
+    BACKBLAZE_app_key = forms.CharField(
+        label=_('Application Key'),
+        max_length=200,
+        required=False,
+    )
+    GCLOUD_keyfile = FileField(
+        label=_('JSON Service Account Key'),
+        required=False,
+    )
+
+    PROVIDER_MAP = {
+        'AMAZON': ['access_key', 'secret_key'],
+        'BACKBLAZE': ['account_id', 'app_key'],
+        'GCLOUD': ['keyfile'],
+    }
 
     class Meta:
         model = models.CloudCredentials
@@ -3383,19 +3450,45 @@ class CloudCredentialsForm(ModelForm):
             'cloudCredentialsProvider();'
         )
         if self.instance.id:
-            if self.instance.provider == 'AMAZON':
-                self.fields['access_key'].initial = self.instance.attributes.get('access_key')
-                self.fields['secret_key'].initial = self.instance.attributes.get('secret_key')
+            for field in self.PROVIDER_MAP.get(self.instance.provider, []):
+                self.fields[f'{self.instance.provider}_{field}'].initial = self.instance.attributes.get(field)
+
+    def clean_GCLOUD_keyfile(self):
+        provider = self.cleaned_data.get('provider')
+        keyfile = self.cleaned_data.get('GCLOUD_keyfile')
+        if not keyfile and provider != 'GCLOUD':
+            return None
+        keyfile = keyfile.read()
+        try:
+            return json.loads(keyfile)
+        except Exception as e:
+            raise forms.ValodationError(_('Failed to load key file: %s') % e)
+
+    def clean(self):
+        provider = self.cleaned_data.get('provider')
+        if not provider:
+            return self.cleaned_data
+        for field in self.PROVIDER_MAP.get(provider, []):
+            if not self.cleaned_data.get(f'{provider}_{field}'):
+                self._errors[f'{provider}_{field}'] = self.error_class([_('This field is required.')])
+        return self.cleaned_data
 
     def save(self, *args, **kwargs):
         with client as c:
+            provider = self.cleaned_data.get('provider')
+            fields = self.PROVIDER_MAP.get(provider)
+            if not fields:
+                raise MiddlewareError(f'Unknown provider {provider}')
+
+            attributes = {}
+
+            for field in fields:
+                attributes[field] = self.cleaned_data.get(f'{provider}_{field}')
+
             data = {
                 'name': self.cleaned_data.get('name'),
-                'provider': self.cleaned_data.get('provider'),
-                'attributes': {
-                    'access_key': self.cleaned_data.get('access_key'),
-                    'secret_key': self.cleaned_data.get('secret_key'),
-                }
+                'provider': provider,
+                'attributes': attributes,
             }
             if self.instance.id:
                 c.call('backup.credential.update', self.instance.id, data)

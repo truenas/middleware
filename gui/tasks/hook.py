@@ -9,9 +9,13 @@ class TasksHook(AppHook):
     name = 'tasks'
 
     def hook_app_tabs_tasks(self, request):
-        from freenasUI.middleware.notifier import notifier
 
         tabs = [{
+            'name': 'CloudSync',
+            'focus': 'tasks.CloudSync.View',
+            'verbose_name': _('Cloud Sync'),
+            'url': reverse('freeadmin_tasks_cloudsync_datagrid'),
+        }, {
             'name': 'CronJob',
             'focus': 'tasks.CronJob.View',
             'verbose_name': _('Cron Jobs'),
@@ -32,13 +36,5 @@ class TasksHook(AppHook):
             'verbose_name': _('S.M.A.R.T. Tests'),
             'url': reverse('freeadmin_tasks_smarttest_datagrid'),
         }]
-
-        if not notifier().is_freenas():
-            tabs.insert(0, {
-                'name': 'CloudSync',
-                'focus': 'tasks.CloudSync.View',
-                'verbose_name': _('Cloud Sync'),
-                'url': reverse('freeadmin_tasks_cloudsync_datagrid'),
-            })
 
         return tabs
