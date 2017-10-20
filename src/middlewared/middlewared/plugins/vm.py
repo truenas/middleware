@@ -812,7 +812,10 @@ class VMService(CRUDService):
             image_file = vm_os['GZIPFILE']
             sharefs = await self.middleware.call('vm.get_sharefs')
             file_path = sharefs + '/iso_files/' + image_file
-            return file_path
+            if os.path.exists(file_path):
+                return file_path
+            else:
+                return False
         else:
             return False
 
