@@ -17,6 +17,7 @@ import bz2
 import gzip
 import libzfs
 import hashlib
+import shutil
 
 logger = middlewared.logger.Logger('vm').getLogger()
 
@@ -638,6 +639,19 @@ class VMService(CRUDService):
         for dataset in zfs.datasets:
             if '.bhyve_containers' in dataset.name:
                 return dataset.mountpoint
+        return False
+
+    @accepts(Int('id'))
+    async def rm_container_conf(self, id):
+        vm_data = await self.middleware.call('datastore.query', 'vm.vm', [('id', '=', id)])
+        if vm_data:
+            sharefs = await self.middleware.call('vm.get_sharefs')
+            if sharefs:
+                cnt_conf_name = str(vm_data[0].get('id')) + '_' + vm_data[0].get('name')
+                full_path = sharefs + '/configs/' + cnt_conf_name
+                if os.path.exists(full_path):
+                    shutil.rmtree(full_path)
+                    return True
         return False
 
     @accepts(Dict(
