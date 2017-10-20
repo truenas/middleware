@@ -1,3 +1,4 @@
+import binascii
 import os
 import pytest
 import secrets
@@ -37,14 +38,14 @@ def test_backup_001_credential_query(conn):
 
 def test_backup_002_credential_create(conn, creds):
     _check()
-    req = conn.rest.post('backup/credential', data=[{
+    req = conn.rest.post('backup/credential', data={
         'name': 'backtestcreds',
         'provider': 'AMAZON',
         'attributes': {
             'access_key': os.environ['BACKUP_AWS_ACCESS_KEY'],
             'secret_key': os.environ['BACKUP_AWS_SECRET_KEY'],
         },
-    }])
+    })
     assert req.status_code == 200
     creds['credid'] = req.json()
     assert isinstance(creds['credid'], int) is True
@@ -52,14 +53,14 @@ def test_backup_002_credential_create(conn, creds):
 
 def test_backup_003_credential_update(conn, creds):
     _check()
-    req = conn.rest.post('backup/credential', data=[{
+    req = conn.rest.post('backup/credential', data={
         'name': 'back_test_creds',
         'provider': 'AMAZON',
         'attributes': {
             'access_key': os.environ['BACKUP_AWS_ACCESS_KEY'],
             'secret_key': os.environ['BACKUP_AWS_SECRET_KEY'],
         },
-    }])
+    })
     assert req.status_code == 200
 
 
@@ -68,9 +69,9 @@ def test_backup_010_create(conn, creds):
 
     pool = _get_pool(conn)
 
-    conn.ws.call('filesystem.file_receive', f'/mnt/{pool["name"]}/s3_test/foo', secrets.token_hex(3))
+    conn.ws.call('filesystem.file_receive', f'/mnt/{pool["name"]}/s3_test/foo', binascii.b2a_base64(secrets.token_hex(3).encode()).decode())
 
-    req = conn.rest.post('backup', data=[{
+    req = conn.rest.post('backup', data={
         "description": "desc",
         "direction": "PUSH",
         "path": f"/mnt/{pool['name']}/s3_test",
@@ -85,7 +86,7 @@ def test_backup_010_create(conn, creds):
             "folder": "",
             "region": os.environ['BACKUP_AWS_REGION'],
         },
-    }])
+    })
     assert req.status_code == 200
     creds['backupid'] = req.json()
     assert isinstance(creds['backupid'], int) is True
@@ -93,9 +94,9 @@ def test_backup_010_create(conn, creds):
 
 def test_backup_020_update(conn, creds):
     _check()
-    req = conn.rest.put(f'backup/id/{creds["backupid"]}', data=[{
+    req = conn.rest.put(f'backup/id/{creds["backupid"]}', data={
         "description": "backup_test"
-    }])
+    })
     assert req.status_code == 200, req.text
 
 

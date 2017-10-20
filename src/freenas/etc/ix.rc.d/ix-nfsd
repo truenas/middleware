@@ -32,16 +32,36 @@ setgroup()
 	echo "\"${group}\"" | sed -E 's/\\/\\\\/'
 }
 
+get_virtual_fqdn()
+{
+	RO_FREENAS_CONFIG=$(ro_sqlite ${name} 2> /tmp/${name}.fail && rm /tmp/${name}.fail)
+	trap 'rm -f ${RO_FREENAS_CONFIG}' EXIT
+
+	gc_hostname_virtual="$(${FREENAS_SQLITE_CMD} ${RO_FREENAS_CONFIG} \
+		"SELECT gc_hostname_virtual FROM network_globalconfiguration ORDER BY -id LIMIT 1")"
+	gc_domain="$(${FREENAS_SQLITE_CMD} ${RO_FREENAS_CONFIG} \
+		"SELECT gc_domain FROM network_globalconfiguration ORDER BY -id LIMIT 1")"
+
+	if [ -n "${gc_hostname_virtual}" -a -n "${gc_domain}" ]; then
+		echo "${gc_hostname_virtual}.${gc_domain}"
+		return 0
+	fi
+
+	return 1
+}
+
 #
 # TODO: For now we overwrite /etc/exports, it's desirable to teach mountd about another
 # place so user can write their own entry.
 #
-generate_exports()
+generate_nfsd_files()
 {
 	RO_FREENAS_CONFIG=$(ro_sqlite ${name} 2> /tmp/${name}.fail && rm /tmp/${name}.fail)
 	trap 'rm -f ${RO_FREENAS_CONFIG}' EXIT
 	rm /etc/exports
+	rm -f /etc/nfsd.virtualhost
 	local v4=0
+	local use_krb=0
 	local IFS="|"
 	local f="id nfs_network nfs_hosts nfs_alldirs nfs_ro nfs_quiet nfs_maproot_user nfs_maproot_group nfs_mapall_user nfs_mapall_group nfs_security"
 	eval local $f
@@ -51,6 +71,7 @@ generate_exports()
 			# The user has required kerberos for NFSv4 in the GUI.  We aren't going
 			# to check for a keytab, we'll just do what we are told.
 			echo "V4: / -sec=krb5:krb5i:krb5p" > /etc/exports
+			use_krb=1
 		else
 			krb=$(${FREENAS_SQLITE_CMD} ${RO_FREENAS_CONFIG} "SELECT COUNT() FROM directoryservice_kerberoskeytab")
 			# The user has not forced kerberized NFSv4 only, so we'll look for
@@ -59,6 +80,7 @@ generate_exports()
 				echo "V4: / -sec=sys" > /etc/exports
 			else
 				echo "V4: / -sec=sys:krb5:krb5i:krb5p" > /etc/exports
+				use_krb=1
 			fi
 		fi
 		v4=1
@@ -116,11 +138,21 @@ generate_exports()
 			echo "${line}"
 		fi
 	done >> /etc/exports
+
+	if [ "${use_krb}" = "1" ]; then
+		virtual_fqdn="$(get_virtual_fqdn)"
+		if [ -n "${virtual_fqdn}" ]; then
+			echo -n "${virtual_fqdn}" > /etc/nfsd.virtualhost
+			service nfsd restart
+			service gssd restart
+		fi
+	fi
+
 	service mountd quietreload
 }
 
 name="ix-nfsd"
-start_cmd='generate_exports'
+start_cmd='generate_nfsd_files'
 stop_cmd=':'
 
 load_rc_config $name

@@ -601,7 +601,6 @@ class Snapshot(object):
     refer = None
     mostrecent = False
     parent_type = None
-    replication = None
     vmsynced = False
 
     def __init__(
@@ -612,7 +611,6 @@ class Snapshot(object):
         refer,
         mostrecent=False,
         parent_type=None,
-        replication=None,
         vmsynced=False
     ):
         self.name = name
@@ -621,7 +619,6 @@ class Snapshot(object):
         self.refer = refer
         self.mostrecent = mostrecent
         self.parent_type = parent_type
-        self.replication = replication
         self.vmsynced = vmsynced
 
     def __repr__(self):

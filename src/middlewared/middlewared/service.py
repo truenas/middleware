@@ -169,9 +169,12 @@ class SystemServiceService(ConfigService):
 
     @accepts()
     async def config(self):
-        return await self.middleware.call('datastore.config',
-                                          f'services.{self._config.service_model or self._config.service}',
-                                          {'prefix': self._config.datastore_prefix})
+        return await self.middleware.call(
+            'datastore.config', f'services.{self._config.service_model or self._config.service}', {
+                'extend': self._config.datastore_extend,
+                'prefix': self._config.datastore_prefix
+            }
+        )
 
     @private
     async def _update_service(self, old, new):
@@ -302,6 +305,10 @@ class CoreService(Service):
             if service is not None and name != service:
                 continue
 
+            # Skip private services
+            if svc._config.private:
+                continue
+
             for attr in dir(svc):
 
                 if attr.startswith('_'):
@@ -324,6 +331,18 @@ class CoreService(Service):
                         if attr in ('update', 'delete'):
                             item_method = True
                     elif attr in ('do_create', 'do_update', 'do_delete'):
+                        continue
+                elif isinstance(svc, ConfigService):
+                    """
+                    For Config the update is special.
+                    The real implementation happens in do_update
+                    so thats where we actually extract pertinent information.
+                    """
+                    if attr == 'update':
+                        method = getattr(svc, 'do_{}'.format(attr), None)
+                        if method is None:
+                            continue
+                    elif attr in ('do_update'):
                         continue
 
                 if method is None:
@@ -372,6 +391,8 @@ class CoreService(Service):
                     'accepts': accepts,
                     'item_method': True if item_method else hasattr(method, '_item_method'),
                     'filterable': hasattr(method, '_filterable'),
+                    'require_websocket': hasattr(method, '_pass_app'),
+                    'job': hasattr(method, '_job'),
                 }
         return data
 

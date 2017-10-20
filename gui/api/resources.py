@@ -93,7 +93,7 @@ from freenasUI.storage.forms import (
     ZFSDatasetCreateForm,
     ZFSDatasetEditForm
 )
-from freenasUI.storage.models import Disk, Replication, VMWarePlugin
+from freenasUI.storage.models import Disk, VMWarePlugin
 from freenasUI.system.alert import alert_node, alertPlugins, Alert
 from freenasUI.system.forms import (
     BootEnvAddForm,
@@ -1098,6 +1098,11 @@ class VolumeResourceMixin(NestedMixin):
                 data[attr] = getattr(child, attr)
 
             if self.is_webclient(bundle.request):
+                data['_promote_dataset_url'] = reverse(
+                    'storage_promote_zfs',
+                    kwargs={
+                        'name': child.path,
+                    })
                 data['compression'] = self.__zfsopts.get(
                     child.path,
                     {},
@@ -1125,6 +1130,11 @@ class VolumeResourceMixin(NestedMixin):
                 data['comments'] = description[1] if description[2] == 'local' else ''
 
             if self.is_webclient(bundle.request):
+                data['_promote_zvol_url'] = reverse(
+                    'storage_promote_zfs',
+                    kwargs={
+                        'name': child.path,
+                    })
                 data['_add_zfs_volume_url'] = reverse(
                     'storage_zvol',
                     kwargs={
@@ -2478,7 +2488,6 @@ class SnapshotResource(DojoResource):
     used = fields.IntegerField(attribute='used')
     mostrecent = fields.BooleanField(attribute='mostrecent')
     parent_type = fields.CharField(attribute='parent_type')
-    replication = fields.CharField(attribute='replication', null=True)
 
     class Meta:
         allowed_methods = ['delete', 'get', 'post']
@@ -2550,28 +2559,7 @@ class SnapshotResource(DojoResource):
 
     def get_list(self, request, **kwargs):
 
-        # Get a list of snapshots in remote sides to show whether it has been
-        # transfered already or not
-        repli = {}
-        for repl in Replication.objects.all():
-            """
-            Multiple replications tasks can have the same remote host.
-            We can't get the list of snapshots on the remote side multiple
-            times, make sure we don't do that.
-            """
-            found = False
-            for _repl, snaps in list(repli.items()):
-                if (
-                    _repl.repl_remote.ssh_remote_hostname == repl.repl_remote.ssh_remote_hostname and
-                    _repl.repl_remote.ssh_remote_port == repl.repl_remote.ssh_remote_port
-                ):
-                    found = True
-                    repli[repl] = snaps
-                    break
-            if found is False:
-                repli[repl] = set(notifier().repl_remote_snapshots(repl))
-
-        snapshots = notifier().zfs_snapshot_list(replications=repli)
+        snapshots = notifier().zfs_snapshot_list()
 
         results = []
         for snaps in list(snapshots.values()):

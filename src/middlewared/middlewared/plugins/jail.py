@@ -161,6 +161,25 @@ class JailService(CRUDService):
 
         return True
 
+    @accepts(Str("resource", enum=["RELEASE", "TEMPLATE", "PLUGIN"]),
+             Bool("remote"))
+    def list_resource(self, resource, remote):
+        """Returns a JSON list of the supplied resource on the host"""
+        self.check_dataset_existence()  # Make sure our datasets exist.
+        iocage = ioc.IOCage(skip_jails=True)
+        remote = True if resource == "PLUGIN" else remote
+        resource = "base" if resource == "RELEASE" else resource
+
+        if remote:
+            if resource != "PLUGIN":
+                resource_list = IOCFetch("").fetch_release(_list=True)
+            else:
+                resource_list = IOCFetch("").fetch_plugin_index("", _list=True)
+        else:
+            resource_list = iocage.list(resource.lower())
+
+        return resource_list
+
     @accepts(Str("jail"))
     def start(self, jail):
         """Takes a jail and starts it."""
@@ -265,12 +284,18 @@ class JailService(CRUDService):
 
     @accepts(Str("jail"))
     @job(lock=lambda args: f"jail_update:{args[-1]}")
-    def update_jail_to_latest_patch(self, job, jail):
+    def update_to_latest_patch(self, job, jail):
         """Updates specified jail to latest patch level."""
 
         uuid, path = self.check_jail_existence(jail)
         status, jid = IOCList.list_get_jid(uuid)
         conf = IOCJson(path).json_load()
+
+        # Sometimes if they don't have an existing patch level, this
+        # becomes 11.1 instead of 11.1-RELEASE
+        _release = conf["release"].rsplit("-", 1)[0]
+        release = _release if "-RELEASE" in _release else conf["release"]
+
         started = False
 
         if conf["type"] == "jail":
@@ -280,7 +305,11 @@ class JailService(CRUDService):
         else:
             return False
 
-        IOCFetch(conf["cloned_release"]).fetch_update(True, uuid)
+        if conf["basejail"] != "yes":
+            IOCFetch(release).fetch_update(True, uuid)
+        else:
+            # Basejails only need their base RELEASE updated
+            IOCFetch(release).fetch_update()
 
         if started:
             self.stop(jail)

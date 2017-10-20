@@ -12,7 +12,7 @@ import libzfs
 from middlewared.schema import Dict, List, Str, Bool, Int, accepts
 from middlewared.service import (
     CallError, CRUDService, Service, ValidationError, ValidationErrors,
-    filterable, job, periodic, private,
+    filterable, job, periodic
 )
 from middlewared.utils import filter_list
 
@@ -289,11 +289,25 @@ class ZFSDatasetService(CRUDService):
             self.logger.error('Failed to delete dataset', exc_info=True)
             raise CallError(f'Failed to delete dataset: {e}')
 
+    def promote(self, name):
+        try:
+            dataset = libzfs.ZFS().get_dataset(name)
+            dataset.promote()
+        except libzfs.ZFSException as e:
+            self.logger.error('Failed to promote dataset', exc_info=True)
+            raise CallError(f'Failed to promote dataset: {e}')
+
 
 class ZFSSnapshot(CRUDService):
 
     class Config:
         namespace = 'zfs.snapshot'
+
+    @filterable
+    def query(self, filters, options):
+        zfs = libzfs.ZFS()
+        # FIXME: awful performance with hundreds/thousands of snapshots
+        return filter_list([i.__getstate__() for i in list(zfs.snapshots)], filters, options)
 
     @accepts(Dict(
         'snapshot_create',
@@ -412,14 +426,6 @@ class ZFSSnapshot(CRUDService):
         except libzfs.ZFSException as err:
             self.logger.error("{0}".format(err))
             return False
-
-    @private
-    def query(self):
-        """
-            XXX: Just set it as private and avoid show a query method
-                 on the API documentation that was not implemented yet.
-        """
-        pass
 
 
 class ZFSQuoteService(Service):

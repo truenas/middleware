@@ -2,6 +2,7 @@ import asyncio
 import inspect
 import os
 import signal
+import sysctl
 import threading
 import time
 from subprocess import DEVNULL, PIPE
@@ -762,10 +763,22 @@ class ServiceService(CRUDService):
             await self._service("vaaiserver", "stop", force=True, **kwargs)
 
     async def _start_nfs(self, **kwargs):
+        nfs = await self.middleware.call('datastore.config', 'services.nfs')
         await self._service("ix-nfsd", "start", quiet=True, **kwargs)
         await self._service("rpcbind", "start", quiet=True, **kwargs)
         await self._service("gssd", "start", quiet=True, **kwargs)
-        await self._service("nfsuserd", "start", quiet=True, **kwargs)
+        # Workaround to work with "onetime", since the rc scripts depend on rc flags.
+        if nfs['nfs_srv_v4']:
+            sysctl.filter('vfs.nfsd.server_max_nfsvers')[0].value = 4
+            if nfs['nfs_srv_v4_v3owner']:
+                sysctl.filter('vfs.nfsd.enable_stringtouid')[0].value = 1
+            else:
+                sysctl.filter('vfs.nfsd.enable_stringtouid')[0].value = 0
+                await self._service("nfsuserd", "start", quiet=True, **kwargs)
+        else:
+            sysctl.filter('vfs.nfsd.server_max_nfsvers')[0].value = 3
+            if nfs['nfs_srv_16']:
+                await self._service("nfsuserd", "start", quiet=True, **kwargs)
         await self._service("mountd", "start", quiet=True, **kwargs)
         await self._service("nfsd", "start", quiet=True, **kwargs)
         await self._service("statd", "start", quiet=True, **kwargs)

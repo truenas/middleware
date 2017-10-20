@@ -1,4 +1,4 @@
-from middlewared.schema import Str, accepts
+from middlewared.schema import Bool, Dict, Int, Str, accepts
 from middlewared.service import CallError, Service, private
 from middlewared.utils import run
 
@@ -39,9 +39,15 @@ class BootService(Service):
             return 'BIOS'
         return 'EFI'
 
-    @accepts(Str('dev'))
+    @accepts(
+        Str('dev'),
+        Dict(
+            'options',
+            Int('size'),
+        )
+    )
     @private
-    async def format(self, dev):
+    async def format(self, dev, options):
         """
         Format a given disk `dev` using the appropiate partition layout
         """
@@ -59,7 +65,11 @@ class BootService(Service):
             commands.append(['gpart', 'add', '-t', 'efi', '-i', '1', '-s', '260m', dev])
             commands.append(['newfs_msdos', '-F', '16', f'/dev/{dev}p1'])
             commands.append(['gpart', 'set', '-a', 'lenovofix', dev])
-        commands.append(['gpart', 'add', '-t', 'freebsd-zfs', '-i', '2', '-a', '4k', dev])
+        commands.append(
+            ['gpart', 'add', '-t', 'freebsd-zfs', '-i', '2', '-a', '4k'] + (
+                ['-s', str(options['size'])] if options.get('size') else []
+            ) + [dev]
+        )
         for command in commands:
             await run(*command)
         return boottype
@@ -82,14 +92,37 @@ class BootService(Service):
         if boottype == 'EFI':
             await run('umount', '/boot/efi', check=False)
 
-    @accepts(Str('dev'))
-    async def attach(self, dev):
+    @accepts(
+        Str('dev'),
+        Dict(
+            'options',
+            Bool('expand', default=False),
+        ),
+    )
+    async def attach(self, dev, options=None):
+        """
+        Attach a disk to the boot pool, turning a stripe into a mirror.
+
+        `expand` option will determine whether the new disk partition will be
+                 the maximum available or the same size as the current disk.
+        """
 
         disks = [d async for d in await self.get_disks()]
         if len(disks) > 1:
             raise CallError('3-way mirror not supported yet')
 
-        boottype = await self.format(dev)
+        format_opts = {}
+        if not options['expand']:
+            # Lets try to find out the size of the current freebsd-zfs partition so
+            # the new partition is not bigger, preventing size mismatch if one of
+            # them fail later on. See #21336
+            await self.middleware.threaded(geom.scan)
+            labelclass = geom.class_by_name('PART')
+            for e in labelclass.xml.findall(f"./geom[name='{disks[0]}']/provider/config[type='freebsd-zfs']"):
+                format_opts['size'] = int(e.find('./length').text)
+                break
+
+        boottype = await self.format(dev, format_opts)
 
         await self.middleware.call('zfs.pool.extend', 'freenas-boot', None, [{'target': f'{disks[0]}p2', 'type': 'DISK', 'path': f'/dev/{dev}p2'}])
 

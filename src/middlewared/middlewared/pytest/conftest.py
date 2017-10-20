@@ -1,5 +1,6 @@
-import pytest
 import configparser
+import os
+import pytest
 
 from client import Client
 
@@ -15,16 +16,16 @@ class ConfigTarget(object):
         self.config.read(self.file_path)
 
     def target_hostname(self):
-        return self.config.get(self.config_section, 'hostname')
+        return os.environ.get('TEST_HOSTNAME') or self.config.get(self.config_section, 'hostname')
 
     def target_api(self):
-        return self.config.get(self.config_section, 'api')
+        return os.environ.get('TEST_API') or self.config.get(self.config_section, 'api')
 
     def target_username(self):
-        return self.config.get(self.config_section, 'username')
+        return os.environ.get('TEST_USERNAME') or self.config.get(self.config_section, 'username')
 
     def target_password(self):
-        return self.config.get(self.config_section, 'password')
+        return os.environ.get('TEST_PASSWORD') or self.config.get(self.config_section, 'password')
 
 
 class Connection(object):

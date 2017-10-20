@@ -1,19 +1,9 @@
 import errno
+from .client import ErrnoMixin
 
 
 def get_errname(code):
     return errno.errorcode.get(code) or ErrnoMixin._get_errname(code) or 'EUNKNOWN'
-
-
-class ErrnoMixin:
-    ENOMETHOD = 201
-    ESERVICESTARTFAILURE = 202
-
-    @classmethod
-    def _get_errname(cls, code):
-        for k, v in cls.__dict__.items():
-            if k.startswith("E") and v == code:
-                return k
 
 
 class CallException(ErrnoMixin, Exception):
