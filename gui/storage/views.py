@@ -418,6 +418,15 @@ def dataset_edit(request, dataset_name):
     })
 
 
+def promote_zfs(request, name):
+    try:
+        with client as c:
+            c.call("zfs.dataset.promote", name)
+            return HttpResponse(_("Filesystem successfully promoted."))
+    except ClientException:
+        return HttpResponse(_("Filesystem is not a clone or has already been promoted."))
+
+
 def zvol_create(request, parent):
     if request.method == 'POST':
         zvol_form = forms.ZVol_CreateForm(request.POST, parentds=parent)

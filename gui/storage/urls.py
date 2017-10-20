@@ -33,7 +33,7 @@ from freenasUI.storage.forms import (
 from .views import (
     home, tasks, replications, replications_public_key, replications_keyscan,
     replications_authtoken, snapshots, disk_editbulk, disk_wipe,
-    disk_wipe_progress, dataset_create, dataset_delete, dataset_edit,
+    disk_wipe_progress, dataset_create, dataset_delete, dataset_edit, promote_zfs,
     zvol_create, zvol_delete, zvol_edit, snapshot_delete, snapshot_delete_bulk,
     snapshot_rollback, manualsnap, clonesnap, mp_permission, volumemanager,
     volumemanager_zfs, volume_detach, zpool_scrub, volimport, volimport_progress,
@@ -75,6 +75,7 @@ urlpatterns = [
     url(r'^volumemanager-zfs/$', volumemanager_zfs, name="storage_volumemanager_zfs"),
     url(r'^detach/(?P<vid>\d+)/$', volume_detach, name="storage_detach"),
     url(r'^scrub/(?P<vid>\d+)/$', zpool_scrub, name="storage_scrub"),
+    url(r'^promote_zfs/(?P<name>.+)/$', promote_zfs, name="storage_promote_zfs"),
     url(r'^import/$', volimport, name="storage_import"),
     url(r'^import/progress$', volimport_progress, name='storage_volimport_progress'),
     url(r'^import/abort$', volimport_abort, name='storage_volimport_abort'),

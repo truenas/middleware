@@ -289,6 +289,14 @@ class ZFSDatasetService(CRUDService):
             self.logger.error('Failed to delete dataset', exc_info=True)
             raise CallError(f'Failed to delete dataset: {e}')
 
+    def promote(self, name):
+        try:
+            dataset = libzfs.ZFS().get_dataset(name)
+            dataset.promote()
+        except libzfs.ZFSException as e:
+            self.logger.error('Failed to promote dataset', exc_info=True)
+            raise CallError(f'Failed to promote dataset: {e}')
+
 
 class ZFSSnapshot(CRUDService):
 
