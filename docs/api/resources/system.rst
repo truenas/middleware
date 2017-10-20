@@ -732,6 +732,7 @@ Update resource
         }
 
    :json string stg_guiprotocol: http, https
+   :json integer stg_guicertificate: Certificate ID
    :json string stg_guiaddress: WebGUI IPv4 Address
    :json string stg_guiv6address: WebGUI IPv6 Address
    :json integer stg_guiport: WebGUI Port for HTTP
