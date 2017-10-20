@@ -167,8 +167,6 @@ class VolumeFAdmin(BaseFreeAdmin):
             hide_cond = "row.data.type != 'dataset'"
         elif show == "ZVOL":
             hide_cond = "row.data.type != 'zvol'"
-        elif show == "BOTH":
-            hide_cond = "row.data.type != 'dataset' && row.data.type != 'zvol'"
         else:
             hide_cond = "row.data.type !== undefined"
 
@@ -348,7 +346,7 @@ class VolumeFAdmin(BaseFreeAdmin):
             'promote_dataset',
             label=_('Promote Dataset'),
             icon="promote_zfs",
-            show="BOTH",
+            show="ALL",
         )
 
         # Dataset actions
