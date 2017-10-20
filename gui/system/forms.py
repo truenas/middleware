@@ -999,6 +999,8 @@ class SettingsForm(ModelForm):
             notifier().restart("syslogd")
         cache.set('guiLanguage', obj.stg_language)
         notifier().reload("timeservices")
+        if self.instance._original_stg_timezone != self.instance.stg_timezone:
+            notifier().restart("cron")
         return obj
 
     def done(self, request, events):
