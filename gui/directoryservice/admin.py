@@ -33,6 +33,7 @@ from freenasUI.api.resources import (
     KerberosKeytabResourceMixin,
     KerberosSettingsResourceMixin
 )
+from freenasUI.api.utils import DojoModelFormResourceMixin
 from freenasUI.directoryservice import models
 from freenasUI.freeadmin.options import BaseFreeAdmin
 from freenasUI.freeadmin.site import site
@@ -48,6 +49,7 @@ class ActiveDirectoryFAdmin(BaseFreeAdmin):
     icon_model = "ActiveDirectoryIcon"
     icon_add = "ActiveDirectoryIcon"
     icon_view = "ActiveDirectoryIcon"
+    resource_mixin = DojoModelFormResourceMixin
 
 
 class LDAPFAdmin(BaseFreeAdmin):
@@ -58,6 +60,7 @@ class LDAPFAdmin(BaseFreeAdmin):
     icon_model = "LDAPIcon"
     icon_add = "LDAPIcon"
     icon_view = "LDAPIcon"
+    resource_mixin = DojoModelFormResourceMixin
 
 
 class NISFAdmin(BaseFreeAdmin):
