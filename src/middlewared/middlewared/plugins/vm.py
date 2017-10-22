@@ -654,6 +654,31 @@ class VMService(CRUDService):
                     return True
         return False
 
+    @accepts(Str('raw_path'), Str('size'))
+    async def raw_resize(self, raw_path, size=0):
+        unit_size = ('M', 'G', 'T')
+        truncate_cmd = [
+            'truncate', '-s',
+        ]
+        if size is 0:
+            return False
+        if os.path.exists(raw_path):
+            if size is 0:
+                return False
+            expand_size = size if len(size) > 0 and size[-1:] in unit_size else size + 'G'
+            self.logger.debug('===> SIZE: {}'.format(size))
+            truncate_cmd += [expand_size, raw_path]
+            self.logger.debug('===> DISK: {0} resize to: {1}'.format(raw_path, expand_size))
+            error = await (await Popen(truncate_cmd, stdout=subprocess.PIPE, stderr=subprocess.PIPE)).wait()
+            self.logger.debug("===> error: {0}".format(error))
+            if error:
+                self.logger.debug("===> Error to resize disk: {0} with size: {1}".format(raw_path, expand_size))
+                return False
+            else:
+                return True
+        else:
+            return False
+
     @accepts(Dict(
         'vm_create',
         Str('name'),
