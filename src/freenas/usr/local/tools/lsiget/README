@@ -1,0 +1,23 @@
+2017-10-20
+
+lsiget is a script provided by LSI/Avago/Broadcom for collecting
+information on LSI controllers for analysis. It creates a multiple-
+megabyte tgz output file in the current directory. Use by copying the
+script to a working directory, then extract and run it:
+
+  tar -xvzf lsigetfreebsd_051915.tgz
+  cd lsigetfreebsd_051915
+  ./lsigetlunix.sh
+
+Type c to continue and the script gathers data. It writes an output file
+in the current directory with a name in the form:
+
+  lsi.osname.hostname.mmddyy.HHMMss.tar.gz
+
+Note that this file contains copies of /etc, log files, and other data
+that might contain sensitive information.
+
+The lsiget archive file was retrieved on 2017-10-20 from
+https://www.broadcom.com/support/knowledgebase/1211161499563/lsiget-data-capture-script
+and is included with permission from our Broadcom FAE as reported by
+Brett Davis.
