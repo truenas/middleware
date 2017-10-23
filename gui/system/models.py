@@ -349,6 +349,12 @@ class Advanced(Model):
                     "the alert emails are set to (root) set an email address for a user and "
                     "select that user in the dropdown.")
     )
+    adv_cpu_in_percentage = models.BooleanField(
+        default=False,
+        verbose_name=_("Report CPU usage in percentage"),
+        help_text=_("collectd will report CPU usage in percentage instead of \"jiffies\" "
+                    "if this is checked."),
+    )
     adv_graphite = models.CharField(
         max_length=120,
         default="",
