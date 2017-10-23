@@ -53,6 +53,7 @@ class Application(object):
           on_close(app)
         """
         self.__callbacks = defaultdict(list)
+        self.__event_sources = {}
         self.__subscribed = {}
 
     def register_callback(self, name, method):
@@ -177,8 +178,26 @@ class Application(object):
                     self.middleware.crash_reporting.report, sys.exc_info(), None, extra_log_files
                 ))
 
-    def subscribe(self, ident, name):
-        self.__subscribed[ident] = name
+    async def subscribe(self, ident, name):
+
+        if ':' in name:
+            shortname, arg = name.split(':', 1)
+        else:
+            shortname = name
+            arg = None
+        event_source = self.middleware.get_event_source(shortname)
+        if event_source:
+            es = event_source(self.middleware, self, name, arg)
+            t = threading.Thread(target=es.process, daemon=True)
+            t.start()
+            self.__event_sources[ident] = {
+                'event_source': es,
+                'thread': t,
+                'name': name,
+            }
+        else:
+            self.__subscribed[ident] = name
+
         self._send({
             'msg': 'ready',
             'subs': [ident],
@@ -212,13 +231,17 @@ class Application(object):
     def on_open(self):
         self.middleware.register_wsclient(self)
 
-    def on_close(self, *args, **kwargs):
+    async def on_close(self, *args, **kwargs):
         # Run callbacks registered in plugins for on_close
         for method in self.__callbacks['on_close']:
             try:
                 method(self)
             except:
                 self.logger.error('Failed to run on_close callback.', exc_info=True)
+
+        for ident, val in self.__event_sources.items():
+            event_source = val['event_source']
+            await self.middleware.threaded(event_source.cancel)
 
         self.middleware.unregister_wsclient(self)
 
@@ -267,7 +290,7 @@ class Application(object):
             return
 
         if message['msg'] == 'sub':
-            self.subscribe(message['id'], message['name'])
+            await self.subscribe(message['id'], message['name'])
         elif message['msg'] == 'unsub':
             self.unsubscribe(message['id'])
 
@@ -591,6 +614,25 @@ class ShellApplication(object):
         return ws
 
 
+class EventSource(object):
+
+    def __init__(self, middleware, app, name, arg):
+        self.middleware = middleware
+        self.app = app
+        self.name = name
+        self.arg = arg
+        self._cancel = threading.Event()
+
+    def process(self):
+        self.run()
+
+    def run(self):
+        raise NotImplementedError('run() method not implemented')
+
+    def cancel(self):
+        self._cancel.set()
+
+
 class Middleware(object):
 
     def __init__(self, loop_monitor=True, plugins_dirs=None, debug_level=None):
@@ -607,6 +649,7 @@ class Middleware(object):
         self.__schemas = {}
         self.__services = {}
         self.__wsclients = {}
+        self.__event_sources = {}
         self.__event_subs = defaultdict(list)
         self.__hooks = defaultdict(list)
         self.__server_threads = []
@@ -765,6 +808,14 @@ class Middleware(object):
             except:
                 self.logger.error('Failed to run hook {}:{}(*{}, **{})'.format(name, hook['method'], args, kwargs), exc_info=True)
 
+    def register_event_source(self, name, event_source):
+        if not issubclass(event_source, EventSource):
+            raise RuntimeError(f'{event_source} is not EventSource subclass')
+        self.__event_sources[name] = event_source
+
+    def get_event_source(self, name):
+        return self.__event_sources.get(name)
+
     def add_service(self, service):
         self.__services[service._config.namespace] = service
 
@@ -899,9 +950,10 @@ class Middleware(object):
             try:
                 await connection.on_message(x)
             except Exception as e:
+                self.logger.error('Connection closed unexpectedly', exc_info=True)
                 await ws.close(message=str(e).encode('utf-8'))
 
-        connection.on_close()
+        await connection.on_close()
         return ws
 
     def _loop_monitor_thread(self):
