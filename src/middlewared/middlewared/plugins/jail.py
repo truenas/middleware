@@ -103,18 +103,17 @@ class JailService(CRUDService):
 
         return True
 
-    @accepts(Str("jail"), Dict(
-        "options",
-        Str("prop"),
-        Bool("plugin"), ))
-    def do_update(self, jail, options):
+    @accepts(Str("jail"),
+             Dict("props", additional_attrs=True),
+             Bool("plugin"))
+    def do_update(self, jail, props, plugin):
         """Sets a jail property."""
         iocage = ioc.IOCage(skip_jails=True, jail=jail)
 
-        prop = options["prop"]
-        plugin = options["plugin"]
+        for prop, val in props.items():
+            p = f"{prop}={val}"
 
-        iocage.set(prop, plugin)
+            iocage.set(p, plugin)
 
         return True
 
