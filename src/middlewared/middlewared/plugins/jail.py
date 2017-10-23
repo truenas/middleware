@@ -106,17 +106,26 @@ class JailService(CRUDService):
     @accepts(Str("jail"), Dict(
              "options",
              Bool("plugin"),
+             Bool("rename"),
              additional_attrs=True,
              ))
     def do_update(self, jail, options):
         """Sets a jail property."""
         plugin = options.pop("plugin")
+        rename = options.pop("rename")
+
         iocage = ioc.IOCage(skip_jails=True, jail=jail)
+
+        if rename:
+            new_name = options.pop("name")
 
         for prop, val in options.items():
             p = f"{prop}={val}"
 
             iocage.set(p, plugin)
+
+        if rename:
+            iocage.rename(new_name)
 
         return True
 
@@ -283,14 +292,6 @@ class JailService(CRUDService):
         msg = iocage.exec(command, host_user, jail_user, return_msg=True)
 
         return msg.decode("utf-8")
-
-    @accepts(Str("jail"), Str("name"))
-    def rename(self, jail, name):
-        iocage = ioc.IOCage(jail=jail)
-
-        iocage.rename(name)
-
-        return True
 
     @accepts(Str("jail"))
     @job(lock=lambda args: f"jail_update:{args[-1]}")
