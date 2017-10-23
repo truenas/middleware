@@ -437,7 +437,7 @@ class VMUtils(object):
         ]
 
         grub_additional_args = {
-            "RancherOS": ['linux /boot/vmlinuz-4.9.45-rancher rancher.password=rancher printk.devkmsg=on rancher.state.dev=LABEL=RANCHER_STATE rancher.state.wait rancher.state.autoformat=[/dev/sda,/dev/vda] rancher.resize_device=/dev/sda',
+            "RancherOS": ['linux /boot/vmlinuz-4.9.45-rancher rancher.password=rancher printk.devkmsg=on rancher.state.dev=LABEL=RANCHER_STATE rancher.state.wait rancher.state.autoformat=[/dev/sda] rancher.resize_device=/dev/sda',
                           'initrd /boot/initrd-v1.1.0']
         }
 
