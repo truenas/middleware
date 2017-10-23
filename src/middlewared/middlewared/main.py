@@ -1,5 +1,6 @@
 from .apidocs import app as apidocs_app
 from .client import ejson as json
+from .event import EventSource
 from .job import Job, JobsQueue
 from .restful import RESTfulAPI
 from .schema import ResolverError, Error as SchemaError
@@ -617,28 +618,6 @@ class ShellApplication(object):
         await self.middleware.threaded(t_worker.join)
 
         return ws
-
-
-class EventSource(object):
-
-    def __init__(self, middleware, app, name, arg):
-        self.middleware = middleware
-        self.app = app
-        self.name = name
-        self.arg = arg
-        self._cancel = threading.Event()
-
-    def send_event(self, etype, **kwargs):
-        self.app.send_event(self.name, etype, **kwargs)
-
-    def process(self):
-        self.run()
-
-    def run(self):
-        raise NotImplementedError('run() method not implemented')
-
-    def cancel(self):
-        self._cancel.set()
 
 
 class Middleware(object):
