@@ -205,7 +205,11 @@ class Application(object):
         })
 
     def unsubscribe(self, ident):
-        self.__subscribed.pop(ident)
+        if ident in self.__subscribed:
+            self.__subscribed.pop(ident)
+        elif ident in self.__event_sources:
+            event_source = self.__event_sources[ident]['event_source']
+            await self.middleware.threaded(event_source.cancel)
 
     def send_event(self, name, event_type, **kwargs):
         found = False
