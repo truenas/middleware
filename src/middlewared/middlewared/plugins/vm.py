@@ -138,11 +138,14 @@ class VMSupervisor(object):
                 else:
                     args += ['-s', '{},virtio-blk,{}{}'.format(nid(), device['attributes']['path'], sectorsize_args)]
 
-                if self.vmutils.is_container(self.vm) and device['attributes'].get('boot', False) is True:
+                if self.vmutils.is_container(self.vm) and \
+                    device['attributes'].get('boot', False) is True and \
+                        grub_boot_device is False:
                     shared_fs = await self.middleware.call('vm.get_sharefs')
                     device_map_file = self.vmutils.ctn_device_map(shared_fs, self.vm['id'], self.vm['name'], device)
                     grub_dir = self.vmutils.ctn_grub(shared_fs, self.vm['id'], self.vm['name'], device, None)
                     grub_boot_device = True
+                    self.logger.debug("==> Boot Disk: {0}".format(device))
 
             elif device['dtype'] == 'CDROM':
                 args += ['-s', '{},ahci-cd,{}'.format(nid(), device['attributes']['path'])]
@@ -434,7 +437,8 @@ class VMUtils(object):
         ]
 
         grub_additional_args = {
-            "RancherOS": ['linux /boot/vmlinuz-4.9.45-rancher rancher.password=rancher printk.devkmsg=on rancher.state.dev=LABEL=RANCHER_STATE rancher.state.wait rancher.state.autoformat=[/dev/sda,/dev/vda]', 'initrd /boot/initrd-v1.1.0']
+            "RancherOS": ['linux /boot/vmlinuz-4.9.45-rancher rancher.password=rancher printk.devkmsg=on rancher.state.dev=LABEL=RANCHER_STATE rancher.state.wait rancher.state.autoformat=[/dev/sda,/dev/vda] rancher.resize_device=/dev/sda',
+                          'initrd /boot/initrd-v1.1.0']
         }
 
         vm_private_dir = sharefs_path + '/configs/' + str(vm_id) + '_' + vm_name + '/' + 'grub/'
