@@ -872,7 +872,12 @@ class VMService(CRUDService):
             sharefs = await self.middleware.call('vm.get_sharefs')
             file_path = sharefs + '/iso_files/' + image_file
             if os.path.exists(file_path):
-                return file_path
+                if self.vmutils.check_sha256(file_path, vmOS):
+                    self.logger.debug("===> Checksum OK: {}".format(file_path))
+                    return file_path
+                else:
+                    self.logger.debug("===> Checksum NOK: {}".format(file_path))
+                    return False
             else:
                 return False
         else:
