@@ -284,14 +284,11 @@ class JailService(CRUDService):
 
         return msg.decode("utf-8")
 
-    @accepts(Dict("options", Str("jail"), Str("name")))
-    def rename(self, options):
-        jail = options["jail"]
-        new_name = options["name"]
-
+    @accepts(Str("jail"), Str("name"))
+    def rename(self, jail, name):
         iocage = ioc.IOCage(jail=jail)
 
-        iocage.rename(new_name)
+        iocage.rename(name)
 
         return True
 
