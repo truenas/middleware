@@ -213,6 +213,11 @@ class Application(object):
                 found = True
                 break
         if not found:
+            for i in self.__event_sources.values():
+                if i['name'] == name:
+                    found = True
+                    break
+        if not found:
             return
         event = {
             'msg': event_type.lower(),
@@ -622,6 +627,9 @@ class EventSource(object):
         self.name = name
         self.arg = arg
         self._cancel = threading.Event()
+
+    def send_event(self, etype, **kwargs):
+        self.app.send_event(self.name, etype, **kwargs)
 
     def process(self):
         self.run()
