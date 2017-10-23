@@ -284,6 +284,17 @@ class JailService(CRUDService):
 
         return msg.decode("utf-8")
 
+    @accepts(Dict("options", Str("jail"), Str("name")))
+    def rename(self, options):
+        jail = options["jail"]
+        new_name = options["name"]
+
+        iocage = ioc.IOCage(jail=jail)
+
+        iocage.rename(new_name)
+
+        return True
+
     @accepts(Str("jail"))
     @job(lock=lambda args: f"jail_update:{args[-1]}")
     def update_to_latest_patch(self, job, jail):
