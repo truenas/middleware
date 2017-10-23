@@ -134,6 +134,13 @@ class DeviceForm(ModelForm):
         help_text=_("Logical and physical sector size in bytes of the emulated disk."
                     "If 0, a sector size is not set."),
     )
+    DISK_raw_size = forms.CharField(
+            label=_('Disk size'),
+            required=False,
+            initial=0,
+            validators=[RegexValidator("^(\d*)\s?([M|G|T]?)$", "You can use M, G or T as unit size, otherwise it will use G by default.")],
+            help_text=_("You can resize a given raw disk or use 0 to use it as it is."),
+    )
     NIC_type = forms.ChoiceField(
         label=_('Adapter Type'),
         choices=choices.VM_NICTYPES,
@@ -223,6 +230,7 @@ class DeviceForm(ModelForm):
                 self.fields['DISK_mode'].initial = self.instance.attributes.get('type')
                 self.fields['DISK_sectorsize'].initial = self.instance.attributes.get('sectorsize', 0)
                 self.fields['DISK_raw_boot'].initial = self.instance.attributes.get('boot', '')
+                self.fields['DISK_raw_size'].initial = self.instance.attributes.get('size', '')
             elif self.instance.dtype == 'NIC':
                 self.fields['NIC_type'].initial = self.instance.attributes.get('type')
                 self.fields['NIC_mac'].initial = self.instance.attributes.get('mac')
@@ -266,6 +274,8 @@ class DeviceForm(ModelForm):
         vm = self.cleaned_data.get('vm')
         kwargs['commit'] = False
         obj = super(DeviceForm, self).save(*args, **kwargs)
+        raw_file_cnt = None
+        raw_file_resize = 0
 
         if self.cleaned_data['dtype'] == 'DISK':
             obj.attributes = {
@@ -274,13 +284,18 @@ class DeviceForm(ModelForm):
                 'sectorsize': self.cleaned_data['DISK_sectorsize'],
             }
         elif self.cleaned_data['dtype'] == 'RAW':
-            if self.is_container(vm.vm_type) and self.cleaned_data['DISK_mode'] == 'VIRTIO':
-                self._errors['dtype'] = self.error_class([_('Container only works with AHCI mode.')])
+            if self.is_container(vm.vm_type):
+                if self.cleaned_data['DISK_mode'] == 'VIRTIO':
+                    self._errors['dtype'] = self.error_class([_('Container only works with AHCI mode.')])
+                if self.cleaned_data['DISK_raw_boot']:
+                    raw_file_cnt = self.cleaned_data['DISK_raw']
+                    raw_file_resize = self.cleaned_data['DISK_raw_size']
             obj.attributes = {
                 'path': self.cleaned_data['DISK_raw'],
                 'type': self.cleaned_data['DISK_mode'],
                 'sectorsize': self.cleaned_data['DISK_sectorsize'],
                 'boot': self.cleaned_data['DISK_raw_boot'],
+                'size': self.cleaned_data['DISK_raw_size'],
             }
         elif self.cleaned_data['dtype'] == 'CDROM':
             cdrom_path = self.cleaned_data['CDROM_path']
@@ -315,6 +330,23 @@ class DeviceForm(ModelForm):
                 self.cleaned_data.pop('VNC_password', None)
                 self.cleaned_data.pop('VNC_web', None)
                 return obj
+
+        # for containers
+        if self.is_container(vm.vm_type):
+            with client as c:
+                job_id = c.call('vm.fetch_image', 'RancherOS')
+                status = None
+                while status != 'SUCCESS':
+                    status = c.call('vm.get_download_status', job_id)
+                    if status == 'FAILED':
+                        break
+                    elif status == 'ABORTED':
+                        break
+                if status == 'SUCCESS':
+                    prebuilt_image = c.call('vm.image_path', 'RancherOS')
+                    if prebuilt_image and raw_file_cnt:
+                        c.call('vm.decompress_gzip', prebuilt_image, raw_file_cnt)
+                        c.call('vm.raw_resize', raw_file_cnt, raw_file_resize)
 
         obj.save()
         return obj
