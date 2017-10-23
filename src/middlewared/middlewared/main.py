@@ -204,7 +204,7 @@ class Application(object):
             'subs': [ident],
         })
 
-    def unsubscribe(self, ident):
+    async def unsubscribe(self, ident):
         if ident in self.__subscribed:
             self.__subscribed.pop(ident)
         elif ident in self.__event_sources:
@@ -302,7 +302,7 @@ class Application(object):
         if message['msg'] == 'sub':
             await self.subscribe(message['id'], message['name'])
         elif message['msg'] == 'unsub':
-            self.unsubscribe(message['id'])
+            await self.unsubscribe(message['id'])
 
 
 class FileApplication(object):
