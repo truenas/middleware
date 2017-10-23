@@ -123,6 +123,7 @@ class VMSupervisor(object):
         nid = Nid(3)
         device_map_file = None
         grub_dir = None
+        grub_boot_device = False
         for device in self.vm['devices']:
             if device['dtype'] == 'DISK' or device['dtype'] == 'RAW':
 
@@ -141,6 +142,7 @@ class VMSupervisor(object):
                     shared_fs = await self.middleware.call('vm.get_sharefs')
                     device_map_file = self.vmutils.ctn_device_map(shared_fs, self.vm['id'], self.vm['name'], device)
                     grub_dir = self.vmutils.ctn_grub(shared_fs, self.vm['id'], self.vm['name'], device, None)
+                    grub_boot_device = True
 
             elif device['dtype'] == 'CDROM':
                 args += ['-s', '{},ahci-cd,{}'.format(nid(), device['attributes']['path'])]
@@ -208,6 +210,11 @@ class VMSupervisor(object):
                 '-d', grub_dir,
                 self.vm['name'],
             ]
+
+            #  If container has no boot device, we should stop.
+            if grub_boot_device is False:
+                self.logger.error("===> There is no boot disk for vm: {0}".format(self.vm['name']))
+                return False
 
             self.logger.debug('Starting grub-bhyve: {}'.format(' '.join(grub_bhyve_args)))
             self.grub_proc = await Popen(grub_bhyve_args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
