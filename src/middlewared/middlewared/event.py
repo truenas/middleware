@@ -1,11 +1,13 @@
+import asyncio
 import threading
 
 
 class EventSource(object):
 
-    def __init__(self, middleware, app, name, arg):
+    def __init__(self, middleware, app, ident, name, arg):
         self.middleware = middleware
         self.app = app
+        self.ident = ident
         self.name = name
         self.arg = arg
         self._cancel = threading.Event()
@@ -15,6 +17,7 @@ class EventSource(object):
 
     def process(self):
         self.run()
+        asyncio.run_coroutine_threadsafe(self.app.unsubscribe(self.ident), self.app.loop)
 
     def run(self):
         raise NotImplementedError('run() method not implemented')

@@ -37,8 +37,9 @@ from . import logger
 
 class Application(object):
 
-    def __init__(self, middleware, request, response):
+    def __init__(self, middleware, loop, request, response):
         self.middleware = middleware
+        self.loop = loop
         self.request = request
         self.response = response
         self.authenticated = False
@@ -188,7 +189,7 @@ class Application(object):
             arg = None
         event_source = self.middleware.get_event_source(shortname)
         if event_source:
-            es = event_source(self.middleware, self, name, arg)
+            es = event_source(self.middleware, self, ident, name, arg)
             t = threading.Thread(target=es.process, daemon=True)
             t.start()
             self.__event_sources[ident] = {
@@ -933,7 +934,7 @@ class Middleware(object):
         ws = web.WebSocketResponse()
         await ws.prepare(request)
 
-        connection = Application(self, request, ws)
+        connection = Application(self, self.__loop, request, ws)
         connection.on_open()
 
         async for msg in ws:
