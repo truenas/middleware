@@ -1,6 +1,5 @@
 from datetime import datetime
 import os
-import socket
 import textwrap
 
 from middlewared.service import Service
@@ -16,7 +15,9 @@ class UnauthorizedRebootAlertService(Service):
 
 async def setup(middleware):
     if os.path.exists(SENTINEL_PATH):
-        hostname = socket.gethostname()
+        gc = await middleware.call('datastore.config', 'network.globalconfiguration')
+
+        hostname = f"{gc['gc_hostname']}.{gc['gc_domain']}"
         now = datetime.now().strftime("%c")
 
         # FIXME: Translation
