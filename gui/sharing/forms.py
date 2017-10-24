@@ -506,8 +506,14 @@ class NFS_ShareForm(ModelForm):
                 break
 
         for network in networks:
+            networkobj = IPNetwork(network)
             for unetwork, ustdev in used_networks:
-                if network == unetwork and dev == ustdev:
+                try:
+                    unetworkobj = IPNetwork(unetwork)
+                except Exception:
+                    # If for some reason other values in db are not valid networks
+                    unetworkobj = IPNetwork('0.0.0.0/0')
+                if networkobj.overlaps(unetworkobj) and dev == ustdev:
                     self._errors['nfs_network'] = self.error_class([
                         _("The network %s is already being shared and cannot "
                             "be used twice for the same filesystem") % (
