@@ -122,7 +122,7 @@ class JailService(CRUDService):
 
             iocage.set(p, plugin)
 
-        if name is not None:
+        if name:
             iocage.rename(name)
 
         return True
