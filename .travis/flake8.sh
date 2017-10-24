@@ -11,7 +11,11 @@ find gui src -name \*.py -exec flake8 --ignore=E402,E501 {} + | egrep -v "migrat
 num_errors_after=`cat $tmpafter | wc -l`
 echo $num_errors_after
 
+if [ "${TRAVIS_PULL_REQUEST}" = "false" ]; then
 git checkout HEAD~
+else
+git checkout ${TRAVIS_PULL_REQUEST_BRANCH}
+fi
 
 tmpbefore=$(mktemp)
 find gui src -name \*.py -exec flake8 --ignore=E402,E501 {} + | egrep -v "migrations/|usr/local/share/pysnmp/mibs/" > $tmpbefore
