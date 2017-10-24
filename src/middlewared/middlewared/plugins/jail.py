@@ -113,12 +113,9 @@ class JailService(CRUDService):
         plugin = options.pop("plugin")
         _, _, iocage = self.check_jail_existence(jail)
 
-        name = options.get("name", None)
+        name = options.pop("name", None)
 
         for prop, val in options.items():
-            if prop == "name":
-                continue
-
             p = f"{prop}={val}"
 
             iocage.set(p, plugin)
