@@ -142,7 +142,7 @@ class FilesystemService(Service):
         return data
 
 
-class FollowTailEventSource(EventSource):
+class FileFollowTailEventSource(EventSource):
 
     def run(self):
         if ':' in self.arg:
@@ -193,4 +193,4 @@ class FollowTailEventSource(EventSource):
 
 
 def setup(middleware):
-    middleware.register_event_source('filesystem.get_and_watch', FollowTailEventSource)
+    middleware.register_event_source('filesystem.file_tail_follow', FileFollowTailEventSource)
