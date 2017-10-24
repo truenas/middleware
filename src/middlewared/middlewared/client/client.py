@@ -552,7 +552,7 @@ def main():
     elif args.name == 'subscribe':
         with Client(uri=args.uri) as c:
 
-            event = TEvent()
+            event = Event()
 
             def cb(mtype, **message):
                 print(mtype, message)

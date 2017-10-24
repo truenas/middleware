@@ -142,7 +142,7 @@ class FilesystemService(Service):
         return data
 
 
-class GetAndWatchEventSource(EventSource):
+class FollowTailEventSource(EventSource):
 
     def run(self):
         if ':' in self.arg:
@@ -193,4 +193,4 @@ class GetAndWatchEventSource(EventSource):
 
 
 def setup(middleware):
-    middleware.register_event_source('filesystem.get_and_watch', GetAndWatchEventSource)
+    middleware.register_event_source('filesystem.get_and_watch', FollowTailEventSource)
