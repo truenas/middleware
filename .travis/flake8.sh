@@ -14,7 +14,7 @@ echo $num_errors_after
 if [ "${TRAVIS_PULL_REQUEST}" = "false" ]; then
 git checkout HEAD~
 else
-git checkout ${TRAVIS_PULL_REQUEST_BRANCH}
+git checkout ${TRAVIS_BRANCH}
 fi
 
 tmpbefore=$(mktemp)
