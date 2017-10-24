@@ -31,7 +31,7 @@ from django.utils.translation import ugettext_lazy as _
 from django.core.validators import MaxValueValidator, MinValueValidator
 
 from freenasUI import choices
-from freenasUI.freeadmin.models import DictField, Model, PathField
+from freenasUI.freeadmin.models import DictField, Model
 
 log = logging.getLogger('vm.models')
 
