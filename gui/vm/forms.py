@@ -125,7 +125,16 @@ class DeviceForm(ModelForm):
     )
     DISK_raw_boot = forms.BooleanField(
         label=_('Disk boot'),
+        widget=forms.widgets.HiddenInput(),
         required=False,
+        initial=False,
+    )
+    ROOT_password = forms.CharField(
+        label=_('Password'),
+        max_length=50,
+        widget=forms.widgets.HiddenInput(),
+        required=False,
+        help_text=_("Set the user rancher password."),
     )
     DISK_sectorsize = forms.IntegerField(
         label=_('Disk sectorsize'),
@@ -136,6 +145,7 @@ class DeviceForm(ModelForm):
     )
     DISK_raw_size = forms.CharField(
             label=_('Disk size'),
+            widget=forms.widgets.HiddenInput(),
             required=False,
             initial=0,
             validators=[RegexValidator("^(\d*)\s?([M|G|T]?)$", "You can use M, G or T as unit size, otherwise it will use G by default.")],
@@ -204,6 +214,7 @@ class DeviceForm(ModelForm):
         self.fields['dtype'].widget.attrs['onChange'] = (
             "deviceTypeToggle();"
         )
+
         self.fields['VNC_bind'].choices = self.ipv4_list()
 
         diskchoices = {}
@@ -229,8 +240,15 @@ class DeviceForm(ModelForm):
                 self.fields['DISK_raw'].initial = self.instance.attributes.get('path', '')
                 self.fields['DISK_mode'].initial = self.instance.attributes.get('type')
                 self.fields['DISK_sectorsize'].initial = self.instance.attributes.get('sectorsize', 0)
-                self.fields['DISK_raw_boot'].initial = self.instance.attributes.get('boot', '')
+
+                if self.instance.vm.vm_type == 'Container Provider':
+                    self.fields['DISK_raw_boot'].widget = forms.CheckboxInput()
+                    self.fields['DISK_raw_size'].widget = forms.TextInput()
+                    self.fields['ROOT_password'].widget = forms.PasswordInput(render_value=True,)
+
+                self.fields['DISK_raw_boot'].initial = self.instance.attributes.get('boot', False)
                 self.fields['DISK_raw_size'].initial = self.instance.attributes.get('size', '')
+                self.fields['ROOT_password'].initial = self.instance.attributes.get('rootpwd', '')
             elif self.instance.dtype == 'NIC':
                 self.fields['NIC_type'].initial = self.instance.attributes.get('type')
                 self.fields['NIC_mac'].initial = self.instance.attributes.get('mac')
@@ -296,6 +314,7 @@ class DeviceForm(ModelForm):
                 'sectorsize': self.cleaned_data['DISK_sectorsize'],
                 'boot': self.cleaned_data['DISK_raw_boot'],
                 'size': self.cleaned_data['DISK_raw_size'],
+                'rootpwd': self.cleaned_data['ROOT_password'],
             }
         elif self.cleaned_data['dtype'] == 'CDROM':
             cdrom_path = self.cleaned_data['CDROM_path']
