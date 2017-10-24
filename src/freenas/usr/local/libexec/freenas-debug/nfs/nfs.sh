@@ -86,4 +86,8 @@ nfs_func()
 	section_header "getent group"
 	getent group
 	section_footer
+
+	section_header "nfsv4 locks: nfsdumpstate"
+	nfsdumpstate
+	section_footer
 }
