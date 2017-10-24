@@ -213,17 +213,10 @@ class Application(object):
             await self.middleware.threaded(event_source.cancel)
 
     def send_event(self, name, event_type, **kwargs):
-        found = False
-        for i in self.__subscribed.values():
-            if i == name or i == '*':
-                found = True
-                break
-        if not found:
-            for i in self.__event_sources.values():
-                if i['name'] == name:
-                    found = True
-                    break
-        if not found:
+        if (
+            not any(i == name or i == '*' for i in self.__subscribed.values()) and
+            not any(i['name'] == name for i in self.__event_sources.values())
+        ):
             return
         event = {
             'msg': event_type.lower(),
