@@ -954,8 +954,8 @@ class SettingsForm(ModelForm):
         super(SettingsForm, self).__init__(*args, **kwargs)
         for i in (
             'stg_guiprotocol', 'stg_guiaddress', 'stg_guiport',
-            'stg_guihttpsport', 'stg_guihttpsredirect', 'stg_sysloglevel',
-            'stg_syslogserver', 'stg_guicertificate', 'stg_timezone',
+            'stg_guihttpsport', 'stg_guihttpsredirect',
+            'stg_guicertificate', 'stg_timezone',
         ):
             setattr(self.instance, f'_original_{i}', getattr(self.instance, i))
 
@@ -978,15 +978,6 @@ class SettingsForm(ModelForm):
     def clean(self):
         cdata = self.cleaned_data
 
-        # todo: make this and ix-syslogd support udp6
-        if cdata["stg_syslogserver"]:
-            syslogserver = cdata.get("stg_syslogserver")
-            match = re.match("^[\w\.\-]+(\:\d+)?$", syslogserver)
-            if match is None:
-                self._errors['stg_syslogserver'] = self.error_class([_(
-                    "Invalid syslog server format")
-                ])
-
         proto = cdata.get("stg_guiprotocol")
         if proto == "http":
             return cdata
@@ -1003,9 +994,6 @@ class SettingsForm(ModelForm):
 
     def save(self):
         obj = super(SettingsForm, self).save()
-        if (self.instance._original_stg_sysloglevel != self.instance.stg_sysloglevel or
-                self.instance._original_stg_syslogserver != self.instance.stg_syslogserver):
-            notifier().restart("syslogd")
         cache.set('guiLanguage', obj.stg_language)
         notifier().reload("timeservices")
         if self.instance._original_stg_timezone != self.instance.stg_timezone:
@@ -1108,6 +1096,8 @@ class AdvancedForm(ModelForm):
 
     def __init__(self, *args, **kwargs):
         super(AdvancedForm, self).__init__(*args, **kwargs)
+        self.instance._original_adv_syslogserver = self.instance.adv_syslogserver
+        self.instance._original_adv_sysloglevel = self.instance.adv_sysloglevel
         self.instance._original_adv_motd = self.instance.adv_motd
         self.instance._original_adv_consolemenu = self.instance.adv_consolemenu
         self.instance._original_adv_powerdaemon = self.instance.adv_powerdaemon
@@ -1133,6 +1123,9 @@ class AdvancedForm(ModelForm):
     def save(self):
         super(AdvancedForm, self).save()
         loader_reloaded = False
+        if (self.instance._original_adv_sysloglevel != self.instance.adv_sysloglevel or
+                self.instance._original_adv_syslogserver != self.instance.adv_sysloglevel):
+            notifier().restart("syslogd")
         if self.instance._original_adv_motd != self.instance.adv_motd:
             notifier().start("motd")
         if self.instance._original_adv_consolemenu != self.instance.adv_consolemenu:
@@ -1186,6 +1179,19 @@ class AdvancedForm(ModelForm):
             self.instance.adv_autotune is True
         ):
             events.append("refreshTree()")
+
+    def clean(self):
+        cdata = self.cleaned_data
+
+        # todo: make this and ix-syslogd support udp6
+        if cdata["adv_syslogserver"]:
+            syslogserver = cdata.get("adv_syslogserver")
+            match = re.match("^[\w\.\-]+(\:\d+)?$", syslogserver)
+            if match is None:
+                self._errors['adv_syslogserver'] = self.error_class([_(
+                    "Invalid syslog server format")
+                ])
+        return cdata
 
 
 class EmailForm(MiddlewareModelForm, ModelForm):

@@ -12,7 +12,7 @@
 generate_syslog_conf()
 {
 	local IFS="|"
-	local f="stg_syslogserver stg_sysloglevel"
+	local f="adv_syslogserver adv_sysloglevel"
 	eval local $f
 	local sf=$(var_to_sf $f)
 	local serverhost=""
@@ -30,7 +30,7 @@ generate_syslog_conf()
 		$sf
 
 	FROM
-		system_settings
+		system_advanced
 
 	ORDER BY
 		-id
@@ -38,18 +38,18 @@ generate_syslog_conf()
 	LIMIT 1
 	" | \
 	while eval read -r $f; do
-		if [ -n "${stg_syslogserver}" ]; then
-			if echo "${stg_syslogserver}" | grep -q ":"; then
-				serverhost=$(echo ${stg_syslogserver}|cut -d: -f1)
-				serverport=$(echo ${stg_syslogserver}|cut -d: -f2)
+		if [ -n "${adv_syslogserver}" ]; then
+			if echo "${adv_syslogserver}" | grep -q ":"; then
+				serverhost=$(echo ${adv_syslogserver}|cut -d: -f1)
+				serverport=$(echo ${adv_syslogserver}|cut -d: -f2)
 			else
-				serverhost="${stg_syslogserver}"
+				serverhost="${adv_syslogserver}"
 				serverport="514"
 			fi
 {
 cat << __EOF__
 destination loghost { udp("${serverhost}" port(${serverport}) localport(514)); };
-log { source(src);  filter(${stg_sysloglevel}); destination(loghost); };
+log { source(src);  filter(${adv_sysloglevel}); destination(loghost); };
 __EOF__
 } >> /etc/local/syslog-ng.conf
 		fi
