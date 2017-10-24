@@ -476,6 +476,9 @@ def main():
 
     iparser = subparsers.add_parser('sql', help='Run SQL command')
     iparser.add_argument('sql', nargs='+')
+
+    iparser = subparsers.add_parser('subscribe', help='Subscribe to event')
+    iparser.add_argument('event')
     args = parser.parse_args()
 
     def from_json(args):
@@ -545,6 +548,18 @@ def main():
                         else:
                             data.append(str(f))
                     print('|'.join(data))
+
+    elif args.name == 'subscribe':
+        with Client(uri=args.uri) as c:
+
+            event = Event()
+
+            def cb(mtype, **message):
+                print(mtype, message)
+
+            c.subscribe(args.event, cb)
+
+            event.wait()
     elif args.name == 'waitready':
         """
         This command is supposed to wait until we are able to connect

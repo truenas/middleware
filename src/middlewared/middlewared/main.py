@@ -1,9 +1,11 @@
 from .apidocs import app as apidocs_app
 from .client import ejson as json
+from .event import EventSource
 from .job import Job, JobsQueue
 from .restful import RESTfulAPI
 from .schema import ResolverError, Error as SchemaError
 from .service import CallError, CallException, ValidationError, ValidationErrors
+from .utils import start_daemon_thread
 from aiohttp import web
 from aiohttp_wsgi import WSGIHandler
 from collections import defaultdict
@@ -36,8 +38,9 @@ from . import logger
 
 class Application(object):
 
-    def __init__(self, middleware, request, response):
+    def __init__(self, middleware, loop, request, response):
         self.middleware = middleware
+        self.loop = loop
         self.request = request
         self.response = response
         self.authenticated = False
@@ -53,6 +56,7 @@ class Application(object):
           on_close(app)
         """
         self.__callbacks = defaultdict(list)
+        self.__event_sources = {}
         self.__subscribed = {}
 
     def register_callback(self, name, method):
@@ -177,23 +181,42 @@ class Application(object):
                     self.middleware.crash_reporting.report, sys.exc_info(), None, extra_log_files
                 ))
 
-    def subscribe(self, ident, name):
-        self.__subscribed[ident] = name
+    async def subscribe(self, ident, name):
+
+        if ':' in name:
+            shortname, arg = name.split(':', 1)
+        else:
+            shortname = name
+            arg = None
+        event_source = self.middleware.get_event_source(shortname)
+        if event_source:
+            es = event_source(self.middleware, self, ident, name, arg)
+            t = start_daemon_thread(target=es.process)
+            self.__event_sources[ident] = {
+                'event_source': es,
+                'thread': t,
+                'name': name,
+            }
+        else:
+            self.__subscribed[ident] = name
+
         self._send({
             'msg': 'ready',
             'subs': [ident],
         })
 
-    def unsubscribe(self, ident):
-        self.__subscribed.pop(ident)
+    async def unsubscribe(self, ident):
+        if ident in self.__subscribed:
+            self.__subscribed.pop(ident)
+        elif ident in self.__event_sources:
+            event_source = self.__event_sources[ident]['event_source']
+            await self.middleware.threaded(event_source.cancel)
 
     def send_event(self, name, event_type, **kwargs):
-        found = False
-        for i in self.__subscribed.values():
-            if i == name or i == '*':
-                found = True
-                break
-        if not found:
+        if (
+            not any(i == name or i == '*' for i in self.__subscribed.values()) and
+            not any(i['name'] == name for i in self.__event_sources.values())
+        ):
             return
         event = {
             'msg': event_type.lower(),
@@ -212,13 +235,17 @@ class Application(object):
     def on_open(self):
         self.middleware.register_wsclient(self)
 
-    def on_close(self, *args, **kwargs):
+    async def on_close(self, *args, **kwargs):
         # Run callbacks registered in plugins for on_close
         for method in self.__callbacks['on_close']:
             try:
                 method(self)
             except:
                 self.logger.error('Failed to run on_close callback.', exc_info=True)
+
+        for ident, val in self.__event_sources.items():
+            event_source = val['event_source']
+            await self.middleware.threaded(event_source.cancel)
 
         self.middleware.unregister_wsclient(self)
 
@@ -267,9 +294,9 @@ class Application(object):
             return
 
         if message['msg'] == 'sub':
-            self.subscribe(message['id'], message['name'])
+            await self.subscribe(message['id'], message['name'])
         elif message['msg'] == 'unsub':
-            self.unsubscribe(message['id'])
+            await self.unsubscribe(message['id'])
 
 
 class FileApplication(object):
@@ -607,6 +634,7 @@ class Middleware(object):
         self.__schemas = {}
         self.__services = {}
         self.__wsclients = {}
+        self.__event_sources = {}
         self.__event_subs = defaultdict(list)
         self.__hooks = defaultdict(list)
         self.__server_threads = []
@@ -765,6 +793,14 @@ class Middleware(object):
             except:
                 self.logger.error('Failed to run hook {}:{}(*{}, **{})'.format(name, hook['method'], args, kwargs), exc_info=True)
 
+    def register_event_source(self, name, event_source):
+        if not issubclass(event_source, EventSource):
+            raise RuntimeError(f'{event_source} is not EventSource subclass')
+        self.__event_sources[name] = event_source
+
+    def get_event_source(self, name):
+        return self.__event_sources.get(name)
+
     def add_service(self, service):
         self.__services[service._config.namespace] = service
 
@@ -891,7 +927,7 @@ class Middleware(object):
         ws = web.WebSocketResponse()
         await ws.prepare(request)
 
-        connection = Application(self, request, ws)
+        connection = Application(self, self.__loop, request, ws)
         connection.on_open()
 
         async for msg in ws:
@@ -899,9 +935,10 @@ class Middleware(object):
             try:
                 await connection.on_message(x)
             except Exception as e:
+                self.logger.error('Connection closed unexpectedly', exc_info=True)
                 await ws.close(message=str(e).encode('utf-8'))
 
-        connection.on_close()
+        await connection.on_close()
         return ws
 
     def _loop_monitor_thread(self):
