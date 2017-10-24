@@ -5,6 +5,7 @@ from .job import Job, JobsQueue
 from .restful import RESTfulAPI
 from .schema import ResolverError, Error as SchemaError
 from .service import CallError, CallException, ValidationError, ValidationErrors
+from .utils import start_daemon_thread
 from aiohttp import web
 from aiohttp_wsgi import WSGIHandler
 from collections import defaultdict
@@ -190,8 +191,7 @@ class Application(object):
         event_source = self.middleware.get_event_source(shortname)
         if event_source:
             es = event_source(self.middleware, self, ident, name, arg)
-            t = threading.Thread(target=es.process, daemon=True)
-            t.start()
+            t = start_daemon_thread(target=es.process)
             self.__event_sources[ident] = {
                 'event_source': es,
                 'thread': t,
