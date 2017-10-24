@@ -143,7 +143,7 @@ class VMSupervisor(object):
                         grub_boot_device is False:
                     shared_fs = await self.middleware.call('vm.get_sharefs')
                     device_map_file = self.vmutils.ctn_device_map(shared_fs, self.vm['id'], self.vm['name'], device)
-                    grub_dir = self.vmutils.ctn_grub(shared_fs, self.vm['id'], self.vm['name'], device, None)
+                    grub_dir = self.vmutils.ctn_grub(shared_fs, self.vm['id'], self.vm['name'], device, device['attributes'].get('rootpwd', None), None)
                     grub_boot_device = True
                     self.logger.debug("==> Boot Disk: {0}".format(device))
 
@@ -425,7 +425,7 @@ class VMUtils(object):
 
         return config_file
 
-    def ctn_grub(sharefs_path, vm_id, vm_name, disk, vmOS=None):
+    def ctn_grub(sharefs_path, vm_id, vm_name, disk, password, vmOS=None):
         if vmOS is None:
             vmOS = 'RancherOS'
 
@@ -437,7 +437,7 @@ class VMUtils(object):
         ]
 
         grub_additional_args = {
-            "RancherOS": ['linux /boot/vmlinuz-4.9.45-rancher rancher.password=rancher printk.devkmsg=on rancher.state.dev=LABEL=RANCHER_STATE rancher.state.wait rancher.state.autoformat=[/dev/sda] rancher.resize_device=/dev/sda',
+            "RancherOS": ['linux /boot/vmlinuz-4.9.45-rancher rancher.password={0} printk.devkmsg=on rancher.state.dev=LABEL=RANCHER_STATE rancher.state.wait rancher.state.autoformat=[/dev/sda] rancher.resize_device=/dev/sda'.format(password),
                           'initrd /boot/initrd-v1.1.0']
         }
 
