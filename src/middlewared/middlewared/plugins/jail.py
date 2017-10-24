@@ -111,7 +111,8 @@ class JailService(CRUDService):
     def do_update(self, jail, options):
         """Sets a jail property."""
         plugin = options.pop("plugin")
-        iocage = ioc.IOCage(skip_jails=True, jail=jail)
+        _, _, iocage = self.check_jail_existence(jail)
+
         name = options.get("name", None)
 
         for prop, val in options.items():
@@ -130,7 +131,7 @@ class JailService(CRUDService):
     @accepts(Str("jail"))
     def do_delete(self, jail):
         """Takes a jail and destroys it."""
-        iocage = ioc.IOCage(skip_jails=True, jail=jail)
+        _, _, iocage = self.check_jail_existence(jail)
 
         # TODO: Port children checking, release destroying.
         iocage.destroy_jail()
@@ -142,12 +143,15 @@ class JailService(CRUDService):
         IOCCheck()
 
     @private
-    def check_jail_existence(self, jail):
+    def check_jail_existence(self, jail, skip=True):
         """Wrapper for iocage's API, as a few commands aren't ported to it"""
-        iocage = ioc.IOCage(skip_jails=True, jail=jail)
-        jail, path = iocage.__check_jail_existence__()
+        try:
+            iocage = ioc.IOCage(skip_jails=skip, jail=jail)
+            jail, path = iocage.__check_jail_existence__()
+        except SystemExit:
+            raise CallError(f"jail '{jail}' not found!")
 
-        return jail, path
+        return jail, path, iocage
 
     @accepts(
         Dict("options",
@@ -192,7 +196,7 @@ class JailService(CRUDService):
     @accepts(Str("jail"))
     def start(self, jail):
         """Takes a jail and starts it."""
-        iocage = ioc.IOCage(skip_jails=True, jail=jail)
+        _, _, iocage = self.check_jail_existence(jail)
 
         iocage.start()
 
@@ -201,7 +205,7 @@ class JailService(CRUDService):
     @accepts(Str("jail"))
     def stop(self, jail):
         """Takes a jail and stops it."""
-        iocage = ioc.IOCage(skip_jails=True, jail=jail)
+        _, _, iocage = self.check_jail_existence(jail)
 
         iocage.stop()
 
@@ -222,7 +226,7 @@ class JailService(CRUDService):
         """
         Adds an fstab mount to the jail, mounts if the jail is running.
         """
-        iocage = ioc.IOCage(jail=jail)
+        _, _, iocage = self.check_jail_existence(jail, skip=False)
 
         action = options["action"]
         source = options["source"]
@@ -275,8 +279,8 @@ class JailService(CRUDService):
         Dict("options", Str("host_user", default="root"), Str("jail_user")))
     def exec(self, jail, command, options):
         """Issues a command inside a jail."""
+        _, _, iocage = self.check_jail_existence(jail, skip=False)
 
-        iocage = ioc.IOCage(jail=jail)
         host_user = options["host_user"]
         jail_user = options.get("jail_user", None)
 
@@ -296,7 +300,7 @@ class JailService(CRUDService):
     def update_to_latest_patch(self, job, jail):
         """Updates specified jail to latest patch level."""
 
-        uuid, path = self.check_jail_existence(jail)
+        uuid, path, _ = self.check_jail_existence(jail)
         status, jid = IOCList.list_get_jid(uuid)
         conf = IOCJson(path).json_load()
 
@@ -330,7 +334,7 @@ class JailService(CRUDService):
     def upgrade(self, job, jail, release):
         """Upgrades specified jail to specified RELEASE."""
 
-        uuid, path = self.check_jail_existence(jail)
+        uuid, path, _ = self.check_jail_existence(jail)
         status, jid = IOCList.list_get_jid(uuid)
         conf = IOCJson(path).json_load()
         root_path = f"{path}/root"
@@ -354,7 +358,7 @@ class JailService(CRUDService):
     @job(lock=lambda args: f"jail_export:{args[-1]}")
     def export(self, job, jail):
         """Exports jail to zip file"""
-        uuid, path = self.check_jail_existence(jail)
+        uuid, path, _ = self.check_jail_existence(jail)
         status, jid = IOCList.list_get_jid(uuid)
         started = False
 
