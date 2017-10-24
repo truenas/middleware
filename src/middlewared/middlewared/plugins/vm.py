@@ -912,15 +912,6 @@ class VMService(CRUDService):
             self.logger.error("===> SRC: {0} does not exists or is broken.".format(src))
             return False
 
-    @accepts(Str('src'), Str('dst'))
-    @job(lock='decompress', process=True)
-    def decompress_bzip(self, job, src, dst):
-        logger.debug("==> SRC: %s DST: %s" % (src, dst))
-        with open(dst, 'wb') as dst_file, bz2.BZ2File(src, 'rb') as src_file:
-            for data in iter(lambda: src_file.read(BUFSIZE), b''):
-                self.decompress_hookreport(dst, job)
-                dst_file.write(data)
-
     async def __find_clone(self, name):
         data = await self.middleware.call('vm.query', [], {'order_by': ['name']})
         clone_index = 0
