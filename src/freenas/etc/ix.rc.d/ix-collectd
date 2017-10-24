@@ -85,6 +85,7 @@ generate_collectd()
     fi
 
     local hostname=$(hostname)
+    local cpu_in_percentage="$(${FREENAS_SQLITE_CMD} ${RO_FREENAS_CONFIG} "select adv_cpu_in_percentage from system_advanced")"
     local graphite="$(${FREENAS_SQLITE_CMD} ${RO_FREENAS_CONFIG} "select adv_graphite from system_advanced")"
 
     rrdfile="/data/rrd_dir.tar.bz2"
@@ -174,6 +175,14 @@ generate_collectd()
     if [ "${hostname}" != "localhost" ]; then
         ln -s "localhost" "${hostname}"
     fi
+
+    cpu_plugin_options=""
+    aggregation_plugin_cpu_type="cpu"
+    if [ "${cpu_in_percentage}" == "1" ]; then
+        cpu_plugin_options="ValuesPercentage True"
+        aggregation_plugin_cpu_type="percent"
+    fi
+
     cfg="/usr/local/etc/collectd.conf"
     cat << EOF > $cfg
 Hostname "${hostname}"
@@ -210,11 +219,19 @@ LoadPlugin zfs_arc_v2
 <Plugin "aggregation">
     <Aggregation>
         Plugin "cpu"
-        Type "cpu"
+        Type "${aggregation_plugin_cpu_type}"
         GroupBy "Host"
         GroupBy "TypeInstance"
+        CalculateNum true
         CalculateSum true
+        CalculateAverage true
+        CalculateMinimum true
+        CalculateMaximum true
+        CalculateStddev true
     </Aggregation>
+</Plugin>
+<Plugin cpu>
+    ${cpu_plugin_options}
 </Plugin>
 <Plugin cputemp>
 </Plugin>

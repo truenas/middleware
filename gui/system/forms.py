@@ -1126,6 +1126,7 @@ class AdvancedForm(ModelForm):
         self.instance._original_adv_autotune = self.instance.adv_autotune
         self.instance._original_adv_debugkernel = self.instance.adv_debugkernel
         self.instance._original_adv_periodic_notifyuser = self.instance.adv_periodic_notifyuser
+        self.instance._original_adv_cpu_in_percentage = self.instance.adv_cpu_in_percentage
         self.instance._original_adv_graphite = self.instance.adv_graphite
         self.instance._original_adv_fqdn_syslog = self.instance.adv_fqdn_syslog
 
@@ -1165,7 +1166,8 @@ class AdvancedForm(ModelForm):
             notifier().reload("loader")
         if self.instance._original_adv_periodic_notifyuser != self.instance.adv_periodic_notifyuser:
             notifier().start("ix-periodic")
-        if self.instance._original_adv_graphite != self.instance.adv_graphite:
+        if (self.instance._original_adv_cpu_in_percentage != self.instance.adv_cpu_in_percentage or
+                self.instance._original_adv_graphite != self.instance.adv_graphite):
             notifier().restart("collectd")
         if self.instance._original_adv_fqdn_syslog != self.instance.adv_fqdn_syslog:
             notifier().restart("syslogd")
