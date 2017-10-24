@@ -158,14 +158,14 @@ class DeviceForm(ModelForm):
         initial='E1000',
     )
     NIC_attach = forms.ChoiceField(
-        label=_('Nic to attach'),
+        label=_('NIC to attach'),
         choices=choices.NICChoices(exclude_configured=False),
         required=False,
     )
     NIC_mac = forms.CharField(
-        label=_('Mac Address'),
+        label=_('MAC Address'),
         required=False,
-        help_text=_("You can specify the adapter MAC Address or let it be auto generated."),
+        help_text=_("Specify the adapter MAC Address or leave empty to be auto generated."),
         validators=[RegexValidator("^([0-9a-fA-F]{2}([::]?|$)){6}$", "Invalid MAC format.")],
         initial='00:a0:98:FF:FF:FF',
     )
@@ -178,8 +178,8 @@ class DeviceForm(ModelForm):
     VNC_port = forms.CharField(
         label=_('VNC port'),
         required=False,
-        help_text=_("You can specify the VNC port or 0 for auto."),
-        validators=[RegexValidator("^[0-9]*$", "Only integer is accepted")],
+        help_text=_("Specify the VNC port or set to 0 for auto."),
+        validators=[RegexValidator("^[0-9]*$", "Only integers are accepted")],
         initial=0,
     )
     VNC_bind = forms.ChoiceField(

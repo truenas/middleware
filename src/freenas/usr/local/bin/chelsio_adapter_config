@@ -11,12 +11,12 @@ echo
 vpd_dir=/usr/local/share/vpds
 bin_dir=/usr/local/bin
 
-# Test for lspci and pcicon
-which lspci > /dev/null 2>&1
-if [ $? -ne 0 ]; then
-    echo "Error: lspci command not found. Please install pciutils package  and retry the command"
-    exit 1
-fi
+# Test for lspci and pciconf - Not required anymore
+#which lspci > /dev/null 2>&1
+#if [ $? -ne 0 ]; then
+#    echo "Error: lspci command not found. Please install pciutils package  and retry the command"
+#    exit 1
+#fi
 
 which pciconf > /dev/null 2>&1
 if [ $? -ne 0 ]; then
@@ -25,12 +25,11 @@ if [ $? -ne 0 ]; then
 fi
 
 
-T580_LP_CR=`lspci -d 1425:5410 | wc -l`
-T580_CR=`lspci -d 1425:540d | wc -l`
-T580_LP_SO_CR=`lspci -d 1425:5414 | wc -l`
+T580_LP_CR=`pciconf -l|grep "1425.*5410"|wc -l`
+T580_CR=`pciconf -l|grep "1425.*540d"|wc -l`
+T580_LP_SO_CR=`pciconf -l|grep "1425.*5414"|wc -l`
 
-
-if [ $T580_LP_CR > 0 ] || [ $T580_CR > 0 ] || [ $T580_LP_SO_CR > 0 ]; then
+if [ "$T580_LP_CR" -gt 0 ] || [ "$T580_CR" -gt 0 ] || [ "$T580_LP_SO_CR" -gt 0 ]; then
 	echo Chelsio T580 card detected
 else
 	echo Chelsio T580 card not detected
@@ -43,12 +42,12 @@ fi
 i=0
 echo; 
 echo "Chelsio T580 PCI devices :"
-echo "|------------------------------|"
+echo "|--------------------------------|"
 devicelist=`pciconf -l|awk '{gsub("chip=","", $0); gsub("1425","",$4);print $4}'`
 
 IS_DONE_T580_5414=0
 IS_DONE_T580_540D=0
-S_DONE_T580_5410=0
+IS_DONE_T580_5410=0
 
 for pci_dev in $devicelist
 do
@@ -58,23 +57,35 @@ do
                         continue
                 fi
 
-		t580_list=`pciconf -l |awk {'print $0'}|grep 0x5410|cut -c 13-15`
+		t580_list=`pciconf -l |awk {'print $0'}|grep 0x5410|cut -d : -f 2 -f 3`
                 num_devices=`echo $t580_list|wc -l`
 
 		if [ "$num_devices" == 1 ]; then
 			i=`echo "$i + 1" | bc`
 			Devices[$i]=$pci_dev
-			dev[$i]=`pciconf -l |awk {'print $0'}|grep 0x5410|cut -c 13-15`
-			dev[$i]=${dev[$i]}".0"
-			echo "| $i T580-LP-CR    ${dev[$i]}        |"
+			# Convert Bus and Dev from Decimal to Hex Values
+			busd=`pciconf -l |awk {'print $0'}|grep 0x5410|cut -d : -f 2`
+                        bush=`echo "obase=16; $busd" | bc`
+                        devd=`pciconf -l |awk {'print $0'}|grep 0x5410|cut -d : -f 3`
+                        devh=`echo "obase=16; $devd" | bc`
+                        dev[$i]=$bush":"$devh".0"
+			devd[$i]=$busd":"$devd".0"
+
+			echo -e "| $i T580-LP-CR     ${devd[$i]}\t |"
 		else
 			for t580_dev in $t580_list
                         do
                                 i=`echo "$i + 1" | bc`
-                                Devices[$i]=$pci_dev
-                                dev[$i]=`echo "$t580_dev"`
-                                dev[$i]=${dev[$i]}".0"
-				echo "| $i T580-LP-CR    ${dev[$i]}        |"
+				Devices[$i]=$pci_dev
+				# Convert Bus and Dev from Decimal to Hex Values
+				busd=`echo $t580_dev|cut -d : -f 1`
+				bush=`echo "obase=16; $busd" | bc`
+				devd=`echo $t580_dev|cut -d : -f 2`
+				devh=`echo "obase=16; $devd" | bc`
+				dev[$i]=$bush":"$devh".0"
+				devd[$i]=$busd":"$devd".0"
+
+				echo -e "| $i T580-LP-CR     ${devd[$i]}\t |"
                         done
 		fi
 		IS_DONE_T580_5410=1
@@ -83,23 +94,35 @@ do
                         continue
                 fi
 
-                t580_list=`pciconf -l |awk {'print $0'}|grep 0x540d|cut -c 13-15`
+                t580_list=`pciconf -l |awk {'print $0'}|grep 0x540d|cut -d : -f 2 -f 3`
                 num_devices=`echo $t580_list|wc -l`
 		if [ "$num_devices" == 1 ]; then
 
 			i=`echo "$i + 1" | bc`
 			Devices[$i]=$pci_dev
-			dev[$i]=`pciconf -l |awk {'print $0'}|grep 0x540d|cut -c 13-15`
-			dev[$i]=${dev[$i]}".0"
-			echo "| $i T580-CR       ${dev[$i]}        |"
+			# Convert Bus and Dev from Decimal to Hex Values
+			busd=`pciconf -l |awk {'print $0'}|grep 0x540d|cut -d : -f 2`
+                        bush=`echo "obase=16; $busd" | bc`
+                        devd=`pciconf -l |awk {'print $0'}|grep 0x540d|cut -d : -f 3`
+                        devh=`echo "obase=16; $devd" | bc`
+                        dev[$i]=$bush":"$devh".0"
+			devd[$i]=$busd":"$devd".0"
+
+			echo -e "| $i T580-CR        ${devd[$i]}\t |"
 		else
                         for t580_dev in $t580_list
                         do
                                 i=`echo "$i + 1" | bc`
-                                Devices[$i]=$pci_dev
-                                dev[$i]=`echo "$t580_dev"`
-                                dev[$i]=${dev[$i]}".0"
-				echo "| $i T580-CR       ${dev[$i]}        |"
+				Devices[$i]=$pci_dev
+				# Convert Bus and Dev from Decimal to Hex Values
+				busd=`echo $t580_dev|cut -d : -f 1`
+                                bush=`echo "obase=16; $busd" | bc`
+                                devd=`echo $t580_dev|cut -d : -f 2`
+                                devh=`echo "obase=16; $devd" | bc`
+				dev[$i]=$bush":"$devh".0"
+			 	devd[$i]=$busd":"$devd".0"
+
+				echo -e "| $i T580-CR        ${devd[$i]}\t |"
                         done
 
 		fi
@@ -110,28 +133,40 @@ do
 			continue
 		fi
 
-		t580_list=`pciconf -l |awk {'print $0'}|grep 0x5414|cut -c 13-15`
+		t580_list=`pciconf -l |awk {'print $0'}|grep 0x5414|cut -d : -f 2 -f 3`
 		num_devices=`echo $t580_list|wc -l`
 		if [ "$num_devices" == 1 ]; then
 			i=`echo "$i + 1" | bc`
 			Devices[$i]=$pci_dev
-			dev[$i]=`pciconf -l |awk {'print $0'}|grep 0x5414|cut -c 13-15`
-			dev[$i]=${dev[$i]}".0"
-			echo "| $i T580-LP-SO-CR ${dev[$i]}        |"
+			# Convert Bus and Dev from Decimal to Hex Values
+			busd=`pciconf -l |awk {'print $0'}|grep 0x5414|cut -d : -f 2`
+			bush=`echo "obase=16; $busd" | bc`
+			devd=`pciconf -l |awk {'print $0'}|grep 0x5414|cut -d : -f 3`
+			devh=`echo "obase=16; $devd" | bc`
+			dev[$i]=$bush":"$devh".0"
+			devd[$i]=$busd":"$devd".0"
+
+			echo -e "| $i T580-SO-CR     ${devd[$i]}\t |"
 		else
 			for t580_dev in $t580_list
 			do
 				i=`echo "$i + 1" | bc`
 				Devices[$i]=$pci_dev
-				dev[$i]=`echo "$t580_dev"`	
-				dev[$i]=${dev[$i]}".0"
-				echo "| $i T580-LP-SO-CR ${dev[$i]}        |"
+				# Convert Bus and Dev from Decimal to Hex Values
+				busd=`echo $t580_dev|cut -d : -f 1`
+                                bush=`echo "obase=16; $busd" | bc`
+                                devd=`echo $t580_dev|cut -d : -f 2`
+                                devh=`echo "obase=16; $devd" | bc`
+				dev[$i]=$bush":"$devh".0"
+				devd[$i]=$busd":"$devd".0"
+
+				echo -e "| $i T580-SO-CR     ${devd[$i]}\t |"
 			done
 		fi
 		IS_DONE_T580_5414=1
 	fi
 done
-echo "|------------------------------|"; echo
+echo "|--------------------------------|"; echo
 
 # echo "Before 'Please select device to modify'"
 # echo ${Devices[1]}
@@ -156,13 +191,13 @@ if [ $i -ne 1 ]; then
 
 		device=`echo ${Devices[$dev_in]} 2> /dev/null`
         	if [ "$device" == 0x5410 ]; then
-                        #dev=`pciconf -l |awk {'print $0'}|grep 0x5410|cut -c 13-15`
+                        #dev=`pciconf -l |awk {'print $0'}|grep 0x5410|cut -d : -f 2 -f 3`
 			dev=${dev[$dev_in]}
         	elif [ "$device" == 0x540d ]; then
-			dev=`pciconf -l |awk {'print $0'}|grep 0x540d|cut -c 13-15`
+			dev=`pciconf -l |awk {'print $0'}|grep 0x540d|cut -d : -f 2 -f 3`
                         dev=${dev[$dev_in]}
         	elif [ "$device" == 0x5414 ]; then
-			dev=`pciconf -l |awk {'print $0'}|grep 0x5414|cut -c 13-15`
+			dev=`pciconf -l |awk {'print $0'}|grep 0x5414|cut -d : -f 2 -f 3`
 			dev=${dev[$dev_in]}
 		else
 			echo "Illegal value selected, quitting..."; echo
@@ -174,7 +209,7 @@ if [ $i -ne 1 ]; then
 	fi
 else
 	device=`echo ${Devices[1]}`
-	#dev=`pciconf -l |awk {'print $0'}|grep $device|cut -c 13-15`
+	#dev=`pciconf -l |awk {'print $0'}|grep $device|cut -d : -f 2 -f 3`
 	dev=${dev[1]}
 
 fi
@@ -195,9 +230,8 @@ read mode
 echo
 
 	
-#dev=`echo ${dev[$dev_in]}|cut -c -6`
-#dev=$dev"0"
-#echo $dev
+# dev=`echo ${dev[$dev_in]}|cut -c -6`
+# dev=$dev"0"
 
 if [ "$mode" == 1 ]; then 
 	echo Programming mode 1: 2x40G 

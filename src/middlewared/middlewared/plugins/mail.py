@@ -115,7 +115,7 @@ class MailService(ConfigService):
         if verrors:
             raise verrors
 
-        await self.middleware.call('datastore.update', 'system.email', config['id'], new)
+        await self.middleware.call('datastore.update', 'system.email', config['id'], new, {'prefix': 'em_'})
         return config
 
     @accepts(Dict(

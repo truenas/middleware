@@ -28,6 +28,7 @@ import pickle as pickle
 import json
 import logging
 import os
+import pytz
 import re
 import shutil
 import socket
@@ -95,6 +96,9 @@ log = logging.getLogger('system.views')
 def _info_humanize(info):
     info['physmem'] = f'{int(info["physmem"] / 1048576)}MB'
     info['loadavg'] = ', '.join(list(map(lambda x: f'{x:.2f}', info['loadavg'])))
+    localtz = pytz.timezone(info['timezone'])
+    info['datetime'] = info['datetime'].replace(tzinfo=None)
+    info['datetime'] = localtz.fromutc(info['datetime'])
     return info
 
 
@@ -791,7 +795,7 @@ def testmail(request):
     if request.is_ajax():
         sw_name = get_sw_name()
         with client as c:
-            mailconfig = form.middleware_clean()
+            mailconfig = form.middleware_prepare()
             try:
                 c.call('mail.send', {
                     'subject': f'Test message from your {sw_name} system hostname {socket.gethostname()}',

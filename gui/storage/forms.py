@@ -74,9 +74,11 @@ attrs_dict = {'class': 'required', 'maxHeight': 200}
 log = logging.getLogger('storage.forms')
 
 DEDUP_WARNING = _(
-    "Enabling dedup may have drastic performance implications,"
-    "<br /> as well as impact your ability to access your data.<br /> "
-    "Consider using compression instead.")
+    "Enabling dedup can drastically reduce performance and<br />"
+    "affect the ability to access data. Compression usually<br />"
+    "offers similar space savings with much lower<br />"
+    "performance impact and overhead.<br />")
+
 RE_HOUR = re.compile(r'(?P<hour>\d{2}):(?P<min>\d{2}):(?P<sec>\d{2})')
 
 

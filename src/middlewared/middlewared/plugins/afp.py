@@ -1,3 +1,4 @@
+from middlewared.async_validators import check_path_resides_within_volume
 from middlewared.schema import accepts, Bool, Dict, Dir, Int, List, Str
 from middlewared.validators import IpAddress, Range
 from middlewared.service import SystemServiceService, ValidationErrors
@@ -37,6 +38,12 @@ class AFPService(SystemServiceService):
 
         if not new["homedir_enable"] and new["homedir"]:
             verrors.add("afp_update.homedir_enable", "This field is required for \"Home directories\".")
+
+        if new["homedir"]:
+            await check_path_resides_within_volume(verrors, self.middleware, "afp_update.homedir", new["homedir"])
+
+        if new["dbpath"]:
+            await check_path_resides_within_volume(verrors, self.middleware, "afp_update.dbpath", new["dbpath"])
 
         if verrors:
             raise verrors

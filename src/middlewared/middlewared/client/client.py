@@ -195,7 +195,19 @@ class Call(object):
         self.extra = None
 
 
-class ClientException(Exception):
+class ErrnoMixin:
+    ENOMETHOD = 201
+    ESERVICESTARTFAILURE = 202
+
+    @classmethod
+    def _get_errname(cls, code):
+        for k, v in cls.__dict__.items():
+            if k.startswith("E") and v == code:
+                return k
+
+
+class ClientException(ErrnoMixin, Exception):
+
     def __init__(self, error, errno=None, trace=None, extra=None):
         self.errno = errno
         self.error = error

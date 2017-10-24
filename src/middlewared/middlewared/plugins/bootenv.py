@@ -94,5 +94,6 @@ class BootEnvService(CRUDService):
         if name in filter(None, beadm_names):
             verrors.add(f'{schema}.name', f'The name "{name}" already exists', errno.EEXIST)
 
+    @accepts(Str('id'))
     def do_delete(self, oid):
         return Update.DeleteClone(oid)

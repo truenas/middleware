@@ -1,4 +1,4 @@
-from middlewared.schema import accepts, Dict, Str
+from middlewared.schema import accepts, Dict, Int, Str
 from middlewared.service import private, CallError, Service
 from middlewared.utils import Popen
 
@@ -8,10 +8,31 @@ import os
 import subprocess
 
 
+REPLICATION_KEY = '/data/ssh/replication.pub'
+
+
 class ReplicationService(Service):
 
-    @private
+    @accepts()
+    def public_key(self):
+        """
+        Get the public SSH replication key.
+        """
+        if (os.path.exists(REPLICATION_KEY) and os.path.isfile(REPLICATION_KEY)):
+            with open(REPLICATION_KEY, 'r') as f:
+                key = f.read()
+        else:
+            key = None
+        return key
+
+    @accepts(
+        Str('host', required=True),
+        Int('port', required=True),
+    )
     async def ssh_keyscan(self, host, port):
+        """
+        Scan the SSH key on `host`:`port`.
+        """
         proc = await Popen([
             "/usr/bin/ssh-keyscan",
             "-p", str(port),
@@ -24,7 +45,7 @@ class ReplicationService(Service):
                 errmsg = 'ssh key scan failed for unknown reason'
             else:
                 errmsg = errmsg.decode()
-            raise ValueError(errmsg)
+            raise CallError(errmsg)
         return key.decode()
 
     @private

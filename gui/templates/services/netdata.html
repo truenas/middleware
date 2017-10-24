@@ -5,10 +5,18 @@
             Configurable settings for Netdata are not yet exposed.
         {% endblocktrans %}
     </p>
-    <button id="btn_A_Close" data-dojo-type="dijit.form.Button"type="button">
-        {% trans "Take me to Netdata UI" %}
-        <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
-            window.open(window.location.href+'/netdata', '_blank')
-        </script>
-    </button>
+    {% if started %}
+        <button id="btn_A_Close" data-dojo-type="dijit.form.Button"type="button">
+            {% trans "Take me to Netdata UI" %}
+            <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
+                window.open(window.location.href+'/netdata', '_blank')
+            </script>
+        </button>
+    {% else %}
+        <p>
+            {% blocktrans %}
+                Service has not been started yet. Start the service first.
+            {% endblocktrans %}
+        </p>
+    {% endif %}
 </div>

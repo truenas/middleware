@@ -28,6 +28,16 @@ app.jinja_env.filters['markdown'] = markdown_filter
 
 @app.route('/')
 def main():
+    return render_template('index.html')
+
+
+@app.route('/restful/')
+def restful():
+    return render_template('restful.html')
+
+
+@app.route('/websocket/')
+def websocket():
     services = []
     # FIXME: better way to call middleware using asyncio insteaad of using client
     with Client() as c:

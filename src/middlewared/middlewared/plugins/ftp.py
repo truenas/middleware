@@ -1,6 +1,7 @@
-from middlewared.schema import accepts, Bool, Dict, Int, Str
+from middlewared.async_validators import check_path_resides_within_volume
+from middlewared.schema import accepts, Bool, Dict, Dir, Int, Str
 from middlewared.validators import Exact, IpAddress, Match, Or, Range
-from middlewared.service import SystemServiceService, ValidationErrors, CallError
+from middlewared.service import SystemServiceService, ValidationErrors
 
 
 class FTPService(SystemServiceService):
@@ -18,7 +19,7 @@ class FTPService(SystemServiceService):
         Int('timeout', validators=[Range(min=0, max=10000)]),
         Bool('rootlogin'),
         Bool('onlyanonymous'),
-        Str('anonpath'),
+        Dir('anonpath'),
         Bool('onlylocal'),
         Str('banner'),
         Str('filemask', validators=[Match(r"^[0-7]{3}$")]),
@@ -69,6 +70,9 @@ class FTPService(SystemServiceService):
 
         if new["onlyanonymous"] and not new["anonpath"]:
             verrors.add("ftp_update.anonpath", "This field is required for anonymous login")
+
+        if new["anonpath"]:
+            await check_path_resides_within_volume(verrors, self.middleware, "ftp_update.anonpath", new["anonpath"])
 
         if new["tls"] and new["ssltls_certificate"] == 0:
             verrors.add("ftp_update.ssltls_certificate", "This field is required when TLS is enabled")

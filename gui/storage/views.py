@@ -47,7 +47,7 @@ from freenasUI.common.system import is_mounted
 from freenasUI.freeadmin.apppool import appPool
 from freenasUI.freeadmin.views import JsonResp
 from freenasUI.middleware import zfs
-from freenasUI.middleware.client import client
+from freenasUI.middleware.client import client, ClientException
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier
 from freenasUI.system.models import Advanced
@@ -105,12 +105,8 @@ def replications(request):
 
 
 def replications_public_key(request):
-    if (os.path.exists('/data/ssh/replication.pub') and
-            os.path.isfile('/data/ssh/replication.pub')):
-        with open('/data/ssh/replication.pub', 'r') as f:
-            key = f.read()
-    else:
-        key = None
+    with client as c:
+        key = c.call('replication.public_key')
     return render(request, 'storage/replications_key.html', {
         'key': key,
     })
@@ -131,20 +127,12 @@ def replications_keyscan(request):
     if not host:
         data = {'error': True, 'errmsg': _('Please enter a hostname')}
     else:
-        proc = subprocess.Popen([
-            "/usr/bin/ssh-keyscan",
-            "-p", str(port),
-            "-T", "2",
-            str(host),
-        ], stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf8')
-        key, errmsg = proc.communicate()
-        if proc.returncode == 0 and key:
-            data = {'error': False, 'key': key}
-        else:
-            if not errmsg:
-                errmsg = _("Key could not be retrieved for unknown reason")
-            data = {'error': True, 'errmsg': errmsg}
-
+        with client as c:
+            try:
+                key = c.call('replication.ssh_keyscan', str(host), int(port))
+                data = {'error': False, 'key': key}
+            except ClientException as e:
+                data = {'error': True, 'errmsg': str(e)}
     return HttpResponse(json.dumps(data))
 
 
@@ -428,6 +416,15 @@ def dataset_edit(request, dataset_name):
         'dataset_name': dataset_name,
         'form': form
     })
+
+
+def promote_zfs(request, name):
+    try:
+        with client as c:
+            c.call("zfs.dataset.promote", name)
+            return HttpResponse(_("Filesystem successfully promoted."))
+    except ClientException:
+        return HttpResponse(_("Filesystem is not a clone or has already been promoted."))
 
 
 def zvol_create(request, parent):

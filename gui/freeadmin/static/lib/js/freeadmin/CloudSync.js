@@ -156,6 +156,16 @@ define([
             }, me.dapAmazonFolder);
             if(me.initial.folder) me._folder.set('value', me.initial.folder);
 
+            me._encryption = new Select({
+              name: "encryption",
+              options: [
+                {label: "None", value: ""},
+                {label: "AES-256", value: "AES256"},
+              ],
+              value: "",
+            }, me.dapAmazonEncryption);
+            if(me.initial.encryption) me._encryption.set('value', me.initial.encryption);
+
             me._hideLoading();
           },
           function(err) {
@@ -232,6 +242,13 @@ define([
         if(this._credential) value['credential'] = this._credential.get('value');
         if(this._buckets) value['bucket'] = this._buckets.get('value');
         if(this._folder) value['folder'] = this._folder.get('value');
+        if(domStyle.get(this.dapAmazon, 'display') == 'table-row' && this._encryption) {
+          if(this._encryption.get('value') == '') {
+            value['encryption'] = null;
+          } else {
+            value['encryption'] = this._encryption.get('value');
+          }
+         }
         return json.stringify(value);
       }
     });

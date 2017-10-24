@@ -35,6 +35,7 @@ import os
 import re
 import stat
 import subprocess
+import time
 
 from OpenSSL import crypto
 
@@ -50,8 +51,8 @@ from django.forms.formsets import BaseFormSet, formset_factory
 from django.http import HttpResponse
 from django.shortcuts import render_to_response
 from django.utils.html import escapejs
-from django.utils.translation import ugettext_lazy as _
-from django.utils.translation import ugettext as __
+from django.utils import timezone
+from django.utils.translation import ugettext_lazy as _, ugettext as __
 
 from dojango import forms
 from freenasOS import Configuration, Update
@@ -220,6 +221,15 @@ class BootEnvPoolAttachForm(Form):
         choices=(),
         widget=forms.Select(),
         label=_('Member disk'))
+    expand = forms.BooleanField(
+        label=_('Use all disk space'),
+        help_text=_(
+            'If disabled will format the new disk using the size of current '
+            'disk.'
+        ),
+        required=False,
+        initial=False,
+    )
 
     def __init__(self, *args, **kwargs):
         self.label = kwargs.pop('label')
@@ -260,7 +270,7 @@ class BootEnvPoolAttachForm(Form):
 
         with client as c:
             try:
-                c.call('boot.attach', devname)
+                c.call('boot.attach', devname, {'expand': self.cleaned_data['expand']})
             except ClientException:
                 return False
         return True
@@ -998,6 +1008,8 @@ class SettingsForm(ModelForm):
             notifier().restart("syslogd")
         cache.set('guiLanguage', obj.stg_language)
         notifier().reload("timeservices")
+        if self.instance._original_stg_timezone != self.instance.stg_timezone:
+            notifier().restart("cron")
         return obj
 
     def done(self, request, events):
@@ -1032,6 +1044,8 @@ class SettingsForm(ModelForm):
                 events.append("restartHttpd('%s')" % newurl)
         if self.instance._original_stg_timezone != self.instance.stg_timezone:
             os.environ['TZ'] = self.instance.stg_timezone
+            time.tzset()
+            timezone.activate(self.instance.stg_timezone)
 
 
 class NTPForm(ModelForm):
@@ -1250,10 +1264,8 @@ class EmailForm(MiddlewareModelForm, ModelForm):
                 del self.cleaned_data['em_pass2']
         return self.cleaned_data
 
-    def middleware_clean(self):
-        update = super().middleware_clean()
-        if 'security' in update:
-            update['security'] = update['security'].upper()
+    def middleware_clean(self, update):
+        update['security'] = update['security'].upper()
         return update
 
 
@@ -2850,6 +2862,19 @@ class CertificateAuthoritySignCSRForm(ModelForm):
         queryset=models.Certificate.objects.filter(cert_CSR__isnull=False),
         label=(_("CSRs"))
     )
+
+    def clean_cert_name(self):
+        cdata = self.cleaned_data
+        name = cdata.get('cert_name')
+        certs = models.Certificate.objects.filter(cert_name=name)
+        if certs:
+            raise forms.ValidationError(_(
+                "A certificate with this name already exists."
+            ))
+        reg = re.search(r'^[a-z0-9_\-]+$', name or '', re.I)
+        if not reg:
+            raise forms.ValidationError(_('Use alphanumeric characters, "_" and "-".'))
+        return name
 
     def save(self):
         cdata = self.cleaned_data

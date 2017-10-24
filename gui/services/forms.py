@@ -440,7 +440,12 @@ class FTPForm(MiddlewareModelForm, ModelForm):
         return "%.3o" % mask
 
 
-class TFTPForm(ModelForm):
+class TFTPForm(MiddlewareModelForm, ModelForm):
+
+    middleware_attr_prefix = "tftp_"
+    middleware_attr_schema = "tftp_update"
+    middleware_plugin = "tftp"
+    is_singletone = True
 
     class Meta:
         fields = '__all__'
@@ -448,17 +453,6 @@ class TFTPForm(ModelForm):
         widgets = {
             'tftp_port': forms.widgets.TextInput(),
         }
-
-    def save(self):
-        super(TFTPForm, self).save()
-        started = notifier().reload("tftp")
-        if (
-            started is False and
-            models.services.objects.get(srv_service='tftp').srv_enable
-        ):
-            raise ServiceFailed(
-                "tftp", _("The tftp service failed to reload.")
-            )
 
 
 class SSHForm(ModelForm):
@@ -552,7 +546,13 @@ class RsyncModForm(ModelForm):
             )
 
 
-class DynamicDNSForm(ModelForm):
+class DynamicDNSForm(MiddlewareModelForm, ModelForm):
+    middleware_attr_prefix = "ddns_"
+    middleware_attr_schema = "dyndns_update"
+    middleware_exclude_fields = ["password2"]
+    middleware_plugin = "dyndns"
+    is_singletone = True
+
     ddns_password2 = forms.CharField(
         max_length=50,
         label=_("Confirm Password"),
@@ -594,17 +594,9 @@ class DynamicDNSForm(ModelForm):
             cdata['ddns_password'] = self.instance.ddns_password
         return cdata
 
-    def save(self):
-        obj = super(DynamicDNSForm, self).save()
-        started = notifier().restart("dynamicdns")
-        if (
-            started is False and
-            models.services.objects.get(srv_service='dynamicdns').srv_enable
-        ):
-            raise ServiceFailed(
-                "dynamicdns", _("The DynamicDNS service failed to reload.")
-            )
-        return obj
+    def middleware_clean(self, update):
+        update["domain"] = list(filter(None, re.split(r"\s+", update["domain"])))
+        return update
 
 
 key_order(DynamicDNSForm, 10, 'ddns_password2')
@@ -1698,39 +1690,21 @@ class ExtentDelete(Form):
             os.unlink(self.instance.iscsi_target_extent_path)
 
 
-class SMARTForm(ModelForm):
+class SMARTForm(MiddlewareModelForm, ModelForm):
+
+    middleware_attr_prefix = "smart_"
+    middleware_attr_schema = "smart_update"
+    middleware_plugin = "smart"
+    is_singletone = True
 
     class Meta:
         fields = '__all__'
         model = models.SMART
 
-    def clean_smart_email(self):
-        email = self.cleaned_data.get("smart_email")
-        if email:
-            invalids = []
-            for e in email.split(','):
-                try:
-                    validate_email(e.strip())
-                except:
-                    invalids.append(e.strip())
-
-            if len(invalids) > 0:
-                raise forms.ValidationError(ungettext_lazy(
-                    'The email %(email)s is not valid',
-                    'The following emails are not valid: %(email)s',
-                    len(invalids)
-                ) % {
-                    'email': ", ".join(invalids),
-                })
-            else:
-                email = email.replace(' ', '')
-        return email
-
-    def save(self):
-        super(SMARTForm, self).save()
-        started = notifier().restart("smartd")
-        if started is False and models.services.objects.get(srv_service='smartd').srv_enable:
-            raise ServiceFailed("smartd", _("The S.M.A.R.T. service failed to reload."))
+    def middleware_clean(self, update):
+        update["powermode"] = update["powermode"].upper()
+        update["email"] = list(filter(None, re.split(r"\s+", update["email"])))
+        return update
 
 
 class DomainControllerForm(ModelForm):
