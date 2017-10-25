@@ -1,3 +1,6 @@
+import threading
+
+
 def test_filesystem_listdir(conn):
     req = conn.rest.post('filesystem/listdir', data={'path': '/boot'})
 
@@ -23,3 +26,14 @@ def test_filesystem_stat(conn):
     assert req.status_code == 200, req.text
     stat = req.json()
     assert isinstance(stat, dict) is True
+
+
+def test_filesystem_file_tail_follow(conn):
+
+    event = threading.Event()
+    def cb(mtype, **message):
+        event.set()
+
+    conn.ws.subscribe('filesystem.file_tail_follow:/var/log/messages', cb)
+
+    assert event.wait(timeout=10) is True
