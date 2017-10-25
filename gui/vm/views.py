@@ -71,9 +71,9 @@ def start(request, id):
                     status = __call.get('state')
                     utils.dump_download_progress(__call)
                     if status == 'FAILED':
-                        break
+                        return HttpResponse('Error: failed to download the image!')
                     elif status == 'ABORTED':
-                        break
+                        return HttpResponse('Error: download ABORTED!')
                 if status == 'SUCCESS':
                     prebuilt_image = c.call('vm.image_path', 'RancherOS')
                     if prebuilt_image and raw_file_cnt:
