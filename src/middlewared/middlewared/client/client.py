@@ -479,6 +479,8 @@ def main():
 
     iparser = subparsers.add_parser('subscribe', help='Subscribe to event')
     iparser.add_argument('event')
+    iparser.add_argument('-n', '--number', type=int, help='Number of events to wait before exit')
+    iparser.add_argument('-t', '--timeout', type=int)
     args = parser.parse_args()
 
     def from_json(args):
@@ -553,13 +555,18 @@ def main():
         with Client(uri=args.uri) as c:
 
             event = Event()
+            number = 0
 
             def cb(mtype, **message):
-                print(mtype, message)
+                print(json.dumps(message))
+                if args.number and args.number >= number:
+                    event.set()
 
             c.subscribe(args.event, cb)
 
-            event.wait()
+            if not event.wait(timeout=args.timeout):
+                sys.exit(1)
+            sys.exit(0)
     elif args.name == 'waitready':
         """
         This command is supposed to wait until we are able to connect
