@@ -1108,6 +1108,7 @@ class AdvancedForm(ModelForm):
 
     def __init__(self, *args, **kwargs):
         super(AdvancedForm, self).__init__(*args, **kwargs)
+        self.fields['adv_motd'].strip = False
         self.instance._original_adv_motd = self.instance.adv_motd
         self.instance._original_adv_consolemenu = self.instance.adv_consolemenu
         self.instance._original_adv_powerdaemon = self.instance.adv_powerdaemon
