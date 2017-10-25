@@ -350,22 +350,5 @@ class DeviceForm(ModelForm):
                 self.cleaned_data.pop('VNC_web', None)
                 return obj
 
-        # for containers
-        if self.is_container(vm.vm_type):
-            with client as c:
-                job_id = c.call('vm.fetch_image', 'RancherOS')
-                status = None
-                while status != 'SUCCESS':
-                    status = c.call('vm.get_download_status', job_id)
-                    if status == 'FAILED':
-                        break
-                    elif status == 'ABORTED':
-                        break
-                if status == 'SUCCESS':
-                    prebuilt_image = c.call('vm.image_path', 'RancherOS')
-                    if prebuilt_image and raw_file_cnt:
-                        c.call('vm.decompress_gzip', prebuilt_image, raw_file_cnt)
-                        c.call('vm.raw_resize', raw_file_cnt, raw_file_resize)
-
         obj.save()
         return obj

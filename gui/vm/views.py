@@ -25,12 +25,14 @@
 #
 #####################################################################
 from django.shortcuts import render
+from django.http import HttpResponse
 
 from freenasUI.freeadmin.apppool import appPool
 from freenasUI.freeadmin.views import JsonResp
 from freenasUI.middleware.client import client
 from freenasUI.vm import models, utils
 
+import json
 
 def home(request):
 
@@ -51,7 +53,32 @@ def home(request):
 
 def start(request, id):
     vm = models.VM.objects.get(id=id)
+    raw_file_cnt = None
+    raw_file_resize = 0
     if request.method == 'POST':
+        if vm.vm_type == 'Container Provider':
+            devices = models.Device.objects.filter(vm__id=vm.id)
+            for device in devices:
+                if device.dtype == 'RAW' and device.attributes.get('boot'):
+                    raw_file_cnt = device.attributes.get('path')
+                    raw_file_resize = device.attributes.get('size')
+
+            with client as c:
+                job_id = c.call('vm.fetch_image', 'RancherOS')
+                status = None
+                while status != 'SUCCESS':
+                    __call = c.call('vm.get_download_status', job_id)
+                    status = __call.get('state')
+                    utils.dump_download_progress(__call)
+                    if status == 'FAILED':
+                        break
+                    elif status == 'ABORTED':
+                        break
+                if status == 'SUCCESS':
+                    prebuilt_image = c.call('vm.image_path', 'RancherOS')
+                    if prebuilt_image and raw_file_cnt:
+                        c.call('vm.decompress_gzip', prebuilt_image, raw_file_cnt)
+                        c.call('vm.raw_resize', raw_file_cnt, raw_file_resize)
         with client as c:
             c.call('vm.start', id)
         return JsonResp(request, message='VM Started')
@@ -102,3 +129,9 @@ def vnc_web(request, id):
         'name': vm.name,
         'url_vnc': url_vnc[0] if url_vnc else url_vnc,
     })
+
+
+def download_progress(request):
+    return HttpResponse(
+        json.dumps(utils.load_progress()), content_type='application/json',
+        )
