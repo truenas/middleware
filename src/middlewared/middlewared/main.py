@@ -191,12 +191,12 @@ class Application(object):
         event_source = self.middleware.get_event_source(shortname)
         if event_source:
             es = event_source(self.middleware, self, ident, name, arg)
-            t = start_daemon_thread(target=es.process)
             self.__event_sources[ident] = {
                 'event_source': es,
-                'thread': t,
                 'name': name,
             }
+            # Start it after setting __event_sources or it can have a race condition
+            start_daemon_thread(target=es.process)
         else:
             self.__subscribed[ident] = name
 
