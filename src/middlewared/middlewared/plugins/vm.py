@@ -860,7 +860,7 @@ class VMService(CRUDService):
         job_pool = await self.middleware.call('core.get_jobs', [('method', '=', 'vm.fetch_image')])
         for job in job_pool:
             if job['id'] == job_id:
-                return job['state']
+                return job
         return False
 
     @accepts(Str('vmOS'))
