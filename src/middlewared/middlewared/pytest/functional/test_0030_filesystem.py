@@ -31,6 +31,7 @@ def test_filesystem_stat(conn):
 def test_filesystem_file_tail_follow(conn):
 
     event = threading.Event()
+
     def cb(mtype, **message):
         event.set()
 
