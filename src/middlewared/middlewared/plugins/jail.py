@@ -178,15 +178,15 @@ class JailService(CRUDService):
         self.check_dataset_existence()  # Make sure our datasets exist.
         iocage = ioc.IOCage(skip_jails=True)
         remote = True if resource == "PLUGIN" else remote
-        resource = "base" if resource == "RELEASE" else resource
+        resource = "base" if resource == "RELEASE" else resource.lower()
 
-        if remote:
-            if resource != "PLUGIN":
-                resource_list = IOCFetch("").fetch_release(_list=True)
-            else:
-                resource_list = IOCFetch("").fetch_plugin_index("", _list=True)
+        if resource == "plugin":
+            resource_list = iocage.fetch(list=True, remote=True,
+                                         plugin_file=True)
+        elif resource == "base":
+            resource_list = iocage.fetch(list=True, remote=remote, http=True)
         else:
-            resource_list = iocage.list(resource.lower())
+            resource_list = iocage.list(resource)
 
         return resource_list
 
