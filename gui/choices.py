@@ -981,7 +981,7 @@ class SERIAL_CHOICES(object):
             yield ('0x3f8', '0x3f8')
         else:
             pipe = popen("/usr/sbin/devinfo -u | "
-                         "awk '/^I\/O ports:/, /^I\/O memory addresses:/' | "
+                         "grep -A 99999 '^I/O ports:' | "
                          "sed -En 's/ *([0-9a-fA-Fx]+).*\(uart[0-9]+\)/\\1/p'")
             ports = [y for y in pipe.read().strip().strip('\n').split('\n') if y]
             if not ports:
