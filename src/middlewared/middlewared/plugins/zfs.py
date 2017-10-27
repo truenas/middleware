@@ -165,6 +165,7 @@ class ZFSPoolService(Service):
 
         def watch():
             while True:
+                pool = zfs.get(name)
                 scrub = pool.scrub
                 if scrub.function != libzfs.ScanFunction.SCRUB:
                     break
@@ -556,9 +557,9 @@ class ScanWatch(object):
 
     def run(self):
         zfs = libzfs.ZFS()
-        pool = zfs.get(self.pool)
 
         while not self._cancel.wait(2):
+            pool = zfs.get(self.pool)
             scan = pool.scrub.__getstate__()
             if scan['state'] == 'SCANNING':
                 self.send_scan(scan)

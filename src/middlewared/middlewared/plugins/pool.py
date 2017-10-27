@@ -2,7 +2,6 @@ import asyncio
 import logging
 from datetime import datetime
 import os
-import socket
 import subprocess
 import sysctl
 
