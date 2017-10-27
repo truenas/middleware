@@ -1331,6 +1331,7 @@ class UPS(Model):
     ups_shutdowntimer = models.IntegerField(
         verbose_name=_("Shutdown timer"),
         default=30,
+        null=True,
         help_text=_(
             "The time in seconds until shutdown is initiated. If the UPS "
             "happens to come back before the time is up the "
