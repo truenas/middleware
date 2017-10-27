@@ -288,15 +288,5 @@ class PoolService(CRUDService):
             self.dismissed_import_disk_jobs.add(current_import_job["id"])
 
 
-async def _handle_zfs_events(middleware, event_type, args):
-    data = args['data']
-    if data.get('type') == 'misc.fs.zfs.scrub_finish':
-        await middleware.call('mail.send', {
-            'subject': f'{socket.gethostname()}: scrub finished',
-            'text': f"scrub of pool '{data.get('pool_name')}' finished",
-        })
-
-
 def setup(middleware):
     asyncio.ensure_future(middleware.call('pool.configure_resilver_priority'))
-    middleware.event_subscribe('devd.zfs', _handle_zfs_events)
