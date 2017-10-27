@@ -603,7 +603,7 @@ async def _handle_zfs_events(middleware, event_type, args):
             return
         await middleware.threaded(scanwatch.cancel)
 
-        # Send the last event with SCRUB/RESILER as FINISHED
+        # Send the last event with SCRUB/RESILVER as FINISHED
         await middleware.threaded(scanwatch.send_scan)
 
     elif data.get('type') == 'misc.fs.zfs.scrub_finish':
