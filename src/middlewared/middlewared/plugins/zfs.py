@@ -14,7 +14,9 @@ from middlewared.service import (
     CallError, CRUDService, Service, ValidationError, ValidationErrors,
     filterable, job, periodic
 )
-from middlewared.utils import filter_list
+from middlewared.utils import filter_list, start_daemon_thread
+
+SCAN_THREADS = {}
 
 
 def find_vdev(pool, vname):
@@ -163,6 +165,7 @@ class ZFSPoolService(Service):
 
         def watch():
             while True:
+                pool = zfs.get(name)
                 scrub = pool.scrub
                 if scrub.function != libzfs.ScanFunction.SCRUB:
                     break
@@ -543,3 +546,72 @@ class ZFSQuoteService(Service):
         if self.excesses is not None:
             for excess in self.excesses.values():
                 await self.middleware.call('datastore.insert', 'storage.quotaexcess', excess)
+
+
+class ScanWatch(object):
+
+    def __init__(self, middleware, pool):
+        self.middleware = middleware
+        self.pool = pool
+        self._cancel = threading.Event()
+
+    def run(self):
+        zfs = libzfs.ZFS()
+
+        while not self._cancel.wait(2):
+            pool = zfs.get(self.pool)
+            scan = pool.scrub.__getstate__()
+            if scan['state'] == 'SCANNING':
+                self.send_scan(scan)
+            elif scan['state'] == 'FINISHED':
+                # Since this thread finishes on scrub/resilver end the event is sent
+                # on devd event arrival
+                break
+
+    def send_scan(self, scan=None):
+        if not scan:
+            scan = libzfs.ZFS().get(self.pool).scrub.__getstate__()
+        self.middleware.send_event('zfs.pool.scan', 'CHANGED', fields={
+            'scan': scan,
+            'name': self.pool,
+        })
+
+    def cancel(self):
+        self._cancel.set()
+
+
+async def _handle_zfs_events(middleware, event_type, args):
+    data = args['data']
+    if data.get('type') in ('misc.fs.zfs.resilver_start', 'misc.fs.zfs.scrub_start'):
+        pool = data.get('pool_name')
+        if not pool:
+            return
+        if pool in SCAN_THREADS:
+            return
+        scanwatch = ScanWatch(middleware, pool)
+        SCAN_THREADS[pool] = scanwatch
+        start_daemon_thread(target=scanwatch.run)
+
+    elif data.get('type') in (
+        'misc.fs.zfs.resilver_finish', 'misc.fs.zfs.scrub_finish', 'misc.fs.zfs.scrub_abort',
+    ):
+        pool = data.get('pool_name')
+        if not pool:
+            return
+        scanwatch = SCAN_THREADS.pop(pool, None)
+        if not scanwatch:
+            return
+        await middleware.threaded(scanwatch.cancel)
+
+        # Send the last event with SCRUB/RESILVER as FINISHED
+        await middleware.threaded(scanwatch.send_scan)
+
+    elif data.get('type') == 'misc.fs.zfs.scrub_finish':
+        await middleware.call('mail.send', {
+            'subject': f'{socket.gethostname()}: scrub finished',
+            'text': f"scrub of pool '{data.get('pool_name')}' finished",
+        })
+
+
+def setup(middleware):
+    middleware.event_subscribe('devd.zfs', _handle_zfs_events)
