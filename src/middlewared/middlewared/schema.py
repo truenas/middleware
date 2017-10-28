@@ -145,6 +145,23 @@ class Dir(Str):
         return super().validate(value)
 
 
+class File(Str):
+
+    def validate(self, value):
+        verrors = ValidationErrors()
+
+        if value:
+            if not os.path.exists(value):
+                verrors.add(self.name, "This path does not exist.", errno.ENOENT)
+            elif not os.path.isfile(value):
+                verrors.add(self.name, "This path is not a file.", errno.EISDIR)
+
+        if verrors:
+            raise verrors
+
+        return super().validate(value)
+
+
 class Bool(Attribute):
 
     def __init__(self, *args, **kwargs):
