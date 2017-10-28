@@ -10,6 +10,8 @@ import threading
 
 import libzfs
 import netsnmpagent
+import pysnmp.hlapi  # noqa
+import pysnmp.smi
 
 sys.path.append("/usr/local/www")
 from freenasUI.tools.arc_summary import get_Kstat, get_arc_efficiency
@@ -38,6 +40,12 @@ def get_zfs_arc_miss_percent(kstat):
     return 0
 
 
+mib_builder = pysnmp.smi.builder.MibBuilder()
+mib_sources = mib_builder.getMibSources() + (pysnmp.smi.builder.DirMibSource("/usr/local/share/pysnmp/mibs"),)
+mib_builder.setMibSources(*mib_sources)
+mib_builder.loadModules("FREENAS-MIB")
+zpool_health_type = mib_builder.importSymbols("FREENAS-MIB", "ZPoolHealthType")[0]
+
 agent = netsnmpagent.netsnmpAgent(
     AgentName="FreeNASAgent",
     MIBFiles=["/usr/local/share/snmp/mibs/FREENAS-MIB.txt"],
@@ -54,7 +62,7 @@ zpool_table = agent.Table(
         (4, agent.Integer32()),
         (5, agent.Integer32()),
         (6, agent.Integer32()),
-        (7, agent.DisplayString()),
+        (7, agent.Integer32()),
         (8, agent.Counter64()),
         (9, agent.Counter64()),
         (10, agent.Counter64()),
@@ -242,7 +250,8 @@ if __name__ == "__main__":
                 row.setRowCell(4, agent.Integer32(size))
                 row.setRowCell(5, agent.Integer32(used))
                 row.setRowCell(6, agent.Integer32(available))
-                row.setRowCell(7, agent.DisplayString(zpool.properties["health"].value))
+                row.setRowCell(7, agent.Integer32(zpool_health_type.namedValues.getValue(
+                    zpool.properties["health"].value.lower())))
                 row.setRowCell(8, agent.Counter64(zpool_io_overall[zpool.name]["read_ops"]))
                 row.setRowCell(9, agent.Counter64(zpool_io_overall[zpool.name]["write_ops"]))
                 row.setRowCell(10, agent.Counter64(zpool_io_overall[zpool.name]["read_bytes"]))
