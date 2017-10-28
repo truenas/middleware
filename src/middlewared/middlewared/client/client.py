@@ -226,11 +226,8 @@ class ValidationErrors(ClientException):
         self.errors = []
         for e in errors:
             self.errors.append(Error(e[0], e[1], e[2]))
-        self.trace = None
 
-    @property
-    def error(self):
-        return str(self)
+        super().__init__(str(self))
 
     def __str__(self):
         msgs = []
