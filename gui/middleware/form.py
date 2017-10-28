@@ -9,8 +9,9 @@ def handle_middleware_validation(form, excep):
         if not field_name:
             field_name = err.attribute
             if form.middleware_attr_schema:
-                if field_name.startswith(f'{form.middleware_attr_schema}.'):
-                    field_name = field_name[len(form.middleware_attr_schema) + 1:]
+                schema = f'{form.middleware_attr_schema}_{form._middleware_action}'
+                if field_name.startswith(f'{schema}.'):
+                    field_name = field_name[len(schema) + 1:]
             if form.middleware_attr_prefix:
                 field_name = f'{form.middleware_attr_prefix}{field_name}'
             if (field_name not in form.fields and
@@ -30,40 +31,52 @@ def handle_middleware_validation(form, excep):
 
 
 class MiddlewareModelForm:
+    middleware_attr_prefix = NotImplemented
+    middleware_attr_schema = NotImplemented
+    middleware_plugin = NotImplemented
+    is_singletone = NotImplemented
+
     middleware_exclude_fields = []
 
     def save(self):
-        result = self.__update()
+        result = self.__save()
 
         self.instance = self._meta.model.objects.get(pk=result["id"])
         return self.instance
 
-    def middleware_clean(self, update):
-        return update
+    def middleware_clean(self, data):
+        return data
 
     def middleware_prepare(self):
-        update = {
+        data = {
             k[len(self.middleware_attr_prefix):]: v
             for k, v in self.cleaned_data.items()
             if (k.startswith(self.middleware_attr_prefix) and
                 k[len(self.middleware_attr_prefix):] not in self.middleware_exclude_fields)
         }
 
-        update = self.middleware_clean(update)
+        data = self.middleware_clean(data)
 
-        return update
+        return data
 
-    def __update(self, *args, **kwargs):
-        update = self.middleware_prepare()
+    def __save(self, *args, **kwargs):
+        data = self.middleware_prepare()
 
-        if self.is_singletone:
-            args = (update,) + args
+        if self.instance.id:
+            self._middleware_action = "update"
+
+            if self.is_singletone:
+                args = (data,) + args
+            else:
+                args = (self.instance.id, data) + args
         else:
-            args = (self.instance.id, update) + args
+            self._middleware_action = "create"
+
+            args = (data,) + args
 
         with client as c:
             try:
-                return c.call(f"{self.middleware_plugin}.update", *args, **kwargs)
+                return c.call(f"{self.middleware_plugin}.{self._middleware_action}", *args, **kwargs)
             except ClientException as e:
                 if e.errno == ClientException.ESERVICESTARTFAILURE:
                     raise ServiceFailed(e.error, e.errno)

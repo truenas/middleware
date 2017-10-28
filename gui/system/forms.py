@@ -167,7 +167,7 @@ def check_certificate(certificate):
 
 class BootEnvAddForm(Form):
 
-    middleware_attr_schema = 'bootenv_create'
+    middleware_attr_schema = 'bootenv'
 
     name = forms.CharField(
         label=_('Name'),
@@ -183,6 +183,7 @@ class BootEnvAddForm(Form):
         if self._source:
             data['source'] = self._source
         with client as c:
+            self._middleware_action = 'create'
             try:
                 c.call('bootenv.create', data)
             except ValidationErrors:
@@ -193,7 +194,7 @@ class BootEnvAddForm(Form):
 
 class BootEnvRenameForm(Form):
 
-    middleware_attr_schema = 'bootenv_update'
+    middleware_attr_schema = 'bootenv'
 
     name = forms.CharField(
         label=_('Name'),
@@ -207,6 +208,7 @@ class BootEnvRenameForm(Form):
     def save(self, *args, **kwargs):
         new_name = self.cleaned_data.get('name')
         with client as c:
+            self._middleware_action = 'update'
             try:
                 c.call('bootenv.update', self._name, {'name': new_name})
             except ValidationErrors:

@@ -91,7 +91,7 @@ class MailService(ConfigService):
         return cfg
 
     @accepts(Dict(
-        'mail',
+        'mail_update',
         Str('fromemail'),
         Str('outgoingserver'),
         Int('port'),
@@ -110,7 +110,7 @@ class MailService(ConfigService):
         verrors = ValidationErrors()
 
         if new['smtp'] and new['user'] == '':
-            verrors.add('mail.user', 'This field is required when SMTP authentication is enabled')
+            verrors.add('mail_update.user', 'This field is required when SMTP authentication is enabled')
 
         if verrors:
             raise verrors
