@@ -150,15 +150,20 @@ class SnmpTrapSender:
         mib_sources = mib_builder.getMibSources() + (pysnmp.smi.builder.DirMibSource("/usr/local/share/pysnmp/mibs"),)
         mib_builder.setMibSources(*mib_sources)
         mib_builder.loadModules("FREENAS-MIB")
+        self.snmp_alert_level_type = mib_builder.importSymbols("FREENAS-MIB", "AlertLevelType")[0]
         mib_view_controller = pysnmp.smi.view.MibViewController(mib_builder)
         self.snmp_alert = pysnmp.hlapi.ObjectIdentity("FREENAS-MIB", "alert"). \
+            resolveWithMib(mib_view_controller)
+        self.snmp_alert_id = pysnmp.hlapi.ObjectIdentity("FREENAS-MIB", "alertId"). \
             resolveWithMib(mib_view_controller)
         self.snmp_alert_level = pysnmp.hlapi.ObjectIdentity("FREENAS-MIB", "alertLevel"). \
             resolveWithMib(mib_view_controller)
         self.snmp_alert_message = pysnmp.hlapi.ObjectIdentity("FREENAS-MIB", "alertMessage"). \
             resolveWithMib(mib_view_controller)
+        self.snmp_alert_cancellation = pysnmp.hlapi.ObjectIdentity("FREENAS-MIB", "alertCancellation"). \
+            resolveWithMib(mib_view_controller)
 
-    def send_trap(self, level, message):
+    def send_alert(self, alert):
         error_indication, error_status, error_index, var_binds = next(
             pysnmp.hlapi.sendNotification(
                 self.snmp_engine,
@@ -167,8 +172,30 @@ class SnmpTrapSender:
                 self.context_data,
                 "trap",
                 pysnmp.hlapi.NotificationType(self.snmp_alert).addVarBinds(
-                    (pysnmp.hlapi.ObjectIdentifier(self.snmp_alert_level), pysnmp.hlapi.OctetString(level)),
-                    (pysnmp.hlapi.ObjectIdentifier(self.snmp_alert_message), pysnmp.hlapi.OctetString(message))
+                    (pysnmp.hlapi.ObjectIdentifier(self.snmp_alert_id), pysnmp.hlapi.OctetString(alert.getId())),
+                    (pysnmp.hlapi.ObjectIdentifier(self.snmp_alert_level),
+                     self.snmp_alert_level_type(self.snmp_alert_level_type.namedValues.getValue(alert.getLevel().lower()))),
+                    (pysnmp.hlapi.ObjectIdentifier(self.snmp_alert_message), pysnmp.hlapi.OctetString(alert.getMessage()))
+                )
+            )
+        )
+
+        if error_indication:
+            log.error(f'Failed to send SNMP trap: {error_indication}')
+            return False
+
+        return True
+
+    def cancel_alert(self, alert):
+        error_indication, error_status, error_index, var_binds = next(
+            pysnmp.hlapi.sendNotification(
+                self.snmp_engine,
+                self.auth_data,
+                self.transport_target,
+                self.context_data,
+                "trap",
+                pysnmp.hlapi.NotificationType(self.snmp_alert_cancellation).addVarBinds(
+                    (pysnmp.hlapi.ObjectIdentifier(self.snmp_alert_id), pysnmp.hlapi.OctetString(alert.getId()))
                 )
             )
         )
@@ -329,6 +356,7 @@ class AlertPlugins(metaclass=HookMetaclass):
         rvs = []
         node = alert_node()
         dismisseds = [a.message_id for a in mAlert.objects.filter(node=node)]
+        cancelled_alerts = sum([v["alerts"] or [] for v in results.values()], [])
         ids = []
         for instance in self.mods:
             try:
@@ -342,6 +370,7 @@ class AlertPlugins(metaclass=HookMetaclass):
                             for alert in results.get(instance.name).get('alerts'):
                                 ids.append(alert.getId())
                                 rvs.append(alert)
+                                cancelled_alerts.remove(alert)
                         continue
                 rv = instance.run()
                 if rv:
@@ -356,6 +385,7 @@ class AlertPlugins(metaclass=HookMetaclass):
                                     break
                             if found is not False:
                                 alert.setTimestamp(found.getTimestamp())
+                                cancelled_alerts.remove(found)
 
                         if alert.getId() in dismisseds:
                             alert.setDismiss(True)
@@ -390,8 +420,10 @@ class AlertPlugins(metaclass=HookMetaclass):
         ])
 
         if service_enabled("snmp"):
+            for a in cancelled_alerts:
+                self.snmp_trap_sender.cancel_alert(a)
             for a in new_alerts:
-                self.snmp_trap_sender.send_trap(a.getLevel(), str(a))
+                self.snmp_trap_sender.send_alert(a)
 
         if not notifier().is_freenas():
             # Automatically create ticket for new alerts tagged as possible
