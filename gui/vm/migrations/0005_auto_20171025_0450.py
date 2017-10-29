@@ -21,6 +21,6 @@ class Migration(migrations.Migration):
         migrations.AlterField(
             model_name='vm',
             name='memory',
-            field=models.IntegerField(help_text='Megabytes of RAM for the virtual machine.This memory will be allocated when the VM is running and not available to the host system or other VMs.', validators=[django.core.validators.MinValueValidator(512)], verbose_name='Memory Size (MiB)'),
+            field=models.IntegerField(help_text='Megabytes of RAM for the virtual machine.This memory is allocated while the VM is running, and is not available to the host system or other VMs.', validators=[django.core.validators.MinValueValidator(512)], verbose_name='Memory Size (MiB)'),
         ),
     ]

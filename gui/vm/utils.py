@@ -24,7 +24,7 @@ def dump_download_progress(data):
                 if progress_n <= 10:
                     details_msg = 'Start to download a prebuilt container image.'
                 elif progress_n > 10 and progress_n <= 50:
-                    details_msg = 'We are almost there....'
+                    details_msg = 'Almost done....'
                 elif progress_n > 50 and progress_n <= 90:
                     details_msg = 'Downloading a prebuilt container image.'
                 elif progress_n > 95:

@@ -63,7 +63,7 @@ class VMForm(ModelForm):
         memory = self.cleaned_data.get('memory')
         vm_type = self.cleaned_data.get('vm_type')
         if vm_type == 'Container Provider' and memory < 1024:
-            raise forms.ValidationError(_('Minimum memory for container must be 1024.'))
+            raise forms.ValidationError(_('Minimum container memory is 1,024MiB.'))
         else:
             return memory
 
@@ -140,7 +140,7 @@ class DeviceForm(ModelForm):
         label=_('Disk sectorsize'),
         required=False,
         initial=0,
-        help_text=_("Logical and physical sector size in bytes of the emulated disk."
+        help_text=_("Sector size of the emulated disk in bytes. Both logical and physical sector size are set to this value."
                     "If 0, a sector size is not set."),
     )
     DISK_raw_size = forms.CharField(
@@ -148,8 +148,9 @@ class DeviceForm(ModelForm):
             widget=forms.widgets.HiddenInput(),
             required=False,
             initial=0,
-            validators=[RegexValidator("^(\d*)\s?([M|G|T]?)$", "You can use M, G or T as unit size, otherwise it will use G by default.")],
-            help_text=_("You can resize a given raw disk or use 0 to use it as it is."),
+            validators=[RegexValidator("^(\d*)\s?([M|G|T]?)$", "Enter M, G or T after the value to use megabytes, gigabytes or terabytes."
+                                                                " When no suffix letter is entered, the units default to gigabytes.")],
+            help_text=_("Resize the existing raw disk. Enter 0 to use the disk with the current size."),
     )
     NIC_type = forms.ChoiceField(
         label=_('Adapter Type'),
@@ -304,7 +305,7 @@ class DeviceForm(ModelForm):
         elif self.cleaned_data['dtype'] == 'RAW':
             if self.is_container(vm.vm_type):
                 if self.cleaned_data['DISK_mode'] == 'VIRTIO':
-                    self._errors['dtype'] = self.error_class([_('Container only works with AHCI mode.')])
+                    self._errors['dtype'] = self.error_class([_('Containers require AHCI mode.')])
                 if self.cleaned_data['DISK_raw_boot']:
                     raw_file_cnt = self.cleaned_data['DISK_raw']
                     raw_file_resize = self.cleaned_data['DISK_raw_size']
