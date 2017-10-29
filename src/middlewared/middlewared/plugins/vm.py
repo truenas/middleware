@@ -902,11 +902,9 @@ class VMService(CRUDService):
 
         if self.vmutils.is_gzip(src) is True:
             self.logger.debug("===> SRC: {0} DST: {1}".format(src, dst))
-            src_file = gzip.open(src, 'rb')
-            dst_file = open(dst, 'wb')
-            dst_file.write(src_file.read())
-            src_file.close()
-            dst_file.close()
+            with gzip.open(src, 'rb') as src_file:
+                with open(dst, 'wb') as dst_file:
+                    dst_file.write(src_file.read())
             return True
         else:
             self.logger.error("===> SRC: {0} does not exists or is broken.".format(src))
