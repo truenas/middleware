@@ -299,6 +299,13 @@ define([
             return "MAJOR_UPGRADE";
           }
         }
+        if(
+          (!Number.isInteger(v1[1]) && Number.isInteger(v2[1])) // [11, "STABLE"] -> [11, 1, "STABLE"]
+          ||
+          (Number.isInteger(v1[1]) && Number.isInteger(v2[1]) && v1[1] < v2[1]) // [11, 1, "STABLE"] -> [11, 2, "STABLE"]
+        ) {
+          return "MINOR_UPGRADE";
+        }
         if(Number.isInteger(v1[1]) && Number.isInteger(v2[1]) && v1[1] > v2[1]) {
           return "MINOR_DOWNGRADE";
         }
@@ -307,7 +314,7 @@ define([
         if(branch1 != branch2) {
           if(branch2 == "nightlies") {
             return "NIGHTLY_UPGRADE";
-          } else {
+          } else if(branch1 == "nightlies") {
             return "NIGHTLY_DOWNGRADE";
           }
         }

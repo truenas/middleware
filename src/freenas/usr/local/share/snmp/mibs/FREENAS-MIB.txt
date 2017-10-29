@@ -4,10 +4,10 @@ IMPORTS
     MODULE-IDENTITY, OBJECT-TYPE, NOTIFICATION-TYPE, enterprises,
     Integer32, Counter32, Counter64, Gauge32  FROM SNMPv2-SMI
 
-    DisplayString                             FROM SNMPv2-TC;
+    TEXTUAL-CONVENTION, DisplayString         FROM SNMPv2-TC;
 
 freeNas MODULE-IDENTITY
-    LAST-UPDATED "201709010000Z"
+    LAST-UPDATED "201710270000Z"
     ORGANIZATION "www.ixsystems.com"
     CONTACT-INFO
         "postal:   2490 Kruse Dr
@@ -16,10 +16,33 @@ freeNas MODULE-IDENTITY
          email:    support@iXsystems.com"
     DESCRIPTION
         ""
-    REVISION     "201709010000Z"
+    REVISION     "201710270000Z"
     DESCRIPTION
         ""
     ::= { enterprises 50536 }
+
+ZPoolHealthType ::= TEXTUAL-CONVENTION
+    STATUS     current
+    DESCRIPTION
+        ""
+    SYNTAX  INTEGER {
+                online(0),
+                degraded(1),
+                faulted(2),
+                offline(3),
+                unavail(4),
+                removed(5)
+                }
+
+AlertLevelType ::= TEXTUAL-CONVENTION
+    STATUS     current
+    DESCRIPTION
+        ""
+    SYNTAX  INTEGER {
+                ok(0),
+                warn(30),
+                crit(50)
+                }
 
 zfs     OBJECT IDENTIFIER ::= { freeNas 1 }
 
@@ -58,7 +81,7 @@ ZpoolEntry ::= SEQUENCE {
         zpoolSize                     Integer32,
         zpoolUsed                     Integer32,
         zpoolAvailable                Integer32,
-        zpoolHealth                   DisplayString,
+        zpoolHealth                   ZPoolHealthType,
         zpoolReadOps                  Counter64,
         zpoolWriteOps                 Counter64,
         zpoolReadBytes                Counter64,
@@ -119,7 +142,7 @@ zpoolAvailable OBJECT-TYPE
     ::= { zpoolEntry 6 }
 
 zpoolHealth OBJECT-TYPE
-    SYNTAX  DisplayString
+    SYNTAX  ZPoolHealthType
     MAX-ACCESS  read-only
     STATUS  current
     DESCRIPTION
@@ -497,13 +520,13 @@ zfsZilstatOps10sec OBJECT-TYPE
     ::= { zil 3 }
 
 alert NOTIFICATION-TYPE
-    OBJECTS    { alertLevel, alertMessage }
+    OBJECTS    { alertId, alertLevel, alertMessage }
     STATUS     current
     DESCRIPTION
         "An alert raised"
     ::= { notificationPrefix 1 }
 
-alertLevel OBJECT-TYPE
+alertId OBJECT-TYPE
     SYNTAX     DisplayString
     MAX-ACCESS read-only
     STATUS     current
@@ -511,12 +534,27 @@ alertLevel OBJECT-TYPE
         ""
     ::= { notificationObjects 1 }
 
+alertLevel OBJECT-TYPE
+    SYNTAX     AlertLevelType
+    MAX-ACCESS read-only
+    STATUS     current
+    DESCRIPTION
+        ""
+    ::= { notificationObjects 2 }
+
 alertMessage OBJECT-TYPE
     SYNTAX     DisplayString
     MAX-ACCESS read-only
     STATUS     current
     DESCRIPTION
         ""
-    ::= { notificationObjects 2 }
+    ::= { notificationObjects 3 }
+
+alertCancellation NOTIFICATION-TYPE
+    OBJECTS    { alertId }
+    STATUS     current
+    DESCRIPTION
+        "An alert cancelled"
+    ::= { notificationPrefix 2 }
 
 END

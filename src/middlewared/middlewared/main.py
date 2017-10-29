@@ -191,12 +191,12 @@ class Application(object):
         event_source = self.middleware.get_event_source(shortname)
         if event_source:
             es = event_source(self.middleware, self, ident, name, arg)
-            t = start_daemon_thread(target=es.process)
             self.__event_sources[ident] = {
                 'event_source': es,
-                'thread': t,
                 'name': name,
             }
+            # Start it after setting __event_sources or it can have a race condition
+            start_daemon_thread(target=es.process)
         else:
             self.__subscribed[ident] = name
 
@@ -222,14 +222,17 @@ class Application(object):
             'msg': event_type.lower(),
             'collection': name,
         }
+        kwargs = kwargs.copy()
         if 'id' in kwargs:
-            event['id'] = kwargs['id']
+            event['id'] = kwargs.pop('id')
         if event_type in ('ADDED', 'CHANGED'):
             if 'fields' in kwargs:
-                event['fields'] = kwargs['fields']
+                event['fields'] = kwargs.pop('fields')
         if event_type == 'CHANGED':
             if 'cleared' in kwargs:
-                event['cleared'] = kwargs['cleared']
+                event['cleared'] = kwargs.pop('cleared')
+        if kwargs:
+            event['extra'] = kwargs
         self._send(event)
 
     def on_open(self):

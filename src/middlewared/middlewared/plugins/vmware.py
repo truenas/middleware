@@ -6,7 +6,7 @@ from middlewared.schema import Dict, Int, Str, accepts
 from middlewared.service import CallError, CRUDService, private
 
 from pyVim import connect
-from pyVmomi import vim
+from pyVmomi import vim, vmodl
 
 
 class VMWareService(CRUDService):
@@ -44,6 +44,8 @@ class VMWareService(CRUDService):
             )
         except (vim.fault.InvalidLogin, vim.fault.NoPermission, vim.fault.RestrictedVersion) as e:
             raise CallError(e.msg, errno.EPERM)
+        except vmodl.RuntimeFault as e:
+            raise CallError(e.msg)
         except (socket.gaierror, socket.error, OSError) as e:
             raise CallError(str(e), e.errno)
 
