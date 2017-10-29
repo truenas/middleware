@@ -13,7 +13,6 @@ import random
 import stat
 import subprocess
 import sysctl
-import bz2
 import gzip
 import libzfs
 import hashlib
