@@ -48,14 +48,15 @@ get_image_name()
 # This does memory size only for now.
 pre_install_check()
 {
-    # We need at least 4 GB of RAM
-    local readonly minmemgb=4
-    local readonly minmem=$(expr ${minmemgb} \* 1024 \* 1024 \* 1024)
+    # We need at least this many GB of RAM
+    local readonly minmemgb=8
+    # subtract 1GB to allow for reserved memory
+    local readonly minmem=$(expr \( ${minmemgb} \- 1 \) \* 1024 \* 1024 \* 1024)
     local memsize=$(sysctl -n hw.physmem)
 
     if [ ${memsize} -lt ${minmem} ]; then
 	dialog --clear --title "${AVATAR_PROJECT}" --defaultno \
-	--yesno "This computer has less than the recommended ${minmemgb} GB of RAM.\n\nPerformance might be very slow.  Continue installation?" 7 74 || return 1
+	--yesno "This computer has less than the recommended ${minmemgb} GB of RAM.\n\nOperation without enough RAM is not recommended.  Continue anyway?" 7 74 || return 1
     fi
     return 0
 }
