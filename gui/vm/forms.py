@@ -133,7 +133,7 @@ class DeviceForm(ModelForm):
         max_length=50,
         widget=forms.widgets.HiddenInput(),
         required=False,
-        help_text=_("Set the user rancher password."),
+        help_text=_("Set rancher user password."),
     )
     DISK_sectorsize = forms.IntegerField(
         label=_('Disk sectorsize'),
