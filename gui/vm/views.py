@@ -34,6 +34,7 @@ from freenasUI.vm import models, utils
 
 import json
 
+
 def home(request):
 
     if not utils.vm_enabled():
@@ -134,4 +135,4 @@ def vnc_web(request, id):
 def download_progress(request):
     return HttpResponse(
         json.dumps(utils.load_progress()), content_type='application/json',
-        )
+    )

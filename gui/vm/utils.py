@@ -5,6 +5,7 @@ import json
 
 DW_PROGRESS = '/tmp/.vm_container_download'
 
+
 def vm_enabled():
     with client as c:
         flags = c.call('vm.flags')
@@ -14,6 +15,7 @@ def vm_enabled():
             return True
         else:
             return False
+
 
 @locked(DW_PROGRESS)
 def dump_download_progress(data):
@@ -37,6 +39,7 @@ def dump_download_progress(data):
                 'details': details_msg,
             }
             dw_f.write(json.dumps(jdata))
+
 
 @locked(DW_PROGRESS)
 def load_progress():

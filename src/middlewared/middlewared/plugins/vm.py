@@ -198,10 +198,9 @@ class VMSupervisor(object):
                     width = vnc_resolution[0]
                     height = vnc_resolution[1]
 
-                args += [
-                   '-s', '29,fbuf,vncserver,tcp={}:{},w={},h={},{},{}'.format(vnc_bind, vnc_port, width, height, vnc_password_args, wait),
-                   '-s', '30,xhci,tablet',
-                ]
+                args += ['-s', '29,fbuf,vncserver,tcp={}:{},w={},h={},{},{}'.format(vnc_bind, vnc_port, width,
+                                                                                    height, vnc_password_args, wait),
+                         '-s', '30,xhci,tablet', ]
 
         # grub-bhyve support for containers
         if self.vmutils.is_container(self.vm):
@@ -238,8 +237,9 @@ class VMSupervisor(object):
             web_bind = ':{}'.format(vnc_web_port) if vnc_bind is '0.0.0.0' else '{}:{}'.format(vnc_bind, vnc_web_port)
 
             self.web_proc = await Popen(['/usr/local/libexec/novnc/utils/websockify/run', '--web',
-                    '/usr/local/libexec/novnc/', '--wrap-mode=ignore',
-                    web_bind, '{}:{}'.format(vnc_bind, vnc_port)], stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+                                         '/usr/local/libexec/novnc/', '--wrap-mode=ignore',
+                                         web_bind, '{}:{}'.format(vnc_bind, vnc_port)],
+                                        stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
             self.logger.debug("==> Start WEBVNC at port {} with pid number {}".format(vnc_web_port, self.web_proc.pid))
 
         while True:
@@ -273,7 +273,7 @@ class VMSupervisor(object):
     async def destroy_vm(self):
         self.logger.warn("===> Destroying VM: {0} ID: {1} BHYVE_CODE: {2}".format(self.vm['name'], self.vm['id'], self.bhyve_error))
         # XXX: We need to catch the bhyvectl return error.
-        bhyve_error = await (await Popen(['bhyvectl', '--destroy', '--vm={}'.format(self.vm['name'])], stdout=subprocess.PIPE, stderr=subprocess.PIPE)).wait()
+        await (await Popen(['bhyvectl', '--destroy', '--vm={}'.format(self.vm['name'])], stdout=subprocess.PIPE, stderr=subprocess.PIPE)).wait()
         self.manager._vm.pop(self.vm['id'], None)
         await self.kill_bhyve_web()
         self.destroy_tap()
@@ -429,10 +429,10 @@ class VMUtils(object):
             vmOS = 'RancherOS'
 
         grub_default_args = [
-                'set timeout=0',
-                'set default={}'.format(vmOS),
-                'menuentry "bhyve-image" --id %s {' % (vmOS),
-                'set root=(hd0,msdos1)',
+            'set timeout=0',
+            'set default={}'.format(vmOS),
+            'menuentry "bhyve-image" --id %s {' % (vmOS),
+            'set root=(hd0,msdos1)',
         ]
 
         grub_additional_args = {
@@ -597,7 +597,7 @@ class VMService(CRUDService):
         new_fs = dataset + images_fs
 
         try:
-            new_dataset = zfs.get_dataset(new_fs)
+            zfs.get_dataset(new_fs)
             pool_exist = True
         except libzfs.ZFSException:
             # dataset does not exist yet, we need to create it.
@@ -748,8 +748,7 @@ class VMService(CRUDService):
             return update_devices
 
     @accepts(Int('id'),
-        Dict('devices', additional_attrs=True),
-    )
+             Dict('devices', additional_attrs=True), )
     async def create_device(self, id, data):
         """Create a new device in an existing vm."""
         devices_type = ('NIC', 'DISK', 'CDROM', 'VNC', 'RAW')
@@ -773,11 +772,11 @@ class VMService(CRUDService):
         status = await self.status(id)
         if isinstance(status, dict):
             if status.get('state') == "RUNNING":
-                stop_vm = await self.stop(id)
+                await self.stop(id)
         try:
             vm_data = await self.middleware.call('datastore.query', 'vm.vm', [('id', '=', id)])
             if self.vmutils.is_container(vm_data[0]):
-                remove_confs = await self.middleware.call('vm.rm_container_conf', id)
+                await self.middleware.call('vm.rm_container_conf', id)
             return await self.middleware.call('datastore.delete', 'vm.vm', id)
         except Exception as err:
             self.logger.error("===> {0}".format(err))
@@ -847,7 +846,8 @@ class VMService(CRUDService):
         if os.path.exists(file_path) is False and force is False:
             logger.debug("===> Downloading: %s" % (url))
             await self.middleware.threaded(lambda: urlretrieve(url, file_path,
-                lambda nb, bs, fs, job=job: self.fetch_hookreport(nb, bs, fs, job, file_path)))
+                                                               lambda nb, bs, fs,
+                                                               job=job: self.fetch_hookreport(nb, bs, fs, job, file_path)))
 
     @accepts()
     async def list_images(self):
@@ -857,9 +857,9 @@ class VMService(CRUDService):
     async def get_download_status(self, job_id):
         """ Returns the status of the job, if job does not exists it returns False."""
         job_pool = await self.middleware.call('core.get_jobs', [('method', '=', 'vm.fetch_image')])
-        for job in job_pool:
-            if job['id'] == job_id:
-                return job
+        for __job in job_pool:
+            if __job['id'] == job_id:
+                return __job
         return False
 
     @accepts(Str('vmOS'))

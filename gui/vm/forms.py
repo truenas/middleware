@@ -20,7 +20,6 @@ log = logging.getLogger('vm.forms')
 
 class VMForm(ModelForm):
 
-
     class Meta:
         fields = '__all__'
         model = models.VM
@@ -144,13 +143,13 @@ class DeviceForm(ModelForm):
                     "If 0, a sector size is not set."),
     )
     DISK_raw_size = forms.CharField(
-            label=_('Disk size'),
-            widget=forms.widgets.HiddenInput(),
-            required=False,
-            initial=0,
-            validators=[RegexValidator("^(\d*)\s?([M|G|T]?)$", "Enter M, G or T after the value to use megabytes, gigabytes or terabytes."
-                                                                " When no suffix letter is entered, the units default to gigabytes.")],
-            help_text=_("Resize the existing raw disk. Enter 0 to use the disk with the current size."),
+        label=_('Disk size'),
+        widget=forms.widgets.HiddenInput(),
+        required=False,
+        initial=0,
+        validators=[RegexValidator("^(\d*)\s?([M|G|T]?)$", "Enter M, G or T after the value to use megabytes, gigabytes or terabytes."
+                                                           " When no suffix letter is entered, the units default to gigabytes.")],
+        help_text=_("Resize the existing raw disk. Enter 0 to use the disk with the current size."),
     )
     NIC_type = forms.ChoiceField(
         label=_('Adapter Type'),
@@ -293,8 +292,6 @@ class DeviceForm(ModelForm):
         vm = self.cleaned_data.get('vm')
         kwargs['commit'] = False
         obj = super(DeviceForm, self).save(*args, **kwargs)
-        raw_file_cnt = None
-        raw_file_resize = 0
 
         if self.cleaned_data['dtype'] == 'DISK':
             obj.attributes = {
@@ -306,9 +303,6 @@ class DeviceForm(ModelForm):
             if self.is_container(vm.vm_type):
                 if self.cleaned_data['DISK_mode'] == 'VIRTIO':
                     self._errors['dtype'] = self.error_class([_('Containers require AHCI mode.')])
-                if self.cleaned_data['DISK_raw_boot']:
-                    raw_file_cnt = self.cleaned_data['DISK_raw']
-                    raw_file_resize = self.cleaned_data['DISK_raw_size']
             obj.attributes = {
                 'path': self.cleaned_data['DISK_raw'],
                 'type': self.cleaned_data['DISK_mode'],
