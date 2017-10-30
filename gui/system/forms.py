@@ -340,8 +340,8 @@ class CommonWizard(SessionWizardView):
         })
         if not self.request.is_ajax():
             response.content = (
-                b"<html><body><textarea>"
-                + response.content +
+                b"<html><body><textarea>" +
+                response.content +
                 b"</textarea></boby></html>"
             )
         return response
@@ -367,8 +367,8 @@ class CommonWizard(SessionWizardView):
         # This is required for the workaround dojo.io.frame for file upload
         if not self.request.is_ajax():
             return HttpResponse(
-                "<html><body><textarea>"
-                + response.rendered_content +
+                "<html><body><textarea>" +
+                response.rendered_content +
                 "</textarea></boby></html>"
             )
         return response
@@ -632,7 +632,7 @@ class InitialWizard(CommonWizard):
                         else:
                             lid = 0
                         serial = mac.strip() + "%.2d" % lid
-                    except:
+                    except Exception:
                         serial = "10000001"
 
                     iscsi_target_name = '%sTarget' % share_name
@@ -744,7 +744,7 @@ class InitialWizard(CommonWizard):
             if cleaned_data.get('ds_type') == 'ad':
                 try:
                     ad = ActiveDirectory.objects.all().order_by('-id')[0]
-                except:
+                except Exception:
                     ad = ActiveDirectory.objects.create()
                 addata = ad.__dict__
                 addata.update({
@@ -767,7 +767,7 @@ class InitialWizard(CommonWizard):
             elif cleaned_data.get('ds_type') == 'ldap':
                 try:
                     ldap = LDAP.objects.all().order_by('-id')[0]
-                except:
+                except Exception:
                     ldap = LDAP.objects.create()
                 ldapdata = ldap.__dict__
                 ldapdata.update({
@@ -791,7 +791,7 @@ class InitialWizard(CommonWizard):
             elif cleaned_data.get('ds_type') == 'nis':
                 try:
                     nis = NIS.objects.all().order_by('-id')[0]
-                except:
+                except Exception:
                     nis = NIS.objects.create()
                 nisdata = nis.__dict__
                 nisdata.update({
@@ -914,7 +914,7 @@ class ManualUpdateWizard(FileWizard):
                     c.call('failover.call_remote', 'update.manual', ['/var/tmp/firmware/update.tar.xz'], {'job': True})
                 try:
                     c.call('failover.call_remote', 'system.reboot', [{'delay': 2}])
-                except:
+                except Exception:
                     pass
                 response = render_to_response('failover/update_standby.html')
             else:
@@ -923,10 +923,10 @@ class ManualUpdateWizard(FileWizard):
                 response = render_to_response('system/done.html', {
                     'retval': getattr(self, 'retval', None),
                 })
-        except:
+        except Exception:
             try:
                 self.file_storage.delete(updatefile.name)
-            except:
+            except Exception:
                 log.warn('Failed to delete uploaded file', exc_info=True)
             raise
 
@@ -1217,7 +1217,7 @@ class EmailForm(MiddlewareModelForm, ModelForm):
         try:
             self.fields['em_pass1'].initial = self.instance.em_pass
             self.fields['em_pass2'].initial = self.instance.em_pass
-        except:
+        except Exception:
             pass
         self.fields['em_smtp'].widget.attrs['onChange'] = (
             'toggleGeneric("id_em_smtp", ["id_em_pass1", "id_em_pass2", '

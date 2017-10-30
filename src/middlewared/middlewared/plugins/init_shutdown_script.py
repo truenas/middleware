@@ -17,7 +17,7 @@ class InitShutdownScriptService(CRUDService):
         Str('when', enum=['PREINIT', 'POSTINIT', 'SHUTDOWN']),
         Bool('enabled'),
         register=True,
-        ))
+    ))
     async def do_create(self, data):
         await self.validate(data, 'init_shutdown_script_create')
 

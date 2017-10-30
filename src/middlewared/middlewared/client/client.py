@@ -484,7 +484,7 @@ def main():
         for i in args:
             try:
                 yield json.loads(i)
-            except:
+            except Exception:
                 yield i
 
     if args.name == 'call':
