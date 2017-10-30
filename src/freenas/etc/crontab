@@ -3,7 +3,7 @@
 # $FreeBSD: src/etc/crontab,v 1.33.2.1 2009/08/03 08:13:06 kensmith Exp $
 #
 SHELL=/bin/sh
-PATH=/etc:/bin:/sbin:/usr/bin:/usr/sbin
+PATH=/etc:/bin:/sbin:/usr/bin:/usr/sbin:/usr/local/bin:/usr/local/sbin
 #
 #minute	hour	mday	month	wday	who	command
 #
