@@ -270,7 +270,7 @@ class CIFSForm(ModelForm):
 class AFPForm(MiddlewareModelForm, ModelForm):
 
     middleware_attr_prefix = "afp_srv_"
-    middleware_attr_schema = "afp_update"
+    middleware_attr_schema = "afp"
     middleware_plugin = "afp"
     is_singletone = True
 
@@ -393,7 +393,7 @@ class NFSForm(ModelForm):
 class FTPForm(MiddlewareModelForm, ModelForm):
 
     middleware_attr_prefix = "ftp_"
-    middleware_attr_schema = "ftp_update"
+    middleware_attr_schema = "ftp"
     middleware_plugin = "ftp"
     is_singletone = True
 
@@ -443,7 +443,7 @@ class FTPForm(MiddlewareModelForm, ModelForm):
 class TFTPForm(MiddlewareModelForm, ModelForm):
 
     middleware_attr_prefix = "tftp_"
-    middleware_attr_schema = "tftp_update"
+    middleware_attr_schema = "tftp"
     middleware_plugin = "tftp"
     is_singletone = True
 
@@ -548,7 +548,7 @@ class RsyncModForm(ModelForm):
 
 class DynamicDNSForm(MiddlewareModelForm, ModelForm):
     middleware_attr_prefix = "ddns_"
-    middleware_attr_schema = "dyndns_update"
+    middleware_attr_schema = "dyndns"
     middleware_exclude_fields = ["password2"]
     middleware_plugin = "dyndns"
     is_singletone = True
@@ -605,7 +605,7 @@ key_order(DynamicDNSForm, 10, 'ddns_password2')
 class SNMPForm(MiddlewareModelForm, ModelForm):
 
     middleware_attr_prefix = "snmp_"
-    middleware_attr_schema = "snmp_update"
+    middleware_attr_schema = "snmp"
     middleware_exclude_fields = ["v3_password2", "v3_privpassphrase2"]
     middleware_plugin = "snmp"
     is_singletone = True
@@ -1693,7 +1693,7 @@ class ExtentDelete(Form):
 class SMARTForm(MiddlewareModelForm, ModelForm):
 
     middleware_attr_prefix = "smart_"
-    middleware_attr_schema = "smart_update"
+    middleware_attr_schema = "smart"
     middleware_plugin = "smart"
     is_singletone = True
 
