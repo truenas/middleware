@@ -468,15 +468,8 @@ class DiskService(CRUDService):
         async for i in await self.middleware.call('boot.get_disks'):
             reserved.append(i)
         # disks already in use count as reserved as well
-        for pool in await self.middleware.call('pool.query'):
-            try:
-                if pool['is_decrypted']:
-                    async for i in await self.middleware.call('pool.get_disks', pool['id']):
-                        reserved.append(i)
-            except CallError as e:
-                # pool could not be available for some reason
-                if e.errno != errno.ENOENT:
-                    raise
+        async for i in await self.middleware.call('pool.get_disks'):
+            reserved.append(i)
 
         is_freenas = await self.middleware.call('system.is_freenas')
 

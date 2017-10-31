@@ -148,16 +148,20 @@ class PoolService(CRUDService):
         return pool
 
     @item_method
-    @accepts(Int('id'))
-    async def get_disks(self, oid):
+    @accepts(Int('id', required=False))
+    async def get_disks(self, oid=None):
         """
-        Get all disks from a given pool `id`.
+        Get all disks in use by pools.
+        If `id` is provided only the disks from the given pool `id` will be returned.
         """
-        pool = await self.query([('id', '=', oid)], {'get': True})
-        if not pool['is_decrypted']:
-            yield
-        async for i in await self.middleware.call('zfs.pool.get_disks', pool['name']):
-            yield i
+        filters = []
+        if oid:
+            filters.append(('id', '=', oid))
+        pools = await self.query(filters)
+        for pool in await self.query(filters):
+            if pool['is_decrypted']:
+                async for i in await self.middleware.call('zfs.pool.get_disks', pool['name']):
+                    yield i
 
     @private
     def configure_resilver_priority(self):
