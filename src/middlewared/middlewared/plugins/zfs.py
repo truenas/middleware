@@ -54,7 +54,7 @@ class ZFSPoolService(Service):
         # Handle `id` filter specially to avoiding getting all pool
         if filters and len(filters) == 1 and list(filters[0][:2]) == ['id', '=']:
             try:
-                pools = [zfs.get_dataset(filters[0][2]).__getstate__()]
+                pools = [zfs.get(filters[0][2]).__getstate__()]
             except libzfs.ZFSException:
                 pools = []
         else:
