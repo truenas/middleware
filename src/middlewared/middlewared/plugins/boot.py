@@ -9,6 +9,12 @@ import asyncio
 
 class BootService(Service):
 
+    async def get_state(self):
+        """
+        Returns the current state of the boot pool, including all vdevs, properties and datasets.
+        """
+        return await self.middleware.call('zfs.pool.query', [('name', '=', 'freenas-boot')], {'get': True})
+
     @accepts()
     async def get_disks(self):
         """

@@ -48,6 +48,19 @@ class ZFSPoolService(Service):
         namespace = 'zfs.pool'
         private = True
 
+    @filterable
+    def query(self, filters, options):
+        zfs = libzfs.ZFS()
+        # Handle `id` filter specially to avoiding getting all pool
+        if filters and len(filters) == 1 and list(filters[0][:2]) == ['id', '=']:
+            try:
+                pools = [zfs.get(filters[0][2]).__getstate__()]
+            except libzfs.ZFSException:
+                pools = []
+        else:
+            pools = [i.__getstate__() for i in zfs.pools]
+        return filter_list(pools, filters, options)
+
     @accepts(Str('pool'))
     async def get_disks(self, name):
         zfs = libzfs.ZFS()

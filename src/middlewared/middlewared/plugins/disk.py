@@ -1,7 +1,6 @@
 from collections import defaultdict
 from datetime import datetime, timedelta
 import asyncio
-import errno
 import os
 import re
 import signal
@@ -11,7 +10,7 @@ import sysctl
 
 from bsd import geom
 from middlewared.schema import accepts, Str
-from middlewared.service import filterable, job, private, CallError, CRUDService
+from middlewared.service import filterable, job, private, CRUDService
 from middlewared.utils import Popen, run
 
 # FIXME: temporary import of SmartAlert until alert is implemented
@@ -46,6 +45,18 @@ class DiskService(CRUDService):
     def disk_extend(self, disk):
         disk.pop('enabled', None)
         return disk
+
+    async def get_unused(self):
+        """
+        Helper method to get all disks that are not in use, either by the boot
+        pool or the user pools.
+        """
+        return await self.query([('name', 'nin', await self.__get_reserved())])
+
+    async def __get_reserved(self):
+        reserved = [i async for i in await self.middleware.call('boot.get_disks')]
+        reserved += [i async for i in await self.middleware.call('pool.get_disks')]
+        return reserved
 
     async def __camcontrol_list(self):
         """
@@ -464,19 +475,7 @@ class DiskService(CRUDService):
                     continue
                 mp_disks.append(p_geom.name)
 
-        reserved = []
-        async for i in await self.middleware.call('boot.get_disks'):
-            reserved.append(i)
-        # disks already in use count as reserved as well
-        for pool in await self.middleware.call('pool.query'):
-            try:
-                if pool['is_decrypted']:
-                    async for i in await self.middleware.call('pool.get_disks', pool['id']):
-                        reserved.append(i)
-            except CallError as e:
-                # pool could not be available for some reason
-                if e.errno != errno.ENOENT:
-                    raise
+        reserved = await self.__get_reserved()
 
         is_freenas = await self.middleware.call('system.is_freenas')
 
