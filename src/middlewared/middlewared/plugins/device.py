@@ -78,9 +78,9 @@ async def devd_listen(middleware):
 
     while True:
         line = await reader.read(8192)
-        if line is None:
-            break
         line = line.decode(errors='ignore')
+        if line == "":
+            break
         if not line.startswith('!'):
             # TODO: its not a complete message, ignore for now
             continue
