@@ -1,7 +1,6 @@
 from collections import defaultdict
 from datetime import datetime, timedelta
 import asyncio
-import errno
 import os
 import re
 import signal
@@ -11,7 +10,7 @@ import sysctl
 
 from bsd import geom
 from middlewared.schema import accepts, Str
-from middlewared.service import filterable, job, private, CallError, CRUDService
+from middlewared.service import filterable, job, private, CRUDService
 from middlewared.utils import Popen, run
 
 # FIXME: temporary import of SmartAlert until alert is implemented
@@ -46,6 +45,15 @@ class DiskService(CRUDService):
     def disk_extend(self, disk):
         disk.pop('enabled', None)
         return disk
+
+    async def get_unused(self):
+        """
+        Helper method to get all disks that are not in use, either by the boot
+        pool or the user pools.
+        """
+        reserved = [i async for i in await self.middleware.call('boot.get_disks')]
+        reserved += [i async for i in await self.middleware.call('pool.get_disks')]
+        return await self.query([('name', 'nin', reserved)])
 
     async def __camcontrol_list(self):
         """
