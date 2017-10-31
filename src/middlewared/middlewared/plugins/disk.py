@@ -51,9 +51,12 @@ class DiskService(CRUDService):
         Helper method to get all disks that are not in use, either by the boot
         pool or the user pools.
         """
+        return await self.query([('name', 'nin', await self.__get_reserved())])
+
+    async def __get_reserved(self):
         reserved = [i async for i in await self.middleware.call('boot.get_disks')]
         reserved += [i async for i in await self.middleware.call('pool.get_disks')]
-        return await self.query([('name', 'nin', reserved)])
+        return reserved
 
     async def __camcontrol_list(self):
         """
@@ -472,12 +475,7 @@ class DiskService(CRUDService):
                     continue
                 mp_disks.append(p_geom.name)
 
-        reserved = []
-        async for i in await self.middleware.call('boot.get_disks'):
-            reserved.append(i)
-        # disks already in use count as reserved as well
-        async for i in await self.middleware.call('pool.get_disks'):
-            reserved.append(i)
+        reserved = await self.__get_reserved()
 
         is_freenas = await self.middleware.call('system.is_freenas')
 
