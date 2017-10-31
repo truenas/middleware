@@ -345,7 +345,7 @@ class ZFSSnapshot(CRUDService):
             return False
 
         try:
-            ds.snapshot(f'{dataset}@{name}', recursive = recursive, fsopts = properties)
+            ds.snapshot(f'{dataset}@{name}', recursive=recursive, fsopts=properties)
 
             if vmsnaps_count > 0:
                 ds.properties['freenas:vmsynced'] = libzfs.ZFSUserProperty('Y')
