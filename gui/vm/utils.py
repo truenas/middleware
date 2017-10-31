@@ -24,13 +24,13 @@ def dump_download_progress(data):
             progress_n = data.get('progress').get('percent')
             if progress_n:
                 if progress_n <= 10:
-                    details_msg = 'Start to download a prebuilt container image.'
+                    details_msg = 'Begin downloading prebuilt container image.'
                 elif progress_n > 10 and progress_n <= 50:
                     details_msg = 'Almost done....'
                 elif progress_n > 50 and progress_n <= 90:
                     details_msg = 'Downloading a prebuilt container image.'
                 elif progress_n > 95:
-                    details_msg = 'Preparing environment....'
+                    details_msg = 'Preparing environment...'
 
             jdata = {
                 'error': data.get('error'),

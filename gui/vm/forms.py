@@ -147,7 +147,7 @@ class DeviceForm(ModelForm):
         widget=forms.widgets.HiddenInput(),
         required=False,
         initial=0,
-        validators=[RegexValidator("^(\d*)\s?([M|G|T]?)$", "Enter M, G or T after the value to use megabytes, gigabytes or terabytes."
+        validators=[RegexValidator("^(\d*)\s?([M|G|T]?)$", "Enter M, G, or T after the value to use megabytes, gigabytes or terabytes."
                                                            " When no suffix letter is entered, the units default to gigabytes.")],
         help_text=_("Resize the existing raw disk. Enter 0 to use the disk with the current size."),
     )
