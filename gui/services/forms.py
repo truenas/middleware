@@ -797,6 +797,8 @@ class UPSForm(ModelForm):
         return email
 
     def save(self):
+        if self.instance.ups_shutdown == "lowbatt":
+            self.instance.ups_shutdowntimer = None
         super(UPSForm, self).save()
         started = notifier().restart("ups")
         if (
