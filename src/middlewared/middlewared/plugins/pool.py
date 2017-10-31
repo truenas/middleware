@@ -157,7 +157,6 @@ class PoolService(CRUDService):
         filters = []
         if oid:
             filters.append(('id', '=', oid))
-        pools = await self.query(filters)
         for pool in await self.query(filters):
             if pool['is_decrypted']:
                 async for i in await self.middleware.call('zfs.pool.get_disks', pool['name']):
