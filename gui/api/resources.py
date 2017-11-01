@@ -888,10 +888,15 @@ class VolumeResourceMixin(NestedMixin):
 
         bundle, obj = self._get_parent(request, kwargs)
 
-        pool = notifier().zpool_parse(bundle.obj.vol_name)
-
         bundle.data['id'] = bundle.obj.id
         bundle.data['name'] = bundle.obj.vol_name
+
+        if not obj.is_decrypted():
+            bundle.data['status'] = 'LOCKED'
+            return self.create_response(request, [bundle.data])
+
+        pool = notifier().zpool_parse(bundle.obj.vol_name)
+
         bundle.data['children'] = []
         bundle.data.update({
             'read': pool.data.read,
