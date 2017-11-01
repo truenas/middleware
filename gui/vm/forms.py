@@ -139,7 +139,7 @@ class DeviceForm(ModelForm):
         label=_('Bind to'),
         choices=(),
         required=False,
-        initial='0.0.0.0'
+        initial='127.0.0.1'
     )
     VNC_wait = forms.BooleanField(
         label=_('Wait to boot'),
@@ -208,7 +208,7 @@ class DeviceForm(ModelForm):
                 self.fields['VNC_web'].initial = self.instance.attributes.get('vnc_web')
 
     def ipv4_list(self):
-        choices = (('0.0.0.0', '0.0.0.0'),)
+        choices = (('127.0.0.1', '127.0.0.1'),)
         with client as c:
             ipv4_addresses = c.call('interfaces.ipv4_in_use')
         for ipv4_addr in ipv4_addresses:
