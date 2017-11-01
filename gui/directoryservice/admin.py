@@ -31,6 +31,7 @@ from django.utils.translation import ugettext as _
 from freenasUI.api.resources import (
     KerberosRealmResourceMixin,
     KerberosKeytabResourceMixin,
+    KerberosPrincipalResourceMixin,
     KerberosSettingsResourceMixin
 )
 from freenasUI.api.utils import DojoModelFormResourceMixin
@@ -80,7 +81,6 @@ class KerberosRealmFAdmin(BaseFreeAdmin):
     icon_model = "KerberosRealmIcon"
     icon_add = "KerberosRealmIcon"
     icon_view = "KerberosRealmIcon"
-
     resource_mixin = KerberosRealmResourceMixin
 
 
@@ -112,6 +112,10 @@ class KerberosKeytabFAdmin(BaseFreeAdmin):
         return context
 
 
+class KerberosPrincipalFAdmin(BaseFreeAdmin):
+    resource_mixin = KerberosPrincipalResourceMixin
+
+
 class KerberosSettingsFAdmin(BaseFreeAdmin):
     create_modelform = "KerberosSettingsForm"
     edit_modelform = "KerberosSettingsForm"
@@ -128,4 +132,5 @@ site.register(models.LDAP, LDAPFAdmin)
 site.register(models.NIS, NISFAdmin)
 site.register(models.KerberosRealm, KerberosRealmFAdmin)
 site.register(models.KerberosKeytab, KerberosKeytabFAdmin)
+site.register(models.KerberosPrincipal, KerberosPrincipalFAdmin)
 site.register(models.KerberosSettings, KerberosSettingsFAdmin)
