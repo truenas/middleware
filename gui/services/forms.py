@@ -1940,7 +1940,7 @@ class S3Form(ModelForm):
         key_order(self, 8, 's3_mode', instance=True)
         key_order(self, 9, 's3_browser', instance=True)
 
-        self.fields['s3_bindip'].choices = [('0.0.0.0', '0.0.0.0')] + list(choices.IPChoices())
+        self.fields['s3_bindip'].choices = [('127.0.0.1', '127.0.0.1')] + list(choices.IPChoices())
         if self.instance.id and self.instance.s3_bindip:
             bindips = []
             for ip in self.instance.s3_bindip:
