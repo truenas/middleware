@@ -156,8 +156,8 @@ class JailService(CRUDService):
              Str("server", default="ftp.freebsd.org"),
              Str("user", default="anonymous"),
              Str("password", default="anonymous@"),
-             Str("plugin_file"),
-             Str("props"),
+             Str("name", default=None),
+             List("props"),
              List(
                  "files",
                  default=["MANIFEST", "base.txz", "lib32.txz", "doc.txz"])))
@@ -165,6 +165,10 @@ class JailService(CRUDService):
     def fetch(self, job, options):
         """Fetches a release or plugin."""
         self.check_dataset_existence()  # Make sure our datasets exist.
+
+        if options["name"] is not None:
+            options["plugins"] = True
+
         iocage = ioc.IOCage()
 
         iocage.fetch(**options)
@@ -177,12 +181,14 @@ class JailService(CRUDService):
         """Returns a JSON list of the supplied resource on the host"""
         self.check_dataset_existence()  # Make sure our datasets exist.
         iocage = ioc.IOCage(skip_jails=True)
-        remote = True if resource == "PLUGIN" else remote
         resource = "base" if resource == "RELEASE" else resource.lower()
 
         if resource == "plugin":
-            resource_list = iocage.fetch(list=True, remote=True,
-                                         plugin_file=True)
+            if remote:
+                resource_list = iocage.fetch(list=True, plugins=True,
+                                             header=False)
+            else:
+                resource_list = iocage.list("all", plugin=True)
         elif resource == "base":
             resource_list = iocage.fetch(list=True, remote=remote, http=True)
         else:
