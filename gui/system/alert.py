@@ -69,11 +69,12 @@ class Alert(object):
     CRIT = 'CRIT'
     WARN = 'WARN'
 
-    def __init__(self, level, message, id=None, dismiss=False, hardware=False):
+    def __init__(self, level, message, id=None, dismiss=False, hardware=False, mail=None):
         self._level = level
         self._message = message
         self._dismiss = dismiss
         self._hardware = hardware
+        self._mail = mail
         if id is None:
             self._id = hashlib.md5(message.encode('utf8')).hexdigest()
         else:
@@ -136,6 +137,9 @@ class Alert(object):
 
     def getDatetime(self):
         return datetime.datetime.fromtimestamp(self._timestamp)
+
+    def getMail(self):
+        return self._mail
 
 
 class SnmpTrapSender:
@@ -416,6 +420,12 @@ class AlertPlugins(metaclass=HookMetaclass):
                 self.snmp_trap_sender.cancel_alert(a)
             for a in new_alerts:
                 self.snmp_trap_sender.send_alert(a)
+
+        for a in new_alerts:
+            mail = a.getMail()
+            if mail:
+                with client as c:
+                    c.call('mail.send', mail, job=True)
 
         if not notifier().is_freenas():
             # Automatically create ticket for new alerts tagged as possible
