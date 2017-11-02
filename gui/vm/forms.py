@@ -9,6 +9,7 @@ from freenasUI import choices
 from freenasUI.common import humanize_size
 from freenasUI.common.forms import ModelForm
 from freenasUI.freeadmin.forms import PathField
+from freenasUI.freeadmin.utils import key_order
 from freenasUI.middleware.client import client
 from freenasUI.middleware.notifier import notifier
 from freenasUI.storage.models import Volume
@@ -22,6 +23,11 @@ class VMForm(ModelForm):
     class Meta:
         fields = '__all__'
         model = models.VM
+
+    def __init__(self, *args, **kwargs):
+        super(VMForm, self).__init__(*args, **kwargs)
+        self.fields['vm_type'].widget.attrs['onChange'] = ("vmTypeToggle();")
+        key_order(self, 0, 'vm_type', instance=True)
 
     def get_cpu_flags(self):
         cpu_flags = {}
@@ -52,13 +58,32 @@ class VMForm(ModelForm):
             else:
                 return vcpus
 
+    def clean_memory(self):
+        memory = self.cleaned_data.get('memory')
+        vm_type = self.cleaned_data.get('vm_type')
+        if vm_type == 'Container Provider' and memory < 1024:
+            raise forms.ValidationError(_('Minimum container memory is 1,024MiB.'))
+        else:
+            return memory
+
     def save(self, **kwargs):
         with client as c:
             cdata = self.cleaned_data
+
+            # Container boot load is GRUB
+            if self.instance.vm_type == 'Container Provider':
+                cdata['bootloader'] = 'GRUB'
+
             if self.instance.id:
                 c.call('vm.update', self.instance.id, cdata)
             else:
-                if self.instance.bootloader == 'UEFI':
+                if self.instance.vm_type == 'Container Provider':
+                    cdata['devices'] = [
+                        {'dtype': 'NIC', 'attributes': {'type': 'E1000'}},
+                        {'dtype': 'RAW', 'attributes': {'path': '', 'type': 'AHCI', 'sectorsize': 0}},
+                    ]
+                    c.call('vm.activate_sharefs')
+                elif self.instance.bootloader == 'UEFI' and self.instance.vm_type == 'Bhyve':
                     cdata['devices'] = [
                         {'dtype': 'NIC', 'attributes': {'type': 'E1000'}},
                         {'dtype': 'VNC', 'attributes': {'wait': False, 'vnc_web': False}},
@@ -97,12 +122,34 @@ class DeviceForm(ModelForm):
         required=False,
         dirsonly=False,
     )
+    DISK_raw_boot = forms.BooleanField(
+        label=_('Disk boot'),
+        widget=forms.widgets.HiddenInput(),
+        required=False,
+        initial=False,
+    )
+    ROOT_password = forms.CharField(
+        label=_('Password'),
+        max_length=50,
+        widget=forms.widgets.HiddenInput(),
+        required=False,
+        help_text=_("Set the password for the rancher user."),
+    )
     DISK_sectorsize = forms.IntegerField(
         label=_('Disk sectorsize'),
         required=False,
         initial=0,
-        help_text=_("Logical and physical sector size in bytes of the emulated disk."
+        help_text=_("Sector size of the emulated disk in bytes. Both logical and physical sector size are set to this value."
                     "If 0, a sector size is not set."),
+    )
+    DISK_raw_size = forms.CharField(
+        label=_('Disk size'),
+        widget=forms.widgets.HiddenInput(),
+        required=False,
+        initial=0,
+        validators=[RegexValidator("^(\d*)\s?([M|G|T]?)$", "Enter M, G, or T after the value to use megabytes, gigabytes or terabytes."
+                                                           " When no suffix letter is entered, the units default to gigabytes.")],
+        help_text=_("Resize the existing raw disk. Enter 0 to use the disk with the current size."),
     )
     NIC_type = forms.ChoiceField(
         label=_('Adapter Type'),
@@ -167,6 +214,7 @@ class DeviceForm(ModelForm):
         self.fields['dtype'].widget.attrs['onChange'] = (
             "deviceTypeToggle();"
         )
+
         self.fields['VNC_bind'].choices = self.ipv4_list()
 
         diskchoices = {}
@@ -188,10 +236,19 @@ class DeviceForm(ModelForm):
                 self.fields['DISK_zvol'].initial = self.instance.attributes.get('path', '').replace('/dev/', '')
                 self.fields['DISK_mode'].initial = self.instance.attributes.get('type')
                 self.fields['DISK_sectorsize'].initial = self.instance.attributes.get('sectorsize', 0)
-            elif self.instance.dtype == "RAW":
+            elif self.instance.dtype == 'RAW':
                 self.fields['DISK_raw'].initial = self.instance.attributes.get('path', '')
                 self.fields['DISK_mode'].initial = self.instance.attributes.get('type')
                 self.fields['DISK_sectorsize'].initial = self.instance.attributes.get('sectorsize', 0)
+
+                if self.instance.vm.vm_type == 'Container Provider':
+                    self.fields['DISK_raw_boot'].widget = forms.CheckboxInput()
+                    self.fields['DISK_raw_size'].widget = forms.TextInput()
+                    self.fields['ROOT_password'].widget = forms.PasswordInput(render_value=True,)
+
+                self.fields['DISK_raw_boot'].initial = self.instance.attributes.get('boot', False)
+                self.fields['DISK_raw_size'].initial = self.instance.attributes.get('size', '')
+                self.fields['ROOT_password'].initial = self.instance.attributes.get('rootpwd', '')
             elif self.instance.dtype == 'NIC':
                 self.fields['NIC_type'].initial = self.instance.attributes.get('type')
                 self.fields['NIC_mac'].initial = self.instance.attributes.get('mac')
@@ -225,10 +282,17 @@ class DeviceForm(ModelForm):
 
         return self.cleaned_data
 
+    def is_container(self, vm_type):
+        if vm_type == 'Container Provider':
+            return True
+        else:
+            return False
+
     def save(self, *args, **kwargs):
         vm = self.cleaned_data.get('vm')
         kwargs['commit'] = False
         obj = super(DeviceForm, self).save(*args, **kwargs)
+
         if self.cleaned_data['dtype'] == 'DISK':
             obj.attributes = {
                 'path': '/dev/' + self.cleaned_data['DISK_zvol'],
@@ -236,10 +300,16 @@ class DeviceForm(ModelForm):
                 'sectorsize': self.cleaned_data['DISK_sectorsize'],
             }
         elif self.cleaned_data['dtype'] == 'RAW':
+            if self.is_container(vm.vm_type):
+                if self.cleaned_data['DISK_mode'] == 'VIRTIO':
+                    self._errors['dtype'] = self.error_class([_('Containers require AHCI mode.')])
             obj.attributes = {
                 'path': self.cleaned_data['DISK_raw'],
                 'type': self.cleaned_data['DISK_mode'],
                 'sectorsize': self.cleaned_data['DISK_sectorsize'],
+                'boot': self.cleaned_data['DISK_raw_boot'],
+                'size': self.cleaned_data['DISK_raw_size'],
+                'rootpwd': self.cleaned_data['ROOT_password'],
             }
         elif self.cleaned_data['dtype'] == 'CDROM':
             cdrom_path = self.cleaned_data['CDROM_path']
@@ -256,7 +326,7 @@ class DeviceForm(ModelForm):
                 'nic_attach': self.cleaned_data['NIC_attach'],
             }
         elif self.cleaned_data['dtype'] == 'VNC':
-            if vm.bootloader == 'UEFI':
+            if vm.bootloader == 'UEFI' and self.is_container(vm.vm_type) is False:
                 obj.attributes = {
                     'wait': self.cleaned_data['VNC_wait'],
                     'vnc_port': self.cleaned_data['VNC_port'],
