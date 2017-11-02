@@ -21,7 +21,7 @@ LDFLAGS+=	-L${LOCALBASE}/lib
 PLIST_FILES=	${HEADER_FILES} \
 		${LIB_FILES}
 
-HEADER_FILES=	include/libhyverem/hyverem.h 	\
+HEADER_FILES=	include/libhyverem/hyverem.h	\
 		include/libhyverem/rfbsrv.h	\
 		include/libhyverem/libcheck.h	\
 		include/libhyverem/vncserver.h
