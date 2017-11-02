@@ -24,7 +24,7 @@ MIRROR_MAX = 5
 RE_DA = re.compile('^da[0-9]+$')
 RE_DD = re.compile(r'^(\d+) bytes transferred .*\((\d+) bytes')
 RE_DSKNAME = re.compile(r'^([a-z]+)([0-9]+)$')
-RE_ISDISK = re.compile(r'^(da|ada|vtbd|mfid|nvd|nvdimm)[0-9]+$')
+RE_ISDISK = re.compile(r'^(da|ada|vtbd|mfid|nvd|pmem)[0-9]+$')
 RE_MPATH_NAME = re.compile(r'[a-z]+(\d+)')
 
 
