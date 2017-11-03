@@ -330,7 +330,8 @@ class ZFSSnapshot(CRUDService):
         Str('dataset'),
         Str('name'),
         Bool('recursive'),
-        Int('vmsnaps_count')
+        Int('vmsnaps_count'),
+        Dict('properties', additional_attrs=True)
     ))
     async def do_create(self, data):
         """
@@ -345,6 +346,7 @@ class ZFSSnapshot(CRUDService):
         name = data.get('name', '')
         recursive = data.get('recursive', False)
         vmsnaps_count = data.get('vmsnaps_count', 0)
+        properties = data.get('properties', None)
 
         if not dataset or not name:
             return False
@@ -356,18 +358,15 @@ class ZFSSnapshot(CRUDService):
             return False
 
         try:
-            if recursive:
-                ds.snapshots('{0}@{1}'.format(dataset, name, recursive=True))
-            else:
-                ds.snapshot('{0}@{1}'.format(dataset, name))
+            ds.snapshot(f'{dataset}@{name}', recursive=recursive, fsopts=properties)
 
             if vmsnaps_count > 0:
                 ds.properties['freenas:vmsynced'] = libzfs.ZFSUserProperty('Y')
 
-            self.logger.info("Snapshot taken: {0}@{1}".format(dataset, name))
+            self.logger.info(f"Snapshot taken: {dataset}@{name}")
             return True
         except libzfs.ZFSException as err:
-                self.logger.error("{0}".format(err))
+                self.logger.error(f"{err}")
                 return False
 
     @accepts(Dict(
