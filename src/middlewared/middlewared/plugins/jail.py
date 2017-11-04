@@ -125,15 +125,13 @@ class JailService(CRUDService):
 
         return True
 
-    @accepts(List("jails"))
-    def do_delete(self, jails):
+    @accepts(Str("jail"))
+    def do_delete(self, jail):
         """Takes a jail and destroys it."""
+        _, _, iocage = self.check_jail_existence(jail)
 
-        for jail in jails:
-            _, _, iocage = self.check_jail_existence(jail)
-
-            # TODO: Port children checking, release destroying.
-            iocage.destroy_jail()
+        # TODO: Port children checking, release destroying.
+        iocage.destroy_jail()
 
         return True
 
@@ -155,7 +153,7 @@ class JailService(CRUDService):
     @accepts(
         Dict("options",
              Str("release"),
-             Str("server", default="ftp.freebsd.org"),
+             Str("server", default="download.freebsd.org"),
              Str("user", default="anonymous"),
              Str("password", default="anonymous@"),
              Str("name", default=None),
@@ -198,25 +196,21 @@ class JailService(CRUDService):
 
         return resource_list
 
-    @accepts(List("jails"))
-    def start(self, jails):
+    @accepts(Str("jail"))
+    def start(self, jail):
         """Takes a jail and starts it."""
+        _, _, iocage = self.check_jail_existence(jail)
 
-        for jail in jails:
-            _, _, iocage = self.check_jail_existence(jail)
-
-            iocage.start()
+        iocage.start()
 
         return True
 
-    @accepts(List("jails"))
-    def stop(self, jails):
+    @accepts(Str("jail"))
+    def stop(self, jail):
         """Takes a jail and stops it."""
+        _, _, iocage = self.check_jail_existence(jail)
 
-        for jail in jails:
-            _, _, iocage = self.check_jail_existence(jail)
-
-            iocage.stop()
+        iocage.stop()
 
         return True
 
@@ -304,94 +298,89 @@ class JailService(CRUDService):
 
         return msg.decode("utf-8")
 
-    @accepts(List("jails"))
+    @accepts(Str("jail"))
     @job(lock=lambda args: f"jail_update:{args[-1]}")
-    def update_to_latest_patch(self, job, jails):
+    def update_to_latest_patch(self, job, jail):
         """Updates specified jail to latest patch level."""
 
-        for jail in jails:
-            uuid, path, _ = self.check_jail_existence(jail)
-            status, jid = IOCList.list_get_jid(uuid)
-            conf = IOCJson(path).json_load()
+        uuid, path, _ = self.check_jail_existence(jail)
+        status, jid = IOCList.list_get_jid(uuid)
+        conf = IOCJson(path).json_load()
 
-            # Sometimes if they don't have an existing patch level, this
-            # becomes 11.1 instead of 11.1-RELEASE
-            _release = conf["release"].rsplit("-", 1)[0]
-            release = _release if "-RELEASE" in _release else conf["release"]
+        # Sometimes if they don't have an existing patch level, this
+        # becomes 11.1 instead of 11.1-RELEASE
+        _release = conf["release"].rsplit("-", 1)[0]
+        release = _release if "-RELEASE" in _release else conf["release"]
 
-            started = False
+        started = False
 
-            if conf["type"] == "jail":
-                if not status:
-                    self.start(jail)
-                    started = True
-            else:
-                return False
+        if conf["type"] == "jail":
+            if not status:
+                self.start(jail)
+                started = True
+        else:
+            return False
 
-            if conf["basejail"] != "yes":
-                IOCFetch(release).fetch_update(True, uuid)
-            else:
-                # Basejails only need their base RELEASE updated
-                IOCFetch(release).fetch_update()
+        if conf["basejail"] != "yes":
+            IOCFetch(release).fetch_update(True, uuid)
+        else:
+            # Basejails only need their base RELEASE updated
+            IOCFetch(release).fetch_update()
 
-            if started:
-                self.stop(jail)
+        if started:
+            self.stop(jail)
 
         return True
 
-    @accepts(List("jails"), Str("release"))
+    @accepts(Str("jail"), Str("release"))
     @job(lock=lambda args: f"jail_upgrade:{args[-1]}")
-    def upgrade(self, job, jails, release):
+    def upgrade(self, job, jail, release):
         """Upgrades specified jail to specified RELEASE."""
 
-        for jail in jails:
-            uuid, path, _ = self.check_jail_existence(jail)
-            status, jid = IOCList.list_get_jid(uuid)
-            conf = IOCJson(path).json_load()
-            root_path = f"{path}/root"
-            started = False
+        uuid, path, _ = self.check_jail_existence(jail)
+        status, jid = IOCList.list_get_jid(uuid)
+        conf = IOCJson(path).json_load()
+        root_path = f"{path}/root"
+        started = False
 
-            if conf["type"] == "jail":
-                if not status:
-                    self.start(jail)
-                    started = True
-            else:
-                return False
-
-            IOCUpgrade(conf, release, root_path).upgrade_jail()
-
-            if started:
-                self.stop(jail)
-
-        return True
-
-    @accepts(List("jails"))
-    @job(lock=lambda args: f"jail_export:{args[-1]}")
-    def export(self, job, jails):
-        """Exports jail to zip file"""
-
-        for jail in jails:
-            uuid, path, _ = self.check_jail_existence(jail)
-            status, jid = IOCList.list_get_jid(uuid)
-            started = False
-
-            if status:
-                self.stop(jail)
-                started = True
-
-            IOCImage().export_jail(uuid, path)
-
-            if started:
+        if conf["type"] == "jail":
+            if not status:
                 self.start(jail)
+                started = True
+        else:
+            return False
+
+        IOCUpgrade(conf, release, root_path).upgrade_jail()
+
+        if started:
+            self.stop(jail)
 
         return True
 
-    @accepts(List("jails"))
+    @accepts(Str("jail"))
+    @job(lock=lambda args: f"jail_export:{args[-1]}")
+    def export(self, job, jail):
+        """Exports jail to zip file"""
+        uuid, path, _ = self.check_jail_existence(jail)
+        status, jid = IOCList.list_get_jid(uuid)
+        started = False
+
+        if status:
+            self.stop(jail)
+            started = True
+
+        IOCImage().export_jail(uuid, path)
+
+        if started:
+            self.start(jail)
+
+        return True
+
+    @accepts(Str("jail"))
     @job(lock=lambda args: f"jail_import:{args[-1]}")
-    def _import(self, job, jails):
+    def _import(self, job, jail):
         """Imports jail from zip file"""
 
-        for jail in jails:
-            IOCImage().import_jail(jail)
+        IOCImage().import_jail(jail)
 
         return True
