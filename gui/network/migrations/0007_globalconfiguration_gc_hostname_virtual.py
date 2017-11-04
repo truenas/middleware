@@ -9,7 +9,7 @@ from django.db import migrations, models
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('network', '0006_globalconfiguration_gc_domains'),
+        ('network', '0003_lagg_no_mtu'),
     ]
 
     operations = [
