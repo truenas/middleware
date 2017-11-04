@@ -62,6 +62,15 @@ class GlobalConfiguration(Model):
         blank=True,
         null=True,
     )
+    gc_hostname_virtual = models.CharField(
+        max_length=120,
+        verbose_name=_("Hostname (Virtual)"),
+        validators=[RegexValidator(
+            regex=r'^[a-zA-Z\.\-\_0-9]+$',
+        )],
+        blank=True,
+        null=True,
+    )
     gc_domain = models.CharField(
         max_length=120,
         verbose_name=_("Domain"),
@@ -140,6 +149,7 @@ class GlobalConfiguration(Model):
         for name in (
             'gc_hostname',
             'gc_hostname_b',
+            'gc_hostname_virtual',
             'gc_ipv4gateway',
             'gc_ipv6gateway',
             'gc_domain',
