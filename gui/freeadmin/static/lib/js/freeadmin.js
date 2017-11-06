@@ -1379,6 +1379,17 @@ require([
 
     }
 
+    vmTypeToggle = function() {
+        var vm_type = registry.byId("id_vm_type");
+        var bootloader = registry.byId("id_bootloader").domNode.parentNode.parentNode;
+
+        if (vm_type.get('value') == 'Container Provider') {
+            domStyle.set(bootloader, "display", "none");
+        } else if (vm_type.get('value') == 'Bhyve') {
+            domStyle.set(bootloader, "display", "");
+        }
+    }
+
     consulTypeToggle = function() {
 
         var consulalert_type = registry.byId("id_consulalert_type");

@@ -26,7 +26,7 @@
 #####################################################################
 from django.conf.urls import url
 
-from .views import start, stop, restart, home, clone, vnc_web
+from .views import start, stop, restart, home, clone, vnc_web, download_progress
 
 urlpatterns = [
     url(r'^$', home, name="vm_home"),
@@ -35,4 +35,5 @@ urlpatterns = [
     url(r'^restart/(?P<id>\d+)/$', restart, name="vm_restart"),
     url(r'^clone/(?P<id>\d+)/$', clone, name="vm_clone"),
     url(r'^vncweb/(?P<id>\d+)/$', vnc_web, name="vm_vncweb"),
+    url(r'^verify_progress/$', download_progress, name="vm_download_progress"),
 ]

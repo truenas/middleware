@@ -68,6 +68,15 @@ class VM(Model):
         choices=choices.VM_BOOTLOADER,
         default='UEFI',
     )
+    vm_type = models.CharField(
+        verbose_name=_('VM Type'),
+        max_length=50,
+        choices=(
+            ('Bhyve', _('Virtual Machine')),
+            ('Container Provider', _('Docker VM')),
+        ),
+        default='Bhyve',
+    )
     autostart = models.BooleanField(
         verbose_name=_('Autostart'),
         help_text=_('Guest VM will start on boot.'),
