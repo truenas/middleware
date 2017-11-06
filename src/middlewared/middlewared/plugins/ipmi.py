@@ -6,7 +6,6 @@ from middlewared.utils import filter_list, run
 
 import errno
 import os
-import pipes
 import subprocess
 
 channels = []
@@ -102,8 +101,7 @@ class IPMIService(CRUDService):
         await run(*args, 'arp', 'generate', 'on', check=False)
         if data.get('password'):
             rv |= (await run(
-                'ipmitool', 'user', 'set', 'password', '2',
-                pipes.quote(data.get('password')),
+                'ipmitool', 'user', 'set', 'password', '2', data.get('password'),
             )).returncode
         rv |= (await run('ipmitool', 'user', 'enable', '2')).returncode
         # XXX: according to dwhite, this needs to be executed off the box via
