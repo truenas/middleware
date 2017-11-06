@@ -77,36 +77,42 @@ class UpdateHandler(object):
         self.service = service
         self.job = job
 
+        self._current_package_index = None
+        self._packages_count = None
+
     def check_handler(self, index, pkg, pkgList):
+        self._current_package_index = index - 1
+        self._packages_count = len(pkgList)
+
         pkgname = '%s-%s' % (
             pkg.Name(),
             pkg.Version(),
         )
-        step_progress = int((1.0 / len(pkgList)) * 100.0)
-        self._baseprogress = index * step_progress
 
-        self.job.set_progress((index - 1) * step_progress, 'Downloading {}'.format(pkgname))
+        self.job.set_progress((self._current_package_index / self._packages_count) * 50,
+                              'Downloading {}'.format(pkgname))
 
     def get_handler(
         self, method, filename, size=None, progress=None, download_rate=None
     ):
-        filename = filename.rsplit('/', 1)[-1]
-        if not progress:
+        if self._current_package_index is None or self._packages_count is None or not progress:
             return
-        progress = (progress * self._baseprogress) / 100
-        if progress == 0:
-            progress = 1
-        self.job.set_progress(progress, 'Downloading {} {} ({}%) {}/s'.format(
-            filename,
-            size if size else '',
-            progress,
-            download_rate if download_rate else '',
-        ))
+
+        filename = filename.rsplit('/', 1)[-1]
+        self.job.set_progress(
+            ((self._current_package_index + progress / 100) / self._packages_count) * 50,
+            'Downloading {} {} ({}%) {}/s'.format(
+                filename,
+                size if size else '',
+                progress,
+                download_rate if download_rate else '',
+            )
+        )
 
     def install_handler(self, index, name, packages):
         total = len(packages)
         self.job.set_progress(
-            int((float(index) / float(total)) * 100.0),
+            50 + (index / total) * 50,
             'Installing {} ({}/{})'.format(name, index, total),
         )
 
@@ -306,6 +312,8 @@ class UpdateService(Service):
         attrs = attrs or {}
         train = attrs.get('train') or (await self.get_trains())['selected']
         location = await self.middleware.call('notifier.get_update_location')
+
+        job.set_progress(0, 'Retrieving update manifest')
 
         handler = UpdateHandler(self, job)
 
