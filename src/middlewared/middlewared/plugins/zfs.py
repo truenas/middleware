@@ -606,7 +606,7 @@ async def _handle_zfs_events(middleware, event_type, args):
         # Send the last event with SCRUB/RESILVER as FINISHED
         await middleware.threaded(scanwatch.send_scan)
 
-    elif data.get('type') == 'misc.fs.zfs.scrub_finish':
+    if data.get('type') == 'misc.fs.zfs.scrub_finish':
         await middleware.call('mail.send', {
             'subject': f'{socket.gethostname()}: scrub finished',
             'text': f"scrub of pool '{data.get('pool_name')}' finished",
