@@ -652,9 +652,9 @@ class VMService(CRUDService):
         return False
 
     @accepts()
-    async def get_memory_in_use(self):
+    async def get_vmemory_in_use(self):
         """
-        Return the total amount of memory in MB used by guests
+        Return the total amount of virtual memory in MB used by guests
         """
         guests = await self.middleware.call('datastore.query', 'vm.vm')
         total_memory = 0
@@ -666,9 +666,9 @@ class VMService(CRUDService):
         return total_memory
 
     @accepts()
-    async def get_provisioned_memory(self):
+    async def get_provisioned_vmemory(self):
         """
-        Return the total amount of memory in MB provisioned for guests,
+        Return the total amount of virtual memory in MB provisioned for guests,
         guests that are set to autostart are accounted.
         """
         guests = await self.middleware.call('datastore.query', 'vm.vm', [('autostart', '=', True)])
