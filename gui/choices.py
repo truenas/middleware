@@ -447,9 +447,7 @@ class NICChoices(object):
         if exclude_configured:
             try:
                 # Exclude any configured interfaces
-                c.execute("SELECT int_interface FROM network_interfaces "
-                          "WHERE int_ipv4address != '' OR int_dhcp != '0' "
-                          "OR int_ipv6auto != '0' OR int_ipv6address != ''")
+                c.execute("SELECT int_interface FROM network_interfaces")
             except sqlite3.OperationalError:
                 pass
             else:
