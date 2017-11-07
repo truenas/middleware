@@ -651,6 +651,33 @@ class VMService(CRUDService):
                 return dataset.mountpoint
         return False
 
+    @accepts()
+    async def get_memory_in_use(self):
+        """
+        Return the total amount of memory in MB used by guests
+        """
+        guests = await self.middleware.call('datastore.query', 'vm.vm')
+        total_memory = 0
+        for guest in guests:
+            status = await self.status(guest['id'])
+            if status['state'] == 'RUNNING':
+                total_memory += guest['memory'] * 1024 * 1024
+
+        return total_memory
+
+    @accepts()
+    async def get_provisioned_memory(self):
+        """
+        Return the total amount of memory in MB provisioned for guests,
+        guests that are set to autostart are accounted.
+        """
+        guests = await self.middleware.call('datastore.query', 'vm.vm', [('autostart', '=', True)])
+        provisioned_memory = 0
+        for guest in guests:
+            provisioned_memory += guest['memory'] * 1024 * 1024
+
+        return provisioned_memory
+
     @accepts(Int('id'))
     async def rm_container_conf(self, id):
         vm_data = await self.middleware.call('datastore.query', 'vm.vm', [('id', '=', id)])
