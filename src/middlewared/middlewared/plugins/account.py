@@ -458,6 +458,13 @@ class GroupService(CRUDService):
     class Config:
         datastore = 'account.bsdgroups'
         datastore_prefix = 'bsdgrp_'
+        datastore_extend = 'group.group_extend'
+
+    @private
+    async def group_extend(self, group):
+        # Get group membership
+        group['users'] = [gm['user']['id'] for gm in await self.middleware.call('datastore.query', 'account.bsdgroupmembership', [('group', '=', group['id'])], {'prefix': 'bsdgrpmember_'})]
+        return group
 
     @accepts(Dict(
         'group_create',
