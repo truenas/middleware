@@ -2,6 +2,7 @@ import asyncio
 import logging
 from datetime import datetime
 import os
+import shutil
 import subprocess
 import sysctl
 
@@ -103,6 +104,8 @@ class MountFsContextManager:
 
 class PoolService(CRUDService):
 
+    GELI_KEYPATH = '/data/geli'
+
     @filterable
     async def query(self, filters=None, options=None):
         filters = filters or []
@@ -161,6 +164,31 @@ class PoolService(CRUDService):
             if pool['is_decrypted']:
                 async for i in await self.middleware.call('zfs.pool.get_disks', pool['name']):
                     yield i
+
+    @item_method
+    @accepts(Int('id'))
+    async def download_encryption_key(self, oid):
+        """
+        Download encryption key for a given pool `id`.
+        """
+        pool = await self.query([('id', '=', oid)], {'get': True})
+        if not pool['encryptkey']:
+            return None
+
+        job_id, url = await self.middleware.call(
+            'core.download',
+            'pool.download_encryption_key_job',
+            [os.path.join(self.GELI_KEYPATH, f"{pool['encryptkey']}.key")],
+            'geli.key'
+        )
+        return url
+
+    @job(pipe=True)
+    @private
+    async def download_encryption_key_job(self, job, filename):
+        with open(filename, "rb") as src:
+            with os.fdopen(job.write_fd, "wb") as dst:
+                shutil.copyfileobj(src, dst)
 
     @private
     def configure_resilver_priority(self):
