@@ -912,6 +912,9 @@ class Middleware(object):
 
     def send_event(self, name, event_type, **kwargs):
         assert event_type in ('ADDED', 'CHANGED', 'REMOVED')
+
+        self.logger.trace(f'Sending event "{event_type}":{kwargs}')
+
         for sessionid, wsclient in self.__wsclients.items():
             try:
                 wsclient.send_event(name, event_type, **kwargs)
