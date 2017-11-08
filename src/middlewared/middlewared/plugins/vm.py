@@ -654,29 +654,25 @@ class VMService(CRUDService):
     @accepts()
     async def get_vmemory_in_use(self):
         """
-        Return the total amount of virtual memory in MB used by guests
+        The total amount of virtual memory in MB used by guests
+
+            Returns a dict with the following information:
+                RNP - Running but not provisioned
+                PRD - Provisioned but not running
+                RPRD - Running and provisioned
         """
+        memory_allocation = {'RNP': 0, 'PRD': 0, 'RPRD': 0}
         guests = await self.middleware.call('datastore.query', 'vm.vm')
-        total_memory = 0
         for guest in guests:
             status = await self.status(guest['id'])
-            if status['state'] == 'RUNNING':
-                total_memory += guest['memory'] * 1024 * 1024
+            if status['state'] == 'RUNNING' and guest['autostart'] is False:
+                memory_allocation['RNP'] += guest['memory'] * 1024 * 1024
+            elif status['state'] == 'RUNNING' and guest['autostart'] is True:
+                memory_allocation['RPRD'] += guest['memory'] * 1024 * 1024
+            elif guest['autostart']:
+                memory_allocation['PRD'] += guest['memory'] * 1024 * 1024
 
-        return total_memory
-
-    @accepts()
-    async def get_provisioned_vmemory(self):
-        """
-        Return the total amount of virtual memory in MB provisioned for guests,
-        guests that are set to autostart are accounted.
-        """
-        guests = await self.middleware.call('datastore.query', 'vm.vm', [('autostart', '=', True)])
-        provisioned_memory = 0
-        for guest in guests:
-            provisioned_memory += guest['memory'] * 1024 * 1024
-
-        return provisioned_memory
+        return memory_allocation
 
     @accepts(Int('id'))
     async def rm_container_conf(self, id):
