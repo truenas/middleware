@@ -192,7 +192,7 @@ class Loop_Sockserver(threading.Thread):
         try:
             asyncore.loop()
         except Exception as e:
-            syslog(LOG_ALERT, str(e))
+            pass 
         finally:
             if os.path.exists(self.obj.path):
                 os.unlink(self.obj.path)
