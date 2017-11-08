@@ -396,6 +396,18 @@ class BackupS3Service(Service):
             return []
         return obj['Contents']
 
+    @private
+    async def is_dir(self, cred_id, bucket, path):
+        client = await self.get_client(cred_id)
+        objects_list = client.list_objects_v2(
+            Bucket=bucket,
+            Prefix=path,
+        )
+        for obj in objects_list.get('Contents', []):
+            if obj['Key'] == path or obj['Key'].startswith(f'{path}/'):
+                return True
+        return False
+
 
 class BackupB2Service(Service):
 
@@ -478,6 +490,42 @@ class BackupB2Service(Service):
                 await asyncio.wait_for(check_task, None)
                 raise ValueError('rclone failed: {}'.format(check_task.result()))
             return True
+
+    @private
+    def is_dir(self, cred_id, bucket, path):
+        auth = self.__get_auth(cred_id)
+
+        for b in self.get_buckets(cred_id):
+            if b['bucketName'] == bucket:
+                bucket_id = b['bucketId']
+                break
+        else:
+            raise ValueError("Bucket not found")
+
+        startFileName = None
+        while True:
+            r = requests.post(
+                f'{auth["apiUrl"]}/b2api/v1/b2_list_file_names',
+                headers={
+                    'Authorization': auth['authorizationToken'],
+                    'Content-Type': 'application/json',
+                },
+                data=json.dumps({'bucketId': bucket_id,
+                                 'startFileName': startFileName,
+                                 'prefix': path,
+                                 'delimiter': '/'}),
+            )
+            if r.status_code != 200:
+                raise CallError(f'Invalid B2 request: [{r.status_code}] {r.text}')
+            response = r.json()
+            for file in response['files']:
+                if file['fileName'] == f'{path}/':
+                    return True
+            if response['nextFileName'] is None:
+                break
+            startFileName = response['nextFileName']
+
+        return False
 
 
 class BackupGCSService(Service):
