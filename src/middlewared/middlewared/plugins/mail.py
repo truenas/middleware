@@ -123,6 +123,7 @@ class MailService(ConfigService):
         Str('subject'),
         Str('text', required=True),
         List('to', items=[Str('email')]),
+        List('cc', items=[Str('email')]),
         Int('interval'),
         Str('channel'),
         Int('timeout', default=300),
@@ -238,6 +239,8 @@ class MailService(ConfigService):
 
         msg['From'] = config['fromemail']
         msg['To'] = ', '.join(to)
+        if message.get('cc'):
+            msg['Cc'] = ', '.join(message.get('cc'))
         msg['Date'] = formatdate()
 
         local_hostname = socket.gethostname()
