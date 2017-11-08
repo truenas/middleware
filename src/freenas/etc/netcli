@@ -179,12 +179,11 @@ def get_lagg_proto():
     return proto
 
 
-def get_lagg_nics(nics=None):
+def get_lagg_nics():
 
     group = [ ]
 
-    if nics is None:
-        nics = NICChoices(nolagg=True)
+    nics = list(NICChoices(nolagg=True))
 
     while True:
         nic = get_nic(nics)
