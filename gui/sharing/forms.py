@@ -365,11 +365,21 @@ class NFS_ShareForm(ModelForm):
         net = re.sub(r'\s{2,}|\n', ' ', net).strip()
         if not net:
             return net
+        seen_networks = []
         for n in net.split(' '):
             try:
-                IPNetwork(n)
+                netobj = IPNetwork(n)
                 if n.find("/") == -1:
                     raise ValueError(n)
+                for i in seen_networks:
+                    if netobj.overlaps(i):
+                        raise forms.ValidationError(
+                            _('The following networks overlap: %(net1)s - %(net2)s') % {
+                                'net1': netobj,
+                                'net2': i,
+                            }
+                        )
+                seen_networks.append(netobj)
             except (AddressValueError, NetmaskValueError, ValueError):
                 raise forms.ValidationError(
                     _("This is not a valid network: %s") % n
