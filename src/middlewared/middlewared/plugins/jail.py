@@ -153,7 +153,7 @@ class JailService(CRUDService):
     @accepts(
         Dict("options",
              Str("release"),
-             Str("server", default="ftp.freebsd.org"),
+             Str("server", default="download.freebsd.org"),
              Str("user", default="anonymous"),
              Str("password", default="anonymous@"),
              Str("name", default=None),
