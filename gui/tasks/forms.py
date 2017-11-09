@@ -79,8 +79,8 @@ class CloudSyncForm(ModelForm):
         credential = attributes.get('credential')
         if not credential:
             raise forms.ValidationError(_('This field is required.'))
-        credential_object = CloudCredentials.objects.get(id=credential)
-        if credential_object is None:
+        qs = CloudCredentials.objects.filter(id=credential)
+        if not qs.exists():
             raise forms.ValidationError(_('Invalid credential.'))
 
         if not attributes.get('bucket'):
@@ -90,10 +90,7 @@ class CloudSyncForm(ModelForm):
         folder = attributes.get('folder').strip('/')
         if direction == 'PULL' and folder:
             with client as c:
-                if not c.call('backup.%s.is_dir' % {'AMAZON': 's3',
-                                                    'BACKBLAZE': 'b2',
-                                                    'GCLOUD': 'gcs'}[credential_object.provider],
-                              credential, attributes['bucket'], folder):
+                if not c.call('backup.is_dir', credential, attributes['bucket'], folder):
                     raise forms.ValidationError(_('Folder "%s" does not exist.') % folder)
 
         return attributes

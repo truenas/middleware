@@ -218,16 +218,29 @@ class BackupService(CRUDService):
         if not credential:
             raise ValueError("Backup credential not found.")
 
-        if credential['provider'] == 'AMAZON':
-            return await self.middleware.call('backup.s3.sync', job, backup, credential)
-        elif credential['provider'] == 'BACKBLAZE':
-            return await self.middleware.call('backup.b2.sync', job, backup, credential)
-        elif credential['provider'] == 'GCLOUD':
-            return await self.middleware.call('backup.gcs.sync', job, backup, credential)
-        else:
-            raise NotImplementedError('Unsupported provider: {}'.format(
-                credential['provider']
-            ))
+        return await self._call_provider_method(credential['provider'], 'sync', job, backup, credential)
+
+    @accepts(Int('credential_id'), Str('bucket'), Str('path'))
+    async def is_dir(self, credential_id, bucket, path):
+        credential = await self.middleware.call('datastore.query', 'system.cloudcredentials',
+                                                [('id', '=', credential_id)], {'get': True})
+        if not credential:
+            raise ValueError("Backup credential not found.")
+
+        return await self._call_provider_method(credential['provider'], 'is_dir', credential_id, bucket, path)
+
+    @private
+    async def _call_provider_method(self, provider, method, *args, **kwargs):
+        try:
+            plugin = {
+                'AMAZON': 's3',
+                'BACKBLAZE': 'b2',
+                'GCLOUD': 'gcs',
+            }[provider]
+        except KeyError:
+            raise NotImplementedError(f'Unsupported provider: {provider}')
+
+        return await self.middleware.call(f'backup.{plugin}.{method}', *args, **kwargs)
 
 
 class BackupS3Service(Service):
@@ -399,7 +412,8 @@ class BackupS3Service(Service):
     @private
     async def is_dir(self, cred_id, bucket, path):
         client = await self.get_client(cred_id)
-        objects_list = client.list_objects_v2(
+        objects_list = await self.middleware.threaded(
+            client.list_objects_v2,
             Bucket=bucket,
             Prefix=path,
         )
