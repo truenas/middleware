@@ -619,3 +619,13 @@ service_account_file = {keyfile}
                 await asyncio.wait_for(check_task, None)
                 raise ValueError('rclone failed: {}'.format(check_task.result()))
             return True
+
+    @private
+    def is_dir(self, cred_id, bucket, path):
+        client = self.__get_client(cred_id)
+        bucket = storage.Bucket(client, bucket)
+        prefix = f"{path}/"
+        for blob in bucket.list_blobs(prefix=prefix):
+            if blob.name.startswith(prefix):
+                return True
+        return False
