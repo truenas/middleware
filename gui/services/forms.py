@@ -447,12 +447,32 @@ class TFTPForm(MiddlewareModelForm, ModelForm):
     middleware_plugin = "tftp"
     is_singletone = True
 
+    tftp_umask = UnixPermissionField(label=_('File Permission'))
+
     class Meta:
         fields = '__all__'
         model = models.TFTP
         widgets = {
             'tftp_port': forms.widgets.TextInput(),
         }
+
+    def __init__(self, *args, **kwargs):
+
+        if 'instance' in kwargs:
+            instance = kwargs['instance']
+            try:
+                mask = int(instance.tftp_umask, 8)
+                instance.tftp_umask = "%.3o" % (~mask & 0o666)
+            except ValueError:
+                pass
+
+        super(TFTPForm, self).__init__(*args, **kwargs)
+
+    def clean_tftp_umask(self):
+        perm = self.cleaned_data['tftp_umask']
+        perm = int(perm, 8)
+        mask = (~perm & 0o666)
+        return "%.3o" % mask
 
 
 class SSHForm(ModelForm):
