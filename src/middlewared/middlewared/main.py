@@ -830,7 +830,7 @@ class Middleware(object):
         to block the event loop indefinitely.
         """
         loop = asyncio.get_event_loop()
-        task = loop.run_in_executor(self.__threadpool, method, *args, **kwargs)
+        task = loop.run_in_executor(self.__threadpool, functools.partial(method, *args, **kwargs))
         await task
         return task.result()
 

@@ -87,13 +87,10 @@ class CloudSyncForm(ModelForm):
             raise forms.ValidationError(_('Bucket is required.'))
 
         direction = self.cleaned_data.get('direction')
-        folder = attributes.get('folder')
-        if direction == 'PULL' and folder and folder != '/':
-            if folder.startswith('/'):
-                folder = folder[1:]
+        folder = attributes.get('folder').strip('/')
+        if direction == 'PULL' and folder:
             with client as c:
-                # TODO: make it provider agnostic
-                if not c.call('backup.s3.ls', credential, attributes['bucket'], folder):
+                if not c.call('backup.is_dir', credential, attributes['bucket'], folder):
                     raise forms.ValidationError(_('Folder "%s" does not exist.') % folder)
 
         return attributes
