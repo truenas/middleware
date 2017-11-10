@@ -2163,7 +2163,7 @@ require([
             } catch(e) {
                 try {
                     if(!error) {
-                        rnode.set('content', data);
+                        rnode.set('content', '<pre>' + data + '</pre>');
                     } else {
                         setMessage(gettext('An error occurred!'), "error");
                         rnode.hide();
