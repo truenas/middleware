@@ -1,3 +1,4 @@
+from azure.storage import CloudStorageAccount
 from google.cloud import storage
 
 from middlewared.schema import accepts, Bool, Dict, Int, Patch, Ref, Str
@@ -53,6 +54,7 @@ class BackupCredentialService(CRUDService):
         Str('name'),
         Str('provider', enum=[
             'AMAZON',
+            'AZURE',
             'BACKBLAZE',
             'GCLOUD',
         ]),
@@ -99,8 +101,8 @@ class BackupService(CRUDService):
 
         if credential['provider'] == 'AMAZON':
             data['attributes']['region'] = await self.middleware.call('backup.s3.get_bucket_location', credential['id'], data['attributes']['bucket'])
-        elif credential['provider'] in ('BACKBLAZE', 'GCLOUD'):
-            #  BACKBLAZE|GCLOUD does not need validation nor new data at this stage
+        elif credential['provider'] in ('AZURE', 'BACKBLAZE', 'GCLOUD'):
+            # AZURE|BACKBLAZE|GCLOUD does not need validation nor new data at this stage
             pass
         else:
             verrors.add(f'{name}.provider', f'Invalid provider: {credential["provider"]}')
@@ -234,6 +236,7 @@ class BackupService(CRUDService):
         try:
             plugin = {
                 'AMAZON': 's3',
+                'AZURE': 'azure',
                 'BACKBLAZE': 'b2',
                 'GCLOUD': 'gcs',
             }[provider]
@@ -626,6 +629,85 @@ service_account_file = {keyfile}
         bucket = storage.Bucket(client, bucket)
         prefix = f"{path}/"
         for blob in bucket.list_blobs(prefix=prefix):
+            if blob.name.startswith(prefix):
+                return True
+        return False
+
+
+class BackupAzureService(Service):
+
+    class Config:
+        namespace = 'backup.azure'
+
+    def __get_client(self, id):
+        credential = self.middleware.call_sync('datastore.query', 'system.cloudcredentials', [('id', '=', id)], {'get': True})
+
+        return CloudStorageAccount(
+            credential['attributes'].get('account_name'),
+            credential['attributes'].get('account_key'),
+        )
+
+    @accepts(Int('id'))
+    def get_buckets(self, id):
+        client = self.__get_client(id)
+        block_blob_service = client.create_block_blob_service()
+        buckets = []
+        for bucket in block_blob_service.list_containers():
+            buckets.append(bucket.name)
+        return buckets
+
+    @private
+    async def sync(self, job, backup, credential):
+        # Use a temporary file to store rclone file
+        with tempfile.NamedTemporaryFile(mode='w+') as f:
+            # Make sure only root can read it as there is sensitive data
+            os.chmod(f.name, 0o600)
+
+            f.write(textwrap.dedent(f"""\
+                [remote]
+                type = azureblob
+                account = {credential['attributes']['account_name']}
+                key = {credential['attributes']['account_key']}
+                endpoint =
+            """))
+            f.flush()
+
+            args = [
+                '/usr/local/bin/rclone',
+                '--config', f.name,
+                '-v',
+                '--stats', '1s',
+                'sync',
+            ]
+
+            remote_path = 'remote:{}{}'.format(
+                backup['attributes']['bucket'],
+                '/{}'.format(backup['attributes']['folder']) if backup['attributes'].get('folder') else '',
+            )
+
+            if backup['direction'] == 'PUSH':
+                args.extend([backup['path'], remote_path])
+            else:
+                args.extend([remote_path, backup['path']])
+
+            proc = await Popen(
+                args,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+            )
+            check_task = asyncio.ensure_future(rclone_check_progress(job, proc))
+            await proc.wait()
+            if proc.returncode != 0:
+                await asyncio.wait_for(check_task, None)
+                raise ValueError('rclone failed: {}'.format(check_task.result()))
+            return True
+
+    @private
+    def is_dir(self, cred_id, bucket, path):
+        client = self.__get_client(cred_id)
+        block_blob_service = client.create_block_blob_service()
+        prefix = f"{path}/"
+        for blob in block_blob_service.list_blobs(bucket, prefix=prefix):
             if blob.name.startswith(prefix):
                 return True
         return False

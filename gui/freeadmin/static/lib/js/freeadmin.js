@@ -1557,6 +1557,7 @@ require([
 
         var PROVIDER_MAP = {
           'AMAZON': ['access_key', 'secret_key'],
+          'AZURE': ['account_name', 'account_key'],
           'BACKBLAZE': ['account_id', 'app_key'],
           'GCLOUD': ['keyfile']
         };
