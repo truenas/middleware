@@ -39,24 +39,22 @@ class ServiceMonitorThread(threading.Thread):
 
         self.logger.debug("[ServiceMonitorThread] name=%s frequency=%d retry=%d", self.name, self.frequency, self.retry)
 
-    @classmethod
-    def reset_alerts(klass, service):
+    @staticmethod
+    def reset_alerts(service):
         for _file in os.listdir('/tmp'):
-            if _file.startswith('.alert.%s.' % service) and _file.endswith('.service_monitor'):
+            if _file.startswith(f'.alert.{service}.') and _file.endswith('.service_monitor'):
                 try:
                     os.remove(os.path.join('/tmp', _file))
-                except Exception:
+                except OSError:
                     pass
 
     @private
-    def alert(self, message):
-        _file = tempfile.NamedTemporaryFile(
-            dir='/tmp', prefix='.alert.%s.' % self.name, suffix='.service_monitor',
+    def alert(self, service, message):
+        with tempfile.NamedTemporaryFile(
+            dir='/tmp', prefix=f'.alert.{service}.', suffix='.service_monitor',
             mode='w', encoding='utf-8', delete=False
-        )
-        if _file:
+        ) as _file:
             _file.write(message)
-            _file.close()
 
     @private
     def isEnabled(self, service):
@@ -69,25 +67,17 @@ class ServiceMonitorThread(threading.Thread):
         # start the service.
         #
         if service in ('activedirectory', 'ldap', 'nis'):
-            try:
-                ds = self.middleware.call_sync('datastore.query', 'directoryservice.%s' % service)[0]
-                if service == 'activedirectory':
-                    service = 'ad'
-                enabled = ds["%s_enable" % service]
-
-            except Exception as e:
-                self.logger.debug("[ServiceMonitorThread] ERROR: isEnabled: %s", e)
+            ds = self.middleware.call_sync('datastore.query', 'directoryservice.%s' % service)[0]
+            if service == 'activedirectory':
+                service = 'ad'
+            enabled = ds["%s_enable" % service]
 
         else:
-            try:
-                services = self.middleware.call_sync('datastore.query', 'services.services')
-                for s in services:
-                    if s['srv_service'] == 'cifs':
-                        enabled = s['srv_enable']
-                    # What about other services?
-
-            except Exception as e:
-                self.logger.debug("[ServiceMonitorThread] ERROR: isEnabled: %s", e)
+            services = self.middleware.call_sync('datastore.query', 'services.services')
+            for s in services:
+                if s['srv_service'] == 'cifs':
+                    enabled = s['srv_enable']
+                # What about other services?
 
         return enabled
 
@@ -123,18 +113,17 @@ class ServiceMonitorThread(threading.Thread):
     @private
     def getStarted(self, service):
         max_tries = 3
-        started = False
 
         for i in range(0, max_tries):
-            started = self.middleware.call_sync('service.started', self.name)
-            if started:
-                break
+            if self.middleware.call_sync('service.started', service):
+                return True
             time.sleep(1)
 
-        return started
+        return False
 
     def run(self):
         ntries = 0
+        service = self.name
 
         while True:
             self.finished.wait(self.frequency)
@@ -143,14 +132,14 @@ class ServiceMonitorThread(threading.Thread):
             # failures before starting or stopping the service
             #
             connected = self.tryConnect(self.host, self.port)
-            started = self.getStarted(self.name)
-            enabled = self.isEnabled(self.name)
+            started = self.getStarted(service)
+            enabled = self.isEnabled(service)
 
-            self.logger.debug("[ServiceMonitorThread] connected=%s started=%s enabled=%s", connected, started, enabled)
-            # Everithing is OK
+            self.logger.trace("[ServiceMonitorThread] connected=%s started=%s enabled=%s", connected, started, enabled)
+            # Everything is OK
             if connected and started and enabled:
                 # Do we want to reset all alerts when things get back to normal?
-                ServiceMonitorThread.reset_alerts(self.name)
+                ServiceMonitorThread.reset_alerts(service)
                 ntries = 0
                 continue
 
@@ -158,7 +147,7 @@ class ServiceMonitorThread(threading.Thread):
             stop_service = False
             ntries += 1
 
-            self.alert("attempt %d to recover service %s\n" % (ntries, self.name))
+            self.alert(service, "attempt %d to recover service %s\n" % (ntries, service))
 
             if connected:
                 if not started:
@@ -168,22 +157,26 @@ class ServiceMonitorThread(threading.Thread):
                     stop_service = True
 
             if stop_service:
-                self.logger.debug("[ServiceMonitorThread] disabling service %s", self.name)
+                self.logger.debug("[ServiceMonitorThread] disabling service %s", service)
                 try:
-                    self.middleware.call_sync('service.stop', self.name)
+                    self.middleware.call_sync('service.stop', service)
                 except Exception:
-                    pass
+                    self.logger.debug(
+                        "[ServiceMonitorThread] failed stopping service", exc_info=True
+                    )
 
             if start_service:
-                self.logger.debug("[ServiceMonitorThread] enabling service %s", self.name)
+                self.logger.debug("[ServiceMonitorThread] enabling service %s", service)
                 try:
-                    self.middleware.call_sync('service.start', self.name)
+                    self.middleware.call_sync('service.start', service)
                 except Exception:
-                    pass
+                    self.logger.debug(
+                        "[ServiceMonitorThread] failed starting service", exc_info=True
+                    )
 
             if self.finished.is_set():
                 # Thread.cancel() takes a while to propagate here
-                ServiceMonitorThread.reset_alerts(self.name)
+                ServiceMonitorThread.reset_alerts(service)
                 return
 
             if self.retry == 0:
@@ -193,11 +186,12 @@ class ServiceMonitorThread(threading.Thread):
                 break
 
         if not connected or not enabled or not started:
-            self.alert("tried %d attempts to recover service %s" % (ntries, self.name))
+            self.alert(service, "tried %d attempts to recover service %s" % (ntries, service))
             # Disable monitoring here?
 
     def cancel(self):
         self.finished.set()
+
 
 class ServiceMonitorService(Service):
     """Main-Class for service monitoring."""
@@ -213,17 +207,20 @@ class ServiceMonitorService(Service):
         services = await self.middleware.call('datastore.query', 'services.servicemonitor')
         for s in services:
             thread_name = s['sm_name']
+            # Remove stale alerts
+            ServiceMonitorThread.reset_alerts(thread_name)
 
             if not s['sm_enable']:
-                # XXX
-                ServiceMonitorThread.reset_alerts(thread_name)
                 self.logger.debug("[ServiceMonitorService] skipping %s", thread_name)
                 continue
 
             self.logger.debug("[ServiceMonitorService] monitoring %s", thread_name)
 
-            thread = ServiceMonitorThread(id=s['id'], frequency=s['sm_frequency'], retry=s['sm_retry'],
-                host=s['sm_host'], port=s['sm_port'], name=thread_name, logger=self.logger, middleware=self.middleware)
+            thread = ServiceMonitorThread(
+                id=s['id'], frequency=s['sm_frequency'], retry=s['sm_retry'],
+                host=s['sm_host'], port=s['sm_port'], name=thread_name,
+                logger=self.logger, middleware=self.middleware
+            )
             self.threads[thread_name] = thread
             thread.start()
 
