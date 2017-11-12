@@ -101,7 +101,8 @@ generate_proftp()
     ${FREENAS_SQLITE_CMD} ${RO_FREENAS_CONFIG} "
         SELECT
             $sf,
-            sc.cert_name
+            sc.cert_name,
+            sc.cert_chain
         FROM
             services_ftp
         LEFT OUTER JOIN
@@ -113,7 +114,7 @@ generate_proftp()
         LIMIT
             1
     " | \
-    while eval read $f certname; do
+    while eval read $f certname certchain; do
         # Check if required directories exists.
         [ ! -d "/var/run/proftpd" ] && mkdir "/var/run/proftpd"
         [ ! -d "/var/log/proftpd" ] && mkdir "/var/log/proftpd"
@@ -250,6 +251,13 @@ LoadModule mod_tls.c
   ${tls_options}
   TLSRSACertificateFile "${tls_cert_dir}/${certname}.crt"
   TLSRSACertificateKeyFile "${tls_cert_dir}/${certname}.key"
+EOF
+            if [ "$certchain" -eq "1" ]; then
+                cat <<EOF >> ${proftpd_config}
+  TLSCertificateChainFile "${tls_cert_dir}/${certname}.crt"
+EOF
+            fi
+            cat <<EOF >> ${proftpd_config}
   TLSVerifyClient ${proftpd_tlsverifyclient}
   TLSRequired ${ftp_tls_policy}
 </IfModule>
