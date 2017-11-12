@@ -279,6 +279,44 @@ class MACField(forms.CharField):
         return value
 
 
+class SizeWidget(widgets.TextInput):
+    def format_value(self, value):
+        for suffix, threshold in sorted(SizeField.SUFFIXES.items(), key=lambda item: -item[1]):
+            if value >= threshold:
+                return ("%.3f" % (value / threshold)).rstrip("0").rstrip(".") + " " + suffix + ("iB" if suffix != "B"
+                                                                                                else "")
+
+        return "%d B" % value
+
+
+class SizeField(forms.CharField):
+
+    SUFFIXES = {
+        'P': 1125899906842624,
+        'T': 1099511627776,
+        'G': 1073741824,
+        'M': 1048576,
+        'K': 1024,
+        'B': 1,
+    }
+
+    widget = SizeWidget
+
+    def to_python(self, value):
+        value = value.replace(' ', '')
+        reg = re.search(r'^(\d+(?:\.\d+)?)([BKMGTP](?:iB)?)$', value, re.I)
+        if not reg:
+            raise forms.ValidationError(
+                _('Specify the value with IEC suffixes, e.g. 10 GiB')
+            )
+
+        number, suffix = reg.groups()
+
+        number = int(float(number) * self.SUFFIXES[suffix[0].upper()])
+
+        return number
+
+
 class SelectMultipleWidget(forms.widgets.SelectMultiple):
 
     def __init__(self, attrs=None, choices=(), sorter=False):
