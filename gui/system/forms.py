@@ -166,11 +166,6 @@ def clean_certificate(instance, certificate):
     except crypto.Error:
         raise forms.ValidationError(_("CA not in PEM format."))
 
-    #
-    # Should we validate the chain??? Probably
-    # For now, just assume the user knows WTF he is doing
-    #
-
     return certificate
 
 
