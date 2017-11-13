@@ -3409,6 +3409,16 @@ class CloudCredentialsForm(ModelForm):
         max_length=200,
         required=False,
     )
+    AZURE_account_name = forms.CharField(
+        label=_('Account Name'),
+        max_length=200,
+        required=False,
+    )
+    AZURE_account_key = forms.CharField(
+        label=_('Account Key'),
+        max_length=200,
+        required=False,
+    )
     BACKBLAZE_account_id = forms.CharField(
         label=_('Account ID'),
         max_length=200,
@@ -3426,6 +3436,7 @@ class CloudCredentialsForm(ModelForm):
 
     PROVIDER_MAP = {
         'AMAZON': ['access_key', 'secret_key'],
+        'AZURE': ['account_name', 'account_key'],
         'BACKBLAZE': ['account_id', 'app_key'],
         'GCLOUD': ['keyfile'],
     }
