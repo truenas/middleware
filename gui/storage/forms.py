@@ -1519,7 +1519,7 @@ class ZFSDatasetEditForm(ZFSDatasetCommonForm):
             error |= not success
             if not success:
                 error = True
-                errors[item] = msg
+                errors[f'dataset_{item}'] = msg
 
         notifier().change_dataset_share_type(name, self.cleaned_data.get('dataset_share_type'))
 
