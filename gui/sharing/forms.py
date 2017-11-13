@@ -33,7 +33,7 @@ from django.utils.translation import ugettext_lazy as _
 
 from dojango import forms
 from freenasUI.common.forms import ModelForm
-from freenasUI.freeadmin.forms import SelectMultipleWidget
+from freenasUI.freeadmin.forms import SelectMultipleWidget, SizeField
 from freenasUI.middleware.exceptions import MiddlewareError
 from freenasUI.middleware.notifier import notifier
 from freenasUI.common.pipesubr import pipeopen
@@ -219,6 +219,11 @@ class AFP_ShareForm(ModelForm):
         self.fields['afp_upriv'].widget.attrs['onChange'] = (
             'javascript:toggleGeneric("id_afp_upriv", ["id_afp_fperm", '
             '"id_afp_dperm", "id_afp_umask"], true);')
+        self.fields['afp_timemachine_quota'] = SizeField(
+            label=self.fields['afp_timemachine_quota'].label,
+            initial=self.fields['afp_timemachine_quota'].initial,
+            required=False,
+        )
         self.fields['afp_fperm'] = UnixPermissionField(
             label=self.fields['afp_fperm'].label,
             initial=self.fields['afp_fperm'].initial,
