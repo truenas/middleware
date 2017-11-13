@@ -165,18 +165,22 @@ class ServiceMonitorThread(threading.Thread):
                     stop_service = True
 
             if stop_service:
-                self.logger.debug("[ServiceMonitorThread] disabling service %s", self.name)
+                self.logger.debug("[ServiceMonitorThread] disabling service %s", service)
                 try:
-                    self.middleware.call('service.stop', self.name)
+                    self.middleware.call('service.stop', service)
                 except Exception:
-                    pass
+                    self.logger.debug(
+                        "[ServiceMonitorThread] failed stopping service", exc_info=True
+                    )
 
             if start_service:
-                self.logger.debug("[ServiceMonitorThread] enabling service %s", self.name)
+                self.logger.debug("[ServiceMonitorThread] enabling service %s", service)
                 try:
-                    self.middleware.call('service.start', self.name)
+                    self.middleware.call('service.start', service)
                 except Exception:
-                    pass
+                    self.logger.debug(
+                        "[ServiceMonitorThread] failed starting service", exc_info=True
+                    )
 
             if self.finished.is_set():
                 # Thread.cancel() takes a while to propagate here
