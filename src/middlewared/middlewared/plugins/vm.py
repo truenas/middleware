@@ -717,7 +717,8 @@ class VMService(CRUDService):
             guest_memory = vm[0].get('memory', None) * 1024 * 1024
             max_arc = sysctl.filter('vfs.zfs.arc_max')
             resize_arc = max_arc[0].value + guest_memory
-            if resize_arc < ZFS_ARC_MAX:
+
+            if resize_arc <= ZFS_ARC_MAX:
                 sysctl.filter('vfs.zfs.arc_max')[0].value = max_arc[0].value + guest_memory
                 self.logger.debug("===> Give back guest memory to ARC.: {}".format(guest_memory))
                 return True
@@ -1086,14 +1087,14 @@ async def __event_system_ready(middleware, event_type, args):
     if args['id'] != 'ready':
         return
 
+    global ZFS_ARC_MAX
+    max_arc = sysctl.filter('vfs.zfs.arc_max')
+    ZFS_ARC_MAX = max_arc[0].value
+
     for vm in await middleware.call('vm.query', [('autostart', '=', True)]):
         await middleware.call('vm.start', vm['id'])
 
 
 def setup(middleware):
-    global ZFS_ARC_MAX
-    max_arc = sysctl.filter('vfs.zfs.arc_max')
-    ZFS_ARC_MAX = max_arc[0].value
-
     asyncio.ensure_future(kmod_load())
     middleware.event_subscribe('system', __event_system_ready)
