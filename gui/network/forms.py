@@ -818,12 +818,13 @@ class VLANForm(ModelForm):
                     int_options='up',
                 )
                 vlan_interface.save()
-            models.Interfaces.objects.create(
-                int_interface=vlan_vint,
-                int_name=vlan_vint,
-                int_dhcp=False,
-                int_ipv6auto=False,
-            )
+            if not models.Interfaces.objects.filter(int_interface=vlan_vint).exists():
+                models.Interfaces.objects.create(
+                    int_interface=vlan_vint,
+                    int_name=vlan_vint,
+                    int_dhcp=False,
+                    int_ipv6auto=False,
+                )
             return super(VLANForm, self).save()
 
     def delete(self, *args, **kwargs):
