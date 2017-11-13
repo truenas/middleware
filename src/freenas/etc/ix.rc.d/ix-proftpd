@@ -55,7 +55,7 @@ proftpd_modban_bantable=${proftpd_modban_bantable:-"/var/run/proftpd/ban.tab"}
 ifset()
 {
     if [ -n "$1" ]; then
-	echo -n $2
+        echo -n $2
     fi
 }
 
@@ -63,7 +63,7 @@ ifset()
 ifnz()
 {
     if [ "$1" -ne 0 ]; then
-	echo -n $2
+        echo -n $2
     fi
 }
 
@@ -71,9 +71,9 @@ ifnz()
 bool_on()
 {
     if [ "$1" -gt 0 ]; then
-	echo -n $2
+        echo -n $2
     else
-	echo -n "# $2"
+        echo -n "# $2"
     fi
 }
 
@@ -81,8 +81,8 @@ bool_on()
 on_off()
 {
     case $1 in
-	0) echo "off";;
-	1) echo "on";;
+        0) echo "off";;
+        1) echo "on";;
     esac
 }
 
@@ -101,7 +101,8 @@ generate_proftp()
     ${FREENAS_SQLITE_CMD} ${RO_FREENAS_CONFIG} "
         SELECT
             $sf,
-            sc.cert_name
+            sc.cert_name,
+            sc.cert_chain
         FROM
             services_ftp
         LEFT OUTER JOIN
@@ -113,28 +114,28 @@ generate_proftp()
         LIMIT
             1
     " | \
-    while eval read $f certname; do
-	# Check if required directories exists.
-	[ ! -d "/var/run/proftpd" ] && mkdir "/var/run/proftpd"
-	[ ! -d "/var/log/proftpd" ] && mkdir "/var/log/proftpd"
+    while eval read $f certname certchain; do
+        # Check if required directories exists.
+        [ ! -d "/var/run/proftpd" ] && mkdir "/var/run/proftpd"
+        [ ! -d "/var/log/proftpd" ] && mkdir "/var/log/proftpd"
 
-	# Check if required files exists.
-	[ ! -e "${proftpd_delaytable}" ] && cat /dev/null > "${proftpd_delaytable}"
-	[ ! -e "${proftpd_tcpaccessfilesallow}" ] && cat /dev/null > "${proftpd_tcpaccessfilesallow}"
-	[ ! -e "${proftpd_tcpaccessfilesdeny}" ] && cat /dev/null > "${proftpd_tcpaccessfilesdeny}"
-	[ ! -e "/var/log/wtmp" ] && touch /var/log/wtmp && chmod 644 /var/log/wtmp
+        # Check if required files exists.
+        [ ! -e "${proftpd_delaytable}" ] && cat /dev/null > "${proftpd_delaytable}"
+        [ ! -e "${proftpd_tcpaccessfilesallow}" ] && cat /dev/null > "${proftpd_tcpaccessfilesallow}"
+        [ ! -e "${proftpd_tcpaccessfilesdeny}" ] && cat /dev/null > "${proftpd_tcpaccessfilesdeny}"
+        [ ! -e "/var/log/wtmp" ] && touch /var/log/wtmp && chmod 644 /var/log/wtmp
 
         ftp_banner=$(${FREENAS_SQLITE_CMD} ${RO_FREENAS_CONFIG} "SELECT ftp_banner FROM services_ftp ORDER BY -services_ftp.id LIMIT 1")
 
-	# Create welcome message file
-	if [ -z "${ftp_banner}" ]; then
-		_productname="FreeNAS"
-		echo "Welcome to ${_productname} FTP Server" > ${proftpd_displaylogin}
-	else
-		echo ${ftp_banner} > ${proftpd_displaylogin}
-	fi
+        # Create welcome message file
+        if [ -z "${ftp_banner}" ]; then
+                _productname="FreeNAS"
+                echo "Welcome to ${_productname} FTP Server" > ${proftpd_displaylogin}
+        else
+                echo ${ftp_banner} > ${proftpd_displaylogin}
+        fi
 
-	cat <<EOF > ${proftpd_config}
+        cat <<EOF > ${proftpd_config}
 ServerName "$(hostname) FTP Server"
 ServerType standalone
 DefaultServer on
@@ -165,8 +166,8 @@ $(ifnz ${ftp_passiveportsmin} "PassivePorts ${ftp_passiveportsmin} ${ftp_passive
 
 EOF
 
-	if [ ${ftp_onlyanonymous} -eq 1 -a -d "${ftp_anonpath}" ]; then
-	    cat <<EOF >> ${proftpd_config}
+        if [ ${ftp_onlyanonymous} -eq 1 -a -d "${ftp_anonpath}" ]; then
+            cat <<EOF >> ${proftpd_config}
 <Anonymous ${ftp_anonpath}>
   User ftp
   Group ftp
@@ -181,8 +182,8 @@ EOF
 EOF
         fi
 
-	if [ ${ftp_onlylocal} -eq 1 ]; then
-		cat <<EOF >> ${proftpd_config}
+        if [ ${ftp_onlylocal} -eq 1 ]; then
+                cat <<EOF >> ${proftpd_config}
 <Limit LOGIN>
   AllowAll
 </Limit>
@@ -190,7 +191,7 @@ EOF
 EOF
         fi
         if [ ${ftp_onlyanonymous} -ne 1 ] && [ ${ftp_onlylocal} -ne 1 ]; then
-	        cat <<EOF >> ${proftpd_config}
+                cat <<EOF >> ${proftpd_config}
 <Limit LOGIN>
   AllowGroup ftp
 $(bool_on ${ftp_rootlogin} "  AllowGroup wheel")
@@ -200,7 +201,7 @@ $(bool_on ${ftp_rootlogin} "  AllowGroup wheel")
 EOF
         fi
 
-	cat <<EOF >> ${proftpd_config}
+        cat <<EOF >> ${proftpd_config}
 <Global>
   RequireValidShell ${proftpd_requirevalidshell}
 $(bool_on ${ftp_defaultroot} "  DefaultRoot ~ ${proftpd_defaultrootgroupexpr}")
@@ -215,7 +216,7 @@ $(bool_on ${ftp_resume} "  AllowStoreRestart on")
 </Global>
 EOF
 
-	if [ ${ftp_tls} -gt 0 ]; then
+        if [ ${ftp_tls} -gt 0 ]; then
 # This is hacky, this should be converted to use the ORM.
 # system.Certificate contains the raw certificates. The path
 # is also only available via the model, so we have to hard code
@@ -237,12 +238,12 @@ $(ifnz ${ftp_tls_opt_stdenvvars} "StdEnvVars") \
 $(ifnz ${ftp_tls_opt_dns_name_required} "dNSNameRequired") \
 $(ifnz ${ftp_tls_opt_ip_address_required} "iPAddressRequired")"
 if [ ! -z "$(echo ${tls_options}|sed -E 's|( +)||g')" ]; then
-	tls_options="TLSOptions $(echo ${tls_options}|sed -E 's|( +)| |g')"
+        tls_options="TLSOptions $(echo ${tls_options}|sed -E 's|( +)| |g')"
 else
-	tls_options=""
+        tls_options=""
 fi
 
-	    cat <<EOF >> ${proftpd_config}
+            cat <<EOF >> ${proftpd_config}
 LoadModule mod_tls.c
 <IfModule mod_tls.c>
   TLSEngine on
@@ -250,12 +251,19 @@ LoadModule mod_tls.c
   ${tls_options}
   TLSRSACertificateFile "${tls_cert_dir}/${certname}.crt"
   TLSRSACertificateKeyFile "${tls_cert_dir}/${certname}.key"
+EOF
+            if [ "$certchain" -eq "1" ]; then
+                cat <<EOF >> ${proftpd_config}
+  TLSCertificateChainFile "${tls_cert_dir}/${certname}.crt"
+EOF
+            fi
+            cat <<EOF >> ${proftpd_config}
   TLSVerifyClient ${proftpd_tlsverifyclient}
   TLSRequired ${ftp_tls_policy}
 </IfModule>
 EOF
-	fi
-	cat <<EOF >> ${proftpd_config}
+        fi
+        cat <<EOF >> ${proftpd_config}
 <IfModule mod_ban.c>
   BanEngine $(on_off ${ftp_mod_ban})
   BanControlsACLs ${proftpd_modban_bancontrolsacls}
@@ -270,18 +278,18 @@ EOF
 EOF
         ${FREENAS_SQLITE_CMD} ${RO_FREENAS_CONFIG} "SELECT ftp_options FROM services_ftp ORDER BY -id LIMIT 1" >> ${proftpd_config}
 
-	if checkyesno proftpd_moddelay_enable; then
-	    cat <<EOF >> ${proftpd_config}
+        if checkyesno proftpd_moddelay_enable; then
+            cat <<EOF >> ${proftpd_config}
 <IfModule mod_delay.c>
   DelayEngine on
   DelayTable "${proftpd_delaytable}"
 </IfModule>
 
 EOF
-	fi
-	# Add mod_wrap
-	if checkyesno proftpd_modwrap_enable; then
-	    cat <<EOF >> ${proftpd_config}
+        fi
+        # Add mod_wrap
+        if checkyesno proftpd_modwrap_enable; then
+            cat <<EOF >> ${proftpd_config}
 <IfModule mod_wrap.c>
   TCPAccessFiles ${proftpd_tcpaccessfilesallow} ${proftpd_tcpaccessfilesdeny}
   TCPAccessSyslogLevels ${proftpd_tcpaccesssysloglevels}
@@ -289,10 +297,10 @@ EOF
 </ifModule>
 
 EOF
-	fi
-	# Add mod_ctrls.
-	if [ "${proftpd_modctrls_controlsengine}" = "on" ]; then
-	    cat <<EOF >> ${proftpd_config}
+        fi
+        # Add mod_ctrls.
+        if [ "${proftpd_modctrls_controlsengine}" = "on" ]; then
+            cat <<EOF >> ${proftpd_config}
 <IfModule mod_ctrls.c>
   ControlsEngine ${proftpd_modctrls_controlsengine}
   ControlsACLs ${proftpd_modctrls_controlsacls}
@@ -303,7 +311,7 @@ EOF
 </IfModule>
 
 EOF
-	fi
+        fi
     done
 }
 
