@@ -682,22 +682,21 @@ class VMService(CRUDService):
         memory = memory * 1024 * 1024
 
         # Keep at least 35% of memory from initial arc_max.
-        throttled_arc_max = int((ZFS_ARC_MAX * 1.35) - ZFS_ARC_MAX)
+        throttled_arc_max = int(usermem[0].value * 1.35) - usermem[0].value
         # Get the user memory and keep space for ARC.
         throttled_user_mem = int(usermem[0].value - throttled_arc_max)
         # Potential memory used by guests.
         memory_used = guest_mem_used['RPRD'] + guest_mem_used['RNP']
 
-        if memory_used + memory < throttled_user_mem:
-            self.logger.info("===> Setting ARC FROM: {} TO: {}".format(max_arc[0].value, max_arc[0].value - memory))
+        vms_memory = memory_used + memory
+        if vms_memory <= throttled_user_mem:
             if max_arc[0].value > throttled_arc_max:
-                sysctl.filter('vfs.zfs.arc_max')[0].value = max_arc[0].value - memory
-                return True
-            else:
-                self.logger.warn("===> Cannot guarantee memory for guest")
-                return False
+                if max(max_arc[0].value - memory, 0) != 0:
+                    self.logger.info("===> Setting ARC FROM: {} TO: {}".format(max_arc[0].value, max_arc[0].value - memory))
+                    sysctl.filter('vfs.zfs.arc_max')[0].value = max_arc[0].value - memory
+            return True
         else:
-            self.logger.debug("===> There is no space on user memory")
+            self.logger.warn("===> Cannot guarantee memory for guest")
             return False
 
     async def __init_guest_vmemory(self, id):
@@ -718,12 +717,13 @@ class VMService(CRUDService):
             max_arc = sysctl.filter('vfs.zfs.arc_max')
             resize_arc = max_arc[0].value + guest_memory
 
-            if resize_arc <= ZFS_ARC_MAX:
+            if resize_arc < ZFS_ARC_MAX:
                 sysctl.filter('vfs.zfs.arc_max')[0].value = max_arc[0].value + guest_memory
                 self.logger.debug("===> Give back guest memory to ARC.: {}".format(guest_memory))
-                return True
-            else:
-                self.logger.error("===> Can't resize ARC anymore!")
+            elif resize_arc > ZFS_ARC_MAX and max_arc[0].value < ZFS_ARC_MAX:
+                sysctl.filter('vfs.zfs.arc_max')[0].value = ZFS_ARC_MAX
+                self.logger.debug("===> Enough guest memory to set ARC back to its original limit.")
+            return True
         else:
             return False
 
