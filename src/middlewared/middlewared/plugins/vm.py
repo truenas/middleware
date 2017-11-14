@@ -720,7 +720,7 @@ class VMService(CRUDService):
             max_arc = sysctl.filter('vfs.zfs.arc_max')
             resize_arc = max_arc[0].value + guest_memory
 
-            if resize_arc < ZFS_ARC_MAX:
+            if resize_arc <= ZFS_ARC_MAX:
                 sysctl.filter('vfs.zfs.arc_max')[0].value = max_arc[0].value + guest_memory
                 self.logger.debug("===> Give back guest memory to ARC.: {}".format(guest_memory))
             elif resize_arc > ZFS_ARC_MAX and max_arc[0].value < ZFS_ARC_MAX:
