@@ -28,7 +28,7 @@ generate_tftp()
 		service="freenas-tftp"
 		echo "freenas-tftp $tftp_port/udp" >> $tmp_services_extra
 	    fi
-	    cmd="tftpd -l -s $tftp_directory -u $tftp_username -U $tftp_umask $tftp_options"
+	    cmd="tftpd -l -s $tftp_directory -u $tftp_username -U 0$tftp_umask $tftp_options"
 	    if [ "$tftp_newfiles" -eq 1 ]; then
 		cmd="$cmd -w"
 	    fi

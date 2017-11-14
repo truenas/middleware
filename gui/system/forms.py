@@ -153,6 +153,22 @@ def clean_path_locked(mp):
             )
 
 
+def clean_certificate(instance, certificate):
+    if not certificate:
+        raise forms.ValidationError(_("Empty Certificate!"))
+    nmatches = check_certificate(certificate)
+
+    if nmatches > 1:
+        instance.cert_chain = True
+
+    try:
+        load_certificate(certificate)
+    except crypto.Error:
+        raise forms.ValidationError(_("CA not in PEM format."))
+
+    return certificate
+
+
 def check_certificate(certificate):
     matches = CERT_CHAIN_REGEX.findall(certificate)
 
@@ -273,8 +289,8 @@ class BootEnvPoolAttachForm(Form):
         with client as c:
             try:
                 c.call('boot.attach', devname, {'expand': self.cleaned_data['expand']})
-            except ClientException:
-                return False
+            except ClientException as e:
+                raise MiddlewareError(str(e))
         return True
 
 
@@ -2475,25 +2491,7 @@ class CertificateAuthorityImportForm(ModelForm):
     )
 
     def clean_cert_certificate(self):
-        cdata = self.cleaned_data
-        certificate = cdata.get('cert_certificate')
-        if not certificate:
-            raise forms.ValidationError(_("Empty Certificate!"))
-        nmatches = check_certificate(certificate)
-
-        if nmatches > 1:
-            self.instance.cert_chain = True
-
-        try:
-            load_certificate(certificate)
-        except crypto.Error:
-            raise forms.ValidationError(_("CA not in PEM format."))
-        #
-        # Should we validate the chain??? Probably
-        # For now, just assume the user knows WTF he is doing
-        #
-
-        return certificate
+        return clean_certificate(self.instance, self.cleaned_data.get('cert_certificate'))
 
     def clean_cert_name(self):
         cdata = self.cleaned_data
@@ -2980,6 +2978,9 @@ class CertificateCSREditForm(ModelForm):
         self.fields['cert_name'].widget.attrs['readonly'] = True
         self.fields['cert_CSR'].widget.attrs['readonly'] = True
 
+    def clean_cert_certificate(self):
+        return clean_certificate(self.instance, self.cleaned_data.get('cert_certificate'))
+
     def save(self):
         self.instance.cert_type = models.CERT_TYPE_EXISTING
         super(CertificateCSREditForm, self).save()
@@ -3029,21 +3030,7 @@ class CertificateImportForm(ModelForm):
     )
 
     def clean_cert_certificate(self):
-        cdata = self.cleaned_data
-        certificate = cdata.get('cert_certificate')
-        if not certificate:
-            raise forms.ValidationError(_("Empty Certificate!"))
-
-        nmatches = check_certificate(certificate)
-
-        if nmatches > 1:
-            self.instance.cert_chain = True
-        #
-        # Should we validate the chain??? Probably
-        # For now, just assume the user knows WTF he is doing
-        #
-
-        return certificate
+        return clean_certificate(self.instance, self.cleaned_data.get('cert_certificate'))
 
     def clean_cert_passphrase(self):
         cdata = self.cleaned_data
@@ -3422,6 +3409,16 @@ class CloudCredentialsForm(ModelForm):
         max_length=200,
         required=False,
     )
+    AZURE_account_name = forms.CharField(
+        label=_('Account Name'),
+        max_length=200,
+        required=False,
+    )
+    AZURE_account_key = forms.CharField(
+        label=_('Account Key'),
+        max_length=200,
+        required=False,
+    )
     BACKBLAZE_account_id = forms.CharField(
         label=_('Account ID'),
         max_length=200,
@@ -3439,6 +3436,7 @@ class CloudCredentialsForm(ModelForm):
 
     PROVIDER_MAP = {
         'AMAZON': ['access_key', 'secret_key'],
+        'AZURE': ['account_name', 'account_key'],
         'BACKBLAZE': ['account_id', 'app_key'],
         'GCLOUD': ['keyfile'],
     }

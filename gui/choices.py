@@ -577,9 +577,6 @@ class NICChoices(object):
 
         return iter((i, i) for i in self._NIClist)
 
-    def remove(self, nic):
-        return self._NIClist.remove(nic)
-
 
 class IPChoices(NICChoices):
 
@@ -635,9 +632,6 @@ class IPChoices(NICChoices):
         if not self._IPlist:
             return iter([('0.0.0.0', '0.0.0.0')])
         return iter((i, i) for i in self._IPlist)
-
-    def remove(self, addr):
-        return self._IPlist.remove(addr)
 
 
 class TimeZoneChoices:
@@ -1197,6 +1191,7 @@ AFP_CHMOD_REQUEST_CHOICES = (
 
 CLOUD_PROVIDERS = (
     ('AMAZON', _('Amazon S3')),
+    ('AZURE', _('Azure Blob Storage')),
     ('BACKBLAZE', _('Backblaze B2')),
     ('GCLOUD', _('Google Cloud Storage')),
 )
