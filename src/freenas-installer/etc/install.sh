@@ -981,7 +981,7 @@ menu_install()
     if ${INTERACTIVE} && [ "${_do_upgrade}" -eq 0 ]; then
 	prompt_password 2> /tmp/password
 	if [ $? -eq 0 ]; then
-	    _password=$(cat /tmp/password 2> /dev/null)
+	    _password="$(cat /tmp/password 2> /dev/null)"
 	fi
     fi
 
@@ -1188,7 +1188,7 @@ menu_install()
     elif [ "${_do_upgrade}" -eq 0 ]; then
 	if [ -n "${_password}" ]; then
 		# Set the root password
-		chroot /tmp/data /etc/netcli reset_root_pw ${_password}
+		chroot /tmp/data /etc/netcli reset_root_pw "${_password}"
 	fi
     fi
     : > /tmp/data/${FIRST_INSTALL_SENTINEL}
@@ -1461,7 +1461,7 @@ parse_config() {
     fi
     if [ -n "${password}" ]; then
 	# Set the root password
-	_output="${_output} -P ${password}"
+	_output="${_output} -P \"${password}\""
     fi
     if [ -n "${whenDone}" ]; then
 	# What to do when finished installing
