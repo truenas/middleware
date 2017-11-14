@@ -107,7 +107,10 @@ Create resource
                 "total_si": "4.9 GiB"
         }
 
-   :json string volume_name: name of the volume
+   :json string volume_name: name of the new volume
+   :json string volume_add: name of the volume to extend
+   :json boolean encryption: encrypted volume or not
+   :json boolean encryption_inirand: initialize disks with random data (slow)
    :json list layout: list of vdevs composed of "vdevtype" (stripe, mirror, raidz, raidz2, raidz3) and disks (list of disk names)
    :reqheader Content-Type: the request content type
    :resheader Content-Type: the response content type
