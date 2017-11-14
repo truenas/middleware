@@ -696,7 +696,6 @@ class VMService(CRUDService):
                     sysctl.filter('vfs.zfs.arc_max')[0].value = max_arc[0].value - memory
             return True
         else:
-            self.logger.warn("===> Cannot guarantee memory for guest")
             return False
 
     async def __init_guest_vmemory(self, id):
@@ -704,7 +703,11 @@ class VMService(CRUDService):
         guest_memory = vm[0].get('memory', None)
         guest_status = await self.status(id)
         if guest_status.get('state') != "RUNNING":
-            return await self.__set_guest_vmemory(guest_memory)
+            setvmem = await self.__set_guest_vmemory(guest_memory)
+            if setvmem is False:
+                self.logger.warn("===> Cannot guarantee memory for guest id: {}".format(id))
+            return setvmem
+
         else:
             self.logger.debug("===> bhyve process is running, we won't allocate memory")
             return False
