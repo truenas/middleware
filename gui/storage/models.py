@@ -1084,12 +1084,13 @@ class VMWarePlugin(Model):
 
 
 class QuotaExcess(Model):
-    dataset_name = models.CharField(
-        unique=True,
-        max_length=256,
-    )
+    class Meta:
+        unique_together = (("dataset_name", "quota_type"),)
+
+    dataset_name = models.CharField(max_length=256)
+    quota_type = models.CharField(max_length=32)
+    quota_value = models.IntegerField()
     level = models.IntegerField()
     used = models.IntegerField()
-    available = models.IntegerField()
     percent_used = models.FloatField()
     uid = models.IntegerField()
