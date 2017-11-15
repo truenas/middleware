@@ -14,10 +14,6 @@ import asyncore
 import json
 import libzfs
 from setproctitle import setproctitle
-from syslog import (
-    syslog,
-    LOG_ALERT,
-)
 
 
 PIDFILE = '/var/run/freenas-snmpd.pid'
@@ -192,7 +188,7 @@ class Loop_Sockserver(threading.Thread):
         try:
             asyncore.loop()
         except Exception as e:
-            syslog(LOG_ALERT, str(e))
+            pass
         finally:
             if os.path.exists(self.obj.path):
                 os.unlink(self.obj.path)
