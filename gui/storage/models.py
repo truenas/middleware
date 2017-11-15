@@ -1038,6 +1038,84 @@ class Task(Model):
         ordering = ["task_filesystem"]
 
 
+class SnapshotTask(Model):
+    task_name = models.CharField(
+        max_length=150,
+        verbose_name=_("Task Name")
+    )
+    task_filesystem = models.CharField(
+        max_length=150,
+        verbose_name=_("Volume/Dataset"),
+    )
+    task_recursive = models.BooleanField(
+        default=False,
+        verbose_name=_("Recursive"),
+    )
+    task_ret_count = models.PositiveIntegerField(
+        default=2,
+        verbose_name=_("Snapshot lifetime value"),
+    )
+    task_ret_unit = models.CharField(
+        default='week',
+        max_length=120,
+        choices=choices.RetentionUnit_Choices,
+        verbose_name=_("Snapshot lifetime unit"),
+    )
+    task_begin = models.TimeField(
+        default=time(hour=9),
+        verbose_name=_("Begin"),
+        help_text=_("Do not snapshot before"),
+    )
+    task_end = models.TimeField(
+        default=time(hour=18),
+        verbose_name=_("End"),
+        help_text=_("Do not snapshot after"),
+    )
+    task_interval = models.PositiveIntegerField(
+        default=60,
+        choices=choices.TASK_INTERVAL,
+        verbose_name=_("Interval"),
+        help_text=_(
+            "How much time has been passed between two snapshot attempts."),
+    )
+    task_repeat_unit = models.CharField(
+        default='weekly',
+        max_length=120,
+        choices=choices.RepeatUnit_Choices,
+        verbose_name=_("Occurrence"),
+        help_text=_("How the task is repeated"),
+    )
+    task_byweekday = models.CharField(
+        max_length=120,
+        default="1,2,3,4,5",
+        verbose_name=_("Weekday"),
+        blank=True,
+    )
+    task_enabled = models.BooleanField(
+        default=None,
+        blank=True,
+        verbose_name=_("Enabled"),
+    )
+
+    task_last_run = models.DateTimeField(
+        null=True,
+        verbose_name=_("Last run of the snap task")
+    )
+
+    def __str__(self):
+        return '%s - every %s - %d%s' % (
+            self.task_filesystem,
+            self.get_task_interval_display(),
+            self.task_ret_count,
+            self.task_ret_unit,
+        )
+
+    class Meta:
+        verbose_name = _("Periodic Snapshot Task(new engine)")
+        verbose_name_plural = _("Periodic Snapshot Tasks(new engine)")
+        ordering = ["task_filesystem"]
+
+
 class VMWarePlugin(Model):
 
     hostname = models.CharField(

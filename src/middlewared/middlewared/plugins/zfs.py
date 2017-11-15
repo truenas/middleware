@@ -4,12 +4,13 @@ import socket
 import textwrap
 import threading
 import time
+import datetime
 
 from bsd import geom
 import humanfriendly
 import libzfs
 
-from middlewared.schema import Dict, List, Str, Bool, Int, accepts
+from middlewared.schema import Dict, List, Str, Bool, Int, accepts, Ref
 from middlewared.service import (
     CallError, CRUDService, Service, ValidationError, ValidationErrors,
     filterable, job, periodic
@@ -312,6 +313,131 @@ class ZFSDatasetService(CRUDService):
         except libzfs.ZFSException as e:
             self.logger.error('Failed to promote dataset', exc_info=True)
             raise CallError(f'Failed to promote dataset: {e}')
+
+
+class ZFSSnapshotTask(CRUDService):
+
+    class Config:
+        namespace = namespace = 'zfs.snapshot_task'
+
+    @filterable
+    async def query(self, filters=None, options=None):
+        return await self.middleware.call('datastore.query', 'storage.snapshottask', filters, options)
+
+    @accepts(Dict(
+        'snapshot-task',
+        Str('task_name'),
+        Str('task_filesystem'),
+        Bool('task_recursive'),
+        Int('task_ret_count'),
+        Str('task_ret_unit'),
+        Str('task_begin'),
+        Str('task_end'),
+        Int('task_interval'),
+        Str('task_repeat_unit'),
+        Str('task_byweekday'),
+        Bool('task_enabled'),
+        Str('task_last_run'),
+        register=True,
+    ))
+    async def do_create(self, data):
+        return await self.middleware.call(
+            'datastore.insert',
+            'storage.snapshottask',
+            data,
+        )
+
+    @accepts(Int('id'), Ref('snapshot-task'))
+    async def do_update(self, id, data):
+        return await self.middleware.call(
+            'datastore.update',
+            'storage.snapshottask',
+            id,
+            data,
+        )
+
+    @accepts(Int('id'))
+    async def do_delete(self, id):
+        return await self.middleware.call(
+            'datastore.delete',
+            'storage.snapshottask',
+            id
+        )
+
+    @periodic(60)
+    async def autosnap(self):
+        snap_tasks = await self.middleware.call('zfs.snapshot_task.query', [('task_enabled', '=', True)])
+        zfs = libzfs.ZFS()
+        tasks_to_execute = []
+
+        date_now = datetime.datetime.now()
+        curtime = datetime.time(date_now.hour, date_now.minute)
+
+        for task in snap_tasks:
+            if task['task_last_run']:
+                snaptask_time_delta = task['task_last_run'] + datetime.timedelta(minutes=task['task_interval'])
+            else:
+                snaptask_time_delta = date_now
+
+            if curtime < task['task_begin'] or curtime > task['task_end'] or date_now < snaptask_time_delta or str(date_now.weekday()+1) not in task['task_byweekday']:
+                continue
+
+            try:
+                zfs.get_dataset(task['task_filesystem'])
+            except libzfs.ZFSException as err:
+                self.logger.error(f'{err} - Periodic snapshot task omitted.')
+            tasks_to_execute.append(task)
+
+
+        for task in tasks_to_execute:
+            await self.middleware.call(
+                'zfs.snapshot.do_create',
+                {'dataset': task['task_filesystem'],
+                'name': f'autosnap_new_{task["task_name"]}{date_now.strftime("%H:%M_%m_%d_%Y")}',
+                'properties':{'autosnap:name':task["task_name"], 'autosnap:retention':f'{task["task_ret_count"]}:{task["task_ret_unit"]}'}}
+            )
+
+            await self.middleware.call(
+                'zfs.snapshot_task.do_update',
+                task['id'],
+                {'task_last_run': f'{date_now.year}-{date_now.month}-{date_now.day} {date_now.hour}:{date_now.minute}'}
+            )
+
+
+    @periodic(300)
+    async def autosnap_remove(self):
+
+        def calculate_snap_time_delta(date, task_ret_count, ret_unit):
+            if ret_unit == 'hour':
+                snaptask_time_delta = date + datetime.timedelta(hours=int(task_ret_count))
+            elif ret_unit == 'day':
+                snaptask_time_delta = date + datetime.timedelta(days=int(task_ret_count))
+            elif ret_unit == 'week':
+                snaptask_time_delta = date + datetime.timedelta(days=7 * int(task_ret_count))
+            elif ret_unit == 'month':
+                snapinfo_expirationtime = date + datetime.timedelta(days=int(30.436875 * task_ret_count))
+            elif ret_unit == 'year':
+                snaptask_time_delta = date + datetime.timedelta(days=int(365.2425 * task_ret_count))
+
+            return snaptask_time_delta
+
+
+        snaps = await self.middleware.call('zfs.snapshot.query')
+        snap_tasks = await self.middleware.call('zfs.snapshot_task.query')
+        date_now = datetime.datetime.now()
+
+        for snap in snaps:
+            if 'autosnap:retention' in snap['properties'].keys():
+                if await self.middleware.call('zfs.snapshot_task.query', [('task_name', '=', snap['properties']['autosnap:name']['value'])]):
+                    snap_task = await self.middleware.call('zfs.snapshot_task.query', [('task_name', '=', snap['properties']['autosnap:name']['value'])], {'get': True})
+                    snaptask_time_delta = calculate_snap_time_delta(snap['properties']['creation']['parsed'], snap_task['task_ret_count'], snap_task['task_ret_unit'])
+
+                else:
+                    snap_ret_count, snap_ret_unit = snap['properties']['autosnap:retention']['value'].split(':')
+                    snaptask_time_delta = calculate_snap_time_delta(snap['properties']['creation']['parsed'], snap_ret_count, snap_ret_unit)
+
+                if snaptask_time_delta <= date_now:
+                    await self.middleware.call('zfs.snapshot.remove', {'dataset': snap['dataset'], 'name': snap['snapshot_name']})
 
 
 class ZFSSnapshot(CRUDService):
