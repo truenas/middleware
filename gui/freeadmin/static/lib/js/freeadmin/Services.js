@@ -272,7 +272,7 @@ define([
 
         me.services = {};
 
-        Middleware.call('service.query', [[], {"order_by": ["service"]}], function(result) {
+        Middleware.call('service.query', [[['service', '!=', 'netdata']], {"order_by": ["service"]}], function(result) {
           var smb_service, smb_index = 0;
           for(var i=0;i<result.length;i++) {
             var item = result[i];
