@@ -5,7 +5,7 @@ import textwrap
 import threading
 import time
 
-from bsd import geom
+from bsd import getmntinfo, geom
 import humanfriendly
 import libzfs
 
@@ -462,7 +462,7 @@ class ZFSQuoteService(Service):
                 for excess in await self.middleware.call('datastore.query', 'storage.quotaexcess')
             }
 
-        excesses = await self.__get_quota_excess()
+        excesses = await self.__get_quota_excesses()
 
         # Remove gone excesses
         self.excesses = dict(
@@ -500,57 +500,92 @@ class ZFSQuoteService(Service):
 
                 try:
                     # FIXME: Translation
+                    human_quota_type = excess["quota_type"][0].upper() + excess["quota_type"][1:]
                     await (await self.middleware.call('mail.send', {
                         'to': [bsduser['bsdusr_email']],
-                        'subject': '{}: Quota exceed on dataset {}'.format(hostname, excess["dataset_name"]),
+                        'subject': '{}: {} exceed on dataset {}'.format(hostname, human_quota_type,
+                                                                        excess["dataset_name"]),
                         'text': textwrap.dedent('''\
-                            Quota exceed on dataset %(dataset_name)s.
-                            Used %(percent_used).2f%% (%(used)s of %(available)s)
+                            %(quota_type)s exceed on dataset %(dataset_name)s.
+                            Used %(percent_used).2f%% (%(used)s of %(quota_value)s)
                         ''') % {
+                            "quota_type": human_quota_type,
                             "dataset_name": excess["dataset_name"],
                             "percent_used": excess["percent_used"],
                             "used": humanfriendly.format_size(excess["used"]),
-                            "available": humanfriendly.format_size(excess["available"]),
+                            "quota_value": humanfriendly.format_size(excess["quota_value"]),
                         },
                     })).wait()
                 except Exception:
                     self.logger.warning('Failed to send email about quota excess', exc_info=True)
 
-    async def __get_quota_excess(self):
-        excess = []
+    async def __get_quota_excesses(self):
+        excesses = []
         zfs = libzfs.ZFS()
         for properties in await self.middleware.threaded(lambda: [i.properties for i in zfs.datasets]):
-            quota = properties.get("quota")
-            # zvols do not have a quota property in libzfs
-            if quota is None or quota.value == "none":
-                continue
-            used = int(properties["used"].rawvalue)
-            available = used + int(properties["available"].rawvalue)
-            try:
-                percent_used = 100 * used / available
-            except ZeroDivisionError:
-                percent_used = 100
+            quota = await self.__get_quota_excess(properties, "quota", "quota", "used")
+            if quota:
+                excesses.append(quota)
 
-            if percent_used >= 95:
-                level = 2
-            elif percent_used >= 80:
-                level = 1
+            refquota = await self.__get_quota_excess(properties, "refquota", "refquota", "usedbydataset")
+            if refquota:
+                excesses.append(refquota)
+
+        return excesses
+
+    async def __get_quota_excess(self, properties, quota_type, quota_property, used_property):
+        try:
+            quota_value = int(properties[quota_property].rawvalue)
+        except (AttributeError, ValueError):
+            return None
+
+        if quota_value == 0:
+            return
+
+        used = int(properties[used_property].rawvalue)
+        try:
+            percent_used = 100 * used / quota_value
+        except ZeroDivisionError:
+            percent_used = 100
+
+        if percent_used >= 95:
+            level = 2
+        elif percent_used >= 80:
+            level = 1
+        else:
+            return None
+
+        mountpoint = None
+        if properties["mounted"].value == "yes":
+            if properties["mountpoint"].value == "legacy":
+                for m in await self.middleware.threaded(getmntinfo):
+                    if m.source == properties["name"].value:
+                        mountpoint = m.dest
+                        break
             else:
-                continue
+                mountpoint = properties["mountpoint"].value
+        if mountpoint is None:
+            self.logger.debug("Unable to get mountpoint for dataset %r, assuming owner = root",
+                              properties["name"].value)
+            uid = 0
+        else:
+            try:
+                stat_info = await self.middleware.threaded(os.stat, mountpoint)
+            except Exception:
+                self.logger.warning("Unable to stat mountpoint %r, assuming owner = root", mountpoint)
+                uid = 0
+            else:
+                uid = stat_info.st_uid
 
-            stat_info = await self.middleware.threaded(os.stat, properties["mountpoint"].value)
-            uid = stat_info.st_uid
-
-            excess.append({
-                "dataset_name": properties["name"].value,
-                "level": level,
-                "used": used,
-                "available": available,
-                "percent_used": percent_used,
-                "uid": uid,
-            })
-
-        return excess
+        return {
+            "dataset_name": properties["name"].value,
+            "quota_type": quota_type,
+            "quota_value": quota_value,
+            "level": level,
+            "used": used,
+            "percent_used": percent_used,
+            "uid": uid,
+        }
 
     async def terminate(self):
         await self.middleware.call('datastore.sql', 'DELETE FROM storage_quotaexcess')
