@@ -19,52 +19,52 @@ generate_tftp()
     local enabled
     srv_enabled tftp; enabled=$?
     ${FREENAS_SQLITE_CMD} ${RO_FREENAS_CONFIG} \
-	"SELECT $sf FROM services_tftp ORDER BY -id LIMIT 1" | \
+        "SELECT $sf FROM services_tftp ORDER BY -id LIMIT 1" | \
     while eval read $f; do
-	if [ $enabled -eq 0 ]; then
-	    if [ "$tftp_port" -eq 69 ]; then
-		service="tftp"
-	    else
-		service="freenas-tftp"
-		echo "freenas-tftp $tftp_port/udp" >> $tmp_services_extra
-	    fi
-	    cmd="tftpd -l -s $tftp_directory -u $tftp_username -U $tftp_umask $tftp_options"
-	    if [ "$tftp_newfiles" -eq 1 ]; then
-		cmd="$cmd -w"
-	    fi
-	    echo "$service dgram udp wait root /usr/libexec/tftpd $cmd" >> \
-		$tmp_inetd_conf_extra
-	fi
+        if [ $enabled -eq 0 ]; then
+            if [ "$tftp_port" -eq 69 ]; then
+                service="tftp"
+            else
+                service="freenas-tftp"
+                echo "freenas-tftp $tftp_port/udp" >> $tmp_services_extra
+            fi
+            cmd="tftpd -l -s $tftp_directory -u $tftp_username -U 0$tftp_umask $tftp_options"
+            if [ "$tftp_newfiles" -eq 1 ]; then
+                cmd="$cmd -w"
+            fi
+            echo "$service dgram udp wait root /usr/libexec/tftpd $cmd" >> \
+                $tmp_inetd_conf_extra
+        fi
     done
 }
 
 generate_inetd_files()
 {
-	local tmp
-	RO_FREENAS_CONFIG=$(ro_sqlite ${name} 2> /tmp/${name}.fail && rm /tmp/${name}.fail)
-	trap 'rm -f ${RO_FREENAS_CONFIG}' EXIT
+    local tmp
+    RO_FREENAS_CONFIG=$(ro_sqlite ${name} 2> /tmp/${name}.fail && rm /tmp/${name}.fail)
+    trap 'rm -f ${RO_FREENAS_CONFIG}' EXIT
 
-	# XXX: intentional namespace pollution
-	tmp_inetd_conf_extra=$(mktemp /tmp/tmp.XXXXXX)
-	tmp_services_extra=$(mktemp /tmp/tmp.XXXXXX)
+    # XXX: intentional namespace pollution
+    tmp_inetd_conf_extra=$(mktemp /tmp/tmp.XXXXXX)
+    tmp_services_extra=$(mktemp /tmp/tmp.XXXXXX)
 
-	tmp=$(mktemp /tmp/tmp.XXXXXX)
+    tmp=$(mktemp /tmp/tmp.XXXXXX)
 
-	generate_tftp
-	if [ -s $tmp_services_extra ]; then
-		cat /conf/base/etc/services $tmp_services_extra >> $tmp
-		if [ $? -eq 0 ]; then
-			mv $tmp /etc/services
-		fi
-	fi
-	if [ -s $tmp_inetd_conf_extra ]; then
-		cat /conf/base/etc/inetd.conf $tmp_inetd_conf_extra > $tmp
-		if [ $? -eq 0 ]; then
-			mv $tmp /etc/inetd.conf
-		fi
-	fi
-	rm -f $tmp $tmp_inetd_conf_extra $tmp_services_extra
-	# we assume that someone else kicks inetd if necessary
+    generate_tftp
+    if [ -s $tmp_services_extra ]; then
+        cat /conf/base/etc/services $tmp_services_extra >> $tmp
+        if [ $? -eq 0 ]; then
+            mv $tmp /etc/services
+        fi
+    fi
+    if [ -s $tmp_inetd_conf_extra ]; then
+        cat /conf/base/etc/inetd.conf $tmp_inetd_conf_extra > $tmp
+        if [ $? -eq 0 ]; then
+            mv $tmp /etc/inetd.conf
+        fi
+    fi
+    rm -f $tmp $tmp_inetd_conf_extra $tmp_services_extra
+    # we assume that someone else kicks inetd if necessary
 }
 
 name="ix-inetd"
