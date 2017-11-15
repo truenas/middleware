@@ -244,7 +244,8 @@ class InterfacesForm(ModelForm):
         options = self.cleaned_data.get('int_options')
         if iface and options and iface.startswith('lagg') and re.search(r'\bmtu\b', options):
             raise forms.ValidationError(
-                _('MTU option is not allowed for LAGG interfaces')
+                _('MTU option is not allowed for LAGG interfaces. '
+                  'To make changes go to Network → Link Aggregrations → Edit Members')
             )
         return options
 
