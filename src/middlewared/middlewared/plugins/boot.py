@@ -78,14 +78,14 @@ class BootService(Service):
     async def install_grub(self, boottype, dev):
         args = [
             '/usr/local/sbin/grub-install',
-            '--modules=\'zfs part_gpt\'',
+            '--modules=zfs part_gpt',
         ]
 
         if boottype == 'EFI':
             await run('mount', '-t', 'msdosfs', f'/dev/{dev}p1', '/boot/efi', check=False)
             args += ['--efi-directory=/boot/efi', '--removable', '--target=x86_64-efi']
 
-        args.append(dev)
+        args.append(f'/dev/{dev}')
 
         await run(*args, check=False)
 
