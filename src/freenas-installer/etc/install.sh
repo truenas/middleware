@@ -48,8 +48,8 @@ get_image_name()
 # This does memory size only for now.
 pre_install_check()
 {
-    # We need at least 4 GB of RAM
-    local readonly minmemgb=4
+    # We need at least 8 GB of RAM
+    local readonly minmemgb=8
     local readonly minmem=$(expr ${minmemgb} \* 1024 \* 1024 \* 1024)
     local memsize=$(sysctl -n hw.physmem)
 
