@@ -772,6 +772,7 @@ class ServiceService(CRUDService):
             sysctl.filter('vfs.nfsd.server_max_nfsvers')[0].value = 4
             if nfs['nfs_srv_v4_v3owner']:
                 sysctl.filter('vfs.nfsd.enable_stringtouid')[0].value = 1
+                await self._service("nfsuserd", "stop", force=True, **kwargs)
             else:
                 sysctl.filter('vfs.nfsd.enable_stringtouid')[0].value = 0
                 await self._service("nfsuserd", "start", quiet=True, **kwargs)
