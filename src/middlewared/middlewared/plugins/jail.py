@@ -157,6 +157,7 @@ class JailService(CRUDService):
              Str("user", default="anonymous"),
              Str("password", default="anonymous@"),
              Str("name", default=None),
+             Bool("accept", default=False),
              List("props"),
              List(
                  "files",
