@@ -481,7 +481,7 @@ class ZFSDataset(object):
     properties = [
         'atime', 'used', 'usedsnap', 'usedds', 'usedrefreserv', 'usedchild',
         'avail', 'refer', 'mountpoint', 'compression', 'dedup',
-        'description', 'quota', 'refquota', 'readonly', 'recordsize',
+        'description', 'quota', 'refquota', 'readonly', 'exec', 'recordsize',
         'reservation', 'refreservation',
     ]
 
@@ -953,6 +953,9 @@ def zfs_list(path="", recursive=False, hierarchical=False, include_root=False,
             zprops['reservation'] = int(props['reservation'][0]) if props['reservation'][0].isdigit() else None
             zprops['refreservation'] = int(props['refreservation'][0]) if props['refreservation'][0].isdigit() else None
             zprops['recordsize'] = int(props['recordsize'][0]) if props['recordsize'][0].isdigit() else None
+            zprops['exec'] = props['exec'][0]
+            if props['exec'][1].startswith('inherited'):
+                inherit_props.append('exec')
             item = ZFSDataset(
                 path=path,
                 include_root=include_root,

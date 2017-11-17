@@ -377,6 +377,7 @@ class DatasetResource(DojoResource):
     dedup = fields.CharField(attribute='dedup')
     atime = fields.CharField(attribute='atime')
     readonly = fields.CharField(attribute='readonly')
+    exec = fields.CharField(attribute='exec')
     inherit_props = fields.ListField(attribute='inherit')
 
     class Meta:

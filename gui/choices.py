@@ -401,6 +401,13 @@ ZFS_ReadonlyChoices = (
     ('off', _('Off')),
 )
 
+
+ZFS_ExecChoices = (
+    ('inherit', _('Inherit')),
+    ('on', _('On')),
+    ('off', _('Off')),
+)
+
 ZFS_CompressionChoices = (
     ('inherit', _('Inherit')),
     ('off', _('Off')),
