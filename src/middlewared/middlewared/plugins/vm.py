@@ -263,12 +263,15 @@ class VMSupervisor(object):
         elif self.bhyve_error == 1:
             # XXX: Need a better way to handle the vmm destroy.
             self.logger.info("===> Powered off VM: {0} ID: {1} BHYVE_CODE: {2}".format(self.vm['name'], self.vm['id'], self.bhyve_error))
+            await self.__teardown_guest_vmemory(self.vm['id'])
             await self.destroy_vm()
         elif self.bhyve_error in (2, 3):
             self.logger.info("===> Stopping VM: {0} ID: {1} BHYVE_CODE: {2}".format(self.vm['name'], self.vm['id'], self.bhyve_error))
+            await self.__teardown_guest_vmemory(self.vm['id'])
             await self.manager.stop(self.vm['id'])
         elif self.bhyve_error not in (0, 1, 2, 3, None):
             self.logger.info("===> Error VM: {0} ID: {1} BHYVE_CODE: {2}".format(self.vm['name'], self.vm['id'], self.bhyve_error))
+            await self.__teardown_guest_vmemory(self.vm['id'])
             await self.destroy_vm()
 
     async def destroy_vm(self):
@@ -278,6 +281,23 @@ class VMSupervisor(object):
         self.manager._vm.pop(self.vm['id'], None)
         await self.kill_bhyve_web()
         self.destroy_tap()
+
+    async def __teardown_guest_vmemory(self, id):
+        guest_status = await self.middleware.call('vm.status', id)
+        vm = await self.middleware.call('datastore.query', 'vm.vm', [('id', '=', id)])
+        guest_memory = vm[0].get('memory', None) * 1024 * 1024
+        max_arc = sysctl.filter('vfs.zfs.arc_max')
+        resize_arc = max_arc[0].value + guest_memory
+
+        if guest_status.get('state') == "STOPPED":
+            if resize_arc <= ZFS_ARC_MAX:
+                sysctl.filter('vfs.zfs.arc_max')[0].value = max_arc[0].value + guest_memory
+                self.logger.debug("===> Give back guest memory to ARC.: {}".format(guest_memory))
+            elif resize_arc > ZFS_ARC_MAX and max_arc[0].value < ZFS_ARC_MAX:
+                sysctl.filter('vfs.zfs.arc_max')[0].value = ZFS_ARC_MAX
+                self.logger.debug("===> Enough guest memory to set ARC back to its original limit.")
+            return True
+        return False
 
     def destroy_tap(self):
         while self.taps:
@@ -330,8 +350,6 @@ class VMSupervisor(object):
                 # Already stopped, process do not exist anymore
                 if e.errno != errno.ESRCH:
                     raise
-
-            await self.destroy_vm()
             return True
 
     async def kill_bhyve_web(self):
@@ -712,24 +730,6 @@ class VMService(CRUDService):
             self.logger.debug("===> bhyve process is running, we won't allocate memory")
             return False
 
-    async def __teardown_guest_vmemory(self, id):
-        guest_status = await self.status(id)
-        if guest_status.get('state') == "RUNNING":
-            vm = await self.middleware.call('datastore.query', 'vm.vm', [('id', '=', id)])
-            guest_memory = vm[0].get('memory', None) * 1024 * 1024
-            max_arc = sysctl.filter('vfs.zfs.arc_max')
-            resize_arc = max_arc[0].value + guest_memory
-
-            if resize_arc <= ZFS_ARC_MAX:
-                sysctl.filter('vfs.zfs.arc_max')[0].value = max_arc[0].value + guest_memory
-                self.logger.debug("===> Give back guest memory to ARC.: {}".format(guest_memory))
-            elif resize_arc > ZFS_ARC_MAX and max_arc[0].value < ZFS_ARC_MAX:
-                sysctl.filter('vfs.zfs.arc_max')[0].value = ZFS_ARC_MAX
-                self.logger.debug("===> Enough guest memory to set ARC back to its original limit.")
-            return True
-        else:
-            return False
-
     @accepts(Int('id'))
     async def rm_container_conf(self, id):
         vm_data = await self.middleware.call('datastore.query', 'vm.vm', [('id', '=', id)])
@@ -879,7 +879,6 @@ class VMService(CRUDService):
     async def stop(self, id):
         """Stop a VM."""
         try:
-            await self.__teardown_guest_vmemory(id)
             return await self._manager.stop(id)
         except Exception as err:
             self.logger.error("===> {0}".format(err))
