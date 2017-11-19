@@ -35,18 +35,9 @@ dtrace_func()
 	local loaded=false
 	local dtscript="$(realpath ${FREENAS_DEBUG_MODULEDIR}/dtrace/disklatencycmd.d)"
 
-	if kldstat | grep -q dtraceall; then
-		loaded=true
-	else
-		kldload dtraceall
-	fi
 
 	section_header "Dtrace Disk Latency - 'dtrace -s ${dtscript}'"
 	dtrace -s ${dtscript}
 	section_footer
 
-	if [ ${loaded} = false ]; then
-		# Do not try to unload for now, I've got a kernel panic
-		# kldunload dtraceall
-	fi
 }
