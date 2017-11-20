@@ -82,18 +82,6 @@ class ViewDisks(TreeNode):
     skip = True
 
 
-class ViewEnclosure(TreeNode):
-
-    gname = 'ViewEnclosure'
-    name = _('View Enclosure')
-    view = 'storage_enclosure_status'
-    type = 'view'
-    icon = 'ViewAllVolumesIcon'
-    app_name = 'storage'
-    model = 'Disk'
-    skip = True
-
-
 class ViewMultipaths(TreeNode):
 
     gname = 'storage.View.Multipaths'
@@ -205,9 +193,6 @@ class Volumes(TreeNode):
             ViewVolumes(),
             ViewDisks(),
         ])
-
-        if not notifier().is_freenas():
-            self.append_child(ViewEnclosure())
 
         has_multipath = models.Disk.objects.exclude(
             disk_multipath_name=''

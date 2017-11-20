@@ -141,3 +141,12 @@ class ProactiveSupport(TreeNode):
     def pre_build_options(self):
         if not Support.is_available()[0]:
             raise ValueError
+
+
+class ViewEnclosure(TreeNode):
+
+    gname = 'ViewEnclosure'
+    name = _(u'View Enclosure')
+    icon = u"ViewAllVolumesIcon"
+    type = 'opensystem'
+    order = 30
