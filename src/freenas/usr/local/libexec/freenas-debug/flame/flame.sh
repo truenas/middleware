@@ -37,21 +37,22 @@ flame_func()
 	local dtustackscript="$(realpath ${FREENAS_DEBUG_MODULEDIR}/flame/flame_ustack.dtrace)"
 	local collapsescript="$(realpath ${FREENAS_DEBUG_MODULEDIR}/flame/dtstackcollapse_flame.pl)"
 	local flamescript="$(realpath ${FREENAS_DEBUG_MODULEDIR}/flame/flamegraph.pl)"
-	section_header "flame graph"
+
+	section_header "flame graph generator"
 	rm -f /tmp/collapsar /tmp/ucollapsar /tmp/stacks /tmp/ustacks
-	dtrace -qs ${dtscript}  > /tmp/stacks & 
+	(time dtrace -qs ${dtscript}  > /tmp/stacks ; echo stack done ) & 
 	local kstackpid=$!
-	
-	dtrace -qs ${dtustackscript}  > /tmp/ustacks &
+	(time dtrace -qs ${dtustackscript}  > /tmp/ustacks; echo ustack done )&
 	local ustackpid=$!
 	echo awaiting $kstackpid $ustackpid
 	wait $kstackpid $ustackpid 
-	echo "generating ${flamescript} < /tmp/collapsar > ${FREENAS_DEBUG_DIRECTORY}/${directory}/flame.svg"
-	${collapsescript} < /tmp/stacks  > /tmp/collapsar &&   \
+	
+	echo "generating ${FREENAS_DEBUG_DIRECTORY}/${directory}/flame.svg"
+	tail -1600 /tmp/stacks | ${collapsescript}  > /tmp/collapsar &&   \
 		${flamescript} < /tmp/collapsar > ${FREENAS_DEBUG_DIRECTORY}/${directory}/flame.svg &
 	local prockstackpid=$!
-	echo "generating  ${flamescript} < /tmp/ucollapsar > ${FREENAS_DEBUG_DIRECTORY}/${directory}/userlandflame.svg"
-	${collapsescript} < /tmp/ustacks  > /tmp/ucollapsar && \ 
+	echo "generating  ${FREENAS_DEBUG_DIRECTORY}/${directory}/userlandflame.svg"
+	tail -1600 /tmp/ustacks | ${collapsescript}  > /tmp/ucollapsar && \ 
 		${flamescript} < /tmp/ucollapsar > ${FREENAS_DEBUG_DIRECTORY}/${directory}/userlandflame.svg &
 	local procustackpid=$!
 	echo awaitng $prockstackpid $procustackpid

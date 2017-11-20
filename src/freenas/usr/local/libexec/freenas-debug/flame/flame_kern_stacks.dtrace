@@ -7,4 +7,7 @@ profile-151  {
 	@[stack()] = count(); 
 }
 
-tick-60s { exit (0);} 
+tick-60s { 
+	trunc( @, 400); 
+	exit (0);
+} 
