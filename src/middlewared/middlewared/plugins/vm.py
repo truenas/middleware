@@ -172,7 +172,8 @@ class VMSupervisor(object):
                     mac_address = None
 
                 if mac_address == '00:a0:98:FF:FF:FF' or mac_address is None:
-                    args += ['-s', '{},{},{},mac={}'.format(nid(), nictype, tapname, self.random_mac())]
+                    random_mac = await self.middleware.call('vm.random_mac')
+                    args += ['-s', '{},{},{},mac={}'.format(nid(), nictype, tapname, random_mac)]
                 else:
                     args += ['-s', '{},{},{},mac={}'.format(nid(), nictype, tapname, mac_address)]
             elif device['dtype'] == 'VNC':
@@ -337,10 +338,6 @@ class VMSupervisor(object):
             bridge.add_member(tapname)
             bridge.add_member(attach_iface)
             bridge.up()
-
-    def random_mac(self):
-        mac_address = [0x00, 0xa0, 0x98, random.randint(0x00, 0x7f), random.randint(0x00, 0xff), random.randint(0x00, 0xff)]
-        return ':'.join(["%02x" % x for x in mac_address])
 
     async def kill_bhyve_pid(self):
         if self.proc:
@@ -765,6 +762,16 @@ class VMService(CRUDService):
                 return True
         else:
             return False
+
+    @accepts()
+    def random_mac(self):
+        """ Create a random mac address.
+
+            Returns:
+                str: with six groups of two hexadecimal digits
+        """
+        mac_address = [0x00, 0xa0, 0x98, random.randint(0x00, 0x7f), random.randint(0x00, 0xff), random.randint(0x00, 0xff)]
+        return ':'.join(["%02x" % x for x in mac_address])
 
     @accepts(Dict(
         'vm_create',
