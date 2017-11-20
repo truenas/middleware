@@ -28,6 +28,7 @@ CONTAINER_IMAGES = {
     }
 }
 BUFSIZE = 65536
+ZFS_ARC_MAX = 0
 
 
 class VMManager(object):
@@ -262,12 +263,15 @@ class VMSupervisor(object):
         elif self.bhyve_error == 1:
             # XXX: Need a better way to handle the vmm destroy.
             self.logger.info("===> Powered off VM: {0} ID: {1} BHYVE_CODE: {2}".format(self.vm['name'], self.vm['id'], self.bhyve_error))
+            await self.__teardown_guest_vmemory(self.vm['id'])
             await self.destroy_vm()
         elif self.bhyve_error in (2, 3):
             self.logger.info("===> Stopping VM: {0} ID: {1} BHYVE_CODE: {2}".format(self.vm['name'], self.vm['id'], self.bhyve_error))
+            await self.__teardown_guest_vmemory(self.vm['id'])
             await self.manager.stop(self.vm['id'])
         elif self.bhyve_error not in (0, 1, 2, 3, None):
             self.logger.info("===> Error VM: {0} ID: {1} BHYVE_CODE: {2}".format(self.vm['name'], self.vm['id'], self.bhyve_error))
+            await self.__teardown_guest_vmemory(self.vm['id'])
             await self.destroy_vm()
 
     async def destroy_vm(self):
@@ -277,6 +281,23 @@ class VMSupervisor(object):
         self.manager._vm.pop(self.vm['id'], None)
         await self.kill_bhyve_web()
         self.destroy_tap()
+
+    async def __teardown_guest_vmemory(self, id):
+        guest_status = await self.middleware.call('vm.status', id)
+        vm = await self.middleware.call('datastore.query', 'vm.vm', [('id', '=', id)])
+        guest_memory = vm[0].get('memory', None) * 1024 * 1024
+        max_arc = sysctl.filter('vfs.zfs.arc_max')
+        resize_arc = max_arc[0].value + guest_memory
+
+        if guest_status.get('state') == "STOPPED":
+            if resize_arc <= ZFS_ARC_MAX:
+                sysctl.filter('vfs.zfs.arc_max')[0].value = max_arc[0].value + guest_memory
+                self.logger.debug("===> Give back guest memory to ARC.: {}".format(guest_memory))
+            elif resize_arc > ZFS_ARC_MAX and max_arc[0].value < ZFS_ARC_MAX:
+                sysctl.filter('vfs.zfs.arc_max')[0].value = ZFS_ARC_MAX
+                self.logger.debug("===> Enough guest memory to set ARC back to its original limit.")
+            return True
+        return False
 
     def destroy_tap(self):
         while self.taps:
@@ -329,8 +350,6 @@ class VMSupervisor(object):
                 # Already stopped, process do not exist anymore
                 if e.errno != errno.ESRCH:
                     raise
-
-            await self.destroy_vm()
             return True
 
     async def kill_bhyve_web(self):
@@ -651,6 +670,66 @@ class VMService(CRUDService):
                 return dataset.mountpoint
         return False
 
+    @accepts()
+    async def get_vmemory_in_use(self):
+        """
+        The total amount of virtual memory in MB used by guests
+
+            Returns a dict with the following information:
+                RNP - Running but not provisioned
+                PRD - Provisioned but not running
+                RPRD - Running and provisioned
+        """
+        memory_allocation = {'RNP': 0, 'PRD': 0, 'RPRD': 0}
+        guests = await self.middleware.call('datastore.query', 'vm.vm')
+        for guest in guests:
+            status = await self.status(guest['id'])
+            if status['state'] == 'RUNNING' and guest['autostart'] is False:
+                memory_allocation['RNP'] += guest['memory'] * 1024 * 1024
+            elif status['state'] == 'RUNNING' and guest['autostart'] is True:
+                memory_allocation['RPRD'] += guest['memory'] * 1024 * 1024
+            elif guest['autostart']:
+                memory_allocation['PRD'] += guest['memory'] * 1024 * 1024
+
+        return memory_allocation
+
+    async def __set_guest_vmemory(self, memory):
+        usermem = sysctl.filter('hw.usermem')
+        max_arc = sysctl.filter('vfs.zfs.arc_max')
+        guest_mem_used = await self.get_vmemory_in_use()
+        memory = memory * 1024 * 1024
+
+        # Keep at least 35% of memory from initial arc_max.
+        throttled_arc_max = int(usermem[0].value * 1.35) - usermem[0].value
+        # Get the user memory and keep space for ARC.
+        throttled_user_mem = int(usermem[0].value - throttled_arc_max)
+        # Potential memory used by guests.
+        memory_used = guest_mem_used['RPRD'] + guest_mem_used['RNP']
+
+        vms_memory = memory_used + memory
+        if vms_memory <= throttled_user_mem:
+            if max_arc[0].value > throttled_arc_max:
+                if max(max_arc[0].value - memory, 0) != 0:
+                    self.logger.info("===> Setting ARC FROM: {} TO: {}".format(max_arc[0].value, max_arc[0].value - memory))
+                    sysctl.filter('vfs.zfs.arc_max')[0].value = max_arc[0].value - memory
+            return True
+        else:
+            return False
+
+    async def __init_guest_vmemory(self, id):
+        vm = await self.middleware.call('datastore.query', 'vm.vm', [('id', '=', id)])
+        guest_memory = vm[0].get('memory', None)
+        guest_status = await self.status(id)
+        if guest_status.get('state') != "RUNNING":
+            setvmem = await self.__set_guest_vmemory(guest_memory)
+            if setvmem is False:
+                self.logger.warn("===> Cannot guarantee memory for guest id: {}".format(id))
+            return setvmem
+
+        else:
+            self.logger.debug("===> bhyve process is running, we won't allocate memory")
+            return False
+
     @accepts(Int('id'))
     async def rm_container_conf(self, id):
         vm_data = await self.middleware.call('datastore.query', 'vm.vm', [('id', '=', id)])
@@ -787,7 +866,10 @@ class VMService(CRUDService):
     async def start(self, id):
         """Start a VM."""
         try:
-            return await self._manager.start(id)
+            if await self.__init_guest_vmemory(id):
+                return await self._manager.start(id)
+            else:
+                return False
         except Exception as err:
             self.logger.error("===> {0}".format(err))
             return False
@@ -1006,6 +1088,10 @@ async def __event_system_ready(middleware, event_type, args):
     """
     if args['id'] != 'ready':
         return
+
+    global ZFS_ARC_MAX
+    max_arc = sysctl.filter('vfs.zfs.arc_max')
+    ZFS_ARC_MAX = max_arc[0].value
 
     for vm in await middleware.call('vm.query', [('autostart', '=', True)]):
         await middleware.call('vm.start', vm['id'])
