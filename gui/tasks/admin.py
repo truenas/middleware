@@ -52,6 +52,7 @@ class CloudSyncFAdmin(BaseFreeAdmin):
         'minute',
         'month',
         'attributes',
+        'transfer_mode',
     )
     menu_child_of = 'tasks'
     refresh_time = 12000
