@@ -524,7 +524,7 @@ class ZFSQuoteService(Service):
     async def __get_quota_excess(self, properties, quota_type, quota_property, used_property):
         try:
             quota_value = int(properties[quota_property].rawvalue)
-        except (AttributeError, ValueError):
+        except (AttributeError, KeyError, ValueError):
             return None
 
         if quota_value == 0:
