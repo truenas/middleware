@@ -1,0 +1,11 @@
+#!/usr/sbin/dtrace -qs
+
+/*# dtrace -x ustackframes=100 -n 'profile-97 /pid == 12345 && arg1/ { @[ustack()] = count(); } tick-60s { exit(0); }' -o out.user_stacks
+*/
+
+/* arg1 is the userland pc */
+profile-19 / (pid != 0 ) && arg1 /   { 
+	@[ustack()] = count(); 
+}
+
+tick-60s { exit (0);} 
