@@ -1,6 +1,5 @@
 from django.utils.translation import ugettext_lazy as _
 from freenasUI.freeadmin.tree import TreeNode
-from freenasUI.middleware.notifier import notifier
 from . import models
 
 NAME = _('Storage')
