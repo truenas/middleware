@@ -115,6 +115,7 @@ class BackupService(CRUDService):
         'backup',
         Str('description'),
         Str('direction', enum=['PUSH', 'PULL']),
+        Str('transfer_mode', enum=['SYNC', 'COPY', 'MOVE']),
         Str('path'),
         Int('credential'),
         Str('minute'),
@@ -312,7 +313,7 @@ class BackupS3Service(Service):
                 '--config', f.name,
                 '-v',
                 '--stats', '1s',
-                'sync',
+                backup['transfer_mode'].lower(),
             ]
 
             remote_path = 'remote:{}{}'.format(
@@ -483,7 +484,7 @@ class BackupB2Service(Service):
                 '--config', f.name,
                 '-v',
                 '--stats', '1s',
-                'sync',
+                backup['transfer_mode'].lower(),
             ]
 
             remote_path = 'remote:{}{}'.format(
@@ -598,7 +599,7 @@ service_account_file = {keyfile}
                 '--config', f.name,
                 '-v',
                 '--stats', '1s',
-                'sync',
+                backup['transfer_mode'].lower(),
             ]
 
             remote_path = 'remote:{}{}'.format(
@@ -677,7 +678,7 @@ class BackupAzureService(Service):
                 '--config', f.name,
                 '-v',
                 '--stats', '1s',
-                'sync',
+                backup['transfer_mode'].lower(),
             ]
 
             remote_path = 'remote:{}{}'.format(
