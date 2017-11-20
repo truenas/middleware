@@ -1,5 +1,6 @@
 from django.utils.translation import ugettext_lazy as _
 from freenasUI.freeadmin.tree import TreeNode
+from freenasUI.middleware.notifier import notifier
 from freenasUI.system.models import Support
 
 BLACKLIST = [
@@ -150,3 +151,7 @@ class ViewEnclosure(TreeNode):
     icon = u"ViewAllVolumesIcon"
     type = 'opensystem'
     order = 30
+
+    def pre_build_options(self):
+        if notifier().is_freenas():
+            raise ValueError
