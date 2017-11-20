@@ -67,6 +67,16 @@ class CloudSync(Model):
         'system.CloudCredentials',
         verbose_name=_('Credential'),
     )
+    transfer_mode = models.CharField(
+        verbose_name=_('Transfer Mode'),
+        default='sync',
+        choices=(
+            ('SYNC', _('Sync')),
+            ('COPY', _('Copy')),
+            ('MOVE', _('Move')),
+        ),
+        max_length=20,
+    )
     attributes = DictField(
         editable=False,
     )
