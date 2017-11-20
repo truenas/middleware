@@ -116,14 +116,14 @@ smb_func()
 	net getdomainsid
 	section_footer
 	section_header "net usersidlist"
-	net usersidlist
+	net usersidlist | head -200
 	section_footer
 	section_header "net groupmap list"
-	net groupmap list
+	net groupmap list | head -200
 	section_footer
 
 	section_header "net status sessions"
-	net status sessions
+	net status sessions | head -200
 	section_footer
 	section_header "net status shares"
 	net status shares
@@ -138,8 +138,8 @@ smb_func()
 	#
 	section_header "Users and Groups"
 	section_header "Users - 'wbinfo -u'"
-	wbinfo -u
+	wbinfo -u | head -200
 	section_header "Groups - 'wbinfo -g'"
-	wbinfo -g
+	wbinfo -g | head -200
 	section_footer
 }
