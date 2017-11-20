@@ -112,11 +112,18 @@ class SystemHook(AppHook):
         license = get_license()[0]
         if license is not None and not notifier().is_freenas():
             support = models.Support.objects.order_by('-id')[0]
-            tabs.insert(12, {
+            tabs.insert(13, {
                 'name': 'Proactive Support',
                 'focus': 'system.ProactiveSupport',
                 'verbose_name': _('Proactive Support'),
                 'url': support.get_edit_url() + '?inline=true',
+            })
+
+            tabs.insert(14, {
+                'name': 'ViewEnclosure',
+                'focus': 'storage.ViewEnclosure',
+                'verbose_name': _('View Enclosure'),
+                'url': reverse('storage_enclosure_status'),
             })
 
         return tabs
