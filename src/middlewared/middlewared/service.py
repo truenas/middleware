@@ -229,21 +229,21 @@ class CRUDService(Service):
         if asyncio.iscoroutinefunction(self.do_create):
             rv = await self.do_create(data)
         else:
-            rv = await self.middleware.threaded(self.do_create, data)
+            rv = await self.middleware.run_in_thread(self.do_create, data)
         return rv
 
     async def update(self, id, data):
         if asyncio.iscoroutinefunction(self.do_update):
             rv = await self.do_update(id, data)
         else:
-            rv = await self.middleware.threaded(self.do_update, id, data)
+            rv = await self.middleware.run_in_thread(self.do_update, id, data)
         return rv
 
     async def delete(self, id, *args):
         if asyncio.iscoroutinefunction(self.do_delete):
             rv = await self.do_delete(id, *args)
         else:
-            rv = await self.middleware.threaded(self.do_delete, id, *args)
+            rv = await self.middleware.run_in_thread(self.do_delete, id, *args)
         return rv
 
     async def _get_instance(self, id):

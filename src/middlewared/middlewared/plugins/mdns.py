@@ -589,7 +589,7 @@ class mDNSAdvertiseService(Service):
     async def stop(self):
         for thread in self.threads.copy():
             thread = self.threads.get(thread)
-            await self.middleware.threaded(thread.cancel)
+            await self.middleware.run_in_thread(thread.cancel)
             del self.threads[thread.service]
         self.threads = {}
 
