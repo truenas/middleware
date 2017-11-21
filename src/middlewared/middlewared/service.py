@@ -41,7 +41,7 @@ def job(lock=None, process=False, pipe=False):
 
 def threaded(pool):
     def m(fn):
-        fn._threaded = pool
+        fn._thread_pool = pool
         return fn
     return m
 
