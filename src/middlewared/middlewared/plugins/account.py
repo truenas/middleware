@@ -274,7 +274,7 @@ class UserService(CRUDService):
         if home_copy:
             def do_home_copy():
                 subprocess.run(f"su - {user['username']} -c '/bin/cp -a {home_old}/* {user['home']}/'")
-            asyncio.ensure_future(self.middleware.threaded(do_home_copy))
+            asyncio.ensure_future(self.middleware.run_in_thread(do_home_copy))
 
         if 'groups' in user:
             groups = user.pop('groups')

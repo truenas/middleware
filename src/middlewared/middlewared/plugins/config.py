@@ -42,7 +42,7 @@ class ConfigService(Service):
                         break
                     f2.write(read)
                 f2.close()
-        await self.middleware.threaded(read_write)
+        await self.middleware.run_in_thread(read_write)
 
         if bundle:
             os.remove(filename)
@@ -68,7 +68,7 @@ class ConfigService(Service):
                     if nreads > 10240:
                         # FIXME: transfer to a file on disk
                         raise ValueError('File is bigger than 10MiB')
-        await self.middleware.threaded(read_write)
+        await self.middleware.run_in_thread(read_write)
         rv = await self.middleware.call('notifier.config_upload', filename)
         if not rv[0]:
             raise ValueError(rv[1])

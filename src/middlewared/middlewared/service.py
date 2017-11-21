@@ -39,6 +39,13 @@ def job(lock=None, process=False, pipe=False):
     return check_job
 
 
+def threaded(pool):
+    def m(fn):
+        fn._thread_pool = pool
+        return fn
+    return m
+
+
 def no_auth_required(fn):
     """Authentication is not required to use the given method."""
     fn._no_auth_required = True
@@ -91,6 +98,7 @@ class ServiceBase(type):
       - namespace: namespace identifier of the service
       - private: whether or not the service is deemed private
       - verbose_name: human-friendly singular name for the service
+      - thread_pool: thread pool to use for threaded methods
 
     """
 
@@ -115,6 +123,7 @@ class ServiceBase(type):
             'service_model': None,
             'namespace': namespace,
             'private': False,
+            'thread_pool': None,
             'verbose_name': klass.__name__.replace('Service', ''),
         }
 
@@ -220,21 +229,21 @@ class CRUDService(Service):
         if asyncio.iscoroutinefunction(self.do_create):
             rv = await self.do_create(data)
         else:
-            rv = await self.middleware.threaded(self.do_create, data)
+            rv = await self.middleware.run_in_thread(self.do_create, data)
         return rv
 
     async def update(self, id, data):
         if asyncio.iscoroutinefunction(self.do_update):
             rv = await self.do_update(id, data)
         else:
-            rv = await self.middleware.threaded(self.do_update, id, data)
+            rv = await self.middleware.run_in_thread(self.do_update, id, data)
         return rv
 
     async def delete(self, id, *args):
         if asyncio.iscoroutinefunction(self.do_delete):
             rv = await self.do_delete(id, *args)
         else:
-            rv = await self.middleware.threaded(self.do_delete, id, *args)
+            rv = await self.middleware.run_in_thread(self.do_delete, id, *args)
         return rv
 
     async def _get_instance(self, id):

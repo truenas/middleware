@@ -22,7 +22,7 @@ class MakoRenderer(object):
             def do():
                 with Client() as c:
                     return tmpl.render(client=c, middleware=self.service.middleware)
-            return await self.service.middleware.threaded(do)
+            return await self.service.middleware.run_in_thread(do)
         except Exception:
             self.service.logger.debug('Failed to render mako template: {0}'.format(
                 exceptions.text_error_template().render()
