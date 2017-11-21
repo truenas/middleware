@@ -334,7 +334,7 @@ class Job(object):
             if asyncio.iscoroutinefunction(self.method):
                 rv = await self.method(*([self] + args))
             else:
-                rv = await self.middleware.threaded(self.method, *([self] + args))
+                rv = await self.middleware.run_in_thread(self.method, *([self] + args))
             self.set_result(rv)
             self.set_state('SUCCESS')
 
