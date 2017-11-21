@@ -1,5 +1,6 @@
-import os
+import concurrent.futures
 import errno
+import os
 import socket
 import textwrap
 import threading
@@ -12,11 +13,12 @@ import libzfs
 from middlewared.schema import Dict, List, Str, Bool, Int, accepts
 from middlewared.service import (
     CallError, CRUDService, Service, ValidationError, ValidationErrors,
-    filterable, job, periodic
+    filterable, job, periodic,
 )
 from middlewared.utils import filter_list, start_daemon_thread
 
 SCAN_THREADS = {}
+SINGLE_THREAD_POOL = concurrent.futures.ThreadPoolExecutor(max_workers=1)
 
 
 def find_vdev(pool, vname):
@@ -47,6 +49,7 @@ class ZFSPoolService(Service):
     class Config:
         namespace = 'zfs.pool'
         private = True
+        thread_pool = SINGLE_THREAD_POOL
 
     @accepts(Str('pool'))
     async def get_disks(self, name):
@@ -191,6 +194,7 @@ class ZFSDatasetService(CRUDService):
     class Config:
         namespace = 'zfs.dataset'
         private = True
+        thread_pool = SINGLE_THREAD_POOL
 
     @filterable
     def query(self, filters, options):
@@ -305,6 +309,7 @@ class ZFSSnapshot(CRUDService):
 
     class Config:
         namespace = 'zfs.snapshot'
+        thread_pool = SINGLE_THREAD_POOL
 
     @filterable
     def query(self, filters, options):
@@ -436,6 +441,7 @@ class ZFSQuoteService(Service):
     class Config:
         namespace = 'zfs.quota'
         private = True
+        thread_pool = SINGLE_THREAD_POOL
 
     def __init__(self, middleware):
         super().__init__(middleware)
@@ -510,7 +516,7 @@ class ZFSQuoteService(Service):
     async def __get_quota_excesses(self):
         excesses = []
         zfs = libzfs.ZFS()
-        for properties in await self.middleware.threaded(lambda: [i.properties for i in zfs.datasets]):
+        for properties in await self.middleware._threaded(SINGLE_THREAD_POOL, lambda: [i.properties for i in zfs.datasets]):
             quota = await self.__get_quota_excess(properties, "quota", "quota", "used")
             if quota:
                 excesses.append(quota)
@@ -591,11 +597,9 @@ class ScanWatch(object):
         self._cancel = threading.Event()
 
     def run(self):
-        zfs = libzfs.ZFS()
 
         while not self._cancel.wait(2):
-            pool = zfs.get(self.pool)
-            scan = pool.scrub.__getstate__()
+            scan = SINGLE_THREAD_POOL.submit(lambda: libzfs.ZFS().get(self.pool).scrub.__getstate__()).result()
             if scan['state'] == 'SCANNING':
                 self.send_scan(scan)
             elif scan['state'] == 'FINISHED':
@@ -605,7 +609,7 @@ class ScanWatch(object):
 
     def send_scan(self, scan=None):
         if not scan:
-            scan = libzfs.ZFS().get(self.pool).scrub.__getstate__()
+            scan = SINGLE_THREAD_POOL.submit(lambda: libzfs.ZFS().get(self.pool).scrub.__getstate__()).result()
         self.middleware.send_event('zfs.pool.scan', 'CHANGED', fields={
             'scan': scan,
             'name': self.pool,
