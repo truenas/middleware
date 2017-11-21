@@ -27,7 +27,7 @@ import os
 import random
 import string
 import logging
-from django.core.validators import RegexValidator
+from django.core.validators import MinValueValidator, MaxValueValidator, RegexValidator
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
@@ -262,6 +262,7 @@ class Interfaces(Model):
     )
     int_vhid = models.PositiveIntegerField(
         verbose_name=_("Virtual Host ID"),
+        validators=[MinValueValidator(1), MaxValueValidator(255)],
         null=True,
         blank=True,
     )
