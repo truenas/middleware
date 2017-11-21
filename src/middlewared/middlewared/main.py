@@ -823,18 +823,21 @@ class Middleware(object):
     def get_schema(self, name):
         return self.__schemas.get(name)
 
-    async def threaded(self, method, *args, **kwargs):
+    async def _threaded(self, pool, method, *args, **kwargs):
         """
         Runs method in a native thread using concurrent.futures.ThreadPool.
         This prevents a CPU intensive or non-greenlet friendly method
         to block the event loop indefinitely.
         """
         loop = asyncio.get_event_loop()
-        task = loop.run_in_executor(self.__threadpool, functools.partial(method, *args, **kwargs))
+        task = loop.run_in_executor(pool, functools.partial(method, *args, **kwargs))
         await task
         return task.result()
 
-    async def _call(self, name, methodobj, params, app=None):
+    async def threaded(self, method, *args, **kwargs):
+        return await self._threaded(self.__threadpool, method, *args, **kwargs)
+
+    async def _call(self, name, serviceobj, methodobj, params, app=None):
 
         args = []
         if hasattr(methodobj, '_pass_app'):
@@ -859,32 +862,41 @@ class Middleware(object):
             if asyncio.iscoroutinefunction(methodobj):
                 return await methodobj(*args)
             else:
-                return await self.threaded(methodobj, *args)
+                pool = None
+                if hasattr(methodobj, '_threaded'):
+                    pool = methodobj._threaded
+                if serviceobj._config.thread_pool:
+                    pool = serviceobj._config.thread_pool
+                if pool:
+                    return await self._threaded(pool, methodobj, *args)
+                else:
+                    return await self.threaded(methodobj, *args)
 
     def _method_lookup(self, name):
         if '.' not in name:
             raise CallError('Invalid method name', errno.EBADMSG)
         try:
             service, method_name = name.rsplit('.', 1)
-            methodobj = getattr(self.get_service(service), method_name)
+            serviceobj = self.get_service(service)
+            methodobj = getattr(serviceobj, method_name)
         except AttributeError:
             raise CallError(f'Method "{method_name}" not found in "{service}"', CallError.ENOMETHOD)
-        return methodobj
+        return serviceobj, methodobj
 
     async def call_method(self, app, message):
         """Call method from websocket"""
         params = message.get('params') or []
-        methodobj = self._method_lookup(message['method'])
+        serviceobj, methodobj = self._method_lookup(message['method'])
 
         if not app.authenticated and not hasattr(methodobj, '_no_auth_required'):
             app.send_error(message, errno.EACCES, 'Not authenticated')
             return
 
-        return await self._call(message['method'], methodobj, params, app=app)
+        return await self._call(message['method'], serviceobj, methodobj, params, app=app)
 
     async def call(self, name, *params):
-        methodobj = self._method_lookup(name)
-        return await self._call(name, methodobj, params)
+        serviceobj, methodobj = self._method_lookup(name)
+        return await self._call(name, serviceobj, methodobj, params)
 
     def call_sync(self, name, *params):
         """
@@ -893,8 +905,8 @@ class Middleware(object):
         if threading.get_ident() == self.__thread_id:
             raise RuntimeError('You cannot call_sync from main thread')
 
-        methodobj = self._method_lookup(name)
-        fut = asyncio.run_coroutine_threadsafe(self._call(name, methodobj, params), self.__loop)
+        serviceobj, methodobj = self._method_lookup(name)
+        fut = asyncio.run_coroutine_threadsafe(self._call(name, serviceobj, methodobj, params), self.__loop)
         event = threading.Event()
 
         def done(_):

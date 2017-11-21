@@ -39,6 +39,13 @@ def job(lock=None, process=False, pipe=False):
     return check_job
 
 
+def threaded(pool):
+    def m(fn):
+        fn._threaded = pool
+        return fn
+    return m
+
+
 def no_auth_required(fn):
     """Authentication is not required to use the given method."""
     fn._no_auth_required = True
@@ -91,6 +98,7 @@ class ServiceBase(type):
       - namespace: namespace identifier of the service
       - private: whether or not the service is deemed private
       - verbose_name: human-friendly singular name for the service
+      - thread_pool: thread pool to use for threaded methods
 
     """
 
@@ -115,6 +123,7 @@ class ServiceBase(type):
             'service_model': None,
             'namespace': namespace,
             'private': False,
+            'thread_pool': None,
             'verbose_name': klass.__name__.replace('Service', ''),
         }
 
