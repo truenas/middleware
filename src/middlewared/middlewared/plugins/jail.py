@@ -190,6 +190,11 @@ class JailService(CRUDService):
                                              header=False)
             else:
                 resource_list = iocage.list("all", plugin=True)
+
+            for plugin in resource_list:
+                for i, elem in enumerate(plugin):
+                    # iocage returns - for None
+                    plugin[i] = elem if elem != "-" else None
         elif resource == "base":
             resource_list = iocage.fetch(list=True, remote=remote, http=True)
         else:
