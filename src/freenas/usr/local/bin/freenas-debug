@@ -283,9 +283,12 @@ main()
 				func_pids="$func_pids $!"
 			fi
 		done
-		logger "waiting on $func_pids"
-		wait $func_pids
-		logger "debug complete"
+		# set a guard  timer for debug modules that go awol
+		( sleep 240; kill $func_pids; echo  debug modules stragglers killed $func_pids) &
+		reaper_pid=$!
+		echo "waiting on $func_pids monitored by $reaper_pid"
+		wait $func_pids 
+		kill $reaper_pid
 	else
 		while getopts "${aopts}" opt
 		do

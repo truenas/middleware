@@ -212,14 +212,14 @@ __EOF__
 	#
 	section_header "Active Directory Users and Groups"
 	section_header "Users - 'wbinfo -u'"
-	wbinfo -u
+	wbinfo -u | head -200
 	section_header "Groups - 'wbinfo -g'"
-	wbinfo -g
+	wbinfo -g | head -200
 	section_header "Using getent"
 	section_header "Users - 'getent passwd'"
-	getent passwd
+	getent passwd | head -200
 	section_header "Groups - 'getent group'"
-	getent group
+	getent group | head -200
 	section_footer
 
 	#
