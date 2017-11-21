@@ -837,9 +837,11 @@ class VMService(CRUDService):
 
         if os.path.exists(file_path) is False and force is False:
             logger.debug("===> Downloading: %s" % (url))
-            await self.middleware.run_in_thread(lambda: urlretrieve(url, file_path,
-                                                               lambda nb, bs, fs,
-                                                               job=job: self.fetch_hookreport(nb, bs, fs, job, file_path)))
+            await self.middleware.run_in_thread(lambda: urlretrieve(
+                url,
+                file_path,
+                lambda nb, bs, fs, job=job: self.fetch_hookreport(nb, bs, fs, job, file_path)
+            ))
 
     @accepts()
     async def list_images(self):
