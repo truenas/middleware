@@ -6,7 +6,6 @@ import subprocess
 import sysctl
 
 import bsd
-import libzfs
 
 from middlewared.job import JobProgressBuffer
 from middlewared.schema import accepts, Int, Str
@@ -120,13 +119,13 @@ class PoolService(CRUDService):
         or if all geli providers exist.
         """
         try:
-            zpool = libzfs.ZFS().get(pool['name'])
-        except libzfs.ZFSException:
+            zpool = (await self.middleware.call('zfs.pool.query', [('id', '=', pool['name'])]))[0]
+        except Exception:
             zpool = None
 
         if zpool:
-            pool['status'] = zpool.status
-            pool['scan'] = zpool.scrub.__getstate__()
+            pool['status'] = zpool['status']
+            pool['scan'] = zpool['scan']
         else:
             pool.update({
                 'status': 'OFFLINE',
