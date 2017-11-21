@@ -83,7 +83,7 @@ class DatastoreService(Service):
         return apps.get_model(app, model)
 
     async def __queryset_serialize(self, qs, extend=None, field_prefix=None):
-        result = await self.middleware.threaded(lambda: list(qs))
+        result = await self.middleware.run_in_thread(lambda: list(qs))
         for i in result:
             yield await django_modelobj_serialize(self.middleware, i, extend=extend, field_prefix=field_prefix)
 
@@ -211,7 +211,7 @@ class DatastoreService(Service):
                 k_new = f'{prefix}{k}'
                 data[k_new] = data.pop(k)
         obj = model(**data)
-        await self.middleware.threaded(obj.save)
+        await self.middleware.run_in_thread(obj.save)
         return obj.pk
 
     @accepts(Str('name'), Any('id'), Dict('data', additional_attrs=True), Dict('options', Str('prefix')))
@@ -223,7 +223,7 @@ class DatastoreService(Service):
         options = options or {}
         prefix = options.get('prefix')
         model = self.__get_model(name)
-        obj = await self.middleware.threaded(lambda oid: model.objects.get(pk=oid), id)
+        obj = await self.middleware.run_in_thread(lambda oid: model.objects.get(pk=oid), id)
         for field in model._meta.fields:
             if prefix:
                 name = field.name.replace(prefix, '')
@@ -237,7 +237,7 @@ class DatastoreService(Service):
             if prefix:
                 k = f'{prefix}{k}'
             setattr(obj, k, v)
-        await self.middleware.threaded(obj.save)
+        await self.middleware.run_in_thread(obj.save)
         return obj.pk
 
     @accepts(Str('name'), Any('id'))
@@ -246,7 +246,7 @@ class DatastoreService(Service):
         Delete an entry `id` in `name`.
         """
         model = self.__get_model(name)
-        await self.middleware.threaded(lambda oid: model.objects.get(pk=oid).delete(), id)
+        await self.middleware.run_in_thread(lambda oid: model.objects.get(pk=oid).delete(), id)
         return True
 
     def sql(self, query, params=None):

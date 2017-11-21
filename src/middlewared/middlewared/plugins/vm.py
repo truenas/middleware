@@ -14,7 +14,6 @@ import stat
 import subprocess
 import sysctl
 import gzip
-import libzfs
 import hashlib
 import shutil
 
@@ -605,31 +604,27 @@ class VMService(CRUDService):
 
     @private
     def __activate_sharefs(self, dataset):
-        zfs = libzfs.ZFS()
         pool_exist = False
-        params = {}
-        fstype = getattr(libzfs.DatasetType, 'FILESYSTEM')
         images_fs = '/.bhyve_containers'
         new_fs = dataset + images_fs
 
-        try:
-            zfs.get_dataset(new_fs)
+        if self.middleware.call_sync('zfs.dataset.query', [('id', '=', new_fs)]):
             pool_exist = True
-        except libzfs.ZFSException:
-            # dataset does not exist yet, we need to create it.
-            pass
 
         if pool_exist is False:
             try:
                 self.logger.debug("===> Trying to create: {0}".format(new_fs))
-                pool = zfs.get(dataset)
-                pool.create(new_fs, params, fstype, sparse_vol=False)
-            except libzfs.ZFSException as e:
+                self.middleware.call_sync('zfs.dataset.create', {
+                    'name': new_fs,
+                    'type': 'FILESYSTEM',
+                    'properties': {'sparse': False},
+                })
+            except Exception as e:
                 self.logger.error("Failed to create dataset", exc_info=True)
                 raise e
-            new_volume = zfs.get_dataset(new_fs)
-            new_volume.mount()
-            self.vmutils.do_dirtree_container(new_volume.mountpoint)
+            self.middleware.call_sync('zfs.dataset.mount', new_fs)
+            mountpoint = self.middleware.call_sync('zfs.dataset.query', [('id', '=', new_fs)])[0]['mountpoint']
+            self.vmutils.do_dirtree_container(mountpoint)
             return True
         else:
             return False
@@ -640,8 +635,6 @@ class VMService(CRUDService):
         Create a pool for pre built containers images.
         """
 
-        zfs = libzfs.ZFS()
-
         if pool_name:
             return self.__activate_sharefs(pool_name)
         else:
@@ -650,9 +643,9 @@ class VMService(CRUDService):
             pool_name = None
 
             # We get the first available pool.
-            for pool in zfs.pools:
-                if pool.name not in blocked_pools:
-                    pool_name = pool.name
+            for pool in self.middleware.call_sync('zfs.pool.query'):
+                if pool['name'] not in blocked_pools:
+                    pool_name = pool['name']
                     break
             return self.__activate_sharefs(pool_name)
 
@@ -661,10 +654,9 @@ class VMService(CRUDService):
         """
         Return the shared pool for containers images.
         """
-        zfs = libzfs.ZFS()
-        for dataset in zfs.datasets:
-            if '.bhyve_containers' in dataset.name:
-                return dataset.mountpoint
+        for dataset in await self.middleware.call('zfs.dataset.query'):
+            if '.bhyve_containers' in dataset['name']:
+                return dataset['mountpoint']
         return False
 
     @accepts()
@@ -934,9 +926,11 @@ class VMService(CRUDService):
 
         if os.path.exists(file_path) is False and force is False:
             logger.debug("===> Downloading: %s" % (url))
-            await self.middleware.threaded(lambda: urlretrieve(url, file_path,
-                                                               lambda nb, bs, fs,
-                                                               job=job: self.fetch_hookreport(nb, bs, fs, job, file_path)))
+            await self.middleware.run_in_thread(lambda: urlretrieve(
+                url,
+                file_path,
+                lambda nb, bs, fs, job=job: self.fetch_hookreport(nb, bs, fs, job, file_path)
+            ))
 
     @accepts()
     async def list_images(self):

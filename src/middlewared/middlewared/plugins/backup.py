@@ -416,7 +416,7 @@ class BackupS3Service(Service):
     @private
     async def is_dir(self, cred_id, bucket, path):
         client = await self.get_client(cred_id)
-        objects_list = await self.middleware.threaded(
+        objects_list = await self.middleware.run_in_thread(
             client.list_objects_v2,
             Bucket=bucket,
             Prefix=path,

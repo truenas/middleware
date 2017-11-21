@@ -207,7 +207,7 @@ class DiskService(CRUDService):
         Returns:
             str - identifier
         """
-        await self.middleware.threaded(geom.scan)
+        await self.middleware.run_in_thread(geom.scan)
 
         g = geom.geom_by_name('DISK', name)
         if g and g.provider.config.get('ident'):
@@ -277,7 +277,7 @@ class DiskService(CRUDService):
             disk = {'disk_identifier': ident}
         disk.update({'disk_name': name, 'disk_expiretime': None})
 
-        await self.middleware.threaded(geom.scan)
+        await self.middleware.run_in_thread(geom.scan)
         g = geom.geom_by_name('DISK', name)
         if g:
             if g.provider.config['ident']:
@@ -316,7 +316,7 @@ class DiskService(CRUDService):
 
         seen_disks = {}
         serials = []
-        await self.middleware.threaded(geom.scan)
+        await self.middleware.run_in_thread(geom.scan)
         for disk in (await self.middleware.call('datastore.query', 'storage.disk', [], {'order_by': ['disk_expiretime']})):
 
             name = await self.middleware.call('notifier.identifier_to_device', disk['disk_identifier'])
@@ -431,7 +431,7 @@ class DiskService(CRUDService):
         Returns:
             The string of the multipath name to be created
         """
-        await self.middleware.threaded(geom.scan)
+        await self.middleware.run_in_thread(geom.scan)
         numbers = sorted([
             int(RE_MPATH_NAME.search(g.name).group(1))
             for g in geom.class_by_name('MULTIPATH').geoms if RE_MPATH_NAME.match(g.name)
@@ -459,7 +459,7 @@ class DiskService(CRUDService):
         then a gmultipath is automatically created and will be available for use.
         """
 
-        await self.middleware.threaded(geom.scan)
+        await self.middleware.run_in_thread(geom.scan)
 
         mp_disks = []
         for g in geom.class_by_name('MULTIPATH').geoms:
@@ -517,7 +517,7 @@ class DiskService(CRUDService):
             await self.__multipath_create(name, disks, 'A' if disks[0] in active_active else mode)
 
         # Scan again to take new multipaths into account
-        await self.middleware.threaded(geom.scan)
+        await self.middleware.run_in_thread(geom.scan)
         mp_ids = []
         for g in geom.class_by_name('MULTIPATH').geoms:
             _disks = []
@@ -563,7 +563,7 @@ class DiskService(CRUDService):
         We try to mirror all available swap partitions to avoid a system
         crash in case one of them dies.
         """
-        await self.middleware.threaded(geom.scan)
+        await self.middleware.run_in_thread(geom.scan)
 
         used_partitions = set()
         swap_devices = []
@@ -640,7 +640,7 @@ class DiskService(CRUDService):
         it will offline if from swap, remove it from the gmirror (if exists)
         and detach the geli.
         """
-        await self.middleware.threaded(geom.scan)
+        await self.middleware.run_in_thread(geom.scan)
         providers = {}
         for disk in disks:
             partgeom = geom.geom_by_name('PART', disk)
@@ -707,7 +707,7 @@ class DiskService(CRUDService):
 
         # First do a quick wipe of every partition to clean things like zfs labels
         if mode == 'QUICK':
-            await self.middleware.threaded(geom.scan)
+            await self.middleware.run_in_thread(geom.scan)
             klass = geom.class_by_name('PART')
             for g in klass.xml.findall(f'./geom[name=\'{dev}\']'):
                 for p in g.findall('./provider'):
@@ -792,7 +792,7 @@ async def _event_devfs(middleware, event_type, args):
         return
 
     if data['type'] == 'CREATE':
-        disks = await middleware.threaded(lambda: sysctl.filter('kern.disks')[0].value.split())
+        disks = await middleware.run_in_thread(lambda: sysctl.filter('kern.disks')[0].value.split())
         # Device notified about is not a disk
         if data['cdev'] not in disks:
             return

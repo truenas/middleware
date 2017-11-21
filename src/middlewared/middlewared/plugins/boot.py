@@ -30,7 +30,7 @@ class BootService(Service):
         Returns:
             "BIOS", "EFI", None
         """
-        await self.middleware.threaded(geom.scan)
+        await self.middleware.run_in_thread(geom.scan)
         labelclass = geom.class_by_name('PART')
         efi = bios = 0
         async for disk in await self.get_disks():
@@ -122,7 +122,7 @@ class BootService(Service):
             # Lets try to find out the size of the current freebsd-zfs partition so
             # the new partition is not bigger, preventing size mismatch if one of
             # them fail later on. See #21336
-            await self.middleware.threaded(geom.scan)
+            await self.middleware.run_in_thread(geom.scan)
             labelclass = geom.class_by_name('PART')
             for e in labelclass.xml.findall(f"./geom[name='{disks[0]}']/provider/config[type='freebsd-zfs']"):
                 format_opts['size'] = int(e.find('./length').text)

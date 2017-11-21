@@ -261,7 +261,7 @@ class UpdateService(Service):
             path = await self.middleware.call('notifier.get_update_location')
         data = []
         try:
-            changes = await self.middleware.threaded(Update.PendingUpdatesChanges, path)
+            changes = await self.middleware.run_in_thread(Update.PendingUpdatesChanges, path)
         except (
             UpdateIncompleteCacheException, UpdateInvalidCacheException,
             UpdateBusyCacheException,

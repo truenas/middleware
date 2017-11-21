@@ -7,7 +7,6 @@ import subprocess
 import sysctl
 
 import bsd
-import libzfs
 
 from middlewared.job import JobProgressBuffer
 from middlewared.schema import accepts, Int, Str
@@ -18,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 
 async def is_mounted(middleware, path):
-    mounted = await middleware.threaded(bsd.getmntinfo)
+    mounted = await middleware.run_in_thread(bsd.getmntinfo)
     return any(fs.dest == path for fs in mounted)
 
 
@@ -99,7 +98,7 @@ class MountFsContextManager:
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         if await is_mounted(self.middleware, self.path):
-            await self.middleware.threaded(bsd.unmount, self.path)
+            await self.middleware.run_in_thread(bsd.unmount, self.path)
 
 
 class PoolService(CRUDService):
@@ -123,13 +122,13 @@ class PoolService(CRUDService):
         or if all geli providers exist.
         """
         try:
-            zpool = libzfs.ZFS().get(pool['name'])
-        except libzfs.ZFSException:
+            zpool = (await self.middleware.call('zfs.pool.query', [('id', '=', pool['name'])]))[0]
+        except Exception:
             zpool = None
 
         if zpool:
-            pool['status'] = zpool.status
-            pool['scan'] = zpool.scrub.__getstate__()
+            pool['status'] = zpool['status']
+            pool['scan'] = zpool['scan']
         else:
             pool.update({
                 'status': 'OFFLINE',
