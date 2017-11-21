@@ -39,7 +39,7 @@ class DeviceService(Service):
         return ports
 
     async def _get_disk(self):
-        await self.middleware.threaded(geom.scan)
+        await self.middleware.run_in_thread(geom.scan)
         disks = {}
         klass = geom.class_by_name('DISK')
         if not klass:
@@ -89,7 +89,7 @@ async def devd_listen(middleware):
                 continue
 
             try:
-                parsed = await middleware.threaded(lambda l: dict(t.split('=') for t in shlex.split(l)), line[1:])
+                parsed = await middleware.run_in_thread(lambda l: dict(t.split('=') for t in shlex.split(l)), line[1:])
             except ValueError:
                 middleware.logger.warn(f'Failed to parse devd message: {line}')
                 continue

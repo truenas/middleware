@@ -116,7 +116,7 @@ class SupportService(Service):
         job.set_progress(20, 'Submitting ticket')
 
         try:
-            r = await self.middleware.threaded(lambda: requests.post(
+            r = await self.middleware.run_in_thread(lambda: requests.post(
                 f'https://{ADDRESS}/{sw_name}/api/v1.0/ticket',
                 data=json.dumps(data),
                 headers={'Content-Type': 'application/json'},
@@ -146,10 +146,10 @@ class SupportService(Service):
 
         if debug:
             # FIXME: generate debug from middleware
-            mntpt, direc, dump = await self.middleware.threaded(debug_get_settings)
+            mntpt, direc, dump = await self.middleware.run_in_thread(debug_get_settings)
 
             job.set_progress(60, 'Generating debug file')
-            await self.middleware.threaded(debug_generate)
+            await self.middleware.run_in_thread(debug_generate)
 
             not_freenas = not (await self.middleware.call('system.is_freenas'))
             if not_freenas:
@@ -181,7 +181,7 @@ class SupportService(Service):
                             break
                         os.write(tjob.write_fd, read)
                     os.close(tjob.write_fd)
-            await self.middleware.threaded(writer)
+            await self.middleware.run_in_thread(writer)
             await tjob.wait()
         else:
             job.set_progress(100)
@@ -213,7 +213,7 @@ class SupportService(Service):
         fileobj = os.fdopen(job.read_fd, 'rb')
 
         try:
-            r = await self.middleware.threaded(lambda: requests.post(
+            r = await self.middleware.run_in_thread(lambda: requests.post(
                 f'https://{ADDRESS}/{sw_name}/api/v1.0/ticket/attachment',
                 data=data,
                 timeout=10,

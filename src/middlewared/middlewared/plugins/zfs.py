@@ -72,7 +72,7 @@ class ZFSPoolService(Service):
         except libzfs.ZFSException as e:
             raise CallError(str(e), errno.ENOENT)
 
-        await self.middleware.threaded(geom.scan)
+        await self.middleware.run_in_thread(geom.scan)
         labelclass = geom.class_by_name('LABEL')
         for absdev in zpool.disks:
             dev = absdev.replace('/dev/', '').replace('.eli', '')
@@ -536,7 +536,7 @@ class ZFSQuoteService(Service):
     async def __get_quota_excesses(self):
         excesses = []
         zfs = libzfs.ZFS()
-        for properties in await self.middleware._threaded(SINGLE_THREAD_POOL, lambda: [i.properties for i in zfs.datasets]):
+        for properties in await self.middleware.run_in_thread_pool(SINGLE_THREAD_POOL, lambda: [i.properties for i in zfs.datasets]):
             quota = await self.__get_quota_excess(properties, "quota", "quota", "used")
             if quota:
                 excesses.append(quota)
@@ -572,7 +572,7 @@ class ZFSQuoteService(Service):
         mountpoint = None
         if properties["mounted"].value == "yes":
             if properties["mountpoint"].value == "legacy":
-                for m in await self.middleware.threaded(getmntinfo):
+                for m in await self.middleware.run_in_thread(getmntinfo):
                     if m.source == properties["name"].value:
                         mountpoint = m.dest
                         break
@@ -584,7 +584,7 @@ class ZFSQuoteService(Service):
             uid = 0
         else:
             try:
-                stat_info = await self.middleware.threaded(os.stat, mountpoint)
+                stat_info = await self.middleware.run_in_thread(os.stat, mountpoint)
             except Exception:
                 self.logger.warning("Unable to stat mountpoint %r, assuming owner = root", mountpoint)
                 uid = 0
@@ -660,10 +660,10 @@ async def _handle_zfs_events(middleware, event_type, args):
         scanwatch = SCAN_THREADS.pop(pool, None)
         if not scanwatch:
             return
-        await middleware.threaded(scanwatch.cancel)
+        await middleware.run_in_thread(scanwatch.cancel)
 
         # Send the last event with SCRUB/RESILVER as FINISHED
-        await middleware.threaded(scanwatch.send_scan)
+        await middleware.run_in_thread(scanwatch.send_scan)
 
     if data.get('type') == 'misc.fs.zfs.scrub_finish':
         await middleware.call('mail.send', {
