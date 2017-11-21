@@ -84,6 +84,11 @@ class FormRender(template.Node):
 
         advanced_fields = getattr(form, 'advanced_fields', [])
         for field in new_fields:
+            if hasattr(form, "fieldsets"):
+                for title, desc in form.fieldsets:
+                    if field == desc["fields"][0]:
+                        output.append("""<tr><th colspan="2"><label>%s</label></th></tr>""" % title)
+
             is_adv = field in advanced_fields
             _hide = ' style="display:none;"' if not adv_mode and is_adv else ''
             is_adv = ' class="advancedField"' if is_adv else ''
