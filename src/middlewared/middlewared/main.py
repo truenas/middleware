@@ -863,10 +863,10 @@ class Middleware(object):
                 return await methodobj(*args)
             else:
                 pool = None
-                if hasattr(methodobj, '_threaded'):
-                    pool = methodobj._threaded
                 if serviceobj._config.thread_pool:
                     pool = serviceobj._config.thread_pool
+                if hasattr(methodobj, '_thread_pool'):
+                    pool = methodobj._thread_pool
                 if pool:
                     return await self._threaded(pool, methodobj, *args)
                 else:
