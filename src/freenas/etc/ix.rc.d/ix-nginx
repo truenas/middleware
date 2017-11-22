@@ -290,17 +290,13 @@ __EOF__
             report_uploads proxied;
         }
 
-        location /legacy/dojango {
-            alias /usr/local/www/freenasUI/dojango;
-        }
-
-        location /legacy/static {
+        location ^~ /legacy/static {
             alias /usr/local/www/freenasUI/static;
             add_header Cache-Control "must-revalidate";
             add_header Etag "$(cat /etc/version)";
         }
 
-        location /legacy/dojango/dojo-media/release/${dojo} {
+        location ^~ /legacy/dojango/dojo-media/release/${dojo} {
             alias /usr/local/www/dojo;
         }
 
