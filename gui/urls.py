@@ -81,9 +81,13 @@ urlpatterns = [
         {'document_root': '/usr/local/www/dojo'}),
     url(r'^legacy/admin/', include(site.urls)),
     url(r'^legacy/jsi18n/', javascript_catalog, name='javascript_catalog'),
+    url(r'^plugins/', include('freenasUI.plugins.urls')),
 ]
 
 for app in settings.APP_MODULES:
+    # plugins must stay on old URL for plugins compatibility
+    if app == 'freenasUI.plugins':
+        continue
     urlpatterns += [
         url(r'^legacy/%s/' % app.rsplit('.')[-1], include('%s.urls' % app)),
     ]
