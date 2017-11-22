@@ -49,7 +49,7 @@ require([
             return;
         _msgstarted = true;
         var msgfull = registry.byId('log_dialog');
-        url = msgfull.open? '/system/varlogmessages/500/' : '/system/varlogmessages/';
+        url = msgfull.open? '/legacy/system/varlogmessages/500/' : '/legacy/system/varlogmessages/';
         xhr.get(url, {
             handleAs: "xml"
         }).then(function(data) {

@@ -49,7 +49,7 @@ require([
 
     loadalert = function() {
 
-        var url = '/admin/alert/status/?' + new Date().getTime();
+        var url = '/legacy/admin/alert/status/?' + new Date().getTime();
         xhr.get(url, {
             handleAs: "text"
             }).then(function(data) {
