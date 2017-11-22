@@ -268,6 +268,10 @@ __EOF__
 	cat << __EOF__
 
         location / {
+            rewrite ^.* /ui/;
+        }
+
+        location ~ /(legacy|plugins|api/v1.0)/ {
             include fastcgi_params;
             fastcgi_pass 127.0.0.1:9042;
             fastcgi_pass_header Authorization;
@@ -286,21 +290,17 @@ __EOF__
             report_uploads proxied;
         }
 
-        location /dojango {
+        location /legacy/dojango {
             alias /usr/local/www/freenasUI/dojango;
         }
 
-        location /static {
+        location /legacy/static {
             alias /usr/local/www/freenasUI/static;
             add_header Cache-Control "must-revalidate";
             add_header Etag "$(cat /etc/version)";
         }
 
-        location /reporting/graphs {
-            alias /var/db/graphs;
-        }
-
-        location /dojango/dojo-media/release/${dojo} {
+        location /legacy/dojango/dojo-media/release/${dojo} {
             alias /usr/local/www/dojo;
         }
 
