@@ -226,7 +226,7 @@ class VMSupervisor(object):
                 if line == b'':
                     break
 
-        args.append(self.vm['name'])
+        args.append(self.vm['name'] + str(self.vm['id']))
 
         self.logger.debug('Starting bhyve: {}'.format(' '.join(args)))
         self.proc = await Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
@@ -277,7 +277,7 @@ class VMSupervisor(object):
     async def destroy_vm(self):
         self.logger.warn("===> Destroying VM: {0} ID: {1} BHYVE_CODE: {2}".format(self.vm['name'], self.vm['id'], self.bhyve_error))
         # XXX: We need to catch the bhyvectl return error.
-        await (await Popen(['bhyvectl', '--destroy', '--vm={}'.format(self.vm['name'])], stdout=subprocess.PIPE, stderr=subprocess.PIPE)).wait()
+        await (await Popen(['bhyvectl', '--destroy', '--vm={}'.format(self.vm['name'] + str(self.vm['id']))], stdout=subprocess.PIPE, stderr=subprocess.PIPE)).wait()
         self.manager._vm.pop(self.vm['id'], None)
         await self.kill_bhyve_web()
         self.destroy_tap()
@@ -359,13 +359,13 @@ class VMSupervisor(object):
             return True
 
     async def restart(self):
-        bhyve_error = await (await Popen(['bhyvectl', '--force-reset', '--vm={}'.format(self.vm['name'])], stdout=subprocess.PIPE, stderr=subprocess.PIPE)).wait()
+        bhyve_error = await (await Popen(['bhyvectl', '--force-reset', '--vm={}'.format(self.vm['name'] + str(self.vm['id']))], stdout=subprocess.PIPE, stderr=subprocess.PIPE)).wait()
         self.logger.debug("==> Reset VM: {0} ID: {1} BHYVE_CODE: {2}".format(self.vm['name'], self.vm['id'], bhyve_error))
         self.destroy_tap()
         await self.kill_bhyve_web()
 
     async def stop(self):
-        bhyve_error = await (await Popen(['bhyvectl', '--force-poweroff', '--vm={}'.format(self.vm['name'])], stdout=subprocess.PIPE, stderr=subprocess.PIPE)).wait()
+        bhyve_error = await (await Popen(['bhyvectl', '--force-poweroff', '--vm={}'.format(self.vm['name'] + str(self.vm['id']))], stdout=subprocess.PIPE, stderr=subprocess.PIPE)).wait()
         self.logger.debug("===> Stopping VM: {0} ID: {1} BHYVE_CODE: {2}".format(self.vm['name'], self.vm['id'], self.bhyve_error))
 
         if bhyve_error:
@@ -374,7 +374,7 @@ class VMSupervisor(object):
         return await self.kill_bhyve_pid()
 
     async def running(self):
-        bhyve_error = await (await Popen(['bhyvectl', '--vm={}'.format(self.vm['name'])], stdout=subprocess.PIPE, stderr=subprocess.PIPE)).wait()
+        bhyve_error = await (await Popen(['bhyvectl', '--vm={}'.format(self.vm['name'] + str(self.vm['id']))], stdout=subprocess.PIPE, stderr=subprocess.PIPE)).wait()
         if bhyve_error == 0:
             if self.proc:
                 try:
