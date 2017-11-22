@@ -489,7 +489,7 @@ class VdevFormSet(BaseFormSet):
                         raise forms.ValidationError(errors[0])
 
 
-class ZFSVolumeWizardForm(forms.Form):
+class ZFSVolumeWizardForm(Form):
     volume_name = forms.CharField(
         max_length=30,
         label=_('Volume name'),
@@ -744,6 +744,7 @@ class ZFSVolumeWizardForm(forms.Form):
         notifier().reload("disk")
         # For scrub cronjob
         notifier().restart("cron")
+        super(ZFSVolumeWizardForm, self).done(request, events)
 
 
 class VolumeImportForm(Form):
