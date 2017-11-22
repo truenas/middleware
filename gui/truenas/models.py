@@ -9,6 +9,12 @@ from django.db import models
 from freenasUI.freeadmin.models import Model
 
 
+class CustomerInformation(Model):
+    data = models.TextField()
+    updated_at = models.DateTimeField()
+    form_dismissed = models.BooleanField()
+
+
 class EnclosureLabel(Model):
     encid = models.CharField(
         max_length=200,
