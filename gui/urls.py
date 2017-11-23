@@ -72,20 +72,24 @@ navtree.prepare_modelforms()
 freeadmin.autodiscover()
 
 urlpatterns = [
-    url('^$', site.adminInterface, name="index"),
-    url(r'^static/(?P<path>.*)',
+    url('^legacy/$', site.adminInterface, name="index"),
+    url(r'^legacy/static/(?P<path>.*)',
         public(serve),
         {'document_root': os.path.join(settings.HERE, "freeadmin/static")}),
-    url(r'^dojango/dojo-media/release/[^/]+/(?P<path>.*)$',
+    url(r'^legacy/dojango/dojo-media/release/[^/]+/(?P<path>.*)$',
         public(serve),
         {'document_root': '/usr/local/www/dojo'}),
-    url(r'^admin/', include(site.urls)),
-    url(r'^jsi18n/', javascript_catalog, name='javascript_catalog'),
+    url(r'^legacy/admin/', include(site.urls)),
+    url(r'^legacy/jsi18n/', javascript_catalog, name='javascript_catalog'),
+    url(r'^plugins/', include('freenasUI.plugins.urls')),
 ]
 
 for app in settings.APP_MODULES:
+    # plugins must stay on old URL for plugins compatibility
+    if app == 'freenasUI.plugins':
+        continue
     urlpatterns += [
-        url(r'^%s/' % app.rsplit('.')[-1], include('%s.urls' % app)),
+        url(r'^legacy/%s/' % app.rsplit('.')[-1], include('%s.urls' % app)),
     ]
 
 urlpatterns += [

@@ -1035,7 +1035,7 @@ def volume_key_download(request, object_id):
 
     volume = models.Volume.objects.get(id=object_id)
     if "allow_gelikey" not in request.session:
-        return HttpResponseRedirect('/')
+        return HttpResponseRedirect('/legacy/')
 
     geli_keyfile = volume.get_geli_keyfile()
     with open(geli_keyfile, 'rb') as f:
@@ -1104,7 +1104,7 @@ def volume_recoverykey_add(request, object_id):
 def volume_recoverykey_download(request, object_id):
 
     if "allow_gelireckey" not in request.session:
-        return HttpResponseRedirect('/')
+        return HttpResponseRedirect('/legacy/')
 
     rec_keyfile = request.session["allow_gelireckey"]
     with open(rec_keyfile, 'rb') as f:

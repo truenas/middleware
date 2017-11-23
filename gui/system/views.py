@@ -689,7 +689,7 @@ def reboot_dialog(request):
 def reboot(request):
     """ reboots the system """
     if not request.session.get("allow_reboot"):
-        return HttpResponseRedirect('/')
+        return HttpResponseRedirect('/legacy/')
     request.session.pop("allow_reboot")
     return render(request, 'system/reboot.html', {
         'sw_name': get_sw_name(),
@@ -741,7 +741,7 @@ def shutdown_dialog(request):
 def shutdown(request):
     """ shuts down the system and powers off the system """
     if not request.session.get("allow_shutdown"):
-        return HttpResponseRedirect('/')
+        return HttpResponseRedirect('/legacy/')
     request.session.pop("allow_shutdown")
     return render(request, 'system/shutdown.html', {
         'sw_name': get_sw_name(),

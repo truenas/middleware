@@ -8,7 +8,7 @@ require([
 
     checkLicenseStatus = function () {
 
-      xhr.get('/support/license/status/', {
+      xhr.get('/legacy/support/license/status/', {
         preventCache: true,
         handleAs: 'text'
       }).then(function(data) {

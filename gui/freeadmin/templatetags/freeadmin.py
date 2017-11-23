@@ -105,7 +105,7 @@ class FormRender(template.Node):
                     html += str(bf_errors) + str(bf)
 
                 if help_text:
-                    html += """<div data-dojo-type="dijit.Tooltip" data-dojo-props="connectId: '%(id)shelp', showDelay: 200">%(text)s</div><img id="%(id)shelp" src="/static/images/ui/MoreInformation_16x16px.png" style="width:16px; height: 16px; cursor: help;" />""" % {
+                    html += """<div data-dojo-type="dijit.Tooltip" data-dojo-props="connectId: '%(id)shelp', showDelay: 200">%(text)s</div><img id="%(id)shelp" src="/legacy/static/images/ui/MoreInformation_16x16px.png" style="width:16px; height: 16px; cursor: help;" />""" % {
                         'id': bf.auto_id,
                         'text': help_text,
                     }
@@ -123,7 +123,7 @@ class FormRender(template.Node):
                     hidden_fields.append(str(bf))
                 else:
                     if help_text:
-                        help_text = """<div data-dojo-type="dijit.Tooltip" data-dojo-props="connectId: '%shelp', showDelay: 200">%s</div><img id="%shelp" src="/static/images/ui/MoreInformation_16x16px.png" style="width:16px; height: 16px; cursor: help;" />""" % (bf.auto_id, help_text, bf.auto_id)
+                        help_text = """<div data-dojo-type="dijit.Tooltip" data-dojo-props="connectId: '%shelp', showDelay: 200">%s</div><img id="%shelp" src="/legacy/static/images/ui/MoreInformation_16x16px.png" style="width:16px; height: 16px; cursor: help;" />""" % (bf.auto_id, help_text, bf.auto_id)
                     html = """<tr%s%s><th>%s</th><td>%s%s %s</td></tr>""" % (
                         is_adv,
                         _hide,

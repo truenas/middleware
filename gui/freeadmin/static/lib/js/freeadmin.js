@@ -224,7 +224,7 @@ require([
             }
         };
 
-        xhr.get('/system/restart-httpd/', {
+        xhr.get('/legacy/system/restart-httpd/', {
             sync: true
         }).then(handle, handle);
 
@@ -240,7 +240,7 @@ require([
             }
         };
 
-        xhr.get('/system/reload-httpd/', {
+        xhr.get('/legacy/system/reload-httpd/', {
             sync: true
         }).then(handle, handle);
 
@@ -273,7 +273,7 @@ require([
                     }
                 });
       dialog.show();
-      xhr.get('/system/restart-httpd-all/', {
+      xhr.get('/legacy/system/restart-httpd-all/', {
                 sync: true
             }).then(checkRunning(newurl));
 
@@ -451,10 +451,10 @@ require([
                 handleAs: "json"
                 }).then(function(data) {
                     if(data.status == 'RUNNING') {
-                        from.src = '/static/images/ui/buttons/on.png';
+                        from.src = '/legacy/static/images/ui/buttons/on.png';
                         domAttr.set(from, "status", "on");
                     } else if(data.status == 'STOPPED') {
-                        from.src = '/static/images/ui/buttons/off.png';
+                        from.src = '/legacy/static/images/ui/buttons/off.png';
                         domAttr.set(from, "status", "off");
                     } else {
                         setTimeout('checkStatus(name, id);', 1000);
@@ -594,7 +594,7 @@ require([
         }
 
         var is_linuxjail = false;
-        xhr.get('/jails/template/info/' + jail_type + '/', {
+        xhr.get('/legacy/jails/template/info/' + jail_type + '/', {
             sync: true
         }).then(function(data) {
             jt = JSON.parse(data);
@@ -618,7 +618,7 @@ require([
         }
 
         var is_x86 = false;
-        xhr.get('/jails/template/info/' + jail_type + '/', {
+        xhr.get('/legacy/jails/template/info/' + jail_type + '/', {
             sync: true
         }).then(function(data) {
             jt = JSON.parse(data);
@@ -880,7 +880,7 @@ require([
             return null;
         } 
 
-        xhr.get('/jails/jail/info/' + id + '/', {
+        xhr.get('/legacy/jails/jail/info/' + id + '/', {
             sync: true
         }).then(function(data) {
             jail_info = JSON.parse(data);
@@ -892,7 +892,7 @@ require([
     get_jc_info = function() {
         jc_info = null;
 
-        xhr.get('/jails/jailsconfiguration/info/', {
+        xhr.get('/legacy/jails/jailsconfiguration/info/', {
             sync: true
         }).then(function(data) {
             jc_info = JSON.parse(data);
@@ -904,7 +904,7 @@ require([
     get_jc_network_info = function()  {
         jc_network_info = null;
 
-        xhr.get('/jails/jailsconfiguration/network/info/', {
+        xhr.get('/legacy/jails/jailsconfiguration/network/info/', {
             sync: true
         }).then(function(data) {
             jc_network_info = JSON.parse(data);
@@ -1014,7 +1014,7 @@ require([
         if (cifs_home == "on" && !cifs_path) {
             console.log("XXX: cifs_home is on and no cifs_path");
 
-            xhr.get('/storage/tasks/recursive/json/', {
+            xhr.get('/legacy/storage/tasks/recursive/json/', {
                 sync: true
             }).then(function(data) {
                 var tasks = JSON.parse(data); 
@@ -1038,7 +1038,7 @@ require([
             storage_task.addOption([{ value: "", label: "-----" }]);
 
             if (cifs_path) {
-                var url = '/storage/tasks/json/' + cifs_path.replace("/mnt/", "") + '/';
+                var url = '/legacy/storage/tasks/json/' + cifs_path.replace("/mnt/", "") + '/';
                 xhr.get(url, {
                     sync: true
                 }).then(function(data) {
@@ -1102,7 +1102,7 @@ require([
     CA_autopopulate = function() {
         var signedby_id = registry.byId("id_cert_signedby").get("value");
         generic_certificate_autopopulate(
-            '/system/CA/info/' + signedby_id + '/'
+            '/legacy/system/CA/info/' + signedby_id + '/'
         );
     }
 
@@ -1125,7 +1125,7 @@ require([
     }
 
     directoryservice_mutex_toggle = function(ds_enable, ds_obj) {
-        xhr.get('/directoryservice/status/', {
+        xhr.get('/legacy/directoryservice/status/', {
             sync: true 
         }). then(function(data) {
             s = JSON.parse(data);
@@ -1191,7 +1191,7 @@ require([
 
     domaincontroller_mutex_toggle = function() {
         var node = query("#domaincontroller_table");
-        xhr.get('/directoryservice/status/', {
+        xhr.get('/legacy/directoryservice/status/', {
             sync: true
         }).then(function(data) {
             s = JSON.parse(data);
@@ -1219,7 +1219,7 @@ require([
     directoryservice_idmap_onclick = function(eid, ds_type, ds_id) {
         var widget = registry.byId(eid);
         var idmap_type = widget.get("value");
-        var idmap_url = "/directoryservice/idmap_backend/" +
+        var idmap_url = "/legacy/directoryservice/idmap_backend/" +
             ds_type + "/" + ds_id + "/" + idmap_type + "/";
         var idmap_name = null;
         var id = -1;
@@ -1237,7 +1237,7 @@ require([
         );
 
         if (id > 0) {
-            var edit_url = "/directoryservice/idmap_" + idmap_name + "/" + id + "/";
+            var edit_url = "/legacy/directoryservice/idmap_" + idmap_name + "/" + id + "/";
 
             //console.log("Edit URL:", edit_url, "ID:", id);
 

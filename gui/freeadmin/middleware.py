@@ -169,7 +169,7 @@ class LocaleMiddleware(object):
         # Limit language select in the wizard to the wizard
         if (
             'wizard_lang' in request.session and
-            request.path == '/system/wizard/'
+            request.path == '/legacy/system/wizard/'
         ):
             translation.activate(request.session['wizard_lang'])
             return None

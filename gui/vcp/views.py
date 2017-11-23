@@ -114,7 +114,7 @@ def vcp_upgrade(request):
                     request, error=True, message=_(
                         "There are No updates available at this time."))
             if form.upgrade_plugin():
-                return HttpResponseRedirect("/vcp/home")
+                return HttpResponseRedirect("/legacy/vcp/home")
             else:
                 return JsonResp(
                     request, error=True, message=_(
@@ -130,7 +130,7 @@ def vcp_uninstall(request):
         form = VcenterConfigurationForm(request.POST)
         if form.is_valid():
             if form.uninstall_plugin():
-                return HttpResponseRedirect("/vcp/home")
+                return HttpResponseRedirect("/legacy/vcp/home")
             else:
                 return JsonResp(
                     request, error=True, message=_(
@@ -146,7 +146,7 @@ def vcp_repair(request):
         form = VcenterConfigurationForm(request.POST)
         if form.is_valid():
             if form.repair_plugin():
-                return HttpResponseRedirect("/vcp/home")
+                return HttpResponseRedirect("/legacy/vcp/home")
             else:
                 return JsonResp(
                     request, error=True, message=_(
