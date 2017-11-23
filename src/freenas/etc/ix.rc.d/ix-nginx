@@ -151,6 +151,7 @@ generate_nginx_conf()
 	local httpsredirect="${6}"
 	local vcenter_https="${7}"
 	local working_ssl=false
+	local default_ui="ui"
 	local dhparams_file="/data/dhparam.pem"
 	local dojo=$(env PYTHONPATH=/usr/local/www/freenasUI/ /usr/local/bin/python -B -S -c 'import settings; print(settings.DOJANGO_DOJO_VERSION)')
 
@@ -265,10 +266,14 @@ __EOF__
 		echo "        listen       [${addr6}]:${port};"
 	fi
 
+	if ! is_freenas; then
+		default_ui="legacy"
+	fi
+
 	cat << __EOF__
 
         location / {
-            rewrite ^.* /ui/;
+            rewrite ^.* /${default_ui}/;
         }
 
         location ~ /(legacy|plugins|api/v1.0)/ {
