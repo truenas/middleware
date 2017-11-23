@@ -11,9 +11,12 @@ import sys
 import sysctl
 import time
 
+from licenselib.license import ContractType
+
 # FIXME: Temporary imports until debug lives in middlewared
 if '/usr/local/www' not in sys.path:
     sys.path.append('/usr/local/www')
+from freenasUI.support.utils import get_license
 from freenasUI.system.utils import debug_get_settings, debug_run
 
 # Flag telling whether the system completed boot and is ready to use
@@ -64,6 +67,13 @@ class SystemService(Service):
             stdout=subprocess.PIPE,
         )).communicate())[0].decode().strip() or None
 
+        license = get_license()[0]
+        if license:
+            license = {
+                "contract_type": ContractType(license.contract_type).name.upper(),
+                "contract_end": license.contract_end,
+            }
+
         return {
             'version': self.version(),
             'hostname': socket.gethostname(),
@@ -74,6 +84,7 @@ class SystemService(Service):
             'uptime': uptime,
             'system_serial': serial,
             'system_product': product,
+            'license': license,
             'boottime': datetime.fromtimestamp(
                 struct.unpack('l', sysctl.filter('kern.boottime')[0].value[:8])[0]
             ),
