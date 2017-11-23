@@ -220,9 +220,10 @@ class AFP_Share(Model):
         default=False,
     )
     afp_timemachine_quota = models.IntegerField(
-        verbose_name=_('Time Machine Quota'),
+        verbose_name=_('Time Machine Quota, GiB'),
         help_text=_(
-            'Quota for each Time Machine backup on this share.'
+            'Quota for each Time Machine backup on this share (in GiB). '
+            'Please note that this change will be applied only after share re-mount.'
         ),
         default=0,
     )
