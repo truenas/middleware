@@ -102,6 +102,16 @@
         <th>{% trans "System Product" %}</th>
         <td class="descr">{{ local.system_product }}</td>
     </tr>
+    <tr>
+        <th>{% trans "License" %}</th>
+        <td class="descr">
+            {% if local.license %}
+                {{ local.license }}
+            {% else %}
+                <span style="color: #ff0000;">{% trans "No license" %}</span>
+            {% endif %}
+        </td>
+    </tr>
     {% endif %}
 </table>
 

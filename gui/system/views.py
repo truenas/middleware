@@ -24,6 +24,7 @@
 #
 #####################################################################
 from collections import OrderedDict, namedtuple
+from datetime import date
 import pickle as pickle
 import json
 import logging
@@ -49,7 +50,7 @@ from django.http import (
     StreamingHttpResponse,
 )
 from django.shortcuts import render
-from django.utils.translation import ugettext as _
+from django.utils.translation import ugettext as _, ungettext
 from django.views.decorators.cache import never_cache
 
 from freenasOS import Configuration
@@ -106,6 +107,21 @@ def system_info(request):
 
     with client as c:
         local = _info_humanize(c.call('system.info'))
+
+        if local['license']:
+            if local['license']['contract_end'] > date.today():
+                days = (local['license']['contract_end'] - date.today()).days
+                local['license'] = _('%1s contract, expires at %2s, %3d %4s left' % (
+                    _(local['license']['contract_type'].title()),
+                    local['license']['contract_end'].strftime("%x"),
+                    days,
+                    ungettext('day', 'days', days),
+                ))
+            else:
+                local['license'] = _('%1s contract, expired at %2s' % (
+                    _(local['license']['contract_type'].title()),
+                    local['license']['contract_end'].strftime("%x"),
+                ))
 
         standby = None
         if not notifier().is_freenas() and notifier().failover_licensed():
