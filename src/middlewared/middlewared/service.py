@@ -299,7 +299,7 @@ class CoreService(Service):
             else:
                 _typ = 'service'
             services[k] = {
-                'config': {k: v for k, v in list(v._config.__dict__.items()) if not k.startswith('_')},
+                'config': {k: v for k, v in list(v._config.__dict__.items()) if not k.startswith(('_', 'thread_pool'))},
                 'type': _typ,
             }
         return services
