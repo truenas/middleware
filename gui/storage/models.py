@@ -39,6 +39,7 @@ from django.utils.translation import ugettext as __, ugettext_lazy as _
 from freenasUI import choices
 from freenasUI.middleware import zfs
 from freenasUI.middleware.notifier import notifier
+from freenasUI.middleware.client import client
 from freenasUI.freeadmin.models import Model, UserField
 
 log = logging.getLogger('storage.models')
@@ -318,6 +319,10 @@ class Volume(Model):
                     [len(attachments[svc]) for svc in svcs]
                 ))
             ))
+
+        # If there is any guest vm attached to this volume, we stop them.
+        with client as c:
+            c.call('vm.stop_by_pool', self.vol_name)
 
         # Delete scheduled snapshots for this volume
         Task.objects.filter(
