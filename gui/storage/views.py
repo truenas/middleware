@@ -39,6 +39,7 @@ from django.core.urlresolvers import reverse
 from django.db.models import Q
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
+from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
 
 from freenasUI.common import humanize_size
@@ -700,6 +701,12 @@ def volume_detach(request, vid):
             instance=volume,
             services=services)
         if form.is_valid():
+            _n = notifier()
+            if '__confirm' not in request.POST and not _n.is_freenas() and _n.failover_licensed():
+                message = render_to_string('freeadmin/generic_model_confirm.html', {
+                    'message': 'Warning: this pool is required for HA to function.<br />Do you want to continue?',
+                })
+                return JsonResp(request, confirm=message)
             try:
                 events = []
                 volume.delete(

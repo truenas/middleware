@@ -20,7 +20,7 @@ require([
     <tr>
         <td>
         {% block confirm %}
-        {{ message }}
+        {{ message|safe }}
         {% endblock %}
         </td>
     </tr>
