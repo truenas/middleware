@@ -271,7 +271,7 @@ class Volume(Model):
         return (reload_cifs, reload_afp, reload_nfs, reload_iscsi,
                 reload_jails, reload_collectd)
 
-    def _delete(self, destroy=True, cascade=True, systemdataset=None):
+    def _delete(self, destroy=False, cascade=True, systemdataset=None):
         """
         Some places reference a path which will not cascade delete
         We need to manually find all paths within this volume mount point
@@ -349,7 +349,7 @@ class Volume(Model):
 
         return (svcs, reloads)
 
-    def delete(self, destroy=True, cascade=True):
+    def delete(self, destroy=False, cascade=True):
         from freenasUI.system.models import SystemDataset
 
         try:
