@@ -2657,7 +2657,11 @@ class notifier(metaclass=HookMetaclass):
                     diskname = self.label_to_disk(disk)
                 else:
                     diskname = disk
-                ed = EncryptedDisk()
+                ed = EncryptedDisk.objects.filter(encrypted_provider=disk)
+                if ed.exists():
+                    ed = ed[0]
+                else:
+                    ed = EncryptedDisk()
                 ed.encrypted_volume = volume
                 ed.encrypted_disk = Disk.objects.filter(
                     disk_name=diskname,
@@ -2668,7 +2672,10 @@ class notifier(metaclass=HookMetaclass):
                 model_objs.append(ed)
         except Exception:
             for obj in reversed(model_objs):
-                obj.delete()
+                if isinstance(obj, Volume):
+                    obj.delete(destroy=False, cascade=False)
+                else:
+                    obj.delete()
             if passfile:
                 os.unlink(passfile)
             raise
