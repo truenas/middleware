@@ -208,7 +208,7 @@ class VMSupervisor(object):
                 '-r', 'host',
                 '-M', str(self.vm['memory']),
                 '-d', grub_dir,
-                self.vm['name'],
+                str(self.vm['id']) + '_' + self.vm['name'],
             ]
 
             #  If container has no boot device, we should stop.
@@ -343,7 +343,7 @@ class VMSupervisor(object):
             return True
 
     async def restart(self):
-        bhyve_error = await (await Popen(['bhyvectl', '--force-reset', '--vm={}'.format(str(self.vm['id']) + '_' + self.vm['name'] )], stdout=subprocess.PIPE, stderr=subprocess.PIPE)).wait()
+        bhyve_error = await (await Popen(['bhyvectl', '--force-reset', '--vm={}'.format(str(self.vm['id']) + '_' + self.vm['name'])], stdout=subprocess.PIPE, stderr=subprocess.PIPE)).wait()
         self.logger.debug("==> Reset VM: {0} ID: {1} BHYVE_CODE: {2}".format(self.vm['name'], self.vm['id'], bhyve_error))
         self.destroy_tap()
         await self.kill_bhyve_web()
