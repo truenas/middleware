@@ -358,6 +358,8 @@ class notifier(metaclass=HookMetaclass):
             if proc.returncode != 0:
                 raise MiddlewareError(f'Unable to GPT format the disk "{devname}": {error}')
 
+        # Invalidating confxml is required or changes wont be seen
+        self.__confxml = None
         # We might need to sync with reality (e.g. devname -> uuid)
         with client as c:
             c.call('disk.sync', devname)
