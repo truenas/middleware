@@ -546,6 +546,35 @@ class VMService(CRUDService):
                 vnc_devices.append(vnc)
         return vnc_devices
 
+    @accepts(Str('pool'),
+             Bool('stop', default=False),)
+    async def stop_by_pool(self, pool, stop):
+        """
+        Get all guests attached to a given pool, if set stop True, it will stop the guests.
+
+        Returns:
+            dict: will return a dict with vm_id, vm_name, device_id and disk path.
+        """
+        vms_attached = []
+        if pool:
+            devices = await self.middleware.call('datastore.query', 'vm.device')
+            for device in devices:
+                if device['dtype'] == 'DISK' or device['dtype'] == 'RAW':
+                        disk = device['attributes'].get('path', None)
+                        if device['dtype'] == 'DISK':
+                            disk = disk.lstrip('/dev/zvol/').split('/')[0]
+                        elif device['dtype'] == 'RAW':
+                            disk = disk.lstrip('/mnt/').split('/')[0]
+
+                        if disk == pool:
+                            status = await self.status(device['vm'].get('id'))
+                            vms_attached.append({'vm_id': device['vm'].get('id'), 'vm_name': device['vm'].get('name'),
+                                                 'device_id': device.get('id'), 'vm_disk': device['attributes'].get('path', None)})
+                            if stop:
+                                if status.get('state') == 'RUNNING':
+                                    await self.stop(device['vm'].get('id'))
+        return vms_attached
+
     @accepts(Int('id'))
     async def get_attached_iface(self, id):
         """
