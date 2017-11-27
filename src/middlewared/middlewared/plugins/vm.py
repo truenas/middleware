@@ -569,7 +569,7 @@ class VMService(CRUDService):
                         if disk == pool:
                             status = await self.status(device['vm'].get('id'))
                             vms_attached.append({'vm_id': device['vm'].get('id'), 'vm_name': device['vm'].get('name'),
-                                'device_id': device.get('id'), 'vm_disk': device['attributes'].get('path', None)})
+                                                 'device_id': device.get('id'), 'vm_disk': device['attributes'].get('path', None)})
                             if stop:
                                 if status.get('state') == 'RUNNING':
                                     await self.stop(device['vm'].get('id'))
