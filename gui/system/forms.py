@@ -37,7 +37,7 @@ import stat
 import subprocess
 import time
 
-from OpenSSL import crypto
+from OpenSSL import crypto, SSL
 
 from ldap import LDAPError
 
@@ -167,6 +167,27 @@ def clean_certificate(instance, certificate):
         raise forms.ValidationError(_("CA not in PEM format."))
 
     return certificate
+
+
+def validate_certificate_keys_match(public_key, private_key, passphrase=None):
+    try:
+        public_key_obj = crypto.load_certificate(crypto.FILETYPE_PEM, public_key)
+    except crypto.Error:
+        raise forms.ValidationError(_("Not a valid certificate."))
+
+    try:
+        private_key_obj = crypto.load_privatekey(crypto.FILETYPE_PEM, private_key,
+                                                 passphrase=lambda _: passphrase.encode() if passphrase else b"")
+    except crypto.Error:
+        raise forms.ValidationError(_("Not a valid private key."))
+
+    try:
+        context = SSL.Context(SSL.TLSv1_2_METHOD)
+        context.use_certificate(public_key_obj)
+        context.use_privatekey(private_key_obj)
+        context.check_privatekey()
+    except SSL.Error as e:
+        raise forms.ValidationError(_("Private key does not match certificate: %r") % e)
 
 
 def check_certificate(certificate):
@@ -2540,6 +2561,11 @@ class CertificateAuthorityImportForm(ModelForm):
             ))
         return passphrase
 
+    def clean(self):
+        validate_certificate_keys_match(self.cleaned_data['cert_certificate'], self.cleaned_data['cert_privatekey'],
+                                        self.cleaned_data['cert_passphrase'])
+        return self.cleaned_data
+
     def save(self):
         self.instance.cert_type = models.CA_TYPE_EXISTING
 
@@ -2981,6 +3007,10 @@ class CertificateCSREditForm(ModelForm):
     def clean_cert_certificate(self):
         return clean_certificate(self.instance, self.cleaned_data.get('cert_certificate'))
 
+    def clean(self):
+        validate_certificate_keys_match(self.cleaned_data['cert_certificate'], self.instance.cert_privatekey)
+        return self.cleaned_data
+
     def save(self):
         self.instance.cert_type = models.CERT_TYPE_EXISTING
         super(CertificateCSREditForm, self).save()
@@ -3075,6 +3105,11 @@ class CertificateImportForm(ModelForm):
         if not reg:
             raise forms.ValidationError(_('Use alphanumeric characters, "_" and "-".'))
         return name
+
+    def clean(self):
+        validate_certificate_keys_match(self.cleaned_data['cert_certificate'], self.cleaned_data['cert_privatekey'],
+                                        self.cleaned_data['cert_passphrase'])
+        return self.cleaned_data
 
     def save(self):
         self.instance.cert_type = models.CERT_TYPE_EXISTING
