@@ -44,7 +44,8 @@ def AFPUsers():
 
     for line in p.stdout:
         line = line.rstrip()
-        if AFPD_PROCESS in line:
+        if bytes(AFPD_PROCESS, encoding="ascii") in line:
+            line = line.decode('ascii')
             m = rx.match(line)
             if m is not None:
                 pid = int(m.group(1))
@@ -61,7 +62,8 @@ def AFPUsers():
 
     for line in p.stdout:
         line = line.rstrip()
-        if NETATALK_PROCESS in line:
+        if bytes(NETATALK_PROCESS, encoding="ascii") in line:
+            line = line.decode('ascii')
             m = match_rx.match(line)
             if m is not None:
                 MAIN_PID = int(m.group(2))
@@ -75,7 +77,8 @@ def AFPUsers():
 
     for line in p.stdout:
         line = line.rstrip()
-        if AFPD_PROCESS in line:
+        if bytes(AFPD_PROCESS, encoding="ascii") in line:
+            line = line.decode('ascii')
             m = match_rx.match(line)
             if m is not None:
                 user = m.group(1)
@@ -93,7 +96,8 @@ def AFPUsers():
 
         p.wait()
 
+
 if __name__ == "__main__":
-    print "PID      UID      Username         Name                 Logintime Mac"
+    print ("PID      UID      Username         Name                 Logintime Mac")
     for (pid, uid, user, fname, time, mac) in AFPUsers():
-        print "%-8d %-8d %-16s %-20s %-9s %s" % (pid, uid, user, fname, time, mac)
+        print ("{0:8d} {1:8d} {2:16s} {3:20s} {4:9s} {5:s}".format(pid, uid, user, fname, time, mac))
