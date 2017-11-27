@@ -53,7 +53,7 @@ require([
         if(_topstarted == true)
             return;
         _topstarted = true;
-        xhr('/system/top/', {
+        xhr('/legacy/system/top/', {
             handleAs: "xml"
             }).then(function(data) {
 
