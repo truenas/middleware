@@ -314,26 +314,6 @@ class AFP(Model):
                     "default limit is 50."),
         default=50,
     )
-    afp_srv_homedir_enable = models.BooleanField(
-        verbose_name=_("Enable home directories"),
-        help_text=_("Enable/disable home directories for AFP user."),
-        default=False,
-    )
-    afp_srv_homedir = PathField(
-        verbose_name=_("Home directories"),
-        blank=True,
-    )
-    afp_srv_homename = models.CharField(
-        verbose_name=_("Home share name"),
-        blank=True,
-        help_text=_("When set, overrides the default Home Share Name."),
-        max_length=50,
-    )
-    afp_srv_hometimemachine = models.BooleanField(
-        verbose_name=_("Home Share Time Machine"),
-        default=False,
-        help_text=_("Enable Time Machine for home share."),
-    )
     afp_srv_dbpath = PathField(
         verbose_name=_('Database Path'),
         blank=True,
