@@ -130,69 +130,6 @@ def license_status(request):
 
 
 @require_POST
-def ticket(request):
-
-    debug = True if request.POST.get('debug') == 'on' else False
-
-    data = {
-        'title': request.POST.get('subject'),
-        'body': request.POST.get('desc'),
-        'category': request.POST.get('category'),
-        'attach_debug': debug,
-    }
-
-    if get_sw_name().lower() == 'freenas':
-        data.update({
-            'username': request.POST.get('username'),
-            'password': request.POST.get('password'),
-            'type': request.POST.get('type', '').upper(),
-        })
-    else:
-        data.update({
-            'phone': request.POST.get('phone'),
-            'name': request.POST.get('name'),
-            'email': request.POST.get('email'),
-            'criticality': request.POST.get('criticality'),
-            'environment': request.POST.get('environment'),
-        })
-
-    error = False
-    files = request.FILES.getlist('attachment')
-    token = None
-    with client as c:
-        try:
-            rv = c.call('support.new_ticket', data, job=True)
-            data = {'error': False, 'message': rv['url']}
-            if files:
-                token = c.call('auth.generate_token')
-        except ClientException as e:
-            data = {'error': True, 'message': e.error}
-
-    if not error:
-        for f in files:
-            requests.post(
-                f'http://127.0.0.1:6000/_upload/?auth_token={token}',
-                files={
-                    'file': ('file', f.file),
-                    'data': ('data', json.dumps({
-                        'method': 'support.attach_ticket',
-                        'params': [{
-                            'ticket': rv['ticket'],
-                            'filename': f.name,
-                            'username': request.POST.get('username'),
-                            'password': request.POST.get('password'),
-                        }],
-                    }).encode()),
-                },
-            )
-
-    data = '<html><body><textarea>{}</textarea></boby></html>'.format(
-        json.dumps(data),
-    )
-    return HttpResponse(data)
-
-
-@require_POST
 def ticket_categories(request):
     with client as c:
         try:
