@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/sh -T
 #+
 # Copyright 2011 iXsystems, Inc.
 # All rights reserved
@@ -259,6 +259,7 @@ main()
 
 	freenas_header 2>&1|tee -a "${FREENAS_DEBUG_DIRECTORY}/osinfo.txt"
 
+	trap "exit 2"
 	if $all_debug; then
 		func_pids=""
 		for opt in ${opts_spaced} ; do
@@ -283,16 +284,26 @@ main()
 				fp="${FREENAS_DEBUG_DIRECTORY}/${directory}"
 				mkdir -p "${fp}"
 				# dispatch the subfunctions in parallel, record the children
-				( eval "${func}" 2>&1|tee -a "${fp}/dump.txt" ) &
+				( trap 'exit 1' ; eval "${func}" 2>&1|tee -a "${fp}/dump.txt" ) &
 				func_pids="$func_pids $!"
 			fi
 		done
-		# set a guard  timer for debug modules that go awol
-		( sleep 240; kill $func_pids; echo  debug modules stragglers killed $func_pids) &
+		# set a guard timer for debug modules that go awol; kill them
+		# the guard sleeps in small shifts to allow signals to dismiss it
+		( for clock in `jot 240`;  \
+				do sleep 1; \
+				echo -n $clock ; \
+			done ;  \
+			kill -9 $func_pids;  \
+			echo  debug modules stragglers killed $func_pids\
+		) &
 		reaper_pid=$!
 		echo "waiting on $func_pids monitored by $reaper_pid"
 		wait $func_pids 
-		kill $reaper_pid
+		echo "reaping reaper $reaper_pid"
+		kill -9 $reaper_pid
+		kill -9 $func_pids   # sometime wait will skip zombie processes, hunt them
+		wait $reaper_pid
 	else
 		while getopts "${aopts}" opt
 		do
@@ -312,7 +323,6 @@ main()
 				then
 					fp="${FREENAS_DEBUG_DIRECTORY}/${directory}"
 					mkdir -p "${fp}"
-
 					eval "${func}" 2>&1|tee -a "${fp}/dump.txt"
 				fi
 			fi
