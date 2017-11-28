@@ -299,7 +299,7 @@ require([
 
         dialog = new Dialog({
             title: gettext('Enable service'),
-            href: '/services/enable/'+srv+'/',
+            href: '/legacy/services/enable/'+srv+'/',
             parseOnLoad: true,
             closable: true,
             style: "max-width: 75%;max-height:70%;background-color:white;overflow:auto;",
