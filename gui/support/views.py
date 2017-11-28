@@ -158,11 +158,15 @@ def ticket_progress(request):
         with client as c:
             jobs = c.call('core.get_jobs', [('method', '=', 'support.new_ticket')], {'order_by': ['-id']})
             job = jobs[0]
-            assert job['state'] == 'RUNNING'
-            data = {
-                'percent': job['progress']['percent'],
-                'details': job['progress']['description'],
-            }
+            if job['state'] == 'SUCCESS':
+                data = {'step': 2, 'indeterminate': True}
+            elif job['state'] == 'RUNNING':
+                data = {
+                    'percent': job['progress']['percent'],
+                    'details': job['progress']['description'],
+                }
+            else:
+                data = {'indeterminate': True}
     except Exception:
         data = {'indeterminate': True}
     return HttpResponse(json.dumps(data), content_type='application/json')
