@@ -388,7 +388,13 @@ define([
               handleAs: "xml"
             }).then(function(data) {
               tmpForm.destroyRecursive();
-              data = json.parse(data);
+
+              try {
+                  data = json.parse(data);
+              } catch(e) {
+                deferred.reject('Failed to parse server response, please try again');
+                return;
+              }
 
               waitAttach = function() {
                 Middleware.call('core.get_jobs', [ [['id', '=', data.job_id]] ], function(data) {
@@ -431,15 +437,15 @@ define([
           if(item.value) fileUpload = true;
         });
 
+        steps.push({
+          label: gettext("Submitting ticket")
+        });
+
         if(fileUpload) {
           steps.push({
             label: gettext("Uploading attachments to host")
           });
         }
-
-        steps.push({
-          label: gettext("Submitting ticket")
-        });
 
         var uuid = generateRandomUuid();
 
