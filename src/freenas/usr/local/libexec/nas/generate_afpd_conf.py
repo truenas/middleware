@@ -95,19 +95,16 @@ def main():
 
     cf_contents.append("\n")
 
-    if afp.afp_srv_homedir_enable:
-        cf_contents.append("[Homes]\n")
-        cf_contents.append("\tbasedir regex = %s\n" % afp.afp_srv_homedir)
-        if afp.afp_srv_homename:
-            cf_contents.append("\thome name = %s\n" % afp.afp_srv_homename)
-        if afp.afp_srv_hometimemachine:
-            cf_contents.append(f"\ttime machine = yes\n")
-        cf_contents.append("\n")
-
     for share in client.call('datastore.query', 'sharing.afp_share'):
         share = Struct(share)
-        cf_contents.append("[%s]\n" % share.afp_name)
-        cf_contents.append("\tpath = %s\n" % share.afp_path)
+        if share.afp_home:
+            cf_contents.append("[Homes]\n")
+            cf_contents.append("\tbasedir regex = %s\n" % share.afp_path)
+            if share.afp_name and share.afp_name != "Homes":
+                cf_contents.append("\thome name = %s\n" % share.afp_name)
+        else:
+            cf_contents.append("[%s]\n" % share.afp_name)
+            cf_contents.append("\tpath = %s\n" % share.afp_path)
         if share.afp_allow:
             cf_contents.append("\tvalid users = %s\n" % share.afp_allow)
         if share.afp_deny:

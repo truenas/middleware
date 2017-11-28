@@ -155,6 +155,10 @@ class AFP_Share(Model):
     afp_path = PathField(
         verbose_name=_("Path"),
     )
+    afp_home = models.BooleanField(
+        verbose_name=_('Use as home share'),
+        default=False,
+    )
     afp_name = models.CharField(
         max_length=120,
         verbose_name=_("Name"),
