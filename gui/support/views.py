@@ -27,7 +27,6 @@ from collections import OrderedDict
 import json
 import logging
 import os
-import requests
 
 from django.http import HttpResponse
 from django.shortcuts import render
