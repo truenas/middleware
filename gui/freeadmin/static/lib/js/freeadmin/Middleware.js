@@ -87,6 +87,8 @@ define([
         } else if(data.fields.state == 'FAILED' || data.fields.state == 'ABORTED') {
           if(job.onError) job.onError(data.fields);
           delete me._jobs[data.fields.id];
+        } else if(data.fields.state == 'RUNNING') {
+          if(job.onProgress) job.onProgress(data.fields);
         }
       },
       sub: function(name, callback) {
@@ -111,11 +113,12 @@ define([
         }
         this._ddp.unsub(subId);
       },
-      call: function(method, args, onSuccess, onError, isJob) {
+      call: function(method, args, onSuccess, onError, isJob, onProgress) {
         var mid = this._ddp.method(method, args);
         this._pending[mid] = {
           onSuccess: onSuccess,
           onError: onError,
+          onProgress, onProgress,
           isJob: isJob
         }
       }
