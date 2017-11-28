@@ -2164,7 +2164,7 @@ require([
             } catch(e) {
                 try {
                     if(!error) {
-                        rnode.set('content', '<pre>' + data + '</pre>');
+                        rnode.set('content', data);
                     } else {
                         setMessage(gettext('An error occurred!'), "error");
                         rnode.hide();
@@ -2262,7 +2262,9 @@ require([
                 form: attrs.form.id,
                 handleAs: 'text',
                 headers: {"X-CSRFToken": CSRFToken}
-                }).then(handleReq, function(evt) {
+                }).then(function(response) {
+                    handleReq("<pre>" + response + "</pre>");
+                }, function(evt) {
                     handleReq(evt.response.data, evt.response, true);
                 });
 
