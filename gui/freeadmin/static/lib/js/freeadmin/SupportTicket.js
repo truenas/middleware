@@ -84,7 +84,6 @@ define([
       initial: "",
       categoriesUrl: "",
       progressUrl: "",
-      url: "",
       softwareName: "",
       templateString: template,
       postCreate: function() {
@@ -389,7 +388,6 @@ define([
               handleAs: "xml"
             }).then(function(data) {
               tmpForm.destroyRecursive();
-              console.log(data);
               data = json.parse(data);
 
               waitAttach = function() {

@@ -99,4 +99,4 @@
 {% trans "For enterprise-grade storage solutions and support, please visit" %} <a href="http://www.ixsystems.com/storage/" target="_blank">http://www.ixsystems.com/storage/</a>.</p>
 {% endif %}
 
-<div data-dojo-type="freeadmin/SupportTicket" data-dojo-props="url: '{% url "support_ticket" %}', softwareName: '{{ sw_name }}'{% if error_message %}, errorMessage: '{{ error_message|escapejs }}'{% endif %}{% if initial %}, initial: '{{ initial|escapejs }}'{% endif %}, categoriesUrl: '{% url "support_ticket_categories" %}', progressUrl: '{% url "support_ticket_progress" %}'"></div>
+<div data-dojo-type="freeadmin/SupportTicket" data-dojo-props="softwareName: '{{ sw_name }}'{% if error_message %}, errorMessage: '{{ error_message|escapejs }}'{% endif %}{% if initial %}, initial: '{{ initial|escapejs }}'{% endif %}, categoriesUrl: '{% url "support_ticket_categories" %}', progressUrl: '{% url "support_ticket_progress" %}'"></div>
