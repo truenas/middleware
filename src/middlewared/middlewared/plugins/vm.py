@@ -676,7 +676,11 @@ class VMService(CRUDService):
                 if pool['name'] not in blocked_pools:
                     pool_name = pool['name']
                     break
-            return self.__activate_sharefs(pool_name)
+            if pool_name:
+                return self.__activate_sharefs(pool_name)
+            else:
+                self.logger.error("===> There is no pool available to activate a shared fs.")
+                return False
 
     @accepts()
     async def get_sharefs(self):
