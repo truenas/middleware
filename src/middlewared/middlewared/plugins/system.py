@@ -70,6 +70,8 @@ class SystemService(Service):
         license = get_license()[0]
         if license:
             license = {
+                "system_serial": license.system_serial,
+                "system_serial_ha": license.system_serial_ha,
                 "contract_type": ContractType(license.contract_type).name.upper(),
                 "contract_end": license.contract_end,
             }
