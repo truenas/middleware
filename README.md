@@ -29,6 +29,12 @@ push your port changes to a branch in freenas/ports (kris/testbranch in this exa
 insert text into the pull-request description field as shown above.
 
 
+If your Pull-Request needs to build aginst another build profile (I.E. fn_head) add the following to the PR description:
+
+```PROFILE: fn_head```
+
+
+
 ## Build Branch / Version Matrix
 
 #### FreeNAS 11 Master / Nightlies
