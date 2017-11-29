@@ -247,8 +247,11 @@ class Job(object):
             self.progress['extra'] = extra
         self.middleware.send_event('core.get_jobs', 'CHANGED', id=self.id, fields=self.__encode__())
 
-    async def wait(self):
-        await self._finished.wait()
+    async def wait(self, timeout=None):
+        if timeout is None:
+            await self._finished.wait()
+        else:
+            await asyncio.wait_for(self._finished.wait(), timeout)
         return self.result
 
     def wait_sync(self):
