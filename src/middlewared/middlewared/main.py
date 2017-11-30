@@ -913,7 +913,11 @@ class Middleware(object):
             event.set()
 
         fut.add_done_callback(done)
-        event.wait()
+
+        # In case middleware dies while we are waiting for a `call_sync` result
+        while not event.wait(1):
+            if not self.__loop.is_running():
+                raise RuntimeError('Middleware is terminating')
         return fut.result()
 
     def event_subscribe(self, name, handler):
