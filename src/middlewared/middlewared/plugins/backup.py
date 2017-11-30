@@ -9,7 +9,12 @@ from middlewared.utils import Popen
 
 
 import asyncio
+import base64
 import boto3
+import codecs
+from Crypto import Random
+from Crypto.Cipher import AES
+from Crypto.Util import Counter
 import errno
 import json
 import os
@@ -17,9 +22,61 @@ import subprocess
 import re
 import requests
 import tempfile
-import textwrap
 
 CHUNK_SIZE = 5 * 1024 * 1024
+
+
+async def rclone(job, backup, config):
+    # Use a temporary file to store rclone file
+    with tempfile.NamedTemporaryFile(mode='w+') as f:
+        # Make sure only root can read it as there is sensitive data
+        os.chmod(f.name, 0o600)
+
+        remote_path = 'remote:{}{}'.format(
+            backup['attributes']['bucket'],
+            '/{}'.format(backup['attributes']['folder']) if backup['attributes'].get('folder') else '',
+        )
+
+        if backup["encryption"]:
+            f.write("[encrypted]\n")
+            f.write("type = crypt\n")
+            f.write("remote = %s\n" % remote_path)
+            f.write("filename_encryption = %s\n" % ("standard" if backup["filename_encryption"] else "off"))
+            f.write("password = %s\n" % rclone_encrypt_password(backup["encryption_password"]))
+            f.write("password2 = %s\n" % rclone_encrypt_password(backup["encryption_salt"]))
+
+            remote_path = "encrypted:/"
+
+        f.write("[remote]\n")
+        for k, v in config.items():
+            f.write(f"{k} = {v}\n")
+
+        f.flush()
+
+        args = [
+            '/usr/local/bin/rclone',
+            '--config', f.name,
+            '-v',
+            '--stats', '1s',
+            backup['transfer_mode'].lower(),
+        ]
+
+        if backup['direction'] == 'PUSH':
+            args.extend([backup['path'], remote_path])
+        else:
+            args.extend([remote_path, backup['path']])
+
+        proc = await Popen(
+            args,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
+        )
+        check_task = asyncio.ensure_future(rclone_check_progress(job, proc))
+        await proc.wait()
+        if proc.returncode != 0:
+            await asyncio.wait_for(check_task, None)
+            raise ValueError('rclone failed: {}'.format(check_task.result()))
+        return True
 
 
 async def rclone_check_progress(job, proc):
@@ -38,6 +95,19 @@ async def rclone_check_progress(job, proc):
             if not transferred.isdigit():
                 job.set_progress(None, transferred)
     return read_buffer
+
+
+def rclone_encrypt_password(password):
+    key = bytes([0x9c, 0x93, 0x5b, 0x48, 0x73, 0x0a, 0x55, 0x4d,
+                 0x6b, 0xfd, 0x7c, 0x63, 0xc8, 0x86, 0xa9, 0x2b,
+                 0xd3, 0x90, 0x19, 0x8e, 0xb8, 0x12, 0x8a, 0xfb,
+                 0xf4, 0xde, 0x16, 0x2b, 0x8b, 0x95, 0xf6, 0x38])
+
+    iv = Random.new().read(AES.block_size)
+    counter = Counter.new(128, initial_value=int(codecs.encode(iv, "hex"), 16))
+    cipher = AES.new(key, AES.MODE_CTR, counter=counter)
+    encrypted = iv + cipher.encrypt(password.encode("utf-8"))
+    return base64.urlsafe_b64encode(encrypted).decode("ascii").rstrip("=")
 
 
 class BackupCredentialService(CRUDService):
@@ -92,7 +162,14 @@ class BackupService(CRUDService):
     async def query(self, filters=None, options=None):
         return await self.middleware.call('datastore.query', 'tasks.cloudsync', filters, options)
 
-    async def _clean_credential(self, verrors, name, data):
+    @private
+    async def _validate(self, verrors, name, data):
+        if data['encryption']:
+            if not data['encryption_password']:
+                verrors.add(f'{name}.encryption_password', 'This field is required when encryption is enabled')
+
+            if not data['encryption_salt']:
+                verrors.add(f'{name}.encryption_salt', 'This field is required when encryption is enabled')
 
         credential = await self.middleware.call('datastore.query', 'system.cloudcredentials', [('id', '=', data['credential'])], {'get': True})
         if credential is None:
@@ -118,6 +195,10 @@ class BackupService(CRUDService):
         Str('transfer_mode', enum=['SYNC', 'COPY', 'MOVE']),
         Str('path'),
         Int('credential'),
+        Bool('encryption'),
+        Bool('filename_encryption'),
+        Str('encryption_password'),
+        Str('encryption_salt'),
         Str('minute'),
         Str('hour'),
         Str('daymonth'),
@@ -159,7 +240,7 @@ class BackupService(CRUDService):
 
         verrors = ValidationErrors()
 
-        await self._clean_credential(verrors, 'backup', data)
+        await self._validate(verrors, 'backup', data)
 
         if verrors:
             raise verrors
@@ -188,7 +269,7 @@ class BackupService(CRUDService):
 
         verrors = ValidationErrors()
 
-        await self._clean_credential(verrors, 'backup_update', backup)
+        await self._validate(verrors, 'backup_update', backup)
 
         if verrors:
             raise verrors
@@ -287,56 +368,14 @@ class BackupS3Service(Service):
 
     @private
     async def sync(self, job, backup, credential):
-        # Use a temporary file to store s3cmd config file
-        with tempfile.NamedTemporaryFile(mode='w+') as f:
-            # Make sure only root can read it ad there is sensitive data
-            os.chmod(f.name, 0o600)
-
-            f.write(textwrap.dedent("""
-                [remote]
-                type = s3
-                env_auth = false
-                access_key_id = {access_key}
-                secret_access_key = {secret_key}
-                region = {region}
-                server_side_encryption = {encryption}
-                """).format(
-                access_key=credential['attributes']['access_key'],
-                secret_key=credential['attributes']['secret_key'],
-                region=backup['attributes']['region'] or '',
-                encryption=backup['attributes'].get('encryption') or '',
-            ))
-            f.flush()
-
-            args = [
-                '/usr/local/bin/rclone',
-                '--config', f.name,
-                '-v',
-                '--stats', '1s',
-                backup['transfer_mode'].lower(),
-            ]
-
-            remote_path = 'remote:{}{}'.format(
-                backup['attributes']['bucket'],
-                '/{}'.format(backup['attributes']['folder']) if backup['attributes'].get('folder') else '',
-            )
-
-            if backup['direction'] == 'PUSH':
-                args.extend([backup['path'], remote_path])
-            else:
-                args.extend([remote_path, backup['path']])
-
-            proc = await Popen(
-                args,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-            )
-            check_task = asyncio.ensure_future(rclone_check_progress(job, proc))
-            await proc.wait()
-            if proc.returncode != 0:
-                await asyncio.wait_for(check_task, None)
-                raise ValueError('rclone failed: {}'.format(check_task.result()))
-            return True
+        return await rclone(job, backup, {
+            "type": "s3",
+            "env_auth": "false",
+            "access_key_id": credential['attributes']['access_key'],
+            "secret_access_key": credential['attributes']['secret_key'],
+            "region": backup['attributes']['region'] or '',
+            "server_side_encryption": backup['attributes'].get('encryption') or '',
+        })
 
     @private
     async def put(self, backup, filename, read_fd):
@@ -461,53 +500,13 @@ class BackupB2Service(Service):
 
     @private
     async def sync(self, job, backup, credential):
-        # Use a temporary file to store rclone file
-        with tempfile.NamedTemporaryFile(mode='w+') as f:
-            # Make sure only root can read it as there is sensitive data
-            os.chmod(f.name, 0o600)
-
-            f.write(textwrap.dedent("""
-                [remote]
-                type = b2
-                env_auth = false
-                account = {account}
-                key = {key}
-                endpoint =
-                """).format(
-                account=credential['attributes']['account_id'],
-                key=credential['attributes']['app_key'],
-            ))
-            f.flush()
-
-            args = [
-                '/usr/local/bin/rclone',
-                '--config', f.name,
-                '-v',
-                '--stats', '1s',
-                backup['transfer_mode'].lower(),
-            ]
-
-            remote_path = 'remote:{}{}'.format(
-                backup['attributes']['bucket'],
-                '/{}'.format(backup['attributes']['folder']) if backup['attributes'].get('folder') else '',
-            )
-
-            if backup['direction'] == 'PUSH':
-                args.extend([backup['path'], remote_path])
-            else:
-                args.extend([remote_path, backup['path']])
-
-            proc = await Popen(
-                args,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-            )
-            check_task = asyncio.ensure_future(rclone_check_progress(job, proc))
-            await proc.wait()
-            if proc.returncode != 0:
-                await asyncio.wait_for(check_task, None)
-                raise ValueError('rclone failed: {}'.format(check_task.result()))
-            return True
+        return await rclone(job, backup, {
+            "type": "b2",
+            "env_auth": "false",
+            "account": credential['attributes']['account_id'],
+            "key": credential['attributes']['app_key'],
+            "endpoint": "",
+        })
 
     @private
     def is_dir(self, cred_id, bucket, path):
@@ -574,55 +573,19 @@ class BackupGCSService(Service):
 
     @private
     async def sync(self, job, backup, credential):
-        # Use a temporary file to store rclone file
-        with tempfile.NamedTemporaryFile(mode='w+') as f, tempfile.NamedTemporaryFile(mode='w+') as keyf:
-            # Make sure only root can read it as there is sensitive data
-            os.chmod(f.name, 0o600)
+        with tempfile.NamedTemporaryFile(mode='w+') as keyf:
             os.chmod(keyf.name, 0o600)
 
             keyf.write(json.dumps(credential['attributes']['keyfile']))
             keyf.flush()
 
-            f.write("""[remote]
-type = google cloud storage
-client_id =
-client_secret =
-project_number =
-service_account_file = {keyfile}
-""".format(
-                keyfile=keyf.name,
-            ))
-            f.flush()
-
-            args = [
-                '/usr/local/bin/rclone',
-                '--config', f.name,
-                '-v',
-                '--stats', '1s',
-                backup['transfer_mode'].lower(),
-            ]
-
-            remote_path = 'remote:{}{}'.format(
-                backup['attributes']['bucket'],
-                '/{}'.format(backup['attributes']['folder']) if backup['attributes'].get('folder') else '',
-            )
-
-            if backup['direction'] == 'PUSH':
-                args.extend([backup['path'], remote_path])
-            else:
-                args.extend([remote_path, backup['path']])
-
-            proc = await Popen(
-                args,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-            )
-            check_task = asyncio.ensure_future(rclone_check_progress(job, proc))
-            await proc.wait()
-            if proc.returncode != 0:
-                await asyncio.wait_for(check_task, None)
-                raise ValueError('rclone failed: {}'.format(check_task.result()))
-            return True
+            return await rclone(job, backup, {
+                "type": "google cloud storage",
+                "client_id": "",
+                "client_secret": "",
+                "project_number": "",
+                "service_account_file": keyf.name,
+            })
 
     @private
     def is_dir(self, cred_id, bucket, path):
@@ -659,49 +622,12 @@ class BackupAzureService(Service):
 
     @private
     async def sync(self, job, backup, credential):
-        # Use a temporary file to store rclone file
-        with tempfile.NamedTemporaryFile(mode='w+') as f:
-            # Make sure only root can read it as there is sensitive data
-            os.chmod(f.name, 0o600)
-
-            f.write(textwrap.dedent(f"""\
-                [remote]
-                type = azureblob
-                account = {credential['attributes']['account_name']}
-                key = {credential['attributes']['account_key']}
-                endpoint =
-            """))
-            f.flush()
-
-            args = [
-                '/usr/local/bin/rclone',
-                '--config', f.name,
-                '-v',
-                '--stats', '1s',
-                backup['transfer_mode'].lower(),
-            ]
-
-            remote_path = 'remote:{}{}'.format(
-                backup['attributes']['bucket'],
-                '/{}'.format(backup['attributes']['folder']) if backup['attributes'].get('folder') else '',
-            )
-
-            if backup['direction'] == 'PUSH':
-                args.extend([backup['path'], remote_path])
-            else:
-                args.extend([remote_path, backup['path']])
-
-            proc = await Popen(
-                args,
-                stdout=subprocess.PIPE,
-                stderr=subprocess.PIPE,
-            )
-            check_task = asyncio.ensure_future(rclone_check_progress(job, proc))
-            await proc.wait()
-            if proc.returncode != 0:
-                await asyncio.wait_for(check_task, None)
-                raise ValueError('rclone failed: {}'.format(check_task.result()))
-            return True
+        return await rclone(job, backup, {
+            "type": "azureblob",
+            "account": credential['attributes']['account_name'],
+            "key": credential['attributes']['account_key'],
+            "endpoint": "",
+        })
 
     @private
     def is_dir(self, cred_id, bucket, path):
