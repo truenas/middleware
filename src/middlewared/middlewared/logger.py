@@ -192,6 +192,9 @@ class Logger(object):
     def getLogger(self):
         return logging.getLogger(self.application_name)
 
+    def stream(self):
+        return logging.root.handlers[0].stream
+
     def _set_output_file(self):
         """Set the output format for file log."""
         dictConfig(self.DEFAULT_LOGGING)

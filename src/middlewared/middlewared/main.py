@@ -1108,8 +1108,7 @@ def main():
         daemonc.open()
     elif 'file' in log_handlers:
         _logger.configure_logging('file')
-        sys.stdout = logger.LoggerStream(get_logger)
-        sys.stderr = logger.LoggerStream(get_logger)
+        sys.stdout = sys.stderr = _logger.stream()
     elif 'console' in log_handlers:
         _logger.configure_logging('console')
     else:
