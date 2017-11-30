@@ -2665,10 +2665,12 @@ class notifier(metaclass=HookMetaclass):
                 else:
                     ed = EncryptedDisk()
                 ed.encrypted_volume = volume
-                ed.encrypted_disk = Disk.objects.filter(
+                diskobj = Disk.objects.filter(
                     disk_name=diskname,
                     disk_expiretime=None,
-                )[0]
+                )
+                if diskobj.exists():
+                    ed.encrypted_disk = diskobj[0]
                 ed.encrypted_provider = disk
                 ed.save()
                 model_objs.append(ed)
