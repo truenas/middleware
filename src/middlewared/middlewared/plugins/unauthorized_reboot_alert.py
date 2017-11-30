@@ -28,5 +28,9 @@ async def setup(middleware):
             """),
         })
 
+    sentinel_dir = os.path.dirname(SENTINEL_PATH)
+    if not os.path.exists(sentinel_dir):
+        os.mkdir(sentinel_dir)
+
     with open(SENTINEL_PATH, "wb"):
         pass
