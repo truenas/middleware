@@ -158,9 +158,27 @@ class BackupCredentialService(CRUDService):
 
 class BackupService(CRUDService):
 
-    @filterable
-    async def query(self, filters=None, options=None):
-        return await self.middleware.call('datastore.query', 'tasks.cloudsync', filters, options)
+    class Config:
+        datastore = 'tasks.cloudsync'
+        datastore_extend = 'backup._extend'
+
+    @private
+    async def _extend(self, backup):
+        backup['encryption_password'] = await self.middleware.call('notifier.pwenc_decrypt',
+                                                                   backup['encryption_password'])
+        backup['encryption_salt'] = await self.middleware.call('notifier.pwenc_decrypt', backup['encryption_salt'])
+
+        return backup
+
+    @private
+    async def _compress(self, backup):
+        if 'encryption_password' in backup:
+            backup['encryption_password'] = await self.middleware.call('notifier.pwenc_encrypt',
+                                                                       backup['encryption_password'])
+        if 'encryption_salt' in backup:
+            backup['encryption_salt'] = await self.middleware.call('notifier.pwenc_encrypt', backup['encryption_salt'])
+
+        return backup
 
     @private
     async def _validate(self, verrors, name, data):
@@ -208,7 +226,7 @@ class BackupService(CRUDService):
         Bool('enabled'),
         register=True,
     ))
-    async def do_create(self, data):
+    async def do_create(self, backup):
         """
         Creates a new backup entry.
 
@@ -240,12 +258,14 @@ class BackupService(CRUDService):
 
         verrors = ValidationErrors()
 
-        await self._validate(verrors, 'backup', data)
+        await self._validate(verrors, 'backup', backup)
 
         if verrors:
             raise verrors
 
-        pk = await self.middleware.call('datastore.insert', 'tasks.cloudsync', data)
+        backup = await self._compress(backup)
+
+        pk = await self.middleware.call('datastore.insert', 'tasks.cloudsync', backup)
         await self.middleware.call('notifier.restart', 'cron')
         return pk
 
@@ -273,6 +293,8 @@ class BackupService(CRUDService):
 
         if verrors:
             raise verrors
+
+        backup = await self._compress(backup)
 
         await self.middleware.call('datastore.update', 'tasks.cloudsync', id, backup)
         await self.middleware.call('notifier.restart', 'cron')
