@@ -2286,7 +2286,13 @@ require([
                 handleAs: 'text',
                 headers: {"X-CSRFToken": CSRFToken}
                 }).then(function(response) {
-                    handleReq("<pre>" + response + "</pre>");
+                    try {
+                        JSON.parse(response);
+                    }
+                    catch (e) {
+                        response = "<pre>" + response + "</pre>";
+                    }
+                    handleReq(response);
                 }, function(evt) {
                     handleReq(evt.response.data, evt.response, true);
                 });
