@@ -355,6 +355,21 @@ class Job(object):
             'time_finished': self.time_finished,
         }
 
+    async def wrap(self, subjob):
+        """
+        Wrap a job in another job, proxying progress and result/error.
+        This is useful when we want to run a job inside a job.
+        """
+        while not subjob.time_finished:
+            try:
+                await subjob.wait(1)
+            except asyncio.TimeoutError:
+                pass
+            self.set_progress(**subjob.progress)
+        if subjob.exception:
+            raise subjob.exception
+        return subjob.result
+
 
 class JobProgressBuffer:
     """
