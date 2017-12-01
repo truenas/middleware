@@ -1,5 +1,5 @@
 from middlewared.schema import Bool, Dict, Int, Str, accepts
-from middlewared.service import CallError, Service, private
+from middlewared.service import CallError, Service, job, private
 from middlewared.utils import run
 
 from bsd import geom
@@ -158,3 +158,12 @@ class BootService(Service):
         # FIXME: use event for when its ready instead of sleep
         await asyncio.sleep(10)
         await self.install_grub(boottype, dev)
+
+    @accepts()
+    @job(lock='boot_scrub')
+    async def scrub(self, job):
+        """
+        Scrub on boot pool.
+        """
+        subjob = await self.middleware.call('zfs.pool.scrub', 'freenas-boot')
+        return await job.wrap(subjob)
