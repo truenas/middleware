@@ -251,7 +251,7 @@ class Job(object):
         if timeout is None:
             await self._finished.wait()
         else:
-            await asyncio.wait_for(self._finished.wait(), timeout)
+            await asyncio.wait_for(asyncio.shield(self._finished.wait()), timeout)
         return self.result
 
     def wait_sync(self):
