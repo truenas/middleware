@@ -247,8 +247,11 @@ class Job(object):
             self.progress['extra'] = extra
         self.middleware.send_event('core.get_jobs', 'CHANGED', id=self.id, fields=self.__encode__())
 
-    async def wait(self):
-        await self._finished.wait()
+    async def wait(self, timeout=None):
+        if timeout is None:
+            await self._finished.wait()
+        else:
+            await asyncio.wait_for(asyncio.shield(self._finished.wait()), timeout)
         return self.result
 
     def wait_sync(self):
@@ -351,6 +354,21 @@ class Job(object):
             'time_started': self.time_started,
             'time_finished': self.time_finished,
         }
+
+    async def wrap(self, subjob):
+        """
+        Wrap a job in another job, proxying progress and result/error.
+        This is useful when we want to run a job inside a job.
+        """
+        while not subjob.time_finished:
+            try:
+                await subjob.wait(1)
+            except asyncio.TimeoutError:
+                pass
+            self.set_progress(**subjob.progress)
+        if subjob.exception:
+            raise subjob.exception
+        return subjob.result
 
 
 class JobProgressBuffer:
