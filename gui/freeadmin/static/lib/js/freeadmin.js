@@ -1575,6 +1575,29 @@ require([
 
     }
 
+    cloudSyncEncryptionToggle = function() {
+
+        var checkbox = registry.byId("id_encryption");
+
+        var filename_encryption = registry.byId("id_filename_encryption");
+        var tr_filename_encryption = filename_encryption.domNode.parentNode.parentNode;
+        var encryption_password = registry.byId("id_encryption_password");
+        var tr_encryption_password = encryption_password.domNode.parentNode.parentNode;
+        var encryption_salt = registry.byId("id_encryption_salt");
+        var tr_encryption_salt = encryption_salt.domNode.parentNode.parentNode;
+
+        if (checkbox.checked) {
+            domStyle.set(tr_filename_encryption, "display", "");
+            domStyle.set(tr_encryption_password, "display", "");
+            domStyle.set(tr_encryption_salt, "display", "");
+        } else {
+            domStyle.set(tr_filename_encryption, "display", "none");
+            domStyle.set(tr_encryption_password, "display", "none");
+            domStyle.set(tr_encryption_salt, "display", "none");
+        }
+
+    }
+
     vcenter_https_enable_check = function () {
         vc_enable_https = registry.byId('id_vc_enable_https');
 
