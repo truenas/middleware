@@ -1,0 +1,4 @@
+
+Warning: settings changed through the CLI are not written to
+the configuration database and will be reset on reboot.
+
