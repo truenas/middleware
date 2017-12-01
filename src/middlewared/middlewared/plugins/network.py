@@ -422,7 +422,11 @@ class RoutesService(Service):
 
         ipv6_gateway = config['gc_ipv6gateway'] or None
         if ipv6_gateway:
-            ipv6_gateway = netif.Route('::', '::', ipaddress.ip_address(str(ipv6_gateway)))
+            if ipv6_gateway.count("%") == 1:
+                ipv6_gateway, ipv6_gateway_interface = ipv6_gateway.split("%")
+            else:
+                ipv6_gateway_interface = None
+            ipv6_gateway = netif.Route('::', '::', ipaddress.ip_address(str(ipv6_gateway)), ipv6_gateway_interface)
             ipv6_gateway.flags.add(netif.RouteFlags.STATIC)
             ipv6_gateway.flags.add(netif.RouteFlags.GATEWAY)
             # If there is a gateway but there is none configured, add it
