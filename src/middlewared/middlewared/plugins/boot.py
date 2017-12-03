@@ -30,7 +30,7 @@ class BootService(Service):
         Returns:
             "BIOS", "EFI", None
         """
-        await self.middleware.threaded(geom.scan)
+        await self.middleware.run_in_thread(geom.scan)
         labelclass = geom.class_by_name('PART')
         efi = bios = 0
         async for disk in await self.get_disks():
@@ -73,7 +73,7 @@ class BootService(Service):
             commands.append(['gpart', 'set', '-a', 'lenovofix', dev])
         commands.append(
             ['gpart', 'add', '-t', 'freebsd-zfs', '-i', '2', '-a', '4k'] + (
-                ['-s', str(options['size'])] if options.get('size') else []
+                ['-s', str(options['size']) + 'B'] if options.get('size') else []
             ) + [dev]
         )
         for command in commands:
@@ -84,14 +84,14 @@ class BootService(Service):
     async def install_grub(self, boottype, dev):
         args = [
             '/usr/local/sbin/grub-install',
-            '--modules=\'zfs part_gpt\'',
+            '--modules=zfs part_gpt',
         ]
 
         if boottype == 'EFI':
             await run('mount', '-t', 'msdosfs', f'/dev/{dev}p1', '/boot/efi', check=False)
             args += ['--efi-directory=/boot/efi', '--removable', '--target=x86_64-efi']
 
-        args.append(dev)
+        args.append(f'/dev/{dev}')
 
         await run(*args, check=False)
 
@@ -122,7 +122,7 @@ class BootService(Service):
             # Lets try to find out the size of the current freebsd-zfs partition so
             # the new partition is not bigger, preventing size mismatch if one of
             # them fail later on. See #21336
-            await self.middleware.threaded(geom.scan)
+            await self.middleware.run_in_thread(geom.scan)
             labelclass = geom.class_by_name('PART')
             for e in labelclass.xml.findall(f"./geom[name='{disks[0]}']/provider/config[type='freebsd-zfs']"):
                 format_opts['size'] = int(e.find('./length').text)

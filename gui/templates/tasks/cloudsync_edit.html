@@ -1,0 +1,11 @@
+{% extends "freeadmin/generic_model_edit.html" %}
+
+{% block post_form %}
+{{ block.super }}
+<script type="dojo/method">
+addToStack(function() {
+    document.getElementById("id_encryption").onchange = cloudSyncEncryptionToggle;
+    cloudSyncEncryptionToggle();
+});
+</script>
+{% endblock %}

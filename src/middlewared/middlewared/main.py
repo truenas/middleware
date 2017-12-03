@@ -177,7 +177,7 @@ class Application(object):
                 self.logger.debug('[Crash Reporting] is disabled using sentinel file.')
             else:
                 extra_log_files = (('/var/log/middlewared.log', 'middlewared_log'),)
-                asyncio.ensure_future(self.middleware.threaded(
+                asyncio.ensure_future(self.middleware.run_in_thread(
                     self.middleware.crash_reporting.report, sys.exc_info(), None, extra_log_files
                 ))
 
@@ -210,7 +210,7 @@ class Application(object):
             self.__subscribed.pop(ident)
         elif ident in self.__event_sources:
             event_source = self.__event_sources[ident]['event_source']
-            await self.middleware.threaded(event_source.cancel)
+            await self.middleware.run_in_thread(event_source.cancel)
 
     def send_event(self, name, event_type, **kwargs):
         if (
@@ -248,7 +248,7 @@ class Application(object):
 
         for ident, val in self.__event_sources.items():
             event_source = val['event_source']
-            await self.middleware.threaded(event_source.cancel)
+            await self.middleware.run_in_thread(event_source.cancel)
 
         self.middleware.unregister_wsclient(self)
 
@@ -359,7 +359,7 @@ class FileApplication(object):
                         break
                     resp.write(read)
                     # await web.drain()
-            await self.middleware.threaded(read_write)
+            await self.middleware.run_in_thread(read_write)
             await resp.drain()
 
         finally:
@@ -434,7 +434,7 @@ class FileApplication(object):
                         break
                     f.write(read)
                     i += 1
-            await self.middleware.threaded(read_write)
+            await self.middleware.run_in_thread(read_write)
         finally:
             if f:
                 f.close()
@@ -601,14 +601,14 @@ class ShellApplication(object):
                 os.kill(t_worker.shell_pid, signal.SIGTERM)
 
                 # If process has not died in 2 seconds, try the big gun
-                events = await self.middleware.threaded(kqueue.control, None, 1, 2)
+                events = await self.middleware.run_in_thread(kqueue.control, None, 1, 2)
                 if not events:
                     os.kill(t_worker.shell_pid, signal.SIGKILL)
 
                     # If process has not died even with the big gun
                     # There is nothing else we can do, leave it be and
                     # release the worker thread
-                    events = await self.middleware.threaded(kqueue.control, None, 1, 2)
+                    events = await self.middleware.run_in_thread(kqueue.control, None, 1, 2)
                     if not events:
                         t_worker.die()
             except ProcessLookupError:
@@ -616,7 +616,7 @@ class ShellApplication(object):
 
         # Wait thread join in yet another thread to avoid event loop blockage
         # There may be a simpler/better way to do this?
-        await self.middleware.threaded(t_worker.join)
+        await self.middleware.run_in_thread(t_worker.join)
 
         return ws
 
@@ -748,7 +748,7 @@ class Middleware(object):
             if asyncio.iscoroutinefunction(method):
                 await method()
             else:
-                await self.threaded(method)
+                await self.run_in_thread(method)
         except Exception:
             self.logger.warning("Exception while calling periodic task", exc_info=True)
 
@@ -823,18 +823,21 @@ class Middleware(object):
     def get_schema(self, name):
         return self.__schemas.get(name)
 
-    async def threaded(self, method, *args, **kwargs):
+    async def run_in_thread_pool(self, pool, method, *args, **kwargs):
         """
         Runs method in a native thread using concurrent.futures.ThreadPool.
         This prevents a CPU intensive or non-greenlet friendly method
         to block the event loop indefinitely.
         """
         loop = asyncio.get_event_loop()
-        task = loop.run_in_executor(self.__threadpool, method, *args, **kwargs)
+        task = loop.run_in_executor(pool, functools.partial(method, *args, **kwargs))
         await task
         return task.result()
 
-    async def _call(self, name, methodobj, params, app=None):
+    async def run_in_thread(self, method, *args, **kwargs):
+        return await self.run_in_thread_pool(self.__threadpool, method, *args, **kwargs)
+
+    async def _call(self, name, serviceobj, methodobj, params, app=None):
 
         args = []
         if hasattr(methodobj, '_pass_app'):
@@ -859,32 +862,41 @@ class Middleware(object):
             if asyncio.iscoroutinefunction(methodobj):
                 return await methodobj(*args)
             else:
-                return await self.threaded(methodobj, *args)
+                pool = None
+                if serviceobj._config.thread_pool:
+                    pool = serviceobj._config.thread_pool
+                if hasattr(methodobj, '_thread_pool'):
+                    pool = methodobj._thread_pool
+                if pool:
+                    return await self.run_in_thread_pool(pool, methodobj, *args)
+                else:
+                    return await self.run_in_thread(methodobj, *args)
 
     def _method_lookup(self, name):
         if '.' not in name:
             raise CallError('Invalid method name', errno.EBADMSG)
         try:
             service, method_name = name.rsplit('.', 1)
-            methodobj = getattr(self.get_service(service), method_name)
+            serviceobj = self.get_service(service)
+            methodobj = getattr(serviceobj, method_name)
         except AttributeError:
             raise CallError(f'Method "{method_name}" not found in "{service}"', CallError.ENOMETHOD)
-        return methodobj
+        return serviceobj, methodobj
 
     async def call_method(self, app, message):
         """Call method from websocket"""
         params = message.get('params') or []
-        methodobj = self._method_lookup(message['method'])
+        serviceobj, methodobj = self._method_lookup(message['method'])
 
         if not app.authenticated and not hasattr(methodobj, '_no_auth_required'):
             app.send_error(message, errno.EACCES, 'Not authenticated')
             return
 
-        return await self._call(message['method'], methodobj, params, app=app)
+        return await self._call(message['method'], serviceobj, methodobj, params, app=app)
 
     async def call(self, name, *params):
-        methodobj = self._method_lookup(name)
-        return await self._call(name, methodobj, params)
+        serviceobj, methodobj = self._method_lookup(name)
+        return await self._call(name, serviceobj, methodobj, params)
 
     def call_sync(self, name, *params):
         """
@@ -893,15 +905,19 @@ class Middleware(object):
         if threading.get_ident() == self.__thread_id:
             raise RuntimeError('You cannot call_sync from main thread')
 
-        methodobj = self._method_lookup(name)
-        fut = asyncio.run_coroutine_threadsafe(self._call(name, methodobj, params), self.__loop)
+        serviceobj, methodobj = self._method_lookup(name)
+        fut = asyncio.run_coroutine_threadsafe(self._call(name, serviceobj, methodobj, params), self.__loop)
         event = threading.Event()
 
         def done(_):
             event.set()
 
         fut.add_done_callback(done)
-        event.wait()
+
+        # In case middleware dies while we are waiting for a `call_sync` result
+        while not event.wait(1):
+            if not self.__loop.is_running():
+                raise RuntimeError('Middleware is terminating')
         return fut.result()
 
     def event_subscribe(self, name, handler):
@@ -1092,8 +1108,7 @@ def main():
         daemonc.open()
     elif 'file' in log_handlers:
         _logger.configure_logging('file')
-        sys.stdout = logger.LoggerStream(get_logger)
-        sys.stderr = logger.LoggerStream(get_logger)
+        sys.stdout = sys.stderr = _logger.stream()
     elif 'console' in log_handlers:
         _logger.configure_logging('console')
     else:

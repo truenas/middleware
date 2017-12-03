@@ -274,7 +274,7 @@ class UserService(CRUDService):
         if home_copy:
             def do_home_copy():
                 subprocess.run(f"su - {user['username']} -c '/bin/cp -a {home_old}/* {user['home']}/'")
-            asyncio.ensure_future(self.middleware.threaded(do_home_copy))
+            asyncio.ensure_future(self.middleware.run_in_thread(do_home_copy))
 
         if 'groups' in user:
             groups = user.pop('groups')
@@ -458,6 +458,13 @@ class GroupService(CRUDService):
     class Config:
         datastore = 'account.bsdgroups'
         datastore_prefix = 'bsdgrp_'
+        datastore_extend = 'group.group_extend'
+
+    @private
+    async def group_extend(self, group):
+        # Get group membership
+        group['users'] = [gm['user']['id'] for gm in await self.middleware.call('datastore.query', 'account.bsdgroupmembership', [('group', '=', group['id'])], {'prefix': 'bsdgrpmember_'})]
+        return group
 
     @accepts(Dict(
         'group_create',
@@ -465,6 +472,7 @@ class GroupService(CRUDService):
         Str('name', required=True),
         Bool('sudo', default=False),
         Bool('allow_duplicate_gid', default=False),
+        List('users', items=[Int('id')], required=False),
         register=True,
     ))
     async def do_create(self, data):
@@ -479,7 +487,13 @@ class GroupService(CRUDService):
 
         group = data.copy()
         group['group'] = group.pop('name')
+
+        users = group.pop('users', [])
+
         pk = await self.middleware.call('datastore.insert', 'account.bsdgroups', group, {'prefix': 'bsdgrp_'})
+
+        for user in users:
+            await self.middleware.call('datastore.insert', 'account.bsdgroupmembership', {'bsdgrpmember_group': pk, 'bsdgrpmember_user': user})
 
         await self.middleware.call('notifier.groupmap_add', data['name'], data['name'])
 
@@ -506,11 +520,23 @@ class GroupService(CRUDService):
 
         group.update(data)
         delete_groupmap = False
+        group.pop('users', None)
+
         if 'name' in data and data['name'] != group['group']:
             delete_groupmap = group['group']
             group['group'] = group.pop('name')
 
         await self.middleware.call('datastore.update', 'account.bsdgroups', pk, group, {'prefix': 'bsdgrp_'})
+
+        if 'users' in data:
+            existing = {i['bsdgrpmember_user']['id']: i for i in await self.middleware.call('datastore.query', 'account.bsdgroupmembership', [('bsdgrpmember_group', '=', pk)])}
+            to_remove = set(existing.keys()) - set(data['users'])
+            for i in to_remove:
+                await self.middleware.call('datastore.delete', 'account.bsdgroupmembership', existing[i]['id'])
+
+            to_add = set(data['users']) - set(existing.keys())
+            for i in to_add:
+                await self.middleware.call('datastore.insert', 'account.bsdgroupmembership', {'bsdgrpmember_group': pk, 'bsdgrpmember_user': i})
 
         if delete_groupmap:
             await self.middleware.call('notifier.groupmap_delete', delete_groupmap)
@@ -571,3 +597,9 @@ class GroupService(CRUDService):
             existing = await self.middleware.call('datastore.query', 'account.bsdgroups', [('gid', '=', data['gid'])] + exclude_filter, {'prefix': 'bsdgrp_'})
             if existing:
                 verrors.add('gid', f'Group ID "{data["gid"]}" already exists', errno.EEXIST)
+
+        if 'users' in data:
+            existing = set([i['id'] for i in await self.middleware.call('datastore.query', 'account.bsdusers', [('id', 'in', data['users'])])])
+            notfound = set(data['users']) - existing
+            if notfound:
+                verrors.add('users', f'Following users do not exist: {", ".join(map(str, notfound))}')

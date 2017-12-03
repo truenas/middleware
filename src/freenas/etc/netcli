@@ -179,12 +179,11 @@ def get_lagg_proto():
     return proto
 
 
-def get_lagg_nics(nics=None):
+def get_lagg_nics():
 
     group = [ ]
 
-    if nics is None:
-        nics = NICChoices(nolagg=True)
+    nics = list(NICChoices(nolagg=True))
 
     while True:
         nic = get_nic(nics)
@@ -487,17 +486,36 @@ Acceptable formats are 255.255.255.0,
         yes = input(_("Configure failover settings? (y/n) "))
         if yes.lower().startswith("y"):
 
-            vip_prompt = prompt("Virtual IP", iface.int_vip)
-            vip = input(vip_prompt)
-            if not vip and iface.int_vip:
-                vip = iface.int_vip
-            iface.int_vip = vip
+            while True:
+                vip_prompt = prompt("Virtual IP", iface.int_vip)
+                vip = input(vip_prompt)
+                if not vip and iface.int_vip:
+                    vip = iface.int_vip
+                elif vip:
+                    try:
+                        ipaddr.IPAddress(vip)
+                    except ValueError:
+                        print('Invalid Virtual IP')
+                        continue
+                iface.int_vip = vip
+                break
 
-            vhid_prompt = prompt("VHID", iface.int_vhid)
-            vhid = input(vhid_prompt)
-            if not vhid and iface.int_vhid:
-                vhid = iface.int_vhid
-            iface.int_vhid = vhid
+            while True:
+                vhid_prompt = prompt("VHID", iface.int_vhid)
+                vhid = input(vhid_prompt)
+                if not vhid and iface.int_vhid:
+                    vhid = iface.int_vhid
+                elif vhid:
+                    try:
+                        vhid = int(vhid)
+                    except ValueError:
+                        print('VHID should be an integer')
+                        continue
+                    if vhid < 1 or vhid > 255:
+                        print('VHID should be between 1 and 255')
+                        continue
+                iface.int_vhid = vhid
+                break
 
             pwd_prompt = prompt("Password", iface.int_pass)
             passwd = input(pwd_prompt)

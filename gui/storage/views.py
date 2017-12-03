@@ -39,6 +39,7 @@ from django.core.urlresolvers import reverse
 from django.db.models import Q
 from django.http import HttpResponse, HttpResponseRedirect
 from django.shortcuts import render
+from django.template.loader import render_to_string
 from django.utils.translation import ugettext as _
 
 from freenasUI.common import humanize_size
@@ -700,6 +701,12 @@ def volume_detach(request, vid):
             instance=volume,
             services=services)
         if form.is_valid():
+            _n = notifier()
+            if '__confirm' not in request.POST and not _n.is_freenas() and _n.failover_licensed():
+                message = render_to_string('freeadmin/generic_model_confirm.html', {
+                    'message': 'Warning: this pool is required for HA to function.<br />Do you want to continue?',
+                })
+                return JsonResp(request, confirm=message)
             try:
                 events = []
                 volume.delete(
@@ -1035,7 +1042,7 @@ def volume_key_download(request, object_id):
 
     volume = models.Volume.objects.get(id=object_id)
     if "allow_gelikey" not in request.session:
-        return HttpResponseRedirect('/')
+        return HttpResponseRedirect('/legacy/')
 
     geli_keyfile = volume.get_geli_keyfile()
     with open(geli_keyfile, 'rb') as f:
@@ -1104,7 +1111,7 @@ def volume_recoverykey_add(request, object_id):
 def volume_recoverykey_download(request, object_id):
 
     if "allow_gelireckey" not in request.session:
-        return HttpResponseRedirect('/')
+        return HttpResponseRedirect('/legacy/')
 
     rec_keyfile = request.session["allow_gelireckey"]
     with open(rec_keyfile, 'rb') as f:

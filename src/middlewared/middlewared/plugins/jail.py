@@ -153,10 +153,11 @@ class JailService(CRUDService):
     @accepts(
         Dict("options",
              Str("release"),
-             Str("server", default="ftp.freebsd.org"),
+             Str("server", default="download.freebsd.org"),
              Str("user", default="anonymous"),
              Str("password", default="anonymous@"),
              Str("name", default=None),
+             Bool("accept", default=False),
              List("props"),
              List(
                  "files",
@@ -189,6 +190,11 @@ class JailService(CRUDService):
                                              header=False)
             else:
                 resource_list = iocage.list("all", plugin=True)
+
+            for plugin in resource_list:
+                for i, elem in enumerate(plugin):
+                    # iocage returns - for None
+                    plugin[i] = elem if elem != "-" else None
         elif resource == "base":
             resource_list = iocage.fetch(list=True, remote=remote, http=True)
         else:

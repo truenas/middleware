@@ -370,7 +370,7 @@ class CPUTempPlugin(RRDBase):
                 'CDEF:max{0}=s_max{0},100,/'.format(n),
                 'AREA:max{0}#bfffbf'.format(n),
                 'AREA:min{0}#FFFFFF'.format(n),
-                'LINE1:avg{0}{1}: Core {2}'.format(n, colors[n], n + 1),
+                'LINE1:avg{0}{1}: Core {2}'.format(n, colors[n % len(colors)], n + 1),
                 'GPRINT:min{0}:MIN:%.1lf\u00b0 Min,'.format(n),
                 'GPRINT:avg{0}:AVERAGE:%.1lf\u00b0 Avg,'.format(n),
                 'GPRINT:max{0}:MAX:%.1lf\u00b0 Max,'.format(n),

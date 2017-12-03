@@ -358,6 +358,8 @@ class notifier(metaclass=HookMetaclass):
             if proc.returncode != 0:
                 raise MiddlewareError(f'Unable to GPT format the disk "{devname}": {error}')
 
+        # Invalidating confxml is required or changes wont be seen
+        self.__confxml = None
         # We might need to sync with reality (e.g. devname -> uuid)
         with client as c:
             c.call('disk.sync', devname)
@@ -2657,18 +2659,27 @@ class notifier(metaclass=HookMetaclass):
                     diskname = self.label_to_disk(disk)
                 else:
                     diskname = disk
-                ed = EncryptedDisk()
+                ed = EncryptedDisk.objects.filter(encrypted_provider=disk)
+                if ed.exists():
+                    ed = ed[0]
+                else:
+                    ed = EncryptedDisk()
                 ed.encrypted_volume = volume
-                ed.encrypted_disk = Disk.objects.filter(
+                diskobj = Disk.objects.filter(
                     disk_name=diskname,
                     disk_expiretime=None,
-                )[0]
+                )
+                if diskobj.exists():
+                    ed.encrypted_disk = diskobj[0]
                 ed.encrypted_provider = disk
                 ed.save()
                 model_objs.append(ed)
         except Exception:
             for obj in reversed(model_objs):
-                obj.delete()
+                if isinstance(obj, Volume):
+                    obj.delete(destroy=False, cascade=False)
+                else:
+                    obj.delete()
             if passfile:
                 os.unlink(passfile)
             raise

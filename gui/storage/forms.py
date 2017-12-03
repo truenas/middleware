@@ -489,7 +489,7 @@ class VdevFormSet(BaseFormSet):
                         raise forms.ValidationError(errors[0])
 
 
-class ZFSVolumeWizardForm(forms.Form):
+class ZFSVolumeWizardForm(Form):
     volume_name = forms.CharField(
         max_length=30,
         label=_('Volume name'),
@@ -744,6 +744,7 @@ class ZFSVolumeWizardForm(forms.Form):
         notifier().reload("disk")
         # For scrub cronjob
         notifier().restart("cron")
+        super(ZFSVolumeWizardForm, self).done(request, events)
 
 
 class VolumeImportForm(Form):
@@ -1262,6 +1263,11 @@ class ZFSDatasetCommonForm(Form):
         choices=choices.ZFS_ReadonlyChoices,
         initial=choices.ZFS_ReadonlyChoices[0][0],
     )
+    dataset_exec = forms.ChoiceField(
+        label=_('Exec'),
+        choices=choices.ZFS_ExecChoices,
+        initial=choices.ZFS_ExecChoices[0][0],
+    )
     dataset_recordsize = forms.ChoiceField(
         choices=(('inherit', _('Inherit')), ) + choices.ZFS_RECORDSIZE,
         label=_('Record Size'),
@@ -1282,7 +1288,8 @@ class ZFSDatasetCommonForm(Form):
         'dataset_quota',
         'dataset_refreservation',
         'dataset_reservation',
-        'dataset_recordsize'
+        'dataset_recordsize',
+        'dataset_exec',
     )
 
     zfs_size_fields = ['quota', 'refquota', 'reservation', 'refreservation']
@@ -1307,6 +1314,10 @@ class ZFSDatasetCommonForm(Form):
             self.fields['dataset_readonly'].choices = _inherit_choices(
                 choices.ZFS_ReadonlyChoices,
                 self.parentdata['readonly'][0]
+            )
+            self.fields['dataset_exec'].choices = _inherit_choices(
+                choices.ZFS_ExecChoices,
+                self.parentdata['exec'][0]
             )
 
         if not dedup_enabled():
@@ -1341,7 +1352,7 @@ class ZFSDatasetCommonForm(Form):
 
         for prop in (
             'org.freenas:description', 'compression', 'atime', 'dedup',
-            'aclmode', 'recordsize', 'casesensitivity', 'readonly',
+            'aclmode', 'recordsize', 'casesensitivity', 'readonly', 'exec',
         ):
             if prop == 'org.freenas:description':
                 value = self.cleaned_data.get('dataset_comments')
@@ -1481,10 +1492,17 @@ class ZFSDatasetEditForm(ZFSDatasetCommonForm):
 
         if zdata['readonly'][2] == 'inherit':
             data['dataset_readonly'] = 'inherit'
-        elif zdata['atime'][0] in ('on', 'off'):
+        elif zdata['readonly'][0] in ('on', 'off'):
             data['dataset_readonly'] = zdata['readonly'][0]
         else:
             data['dataset_readonly'] = 'off'
+
+        if zdata['exec'][2] == 'inherit':
+            data['dataset_exec'] = 'inherit'
+        elif zdata['exec'][0] in ('on', 'off'):
+            data['dataset_exec'] = zdata['exec'][0]
+        else:
+            data['dataset_exec'] = 'off'
 
         if zdata['recordsize'][2] == 'inherit':
             data['dataset_recordsize'] = 'inherit'
@@ -1519,7 +1537,7 @@ class ZFSDatasetEditForm(ZFSDatasetCommonForm):
             error |= not success
             if not success:
                 error = True
-                errors[item] = msg
+                errors[f'dataset_{item}'] = msg
 
         notifier().change_dataset_share_type(name, self.cleaned_data.get('dataset_share_type'))
 

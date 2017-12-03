@@ -5,9 +5,16 @@
 #pragma D option switchrate=10hz
 #pragma D option dynvarsize=20m
 
+
+/* zfsslower.sh <threshold (us)> <runtime (s)> */
+
+int clock;
+tick-1s { clock = clock+1 ; } 
+tick-1s / clock ==   $2 / { exit (0); }
 dtrace:::BEGIN {
+    clock = 0;
     printf("%-20s %-16s %1s %4s %6s %s\n", "TIME", "PROCESS", "D", "KB", "ms", "FILE");
-    min_ns = $1 * 1000000;
+    min_ns = $1 * 1000;
 }
 
 /* https://github.com/hybridlogic/freebsd-base-stable-9/blob/master/sys/cddl/contrib/opensolaris/uts/common/fs/zfs/zfs_vnops.c */
@@ -37,9 +44,10 @@ fbt::zfs_freebsd_read:entry, fbt::zfs_freebsd_write:entry
 }
 
 fbt::zfs_freebsd_read:return, fbt::zfs_freebsd_write:return
-/self->start && (timestamp - self->start) >= min_ns/
-{
-    this->iotime = (timestamp - self->start) / 1000000;
+/self->start && ((timestamp - self->start) >= min_ns)/
+{ 
+    /* ns --> ms */
+    this->iotime = (timestamp - self->start) / 1000; 
     this->dir = probefunc == "zfs_freebsd_read" ? "R" : "W";
     printf("%-20Y %-16s %1s %4d %6d %s\n", walltimestamp,
             execname, this->dir, 0 /*self->kb*/, this->iotime,

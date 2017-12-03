@@ -1,3 +1,5 @@
+from django.db.models import Model
+
 from freenasUI.middleware.client import client, ClientException
 from freenasUI.services.exceptions import ServiceFailed
 
@@ -49,7 +51,7 @@ class MiddlewareModelForm:
 
     def middleware_prepare(self):
         data = {
-            k[len(self.middleware_attr_prefix):]: v
+            k[len(self.middleware_attr_prefix):]: v.id if isinstance(v, Model) else v
             for k, v in self.cleaned_data.items()
             if (k.startswith(self.middleware_attr_prefix) and
                 k[len(self.middleware_attr_prefix):] not in self.middleware_exclude_fields)

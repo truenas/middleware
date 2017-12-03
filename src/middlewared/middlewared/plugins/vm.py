@@ -14,7 +14,6 @@ import stat
 import subprocess
 import sysctl
 import gzip
-import libzfs
 import hashlib
 import shutil
 
@@ -28,6 +27,7 @@ CONTAINER_IMAGES = {
     }
 }
 BUFSIZE = 65536
+ZFS_ARC_MAX = 0
 
 
 class VMManager(object):
@@ -171,7 +171,8 @@ class VMSupervisor(object):
                     mac_address = None
 
                 if mac_address == '00:a0:98:FF:FF:FF' or mac_address is None:
-                    args += ['-s', '{},{},{},mac={}'.format(nid(), nictype, tapname, self.random_mac())]
+                    random_mac = await self.middleware.call('vm.random_mac')
+                    args += ['-s', '{},{},{},mac={}'.format(nid(), nictype, tapname, random_mac)]
                 else:
                     args += ['-s', '{},{},{},mac={}'.format(nid(), nictype, tapname, mac_address)]
             elif device['dtype'] == 'VNC':
@@ -209,7 +210,7 @@ class VMSupervisor(object):
                 '-r', 'host',
                 '-M', str(self.vm['memory']),
                 '-d', grub_dir,
-                self.vm['name'],
+                str(self.vm['id']) + '_' + self.vm['name'],
             ]
 
             #  If container has no boot device, we should stop.
@@ -225,7 +226,7 @@ class VMSupervisor(object):
                 if line == b'':
                     break
 
-        args.append(self.vm['name'])
+        args.append(str(self.vm['id']) + '_' + self.vm['name'])
 
         self.logger.debug('Starting bhyve: {}'.format(' '.join(args)))
         self.proc = await Popen(args, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
@@ -262,21 +263,41 @@ class VMSupervisor(object):
         elif self.bhyve_error == 1:
             # XXX: Need a better way to handle the vmm destroy.
             self.logger.info("===> Powered off VM: {0} ID: {1} BHYVE_CODE: {2}".format(self.vm['name'], self.vm['id'], self.bhyve_error))
+            await self.__teardown_guest_vmemory(self.vm['id'])
             await self.destroy_vm()
         elif self.bhyve_error in (2, 3):
             self.logger.info("===> Stopping VM: {0} ID: {1} BHYVE_CODE: {2}".format(self.vm['name'], self.vm['id'], self.bhyve_error))
+            await self.__teardown_guest_vmemory(self.vm['id'])
             await self.manager.stop(self.vm['id'])
         elif self.bhyve_error not in (0, 1, 2, 3, None):
             self.logger.info("===> Error VM: {0} ID: {1} BHYVE_CODE: {2}".format(self.vm['name'], self.vm['id'], self.bhyve_error))
+            await self.__teardown_guest_vmemory(self.vm['id'])
             await self.destroy_vm()
 
     async def destroy_vm(self):
         self.logger.warn("===> Destroying VM: {0} ID: {1} BHYVE_CODE: {2}".format(self.vm['name'], self.vm['id'], self.bhyve_error))
         # XXX: We need to catch the bhyvectl return error.
-        await (await Popen(['bhyvectl', '--destroy', '--vm={}'.format(self.vm['name'])], stdout=subprocess.PIPE, stderr=subprocess.PIPE)).wait()
+        await (await Popen(['bhyvectl', '--destroy', '--vm={}'.format(str(self.vm['id']) + '_' + self.vm['name'])], stdout=subprocess.PIPE, stderr=subprocess.PIPE)).wait()
         self.manager._vm.pop(self.vm['id'], None)
         await self.kill_bhyve_web()
         self.destroy_tap()
+
+    async def __teardown_guest_vmemory(self, id):
+        guest_status = await self.middleware.call('vm.status', id)
+        vm = await self.middleware.call('datastore.query', 'vm.vm', [('id', '=', id)])
+        guest_memory = vm[0].get('memory', None) * 1024 * 1024
+        max_arc = sysctl.filter('vfs.zfs.arc_max')
+        resize_arc = max_arc[0].value + guest_memory
+
+        if guest_status.get('state') == "STOPPED":
+            if resize_arc <= ZFS_ARC_MAX:
+                sysctl.filter('vfs.zfs.arc_max')[0].value = max_arc[0].value + guest_memory
+                self.logger.debug("===> Give back guest memory to ARC.: {}".format(guest_memory))
+            elif resize_arc > ZFS_ARC_MAX and max_arc[0].value < ZFS_ARC_MAX:
+                sysctl.filter('vfs.zfs.arc_max')[0].value = ZFS_ARC_MAX
+                self.logger.debug("===> Enough guest memory to set ARC back to its original limit.")
+            return True
+        return False
 
     def destroy_tap(self):
         while self.taps:
@@ -317,10 +338,6 @@ class VMSupervisor(object):
             bridge.add_member(attach_iface)
             bridge.up()
 
-    def random_mac(self):
-        mac_address = [0x00, 0xa0, 0x98, random.randint(0x00, 0x7f), random.randint(0x00, 0xff), random.randint(0x00, 0xff)]
-        return ':'.join(["%02x" % x for x in mac_address])
-
     async def kill_bhyve_pid(self):
         if self.proc:
             try:
@@ -329,8 +346,6 @@ class VMSupervisor(object):
                 # Already stopped, process do not exist anymore
                 if e.errno != errno.ESRCH:
                     raise
-
-            await self.destroy_vm()
             return True
 
     async def kill_bhyve_web(self):
@@ -344,13 +359,13 @@ class VMSupervisor(object):
             return True
 
     async def restart(self):
-        bhyve_error = await (await Popen(['bhyvectl', '--force-reset', '--vm={}'.format(self.vm['name'])], stdout=subprocess.PIPE, stderr=subprocess.PIPE)).wait()
+        bhyve_error = await (await Popen(['bhyvectl', '--force-reset', '--vm={}'.format(str(self.vm['id']) + '_' + self.vm['name'])], stdout=subprocess.PIPE, stderr=subprocess.PIPE)).wait()
         self.logger.debug("==> Reset VM: {0} ID: {1} BHYVE_CODE: {2}".format(self.vm['name'], self.vm['id'], bhyve_error))
         self.destroy_tap()
         await self.kill_bhyve_web()
 
     async def stop(self):
-        bhyve_error = await (await Popen(['bhyvectl', '--force-poweroff', '--vm={}'.format(self.vm['name'])], stdout=subprocess.PIPE, stderr=subprocess.PIPE)).wait()
+        bhyve_error = await (await Popen(['bhyvectl', '--force-poweroff', '--vm={}'.format(str(self.vm['id']) + '_' + self.vm['name'])], stdout=subprocess.PIPE, stderr=subprocess.PIPE)).wait()
         self.logger.debug("===> Stopping VM: {0} ID: {1} BHYVE_CODE: {2}".format(self.vm['name'], self.vm['id'], self.bhyve_error))
 
         if bhyve_error:
@@ -359,7 +374,7 @@ class VMSupervisor(object):
         return await self.kill_bhyve_pid()
 
     async def running(self):
-        bhyve_error = await (await Popen(['bhyvectl', '--vm={}'.format(self.vm['name'])], stdout=subprocess.PIPE, stderr=subprocess.PIPE)).wait()
+        bhyve_error = await (await Popen(['bhyvectl', '--vm={}'.format(str(self.vm['id']) + '_' + self.vm['name'])], stdout=subprocess.PIPE, stderr=subprocess.PIPE)).wait()
         if bhyve_error == 0:
             if self.proc:
                 try:
@@ -547,6 +562,35 @@ class VMService(CRUDService):
                 vnc_devices.append(vnc)
         return vnc_devices
 
+    @accepts(Str('pool'),
+             Bool('stop', default=False),)
+    async def stop_by_pool(self, pool, stop):
+        """
+        Get all guests attached to a given pool, if set stop True, it will stop the guests.
+
+        Returns:
+            dict: will return a dict with vm_id, vm_name, device_id and disk path.
+        """
+        vms_attached = []
+        if pool:
+            devices = await self.middleware.call('datastore.query', 'vm.device')
+            for device in devices:
+                if device['dtype'] == 'DISK' or device['dtype'] == 'RAW':
+                        disk = device['attributes'].get('path', None)
+                        if device['dtype'] == 'DISK':
+                            disk = disk.lstrip('/dev/zvol/').split('/')[0]
+                        elif device['dtype'] == 'RAW':
+                            disk = disk.lstrip('/mnt/').split('/')[0]
+
+                        if disk == pool:
+                            status = await self.status(device['vm'].get('id'))
+                            vms_attached.append({'vm_id': device['vm'].get('id'), 'vm_name': device['vm'].get('name'),
+                                                 'device_id': device.get('id'), 'vm_disk': device['attributes'].get('path', None)})
+                            if stop:
+                                if status.get('state') == 'RUNNING':
+                                    await self.stop(device['vm'].get('id'))
+        return vms_attached
+
     @accepts(Int('id'))
     async def get_attached_iface(self, id):
         """
@@ -589,31 +633,27 @@ class VMService(CRUDService):
 
     @private
     def __activate_sharefs(self, dataset):
-        zfs = libzfs.ZFS()
         pool_exist = False
-        params = {}
-        fstype = getattr(libzfs.DatasetType, 'FILESYSTEM')
         images_fs = '/.bhyve_containers'
         new_fs = dataset + images_fs
 
-        try:
-            zfs.get_dataset(new_fs)
+        if self.middleware.call_sync('zfs.dataset.query', [('id', '=', new_fs)]):
             pool_exist = True
-        except libzfs.ZFSException:
-            # dataset does not exist yet, we need to create it.
-            pass
 
         if pool_exist is False:
             try:
                 self.logger.debug("===> Trying to create: {0}".format(new_fs))
-                pool = zfs.get(dataset)
-                pool.create(new_fs, params, fstype, sparse_vol=False)
-            except libzfs.ZFSException as e:
+                self.middleware.call_sync('zfs.dataset.create', {
+                    'name': new_fs,
+                    'type': 'FILESYSTEM',
+                    'properties': {'sparse': False},
+                })
+            except Exception as e:
                 self.logger.error("Failed to create dataset", exc_info=True)
                 raise e
-            new_volume = zfs.get_dataset(new_fs)
-            new_volume.mount()
-            self.vmutils.do_dirtree_container(new_volume.mountpoint)
+            self.middleware.call_sync('zfs.dataset.mount', new_fs)
+            mountpoint = self.middleware.call_sync('zfs.dataset.query', [('id', '=', new_fs)])[0]['mountpoint']
+            self.vmutils.do_dirtree_container(mountpoint)
             return True
         else:
             return False
@@ -624,8 +664,6 @@ class VMService(CRUDService):
         Create a pool for pre built containers images.
         """
 
-        zfs = libzfs.ZFS()
-
         if pool_name:
             return self.__activate_sharefs(pool_name)
         else:
@@ -634,22 +672,85 @@ class VMService(CRUDService):
             pool_name = None
 
             # We get the first available pool.
-            for pool in zfs.pools:
-                if pool.name not in blocked_pools:
-                    pool_name = pool.name
+            for pool in self.middleware.call_sync('zfs.pool.query'):
+                if pool['name'] not in blocked_pools:
+                    pool_name = pool['name']
                     break
-            return self.__activate_sharefs(pool_name)
+            if pool_name:
+                return self.__activate_sharefs(pool_name)
+            else:
+                self.logger.error("===> There is no pool available to activate a shared fs.")
+                return False
 
     @accepts()
     async def get_sharefs(self):
         """
         Return the shared pool for containers images.
         """
-        zfs = libzfs.ZFS()
-        for dataset in zfs.datasets:
-            if '.bhyve_containers' in dataset.name:
-                return dataset.mountpoint
+        for dataset in await self.middleware.call('zfs.dataset.query'):
+            if '.bhyve_containers' in dataset['name']:
+                return dataset['mountpoint']
         return False
+
+    @accepts()
+    async def get_vmemory_in_use(self):
+        """
+        The total amount of virtual memory in MB used by guests
+
+            Returns a dict with the following information:
+                RNP - Running but not provisioned
+                PRD - Provisioned but not running
+                RPRD - Running and provisioned
+        """
+        memory_allocation = {'RNP': 0, 'PRD': 0, 'RPRD': 0}
+        guests = await self.middleware.call('datastore.query', 'vm.vm')
+        for guest in guests:
+            status = await self.status(guest['id'])
+            if status['state'] == 'RUNNING' and guest['autostart'] is False:
+                memory_allocation['RNP'] += guest['memory'] * 1024 * 1024
+            elif status['state'] == 'RUNNING' and guest['autostart'] is True:
+                memory_allocation['RPRD'] += guest['memory'] * 1024 * 1024
+            elif guest['autostart']:
+                memory_allocation['PRD'] += guest['memory'] * 1024 * 1024
+
+        return memory_allocation
+
+    async def __set_guest_vmemory(self, memory):
+        usermem = sysctl.filter('hw.usermem')
+        max_arc = sysctl.filter('vfs.zfs.arc_max')
+        guest_mem_used = await self.get_vmemory_in_use()
+        memory = memory * 1024 * 1024
+
+        # Keep at least 35% of memory from initial arc_max.
+        throttled_arc_max = int(usermem[0].value * 1.35) - usermem[0].value
+        # Get the user memory and keep space for ARC.
+        throttled_user_mem = int(usermem[0].value - throttled_arc_max)
+        # Potential memory used by guests.
+        memory_used = guest_mem_used['RPRD'] + guest_mem_used['RNP']
+
+        vms_memory = memory_used + memory
+        if vms_memory <= throttled_user_mem:
+            if max_arc[0].value > throttled_arc_max:
+                if max(max_arc[0].value - memory, 0) != 0:
+                    self.logger.info("===> Setting ARC FROM: {} TO: {}".format(max_arc[0].value, max_arc[0].value - memory))
+                    sysctl.filter('vfs.zfs.arc_max')[0].value = max_arc[0].value - memory
+            return True
+        else:
+            return False
+
+    async def __init_guest_vmemory(self, id):
+        vm = await self.middleware.call('datastore.query', 'vm.vm', [('id', '=', id)])
+        guest_memory = vm[0].get('memory', None)
+        guest_status = await self.status(id)
+        if guest_status.get('state') != "RUNNING":
+            setvmem = await self.__set_guest_vmemory(guest_memory)
+            if setvmem is False:
+                self.logger.warn("===> Cannot guarantee memory for guest id: {}".format(id))
+            return setvmem
+
+        else:
+            self.logger.debug("===> bhyve process is running, we won't allocate memory")
+            return False
 
     @accepts(Int('id'))
     async def rm_container_conf(self, id):
@@ -686,6 +787,16 @@ class VMService(CRUDService):
                 return True
         else:
             return False
+
+    @accepts()
+    def random_mac(self):
+        """ Create a random mac address.
+
+            Returns:
+                str: with six groups of two hexadecimal digits
+        """
+        mac_address = [0x00, 0xa0, 0x98, random.randint(0x00, 0x7f), random.randint(0x00, 0xff), random.randint(0x00, 0xff)]
+        return ':'.join(["%02x" % x for x in mac_address])
 
     @accepts(Dict(
         'vm_create',
@@ -787,7 +898,10 @@ class VMService(CRUDService):
     async def start(self, id):
         """Start a VM."""
         try:
-            return await self._manager.start(id)
+            if await self.__init_guest_vmemory(id):
+                return await self._manager.start(id)
+            else:
+                return False
         except Exception as err:
             self.logger.error("===> {0}".format(err))
             return False
@@ -845,9 +959,11 @@ class VMService(CRUDService):
 
         if os.path.exists(file_path) is False and force is False:
             logger.debug("===> Downloading: %s" % (url))
-            await self.middleware.threaded(lambda: urlretrieve(url, file_path,
-                                                               lambda nb, bs, fs,
-                                                               job=job: self.fetch_hookreport(nb, bs, fs, job, file_path)))
+            await self.middleware.run_in_thread(lambda: urlretrieve(
+                url,
+                file_path,
+                lambda nb, bs, fs, job=job: self.fetch_hookreport(nb, bs, fs, job, file_path)
+            ))
 
     @accepts()
     async def list_images(self):
@@ -1006,6 +1122,10 @@ async def __event_system_ready(middleware, event_type, args):
     """
     if args['id'] != 'ready':
         return
+
+    global ZFS_ARC_MAX
+    max_arc = sysctl.filter('vfs.zfs.arc_max')
+    ZFS_ARC_MAX = max_arc[0].value
 
     for vm in await middleware.call('vm.query', [('autostart', '=', True)]):
         await middleware.call('vm.start', vm['id'])

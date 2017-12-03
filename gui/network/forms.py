@@ -244,7 +244,8 @@ class InterfacesForm(ModelForm):
         options = self.cleaned_data.get('int_options')
         if iface and options and iface.startswith('lagg') and re.search(r'\bmtu\b', options):
             raise forms.ValidationError(
-                _('MTU option is not allowed for LAGG interfaces')
+                _('MTU option is not allowed for LAGG interfaces. '
+                  'To make changes go to Network → Link Aggregrations → Edit Members')
             )
         return options
 
@@ -646,7 +647,7 @@ class GlobalConfigurationForm(ModelForm):
 
     def clean(self):
         cleaned_data = self.cleaned_data
-        domains     = cleaned_data.get("gc_domains")
+        domains = (cleaned_data.get("gc_domains") or "").split()
         nameserver1 = cleaned_data.get("gc_nameserver1")
         nameserver2 = cleaned_data.get("gc_nameserver2")
         nameserver3 = cleaned_data.get("gc_nameserver3")
@@ -655,7 +656,6 @@ class GlobalConfigurationForm(ModelForm):
                 msg = _("No more than 5 additional domains are allowed.")
                 self._errors["gc_domains"] = self.error_class([msg])
             else:
-                domains = domains.split()
                 cleaned_data['gc_domains'] = '\n'.join(domains)
         if nameserver3:
             if nameserver2 == "":
@@ -818,12 +818,13 @@ class VLANForm(ModelForm):
                     int_options='up',
                 )
                 vlan_interface.save()
-            models.Interfaces.objects.create(
-                int_interface=vlan_vint,
-                int_name=vlan_vint,
-                int_dhcp=False,
-                int_ipv6auto=False,
-            )
+            if not models.Interfaces.objects.filter(int_interface=vlan_vint).exists():
+                models.Interfaces.objects.create(
+                    int_interface=vlan_vint,
+                    int_name=vlan_vint,
+                    int_dhcp=False,
+                    int_ipv6auto=False,
+                )
             return super(VLANForm, self).save()
 
     def delete(self, *args, **kwargs):

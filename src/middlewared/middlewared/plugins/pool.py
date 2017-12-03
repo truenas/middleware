@@ -2,11 +2,11 @@ import asyncio
 import logging
 from datetime import datetime
 import os
+import shutil
 import subprocess
 import sysctl
 
 import bsd
-import libzfs
 
 from middlewared.job import JobProgressBuffer
 from middlewared.schema import accepts, Int, Str
@@ -17,7 +17,7 @@ logger = logging.getLogger(__name__)
 
 
 async def is_mounted(middleware, path):
-    mounted = await middleware.threaded(bsd.getmntinfo)
+    mounted = await middleware.run_in_thread(bsd.getmntinfo)
     return any(fs.dest == path for fs in mounted)
 
 
@@ -98,10 +98,12 @@ class MountFsContextManager:
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         if await is_mounted(self.middleware, self.path):
-            await self.middleware.threaded(bsd.unmount, self.path)
+            await self.middleware.run_in_thread(bsd.unmount, self.path)
 
 
 class PoolService(CRUDService):
+
+    GELI_KEYPATH = '/data/geli'
 
     @filterable
     async def query(self, filters=None, options=None):
@@ -120,13 +122,13 @@ class PoolService(CRUDService):
         or if all geli providers exist.
         """
         try:
-            zpool = libzfs.ZFS().get(pool['name'])
-        except libzfs.ZFSException:
+            zpool = (await self.middleware.call('zfs.pool.query', [('id', '=', pool['name'])]))[0]
+        except Exception:
             zpool = None
 
         if zpool:
-            pool['status'] = zpool.status
-            pool['scan'] = zpool.scrub.__getstate__()
+            pool['status'] = zpool['status']
+            pool['scan'] = zpool['scan']
         else:
             pool.update({
                 'status': 'OFFLINE',
@@ -161,6 +163,31 @@ class PoolService(CRUDService):
             if pool['is_decrypted']:
                 async for i in await self.middleware.call('zfs.pool.get_disks', pool['name']):
                     yield i
+
+    @item_method
+    @accepts(Int('id'))
+    async def download_encryption_key(self, oid):
+        """
+        Download encryption key for a given pool `id`.
+        """
+        pool = await self.query([('id', '=', oid)], {'get': True})
+        if not pool['encryptkey']:
+            return None
+
+        job_id, url = await self.middleware.call(
+            'core.download',
+            'pool.download_encryption_key_job',
+            [os.path.join(self.GELI_KEYPATH, f"{pool['encryptkey']}.key")],
+            'geli.key'
+        )
+        return url
+
+    @job(pipe=True)
+    @private
+    async def download_encryption_key_job(self, job, filename):
+        with open(filename, "rb") as src:
+            with os.fdopen(job.write_fd, "wb") as dst:
+                shutil.copyfileobj(src, dst)
 
     @private
     def configure_resilver_priority(self):

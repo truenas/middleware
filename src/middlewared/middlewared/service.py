@@ -15,6 +15,8 @@ from middlewared.schema import accepts, Bool, Dict, Int, List, Ref, Str
 from middlewared.service_exception import CallException, CallError, ValidationError, ValidationErrors  # noqa
 from middlewared.utils import filter_list
 from middlewared.logger import Logger
+from middlewared.job import Job
+
 
 PeriodicTaskDescriptor = namedtuple("PeriodicTaskDescriptor", ["interval", "run_on_start"])
 
@@ -37,6 +39,13 @@ def job(lock=None, process=False, pipe=False):
         }
         return fn
     return check_job
+
+
+def threaded(pool):
+    def m(fn):
+        fn._thread_pool = pool
+        return fn
+    return m
 
 
 def no_auth_required(fn):
@@ -91,6 +100,7 @@ class ServiceBase(type):
       - namespace: namespace identifier of the service
       - private: whether or not the service is deemed private
       - verbose_name: human-friendly singular name for the service
+      - thread_pool: thread pool to use for threaded methods
 
     """
 
@@ -115,6 +125,7 @@ class ServiceBase(type):
             'service_model': None,
             'namespace': namespace,
             'private': False,
+            'thread_pool': None,
             'verbose_name': klass.__name__.replace('Service', ''),
         }
 
@@ -220,21 +231,21 @@ class CRUDService(Service):
         if asyncio.iscoroutinefunction(self.do_create):
             rv = await self.do_create(data)
         else:
-            rv = await self.middleware.threaded(self.do_create, data)
+            rv = await self.middleware.run_in_thread(self.do_create, data)
         return rv
 
     async def update(self, id, data):
         if asyncio.iscoroutinefunction(self.do_update):
             rv = await self.do_update(id, data)
         else:
-            rv = await self.middleware.threaded(self.do_update, id, data)
+            rv = await self.middleware.run_in_thread(self.do_update, id, data)
         return rv
 
     async def delete(self, id, *args):
         if asyncio.iscoroutinefunction(self.do_delete):
             rv = await self.do_delete(id, *args)
         else:
-            rv = await self.middleware.threaded(self.do_delete, id, *args)
+            rv = await self.middleware.run_in_thread(self.do_delete, id, *args)
         return rv
 
     async def _get_instance(self, id):
@@ -290,7 +301,7 @@ class CoreService(Service):
             else:
                 _typ = 'service'
             services[k] = {
-                'config': {k: v for k, v in list(v._config.__dict__.items()) if not k.startswith('_')},
+                'config': {k: v for k, v in list(v._config.__dict__.items()) if not k.startswith(('_', 'thread_pool'))},
                 'type': _typ,
             }
         return services
@@ -449,7 +460,7 @@ class CoreService(Service):
         Int('sleep'),
     ))
     @job()
-    def job(self, job, data=None):
+    def job_test(self, job, data=None):
         """
         Private no-op method to test a job, simply returning `true`.
         """
@@ -516,3 +527,39 @@ class CoreService(Service):
             import pydevd
             pydevd.stoptrace()
             pydevd.settrace(host=options['host'])
+
+    @accepts(Str("method"), List("params"))
+    @job(lock=lambda args: f"bulk:{args[0]}")
+    async def bulk(self, job, method, params):
+        """
+        Will loop on a list of items for the given method, returning a list of
+        dicts containing a result and error key.
+
+        Result will be the message returned by the method being called,
+        or a string of an error, in which case the error key will be the
+        exception
+        """
+        statuses = []
+        progress_step = 100 / len(params)
+        current_progress = 0
+
+        for p in params:
+            try:
+                msg = await self.middleware.call(method, p)
+                error = None
+
+                if isinstance(msg, Job):
+                    job = msg
+                    msg = await msg.wait()
+
+                    if job.error:
+                        error = job.error
+
+                statuses.append({"result": msg, "error": error})
+            except Exception as e:
+                statuses.append({"result": None, "error": str(e)})
+
+            current_progress += progress_step
+            job.set_progress(current_progress)
+
+        return statuses

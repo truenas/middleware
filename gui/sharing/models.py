@@ -155,6 +155,10 @@ class AFP_Share(Model):
     afp_path = PathField(
         verbose_name=_("Path"),
     )
+    afp_home = models.BooleanField(
+        verbose_name=_('Use as home share'),
+        default=False,
+    )
     afp_name = models.CharField(
         max_length=120,
         verbose_name=_("Name"),
@@ -220,9 +224,10 @@ class AFP_Share(Model):
         default=False,
     )
     afp_timemachine_quota = models.IntegerField(
-        verbose_name=_('Time Machine Quota'),
+        verbose_name=_('Time Machine Quota, GiB'),
         help_text=_(
-            'Quota for each Time Machine backup on this share.'
+            'Quota for each Time Machine backup on this share (in GiB). '
+            'Please note that this change will be applied only after share re-mount.'
         ),
         default=0,
     )

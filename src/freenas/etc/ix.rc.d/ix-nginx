@@ -151,6 +151,7 @@ generate_nginx_conf()
 	local httpsredirect="${6}"
 	local vcenter_https="${7}"
 	local working_ssl=false
+	local default_ui="ui"
 	local dhparams_file="/data/dhparam.pem"
 	local dojo=$(env PYTHONPATH=/usr/local/www/freenasUI/ /usr/local/bin/python -B -S -c 'import settings; print(settings.DOJANGO_DOJO_VERSION)')
 
@@ -265,9 +266,17 @@ __EOF__
 		echo "        listen       [${addr6}]:${port};"
 	fi
 
+	if ! is_freenas; then
+		default_ui="legacy"
+	fi
+
 	cat << __EOF__
 
         location / {
+            rewrite ^.* /${default_ui}/;
+        }
+
+        location ~ /(legacy|plugins|api/v1.0)/ {
             include fastcgi_params;
             fastcgi_pass 127.0.0.1:9042;
             fastcgi_pass_header Authorization;
@@ -286,21 +295,13 @@ __EOF__
             report_uploads proxied;
         }
 
-        location /dojango {
-            alias /usr/local/www/freenasUI/dojango;
-        }
-
-        location /static {
+        location ^~ /legacy/static {
             alias /usr/local/www/freenasUI/static;
             add_header Cache-Control "must-revalidate";
             add_header Etag "$(cat /etc/version)";
         }
 
-        location /reporting/graphs {
-            alias /var/db/graphs;
-        }
-
-        location /dojango/dojo-media/release/${dojo} {
+        location ^~ /legacy/dojango/dojo-media/release/${dojo} {
             alias /usr/local/www/dojo;
         }
 

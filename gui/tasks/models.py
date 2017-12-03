@@ -67,8 +67,41 @@ class CloudSync(Model):
         'system.CloudCredentials',
         verbose_name=_('Credential'),
     )
+    transfer_mode = models.CharField(
+        verbose_name=_('Transfer Mode'),
+        default='sync',
+        choices=(
+            ('SYNC', _('Sync')),
+            ('COPY', _('Copy')),
+            ('MOVE', _('Move')),
+        ),
+        max_length=20,
+    )
     attributes = DictField(
         editable=False,
+    )
+    encryption = models.BooleanField(
+        verbose_name=_("Remote encryption"),
+        help_text=_(
+            "This option will push encrypted files and decrypt pulled files.",
+        ),
+    )
+    filename_encryption = models.BooleanField(
+        default=True,
+        verbose_name=_("Filename encryption"),
+        help_text=_(
+            "Also encrypt filenames.",
+        ),
+    )
+    encryption_password = models.CharField(
+        blank=True,
+        max_length=256,
+        verbose_name=_("Encryption password"),
+    )
+    encryption_salt = models.CharField(
+        blank=True,
+        max_length=256,
+        verbose_name=_("Encryption salt"),
     )
     minute = models.CharField(
         max_length=100,

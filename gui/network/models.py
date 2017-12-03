@@ -27,7 +27,7 @@ import os
 import random
 import string
 import logging
-from django.core.validators import RegexValidator
+from django.core.validators import MinValueValidator, MaxValueValidator, RegexValidator
 from django.db import models
 from django.utils.translation import ugettext_lazy as _
 
@@ -92,6 +92,7 @@ class GlobalConfiguration(Model):
         verbose_name=_("IPv4 Default Gateway"),
     )
     gc_ipv6gateway = IP6AddressField(
+        allow_zone_index=True,
         blank=True,
         default='',
         verbose_name=_("IPv6 Default Gateway"),
@@ -262,6 +263,7 @@ class Interfaces(Model):
     )
     int_vhid = models.PositiveIntegerField(
         verbose_name=_("Virtual Host ID"),
+        validators=[MinValueValidator(1), MaxValueValidator(255)],
         null=True,
         blank=True,
     )

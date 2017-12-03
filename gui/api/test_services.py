@@ -48,8 +48,6 @@ class AFPResourceTest(APITestCase):
             'afp_srv_connections_limit': 50,
             'afp_srv_guest': False,
             'afp_srv_guest_user': 'nobody',
-            'afp_srv_homedir': None,
-            'afp_srv_homedir_enable': False,
             'afp_srv_dbpath': None,
             'afp_srv_global_aux': '',
         })

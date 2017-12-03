@@ -1,0 +1,17 @@
+#!/usr/sbin/dtrace -qs
+
+#pragma D option ustackframes=100
+/*# dtrace -x ustackframes=100 -n 'profile-97 /pid == 12345 && arg1/ { @[ustack()] = count(); } tick-60s { exit(0); }' -o out.user_stacks
+*/
+
+/* arg1 is the userland pc */
+profile-99 /   ( arg1 != 0 )   /   { 
+	@[ustack()] = count(); 
+	/*limit writes to disk by truncation */
+	trunc( @, 1400);
+}
+
+tick-60s { 
+	trunc(@, 400); 
+	exit (0);
+} 
