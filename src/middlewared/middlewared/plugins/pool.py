@@ -317,5 +317,20 @@ class PoolService(CRUDService):
             self.dismissed_import_disk_jobs.add(current_import_job["id"])
 
 
+
+class PoolDataset(CRUDService):
+
+    class Config:
+        namespace = 'pool.dataset'
+
+    @filterable
+    async def query(self, filters, options):
+        return await self.middleware.call('zfs.dataset.query', filters, options)
+
+    @accepts(Str('id'))
+    def do_delete(self, id):
+        return await self.middleware.call('zfs.dataset.delete', id)
+
+
 def setup(middleware):
     asyncio.ensure_future(middleware.call('pool.configure_resilver_priority'))
