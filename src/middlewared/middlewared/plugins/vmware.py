@@ -3,9 +3,9 @@ import socket
 import ssl
 
 from middlewared.schema import Dict, Int, Str, accepts
-from middlewared.service import CallError, CRUDService, private
+from middlewared.service import CallError, CRUDService, private, job
 
-from pyVim import connect
+from pyVim import connect, task as VimTask
 from pyVmomi import vim, vmodl
 
 
@@ -16,23 +16,7 @@ class VMWareService(CRUDService):
         datastore_extend = 'vmware.item_extend'
 
     @private
-    async def item_extend(self, item):
-        try:
-            item['password'] = await self.middleware.call('notifier.pwenc_decrypt', item['password'])
-        except:
-            self.logger.warn('Failed to decrypt password', exc_info=True)
-        return item
-
-    @accepts(Dict(
-        'vmware-creds',
-        Str('hostname'),
-        Str('username'),
-        Str('password'),
-    ))
-    def get_datastores(self, data):
-        """
-        Get datastores from VMWare.
-        """
+    async def esxi_retrive_content(self, data):
         try:
             ssl_context = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
             ssl_context.verify_mode = ssl.CERT_NONE
@@ -50,6 +34,29 @@ class VMWareService(CRUDService):
             raise CallError(str(e), e.errno)
 
         content = server_instance.RetrieveContent()
+        
+        return content
+
+
+    @private
+    async def item_extend(self, item):
+        try:
+            item['password'] = await self.middleware.call('notifier.pwenc_decrypt', item['password'])
+        except:
+            self.logger.warn('Failed to decrypt password', exc_info=True)
+        return item
+
+    @accepts(Dict(
+        'vmware-creds',
+        Str('hostname'),
+        Str('username'),
+        Str('password'),
+    ))
+    async def get_datastores(self, data):
+        """
+        Get datastores from VMWare.
+        """
+        content = await self.esxi_retrive_content(data)
         objview = content.viewManager.CreateContainerView(
             content.rootFolder, [vim.HostSystem], True
         )
@@ -95,21 +102,11 @@ class VMWareService(CRUDService):
         connect.Disconnect(server_instance)
         return datastores
 
+
     @accepts(Int('pk'))
     async def get_virtual_machines(self, pk):
-
         item = await self.query([('id', '=', pk)], {'get': True})
-
-        ssl_context = ssl.SSLContext(ssl.PROTOCOL_SSLv23)
-        ssl_context.verify_mode = ssl.CERT_NONE
-        server_instance = connect.SmartConnect(
-            host=item['hostname'],
-            user=item['username'],
-            pwd=item['password'],
-            sslContext=ssl_context,
-        )
-
-        content = server_instance.RetrieveContent()
+        content = await self.esxi_retrive_content(item)
         objview = content.viewManager.CreateContainerView(content.rootFolder, [vim.VirtualMachine], True)
         vm_view = objview.view
         objview.Destroy()
@@ -120,6 +117,51 @@ class VMWareService(CRUDService):
                 'uuid': vm.config.uuid,
                 'name': vm.name,
                 'power_state': vm.summary.runtime.powerState,
+                'datastores': [datastore.name for datastore in vm.datastore]
+
             }
             vms[vm.config.uuid] = data
         return vms
+
+  
+    @accepts(Int('pk'), Str('vm_uuid'), Str('snap_name'), Str('description'))
+    async def create_vm_snapshot(self, pk, vm_uuid, snap_name, description):
+        item = self.query([('id', '=', pk)], {'get': True})
+        content = self.esxi_retrive_content(item)
+        objview = content.viewManager.CreateContainerView(content.rootFolder, [vim.VirtualMachine], True)
+        vm_view = objview.view
+        objview.Destroy()
+
+        for vm in vm_view:
+            if vm.config.uuid == vm_uuid:
+                break
+
+        task = vm.CreateSnapshot_Task(name=snap_name, description=description, memory=False, quiesce=False)
+        VimTask.WaitForTask(task)
+        return task.info.state
+
+
+    @accepts(Int('pk'), Str('vm_uuid'), Str('snap_name'))   
+    async def delete_vm_snapshot(self, pk, vm_uuid, snap_name):
+        item = await self.query([('id', '=', pk)], {'get': True})
+        content = await self.esxi_retrive_content(item)
+        #import pudb; pu.db
+        vm = content.searchIndex.FindByUuid(None, vm_uuid, True)
+        snap_to_remove = None
+
+        tree = vm.snapshot.rootSnapshotList
+        while tree[0].childSnapshotList is not None:
+            snap = tree[0]
+            if snap.name == snap_name:
+                snap_to_remove = snap.snapshot
+            if len(tree[0].childSnapshotList) < 1:
+                break
+            tree = tree[0].childSnapshotList
+        
+        if snap_to_remove is not None:
+            task = snap_to_remove.RemoveSnapshot_Task(True)
+
+            VimTask.WaitForTask(task)
+            return task.info.state
+
+
