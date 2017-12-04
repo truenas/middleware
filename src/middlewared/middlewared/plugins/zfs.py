@@ -334,7 +334,7 @@ class ZFSSnapshotTask(CRUDService):
 
     @filterable
     async def query(self, filters=None, options=None):
-        return await self.middleware.call('datastore.query', 'storage.snapshottask', filters, options)
+        return await self.middleware.call('datastore.query', 'storage.task', filters, options)
 
     @accepts(Dict(
         'snapshot-task',
@@ -355,7 +355,7 @@ class ZFSSnapshotTask(CRUDService):
     async def do_create(self, data):
         return await self.middleware.call(
             'datastore.insert',
-            'storage.snapshottask',
+            'storage.task',
             data,
         )
 
@@ -363,7 +363,7 @@ class ZFSSnapshotTask(CRUDService):
     async def do_update(self, id, data):
         return await self.middleware.call(
             'datastore.update',
-            'storage.snapshottask',
+            'storage.task',
             id,
             data,
         )
@@ -372,7 +372,7 @@ class ZFSSnapshotTask(CRUDService):
     async def do_delete(self, id):
         return await self.middleware.call(
             'datastore.delete',
-            'storage.snapshottask',
+            'storage.task',
             id
         )
 
@@ -402,11 +402,12 @@ class ZFSSnapshotTask(CRUDService):
 
 
         for task in tasks_to_execute:
+            task_name = task_name if task['task_name'] else f"task_{task['id']}"
             await self.middleware.call(
                 'zfs.snapshot.do_create',
                 {'dataset': task['task_filesystem'],
-                'name': f'autosnap_new_{task["task_name"]}{date_now.strftime("%H:%M_%m_%d_%Y")}',
-                'properties':{'autosnap:name':task["task_name"], 'autosnap:retention':f'{task["task_ret_count"]}:{task["task_ret_unit"]}'}}
+                'name': f'autosnap_new_{task_name}_{date_now.strftime("%H:%M_%m_%d_%Y")}',
+                'properties':{'autosnap:name':task_name, 'autosnap:retention':f'{task["task_ret_count"]}:{task["task_ret_unit"]}'}}
             )
 
             await self.middleware.call(
