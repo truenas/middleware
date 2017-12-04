@@ -2,6 +2,7 @@ from middlewared.schema import accepts, Int, Str, Dict, List, Bool, Patch
 from middlewared.service import filterable, CRUDService, item_method, private, job, CallError
 from middlewared.utils import Nid, Popen
 from urllib.request import urlretrieve
+from pipes import quote
 
 import middlewared.logger
 import asyncio
@@ -451,7 +452,7 @@ class VMUtils(object):
         ]
 
         grub_additional_args = {
-            "RancherOS": ['linux /boot/vmlinuz-4.9.45-rancher rancher.password={0} printk.devkmsg=on rancher.state.dev=LABEL=RANCHER_STATE rancher.state.wait rancher.state.autoformat=[/dev/sda] rancher.resize_device=/dev/sda'.format(password),
+            "RancherOS": ['linux /boot/vmlinuz-4.9.45-rancher rancher.password={0} printk.devkmsg=on rancher.state.dev=LABEL=RANCHER_STATE rancher.state.wait rancher.state.autoformat=[/dev/sda] rancher.resize_device=/dev/sda'.format(quote(password)),
                           'initrd /boot/initrd-v1.1.0']
         }
 
