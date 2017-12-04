@@ -969,6 +969,11 @@ class Replication(Model):
 
 
 class Task(Model):
+
+    task_name = models.CharField(
+        max_length=150,
+        verbose_name=_("Task Name")
+    )
     task_filesystem = models.CharField(
         max_length=150,
         verbose_name=_("Volume/Dataset"),
@@ -1031,6 +1036,10 @@ class Task(Model):
     task_enabled = models.BooleanField(
         default=True,
         verbose_name=_("Enabled"),
+    )
+    task_last_run = models.DateTimeField(
+        null=True,
+        verbose_name=_("Last run of the snap task")
     )
 
     def __str__(self):
