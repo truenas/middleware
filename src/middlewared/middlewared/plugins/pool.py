@@ -9,7 +9,7 @@ import sysctl
 import bsd
 
 from middlewared.job import JobProgressBuffer
-from middlewared.schema import accepts, Int, Str
+from middlewared.schema import accepts, Dict, Int, Str
 from middlewared.service import filterable, item_method, job, private, CRUDService
 from middlewared.utils import Popen, run
 
@@ -317,7 +317,6 @@ class PoolService(CRUDService):
             self.dismissed_import_disk_jobs.add(current_import_job["id"])
 
 
-
 class PoolDataset(CRUDService):
 
     class Config:
@@ -327,8 +326,57 @@ class PoolDataset(CRUDService):
     async def query(self, filters, options):
         return await self.middleware.call('zfs.dataset.query', filters, options)
 
+    @accepts(Dict(
+        'pool_dataset_create',
+        Str('name', required=True),
+        Str('comments'),
+        Str('compression', enum=[
+            'OFF', 'LZ4', 'GZIP-1', 'GZIP-6', 'GZIP-9', 'ZLE', 'LZJB',
+        ]),
+        Str('atime', enum=['ON', 'OFF']),
+        Int('quota'),
+        Int('refquota'),
+        Int('reservation'),
+        Int('refreservation'),
+        Str('deduplication', enum=['ON', 'VERIFY', 'OFF']),
+        Str('readonly', enum=['ON', 'OFF']),
+        Str('recordsize', enum=[
+            '512', '1K', '2K', '4K', '8K', '16K', '32K', '64K', '128K', '256K', '512K', '1024K',
+        ]),
+        Str('casesensitivity', enum=['SENSITIVE', 'INSENSITIVE', 'MIXED']),
+        register=True,
+    ))
+    async def do_create(self, data):
+
+        def lower(x):
+            return x.lower()
+
+        props = {}
+        for i, real_name, transform in (
+            ('comments', 'org.freenas:description', None),
+            ('compression', None, lower),
+            ('atime', None, lower),
+            ('quota', None, None),
+            ('refquota', None, None),
+            ('reservation', None, None),
+            ('refreservation', None, None),
+            ('deduplication', 'dedup', lower),
+            ('readonly', None, lower),
+            ('recordsize', None, None),
+            ('casesensitivity', None, lower),
+        ):
+            if i not in data:
+                continue
+            name = real_name or i
+            props[name] = data[i] if not transform else transform(data[i])
+
+        return await self.middleware.call('zfs.dataset.create', {
+            'name': data['name'],
+            'properties': props,
+        })
+
     @accepts(Str('id'))
-    def do_delete(self, id):
+    async def do_delete(self, id):
         return await self.middleware.call('zfs.dataset.delete', id)
 
 
