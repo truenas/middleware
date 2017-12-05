@@ -1,4 +1,5 @@
 import asyncio
+import errno
 import logging
 from datetime import datetime
 import os
@@ -398,9 +399,14 @@ class PoolDataset(CRUDService):
         ('rm', {'name': 'name'}),
         ('rm', {'name': 'type'}),
         ('rm', {'name': 'sparse'}),
+        ('edit', {'name': 'atime', 'method': lambda x: x.enum.append('INHERIT')}),
+        ('edit', {'name': 'casesensitivity', 'method': lambda x: x.enum.append('INHERIT')}),
+        ('edit', {'name': 'compression', 'method': lambda x: x.enum.append('INHERIT')}),
+        ('edit', {'name': 'deduplication', 'method': lambda x: x.enum.append('INHERIT')}),
+        ('edit', {'name': 'recordsize', 'method': lambda x: x.enum.append('INHERIT')}),
+        ('edit', {'name': 'readonly', 'method': lambda x: x.enum.append('INHERIT')}),
     ))
     async def do_update(self, id, data):
-
 
         verrors = ValidationErrors()
 
@@ -414,25 +420,24 @@ class PoolDataset(CRUDService):
             raise verrors
 
         props = {}
-        for i, real_name, transform in (
-            ('atime', None, str.lower),
-            ('casesensitivity', None, str.lower),
-            ('comments', 'org.freenas:description', None),
-            ('compression', None, str.lower),
-            ('deduplication', 'dedup', str.lower),
+        for i, real_name, transform, inheritable in (
+            ('atime', None, str.lower, True),
+            ('casesensitivity', None, str.lower, True),
+            ('comments', 'org.freenas:description', None, False),
+            ('compression', None, str.lower, True),
+            ('deduplication', 'dedup', str.lower, True),
             ('quota', None, None),
             ('refquota', None, None),
             ('reservation', None, None),
             ('refreservation', None, None),
-            ('readonly', None, str.lower),
-            ('recordsize', None, None),
-            ('sparse', None, None),
+            ('readonly', None, str.lower, True),
+            ('recordsize', None, None, True),
             ('volsize', None, lambda x: str(x)),
         ):
             if i not in data:
                 continue
             name = real_name or i
-            if data[i] == 'INHERIT':
+            if inheritable and data[i] == 'INHERIT':
                 props[name] = {'source': 'INHERIT'}
             else:
                 props[name] = {'value': data[i] if not transform else transform(data[i])}
