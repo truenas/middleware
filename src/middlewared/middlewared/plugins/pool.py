@@ -366,21 +366,18 @@ class PoolDataset(CRUDService):
         if verrors:
             raise verrors
 
-        def lower(x):
-            return x.lower()
-
         props = {}
         for i, real_name, transform in (
-            ('atime', None, lower),
-            ('casesensitivity', None, lower),
+            ('atime', None, str.lower),
+            ('casesensitivity', None, str.lower),
             ('comments', 'org.freenas:description', None),
-            ('compression', None, lower),
-            ('deduplication', 'dedup', lower),
+            ('compression', None, str.lower),
+            ('deduplication', 'dedup', str.lower),
             ('quota', None, None),
             ('refquota', None, None),
             ('reservation', None, None),
             ('refreservation', None, None),
-            ('readonly', None, lower),
+            ('readonly', None, str.lower),
             ('recordsize', None, None),
             ('sparse', None, None),
             ('volsize', None, lambda x: str(x)),
@@ -416,21 +413,18 @@ class PoolDataset(CRUDService):
         if verrors:
             raise verrors
 
-        def lower(x):
-            return x.lower()
-
         props = {}
         for i, real_name, transform in (
-            ('atime', None, lower),
-            ('casesensitivity', None, lower),
+            ('atime', None, str.lower),
+            ('casesensitivity', None, str.lower),
             ('comments', 'org.freenas:description', None),
-            ('compression', None, lower),
-            ('deduplication', 'dedup', lower),
+            ('compression', None, str.lower),
+            ('deduplication', 'dedup', str.lower),
             ('quota', None, None),
             ('refquota', None, None),
             ('reservation', None, None),
             ('refreservation', None, None),
-            ('readonly', None, lower),
+            ('readonly', None, str.lower),
             ('recordsize', None, None),
             ('sparse', None, None),
             ('volsize', None, lambda x: str(x)),
