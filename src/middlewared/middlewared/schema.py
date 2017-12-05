@@ -393,6 +393,10 @@ class Patch(object):
                 schema.attrs[new.name] = new
             elif operation == 'rm':
                 del schema.attrs[patch['name']]
+            elif operation == 'edit':
+                attr = schema.attrs[patch['name']]
+                if 'method' in patch:
+                    patch['method'](attr)
             elif operation == 'attr':
                 for key, val in list(patch.items()):
                     setattr(schema, key, val)
