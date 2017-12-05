@@ -9,8 +9,10 @@ import sysctl
 import bsd
 
 from middlewared.job import JobProgressBuffer
-from middlewared.schema import accepts, Dict, Int, Str
-from middlewared.service import filterable, item_method, job, private, CRUDService
+from middlewared.schema import accepts, Bool, Dict, Int, Str
+from middlewared.service import (
+    filterable, item_method, job, private, CRUDService, ValidationErrors,
+)
 from middlewared.utils import Popen, run
 
 logger = logging.getLogger(__name__)
@@ -329,6 +331,12 @@ class PoolDataset(CRUDService):
     @accepts(Dict(
         'pool_dataset_create',
         Str('name', required=True),
+        Str('type', enum=['FILESYSTEM', 'VOLUME'], default='FILESYSTEM'),
+        Int('volsize'),
+        Str('volblocksize', enum=[
+            '512', '1K', '2K', '4K', '8K', '16K', '32K', '64K', '128K',
+        ]),
+        Bool('sparse'),
         Str('comments'),
         Str('compression', enum=[
             'OFF', 'LZ4', 'GZIP-1', 'GZIP-6', 'GZIP-9', 'ZLE', 'LZJB',
@@ -347,23 +355,49 @@ class PoolDataset(CRUDService):
         register=True,
     ))
     async def do_create(self, data):
+        """
+        Creates a dataset/zvol.
+
+        `volsize` is required for type=VOLUME and is supposed to be a multiple of the block size.
+        """
+
+        verrors = ValidationErrors()
+
+        if data['type'] == 'FILESYSTEM':
+            for i in ('sparse', 'volsize', 'volblocksize'):
+                if i in data:
+                    verrors.add(f'pool_dataset_create.{i}', 'This field is not valid for FILESYSTEM')
+        elif data['type'] == 'VOLUME':
+            if 'volsize' not in data:
+                verrors.add('pool_dataset_create.volsize', 'This field is required for VOLUME')
+
+            for i in (
+                'atime', 'casesensitivity', 'quota', 'refquota', 'recordsize',
+            ):
+                if i in data:
+                    verrors.add(f'pool_dataset_create.{i}', 'This field is not valid for VOLUME')
+
+        if verrors:
+            raise verrors
 
         def lower(x):
             return x.lower()
 
         props = {}
         for i, real_name, transform in (
+            ('atime', None, lower),
+            ('casesensitivity', None, lower),
             ('comments', 'org.freenas:description', None),
             ('compression', None, lower),
-            ('atime', None, lower),
+            ('deduplication', 'dedup', lower),
             ('quota', None, None),
             ('refquota', None, None),
             ('reservation', None, None),
             ('refreservation', None, None),
-            ('deduplication', 'dedup', lower),
             ('readonly', None, lower),
             ('recordsize', None, None),
-            ('casesensitivity', None, lower),
+            ('sparse', None, None),
+            ('volsize', None, lambda x: str(x)),
         ):
             if i not in data:
                 continue
@@ -372,6 +406,7 @@ class PoolDataset(CRUDService):
 
         return await self.middleware.call('zfs.dataset.create', {
             'name': data['name'],
+            'type': data['type'],
             'properties': props,
         })
 
