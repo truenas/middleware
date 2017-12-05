@@ -9,7 +9,7 @@ import sysctl
 import bsd
 
 from middlewared.job import JobProgressBuffer
-from middlewared.schema import accepts, Bool, Dict, Int, Str
+from middlewared.schema import accepts, Bool, Dict, Int, Patch, Str
 from middlewared.service import (
     filterable, item_method, job, private, CRUDService, ValidationErrors,
 )
@@ -362,21 +362,7 @@ class PoolDataset(CRUDService):
         """
 
         verrors = ValidationErrors()
-
-        if data['type'] == 'FILESYSTEM':
-            for i in ('sparse', 'volsize', 'volblocksize'):
-                if i in data:
-                    verrors.add(f'pool_dataset_create.{i}', 'This field is not valid for FILESYSTEM')
-        elif data['type'] == 'VOLUME':
-            if 'volsize' not in data:
-                verrors.add('pool_dataset_create.volsize', 'This field is required for VOLUME')
-
-            for i in (
-                'atime', 'casesensitivity', 'quota', 'refquota', 'recordsize',
-            ):
-                if i in data:
-                    verrors.add(f'pool_dataset_create.{i}', 'This field is not valid for VOLUME')
-
+        await self.__common_validation(verrors, 'pool_dataset_create', data, 'CREATE')
         if verrors:
             raise verrors
 
@@ -409,6 +395,72 @@ class PoolDataset(CRUDService):
             'type': data['type'],
             'properties': props,
         })
+
+    @accepts(Str('id'), Patch(
+        'pool_dataset_create', 'pool_dataset_update',
+        ('rm', {'name': 'name'}),
+        ('rm', {'name': 'type'}),
+        ('rm', {'name': 'sparse'}),
+    ))
+    async def do_update(self, id, data):
+
+
+        verrors = ValidationErrors()
+
+        dataset = await self.query([('id', '=', id)])
+        if not dataset:
+            verrors.add('id', f'{id} does not exist', errno.ENOENT)
+        else:
+            data['type'] = dataset[0]['type']
+            await self.__common_validation(verrors, 'pool_dataset_update', data, 'UPDATE')
+        if verrors:
+            raise verrors
+
+        def lower(x):
+            return x.lower()
+
+        props = {}
+        for i, real_name, transform in (
+            ('atime', None, lower),
+            ('casesensitivity', None, lower),
+            ('comments', 'org.freenas:description', None),
+            ('compression', None, lower),
+            ('deduplication', 'dedup', lower),
+            ('quota', None, None),
+            ('refquota', None, None),
+            ('reservation', None, None),
+            ('refreservation', None, None),
+            ('readonly', None, lower),
+            ('recordsize', None, None),
+            ('sparse', None, None),
+            ('volsize', None, lambda x: str(x)),
+        ):
+            if i not in data:
+                continue
+            name = real_name or i
+            if data[i] == 'INHERIT':
+                props[name] = {'source': 'INHERIT'}
+            else:
+                props[name] = {'value': data[i] if not transform else transform(data[i])}
+
+        return await self.middleware.call('zfs.dataset.update', id, {'properties': props})
+
+    async def __common_validation(self, verrors, schema, data, mode):
+        assert mode in ('CREATE', 'UPDATE')
+
+        if data['type'] == 'FILESYSTEM':
+            for i in ('sparse', 'volsize', 'volblocksize'):
+                if i in data:
+                    verrors.add(f'{schema}.{i}', 'This field is not valid for FILESYSTEM')
+        elif data['type'] == 'VOLUME':
+            if mode == 'CREATE' and 'volsize' not in data:
+                verrors.add(f'{schema}.volsize', 'This field is required for VOLUME')
+
+            for i in (
+                'atime', 'casesensitivity', 'quota', 'refquota', 'recordsize',
+            ):
+                if i in data:
+                    verrors.add(f'{schema}.{i}', 'This field is not valid for VOLUME')
 
     @accepts(Str('id'))
     async def do_delete(self, id):
