@@ -382,6 +382,7 @@ class PoolDatasetService(CRUDService):
             ('recordsize', None, None),
             ('sparse', None, None),
             ('volsize', None, lambda x: str(x)),
+            ('volblocksize', None, None),
         ):
             if i not in data:
                 continue
@@ -403,8 +404,9 @@ class PoolDatasetService(CRUDService):
         'pool_dataset_create', 'pool_dataset_update',
         ('rm', {'name': 'name'}),
         ('rm', {'name': 'type'}),
-        ('rm', {'name': 'sparse'}),  # Create time only attribute
         ('rm', {'name': 'casesensitivity'}),  # Its a readonly attribute
+        ('rm', {'name': 'sparse'}),  # Create time only attribute
+        ('rm', {'name': 'volblocksize'}),  # Create time only attribute
         ('edit', _add_inherit('atime')),
         ('edit', _add_inherit('compression')),
         ('edit', _add_inherit('deduplication')),
@@ -412,6 +414,9 @@ class PoolDatasetService(CRUDService):
         ('edit', _add_inherit('recordsize')),
     ))
     async def do_update(self, id, data):
+        """
+        Updates a dataset/zvol `id`.
+        """
 
         verrors = ValidationErrors()
 
@@ -427,7 +432,6 @@ class PoolDatasetService(CRUDService):
         props = {}
         for i, real_name, transform, inheritable in (
             ('atime', None, str.lower, True),
-            ('casesensitivity', None, str.lower, True),
             ('comments', 'org.freenas:description', None, False),
             ('compression', None, str.lower, True),
             ('deduplication', 'dedup', str.lower, True),
