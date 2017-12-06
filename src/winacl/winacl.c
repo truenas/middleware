@@ -491,7 +491,7 @@ windows_acl_reset(struct windows_acl_info *w, const char *path, int is_rootdir)
     if ((is_rootdir))
         acl_new = w->pacl;
     else
-	    acl_new = (S_ISDIR(st.st_mode) == 0) ? w->facl : w->dacl;
+	acl_new = (S_ISDIR(st.st_mode) == 0) ? w->facl : w->dacl;
 
 	/* merge the new acl with the existing acl */
 	if (merge_acl(acl_new, &acl, path) < 0)
@@ -589,10 +589,10 @@ set_windows_acls(struct windows_acl_info *w)
 	for (rval = 0; (entry = fts_read(tree)) != NULL;) {
         switch (entry->fts_level) {
             case FTS_ROOTLEVEL:
-				if (w->flags & WA_DIRECTORIES)
+		if (w->flags & WA_DIRECTORIES)
                     is_rootdir = 1;
-					set_windows_acl(w, entry, is_rootdir);
-				break;
+		set_windows_acl(w, entry, is_rootdir);
+		    break;
             
             default:
                 switch (entry->fts_info) {
