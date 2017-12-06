@@ -661,6 +661,7 @@ class idmap_tdb(idmap_base):
 
     class FreeAdmin:
         deletable = False
+        resource_name = 'directoryservice/idmap/tdb'
 
 
 class idmap_tdb2(idmap_base):
