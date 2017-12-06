@@ -39,10 +39,10 @@ require([
 
         checkRunning = function() {
 
-            xhr.get('/', {
+            xhr.get('/legacy/', {
                 sync: true
             }).then(function(data) {
-                window.location = '/';
+                window.location = '/legacy/';
             }, function(err) {
                 setTimeout('checkRunning()', 3000);
             });
@@ -50,7 +50,7 @@ require([
         }
 
         setTimeout(function() {
-            xhr.get('/system/reboot/run/', {
+            xhr.get('/legacy/system/reboot/run/', {
                 sync: true
             }).then(function(a1) {
                 setTimeout('checkRunning()', 10000);
@@ -71,7 +71,7 @@ require([
 		<div data-dojo-type="dijit.layout.ContentPane" data-dojo-props="region: 'top', gutters: false">
                 <div id="page-header">
                     <div>
-                        <a href="/" title="{{ sw_name }}"><img src="{{ STATIC_URL }}images/ui/{{ sw_name|lower }}-logo.png" alt="{{ sw_name }}" /></a>
+                        <a href="/legacy/" title="{{ sw_name }}"><img src="{{ STATIC_URL }}images/ui/{{ sw_name|lower }}-logo.png" alt="{{ sw_name }}" /></a>
                     </div>
                 </div>
 	    </div>
