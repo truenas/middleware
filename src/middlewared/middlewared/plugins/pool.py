@@ -320,7 +320,7 @@ class PoolService(CRUDService):
             self.dismissed_import_disk_jobs.add(current_import_job["id"])
 
 
-class PoolDataset(CRUDService):
+class PoolDatasetService(CRUDService):
 
     class Config:
         namespace = 'pool.dataset'
@@ -394,17 +394,22 @@ class PoolDataset(CRUDService):
             'properties': props,
         })
 
+    def _add_inherit(name):
+        def add(attr):
+            attr.enum.append('INHERIT')
+        return {'name': name, 'method': add}
+
     @accepts(Str('id'), Patch(
         'pool_dataset_create', 'pool_dataset_update',
         ('rm', {'name': 'name'}),
         ('rm', {'name': 'type'}),
-        ('rm', {'name': 'sparse'}),
-        ('edit', {'name': 'atime', 'method': lambda x: x.enum.append('INHERIT')}),
-        ('edit', {'name': 'casesensitivity', 'method': lambda x: x.enum.append('INHERIT')}),
-        ('edit', {'name': 'compression', 'method': lambda x: x.enum.append('INHERIT')}),
-        ('edit', {'name': 'deduplication', 'method': lambda x: x.enum.append('INHERIT')}),
-        ('edit', {'name': 'recordsize', 'method': lambda x: x.enum.append('INHERIT')}),
-        ('edit', {'name': 'readonly', 'method': lambda x: x.enum.append('INHERIT')}),
+        ('rm', {'name': 'sparse'}),  # Create time only attribute
+        ('rm', {'name': 'casesensitivity'}),  # Its a readonly attribute
+        ('edit', _add_inherit('atime')),
+        ('edit', _add_inherit('compression')),
+        ('edit', _add_inherit('deduplication')),
+        ('edit', _add_inherit('readonly')),
+        ('edit', _add_inherit('recordsize')),
     ))
     async def do_update(self, id, data):
 
@@ -426,13 +431,13 @@ class PoolDataset(CRUDService):
             ('comments', 'org.freenas:description', None, False),
             ('compression', None, str.lower, True),
             ('deduplication', 'dedup', str.lower, True),
-            ('quota', None, None),
-            ('refquota', None, None),
-            ('reservation', None, None),
-            ('refreservation', None, None),
+            ('quota', None, None, False),
+            ('refquota', None, None, False),
+            ('reservation', None, None, False),
+            ('refreservation', None, None, False),
             ('readonly', None, str.lower, True),
             ('recordsize', None, None, True),
-            ('volsize', None, lambda x: str(x)),
+            ('volsize', None, lambda x: str(x), False),
         ):
             if i not in data:
                 continue
