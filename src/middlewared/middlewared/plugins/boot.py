@@ -67,7 +67,7 @@ class BootService(Service):
             commands.append(['gpart', 'set', '-a', 'lenovofix', dev])
         commands.append(
             ['gpart', 'add', '-t', 'freebsd-zfs', '-i', '2', '-a', '4k'] + (
-                ['-s', str(options['size'])] if options.get('size') else []
+                ['-s', str(options['size']) + 'B'] if options.get('size') else []
             ) + [dev]
         )
         for command in commands:
