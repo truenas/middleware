@@ -12,6 +12,7 @@ from freenasUI.freeadmin.models import Model
 class CustomerInformation(Model):
     data = models.TextField()
     updated_at = models.DateTimeField()
+    sent_at = models.DateTimeField(null=True)
     form_dismissed = models.BooleanField()
 
 

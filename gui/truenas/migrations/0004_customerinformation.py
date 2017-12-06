@@ -11,7 +11,7 @@ def create_customer_information(apps, schema_editor):
     CustomerInformation = apps.get_model("truenas", "CustomerInformation")
     db_alias = schema_editor.connection.alias
     CustomerInformation.objects.using(db_alias).bulk_create([
-        CustomerInformation(data="null", updated_at=datetime.min, form_dismissed=False),
+        CustomerInformation(data="null", updated_at=datetime.min, sent_at=None, form_dismissed=False),
     ])
 
 def delete_customer_information(apps, schema_editor):
@@ -33,6 +33,7 @@ class Migration(migrations.Migration):
                 ('id', models.AutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
                 ('data', models.TextField()),
                 ('updated_at', models.DateTimeField()),
+                ('sent_at', models.DateTimeField(null=True)),
                 ('form_dismissed', models.BooleanField()),
             ],
             options={
