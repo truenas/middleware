@@ -43,14 +43,14 @@ struct windows_acl_info {
 
 #define	WA_NULL			0x00000000	/* nothing */
 #define	WA_FILES		0x00000001	/* only files */
-#define	WA_DIRECTORIES	0x00000002	/* only directories */
+#define	WA_DIRECTORIES		0x00000002	/* only directories */
 #define	WA_APPEND		0x00000004	/* append entrie(s) */
 #define	WA_REMOVE		0x00000008	/* remove entrie(s) */
 #define	WA_UPDATE		0x00000010	/* update entrie(s) */
-#define	WA_RECURSIVE	0x00000020	/* recursive */
+#define	WA_RECURSIVE		0x00000020	/* recursive */
 #define	WA_VERBOSE		0x00000040	/* print more stuff */
 #define	WA_RESET		0x00000080	/* set defaults */
-#define WA_DOSATTRIB	0x00000100	/* DOS extended attribute */
+#define WA_DOSATTRIB		0x00000100	/* DOS extended attribute */
 
 /* default ACL entries if none are specified */
 #define	WA_ENTRY_OWNER		"owner@:rwxpDdaARWcCos:fd:allow"
@@ -361,6 +361,29 @@ remove_inherit_flags(acl_t *acl)
 	return (0);
 }
 
+/* add inherited flag to ACES in ACL */
+static int
+set_inherited_flag(acl_t *acl)
+{
+	int entry_id;
+	acl_entry_t acl_entry;
+	acl_flagset_t acl_flags;
+
+	entry_id = ACL_FIRST_ENTRY;
+	while (acl_get_entry(*acl, entry_id, &acl_entry) > 0) {
+		entry_id = ACL_NEXT_ENTRY;
+
+		if (acl_get_flagset_np(acl_entry, &acl_flags) < 0)
+			err(EX_OSERR, "acl_get_flagset_np() failed");
+
+		acl_add_flag_np(acl_flags, ACL_ENTRY_INHERITED);
+
+		if (acl_set_flagset_np(acl_entry, acl_flags) < 0)
+			err(EX_OSERR, "acl_set_flagset_np() failed");
+	}
+
+	return (0);
+}
 
 /* update an existing ACL */
 static int
@@ -576,6 +599,8 @@ set_windows_acls(struct windows_acl_info *w)
 				continue;
 		}
 	}
+	
+	set_windows_acl(w, NULL);
 
 	return (rval);
 }
@@ -637,6 +662,7 @@ make_acls(struct windows_acl_info *w)
 	if (w->flags & WA_DIRECTORIES) {
 		if ((w->dacl = acl_dup(acl)) == NULL)
 			err(EX_OSERR, "acl_dup() failed");
+		set_inherited_flag(&w->dacl);		
 	}
 
 	/* create a file acl */
@@ -644,6 +670,7 @@ make_acls(struct windows_acl_info *w)
 		if ((w->facl = acl_dup(acl)) == NULL)
 			err(EX_OSERR, "acl_dup() failed");
 		remove_inherit_flags(&w->facl);
+	        set_inherited_flag(&w->facl);
 	}
 
 	acl_free(acl);
