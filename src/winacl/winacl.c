@@ -66,6 +66,7 @@ struct windows_acl_info {
 	char *path;
 	acl_t dacl;
 	acl_t facl;
+  	acl_t pacl;
 	uid_t uid;
 	gid_t gid;
 	int	flags;
@@ -467,7 +468,7 @@ windows_acl_remove(struct windows_acl_info *w, const char *path)
 
 /* reset an ACL */
 static int
-windows_acl_reset(struct windows_acl_info *w, const char *path)
+windows_acl_reset(struct windows_acl_info *w, const char *path, int is_rootdir)
 {
 	char *buf;
 	struct stat st;
@@ -486,8 +487,11 @@ windows_acl_reset(struct windows_acl_info *w, const char *path)
 	bzero(&st, sizeof(st));
 	if (stat(path, &st) < 0)
 		err(EX_OSERR, "%s: acl_from_text() failed", path);
-
-	acl_new = (S_ISDIR(st.st_mode) == 0) ? w->facl : w->dacl;
+    
+    if ((is_rootdir))
+        acl_new = w->pacl;
+    else
+	    acl_new = (S_ISDIR(st.st_mode) == 0) ? w->facl : w->dacl;
 
 	/* merge the new acl with the existing acl */
 	if (merge_acl(acl_new, &acl, path) < 0)
@@ -515,7 +519,7 @@ clear_dosattrib(struct windows_acl_info *w, const char *path)
 
 
 static int
-set_windows_acl(struct windows_acl_info *w, FTSENT *fts_entry)
+set_windows_acl(struct windows_acl_info *w, FTSENT *fts_entry, int is_rootdir)
 {
 	char *path;
 
@@ -534,7 +538,7 @@ set_windows_acl(struct windows_acl_info *w, FTSENT *fts_entry)
 	else if (w->flags & WA_REMOVE)
 		windows_acl_remove(w, path);
 	else if (w->flags & WA_RESET)
-		windows_acl_reset(w, path);
+		windows_acl_reset(w, path, is_rootdir);
 
 	if (w->flags & WA_DOSATTRIB)
 		clear_dosattrib(w, path);
@@ -563,13 +567,14 @@ set_windows_acls(struct windows_acl_info *w)
 	int options = 0;
 	char *paths[4];
 	int rval;
+    int is_rootdir;
 
 	if (w == NULL)
 		return (-1);
 
 	/* recursive not set, only do this entry */
 	if (!(w->flags & WA_RECURSIVE)) {
-		set_windows_acl(w, NULL);
+		set_windows_acl(w, NULL, 0);
 		return (0);
 	}
 
@@ -582,26 +587,33 @@ set_windows_acls(struct windows_acl_info *w)
 
 	/* traverse directory hierarchy */
 	for (rval = 0; (entry = fts_read(tree)) != NULL;) {
-		switch (entry->fts_info) {
-			case FTS_D:
+        switch (entry->fts_level) {
+            case FTS_ROOTLEVEL:
 				if (w->flags & WA_DIRECTORIES)
-					set_windows_acl(w, entry);
-				break;	
+                    is_rootdir = 1;
+					set_windows_acl(w, entry, is_rootdir);
+				break;
+            
+            default:
+                switch (entry->fts_info) {
+                    case FTS_D:
+                        if (w->flags & WA_DIRECTORIES)
+                            set_windows_acl(w, entry, 0);
+                        break;	
 
-			case FTS_F:
-				if (w->flags & WA_FILES)
-					set_windows_acl(w, entry);
-				break;	
+                    case FTS_F:
+                        if (w->flags & WA_FILES)
+                            set_windows_acl(w, entry, 0);
+                        break;	
 
-			case FTS_ERR:
-				warnx("%s: %s", entry->fts_path, strerror(entry->fts_errno));
-				rval = -2;
-				continue;
+                    case FTS_ERR:
+                        warnx("%s: %s", entry->fts_path, strerror(entry->fts_errno));
+                        rval = -2;
+                        continue;
+                }
 		}
 	}
 	
-	set_windows_acl(w, NULL);
-
 	return (rval);
 }
 
@@ -670,8 +682,12 @@ make_acls(struct windows_acl_info *w)
 		if ((w->facl = acl_dup(acl)) == NULL)
 			err(EX_OSERR, "acl_dup() failed");
 		remove_inherit_flags(&w->facl);
-	        set_inherited_flag(&w->facl);
+	    set_inherited_flag(&w->facl);
 	}
+
+    /* create acl for parent directory */
+    if ((w->pacl = acl_dup(acl)) == NULL)
+        err(EX_OSERR, "acl_dup() failed");
 
 	acl_free(acl);
 }
