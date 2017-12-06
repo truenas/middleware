@@ -1,12 +1,17 @@
+import asyncio
 from datetime import datetime, timedelta
 import json
 
+import aiohttp
+
 from licenselib.license import ContractType
 
-from freenasUI.support.utils import get_license
+from freenasUI.support.utils import get_license, ADDRESS, LICENSE_FILE
 
 from middlewared.schema import accepts, Bool, Dict, Int, Str
-from middlewared.service import Service
+from middlewared.service import Service, private
+
+REGISTER_URL = "http://%s/api/v1.0/register" % ADDRESS
 
 user_attrs = [
     Str('first_name'),
@@ -28,6 +33,8 @@ class TrueNASService(Service):
 
     class Config:
         private = True
+
+    __send_customer_information_task = None
 
     @accepts()
     async def get_chassis_hardware(self):
@@ -74,7 +81,28 @@ class TrueNASService(Service):
             "updated_at": datetime.utcnow(),
         })
 
+        await self.schedule_sending_customer_information()
+
         return customer_information
+
+    async def schedule_sending_customer_information(self):
+        customer_information = await self.__fetch_customer_information()
+
+        if customer_information["data"] is None:
+            self.logger.debug("Customer information is not filled yet")
+            return
+
+        if customer_information["sent_at"] is not None:
+            self.logger.debug("Customer information is already sent")
+            return
+
+        task = self.__send_customer_information_task
+        if task is not None:
+            self.logger.debug("Aborting current send_customer_information task")
+            task.abort()
+
+        self.__send_customer_information_task = asyncio.ensure_future(
+            self.__send_customer_information(customer_information))
 
     async def dismiss_customer_information_form(self):
         customer_information = await self.__fetch_customer_information()
@@ -102,3 +130,42 @@ class TrueNASService(Service):
             "support_start_date": license.contract_start.isoformat(),
             "support_end_date": license.contract_end.isoformat(),
         }
+
+    async def __send_customer_information(self, customer_information):
+        sleep = 60
+        while True:
+            try:
+                with open(LICENSE_FILE, 'r') as f:
+                    license_key = f.read().strip('\n')
+
+                data = dict(customer_information["data"], **{
+                    "license_key": license_key,
+                })
+
+                await asyncio.wait_for(self.__do_send_customer_information(data), 30)
+            except Exception:
+                self.logger.debug("Exception while sending customer data", exc_info=True)
+            else:
+                self.logger.debug("Customer information sent successfully")
+                break
+
+            await asyncio.sleep(sleep)
+            sleep = min(sleep * 2, 3600)
+
+        await self.middleware.call('datastore.update', 'truenas.customerinformation', customer_information["id"], {
+            "sent_at": datetime.utcnow(),
+        })
+
+    async def __do_send_customer_information(self, data):
+        async with aiohttp.ClientSession(headers={"Content-type": "application/json"}) as session:
+            async with session.request("post", REGISTER_URL, data=json.dumps(data)) as response:
+                if response.status != 200:
+                    raise Exception("HTTP Error", response.status, await response.text())
+
+                result = await response.json()
+                if result["error"]:
+                    raise ValueError(result["message"])
+
+
+def setup(middleware):
+    asyncio.ensure_future(middleware.call('truenas.schedule_sending_customer_information'))
