@@ -180,18 +180,17 @@ def get_lagg_proto():
 
 
 def get_lagg_nics():
-
     group = [ ]
 
     nics = list(NICChoices(nolagg=True))
 
-    while True:
+    while nics:
         nic = get_nic(nics)
         if not nic:
             break
-
-        nics.remove(nic)
         group.append(nic)
+
+        nics = [n for n in nics if n[0] != nic]
 
     return group
 
