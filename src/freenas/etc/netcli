@@ -180,18 +180,19 @@ def get_lagg_proto():
 
 
 def get_lagg_nics():
-
-    group = [ ]
-
     nics = list(NICChoices(nolagg=True))
+    if not nics:
+        print("All interfaces are already allocated to LAGG or VLAN, cannot proceed.")
+        return []
 
-    while True:
+    group = []
+    while nics:
         nic = get_nic(nics)
         if not nic:
             break
-
-        nics.remove(nic)
         group.append(nic)
+
+        nics = [n for n in nics if n[0] != nic]
 
     return group
 
