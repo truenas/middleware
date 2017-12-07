@@ -245,8 +245,11 @@ class JailService(CRUDService):
         dump = options["dump"]
         _pass = options["_pass"]
 
-        iocage.fstab(action, source, destination, fstype, fsoptions, dump,
-                     _pass)
+        _list = iocage.fstab(action, source, destination, fstype, fsoptions,
+                             dump, _pass)
+
+        if action == "list":
+            return _list
 
         return True
 
