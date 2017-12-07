@@ -17,9 +17,9 @@ from pybonjour import (
 from middlewared.service import Service
 
 
-class mDNSDaemonThread(object):
+class mDNSDaemonMonitor(object):
     def __init__(self, *args, **kwargs):
-        super(mDNSDaemonThread, self).__init__()
+        super(mDNSDaemonMonitor, self).__init__()
         self.mdnsd_pidfile = "/var/run/mdnsd.pid"
         self.mdnsd_piddir = "/var/run/"
 
@@ -151,7 +151,7 @@ class mDNSThread(threading.Thread):
         self.logger = kwargs.get('logger')
         self.timeout = kwargs.get('timeout', 30)
 
-        self.mdnsd = mDNSDaemonThread()
+        self.mdnsd = mDNSDaemonMonitor()
         self.mdnsd.wait()
 
     def active(self, sdRef):
@@ -647,7 +647,7 @@ class mDNSAdvertiseService(Service):
         self.threads = {}
         self.initialized = False
         self.lock = threading.Lock()
-        self.mdnsd = mDNSDaemonThread()
+        self.mdnsd = mDNSDaemonMonitor()
 
     def start(self):
         self.lock.acquire()
