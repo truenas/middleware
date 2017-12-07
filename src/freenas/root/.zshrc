@@ -1,3 +1,9 @@
+
+HISTFILE=~/.zsh-histfile
+SAVEHIST=1000
+
+setopt APPEND_HISTORY
+
 # Enable the builtin emacs(1) command line editor in sh(1),
 # e.g. C-a -> beginning-of-line.
 set -o emacs
