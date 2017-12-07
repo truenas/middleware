@@ -96,7 +96,7 @@ class MailService(ConfigService):
         Str('outgoingserver'),
         Int('port'),
         Str('security', enum=['PLAIN', 'SSL', 'TLS']),
-        Bool('smtp'),
+        Bool('smtp', default=False),
         Str('user'),
         Str('pass'),
     ))

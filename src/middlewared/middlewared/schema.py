@@ -164,11 +164,6 @@ class File(Str):
 
 class Bool(Attribute):
 
-    def __init__(self, *args, **kwargs):
-        if 'default' not in kwargs:
-            kwargs['default'] = False
-        super(Bool, self).__init__(*args, **kwargs)
-
     def clean(self, value):
         if value is None and not self.required:
             return self.default

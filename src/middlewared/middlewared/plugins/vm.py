@@ -944,7 +944,7 @@ class VMService(CRUDService):
             percent = readchunk * 1e2 / totalsize
             job.set_progress(int(percent), 'Downloading', {'downloaded': readchunk, 'total': totalsize})
 
-    @accepts(Str('vmOS'), Bool('force'))
+    @accepts(Str('vmOS'), Bool('force', default=False))
     @job(lock='container')
     async def fetch_image(self, job, vmOS, force=False):
         """Download a pre-built image for bhyve"""

@@ -14,7 +14,7 @@ class SNMPService(SystemServiceService):
         Str('location'),
         Str('contact', validators=[Or(Email(), Match(r'^[-_a-zA-Z0-9\s]+$'))]),
         Bool('traps'),
-        Bool('v3'),
+        Bool('v3', default=False),
         Str('community', validators=[Match(r'^[-_.a-zA-Z0-9\s]*$')]),
         Str('v3_username'),
         Str('v3_authtype', enum=['', 'MD5', 'SHA']),
