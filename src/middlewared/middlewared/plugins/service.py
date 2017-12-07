@@ -130,7 +130,7 @@ class ServiceService(CRUDService):
         Int('id'),
         Dict(
             'service-update',
-            Bool('enable'),
+            Bool('enable', default=False),
         ),
     )
     async def do_update(self, id, data):

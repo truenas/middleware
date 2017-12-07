@@ -42,7 +42,10 @@ class JailService(CRUDService):
              Str("template"),
              Str("pkglist"),
              Str("uuid"),
-             Bool("basejail"), Bool("empty"), Bool("short"), List("props")))
+             Bool("basejail", default=False),
+             Bool("empty", default=False),
+             Bool("short", default=False),
+             List("props")))
     async def do_create(self, options):
         """Creates a jail."""
         # Typically one would return the created jail's id in this
@@ -63,7 +66,10 @@ class JailService(CRUDService):
              Str("template"),
              Str("pkglist"),
              Str("uuid"),
-             Bool("basejail"), Bool("empty"), Bool("short"), List("props")))
+             Bool("basejail", default=False),
+             Bool("empty", default=False),
+             Bool("short", default=False),
+             List("props")))
     @job()
     def create_job(self, job, options):
         iocage = ioc.IOCage(skip_jails=True)
@@ -105,7 +111,7 @@ class JailService(CRUDService):
 
     @accepts(Str("jail"), Dict(
              "options",
-             Bool("plugin"),
+             Bool("plugin", default=False),
              additional_attrs=True,
              ))
     def do_update(self, jail, options):
@@ -177,7 +183,7 @@ class JailService(CRUDService):
         return True
 
     @accepts(Str("resource", enum=["RELEASE", "TEMPLATE", "PLUGIN"]),
-             Bool("remote"))
+             Bool("remote", default=False))
     def list_resource(self, resource, remote):
         """Returns a JSON list of the supplied resource on the host"""
         self.check_dataset_existence()  # Make sure our datasets exist.

@@ -347,6 +347,8 @@ class PoolDatasetService(CRUDService):
         Int('refquota'),
         Int('reservation'),
         Int('refreservation'),
+        Int('copies'),
+        Str('snapdir', enum=['VISIBLE', 'HIDDEN']),
         Str('deduplication', enum=['ON', 'VERIFY', 'OFF']),
         Str('readonly', enum=['ON', 'OFF']),
         Str('recordsize', enum=[
@@ -378,6 +380,8 @@ class PoolDatasetService(CRUDService):
             ('refquota', None, None),
             ('reservation', None, None),
             ('refreservation', None, None),
+            ('copies', None, None),
+            ('snapdir', None, str.lower),
             ('readonly', None, str.lower),
             ('recordsize', None, None),
             ('sparse', None, None),
@@ -412,6 +416,7 @@ class PoolDatasetService(CRUDService):
         ('edit', _add_inherit('deduplication')),
         ('edit', _add_inherit('readonly')),
         ('edit', _add_inherit('recordsize')),
+        ('edit', _add_inherit('snapdir')),
     ))
     async def do_update(self, id, data):
         """
@@ -439,6 +444,8 @@ class PoolDatasetService(CRUDService):
             ('refquota', None, None, False),
             ('reservation', None, None, False),
             ('refreservation', None, None, False),
+            ('copies', None, None, False),
+            ('snapdir', None, str.lower, True),
             ('readonly', None, str.lower, True),
             ('recordsize', None, None, True),
             ('volsize', None, lambda x: str(x), False),
