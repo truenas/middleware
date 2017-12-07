@@ -16,10 +16,10 @@ from pybonjour import (
 
 from middlewared.service import Service
 
-class mDNSDaemonThread(threading.Thread):
+
+class mDNSDaemonThread(object):
     def __init__(self, *args, **kwargs):
         super(mDNSDaemonThread, self).__init__()
-        self.setDaemon(True)
         self.mdnsd_pidfile = "/var/run/mdnsd.pid"
         self.mdnsd_piddir = "/var/run/"
 
@@ -60,11 +60,11 @@ class mDNSDaemonThread(threading.Thread):
         fd = os.open(self.mdnsd_piddir, os.O_RDONLY)
         kq = select.kqueue()
 
-        events = [
-            select.kevent(fd, filter=select.KQ_FILTER_VNODE,
-                flags=select.KQ_EV_ADD|select.KQ_EV_ENABLE|select.KQ_EV_CLEAR,
-                fflags=select.KQ_NOTE_WRITE|select.KQ_NOTE_EXTEND)
-        ]
+        events = [select.kevent(
+            fd, filter=select.KQ_FILTER_VNODE,
+            flags=select.KQ_EV_ADD | select.KQ_EV_ENABLE | select.KQ_EV_CLEAR,
+            fflags=select.KQ_NOTE_WRITE | select.KQ_NOTE_EXTEND
+        )]
 
         events = kq.control(events, 0, 0)
         if not self.is_alive() and self.pidfile_exists():
@@ -73,8 +73,8 @@ class mDNSDaemonThread(threading.Thread):
         while (not alive):
             proc_events = kq.control([], 1)
             for event in proc_events:
-                if ((event.fflags & select.KQ_NOTE_WRITE) or \
-                    (event.fflags & select.KQ_NOTE_EXTEND)):
+                if ((event.fflags & select.KQ_NOTE_WRITE) or
+                        (event.fflags & select.KQ_NOTE_EXTEND)):
                     if self.pidfile_exists() and self.is_alive():
                         alive = True
                         break
@@ -84,8 +84,6 @@ class mDNSDaemonThread(threading.Thread):
 
         return True
 
-    def run(self):
-        self.wait()
 
 class mDNSObject(object):
     def __init__(self, **kwargs):
@@ -591,6 +589,32 @@ class mDNSServiceSFTPThread(mDNSServiceThread):
                 self.regtype = "_sftp._tcp."
 
 
+class mDNSServiceHTTPThread(mDNSServiceThread):
+    def __init__(self, **kwargs):
+        kwargs['service'] = 'http'
+        super(mDNSServiceHTTPThread, self).__init__(**kwargs)
+
+    def setup(self):
+        webui = self.middleware.call_sync('datastore.query', 'system.settings')
+        if (webui[0]['stg_guiprotocol'] == 'http' or
+           webui[0]['stg_guiprotocol'] == 'httphttps'):
+            self.port = int(webui[0]['stg_guiport'] or 80)
+            self.regtype = "_http._tcp."
+
+
+class mDNSServiceHTTPSThread(mDNSServiceThread):
+    def __init__(self, **kwargs):
+        kwargs['service'] = 'https'
+        super(mDNSServiceHTTPSThread, self).__init__(**kwargs)
+
+    def setup(self):
+        webui = self.middleware.call_sync('datastore.query', 'system.settings')
+        if (webui[0]['stg_guiprotocol'] == 'https' or
+           webui[0]['stg_guiprotocol'] == 'httphttps'):
+            self.port = int(webui[0]['stg_guihttpsport'] or 443)
+            self.regtype = "_https._tcp."
+
+
 class mDNSServiceMiddlewareThread(mDNSServiceThread):
     def __init__(self, **kwargs):
         kwargs['service'] = 'middleware'
@@ -642,6 +666,8 @@ class mDNSAdvertiseService(Service):
         mdns_advertise_services = [
             mDNSServiceSSHThread,
             mDNSServiceSFTPThread,
+            mDNSServiceHTTPThread,
+            mDNSServiceHTTPSThread,
             mDNSServiceMiddlewareThread,
             mDNSServiceMiddlewareSSLThread
         ]
