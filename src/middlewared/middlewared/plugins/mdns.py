@@ -1,7 +1,9 @@
 import asyncio
 import os
+import psutil
 import pybonjour
 import queue
+import re
 import select
 import socket
 import threading
@@ -13,6 +15,74 @@ from pybonjour import (
 )
 
 from middlewared.service import Service
+
+
+class mDNSDaemonThread(object):
+    def __init__(self, *args, **kwargs):
+        super(mDNSDaemonThread, self).__init__()
+        self.mdnsd_pidfile = "/var/run/mdnsd.pid"
+        self.mdnsd_piddir = "/var/run/"
+
+    def pidfile_exists(self):
+        return os.access(self.mdnsd_pidfile, os.F_OK)
+
+    def is_alive(self):
+        mdnsd_proc = None
+        alive = False
+
+        if not self.pidfile_exists():
+            return False
+
+        for proc in psutil.process_iter():
+            procdict = proc.as_dict(['name'])
+            procname = str(procdict['name'])
+
+            match = re.search("([^/]+)$", procname)
+            if not match:
+                continue
+
+            procname = match.group(0)
+            if procname == "mdnsd":
+                mdnsd_proc = proc
+                break
+
+        if mdnsd_proc and mdnsd_proc.is_running():
+            alive = True
+
+        return alive
+
+    def wait(self):
+        alive = False
+
+        if self.is_alive():
+            return True
+
+        fd = os.open(self.mdnsd_piddir, os.O_RDONLY)
+        kq = select.kqueue()
+
+        events = [select.kevent(
+            fd, filter=select.KQ_FILTER_VNODE,
+            flags=select.KQ_EV_ADD | select.KQ_EV_ENABLE | select.KQ_EV_CLEAR,
+            fflags=select.KQ_NOTE_WRITE | select.KQ_NOTE_EXTEND
+        )]
+
+        events = kq.control(events, 0, 0)
+        if not self.is_alive() and self.pidfile_exists():
+            os.unlink(self.mdnsd_pidfile)
+
+        while (not alive):
+            proc_events = kq.control([], 1)
+            for event in proc_events:
+                if ((event.fflags & select.KQ_NOTE_WRITE) or
+                        (event.fflags & select.KQ_NOTE_EXTEND)):
+                    if self.pidfile_exists() and self.is_alive():
+                        alive = True
+                        break
+
+        kq.close()
+        os.close(fd)
+
+        return True
 
 
 class mDNSObject(object):
@@ -80,6 +150,9 @@ class mDNSThread(threading.Thread):
         self.setDaemon(True)
         self.logger = kwargs.get('logger')
         self.timeout = kwargs.get('timeout', 30)
+
+        self.mdnsd = mDNSDaemonThread()
+        self.mdnsd.wait()
 
     def active(self, sdRef):
         return (bool(sdRef) and sdRef.fileno() != -1)
@@ -516,6 +589,32 @@ class mDNSServiceSFTPThread(mDNSServiceThread):
                 self.regtype = "_sftp._tcp."
 
 
+class mDNSServiceHTTPThread(mDNSServiceThread):
+    def __init__(self, **kwargs):
+        kwargs['service'] = 'http'
+        super(mDNSServiceHTTPThread, self).__init__(**kwargs)
+
+    def setup(self):
+        webui = self.middleware.call_sync('datastore.query', 'system.settings')
+        if (webui[0]['stg_guiprotocol'] == 'http' or
+           webui[0]['stg_guiprotocol'] == 'httphttps'):
+            self.port = int(webui[0]['stg_guiport'] or 80)
+            self.regtype = "_http._tcp."
+
+
+class mDNSServiceHTTPSThread(mDNSServiceThread):
+    def __init__(self, **kwargs):
+        kwargs['service'] = 'https'
+        super(mDNSServiceHTTPSThread, self).__init__(**kwargs)
+
+    def setup(self):
+        webui = self.middleware.call_sync('datastore.query', 'system.settings')
+        if (webui[0]['stg_guiprotocol'] == 'https' or
+           webui[0]['stg_guiprotocol'] == 'httphttps'):
+            self.port = int(webui[0]['stg_guihttpsport'] or 443)
+            self.regtype = "_https._tcp."
+
+
 class mDNSServiceMiddlewareThread(mDNSServiceThread):
     def __init__(self, **kwargs):
         kwargs['service'] = 'middleware'
@@ -548,6 +647,7 @@ class mDNSAdvertiseService(Service):
         self.threads = {}
         self.initialized = False
         self.lock = threading.Lock()
+        self.mdnsd = mDNSDaemonThread()
 
     def start(self):
         self.lock.acquire()
@@ -555,6 +655,8 @@ class mDNSAdvertiseService(Service):
             self.lock.release()
             return
         self.lock.release()
+
+        self.mdnsd.wait()
 
         try:
             hostname = socket.gethostname().split('.')[0]
@@ -564,6 +666,8 @@ class mDNSAdvertiseService(Service):
         mdns_advertise_services = [
             mDNSServiceSSHThread,
             mDNSServiceSFTPThread,
+            mDNSServiceHTTPThread,
+            mDNSServiceHTTPSThread,
             mDNSServiceMiddlewareThread,
             mDNSServiceMiddlewareSSLThread
         ]
