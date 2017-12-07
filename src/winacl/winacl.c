@@ -587,14 +587,17 @@ set_windows_acls(struct windows_acl_info *w)
 
 	/* traverse directory hierarchy */
 	for (rval = 0; (entry = fts_read(tree)) != NULL;) {
-        switch (entry->fts_level) {
-            case FTS_ROOTLEVEL:
+        /* 
+         * we need to treat the root level differently (not add inherited flag)
+         * this is controlled by "is_rootdir". I think fts_level shouldn't ever
+         * be -1 (parent of root level), but may need to add explicit handling for this.
+         */
+            if ((entry->fts_level) == FTS_ROOTLEVEL){ 
 		if (w->flags & WA_DIRECTORIES)
                     is_rootdir = 1;
-		set_windows_acl(w, entry, is_rootdir);
-		    break;
-            
-            default:
+		set_windows_acl(w, entry, is_rootdir);    
+        
+            } else {
                 switch (entry->fts_info) {
                     case FTS_D:
                         if (w->flags & WA_DIRECTORIES)
@@ -611,7 +614,7 @@ set_windows_acls(struct windows_acl_info *w)
                         rval = -2;
                         continue;
                 }
-		}
+            }
 	}
 	
 	return (rval);
