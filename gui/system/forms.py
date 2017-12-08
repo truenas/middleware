@@ -3494,7 +3494,7 @@ class CloudCredentialsForm(ModelForm):
     def clean_GCLOUD_keyfile(self):
         provider = self.cleaned_data.get('provider')
         keyfile = self.cleaned_data.get('GCLOUD_keyfile')
-        if not keyfile and provider != 'GCLOUD':
+        if not keyfile or provider != 'GCLOUD':
             return None
         keyfile = keyfile.read()
         try:
