@@ -8,7 +8,7 @@ import freenasUI.freeadmin.models.fields
 
 def change_cifs_vfsobjects_defaults(apps, schema_editor):
     cifs_shares = apps.get_model('sharing', 'CIFS_Share').objects.all()
-    if not cifs_shares:
+    if not cifs_shares.exists():
         return
 
     for share in cifs_shares:

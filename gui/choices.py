@@ -1178,7 +1178,7 @@ class CIFS_VFS_OBJECTS(object):
                 )
             )
         else:
-            self.__vfs_modules.extend('streams_xattr')
+            self.__vfs_modules.extend(['streams_xattr'])
 
     def __iter__(self):
         return iter((m, m) for m in sorted(self.__vfs_modules))
