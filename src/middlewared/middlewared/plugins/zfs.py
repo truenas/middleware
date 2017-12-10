@@ -377,9 +377,10 @@ class ZFSSnapshotTask(CRUDService):
             id
         )
 
+    @job(lock='autosnap')
     @periodic(60)
-    async def autosnap(self):
-        snap_tasks = await self.middleware.call('zfs.snapshot_task.query', [('task_enabled', '=', True)])
+    def autosnap(self, job):
+        snap_tasks = self.middleware.call_sync('zfs.snapshot_task.query', [('task_enabled', '=', True)])
         zfs = libzfs.ZFS()
         tasks_to_execute = []
 
@@ -404,14 +405,14 @@ class ZFSSnapshotTask(CRUDService):
 
         for task in tasks_to_execute:
             task_name = task_name if task['task_name'] else f"task_{task['id']}"
-            await self.middleware.call(
+            self.middleware.call_sync(
                 'zfs.snapshot.do_create',
                 {'dataset': task['task_filesystem'],
                 'name': f'autosnap_new_{task_name}_{date_now.strftime("%H:%M_%m_%d_%Y")}',
                 'properties':{'autosnap:name':task_name, 'autosnap:retention':f'{task["task_ret_count"]}:{task["task_ret_unit"]}'}}
             )
 
-            await self.middleware.call(
+            self.middleware.call_sync(
                 'zfs.snapshot_task.do_update',
                 task['id'],
                 {'task_last_run': f'{date_now.year}-{date_now.month}-{date_now.day} {date_now.hour}:{date_now.minute}'}
