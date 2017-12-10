@@ -350,6 +350,7 @@ class ZFSSnapshotTask(CRUDService):
         Str('task_byweekday'),
         Bool('task_enabled'),
         Str('task_last_run'),
+        Int('vmware_snap_task_id'),
         register=True,
     ))
     async def do_create(self, data):
