@@ -972,7 +972,9 @@ class Task(Model):
 
     task_name = models.CharField(
         max_length=150,
-        verbose_name=_("Task Name")
+        verbose_name=_("Task Name"),
+        null=True,
+        blank=True
     )
     task_filesystem = models.CharField(
         max_length=150,
@@ -1040,6 +1042,11 @@ class Task(Model):
     task_last_run = models.DateTimeField(
         null=True,
         verbose_name=_("Last run of the snap task")
+    )
+    vmware_snap_task_id = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        verbose_name=_("Snapshot lifetime value"),
     )
 
     def __str__(self):
