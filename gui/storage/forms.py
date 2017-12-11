@@ -303,7 +303,7 @@ class VolumeManagerForm(VolumeMixin, Form):
                 scrub = models.Scrub.objects.create(scrub_volume=volume)
         except Exception:
             if volume:
-                volume.delete()
+                volume.delete(destroy=False, cascade=False)
             if scrub:
                 scrub.delete()
             raise
@@ -734,7 +734,7 @@ class ZFSVolumeWizardForm(Form):
                     log.error("Error syncing enclosure: %s", e)
         except Exception:
             if volume:
-                volume.delete()
+                volume.delete(destroy=False, cascade=False)
             if scrub:
                 scrub.delete()
             raise
