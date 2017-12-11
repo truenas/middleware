@@ -745,7 +745,10 @@ class InitialWizard(CommonWizard):
                 )
         except Exception:
             for obj in reversed(model_objs):
-                obj.delete()
+                if isinstance(obj, Volume):
+                    obj.delete(destroy=False, cascade=False)
+                else:
+                    obj.delete()
             raise
 
         if ds_form:
