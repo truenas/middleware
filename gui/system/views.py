@@ -1222,9 +1222,19 @@ def update_apply(request):
 
             # If it is HA run updated on the other node
             if not notifier().is_freenas() and notifier().failover_licensed():
-                with client as c:
-                    uuid = c.call('failover.call_remote', 'update.download')
-                request.session['failover_update_jobid'] = uuid
+                try:
+                    with client as c:
+                        uuid = c.call('failover.call_remote', 'update.download')
+                    request.session['failover_update_jobid'] = uuid
+                except ClientException as e:
+                    if e.errno != ClientException.ENOMETHOD and e.trace['class'] not in ('KeyError', 'ConnectionRefusedError'):
+                        raise
+                    # If method does not exist it means we are still upgranding old
+                    # version standby node using hasyncd
+                    s = notifier().failover_rpc()
+                    uuid = s.updated(False, True)
+                    if uuid is False:
+                        raise MiddlewareError(_('Update daemon failed!'))
                 return HttpResponse(uuid, status=202)
 
             running = UpdateHandler.is_running()
@@ -1245,23 +1255,35 @@ def update_apply(request):
             # Get update handler from standby node
             if not notifier().is_freenas() and notifier().failover_licensed():
                 failover = True
+                job = None
                 try:
                     with client as c:
                         job = c.call('failover.call_remote', 'core.get_jobs', [[('id', '=', int(uuid))]], {'timeout': 10})[0]
                 except CallTimeout:
                     return HttpResponse(uuid, status=202)
+                except ClientException as e:
+                    if e.errno != ClientException.ENOMETHOD and e.trace['class'] not in ('KeyError', 'ConnectionRefusedError'):
+                        raise
+                    # If method does not exist it means we are still upgranding old
+                    # version standby node using hasyncd
+                    s = notifier().failover_rpc()
+                    rv = s.updated_handler(uuid)
 
                 def exit():
                     pass
 
-                rv = {
-                    'exit': exit,
-                    'uuid': uuid,
-                    'reboot': True,
-                    'finished': True if job['state'] in ('SUCCESS', 'FAILED', 'ABORTED') else False,
-                    'error': job['error'] or False,
-                }
-                handler = namedtuple('Handler', ['uuid', 'error', 'finished', 'exit', 'reboot'])(**rv)
+                if job:
+                    rv = {
+                        'exit': exit,
+                        'uuid': uuid,
+                        'reboot': True,
+                        'finished': True if job['state'] in ('SUCCESS', 'FAILED', 'ABORTED') else False,
+                        'error': job['error'] or False,
+                    }
+                    handler = namedtuple('Handler', ['uuid', 'error', 'finished', 'exit', 'reboot'])(**rv)
+                else:
+                    rv['exit'] = exit
+                    handler = namedtuple('Handler', list(rv.keys()))(**rv)
 
             else:
                 handler = UpdateHandler(uuid=uuid)
@@ -1275,6 +1297,13 @@ def update_apply(request):
                 try:
                     with client as c:
                         c.call('failover.call_remote', 'system.reboot', [{'delay': 2}])
+                except ClientException as e:
+                    if e.errno != ClientException.ENOMETHOD and e.trace['class'] not in ('KeyError', 'ConnectionRefusedError'):
+                        raise
+                    # If method does not exist it means we are still upgranding old
+                    # version standby node using hasyncd
+                    s.reboot()
+
                 except:
                     pass
                 return render(request, 'failover/update_standby.html')
@@ -1294,7 +1323,20 @@ def update_apply(request):
                 try:
                     update_check = c.call('failover.call_remote', 'update.check_available')
                 except ClientException as e:
-                    if e.trace['class'] in ('ConnectionRefusedError', 'socket.error'):
+                    # If method does not exist it means we are still upgranding old
+                    # version standby node using hasyncd
+                    if e.errno == ClientException.ENOMETHOD or e.trace['class'] == 'KeyError':
+                        try:
+                            s = notifier().failover_rpc()
+                            return render(
+                                request,
+                                'system/update.html',
+                                s.update_check(),
+                            )
+                        except socket.error:
+                            return render(request, 'failover/failover_down.html')
+
+                    elif e.trace['class'] in ('ConnectionRefusedError', 'socket.error'):
                         return render(request, 'failover/failover_down.html')
                     raise
 
@@ -1378,10 +1420,20 @@ def update_check(request):
 
             # If it is HA run updated on the other node
             if not notifier().is_freenas() and notifier().failover_licensed():
-                with client as c:
-                    method = 'update.update' if apply_ else 'update.download'
-                    uuid = c.call('failover.call_remote', method)
-                request.session['failover_update_jobid'] = uuid
+                try:
+                    with client as c:
+                        method = 'update.update' if apply_ else 'update.download'
+                        uuid = c.call('failover.call_remote', method)
+                    request.session['failover_update_jobid'] = uuid
+                except ClientException as e:
+                    if e.errno != ClientException.ENOMETHOD and e.trace['class'] not in ('KeyError', 'ConnectionRefusedError'):
+                        raise
+                    # If method does not exist it means we are still upgranding old
+                    # version standby node using hasyncd
+                    s = notifier().failover_rpc()
+                    uuid = s.updated(True, apply_)
+                    if uuid is False:
+                        raise MiddlewareError(_('Update daemon failed!'))
                 return HttpResponse(uuid, status=202)
 
             running = UpdateHandler.is_running()
@@ -1404,24 +1456,36 @@ def update_check(request):
             # Get update handler from standby node
             if not notifier().is_freenas() and notifier().failover_licensed():
                 failover = True
+                job = None
                 try:
                     with client as c:
                         job = c.call('failover.call_remote', 'core.get_jobs', [[('id', '=', int(uuid))]], {'timeout': 10})[0]
                 except CallTimeout:
                     return HttpResponse(uuid, status=202)
+                except ClientException as e:
+                    if e.errno != ClientException.ENOMETHOD and e.trace['class'] not in ('KeyError', 'ConnectionRefusedError'):
+                        raise
+                    # If method does not exist it means we are still upgranding old
+                    # version standby node using hasyncd
+                    s = notifier().failover_rpc()
+                    rv = s.updated_handler(uuid)
 
                 def exit():
                     pass
 
-                rv = {
-                    'exit': exit,
-                    'uuid': uuid,
-                    'apply': True if job['method'] == 'update.update' else False,
-                    'reboot': True,
-                    'finished': True if job['state'] in ('SUCCESS', 'FAILED', 'ABORTED') else False,
-                    'error': job['error'] or False,
-                }
-                handler = namedtuple('Handler', ['uuid', 'error', 'finished', 'exit', 'reboot', 'apply'])(**rv)
+                if job:
+                    rv = {
+                        'exit': exit,
+                        'uuid': uuid,
+                        'apply': True if job['method'] == 'update.update' else False,
+                        'reboot': True,
+                        'finished': True if job['state'] in ('SUCCESS', 'FAILED', 'ABORTED') else False,
+                        'error': job['error'] or False,
+                    }
+                    handler = namedtuple('Handler', ['uuid', 'error', 'finished', 'exit', 'reboot', 'apply'])(**rv)
+                else:
+                    rv['exit'] = exit
+                    handler = namedtuple('Handler', list(rv.keys()))(**rv)
             else:
                 handler = UpdateHandler(uuid=uuid)
             if handler.error is not False:
@@ -1435,6 +1499,12 @@ def update_check(request):
                     try:
                         with client as c:
                             c.call('failover.call_remote', 'system.reboot', [{'delay': 2}])
+                    except ClientException as e:
+                        if e.errno != ClientException.ENOMETHOD and e.trace['class'] not in ('KeyError', 'ConnectionRefusedError'):
+                            raise
+                        # If method does not exist it means we are still upgranding old
+                        # version standby node using hasyncd
+                        s.reboot()
                     except:
                         pass
                     return render(request, 'failover/update_standby.html')
@@ -1455,19 +1525,29 @@ def update_check(request):
     else:
         # If it is HA run update check on the other node
         if not notifier().is_freenas() and notifier().failover_licensed():
-            with client as c:
-                error = False
-                network = False
-                error_trace = None
-                try:
+            try:
+                with client as c:
+                    error = False
+                    network = False
+                    error_trace = None
                     update_check = c.call('failover.call_remote', 'update.check_available')
-                except Exception as e:
-                    if isinstance(e, ClientException):
-                        if e.trace['class'] in ('ConnectionRefusedError', 'socket.error'):
+            except Exception as e:
+                if isinstance(e, ClientException):
+                    if e.errno != ClientException.ENOMETHOD and e.trace['class'] not in ('KeyError', 'ConnectionRefusedError'):
+                        try:
+                            s = notifier().failover_rpc()
+                            return render(
+                                request,
+                                'system/update_check.html',
+                                s.update_check(),
+                            )
+                        except socket.error:
                             return render(request, 'failover/failover_down.html')
-                    error = True
-                    if sys.exc_info()[0]:
-                        error_trace = traceback.format_exc()
+                    if e.trace['class'] in ('ConnectionRefusedError', 'socket.error'):
+                        return render(request, 'failover/failover_down.html')
+                error = True
+                if sys.exc_info()[0]:
+                    error_trace = traceback.format_exc()
 
             # We need to transform returned data to something the template understands
             if not error and update_check['status'] == 'AVAILABLE':
@@ -1552,21 +1632,30 @@ def update_progress(request):
     # If it is HA run update handler on the other node
     if not notifier().is_freenas() and notifier().failover_licensed():
         jobid = request.session['failover_update_jobid']
-        with client as c:
-            job = c.call('failover.call_remote', 'core.get_jobs', [[('id', '=', jobid)]], {'timeout': 10})[0]
-        load = {
-            'apply': True if job['method'] == 'update.update' else False,
-            'error': job['error'],
-            'finished': job['state'] in ('SUCCESS', 'FAILED', 'ABORTED'),
-            'indeterminate': True if job['progress']['percent'] is None else False,
-            'percent': job['progress'].get('percent'),
-            'step': 1,
-            'reboot': True,
-            'uuid': jobid,
-        }
-        desc = job['progress'].get('description')
-        if desc:
-            load['details'] = desc
+        try:
+            with client as c:
+                job = c.call('failover.call_remote', 'core.get_jobs', [[('id', '=', jobid)]], {'timeout': 10})[0]
+            load = {
+                'apply': True if job['method'] == 'update.update' else False,
+                'error': job['error'],
+                'finished': job['state'] in ('SUCCESS', 'FAILED', 'ABORTED'),
+                'indeterminate': True if job['progress']['percent'] is None else False,
+                'percent': job['progress'].get('percent'),
+                'step': 1,
+                'reboot': True,
+                'uuid': jobid,
+            }
+            desc = job['progress'].get('description')
+            if desc:
+                load['details'] = desc
+        except ClientException as e:
+            if e.errno != ClientException.ENOMETHOD and e.trace['class'] not in ('KeyError', 'ConnectionRefusedError'):
+                raise
+            # If method does not exist it means we are still upgranding old
+            # version standby node using hasyncd
+            s = notifier().failover_rpc()
+            rv = s.updated_handler(None)
+            load = rv['data']
     else:
         load = UpdateHandler().load()
     return HttpResponse(
