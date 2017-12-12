@@ -564,7 +564,13 @@ class VMService(CRUDService):
         return vnc_devices
 
     @accepts()
-    def get_vnc_ifaces(self):
+    def get_vnc_ipv4(self):
+        """
+        Get all available IPv4 address in the system.
+
+        Returns:
+           list: will return a list of available IPv4 address.
+        """
         default_ifaces = ['0.0.0.0', '127.0.0.1']
         ifaces = self.middleware.call_sync('interfaces.ipv4_in_use')
 
