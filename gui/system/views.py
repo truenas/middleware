@@ -26,6 +26,7 @@
 from collections import OrderedDict, namedtuple
 from datetime import date
 import pickle as pickle
+import errno
 import json
 import logging
 import os
@@ -1227,7 +1228,7 @@ def update_apply(request):
                         uuid = c.call('failover.call_remote', 'update.download')
                     request.session['failover_update_jobid'] = uuid
                 except ClientException as e:
-                    if e.errno != ClientException.ENOMETHOD and e.trace['class'] not in ('KeyError', 'ConnectionRefusedError'):
+                    if e.errno not in (ClientException.ENOMETHOD, errno.ECONNREFUSED) and e.trace['class'] not in ('KeyError', 'ConnectionRefusedError'):
                         raise
                     # If method does not exist it means we are still upgranding old
                     # version standby node using hasyncd
@@ -1262,7 +1263,7 @@ def update_apply(request):
                 except CallTimeout:
                     return HttpResponse(uuid, status=202)
                 except ClientException as e:
-                    if e.errno != ClientException.ENOMETHOD and e.trace['class'] not in ('KeyError', 'ConnectionRefusedError'):
+                    if e.errno not in (ClientException.ENOMETHOD, errno.ECONNREFUSED) and e.trace['class'] not in ('KeyError', 'ConnectionRefusedError'):
                         raise
                     # If method does not exist it means we are still upgranding old
                     # version standby node using hasyncd
@@ -1298,7 +1299,7 @@ def update_apply(request):
                     with client as c:
                         c.call('failover.call_remote', 'system.reboot', [{'delay': 2}])
                 except ClientException as e:
-                    if e.errno != ClientException.ENOMETHOD and e.trace['class'] not in ('KeyError', 'ConnectionRefusedError'):
+                    if e.errno not in (ClientException.ENOMETHOD, errno.ECONNREFUSED) and e.trace['class'] not in ('KeyError', 'ConnectionRefusedError'):
                         raise
                     # If method does not exist it means we are still upgranding old
                     # version standby node using hasyncd
@@ -1325,7 +1326,7 @@ def update_apply(request):
                 except ClientException as e:
                     # If method does not exist it means we are still upgranding old
                     # version standby node using hasyncd
-                    if e.errno == ClientException.ENOMETHOD or e.trace['class'] == 'KeyError':
+                    if e.errno in (ClientException.ENOMETHOD, errno.ECONNREFUSED) or e.trace['class'] == 'KeyError':
                         try:
                             s = notifier().failover_rpc()
                             return render(
@@ -1426,7 +1427,7 @@ def update_check(request):
                         uuid = c.call('failover.call_remote', method)
                     request.session['failover_update_jobid'] = uuid
                 except ClientException as e:
-                    if e.errno != ClientException.ENOMETHOD and e.trace['class'] not in ('KeyError', 'ConnectionRefusedError'):
+                    if e.errno not in (ClientException.ENOMETHOD, errno.ECONNREFUSED) and e.trace['class'] not in ('KeyError', 'ConnectionRefusedError'):
                         raise
                     # If method does not exist it means we are still upgranding old
                     # version standby node using hasyncd
@@ -1463,7 +1464,7 @@ def update_check(request):
                 except CallTimeout:
                     return HttpResponse(uuid, status=202)
                 except ClientException as e:
-                    if e.errno != ClientException.ENOMETHOD and e.trace['class'] not in ('KeyError', 'ConnectionRefusedError'):
+                    if e.errno not in (ClientException.ENOMETHOD, errno.ECONNREFUSED) and e.trace['class'] not in ('KeyError', 'ConnectionRefusedError'):
                         raise
                     # If method does not exist it means we are still upgranding old
                     # version standby node using hasyncd
@@ -1500,7 +1501,7 @@ def update_check(request):
                         with client as c:
                             c.call('failover.call_remote', 'system.reboot', [{'delay': 2}])
                     except ClientException as e:
-                        if e.errno != ClientException.ENOMETHOD and e.trace['class'] not in ('KeyError', 'ConnectionRefusedError'):
+                        if e.errno not in (ClientException.ENOMETHOD, errno.ECONNREFUSED) and e.trace['class'] not in ('KeyError', 'ConnectionRefusedError'):
                             raise
                         # If method does not exist it means we are still upgranding old
                         # version standby node using hasyncd
@@ -1533,7 +1534,7 @@ def update_check(request):
                     update_check = c.call('failover.call_remote', 'update.check_available')
             except Exception as e:
                 if isinstance(e, ClientException):
-                    if e.errno != ClientException.ENOMETHOD and e.trace['class'] not in ('KeyError', 'ConnectionRefusedError'):
+                    if e.errno not in (ClientException.ENOMETHOD, errno.ECONNREFUSED) and e.trace['class'] not in ('KeyError', 'ConnectionRefusedError'):
                         try:
                             s = notifier().failover_rpc()
                             return render(
@@ -1649,7 +1650,7 @@ def update_progress(request):
             if desc:
                 load['details'] = desc
         except ClientException as e:
-            if e.errno != ClientException.ENOMETHOD and e.trace['class'] not in ('KeyError', 'ConnectionRefusedError'):
+            if e.errno not in (ClientException.ENOMETHOD, errno.ECONNREFUSED) and e.trace['class'] not in ('KeyError', 'ConnectionRefusedError'):
                 raise
             # If method does not exist it means we are still upgranding old
             # version standby node using hasyncd
