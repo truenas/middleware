@@ -13,8 +13,8 @@ def ha_hardware():
         proc = subprocess.Popen([
             '/usr/sbin/getencstat',
             '-V', enclosure,
-        ], stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf8')
-        encstat = proc.communicate()[0].strip()
+        ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+        encstat = proc.communicate()[0].decode('utf8', 'ignore').strip()
         # The echostream E16 JBOD and the echostream Z-series chassis are the same piece of hardware
         # One of the only ways to differentiate them is to look at the enclosure elements in detail
         # The Z-series chassis identifies element 0x26 as SD_9GV12P1J_12R6K4.  The E16 does not.
