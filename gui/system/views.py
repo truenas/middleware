@@ -1257,9 +1257,14 @@ def update_apply(request):
             if not notifier().is_freenas() and notifier().failover_licensed():
                 failover = True
                 job = None
+                if uuid.isdigit():
+                    legacy = False
+                else:
+                    legacy = True
                 try:
-                    with client as c:
-                        job = c.call('failover.call_remote', 'core.get_jobs', [[('id', '=', int(uuid))]], {'timeout': 10})[0]
+                    if not legacy:
+                        with client as c:
+                            job = c.call('failover.call_remote', 'core.get_jobs', [[('id', '=', int(uuid))]], {'timeout': 10})[0]
                 except CallTimeout:
                     return HttpResponse(uuid, status=202)
                 except ClientException as e:
@@ -1267,6 +1272,9 @@ def update_apply(request):
                         raise
                     # If method does not exist it means we are still upgranding old
                     # version standby node using hasyncd
+                    legacy = True
+
+                if legacy:
                     s = notifier().failover_rpc()
                     rv = s.updated_handler(uuid)
 
@@ -1458,9 +1466,14 @@ def update_check(request):
             if not notifier().is_freenas() and notifier().failover_licensed():
                 failover = True
                 job = None
+                if uuid.isdigit():
+                    legacy = False
+                else:
+                    legacy = True
                 try:
-                    with client as c:
-                        job = c.call('failover.call_remote', 'core.get_jobs', [[('id', '=', int(uuid))]], {'timeout': 10})[0]
+                    if not legacy:
+                        with client as c:
+                            job = c.call('failover.call_remote', 'core.get_jobs', [[('id', '=', int(uuid))]], {'timeout': 10})[0]
                 except CallTimeout:
                     return HttpResponse(uuid, status=202)
                 except ClientException as e:
@@ -1468,6 +1481,9 @@ def update_check(request):
                         raise
                     # If method does not exist it means we are still upgranding old
                     # version standby node using hasyncd
+                    legacy = True
+
+                if legacy:
                     s = notifier().failover_rpc()
                     rv = s.updated_handler(uuid)
 
@@ -1632,8 +1648,8 @@ def update_progress(request):
 
     # If it is HA run update handler on the other node
     if not notifier().is_freenas() and notifier().failover_licensed():
-        jobid = request.session['failover_update_jobid']
-        try:
+        jobid = request.session.get('failover_update_jobid')
+        if jobid:
             with client as c:
                 job = c.call('failover.call_remote', 'core.get_jobs', [[('id', '=', jobid)]], {'timeout': 10})[0]
             load = {
@@ -1649,11 +1665,7 @@ def update_progress(request):
             desc = job['progress'].get('description')
             if desc:
                 load['details'] = desc
-        except ClientException as e:
-            if e.errno not in (ClientException.ENOMETHOD, errno.ECONNREFUSED) and e.trace['class'] not in ('KeyError', 'ConnectionRefusedError'):
-                raise
-            # If method does not exist it means we are still upgranding old
-            # version standby node using hasyncd
+        else:
             s = notifier().failover_rpc()
             rv = s.updated_handler(None)
             load = rv['data']
