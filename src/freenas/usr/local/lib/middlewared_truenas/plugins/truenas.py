@@ -11,7 +11,7 @@ from freenasUI.support.utils import get_license, ADDRESS, LICENSE_FILE
 from middlewared.schema import accepts, Bool, Dict, Int, Str
 from middlewared.service import Service, private
 
-REGISTER_URL = "http://%s/api/v1.0/register" % ADDRESS
+REGISTER_URL = "https://%s/truenas/api/v1.0/register" % ADDRESS
 
 user_attrs = [
     Str('first_name'),
@@ -139,6 +139,7 @@ class TrueNASService(Service):
                     license_key = f.read().strip('\n')
 
                 data = dict(customer_information["data"], **{
+                    "system_serial": get_license()[0].system_serial,
                     "license_key": license_key,
                 })
 
