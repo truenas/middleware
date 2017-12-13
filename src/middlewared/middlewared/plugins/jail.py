@@ -230,7 +230,7 @@ class JailService(CRUDService):
             Str("fstype"),
             Str("fsoptions"),
             Str("dump"),
-            Str("_pass"),
+            Str("pass"),
             Int("index", default=None),
         ))
     def fstab(self, jail, options):
@@ -245,7 +245,7 @@ class JailService(CRUDService):
         fstype = options["fstype"]
         fsoptions = options["fsoptions"]
         dump = options["dump"]
-        _pass = options["_pass"]
+        _pass = options["pass"]
         index = options["index"]
 
         if action == "replace" and index is None:
