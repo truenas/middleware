@@ -10,7 +10,7 @@ from iocage.lib.ioc_json import IOCJson
 # iocage's imports are per command, these are just general facilities
 from iocage.lib.ioc_list import IOCList
 from iocage.lib.ioc_upgrade import IOCUpgrade
-from middlewared.schema import Bool, Dict, List, Str, accepts
+from middlewared.schema import Bool, Dict, List, Str, accepts, Int
 from middlewared.service import CRUDService, filterable, job, private
 from middlewared.service_exception import CallError
 from middlewared.utils import filter_list
@@ -230,32 +230,44 @@ class JailService(CRUDService):
         Str("jail"),
         Dict(
             "options",
-            Str("action"),
+            Str("action", enum=["ADD", "EDIT", "REMOVE", "REPLACE", "LIST"]),
             Str("source"),
             Str("destination"),
             Str("fstype"),
             Str("fsoptions"),
             Str("dump"),
-            Str("_pass"), ))
+            Str("_pass"),
+            Int("index", default=None),
+        ))
     def fstab(self, jail, options):
         """
         Adds an fstab mount to the jail, mounts if the jail is running.
         """
         _, _, iocage = self.check_jail_existence(jail, skip=False)
 
-        action = options["action"]
+        action = options["action"].lower()
         source = options["source"]
         destination = options["destination"]
         fstype = options["fstype"]
         fsoptions = options["fsoptions"]
         dump = options["dump"]
         _pass = options["_pass"]
+        index = options["index"]
+
+        if action == "replace" and index is None:
+            raise ValueError(
+                "index must not be None when replacing fstab entry"
+            )
 
         _list = iocage.fstab(action, source, destination, fstype, fsoptions,
-                             dump, _pass)
+                             dump, _pass, index=index)
 
         if action == "list":
-            return _list
+            split_list = {}
+            for i in _list:
+                split_list[i[0]] = i[1].split()
+
+            return split_list
 
         return True
 
