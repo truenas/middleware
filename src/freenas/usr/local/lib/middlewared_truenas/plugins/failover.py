@@ -46,7 +46,7 @@ class FailoverService(Service):
         Gets the hardware type of HA.
 
           ECHOSTREAM
-          AIC
+          ECHOWARP
           PUMA
           SBB
           ULTIMATE
@@ -84,7 +84,7 @@ class FailoverService(Service):
             return [proc.stdout.split('@')[0]]
         elif hardware == 'SBB':
             return ['ix0']
-        elif hardware in ('AIC', 'PUMA'):
+        elif hardware in ('ECHOWARP', 'PUMA'):
             return ['ntb0']
         elif hardware == 'ULTIMATE':
             return ['igb1']
