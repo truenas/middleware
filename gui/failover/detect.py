@@ -140,6 +140,7 @@ def ha_mode():
         return mode
 
     if license.system_serial and license.system_serial_ha:
+        mode = None
         proc = subprocess.Popen([
             '/usr/local/sbin/dmidecode',
             '-s', 'baseboard-product-name',
@@ -152,9 +153,10 @@ def ha_mode():
         elif board.startswith('X8'):
             hardware = 'ULTIMATE'
         else:
-            hardware = 'FAULT'
+            mode = 'MANUAL'
 
-        mode = '%s:%s' % (hardware, node)
+        if mode is None:
+            mode = '%s:%s' % (hardware, node)
         with open(HA_MODE_FILE, 'w') as f:
             f.write(mode)
         return mode
