@@ -1334,7 +1334,7 @@ def update_apply(request):
                 except ClientException as e:
                     # If method does not exist it means we are still upgranding old
                     # version standby node using hasyncd
-                    if e.errno in (ClientException.ENOMETHOD, errno.ECONNREFUSED) or e.trace['class'] == 'KeyError':
+                    if e.errno in (ClientException.ENOMETHOD, errno.ECONNREFUSED) or e.trace['class'] in ('ConnectionRefusedError', 'KeyError'):
                         try:
                             s = notifier().failover_rpc()
                             return render(
@@ -1342,11 +1342,10 @@ def update_apply(request):
                                 'system/update.html',
                                 s.update_check(),
                             )
-                        except socket.error:
+                        except (ConnectionRefusedError, socket.error):
                             return render(request, 'failover/failover_down.html')
-
-                    elif e.trace['class'] in ('ConnectionRefusedError', 'socket.error'):
-                        return render(request, 'failover/failover_down.html')
+                    else:
+                        raise
                     raise
 
             # We need to transform returned data to something the template understands
@@ -1550,7 +1549,7 @@ def update_check(request):
                     update_check = c.call('failover.call_remote', 'update.check_available')
             except Exception as e:
                 if isinstance(e, ClientException):
-                    if e.errno not in (ClientException.ENOMETHOD, errno.ECONNREFUSED) and e.trace['class'] not in ('KeyError', 'ConnectionRefusedError'):
+                    if e.errno in (ClientException.ENOMETHOD, errno.ECONNREFUSED) or e.trace['class'] in ('KeyError', 'ConnectionRefusedError'):
                         try:
                             s = notifier().failover_rpc()
                             return render(
@@ -1558,10 +1557,10 @@ def update_check(request):
                                 'system/update_check.html',
                                 s.update_check(),
                             )
-                        except socket.error:
+                        except (ConnectionRefusedError, socket.error):
                             return render(request, 'failover/failover_down.html')
-                    if e.trace['class'] in ('ConnectionRefusedError', 'socket.error'):
-                        return render(request, 'failover/failover_down.html')
+                    else:
+                        raise
                 error = True
                 if sys.exc_info()[0]:
                     error_trace = traceback.format_exc()
