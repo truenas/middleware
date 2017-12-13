@@ -879,7 +879,7 @@ class Middleware(object):
             service, method_name = name.rsplit('.', 1)
             serviceobj = self.get_service(service)
             methodobj = getattr(serviceobj, method_name)
-        except AttributeError:
+        except (AttributeError, KeyError):
             raise CallError(f'Method "{method_name}" not found in "{service}"', CallError.ENOMETHOD)
         return serviceobj, methodobj
 
