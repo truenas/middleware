@@ -158,6 +158,9 @@ _interface_config()
 	# configuration.
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT id, int_interface, int_dhcp, int_ipv4address, int_ipv4address_b, int_v4netmaskbit, int_ipv6auto, int_ipv6address, int_v6netmaskbit, int_vip, int_vhid, int_pass, int_critical, int_group, int_options FROM network_interfaces ORDER BY id" | \
 	while read interface_id interface dodhcp ipv4addr ipv4addr_b ipv4netmask doipv6auto ipv6addr ipv6netmask int_vip int_vhid int_pass critical group options; do
+		if [ "$(ha_mode)" = "MANUAL" ]; then
+			continue;
+		fi
 		if [ "$(ha_node)" = "B" ]; then
 			ipv4addr=${ipv4addr_b}
 		fi
