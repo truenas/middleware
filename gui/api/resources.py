@@ -24,6 +24,7 @@
 #
 #####################################################################
 import base64
+import errno
 import json
 import logging
 import os
@@ -3676,9 +3677,18 @@ class UpdateResourceMixin(NestedMixin):
                 hasattr(notifier, 'failover_status') and
                 notifier().failover_licensed()
             ):
-                data = c.call('failover.call_remote', 'update.get_pending')
+                try:
+                    data = c.call('failover.call_remote', 'update.get_pending')
+                except ClientException as e:
+                    # If method does not exist it means we are still upgranding old
+                    # version standby node using hasyncd
+                    if e.errno not in (ClientException.ENOMETHOD, errno.ECONNREFUSED) and e.trace['class'] not in ('ConnectionRefusedError', 'KeyError'):
+                        raise
+                    s = notifier().failover_rpc()
+                    data = s.update_pending()
             else:
                 data = c.call('update.get_pending')
+
         return self.create_response(
             request,
             data,
