@@ -100,6 +100,16 @@ def ha_mode():
                     if addr in phylist:
                         node = "B"
                         break
+            else:
+                # Identify ECHOWARP platform by one of enclosure names.
+                reg = re.search("Enclosure Name: IN WIN RS-424-03([ps])", encstat, re.M)
+                if reg:
+                    hardware = 'ECHOWARP'
+                    # Identify node by the last symbol of the model name
+                    if reg.group(1) == "p":
+                        node = "A"
+                    elif reg.group(1) == "s":
+                        node = "B"
 
     if node:
         mode = '%s:%s' % (hardware, node)
@@ -136,22 +146,13 @@ def ha_mode():
         ], stdout=subprocess.PIPE, stderr=subprocess.PIPE, encoding='utf8')
         board = proc.communicate()[0].split('\n', 1)[0].strip()
         # If we've gotten this far it's because we were unable to
-        # detect ourselves as an echostream.
-        if board == 'LIBRA':
-            hardware = 'AIC'
-        elif board == "iXsystems TrueNAS X10":
-            hardware = 'PUMA'
-        elif board == 'X8DTS':
+        # identify ourselves via enclosure device.
+        if board == 'X8DTS':
             hardware = 'SBB'
+        elif board.startswith('X8'):
+            hardware = 'ULTIMATE'
         else:
-            # At this point we are not an echostream or an SBB or an AIC
-            # however before we call ourselves an ULTIMATE we are going
-            # to check for X8 versus X9 hardware.  All ultimates were
-            # SM X8 so if we are not an X8...something is wrong.
-            if board.startswith('X8'):
-                hardware = 'ULTIMATE'
-            else:
-                hardware = 'FAULT'
+            hardware = 'FAULT'
 
         mode = '%s:%s' % (hardware, node)
         with open(HA_MODE_FILE, 'w') as f:
