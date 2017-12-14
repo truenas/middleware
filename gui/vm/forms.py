@@ -266,7 +266,7 @@ class DeviceForm(ModelForm):
     def ipv4_list(self):
         choices = ()
         with client as c:
-            ipv4_addresses = c.call('interfaces.ipv4_in_use')
+            ipv4_addresses = c.call('vm.get_vnc_ipv4')
         for ipv4_addr in ipv4_addresses:
             choices = choices + ((ipv4_addr, ipv4_addr),)
         return choices

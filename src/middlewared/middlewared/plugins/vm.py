@@ -563,6 +563,20 @@ class VMService(CRUDService):
                 vnc_devices.append(vnc)
         return vnc_devices
 
+    @accepts()
+    def get_vnc_ipv4(self):
+        """
+        Get all available IPv4 address in the system.
+
+        Returns:
+           list: will return a list of available IPv4 address.
+        """
+        default_ifaces = ['0.0.0.0', '127.0.0.1']
+        ifaces = self.middleware.call_sync('interfaces.ipv4_in_use')
+
+        default_ifaces.extend(ifaces)
+        return default_ifaces
+
     @accepts(Str('pool'),
              Bool('stop', default=False),)
     async def stop_by_pool(self, pool, stop):
