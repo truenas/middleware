@@ -1,6 +1,7 @@
 import asyncio
 from datetime import datetime, timedelta
 import json
+import os
 
 import aiohttp
 
@@ -11,6 +12,7 @@ from freenasUI.support.utils import get_license, ADDRESS, LICENSE_FILE
 from middlewared.schema import accepts, Bool, Dict, Int, Str
 from middlewared.service import Service, private
 
+EULA_PENDING_PATH = "/data/truenas_license.pending"
 REGISTER_URL = "https://%s/truenas/api/v1.0/register" % ADDRESS
 
 user_attrs = [
@@ -40,6 +42,13 @@ class TrueNASService(Service):
     async def get_chassis_hardware(self):
         # FIXME: bring code from notifier
         return await self.middleware.call('notifier.get_chassis_hardware')
+
+    async def is_eula_accepted(self):
+        return not os.path.exists(EULA_PENDING_PATH)
+
+    async def accept_eula(self):
+        if os.path.exists(EULA_PENDING_PATH):
+            os.unlink(EULA_PENDING_PATH)
 
     async def get_customer_information(self):
         result = await self.__fetch_customer_information()
