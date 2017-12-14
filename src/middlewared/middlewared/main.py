@@ -749,7 +749,7 @@ class Middleware(object):
             interval,
             functools.partial(
                 self.__call_periodic_task,
-                method, service_name, task_name, service_obj, interval
+                method, service_name, service_obj, task_name, interval
             )
         )
 
