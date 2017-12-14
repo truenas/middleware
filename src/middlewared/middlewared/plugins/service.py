@@ -759,15 +759,15 @@ class ServiceService(Service):
         self._service("gssd", "start", quiet=True, **kwargs)
         # Workaround to work with "onetime", since the rc scripts depend on rc flags.
         if nfs['nfs_srv_v4']:
-            sysctl.filter('vfs.nfsd.server_max_nfsvers')[0].value = 4
+            self._system("sysctl vfs.nfsd.server_max_nfsvers=4")
             if nfs['nfs_srv_v4_v3owner']:
-                sysctl.filter('vfs.nfsd.enable_stringtouid')[0].value = 1
+                self._system("sysctl vfs.nfsd.enable_stringtouid=1")
                 self._service("nfsuserd", "stop", force=True, **kwargs)
             else:
-                sysctl.filter('vfs.nfsd.enable_stringtouid')[0].value = 0
+                self._system("sysctl vfs.nfsd.enable_stringtouid=0")
                 self._service("nfsuserd", "start", quiet=True, **kwargs)
         else:
-            sysctl.filter('vfs.nfsd.server_max_nfsvers')[0].value = 3
+            self._system("sysctl vfs.nfsd.server_max_nfsvers=3")
             if nfs['nfs_srv_16']:
                 self._service("nfsuserd", "start", quiet=True, **kwargs)
         self._service("mountd", "start", quiet=True, **kwargs)
