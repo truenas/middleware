@@ -837,7 +837,7 @@ class Middleware(object):
     async def run_in_thread(self, method, *args, **kwargs):
         return await self.run_in_thread_pool(self.__threadpool, method, *args, **kwargs)
 
-    async def _call(self, name, serviceobj, methodobj, params, app=None):
+    async def _call(self, name, serviceobj, methodobj, params=None, app=None):
 
         args = []
         if hasattr(methodobj, '_pass_app'):
@@ -855,7 +855,9 @@ class Middleware(object):
         else:
             job = None
 
-        args.extend(params)
+        if params:
+            args.extend(params)
+
         if job:
             return job
         else:
