@@ -96,10 +96,14 @@ _interface_config()
 	local carp1_addr="169.254.10.20/32" carp2_addr="169.254.10.80/32"
 	local carp1_skew carp2_skew
 	local internal_ip internal_iface
+	local configure_ifaces=1
 	if ! is_freenas; then
 
 		if [ "$(ha_mode)" = "MANUAL" ]; then
-			# TODO: get from database if we are not echostream
+			if [ "$(/usr/local/bin/python /usr/local/www/freenasUI/middleware/notifier.py failover_licensed 2> /dev/null)" = "True" ]; then
+				configure_ifaces=0
+				echo "# Unable to determine HA hardware and node, skipping interfaces configuration" | tee /dev/console
+			fi
 		else
 			node=$(ha_node)
 		fi
@@ -158,7 +162,7 @@ _interface_config()
 	# configuration.
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT id, int_interface, int_dhcp, int_ipv4address, int_ipv4address_b, int_v4netmaskbit, int_ipv6auto, int_ipv6address, int_v6netmaskbit, int_vip, int_vhid, int_pass, int_critical, int_group, int_options FROM network_interfaces ORDER BY id" | \
 	while read interface_id interface dodhcp ipv4addr ipv4addr_b ipv4netmask doipv6auto ipv6addr ipv6netmask int_vip int_vhid int_pass critical group options; do
-		if [ "$(ha_mode)" = "MANUAL" ]; then
+		if [ ${configure_ifaces} -ne 1 ]; then
 			continue;
 		fi
 		if [ "$(ha_node)" = "B" ]; then
