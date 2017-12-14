@@ -719,9 +719,9 @@ class Middleware(object):
         self.logger.debug('All plugins loaded')
 
     def __setup_periodic_tasks(self):
-        for service_name, service in self.__services.items():
-            for task_name in dir(service):
-                method = getattr(service, task_name)
+        for service_name, service_obj in self.__services.items():
+            for task_name in dir(service_obj):
+                method = getattr(service_obj, task_name)
                 if callable(method) and hasattr(method, "_periodic"):
                     if method._periodic.run_on_start:
                         delay = 0
@@ -734,29 +734,22 @@ class Middleware(object):
                         delay,
                         functools.partial(
                             self.__call_periodic_task,
-                            method, service_name, task_name, method._periodic.interval
+                            method, service_name, service_obj, task_name, method._periodic.interval
                         )
                     )
 
-    def __call_periodic_task(self, method, service_name, task_name, interval):
-        self.__loop.create_task(self.__periodic_task_wrapper(method, service_name, task_name, interval))
+    def __call_periodic_task(self, method, service_name, service_obj, task_name, interval):
+        self.__loop.create_task(self.__periodic_task_wrapper(method, service_name, service_obj, task_name, interval))
 
-    async def __periodic_task_wrapper(self, method, service_name, task_name, interval):
+    async def __periodic_task_wrapper(self, method, service_name, service_obj, task_name, interval):
         self.logger.trace("Calling periodic task %s::%s", service_name, task_name)
-
-        try:
-            if asyncio.iscoroutinefunction(method):
-                await method()
-            else:
-                await self.run_in_thread(method)
-        except Exception:
-            self.logger.warning("Exception while calling periodic task", exc_info=True)
+        await self._call(task_name, service_obj, method)
 
         self.__loop.call_later(
             interval,
             functools.partial(
                 self.__call_periodic_task,
-                method, service_name, task_name, interval
+                method, service_name, task_name, service_obj, interval
             )
         )
 
