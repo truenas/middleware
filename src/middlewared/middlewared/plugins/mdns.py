@@ -14,7 +14,7 @@ from pybonjour import (
     kDNSServiceErr_NoError
 )
 
-from middlewared.service import Service
+from middlewared.service import Service, private
 
 
 class mDNSDaemonMonitor(object):
@@ -462,6 +462,7 @@ class mDNSBrowserService(Service):
     async def get_services(self):
         return await self.rthread.get_services()
 
+    @private
     def start(self):
         self.logger.debug("mDNSBrowserService: start()")
 
@@ -486,6 +487,7 @@ class mDNSBrowserService(Service):
         self.initialized = True
         self.lock.release()
 
+    @private
     def stop(self):
         self.logger.debug("mDNSBrowserService: stop()")
 
@@ -497,6 +499,7 @@ class mDNSBrowserService(Service):
         self.initialized = False
         self.lock.release()
 
+    @private
     def restart(self):
         self.logger.debug("mDNSBrowserService: restart()")
 
@@ -649,6 +652,7 @@ class mDNSAdvertiseService(Service):
         self.lock = threading.Lock()
         self.mdnsd = mDNSDaemonMonitor()
 
+    @private
     def start(self):
         self.lock.acquire()
         if self.initialized:
@@ -683,6 +687,7 @@ class mDNSAdvertiseService(Service):
         self.initialized = True
         self.lock.release()
 
+    @private
     def stop(self):
         for thread in self.threads.copy():
             thread = self.threads.get(thread)
@@ -694,6 +699,7 @@ class mDNSAdvertiseService(Service):
         self.initialized = False
         self.lock.release()
 
+    @private
     def restart(self):
         self.stop()
         self.start()
