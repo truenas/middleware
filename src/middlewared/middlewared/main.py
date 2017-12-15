@@ -743,7 +743,10 @@ class Middleware(object):
 
     async def __periodic_task_wrapper(self, method, service_name, service_obj, task_name, interval):
         self.logger.trace("Calling periodic task %s::%s", service_name, task_name)
-        await self._call(task_name, service_obj, method)
+        try:
+            await self._call(task_name, service_obj, method)
+        except Exception:
+            self.logger.warning("Exception while calling periodic task", exc_info=True)
 
         self.__loop.call_later(
             interval,
