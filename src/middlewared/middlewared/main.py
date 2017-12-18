@@ -191,6 +191,17 @@ class Application(object):
         event_source = self.middleware.get_event_source(shortname)
         if event_source:
             es = event_source(self.middleware, self, ident, name, arg)
+            for v in self.__event_sources.values():
+                # Do not allow an event source to be subscribed again
+                if v['name'] == name:
+                    self._send({
+                        'msg': 'nosub',
+                        'id': ident,
+                        'error': {
+                            'error': 'Already subscribed',
+                        }
+                    })
+                    return
             self.__event_sources[ident] = {
                 'event_source': es,
                 'name': name,
@@ -248,7 +259,7 @@ class Application(object):
 
         for ident, val in self.__event_sources.items():
             event_source = val['event_source']
-            await self.middleware.run_in_thread(event_source.cancel)
+            asyncio.ensure_future(self.middleware.run_in_thread(event_source.cancel))
 
         self.middleware.unregister_wsclient(self)
 
