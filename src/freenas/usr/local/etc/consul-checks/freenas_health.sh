@@ -3,7 +3,7 @@
 PATH="${PATH}:/usr/local/bin:/usr/local/sbin"
 export PATH
 
-/usr/local/bin/alertcli.py > /tmp/.alert-health
+/usr/local/bin/midclt call notifier.get_alerts > /tmp/.alert-health
 if [ $? -ne 0 ] ; then
    exit 1
 fi
