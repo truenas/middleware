@@ -19,6 +19,12 @@ from middlewared.utils import Popen, run
 logger = logging.getLogger(__name__)
 
 
+def _none(x):
+    if x is None:
+        return 'none'
+    return x
+
+
 async def is_mounted(middleware, path):
     mounted = await middleware.run_in_thread(bsd.getmntinfo)
     return any(fs.dest == path for fs in mounted)
@@ -376,10 +382,10 @@ class PoolDatasetService(CRUDService):
             ('comments', 'org.freenas:description', None),
             ('compression', None, str.lower),
             ('deduplication', 'dedup', str.lower),
-            ('quota', None, None),
-            ('refquota', None, None),
-            ('reservation', None, None),
-            ('refreservation', None, None),
+            ('quota', None, _none),
+            ('refquota', None, _none),
+            ('reservation', None, _none),
+            ('refreservation', None, _none),
             ('copies', None, None),
             ('snapdir', None, str.lower),
             ('readonly', None, str.lower),
@@ -440,10 +446,10 @@ class PoolDatasetService(CRUDService):
             ('comments', 'org.freenas:description', None, False),
             ('compression', None, str.lower, True),
             ('deduplication', 'dedup', str.lower, True),
-            ('quota', None, None, False),
-            ('refquota', None, None, False),
-            ('reservation', None, None, False),
-            ('refreservation', None, None, False),
+            ('quota', None, _none, False),
+            ('refquota', None, _none, False),
+            ('reservation', None, _none, False),
+            ('refreservation', None, _none, False),
             ('copies', None, None, False),
             ('snapdir', None, str.lower, True),
             ('readonly', None, str.lower, True),
