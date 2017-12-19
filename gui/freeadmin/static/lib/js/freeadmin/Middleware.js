@@ -118,7 +118,7 @@ define([
         this._pending[mid] = {
           onSuccess: onSuccess,
           onError: onError,
-          onProgress, onProgress,
+          onProgress: onProgress,
           isJob: isJob
         }
       }
