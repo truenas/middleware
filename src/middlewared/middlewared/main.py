@@ -190,7 +190,6 @@ class Application(object):
             arg = None
         event_source = self.middleware.get_event_source(shortname)
         if event_source:
-            es = event_source(self.middleware, self, ident, name, arg)
             for v in self.__event_sources.values():
                 # Do not allow an event source to be subscribed again
                 if v['name'] == name:
@@ -202,6 +201,7 @@ class Application(object):
                         }
                     })
                     return
+            es = event_source(self.middleware, self, ident, name, arg)
             self.__event_sources[ident] = {
                 'event_source': es,
                 'name': name,
