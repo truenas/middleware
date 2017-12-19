@@ -27,6 +27,7 @@
 
 var _webshell;
 var Middleware;
+var middlewareTokenUrl;
 
 require([
     "dojo",
