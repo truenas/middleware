@@ -33,7 +33,9 @@ def find_vdev(pool, vname):
     while children:
         child = children.pop()
 
-        if child.guid == vname:
+        if (
+            isinstance(vname, str) and vname.isdigit() and child.guid == int(vname)
+        ) or child.guid == vname:
             return child
 
         if child.type == 'disk':
