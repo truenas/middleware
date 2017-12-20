@@ -94,15 +94,7 @@ class MiddlewareGDB(object):
         return path
 
     def extract(self, dataset, path):
-        proc = subprocess.Popen([
-            'tar',
-            '-xf',
-            path,
-            '-C', dataset.mountpoint,
-        ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        stdout, stderr = proc.communicate()
-        if proc.returncode != 0:
-            raise RuntimeError(f'Failed to extract: {stderr}')
+        subprocess.run(['tar', '-xf', path, '-C', dataset.mountpoint], check=True)
 
     def run_gdb(self, dataset):
 
