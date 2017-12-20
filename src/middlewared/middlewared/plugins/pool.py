@@ -25,6 +25,12 @@ def _none(x):
     return x
 
 
+def _null(x):
+    if x == 'none':
+        return None
+    return x
+
+
 async def is_mounted(middleware, path):
     mounted = await middleware.run_in_thread(bsd.getmntinfo)
     return any(fs.dest == path for fs in mounted)
@@ -333,7 +339,55 @@ class PoolDatasetService(CRUDService):
 
     @filterable
     async def query(self, filters, options):
-        return await self.middleware.call('zfs.dataset.query', filters, options)
+        return await self.middleware.run_in_thread(
+            self.__transform,
+            await self.middleware.call('zfs.dataset.query', filters, options),
+        )
+
+    def __transform(self, datasets):
+        """
+        We need to transform the data zfs gives us to make it consistent/user-friendly,
+        making it match whatever pool.dataset.{create,update} uses as input.
+        """
+
+        def transform(dataset):
+            newprops = {}
+            for orig_name, new_name, method in (
+                ('org.freenas:description', 'comments', None),
+                ('dedup', 'deduplication', str.upper),
+                ('atime', None, str.upper),
+                ('casesensitivity', None, str.upper),
+                ('compression', None, str.upper),
+                ('quota', None, _null),
+                ('refquota', None, _null),
+                ('reservation', None, _null),
+                ('refreservation', None, _null),
+                ('copies', None, None),
+                ('snapdir', None, str.upper),
+                ('readonly', None, str.upper),
+                ('recordsize', None, None),
+                ('sparse', None, None),
+                ('volsize', None, None),
+                ('volblocksize', None, None),
+            ):
+                if orig_name not in dataset['properties']:
+                    continue
+                i = new_name or orig_name
+                newprops[i] = dataset['properties'][orig_name]
+                if method:
+                    newprops[i]['value'] = method(newprops[i]['value'])
+            dataset['properties'] = newprops
+
+            rv = []
+            for child in dataset['children']:
+                rv.append(transform(child))
+            dataset['children'] = rv
+            return dataset
+
+        rv = []
+        for dataset in datasets:
+            rv.append(transform(dataset))
+        return rv
 
     @accepts(Dict(
         'pool_dataset_create',
