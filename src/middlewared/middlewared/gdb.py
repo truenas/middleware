@@ -50,7 +50,7 @@ class MiddlewareGDB(object):
             dirurl = f'{base_url}/{verdir}/x64/'
             req = requests.get(dirurl)
             if req.status_code != 200:
-                raise RuntimeError('debug symbols url could not be found, provide the url')
+                raise RuntimeError(f'debug symbols could not be downloaded ({req.status_code}), provide the url')
             reg = re.search(r'href="(?P<debug>.+?\.debug\.txz)"', req.text, re.M)
             if reg is None:
                 raise RuntimeError(f'debug symbols file not found in {dirurl}')
@@ -74,9 +74,6 @@ class MiddlewareGDB(object):
             headers['Range'] = f'bytes={first_byte}-{total_size}'
 
         if first_byte and first_byte == total_size:
-            return path
-
-        if first_byte > 0 and total_size == first_byte:
             return path
 
         r = requests.get(url, headers=headers, stream=True)
