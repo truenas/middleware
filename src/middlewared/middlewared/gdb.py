@@ -1,13 +1,11 @@
 import argparse
 import logging
 import libzfs
-import os
 import re
 import requests
 import subprocess
 import tempfile
 import textwrap
-import tqdm
 
 
 class MiddlewareGDB(object):
@@ -61,36 +59,7 @@ class MiddlewareGDB(object):
     def _download_debug(self, dataset, url):
         filename = url.rsplit('/', 1)[-1]
         path = f'{dataset.mountpoint}/{filename}'
-
-        if os.path.exists(path):
-            first_byte = os.path.getsize(path)
-        else:
-            first_byte = 0
-
-        headers = {}
-        r = requests.head(url)
-        total_size = int(r.headers.get('content-length', 0))
-        if total_size:
-            headers['Range'] = f'bytes={first_byte}-{total_size}'
-
-        if first_byte and first_byte == total_size:
-            return path
-
-        r = requests.get(url, headers=headers, stream=True)
-        content_range = r.headers.get('content-range')
-        if content_range:
-            initial = int(content_range.split()[1].split('-')[0])
-        else:
-            initial = 0
-
-        chunk_size = 64 * 1024
-        with open(path, 'ab') as f:
-            if not initial:
-                f.seek(0)
-            pbar = tqdm.tqdm(total=total_size, initial=initial, unit='B', unit_scale=True)
-            for chunk in r.iter_content(chunk_size):
-                f.write(chunk)
-                pbar.update(chunk_size)
+        subprocess.run(['wget', '-c', url, '-O', path])
         return path
 
     def extract(self, dataset, path):
