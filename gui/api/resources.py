@@ -2914,7 +2914,7 @@ class ConfigFactoryRestoreResource(DojoResource):
 
     def post_list(self, request, **kwargs):
         factory_restore(request)
-        return HttpResponse('Factory restore completed. Reboot is required.', status=202)
+        return HttpResponse('Configuration restored to defaults. Reboot required.', status=202)
 
 
 class KerberosRealmResourceMixin(object):
