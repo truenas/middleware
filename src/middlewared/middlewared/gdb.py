@@ -59,7 +59,7 @@ class MiddlewareGDB(object):
     def _download_debug(self, dataset, url):
         filename = url.rsplit('/', 1)[-1]
         path = f'{dataset.mountpoint}/{filename}'
-        subprocess.run(['wget', '-c', url, '-O', path])
+        subprocess.run(['wget', '-c', url, '-O', path], check=True)
         return path
 
     def extract(self, dataset, path):
