@@ -351,7 +351,6 @@ class PoolDatasetService(CRUDService):
         """
 
         def transform(dataset):
-            newprops = {}
             for orig_name, new_name, method in (
                 ('org.freenas:description', 'comments', None),
                 ('dedup', 'deduplication', str.upper),
@@ -373,10 +372,10 @@ class PoolDatasetService(CRUDService):
                 if orig_name not in dataset['properties']:
                     continue
                 i = new_name or orig_name
-                newprops[i] = dataset['properties'][orig_name]
+                dataset[i] = dataset['properties'][orig_name]
                 if method:
-                    newprops[i]['value'] = method(newprops[i]['value'])
-            dataset['properties'] = newprops
+                    dataset[i]['value'] = method(dataset[i]['value'])
+            del dataset['properties']
 
             rv = []
             for child in dataset['children']:
