@@ -1160,6 +1160,9 @@ def get_urls(addrs, ipv6=False):
             ):
                 continue
 
+            if ipv6 and '%' in o:
+                o = o.split('%')[0]
+
             try:
                 if ipv6:
                     url = 'http://[%s]' % o
