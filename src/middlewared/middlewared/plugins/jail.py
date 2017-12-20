@@ -176,7 +176,7 @@ class JailService(CRUDService):
         if options["name"] is not None:
             options["plugins"] = True
 
-        iocage = ioc.IOCage()
+        iocage = ioc.IOCage(silent=True)
 
         iocage.fetch(**options)
 
