@@ -56,7 +56,18 @@ class DiskService(CRUDService):
     async def __get_reserved(self):
         reserved = [i async for i in await self.middleware.call('boot.get_disks')]
         reserved += [i async for i in await self.middleware.call('pool.get_disks')]
+        reserved += [i async for i in self.__get_iscsi_targets()]
         return reserved
+
+    async def __get_iscsi_targets(self):
+        iscsi_target_extent_paths = [
+            extent["iscsi_target_extent_path"]
+            for extent in await self.middleware.call('datastore.query', 'services.iscsitargetextent',
+                                                     [('iscsi_target_extent_type', '=', 'Disk')])
+        ]
+        for disk in await self.middleware.call('datastore.query', 'storage.disk',
+                                               [('disk_identifier', 'in', iscsi_target_extent_paths)]):
+            yield disk["disk_name"]
 
     async def __camcontrol_list(self):
         """
