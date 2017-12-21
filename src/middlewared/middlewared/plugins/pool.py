@@ -17,7 +17,7 @@ from middlewared.schema import accepts, Bool, Dict, Int, Patch, Str
 from middlewared.service import (
     filterable, item_method, job, private, CRUDService, ValidationErrors,
 )
-from middlewared.utils import Popen, run
+from middlewared.utils import Popen, filter_list, run
 
 logger = logging.getLogger(__name__)
 
@@ -531,8 +531,59 @@ class PoolDatasetService(CRUDService):
         namespace = 'pool.dataset'
 
     @filterable
-    async def query(self, filters, options):
-        return await self.middleware.call('zfs.dataset.query', filters, options)
+    def query(self, filters, options):
+        # Otimization for cases in which they can be filtered at zfs.dataset.query
+        zfsfilters = []
+        for f in filters:
+            if len(f) == 3:
+                if f[0] in ('id', 'name', 'pool', 'type'):
+                    zfsfilters.append(f)
+        datasets = self.middleware.call_sync('zfs.dataset.query', zfsfilters, None)
+        return filter_list(self.__transform(datasets), filters, options)
+
+    def __transform(self, datasets):
+        """
+        We need to transform the data zfs gives us to make it consistent/user-friendly,
+        making it match whatever pool.dataset.{create,update} uses as input.
+        """
+
+        def transform(dataset):
+            for orig_name, new_name, method in (
+                ('org.freenas:description', 'comments', None),
+                ('dedup', 'deduplication', str.upper),
+                ('atime', None, str.upper),
+                ('casesensitivity', None, str.upper),
+                ('compression', None, str.upper),
+                ('quota', None, _null),
+                ('refquota', None, _null),
+                ('reservation', None, _null),
+                ('refreservation', None, _null),
+                ('copies', None, None),
+                ('snapdir', None, str.upper),
+                ('readonly', None, str.upper),
+                ('recordsize', None, None),
+                ('sparse', None, None),
+                ('volsize', None, None),
+                ('volblocksize', None, None),
+            ):
+                if orig_name not in dataset['properties']:
+                    continue
+                i = new_name or orig_name
+                dataset[i] = dataset['properties'][orig_name]
+                if method:
+                    dataset[i]['value'] = method(dataset[i]['value'])
+            del dataset['properties']
+
+            rv = []
+            for child in dataset['children']:
+                rv.append(transform(child))
+            dataset['children'] = rv
+            return dataset
+
+        rv = []
+        for dataset in datasets:
+            rv.append(transform(dataset))
+        return rv
 
     @accepts(Dict(
         'pool_dataset_create',

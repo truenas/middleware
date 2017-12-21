@@ -1435,7 +1435,8 @@ Factory Restore
 
 .. http:post:: /api/v1.0/system/config/factory_restore/
 
-   Perform a factory restore. A reboot is necessary after this operation.
+   Reset configuration to defaults. A reboot is necessary after this
+   operation.
 
    **Example request**:
 
@@ -1452,7 +1453,7 @@ Factory Restore
       Vary: Accept
       Content-Type: application/json
 
-        Factory restore completed. Reboot is required.
+        Configuration restored to defaults. Reboot required.
 
    :resheader Content-Type: content type of the response
    :statuscode 202: no error
