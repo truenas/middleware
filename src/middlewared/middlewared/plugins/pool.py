@@ -25,6 +25,12 @@ def _none(x):
     return x
 
 
+def _null(x):
+    if x == 'none':
+        return None
+    return x
+
+
 async def is_mounted(middleware, path):
     mounted = await middleware.run_in_thread(bsd.getmntinfo)
     return any(fs.dest == path for fs in mounted)
@@ -182,7 +188,6 @@ class PoolService(CRUDService):
                         name = disk['disk_name']
                     if os.path.exists(os.path.join("/dev", name)):
                         yield name
-
 
     @item_method
     @accepts(Int('id'))
