@@ -14,7 +14,7 @@ from middlewared.schema import accepts, Bool, Dict, Int, Patch, Str
 from middlewared.service import (
     filterable, item_method, job, private, CRUDService, ValidationErrors,
 )
-from middlewared.utils import Popen, run
+from middlewared.utils import Popen, filter_list, run
 
 logger = logging.getLogger(__name__)
 
@@ -338,11 +338,15 @@ class PoolDatasetService(CRUDService):
         namespace = 'pool.dataset'
 
     @filterable
-    async def query(self, filters, options):
-        return await self.middleware.run_in_thread(
-            self.__transform,
-            await self.middleware.call('zfs.dataset.query', filters, options),
-        )
+    def query(self, filters, options):
+        # Otimization for cases in which they can be filtered at zfs.dataset.query
+        zfsfilters = []
+        for f in filters:
+            if len(f) == 3:
+                if f[0] in ('id', 'name', 'pool', 'type'):
+                    zfsfilters.append(f)
+        datasets = self.middleware.call_sync('zfs.dataset.query', zfsfilters, None)
+        return filter_list(self.__transform(datasets), filters, options)
 
     def __transform(self, datasets):
         """
