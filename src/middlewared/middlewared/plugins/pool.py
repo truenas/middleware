@@ -1,13 +1,16 @@
 import asyncio
 import errno
+import glob
 import logging
 from datetime import datetime
 import os
+import re
 import shutil
 import subprocess
 import sysctl
 
 import bsd
+from lxml import etree
 
 from middlewared.job import JobProgressBuffer
 from middlewared.schema import accepts, Bool, Dict, Int, Patch, Str
@@ -23,6 +26,56 @@ def _none(x):
     if x is None:
         return 'none'
     return x
+
+
+class Multipath(object):
+    """
+    Class representing a GEOM_MULTIPATH
+    """
+
+    @property
+    def status(self):
+        return getattr(self, '_status', 'Unknown')
+
+    @status.setter
+    def status(self, value):
+        self._status = value
+
+    @property
+    def devices(self):
+        devs = []
+        for consumer in self.consumers:
+            devs.append(consumer.devname)
+        return devs
+
+    def __init__(self, doc, xmlnode):
+        self.name = xmlnode.xpath("./name")[0].text
+        self.devname = "multipath/%s" % self.name
+        self._status = xmlnode.xpath("./config/State")[0].text
+        self.consumers = []
+        for consumer in xmlnode.xpath("./consumer"):
+            status = consumer.xpath("./config/State")[0].text
+            provref = consumer.xpath("./provider/@ref")[0]
+            prov = doc.xpath("//provider[@id = '%s']" % provref)[0]
+            self.consumers.append(Consumer(status, prov))
+
+        self.__xml = xmlnode
+        self.__doc = doc
+
+    def __repr__(self):
+        return "<Multipath:%s [%s]>" % (self.name, ",".join(self.devices))
+
+
+class Consumer(object):
+
+    def __init__(self, status, xmlnode):
+        self.status = status
+        self.devname = xmlnode.xpath("./name")[0].text
+        try:
+            self.lunid = xmlnode.xpath("./config/lunid")[0].text
+        except Exception:
+            self.lunid = ''
+        self.__xml = xmlnode
 
 
 async def is_mounted(middleware, path):
@@ -239,6 +292,152 @@ class PoolService(CRUDService):
         sysctl.filter('vfs.zfs.resilver_delay')[0].value = resilver_delay
         sysctl.filter('vfs.zfs.resilver_min_time_ms')[0].value = resilver_min_time_ms
         sysctl.filter('vfs.zfs.scan_idle')[0].value = scan_idle
+
+    async def get_disks_for_import(self):
+        used_disks = []
+
+        async for disk in self.get_disks():
+            used_disks.append(disk)
+
+        for pool in await self.query():
+            if not pool['is_decrypted']:
+                for ed in await self.middleware.call('datastore.query', 'storage.encrypteddisk',
+                                                     [('encrypted_volume', '=', pool['id'])]):
+                    encrypted_disk = ed['encrypted_disk']
+                    if encrypted_disk['disk_multipath_name']:
+                        encrypted_disk_devname = "multipath/%s" % encrypted_disk['disk_multipath_name']
+                    else:
+                        encrypted_disk_devname = encrypted_disk['disk_name']
+
+                    if os.path.exists('/dev/{}'.format(encrypted_disk_devname)):
+                        used_disks.append(encrypted_disk_devname)
+
+        iscsi_target_extent_paths = [
+            extent["iscsi_target_extent_path"]
+            for extent in await self.middleware.call('datastore.query', 'services.iscsitargetextent',
+                                                     [('iscsi_target_extent_type', '=', 'Disk')])
+        ]
+        for disk in await self.middleware.call('datastore.query', 'storage.disk',
+                                               [('disk_identifier', 'in', iscsi_target_extent_paths)]):
+            used_disks.append(disk["disk_name"])
+
+        # Grab partition list
+        # NOTE: This approach may fail if device nodes are not accessible.
+        _parts = await self.__get_partitions()
+        for name, part in list(_parts.items()):
+            for i in used_disks:
+                if re.search(r'^%s([ps]|$)' % i, part['devname']) is not None:
+                    _parts.pop(name, None)
+
+        parts = []
+        for name, part in list(_parts.items()):
+            parts.append((part['devname'], part['capacity']))
+
+        choices = sorted(parts)
+        return choices
+
+    @private
+    async def __find_root_devices(self):
+        try:
+            return [disk async for disk in await self.middleware.call('zfs.pool.get_disks', 'freenas-boot')]
+        except Exception:
+            self.logger.warning("Root device not found!")
+            return []
+
+    @private
+    async def __get_storage_disks(self):
+        """Return a list of available storage disks.
+
+        The list excludes all devices that cannot be reserved for storage,
+        e.g. the root device, CD drives, etc.
+
+        Returns:
+            A list of available devices (ada0, da0, etc), or an empty list if
+            no devices could be divined from the system.
+        """
+
+        disks = sysctl.filter('kern.disks')[0].value.split()
+        disks.reverse()
+
+        blacklist_list = await self.__find_root_devices()
+        blacklist_re = re.compile('a?cd[0-9]+')
+
+        return [disk for disk in disks if not (disk in blacklist_list or blacklist_re.match(disk))]
+
+    @private
+    def __get_multipaths(self):
+        doc = etree.fromstring(sysctl.filter('kern.geom.confxml')[0].value)
+        return [
+            Multipath(doc=doc, xmlnode=geom)
+            for geom in doc.xpath("//class[name = 'MULTIPATH']/geom")
+        ]
+
+    @private
+    async def __get_disks(self):
+        """
+        Grab usable disks and pertinent info about them
+        This accounts for:
+            - all the disks the OS found
+                (except the ones that are providers for multipath)
+            - multipath geoms providers
+
+        Returns:
+            Dict of disks
+        """
+        disksd = {}
+
+        disks = await self.__get_storage_disks()
+
+        """
+        Replace devnames by its multipath equivalent
+        """
+        for mp in self.__get_multipaths():
+            for dev in mp.devices:
+                if dev in disks:
+                    disks.remove(dev)
+            disks.append(mp.devname)
+
+        for disk in disks:
+            info = (await run('/usr/sbin/diskinfo', disk)).stdout.decode("utf-8").split('\t')
+            if len(info) > 3:
+                disksd.update({
+                    disk: {
+                        'devname': info[0],
+                        'capacity': info[2],
+                    },
+                })
+
+        for mp in self.__get_multipaths():
+            for consumer in mp.consumers:
+                if consumer.lunid and mp.devname in disksd:
+                    disksd[mp.devname]['ident'] = consumer.lunid
+                    break
+
+        return disksd
+
+    @private
+    async def __get_partitions(self, try_disks=True):
+        disks = list((await self.__get_disks()).keys())
+        partitions = {}
+        for disk in disks:
+            listing = glob.glob('/dev/%s[a-fps]*' % disk)
+            if try_disks is True and len(listing) == 0:
+                listing = [disk]
+            for part in list(listing):
+                toremove = len([i for i in listing if i.startswith(part) and i != part]) > 0
+                if toremove:
+                    listing.remove(part)
+
+            for part in listing:
+                info = (await run("/usr/sbin/diskinfo", part)).stdout.decode("utf-8").split('\t')
+                if len(info) > 3:
+                    partitions.update({
+                        part: {
+                            'devname': info[0].replace("/dev/", ""),
+                            'capacity': info[2]
+                        },
+                    })
+        return partitions
 
     @accepts(Str('volume'), Str('fs_type'), Str('dst_path'))
     @job(lock=lambda args: 'volume_import')
