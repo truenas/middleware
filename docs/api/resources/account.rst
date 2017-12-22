@@ -261,12 +261,12 @@ Change password
    :statuscode 200: no error
 
 
-Get user groups
-++++++++++++++++
+Get user auxiliary groups
++++++++++++++++++++++++++
 
 .. http:get:: /api/v1.0/account/users/(int:id)/groups/
 
-   Get a list of groups of user `id`.
+   Get a list of auxiliary groups of user `id`.
 
    **Example request**:
 
@@ -288,12 +288,12 @@ Get user groups
    :statuscode 200: no error
 
 
-Set user groups
-++++++++++++++++
+Set user auxiliary groups
++++++++++++++++++++++++++
 
 .. http:post:: /api/v1.0/account/users/(int:id)/groups/
 
-   Set a list of groups of user `id`.
+   Set a list of auxiliary groups of user `id`.
 
    **Example request**:
 
