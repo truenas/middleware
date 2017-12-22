@@ -165,7 +165,7 @@ class JailService(CRUDService):
     def fetch(self, job, options):
         """Fetches a release or plugin."""
         self.check_dataset_existence()  # Make sure our datasets exist.
-        iocage = ioc.IOCage()
+        iocage = ioc.IOCage(silent=True)
 
         iocage.fetch(**options)
 
