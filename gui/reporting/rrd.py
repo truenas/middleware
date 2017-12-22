@@ -458,7 +458,7 @@ class MemoryPlugin(RRDBase):
 
         memory_free = os.path.join(self.base_path, "memory-free.rrd")
         memory_active = os.path.join(self.base_path, "memory-active.rrd")
-        memory_cache = os.path.join(self.base_path, "memory-cache.rrd")
+        memory_laundry = os.path.join(self.base_path, "memory-laundry.rrd")
         memory_inactive = os.path.join(self.base_path, "memory-inactive.rrd")
         memory_wired = os.path.join(self.base_path, "memory-wired.rrd")
 
@@ -469,9 +469,9 @@ class MemoryPlugin(RRDBase):
             'DEF:min1=%s:value:MIN' % memory_active,
             'DEF:avg1=%s:value:AVERAGE' % memory_active,
             'DEF:max1=%s:value:MAX' % memory_active,
-            'DEF:min2=%s:value:MIN' % memory_cache,
-            'DEF:avg2=%s:value:AVERAGE' % memory_cache,
-            'DEF:max2=%s:value:MAX' % memory_cache,
+            'DEF:min2=%s:value:MIN' % memory_laundry,
+            'DEF:avg2=%s:value:AVERAGE' % memory_laundry,
+            'DEF:max2=%s:value:MAX' % memory_laundry,
             'DEF:min3=%s:value:MIN' % memory_inactive,
             'DEF:avg3=%s:value:AVERAGE' % memory_inactive,
             'DEF:max3=%s:value:MAX' % memory_inactive,
@@ -488,7 +488,7 @@ class MemoryPlugin(RRDBase):
             'AREA:cdef2#bfbfe040',
             'AREA:cdef3#bfe0e030',
             'AREA:cdef4#e0bfe020',
-            'LINE1:cdef0#00a000:Free  ',
+            'LINE1:cdef0#00a000:Free    ',
             'GPRINT:min0:MIN:%5.1lf%s Min,',
             'GPRINT:avg0:AVERAGE:%5.1lf%s Avg,',
             'GPRINT:max0:MAX:%5.1lf%s Max,',
@@ -498,7 +498,7 @@ class MemoryPlugin(RRDBase):
             'GPRINT:avg1:AVERAGE:%5.1lf%s Avg,',
             'GPRINT:max1:MAX:%5.1lf%s Max,',
             'GPRINT:avg1:LAST:%5.1lf%s Last\l',
-            'LINE1:cdef2#0000a0:Cache   ',
+            'LINE1:cdef2#0000a0:Laundry ',
             'GPRINT:min2:MIN:%5.1lf%s Min,',
             'GPRINT:avg2:AVERAGE:%5.1lf%s Avg,',
             'GPRINT:max2:MAX:%5.1lf%s Max,',
