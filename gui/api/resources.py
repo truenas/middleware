@@ -299,14 +299,24 @@ class DiskResourceMixin(object):
         except:
             raise ImmediateHttpResponse(response=HttpNotFound())
 
+    def dispatch_list(self, request, **kwargs):
+        try:
+            with client as c:
+                self._disks_unused = [i['name'] for i in c.call('disk.get_unused')]
+        except Exception:
+            log.debug('Failed to get unused disks', exc_info=True)
+        return super(DiskResourceMixin, self).dispatch_list(request, **kwargs)
+
     def dehydrate(self, bundle):
         bundle = super(DiskResourceMixin, self).dehydrate(bundle)
         if self.is_webclient(bundle.request):
             bundle.data['id'] = bundle.obj.pk
             bundle.data['_edit_url'] += '?deletable=false'
-            bundle.data['_wipe_url'] = reverse('storage_disk_wipe', kwargs={
-                'devname': bundle.obj.disk_name,
-            })
+            unused = getattr(self, '_disks_unused', None)
+            if unused is not None and bundle.obj.disk_name in unused:
+                bundle.data['_wipe_url'] = reverse('storage_disk_wipe', kwargs={
+                    'devname': bundle.obj.disk_name,
+                })
             bundle.data['_editbulk_url'] = reverse('storage_disk_editbulk')
             if bundle.data['disk_size']:
                 bundle.data['disk_size'] = humanize_number_si(
