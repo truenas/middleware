@@ -119,7 +119,6 @@ Create resource
    :json boolean bsdusr_locked: lock user login
    :json boolean bsdusr_sudo: enable sudo for the user
    :json string bsdusr_sshpubkey: SSH authorized keys file content
-   :json object bsdusr_attributes: general purpose JSON object attributes
    :reqheader Content-Type: the request content type
    :resheader Content-Type: the response content type
    :statuscode 201: no error
@@ -130,7 +129,7 @@ Update resource
 
 .. http:put:: /api/v1.0/account/users/(int:id)/
 
-   Creates a new user and returns the new user object.
+   Updates a user and returns the new user object.
 
    **Example request**:
 
@@ -181,7 +180,6 @@ Update resource
    :json boolean bsdusr_locked: lock user login
    :json boolean bsdusr_sudo: enable sudo for the user
    :json string bsdusr_sshpubkey: SSH authorized keys file content
-   :json object bsdusr_attributes: general purpose JSON object attributes
    :reqheader Content-Type: the request content type
    :resheader Content-Type: the response content type
    :statuscode 200: no error
