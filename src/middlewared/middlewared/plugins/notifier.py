@@ -42,8 +42,6 @@ from freenasUI.directoryservice.models import (
 )
 from freenasUI.directoryservice.utils import get_idmap_object
 
-from freenasUI.system.alert import alertPlugins
-
 from middlewared.utils import django_modelobj_serialize
 
 
@@ -253,12 +251,3 @@ class NotifierService(Service):
     def gui_languages(self):
         """Temporary wrapper to return available languages in django"""
         return settings.LANGUAGES
-
-    def get_alerts(self):
-        """
-        Temporary workaround to get alerts from legacy UI code
-        """
-        rv = []
-        for alert in alertPlugins.get_alerts():
-            rv.append(f'{alert.getLevel()} - {alert.getMessage()}')
-        return '\n'.join(rv)
