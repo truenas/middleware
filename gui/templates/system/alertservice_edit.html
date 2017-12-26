@@ -3,7 +3,7 @@
 {{ block.super }}
 <script type="dojo/method">
 addToStack(function() {
-    consulTypeToggle();
+    alertServiceTypeToggle();
 });
 </script>
 {% endblock %}
@@ -15,7 +15,9 @@ addToStack(function() {
     doSubmit({
         form: form,
         event: evt,
-        url: '{% url 'consulalerts_fake' %}{{ request.path }}'
+        url: '{{ request.path }}',
+        extraKey: "send_test_alert",
+        extraValue: "1",
         });
 </script>
 {% trans "Send Test Alert" %}
