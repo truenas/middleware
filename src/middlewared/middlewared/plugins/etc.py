@@ -1,7 +1,6 @@
 from mako import exceptions
 from mako.template import Template
 from middlewared.service import Service
-from middlewared.client import Client
 
 import hashlib
 import imp
@@ -15,13 +14,10 @@ class MakoRenderer(object):
 
     async def render(self, path):
         try:
-            tmpl = Template(filename=path)
             # Mako is not asyncio friendly so run it within a thread
-            # using the client
-
             def do():
-                with Client() as c:
-                    return tmpl.render(client=c, middleware=self.service.middleware)
+                tmpl = Template(filename=path)
+                return tmpl.render(middleware=self.service.middleware)
             return await self.service.middleware.run_in_thread(do)
         except Exception:
             self.service.logger.debug('Failed to render mako template: {0}'.format(

@@ -1,4 +1,5 @@
 import asyncio
+import errno
 import logging
 from datetime import datetime
 import os
@@ -9,11 +10,25 @@ import sysctl
 import bsd
 
 from middlewared.job import JobProgressBuffer
-from middlewared.schema import accepts, Int, Str
-from middlewared.service import filterable, item_method, job, private, CRUDService
-from middlewared.utils import Popen, run
+from middlewared.schema import accepts, Bool, Dict, Int, Patch, Str
+from middlewared.service import (
+    filterable, item_method, job, private, CRUDService, ValidationErrors,
+)
+from middlewared.utils import Popen, filter_list, run
 
 logger = logging.getLogger(__name__)
+
+
+def _none(x):
+    if x is None:
+        return 'none'
+    return x
+
+
+def _null(x):
+    if x == 'none':
+        return None
+    return x
 
 
 async def is_mounted(middleware, path):
@@ -315,6 +330,219 @@ class PoolService(CRUDService):
         current_import_job = await self.get_current_import_disk_job()
         if current_import_job:
             self.dismissed_import_disk_jobs.add(current_import_job["id"])
+
+
+class PoolDatasetService(CRUDService):
+
+    class Config:
+        namespace = 'pool.dataset'
+
+    @filterable
+    def query(self, filters, options):
+        # Otimization for cases in which they can be filtered at zfs.dataset.query
+        zfsfilters = []
+        for f in filters:
+            if len(f) == 3:
+                if f[0] in ('id', 'name', 'pool', 'type'):
+                    zfsfilters.append(f)
+        datasets = self.middleware.call_sync('zfs.dataset.query', zfsfilters, None)
+        return filter_list(self.__transform(datasets), filters, options)
+
+    def __transform(self, datasets):
+        """
+        We need to transform the data zfs gives us to make it consistent/user-friendly,
+        making it match whatever pool.dataset.{create,update} uses as input.
+        """
+
+        def transform(dataset):
+            for orig_name, new_name, method in (
+                ('org.freenas:description', 'comments', None),
+                ('dedup', 'deduplication', str.upper),
+                ('atime', None, str.upper),
+                ('casesensitivity', None, str.upper),
+                ('compression', None, str.upper),
+                ('quota', None, _null),
+                ('refquota', None, _null),
+                ('reservation', None, _null),
+                ('refreservation', None, _null),
+                ('copies', None, None),
+                ('snapdir', None, str.upper),
+                ('readonly', None, str.upper),
+                ('recordsize', None, None),
+                ('sparse', None, None),
+                ('volsize', None, None),
+                ('volblocksize', None, None),
+            ):
+                if orig_name not in dataset['properties']:
+                    continue
+                i = new_name or orig_name
+                dataset[i] = dataset['properties'][orig_name]
+                if method:
+                    dataset[i]['value'] = method(dataset[i]['value'])
+            del dataset['properties']
+
+            rv = []
+            for child in dataset['children']:
+                rv.append(transform(child))
+            dataset['children'] = rv
+            return dataset
+
+        rv = []
+        for dataset in datasets:
+            rv.append(transform(dataset))
+        return rv
+
+    @accepts(Dict(
+        'pool_dataset_create',
+        Str('name', required=True),
+        Str('type', enum=['FILESYSTEM', 'VOLUME'], default='FILESYSTEM'),
+        Int('volsize'),
+        Str('volblocksize', enum=[
+            '512', '1K', '2K', '4K', '8K', '16K', '32K', '64K', '128K',
+        ]),
+        Bool('sparse'),
+        Str('comments'),
+        Str('compression', enum=[
+            'OFF', 'LZ4', 'GZIP-1', 'GZIP-6', 'GZIP-9', 'ZLE', 'LZJB',
+        ]),
+        Str('atime', enum=['ON', 'OFF']),
+        Int('quota'),
+        Int('refquota'),
+        Int('reservation'),
+        Int('refreservation'),
+        Int('copies'),
+        Str('snapdir', enum=['VISIBLE', 'HIDDEN']),
+        Str('deduplication', enum=['ON', 'VERIFY', 'OFF']),
+        Str('readonly', enum=['ON', 'OFF']),
+        Str('recordsize', enum=[
+            '512', '1K', '2K', '4K', '8K', '16K', '32K', '64K', '128K', '256K', '512K', '1024K',
+        ]),
+        Str('casesensitivity', enum=['SENSITIVE', 'INSENSITIVE', 'MIXED']),
+        register=True,
+    ))
+    async def do_create(self, data):
+        """
+        Creates a dataset/zvol.
+
+        `volsize` is required for type=VOLUME and is supposed to be a multiple of the block size.
+        """
+
+        verrors = ValidationErrors()
+        await self.__common_validation(verrors, 'pool_dataset_create', data, 'CREATE')
+        if verrors:
+            raise verrors
+
+        props = {}
+        for i, real_name, transform in (
+            ('atime', None, str.lower),
+            ('casesensitivity', None, str.lower),
+            ('comments', 'org.freenas:description', None),
+            ('compression', None, str.lower),
+            ('deduplication', 'dedup', str.lower),
+            ('quota', None, _none),
+            ('refquota', None, _none),
+            ('reservation', None, _none),
+            ('refreservation', None, _none),
+            ('copies', None, None),
+            ('snapdir', None, str.lower),
+            ('readonly', None, str.lower),
+            ('recordsize', None, None),
+            ('sparse', None, None),
+            ('volsize', None, lambda x: str(x)),
+            ('volblocksize', None, None),
+        ):
+            if i not in data:
+                continue
+            name = real_name or i
+            props[name] = data[i] if not transform else transform(data[i])
+
+        return await self.middleware.call('zfs.dataset.create', {
+            'name': data['name'],
+            'type': data['type'],
+            'properties': props,
+        })
+
+    def _add_inherit(name):
+        def add(attr):
+            attr.enum.append('INHERIT')
+        return {'name': name, 'method': add}
+
+    @accepts(Str('id'), Patch(
+        'pool_dataset_create', 'pool_dataset_update',
+        ('rm', {'name': 'name'}),
+        ('rm', {'name': 'type'}),
+        ('rm', {'name': 'casesensitivity'}),  # Its a readonly attribute
+        ('rm', {'name': 'sparse'}),  # Create time only attribute
+        ('rm', {'name': 'volblocksize'}),  # Create time only attribute
+        ('edit', _add_inherit('atime')),
+        ('edit', _add_inherit('compression')),
+        ('edit', _add_inherit('deduplication')),
+        ('edit', _add_inherit('readonly')),
+        ('edit', _add_inherit('recordsize')),
+        ('edit', _add_inherit('snapdir')),
+    ))
+    async def do_update(self, id, data):
+        """
+        Updates a dataset/zvol `id`.
+        """
+
+        verrors = ValidationErrors()
+
+        dataset = await self.query([('id', '=', id)])
+        if not dataset:
+            verrors.add('id', f'{id} does not exist', errno.ENOENT)
+        else:
+            data['type'] = dataset[0]['type']
+            await self.__common_validation(verrors, 'pool_dataset_update', data, 'UPDATE')
+        if verrors:
+            raise verrors
+
+        props = {}
+        for i, real_name, transform, inheritable in (
+            ('atime', None, str.lower, True),
+            ('comments', 'org.freenas:description', None, False),
+            ('compression', None, str.lower, True),
+            ('deduplication', 'dedup', str.lower, True),
+            ('quota', None, _none, False),
+            ('refquota', None, _none, False),
+            ('reservation', None, _none, False),
+            ('refreservation', None, _none, False),
+            ('copies', None, None, False),
+            ('snapdir', None, str.lower, True),
+            ('readonly', None, str.lower, True),
+            ('recordsize', None, None, True),
+            ('volsize', None, lambda x: str(x), False),
+        ):
+            if i not in data:
+                continue
+            name = real_name or i
+            if inheritable and data[i] == 'INHERIT':
+                props[name] = {'source': 'INHERIT'}
+            else:
+                props[name] = {'value': data[i] if not transform else transform(data[i])}
+
+        return await self.middleware.call('zfs.dataset.update', id, {'properties': props})
+
+    async def __common_validation(self, verrors, schema, data, mode):
+        assert mode in ('CREATE', 'UPDATE')
+
+        if data['type'] == 'FILESYSTEM':
+            for i in ('sparse', 'volsize', 'volblocksize'):
+                if i in data:
+                    verrors.add(f'{schema}.{i}', 'This field is not valid for FILESYSTEM')
+        elif data['type'] == 'VOLUME':
+            if mode == 'CREATE' and 'volsize' not in data:
+                verrors.add(f'{schema}.volsize', 'This field is required for VOLUME')
+
+            for i in (
+                'atime', 'casesensitivity', 'quota', 'refquota', 'recordsize',
+            ):
+                if i in data:
+                    verrors.add(f'{schema}.{i}', 'This field is not valid for VOLUME')
+
+    @accepts(Str('id'))
+    async def do_delete(self, id):
+        return await self.middleware.call('zfs.dataset.delete', id)
 
 
 def setup(middleware):

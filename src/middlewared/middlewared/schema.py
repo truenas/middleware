@@ -164,11 +164,6 @@ class File(Str):
 
 class Bool(Attribute):
 
-    def __init__(self, *args, **kwargs):
-        if 'default' not in kwargs:
-            kwargs['default'] = False
-        super(Bool, self).__init__(*args, **kwargs)
-
     def clean(self, value):
         if value is None and not self.required:
             return self.default
@@ -393,6 +388,10 @@ class Patch(object):
                 schema.attrs[new.name] = new
             elif operation == 'rm':
                 del schema.attrs[patch['name']]
+            elif operation == 'edit':
+                attr = schema.attrs[patch['name']]
+                if 'method' in patch:
+                    patch['method'](attr)
             elif operation == 'attr':
                 for key, val in list(patch.items()):
                     setattr(schema, key, val)

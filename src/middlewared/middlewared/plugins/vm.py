@@ -2,6 +2,7 @@ from middlewared.schema import accepts, Int, Str, Dict, List, Bool, Patch
 from middlewared.service import filterable, CRUDService, item_method, private, job, CallError
 from middlewared.utils import Nid, Popen
 from urllib.request import urlretrieve
+from pipes import quote
 
 import middlewared.logger
 import asyncio
@@ -451,7 +452,7 @@ class VMUtils(object):
         ]
 
         grub_additional_args = {
-            "RancherOS": ['linux /boot/vmlinuz-4.9.45-rancher rancher.password={0} printk.devkmsg=on rancher.state.dev=LABEL=RANCHER_STATE rancher.state.wait rancher.state.autoformat=[/dev/sda] rancher.resize_device=/dev/sda'.format(password),
+            "RancherOS": ['linux /boot/vmlinuz-4.9.45-rancher rancher.password={0} printk.devkmsg=on rancher.state.dev=LABEL=RANCHER_STATE rancher.state.wait rancher.state.autoformat=[/dev/sda] rancher.resize_device=/dev/sda'.format(quote(password)),
                           'initrd /boot/initrd-v1.1.0']
         }
 
@@ -561,6 +562,20 @@ class VMService(CRUDService):
                 vnc = device['attributes']
                 vnc_devices.append(vnc)
         return vnc_devices
+
+    @accepts()
+    def get_vnc_ipv4(self):
+        """
+        Get all available IPv4 address in the system.
+
+        Returns:
+           list: will return a list of available IPv4 address.
+        """
+        default_ifaces = ['0.0.0.0', '127.0.0.1']
+        ifaces = self.middleware.call_sync('interfaces.ipv4_in_use')
+
+        default_ifaces.extend(ifaces)
+        return default_ifaces
 
     @accepts(Str('pool'),
              Bool('stop', default=False),)
@@ -943,7 +958,7 @@ class VMService(CRUDService):
             percent = readchunk * 1e2 / totalsize
             job.set_progress(int(percent), 'Downloading', {'downloaded': readchunk, 'total': totalsize})
 
-    @accepts(Str('vmOS'), Bool('force'))
+    @accepts(Str('vmOS'), Bool('force', default=False))
     @job(lock='container')
     async def fetch_image(self, job, vmOS, force=False):
         """Download a pre-built image for bhyve"""

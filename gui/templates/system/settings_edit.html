@@ -3,7 +3,7 @@
 
 {% block buttons_extra %}
     <button id="btn_{% cls_name form %}_Restore" data-dojo-type="dijit.form.Button" type="button">
-        {% trans "Factory Restore" %}
+        {% trans "Reset Configuration to Defaults" %}
         <script type="dojo/method" data-dojo-event="onClick" data-dojo-args="evt">
             editObject('{% trans "Restore Config"|force_escape|force_escape %}', '{% url "system_configrestore" %}');
         </script>

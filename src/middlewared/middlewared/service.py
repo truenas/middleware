@@ -350,7 +350,11 @@ class CoreService(Service):
                     so thats where we actually extract pertinent information.
                     """
                     if attr == 'update':
-                        method = getattr(svc, 'do_{}'.format(attr), None)
+                        original_name = 'do_{}'.format(attr)
+                        if hasattr(svc, original_name):
+                            method = getattr(svc, original_name, None)
+                        else:
+                            method = getattr(svc, attr)
                         if method is None:
                             continue
                     elif attr in ('do_update'):

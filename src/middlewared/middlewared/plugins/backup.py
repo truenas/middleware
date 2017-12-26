@@ -213,8 +213,8 @@ class BackupService(CRUDService):
         Str('transfer_mode', enum=['SYNC', 'COPY', 'MOVE']),
         Str('path'),
         Int('credential'),
-        Bool('encryption'),
-        Bool('filename_encryption'),
+        Bool('encryption', default=False),
+        Bool('filename_encryption', default=False),
         Str('encryption_password'),
         Str('encryption_salt'),
         Str('minute'),
@@ -223,7 +223,7 @@ class BackupService(CRUDService):
         Str('dayweek'),
         Str('month'),
         Dict('attributes', additional_attrs=True),
-        Bool('enabled'),
+        Bool('enabled', default=True),
         register=True,
     ))
     async def do_create(self, backup):

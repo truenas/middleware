@@ -766,7 +766,10 @@ class InitialWizard(CommonWizard):
                 )
         except Exception:
             for obj in reversed(model_objs):
-                obj.delete()
+                if isinstance(obj, Volume):
+                    obj.delete(destroy=False, cascade=False)
+                else:
+                    obj.delete()
             raise
 
         if ds_form:
@@ -3494,7 +3497,7 @@ class CloudCredentialsForm(ModelForm):
     def clean_GCLOUD_keyfile(self):
         provider = self.cleaned_data.get('provider')
         keyfile = self.cleaned_data.get('GCLOUD_keyfile')
-        if not keyfile and provider != 'GCLOUD':
+        if not keyfile or provider != 'GCLOUD':
             return None
         keyfile = keyfile.read()
         try:
