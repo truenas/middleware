@@ -664,7 +664,7 @@ Update resource
 
 .. http:put:: /api/v1.0/network/lagginterfacemembers/(int:id)/
 
-   Creates a new LAGG member and returns the new LAGG member object.
+   Updates LAGG member and returns the new LAGG member object.
 
    **Example request**:
 
