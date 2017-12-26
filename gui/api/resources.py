@@ -1775,9 +1775,14 @@ class LAGGInterfaceMembersResourceMixin(object):
         bundle = super(LAGGInterfaceMembersResourceMixin, self).dehydrate(
             bundle
         )
-        bundle.data['lagg_interfacegroup'] = str(
-            bundle.obj.lagg_interfacegroup
-        )
+        if self.is_webclient(bundle.request):
+            bundle.data['lagg_interfacegroup'] = str(
+                bundle.obj.lagg_interfacegroup
+            )
+        else:
+            bundle.data['lagg_interfacegroup'] = (
+                bundle.obj.lagg_interfacegroup.id
+            )
         return bundle
 
 
