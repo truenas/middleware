@@ -5,7 +5,7 @@ from .job import Job, JobsQueue
 from .restful import RESTfulAPI
 from .schema import ResolverError, Error as SchemaError
 from .service import CallError, CallException, ValidationError, ValidationErrors
-from .utils import start_daemon_thread
+from .utils import start_daemon_thread, load_modules, load_classes
 from aiohttp import web
 from aiohttp_wsgi import WSGIHandler
 from collections import defaultdict
@@ -18,7 +18,6 @@ import binascii
 import concurrent.futures
 import errno
 import functools
-import imp
 import inspect
 import linecache
 import os
@@ -676,25 +675,9 @@ class Middleware(object):
             if not os.path.exists(plugins_dir):
                 raise ValueError(f'plugins dir not found: {plugins_dir}')
 
-            for f in os.listdir(plugins_dir):
-                if not f.endswith('.py'):
-                    continue
-                f = f[:-3]
-                fp, pathname, description = imp.find_module(f, [plugins_dir])
-                try:
-                    mod = imp.load_module(f, fp, pathname, description)
-                finally:
-                    if fp:
-                        fp.close()
-
-                for attr in dir(mod):
-                    attr = getattr(mod, attr)
-                    if not inspect.isclass(attr):
-                        continue
-                    if attr in (Service, CRUDService, ConfigService, SystemServiceService):
-                        continue
-                    if issubclass(attr, Service):
-                        self.add_service(attr(self))
+            for mod in load_modules(plugins_dir):
+                for cls in load_classes(mod, Service, (ConfigService, CRUDService, SystemServiceService)):
+                    self.add_service(cls(self))
 
                 if hasattr(mod, 'setup'):
                     setup_funcs.append(mod.setup)
