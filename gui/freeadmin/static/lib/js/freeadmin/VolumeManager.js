@@ -128,8 +128,9 @@ define([
           lang.hitch(me, me.onClick)();
         });
       },
-      addToRow: function(vdev, row, col) {
+      addToRow: function(vdev, row, col, check) {
         try {
+          if(check === undefined) check = true;
           vdev.validate(this);
 
           if(query("tr", vdev.dapTable).length - 1 < row + 1) {
@@ -147,7 +148,9 @@ define([
           vdev.disks.push(this);
           this.disksAvail.update();
           this.set('vdev', vdev);
-          vdev._disksCheck();
+          if(check) {
+            vdev._disksCheck();
+          }
         } catch(e) {
           var me = this;
           connect.publish("volumeManager", {
@@ -158,12 +161,15 @@ define([
 
         }
       },
-      remove: function() {
+      remove: function(check) {
+        if(check === undefined) check = true;
         this.disksAvail.disks.push(this);
         this.domNode.parentNode.removeChild(this.domNode);
         this.vdev.disks.splice(this.vdev.disks.indexOf(this), 1);
         this.disksAvail.update();
-        this.vdev._disksCheck();
+        if(check) {
+          this.vdev._disksCheck();
+        }
         this.set('vdev', null);
       },
       onClick: function() {
@@ -319,6 +325,7 @@ define([
       _draggedOnce: false,
       _formVdevs: null,
       _isOptimal: null,
+      _manualVdevType: false,
       validate: function(disk) {
         /*
          * Make sure all the disks in the disk group have the same size
@@ -481,12 +488,25 @@ define([
         }
 
         if(manual !== true) {
-          for(var key in this._optimalCheck) {
-            if(this._optimalCheck[key](numDisksRow)) {
-              // .set will trigger onChange, ignore it once
-              this.vdevtype._stopEvent = true;
-              this.vdevtype.set('value', key);
-              break;
+          var found = false;
+          if(this._manualVdevType === true) {
+            var curvdevtype = this.vdevtype.get('value');
+            if(this._optimalCheck[curvdevtype]) {
+              if(this._optimalCheck[curvdevtype](numDisksRow)) {
+                found = true;
+              }
+            } else if(curvdevtype == 'log' || curvdevtype == 'cache' || curvdevtype == 'spare') {
+              found = true;
+            }
+          }
+          if(!found) {
+            for(var key in this._optimalCheck) {
+              if(this._optimalCheck[key](numDisksRow)) {
+                // .set will trigger onChange, ignore it once
+                this.vdevtype._stopEvent = true;
+                this.vdevtype.set('value', key);
+                break;
+              }
             }
           }
         }
@@ -738,7 +758,7 @@ define([
                  * structure
                  */
                 while(me.disks.length > 0) {
-                  me.disks[0].remove();
+                  me.disks[0].remove(false);
                 }
 
                 /*
@@ -750,7 +770,7 @@ define([
                     var disk = this._disks[i][j];
                     var index = me.disks.indexOf(disk);
                     if(index == -1) {
-                      disk.addToRow(me, i, j);
+                      disk.addToRow(me, i, j, false);
                     }
                   }
                 }
@@ -798,6 +818,7 @@ define([
         }
 
         on(this.vdevtype, "change", function() {
+          me._manualVdevType = true;
           if(this._stopEvent !== true) {
             me._disksCheck(true);
             me.colorActive();
