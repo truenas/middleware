@@ -456,11 +456,13 @@ class PoolDatasetService(CRUDService):
             name = real_name or i
             props[name] = data[i] if not transform else transform(data[i])
 
-        return await self.middleware.call('zfs.dataset.create', {
+        await self.middleware.call('zfs.dataset.create', {
             'name': data['name'],
             'type': data['type'],
             'properties': props,
         })
+
+        await self.middleware.call('zfs.dataset.mount', data['name'])
 
     def _add_inherit(name):
         def add(attr):
@@ -488,7 +490,7 @@ class PoolDatasetService(CRUDService):
 
         verrors = ValidationErrors()
 
-        dataset = await self.query([('id', '=', id)])
+        dataset = await self.middleware.call('pool.dataset.query', [('id', '=', id)])
         if not dataset:
             verrors.add('id', f'{id} does not exist', errno.ENOENT)
         else:
