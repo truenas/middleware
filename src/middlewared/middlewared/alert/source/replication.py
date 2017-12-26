@@ -1,4 +1,4 @@
-from middlewared.alert.base import *
+from middlewared.alert.base import Alert, AlertLevel, AlertSource
 
 
 class ReplicationAlertSource(AlertSource):

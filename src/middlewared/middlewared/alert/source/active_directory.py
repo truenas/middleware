@@ -1,4 +1,4 @@
-from middlewared.alert.base import *
+from middlewared.alert.base import AlertLevel, FilePresenceAlertSource
 
 
 class ActiveDirectoryDomainBindAlertSource(FilePresenceAlertSource):

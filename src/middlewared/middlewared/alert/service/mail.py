@@ -1,4 +1,4 @@
-from middlewared.alert.base import *
+from middlewared.alert.base import AlertService, format_alerts
 from middlewared.schema import Dict, Str
 
 

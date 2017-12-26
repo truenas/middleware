@@ -6,7 +6,7 @@ import logging
 from freenasOS.Update import PendingUpdates
 from freenasUI.system.utils import is_update_applied
 
-from middlewared.alert.base import *
+from middlewared.alert.base import Alert, AlertLevel, FilePresenceAlertSource, ThreadedAlertSource
 
 UPDATE_APPLIED_SENTINEL = "/tmp/.updateapplied"
 

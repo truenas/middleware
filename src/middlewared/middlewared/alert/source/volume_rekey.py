@@ -1,6 +1,6 @@
 from freenasUI.middleware.notifier import GELI_REKEY_FAILED
 
-from middlewared.alert.base import *
+from middlewared.alert.base import AlertLevel, FilePresenceAlertSource
 
 
 class VolumeRekeyAlertSource(FilePresenceAlertSource):

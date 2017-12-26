@@ -1,6 +1,6 @@
 import os
 
-from middlewared.alert.base import *
+from middlewared.alert.base import Alert, AlertLevel, AlertSource
 
 PORTAL_IP_FILE = "/var/tmp/iscsi_portal_ip"
 

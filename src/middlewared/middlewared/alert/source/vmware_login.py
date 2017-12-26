@@ -2,7 +2,7 @@ import pickle as pickle
 
 from lockfile import LockFile
 
-from middlewared.alert.base import *
+from middlewared.alert.base import Alert, AlertLevel, ThreadedAlertSource
 
 VMWARELOGIN_FAILS = "/var/tmp/.vmwarelogin_fails"
 

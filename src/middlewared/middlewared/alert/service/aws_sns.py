@@ -1,6 +1,6 @@
 import boto3
 
-from middlewared.alert.base import *
+from middlewared.alert.base import ThreadedAlertService, format_alerts
 from middlewared.schema import Dict, Str
 
 

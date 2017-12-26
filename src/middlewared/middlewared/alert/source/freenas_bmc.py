@@ -3,7 +3,7 @@ import re
 
 from freenasUI.common.pipesubr import pipeopen
 
-from middlewared.alert.base import *
+from middlewared.alert.base import Alert, AlertLevel, ThreadedAlertSource
 
 logger = logging.getLogger("FreeNASBMCAlert")
 

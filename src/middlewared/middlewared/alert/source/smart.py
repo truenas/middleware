@@ -2,7 +2,7 @@ from datetime import timedelta
 
 from freenasUI.services.utils import SmartAlert
 
-from middlewared.alert.base import *
+from middlewared.alert.base import Alert, AlertLevel, ThreadedAlertSource
 
 
 class SMARTAlertSource(ThreadedAlertSource):

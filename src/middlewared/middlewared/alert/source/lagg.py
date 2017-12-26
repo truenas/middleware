@@ -2,7 +2,7 @@ from collections import defaultdict
 
 import netif
 
-from middlewared.alert.base import *
+from middlewared.alert.base import Alert, AlertLevel, ThreadedAlertSource
 
 
 class LAGGStatus(ThreadedAlertSource):

@@ -2,7 +2,7 @@ import pickle as pickle
 
 from lockfile import LockFile
 
-from middlewared.alert.base import *
+from middlewared.alert.base import Alert, AlertLevel, ThreadedAlertSource
 
 VMWARE_FAILS = "/var/tmp/.vmwaresnap_fails"
 VMWARESNAPDELETE_FAILS = "/var/tmp/.vmwaresnapdelete_fails"

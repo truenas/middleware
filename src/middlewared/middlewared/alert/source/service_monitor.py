@@ -1,6 +1,6 @@
 import os
 
-from middlewared.alert.base import *
+from middlewared.alert.base import Alert, AlertLevel, AlertSource
 
 
 class ServiceMonitorAlertSource(AlertSource):

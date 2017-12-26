@@ -2,7 +2,7 @@ from datetime import timedelta
 import glob
 import os
 
-from middlewared.alert.base import *
+from middlewared.alert.base import Alert, AlertLevel, AlertSource
 
 
 class HTTPD_SSL_AlertSource(AlertSource):

@@ -1,7 +1,7 @@
 import pysnmp.hlapi
 import pysnmp.smi
 
-from middlewared.alert.base import *
+from middlewared.alert.base import ThreadedAlertService
 from middlewared.schema import Dict
 
 

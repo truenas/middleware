@@ -1,7 +1,7 @@
 from datetime import timedelta
 import subprocess
 
-from middlewared.alert.base import *
+from middlewared.alert.base import Alert, AlertLevel, ThreadedAlertSource
 
 
 class ZpoolCapacityAlertSource(ThreadedAlertSource):

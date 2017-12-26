@@ -2,7 +2,7 @@ from lockfile import LockFile, LockTimeout
 import os
 import pickle
 
-from middlewared.alert.base import *
+from middlewared.alert.base import Alert, AlertLevel, ThreadedAlertSource
 
 COLLECTD_FILE = "/tmp/.collectdalert"
 
