@@ -1,5 +1,5 @@
+import enum
 from functools import update_wrapper
-
 import hashlib
 import json
 import logging
@@ -14,8 +14,11 @@ from django.views.decorators.cache import never_cache
 from django.views.decorators.csrf import csrf_protect
 
 from freenasUI.common.system import get_sw_name, get_sw_version
+from freenasUI.middleware.client import client
 from freenasUI.freeadmin.apppool import appPool
 from freenasUI.freeadmin.options import BaseFreeAdmin
+
+from middlewared.alert.base import AlertLevel
 
 RE_ALERT = re.compile(r'^(?P<status>\w+)\[(?P<msgid>.+?)\]: (?P<message>.+)')
 log = logging.getLogger('freeadmin.site')
@@ -268,33 +271,24 @@ class FreeAdminSite(object):
 
     @never_cache
     def alert_status(self, request):
-        from freenasUI.system.models import Alert
-        from freenasUI.system.alert import alert_node, alertPlugins
-        dismisseds = [a.message_id for a in Alert.objects.filter(node=alert_node())]
-        alerts = alertPlugins.get_alerts()
-        current = 'OK'
-        for alert in alerts:
-            # Skip dismissed alerts
-            if alert.getId() in dismisseds:
-                continue
-            status = alert.getLevel()
-            if (
-                (status == 'WARN' and current == 'OK') or
-                status == 'CRIT' and
-                current in ('OK', 'WARN')
-            ):
-                current = status
-        return HttpResponse(current)
+        level = "INFO"
+
+        with client as c:
+            alerts = c.call("alert.list")
+
+        alerts = [alert for alert in alerts if not alert["dismissed"]]
+
+        if alerts:
+            level = AlertLevel(max(AlertLevel[alert["level"]].value for alert in alerts)).name
+
+        return HttpResponse(level)
 
     @never_cache
     def alert_detail(self, request):
-        from freenasUI.system.models import Alert
-        from freenasUI.system.alert import alert_node, alertPlugins
-        dismisseds = [a.message_id for a in Alert.objects.filter(node=alert_node())]
-        alerts = alertPlugins.get_alerts()
+        with client as c:
+            alerts = c.call("alert.list")
         return render(request, "freeadmin/alert_status.html", {
-            'alerts': alerts,
-            'dismisseds': dismisseds,
+            "alerts": alerts,
         })
 
 
