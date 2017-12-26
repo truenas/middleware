@@ -218,7 +218,7 @@ define([
         }).then(function(data) {
 
           if(data.match("<!-- THIS IS A LOGIN WEBPAGE -->")) {
-            window.location = '/';
+            window.location = '/legacy/';
             return;
           }
 
