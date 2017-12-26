@@ -745,14 +745,7 @@ class Middleware(object):
         self.logger.trace("Calling periodic task %s::%s", service_name, task_name)
 
         try:
-            args = []
-            if hasattr(method, '_pass_app'):
-                args.append(app)
-
-            if getattr(method, '_job', None):
-                job = Job(self, task_name, method, args, method._job)
-                self.jobs.add(job)
-            elif asyncio.iscoroutinefunction(method):
+            if asyncio.iscoroutinefunction(method):
                 await method()
             else:
                 await self.run_in_thread(method)
