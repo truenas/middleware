@@ -15,7 +15,7 @@ snmp_config=/etc/local/snmpd.conf
 generate_snmpconf()
 {
 	local IFS="|"
-	local f="snmp_location snmp_contact snmp_community snmp_v3 snmp_v3_username snmp_v3_authtype snmp_v3_password snmp_v3_privproto snmp_v3_privpassphrase"
+	local f="snmp_location snmp_contact snmp_community snmp_v3 snmp_v3_username snmp_v3_authtype snmp_v3_password snmp_v3_privproto snmp_v3_privpassphrase snmp_options"
 	eval local $f
 	local sf=$(var_to_sf $f)
 	RO_FREENAS_CONFIG=$(ro_sqlite ${name} 2> /tmp/${name}.fail && rm /tmp/${name}.fail)
@@ -56,6 +56,7 @@ EOF
 			echo "rocommunity \"${snmp_community}\" default" >> ${snmp_config}
 		fi
 
+		echo "${snmp_options}" >> ${snmp_config}
 	done
 }
 
