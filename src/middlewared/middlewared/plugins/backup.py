@@ -501,7 +501,7 @@ class BackupB2Service(Service):
             auth=(credential['attributes'].get('account_id'), credential['attributes'].get('app_key')),
         )
         if r.status_code != 200:
-            raise ValueError(f'Invalid request: {r.text}')
+            raise CallError(f'Invalid request: {r.text}')
         return r.json()
 
     @accepts(Int('id'))
