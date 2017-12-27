@@ -178,6 +178,13 @@ class PoolService(CRUDService):
             if pool['is_decrypted']:
                 async for i in await self.middleware.call('zfs.pool.get_disks', pool['name']):
                     yield i
+            else:
+                for encrypted_disk in await self.middleware.call('datastore.query', 'storage.encrypteddisk',
+                                                                 [('encrypted_volume', '=', pool['id'])]):
+                    disk = {k[len("disk_"):]: v for k, v in encrypted_disk["encrypted_disk"].items()}
+                    name = await self.middleware.call("disk.get_name", disk)
+                    if os.path.exists(os.path.join("/dev", name)):
+                        yield name
 
     @item_method
     @accepts(Int('id'))
