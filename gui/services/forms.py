@@ -1925,7 +1925,14 @@ class WebDAVForm(ModelForm):
             notifier().start_ssl("webdav")
 
 
-class S3Form(ModelForm):
+class S3Form(MiddlewareModelForm, ModelForm):
+
+    middleware_attr_prefix = "s3_"
+    middleware_attr_schema = "s3"
+    middleware_exclude_fields = ('secret_key2', )
+    middleware_plugin = "s3"
+    is_singletone = True
+
     s3_bindip = forms.ChoiceField(
         label=models.S3._meta.get_field("s3_bindip").verbose_name,
         help_text=models.S3._meta.get_field("s3_bindip").help_text,
@@ -1977,24 +1984,6 @@ class S3Form(ModelForm):
 
         self.fields['s3_mode'].widget = forms.widgets.HiddenInput()
 
-    def clean_s3_access_key(self):
-        s3_access_key = self.cleaned_data.get("s3_access_key")
-        s3_access_key_len = len(s3_access_key)
-        if s3_access_key_len < 5 or s3_access_key_len > 20:
-            raise forms.ValidationError(
-                _("S3 access key should be 5 to 20 characters in length.")
-            )
-        return s3_access_key
-
-    def clean_s3_secret_key(self):
-        s3_secret_key = self.cleaned_data.get("s3_secret_key")
-        s3_secret_key_len = len(s3_secret_key)
-        if s3_secret_key_len < 8 or s3_secret_key_len > 40:
-            raise forms.ValidationError(
-                _("S3 secret key should be 8 to 40 characters in length.")
-            )
-        return s3_secret_key
-
     def clean_s3_secret_key2(self):
         s3_secret_key1 = self.cleaned_data.get("s3_secret_key")
         s3_secret_key2 = self.cleaned_data.get("s3_secret_key2")
@@ -2010,17 +1999,8 @@ class S3Form(ModelForm):
             cdata["s3_secret_key"] = self.instance.s3_secret_key
         return cdata
 
-    def save(self):
-        obj = super(S3Form, self).save()
-        path = self.cleaned_data.get("s3_disks")
-        if not path:
-            return
-        try:
-            path = path.decode('utf-8')
-        except Exception as e:
-            log.debug("ERROR: unable to decode string %s", e)
-            pass
-        if notifier().mp_get_owner(path) != "minio":
-            # Currently not working because of python byte string
-            notifier().winacl_reset(path=path, owner="minio", group="minio")
-        return obj
+    def middleware_clean(self, data):
+        if 'disks' in data:
+            data['storage_path'] = data.pop('disks')
+        data.pop('mode', None)
+        return data

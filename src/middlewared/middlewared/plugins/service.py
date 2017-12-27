@@ -515,6 +515,10 @@ class ServiceService(CRUDService):
         await self.middleware.call('etc.generate', 's3')
         await self._service("minio", "start", quiet=True, stdout=None, stderr=None, **kwargs)
 
+    async def _reload_s3(self, **kwargs):
+        await self.middleware.call('etc.generate', 's3')
+        await self._service("minio", "restart", quiet=True, stdout=None, stderr=None, **kwargs)
+
     async def _reload_rsync(self, **kwargs):
         await self._service("ix-rsyncd", "start", quiet=True, **kwargs)
         await self._service("rsyncd", "restart", **kwargs)
