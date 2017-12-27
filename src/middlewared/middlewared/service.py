@@ -370,6 +370,10 @@ class CoreService(Service):
                 if hasattr(method, '_private'):
                     continue
 
+                # terminate is a private method used to clean up a service on shutdown
+                if attr == 'terminate':
+                    continue
+
                 examples = defaultdict(list)
                 doc = inspect.getdoc(method)
                 if doc:
