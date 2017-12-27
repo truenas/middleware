@@ -32,6 +32,7 @@ import json
 import logging
 import math
 import os
+import random
 import re
 import stat
 import subprocess
@@ -2891,9 +2892,9 @@ class CertificateAuthoritySignCSRForm(ModelForm):
         csr = crypto.load_certificate_request(crypto.FILETYPE_PEM, ca.cert_CSR)
 
         cert = crypto.X509()
-        cert.set_serial_number(12345)
+        cert.set_serial_number(int(random.random() * (1 << 160)))
         cert.gmtime_adj_notBefore(0)
-        cert.gmtime_adj_notAfter(3650)
+        cert.gmtime_adj_notAfter(86400 * 365 * 10)
         cert.set_issuer(cert_info.get_subject())
         cert.set_subject(csr.get_subject())
         cert.set_pubkey(csr.get_pubkey())
