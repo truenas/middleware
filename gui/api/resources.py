@@ -1775,8 +1775,10 @@ class CloudSyncResourceMixin(NestedMixin):
     def dispatch_list(self, request, **kwargs):
         with client as c:
             self.__jobs = {}
-            for job in c.call('core.get_jobs', [('method', '=', 'backup.sync')], {'order_by': ['-id']}):
-                if job['arguments'] and job['arguments'][0] not in self.__jobs:
+            for job in c.call('core.get_jobs', [('method', '=', 'backup.sync')], {'order_by': ['id']}):
+                if job['arguments']:
+                    if job['arguments'][0] in self.__jobs and self.__jobs[job['arguments'][0]]['state'] == 'RUNNING':
+                        continue
                     self.__jobs[job['arguments'][0]] = job
         return super(CloudSyncResourceMixin, self).dispatch_list(request, **kwargs)
 
