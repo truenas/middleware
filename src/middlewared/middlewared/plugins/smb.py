@@ -5,7 +5,7 @@ import ipaddress
 import re
 
 
-_LOGLEVEL_MAP = {
+LOGLEVEL_MAP = {
     '0': 'NONE',
     '1': 'MINIMUM',
     '2': 'NORMAL',
@@ -32,11 +32,11 @@ class SMBService(SystemServiceService):
         for i in ('aio_enable', 'aio_rs', 'aio_ws'):
             smb.pop(i, None)
 
-        smb['loglevel'] = _LOGLEVEL_MAP.get(smb['loglevel'])
+        smb['loglevel'] = LOGLEVEL_MAP.get(smb['loglevel'])
 
         return smb
 
-    def __validate_netbios_name(self, name):
+    async def __validate_netbios_name(self, name):
         return RE_NETBIOSNAME.match(name)
 
     @accepts(Dict(
@@ -67,7 +67,7 @@ class SMBService(SystemServiceService):
         Bool('hostlookup'),
         Bool('allow_execute_always'),
         Bool('obey_pam_restrictions'),
-        Bool('tlmv1_auth'),
+        Bool('ntlmv1_auth'),
         List('bindip', items=[Str('ip')]),
         Str('smb_options'),
         update=True,
@@ -81,16 +81,16 @@ class SMBService(SystemServiceService):
         verrors = ValidationErrors()
 
         for i in ('workgroup', 'netbiosname', 'netbiosname_b', 'netbiosalias'):
-            if i not in data:
+            if i not in data or not data[i]:
                 continue
             if not await self.__validate_netbios_name(data[i]):
                 verrors.add(f'smb_update.{i}', 'Invalid NetBIOS name')
 
         if new['netbiosname'] and new['netbiosname'].lower() == new['workgroup'].lower():
-            verrors.add('smb_update.netbios', 'NetBIOS and Workgroup must be unique')
+            verrors.add('smb_update.netbiosname', 'NetBIOS and Workgroup must be unique')
 
         for i in ('filemask', 'dirmask'):
-            if i not in data:
+            if i not in data or not data[i]:
                 continue
             try:
                 if int(data[i], 8) & ~0o11777:
@@ -109,7 +109,7 @@ class SMBService(SystemServiceService):
             raise verrors
 
         # TODO: consider using bidict
-        for k, v in _LOGLEVEL_MAP.items():
+        for k, v in LOGLEVEL_MAP.items():
             if new['loglevel'] == v:
                 new['loglevel'] = k
                 break
