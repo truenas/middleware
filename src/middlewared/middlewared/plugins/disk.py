@@ -1,6 +1,7 @@
+import asyncio
 from collections import defaultdict
 from datetime import datetime, timedelta
-import asyncio
+import glob
 import os
 import re
 import signal
@@ -9,7 +10,7 @@ import sys
 import sysctl
 
 from bsd import geom
-from middlewared.schema import accepts, Str
+from middlewared.schema import accepts, Bool, Str
 from middlewared.service import filterable, job, private, CRUDService
 from middlewared.utils import Popen, run
 
@@ -46,12 +47,26 @@ class DiskService(CRUDService):
         disk.pop('enabled', None)
         return disk
 
-    async def get_unused(self):
+    @private
+    def get_name(self, disk):
+        if disk["multipath_name"]:
+            return f"multipath/{disk['multipath_name']}"
+        else:
+            return disk["name"]
+
+    @accepts(Bool("join_partitions"))
+    async def get_unused(self, join_partitions=False):
         """
         Helper method to get all disks that are not in use, either by the boot
         pool or the user pools.
         """
-        return await self.query([('name', 'nin', await self.__get_reserved())])
+        disks = await self.query([('name', 'nin', await self.__get_reserved())])
+
+        if join_partitions:
+            for disk in disks:
+                disk["partitions"] = await self.__get_partitions(disk)
+
+        return disks
 
     async def __get_reserved(self):
         reserved = [i async for i in await self.middleware.call('boot.get_disks')]
@@ -68,6 +83,19 @@ class DiskService(CRUDService):
         for disk in await self.middleware.call('datastore.query', 'storage.disk',
                                                [('disk_identifier', 'in', iscsi_target_extent_paths)]):
             yield disk["disk_name"]
+
+    async def __get_partitions(self, disk):
+        partitions = []
+        name = await self.middleware.call("disk.get_name", disk)
+        for path in glob.glob(f"/dev/%s[a-fps]*" % name) or [f"/dev/{name}"]:
+            info = (await run("/usr/sbin/diskinfo", path)).stdout.decode("utf-8").split("\t")
+            if len(info) > 3:
+                partitions.append({
+                    "path": path,
+                    "capacity": int(info[2]),
+                })
+
+        return partitions
 
     async def __camcontrol_list(self):
         """

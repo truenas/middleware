@@ -181,11 +181,8 @@ class PoolService(CRUDService):
             else:
                 for encrypted_disk in await self.middleware.call('datastore.query', 'storage.encrypteddisk',
                                                                  [('encrypted_volume', '=', pool['id'])]):
-                    disk = encrypted_disk['encrypted_disk']
-                    if disk['disk_multipath_name']:
-                        name = "multipath/%s" % disk['disk_multipath_name']
-                    else:
-                        name = disk['disk_name']
+                    disk = {k[len("disk_"):]: v for k, v in encrypted_disk["encrypted_disk"].items()}
+                    name = await self.middleware.call("disk.get_name", disk)
                     if os.path.exists(os.path.join("/dev", name)):
                         yield name
 
