@@ -1,6 +1,7 @@
-from middlewared.schema import Bool, Dict, Str
+from middlewared.schema import Bool, Dict, List, Str
 from middlewared.service import SystemServiceService, ValidationErrors, accepts, private
 
+import ipaddress
 import re
 
 
@@ -67,12 +68,11 @@ class SMBService(SystemServiceService):
         Bool('allow_execute_always'),
         Bool('obey_pam_restrictions'),
         Bool('tlmv1_auth'),
-        Str('bindip'),
+        List('bindip', items=[Str('ip')]),
         Str('smb_options'),
         update=True,
     ))
     async def do_update(self, data):
-        print(data)
         old = await self.config()
 
         new = old.copy()
@@ -80,14 +80,39 @@ class SMBService(SystemServiceService):
 
         verrors = ValidationErrors()
 
-        for i in ('workgroup', 'netbiosname', 'netbiosname_b'):
+        for i in ('workgroup', 'netbiosname', 'netbiosname_b', 'netbiosalias'):
             if i not in data:
                 continue
             if not await self.__validate_netbios_name(data[i]):
                 verrors.add(f'smb_update.{i}', 'Invalid NetBIOS name')
 
+        if new['netbiosname'] and new['netbiosname'].lower() == new['workgroup'].lower():
+            verrors.add('smb_update.netbios', 'NetBIOS and Workgroup must be unique')
+
+        for i in ('filemask', 'dirmask'):
+            if i not in data:
+                continue
+            try:
+                if int(data[i], 8) & ~0o11777:
+                    raise ValueError('Not an octet')
+            except (ValueError, TypeError):
+                verrors.add(f'smb_update.{i}', 'Not a valid mask')
+
+        if 'bindip' in data and data['bindip']:
+            for i in data['bindip']:
+                try:
+                    ipaddress.ip_address(i)
+                except ValueError:
+                    verrors.add('smb_update.bindip', f'Not a valid IP: {i}')
+
         if verrors:
             raise verrors
+
+        # TODO: consider using bidict
+        for k, v in _LOGLEVEL_MAP.items():
+            if new['loglevel'] == v:
+                new['loglevel'] = k
+                break
 
         await self._update_service(old, new)
 
