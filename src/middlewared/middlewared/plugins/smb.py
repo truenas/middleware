@@ -1,4 +1,4 @@
-from middlewared.schema import Bool, Dict, List, Str
+from middlewared.schema import Bool, Dict, IPAddr, List, Str
 from middlewared.service import SystemServiceService, ValidationErrors, accepts, private
 
 import ipaddress
@@ -68,7 +68,7 @@ class SMBService(SystemServiceService):
         Bool('allow_execute_always'),
         Bool('obey_pam_restrictions'),
         Bool('ntlmv1_auth'),
-        List('bindip', items=[Str('ip')]),
+        List('bindip', items=[IPAddr('ip')]),
         Str('smb_options'),
         update=True,
     ))
@@ -97,13 +97,6 @@ class SMBService(SystemServiceService):
                     raise ValueError('Not an octet')
             except (ValueError, TypeError):
                 verrors.add(f'smb_update.{i}', 'Not a valid mask')
-
-        if 'bindip' in data and data['bindip']:
-            for i in data['bindip']:
-                try:
-                    ipaddress.ip_address(i)
-                except ValueError:
-                    verrors.add('smb_update.bindip', f'Not a valid IP: {i}')
 
         if verrors:
             raise verrors
