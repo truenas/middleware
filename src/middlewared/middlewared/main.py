@@ -850,6 +850,9 @@ class Middleware(object):
         if hasattr(methodobj, '_pass_app'):
             args.append(app)
 
+        if params:
+            args.extend(params)
+
         # If the method is marked as a @job we need to create a new
         # entry to keep track of its state.
         job_options = getattr(methodobj, '_job', None)
@@ -858,12 +861,9 @@ class Middleware(object):
             job = Job(self, name, methodobj, args, job_options)
             # Add the job to the queue.
             # At this point an `id` is assinged to the job.
-            self.jobs.add(job)
+            job = self.jobs.add(job)
         else:
             job = None
-
-        if params:
-            args.extend(params)
 
         if job:
             return job

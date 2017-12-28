@@ -73,6 +73,12 @@ class JobsQueue(object):
         return self.deque.all()
 
     def add(self, job):
+        if job.options["lock_queue_size"] is not None:
+            lock = self.get_lock(job)
+            queued_jobs = [another_job for another_job in self.queue if self.get_lock(another_job) is lock]
+            if len(queued_jobs) >= job.options["lock_queue_size"]:
+                return queued_jobs[-1]
+
         self.deque.add(job)
         self.queue.append(job)
 
@@ -80,6 +86,8 @@ class JobsQueue(object):
 
         # A job has been added to the queue, let the queue scheduler run
         self.queue_event.set()
+
+        return job
 
     def get_lock(self, job):
         """
