@@ -310,7 +310,7 @@ class BackupService(CRUDService):
 
     @item_method
     @accepts(Int('id'))
-    @job(lock=lambda args: 'backup:{}'.format(args[-1]))
+    @job(lock=lambda args: 'backup:{}'.format(args[-1]), lock_queue_size=1)
     async def sync(self, job, id):
         """
         Run the backup job `id`, syncing the local data to remote.
