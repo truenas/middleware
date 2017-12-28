@@ -450,7 +450,7 @@ class PoolDatasetService(CRUDService):
             ('refquota', None, _none),
             ('reservation', None, _none),
             ('refreservation', None, _none),
-            ('copies', None, None),
+            ('copies', None, lambda x: str(x)),
             ('snapdir', None, str.lower),
             ('readonly', None, str.lower),
             ('recordsize', None, None),
