@@ -59,7 +59,7 @@ class VM(Model):
         help_text=_('Megabytes of RAM for the virtual machine.'
                     'This memory will be allocated when the VM is running '
                     'and not available to the host system or other VMs.'),
-        validators=[MinValueValidator(512)],
+        validators=[MinValueValidator(256)],
     )
     bootloader = models.CharField(
         verbose_name=_('Boot Method'),
