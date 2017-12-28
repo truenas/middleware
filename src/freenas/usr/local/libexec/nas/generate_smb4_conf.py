@@ -2,6 +2,7 @@
 
 from middlewared.client import Client
 from middlewared.client.utils import Struct
+from middlewared.plugins.smb import LOGLEVEL_MAP
 
 import os
 import pwd
@@ -991,10 +992,12 @@ def generate_smb4_conf(client, smb4_conf, role):
     confset2(smb4_conf, "max open files = %d",
              int(get_sysctl('kern.maxfilesperproc')) - 25)
 
+    loglevel = "0"
     if cifs.loglevel and cifs.loglevel is not True:
-        loglevel = cifs.loglevel
-    else:
-        loglevel = "0"
+        for k, v in LOGLEVEL_MAP.items():
+            if cifs.loglevel == v:
+                loglevel = k
+                break
 
     if cifs.syslog:
         confset1(smb4_conf, "logging = syslog:%s" % loglevel)
@@ -1092,7 +1095,7 @@ def generate_smb4_conf(client, smb4_conf, role):
     confset2(smb4_conf, "unix charset = %s", cifs.unixcharset)
 
     if cifs.loglevel and cifs.loglevel is not True:
-        confset2(smb4_conf, "log level = %s", cifs.loglevel)
+        confset2(smb4_conf, "log level = %s", loglevel)
 
     smb_options = cifs.smb_options.strip()
     for line in smb_options.split('\n'):

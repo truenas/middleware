@@ -66,6 +66,7 @@ from ipaddr import (
     IPAddress, IPNetwork, AddressValueError, NetmaskValueError,
     IPv4Address, IPv6Address,
 )
+from middlewared.plugins.smb import LOGLEVEL_MAP
 
 log = logging.getLogger('services.form')
 
@@ -124,7 +125,12 @@ class servicesForm(ModelForm):
         return obj
 
 
-class CIFSForm(ModelForm):
+class CIFSForm(MiddlewareModelForm, ModelForm):
+
+    middleware_attr_prefix = "cifs_srv_"
+    middleware_attr_schema = "smb"
+    middleware_plugin = "smb"
+    is_singletone = True
 
     cifs_srv_bindip = forms.MultipleChoiceField(
         label=models.CIFS._meta.get_field('cifs_srv_bindip').verbose_name,
@@ -183,88 +189,10 @@ class CIFSForm(ModelForm):
         else:
             del self.fields['cifs_srv_netbiosname_b']
 
-    def __check_octet(self, v):
-        try:
-            if v != "" and (int(v, 8) & ~0o11777):
-                raise ValueError
-        except:
-            raise forms.ValidationError(_("This is not a valid mask"))
-
-    def clean_cifs_srv_workgroup(self):
-        netbios = self.cleaned_data.get("cifs_srv_netbiosname")
-        workgroup = self.cleaned_data.get("cifs_srv_workgroup").strip()
-        if netbios and netbios.lower() == workgroup.lower():
-            raise forms.ValidationError("NetBIOS and Workgroup must be unique")
-        try:
-            validate_netbios_name(workgroup)
-        except Exception as e:
-            raise forms.ValidationError(_("workgroup: %s" % e))
-        return workgroup
-
-    def clean_cifs_srv_netbiosname(self):
-        netbios = self.cleaned_data.get("cifs_srv_netbiosname")
-        try:
-            validate_netbios_name(netbios)
-        except Exception as e:
-            raise forms.ValidationError(_("netbiosname: %s" % e))
-        return netbios
-
-    def clean_cifs_srv_netbiosname_b(self):
-        netbios = self.cleaned_data.get("cifs_srv_netbiosname_b")
-        if netbios:
-            try:
-                validate_netbios_name(netbios)
-            except Exception as e:
-                raise forms.ValidationError(_("netbiosname: %s" % e))
-        return netbios
-
-    def clean_cifs_srv_netbiosalias(self):
-        alias = self.cleaned_data.get("cifs_srv_netbiosalias")
-        if alias:
-            try:
-                validate_netbios_name(alias)
-            except Exception as e:
-                raise forms.ValidationError(_("NetBIOS Alias: %s" % e))
-        return alias
-
-    def clean_cifs_srv_filemask(self):
-        v = self.cleaned_data.get("cifs_srv_filemask").strip()
-        self.__check_octet(v)
-        return v
-
-    def clean_cifs_srv_dirmask(self):
-        v = self.cleaned_data.get("cifs_srv_dirmask").strip()
-        self.__check_octet(v)
-        return v
-
-    def clean_cifs_srv_bindip(self):
-        ips = self.cleaned_data.get("cifs_srv_bindip")
-        if not ips:
-            return ''
-        bind = []
-        for ip in ips:
-            try:
-                IPAddress(ip)
-            except:
-                raise forms.ValidationError(
-                    "This is not a valid IP: %s" % (ip, )
-                )
-            bind.append(ip)
-        return ','.join(bind)
-
-    def save(self):
-        obj = super(CIFSForm, self).save(commit=False)
-        obj.cifs_srv_bindip = self.cleaned_data.get('cifs_srv_bindip')
-        obj.save()
-
-        started = notifier().restart("cifs")
-        if (
-            started is False and
-            models.services.objects.get(srv_service='cifs').srv_enable
-        ):
-            raise ServiceFailed(
-                "cifs", _("The SMB service failed to reload.")
-            )
+    def middleware_clean(self, data):
+        if 'loglevel' in data:
+            data['loglevel'] = LOGLEVEL_MAP.get(data['loglevel'])
+        return data
 
 
 class AFPForm(MiddlewareModelForm, ModelForm):
