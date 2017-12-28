@@ -1,7 +1,6 @@
 from middlewared.schema import Bool, Dict, IPAddr, List, Str
 from middlewared.service import SystemServiceService, ValidationErrors, accepts, private
 
-import ipaddress
 import re
 
 
