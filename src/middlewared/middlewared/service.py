@@ -97,6 +97,8 @@ class ServiceBase(type):
       - datastore_extend: datastore `extend` option used in common `query` method
       - datastore_prefix: datastore `prefix` option used in helper methods
       - service: system service `name` option used by `SystemServiceService`
+      - service_model: system service datastore model option used by `SystemServiceService` (`service` if used if not provided)
+      - service_verb: verb to be used on update (default to `reload`)
       - namespace: namespace identifier of the service
       - private: whether or not the service is deemed private
       - verbose_name: human-friendly singular name for the service
@@ -123,6 +125,7 @@ class ServiceBase(type):
             'datastore_extend': None,
             'service': None,
             'service_model': None,
+            'service_verb': 'reload',
             'namespace': namespace,
             'private': False,
             'thread_pool': None,
@@ -197,7 +200,7 @@ class SystemServiceService(ConfigService):
             'datastore.query', 'services.services', [('srv_service', '=', self._config.service)], {'get': True}
         ))['srv_enable']
 
-        started = await self.middleware.call('service.reload', self._config.service, {'onetime': False})
+        started = await self.middleware.call(f'service.{self._config.service_verb}', self._config.service, {'onetime': False})
 
         if enabled and not started:
             raise CallError(f'The {self._config.service} service failed to start', CallError.ESERVICESTARTFAILURE)
