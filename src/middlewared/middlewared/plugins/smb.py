@@ -19,6 +19,7 @@ class SMBService(SystemServiceService):
 
     class Config:
         service = 'cifs'
+        service_verb = 'restart'
         datastore = 'services.cifs'
         datastore_extend = 'smb.smb_extend'
         datastore_prefix = 'cifs_srv_'
