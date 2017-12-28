@@ -1095,7 +1095,7 @@ def generate_smb4_conf(client, smb4_conf, role):
     confset2(smb4_conf, "unix charset = %s", cifs.unixcharset)
 
     if cifs.loglevel and cifs.loglevel is not True:
-        confset2(smb4_conf, "log level = %s", cifs.loglevel)
+        confset2(smb4_conf, "log level = %s", loglevel)
 
     smb_options = cifs.smb_options.strip()
     for line in smb_options.split('\n'):
