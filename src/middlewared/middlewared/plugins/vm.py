@@ -368,7 +368,7 @@ class VMSupervisor(object):
         if bhyve_error == 0:
             if self.proc:
                 try:
-                    os.kill(self.proc.pid, signal.SIGHUP)
+                    os.kill(self.proc.pid, 0)
                 except OSError:
                     self.logger.error("===> VMM {0} is running without bhyve process.".format(self.vm['name']))
                     return False
