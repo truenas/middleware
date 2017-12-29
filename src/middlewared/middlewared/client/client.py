@@ -163,7 +163,18 @@ class WSClient(WebSocketClient):
 
     def connect(self):
         self.sock.settimeout(10)
-        rv = super(WSClient, self).connect()
+        for i in range(3):
+            try:
+                rv = super(WSClient, self).connect()
+            except OSError as e:
+                # Lets retry a few times in case the error is
+                # [Errno 48] Address already in use
+                # which I believe may be caused by a race condition
+                if e.errno == errno.EADDRINUSE:
+                    continue
+                raise
+            else:
+                break
         if self.sock:
             self.sock.settimeout(None)
         return rv
