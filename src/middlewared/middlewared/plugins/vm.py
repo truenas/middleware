@@ -17,6 +17,7 @@ import sysctl
 import gzip
 import hashlib
 import shutil
+import signal
 
 logger = middlewared.logger.Logger('vm').getLogger()
 
@@ -47,12 +48,12 @@ class VMManager(object):
         except:
             raise
 
-    async def stop(self, id):
+    async def stop(self, id, force=False):
         supervisor = self._vm.get(id)
         if not supervisor:
             return False
 
-        err = await supervisor.stop()
+        err = await supervisor.stop(force)
         return err
 
     async def restart(self, id):
@@ -342,7 +343,7 @@ class VMSupervisor(object):
     async def kill_bhyve_pid(self):
         if self.proc:
             try:
-                os.kill(self.proc.pid, 15)
+                os.kill(self.proc.pid, signal.SIGTERM)
             except ProcessLookupError as e:
                 # Already stopped, process do not exist anymore
                 if e.errno != errno.ESRCH:
@@ -353,7 +354,7 @@ class VMSupervisor(object):
         if self.web_proc:
             try:
                 self.logger.debug("==> Killing WEBVNC: {}".format(self.web_proc.pid))
-                os.kill(self.web_proc.pid, 15)
+                os.kill(self.web_proc.pid, signal.SIGTERM)
             except ProcessLookupError as e:
                 if e.errno != errno.ESRCH:
                     raise
@@ -365,12 +366,15 @@ class VMSupervisor(object):
         self.destroy_tap()
         await self.kill_bhyve_web()
 
-    async def stop(self):
-        bhyve_error = await (await Popen(['bhyvectl', '--force-poweroff', '--vm={}'.format(str(self.vm['id']) + '_' + self.vm['name'])], stdout=subprocess.PIPE, stderr=subprocess.PIPE)).wait()
-        self.logger.debug("===> Stopping VM: {0} ID: {1} BHYVE_CODE: {2}".format(self.vm['name'], self.vm['id'], self.bhyve_error))
-
-        if bhyve_error:
-            self.logger.error("===> Stopping VM error: {0}".format(bhyve_error))
+    async def stop(self, force=False):
+        if force:
+            bhyve_error = await (await Popen(['bhyvectl', '--force-poweroff', '--vm={}'.format(str(self.vm['id']) + '_' + self.vm['name'])], stdout=subprocess.PIPE, stderr=subprocess.PIPE)).wait()
+            self.logger.debug("===> Force Stop VM: {0} ID: {1} BHYVE_CODE: {2}".format(self.vm['name'], self.vm['id'], self.bhyve_error))
+            if bhyve_error:
+                self.logger.error("===> Stopping VM error: {0}".format(bhyve_error))
+        else:
+            os.kill(self.proc.pid, signal.SIGTERM)
+            self.logger.debug("===> Soft Stop VM: {0} ID: {1} BHYVE_CODE: {2}".format(self.vm['name'], self.vm['id'], self.bhyve_error))
 
         return await self.kill_bhyve_pid()
 
@@ -922,11 +926,11 @@ class VMService(CRUDService):
             return False
 
     @item_method
-    @accepts(Int('id'))
-    async def stop(self, id):
+    @accepts(Int('id'), Bool('force', default=False),)
+    async def stop(self, id, force):
         """Stop a VM."""
         try:
-            return await self._manager.stop(id)
+            return await self._manager.stop(id, force)
         except Exception as err:
             self.logger.error("===> {0}".format(err))
             return False

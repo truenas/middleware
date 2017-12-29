@@ -3988,6 +3988,7 @@ class VMResourceMixin(object):
         bundle = super(VMResourceMixin, self).dehydrate(bundle)
         state = 'UNKNOWN'
         device_start_url = device_stop_url = device_restart_url = device_clone_url = device_vncweb_url = info = ''
+        device_poweroff_url = ''
         try:
             with client as c:
                 status = c.call('vm.status', bundle.obj.id)
@@ -4000,6 +4001,9 @@ class VMResourceMixin(object):
                 if state == 'RUNNING':
                     device_stop_url = reverse(
                         'vm_stop', kwargs={'id': bundle.obj.id},
+                    )
+                    device_poweroff_url = reverse(
+                        'vm_poweroff', kwargs={'id': bundle.obj.id},
                     )
                     device_restart_url = reverse(
                         'vm_restart', kwargs={'id': bundle.obj.id},
@@ -4018,6 +4022,7 @@ class VMResourceMixin(object):
                 bundle.data.update({
                     '_device_url': reverse('freeadmin_vm_device_datagrid') + '?id=%d' % bundle.obj.id,
                     '_stop_url': device_stop_url,
+                    '_poweroff_url': device_poweroff_url,
                     '_start_url': device_start_url,
                     '_restart_url': device_restart_url,
                     '_clone_url': device_clone_url,
