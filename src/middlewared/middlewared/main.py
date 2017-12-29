@@ -999,13 +999,17 @@ class Middleware(object):
         if self.loop_monitor:
             self.__loop.set_debug(True)
             # loop.slow_callback_duration(0.2)
-            t = threading.Thread(target=self._loop_monitor_thread)
-            t.setDaemon(True)
-            t.start()
 
         # Needs to happen after setting debug or may cause race condition
         # http://bugs.python.org/issue30805
         self.__loop.run_until_complete(self.__plugins_load())
+
+        if self.loop_monitor:
+            # Start monitor thread after plugins have been loaded
+            # because of the time spent doing I/O
+            t = threading.Thread(target=self._loop_monitor_thread)
+            t.setDaemon(True)
+            t.start()
 
         self.__loop.add_signal_handler(signal.SIGINT, self.terminate)
         self.__loop.add_signal_handler(signal.SIGTERM, self.terminate)
