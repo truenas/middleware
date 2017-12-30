@@ -418,7 +418,6 @@ class ZFSSnapshotTask(CRUDService):
                 {'task_last_run': f'{date_now.year}-{date_now.month}-{date_now.day} {date_now.hour}:{date_now.minute}'}
             )
 
-
     @periodic(300)
     async def autosnap_remove(self):
 
@@ -437,7 +436,6 @@ class ZFSSnapshotTask(CRUDService):
             return snaptask_time_delta
 
         snaps = await self.middleware.call('zfs.snapshot.query')
-        snap_tasks = await self.middleware.call('zfs.snapshot_task.query')
         date_now = datetime.datetime.now()
 
         for snap in snaps:
