@@ -404,7 +404,7 @@ class ZFSSnapshotTask(CRUDService):
 
 
         for task in tasks_to_execute:
-            task_name = task_name if task['task_name'] else f"task_{task['id']}"
+            task_name = task['task_name'] if task['task_name'] else f"task_{task['id']}"
             self.middleware.call_sync(
                 'zfs.snapshot.do_create',
                 {'dataset': task['task_filesystem'],
