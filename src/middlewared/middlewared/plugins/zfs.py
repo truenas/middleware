@@ -430,12 +430,11 @@ class ZFSSnapshotTask(CRUDService):
             elif ret_unit == 'week':
                 snaptask_time_delta = date + datetime.timedelta(days=7 * int(task_ret_count))
             elif ret_unit == 'month':
-                snapinfo_expirationtime = date + datetime.timedelta(days=int(30.436875 * task_ret_count))
+                snaptask_time_delta = date + datetime.timedelta(days=int(30.436875 * task_ret_count))
             elif ret_unit == 'year':
                 snaptask_time_delta = date + datetime.timedelta(days=int(365.2425 * task_ret_count))
 
             return snaptask_time_delta
-
 
         snaps = await self.middleware.call('zfs.snapshot.query')
         snap_tasks = await self.middleware.call('zfs.snapshot_task.query')
