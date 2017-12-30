@@ -402,14 +402,14 @@ class ZFSSnapshotTask(CRUDService):
                 self.logger.error(f'{err} - Periodic snapshot task omitted.')
             tasks_to_execute.append(task)
 
-
         for task in tasks_to_execute:
             task_name = task['task_name'] if task['task_name'] else f"task_{task['id']}"
             self.middleware.call_sync(
                 'zfs.snapshot.do_create',
                 {'dataset': task['task_filesystem'],
-                'name': f'autosnap_new_{task_name}_{date_now.strftime("%H:%M_%m_%d_%Y")}',
-                'properties':{'autosnap:name':task_name, 'autosnap:retention':f'{task["task_ret_count"]}:{task["task_ret_unit"]}'}}
+                'recursive': task['task_recursive'],
+                'name': f'autosnap_new_{task_name}_{date_now.strftime("%Y%m%d.%H%M")}',
+                'properties': {'autosnap:name': task_name, 'autosnap:retention': f'{task["task_ret_count"]}:{task["task_ret_unit"]}'}}
             )
 
             self.middleware.call_sync(
