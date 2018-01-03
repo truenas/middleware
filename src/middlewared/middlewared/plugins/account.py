@@ -175,8 +175,7 @@ class UserService(CRUDService):
 
             password = await self.__set_password(data)
 
-            await self.__update_sshpubkey(data, group['group'])
-
+            sshpubkey = data.pop('sshpubkey')  # datastore does not have sshpubkey
             pk = await self.middleware.call('datastore.insert', 'account.bsdusers', data, {'prefix': 'bsdusr_'})
 
             await self.__set_groups(pk, groups)
@@ -203,6 +202,9 @@ class UserService(CRUDService):
                 if not os.path.exists(dest_file):
                     shutil.copyfile(os.path.join(SKEL_PATH, f), dest_file)
                     os.chown(dest_file, data['uid'], group['gid'])
+
+        data['sshpubkey'] = sshpubkey
+        await self.__update_sshpubkey(data, group['group'])
 
         return pk
 
@@ -262,6 +264,7 @@ class UserService(CRUDService):
         password = await self.__set_password(user)
 
         await self.__update_sshpubkey(user, group['bsdgrp_group'])
+        user.pop('sshpubkey')
 
         home_mode = user.pop('home_mode', None)
         if home_mode is not None:
@@ -422,7 +425,7 @@ class UserService(CRUDService):
         if 'sshpubkey' not in user:
             return
         keysfile = f'{user["home"]}/.ssh/authorized_keys'
-        pubkey = user.pop('sshpubkey')
+        pubkey = user.get('sshpubkey')
         if pubkey is None:
             if os.path.exists(keysfile):
                 try:
