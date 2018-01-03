@@ -84,6 +84,7 @@ VMWARESNAPDELETE_FAILS = '/var/tmp/.vmwaresnapdelete_fails'
 # Make debug output great again.
 debug = False
 
+run_replication = False
 
 def snapinfodict2datetime(snapinfo):
     year = int(snapinfo['year'])
@@ -530,7 +531,7 @@ Hello,
         proc = pipeopen(snapcmd, logger=log)
         err = proc.communicate()[1]
         MNTLOCK.unlock()
-
+        run_replication = True
         if proc.returncode != 0:
             log.error("Failed to create snapshot '%s': %s", snapname, err)
             send_mail(
@@ -610,6 +611,7 @@ Hello,
             err = proc.communicate()[1]
             if proc.returncode != 0:
                 log.error("Failed to destroy snapshot '%s': %s", snapshot, err)
+            run_replication = True
     else:
         log.debug("Autorepl running, skip destroying snapshots")
     MNTLOCK.unlock()
@@ -617,7 +619,7 @@ Hello,
 
 os.unlink('/var/run/autosnap.pid')
 
-if Replication.objects.exists():
+if run_replication and Replication.objects.exists():
     os.execl('/usr/local/bin/python',
              'python',
              '/usr/local/www/freenasUI/tools/autorepl.py')
