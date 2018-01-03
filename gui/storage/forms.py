@@ -2797,7 +2797,7 @@ class UnlockPassphraseForm(Form):
             os.unlink(keyfile)
         else:
             raise ValueError("Need a passphrase or recovery key")
-        zimport = notifier().zfs_import(volume.vol_name, id=volume.vol_guid)
+        zimport = notifier().zfs_import(volume.vol_name, id=volume.vol_guid, first_time=False)
         if not zimport:
             if failed > 0:
                 msg = _(
