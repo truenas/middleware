@@ -175,7 +175,7 @@ class UserService(CRUDService):
 
             password = await self.__set_password(data)
 
-            sshpubkey = data.pop('sshpubkey')  # datastore does not have sshpubkey
+            sshpubkey = data.pop('sshpubkey', None)  # datastore does not have sshpubkey
             pk = await self.middleware.call('datastore.insert', 'account.bsdusers', data, {'prefix': 'bsdusr_'})
 
             await self.__set_groups(pk, groups)
@@ -264,7 +264,7 @@ class UserService(CRUDService):
         password = await self.__set_password(user)
 
         await self.__update_sshpubkey(user, group['bsdgrp_group'])
-        user.pop('sshpubkey')
+        user.pop('sshpubkey', None)
 
         home_mode = user.pop('home_mode', None)
         if home_mode is not None:
