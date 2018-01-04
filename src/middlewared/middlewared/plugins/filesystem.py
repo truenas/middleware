@@ -1,6 +1,6 @@
 from middlewared.main import EventSource
 from middlewared.schema import Bool, Dict, Int, Ref, Str, accepts
-from middlewared.service import private, CallError, Service
+from middlewared.service import private, CallError, Service, job
 from middlewared.utils import filter_list
 
 import binascii
@@ -140,6 +140,27 @@ class FilesystemService(Service):
                 f.seek(options['offset'])
             data = binascii.b2a_base64(f.read(options.get('maxlen'))).decode().strip()
         return data
+
+    @accepts(Str('path'))
+    @job(pipe=True)
+    async def get(self, job, path):
+        """
+        Job to get contents of `path`.
+        """
+
+        if not os.path.isfile(path):
+            raise CallError(f'{path} is not a file')
+
+        def read_write():
+            with open(path, 'rb') as f:
+                f2 = os.fdopen(job.write_fd, 'wb')
+                while True:
+                    read = f.read(102400)
+                    if read == b'':
+                        break
+                    f2.write(read)
+                f2.close()
+        await self.middleware.run_in_thread(read_write)
 
 
 class FileFollowTailEventSource(EventSource):
