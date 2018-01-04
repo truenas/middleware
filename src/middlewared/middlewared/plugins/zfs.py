@@ -382,27 +382,29 @@ class ZFSSnapshot(CRUDService):
                 self.logger.error(f"{err}")
                 return False
 
-     @accepts(Dict(
-         'snapshot_remove',
-         Str('dataset', required=True),
-         Str('name', required=True),
-         Bool('defer_delete')
-     ))
-     async def remove(self, data):
-         """
-         Remove a snapshot from a given dataset.
+    @accepts(Dict(
+        'snapshot_remove',
+        Str('dataset', required=True),
+        Str('name', required=True),
+        Bool('defer_delete')
+    ))
+    async def remove(self, data):
+        """
+        Remove a snapshot from a given dataset.
 
-         Returns:
-             bool: True if succeed otherwise False.
-         """
-         zfs = libzfs.ZFS()
+        Returns:
+            bool: True if succeed otherwise False.
+        """
+        zfs = libzfs.ZFS()
 
-         try:
-             snap = zfs.get_snapshot(data['dataset'] + '@' + data['name'])
-             snap.delete(True if data.get('defer_delete') else False)
-         except libzfs.ZFSException as err:
-             self.logger.error("{0}".format(err))
-             return False
+        try:
+            snap = zfs.get_snapshot(data['dataset'] + '@' + data['name'])
+            snap.delete(True if data.get('defer_delete') else False)
+        except libzfs.ZFSException as err:
+            self.logger.error("{0}".format(err))
+            return False
+
+        return True
 
     @accepts(Dict(
         'snapshot_clone',
