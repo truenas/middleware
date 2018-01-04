@@ -16,7 +16,7 @@ def existing_virtual_hostname(apps, schema_editor):
         return
 
     with open(SENTINEL, 'r') as f:
-        hostname_virtual = f.read()
+        hostname_virtual = f.read().strip().split('\n')[0]
 
     GlobalConfiguration = apps.get_model('network', 'GlobalConfiguration')
     for o in GlobalConfiguration.objects.all():
