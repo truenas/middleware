@@ -1,6 +1,6 @@
-from middlewared.schema import accepts, Bool, Dict, Int, List, Patch, Str
+from middlewared.schema import accepts, Any, Bool, Dict, Int, List, Patch, Str
 from middlewared.service import (
-    CallError, CRUDService, ValidationErrors, private
+    CallError, CRUDService, ValidationErrors, item_method, private
 )
 from middlewared.utils import run, Popen
 
@@ -325,6 +325,27 @@ class UserService(CRUDService):
 
         return pk
 
+    @item_method
+    @accepts(
+        Int('id'),
+        Str('key'),
+        Any('value'),
+    )
+    async def set_attribute(self, pk, key, value):
+        """
+        Set user general purpose `attributes` dictionary `key` to `value`.
+
+        e.g. Setting key="foo" value="var" will result in {"attributes": {"foo": "bar"}}
+        """
+        user = await self._get_instance(pk)
+        user.pop('group')
+
+        user['attributes'][key] = value
+        await self.middleware.call('datastore.update', 'account.bsdusers', pk, user, {'prefix': 'bsdusr_'})
+
+        return True
+
+    @accepts()
     async def get_next_uid(self):
         """
         Get the next available/free uid.
