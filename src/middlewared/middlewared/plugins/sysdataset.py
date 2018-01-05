@@ -306,7 +306,7 @@ class SystemDatasetService(ConfigService):
             await self.__umount(_from, config['uuid'])
             await self.__umount(_to, config['uuid'])
             await self.__mount(_to, config['uuid'], SYSDATASET_PATH)
-            proc = await Popen(f'zfs list -H -o name {_from}/.system|xargs zfs destroy -r')
+            proc = await Popen(f'zfs list -H -o name {_from}/.system|xargs zfs destroy -r', shell=True)
             await proc.communicate()
 
         os.rmdir('/tmp/system.new')

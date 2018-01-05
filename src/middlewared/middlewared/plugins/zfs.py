@@ -33,7 +33,7 @@ def find_vdev(pool, vname):
     while children:
         child = children.pop()
 
-        if child.guid == vname:
+        if str(vname) == str(child.guid):
             return child
 
         if child.type == 'disk':
@@ -291,7 +291,7 @@ class ZFSDatasetService(CRUDService):
                     else:
                         if 'value' not in v:
                             raise ValidationError('properties', f'properties.{k} needs a "value" attribute')
-                        if ':' not in v['value']:
+                        if ':' not in k:
                             raise ValidationError('properties', f'User property needs a colon (:) in its name`')
                         prop = libzfs.ZFSUserProperty(v['value'])
                         dataset.properties[k] = prop

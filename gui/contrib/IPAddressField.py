@@ -7,6 +7,21 @@ from dojango import forms
 from dojango.forms import widgets
 
 
+def ScopedIPAddress(*args, **kwargs):
+    zone_index = None
+    if kwargs.get("version") == 6 and kwargs.pop("allow_zone_index", False):
+        value = args[0]
+        if value.count("%") == 1:
+            value, zone_index = value.split("%")
+        args = (value,) + args[1:]
+
+    result = IPAddress(*args, **kwargs)
+    result.zone_index = zone_index
+    result._string_from_ip_int = lambda ip_int: result.__class__._string_from_ip_int(result, ip_int) + (
+        ("%" + result.zone_index) if result.zone_index is not None else "")
+    return result
+
+
 class IPNetworkWidget(widgets.TextInput):
     def render(self, name, value, attrs=None):
         if isinstance(value, _IPAddrBase):
@@ -142,6 +157,10 @@ class IP4AddressFormField(IPAddressFormFieldBase):
 
 
 class IP6AddressFormField(IPAddressFormFieldBase):
+    def __init__(self, *args, **kwargs):
+        self.allow_zone_index = kwargs.pop("allow_zone_index", False)
+        super().__init__(*args, **kwargs)
+
     def to_python(self, value):
         if not value:
             return ""
@@ -153,7 +172,7 @@ class IP6AddressFormField(IPAddressFormFieldBase):
             return ""
         else:
             try:
-                return IPAddress(value, version=6)
+                return ScopedIPAddress(value, version=6, allow_zone_index=self.allow_zone_index)
             except Exception as e:
                 raise ValidationError("Invalid IPv6 address: %s" % e)
 
@@ -236,6 +255,10 @@ class IP4AddressField(IPAddressFieldBase):
 class IP6AddressField(IPAddressFieldBase):
     description = "IPv6 Address Field"
 
+    def __init__(self, *args, **kwargs):
+        self.allow_zone_index = kwargs.pop("allow_zone_index", False)
+        super().__init__(*args, **kwargs)
+
     def to_python(self, value):
         if not value:
             return ""
@@ -246,12 +269,13 @@ class IP6AddressField(IPAddressFieldBase):
         if value == "None":
             return ""
         else:
-            return IPAddress(value, version=6)
+            return ScopedIPAddress(value, version=6, allow_zone_index=self.allow_zone_index)
 
     def formfield(self, **kwargs):
         defaults = {
             'form_class': IP6AddressFormField,
             'widget': IPNetworkWidget,
+            'allow_zone_index': self.allow_zone_index,
         }
         defaults.update(kwargs)
         return super(IP6AddressField, self).formfield(**defaults)

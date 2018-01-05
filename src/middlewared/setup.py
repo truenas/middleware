@@ -67,6 +67,7 @@ setup(
         'console_scripts': [
             'middlewared = middlewared.main:main',
             'midclt = middlewared.client.client:main',
+            'midgdb = middlewared.gdb:main',
         ],
     },
 )

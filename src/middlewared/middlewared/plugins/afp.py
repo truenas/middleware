@@ -20,7 +20,7 @@ class AFPService(SystemServiceService):
         Str('global_aux'),
         Str('map_acls', enum=["rights", "mode", "none"]),
         Str('chmod_request', enum=["preserve", "simple", "ignore"]),
-    ), Bool('dry_run'))
+    ), Bool('dry_run', default=False))
     async def update(self, data, dry_run=False):
         old = await self.config()
 

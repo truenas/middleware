@@ -1,12 +1,11 @@
 import asyncio
-import ctypes
-import json
 import os
+import psutil
 import pybonjour
 import queue
+import re
 import select
 import socket
-import sys
 import threading
 
 from pybonjour import (
@@ -15,14 +14,76 @@ from pybonjour import (
     kDNSServiceErr_NoError
 )
 
-from middlewared.service import Service
+from middlewared.service import Service, private
 
-if '/usr/local/www' not in sys.path:
-    sys.path.append('/usr/local/www')
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'freenasUI.settings')
 
-import django
-django.setup()
+class mDNSDaemonMonitor(object):
+    def __init__(self, *args, **kwargs):
+        super(mDNSDaemonMonitor, self).__init__()
+        self.mdnsd_pidfile = "/var/run/mdnsd.pid"
+        self.mdnsd_piddir = "/var/run/"
+
+    def pidfile_exists(self):
+        return os.access(self.mdnsd_pidfile, os.F_OK)
+
+    def is_alive(self):
+        mdnsd_proc = None
+        alive = False
+
+        if not self.pidfile_exists():
+            return False
+
+        for proc in psutil.process_iter():
+            procdict = proc.as_dict(['name'])
+            procname = str(procdict['name'])
+
+            match = re.search("([^/]+)$", procname)
+            if not match:
+                continue
+
+            procname = match.group(0)
+            if procname == "mdnsd":
+                mdnsd_proc = proc
+                break
+
+        if mdnsd_proc and mdnsd_proc.is_running():
+            alive = True
+
+        return alive
+
+    def wait(self):
+        alive = False
+
+        if self.is_alive():
+            return True
+
+        fd = os.open(self.mdnsd_piddir, os.O_RDONLY)
+        kq = select.kqueue()
+
+        events = [select.kevent(
+            fd, filter=select.KQ_FILTER_VNODE,
+            flags=select.KQ_EV_ADD | select.KQ_EV_ENABLE | select.KQ_EV_CLEAR,
+            fflags=select.KQ_NOTE_WRITE | select.KQ_NOTE_EXTEND
+        )]
+
+        events = kq.control(events, 0, 0)
+        if not self.is_alive() and self.pidfile_exists():
+            os.unlink(self.mdnsd_pidfile)
+
+        while (not alive):
+            proc_events = kq.control([], 1)
+            for event in proc_events:
+                if ((event.fflags & select.KQ_NOTE_WRITE) or
+                        (event.fflags & select.KQ_NOTE_EXTEND)):
+                    if self.pidfile_exists() and self.is_alive():
+                        alive = True
+                        break
+
+        kq.close()
+        os.close(fd)
+
+        return True
+
 
 class mDNSObject(object):
     def __init__(self, **kwargs):
@@ -53,10 +114,10 @@ class mDNSDiscoverObject(mDNSObject):
             self.name.strip('.'),
             self.regtype.strip('.'),
             self.domain.strip('.')
-        ) 
+        )
 
     def to_dict(self):
-        bdict = super(mDNSDiscoveryObject, self).to_dict()
+        bdict = super(mDNSDiscoverObject, self).to_dict()
         bdict.update({
             'type': 'mDNSDiscoverObject',
             'regtype': self.regtype,
@@ -90,6 +151,9 @@ class mDNSThread(threading.Thread):
         self.logger = kwargs.get('logger')
         self.timeout = kwargs.get('timeout', 30)
 
+        self.mdnsd = mDNSDaemonMonitor()
+        self.mdnsd.wait()
+
     def active(self, sdRef):
         return (bool(sdRef) and sdRef.fileno() != -1)
 
@@ -105,7 +169,7 @@ class DiscoverThread(mDNSThread):
         self.finished = threading.Event()
         self.pipe = os.pipe()
 
-    def on_discover(self ,sdRef, flags, interface, error, name, regtype, domain):
+    def on_discover(self, sdRef, flags, interface, error, name, regtype, domain):
         self.debug("DiscoverThread: name=%s flags=0x%08x error=%d", name, flags, error)
 
         if error != kDNSServiceErr_NoError:
@@ -136,7 +200,7 @@ class DiscoverThread(mDNSThread):
             for ref in r:
                 pybonjour.DNSServiceProcessResult(ref)
 
-            if self.finished.is_set(): 
+            if self.finished.is_set():
                 break
 
         if self.active(sdRef):
@@ -145,6 +209,7 @@ class DiscoverThread(mDNSThread):
     def cancel(self):
         self.finished.set()
         os.write(self.pipe[1], b'42')
+
 
 class ServicesThread(mDNSThread):
     def __init__(self, **kwargs):
@@ -159,8 +224,8 @@ class ServicesThread(mDNSThread):
     def to_regtype(self, obj):
         regtype = None
 
-        if (obj.flags & (kDNSServiceFlagsAdd|kDNSServiceFlagsMoreComing)) \
-            or not (obj.flags & kDNSServiceFlagsAdd):
+        if (obj.flags & (kDNSServiceFlagsAdd | kDNSServiceFlagsMoreComing)) \
+           or not (obj.flags & kDNSServiceFlagsAdd):
             service = obj.name
             proto = obj.regtype.split('.')[0]
             regtype = "%s.%s." % (service, proto)
@@ -218,7 +283,7 @@ class ServicesThread(mDNSThread):
 
             r, w, x = select.select(_references + [self.pipe[0]], [], [])
             if self.pipe[0] in r:
-                break 
+                break
             for ref in r:
                 pybonjour.DNSServiceProcessResult(ref)
             if not (obj.flags & kDNSServiceFlagsAdd):
@@ -226,18 +291,18 @@ class ServicesThread(mDNSThread):
                 if self.active(sdRef):
                     sdRef.close()
 
-            if self.finished.is_set(): 
+            if self.finished.is_set():
                 break
 
         for ref in self.references:
-            self.references.remove(ref)  
+            self.references.remove(ref)
             if self.active(ref):
                 ref.close()
 
     def cancel(self):
         self.finished.set()
         os.write(self.pipe[1], b'42')
-        
+
 
 class ResolveThread(mDNSThread):
     def __init__(self, **kwargs):
@@ -263,7 +328,7 @@ class ResolveThread(mDNSThread):
                 port=port,
                 text=text
             )
-        ) 
+        )
 
         self.references.remove(sdRef)
         sdRef.close()
@@ -320,8 +385,8 @@ class ResolveThread(mDNSThread):
 
             if _host == host:
                 if (service and _service == service) or \
-                    (service and _service == service[:-1]) or \
-                    (not service):
+                   (service and _service == service[:-1]) or \
+                   (not service):
                     self.services.remove(s)
                     ret = True
         return ret
@@ -341,8 +406,8 @@ class ResolveThread(mDNSThread):
 
             if _host == host:
                 if (service and _service == service) or \
-                    (service and _service == service[:-1]) or \
-                    (not service):
+                   (service and _service == service[:-1]) or \
+                   (not service):
                     services.append(s)
 
         return services
@@ -397,7 +462,8 @@ class mDNSBrowserService(Service):
     async def get_services(self):
         return await self.rthread.get_services()
 
-    async def start(self):
+    @private
+    def start(self):
         self.logger.debug("mDNSBrowserService: start()")
 
         self.lock.acquire()
@@ -421,7 +487,8 @@ class mDNSBrowserService(Service):
         self.initialized = True
         self.lock.release()
 
-    async def stop(self):
+    @private
+    def stop(self):
         self.logger.debug("mDNSBrowserService: stop()")
 
         self.rthread.cancel()
@@ -432,11 +499,12 @@ class mDNSBrowserService(Service):
         self.initialized = False
         self.lock.release()
 
-    async def restart(self):
+    @private
+    def restart(self):
         self.logger.debug("mDNSBrowserService: restart()")
 
-        await self.stop()
-        await self.start()
+        self.stop()
+        self.start()
 
 
 class mDNSServiceThread(threading.Thread):
@@ -460,8 +528,7 @@ class mDNSServiceThread(threading.Thread):
         if not (name and regtype and port):
             return
 
-        sdRef = pybonjour.DNSServiceRegister(name=name,
-            regtype=regtype, port=port, callBack=None)
+        sdRef = pybonjour.DNSServiceRegister(name=name, regtype=regtype, port=port, callBack=None)
 
         while True:
             r, w, x = select.select([sdRef, self.pipe[0]], [], [])
@@ -484,7 +551,7 @@ class mDNSServiceThread(threading.Thread):
     def run(self):
         self.register()
 
-    async def setup(self):
+    def setup(self):
         pass
 
     def cancel(self):
@@ -498,11 +565,12 @@ class mDNSServiceSSHThread(mDNSServiceThread):
             kwargs['service'] = 'ssh'
         super(mDNSServiceSSHThread, self).__init__(**kwargs)
 
-    async def setup(self):
-        ssh_service = await self.middleware.call('datastore.query',
+    def setup(self):
+        ssh_service = self.middleware.call_sync(
+            'datastore.query',
             'services.services', [('srv_service', '=', 'ssh'), ('srv_enable', '=', True)])
         if ssh_service:
-            response = await self.middleware.call('datastore.query', 'services.ssh', [], {'get': True})
+            response = self.middleware.call_sync('datastore.query', 'services.ssh', [], {'get': True})
             if response:
                 self.port = response['ssh_tcpport']
                 self.regtype = "_ssh._tcp."
@@ -513,14 +581,41 @@ class mDNSServiceSFTPThread(mDNSServiceThread):
         kwargs['service'] = 'sftp'
         super(mDNSServiceSFTPThread, self).__init__(**kwargs)
 
-    async def setup(self):
-        ssh_service = await self.middleware.call('datastore.query',
+    def setup(self):
+        ssh_service = self.middleware.call_sync(
+            'datastore.query',
             'services.services', [('srv_service', '=', 'ssh'), ('srv_enable', '=', True)])
         if ssh_service:
-            response = await self.middleware.call('datastore.query', 'services.ssh', [], {'get': True})
+            response = self.middleware.call_sync('datastore.query', 'services.ssh', [], {'get': True})
             if response:
                 self.port = response['ssh_tcpport']
                 self.regtype = "_sftp._tcp."
+
+
+class mDNSServiceHTTPThread(mDNSServiceThread):
+    def __init__(self, **kwargs):
+        kwargs['service'] = 'http'
+        super(mDNSServiceHTTPThread, self).__init__(**kwargs)
+
+    def setup(self):
+        webui = self.middleware.call_sync('datastore.query', 'system.settings')
+        if (webui[0]['stg_guiprotocol'] == 'http' or
+           webui[0]['stg_guiprotocol'] == 'httphttps'):
+            self.port = int(webui[0]['stg_guiport'] or 80)
+            self.regtype = "_http._tcp."
+
+
+class mDNSServiceHTTPSThread(mDNSServiceThread):
+    def __init__(self, **kwargs):
+        kwargs['service'] = 'https'
+        super(mDNSServiceHTTPSThread, self).__init__(**kwargs)
+
+    def setup(self):
+        webui = self.middleware.call_sync('datastore.query', 'system.settings')
+        if (webui[0]['stg_guiprotocol'] == 'https' or
+           webui[0]['stg_guiprotocol'] == 'httphttps'):
+            self.port = int(webui[0]['stg_guihttpsport'] or 443)
+            self.regtype = "_https._tcp."
 
 
 class mDNSServiceMiddlewareThread(mDNSServiceThread):
@@ -528,10 +623,10 @@ class mDNSServiceMiddlewareThread(mDNSServiceThread):
         kwargs['service'] = 'middleware'
         super(mDNSServiceMiddlewareThread, self).__init__(**kwargs)
 
-    async def setup(self):
-        webui = await self.middleware.call('datastore.query', 'system.settings')
+    def setup(self):
+        webui = self.middleware.call_sync('datastore.query', 'system.settings')
         if (webui[0]['stg_guiprotocol'] == 'http' or
-            webui[0]['stg_guiprotocol'] == 'httphttps'):
+           webui[0]['stg_guiprotocol'] == 'httphttps'):
             self.port = int(webui[0]['stg_guiport'] or 80)
             self.regtype = "_middleware._tcp."
 
@@ -541,10 +636,10 @@ class mDNSServiceMiddlewareSSLThread(mDNSServiceThread):
         kwargs['service'] = 'middleware-ssl'
         super(mDNSServiceMiddlewareSSLThread, self).__init__(**kwargs)
 
-    async def setup(self):
-        webui = await self.middleware.call('datastore.query', 'system.settings')
+    def setup(self):
+        webui = self.middleware.call_sync('datastore.query', 'system.settings')
         if (webui[0]['stg_guiprotocol'] == 'https' or
-            webui[0]['stg_guiprotocol'] == 'httphttps'):
+           webui[0]['stg_guiprotocol'] == 'httphttps'):
             self.port = int(webui[0]['stg_guihttpsport'] or 443)
             self.regtype = "_middleware-ssl._tcp."
 
@@ -555,13 +650,17 @@ class mDNSAdvertiseService(Service):
         self.threads = {}
         self.initialized = False
         self.lock = threading.Lock()
+        self.mdnsd = mDNSDaemonMonitor()
 
-    async def start(self):
+    @private
+    def start(self):
         self.lock.acquire()
         if self.initialized:
             self.lock.release()
             return
         self.lock.release()
+
+        self.mdnsd.wait()
 
         try:
             hostname = socket.gethostname().split('.')[0]
@@ -571,13 +670,15 @@ class mDNSAdvertiseService(Service):
         mdns_advertise_services = [
             mDNSServiceSSHThread,
             mDNSServiceSFTPThread,
+            mDNSServiceHTTPThread,
+            mDNSServiceHTTPSThread,
             mDNSServiceMiddlewareThread,
             mDNSServiceMiddlewareSSLThread
         ]
 
         for service in mdns_advertise_services:
             thread = service(middleware=self.middleware, logger=self.logger, hostname=hostname)
-            await thread.setup()
+            thread.setup()
             thread_name = thread.service
             self.threads[thread_name] = thread
             thread.start()
@@ -586,10 +687,11 @@ class mDNSAdvertiseService(Service):
         self.initialized = True
         self.lock.release()
 
-    async def stop(self):
+    @private
+    def stop(self):
         for thread in self.threads.copy():
             thread = self.threads.get(thread)
-            await self.middleware.run_in_thread(thread.cancel)
+            thread.cancel()
             del self.threads[thread.service]
         self.threads = {}
 
@@ -597,13 +699,15 @@ class mDNSAdvertiseService(Service):
         self.initialized = False
         self.lock.release()
 
-    async def restart(self):
-        await self.stop()
-        await self.start()
+    @private
+    def restart(self):
+        self.stop()
+        self.start()
 
 
 class mDNSService(Service):
     pass
+
 
 def setup(middleware):
     asyncio.ensure_future(middleware.call('mdnsadvertise.start'))

@@ -92,6 +92,7 @@ class GlobalConfiguration(Model):
         verbose_name=_("IPv4 Default Gateway"),
     )
     gc_ipv6gateway = IP6AddressField(
+        allow_zone_index=True,
         blank=True,
         default='',
         verbose_name=_("IPv6 Default Gateway"),
@@ -160,6 +161,7 @@ class GlobalConfiguration(Model):
             'gc_ipv4gateway',
             'gc_ipv6gateway',
             'gc_domain',
+            'gc_domains',
             'gc_nameserver1',
             'gc_nameserver2',
             'gc_nameserver3',

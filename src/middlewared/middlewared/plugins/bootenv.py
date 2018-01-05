@@ -35,7 +35,7 @@ class BootEnvService(CRUDService):
         Str('id'),
         Dict(
             'attributes',
-            Bool('keep'),
+            Bool('keep', default=False),
         )
     )
     def set_attribute(self, oid, attrs):

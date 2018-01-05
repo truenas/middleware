@@ -12,6 +12,8 @@ app.wsgi_app = ReverseProxied(app.wsgi_app)
 
 @app.template_filter()
 def json_filter(value):
+    if isinstance(value, dict):
+        value.pop('_required_', None)
     return json.dumps(value, indent=True)
 
 

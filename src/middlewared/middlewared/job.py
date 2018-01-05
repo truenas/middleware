@@ -73,6 +73,12 @@ class JobsQueue(object):
         return self.deque.all()
 
     def add(self, job):
+        if job.options["lock_queue_size"] is not None:
+            lock = self.get_lock(job)
+            queued_jobs = [another_job for another_job in self.queue if self.get_lock(another_job) is lock]
+            if len(queued_jobs) >= job.options["lock_queue_size"]:
+                return queued_jobs[-1]
+
         self.deque.add(job)
         self.queue.append(job)
 
@@ -80,6 +86,8 @@ class JobsQueue(object):
 
         # A job has been added to the queue, let the queue scheduler run
         self.queue_event.set()
+
+        return job
 
     def get_lock(self, job):
         """
@@ -247,8 +255,11 @@ class Job(object):
             self.progress['extra'] = extra
         self.middleware.send_event('core.get_jobs', 'CHANGED', id=self.id, fields=self.__encode__())
 
-    async def wait(self):
-        await self._finished.wait()
+    async def wait(self, timeout=None):
+        if timeout is None:
+            await self._finished.wait()
+        else:
+            await asyncio.wait_for(asyncio.shield(self._finished.wait()), timeout)
         return self.result
 
     def wait_sync(self):
@@ -351,6 +362,21 @@ class Job(object):
             'time_started': self.time_started,
             'time_finished': self.time_finished,
         }
+
+    async def wrap(self, subjob):
+        """
+        Wrap a job in another job, proxying progress and result/error.
+        This is useful when we want to run a job inside a job.
+        """
+        while not subjob.time_finished:
+            try:
+                await subjob.wait(1)
+            except asyncio.TimeoutError:
+                pass
+            self.set_progress(**subjob.progress)
+        if subjob.exception:
+            raise subjob.exception
+        return subjob.result
 
 
 class JobProgressBuffer:

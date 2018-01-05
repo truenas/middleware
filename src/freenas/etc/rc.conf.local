@@ -96,10 +96,14 @@ _interface_config()
 	local carp1_addr="169.254.10.20/32" carp2_addr="169.254.10.80/32"
 	local carp1_skew carp2_skew
 	local internal_ip internal_iface
+	local configure_ifaces=1
 	if ! is_freenas; then
 
 		if [ "$(ha_mode)" = "MANUAL" ]; then
-			# TODO: get from database if we are not echostream
+			if [ "$(/usr/local/bin/python /usr/local/www/freenasUI/middleware/notifier.py failover_licensed 2> /dev/null)" = "True" ]; then
+				configure_ifaces=0
+				echo "# Unable to determine HA hardware and node, skipping interfaces configuration" | tee /dev/console
+			fi
 		else
 			node=$(ha_node)
 		fi
@@ -124,7 +128,7 @@ _interface_config()
                                 fi
 			elif [ "$(ha_hardware)" = "SBB" ]; then
 				internal_iface="ix0"
-			elif [ "$(ha_hardware)" = "AIC" -o "$(ha_hardware)" = "PUMA" ]; then
+			elif [ "$(ha_hardware)" = "ECHOWARP" -o "$(ha_hardware)" = "PUMA" ]; then
 				internal_iface="ntb0"
 				if [ "${node}" = "A" ]; then
 					ether="02:8c:97:2e:a5:01"
@@ -158,6 +162,9 @@ _interface_config()
 	# configuration.
 	${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT id, int_interface, int_dhcp, int_ipv4address, int_ipv4address_b, int_v4netmaskbit, int_ipv6auto, int_ipv6address, int_v6netmaskbit, int_vip, int_vhid, int_pass, int_critical, int_group, int_options FROM network_interfaces ORDER BY id" | \
 	while read interface_id interface dodhcp ipv4addr ipv4addr_b ipv4netmask doipv6auto ipv6addr ipv6netmask int_vip int_vhid int_pass critical group options; do
+		if [ ${configure_ifaces} -ne 1 ]; then
+			continue;
+		fi
 		if [ "$(ha_node)" = "B" ]; then
 			ipv4addr=${ipv4addr_b}
 		fi
@@ -457,7 +464,7 @@ _snmp_config()
 	echo "snmpd_conffile=\"/etc/local/snmpd.conf\""
 
 	local snmpd_loglevel=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT snmp_loglevel FROM services_snmp ORDER BY -id LIMIT 1")
-	echo "snmpd_flags=\"-Ls${snmpd_loglevel}d\""
+	echo "snmpd_flags=\"-LS${snmpd_loglevel}d\""
 }
 
 _ssl_config()
@@ -606,7 +613,6 @@ _gen_conf()
 	fi
 
 	_count_config powerd_enable system_advanced adv_powerdaemon =1
-	_count_config ix_diagnose_enable system_advanced adv_uploadcrash =1
 	if ! is_freenas; then
 		if [ "$(/usr/local/bin/python /usr/local/www/freenasUI/middleware/notifier.py failover_licensed 2> /dev/null)" = "True" ]; then
 			echo "failover_enable=\"YES\""

@@ -2494,7 +2494,7 @@ class notifier(metaclass=HookMetaclass):
 
         return volumes
 
-    def zfs_import(self, name, id=None):
+    def zfs_import(self, name, id=None, first_time=True):
         if id is not None:
             imp = self._pipeopen('zpool import -f -R /mnt %s' % id)
         else:
@@ -2512,13 +2512,14 @@ class notifier(metaclass=HookMetaclass):
                 pass
 
         if imported:
-            # Reset all mountpoints in the zpool
-            self.zfs_inherit_option(name, 'mountpoint', True)
             # Remember the pool cache
             self._system("zpool set cachefile=/data/zfs/zpool.cache %s" % (name))
-            # These should probably be options that are configurable from the GUI
-            self._system("zfs set aclmode=passthrough '%s'" % name)
-            self._system("zfs set aclinherit=passthrough '%s'" % name)
+            if first_time:
+                # Reset all mountpoints in the zpool
+                self.zfs_inherit_option(name, 'mountpoint', True)
+                # These should probably be options that are configurable from the GUI
+                self._system("zfs set aclmode=passthrough '%s'" % name)
+                self._system("zfs set aclinherit=passthrough '%s'" % name)
             return True
         else:
             log.error("Importing %s [%s] failed with: %s", name, id, stderr)
@@ -2665,10 +2666,12 @@ class notifier(metaclass=HookMetaclass):
                 else:
                     ed = EncryptedDisk()
                 ed.encrypted_volume = volume
-                ed.encrypted_disk = Disk.objects.filter(
+                diskobj = Disk.objects.filter(
                     disk_name=diskname,
                     disk_expiretime=None,
-                )[0]
+                )
+                if diskobj.exists():
+                    ed.encrypted_disk = diskobj[0]
                 ed.encrypted_provider = disk
                 ed.save()
                 model_objs.append(ed)

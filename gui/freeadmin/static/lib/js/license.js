@@ -16,7 +16,7 @@ require([
           commonDialog({
             id: "licenseDialog",
             name: 'Update License',
-            url: '/support/license/update/',
+            url: '/legacy/support/license/update/',
             nodes: [],
             style: "max-width: 75%;max-height:70%;background-color:white;overflow:auto;"
           });

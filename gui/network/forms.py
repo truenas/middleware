@@ -708,6 +708,10 @@ class GlobalConfigurationForm(ModelForm):
             with client as c:
                 c.call('routes.sync')
 
+        if self.instance._orig_gc_domains != self.cleaned_data.get('gc_domains'):
+            with client as c:
+                c.call('dns.sync')
+
         notifier().reload(whattoreload)
 
         http_proxy = self.cleaned_data.get('gc_httpproxy')

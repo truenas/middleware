@@ -24,6 +24,7 @@
 #
 #####################################################################
 import base64
+import errno
 import json
 import logging
 import os
@@ -298,14 +299,24 @@ class DiskResourceMixin(object):
         except:
             raise ImmediateHttpResponse(response=HttpNotFound())
 
+    def dispatch_list(self, request, **kwargs):
+        try:
+            with client as c:
+                self._disks_unused = [i['name'] for i in c.call('disk.get_unused')]
+        except Exception:
+            log.debug('Failed to get unused disks', exc_info=True)
+        return super(DiskResourceMixin, self).dispatch_list(request, **kwargs)
+
     def dehydrate(self, bundle):
         bundle = super(DiskResourceMixin, self).dehydrate(bundle)
         if self.is_webclient(bundle.request):
             bundle.data['id'] = bundle.obj.pk
             bundle.data['_edit_url'] += '?deletable=false'
-            bundle.data['_wipe_url'] = reverse('storage_disk_wipe', kwargs={
-                'devname': bundle.obj.disk_name,
-            })
+            unused = getattr(self, '_disks_unused', None)
+            if unused is not None and bundle.obj.disk_name in unused:
+                bundle.data['_wipe_url'] = reverse('storage_disk_wipe', kwargs={
+                    'devname': bundle.obj.disk_name,
+                })
             bundle.data['_editbulk_url'] = reverse('storage_disk_editbulk')
             if bundle.data['disk_size']:
                 bundle.data['disk_size'] = humanize_number_si(
@@ -1764,9 +1775,14 @@ class LAGGInterfaceMembersResourceMixin(object):
         bundle = super(LAGGInterfaceMembersResourceMixin, self).dehydrate(
             bundle
         )
-        bundle.data['lagg_interfacegroup'] = str(
-            bundle.obj.lagg_interfacegroup
-        )
+        if self.is_webclient(bundle.request):
+            bundle.data['lagg_interfacegroup'] = str(
+                bundle.obj.lagg_interfacegroup
+            )
+        else:
+            bundle.data['lagg_interfacegroup'] = (
+                bundle.obj.lagg_interfacegroup.id
+            )
         return bundle
 
 
@@ -1775,8 +1791,10 @@ class CloudSyncResourceMixin(NestedMixin):
     def dispatch_list(self, request, **kwargs):
         with client as c:
             self.__jobs = {}
-            for job in c.call('core.get_jobs', [('method', '=', 'backup.sync')], {'order_by': ['-id']}):
-                if job['arguments'] and job['arguments'][0] not in self.__jobs:
+            for job in c.call('core.get_jobs', [('method', '=', 'backup.sync')], {'order_by': ['id']}):
+                if job['arguments']:
+                    if job['arguments'][0] in self.__jobs and self.__jobs[job['arguments'][0]]['state'] == 'RUNNING':
+                        continue
                     self.__jobs[job['arguments'][0]] = job
         return super(CloudSyncResourceMixin, self).dispatch_list(request, **kwargs)
 
@@ -2913,7 +2931,7 @@ class ConfigFactoryRestoreResource(DojoResource):
 
     def post_list(self, request, **kwargs):
         factory_restore(request)
-        return HttpResponse('Factory restore completed. Reboot is required.', status=202)
+        return HttpResponse('Configuration restored to defaults. Reboot required.', status=202)
 
 
 class KerberosRealmResourceMixin(object):
@@ -3676,9 +3694,18 @@ class UpdateResourceMixin(NestedMixin):
                 hasattr(notifier, 'failover_status') and
                 notifier().failover_licensed()
             ):
-                data = c.call('failover.call_remote', 'update.get_pending')
+                try:
+                    data = c.call('failover.call_remote', 'update.get_pending')
+                except ClientException as e:
+                    # If method does not exist it means we are still upgranding old
+                    # version standby node using hasyncd
+                    if e.errno not in (ClientException.ENOMETHOD, errno.ECONNREFUSED) and e.trace['class'] not in ('ConnectionRefusedError', 'KeyError'):
+                        raise
+                    s = notifier().failover_rpc()
+                    data = s.update_pending()
             else:
                 data = c.call('update.get_pending')
+
         return self.create_response(
             request,
             data,
@@ -3961,6 +3988,7 @@ class VMResourceMixin(object):
         bundle = super(VMResourceMixin, self).dehydrate(bundle)
         state = 'UNKNOWN'
         device_start_url = device_stop_url = device_restart_url = device_clone_url = device_vncweb_url = info = ''
+        device_poweroff_url = ''
         try:
             with client as c:
                 status = c.call('vm.status', bundle.obj.id)
@@ -3973,6 +4001,9 @@ class VMResourceMixin(object):
                 if state == 'RUNNING':
                     device_stop_url = reverse(
                         'vm_stop', kwargs={'id': bundle.obj.id},
+                    )
+                    device_poweroff_url = reverse(
+                        'vm_poweroff', kwargs={'id': bundle.obj.id},
                     )
                     device_restart_url = reverse(
                         'vm_restart', kwargs={'id': bundle.obj.id},
@@ -3991,6 +4022,7 @@ class VMResourceMixin(object):
                 bundle.data.update({
                     '_device_url': reverse('freeadmin_vm_device_datagrid') + '?id=%d' % bundle.obj.id,
                     '_stop_url': device_stop_url,
+                    '_poweroff_url': device_poweroff_url,
                     '_start_url': device_start_url,
                     '_restart_url': device_restart_url,
                     '_clone_url': device_clone_url,
