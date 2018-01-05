@@ -345,6 +345,19 @@ install_grub() {
 
 	_disks="$*"
 
+	# When doing inplace upgrades, its entirely possible we've
+	# booted in the wrong mode (I.E. bios/efi)
+	# Default to re-stamping what was already used on the current install
+	_boottype="$BOOTMODE"
+        if [ "${_upgrade_type}" = "inplace" ] ; then
+	   glabel list | grep -q 'efibsd'
+	   if [ $? -eq 0 ] ; then
+	      _boottype="efi"
+	   else
+	      _boottype="bios"
+	   fi
+	fi
+
 	# Install grub
 	# /usr/local/etc got changed to a symlink to /etc/local
 	ln -s /conf/base/etc/local ${_mnt}/etc/local
@@ -356,7 +369,7 @@ install_grub() {
 	mv ${_mnt}/conf/base/etc/local/grub.d/10_ktrueos.bak /tmp/bakup
 	for _disk in ${_disks}; do
 	    _grub_args=""
-	    if [ "$BOOTMODE" = "efi" ] ; then
+	    if [ "$_boottype" = "efi" ] ; then
 		# EFI Mode
 		glabel label efibsd /dev/${_disk}p1
 		mkdir -p ${_mnt}/boot/efi
