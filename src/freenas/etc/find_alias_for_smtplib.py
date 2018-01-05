@@ -125,7 +125,7 @@ def main():
     if not to and not args.parse_recipients:
         parser.exit(message=parser.format_usage())
     msg = sys.stdin.read()
-    syslog.syslog("sending mail to " + ','.join(to) + msg[0:140])
+    syslog.syslog("sending mail to " + ', '.join(to) + '\n' + msg[0:140])
     do_sendmail(msg, to_addrs=to, parse_recipients=args.parse_recipients)
 
 
