@@ -381,7 +381,7 @@ def carp_master(fobj, state_file, ifname, vhid, event, user_override, forcetakeo
             except:
                 pass
 
-            run("sysctl -n kern.disks | tr ' ' '\\n' | sed -e 's,^,/dev/,' | grep '^/dev/da' | xargs -n 1 echo 'false >' | sh")
+            run("sysctl -n kern.disks | tr ' ' '\\n' | sed -e 's,^,/dev/,' | egrep '^/dev/(da|pmem)' | xargs -n 1 echo 'false >' | sh")
 
             if os.path.exists('/data/zfs/killcache'):
                 run('rm -f /data/zfs/zpool.cache /data/zfs/zpool.cache.saved')
