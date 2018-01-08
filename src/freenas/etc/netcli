@@ -808,12 +808,14 @@ def create_vlan():
     # Get interface name
     while True:
         vlan_vint = input(_("Enter an interface name ")
-                              + _("(vlanXX) or a to abort: "))
+                              + _("(vlanX) or a to abort: "))
         if vlan_vint == "a":
             return
-        if not re.match(r'vlan\d+', vlan_vint):
-            print(_("Interface name must be vlanXX where XX is a number"))
+        reg = re.search(r'vlan(\d+)', vlan_vint)
+        if not reg:
+            print(_("Interface name must be vlanX where X is a number"))
             continue
+        vlan_vint = f'vlan{int(reg.group(1))}'
         break
     # Get vlan tag
     while True:
