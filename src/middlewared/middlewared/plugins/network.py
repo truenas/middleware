@@ -1,5 +1,5 @@
-from middlewared.service import Service, private
-from middlewared.utils import Popen
+from middlewared.service import Service, filterable, private
+from middlewared.utils import Popen, filter_list
 from middlewared.schema import accepts, Str
 
 import asyncio
@@ -60,6 +60,57 @@ def dhclient_leases(interface):
 
 
 class InterfacesService(Service):
+
+    @filterable
+    def query(self, filters, options):
+        data = []
+        for name, iface in netif.list_interfaces().items():
+            data.append(self.iface_extend(iface.__getstate__()))
+        return filter_list(data, filters, options)
+
+    @private
+    def iface_extend(self, iface):
+        iface.update({
+            'configured_aliases': [],
+            'dhcp': False,
+        })
+        config = self.middleware.call_sync('datastore.query', 'network.interfaces', [('int_interface', '=', iface['name'])])
+        if not config:
+            return iface
+        config = config[0]
+
+        if config['int_dhcp']:
+            iface['dhcp'] = True
+        else:
+            if config['int_ipv4address']:
+                iface['configured_aliases'].append({
+                    'type': 'INET',
+                    'address': config['int_ipv4address'],
+                    'netmask': int(config['int_v4netmaskbit']),
+                })
+            if config['int_ipv6address']:
+                iface['configured_aliases'].append({
+                    'type': 'INET6',
+                    'address': config['int_ipv6address'],
+                    'netmask': int(config['int_v6netmaskbit']),
+                })
+
+        for alias in self.middleware.call_sync('datastore.query', 'network.alias', [('alias_interface', '=', config['id'])]):
+
+            if alias['alias_v4address']:
+                iface['configured_aliases'].append({
+                    'type': 'INET',
+                    'address': alias['alias_v4address'],
+                    'netmask': int(alias['alias_v4netmaskbit']),
+                })
+            if alias['alias_v6address']:
+                iface['configured_aliases'].append({
+                    'type': 'INET6',
+                    'address': alias['alias_v6address'],
+                    'netmask': int(alias['alias_v6netmaskbit']),
+                })
+
+        return iface
 
     @private
     async def sync(self):
