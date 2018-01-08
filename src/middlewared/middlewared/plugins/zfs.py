@@ -396,13 +396,17 @@ class ZFSSnapshot(CRUDService):
             bool: True if succeed otherwise False.
         """
         zfs = libzfs.ZFS()
+        snapshot_name = data['dataset'] + '@' + data['name']
 
         try:
-            snap = zfs.get_snapshot(data['dataset'] + '@' + data['name'])
+            snap = zfs.get_snapshot(snapshot_name)
             snap.delete(True if data.get('defer_delete') else False)
+
         except libzfs.ZFSException as err:
             self.logger.error("{0}".format(err))
             return False
+        else:
+            self.logger.info(f"Destroyed snapshot: {snapshot_name}")
 
         return True
 
