@@ -3,6 +3,7 @@ from middlewared.utils import Popen, filter_list, run
 from middlewared.schema import accepts, Str
 
 import asyncio
+from collections import defaultdict
 import ipaddr
 import ipaddress
 import netif
@@ -532,7 +533,6 @@ class DNSService(Service):
     async def query(self, filters, options):
         data = []
         resolvconf = (await run('resolvconf', '-l')).stdout.decode()
-        print(resolvconf)
         for nameserver in RE_NAMESERVER.findall(resolvconf):
             data.append({'nameserver': nameserver})
         return filter_list(data, filters, options)
@@ -576,6 +576,34 @@ class DNSService(Service):
         data = await proc.communicate(input=resolvconf.encode())
         if proc.returncode != 0:
             self.logger.warn(f'Failed to run resolvconf: {data[1].decode()}')
+
+
+class NetworkGeneralService(Service):
+
+    class Config:
+        namespace = 'network.general'
+
+    @accepts()
+    async def summary(self):
+        ips = defaultdict(lambda: defaultdict(list))
+        for iface in await self.middleware.call('interfaces.query'):
+            for alias in iface['aliases']:
+                if alias['type'] == 'INET':
+                    ips[iface['name']]['IPV4'].append(f'{alias["address"]}/{alias["netmask"]}')
+
+        default_routes = []
+        for route in await self.middleware.call('routes.system_routes', [('netmask', 'in', ['0.0.0.0', '::'])]):
+            default_routes.append(route['gateway'])
+
+        nameservers = []
+        for ns in await self.middleware.call('dns.query'):
+            nameservers.append(ns['nameserver'])
+
+        return {
+            'ips': ips,
+            'default_routes': default_routes,
+            'nameservers': nameservers,
+        }
 
 
 async def configure_http_proxy(middleware, *args, **kwargs):
