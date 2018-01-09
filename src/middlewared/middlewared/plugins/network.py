@@ -68,6 +68,8 @@ class InterfacesService(Service):
     def query(self, filters, options):
         data = []
         for name, iface in netif.list_interfaces().items():
+            if name in ('lo0', 'pfsync0', 'pflog0'):
+                continue
             data.append(self.iface_extend(iface.__getstate__()))
         return filter_list(data, filters, options)
 
