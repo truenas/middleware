@@ -345,6 +345,25 @@ class UserService(CRUDService):
 
         return True
 
+    @item_method
+    @accepts(
+        Int('id'),
+        Str('key'),
+    )
+    async def pop_attribute(self, pk, key):
+        """
+        Remove user general purpose `attributes` dictionary `key`.
+        """
+        user = await self._get_instance(pk)
+        user.pop('group')
+
+        if key in user['attributes']:
+            user['attributes'].pop(key)
+            await self.middleware.call('datastore.update', 'account.bsdusers', pk, user, {'prefix': 'bsdusr_'})
+            return True
+        else:
+            return False
+
     @accepts()
     async def get_next_uid(self):
         """
