@@ -209,7 +209,7 @@ Datasets
    :json string recordsize: recodsize (512, 1K, 2K, 4K, 8k, 16K, 32K, 64K, 128K, 256K, 512K, 1024K)
    :json string case_sensitivity: files case sensitivity (on, off, inherit)
    :json string quota: quota for this dataset and all children
-   :json string refquote: quota for this dataset
+   :json string refquota: quota for this dataset
    :json string reservation: reserved space for this dataset and all children
    :json string refreservation: reserved space for this dataset
    :json string readonly: read only (on, off, inherit)
@@ -272,7 +272,7 @@ Datasets
    :json string recordsize: recodsize (512, 1K, 2K, 4K, 8k, 16K, 32K, 64K, 128K, 256K, 512K, 1024K)
    :json string case_sensitivity: files case sensitivity (on, off, inherit)
    :json string quota: quota for this dataset and all children
-   :json string refquote: quota for this dataset
+   :json string refquota: quota for this dataset
    :json string reservation: reserved space for this dataset and all children
    :json string refreservation: reserved space for this dataset
    :json string readonly: read only (on, off, inherit)
@@ -1079,8 +1079,8 @@ Create resource
    :json string readonly: read only (on, off, inherit)
    :json string recordsize: recodsize (512, 1K, 2K, 4K, 8k, 16K, 32K, 64K, 128K, 256K, 512K, 1024K)
    :json string case_sensitivity: files case sensitivity (on, off, inherit)
-   :json string quote: quota for this dataset and all children
-   :json string refquote: quota for this dataset
+   :json string quota: quota for this dataset and all children
+   :json string refquota: quota for this dataset
    :json string reservation: reserved space for this dataset and all children
    :json string refreservation: reserved space for this dataset
    :json string readonly: read only (on, off, inherit)
@@ -1147,8 +1147,8 @@ Update resource
    :json string readonly: read only (on, off, inherit)
    :json string recordsize: recodsize (512, 1K, 2K, 4K, 8k, 16K, 32K, 64K, 128K, 256K, 512K, 1024K)
    :json string case_sensitivity: files case sensitivity (on, off, inherit)
-   :json string quote: quota for this dataset and all children
-   :json string refquote: quota for this dataset
+   :json string quota: quota for this dataset and all children
+   :json string refquota: quota for this dataset
    :json string reservation: reserved space for this dataset and all children
    :json string refreservation: reserved space for this dataset
    :json string readonly: read only (on, off, inherit)
