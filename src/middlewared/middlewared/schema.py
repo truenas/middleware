@@ -1,6 +1,7 @@
 import asyncio
 import copy
 import errno
+import ipaddress
 import os
 
 from middlewared.service_exception import ValidationErrors
@@ -162,12 +163,18 @@ class File(Str):
         return super().validate(value)
 
 
-class Bool(Attribute):
+class IPAddr(Str):
 
-    def __init__(self, *args, **kwargs):
-        if 'default' not in kwargs:
-            kwargs['default'] = False
-        super(Bool, self).__init__(*args, **kwargs)
+    def validate(self, value):
+        if value:
+            try:
+                ipaddress.ip_address(value)
+            except ValueError:
+                raise Error(self.name, f'Not a valid IP Address: {value}')
+        return super().validate(value)
+
+
+class Bool(Attribute):
 
     def clean(self, value):
         if value is None and not self.required:
@@ -393,6 +400,10 @@ class Patch(object):
                 schema.attrs[new.name] = new
             elif operation == 'rm':
                 del schema.attrs[patch['name']]
+            elif operation == 'edit':
+                attr = schema.attrs[patch['name']]
+                if 'method' in patch:
+                    patch['method'](attr)
             elif operation == 'attr':
                 for key, val in list(patch.items()):
                     setattr(schema, key, val)

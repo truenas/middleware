@@ -29,11 +29,12 @@ def item_method(fn):
     return fn
 
 
-def job(lock=None, process=False, pipe=False):
+def job(lock=None, lock_queue_size=None, process=False, pipe=False):
     """Flag method as a long running job."""
     def check_job(fn):
         fn._job = {
             'lock': lock,
+            'lock_queue_size': lock_queue_size,
             'process': process,
             'pipe': pipe,
         }
@@ -97,6 +98,8 @@ class ServiceBase(type):
       - datastore_extend: datastore `extend` option used in common `query` method
       - datastore_prefix: datastore `prefix` option used in helper methods
       - service: system service `name` option used by `SystemServiceService`
+      - service_model: system service datastore model option used by `SystemServiceService` (`service` if used if not provided)
+      - service_verb: verb to be used on update (default to `reload`)
       - namespace: namespace identifier of the service
       - private: whether or not the service is deemed private
       - verbose_name: human-friendly singular name for the service
@@ -123,6 +126,7 @@ class ServiceBase(type):
             'datastore_extend': None,
             'service': None,
             'service_model': None,
+            'service_verb': 'reload',
             'namespace': namespace,
             'private': False,
             'thread_pool': None,
@@ -197,7 +201,7 @@ class SystemServiceService(ConfigService):
             'datastore.query', 'services.services', [('srv_service', '=', self._config.service)], {'get': True}
         ))['srv_enable']
 
-        started = await self.middleware.call('service.reload', self._config.service, {'onetime': False})
+        started = await self.middleware.call(f'service.{self._config.service_verb}', self._config.service, {'onetime': False})
 
         if enabled and not started:
             raise CallError(f'The {self._config.service} service failed to start', CallError.ESERVICESTARTFAILURE)
@@ -350,7 +354,11 @@ class CoreService(Service):
                     so thats where we actually extract pertinent information.
                     """
                     if attr == 'update':
-                        method = getattr(svc, 'do_{}'.format(attr), None)
+                        original_name = 'do_{}'.format(attr)
+                        if hasattr(svc, original_name):
+                            method = getattr(svc, original_name, None)
+                        else:
+                            method = getattr(svc, attr)
                         if method is None:
                             continue
                     elif attr in ('do_update'):
@@ -364,6 +372,10 @@ class CoreService(Service):
 
                 # Skip private methods
                 if hasattr(method, '_private'):
+                    continue
+
+                # terminate is a private method used to clean up a service on shutdown
+                if attr == 'terminate':
                     continue
 
                 examples = defaultdict(list)

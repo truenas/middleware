@@ -15,7 +15,7 @@ class InitShutdownScriptService(CRUDService):
         Str('command'),
         File('script'),
         Str('when', enum=['PREINIT', 'POSTINIT', 'SHUTDOWN']),
-        Bool('enabled'),
+        Bool('enabled', default=True),
         register=True,
     ))
     async def do_create(self, data):

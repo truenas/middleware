@@ -10,7 +10,7 @@ from iocage.lib.ioc_json import IOCJson
 # iocage's imports are per command, these are just general facilities
 from iocage.lib.ioc_list import IOCList
 from iocage.lib.ioc_upgrade import IOCUpgrade
-from middlewared.schema import Bool, Dict, List, Str, accepts
+from middlewared.schema import Bool, Dict, List, Str, accepts, Int
 from middlewared.service import CRUDService, filterable, job, private
 from middlewared.service_exception import CallError
 from middlewared.utils import filter_list
@@ -42,7 +42,10 @@ class JailService(CRUDService):
              Str("template"),
              Str("pkglist"),
              Str("uuid"),
-             Bool("basejail"), Bool("empty"), Bool("short"), List("props")))
+             Bool("basejail", default=False),
+             Bool("empty", default=False),
+             Bool("short", default=False),
+             List("props")))
     async def do_create(self, options):
         """Creates a jail."""
         # Typically one would return the created jail's id in this
@@ -63,7 +66,10 @@ class JailService(CRUDService):
              Str("template"),
              Str("pkglist"),
              Str("uuid"),
-             Bool("basejail"), Bool("empty"), Bool("short"), List("props")))
+             Bool("basejail", default=False),
+             Bool("empty", default=False),
+             Bool("short", default=False),
+             List("props")))
     @job()
     def create_job(self, job, options):
         iocage = ioc.IOCage(skip_jails=True)
@@ -105,7 +111,7 @@ class JailService(CRUDService):
 
     @accepts(Str("jail"), Dict(
              "options",
-             Bool("plugin"),
+             Bool("plugin", default=False),
              additional_attrs=True,
              ))
     def do_update(self, jail, options):
@@ -170,14 +176,14 @@ class JailService(CRUDService):
         if options["name"] is not None:
             options["plugins"] = True
 
-        iocage = ioc.IOCage()
+        iocage = ioc.IOCage(silent=True)
 
         iocage.fetch(**options)
 
         return True
 
     @accepts(Str("resource", enum=["RELEASE", "TEMPLATE", "PLUGIN"]),
-             Bool("remote"))
+             Bool("remote", default=False))
     def list_resource(self, resource, remote):
         """Returns a JSON list of the supplied resource on the host"""
         self.check_dataset_existence()  # Make sure our datasets exist.
@@ -224,29 +230,44 @@ class JailService(CRUDService):
         Str("jail"),
         Dict(
             "options",
-            Str("action"),
+            Str("action", enum=["ADD", "EDIT", "REMOVE", "REPLACE", "LIST"]),
             Str("source"),
             Str("destination"),
             Str("fstype"),
             Str("fsoptions"),
             Str("dump"),
-            Str("_pass"), ))
+            Str("pass"),
+            Int("index", default=None),
+        ))
     def fstab(self, jail, options):
         """
         Adds an fstab mount to the jail, mounts if the jail is running.
         """
         _, _, iocage = self.check_jail_existence(jail, skip=False)
 
-        action = options["action"]
+        action = options["action"].lower()
         source = options["source"]
         destination = options["destination"]
         fstype = options["fstype"]
         fsoptions = options["fsoptions"]
         dump = options["dump"]
-        _pass = options["_pass"]
+        _pass = options["pass"]
+        index = options["index"]
 
-        iocage.fstab(action, source, destination, fstype, fsoptions, dump,
-                     _pass)
+        if action == "replace" and index is None:
+            raise ValueError(
+                "index must not be None when replacing fstab entry"
+            )
+
+        _list = iocage.fstab(action, source, destination, fstype, fsoptions,
+                             dump, _pass, index=index)
+
+        if action == "list":
+            split_list = {}
+            for i in _list:
+                split_list[i[0]] = i[1].split()
+
+            return split_list
 
         return True
 

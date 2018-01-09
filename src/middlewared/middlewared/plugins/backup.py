@@ -213,8 +213,8 @@ class BackupService(CRUDService):
         Str('transfer_mode', enum=['SYNC', 'COPY', 'MOVE']),
         Str('path'),
         Int('credential'),
-        Bool('encryption'),
-        Bool('filename_encryption'),
+        Bool('encryption', default=False),
+        Bool('filename_encryption', default=False),
         Str('encryption_password'),
         Str('encryption_salt'),
         Str('minute'),
@@ -223,7 +223,7 @@ class BackupService(CRUDService):
         Str('dayweek'),
         Str('month'),
         Dict('attributes', additional_attrs=True),
-        Bool('enabled'),
+        Bool('enabled', default=True),
         register=True,
     ))
     async def do_create(self, backup):
@@ -310,7 +310,7 @@ class BackupService(CRUDService):
 
     @item_method
     @accepts(Int('id'))
-    @job(lock=lambda args: 'backup:{}'.format(args[-1]))
+    @job(lock=lambda args: 'backup:{}'.format(args[-1]), lock_queue_size=1)
     async def sync(self, job, id):
         """
         Run the backup job `id`, syncing the local data to remote.
@@ -501,7 +501,7 @@ class BackupB2Service(Service):
             auth=(credential['attributes'].get('account_id'), credential['attributes'].get('app_key')),
         )
         if r.status_code != 200:
-            raise ValueError(f'Invalid request: {r.text}')
+            raise CallError(f'Invalid request: {r.text}')
         return r.json()
 
     @accepts(Int('id'))

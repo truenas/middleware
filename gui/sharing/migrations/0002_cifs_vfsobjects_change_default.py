@@ -5,6 +5,7 @@ from __future__ import unicode_literals
 from django.db import migrations
 import freenasUI.freeadmin.models.fields
 
+
 def change_cifs_vfsobjects_defaults(apps, schema_editor):
     cifs_shares = apps.get_model('sharing', 'CIFS_Share').objects.all()
     if not cifs_shares:
@@ -12,7 +13,7 @@ def change_cifs_vfsobjects_defaults(apps, schema_editor):
 
     for share in cifs_shares:
         if not share.cifs_vfsobjects:
-            continue 
+            continue
 
         new_vfs_objects = []
         if 'zfs_space' not in share.cifs_vfsobjects:
@@ -25,6 +26,7 @@ def change_cifs_vfsobjects_defaults(apps, schema_editor):
 
         share.cifs_vfsobjects = new_vfs_objects
         share.save()
+
 
 class Migration(migrations.Migration):
 

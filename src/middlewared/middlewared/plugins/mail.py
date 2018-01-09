@@ -96,7 +96,7 @@ class MailService(ConfigService):
         Str('outgoingserver'),
         Int('port'),
         Str('security', enum=['PLAIN', 'SSL', 'TLS']),
-        Bool('smtp'),
+        Bool('smtp', default=False),
         Str('user'),
         Str('pass'),
     ))
@@ -264,7 +264,7 @@ class MailService(ConfigService):
             # This is because FreeNAS doesn't run a full MTA.
             # else:
             #    server.connect()
-            syslog.syslog("sending mail to " + ','.join(to) + msg.as_string()[0:140])
+            syslog.syslog("sending mail to " + ', '.join(to) + '\n' + msg.as_string()[0:140])
             server.sendmail(config['fromemail'], to, msg.as_string())
             server.quit()
         except ValueError as ve:

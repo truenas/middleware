@@ -39,6 +39,7 @@ from freenasUI.directoryservice.models import (
 from freenasUI.directoryservice.views import get_directoryservice_status
 from freenasUI.freeadmin.apppool import appPool
 from freenasUI.freeadmin.views import JsonResp
+from freenasUI.middleware.form import handle_middleware_validation
 from freenasUI.middleware.notifier import notifier
 from freenasUI.services import models
 from freenasUI.services.forms import (
@@ -47,6 +48,7 @@ from freenasUI.services.forms import (
 )
 from freenasUI.system.models import Tunable
 from freenasUI.support.utils import fc_enabled
+from middlewared.client import ValidationErrors
 
 log = logging.getLogger("services.views")
 
@@ -204,10 +206,14 @@ def services_cifs(request):
         it = idmap_tdb()
 
     if request.method == "POST":
-        form = CIFSForm(request.POST, instance=cifs)
-        if form.is_valid():
-            form.save()
-        else:
+        try:
+            form = CIFSForm(request.POST, instance=cifs)
+            if form.is_valid():
+                form.save()
+            else:
+                return JsonResp(request, form=form)
+        except ValidationErrors as e:
+            handle_middleware_validation(form, e)
             return JsonResp(request, form=form)
 
         idmap_form = idmap_tdb_Form(request.POST, instance=it)

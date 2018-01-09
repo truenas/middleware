@@ -130,7 +130,7 @@ class ServiceService(CRUDService):
         Int('id'),
         Dict(
             'service-update',
-            Bool('enable'),
+            Bool('enable', default=False),
         ),
     )
     async def do_update(self, id, data):
@@ -515,6 +515,10 @@ class ServiceService(CRUDService):
         await self.middleware.call('etc.generate', 's3')
         await self._service("minio", "start", quiet=True, stdout=None, stderr=None, **kwargs)
 
+    async def _reload_s3(self, **kwargs):
+        await self.middleware.call('etc.generate', 's3')
+        await self._service("minio", "restart", quiet=True, stdout=None, stderr=None, **kwargs)
+
     async def _reload_rsync(self, **kwargs):
         await self._service("ix-rsyncd", "start", quiet=True, **kwargs)
         await self._service("rsyncd", "restart", **kwargs)
@@ -865,6 +869,13 @@ class ServiceService(CRUDService):
         await self._service("snmpd", "stop", quiet=True, **kwargs)
 
     async def _restart_snmp(self, **kwargs):
+        await self._service("snmp-agent", "stop", quiet=True, **kwargs)
+        await self._service("snmpd", "stop", force=True, **kwargs)
+        await self._service("ix-snmpd", "start", quiet=True, **kwargs)
+        await self._service("snmpd", "start", quiet=True, **kwargs)
+        await self._service("snmp-agent", "start", quiet=True, **kwargs)
+
+    async def _reload_snmp(self, **kwargs):
         await self._service("snmp-agent", "stop", quiet=True, **kwargs)
         await self._service("snmpd", "stop", force=True, **kwargs)
         await self._service("ix-snmpd", "start", quiet=True, **kwargs)

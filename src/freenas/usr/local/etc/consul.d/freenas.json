@@ -1,13 +1,16 @@
 {
+  "disable_update_check": true,
   "service": {
     "name": "nas-health",
     "tags": ["primary"],
     "address": "",
     "port": 80,
     "enableTagOverride": false,
-    "checks": [
+    "check": [
       {
-        "script": "/usr/local/etc/consul-checks/freenas_health.sh",
+        "id": "freenas_health",
+        "name": "FreeNAS health check",
+        "args": [ "/usr/local/etc/consul-checks/freenas_health.sh" ],
         "interval": "120s"
       }
     ]

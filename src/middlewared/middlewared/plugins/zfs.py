@@ -33,7 +33,7 @@ def find_vdev(pool, vname):
     while children:
         child = children.pop()
 
-        if child.guid == vname:
+        if str(vname) == str(child.guid):
             return child
 
         if child.type == 'disk':
@@ -291,7 +291,7 @@ class ZFSDatasetService(CRUDService):
                     else:
                         if 'value' not in v:
                             raise ValidationError('properties', f'properties.{k} needs a "value" attribute')
-                        if ':' not in v['value']:
+                        if ':' not in k:
                             raise ValidationError('properties', f'User property needs a colon (:) in its name`')
                         prop = libzfs.ZFSUserProperty(v['value'])
                         dataset.properties[k] = prop
@@ -384,8 +384,9 @@ class ZFSSnapshot(CRUDService):
 
     @accepts(Dict(
         'snapshot_remove',
-        Str('dataset'),
-        Str('name')
+        Str('dataset', required=True),
+        Str('name', required=True),
+        Bool('defer_delete')
     ))
     async def remove(self, data):
         """
@@ -395,31 +396,19 @@ class ZFSSnapshot(CRUDService):
             bool: True if succeed otherwise False.
         """
         zfs = libzfs.ZFS()
-
-        dataset = data.get('dataset', '')
-        snapshot_name = data.get('name', '')
-
-        if not dataset or not snapshot_name:
-            return False
+        snapshot_name = data['dataset'] + '@' + data['name']
 
         try:
-            ds = zfs.get_dataset(dataset)
+            snap = zfs.get_snapshot(snapshot_name)
+            snap.delete(True if data.get('defer_delete') else False)
+
         except libzfs.ZFSException as err:
             self.logger.error("{0}".format(err))
             return False
+        else:
+            self.logger.info(f"Destroyed snapshot: {snapshot_name}")
 
-        __snap_name = dataset + '@' + snapshot_name
-        try:
-            for snap in list(ds.snapshots):
-                if snap.name == __snap_name:
-                    ds.destroy_snapshot(snapshot_name)
-                    self.logger.info("Destroyed snapshot: {0}".format(__snap_name))
-                    return True
-            self.logger.error("There is no snapshot {0} on dataset {1}".format(snapshot_name, dataset))
-            return False
-        except libzfs.ZFSException as err:
-            self.logger.error("{0}".format(err))
-            return False
+        return True
 
     @accepts(Dict(
         'snapshot_clone',

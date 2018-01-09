@@ -99,6 +99,17 @@ def stop(request, id):
     })
 
 
+def power_off(request, id):
+    vm = models.VM.objects.get(id=id)
+    if request.method == 'POST':
+        with client as c:
+            c.call('vm.stop', id, True)
+        return JsonResp(request, message='VM Powered off')
+    return render(request, "vm/poweroff.html", {
+        'name': vm.name,
+    })
+
+
 def restart(request, id):
     vm = models.VM.objects.get(id=id)
     if request.method == 'POST':

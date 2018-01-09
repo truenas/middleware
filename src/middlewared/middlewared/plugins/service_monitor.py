@@ -186,7 +186,10 @@ class ServiceMonitorThread(threading.Thread):
                 break
 
         if not connected or not enabled or not started:
-            self.alert(service, "tried %d attempts to recover service %s" % (ntries, service))
+            # Clear all intermediate alerts
+            ServiceMonitorThread.reset_alerts(service)
+            # We gave up to restore service here
+            self.alert(service, "Failed to recover service %s after %d tries" % (service, ntries))
             # Disable monitoring here?
 
     def cancel(self):

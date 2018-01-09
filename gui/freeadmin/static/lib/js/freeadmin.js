@@ -27,6 +27,7 @@
 
 var _webshell;
 var Middleware;
+var middlewareTokenUrl;
 
 require([
     "dojo",
@@ -2718,7 +2719,7 @@ require([
     dojo._contentHandlers.text = (function(old){
       return function(xhr){
         if(xhr.responseText.match("<!-- THIS IS A LOGIN WEBPAGE -->")){
-          window.location='/';
+          window.location='/legacy/';
           return '';
         }
         var text = old(xhr);

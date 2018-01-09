@@ -161,6 +161,7 @@ class GlobalConfiguration(Model):
             'gc_ipv4gateway',
             'gc_ipv6gateway',
             'gc_domain',
+            'gc_domains',
             'gc_nameserver1',
             'gc_nameserver2',
             'gc_nameserver3',
