@@ -1,5 +1,5 @@
 from middlewared.service import Service, filterable, private
-from middlewared.utils import Popen, filter_list
+from middlewared.utils import Popen, filter_list, run
 from middlewared.schema import accepts, Str
 
 import asyncio
@@ -11,6 +11,8 @@ import re
 import signal
 import subprocess
 import urllib.request
+
+RE_NAMESERVER = re.compile(r'^nameserver\s+(\S+)', re.M)
 
 
 def dhclient_status(interface):
@@ -525,6 +527,15 @@ class RoutesService(Service):
 
 
 class DNSService(Service):
+
+    @filterable
+    async def query(self, filters, options):
+        data = []
+        resolvconf = (await run('resolvconf', '-l')).stdout.decode()
+        print(resolvconf)
+        for nameserver in RE_NAMESERVER.findall(resolvconf):
+            data.append({'nameserver': nameserver})
+        return filter_list(data, filters, options)
 
     @private
     async def sync(self):
