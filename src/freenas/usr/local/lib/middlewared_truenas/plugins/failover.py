@@ -192,15 +192,15 @@ def journal_sync(middleware, retries):
                     c.call('failover.call_remote', 'datastore.sql', [query, params])
                 j.queries.remove(q)
             except ClientException as e:
-                retries[q] += 1
-                if retries[q] >= 2:
+                retries[str(q)] += 1
+                if retries[str(q)] >= 2:
                     # No need to warn/log multiple times the same thing
                     continue
                 middleware.logger.exception('Failed to run sql: %s', e)
                 try:
                     if not os.path.exists(SYNC_FILE):
                         open(SYNC_FILE, 'w').close()
-                except:
+                except Exception:
                     pass
                 break
             except Exception as e:
