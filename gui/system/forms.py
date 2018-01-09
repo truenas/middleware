@@ -244,8 +244,11 @@ class BootEnvPoolAttachForm(Form):
     expand = forms.BooleanField(
         label=_('Use all disk space'),
         help_text=_(
-            'If disabled will format the new disk using the size of current '
-            'disk.'
+            'Unchecked (default): format the new disk to the same capacity as the '
+            'existing disk. Checked: use full capacity of the new disk. If the '
+            'original disk in the mirror is replaced, the mirror could grow to '
+            'the capacity of the new disk, requiring replacement boot devices '
+            'to be as large as this new disk.'
         ),
         required=False,
         initial=False,
