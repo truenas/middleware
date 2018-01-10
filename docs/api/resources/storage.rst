@@ -865,6 +865,34 @@ Recovery Key
    :statuscode 204: no error
 
 
+Re-Key
+++++++++++++
+
+.. http:post:: /api/v1.0/storage/volume/(int:id|string:name)/rekey/
+
+   Re-key volume `id`.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      POST /api/v1.0/storage/volume/tank/rekey/ HTTP/1.1
+      Content-Type: application/json
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 202 Accepted
+      Vary: Accept
+      Content-Type: application/json
+
+        Volume has been rekeyed.
+
+   :resheader Content-Type: content type of the response
+   :statuscode 202: no error
+
+
 Status
 ++++++
 

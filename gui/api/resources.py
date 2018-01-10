@@ -893,7 +893,7 @@ class VolumeResourceMixin(NestedMixin):
             )
         else:
             form.done()
-        return HttpResponse('Volume key has been recreated.', status=202)
+        return HttpResponse('Volume has been rekeyed.', status=202)
 
     def status(self, request, **kwargs):
         self.method_check(request, allowed=['get'])
