@@ -107,6 +107,7 @@ class VMSupervisor(object):
         vnc_web = None  # We need to initialize before line 200
         args = [
             'bhyve',
+            '-A',
             '-H',
             '-w',
             '-c', str(self.vm['vcpus']),
