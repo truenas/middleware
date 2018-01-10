@@ -147,6 +147,7 @@ class UserService(CRUDService):
         if data['home'] != '/nonexistent':
             try:
                 os.makedirs(data['home'], mode=int(home_mode, 8))
+                os.chown(data['home'], data['uid'], group['gid'])
             except FileExistsError:
                 if not os.path.isdir(data['home']):
                     raise CallError(
