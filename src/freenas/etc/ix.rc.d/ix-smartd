@@ -207,7 +207,8 @@ EOF
 				printf ")"
 			} else printf $0 }')
 
-			echo -n " -s ${smarttest_type}/${nmonth}/${ndaymonth}/${ndayweek}/${nhour}"
+			echo "\\"
+			echo "-s ${smarttest_type}/${nmonth}/${ndaymonth}/${ndayweek}/${nhour}\\"
 			fi
 			echo " $disk_smartoptions"
 		done
