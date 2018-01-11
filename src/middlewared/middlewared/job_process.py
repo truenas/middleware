@@ -65,7 +65,10 @@ class FakeMiddleware(object):
         if job_options:
             params = list(job['arguments'])
             params.insert(0, FakeJob(job['id'], self.client))
-            return await methodobj(*params)
+            if asyncio.iscoroutinefunction(methodobj):
+                return await methodobj(*params)
+            else:
+                return methodobj(*params)
         else:
             raise NotImplementedError("Only jobs are allowed")
 
@@ -108,8 +111,8 @@ if __name__ == '__main__':
     try:
         loop = asyncio.get_event_loop()
         coro = main()
-        loop.run_until_complete(coro)
-        print(json.dumps(coro.result()))
+        res = loop.run_until_complete(coro)
+        print(json.dumps(res))
     except Exception as e:
         print(json.dumps({
             'exception': ''.join(traceback.format_exception(*sys.exc_info())),
