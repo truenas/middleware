@@ -546,7 +546,7 @@ class CoreService(Service):
 
         for p in params:
             try:
-                msg = await self.middleware.call(method, p)
+                msg = await self.middleware.call(method, *p)
                 error = None
 
                 if isinstance(msg, Job):
