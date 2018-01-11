@@ -433,7 +433,10 @@ class ServiceService(CRUDService):
         await self._service("ix-warden", "start", **kwargs)
         for jail in await self.middleware.call('datastore.query', 'jails.jails'):
             if jail['jail_autostart']:
-                await self.middleware.call('notifier.warden', 'start', [], {'jail': jail['jail_host']})
+                try:
+                    await self.middleware.call('notifier.warden', 'start', [], {'jail': jail['jail_host']})
+                except Exception as e:
+                    self.logger.debug(f'Failed to start {jail["jail_host"]}', exc_info=True)
         await self._service("ix-plugins", "start", **kwargs)
         await self.reload("http", kwargs)
 
