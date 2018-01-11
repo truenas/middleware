@@ -41,6 +41,7 @@ from freenasUI.middleware import zfs
 from freenasUI.middleware.notifier import notifier
 from freenasUI.middleware.client import client
 from freenasUI.freeadmin.models import Model, UserField
+from freenasUI.peers.models import Peer
 
 log = logging.getLogger('storage.models')
 REPL_RESULTFILE = '/tmp/.repl-result'
