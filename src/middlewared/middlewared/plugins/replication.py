@@ -1,108 +1,328 @@
-from middlewared.schema import accepts, Dict, Int, Str
-from middlewared.service import private, CallError, Service
+from middlewared.schema import accepts, Dict, Str, Int, Bool, Ref
+from middlewared.service import private, CallError, Service, CRUDService, filterable, job, periodic
 from middlewared.utils import Popen
 
-import base64
-import errno
-import os
 import subprocess
+import libzfs
+import paramiko
 
 
-REPLICATION_KEY = '/data/ssh/replication.pub'
+compression_cmd = {
+    'pigz': ('| /usr/local/bin/pigz ', ' /usr/bin/env pigz -d |'),
+    'plzip': ('| /usr/local/bin/plzip ', ' /usr/bin/env plzip -d |'),
+    'lz4': ('| /usr/local/bin/lz4c ', ' /usr/bin/env lz4c -d |'),
+    'xz': ('| /usr/bin/xz ', ' /usr/bin/env xzdec |'),
+}
 
 
-class ReplicationService(Service):
+def find_latest_common_snap(local, remote):
+    last_remote_snap = remote[-1]
+    if isinstance(last_remote_snap, libzfs.ZFSSnapshot):
+        last_remote_snap_guid = last_remote_snap.properties['guid'].value
+    else:
+        last_remote_snap_guid = last_remote_snap['guid']
 
-    @accepts()
-    def public_key(self):
-        """
-        Get the public SSH replication key.
-        """
-        if (os.path.exists(REPLICATION_KEY) and os.path.isfile(REPLICATION_KEY)):
-            with open(REPLICATION_KEY, 'r') as f:
-                key = f.read()
+    for snap in local:
+        if isinstance(snap, libzfs.ZFSSnapshot):
+            if snap.properties['guid'].value == last_remote_snap_guid:
+                return snap.name
+
+
+def find_snaps_to_delete(local, remote):
+    local_snaps = []
+    snaps_to_remove = []
+    for snap in local:
+        if isinstance(snap, libzfs.ZFSSnapshot):
+            local_snaps.append(snap.snapshot_name)
         else:
-            key = None
-        return key
+            local_snaps.append(snap['name'])
 
-    @accepts(
-        Str('host', required=True),
-        Int('port', required=True),
-    )
-    async def ssh_keyscan(self, host, port):
-        """
-        Scan the SSH key on `host`:`port`.
-        """
-        proc = await Popen([
-            "/usr/bin/ssh-keyscan",
-            "-p", str(port),
-            "-T", "2",
-            str(host),
-        ], stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-        key, errmsg = await proc.communicate()
-        if proc.returncode != 0 or not key:
-            if not errmsg:
-                errmsg = 'ssh key scan failed for unknown reason'
-            else:
-                errmsg = errmsg.decode()
-            raise CallError(errmsg)
-        return key.decode()
+    for snap in remote:
+        if isinstance(snap, libzfs.ZFSSnapshot):
+            if snap.snapshot_name not in local_snaps:
+                snaps_to_remove.append(snap.snapshot_name)
+        else:
+            if snap['name'] not in local_snaps:
+                snaps_to_remove.append(snap['name'])
 
-    @private
+    return snaps_to_remove
+
+
+class ReplicationTask(CRUDService):
+
+    class Config:
+        namespace = 'replication.task'
+
+    @filterable
+    async def query(self, filters=None, options=None):
+        return await self.middleware.call('datastore.query', 'storage.replication', filters, options)
+
     @accepts(Dict(
-        'replication-pair-data',
-        Str('hostname', required=True),
-        Str('public-key', required=True),
-        Str('user'),
+        'replication-task',
+        Str('name'),
+        Str('repl_filesystem'),
+        Int('repl_snap_task'),
+        Bool('recursive'),
+        Int('repl_peer'),
+        Str('repl_remote'),
+        Str('repl_zfs'),
+        Str('repl_userepl'),
+        Bool('repl_followdelete'),
+        Str('repl_compression'),
+        Str('repl_limit'),
+        Int('repl_end'),
+        Bool('repl_enabled'),
+        Bool('new_repl_engine'),
+        Bool('repl_resume'),
+        Bool('repl_ssh_mbuffer'),
+        Str('repl_type'),
+        Str('repl_transport'),
+        Str('repl_last_begin'),
+        Str('repl_last_end'),
+        Str('repl_result'),
+        Bool('repl_userepl'),
+        register=True,
     ))
-    async def pair(self, data):
-        """
-        Receives public key, storing it to accept SSH connection and return
-        pertinent SSH data of this machine.
-        """
-        service = await self.middleware.call('datastore.query', 'services.services', [('srv_service', '=', 'ssh')], {'get': True})
-        ssh = await self.middleware.call('datastore.query', 'services.ssh', None, {'get': True})
-        try:
-            user = await self.middleware.call('datastore.query', 'account.bsdusers', [('bsdusr_username', '=', data.get('user') or 'root')], {'get': True})
-        except IndexError:
-            raise ValueError('User "{}" does not exist'.format(data.get('user')))
-
-        if user['bsdusr_home'].startswith('/nonexistent'):
-            raise CallError(f'User home directory does not exist', errno.ENOENT)
-
-        # Make sure SSH is enabled
-        if not service['srv_enable']:
-            await self.middleware.call('datastore.update', 'services.services', service['id'], {'srv_enable': True})
-            await self.middleware.call('notifier.start', 'ssh')
-
-            # This might be the first time of the service being enabled
-            # which will then result in new host keys we need to grab
-            ssh = await self.middleware.call('datastore.query', 'services.ssh', None, {'get': True})
-
-        if not os.path.exists(user['bsdusr_home']):
-            raise ValueError('Homedir {} does not exist'.format(user['bsdusr_home']))
-
-        # If .ssh dir does not exist, create it
-        dotsshdir = os.path.join(user['bsdusr_home'], '.ssh')
-        if not os.path.exists(dotsshdir):
-            os.mkdir(dotsshdir)
-            os.chown(dotsshdir, user['bsdusr_uid'], user['bsdusr_group']['bsdgrp_gid'])
-
-        # Write public key in user authorized_keys for SSH
-        authorized_keys_file = f'{dotsshdir}/authorized_keys'
-        with open(authorized_keys_file, 'a+') as f:
-            f.seek(0)
-            if data['public-key'] not in f.read():
-                f.write('\n' + data['public-key'])
-
-        ssh_hostkey = '{0} {1}\n{0} {2}\n{0} {3}\n'.format(
-            data['hostname'],
-            base64.b64decode(ssh['ssh_host_rsa_key_pub'].encode()).decode(),
-            base64.b64decode(ssh['ssh_host_ecdsa_key_pub'].encode()).decode(),
-            base64.b64decode(ssh['ssh_host_ed25519_key_pub'].encode()).decode(),
+    async def do_create(self, data):
+        return await self.middleware.call(
+            'datastore.insert',
+            'storage.replication',
+            data,
         )
 
-        return {
-            'ssh_port': ssh['ssh_tcpport'],
-            'ssh_hostkey': ssh_hostkey,
-        }
+    @accepts(Int('id'), Ref('replication-task'))
+    async def do_update(self, id, data):
+        return await self.middleware.call(
+            'datastore.update',
+            'storage.replication',
+            id,
+            data,
+        )
+
+    @accepts(Int('id'))
+    async def do_delete(self, id):
+        return await self.middleware.call(
+            'datastore.delete',
+            'storage.replication',
+            id,
+        )
+
+
+    @job(process=True)
+    async def start_local_replication(self, job, repl_task_id):
+        zfs = libzfs.ZFS()
+
+        try:
+            repl_task = await self.middleware.call(
+                'replication.task.query',
+                [('id', '=', repl_task_id)],
+                {'get': True}
+            )
+        except IndexError:
+            raise CallError(f'Task {repl_task_id} does not exists')
+
+        src_dataset_name = repl_task.get('repl_filesystem')
+        dest_dataset_name = repl_task.get('repl_zfs')
+
+        try:
+            src_dataset = zfs.get_dataset(src_dataset_name)
+        except libzfs.ZFSException as e:
+            await self.do_update(repl_task_id, {'repl_result': e})
+            raise CallError(e)
+        else:
+            src_snapshots = src_dataset.snapshots
+            snap_sorted_s = sorted(src_snapshots, key=lambda x: x.properties['createtxg'].rawvalue)
+
+        try:
+            dest_dataset = zfs.get_dataset(dest_dataset_name)
+            token = dest_dataset.properties.get('receive_resume_token')
+        except libzfs.ZFSException:
+            dest_pool = await self.middleware.call(
+                'zfs.pool.query',
+                [('name', '=', dest_dataset_name.split('/')[0])]
+            )
+            if dest_pool:
+                sender = subprocess.Popen(
+                        ['zfs', 'send', '-p', snap_sorted_s[-1].name],
+                        stdout=subprocess.PIPE
+                    )
+            else:
+                await self.do_update(repl_task_id, {'repl_result': 'Destination pool does not exists'})
+                raise CallError('Destination pool does not exists')
+        else:
+
+            if token.value and repl_task['repl_resume']:
+                sender = subprocess.Popen(
+                    ['zfs', 'send', '-t', '-p', token.value, dest_dataset_name],
+                    stdout=subprocess.PIPE
+                )
+            elif token.value and not repl_task['repl_resume']:
+                subprocess.Popen(['zfs', 'recv', '-A', dest_dataset_name])
+
+            else:
+                dest_snapshots = src_dataset.snapshots
+                snap_sorted_r = sorted(dest_snapshots, key=lambda x: x.properties['createtxg'].rawvalue)
+                last_common_snapshot = find_latest_common_snap(snap_sorted_s, snap_sorted_r)
+
+                if last_common_snapshot.split('/')[-1] == snap_sorted_s[-1].name:
+                    await self.do_update(repl_task_id, {'repl_result': f'Destination dataset already has the newest snapshot'})
+                    return False
+                else:
+                    sender = subprocess.Popen(
+                        ['zfs', 'send', '-p', '-I', last_common_snapshot, snap_sorted_s[-1].name],
+                        stdout=subprocess.PIPE)
+
+        receiver = subprocess.Popen(
+            ['zfs', 'recv', '-s' if repl_task['repl_resume'] else '', repl_task['repl_zfs']],
+            stdin=sender.stdout
+        )
+
+        while True:
+            # Just for PoC
+            if sender.poll() is not None or receiver.poll() is not None:
+                receiver.terminate()
+                sender.terminate()
+                await self.do_update(repl_task_id, {'repl_result': f'Sending process finished with {sender.returncode} retruncode and receiving with {receiver.returncode}'})
+                break
+
+        if repl_task['repl_followdelete']:
+            snaps_to_delete = find_snaps_to_delete(snap_sorted_s, snap_sorted_r)
+            for snap in snaps_to_delete:
+                snap = zfs.get_snapshot(snap)
+                snap.delete(True)
+
+        return True
+
+    @job(process=True)
+    async def start_ssh_replication(self, job, repl_task_id):
+        zfs = libzfs.ZFS()
+
+        try:
+            repl_task = await self.middleware.call(
+                'replication.task.query',
+                [('id', '=', repl_task_id)],
+                {'get': True}
+            )
+        except IndexError:
+            raise CallError(f'Task {repl_task_id} does not exists')
+
+        try:
+            peer = await self.middleware.call(
+                'peer.ssh.query',
+                [('peer_ptr', '=', repl_task['repl_peer']['id'])],
+                {'get': True}
+            )
+        except IndexError:
+            raise CallError(f'SSH Peer does not exist')
+
+        src_dataset_name = repl_task.get('repl_filesystem')
+        dest_dataset_name = repl_task.get('repl_zfs')
+
+        if repl_task['repl_ssh_mbuffer']:
+            mbuffer_r = '/usr/local/bin/mbuffer -s 128k -m 1G |'
+            mbuffer_w = '| /usr/local/bin/mbuffer -s 128k -m 1G'
+        else:
+            mbuffer_r, mbuffer_w = '', ''
+
+        if repl_task['repl_compression'] != 'off':
+            comp_r = compression_cmd[repl_task['repl_compression']][1]
+            comp_w = compression_cmd[repl_task['repl_compression']][0]
+        else:
+            comp_r, comp_w = '', ''
+
+        try:
+            src_dataset = zfs.get_dataset(src_dataset_name)
+        except libzfs.ZFSException as e:
+            await self.do_update(repl_task_id, {'repl_result': e})
+            raise CallError(e)
+        else:
+            src_snapshots = src_dataset.snapshots
+            snap_sorted_s = sorted(src_snapshots, key=lambda x: x.properties['createtxg'].rawvalue)
+
+        try:
+            client = paramiko.SSHClient()
+            client.load_system_host_keys()
+            client.connect(peer['ssh_remote_hostname'], port=peer['ssh_port'], username=peer['ssh_remote_user'])
+        except paramiko.AuthenticationException as e:
+            await self.do_update(repl_task_id, {'repl_result': e})
+            raise CallError(e)
+
+        stdin, stdout, stderr = client.exec_command(f'/sbin/zfs list {dest_dataset_name}')
+
+        if stdout.channel.exit_status:
+            stdin, stdout, stderr = client.exec_command(f"/sbin/zpool list {dest_dataset_name.split('/')[0]}")
+            if stdout.channel.exit_status:
+                err_message = stderr.readline()
+                await self.do_update(repl_task_id, {'repl_result': err_message})
+                raise CallError(err_message)
+            else:
+                sender = subprocess.Popen(
+                    f"zfs send -p {snap_sorted_s[-1].name} {comp_w} {mbuffer_w}| ssh root@{peer['ssh_remote_hostname']} '{mbuffer_r} {comp_r} zfs recv {dest_dataset_name}'",
+                    shell=True
+                )
+                output, error = sender.communicate()
+                if sender.returncode:
+                    await self.do_update(repl_task_id, {'repl_result': f'{error}'})
+                    return False
+
+        else:
+            stdin, stdout, stderr = client.exec_command(
+                f'/sbin/zfs get -H -p -o value receive_resume_token {dest_dataset_name}'
+            )
+            if not stdout.channel.exit_status:
+                token = stdout.readlines()[0].strip('\n')
+                if token != '-' and repl_task['repl_resume']:
+                    subprocess.Popen(
+                        f"zfs send -p -t {token} {comp_w} {mbuffer_w}| ssh root@{peer['ssh_remote_hostname']} '{mbuffer_r} {comp_r} zfs recv {dest_dataset_name}'",
+                        shell=True
+                    )
+                elif token != '-' and not repl_task['repl_resume']:
+                    subprocess.Popen(
+                        f"ssh root@{peer['ssh_remote_hostname']} zfs recv -A {dest_dataset_name}",
+                        shell=True
+                    )
+                else:
+                    stdin, stdout, stderr = client.exec_command(
+                        f'/sbin/zfs list -H -t snapshot -p -o name,guid,createtxg -r -d 1 {dest_dataset_name}'
+                    )
+
+                if stdout.channel.exit_status:
+                    err_message = stderr.readline()
+                    await self.do_update(repl_task_id, {'repl_result': err_message})
+                    raise CallError(err_message)
+
+                else:
+                    dest_snapshots = []
+                    dest_snapshots_list = stdout.readlines()
+                    if dest_snapshots_list:
+                        for snap in dest_snapshots_list:
+                            parsed_snap = snap.replace('\n', '').split('\t')
+                            dest_snapshots.append(
+                                {'name': parsed_snap[0], 'guid': parsed_snap[1], 'txg': parsed_snap[2]}
+                            )
+                    snap_sorted_r = sorted(dest_snapshots, key=lambda x: x['txg'])
+                    last_common_snapshot = find_latest_common_snap(snap_sorted_s, snap_sorted_r)
+
+                    if last_common_snapshot.split('/')[-1] == snap_sorted_s[-1].name:
+                        await self.do_update(repl_task_id, {'repl_result': f'Destination dataset already has the newest snapshot'})
+                        return False
+
+                    else:
+                        sender = subprocess.Popen(
+                            f"zfs send -p -I {last_common_snapshot} {snap_sorted_s[-1].name} | ssh root@{peer['ssh_remote_hostname']} '{mbuffer_r} zfs recv {dest_dataset_name}'",
+                            shell=True
+                        )
+                        output, error = sender.communicate()
+                        if sender.returncode:
+                            await self.do_update(repl_task_id, {'repl_result': f'{error}'})
+                            return False
+
+                    if repl_task['repl_followdelete']:
+                        snaps_to_delete = find_snaps_to_delete(snap_sorted_s, snap_sorted_r)
+                        
+                        stdin, stdout, stderr = client.exec_command(
+                            f'/sbin/zfs destroy -d {dest_dataset_name}' + '@' + ','.join([snap.split('@')[-1] for snap in snaps_to_delete])
+                        )
+
+        await self.do_update(repl_task_id, {'repl_result': 'Success'})
+        return True
