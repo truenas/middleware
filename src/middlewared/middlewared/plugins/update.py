@@ -310,7 +310,7 @@ class UpdateService(Service):
         Downloads (if not already in cache) and apply an update.
         """
         attrs = attrs or {}
-        train = attrs.get('train') or (await self.get_trains())['selected']
+        train = attrs.get('train') or self.middleware.call_sync('update.get_trains')['selected']
         location = await self.middleware.call('notifier.get_update_location')
 
         job.set_progress(0, 'Retrieving update manifest')
