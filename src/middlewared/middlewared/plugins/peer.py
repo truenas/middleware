@@ -183,6 +183,21 @@ class SSHPeerService(CRUDService):
             'ssh_hostkey': ssh_hostkey,
         } 
 
+    async def verify_connection(self, id):
+        peer = await self.query([('id', '=', id)], {'get': True})
+
+        if peer:
+            try:
+                async with asyncssh.connect(
+                    peer['ssh_remote_hostname'],
+                    port=peer['ssh_port'],
+                    username=peer['ssh_remote_user']) as conn:
+
+                    return True
+
+            except (OSError, asyncssh.Error) as e:
+                raise CallError(f'Failed to connect to the host:{e}')
+
 
 class S3PeerService(CRUDService):
 
