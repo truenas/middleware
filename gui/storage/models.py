@@ -836,11 +836,132 @@ class ReplRemote(Model):
         return "%s:%s" % (self.ssh_remote_hostname, self.ssh_remote_port)
 
 
+class Task(Model):
+
+    task_name = models.CharField(
+        max_length=150,
+        verbose_name=_("Task Name"),
+        null=True,
+        blank=True
+    )
+    task_filesystem = models.CharField(
+        max_length=150,
+        verbose_name=_("Volume/Dataset"),
+    )
+    task_recursive = models.BooleanField(
+        default=False,
+        verbose_name=_("Recursive"),
+    )
+    task_ret_count = models.PositiveIntegerField(
+        default=2,
+        verbose_name=_("Snapshot lifetime value"),
+    )
+    task_ret_unit = models.CharField(
+        default='week',
+        max_length=120,
+        choices=choices.RetentionUnit_Choices,
+        verbose_name=_("Snapshot lifetime unit"),
+    )
+    task_begin = models.TimeField(
+        default=time(hour=9),
+        verbose_name=_("Begin"),
+        help_text=_("Do not snapshot before"),
+    )
+    task_end = models.TimeField(
+        default=time(hour=18),
+        verbose_name=_("End"),
+        help_text=_("Do not snapshot after"),
+    )
+    task_interval = models.PositiveIntegerField(
+        default=60,
+        choices=choices.TASK_INTERVAL,
+        verbose_name=_("Interval"),
+        help_text=_(
+            "How much time has been passed between two snapshot attempts."),
+    )
+    task_repeat_unit = models.CharField(
+        default='weekly',
+        max_length=120,
+        choices=choices.RepeatUnit_Choices,
+        verbose_name=_("Occurrence"),
+        help_text=_("How the task is repeated"),
+    )
+    task_byweekday = models.CharField(
+        max_length=120,
+        default="1,2,3,4,5",
+        verbose_name=_("Weekday"),
+        blank=True,
+    )
+#    task_bymonth = models.CharField(
+#            max_length = 120,
+#            default = "1,2,3,4,5,6,7,8,9,a,b,c",
+#            verbose_name = _("Month"),
+#            blank = True,
+#            )
+#    task_bymonthday = models.CharField(
+#            max_length = 120,
+#            verbose_name = _("Day"),
+#            blank = True,
+#            )
+    task_enabled = models.BooleanField(
+        default=True,
+        verbose_name=_("Enabled"),
+    )
+    task_last_run = models.DateTimeField(
+        null=True,
+        verbose_name=_("Last run of the snap task")
+    )
+    vmware_snap_task_id = models.PositiveIntegerField(
+        null=True,
+        blank=True,
+        verbose_name=_("Snapshot lifetime value"),
+    )
+
+    def __str__(self):
+        return '%s - every %s - %d%s' % (
+            self.task_filesystem,
+            self.get_task_interval_display(),
+            self.task_ret_count,
+            self.task_ret_unit,
+        )
+
+    def save(self, *args, **kwargs):
+        super(Task, self).save(*args, **kwargs)
+        try:
+            notifier().restart("cron")
+        except:
+            pass
+
+    def delete(self, *args, **kwargs):
+        super(Task, self).delete(*args, **kwargs)
+        try:
+            notifier().restart("cron")
+        except:
+            pass
+
+    class Meta:
+        verbose_name = _("Periodic Snapshot Task")
+        verbose_name_plural = _("Periodic Snapshot Tasks")
+        ordering = ["task_filesystem"]
+
+
 class Replication(Model):
     repl_filesystem = models.CharField(
         max_length=150,
         verbose_name=_("Volume/Dataset"),
         blank=True,
+    )
+    repl_snap_task = models.ForeignKey(
+        Task,
+        blank=True,
+        null=True,
+        verbose_name=_("Remote Host"),
+    )
+    repl_peer = models.ForeignKey(
+        Peer,
+        blank=True,
+        null=True,
+        verbose_name=_("Remote Peer"),
     )
     repl_lastsnapshot = models.CharField(
         max_length=120,
@@ -967,115 +1088,6 @@ class Replication(Model):
                 # Possible race condition?
                 pass
         super(Replication, self).delete()
-
-
-class Task(Model):
-
-    task_name = models.CharField(
-        max_length=150,
-        verbose_name=_("Task Name"),
-        null=True,
-        blank=True
-    )
-    task_filesystem = models.CharField(
-        max_length=150,
-        verbose_name=_("Volume/Dataset"),
-    )
-    task_recursive = models.BooleanField(
-        default=False,
-        verbose_name=_("Recursive"),
-    )
-    task_ret_count = models.PositiveIntegerField(
-        default=2,
-        verbose_name=_("Snapshot lifetime value"),
-    )
-    task_ret_unit = models.CharField(
-        default='week',
-        max_length=120,
-        choices=choices.RetentionUnit_Choices,
-        verbose_name=_("Snapshot lifetime unit"),
-    )
-    task_begin = models.TimeField(
-        default=time(hour=9),
-        verbose_name=_("Begin"),
-        help_text=_("Do not snapshot before"),
-    )
-    task_end = models.TimeField(
-        default=time(hour=18),
-        verbose_name=_("End"),
-        help_text=_("Do not snapshot after"),
-    )
-    task_interval = models.PositiveIntegerField(
-        default=60,
-        choices=choices.TASK_INTERVAL,
-        verbose_name=_("Interval"),
-        help_text=_(
-            "How much time has been passed between two snapshot attempts."),
-    )
-    task_repeat_unit = models.CharField(
-        default='weekly',
-        max_length=120,
-        choices=choices.RepeatUnit_Choices,
-        verbose_name=_("Occurrence"),
-        help_text=_("How the task is repeated"),
-    )
-    task_byweekday = models.CharField(
-        max_length=120,
-        default="1,2,3,4,5",
-        verbose_name=_("Weekday"),
-        blank=True,
-    )
-#    task_bymonth = models.CharField(
-#            max_length = 120,
-#            default = "1,2,3,4,5,6,7,8,9,a,b,c",
-#            verbose_name = _("Month"),
-#            blank = True,
-#            )
-#    task_bymonthday = models.CharField(
-#            max_length = 120,
-#            verbose_name = _("Day"),
-#            blank = True,
-#            )
-    task_enabled = models.BooleanField(
-        default=True,
-        verbose_name=_("Enabled"),
-    )
-    task_last_run = models.DateTimeField(
-        null=True,
-        verbose_name=_("Last run of the snap task")
-    )
-    vmware_snap_task_id = models.PositiveIntegerField(
-        null=True,
-        blank=True,
-        verbose_name=_("Snapshot lifetime value"),
-    )
-
-    def __str__(self):
-        return '%s - every %s - %d%s' % (
-            self.task_filesystem,
-            self.get_task_interval_display(),
-            self.task_ret_count,
-            self.task_ret_unit,
-        )
-
-    def save(self, *args, **kwargs):
-        super(Task, self).save(*args, **kwargs)
-        try:
-            notifier().restart("cron")
-        except:
-            pass
-
-    def delete(self, *args, **kwargs):
-        super(Task, self).delete(*args, **kwargs)
-        try:
-            notifier().restart("cron")
-        except:
-            pass
-
-    class Meta:
-        verbose_name = _("Periodic Snapshot Task")
-        verbose_name_plural = _("Periodic Snapshot Tasks")
-        ordering = ["task_filesystem"]
 
 
 class VMWarePlugin(Model):
