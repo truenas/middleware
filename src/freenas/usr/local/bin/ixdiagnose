@@ -129,21 +129,11 @@ if [ $? -gt 0 ] ; then
 	exit 1
 fi
 
-#
-# We can send some more detailed information here if
-# the user has opted in by running it from the command
-# line.
-#
-# We ONLY send this more detailed information if the
-# user specifically requests that we do.
-#
-if ! $boot_time ; then
-	$mydir/freenas-debug -A > /tmp/ixdiagnose.diagnose
-	tar -cHf - -C /var log | tar -C $dir -xf -
-	tar -cHf - -C /var/tmp fndebug | tar -C $dir -xf -
-	if [ "${limit}" != "-1" ] ; then
-		truncate_files "${limit}"
-	fi
+$mydir/freenas-debug -A > /tmp/ixdiagnose.diagnose
+tar -cHf - -C /var log | tar -C $dir -xf -
+tar -cHf - -C /var/tmp fndebug | tar -C $dir -xf -
+if [ "${limit}" != "-1" ] ; then
+	truncate_files "${limit}"
 fi
 
 if ! dumpfile_to_submit_exists $dumpdir ; then
