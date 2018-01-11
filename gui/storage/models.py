@@ -1020,6 +1020,52 @@ class Replication(Model):
             'Disabling will not stop any replications which are in progress.'
         ),
     )
+    new_repl_engine = models.BooleanField(
+        default=True,
+        verbose_name=_("New replication engine"),
+        help_text=_(
+            'New replication engine.'
+        ),
+    )
+    repl_resume = models.BooleanField(
+        default=True,
+        verbose_name=_("Resumable replication"),
+        help_text=_(
+            'Allow resumable replication.'
+        ),
+    )
+    repl_ssh_mbuffer = models.BooleanField(
+        default=False,
+        verbose_name=_("Enable mbuffer"),
+        help_text=_(
+            'Enable mbuffer for SSH transport'
+        ),
+    )
+    repl_type = models.CharField(
+        max_length=255,
+        choices=choices.Repl_Type,
+        default="onetime",
+        verbose_name=_("Replication type"),
+    )
+    repl_transport = models.CharField(
+        max_length=255,
+        choices=choices.Repl_Type,
+        default="local",
+        verbose_name=_("Replication type"),
+    )
+    repl_last_begin = models.DateTimeField(
+        null=True,
+        verbose_name=_("Last start time of the repl task")
+    )
+    repl_last_end = models.DateTimeField(
+        null=True,
+        verbose_name=_("Last end time of the repl task")
+    )
+    repl_result = models.CharField(
+        null=True,
+        max_length=255,
+        verbose_name=_("Last run result"),
+    )
 
     class Meta:
         verbose_name = _("Replication Task")
