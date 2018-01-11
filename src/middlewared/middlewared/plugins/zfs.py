@@ -418,6 +418,16 @@ class ZFSSnapshotTask(CRUDService):
                 {'task_last_run': f'{date_now.year}-{date_now.month}-{date_now.day} {date_now.hour}:{date_now.minute}'}
             )
 
+            try:
+                repl_task = self.middleware.call_sync('replication.task.query', [('repl_snap_task', '=', task['id'])], {'get': True})
+            except IndexError:
+                pass
+            else:
+                self.middleware.call_sync(f"replication.task.start_{repl_task['repl_transport']}_replication", repl_task['id'])
+
+
+
+
     @periodic(300)
     async def autosnap_remove(self):
 
