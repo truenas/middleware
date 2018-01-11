@@ -426,6 +426,16 @@ Repl_CompressionChoices = (
     ('plzip', _('plzip (best compression)')),
 )
 
+Repl_Transport = (
+    ('local', _('Local Replication')),
+    ('ssh', _('SSH based replication')),
+)
+
+Repl_Type = (
+    ('onetime', _('One-time Replication')),
+    ('periodic', _('Periodic Replication')),
+)
+
 
 class whoChoices:
     """Populate a list of system user choices"""
