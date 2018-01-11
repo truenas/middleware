@@ -75,6 +75,12 @@ class FakeMiddleware(object):
         """
         return self.client.call(method, *params)
 
+    def call_sync(self, method, *params):
+        """
+        Calls a method using middleware client
+        """
+        return self.client.call(method, *params)
+
 
 class FakeJob(object):
 
