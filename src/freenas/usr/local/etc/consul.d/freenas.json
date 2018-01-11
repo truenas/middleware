@@ -1,4 +1,5 @@
 {
+  "disable_update_check": true,
   "service": {
     "name": "nas-health",
     "tags": ["primary"],

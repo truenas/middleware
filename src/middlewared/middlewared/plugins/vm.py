@@ -17,14 +17,15 @@ import sysctl
 import gzip
 import hashlib
 import shutil
+import signal
 
 logger = middlewared.logger.Logger('vm').getLogger()
 
 CONTAINER_IMAGES = {
     "RancherOS": {
-        "URL": "http://download.freenas.org/bhyve-templates/rancheros-bhyve-v1.1.0/rancheros-bhyve-v1.1.0.img.gz",
+        "URL": "http://download.freenas.org/bhyve-templates/rancheros-bhyve-v1.1.2/rancheros-bhyve-v1.1.2.img.gz",
         "GZIPFILE": "rancheros-bhyve-v1.1.0.img.gz",
-        "SHA256": "721966b303bdb5dff3a169be60f6dce679ab05aad567fff5c5188531f7e0cd9d",
+        "SHA256": "062041d60160c298e6b395bb382bf3f37fb4b07c98da0b44bfd3745907b2c832",
     }
 }
 BUFSIZE = 65536
@@ -47,12 +48,12 @@ class VMManager(object):
         except:
             raise
 
-    async def stop(self, id):
+    async def stop(self, id, force=False):
         supervisor = self._vm.get(id)
         if not supervisor:
             return False
 
-        err = await supervisor.stop()
+        err = await supervisor.stop(force)
         return err
 
     async def restart(self, id):
@@ -106,6 +107,7 @@ class VMSupervisor(object):
         vnc_web = None  # We need to initialize before line 200
         args = [
             'bhyve',
+            '-A',
             '-H',
             '-w',
             '-c', str(self.vm['vcpus']),
@@ -342,7 +344,7 @@ class VMSupervisor(object):
     async def kill_bhyve_pid(self):
         if self.proc:
             try:
-                os.kill(self.proc.pid, 15)
+                os.kill(self.proc.pid, signal.SIGTERM)
             except ProcessLookupError as e:
                 # Already stopped, process do not exist anymore
                 if e.errno != errno.ESRCH:
@@ -353,7 +355,7 @@ class VMSupervisor(object):
         if self.web_proc:
             try:
                 self.logger.debug("==> Killing WEBVNC: {}".format(self.web_proc.pid))
-                os.kill(self.web_proc.pid, 15)
+                os.kill(self.web_proc.pid, signal.SIGTERM)
             except ProcessLookupError as e:
                 if e.errno != errno.ESRCH:
                     raise
@@ -365,12 +367,15 @@ class VMSupervisor(object):
         self.destroy_tap()
         await self.kill_bhyve_web()
 
-    async def stop(self):
-        bhyve_error = await (await Popen(['bhyvectl', '--force-poweroff', '--vm={}'.format(str(self.vm['id']) + '_' + self.vm['name'])], stdout=subprocess.PIPE, stderr=subprocess.PIPE)).wait()
-        self.logger.debug("===> Stopping VM: {0} ID: {1} BHYVE_CODE: {2}".format(self.vm['name'], self.vm['id'], self.bhyve_error))
-
-        if bhyve_error:
-            self.logger.error("===> Stopping VM error: {0}".format(bhyve_error))
+    async def stop(self, force=False):
+        if force:
+            bhyve_error = await (await Popen(['bhyvectl', '--force-poweroff', '--vm={}'.format(str(self.vm['id']) + '_' + self.vm['name'])], stdout=subprocess.PIPE, stderr=subprocess.PIPE)).wait()
+            self.logger.debug("===> Force Stop VM: {0} ID: {1} BHYVE_CODE: {2}".format(self.vm['name'], self.vm['id'], self.bhyve_error))
+            if bhyve_error:
+                self.logger.error("===> Stopping VM error: {0}".format(bhyve_error))
+        else:
+            os.kill(self.proc.pid, signal.SIGTERM)
+            self.logger.debug("===> Soft Stop VM: {0} ID: {1} BHYVE_CODE: {2}".format(self.vm['name'], self.vm['id'], self.bhyve_error))
 
         return await self.kill_bhyve_pid()
 
@@ -452,8 +457,8 @@ class VMUtils(object):
         ]
 
         grub_additional_args = {
-            "RancherOS": ['linux /boot/vmlinuz-4.9.45-rancher rancher.password={0} printk.devkmsg=on rancher.state.dev=LABEL=RANCHER_STATE rancher.state.wait rancher.state.autoformat=[/dev/sda] rancher.resize_device=/dev/sda'.format(quote(password)),
-                          'initrd /boot/initrd-v1.1.0']
+            "RancherOS": ['linux /boot/vmlinuz-4.9.69-rancher rancher.password={0} printk.devkmsg=on rancher.state.dev=LABEL=RANCHER_STATE rancher.state.wait rancher.resize_device=/dev/sda'.format(quote(password)),
+                          'initrd /boot/initrd-v1.1.2']
         }
 
         vm_private_dir = sharefs_path + '/configs/' + str(vm_id) + '_' + vm_name + '/' + 'grub/'
@@ -922,11 +927,11 @@ class VMService(CRUDService):
             return False
 
     @item_method
-    @accepts(Int('id'))
-    async def stop(self, id):
+    @accepts(Int('id'), Bool('force', default=False),)
+    async def stop(self, id, force):
         """Stop a VM."""
         try:
-            return await self._manager.stop(id)
+            return await self._manager.stop(id, force)
         except Exception as err:
             self.logger.error("===> {0}".format(err))
             return False

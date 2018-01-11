@@ -27,11 +27,13 @@
 
 from collections import defaultdict, OrderedDict
 from datetime import datetime
+import errno
 import pickle as pickle
 import json
 import logging
 import math
 import os
+import random
 import re
 import stat
 import subprocess
@@ -263,8 +265,11 @@ class BootEnvPoolAttachForm(Form):
     expand = forms.BooleanField(
         label=_('Use all disk space'),
         help_text=_(
-            'If disabled will format the new disk using the size of current '
-            'disk.'
+            'Unchecked (default): format the new disk to the same capacity as the '
+            'existing disk. Checked: use full capacity of the new disk. If the '
+            'original disk in the mirror is replaced, the mirror could grow to '
+            'the capacity of the new disk, requiring replacement boot devices '
+            'to be as large as this new disk.'
         ),
         required=False,
         initial=False,
@@ -948,14 +953,28 @@ class ManualUpdateWizard(FileWizard):
 
         try:
             if not _n.is_freenas() and _n.failover_licensed():
-                with client as c:
-                    c.call('failover.call_remote', 'notifier.create_upload_location')
-                    _n.sync_file_send(c, path, '/var/tmp/firmware/update.tar.xz')
-                    c.call('failover.call_remote', 'update.manual', ['/var/tmp/firmware/update.tar.xz'], {'job': True})
                 try:
-                    c.call('failover.call_remote', 'system.reboot', [{'delay': 2}])
-                except Exception:
-                    pass
+                    with client as c:
+                        c.call('failover.call_remote', 'notifier.create_upload_location')
+                        _n.sync_file_send(c, path, '/var/tmp/firmware/update.tar.xz')
+                        c.call('failover.call_remote', 'update.manual', ['/var/tmp/firmware/update.tar.xz'], {'job': True})
+                    try:
+                        c.call('failover.call_remote', 'system.reboot', [{'delay': 2}])
+                    except Exception:
+                        pass
+                except ClientException as e:
+                    if e.errno not in (ClientException.ENOMETHOD, errno.ECONNREFUSED) and e.trace['class'] not in ('KeyError', 'ConnectionRefusedError'):
+                        raise
+
+                    s = _n.failover_rpc(timeout=10)
+                    s.notifier('create_upload_location', None, None)
+                    _n.sync_file_send(s, path, '/var/tmp/firmware/update.tar.xz')
+                    s.update_manual('/var/tmp/firmware/update.tar.xz')
+
+                    try:
+                        s.reboot()
+                    except Exception:
+                        pass
                 response = render_to_response('failover/update_standby.html')
             else:
                 manual_update(path)
@@ -2917,9 +2936,9 @@ class CertificateAuthoritySignCSRForm(ModelForm):
         csr = crypto.load_certificate_request(crypto.FILETYPE_PEM, ca.cert_CSR)
 
         cert = crypto.X509()
-        cert.set_serial_number(12345)
+        cert.set_serial_number(int(random.random() * (1 << 160)))
         cert.gmtime_adj_notBefore(0)
-        cert.gmtime_adj_notAfter(3650)
+        cert.gmtime_adj_notAfter(86400 * 365 * 10)
         cert.set_issuer(cert_info.get_subject())
         cert.set_subject(csr.get_subject())
         cert.set_pubkey(csr.get_pubkey())

@@ -893,7 +893,7 @@ class VolumeResourceMixin(NestedMixin):
             )
         else:
             form.done()
-        return HttpResponse('Volume key has been recreated.', status=202)
+        return HttpResponse('Volume has been rekeyed.', status=202)
 
     def status(self, request, **kwargs):
         self.method_check(request, allowed=['get'])
@@ -1775,9 +1775,14 @@ class LAGGInterfaceMembersResourceMixin(object):
         bundle = super(LAGGInterfaceMembersResourceMixin, self).dehydrate(
             bundle
         )
-        bundle.data['lagg_interfacegroup'] = str(
-            bundle.obj.lagg_interfacegroup
-        )
+        if self.is_webclient(bundle.request):
+            bundle.data['lagg_interfacegroup'] = str(
+                bundle.obj.lagg_interfacegroup
+            )
+        else:
+            bundle.data['lagg_interfacegroup'] = (
+                bundle.obj.lagg_interfacegroup.id
+            )
         return bundle
 
 
@@ -1786,8 +1791,10 @@ class CloudSyncResourceMixin(NestedMixin):
     def dispatch_list(self, request, **kwargs):
         with client as c:
             self.__jobs = {}
-            for job in c.call('core.get_jobs', [('method', '=', 'backup.sync')], {'order_by': ['-id']}):
-                if job['arguments'] and job['arguments'][0] not in self.__jobs:
+            for job in c.call('core.get_jobs', [('method', '=', 'backup.sync')], {'order_by': ['id']}):
+                if job['arguments']:
+                    if job['arguments'][0] in self.__jobs and self.__jobs[job['arguments'][0]]['state'] == 'RUNNING':
+                        continue
                     self.__jobs[job['arguments'][0]] = job
         return super(CloudSyncResourceMixin, self).dispatch_list(request, **kwargs)
 
@@ -3981,6 +3988,7 @@ class VMResourceMixin(object):
         bundle = super(VMResourceMixin, self).dehydrate(bundle)
         state = 'UNKNOWN'
         device_start_url = device_stop_url = device_restart_url = device_clone_url = device_vncweb_url = info = ''
+        device_poweroff_url = ''
         try:
             with client as c:
                 status = c.call('vm.status', bundle.obj.id)
@@ -3993,6 +4001,9 @@ class VMResourceMixin(object):
                 if state == 'RUNNING':
                     device_stop_url = reverse(
                         'vm_stop', kwargs={'id': bundle.obj.id},
+                    )
+                    device_poweroff_url = reverse(
+                        'vm_poweroff', kwargs={'id': bundle.obj.id},
                     )
                     device_restart_url = reverse(
                         'vm_restart', kwargs={'id': bundle.obj.id},
@@ -4011,6 +4022,7 @@ class VMResourceMixin(object):
                 bundle.data.update({
                     '_device_url': reverse('freeadmin_vm_device_datagrid') + '?id=%d' % bundle.obj.id,
                     '_stop_url': device_stop_url,
+                    '_poweroff_url': device_poweroff_url,
                     '_start_url': device_start_url,
                     '_restart_url': device_restart_url,
                     '_clone_url': device_clone_url,

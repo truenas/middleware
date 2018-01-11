@@ -819,8 +819,8 @@ RSYNC_DIRECTION = (
 
 
 class KBDMAP_CHOICES(object):
-    """Populate choices from /usr/share/syscons/keymaps/INDEX.keymaps"""
-    INDEX = "/usr/share/syscons/keymaps/INDEX.keymaps"
+    """Populate choices from /usr/share/vt/keymaps/INDEX.keymaps"""
+    INDEX = "/usr/share/vt/keymaps/INDEX.keymaps"
 
     def __iter__(self):
         if not os.path.exists(self.INDEX):

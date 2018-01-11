@@ -850,6 +850,9 @@ class Middleware(object):
         if hasattr(methodobj, '_pass_app'):
             args.append(app)
 
+        if params:
+            args.extend(params)
+
         # If the method is marked as a @job we need to create a new
         # entry to keep track of its state.
         job_options = getattr(methodobj, '_job', None)
@@ -858,12 +861,9 @@ class Middleware(object):
             job = Job(self, name, methodobj, args, job_options)
             # Add the job to the queue.
             # At this point an `id` is assinged to the job.
-            self.jobs.add(job)
+            job = self.jobs.add(job)
         else:
             job = None
-
-        if params:
-            args.extend(params)
 
         if job:
             return job
@@ -999,13 +999,17 @@ class Middleware(object):
         if self.loop_monitor:
             self.__loop.set_debug(True)
             # loop.slow_callback_duration(0.2)
-            t = threading.Thread(target=self._loop_monitor_thread)
-            t.setDaemon(True)
-            t.start()
 
         # Needs to happen after setting debug or may cause race condition
         # http://bugs.python.org/issue30805
         self.__loop.run_until_complete(self.__plugins_load())
+
+        if self.loop_monitor:
+            # Start monitor thread after plugins have been loaded
+            # because of the time spent doing I/O
+            t = threading.Thread(target=self._loop_monitor_thread)
+            t.setDaemon(True)
+            t.start()
 
         self.__loop.add_signal_handler(signal.SIGINT, self.terminate)
         self.__loop.add_signal_handler(signal.SIGTERM, self.terminate)

@@ -20,6 +20,7 @@ define([
   "dijit/form/TextBox",
   "dijit/form/SimpleTextarea",
   "dijit/popup",
+  "dojox/html/entities",
   "dojox/uuid/generateRandomUuid",
   "dojox/widget/Standby",
   "freeadmin/Progress",
@@ -46,6 +47,7 @@ define([
   TextBox,
   SimpleTextarea,
   popup,
+  entities,
   generateRandomUuid,
   Standby,
   Progress,
@@ -171,7 +173,7 @@ define([
             me._hideLoading();
           },
           function(err) {
-            me.dapProviderError.innerHTML = err.error;
+            me.dapProviderError.innerHTML = "Error " + err.error + "<pre style='white-space: pre-wrap;'>" + entities.encode(err.reason) + "</pre>";
             domStyle.set(me.dapProviderError, "display", "");
             me._hideLoading();
           }
@@ -202,7 +204,7 @@ define([
             me._hideLoading();
           },
           function(err) {
-            me.dapProviderError.innerHTML = err.error;
+            me.dapProviderError.innerHTML = "Error " + err.error + "<pre style='white-space: pre-wrap;'>" + entities.encode(err.reason) + "</pre>";
             domStyle.set(me.dapProviderError, "display", "");
             me._hideLoading();
           }
@@ -233,7 +235,7 @@ define([
             me._hideLoading();
           },
           function(err) {
-            me.dapProviderError.innerHTML = err.error;
+            me.dapProviderError.innerHTML = "Error " + err.error + "<pre style='white-space: pre-wrap;'>" + entities.encode(err.reason) + "</pre>";
             domStyle.set(me.dapProviderError, "display", "");
             me._hideLoading();
           }
@@ -264,7 +266,7 @@ define([
             me._hideLoading();
           },
           function(err) {
-            me.dapProviderError.innerHTML = err.error;
+            me.dapProviderError.innerHTML = "Error " + err.error + "<pre style='white-space: pre-wrap;'>" + entities.encode(err.reason) + "</pre>";
             domStyle.set(me.dapProviderError, "display", "");
             me._hideLoading();
           }

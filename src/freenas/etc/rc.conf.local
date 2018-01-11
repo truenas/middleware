@@ -464,7 +464,7 @@ _snmp_config()
 	echo "snmpd_conffile=\"/etc/local/snmpd.conf\""
 
 	local snmpd_loglevel=$(${FREENAS_SQLITE_CMD} ${FREENAS_CONFIG} "SELECT snmp_loglevel FROM services_snmp ORDER BY -id LIMIT 1")
-	echo "snmpd_flags=\"-Ls${snmpd_loglevel}d\""
+	echo "snmpd_flags=\"-LS${snmpd_loglevel}d\""
 }
 
 _ssl_config()
@@ -613,7 +613,6 @@ _gen_conf()
 	fi
 
 	_count_config powerd_enable system_advanced adv_powerdaemon =1
-	_count_config ix_diagnose_enable system_advanced adv_uploadcrash =1
 	if ! is_freenas; then
 		if [ "$(/usr/local/bin/python /usr/local/www/freenasUI/middleware/notifier.py failover_licensed 2> /dev/null)" = "True" ]; then
 			echo "failover_enable=\"YES\""

@@ -178,6 +178,13 @@ class PoolService(CRUDService):
             if pool['is_decrypted']:
                 async for i in await self.middleware.call('zfs.pool.get_disks', pool['name']):
                     yield i
+            else:
+                for encrypted_disk in await self.middleware.call('datastore.query', 'storage.encrypteddisk',
+                                                                 [('encrypted_volume', '=', pool['id'])]):
+                    disk = {k[len("disk_"):]: v for k, v in encrypted_disk["encrypted_disk"].items()}
+                    name = await self.middleware.call("disk.get_name", disk)
+                    if os.path.exists(os.path.join("/dev", name)):
+                        yield name
 
     @item_method
     @accepts(Int('id'))
@@ -443,7 +450,7 @@ class PoolDatasetService(CRUDService):
             ('refquota', None, _none),
             ('reservation', None, _none),
             ('refreservation', None, _none),
-            ('copies', None, None),
+            ('copies', None, lambda x: str(x)),
             ('snapdir', None, str.lower),
             ('readonly', None, str.lower),
             ('recordsize', None, None),
@@ -456,11 +463,13 @@ class PoolDatasetService(CRUDService):
             name = real_name or i
             props[name] = data[i] if not transform else transform(data[i])
 
-        return await self.middleware.call('zfs.dataset.create', {
+        await self.middleware.call('zfs.dataset.create', {
             'name': data['name'],
             'type': data['type'],
             'properties': props,
         })
+
+        await self.middleware.call('zfs.dataset.mount', data['name'])
 
     def _add_inherit(name):
         def add(attr):
@@ -488,7 +497,7 @@ class PoolDatasetService(CRUDService):
 
         verrors = ValidationErrors()
 
-        dataset = await self.query([('id', '=', id)])
+        dataset = await self.middleware.call('pool.dataset.query', [('id', '=', id)])
         if not dataset:
             verrors.add('id', f'{id} does not exist', errno.ENOENT)
         else:

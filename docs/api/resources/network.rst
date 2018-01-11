@@ -465,7 +465,7 @@ Delete resource
 
 
 LAGG
-----------
+----
 
 The LAGG resource represents network LAGG (Link Aggregation) configuration.
 
@@ -557,6 +557,163 @@ Delete resource
    .. sourcecode:: http
 
       DELETE /api/v1.0/network/lagg/1/ HTTP/1.1
+      Content-Type: application/json
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 204 No Response
+      Vary: Accept
+      Content-Type: application/json
+
+   :statuscode 204: no error
+
+
+LAGG Members
+------------
+
+The LAGG Interface Members resource represents network LAGG (Link Aggregation) members.
+
+List resource
++++++++++++++
+
+.. http:get:: /api/v1.0/network/lagginterfacemembers/
+
+   Returns a list of all LAGG members.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      GET /api/v1.0/network/lagginterfacemembers/ HTTP/1.1
+      Content-Type: application/json
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 200 OK
+      Vary: Accept
+      Content-Type: application/json
+
+      [
+        {
+          "id": 2,
+          "lagg_deviceoptions": "up",
+          "lagg_interfacegroup": 1,
+          "lagg_ordernum": 0,
+          "lagg_physnic": "em1"
+        }
+      ]
+
+
+   :query offset: offset number. default is 0
+   :query limit: limit number. default is 20
+   :resheader Content-Type: content type of the response
+   :statuscode 200: no error
+
+
+Create resource
++++++++++++++++
+
+.. http:post:: /api/v1.0/network/lagginterfacemembers/
+
+   Creates a new LAGG member and returns the new LAGG member object.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      POST /api/v1.0/network/lagginterfacemembers/ HTTP/1.1
+      Content-Type: application/json
+
+        {
+            "lagg_interfacegroup": 1,
+            "lagg_physnic": "em2",
+            "lagg_ordernum": 1
+        }
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 201 Created
+      Vary: Accept
+      Content-Type: application/json
+
+        {
+             "id": 3,
+             "lagg_deviceoptions": "up",
+             "lagg_interfacegroup": 1,
+             "lagg_ordernum": 1,
+             "lagg_physnic": "em2"
+        }
+
+   :json int lagg_interfacegroup: id of the lagg interface object
+   :json int lagg_ordernum: LAGG priority number
+   :json string lagg_deviceoptions: intercace device options
+   :json string lagg_physnic: physical interface name
+   :reqheader Content-Type: the request content type
+   :resheader Content-Type: the response content type
+   :statuscode 201: no error
+
+
+Update resource
++++++++++++++++
+
+.. http:put:: /api/v1.0/network/lagginterfacemembers/(int:id)/
+
+   Updates LAGG member and returns the new LAGG member object.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      PUT /api/v1.0/network/lagginterfacemembers/3/ HTTP/1.1
+      Content-Type: application/json
+
+        {
+            "lagg_ordernum": 0
+        }
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 200 OK
+      Vary: Accept
+      Content-Type: application/json
+
+        {
+             "id": 3,
+             "lagg_deviceoptions": "up",
+             "lagg_interfacegroup": 1,
+             "lagg_ordernum": 0,
+             "lagg_physnic": "em2"
+        }
+
+   :json int lagg_interfacegroup: id of the lagg interface object
+   :json int lagg_ordernum: LAGG priority number
+   :json string lagg_deviceoptions: intercace device options
+   :json string lagg_physnic: physical interface name
+   :reqheader Content-Type: the request content type
+   :resheader Content-Type: the response content type
+   :statuscode 200: no error
+
+
+Delete resource
++++++++++++++++
+
+.. http:delete:: /api/v1.0/network/lagginterfacemembers/(int:id)/
+
+   Delete LAGG member `id`.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      DELETE /api/v1.0/network/lagginterfacemembers/3/ HTTP/1.1
       Content-Type: application/json
 
    **Example response**:
