@@ -168,10 +168,11 @@ class AlertService(Service):
                                       alert_service_desc["type"], alert_service_desc["attributes"], exc_info=True)
                     continue
 
-                try:
-                    await alert_service.send(all_alerts, service_gone_alerts, service_new_alerts)
-                except Exception:
-                    self.logger.error("Error in alert service %r", alert_service_desc["type"], exc_info=True)
+                if all_alerts or service_gone_alerts or service_new_alerts:
+                    try:
+                        await alert_service.send(all_alerts, service_gone_alerts, service_new_alerts)
+                    except Exception:
+                        self.logger.error("Error in alert service %r", alert_service_desc["type"], exc_info=True)
 
             if policy_name == "IMMEDIATELY":
                 if not await self.middleware.call("system.is_freenas"):
