@@ -427,7 +427,10 @@ class ServiceService(CRUDService):
 
     async def _stop_jails(self, **kwargs):
         for jail in await self.middleware.call('datastore.query', 'jails.jails'):
-            await self.middleware.call('notifier.warden', 'stop', [], {'jail': jail['jail_host']})
+            try:
+                await self.middleware.call('notifier.warden', 'stop', [], {'jail': jail['jail_host']})
+            except Exception as e:
+                self.logger.debug(f'Failed to stop jail {jail["jail_host"]}', exc_info=True)
 
     async def _start_jails(self, **kwargs):
         await self._service("ix-warden", "start", **kwargs)
@@ -436,7 +439,7 @@ class ServiceService(CRUDService):
                 try:
                     await self.middleware.call('notifier.warden', 'start', [], {'jail': jail['jail_host']})
                 except Exception as e:
-                    self.logger.debug(f'Failed to start {jail["jail_host"]}', exc_info=True)
+                    self.logger.debug(f'Failed to start jail {jail["jail_host"]}', exc_info=True)
         await self._service("ix-plugins", "start", **kwargs)
         await self.reload("http", kwargs)
 
