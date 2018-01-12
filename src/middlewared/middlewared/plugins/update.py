@@ -392,7 +392,7 @@ Changelog:
         rv = await self.middleware.call('notifier.validate_update', path)
         if not rv:
             raise CallError('Invalid update file', errno.EINVAL)
-        await self.middleware.call('notifier.apply_update', path)
+        await self.middleware.call('notifier.apply_update', path, timeout=None)
         try:
             await self.middleware.call('notifier.destroy_upload_location')
         except Exception:
