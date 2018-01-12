@@ -935,7 +935,7 @@ class ManualUpdateWizard(FileWizard):
                 try:
                     with client as c:
                         c.call('failover.call_remote', 'notifier.create_upload_location')
-                        _n.sync_file_send(c, path, '/var/tmp/firmware/update.tar.xz')
+                        _n.sync_file_send_v2(c, path, '/var/tmp/firmware/update.tar.xz')
                         c.call('failover.call_remote', 'update.manual', ['/var/tmp/firmware/update.tar.xz'], {'job': True})
                     try:
                         c.call('failover.call_remote', 'system.reboot', [{'delay': 2}])
@@ -947,7 +947,7 @@ class ManualUpdateWizard(FileWizard):
 
                     s = _n.failover_rpc(timeout=10)
                     s.notifier('create_upload_location', None, None)
-                    _n.sync_file_send(s, path, '/var/tmp/firmware/update.tar.xz')
+                    _n.sync_file_send(s, path, '/var/tmp/firmware/update.tar.xz', legacy=True)
                     s.update_manual('/var/tmp/firmware/update.tar.xz')
 
                     try:
