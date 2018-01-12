@@ -1,6 +1,6 @@
 from middlewared.main import EventSource
 from middlewared.schema import Bool, Dict, Int, Ref, Str, accepts
-from middlewared.service import private, CallError, Service
+from middlewared.service import job, private, CallError, Service
 from middlewared.utils import filter_list
 
 import binascii
