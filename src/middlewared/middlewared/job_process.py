@@ -78,7 +78,7 @@ class FakeMiddleware(object):
         """
         return self.client.call(method, *params, timeout=timeout)
 
-    def call_sync(self, method, *params):
+    def call_sync(self, method, *params, timeout=None):
         """
         Calls a method using middleware client
         """
