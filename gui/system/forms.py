@@ -938,7 +938,7 @@ class ManualUpdateWizard(FileWizard):
                         _n.sync_file_send_v2(c, path, '/var/tmp/firmware/update.tar.xz')
                         job_id = c.call('failover.call_remote', 'update.manual', ['/var/tmp/firmware/update.tar.xz'])
                         while True:
-                            job = c.call('failover.call_remote', 'core.get_jobs', [ [('id', '=', job_id)] ])
+                            job = c.call('failover.call_remote', 'core.get_jobs', [[('id', '=', job_id)]])
                             if job:
                                 job = job[0]
                                 if job['state'] == 'SUCCESS':
