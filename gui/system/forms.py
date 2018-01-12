@@ -957,13 +957,22 @@ class ManualUpdateWizard(FileWizard):
                     with client as c:
                         c.call('failover.call_remote', 'notifier.create_upload_location')
                         _n.sync_file_send_v2(c, path, '/var/tmp/firmware/update.tar.xz')
-                        c.call('failover.call_remote', 'update.manual', ['/var/tmp/firmware/update.tar.xz'], {'job': True})
+                        job_id = c.call('failover.call_remote', 'update.manual', ['/var/tmp/firmware/update.tar.xz'])
+                        while True:
+                            job = c.call('failover.call_remote', 'core.get_jobs', [ [('id', '=', job_id)] ])
+                            if job:
+                                job = job[0]
+                                if job['state'] == 'SUCCESS':
+                                    break
+                                elif job['state'] == 'FAILED':
+                                    raise MiddlewareError(job['error'])
+                            time.sleep(1)
                     try:
                         c.call('failover.call_remote', 'system.reboot', [{'delay': 2}])
                     except Exception:
-                        pass
+                        log.debug('Failed to reboot standby', exc_info=True)
                 except ClientException as e:
-                    if e.errno not in (ClientException.ENOMETHOD, errno.ECONNREFUSED) and e.trace['class'] not in ('KeyError', 'ConnectionRefusedError'):
+                    if e.errno not in (ClientException.ENOMETHOD, errno.ECONNREFUSED) and (e.trace is None or e.trace['class'] not in ('KeyError', 'ConnectionRefusedError')):
                         raise
 
                     s = _n.failover_rpc(timeout=10)
