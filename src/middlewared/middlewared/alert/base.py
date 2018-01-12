@@ -1,11 +1,13 @@
 from datetime import timedelta
 import enum
+import hashlib
+import json
 import logging
 import os
 
 __all__ = ["AlertLevel", "Alert", "AlertSource", "FilePresenceAlertSource", "ThreadedAlertSource",
-           "AlertService", "ThreadedAlertService",
-           "format_alerts"]
+           "AlertService", "ThreadedAlertService", "ProThreadedAlertService",
+           "format_alerts", "ellipsis"]
 
 logger = logging.getLogger(__name__)
 
@@ -108,12 +110,43 @@ class AlertService:
     async def send(self, alerts, gone_alerts, new_alerts):
         raise NotImplementedError
 
+    def _alert_id(self, alert):
+        return hashlib.sha256(json.dumps([alert.source, alert.key]).encode("utf-8")).hexdigest()
+
 
 class ThreadedAlertService(AlertService):
     async def send(self, alerts, gone_alerts, new_alerts):
         return await self.middleware.run_in_thread(self.send_sync, alerts, gone_alerts, new_alerts)
 
     def send_sync(self, alerts, gone_alerts, new_alerts):
+        raise NotImplementedError
+
+
+class ProThreadedAlertService(ThreadedAlertService):
+    def send_sync(self, alerts, gone_alerts, new_alerts):
+        exc = None
+
+        for alert in gone_alerts:
+            try:
+                self.delete_alert(alert)
+            except Exception as e:
+                self.logger.warning("An exception occurred while deleting alert", exc_info=True)
+                exc = e
+
+        for alert in new_alerts:
+            try:
+                self.create_alert(alert)
+            except Exception as e:
+                self.logger.warning("An exception occurred while creating alert", exc_info=True)
+                exc = e
+
+        if exc is not None:
+            raise exc
+
+    def create_alert(self, alert):
+        raise NotImplementedError
+
+    def delete_alert(self, alert):
         raise NotImplementedError
 
 
@@ -130,3 +163,10 @@ def format_alerts(alerts, gone_alerts, new_alerts):
         text += "Alerts:\n" + "".join([f"* {alert.formatted}\n" for alert in new_alerts]) + "\n"
 
     return text
+
+
+def ellipsis(s, l):
+    if len(s) <= l:
+        return s
+
+    return s[:(l - 1)] + "…"
