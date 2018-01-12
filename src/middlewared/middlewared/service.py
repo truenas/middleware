@@ -15,6 +15,8 @@ from middlewared.schema import accepts, Bool, Dict, Int, List, Ref, Str
 from middlewared.service_exception import CallException, CallError, ValidationError, ValidationErrors  # noqa
 from middlewared.utils import filter_list
 from middlewared.logger import Logger
+from middlewared.job import Job
+
 
 PeriodicTaskDescriptor = namedtuple("PeriodicTaskDescriptor", ["interval", "run_on_start"])
 
@@ -459,7 +461,7 @@ class CoreService(Service):
         Int('sleep'),
     ))
     @job()
-    def job(self, job, data=None):
+    def job_test(self, job, data=None):
         """
         Private no-op method to test a job, simply returning `true`.
         """
@@ -526,3 +528,39 @@ class CoreService(Service):
             import pydevd
             pydevd.stoptrace()
             pydevd.settrace(host=options['host'])
+
+    @accepts(Str("method"), List("params"))
+    @job(lock=lambda args: f"bulk:{args[0]}")
+    async def bulk(self, job, method, params):
+        """
+        Will loop on a list of items for the given method, returning a list of
+        dicts containing a result and error key.
+
+        Result will be the message returned by the method being called,
+        or a string of an error, in which case the error key will be the
+        exception
+        """
+        statuses = []
+        progress_step = 100 / len(params)
+        current_progress = 0
+
+        for p in params:
+            try:
+                msg = await self.middleware.call(method, *p)
+                error = None
+
+                if isinstance(msg, Job):
+                    job = msg
+                    msg = await msg.wait()
+
+                    if job.error:
+                        error = job.error
+
+                statuses.append({"result": msg, "error": error})
+            except Exception as e:
+                statuses.append({"result": None, "error": str(e)})
+
+            current_progress += progress_step
+            job.set_progress(current_progress)
+
+        return statuses
