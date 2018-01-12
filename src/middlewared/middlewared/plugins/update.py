@@ -310,7 +310,7 @@ class UpdateService(Service):
         Downloads (if not already in cache) and apply an update.
         """
         attrs = attrs or {}
-        train = attrs.get('train') or self.middleware.call_sync('update.get_trains')['selected']
+        train = attrs.get('train') or (await self.middleware.call('update.get_trains'))['selected']
         location = await self.middleware.call('notifier.get_update_location')
 
         job.set_progress(0, 'Retrieving update manifest')
@@ -342,7 +342,7 @@ class UpdateService(Service):
     @accepts()
     @job(lock='updatedownload', process=True)
     async def download(self, job):
-        train = (await self.get_trains())['selected']
+        train = (await self.middleware.call('update.get_trains'))['selected']
         location = await self.middleware.call('notifier.get_update_location')
 
         Update.DownloadUpdate(
@@ -400,7 +400,7 @@ Changelog:
         rv = await self.middleware.call('notifier.validate_update', path)
         if not rv:
             raise CallError('Invalid update file', errno.EINVAL)
-        await self.middleware.call('notifier.apply_update', path)
+        await self.middleware.call('notifier.apply_update', path, timeout=None)
         try:
             await self.middleware.call('notifier.destroy_upload_location')
         except Exception:
