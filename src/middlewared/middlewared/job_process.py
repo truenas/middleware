@@ -69,11 +69,17 @@ class FakeMiddleware(object):
         else:
             raise NotImplementedError("Only jobs are allowed")
 
-    async def call(self, method, *params):
+    async def call(self, method, *params, timeout=None):
         """
         Calls a method using middleware client
         """
-        return self.client.call(method, *params)
+        return self.client.call(method, *params, timeout=timeout)
+
+    def call_sync(self, method, *params, timeout=None):
+        """
+        Calls a method using middleware client
+        """
+        return self.client.call(method, *params, timeout=timeout)
 
 
 class FakeJob(object):

@@ -141,6 +141,44 @@ class FilesystemService(Service):
             data = binascii.b2a_base64(f.read(options.get('maxlen'))).decode().strip()
         return data
 
+    @accepts(
+        Str('path'),
+        Dict(
+            'options',
+            Bool('append', default=False),
+            Int('mode'),
+        ),
+    )
+    @job(pipe=True)
+    async def put(self, job, path, options=None):
+        """
+        Job to put contents to `path`.
+        """
+        options = options or {}
+        dirname = os.path.dirname(path)
+        if not os.path.exists(dirname):
+            os.makedirs(dirname)
+        if options.get('append'):
+            openmode = 'ab'
+        else:
+            openmode = 'wb+'
+
+        def read_write():
+            with open(path, openmode) as f:
+                f2 = os.fdopen(job.read_fd, 'rb')
+                while True:
+                    read = f2.read(102400)
+                    if read == b'':
+                        break
+                    f.write(read)
+                f2.close()
+        await self.middleware.run_in_thread(read_write)
+
+        mode = options.get('mode')
+        if mode:
+            os.chmod(path, mode)
+        return True
+
 
 class FileFollowTailEventSource(EventSource):
 
