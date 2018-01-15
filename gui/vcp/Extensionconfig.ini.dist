@@ -1,9 +1,9 @@
 [RegisterParam]
 
 company=iXsystem
-label="Test extension"
+label="FreeNAS extension"
 description=Plugin for iXsystem
-key=com.vmware.truenas
+key=com.ixsystems.truenas
 events=truenas-alert
 tasks=TrueNASCreateDatastoreTask
 auth=iXSystems.Discovery,iXSystems.Clones,iXSystems.Storage,iXSystems.Modify,iXSystems.Destroy
