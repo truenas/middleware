@@ -162,7 +162,7 @@ def main():
                                 <integer>%d</integer>
                             </dict>
                         </plist>
-                    """ % (share.afp_timemachine_quota * 1024 * 1024)))
+                    """ % (share.afp_timemachine_quota * 1024 * 1024 * 1024)))
             except IOError:
                 pass
 
