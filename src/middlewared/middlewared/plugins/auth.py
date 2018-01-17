@@ -162,7 +162,7 @@ async def check_permission(app):
     """
     remote_addr, remote_port = app.request.transport.get_extra_info('peername')
 
-    if remote_addr not in ('127.0.0.1', '::1'):
+    if not (remote_addr.startswith('127.') or remote_addr == '::1'):
         return
 
     remote = '{0}:{1}'.format(remote_addr, remote_port)
