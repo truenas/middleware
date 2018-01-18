@@ -567,19 +567,9 @@ disk_is_freenas()
 	fi
 	# There should always be a "set default=" line in a grub.cfg
 	# that we created.
-	if grep -q '^set default=' /tmp/data_old/grub.cfg ; then
-	    DF=$(grep '^set default=' /tmp/data_old/grub.cfg | tail -1 | sed 's/^set default="\(.*\)"$/\1/')
-	    case "${DF}" in
-		0)	# No default, use "default"
-		    DS=default ;;
-                *${AVATAR_PROJECT}*)    # Default dataset
-                    DS=$(expr "${DF}" : "${AVATAR_PROJECT} (\(.*\)) .*") ;;
-		*) DS="" ;;
-	    esac
-	    umount /tmp/data_old
-	    if [ -n "${DS}" ]; then
-		# Okay, mount this pool
-		if mount -t zfs freenas-boot/ROOT/"${DS}" /tmp/data_old; then
+        if [ -n "${DS}" ]; then
+    	   # Okay, mount this pool
+	   if mount -t zfs freenas-boot/ROOT/"${DS}" /tmp/data_old; then
 		    # If the active dataset doesn't have a database file,
 		    # then it's not FN as far as we're concerned (the upgrade code
 		    # will go badly).
@@ -619,8 +609,9 @@ disk_is_freenas()
 	    umount /tmp/data_old || return 1
 	    zpool export freenas-boot || return 1
 	    return 0
-	fi
-    fi
+        fi
+      fi
+    fi # End of if NEW upgrade style
 
     # This is now legacy code, to support the old
     # partitioning scheme (freenas-9.2 and earlier)
