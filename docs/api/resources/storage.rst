@@ -907,6 +907,11 @@ Key Passphrase
       POST /api/v1.0/storage/volume/tank/keypassphrase/ HTTP/1.1
       Content-Type: application/json
 
+      {
+        "passphrase": "mypassphrase",
+        "passphrase2": "mypassphrase",
+      }
+
    **Example response**:
 
    .. sourcecode:: http
