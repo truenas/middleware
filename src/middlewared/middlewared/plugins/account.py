@@ -147,6 +147,7 @@ class UserService(CRUDService):
         if data['home'] != '/nonexistent':
             try:
                 os.makedirs(data['home'], mode=int(home_mode, 8))
+                os.chown(data['home'], data['uid'], group['gid'])
             except FileExistsError:
                 if not os.path.isdir(data['home']):
                     raise CallError(
@@ -344,6 +345,25 @@ class UserService(CRUDService):
         await self.middleware.call('datastore.update', 'account.bsdusers', pk, user, {'prefix': 'bsdusr_'})
 
         return True
+
+    @item_method
+    @accepts(
+        Int('id'),
+        Str('key'),
+    )
+    async def pop_attribute(self, pk, key):
+        """
+        Remove user general purpose `attributes` dictionary `key`.
+        """
+        user = await self._get_instance(pk)
+        user.pop('group')
+
+        if key in user['attributes']:
+            user['attributes'].pop(key)
+            await self.middleware.call('datastore.update', 'account.bsdusers', pk, user, {'prefix': 'bsdusr_'})
+            return True
+        else:
+            return False
 
     @accepts()
     async def get_next_uid(self):

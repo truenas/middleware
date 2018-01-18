@@ -4,7 +4,8 @@
       form: this,
       event: e,
       url: '{% url "storage_detach" vid=volume.id %}',
-      progressbar: true
+      progressbar: true,
+      confirm: conf
       });
 {%endblock %}
 {% block form %}

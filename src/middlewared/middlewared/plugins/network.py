@@ -1,8 +1,9 @@
-from middlewared.service import Service, private
-from middlewared.utils import Popen
+from middlewared.service import Service, filterable, private
+from middlewared.utils import Popen, filter_list, run
 from middlewared.schema import accepts, Str
 
 import asyncio
+from collections import defaultdict
 import ipaddr
 import ipaddress
 import netif
@@ -11,6 +12,8 @@ import re
 import signal
 import subprocess
 import urllib.request
+
+RE_NAMESERVER = re.compile(r'^nameserver\s+(\S+)', re.M)
 
 
 def dhclient_status(interface):
@@ -60,6 +63,59 @@ def dhclient_leases(interface):
 
 
 class InterfacesService(Service):
+
+    @filterable
+    def query(self, filters, options):
+        data = []
+        for name, iface in netif.list_interfaces().items():
+            if name in ('lo0', 'pfsync0', 'pflog0'):
+                continue
+            data.append(self.iface_extend(iface.__getstate__()))
+        return filter_list(data, filters, options)
+
+    @private
+    def iface_extend(self, iface):
+        iface.update({
+            'configured_aliases': [],
+            'dhcp': False,
+        })
+        config = self.middleware.call_sync('datastore.query', 'network.interfaces', [('int_interface', '=', iface['name'])])
+        if not config:
+            return iface
+        config = config[0]
+
+        if config['int_dhcp']:
+            iface['dhcp'] = True
+        else:
+            if config['int_ipv4address']:
+                iface['configured_aliases'].append({
+                    'type': 'INET',
+                    'address': config['int_ipv4address'],
+                    'netmask': int(config['int_v4netmaskbit']),
+                })
+            if config['int_ipv6address']:
+                iface['configured_aliases'].append({
+                    'type': 'INET6',
+                    'address': config['int_ipv6address'],
+                    'netmask': int(config['int_v6netmaskbit']),
+                })
+
+        for alias in self.middleware.call_sync('datastore.query', 'network.alias', [('alias_interface', '=', config['id'])]):
+
+            if alias['alias_v4address']:
+                iface['configured_aliases'].append({
+                    'type': 'INET',
+                    'address': alias['alias_v4address'],
+                    'netmask': int(alias['alias_v4netmaskbit']),
+                })
+            if alias['alias_v6address']:
+                iface['configured_aliases'].append({
+                    'type': 'INET6',
+                    'address': alias['alias_v6address'],
+                    'netmask': int(alias['alias_v6netmaskbit']),
+                })
+
+        return iface
 
     @private
     async def sync(self):
@@ -381,6 +437,14 @@ class InterfacesService(Service):
 
 class RoutesService(Service):
 
+    @filterable
+    def system_routes(self, filters, options):
+        """
+        Get current/applied network routes.
+        """
+        rtable = netif.RoutingTable()
+        return filter_list([r.__getstate__() for r in rtable.routes], filters, options)
+
     @private
     async def sync(self):
         config = await self.middleware.call('datastore.query', 'network.globalconfiguration', [], {'get': True})
@@ -467,6 +531,14 @@ class RoutesService(Service):
 
 class DNSService(Service):
 
+    @filterable
+    async def query(self, filters, options):
+        data = []
+        resolvconf = (await run('resolvconf', '-l')).stdout.decode()
+        for nameserver in RE_NAMESERVER.findall(resolvconf):
+            data.append({'nameserver': nameserver})
+        return filter_list(data, filters, options)
+
     @private
     async def sync(self):
         domains = []
@@ -506,6 +578,34 @@ class DNSService(Service):
         data = await proc.communicate(input=resolvconf.encode())
         if proc.returncode != 0:
             self.logger.warn(f'Failed to run resolvconf: {data[1].decode()}')
+
+
+class NetworkGeneralService(Service):
+
+    class Config:
+        namespace = 'network.general'
+
+    @accepts()
+    async def summary(self):
+        ips = defaultdict(lambda: defaultdict(list))
+        for iface in await self.middleware.call('interfaces.query'):
+            for alias in iface['aliases']:
+                if alias['type'] == 'INET':
+                    ips[iface['name']]['IPV4'].append(f'{alias["address"]}/{alias["netmask"]}')
+
+        default_routes = []
+        for route in await self.middleware.call('routes.system_routes', [('netmask', 'in', ['0.0.0.0', '::'])]):
+            default_routes.append(route['gateway'])
+
+        nameservers = []
+        for ns in await self.middleware.call('dns.query'):
+            nameservers.append(ns['nameserver'])
+
+        return {
+            'ips': ips,
+            'default_routes': default_routes,
+            'nameservers': nameservers,
+        }
 
 
 async def configure_http_proxy(middleware, *args, **kwargs):

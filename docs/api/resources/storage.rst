@@ -208,8 +208,8 @@ Datasets
    :json string readonly: read only (on, off, inherit)
    :json string recordsize: recodsize (512, 1K, 2K, 4K, 8k, 16K, 32K, 64K, 128K, 256K, 512K, 1024K)
    :json string case_sensitivity: files case sensitivity (on, off, inherit)
-   :json string quote: quota for this dataset and all children
-   :json string refquote: quota for this dataset
+   :json string quota: quota for this dataset and all children
+   :json string refquota: quota for this dataset
    :json string reservation: reserved space for this dataset and all children
    :json string refreservation: reserved space for this dataset
    :json string readonly: read only (on, off, inherit)
@@ -271,8 +271,8 @@ Datasets
    :json string readonly: read only (on, off, inherit)
    :json string recordsize: recodsize (512, 1K, 2K, 4K, 8k, 16K, 32K, 64K, 128K, 256K, 512K, 1024K)
    :json string case_sensitivity: files case sensitivity (on, off, inherit)
-   :json string quote: quota for this dataset and all children
-   :json string refquote: quota for this dataset
+   :json string quota: quota for this dataset and all children
+   :json string refquota: quota for this dataset
    :json string reservation: reserved space for this dataset and all children
    :json string refreservation: reserved space for this dataset
    :json string readonly: read only (on, off, inherit)
@@ -865,6 +865,34 @@ Recovery Key
    :statuscode 204: no error
 
 
+Re-Key
+++++++++++++
+
+.. http:post:: /api/v1.0/storage/volume/(int:id|string:name)/rekey/
+
+   Re-key volume `id`.
+
+   **Example request**:
+
+   .. sourcecode:: http
+
+      POST /api/v1.0/storage/volume/tank/rekey/ HTTP/1.1
+      Content-Type: application/json
+
+   **Example response**:
+
+   .. sourcecode:: http
+
+      HTTP/1.1 202 Accepted
+      Vary: Accept
+      Content-Type: application/json
+
+        Volume has been rekeyed.
+
+   :resheader Content-Type: content type of the response
+   :statuscode 202: no error
+
+
 Status
 ++++++
 
@@ -1079,8 +1107,8 @@ Create resource
    :json string readonly: read only (on, off, inherit)
    :json string recordsize: recodsize (512, 1K, 2K, 4K, 8k, 16K, 32K, 64K, 128K, 256K, 512K, 1024K)
    :json string case_sensitivity: files case sensitivity (on, off, inherit)
-   :json string quote: quota for this dataset and all children
-   :json string refquote: quota for this dataset
+   :json string quota: quota for this dataset and all children
+   :json string refquota: quota for this dataset
    :json string reservation: reserved space for this dataset and all children
    :json string refreservation: reserved space for this dataset
    :json string readonly: read only (on, off, inherit)
@@ -1147,8 +1175,8 @@ Update resource
    :json string readonly: read only (on, off, inherit)
    :json string recordsize: recodsize (512, 1K, 2K, 4K, 8k, 16K, 32K, 64K, 128K, 256K, 512K, 1024K)
    :json string case_sensitivity: files case sensitivity (on, off, inherit)
-   :json string quote: quota for this dataset and all children
-   :json string refquote: quota for this dataset
+   :json string quota: quota for this dataset and all children
+   :json string refquota: quota for this dataset
    :json string reservation: reserved space for this dataset and all children
    :json string refreservation: reserved space for this dataset
    :json string readonly: read only (on, off, inherit)
